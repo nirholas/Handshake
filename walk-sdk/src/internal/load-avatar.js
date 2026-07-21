@@ -3,8 +3,9 @@
 // One entry point used by BOTH the corner companion and the full-page
 // playground, so adding an avatar to the roster makes it work everywhere at
 // once. Given a roster entry it loads the GLB and returns a controller with a
-// single interface — setState('idle'|'walk'|'run'|'jump') + playWave() — no
-// matter how the rig is animated underneath:
+// single interface, setState('idle'|'walk'|'run'|'jump') + playWave() plus
+// emotes() / playEmote(name) for on-command performances, no matter how the
+// rig is animated underneath:
 //
 //   • embedded rigs play the clips baked into the GLB (robot, fox, showpieces),
 //     with loose name matching that always falls back to the model's first clip
@@ -20,9 +21,39 @@ import { getMeshoptDecoder } from './meshopt.js';
 import { AnimationManager } from './runtime.js';
 import { resolveClipUrls } from './manifest.js';
 import { log } from './log.js';
-import { resolveAvatarUrl, DEFAULT_SHARED_CLIPS } from '../roster.js';
+import { resolveAvatarUrl, DEFAULT_SHARED_CLIPS, DEFAULT_EMOTES } from '../roster.js';
 
 const DEFAULT_WAVE_MS = 1500;
+
+// A looping emote clip (dance, headbang) performs one capped pass before the
+// controller settles back to its base state: a tap is a performance, not a
+// permanent mode switch.
+const EMOTE_MAX_MS = 8000;
+
+// Baked-clip name candidates per emote for embedded rigs, matched with the same
+// loose case-insensitive lookup as the locomotion states. RobotExpressive (the
+// default mascot) ships Dance/Punch/Wave; rigs missing a clip simply don't
+// list that emote, and the UI hides its button.
+const EMBEDDED_EMOTE_CANDIDATES = {
+	dance: ['Dance'],
+	punch: ['Punch'],
+	backflip: ['Backflip', 'BackFlip', 'Back Flip', 'back_flip'],
+	wave: ['Wave'],
+};
+
+/**
+ * Resolve an emote map ({name: clip}) against the set of clips that actually
+ * exist, dropping emotes whose clip is missing so a UI can render only buttons
+ * that work. Pure; exported for tests.
+ */
+export function resolveEmotes(availableClipNames, emotes = DEFAULT_EMOTES) {
+	const available = new Set(availableClipNames);
+	const out = {};
+	for (const [name, clip] of Object.entries(emotes)) {
+		if (clip && available.has(clip)) out[name] = clip;
+	}
+	return out;
+}
 
 // Thrown by buildSharedController when the attached rig can't be driven by the
 // shared clip library (no skinned humanoid skeleton). loadWalkAvatar catches it
@@ -88,6 +119,7 @@ export async function loadWalkAvatar(entry, opts = {}) {
 			controller = await buildSharedController(model, active.clips || DEFAULT_SHARED_CLIPS, {
 				manifestUrl,
 				waveMs,
+				emotes: active.emotes,
 			});
 		} else {
 			controller = makeEmbeddedController(model, gltf.animations || [], active.clips || {}, {
@@ -176,6 +208,14 @@ function makeEmbeddedController(root, clips, overrides, { waveMs }) {
 		wave: pick([...ov('wave'), 'Wave', 'wave']) || null,
 	};
 
+	// Emotes resolve against the same baked clips; a rig without a matching clip
+	// simply doesn't list that emote, so UIs can hide dead buttons.
+	const emoteClip = {};
+	for (const [name, cands] of Object.entries(EMBEDDED_EMOTE_CANDIDATES)) {
+		const clip = pick([...ov(name), ...cands]);
+		if (clip) emoteClip[name] = clip;
+	}
+
 	const action = {};
 	for (const [state, clip] of Object.entries(map)) {
 		if (!clip) continue;
@@ -183,14 +223,19 @@ function makeEmbeddedController(root, clips, overrides, { waveMs }) {
 		a.enabled = true;
 		action[state] = a;
 	}
+	const emoteAction = {};
+	for (const [name, clip] of Object.entries(emoteClip)) {
+		const a = mixer.clipAction(clip);
+		a.enabled = true;
+		emoteAction[name] = a;
+	}
 
 	let base = 'idle';
 	let requested = 'idle';
 	let current = null;
 	let oneShot = false;
 
-	function crossfade(name, { once = false, dur = 0.3 } = {}) {
-		const a = action[name] || action.idle;
+	function fadeTo(a, { once = false, dur = 0.3 } = {}) {
 		if (!a) return;
 		a.reset();
 		a.setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity);
@@ -198,6 +243,10 @@ function makeEmbeddedController(root, clips, overrides, { waveMs }) {
 		a.fadeIn(dur).play();
 		if (current && current !== a) current.fadeOut(dur);
 		current = a;
+	}
+
+	function crossfade(name, opts) {
+		fadeTo(action[name] || action.idle, opts);
 	}
 
 	mixer.addEventListener('finished', () => {
@@ -223,20 +272,32 @@ function makeEmbeddedController(root, clips, overrides, { waveMs }) {
 			base = next;
 			if (!oneShot) crossfade(base, { dur: 0.22 });
 		},
-		playWave() {
-			if (!action.wave || oneShot) return;
+		// Names this rig can actually perform; render only these as buttons.
+		emotes() {
+			return Object.keys(emoteAction);
+		},
+		// Play an emote once, then settle back to the current base state. A tap
+		// mid-emote switches to the new one. Returns false when unsupported.
+		playEmote(name) {
+			const a = emoteAction[name];
+			if (!a) return false;
 			oneShot = true;
-			crossfade('wave', { once: true, dur: 0.25 });
+			fadeTo(a, { once: true, dur: 0.2 });
 			// Safety net: if the 'finished' event is missed (clip stripped of its
 			// end key, etc.), still fall back to the base after the clip's length.
-			const len = action.wave.getClip().duration * 1000 || waveMs;
-			clearTimeout(this._waveGuard);
-			this._waveGuard = setTimeout(() => {
+			const len = a.getClip().duration * 1000 || waveMs;
+			clearTimeout(this._emoteGuard);
+			this._emoteGuard = setTimeout(() => {
 				if (oneShot) {
 					oneShot = false;
 					crossfade(base, { dur: 0.25 });
 				}
-			}, len + 250);
+			}, Math.min(len, EMOTE_MAX_MS) + 250);
+			return true;
+		},
+		playWave() {
+			if (oneShot) return;
+			this.playEmote('wave');
 		},
 		// Scale playback rate of every action (global mixer multiplier) so a walk
 		// cycle can be sped up/slowed to match actual travel speed and keep feet
@@ -248,7 +309,7 @@ function makeEmbeddedController(root, clips, overrides, { waveMs }) {
 			mixer.update(dt);
 		},
 		dispose() {
-			clearTimeout(this._waveGuard);
+			clearTimeout(this._emoteGuard);
 			mixer.stopAllAction();
 			mixer.uncacheRoot(root);
 		},
@@ -256,7 +317,7 @@ function makeEmbeddedController(root, clips, overrides, { waveMs }) {
 }
 
 // ── Shared retargeted-clip controller (rig: 'shared') ────────────────────────
-async function buildSharedController(model, clips, { manifestUrl, waveMs }) {
+async function buildSharedController(model, clips, { manifestUrl, waveMs, emotes }) {
 	const manager = new AnimationManager();
 	manager.attach(model);
 
@@ -274,12 +335,15 @@ async function buildSharedController(model, clips, { manifestUrl, waveMs }) {
 	}
 
 	const resolved = {};
+	let resolvedEmotes = {};
+	const clipMs = new Map();
 	try {
 		const manifest = await fetch(manifestUrl, { cache: 'force-cache' }).then((r) => {
 			if (!r.ok) throw new Error(`HTTP ${r.status} fetching animation manifest`);
 			return r.json();
 		}).then((defs) => resolveClipUrls(defs, manifestUrl));
 		const available = new Set(manifest.map((d) => d.name));
+		for (const d of manifest) clipMs.set(d.name, (Number(d.duration) || 0) * 1000);
 
 		// Resolve each requested clip to one that actually exists; unknown names fall
 		// back to idle so the controller never asks the manager for a missing clip.
@@ -290,7 +354,11 @@ async function buildSharedController(model, clips, { manifestUrl, waveMs }) {
 		if (!resolved.idle) throw new Error('animation manifest missing an idle clip');
 		for (const k of Object.keys(resolved)) if (!resolved[k]) resolved[k] = resolved.idle;
 
-		const wanted = new Set(Object.values(resolved));
+		// Emotes never fall back to idle: a missing clip drops the emote instead,
+		// so every rendered emote button visibly performs.
+		resolvedEmotes = resolveEmotes(available, { ...DEFAULT_EMOTES, ...(emotes || {}) });
+
+		const wanted = new Set([...Object.values(resolved), ...Object.values(resolvedEmotes)]);
 		manager.setAnimationDefs(manifest.filter((d) => wanted.has(d.name)));
 		await manager.loadAll();
 	} catch (err) {
@@ -312,10 +380,31 @@ async function buildSharedController(model, clips, { manifestUrl, waveMs }) {
 			base = next;
 			if (!waveTimer) fade(clipFor(next), next === 'jump' ? 0.12 : 0.3);
 		},
+		// Names this rig can actually perform; render only these as buttons.
+		emotes() {
+			return Object.keys(resolvedEmotes);
+		},
+		// Play an emote once (loops get one capped pass), then settle back to the
+		// base state. A tap mid-emote switches to the new one. False = unsupported.
+		playEmote(name) {
+			const clip = resolvedEmotes[name];
+			if (!clip || clip === resolved.idle) return false;
+			clearTimeout(waveTimer);
+			fade(clip, 0.25);
+			const len = clipMs.get(clip) || waveMs;
+			waveTimer = setTimeout(() => {
+				waveTimer = null;
+				fade(clipFor(base), 0.3);
+			}, Math.min(len, EMOTE_MAX_MS) + 150);
+			return true;
+		},
 		playWave() {
 			if (waveTimer) return;
+			if (this.playEmote('wave')) return;
+			// No wave emote resolved (host stripped it): fall back to the state
+			// map's wave clip so nav-waves keep working exactly as before.
 			const w = resolved.wave;
-			if (!w || w === resolved.idle) return; // no distinct wave clip → skip
+			if (!w || w === resolved.idle) return;
 			fade(w, 0.25);
 			waveTimer = setTimeout(() => {
 				waveTimer = null;

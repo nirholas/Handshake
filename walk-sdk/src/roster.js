@@ -30,6 +30,17 @@ export const DEFAULT_SHARED_CLIPS = {
 	jump: 'jump',
 };
 
+// On-command performances for shared-rig avatars: emote name to manifest clip.
+// Verified present in /animations/manifest.json (walk-sdk/test/emotes.test.mjs
+// enforces this against the real manifest). A roster entry can override any of
+// them with its own `emotes` map; embedded rigs match baked clip names instead.
+export const DEFAULT_EMOTES = {
+	dance: 'dance',
+	punch: 'av-muay-thai',
+	backflip: 'av-back-flip',
+	wave: 'wave',
+};
+
 export const WALK_AVATARS = [
 	{
 		id: 'robot',
@@ -70,6 +81,7 @@ export const WALK_AVATARS = [
 		// Michelle's GLB ships only a TPose — force the shared library and never
 		// touch the embedded pose. See the repo's no-T-pose rule.
 		clips: { ...DEFAULT_SHARED_CLIPS, wave: 'michelle-samba-dance' },
+		emotes: { ...DEFAULT_EMOTES, dance: 'michelle-samba-dance' },
 		accent: '#ff8fab',
 		tags: ['humanoid', 'feminine', 'dancer'],
 	},

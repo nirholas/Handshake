@@ -257,6 +257,61 @@ function pickButtonHTML() {
 	return `<button type="button" class="walk-pg-pick" data-walk-picker-toggle aria-label="Choose your avatar" title="Choose avatar (C)"><span class="walk-pg-pick-ic" aria-hidden="true">🧑</span><span class="walk-pg-pick-tx">Avatar</span></button>`;
 }
 
+// ── Emote rail (shared by both movement modes) ───────────────────────────────
+// The big round tap-to-perform buttons pinned to the right edge: dance, punch,
+// backflip, wave. Rendered only for emotes the CURRENT rig actually supports
+// (controller.emotes()), so every visible button performs; rebuilt on avatar
+// swap. Number keys 1-4 mirror the buttons.
+const EMOTE_BUTTONS = [
+	{ name: 'dance', icon: '🕺', label: 'Dance', key: '1' },
+	{ name: 'punch', icon: '👊', label: 'Punch', key: '2' },
+	{ name: 'backflip', icon: '🤸', label: 'Backflip', key: '3' },
+	{ name: 'wave', icon: '👋', label: 'Wave', key: '4' },
+];
+
+function buildEmoteRail(pg) {
+	if (!pg.host) return;
+	pg.host.querySelector('.walk-pg-emotes')?.remove();
+	const supported = pg.controller?.emotes?.() || [];
+	const buttons = EMOTE_BUTTONS.filter((b) => supported.includes(b.name));
+	if (!buttons.length) return;
+	const rail = document.createElement('div');
+	rail.className = 'walk-pg-emotes';
+	rail.setAttribute('role', 'toolbar');
+	rail.setAttribute('aria-label', 'Emotes: make the character perform');
+	rail.innerHTML = buttons
+		.map(
+			(b) =>
+				`<button type="button" class="walk-pg-emote" data-emote="${b.name}" aria-label="${b.label}" title="${b.label} (${b.key})"><span aria-hidden="true">${b.icon}</span></button>`,
+		)
+		.join('');
+	rail.addEventListener('click', (e) => {
+		const btn = e.target.closest('.walk-pg-emote');
+		if (btn) triggerEmote(pg, btn.getAttribute('data-emote'));
+	});
+	pg.host.appendChild(rail);
+}
+
+function triggerEmote(pg, name) {
+	if (pg._diving || pg._narrating) return;
+	if (!pg.controller?.playEmote?.(name)) return;
+	const btn = pg.host?.querySelector(`.walk-pg-emote[data-emote="${name}"]`);
+	if (btn) {
+		btn.classList.remove('is-playing');
+		void btn.offsetWidth; // restart the pop on a repeat tap
+		btn.classList.add('is-playing');
+	}
+}
+
+// Number-key shortcut shared by both modes' keydown handlers. Returns true when
+// the key mapped to a rendered emote (so the caller preventDefaults it).
+function emoteHotkey(pg, key) {
+	const btn = EMOTE_BUTTONS.find((b) => b.key === key);
+	if (!btn || !pg.host?.querySelector(`.walk-pg-emote[data-emote="${btn.name}"]`)) return false;
+	triggerEmote(pg, btn.name);
+	return true;
+}
+
 // Free a model's GPU resources (geometries, materials, textures) when it leaves
 // the rig after a live avatar swap. Mirrors the per-mesh disposal in teardown.
 function disposeModel(model) {
@@ -321,6 +376,7 @@ async function swapAvatar(pg, idOrEntry) {
 		pg.controller = next.controller;
 		pg.modelHalfW = next.halfW;
 		if (typeof pg._shadowR === 'number') pg._shadowR = Math.max(22, next.halfW * 1.15);
+		buildEmoteRail(pg); // the new rig may support a different emote set
 		pg._say?.(`Say hi to ${entry.name}!`);
 	} catch (err) {
 		log.warn('avatar swap failed:', err?.message || err);
@@ -457,6 +513,7 @@ class StrollPlayground {
 			return;
 		}
 		if (!this.mounted) { this._teardown(); return; }
+		buildEmoteRail(this);
 		this._placeStart(startScreen, dropIn);
 		questBuild(this);
 		this._spawnGuardUntil = performance.now() + SPAWN_GUARD_MS;
@@ -678,6 +735,10 @@ class StrollPlayground {
 		if (k === 'c' || k === 'C') {
 			e.preventDefault();
 			openAvatarPicker(this);
+			return;
+		}
+		if (emoteHotkey(this, k)) {
+			e.preventDefault();
 			return;
 		}
 		let handled = true;
@@ -974,6 +1035,7 @@ class PlatformerPlayground {
 			return;
 		}
 		if (!this.mounted) { this._teardown(); return; }
+		buildEmoteRail(this);
 		this._scrollY = window.scrollY || 0;
 		this._scan(true);
 		this._placeStart(startScreen, dropIn);
@@ -1230,6 +1292,10 @@ class PlatformerPlayground {
 		if (k === 'c' || k === 'C') {
 			e.preventDefault();
 			openAvatarPicker(this);
+			return;
+		}
+		if (emoteHotkey(this, k)) {
+			e.preventDefault();
 			return;
 		}
 		let handled = true;
@@ -1559,13 +1625,21 @@ function ensureStyles() {
 .walk-pg--plat .walk-pg-pad{position:fixed;left:0;right:0;bottom:18px;z-index:3;display:none;justify-content:center;gap:12px;pointer-events:none}
 .walk-pg--plat .walk-pg-btn{width:60px;height:60px;border-radius:50%;font-size:22px}
 .walk-pg-jump{background:rgba(122,162,255,.32)}
+.walk-pg-emotes{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.walk-pg-emote{pointer-events:auto;width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(16,18,26,.78);color:#fff;font-size:24px;line-height:1;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s ease,transform .15s ease;-webkit-user-select:none;user-select:none;touch-action:manipulation;padding:0}
+.walk-pg-emote:hover{background:rgba(122,162,255,.55);transform:scale(1.06)}
+.walk-pg-emote:active{transform:scale(.92)}
+.walk-pg-emote:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+.walk-pg-emote.is-playing{animation:walk-pg-emote-pop .45s ease}
+@keyframes walk-pg-emote-pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@media (max-width:520px){.walk-pg-emotes{right:10px;gap:8px}.walk-pg-emote{width:46px;height:46px;font-size:20px}}
 .walk-pg-flash{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(circle at 50% 50%,rgba(122,162,255,0) 0%,rgba(8,10,16,0) 60%);opacity:0;transition:opacity .5s ease}
 .walk-pg-flash.is-on{background:radial-gradient(circle at 50% 50%,rgba(122,162,255,.25) 0%,rgba(6,8,14,.96) 70%);opacity:1}
 .walk-pg-portal{outline:2px solid rgba(122,162,255,.9)!important;outline-offset:3px;border-radius:6px;box-shadow:0 0 0 4px rgba(122,162,255,.18),0 0 28px rgba(122,162,255,.45)!important;transition:box-shadow .2s ease,transform .25s ease;animation:walk-pg-pulse 1.1s ease-in-out infinite}
 .walk-pg-portal.is-open{transform:scale(.94);box-shadow:0 0 0 6px rgba(122,162,255,.3),0 0 48px rgba(122,162,255,.7)!important}
 @keyframes walk-pg-pulse{0%,100%{box-shadow:0 0 0 4px rgba(122,162,255,.16),0 0 22px rgba(122,162,255,.35)}50%{box-shadow:0 0 0 6px rgba(122,162,255,.3),0 0 36px rgba(122,162,255,.6)}}
 @media (pointer: coarse){.walk-pg--stroll .walk-pg-pad,.walk-pg--plat .walk-pg-pad{display:flex}.walk-pg--stroll .walk-pg-hint{bottom:200px}.walk-pg--plat .walk-pg-hint{bottom:110px}.walk-pg-mode .walk-pg-mode-tx{display:none}.walk-pg-mode{right:84px}.walk-pg-pick .walk-pg-pick-tx{display:none}.walk-pg-pick{right:132px}}
-@media (prefers-reduced-motion:reduce){.walk-pg,.walk-pg-hint,.walk-pg-flash{transition:none}.walk-pg-portal{animation:none}}
+@media (prefers-reduced-motion:reduce){.walk-pg,.walk-pg-hint,.walk-pg-flash{transition:none}.walk-pg-portal,.walk-pg-emote.is-playing{animation:none}}
 `;
 	document.head.appendChild(style);
 }

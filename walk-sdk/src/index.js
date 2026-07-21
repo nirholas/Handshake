@@ -19,7 +19,7 @@
 //
 // `three` is a peer dependency — bring your own copy.
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 
 // Companion (corner mascot) — the main entry point.
 export { createWalkCompanion } from './companion.js';
@@ -41,6 +41,7 @@ export {
 	WALK_AVATARS,
 	DEFAULT_AVATAR_ID,
 	DEFAULT_SHARED_CLIPS,
+	DEFAULT_EMOTES,
 	getAvatar,
 	defaultAvatar,
 	listCategories,
@@ -52,5 +53,5 @@ export {
 export { createAvatarPicker } from './picker.js';
 
 // Low-level building blocks for advanced integrations.
-export { loadWalkAvatar } from './internal/load-avatar.js';
+export { loadWalkAvatar, resolveEmotes } from './internal/load-avatar.js';
 export { resolveConfig, resolveAvatarEntry, DEFAULT_EXCLUDED_PREFIXES } from './config.js';

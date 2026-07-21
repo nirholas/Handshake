@@ -9,6 +9,9 @@ export type WalkRig = 'embedded' | 'shared';
 /** Logical animation states the controller understands. */
 export type WalkState = 'idle' | 'walk' | 'run' | 'jump';
 
+/** On-command performances the controller can play (when the rig has the clip). */
+export type WalkEmote = 'dance' | 'punch' | 'backflip' | 'wave' | (string & {});
+
 /** Mapping of logical states to clip names (shared rig) or candidate name lists (embedded rig). */
 export interface WalkClipMap {
 	idle?: string | string[];
@@ -30,6 +33,8 @@ export interface WalkAvatar {
 	source: 'static' | 'api';
 	rig: WalkRig;
 	clips?: WalkClipMap;
+	/** Shared-rig emote overrides: emote name to manifest clip name. */
+	emotes?: Record<string, string>;
 	thumb?: string;
 	accent?: string;
 	tags?: string[];
@@ -38,6 +43,13 @@ export interface WalkAvatar {
 export declare const WALK_AVATARS: WalkAvatar[];
 export declare const DEFAULT_AVATAR_ID: string;
 export declare const DEFAULT_SHARED_CLIPS: Record<string, string>;
+export declare const DEFAULT_EMOTES: Record<string, string>;
+
+/** Resolve an emote map against the clips that exist, dropping unsupported emotes. */
+export declare function resolveEmotes(
+	availableClipNames: Iterable<string>,
+	emotes?: Record<string, string>,
+): Record<string, string>;
 
 export declare function getAvatar(id: string): WalkAvatar | null;
 export declare function defaultAvatar(): WalkAvatar;
@@ -91,10 +103,16 @@ export interface WalkCompanionControl {
 
 export declare function createWalkCompanion(opts?: WalkCompanionOptions): WalkCompanionControl;
 
-/** A controller exposing setState/playWave for a loaded avatar. */
+/** A controller exposing setState/playWave/emotes for a loaded avatar. */
 export interface WalkController {
 	setState(state: WalkState): void;
 	playWave(): void;
+	/** Emote names this rig can actually perform; render only these as buttons. */
+	emotes(): WalkEmote[];
+	/** Play an emote once, then settle back to the base state. False = unsupported. */
+	playEmote(name: WalkEmote): boolean;
+	/** Scale playback rate (1 = authored cadence) so walk cycles match travel speed. */
+	setSpeed(scale: number): void;
 	update(dt: number): void;
 	dispose(): void;
 }

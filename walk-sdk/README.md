@@ -85,6 +85,27 @@ Each roster entry declares a rig strategy so it always moves:
 The same unified loader powers both the corner companion and the playground, so
 adding an avatar makes it work everywhere at once.
 
+### Emotes
+
+In the playground, big round buttons pinned to the right edge make the
+character **perform on command**: dance, punch (a muay thai combo), backflip,
+and wave, with the number keys `1`-`4` as shortcuts. Only emotes the current rig
+can actually play get a button: shared rigs resolve them against the animation
+manifest (`DEFAULT_EMOTES`, overridable per entry with `emotes`), embedded rigs
+match their baked clip names (`Dance`, `Punch`, `Wave`, …). Looping clips
+perform one capped pass, then the character settles back into whatever it was
+doing. The rail rebuilds automatically when the visitor swaps avatars.
+
+```js
+// Give a custom shared-rig avatar its own dance:
+{ id: 'mascot', rig: 'shared', asset: '/brand/mascot.glb', source: 'static',
+  emotes: { dance: 'av-dance-shuffle' } }
+
+// Or drive emotes programmatically from a loaded controller:
+controller.emotes(); // e.g. ['dance', 'punch', 'wave']
+controller.playEmote('dance'); // true if it played, false if unsupported
+```
+
 ### Custom roster
 
 ```js
@@ -202,6 +223,7 @@ import { loadWalkAvatar, getAvatar } from '@three-ws/walk';
 
 const { model, controller } = await loadWalkAvatar(getAvatar('xbot'));
 scene.add(model);
+controller.playEmote('punch'); // one-shot performance, then back to base
 // each frame:
 controller.setState('walk'); // 'idle' | 'walk' | 'run' | 'jump'
 controller.update(dt);

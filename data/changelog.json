@@ -15339,6 +15339,16 @@
 		},
 		{
 			"date": "2026-07-21",
+			"title": "Emote buttons: your walking avatar performs on command",
+			"summary": "The avatar that walks over three.ws pages just got a performance kit. Round buttons on the right edge of the screen (or the 1-4 keys) make it dance, throw a muay thai combo, backflip, or wave, mid-stroll, mid-platforming, anywhere on the page. Every avatar in the cast supports it, including your own generated ones, and the buttons adapt to what each character can actually do. Site owners get the same feature free in the @three-ws/walk SDK 0.3.0, so any website's companion can now put on a show.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/?walk=play"
+		},
+		{
+			"date": "2026-07-21",
 			"title": "The sniper fleet gets a BOOST-window arm",
 			"summary": "pump.fun now reinjects each migrated coin's stranded liquidity as a 5-minute buyback-and-burn right after migration (BOOST mode). The autonomous sniper fleet gained an eleventh experiment arm that trades exactly that: it buys a coin's brand-new pool the moment it migrates and sells into the guaranteed buyback window, with the same hard stop-loss, budget caps, and safety firewall as every other arm. Its wallet, every trade, and its full reasoning history are public on the experiments scoreboard like the rest of the fleet.",
 			"tags": [

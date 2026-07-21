@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T18:46:52.807Z",
+	"generated_at": "2026-07-21T19:30:32.066Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -55,6 +55,17 @@
 			"link": "/objects",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "Emote buttons: your walking avatar performs on command",
+			"summary": "The avatar that walks over three.ws pages just got a performance kit. Round buttons on the right edge of the screen (or the 1-4 keys) make it dance, throw a muay thai combo, backflip, or wave, mid-stroll, mid-platforming, anywhere on the page. Every avatar in the cast supports it, including your own generated ones, and the buttons adapt to what each character can actually do. Site owners get the same feature free in the @three-ws/walk SDK 0.3.0, so any website's companion can now put on a show.",
+			"link": "/?walk=play",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

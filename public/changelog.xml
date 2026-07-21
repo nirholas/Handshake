@@ -47,6 +47,14 @@
 			<description>A new Object Library brings hundreds of free 3D objects and props to three.ws - furniture, lighting, electronics, containers, decor. Every one is CC0 public domain: free to use commercially with no attribution. Browse them at /objects, preview any one live in your browser, or download the GLB to use anywhere.</description>
 		</item>
 		<item>
+			<title>Emote buttons: your walking avatar performs on command</title>
+			<link>https://three.ws/?walk=play</link>
+			<guid isPermaLink="false">2026-07-21:Emote buttons: your walking avatar performs on command</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The avatar that walks over three.ws pages just got a performance kit. Round buttons on the right edge of the screen (or the 1-4 keys) make it dance, throw a muay thai combo, backflip, or wave, mid-stroll, mid-platforming, anywhere on the page. Every avatar in the cast supports it, including your own generated ones, and the buttons adapt to what each character can actually do. Site owners get the same feature free in the @three-ws/walk SDK 0.3.0, so any website's companion can now put on a show.</description>
+		</item>
+		<item>
 			<title>Installing a marketplace skill now actually teaches your agent</title>
 			<link>https://three.ws/marketplace?tab=skills</link>
 			<guid isPermaLink="false">2026-07-21:Installing a marketplace skill now actually teaches your agent</guid>
