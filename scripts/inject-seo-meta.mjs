@@ -35,11 +35,20 @@ const WRITE = process.argv.includes('--write');
 // Per-page dynamic social share image. Copy is carried in the URL so the
 // /api/page-og renderer stays a pure, cacheable function of its params and
 // always matches this catalog. Mirrors the section accents defined there.
+// Cut at the last word boundary inside the cap so the rendered OG card never
+// ends mid-word.
+function truncateAtWord(s, max) {
+	if (s.length <= max) return s;
+	const cut = s.slice(0, max);
+	const space = cut.lastIndexOf(' ');
+	return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, '');
+}
+
 function pageOgUrl(page, sectionId) {
 	const q = new URLSearchParams();
 	q.set('s', sectionId || 'main');
 	q.set('t', page.title || 'three.ws');
-	if (page.description) q.set('d', page.description.slice(0, 160));
+	if (page.description) q.set('d', truncateAtWord(page.description, 160));
 	q.set('p', page.path || '/');
 	return `${ORIGIN}/api/page-og?${q.toString()}`;
 }
