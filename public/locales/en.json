@@ -1533,6 +1533,7 @@
 		"meta_twitter_description": "Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera.",
 		"meta_twitter_title": "AR Studio · three.ws",
 		"model": "Model",
+		"objects": "Objects",
 		"open_a_shared_room_and_everyone_with": "Open a shared room and everyone with the code sees the same scene update in real time — add, move, and forge models together.",
 		"or_join_one": "or join one",
 		"phone": "Phone ↗",

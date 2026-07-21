@@ -72,6 +72,26 @@ async function armStats(network, interval) {
 	`;
 }
 
+// Per-arm realized win rate bucketed by the Oracle conviction each coin had at
+// entry (Bridge 2). Feeds the optimizer's Rule O so it tunes min_oracle_score to
+// the conviction band where the arm actually wins, instead of ignoring Oracle.
+// Uses the coin's current conviction (oracle_conviction keeps one row per mint);
+// coins the Oracle never scored simply don't contribute.
+async function armOracleBuckets(network, interval) {
+	return sql`
+		select p.strategy_id,
+			case when oc.score >= 85 then 85 when oc.score >= 70 then 70
+			     when oc.score >= 50 then 50 when oc.score >= 30 then 30 else 0 end as lo,
+			count(*) as closed,
+			count(*) filter (where p.realized_pnl_lamports > 0) as wins
+		from agent_sniper_positions p
+		join oracle_conviction oc on oc.mint = p.mint and oc.network = p.network
+		where p.network = ${network} and p.status = 'closed' and p.buy_sig <> 'SIMULATED'
+		  and p.opened_at > now() - (${interval}::text)::interval
+		group by p.strategy_id, lo
+	`;
+}
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
@@ -84,8 +104,15 @@ export default wrapCron(async (req, res) => {
 
 	const report = { mode, window: windowLabel, arms: 0, with_proposals: 0, applied: 0, skipped_optin: 0, errors: 0, runs: [] };
 	let rows = [];
+	let oracleByArm = new Map();
 	try {
 		rows = await armStats(network, interval);
+		const oracleRows = await armOracleBuckets(network, interval).catch(() => []);
+		for (const o of oracleRows) {
+			const list = oracleByArm.get(o.strategy_id) || [];
+			list.push({ lo: Number(o.lo), closed: Number(o.closed), wins: Number(o.wins) });
+			oracleByArm.set(o.strategy_id, list);
+		}
 	} catch (err) {
 		return json(res, 200, { ok: false, error: err.message, report });
 	}
@@ -104,6 +131,7 @@ export default wrapCron(async (req, res) => {
 				avgHoldSeconds: r.avg_hold_s != null ? Math.round(Number(r.avg_hold_s)) : null,
 				netPnlLamports: Number(r.net_pnl_lamports) || 0,
 				exitReasons: r.exit_reasons || {},
+				oracleBuckets: oracleByArm.get(r.strategy_id) || [],
 			};
 			const { proposals, sample, acted, notes } = proposeAdjustments(stats, r);
 			if (!acted) continue;

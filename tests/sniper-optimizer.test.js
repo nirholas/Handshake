@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { proposeAdjustments, MIN_SAMPLE, BOUNDS, STEP } from '../api/_lib/sniper-optimizer.js';
+import { proposeAdjustments, bestOracleThreshold, MIN_SAMPLE, BOUNDS, STEP } from '../api/_lib/sniper-optimizer.js';
 
 const baseConfig = {
 	decision_mode: 'rules',

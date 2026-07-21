@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-21",
+			"title": "Object Library props now place straight into AR Studio",
+			"summary": "The CC0 Object Library and AR Studio are now wired together. Every prop card on /objects has an AR button that opens the model in AR Studio, ready to place in your room through your camera. Inside AR Studio, a new Objects tab in the model tray lets you search all the CC0 props by name or category and tap any of them into your scene alongside your forged models.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/ar/studio"
+		},
+		{
+			"date": "2026-07-21",
 			"title": "A free CC0 object library: hundreds of props, ready to drop in",
 			"summary": "A new Object Library brings hundreds of free 3D objects and props to three.ws - furniture, lighting, electronics, containers, decor. Every one is CC0 public domain: free to use commercially with no attribution. Browse them at /objects, preview any one live in your browser, or download the GLB to use anywhere.",
 			"tags": [

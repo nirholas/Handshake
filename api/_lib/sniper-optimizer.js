@@ -45,8 +45,48 @@ export const STEP = {
 	per_trade_fraction: 0.2, // ≤20% size change per run
 };
 
+// Fields that may be set from unset (null). For a filter threshold, null means
+// "no filter" and turning one on is a safe tightening; for take-profit it locks
+// gains. Stops/hold are deliberately excluded: null there is load-bearing.
+const UNSET_OK = new Set(['take_profit_pct', 'min_oracle_score', 'min_quality_score']);
+
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const num = (v) => (v == null ? null : Number(v));
+
+/**
+ * Oracle-aware entry threshold (Bridge 2). Given an arm's realized win rate
+ * bucketed by the Oracle conviction the coin had at entry, find the conviction
+ * floor that best separates winners from losers: the threshold T where trades
+ * with conviction >= T win meaningfully more than the arm overall, with enough
+ * sample above T to trust it. Returns the target floor, or null when the data
+ * does not support a move. Pure.
+ *
+ * @param {Array<{lo:number, closed:number|string, wins:number|string}>} buckets
+ * @param {{ minAbove?:number, minLift?:number, minTotal?:number }} [opts]
+ */
+export function bestOracleThreshold(buckets, { minAbove = 4, minLift = 0.15, minTotal = 6 } = {}) {
+	const b = (buckets || [])
+		.map((x) => ({ lo: Number(x.lo), closed: Number(x.closed) || 0, wins: Number(x.wins) || 0 }))
+		.filter((x) => x.closed > 0)
+		.sort((a, z) => a.lo - z.lo);
+	if (!b.length) return null;
+	const total = b.reduce((s, x) => s + x.closed, 0);
+	const totalWins = b.reduce((s, x) => s + x.wins, 0);
+	if (total < minTotal) return null;
+	const overall = totalWins / total;
+	let best = null;
+	for (const cand of b) {
+		if (cand.lo <= 0) continue; // a zero floor is "no filter", never a proposal
+		const above = b.filter((x) => x.lo >= cand.lo);
+		const closedAbove = above.reduce((s, x) => s + x.closed, 0);
+		const winsAbove = above.reduce((s, x) => s + x.wins, 0);
+		if (closedAbove < minAbove || closedAbove === total) continue; // need a real, informative cut
+		const rateAbove = winsAbove / closedAbove;
+		const lift = rateAbove - overall;
+		if (lift >= minLift && (!best || rateAbove > best.rateAbove)) best = { threshold: cand.lo, rateAbove };
+	}
+	return best ? best.threshold : null;
+}
 
 // Move `from` toward `to` but never by more than `step`, then clamp to bounds.
 // Returns the bounded target, or null if `from` is already there.
@@ -108,10 +148,20 @@ export function proposeAdjustments(stats, config) {
 		target = clamp(target, b.min, b.max);
 		if (field === 'max_hold_seconds' || field === 'per_trade_lamports') target = Math.round(target);
 		if (from != null && target === from) return; // no-op
-		if (from == null && field !== 'take_profit_pct') return; // only TP supports unset→set
+		if (from == null && !UNSET_OK.has(field)) return; // some fields must not be set from unset
 		claimed.add(field);
 		proposals.push({ field, from, to: target, reason });
 	};
+
+	// Rule O: Oracle-aware entry. If the arm's realized wins concentrate above a
+	// conviction floor, tune min_oracle_score toward it. Runs FIRST so this
+	// data-driven signal claims the field before Rule B's cruder stop-loss bump.
+	// This is what makes the optimizer actually USE the Oracle rather than ignore it.
+	const oracleTarget = bestOracleThreshold(stats.oracleBuckets);
+	if (oracleTarget != null && (oracle == null || oracleTarget > oracle)) {
+		propose('min_oracle_score', oracleTarget,
+			`Realized wins concentrate at Oracle conviction >= ${oracleTarget} over ${sample} trades: raise the conviction floor to buy where this arm actually wins.`);
+	}
 
 	// Rule A: winners are timing out unrealized (the classic "no take-profit" leak).
 	if (share(er, 'timeout', sample) >= 0.4 && avg > 5) {

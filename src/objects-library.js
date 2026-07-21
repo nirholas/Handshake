@@ -44,6 +44,9 @@ function renderCard(o) {
 	const previewUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
 	const thumb = o.thumb || '';
 	const alt = o.label || o.name || 'Object';
+	const arUrl = glbUrl
+		? `/ar/studio?src=${encodeURIComponent(glbUrl)}&title=${encodeURIComponent(alt)}`
+		: '#';
 	const cat = (o.categories && o.categories[0]) || '';
 
 	const card = document.createElement('article');
@@ -70,6 +73,7 @@ function renderCard(o) {
 			</div>
 			<div class="ch-card-actions">
 				<a class="ch-btn ch-btn--primary" href="${escapeAttr(previewUrl)}" title="Open in the 3D viewer">Preview</a>
+				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(arUrl)}" title="Place this prop in your room with AR Studio">AR</a>
 				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(glbUrl)}" download title="Download the GLB (CC0, free to reuse)">Download</a>
 			</div>
 		</div>

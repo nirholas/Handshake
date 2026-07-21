@@ -1612,8 +1612,8 @@ async function fetchTrayItems(tab) {
 		items = readRecent().map((e) => ({ src: e.glb, title: e.prompt, poster: '' }));
 	} else if (tab === 'objects') {
 		// The CC0 object library (/objects). The full manifest is a few hundred
-		// small records — fetch it once so the tab's filter box works offline of
-		// the network after first open.
+		// small records; fetch it once so the tab's filter box runs client-side
+		// with no further requests.
 		const res = await fetch('/api/objects/library');
 		if (!res.ok) throw new Error(`objects ${res.status}`);
 		const data = await res.json();
@@ -1729,7 +1729,7 @@ function wireTrayAdds() {
 	});
 }
 
-// The object library is ~500 CC0 props — too many to scroll blind, so this tab
+// The object library is ~500 CC0 props, too many to scroll blind, so this tab
 // filters over name + category and renders matches in slices.
 const OBJECTS_SLICE = 60;
 function renderObjectsTray(items) {
@@ -1740,7 +1740,7 @@ function renderObjectsTray(items) {
 					placeholder="Search ${items.length} CC0 props…"
 					aria-label="Search the object library" />
 			</div>
-			<p class="ars-link-hint">Free CC0 props from the <a href="/objects">object library</a> — tap to place one in your space.</p>
+			<p class="ars-link-hint">Free CC0 props from the <a href="/objects">object library</a>. Tap one to place it in your space.</p>
 		</div>
 		<ul class="ars-item-list" id="ars-objects-list"></ul>
 		<div class="ars-objects-more" id="ars-objects-more"></div>`;

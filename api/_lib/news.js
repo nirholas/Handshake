@@ -26,6 +26,7 @@ import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
 import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, isFeaturedSource } from './news-sources.js';
 import { isSuppressed, excerptText } from './news-rights.js';
+import { isDisplayable } from './news-curation.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
@@ -543,10 +544,14 @@ function dedupe(articles) {
  * `featured` narrows the fan-out to the majors (tier1/tier2 or credibility
  * ≥ 0.85) — the "Featured" tab on /markets/news.
  *
- * @param {object} opts { category, source, lang, q, limit, offset, featured }
+ * `curated` applies the editorial display gate (crypto-relevant + above the
+ * quality floor, see api/_lib/news-curation.js). Off by default: ingestion and
+ * agent-signal callers get the full firehose; human-facing feeds opt in.
+ *
+ * @param {object} opts { category, source, lang, q, limit, offset, featured, curated }
  * @returns {{ articles: Array, total: number, sources_ok: number, sources_total: number }}
  */
-export async function getNews({ category, source, lang = 'en', q, limit = 30, offset = 0, featured = false } = {}) {
+export async function getNews({ category, source, lang = 'en', q, limit = 30, offset = 0, featured = false, curated = false } = {}) {
 	let keys;
 	if (source && NEWS_SOURCES[source]) keys = [source];
 	else if (source) return { articles: [], total: 0, sources_ok: 0, sources_total: 0 };
@@ -573,6 +578,14 @@ export async function getNews({ category, source, lang = 'en', q, limit = 30, of
 	let articles = dedupe(all)
 		.filter((a) => !isSuppressed(a))
 		.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
+	// Editorial display gate (opt-in): crypto-relevant + above the quality
+	// floor. OFF by default so ingestion (the archive cron) and agent-signal
+	// callers keep the full firehose; the human-facing feeds pass curated:true.
+	// An explicit single-source request is exempt — the caller asked for that
+	// outlet by name, so honour it.
+	if (curated && !source) {
+		articles = articles.filter((a) => isDisplayable(a));
+	}
 	if (q) {
 		const needle = q.toLowerCase();
 		articles = articles.filter((a) =>
