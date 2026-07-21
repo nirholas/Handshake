@@ -780,27 +780,74 @@ def image_anchors(image_landmarks: np.ndarray, visibility: Optional[np.ndarray] 
     compositor needs to pin and scale the avatar over the subject.
     """
     image_landmarks = np.asarray(image_landmarks, dtype=np.float64)
-    anchors = []
-    for t in range(image_landmarks.shape[0]):
+    n = image_landmarks.shape[0]
+    key = [LEFT_HIP, RIGHT_HIP, LEFT_SHOULDER, RIGHT_SHOULDER]
+
+    # Pass 1: raw per-frame x / y / h + a visibility flag.
+    raw_x = np.zeros(n)
+    raw_y = np.zeros(n)
+    raw_h = np.full(n, np.nan)
+    vis_flag = np.ones(n, dtype=bool)
+    for t in range(n):
         p = image_landmarks[t]
-        vis = visibility[t] if visibility is not None else None
-        key = [LEFT_HIP, RIGHT_HIP, LEFT_SHOULDER, RIGHT_SHOULDER]
-        visible = True
-        if vis is not None:
-            visible = bool(np.mean([vis[i] for i in key]) > 0.35)
+        if visibility is not None:
+            vis_flag[t] = bool(np.mean([visibility[t][i] for i in key]) > 0.35)
         hip = 0.5 * (p[LEFT_HIP, :2] + p[RIGHT_HIP, :2])
+        raw_x[t] = hip[0]
+        raw_y[t] = hip[1]
         top = float(min(p[NOSE, 1], p[LEFT_EAR, 1], p[RIGHT_EAR, 1]))
         bottom = float(max(p[LEFT_ANKLE, 1], p[RIGHT_ANKLE, 1]))
-        height = max(0.05, bottom - top)
-        anchors.append(
-            {
-                "x": round(float(hip[0]), 4),
-                "y": round(float(hip[1]), 4),
-                "h": round(height, 4),
-                "v": 1 if visible else 0,
-            }
-        )
-    return anchors
+        span = bottom - top
+        # Only trust the height when the subject is visible and the span is
+        # plausible; otherwise leave it NaN so it gets filled from neighbours
+        # instead of collapsing the avatar to a speck.
+        if vis_flag[t] and span > 0.05:
+            raw_h[t] = span
+
+    # Robust height reference: the median of trusted spans. Clamp every frame's
+    # height to a band around it so one bad detection can't shrink/grow the
+    # avatar. If nothing was trusted, fall back to a sane default.
+    good = raw_h[np.isfinite(raw_h)]
+    med_h = float(np.median(good)) if good.size else 0.6
+    lo, hi = med_h * 0.7, med_h * 1.4
+    filled_h = np.where(np.isfinite(raw_h), np.clip(raw_h, lo, hi), med_h)
+
+    # Forward/back-fill x/y across invisible frames so the anchor holds instead
+    # of jumping, then EMA-smooth x/y/h (fps-agnostic, gentle) for stable
+    # scale and position. The visibility flag still marks hidden frames.
+    def _fill(seq: np.ndarray) -> np.ndarray:
+        out = seq.copy()
+        last = None
+        for t in range(n):
+            if vis_flag[t]:
+                last = out[t]
+            elif last is not None:
+                out[t] = last
+        if not vis_flag.any():
+            return out
+        first = int(np.argmax(vis_flag))
+        out[:first] = out[first]
+        return out
+
+    def _ema(seq: np.ndarray, alpha: float = 0.3) -> np.ndarray:
+        out = seq.copy()
+        for t in range(1, n):
+            out[t] = out[t - 1] + alpha * (seq[t] - out[t - 1])
+        return out
+
+    sx = _ema(_fill(raw_x))
+    sy = _ema(_fill(raw_y))
+    sh = _ema(_fill(filled_h))
+
+    return [
+        {
+            "x": round(float(sx[t]), 4),
+            "y": round(float(sy[t]), 4),
+            "h": round(float(sh[t]), 4),
+            "v": 1 if vis_flag[t] else 0,
+        }
+        for t in range(n)
+    ]
 
 
 def _stable_uuid(name: str, n_frames: int) -> str:
