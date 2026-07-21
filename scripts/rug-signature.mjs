@@ -29,6 +29,14 @@ const args = process.argv.slice(2);
 const asJson = args.includes('--json');
 const minMcIdx = args.indexOf('--min-mc');
 const minMc = minMcIdx >= 0 ? Number(args[minMcIdx + 1]) : 0;
+// --active isolates the cohort a momentum bot would actually consider: a coin
+// that had a real formed market in the observation window, not a stillborn mint.
+// Without this, 50k dead-on-arrival "rugs" (unique_buyers=1) swamp every median
+// and the honeypot signature (which lives among the LIVE-LOOKING coins) is
+// invisible. Floor is generous so we keep the whole "looked alive" population.
+const activeIdx = args.indexOf('--active');
+const activeBuyers = activeIdx >= 0 ? Number(args[activeIdx + 1] || 10) : 0;
+const ACTIVE = activeBuyers ? `and i.unique_buyers >= ${activeBuyers}` : '';
 
 function resolveDatabaseUrl() {
 	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
@@ -78,6 +86,7 @@ async function distribution(pool, expr, bucketPred) {
 			join pump_coin_outcomes o on o.mint = i.mint
 			where i.network = 'mainnet'
 			  and ${bucketPred}
+			  ${ACTIVE}
 			  and (${expr}) is not null
 			  ${minMc ? `and coalesce(o.ath_market_cap_usd, 0) >= ${minMc}` : ''}
 		) s`;
@@ -101,6 +110,7 @@ async function main() {
 				`select count(*)::int as n from pump_coin_intel i
 				 join pump_coin_outcomes o on o.mint = i.mint
 				 where i.network='mainnet' and ${pred}
+				 ${ACTIVE}
 				 ${minMc ? `and coalesce(o.ath_market_cap_usd,0) >= ${minMc}` : ''}`,
 			);
 			counts[name] = rows[0].n;

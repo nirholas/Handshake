@@ -105,3 +105,59 @@ describe('proposeAdjustments', () => {
 		for (const p of r.proposals) expect(p.to).not.toBe(p.from);
 	});
 });
+
+describe('bestOracleThreshold (Bridge 2)', () => {
+	it('finds the conviction floor where wins concentrate', () => {
+		// Low-conviction coins mostly lose; >=70 mostly win.
+		const buckets = [
+			{ lo: 30, closed: 6, wins: 1 },
+			{ lo: 50, closed: 4, wins: 1 },
+			{ lo: 70, closed: 5, wins: 4 },
+			{ lo: 85, closed: 3, wins: 3 },
+		];
+		expect(bestOracleThreshold(buckets)).toBe(70);
+	});
+
+	it('returns null when conviction does not separate outcomes', () => {
+		const buckets = [
+			{ lo: 30, closed: 5, wins: 3 },
+			{ lo: 70, closed: 5, wins: 3 },
+		];
+		expect(bestOracleThreshold(buckets)).toBeNull();
+	});
+
+	it('returns null on too little data', () => {
+		expect(bestOracleThreshold([{ lo: 70, closed: 3, wins: 3 }])).toBeNull();
+		expect(bestOracleThreshold([])).toBeNull();
+		expect(bestOracleThreshold(null)).toBeNull();
+	});
+});
+
+describe('Rule O: optimizer uses Oracle conviction', () => {
+	it('sets min_oracle_score toward the winning conviction band', () => {
+		const r = proposeAdjustments(
+			stats({
+				closed: 18, wins: 8, winRate: 44, avgPnlPct: 5,
+				exitReasons: { stop_loss: 6, trailing_stop: 6, timeout: 6 },
+				oracleBuckets: [
+					{ lo: 30, closed: 8, wins: 1 },
+					{ lo: 50, closed: 4, wins: 1 },
+					{ lo: 70, closed: 6, wins: 5 },
+				],
+			}),
+			{ ...baseConfig, min_oracle_score: null },
+		);
+		const o = r.proposals.find((p) => p.field === 'min_oracle_score');
+		expect(o).toBeTruthy();
+		expect(o.from).toBe(null);
+		expect(o.to).toBe(70);
+	});
+
+	it('does nothing when the arm has no oracle-scored trades', () => {
+		const r = proposeAdjustments(
+			stats({ closed: 12, wins: 7, oracleBuckets: [] }),
+			{ ...baseConfig, min_oracle_score: null },
+		);
+		expect(r.proposals.find((p) => p.field === 'min_oracle_score')).toBeFalsy();
+	});
+});

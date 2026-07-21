@@ -205,10 +205,10 @@ export default wrap(async (req, res) => {
 		(async () => {
 			try {
 				const relatedQuery = tickers[0] || title.split(/\s+/).slice(0, 3).join(' ');
-				const rel = await getNews({ q: relatedQuery, limit: 7 });
+				const rel = await getNews({ q: relatedQuery, limit: 7, curated: true });
 				let out = rel.articles.filter((a) => a.link !== target).slice(0, 6);
 				if (!out.length) {
-					const fallback = await getNews({ category: feedCopy?.category, limit: 7 });
+					const fallback = await getNews({ category: feedCopy?.category, limit: 7, curated: true });
 					out = fallback.articles.filter((a) => a.link !== target).slice(0, 6);
 				}
 				return out;

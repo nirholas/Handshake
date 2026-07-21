@@ -198,7 +198,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const { articles: all, sources_ok, sources_total } = await getNews({ limit: 400 });
+	const { articles: all, sources_ok, sources_total } = await getNews({ limit: 400, curated: true });
 	const cutoff = Date.now() - hours * 3600_000;
 	const windowed = all
 		.filter((a) => a.pub_date && new Date(a.pub_date).getTime() >= cutoff)

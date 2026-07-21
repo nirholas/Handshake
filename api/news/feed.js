@@ -60,7 +60,10 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const result = await getNews({ category, source, lang, q, limit, offset, featured });
+	// Human-facing feed: apply the editorial display gate (crypto-relevant +
+	// above the quality floor). raw=1 bypasses it for debugging / parity checks.
+	const curated = params.get('raw') !== '1';
+	const result = await getNews({ category, source, lang, q, limit, offset, featured, curated });
 
 	const body = {
 		articles: result.articles,

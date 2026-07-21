@@ -38,7 +38,7 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_category', `unknown category "${category}"`);
 	}
 
-	const { articles } = await getNews({ category, limit });
+	const { articles } = await getNews({ category, limit, curated: true });
 	const feedUrl = `https://three.ws/api/news/rss${category ? `?category=${category}` : ''}`;
 	const pageUrl = `https://three.ws/markets/news${category ? `?category=${category}` : ''}`;
 	const title = `three.ws Crypto News${category ? ` — ${category}` : ''}`;
