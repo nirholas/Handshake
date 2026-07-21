@@ -2925,8 +2925,8 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 /* ── end King of the Totem ──────────────────────────────────────────────────── */
 
 /* ── Zen mode (hide all UI) ──────────────────────────────────────────────────
-   Z, the HUD button, or a ?ui=hidden link strips every overlay — banner, chat,
-   world HUD, hotbar, prompts, name tags — so the world renders clean for
+   Z, the HUD button, or a ?ui=hidden link strips every overlay (banner, chat,
+   world HUD, hotbar, prompts, name tags) so the world renders clean for
    screenshots and ambient play. Movement affordances survive (the joystick and
    the driving pedal cluster), and panels the player opens on purpose (build
    palettes, shops, boards, the emote wheel) still show. Same body.is-zen
@@ -2955,11 +2955,15 @@ body.is-zen .combat-attack-btn,
 body.is-zen .combat-mob-label,
 body.is-zen .combat-zone-label,
 body.is-zen .tik-prompt,
-body.is-zen .ac-prompt {
+body.is-zen .ac-prompt,
+body.is-zen #cc-build,
+body.is-zen #po-strip,
+body.is-zen .cc-it-marker,
+body.is-zen .twx-i18n-fab {
 	display: none !important;
 }
 
-/* zen toggle — under the power saver, same visual family */
+/* zen toggle: under the power saver, same visual family */
 .cc-zen-btn {
 	position: fixed; top: 184px; right: 14px; z-index: 22;
 	display: inline-flex; align-items: center; gap: 8px;
@@ -2974,7 +2978,7 @@ body.is-zen .ac-prompt {
 .cc-zen-ico { line-height: 1; filter: grayscale(1); }
 .cc-zen-label { line-height: 1; }
 
-/* zen exit pill — the one control left on screen, faded in a frame after entry */
+/* zen exit pill: the one control left on screen, faded in a frame after entry */
 #cc-zen-exit {
 	position: fixed; z-index: 30;
 	top: calc(env(safe-area-inset-top, 0px) + 14px); right: 14px;

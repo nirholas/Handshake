@@ -508,7 +508,7 @@ export class CoinCommunities {
 			onOpenFeatured: () => this._openFeatured(),
 			onPublishBuild: (meta) => this._publishBuild(meta),
 			onDance: () => this._triggerDance(),
-			// Zen mode — strip every overlay for a clean view of the world.
+			// Zen mode: strip every overlay for a clean view of the world.
 			onZen: () => this._setZen(!this._zen),
 			onFeaturedClosed: () => { this._featuredOpen = false; },
 		});
@@ -574,6 +574,10 @@ export class CoinCommunities {
 		// for this session only — never persisted over the player's saved avatar.
 		const p = new URLSearchParams(location.search);
 		this._urlAvatar = (p.get('avatar') || '').trim();
+		// Capture ?ui= before enter() canonicalises the URL (the share-link
+		// rewrite drops unknown params); _restoreZen() reads it at world entry,
+		// where the zen preference actually applies.
+		this._urlUi = (p.get('ui') || '').trim();
 		const mint = p.get('coin');
 		if (mint) {
 			const tier = p.get('tier') === 'holders' ? 'holders' : 'general';
@@ -1012,6 +1016,9 @@ export class CoinCommunities {
 			if (coin.symbol) q.set('symbol', coin.symbol);
 			if (coin.image) q.set('image', coin.image);
 			if (tier === 'holders') q.set('tier', 'holders');
+			// Keep ?ui= on the canonical URL so a shared zen link stays a zen link
+			// when copied back out of the address bar (or refreshed).
+			if (this._urlUi) q.set('ui', this._urlUi);
 			history.replaceState(null, '', location.pathname + '?' + q.toString());
 		} catch { /* non-fatal */ }
 		await loadManifest();
@@ -2522,7 +2529,7 @@ export class CoinCommunities {
 
 	// ---------------------------------------------------------------- zen mode
 	// Hides every overlay (HUD, chat, prompts, name tags) so the world renders
-	// clean — the same body.is-zen contract /walk uses. Movement affordances
+	// clean (the same body.is-zen contract /walk uses). Movement affordances
 	// stay (joystick, driving pedals), and panels the player opens on purpose
 	// (build palettes, shops, the emote wheel) still show. The preference
 	// persists across sessions, and a shared ?ui=hidden link starts in zen.
@@ -2543,16 +2550,16 @@ export class CoinCommunities {
 	}
 
 	// Restore the zen preference on world entry: URL param wins (?ui=hidden for
-	// shared links, ?ui=on to force chrome back), then the stored choice.
+	// shared links, ?ui=on to force chrome back), then the stored choice. Uses
+	// the boot-time capture because enter() rewrites the URL before this runs.
 	_restoreZen() {
-		let param = null;
-		try { param = new URLSearchParams(location.search).get('ui'); } catch {}
+		const param = this._urlUi;
 		if (param === 'hidden' || param === 'off') { this._setZen(true); return; }
 		if (param === 'on' || param === 'shown') return;
 		try { if (localStorage.getItem('play:zen') === '1') this._setZen(true); } catch {}
 	}
 
-	// Drop the zen body classes without touching the stored preference — the
+	// Drop the zen body classes without touching the stored preference: the
 	// lobby always shows its UI; _restoreZen() re-applies zen next world entry.
 	_suspendZen() {
 		this._zen = false;
@@ -2652,7 +2659,7 @@ export class CoinCommunities {
 					this._toggleFriends();
 					return;
 				}
-				// Z toggles zen mode — every overlay hidden, just the world. Plain Z
+				// Z toggles zen mode (every overlay hidden, just the world). Plain Z
 				// only: Ctrl/Cmd+Z stays the build-mode undo above.
 				if (k === 'z' && !this.buildHud.active && !e.ctrlKey && !e.metaKey && !e.repeat) {
 					e.preventDefault();

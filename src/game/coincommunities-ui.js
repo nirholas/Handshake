@@ -1320,12 +1320,12 @@ export class CommunityUI {
 		]);
 		onPowerSaverChange((on) => this.powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false'));
 
-		// Zen mode — hide every overlay so the world renders clean. Same
+		// Zen mode: hide every overlay so the world renders clean. Same
 		// body.is-zen contract as /walk; Z is the hotkey (wired by the host) and
 		// the floating exit pill below is the only control left on screen.
 		this.zenBtn = el('button', {
 			class: 'cc-zen-btn', type: 'button', 'aria-pressed': 'false',
-			'aria-label': 'Zen mode', title: 'Zen mode — hide every panel, just the world (Z)',
+			'aria-label': 'Zen mode', title: 'Zen mode: hide every panel, just the world (Z)',
 			onclick: () => this.h.onZen?.(),
 		}, [
 			el('span', { class: 'cc-zen-ico', 'aria-hidden': 'true', text: '🧘' }),
