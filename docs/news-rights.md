@@ -53,6 +53,19 @@ node scripts/news-takedown-purge.mjs --apply    # rewrite the GCS month files, d
 
 The script rewrites each affected `gs://three-ws-news-archive/articles/<month>.jsonl` guarded with `if-generation-match`, so it cannot clobber a concurrent append from the hourly cron, and deletes the matching `news_knowledge` rows.
 
+## Editorial curation: what appears in the feed
+
+Rights govern how *much* of a story we may show. Curation governs *which* stories appear at all. They are separate filters and live in separate files ([`api/_lib/news-curation.js`](../api/_lib/news-curation.js) is the curation one).
+
+three.ws ingests ~190 feeds. Some are crypto-native — every article is on topic. Others are broad outlets (WSJ, CNBC, Seeking Alpha, the SEC, the Fed, world-news desks) that run crypto coverage *and* a great deal that isn't. We keep pulling the broad ones on purpose: their crypto reporting is high-value, and the macro and regulatory context enriches the archive and the agents' knowledge corpus. But a world-politics headline or a general-markets note should never land in a crypto feed.
+
+So the human-facing feeds apply a display gate with two conditions:
+
+1. **Relevance** — a crypto-native source always shows. A broad source's article shows only if the article itself is about crypto (a detected ticker, or a term from the crypto lexicon). This is what keeps "Ryanair broken window" and "3M stock jumps" out while letting the same source's Bitcoin coverage through.
+2. **Quality** — a credibility floor (default 0.6, override with `NEWS_MIN_CREDIBILITY`). Scored sources must clear it; unscored registry sources are presumed acceptable; legacy archive rows with no registry entry are never dropped on quality grounds.
+
+The gate is **display-only**. It runs on `/api/news/feed`, the RSS mirror, the daily digest, and related coverage — never on ingestion. The archive cron and the agent-signal callers still receive the full firehose. `GET /api/news/feed?raw=1` bypasses the gate for debugging or parity checks. An explicit single-source request (`?source=`) is also exempt: you asked for that outlet by name.
+
 ## Removal history
 
 **The Merkle, LLC (NullTX, nulltx.com)** — notice received 2026-07-19 through the Google Search Console legal channel; Lumen notice 15710816. 24 story pages reproduced the titles and substantially the full body text of the corresponding nulltx.com articles. The claim was correct: the reader rendered the extracted body under our own canonical URL. All 24 ids are in `TAKEDOWN_IDS`, `nulltx` was removed from the feed registry, and the excerpt cap above was added so the same defect cannot recur with any other publisher.

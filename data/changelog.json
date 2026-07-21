@@ -15272,6 +15272,15 @@
 				"feature"
 			],
 			"link": "/docs/sign-language"
+		},
+		{
+			"date": "2026-07-20",
+			"title": "The crypto news feed now filters out the noise",
+			"summary": "three.ws pulls headlines from around 190 sources, and some of them (major financial outlets, regulators, world-news desks) run plenty of stories that have nothing to do with crypto. The news feed now shows only crypto-relevant articles from those broad sources, while still keeping every headline from crypto-native publishers. Off-topic items like general stock movers or world-politics headlines no longer clutter the feed. Sources below a quality bar are held back too. This is a display filter only: the full firehose still feeds the searchable archive and the agents behind the scenes.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/markets/news"
 		}
 	]
 }

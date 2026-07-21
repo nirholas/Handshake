@@ -215,6 +215,14 @@
 			<description>The pump.fun MCP swap-quote tool used to hand back a price and nothing else, so there was no way to check it. It now also returns the pool reserves the quote was computed from, including the virtual quote reserves PumpSwap added last week, so an agent or a person can reproduce the number instead of trusting it. The tool descriptions were also rewritten to keep the bonding curve and the PumpSwap pool apart: both now have a field called virtual_quote_reserves, they mean different things, and conflating them was an easy way to read a coin's price as zero.</description>
 		</item>
 		<item>
+			<title>The crypto news feed now filters out the noise</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-07-20:The crypto news feed now filters out the noise</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>three.ws pulls headlines from around 190 sources, and some of them (major financial outlets, regulators, world-news desks) run plenty of stories that have nothing to do with crypto. The news feed now shows only crypto-relevant articles from those broad sources, while still keeping every headline from crypto-native publishers. Off-topic items like general stock movers or world-politics headlines no longer clutter the feed. Sources below a quality bar are held back too. This is a display filter only: the full firehose still feeds the searchable archive and the agents behind the scenes.</description>
+		</item>
+		<item>
 			<title>The live economy now paces itself instead of going quiet</title>
 			<link>https://three.ws/pulse</link>
 			<guid isPermaLink="false">2026-07-20:The live economy now paces itself instead of going quiet</guid>
