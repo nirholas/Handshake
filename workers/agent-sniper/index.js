@@ -220,6 +220,38 @@ async function main() {
 				const trigger = strat.trigger || 'new_mint';
 				if (strat.network !== cfg.network) continue;
 
+				// LLM arms on the intel trigger judge the coin AFTER observation, so the
+				// model sees the market SHAPE (buyer/seller diversity, concentration,
+				// timing) — the painted-stairstep tell a human reads off the chart and a
+				// blind new_mint LLM buy never gets. Safety rails still gate at executeBuy.
+				if (trigger === 'intel_confirmed' && (strat.decision_mode || 'rules') === 'llm') {
+					smartReady.then(() => {
+						const judgeMint = {
+							mint: rec.mint, symbol: rec.symbol, name: rec.name, description: rec.description,
+							twitter: rec.twitter, telegram: rec.telegram, website: rec.website,
+							market_cap_usd: rec.market_cap_usd, initial_buy_sol: rec.dev_buy_sol,
+							creator_launches: rec.creator_launches, creator_graduated: rec.creator_graduated,
+							signals: rec.signals,
+						};
+						judgeLaunch(judgeMint, strat).then((verdict) => {
+							if (!verdict) return;
+							const minConf = Number(strat.llm_min_confidence ?? 0.6);
+							if (!verdict.buy || verdict.confidence < minConf) {
+								log.info('llm judge pass', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence });
+								return;
+							}
+							log.info('llm judge buy', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });
+							queue.push(async () => {
+								await executeBuy({
+									cfg, strat, throttle,
+									mint: { mint: rec.mint, symbol: rec.symbol, name: rec.name, market_cap_usd: rec.market_cap_usd, entry_trigger: 'llm_intel', trigger_ref: verdict.model, score: verdict.confidence, llm: verdict },
+								});
+							});
+						}).catch((err) => log.error('llm intel judge failed', { mint: rec.mint, err: err?.message }));
+					});
+					continue;
+				}
+
 				if (trigger === 'intel_confirmed') {
 					Promise.all([getLearnedWeights(cfg.network), smartReady])
 						.then(([weights]) => {
