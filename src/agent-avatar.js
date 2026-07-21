@@ -543,6 +543,35 @@ export class AgentAvatar {
 		}
 	}
 
+	// ── Sign language ─────────────────────────────────────────────────────────
+
+	/**
+	 * Enable or disable ASL sign-language responses: while on, every SPEAK
+	 * reply is also performed in sign (dictionary signs where the library has
+	 * them, fingerspelling for everything else — src/sign-speech.js). The
+	 * engine loads lazily on first enable, so surfaces that never turn it on
+	 * pay nothing. Resolves to the effective state: false when the rig has no
+	 * canonical skeleton (no fingers, nothing to sign with).
+	 */
+	async setSignLanguage(on) {
+		this._signLanguage = !!on;
+		if (on && !this._signSpeaker) {
+			const am = this.viewer?.animationManager;
+			if (!am?.supportsCanonicalClips?.()) {
+				this._signLanguage = false;
+				return false;
+			}
+			const { SignSpeaker } = await import('./sign-speech.js');
+			this._signSpeaker = new SignSpeaker({ manager: am });
+		}
+		if (!on) this._signSpeaker?.cancel();
+		return this._signLanguage;
+	}
+
+	get signLanguage() {
+		return !!this._signLanguage;
+	}
+
 	// ── Protocol Handlers ─────────────────────────────────────────────────────
 
 	_onSpeak(action) {
@@ -564,6 +593,13 @@ export class AgentAvatar {
 		// Trigger mouth/talk animation hint
 		const duration = Math.max(1.5, text.split(' ').length * 0.3);
 		this._triggerOneShot('talk', duration);
+
+		// Sign-language mode: perform the reply in ASL as well. Unsignable
+		// text (digits/symbols only) simply skips — the spoken path already
+		// carried it.
+		if (this._signLanguage && this._signSpeaker && text) {
+			this._signSpeaker.speak(text).catch(() => {});
+		}
 
 		// Drive the state machine into the talk state so the body-loop swaps
 		// (idle → talk) when the agent has a configured talk clip. Default

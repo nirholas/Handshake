@@ -631,6 +631,7 @@ class Agent3DElement extends HTMLElement {
 			'clip',
 			'framing',
 			'wallet',
+			'sign-language',
 		];
 	}
 
@@ -837,6 +838,11 @@ class Agent3DElement extends HTMLElement {
 		}
 		if (name === 'framing') {
 			this._viewer?.setFraming?.(newVal === 'portrait' ? 'portrait' : 'full');
+		}
+		// ASL replies: any value except "off"/"false" enables signing.
+		if (name === 'sign-language') {
+			const on = newVal != null && newVal !== 'off' && newVal !== 'false';
+			this._avatar?.setSignLanguage?.(on);
 		}
 		// Re-cue decoration playback when the requested clip changes at runtime
 		// (loop-honoring + reduced-motion handled by _startDecorationPlayback).
@@ -1770,6 +1776,13 @@ class Agent3DElement extends HTMLElement {
 				const _identity = { id: manifest.id?.agentId || manifest.name || 'embed' };
 				this._avatar = new AgentAvatar(this._viewer, protocol, _identity);
 				this._avatar.attach();
+
+				// Honor a sign-language attribute present at boot (the observer
+				// only covers post-mount changes).
+				const signAttr = this.getAttribute('sign-language');
+				if (signAttr != null && signAttr !== 'off' && signAttr !== 'false') {
+					this._avatar.setSignLanguage(true);
+				}
 
 				// Apply any mood set before the empathy layer existed so the avatar
 				// boots straight into its current resting expression.

@@ -151,6 +151,7 @@ export class NichAgent {
 								`<option value="${opt.id}"${opt.id === this._modelChoice ? ' selected' : ''}>${_escapeHTML(opt.label)}</option>`,
 						).join('')}
 					</select>
+					<button class="nich-sign" aria-label="Toggle sign language replies" aria-pressed="false" title="Replies in ASL: the avatar signs every answer">🤟</button>
 					<span class="nich-emotion-dot" id="nich-emotion-dot" title="Agent emotional state"></span>
 					${this.layout === 'embedded' ? '' : '<button class="nich-close" aria-label="Close">&times;</button>'}
 				</div>
@@ -215,6 +216,7 @@ export class NichAgent {
 			if (e.key === 'Enter') this._send();
 		});
 		this.panel.querySelector('.nich-mic')?.addEventListener('click', () => this._toggleMic());
+		this.panel.querySelector('.nich-sign')?.addEventListener('click', (e) => this._toggleSignLanguage(e.currentTarget));
 		this.panel.querySelector('.nich-model-select')?.addEventListener('change', (e) => {
 			this._modelChoice = e.target.value;
 			try {
@@ -826,6 +828,31 @@ export class NichAgent {
 			this.isListening = true;
 			this.panel.querySelector('.nich-mic').classList.add('active');
 		}
+	}
+
+	/**
+	 * Toggle ASL replies: while on, the 3D avatar signs every answer
+	 * (AgentAvatar.setSignLanguage → src/sign-speech.js). Falls back with an
+	 * explanation when no signing-capable avatar is attached.
+	 */
+	async _toggleSignLanguage(btn) {
+		const avatar = window.VIEWER?.agent_avatar;
+		if (!avatar?.setSignLanguage) {
+			this._addMessage('agent', 'Sign language needs the 3D avatar loaded first.', 'status');
+			return;
+		}
+		const want = !avatar.signLanguage;
+		const on = await avatar.setSignLanguage(want);
+		if (want && !on) {
+			this._addMessage(
+				'agent',
+				'This avatar’s rig has no finger bones, so it can’t sign. Load a rigged humanoid avatar and try again.',
+				'status',
+			);
+		}
+		btn.classList.toggle('active', on);
+		btn.setAttribute('aria-pressed', String(on));
+		if (on) this._addMessage('agent', 'Sign language on — I’ll sign every reply in ASL.', 'status');
 	}
 
 	// ── Message Rendering ────────────────────────────────────────────────────
