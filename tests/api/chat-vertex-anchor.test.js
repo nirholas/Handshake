@@ -71,4 +71,47 @@ describe('anonymous-chat vertex-gemini anchor wiring', () => {
 		const chain = buildFallbackChain(primary, {}, new Map());
 		expect(chain.find((r) => r.name === 'vertex-gemini')).toBeUndefined();
 	});
+
+	// Production repro: OPENAI_API_KEY is set on the Cloud Run service. The old
+	// buildFallbackChain filled its MAX_FALLBACK_ATTEMPTS (4) slots with
+	// [groq, openrouter, nvidia, openai], then the handler's anon clamp stripped
+	// `openai` — leaving [groq, openrouter, nvidia] with NO anchor. A simultaneous
+	// throttle of all three free lanes then 503'd signed-out chat. The earlier test
+	// above missed this because CI has no OPENAI_API_KEY, so nothing competed for
+	// the capped slot. The allow-set must exclude paid providers from the cap so the
+	// credits-funded anchor keeps its place.
+	it('keeps the anchor for anon callers even when a paid host key (OPENAI_API_KEY) is present', () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		setEnv('OPENAI_API_KEY', 'sk-test');
+		setEnv('GROQ_API_KEY', 'gsk-test');
+		setEnv('OPENROUTER_API_KEY', 'or-test');
+		setEnv('NVIDIA_API_KEY', 'nv-test');
+		const allow = new Set(ANON_PROVIDER_LIST);
+		const primary = { name: 'groq', model: 'llama-3.3-70b-versatile' };
+		const names = buildFallbackChain(primary, {}, new Map(), allow).map((r) => r.name);
+		expect(names).toContain('vertex-gemini');
+		expect(names).not.toContain('openai'); // a paid provider never consumes an anon slot
+		for (const n of names) expect(ANON_PROVIDER_LIST).toContain(n);
+	});
+
+	it('force-appends the anchor even when it is in a cooldown — the last resort must never be skipped', () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		setEnv('GROQ_API_KEY', 'gsk-test');
+		const allow = new Set(ANON_PROVIDER_LIST);
+		const primary = { name: 'groq', model: 'llama-3.3-70b-versatile' };
+		const cooldown = new Map([['vertex-gemini', 'auth']]);
+		const names = buildFallbackChain(primary, {}, cooldown, allow).map((r) => r.name);
+		expect(names).toContain('vertex-gemini');
+	});
+
+	it('authenticated callers (no allow-set) still reach the anchor past present paid keys', () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		setEnv('OPENAI_API_KEY', 'sk-test');
+		setEnv('GROQ_API_KEY', 'gsk-test');
+		setEnv('OPENROUTER_API_KEY', 'or-test');
+		setEnv('NVIDIA_API_KEY', 'nv-test');
+		const primary = { name: 'groq', model: 'llama-3.3-70b-versatile' };
+		const names = buildFallbackChain(primary, {}, new Map()).map((r) => r.name); // allow=null
+		expect(names).toContain('vertex-gemini');
+	});
 });

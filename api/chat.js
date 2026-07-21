@@ -569,10 +569,17 @@ export default wrap(async (req, res) => {
 	// Provider/model failover chain. The first entry is the picked route; if it
 	// returns 429 (rate-limit) or 5xx (provider down) we cycle through a
 	// pre-built fallback list before surfacing an error.
-	let fallbackRoutes = buildFallbackChain(route, userProviderKeys, cooldown);
+	let fallbackRoutes = buildFallbackChain(
+		route,
+		userProviderKeys,
+		cooldown,
+		anonymous ? ANON_PROVIDERS : null,
+	);
 	// Anonymous traffic must never fail over onto paid providers (OpenAI/
-	// Anthropic). Clamp the whole chain to the free-tier anon providers so a
-	// rate-limited free model degrades to another free model, never paid keys.
+	// Anthropic). buildFallbackChain already excludes them from the capped chain
+	// for anon callers (via the allow-set above) so they can't evict the free-tier
+	// vertex-gemini anchor; this post-build clamp stays as a defensive no-op in case
+	// the primary route itself is ever non-anon.
 	if (anonymous) fallbackRoutes = fallbackRoutes.filter((r) => ANON_PROVIDERS.has(r.name));
 
 	let upstream;
@@ -1186,12 +1193,21 @@ function eligibleAsFallback(modelId) {
 	return meta.tools === true && !meta.moderationGated;
 }
 
-export function buildFallbackChain(primary, userKeys = {}, cooldown = new Map()) {
+export function buildFallbackChain(primary, userKeys = {}, cooldown = new Map(), allow = null) {
 	const chain = [primary];
 	const seen = new Set([`${primary.name}:${primary.model}`]);
 
 	const tryAdd = (name, model) => {
 		if (chain.length >= MAX_FALLBACK_ATTEMPTS) return;
+		// Honour the caller's allow-set (anonymous traffic → ANON_PROVIDERS only)
+		// BEFORE a capped slot is consumed. Filtering the chain *after* it was built
+		// (the old approach, still kept as a defensive clamp at the call site) let a
+		// paid provider whose host key is present — e.g. OPENAI_API_KEY — take one of
+		// the MAX_FALLBACK_ATTEMPTS slots and then get stripped, which pushed the
+		// credits-funded vertex-gemini anchor out of the chain entirely and 503'd
+		// anonymous chat whenever groq/openrouter/nvidia all throttled at once. The
+		// primary (position 0) is exempt: it is picked upstream and always kept.
+		if (allow && name !== primary.name && !allow.has(name)) return;
 		const key = `${name}:${model}`;
 		if (seen.has(key)) return;
 		if (!eligibleAsFallback(model)) return;
@@ -1220,8 +1236,28 @@ export function buildFallbackChain(primary, userKeys = {}, cooldown = new Map())
 		tryAdd(name, PROVIDERS[name].defaultModel);
 	}
 
-	// The chain is bounded to MAX_FALLBACK_ATTEMPTS so a single request can't
-	// churn through every provider before timing out.
+	// Guarantee the credits-funded Vertex anchor as the final rung. It is keyless
+	// (GCP credits, no third-party quota) and is the whole reason a failover chain
+	// can promise never to 503 while a healthy quota-free provider exists. Neither
+	// the MAX_FALLBACK_ATTEMPTS cap nor a transient per-provider cooldown may evict
+	// it — both used to (a present paid key filled the cap; a cooldown from one
+	// transient blip dropped it), which is what made anonymous chat 503 whenever the
+	// free lanes throttled together. Appended only when it is available and allowed,
+	// deduped, so it never leads and never doubles up.
+	for (const anchor of ['vertex-gemini', 'vertex']) {
+		if (!keylessVertexAvailable(anchor)) continue;
+		if (allow && !allow.has(anchor)) continue;
+		if (chain.some((r) => r.name === anchor)) continue;
+		const cfg = PROVIDERS[anchor];
+		const model = cfg.defaultModel;
+		if (seen.has(`${anchor}:${model}`)) continue;
+		seen.add(`${anchor}:${model}`);
+		chain.push(makeRoute(anchor, cfg, 'vertex', model));
+	}
+
+	// The chain is bounded to MAX_FALLBACK_ATTEMPTS (plus the guaranteed keyless
+	// anchor above) so a single request can't churn through every provider before
+	// timing out.
 	return chain;
 }
 
