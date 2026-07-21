@@ -88,55 +88,33 @@ const escapeHtml = (s) =>
 // Most commit subjects in this repo follow a loose "scope: description"
 // convention ("agent-sniper: stop LLM judge calls…", "docs: cover ASL
 // fingerspelling…"). Split on the first colon when it looks like that
-// convention so the scope becomes the hashtag and the rest becomes the
-// title, matching the changelog message's "Update — title" headline.
-// Subjects without that convention fall back to no scope / the full subject
-// as the title.
+// convention so the scope becomes the bold headline and the description the
+// body. Subjects without that convention get a generic "New commit" headline.
+// Only the subject line is ever posted: full commit bodies are hard-wrapped
+// by git and written for engineers, not holders, so they stay on GitHub.
 function splitSubject(subjectLine) {
 	const idx = subjectLine.indexOf(': ');
 	if (idx > 0 && idx < 60) {
-		return { scope: subjectLine.slice(0, idx), title: subjectLine.slice(idx + 2) };
+		return { headline: subjectLine.slice(0, idx), body: subjectLine.slice(idx + 2) };
 	}
-	return { scope: null, title: subjectLine };
-}
-
-const TRAILER_RE = /^(co-authored-by|signed-off-by|reviewed-by):/i;
-
-// The body paragraph(s) below the subject line, with git trailers (this
-// repo's commits close with "Co-Authored-By: …") stripped so they don't leak
-// into a holder-facing message as if they were part of the description.
-function extractBody(fullMessage) {
-	return fullMessage
-		.split('\n')
-		.slice(1)
-		.filter((line) => !TRAILER_RE.test(line.trim()))
-		.join('\n')
-		.trim();
-}
-
-function hashtagFor(scope) {
-	const slug = String(scope || 'commit')
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 24);
-	return `#${slug || 'commit'}`;
+	return { headline: 'New commit', body: subjectLine };
 }
 
 export function formatTelegramMessage(commit) {
 	const shortSha = commit.sha.slice(0, 7);
-	const fullMessage = commit.commit?.message || '';
-	const subjectLine = fullMessage.split('\n')[0];
-	const { scope, title } = splitSubject(subjectLine);
-	const body = extractBody(fullMessage);
+	const subjectLine = (commit.commit?.message || '').split('\n')[0];
+	const { headline, body } = splitSubject(subjectLine);
+	const author = commit.author?.login || commit.commit?.author?.name || 'unknown';
 	const date = (commit.commit?.author?.date || '').slice(0, 10);
 	const url = commit.html_url || `https://github.com/${REPO}/commit/${commit.sha}`;
 	const linkText = `github.com/${REPO}/commit/${shortSha}`;
-
-	const lines = [`<b>Commit — ${escapeHtml(title)}</b>`, ''];
-	if (body) lines.push(escapeHtml(body), '');
-	lines.push(`<a href="${url}">${escapeHtml(linkText)}</a> · ${escapeHtml(date)} · ${escapeHtml(hashtagFor(scope))}`);
-	return lines.join('\n');
+	return [
+		`<b>${escapeHtml(headline)}</b>`,
+		'',
+		escapeHtml(body),
+		'',
+		`<a href="${url}">${escapeHtml(linkText)}</a> · ${escapeHtml(date)} · ${escapeHtml(author)}`,
+	].join('\n');
 }
 
 async function sendTelegram(botToken, chatId, text) {
