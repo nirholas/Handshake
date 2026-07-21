@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Motion filmstrip harness</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				background: #10141c;
+			}
+			canvas {
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<!--
+			Debug harness: renders a motion-swap clip on the preview avatar with a
+			FIXED camera (framed once on the bind pose) and a ground plane, so lean,
+			bend, fold and drift are visible against vertical instead of hidden by a
+			per-frame reframe. Composites N sample frames into one grid image for
+			front and side views. Driven by scripts/motion-filmstrip.mjs.
+		-->
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+			import { getMeshoptDecoder } from '/src/viewer/internal.js';
+			import {
+				parseClipJSON,
+				retargetClip,
+				canonicalNodeMapFromObject,
+				canonicalRestMapFromObject,
+				canonicalWorldRestMapFromObject,
+				hipsParentWorldQuat,
+				hipRestLocalHeight,
+				clipHipBaselineY,
+			} from '/src/animation-retarget.js';
+
+			const CELL_W = 220;
+			const CELL_H = 360;
+			const MODEL_URL = '/avatars/cz.glb';
+
+			const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+			renderer.setSize(CELL_W, CELL_H);
+			renderer.setPixelRatio(1);
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1.05;
+			document.body.appendChild(renderer.domElement);
+
+			const scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x10141c);
+			const pmrem = new THREE.PMREMGenerator(renderer);
+			scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+			const key = new THREE.DirectionalLight(0xffffff, 1.7);
+			key.position.set(2.2, 4.5, 3.2);
+			key.castShadow = true;
+			key.shadow.mapSize.set(1024, 1024);
+			key.shadow.camera.left = -2.5;
+			key.shadow.camera.right = 2.5;
+			key.shadow.camera.top = 3;
+			key.shadow.camera.bottom = -0.2;
+			key.shadow.bias = -0.0004;
+			scene.add(key, key.target);
+			scene.add(new THREE.DirectionalLight(0x99bbff, 0.6).translateX(-3).translateY(2).translateZ(-3));
+			scene.add(new THREE.HemisphereLight(0xbfd4ff, 0x20262e, 0.5));
+
+			const grid = new THREE.GridHelper(10, 20, 0x2b3546, 0x1b2230);
+			grid.position.y = 0.001;
+			scene.add(grid);
+			const ground = new THREE.Mesh(
+				new THREE.PlaneGeometry(30, 30),
+				new THREE.ShadowMaterial({ opacity: 0.32 }),
+			);
+			ground.rotation.x = -Math.PI / 2;
+			ground.receiveShadow = true;
+			scene.add(ground);
+
+			const camera = new THREE.PerspectiveCamera(30, CELL_W / CELL_H, 0.05, 100);
+
+			let model = null;
+			let mixer = null;
+			const restPose = new Map();
+			let canonicalToNode = null;
+			let canonicalRest = null;
+			let canonicalWorldRest = null;
+			let hipsParentQuat = null;
+			let hipTargetLocalY = 0;
+			const bones = [];
+			// Fixed frame captured at bind pose.
+			let bindCenter = new THREE.Vector3();
+			let bindDist = 4;
+
+			async function boot() {
+				const loader = new GLTFLoader();
+				loader.setMeshoptDecoder(await getMeshoptDecoder());
+				const gltf = await loader.loadAsync(MODEL_URL);
+				model = gltf.scene;
+				model.traverse((o) => {
+					if (o.isMesh || o.isSkinnedMesh) {
+						o.castShadow = true;
+						o.frustumCulled = false;
+					}
+					if (o.isBone) bones.push(o);
+					restPose.set(o, { p: o.position.clone(), q: o.quaternion.clone(), s: o.scale.clone() });
+				});
+				scene.add(model);
+				model.updateMatrixWorld(true);
+				canonicalToNode = canonicalNodeMapFromObject(model);
+				canonicalRest = canonicalRestMapFromObject(model);
+				canonicalWorldRest = canonicalWorldRestMapFromObject(model);
+				hipsParentQuat = hipsParentWorldQuat(model);
+				hipTargetLocalY = hipRestLocalHeight(model);
+				mixer = new THREE.AnimationMixer(model);
+
+				// Frame once on the bind pose, full standing height, feet on ground.
+				const box = new THREE.Box3();
+				const v = new THREE.Vector3();
+				for (const b of bones) box.expandByPoint(b.getWorldPosition(v));
+				box.min.y = Math.min(box.min.y, 0);
+				const size = box.getSize(new THREE.Vector3());
+				bindCenter = box.getCenter(new THREE.Vector3());
+				const fovV = THREE.MathUtils.degToRad(camera.fov);
+				const fovH = 2 * Math.atan(Math.tan(fovV / 2) * camera.aspect);
+				// Pad generously so a lean/drift stays inside the frame.
+				const distV = (size.y * 1.35) / 2 / Math.tan(fovV / 2);
+				const distH = (Math.max(size.x, size.z) * 1.6) / 2 / Math.tan(fovH / 2);
+				bindDist = Math.max(distV, distH);
+				return { bones: bones.length, canonical: canonicalToNode.size, height: size.y };
+			}
+
+			function restoreRestPose() {
+				mixer.stopAllAction();
+				mixer.uncacheRoot(model);
+				for (const [node, t] of restPose) {
+					node.position.copy(t.p);
+					node.quaternion.copy(t.q);
+					node.scale.copy(t.s);
+				}
+				model.updateMatrixWorld(true);
+			}
+
+			function placeCamera(view) {
+				const az = view === 'side' ? Math.PI / 2 : view === 'q' ? THREE.MathUtils.degToRad(35) : 0;
+				const el = THREE.MathUtils.degToRad(6);
+				camera.position.set(
+					bindCenter.x + bindDist * Math.cos(el) * Math.sin(az),
+					bindCenter.y + bindDist * Math.sin(el),
+					bindCenter.z + bindDist * Math.cos(el) * Math.cos(az),
+				);
+				camera.lookAt(bindCenter);
+				key.target.position.copy(bindCenter);
+				key.target.updateMatrixWorld();
+			}
+
+			// Render `count` frames across the clip at fixed camera, tile into a grid.
+			function renderFilmstrip(clipJson, name, opts = {}) {
+				const count = opts.count ?? 8;
+				const views = opts.views ?? ['front', 'side'];
+				restoreRestPose();
+				const clip = parseClipJSON(clipJson, name);
+				let hipScale = 1;
+				const baseline = clipHipBaselineY(clip);
+				if (hipTargetLocalY > 0.05 && baseline > 0.05) {
+					hipScale = Math.min(200, Math.max(0.2, hipTargetLocalY / baseline));
+				}
+				const { clip: bound, coverage } = retargetClip(clip, canonicalToNode, {
+					targetRest: canonicalRest,
+					targetWorldRest: canonicalWorldRest,
+					hipsParentWorldQuat: hipsParentQuat,
+					hipScale,
+					minCoverage: 0.3,
+				});
+				if (!bound) throw new Error(`retarget failed (coverage ${(coverage * 100).toFixed(0)}%)`);
+
+				const out = document.createElement('canvas');
+				out.width = CELL_W * count;
+				out.height = CELL_H * views.length;
+				const ctx = out.getContext('2d');
+				ctx.fillStyle = '#10141c';
+				ctx.fillRect(0, 0, out.width, out.height);
+				ctx.font = '12px monospace';
+				ctx.fillStyle = '#7f8ea3';
+
+				for (let r = 0; r < views.length; r++) {
+					placeCamera(views[r]);
+					for (let i = 0; i < count; i++) {
+						const t = (bound.duration * i) / Math.max(1, count - 1);
+						restoreRestPose();
+						const action = mixer.clipAction(bound);
+						action.play();
+						mixer.setTime(0);
+						mixer.update(Math.max(0.0001, t));
+						model.updateMatrixWorld(true);
+						renderer.render(scene, camera);
+						ctx.drawImage(renderer.domElement, i * CELL_W, r * CELL_H);
+						action.stop();
+						if (r === 0) ctx.fillText(`${t.toFixed(1)}s`, i * CELL_W + 6, 16);
+						if (i === 0) ctx.fillText(views[r], 6, r * CELL_H + CELL_H - 8);
+					}
+					mixer.uncacheClip(bound);
+				}
+				return { dataUrl: out.toDataURL('image/png'), coverage, duration: bound.duration };
+			}
+
+			window.__film = { ready: boot(), renderFilmstrip };
+		</script>
+	</body>
+</html>

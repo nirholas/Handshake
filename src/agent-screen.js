@@ -1104,13 +1104,13 @@ async function boot(id) {
 					poseRig = makeGltfRig(webcamAvatar);
 				}
 				if (!poseRig) return false;
-				const canonical = poseFromMannequinPreset(poseMap).bones || {};
+				const localTargets = poseRig.localTargetsForPose(poseFromMannequinPreset(poseMap));
 				const targets = [];
-				for (const [key, v] of Object.entries(canonical)) {
-					if (POSE_SKIP.has(key) || !Array.isArray(v) || v.length < 4) continue;
+				for (const [key, to] of localTargets) {
+					if (POSE_SKIP.has(key)) continue;
 					const node = poseRig.getNode(key);
 					if (!node) continue;
-					targets.push({ node, from: node.quaternion.clone(), to: new Quaternion(v[0], v[1], v[2], v[3]) });
+					targets.push({ node, from: node.quaternion.clone(), to });
 				}
 				if (!targets.length) return false;
 				// Keep the mixer's base layer on idle so the pose releases into a live

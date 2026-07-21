@@ -61,6 +61,46 @@ const CANONICAL_TO_MANNEQUIN = Object.fromEntries(
 	Object.entries(MANNEQUIN_TO_CANONICAL).map(([j, c]) => [c, j]),
 );
 
+// Mannequin joint hierarchy (parent per joint), mirroring Mannequin's build
+// order. Needed to compose a preset's per-joint local rotations into the
+// world-frame deltas that applyPose() replays on any rig's rest pose.
+const MANNEQUIN_PARENT = {
+	pelvis: null,
+	spine: 'pelvis', chest: 'spine', neck: 'chest', head: 'neck',
+	shoulderL: 'chest', elbowL: 'shoulderL', wristL: 'elbowL',
+	shoulderR: 'chest', elbowR: 'shoulderR', wristR: 'elbowR',
+	hipL: 'pelvis', kneeL: 'hipL', ankleL: 'kneeL',
+	hipR: 'pelvis', kneeR: 'hipR', ankleR: 'kneeR',
+};
+const MANNEQUIN_JOINT_ORDER = Object.keys(MANNEQUIN_PARENT);
+
+// Presets are ABSOLUTE poses authored against the mannequin's reference stance
+// (standing, arms hanging at the sides). A loaded GLB can bind in any stance
+// (Mixamo T-pose, Avaturn A-pose), so before replaying a preset's world deltas
+// we align each bone from its bind direction to the reference direction its
+// canonical joint has on the mannequin. Directions are measured bone→child at
+// bind; bones without a measurable child (head, hands, fingers, toes) inherit
+// the nearest measured ancestor's alignment so the whole limb moves as one.
+const REFERENCE_DIR = {
+	Hips: [0, 1, 0], Spine: [0, 1, 0], Spine1: [0, 1, 0], Spine2: [0, 1, 0], Neck: [0, 1, 0],
+	LeftShoulder: [1, 0, 0], LeftArm: [0, -1, 0], LeftForeArm: [0, -1, 0],
+	RightShoulder: [-1, 0, 0], RightArm: [0, -1, 0], RightForeArm: [0, -1, 0],
+	LeftUpLeg: [0, -1, 0], LeftLeg: [0, -1, 0],
+	RightUpLeg: [0, -1, 0], RightLeg: [0, -1, 0],
+	LeftFoot: [0, -0.29, 0.96], RightFoot: [0, -0.29, 0.96],
+};
+const DIRECTION_CHILD = {
+	Hips: ['Spine', 'Spine1', 'Spine2', 'Neck'],
+	Spine: ['Spine1', 'Spine2', 'Neck'],
+	Spine1: ['Spine2', 'Neck'],
+	Spine2: ['Neck', 'Head'],
+	Neck: ['Head'],
+	LeftShoulder: ['LeftArm'], LeftArm: ['LeftForeArm'], LeftForeArm: ['LeftHand'],
+	RightShoulder: ['RightArm'], RightArm: ['RightForeArm'], RightForeArm: ['RightHand'],
+	LeftUpLeg: ['LeftLeg'], LeftLeg: ['LeftFoot'], LeftFoot: ['LeftToeBase'],
+	RightUpLeg: ['RightLeg'], RightLeg: ['RightFoot'], RightFoot: ['RightToeBase'],
+};
+
 // normalize(canonical) → canonical, so an arbitrary GLB bone name (mixamorig:,
 // case, separators) can be matched to a canonical bone via normalizeBoneName().
 const NORMALIZED_CANONICAL = new Map(
@@ -158,6 +198,82 @@ class BaseRig {
 	hasBone(key) { return this.bones.has(key); }
 	getNode(key) { return this.bones.get(key) || null; }
 
+	/**
+	 * Snapshot the rig's rest pose: each posable bone's LOCAL bind rotation and
+	 * its WORLD (within-model) bind rotation. Both rigs call this once while
+	 * still in bind pose; applyPose()/the FK sliders express rotations as
+	 * deltas on top of these, so the same preset lands identically on the
+	 * mannequin (identity rest) and on a GLB whose bones carry bind rotations.
+	 */
+	captureRest() {
+		this._restLocal = new Map();
+		this._restWorld = new Map();
+		for (const [key, node] of this.bones) {
+			this._restLocal.set(key, node.quaternion.clone());
+			this._restWorld.set(key, this._parentQuat(node).multiply(node.quaternion));
+		}
+		this._restRootPos = this.root ? this.root.position.clone() : new Vector3();
+		this._captureReferenceStance();
+	}
+
+	// Compute _restRef: each bone's world rotation in the REFERENCE stance
+	// (arms at the sides — the frame presets are authored in), by rotating its
+	// bind orientation from its measured bind direction onto the reference
+	// direction. On the mannequin every direction already matches, so the
+	// alignment is identity and _restRef === _restWorld (identity).
+	_captureReferenceStance() {
+		this._restRef = new Map();
+		if (!this.root) return;
+		this.root.updateMatrixWorld(true);
+		const keyByNode = new Map();
+		for (const [key, node] of this.bones) keyByNode.set(node, key);
+		const posInRoot = (node) =>
+			this.root.worldToLocal(node.getWorldPosition(new Vector3()));
+		const aligns = new Map();
+		for (const key of CANONICAL_BONES) {
+			const node = this.bones.get(key);
+			if (!node) continue;
+			let align = null;
+			const ref = REFERENCE_DIR[key];
+			const childKey = (DIRECTION_CHILD[key] || []).find((k) => this.bones.has(k));
+			if (ref && childKey) {
+				const dir = posInRoot(this.bones.get(childKey)).sub(posInRoot(node));
+				if (dir.lengthSq() > 1e-10) {
+					align = new Quaternion().setFromUnitVectors(
+						dir.normalize(),
+						new Vector3(ref[0], ref[1], ref[2]).normalize(),
+					);
+				}
+			}
+			if (!align) {
+				// Leaf / unmeasurable bone: inherit the nearest canonical ancestor's
+				// alignment (CANONICAL_BONES order guarantees ancestors are done).
+				for (let n = node.parent; n && n !== this.root; n = n.parent) {
+					const ancestorKey = keyByNode.get(n);
+					if (ancestorKey && aligns.has(ancestorKey)) {
+						align = aligns.get(ancestorKey);
+						break;
+					}
+				}
+			}
+			aligns.set(key, align || new Quaternion());
+			this._restRef.set(
+				key,
+				(align ? align.clone() : new Quaternion()).multiply(this._restWorld.get(key)),
+			);
+		}
+	}
+
+	// Composed rotation of a node's ancestors up to (excluding) the rig root —
+	// the pure-quaternion frame both rest capture and delta application share.
+	_parentQuat(node) {
+		const chain = [];
+		for (let n = node?.parent; n && n !== this.root; n = n.parent) chain.push(n);
+		const q = new Quaternion();
+		for (let i = chain.length - 1; i >= 0; i--) q.multiply(chain[i].quaternion);
+		return q;
+	}
+
 	getBoneQuaternion(key) {
 		const n = this.bones.get(key);
 		return n ? n.quaternion.clone() : new Quaternion();
@@ -199,15 +315,84 @@ class BaseRig {
 	applyPose(pose) {
 		if (!pose) return;
 		this.resetPose();
-		const bones = pose.bones || pose; // tolerate a bare bones map
-		for (const [key, v] of Object.entries(bones)) {
-			if (key === 'rootPosition') continue;
-			const node = this.bones.get(key);
-			if (!node || !Array.isArray(v) || v.length < 4) continue;
-			node.quaternion.set(v[0], v[1], v[2], v[3]);
+		if (pose.worldDeltas) {
+			this._applyWorldDeltas(pose.worldDeltas);
+		} else {
+			const bones = pose.bones || pose; // tolerate a bare bones map
+			for (const [key, v] of Object.entries(bones)) {
+				if (key === 'rootPosition') continue;
+				const node = this.bones.get(key);
+				if (!node || !Array.isArray(v) || v.length < 4) continue;
+				node.quaternion.set(v[0], v[1], v[2], v[3]);
+			}
 		}
 		const rp = pose.rootPosition;
 		if (rp && this.root) this.root.position.set(rp.x || 0, rp.y || 0, rp.z || 0);
+	}
+
+	// Replay a preset's world-frame rotation deltas on this rig: worldTarget =
+	// delta · restRef, where restRef is the bone's orientation in the REFERENCE
+	// stance (bind aligned to arms-at-sides), reprojected into the bone's live
+	// parent frame. Root→leaf order (CANONICAL_BONES is topological) so each
+	// parent's new rotation is current before its children reproject. On the
+	// mannequin (identity rest, matching stance) this reproduces the preset's
+	// local Eulers exactly; on a GLB it lands the same absolute pose regardless
+	// of whether the avatar binds in a T-pose or an A-pose.
+	_applyWorldDeltas(deltas) {
+		if (!this._restRef) this.captureRest();
+		const worldTarget = new Quaternion();
+		for (const key of CANONICAL_BONES) {
+			const v = deltas[key];
+			if (!Array.isArray(v) || v.length < 4) continue;
+			const node = this.bones.get(key);
+			const restRef = this._restRef.get(key);
+			if (!node || !restRef) continue;
+			worldTarget.set(v[0], v[1], v[2], v[3]).multiply(restRef);
+			node.quaternion.copy(this._parentQuat(node).invert().multiply(worldTarget));
+		}
+	}
+
+	/**
+	 * Resolve a pose to the per-bone LOCAL quaternions it produces on this rig,
+	 * without leaving the rig posed. Used by surfaces that tween toward a pose
+	 * (agent-screen's live pose driver) instead of snapping applyPose().
+	 * @returns {Map<string, Quaternion>} canonical bone key → target local quat
+	 */
+	localTargetsForPose(pose) {
+		const saved = [];
+		const record = (node) => saved.push({
+			node,
+			pos: node.position.clone(),
+			quat: node.quaternion.clone(),
+			scale: node.scale.clone(),
+		});
+		const seen = new Set();
+		for (const sm of this.skinnedMeshes || []) {
+			for (const bone of sm.skeleton?.bones || []) {
+				if (!seen.has(bone)) { seen.add(bone); record(bone); }
+			}
+		}
+		for (const node of this.bones.values()) {
+			if (!seen.has(node)) { seen.add(node); record(node); }
+		}
+		const rootPos = this.root ? this.root.position.clone() : null;
+		this.applyPose(pose);
+		// Only bones the pose names get targets — callers blend those on top of
+		// whatever (idle animation, live tracking) drives the rest of the body.
+		const named = pose?.worldDeltas || pose?.bones || pose || {};
+		const targets = new Map();
+		for (const key of Object.keys(named)) {
+			if (key === 'rootPosition') continue;
+			const node = this.bones.get(key);
+			if (node) targets.set(key, node.quaternion.clone());
+		}
+		for (const { node, pos, quat, scale } of saved) {
+			node.position.copy(pos);
+			node.quaternion.copy(quat);
+			node.scale.copy(scale);
+		}
+		if (rootPos && this.root) this.root.position.copy(rootPos);
+		return targets;
 	}
 
 	// Resolve the IK chains that actually exist on this rig.
@@ -272,6 +457,7 @@ export class MannequinRig extends BaseRig {
 		this.root = this.mannequin.root;
 		this.selectableMeshes = this.mannequin.selectableMeshes;
 		this._rebuildMap();
+		this.captureRest();
 	}
 
 	_rebuildMap() {
@@ -298,6 +484,7 @@ export class MannequinRig extends BaseRig {
 		this.root = this.mannequin.root;
 		this.selectableMeshes = this.mannequin.selectableMeshes;
 		this._rebuildMap();
+		this.captureRest();
 	}
 	setColor(hex) { this.mannequin.setColor(hex); }
 	setConstraintsEnabled(on) { this.mannequin.setConstraintsEnabled(on); }
@@ -372,36 +559,100 @@ export class GltfRig extends BaseRig {
 		return null;
 	}
 
-	resetPose() {
-		// Restore each posable bone to its bind/rest local transform. We captured
-		// nothing at load besides the live transform, so reset means identity-ish
-		// rest: re-read from the skeleton's boneInverses when available.
+	// Snapshot every skeleton bone's local TRS as the rest pose. Deliberately
+	// NOT skeleton.pose(): inverse-bind matrices live in the skin's own frame,
+	// and on plenty of exports (Mixamo cm-scale — michelle.glb, xbot.glb) that
+	// frame differs from the node graph's, so reconstructing "bind" from them
+	// collapses the avatar to 1% scale. The node transforms at load ARE the
+	// authored bind pose; trust them.
+	captureRest() {
+		this._restNodes = [];
+		const seen = new Set();
+		const record = (node) => {
+			if (seen.has(node)) return;
+			seen.add(node);
+			this._restNodes.push({
+				node,
+				pos: node.position.clone(),
+				quat: node.quaternion.clone(),
+				scale: node.scale.clone(),
+			});
+		};
 		for (const sm of this.skinnedMeshes) {
-			const sk = sm.skeleton;
-			if (!sk) continue;
-			sk.pose(); // restores bones to their bind pose
+			for (const bone of sm.skeleton?.bones || []) record(bone);
+		}
+		for (const node of this.bones.values()) record(node);
+		super.captureRest();
+	}
+
+	resetPose() {
+		// Restore every bone (skeleton + loose) to its captured rest transform.
+		for (const { node, pos, quat, scale } of this._restNodes || []) {
+			node.position.copy(pos);
+			node.quaternion.copy(quat);
+			node.scale.copy(scale);
 		}
 		if (this._restRootPos) this.root.position.copy(this._restRootPos);
 	}
 
-	captureRest() {
-		// Snapshot the bind pose so resetPose() and applyPose() have a baseline.
-		this._restRootPos = this.root.position.clone();
+	// FK sliders and "reset this bone" speak model-frame deltas from rest, the
+	// same convention the mannequin's zeroed joints give for free. Without this
+	// a GLB bone's sliders show its raw bind rotation (e.g. 94°/90° on an
+	// untouched shoulder) and zeroing them wipes the bind pose entirely.
+	getBoneEuler(key) {
+		const node = this.bones.get(key);
+		const restWorld = this._restWorld?.get(key);
+		if (!node || !restWorld) return super.getBoneEuler(key);
+		const world = this._parentQuat(node).multiply(node.quaternion);
+		const delta = world.multiply(restWorld.clone().invert());
+		const e = new Euler().setFromQuaternion(delta, 'XYZ');
+		return { x: e.x, y: e.y, z: e.z };
+	}
+
+	setBoneEuler(key, { x = 0, y = 0, z = 0 }) {
+		const node = this.bones.get(key);
+		const restWorld = this._restWorld?.get(key);
+		if (!node || !restWorld) return super.setBoneEuler(key, { x, y, z });
+		const delta = new Quaternion().setFromEuler(new Euler(x, y, z, 'XYZ'));
+		const worldTarget = delta.multiply(restWorld);
+		node.quaternion.copy(this._parentQuat(node).invert().multiply(worldTarget));
 	}
 }
 
 // Convert a legacy mannequin preset ({ jointName: {x,y,z} Euler, rootPosition })
-// into a canonical quaternion pose so presets apply to any rig uniformly.
+// into a canonical pose that applies to any rig uniformly.
+//
+// `bones` keeps the raw local quaternions (mannequin frame, identity rest) for
+// callers that address the mannequin convention directly. `worldDeltas` is what
+// applyPose() consumes: each joint's preset rotation composed down the mannequin
+// hierarchy. Because every mannequin joint rests at identity, that chain product
+// IS the joint's world-frame rotation delta — replayable on top of any rig's
+// own rest pose, so the same preset reads correctly on a GLB avatar whose bones
+// carry bind rotations (where the raw locals used to garble every pose).
 export function poseFromMannequinPreset(presetPose) {
 	const bones = {};
+	const local = new Map();
 	for (const [joint, rot] of Object.entries(presetPose || {})) {
 		if (joint === 'rootPosition' || !rot) continue;
 		const canonical = MANNEQUIN_TO_CANONICAL[joint];
 		if (!canonical) continue;
 		const q = new Quaternion().setFromEuler(new Euler(rot.x || 0, rot.y || 0, rot.z || 0, 'XYZ'));
 		bones[canonical] = [q.x, q.y, q.z, q.w];
+		local.set(joint, q);
 	}
-	const pose = { bones };
+	const worldDeltas = {};
+	const composed = new Map(); // joint → chain product root→joint
+	for (const joint of MANNEQUIN_JOINT_ORDER) {
+		const parent = MANNEQUIN_PARENT[joint];
+		const q = (parent ? composed.get(parent).clone() : new Quaternion())
+			.multiply(local.get(joint) || new Quaternion());
+		composed.set(joint, q);
+		if (local.has(joint)) {
+			const canonical = MANNEQUIN_TO_CANONICAL[joint];
+			worldDeltas[canonical] = [q.x, q.y, q.z, q.w];
+		}
+	}
+	const pose = { bones, worldDeltas };
 	if (presetPose?.rootPosition) pose.rootPosition = presetPose.rootPosition;
 	return pose;
 }

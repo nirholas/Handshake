@@ -407,6 +407,7 @@ function boot() {
 			state.rig.dispose?.();
 		}
 		state.rig = rig;
+		window.__rig = rig; // TEMP DEBUG
 		scene.add(rig.root);
 		state.selectedBone = null;
 		clearIKHandles();
