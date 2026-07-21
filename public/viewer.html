@@ -69,6 +69,13 @@
     padding: 11px 16px; border-top: 1px solid rgba(255,255,255,0.07);
     background: rgba(10,11,14,0.55); backdrop-filter: blur(8px);
   }
+  /* The i18n runtime's floating language pill defaults to the bottom-right
+     corner, which this page's action bar owns (it was covering the "Do more
+     with this model" button). Lift it above the bar; body-scoped so this
+     outranks the runtime's class-only rule regardless of injection order. */
+  body .twx-i18n-fab {
+    inset-block-end: calc(max(16px, env(safe-area-inset-bottom)) + 58px);
+  }
   .spacer { flex: 1 1 auto; }
   a.btn, button.btn {
     appearance: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
