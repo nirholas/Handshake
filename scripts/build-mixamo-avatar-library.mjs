@@ -75,12 +75,36 @@ const avatars = Object.values(catalog.avatars || {})
 		animations: e.glb_animations ?? 1,
 		source: 'mixamo',
 	}))
-	.sort((a, b) => a.label.localeCompare(b.label));
+	.map((e) => ({ ...e, license: 'Mixamo' }));
+
+// Merge non-Mixamo CC0 characters (Quaternius, KayKit, …) from the extra catalog.
+// Each is a canonicalized, animation-ready GLB already on R2, so it drops into
+// the same manifest and drives the same canonical animation library.
+const EXTRA_PATH = join(ROOT, 'public', 'avatars', 'extra', 'characters.json');
+if (existsSync(EXTRA_PATH)) {
+	const extra = JSON.parse(readFileSync(EXTRA_PATH, 'utf8')).characters || [];
+	for (const e of extra) {
+		if (!e.glb_file) continue;
+		avatars.push({
+			name: e.name,
+			label: e.label || e.name,
+			url: cdn(e.glb_file),
+			...(e.thumb_file ? { thumb: cdn(e.thumb_file) } : {}),
+			bytes: e.glb_bytes || 0,
+			skins: e.skins ?? 1,
+			animations: e.animations ?? 0,
+			source: e.source || 'extra',
+			license: e.license || 'CC0',
+		});
+	}
+}
+
+avatars.sort((a, b) => a.label.localeCompare(b.label));
 
 const manifest = {
 	generated_at: new Date().toISOString(),
 	total: avatars.length,
-	source: 'mixamo',
+	sources: [...new Set(avatars.map((a) => a.source))],
 	avatars,
 };
 

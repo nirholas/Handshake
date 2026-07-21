@@ -1,0 +1,15 @@
+{
+  "$comment": "Non-Mixamo CC0 characters merged into the character library manifest by build-mixamo-avatar-library.mjs. Each is a canonicalized, animation-ready GLB on R2.",
+  "characters": [
+    {
+      "name": "quaternius-base",
+      "label": "Quaternius Base",
+      "glb_file": "avatars/quaternius/glb/quaternius-base.glb",
+      "thumb_file": "avatars/quaternius/thumbs/quaternius-base.png",
+      "glb_bytes": 2206308,
+      "skins": 1,
+      "license": "CC0",
+      "source": "quaternius"
+    }
+  ]
+}
