@@ -78,7 +78,15 @@ const POLICY = {
 	CORSRules: [
 		{
 			ID: 'public-read',
-			AllowedOrigins: ALLOWED_ORIGINS,
+			// Reads are world-open on purpose: the bucket is already public
+			// (keyless r2.dev host), and its GLBs/posters are meant to load from
+			// ANY origin — <model-viewer> embeds, Jupyter/Colab notebooks (the
+			// OpenAI Cookbook tutorial runs on localhost), partner sites. CORS
+			// on GET adds no protection for public objects; an allowlist here
+			// only breaks legitimate embeds (2026-07-21: galleries dead in
+			// Codespaces/Jupyter because the live policy predated the wildcard
+			// entries below). Uploads stay origin-locked in the next rule.
+			AllowedOrigins: ['*'],
 			AllowedMethods: ['GET', 'HEAD'],
 			AllowedHeaders: ['*'],
 			ExposeHeaders: ['ETag', 'Content-Length', 'Content-Type', 'Accept-Ranges'],

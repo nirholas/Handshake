@@ -7951,6 +7951,7 @@ free.</li>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
@@ -8194,7 +8195,12 @@ grid; static views still see the models.</p>
         <span class="n">cards</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prompt"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"Model"</span><span class="p">))</span>
-            <span class="n">glb</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">it</span><span class="p">[</span><span class="s2">"glbUrl"</span><span class="p">],</span> <span class="n">quote</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># model-viewer fetches the GLB from the browser, and the object</span>
+            <span class="c1"># store only answers CORS for allowlisted origins. The keyless</span>
+            <span class="c1"># /api/glb proxy answers for ANY origin (Jupyter, Colab, this</span>
+            <span class="c1"># notebook rendered on a website), so the gallery works everywhere.</span>
+            <span class="n">proxied</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">THREE_WS_BASE</span><span class="si">}</span><span class="s2">/api/glb?src=</span><span class="si">{</span><span class="n">quote</span><span class="p">(</span><span class="n">it</span><span class="p">[</span><span class="s1">'glbUrl'</span><span class="p">],</span><span class="w"> </span><span class="n">safe</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">glb</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">proxied</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">viewer</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"viewerUrl"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">ar</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"arUrl"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">cards</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'''    &lt;figure&gt;</span>
@@ -8326,28 +8332,28 @@ the batch. Every model below was generated live by this cell.</p>
 </div>
 <div class="grid">
 <figure>
-<model-viewer alt="Candelabra" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/bdb5072f-0cea-4a78-b6fe-178b13901283.glb"></model-viewer>
+<model-viewer alt="Candelabra" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fbdb5072f-0cea-4a78-b6fe-178b13901283.glb"></model-viewer>
 <figcaption>
 <span class="name">Candelabra</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fbdb5072f-0cea-4a78-b6fe-178b13901283.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fbdb5072f-0cea-4a78-b6fe-178b13901283.glb&amp;title=a%20tarnished%20bronze%20candelabra%20with%20three%20twisted%20arms%20and%20melted%20white%20candles" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Telescope" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/8561bcec-0132-451c-9612-303c05069a2f.glb"></model-viewer>
+<model-viewer alt="Telescope" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F8561bcec-0132-451c-9612-303c05069a2f.glb"></model-viewer>
 <figcaption>
 <span class="name">Telescope</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F8561bcec-0132-451c-9612-303c05069a2f.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F8561bcec-0132-451c-9612-303c05069a2f.glb&amp;title=a%20brass%20spyglass%20telescope%20on%20a%20mahogany%20tripod" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Scale" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/b4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb"></model-viewer>
+<model-viewer alt="Scale" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fb4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb"></model-viewer>
 <figcaption>
 <span class="name">Scale</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fb4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fb4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb&amp;title=an%20antique%20brass%20balance%20scale%20with%20two%20chained%20pans" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Book stack" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb"></model-viewer>
+<model-viewer alt="Book stack" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb"></model-viewer>
 <figcaption>
 <span class="name">Book stack</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb&amp;title=a%20stack%20of%20three%20old%20leather%20books%20with%20gilded%20spines" rel="noopener" target="_blank">AR</a></span>
@@ -8641,42 +8647,42 @@ If you want variants (clean/restored, fully spectral, different colorways), or l
 </div>
 <div class="grid">
 <figure>
-<model-viewer alt="Barnacled Carousel Horse" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9f849773-3d6d-4a70-ac81-02c5c0bdcbf1.glb"></model-viewer>
+<model-viewer alt="Barnacled Carousel Horse" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9f849773-3d6d-4a70-ac81-02c5c0bdcbf1.glb"></model-viewer>
 <figcaption>
 <span class="name">Barnacled Carousel Horse</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9f849773-3d6d-4a70-ac81-02c5c0bdcbf1.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9f849773-3d6d-4a70-ac81-02c5c0bdcbf1.glb&amp;title=A%20single%20carved%20wooden%20carousel%20horse%20in%20a%20haunted%20seaside%20carnival%20style.%20The%20h" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Driftwood Ticket Sign" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/e8ca2188-60fd-4836-bf08-ebc2e1317e66.glb"></model-viewer>
+<model-viewer alt="Driftwood Ticket Sign" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fe8ca2188-60fd-4836-bf08-ebc2e1317e66.glb"></model-viewer>
 <figcaption>
 <span class="name">Driftwood Ticket Sign</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fe8ca2188-60fd-4836-bf08-ebc2e1317e66.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fe8ca2188-60fd-4836-bf08-ebc2e1317e66.glb" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Verdigris Lantern" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/92ea2055-75e2-4ebf-9152-92dcfd618a28.glb"></model-viewer>
+<model-viewer alt="Verdigris Lantern" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F92ea2055-75e2-4ebf-9152-92dcfd618a28.glb"></model-viewer>
 <figcaption>
 <span class="name">Verdigris Lantern</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F92ea2055-75e2-4ebf-9152-92dcfd618a28.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F92ea2055-75e2-4ebf-9152-92dcfd618a28.glb&amp;title=A%20handheld%20brass%20oil%20lantern%20with%20a%20haunted%2C%20ghostly%20green%20flame.%20The%20lantern%20is" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Fortune Automaton" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/d4238992-dfc3-4f21-9626-a0f9eda84180.glb"></model-viewer>
+<model-viewer alt="Fortune Automaton" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd4238992-dfc3-4f21-9626-a0f9eda84180.glb"></model-viewer>
 <figcaption>
 <span class="name">Fortune Automaton</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd4238992-dfc3-4f21-9626-a0f9eda84180.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd4238992-dfc3-4f21-9626-a0f9eda84180.glb&amp;title=A%20single%20tabletop%20fortune-teller%20automaton%3A%20a%20seated%20porcelain%20doll%20in%20a%20moth-ea" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Kelp-Tangled Prize Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb"></model-viewer>
+<model-viewer alt="Kelp-Tangled Prize Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb"></model-viewer>
 <figcaption>
 <span class="name">Kelp-Tangled Prize Chest</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb&amp;title=A%20small%20wooden%20prize%20chest%2C%20half-open%20and%20encrusted%20with%20barnacles%20and%20salt%20crys" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Tattered Pennant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb"></model-viewer>
+<model-viewer alt="Tattered Pennant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb"></model-viewer>
 <figcaption>
 <span class="name">Tattered Pennant</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb&amp;title=A%20single%20triangular%20carnival%20pennant%20flag%20made%20of%20heavy%20canvas%2C%20originally%20red-a" rel="noopener" target="_blank">AR</a></span>
@@ -9180,42 +9186,42 @@ human.</p>
 </div>
 <div class="grid">
 <figure>
-<model-viewer alt="Barnacled Carousel Horse · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/13fc34b1-b76d-41d1-a201-87657ed7a2cb.glb"></model-viewer>
+<model-viewer alt="Barnacled Carousel Horse · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F13fc34b1-b76d-41d1-a201-87657ed7a2cb.glb"></model-viewer>
 <figcaption>
 <span class="name">Barnacled Carousel Horse · rebuilt</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F13fc34b1-b76d-41d1-a201-87657ed7a2cb.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F13fc34b1-b76d-41d1-a201-87657ed7a2cb.glb&amp;title=A%20single%20carved%20wooden%20carousel%20horse%2C%20standing%20alone%2C%20with%20flaking%20teal%20and%20sea" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Driftwood Ticket Sign" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/e8ca2188-60fd-4836-bf08-ebc2e1317e66.glb"></model-viewer>
+<model-viewer alt="Driftwood Ticket Sign" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fe8ca2188-60fd-4836-bf08-ebc2e1317e66.glb"></model-viewer>
 <figcaption>
 <span class="name">Driftwood Ticket Sign</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fe8ca2188-60fd-4836-bf08-ebc2e1317e66.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fe8ca2188-60fd-4836-bf08-ebc2e1317e66.glb" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Verdigris Lantern" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/92ea2055-75e2-4ebf-9152-92dcfd618a28.glb"></model-viewer>
+<model-viewer alt="Verdigris Lantern" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F92ea2055-75e2-4ebf-9152-92dcfd618a28.glb"></model-viewer>
 <figcaption>
 <span class="name">Verdigris Lantern</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F92ea2055-75e2-4ebf-9152-92dcfd618a28.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F92ea2055-75e2-4ebf-9152-92dcfd618a28.glb&amp;title=A%20handheld%20brass%20oil%20lantern%20with%20a%20haunted%2C%20ghostly%20green%20flame.%20The%20lantern%20is" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Fortune Automaton · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/cf683396-c521-4b9c-9701-b6872ad19c6c.glb"></model-viewer>
+<model-viewer alt="Fortune Automaton · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fcf683396-c521-4b9c-9701-b6872ad19c6c.glb"></model-viewer>
 <figcaption>
 <span class="name">Fortune Automaton · rebuilt</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fcf683396-c521-4b9c-9701-b6872ad19c6c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fcf683396-c521-4b9c-9701-b6872ad19c6c.glb&amp;title=Seated%20tabletop%20fortune-teller%20automaton%3A%20a%20small%20cracked-white%20porcelain%20doll%20w" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Kelp-Tangled Prize Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb"></model-viewer>
+<model-viewer alt="Kelp-Tangled Prize Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb"></model-viewer>
 <figcaption>
 <span class="name">Kelp-Tangled Prize Chest</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fba3c4d2b-47ca-4d5c-989e-a3526785cbd8.glb&amp;title=A%20small%20wooden%20prize%20chest%2C%20half-open%20and%20encrusted%20with%20barnacles%20and%20salt%20crys" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Tattered Pennant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb"></model-viewer>
+<model-viewer alt="Tattered Pennant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb"></model-viewer>
 <figcaption>
 <span class="name">Tattered Pennant</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2440cac9-44c2-4fb6-9c21-3cf8c9229fd6.glb&amp;title=A%20single%20triangular%20carnival%20pennant%20flag%20made%20of%20heavy%20canvas%2C%20originally%20red-a" rel="noopener" target="_blank">AR</a></span>
@@ -9380,35 +9386,35 @@ If you want variations (e.g., more weathering, different color palette, high-pol
 </div>
 <div class="grid">
 <figure>
-<model-viewer alt="Observation Porthole Hatch" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/fff3d74e-1385-4e14-9e56-9eeab4f35a34.glb"></model-viewer>
+<model-viewer alt="Observation Porthole Hatch" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb"></model-viewer>
 <figcaption>
 <span class="name">Observation Porthole Hatch</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb&amp;title=Wall-mounted%20circular%20observation%20porthole%20hatch%2C%2060%20cm%20diameter.%20Thick%20triple-l" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Bioluminescent Specimen Jar" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb"></model-viewer>
+<model-viewer alt="Bioluminescent Specimen Jar" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb"></model-viewer>
 <figcaption>
 <span class="name">Bioluminescent Specimen Jar</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb&amp;title=A%20single%20squat%20cylindrical%20glass%20specimen%20jar%20with%20a%20removable%20aged-brass%20clamp%20" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Pressure Gauge Cluster" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb"></model-viewer>
+<model-viewer alt="Pressure Gauge Cluster" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb"></model-viewer>
 <figcaption>
 <span class="name">Pressure Gauge Cluster</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb&amp;title=Front-facing%20wall-mounted%20cluster%20of%20three%20round%20vintage%20pressure%20gauges%20on%20a%20sm" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Submersible Sextant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/648d9372-89ce-402e-8f9d-a50a70b7909c.glb"></model-viewer>
+<model-viewer alt="Submersible Sextant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F648d9372-89ce-402e-8f9d-a50a70b7909c.glb"></model-viewer>
 <figcaption>
 <span class="name">Submersible Sextant</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F648d9372-89ce-402e-8f9d-a50a70b7909c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F648d9372-89ce-402e-8f9d-a50a70b7909c.glb&amp;title=Handheld%20submersible%20sextant%2C%2020%20cm%20wide%20crescent%20bronze%20limb%20with%20engraved%20fine" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
-<model-viewer alt="Instrument Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb"></model-viewer>
+<model-viewer alt="Instrument Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb"></model-viewer>
 <figcaption>
 <span class="name">Instrument Chest</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb&amp;title=A%20single%20compact%20instrument%20chest%3A%20a%20tabletop%20wooden%20lockbox%20made%20from%20oiled%20oak" rel="noopener" target="_blank">AR</a></span>
