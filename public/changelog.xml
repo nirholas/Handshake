@@ -23,6 +23,22 @@
 			<description>three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.</description>
 		</item>
 		<item>
+			<title>Object Library</title>
+			<link>https://three.ws/objects</link>
+			<guid isPermaLink="false">2026-07-21:Object Library</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live or download the GLB.</description>
+		</item>
+		<item>
+			<title>A free CC0 object library: hundreds of props, ready to drop in</title>
+			<link>https://three.ws/objects</link>
+			<guid isPermaLink="false">2026-07-21:A free CC0 object library: hundreds of props, ready to drop in</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Object Library brings hundreds of free 3D objects and props to three.ws - furniture, lighting, electronics, containers, decor. Every one is CC0 public domain: free to use commercially with no attribution. Browse them at /objects, preview any one live in your browser, or download the GLB to use anywhere.</description>
+		</item>
+		<item>
 			<title>Installing a marketplace skill now actually teaches your agent</title>
 			<link>https://three.ws/marketplace?tab=skills</link>
 			<guid isPermaLink="false">2026-07-21:Installing a marketplace skill now actually teaches your agent</guid>
