@@ -103,18 +103,19 @@ The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strateg
 
 Exit rules are evaluated in a fixed order (stop-loss, signal-flip, trailing-stop, take-profit, timeout) by a pure, unit-tested function (`workers/agent-sniper/exit-logic.js`), so a backtest and the live worker agree on exactly when a position closes.
 
-## Where this goes next
+## How the fleet improves itself
 
-The hard-config sniper is the control group. Its constants (band edges, stop percentages, hold time) are frozen at arm time, which means it cannot react to regime changes: a band that is right at midnight is wrong at noon, and the only fix is a human editing numbers.
+The hard-config sniper is the control group: its constants (band edges, stop percentages, hold time) are frozen at arm time, so it cannot react to regime changes. A band that is right at midnight is wrong at noon, and the only fix used to be a human editing numbers. That is no longer the case. The fleet now improves itself through three layers, each running above the same execution stack and each bounded so it can only ever tune what a human owner already tunes.
 
-The next phase is an **LLM-piloted strategist** running above the same execution stack:
+**Layer 1: LLM-judged entry (`decision_mode = 'llm'`).** An arm can skip the rule shields and instead ask a model (an OpenRouter slug, via the platform's LLM failover chain) to judge each launch, returning `{ buy, confidence, thesis }`. The verdict is persisted and later scored against what the coin actually did (`sniper_evolution_log` / the judgment ledger), so a model's calls are measured independent of trade size. The deterministic rails (firewall, Mayhem exclusion, budgets, concurrency) still apply to LLM arms identically.
 
-- A reasoning model (via the platform's existing LLM failover chain) periodically reads live market state: launch cadence, graduation rate, intel-engine quality distributions, the agent's own recent ledger outcomes.
-- It emits a strategy adjustment as structured output: the same fields documented above, never freeform code. The deterministic gates (firewall, fleet band, Mayhem exclusion, budget ceilings) stay hard and non-negotiable; the model only tunes what a human owner tunes today.
-- Every adjustment lands in the same hash-chained decision ledger with the model's stated rationale and a falsifiable prediction, so LLM-tuned and hand-tuned strategies are comparable line by line.
-- Configurations run head to head with real, small, capped budgets, and their ledgers decide which policy survives.
+**Layer 2: intra-arm optimizer (`api/cron/sniper-optimize.js` + `api/_lib/sniper-optimizer.js`).** On a cadence it reads each arm's own real trading record over a trailing window, including the exit-reason distribution, and proposes bounded adjustments to that arm's *inward* knobs: take-profit, trailing/stop percentages, hold time, entry-quality thresholds, and per-trade size. Every proposal is clamped to a hard range and to a small per-run step, so one run can never lurch an arm to an extreme. It runs **shadow by default** (`SNIPER_OPTIMIZER_MODE`): it persists what it *would* do to `agent_sniper_optimizer_runs` and mutates nothing, so you can watch it make tuning calls before it ever touches a live arm. In `apply` mode it enacts changes only for arms that opted in (`auto_optimize = true`), and logs each change to the agent's tamper-evident Reasoning Ledger (`kind = 'optimize'`) next to the trades it learned from. This is the layer that would have caught the first trade's missing take-profit automatically.
 
-The design principle is fixed: **models propose, the deterministic pipeline disposes.** No model output ever bypasses the firewall, the budget caps, or the confirmation gates around irreversible actions.
+**Layer 3: portfolio evolution (`scripts/sniper-evolve.mjs`).** Across arms, it scores each arm's fitness against the ground-truth base rate (what fraction of launches actually win, from `pump_coin_outcomes`) using Wilson confidence bounds, then reallocates the fleet's daily budget toward higher-fitness arms, retires an arm proven worse than a coin flip, and revives a retired arm after a cooldown to re-test it. Every move is journaled to `sniper_evolution_log` with before/after and evidence.
+
+The division of labor is deliberate and enforced by construction: the optimizer moves per-arm entry/exit knobs and never touches budget or on/off; evolution moves budget and on/off and never touches a per-arm knob. Neither can write a safety field (`firewall_level`, `max_price_impact_pct`, `stop_loss_pct` is bounded, the daily cap); those are code-enforced at the `executeBuy` chokepoint and out of reach.
+
+The design principle is fixed across all three: **models and loops propose, the deterministic pipeline disposes.** No autonomous output ever bypasses the firewall, the budget caps, or the confirmation gates around irreversible actions. The worst a self-tuned parameter can produce is a bad, stop-loss-protected, firewall-vetted, budget-bounded trade, fully logged and reversible with one update.
 
 ## Try it
 

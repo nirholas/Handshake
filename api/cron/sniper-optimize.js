@@ -1,0 +1,164 @@
+// GET/POST /api/cron/sniper-optimize: the autonomous learning loop for the
+// sniper fleet. Reads each arm's REAL trading record over a trailing window,
+// asks the pure optimizer (api/_lib/sniper-optimizer.js) for bounded, explained
+// adjustments to that arm's own knobs, and:
+//
+//   mode=shadow (default): persists the proposals and mutates NOTHING. This is
+//        how you watch the loop make tuning calls before it touches a live arm.
+//   mode=apply: additionally enacts the proposals, but ONLY for arms that opted
+//        in (auto_optimize = true). Each applied change is bounded to a small
+//        per-run step, recorded in agent_sniper_optimizer_runs, and written to
+//        the agent's tamper-evident Reasoning Ledger (agent_decisions) so the
+//        tuning itself is auditable next to the trades it learned from.
+//
+// The deterministic safety rails (trade firewall, Mayhem exclusion, budgets,
+// concurrency) are never touched here. The optimizer only moves policy knobs a
+// human owner already tunes, each clamped to a hard range.
+//
+// Controls:
+//   SNIPER_OPTIMIZER_MODE   = shadow | apply     (default shadow)
+//   SNIPER_OPTIMIZER_WINDOW = 24h | 7d | 30d     (default 7d)
+//   SNIPER_OPTIMIZER_MAX_APPLIES = integer        (default 5 arms mutated/run)
+
+import { error, json, method, wrapCron } from '../_lib/http.js';
+import { env } from '../_lib/env.js';
+import { constantTimeEquals } from '../_lib/crypto.js';
+import { sql } from '../_lib/db.js';
+import { recordDecision } from '../_lib/reasoning-ledger.js';
+import { proposeAdjustments } from '../_lib/sniper-optimizer.js';
+
+const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
+
+function requireCron(req, res) {
+	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
+	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
+	const auth = req.headers['authorization'] || '';
+	const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+	if (!constantTimeEquals(presented, secret)) { error(res, 401, 'unauthorized', 'invalid cron secret'); return false; }
+	return true;
+}
+
+// Per-arm real trading record over the window, including the exit-reason
+// distribution the optimizer's rules key on. Real fills only (the 'SIMULATED'
+// sentinel is excluded) so a shadow-mode fleet still produces proposals from its
+// paper record is NOT what we want; we learn from real money. Paper arms simply
+// have too few real closes and no-op under MIN_SAMPLE, which is correct.
+async function armStats(network, interval) {
+	return sql`
+		select
+			s.id as strategy_id, s.agent_id, s.decision_mode, s.auto_optimize, s.label,
+			s.per_trade_lamports, s.daily_budget_lamports, s.max_concurrent_positions,
+			s.take_profit_pct, s.trailing_stop_pct, s.stop_loss_pct, s.max_hold_seconds,
+			s.min_quality_score, s.min_oracle_score,
+			count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED')                              as closed,
+			count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED' and p.realized_pnl_lamports>0) as wins,
+			coalesce(sum(p.realized_pnl_lamports) filter (where p.status='closed' and p.buy_sig<>'SIMULATED'),0)  as net_pnl_lamports,
+			avg(p.realized_pnl_pct) filter (where p.status='closed' and p.buy_sig<>'SIMULATED')                   as avg_pnl_pct,
+			max(p.realized_pnl_pct) filter (where p.status='closed' and p.buy_sig<>'SIMULATED')                   as best_pnl_pct,
+			min(p.realized_pnl_pct) filter (where p.status='closed' and p.buy_sig<>'SIMULATED')                   as worst_pnl_pct,
+			avg(extract(epoch from (p.closed_at - p.opened_at))) filter (where p.status='closed' and p.buy_sig<>'SIMULATED') as avg_hold_s,
+			jsonb_object_agg(coalesce(p.exit_reason,'unknown'), rc)
+				filter (where p.status='closed' and p.buy_sig<>'SIMULATED')                                       as exit_reasons
+		from agent_sniper_strategies s
+		join agent_identities a on a.id = s.agent_id and a.deleted_at is null
+		left join lateral (
+			select p.*, count(*) over (partition by p.exit_reason) as rc
+			from agent_sniper_positions p
+			where p.strategy_id = s.id and p.network = s.network and p.buy_sig is not null
+			  and p.opened_at > now() - (${interval}::text)::interval
+		) p on true
+		where s.network = ${network} and (s.enabled = true or s.label is not null)
+		group by s.id, a.id
+	`;
+}
+
+export default wrapCron(async (req, res) => {
+	if (!method(req, res, ['GET', 'POST'])) return;
+	if (!requireCron(req, res)) return;
+
+	const mode = (process.env.SNIPER_OPTIMIZER_MODE || 'shadow').trim() === 'apply' ? 'apply' : 'shadow';
+	const windowLabel = WINDOWS[process.env.SNIPER_OPTIMIZER_WINDOW] ? process.env.SNIPER_OPTIMIZER_WINDOW : '7d';
+	const interval = WINDOWS[windowLabel];
+	const maxApplies = Math.max(0, Number(process.env.SNIPER_OPTIMIZER_MAX_APPLIES ?? 5) || 5);
+	const network = 'mainnet';
+
+	const report = { mode, window: windowLabel, arms: 0, with_proposals: 0, applied: 0, skipped_optin: 0, errors: 0, runs: [] };
+	let rows = [];
+	try {
+		rows = await armStats(network, interval);
+	} catch (err) {
+		return json(res, 200, { ok: false, error: err.message, report });
+	}
+	report.arms = rows.length;
+
+	for (const r of rows) {
+		try {
+			const closed = Number(r.closed) || 0;
+			const wins = Number(r.wins) || 0;
+			const stats = {
+				closed, wins,
+				winRate: closed > 0 ? Math.round((wins / closed) * 100) : 0,
+				avgPnlPct: r.avg_pnl_pct != null ? Number(r.avg_pnl_pct) : 0,
+				bestPnlPct: r.best_pnl_pct != null ? Number(r.best_pnl_pct) : 0,
+				worstPnlPct: r.worst_pnl_pct != null ? Number(r.worst_pnl_pct) : 0,
+				avgHoldSeconds: r.avg_hold_s != null ? Math.round(Number(r.avg_hold_s)) : null,
+				netPnlLamports: Number(r.net_pnl_lamports) || 0,
+				exitReasons: r.exit_reasons || {},
+			};
+			const { proposals, sample, acted, notes } = proposeAdjustments(stats, r);
+			if (!acted) continue;
+			report.with_proposals++;
+
+			const optedIn = r.auto_optimize === true;
+			const willApply = mode === 'apply' && optedIn && report.applied < maxApplies;
+			if (mode === 'apply' && !optedIn) report.skipped_optin++;
+
+			let ledgerSeq = null;
+			if (willApply) {
+				// Enact each proposal on the strategy row (bounded values only).
+				for (const p of proposals) {
+					await sql`
+						update agent_sniper_strategies
+						set ${sql(p.field)} = ${p.to}, updated_at = now()
+						where id = ${r.strategy_id}
+					`;
+				}
+				// Log the tuning to the agent's tamper-evident ledger so the loop's
+				// own decisions are auditable next to the trades that drove them.
+				const dec = await recordDecision({
+					agentId: r.agent_id,
+					kind: 'optimize',
+					subjectRef: r.strategy_id,
+					actionRef: `optimize:${r.strategy_id}:${Date.now()}`,
+					inputs: { window: windowLabel, sample, stats, proposals },
+					rationale: `Auto-tuned ${proposals.length} field(s) for arm "${r.label || r.strategy_id}" from ${sample} real trades over ${windowLabel}: ${proposals.map((p) => `${p.field} ${p.from ?? '(unset)'}→${p.to}`).join(', ')}.`,
+					prediction: { basis: 'bounded self-tuning from realized outcomes', metric: 'realized_pnl', direction: 'up' },
+					confidence: 0.5,
+					network,
+				}).catch(() => null);
+				ledgerSeq = dec?.seq ?? null;
+				report.applied++;
+			}
+
+			await sql`
+				insert into agent_sniper_optimizer_runs
+					(strategy_id, agent_id, network, mode, window_label, sample_size, evidence, proposals, applied, ledger_seq)
+				values
+					(${r.strategy_id}, ${r.agent_id}, ${network}, ${mode}, ${windowLabel}, ${sample},
+					 ${JSON.stringify(stats)}::jsonb, ${JSON.stringify(proposals)}::jsonb, ${willApply}, ${ledgerSeq})
+			`;
+
+			report.runs.push({
+				strategy_id: r.strategy_id, label: r.label || null, sample,
+				applied: willApply, opted_in: optedIn,
+				proposals: proposals.map((p) => ({ field: p.field, from: p.from, to: p.to })),
+				notes,
+			});
+		} catch (err) {
+			report.errors++;
+			report.runs.push({ strategy_id: r.strategy_id, error: err.message });
+		}
+	}
+
+	return json(res, 200, { ok: true, ...report });
+});

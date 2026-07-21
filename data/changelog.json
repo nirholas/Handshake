@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-21",
+			"title": "Snipers that tune themselves from their own results",
+			"summary": "The sniper fleet now has an intra-arm optimizer that learns from each strategy's real trading record and proposes bounded adjustments to its own knobs (take-profit, trailing/stop, hold time, entry-quality, size). It runs in shadow mode by default, recording exactly what it would change without touching anything, and in apply mode only tunes strategies that opted in, logging every change to the agent's tamper-evident reasoning ledger. It pairs with the portfolio evolution engine (which reallocates budget across arms): the optimizer tunes each arm inward, evolution decides which arms get capital. Neither can touch a safety field.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/agent-sniper"
+		},
+		{
+			"date": "2026-07-21",
 			"title": "Marketplace: submitting an agent no longer means typing a form",
 			"summary": "The Submit Agent flow on /marketplace is now a chooser instead of a wall of text fields. The primary path sends you to the guided agent builder (3D avatar, persona, publish); a second path lists the agents you already have, with drafts publishable in one click right from the dialog; the old manual form and JSON import stay available behind an Advanced toggle. The featured hero is more compact so search and listings are visible without scrolling, the signed-out My Agents view got a proper call to action, and related agents on detail pages now show their 3D thumbnails.",
 			"tags": [

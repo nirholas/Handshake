@@ -47,6 +47,14 @@
 			<description>The /sniper/experiments scoreboard now shows each strategy's live wallet: its address, a Solscan link, and its real-time SOL balance, plus the shared master wallet that auto-funds the fleet. Every arm also links straight to its Reasoning Ledger, a tamper-evident, on-chain-anchored record of every single buy decision: the exact market data and rationale the agent acted on at entry, and once the trade closes, the real outcome (win or loss, by how much). Nothing is hidden or summarized away; wins and losses are published with the same detail.</description>
 		</item>
 		<item>
+			<title>Snipers that tune themselves from their own results</title>
+			<link>https://three.ws/docs/agent-sniper</link>
+			<guid isPermaLink="false">2026-07-21:Snipers that tune themselves from their own results</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The sniper fleet now has an intra-arm optimizer that learns from each strategy's real trading record and proposes bounded adjustments to its own knobs (take-profit, trailing/stop, hold time, entry-quality, size). It runs in shadow mode by default, recording exactly what it would change without touching anything, and in apply mode only tunes strategies that opted in, logging every change to the agent's tamper-evident reasoning ledger. It pairs with the portfolio evolution engine (which reallocates budget across arms): the optimizer tunes each arm inward, evolution decides which arms get capital. Neither can touch a safety field.</description>
+		</item>
+		<item>
 			<title>three.ws joins the NVIDIA Inception program</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-21:three.ws joins the NVIDIA Inception program</guid>
