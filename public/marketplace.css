@@ -778,6 +778,72 @@ body.market-page > header {
 }
 .tool-detail-cta:hover { opacity: 0.88; }
 .tool-detail-cta.installed { background: var(--surface-2); color: var(--ink); border: 1px solid var(--stroke-strong); }
+
+/* What installing does (pre-install) + where to go next (post-install) */
+.skill-detail-how {
+	margin: var(--space-md) 0 0;
+	font-size: 13px;
+	line-height: 1.6;
+	color: var(--ink-dim);
+	max-width: 62ch;
+}
+.skill-detail-next {
+	margin-top: var(--space-md);
+	padding: var(--space-md) var(--space-lg);
+	border-radius: var(--radius-md);
+	background: color-mix(in srgb, var(--success, #4ade80) 8%, transparent);
+	border: 1px solid color-mix(in srgb, var(--success, #4ade80) 28%, transparent);
+	animation: skill-next-in 0.25s ease-out;
+}
+@keyframes skill-next-in {
+	from { opacity: 0; transform: translateY(4px); }
+	to { opacity: 1; transform: none; }
+}
+.skill-detail-next-head {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	font-size: 14px;
+	color: var(--ink);
+}
+.skill-detail-next-check {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--success, #4ade80) 18%, transparent);
+	color: var(--success, #4ade80);
+	font-size: 12px;
+	font-weight: 700;
+	flex: 0 0 auto;
+}
+.skill-detail-next-desc {
+	margin: var(--space-sm) 0 0;
+	font-size: 13px;
+	line-height: 1.6;
+	color: var(--ink-dim);
+	max-width: 62ch;
+}
+.skill-detail-next-cta {
+	display: inline-block;
+	margin-top: var(--space-md);
+	padding: var(--space-sm) var(--space-lg);
+	border-radius: var(--radius-md);
+	background: var(--ink);
+	color: var(--btn-primary-fg, #0a0a0a);
+	font-size: 14px;
+	font-weight: 700;
+	text-decoration: none;
+	transition: opacity 0.15s;
+}
+.skill-detail-next-cta:hover { opacity: 0.88; }
+.skill-detail-next-cta:focus-visible {
+	outline: 2px solid var(--accent, #00d9ff);
+	outline-offset: 2px;
+}
+.skill-detail-next-cta:active { opacity: 0.8; }
 .market-tool-detail .btn-secondary {
 	display: inline-flex;
 	align-items: center;
@@ -1892,6 +1958,12 @@ body.market-page > header {
 	flex-shrink: 0;
 }
 
+.related-card .av.av-img {
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
 .related-card .name {
 	font-size: 13px;
 	font-weight: 600;
@@ -2433,6 +2505,210 @@ body.market-page > header {
 	padding: var(--space-xs) var(--space-sm);
 	background: rgba(239, 68, 68, 0.08);
 	border-radius: var(--radius-sm);
+}
+
+/* ── Submit modal: choose-a-path layout ─────────────────────────────── */
+
+.market-submit-path {
+	display: flex;
+	align-items: center;
+	gap: var(--space-md);
+	padding: var(--space-md);
+	background: var(--ink);
+	color: var(--btn-primary-fg, #0a0a0a);
+	border-radius: var(--radius-md);
+	text-decoration: none;
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.market-submit-path:hover,
+.market-submit-path:focus-visible {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 24px rgba(255, 255, 255, 0.08);
+}
+
+.market-submit-path .msp-icon {
+	font-size: 20px;
+	flex-shrink: 0;
+}
+
+.market-submit-path .msp-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.market-submit-path .msp-copy strong {
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.market-submit-path .msp-copy span {
+	font-size: 12px;
+	opacity: 0.75;
+	line-height: 1.4;
+}
+
+.market-submit-path .msp-arrow {
+	margin-left: auto;
+	font-size: 18px;
+	flex-shrink: 0;
+	transition: transform 0.15s ease;
+}
+
+.market-submit-path:hover .msp-arrow {
+	transform: translateX(3px);
+}
+
+.market-submit-mine .msm-title {
+	margin: 0 0 var(--space-xs);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+}
+
+.msm-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+	max-height: 264px;
+	overflow-y: auto;
+}
+
+.msm-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-sm);
+	padding: var(--space-xs) var(--space-sm);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+}
+
+.msm-row:hover {
+	border-color: var(--stroke-strong);
+}
+
+.msm-thumb {
+	width: 36px;
+	height: 36px;
+	border-radius: var(--radius-sm);
+	background: var(--surface-1) center/cover no-repeat;
+	display: grid;
+	place-items: center;
+	font-size: 15px;
+	color: var(--ink-dim);
+	flex-shrink: 0;
+}
+
+.msm-meta {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.msm-name {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.msm-status {
+	font-size: 11px;
+	color: var(--ink-dim);
+}
+
+.msm-status.live {
+	color: var(--success, #4ade80);
+}
+
+.msm-action {
+	margin-left: auto;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--space-2xs);
+}
+
+.msm-category {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke-strong);
+	color: var(--ink);
+	border-radius: var(--radius-sm);
+	font-size: 11px;
+	padding: 4px 6px;
+	max-width: 110px;
+}
+
+.msm-btn {
+	background: var(--ink);
+	color: var(--btn-primary-fg, #0a0a0a);
+	border: 0;
+	border-radius: var(--radius-sm);
+	padding: 6px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.msm-btn:hover {
+	transform: translateY(-1px);
+}
+
+.msm-btn[disabled] {
+	opacity: 0.6;
+	cursor: default;
+	transform: none;
+}
+
+.msm-btn.sec {
+	background: transparent;
+	color: var(--ink);
+	border: 1px solid var(--stroke-strong);
+}
+
+.msm-note {
+	font-size: 12px;
+	color: var(--ink-dim);
+	padding: var(--space-sm);
+	background: var(--surface-2);
+	border: 1px dashed var(--stroke);
+	border-radius: var(--radius-md);
+	line-height: 1.5;
+}
+
+.msm-note .msm-note-cta {
+	color: var(--ink);
+	font-weight: 600;
+	cursor: pointer;
+	background: none;
+	border: 0;
+	padding: 0;
+	font-size: 12px;
+	text-decoration: underline;
+}
+
+.msm-error {
+	flex-basis: 100%;
+	font-size: 12px;
+	color: var(--danger);
+	padding: var(--space-2xs) 0;
+}
+
+#market-quickform {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-md);
 }
 
 .market-modal-import {
@@ -3110,19 +3386,22 @@ body.market-page > header {
 
 .market-hero {
 	display: grid;
-	grid-template-columns: minmax(280px, 480px) 1fr;
+	grid-template-columns: minmax(280px, 440px) 1fr;
 	gap: var(--space-lg);
-	padding: var(--space-lg) var(--space-lg);
+	padding: var(--space-md) var(--space-lg);
 	border-bottom: 1px solid var(--stroke);
 	background:
 		radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.04), transparent 60%),
 		radial-gradient(ellipse at bottom left, rgba(253, 224, 71, 0.03), transparent 50%),
 		#000;
-	min-height: 360px;
+	min-height: 300px;
 	position: relative;
 	overflow: hidden;
 }
 
+/* 4/3 stage (not square): keeps the featured avatar prominent while leaving
+   the search toolbar and the first row of listings visible on a 900px-tall
+   viewport — the marketplace should show the market above the fold. */
 .market-hero-stage {
 	position: relative;
 	border-radius: var(--radius-card);
@@ -3131,9 +3410,9 @@ body.market-page > header {
 		var(--surface-1);
 	border: 1px solid var(--stroke);
 	overflow: hidden;
-	min-height: 320px;
-	aspect-ratio: 1 / 1;
-	max-width: 480px;
+	min-height: 280px;
+	aspect-ratio: 4 / 3;
+	max-width: 440px;
 }
 
 .market-hero-stage model-viewer {

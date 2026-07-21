@@ -3829,7 +3829,7 @@
 					<div class="market-mine-head">
 						<h2 class="market-section-heading" data-i18n="marketplace.skills_marketplace">Skills Marketplace</h2>
 						<span class="market-mine-sub" id="skills-subtitle"
-							 data-i18n="marketplace.browse_capabilities_you_can_unlock_or_fork">Browse capabilities you can unlock or fork</span
+							 data-i18n="marketplace.skills_subtitle_install">Install a skill and your agent follows its playbook in every signed-in chat</span
 						>
 					</div>
 					<input
@@ -4197,6 +4197,23 @@
 								hidden
 							></button>
 						</div>
+						<p class="skill-detail-how" id="skill-detail-how" hidden>
+							Installing adds this skill to your account. Your agent reads its
+							playbook in every signed-in chat on three.ws and applies it whenever
+							the conversation is in its domain.
+						</p>
+						<div class="skill-detail-next" id="skill-detail-next" aria-live="polite" hidden>
+							<div class="skill-detail-next-head">
+								<span class="skill-detail-next-check" aria-hidden="true">✓</span>
+								<strong data-i18n="marketplace.skill_installed_title">Your agent has this skill</strong>
+							</div>
+							<p class="skill-detail-next-desc" id="skill-detail-next-desc">
+								Its playbook now loads into every chat you have while signed in.
+								Ask your agent something in this skill's domain and the reply
+								follows it.
+							</p>
+							<a class="skill-detail-next-cta" id="skill-detail-next-chat" href="/app" data-i18n="marketplace.skill_installed_cta">Chat with your agent →</a>
+						</div>
 						<section class="tool-detail-block" id="skill-detail-rating-wrap" hidden>
 							<h2 class="tool-detail-block-title" data-i18n="marketplace.rate_this_skill">Rate this skill</h2>
 							<div id="skill-detail-rating" class="market-skill-rating"></div>
@@ -4504,6 +4521,36 @@
 					</button>
 				</div>
 
+				<a class="market-submit-path" id="market-submit-builder" href="/create-agent">
+					<span class="msp-icon" aria-hidden="true">✦</span>
+					<span class="msp-copy">
+						<strong data-i18n="marketplace.submit_builder_title">Create a new agent</strong>
+						<span data-i18n="marketplace.submit_builder_desc"
+							>Guided builder: pick a 3D avatar, write the persona, publish. About two minutes.</span
+						>
+					</span>
+					<span class="msp-arrow" aria-hidden="true">→</span>
+				</a>
+
+				<section class="market-submit-mine" aria-labelledby="msm-title">
+					<h3 class="msm-title" id="msm-title" data-i18n="marketplace.submit_publish_existing">
+						Or publish one you already have
+					</h3>
+					<div class="msm-list" id="msm-list" aria-live="polite"></div>
+				</section>
+
+				<button
+					type="button"
+					id="market-quickform-toggle"
+					class="market-import-btn"
+					aria-expanded="false"
+					aria-controls="market-quickform"
+					data-i18n="marketplace.submit_manual_toggle"
+				>
+					Advanced: type the details manually ↓
+				</button>
+
+				<div id="market-quickform" hidden>
 				<div class="market-modal-import">
 					<button type="button" id="market-import-toggle" class="market-import-btn" data-i18n="marketplace.import_from_json">
 						Import from JSON ↓
@@ -4646,6 +4693,7 @@
 						</button>
 					</div>
 				</form>
+				</div>
 			</div>
 		</div>
 

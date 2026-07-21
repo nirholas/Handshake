@@ -55,7 +55,7 @@ async function resolveOptionalAuth(req) {
 	return null;
 }
 
-function toSkill(row, { includeInstalled = false, includeSchema = false } = {}) {
+function toSkill(row, { includeInstalled = false, includeSchema = false, includeContent = false } = {}) {
 	const hasContent = typeof row.content === 'string' && row.content.length > 0;
 	const skill = {
 		id: row.id,
@@ -76,7 +76,8 @@ function toSkill(row, { includeInstalled = false, includeSchema = false } = {}) 
 		content_preview: hasContent ? row.content.slice(0, 280) : null,
 	};
 	if (includeInstalled) skill.installed = !!row.installed;
-	if (includeSchema) skill.schema_json = row.schema_json;
+	if (includeSchema) skill.schema_json = row.schema_json ?? null;
+	if (includeContent) skill.content = hasContent ? row.content : null;
 	return skill;
 }
 
@@ -164,7 +165,16 @@ async function handleList(req, res) {
 	});
 
 	const hasMore = rows.length > limit;
-	const skills = rows.slice(0, limit).map((r) => toSkill(r, { includeInstalled: userId != null }));
+	// The caller's own installed set (`?installed=true`) returns the full
+	// payload (content + schema_json) so clients can hydrate an agent from one
+	// request. Public browse lists stay slim: preview + has_content only.
+	const skills = rows.slice(0, limit).map((r) =>
+		toSkill(r, {
+			includeInstalled: userId != null,
+			includeSchema: installedOnly,
+			includeContent: installedOnly,
+		}),
+	);
 
 	const cacheHeaders = userId
 		? {}
@@ -195,6 +205,7 @@ function runListQuery(p) {
 			SELECT
 				ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
 				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd, ms.content,
+				CASE WHEN ${installedOnly} THEN ms.schema_json END AS schema_json,
 				u.display_name AS author_display_name,
 				ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
 				COUNT(sr.rating)::int AS rating_count,
@@ -239,6 +250,7 @@ function runListQuery(p) {
 			SELECT
 				ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
 				ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd, ms.content,
+				CASE WHEN ${installedOnly} THEN ms.schema_json END AS schema_json,
 				u.display_name AS author_display_name,
 				ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
 				COUNT(sr.rating)::int AS rating_count,
@@ -282,7 +294,8 @@ function runListQuery(p) {
 	return sql`
 		SELECT
 			ms.id, ms.name, ms.slug, ms.description, ms.category, ms.tags,
-			ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd,
+			ms.install_count, ms.created_at, ms.author_id, ms.price_per_call_usd, ms.content,
+			CASE WHEN ${installedOnly} THEN ms.schema_json END AS schema_json,
 			u.display_name AS author_display_name,
 			ROUND(COALESCE(AVG(sr.rating), 0)::numeric, 1)::float AS avg_rating,
 			COUNT(sr.rating)::int AS rating_count,

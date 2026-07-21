@@ -92,7 +92,14 @@ function overlap(a, b) {
 // --- load data --------------------------------------------------------------
 
 const entries = JSON.parse(readFileSync(resolve(root, 'data/changelog.json'), 'utf8')).entries;
-const entryTokens = entries.map((e) => ({ date: e.date, tok: tokens(`${e.title} ${e.summary}`) }));
+// New pages get their own changelog entry automatically from their `added`
+// date (see data/pages.json's $comment) — fold those in as covered too, or
+// every page-launch commit reads as a gap even though it's already logged.
+const pageLaunches = JSON.parse(readFileSync(resolve(root, 'data/pages.json'), 'utf8')).sections
+	.flatMap((s) => s.pages || [])
+	.filter((p) => p.added)
+	.map((p) => ({ date: p.added, title: p.title, summary: p.description }));
+const entryTokens = [...entries, ...pageLaunches].map((e) => ({ date: e.date, tok: tokens(`${e.title} ${e.summary}`) }));
 
 function daysApart(a, b) {
 	return Math.abs((new Date(a) - new Date(b)) / 86400000);

@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-21",
+			"title": "Marketplace: submitting an agent no longer means typing a form",
+			"summary": "The Submit Agent flow on /marketplace is now a chooser instead of a wall of text fields. The primary path sends you to the guided agent builder (3D avatar, persona, publish); a second path lists the agents you already have, with drafts publishable in one click right from the dialog; the old manual form and JSON import stay available behind an Advanced toggle. The featured hero is more compact so search and listings are visible without scrolling, the signed-out My Agents view got a proper call to action, and related agents on detail pages now show their 3D thumbnails.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/marketplace"
+		},
+		{
 			"date": "2026-07-20",
 			"title": "hood-traders gains an LLM-piloted strategy, hood-alerts now posts to X",
 			"summary": "The open-source Robinhood Chain trading fleet, hood-traders, shipped a fourth strategy: bring your own key (Claude, OpenAI, Groq, or OpenRouter) and an LLM weighs the same on-chain launch signals the mechanical sniper already checks, holistically instead of against fixed cutoffs, gated behind the exact same risk engine as every other trade. The real-time alert bot, hood-alerts, now posts to X in addition to Telegram and Discord, with a choice of the official X API or a free self-hosted xactions instance. A new `hood init` command in hood-cli walks through setting up the wallet, the LLM key, and Telegram/Discord/X in one pass, so getting the whole stack running is one command instead of hand-editing env files.",
@@ -15185,6 +15194,16 @@
 				"improvement"
 			],
 			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-07-21",
+			"title": "Installing a marketplace skill now actually teaches your agent",
+			"summary": "Skills from the marketplace used to install into the void: you clicked Install, a badge flipped, and nothing changed. Now every knowledge skill you install loads its playbook into your agent's context in every signed-in chat, so an install visibly changes how your agent answers (install whale-wallet-tracking and ask about a token's whales to see it). Skill pages also explain what installing does up front and, once installed, hand you a 'Chat with your agent' shortcut. Developers can pull their full installed set, playbooks included, from GET /api/skills?installed=true.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/marketplace?tab=skills"
 		}
 	]
 }

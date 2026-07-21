@@ -377,9 +377,19 @@ export async function executeMicrobuy(signer, plan) {
 		);
 	}
 
+	// jupiterSwapTx()'s default priority ceiling (0.001 SOL, 'medium') is sized for
+	// time-sensitive swaps elsewhere in the codebase. This lane broadcasts-and-goes
+	// with no confirm wait (see awaitConfirm() above), so nothing is waiting on fast
+	// inclusion — an occasional slower landing costs nothing. On a $0.01-$5 buy that
+	// ceiling can dwarf the trade itself, so cap it far tighter; 'medium' still
+	// prices adaptively off real network conditions, just bounded.
 	let swapB64;
 	try {
-		swapB64 = await jupiterSwapTx({ quote: plan.quote, userPublicKey: payer.toBase58() });
+		swapB64 = await jupiterSwapTx({
+			quote: plan.quote,
+			userPublicKey: payer.toBase58(),
+			maxPriorityLamports: 25_000,
+		});
 	} catch (err) {
 		await releaseDailySpend(plan.spendUsdcAtomics);
 		throw err;

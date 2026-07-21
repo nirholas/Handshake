@@ -135,12 +135,12 @@ Routing facts confirmed in `vercel.json`:
   3. (optional) User searches → `skillsState.q` → refetch; or toggles Free/Paid (client-side `isPaidSkill`).
   4. (optional) User scrolls → cursor pagination appends more cards.
   5. User clicks a card → `/marketplace/skills/:id` → `GET /api/skills/:id` renders the detail panel (header, meta pills, description, tool schemas, full content, related skills).
-  6. User clicks "Install" → `toggleSkillInstall()` POSTs `/api/skills/:id/install` (DELETE to remove); 401 → login redirect; on success the detail + grid refetch and the button flips to "Installed ✓ — Remove".
+  6. User clicks "Install" → `toggleSkillInstall()` POSTs `/api/skills/:id/install` (DELETE to remove); 401 → login redirect; on success the detail + grid refetch, the button flips to "Installed ✓ — Remove", and the "what next" panel (`#skill-detail-next`) appears: knowledge skills get a "Chat with your agent →" CTA to `/app`, schema-only packs get the `GET /api/skills?installed=true` retrieval hint. Pre-install, `#skill-detail-how` explains what installing does.
   7. (optional) User rates 1–5 stars → `POST /api/skills/:id/rate { rating }` → detail refetches with updated counts.
   8. (optional, paid skills) Detail shows an x402 panel: endpoint `GET /api/x402/skill-call?skill=:slug`, price `$X.XXX/call`, and a copy-paste `@three-ws/x402-fetch` snippet — developers pay per call from their own wallet; the server settles to the author.
 - **Decision points / branches:** free vs paid (paid = x402 per-call, not an install purchase); installed vs not; authed vs anon (install/rate gated). Marketplace skills (community tool packs with schema/content) are distinct from built-in agent skills in `src/agent-skills*.js`.
 - **External calls / dependencies:** `/api/skills`, `/api/skills/categories`, `/api/skills/:id`, `/api/skills/:id/install` (POST/DELETE), `/api/skills/:id/rate`, `/api/x402/skill-call` (per-call payment), `/api/creators/:id` (author modal).
-- **Success state:** Skill installed (flips to "Installed ✓"), rating recorded, x402 snippet copyable; installs reflected on the user's agents.
+- **Success state:** Skill installed (flips to "Installed ✓" + the what-next panel), rating recorded, x402 snippet copyable. Installs take effect at chat time: `/api/chat` loads the signed-in user's installed knowledge skills (`api/_lib/installed-skills.js`, newest 8, content budget 24k chars) into the system prompt and reports them as `skills_applied` in the SSE `done` event; `GET /api/skills?installed=true` returns the full payload (content + schema_json) for external agents.
 - **Empty / error states:** "No skills found" with Clear-filters / Publish-a-Skill CTAs; `renderErrorState('skills')` with retry; install button restores text + re-enables on error; auth redirect on 401.
 - **Step count:** 3 required (+5 optional)
 

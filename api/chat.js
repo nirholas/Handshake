@@ -52,6 +52,7 @@ import {
 	PER_CALL_TIMEOUT_MS,
 } from './_lib/chat-models.js';
 import { computeContext, searchMemories } from './_lib/memory-store.js';
+import { loadInstalledSkills, skillsPromptBlock } from './_lib/installed-skills.js';
 import {
 	vertexClaudeEnabled,
 	vertexClaudePrimary,
@@ -540,7 +541,27 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	const systemPrompt = buildSystemPrompt(body.context, personaPrompt, recalledMemories);
+	// Installed marketplace skills: a signed-in user's installed knowledge
+	// skills become standing playbooks in the system prompt, so installing a
+	// skill from /marketplace visibly changes how their agent answers. The
+	// slugs ride along in the done event as `skills_applied` so clients can
+	// show which skills were in play. Best-effort: a skills-store hiccup
+	// degrades to a skill-less reply, never a failed chat.
+	let installedSkills = [];
+	if (auth?.userId) {
+		try {
+			installedSkills = await loadInstalledSkills(auth.userId);
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'installed-skills' });
+		}
+	}
+
+	const systemPrompt = buildSystemPrompt(
+		body.context,
+		personaPrompt,
+		recalledMemories,
+		installedSkills,
+	);
 	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
 	history.push({ role: 'user', content: body.message });
 
@@ -936,6 +957,8 @@ export default wrap(async (req, res) => {
 		recalled: recalledMemories,
 		recalledSemantic,
 		recalledTs: new Date().toISOString(),
+		// Marketplace skills whose playbooks were in this reply's context.
+		skills_applied: installedSkills.map((s) => s.slug),
 	});
 	res.end();
 
@@ -1509,7 +1532,7 @@ async function recallForChat(agentId, message, isOwner) {
 		}));
 }
 
-function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = []) {
+function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = []) {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
 		: 'No model is currently loaded in the viewer.';
@@ -1528,6 +1551,8 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = []) {
 			'',
 		);
 	}
+	const skillsBlock = skillsPromptBlock(installedSkills);
+	if (skillsBlock) lines.push(skillsBlock, '');
 	lines.push(
 		'You are an embodied AI assistant rendered as a 3D avatar at three.ws — the platform for building, embedding, and monetising 3D AI agents.',
 		'',

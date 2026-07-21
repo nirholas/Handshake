@@ -2548,6 +2548,31 @@ function renderSkillDetail(skill) {
 		installBtn.onclick = () => toggleSkillInstall(skill.id);
 	}
 
+	// What installing does, and where to go next. Knowledge skills (content)
+	// load into the signed-in user's /api/chat system prompt, so the payoff is
+	// a conversation with their agent; schema-only packs are consumed by
+	// agents through the skills API instead, so the CTA stays honest per kind.
+	const isKnowledgeSkill = Boolean(skill.content || skill.has_content);
+	const howEl = $('skill-detail-how');
+	if (howEl) {
+		howEl.textContent = isKnowledgeSkill
+			? 'Installing adds this skill to your account. Your agent reads its playbook in every signed-in chat on three.ws and applies it whenever the conversation is in its domain.'
+			: 'Installing saves this tool pack to your account. Fetch it from the skills API (GET /api/skills?installed=true) and hand its tool definitions to any agent you run.';
+		howEl.hidden = !!skill.installed;
+	}
+	const nextEl = $('skill-detail-next');
+	if (nextEl) {
+		nextEl.hidden = !skill.installed;
+		const nextDesc = $('skill-detail-next-desc');
+		if (nextDesc) {
+			nextDesc.textContent = isKnowledgeSkill
+				? `Its playbook now loads into every chat you have while signed in. Ask your agent something ${skill.category ? `about ${skill.category}` : 'in its domain'} and the reply follows it.`
+				: 'This tool pack is saved to your account. Fetch it with GET /api/skills?installed=true to wire its tools into your own agent.';
+		}
+		const nextChat = $('skill-detail-next-chat');
+		if (nextChat) nextChat.hidden = !isKnowledgeSkill;
+	}
+
 	// Share.
 	const shareBtn = $('skill-detail-share');
 	if (shareBtn) shareBtn.onclick = () => shareCurrentPage(shareBtn, `${skill.name} — three.ws skill`, skill.description || 'Check out this agent skill on three.ws');
@@ -2711,6 +2736,10 @@ async function toggleSkillInstall(id) {
 		skillsState.loaded = false;
 		await loadSkillDetail(id);
 		loadSkillsTab(true);
+		// A fresh install reveals the "what next" panel; make sure it's on screen.
+		if (!wasInstalled) {
+			$('skill-detail-next')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		}
 	} catch (err) {
 		log.error('[marketplace] skill install', err);
 		btn.disabled = false;
@@ -4316,12 +4345,16 @@ async function loadMine(force = false) {
 	try {
 		const r = await fetch(`${API}/marketplace/agents/mine`, { credentials: 'include' });
 		if (r.status === 401) {
-			grid.innerHTML = `<div class="market-empty-cta">
-					<h3>Sign in to see your agents</h3>
-					<p>Your published and draft agents will appear here.</p>
-					<button id="mine-signin">Sign in</button>
-				</div>`;
-			$('mine-signin')?.addEventListener('click', () => {
+			grid.innerHTML = emptyStateHTML({
+				icon: '🤖',
+				title: 'Sign in to see your agents',
+				body: 'Your published agents and drafts live here — publish, price, and track them from one place.',
+				actions: [
+					{ label: 'Sign in', id: 'mine-signin', primary: true },
+					{ label: "What's an agent?", href: '/docs/agents-vs-avatars' },
+				],
+			});
+			grid.querySelector('[data-sk-action="mine-signin"]')?.addEventListener('click', () => {
 				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 			});
 			mineState.loading = false;
@@ -5402,7 +5435,11 @@ function renderSimilar(items) {
 			shown
 				.map(
 					(a) => `<div class="related-card" data-id="${a.id}">
-						<div class="av">${initial(a.name)}</div>
+						${
+							a.thumbnail_url
+								? `<div class="av av-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')" role="img" aria-label="${escapeHtml(a.name || 'Agent')}"></div>`
+								: `<div class="av">${initial(a.name)}</div>`
+						}
 						<div style="min-width:0">
 							<div class="name">${escapeHtml(a.name || '')}</div>
 							<div class="desc">${escapeHtml(a.description || '')}</div>
@@ -6066,14 +6103,157 @@ function bindEvents() {
 }
 
 // ── Submit Modal ──────────────────────────────────────────────────────────
+//
+// Three paths, in order of how much work they ask of the user:
+//   1. "Create a new agent" → the /create-agent guided builder (primary).
+//   2. Publish an agent the user already has (drafts from the builder, forks,
+//      imports) — fetched from /marketplace/agents/mine, one click to go live.
+//   3. An advanced manual form (+ LobeHub JSON import), collapsed by default.
 
 function openSubmitModal() {
 	$('market-submit-overlay').hidden = false;
-	$('sf-name').focus();
+	$('market-submit-builder')?.focus();
+	loadSubmitMine();
 }
 
 function closeSubmitModal() {
 	$('market-submit-overlay').hidden = true;
+}
+
+const submitMine = { loading: false, items: null, authed: null };
+
+async function loadSubmitMine(force = false) {
+	const list = $('msm-list');
+	if (!list || submitMine.loading) return;
+	if (submitMine.items !== null && submitMine.authed !== null && !force) {
+		return renderSubmitMine();
+	}
+	submitMine.loading = true;
+	list.innerHTML = `<div class="msm-row" aria-hidden="true">
+			<div class="msm-thumb"></div>
+			<div class="msm-meta"><div class="msm-name" style="width:120px;background:var(--surface-1);border-radius:4px">&nbsp;</div></div>
+		</div>`;
+	try {
+		const r = await fetch(`${API}/marketplace/agents/mine`, { credentials: 'include' });
+		if (r.status === 401) {
+			submitMine.authed = false;
+			submitMine.items = [];
+		} else {
+			const j = await r.json().catch(() => ({}));
+			submitMine.authed = true;
+			submitMine.items = j?.data?.items ?? [];
+		}
+	} catch (err) {
+		log.error('[marketplace] submit mine', err);
+		submitMine.authed = null;
+		submitMine.items = null;
+		list.innerHTML = `<div class="msm-note">Couldn't load your agents.
+			<button type="button" class="msm-note-cta" id="msm-retry">Retry</button></div>`;
+		$('msm-retry')?.addEventListener('click', () => loadSubmitMine(true));
+		submitMine.loading = false;
+		return;
+	}
+	submitMine.loading = false;
+	renderSubmitMine();
+}
+
+function renderSubmitMine() {
+	const list = $('msm-list');
+	if (!list) return;
+
+	if (submitMine.authed === false) {
+		list.innerHTML = `<div class="msm-note">Sign in to see your agents here — drafts and
+			published agents both show up, ready to go live in one click.
+			<button type="button" class="msm-note-cta" id="msm-signin">Sign in</button></div>`;
+		$('msm-signin')?.addEventListener('click', () => {
+			location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+		});
+		return;
+	}
+
+	const items = submitMine.items || [];
+	if (!items.length) {
+		list.innerHTML = `<div class="msm-note">You don't have any agents yet.
+			The builder above walks you through your first one — avatar, persona, and all.</div>`;
+		return;
+	}
+
+	// Drafts first — they're the ones with a pending action.
+	const sorted = [...items].sort((a, b) => Number(a.is_published) - Number(b.is_published));
+	const categories = [...($('sf-category')?.options || [])]
+		.map((o) => o.value)
+		.filter(Boolean);
+
+	list.innerHTML = sorted
+		.map((a) => {
+			const thumb = a.thumbnail_url
+				? `<div class="msm-thumb" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
+				: `<div class="msm-thumb">${escapeHtml(initial(a.name))}</div>`;
+			const status = a.is_published
+				? '<span class="msm-status live">Published</span>'
+				: '<span class="msm-status">Draft</span>';
+			// The publish endpoint requires a category; drafts made outside the
+			// builder can lack one, so surface an inline picker only in that case.
+			const needsCategory = !a.is_published && !a.category;
+			const categorySelect = needsCategory
+				? `<select class="msm-category" data-cat-for="${escapeHtml(a.id)}" aria-label="Category for ${escapeHtml(a.name || 'agent')}">
+						${categories.map((c) => `<option value="${c}"${c === 'general' ? ' selected' : ''}>${c}</option>`).join('')}
+					</select>`
+				: '';
+			const action = a.is_published
+				? `<button type="button" class="msm-btn sec" data-msm-view="${escapeHtml(a.id)}">View</button>`
+				: `${categorySelect}<button type="button" class="msm-btn" data-msm-publish="${escapeHtml(a.id)}">Publish</button>`;
+			return `<div class="msm-row" data-msm-id="${escapeHtml(a.id)}">
+					${thumb}
+					<div class="msm-meta">
+						<span class="msm-name">${escapeHtml(a.name || 'Untitled agent')}</span>
+						${status}
+					</div>
+					<div class="msm-action">${action}</div>
+				</div>`;
+		})
+		.join('');
+
+	list.querySelectorAll('[data-msm-view]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			closeSubmitModal();
+			navTo(`/marketplace/agents/${btn.dataset.msmView}`);
+		});
+	});
+	list.querySelectorAll('[data-msm-publish]').forEach((btn) => {
+		btn.addEventListener('click', () => publishExistingAgent(btn.dataset.msmPublish, btn));
+	});
+}
+
+async function publishExistingAgent(id, btn) {
+	const row = btn.closest('.msm-row');
+	const catSel = row?.querySelector(`[data-cat-for="${CSS.escape(id)}"]`);
+	btn.disabled = true;
+	btn.textContent = 'Publishing…';
+	row?.querySelector('.msm-error')?.remove();
+	try {
+		const body = catSel ? { category: catSel.value } : {};
+		const r = await fetch(`${API}/marketplace/agents/${id}/publish`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify(body),
+		});
+		const j = await r.json().catch(() => ({}));
+		if (!r.ok) throw new Error(j.error_description || 'Publish failed');
+		const item = (submitMine.items || []).find((a) => a.id === id);
+		if (item) item.is_published = true;
+		mineState.loaded = false;
+		renderSubmitMine();
+		loadList(true);
+	} catch (err) {
+		btn.disabled = false;
+		btn.textContent = 'Publish';
+		const errEl = document.createElement('div');
+		errEl.className = 'msm-error';
+		errEl.textContent = err.message;
+		row?.appendChild(errEl);
+	}
 }
 
 // sf-price-rows state for the submit modal
@@ -6116,6 +6296,25 @@ function bindSubmit() {
 	$('market-submit-overlay').addEventListener('click', (e) => {
 		if (e.target === $('market-submit-overlay')) closeSubmitModal();
 	});
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && !$('market-submit-overlay').hidden) closeSubmitModal();
+	});
+
+	// Advanced manual form, collapsed by default — the picker paths above cover
+	// the common cases; the form remains for hand-tuned or imported agents.
+	const quickToggle = $('market-quickform-toggle');
+	const quickForm = $('market-quickform');
+	if (quickToggle && quickForm) {
+		quickToggle.addEventListener('click', () => {
+			const open = quickForm.hidden;
+			quickForm.hidden = !open;
+			quickToggle.setAttribute('aria-expanded', String(open));
+			quickToggle.textContent = open
+				? 'Advanced: type the details manually ↑'
+				: 'Advanced: type the details manually ↓';
+			if (open) $('sf-name').focus();
+		});
+	}
 
 	// Add skill price row in submit modal
 	$('sf-add-skill')?.addEventListener('click', () => {
@@ -6253,6 +6452,8 @@ function bindSubmit() {
 			}
 
 			sfPriceRows.length = 0;
+			mineState.loaded = false;
+			submitMine.items = null;
 			if (publish) {
 				closeSubmitModal();
 				loadList(true);
