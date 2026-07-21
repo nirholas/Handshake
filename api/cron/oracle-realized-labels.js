@@ -1,4 +1,4 @@
-// GET/POST /api/cron/oracle-realized-labels — Bridge 1: give the Oracle real
+// GET/POST /api/cron/oracle-realized-labels (Bridge 1): give the Oracle real
 // money to learn from.
 //
 // The Oracle/intel learner (workers/agent-sniper/intel/learn.js) trains its
@@ -33,7 +33,7 @@ export default wrapCron(async (req, res) => {
 
 	const network = 'mainnet';
 	const rows = await sql`
-		insert into oracle_realized_outcomes (mint, network, realized_win, realized_pnl_pct, samples, updated_at)
+		insert into oracle_realized_outcomes (mint, network, realized_win, realized_pnl_pct, samples)
 		select p.mint, p.network,
 			case when sum(p.realized_pnl_lamports) > 0 then 1 else 0 end,
 			round(avg(p.realized_pnl_pct)::numeric, 4),

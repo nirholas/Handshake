@@ -117,6 +117,16 @@ The division of labor is deliberate and enforced by construction: the optimizer 
 
 The design principle is fixed across all three: **models and loops propose, the deterministic pipeline disposes.** No autonomous output ever bypasses the firewall, the budget caps, or the confirmation gates around irreversible actions. The worst a self-tuned parameter can produce is a bad, stop-loss-protected, firewall-vetted, budget-bounded trade, fully logged and reversible with one update.
 
+## The Oracle feedback loop: closing the silos
+
+For a while two learning systems ran without talking to each other. The Oracle/intel engine learns *which launch signals predict a coin pumping* (`intel-learn`, every 15 min) and trained on coarse chart labels: a coin "won" if it hit ATH >= 3x at any point. The sniper optimizer learns *which config makes money* from realized PnL. Neither fed the other, and the Oracle never saw a single real trade result, even though a coin can spike 3x on the chart while the sniper still loses (bought late, timed-out exit). Three bridges now connect them:
+
+- **Bridge 1: realized PnL trains the Oracle.** `api/cron/oracle-realized-labels` derives each traded coin's real win/loss from `agent_sniper_positions` into `oracle_realized_outcomes`, and `trainWeights` prefers that label over the chart label. The Oracle now learns from real money where it has it, and falls back to chart outcomes where it doesn't. Realized labels are scarce but gold-standard.
+- **Bridge 2: the optimizer uses the Oracle.** `api/cron/sniper-optimize` joins each arm's trades to the Oracle conviction the coin had at entry, buckets the realized win rate by conviction band, and (Rule O) tunes `min_oracle_score` toward the band where that arm actually wins. This already surfaced a real finding: the fleet had mostly been sniping sub-30-conviction coins and losing (~17% win rate), so the optimizer will raise the conviction floor once it has enough high-conviction trades to prove the lift.
+- **Bridge 3: calibration.** `api/cron/oracle-calibrate` measures, per conviction band, whether the Oracle's score matches the *realized* win rate (does an 80 actually win ~80%?) and writes a bounded correction factor to `oracle_calibration`, exposed at `GET /api/oracle/calibration`. The correction is applied through the optimizer's entry-threshold tuning rather than by overwriting the canonical conviction score, which would feed back into its own measurement.
+
+The direction of every bridge is the same: real, realized money is the ground truth, and every layer of judgment is pulled toward what actually paid.
+
 ## Try it
 
 - Arm your first strategy: [the sniper tutorial](/tutorials/arm-an-agent-sniper)

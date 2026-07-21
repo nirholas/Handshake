@@ -312,22 +312,31 @@ export async function trainWeights({ network = 'mainnet', minSamples = 50 } = {}
 	const sql = await getSql();
 	if (!sql) return { trained: false, sample_size: 0 };
 
-	// Pull signals JSONB + all direct columns needed for conditional bucketing
+	// Pull signals JSONB + all direct columns needed for conditional bucketing.
+	// Bridge 1: LEFT JOIN oracle_realized_outcomes so a coin the fleet actually
+	// traded carries its REAL realized win/loss (ro.realized_win). Realized PnL is
+	// higher-fidelity ground truth than the chart-based ATH label, so the label
+	// below prefers it when present.
 	const rows = await sql`
 		select
-			i.signals, o.outcome,
+			i.signals, o.outcome, ro.realized_win,
 			i.bundle_score, i.organic_score, i.quality_score,
 			i.bubblemap_connectivity, i.unique_buyers,
 			i.smart_money_count, i.is_news_meme,
 			i.dev_sold, i.category
 		from pump_coin_intel i
 		join pump_coin_outcomes o on o.mint = i.mint
+		left join oracle_realized_outcomes ro on ro.mint = i.mint and ro.network = i.network
 		where i.network = ${network} and o.outcome <> 'unknown'
 	`;
 	if (rows.length < minSamples) return { trained: false, sample_size: rows.length };
 
-	// Pearson correlation weights (existing)
-	const labels = rows.map((r) => (r.outcome === 'graduated' || r.outcome === 'pumped') ? 1 : 0);
+	// Pearson correlation weights. A traded coin's realized win/loss overrides the
+	// chart label; untraded coins fall back to graduated/pumped as before.
+	const labels = rows.map((r) => (
+		r.realized_win != null ? Number(r.realized_win)
+			: ((r.outcome === 'graduated' || r.outcome === 'pumped') ? 1 : 0)
+	));
 	const weights = {};
 	for (const key of TRAINABLE_SIGNALS) {
 		const pairs = rows.map((r, i) => [r.signals?.[key], labels[i]]);

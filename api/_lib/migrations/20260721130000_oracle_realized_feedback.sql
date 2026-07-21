@@ -10,12 +10,12 @@
 -- exit). Realized PnL is scarcer but far higher-fidelity ground truth.
 --
 -- Two additive tables:
---   oracle_realized_outcomes  — per mint, the fleet's REAL realized result
+--   oracle_realized_outcomes: per mint, the fleet's REAL realized result
 --       (win/loss + avg PnL%), derived from agent_sniper_positions by the
 --       api/cron/oracle-realized-labels cron. trainWeights (intel/learn.js)
 --       LEFT JOINs this and PREFERS the realized label when present, so Oracle
 --       trains on real money, not just price history. (Bridge 1)
---   oracle_calibration        — per conviction bucket, how the Oracle's score
+--   oracle_calibration: per conviction bucket, how the Oracle's score
 --       lined up with the REALIZED win rate (does an 80 actually win ~80%?),
 --       plus a bounded correction_factor the scorer can apply. Written by
 --       api/cron/oracle-calibrate. (Bridge 3)
