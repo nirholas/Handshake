@@ -2923,3 +2923,75 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	.cc-king-timer.cc-king-low { animation: none; }
 }
 /* ── end King of the Totem ──────────────────────────────────────────────────── */
+
+/* ── Zen mode (hide all UI) ──────────────────────────────────────────────────
+   Z, the HUD button, or a ?ui=hidden link strips every overlay — banner, chat,
+   world HUD, hotbar, prompts, name tags — so the world renders clean for
+   screenshots and ambient play. Movement affordances survive (the joystick and
+   the driving pedal cluster), and panels the player opens on purpose (build
+   palettes, shops, boards, the emote wheel) still show. Same body.is-zen
+   contract as /walk and the marketplace gallery. */
+body.is-zen #cc-hud > :not(#cc-joystick),
+body.is-zen .cc-nav-toggle,
+body.is-zen .cc-nav-drawer,
+body.is-zen #cc-tag-hud,
+body.is-zen #cc-tag-alert,
+body.is-zen #cc-king-hud,
+body.is-zen #cc-king-banner,
+body.is-zen #cc-toast,
+body.is-zen .cc-label,
+body.is-zen .cc-bubble,
+body.is-zen #wh-hud,
+body.is-zen .wh-minimap,
+body.is-zen .wh-feel-money,
+body.is-zen .wh-feel-flourish,
+body.is-zen #ps-hud,
+body.is-zen .ps-action,
+body.is-zen .ps-xp-float,
+body.is-zen .ps-levelup,
+body.is-zen .veh-prompt,
+body.is-zen .combat-prompt,
+body.is-zen .combat-attack-btn,
+body.is-zen .combat-mob-label,
+body.is-zen .combat-zone-label,
+body.is-zen .tik-prompt,
+body.is-zen .ac-prompt {
+	display: none !important;
+}
+
+/* zen toggle — under the power saver, same visual family */
+.cc-zen-btn {
+	position: fixed; top: 184px; right: 14px; z-index: 22;
+	display: inline-flex; align-items: center; gap: 8px;
+	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
+	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
+	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+.cc-zen-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
+.cc-zen-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-zen-ico { line-height: 1; filter: grayscale(1); }
+.cc-zen-label { line-height: 1; }
+
+/* zen exit pill — the one control left on screen, faded in a frame after entry */
+#cc-zen-exit {
+	position: fixed; z-index: 30;
+	top: calc(env(safe-area-inset-top, 0px) + 14px); right: 14px;
+	display: none; align-items: center; gap: 7px;
+	appearance: none; border: 1px solid var(--cc-edge);
+	background: var(--cc-panel); color: var(--cc-dim);
+	font: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+	padding: 8px 13px; border-radius: 999px; cursor: pointer;
+	backdrop-filter: blur(10px); box-shadow: var(--cc-shadow);
+	opacity: 0;
+	transition: opacity 0.3s ease, color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+body.is-zen #cc-zen-exit { display: inline-flex; }
+body.is-zen.zen-revealed #cc-zen-exit { opacity: 0.85; }
+#cc-zen-exit:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.05); opacity: 1; }
+#cc-zen-exit:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); opacity: 1; }
+#cc-zen-exit svg { width: 14px; height: 14px; display: block; }
+@media (prefers-reduced-motion: reduce) {
+	#cc-zen-exit { transition: none; }
+}

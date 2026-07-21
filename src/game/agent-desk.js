@@ -31,11 +31,12 @@
 //   desk.dispose();
 
 import {
-	Group, Mesh, MeshBasicMaterial, MeshStandardMaterial,
+	Group, Mesh, MeshStandardMaterial,
 	PlaneGeometry, BoxGeometry, CylinderGeometry,
-	CanvasTexture, SRGBColorSpace, DoubleSide, Vector3,
+	Vector3,
 } from 'three';
 import { createAgentScreenClient } from '../shared/agent-screen-client.js';
+import { makeScreenTexture, screenMaterial } from './screen-texture.js';
 
 const NEAR_DIST   = 8;    // units — player proximity to activate
 const REDRAW_MS   = 100;  // ~10fps canvas repaint
@@ -271,11 +272,9 @@ export function createAgentDesk(scene, agent, opts = {}) {
 	const canvas = document.createElement('canvas');
 	canvas.width = CW; canvas.height = CH;
 	const ctx = canvas.getContext('2d');
-	const tex = new CanvasTexture(canvas);
-	tex.colorSpace = SRGBColorSpace;
-	tex.anisotropy = 8;
+	const tex = makeScreenTexture(canvas);
 
-	const screenMat = new MeshBasicMaterial({ map: tex, toneMapped: false });
+	const screenMat = screenMaterial(tex);
 	const screen = new Mesh(new PlaneGeometry(MON_W, MON_H), screenMat);
 	screen.position.set(0, monCY, -0.35 + 0.07);
 	screen.userData.agentDesk = true;

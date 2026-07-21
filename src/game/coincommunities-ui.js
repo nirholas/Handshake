@@ -1320,6 +1320,30 @@ export class CommunityUI {
 		]);
 		onPowerSaverChange((on) => this.powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false'));
 
+		// Zen mode — hide every overlay so the world renders clean. Same
+		// body.is-zen contract as /walk; Z is the hotkey (wired by the host) and
+		// the floating exit pill below is the only control left on screen.
+		this.zenBtn = el('button', {
+			class: 'cc-zen-btn', type: 'button', 'aria-pressed': 'false',
+			'aria-label': 'Zen mode', title: 'Zen mode — hide every panel, just the world (Z)',
+			onclick: () => this.h.onZen?.(),
+		}, [
+			el('span', { class: 'cc-zen-ico', 'aria-hidden': 'true', text: '🧘' }),
+			el('span', { class: 'cc-zen-label', text: 'Zen' }),
+		]);
+		this.zenExit = el('button', {
+			id: 'cc-zen-exit', type: 'button',
+			'aria-label': 'Show controls', title: 'Show controls (Z)',
+			onclick: () => this.h.onZen?.(),
+		}, [
+			el('span', { 'aria-hidden': 'true', html:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false">'
+				+ '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'
+				+ '</svg>' }),
+			document.createTextNode('Show UI'),
+		]);
+		document.body.appendChild(this.zenExit);
+
 		// Dance floor button — hidden until the player steps onto the pad.
 		this.danceBtnLabel = el('span', { class: 'cc-dance-label', text: 'Dance' });
 		this.danceBtn = el('button', {
@@ -1332,13 +1356,13 @@ export class CommunityUI {
 		]);
 
 		const hint = el('div', { id: 'cc-hint', html:
-			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect' });
+			'<kbd>W A S D</kbd> / drag-joystick to move · <kbd>drag</kbd> to look · scroll zoom · <kbd>Enter</kbd> chat · <kbd>Q</kbd> emotes · <kbd>I</kbd> inspect · <kbd>Z</kbd> zen' });
 
 		this.joystick = el('div', { id: 'cc-joystick' });
 
 		this._buildTagHud();
 		this._buildKingHud();
-		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
+		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
 
@@ -2001,6 +2025,11 @@ export class CommunityUI {
 		if (!this.danceBtn) return;
 		this.danceBtn.hidden = !on;
 		if (!on) this.setDancing(false);
+	}
+
+	// Mirror the zen state on both toggles (the HUD button and the exit pill).
+	setZen(on) {
+		this.zenBtn?.setAttribute('aria-pressed', on ? 'true' : 'false');
 	}
 
 	// Toggle the button's armed state (lit = will dance on next beat).

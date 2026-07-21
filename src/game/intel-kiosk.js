@@ -19,15 +19,17 @@
 
 import {
 	Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, RingGeometry,
-	PlaneGeometry, BoxGeometry, CylinderGeometry, CanvasTexture, SRGBColorSpace,
+	PlaneGeometry, BoxGeometry, CylinderGeometry,
 	DoubleSide, Vector3,
 } from 'three';
+import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-texture.js';
 import { isHomeTown } from './home-town.js';
 import { log } from '../shared/log.js';
 import { ensureX402 } from '../shared/x402-loader.js';
 
 const KIOSK_POS = new Vector3(-8, 0, -7);
 const INTERACT_RANGE = 5.5;
+const SCREEN_W = 512, SCREEN_H = 320; // logical layout grid; backed at 2x
 const ACCENT = '#9945ff';
 const ACCENT_LT = '#b88aff';
 
@@ -94,14 +96,13 @@ export class IntelKiosk {
 		pedestal.castShadow = true;
 		this.group.add(pedestal);
 
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = 512; this.canvas.height = 320;
-		this.ctx = this.canvas.getContext('2d');
-		this.tex = new CanvasTexture(this.canvas);
-		this.tex.colorSpace = SRGBColorSpace;
+		const { canvas, ctx } = makeScreenCanvas(SCREEN_W, SCREEN_H, 2);
+		this.canvas = canvas;
+		this.ctx = ctx;
+		this.tex = makeScreenTexture(this.canvas);
 		const screen = new Mesh(
 			new PlaneGeometry(1.5, 0.94),
-			new MeshBasicMaterial({ map: this.tex, toneMapped: false }),
+			screenMaterial(this.tex),
 		);
 		screen.position.set(0, 1.85, 0.08);
 		screen.rotation.x = -0.14;
@@ -141,8 +142,7 @@ export class IntelKiosk {
 	}
 
 	_signMesh(title, sub) {
-		const c = document.createElement('canvas'); c.width = 512; c.height = 160;
-		const x = c.getContext('2d');
+		const { canvas, ctx: x } = makeScreenCanvas(512, 160, 2);
 		x.textAlign = 'center';
 		x.fillStyle = ACCENT_LT;
 		fitFont(x, title, 480, 54);
@@ -150,10 +150,10 @@ export class IntelKiosk {
 		x.fillStyle = 'rgba(255,255,255,0.62)';
 		x.font = '600 26px Inter, system-ui, sans-serif';
 		x.fillText(sub, 256, 104);
-		const tex = new CanvasTexture(c); tex.colorSpace = SRGBColorSpace;
+		const tex = makeScreenTexture(canvas);
 		return new Mesh(
 			new PlaneGeometry(4.2, 1.32),
-			new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide }),
+			screenMaterial(tex, { transparent: true, side: DoubleSide }),
 		);
 	}
 
@@ -189,7 +189,7 @@ export class IntelKiosk {
 	// ── kiosk screen states: offer → paying → intel ────────────────────────────
 
 	_drawScreen() {
-		const c = this.ctx, W = this.canvas.width, H = this.canvas.height;
+		const c = this.ctx, W = SCREEN_W, H = SCREEN_H;
 		const g = c.createLinearGradient(0, 0, 0, H);
 		g.addColorStop(0, '#15151a'); g.addColorStop(1, '#0a0a0c');
 		c.fillStyle = g; c.fillRect(0, 0, W, H);

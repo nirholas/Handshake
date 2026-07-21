@@ -17,15 +17,17 @@
 // empty, and error states are painted on the screen itself.
 
 import {
-	Group, Mesh, MeshBasicMaterial, MeshStandardMaterial,
+	Group, Mesh, MeshStandardMaterial,
 	PlaneGeometry, CylinderGeometry, BoxGeometry,
-	CanvasTexture, SRGBColorSpace, DoubleSide,
+	DoubleSide,
 } from 'three';
+import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-texture.js';
 
 const FEED_URL = (limit = 12) => `/api/x402-pay?feed=1&limit=${limit}`;
 const POLL_MS = 8000;
 const REDRAW_MS = 100;          // ~10fps — smooth pulse/scroll, cheap on the GPU
-const CW = 1280, CH = 720;      // 16:9 canvas backing the screen
+const CW = 1280, CH = 720;      // 16:9 logical layout grid for the draw code
+const SS = 1.5;                 // supersample: 1920x1080 backing store, crisp text
 const MAX_ROWS = 6;             // recent payments shown on the board
 
 // Stage stepper, keyed to the SSE events /api/x402-pay emits — matches the order
@@ -51,7 +53,11 @@ const COL = {
 function fmtUsdc(micro) {
 	const n = Number(micro);
 	if (!isFinite(n) || n <= 0) return '$0.01';
-	return '$' + (n / 1e6).toFixed(2);
+	const usd = n / 1e6;
+	// Sub-cent micropayments (a 1000-micro dance tip is $0.001) must not floor
+	// to "$0.00" on a board whose whole point is showing money move.
+	if (usd >= 0.01) return '$' + usd.toFixed(2);
+	return '$' + usd.toFixed(4).replace(/0+$/, '').replace(/\.$/, '.00');
 }
 
 function shortAddr(a) {
@@ -127,15 +133,13 @@ export function createX402Jumbotron(scene, opts = {}) {
 	group.add(bezel);
 
 	// The live face: canvas → CanvasTexture → unlit plane (glows like a screen).
-	const canvas = document.createElement('canvas');
-	canvas.width = CW; canvas.height = CH;
-	const ctx = canvas.getContext('2d');
-	const tex = new CanvasTexture(canvas);
-	tex.colorSpace = SRGBColorSpace;
-	tex.anisotropy = 4;
+	// Supersampled backing store + max anisotropy + fog/tone-mapping exemption
+	// via screen-texture.js so the board stays crisp and punchy at any angle.
+	const { canvas, ctx } = makeScreenCanvas(CW, CH, SS);
+	const tex = makeScreenTexture(canvas);
 	const panel = new Mesh(
 		new PlaneGeometry(width, height),
-		new MeshBasicMaterial({ map: tex, side: DoubleSide, toneMapped: false }),
+		screenMaterial(tex, { side: DoubleSide }),
 	);
 	panel.position.set(0, cy, 0.01);
 	panel.userData.x402Jumbotron = true;

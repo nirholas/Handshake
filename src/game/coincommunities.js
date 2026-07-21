@@ -15,7 +15,7 @@ import {
 	ACESFilmicToneMapping,
 	Mesh, MeshStandardMaterial, MeshBasicMaterial, CircleGeometry, RingGeometry,
 	CylinderGeometry, PlaneGeometry,
-	CanvasTexture, TextureLoader, DoubleSide,
+	TextureLoader, DoubleSide,
 	PointLight,
 	Raycaster, Vector2, WebGLRenderTarget,
 } from 'three';
@@ -36,6 +36,7 @@ import { createDayNightCycle } from './day-night.js';
 import { worldClock } from '../shared/world-clock.js';
 import { createCameraModeController, CAMERA_MODE_LABELS, CAMERA_MODE_FOV } from './camera-modes.js';
 import { createChartScreen } from './chart-screen.js';
+import { makeScreenCanvas, makeScreenTexture, screenMaterial, screenAnisotropy } from './screen-texture.js';
 import { mountOracleRibbon } from './oracle-ribbon.js';
 import { MarketReactor } from './market-reactor.js';
 import {
@@ -380,6 +381,7 @@ export class CoinCommunities {
 	constructor(canvas) {
 		this.canvas = canvas;
 		this.phase = 'lobby';
+		this._zen = false;
 		this.remotes = new Map();
 		this.keys = new Set();
 		this.input = new Vector3(); // joystick/keys movement intent (x,z in [-1,1])
@@ -506,6 +508,8 @@ export class CoinCommunities {
 			onOpenFeatured: () => this._openFeatured(),
 			onPublishBuild: (meta) => this._publishBuild(meta),
 			onDance: () => this._triggerDance(),
+			// Zen mode — strip every overlay for a clean view of the world.
+			onZen: () => this._setZen(!this._zen),
 			onFeaturedClosed: () => { this._featuredOpen = false; },
 		});
 
@@ -803,16 +807,15 @@ export class CoinCommunities {
 	}
 
 	_textBanner(name, sym) {
-		const c = document.createElement('canvas'); c.width = 512; c.height = 128;
-		const x = c.getContext('2d');
+		const { canvas, ctx: x } = makeScreenCanvas(512, 128, 2);
 		x.fillStyle = 'rgba(11,16,32,0.0)'; x.fillRect(0, 0, 512, 128);
 		x.textAlign = 'center'; x.fillStyle = '#fff';
 		x.font = '800 50px Inter, system-ui, sans-serif';
 		x.fillText(name.slice(0, 18).toUpperCase(), 256, 56);
 		x.font = 'bold 32px Inter, system-ui, sans-serif'; x.fillStyle = '#5fc8ff';
 		x.fillText(sym, 256, 100);
-		const tex = new CanvasTexture(c); tex.colorSpace = SRGBColorSpace;
-		const m = new Mesh(new PlaneGeometry(6, 1.5), new MeshBasicMaterial({ map: tex, transparent: true, side: DoubleSide }));
+		const tex = makeScreenTexture(canvas);
+		const m = new Mesh(new PlaneGeometry(6, 1.5), screenMaterial(tex, { transparent: true, side: DoubleSide }));
 		m.position.y = 10.2;
 		return m;
 	}
@@ -833,10 +836,11 @@ export class CoinCommunities {
 
 		// The lit panel: a canvas texture (name / market cap / live count) drawn by
 		// _drawScreen. Unlit material so it glows like an LED wall at any distance.
-		const canvas = document.createElement('canvas');
-		canvas.width = 1600; canvas.height = 900;
-		const tex = new CanvasTexture(canvas); tex.colorSpace = SRGBColorSpace;
-		const panel = new Mesh(new PlaneGeometry(W, H), new MeshBasicMaterial({ map: tex }));
+		// Backed at 1.5x the 1600x900 layout grid and exempt from fog/tone mapping
+		// (screen-texture.js) so the biggest screen in the town reads crisp, not hazed.
+		const { canvas } = makeScreenCanvas(1600, 900, 1.5);
+		const tex = makeScreenTexture(canvas);
+		const panel = new Mesh(new PlaneGeometry(W, H), screenMaterial(tex));
 		panel.position.set(0, 11, 0); g.add(panel);
 		this._screenCanvas = canvas; this._screenTex = tex;
 
@@ -846,7 +850,8 @@ export class CoinCommunities {
 		if (coin.image) {
 			new TextureLoader().load(coin.image, (imgTex) => {
 				imgTex.colorSpace = SRGBColorSpace;
-				const art = new Mesh(new PlaneGeometry(8.4, 8.4), new MeshBasicMaterial({ map: imgTex }));
+				imgTex.anisotropy = screenAnisotropy();
+				const art = new Mesh(new PlaneGeometry(8.4, 8.4), screenMaterial(imgTex));
 				art.position.set(-6.7, 11, 0.04); g.add(art);
 				this._screenArt = art;
 			}, undefined, () => { /* image blocked — panel still shows text */ });
@@ -1314,6 +1319,7 @@ export class CoinCommunities {
 		this._initVoice();
 		this.phase = 'world';
 		this._initJoystick();
+		this._restoreZen();
 		this._onboardBuild();
 		// W02: drivable vehicles — the parked fleet the server seeds every world
 		// with (multiplayer/src/vehicles.js VEHICLE_SPAWNS, mirrored from this
@@ -1639,6 +1645,8 @@ export class CoinCommunities {
 		// Invalidate any in-flight enter() so a connect/avatar continuation that
 		// resolves after this teardown bails instead of rebuilding the world.
 		this._enterEpoch = (this._enterEpoch || 0) + 1;
+		// The lobby always shows its UI; zen re-applies on the next world entry.
+		this._suspendZen();
 		// Tear voice down before the socket so our final "left voice" flag still
 		// sends, and peers' connections close cleanly.
 		clearTimeout(this._passRefreshTimer);
@@ -2512,6 +2520,46 @@ export class CoinCommunities {
 		}
 	}
 
+	// ---------------------------------------------------------------- zen mode
+	// Hides every overlay (HUD, chat, prompts, name tags) so the world renders
+	// clean — the same body.is-zen contract /walk uses. Movement affordances
+	// stay (joystick, driving pedals), and panels the player opens on purpose
+	// (build palettes, shops, the emote wheel) still show. The preference
+	// persists across sessions, and a shared ?ui=hidden link starts in zen.
+	_setZen(on) {
+		this._zen = !!on;
+		document.body.classList.toggle('is-zen', this._zen);
+		if (this._zen) {
+			// Defer the reveal class one frame so the exit pill fades in.
+			requestAnimationFrame(() => document.body.classList.add('zen-revealed'));
+			// Close the drawers/wheels so they don't linger over the clean scene.
+			if (this._friendsOpen) this._closeFriends();
+			this.ui.closeEmoteWheel(false);
+		} else {
+			document.body.classList.remove('zen-revealed');
+		}
+		this.ui.setZen(this._zen);
+		try { localStorage.setItem('play:zen', this._zen ? '1' : '0'); } catch {}
+	}
+
+	// Restore the zen preference on world entry: URL param wins (?ui=hidden for
+	// shared links, ?ui=on to force chrome back), then the stored choice.
+	_restoreZen() {
+		let param = null;
+		try { param = new URLSearchParams(location.search).get('ui'); } catch {}
+		if (param === 'hidden' || param === 'off') { this._setZen(true); return; }
+		if (param === 'on' || param === 'shown') return;
+		try { if (localStorage.getItem('play:zen') === '1') this._setZen(true); } catch {}
+	}
+
+	// Drop the zen body classes without touching the stored preference — the
+	// lobby always shows its UI; _restoreZen() re-applies zen next world entry.
+	_suspendZen() {
+		this._zen = false;
+		document.body.classList.remove('is-zen', 'zen-revealed');
+		this.ui.setZen(false);
+	}
+
 	_sayLocal(text) {
 		if (this._localBubble) this._localBubble.remove();
 		this._localBubble = document.createElement('div');
@@ -2602,6 +2650,13 @@ export class CoinCommunities {
 				if (k === 'j' && !this.buildHud.active && !e.repeat) {
 					e.preventDefault();
 					this._toggleFriends();
+					return;
+				}
+				// Z toggles zen mode — every overlay hidden, just the world. Plain Z
+				// only: Ctrl/Cmd+Z stays the build-mode undo above.
+				if (k === 'z' && !this.buildHud.active && !e.ctrlKey && !e.metaKey && !e.repeat) {
+					e.preventDefault();
+					this._setZen(!this._zen);
 					return;
 				}
 				// C cycles the camera: follow → cinematic → first person → top down.

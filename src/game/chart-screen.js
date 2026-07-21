@@ -14,10 +14,11 @@
 // error states are all painted on the screen itself.
 
 import {
-	Group, Mesh, MeshBasicMaterial, MeshStandardMaterial,
+	Group, Mesh, MeshStandardMaterial,
 	PlaneGeometry, CylinderGeometry, BoxGeometry,
-	CanvasTexture, SRGBColorSpace, DoubleSide,
+	DoubleSide,
 } from 'three';
+import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-texture.js';
 
 // An EVM 0x-address identifies a Robinhood Chain coin (NOXA/Odyssey), routed
 // to the robinhood-feed-backed endpoint; everything else is a pump.fun Solana
@@ -31,7 +32,8 @@ const TRADES_URL = (mint, limit = 100) => {
 const POLL_MS = 5000;
 const REDRAW_MS = 100;          // ~10fps: enough for a smooth ticker, cheap on the GPU
 const MAX_POINTS = 220;         // rolling price history kept across the session
-const CW = 1280, CH = 720;      // 16:9 canvas backing the screen
+const CW = 1280, CH = 720;      // 16:9 logical layout grid for the draw code
+const SS = 1.5;                 // supersample: 1920x1080 backing store, crisp text
 
 // Restrained palette — the /play client is monochrome, but a trading terminal
 // earns a single directional accent (up green / down red) the way a real screen
@@ -147,15 +149,11 @@ export function createChartScreen(scene, coin, opts = {}) {
 
 	// The live face: an HTML canvas → CanvasTexture → unlit plane (so it glows
 	// like a screen rather than catching world light).
-	const canvas = document.createElement('canvas');
-	canvas.width = CW; canvas.height = CH;
-	const ctx = canvas.getContext('2d');
-	const tex = new CanvasTexture(canvas);
-	tex.colorSpace = SRGBColorSpace;
-	tex.anisotropy = 4;
+	const { canvas, ctx } = makeScreenCanvas(CW, CH, SS);
+	const tex = makeScreenTexture(canvas);
 	const panel = new Mesh(
 		new PlaneGeometry(width, height),
-		new MeshBasicMaterial({ map: tex, side: DoubleSide, toneMapped: false }),
+		screenMaterial(tex, { side: DoubleSide }),
 	);
 	panel.position.set(0, cy, 0.01);
 	panel.userData.chartScreen = true; // raycast tag
