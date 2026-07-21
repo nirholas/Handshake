@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Cookbook: self-correcting 3D with function calling</title>
+			<link>https://three.ws/cookbook</link>
+			<guid isPermaLink="false">2026-07-21:Cookbook: self-correcting 3D with function calling</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.</description>
+		</item>
+		<item>
 			<title>Docs · NVIDIA Inception membership</title>
 			<link>https://three.ws/docs/nvidia-inception</link>
 			<guid isPermaLink="false">2026-07-21:Docs · NVIDIA Inception membership</guid>

@@ -391,6 +391,7 @@ Docs, tutorials, and reference.
 - [Tutorial · Arm an Autonomous Sniper on Your Agent](https://three.ws/tutorials/arm-an-agent-sniper): Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.
 - [three.ws on AWS](https://three.ws/aws): three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
 - [Docs · NVIDIA Inception membership](https://three.ws/docs/nvidia-inception): three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.
+- [Cookbook: self-correcting 3D with function calling](https://three.ws/cookbook): An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.
 
 ## Blog
 

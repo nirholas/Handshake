@@ -4268,6 +4268,14 @@
 			"dest": "/my-agents/$1"
 		},
 		{
+			"src": "/cookbook",
+			"dest": "/cookbook/index.html"
+		},
+		{
+			"src": "/cookbook/",
+			"dest": "/cookbook/index.html"
+		},
+		{
 			"src": "/discover",
 			"dest": "/discover/index.html"
 		},
