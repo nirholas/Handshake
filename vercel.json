@@ -6,7 +6,7 @@
 		"NODE_OPTIONS": "--no-deprecation"
 	},
 	"functions": {
-		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,custody-attest,sniper-optimize}.js": {
+		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,custody-attest,sniper-optimize,sniper-evolve}.js": {
 			"maxDuration": 120
 		},
 		"api/cron/{strategy-fanout,gmgn-seed}.js": {
@@ -5190,6 +5190,10 @@
 		{
 			"path": "/api/cron/sniper-optimize",
 			"schedule": "0 */6 * * *"
+		},
+		{
+			"path": "/api/cron/sniper-evolve",
+			"schedule": "30 */12 * * *"
 		},
 		{
 			"path": "/api/cron/dead-man-switch",

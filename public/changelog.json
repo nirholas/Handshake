@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T09:52:51.103Z",
+	"generated_at": "2026-07-21T12:46:50.016Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -66,6 +66,17 @@
 			"link": "/docs/agent-sniper",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "The sniper fleet now runs its full self-improvement loop autonomously",
+			"summary": "Both halves of the fleet's learning loop now run on their own schedule with no human in the loop. The intra-arm optimizer (every 6h) tunes each strategy's own knobs from its real results, and the portfolio evolution engine (every 12h) reallocates budget toward the arms that actually win and retires the ones that provably don't. Every change is bounded, reversible, and journaled; neither loop can touch a safety field or raise the total spend cap.",
+			"link": "/docs/agent-sniper",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{

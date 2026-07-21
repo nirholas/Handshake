@@ -55,6 +55,14 @@
 			<description>The sniper fleet now has an intra-arm optimizer that learns from each strategy's real trading record and proposes bounded adjustments to its own knobs (take-profit, trailing/stop, hold time, entry-quality, size). It runs in shadow mode by default, recording exactly what it would change without touching anything, and in apply mode only tunes strategies that opted in, logging every change to the agent's tamper-evident reasoning ledger. It pairs with the portfolio evolution engine (which reallocates budget across arms): the optimizer tunes each arm inward, evolution decides which arms get capital. Neither can touch a safety field.</description>
 		</item>
 		<item>
+			<title>The sniper fleet now runs its full self-improvement loop autonomously</title>
+			<link>https://three.ws/docs/agent-sniper</link>
+			<guid isPermaLink="false">2026-07-21:The sniper fleet now runs its full self-improvement loop autonomously</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Both halves of the fleet's learning loop now run on their own schedule with no human in the loop. The intra-arm optimizer (every 6h) tunes each strategy's own knobs from its real results, and the portfolio evolution engine (every 12h) reallocates budget toward the arms that actually win and retires the ones that provably don't. Every change is bounded, reversible, and journaled; neither loop can touch a safety field or raise the total spend cap.</description>
+		</item>
+		<item>
 			<title>three.ws joins the NVIDIA Inception program</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-21:three.ws joins the NVIDIA Inception program</guid>
