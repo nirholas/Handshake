@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			html, body { margin: 0; height: 100%; background: #0e0f16; }
+			model-viewer {
+				width: 100vw; height: 100vh;
+				--poster-color: transparent;
+				background: radial-gradient(120% 120% at 50% 20%, #1a1b26, #0a0b12);
+			}
+		</style>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+	</head>
+	<body>
+		<model-viewer
+			id="mv"
+			camera-controls="false"
+			interaction-prompt="none"
+			disable-zoom
+			environment-image="neutral"
+			shadow-intensity="0.6"
+			shadow-softness="1"
+			exposure="1.1"
+			camera-orbit="25deg 82deg auto"
+			field-of-view="30deg"
+		></model-viewer>
+		<script type="module">
+			const mv = document.getElementById('mv');
+
+			// Load a GLB by (same-origin) URL, wait for it to render, frame it, and
+			// return a PNG data URL. Called by the playwright driver via evaluate().
+			window.__renderGlb = async (url) => {
+				return new Promise((resolve, reject) => {
+					const to = setTimeout(() => reject(new Error('load timeout')), 45000);
+					const onError = (e) => { clearTimeout(to); reject(new Error('model-viewer error: ' + (e?.detail?.type || 'unknown'))); };
+					mv.addEventListener('error', onError, { once: true });
+					mv.addEventListener('load', async () => {
+						clearTimeout(to);
+						mv.removeEventListener('error', onError);
+						try {
+							// Let a couple of frames settle so lighting/framing is stable.
+							await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+							mv.dismissPoster?.();
+							await new Promise((r) => setTimeout(r, 250));
+							const blob = await mv.toBlob({ mimeType: 'image/png', idealAspect: true });
+							const reader = new FileReader();
+							reader.onload = () => resolve(reader.result);
+							reader.onerror = () => reject(new Error('blob read failed'));
+							reader.readAsDataURL(blob);
+						} catch (err) {
+							reject(err);
+						}
+					}, { once: true });
+					mv.src = url;
+				});
+			};
+			window.__ready = true;
+		</script>
+	</body>
+</html>
