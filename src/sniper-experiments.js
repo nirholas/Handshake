@@ -63,6 +63,22 @@ function pnlClass(v) {
 	return Number(v) > 0 ? 'xp-pos' : 'xp-neg';
 }
 
+function shortAddr(a) {
+	if (!a) return null;
+	return `${a.slice(0, 4)}…${a.slice(-4)}`;
+}
+
+function walletLine(x) {
+	if (!x.wallet_address) return '<div class="xp-wallet xp-wallet-none">no wallet</div>';
+	const bal = x.balance_sol != null ? `${Number(x.balance_sol).toFixed(3)} SOL` : '· SOL';
+	const low = x.balance_sol != null && x.balance_sol < 0.02;
+	return `
+		<div class="xp-wallet">
+			<a href="${esc(x.wallet_explorer_url)}" target="_blank" rel="noopener noreferrer" title="View wallet on Solscan">${esc(shortAddr(x.wallet_address))} ↗</a>
+			<span class="${low ? 'xp-neg' : ''}">${esc(bal)}</span>
+		</div>`;
+}
+
 function modeBadge(x) {
 	if (x.decision_mode === 'llm') {
 		return `<span class="xp-badge xp-badge-llm" title="No rule shields: an LLM judges each launch">LLM · ${esc((x.llm_model || 'auto').split('/').pop())}</span>`;
@@ -89,18 +105,28 @@ function renderControls() {
 	});
 }
 
-function renderSummary(experiments) {
+function renderSummary(experiments, masterWallet) {
 	const active = experiments.filter((x) => x.enabled);
 	const traded = experiments.filter((x) => x.closed > 0);
 	const totalPnl = experiments.reduce((a, x) => a + (Number(x.realized_pnl_sol) || 0), 0);
 	const totalTrades = experiments.reduce((a, x) => a + x.closed, 0);
+	const fleetSol = experiments.reduce((a, x) => a + (Number(x.balance_sol) || 0), 0);
 	const best = traded.slice().sort((a, b) => (b.realized_pnl_sol || 0) - (a.realized_pnl_sol || 0))[0];
+	const masterTile = masterWallet
+		? `<div class="cv-card xp-tile">
+				<span>Master funding wallet</span>
+				<b><a href="${esc(masterWallet.explorer_url)}" target="_blank" rel="noopener noreferrer">${esc(shortAddr(masterWallet.address))} ↗</a></b>
+				<i>${masterWallet.balance_sol != null ? `${masterWallet.balance_sol.toFixed(3)} SOL, auto-tops-up dry arms` : 'balance unavailable'}</i>
+			</div>`
+		: '';
 	$('xp-summary').innerHTML = `
 		<div class="xp-tiles">
 			<div class="cv-card xp-tile"><span>Armed strategies</span><b>${active.length}</b><i>${experiments.length - active.length} paused</i></div>
 			<div class="cv-card xp-tile"><span>Closed trades</span><b>${totalTrades}</b><i>${experiments.reduce((a, x) => a + x.open, 0)} open now</i></div>
 			<div class="cv-card xp-tile"><span>Fleet realized P&amp;L</span><b class="${pnlClass(totalPnl)}">${esc(sol(totalPnl))}</b><i>window: ${esc(windowKey)}</i></div>
+			<div class="cv-card xp-tile"><span>Fleet SOL on hand</span><b>${fleetSol.toFixed(3)} SOL</b><i>across ${experiments.filter((x) => x.wallet_address).length} wallets</i></div>
 			<div class="cv-card xp-tile"><span>Best arm</span><b>${best ? esc(best.label) : 'no trades yet'}</b><i>${best ? esc(sol(best.realized_pnl_sol)) : 'waiting on fills'}</i></div>
+			${masterTile}
 		</div>`;
 }
 
@@ -123,7 +149,8 @@ function renderBoard(experiments) {
 			<tr class="${x.enabled ? '' : 'xp-off'}">
 				<td>
 					<div class="xp-label">${esc(x.label)}${x.enabled ? '' : ' <span class="xp-paused">paused</span>'}</div>
-					<div class="xp-agent"><a href="/a/${esc(x.agent_id)}">${esc(x.agent_name || 'agent')}</a> ${modeBadge(x)}</div>
+					<div class="xp-agent"><a href="/a/${esc(x.agent_id)}">${esc(x.agent_name || 'agent')}</a> ${modeBadge(x)} · <a href="${esc(x.ledger_url)}" title="Full decision-by-decision reasoning ledger, tamper-evident and on-chain anchored">ledger →</a></div>
+					${walletLine(x)}
 				</td>
 				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · SL ${esc(pct(-Math.abs(x.stop_loss_pct ?? 0), false))}${x.trailing_stop_pct != null ? ` · trail ${esc(pct(x.trailing_stop_pct, false))}` : ''}${x.max_hold_seconds != null ? ` · max ${esc(holdFmt(x.max_hold_seconds))}` : ''}</div></td>
 				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}${paper}</td>
@@ -192,7 +219,7 @@ function renderJudgment(judgment) {
 async function refresh() {
 	try {
 		const data = await getJson(`/api/sniper/experiments?network=mainnet&window=${encodeURIComponent(windowKey)}`);
-		renderSummary(data.experiments);
+		renderSummary(data.experiments, data.master_wallet);
 		renderBoard(data.experiments);
 		renderJudgment(data.judgment);
 		$('xp-updated').textContent = `Updated ${new Date(data.t).toLocaleTimeString()} · real on-chain fills only`;
@@ -226,6 +253,10 @@ function injectStyles() {
 	.xp-agent{font-size:12px;color:var(--cv-text-3,#888);margin-top:2px}
 	.xp-agent a{color:inherit}
 	.xp-agent a:hover{color:var(--cv-text,#eee)}
+	.xp-wallet{font-size:11px;color:var(--cv-text-3,#888);margin-top:3px;display:flex;gap:6px;align-items:baseline;font-variant-numeric:tabular-nums}
+	.xp-wallet a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--cv-border,rgba(255,255,255,.25))}
+	.xp-wallet a:hover{color:var(--cv-text,#eee)}
+	.xp-wallet-none{opacity:.6}
 	.xp-cond{max-width:300px;color:var(--cv-text-2,#bbb)}
 	.xp-cond-sub{font-size:11.5px;color:var(--cv-text-3,#888);margin-top:3px}
 	.xp-badge{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--cv-border,rgba(255,255,255,.12));vertical-align:1px}

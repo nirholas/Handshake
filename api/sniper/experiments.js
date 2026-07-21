@@ -17,9 +17,44 @@
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { solanaConnection } from '../_lib/solana/connection.js';
+import { getSolBalance } from '../_lib/avatar-wallet.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days', all: null };
+const BALANCE_CACHE_TTL_S = 20; // shorter than the page's 30s poll so a refresh sees fresh funding
+
+function solscanAddress(address, network) {
+	if (!address) return null;
+	return network === 'devnet' ? `https://solscan.io/account/${address}?cluster=devnet` : `https://solscan.io/account/${address}`;
+}
+
+// Live SOL balance per wallet, cached briefly so a public, polled endpoint
+// doesn't turn into an RPC-balance hammer. A read failure degrades to null
+// (never breaks the scoreboard) rather than throwing.
+async function walletBalances(addresses, network) {
+	const out = new Map();
+	const misses = [];
+	for (const addr of addresses) {
+		const cached = await cacheGet(`sniper:wallet-sol:${network}:${addr}`).catch(() => null);
+		if (cached != null) out.set(addr, Number(cached));
+		else misses.push(addr);
+	}
+	if (misses.length) {
+		const conn = solanaConnection({ network });
+		await Promise.all(misses.map(async (addr) => {
+			try {
+				const { sol } = await getSolBalance(conn, addr);
+				out.set(addr, sol);
+				await cacheSet(`sniper:wallet-sol:${network}:${addr}`, sol, BALANCE_CACHE_TTL_S).catch(() => {});
+			} catch {
+				out.set(addr, null);
+			}
+		}));
+	}
+	return out;
+}
 
 function lamportsToSol(v) {
 	return v == null ? null : Number((Number(BigInt(v)) / 1e9).toFixed(6));
@@ -65,7 +100,7 @@ export default wrap(async (req, res) => {
 			s.min_market_cap_usd, s.max_market_cap_usd, s.require_socials,
 			s.min_oracle_score, s.min_quality_score, s.max_bundle_score, s.require_smart_money,
 			s.stop_loss_pct, s.trailing_stop_pct, s.take_profit_pct, s.max_hold_seconds,
-			a.id as agent_id, a.name as agent_name,
+			a.id as agent_id, a.name as agent_name, a.meta->>'solana_address' as wallet_address,
 			count(p.id) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED')                                 as closed,
 			count(p.id) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED' and p.realized_pnl_lamports > 0) as wins,
 			count(p.id) filter (where p.status = 'open' and p.buy_sig <> 'SIMULATED')                                   as open,
@@ -89,7 +124,7 @@ export default wrap(async (req, res) => {
 			and (${interval}::text is null or p.opened_at > now() - (${interval}::text)::interval)
 		where s.network = ${network}
 		  and (s.enabled = true or s.label is not null)
-		group by s.id, a.id, a.name
+		group by s.id, a.id, a.name, a.meta
 		order by realized_pnl_lamports desc, closed desc
 	`;
 
@@ -102,6 +137,9 @@ export default wrap(async (req, res) => {
 			experiment_group: r.experiment_group || null,
 			agent_id: r.agent_id,
 			agent_name: r.agent_name,
+			wallet_address: r.wallet_address || null,
+			wallet_explorer_url: solscanAddress(r.wallet_address, network),
+			ledger_url: `/reasoning-ledger?agent=${encodeURIComponent(r.agent_id)}&kind=snipe`,
 			decision_mode: r.decision_mode || 'rules',
 			llm_model: r.llm_model || null,
 			trigger: r.trigger || 'new_mint',
@@ -137,6 +175,20 @@ export default wrap(async (req, res) => {
 			paper_pnl_sol: lamportsToSol(r.paper_pnl_lamports),
 		};
 	});
+
+	// Live wallet transparency: every arm's actual SOL balance, right now, next to
+	// its Solscan link — so "is this arm funded" never requires a DB query the
+	// public can't run themselves. Best-effort: an RPC hiccup leaves balance_sol
+	// null on the affected rows rather than failing the whole scoreboard.
+	const wallets = [...new Set(experiments.map((x) => x.wallet_address).filter(Boolean))];
+	if (wallets.length) {
+		const balances = await walletBalances(wallets, network).catch(() => new Map());
+		for (const x of experiments) {
+			x.balance_sol = x.wallet_address ? (balances.get(x.wallet_address) ?? null) : null;
+		}
+	} else {
+		for (const x of experiments) x.balance_sol = null;
+	}
 
 	// Judgment ledger: every LLM verdict (buys AND skips) scored against what the
 	// coin actually did. This measures a model's CALLS, independent of trade size
@@ -185,11 +237,37 @@ export default wrap(async (req, res) => {
 		};
 	});
 
+	// The funding source: one master wallet auto-tops-up every dry arm above.
+	// Publishing its address + live balance is the other half of "track the
+	// wallets" — you can watch funding flow into the fleet, not just the fleet
+	// itself. Reads a PUBLIC-ADDRESS-ONLY env var (SNIPER_MASTER_WALLET_ADDRESS),
+	// never a secret key: this route runs on three-ws-api, a different Cloud Run
+	// service from agent-sniper, and the two do NOT share which physical wallet
+	// LAUNCHER_MASTER_SECRET_KEY_B64 resolves to (three-ws-api's copy funds the
+	// autonomous coin launcher; agent-sniper's is the sniper-only wallet below) —
+	// deriving a pubkey from either service's secret here would silently show the
+	// wrong wallet. Best-effort: unconfigured or unreadable never breaks the board.
+	let masterWallet = null;
+	try {
+		const address = (process.env.SNIPER_MASTER_WALLET_ADDRESS || '').trim();
+		if (address) {
+			const balance = await walletBalances([address], network);
+			masterWallet = {
+				address,
+				balance_sol: balance.get(address) ?? null,
+				explorer_url: solscanAddress(address, network),
+			};
+		}
+	} catch {
+		masterWallet = null;
+	}
+
 	return json(res, 200, {
 		network,
 		window,
 		experiments,
 		judgment: judgmentOut,
+		master_wallet: masterWallet,
 		t: Date.now(),
 	}, { 'cache-control': 'public, max-age=15, s-maxage=30' });
 });

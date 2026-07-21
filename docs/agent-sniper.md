@@ -69,6 +69,17 @@ Every layer of the trade above is independently checkable. You do not need our w
 - The reasoning entry lives in `agent_decisions`, hash-chained to the agent's prior history.
 - The spend and key-recovery events live in `agent_custody_events`, and the wallet appears in the epoch custody attestations (`custody_attestation_leaves`).
 
+## Track every wallet, every decision
+
+The case study above audits one trade. [/sniper/experiments](/sniper/experiments) is the live version of that audit for the whole fleet, updated every 30 seconds:
+
+- **Every arm's wallet, in the open.** Each row shows its Solana address (truncated, linked to Solscan) and its real-time SOL balance — no login, no DB query, just what the chain says right now. A "Fleet SOL on hand" tile totals it across every armed wallet.
+- **The funding source too.** The fleet's dry wallets are kept above their floor by one master wallet (`SNIPER_AUTO_FUND`, `workers/agent-sniper/auto-funder.js`). Its address and live balance are published in the same view, so funding flow into the fleet is as auditable as the fleet itself.
+- **A "ledger →" link on every arm** goes straight to that agent's full Reasoning Ledger (`/reasoning-ledger?agent=<id>&kind=snipe`, backed by `GET /api/ledger/:agentId`): the complete, tamper-evident, hash-chained history of every buy decision that agent has made — the trigger, price impact, firewall verdict, and (for LLM-judged arms) the model's thesis and confidence at the moment it decided, plus the reconciled real outcome once the position closes (win or loss, exact SOL, the sell signature). Nothing is aggregated away; a loss is exactly as visible as a win.
+- **The judgment ledger** (rendered lower on the same page) scores every LLM verdict — buys AND skips — against what the coin actually did, independent of position size, so a model's calibration is measurable even before its trades close.
+
+This is deliberately the same infrastructure the case study above uses, generalized: `agent_decisions` + `decision_outcomes` (the reasoning ledger), `sniper_llm_verdicts` (the judgment ledger), and `api/cron/reconcile-decisions` (closes the loop from an open prediction to a proven outcome, then anchors the chain head on-chain via SPL-Memo so the history is independently verifiable at `GET /api/ledger/verify/:agentId`).
+
 ## Configuration reference
 
 The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strategy`) is the whole policy. The load-bearing fields:

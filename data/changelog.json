@@ -15175,6 +15175,16 @@
 			"tags": [
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-21",
+			"title": "Sniper Experiments: every wallet and every decision, in the open",
+			"summary": "The /sniper/experiments scoreboard now shows each strategy's live wallet: its address, a Solscan link, and its real-time SOL balance, plus the shared master wallet that auto-funds the fleet. Every arm also links straight to its Reasoning Ledger, a tamper-evident, on-chain-anchored record of every single buy decision: the exact market data and rationale the agent acted on at entry, and once the trade closes, the real outcome (win or loss, by how much). Nothing is hidden or summarized away; wins and losses are published with the same detail.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/sniper/experiments"
 		}
 	]
 }
