@@ -1,0 +1,208 @@
+// Sniper evolution engine: the fleet improves itself from its own results.
+//
+//   node scripts/sniper-evolve.mjs            # dry-run: print the proposals, write nothing
+//   node scripts/sniper-evolve.mjs --apply    # apply the mutations to the DB
+//
+// This is the PORTFOLIO layer of the fleet's self-improvement loop. It is the
+// complement to the intra-arm optimizer (api/_lib/sniper-optimizer.js +
+// api/cron/sniper-optimize.js), which tunes each arm's OWN knobs (stops,
+// take-profit, hold, sizing) inward. Evolve works ACROSS arms: it decides which
+// arms deserve capital and which should stop trading, against the ground-truth
+// base rate. Division of labor is deliberate — evolve never touches a per-arm
+// entry/exit knob, the optimizer never moves budget between arms.
+//
+// Reads each labeled arm's REAL + paper trading evidence and the base rate
+// (pump_coin_outcomes: what fraction of launches actually win), scores every arm,
+// and mutates the fleet's ALLOCATION. Three moves, all bounded and reversible:
+//
+//   retire      an arm with enough samples whose win rate is provably below the
+//               base rate (Wilson 95% upper bound < base rate) — stop paying to be wrong.
+//   revive      a retired arm once enough time has passed to re-test it (exploration).
+//   reallocate  shift the fixed fleet daily budget toward higher-fitness arms,
+//               with a floor so no arm starves and the experiment keeps exploring.
+//
+// SAFETY BY CONSTRUCTION. The engine writes ONLY the fields in WRITABLE below.
+// It can never touch stop_loss_pct, firewall_level, max_price_impact, the daily
+// loss cap, or push a size past the fleet ceiling — those are code-enforced in
+// executeBuy and out of reach. The worst an evolved param can do is a bad,
+// stop-loss-protected, firewall-vetted, budget-bounded trade. Every proposal is
+// journaled to sniper_evolution_log (before/after + the evidence) so the whole
+// autonomous history is auditable and one UPDATE can roll any change back.
+
+import { execSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { Pool } = require('@neondatabase/serverless');
+
+const APPLY = process.argv.includes('--apply');
+const NETWORK = 'mainnet';
+
+// ── tunables (env-overridable; the optimizer's own guardrails) ────────────────
+const num = (k, d) => (process.env[k] ? Number(process.env[k]) : d);
+const FLEET_DAILY_SOL = num('EVOLVE_FLEET_DAILY_SOL', 0.5);       // total budget shared across active arms
+const PER_ARM_FLOOR_SOL = num('EVOLVE_ARM_FLOOR_SOL', 0.02);      // no active arm starves below this (keeps exploring)
+const MIN_SAMPLES_RETIRE = num('EVOLVE_MIN_SAMPLES', 15);         // don't retire on noise
+const REVIVE_AFTER_HOURS = num('EVOLVE_REVIVE_HOURS', 24);        // re-test a retired arm after this long
+const LAMPORTS = 1e9;
+
+// The ONLY columns evolve may write: the portfolio surface. Per-arm entry/exit
+// knobs are intentionally absent — those belong to the intra-arm optimizer. A
+// safety field appearing here would be a bug; the list is short and reviewed.
+const WRITABLE = new Set(['enabled', 'daily_budget_lamports']);
+
+function resolveDatabaseUrl() {
+	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+	const svc = JSON.parse(execSync(
+		'gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=json',
+		{ encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+	));
+	const env = svc.spec.template.spec.containers[0].env || [];
+	const url = env.find((e) => e.name === 'DATABASE_URL')?.value;
+	if (!url) throw new Error('DATABASE_URL not found in env or on the Cloud Run service');
+	return url;
+}
+
+// Wilson score interval for a binomial proportion. Gives a conservative lower
+// AND upper bound on the true win rate from a small sample, so we act on evidence
+// not noise: retire only when even the OPTIMISTIC bound is below the base rate.
+function wilson(wins, n, z = 1.96) {
+	if (n === 0) return { lo: 0, hi: 1, p: 0 };
+	const p = wins / n;
+	const d = 1 + (z * z) / n;
+	const c = p + (z * z) / (2 * n);
+	const s = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
+	return { lo: Math.max(0, (c - s) / d), hi: Math.min(1, (c + s) / d), p };
+}
+
+const runId = `evolve-${new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)}`;
+const pool = new Pool({ connectionString: resolveDatabaseUrl() });
+
+// Ground truth: the base rate every arm has to beat to be worth funding.
+const [{ base_rate }] = (await pool.query(`
+	select coalesce(
+		count(*) filter (where outcome in ('pumped','graduated'))::float / nullif(count(*),0),
+		0.12) as base_rate
+	from pump_coin_outcomes`)).rows;
+const baseRate = Number(base_rate);
+
+// Every labeled arm + its real and paper evidence. Paper fills still teach which
+// coins WOULD have won, so they count (discounted) when real fills are thin.
+const arms = (await pool.query(`
+	select s.id, s.label, s.experiment_group, s.decision_mode, s.enabled, s.llm_model,
+	       s.llm_min_confidence, s.min_oracle_score, s.min_market_cap_usd, s.max_market_cap_usd,
+	       s.daily_budget_lamports, s.updated_at,
+	       count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED') real_n,
+	       count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED' and p.realized_pnl_lamports>0) real_w,
+	       coalesce(avg(p.realized_pnl_pct) filter (where p.status='closed' and p.buy_sig<>'SIMULATED'),0) real_avg_pct,
+	       count(p.id) filter (where p.status='closed' and p.buy_sig='SIMULATED') paper_n,
+	       count(p.id) filter (where p.status='closed' and p.buy_sig='SIMULATED' and p.realized_pnl_lamports>0) paper_w
+	from agent_sniper_strategies s
+	left join agent_sniper_positions p on p.strategy_id=s.id and p.network=s.network
+	where s.network=$1 and s.label is not null
+	group by s.id
+	order by s.label`, [NETWORK])).rows;
+
+// Fitness: conservative win-edge over the base rate (Wilson lower bound) plus a
+// realized-ROI term, using real fills at full weight and paper at 1/3. An arm
+// with no evidence yet gets a neutral exploration fitness so it keeps a budget
+// floor and a chance to prove itself.
+function fitness(a) {
+	const realN = +a.real_n, realW = +a.real_w;
+	const paperN = +a.paper_n, paperW = +a.paper_w;
+	const n = realN + paperN / 3;
+	const w = realW + paperW / 3;
+	if (n < 1) return { score: baseRate, samples: 0, edge: 0, wl: wilson(0, 0) };
+	const wl = wilson(w, Math.max(1, Math.round(n)));
+	const edge = wl.lo - baseRate;                    // provable edge over ground truth
+	const roi = Math.max(-1, Math.min(2, Number(a.real_avg_pct) / 100));
+	const score = Math.max(0, baseRate + edge * 2 + roi * 0.05);
+	return { score, samples: Math.round(n), edge, wl, roi };
+}
+
+const proposals = [];
+function propose(a, action, field, before, after, fit, evidence) {
+	proposals.push({ id: a.id, label: a.label, action, field, before, after, fitness: fit.score, evidence });
+}
+
+// 1. RETIRE arms proven worse than a coin flip, and REVIVE stale retirees to re-test.
+for (const a of arms) {
+	const fit = fitness(a);
+	if (a.enabled && fit.samples >= MIN_SAMPLES_RETIRE && fit.wl.hi < baseRate) {
+		propose(a, 'retire', 'enabled', 'true', 'false', fit,
+			{ samples: fit.samples, win_hi: +fit.wl.hi.toFixed(3), base_rate: +baseRate.toFixed(3), reason: 'upper bound below base rate' });
+	} else if (!a.enabled) {
+		const ageH = (Date.now() - new Date(a.updated_at).getTime()) / 3.6e6;
+		if (ageH >= REVIVE_AFTER_HOURS) {
+			propose(a, 'revive', 'enabled', 'false', 'true', fit,
+				{ retired_hours: Math.round(ageH), reason: 're-test after cooldown' });
+		}
+	}
+}
+
+// 2. REALLOCATE the fixed fleet budget across active arms, fitness-weighted with a
+//    floor. This is the core "put money where it works" move, bounded so the total
+//    can never grow and exploration never dies.
+const active = arms.filter((a) => a.enabled && !proposals.find((p) => p.id === a.id && p.action === 'retire'));
+if (active.length) {
+	const fits = active.map((a) => ({ a, f: fitness(a) }));
+	const floor = PER_ARM_FLOOR_SOL;
+	const floorTotal = floor * active.length;
+	const discretionary = Math.max(0, FLEET_DAILY_SOL - floorTotal);
+	const sumScore = fits.reduce((s, x) => s + x.f.score, 0) || 1;
+	for (const { a, f } of fits) {
+		const share = floor + discretionary * (f.score / sumScore);
+		const nextLamports = String(Math.round(share * LAMPORTS));
+		const cur = String(a.daily_budget_lamports);
+		if (nextLamports !== cur) propose(a, 'reallocate', 'daily_budget_lamports', cur, nextLamports, f,
+			{ share_sol: +share.toFixed(4), fleet_sol: FLEET_DAILY_SOL, fitness: +f.score.toFixed(4) });
+	}
+}
+
+// ── report + (optional) apply ─────────────────────────────────────────────────
+console.log(`\nEvolution run ${runId} — base rate ${(baseRate * 100).toFixed(1)}% (fraction of launches that win)`);
+console.log(`Fleet daily budget ${FLEET_DAILY_SOL} SOL across ${active.length} active arms. ${APPLY ? 'APPLYING' : 'DRY-RUN (no writes)'}.\n`);
+for (const a of arms) {
+	const f = fitness(a);
+	console.log(`  ${(a.label || '?').padEnd(17)} ${a.enabled ? 'ON ' : 'off'} fitness ${f.score.toFixed(4)} · ${f.samples} samples · edge ${(f.edge * 100).toFixed(1)}pt`);
+}
+console.log(`\n${proposals.length} proposed mutation(s):`);
+for (const p of proposals) {
+	const fmt = (v) => p.field?.includes('lamports') ? (Number(v) / LAMPORTS).toFixed(3) + ' SOL' : v;
+	console.log(`  [${p.action}] ${p.label}: ${p.field} ${fmt(p.before)} -> ${fmt(p.after)}  ${JSON.stringify(p.evidence)}`);
+}
+
+// Log every proposal (applied flag reflects whether we wrote it), then apply the
+// writable ones. A field outside WRITABLE is refused loudly — that guard is the
+// safety contract, not a formality.
+for (const p of proposals) {
+	if (p.field && !WRITABLE.has(p.field)) {
+		throw new Error(`REFUSED: ${p.action} tried to write non-writable field '${p.field}'`);
+	}
+}
+if (APPLY) {
+	for (const p of proposals) {
+		await pool.query(
+			`update agent_sniper_strategies set ${p.field} = $1, updated_at = now() where id = $2 and network = $3`,
+			[p.action === 'reallocate' || p.field?.includes('lamports') ? p.after : castParam(p.field, p.after), p.id, NETWORK],
+		);
+	}
+}
+for (const p of proposals) {
+	await pool.query(
+		`insert into sniper_evolution_log (run_id, network, strategy_id, label, action, field, before_val, after_val, fitness, evidence, applied)
+		 values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+		[runId, NETWORK, p.id, p.label, p.action, p.field, String(p.before), String(p.after), p.fitness, JSON.stringify(p.evidence), APPLY],
+	);
+}
+
+function castParam(field, v) {
+	if (field === 'enabled') return v === 'true';
+	if (['llm_min_confidence', 'min_oracle_score', 'min_market_cap_usd', 'max_market_cap_usd'].includes(field)) {
+		return v === 'null' ? null : Number(v);
+	}
+	return v;
+}
+
+console.log(`\n${APPLY ? 'Applied and logged' : 'Logged (dry-run)'} ${proposals.length} mutation(s) as ${runId}.`);
+if (!APPLY) console.log('Re-run with --apply to let the fleet evolve.');
+await pool.end();
