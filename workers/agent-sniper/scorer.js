@@ -6,6 +6,7 @@
 // logs show WHY a mint was passed over, which is what you stare at when tuning.
 
 import { learnedScore } from './intel/learn.js';
+import { assessMarketRealness } from '../../api/_lib/market-realness.js';
 
 function n(v) {
 	if (v == null) return null;
@@ -164,6 +165,23 @@ export function scoreIntel(rec, strat, weights = null) {
 		return { pass: false, score: 0, reasons: ['no_socials'] };
 	}
 
+	// Market-realness gate (the painted-stairstep defense). A big candle that then
+	// stairsteps up on a handful of wallets with no sellers is a chart painted to
+	// trap momentum bots; in the platform's own 62k labeled outcomes a genuine
+	// two-sided market (>=20 buyers & >=5 sellers) wins 52% vs a ~12% base, while a
+	// painted one-sided rise barely beats a coin flip. Two optional per-strategy
+	// hard gates, off by default so existing arms are unchanged:
+	//   require_two_sided_market — demand the proven two-sided bar before buying.
+	//   min_unique_sellers       — demand a floor of real sellers (a two-sided market).
+	const market = assessMarketRealness(s);
+	if (strat.require_two_sided_market === true && !market.twoSided) {
+		return { pass: false, score: 0, reasons: [`not_two_sided:${market.read}`] };
+	}
+	const minSellers = n(strat.min_unique_sellers);
+	if (minSellers != null && (market.sellers == null || market.sellers < minSellers)) {
+		return { pass: false, score: 0, reasons: [`too_few_sellers:${market.sellers ?? 0}<${minSellers}`] };
+	}
+
 	// Smart-money gate (task 03). `rec.smart_money` is the live graph read attached
 	// by the worker (getSmartMoneyForMint). It honours two optional strategy knobs:
 	//   require_smart_money   — demand at least one reputable, non-sybil buyer.
@@ -190,6 +208,15 @@ export function scoreIntel(rec, strat, weights = null) {
 
 	const learned = learnedScore(s, weights);
 	if (learned != null) { score += learned; reasons.push(`learned:${learned}`); }
+
+	// Market realness: reward a genuine two-sided market, drag a painted stairstep.
+	// Always on (no knob) so EVERY intel arm's ranking reflects the single strongest
+	// signal in the data, centered so a neutral market neither helps nor hurts.
+	if (market.buyers != null && !market.flags.includes('insufficient_trades')) {
+		score += (market.realness - 0.5) * 0.8;
+		if (market.twoSided) reasons.push('two_sided');
+		if (market.painted) reasons.push(`painted:${market.read}`);
+	}
 
 	// Smart-money lifts the score (proven money in) and a dominant sybil cluster
 	// drags it (a manufactured "wide base"). Pure contribution — no I/O here.

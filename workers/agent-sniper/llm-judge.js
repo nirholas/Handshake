@@ -20,6 +20,7 @@
 import { log } from './log.js';
 import { sql } from '../../api/_lib/db.js';
 import { llmComplete } from '../../api/_lib/llm.js';
+import { assessMarketRealness } from '../../api/_lib/market-realness.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -36,6 +37,12 @@ const SYSTEM_PROMPT = [
 	'time-boxed momentum position (held minutes, hard stop-loss) is worth taking.',
 	'Weigh: name/ticker memetic quality, narrative timing, socials, the creator\'s',
 	'launch history, the size of the dev\'s initial buy, and market cap.',
+	'CRUCIAL: when market data is shown, judge the CHART like an experienced trader.',
+	'A big opening candle that then stairsteps up on a handful of wallets with no',
+	'sellers is a PAINTED chart meant to trap momentum bots, not real demand: skip',
+	'it. Genuine momentum has a real two-sided market (many distinct buyers AND real',
+	'sellers). A high market_realness score is a strong buy signal; a painted-pattern',
+	'warning is a strong skip.',
 	'Most launches are worthless; be selective, but you are the only judge, there',
 	'are no other filters after you besides honeypot/safety checks.',
 	'Respond with ONLY a JSON object, no prose, no code fences:',
@@ -58,6 +65,20 @@ function launchBrief(mint) {
 	const lines = Object.entries(fields)
 		.filter(([, v]) => v != null && v !== '')
 		.map(([k, v]) => `${k}: ${v}`);
+
+	// The market shape the operator reads off the chart, handed to the model as
+	// data: buyer/seller diversity, concentration, timing. This is what separates a
+	// real mover from a painted stairstep, and without it the model is judging a
+	// coin blind on its name and socials the way a bot does.
+	const sig = mint.signals || mint.intel_signals || null;
+	if (sig) {
+		const m = assessMarketRealness(sig);
+		if (!m.flags.includes('insufficient_trades')) {
+			lines.push(`market: ${m.read}`);
+			lines.push(`market_realness: ${m.realness} (0=painted/one-sided, 1=genuine two-sided market)`);
+			if (m.painted) lines.push('WARNING: this matches a painted-stairstep pattern (a rise with no real two-sided market), which historically wins far below the base rate.');
+		}
+	}
 	return `New pump.fun launch:\n${lines.join('\n')}`;
 }
 
