@@ -368,6 +368,36 @@
 	height: 14px;
 }
 
+.h-footer-nvidia {
+	display: inline-flex;
+	align-self: flex-start;
+	margin-top: 1.1rem;
+	padding: 7px 11px;
+	background: #fff;
+	border-radius: 9px;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.h-footer-nvidia:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 18px rgba(118, 185, 0, 0.28);
+}
+
+.h-footer-nvidia img {
+	height: 28px;
+	display: block;
+}
+
+.h-footer-nvidia-legal {
+	margin: 0.9rem auto 0;
+	max-width: 720px;
+	text-align: center;
+	font-size: 0.66rem;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.32);
+}
+
 .h-footer-legal-links {
 	display: flex;
 	align-items: center;
