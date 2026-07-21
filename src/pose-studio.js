@@ -1871,10 +1871,12 @@ function boot() {
 	const rawSrc = _params.get('src') || '';
 	const requestedSrc = isSafeQueryModelUrl(rawSrc) ? rawSrc : '';
 	const requestedAnim = _params.get('anim');
+	// ?spell=<word> — fingerspell the word in ASL on arrival (shareable link).
+	const requestedSpell = (_params.get('spell') || '').slice(0, 40);
 
-	// An explicit ?anim= or model deep-link wins over any recovered draft;
-	// otherwise we offer back last session's unsaved work.
-	const recovered = !requestedAnim && !requestedSrc && autosave?.tryRestore();
+	// An explicit ?anim=, ?spell= or model deep-link wins over any recovered
+	// draft; otherwise we offer back last session's unsaved work.
+	const recovered = !requestedAnim && !requestedSrc && !requestedSpell && autosave?.tryRestore();
 
 	// A 36-char UUID is a saved community clip (PoseLibrary.openById); anything
 	// else is a built-in preset name from the animation library (AnimationLibrary
@@ -1890,14 +1892,16 @@ function boot() {
 			setStatus(`Could not load animation: ${err?.message || 'unknown error'}`, 'error');
 		});
 	};
+	const openRequestedExtras = () => {
+		if (requestedAnim) openRequestedAnim(requestedAnim);
+		else if (requestedSpell) state.animLibrary?.spellWord(requestedSpell);
+	};
 
 	if (requestedAvatar) {
 		loadAvatarById(requestedAvatar).catch((err) => {
 			setStatus(`${err.message} Showing the mannequin instead.`, 'error');
 			switchToMannequin();
-		}).then(() => {
-			if (requestedAnim) openRequestedAnim(requestedAnim);
-		});
+		}).then(() => openRequestedExtras());
 	} else if (requestedSrc) {
 		// /viewer funnel: animate a freshly generated GLB by URL. A model with no
 		// humanoid skeleton can't be posed; say so and fall back to the mannequin.
@@ -1908,22 +1912,20 @@ function boot() {
 				switchToMannequin();
 				setStatus(`${err?.message || 'Could not load that model.'} Showing the mannequin instead.`, 'error');
 			})
-			.then(() => {
-				if (requestedAnim) openRequestedAnim(requestedAnim);
-			});
-	} else if (requestedAnim) {
+			.then(() => openRequestedExtras());
+	} else if (requestedAnim || requestedSpell) {
 		// Deep-linked to an animation with no avatar chosen (the /animations
 		// gallery "Open in Studio" path). Presets need a rigged figure to play on,
 		// so auto-load one of the built-in avatars — varied by clip so the gallery
 		// doesn't feel like it only ships one character — then play the clip live.
-		const model = pickDeepLinkAvatar(requestedAnim);
+		const model = pickDeepLinkAvatar(requestedAnim || requestedSpell);
 		setStatus(`Loading ${model.name} to preview this animation…`);
 		loadAvatarFromUrl(model.url, { name: model.name })
 			.catch((err) => {
 				log.warn('[pose] deep-link avatar load failed:', err?.message);
 				switchToMannequin();
 			})
-			.then(() => openRequestedAnim(requestedAnim));
+			.then(() => openRequestedExtras());
 	} else if (rawSrc) {
 		// A ?src= deep-link that failed the trusted-host gate: say why instead of
 		// silently opening an empty studio.

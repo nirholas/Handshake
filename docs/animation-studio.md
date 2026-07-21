@@ -32,6 +32,8 @@ A curated gallery of ready-made motion clips sits beside the timeline. Picking o
 
 Under the motion generator sits a Spell box: type a word and the avatar spells it letter by letter in American Sign Language on its right hand. All 26 handshapes are built in, including the traced motions for J and Z and the small bounce signers use to mark double letters; between letters the hand transitions smoothly and the figure holds a natural signing posture (right hand raised palm-out, off hand relaxed). Spelling is generated locally in the browser from a parametric hand model (`src/fingerspelling.js`), so it is instant, deterministic, and works offline; nothing is sent to a server. The spelled clip plays through the same retarget path as a preset, which means scrub, speed, stop, and the animated-GLB export all work on it, and it plays on any rigged avatar whose skeleton includes finger bones. A rig without finger bones cannot form handshapes, so the studio refuses it with an explanation instead of playing a wrong result.
 
+A spelled word is shareable as a link: `https://three.ws/pose?spell=HELLO` opens the studio, auto-loads a rigged avatar (same roster as animation deep links), and spells the word on arrival.
+
 Fingerspelling is the deterministic, spelling-based subset of sign language, it spells English words rather than translating into grammatical ASL. It is the first step of the platform's signing-avatars work; lexical signs come from the motion-capture lane, which can turn video of a real signer into a library clip.
 
 ### Export, save, and sell

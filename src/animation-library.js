@@ -704,6 +704,8 @@ export class AnimationLibrary {
 			this.setStatus('Type a word to fingerspell — letters A–Z.', 'error');
 			return false;
 		}
+		// Reflect the (normalized) word in the input so deep links read back.
+		if (this._refs.spellInput) this._refs.spellInput.value = letters;
 		const rig = this.getRig();
 		if (!rig || rig.kind === 'mannequin') {
 			this.setStatus('Load a rigged avatar to fingerspell.', 'error');

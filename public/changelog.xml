@@ -164,7 +164,7 @@
 			<guid isPermaLink="false">2026-07-20:Your avatar can fingerspell in American Sign Language</guid>
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>The Animation Studio at /pose has a new Spell box: type any word and your avatar spells it letter by letter in ASL on its right hand, with all 26 handshapes, the traced J and Z motions, and the little bounce signers use for double letters. Spelling is built instantly on your device (no network round-trip), plays on any rigged avatar, and exports as an animated GLB like any other clip. This is the first step toward signing avatars for deaf and hard-of-hearing users, alongside the new hand-and-finger motion capture in Motion Swap.</description>
+			<description>The Animation Studio at /pose has a new Spell box: type any word and your avatar spells it letter by letter in ASL on its right hand, with all 26 handshapes, the traced J and Z motions, and the little bounce signers use for double letters. Spelling is built instantly on your device (no network round-trip), plays on any rigged avatar, and exports as an animated GLB like any other clip Spelled words are shareable links too: three.ws/pose?spell=HELLO opens the studio and signs it on arrival. This is the first step toward signing avatars for deaf and hard-of-hearing users, alongside the new hand-and-finger motion capture in Motion Swap.</description>
 		</item>
 		<item>
 			<title>Agent Sniper: Autonomous On-Chain Trading</title>
