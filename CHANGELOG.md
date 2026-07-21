@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-21
+
+- **three.ws joins the NVIDIA Inception program** — three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars. `[infra]`
+
 ## 2026-07-20
 
 - **Legal** (`/legal`) — Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.

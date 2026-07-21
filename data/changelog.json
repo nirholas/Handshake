@@ -15167,6 +15167,14 @@
 				"feature",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-21",
+			"title": "three.ws joins the NVIDIA Inception program",
+			"summary": "three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.",
+			"tags": [
+				"infra"
+			]
 		}
 	]
 }

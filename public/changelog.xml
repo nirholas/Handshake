@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>three.ws joins the NVIDIA Inception program</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-21:three.ws joins the NVIDIA Inception program</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.</description>
+		</item>
+		<item>
 			<title>Legal</title>
 			<link>https://three.ws/legal</link>
 			<guid isPermaLink="false">2026-07-20:Legal</guid>
