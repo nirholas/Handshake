@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T14:12:39.555Z",
+	"generated_at": "2026-07-21T18:46:52.807Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -144,6 +144,26 @@
 		{
 			"date": "2026-07-21",
 			"type": "update",
+			"title": "The screens in the 3D world are sharp now",
+			"summary": "Every screen in the /play world (the giant community jumbotron, the Agent Exchange payment board, the live price chart, the intel kiosk, and the agents' desk monitors) got a full picture-quality pass. Screens used to blur out when viewed at an angle and got hazed gray by the atmosphere; they now render with high-resolution text, full anisotropic filtering, and true blacks and whites at any distance or angle. The payment board also shows exact sub-cent amounts (a $0.001 tip reads $0.001, not $0.00).",
+			"link": "/play",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "The sniper fleet gets a BOOST-window arm",
+			"summary": "pump.fun now reinjects each migrated coin's stranded liquidity as a 5-minute buyback-and-burn right after migration (BOOST mode). The autonomous sniper fleet gained an eleventh experiment arm that trades exactly that: it buys a coin's brand-new pool the moment it migrates and sells into the guaranteed buyback window, with the same hard stop-loss, budget caps, and safety firewall as every other arm. Its wallet, every trade, and its full reasoning history are public on the experiments scoreboard like the rest of the fleet.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
 			"title": "The sniper fleet now runs its full self-improvement loop autonomously",
 			"summary": "Both halves of the fleet's learning loop now run on their own schedule with no human in the loop. The intra-arm optimizer (every 6h) tunes each strategy's own knobs from its real results, and the portfolio evolution engine (every 12h) reallocates budget toward the arms that actually win and retires the ones that provably don't. Every change is bounded, reversible, and journaled; neither loop can touch a safety field or raise the total spend cap.",
 			"link": "/docs/agent-sniper",
@@ -183,6 +203,16 @@
 			"link": null,
 			"tags": [
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "Zen mode in Play: hide the whole interface with one key",
+			"summary": "Press Z inside any coin community world (or tap the new Zen button in the top-right control rail) and every panel disappears: the coin banner, chat, minimap, money HUD, hotbar, prompts, and name tags all fade away, leaving just your avatar and the living world. Perfect for screenshots, screen recordings, or simply hanging out in your community without clutter. The movement joystick and driving controls stay, so you can still wander while in zen. A small Show UI pill (or Z again) brings everything back, your choice is remembered between visits, and sharing a world link with ?ui=hidden opens it in zen for a clean first impression.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{

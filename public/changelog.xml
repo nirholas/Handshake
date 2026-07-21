@@ -111,6 +111,22 @@
 			<description>We connected the two learning systems that used to run in separate silos. The Oracle (which scores coins) now trains on the fleet's real realized profit and loss, not just whether a coin pumped on a chart. The sniper optimizer now reads each strategy's win rate bucketed by the Oracle's conviction and tunes its entry threshold toward the conviction band where it actually wins. And a new calibration job measures whether an 80-conviction coin really wins about 80 percent of the time by realized money, exposed at /api/oracle/calibration. Every layer is now pulled toward what actually paid.</description>
 		</item>
 		<item>
+			<title>The screens in the 3D world are sharp now</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-21:The screens in the 3D world are sharp now</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every screen in the /play world (the giant community jumbotron, the Agent Exchange payment board, the live price chart, the intel kiosk, and the agents' desk monitors) got a full picture-quality pass. Screens used to blur out when viewed at an angle and got hazed gray by the atmosphere; they now render with high-resolution text, full anisotropic filtering, and true blacks and whites at any distance or angle. The payment board also shows exact sub-cent amounts (a $0.001 tip reads $0.001, not $0.00).</description>
+		</item>
+		<item>
+			<title>The sniper fleet gets a BOOST-window arm</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-21:The sniper fleet gets a BOOST-window arm</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>pump.fun now reinjects each migrated coin's stranded liquidity as a 5-minute buyback-and-burn right after migration (BOOST mode). The autonomous sniper fleet gained an eleventh experiment arm that trades exactly that: it buys a coin's brand-new pool the moment it migrates and sells into the guaranteed buyback window, with the same hard stop-loss, budget caps, and safety firewall as every other arm. Its wallet, every trade, and its full reasoning history are public on the experiments scoreboard like the rest of the fleet.</description>
+		</item>
+		<item>
 			<title>The sniper fleet now runs its full self-improvement loop autonomously</title>
 			<link>https://three.ws/docs/agent-sniper</link>
 			<guid isPermaLink="false">2026-07-21:The sniper fleet now runs its full self-improvement loop autonomously</guid>
@@ -141,6 +157,14 @@
 			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.</description>
+		</item>
+		<item>
+			<title>Zen mode in Play: hide the whole interface with one key</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-21:Zen mode in Play: hide the whole interface with one key</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Press Z inside any coin community world (or tap the new Zen button in the top-right control rail) and every panel disappears: the coin banner, chat, minimap, money HUD, hotbar, prompts, and name tags all fade away, leaving just your avatar and the living world. Perfect for screenshots, screen recordings, or simply hanging out in your community without clutter. The movement joystick and driving controls stay, so you can still wander while in zen. A small Show UI pill (or Z again) brings everything back, your choice is remembered between visits, and sharing a world link with ?ui=hidden opens it in zen for a clean first impression.</description>
 		</item>
 		<item>
 			<title>Legal</title>

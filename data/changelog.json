@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-21",
+			"title": "Zen mode in Play: hide the whole interface with one key",
+			"summary": "Press Z inside any coin community world (or tap the new Zen button in the top-right control rail) and every panel disappears: the coin banner, chat, minimap, money HUD, hotbar, prompts, and name tags all fade away, leaving just your avatar and the living world. Perfect for screenshots, screen recordings, or simply hanging out in your community without clutter. The movement joystick and driving controls stay, so you can still wander while in zen. A small Show UI pill (or Z again) brings everything back, your choice is remembered between visits, and sharing a world link with ?ui=hidden opens it in zen for a clean first impression.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-21",
 			"title": "Pose presets now land correctly on every loaded avatar",
 			"summary": "Picking a pose preset in the Animation Studio (Arms up, Salute, Hands on hips, and the rest) used to garble loaded 3D avatars: arms stuck out sideways, salutes pointed at nothing, and some Mixamo-rigged characters vanished from the scene entirely. The presets were written for the built-in mannequin and were being copied raw onto avatars whose skeletons rest in a different stance. Presets are now retargeted onto each avatar's own skeleton, whether it was rigged in a T-pose, an A-pose, or anything in between, so a cheer is a cheer on every character. Resetting a pose no longer shrinks or hides certain avatars either.",
 			"tags": [
@@ -15318,6 +15327,24 @@
 				"fix",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-07-21",
+			"title": "The screens in the 3D world are sharp now",
+			"summary": "Every screen in the /play world (the giant community jumbotron, the Agent Exchange payment board, the live price chart, the intel kiosk, and the agents' desk monitors) got a full picture-quality pass. Screens used to blur out when viewed at an angle and got hazed gray by the atmosphere; they now render with high-resolution text, full anisotropic filtering, and true blacks and whites at any distance or angle. The payment board also shows exact sub-cent amounts (a $0.001 tip reads $0.001, not $0.00).",
+			"tags": [
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-21",
+			"title": "The sniper fleet gets a BOOST-window arm",
+			"summary": "pump.fun now reinjects each migrated coin's stranded liquidity as a 5-minute buyback-and-burn right after migration (BOOST mode). The autonomous sniper fleet gained an eleventh experiment arm that trades exactly that: it buys a coin's brand-new pool the moment it migrates and sells into the guaranteed buyback window, with the same hard stop-loss, budget caps, and safety firewall as every other arm. Its wallet, every trade, and its full reasoning history are public on the experiments scoreboard like the rest of the fleet.",
+			"tags": [
+				"feature"
+			],
+			"link": "/sniper/experiments"
 		}
 	]
 }
