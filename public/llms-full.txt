@@ -43,6 +43,12 @@ URL: https://three.ws/character-library
 
 106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.
 
+### Object Library
+
+URL: https://three.ws/objects
+
+Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live or download the GLB.
+
 ### Diorama
 
 URL: https://three.ws/diorama

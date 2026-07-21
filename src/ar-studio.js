@@ -1610,6 +1610,21 @@ async function fetchTrayItems(tab) {
 	let items = [];
 	if (tab === 'recent') {
 		items = readRecent().map((e) => ({ src: e.glb, title: e.prompt, poster: '' }));
+	} else if (tab === 'objects') {
+		// The CC0 object library (/objects). The full manifest is a few hundred
+		// small records — fetch it once so the tab's filter box works offline of
+		// the network after first open.
+		const res = await fetch('/api/objects/library');
+		if (!res.ok) throw new Error(`objects ${res.status}`);
+		const data = await res.json();
+		items = (data.objects || [])
+			.map((o) => ({
+				src: o.url || '',
+				title: o.label || o.name || '',
+				poster: o.thumb || '',
+				keywords: `${o.label || o.name || ''} ${(o.categories || []).join(' ')}`.toLowerCase(),
+			}))
+			.filter((o) => normalizeGlbUrl(o.src));
 	} else {
 		const qs = tab === 'community' ? '?scope=community&limit=24' : '?limit=24';
 		const res = await fetch(`/api/forge-gallery${qs}`, {
@@ -1684,6 +1699,7 @@ async function renderTray() {
 			recent: 'Nothing forged on this device yet. Type a prompt below and your first model appears here.',
 			yours: 'No saved creations yet. Forge something here or in the <a href="/forge">Forge studio</a> and it lands in this tab.',
 			community: 'The community feed is quiet right now. Check back in a bit.',
+			objects: 'The <a href="/objects">object library</a> is unreachable right now. Check back in a bit.',
 		}[tab] || 'Nothing here yet.';
 		trayBody.innerHTML = `
 			<div class="ars-tray-empty">
@@ -1696,13 +1712,62 @@ async function renderTray() {
 		});
 		return;
 	}
+	if (tab === 'objects') {
+		renderObjectsTray(items);
+		return;
+	}
 	trayBody.innerHTML = `<ul class="ars-item-list">${items.map(trayItemHTML).join('')}</ul>`;
+	wireTrayAdds();
+}
+
+function wireTrayAdds() {
 	trayBody.querySelectorAll('.ars-item-add').forEach((btn) => {
 		btn.addEventListener('click', () => {
 			closeTray();
 			addModel({ src: btn.dataset.src, title: btn.dataset.title });
 		});
 	});
+}
+
+// The object library is ~500 CC0 props — too many to scroll blind, so this tab
+// filters over name + category and renders matches in slices.
+const OBJECTS_SLICE = 60;
+function renderObjectsTray(items) {
+	trayBody.innerHTML = `
+		<div class="ars-objects-head">
+			<div class="ars-link-row">
+				<input id="ars-objects-search" type="search" autocomplete="off"
+					placeholder="Search ${items.length} CC0 props…"
+					aria-label="Search the object library" />
+			</div>
+			<p class="ars-link-hint">Free CC0 props from the <a href="/objects">object library</a> — tap to place one in your space.</p>
+		</div>
+		<ul class="ars-item-list" id="ars-objects-list"></ul>
+		<div class="ars-objects-more" id="ars-objects-more"></div>`;
+	const list = $('ars-objects-list');
+	const more = $('ars-objects-more');
+	const input = $('ars-objects-search');
+	let shown = OBJECTS_SLICE;
+	const paint = () => {
+		const q = (input?.value || '').trim().toLowerCase();
+		const matches = q ? items.filter((o) => o.keywords.includes(q)) : items;
+		list.innerHTML = matches.slice(0, shown).map(trayItemHTML).join('');
+		wireTrayAdds();
+		if (matches.length > shown) {
+			more.innerHTML = `<button type="button" class="ars-btn" id="ars-objects-show-more">Show ${Math.min(OBJECTS_SLICE, matches.length - shown)} more (${matches.length - shown} left)</button>`;
+			$('ars-objects-show-more')?.addEventListener('click', () => {
+				shown += OBJECTS_SLICE;
+				paint();
+			});
+		} else {
+			more.innerHTML = matches.length ? '' : '<p class="ars-link-hint">No props match that search.</p>';
+		}
+	};
+	input?.addEventListener('input', () => {
+		shown = OBJECTS_SLICE;
+		paint();
+	});
+	paint();
 }
 
 // ── WebXR immersive multi-placement ──────────────────────────────────────────

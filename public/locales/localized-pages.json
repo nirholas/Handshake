@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 180,
+	"count": 183,
 	"paths": [
 		"/",
 		"/activity",
@@ -38,6 +38,7 @@
 		"/capture",
 		"/categories",
 		"/chains",
+		"/character-library",
 		"/claim-wallet",
 		"/clash",
 		"/clip-director",
@@ -63,6 +64,7 @@
 		"/crypto-api",
 		"/dad",
 		"/daily",
+		"/daily-match",
 		"/defi",
 		"/deployments",
 		"/derivatives",
@@ -122,6 +124,7 @@
 		"/mocap-studio",
 		"/motion-swap",
 		"/nim-forge",
+		"/objects",
 		"/oracle",
 		"/partners",
 		"/payments",

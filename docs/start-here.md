@@ -70,6 +70,7 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 
 - **Just exploring?** → Open [Discover](/discover) to browse agents others have built
 - **Creating your first agent** → Go to [/start](/start) — a 5-step wizard walks you through it
+- **Want your avatar to sign in ASL?** → [Sign language](./sign-language.md) — fingerspell any word in the Animation Studio, share it as a link (`/pose?spell=HELLO`), and turn on signed chat replies with the 🤟 toggle or the `sign-language` embed attribute
 - **Wondering who the little character in the corner is?** → [The agent shell](./agent-shell.md) — every visitor gets a named agent in the first five seconds (claim it to make it real), the ⌘K palette runs real commands (`forge …`, `digest`, `price btc`, `ask …`), and shell pages navigate without ever unloading your agent
 - **Meeting avatars in the worlds?** → Press <kbd>I</kbd> on anyone in `/play`, `/city`, a coin world, or `/agora` to see who they are — the [avatar inspector](./avatar-inspector.md) shows their reputation, wallet, and profile
 - **Following creators?** → [The social layer](./social-layer.md): follow anyone from their `/u/:username` portfolio, watch their work land on [/feed](/feed), climb the [/rankings](/rankings) leaderboards with streaks and badges, get bell notifications for remixes, DMs, and coin graduations, and search everything at once on [/search](/search)

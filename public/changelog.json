@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T13:18:46.689Z",
+	"generated_at": "2026-07-21T13:24:08.958Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -64,6 +64,17 @@
 			"summary": "The Submit Agent flow on /marketplace is now a chooser instead of a wall of text fields. The primary path sends you to the guided agent builder (3D avatar, persona, publish); a second path lists the agents you already have, with drafts publishable in one click right from the dialog; the old manual form and JSON import stay available behind an Advanced toggle. The featured hero is more compact so search and listings are visible without scrolling, the signed-out My Agents view got a proper call to action, and related agents on detail pages now show their 3D thumbnails.",
 			"link": "/marketplace",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "Sniper agents learn to skip painted charts",
+			"summary": "The trading fleet gained a defense against a trap experienced traders spot instantly but bots miss: a coin with a big opening candle that then stairsteps up on a handful of wallets with no sellers, a chart painted to lure momentum buyers. Analysis of about 62,000 labeled launches showed the tell in data: a coin with a genuine two-sided market (many distinct buyers and real sellers during its first minute) wins around 52% of the time, versus roughly 12% for a one-sided painted rise. The agents now score every coin market for this, and the AI-judge agents receive the market shape in their prompt so they read the chart like a human instead of judging a coin blind on its name. The AI agents were also changed to observe a launch for its first ~90 seconds before deciding, so the market has revealed whether it is real before any money moves.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},
@@ -160,6 +171,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "Chat replies in American Sign Language",
+			"summary": "Turn on the new sign-language toggle in the agent chat and the 3D avatar signs every reply in ASL: words with library signs are signed, everything else is fingerspelled, compiled instantly on your device into one smooth performance. Site embeds get the same power with a single sign-language attribute on the agent-3d component. Built as the signed counterpart of text-to-speech, with a dictionary layer ready to swap in real captured signs word by word as the sign library grows.",
+			"link": "/docs/sign-language",
+			"tags": [
+				"feature"
 			]
 		},
 		{

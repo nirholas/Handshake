@@ -55,6 +55,14 @@
 			<description>The Submit Agent flow on /marketplace is now a chooser instead of a wall of text fields. The primary path sends you to the guided agent builder (3D avatar, persona, publish); a second path lists the agents you already have, with drafts publishable in one click right from the dialog; the old manual form and JSON import stay available behind an Advanced toggle. The featured hero is more compact so search and listings are visible without scrolling, the signed-out My Agents view got a proper call to action, and related agents on detail pages now show their 3D thumbnails.</description>
 		</item>
 		<item>
+			<title>Sniper agents learn to skip painted charts</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-21:Sniper agents learn to skip painted charts</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The trading fleet gained a defense against a trap experienced traders spot instantly but bots miss: a coin with a big opening candle that then stairsteps up on a handful of wallets with no sellers, a chart painted to lure momentum buyers. Analysis of about 62,000 labeled launches showed the tell in data: a coin with a genuine two-sided market (many distinct buyers and real sellers during its first minute) wins around 52% of the time, versus roughly 12% for a one-sided painted rise. The agents now score every coin market for this, and the AI-judge agents receive the market shape in their prompt so they read the chart like a human instead of judging a coin blind on its name. The AI agents were also changed to observe a launch for its first ~90 seconds before deciding, so the market has revealed whether it is real before any money moves.</description>
+		</item>
+		<item>
 			<title>Sniper Experiments: every wallet and every decision, in the open</title>
 			<link>https://three.ws/sniper/experiments</link>
 			<guid isPermaLink="false">2026-07-21:Sniper Experiments: every wallet and every decision, in the open</guid>
@@ -125,6 +133,14 @@
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The agent tools that report a coin's bonding curve were showing every coin as 0% to graduation with zero reserves and a zero price. Pump renamed these on-chain fields when USDC became a possible trading pair, and the tools were still reading the old names, which quietly resolved to zero instead of failing. They now read the current fields, so graduation progress, reserves, and price reflect the real curve. Verified against live coins reading 2% through 70% to graduation.</description>
+		</item>
+		<item>
+			<title>Chat replies in American Sign Language</title>
+			<link>https://three.ws/docs/sign-language</link>
+			<guid isPermaLink="false">2026-07-20:Chat replies in American Sign Language</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Turn on the new sign-language toggle in the agent chat and the 3D avatar signs every reply in ASL: words with library signs are signed, everything else is fingerspelled, compiled instantly on your device into one smooth performance. Site embeds get the same power with a single sign-language attribute on the agent-3d component. Built as the signed counterpart of text-to-speech, with a dictionary layer ready to swap in real captured signs word by word as the sign library grows.</description>
 		</item>
 		<item>
 			<title>Closed a gap that could price a drained PumpSwap pool as the safest trade</title>
