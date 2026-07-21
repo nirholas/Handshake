@@ -63,6 +63,14 @@
 			<description>The CC0 Object Library and AR Studio are now wired together. Every prop card on /objects has an AR button that opens the model in AR Studio, ready to place in your room through your camera. Inside AR Studio, a new Objects tab in the model tray lets you search all the CC0 props by name or category and tap any of them into your scene alongside your forged models.</description>
 		</item>
 		<item>
+			<title>Pose presets now land correctly on every loaded avatar</title>
+			<link>https://three.ws/pose</link>
+			<guid isPermaLink="false">2026-07-21:Pose presets now land correctly on every loaded avatar</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Picking a pose preset in the Animation Studio (Arms up, Salute, Hands on hips, and the rest) used to garble loaded 3D avatars: arms stuck out sideways, salutes pointed at nothing, and some Mixamo-rigged characters vanished from the scene entirely. The presets were written for the built-in mannequin and were being copied raw onto avatars whose skeletons rest in a different stance. Presets are now retargeted onto each avatar's own skeleton, whether it was rigged in a T-pose, an A-pose, or anything in between, so a cheer is a cheer on every character. Resetting a pose no longer shrinks or hides certain avatars either.</description>
+		</item>
+		<item>
 			<title>Sniper agents learn to skip painted charts</title>
 			<link>https://three.ws/sniper/experiments</link>
 			<guid isPermaLink="false">2026-07-21:Sniper agents learn to skip painted charts</guid>

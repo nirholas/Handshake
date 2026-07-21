@@ -21,10 +21,16 @@
  *      leaves the rig's live transforms untouched (agent-screen tween path).
  */
 
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Bone, Euler, Group, Object3D, Quaternion, Vector3 } from 'three';
 import { describe, it, expect } from 'vitest';
 import { MannequinRig, makeGltfRig, poseFromMannequinPreset } from '../src/pose-rig.js';
 import { PRESETS, getPresetById } from '../src/pose-presets.js';
+import { loadBoneGraph } from './_helpers/glb-bone-graph.js';
+
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const avatarPath = (n) => path.join(REPO, 'public/avatars', `${n}.glb`);
 
 const MANNEQUIN_TO_CANONICAL = {
 	pelvis: 'Hips', spine: 'Spine', chest: 'Spine2', neck: 'Neck', head: 'Head',
@@ -235,6 +241,35 @@ describe('GLB FK slider semantics (delta from rest)', () => {
 		expect(e.y).toBeCloseTo(0.3, 5);
 		expect(e.z).toBeCloseTo(0.1, 5);
 	});
+});
+
+describe('presets on committed real avatars', () => {
+	// michelle.glb / xbot.glb are Mixamo-derived: their skins' inverse-bind
+	// matrices are in a cm-scale frame, so a resetPose built on skeleton.pose()
+	// collapses the avatar to 1% scale (it vanished in the studio). Rest must
+	// come from the node transforms at load, never from the skin's bind frame.
+	for (const name of ['michelle', 'cz', 'xbot', 'realistic-male']) {
+		it(`${name}.glb keeps its size and raises its arms for the cheer preset`, () => {
+			const { root } = loadBoneGraph(avatarPath(name));
+			const rig = makeGltfRig(root);
+			expect(rig, name).toBeTruthy();
+			root.updateMatrixWorld(true);
+			const hipsBefore = rig.getNode('Hips').getWorldPosition(new Vector3());
+			rig.applyPose(poseFromMannequinPreset(getPresetById('hands-up').pose));
+			root.updateMatrixWorld(true);
+			const hipsAfter = rig.getNode('Hips').getWorldPosition(new Vector3());
+			// The figure must stay where (and how big) it was — no bind-frame collapse.
+			expect(hipsAfter.distanceTo(hipsBefore), name).toBeLessThan(0.05 * Math.max(1, hipsBefore.length()));
+			for (const side of ['Left', 'Right']) {
+				expect(limbDir(rig, `${side}Arm`, `${side}ForeArm`).y, `${name} ${side}`).toBeGreaterThan(0.85);
+			}
+			// And resetPose returns to the loaded stance, same scale.
+			rig.resetPose();
+			root.updateMatrixWorld(true);
+			expect(rig.getNode('Hips').getWorldPosition(new Vector3()).distanceTo(hipsBefore), name)
+				.toBeLessThan(1e-6 + 0.001 * hipsBefore.length());
+		});
+	}
 });
 
 describe('localTargetsForPose', () => {
