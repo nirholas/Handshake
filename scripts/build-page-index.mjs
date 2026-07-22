@@ -175,6 +175,30 @@ function buildLlmsFull() {
 // ────────────────────────────────────────────────────────────────────────
 function buildSitemapHtml() {
 	const totalPages = sections.reduce((n, s) => n + s.pages.length, 0);
+
+	// "Newest" strip: the most recently added public pages, so what just
+	// shipped is visible without scanning every section. News articles are
+	// excluded (they have their own feed and would drown product launches).
+	const NEWEST_COUNT = 9;
+	const fmtAdded = (iso) =>
+		new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+	const newestPages = sections
+		.filter((s) => s.id !== 'news')
+		.flatMap((s) => s.pages)
+		.filter((p) => p.added && p.indexable !== false)
+		.sort((a, b) => b.added.localeCompare(a.added))
+		.slice(0, NEWEST_COUNT);
+	const newestHtml = newestPages
+		.map((p) => `\t\t\t\t<li>
+\t\t\t\t\t<a href="${escapeHtml(p.path)}">
+\t\t\t\t\t\t<span class="sm-new-date">${escapeHtml(fmtAdded(p.added))}</span>
+\t\t\t\t\t\t<span class="sm-title">${escapeHtml(p.title)}${p.auth === 'required' ? '<span class="sm-badge sm-badge-auth">sign-in</span>' : ''}</span>
+\t\t\t\t\t\t<span class="sm-path">${escapeHtml(p.path)}</span>
+\t\t\t\t\t\t<span class="sm-desc">${escapeHtml(p.description)}</span>
+\t\t\t\t\t</a>
+\t\t\t\t</li>`)
+		.join('\n');
+
 	const sectionHtml = sections
 		.map((section) => {
 			const items = section.pages
@@ -261,6 +285,13 @@ ${items}
 \t.sm-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 \t.sm-badge-auth { background: rgba(255, 200, 80, .15); color: #ffcf66; }
 \t.sm-badge-internal { background: rgba(120,200,255,.12); color: #9ad4ff; }
+\t.sm-new { margin-bottom: 56px; }
+\t.sm-new h2 { display: flex; align-items: baseline; gap: 12px; font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+\t.sm-new-more { font-size: 13px; font-weight: 500; color: #9ad4ff; text-decoration: none; }
+\t.sm-new-more:hover { text-decoration: underline; }
+\t.sm-new .sm-list a { border-color: rgba(150,170,255,.18); background: rgba(120,140,255,.04); }
+\t.sm-new .sm-list a:hover { border-color: rgba(150,170,255,.40); }
+\t.sm-new-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #7fd6a2; }
 </style>
 </head>
 <body>
@@ -284,6 +315,13 @@ ${items}
 \t\t\t<kbd aria-hidden="true">/</kbd>
 \t\t</div>
 \t\t<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
+\t\t<section class="sm-new" id="sm-new" aria-labelledby="sm-new-title">
+\t\t\t<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
+\t\t\t<p class="sm-section-desc">The ${newestPages.length} most recently launched pages, straight to the live surface.</p>
+\t\t\t<ul class="sm-list">
+${newestHtml}
+\t\t\t</ul>
+\t\t</section>
 \t\t<nav class="sm-toc" aria-label="Sections">
 ${tocHtml}
 \t\t</nav>
@@ -315,8 +353,11 @@ ${sectionHtml}
 \t\tvar total = groups.reduce(function (n, g) { return n + g.items.length; }, 0);
 \t\tcountEl.textContent = total + ' pages \\u00b7 ' + groups.length + ' sections';
 
+\t\tvar newest = document.getElementById('sm-new');
+
 \t\tfunction apply(q) {
 \t\t\tq = q.trim().toLowerCase();
+\t\t\tif (newest) newest.hidden = !!q;
 \t\t\tvar shown = 0;
 \t\t\tgroups.forEach(function (g) {
 \t\t\t\tvar visible = 0;

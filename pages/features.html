@@ -368,6 +368,31 @@
 			</section>
 
 			<!-- ════════════════════════════════════
+			     NEW ON THREE.WS: latest shipped features, fed by /changelog.json
+			     ════════════════════════════════════ -->
+			<section class="feat-new-section scroll-reveal" id="new" aria-labelledby="featNewTitle">
+				<div class="feat-new-head">
+					<div>
+						<p class="feat-eyebrow" data-i18n="features.just_shipped">Just shipped</p>
+						<h2 class="feat-new-title" id="featNewTitle" data-i18n="features.new_on_three_ws">New on three.ws</h2>
+						<p class="feat-new-sub" data-i18n="features.the_latest_features_each_linked_to_the">
+							The latest features and launches, each linked to the live page. This list
+							updates itself with every release.
+						</p>
+					</div>
+					<a class="feat-new-all" href="/changelog" data-i18n="features.view_the_full_changelog">View the full changelog</a>
+				</div>
+				<ul class="feat-new-grid" id="featNewGrid">
+					<li class="feat-new-skeleton" aria-hidden="true"></li>
+					<li class="feat-new-skeleton" aria-hidden="true"></li>
+					<li class="feat-new-skeleton" aria-hidden="true"></li>
+					<li class="feat-new-skeleton" aria-hidden="true"></li>
+					<li class="feat-new-skeleton" aria-hidden="true"></li>
+					<li class="feat-new-skeleton" aria-hidden="true"></li>
+				</ul>
+			</section>
+
+			<!-- ════════════════════════════════════
 			     ANIMATION SHOWCASE — interactive demo
 			     ════════════════════════════════════ -->
 			<section class="feat-anim-showcase" id="animations" aria-label="Animation showcase">
@@ -1618,6 +1643,58 @@
 					el.style.transitionDelay = idx * 0.07 + 's';
 					observer.observe(el);
 				});
+			})();
+		</script>
+		<script type="module">
+			// "New on three.ws": newest feature/launch entries from the changelog
+			// feed, each card linking to the live page it shipped on.
+			(async () => {
+				const grid = document.getElementById('featNewGrid');
+				if (!grid) return;
+				const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+				const slugify = (title, date) =>
+					date + '-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+				const fmtDate = (iso) => {
+					try {
+						return new Date(iso + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+					} catch { return iso; }
+				};
+				try {
+					const res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
+					if (!res.ok) throw new Error('feed ' + res.status);
+					const { entries = [] } = await res.json();
+					const seen = new Set();
+					const fresh = entries
+						.filter((e) => e.type === 'launch' || (e.tags || []).includes('feature'))
+						.filter((e) => {
+							const key = e.link || slugify(e.title, e.date);
+							if (seen.has(key)) return false;
+							seen.add(key);
+							return true;
+						})
+						.slice(0, 6);
+					if (!fresh.length) throw new Error('feed empty');
+					grid.innerHTML = fresh.map((e) => {
+						const href = e.link || '/changelog/' + slugify(e.title, e.date);
+						const kind = e.type === 'launch' ? 'launch' : 'feature';
+						return `<li>
+							<a class="feat-new-card" href="${esc(href)}">
+								<span class="feat-new-meta">
+									<span class="feat-new-tag feat-new-tag-${kind}">${kind === 'launch' ? 'New page' : 'Feature'}</span>
+									<time datetime="${esc(e.date)}">${esc(fmtDate(e.date))}</time>
+								</span>
+								<span class="feat-new-card-title">${esc(e.title)}</span>
+								<span class="feat-new-card-desc">${esc(e.summary)}</span>
+							</a>
+						</li>`;
+					}).join('');
+				} catch (err) {
+					console.error('[features:new]', err);
+					grid.innerHTML = `<li class="feat-new-fallback">
+						Couldn't load the latest releases right now.
+						<a href="/changelog">Browse the full changelog</a> instead.
+					</li>`;
+				}
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
