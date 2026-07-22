@@ -56,7 +56,7 @@
 				--text-3: #71717a;
 				--accent: #ffffff;
 				--accent-2: #cccccc;
-				--danger: var(--danger);
+				--danger: #f87171;
 				--ok: #ffffff;
 				--nav-h: 69px;
 			}
@@ -95,13 +95,34 @@
 				grid-area: top;
 				display: flex;
 				align-items: center;
-				gap: 10px;
+				gap: 6px;
 				padding: 0 14px;
 				border-bottom: 1px solid var(--border);
 				background: rgba(0, 0, 0, 0.85);
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
 				z-index: 10;
+				scrollbar-width: none;
+			}
+			/* Neutralize style.css's legacy `header:not(.nav)` chrome: it
+			   forces height/line-height 56px (buttons inherit it via
+			   `font: inherit` and balloon into oversized pills) and marks the
+			   bar as an app-drag region. That selector hides an ID inside
+			   :has(), so a bare #pose-top loses — double the ID to outrank it.
+			   The grid row sizes this bar; overflow-x is the narrow-width
+			   safety net so buttons scroll instead of truncating mid-label. */
+			#pose-app #pose-top {
+				height: auto;
+				line-height: 1.45;
+				-webkit-app-region: no-drag;
+				overflow-x: auto;
+				overflow-y: hidden;
+			}
+			#pose-top::-webkit-scrollbar {
+				display: none;
+			}
+			#pose-top > * {
+				flex-shrink: 0;
 			}
 			#pose-top .brand {
 				display: flex;
@@ -243,6 +264,72 @@
 			}
 			.file-label input[type='file'] {
 				display: none;
+			}
+
+			/* Overflow ("More") menu — low-frequency toolbar actions live here so
+			   the top bar never truncates at laptop widths. The panel is
+			   position:fixed and placed from the trigger's rect in JS, so the
+			   scrollable top bar can never clip it. */
+			#pose-more {
+				font-size: 16px;
+				letter-spacing: 0.08em;
+				padding: 6px 10px;
+				line-height: 1;
+			}
+			#pose-more[aria-expanded='true'] {
+				background: rgba(255, 255, 255, 0.12);
+				color: var(--text);
+			}
+			.pose-menu {
+				position: fixed;
+				min-width: 200px;
+				background: var(--panel-solid);
+				border: 1px solid var(--border-strong);
+				border-radius: 12px;
+				padding: 5px;
+				box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+				display: flex;
+				flex-direction: column;
+				gap: 1px;
+				z-index: 200;
+				animation: pose-menu-in 0.14s ease both;
+			}
+			@keyframes pose-menu-in {
+				from {
+					opacity: 0;
+					transform: translateY(-4px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.pose-menu {
+					animation: none;
+				}
+			}
+			.pose-menu[hidden] {
+				display: none;
+			}
+			.pose-menu .pose-btn {
+				width: 100%;
+				box-sizing: border-box;
+				justify-content: flex-start;
+				border-radius: 8px;
+				border-color: transparent;
+				background: transparent;
+				color: var(--text-2);
+				padding: 8px 10px;
+				margin: 0;
+			}
+			.pose-menu .pose-btn:hover,
+			.pose-menu .pose-btn:focus-visible {
+				background: rgba(255, 255, 255, 0.08);
+				color: var(--text);
+			}
+			.pose-menu .pose-btn:focus-visible {
+				outline: none;
 			}
 
 			/* ── Left panel: joint picker + controls ──────────────── */
@@ -497,6 +584,83 @@
 			#pose-status[data-kind='error'] {
 				color: var(--danger);
 				border-color: rgba(248, 113, 113, 0.4);
+			}
+			#pose-recovery {
+				position: absolute;
+				left: 50%;
+				bottom: 58px;
+				transform: translateX(-50%);
+				display: flex;
+				align-items: center;
+				gap: 18px;
+				width: min(500px, calc(100% - 32px));
+				background: rgba(20, 20, 20, 0.94);
+				border: 1px solid var(--border-strong);
+				border-radius: 14px;
+				padding: 12px 14px 12px 16px;
+				box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				z-index: 20;
+				animation: pose-recovery-in 0.22s ease both;
+			}
+			@keyframes pose-recovery-in {
+				from {
+					opacity: 0;
+					transform: translate(-50%, 8px);
+				}
+				to {
+					opacity: 1;
+					transform: translate(-50%, 0);
+				}
+			}
+			.pose-recovery-body {
+				flex: 1 1 auto;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				min-width: 0;
+			}
+			.pose-recovery-icon {
+				flex: none;
+				width: 30px;
+				height: 30px;
+				display: grid;
+				place-items: center;
+				border-radius: 8px;
+				background: var(--border);
+				color: var(--text);
+				font-size: 15px;
+			}
+			.pose-recovery-copy {
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				min-width: 0;
+			}
+			.pose-recovery-copy strong {
+				font-size: 12.5px;
+				font-weight: 600;
+				color: var(--text);
+			}
+			.pose-recovery-copy span {
+				font-size: 11.5px;
+				color: var(--text-2);
+			}
+			.pose-recovery-actions {
+				flex: none;
+				display: flex;
+				gap: 8px;
+			}
+			@media (max-width: 560px) {
+				#pose-recovery {
+					flex-direction: column;
+					align-items: stretch;
+					gap: 12px;
+				}
+				.pose-recovery-actions {
+					justify-content: flex-end;
+				}
 			}
 
 			/* ── Right panel: presets + props ──────────────────── */
@@ -1673,18 +1837,23 @@
 			@media (max-width: 900px) {
 				#pose-app {
 					grid-template-columns: 1fr;
-					grid-template-rows: 52px minmax(46vh, 1fr) auto auto;
+					grid-template-rows: 52px minmax(46vh, 1fr) auto auto auto;
 					grid-template-areas:
 						'top'
 						'stage'
 						'timeline'
+						'right'
 						'left';
 					/* Stacked panels can exceed one screen — let the page scroll. */
 					height: auto;
 					min-height: calc(100dvh - var(--nav-h));
 				}
+				/* Animation library + presets stay reachable on small screens:
+				   they stack under the timeline instead of disappearing. */
 				#pose-right {
-					display: none;
+					border-left: none;
+					border-top: 1px solid var(--border);
+					max-height: 44vh;
 				}
 				#pose-left {
 					border-right: none;
@@ -1694,6 +1863,12 @@
 				.tl-field-fps,
 				.tl-field-name {
 					display: none;
+				}
+				/* The empty-state hint wraps on narrow screens and collides
+				   with the ruler labels — scrim the whole track while empty. */
+				.tl-empty {
+					inset: 0;
+					background: rgba(0, 0, 0, 0.6);
 				}
 			}
 		</style>
@@ -1839,27 +2014,49 @@
 					Reset pose
 				</button>
 
-				<label class="pose-btn file-label" title="Load a pose from JSON" data-i18n-attr="title:pose.load_a_pose_from_json_title">
-					Import
+				<button
+					type="button"
+					id="pose-more"
+					class="pose-btn"
+					title="More actions"
+					aria-label="More actions"
+					aria-haspopup="menu"
+					aria-expanded="false"
+					aria-controls="pose-more-menu"
+				>
+					⋯
+				</button>
+			</header>
+
+			<!-- Overflow menu panel. Lives OUTSIDE the scrollable top bar
+			     (position:fixed, placed from the trigger's rect in JS) so
+			     focusing its items can never scroll or clip the toolbar. -->
+			<div class="pose-menu" id="pose-more-menu" role="menu" aria-label="More actions" hidden>
+				<label class="pose-btn file-label" role="menuitem" tabindex="-1" title="Load a pose from JSON" data-i18n-attr="title:pose.load_a_pose_from_json_title">
+					Import pose JSON
 					<input type="file" id="pose-import-json" accept="application/json,.json" />
 				</label>
 				<button
 					type="button"
 					id="pose-export-json"
 					class="pose-btn"
+					role="menuitem"
+					tabindex="-1"
 					title="Save pose as JSON"
 				 data-i18n="pose.export_json" data-i18n-attr="title:pose.save_pose_as_json_title">
-					Export JSON
+					Export pose JSON
 				</button>
 				<button
 					type="button"
 					id="pose-screenshot"
 					class="pose-btn"
+					role="menuitem"
+					tabindex="-1"
 					title="Download a PNG of the current view"
 				 data-i18n="pose.png_screenshot" data-i18n-attr="title:pose.download_a_png_of_the_curren_title">
 					PNG screenshot
 				</button>
-			</header>
+			</div>
 
 			<!-- LEFT PANEL -->
 			<aside id="pose-left">
@@ -2199,6 +2396,9 @@
 			<div class="h-footer-bottom">
 				<p class="h-footer-legal" data-i18n="pose.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
+					<!-- Placing the switcher here keeps i18n.js from mounting its
+					     floating fallback, which sat on top of the timeline. -->
+					<lang-switcher></lang-switcher>
 					<a href="/legal/privacy" data-i18n="pose.privacy">Privacy</a>
 					<a href="/legal/tos" data-i18n="pose.terms">Terms</a>
 				</div>

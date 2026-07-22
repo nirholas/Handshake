@@ -991,6 +991,64 @@ function boot() {
 	});
 
 	// ── Top toolbar ──────────────────────────────────────────────────────────
+
+	// Overflow ("More") menu: low-frequency actions (import/export pose JSON,
+	// PNG screenshot) collapse behind one trigger so the bar fits laptop
+	// widths. The panel is position:fixed and placed from the trigger's rect,
+	// because the scrollable top bar would clip an absolutely-positioned child.
+	const moreBtn = $('#pose-more');
+	const moreMenu = $('#pose-more-menu');
+	if (moreBtn && moreMenu) {
+		const menuItems = () => [...moreMenu.querySelectorAll('[role="menuitem"]')];
+		const openMenu = () => {
+			const r = moreBtn.getBoundingClientRect();
+			moreMenu.hidden = false;
+			moreMenu.style.top = `${Math.round(r.bottom + 6)}px`;
+			moreMenu.style.right = `${Math.max(8, Math.round(window.innerWidth - r.right))}px`;
+			moreBtn.setAttribute('aria-expanded', 'true');
+			menuItems()[0]?.focus();
+		};
+		const closeMenu = (refocus = false) => {
+			if (moreMenu.hidden) return;
+			moreMenu.hidden = true;
+			moreBtn.setAttribute('aria-expanded', 'false');
+			if (refocus) moreBtn.focus();
+		};
+		moreBtn.addEventListener('click', () => {
+			if (moreMenu.hidden) openMenu();
+			else closeMenu();
+		});
+		moreMenu.addEventListener('keydown', (ev) => {
+			const list = menuItems();
+			const idx = list.indexOf(document.activeElement);
+			if (ev.key === 'Escape') {
+				closeMenu(true);
+			} else if (ev.key === 'ArrowDown') {
+				ev.preventDefault();
+				list[(idx + 1) % list.length]?.focus();
+			} else if (ev.key === 'ArrowUp') {
+				ev.preventDefault();
+				list[(idx - 1 + list.length) % list.length]?.focus();
+			} else if (
+				(ev.key === 'Enter' || ev.key === ' ') &&
+				document.activeElement?.classList?.contains('file-label')
+			) {
+				// A <label> doesn't activate its file input from the keyboard.
+				ev.preventDefault();
+				document.activeElement.querySelector('input[type="file"]')?.click();
+			}
+		});
+		moreMenu.addEventListener('click', (ev) => {
+			if (ev.target.closest('[role="menuitem"]')) closeMenu();
+		});
+		document.addEventListener('pointerdown', (ev) => {
+			if (!moreMenu.hidden && !ev.target.closest('#pose-more, #pose-more-menu')) {
+				closeMenu();
+			}
+		});
+		window.addEventListener('resize', () => closeMenu());
+	}
+
 	$('#pose-reset')?.addEventListener('click', () => {
 		recordHistory();
 		state.rig.resetPose();
@@ -1209,7 +1267,11 @@ function boot() {
 	// warn before unload while the current state differs from the last point it
 	// was persisted (an account save, or opening a saved clip). On the next boot
 	// the draft is offered back — unless an explicit deep-link (?anim=) wins.
-	const autosave = setupAutosave();
+	// The recovery offer banner (last session's unsaved work), when showing.
+	let recoveryBanner = null;
+	// onSupersede fires when a still-pending recovery offer is overtaken by fresh
+	// work (the user started posing instead of answering) — dismiss the banner.
+	const autosave = setupAutosave({ onSupersede: () => dismissRecoveryPrompt() });
 
 	// ── Animation preset library ─────────────────────────────────────────────
 	// A curated gallery of ready-to-apply motion clips. Picking one retargets it
@@ -1750,7 +1812,7 @@ function boot() {
 
 	// Local crash-recovery for in-progress timeline work. Returns null when the
 	// page has no timeline (the studio markup is absent) so callers no-op safely.
-	function setupAutosave() {
+	function setupAutosave({ onSupersede } = {}) {
 		if (!timeline) return null;
 		const DRAFT_KEY = 'pose-studio:draft:v2';
 		// savedBaseline = the document JSON at the last persisted point (account
@@ -1758,6 +1820,11 @@ function boot() {
 		// the interval skips redundant writes.
 		let savedBaseline = JSON.stringify(timeline.getDocument());
 		let lastDraftJson = null;
+		// True while a recovered draft is being OFFERED but not yet applied. The
+		// timeline is empty in that window, so without this guard the periodic
+		// persistDraft() would clear the on-disk draft out from under the prompt
+		// (a reload before the user chooses would then lose the work).
+		let restorePending = false;
 
 		const currentJson = () => JSON.stringify(timeline.getDocument());
 
@@ -1782,6 +1849,14 @@ function boot() {
 		}
 
 		function persistDraft() {
+			// While a recovered draft is being offered, leave it on disk, unless the
+			// user has started fresh keyframe work without answering, in which case
+			// the offer is superseded and this new work takes over the draft slot.
+			if (restorePending) {
+				if (!timeline.getDocument().keyframes.length) return;
+				restorePending = false;
+				onSupersede?.();
+			}
 			const cur = currentJson();
 			if (cur === lastDraftJson) return;
 			lastDraftJson = cur;
@@ -1810,20 +1885,33 @@ function boot() {
 			clearDraft();
 		}
 
-		// Offer the previous session's unsaved draft back. Restored work stays
-		// "unsaved" (it isn't in the account yet), so the unload guard keeps
-		// protecting it until the user Saves.
-		function tryRestore() {
+		// Read (without applying) the previous session's unsaved draft, if any.
+		// Boot uses this to OFFER recovery rather than silently applying keyframes
+		// onto whatever rig happens to be loaded — auto-applying a pose made on a
+		// different avatar contorts the mannequin and gives no way back to a clean
+		// figure. Returns { doc, count, savedAt, avatarId } or null.
+		function peekDraft() {
 			const saved = readDraft();
 			const count = saved?.doc?.keyframes?.length || 0;
-			if (!count) return false;
-			timeline.loadDocument(saved.doc);
+			if (!count) return null;
+			// Freeze the on-disk draft until the offer is resolved (see restorePending).
+			restorePending = true;
+			return { doc: saved.doc, count, savedAt: saved.savedAt || null, avatarId: saved.avatarId || null };
+		}
+
+		// Apply a peeked draft's timeline to the live rig. Restored work stays
+		// "unsaved" (it isn't in the account yet), so the unload guard keeps
+		// protecting it until the user Saves.
+		function applyDraft(doc) {
+			restorePending = false;
+			if (!doc) return;
+			timeline.loadDocument(doc);
 			lastDraftJson = currentJson();
-			const when = saved.savedAt ? new Date(saved.savedAt).toLocaleTimeString() : 'a previous session';
-			setStatus(
-				`Recovered your unsaved animation — ${count} keyframe${count === 1 ? '' : 's'} from ${when}. Save it to keep it.`,
-			);
-			return true;
+		}
+
+		function discardDraft() {
+			restorePending = false;
+			clearDraft();
 		}
 
 		const interval = setInterval(persistDraft, 1500);
@@ -1839,7 +1927,7 @@ function boot() {
 		});
 		window.addEventListener('pagehide', () => clearInterval(interval));
 
-		return { markSaved, tryRestore, hasUnsavedWork };
+		return { markSaved, peekDraft, applyDraft, discardDraft, hasUnsavedWork };
 	}
 
 	// ── Account: save + "My animations" library ──────────────────────────────
@@ -1875,8 +1963,67 @@ function boot() {
 	const requestedSpell = (_params.get('spell') || '').slice(0, 40);
 
 	// An explicit ?anim=, ?spell= or model deep-link wins over any recovered
-	// draft; otherwise we offer back last session's unsaved work.
-	const recovered = !requestedAnim && !requestedSrc && !requestedSpell && autosave?.tryRestore();
+	// draft; otherwise we OFFER back last session's unsaved work (see boot tail).
+	const hasDeepLink = requestedAvatar || requestedSrc || requestedAnim || requestedSpell;
+	const pendingDraft = !hasDeepLink ? autosave?.peekDraft() : null;
+
+	// Offer the previous session's unsaved work as an explicit choice instead of
+	// silently applying it. Keeps the clean default figure on screen until the
+	// user opts in; Restore reloads the avatar the pose was made on, then applies
+	// the keyframes; Discard drops the local draft for good.
+	function showRecoveryPrompt(draft) {
+		const canvasWrap = document.getElementById('pose-canvas')?.parentElement || document.body;
+		dismissRecoveryPrompt();
+
+		const when = draft.savedAt ? new Date(draft.savedAt).toLocaleTimeString() : 'a previous session';
+
+		const restore = async () => {
+			dismissRecoveryPrompt();
+			setStatus('Restoring your animation…');
+			// Reload the avatar the draft was posed on so the keyframes land on the
+			// same rig (a pose made on a rigged avatar looks wrong on the mannequin).
+			// Apply the timeline regardless of whether that avatar still resolves.
+			if (draft.avatarId && draft.avatarId !== state.avatar?.id) {
+				try {
+					await loadAvatarById(draft.avatarId);
+				} catch (err) {
+					log.warn('[pose] recovery avatar reload failed:', err?.message);
+					setStatus(`Original avatar unavailable (${err?.message || 'removed'}); restoring onto the mannequin.`, 'error');
+				}
+			}
+			autosave.applyDraft(draft.doc);
+			setStatus(
+				`Recovered your unsaved animation. ${draft.count} keyframe${draft.count === 1 ? '' : 's'} from ${when}. Save it to keep it.`,
+			);
+		};
+		const discard = () => {
+			dismissRecoveryPrompt();
+			autosave.discardDraft();
+			setStatus('Ready. Click a body part to pose, or load an avatar.');
+		};
+
+		recoveryBanner = el('div', { id: 'pose-recovery', role: 'status', 'aria-live': 'polite' }, [
+			el('div', { class: 'pose-recovery-body' }, [
+				el('div', { class: 'pose-recovery-icon', 'aria-hidden': 'true' }, ['↺']),
+				el('div', { class: 'pose-recovery-copy' }, [
+					el('strong', {}, ['Unsaved animation found']),
+					el('span', {}, [
+						`${draft.count} keyframe${draft.count === 1 ? '' : 's'} from ${when}. Restore it or start fresh.`,
+					]),
+				]),
+			]),
+			el('div', { class: 'pose-recovery-actions' }, [
+				el('button', { class: 'pose-btn pose-btn-ghost', type: 'button', onclick: discard }, ['Discard']),
+				el('button', { class: 'pose-btn pose-btn-primary', type: 'button', onclick: restore }, ['Restore']),
+			]),
+		]);
+		canvasWrap.appendChild(recoveryBanner);
+	}
+
+	function dismissRecoveryPrompt() {
+		recoveryBanner?.remove();
+		recoveryBanner = null;
+	}
 
 	// A 36-char UUID is a saved community clip (PoseLibrary.openById); anything
 	// else is a built-in preset name from the animation library (AnimationLibrary
@@ -1930,8 +2077,11 @@ function boot() {
 		// A ?src= deep-link that failed the trusted-host gate: say why instead of
 		// silently opening an empty studio.
 		setStatus('That model link is not from a trusted host. Pick an avatar instead.', 'error');
+	} else if (pendingDraft) {
+		setStatus('Ready. Click a body part to pose, or load an avatar.');
+		showRecoveryPrompt(pendingDraft);
 	} else {
-		if (!recovered) setStatus('Ready. Click a body part to pose, or load an avatar.');
+		setStatus('Ready. Click a body part to pose, or load an avatar.');
 	}
 }
 
