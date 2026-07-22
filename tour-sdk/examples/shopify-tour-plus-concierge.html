@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Northwind Goods: guided tour + AI concierge (one storefront)</title>
+<meta name="description" content="Small-batch homeware: ceramics, linen, and oak, finished by hand." />
+<meta property="og:site_name" content="Northwind Goods" />
+<!--
+	ONE avatar experience, two jobs: a guided store TOUR and a customer-support
+	CONCIERGE that answers product/store questions, on the same storefront.
+
+	three.ws ships these as two purpose-built widgets:
+	  - @three-ws/tour       walks the page and narrates it (scripted, no LLM)
+	  - @three-ws/concierge  answers typed/spoken questions, grounded in the
+	                         live page + your curated `knowledge` string
+
+	This page runs both and wires a clean handoff between them:
+	  1. The tour's completion card offers "Ask our concierge" -> opens the chat.
+	  2. Opening the chat mid-tour exits the tour, so the two never talk over
+	     each other.
+
+	Paste-ready for a Shopify theme.liquid (before </body>): the two <script>
+	tags plus the small handoff script below. Swap the CDN paths for pinned
+	versions in production.
+
+	Run the demo:  npx serve tour-sdk   ->   /examples/shopify-tour-plus-concierge.html
+-->
+<style>
+	:root {
+		--bg: #fffdf9; --ink: #121212; --muted: #5c5c5c;
+		--accent: #2e4b3f; --accent-ink: #fff; --line: #e8e4dc; --card: #f6f3ec;
+	}
+	* { box-sizing: border-box; margin: 0; }
+	body { font: 15px/1.6 "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--ink); }
+	a { color: inherit; text-decoration: none; }
+	img { max-width: 100%; display: block; }
+
+	.announcement { background: var(--accent); color: var(--accent-ink); text-align: center; padding: 8px 16px; font-size: 13px; letter-spacing: .04em; }
+	header.site { display: flex; align-items: center; justify-content: space-between; padding: 18px 5vw; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 50; }
+	.logo { font-size: 22px; font-weight: 700; letter-spacing: .06em; }
+	nav.main { display: flex; gap: 28px; font-size: 14px; }
+	nav.main a:hover { text-decoration: underline; text-underline-offset: 4px; }
+	.cart { font-size: 14px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; }
+
+	.hero { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: center; padding: 9vh 5vw; }
+	.hero h1 { font-size: clamp(34px, 4.5vw, 56px); line-height: 1.08; font-weight: 650; letter-spacing: -.01em; }
+	.hero p { margin: 18px 0 28px; color: var(--muted); font-size: 17px; max-width: 46ch; }
+	a.cta { display: inline-block; background: var(--accent); color: var(--accent-ink); padding: 14px 30px; border-radius: 4px; font-weight: 600; transition: transform .15s ease, box-shadow .15s ease; }
+	a.cta:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(46,75,63,.25); }
+	.hero-art { aspect-ratio: 4/3; border-radius: 10px; background: linear-gradient(135deg,#dfe8df,#b9ccbb 55%,#8fae94); }
+
+	section.shelf { padding: 7vh 5vw; }
+	section.shelf > h2 { font-size: 30px; font-weight: 650; margin-bottom: 6px; }
+	section.shelf > .sub { color: var(--muted); margin-bottom: 34px; }
+	.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 26px; }
+	.product { background: var(--card); border-radius: 10px; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease; }
+	.product:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,.08); }
+	.product .ph { aspect-ratio: 1; }
+	.product .meta { padding: 14px 16px 18px; }
+	.product h3 { font-size: 15px; font-weight: 600; }
+	.product .price { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+	.story { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: center; background: var(--card); }
+	.story .copy { padding: 8vh 5vw; }
+	.story h2 { font-size: 30px; margin-bottom: 14px; }
+	.story p { color: var(--muted); max-width: 52ch; }
+	.story .art { min-height: 340px; background: linear-gradient(160deg,#e8dfd2,#cdb99b 60%,#a98f68); }
+
+	.reviews { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+	.review { border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
+	.review .stars { color: #c98f19; letter-spacing: 2px; margin-bottom: 10px; }
+	.review p { color: var(--muted); font-size: 14px; }
+	.review .who { margin-top: 14px; font-size: 13px; font-weight: 600; }
+
+	.policies { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 26px; }
+	.policy h3 { font-size: 16px; margin-bottom: 6px; }
+	.policy p { color: var(--muted); font-size: 14px; }
+
+	footer.site { border-top: 1px solid var(--line); padding: 6vh 5vw; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px; color: var(--muted); font-size: 13px; }
+
+	.tour-cta { position: fixed; left: 16px; bottom: 16px; z-index: 2147483600; }
+	.tour-cta button { cursor: pointer; border: 0; border-radius: 999px; padding: 12px 22px; font: 600 14px/1 inherit; background: #121212; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.3); transition: background .15s ease; }
+	.tour-cta button:hover { background: var(--accent); }
+	.tour-cta button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+	@media (max-width: 768px) {
+		.hero, .story { grid-template-columns: 1fr; }
+		nav.main { display: none; }
+	}
+</style>
+</head>
+<body>
+
+<div class="announcement">Free shipping on orders over $60 · Summer collection is live</div>
+
+<header class="site">
+	<a class="logo" href="/">NORTHWIND&nbsp;GOODS</a>
+	<nav class="main" aria-label="Main">
+		<a href="/">Home</a><a href="#featured">Catalog</a><a href="#story">About</a><a href="#reviews">Reviews</a><a href="#policies">Shipping</a>
+	</nav>
+	<a class="cart" href="#" aria-label="Cart">Cart · 0</a>
+</header>
+
+<section class="hero">
+	<div>
+		<h1>Handcrafted homeware for slow mornings</h1>
+		<p>Small-batch ceramics, linen, and oak, made by workshops we know by name. Every piece is finished by hand and built to outlast trends.</p>
+		<a class="cta" href="#featured">Shop the collection</a>
+	</div>
+	<div class="hero-art" role="img" aria-label="Stoneware mugs on an oak shelf"></div>
+</section>
+
+<section class="shelf" id="featured">
+	<h2>Featured products</h2>
+	<p class="sub">This season's most-loved pieces, restocked weekly.</p>
+	<div class="grid" data-tour-target>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#dcd5c9,#b8ad99)"></div><div class="meta"><h3>Stoneware Mug (Fog)</h3><div class="price">$28.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#d7e0d7,#9fb5a1)"></div><div class="meta"><h3>Linen Table Runner</h3><div class="price">$54.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#e6dccd,#c2a678)"></div><div class="meta"><h3>Oak Serving Board</h3><div class="price">$72.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#ded8d2,#a89f96)"></div><div class="meta"><h3>Ceramic Pour-Over Set</h3><div class="price">$96.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#e0dbd3,#bfb2a0)"></div><div class="meta"><h3>Wool Throw (Oat)</h3><div class="price">$148.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#d9dfd9,#8fa892)"></div><div class="meta"><h3>Botanical Candle No. 4</h3><div class="price">$36.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#e3d9c8,#caa96f)"></div><div class="meta"><h3>Hand-Thrown Vase</h3><div class="price">$88.00</div></div></a>
+		<a class="product" href="#"><div class="ph" style="background:linear-gradient(140deg,#dcd6cf,#ada393)"></div><div class="meta"><h3>Linen Napkin Set of 4</h3><div class="price">$42.00</div></div></a>
+	</div>
+</section>
+
+<section class="story" id="story">
+	<div class="copy">
+		<h2>Our story</h2>
+		<p>Northwind started in a garage kiln in 2019. Today we partner with eleven independent workshops across the Pacific Northwest, paying fair rates and releasing pieces only when they're ready. No seasons rushed, no corners cut.</p>
+	</div>
+	<div class="art" role="img" aria-label="A potter trimming a bowl on a wheel"></div>
+</section>
+
+<section class="shelf" id="reviews">
+	<h2>What customers say</h2>
+	<p class="sub">4.9 average across 2,300+ reviews.</p>
+	<div class="reviews">
+		<div class="review"><div class="stars">★★★★★</div><p>"The pour-over set is the best-made thing in my kitchen. You can feel the hand in it."</p><div class="who">Maya R., Portland</div></div>
+		<div class="review"><div class="stars">★★★★★</div><p>"Ordered Monday, arrived Thursday, beautifully packed. The mug is somehow better in person."</p><div class="who">Devon K., Austin</div></div>
+		<div class="review"><div class="stars">★★★★★</div><p>"Bought the throw as a gift and immediately ordered a second one for myself."</p><div class="who">Priya S., Chicago</div></div>
+	</div>
+</section>
+
+<section class="shelf" id="policies">
+	<h2>Shipping &amp; returns</h2>
+	<p class="sub">The boring stuff, made painless.</p>
+	<div class="policies">
+		<div class="policy"><h3>Fast, tracked shipping</h3><p>Orders ship within 48 hours from our Seattle studio. Free over $60.</p></div>
+		<div class="policy"><h3>60-day returns</h3><p>Not right for your home? Send it back within 60 days, no questions.</p></div>
+		<div class="policy"><h3>Lifetime repair</h3><p>If a piece chips or a seam frays, we repair or replace it. Forever.</p></div>
+	</div>
+</section>
+
+<footer class="site">
+	<div>© Northwind Goods, 14 Pike Pl, Seattle WA</div>
+	<div>Instagram · Pinterest · Newsletter</div>
+</footer>
+
+<!-- "Take the store tour" button, wired to the tour controller below. -->
+<div class="tour-cta">
+	<button data-tour-start>✨ Take the store tour</button>
+</div>
+
+<!--
+	1) The CONCIERGE (customer-support chat with a face). The one-tag build
+	   registers <three-concierge> and exposes window.ThreeWsConcierge. It answers
+	   grounded in this page's live DOM plus the curated `knowledge` string below,
+	   so it can talk about products, prices, shipping, and returns. Free and
+	   host-paid: no API key. For a big catalog, drop the store's product/policy
+	   facts into `knowledge` (max 8000 chars); the page content fills the rest.
+-->
+<script type="module" src="https://three.ws/concierge/concierge.global.js"></script>
+<three-concierge
+	site-name="Northwind Goods"
+	accent="#2e4b3f"
+	avatar="vera"
+	position="bottom-right"
+	greeting="Hi! I'm your Northwind concierge. Ask me anything about our products, shipping, or returns."
+	suggestions="What's your bestseller?|How much is shipping?|What's your return policy?|Is the pour-over set in stock?"
+	knowledge="Northwind Goods sells small-batch handmade homeware from eleven Pacific Northwest workshops. Products and prices: Stoneware Mug (Fog) $28; Linen Table Runner $54; Oak Serving Board $72; Ceramic Pour-Over Set $96; Wool Throw (Oat) $148; Botanical Candle No. 4 $36; Hand-Thrown Vase $88; Linen Napkin Set of 4 $42. Bestsellers: the Ceramic Pour-Over Set and the Oak Serving Board, both restocked weekly. Shipping: orders ship within 48 hours from our Seattle studio; free shipping on orders over $60; all orders are tracked. Returns: 60-day returns, no questions asked. Lifetime repair: if a piece chips or a seam frays, we repair or replace it for free, forever. Reviews: 4.9 average across 2,300+ reviews. Support: help@northwind.example.">
+</three-concierge>
+
+<!--
+	2) The TOUR. Loaded WITHOUT data-tour so we can drive it from JS and set the
+	   completion call-to-action that hands off to the concierge. assetBase and
+	   manifestUrl point at the three.ws CDN so the guide avatar loads on any
+	   origin (the manual API defaults to the current origin, which 404s off-site).
+-->
+<script src="https://unpkg.com/@three-ws/tour/dist/tour.global.js" defer></script>
+
+<!-- 3) The glue: build the tour, wire the start button, and bridge tour <-> chat. -->
+<script>
+window.addEventListener('load', () => {
+	const { createFeatureTour } = window.ThreeWsTour;
+	const concierge = document.querySelector('three-concierge');
+
+	// Every stop lives on this single page, so pin the path to the current route
+	// (the tour only navigates when a stop's path differs from where we are).
+	const here = location.pathname;
+	const tour = createFeatureTour({
+		assetBase: 'https://three.ws',
+		manifestUrl: 'https://three.ws/animations/manifest.json',
+		curriculum: {
+			title: 'Northwind Goods store tour',
+			tracks: [{ id: 'full', title: 'Full tour' }],
+			sections: [{ id: 'store', title: 'The store', intro: 'Welcome to Northwind Goods. Let me show you around.' }],
+			stops: [
+				{ path: here, section: 'store', title: 'Welcome', highlight: true, narration: "This is Northwind Goods, small-batch homeware, made by hand. Hit this button any time to browse the whole collection.", targets: ['a.cta'] },
+				{ path: here, section: 'store', title: 'Featured products', highlight: true, narration: "These are the pieces everyone is loving right now. The pour-over set and the oak board restock every week.", targets: ['#featured .grid'] },
+				{ path: here, section: 'store', title: 'Our story', narration: "Everything here comes from eleven independent Pacific Northwest workshops, at fair rates, no rushed seasons.", targets: ['#story .copy'] },
+				{ path: here, section: 'store', title: 'Reviews', highlight: true, narration: "Two thousand three hundred reviews, four point nine average. The throw blanket reviews are basically love letters.", targets: ['#reviews .reviews'] },
+				{ path: here, section: 'store', title: 'Shipping and returns', narration: "Orders ship in forty-eight hours, returns are free for sixty days, and every piece carries a lifetime repair promise.", targets: ['#policies .policies'] },
+			],
+		},
+		// The completion card's primary button is a link. Point it at a hash we
+		// listen for, then open the concierge, a scripted tour handing the
+		// visitor to live Q&A.
+		copy: {
+			completion: {
+				title: 'That is the tour',
+				body: 'Have a question about a product, shipping, or returns? Ask our concierge.',
+				primary: { label: 'Ask our concierge', href: '#ask-concierge' },
+			},
+		},
+	});
+	window.__featureTour = tour;
+	tour.bootstrap(); // honour ?tour=start deep links + rehydrate across pages
+
+	// Start button.
+	document.querySelector('[data-tour-start]')?.addEventListener('click', (e) => {
+		e.preventDefault();
+		tour.start('full');
+	});
+
+	// Handoff A: completion CTA (or any #ask-concierge link) opens the chat.
+	const openConcierge = () => {
+		if (location.hash === '#ask-concierge') history.replaceState(null, '', location.pathname + location.search);
+		concierge?.open();
+	};
+	window.addEventListener('hashchange', () => { if (location.hash === '#ask-concierge') openConcierge(); });
+	document.addEventListener('click', (e) => {
+		if (e.target.closest('a[href="#ask-concierge"]')) { e.preventDefault(); openConcierge(); }
+	});
+
+	// Handoff B: opening the chat during a tour exits the tour, so the two
+	// avatars never narrate over each other.
+	concierge?.addEventListener('three-concierge:open', () => { if (tour.isActive()) tour.exit(); });
+});
+</script>
+
+</body>
+</html>

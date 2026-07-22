@@ -70,6 +70,48 @@ A complete runnable storefront demo ships with the package —
 
 ---
 
+## Tour + support Q&A on one site (pair with the concierge)
+
+The tour narrates a **scripted** walkthrough; it does not answer free-form
+questions (there is no LLM at runtime). To also let visitors *ask* about
+products, shipping, or returns, run the tour alongside
+[`@three-ws/concierge`](https://www.npmjs.com/package/@three-ws/concierge): a
+floating chat widget with the same kind of 3D avatar, grounded in the live page
+plus a curated `knowledge` string. One shows people around; the other answers.
+
+Wire a handoff so the two feel like one guide and never talk over each other:
+
+1. Set the tour's completion call-to-action to open the concierge. The
+   completion primary button is a link, so point it at a hash you listen for:
+
+   ```js
+   const tour = createFeatureTour({
+     curriculum: '/tour/curriculum.json',
+     copy: { completion: { primary: { label: 'Ask a question', href: '#ask' } } },
+   });
+   const concierge = document.querySelector('three-concierge');
+   addEventListener('hashchange', () => { if (location.hash === '#ask') concierge.open(); });
+   ```
+
+2. Exit the tour when the chat opens, so only one avatar speaks at a time:
+
+   ```js
+   concierge.addEventListener('three-concierge:open', () => {
+     if (tour.isActive()) tour.exit();
+   });
+   ```
+
+The concierge element also exposes `ask(text)` (opens the panel and asks) and
+`close()`. A complete, paste-ready storefront running both is in
+[`examples/shopify-tour-plus-concierge.html`](./examples/shopify-tour-plus-concierge.html).
+
+> One avatar that *both* walks a scripted tour and answers knowledge-base
+> questions is not a single built-in component today: the tour and the
+> concierge are separate packages by design. The pattern above is the supported
+> way to deliver both on one page.
+
+---
+
 ## Install (npm)
 
 ```bash

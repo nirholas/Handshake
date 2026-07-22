@@ -11,6 +11,7 @@ Live demo: [three.ws/concierge](https://three.ws/concierge) (the widget on that 
 - Examples: [examples/](./examples), one-tag, web component, imperative, custom avatar, React, self-hosted backend
 - Use it from an AI agent: [`@three-ws/concierge-mcp`](https://www.npmjs.com/package/@three-ws/concierge-mcp) (Model Context Protocol server)
 - Sibling packages: [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk) (walking page companion), [`@three-ws/page-agent`](https://www.npmjs.com/package/@three-ws/page-agent) (narrating page guide), [`@three-ws/tour`](https://www.npmjs.com/package/@three-ws/tour) (guided site tours)
+- Want a guided **tour** *and* live support Q&A on one site? Run this alongside `@three-ws/tour` and hand off from the tour's completion CTA to `concierge.open()`. See the tour README's "Tour + support Q&A on one site" section and its `examples/shopify-tour-plus-concierge.html`.
 
 ## Install
 
