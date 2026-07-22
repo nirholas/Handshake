@@ -8145,8 +8145,10 @@ function the model will call, no mocking.</p>
                 <span class="c1"># Rate-limited mid-poll: wait out Retry-After on the SAME job.</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">_retry_after_seconds</span><span class="p">(</span><span class="n">poll</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"retry-after"</span><span class="p">)))</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">poll</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="n">transient_status</span><span class="p">:</span>
-                <span class="k">continue</span>  <span class="c1"># edge hiccup mid-poll; same job, next cadence tick</span>
+            <span class="k">if</span> <span class="mi">500</span> <span class="o">&lt;=</span> <span class="n">poll</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&lt;</span> <span class="mi">600</span><span class="p">:</span>
+                <span class="c1"># Any 5xx on the poll leg is an edge hiccup, not a verdict on</span>
+                <span class="c1"># the job itself: same job, next cadence tick.</span>
+                <span class="k">continue</span>
             <span class="n">poll</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">poll</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">data</span>
