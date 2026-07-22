@@ -225,6 +225,13 @@ function registerLangSwitcher() {
 	if (customElements.get('lang-switcher')) return;
 	class LangSwitcher extends HTMLElement {
 		async connectedCallback() {
+			// connectedCallback re-fires whenever the element is moved to a new slot
+			// (pages re-parent the switcher into footers/overflow menus), and a second
+			// attachShadow on the same host throws. The sync flag also covers the
+			// race where two rapid reconnects both clear the manifest await before
+			// either has attached the shadow root.
+			if (this._booted) return;
+			this._booted = true;
 			const manifest = await loadManifest();
 			if (!manifest.locales || manifest.locales.length < 2) return;
 
