@@ -88,7 +88,7 @@ export function providerChain() {
 	if (env.OPENAI_API_KEY) {
 		chain.push({ name: 'openai', url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.4-nano' });
 	}
-	// Vertex Gemini credits anchor — keyless (GCP OAuth token minted per request
+	// Vertex Gemini credits anchor: keyless (GCP OAuth token minted per request
 	// via getHeaders; see api/_lib/vertex-gemini.js), OpenAI-compatible including
 	// tools + streamed tool_calls, billed to platform credits. Appended at the
 	// tail unconditionally when available so no present provider key can evict it.
@@ -117,7 +117,7 @@ async function streamRound(provider, { messages, tools, onContent }) {
 	};
 	if (Array.isArray(tools) && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
 	// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per request
-	// via getHeaders — a token-exchange failure throws here and fails over to the
+	// via getHeaders; a token-exchange failure throws here and fails over to the
 	// next provider exactly like a transport error.
 	const headers = provider.getHeaders
 		? { ...(await provider.getHeaders()), ...(provider.extraHeaders || {}) }

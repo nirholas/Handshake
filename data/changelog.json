@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-22",
+			"title": "Every AI surface now falls back to a funded reserve model",
+			"summary": "Chat already had it; now the Brain page, embedded avatar widgets, the Trading Copilot, image understanding, and embedded agent brains share the same safety net. When every free AI lane is rate-limited at the same time, these features now roll over to the platform's own reserve model on Google Cloud instead of returning an error. Fewer failed replies during traffic spikes, with no change to which model answers first.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-22",
 			"title": "What's new, at a glance: newest features on /features and /sitemap",
 			"summary": "You no longer have to scroll the changelog to see what just shipped. The Features page opens with a 'New on three.ws' strip: the six latest features and page launches, each card linking straight to the live page. The sitemap gained a matching 'Newest' section listing the most recently launched pages with their dates. Both update themselves with every release.",
 			"tags": [
@@ -15454,6 +15463,16 @@
 				"fix"
 			],
 			"link": "/pose"
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Avatar render API: poses now apply and portraits keep the head in frame",
+			"summary": "The public avatar image API (GET /api/avatar/render) now actually strikes the pose you ask for: pose presets are applied through the same retargeting engine as the Animation Studio, so wave, sit, flex and the rest land correctly on any humanoid rig instead of silently rendering the default stance. Camera framing was rebuilt too: portrait and headshot crops always keep the full head in frame with proper headroom, at every image size and aspect ratio. Existing cached renders refresh automatically.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/api/avatar/render"
 		}
 	]
 }

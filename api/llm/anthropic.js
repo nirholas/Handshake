@@ -118,7 +118,7 @@ const UPSTREAM_URL = {
 // Resolve a model id to its upstream route. Static allowlist first; the Vertex
 // Gemini credits anchor resolves dynamically because its model id is env-tunable
 // (VERTEX_GEMINI_MODEL) and its availability is gated by GOOGLE_CLOUD_PROJECT,
-// not an API key. It shares the 'openai' branch — the Vertex OpenAI-compatible
+// not an API key. It shares the 'openai' branch: the Vertex OpenAI-compatible
 // endpoint speaks the same wire format (tools included), so request translation
 // and the Anthropic-shape response/SSE conversion below work verbatim.
 // Exported for the anchor regression tests (tests/api/llm-vertex-anchor-surfaces).
@@ -132,11 +132,11 @@ export function resolveModelRoute(modelId) {
 
 // Ordered model fallback chain for a request. Free lanes degrade in-order; the
 // credits-funded Vertex Gemini anchor is ALWAYS the final rung when the GCP
-// project is set (api/chat.js semantics — see api/_lib/vertex-gemini.js): it is
+// project is set (api/chat.js semantics, see api/_lib/vertex-gemini.js): it is
 // keyless, has no third-party quota, and no present provider key may evict it,
 // so an embedded agent's brain cannot 5xx while GCP credits can still answer.
-// The paid Anthropic rung stays ahead of it — when that key works it is the
-// caller-visible model family — but a dead paid key degrades to the anchor
+// The paid Anthropic rung stays ahead of it (when that key works it is the
+// caller-visible model family), but a dead paid key degrades to the anchor
 // instead of surfacing an error. Exported for the anchor regression tests.
 export function modelFallbackChain(requestedModel) {
 	const chain = [
@@ -476,7 +476,7 @@ export default wrap(async (req, res) => {
 				});
 			}
 		} else if (route.provider === 'vertex-gemini') {
-			// Credits anchor: keyless — the GCP OAuth bearer token is minted in
+			// Credits anchor: keyless; the GCP OAuth bearer token is minted in
 			// build() per attempt, and a token-exchange failure degrades through
 			// the chain exactly like an unreachable upstream (upstream_prepare_failed).
 			// Same OpenAI wire shape as the other non-Anthropic lanes, so the

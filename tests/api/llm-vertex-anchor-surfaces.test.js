@@ -4,7 +4,7 @@
 // The 2026-07-21 production diagnosis: brain, widgets, copilot, vision, and the
 // anthropic-proxy each hand-rolled their model fallback chains WITHOUT the
 // keyless Vertex Gemini rung, so a simultaneous throttle of the free lanes
-// (groq/openrouter/nvidia) surfaced 5xx even though GCP credits could answer —
+// (groq/openrouter/nvidia) surfaced 5xx even though GCP credits could answer -
 // the prod OPENAI_API_KEY is billing-dead (429 billing_not_active) and the
 // OpenRouter host key must never route to paid models. These tests lock the
 // chat.js semantics onto every surface, via the shared api/_lib/vertex-gemini.js:
@@ -99,7 +99,7 @@ describe('shared vertex-gemini helper (api/_lib/vertex-gemini.js)', () => {
 	});
 });
 
-describe('brain (api/brain/chat.js) — freeFallbackChain anchor', () => {
+describe('brain (api/brain/chat.js): freeFallbackChain anchor', () => {
 	const spec = { openrouterModel: 'openai/gpt-oss-120b:free' };
 
 	it('appends the anchor at the tail when a GCP project is set', () => {
@@ -110,7 +110,7 @@ describe('brain (api/brain/chat.js) — freeFallbackChain anchor', () => {
 		const last = chain[chain.length - 1];
 		expect(last.vertexGemini).toBe(true);
 		expect(last.label).toBe('vertex-gemini/google/gemini-2.5-flash');
-		// Exactly one anchor entry — never doubled.
+		// Exactly one anchor entry: never doubled.
 		expect(chain.filter((a) => a.vertexGemini)).toHaveLength(1);
 	});
 
@@ -128,7 +128,7 @@ describe('brain (api/brain/chat.js) — freeFallbackChain anchor', () => {
 	});
 });
 
-describe('copilot (api/agents/copilot.js) — providerChain anchor', () => {
+describe('copilot (api/agents/copilot.js): providerChain anchor', () => {
 	it('keeps the keyless anchor as the final rung past every present provider key', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		setAllProviderKeys();
@@ -146,7 +146,7 @@ describe('copilot (api/agents/copilot.js) — providerChain anchor', () => {
 		);
 	});
 
-	it('serves a non-empty chain with zero provider keys — the 503 gate opens on credits alone', () => {
+	it('serves a non-empty chain with zero provider keys: the 503 gate opens on credits alone', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		const chain = copilotProviderChain();
 		expect(chain).toHaveLength(1);
@@ -160,7 +160,7 @@ describe('copilot (api/agents/copilot.js) — providerChain anchor', () => {
 	});
 });
 
-describe('widgets (api/widgets/[id]/[action].js) — pickProviderChain anchor', () => {
+describe('widgets (api/widgets/[id]/[action].js): pickProviderChain anchor', () => {
 	it('appends the anchor after every configured route and never as the primary', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		setAllProviderKeys();
@@ -196,7 +196,7 @@ describe('widgets (api/widgets/[id]/[action].js) — pickProviderChain anchor', 
 	});
 });
 
-describe('vision (api/_lib/vision.js) — visionChain anchor', () => {
+describe('vision (api/_lib/vision.js): visionChain anchor', () => {
 	it('sits after the free NIM lanes and ahead of the paid OpenAI backstop', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		process.env.NVIDIA_API_KEY = 'nv-test';
@@ -214,7 +214,7 @@ describe('vision (api/_lib/vision.js) — visionChain anchor', () => {
 		expect(anchor.headers).toBeUndefined(); // keyless: no static bearer header
 	});
 
-	it('visionConfigured() is true on a GCP project alone — the multimodal anchor serves', () => {
+	it('visionConfigured() is true on a GCP project alone: the multimodal anchor serves', () => {
 		expect(visionConfigured()).toBe(false);
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		expect(visionConfigured()).toBe(true);
@@ -242,7 +242,7 @@ describe('vision (api/_lib/vision.js) — visionChain anchor', () => {
 	});
 });
 
-describe('anthropic-proxy (api/llm/anthropic.js) — model fallback anchor', () => {
+describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => {
 	it('appends the anchor model as the final fallback when a GCP project is set', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		setAllProviderKeys();

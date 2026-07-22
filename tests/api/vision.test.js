@@ -33,7 +33,9 @@ import { imageEvidence } from '../../agents/fact-checker/src/image-evidence.js';
 import { generateAltText, cleanAltText } from '../../api/_lib/avatar-alt-text.js';
 
 const ORIGINAL_FETCH = globalThis.fetch;
-const ENV_KEYS = ['NVIDIA_API_KEY', 'OPENAI_API_KEY'];
+// GOOGLE_CLOUD_PROJECT gates the Vertex Gemini credits anchor in visionChain;
+// isolate it too so these tests are deterministic on GCP-configured machines.
+const ENV_KEYS = ['NVIDIA_API_KEY', 'OPENAI_API_KEY', 'GOOGLE_CLOUD_PROJECT'];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 // Route a mocked fetch by URL substring so one test can exercise the full
@@ -65,6 +67,7 @@ beforeEach(() => {
 	usageState.events = [];
 	process.env.NVIDIA_API_KEY = 'nvapi-test';
 	delete process.env.OPENAI_API_KEY;
+	delete process.env.GOOGLE_CLOUD_PROJECT;
 	// Default: our own image fetch fails, so describeImage falls back to handing
 	// the raw URL to the provider (the pre-inline behavior). Tests that exercise
 	// the inline path override this.

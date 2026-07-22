@@ -101,7 +101,7 @@ export function visionChain() {
 			}));
 		}
 	}
-	// Vertex Gemini credits anchor — multimodal (Gemini Flash reads image_url
+	// Vertex Gemini credits anchor: multimodal (Gemini Flash reads image_url
 	// parts, data URIs included, through the same OpenAI-compatible endpoint),
 	// keyless (OAuth token minted per request), billed to GCP credits. Sits
 	// after the free NIM lanes and ahead of the paid tail, exactly like the
@@ -313,7 +313,7 @@ export async function describeImage({
 		let upstream;
 		try {
 			// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per
-			// attempt via getHeaders — a token-exchange failure lands in the catch
+			// attempt via getHeaders; a token-exchange failure lands in the catch
 			// below and fails over to the next lane like any transport error.
 			upstream = await fetch(p.url, {
 				method: 'POST',

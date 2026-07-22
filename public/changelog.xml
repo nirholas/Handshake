@@ -31,6 +31,14 @@
 			<description>The Animation Studio (/pose) got a UI pass: toolbar buttons no longer render as oversized circles behind FK and Save, the toolbar fits on laptop screens with pose import/export and screenshots collected under a new overflow menu, the language picker moved into the footer so it stops covering the timeline, error messages show their warning color again, and on phones the animation library and pose presets are reachable instead of hidden.</description>
 		</item>
 		<item>
+			<title>Avatar render API: poses now apply and portraits keep the head in frame</title>
+			<link>https://three.ws/api/avatar/render</link>
+			<guid isPermaLink="false">2026-07-22:Avatar render API: poses now apply and portraits keep the head in frame</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public avatar image API (GET /api/avatar/render) now actually strikes the pose you ask for: pose presets are applied through the same retargeting engine as the Animation Studio, so wave, sit, flex and the rest land correctly on any humanoid rig instead of silently rendering the default stance. Camera framing was rebuilt too: portrait and headshot crops always keep the full head in frame with proper headroom, at every image size and aspect ratio. Existing cached renders refresh automatically.</description>
+		</item>
+		<item>
 			<title>Avatar Studio: a Parametric base with 120+ face and body sliders</title>
 			<link>https://three.ws/avatar-studio</link>
 			<guid isPermaLink="false">2026-07-22:Avatar Studio: a Parametric base with 120+ face and body sliders</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The platform database reclaimed 770 MB of dead space and learned to do this on its own: when storage runs tight, the retention job now compacts its own bloated tables instead of waiting for an operator. Background jobs that pause under storage pressure resume automatically. Intel model training also got a memory bound so it keeps learning from the freshest coins without ever outgrowing its worker.</description>
+		</item>
+		<item>
+			<title>Every AI surface now falls back to a funded reserve model</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-22:Every AI surface now falls back to a funded reserve model</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Chat already had it; now the Brain page, embedded avatar widgets, the Trading Copilot, image understanding, and embedded agent brains share the same safety net. When every free AI lane is rate-limited at the same time, these features now roll over to the platform's own reserve model on Google Cloud instead of returning an error. Fewer failed replies during traffic spikes, with no change to which model answers first.</description>
 		</item>
 		<item>
 			<title>Menus no longer show raw translation codes</title>

@@ -75,6 +75,14 @@ class FakeRedis {
 
 vi.mock('@upstash/redis', () => ({ Redis: FakeRedis }));
 
+// The Vertex Gemini credits anchor mints a GCP OAuth token per request; stub
+// the token exchange so anchor-lane tests need no real GCP credentials.
+vi.mock('../../api/_lib/gcp-auth.js', () => ({
+	getGcpAccessToken: vi.fn(async () => 'gcp-test-token'),
+	gcpAuthConfigured: () => true,
+	parseServiceAccount: vi.fn(),
+}));
+
 // Default upstream mock — overridden per-test as needed.
 const fetchState = {
 	response: () => upstreamOk({ ok: true, usage: { input_tokens: 10, output_tokens: 20 } }),
@@ -204,6 +212,11 @@ const DEFAULT_POLICY = {
 // ── Reset between tests ───────────────────────────────────────────────────
 
 beforeEach(() => {
+	// The Vertex Gemini credits anchor joins the fallback chain whenever
+	// GOOGLE_CLOUD_PROJECT is set; clear it so chain-shape assertions here are
+	// deterministic on GCP-configured machines. The anchor's own coverage lives
+	// in tests/api/llm-vertex-anchor-surfaces.test.js.
+	delete process.env.GOOGLE_CLOUD_PROJECT;
 	policyState.policy = JSON.parse(JSON.stringify(WE_PAY_POLICY));
 	avatarPolicyState.policy = null;
 	avatarState.avatar = null;
@@ -567,6 +580,34 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			expect(fetchState.calls).toHaveLength(0);
 		} finally {
 			process.env.ANTHROPIC_API_KEY = savedAnthropic;
+		}
+	});
+
+	it('serves from the Vertex Gemini credits anchor when every keyed lane is unconfigured', async () => {
+		// Prod repro of the 2026-07-21 diagnosis: free keys dead/absent, paid keys
+		// dead/absent; the keyless GCP-credits anchor must answer instead of 503.
+		delete process.env.OPENROUTER_API_KEY;
+		delete process.env.GROQ_API_KEY;
+		delete process.env.NVIDIA_API_KEY;
+		const savedAnthropic = process.env.ANTHROPIC_API_KEY;
+		delete process.env.ANTHROPIC_API_KEY;
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		try {
+			const { status, body } = await invoke({
+				body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			});
+			expect(status).toBe(200);
+			const call = fetchState.calls[0];
+			expect(call.url).toContain('aiplatform.googleapis.com');
+			expect(call.url).toContain('test-project');
+			expect(call.init.headers.authorization).toBe('Bearer gcp-test-token');
+			// OpenAI-shape upstream translated back to the Anthropic shape the
+			// embed client parses.
+			expect(body.role).toBe('assistant');
+			expect(body.content?.[0]?.text).toBe('hi from free model');
+		} finally {
+			process.env.ANTHROPIC_API_KEY = savedAnthropic;
+			delete process.env.GOOGLE_CLOUD_PROJECT;
 		}
 	});
 

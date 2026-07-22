@@ -115,8 +115,16 @@ shuffle the remaining SOL, and when it hits zero the Money Pulse
 ([`/pulse`](../pages/pulse.html)) goes quiet. Historically the only cure was a
 human moving SOL in.
 
-When the master can't cover the engines' real deficit, the topup cron self-heals
-in two automatic steps before it ever pages a human, in cheapest-first order:
+When the master can't cover the real deficit, the topup cron self-heals in two
+automatic steps before it ever pages a human, in cheapest-first order. The
+deficit counts the engines under floor **plus the master's own shortfall**: the
+master doubles as the x402 sponsor fee wallet, and below the sponsor SOL floor
+(0.02) every autonomous settle fail-closes — but the master can never be a topup
+target (it is the funding root), so without this term the self-healing never
+fired for it and the economy stalled with the master a hair under the settle
+floor (the July 2026 recurrences). The master's operating floor is
+`ECONOMY_MASTER_RESERVE_SOL` plus `ECONOMY_MASTER_OPERATING_SOL` (default 0.15,
+sized to clear the fuel step's minimum-gap trigger).
 
 **Step 1: reclaim idle SOL (free).** `reclaimIdleSol`
 ([`api/_lib/economy-sweepback.js`](../api/_lib/economy-sweepback.js)) pulls SOL
@@ -183,6 +191,7 @@ congestion, clamped to a hard ceiling.
 | `ECONOMY_MASTER_ADDRESS` | no | Override the expected pubkey if the master is ever rotated. Defaults to the address above. |
 | `ECONOMY_MASTER_RESERVE_SOL` / `_PER_TOPUP_MAX_SOL` / `_RUN_CAP_SOL` | no | Guard caps (see table). |
 | `ECONOMY_FUEL_ENABLED` | no | `0` disables the USDC→SOL auto-refuel (default on). |
+| `ECONOMY_MASTER_OPERATING_SOL` | no | Working headroom above the reserve the master keeps for sponsor co-sign fees; its shortfall below reserve + this counts toward the self-heal deficit. Default 0.15. |
 | `ECONOMY_FUEL_PER_RUN_USDC` / `_DAILY_USDC` | no | Fuel caps: max USDC per swap (default 25) and per UTC day (default 100). |
 | `ECONOMY_FUEL_USDC_KEEP` | no | USDC the refuel never spends below (revenue reserve). Default 0. |
 | `ECONOMY_FUEL_MIN_GAP_SOL` / `_TARGET_SOL` | no | Only refuel when the SOL gap is at least this (default 0.1); buy toward this spendable-SOL buffer (default 1.0). |

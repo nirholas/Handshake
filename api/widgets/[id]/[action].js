@@ -416,7 +416,7 @@ export function pickProviderChain(requested, requestedModel) {
 		chain.push({ name, cfg, apiKey, model });
 	}
 	// Credits-funded Vertex Gemini anchor, ALWAYS the final rung when the GCP
-	// project is set (api/chat.js semantics — see api/_lib/vertex-gemini.js).
+	// project is set (api/chat.js semantics, see api/_lib/vertex-gemini.js).
 	// Keyless: the OAuth bearer token is minted per request via resolveHeaders,
 	// so no env key gates it and no present paid key can evict it. This is what
 	// keeps embedded widget chat answering when groq/openrouter/nvidia throttle
@@ -573,7 +573,7 @@ async function callOpenAICompatible({
 	}
 
 	// Keyless routes (the Vertex Gemini credits anchor) mint their auth per
-	// request via resolveHeaders — a token-exchange failure throws here and fails
+	// request via resolveHeaders; a token-exchange failure throws here and fails
 	// over to the next route exactly like a transport error.
 	const headers = route.cfg.resolveHeaders
 		? { ...(await route.cfg.resolveHeaders()), ...(route.cfg.extraHeaders || {}) }

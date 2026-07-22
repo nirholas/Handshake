@@ -113,7 +113,30 @@ export default wrapCron(async (req, res) => {
 	// without a source the funding root drains to zero and /pulse goes quiet —
 	// this keeps the tank full from revenue instead of waiting on a human. No-op
 	// unless there is a genuine shortage AND spare USDC (see economy-fuel.js).
-	const totalDeficitSol = targets.reduce((s, t) => s + Math.max(0, t.refillToSol - t.currentSol), 0);
+	const engineDeficitSol = targets.reduce((s, t) => s + Math.max(0, t.refillToSol - t.currentSol), 0);
+
+	// The master is ALSO the x402 sponsor fee wallet: below the sponsor SOL floor
+	// (0.02) the self-facilitator fail-closes every settle and the autonomous
+	// economy flat-lines. The master can never be a top-up TARGET (it is the
+	// funding root), so its own shortfall must count as deficit here or the
+	// reclaim/refuel self-healing below never fires for it — the July 2026
+	// recurrences all stalled exactly this way, with the master a few thousand
+	// lamports under the settle floor while the deficit read as engines-only.
+	// Operating floor = reserve + working headroom for sponsor co-sign fees;
+	// the headroom default clears economy-fuel's minimum-gap trigger (0.1 SOL).
+	const masterOperatingSol = (() => {
+		const n = Number(process.env.ECONOMY_MASTER_OPERATING_SOL);
+		return Number.isFinite(n) && n >= 0 ? n : 0.15;
+	})();
+	let masterDeficitSol = 0;
+	let masterSolBefore = null;
+	try {
+		masterSolBefore = (await connection.getBalance(new PublicKey(ECONOMY_MASTER_ADDRESS), 'confirmed')) / 1e9;
+		masterDeficitSol = Math.max(0, RESERVE_SOL + masterOperatingSol - masterSolBefore);
+	} catch {
+		/* balance read failed — engines-only deficit this tick, next tick retries */
+	}
+	const totalDeficitSol = engineDeficitSol + masterDeficitSol;
 
 	// Self-healing, step 1 (free SOL first): when there is a real deficit, reclaim
 	// idle SOL sitting above other engines' operating floors back to the master
@@ -124,7 +147,7 @@ export default wrapCron(async (req, res) => {
 	let reclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [] };
 	if (totalDeficitSol > 0) {
 		try {
-			const masterSolNow = (await connection.getBalance(new PublicKey(ECONOMY_MASTER_ADDRESS), 'confirmed')) / 1e9;
+			const masterSolNow = masterSolBefore ?? (await connection.getBalance(new PublicKey(ECONOMY_MASTER_ADDRESS), 'confirmed')) / 1e9;
 			if (Math.max(0, masterSolNow - RESERVE_SOL) < totalDeficitSol) {
 				reclaim = await reclaimIdleSol({ connection, network: 'mainnet', dryRun });
 			}
@@ -175,6 +198,8 @@ export default wrapCron(async (req, res) => {
 			rejected: result.rejected || [],
 			master_sol: result.masterSol ?? null,
 			spendable_sol: result.spendableSol ?? null,
+			master_deficit_sol: Number(masterDeficitSol.toFixed(6)),
+			master_operating_sol: masterOperatingSol,
 			reclaim,
 			fuel,
 			read_errors: errors,
@@ -256,6 +281,7 @@ export default wrapCron(async (req, res) => {
 		rejected: result.rejected || [],
 		spent_sol: result.spentSol,
 		master_sol: result.masterSol ?? null,
+		master_deficit_sol: Number(masterDeficitSol.toFixed(6)),
 		reclaim,
 		fuel,
 		read_errors: errors,

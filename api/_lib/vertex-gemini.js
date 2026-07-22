@@ -1,4 +1,4 @@
-// Vertex Gemini — the platform's credits-funded LLM reliability anchor.
+// Vertex Gemini: the platform's credits-funded LLM reliability anchor.
 //
 // One shared definition of the rung that api/chat.js proved out (commit
 // 2b3d00254, "chat anchor eviction"): Gemini on Vertex AI through its
@@ -10,10 +10,10 @@
 // billing_not_active; the OpenRouter host key must never route to paid models).
 //
 // Semantics every consumer must preserve (mirroring api/chat.js exactly):
-//   • The anchor is appended at the TAIL of the chain — never auto-selected as
+//   • The anchor is appended at the TAIL of the chain: never auto-selected as
 //     a primary route, always present as the last-resort rung.
 //   • Presence of other provider keys (OPENAI_API_KEY etc.) must never evict
-//     it — no chain cap, cooldown, or anon filter may drop the anchor.
+//     it: no chain cap, cooldown, or anon filter may drop the anchor.
 //   • Anonymous/keyless callers keep it: it is GCP-credit funded, so it is not
 //     a paid-key drain vector (see ANON_PROVIDER_LIST in chat-models.js).
 //   • Availability is gated ONLY by GOOGLE_CLOUD_PROJECT (set on every Cloud
@@ -21,9 +21,9 @@
 //     failure falls through the chain like any other provider error.
 //
 // Env knobs (same as the api/chat.js and api/_lib/llm.js rungs):
-//   GOOGLE_CLOUD_PROJECT          — GCP project id (required; gates the rung)
-//   GOOGLE_CLOUD_LOCATION_GEMINI  — region or "global" (default: "global")
-//   VERTEX_GEMINI_MODEL           — model id (default: google/gemini-2.5-flash)
+//   GOOGLE_CLOUD_PROJECT         : GCP project id (required; gates the rung)
+//   GOOGLE_CLOUD_LOCATION_GEMINI : region or "global" (default: "global")
+//   VERTEX_GEMINI_MODEL          : model id (default: google/gemini-2.5-flash)
 
 import { getGcpAccessToken } from './gcp-auth.js';
 
@@ -34,7 +34,7 @@ export function vertexGeminiAvailable() {
 }
 
 // The anchor's model id. Full Flash by default (platform credits, standing
-// owner-approved spend) — env-tunable without a code change.
+// owner-approved spend): env-tunable without a code change.
 export function vertexGeminiModel() {
 	return process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.5-flash';
 }
@@ -47,14 +47,14 @@ function vertexGeminiTarget() {
 	return { project, location, host };
 }
 
-// OpenAI-compatible base URL (no trailing /chat/completions) — for SDK clients
+// OpenAI-compatible base URL (no trailing /chat/completions): for SDK clients
 // that append the path themselves (e.g. @ai-sdk/openai's baseURL).
 export function vertexGeminiOpenAIBase() {
 	const { project, location, host } = vertexGeminiTarget();
 	return `https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi`;
 }
 
-// Full chat-completions URL — for hand-rolled fetch transports.
+// Full chat-completions URL: for hand-rolled fetch transports.
 export function vertexGeminiChatUrl() {
 	return `${vertexGeminiOpenAIBase()}/chat/completions`;
 }
