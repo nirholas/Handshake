@@ -41,6 +41,18 @@ import {
 import { log } from './shared/log.js';
 
 const BASE_GLB_URL = '/avatars/default.glb';
+
+// Selectable base bodies for create mode (?base=<id>). `default` is the
+// stylized RPM body; `parametric` is the CC0 MakeHuman-derived base baked by
+// scripts/build-parametric-base.mjs with ~120 identity morph sliders (nose,
+// ears, jaw, body macros, limbs), so the Sculpt tab becomes a full character
+// creator. Edit mode always reloads the avatar's own saved model instead.
+const BASE_BODIES = [
+	{ id: 'default', label: 'Stylized', url: BASE_GLB_URL },
+	{ id: 'parametric', label: 'Parametric', url: '/avatars/parametric-base.glb' },
+];
+const BASE_BODY_BY_ID = new Map(BASE_BODIES.map((b) => [b.id, b]));
+
 const MAX_HISTORY = 50;
 
 const $ = (id) => document.getElementById(id);
@@ -118,7 +130,7 @@ const TABS = [
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
-	{ id: 'sculpt', label: 'Face', kinds: [], emoji: '✨', single: true, sculpt: true },
+	{ id: 'sculpt', label: 'Sculpt', kinds: [], emoji: '✨', single: true, sculpt: true },
 	{ id: 'animate', label: 'Animate', kinds: [], emoji: '🎬', animate: true },
 ];
 
@@ -131,7 +143,7 @@ const COLOR_SLOTS = [
 	{
 		id: 'skin',
 		label: 'Skin tone',
-		materials: ['Wolf3D_Skin', 'Wolf3D_Body'],
+		materials: ['Wolf3D_Skin', 'Wolf3D_Body', 'Parametric_Body'],
 		swatches: ['#ffe9d6', '#f3c1a3', '#e0a878', '#c08552', '#9c6b44', '#6f4a32', '#4a2f20'],
 	},
 	{
@@ -230,9 +242,12 @@ async function init() {
 	// History starts at the hydrated initial state
 	pushHistory();
 
+	const baseBody = BASE_BODY_BY_ID.get(params.get('base')) || BASE_BODIES[0];
+	bindBaseSwitch(baseBody, !!editAvatar);
+
 	const glbUrl = editAvatar
 		? (editAvatar.base_model_url || editAvatar.model_url || BASE_GLB_URL)
-		: BASE_GLB_URL;
+		: baseBody.url;
 
 	const scenePromise = bootScene(glbUrl, editAvatar);
 
@@ -262,6 +277,37 @@ async function fetchEditAvatar(id) {
 	}
 	const { avatar } = await res.json();
 	return avatar;
+}
+
+// Base body switcher (create mode only): reloading the studio with ?base=<id>
+// is the correct way to swap the template, because every panel binds to the
+// loaded scene graph. Edit mode hides it: a saved avatar owns its base.
+function bindBaseSwitch(activeBase, isEdit) {
+	const el = $('as-base-switch');
+	if (!el) return;
+	if (isEdit) {
+		el.style.display = 'none';
+		return;
+	}
+	el.querySelectorAll('[data-base]').forEach((btn) => {
+		const selected = btn.dataset.base === activeBase.id;
+		btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+		btn.classList.toggle('active', selected);
+		btn.addEventListener('click', () => {
+			if (btn.dataset.base === activeBase.id) return;
+			if (isDirtyNow() && !confirm('Switch base body? Unsaved changes will be lost.')) return;
+			const url = new URL(location.href);
+			url.searchParams.set('base', btn.dataset.base);
+			location.href = url.toString();
+		});
+	});
+}
+
+// Same dirty predicate updateDirtyState() renders from.
+function isDirtyNow() {
+	return savedAppearance !== null
+		? !appearanceEqual(workingAppearance, savedAppearance)
+		: collapseAppearance(workingAppearance) !== null;
 }
 
 // Surface the avatar's agent-wallet panel (create / manage) in the studio rail.
@@ -737,9 +783,24 @@ function markActiveEmote() {
 
 // ── Color panel ──────────────────────────────────────────────────────
 
+// A color slot is live only when the loaded base actually carries one of its
+// materials (the parametric base has skin but no hair/outfit meshes). Hiding
+// dead slots beats rendering swatches that do nothing.
+function slotPresent(slot) {
+	if (!scene?.root) return true; // pre-load: keep the panel populated
+	const names = new Set(slot.materials);
+	let found = false;
+	scene.root.traverse((obj) => {
+		if (found || !obj.isMesh) return;
+		const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+		if (mats.some((m) => m && names.has(m.name))) found = true;
+	});
+	return found;
+}
+
 function renderColorPanel(panel) {
 	const ready = !!scene?.root;
-	const groups = COLOR_SLOTS.map((slot) => {
+	const groups = COLOR_SLOTS.filter(slotPresent).map((slot) => {
 		const current = workingAppearance.colors[slot.id] || null;
 		const presetMatch = current && slot.swatches.some((h) => h.toLowerCase() === current);
 		const swatches = slot.swatches
@@ -796,9 +857,13 @@ function renderColorPanel(panel) {
 // ── Layers (show/hide) ───────────────────────────────────────────────
 
 function layersBlockHtml() {
-	const anyStripVisible = LAYER_SLOTS.some((s) => s.strip && !workingAppearance.hidden.includes(s.id));
-	const anyHidden = LAYER_SLOTS.some((s) => workingAppearance.hidden.includes(s.id));
-	const toggles = LAYER_SLOTS.map((slot) => {
+	// Only offer layers the loaded base actually has meshes for (the
+	// parametric base ships bare: no outfit/glasses/hair to hide).
+	const slots = LAYER_SLOTS.filter(slotPresent);
+	if (!slots.length) return '';
+	const anyStripVisible = slots.some((s) => s.strip && !workingAppearance.hidden.includes(s.id));
+	const anyHidden = slots.some((s) => workingAppearance.hidden.includes(s.id));
+	const toggles = slots.map((slot) => {
 		const hidden = workingAppearance.hidden.includes(slot.id);
 		return `<button class="as-layer${hidden ? ' off' : ''}" type="button" role="switch"
 			aria-checked="${hidden ? 'false' : 'true'}" data-layer="${slot.id}"
@@ -1072,13 +1137,17 @@ function liveSlotColor(slotId, hex) {
 
 function applySlotColor(slot, hex) {
 	if (!scene?.root) return;
-	const color = hex || '#ffffff';
 	const names = new Set(slot.materials);
 	scene.root.traverse((obj) => {
 		if (!obj.isMesh) return;
 		const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
 		for (const m of mats) {
-			if (m && m.color && names.has(m.name)) m.color.set(color);
+			if (!m || !m.color || !names.has(m.name)) continue;
+			// "Default" restores the material's authored color. On textured RPM
+			// bases that's white (factor x texture = skin); on factor-colored
+			// bases like the parametric body, white would bleach it.
+			if (m.userData.origColor === undefined) m.userData.origColor = `#${m.color.getHexString()}`;
+			m.color.set(hex || m.userData.origColor);
 		}
 	});
 }

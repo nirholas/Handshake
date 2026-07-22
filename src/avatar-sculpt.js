@@ -84,13 +84,25 @@ const CATEGORIES = [
 		match: /^cheek/,
 		preferred: ['cheekPuff', 'cheekSquintLeft', 'cheekSquintRight'],
 	},
+	// Identity regions of the parametric base (scripts/build-parametric-base.mjs).
+	// Bases without these morphs simply don't render the group.
+	{
+		id: 'ears',
+		label: 'Ears',
+		match: /^ear/,
+	},
+	{
+		id: 'head',
+		label: 'Head Shape',
+		match: /^(head|forehead)/,
+	},
 	// tongueOut intentionally omitted — RPM/Avaturn bake the morph but nobody
 	// wants a "Tongue Out" slider on their face customizer. Drivers that need
 	// it (lipsync, mocap) still hit it via runtime APIs.
 	{
 		id: 'body',
 		label: 'Body',
-		match: /^(body|shape|height|breast|chest|waist|hip|muscle|weight|bust|gluteus|figure|thighs|arms)/i,
+		match: /^(body|shape|height|breast|chest|waist|hip|muscle|weight|bust|gluteus|figure|thighs|arms|neck|belly|shoulders|calves|legs)/i,
 	},
 	{
 		id: 'visemes',

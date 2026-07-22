@@ -259,6 +259,31 @@
 			}
 			.as-name-input:focus { border-color: var(--accent); }
 			.as-name-input::placeholder { color: var(--text-3); }
+			.as-base-switch {
+				display: flex; align-items: center; gap: 6px;
+				padding: 0 16px 10px;
+			}
+			.as-base-label {
+				font-size: 11px; color: var(--text-3); text-transform: uppercase;
+				letter-spacing: 0.06em; margin-right: 2px;
+			}
+			.as-base-btn {
+				flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+				padding: 6px 10px; font-size: 12px; color: var(--text-2);
+				background: var(--surface-2); border: 1px solid var(--border);
+				border-radius: 8px; cursor: pointer;
+				transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+			}
+			.as-base-btn:hover { color: var(--text); border-color: var(--text-3); }
+			.as-base-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+			.as-base-btn.active {
+				color: var(--text); border-color: var(--accent);
+				background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+			}
+			.as-base-new {
+				font-size: 10px; padding: 1px 6px; border-radius: 999px;
+				background: var(--accent); color: #fff; line-height: 1.5;
+			}
 
 			/* ── Tabs ─────────────────────────────────────────────── */
 			.as-tabs {
@@ -1030,6 +1055,11 @@
 			<aside class="as-side">
 				<div class="as-name-row">
 					<input class="as-name-input" id="as-name" type="text" placeholder="Name your avatar" maxlength="60" autocomplete="off" aria-label="Avatar name" />
+				</div>
+				<div class="as-base-switch" id="as-base-switch" role="group" aria-label="Base body">
+					<span class="as-base-label">Base</span>
+					<button type="button" class="as-base-btn" data-base="default" aria-pressed="false">Stylized</button>
+					<button type="button" class="as-base-btn" data-base="parametric" aria-pressed="false">Parametric <span class="as-base-new">120+ sliders</span></button>
 				</div>
 				<nav class="as-tabs" id="as-tabs" role="tablist"></nav>
 				<div class="as-chips" id="as-chips" aria-label="Selected items"></div>
