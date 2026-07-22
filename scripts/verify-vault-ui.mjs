@@ -4,8 +4,8 @@
 // technique prompt 11 established, extended here to drive the REAL running
 // HTTP endpoints (api/vault/*) and a REAL headless browser (Playwright)
 // through the REAL page (pages/vault.html + src/vault.js), not a
-// reimplementation of either. Throwaway verification script — not committed
-// product code, deleted after use per CLAUDE.md repo-hygiene rules.
+// reimplementation of either. Kept as the reproducible E2E proof referenced
+// by docs/bnb-vault.md; re-run it after touching the vault stack.
 //
 // What this proves for real:
 //   - GET /api/vault/list resolves a real on-chain Listed event to a card.
@@ -159,7 +159,7 @@ async function main() {
 	process.env.BNB_VAULT_RPC_OVERRIDE_TESTNET = ANVIL_RPC;
 	process.env.GREENFIELD_VAULT_BUCKET_TESTNET = 'three-ws-vault-testnet';
 	process.env.GREENFIELD_SP_OVERRIDE_TESTNET = `http://${SP_HOST}:${SP_PORT}`;
-	process.env.JWT_SECRET = process.env.JWT_SECRET || 'tmp-verify-vault-ui-secret-not-for-prod';
+	process.env.JWT_SECRET = process.env.JWT_SECRET || 'verify-vault-ui-secret-not-for-prod';
 	process.env.PORT = String(API_PORT);
 	process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 

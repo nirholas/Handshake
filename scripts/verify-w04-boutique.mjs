@@ -2,7 +2,7 @@
 // Chromium browser against a real Vite dev server, a real, freshly-started
 // Colyseus WalkRoom wired to real game-token.js settlement, and a real local
 // Solana validator (the actual SVM + SPL-token program + RPC — see
-// scripts/tmp-verify-w04-boutique-setup.mjs for why local instead of the
+// scripts/verify-w04-boutique-setup.mjs for why local instead of the
 // public devnet faucet). Nothing here is simulated: a real ed25519 signature
 // from a real Keypair, a real broadcast transaction, a real confirmed
 // transaction the server re-reads from RPC before granting anything.
@@ -14,8 +14,8 @@
 // and exercise the production code paths verbatim (boutique-purchase.js,
 // WalkRoom._handleBoutiqueQuote/_handleBoutiqueSettle, game-token.js).
 //
-// Usage: node scripts/tmp-verify-w04-boutique-setup.mjs   (once, writes the fixture)
-//        node scripts/tmp-verify-w04-boutique.mjs
+// Usage: node scripts/verify-w04-boutique-setup.mjs   (once, writes the fixture)
+//        node scripts/verify-w04-boutique.mjs
 
 import { chromium } from 'playwright';
 import { Connection, Keypair, Transaction, PublicKey } from '@solana/web3.js';

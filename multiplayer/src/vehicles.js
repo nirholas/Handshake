@@ -40,7 +40,7 @@ export const VEHICLE_TYPES = {
 		// -0.3*hy below the body origin) settles low enough to rest on/against the
 		// ground itself, so its own friction pins the car almost dead still no
 		// matter how much engine force is applied (0.61 m/s after 3s of full
-		// throttle in a scripted repro — scripts/tmp-verify-w02-physics-core.mjs).
+		// throttle in a scripted repro — scripts/verify-w02-physics-core.mjs).
 		// 0.4 gives the chassis clearance over the wheel contact line so the wheels
 		// (not the hull) carry the car's weight and traction (10.8 m/s after the
 		// same 3s in the same repro).

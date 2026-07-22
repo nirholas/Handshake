@@ -11,7 +11,7 @@
 // (CLAUDE.md "known traps" — load average routinely far exceeds core count),
 // which starves headless Chromium's frame rate well below a normal machine's;
 // every wall-clock budget below is widened accordingly (mirrors
-// scripts/tmp-verify-w02-vehicles.mjs). That affects wall-clock only, never
+// scripts/verify-w02-vehicles.mjs). That affects wall-clock only, never
 // the pass/fail economy assertions.
 
 import { chromium } from 'playwright';
@@ -92,7 +92,7 @@ function isBenignSandboxNoise(text) {
 	// x402-pay?feed=… is the site-wide live-payments ticker, unrelated to the
 	// economy under test; this dev Vite instance has no x402-pay API proxy
 	// target running, so it 500s/502s on every poll (same root cause noted in
-	// tmp-verify-w02-vehicles.mjs — "the local x402-pay API proxy target not
+	// verify-w02-vehicles.mjs — "the local x402-pay API proxy target not
 	// running in this dev session").
 	return /favicon|WebGL.*SwiftShader|Autoplay|r2\.dev|\[vite\]|502 \(Bad Gateway\)|500 \(Internal Server Error\)|401 \(Unauthorized\)|402 \(Payment Required\)|GPU stall|GL Driver Message|app\.github\.dev|WebSocket closed without opened|deprecated parameters for the initialization function|AnimationManager.*failed to load|npc-zauth|429 \(Too Many Requests\)|ERR_CONNECTION_REFUSED|ERR_FAILED|agents\?limit|x402-pay/i.test(text);
 }

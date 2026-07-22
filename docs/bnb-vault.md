@@ -90,7 +90,7 @@ same technique prompt 11 used at the exported-function level, extended here
 to drive the actual running HTTP endpoints and a real headless browser:
 
 ```
-node scripts/tmp-verify-vault-ui.mjs
+node scripts/verify-vault-ui.mjs
 ```
 
 This script deploys `GreenfieldVault` (with faithful mocked Greenfield hubs,

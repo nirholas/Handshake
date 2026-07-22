@@ -19,7 +19,7 @@
 // This box runs many concurrent agent build/dev/test processes (CLAUDE.md
 // "known traps" — load average routinely exceeds core count), which starves
 // headless Chromium's frame rate; wall-clock budgets below are widened
-// accordingly, mirroring tmp-verify-w02-vehicles.mjs / tmp-verify-w04-economy.mjs.
+// accordingly, mirroring verify-w02-vehicles.mjs / verify-w04-economy.mjs.
 // That affects wall-clock only, never the pass/fail combat assertions.
 
 import { chromium } from 'playwright';
@@ -85,7 +85,7 @@ function attachConsole(page, issues, tag) {
 }
 
 // Real WASD-driven walk toward a world point, steering camYaw each beat —
-// identical technique to tmp-verify-w04-economy.mjs's walkTo (keyboard hold
+// identical technique to verify-w04-economy.mjs's walkTo (keyboard hold
 // under heavy sandbox load is more reliable than Playwright's own click/drag
 // actionability checks, and it's still the REAL movement + physics + netcode
 // path, just driven externally).

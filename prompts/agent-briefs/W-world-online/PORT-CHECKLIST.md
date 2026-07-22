@@ -130,7 +130,7 @@ itself rested on/against the ground and its own friction pinned the car almost d
 regardless of engine force (sedan and pickup: ~0.00 m/s after 3s of full throttle even at 10x
 their spec'd engine force; coupe: crawled at 0.6 m/s). Root-caused with a standalone real-Rapier
 repro (no browser, no game loop — immune to frame-rate starvation) at
-[scripts/tmp-verify-w02-physics-core.mjs](../../../scripts/tmp-verify-w02-physics-core.mjs).
+[scripts/verify-w02-physics-core.mjs](../../../scripts/verify-w02-physics-core.mjs).
 Fixed by raising `suspension.rest` (coupe 0.32→0.4, sedan 0.36→0.5, pickup 0.42→0.6; buggy was
 already fine at 0.46) — all four types now accelerate, steer, and are stopped by real wall
 collision correctly.
@@ -139,13 +139,13 @@ collision correctly.
 with collision, a second browser sees the car move smoothly, and exit returns to on-foot. —
 **Verified for real, twice:**
 1. A standalone real-Rapier physics repro (no browser/network — immune to shared-box CPU
-   contention): [scripts/tmp-verify-w02-physics-core.mjs](../../../scripts/tmp-verify-w02-physics-core.mjs)
+   contention): [scripts/verify-w02-physics-core.mjs](../../../scripts/verify-w02-physics-core.mjs)
    — real acceleration on open ground, a real wall stopping the car (not tunnelling, not a
    bounds-clamp teleport), real steering-induced lateral displacement, and the handbrake
    arresting speed. All passing against the production `createVehicle`/`vehicleSpec` code.
 2. A full two-Chromium-context Playwright run against a live Vite dev server + a freshly-started
    Colyseus `WalkRoom` (no mocked physics, no mocked network):
-   [scripts/tmp-verify-w02-vehicles.mjs](../../../scripts/tmp-verify-w02-vehicles.mjs) — Player A
+   [scripts/verify-w02-vehicles.mjs](../../../scripts/verify-w02-vehicles.mjs) — Player A
    joins, Rapier boots, the 6-vehicle fleet syncs, A walks to a parked car under real on-foot
    Rapier movement, presses F, the server grants the seat, the driving HUD appears, Player B's
    independent client sees the `driver` field flip to A's sessionId and sees the car's replicated
@@ -256,7 +256,7 @@ friction, and once in the world can walk up to a physical storefront (not just a
 browse and equip real, server-persisted cosmetics. **Verified for real** against a local Vite
 dev server + a freshly-started Colyseus `WalkRoom` (no mocked physics, no mocked catalog, no
 mocked SDK) with Playwright:
-[scripts/tmp-verify-w03-boutique.mjs](../../../scripts/tmp-verify-w03-boutique.mjs) — the lobby's
+[scripts/verify-w03-boutique.mjs](../../../scripts/verify-w03-boutique.mjs) — the lobby's
 "Design your avatar" card opens `AvatarCreator`, which fires a real network request to
 `avaturn.*` (the SDK is genuinely wired, not a stub); the player joins the `$THREE` world over a
 real Colyseus session; both boutique NPCs are present in `worldLife.npcs`; real on-foot
@@ -317,7 +317,7 @@ player (raising wanted heat, visible on both the HUD and the victim's nameplate)
 kill drops the victim's carried valuables + auto-respawns them in town at full health —
 all real Rapier-driven movement, a real freshly-started `WalkRoom`, zero mocked combat
 math. Verified end-to-end with two independent Chromium contexts against a live server:
-[scripts/tmp-verify-w07-combat.mjs](../../../scripts/tmp-verify-w07-combat.mjs).
+[scripts/verify-w07-combat.mjs](../../../scripts/verify-w07-combat.mjs).
 
 ---
 

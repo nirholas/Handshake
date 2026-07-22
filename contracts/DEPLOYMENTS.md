@@ -61,8 +61,8 @@ Polygon Amoy (80002), Avalanche Fuji (43113).
 The platform validator is the EVM key that signs glTF/schema validation
 attestations (`recordValidation`) when an agent is registered. It must be
 allow-listed via `addValidator(<addr>)` by the registry owner on every chain it
-attests on, funded with gas, and stored as the `VALIDATOR_PRIVATE_KEY` secret in
-Vercel (never committed). Provision/rotate with
+attests on, funded with gas, and stored as the `VALIDATOR_PRIVATE_KEY` env var on the
+`three-ws-api` Cloud Run service (never committed). Provision/rotate with
 [`scripts/erc8004/provision-validator-key.mjs`](../scripts/erc8004/provision-validator-key.mjs).
 
 | Address | Allow-listed chains | Notes |

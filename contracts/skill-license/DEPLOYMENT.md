@@ -65,7 +65,8 @@ the admin.
 
 ## 4. Wire the backend
 
-Set on the server (Vercel):
+Set on the server (the `three-ws-api` Cloud Run service, via
+`gcloud run services update three-ws-api --region us-central1 --update-env-vars ...`):
 
 | Env | Value |
 |---|---|

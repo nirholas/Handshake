@@ -37,15 +37,14 @@
 //   VERTEX_IMAGEN_EDIT_MODEL   — override the edit model
 //                                (default: gemini-2.5-flash-image)
 //   VERTEX_IMAGEN_LOCATION     — location for the image models only (falls back
-//                                to GOOGLE_CLOUD_LOCATION). Set to "global" to
-//                                run gemini-3-pro-image-preview, which is not
-//                                served regionally (E2E-verified 2026-07-16:
-//                                2048x2048 out of both generate and edit).
+//                                to GOOGLE_CLOUD_LOCATION). Some preview image
+//                                models are served only from "global", not
+//                                regionally; set it here if the configured
+//                                model requires that.
 //   VERTEX_IMAGE_SIZE          — requested output resolution, "1K"/"2K"/"4K"
 //                                (default: 2K). gemini-2.5-flash-image ignores
-//                                it (always 1024px); gemini-3-pro-image honors
-//                                it. Models that reject the knob get one retry
-//                                without it.
+//                                it (always 1024px); models that reject the
+//                                knob get one retry without it.
 //
 // Output: a base64 image returned inline as a data: URI. The caller
 // (text-to-image.js) uploads it to R2/S3 before handing it to the 3D backend.

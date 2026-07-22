@@ -249,7 +249,8 @@ const PROVIDERS = {
 			env.GROK_API_KEY
 				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.1-fast')
 				: null,
-		openrouterModel: 'x-ai/grok-4.1-fast',
+		// OpenRouter dropped x-ai/grok-4.1-fast from its catalog (verified
+		// 2026-07-22), so this tier is native xAI only, with no mirror route.
 	},
 	'groq-llama': {
 		label: 'Llama 3.3 70B',

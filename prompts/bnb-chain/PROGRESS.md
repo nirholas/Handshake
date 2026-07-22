@@ -1877,7 +1877,7 @@ edge cases, and `pollDelayMs` backoff bounds. Full BNB suite: `npx vitest run te
 `node --check`/`eslint` clean on every new/changed file (0 errors; a handful of expected
 `no-console` warnings in the throwaway proof script).
 
-**REAL anvil-fork browser E2E proof** (`scripts/tmp-verify-vault-ui.mjs`, reproducible — see
+**REAL anvil-fork browser E2E proof** (`scripts/verify-vault-ui.mjs`, reproducible — see
 `docs/bnb-vault.md`#4). Not a reimplementation: drives the actual `pages/vault.html`/`src/vault.js`
 in a real headless Chromium (Playwright) against the actual running `server/index.mjs` API server
 (booted in-process so it shares the in-memory KV index with the proof's setup step) and a real

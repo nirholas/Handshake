@@ -10,7 +10,7 @@
 // client-claimed), and finishing the mission pays out a real cash reward with
 // a toast. This box runs many concurrent agent build/dev/test processes
 // (CLAUDE.md "known traps"), so wall-clock budgets below are generous, mirroring
-// scripts/tmp-verify-w04-economy.mjs and tmp-verify-w02-vehicles.mjs.
+// scripts/verify-w04-economy.mjs and verify-w02-vehicles.mjs.
 
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
