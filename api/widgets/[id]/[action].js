@@ -21,6 +21,12 @@ import { moderateAnonInput, refusalReply } from '../../_lib/moderation.js';
 import { embeddingsConfigured, scoreRowsBySpace } from '../../_lib/embeddings.js';
 import { rerankConfigured, rerankPassages } from '../../_lib/rerank.js';
 import { watsonxConfig, watsonxToken } from '../../_lib/watsonx.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiModel,
+	vertexGeminiChatUrl,
+	vertexGeminiHeaders,
+} from '../../_lib/vertex-gemini.js';
 import { fetchSafePublicUrlPinned, SsrfBlockedError } from '../../_lib/ssrf-guard.js';
 import { listTranscripts, getTranscript } from './_transcripts.js';
 // _knowledge.js is loaded on demand (dynamic import in handleKnowledge) so the
@@ -370,7 +376,8 @@ async function handleChat(req, res) {
 
 // ── Brain dispatchers ──────────────────────────────────────────────────────
 
-function pickProviderChain(requested, requestedModel) {
+// Exported for the anchor regression tests (tests/api/llm-vertex-anchor-surfaces).
+export function pickProviderChain(requested, requestedModel) {
 	// Fall back in DEFAULT_PROVIDER_ORDER (free providers first), not the
 	// PROVIDERS object order, so an unconfigured explicit request degrades to
 	// the free chain — never to a paid key first. Mirrors api/chat.js. Returns
@@ -407,6 +414,25 @@ function pickProviderChain(requested, requestedModel) {
 			(requestedApplies && requestedModel) ||
 			(name === 'watsonx' ? cfg.defaultModel : envPinned || cfg.defaultModel);
 		chain.push({ name, cfg, apiKey, model });
+	}
+	// Credits-funded Vertex Gemini anchor, ALWAYS the final rung when the GCP
+	// project is set (api/chat.js semantics — see api/_lib/vertex-gemini.js).
+	// Keyless: the OAuth bearer token is minted per request via resolveHeaders,
+	// so no env key gates it and no present paid key can evict it. This is what
+	// keeps embedded widget chat answering when groq/openrouter/nvidia throttle
+	// together and the prod OPENAI_API_KEY is billing-dead. Never a primary:
+	// it is appended after every configured route, reached only via failover.
+	if (vertexGeminiAvailable()) {
+		chain.push({
+			name: 'vertex-gemini',
+			cfg: {
+				style: 'openai',
+				url: vertexGeminiChatUrl(),
+				resolveHeaders: vertexGeminiHeaders,
+			},
+			apiKey: 'vertex',
+			model: vertexGeminiModel(),
+		});
 	}
 	return chain;
 }
@@ -546,13 +572,19 @@ async function callOpenAICompatible({
 		payload.tool_choice = 'auto';
 	}
 
+	// Keyless routes (the Vertex Gemini credits anchor) mint their auth per
+	// request via resolveHeaders — a token-exchange failure throws here and fails
+	// over to the next route exactly like a transport error.
+	const headers = route.cfg.resolveHeaders
+		? { ...(await route.cfg.resolveHeaders()), ...(route.cfg.extraHeaders || {}) }
+		: {
+				Authorization: `Bearer ${route.apiKey}`,
+				'Content-Type': 'application/json',
+				...(route.cfg.extraHeaders || {}),
+			};
 	const upstream = await fetch(route.cfg.url, {
 		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${route.apiKey}`,
-			'Content-Type': 'application/json',
-			...(route.cfg.extraHeaders || {}),
-		},
+		headers,
 		body: JSON.stringify(payload),
 		// A hung upstream must not eat the whole function budget — abort and let
 		// the provider chain in handleChat move to the next route.

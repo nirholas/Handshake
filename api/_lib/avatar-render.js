@@ -5,6 +5,7 @@
 // duplicated chromium code anywhere else.
 
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 // puppeteer-core + @sparticuz/chromium-min are loaded lazily inside getBrowser()
 // so Vercel's NFT does not statically trace the chromium binary tree on every
 // route in a function package — that trace was the 45-min build timeout.
@@ -16,12 +17,80 @@ export const MIN_DIM = 64;
 export const MAX_DIM = 2048;
 export const DEFAULT_SIZE = 512;
 
+// Bump whenever the in-page render pipeline changes visibly (pose application,
+// camera framing, lighting). Part of the cache fingerprint, so every cached
+// render from the previous pipeline is invalidated on deploy instead of
+// serving stale/broken images forever.
+const RENDER_PIPELINE_VERSION = 2;
+
+// Camera framing per scene. `band` is the vertical slice of the model shown,
+// as fractions of its bounding-box height measured from the feet: [0, 1] is
+// the whole figure, band[1] > 1 buys guaranteed headroom above the crown so a
+// head can never be clipped. `halfWidthFrac` is the minimum horizontal
+// half-extent to keep in frame, as a fraction of model height (a head is
+// ~0.13 H wide, shoulders ~0.3 H); `fitFullWidth` additionally fits the whole
+// bounding-box width (full-body must never crop an outstretched arm).
+// `margin` is the safety zoom-out applied after fitting. phi/theta are the
+// default orbit angles (degrees; phi is polar from +Y, so ~80-86 is eye-ish
+// level looking slightly down).
 export const SCENE_PRESETS = {
-	'full-body':  { phi: 80, theta: 0,  radiusMult: 1.0,  lookAtY: 0.0  },
-	'upper-body': { phi: 82, theta: 5,  radiusMult: 0.55, lookAtY: 0.15 },
-	'portrait':   { phi: 84, theta: 8,  radiusMult: 0.38, lookAtY: 0.30 },
-	'headshot':   { phi: 86, theta: 5,  radiusMult: 0.28, lookAtY: 0.38 },
+	'full-body':  { phi: 80, theta: 0, band: [-0.02, 1.05], fitFullWidth: true,  halfWidthFrac: 0.25, margin: 1.12 },
+	'upper-body': { phi: 82, theta: 5, band: [0.42, 1.05],  fitFullWidth: false, halfWidthFrac: 0.22, margin: 1.08 },
+	'portrait':   { phi: 84, theta: 8, band: [0.60, 1.06],  fitFullWidth: false, halfWidthFrac: 0.14, margin: 1.08 },
+	'headshot':   { phi: 86, theta: 5, band: [0.74, 1.07],  fitFullWidth: false, halfWidthFrac: 0.09, margin: 1.08 },
 };
+
+// Pure camera-framing math, shared verbatim between Node (unit tests) and the
+// headless render page (injected via toString(), so keep it self-contained:
+// plain objects and Math only, no three.js, no outer-scope references).
+//
+// Given the POSED model's world-space bounding box, a scene preset (above),
+// the output aspect ratio (width / height) and the vertical FOV, it returns
+// where to put the camera and what to look at so the preset's vertical band
+// fits the vertical frustum AND the required horizontal extent fits the
+// horizontal frustum. Fitting the band (whose top is above the crown) against
+// the vertical FOV is what makes portrait-aspect outputs keep the head in
+// frame; fitting the width keeps landscape/square framing correct too.
+export function computeCameraFraming(box, preset, aspect, fovDeg, orbit) {
+	const p = preset || {};
+	const sizeX = Math.max(box.max.x - box.min.x, 1e-6);
+	const sizeY = Math.max(box.max.y - box.min.y, 1e-6);
+	const sizeZ = Math.max(box.max.z - box.min.z, 1e-6);
+	const cx = (box.min.x + box.max.x) / 2;
+	const cz = (box.min.z + box.max.z) / 2;
+
+	const band = Array.isArray(p.band) && p.band.length === 2 ? p.band : [-0.02, 1.05];
+	const bandBottom = box.min.y + sizeY * band[0];
+	const bandTop = box.min.y + sizeY * band[1];
+	const lookY = (bandBottom + bandTop) / 2;
+	const halfH = Math.max((bandTop - bandBottom) / 2, 1e-6);
+
+	const minHalfW = sizeY * (Number.isFinite(p.halfWidthFrac) ? p.halfWidthFrac : 0.3);
+	const halfW = p.fitFullWidth ? Math.max(Math.max(sizeX, sizeZ) / 2, minHalfW) : minHalfW;
+
+	const tanV = Math.tan(((Number(fovDeg) || 28) * Math.PI) / 360);
+	const tanH = tanV * Math.max(Number(aspect) || 1, 1e-6);
+	const margin = Number.isFinite(p.margin) ? p.margin : 1.08;
+	// + sizeZ / 2 backs the camera off past the model's front surface so depth
+	// (an outstretched punch, a knee toward camera) never breaches the frustum.
+	const distance = Math.max(halfH / tanV, halfW / tanH) * margin + sizeZ / 2;
+
+	const num = (v) => (v == null ? NaN : Number(v));
+	const thetaDeg = Number.isFinite(num(orbit && orbit.theta)) ? num(orbit.theta) : (Number(p.theta) || 0);
+	const phiDeg = Number.isFinite(num(orbit && orbit.phi)) ? num(orbit.phi) : (Number(p.phi) || 80);
+	const theta = (thetaDeg * Math.PI) / 180;
+	const phi = (phiDeg * Math.PI) / 180;
+
+	return {
+		position: {
+			x: cx + distance * Math.sin(phi) * Math.sin(theta),
+			y: lookY + distance * Math.cos(phi),
+			z: cz + distance * Math.sin(phi) * Math.cos(theta),
+		},
+		target: { x: cx, y: lookY, z: cz },
+		distance,
+	};
+}
 
 export const FORMAT_TYPES = {
 	png:  'image/png',
@@ -124,6 +193,7 @@ function renderFingerprint(updatedAt, params) {
 		pose: params.posePresetId,
 		expression: params.expression,
 		updated: updatedAt,
+		pipeline: RENDER_PIPELINE_VERSION,
 	});
 }
 
@@ -204,12 +274,48 @@ async function getBrowser() {
 	return _browserPromise;
 }
 
-function sceneViewerHtml({ glbUrl, width, height, background, pose, cameraOrbit, expression, scenePreset }) {
+// The pose studio's posing stack (src/pose-rig.js + src/glb-canonicalize.js +
+// src/pose-mannequin.js) is pure three.js ESM, so the headless page runs the
+// EXACT same code the client does: canonical bone-name mapping for every rig
+// convention, and world-delta preset retargeting (poseFromMannequinPreset →
+// GltfRig.applyPose) that lands presets on top of any bind stance. The
+// sources are shipped to the page as data: URL modules in its import map,
+// with pose-rig's relative imports rewritten to the bare specifiers the map
+// defines. Never reintroduce a hand-rolled alias table here — it silently
+// missed every Mixamo rig (GLTFLoader strips ':' from node names) and stomped
+// absolute local Eulers over bind rotations on the rest.
+const SRC_DIR = new URL('../../src/', import.meta.url);
+
+function poseModuleDataUrl(file, rewrites = []) {
+	let code = readFileSync(new URL(file, SRC_DIR), 'utf8');
+	for (const [from, to] of rewrites) code = code.replaceAll(from, to);
+	if (/from\s+['"]\.{1,2}\//.test(code)) {
+		throw new Error(`avatar-render: ${file} still has relative imports after rewrite — update poseRuntimeModules()`);
+	}
+	return 'data:text/javascript;base64,' + Buffer.from(code, 'utf8').toString('base64');
+}
+
+let _poseRuntimeModules = null;
+export function poseRuntimeModules() {
+	if (_poseRuntimeModules) return _poseRuntimeModules;
+	_poseRuntimeModules = {
+		'glb-canonicalize': poseModuleDataUrl('glb-canonicalize.js'),
+		'pose-mannequin': poseModuleDataUrl('pose-mannequin.js'),
+		'pose-rig': poseModuleDataUrl('pose-rig.js', [
+			["from './glb-canonicalize.js'", "from 'glb-canonicalize'"],
+			["from './pose-mannequin.js'", "from 'pose-mannequin'"],
+		]),
+	};
+	return _poseRuntimeModules;
+}
+
+export function sceneViewerHtml({ glbUrl, width, height, background, pose, cameraOrbit, expression, scenePreset }) {
 	const bg = background === 'transparent' ? 'null' : JSON.stringify(background || '#0a0a0a');
 	const poseJson = pose ? JSON.stringify(pose) : 'null';
 	const orbitJson = JSON.stringify(cameraOrbit || { theta: 0, phi: 80, radius: null });
 	const expressionJson = JSON.stringify(expression || null);
 	const presetJson = JSON.stringify(scenePreset);
+	const poseModules = poseRuntimeModules();
 
 	return `<!doctype html>
 <html><head><meta charset="utf-8" />
@@ -218,7 +324,10 @@ function sceneViewerHtml({ glbUrl, width, height, background, pose, cameraOrbit,
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
 <script type="importmap">{ "imports": {
 	"three": "https://unpkg.com/three@${THREE_VERSION}/build/three.module.js",
-	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/"
+	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/",
+	"glb-canonicalize": "${poseModules['glb-canonicalize']}",
+	"pose-mannequin": "${poseModules['pose-mannequin']}",
+	"pose-rig": "${poseModules['pose-rig']}"
 }}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -227,6 +336,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { makeGltfRig, poseFromMannequinPreset } from 'pose-rig';
 
 window.__renderDone = false;
 window.__renderError = null;
@@ -265,42 +375,18 @@ fill.position.set(-3, 1.2, 2.5); scene.add(fill);
 const rim = new THREE.DirectionalLight(0xecdcff, 0.7);
 rim.position.set(-0.5, 2.5, -4); scene.add(rim);
 
-const aliases = {
-	shoulderl: ['leftshoulder','shoulder_l','l_shoulder','mixamorig:leftshoulder'],
-	shoulderr: ['rightshoulder','shoulder_r','r_shoulder','mixamorig:rightshoulder'],
-	elbowl: ['leftforearm','leftelbow','elbow_l','mixamorig:leftforearm','mixamorig:leftelbow'],
-	elbowr: ['rightforearm','rightelbow','elbow_r','mixamorig:rightforearm','mixamorig:rightelbow'],
-	wristl: ['lefthand','wrist_l','mixamorig:lefthand'],
-	wristr: ['righthand','wrist_r','mixamorig:righthand'],
-	hipl: ['leftupleg','hip_l','mixamorig:leftupleg'],
-	hipr: ['rightupleg','hip_r','mixamorig:rightupleg'],
-	kneel: ['leftleg','knee_l','mixamorig:leftleg'],
-	kneer: ['rightleg','knee_r','mixamorig:rightleg'],
-	anklel: ['leftfoot','ankle_l','mixamorig:leftfoot'],
-	ankler: ['rightfoot','ankle_r','mixamorig:rightfoot'],
-	head: ['head','mixamorig:head'],
-	neck: ['neck','mixamorig:neck'],
-	spine: ['spine','spine1','mixamorig:spine','mixamorig:spine1'],
-	hips: ['hips','mixamorig:hips'],
-};
-
+// Preset poses are authored in the mannequin convention (src/pose-presets.js);
+// poseFromMannequinPreset converts them to canonical world-frame deltas and
+// GltfRig.applyPose replays those on the avatar's OWN rest pose with
+// reference-stance alignment — the same path the /pose studio uses, so a
+// preset lands identically here whether the rig binds in a T-pose or A-pose,
+// and whatever naming convention its bones use. Rigs with no recognizable
+// humanoid skeleton stay in bind pose (there is no safe mapping for those).
 function applyPose(root, poseMap) {
 	if (!poseMap) return;
-	const byName = new Map();
-	root.traverse((o) => { if (o.name) byName.set(o.name.toLowerCase(), o); });
-	function findJoint(k) {
-		const key = k.toLowerCase();
-		const direct = byName.get(key);
-		if (direct) return direct;
-		const list = aliases[key] || [];
-		for (const a of list) { const j = byName.get(a); if (j) return j; }
-		return null;
-	}
-	for (const [key, rot] of Object.entries(poseMap)) {
-		const joint = findJoint(key);
-		if (!joint) continue;
-		joint.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
-	}
+	const rig = makeGltfRig(root);
+	if (!rig) return;
+	rig.applyPose(poseFromMannequinPreset(poseMap));
 }
 
 function applyExpression(root, expression) {
@@ -314,30 +400,29 @@ function applyExpression(root, expression) {
 	});
 }
 
+${computeCameraFraming.toString()}
+
 function frameCameraForScene(root, orbit, preset) {
+	// The bounding box must reflect the POSED skin, not the bind-pose geometry:
+	// three's Box3.setFromObject defers to SkinnedMesh.computeBoundingBox (CPU
+	// skinning), which needs current bone matrices — update the graph and each
+	// skeleton first. (Never reset rigs via THREE.Skeleton's pose method: it
+	// reconstructs bind from inverse-bind matrices and collapses Mixamo rigs.)
+	root.updateMatrixWorld(true);
+	root.traverse((o) => { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });
 	const box = new THREE.Box3().setFromObject(root);
-	const size = new THREE.Vector3(); box.getSize(size);
-	const center = new THREE.Vector3(); box.getCenter(center);
 
-	root.position.sub(center);
-
-	const halfH = size.y * 0.5;
-	const lookAtY = halfH * (preset.lookAtY || 0);
-
-	root.position.y += size.y * 0.05;
-
-	const maxDim = Math.max(size.x, size.y, size.z);
-	const fov = THREE.MathUtils.degToRad(camera.fov);
-	const defaultDist = (maxDim / 2) / Math.tan(fov / 2) * 1.45;
-	const radius = defaultDist * (preset.radiusMult || 1.0);
-
-	const theta = THREE.MathUtils.degToRad(Number(orbit.theta) || 0);
-	const phi = THREE.MathUtils.degToRad(Number(orbit.phi) || 80);
-	const x = radius * Math.sin(phi) * Math.sin(theta);
-	const y = radius * Math.cos(phi) + lookAtY;
-	const z = radius * Math.sin(phi) * Math.cos(theta);
-	camera.position.set(x, y, z);
-	camera.lookAt(0, lookAtY, 0);
+	const framing = computeCameraFraming(
+		{ min: { x: box.min.x, y: box.min.y, z: box.min.z }, max: { x: box.max.x, y: box.max.y, z: box.max.z } },
+		preset, ${width} / ${height}, camera.fov, orbit,
+	);
+	// Scale-aware clip planes: pipeline GLBs are ~1.7 units tall but Mixamo
+	// cm-scale exports are ~170 — a fixed near/far would clip one or the other.
+	camera.near = Math.max(framing.distance / 1000, 0.001);
+	camera.far = framing.distance * 10;
+	camera.updateProjectionMatrix();
+	camera.position.set(framing.position.x, framing.position.y, framing.position.z);
+	camera.lookAt(framing.target.x, framing.target.y, framing.target.z);
 }
 
 const orbit = ${orbitJson};

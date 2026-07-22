@@ -308,7 +308,7 @@ export function correlation(pairs) {
  *
  * @returns {Promise<{ trained: boolean, sample_size: number, weights?: object, conditional_win_rates?: object }>}
  */
-export async function trainWeights({ network = 'mainnet', minSamples = 50 } = {}) {
+export async function trainWeights({ network = 'mainnet', minSamples = 50, maxSamples = 20_000 } = {}) {
 	const sql = await getSql();
 	if (!sql) return { trained: false, sample_size: 0 };
 
@@ -317,6 +317,12 @@ export async function trainWeights({ network = 'mainnet', minSamples = 50 } = {}
 	// traded carries its REAL realized win/loss (ro.realized_win). Realized PnL is
 	// higher-fidelity ground truth than the chart-based ATH label, so the label
 	// below prefers it when present.
+	//
+	// Bounded to the freshest maxSamples labeled coins: the unbounded form OOMed
+	// the cron once the labeled set passed ~64k rows (each carries the full
+	// signals JSONB), and launch-meta regimes shift (e.g. the 2026-07-21 BOOST
+	// cutover), so the newest window is both the safe and the better training set.
+	const cap = Math.max(1, Math.min(200_000, maxSamples | 0));
 	const rows = await sql`
 		select
 			i.signals, o.outcome, ro.realized_win,
@@ -328,6 +334,8 @@ export async function trainWeights({ network = 'mainnet', minSamples = 50 } = {}
 		join pump_coin_outcomes o on o.mint = i.mint
 		left join oracle_realized_outcomes ro on ro.mint = i.mint and ro.network = i.network
 		where i.network = ${network} and o.outcome <> 'unknown'
+		order by i.first_seen_at desc
+		limit ${cap}
 	`;
 	if (rows.length < minSamples) return { trained: false, sample_size: rows.length };
 

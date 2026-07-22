@@ -33,6 +33,12 @@ import { quoteTrade } from './solana-trade.js';
 import { assessTradeSafety } from '../_lib/trade-firewall.js';
 import { getSmartMoneyForMint } from '../_lib/smart-money.js';
 import { getTradeLimits } from '../_lib/agent-trade-guards.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiModel,
+	vertexGeminiChatUrl,
+	vertexGeminiHeaders,
+} from '../_lib/vertex-gemini.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const netOf = (v) => (NETWORKS.has(v) ? v : 'mainnet');
@@ -56,8 +62,12 @@ async function resolveAuth(req) {
 // OpenAI chat-completions wire format (tools + streamed tool_calls), so one
 // reader handles them all. Anthropic is intentionally omitted from the tool loop
 // — the free OpenAI-compatible lanes are the primary path and OpenAI is the paid
-// tail; nothing here depends on a paid key existing.
-function providerChain() {
+// tail; nothing here depends on a paid key existing. The credits-funded Vertex
+// Gemini anchor is ALWAYS the final rung when the GCP project is set (api/chat.js
+// semantics): the prod OPENAI_API_KEY is billing-dead, so without the anchor a
+// simultaneous free-lane throttle 5xx'd the copilot. Exported for the anchor
+// regression tests.
+export function providerChain() {
 	const chain = [];
 	if (env.GROQ_API_KEY) {
 		chain.push({ name: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'llama-3.3-70b-versatile' });
@@ -78,6 +88,19 @@ function providerChain() {
 	if (env.OPENAI_API_KEY) {
 		chain.push({ name: 'openai', url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.4-nano' });
 	}
+	// Vertex Gemini credits anchor — keyless (GCP OAuth token minted per request
+	// via getHeaders; see api/_lib/vertex-gemini.js), OpenAI-compatible including
+	// tools + streamed tool_calls, billed to platform credits. Appended at the
+	// tail unconditionally when available so no present provider key can evict it.
+	if (vertexGeminiAvailable()) {
+		chain.push({
+			name: 'vertex-gemini',
+			url: vertexGeminiChatUrl(),
+			key: null,
+			model: vertexGeminiModel(),
+			getHeaders: vertexGeminiHeaders,
+		});
+	}
 	return chain;
 }
 
@@ -93,9 +116,15 @@ async function streamRound(provider, { messages, tools, onContent }) {
 		messages,
 	};
 	if (Array.isArray(tools) && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
+	// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per request
+	// via getHeaders — a token-exchange failure throws here and fails over to the
+	// next provider exactly like a transport error.
+	const headers = provider.getHeaders
+		? { ...(await provider.getHeaders()), ...(provider.extraHeaders || {}) }
+		: { 'content-type': 'application/json', authorization: `Bearer ${provider.key}`, ...(provider.extraHeaders || {}) };
 	const resp = await fetch(provider.url, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', authorization: `Bearer ${provider.key}`, ...(provider.extraHeaders || {}) },
+		headers,
 		body: JSON.stringify(body),
 		signal: AbortSignal.timeout(45_000),
 	});
@@ -403,7 +432,7 @@ export default async function handler(req, res, id) {
 	}
 
 	const chain = providerChain();
-	if (!chain.length) return error(res, 503, 'llm_unavailable', 'No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY.');
+	if (!chain.length) return error(res, 503, 'llm_unavailable', 'No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (or GOOGLE_CLOUD_PROJECT for the Vertex credits anchor).');
 
 	// SSE open.
 	res.writeHead(200, {

@@ -55,7 +55,7 @@ export default wrap(async function handler(req, res) {
 	}
 
 	if (!visionConfigured()) {
-		return error(res, 503, 'not_configured', 'Vision is not configured (set NVIDIA_API_KEY, or OPENAI_API_KEY for the paid backstop)');
+		return error(res, 503, 'not_configured', 'Vision is not configured (set NVIDIA_API_KEY, GOOGLE_CLOUD_PROJECT for the Vertex Gemini credits anchor, or OPENAI_API_KEY for the paid backstop)');
 	}
 
 	// Metered like the other free NVIDIA lanes.

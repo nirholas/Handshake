@@ -11,6 +11,7 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { geckoFetch } from '../../api/_lib/coingecko.js';
+import { cacheSet } from '../../api/_lib/cache.js';
 
 const realFetch = global.fetch;
 afterEach(() => {
@@ -65,5 +66,30 @@ describe('geckoFetch — stale-on-error', () => {
 		await geckoFetch(path, { ttlMs: 60_000 });
 		await geckoFetch(path, { ttlMs: 60_000 });
 		expect(global.fetch).toHaveBeenCalledTimes(1);
+	});
+
+	// The memory stale buffer dies with the instance. The durable last-good copy
+	// (shared cache, written on every good fetch) is what keeps a COLD instance
+	// serving through an upstream storm instead of 502ing — the exact failure the
+	// 2026-07-22 api-sweep caught on /api/coin/exchanges.
+	it('falls back to the durable last-good copy when memory has nothing (throttled upstream)', async () => {
+		const path = `/coins/durable-429-${Math.round(performance.now())}`;
+		await cacheSet(`gecko:last-good:${path}`, { id: 'from-durable' }, 300);
+		global.fetch = vi.fn().mockResolvedValue(fail(429));
+		await expect(geckoFetch(path)).resolves.toEqual({ id: 'from-durable' });
+	});
+
+	it('falls back to the durable last-good copy on a cold network failure', async () => {
+		const path = `/coins/durable-net-${Math.round(performance.now())}`;
+		await cacheSet(`gecko:last-good:${path}`, { id: 'from-durable-net' }, 300);
+		global.fetch = vi.fn().mockRejectedValue(Object.assign(new Error('boom'), { name: 'TimeoutError' }));
+		await expect(geckoFetch(path)).resolves.toEqual({ id: 'from-durable-net' });
+	});
+
+	it('never masks a 404 with the durable copy', async () => {
+		const path = `/coins/durable-404-${Math.round(performance.now())}`;
+		await cacheSet(`gecko:last-good:${path}`, { id: 'ghost' }, 300);
+		global.fetch = vi.fn().mockResolvedValue(fail(404));
+		await expect(geckoFetch(path)).rejects.toMatchObject({ status: 404 });
 	});
 });

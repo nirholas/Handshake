@@ -31,6 +31,12 @@ import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
 import { validatePublicUrl, isPrivateAddress, SsrfError } from './ssrf.js';
 import { fetchSafePublicUrl } from './ssrf-guard.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiModel,
+	vertexGeminiChatUrl,
+	vertexGeminiHeaders,
+} from './vertex-gemini.js';
 
 // Free NIM vision lanes, in order. nemotron-nano carries the smallest image
 // token footprint (~281 prompt tokens for a tiny image vs ~1600 for llama-90B);
@@ -48,7 +54,7 @@ const OPENAI_VISION_MODEL = 'gpt-5.4-nano';
 // a handler that *chose* to surface it can return 503 — but consumers should
 // generally catch it and degrade silently instead.
 export class VisionUnavailableError extends Error {
-	constructor(message = 'No vision provider available. Configure NVIDIA_API_KEY (free) or OPENAI_API_KEY (paid backstop).') {
+	constructor(message = 'No vision provider available. Configure NVIDIA_API_KEY (free), GOOGLE_CLOUD_PROJECT (Vertex Gemini credits anchor), or OPENAI_API_KEY (paid backstop).') {
 		super(message);
 		this.name = 'VisionUnavailableError';
 		this.code = 'vision_unavailable';
@@ -57,13 +63,17 @@ export class VisionUnavailableError extends Error {
 }
 
 // One OpenAI-compatible vision provider entry. The multimodal user message is
-// the only shape difference from llm.js's text providers.
-function openaiCompatVisionProvider({ name, key, url, model }) {
+// the only shape difference from llm.js's text providers. `getHeaders` (async)
+// replaces the static key header for keyless lanes whose auth is minted per
+// request (the Vertex Gemini credits anchor).
+function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null }) {
 	return {
 		name,
 		model,
 		url,
-		headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+		...(getHeaders
+			? { getHeaders }
+			: { headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` } }),
 		buildBody: (system, parts, maxTokens) => {
 			const messages = [];
 			if (system) messages.push({ role: 'system', content: system });
@@ -75,9 +85,11 @@ function openaiCompatVisionProvider({ name, key, url, model }) {
 	};
 }
 
-// Build the ordered vision provider chain: free NIM lanes first, paid OpenAI
-// backstop appended last and only when its key is set.
-function visionChain() {
+// Build the ordered vision provider chain: free NIM lanes first, then the
+// credits-funded Vertex Gemini anchor, paid OpenAI backstop appended last and
+// only when its key is set. Exported for the anchor regression tests
+// (tests/api/llm-vertex-anchor-surfaces).
+export function visionChain() {
 	const chain = [];
 	if (env.NVIDIA_API_KEY) {
 		for (const model of NVIDIA_VISION_MODELS) {
@@ -88,6 +100,21 @@ function visionChain() {
 				model,
 			}));
 		}
+	}
+	// Vertex Gemini credits anchor — multimodal (Gemini Flash reads image_url
+	// parts, data URIs included, through the same OpenAI-compatible endpoint),
+	// keyless (OAuth token minted per request), billed to GCP credits. Sits
+	// after the free NIM lanes and ahead of the paid tail, exactly like the
+	// text anchor in llm.js's providerChain: the prod OPENAI_API_KEY is
+	// billing-dead, so this rung is what keeps vision answering when the NIM
+	// queue throttles or hangs. Nothing may evict it (see api/_lib/vertex-gemini.js).
+	if (vertexGeminiAvailable()) {
+		chain.push(openaiCompatVisionProvider({
+			name: 'vertex-gemini',
+			url: vertexGeminiChatUrl(),
+			model: vertexGeminiModel(),
+			getHeaders: vertexGeminiHeaders,
+		}));
 	}
 	if (env.OPENAI_API_KEY) {
 		chain.push(openaiCompatVisionProvider({
@@ -285,9 +312,12 @@ export async function describeImage({
 		const startedAt = Date.now();
 		let upstream;
 		try {
+			// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per
+			// attempt via getHeaders — a token-exchange failure lands in the catch
+			// below and fails over to the next lane like any transport error.
 			upstream = await fetch(p.url, {
 				method: 'POST',
-				headers: p.headers,
+				headers: p.getHeaders ? await p.getHeaders() : p.headers,
 				body: JSON.stringify(p.buildBody(system, parts, maxTokens)),
 				signal: AbortSignal.timeout(attemptTimeout),
 			});

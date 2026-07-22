@@ -42,6 +42,15 @@
 //      a day old, and deletes terminal jobs past 30 days.
 //   C. VACUUM. Plain VACUUM on the tables it pruned so the freed pages become
 //      reusable and Neon's storage GC can return them.
+//   D. COMPACTION. Plain VACUUM never shrinks the relation FILES, so on Neon
+//      pg_database_size stays high after a prune and the storage-pressure gate
+//      (isStoragePressured / requireWriteCapacity) can latch permanently: the
+//      July 2026 recurrence had 770 MB of dead file space across the pruned
+//      tables while every write-heavy cron sat skipped. When a tick starts
+//      under pressure, this step measures reclaimable space per managed table
+//      (pgstattuple_approx) and VACUUM FULLs the worst offenders, smallest
+//      first and bounded per tick, so the file space actually returns and the
+//      gate unlatches without a human.
 //
 // DELETE (not UPDATE) is used for the firehose because DELETE settles xmax in place
 // and does NOT extend a relation file — it therefore succeeds even AT the cap,
@@ -84,6 +93,17 @@ const REGEN_MAX_ITERS = 40;
 const SERIES_BATCH = 5000; // rows per batch for time-keyed series prunes
 const SERIES_MAX_PER_RUN = 50_000; // per-table ceiling per tick
 const ORPHAN_BATCH = 5000; // orphaned satellite rows per table per tick
+
+// Compaction bounds (section D). VACUUM FULL rewrites a table into a fresh file
+// under an ACCESS EXCLUSIVE lock — cheap on Neon for these churn tables (a
+// 500 MB table compacted in ~2 s in the July 2026 recovery) but never free, so
+// only tables with real reclaimable space qualify and each tick rewrites at
+// most a few. Smallest-first ordering matters near the hard cap: each rewrite
+// needs headroom ≈ the table's LIVE size, so freeing the small ones first buys
+// the room to rewrite the big ones.
+const COMPACT_MIN_FREE_MB = 25; // ignore tables with less reclaimable space than this
+const COMPACT_MIN_FREE_RATIO = 0.3; // ... or mostly-live files (rewrite buys little)
+const COMPACT_MAX_TABLES = 3; // per tick; the cron re-runs on its schedule
 
 // Time-keyed tables outside the mint-cascade family that still grow without
 // bound. Each is pruned by its own timestamp column on the shared valve
@@ -375,6 +395,100 @@ async function pruneRegenJobs() {
 	return { stripped, deleted };
 }
 
+// ── D. Bounded compaction under storage pressure ──────────────────────────────
+// Every table this cron manages is a compaction candidate; nothing outside the
+// retention set is ever rewritten (a VACUUM FULL on a hot product table would
+// block its writers behind an exclusive lock).
+const COMPACT_CANDIDATES = [
+	'pump_coin_intel',
+	...FIREHOSE_SATELLITES,
+	...TIME_SERIES_TABLES.map((t) => t.table),
+	...RUN_LOG_TABLES.map((t) => t.table),
+	'x402_audit_log',
+	'avatar_regen_jobs',
+];
+
+/**
+ * Pure target selection so the bounds are unit-testable. Keeps tables whose
+ * reclaimable space clears both the absolute and the ratio floor, orders them
+ * smallest file first (each rewrite needs headroom ≈ live size, so free the
+ * cheap space before attempting the big files near a hard cap), and caps how
+ * many one tick may rewrite.
+ *
+ * @param {object} a
+ * @param {Array<{table:string, tableMb:number, freeMb:number}>} a.candidates
+ * @param {number} a.minFreeMb
+ * @param {number} a.minFreeRatio
+ * @param {number} a.maxTables
+ */
+export function pickCompactionTargets({ candidates, minFreeMb, minFreeRatio, maxTables }) {
+	return candidates
+		.filter(
+			(c) =>
+				c.tableMb > 0 &&
+				c.freeMb >= minFreeMb &&
+				c.freeMb / c.tableMb >= minFreeRatio,
+		)
+		.sort((a, b) => a.tableMb - b.tableMb)
+		.slice(0, Math.max(0, maxTables));
+}
+
+// Measure reclaimable space per candidate and VACUUM FULL the picks. Wholly
+// best-effort: pgstattuple missing, a lock we can't get, or a rewrite failing
+// mid-tick degrades to "less compacted this tick", never a failed cron.
+async function compactTables({ minFreeMb, maxTables }) {
+	const result = { measured: 0, compacted: [], skipped: [] };
+	try {
+		// Idempotent; Neon ships pgstattuple as an installable extension.
+		await sql`CREATE EXTENSION IF NOT EXISTS pgstattuple`;
+	} catch (err) {
+		result.skipped.push({ reason: 'pgstattuple_unavailable', detail: err?.message?.slice(0, 120) });
+		return result;
+	}
+
+	const candidates = [];
+	for (const t of COMPACT_CANDIDATES) {
+		if (!(await tableExists(t))) continue;
+		try {
+			// t is a fixed constant from the retention config above — safe to splice.
+			const [r] = await sql(`SELECT * FROM pgstattuple_approx('public.${t}'::regclass)`);
+			candidates.push({
+				table: t,
+				tableMb: Number(r.table_len) / 1048576,
+				freeMb: (Number(r.approx_free_space) + Number(r.dead_tuple_len)) / 1048576,
+			});
+		} catch {
+			/* a table we cannot measure is a table we do not rewrite */
+		}
+	}
+	result.measured = candidates.length;
+
+	const targets = pickCompactionTargets({
+		candidates,
+		minFreeMb,
+		minFreeRatio: COMPACT_MIN_FREE_RATIO,
+		maxTables,
+	});
+	for (const target of targets) {
+		const t0 = Date.now();
+		try {
+			await sql(`VACUUM FULL ${target.table}`);
+			const [after] = await sql(
+				`SELECT (pg_total_relation_size('${target.table}') / 1048576.0)::numeric(10,1) AS mb`,
+			);
+			result.compacted.push({
+				table: target.table,
+				before_mb: Math.round(target.tableMb),
+				after_mb: Number(after.mb),
+				took_ms: Date.now() - t0,
+			});
+		} catch (err) {
+			result.skipped.push({ table: target.table, reason: err?.message?.slice(0, 120) });
+		}
+	}
+	return result;
+}
+
 // ── C. Best-effort VACUUM of the tables we pruned ─────────────────────────────
 async function vacuumTables(names) {
 	for (const t of names) {
@@ -428,6 +542,17 @@ export default wrapCron(async (req, res) => {
 	if (regen.deleted > 0 || regen.stripped > 0) touched.push('avatar_regen_jobs');
 	await vacuumTables(touched);
 
+	// D. Under pressure, actually shrink the files (plain VACUUM cannot) so the
+	// storage gate unlatches. Off-switch and bounds are env-tunable.
+	let compaction = { measured: 0, compacted: [], skipped: [] };
+	const compactEnabled = process.env.DB_COMPACT_ENABLED !== '0';
+	if (underPressure && compactEnabled) {
+		compaction = await compactTables({
+			minFreeMb: clampInt(process.env.DB_COMPACT_MIN_FREE_MB, 1, 10_000, COMPACT_MIN_FREE_MB),
+			maxTables: clampInt(process.env.DB_COMPACT_MAX_TABLES, 0, 20, COMPACT_MAX_TABLES),
+		});
+	}
+
 	const sizeAfterMb = await dbSizeMb();
 	const topTables = await topRelationsBySize();
 
@@ -443,9 +568,12 @@ export default wrapCron(async (req, res) => {
 			.slice(0, 5)
 			.map((t) => `${t.table} ${t.mb}MB`)
 			.join(', ');
+		const compactLine = compaction.compacted.length
+			? ` Compacted: ${compaction.compacted.map((c) => `${c.table} ${c.before_mb}→${c.after_mb}MB`).join(', ')}.`
+			: '';
 		sendOpsAlert(
 			'db retention pressure valve engaged',
-			`db ${sizeBeforeMb}MB ≥ high-water ${highWaterMb}MB — tightened firehose retention to ${minDays}d; pruned ${firehose.mints} mints, ${seriesDeleted} series rows, ${runLogsDeleted} autopilot run-log rows, ${orphansDeleted} orphaned satellite rows. Largest tables: ${topLine || 'n/a'}. Raise the Neon storage plan (or DB_RETENTION_HIGH_WATER_MB / PUMP_INTEL_RETENTION_DAYS) for a longer window.`,
+			`db ${sizeBeforeMb}MB ≥ high-water ${highWaterMb}MB — tightened firehose retention to ${minDays}d; pruned ${firehose.mints} mints, ${seriesDeleted} series rows, ${runLogsDeleted} autopilot run-log rows, ${orphansDeleted} orphaned satellite rows.${compactLine} Largest tables: ${topLine || 'n/a'}. Raise the Neon storage plan (or DB_RETENTION_HIGH_WATER_MB / PUMP_INTEL_RETENTION_DAYS) for a longer window.`,
 			{ signature: 'db:retention-pressure' },
 		);
 	}
@@ -467,6 +595,7 @@ export default wrapCron(async (req, res) => {
 		audit,
 		regen,
 		vacuumed: touched,
+		compaction,
 		top_tables: topTables,
 		took_ms: Date.now() - started,
 	});

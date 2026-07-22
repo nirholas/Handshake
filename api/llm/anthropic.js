@@ -30,6 +30,12 @@ import {
 	vertexRequestHeaders,
 	toVertexBody,
 } from '../_lib/vertex-claude.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiModel,
+	vertexGeminiChatUrl,
+	vertexGeminiHeaders,
+} from '../_lib/vertex-gemini.js';
 
 const log = logger('llm.anthropic');
 
@@ -108,6 +114,44 @@ const UPSTREAM_URL = {
 	nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
 	grok: 'https://api.x.ai/v1/chat/completions',
 };
+
+// Resolve a model id to its upstream route. Static allowlist first; the Vertex
+// Gemini credits anchor resolves dynamically because its model id is env-tunable
+// (VERTEX_GEMINI_MODEL) and its availability is gated by GOOGLE_CLOUD_PROJECT,
+// not an API key. It shares the 'openai' branch — the Vertex OpenAI-compatible
+// endpoint speaks the same wire format (tools included), so request translation
+// and the Anthropic-shape response/SSE conversion below work verbatim.
+// Exported for the anchor regression tests (tests/api/llm-vertex-anchor-surfaces).
+export function resolveModelRoute(modelId) {
+	if (MODELS[modelId]) return MODELS[modelId];
+	if (vertexGeminiAvailable() && modelId === vertexGeminiModel()) {
+		return { kind: 'openai', provider: 'vertex-gemini' };
+	}
+	return null;
+}
+
+// Ordered model fallback chain for a request. Free lanes degrade in-order; the
+// credits-funded Vertex Gemini anchor is ALWAYS the final rung when the GCP
+// project is set (api/chat.js semantics — see api/_lib/vertex-gemini.js): it is
+// keyless, has no third-party quota, and no present provider key may evict it,
+// so an embedded agent's brain cannot 5xx while GCP credits can still answer.
+// The paid Anthropic rung stays ahead of it — when that key works it is the
+// caller-visible model family — but a dead paid key degrades to the anchor
+// instead of surfacing an error. Exported for the anchor regression tests.
+export function modelFallbackChain(requestedModel) {
+	const chain = [
+		requestedModel,
+		...[
+			'meta-llama/llama-3.1-8b-instruct:free',
+			'meta/llama-4-maverick-17b-128e-instruct',
+			'claude-haiku-4-5-20251001',
+		].filter((m) => m !== requestedModel),
+	];
+	if (vertexGeminiAvailable() && !chain.includes(vertexGeminiModel())) {
+		chain.push(vertexGeminiModel());
+	}
+	return chain;
+}
 
 const FIRST_PARTY = ['three.ws', 'localhost'];
 
@@ -366,20 +410,15 @@ export default wrap(async (req, res) => {
 	//   1. Requested model (e.g. llama-3.3-70b:free)
 	//   2. meta-llama/llama-3.1-8b-instruct:free      (smaller free model)
 	//   3. meta/llama-4-maverick-17b-128e-instruct    (free NVIDIA NIM tier)
-	//   4. claude-haiku-4-5-20251001                  (paid Anthropic — last resort)
+	//   4. claude-haiku-4-5-20251001                  (paid Anthropic)
+	//   5. Vertex Gemini credits anchor               (keyless last resort)
 	// The NVIDIA free tier sits ahead of paid Anthropic so a rate-limited OpenRouter
 	// free model exhausts every free option before any per-token cost is incurred.
 	// A non-reasoning model is used here on purpose: a reasoning model can spend a
 	// small max_tokens budget entirely on (dropped) reasoning_content and return an
-	// empty completion to the embedded agent.
-	const modelFallbacks = [
-		requestedModel,
-		...[
-			'meta-llama/llama-3.1-8b-instruct:free',
-			'meta/llama-4-maverick-17b-128e-instruct',
-			'claude-haiku-4-5-20251001',
-		].filter((m) => m !== requestedModel),
-	];
+	// empty completion to the embedded agent. See modelFallbackChain for the
+	// anchor's never-evicted guarantee.
+	const modelFallbacks = modelFallbackChain(requestedModel);
 
 	const isStreaming = body.stream === true;
 	const t0 = Date.now();
@@ -397,7 +436,7 @@ export default wrap(async (req, res) => {
 
 	for (let attempt = 0; attempt < modelFallbacks.length; attempt++) {
 		usedModel = modelFallbacks[attempt];
-		const route = MODELS[usedModel];
+		const route = resolveModelRoute(usedModel);
 		if (!route) {
 			if (attempt === 0) {
 				return error(res, 400, 'validation_error', `model "${usedModel}" not in allowlist`);
@@ -436,6 +475,20 @@ export default wrap(async (req, res) => {
 					}),
 				});
 			}
+		} else if (route.provider === 'vertex-gemini') {
+			// Credits anchor: keyless — the GCP OAuth bearer token is minted in
+			// build() per attempt, and a token-exchange failure degrades through
+			// the chain exactly like an unreachable upstream (upstream_prepare_failed).
+			// Same OpenAI wire shape as the other non-Anthropic lanes, so the
+			// request translation and Anthropic-shape response conversion are reused.
+			transports.push({
+				via: 'vertex-gemini',
+				build: async () => ({
+					url: vertexGeminiChatUrl(),
+					headers: await vertexGeminiHeaders(),
+					body: JSON.stringify(anthropicBodyToOpenAI({ ...body, model: usedModel })),
+				}),
+			});
 		} else {
 			const apiKey = process.env[route.envKey];
 			if (apiKey) {

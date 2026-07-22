@@ -26,6 +26,12 @@ import {
 	vertexClaudeConfigured,
 	vertexAnthropicMessages,
 } from '../_lib/vertex-claude.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiModel,
+	vertexGeminiOpenAIBase,
+	vertexGeminiAccessToken,
+} from '../_lib/vertex-gemini.js';
 
 // Providers an anonymous (signed-out) caller may use: only the genuinely free
 // tiers — the OpenRouter-routed open-weight default and the free NVIDIA NIM
@@ -464,7 +470,8 @@ function buildFallback(spec, primary) {
 // token streamed. Free-first platform policy (api/_lib/llm.js): the user gets
 // an answer from an open-weight model rather than an error event. Skips routes
 // that already failed as the primary (same key + model would fail identically).
-function freeFallbackChain(providerKey, spec, primary) {
+// Exported for the anchor regression tests (tests/api/llm-vertex-anchor-surfaces).
+export function freeFallbackChain(providerKey, spec, primary) {
 	const chain = [];
 	if (env.GROQ_API_KEY && providerKey !== 'groq-llama') {
 		chain.push({
@@ -482,6 +489,16 @@ function freeFallbackChain(providerKey, spec, primary) {
 	});
 	if (env.NVIDIA_API_KEY && !providerKey.startsWith('nvidia-')) {
 		chain.push({ label: 'nvidia/llama-3.3-70b-instruct', model: nvidia('meta/llama-3.3-70b-instruct') });
+	}
+	// Credits-funded Vertex Gemini anchor, ALWAYS at the tail when the GCP
+	// project is set (api/chat.js semantics — see api/_lib/vertex-gemini.js). No
+	// key gates it and nothing may evict it: it is the rung that keeps /brain
+	// streaming when groq/openrouter/nvidia all throttle at once and the paid
+	// backstops are dead. The AI SDK model is built lazily in streamBrain's
+	// attempt loop (vertexGemini flag) because its bearer token is minted per
+	// request — a token failure falls through like any other provider error.
+	if (vertexGeminiAvailable()) {
+		chain.push({ label: `vertex-gemini/${vertexGeminiModel()}`, vertexGemini: true });
 	}
 	return chain;
 }
@@ -858,7 +875,17 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 				if (attempt.watsonx) await streamWatsonx(res, { messages, system, maxTokens, t0 });
 				else if (attempt.vertex)
 					await streamVertex(res, { messages, system, maxTokens, t0, model: attempt.model });
-				else await streamOnce(maxTokens, attempt.model);
+				else if (attempt.vertexGemini) {
+					// Credits anchor: OpenAI-compatible Vertex endpoint, bearer token
+					// minted per attempt (a token-exchange failure throws here and is
+					// handled like any other lane failure). Reuses streamOnce so the
+					// budget/abort/onError machinery is identical to every other lane.
+					const anchorModel = createOpenAI({
+						apiKey: await vertexGeminiAccessToken(),
+						baseURL: vertexGeminiOpenAIBase(),
+					}).chat(vertexGeminiModel());
+					await streamOnce(maxTokens, anchorModel);
+				} else await streamOnce(maxTokens, attempt.model);
 				return;
 			} catch (err) {
 				lastErr = err;
