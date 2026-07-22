@@ -47,12 +47,28 @@
 			<description>Coin profile pages (the /coin/:id view with price, market cap, links, and developer stats) were returning an error whenever the upstream market-data provider hit its rate limit, which happens under heavy crawling. Now the page serves the most recent good data through those throttling windows instead of failing, and only shows an error for a coin that genuinely has no data. Prices refresh as soon as the provider recovers.</description>
 		</item>
 		<item>
+			<title>Coin pages stay live through market-data outages</title>
+			<link>https://three.ws/exchanges</link>
+			<guid isPermaLink="false">2026-07-22:Coin pages stay live through market-data outages</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every coin page (prices, markets, exchanges, charts) now keeps a shared last-good copy of its market data. When the upstream data provider rate-limits or goes down, pages serve slightly older numbers instead of an error, even right after a fresh server starts. The exchanges directory was the last surface that could still show an error during a data-provider storm; now it rides through.</description>
+		</item>
+		<item>
 			<title>Commit feed posts now render a branded three.ws card</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-22:Commit feed posts now render a branded three.ws card</guid>
 			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The automatic commit feed (every change that lands on the main branch) used to post to Telegram as bare text: a scope, the raw commit subject, and a GitHub link. It now previews the same designed three.ws poster the changelog feed uses, so each commit reads as a proper card with the change, the date, and the author. Engineering shorthand in the title is translated too, so 'feat' shows as 'Feature', 'fix' as 'Fix', and so on, while real scopes like 'Avatar Studio' pass through unchanged. Clicking the card still opens the exact commit on GitHub.</description>
+		</item>
+		<item>
+			<title>Database storage now heals itself</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-22:Database storage now heals itself</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The platform database reclaimed 770 MB of dead space and learned to do this on its own: when storage runs tight, the retention job now compacts its own bloated tables instead of waiting for an operator. Background jobs that pause under storage pressure resume automatically. Intel model training also got a memory bound so it keeps learning from the freshest coins without ever outgrowing its worker.</description>
 		</item>
 		<item>
 			<title>Menus no longer show raw translation codes</title>

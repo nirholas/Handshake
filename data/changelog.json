@@ -15428,6 +15428,25 @@
 		},
 		{
 			"date": "2026-07-22",
+			"title": "Coin pages stay live through market-data outages",
+			"summary": "Every coin page (prices, markets, exchanges, charts) now keeps a shared last-good copy of its market data. When the upstream data provider rate-limits or goes down, pages serve slightly older numbers instead of an error, even right after a fresh server starts. The exchanges directory was the last surface that could still show an error during a data-provider storm; now it rides through.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/exchanges"
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Database storage now heals itself",
+			"summary": "The platform database reclaimed 770 MB of dead space and learned to do this on its own: when storage runs tight, the retention job now compacts its own bloated tables instead of waiting for an operator. Background jobs that pause under storage pressure resume automatically. Intel model training also got a memory bound so it keeps learning from the freshest coins without ever outgrowing its worker.",
+			"tags": [
+				"infra",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-22",
 			"title": "Animation Studio toolbar cleanup",
 			"summary": "The Animation Studio (/pose) got a UI pass: toolbar buttons no longer render as oversized circles behind FK and Save, the toolbar fits on laptop screens with pose import/export and screenshots collected under a new overflow menu, the language picker moved into the footer so it stops covering the timeline, error messages show their warning color again, and on phones the animation library and pose presets are reachable instead of hidden.",
 			"tags": [
