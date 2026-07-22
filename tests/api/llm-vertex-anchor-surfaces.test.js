@@ -280,3 +280,40 @@ describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => 
 		expect(chain.filter((m) => m === 'google/gemini-2.5-flash')).toHaveLength(1);
 	});
 });
+
+describe('marketplace preview (api/marketplace/[action].js): buildPreviewRoutes anchor', () => {
+	it('appends a keyless vertex-gemini tail route when a GCP project is set', async () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		process.env.GROQ_API_KEY = 'gk';
+		process.env.OPENAI_API_KEY = 'ok';
+		const { buildPreviewRoutes } = await import('../../api/marketplace/[action].js');
+		const routes = buildPreviewRoutes();
+		const last = routes[routes.length - 1];
+		expect(last.name).toBe('vertex-gemini');
+		expect(last.url).toBe(vertexGeminiChatUrl());
+		expect(typeof last.getHeaders).toBe('function');
+		// Never a primary: keyed providers still lead.
+		expect(routes[0].name).toBe('groq');
+	});
+
+	it('keeps previews alive on a keyless deploy (anchor is the whole chain)', async () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		const { buildPreviewRoutes } = await import('../../api/marketplace/[action].js');
+		const routes = buildPreviewRoutes();
+		expect(routes).toHaveLength(1);
+		expect(routes[0].name).toBe('vertex-gemini');
+		const payload = routes[0].buildPayload({
+			systemPrompt: 'be brief',
+			history: [{ role: 'user', content: 'hi' }],
+		});
+		expect(payload.model).toBe(vertexGeminiModel());
+		expect(payload.messages[0]).toEqual({ role: 'system', content: 'be brief' });
+	});
+
+	it('is absent without a GCP project', async () => {
+		process.env.GROQ_API_KEY = 'gk';
+		const { buildPreviewRoutes } = await import('../../api/marketplace/[action].js');
+		const routes = buildPreviewRoutes();
+		expect(routes.map((r) => r.name)).not.toContain('vertex-gemini');
+	});
+});

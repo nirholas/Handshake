@@ -24,6 +24,12 @@ import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { pedigreeScore } from '../_lib/genome.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { markProviderCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiModel,
+	vertexGeminiChatUrl,
+	vertexGeminiHeaders,
+} from '../_lib/vertex-gemini.js';
 import { getSkillPrices, skillPriceMap } from '../_lib/skill-price-cache.js';
 import { viewerNftGatedSkills } from '../_lib/nft-gate.js';
 import { z } from 'zod';
@@ -982,9 +988,11 @@ async function handlePreview(req, res, id) {
 			break;
 		}
 		try {
+			// Anchor routes mint per-request OAuth headers; keyed routes are static.
+			const headers = route.getHeaders ? await route.getHeaders() : route.headers;
 			upstream = await fetch(route.url, {
 				method: 'POST',
-				headers: route.headers,
+				headers,
 				body: JSON.stringify(route.buildPayload({ systemPrompt, history })),
 				signal: AbortSignal.timeout(Math.min(22_000, budgetLeft())),
 			});
@@ -1071,7 +1079,7 @@ async function handlePreview(req, res, id) {
 //   4. anthropic  — paid backstop
 //   5. openai     — paid backstop (account may be over quota)
 //   6. grok       — paid backstop (xAI, budget tier)
-function buildPreviewRoutes() {
+export function buildPreviewRoutes() {
 	const order = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok'];
 	const routes = [];
 	for (const name of order) {
@@ -1117,6 +1125,27 @@ function buildPreviewRoutes() {
 				}),
 			});
 		}
+	}
+	// Keyless funded anchor (GCP credits): the one lane that stays up when every
+	// free tier throttles at once and the paid keys are dead. Strict tail — never
+	// a primary — mirroring chat.js / llm.js providerChain semantics. Headers are
+	// minted per attempt (OAuth token), so this route carries getHeaders instead
+	// of a static headers object.
+	if (vertexGeminiAvailable()) {
+		const model = vertexGeminiModel();
+		routes.push({
+			name: 'vertex-gemini',
+			model,
+			url: vertexGeminiChatUrl(),
+			style: 'openai',
+			getHeaders: vertexGeminiHeaders,
+			buildPayload: ({ systemPrompt, history }) => ({
+				model,
+				max_tokens: 512,
+				messages: [{ role: 'system', content: systemPrompt }, ...history],
+				stream: true,
+			}),
+		});
 	}
 	return routes;
 }
