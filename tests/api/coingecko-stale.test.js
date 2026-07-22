@@ -70,7 +70,7 @@ describe('geckoFetch — stale-on-error', () => {
 
 	// The memory stale buffer dies with the instance. The durable last-good copy
 	// (shared cache, written on every good fetch) is what keeps a COLD instance
-	// serving through an upstream storm instead of 502ing — the exact failure the
+	// serving through an upstream storm instead of 502ing, the exact failure the
 	// 2026-07-22 api-sweep caught on /api/coin/exchanges.
 	it('falls back to the durable last-good copy when memory has nothing (throttled upstream)', async () => {
 		const path = `/coins/durable-429-${Math.round(performance.now())}`;

@@ -89,7 +89,7 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 			return stale;
 		}
 		if (resp.status !== 404) {
-			// Cold instance, throttled upstream, nothing in memory — the shared
+			// Cold instance, throttled upstream, nothing in memory, the shared
 			// last-good copy is the difference between minutes-stale data and a 502.
 			const durable = await durableStale(path);
 			if (durable !== null) {
@@ -105,7 +105,7 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 	const value = await resp.json();
 	_cache.set(path, { value, expiresAt: now + ttlMs, staleUntil: now + ttlMs + STALE_MS });
 	if (_cache.size > MAX_ENTRIES) _cache.delete(_cache.keys().next().value);
-	// Fire-and-forget durable mirror — never let a cache fault fail a live fetch.
+	// Fire-and-forget durable mirror, never let a cache fault fail a live fetch.
 	Promise.resolve(cacheSet(durableKey(path), value, DURABLE_STALE_S)).catch(() => {});
 	return value;
 }

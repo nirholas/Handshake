@@ -1127,8 +1127,8 @@ export function buildPreviewRoutes() {
 		}
 	}
 	// Keyless funded anchor (GCP credits): the one lane that stays up when every
-	// free tier throttles at once and the paid keys are dead. Strict tail — never
-	// a primary — mirroring chat.js / llm.js providerChain semantics. Headers are
+	// free tier throttles at once and the paid keys are dead. Strict tail, never
+	// a primary, mirroring chat.js / llm.js providerChain semantics. Headers are
 	// minted per attempt (OAuth token), so this route carries getHeaders instead
 	// of a static headers object.
 	if (vertexGeminiAvailable()) {

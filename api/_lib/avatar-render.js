@@ -281,7 +281,7 @@ async function getBrowser() {
 // GltfRig.applyPose) that lands presets on top of any bind stance. The
 // sources are shipped to the page as data: URL modules in its import map,
 // with pose-rig's relative imports rewritten to the bare specifiers the map
-// defines. Never reintroduce a hand-rolled alias table here — it silently
+// defines. Never reintroduce a hand-rolled alias table here, it silently
 // missed every Mixamo rig (GLTFLoader strips ':' from node names) and stomped
 // absolute local Eulers over bind rotations on the rest.
 const SRC_DIR = new URL('../../src/', import.meta.url);
@@ -290,7 +290,7 @@ function poseModuleDataUrl(file, rewrites = []) {
 	let code = readFileSync(new URL(file, SRC_DIR), 'utf8');
 	for (const [from, to] of rewrites) code = code.replaceAll(from, to);
 	if (/from\s+['"]\.{1,2}\//.test(code)) {
-		throw new Error(`avatar-render: ${file} still has relative imports after rewrite — update poseRuntimeModules()`);
+		throw new Error(`avatar-render: ${file} still has relative imports after rewrite, update poseRuntimeModules()`);
 	}
 	return 'data:text/javascript;base64,' + Buffer.from(code, 'utf8').toString('base64');
 }
@@ -378,7 +378,7 @@ rim.position.set(-0.5, 2.5, -4); scene.add(rim);
 // Preset poses are authored in the mannequin convention (src/pose-presets.js);
 // poseFromMannequinPreset converts them to canonical world-frame deltas and
 // GltfRig.applyPose replays those on the avatar's OWN rest pose with
-// reference-stance alignment — the same path the /pose studio uses, so a
+// reference-stance alignment, the same path the /pose studio uses, so a
 // preset lands identically here whether the rig binds in a T-pose or A-pose,
 // and whatever naming convention its bones use. Rigs with no recognizable
 // humanoid skeleton stay in bind pose (there is no safe mapping for those).
@@ -405,7 +405,7 @@ ${computeCameraFraming.toString()}
 function frameCameraForScene(root, orbit, preset) {
 	// The bounding box must reflect the POSED skin, not the bind-pose geometry:
 	// three's Box3.setFromObject defers to SkinnedMesh.computeBoundingBox (CPU
-	// skinning), which needs current bone matrices — update the graph and each
+	// skinning), which needs current bone matrices, update the graph and each
 	// skeleton first. (Never reset rigs via THREE.Skeleton's pose method: it
 	// reconstructs bind from inverse-bind matrices and collapses Mixamo rigs.)
 	root.updateMatrixWorld(true);
@@ -417,7 +417,7 @@ function frameCameraForScene(root, orbit, preset) {
 		preset, ${width} / ${height}, camera.fov, orbit,
 	);
 	// Scale-aware clip planes: pipeline GLBs are ~1.7 units tall but Mixamo
-	// cm-scale exports are ~170 — a fixed near/far would clip one or the other.
+	// cm-scale exports are ~170, a fixed near/far would clip one or the other.
 	camera.near = Math.max(framing.distance / 1000, 0.001);
 	camera.far = framing.distance * 10;
 	camera.updateProjectionMatrix();

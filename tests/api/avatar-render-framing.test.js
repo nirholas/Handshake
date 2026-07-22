@@ -64,7 +64,7 @@ describe('computeCameraFraming', () => {
 					const bandTop = box.min.y + sizeY * preset.band[1];
 					const covered = f.target.y + verticalHalfCoverage(f.distance, FOV);
 					// The frustum top at the target plane must clear the band top,
-					// which itself is above the crown — no decapitation possible.
+					// which itself is above the crown, no decapitation possible.
 					expect(covered, `${name} @ aspect ${aspect}`).toBeGreaterThanOrEqual(bandTop);
 					expect(bandTop).toBeGreaterThanOrEqual(box.max.y);
 					expect(f.distance).toBeGreaterThan(0);

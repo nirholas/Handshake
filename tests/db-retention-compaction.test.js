@@ -1,4 +1,4 @@
-// pickCompactionTargets — the pure selection bounds behind db-retention's
+// pickCompactionTargets, the pure selection bounds behind db-retention's
 // section D (VACUUM FULL under storage pressure). The floors and ordering are
 // what keep the rewrite step safe: never touch mostly-live tables, never
 // rewrite more than the per-tick cap, and always free the small files first so
@@ -18,9 +18,9 @@ const pick = (candidates, over = {}) =>
 describe('pickCompactionTargets', () => {
 	it('keeps only tables clearing both the absolute and ratio floors', () => {
 		const targets = pick([
-			{ table: 'bloated', tableMb: 100, freeMb: 60 }, // 60% free — in
-			{ table: 'small_free', tableMb: 40, freeMb: 20 }, // 50% free but < 25 MB — out
-			{ table: 'big_live', tableMb: 500, freeMb: 60 }, // 60 MB free but only 12% — out
+			{ table: 'bloated', tableMb: 100, freeMb: 60 }, // 60% free, in
+			{ table: 'small_free', tableMb: 40, freeMb: 20 }, // 50% free but < 25 MB, out
+			{ table: 'big_live', tableMb: 500, freeMb: 60 }, // 60 MB free but only 12%, out
 			{ table: 'healthy', tableMb: 80, freeMb: 2 }, // out on both
 		]);
 		expect(targets.map((t) => t.table)).toEqual(['bloated']);

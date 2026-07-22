@@ -95,7 +95,7 @@ const SERIES_MAX_PER_RUN = 50_000; // per-table ceiling per tick
 const ORPHAN_BATCH = 5000; // orphaned satellite rows per table per tick
 
 // Compaction bounds (section D). VACUUM FULL rewrites a table into a fresh file
-// under an ACCESS EXCLUSIVE lock — cheap on Neon for these churn tables (a
+// under an ACCESS EXCLUSIVE lock, cheap on Neon for these churn tables (a
 // 500 MB table compacted in ~2 s in the July 2026 recovery) but never free, so
 // only tables with real reclaimable space qualify and each tick rewrites at
 // most a few. Smallest-first ordering matters near the hard cap: each rewrite
@@ -450,7 +450,7 @@ async function compactTables({ minFreeMb, maxTables }) {
 	for (const t of COMPACT_CANDIDATES) {
 		if (!(await tableExists(t))) continue;
 		try {
-			// t is a fixed constant from the retention config above — safe to splice.
+			// t is a fixed constant from the retention config above, safe to splice.
 			const [r] = await sql(`SELECT * FROM pgstattuple_approx('public.${t}'::regclass)`);
 			candidates.push({
 				table: t,
@@ -573,7 +573,7 @@ export default wrapCron(async (req, res) => {
 			: '';
 		sendOpsAlert(
 			'db retention pressure valve engaged',
-			`db ${sizeBeforeMb}MB ≥ high-water ${highWaterMb}MB — tightened firehose retention to ${minDays}d; pruned ${firehose.mints} mints, ${seriesDeleted} series rows, ${runLogsDeleted} autopilot run-log rows, ${orphansDeleted} orphaned satellite rows.${compactLine} Largest tables: ${topLine || 'n/a'}. Raise the Neon storage plan (or DB_RETENTION_HIGH_WATER_MB / PUMP_INTEL_RETENTION_DAYS) for a longer window.`,
+			`db ${sizeBeforeMb}MB ≥ high-water ${highWaterMb}MB, tightened firehose retention to ${minDays}d; pruned ${firehose.mints} mints, ${seriesDeleted} series rows, ${runLogsDeleted} autopilot run-log rows, ${orphansDeleted} orphaned satellite rows.${compactLine} Largest tables: ${topLine || 'n/a'}. Raise the Neon storage plan (or DB_RETENTION_HIGH_WATER_MB / PUMP_INTEL_RETENTION_DAYS) for a longer window.`,
 			{ signature: 'db:retention-pressure' },
 		);
 	}

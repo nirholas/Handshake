@@ -62,7 +62,7 @@ Bounded + idempotent. Each tick:
   across the pruned tables while every write-heavy cron sat skipped. When a
   tick starts over the high-water mark, the cron now measures reclaimable space
   per managed table (`pgstattuple_approx`, extension auto-installed) and
-  `VACUUM FULL`s the worst offenders — smallest file first (each rewrite needs
+  `VACUUM FULL`s the worst offenders, smallest file first (each rewrite needs
   headroom about equal to the table's live size), bounded per tick, and only
   ever on tables this cron itself manages. The rewrites returned
   `pump_coin_intel` 576→194 MB and `oracle_conviction` 386→137 MB in ~2 s each

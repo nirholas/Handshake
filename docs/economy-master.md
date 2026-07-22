@@ -119,7 +119,7 @@ When the master can't cover the real deficit, the topup cron self-heals in two
 automatic steps before it ever pages a human, in cheapest-first order. The
 deficit counts the engines under floor **plus the master's own shortfall**: the
 master doubles as the x402 sponsor fee wallet, and below the sponsor SOL floor
-(0.02) every autonomous settle fail-closes — but the master can never be a topup
+(0.02) every autonomous settle fail-closes, but the master can never be a topup
 target (it is the funding root), so without this term the self-healing never
 fired for it and the economy stalled with the master a hair under the settle
 floor (the July 2026 recurrences). The master's operating floor is

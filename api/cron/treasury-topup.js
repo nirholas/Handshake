@@ -119,7 +119,7 @@ export default wrapCron(async (req, res) => {
 	// (0.02) the self-facilitator fail-closes every settle and the autonomous
 	// economy flat-lines. The master can never be a top-up TARGET (it is the
 	// funding root), so its own shortfall must count as deficit here or the
-	// reclaim/refuel self-healing below never fires for it — the July 2026
+	// reclaim/refuel self-healing below never fires for it, the July 2026
 	// recurrences all stalled exactly this way, with the master a few thousand
 	// lamports under the settle floor while the deficit read as engines-only.
 	// Operating floor = reserve + working headroom for sponsor co-sign fees;
@@ -134,7 +134,7 @@ export default wrapCron(async (req, res) => {
 		masterSolBefore = (await connection.getBalance(new PublicKey(ECONOMY_MASTER_ADDRESS), 'confirmed')) / 1e9;
 		masterDeficitSol = Math.max(0, RESERVE_SOL + masterOperatingSol - masterSolBefore);
 	} catch {
-		/* balance read failed — engines-only deficit this tick, next tick retries */
+		/* balance read failed, engines-only deficit this tick, next tick retries */
 	}
 	const totalDeficitSol = engineDeficitSol + masterDeficitSol;
 

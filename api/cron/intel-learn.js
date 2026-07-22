@@ -44,7 +44,7 @@ export default wrapCron(async (req, res) => {
 
 	// Retrain once there's enough labeled history. Skips quietly below the floor.
 	// The sample ceiling keeps the training query's memory bounded (the signals
-	// JSONB per row is heavy) — freshest labeled coins win, which also tracks
+	// JSONB per row is heavy), freshest labeled coins win, which also tracks
 	// regime shifts in the launch meta.
 	const maxSamples = Number.parseInt(process.env.INTEL_TRAIN_MAX_SAMPLES || '', 10);
 	const train = await trainWeights({
