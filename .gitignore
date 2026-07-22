@@ -147,6 +147,8 @@ scratch/screenshots/
 
 # Playwright run artifacts
 test-results/
+# Captured probe/harness stdout under roadmap work-evidence dirs
+prompts/roadmap/_generated/**/*.log
 
 # page-audit harness (scripts/page-audit.mjs)
 reports/

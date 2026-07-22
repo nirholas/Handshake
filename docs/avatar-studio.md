@@ -12,7 +12,7 @@ The selfie-to-avatar path is great when you want to look like yourself, but it i
 
 The studio mounts a `TalkScene` around a base body and layers a tabbed customization panel over it. A **Base** switcher at the top of the panel picks the starting template (create mode only; a saved avatar always reloads its own model):
 
-- **Stylized** (`/avatars/default.glb`): the dressed feminine RPM body with hair, outfit, and garment layers. The default.
+- **Stylized** (`/avatars/default.glb`): the dressed feminine stylized body with hair, outfit, and garment layers. The default.
 - **Parametric** (`/avatars/parametric-base.glb`): a bare humanoid built from the CC0 MakeHuman/MPFB2 body, baked with **120+ identity morph sliders** by [scripts/build-parametric-base.mjs](../scripts/build-parametric-base.mjs). On this base the Sculpt tab becomes a full character creator: Nose (width, length, tip, hump, nostrils), Mouth (lip volume, corners, cupid's bow, dimples), Ears (size, pointed, lobes, position: yes, elf ears), Eyes (size, tilt, spacing, bags), Brows, Cheeks, Jaw and chin, Head Shape (round/square/oval, forehead), and Body (feminine/masculine, muscle, weight, age, height, chest, waist, hips, glutes, belly, shoulders, arms, thighs, calves, leg length). It rides the same 52-bone Mixamo-named skeleton conventions as everything else, so the entire animation library retargets onto any slider combination. Source data and license provenance: [avatar-sources/anny/README.md](../avatar-sources/anny/README.md).
 
 Every edit updates the live scene graph, and a working "appearance" object tracks the whole configuration: chosen colors, morph values, accessories, and hidden layers.

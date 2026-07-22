@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-07-22",
+			"title": "What's new, at a glance: newest features on /features and /sitemap",
+			"summary": "You no longer have to scroll the changelog to see what just shipped. The Features page opens with a 'New on three.ws' strip: the six latest features and page launches, each card linking straight to the live page. The sitemap gained a matching 'Newest' section listing the most recently launched pages with their dates. Both update themselves with every release.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/features"
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Animation Studio asks before restoring unsaved work",
+			"summary": "The Studio keeps a local backup of an in-progress animation so a refresh or accidental tab close never loses it. Until now it silently reapplied that backup the instant you opened /pose, which could drop a pose made on one avatar straight onto the plain mannequin and show a contorted figure with no obvious way back to a clean start. Now it greets you with the default figure and a small prompt: 'Unsaved animation found, N keyframes, Restore or Discard.' Restore reloads the exact avatar the pose was made on before applying your keyframes; Discard clears the backup; and if you just start posing, the prompt steps aside and your new work takes over. The backup is protected the whole time, so nothing is lost while you decide.",
+			"tags": [
+				"fix"
+			],
+			"link": "/pose"
+		},
+		{
+			"date": "2026-07-22",
 			"title": "Commit feed posts now render a branded three.ws card",
 			"summary": "The automatic commit feed (every change that lands on the main branch) used to post to Telegram as bare text: a scope, the raw commit subject, and a GitHub link. It now previews the same designed three.ws poster the changelog feed uses, so each commit reads as a proper card with the change, the date, and the author. Engineering shorthand in the title is translated too, so 'feat' shows as 'Feature', 'fix' as 'Fix', and so on, while real scopes like 'Avatar Studio' pass through unchanged. Clicking the card still opens the exact commit on GitHub.",
 			"tags": [
@@ -15399,6 +15417,24 @@
 				"feature"
 			],
 			"link": "/avatar-studio"
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Menus no longer show raw translation codes",
+			"summary": "A few navigation entries (Daily Match, Character Library, Object Library, and others added recently) could render as internal translation codes like \"nav.c3spxn\" instead of their real names. Fixed at both ends: the translation runtime now leaves the original English text in place whenever a string is missing from the language catalogs, and the missing menu strings were added and localized into all 11 languages.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Animation Studio toolbar cleanup",
+			"summary": "The Animation Studio (/pose) got a UI pass: toolbar buttons no longer render as oversized circles behind FK and Save, the toolbar fits on laptop screens with pose import/export and screenshots collected under a new overflow menu, the language picker moved into the footer so it stops covering the timeline, error messages show their warning color again, and on phones the animation library and pose presets are reachable instead of hidden.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/pose"
 		}
 	]
 }
