@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-07-22",
+			"title": "Commit feed posts now render a branded three.ws card",
+			"summary": "The automatic commit feed (every change that lands on the main branch) used to post to Telegram as bare text: a scope, the raw commit subject, and a GitHub link. It now previews the same designed three.ws poster the changelog feed uses, so each commit reads as a proper card with the change, the date, and the author. Engineering shorthand in the title is translated too, so 'feat' shows as 'Feature', 'fix' as 'Fix', and so on, while real scopes like 'Avatar Studio' pass through unchanged. Clicking the card still opens the exact commit on GitHub.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Coin detail pages stay up when market data is throttled",
+			"summary": "Coin profile pages (the /coin/:id view with price, market cap, links, and developer stats) were returning an error whenever the upstream market-data provider hit its rate limit, which happens under heavy crawling. Now the page serves the most recent good data through those throttling windows instead of failing, and only shows an error for a coin that genuinely has no data. Prices refresh as soon as the provider recovers.",
+			"tags": [
+				"fix"
+			],
+			"link": "/coins"
+		},
+		{
+			"date": "2026-07-22",
 			"title": "Animation preview plays again on every clip page",
 			"summary": "Opening an animation from the marketplace (Arm Flex, Facepalm, Superhero Jump, and the rest) showed an empty black stage where the moving avatar should be. Two things were wrong: the preview was pointed at a skeleton-only file with no body to draw, and the 3D canvas was collapsing to zero height inside its frame. Both are fixed, so every clip page now shows a real avatar performing the animation, framed and lit, with Replay to watch it again.",
 			"tags": [

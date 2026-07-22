@@ -23,6 +23,14 @@
 			<description>The Avatar Studio has a second base body: Parametric. Built on the open-source MakeHuman body (CC0, fully licensed), it turns the Sculpt tab into a real character creator with over 120 sliders: nose width and hump, lip volume, pointed elf ears, eye tilt, jawline, head shape, plus whole-body controls for feminine or masculine build, muscle, weight, age, height, waist, hips, shoulders, arms, and legs. Mirror left/right or unlock them for asymmetry. Every combination stays fully rigged and walks, dances, and emotes with the entire animation library, and hats, glasses, and skin tones work like on any avatar. Pick Parametric in the Base switcher at the top of the studio.</description>
 		</item>
 		<item>
+			<title>Coin detail pages stay up when market data is throttled</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-07-22:Coin detail pages stay up when market data is throttled</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Coin profile pages (the /coin/:id view with price, market cap, links, and developer stats) were returning an error whenever the upstream market-data provider hit its rate limit, which happens under heavy crawling. Now the page serves the most recent good data through those throttling windows instead of failing, and only shows an error for a coin that genuinely has no data. Prices refresh as soon as the provider recovers.</description>
+		</item>
+		<item>
 			<title>Take the wheel: drive your agent's computer</title>
 			<link>https://three.ws/agent-screen</link>
 			<guid isPermaLink="false">2026-07-22:Take the wheel: drive your agent's computer</guid>
