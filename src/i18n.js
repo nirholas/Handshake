@@ -78,8 +78,11 @@ export function translate(key, vars, { catalog = state.catalog, fallback = state
 export function applyCatalog(root, t) {
 	if (!root) return;
 	root.querySelectorAll?.('[data-i18n]').forEach((el) => {
-		const v = t(el.getAttribute('data-i18n'));
-		if (v == null) return;
+		const key = el.getAttribute('data-i18n');
+		const v = t(key);
+		// A total miss (both catalogs) echoes the key back. The element already
+		// holds its English source text; keep it rather than showing "nav.c3spxn".
+		if (v == null || v === key) return;
 		// Some nav elements carry both data-i18n (a translatable label) and
 		// data-auth-name (their text is the signed-in visitor's display name). The
 		// name is not translatable copy and nav-auth owns it. Keep the translation
@@ -92,8 +95,9 @@ export function applyCatalog(root, t) {
 		el.textContent = v;
 	});
 	root.querySelectorAll?.('[data-i18n-html]').forEach((el) => {
-		const v = t(el.getAttribute('data-i18n-html'));
-		if (v == null) return;
+		const key = el.getAttribute('data-i18n-html');
+		const v = t(key);
+		if (v == null || v === key) return;
 		// Same nav-auth ownership rule as the textContent loop above: never let a
 		// translated markup value overwrite a live display name.
 		if (el.hasAttribute('data-auth-name')) {
@@ -107,7 +111,7 @@ export function applyCatalog(root, t) {
 			const [attr, key] = pair.split(':').map((s) => s && s.trim());
 			if (!attr || !key) continue;
 			const v = t(key);
-			if (v != null) {
+			if (v != null && v !== key) {
 				el.setAttribute(attr, v);
 				if (attr === 'data-i18n-title' || attr === 'title-text') document.title = v;
 			}

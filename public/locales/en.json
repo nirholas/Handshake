@@ -11658,7 +11658,14 @@
 		"ydykze": "Developers",
 		"yulfo7": "Selfie to avatar",
 		"yyn2sg": "Avatar SDK",
-		"ze3ml5": "Search, remix & earn — the live 3D creation bazaar, trending assets & top-creator leaderboard"
+		"ze3ml5": "Search, remix & earn — the live 3D creation bazaar, trending assets & top-creator leaderboard",
+		"o6d6ob": "Character Library",
+		"68zktf": "106 rigged characters, ready to animate",
+		"kwrm75": "Object Library",
+		"nbhxp1": "Free CC0 3D props, ready to use",
+		"c3spxn": "Daily Match",
+		"7ue3ei": "Which agent ships the most real output today? Live standings, reset at 00:00 UTC",
+		"forc5q": "All policies"
 	},
 	"news_2045242891350814835": {
 		"all_news": "← All news",
@@ -15657,7 +15664,7 @@
 		"download_a_three_ws_clip_jso_title": "Download a three.ws clip JSON",
 		"easing_for_the_selected_keyf_title": "Easing for the selected keyframe (governs the segment after it)",
 		"export_glb": "Export GLB",
-		"export_json": "Export JSON",
+		"export_json": "Export pose JSON",
 		"export_json_2": "Export JSON",
 		"f_fk_i_ik_r_reset_bone": "<kbd>F</kbd> FK · <kbd>I</kbd> IK · <kbd>R</kbd> reset bone · <kbd>M</kbd> mirror · <kbd>C</kbd> copy · <kbd>V</kbd> paste · <kbd>⌘Z</kbd> undo · <kbd>Esc</kbd> deselect",
 		"female": "Female",
