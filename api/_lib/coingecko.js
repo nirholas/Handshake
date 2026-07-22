@@ -9,8 +9,17 @@
 
 export const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
-const _cache = new Map(); // key → { value, expiresAt }
-const MAX_ENTRIES = 256;
+// key → { value, expiresAt, staleUntil }. Entries stay readable past expiresAt
+// (up to staleUntil) so a rate-limited or flaky upstream serves last-good data
+// instead of cascading into a user-facing 502. CoinGecko's free/demo tiers cap
+// at ~30 req/min; broad coin-page crawling saturates that, and without a stale
+// buffer every /coin/:id detail call would 502 during the storm.
+const _cache = new Map();
+const MAX_ENTRIES = 512;
+// How long past freshness a cached value may still be served on an upstream
+// fault. Coin metadata (description, dev/community stats, market cap) tolerates
+// minutes of staleness far better than an outage.
+const STALE_MS = 30 * 60_000;
 
 function headers() {
 	const h = { accept: 'application/json', 'user-agent': 'three.ws/1.0' };
@@ -28,18 +37,37 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 	const now = Date.now();
 	const hit = _cache.get(path);
 	if (hit && hit.expiresAt > now) return hit.value;
+	// A still-usable stale entry lets us ride out a throttled/failing upstream.
+	const stale = hit && hit.staleUntil > now ? hit.value : null;
 
-	const resp = await fetch(`${COINGECKO_BASE}${path}`, {
-		headers: headers(),
-		signal: AbortSignal.timeout(timeoutMs),
-	});
+	let resp;
+	try {
+		resp = await fetch(`${COINGECKO_BASE}${path}`, {
+			headers: headers(),
+			signal: AbortSignal.timeout(timeoutMs),
+		});
+	} catch (netErr) {
+		// Network failure or timeout — serve stale if we have it, else surface.
+		if (stale !== null) {
+			console.warn(`[coingecko] ${path} fetch failed (${netErr?.name || 'error'}); serving stale`);
+			return stale;
+		}
+		throw netErr;
+	}
 	if (!resp.ok) {
+		// 404 is a genuine "unknown coin" signal callers must see; never mask it
+		// with stale data. For throttling (429) or upstream trouble (5xx), a
+		// recent value beats an outage — serve it and keep the page alive.
+		if (resp.status !== 404 && stale !== null) {
+			console.warn(`[coingecko] ${path} → ${resp.status}; serving stale`);
+			return stale;
+		}
 		const err = new Error(`CoinGecko ${resp.status} for ${path}`);
 		err.status = resp.status;
 		throw err;
 	}
 	const value = await resp.json();
-	_cache.set(path, { value, expiresAt: now + ttlMs });
+	_cache.set(path, { value, expiresAt: now + ttlMs, staleUntil: now + ttlMs + STALE_MS });
 	if (_cache.size > MAX_ENTRIES) _cache.delete(_cache.keys().next().value);
 	return value;
 }

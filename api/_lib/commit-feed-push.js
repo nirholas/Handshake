@@ -15,6 +15,7 @@
 import { sql } from './db.js';
 
 const REPO = 'nirholas/three.ws';
+const BASE = 'https://three.ws';
 const TELEGRAM_LIMIT = 15; // per run; Bot API allows ~20 msg/min per chat
 const TELEGRAM_PACE_MS = 3500;
 const LOCK_KEY = 'commit_feed_push_lock';

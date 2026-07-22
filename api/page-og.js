@@ -50,6 +50,7 @@ const SECTIONS = {
   blog: { label: 'Blog', accent: '#a78bfa' },
   legal: { label: 'Legal', accent: '#94a3b8' },
   machine: { label: 'Reference', accent: '#9ca3af' },
+  commit: { label: 'Commit', accent: '#818cf8' },
 };
 const DEFAULT_SECTION = { label: 'three.ws', accent: '#8b5cf6' };
 

@@ -156,7 +156,7 @@ export default wrap(async (req, res) => {
 
 	try {
 		return json(res, 200, await buildCoinDetail({ id, contract }), {
-			'cache-control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
+			'cache-control': 'public, max-age=60, s-maxage=180, stale-while-revalidate=900',
 		});
 	} catch (err) {
 		if (err?.status === 404)
