@@ -69,6 +69,7 @@ import { createHeatmapPoller, buildNarrationContext } from './sentiment-heatmap-
 import { createPnlHud } from './agent-screen-pnl-hud.js';
 import { createAmbientWorld, phaseLabel } from './agent-screen-world.js';
 import { createDjScript } from './agent-screen-dj.js';
+import { mountScreenControl } from './agent-screen-control.js';
 import { LipSyncAnalyser } from './lip-sync-analyser.js';
 import { createVisemeDriver } from './runtime/lipsync.js';
 import { classifyTaskInput, ensureSessionId } from './shared/ask-routing.js';
@@ -1787,6 +1788,25 @@ async function boot(id) {
 		});
 	}
 
+	// Owner-only: take the wheel of the agent's live cast browser. Watching is
+	// public (above); driving is private. The controller drives the real Chromium
+	// through the control channel, and the caster pauses its own task while a human
+	// holds the wheel. The cast browser holds no wallet/keys, so this cannot move
+	// funds, that boundary is what makes remote control safe to ship.
+	let screenControl = null;
+	if (isOwner && screenStageEl && screenCanvas) {
+		screenControl = mountScreenControl({
+			stage: screenStageEl,
+			canvas: screenCanvas,
+			agentId: id,
+			isLive: () => liveNow,
+			onStatus: (kind, msg) => {
+				if (kind === 'error' && msg) toast(msg);
+				else if (kind === 'driving') toast('You have the wheel, drive the agent live');
+			},
+		});
+	}
+
 	const client = createAgentScreenClient(id, {
 		onOpen({ agentName: n }) {
 			if (n) { agentNameEl.textContent = n; agentName = n; webcamName.textContent = n; }
@@ -3433,6 +3453,7 @@ async function boot(id) {
 		heatmap?.dispose();
 		clearInterval(watchPingTimer);
 		stopWatchStatus();
+		screenControl?.destroy();
 		treasuryCockpit?.destroy();
 		mirrorPanel?.destroy();
 		pnlHud?.destroy();

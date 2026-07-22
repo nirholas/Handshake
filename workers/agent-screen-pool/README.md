@@ -83,6 +83,22 @@ docker run --rm -e SCREEN_WORKER_SECRET=<secret> three-ws/agent-screen-pool
 | `JPEG_QUALITY` | `58` | Frame quality vs. bandwidth. |
 | `LEAD_MS` | `900` | How long a narration line leads its action. |
 | `DWELL_MS` | `6000` | How long to hold on the result between task runs. |
+| `CONTROL_URL` | `$BASE_URL/api/agent-screen-control-drain` | Control-channel drain (owner input). |
+| `CONTROL_POLL_MS` | `250` | How often to drain queued owner input. |
+| `MANUAL_HOLD_MS` | `2500` | How long the autonomous task stays paused after the last manual signal. |
+
+## Take the wheel (owner control)
+
+The caster is not just an outbound screen: an agent's **owner** can drive its live
+browser. Each tick this worker also calls `CONTROL_URL` for the agents it is
+casting, learns whether a human holds the control lease, and dispatches their
+queued input (mouse, drag, scroll, keyboard, navigation) into the real page via
+[`control.js`](./control.js). While a human is driving, the autonomous task/tour
+stands down (`isManual`) so the two never fight over the cursor, and resumes once
+the lease lapses. Input is sanitized and SSRF-guarded on the API boundary; the
+dispatcher re-clamps coordinates and re-guards navigation as defense in depth. See
+[docs/agent-screen-control.md](../../docs/agent-screen-control.md) for the full
+channel and safety model.
 
 ## Where to run it
 

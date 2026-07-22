@@ -3866,7 +3866,10 @@ function triggerDownload(url, filename) {
 // Rich, deep-linkable page at /marketplace/animations/:name. Plays the clip
 // live on a preview avatar, shows clip metadata, and lists more animations.
 
-const PREVIEW_AVATAR_GLB = '/animations/idle_female_jan25.glb';
+// The preview body the clip is retargeted onto. Must be a real avatar with
+// meshes — the same one the /animations gallery preview uses — not a bare
+// animation-carrier rig (idle_female_jan25.glb is meshless: skeleton only).
+const PREVIEW_AVATAR_GLB = '/avatars/cz.glb';
 
 let _animDetailId = null;
 let _animDetailEl = null;
@@ -3927,7 +3930,10 @@ function playAnimOnStage(anim) {
 	const agentEl = document.createElement('agent-3d');
 	agentEl.setAttribute('src', PREVIEW_AVATAR_GLB);
 	agentEl.setAttribute('eager', '');
-	agentEl.style.cssText = 'width:100%;height:100%;display:block;';
+	// Absolute-fill the stage (see the .anim-detail-stage agent-3d CSS): a
+	// percentage height on this child collapses to 0 against the stage's
+	// auto/min-height, which left the avatar unrendered (black stage).
+	agentEl.style.cssText = 'position:absolute;inset:0;display:block;';
 	agentEl.addEventListener('agent:ready', () => {
 		if (load) load.hidden = true;
 		agentEl.play?.(anim.name, { loop: isLoop, fade_ms: 300 });

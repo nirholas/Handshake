@@ -3033,6 +3033,14 @@
 			"dest": "/api/agent-screen-push.js"
 		},
 		{
+			"src": "/api/agent-screen-control",
+			"dest": "/api/agent-screen-control.js"
+		},
+		{
+			"src": "/api/agent-screen-control-drain",
+			"dest": "/api/agent-screen-control-drain.js"
+		},
+		{
 			"src": "/api/agent-screen-active",
 			"dest": "/api/agent-screen-active.js"
 		},

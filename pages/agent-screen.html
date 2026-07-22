@@ -262,6 +262,150 @@
 				border-radius: 0;
 			}
 
+			/* ── Take-the-wheel control (owner-only) ─────────────────────────── */
+			.asc-ctl-bar {
+				position: absolute;
+				top: 12px;
+				left: 12px;
+				z-index: 8;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				max-width: calc(100% - 24px);
+				transition: opacity 0.2s ease, transform 0.2s ease;
+			}
+			body.asc-zen .asc-ctl-bar {
+				opacity: 0;
+				pointer-events: none;
+				transform: translateY(-6px);
+			}
+			.asc-ctl-toggle {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				padding: 7px 12px;
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(10, 10, 14, 0.66);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				color: #e7e7ee;
+				font: inherit;
+				font-size: 13px;
+				font-weight: 600;
+				cursor: pointer;
+				box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+				transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+			}
+			.asc-ctl-toggle:hover {
+				border-color: rgba(139, 92, 246, 0.5);
+				background: rgba(18, 16, 28, 0.82);
+			}
+			.asc-ctl-toggle:focus-visible {
+				outline: 2px solid rgba(139, 92, 246, 0.7);
+				outline-offset: 2px;
+			}
+			.asc-ctl-toggle:disabled {
+				opacity: 0.55;
+				cursor: progress;
+			}
+			.asc-ctl-toggle.driving {
+				border-color: rgba(52, 211, 153, 0.55);
+				background: rgba(6, 30, 24, 0.82);
+				color: #6ee7b7;
+			}
+			.asc-ctl-ico {
+				font-size: 14px;
+				line-height: 1;
+			}
+			.asc-ctl-drive {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 6px 8px;
+				border-radius: 12px;
+				border: 1px solid rgba(52, 211, 153, 0.35);
+				background: rgba(8, 12, 12, 0.72);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+				min-width: 0;
+			}
+			.asc-ctl-drive[hidden] {
+				display: none;
+			}
+			.asc-ctl-nav {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 26px;
+				height: 26px;
+				border-radius: 8px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(255, 255, 255, 0.05);
+				color: #cbd5e1;
+				font-size: 14px;
+				line-height: 1;
+				cursor: pointer;
+				flex-shrink: 0;
+				transition: background 0.15s ease, color 0.15s ease;
+			}
+			.asc-ctl-nav:hover {
+				background: rgba(255, 255, 255, 0.12);
+				color: #fff;
+			}
+			.asc-ctl-urlform {
+				display: flex;
+				min-width: 0;
+			}
+			.asc-ctl-url {
+				width: clamp(140px, 32vw, 320px);
+				max-width: 100%;
+				padding: 5px 9px;
+				border-radius: 8px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(0, 0, 0, 0.32);
+				color: #e7e7ee;
+				font: inherit;
+				font-size: 12.5px;
+			}
+			.asc-ctl-url:focus {
+				outline: none;
+				border-color: rgba(52, 211, 153, 0.6);
+			}
+			.asc-ctl-hint {
+				font-size: 12px;
+				color: rgba(110, 231, 183, 0.85);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.asc-ctl-overlay {
+				position: absolute;
+				inset: 0;
+				z-index: 6;
+				cursor: crosshair;
+				touch-action: none;
+				background: transparent;
+			}
+			.asc-ctl-overlay[hidden] {
+				display: none;
+			}
+			/* A soft ring while driving signals the screen is now interactive. */
+			.asc-ctl-overlay:not([hidden]) {
+				box-shadow: inset 0 0 0 2px rgba(52, 211, 153, 0.45);
+				border-radius: 4px;
+			}
+			.asc-ctl-overlay:focus {
+				outline: none;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.asc-ctl-bar,
+				.asc-ctl-toggle {
+					transition: none;
+				}
+			}
+
 			.asc-screen-overlay {
 				position: absolute;
 				inset: 0;

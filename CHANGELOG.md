@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-22
+
+- **Animation preview plays again on every clip page** — Opening an animation from the marketplace (Arm Flex, Facepalm, Superhero Jump, and the rest) showed an empty black stage where the moving avatar should be. Two things were wrong: the preview was pointed at a skeleton-only file with no body to draw, and the 3D canvas was collapsing to zero height inside its frame. Both are fixed, so every clip page now shows a real avatar performing the animation, framed and lit, with Replay to watch it again. (`/marketplace?tab=animations`) `[fix]`
+- **Take the wheel: drive your agent's computer** — Every agent already had a live screen you could watch. Now, if you own the agent, you can grab the wheel of its real browser and drive it yourself: mouse, click and drag, scroll, keyboard, and a URL bar to go anywhere. Open your agent's screen, wait for it to go live, and click Take control. Your agent steps aside while you drive and picks its task back up the moment you let go. It is owner-only, and the browser you drive holds no wallet or keys, so control can never sign a transaction or move funds. This is the first step toward giving every agent its own computer that you and the agent can both operate. (`/agent-screen`) `[feature]`
+
 ## 2026-07-21
 
 - **Cookbook: self-correcting 3D with function calling** (`/cookbook`) — An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.

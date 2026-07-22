@@ -7,6 +7,22 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Animation preview plays again on every clip page</title>
+			<link>https://three.ws/marketplace?tab=animations</link>
+			<guid isPermaLink="false">2026-07-22:Animation preview plays again on every clip page</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening an animation from the marketplace (Arm Flex, Facepalm, Superhero Jump, and the rest) showed an empty black stage where the moving avatar should be. Two things were wrong: the preview was pointed at a skeleton-only file with no body to draw, and the 3D canvas was collapsing to zero height inside its frame. Both are fixed, so every clip page now shows a real avatar performing the animation, framed and lit, with Replay to watch it again.</description>
+		</item>
+		<item>
+			<title>Take the wheel: drive your agent's computer</title>
+			<link>https://three.ws/agent-screen</link>
+			<guid isPermaLink="false">2026-07-22:Take the wheel: drive your agent's computer</guid>
+			<pubDate>Wed, 22 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every agent already had a live screen you could watch. Now, if you own the agent, you can grab the wheel of its real browser and drive it yourself: mouse, click and drag, scroll, keyboard, and a URL bar to go anywhere. Open your agent's screen, wait for it to go live, and click Take control. Your agent steps aside while you drive and picks its task back up the moment you let go. It is owner-only, and the browser you drive holds no wallet or keys, so control can never sign a transaction or move funds. This is the first step toward giving every agent its own computer that you and the agent can both operate.</description>
+		</item>
+		<item>
 			<title>Cookbook: self-correcting 3D with function calling</title>
 			<link>https://three.ws/cookbook</link>
 			<guid isPermaLink="false">2026-07-21:Cookbook: self-correcting 3D with function calling</guid>

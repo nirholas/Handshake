@@ -30,12 +30,22 @@
 import { chromium } from 'playwright';
 import { pickTask } from './tasks/index.js';
 import { generateNarration, runTaskSteps } from './task-runner.js';
+import { applyEvents } from './control.js';
 
 const BASE_URL   = (process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '');
 const WANTED_URL = process.env.WANTED_URL || `${BASE_URL}/api/agent/watch-wanted`;
 // Single frame convention: the live wall, 2D watch panel, AND the in-world 3D
 // desk all read /api/agent-screen-push frames via /api/agent-screen-stream.
 const PUSH_URL = process.env.PUSH_URL || `${BASE_URL}/api/agent-screen-push`;
+// Reverse channel: the owner drives the cast browser. This worker drains queued
+// input events (and the manual-mode flag) for every agent it is casting, then
+// dispatches them into the live page. Polled fast so control feels responsive.
+const CONTROL_URL     = process.env.CONTROL_URL || `${BASE_URL}/api/agent-screen-control-drain`;
+const CONTROL_POLL_MS = Number(process.env.CONTROL_POLL_MS || 250);
+// How long after the last manual signal the autonomous task stays paused. Long
+// enough to bridge poll gaps and idle holds; short enough that the bot resumes
+// promptly once the human lets go.
+const MANUAL_HOLD_MS  = Number(process.env.MANUAL_HOLD_MS || 2500);
 const SECRET   = process.env.SCREEN_WORKER_SECRET || '';
 
 // Hard cap on concurrent Chromium casters. The API's /api/agent/watch-status
@@ -142,6 +152,60 @@ function resolveUrl(homeUrl, agentId) {
 	return `${BASE_URL}${u.startsWith('/') ? '' : '/'}${u}`;
 }
 
+// ── control channel: the owner takes the wheel ──────────────────────────────
+// True while a human holds this agent's control lease (recently signalled by the
+// drain endpoint). The autonomous task/tour loops check this and stand down so
+// the two never fight over the cursor.
+function isManual(entry) {
+	return !!(entry && entry.manualUntil && entry.manualUntil > Date.now());
+}
+
+// Drain queued input events for every casting agent and dispatch them into the
+// live page. Best-effort: a blip never interrupts casting. Re-entrancy guarded so
+// a slow round can't stack on the next tick.
+let controlPolling = false;
+async function drainControl() {
+	if (controlPolling || stopping || pool.size === 0) return;
+	controlPolling = true;
+	try {
+		const ids = [...pool.keys()];
+		const res = await fetch(CONTROL_URL, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', authorization: `Bearer ${SECRET}` },
+			body: JSON.stringify({ agentIds: ids }),
+		});
+		if (!res.ok) return;
+		const body = await res.json().catch(() => null);
+		const agents = body?.agents || {};
+		await Promise.all(ids.map(async (id) => {
+			const entry = pool.get(id);
+			if (!entry || !entry.page || entry.page.isClosed()) return;
+			const info = agents[id];
+			if (!info) return;
+			const wasManual = isManual(entry);
+			if (info.manual) entry.manualUntil = Date.now() + MANUAL_HOLD_MS;
+			// Announce the handoff exactly once as control passes each way.
+			if (info.manual && !wasManual) {
+				await pushTaskFrame(entry, { activity: 'Owner took the wheel, driving live', type: 'activity' });
+			}
+			const events = Array.isArray(info.events) ? info.events : [];
+			if (events.length) {
+				const { changed } = await applyEvents(entry.page, events, VIEWPORT);
+				if (changed) await pushTaskFrame(entry, {}); // land the result immediately
+			} else if (isManual(entry)) {
+				await pushTaskFrame(entry, {}); // held wheel, no new input: keep pixels live
+			}
+			if (!isManual(entry) && wasManual) {
+				await pushTaskFrame(entry, { activity: 'Owner released the wheel, agent resumed', type: 'activity' });
+			}
+		}));
+	} catch {
+		/* control is best-effort; casting continues regardless */
+	} finally {
+		controlPolling = false;
+	}
+}
+
 async function pushFrame(entry) {
 	if (entry.pushing || !entry.page || entry.page.isClosed()) return;
 	entry.pushing = true;
@@ -222,6 +286,8 @@ async function runTour(entry) {
 
 	let i = 0;
 	while (!stopping && pool.has(agentId) && !page.isClosed()) {
+		// Human has the wheel: pause the guided tour, the driver steers instead.
+		if (isManual(entry)) { await sleep(600); continue; }
 		const name = stops[i % stops.length];
 		i++;
 		try {
@@ -319,7 +385,7 @@ async function waitWithFrames(entry, selector, { timeout = 15_000, fallbackUrl =
 async function dwellTask(entry, ms) {
 	const deadline = Date.now() + ms;
 	while (Date.now() < deadline) {
-		if (entry.controller.signal.aborted) return;
+		if (entry.controller.signal.aborted || isManual(entry)) return; // yield to the driver
 		await pushTaskFrame(entry, {});
 		await sleep(FRAME_MS);
 	}
@@ -344,11 +410,13 @@ async function readText(entry, step) {
 function makeExecutor(entry) {
 	return {
 		async narrate(line) {
+			if (isManual(entry)) return; // human is driving, do not narrate over them
 			await pushTaskFrame(entry, { activity: line, type: 'analysis' });
 			const deadline = Date.now() + LEAD_MS;
-			while (Date.now() < deadline && !entry.controller.signal.aborted) await sleep(Math.min(LEAD_MS, 150));
+			while (Date.now() < deadline && !entry.controller.signal.aborted && !isManual(entry)) await sleep(Math.min(LEAD_MS, 150));
 		},
 		async perform(step) {
+			if (isManual(entry)) return null; // yield the page to the driver
 			const page = entry.page;
 			switch (step.kind) {
 				case 'goto': await page.goto(step.url, { waitUntil: 'domcontentloaded', timeout: 30_000 }); return null;
@@ -390,6 +458,9 @@ async function runCastTask(entry) {
 
 	const executor = makeExecutor(entry);
 	while (!entry.controller.signal.aborted && entry.page && !entry.page.isClosed()) {
+		// Human has the wheel: don't start a task sequence. The control loop drains
+		// their input and keeps pixels flowing; we just wait for them to let go.
+		if (isManual(entry)) { await sleep(FRAME_MS); continue; }
 		try {
 			const { aborted } = await runTaskSteps({ task, narration, executor, signal: entry.controller.signal });
 			if (aborted) break;
@@ -448,6 +519,7 @@ async function shutdown() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-log(`starting · base=${BASE_URL} · max=${MAX_BROWSERS} · poll=${POLL_MS}ms · frame=${FRAME_MS}ms`);
+log(`starting · base=${BASE_URL} · max=${MAX_BROWSERS} · poll=${POLL_MS}ms · frame=${FRAME_MS}ms · control=${CONTROL_POLL_MS}ms`);
 await reconcile();
 setInterval(reconcile, POLL_MS);
+setInterval(drainControl, CONTROL_POLL_MS);

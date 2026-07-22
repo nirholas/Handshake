@@ -2,6 +2,24 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-22",
+			"title": "Animation preview plays again on every clip page",
+			"summary": "Opening an animation from the marketplace (Arm Flex, Facepalm, Superhero Jump, and the rest) showed an empty black stage where the moving avatar should be. Two things were wrong: the preview was pointed at a skeleton-only file with no body to draw, and the 3D canvas was collapsing to zero height inside its frame. Both are fixed, so every clip page now shows a real avatar performing the animation, framed and lit, with Replay to watch it again.",
+			"tags": [
+				"fix"
+			],
+			"link": "/marketplace?tab=animations"
+		},
+		{
+			"date": "2026-07-22",
+			"title": "Take the wheel: drive your agent's computer",
+			"summary": "Every agent already had a live screen you could watch. Now, if you own the agent, you can grab the wheel of its real browser and drive it yourself: mouse, click and drag, scroll, keyboard, and a URL bar to go anywhere. Open your agent's screen, wait for it to go live, and click Take control. Your agent steps aside while you drive and picks its task back up the moment you let go. It is owner-only, and the browser you drive holds no wallet or keys, so control can never sign a transaction or move funds. This is the first step toward giving every agent its own computer that you and the agent can both operate.",
+			"tags": [
+				"feature"
+			],
+			"link": "/agent-screen"
+		},
+		{
 			"date": "2026-07-21",
 			"title": "Zen mode in Play: hide the whole interface with one key",
 			"summary": "Press Z inside any coin community world (or tap the new Zen button in the top-right control rail) and every panel disappears: the coin banner, chat, minimap, money HUD, hotbar, prompts, and name tags all fade away, leaving just your avatar and the living world. Perfect for screenshots, screen recordings, or simply hanging out in your community without clutter. The movement joystick and driving controls stay, so you can still wander while in zen. A small Show UI pill (or Z again) brings everything back, your choice is remembered between visits, and sharing a world link with ?ui=hidden opens it in zen for a clean first impression.",
