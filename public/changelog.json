@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-22T04:40:10.177Z",
+	"generated_at": "2026-07-22T05:00:32.726Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,16 @@
 			"link": "/marketplace?tab=animations",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-22",
+			"type": "update",
+			"title": "Avatar Studio: a Parametric base with 120+ face and body sliders",
+			"summary": "The Avatar Studio has a second base body: Parametric. Built on the open-source MakeHuman body (CC0, fully licensed), it turns the Sculpt tab into a real character creator with over 120 sliders: nose width and hump, lip volume, pointed elf ears, eye tilt, jawline, head shape, plus whole-body controls for feminine or masculine build, muscle, weight, age, height, waist, hips, shoulders, arms, and legs. Mirror left/right or unlock them for asymmetry. Every combination stays fully rigged and walks, dances, and emotes with the entire animation library, and hats, glasses, and skin tones work like on any avatar. Pick Parametric in the Base switcher at the top of the studio.",
+			"link": "/avatar-studio",
+			"tags": [
+				"feature"
 			]
 		},
 		{

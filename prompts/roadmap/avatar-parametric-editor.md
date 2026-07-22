@@ -35,7 +35,9 @@ Key leverage: `avatar-sculpt.js` renders sliders for whatever morphs the loaded 
 
 ## The build, in phases
 
-### Phase 1: the parametric backbone (unlocks everything)
+### Phase 1: the parametric backbone (unlocks everything): SHIPPED v1, 2026-07-22
+
+Shipped by adopting [naver/anny](https://github.com/naver/anny)'s CC0 repackaging of the MakeHuman/MPFB2 data instead of hand-porting targets: `avatar-sources/anny/` (vendored data + provenance), `scripts/build-parametric-base.mjs` (baker), `public/avatars/parametric-base.glb` (52-bone mixamorig skeleton, 4 submeshes, 122 sparse morph sliders), Base switcher in Avatar Studio (`?base=parametric`), Ears/Head Shape sculpt groups, `tests/parametric-base.test.js`. 472 target files are vendored; ~350 remain uncurated (asym, per-segment scale axes, navel, valgus, hands, feet), so growing 122 sliders toward 400+ is a MORPHS-table edit plus rebake, no new engineering. Original plan for reference:
 
 Adopt a commercially-clean parametric base and port a large morph library onto it.
 
