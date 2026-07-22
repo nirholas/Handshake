@@ -93,12 +93,53 @@ const escapeHtml = (s) =>
 // body. Subjects without that convention get a generic "New commit" headline.
 // Only the subject line is ever posted: full commit bodies are hard-wrapped
 // by git and written for engineers, not holders, so they stay on GitHub.
-function splitSubject(subjectLine) {
+export function splitSubject(subjectLine) {
 	const idx = subjectLine.indexOf(': ');
 	if (idx > 0 && idx < 60) {
 		return { headline: subjectLine.slice(0, idx), body: subjectLine.slice(idx + 2) };
 	}
 	return { headline: 'New commit', body: subjectLine };
+}
+
+// Conventional-commit type prefixes are written for engineers ("feat", "fix",
+// "perf"). Holders following the feed read plain words, so map the known types
+// to friendly labels. Anything not in the map — a real scope like "Avatar
+// Studio" or "/cookbook" — is already readable and passes through untouched.
+const TYPE_LABELS = {
+	feat: 'Feature',
+	fix: 'Fix',
+	perf: 'Performance',
+	refactor: 'Refactor',
+	docs: 'Docs',
+	test: 'Tests',
+	tests: 'Tests',
+	build: 'Build',
+	ci: 'CI',
+	chore: 'Chore',
+	style: 'Style',
+	revert: 'Revert',
+};
+
+export function prettyHeadline(headline) {
+	return TYPE_LABELS[String(headline).toLowerCase()] || headline;
+}
+
+// three.ws-branded social-share landing for one commit. Telegram scrapes its
+// OG tags to render the poster card, then redirects a human click to GitHub.
+// The GitHub link still lives in the message text, so both paths work.
+export function commitPreviewUrl(commit) {
+	const subjectLine = (commit.commit?.message || '').split('\n')[0];
+	const { headline, body } = splitSubject(subjectLine);
+	const author = commit.author?.login || commit.commit?.author?.name || 'unknown';
+	const date = (commit.commit?.author?.date || '').slice(0, 10);
+	const params = new URLSearchParams({
+		sha: commit.sha,
+		t: prettyHeadline(headline),
+		d: body,
+		date,
+		author,
+	});
+	return `${BASE}/api/commit-og?${params.toString()}`;
 }
 
 export function formatTelegramMessage(commit) {
@@ -110,7 +151,7 @@ export function formatTelegramMessage(commit) {
 	const url = commit.html_url || `https://github.com/${REPO}/commit/${commit.sha}`;
 	const linkText = `github.com/${REPO}/commit/${shortSha}`;
 	return [
-		`<b>${escapeHtml(headline)}</b>`,
+		`<b>${escapeHtml(prettyHeadline(headline))}</b>`,
 		'',
 		escapeHtml(body),
 		'',
@@ -118,7 +159,7 @@ export function formatTelegramMessage(commit) {
 	].join('\n');
 }
 
-async function sendTelegram(botToken, chatId, text) {
+async function sendTelegram(botToken, chatId, text, previewUrl) {
 	const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -126,7 +167,9 @@ async function sendTelegram(botToken, chatId, text) {
 			chat_id: chatId,
 			text,
 			parse_mode: 'HTML',
-			link_preview_options: { is_disabled: true },
+			// Preview the branded three.ws poster (not the GitHub link that also
+			// sits in the text), rendered below the message like the changelog feed.
+			link_preview_options: { is_disabled: false, url: previewUrl, show_above_text: false },
 		}),
 	});
 	const body = await res.json().catch(() => ({}));
@@ -158,7 +201,7 @@ export async function pushTelegramLane() {
 	let lastSha = state.lastSha;
 	try {
 		for (const commit of capped) {
-			await sendTelegram(botToken, chatId, formatTelegramMessage(commit));
+			await sendTelegram(botToken, chatId, formatTelegramMessage(commit), commitPreviewUrl(commit));
 			lastSha = commit.sha;
 			sent++;
 			await setState(STATE_KEY, { lastSha });
