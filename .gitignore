@@ -109,6 +109,9 @@ solana-wallets-backup.zip
 *throwaway*
 .solana-*.json
 id.json
+# id.json above targets Solana CLI keypairs; the Indonesian locale catalog is
+# a plain translation file and must stay tracked.
+!public/locales/id.json
 scripts/x402-test-endpoints.mjs
 wallets/
 .wallets/
@@ -124,8 +127,11 @@ threews-launch-week-case-study.html
 # Editor/tool temp copies (e.g. activities.js.tmp.4033808.adac1fce2562)
 *.tmp.[0-9]*
 
-# Throwaway inspection scripts (e.g. scripts/.tmp-home-defer-check.mjs)
+# Throwaway inspection scripts (e.g. scripts/.tmp-home-defer-check.mjs).
+# The undotted variants slipped into history once; keep them out for good.
 .tmp-*
+scripts/tmp-*
+scripts/scratch-*
 
 # Backup files (never commit backups)
 *.bak
