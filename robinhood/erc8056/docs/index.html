@@ -1,710 +1,522 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Understanding ERC-8056: uiMultiplier and Scaled UI Amounts, Explained</title>
-<meta name="description" content="The definitive guide to ERC-8056 (Scaled UI Amount / uiMultiplier), the corporate-actions standard behind tokenized equities like Robinhood Chain Stock Tokens. Live on-chain multipliers, the wrong-vs-right valuation math, verified interface IDs, and integration recipes for JavaScript and Solidity.">
-<meta property="og:title" content="Understanding ERC-8056: uiMultiplier, Explained">
-<meta property="og:description" content="How tokenized stocks handle splits and dividends without rebasing, and the one mistake every naive integrator makes. With live on-chain data.">
-<meta property="og:type" content="article">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%C3%97%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ERC-8056, Scaled UI Amount, a typewritten spec with living margins</title>
+<meta name="description" content="A reference implementation and living specification of ERC-8056 (Scaled UI Amount / uiMultiplier), the corporate-actions standard for tokenized equities. Read the spec as a typewritten RFC; every clause carries a margin annotation that expands in place, verified against live Robinhood Chain state." />
+<link rel="canonical" href="https://nirholas.github.io/erc8056/" />
+<meta name="theme-color" content="#efece4" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ERC-8056, the multiplier, spelled out in the margins" />
+<meta property="og:description" content="Scaled UI Amount (uiMultiplier) as a typewritten RFC with living margins. Apply the corporate-action multiplier exactly once, the wrong branch is a compile error. Verified bit-for-bit against live Robinhood Chain Stock Tokens." />
+<meta property="og:url" content="https://nirholas.github.io/erc8056/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ERC-8056, Scaled UI Amount, a living spec" />
+<meta name="twitter:description" content="Read ERC-8056 as a typewritten RFC. Clauses carry margin annotations that expand in place; cross-references draw connecting lines. Verified against live chain 4663." />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23efece4'/><path d='M8 8 L14 14 M14 8 L8 14' stroke='%2317150f' stroke-width='2' stroke-linecap='square'/><path d='M18 11 L26 11 M18 16 L26 16 M18 21 L23 21' stroke='%2317150f' stroke-width='1.6' stroke-linecap='square'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"ERC-8056, Scaled UI Amount (uiMultiplier)","description":"Reference implementation and living specification of ERC-8056, the corporate-actions (uiMultiplier) standard for tokenized equities, verified against live Robinhood Chain Stock Tokens.","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"about":["ERC-8056","Scaled UI Amount","uiMultiplier","tokenized equities","corporate actions","Robinhood Chain"],"url":"https://nirholas.github.io/erc8056/","codeRepository":"https://github.com/nirholas/erc8056","license":"https://github.com/nirholas/erc8056/blob/main/LICENSE"}
+</script>
 <style>
-:root {
-  --bg: #0a0b0e;
-  --bg-raised: #101218;
-  --bg-inset: #0d0f14;
-  --border: #1e2230;
-  --border-strong: #2a3044;
-  --text: #e6e9f2;
-  --text-dim: #9aa2b8;
-  --text-faint: #6a7288;
-  --accent-a: #34d399;
-  --accent-b: #22d3ee;
-  --wrong: #f87171;
-  --right: #34d399;
-  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  line-height: 1.65;
-  font-size: 16px;
-  -webkit-font-smoothing: antialiased;
-}
-.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
-a { color: var(--accent-b); text-decoration: none; }
-a:hover, a:focus-visible { text-decoration: underline; }
-a:focus-visible, button:focus-visible, summary:focus-visible {
-  outline: 2px solid var(--accent-b);
-  outline-offset: 2px;
-  border-radius: 3px;
-}
-code {
-  font-family: var(--mono);
-  font-size: 0.875em;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.1em 0.35em;
-  overflow-wrap: anywhere;
-}
-pre {
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px 18px;
-  overflow-x: auto;
-  margin: 16px 0;
-  line-height: 1.55;
-}
-pre code { background: none; border: none; padding: 0; white-space: pre; font-size: 13px; }
-h1, h2, h3 { line-height: 1.25; letter-spacing: -0.015em; }
-h2 { font-size: 26px; margin: 56px 0 14px; padding-top: 8px; }
-h3 { font-size: 19px; margin: 32px 0 10px; }
-p, ul, ol { margin: 12px 0; color: var(--text-dim); }
-p strong, li strong { color: var(--text); }
-ul, ol { padding-left: 22px; }
-li { margin: 6px 0; }
-header.hero { padding: 72px 0 40px; border-bottom: 1px solid var(--border); }
-.eyebrow {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent-a);
-  margin-bottom: 14px;
-}
-h1 {
-  font-size: clamp(30px, 5.5vw, 46px);
-  font-weight: 750;
-  background: linear-gradient(100deg, var(--accent-a), var(--accent-b));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin-bottom: 14px;
-}
-.lede { font-size: 18px; color: var(--text-dim); max-width: 640px; }
-nav.toc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  margin-top: 28px;
-  font-size: 14px;
-}
-nav.toc a { color: var(--text-faint); }
-nav.toc a:hover { color: var(--accent-b); }
-table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 16px 0; }
-.table-scroll { overflow-x: auto; margin: 16px 0; }
-.table-scroll table { margin: 0; min-width: 560px; }
-th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-th { color: var(--text-faint); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
-td { color: var(--text-dim); }
-td code { font-size: 12.5px; }
-.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.card {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 18px 20px;
-  margin: 18px 0;
-}
-.callout { border-left: 3px solid var(--accent-a); }
-.callout.warn { border-left-color: var(--wrong); }
-.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
-@media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
-.compare .card { margin: 0; }
-.compare h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
-.compare .bad h4 { color: var(--wrong); }
-.compare .good h4 { color: var(--right); }
-.compare .figure { font-family: var(--mono); font-size: 22px; margin: 6px 0 2px; color: var(--text); }
-.compare .note { font-size: 13px; color: var(--text-faint); }
-/* Live widget */
-#live { margin-top: 34px; }
-.live-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.live-head h2 { margin: 0; font-size: 16px; padding: 0; }
-.live-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
-.live-meta .dot {
-  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent-a); margin-right: 6px;
-  animation: pulse 2.4s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-@media (prefers-reduced-motion: reduce) { .live-meta .dot { animation: none; } }
-#live .card { padding: 6px 20px 10px; }
-#live-error {
-  display: none; padding: 14px 0; color: var(--wrong); font-size: 14px;
-}
-#live-error button {
-  margin-left: 10px; background: none; border: 1px solid var(--border-strong);
-  color: var(--text); border-radius: 6px; padding: 4px 12px; font-size: 13px; cursor: pointer;
-}
-#live-error button:hover { border-color: var(--accent-b); }
-.skel { color: transparent !important; border-radius: 4px; background: linear-gradient(90deg, var(--border) 25%, var(--border-strong) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; user-select: none; }
-@keyframes shimmer { to { background-position: -200% 0; } }
-.mult-up { color: var(--accent-a); }
-details {
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 0 18px; margin: 10px 0; background: var(--bg-raised);
-}
-details summary {
-  cursor: pointer; padding: 13px 0; font-weight: 600; color: var(--text);
-  list-style: none; display: flex; justify-content: space-between; align-items: center;
-}
-details summary::after { content: "+"; color: var(--text-faint); font-family: var(--mono); font-size: 17px; transition: transform 0.18s ease; }
-details[open] summary::after { transform: rotate(45deg); }
-details > div { padding: 0 0 14px; }
-footer {
-  margin-top: 72px; padding: 28px 0 44px; border-top: 1px solid var(--border);
-  font-size: 14px; color: var(--text-faint);
-}
-.src-list { font-size: 14px; }
-.src-list li { margin: 8px 0; }
-.pill {
-  display: inline-block; font-family: var(--mono); font-size: 11px;
-  border: 1px solid var(--border-strong); border-radius: 99px;
-  padding: 1px 9px; color: var(--text-faint); margin-left: 8px; vertical-align: middle;
-}
+  :root{
+    --paper:#efece4; --ink:#17150f; --graphite:#6b6659; --faint:#a39d8f;
+    --hair:rgba(23,21,15,.16); --hair2:rgba(23,21,15,.30);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--paper); color:var(--ink); font-family:var(--mono);
+    font-size:clamp(13px,.95vw,15.5px); line-height:1.72; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; font-feature-settings:"zero" 1}
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  b,strong{font-weight:700}
+
+  /* typewriter ink texture: faint horizontal fibres, no repaint */
+  body::before{content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background:
+      repeating-linear-gradient(0deg, rgba(23,21,15,.018) 0 1px, transparent 1px 4px),
+      radial-gradient(140% 60% at 50% -10%, rgba(23,21,15,.03), transparent 60%);}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.001s!important; transition-duration:.001s!important}}
+
+  .doc{position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:0 clamp(16px,4vw,40px)}
+
+  /* ---- masthead: RFC cover ---- */
+  .mast{padding:clamp(30px,6vh,70px) 0 clamp(22px,3vh,38px); border-bottom:2px solid var(--ink)}
+  .mhead{display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 24px;
+    font-size:11px; letter-spacing:.06em; color:var(--graphite); text-transform:uppercase}
+  .mhead b{color:var(--ink)}
+  .title{margin:26px 0 6px; font-weight:700; letter-spacing:-.01em; line-height:1;
+    font-size:clamp(40px,8.5vw,120px)}
+  .title .cur{display:inline-block; width:.56ch; height:.82em; background:var(--ink); vertical-align:-2px;
+    animation:blink 1.05s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .subtitle{font-size:clamp(15px,1.8vw,24px); letter-spacing:.02em; color:var(--ink); min-height:1.4em}
+  .abs{margin-top:22px; max-width:74ch; color:#2c2a22; font-size:clamp(13.5px,1.05vw,16px)}
+  .tags{margin-top:22px; display:flex; flex-wrap:wrap; gap:8px}
+  .tag{border:1px solid var(--hair2); padding:6px 10px; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--graphite)}
+  .tag b{color:var(--ink)}
+
+  /* ---- table of contents ---- */
+  .toc{display:flex; flex-wrap:wrap; gap:2px 0; margin:26px 0 0; padding-top:20px; border-top:1px solid var(--hair)}
+  .toc a{flex:1 1 260px; display:flex; gap:12px; padding:7px 6px; text-decoration:none; color:var(--ink);
+    transition:background .2s, padding-left .2s var(--ease)}
+  .toc a:hover{background:rgba(23,21,15,.05); padding-left:12px}
+  .toc a .s{color:var(--graphite)}
+  .toc a .d{border-bottom:1px dotted var(--hair2); flex:1}
+
+  /* ---- the document body: two columns, text + living margin ---- */
+  .clauses{position:relative; padding:clamp(30px,5vh,54px) 0 0}
+  .sec{position:relative; display:grid; grid-template-columns:1fr 300px; gap:clamp(20px,3vw,54px);
+    padding:clamp(26px,4vh,44px) 0; border-bottom:1px solid var(--hair); scroll-margin-top:20px}
+  @media(max-width:900px){.sec{grid-template-columns:1fr; gap:0}}
+
+  .sec > .body{max-width:74ch}
+  .sh{display:flex; align-items:baseline; gap:14px; margin-bottom:16px}
+  .sh .no{font-weight:700; font-size:15px; color:var(--ink); white-space:nowrap}
+  .sh h2{font-weight:700; font-size:clamp(18px,2.1vw,27px); letter-spacing:-.01em; line-height:1.1}
+  .sec.flash h2{animation:flash 1.1s var(--ease)}
+  @keyframes flash{0%,100%{color:var(--ink)}30%{color:var(--graphite)}}
+  .sec p{margin:0 0 14px; color:#2c2a22}
+  .sec p:last-child{margin-bottom:0}
+  .sec .mono-em{color:var(--ink); border-bottom:1px solid var(--hair2)}
+  ul.plain{list-style:none; margin:6px 0 14px}
+  ul.plain li{position:relative; padding:6px 0 6px 24px; color:#2c2a22}
+  ul.plain li::before{content:attr(data-b); position:absolute; left:0; top:6px; color:var(--graphite)}
+
+  /* cross-reference links */
+  .xref{cursor:pointer; color:var(--ink); border-bottom:1px solid var(--ink); text-decoration:none; white-space:nowrap;
+    transition:background .2s}
+  .xref:hover, .xref.on{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .sec.xtarget{background:linear-gradient(90deg, rgba(23,21,15,.06), transparent 70%)}
+
+  /* code blocks, typed listings */
+  .list{border:1px solid var(--hair2); background:rgba(23,21,15,.03); padding:16px 18px; margin:6px 0 14px;
+    font-size:12.5px; line-height:1.7; white-space:pre; overflow-x:auto}
+  .list .cm{color:var(--graphite)}
+  .list .st{color:#4f4b3f}
+  .copy{float:right; appearance:none; border:1px solid var(--hair2); background:transparent; color:var(--ink);
+    font:600 10px/1 var(--mono); letter-spacing:.12em; padding:6px 9px; cursor:pointer; margin:-4px -6px 8px 8px; transition:background .2s}
+  .copy:hover{background:rgba(23,21,15,.08)}
+
+  /* ---- the living margin ---- */
+  .margin{position:relative}
+  @media(max-width:900px){.margin{margin-top:14px}}
+  .note{border-left:2px solid var(--ink); background:transparent}
+  .note > button{appearance:none; width:100%; text-align:left; background:transparent; border:0; cursor:pointer;
+    color:var(--ink); font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    padding:8px 0 8px 14px; display:flex; align-items:center; gap:10px; transition:color .2s}
+  .note > button:hover{color:var(--graphite)}
+  .note > button .mk{display:inline-flex; width:16px; height:16px; border:1px solid var(--ink); align-items:center; justify-content:center;
+    font-size:11px; line-height:1; transition:background .25s, color .25s, transform .35s var(--ease)}
+  .note.open > button .mk{background:var(--ink); color:var(--paper); transform:rotate(45deg)}
+  .note > button .mk b{transform:rotate(0)}
+  .note.open > button .mk b{transform:rotate(-45deg)}
+  .note .panel{display:grid; grid-template-rows:0fr; opacity:0;
+    transition:grid-template-rows .45s var(--ease), opacity .4s var(--ease)}
+  .note.open .panel{grid-template-rows:1fr; opacity:1}
+  .note .panel > div{overflow:hidden}
+  .note .panel .in{padding:2px 0 14px 14px; font-size:12.5px; line-height:1.66; color:#2c2a22}
+  .note .panel .in b{color:var(--ink)}
+  .note .panel .in .k{color:var(--graphite)}
+  .note .panel .in code{border-bottom:1px solid var(--hair2); word-break:break-all}
+  .note + .note{margin-top:14px}
+  .mtag{font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin-bottom:10px}
+
+  /* cross-reference line overlay */
+  #xrefsvg{position:fixed; inset:0; z-index:40; pointer-events:none}
+  #xrefsvg path{fill:none; stroke:var(--ink); stroke-width:1.3; stroke-dasharray:5 4}
+
+  /* ---- footer sections ---- */
+  .install{border:1px solid var(--ink); background:rgba(23,21,15,.03); padding:18px 20px; margin-top:8px;
+    font-size:13px; line-height:1.95; position:relative; overflow-x:auto}
+  .install .c{color:var(--graphite)} .install .p::before{content:"$ "; color:var(--graphite)}
+  .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 11px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; padding:14px 20px; cursor:pointer;
+    transition:background .2s,color .2s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  footer{padding:clamp(34px,6vh,60px) 0; margin-top:10px; border-top:2px solid var(--ink);
+    display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font-weight:700; font-size:clamp(26px,5vw,54px); line-height:.95; letter-spacing:-.01em}
+  footer .meta{font-size:11.5px; line-height:1.9; color:var(--graphite); text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2)}
+  footer a:hover{border-color:var(--ink)}
 </style>
 </head>
 <body>
+<svg id="xrefsvg" aria-hidden="true"><path id="xrefpath" d=""/></svg>
 
-<header class="hero">
-  <div class="wrap">
-    <div class="eyebrow">ERC-8056 / Scaled UI Amount</div>
-    <h1>Understanding ERC-8056</h1>
-    <p class="lede">
-      The corporate-actions standard behind tokenized equities. One view function,
-      <code>uiMultiplier()</code>, decides whether your integration reports positions
-      correctly or misstates every balance after a split or dividend. This page is the
-      reference: verified semantics, live on-chain data, and the exact math.
-    </p>
+<div class="doc">
+  <!-- ============ MASTHEAD ============ -->
+  <header class="mast">
+    <div class="mhead">
+      <span>Request for Implementation &#183; <b>ERC-8056</b></span>
+      <span>Category: <b>Standards Track</b> &#183; Reference</span>
+      <span>Chain <b>4663</b> &#183; verified live</span>
+    </div>
+    <h1 class="title">ERC-8056<span class="cur" aria-hidden="true"></span></h1>
+    <div class="subtitle" id="subtitle"></div>
+    <p class="abs">When a tokenized stock splits or reinvests a dividend, its raw ERC-20 balances never change. The issuer updates one number, <span class="mono-em">uiMultiplier()</span>, and every correct integration scales its display and valuation by it, exactly once. This document is that rule, spelled out clause by clause, with the deployed-reality caveats in the margins. Engage any note to expand it in place; follow a cross-reference and the spec draws the line for you.</p>
+    <div class="tags">
+      <span class="tag"><b>~2.5 kB</b> gzipped</span>
+      <span class="tag">zero runtime deps &#183; <b>viem</b> peer</span>
+      <span class="tag">Solidity + <b>Foundry</b> fork tests</span>
+      <span class="tag">verified against <b>AAPL / SGOV / WEEK</b></span>
+    </div>
+
     <nav class="toc" aria-label="Contents">
-      <a href="#what">What it is</a>
-      <a href="#why">Why it exists</a>
-      <a href="#spec">The spec surface</a>
-      <a href="#math">The two rules</a>
-      <a href="#feeds">The price-feed question</a>
-      <a href="#deployed">As deployed on chain 4663</a>
-      <a href="#integrate">Integration</a>
-      <a href="#faq">FAQ</a>
-      <a href="#sources">Sources</a>
+      <a href="#s1"><span class="s">1</span><span>Abstract</span><span class="d"></span></a>
+      <a href="#s2"><span class="s">2</span><span>Motivation</span><span class="d"></span></a>
+      <a href="#s3"><span class="s">3</span><span>The multiplier</span><span class="d"></span></a>
+      <a href="#s4"><span class="s">4</span><span>Rule 1 &#183; positions</span><span class="d"></span></a>
+      <a href="#s5"><span class="s">5</span><span>Rule 2 &#183; valuation</span><span class="d"></span></a>
+      <a href="#s6"><span class="s">6</span><span>The one trap</span><span class="d"></span></a>
+      <a href="#s7"><span class="s">7</span><span>Deployed reality</span><span class="d"></span></a>
+      <a href="#s8"><span class="s">8</span><span>API surface</span><span class="d"></span></a>
+      <a href="#s9"><span class="s">9</span><span>Interface IDs</span><span class="d"></span></a>
+      <a href="#s10"><span class="s">10</span><span>Reference implementation</span><span class="d"></span></a>
     </nav>
+  </header>
 
-    <section id="live" aria-label="Live multipliers">
-      <div class="live-head">
-        <h2>Live multipliers, read from Robinhood Chain right now</h2>
-        <span class="live-meta"><span class="dot" aria-hidden="true"></span><span id="live-block">connecting to chain 4663&hellip;</span></span>
+  <main class="clauses">
+
+    <!-- 1 ABSTRACT -->
+    <section class="sec" id="s1">
+      <div class="body">
+        <div class="sh"><span class="no">1.</span><h2>Abstract</h2></div>
+        <p>ERC-8056 (&#8220;Scaled UI Amount&#8221;) defines <span class="mono-em">uiMultiplier()</span>: an 18-decimal fixed-point factor a token issuer maintains so that a token's <em>displayed</em> and <em>valued</em> amounts track corporate actions while its raw on-chain balances stay immutable. It is the standard behind Robinhood Chain Stock Tokens.</p>
+        <p>This package is both the reference implementation and, on this page, the living specification: the math is bit-for-bit the on-chain math, and the price types make the wrong valuation branch a compile error. See <a class="xref" data-ref="s4">&#167;4 (positions)</a> and <a class="xref" data-ref="s5">&#167;5 (valuation)</a> for the two rules everything reduces to.</p>
       </div>
-      <div class="card">
-        <div class="table-scroll">
-        <table id="live-table">
-          <thead>
-            <tr><th>Token</th><th>uiMultiplier()</th><th>1 token =</th><th>Last action effective</th></tr>
-          </thead>
-          <tbody>
-            <tr data-token="0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9"><td>AAPL</td><td class="num skel">loading</td><td class="num skel">loading</td><td class="num skel">loading</td></tr>
-            <tr data-token="0x12f190a9F9d7D37a250758b26824B97CE941bF54"><td>AMZN</td><td class="num skel">loading</td><td class="num skel">loading</td><td class="num skel">loading</td></tr>
-            <tr data-token="0x92FD66527192E3e61d4DDd13322Aa222DE86F9B5"><td>SGOV</td><td class="num skel">loading</td><td class="num skel">loading</td><td class="num skel">loading</td></tr>
-            <tr data-token="0xc93a8c440CEa26D7445dF01729f193b27965099f"><td>WEEK</td><td class="num skel">loading</td><td class="num skel">loading</td><td class="num skel">loading</td></tr>
-          </tbody>
-        </table>
-        </div>
-        <div id="live-error" role="alert">
-          Could not reach the public RPC. Your network may block it.
-          <button type="button" id="live-retry">Retry</button>
+      <div class="margin">
+        <div class="mtag">// margin</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> what &#8220;scaled UI amount&#8221; means</button>
+          <div class="panel"><div><div class="in">A raw balance is what the ledger stores; the <b>UI amount</b> is what a human should see. <span class="k">balanceOfUI = balanceOf &#215; uiMultiplier &#247; 1e18</span>, floored. The multiplier is the only moving part, so a split becomes a single storage write instead of a rebase across every holder.</div></div></div>
         </div>
       </div>
     </section>
-  </div>
-</header>
 
-<main class="wrap">
+    <!-- 2 MOTIVATION -->
+    <section class="sec" id="s2">
+      <div class="body">
+        <div class="sh"><span class="no">2.</span><h2>Motivation</h2></div>
+        <p>Every naive integration gets tokenized equities wrong in one of exactly two ways. This standard, and this package, make both mistakes hard.</p>
+        <ul class="plain">
+          <li data-b="a)">Showing <b>raw balances as shares</b> understates positions: after a split or reinvested dividend the true share-equivalent has diverged from the raw ERC-20 number. Fixed by <a class="xref" data-ref="s4">&#167;4</a>.</li>
+          <li data-b="b)">Re-applying the multiplier to an <b>already-adjusted price feed</b> double-counts the corporate action. Fixed by <a class="xref" data-ref="s5">&#167;5</a> and the trap in <a class="xref" data-ref="s6">&#167;6</a>.</li>
+        </ul>
+        <p>The remedy is a discipline, not a library call: apply the multiplier <em>exactly once</em>, and know which side of the trade already applied it.</p>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> why not just rebase?</button>
+          <div class="panel"><div><div class="in">A rebasing token rewrites every balance on every corporate action, expensive, and it breaks any contract that cached a balance. Scaled UI Amount keeps balances immutable and moves the adjustment to read time, so integrators opt in by reading <code>uiMultiplier()</code> rather than being forced to track rebases.</div></div></div>
+        </div>
+      </div>
+    </section>
 
-<h2 id="what">What ERC-8056 is</h2>
-<p>
-  <a href="https://eips.ethereum.org/EIPS/eip-8056">ERC-8056</a> ("Scaled UI Amount Extension
-  for ERC-20 Tokens", draft, created 2025-10-20, co-authored by engineers from Superstate and
-  Robinhood) adds one updatable number to an ERC-20: a <strong>display multiplier</strong>.
-</p>
-<pre><code>function uiMultiplier() external view returns (uint256); // 18-decimal fixed point, 1e18 = 1.0</code></pre>
-<p>
-  Raw balances never move. <code>balanceOf</code> and <code>totalSupply</code> are untouched by
-  corporate actions. When a company splits its stock 2-for-1, the issuer does not mint tokens to
-  thousands of holders; it sets the multiplier to <code>2e18</code> and emits one event. Every
-  interface that respects the standard then displays doubled positions, because the true position is:
-</p>
-<pre><code>trueBalance = balanceOf(account) * uiMultiplier() / 1e18</code></pre>
-<p>
-  The multiplier is a <strong>cosmetic layer with economic meaning</strong>: it is how many
-  underlying units (shares, for tokenized equities) one raw token represents. It starts at
-  <code>1e18</code> and moves on splits, reverse splits, and reinvested distributions. The same
-  pattern exists on Solana as the Token-2022 scaled-UI-amount extension; ERC-8056 is its EVM
-  counterpart.
-</p>
+    <!-- 3 THE MULTIPLIER -->
+    <section class="sec" id="s3">
+      <div class="body">
+        <div class="sh"><span class="no">3.</span><h2>The multiplier</h2></div>
+        <p><span class="mono-em">uiMultiplier()</span> returns underlying shares per token as an 18-decimal fixed-point number. <span class="mono-em">MULTIPLIER_ONE</span> is <span class="mono-em">10n ** 18n</span>. A token that has never had a corporate action reads exactly one; a split or dividend moves it.</p>
+        <p>Read it with <span class="mono-em">readUiMultiplier(client, token)</span>, which throws <span class="mono-em">Erc8056NotImplementedError</span> for a plain ERC-20 rather than returning a misleading zero. For scheduled changes, <span class="mono-em">readMultiplierState</span> returns the current value and a <em>pending</em> one.</p>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin &#183; live</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> a real value on chain 4663</button>
+          <div class="panel"><div><div class="in">Token <b>WEEK</b> at <code>0xc93a8c440CEa26D7445dF01729f193b27965099f</code>. On <b>2026-07-15</b> its multiplier read <code>2006182524271844660n</code>, i.e. <b>1 raw WEEK token = 2.0062 shares</b>. Read it yourself; the value is pinned by this package's live test suite, not folklore.</div></div></div>
+        </div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> pending vs applied</button>
+          <div class="panel"><div><div class="in">After a scheduled change activates, <code>newUIMultiplier()</code> and <code>effectiveAt()</code> retain the last applied values. &#8220;Pending&#8221; means a <em>future</em> <code>effectiveAt</code> <b>and</b> a differing value, exactly what <code>readMultiplierState</code> encodes, so you never mistake history for a queued action.</div></div></div>
+        </div>
+      </div>
+    </section>
 
-<h2 id="why">Why it exists</h2>
-<p>Without it, an issuer handling a 2-for-1 split has two bad options:</p>
-<ul>
-  <li><strong>Mint to every holder.</strong> Gas-intensive, operationally risky, and it breaks
-      accounting in every DeFi protocol holding the token (pool reserves, collateral records,
-      vault shares all go stale at once).</li>
-  <li><strong>Rebase.</strong> Rewriting balances has the same DeFi-breaking problem, famously
-      so: rebasing tokens are widely unsupported by AMMs and lending markets.</li>
-</ul>
-<p>
-  ERC-8056 takes a third path: <strong>raw amounts are stable forever; display scales.</strong>
-  DeFi keeps working because the token it integrates never changes shape. The cost is moved to
-  the read side: every UI, indexer, and valuation engine must apply the multiplier, exactly
-  once, in exactly the right place. That is the entire failure mode of the standard, and the
-  reason this page and the <a href="https://www.npmjs.com/package/erc8056"><code>erc8056</code></a>
-  package exist.
-</p>
+    <!-- 4 RULE 1 POSITIONS -->
+    <section class="sec" id="s4">
+      <div class="body">
+        <div class="sh"><span class="no">4.</span><h2>Rule 1 &#183; positions</h2></div>
+        <p>Raw balances understate holdings. The true share-equivalent is:</p>
+        <div class="list"><span class="cm">// bit-for-bit the on-chain balanceOfUI() math</span>
+trueBalance({ raw, multiplier })  =  raw &#215; multiplier &#247; 1e18   <span class="cm">// floored</span></div>
+        <p><span class="mono-em">trueBalance</span> floors exactly as the chain does, so your number equals <span class="mono-em">balanceOfUI</span> to the wei. This is the number to show a user as &#8220;shares held&#8221;, never the raw ERC-20 balance. It depends only on <a class="xref" data-ref="s3">&#167;3 (the multiplier)</a>.</p>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> conversion, computed locally</button>
+          <div class="panel"><div><div class="in"><code>toUiAmount</code> / <code>fromUiAmount</code> perform the spec conversion math in JS, because the on-chain conversion extension (<code>toUIAmount</code>/<code>fromUIAmount</code>) is <b>not deployed</b>, calls revert. See <a class="xref" data-ref="s7">&#167;7</a>.</div></div></div>
+        </div>
+      </div>
+    </section>
 
-<h2 id="spec">The spec surface</h2>
-<p>
-  One required interface, three optional extensions. Compliant contracts MUST implement
-  <a href="https://eips.ethereum.org/EIPS/eip-165">ERC-165</a> and answer <code>true</code> for the
-  core interface ID. Every ID below is stated in the spec and was independently re-derived from
-  selector XOR, then confirmed with live <code>supportsInterface</code> reads against Stock Tokens
-  on chain 4663.
-</p>
-<div class="table-scroll">
-<table>
-  <thead><tr><th>Interface</th><th>Members</th><th>ERC-165 ID</th><th>On Robinhood Chain</th></tr></thead>
-  <tbody>
-    <tr>
-      <td><code>IScaledUIAmount</code><br><span class="pill">required</span></td>
-      <td><code>uiMultiplier()</code><br>event <code>UIMultiplierUpdated</code></td>
-      <td><code>0xa60bf13d</code></td>
-      <td>implemented</td>
-    </tr>
-    <tr>
-      <td><code>IScaledUIAmountNewUIMultiplier</code></td>
-      <td><code>newUIMultiplier()</code>, <code>effectiveAt()</code></td>
-      <td><code>0x4bd27648</code></td>
-      <td>implemented</td>
-    </tr>
-    <tr>
-      <td><code>IScaledUIAmountConversion</code></td>
-      <td><code>toUIAmount(uint256)</code>, <code>fromUIAmount(uint256)</code></td>
-      <td><code>0x57854fc3</code></td>
-      <td><strong>not implemented</strong> (calls revert)</td>
-    </tr>
-    <tr>
-      <td><code>IScaledUIAmountBalances</code></td>
-      <td><code>balanceOfUI(address)</code>, <code>totalSupplyUI()</code></td>
-      <td><code>0xd890fd71</code></td>
-      <td>implemented</td>
-    </tr>
-  </tbody>
-</table>
+    <!-- 5 RULE 2 VALUATION -->
+    <section class="sec" id="s5">
+      <div class="body">
+        <div class="sh"><span class="no">5.</span><h2>Rule 2 &#183; valuation</h2></div>
+        <p>To value a position you must declare <em>what kind of price you hold</em>. A bare <span class="mono-em">number</span> does not compile; the only way to make a <span class="mono-em">StockPrice</span> is a branded constructor:</p>
+        <div class="list"><span class="cm">// feed price (USD per TOKEN): multiplier NOT re-applied</span>
+trueValue({ raw, multiplier, price: <b>adjustedPrice</b>(100.62) })
+
+<span class="cm">// share quote (USD per SHARE): multiplier applied once</span>
+trueValue({ raw, multiplier, price: <b>rawPrice</b>(100.53) })</div>
+        <p>The multiplier is applied by <span class="mono-em">trueValue</span> exactly zero or one times, decided by the price's brand. Choosing the wrong brand is the trap in <a class="xref" data-ref="s6">&#167;6</a>, and here it is a type error, not a silent loss.</p>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin &#183; the table</div>
+        <div class="note" data-note open>
+          <button type="button"><span class="mk"><b>+</b></span> which constructor, when</button>
+          <div class="panel"><div><div class="in"><b>adjustedPrice(usd)</b>, a Chainlink feed answer on Robinhood Chain. The multiplier is already inside the price; <code>trueValue</code> applies it <b>never</b>.<br><br><b>rawPrice(usd)</b>, an off-chain exchange or broker share quote. The multiplier is applied <b>exactly once</b>. Passing a plain <code>number</code> is a deliberate compile error.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 THE TRAP -->
+    <section class="sec" id="s6">
+      <div class="body">
+        <div class="sh"><span class="no">6.</span><h2>The one trap, spelled out</h2></div>
+        <p>On Robinhood Chain, <b>Chainlink Stock Token feed answers are already multiplier-adjusted</b>: the answer is the price of one TOKEN, not one underlying share. Robinhood's docs state it, and the market confirms it. So you scale the balance (<a class="xref" data-ref="s4">&#167;4</a>), and you take the feed price as-is (<a class="xref" data-ref="s5">&#167;5</a>).</p>
+        <p>Get this backwards and every position off a live feed is wrong by the multiplier, here, off by roughly 2&#215; on WEEK.</p>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin &#183; evidence</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> three numbers at one block</button>
+          <div class="panel"><div><div class="in">At block <b>10,745,112</b> the Uniswap v3 <b>SGOV/USDG</b> pool priced the token at <code>$100.6075</code>; the Chainlink feed answered <code>$100.6215</code>; the unadjusted share price was <code>$100.5252</code>. The pool and the feed agree on the <em>token</em>; only the share price differs, proof the feed already carries the multiplier.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 DEPLOYED REALITY -->
+    <section class="sec" id="s7">
+      <div class="body">
+        <div class="sh"><span class="no">7.</span><h2>Deployed reality vs the draft</h2></div>
+        <p>Facts about Robinhood's deployed <span class="mono-em">Stock</span> implementation (<span class="mono-em">0xb354&#8230;5aE2</span>, verified source) that the spec draft alone will not tell you. This package encodes the deployed flavor, not the draft's.</p>
+        <ul class="plain">
+          <li data-b="&#8226;">The optional transfer event is <span class="mono-em">TransferWithScaledUI</span>, not the draft's <span class="mono-em">TransferWithUIAmount</span>. Both ABIs ship; indexers need the deployed topic.</li>
+          <li data-b="&#8226;">The conversion extension is <b>not implemented</b>; calls revert. This package computes conversions locally (<a class="xref" data-ref="s4">&#167;4</a>).</li>
+          <li data-b="&#8226;">Issuer updates go through <span class="mono-em">updateMultiplier(uint256)</span> and <span class="mono-em">updateMultiplier(uint256,uint256)</span>.</li>
+        </ul>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> the event topic indexers need</button>
+          <div class="panel"><div><div class="in"><code>TransferWithScaledUI</code> hashes to topic <code>0x37e7f0db&#8230;3802</code>. Subscribe to that, not to the draft's <code>TransferWithUIAmount</code>, or you will index nothing on the live chain.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 API -->
+    <section class="sec" id="s8">
+      <div class="body">
+        <div class="sh"><span class="no">8.</span><h2>API surface</h2></div>
+        <p>Nine reads and constructors, one ABI. Detection never throws; a plain ERC-20 resolves cleanly to false.</p>
+        <ul class="plain">
+          <li data-b="&#8226;"><span class="mono-em">readUiMultiplier</span> &#183; <span class="mono-em">readMultiplierState</span> &#183; <span class="mono-em">watchMultiplier</span>, read and follow the factor and its <em>UIMultiplierUpdated</em> events (<a class="xref" data-ref="s3">&#167;3</a>).</li>
+          <li data-b="&#8226;"><span class="mono-em">trueBalance</span> &#183; <span class="mono-em">trueValue</span> &#183; <span class="mono-em">adjustedPrice</span> &#183; <span class="mono-em">rawPrice</span>, the two rules and their branded prices (<a class="xref" data-ref="s4">&#167;4</a>, <a class="xref" data-ref="s5">&#167;5</a>).</li>
+          <li data-b="&#8226;"><span class="mono-em">supportsErc8056</span> &#183; <span class="mono-em">detectErc8056</span>, ERC-165 first, direct probe fallback, per-extension report.</li>
+          <li data-b="&#8226;"><span class="mono-em">erc8056Abi</span> &#183; <span class="mono-em">INTERFACE_IDS</span> &#183; <span class="mono-em">MULTIPLIER_ONE</span>, ABI fragments and constants (<a class="xref" data-ref="s9">&#167;9</a>).</li>
+        </ul>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin &#183; quickstart</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> read a multiplier in four lines</button>
+          <div class="panel"><div><div class="in"><div class="list" style="margin:0"><span class="st">import</span> { readUiMultiplier } <span class="st">from</span> <span class="st">'erc8056'</span>
+<span class="st">const</span> m = <span class="st">await</span> readUiMultiplier(
+  client, WEEK)
+<span class="cm">// 2006182524271844660n</span></div></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 INTERFACE IDS -->
+    <section class="sec" id="s9">
+      <div class="body">
+        <div class="sh"><span class="no">9.</span><h2>Interface IDs</h2></div>
+        <p>Four ERC-165 interface identifiers, taken from the spec, re-derived from selector XOR, and confirmed by live <span class="mono-em">supportsInterface</span> reads against real Stock Tokens.</p>
+        <div class="list">core          <b>0xa60bf13d</b>
+metadata      <b>0x4bd27648</b>
+events        <b>0x57854fc3</b>
+conversion    <b>0xd890fd71</b>  <span class="cm">// declared, not deployed (&#167;7)</span></div>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> why re-derive them</button>
+          <div class="panel"><div><div class="in">Trusting a draft's printed ID is how indexers ship dead detection. Every ID here is XORed from its own selectors <b>and</b> checked against a live <code>supportsInterface</code> call, so the constant and the chain agree before you depend on it.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 REFERENCE IMPL -->
+    <section class="sec" id="s10">
+      <div class="body">
+        <div class="sh"><span class="no">10.</span><h2>Reference implementation</h2></div>
+        <p><span class="mono-em">contracts/src/IERC8056.sol</span> declares all four spec interfaces plus an <span class="mono-em">ERC8056InterfaceIds</span> constants library. <span class="mono-em">ERC8056Consumer.sol</span> is the commented pattern for consuming these tokens from another contract, detection, true balances, and both valuation branches, with the multiplier deliberately absent from the adjusted-feed branch.</p>
+        <p>Fork tests run against live mainnet Stock Tokens, read-only, no keys, no funds:</p>
+        <div class="list"><button class="copy" data-copy="forge test --fork-url https://rpc.mainnet.chain.robinhood.com">COPY</button><span class="cm"># asserts, against the chain itself:</span>
+<span class="cm">#   totalSupplyUI == totalSupply * uiMultiplier / 1e18</span>
+forge test --fork-url https://rpc.mainnet.chain.robinhood.com</div>
+      </div>
+      <div class="margin">
+        <div class="mtag">// margin</div>
+        <div class="note" data-note>
+          <button type="button"><span class="mk"><b>+</b></span> what the fork test proves</button>
+          <div class="panel"><div><div class="in">Against <b>AAPL / SGOV / WEEK</b> it asserts: mandatory ERC-165 answers, live multiplier values, <code>totalSupplyUI == totalSupply &#215; uiMultiplier &#247; 1e18</code> bit-for-bit, <code>balanceOfUI</code> agreement on a real top holder, the absence of the conversion extension, and that valuation never re-applies the multiplier.</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTALL -->
+    <section class="sec" id="get" style="grid-template-columns:1fr">
+      <div class="body" style="max-width:none">
+        <div class="sh"><span class="no">&#167;</span><h2>Install &amp; verify</h2></div>
+        <div class="install">
+          <button class="copy" data-copy="npm install erc8056 viem">COPY</button>
+<span class="p">npm install erc8056 viem</span>
+<span class="c"># unit + type-level tests (misuse must not compile)</span>
+<span class="p">npm test</span>
+<span class="c"># live reads against Robinhood Chain mainnet (public RPC, read-only)</span>
+<span class="p">npm run test:live</span>
+        </div>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/erc8056">npm</a>
+          <a class="btn" href="https://github.com/nirholas/erc8056">source</a>
+          <a class="btn" href="https://eips.ethereum.org/EIPS/eip-8056">the eip</a>
+          <a class="btn" href="https://robinhoodchain.blockscout.com/address/0xb35490d6f9163DE4F80d88dc75c3516eb64C5aE2?tab=contract">deployed Stock</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="big">apply it<br>exactly once.</div>
+    <div class="meta">
+      ERC-8056 &#183; Scaled UI Amount &#183; uiMultiplier<br>
+      <a href="https://github.com/nirholas/erc8056">github.com/nirholas/erc8056</a><br>
+      <a href="https://www.npmjs.com/package/erc8056">npmjs.com/package/erc8056</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> &#183; <a href="https://three.ws">three.ws</a> &#183; not affiliated with Robinhood Markets
+    </div>
+  </footer>
 </div>
-<h3>Events</h3>
-<pre><code>event UIMultiplierUpdated(uint256 oldMultiplier, uint256 newMultiplier, uint256 effectiveAtTimestamp);
-// MUST be emitted on every multiplier change. All params non-indexed.
-// topic0: 0x2205df4534432b2f60654a3fdb48737ffdaf3e9edb1a498bd985bc026b15b055</code></pre>
-<p>
-  A real instance, from SGOV's reinvested dividend: block
-  <a href="https://robinhoodchain.blockscout.com/tx/0x79292bc8af671bd6fc4ebc8f5e7a27c814d87988e175cbfab2ab1db1df0efbfb">4629631</a>
-  carries <code>UIMultiplierUpdated(1000000000000000000, 1000957519890990718, 1783541672)</code>:
-  from 1.0 to 1.000957&hellip;, effective 2026-07-08 20:14:32 UTC.
-</p>
-<h3>Scheduled changes</h3>
-<p>
-  Corporate actions are announced before they happen, and the standard mirrors that:
-  <code>newUIMultiplier()</code> and <code>effectiveAt()</code> expose the scheduled change, and
-  <code>uiMultiplier()</code> flips to the new value once the timestamp passes. One observed
-  subtlety of the deployed implementation: after activation, <code>newUIMultiplier()</code> and
-  <code>effectiveAt()</code> <strong>keep the last applied values</strong> rather than resetting.
-  "A change is pending" therefore means
-  <code>effectiveAt() &gt; block.timestamp &amp;&amp; newUIMultiplier() != uiMultiplier()</code>,
-  not merely <code>effectiveAt() != 0</code>.
-</p>
-
-<h2 id="math">The two rules (with real on-chain numbers)</h2>
-<p>
-  Everything an integrator must get right reduces to two rules. The numbers below are not
-  hypothetical; they were read from Robinhood Chain mainnet at block 10,745,112 (2026-07-15) and
-  are pinned by <a href="https://github.com/nirholas/erc8056">this project's test suites</a>.
-</p>
-
-<h3>Rule 1: positions. Raw balances understate holdings.</h3>
-<p>
-  WEEK (Roundhill Weekly T-Bill ETF token) reinvests weekly distributions. Its multiplier was
-  <code class="num">2006182524271844660</code>: one raw WEEK token was
-  <strong>2.0062 underlying shares</strong>.
-</p>
-<div class="compare">
-  <div class="card bad">
-    <h4>Wrong: show balanceOf</h4>
-    <div class="figure">1.0000 WEEK</div>
-    <div class="note">A naive tracker reads <code>balanceOf</code> = 1e18 and reports one share. The position is understated by 50.1%.</div>
-  </div>
-  <div class="card good">
-    <h4>Right: apply the multiplier</h4>
-    <div class="figure">2.0062 shares</div>
-    <div class="note"><code>1e18 &times; 2006182524271844660 / 1e18</code>. Cross-checkable on-chain: <code>balanceOfUI()</code> computes exactly this, floored.</div>
-  </div>
-</div>
-
-<h3>Rule 2: valuation. Know what your price is a price of.</h3>
-<p>
-  SGOV's multiplier was <code class="num">1000957519890990718</code> and its Chainlink feed
-  answered <code class="num">100.62147097</code> USD. That answer is the price of one
-  <strong>token</strong>; the multiplier is already inside it. Value a 1-token position:
-</p>
-<div class="compare">
-  <div class="card bad">
-    <h4>Wrong: re-apply the multiplier</h4>
-    <div class="figure">$100.7178</div>
-    <div class="note"><code>100.62147097 &times; 1.000957&hellip;</code> double-counts the dividend. Every split and distribution inflates the error further.</div>
-  </div>
-  <div class="card good">
-    <h4>Right: tokens &times; feed price</h4>
-    <div class="figure">$100.6215</div>
-    <div class="note"><code>balanceOf &times; feedAnswer / 1e18</code>. The multiplier appears nowhere. That absence is the correctness.</div>
-  </div>
-</div>
-<div class="card callout">
-  <p><strong>The invariant:</strong> the multiplier is applied <em>exactly once</em> across the
-  balance-and-price pair. Feed prices per token: apply it zero more times. Share prices from an
-  off-chain equity quote: apply it exactly once, to the balance. The
-  <code>erc8056</code> package enforces this with branded price types; a bare number does not
-  compile.</p>
-</div>
-
-<h2 id="feeds">The price-feed question, answered definitively</h2>
-<p>
-  "Is the Chainlink answer pre- or post-multiplier?" is the ambiguity that produces most
-  real-world bugs, because for most tokens (multiplier still 1.0) both readings give the same
-  number and the bug ships silently. Three independent lines of evidence settle it:
-</p>
-<ol>
-  <li>
-    <strong>The issuer says so.</strong> Robinhood's
-    <a href="https://docs.robinhood.com/chain/building-with-stock-tokens/">developer documentation</a>:
-    "The Chainlink price already includes the corporate-action multiplier (dividends, splits), so
-    the value you read is the token's full price - don't apply the multiplier yourself."
-  </li>
-  <li>
-    <strong>The market agrees.</strong> At block 10,745,112 the Uniswap v3 SGOV/USDG pool
-    (<a href="https://robinhoodchain.blockscout.com/address/0xFfb376Bfc48668f16719b42ed8AEEF5b98dBc4f1">0xFfb3&hellip;c4f1</a>,
-    0.01% tier) priced the token at <span class="num">$100.6075</span>. The feed said
-    <span class="num">$100.6215</span>: 0.014% apart. The unadjusted share price,
-    <span class="num">$100.5252</span> (feed &divide; multiplier), is 0.096% away. Live DEX
-    liquidity tracks the <em>adjusted</em> number.
-  </li>
-  <li>
-    <strong>The magnitudes reconcile.</strong> feed &asymp; share price &times; multiplier holds
-    on SGOV to within normal market noise; the relationship is not an accident of one reading,
-    and it is asserted continuously by this project's fork tests.
-  </li>
-</ol>
-<div class="card callout warn">
-  <p><strong>Scope note:</strong> this is verified for Robinhood Chain's Stock Token feeds. The
-  ERC-8056 spec itself does not standardize oracle behavior. If you integrate a different
-  ERC-8056 asset, verify its oracle's convention the same way (compare against a DEX pool or the
-  issuer's docs) before choosing which valuation branch to use.</p>
-</div>
-
-<h2 id="deployed">As deployed on Robinhood Chain (chain ID 4663)</h2>
-<p>
-  Every canonical Stock Token is a BeaconProxy resolving through the shared beacon
-  <code>0xe10b6f6B275de231345c20D14Ab812db62151b00</code> to the verified <code>Stock</code>
-  implementation
-  (<a href="https://robinhoodchain.blockscout.com/address/0xb35490d6f9163DE4F80d88dc75c3516eb64C5aE2?tab=contract">0xb354&hellip;C5aE2</a>).
-  Reading its verified source and ABI surfaces four facts the spec draft alone will not tell you:
-</p>
-<ul>
-  <li><strong>The transfer event is named differently.</strong> The draft's optional event is
-      <code>TransferWithUIAmount</code>; the deployed contract emits
-      <code>TransferWithScaledUI(address indexed from, address indexed to, uint256 value, uint256 uiValue)</code>,
-      topic0 <code>0x37e7f0db430edc9dd31bc66f25f8449353aa0818f503b906747dd8f286cd3802</code>.
-      Events do not affect ERC-165 IDs, so both are conformant, but an indexer subscribed to the
-      draft's topic sees nothing.</li>
-  <li><strong>The conversion extension is absent.</strong> <code>toUIAmount</code>/<code>fromUIAmount</code>
-      are not in the ABI, calls revert, and <code>supportsInterface(0x57854fc3)</code> is
-      <code>false</code>. Compute conversions locally.</li>
-  <li><strong>Updates go through <code>updateMultiplier</code>.</strong> The issuer-side writers are
-      <code>updateMultiplier(uint256)</code> and <code>updateMultiplier(uint256,uint256)</code>
-      (value + effective timestamp), not the reference implementation's <code>setUIMultiplier</code>.
-      They are access-controlled; only the issuer moves the multiplier.</li>
-  <li><strong><code>balanceOfUI</code>/<code>totalSupplyUI</code> floor.</strong>
-      <code>totalSupplyUI() == totalSupply() * uiMultiplier() / 1e18</code> holds bit-for-bit on
-      live tokens (verified on SGOV and WEEK), so local math can replicate the chain exactly.</li>
-</ul>
-<p>Observed live multipliers (2026-07-15; the widget above shows current values):</p>
-<div class="table-scroll">
-<table>
-  <thead><tr><th>Token</th><th>uiMultiplier()</th><th>Meaning</th><th>Effective</th></tr></thead>
-  <tbody>
-    <tr><td>AAPL, AMZN, and most others</td><td class="num">1000000000000000000</td><td>No corporate action yet; 1 token = 1 share</td><td class="num">n/a</td></tr>
-    <tr><td>SGOV</td><td class="num">1000957519890990718</td><td class="mult-up">+0.0958% reinvested dividend</td><td class="num">2026-07-08 20:14 UTC</td></tr>
-    <tr><td>WEEK</td><td class="num">2006182524271844660</td><td class="mult-up">+100.6% cumulative weekly distributions</td><td class="num">2026-06-29 13:30 UTC</td></tr>
-  </tbody>
-</table>
-</div>
-
-<h2 id="integrate">Integration recipes</h2>
-<h3>JavaScript / TypeScript</h3>
-<p>
-  <code>npm install erc8056 viem</code> - a &lt;3 kB package whose types make the wrong
-  valuation branch a compile error:
-</p>
-<pre><code>import { createPublicClient, http } from 'viem'
-import { robinhood } from 'viem/chains'
-import {
-  readUiMultiplier, readMultiplierState, watchMultiplier,
-  trueBalance, trueValue, adjustedPrice, rawPrice, supportsErc8056,
-} from 'erc8056'
-
-const client = createPublicClient({ chain: robinhood, transport: http() })
-const WEEK = '0xc93a8c440CEa26D7445dF01729f193b27965099f'
-
-// Rule 1: positions
-const multiplier = await readUiMultiplier(client, WEEK)   // 2006182524271844660n
-const shares = trueBalance({ raw: rawBalance, multiplier }) // == on-chain balanceOfUI
-
-// Rule 2: valuation. A bare number is not a price; declare what you hold.
-trueValue({ raw, multiplier, price: adjustedPrice(feedUsd) }) // Chainlink on chain 4663
-trueValue({ raw, multiplier, price: rawPrice(shareUsd) })     // off-chain share quote
-// trueValue({ raw, multiplier, price: feedUsd })  &lt;- does not compile
-
-// Corporate-action monitoring
-const unwatch = watchMultiplier(client, WEEK, (u) =&gt;
-  console.log(`multiplier ${u.oldMultiplier} -&gt; ${u.newMultiplier} at ${u.effectiveAt}`))
-
-// Scheduled-but-not-yet-effective changes
-const { pending } = await readMultiplierState(client, WEEK)
-
-// Non-implementers detected gracefully, no throw
-await supportsErc8056(client, someToken) // false for a plain ERC-20</code></pre>
-
-<h3>Solidity</h3>
-<p>
-  The repo ships <code>IERC8056.sol</code> (all four interfaces + interface-ID constants) and
-  <code>ERC8056Consumer.sol</code>, a commented reference consumer proven by fork tests against
-  live tokens. The essence:
-</p>
-<pre><code>import {IScaledUIAmount, ERC8056InterfaceIds} from "erc8056/contracts/src/IERC8056.sol";
-
-// Detect (ERC-165 is mandatory for compliant tokens)
-bool ok = IERC165(token).supportsInterface(ERC8056InterfaceIds.SCALED_UI_AMOUNT);
-
-// Rule 1: true position
-uint256 shares = IERC20(token).balanceOf(user) * IScaledUIAmount(token).uiMultiplier() / 1e18;
-
-// Rule 2: value with a Robinhood Chain Chainlink feed - NO multiplier here,
-// the feed already applied it:
-(, int256 answer,,,) = feed.latestRoundData();
-uint256 usdValue = IERC20(token).balanceOf(user) * uint256(answer) / 1e18;</code></pre>
-<p>Run the fork suite yourself (read-only, no keys):</p>
-<pre><code>cd contracts
-forge soldeer install
-forge test --fork-url https://rpc.mainnet.chain.robinhood.com</code></pre>
-
-<h2 id="faq">FAQ</h2>
-<details>
-  <summary>Is an ERC-8056 token a rebase token?</summary>
-  <div><p>No. Rebase tokens rewrite <code>balanceOf</code>; ERC-8056 never does. Raw balances and
-  <code>totalSupply</code> are permanent, which is why AMMs and lending markets keep working
-  through corporate actions. Only the display layer (and your accounting of "how many shares is
-  this") scales.</p></div>
-</details>
-<details>
-  <summary>Do I multiply the Chainlink price by uiMultiplier?</summary>
-  <div><p>On Robinhood Chain: <strong>no, never.</strong> The feed answer is already the token's
-  full, multiplier-adjusted price (issuer-documented and market-verified above). Multiplying
-  again double-counts every split and dividend. For other chains or issuers, verify the oracle's
-  convention first; the spec does not standardize it.</p></div>
-</details>
-<details>
-  <summary>How do I detect whether a token implements ERC-8056?</summary>
-  <div><p>ERC-165 is mandatory: <code>supportsInterface(0xa60bf13d)</code>. As a fallback for
-  non-compliant partial implementers, staticcall <code>uiMultiplier()</code> and check for a
-  32-byte uint. A token with neither is a plain ERC-20, which behaves exactly like a multiplier
-  of <code>1e18</code>.</p></div>
-</details>
-<details>
-  <summary>Can the multiplier go below 1e18?</summary>
-  <div><p>Yes: a reverse split scales it down (a 1-for-2 reverse split halves it). The math is
-  unchanged. Nothing observed on Robinhood Chain has gone below <code>1e18</code> yet; SGOV and
-  WEEK have only moved up, via reinvested distributions.</p></div>
-</details>
-<details>
-  <summary>What precision and rounding does the standard use?</summary>
-  <div><p>The multiplier is 18-decimal fixed point (<code>1e18</code> = 1.0). The deployed
-  implementation floors: <code>balanceOfUI = balanceOf * uiMultiplier / 1e18</code> with EVM
-  integer division. The <code>erc8056</code> package reproduces this bit-for-bit (asserted
-  against live <code>totalSupplyUI</code> in its tests), so client-side and on-chain numbers
-  never diverge.</p></div>
-</details>
-<details>
-  <summary>Which event should my indexer subscribe to?</summary>
-  <div><p>For corporate actions: <code>UIMultiplierUpdated(uint256,uint256,uint256)</code>,
-  topic0 <code>0x2205df45&hellip;b055</code>, emitted on every change (spec MUST). For
-  UI-amount transfers on Robinhood Chain: <code>TransferWithScaledUI</code>, topic0
-  <code>0x37e7f0db&hellip;3802</code>. The draft's <code>TransferWithUIAmount</code> name is not
-  what the deployed contracts emit.</p></div>
-</details>
-<details>
-  <summary>Does uiMultiplier() flip automatically at effectiveAt?</summary>
-  <div><p>Yes. The scheduled value in <code>newUIMultiplier()</code> becomes the answer of
-  <code>uiMultiplier()</code> once <code>block.timestamp &gt;= effectiveAt()</code>, with no
-  further transaction. After activation the deployed implementation keeps the last applied
-  values in <code>newUIMultiplier()</code>/<code>effectiveAt()</code>, so test for pending as
-  <em>future timestamp and differing value</em>, not merely a nonzero timestamp.</p></div>
-</details>
-<details>
-  <summary>Why does toUIAmount() revert on Stock Tokens?</summary>
-  <div><p>Robinhood's implementation omits the optional conversion extension
-  (<code>supportsInterface(0x57854fc3)</code> is <code>false</code>). The conversion is one
-  multiplication; do it locally (<code>toUiAmount</code>/<code>fromUiAmount</code> in the
-  package) and save the RPC round-trip.</p></div>
-</details>
-
-<h2 id="sources">Sources</h2>
-<p>Every semantic claim above traces to one of these; nothing is folklore.</p>
-<ul class="src-list">
-  <li>Spec: <a href="https://eips.ethereum.org/EIPS/eip-8056">EIP-8056, eips.ethereum.org</a> (Draft, created 2025-10-20; requires ERC-20, ERC-165), and the source file <a href="https://github.com/ethereum/ERCs/blob/master/ERCS/erc-8056.md">ethereum/ERCs erc-8056.md</a>.</li>
-  <li>Discussion: <a href="https://ethereum-magicians.org/t/erc-8056-scaled-ui-amount-extension-for-erc-20-tokens/25899">Ethereum Magicians thread 25899</a>.</li>
-  <li>Issuer semantics and the feed-adjustment statement: <a href="https://docs.robinhood.com/chain/building-with-stock-tokens/">docs.robinhood.com, Building with Stock Tokens</a>.</li>
-  <li>Deployed ground truth: the verified <code>Stock</code> implementation <a href="https://robinhoodchain.blockscout.com/address/0xb35490d6f9163DE4F80d88dc75c3516eb64C5aE2?tab=contract">0xb35490d6&hellip;C5aE2 on Blockscout</a> (event names, updateMultiplier, absent conversion extension).</li>
-  <li>On-chain observations (2026-07-15, block 10,745,112, public RPC): live multiplier / <code>supportsInterface</code> / <code>totalSupplyUI</code> reads on <a href="https://robinhoodchain.blockscout.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9">AAPL</a>, <a href="https://robinhoodchain.blockscout.com/address/0x92FD66527192E3e61d4DDd13322Aa222DE86F9B5">SGOV</a>, <a href="https://robinhoodchain.blockscout.com/address/0xc93a8c440CEa26D7445dF01729f193b27965099f">WEEK</a>; SGOV's <code>UIMultiplierUpdated</code> in tx <a href="https://robinhoodchain.blockscout.com/tx/0x79292bc8af671bd6fc4ebc8f5e7a27c814d87988e175cbfab2ab1db1df0efbfb">0x79292bc8&hellip;fbfb</a>; SGOV/USDG pool <a href="https://robinhoodchain.blockscout.com/address/0xFfb376Bfc48668f16719b42ed8AEEF5b98dBc4f1">0xFfb376&hellip;c4f1</a> spot vs feed triangulation. Reproducible via the repo's live tests and fork tests.</li>
-  <li>Interface IDs re-derived from selector XOR (<code>cast sig</code>): <code>uiMultiplier() = 0xa60bf13d</code>; <code>newUIMultiplier() ^ effectiveAt() = 0xdc767007 ^ 0x97a4064f = 0x4bd27648</code>; <code>balanceOfUI(address) ^ totalSupplyUI() = 0xd890fd71</code>; <code>toUIAmount(uint256) ^ fromUIAmount(uint256) = 0x57854fc3</code>.</li>
-</ul>
-
-</main>
-
-<footer>
-  <div class="wrap">
-    <p>
-      <a href="https://github.com/nirholas/erc8056">github.com/nirholas/erc8056</a> &middot;
-      <a href="https://www.npmjs.com/package/erc8056">npm: erc8056</a> &middot; MIT
-    </p>
-    <p>Stock Tokens are tokenized debt securities issued by Robinhood Assets (Jersey) Ltd and may
-    not be offered, sold, or delivered to US persons. This page displays public on-chain data and
-    is not investment advice or an offer of securities.</p>
-    <p>Built by <a href="https://x.com/nichxbt">nirholas</a> &middot; <a href="https://three.ws">three.ws</a></p>
-  </div>
-</footer>
 
 <script>
-(function () {
-  'use strict'
-  var RPC = 'https://rpc.mainnet.chain.robinhood.com'
-  var SEL = {
-    uiMultiplier: '0xa60bf13d',
-    newUIMultiplier: '0xdc767007',
-    effectiveAt: '0x97a4064f'
+"use strict";
+
+/* ---------- masthead subtitle types itself ---------- */
+(function(){
+  const el = document.getElementById('subtitle');
+  const text = 'Scaled UI Amount, the uiMultiplier standard, with living margins.';
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce){ el.textContent = text; return; }
+  let i = 0;
+  const t = setInterval(()=>{
+    i += 1; el.textContent = text.slice(0,i);
+    if(i >= text.length) clearInterval(t);
+  }, 26);
+})();
+
+/* ---------- living margin notes: expand in place ---------- */
+document.querySelectorAll('.note[data-note]').forEach(note=>{
+  const btn = note.querySelector('button');
+  if(note.hasAttribute('open')) note.classList.add('open');
+  btn.addEventListener('click', ()=> note.classList.toggle('open'));
+});
+
+/* ---------- cross-references: draw a line, scroll, flash ---------- */
+const svg = document.getElementById('xrefsvg');
+const path = document.getElementById('xrefpath');
+let activeXref = null, rafId = 0;
+
+function centerRight(el){
+  const r = el.getBoundingClientRect();
+  return { x: r.right, y: r.top + r.height/2, top:r.top, bottom:r.bottom };
+}
+function drawLine(fromEl, toEl){
+  const a = fromEl.getBoundingClientRect();
+  const b = toEl.getBoundingClientRect();
+  const ax = a.right, ay = a.top + a.height/2;
+  // aim at the target heading's left edge, clamped into the viewport vertically
+  const bx = b.left + 8;
+  const by = Math.max(12, Math.min(innerHeight-12, b.top + 18));
+  const midx = Math.max(ax, bx) + 60;
+  const d = `M ${ax+4} ${ay} C ${midx} ${ay}, ${midx} ${by}, ${bx} ${by}`;
+  path.setAttribute('d', d);
+  const len = path.getTotalLength();
+  path.style.strokeDasharray = '5 4';
+  path.style.opacity = '1';
+}
+function clearLine(){ path.setAttribute('d',''); path.style.opacity='0'; }
+
+document.querySelectorAll('.xref').forEach(x=>{
+  const targetId = x.getAttribute('data-ref');
+  const target = document.getElementById(targetId);
+  if(!target) return;
+  function show(){
+    activeXref = { x, target };
+    x.classList.add('on');
+    target.classList.add('xtarget');
+    drawLine(x, target);
   }
-  var ONE = 1000000000000000000n
-
-  var table = document.getElementById('live-table')
-  var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'))
-  var errorBox = document.getElementById('live-error')
-  var blockLabel = document.getElementById('live-block')
-
-  function rpc(calls) {
-    var batch = calls.map(function (c, i) {
-      return { jsonrpc: '2.0', id: i, method: c.method, params: c.params }
-    })
-    return fetch(RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(batch)
-    }).then(function (res) {
-      if (!res.ok) throw new Error('RPC HTTP ' + res.status)
-      return res.json()
-    }).then(function (out) {
-      var byId = {}
-      out.forEach(function (r) { byId[r.id] = r })
-      return calls.map(function (_, i) {
-        var r = byId[i]
-        if (!r || r.error) throw new Error(r && r.error ? r.error.message : 'missing response')
-        return r.result
-      })
-    })
+  function hide(){
+    x.classList.remove('on');
+    target.classList.remove('xtarget');
+    clearLine();
+    activeXref = null;
   }
+  x.addEventListener('pointerenter', show);
+  x.addEventListener('pointerleave', hide);
+  x.addEventListener('focus', show);
+  x.addEventListener('blur', hide);
+  x.addEventListener('click', e=>{
+    e.preventDefault();
+    target.scrollIntoView({ behavior:'smooth', block:'center' });
+    target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash');
+    // keep the line briefly during the scroll, then clear
+    setTimeout(()=>{ if(activeXref && activeXref.x===x){ hide(); } }, 900);
+  });
+});
 
-  function formatMultiplier(hex) {
-    var v = BigInt(hex)
-    var whole = v / ONE
-    var frac = (v % ONE).toString().padStart(18, '0')
-    return { raw: v, text: whole.toString() + '.' + frac }
-  }
+/* redraw the active line on scroll/resize without layout thrash */
+function tick(){
+  rafId = 0;
+  if(activeXref) drawLine(activeXref.x, activeXref.target);
+}
+function schedule(){ if(!rafId) rafId = requestAnimationFrame(tick); }
+addEventListener('scroll', schedule, { passive:true });
+addEventListener('resize', ()=>{ svg.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`); schedule(); });
+svg.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
 
-  function formatShares(v) {
-    // 1 token in shares, 4 decimal places, floor like the chain does.
-    var scaled = v / 100000000000000n // 4 dp
-    var s = scaled.toString().padStart(5, '0')
-    return s.slice(0, -4) + '.' + s.slice(-4)
-  }
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    navigator.clipboard.writeText(btn.dataset.copy||'').then(()=>{
+      const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
 
-  function formatDate(hexTs) {
-    var ts = Number(BigInt(hexTs))
-    if (ts === 0) return 'no action yet'
-    var d = new Date(ts * 1000)
-    return d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
-  }
-
-  function load(showSkeletons) {
-    errorBox.style.display = 'none'
-    if (showSkeletons) {
-      rows.forEach(function (row) {
-        Array.prototype.slice.call(row.querySelectorAll('td')).slice(1).forEach(function (td) {
-          td.classList.add('skel')
-          td.textContent = 'loading'
-        })
-      })
-    }
-
-    var calls = [{ method: 'eth_blockNumber', params: [] }]
-    rows.forEach(function (row) {
-      var token = row.getAttribute('data-token')
-      ;[SEL.uiMultiplier, SEL.effectiveAt].forEach(function (sel) {
-        calls.push({ method: 'eth_call', params: [{ to: token, data: sel }, 'latest'] })
-      })
-    })
-
-    rpc(calls).then(function (results) {
-      blockLabel.textContent = 'block ' + BigInt(results[0]).toString() + ' / chain 4663'
-      rows.forEach(function (row, i) {
-        var m = formatMultiplier(results[1 + i * 2])
-        var eff = results[2 + i * 2]
-        var tds = row.querySelectorAll('td')
-        tds[1].textContent = m.text
-        tds[2].textContent = formatShares(m.raw) + ' shares'
-        tds[3].textContent = m.raw === ONE ? 'no action yet' : formatDate(eff)
-        if (m.raw !== ONE) tds[2].classList.add('mult-up')
-        Array.prototype.slice.call(tds).forEach(function (td) { td.classList.remove('skel') })
-      })
-    }).catch(function () {
-      rows.forEach(function (row) {
-        Array.prototype.slice.call(row.querySelectorAll('td')).slice(1).forEach(function (td) {
-          td.classList.remove('skel')
-          td.textContent = 'unavailable'
-        })
-      })
-      blockLabel.textContent = 'offline'
-      errorBox.style.display = 'block'
-    })
-  }
-
-  document.getElementById('live-retry').addEventListener('click', function () { load(true) })
-  load(true)
-  // Refresh every 60s while the tab is visible; multipliers move rarely,
-  // the block number proves liveness. Background refreshes keep the old
-  // values on screen instead of flashing skeletons.
-  setInterval(function () {
-    if (document.visibilityState === 'visible') load(false)
-  }, 60000)
-})()
+/* ---------- smooth-scroll the TOC ---------- */
+document.querySelectorAll('.toc a').forEach(a=>{
+  a.addEventListener('click', e=>{
+    const t = document.querySelector(a.getAttribute('href'));
+    if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth', block:'start'}); }
+  });
+});
 </script>
 </body>
 </html>

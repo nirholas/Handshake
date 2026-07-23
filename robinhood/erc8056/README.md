@@ -14,6 +14,18 @@ valuation branch a compile error.
 
 The full explainer, with live on-chain data: **https://nirholas.github.io/erc8056/**
 
+## Website
+
+The site in [`docs/`](docs/) is a single self-contained `index.html` (inline CSS + JS, zero external requests, works from `file://`). It presents ERC-8056 as a **typewritten RFC with living margins**: the spec reads as a monospaced document, every clause carries a margin annotation that expands in place when engaged, and following a cross-reference (`§4`, `§5`, `§6`) draws a connecting line between the clauses. Every figure is real, pinned to live chain 4663 state.
+
+Deploy the `docs/` folder anywhere static:
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/erc8056)
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/erc8056)
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/erc8056)
+
+Config lives in [`wrangler.toml`](wrangler.toml), [`netlify.toml`](netlify.toml), and [`vercel.json`](vercel.json). Each points the platform at `docs/`.
+
 - Tiny: about 2.5 kB gzipped, zero runtime dependencies (viem is a peer).
 - Verified: every semantic claim is pinned to live Robinhood Chain mainnet state by the test
   suites (Vitest live reads + Foundry fork tests), not folklore.
