@@ -23,6 +23,11 @@ const ENV_VARS = [
 	'three_KV_REST_API_TOKEN',
 	'KV_REST_API_URL',
 	'KV_REST_API_TOKEN',
+	// The host shell can leak a real OpenAI key into the suite (workspaces and
+	// CI both carry one); the health probe treats any present key as a
+	// configured backend and would probe api.openai.com, breaking the
+	// nothing-configured assertions. Scrub it with the rest.
+	'OPENAI_API_KEY',
 	'VERCEL_ENV',
 ];
 const savedEnv = {};

@@ -20,6 +20,32 @@ import { dirname, resolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
+// pipeline-stage.js fetches through the pinned SSRF guard (raw sockets, no
+// sandbox egress). Route the guard through the per-test fetch spy so those
+// staged responses stay authoritative, and enforce opts.maxBytes the way the
+// real guard does so the byte-cap branches keep their meaning.
+vi.mock('../../api/_lib/ssrf-guard.js', async () => {
+	const actual = await vi.importActual('../../api/_lib/ssrf-guard.js');
+	return {
+		...actual,
+		fetchSafePublicUrlPinned: async (url, init, opts) => {
+			const resp = await globalThis.fetch(url, init);
+			if (opts?.maxBytes == null) return resp;
+			const buf = await resp.arrayBuffer();
+			if (buf.byteLength > opts.maxBytes) {
+				throw new actual.MaxBytesExceededError(buf.byteLength, opts.maxBytes);
+			}
+			return {
+				ok: resp.ok,
+				status: resp.status,
+				headers: resp.headers ?? new Headers(),
+				arrayBuffer: async () => buf,
+				text: async () => Buffer.from(buf).toString('utf8'),
+			};
+		},
+	};
+});
+
 import {
 	StageError,
 	isGlbMagic,
