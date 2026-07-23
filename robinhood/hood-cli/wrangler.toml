@@ -1,0 +1,4 @@
+# Cloudflare Pages — static deploy of the docs/ site.
+# Used by the "Deploy to Cloudflare" button and `wrangler pages deploy docs`.
+name = "hood-cli"
+pages_build_output_dir = "docs"

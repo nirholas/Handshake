@@ -18,6 +18,16 @@ Docs + a live animated terminal demo (a REAL captured session, not invented outp
 **https://nirholas.github.io/hood-cli/commands.html** (generated straight from `hood
 <command> --help` — never hand-written, never drifts from the shipped binary).
 
+## Website
+
+A single-file, zero-dependency landing page lives in [`docs/`](./docs) — and it is **keyboard-only**: there is no nav and no buttons, because the product is a command line, so the site is one too. Type `price AAPL`, `stocks`, `swap`, `help` and real captured Robinhood Chain output answers back (with autocomplete, history, and Tab completion). It opens straight from `docs/index.html` (no build step) and deploys to GitHub Pages or any static host (output directory `docs`):
+
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hood-cli)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-cli)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-cli)
+
+Live: **https://nirholas.github.io/hood-cli/**
+
 ## Install
 
 ```bash
