@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T13:42:42.342Z",
+	"generated_at": "2026-07-23T13:45:06.563Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -81,11 +81,32 @@
 		{
 			"date": "2026-07-23",
 			"type": "update",
+			"title": "Every 3D view on the site now renders film-quality",
+			"summary": "We audited every 3D viewer on the platform, from the IRL AR placer and avatar talk mode to the marketplace lobby, the coin snapshot view, the trading floor, the demo pages, and the embeddable avatar widget, and brought them all up to one cinematic bar: filmic tone mapping, correct color management, and real photographic HDRI lighting (not a flat studio guess) reflecting off skin, chrome, and fabric alike. A model now looks the same whether you're seeing it on your own profile, in a marketplace card, embedded on someone else's site, or standing on a street corner in AR. Lower-end phones automatically get a lighter version (capped resolution, simplified lighting) so nothing chugs or overheats.",
+			"link": "/irl",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
 			"title": "Fixed: wallets showing $0 of $THREE on the tiers page",
 			"summary": "Holders reported the site not recognising their $THREE balance: /three showed \"You hold $0\" (Member tier) for wallets with real bags, across Phantom, Solflare, and Brave Wallet. Root cause: when our primary balance provider ran out of quota, the backup on-chain read only queried the classic SPL token program, and $THREE (like all pump.fun coins) lives on Token-2022, so it was invisible. The backup path now reads both token programs and rides the same deep multi-provider RPC failover as the rest of the platform, so holder tiers, fee discounts, and quota boosts resolve correctly even when individual RPC providers are down.",
 			"link": "/three",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
+			"title": "Forge results now come with a full next-step toolkit",
+			"summary": "Every model you forge now lands with four new one-click follow-ups right in the result bar. Rig for animation adds a humanoid skeleton and hands you straight to Pose Studio or IRL placement. Restyle materials re-skins the surface (chrome, wood, gold, cyberpunk neon, marble, rust, or your own description) without touching the shape. Iterate makes a real shape-changing edit from a plain sentence, like \"make the helmet red\" or \"add a backpack\", and keeps every version in a branchable history you can jump back to. And Place IRL sends the model straight into the AR pin-placement flow so you can anchor it somewhere real. The empty state also grew from three starter prompts to six, so there's more to try with zero typing.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

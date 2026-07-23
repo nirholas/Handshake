@@ -86,6 +86,7 @@ export class PointCloudViewer {
 	_tick() {
 		if (this._disposed) return;
 		requestAnimationFrame(this._loop);
+		if (document.visibilityState === 'hidden') return; // pause rendering on a backgrounded tab
 		const now = performance.now();
 		const damping = this.controls.enableDamping && now < this._settleUntil;
 		if (this._autoRotate && this.points) {

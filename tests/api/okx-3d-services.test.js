@@ -262,7 +262,7 @@ describe('paid dispatch — verify → engine → settle', () => {
 		return makeReq({ service, body, headers: { 'payment-signature': 'c2ln' } });
 	}
 
-	it('text-to-3d runs the free NVIDIA NIM lane (draft) and returns a pollable job', async () => {
+	it('text-to-3d runs the free draft-tier lane (no backend pin) and returns a pollable job', async () => {
 		const res = makeRes();
 		await handler(paidReq('text-to-3d', VALID_INPUT['text-to-3d']), res);
 		expect(res.statusCode).toBe(200);
@@ -270,7 +270,11 @@ describe('paid dispatch — verify → engine → settle', () => {
 		expect(body).toMatchObject({ service: 'text-to-3d', price_usd: '0.01', status: 'queued', job_id: 'forge-gen-1' });
 		expect(body.poll_url).toContain('/api/forge?job=');
 		const submit = globalThis.fetch.mock.calls.find(([u]) => String(u).endsWith('/api/forge'));
-		expect(JSON.parse(submit[1].body)).toMatchObject({ backend: 'nvidia', path: 'image' });
+		// No backend pin: the draft default now resolves to the photoreal
+		// image-intermediate pipeline (see forge-tiers.js FREE_DEFAULT_FOR_TIERS)
+		// instead of forcing NVIDIA's native text-only preview.
+		expect(JSON.parse(submit[1].body)).toMatchObject({ path: 'image' });
+		expect(JSON.parse(submit[1].body).backend).toBeUndefined();
 		expect(settlePaymentMock).toHaveBeenCalledTimes(1);
 		expect(res.headers['payment-response']).toBeTruthy();
 		expect(res.headers['x-payment-response']).toBe(res.headers['payment-response']);

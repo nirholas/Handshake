@@ -280,6 +280,7 @@ export function mountOracleGraph(canvas, labelContainer) {
 	let raf = 0;
 
 	function frame() {
+		if (document.visibilityState === 'hidden') { raf = requestAnimationFrame(frame); return; } // pause on a backgrounded tab
 		controls.update();
 		stepPhysics(0.016);
 

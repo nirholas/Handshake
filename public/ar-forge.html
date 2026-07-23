@@ -330,7 +330,10 @@
 						throw new Error(data.message || ('The forge is busy. Try again in about ' + secs + ' seconds.'));
 					}
 					if (!res.ok) throw new Error(data.message || ('The generator returned ' + res.status + '.'));
-					return data; // {status:'done', glb_url} or {job_id, status:'queued'}
+					// {status:'done', glb_url} or {job_id, status:'queued', eta_seconds, cold_start}
+					if (Number(data.eta_seconds) > 0) etaSeconds = Math.round(Number(data.eta_seconds));
+					coldStart = Boolean(data.cold_start);
+					return data;
 				});
 			});
 		}
@@ -348,7 +351,7 @@
 						if (seq !== runSeq) return null;
 						if (data.status === 'done' && data.glb_url) return data;
 						if (data.status === 'failed') throw new Error(data.error || 'Generation failed. Try rephrasing the prompt.');
-						if (data.status === 'running') workMsg.textContent = 'Sculpting geometry and painting textures. Usually under a minute.';
+						if (data.status === 'running') setStage('running');
 						return tick();
 					});
 				});
@@ -360,29 +363,34 @@
 			prompt = String(prompt || '').trim();
 			if (prompt.length < 3) { input.focus(); return; }
 			var seq = ++runSeq;
+			etaSeconds = null;
+			coldStart = false;
 			setBusy(true);
 			mv.classList.add('veiled');
 			actions.classList.add('hidden');
 			handoff.classList.remove('show');
+			skeletonEl.classList.add('show');
 			workTitle.textContent = 'Forging "' + (prompt.length > 60 ? prompt.slice(0, 57) + '…' : prompt) + '"';
 			workMsg.textContent = 'Sending your prompt to the forge.';
 			overlay(working);
-			startElapsed();
+			startElapsed('submitting');
 
 			startJob(prompt).then(function (job) {
 				if (seq !== runSeq) return null;
 				if (job.status === 'done' && job.glb_url) return job;
 				if (!job.job_id) throw new Error('The forge did not accept the job. Try again.');
-				workMsg.textContent = 'Queued. Sculpting starts in a moment.';
+				setStage('queued');
 				return pollUntilDone(job.job_id, seq);
 			}).then(function (done) {
 				if (!done || seq !== runSeq) return;
 				stopElapsed();
+				skeletonEl.classList.remove('show');
 				remember(prompt, done.glb_url);
 				showResult(done.glb_url, prompt);
 			}).catch(function (err) {
 				if (seq !== runSeq) return;
 				stopElapsed();
+				skeletonEl.classList.remove('show');
 				setBusy(false);
 				failMsg.textContent = (err && err.message) || 'Generation failed.';
 				overlay(failed);

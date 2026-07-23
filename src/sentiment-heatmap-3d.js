@@ -328,6 +328,7 @@ export class SentimentHeatmap3D {
 	_loop() {
 		if (this.disposed) return;
 		this.raf = requestAnimationFrame(this._loop);
+		if (document.visibilityState === 'hidden') return; // pause rendering on a backgrounded tab
 
 		// Camera drift / focus tween.
 		this.focusT = lerp(this.focusT, this.focusTarget, 0.08);

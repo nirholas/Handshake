@@ -26,7 +26,13 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { catalogEntry } from '../_lib/okx-catalog.js';
-import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
+import {
+	meshDirectorFor,
+	meshSubjectClass,
+	avatarDirectorFor,
+	classifySubject,
+	resolveLogoPrompt,
+} from '../_lib/forge-director-prompts.js';
 import {
 	originFromReq,
 	viewerUrl,
@@ -122,12 +128,14 @@ async function callStudioTool(name, args, { req, payer }) {
 }
 
 const HANDLERS = {
-	// $0.01, the free NVIDIA NIM TRELLIS lane, draft tier, submit-then-poll.
+	// $0.01, the free draft-tier lane, submit-then-poll. No backend pin: the
+	// draft default now resolves to the photoreal image-intermediate pipeline
+	// (self-host TRELLIS → Hunyuan3D → HuggingFace → NVIDIA NIM last resort —
+	// see forge-tiers.js FREE_DEFAULT_FOR_TIERS), still zero vendor cost.
 	async 'text-to-3d'(args, ctx) {
 		const job = await startForge(ctx.base, {
 			prompt: args.prompt,
 			aspect: args.aspect_ratio,
-			backend: 'nvidia',
 			path: 'image',
 		});
 		return queuedResponse(job, { mode: 'text_to_3d', tier: 'draft' });
@@ -142,7 +150,7 @@ const HANDLERS = {
 		if (knownMark) {
 			effective = knownMark.prompt;
 		} else {
-			const directed = await directPrompt(MESH_DIRECTOR, args.prompt);
+			const directed = await directPrompt(meshDirectorFor(meshSubjectClass(args.prompt)), args.prompt);
 			if (directed) effective = directed;
 		}
 		const job = await startForge(ctx.base, {
@@ -181,10 +189,19 @@ const HANDLERS = {
 				'That looks like an object rather than a character. Auto-rigging needs a humanoid figure, use text-to-3d for objects, or set allow_non_humanoid to override.',
 			);
 		}
+		// Granite avatar director (text mode only, fail-soft) — without it this
+		// paid lane reconstructed straight from the raw words with no photoreal
+		// reference-image briefing at all.
+		let effectivePrompt = args.prompt;
+		if (args.prompt && !args.image_url) {
+			const subject = classifySubject(args.prompt) === 'animal' ? 'animal' : 'person';
+			const directed = await directPrompt(avatarDirectorFor(subject), args.prompt);
+			if (directed) effectivePrompt = directed;
+		}
 		const gen = await generate(
 			ctx.base,
 			{
-				prompt: args.prompt || undefined,
+				prompt: effectivePrompt || undefined,
 				imageUrls: args.image_url ? [args.image_url] : undefined,
 				aspect: '1:1',
 			},

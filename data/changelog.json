@@ -11,6 +11,25 @@
 		},
 		{
 			"date": "2026-07-23",
+			"title": "Forge results now come with a full next-step toolkit",
+			"summary": "Every model you forge now lands with four new one-click follow-ups right in the result bar. Rig for animation adds a humanoid skeleton and hands you straight to Pose Studio or IRL placement. Restyle materials re-skins the surface (chrome, wood, gold, cyberpunk neon, marble, rust, or your own description) without touching the shape. Iterate makes a real shape-changing edit from a plain sentence, like \"make the helmet red\" or \"add a backpack\", and keeps every version in a branchable history you can jump back to. And Place IRL sends the model straight into the AR pin-placement flow so you can anchor it somewhere real. The empty state also grew from three starter prompts to six, so there's more to try with zero typing.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-23",
+			"title": "Every 3D view on the site now renders film-quality",
+			"summary": "We audited every 3D viewer on the platform, from the IRL AR placer and avatar talk mode to the marketplace lobby, the coin snapshot view, the trading floor, the demo pages, and the embeddable avatar widget, and brought them all up to one cinematic bar: filmic tone mapping, correct color management, and real photographic HDRI lighting (not a flat studio guess) reflecting off skin, chrome, and fabric alike. A model now looks the same whether you're seeing it on your own profile, in a marketplace card, embedded on someone else's site, or standing on a street corner in AR. Lower-end phones automatically get a lighter version (capped resolution, simplified lighting) so nothing chugs or overheats.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-23",
 			"title": "A full notification center, plus two new things it tells you about",
 			"summary": "The bell in the nav now links to a dedicated /notifications page: your full history, filterable by category (sales, purchases, social, in person, market alerts, creations, account), with load-more paging so nothing gets lost past the dropdown's last 20. We also closed two gaps in what triggers a notification. Fork royalty streams (an avatar you created earning a slice of income from everyone who forked it) now notify the upstream creator the moment a payout confirms on-chain, with the SOL/USD amount and which fork paid it. And finishing a mission or co-op heist in /play now lands in your inbox too, not just the site-wide activity ticker. Both respect your existing per-category mute preferences in notification settings.",
 			"tags": [

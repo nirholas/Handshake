@@ -262,21 +262,80 @@ function normalizeViews({ image_url, image_urls }) {
 	return views;
 }
 
-const MESH_DIRECTOR_INSTRUCTION =
-	"You are a 3D asset art director. Rewrite the user's idea into ONE concise prompt for a " +
-	'text-to-3D generator. Describe a SINGLE isolated subject on a plain background, naming form, ' +
-	'materials, color, and surface detail. No scenes, no multiple objects, no rendered text, no ' +
-	'background environment. ' +
-	BRAND_MARK_DIRECTIVE +
-	'Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
+// Photoreal cue block shared by both directors below — mirrors the wording in
+// api/_lib/forge-director-prompts.js's PHOTOREAL_CUES so this published,
+// independently-deployed mcp-server package produces the same realism bar as
+// the platform's own /api/forge director. Duplicated rather than imported: this
+// package ships standalone (npm), so it cannot reach into the api/ tree.
+const PHOTOREAL_CUES =
+	'shot like a real photograph, not a render or illustration: natural soft studio lighting with gentle wrapping ' +
+	'shadows, true-to-life color response, and visible micro-detail — fabric weave, skin pores and fine creases, ' +
+	'brushed-metal grain, natural wear — because nothing in the real world is perfectly clean or perfectly smooth';
 
-const AVATAR_DIRECTOR_INSTRUCTION =
-	"You are a 3D character art director. Rewrite the user's idea into ONE concise prompt for a text-to-3D " +
-	'generator that will be auto-rigged. Describe a SINGLE full-body humanoid character standing in a relaxed ' +
-	'neutral pose with arms slightly away from the body, hands open and fingers separated and clearly visible ' +
-	'(never a closed fist, never a hand hidden behind the body or in a pocket), on a plain background. Name the ' +
-	'body type, outfit, materials, colors, and key features. No scene, no props held across the body, no multiple ' +
-	'characters, no text or logos. Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
+// Lightweight subject classifier so this lane can pick a subject-aware cue
+// without importing across the api/ package boundary. Whole-word matching so
+// "manatee" never reads as "man".
+const PERSON_RE = /\b(person|human|man|woman|guy|girl|boy|lady|character|hero|warrior|knight|wizard|ninja|astronaut|robot|android|mascot)\b/i;
+const ANIMAL_RE = /\b(animal|creature|dragon|dog|cat|horse|bird|dinosaur|beast|wolf|fox|lion|tiger|bear|monster)\b/i;
+const VEHICLE_RE = /\b(car|truck|van|bus|motorcycle|bike|plane|jet|boat|ship|train|tank|spaceship|rocket|vehicle)\b/i;
+const FOOD_RE = /\b(food|fruit|vegetable|burger|pizza|cake|bread|sushi|sandwich|donut|cookie|meal|dish|coffee)\b/i;
+function classifySubjectLite(text) {
+	const t = String(text || '');
+	if (PERSON_RE.test(t)) return 'person';
+	if (ANIMAL_RE.test(t)) return 'animal';
+	if (VEHICLE_RE.test(t)) return 'vehicle';
+	if (FOOD_RE.test(t)) return 'object';
+	return 'object';
+}
+
+const MESH_SUBJECT_CUES = {
+	person: 'real skin with visible pores and subtle asymmetry, individual hair strands, ordinary human proportions',
+	animal: 'real fur/feathers/scales with natural directional flow, correct species anatomy, a moist natural nose or beak',
+	vehicle: 'correct wheel count and panel symmetry, real painted or brushed-metal body panels, rubber tread',
+	object: "the object's real material, finish, and surface micro-detail (grain, brush marks, wear, weave)",
+};
+
+function meshDirectorInstruction(prompt) {
+	const cue = MESH_SUBJECT_CUES[classifySubjectLite(prompt)] || MESH_SUBJECT_CUES.object;
+	return (
+		"You are a 3D asset art director. Rewrite the user's idea into ONE concise prompt for a " +
+		'text-to-3D generator. Describe a SINGLE isolated subject on a plain background, naming form, ' +
+		'materials, color, and surface detail. Default to photoreal — an actual photograph of the physical thing, ' +
+		'not a render or game asset — unless the user clearly asked for a different style (cartoon, low-poly, toy, ' +
+		'anime, etc.). When photoreal, weave in: ' + PHOTOREAL_CUES + '; specifically call out ' + cue + '. No ' +
+		'scenes, no multiple objects, no rendered text, no background environment. ' +
+		BRAND_MARK_DIRECTIVE +
+		'Output ONLY the rewritten prompt as a single line — no preamble, no quotes.'
+	);
+}
+
+// Back-compat constant (subject-agnostic) for any caller still importing it
+// directly; runMeshForge below now calls meshDirectorInstruction(prompt).
+const MESH_DIRECTOR_INSTRUCTION = meshDirectorInstruction('');
+
+function avatarDirectorInstruction(prompt) {
+	const subject = classifySubjectLite(prompt) === 'animal' ? 'animal' : 'person';
+	const subjectCue =
+		subject === 'animal'
+			? 'real fur/feathers/scales with natural directional flow, correct species anatomy, lifelike eyes with a catchlight'
+			: 'real skin with visible pores and subtle asymmetry, hair as many fine individual strands, natural catchlights in the eyes';
+	return (
+		"You are a 3D character art director. Rewrite the user's idea into ONE concise prompt for a text-to-3D " +
+		'generator that will be auto-rigged. Describe a SINGLE full-body humanoid character standing in a relaxed ' +
+		'neutral pose with arms slightly away from the body, hands open and fingers separated and clearly visible ' +
+		'(never a closed fist, never a hand hidden behind the body or in a pocket), on a plain background. Default ' +
+		'to photoreal — a real person (or, for a creature/beast character, a real animal) photographed, not a game ' +
+		"character or a toy — unless the user's words clearly call for something else (anime, cartoon, chibi, " +
+		'voxel, toy, low-poly, etc.). When photoreal, weave in: ' + PHOTOREAL_CUES + '; specifically: ' + subjectCue +
+		'. Name the body type, outfit, materials, colors, and key features. No scene, no props held across the ' +
+		'body, no multiple characters, no text or logos. Output ONLY the rewritten prompt as a single line — no ' +
+		'preamble, no quotes.'
+	);
+}
+
+// Back-compat constant (person default) for any caller still importing it
+// directly; runForgeAvatar/runTextToAvatar below now call avatarDirectorInstruction(prompt).
+const AVATAR_DIRECTOR_INSTRUCTION = avatarDirectorInstruction('');
 
 // ---------------------------------------------------------------------------
 // forge_free — text → textured 3D GLB on the FREE NVIDIA NIM (TRELLIS) lane.
@@ -398,18 +457,21 @@ export async function runForgeFree({ prompt, tier }) {
 	);
 }
 
-// One forge_free generation attempt: submit to the pinned free NVIDIA NIM lane,
-// then (when queued) poll to a terminal state. Returns { data, jobId } or throws
-// a coded error (with optional `.extra`/`.retryAfter`) the retry loop acts on.
+// One forge_free generation attempt: submit to the free draft-tier lane, then
+// (when queued) poll to a terminal state. Returns { data, jobId } or throws a
+// coded error (with optional `.extra`/`.retryAfter`) the retry loop acts on.
 async function forgeFreeOnce({ base, prompt, tierId, imageUrls }) {
 	const job = await submitForge({
 		base,
-		// Pin the free NVIDIA NIM (TRELLIS) lane so the happy path is always the
-		// zero-cost engine; path:"image" is the only path NVIDIA serves. NVCF can
-		// finish inside the generous submit window, so accept a synchronous done.
-		// With a reference view (known brand marks) the submit goes image→3D
-		// unpinned: the forge router owns image-mode engine selection, and the
-		// prompt rides along as the caption.
+		// No backend pin: the forge router's own free-lane resolver picks the
+		// zero-cost engine (self-host TRELLIS → Hunyuan3D → HuggingFace → NVIDIA
+		// NIM last resort, see forge-tiers.js FREE_DEFAULT_FOR_TIERS) so this free
+		// lane gets the photoreal image-intermediate pipeline by default instead
+		// of forcing NVIDIA's native text-only preview, which skips it entirely.
+		// path:"image" still applies for a bare text prompt. With a reference
+		// view (known brand marks) the submit goes image→3D unpinned the same way:
+		// the forge router owns image-mode engine selection, and the prompt rides
+		// along as the caption.
 		payload:
 			Array.isArray(imageUrls) && imageUrls.length
 				? { image_urls: imageUrls, prompt: prompt || undefined, tier: tierId }

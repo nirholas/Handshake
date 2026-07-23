@@ -403,6 +403,7 @@ function safeMsg(data) { try { return JSON.parse(data).message || data; } catch 
 // ---- render loop ----------------------------------------------------------
 function animate() {
 	requestAnimationFrame(animate);
+	if (document.visibilityState === 'hidden') return; // pause rendering on a backgrounded tab
 	for (const node of nodes) {
 		node.mesh.position.lerp(node.target, 0.06);
 		node.glow.position.copy(node.mesh.position);

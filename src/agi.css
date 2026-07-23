@@ -3,6 +3,15 @@
  * the mood aura around the embodied body, whose hue is set at runtime from the
  * live cognition vector (--agi-aura). Semantic green/red only ever mark P&L. */
 
+/* This page doesn't load /style.css, so the near-black canvas isn't painted
+   by default — without this, every --ink/--ink-dim token here renders against
+   the browser's white default background instead of --bg-0. */
+body {
+	background: var(--bg-0);
+	color: var(--ink);
+	min-height: 100vh;
+}
+
 .agi-shell {
 	max-width: 1180px;
 	margin: 0 auto;
