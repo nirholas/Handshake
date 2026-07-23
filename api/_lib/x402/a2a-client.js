@@ -22,6 +22,8 @@ import { randomBytes, randomUUID } from 'node:crypto';
 
 import bs58 from 'bs58';
 
+import { fetchSafePublicUrlPinned } from '../ssrf-guard.js';
+
 import {
 	A2A_EXTENSIONS_HEADER,
 	A2A_X402_EXTENSION_URI,
@@ -253,16 +255,25 @@ function buildJsonRpcRequest({ id, message }) {
 }
 
 async function postJsonRpc(endpoint, body, extraHeaders) {
-	const res = await fetch(endpoint, {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			accept: 'application/json',
-			[A2A_EXTENSIONS_HEADER]: A2A_X402_EXTENSION_URI,
-			...(extraHeaders || {}),
+	// The peer endpoint is caller-controlled (validated once upstream), so the
+	// POST goes through the pinned SSRF guard: the socket connects only to the
+	// pre-validated IP and every redirect hop is re-validated, closing the
+	// 302-to-internal and DNS-rebinding paths a hostile peer could use to read
+	// internal JSON services through us. maxBytes bounds the reply body.
+	const res = await fetchSafePublicUrlPinned(
+		endpoint,
+		{
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+				accept: 'application/json',
+				[A2A_EXTENSIONS_HEADER]: A2A_X402_EXTENSION_URI,
+				...(extraHeaders || {}),
+			},
+			body: JSON.stringify(body),
 		},
-		body: JSON.stringify(body),
-	});
+		{ maxBytes: 2 * 1024 * 1024 },
+	);
 	const text = await res.text();
 	let parsed;
 	try {
