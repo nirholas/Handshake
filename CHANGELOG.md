@@ -6,7 +6,9 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-07-23
 
+- **We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.** (`/blog/all-90-trades`) — Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. The complete dataset, the charts, and the finding that LLM-judged entries beat hand-tuned rules.
 - **Agent wallet and portfolio views stay reliable when an RPC provider is capped** — Agent portfolio and wallet-balance reads no longer fail when a Solana RPC provider hits its daily request limit. Balance lookups now fall back across several free, unthrottled Solana nodes, so net-worth snapshots and holdings keep loading during provider throttling instead of erroring out. `[fix, infra]`
+- **All 90 trades from the autonomous fleet, published and graded** — The autonomous sniper fleet has now closed 90 real-money trades across 8 strategies and 8 wallets, and we published every single one: the entry thesis, the exit, the on-chain receipts, and an honest grade per trade. The deep dive covers the finding that LLM-judged entries are the only profitable cohort, why win rate is a vanity metric, what happens when a stop-loss meets a collapsing bonding curve, and the two silent failures that faked autonomy for two days. The full dataset is downloadable as JSON. (`/blog/all-90-trades`) `[docs, feature]`
 
 ## 2026-07-22
 

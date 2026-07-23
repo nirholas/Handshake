@@ -7,12 +7,28 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.</title>
+			<link>https://three.ws/blog/all-90-trades</link>
+			<guid isPermaLink="false">2026-07-23:We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. The complete dataset, the charts, and the finding that LLM-judged entries beat hand-tuned rules.</description>
+		</item>
+		<item>
 			<title>Agent wallet and portfolio views stay reliable when an RPC provider is capped</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-23:Agent wallet and portfolio views stay reliable when an RPC provider is capped</guid>
 			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Agent portfolio and wallet-balance reads no longer fail when a Solana RPC provider hits its daily request limit. Balance lookups now fall back across several free, unthrottled Solana nodes, so net-worth snapshots and holdings keep loading during provider throttling instead of erroring out.</description>
+		</item>
+		<item>
+			<title>All 90 trades from the autonomous fleet, published and graded</title>
+			<link>https://three.ws/blog/all-90-trades</link>
+			<guid isPermaLink="false">2026-07-23:All 90 trades from the autonomous fleet, published and graded</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The autonomous sniper fleet has now closed 90 real-money trades across 8 strategies and 8 wallets, and we published every single one: the entry thesis, the exit, the on-chain receipts, and an honest grade per trade. The deep dive covers the finding that LLM-judged entries are the only profitable cohort, why win rate is a vanity metric, what happens when a stop-loss meets a collapsing bonding curve, and the two silent failures that faked autonomy for two days. The full dataset is downloadable as JSON.</description>
 		</item>
 		<item>
 			<title>Animation preview plays again on every clip page</title>

@@ -2270,6 +2270,12 @@ URL: https://three.ws/blog
 
 Editorial index of three.ws launches and long-form posts.
 
+### We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.
+
+URL: https://three.ws/blog/all-90-trades
+
+Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. The complete dataset, the charts, and the finding that LLM-judged entries beat hand-tuned rules.
+
 ### Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.
 
 URL: https://three.ws/blog/first-autonomous-trade

@@ -2939,6 +2939,15 @@
 					"added": "2026-05-17"
 				},
 				{
+					"path": "/blog/all-90-trades",
+					"title": "We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.",
+					"description": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. The complete dataset, the charts, and the finding that LLM-judged entries beat hand-tuned rules.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-23",
+					"lastmod": "2026-07-23"
+				},
+				{
 					"path": "/blog/first-autonomous-trade",
 					"title": "Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.",
 					"description": "A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.",

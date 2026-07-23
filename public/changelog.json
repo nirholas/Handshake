@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-23T03:25:42.308Z",
+	"generated_at": "2026-07-23T04:01:33.666Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-23",
+			"type": "launch",
+			"title": "We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.",
+			"summary": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. The complete dataset, the charts, and the finding that LLM-judged entries beat hand-tuned rules.",
+			"link": "/blog/all-90-trades",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-23",
 			"type": "update",
@@ -15,6 +25,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
+			"title": "All 90 trades from the autonomous fleet, published and graded",
+			"summary": "The autonomous sniper fleet has now closed 90 real-money trades across 8 strategies and 8 wallets, and we published every single one: the entry thesis, the exit, the on-chain receipts, and an honest grade per trade. The deep dive covers the finding that LLM-judged entries are the only profitable cohort, why win rate is a vanity metric, what happens when a stop-loss meets a collapsing bonding curve, and the two silent failures that faked autonomy for two days. The full dataset is downloadable as JSON.",
+			"link": "/blog/all-90-trades",
+			"tags": [
+				"docs",
+				"feature"
 			]
 		},
 		{
