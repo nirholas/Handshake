@@ -15482,6 +15482,15 @@
 				"improvement"
 			],
 			"link": "/api/avatar/render"
+		},
+		{
+			"date": "2026-07-20",
+			"title": "Sign to the chat with your camera",
+			"summary": "The agent chat now understands fingerspelled ASL. Click the camera button, sign at your webcam with a live mirrored preview, and your fingerspelling is transcribed into the message box, ready to review and send. Recognition runs on the first-place model from Google\u2019s ASL fingerspelling challenge, and your video never leaves your device: the browser extracts hand and body landmarks locally and only those coordinates are sent. Together with signed replies, the chat now works in both directions for sign language users.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/sign-language"
 		}
 	]
 }

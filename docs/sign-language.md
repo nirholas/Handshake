@@ -13,6 +13,7 @@ three.ws avatars can communicate in American Sign Language. Today that means ASL
 <agent-3d agent-id="your-agent" chat sign-language></agent-3d>
 ```
 
+- **Sign INTO the chat with your camera.** The 🎥 button in the agent chat opens your webcam with a mirrored self-view: fingerspell at the camera, click again, and the transcription lands in the message box for review before sending. Landmarks are extracted in your browser (MediaPipe Holistic), so video never leaves your device — only pose coordinates go to the recognizer ([workers/model-asl-recognition](../workers/model-asl-recognition), the Kaggle-2023 1st-place fingerspelling model; Apache-2.0 weights, CC BY 4.0 corpus). Expect a 10–20% character error rate on webcam fingerspelling; the chat model is robust to it.
 - **Motion capture with hands.** The video-to-motion worker tracks 21 landmarks per hand and solves all 30 finger joints, so a video of a real signer becomes a retargetable animation clip. This is the pipeline that will populate the lexical sign dictionary.
 
 ## How it works
@@ -38,7 +39,7 @@ Fingerspelling spells English words letter by letter; it is not grammatical ASL,
 ## Roadmap
 
 1. **Lexical sign dictionary** — captured clips (commissioned signers, community capture through [Motion Swap](https://three.ws/motion-swap), permissively licensed video) served as a `sign-language` library category and fed to `compileUtterance` so common words are signed, not spelled.
-2. **Sign recognition** — webcam ASL input transcribed to text for the chat (the reverse direction), so signed conversations work both ways. The recognition worker is built ([workers/model-asl-recognition](../workers/model-asl-recognition)): continuous fingerspelling transcription on CPU using the Kaggle-2023 1st-place model (Apache-2.0 weights, CC BY 4.0 corpus), with landmarks extracted in the browser so video never leaves the device. Remaining: deploy plus the webcam capture UI in chat.
+2. **Word-level sign recognition** — the current recognizer reads fingerspelling; a 250-sign vocabulary model (MIT architecture retrained on the CC BY 4.0 PopSign corpus) will let common signs be recognized directly.
 3. **Non-manual markers** — eyebrow and mouth blendshape tracks alongside the hand tracks.
 4. **Standalone package** — the engines are platform-free by design and will ship as an npm package plus reference integration.
 

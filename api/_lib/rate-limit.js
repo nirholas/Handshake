@@ -482,6 +482,11 @@ export const limits = {
 	// 40 per 5 min per IP comfortably covers rapid rerolling, well under abuse.
 	surpriseIp: (ip) =>
 		getLimiter('avatar:surprise:ip', { limit: 40, window: '5 m', local: true }).limit(ip),
+	// Webcam sign-language transcription (/api/asl-recognition). Each call runs
+	// a sub-second CPU inference on the worker; 30 per 5 min per IP covers an
+	// active signed conversation while stopping scripted hammering.
+	aslTranscribeIp: (ip) =>
+		getLimiter('asl:transcribe:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing

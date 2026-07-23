@@ -161,6 +161,7 @@ export class NichAgent {
 			</div>
 			<div class="nich-controls">
 				<input type="text" class="nich-input" placeholder="Ask the agent…" autocomplete="off" maxlength="4000" />
+				<button class="nich-signcam" aria-label="Sign in ASL with your camera" aria-pressed="false" title="Sign into your camera and I’ll transcribe the fingerspelling into the message box">🎥</button>
 				<button class="nich-send" aria-label="Send">
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
 				</button>
@@ -217,6 +218,7 @@ export class NichAgent {
 		});
 		this.panel.querySelector('.nich-mic')?.addEventListener('click', () => this._toggleMic());
 		this.panel.querySelector('.nich-sign')?.addEventListener('click', (e) => this._toggleSignLanguage(e.currentTarget));
+		this.panel.querySelector('.nich-signcam')?.addEventListener('click', (e) => this._toggleSignInput(e.currentTarget));
 		this.panel.querySelector('.nich-model-select')?.addEventListener('change', (e) => {
 			this._modelChoice = e.target.value;
 			try {
@@ -853,6 +855,57 @@ export class NichAgent {
 		btn.classList.toggle('active', on);
 		btn.setAttribute('aria-pressed', String(on));
 		if (on) this._addMessage('agent', 'Sign language on — I’ll sign every reply in ASL.', 'status');
+	}
+
+	/**
+	 * Webcam sign input: first click opens the camera and captures signing
+	 * (with a mirrored self-view for framing); second click stops, transcribes
+	 * the fingerspelling (src/sign-input.js → /api/asl-recognition), and drops
+	 * the text into the message box for review before sending.
+	 */
+	async _toggleSignInput(btn) {
+		if (this._signInput?.capturing) {
+			btn.disabled = true;
+			try {
+				const { text } = await this._signInput.stop();
+				const input = this.panel.querySelector('.nich-input');
+				if (text) {
+					input.value = (input.value ? `${input.value} ` : '') + text;
+					input.focus();
+				} else {
+					this._addMessage('agent', 'I couldn’t read any fingerspelling there — face the camera and spell a little slower.', 'status');
+				}
+			} catch (e) {
+				this._addMessage('agent', e?.message || 'Transcription failed.', 'status');
+			}
+			btn.disabled = false;
+			btn.classList.remove('active');
+			btn.setAttribute('aria-pressed', 'false');
+			this._signPreview?.remove();
+			this._signPreview = null;
+			return;
+		}
+		try {
+			if (!this._signInput) {
+				const { SignInput } = await import('./sign-input.js');
+				this._signInput = new SignInput({ apiBase: window.ASL_API_BASE || undefined });
+			}
+			await this._signInput.start();
+			const video = this._signInput.videoElement;
+			video.className = 'nich-sign-preview';
+			const controls = this.panel.querySelector('.nich-controls');
+			controls.parentNode.insertBefore(video, controls);
+			this._signPreview = video;
+			btn.classList.add('active');
+			btn.setAttribute('aria-pressed', 'true');
+		} catch (e) {
+			this._addMessage(
+				'agent',
+				e?.message || 'Camera unavailable — check browser permissions.',
+				'status',
+			);
+			this._signInput?.cancel();
+		}
 	}
 
 	// ── Message Rendering ────────────────────────────────────────────────────

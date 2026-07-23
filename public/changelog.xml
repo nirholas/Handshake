@@ -383,6 +383,14 @@
 			<description>three.ws had six legal documents and no index, so /legal itself went nowhere. It is now a real page: every policy listed with a plain-language summary and its effective date, plus which address actually reaches the right desk (copyright, abuse, privacy, general, support). Publishers who think we are showing too much of their work get a direct answer and a direct address instead of a search.</description>
 		</item>
 		<item>
+			<title>Sign to the chat with your camera</title>
+			<link>https://three.ws/docs/sign-language</link>
+			<guid isPermaLink="false">2026-07-20:Sign to the chat with your camera</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The agent chat now understands fingerspelled ASL. Click the camera button, sign at your webcam with a live mirrored preview, and your fingerspelling is transcribed into the message box, ready to review and send. Recognition runs on the first-place model from Google’s ASL fingerspelling challenge, and your video never leaves your device: the browser extracts hand and body landmarks locally and only those coordinates are sent. Together with signed replies, the chat now works in both directions for sign language users.</description>
+		</item>
+		<item>
 			<title>Swap quotes now show the reserves they were priced from</title>
 			<link>https://three.ws/docs/mcp</link>
 			<guid isPermaLink="false">2026-07-20:Swap quotes now show the reserves they were priced from</guid>
