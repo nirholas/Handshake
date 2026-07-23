@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-23
+
+- **Agent wallet and portfolio views stay reliable when an RPC provider is capped** — Agent portfolio and wallet-balance reads no longer fail when a Solana RPC provider hits its daily request limit. Balance lookups now fall back across several free, unthrottled Solana nodes, so net-worth snapshots and holdings keep loading during provider throttling instead of erroring out. `[fix, infra]`
+
 ## 2026-07-22
 
 - **Animation preview plays again on every clip page** — Opening an animation from the marketplace (Arm Flex, Facepalm, Superhero Jump, and the rest) showed an empty black stage where the moving avatar should be. Two things were wrong: the preview was pointed at a skeleton-only file with no body to draw, and the 3D canvas was collapsing to zero height inside its frame. Both are fixed, so every clip page now shows a real avatar performing the animation, framed and lit, with Replay to watch it again. (`/marketplace?tab=animations`) `[fix]`

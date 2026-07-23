@@ -237,6 +237,25 @@ HTTP 502 POST /api/x402/<any endpoint>   ua: threews-x402-autonomous/1.0   (~334
 
 ---
 
+## 🟢 `Error: Invalid name account provided` (at `@bonfida/spl-name-service` → `resolveName` in pay-by-name.js) — `sns-name-not-found`
+
+- **Source:** [api/x402/pay-by-name.js](../../api/x402/pay-by-name.js) `resolveName()`,
+  the `.sol` resolution branch calling `sns.resolve(conn, bare)`.
+- **What it means:** the x402 pay-by-name resolver was asked for a `.sol` name
+  that has no on-chain name account (a name that does not exist). The `await
+  sns.resolve(...)` call is wrapped in `try/catch` and correctly returns `null`,
+  so the caller gets a clean `404 not_found` — there is **no user impact**. The
+  `ERROR` line appears anyway because `@bonfida/spl-name-service` runs several
+  lookup strategies in parallel: the awaited promise rejects and is caught, but a
+  sibling promise also rejects and is left un-consumed, so Node surfaces the
+  orphan rejection with an async stack that still points back through
+  `resolveName` → `handleResolve`. It is caught chatter, not a fault.
+- **Resolve:** 🟢 nothing required. It fires on a steady low cadence from callers
+  probing names that are not registered. If it ever spikes, check *who* is
+  resolving (request logs for `/api/x402/pay-by-name`) rather than the resolver.
+
+---
+
 ## The owner runbook — every fix as an exact command
 
 Everything red/yellow above, condensed to the actions only the owner can take,

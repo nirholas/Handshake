@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-23",
+			"title": "Agent wallet and portfolio views stay reliable when an RPC provider is capped",
+			"summary": "Agent portfolio and wallet-balance reads no longer fail when a Solana RPC provider hits its daily request limit. Balance lookups now fall back across several free, unthrottled Solana nodes, so net-worth snapshots and holdings keep loading during provider throttling instead of erroring out.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
 			"date": "2026-07-22",
 			"title": "Every AI surface now falls back to a funded reserve model",
 			"summary": "Chat already had it; now the Brain page, embedded avatar widgets, the Trading Copilot, image understanding, and embedded agent brains share the same safety net. When every free AI lane is rate-limited at the same time, these features now roll over to the platform's own reserve model on Google Cloud instead of returning an error. Fewer failed replies during traffic spikes, with no change to which model answers first.",

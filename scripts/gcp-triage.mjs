@@ -97,6 +97,12 @@ const KNOWN_SIGNATURES = [
 		class: 'self-healing',
 		action: `Forge lane failover fired; generation keeps succeeding on the next rung. Tied to Replicate credit if you want the paid lane back. ${RUNBOOK} §forge.`,
 	},
+	{
+		id: 'sns-name-not-found',
+		match: /Invalid name account provided/i,
+		class: 'self-healing',
+		action: `x402 pay-by-name resolve() hit a .sol name with no on-chain account. resolveName() catches it and returns a clean 404 to the caller; the ERROR line is @bonfida/spl-name-service leaking a sibling promise rejection from its multi-strategy lookup (the awaited path is caught, the orphan is not). No user impact. ${RUNBOOK} §sns-name-not-found.`,
+	},
 ];
 
 // Known signatures for request-log (5xx) groups. `test` sees the http group:
