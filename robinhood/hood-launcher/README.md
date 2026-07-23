@@ -4,6 +4,17 @@
 Concept → 3D logo → deploy on a real launchpad or a clean-room Uniswap v3 rail → announce.
 The pump.fun-launcher playbook, ported to chain 4663 — nothing like it existed there before this.
 
+## Website
+
+Mission-control landing page with a live launch gantry: configure a token, throw the lever, and run the full preflight sequence. Served from [`docs/`](./docs):
+**https://nirholas.github.io/hood-launcher/**
+
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/?to=/:account/pages/new)
+[![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?logo=netlify&logoColor=white)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/robinhood-chain-launcher)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-101418?logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/robinhood-chain-launcher)
+
+The site is a single self-contained `docs/index.html` (inline CSS + JS, zero external requests, works from `file://`). The launch sequence on the page is a preflight simulation only: it signs and sends nothing. `wrangler.toml`, `netlify.toml`, and `vercel.json` all publish `docs/`.
+
 > **This tool creates real, tradeable, irreversible on-chain assets.** Read [Safety](#safety) before
 > running it against mainnet with `LIVE=1`. Every launch spends real funds and creates a coin that
 > real people can buy.

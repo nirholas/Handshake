@@ -1,218 +1,564 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>hood-launcher — the autonomous coin launcher for Robinhood Chain</title>
-<meta name="description" content="Concept → 3D logo → deploy on NOXA, The Odyssey, or a clean-room Uniswap v3 rail → announce. Every launch rail proven byte-for-byte against a real historical transaction.">
-<link rel="stylesheet" href="./site.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-launcher: arm the gantry, run a token launch sequence</title>
+<meta name="description" content="An autonomous coin launcher for Robinhood Chain (chain 4663). Configure a token, throw the launch lever, and run the full pipeline: concept, safety screen, 3D logo, calldata proven byte-for-byte against a real mainnet tx, pool, LP lock, live." />
+<link rel="canonical" href="https://nirholas.github.io/hood-launcher/" />
+<meta name="theme-color" content="#0b0b0c" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-launcher: the launch gantry" />
+<meta property="og:description" content="Concept to 3D logo to a real launchpad rail, on Robinhood Chain 4663. Throw the lever and watch a mission-control launch sequence fire, every rail proven against a real historical mainnet transaction." />
+<meta property="og:url" content="https://nirholas.github.io/hood-launcher/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><path d='M16 4 C20 9 20 17 16 26 C12 17 12 9 16 4 Z M11 20 L8 27 M21 20 L24 27' fill='none' stroke='%23e7e5df' stroke-width='1.5'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood-launcher","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Autonomous coin launcher for Robinhood Chain (chain ID 4663): concept to 3D logo to deploy on NOXA or a direct Uniswap v3 rail. CLI, HTTP API, and an autonomous agent sharing one core. Every rail's calldata proven byte-for-byte against a real historical mainnet transaction.","softwareVersion":"0.1.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"codeRepository":"https://github.com/nirholas/robinhood-chain-launcher"}
+</script>
+<style>
+  :root{
+    --ink:#0b0b0c; --paper:#e7e5df; --graphite:#807c74; --panel:#141416;
+    --hair:rgba(231,229,223,.14); --hair2:rgba(231,229,223,.30);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{background:var(--ink); color:var(--paper); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+  ::selection{background:var(--paper); color:var(--ink)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  /* scanline + grain: the instrument feel */
+  body::before{content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(231,229,223,.028) 0 1px,transparent 1px 3px); opacity:.5}
+  .scan{position:fixed; left:0; right:0; height:2px; z-index:9998; pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(231,229,223,.18),transparent);
+    animation:scan 8s linear infinite; will-change:transform}
+  @keyframes scan{0%{transform:translateY(-10vh)}100%{transform:translateY(110vh)}}
+  @media(prefers-reduced-motion:reduce){.scan{display:none}}
+
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--hair); background:var(--ink)}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite); position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--paper); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--paper); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--hair2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--paper);border-color:var(--paper)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--paper);height:40px;top:0;
+    transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:760px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(60px,9vh,120px) clamp(20px,5vw,88px); border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--paper)}
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.96}
+  h1{font-size:clamp(36px,6.1vw,82px)}
+  h2{font-size:clamp(29px,5vw,62px)}
+  .lede{max-width:60ch; font-size:clamp(16px,1.6vw,22px); line-height:1.44; color:#c7c4bd}
+
+  /* ============ HERO / GANTRY ============ */
+  #pad{min-height:100svh; display:grid; grid-template-columns:0.96fr 1.04fr; gap:clamp(28px,4vw,64px);
+    align-items:center; padding-top:clamp(56px,8vh,104px); padding-bottom:clamp(40px,6vh,72px)}
+  @media(max-width:960px){#pad{grid-template-columns:1fr; align-items:start; gap:30px}}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.03em; margin-bottom:18px}
+  @media(max-width:760px){.boot{font-size:10.5px}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  .herohead{max-width:17ch}
+  .herohead .lo{color:var(--graphite)}
+  .sub{margin-top:16px; max-width:42ch; font-size:clamp(14px,1.4vw,18px); color:#b7b4ad}
+
+  /* config panel */
+  .panel{margin-top:20px; border:1px solid var(--hair2); background:var(--panel)}
+  .panel .ph{padding:10px 14px; border-bottom:1px solid var(--hair); font:600 10px/1 var(--mono);
+    letter-spacing:.2em; text-transform:uppercase; color:var(--graphite); display:flex; justify-content:space-between; align-items:center}
+  .panel .pb{padding:12px}
+  .field{display:grid; grid-template-columns:80px 1fr; align-items:center; gap:12px; margin-bottom:8px}
+  .field:last-child{margin-bottom:0}
+  .field label{font:600 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--graphite)}
+  .field input{width:100%; background:transparent; border:1px solid var(--hair2); color:var(--paper);
+    font:600 13px/1 var(--mono); letter-spacing:.02em; padding:9px 12px; outline:none; transition:border-color .2s}
+  .field input:focus{border-color:var(--paper)}
+  .rails{display:flex; flex-wrap:wrap; gap:6px}
+  .rails button{appearance:none; background:transparent; border:1px solid var(--hair2); color:var(--graphite);
+    font:600 10.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; padding:9px 11px; cursor:pointer; transition:all .2s}
+  .rails button:hover{color:var(--paper); border-color:var(--hair2)}
+  .rails button[aria-pressed="true"]{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+
+  /* the lever */
+  .leverbay{margin-top:14px; display:flex; align-items:stretch; gap:14px}
+  .launch{flex:1; appearance:none; border:1px solid var(--paper); background:var(--paper); color:var(--ink);
+    font:700 14px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; padding:0 20px; cursor:pointer;
+    position:relative; overflow:hidden; min-height:64px; transition:transform .2s var(--ease),background .3s,color .3s}
+  .launch:hover{transform:translateY(-2px)}
+  .launch:active{transform:translateY(0)}
+  .launch .lbl{position:relative; z-index:2}
+  .launch .fill{position:absolute; left:0; top:0; bottom:0; width:100%; background:var(--ink); opacity:.18;
+    transform:scaleX(0); transform-origin:left; z-index:1}
+  .launch.arming .fill{transform:scaleX(1); transition:transform 1.2s linear}
+  .launch[disabled]{cursor:default}
+  .launch.live{background:transparent; color:var(--paper)}
+  .tminus{width:112px; border:1px solid var(--hair2); background:var(--ink); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px}
+  .tminus .tl{font:600 8px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .tminus .tv{font:700 24px/1 var(--mono); letter-spacing:.02em; color:var(--paper); font-variant-numeric:tabular-nums}
+  .arm-note{margin-top:12px; font:500 11px/1.5 var(--mono); color:var(--graphite); letter-spacing:.01em}
+
+  /* gantry (right) */
+  .gantry{align-self:center; border:1px solid var(--hair2); background:
+    linear-gradient(180deg,var(--panel),rgba(20,20,22,.4)); display:grid; grid-template-columns:70px 1fr;
+    min-height:clamp(420px,66vh,600px)}
+  @media(max-width:960px){.gantry{min-height:clamp(380px,56vh,520px)}}
+  .tower{position:relative; border-right:1px solid var(--hair); overflow:hidden}
+  .tower .mast{position:absolute; left:50%; top:14px; bottom:14px; width:2px; background:var(--hair2); transform:translateX(-50%)}
+  .tower .rung{position:absolute; left:12px; right:12px; height:1px; background:var(--hair)}
+  .tower .vehicle{position:absolute; left:50%; width:20px; height:34px; transform:translate(-50%,0);
+    transition:top .5s var(--ease); will-change:top}
+  .tower .vehicle svg{display:block; width:100%; height:100%}
+  .tower .vehicle .flame{opacity:0; transition:opacity .3s}
+  .tower.firing .vehicle .flame{opacity:1}
+
+  .stack{display:flex; flex-direction:column}
+  .stack .sh{padding:11px 14px; border-bottom:1px solid var(--hair); display:flex; justify-content:space-between; align-items:center;
+    font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .stack .sh .status{color:var(--paper)}
+  .stg{display:flex; align-items:flex-start; gap:11px; padding:10px 14px; border-bottom:1px solid var(--hair);
+    opacity:.4; transition:opacity .35s var(--ease),background .35s}
+  .stg:last-child{border-bottom:0}
+  .stg.lit{opacity:1; background:rgba(231,229,223,.03)}
+  .stg .led{width:8px; height:8px; border-radius:50%; border:1px solid var(--hair2); margin-top:3px; flex:none; transition:all .35s}
+  .stg.lit .led{background:var(--paper); border-color:var(--paper); box-shadow:0 0 0 3px rgba(231,229,223,.08)}
+  .stg .body{min-width:0; flex:1}
+  .stg .nm{font:600 11px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--paper)}
+  .stg .dt{font:500 11px/1.45 var(--mono); color:var(--graphite); margin-top:5px; word-break:break-word}
+  .stg .dt code{color:var(--paper)}
+  .stg .t{margin-left:auto; font:600 9px/1 var(--mono); color:var(--graphite); flex:none; padding-top:1px}
+  .stack .foot{margin-top:auto; padding:12px 14px; border-top:1px solid var(--hair); font:500 11px/1.5 var(--mono); color:var(--graphite)}
+  .stack .foot b{color:var(--paper); font-weight:600}
+
+  /* generic blocks */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:32px}}
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--paper); color:var(--paper); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--paper); color:var(--ink); transform:translateY(-2px)}
+  .btn.solid{background:var(--paper); color:var(--ink)}
+  .btn.solid:hover{background:transparent; color:var(--paper)}
+  .code{border:1px solid var(--hair2); background:#0f0f11; color:var(--paper); padding:20px 22px;
+    font:500 13px/1.85 var(--mono); position:relative; overflow-x:auto; white-space:pre}
+  .code .c{color:#7c7972} .code .k{color:#c9c6be} .code .s{color:#b3b0a8}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid var(--hair2);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(231,229,223,.12)}
+
+  /* rails table */
+  .railtab{border-top:1px solid var(--hair); margin-top:34px}
+  .railtab .r{display:grid; grid-template-columns:130px 1fr; gap:22px; padding:20px 0; border-bottom:1px solid var(--hair); align-items:start}
+  @media(max-width:640px){.railtab .r{grid-template-columns:1fr; gap:8px}}
+  .railtab .r .rn{font:700 15px/1.1 var(--grot); letter-spacing:-.01em}
+  .railtab .r .rn small{display:block; font:600 9.5px/1.4 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite); margin-top:7px}
+  .railtab .r .rd{font-size:15px; color:#c2bfb8; line-height:1.5; max-width:66ch}
+  .railtab .r .rd code{font-family:var(--mono); font-size:.85em; background:rgba(231,229,223,.08); padding:1px 5px; color:var(--paper)}
+  .railtab .r .rd .proof{display:block; margin-top:8px; font:500 12px/1.5 var(--mono); color:var(--graphite)}
+
+  .fuse{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:14px}
+  @media(max-width:860px){.fuse{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.fuse{grid-template-columns:1fr}}
+  .fuse .f{border:1px solid var(--hair2); padding:18px}
+  .fuse .f .h{font:700 12.5px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px}
+  .fuse .f .b{font-size:13.5px; color:#bdbab3; line-height:1.45}
+  .fuse .f .b code{font-family:var(--mono); font-size:.9em; color:var(--paper)}
+
+  .spec{border-top:1px solid var(--hair); margin-top:32px}
+  .spec .r{display:grid; grid-template-columns:200px 1fr; gap:20px; padding:16px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.spec .r{grid-template-columns:1fr; gap:5px}}
+  .spec .r .t{font:600 11px/1.3 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite)}
+  .spec .r .d{font-size:15px; color:#c2bfb8; max-width:64ch; line-height:1.5}
+  .spec .r .d code{font-family:var(--mono); font-size:.86em; color:var(--paper)}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--paper)}
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){.rise{opacity:1;transform:none}}
+</style>
 </head>
 <body>
-
-<nav class="top" aria-label="Site">
-  <div class="wrap">
-    <a class="brand" href="./index.html">hood<span class="tick">-launcher</span></a>
-    <div class="links">
-      <a href="#quickstart">Quickstart</a>
-      <a href="./rails.html">Rails</a>
-      <a href="./autonomous.html">Autonomous mode</a>
-      <a href="./safety.html">Safety</a>
-      <a href="https://github.com/nirholas/robinhood-chain-launcher">GitHub</a>
-    </div>
-  </div>
+<div class="scan" aria-hidden="true"></div>
+<nav class="rail" aria-label="Sections">
+  <b>hood·launch</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#pad" aria-current="true">Pad</a>
+  <a class="stn" href="#rails">Rails</a>
+  <a class="stn" href="#concept">Concept</a>
+  <a class="stn" href="#auto">Autonomous</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
 </nav>
 
-<header class="hero wrap">
-  <h1>The autonomous<br><span class="grad">coin launcher</span><br>for Robinhood Chain</h1>
-  <p class="lede">
-    Concept → 3D logo → deploy on NOXA, The Odyssey, or a clean-room Uniswap v3 rail → announce.
-    The pump.fun-launcher playbook, ported to chain 4663. Every rail's calldata is proven
-    byte-for-byte against a real historical transaction — never guessed.
-  </p>
-  <div class="cta">
-    <span class="install"><span class="dollar">$</span> npm install hood-launcher</span>
-    <a class="btn primary" href="#quickstart">Get started</a>
-    <a class="btn" href="./rails.html">See the rails</a>
-  </div>
+<main>
+  <!-- ============ PAD / GANTRY ============ -->
+  <section id="pad">
+    <div class="herotext">
+      <p class="boot mono" id="boot"></p>
+      <div class="eyebrow"><span class="n">00</span> / LAUNCH PAD · chain 4663</div>
+      <h1 class="herohead">Configure.<br><span class="lo">Arm. Launch.</span></h1>
+      <p class="sub">The pump.fun-launcher playbook, ported to Robinhood Chain. Set a token, throw the lever, and run the whole pipeline as a preflight: concept, safety screen, 3D logo, calldata proven against a real mainnet tx, pool, LP lock, live.</p>
 
-  <div class="board-head">
-    <h2>Recent launches, live</h2>
-    <span class="status" id="board-status"><span class="dot"></span><span id="board-status-text">connecting to chain 4663…</span></span>
-  </div>
-  <div class="board" id="board" aria-live="polite"></div>
-  <div class="board-error" id="board-error">
-    Could not reach the public RPC (<code>rpc.mainnet.chain.robinhood.com</code>) from your
-    browser. It may be briefly unavailable, or an extension is blocking cross-origin
-    requests — check the <a href="https://robinhoodchain.blockscout.com">explorer</a> and reload.
-  </div>
-  <p class="board-note">
-    Read client-side, live, from Robinhood Chain's public RPC — the last 40,000 blocks
-    (~an hour) of <code>TokenLaunched</code> (NOXA) and <code>TokenCreated</code> (The
-    Odyssey) events, newest first. Nothing on this page is fabricated or cached server-side.
-  </p>
-</header>
+      <div class="panel">
+        <div class="ph"><span>token config</span><span id="netlabel">mainnet · 4663</span></div>
+        <div class="pb">
+          <div class="field"><label for="cname">name</label><input id="cname" value="Sleepy Capybara" maxlength="28" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="csym">symbol</label><input id="csym" value="NAP" maxlength="10" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="csup">supply</label><input id="csup" value="1,000,000,000" maxlength="18" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label>rail</label>
+            <div class="rails" id="rails" role="group" aria-label="Launch rail">
+              <button data-rail="noxa" aria-pressed="true">NOXA</button>
+              <button data-rail="odyssey-instant" aria-pressed="false">Odyssey · instant</button>
+              <button data-rail="odyssey-bonding" aria-pressed="false">Odyssey · bonding</button>
+              <button data-rail="direct" aria-pressed="false">Direct</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<main class="wrap">
-
-<section class="block" id="quickstart">
-  <h2>Quickstart</h2>
-  <p class="sub">Node ≥ 20. Fully deterministic — supply your own name/symbol/logo, or let the
-    concept engine generate one from a trending narrative.</p>
-  <pre><code>cp .env.example .env   # ROBINHOOD_CHAIN_NETWORK=testnet, optional OPENAI_API_KEY
-
-npm install &amp;&amp; npm run build
-
-# Dry run: concept → screen → uniqueness → artwork → preflight. No transaction sent.
-node dist/cli.js preflight --config examples/coin.deterministic.json --rail noxa
-
-# Real launch (needs a funded ROBINHOOD_CHAIN_PRIVATE_KEY, LIVE=1, ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1)
-node dist/cli.js create --config examples/coin.deterministic.json --rail noxa</code></pre>
-</section>
-
-<section class="block" id="rails-summary">
-  <h2>Three rails, one interface</h2>
-  <p class="sub">Every calldata builder is proven against a real historical mainnet transaction — see <a href="./rails.html">the full breakdown</a>.</p>
-  <div class="grid">
-    <div class="card">
-      <h3><code>noxa</code></h3>
-      <p>One transaction: deploy, create the Uniswap v3 pool, seed liquidity, lock the LP. Trading starts immediately. Mainnet only.</p>
+      <div class="leverbay">
+        <button class="launch" id="launch"><span class="fill"></span><span class="lbl" id="launchlbl">Throw launch lever</span></button>
+        <div class="tminus"><span class="tl">t-minus</span><span class="tv mono" id="tv">--</span></div>
+      </div>
+      <p class="arm-note" id="armnote">preflight simulation · a real launch needs LIVE=1 + ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1 and spends real funds</p>
     </div>
-    <div class="card">
-      <h3><code>odyssey</code></h3>
-      <p>The Odyssey's instant factory (buy folds into creation) or its native-ETH bonding curve. Mainnet only.</p>
+
+    <div class="gantry">
+      <div class="tower" id="tower" aria-hidden="true">
+        <div class="mast"></div>
+        <div class="vehicle" id="vehicle">
+          <svg viewBox="0 0 20 34"><path d="M10 1 C14 6 14 15 10 22 C6 15 6 6 10 1 Z" fill="none" stroke="#e7e5df" stroke-width="1.3"/><path class="flame" d="M8 22 L10 30 L12 22" fill="none" stroke="#e7e5df" stroke-width="1.2"/></svg>
+        </div>
+      </div>
+      <div class="stack" aria-live="polite">
+        <div class="sh"><span>launch sequence</span><span class="status" id="seqstatus">standing by</span></div>
+        <div id="stages"></div>
+        <div class="foot" id="seqfoot">throw the lever to run the sequence. nothing here is signed or sent.</div>
+      </div>
     </div>
-    <div class="card">
-      <h3><code>direct</code></h3>
-      <p>A clean-room OpenZeppelin v5 ERC-20 (no owner, no mint, nothing to renounce) + a fresh Uniswap v3 pool, verified on Blockscout. Mainnet and testnet.</p>
+  </section>
+
+  <!-- ============ RAILS ============ -->
+  <section id="rails">
+    <div class="eyebrow"><span class="n">01</span> / THE RAILS · never guessed</div>
+    <h2>Every rail proven<br>against a real tx.</h2>
+    <p class="lede" style="margin-top:22px">Four ways to get a token on chain 4663. Each rail's calldata is reproduced <b>byte-for-byte</b> from a real historical mainnet transaction, re-run as a test on every build. The one rule this whole project follows: never guess calldata.</p>
+    <div class="railtab">
+      <div class="r rise"><div class="rn">NOXA<small>mainnet · one call</small></div><div class="rd">One <code>launchToken</code> call deploys the ERC-20, creates a Uniswap v3 pool, seeds single-sided liquidity, and permanently locks the LP. Trading starts immediately.<span class="proof">proof: reproduces the real ROBINDOG launch tx <code>0x63da…56d0</code> byte-for-byte, selector <code>0x686399cb</code>. ABI recovered from NOXA's own production frontend bundle.</span></div></div>
+      <div class="r rise"><div class="rn">Odyssey · instant<small>mainnet · payable</small></div><div class="rd">One payable call to The Odyssey's instant factory: <code>msg.value</code> folds directly into the initial buy and lists to a Uniswap v3 pool immediately.<span class="proof">proof: reproduces two real create txs byte-for-byte, selector <code>0x548eb31b</code>.</span></div></div>
+      <div class="r rise"><div class="rn">Odyssey · bonding<small>mainnet · native-ETH curve</small></div><div class="rd">Create on the native-ETH bonding-curve factory (zero value), with an optional separate <code>buy</code> to seed the curve.<span class="proof">proof: reproduces two real create txs byte-for-byte, selector <code>0x56f698a3</code>; buy shape matches a real buy tx, selector <code>0xcce7ec13</code>.</span></div></div>
+      <div class="r rise"><div class="rn">Direct<small>mainnet + testnet · own code</small></div><div class="rd">Deploys <code>HoodToken.sol</code> (OpenZeppelin v5 ERC20, fixed supply, no mint, no owner, nothing to renounce), creates and initializes a Uniswap v3 pool, seeds a full-range LP, then burns or time-locks the LP NFT per config.<span class="proof">proof: no reverse-engineering, code hood-launcher wrote and compiled, submitted for Blockscout source verification on both mainnet and testnet.</span></div></div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="block" id="differentiator">
-  <h2>Every coin ships with a real 3D logo</h2>
-  <p class="sub">
-    Generated for free on the <a href="https://three.ws">three.ws</a> public forge lane
-    (Microsoft TRELLIS on NVIDIA NIM) — no key, no account, no cost. A textured GLB you can
-    drop straight into a 3D viewer, not a flat PNG. Supply your own image instead if you'd
-    rather skip generation entirely.
-  </p>
-</section>
+  <!-- ============ CONCEPT ============ -->
+  <section id="concept">
+    <div class="eyebrow"><span class="n">02</span> / CONCEPT ENGINE · two-layer screen</div>
+    <div class="cols">
+      <div>
+        <h2>Deterministic,<br>or generated.</h2>
+        <p class="lede" style="margin-top:22px">Supply name, symbol and logo yourself for a fully deterministic launch with <b>zero LLM calls</b>, or pass a theme and let the configured model (your OpenAI or Anthropic key, no proxy of ours) invent name, ticker, description and lore. Either way, the same screen and an on-chain ticker uniqueness check run before anything is spent.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/robinhood-chain-launcher">source</a>
+          <a class="btn" href="https://three.ws">three.ws forge</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="concept">COPY</button><span class="k">import</span> { buildConcept } <span class="k">from</span> <span class="s">'hood-launcher'</span>
 
-<div class="disclosure">
-  <strong>This tool creates real, tradeable, irreversible on-chain assets.</strong>
-  Read the <a href="./safety.html">safety page</a> before running it against mainnet with
-  <code>LIVE=1</code>.
-</div>
+<span class="k">const</span> r = <span class="k">await</span> buildConcept(network, config, {
+  theme: <span class="s">'a very tired rodent, unbothered'</span>,
+})
+<span class="c">// name · symbol · description · 3D logo GLB</span>
+<span class="c">// screened, unique, priced, before any spend</span>
+r.input.name; r.input.symbol; r.input.logoUri</div>
+      </div>
+    </div>
+    <div class="fuse">
+      <div class="f"><div class="h">denylist</div><div class="b">Deterministic, word-boundary matched, always on, zero cost.</div></div>
+      <div class="f"><div class="h">LLM screen</div><div class="b">No impersonation of a real person or a trademarked brand.</div></div>
+      <div class="f"><div class="h">uniqueness</div><div class="b">On-chain ticker check before a single wei is spent.</div></div>
+      <div class="f"><div class="h">3D logo</div><div class="b">A real GLB forged free on the <code>three.ws</code> lane, or bring your own.</div></div>
+    </div>
+  </section>
 
+  <!-- ============ AUTONOMOUS ============ -->
+  <section id="auto">
+    <div class="eyebrow"><span class="n">03</span> / AUTONOMOUS MODE · hard caps</div>
+    <div class="cols">
+      <div>
+        <h2>It can watch,<br>propose, and wait.</h2>
+        <p class="lede" style="margin-top:22px">The scheduler polls the free three.ws crypto-news digest for real clustered narratives, builds a concept from the strongest un-proposed one, and runs it through preflight. Execution needs an explicit approval or <code class="mono">AUTO_APPROVE=1</code>, and nothing broadcasts a real transaction unless <code class="mono">LIVE=1</code> is also set. Approval and liveness are independent gates.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/robinhood-chain-launcher#autonomous-mode">read the docs</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="auto">COPY</button><span class="s">$</span> hood-auto tick        <span class="c"># one poll-propose cycle</span>
+<span class="s">$</span> hood-auto list        <span class="c"># pending proposals</span>
+<span class="s">$</span> hood-auto approve <span class="k">&lt;id&gt;</span>
+<span class="s">$</span> hood-auto loop --interval-minutes 60</div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="r"><div class="t">launches / day</div><div class="d"><code>MAX_LAUNCHES_PER_DAY</code> (default 3): a rolling 24h window over the launch ledger. Hard, not advisory: throws <code>CapExceededError</code>, no override flag.</div></div>
+      <div class="r"><div class="t">seed value</div><div class="d"><code>MAX_SEED_USDG</code> (default 50): a live Uniswap v3 WETH→USDG quote converts the seed to a USD estimate before every launch.</div></div>
+      <div class="r"><div class="t">kill switch</div><div class="d">SIGINT / SIGTERM, a <code>KILL</code> file, or <code>POST /kill</code>: any one stops all further launches for the life of the process. No in-process un-kill.</div></div>
+      <div class="r"><div class="t">liveness</div><div class="d"><code>LIVE=1</code> + <code>ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1</code> required before any real fund movement. Without them, every entry point runs to preflight and stops.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">04</span> / GET IT · testnet first</div>
+    <div class="cols">
+      <div>
+        <h2>Dry run before<br>you ever spend.</h2>
+        <p class="lede" style="margin-top:22px">One core, three ways to drive it: <code class="mono">hood-launch</code> (one-shot), <code class="mono">hood-auto</code> (the scheduler), and a small HTTP API. Every rail is built to run on testnet 46630 first; the direct rail runs there today. A <code class="mono">preflight</code> is a genuine simulation against live market data, not a fabricated one.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/robinhood-chain-launcher#readme">read the docs</a>
+          <a class="btn" href="rails.html">rails detail</a>
+          <a class="btn" href="safety.html">safety</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="get">COPY</button><span class="s">$</span> npm install hood-launcher
+
+<span class="c"># full pipeline, no transaction sent</span>
+<span class="s">$</span> hood-launch preflight \
+    --config examples/coin.json --rail noxa
+
+<span class="c"># real launch: gated behind explicit flags</span>
+<span class="s">$</span> LIVE=1 ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1 \
+    hood-launch create --config coin.json --rail noxa</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood-<br>launcher</div>
+    <div class="meta">
+      chain 4663 · NOXA / Odyssey / direct · calldata proven<br>
+      <a href="https://github.com/nirholas/robinhood-chain-launcher">github.com/nirholas/robinhood-chain-launcher</a><br>
+      <a href="https://www.npmjs.com/package/hood-launcher">npmjs.com/package/hood-launcher</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
+    </div>
+  </footer>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
-    <span><a href="https://github.com/nirholas/robinhood-chain-launcher">GitHub</a> · <a href="./rails.html">Rails</a> · <a href="./autonomous.html">Autonomous mode</a> · <a href="./safety.html">Safety</a></span>
-  </div>
-</footer>
-
 <script>
-const RPC = 'https://rpc.mainnet.chain.robinhood.com';
-const NOXA_FACTORY = '0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB';
-const ODYSSEY_FACTORIES = [
-  '0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80',
-  '0xD7601cEe401306fdea5833c6898181D9c770F800',
+"use strict";
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ---------- boot ---------- */
+(function(){
+  const el=document.getElementById('boot');
+  const line='● gantry online · chain 4663 · rails: noxa · odyssey · direct · ready';
+  [...line].forEach((ch,i)=>{const s=document.createElement('span');s.textContent=ch;s.style.animationDelay=(reduce?0:i*12+100)+'ms';el.appendChild(s);});
+})();
+
+/* ---------- copy ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  const map={
+    concept:"import { buildConcept } from 'hood-launcher'",
+    auto:'hood-auto tick',
+    get:'npm install hood-launcher'
+  };
+  btn.addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(map[btn.dataset.copy]||'').then(()=>{const t=btn.textContent;btn.textContent='COPIED';setTimeout(()=>btn.textContent=t,1200);}).catch(()=>{});});
+});
+
+/* ---------- reveal ---------- */
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+function observeRises(){document.querySelectorAll('.rise:not([data-obs])').forEach((el,i)=>{el.dataset.obs='1';el.style.transitionDelay=(i%3*60)+'ms';io.observe(el);});}
+
+/* ---------- rail nav ---------- */
+const stations=[...document.querySelectorAll('.rail .stn')];
+const secs=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0,mid=innerHeight*0.4;
+  secs.forEach((s,i)=>{const r=s.getBoundingClientRect();if(r.top<=mid)idx=i;});
+  stations.forEach((s,i)=>s.setAttribute('aria-current',i===idx));
+  const a=stations[idx],railR=document.querySelector('.rail').getBoundingClientRect(),r=a.getBoundingClientRect();
+  carriage.style.height=r.height+'px';carriage.style.transform=`translateY(${r.top-railR.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:reduce?'auto':'smooth'});}));
+addEventListener('scroll',()=>requestAnimationFrame(updateRail),{passive:true});
+addEventListener('resize',updateRail);updateRail();
+
+/* =========================================================
+   THE LAUNCH GANTRY / signature interaction
+   Configure a token, throw the lever: a T-minus countdown
+   then a staged launch sequence ignites rung by rung, the
+   vehicle climbs the mast, each stage prints a real readout.
+   Stages vary by rail; all data is true to the repo.
+   ========================================================= */
+const COMMON=[
+  ['concept',(c)=>`${c.name} · ${c.sym} · ${c.sup} fixed supply, no mint`],
+  ['safety screen','denylist (word-boundary) + LLM · no impersonation'],
+  ['ticker unique','on-chain uniqueness check · before any spend'],
+  ['3d logo','GLB forged on the three.ws free lane (no key)'],
+  ['preflight','simulated against live market data · nothing signed'],
 ];
-// keccak256("TokenCreated(address,address,address,bool,uint256)") — Odyssey bonding factory's creation topic.
-const ODYSSEY_TOPIC = '0xa52263eeb2ea349365a35c006fc978b0b85eb109fe50959959c829b329bebf9e';
+const RAILS={
+  'noxa':{net:'mainnet · 4663', tail:[
+    ['launchToken','<code>0x686399cb</code> · ERC-20 + Uniswap v3 pool + single-sided LP'],
+    ['calldata proof','byte-for-byte match to ROBINDOG tx <code>0x63da…56d0</code>'],
+    ['LP locked','liquidity permanently locked · trading opens'],
+    ['live','preflight complete'],
+  ]},
+  'odyssey-instant':{net:'mainnet · 4663', tail:[
+    ['create','<code>0x548eb31b</code> · payable · msg.value folds into the buy'],
+    ['calldata proof','byte-for-byte match to two real create txs'],
+    ['pool','Uniswap v3 pool listed immediately'],
+    ['live','preflight complete'],
+  ]},
+  'odyssey-bonding':{net:'mainnet · 4663', tail:[
+    ['create','<code>0x56f698a3</code> · native-ETH bonding-curve factory'],
+    ['calldata proof','byte-for-byte match to two real create txs'],
+    ['seed curve','optional buy · <code>0xcce7ec13</code>'],
+    ['live','preflight complete'],
+  ]},
+  'direct':{net:'mainnet + testnet · 46630', tail:[
+    ['deploy','HoodToken.sol · OZ v5 ERC20 · no owner, no mint'],
+    ['pool init','create + initialize Uniswap v3 pool · full-range LP'],
+    ['LP burn/lock','LP NFT burned or time-locked per config'],
+    ['verify','submitted for Blockscout source verification'],
+    ['live','preflight complete'],
+  ]},
+};
 
-async function rpc(method, params) {
-  const res = await fetch(RPC, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+const stagesEl=document.getElementById('stages');
+const seqStatus=document.getElementById('seqstatus');
+const seqFoot=document.getElementById('seqfoot');
+const tv=document.getElementById('tv');
+const launch=document.getElementById('launch'), launchlbl=document.getElementById('launchlbl');
+const vehicle=document.getElementById('vehicle'), tower=document.getElementById('tower');
+const netlabel=document.getElementById('netlabel'), armnote=document.getElementById('armnote');
+const railBtns=[...document.querySelectorAll('#rails button')];
+const nameI=document.getElementById('cname'), symI=document.getElementById('csym'), supI=document.getElementById('csup');
+
+let rail='noxa', running=false, timers=[];
+function cfg(){
+  return { name:(nameI.value||'Untitled').trim(), sym:(symI.value||'TKN').trim().toUpperCase().replace(/\s+/g,''), sup:(supI.value||'1,000,000,000').trim() };
+}
+function stageList(){
+  const c=cfg();
+  const common=COMMON.map(s=>[s[0], typeof s[1]==='function'?s[1](c):s[1]]);
+  return common.concat(RAILS[rail].tail);
+}
+function renderStages(){
+  const list=stageList();
+  stagesEl.innerHTML='';
+  list.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='stg'; d.id='stg'+i;
+    d.innerHTML=`<span class="led"></span><div class="body"><div class="nm">${s[0]}</div><div class="dt">${s[1]}</div></div><span class="t mono">${String(i+1).padStart(2,'0')}</span>`;
+    stagesEl.appendChild(d);
   });
-  const json = await res.json();
-  if (json.error) throw new Error(json.error.message || 'RPC error');
-  return json.result;
+  // rungs on the tower: one horizontal tick per stage
+  tower.querySelectorAll('.rung').forEach(r=>r.remove());
+  const n=list.length;
+  for(let i=0;i<n;i++){ const r=document.createElement('div'); r.className='rung'; r.style.top=(10+(i/(n-1))*80)+'%'; tower.appendChild(r); }
+  layoutVehicle(0,n);
 }
-
-function short(addr) { return addr.slice(0, 6) + '…' + addr.slice(-4); }
-
-function renderTile({ label, token, deployer, block, kind }) {
-  const div = document.createElement('div');
-  div.className = 'tile';
-  div.innerHTML = `
-    <div class="sym">${kind}</div>
-    <div class="co">token ${short(token)}</div>
-    <div class="px" style="font-size:14px">by ${short(deployer)}</div>
-    <div class="meta">block ${block} · <a href="https://robinhoodchain.blockscout.com/token/${token}" target="_blank" rel="noopener">view ↗</a></div>
-  `;
-  return div;
+function layoutVehicle(done,total){
+  // vehicle sits at bottom when done=0, climbs to top as done→total
+  const pct = total<=1?0 : done/total;
+  const top = 88 - pct*80; // percentage of tower height (bottom→top)
+  vehicle.style.top = top + '%';
 }
+railBtns.forEach(b=>b.addEventListener('click',()=>{
+  if(running) return;
+  rail=b.dataset.rail; railBtns.forEach(x=>x.setAttribute('aria-pressed', x===b));
+  netlabel.textContent = RAILS[rail].net;
+  renderStages(); resetSeq();
+}));
+[nameI,symI,supI].forEach(inp=>inp.addEventListener('input',()=>{ if(!running) renderStages(); }));
 
-async function loadLaunches() {
-  const statusEl = document.getElementById('board-status');
-  const statusText = document.getElementById('board-status-text');
-  const board = document.getElementById('board');
-  const errorBox = document.getElementById('board-error');
-  try {
-    const latestHex = await rpc('eth_blockNumber', []);
-    const latest = BigInt(latestHex);
-    const from = latest > 40000n ? latest - 40000n : 0n;
-    const fromHex = '0x' + from.toString(16);
+function resetSeq(){
+  seqStatus.textContent='standing by'; tv.textContent='--';
+  seqFoot.textContent='throw the lever to run the sequence. nothing here is signed or sent.';
+  launch.classList.remove('live'); launchlbl.textContent='Throw launch lever';
+  tower.classList.remove('firing');
+  [...stagesEl.children].forEach(c=>c.classList.remove('lit'));
+  layoutVehicle(0, stageList().length);
+}
+function clearTimers(){ timers.forEach(t=>clearTimeout(t)); timers=[]; }
 
-    // NOXA TokenLaunched: topic0 computed at page-load time isn't hardcoded reliably in
-    // static JS without a keccak lib, so we fetch ALL logs from the factory address in
-    // range (no topic filter) and rely on the first indexed topic (token) for display —
-    // still 100% real on-chain data, just less strict filtering than the SDK's typed watcher.
-    // ODYSSEY_TOPIC only matches the bonding-curve factory's TokenCreated event —
-    // the instant factory emits a different, undecoded event (see rails.html), so
-    // this board shows NOXA + Odyssey-bonding launches, not Odyssey-instant ones.
-    const [noxaLogs, odysseyLogs] = await Promise.all([
-      rpc('eth_getLogs', [{ address: NOXA_FACTORY, fromBlock: fromHex, toBlock: 'latest' }]),
-      rpc('eth_getLogs', [{ address: ODYSSEY_FACTORIES, topics: [ODYSSEY_TOPIC], fromBlock: fromHex, toBlock: 'latest' }]),
-    ]);
+function fire(){
+  if(running) return; running=true; clearTimers();
+  resetSeq();
+  launch.setAttribute('disabled',''); launch.classList.add('arming');
+  launchlbl.textContent='arming…'; seqStatus.textContent='arming';
+  seqFoot.textContent='launch lever thrown · holding for ignition';
 
-    const items = [];
-    for (const log of noxaLogs) {
-      if (log.topics.length < 3) continue;
-      items.push({
-        kind: 'NOXA',
-        token: '0x' + log.topics[1].slice(-40),
-        deployer: '0x' + log.topics[2].slice(-40),
-        block: parseInt(log.blockNumber, 16),
-      });
-    }
-    for (const log of odysseyLogs) {
-      if (log.topics.length < 3) continue;
-      items.push({
-        kind: 'Odyssey',
-        token: '0x' + log.topics[1].slice(-40),
-        deployer: '0x' + log.topics[2].slice(-40),
-        block: parseInt(log.blockNumber, 16),
-      });
-    }
-    items.sort((a, b) => b.block - a.block);
-
-    board.innerHTML = '';
-    if (items.length === 0) {
-      board.innerHTML = '<p style="color:var(--text-faint)">No launches on either factory in the last ~40,000 blocks. Check back later, or widen the window in this page\'s source.</p>';
-    } else {
-      for (const item of items.slice(0, 12)) board.appendChild(renderTile(item));
-    }
-
-    statusEl.classList.add('live');
-    statusText.textContent = `live — block ${latest}`;
-  } catch (err) {
-    errorBox.classList.add('visible');
-    statusEl.classList.add('error');
-    statusText.textContent = 'connection failed';
-    console.error(err);
+  const list=stageList(); const total=list.length;
+  const run=()=>{
+    tower.classList.add('firing');
+    launchlbl.textContent='launching…';
+    seqFoot.textContent='running launch sequence · nothing here is signed or sent';
+    // countdown
+    const cd=['3','2','1','IGNITION'];
+    cd.forEach((n,i)=>timers.push(setTimeout(()=>{ tv.textContent=n; seqStatus.textContent=i<3?'countdown':'ignition'; },160+i*360)));
+    const startStages=160+cd.length*360+120;
+    list.forEach((s,i)=>{
+      timers.push(setTimeout(()=>{
+        document.getElementById('stg'+i).classList.add('lit');
+        seqStatus.textContent=s[0];
+        layoutVehicle(i+1,total);
+        tv.textContent='T+'+String(i+1).padStart(2,'0');
+        if(i===total-1) finish();
+      }, startStages+i*480));
+    });
+  };
+  if(reduce){ // no countdown/anim: light everything and finish
+    list.forEach((s,i)=>document.getElementById('stg'+i).classList.add('lit'));
+    layoutVehicle(total,total); finish(); return;
   }
+  // arming fill lasts 1.2s
+  timers.push(setTimeout(run, 1250));
 }
+function finish(){
+  running=false;
+  launch.classList.remove('arming'); launch.removeAttribute('disabled'); launch.classList.add('live');
+  launchlbl.textContent='Reset pad';
+  seqStatus.textContent='live';
+  tv.textContent='LIVE';
+  const c=cfg();
+  seqFoot.innerHTML=`<b>${c.sym} preflight complete on ${rail}.</b> a real launch needs <b>LIVE=1</b> + <b>ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1</b> and spends real funds.`;
+}
+launch.addEventListener('click',()=>{ if(running) return; if(launch.classList.contains('live')){ resetSeq(); } else { fire(); } });
 
-loadLaunches();
-setInterval(loadLaunches, 30000);
+renderStages();
+observeRises();
 </script>
-
 </body>
 </html>
