@@ -8,7 +8,7 @@ Twelve tutorials, zero to shipping an autonomous agent, every one of them perfor
 
 ## Website
 
-The landing page in [`docs/`](docs/) is a single self-contained `index.html` (inline CSS + JS, zero external requests, works from `file://`). Its signature interaction is a **branching Socratic dialogue**: you don't scroll the course, you interrogate chain 4663 — pick a question, it answers, and it hands you the next fork worth asking. The twelve verified tutorials sit underneath every thread.
+The landing page in [`docs/`](docs/) is a single self-contained `index.html` (inline CSS + JS, zero external requests, works from `file://`). Its signature interaction is a **branching Socratic dialogue**: you don't scroll the course, you interrogate chain 4663: pick a question, it answers, and it hands you the next fork worth asking. The twelve verified tutorials sit underneath every thread.
 
 Deploy the `docs/` folder anywhere static:
 
@@ -16,7 +16,7 @@ Deploy the `docs/` folder anywhere static:
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/learn-robinhood-chain)
 [![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/learn-robinhood-chain)
 
-Config lives in [`wrangler.toml`](wrangler.toml), [`netlify.toml`](netlify.toml), and [`vercel.json`](vercel.json) — each points the platform at `docs/`.
+Config lives in [`wrangler.toml`](wrangler.toml), [`netlify.toml`](netlify.toml), and [`vercel.json`](vercel.json). Each points the platform at `docs/`.
 
 ## How to use this course
 
