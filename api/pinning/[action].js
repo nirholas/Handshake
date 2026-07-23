@@ -130,13 +130,26 @@ export default wrap(async (req, res) => {
 					'sourceUrl must be an owned R2 URL or a data: URL',
 				);
 			}
-			const head = await fetch(sourceUrl, { method: 'HEAD', signal: AbortSignal.timeout(8000) });
+			const head = await fetch(sourceUrl, {
+				method: 'HEAD',
+				redirect: 'manual',
+				signal: AbortSignal.timeout(8000),
+			});
 			if (!head.ok) return error(res, 400, 'validation_error', 'source URL is not accessible');
 			const contentLength = parseInt(head.headers.get('content-length') || '0', 10);
 			if (contentLength > MAX_R2_BYTES) {
 				return error(res, 413, 'payload_too_large', 'source exceeds 50 MB limit');
 			}
-			const fetched = await fetch(sourceUrl, { signal: AbortSignal.timeout(20000) });
+			// redirect: 'manual' — the source is prefix-locked to our own R2 domain
+			// and R2 public buckets do not 302; refusing to follow any redirect keeps
+			// a future CDN/front-end change from silently widening the fetch target.
+			const fetched = await fetch(sourceUrl, {
+				redirect: 'manual',
+				signal: AbortSignal.timeout(20000),
+			});
+			if (fetched.status >= 300 && fetched.status < 400) {
+				return error(res, 502, 'fetch_failed', 'source URL returned an unexpected redirect');
+			}
 			if (!fetched.ok) return error(res, 502, 'fetch_failed', 'failed to fetch source URL');
 			buf = Buffer.from(await fetched.arrayBuffer());
 			const urlPath = new URL(sourceUrl).pathname;
