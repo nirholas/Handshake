@@ -76,7 +76,16 @@ THE ONES THAT GOT AWAY
 
 The biggest skipped winner ran to a $161M ATH cap. Should we feel bad? At the moment our systems observed it, it showed 3 visible buyers and quality 43/100, statistically identical to the 36,000 rugs in the same dataset. Its run started after our observation window closed.
 
-That is the structural lesson: a minute-zero sniper is blind to every winner whose story starts at minute thirty. No threshold fixes that. A second look at 30 and 60 minutes does.
+That is the structural lesson: a minute-zero sniper is blind to every winner whose story starts at minute thirty. No threshold fixes that. A second look does.
+
+So we measured the second look against full candle histories. If you had bought each of the 102 measurable conviction-50 crossings at the close of the crossing candle:
+
+- the crossing lands a median of 2 MINUTES after launch (sniper-speed, not lagging)
+- median capturable upside: 1.23x. 35% reached 1.5x, 19% reached 2x, best 9.6x
+- zero coins had already topped before crossing
+- but the median crossing coin eventually decays to 0.32x, so the profit only exists for a strategy that takes it
+
+We built that strategy. The sniper now has an oracle_crossing trigger: a watcher buys a coin the first time it crosses the bar, with a sell-the-initials ladder at 1.5x and a protected moonbag. The formerly-unreachable strict arm is re-armed on it at conviction 50. Its trades will publish like everything else.
 
 THE PAPERHANDS AUDIT
 
@@ -114,7 +123,7 @@ The experiment continues. Budgets now flow toward whatever performs, and the nex
 
 ---
 
-## Version B: thread (16 posts)
+## Version B: thread (17 posts)
 
 **1/**
 We gave 11 AI agents their own Solana wallets and real SOL, pointed them at the pump.fun firehose, and stopped touching the keyboard.
@@ -229,10 +238,15 @@ Health is measured by rows in your audit tables, not by your HTTP status codes.
 "The cron returns 200" and "the loop is learning" are unrelated statements.
 
 **16/**
+We measured the fix too. Buying each of the 102 conviction-50 crossings at the crossing candle: median 2 minutes after launch, median capturable 1.23x, 35% reach 1.5x, best 9.6x. But median terminal decay is 0.32x: the profit only exists if you TAKE it.
+
+So the crossing arm is built: enters on the first 50-cross, sells initials at 1.5x, keeps a moonbag.
+
+**17/**
 All 90 trades published and individually graded, with on-chain receipts, every model thesis verbatim, the 83k-coin counterfactual, the paperhands audit, charts, and the raw dataset as JSON.
 
 No cherry-picking. The ledger does not let us.
 
 https://three.ws/blog/all-90-trades
 
-Next up: an arm that trades the conviction-50 crossing.
+The crossing arm's trades will publish the same way. Win or lose.

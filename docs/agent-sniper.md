@@ -86,7 +86,7 @@ The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strateg
 
 | Field | What it does |
 |---|---|
-| `trigger` | `new_mint`, `first_claim`, `intel_confirmed`, `graduation_ride` (buy at migration, sell into pump.fun's 5-minute BOOST buyback window), alpha/radar variants |
+| `trigger` | `new_mint`, `first_claim`, `intel_confirmed`, `graduation_ride` (buy at migration, sell into pump.fun's 5-minute BOOST buyback window), `oracle_crossing` (buy the first time a coin crosses the strategy's Oracle-conviction bar; see below), alpha/radar variants |
 | `per_trade_lamports` / `daily_budget_lamports` | Position size and the hard daily spend ceiling |
 | `max_concurrent_positions` | Open-position cap |
 | `min_market_cap_usd` / `max_market_cap_usd` | Entry band; tightened by the fleet-wide safety band |
@@ -95,13 +95,17 @@ The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strateg
 | `firewall_level` | `block` (abort on a failed simulation) or `warn` |
 | `slippage_bps` / `max_price_impact_pct` | Execution guards |
 | `stop_loss_pct` | Hard floor below entry, always evaluated first |
-| `trailing_stop_pct` | Percent off the position's high-water mark |
+| `trailing_stop_pct` | Percent off the position's high-water mark. Arms only once the position has been above breakeven; underwater, the stop-loss alone owns the downside (measured across the fleet's first 90 trades: every below-breakeven trail just realized a loss the stop would have capped) |
 | `take_profit_pct` | Profit ceiling. **Set this.** Null means winners are only ever closed by the trailing stop or the clock |
 | `max_hold_seconds` | The timeout backstop; closes the position regardless of PnL |
 | `initials_out_multiple` / `moonbag_min_pct` | The laddered exit: recover cost at N times entry, let the rest ride |
 | `kill_switch` / `enabled` | Two independent off switches |
 
 Exit rules are evaluated in a fixed order (stop-loss, signal-flip, trailing-stop, take-profit, timeout) by a pure, unit-tested function (`workers/agent-sniper/exit-logic.js`), so a backtest and the live worker agree on exactly when a position closes.
+
+### The `oracle_crossing` trigger
+
+Most triggers judge a coin at launch, when the Oracle has no signal yet. `oracle_crossing` inverts that: a watcher (`workers/agent-sniper/oracle-crossing.js`) polls `oracle_conviction` and buys a coin the **first time** its score crosses the strategy's `min_oracle_score` (default 50), provided the coin is young (`SNIPER_CROSSING_MAX_AGE_MIN`, default 90) and the score is fresh. The empirical case, measured over the fleet's first window (2026-07-20..23): coins that crossed conviction 50 pumped or graduated **77.5%** of the time vs an 11.8% base rate; the crossing lands a **median of 2 minutes after launch**; and the median crossing offered 1.23x from the crossing candle with 35% reaching 1.5x. The same data says the median crossing coin eventually decays to 0.32x of the crossing price, so a crossing strategy should always ship with a reachable take-profit or the initials-out ladder. One attempt per (strategy, mint); candidates route through the same `executeBuy` chokepoint (Mayhem gate, firewall round trip, budgets, market-cap clamps) plus an explicit x402 rugpull veto. Full analysis: [the 90-trade postmortem](/blog/all-90-trades).
 
 ## How the fleet improves itself
 

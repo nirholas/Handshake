@@ -21,6 +21,7 @@ import { judgeLaunch } from './llm-judge.js';
 import { runPositionSweep } from './positions.js';
 import { runSwarmConsensus, runSwarmSettlement } from './swarm.js';
 import { startFirstClaimWatch } from './first-claim-watch.js';
+import { startOracleCrossingWatch } from './oracle-crossing.js';
 import { startPrelaunchRadar } from './prelaunch-radar.js';
 import { startIntelWatcher } from './intel/watcher.js';
 import { getLearnedWeights } from './intel/store.js';
@@ -339,6 +340,14 @@ async function main() {
 		cfg, queue, throttle, isHalted: () => draining || cfg.globalKill,
 	});
 
+	// Oracle conviction-crossing entries — buys the FIRST crossing of a
+	// strategy's conviction threshold (median 2 minutes after launch) instead of
+	// gating a launch-second buy on a score that does not exist yet. See
+	// workers/agent-sniper/oracle-crossing.js for the measured rationale.
+	const stopCrossingWatch = startOracleCrossingWatch({
+		cfg, queue, throttle, isHalted: () => draining || cfg.globalKill,
+	});
+
 	// Autonomous coin launcher — fires pump.fun launches on schedule.
 	let stopLauncher = () => {};
 	if (cfg.launcher) {
@@ -475,6 +484,7 @@ async function main() {
 		clearInterval(watchdogTimer);
 		try { stopHeartbeat?.(); } catch {}
 		try { stopClaimWatch?.(); } catch {}
+		try { stopCrossingWatch?.(); } catch {}
 		try { radar?.stop?.(); } catch {}
 		try { stopFeed?.(); } catch {}
 		try { stopIntel?.(); } catch {}

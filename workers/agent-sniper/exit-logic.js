@@ -48,7 +48,12 @@ export function decideExit(pos, value, peak, now = Date.now(), sentiment = null)
 
 	if (sl != null && value <= ev * (1 - sl / 100)) return 'stop_loss';
 	if (isBearishFlip(sentiment) && value < ev) return 'signal_flip';
-	if (ts != null && peak > 0 && value <= peak * (1 - ts / 100)) return 'trailing_stop';
+	// The trailing stop arms only once the position has been green (peak above
+	// entry). Armed underwater it is a machine for realizing small losses: across
+	// the fleet's first 90 real trades, every below-breakeven trail converted a
+	// recoverable dip into a locked loss while protecting nothing (the hard
+	// stop-loss above still caps the downside). Measured 2026-07-23.
+	if (ts != null && peak > ev && value <= peak * (1 - ts / 100)) return 'trailing_stop';
 	if (tp != null && value >= ev * (1 + tp / 100)) return 'take_profit';
 
 	const heldS = (now - new Date(pos.opened_at).getTime()) / 1000;
