@@ -111,6 +111,14 @@
 			<description>Your public portfolio at /u/:username (and /profile for yourself) already collected your forged 3D models and saved worlds into one &quot;Creations&quot; feed alongside your avatars, agents, launched coins, skills, and plugins. Restyled models were the missing piece: an AI material restyle (&quot;make it chrome&quot;, &quot;cyberpunk neon&quot;) or a seeded colorway variant fan-out from the Restyle Studio now records to your account when you're signed in, and shows up in Creations with a live 3D thumbnail, the instruction or preset used, and a link to the viewer, right next to your other work.</description>
 		</item>
 		<item>
+			<title>Security hardening across payments, embeds, and account pages</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-23:Security hardening across payments, embeds, and account pages</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A full-platform security audit landed fixes for every confirmed finding. Paid API endpoints now reject concurrent replays of the same payment, so one payment can never be redeemed twice for generation work. The Solana payment facilitator only settles USDC and $THREE, closing a path that could waste platform funds on junk tokens. Server fetches that follow user-supplied links (article reader, scene export, vault uploads, agent-to-agent calls) are pinned to pre-validated addresses and re-checked on every redirect, shutting down server-side request forgery against internal services. Sign-in and registration pages validate post-login redirect targets, blocking phishing-grade open redirects, and wallet/payment flows reject cross-site posts. Two scheduled jobs now refuse to run unauthenticated if their secret is ever missing, matching the rest of the fleet.</description>
+		</item>
+		<item>
 			<title>The Concierge becomes a Shopify shopping assistant, with product cards</title>
 			<link>https://three.ws/tutorials/shopify-shopping-assistant</link>
 			<guid isPermaLink="false">2026-07-23:The Concierge becomes a Shopify shopping assistant, with product cards</guid>

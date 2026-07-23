@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T13:45:06.563Z",
+	"generated_at": "2026-07-23T13:48:38.850Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -138,6 +138,16 @@
 			"link": "/profile",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
+			"title": "Security hardening across payments, embeds, and account pages",
+			"summary": "A full-platform security audit landed fixes for every confirmed finding. Paid API endpoints now reject concurrent replays of the same payment, so one payment can never be redeemed twice for generation work. The Solana payment facilitator only settles USDC and $THREE, closing a path that could waste platform funds on junk tokens. Server fetches that follow user-supplied links (article reader, scene export, vault uploads, agent-to-agent calls) are pinned to pre-validated addresses and re-checked on every redirect, shutting down server-side request forgery against internal services. Sign-in and registration pages validate post-login redirect targets, blocking phishing-grade open redirects, and wallet/payment flows reject cross-site posts. Two scheduled jobs now refuse to run unauthenticated if their secret is ever missing, matching the rest of the fleet.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
