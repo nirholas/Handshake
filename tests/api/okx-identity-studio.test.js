@@ -60,8 +60,12 @@ vi.mock('../../api/_lib/r2.js', () => ({
 
 // Reference-image validation calls the real SSRF guard's public-URL check —
 // stub it to a pass-through so tests control reachability via fetch alone.
+// fetchSafePublicUrlPinned is routed through the fetch router for the same
+// reason (the pinned variant opens raw sockets, which the sandbox has no
+// egress for).
 vi.mock('../../api/_lib/ssrf-guard.js', () => ({
 	assertSafePublicUrl: vi.fn(async () => {}),
+	fetchSafePublicUrlPinned: vi.fn(async (url, init) => globalThis.fetch(url, init)),
 	SsrfBlockedError: class SsrfBlockedError extends Error {},
 }));
 

@@ -32,6 +32,31 @@ vi.mock('../../api/_lib/ssrf.js', () => ({
 	assertPublicHttpsUrl: vi.fn(async (url) => url),
 }));
 
+// material-studio-store.js fetches through the pinned SSRF guard (raw
+// sockets). Route it through the per-test fetch stub, enforcing opts.maxBytes
+// the way the real guard does.
+vi.mock('../../api/_lib/ssrf-guard.js', async () => {
+	const actual = await vi.importActual('../../api/_lib/ssrf-guard.js');
+	return {
+		...actual,
+		fetchSafePublicUrlPinned: async (url, init, opts) => {
+			const resp = await globalThis.fetch(url, init);
+			if (opts?.maxBytes == null) return resp;
+			const buf = await resp.arrayBuffer();
+			if (buf.byteLength > opts.maxBytes) {
+				throw new actual.MaxBytesExceededError(buf.byteLength, opts.maxBytes);
+			}
+			return {
+				ok: resp.ok,
+				status: resp.status,
+				headers: resp.headers ?? new Headers(),
+				arrayBuffer: async () => buf,
+				text: async () => Buffer.from(buf).toString('utf8'),
+			};
+		},
+	};
+});
+
 vi.mock('../../api/_lib/watsonx.js', () => ({
 	watsonxConfig: vi.fn(() => ({ configured: true, chatModel: 'ibm/granite-3-8b-instruct' })),
 	watsonxChatComplete: vi.fn(async () => ({
