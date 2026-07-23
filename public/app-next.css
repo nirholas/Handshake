@@ -2151,3 +2151,14 @@ body.app-next-body .dg.ac { display: none !important; }
 		height: 200px;
 	}
 }
+
+/* ── Object mode ─────────────────────────────────────────────────────────────
+   Set by app-next-overlay.js when the viewer opens a prop (/app#…&kind=object).
+   A 3D object is inspected and modified, not conversed with, so the agent
+   surface is removed and the bar carries view + modify actions instead. */
+html[data-app-mode="object"] #nxt-chat-dock,
+html[data-app-mode="object"] #nxt-agent-bubble,
+html[data-app-mode="object"] #nxt-visitor-card,
+html[data-app-mode="object"] #nxt-first-hint {
+	display: none !important;
+}

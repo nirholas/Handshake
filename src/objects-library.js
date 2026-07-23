@@ -3,7 +3,7 @@
 // Browses the free, commercial-OK props served by GET /api/objects/library
 // (manifest on R2, mirroring /character-library). Each card renders a live
 // <model-viewer> off the GLB's CDN url and offers:
-//   Preview  → /app#model=<glb>   (real three.js viewer)
+//   Preview  → /app#model=<glb>&kind=object   (viewer in object mode: no agent chat)
 //   Download → the GLB directly   (every object is CC0 — free to reuse)
 //
 // The library is a few hundred entries, so the whole manifest is fetched once
@@ -41,9 +41,15 @@ function formatBytes(n) {
 
 function renderCard(o) {
 	const glbUrl = o.url || '';
-	const previewUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
 	const thumb = o.thumb || '';
 	const alt = o.label || o.name || 'Object';
+	// A prop is not an embodied agent — open the viewer in object mode so it
+	// shows view + modify affordances (Restyle / AR / Download) instead of the
+	// "Ask the agent / Why are you embodied?" chat dock. The overlay reads
+	// `kind=object` and `title` from the hash.
+	const previewUrl = glbUrl
+		? `/app#model=${encodeURIComponent(glbUrl)}&kind=object&title=${encodeURIComponent(alt)}`
+		: '#';
 	const arUrl = glbUrl
 		? `/ar/studio?src=${encodeURIComponent(glbUrl)}&title=${encodeURIComponent(alt)}`
 		: '#';

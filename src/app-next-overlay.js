@@ -67,6 +67,24 @@ const DEFAULT_BACKDROP_ID = 'studio';
 
 document.addEventListener('DOMContentLoaded', boot);
 
+// Read the viewer's launch hash (`/app#model=…&kind=object&title=…`). app.js
+// parses the same hash for the model; we only need the mode-shaping keys.
+function readLaunchHash() {
+	try {
+		return Object.fromEntries(new URLSearchParams(location.hash.replace(/^#/, '')));
+	} catch {
+		return {};
+	}
+}
+
+// A prop opened from /objects is a 3D thing to look at and modify, not an
+// embodied agent to converse with. In object mode we drop the whole agent
+// surface (chat dock, suggested prompts, agent bubble, visitor card, avatar
+// switcher, animation sheet) and offer view + modify actions instead.
+function isObjectMode() {
+	return (readLaunchHash().kind || '').toLowerCase() === 'object';
+}
+
 function boot() {
 	// In chat-embed mode (/a/<uuid>?embed=1) the site header and nav chrome
 	// are hidden by CSS. Wire only what the embedded chat surface needs.
@@ -79,6 +97,11 @@ function boot() {
 			if (!viewer) return;
 			hookAgentBubble();
 		});
+		return;
+	}
+
+	if (isObjectMode()) {
+		bootObjectMode();
 		return;
 	}
 
@@ -117,6 +140,112 @@ function boot() {
 	window.addEventListener('storage', (e) => {
 		if (e.key === 'nxt-auth-touch' || e.key?.startsWith('auth')) refreshAuthState();
 	});
+}
+
+// ── Object mode ─────────────────────────────────────────────────────────────
+// The viewer opened on a prop (a wrench, a vase, an ammo box), not an agent.
+// Keep everything that helps you look at and modify a 3D thing (camera presets,
+// backdrops, upload, fullscreen, help, keyboard) and strip everything that only
+// makes sense for an embodied agent.
+function bootObjectMode() {
+	document.documentElement.dataset.appMode = 'object';
+
+	// Chrome that stays: it all applies to inspecting any 3D model.
+	wireExploreMenu();
+	wireUserMenu();
+	wireKeyboardShortcuts();
+	wirePrimaryCTA();
+	wireShare();
+	wireFullscreen();
+	wireCameraPresets();
+	wireHelp();
+	wireAutoHide();
+	wireDeployMirror();
+	wirePosterSkeleton();
+	wireBackdrop();
+
+	// Deliberately NOT wired: wireChatDock, wireChatPanelDock, wireAnimationSheet,
+	// wireVisitorCard, wireAvatarSwitcher, startChatChipRotation, hookAgentBubble,
+	// wireFirstHint — all agent-only.
+
+	wireObjectActions();
+
+	waitForViewer().then((viewer) => {
+		if (!viewer) {
+			log.warn('[nxt] viewer never appeared — stage polish skipped');
+			return;
+		}
+		polishStage(viewer);
+		startCameraDrift(viewer);
+		applyCameraPreset('body'); // initial framing
+	});
+
+	refreshAuthState();
+	window.addEventListener('storage', (e) => {
+		if (e.key === 'nxt-auth-touch' || e.key?.startsWith('auth')) refreshAuthState();
+	});
+}
+
+// Replace the agent surface with view + modify actions for the loaded prop.
+// Restyle reads `?url=`, AR Studio reads `src=`/`title=`, Download is the GLB.
+function wireObjectActions() {
+	const hash = readLaunchHash();
+	const modelUrl = hash.model || '';
+	const title = hash.title || 'Object';
+	if (!modelUrl) return;
+
+	// Hide the agent-only bottom-bar controls (animations, avatar switcher).
+	['nxt-anim-btn', 'nxt-avatar-btn'].forEach((id) => {
+		const el = document.getElementById(id);
+		if (el) el.hidden = true;
+	});
+
+	const bar = document.querySelector('.nxt-action-bar--secondary');
+	if (!bar) return;
+
+	const enc = encodeURIComponent(modelUrl);
+	const encTitle = encodeURIComponent(title);
+	const actions = [
+		{
+			href: `/restyle?url=${enc}`,
+			label: 'Restyle',
+			title: 'Recolor materials, apply presets, or AI-restyle this object',
+			path: 'M4 13.5V16h2.5l7.4-7.4-2.5-2.5L4 13.5zM15.7 6.3a1 1 0 000-1.4l-1.6-1.6a1 1 0 00-1.4 0l-1.2 1.2 2.5 2.5 1.7-1.7z',
+		},
+		{
+			href: `/ar/studio?src=${enc}&title=${encTitle}`,
+			label: 'View in AR',
+			title: 'Place this object in your real space with AR Studio',
+			path: 'M10 2l7 4v8l-7 4-7-4V6l7-4zm0 2.2L5 6.9v6.2l5 2.7 5-2.7V6.9l-5-2.7zM10 9.5L6.5 7.6M10 9.5l3.5-1.9M10 9.5v4',
+		},
+		{
+			href: modelUrl,
+			label: 'Download',
+			title: 'Download the GLB (CC0, free to reuse)',
+			download: true,
+			path: 'M10 3v9m-4-4l4 4 4-4M4 15h12',
+		},
+	];
+
+	const frag = document.createDocumentFragment();
+	for (const a of actions) {
+		const el = document.createElement('a');
+		el.className = 'nxt-action nxt-action--ghost';
+		el.href = a.href;
+		el.title = a.title;
+		if (a.download) el.setAttribute('download', '');
+		el.innerHTML =
+			`<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">` +
+			`<path d="${a.path}" stroke="currentColor" stroke-width="1.5" fill="none" ` +
+			`stroke-linecap="round" stroke-linejoin="round" /></svg>` +
+			`<span>${escHtml(a.label)}</span>`;
+		frag.appendChild(el);
+	}
+	// Insert the object actions before the primary (Save/Sign-in) button so the
+	// bar reads: Backdrop · Upload · Restyle · AR · Download · Save.
+	const primary = document.getElementById('nxt-primary');
+	if (primary) bar.insertBefore(frag, primary);
+	else bar.appendChild(frag);
 }
 
 // ── Viewer wait ───────────────────────────────────────────────────────────
