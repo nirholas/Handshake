@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>hood-status — is Robinhood Chain down?</title>
-<meta name="description" content="A status page for Robinhood Chain (chain 4663) that draws chain health onto a live seismograph roll. RPC, block production, the sequencer feed, gas, settlement lag and Chainlink freshness — probed, thresholded, and never a dead page." />
+<title>hood-status, is Robinhood Chain down?</title>
+<meta name="description" content="A status page for Robinhood Chain (chain 4663) that draws chain health onto a live seismograph roll. RPC, block production, the sequencer feed, gas, settlement lag and Chainlink freshness, probed, thresholded, and never a dead page." />
 <link rel="canonical" href="https://nirholas.github.io/hood-status/" />
 <meta name="theme-color" content="#e9e6df" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="hood-status — the chain seismograph" />
+<meta property="og:title" content="hood-status, the chain seismograph" />
 <meta property="og:description" content="Robinhood Chain health drawn onto a moving paper roll. Incidents are quakes. RPC, sequencer feed, block production, gas, settlement lag, Chainlink freshness, 90-day uptime." />
 <meta property="og:url" content="https://nirholas.github.io/hood-status/" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:creator" content="@nichxbt" />
-<meta name="twitter:title" content="hood-status — is Robinhood Chain down?" />
+<meta name="twitter:title" content="hood-status, is Robinhood Chain down?" />
 <meta name="twitter:description" content="A status page for Robinhood Chain that draws chain health onto a live seismograph roll. Never a dead page." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23e9e6df'/><path d='M2 16 H8 L11 8 L15 24 L19 12 L22 16 H30' fill='none' stroke='%2314130f' stroke-width='2' stroke-linejoin='round'/></svg>" />
 <script type="application/ld+json">
@@ -325,7 +325,7 @@
     <div class="grid2">
       <div>
         <h2>Backend optional.<br>The page still works.</h2>
-        <p class="lede" style="margin-top:20px">If the worker is unreachable the front end flips to <b>direct probe mode</b> and measures the chain from the visitor's browser with the same thresholds. No secrets, no signing — every call is read-only. Badge and embeddable pill included.</p>
+        <p class="lede" style="margin-top:20px">If the worker is unreachable the front end flips to <b>direct probe mode</b> and measures the chain from the visitor's browser with the same thresholds. No secrets, no signing, every call is read-only. Badge and embeddable pill included.</p>
         <div class="btns">
           <a class="btn solid" href="https://github.com/nirholas/hood-status#readme">read the docs</a>
           <a class="btn" href="methodology.html">methodology</a>
@@ -339,14 +339,14 @@
 <span class="p">npm run serve:docs</span>   <span class="c"># front end on :4663</span>
 
 <span class="c"># or just open docs/index.html</span>
-<span class="c"># from disk — direct-probe mode,</span>
+<span class="c"># from disk, direct-probe mode,</span>
 <span class="c"># no backend at all</span>
 
 <span class="c"># deploy the prober to Cloud Run</span>
 <span class="p">gcloud run deploy hood-status \</span>
   <span class="p">--source . --min-instances 1 \</span>
   <span class="p">--max-instances 1</span></div>
-        <p class="lede" style="font-size:14px;margin-top:16px">Embed the status badge anywhere: <span class="mono">![status](https://YOUR-WORKER/badge.svg)</span> — shields-style operational / degraded / down / unknown.</p>
+        <p class="lede" style="font-size:14px;margin-top:16px">Embed the status badge anywhere: <span class="mono">![status](https://YOUR-WORKER/badge.svg)</span>, shields-style operational / degraded / down / unknown.</p>
       </div>
     </div>
   </section>
@@ -364,7 +364,7 @@
 <script>
 "use strict";
 /* =========================================================================
-   hood-status — the seismograph. Synthetic but plausible, self-contained.
+   hood-status, the seismograph. Synthetic but plausible, self-contained.
    Metric shapes and thresholds mirror the real status-core.js in this repo.
    ========================================================================= */
 
@@ -387,7 +387,7 @@ let selected = -1;
 const labelsEl = document.getElementById('labels');
 CH.forEach((c,i)=>{
   const d = document.createElement('div'); d.className='lrow'; d.dataset.i=i;
-  d.innerHTML = `<span class="badge" aria-hidden="true"></span><span class="lk">${c.label}</span><span class="lv" id="lv-${c.k}">—</span><span class="lu">${c.unit}</span>`;
+  d.innerHTML = `<span class="badge" aria-hidden="true"></span><span class="lk">${c.label}</span><span class="lv" id="lv-${c.k}">, </span><span class="lu">${c.unit}</span>`;
   d.addEventListener('click', ()=>{ selected = (selected===i? -1 : i); paintSel(); });
   labelsEl.appendChild(d);
 });
@@ -414,10 +414,13 @@ const MID = css.getPropertyValue('--mid').trim() || '#6b6862';
 /* ---- signal generator: baseline noise + micro-events + injected quakes ---- */
 function tick(i){
   const c = CH[i], s = S[i];
-  // gentle correlated noise
-  let target = c.base + (Math.sin(Date.now()/ (2200 + i*400)) * c.span*0.35) + (Math.random()-0.5)*c.span*0.5;
+  // gentle correlated noise + a faster tremor so the roll always breathes
+  let target = c.base
+    + Math.sin(Date.now()/(2200 + i*400)) * c.span*0.5
+    + Math.sin(Date.now()/(430 + i*90) + i) * c.span*0.3
+    + (Math.random()-0.5)*c.span*0.7;
   // occasional benign micro-spike
-  if(Math.random() < 0.012) s.quake = Math.max(s.quake, c.span*(1.6+Math.random()*1.4));
+  if(Math.random() < 0.02) s.quake = Math.max(s.quake, c.span*(1.8+Math.random()*1.6));
   // injected sustained badness (stall)
   if(s.stall > 0){
     s.stall--;
@@ -478,33 +481,32 @@ function draw(t){
   ctx.strokeStyle = 'rgba(20,19,15,.14)';
   for(let i=1;i<CH.length;i++){ const y=i*rowH; ctx.beginPath(); ctx.moveTo(0,y+.5); ctx.lineTo(W,y+.5); ctx.stroke(); }
 
-  // traces
-  const pxStep = W / 240;               // show last 240 samples across width
+  // traces, visual amplitude is scaled to each channel's noise span so
+  // ambient life is always visible; a threshold breach saturates the deflection.
+  const SAMP = 240, pxStep = W / SAMP;               // last 240 samples across width
   for(let i=0;i<CH.length;i++){
     const c=CH[i], s=S[i];
     const cy = i*rowH + rowH/2;
-    const amp = rowH*0.36;
-    const norm = c.dir>0 ? Math.min(1, (s.v - c.base) / (c.deg - c.base + 1e-6))
-                         : Math.min(1, (c.base - s.v) / (c.base - c.deg + 1e-6));
+    const amp = rowH*0.38 * (c.info?0.72:1);
+    const scale = c.span*4;
+    const relOf = v => Math.max(-1.15, Math.min(1.15, (v - c.base)*c.dir/scale));
     const dim = selected>=0 && selected!==i;
-    ctx.lineWidth = (i===selected)? 2 : 1.25;
-    ctx.strokeStyle = dim ? 'rgba(20,19,15,.22)' : INK;
+    ctx.lineWidth = (i===selected)? 2 : 1.3;
+    ctx.strokeStyle = dim ? 'rgba(20,19,15,.20)' : INK;
+    ctx.lineJoin='round';
     ctx.beginPath();
-    for(let n=0;n<240;n++){
-      const idx = (s.head - 1 - (239-n) + s.buf.length*2) % s.buf.length;
-      const val = s.buf[idx];
-      const rel = c.dir>0 ? (val - c.base)/(c.deg - c.base + 1e-6) : (c.base - val)/(c.base - c.deg + 1e-6);
-      const y = cy - Math.max(-1.1, Math.min(1.1, rel)) * amp * (c.info?0.7:1);
+    for(let n=0;n<SAMP;n++){
+      const idx = (s.head - 1 - (SAMP-1-n) + s.buf.length*2) % s.buf.length;
+      const y = cy - relOf(s.buf[idx]) * amp;
       const x = n*pxStep;
       n? ctx.lineTo(x,y) : ctx.moveTo(x,y);
     }
     ctx.stroke();
-    // needle glow at right edge
+    // needle at right edge
     if(!dim){
-      const idx=(s.head-1+s.buf.length)%s.buf.length; const val=s.buf[idx];
-      const rel = c.dir>0 ? (val - c.base)/(c.deg - c.base + 1e-6) : (c.base - val)/(c.base - c.deg + 1e-6);
-      const y = cy - Math.max(-1.1, Math.min(1.1, rel)) * amp * (c.info?0.7:1);
-      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(W-1, y, (i===selected)?3.4:2.4, 0, 7); ctx.fill();
+      const idx=(s.head-1+s.buf.length)%s.buf.length;
+      const y = cy - relOf(s.buf[idx]) * amp;
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(W-1, y, (i===selected)?3.6:2.5, 0, 7); ctx.fill();
     }
   }
   requestAnimationFrame(draw);
@@ -557,7 +559,7 @@ const compEl=document.getElementById('compList');
 CH.forEach((c,i)=>{
   const m=COMP_META[c.k];
   const d=document.createElement('div'); d.className='c'; d.id='comp-'+c.k;
-  d.innerHTML=`<div class="nm">${m[0]}<small>${m[1]}</small></div><div class="val">—</div><div class="pill op">operational</div>`;
+  d.innerHTML=`<div class="nm">${m[0]}<small>${m[1]}</small></div><div class="val">, </div><div class="pill op">operational</div>`;
   compEl.appendChild(d);
 });
 /* Blockscout as a static extra row (no trace) */
@@ -565,14 +567,14 @@ CH.forEach((c,i)=>{
   d.innerHTML=`<div class="nm">Blockscout explorer<small>GET /api/v2/stats availability</small></div><div class="val mono">142 ms</div><div class="pill op">operational</div>`;
   compEl.appendChild(d);
   const d2=document.createElement('div'); d2.className='c';
-  d2.innerHTML=`<div class="nm">Alchemy RPC<small>optional, when ALCHEMY_API_KEY set</small></div><div class="val mono">—</div><div class="pill" style="opacity:.6">not configured</div>`;
+  d2.innerHTML=`<div class="nm">Alchemy RPC<small>optional, when ALCHEMY_API_KEY set</small></div><div class="val mono">, </div><div class="pill" style="opacity:.6">not configured</div>`;
   compEl.appendChild(d2);
 })();
 
 /* ---- API list (endpoints) ---- */
 const API=[
   ['GET /api/status','overall + per-component status, metrics, 90-day uptime, open + recent incidents'],
-  ['GET /api/history','bucketed series per metric — windows 1h / 6h / 24h / 7d / 90d'],
+  ['GET /api/history','bucketed series per metric, windows 1h / 6h / 24h / 7d / 90d'],
   ['GET /badge.svg','shields-style status badge; ?component= for one surface'],
   ['GET /embed.js','drop-in status pill widget for any README'],
   ['GET /healthz','liveness + sample count'],
@@ -604,7 +606,7 @@ function buildBars(seedBad){
     if(i<3) s='nd';                              // youngest 3 days still filling (honest)
     else if(seedBad.deg.includes(i)) s='deg';
     else if(seedBad.dn.includes(i)) s='dn';
-    if(s==='op'||s==='deg') ok++;
+    if(s==='op') ok+=1; else if(s==='deg') ok+=0.5;   // degraded counts as half-available
     out.push(s);
   }
   return {out, pct: (ok/(days-3)*100)};
@@ -654,7 +656,7 @@ btnStall.addEventListener('click', ()=>{
 btnGas.addEventListener('click', ()=>{
   const gi=CH.findIndex(c=>c.k==='gas'); S[gi].quake = CH[gi].span*22; S[gi].stall=40; selected=gi; paintSel();
   btnGas.classList.add('armed'); setTimeout(()=>btnGas.classList.remove('armed'), 800);
-  document.getElementById('chint').textContent='Gas spiked — informational only, so it draws a quake but never opens an incident.';
+  document.getElementById('chint').textContent='Gas spiked, informational only, so it draws a quake but never opens an incident.';
 });
 btnPause.addEventListener('click', ()=>{
   running=!running;
@@ -675,6 +677,9 @@ document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i
 /* ---- boot ---- */
 resize();
 renderBanner();
+// pre-roll so the paper starts populated across its whole width, not dead-flat
+for(let p=0;p<260;p++){ for(let i=0;i<CH.length;i++) tick(i); }
+updateReadouts();
 if(REDUCE){
   // draw a single static frame (still honest, no motion)
   for(let p=0;p<240;p++){ for(let i=0;i<CH.length;i++) tick(i); }

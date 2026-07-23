@@ -14,6 +14,21 @@ Two pieces:
   on GitHub Pages. If the worker is unreachable the page flips to **direct probe mode** and
   measures the chain from the visitor's browser with the same thresholds. It is never a dead page.
 
+## Website
+
+The static front end in [`docs/`](./docs) is served at **https://nirholas.github.io/hood-status/**.
+The landing page draws every monitored surface onto a live **seismograph roll** (RPC, block
+production, the sequencer feed, settlement lag, gas, Chainlink freshness) redrawn every frame;
+trip the controls to watch the flap-suppressed incident machine open, escalate, and resolve an
+incident in real time. The signal is a self-contained synthetic demo, clearly labelled as such;
+deploy the worker for live probes. Zero external requests, works from `file://`.
+
+Deploy your own copy (publishes the `docs/` folder as a static site):
+
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hood-status)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-status)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-status)
+
 ## What is monitored
 
 | Component | Probe | Source |
