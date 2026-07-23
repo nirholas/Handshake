@@ -16,7 +16,7 @@
 
 import { SignJWT } from 'jose';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 
@@ -47,7 +47,10 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const auth = await getSessionUser(req).catch(() => null)
-		|| await authenticateBearer(req).catch(() => null);
+		// extractBearer yields the token string authenticateBearer expects —
+		// passing the raw request object always threw inside and silently
+		// disabled bearer auth on this endpoint (fail-closed, but a bug).
+		|| await authenticateBearer(extractBearer(req)).catch(() => null);
 	if (!auth?.userId) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const body = await readJson(req, res);
