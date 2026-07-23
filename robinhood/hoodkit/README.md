@@ -23,6 +23,16 @@ Who it's for: anyone building a bot, dashboard, indexer, or agent against Robinh
 doesn't want to hand-roll reconnect logic, cache invalidation, or multicall batching on top of
 the base SDK.
 
+## Website
+
+A single-file, zero-dependency landing page lives in [`docs/`](./docs) — a monochrome **signal patchbay** where you drag patch cables between the stream, cache, indexer and your app, and the pipeline goes live when the patch completes. It opens straight from `docs/index.html` (no build step) and deploys to GitHub Pages or any static host (output directory `docs`):
+
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hoodkit)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hoodkit)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hoodkit)
+
+Live: **https://nirholas.github.io/hoodkit/**
+
 ## Install
 
 ```bash
