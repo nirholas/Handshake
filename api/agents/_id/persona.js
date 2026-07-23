@@ -13,7 +13,7 @@
 
 import { createHash, createHmac } from 'node:crypto';
 import { sql } from '../../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
@@ -48,7 +48,17 @@ const restoreBody = z.object({ version: z.number().int().positive() });
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id };
+	if (session) {
+		// CSRF defense-in-depth for the cookie path: persona writes rewrite the
+		// agent's compiled prompt (prompt-injection persistence), so a
+		// cross-site POST riding the session cookie must never reach them.
+		// Reads stay open; bearer callers are exempt.
+		const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || '').toUpperCase());
+		if (!isRead && !isSameSiteOrigin(req)) {
+			throw Object.assign(new Error('cross-site request blocked'), { status: 403, code: 'forbidden' });
+		}
+		return { userId: session.id };
+	}
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId };
 	return null;

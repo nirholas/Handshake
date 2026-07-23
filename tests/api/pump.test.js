@@ -7,11 +7,15 @@ import { Readable } from 'node:stream';
 
 // ── Auth state ────────────────────────────────────────────────────────────
 const authState = { session: null, bearer: null };
-vi.mock('../../api/_lib/auth.js', () => ({
-	getSessionUser: vi.fn(async () => authState.session),
-	authenticateBearer: vi.fn(async () => authState.bearer),
-	extractBearer: vi.fn(() => null),
-}));
+vi.mock('../../api/_lib/auth.js', async () => {
+	const actual = await vi.importActual('../../api/_lib/auth.js');
+	return {
+		...actual,
+		getSessionUser: vi.fn(async () => authState.session),
+		authenticateBearer: vi.fn(async () => authState.bearer),
+		extractBearer: vi.fn(() => null),
+	};
+});
 
 // ── SQL mock ──────────────────────────────────────────────────────────────
 const sqlState = { queue: [], calls: [] };
@@ -103,6 +107,9 @@ function makeReq({ method = 'GET', url = '/', headers = {}, body = null, query =
 	if (query) base.query = query;
 	base.headers = {
 		host: 'localhost',
+		// Same-site Origin: the pump dispatchers gate cookie-authed mutations on
+		// isSameSiteOrigin (browsers always send Origin on POST).
+		origin: 'https://three.ws',
 		...(body ? { 'content-type': 'application/json' } : {}),
 		...headers,
 	};
@@ -561,5 +568,53 @@ describe('GET /.well-known/x402', () => {
 		expect(res.statusCode).toBe(200);
 		expect(json.schemes).toContain('pump-agent-payments');
 		expect(json.pump_agent_payments.prep).toBe('/api/pump/accept-payment-prep');
+	});
+});
+
+describe('cookie-CSRF gate on pump mutations (2026-07-23 audit)', () => {
+	beforeEach(resetAll);
+
+	it('rejects a cross-site POST riding the session cookie before any handler work', async () => {
+		authState.session = { id: 'user-1' };
+		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const { res, json } = await invoke(handler, {
+			method: 'POST', url: '/api/pump/launch-prep',
+			headers: { origin: 'https://evil.example' },
+			// A schema-valid body: launch-prep validates input before auth, so
+			// the CSRF gate inside resolveAuth is only reached with this shape.
+			body: { agent_id: '00000000-0000-0000-0000-000000000001',
+				wallet_address: walletB58, name: 'X', symbol: 'X', uri: 'https://x/m.json' },
+		});
+		expect(res.statusCode).toBe(403);
+		expect(json.error).toBe('forbidden');
+		// Nothing mutating ran: the gate fires inside resolveAuth, ahead of the
+		// spend/signing path. (A read-only agent lookup may precede auth.)
+		expect(
+			sqlState.calls.every((c) => !/\b(insert|update|delete)\b/i.test(String(c.query))),
+		).toBe(true);
+	});
+
+	it('rejects a cookie-authed POST with no Origin and no Referer', async () => {
+		authState.session = { id: 'user-1' };
+		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const { res } = await invoke(handler, {
+			method: 'POST', url: '/api/pump/launch-prep',
+			headers: { origin: undefined },
+			body: { agent_id: '00000000-0000-0000-0000-000000000001',
+				wallet_address: walletB58, name: 'X', symbol: 'X', uri: 'https://x/m.json' },
+		});
+		expect(res.statusCode).toBe(403);
+	});
+
+	it('does not gate bearer-authed mutations (agent keys, workers)', async () => {
+		authState.bearer = { userId: 'user-1' };
+		const { default: handler } = await import('../../api/pump/launch-prep.js');
+		const { res } = await invoke(handler, {
+			method: 'POST', url: '/api/pump/launch-prep',
+			headers: { origin: 'https://evil.example' },
+			body: {},
+		});
+		// Past the gate; may fail later on input validation, never on the CSRF gate.
+		expect(res.statusCode).not.toBe(403);
 	});
 });

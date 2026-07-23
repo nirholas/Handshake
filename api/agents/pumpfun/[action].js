@@ -12,7 +12,7 @@
  * One bundle so Vercel doesn't re-bundle @solana/web3.js + @pump-fun/* per file.
  */
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
 import {
 	cors,
 	json,
@@ -37,7 +37,18 @@ const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id };
+	if (session) {
+		// CSRF defense-in-depth for the cookie path: these handlers sign real
+		// spends with platform-held custodial keys, so a cross-site POST riding
+		// the session cookie must never reach them. Reads stay open; bearer
+		// callers (agent keys, workers) are exempt since the token itself is
+		// the proof of intent.
+		const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || '').toUpperCase());
+		if (!isRead && !isSameSiteOrigin(req)) {
+			throw Object.assign(new Error('cross-site request blocked'), { status: 403, code: 'forbidden' });
+		}
+		return { userId: session.id };
+	}
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId };
 	return null;

@@ -15,7 +15,7 @@
 // inspector's signal feed and the "mood over time" sparkline.
 
 import { sql } from '../../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { z } from 'zod';
@@ -38,7 +38,16 @@ const sensitivityBody = z.object({ sensitivity: z.number().min(0).max(1) });
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id };
+	if (session) {
+		// CSRF defense-in-depth for the cookie path: mood writes persist state
+		// onto the agent, so a cross-site POST riding the session cookie must
+		// never reach them. Reads stay open; bearer callers are exempt.
+		const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || '').toUpperCase());
+		if (!isRead && !isSameSiteOrigin(req)) {
+			throw Object.assign(new Error('cross-site request blocked'), { status: 403, code: 'forbidden' });
+		}
+		return { userId: session.id };
+	}
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId };
 	return null;
