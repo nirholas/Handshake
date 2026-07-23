@@ -16,6 +16,7 @@ Entry points into the product.
 - [Avatar Gallery](https://three.ws/gallery): Every public 3D avatar in the system, browsable as a grid.
 - [Animation Gallery](https://three.ws/animations): Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.
 - [Character Library](https://three.ws/character-library): 106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.
+- [Sign Language Avatars](https://three.ws/sign-language): three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.
 - [Object Library](https://three.ws/objects): Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.
 - [Diorama](https://three.ws/diorama): Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.
 - [Mocap Studio](https://three.ws/mocap-studio): Drive a 3D avatar with your webcam — real-time facial motion capture in the browser, no rig and no download.
@@ -369,6 +370,7 @@ Docs, tutorials, and reference.
 - [Tutorial · Read an agent's reputation](https://three.ws/tutorials/agent-reputation): Read any registered agent's ERC-8004 reputation from the UI, the REST API, the MCP tool, the SDK, or the contract.
 - [Tutorial · Read a Solana agent's reputation](https://three.ws/tutorials/solana-agent-reputation): Read a Solana agent's A–D trust grade and the attestations behind it, then leave your own on-chain vouch.
 - [Tour Builder — design a 3D store guide, no code](https://three.ws/tour-builder): A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.
+- [Tutorial · 3D AI Shopping Assistant for Shopify](https://three.ws/tutorials/shopify-shopping-assistant): Add a chat assistant with a 3D face to your Shopify store: it reads your live catalog, recommends real products as cards with add-to-cart, and answers shipping and returns, all from one script tag.
 - [Tutorial · 3D Store Guide for Shopify (No Code)](https://three.ws/tutorials/shopify-store-guide): Design a walking 3D store guide in the Tour Builder playground, preview it, and paste it into Shopify — point, click, done, no code.
 - [Tutorial · Customize Your Shopify 3D Store Guide](https://three.ws/tutorials/shopify-store-guide-advanced): Hand-tune the store guide: exact section targeting, multi-page tours, real spoken voices, your own avatar, autostart, deep links, and the JavaScript API.
 - [Status](https://three.ws/status): Live operational status and 90-day uptime history for the platform, API, and x402 surfaces — probed every 5 minutes.

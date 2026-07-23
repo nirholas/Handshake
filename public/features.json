@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T05:53:57.481Z",
+	"generated_at": "2026-07-23T07:41:45.568Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -60,6 +60,16 @@
 					"title": "Character Library",
 					"description": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
 					"added": "2026-07-19",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/sign-language",
+					"title": "Sign Language Avatars",
+					"description": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
+					"added": "2026-07-20",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3472,6 +3482,16 @@
 					"title": "Tour Builder — design a 3D store guide, no code",
 					"description": "A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
 					"added": "2026-07-05",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/shopify-shopping-assistant",
+					"title": "Tutorial · 3D AI Shopping Assistant for Shopify",
+					"description": "Add a chat assistant with a 3D face to your Shopify store: it reads your live catalog, recommends real products as cards with add-to-cart, and answers shipping and returns, all from one script tag.",
+					"added": "2026-07-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

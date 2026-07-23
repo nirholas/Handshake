@@ -57,6 +57,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/sign-language",
+					"title": "Sign Language Avatars",
+					"description": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
+					"priority": 0.9,
+					"changefreq": "weekly",
+					"added": "2026-07-20",
+					"showcase": true
+				},
+				{
 					"path": "/objects",
 					"title": "Object Library",
 					"description": "Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.",
@@ -2746,6 +2755,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-07-05"
+				},
+				{
+					"path": "/tutorials/shopify-shopping-assistant",
+					"title": "Tutorial · 3D AI Shopping Assistant for Shopify",
+					"description": "Add a chat assistant with a 3D face to your Shopify store: it reads your live catalog, recommends real products as cards with add-to-cart, and answers shipping and returns, all from one script tag.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-23"
 				},
 				{
 					"path": "/tutorials/shopify-store-guide",

@@ -43,6 +43,12 @@ URL: https://three.ws/character-library
 
 106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.
 
+### Sign Language Avatars
+
+URL: https://three.ws/sign-language
+
+three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.
+
 ### Object Library
 
 URL: https://three.ws/objects
@@ -2115,6 +2121,12 @@ Read a Solana agent's A–D trust grade and the attestations behind it, then lea
 URL: https://three.ws/tour-builder
 
 A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.
+
+### Tutorial · 3D AI Shopping Assistant for Shopify
+
+URL: https://three.ws/tutorials/shopify-shopping-assistant
+
+Add a chat assistant with a 3D face to your Shopify store: it reads your live catalog, recommends real products as cards with add-to-cart, and answers shipping and returns, all from one script tag.
 
 ### Tutorial · 3D Store Guide for Shopify (No Code)
 

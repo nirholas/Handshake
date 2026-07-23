@@ -101,6 +101,13 @@ export const NAV_GROUPS = [
 						badgeTone: 'live',
 						desc: 'Brand brief → rigged avatar + studio renders for your AI agent',
 					},
+					{
+						title: 'Sign Language',
+						href: '/sign-language',
+						badge: 'New',
+						badgeTone: 'live',
+						desc: 'Avatars that sign in ASL — fingerspell anything, signed chat replies, webcam sign input',
+					},
 				],
 			},
 			{

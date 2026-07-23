@@ -47,6 +47,10 @@ Most site chatbots need a crawler, an index, and an onboarding flow. Concierge s
 
 Because the page itself is the knowledge source, the concierge is never stale: edit your pricing page and the very next answer reflects it.
 
+## Shopping mode (Shopify)
+
+On a Shopify store the concierge becomes a shopping assistant that knows your live catalog and shows real product cards. It needs no app, no API key, and no product feed: Shopify serves every storefront's catalog and policies publicly, and the widget reads them at ask-time (`/products.json`, `/collections.json`, `/policies/*`, all same-origin on the store). Per question it retrieves the handful of products the shopper asked about, grounds the streamed answer in them, and renders cards (image, live price, link, add-to-cart) from that same set, so prices and links are always real. It understands shopping intent ("a gift under $75", "cheapest hoodie", "anything on sale?") and answers shipping and returns from your published policies. Turn it on with the same one tag: it auto-detects the storefront, or force it with `data-shopping="true"` / `data-shop="your-store.myshopify.com"`. Full walkthrough: [Shopify shopping assistant tutorial](/tutorials/shopify-shopping-assistant).
+
 ## The avatar
 
 The catalog (`sol`, `nova`, `vera`, `atlas`, `echo`) is the same rigged, viseme-capable roster the [page-agent](https://www.npmjs.com/package/@three-ws/page-agent) ships, served from `https://three.ws/avatars/`. Visitors pick their concierge from the built-in picker (their choice persists), or the host pins a single custom rigged GLB with `custom-avatar`. The 3D stage initializes on first open only, so a closed widget costs the host page zero GPU and no GLB download.
@@ -56,7 +60,7 @@ The catalog (`sol`, `nova`, `vera`, `atlas`, `echo`) is the same rigged, viseme-
 The hosted endpoint is free, but the wire format is open. Any server that accepts the POST body and streams the same three SSE event types can be swapped in via the `endpoint` option:
 
 ```
-→ POST { message, history[], site{url,name,title,description,headings,nav,knowledge,content}, persona?, lang? }
+→ POST { message, history[], site{url,name,title,description,headings,nav,knowledge,content}, shopping?{store,currency,summary,collections[],policies,products}, persona?, lang? }
 ← data: {"type":"chunk","text":"..."}
 ← data: {"type":"done","provider":"...","model":"..."}
 ← data: {"type":"error","code":"...","message":"..."}

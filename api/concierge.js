@@ -52,6 +52,22 @@ const siteSchema = z
 	.partial()
 	.default({});
 
+// Shopping mode: a bounded snapshot of the store the widget already retrieved
+// against the question (see @three-ws/concierge shopify.js). Only the handful
+// of relevant products, a store summary, collection names, and the pertinent
+// policy travel here, never the whole catalog.
+const shoppingSchema = z
+	.object({
+		store: z.string().max(160).optional(),
+		currency: z.string().max(10).optional(),
+		summary: z.string().max(600).optional(),
+		collections: z.array(z.string().max(80)).max(40).optional(),
+		policies: z.string().max(4000).optional(),
+		products: z.string().max(4000).optional(),
+	})
+	.partial()
+	.optional();
+
 const bodySchema = z.object({
 	message: z.string().trim().min(1).max(2000),
 	history: z
@@ -64,6 +80,7 @@ const bodySchema = z.object({
 		.max(20)
 		.default([]),
 	site: siteSchema,
+	shopping: shoppingSchema,
 	persona: z.string().trim().max(200).optional(),
 	lang: z.string().trim().max(20).optional(),
 });
@@ -72,19 +89,47 @@ const bodySchema = z.object({
 // below understands; skip them (see header note).
 const NON_OPENAI_STYLES = new Set(['anthropic', 'vertex-anthropic']);
 
-function buildSystemPrompt({ site, persona, lang }) {
-	const name = site.name || site.title || 'this website';
+function buildSystemPrompt({ site, shopping, persona, lang }) {
+	const shop = shopping && (shopping.products || shopping.summary) ? shopping : null;
+	const name = (shop && shop.store) || site.name || site.title || 'this website';
+
+	const role = shop
+		? [
+				`You are the AI shopping assistant for ${name}, embedded as a chat widget on the store.`,
+				'Help the shopper find the right product, compare options, and answer questions about products, pricing, shipping, and returns.',
+				'Be warm, concise, and genuinely helpful, like a great in-store associate: two short paragraphs at most, or a compact list.',
+				'The shopper is ALSO shown clickable product cards for the products listed below, with images, live prices, and links. Recommend from those products by name, say why each fits their need, and mention the price. Do not paste raw URLs or restate the price list as a table; the cards already show them.',
+				'If none of the listed products fit, say so honestly and point them to a relevant collection to browse or to contact the store. Never invent products, prices, variants, or stock status, and never promise a discount that is not stated.',
+			]
+		: [
+				`You are the AI concierge for ${name}, embedded as a chat widget on the site itself.`,
+				"Answer the visitor's questions about the site, its product, content, and how to use it.",
+				'Be genuinely helpful, warm, and concise: two short paragraphs at most, or a compact list.',
+				'Ground every claim in the site information below. If it does not contain the answer, say so honestly and point the visitor to the closest thing that does (a nav item, a page, or contacting the team). Never invent prices, features, or policies.',
+			];
+
 	const lines = [
-		`You are the AI concierge for ${name}, embedded as a chat widget on the site itself.`,
-		'Answer the visitor\'s questions about the site, its product, content, and how to use it.',
-		'Be genuinely helpful, warm, and concise: two short paragraphs at most, or a compact list.',
-		'Ground every claim in the site information below. If it does not contain the answer, say so honestly and point the visitor to the closest thing that does (a nav item, a page, or contacting the team). Never invent prices, features, or policies.',
+		...role,
 		'You may use light markdown: **bold**, `code`, links, and bullet lists.',
-		'Only link to URLs that appear in the site information.',
-		persona ? `Tone instruction from the site owner: ${persona}` : '',
+		'Only link to URLs that appear in the information below.',
+		persona ? `Tone instruction from the store owner: ${persona}` : '',
 		lang ? `Reply in the visitor's language (${lang}) when their message is in it.` : '',
+	];
+
+	if (shop) {
+		lines.push(
+			'',
+			`--- ${name.toUpperCase()} STORE ---`,
+			shop.summary ? `Store overview: ${shop.summary}` : '',
+			shop.collections?.length ? `Collections available to browse: ${shop.collections.join(', ')}` : '',
+			shop.products ? `Products matching the shopper's question (these are shown as cards):\n${shop.products}` : 'No products in the catalog matched this question.',
+			shop.policies ? `\nStore policies (authoritative):\n${shop.policies}` : '',
+		);
+	}
+
+	lines.push(
 		'',
-		'--- SITE INFORMATION ---',
+		'--- PAGE THE SHOPPER IS ON ---',
 		site.url ? `URL: ${site.url}` : '',
 		site.title ? `Page title: ${site.title}` : '',
 		site.description ? `Description: ${site.description}` : '',
@@ -92,7 +137,7 @@ function buildSystemPrompt({ site, persona, lang }) {
 		site.headings?.length ? `Page headings: ${site.headings.join(' · ')}` : '',
 		site.knowledge ? `Curated site knowledge (authoritative):\n${site.knowledge}` : '',
 		site.content ? `Current page content:\n${site.content}` : '',
-	];
+	);
 	return lines.filter(Boolean).join('\n');
 }
 
@@ -256,6 +301,7 @@ export default wrap(async (req, res) => {
 				model: provider.model,
 				anonymous: true,
 				site: siteHostname(body.site?.url),
+				shopping: !!(body.shopping && (body.shopping.products || body.shopping.summary)),
 				reply_chars: reply.length,
 				history_turns: body.history.length,
 			},

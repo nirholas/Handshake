@@ -36,6 +36,11 @@ export {
 	getAvatar, avatarUrl, customAvatarEntry,
 } from './catalog.js';
 export { harvestSiteContext, buildSitePayload, MAX_CONTENT_CHARS, MAX_KNOWLEDGE_CHARS } from './context.js';
+export {
+	detectShop, normalizeShopDomain, shopOrigin, fetchCatalog, fetchPolicies,
+	searchProducts, parseIntent, catalogSummary, buildShoppingPayload,
+	normalizeProduct, money, MAX_RECOMMENDATIONS,
+} from './shopify.js';
 export { askConcierge, parseSseEvent, createSseBuffer, DEFAULT_ENDPOINT, MAX_HISTORY_TURNS } from './client.js';
 export { renderMarkdown, stripMarkdown, escapeHtml } from './markdown.js';
 export { createMic, micSupported } from './mic.js';
@@ -79,6 +84,10 @@ function autoInit() {
 		greeting: d.greeting || undefined,
 		suggestions: d.suggestions?.split('|').map((s) => s.trim()).filter(Boolean),
 		knowledge: d.knowledge || undefined,
+		shop: d.shop || undefined,
+		shopping: 'shopping' in d ? d.shopping !== 'false' : undefined,
+		currency: d.currency || undefined,
+		maxProducts: d.maxProducts ? Number(d.maxProducts) : undefined,
 		persona: d.persona || undefined,
 		accent: d.accent || undefined,
 		position: d.position || undefined,

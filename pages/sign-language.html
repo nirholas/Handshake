@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Sign Language Avatars · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="three.ws avatars sign in American Sign Language. Fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/sign-language" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Sign Language Avatars · three.ws" />
+		<meta property="og:description" content="Avatars that sign in ASL. Fingerspell anything, get signed chat replies, and sign back with your webcam — live in 3D." />
+		<meta property="og:url" content="https://three.ws/sign-language" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=Avatars+that+sign+in+ASL.+Fingerspell+anything%2C+get+signed+chat+replies%2C+and+sign+back+with+your+webcam+%E2%80%94+live+in+3D&amp;p=%2Fsign-language" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Sign Language Avatars · three.ws" />
+		<meta name="twitter:description" content="Avatars that sign in ASL — fingerspelling, signed chat replies, and webcam sign input, live in 3D." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=Avatars+that+sign+in+ASL.+Fingerspell+anything%2C+get+signed+chat+replies%2C+and+sign+back+with+your+webcam+%E2%80%94+live+in+3D&amp;p=%2Fsign-language" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sign Language Avatars","description":"three.ws avatars sign in American Sign Language: fingerspelling for any word or number, signed chat replies, and webcam sign-to-text recognition — the full loop, live in 3D.","url":"https://three.ws/sign-language","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<style>
+			.sl-main { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+
+			/* Hero: live avatar left, pitch + input right */
+			.sl-hero {
+				display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(24px, 4vw, 56px);
+				align-items: center; padding: clamp(28px, 5vw, 64px) 0 clamp(20px, 3vw, 40px);
+			}
+			.sl-chip {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 5px 12px; border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-1); font-size: 12px; letter-spacing: .04em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+			}
+			.sl-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,.18); }
+			.sl-hero h1 { font-size: clamp(32px, 5.2vw, 58px); line-height: 1.03; margin: 18px 0 14px; letter-spacing: -.02em; }
+			.sl-hero-lede { max-width: 54ch; color: var(--ink-dim); font-size: clamp(15px, 1.4vw, 18px); line-height: 1.6; margin: 0; }
+
+			.sl-stage-wrap { position: relative; border: 1px solid var(--stroke); border-radius: 20px; overflow: hidden; background: radial-gradient(120% 120% at 50% 0%, rgba(167,139,250,.10), transparent 60%), var(--surface-1); aspect-ratio: 4 / 5; min-height: 380px; }
+			#sl-stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+			.sl-status { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); background: linear-gradient(to top, rgba(0,0,0,.55), transparent); pointer-events: none; min-height: 20px; }
+			:root[data-theme='light'] .sl-status { color: #fff; }
+
+			/* Spell input */
+			.sl-try { margin-top: 26px; }
+			.sl-try-label { font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+			.sl-input-row { display: flex; gap: 8px; }
+			.sl-input {
+				flex: 1 1 auto; min-width: 0; box-sizing: border-box;
+				background: rgba(167,139,250,.06); border: 1px solid rgba(167,139,250,.4);
+				color: var(--ink); font: inherit; font-size: 15px; padding: 12px 14px; border-radius: 12px;
+			}
+			.sl-input::placeholder { color: var(--ink-dim); }
+			.sl-input:focus { outline: none; border-color: rgba(167,139,250,.8); box-shadow: 0 0 0 3px rgba(167,139,250,.2); }
+			.sl-btn {
+				flex: 0 0 auto; appearance: none; border: 1px solid rgba(167,139,250,.5);
+				background: rgba(167,139,250,.16); color: var(--ink); font: inherit; font-weight: 600;
+				font-size: 15px; padding: 12px 20px; border-radius: 12px; cursor: pointer;
+				transition: background .12s ease, border-color .12s ease;
+			}
+			.sl-btn:hover:not(:disabled) { background: rgba(167,139,250,.28); border-color: rgba(167,139,250,.75); }
+			.sl-btn:disabled { opacity: .6; cursor: default; }
+			.sl-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+			.sl-phrase-chip {
+				appearance: none; border: 1px solid var(--stroke); background: var(--surface-2);
+				color: var(--ink-dim); font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+				transition: border-color .12s ease, color .12s ease;
+			}
+			.sl-phrase-chip:hover { border-color: rgba(167,139,250,.6); color: var(--ink); }
+
+			/* Capability cards */
+			.sl-caps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: clamp(40px, 6vw, 72px); }
+			.sl-cap { border: 1px solid var(--stroke); border-radius: 16px; padding: 24px; background: var(--surface-1); display: flex; flex-direction: column; }
+			.sl-cap-icon { font-size: 26px; line-height: 1; }
+			.sl-cap h3 { font-size: 18px; margin: 14px 0 8px; letter-spacing: -.01em; }
+			.sl-cap p { color: var(--ink-dim); font-size: 14px; line-height: 1.6; margin: 0 0 16px; flex: 1 1 auto; }
+			.sl-cap-link { color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(167,139,250,.5); align-self: flex-start; padding-bottom: 1px; }
+			.sl-cap-link:hover { border-bottom-color: rgba(167,139,250,.9); }
+
+			/* Webcam demo */
+			.sl-webcam { margin-top: clamp(40px, 6vw, 72px); border: 1px solid var(--stroke); border-radius: 20px; padding: clamp(24px, 4vw, 40px); background: var(--surface-1); }
+			.sl-webcam h2 { font-size: clamp(22px, 3vw, 30px); margin: 0 0 10px; letter-spacing: -.02em; }
+			.sl-webcam p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 64ch; margin: 0 0 20px; }
+			.sl-webcam-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+			#sl-cam-preview { border: 1px solid var(--stroke); border-radius: 14px; overflow: hidden; aspect-ratio: 4 / 3; background: #000; }
+			.sl-cam-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+			.sl-cam-side { display: flex; flex-direction: column; gap: 14px; }
+			#sl-cam-btn.is-live { background: rgba(239,68,68,.16); border-color: rgba(239,68,68,.6); }
+			.sl-cam-result { min-height: 48px; border: 1px dashed var(--stroke); border-radius: 12px; padding: 14px; font-size: 17px; color: var(--ink); background: var(--surface-2); }
+			.sl-cam-result[data-state='low'] { border-color: rgba(239,68,68,.5); }
+			.sl-cam-result[data-state='ok'] { border-color: rgba(56,211,159,.5); }
+			.sl-cam-hint { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+
+			/* Honest scope note */
+			.sl-note { margin-top: clamp(36px, 5vw, 56px); border-left: 2px solid rgba(167,139,250,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 72ch; }
+
+			@media (max-width: 900px) {
+				.sl-hero { grid-template-columns: 1fr; }
+				.sl-caps { grid-template-columns: 1fr; }
+				.sl-webcam-grid { grid-template-columns: 1fr; }
+				#sl-cam-preview { max-width: 360px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="sl-main">
+			<section class="sl-hero">
+				<div class="sl-stage-wrap">
+					<div id="sl-stage" role="img" aria-label="A 3D avatar signing in American Sign Language"></div>
+					<div class="sl-status" id="sl-status" aria-live="polite"></div>
+				</div>
+
+				<div class="sl-hero-copy">
+					<span class="sl-chip"><span class="sl-chip-dot"></span> American Sign Language · live in 3D</span>
+					<h1>Your avatar speaks sign language.</h1>
+					<p class="sl-hero-lede">
+						three.ws avatars fingerspell any word or number in ASL, sign every chat reply,
+						and read your own signing back from a webcam. The whole conversation, both
+						directions, in 3D that runs in the browser.
+					</p>
+
+					<div class="sl-try">
+						<div class="sl-try-label">Try it — type anything</div>
+						<div class="sl-input-row">
+							<input
+								id="sl-spell-input"
+								class="sl-input"
+								type="text"
+								maxlength="48"
+								placeholder="your name, a word, a number…"
+								aria-label="Text for the avatar to sign"
+								autocomplete="off"
+							/>
+							<button id="sl-spell-btn" class="sl-btn" type="button">🤟 Sign it</button>
+						</div>
+						<div class="sl-chips">
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="THANK YOU">thank you</button>
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="I LOVE THREE WS">i love three.ws</button>
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="42">42</button>
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="GM">gm</button>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sl-caps" aria-label="What sign language avatars can do">
+				<article class="sl-cap">
+					<span class="sl-cap-icon">🤟</span>
+					<h3>Fingerspell anything</h3>
+					<p>
+						All 26 ASL letter handshapes plus the numbers 0–9, with the traced J and Z
+						and the double-letter bounce. Type a word in the Animation Studio and export
+						the signing as an animated GLB, or share it as a link.
+					</p>
+					<a class="sl-cap-link" href="/pose">Open the Animation Studio →</a>
+				</article>
+				<article class="sl-cap">
+					<span class="sl-cap-icon">💬</span>
+					<h3>Signed chat replies</h3>
+					<p>
+						Turn on sign mode in the agent chat and the avatar signs every answer —
+						library signs where they exist, fingerspelling for the rest. Any embedded
+						avatar gets it with one <code>sign-language</code> attribute.
+					</p>
+					<a class="sl-cap-link" href="/app">Chat with an agent →</a>
+				</article>
+				<article class="sl-cap">
+					<span class="sl-cap-icon">🎥</span>
+					<h3>Sign back with your camera</h3>
+					<p>
+						Fingerspell into your webcam and the AI reads it to text — landmarks are
+						extracted on your device, so the video never leaves your machine. The demo
+						below runs the same recognizer.
+					</p>
+					<a class="sl-cap-link" href="#sl-webcam">Try the webcam demo ↓</a>
+				</article>
+			</section>
+
+			<section class="sl-webcam" id="sl-webcam" aria-label="Webcam sign recognition demo">
+				<h2>Sign to us — we’ll read it</h2>
+				<p>
+					Click start, fingerspell a word at your camera, then stop. Your browser turns
+					the video into hand and body landmarks locally; only those coordinates are sent
+					for recognition. Webcam fingerspelling is imperfect (expect the odd wrong
+					letter), so review the text before you trust it.
+				</p>
+				<div class="sl-webcam-grid">
+					<div id="sl-cam-preview" hidden></div>
+					<div class="sl-cam-side">
+						<button id="sl-cam-btn" class="sl-btn" type="button">🎥 Start signing</button>
+						<div id="sl-cam-result" class="sl-cam-result" aria-live="polite"></div>
+						<p class="sl-cam-hint">
+							Best results: good light, hand in frame, one letter at a time. Numbers and
+							the full A–Z alphabet are supported.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<p class="sl-note">
+				Fingerspelling spells words letter by letter; it is not full grammatical ASL, which
+				has its own grammar and facial-expression markers. Lexical signs come from recordings
+				of real signers through our motion-capture pipeline, never synthesized guesses — which
+				is why the sign dictionary grows deliberately. Read the
+				<a href="/docs/sign-language">full breakdown</a>.
+			</p>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/sign-language-page.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

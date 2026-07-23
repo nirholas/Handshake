@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Larkspur Supply, 3D shopping assistant demo</title>
+		<meta name="description" content="Larkspur Supply sells small-batch outdoor gear. Ask the assistant to help you find a jacket, a pack, or a gift." />
+		<meta property="og:site_name" content="Larkspur Supply" />
+		<style>
+			body { margin: 0; font-family: system-ui, sans-serif; color: #1a1a1a; background: #fbfaf7; }
+			header { padding: 16px 24px; background: #fff; border-bottom: 1px solid #ece8df; display: flex; gap: 24px; align-items: center; }
+			nav a { margin-right: 16px; color: #5b564c; text-decoration: none; }
+			main { max-width: 760px; margin: 0 auto; padding: 48px 24px; line-height: 1.65; }
+			h1 { font-size: 2.1rem; letter-spacing: -0.02em; }
+			.note { background: #fff; border: 1px solid #ece8df; border-radius: 12px; padding: 16px 20px; margin: 28px 0; font-size: 0.95rem; }
+			code { background: #f0ede5; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+			pre { background: #17150f; color: #f4f1e8; padding: 16px; border-radius: 12px; overflow-x: auto; font-size: 0.85rem; line-height: 1.55; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<strong>Larkspur Supply</strong>
+			<nav><a href="#">Shop</a><a href="#">Collections</a><a href="#">Shipping</a><a href="#">Contact</a></nav>
+		</header>
+		<main>
+			<h1>Small-batch outdoor gear</h1>
+			<p>Larkspur makes jackets, packs, and layers for people who spend more time outside than in. Every piece is made in limited runs, so the assistant in the corner knows the live catalog and can help you find the right thing, compare options, and check shipping.</p>
+
+			<div class="note">
+				<strong>This is a demo storefront.</strong> On a real Shopify store the assistant reads your live catalog automatically. It fetches your store's public
+				<code>/products.json</code>, <code>/collections.json</code>, and policy pages (no API key, no app install, no product feed to maintain), then recommends real products as cards with live prices and links. Here, <code>window.Shopify</code> is faked so you can see auto-detection kick in; the product cards appear once the catalog loads on the actual store.
+			</div>
+
+			<h2>Install on your Shopify theme</h2>
+			<p>Paste one tag into <code>theme.liquid</code>, just before <code>&lt;/body&gt;</code>. Shopping mode turns on by itself because the widget detects the Shopify storefront:</p>
+			<pre>&lt;script type="module"
+        src="https://three.ws/concierge/concierge.global.js"
+        data-concierge
+        data-site-name="Larkspur Supply"
+        data-accent="#3f7d5b"
+        data-avatar="nova"&gt;&lt;/script&gt;</pre>
+			<p>That's it. Want to point it at a specific store, force shopping mode, or set the currency? Add <code>data-shop</code>, <code>data-shopping="true"</code>, and <code>data-currency</code>.</p>
+		</main>
+
+		<!--
+			Demo only: fake the Shopify global so detectShop() fires and the widget
+			enters shopping mode. On a real store this object is already present, and
+			`/products.json` is same-origin, so the catalog + product cards load with
+			no configuration. `data-shop` is set here so this demo page (which is NOT
+			a Shopify origin) knows which store's catalog to read.
+
+			Serve this folder next to a build of the SDK:
+			  npm run build && npx serve .
+			then open /examples/shopify.html. Swap ../dist for the CDN URL to run
+			against the published build.
+		-->
+		<script>
+			window.Shopify = { shop: 'larkspur-supply.myshopify.com', currency: { active: 'USD' } };
+		</script>
+		<script
+			type="module"
+			src="../dist/concierge.global.js"
+			data-concierge
+			data-shop="larkspur-supply.myshopify.com"
+			data-shopping="true"
+			data-site-name="Larkspur Supply"
+			data-accent="#3f7d5b"
+			data-avatar="nova"
+			data-persona="a warm, knowledgeable shop associate who keeps it brief"
+			data-suggestions="Help me pick a rain jacket|What's good for a gift under $75?|Do you ship to Canada?|What's on sale?"
+		></script>
+	</body>
+</html>

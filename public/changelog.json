@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-23T05:53:57.500Z",
+	"generated_at": "2026-07-23T07:41:45.574Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-23",
+			"type": "launch",
+			"title": "Tutorial · 3D AI Shopping Assistant for Shopify",
+			"summary": "Add a chat assistant with a 3D face to your Shopify store: it reads your live catalog, recommends real products as cards with add-to-cart, and answers shipping and returns, all from one script tag.",
+			"link": "/tutorials/shopify-shopping-assistant",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-23",
 			"type": "launch",
@@ -56,6 +66,17 @@
 			"link": "/objects",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
+			"title": "The Concierge becomes a Shopify shopping assistant, with product cards",
+			"summary": "The embeddable AI concierge (the floating chat with a 3D avatar) now turns into a full shopping assistant on any Shopify store, from the same one script tag. It reads your live catalog and policies straight from Shopify's public endpoints, no app, no API key, and no product feed to keep in sync, then helps shoppers find the right thing and shows real product cards with the live image, price, and an add-to-cart button. It understands how people actually shop (\"a gift under $75\", \"cheapest hoodie\", \"anything on sale?\") and answers shipping and returns from your published policies. Because the cards are drawn from your real catalog, it can never invent a product, a price, or a discount.",
+			"link": "/tutorials/shopify-shopping-assistant",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -446,6 +467,16 @@
 		},
 		{
 			"date": "2026-07-20",
+			"type": "launch",
+			"title": "Sign Language Avatars",
+			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
+			"link": "/sign-language",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-20",
 			"type": "update",
 			"title": "Audit any agent's trade decisions, linked from the write-ups",
 			"summary": "The first-autonomous-trade postmortem, the Agent Sniper doc, and the sniper tutorial now link straight to the agent's live, tamper-evident Reasoning Ledger and to the on-chain transactions, so you can verify the +42% trade yourself instead of taking our word for it. The Reasoning Ledger is now a discoverable page, and its landing view features a live example to open first.",
@@ -549,6 +580,16 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "Sign Language gets its own home",
+			"summary": "There is now a dedicated Sign Language page at three.ws/sign-language: a live avatar signing on arrival, an input that fingerspells anything you type (words and numbers), the three ways avatars use ASL explained, and a webcam demo that reads your own fingerspelling. Find it in the Build menu under 3D and avatars, or the new card on the home page.",
+			"link": "/sign-language",
+			"tags": [
+				"feature"
 			]
 		},
 		{

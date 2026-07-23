@@ -5,6 +5,7 @@ Runnable examples for every way to use the concierge. The HTML files load the SD
 | File | Shows |
 | --- | --- |
 | [index.html](./index.html) | The one-tag CDN install with `data-*` config, grounded in the page + curated knowledge. |
+| [shopify.html](./shopify.html) | Shopping mode: shopping assistant on a Shopify store — live catalog, product cards, add-to-cart. |
 | [web-component.html](./web-component.html) | The declarative `<three-concierge>` element. |
 | [imperative.html](./imperative.html) | The `new Concierge({...})` API: events, programmatic `ask()`, hot-swapping avatars. |
 | [custom-avatar.html](./custom-avatar.html) | Using your own rigged GLB instead of the catalog. |

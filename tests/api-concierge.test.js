@@ -220,6 +220,53 @@ describe('/api/concierge', () => {
 		);
 	});
 
+	it('shopping payload switches the system prompt to a store assistant grounded in products', async () => {
+		let capturedBody = null;
+		providerChainMock.mockReturnValue([
+			{ name: 'groq', model: 'llama-3.3-70b', url: 'https://groq.test/v1/chat/completions', headers: {} },
+		]);
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url, opts) => {
+				capturedBody = JSON.parse(opts.body);
+				return { ok: true, body: fakeStreamBody(['The Merino scarf is a great pick.']) };
+			}),
+		);
+
+		const res = mkRes();
+		await handler(
+			mkReq({
+				body: {
+					message: 'do you have a warm wool scarf?',
+					site: { url: 'https://larkspur.example', name: 'Larkspur' },
+					shopping: {
+						store: 'larkspur-supply.myshopify.com',
+						currency: 'USD',
+						summary: '42 products · categories: Scarves, Hats · prices from $28.00 to $180.00',
+						collections: ['Winter', 'New Arrivals'],
+						policies: 'Shipping policy: We ship worldwide within 3 business days.',
+						products: '- Merino Wool Scarf ($48.00) · type: Scarves · A soft blue scarf · link: https://larkspur-supply.myshopify.com/products/merino-wool-scarf',
+					},
+				},
+			}),
+			res,
+		);
+		vi.unstubAllGlobals();
+
+		const sys = capturedBody.messages[0].content;
+		expect(capturedBody.messages[0].role).toBe('system');
+		expect(sys).toContain('shopping assistant');
+		expect(sys).toContain('larkspur-supply.myshopify.com'); // store name
+		expect(sys).toContain('Merino Wool Scarf'); // retrieved product grounds the answer
+		expect(sys).toContain('shown as cards'); // told the shopper sees cards
+		expect(sys).toContain('ship worldwide within 3 business days'); // policy grounded
+		expect(sys).toContain('Winter'); // collections offered as a fallback
+
+		expect(recordEventMock).toHaveBeenCalledWith(
+			expect.objectContaining({ meta: expect.objectContaining({ shopping: true }) }),
+		);
+	});
+
 	it('fails over past a billing-dead rung (with auth cooldown) to the next provider', async () => {
 		providerChainMock.mockReturnValue([
 			{ name: 'openrouter', model: 'oss-120b', url: 'https://or.test/v1', headers: {} },

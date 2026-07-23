@@ -68,9 +68,12 @@ export class PoseStage {
 	 * @param {HTMLElement} host  container the canvas fills (the av-stage element)
 	 * @param {{ glbUrl: string }} opts
 	 */
-	constructor(host, { glbUrl }) {
+	constructor(host, { glbUrl, framing = 'full' }) {
 		this.host = host;
 		this.glbUrl = glbUrl;
+		// 'full' = whole body (studio default); 'portrait' = tighter on the
+		// upper body, where hand signing reads clearly.
+		this.framing = framing;
 
 		this.renderer = null;
 		this.scene = null;
@@ -171,9 +174,16 @@ export class PoseStage {
 
 		// Drop the model so its feet sit at y=0, then look at the upper torso.
 		this.model.position.y -= box.min.y;
-		const target = new Vector3(0, height * 0.55, 0);
-		const dist = height * 1.6;
-		this.camera.position.set(0, height * 0.62, dist);
+		// Portrait framing sits the camera at chest height and pulls in so the
+		// raised hand and face fill the frame — the signing is the point. It
+		// also centers on the model's true x/z, since a close camera amplifies
+		// any off-origin authoring the full-body distance hides.
+		const portrait = this.framing === 'portrait';
+		const cx = portrait ? center.x : 0;
+		const cz = portrait ? center.z : 0;
+		const target = new Vector3(cx, height * (portrait ? 0.72 : 0.55), cz);
+		const dist = height * (portrait ? 1.2 : 1.6);
+		this.camera.position.set(cx, height * (portrait ? 0.76 : 0.62), cz + dist);
 		this.camera.near = Math.max(0.01, dist / 100);
 		this.camera.far = dist * 20;
 		this.camera.updateProjectionMatrix();

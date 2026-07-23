@@ -7,7 +7,7 @@
  * tokens render (and speak) as they arrive instead of after the full answer.
  *
  * Wire format (matches /api/concierge on three.ws):
- *   → POST { message, history[], site{...}, persona?, lang? }
+ *   → POST { message, history[], site{...}, shopping?{...}, persona?, lang? }
  *   ← SSE  data: { type: 'chunk', text }   repeated
  *          data: { type: 'done', provider?, model? }
  *          data: { type: 'error', error }
@@ -67,7 +67,7 @@ export function createSseBuffer(onEvent) {
  *
  * @param {{ endpoint?: string, message: string,
  *          history?: {role:'user'|'assistant', content:string}[],
- *          site?: object, persona?: string, lang?: string,
+ *          site?: object, shopping?: object, persona?: string, lang?: string,
  *          signal?: AbortSignal,
  *          onChunk?: (text:string)=>void }} opts
  * @returns {Promise<{ text: string, provider?: string, model?: string }>}
@@ -85,6 +85,7 @@ export async function askConcierge(opts) {
 			message: String(opts.message).slice(0, MAX_MESSAGE_CHARS),
 			history,
 			site: opts.site || {},
+			shopping: opts.shopping || undefined,
 			persona: opts.persona || undefined,
 			lang: opts.lang || (typeof navigator !== 'undefined' ? navigator.language : undefined),
 		}),

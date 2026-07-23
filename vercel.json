@@ -3869,6 +3869,10 @@
 			"dest": "/character-library.html"
 		},
 		{
+			"src": "/sign-language/?",
+			"dest": "/sign-language.html"
+		},
+		{
 			"src": "/objects/?",
 			"dest": "/objects.html"
 		},

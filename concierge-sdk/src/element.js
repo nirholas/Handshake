@@ -21,6 +21,10 @@
  *   greeting       first line shown in the empty state and teaser
  *   suggestions    pipe-separated prompt chips ("a|b|c", max 4)
  *   knowledge      curated facts (FAQ, policies) the answers are grounded in
+ *   shop           Shopify store domain → shopping mode (catalog + product cards)
+ *   shopping       "true"/"false" to force shopping mode on/off (auto on a store)
+ *   currency       ISO currency for product prices (default: the store's / USD)
+ *   max-products   how many product cards to recommend per answer (1–8, default 4)
  *   persona        one-line tone instruction, e.g. "warm, playful, concise"
  *   accent         CSS color for the whole widget chrome
  *   position       bottom-right | bottom-left
@@ -34,7 +38,8 @@
  *
  * Methods proxy the controller: ask(text), open(), close(), reset(),
  * setAvatar(id), setMuted(bool). Events re-dispatch as DOM CustomEvents:
- *   three-concierge:ready | :open | :close | :message | :agentchange | :error
+ *   three-concierge:ready | :open | :close | :message | :agentchange
+ *   three-concierge:catalog (store catalog loaded) | :addtocart | :error
  */
 
 import { Concierge } from './widget.js';
@@ -57,6 +62,14 @@ export class ThreeConciergeElement extends HTMLElement {
 			greeting: this.getAttribute('greeting') || undefined,
 			suggestions: this.getAttribute('suggestions')?.split('|').map((s) => s.trim()).filter(Boolean),
 			knowledge: this.getAttribute('knowledge') || undefined,
+			shop: this.getAttribute('shop') || undefined,
+			shopping: this.hasAttribute('shopping')
+				? this.getAttribute('shopping') !== 'false'
+				: undefined,
+			currency: this.getAttribute('currency') || undefined,
+			maxProducts: this.getAttribute('max-products')
+				? Number(this.getAttribute('max-products'))
+				: undefined,
 			persona: this.getAttribute('persona') || undefined,
 			accent: this.getAttribute('accent') || undefined,
 			position: this.getAttribute('position') || undefined,
@@ -69,7 +82,7 @@ export class ThreeConciergeElement extends HTMLElement {
 			zIndex: this.getAttribute('z-index') ? Number(this.getAttribute('z-index')) : undefined,
 		});
 
-		for (const ev of ['ready', 'open', 'close', 'message', 'agentchange', 'error']) {
+		for (const ev of ['ready', 'open', 'close', 'message', 'agentchange', 'catalog', 'addtocart', 'error']) {
 			this._widget.on(ev, (detail) => {
 				this.dispatchEvent(
 					new CustomEvent(`three-concierge:${ev}`, { detail, bubbles: true, composed: true }),

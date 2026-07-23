@@ -71,6 +71,35 @@ There is no crawler and no index to keep fresh. At **ask-time** the widget snaps
 
 Add `data-concierge-ignore` to any element you never want harvested.
 
+## Shopping mode (Shopify)
+
+On a Shopify store the concierge becomes a full shopping assistant: it reads your **live catalog** and helps visitors find the right product, compare options, and check shipping and returns, then shows real **product cards** (image, live price, link, add-to-cart) for what it recommends.
+
+There is still no crawler, no index, and no product feed to maintain. Shopify serves every storefront's catalog and policies as public endpoints, and the widget reads them at ask-time:
+
+- `GET /products.json` — the live catalog (variants, prices, images, tags, type)
+- `GET /collections.json` — the collections
+- `GET /policies/shipping-policy`, `/policies/refund-policy`, … — shipping/returns/privacy/terms
+
+It fetches these once (same-origin on the store, so no CORS wall), caches them for the session, then for each question runs a small keyword retrieval to pick the handful of products the shopper actually asked about. Only that handful plus a compact store summary is sent to the answer endpoint, and the cards are rendered from that same set, so **prices and links are always real, never model-invented**. No embeddings service, no vector DB.
+
+**Install** is the same one tag, dropped into `theme.liquid` before `</body>`:
+
+```html
+<script type="module"
+        src="https://three.ws/concierge/concierge.global.js"
+        data-concierge
+        data-site-name="Larkspur Supply"
+        data-avatar="nova"
+        data-accent="#3f7d5b"></script>
+```
+
+Shopping mode turns on automatically because the widget detects the Shopify storefront (`window.Shopify`). Force it, target a specific store, or set the currency with `data-shopping="true"`, `data-shop="your-store.myshopify.com"`, and `data-currency="GBP"`.
+
+**Add-to-cart** works when the widget runs on the store itself: the button posts to Shopify's public `/cart/add.js` and fires a `cart:refresh` event so themes update their cart count. Off-store, cards show a **View** link to the product page.
+
+Handles price intent too (`"a gift under $75"`, `"cheapest hoodie"`, `"anything on sale?"`) and grounds shipping/returns answers in your published policies. See [`examples/shopify.html`](./examples/shopify.html) and the tutorial: [three.ws/docs/tutorials/shopify-shopping-assistant](https://three.ws/docs/tutorials/shopify-shopping-assistant).
+
 ## Options
 
 Constructor config / element attributes / `data-*` script attributes are the same set:
@@ -87,6 +116,10 @@ Constructor config / element attributes / `data-*` script attributes are the sam
 | `greeting` | `greeting` | generated | Empty-state + teaser line. |
 | `suggestions` | `suggestions` | generated | Prompt chips. Pipe-separated in attributes, max 4. |
 | `knowledge` | `knowledge` | none | Curated facts (FAQ, policies, pricing). Leads the grounding. |
+| `shop` | `shop` | auto-detected | Shopify store domain. Turns on shopping mode (catalog + product cards). |
+| `shopping` | `shopping` | auto on a store | Force shopping mode on (`true`) or off (`false`). |
+| `currency` | `currency` | store's / `USD` | ISO code for product prices. |
+| `maxProducts` | `max-products` | `4` | Product cards recommended per answer (1–8). |
 | `persona` | `persona` | none | One-line tone instruction for the model. |
 | `accent` | `accent` | indigo | Any CSS color; restyles the whole widget. |
 | `position` | `position` | `bottom-right` | Or `bottom-left`. |
@@ -109,7 +142,8 @@ c.setAvatar('nova')    // hot-swap the rig
 c.setMuted(true)
 c.reset()              // clear the conversation
 c.dispose()
-c.on(event, fn)        // 'ready' | 'open' | 'close' | 'message' | 'agentchange' | 'error'
+c.on(event, fn)        // 'ready' | 'open' | 'close' | 'message' | 'agentchange'
+                       // | 'catalog' (store catalog loaded) | 'addtocart' | 'error'
 ```
 
 `<three-concierge>` proxies the same methods and re-dispatches events as DOM CustomEvents (`three-concierge:message` etc., bubbling + composed).

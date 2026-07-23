@@ -25,11 +25,24 @@ import { askConcierge, DEFAULT_ENDPOINT, MAX_HISTORY_TURNS } from './client.js';
 import { renderMarkdown, stripMarkdown, escapeHtml } from './markdown.js';
 import { createMic, micSupported } from './mic.js';
 import { ensureStyles } from './styles.js';
+import {
+	detectShop,
+	normalizeShopDomain,
+	shopOrigin,
+	fetchCatalog,
+	fetchPolicies,
+	searchProducts,
+	buildShoppingPayload,
+	money,
+	MAX_RECOMMENDATIONS,
+} from './shopify.js';
 
 const LS_AVATAR = 'tc:avatar';
 const LS_MUTED = 'tc:muted';
 const SS_THREAD = 'tc:thread';
 const SS_TEASED = 'tc:teased';
+const SS_CATALOG = 'tc:shop'; // per-store catalog cache key prefix
+const CATALOG_TTL_MS = 30 * 60 * 1000; // re-fetch the catalog every 30 min
 
 const ICONS = {
 	spark:
@@ -114,7 +127,28 @@ export class Concierge {
 			teaser: config.teaser !== false,
 			zIndex: config.zIndex,
 			lang: config.lang || '',
+			shop: normalizeShopDomain(config.shop),
+			shopping: config.shopping,
+			currency: config.currency || '',
+			maxProducts:
+				Number.isFinite(config.maxProducts) && config.maxProducts > 0
+					? Math.min(config.maxProducts, 8)
+					: MAX_RECOMMENDATIONS,
 		};
+
+		// Shopping mode: explicit `shop` domain, or auto-detected when the widget
+		// is embedded on a Shopify storefront (the Shopify global is present). The
+		// host can force it off with `shopping: false`.
+		const detected = detectShop();
+		if (!this.config.shop && detected) this.config.shop = detected.shop;
+		if (!this.config.currency && detected) this.config.currency = detected.currency;
+		this.config.shopping =
+			config.shopping === false ? false : !!(config.shopping || this.config.shop);
+		// Add-to-cart only works same-origin on the store itself.
+		this._onStore = !!(detected && this.config.shop && detected.shop === this.config.shop);
+		this._catalog = null;
+		this._policies = {};
+		this._catalogPromise = null;
 
 		this._custom = config.customAvatar ? customAvatarEntry(config.customAvatar) : null;
 		const savedId = storageGet('localStorage', LS_AVATAR);
@@ -311,6 +345,7 @@ export class Concierge {
 			this.$.panel.hidden = false;
 			requestAnimationFrame(() => this.root.classList.add('is-open'));
 			this._ensureStage();
+			this._ensureCatalog(); // warm the store catalog so the first ask is instant
 			this.$.textarea.focus({ preventScroll: true });
 			this._scrollThread(false);
 		} else {
@@ -368,7 +403,76 @@ export class Concierge {
 	_greetingText() {
 		if (this.config.greeting) return this.config.greeting;
 		const site = this.config.siteName || document.querySelector('meta[property="og:site_name"]')?.content || '';
+		if (this.config.shopping) {
+			return site
+				? `Hi! I can help you find the right thing at ${site} — ask away.`
+				: 'Hi! Tell me what you\'re shopping for and I\'ll help you find it.';
+		}
 		return site ? `Hi! Ask me anything about ${site}.` : 'Hi! Ask me anything about this site.';
+	}
+
+	// ── Shopify catalog (lazy) ──────────────────────────────────────────────────
+	/** Load the store catalog once, from session cache or the live storefront. */
+	_ensureCatalog() {
+		if (!this.config.shopping || !this.config.shop) return Promise.resolve(null);
+		if (this._catalog) return Promise.resolve(this._catalog);
+		if (this._catalogPromise) return this._catalogPromise;
+		this._catalogPromise = this._loadCatalog().finally(() => {
+			this._catalogPromise = null;
+		});
+		return this._catalogPromise;
+	}
+
+	async _loadCatalog() {
+		const shop = this.config.shop;
+		const cached = this._readCatalogCache(shop);
+		if (cached) {
+			this._catalog = cached.catalog;
+			this._policies = cached.policies || {};
+			return this._catalog;
+		}
+		this._catalogAbort = new AbortController();
+		try {
+			const [catalog, policies] = await Promise.all([
+				fetchCatalog({
+					shop,
+					currency: this.config.currency || 'USD',
+					signal: this._catalogAbort.signal,
+				}),
+				fetchPolicies({ shop, signal: this._catalogAbort.signal }).catch(() => ({})),
+			]);
+			if (this.config.currency) catalog.currency = this.config.currency;
+			this._catalog = catalog;
+			this._policies = policies || {};
+			this._writeCatalogCache(shop, catalog, this._policies);
+			this._emit('catalog', { store: catalog.store, products: catalog.products.length });
+			return catalog;
+		} catch (err) {
+			// A store with a disabled public catalog: shopping cards go quiet, the
+			// concierge still answers from the page + any curated knowledge.
+			this._emit('error', err instanceof Error ? err : new Error(String(err)));
+			this._catalog = { store: shop, origin: shopOrigin(shop), currency: this.config.currency || 'USD', products: [], collections: [] };
+			return this._catalog;
+		}
+	}
+
+	_readCatalogCache(shop) {
+		try {
+			const raw = storageGet('sessionStorage', `${SS_CATALOG}:${shop}`);
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			if (!parsed || Date.now() - parsed.t > CATALOG_TTL_MS) return null;
+			if (!parsed.catalog?.products?.length) return null;
+			return parsed;
+		} catch {
+			return null;
+		}
+	}
+
+	_writeCatalogCache(shop, catalog, policies) {
+		// Only worth caching a real catalog; keep it lean for the sessionStorage cap.
+		if (!catalog?.products?.length) return;
+		storageSet('sessionStorage', `${SS_CATALOG}:${shop}`, JSON.stringify({ t: Date.now(), catalog, policies }));
 	}
 
 	// ── 3D stage (lazy) ───────────────────────────────────────────────────────
@@ -525,7 +629,9 @@ export class Concierge {
 			empty.appendChild(title);
 			const suggestions = this.config.suggestions.length
 				? this.config.suggestions
-				: defaultSuggestions(this.config.siteName);
+				: this.config.shopping
+					? shoppingSuggestions()
+					: defaultSuggestions(this.config.siteName);
 			if (suggestions.length) {
 				const chips = document.createElement('div');
 				chips.className = 'tc-chips';
@@ -542,16 +648,108 @@ export class Concierge {
 			thread.appendChild(empty);
 			return;
 		}
-		for (const m of this.messages) thread.appendChild(this._bubble(m.role, m.content));
+		for (const m of this.messages) thread.appendChild(this._bubble(m.role, m.content, { products: m.products }));
 		this._scrollThread(false);
 	}
 
-	_bubble(role, content, { error = false } = {}) {
+	_bubble(role, content, { error = false, products = null } = {}) {
 		const el = document.createElement('div');
 		el.className = `tc-msg is-${role === 'user' ? 'user' : 'bot'}${error ? ' is-error' : ''}`;
 		if (role === 'user') el.textContent = content;
-		else el.innerHTML = renderMarkdown(content);
+		else {
+			el.innerHTML = renderMarkdown(content);
+			if (Array.isArray(products) && products.length) this._renderProductCards(el, products);
+		}
 		return el;
+	}
+
+	/**
+	 * Render product recommendation cards under an answer. The set comes from the
+	 * widget's own retrieval, so image, price, and link are always real. On the
+	 * store itself an "Add" button posts to Shopify's public /cart/add.js.
+	 */
+	_renderProductCards(afterEl, products) {
+		const wrap = document.createElement('div');
+		wrap.className = 'tc-products';
+		wrap.setAttribute('role', 'list');
+		wrap.setAttribute('aria-label', 'Recommended products');
+		for (const p of products) {
+			const priceLabel =
+				p.priceMax > p.priceMin
+					? `${money(p.priceMin, p.currency)} – ${money(p.priceMax, p.currency)}`
+					: money(p.priceMin, p.currency);
+			const card = document.createElement('div');
+			card.className = 'tc-product';
+			card.setAttribute('role', 'listitem');
+			card.innerHTML = `
+				<a class="tc-product-media" href="${escapeHtml(p.url)}" target="_top" rel="noopener" aria-label="${escapeHtml(p.title)}">
+					${p.image ? `<img loading="lazy" src="${escapeHtml(p.image)}" alt="">` : '<span class="tc-product-noimg" aria-hidden="true"></span>'}
+					${p.onSale ? '<span class="tc-product-badge">Sale</span>' : ''}
+				</a>
+				<div class="tc-product-body">
+					<a class="tc-product-title" href="${escapeHtml(p.url)}" target="_top" rel="noopener">${escapeHtml(p.title)}</a>
+					<div class="tc-product-meta">
+						<span class="tc-product-price">${escapeHtml(priceLabel)}</span>
+						${p.available ? '' : '<span class="tc-product-oos">Sold out</span>'}
+					</div>
+					<div class="tc-product-actions"></div>
+				</div>`;
+			const actions = card.querySelector('.tc-product-actions');
+			const view = document.createElement('a');
+			view.className = 'tc-product-view';
+			view.href = p.url;
+			view.target = '_top';
+			view.rel = 'noopener';
+			view.textContent = 'View';
+			actions.appendChild(view);
+			if (this._onStore && p.available && p.variantId) {
+				const add = document.createElement('button');
+				add.type = 'button';
+				add.className = 'tc-product-add';
+				add.textContent = 'Add to cart';
+				add.addEventListener('click', () => this._addToCart(p, add));
+				actions.appendChild(add);
+			}
+			wrap.appendChild(card);
+		}
+		afterEl.appendChild(wrap);
+		this._scrollThread();
+	}
+
+	/** Add a variant to the Shopify cart via the store's public AJAX endpoint. */
+	async _addToCart(product, btn) {
+		if (!this._onStore || !product.variantId) return;
+		const origin = shopOrigin(this.config.shop);
+		btn.disabled = true;
+		const original = btn.textContent;
+		btn.textContent = 'Adding…';
+		try {
+			const res = await fetch(`${origin}/cart/add.js`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ items: [{ id: product.variantId, quantity: 1 }] }),
+			});
+			if (!res.ok) throw new Error(`cart/add → HTTP ${res.status}`);
+			btn.textContent = 'Added ✓';
+			btn.classList.add('is-added');
+			this._emit('addtocart', { product });
+			// Nudge Shopify themes that watch for cart changes to refresh their count.
+			try {
+				document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+			} catch {
+				/* theme has no such hook: the item is still in the cart */
+			}
+			setTimeout(() => {
+				if (!btn.isConnected) return;
+				btn.textContent = original;
+				btn.classList.remove('is-added');
+				btn.disabled = false;
+			}, 2400);
+		} catch (err) {
+			btn.textContent = 'Try again';
+			btn.disabled = false;
+			this._emit('error', err instanceof Error ? err : new Error(String(err)));
+		}
 	}
 
 	_scrollThread(smooth = true) {
@@ -609,6 +807,23 @@ export class Concierge {
 		let spoken = ''; // buffer of not-yet-spoken text
 		let started = false;
 
+		// Shopping mode: retrieve the products this question is about and ground
+		// the answer in them. The cards are rendered from this same set, so prices
+		// and links are always real, never model-invented.
+		let shopping = null;
+		let recommended = [];
+		if (this.config.shopping) {
+			try {
+				const catalog = await this._ensureCatalog();
+				if (catalog?.products?.length) {
+					recommended = searchProducts(catalog.products, question, this.config.maxProducts);
+					shopping = buildShoppingPayload(catalog, recommended, this._policies, question);
+				}
+			} catch {
+				/* retrieval must never block the answer */
+			}
+		}
+
 		this._abort = new AbortController();
 		let answer = '';
 		try {
@@ -620,6 +835,7 @@ export class Concierge {
 					knowledge: this.config.knowledge,
 					siteName: this.config.siteName,
 				}),
+				shopping: shopping || undefined,
 				persona: this.config.persona || undefined,
 				lang: this.config.lang || undefined,
 				signal: this._abort.signal,
@@ -653,9 +869,14 @@ export class Concierge {
 			} else {
 				if (!started) this.$.thread.appendChild(streamEl);
 				streamEl.innerHTML = renderMarkdown(answer);
-				this.messages.push({ role: 'assistant', content: answer });
+				if (recommended.length) this._renderProductCards(streamEl, recommended);
+				this.messages.push({
+					role: 'assistant',
+					content: answer,
+					products: recommended.length ? recommended.map(compactCard) : undefined,
+				});
 				this._persistThread();
-				this._emit('message', { role: 'assistant', content: answer });
+				this._emit('message', { role: 'assistant', content: answer, products: recommended });
 			}
 		} catch (err) {
 			typing.remove();
@@ -713,6 +934,7 @@ export class Concierge {
 		if (this._destroyed) return;
 		this._destroyed = true;
 		this._abort?.abort();
+		this._catalogAbort?.abort();
 		this._killTeaser();
 		this._mq?.removeEventListener?.('change', this._onScheme);
 		this._themeObs?.disconnect();
@@ -731,4 +953,24 @@ function getAvatarFrom(list, id) {
 function defaultSuggestions(siteName) {
 	const site = siteName || 'this site';
 	return [`What is ${site}?`, 'How do I get started?', 'What does it cost?'];
+}
+
+function shoppingSuggestions() {
+	return ['What do you recommend?', 'Help me find a gift', "What's on sale?", 'Do you ship internationally?'];
+}
+
+/** Minimal product shape persisted on a message so cards survive a reload. */
+function compactCard(p) {
+	return {
+		handle: p.handle,
+		title: p.title,
+		url: p.url,
+		image: p.image,
+		priceMin: p.priceMin,
+		priceMax: p.priceMax,
+		currency: p.currency,
+		available: p.available,
+		onSale: p.onSale,
+		variantId: p.variantId,
+	};
 }
