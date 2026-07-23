@@ -1,182 +1,605 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>hood-connect: wallet + onboarding kit for Robinhood Chain</title>
-  <meta name="description" content="EIP-6963 wallet discovery, add/switch chain 4663, a drop-in React connect button with live ETH/USDG balances, and a bridge funding funnel via LI.FI and Relay." />
-  <link rel="stylesheet" href="site.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0e11'/%3E%3Cpath d='M6 9.5A2.5 2.5 0 0 1 8.5 7h7A2.5 2.5 0 0 1 18 9.5v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 14.5v-5Z' stroke='%2300c805' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14.5' cy='12' r='1.25' fill='%2300c805'/%3E%3C/svg%3E" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-connect: release funds onto Robinhood Chain</title>
+<meta name="description" content="The wallet + onboarding kit for Robinhood Chain (chain 4663). Add the network, bridge funds in via LI.FI with Relay fallback, connect. Release a marble down the on-ramp and watch every stage fire." />
+<link rel="canonical" href="https://nirholas.github.io/hood-connect/" />
+<meta name="theme-color" content="#111013" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-connect: the on-ramp marble run" />
+<meta property="og:description" content="Chain 4663 is in no wallet by default. hood-connect adds it, funds it across any chain via LI.FI, and connects with one component or three calls. Release the marble to see the whole on-ramp." />
+<meta property="og:url" content="https://nirholas.github.io/hood-connect/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23111013'/><circle cx='16' cy='9' r='3.4' fill='%23eceae3'/><path d='M6 15 L26 20 M26 20 L6 25' fill='none' stroke='%23eceae3' stroke-width='1.6'/><circle cx='16' cy='28' r='2' fill='%23eceae3'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood-connect","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Wallet + onboarding kit for Robinhood Chain (chain ID 4663): EIP-6963 wallet discovery, add/switch network derived from viem, a drop-in React connect button with live ETH/USDG balances, and a funding funnel that bridges from any chain via LI.FI with Relay fallback.","softwareVersion":"0.1.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hood-connect","codeRepository":"https://github.com/nirholas/hood-connect"}
+</script>
+<style>
+  :root{
+    --ink:#111013; --paper:#eceae3; --graphite:#77746d; --steel:#a7a49c;
+    --hair:rgba(17,16,19,.14); --hair2:rgba(17,16,19,.30);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    background:var(--paper); color:var(--ink); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  /* film grain, pure CSS, no repaint cost */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(17,16,19,.03) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply; opacity:.5;
+  }
+
+  /* nav rail */
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--hair); background:var(--paper)}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite);
+    position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--ink); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--ink); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--hair2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--ink);border-color:var(--ink)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--ink);height:40px;
+    top:0;transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:760px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(60px,9vh,120px) clamp(20px,5vw,88px);
+    border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--ink)}
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.96}
+  h1{font-size:clamp(40px,7.6vw,104px)}
+  h2{font-size:clamp(29px,5vw,62px)}
+  .lede{max-width:60ch; font-size:clamp(16px,1.6vw,22px); line-height:1.44; color:#26241f}
+
+  /* ============ HERO / MARBLE RUN ============ */
+  #release{min-height:100svh; display:grid; grid-template-columns:1.02fr 0.98fr; gap:clamp(28px,4vw,76px);
+    align-items:center; padding-top:clamp(56px,8vh,104px); padding-bottom:clamp(40px,6vh,72px)}
+  @media(max-width:920px){#release{grid-template-columns:1fr; align-items:start; gap:26px}}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.03em; margin-bottom:20px; white-space:pre-wrap}
+  @media(max-width:760px){.boot{font-size:10.5px; letter-spacing:0}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  .herohead{max-width:15ch}
+  .herohead .lo{color:var(--graphite)}
+  .sub{margin-top:22px; max-width:46ch; font-size:clamp(15px,1.5vw,19px); color:#2b2823}
+
+  .instrument{display:grid; grid-template-rows:1fr auto; gap:14px; align-self:stretch;
+    max-height:min(80vh,700px); margin-top:0}
+  @media(max-width:920px){.instrument{max-height:none}}
+
+  /* the track (canvas) */
+  .track{position:relative; border:1px solid var(--hair2); background:
+    linear-gradient(0deg,rgba(17,16,19,.03),transparent 60%);
+    min-height:clamp(300px,42vh,440px); overflow:hidden}
+  .track canvas{display:block; width:100%; height:100%; position:absolute; inset:0}
+  .track .label{position:absolute; left:12px; font:600 9.5px/1 var(--mono); letter-spacing:.22em;
+    text-transform:uppercase; color:var(--graphite); pointer-events:none; transition:color .35s var(--ease)}
+  .track .label.hit{color:var(--ink)}
+  .track .label .tick{display:inline-block; width:16px; height:1px; background:currentColor; vertical-align:middle; margin-right:8px}
+  .track .funnelnote{position:absolute; bottom:8px; left:12px; right:12px; font:500 10px/1.4 var(--mono);
+    letter-spacing:.02em; color:var(--graphite); pointer-events:none}
+
+  /* readout column */
+  .console{display:flex; flex-direction:column; border:1px solid var(--hair2)}
+  .console .head{padding:12px 14px; border-bottom:1px solid var(--hair); display:flex; justify-content:space-between; align-items:center;
+    font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .steprow{padding:14px; border-bottom:1px solid var(--hair); position:relative; transition:background .4s var(--ease)}
+  .steprow:last-of-type{border-bottom:0}
+  .steprow.on{background:rgba(17,16,19,.035)}
+  .steprow .top{display:flex; align-items:center; gap:10px}
+  .steprow .dot{width:8px; height:8px; border-radius:50%; border:1px solid var(--hair2); flex:none; transition:all .4s var(--ease)}
+  .steprow.on .dot{background:var(--ink); border-color:var(--ink); box-shadow:0 0 0 3px rgba(17,16,19,.08)}
+  .steprow .st{font:600 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink)}
+  .steprow .num{margin-left:auto; font:600 10px/1 var(--mono); color:var(--graphite)}
+  .steprow .dsc{margin-top:9px; padding-left:18px; font:500 12px/1.5 var(--mono); color:var(--graphite);
+    max-height:0; overflow:hidden; opacity:0; transition:max-height .5s var(--ease),opacity .4s var(--ease)}
+  .steprow.on .dsc{max-height:9em; opacity:1}
+  .steprow .dsc b{color:var(--ink); font-weight:600}
+  .steprow .dsc code{background:rgba(17,16,19,.06); padding:1px 4px}
+
+  .lever{margin-top:22px; display:flex; flex-wrap:wrap; align-items:center; gap:16px}
+  .rls{appearance:none; border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+    font:600 13px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; padding:16px 30px;
+    cursor:pointer; transition:transform .3s var(--ease),background .3s,color .3s; position:relative; overflow:hidden}
+  .rls:hover{transform:translateY(-2px)}
+  .rls:active{transform:translateY(0)}
+  .rls.done{background:var(--paper); color:var(--ink)}
+  .rls[disabled]{cursor:default; opacity:.55}
+  .hint{font:500 12px/1.5 var(--mono); color:var(--graphite); letter-spacing:.01em; max-width:34ch}
+  .scrollcue{margin-top:clamp(26px,4vh,44px); font:600 10px/1 var(--mono);
+    letter-spacing:.3em; text-transform:uppercase; color:var(--graphite); display:inline-flex; align-items:center; gap:10px; text-decoration:none}
+  .scrollcue i{display:block; width:26px; height:1px; background:var(--graphite); position:relative; overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--ink);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+  @media(prefers-reduced-motion:reduce){.scrollcue i::after{animation:none}}
+
+  /* generic layout blocks */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:32px}}
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  .code{border:1px solid var(--ink); background:var(--ink); color:var(--paper); padding:20px 22px;
+    font:500 13px/1.85 var(--mono); position:relative; overflow-x:auto; white-space:pre}
+  .code .c{color:#8b8781}
+  .code .k{color:#cfccc4}
+  .code .p::before{content:"$ "; color:#8b8781}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid rgba(236,234,227,.28);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(236,234,227,.14)}
+
+  /* state matrix (ensureChain) */
+  .matrix{display:grid; grid-template-columns:repeat(4,1fr); border-left:1px solid var(--hair); border-top:1px solid var(--hair); margin-top:34px}
+  @media(max-width:760px){.matrix{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.matrix{grid-template-columns:1fr}}
+  .cell{border-right:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:20px 18px 24px; transition:background .3s}
+  .cell:hover{background:rgba(17,16,19,.03)}
+  .cell .id{font:600 10px/1 var(--mono); letter-spacing:.2em; color:var(--graphite)}
+  .cell .nm{font:700 18px/1.05 var(--grot); letter-spacing:-.02em; margin:12px 0 8px}
+  .cell .ds{font-size:14px; color:#2c2925; line-height:1.42}
+
+  .spec{border-top:1px solid var(--hair); margin-top:34px}
+  .spec .r{display:grid; grid-template-columns:220px 1fr; gap:20px; padding:17px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.spec .r{grid-template-columns:1fr; gap:5px}}
+  .spec .r .t{font:600 11px/1.3 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite)}
+  .spec .r .d{font-size:15.5px; color:#25231f; max-width:64ch}
+  .spec .r .d b{font-weight:700}
+  .spec .r .d code{font-family:var(--mono); font-size:.86em; background:rgba(17,16,19,.06); padding:1px 5px}
+
+  /* funding chains ticker */
+  .chains{display:flex; flex-wrap:wrap; gap:8px; margin-top:22px}
+  .chains span{font:600 11px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--ink);
+    border:1px solid var(--hair2); padding:9px 12px; transition:background .25s,color .25s}
+  .chains span:hover{background:var(--ink); color:var(--paper)}
+
+  .fuse{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:14px}
+  @media(max-width:860px){.fuse{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.fuse{grid-template-columns:1fr}}
+  .fuse .f{border:1px solid var(--hair2); padding:18px}
+  .fuse .f .h{font:700 12.5px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px}
+  .fuse .f .b{font-size:13.5px; color:#2c2925; line-height:1.45}
+  .fuse .f .b code{font-family:var(--mono); font-size:.9em; background:rgba(17,16,19,.06); padding:1px 4px}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--ink)}
+
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){.rise{opacity:1;transform:none}}
+</style>
 </head>
 <body>
-  <header class="site">
-    <div class="wrap">
-      <a class="logo" href="index.html">hood<span class="tick">-</span>connect</a>
-      <nav class="main" aria-label="Site">
-        <a href="index.html" aria-current="page">Overview</a>
-        <a href="guide.html">Integration guide</a>
-        <a href="funding.html">Funding funnel</a>
-        <a href="add.html">Add-network button</a>
-        <a href="https://github.com/nirholas/hood-connect" rel="noreferrer noopener">GitHub</a>
-        <a href="https://www.npmjs.com/package/hood-connect" rel="noreferrer noopener">npm</a>
-      </nav>
-    </div>
-  </header>
+<nav class="rail" aria-label="Sections">
+  <b>hood·connect</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#release" aria-current="true">Release</a>
+  <a class="stn" href="#add">Add</a>
+  <a class="stn" href="#fund">Fund</a>
+  <a class="stn" href="#connect">Connect</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
+</nav>
 
-  <main>
-    <div class="hero">
-      <div class="wrap">
-        <h1>Wallet onboarding for <span class="grad">Robinhood Chain</span>, in one component.</h1>
-        <p class="lede">
-          Chain 4663 ships in no wallet by default, so every dApp rebuilds the same flow: add network,
-          fund via bridge, connect. hood-connect makes it one call: EIP-6963 discovery, EIP-3085
-          add-network derived from viem's official chain defs, live ETH/USDG balances, and a bridge
-          funding funnel routed through LI.FI with Relay fallback.
-        </p>
-        <div class="install">
-          <span id="install-cmd">npm install hood-connect</span>
-          <button type="button" id="copy-install" aria-label="Copy install command">copy</button>
-        </div>
-
-        <div class="stats" aria-label="Live Robinhood Chain data">
-          <div class="stat"><div class="k">Chain ID</div><div class="v" id="stat-chain">4663</div></div>
-          <div class="stat"><div class="k">Block height</div><div class="v live" id="stat-block">loading</div></div>
-          <div class="stat"><div class="k">USDG supply</div><div class="v" id="stat-usdg">loading</div></div>
-          <div class="stat"><div class="k">Gas token</div><div class="v" id="stat-gas">ETH</div></div>
-        </div>
+<main>
+  <!-- ============ RELEASE / MARBLE RUN ============ -->
+  <section id="release">
+    <div class="herotext">
+      <p class="boot mono" id="boot"></p>
+      <div class="eyebrow"><span class="n">00</span> / THE ON-RAMP · chain 4663</div>
+      <h1 class="herohead">Drop funds<br><span class="lo">onto a chain no<br>wallet knows yet.</span></h1>
+      <p class="sub">Robinhood Chain (ID 4663) ships in no wallet by default. Every dApp needs the same three moves before it can do anything: add the network, bridge funds in, connect. hood-connect is that whole descent in one component. Release the marble and follow it down.</p>
+      <div class="lever">
+        <button class="rls" id="rls"><span class="lbl">Release funds</span></button>
+        <span class="hint" id="hint">gravity does the routing · the marble trips each stage as it passes</span>
       </div>
+      <a class="scrollcue" href="#add">the kit <i></i> keep going</a>
     </div>
 
-    <section aria-labelledby="try-title">
-      <div class="wrap">
-        <h2 id="try-title">Try it, right here</h2>
-        <p class="sub">
-          This button is the framework-free core running live on this page: it discovers your
-          installed wallets, connects, adds Robinhood Chain if your wallet does not know it, switches,
-          and reads your real ETH and USDG balances from the public RPC.
-        </p>
-        <div class="demo-box">
-          <div id="connect-demo"></div>
-          <p class="note">
-            Read-only: the page never asks for a signature and never moves funds. No wallet installed?
-            You will get install links instead.
-          </p>
+    <div class="instrument">
+      <div class="track" id="track" role="img" aria-label="A marble-run on-ramp: funds fall from a source chain, through a bridge, into an on-chain balance on Robinhood Chain 4663.">
+        <canvas id="cv"></canvas>
+        <div class="label" id="lb0"><span class="tick"></span>source chain, any of 20+</div>
+        <div class="label" id="lb1"><span class="tick"></span>bridge · LI.FI → Relay</div>
+        <div class="label" id="lb2"><span class="tick"></span>chain 4663 balance</div>
+        <div class="funnelnote mono" id="fnote">release the marble to run the funnel</div>
+      </div>
+
+      <div class="console" aria-live="polite">
+        <div class="head"><span>on-ramp trace</span><span id="clk">idle</span></div>
+        <div class="steprow" id="s0">
+          <div class="top"><span class="dot"></span><span class="st">deposit</span><span class="num">0.01 ETH</span></div>
+          <div class="dsc"><code>getFundingQuote()</code> builds a ready-to-send source-chain tx from <b>any of 20+ chains</b>. ERC-20? An approval leg comes with it.</div>
+        </div>
+        <div class="steprow" id="s1">
+          <div class="top"><span class="dot"></span><span class="st">bridge</span><span class="num">LI.FI</span></div>
+          <div class="dsc">Live quote via <b>LI.FI</b>, automatic <b>Relay</b> fallback, both verified live against 4663. <code>getFundingStatus()</code> reports pending / done / failed.</div>
+        </div>
+        <div class="steprow" id="s2">
+          <div class="top"><span class="dot"></span><span class="st">landed</span><span class="num">4663</span></div>
+          <div class="dsc"><code>checkBootstrap()</code> reads live <b>ETH + USDG</b>. The empty wallet is now funded and the chain is added, connect proceeds.</div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section aria-labelledby="features-title">
-      <div class="wrap">
-        <h2 id="features-title">What is in the kit</h2>
-        <div class="grid">
-          <div class="card">
-            <span class="tag">hood-connect</span>
-            <h3>ensureChain()</h3>
-            <p>Connect, add chain 4663 if missing (EIP-3085, params derived from viem, never hand-copied), switch, verify. Typed states for every phase and typed errors for every rejection path.</p>
-          </div>
-          <div class="card">
-            <span class="tag">hood-connect</span>
-            <h3>EIP-6963 discovery</h3>
-            <p>Every installed wallet announces itself; no more fighting over window.ethereum. Legacy injection still works as a fallback.</p>
-          </div>
-          <div class="card">
-            <span class="tag">hood-connect</span>
-            <h3>Balance bootstrap</h3>
-            <p>checkBootstrap() detects the empty-wallet-on-4663 state every new user hits and returns concrete funding options to render.</p>
-          </div>
-          <div class="card">
-            <span class="tag">hood-connect</span>
-            <h3>Funding funnel</h3>
-            <p>Live bridge quotes and route execution into Robinhood Chain via the LI.FI API, with Relay as automatic fallback. Both verified live against chain 4663.</p>
-          </div>
-          <div class="card">
-            <span class="tag">hood-connect/react</span>
-            <h3>&lt;HoodConnectButton /&gt;</h3>
-            <p>The whole flow in one component with a styled default skin: wallet picker, add/switch progress, address pill with live ETH/USDG balances, designed empty and error states.</p>
-          </div>
-          <div class="card">
-            <span class="tag">hood-connect/wagmi</span>
-            <h3>wagmi config</h3>
-            <p>hoodWagmiConfig() for teams already on wagmi v2: Robinhood Chain transports and EIP-6963 connectors, one import.</p>
-          </div>
+  <!-- ============ ADD ============ -->
+  <section id="add">
+    <div class="eyebrow"><span class="n">01</span> / ADD THE NETWORK</div>
+    <div class="cols">
+      <div>
+        <h2>One call adds a<br>chain from scratch.</h2>
+        <p class="lede" style="margin-top:22px"><code class="mono">ensureChain()</code> connects, adds 4663 via EIP-3085 if the wallet has never heard of it, switches, and verifies, with a typed state for every phase and a typed error for every rejection path, including MetaMask's nested <code class="mono">-32603</code>/<code class="mono">4902</code> wrapping.</p>
+        <p class="lede" style="margin-top:18px">The add-chain params are <b>provably derived from viem</b>: <code class="mono">toAddChainParams()</code> computes them at runtime from viem's official <code class="mono">robinhood</code> / <code class="mono">robinhoodTestnet</code> definitions. Nothing is hand-copied, and the test suite enforces it.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/hood-connect">npm</a>
+          <a class="btn" href="https://github.com/nirholas/hood-connect">source</a>
+          <a class="btn" href="add.html">add-to-wallet button</a>
         </div>
       </div>
-    </section>
+      <div>
+        <div class="code"><button class="copy" data-copy="ens">COPY</button><span class="c">// EIP-6963 discovery + legacy fallback</span>
+<span class="k">import</span> { discoverWallets, ensureChain } <span class="k">from</span> 'hood-connect'
 
-    <section aria-labelledby="quick-title">
-      <div class="wrap">
-        <h2 id="quick-title">60-second quickstart</h2>
-        <p class="sub">Framework-free core. React and wagmi variants live in the <a href="guide.html">integration guide</a>.</p>
-<pre><code>import { discoverWallets, ensureChain, checkBootstrap } from 'hood-connect'
-
-const [wallet] = await discoverWallets()          // EIP-6963 (+ legacy fallback)
-const { address } = await ensureChain(wallet.provider)  // connect + add 4663 + switch
-
-const status = await checkBootstrap(address)      // live ETH + USDG read
-if (!status.funded) {
-  console.log(status.fundingOptions)              // bridge + Robinhood-app paths
-}</code></pre>
+<span class="k">const</span> wallets = <span class="k">await</span> discoverWallets()
+<span class="k">const</span> { address } = <span class="k">await</span> ensureChain(
+  wallets[0].provider,
+  { network: 'mainnet',        <span class="c">// 4663</span>
+    onState: (s) => log(s.status) }
+)
+<span class="c">// connecting → adding → switching → connected</span></div>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <footer class="site">
-    <div class="wrap">
-      Built by <a href="https://x.com/nichxbt" rel="noreferrer noopener">nirholas</a> ·
-      <a href="https://three.ws" rel="noreferrer noopener">three.ws</a> · MIT licensed ·
-      Not affiliated with Robinhood Markets.
+    <div class="matrix" id="matrix"></div>
+  </section>
+
+  <!-- ============ FUND ============ -->
+  <section id="fund">
+    <div class="eyebrow"><span class="n">02</span> / FUND THE FUNNEL</div>
+    <h2>Bridge in from<br>anywhere you already are.</h2>
+    <p class="lede" style="margin-top:22px">The empty wallet every new 4663 user has is the whole problem. <code class="mono">checkBootstrap()</code> spots it and hands back concrete funding options; <code class="mono">getFundingQuote()</code> returns a ready-to-send bridge transaction, priced live, LI.FI first and Relay behind it. The documented "withdraw from the Robinhood app" path is offered alongside for anyone who prefers the front door.</p>
+
+    <div class="chains" aria-label="Source chains">
+      <span>Ethereum</span><span>Arbitrum</span><span>Base</span><span>Optimism</span><span>Polygon</span><span>BNB</span><span>Avalanche</span><span>+ more</span>
+    </div>
+
+    <div class="code" style="margin-top:26px; max-width:720px"><button class="copy" data-copy="fund">COPY</button><span class="k">import</span> { getFundingQuote, getFundingStatus } <span class="k">from</span> 'hood-connect'
+
+<span class="k">const</span> quote = <span class="k">await</span> getFundingQuote({
+  fromChainId: 42161,                 <span class="c">// Arbitrum One</span>
+  fromAddress: account,
+  amount: 10_000_000_000_000_000n,    <span class="c">// 0.01 ETH</span>
+})
+<span class="c">// quote.tx is ready to send; quote.approval is set for ERC-20s</span>
+<span class="k">await</span> getFundingStatus(quote, txHash) <span class="c">// pending | done | failed</span></div>
+
+    <div class="fuse">
+      <div class="f"><div class="h">LI.FI primary</div><div class="b">Live route + quote across chains, verified against 4663.</div></div>
+      <div class="f"><div class="h">Relay fallback</div><div class="b">Second live provider, so one dead route never dead-ends the user.</div></div>
+      <div class="f"><div class="h">App path</div><div class="b">The documented Robinhood-app withdrawal, offered for those who want it.</div></div>
+      <div class="f"><div class="h">User-signed</div><div class="b">Read-only by default. Only the user's own wallet sends the bridge.</div></div>
+    </div>
+    <div class="btns"><a class="btn" href="funding.html">funding walkthrough</a><a class="btn" href="guide.html">error-handling guide</a></div>
+  </section>
+
+  <!-- ============ CONNECT ============ -->
+  <section id="connect">
+    <div class="eyebrow"><span class="n">03</span> / CONNECT · every state designed</div>
+    <div class="cols">
+      <div>
+        <h2>Drop in the button.<br>Or keep the core.</h2>
+        <p class="lede" style="margin-top:22px"><code class="mono">&lt;HoodConnectButton /&gt;</code> and <code class="mono">&lt;FundWallet /&gt;</code> carry the whole journey with a themable skin: no wallet, picker, connecting, adding, switching, wrong chain, connected, empty wallet, error: each visual state is drawn. Already on wagmi v2? <code class="mono">hoodWagmiConfig()</code> wires chain 4663 in. The framework-free core needs neither React nor wagmi.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/hood-connect#readme">read the docs</a>
+          <a class="btn" href="https://registry.modelcontextprotocol.io">registry</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="react">COPY</button><span class="k">import</span> { HoodConnectButton, FundWallet }
+  <span class="k">from</span> 'hood-connect/react'
+
+<span class="k">&lt;</span>HoodConnectButton showBalances
+  onFund={() => openFunding()} <span class="k">/&gt;</span>
+<span class="k">&lt;</span>FundWallet onFunded={() => refetch()} <span class="k">/&gt;</span>
+
+<span class="c">// headless, if you'd rather:</span>
+<span class="c">// useHoodAccount · useEnsureChain · useWallets</span></div>
+      </div>
+    </div>
+
+    <div class="spec">
+      <div class="r"><div class="t">discovery</div><div class="d"><code>discoverWallets</code> / <code>watchWallets</code>: EIP-6963 one-shot or streaming, with a legacy <b>window.ethereum</b> fallback for wallets that never adopted it.</div></div>
+      <div class="r"><div class="t">typed errors</div><div class="d"><code>ConnectionRejectedError</code>, <code>ChainAddRejectedError</code>, <code>ChainSwitchRejectedError</code> and siblings, <b>never a raw provider error</b>, so your UI branches on a name, not a magic number.</div></div>
+      <div class="r"><div class="t">balances</div><div class="d"><code>checkBootstrap</code> reads live ETH + USDG and, for the empty wallet, returns funding options ready to render. Stock Tokens are shown, never acquired.</div></div>
+      <div class="r"><div class="t">theming</div><div class="d">Skin the components with <code>--hc-*</code> CSS variables, or take <code>unstyled</code> and paint it yourself. Every state has a class hook.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">04</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>One install.<br>Three calls, or one tag.</h2>
+        <p class="lede" style="margin-top:22px"><code class="mono">viem</code> and <code class="mono">hoodchain</code> install automatically; <code class="mono">react</code> and <code class="mono">wagmi</code> are optional peers, needed only for the framework entries. The "Add Robinhood Chain" page is a button-as-a-service any README can link or iframe.</p>
+        <div class="btns">
+          <a class="btn solid" href="add.html">try add-to-wallet</a>
+          <a class="btn" href="https://github.com/nirholas/hood-connect/generate">deploy your own</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="get">COPY</button><span class="p" id="cmd-get">npm install hood-connect</span>
+
+<span class="c"># add-to-wallet badge for any README</span>
+<span class="c"># → docs/add.html (?network=testnet, ?embed=1)</span>
+
+<span class="c"># 36 unit tests + live read-only checks</span>
+<span class="p">npm test</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood-<br>connect</div>
+    <div class="meta">
+      chain 4663 · viem-derived · EIP-6963 / EIP-3085<br>
+      <a href="https://github.com/nirholas/hood-connect">github.com/nirholas/hood-connect</a><br>
+      <a href="https://www.npmjs.com/package/hood-connect">npmjs.com/package/hood-connect</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
     </div>
   </footer>
+</main>
 
-  <script src="hood-connect.iife.js"></script>
-  <script src="connect-widget.js"></script>
-  <script>
-    (function () {
-      'use strict'
-      var HC = window.HoodConnect
+<script>
+"use strict";
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-      mountConnectWidget(document.getElementById('connect-demo'), { network: 'mainnet' })
+/* ---------- boot line ---------- */
+(function boot(){
+  const el = document.getElementById('boot');
+  const line = '● wallet discovery ready · chain 4663 (0x1237) · usdg + eth';
+  [...line].forEach((ch,i)=>{ const s=document.createElement('span'); s.textContent=ch; s.style.animationDelay=(reduce?0:i*13+120)+'ms'; el.appendChild(s); });
+})();
 
-      document.getElementById('copy-install').addEventListener('click', function () {
-        navigator.clipboard.writeText('npm install hood-connect').then(function () {
-          var button = document.getElementById('copy-install')
-          button.textContent = 'copied'
-          setTimeout(function () { button.textContent = 'copy' }, 1500)
-        })
-      })
+/* ---------- ensureChain state matrix ---------- */
+const STATES = [
+  ['connecting','Connecting','Request accounts from the chosen EIP-6963 provider.'],
+  ['adding','Adding','Wallet has never seen 4663 → EIP-3085 add, params derived from viem.'],
+  ['switching','Switching','Point the wallet at 4663; unwrap MetaMask 4902 / -32603.'],
+  ['connected','Connected','Address in hand, chain verified. Bootstrap read fires next.'],
+];
+const matrix = document.getElementById('matrix');
+STATES.forEach((s,i)=>{
+  const c=document.createElement('div'); c.className='cell rise';
+  c.innerHTML=`<div class="id">${String(i+1).padStart(2,'0')} · status</div><div class="nm">${s[1]}</div><div class="ds">${s[2]}</div>`;
+  matrix.appendChild(c);
+});
 
-      // Live chain stats from the public RPC (read-only). The public RPC's
-      // CDN occasionally returns a malformed CORS header from one backend;
-      // viem retries, and a stale-but-real value beats an error string, so
-      // failures only show when no reading ever succeeded.
-      var hood = HC.createHoodClient({ chain: 'mainnet' })
-      var blockEl = document.getElementById('stat-block')
-      var usdgEl = document.getElementById('stat-usdg')
-      var haveBlock = false
-      var haveUsdg = false
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  const map={ens:"import { discoverWallets, ensureChain } from 'hood-connect'",fund:"import { getFundingQuote, getFundingStatus } from 'hood-connect'",react:"import { HoodConnectButton, FundWallet } from 'hood-connect/react'",get:'npm install hood-connect'};
+  btn.addEventListener('click',()=>{ navigator.clipboard&&navigator.clipboard.writeText(map[btn.dataset.copy]||'').then(()=>{ const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);}).catch(()=>{}); });
+});
 
-      function refreshBlock() {
-        hood.public.getBlockNumber().then(function (block) {
-          haveBlock = true
-          blockEl.textContent = block.toLocaleString('en-US')
-        }).catch(function () {
-          if (!haveBlock) blockEl.textContent = 'rpc busy'
-        })
-      }
-      function refreshUsdg() {
-        HC.getUsdgTotalSupply(hood).then(function (supply) {
-          haveUsdg = true
-          var formatted = Number(HC.formatUsdg(supply))
-          usdgEl.textContent = '$' + formatted.toLocaleString('en-US', { maximumFractionDigits: 0 })
-        }).catch(function () {
-          if (!haveUsdg) usdgEl.textContent = 'rpc busy'
-        })
-      }
-      refreshBlock()
-      refreshUsdg()
-      setInterval(refreshBlock, 12000)
-      setInterval(refreshUsdg, 120000)
-    })()
-  </script>
+/* ---------- reveal on scroll ---------- */
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{el.style.transitionDelay=(i%4*60)+'ms';io.observe(el);});
+
+/* ---------- nav rail carriage ---------- */
+const stations=[...document.querySelectorAll('.rail .stn')];
+const secs=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0,mid=innerHeight*0.4;
+  secs.forEach((s,i)=>{const r=s.getBoundingClientRect(); if(r.top<=mid) idx=i;});
+  stations.forEach((s,i)=>s.setAttribute('aria-current',i===idx));
+  const a=stations[idx], railR=document.querySelector('.rail').getBoundingClientRect(), r=a.getBoundingClientRect();
+  carriage.style.height=r.height+'px'; carriage.style.transform=`translateY(${r.top-railR.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:reduce?'auto':'smooth'});}));
+addEventListener('scroll',()=>requestAnimationFrame(updateRail),{passive:true});
+addEventListener('resize',updateRail); updateRail();
+
+/* =========================================================
+   THE MARBLE RUN / signature interaction
+   Bead-on-wire + projectile hybrid. Ramps are normalized
+   (0..1) so the track re-lays out on resize. Three gate y
+   thresholds trip the on-ramp stages as the marble passes.
+   ========================================================= */
+const track=document.getElementById('track');
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+const rls=document.getElementById('rls');
+const hint=document.getElementById('hint');
+const clk=document.getElementById('clk');
+const fnote=document.getElementById('fnote');
+const steps=[document.getElementById('s0'),document.getElementById('s1'),document.getElementById('s2')];
+const labels=[document.getElementById('lb0'),document.getElementById('lb1'),document.getElementById('lb2')];
+
+const RAMPS=[
+  {x1:0.14,y1:0.18,x2:0.80,y2:0.31},
+  {x1:0.86,y1:0.40,x2:0.20,y2:0.55},
+  {x1:0.14,y1:0.65,x2:0.82,y2:0.79},
+];
+const GATES=[0.31,0.55,0.85];
+const LABEL_Y=[0.05,0.475,0.87];
+
+let W=0,H=0,DPR=1;
+function resize(){
+  const r=track.getBoundingClientRect();
+  DPR=Math.min(devicePixelRatio||1,2);
+  W=r.width; H=r.height;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  labels.forEach((l,i)=>{ l.style.top=(LABEL_Y[i]*H)+'px'; });
+  draw();
+}
+const nx=v=>v*W, ny=v=>v*H;
+function ramps(){ return RAMPS.map(s=>({x1:nx(s.x1),y1:ny(s.y1),x2:nx(s.x2),y2:ny(s.y2)})); }
+
+let marble=null, running=false, gateHit=[false,false,false];
+
+function drawTrackStatic(){
+  ctx.clearRect(0,0,W,H);
+  const rs=ramps();
+  // release hopper at top-left
+  ctx.strokeStyle='rgba(17,16,19,0.32)'; ctx.lineWidth=1.5; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(nx(0.10),ny(0.055)); ctx.lineTo(nx(0.10),ny(0.10)); ctx.lineTo(nx(0.17),ny(0.155));
+  ctx.moveTo(nx(0.24),ny(0.055)); ctx.lineTo(nx(0.24),ny(0.10)); ctx.lineTo(nx(0.185),ny(0.145));
+  ctx.stroke();
+  // ramps
+  ctx.strokeStyle='rgba(17,16,19,0.85)'; ctx.lineWidth=2.5;
+  rs.forEach(s=>{ ctx.beginPath(); ctx.moveTo(s.x1,s.y1); ctx.lineTo(s.x2,s.y2); ctx.stroke();
+    const lowX = s.y2>s.y1? s.x2:s.x1, lowY=Math.max(s.y1,s.y2);
+    ctx.strokeStyle='rgba(17,16,19,0.26)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(lowX,lowY); ctx.lineTo(lowX,Math.min(H-2,lowY+ny(0.05))); ctx.stroke();
+    ctx.strokeStyle='rgba(17,16,19,0.85)'; ctx.lineWidth=2.5;
+  });
+  // gate lines
+  ctx.setLineDash([2,5]); ctx.strokeStyle='rgba(17,16,19,0.20)'; ctx.lineWidth=1;
+  GATES.forEach(g=>{ const y=ny(g); ctx.beginPath(); ctx.moveTo(nx(0.04),y); ctx.lineTo(nx(0.96),y); ctx.stroke(); });
+  ctx.setLineDash([]);
+  // basin
+  ctx.strokeStyle='rgba(17,16,19,0.85)'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(nx(0.30),ny(0.90)); ctx.lineTo(nx(0.42),ny(0.965)); ctx.lineTo(nx(0.58),ny(0.965)); ctx.lineTo(nx(0.70),ny(0.90));
+  ctx.stroke();
+}
+
+function draw(){
+  drawTrackStatic();
+  if(marble){
+    const rr=Math.max(6,Math.min(13,W*0.021));
+    ctx.fillStyle='rgba(17,16,19,0.13)';
+    for(let i=0;i<marble.trail.length;i++){ const t=marble.trail[i]; ctx.beginPath(); ctx.arc(t.x,t.y,rr*(0.3+0.55*i/marble.trail.length),0,7); ctx.fill(); }
+    ctx.fillStyle='#111013'; ctx.beginPath(); ctx.arc(marble.x,marble.y,rr,0,7); ctx.fill();
+    ctx.fillStyle='rgba(236,234,227,0.85)'; ctx.beginPath(); ctx.arc(marble.x-rr*0.32,marble.y-rr*0.34,rr*0.28,0,7); ctx.fill();
+  }
+}
+
+function nearestRampBelow(x,y){
+  const rs=ramps(); let best=null,bestY=Infinity;
+  for(const s of rs){
+    const minX=Math.min(s.x1,s.x2),maxX=Math.max(s.x1,s.x2);
+    if(x<minX-2||x>maxX+2) continue;
+    const t=(x-s.x1)/(s.x2-s.x1);
+    const ly=s.y1+(s.y2-s.y1)*t;
+    if(ly>=y-1 && ly<bestY){ bestY=ly; best={s,ly,t}; }
+  }
+  return best;
+}
+
+function release(){
+  if(running) return;
+  running=true; gateHit=[false,false,false];
+  steps.forEach(s=>s.classList.remove('on'));
+  labels.forEach(l=>l.classList.remove('hit'));
+  rls.setAttribute('disabled','');
+  rls.querySelector('.lbl').textContent='running…';
+  hint.textContent='marble in the chute · tripping stages on the way down';
+  fnote.textContent='deposit → bridge → landed';
+
+  if(reduce){
+    steps.forEach(s=>s.classList.add('on')); labels.forEach(l=>l.classList.add('hit'));
+    clk.textContent='landed'; finishRun(); return;
+  }
+  marble={ x:nx(0.17), y:ny(0.12), vx:24, vy:0, mode:'fall', ramp:null, t:0, speed:0, trail:[] };
+  last=0; requestAnimationFrame(step);
+}
+
+function tripGate(i){
+  if(gateHit[i]) return; gateHit[i]=true;
+  steps[i].classList.add('on'); labels[i].classList.add('hit');
+  clk.textContent=['deposit','bridge','landed'][i];
+}
+
+let last=0;
+function step(ts){
+  if(!running) return;
+  const dt=Math.min(0.032,last?(ts-last)/1000:0.016); last=ts;
+  const g=1500, m=marble;
+  m.trail.push({x:m.x,y:m.y}); if(m.trail.length>7) m.trail.shift();
+
+  if(m.mode==='ramp'){
+    const s=m.ramp, ang=Math.atan2(s.y2-s.y1,s.x2-s.x1);
+    m.speed=(m.speed||60)+g*Math.sin(ang)*dt; m.speed*=0.999;
+    const len=Math.hypot(s.x2-s.x1,s.y2-s.y1);
+    m.t+=(m.speed*dt)/len;
+    if(m.t>=1){
+      const dirx=Math.cos(ang),diry=Math.sin(ang);
+      m.x=s.x2; m.y=s.y2; m.vx=dirx*m.speed; m.vy=diry*m.speed;
+      m.mode='fall'; m.ramp=null;
+    } else { m.x=s.x1+(s.x2-s.x1)*m.t; m.y=s.y1+(s.y2-s.y1)*m.t; }
+  } else {
+    m.vy+=g*dt; m.x+=m.vx*dt; m.y+=m.vy*dt;
+    if(m.x<nx(0.05)){ m.x=nx(0.05); m.vx=Math.abs(m.vx)*0.5; }
+    if(m.x>nx(0.95)){ m.x=nx(0.95); m.vx=-Math.abs(m.vx)*0.5; }
+    const hit=nearestRampBelow(m.x,m.y);
+    if(hit && m.y>=hit.ly-2 && m.vy>0){
+      m.ramp=hit.s; m.t=hit.t; m.mode='ramp';
+      m.speed=Math.max(70,Math.hypot(m.vx,m.vy))*0.72; m.y=hit.ly;
+    }
+  }
+  GATES.forEach((gy,i)=>{ if(m.y>=ny(gy)) tripGate(i); });
+
+  if(m.y>=ny(0.90)){
+    m.y=Math.min(m.y,ny(0.94));
+    m.x += (nx(0.5)-m.x)*0.16; m.vx*=0.55; m.vy*=0.2;
+    if(Math.abs(m.x-nx(0.5))<3){ draw(); finishRun(); return; }
+  }
+  draw();
+  requestAnimationFrame(step);
+}
+
+function finishRun(){
+  running=false;
+  steps.forEach(s=>s.classList.add('on')); labels.forEach(l=>l.classList.add('hit'));
+  clk.textContent='funded';
+  fnote.textContent='wallet funded on 4663 · eth + usdg live · ready to connect';
+  rls.classList.add('done'); rls.removeAttribute('disabled');
+  rls.querySelector('.lbl').textContent='Release again';
+  hint.textContent='every stage tripped · this is the whole hood-connect on-ramp';
+}
+
+rls.addEventListener('click',release);
+track.addEventListener('click',(e)=>{ if(e.target.closest('.rls')) return; if(!running) release(); });
+
+const ro=new ResizeObserver(resize); ro.observe(track);
+resize();
+</script>
 </body>
 </html>

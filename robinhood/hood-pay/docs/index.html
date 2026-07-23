@@ -1,182 +1,614 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>hood-pay - USDG checkout for Robinhood Chain</title>
-  <meta name="description" content="Stripe-Checkout-grade USDG payments on Robinhood Chain: an embeddable checkout widget, hosted payment links that run entirely on GitHub Pages, and a reorg-safe merchant verification library." />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-pay — USDG payments that print a receipt on Robinhood Chain</title>
+<meta name="description" content="Stripe-Checkout-grade USDG payments on Robinhood Chain (4663). Ring up a real payment link in your browser, watch the dust fingerprint and router reference print onto a thermal receipt, and see the reorg-safe watcher settle it. Non-custodial." />
+<link rel="canonical" href="https://nirholas.github.io/hood-pay/" />
+<meta name="theme-color" content="#141310" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-pay — the receipt prints itself" />
+<meta property="og:description" content="Type an amount, ring it up, and a real USDG payment link, dust fingerprint and router reference print line by line onto a thermal receipt. Non-custodial payments for Robinhood Chain." />
+<meta property="og:url" content="https://nirholas.github.io/hood-pay/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23141310'/><rect x='9' y='5' width='14' height='22' fill='none' stroke='%23eceae3' stroke-width='2'/><path d='M9 27 l2-2 2 2 2-2 2 2 2-2 2 2 2-2' fill='none' stroke='%23eceae3' stroke-width='1.4'/><path d='M12 11h8M12 15h8M12 19h5' stroke='%23eceae3' stroke-width='1.4'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood-pay","applicationCategory":"FinanceApplication","operatingSystem":"Node.js >= 20, any EIP-6963 browser wallet","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"USDG payments for Robinhood Chain (chain 4663): an embeddable non-custodial checkout widget, hosted payment links that run entirely on GitHub Pages, and a reorg-safe merchant verification library with signed webhooks, an idempotent SQLite ledger and refund helpers.","softwareVersion":"0.1.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hood-pay","codeRepository":"https://github.com/nirholas/hood-pay"}
+</script>
+<style>
+  :root{
+    --ink:#141310; --paper:#eceae3; --bed:#d6d3c9; --mid:#6f6b61;
+    --hair:rgba(20,19,16,.16); --hair2:rgba(20,19,16,.34);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial Narrow","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --tape:min(520px,92vw);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bed); color:var(--ink); font-family:var(--mono);
+    font-size:14px; line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .grot{font-family:var(--grot)}
+
+  /* thermal grain over the whole bed */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg,rgba(20,19,16,.030) 0 1px,transparent 1px 3px),
+      radial-gradient(120% 60% at 50% -10%, rgba(20,19,16,.05), transparent 60%);
+    mix-blend-mode:multiply; opacity:.7;
+  }
+
+  /* ===== fixed printer head bar ===== */
+  .head{position:fixed; top:0; left:0; right:0; height:38px; z-index:70;
+    background:var(--ink); color:var(--paper);
+    display:flex; align-items:center; gap:14px; padding:0 clamp(12px,3vw,26px);
+    font:600 10.5px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase}
+  .head .dot{width:7px;height:7px;border-radius:50%;background:var(--paper);
+    box-shadow:0 0 0 0 rgba(236,234,227,.6); animation:pulse 2.6s var(--ease) infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(236,234,227,.55)}70%,100%{box-shadow:0 0 0 6px rgba(236,234,227,0)}}
+  .head .mech{margin-left:auto; position:relative; width:74px; height:8px;
+    border:1px solid rgba(236,234,227,.4); overflow:hidden}
+  .head .mech i{position:absolute; top:-1px; bottom:-1px; width:16px; background:var(--paper);
+    animation:print 3.4s var(--ease) infinite; will-change:transform}
+  @keyframes print{0%{transform:translateX(-18px)}50%{transform:translateX(74px)}100%{transform:translateX(-18px)}}
+  .head .sn{opacity:.6}
+  @media(max-width:560px){.head .sn{display:none}}
+
+  /* ===== left ruler nav ===== */
+  .ruler{position:fixed; left:0; top:38px; bottom:0; width:46px; z-index:60;
+    border-right:1px solid var(--hair);
+    background:repeating-linear-gradient(0deg,transparent 0 11px, var(--hair) 11px 12px);
+    display:flex; flex-direction:column; align-items:center; padding-top:14px; gap:0}
+  .ruler a{writing-mode:vertical-rl; font:600 9px/1 var(--mono); letter-spacing:.26em;
+    text-transform:uppercase; color:var(--mid); text-decoration:none; padding:16px 0;
+    transition:color .3s var(--ease); opacity:.7}
+  .ruler a:hover{color:var(--ink); opacity:1}
+  .ruler a[aria-current="true"]{color:var(--ink); opacity:1}
+  .ruler .cursor{position:absolute; left:0; width:3px; height:26px; background:var(--ink);
+    top:0; transition:transform .5s var(--ease); will-change:transform}
+  @media(max-width:760px){.ruler{display:none}}
+
+  /* ===== the tape ===== */
+  main{padding-top:38px}
+  .stage{margin-left:46px; display:flex; justify-content:center; position:relative;
+    padding:clamp(26px,5vw,60px) 16px 90px}
+  @media(max-width:760px){.stage{margin-left:0}}
+
+  .tape{width:var(--tape); background:var(--paper); position:relative;
+    box-shadow:
+      -14px 0 22px -18px rgba(20,19,16,.5),
+      14px 0 22px -18px rgba(20,19,16,.5),
+      0 30px 60px -40px rgba(20,19,16,.7);
+  }
+  /* curled paper edges */
+  .tape::before,.tape::after{content:""; position:absolute; top:0; bottom:0; width:16px; pointer-events:none; z-index:3}
+  .tape::before{left:0; background:linear-gradient(90deg,rgba(20,19,16,.14),transparent)}
+  .tape::after{right:0; background:linear-gradient(270deg,rgba(20,19,16,.14),transparent)}
+
+  /* torn top + bottom edges */
+  .torn{height:12px; width:100%;
+    background:
+      linear-gradient(-45deg, var(--paper) 6px, transparent 0) 0 0/12px 12px repeat-x,
+      linear-gradient(45deg, var(--paper) 6px, transparent 0) 0 0/12px 12px repeat-x;
+    filter:drop-shadow(0 1px 0 rgba(20,19,16,.14))}
+  .torn.top{transform:scaleY(-1)}
+
+  .blk{padding:clamp(20px,4vw,34px) clamp(22px,5vw,44px); position:relative}
+  .tear{border:0; border-top:1.6px dashed var(--hair2); margin:0 clamp(18px,4vw,38px);
+    position:relative}
+  .tear::after{content:"✂"; position:absolute; left:-4px; top:-9px; font:12px/1 var(--mono); color:var(--mid); background:var(--paper); padding-right:4px}
+
+  .line{display:flex; justify-content:space-between; gap:14px; padding:2.5px 0;
+    font:500 13px/1.55 var(--mono); letter-spacing:.01em}
+  .line .l{color:var(--mid); text-transform:uppercase; letter-spacing:.12em; font-size:10.5px; align-self:center}
+  .line .r{text-align:right; word-break:break-all}
+  .lead{font:600 10.5px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase; color:var(--mid); margin-bottom:16px}
+  .center{text-align:center}
+  .rule{border:0; border-top:1px dashed var(--hair2); margin:14px 0}
+  .rule.solid{border-top-style:solid; border-color:var(--ink)}
+  .big{font:700 clamp(30px,7vw,52px)/.92 var(--grot); letter-spacing:-.03em}
+  .sub{font:500 13px/1.6 var(--mono); color:#2b2822; margin-top:14px; max-width:42ch}
+  .stamp{display:inline-flex; align-items:center; gap:8px; font:700 11px/1 var(--mono);
+    letter-spacing:.18em; text-transform:uppercase; padding:7px 12px; border:1.5px solid var(--ink)}
+  .stamp .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .stamp.paid{background:var(--ink); color:var(--paper)}
+  .stamp.wait{color:var(--mid)}
+  .barcode{height:46px; width:100%; margin-top:6px;
+    background:repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 3px, var(--ink) 3px 4px, transparent 4px 7px, var(--ink) 7px 10px, transparent 10px 12px);
+    opacity:.86}
+  .barcode.small{height:26px}
+
+  /* ===== the terminal (signature interaction) ===== */
+  .term{margin:2px 0 4px}
+  .fields{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--hair2);
+    border:1px solid var(--hair2); margin:4px 0 16px}
+  .field{background:var(--paper); padding:11px 13px 12px; position:relative}
+  .field label{display:block; font:600 9px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--mid); margin-bottom:7px}
+  .field input{width:100%; border:0; background:transparent; color:var(--ink);
+    font:600 16px/1.1 var(--mono); letter-spacing:.01em; outline:none}
+  .field input::placeholder{color:var(--mid)}
+  .field.full{grid-column:1/-1}
+  .segs{display:flex; gap:0; grid-column:1/-1; border:1px solid var(--hair2); background:var(--paper)}
+  .seg{flex:1; display:flex}
+  .seg button{flex:1; appearance:none; border:0; border-right:1px solid var(--hair);
+    background:transparent; color:var(--mid); cursor:pointer; padding:11px 8px;
+    font:600 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    transition:background .2s,color .2s}
+  .seg:last-child button{border-right:0}
+  .seg button[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
+  .ring{appearance:none; width:100%; border:1.5px solid var(--ink); background:var(--ink); color:var(--paper);
+    font:700 13px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; padding:16px;
+    cursor:pointer; position:relative; overflow:hidden; transition:transform .25s var(--ease)}
+  .ring:hover{transform:translateY(-2px)}
+  .ring:active{transform:translateY(0)}
+  .ring:disabled{cursor:default}
+  .ring .fill{position:absolute; inset:0; background:var(--paper); opacity:.16; transform:scaleX(0); transform-origin:left;
+    transition:transform 1.3s linear}
+  .ring.busy .fill{transform:scaleX(1)}
+  .ring .lbl{position:relative; z-index:2}
+
+  /* printed receipt output */
+  .receipt{margin-top:20px; border-top:1px dashed var(--hair2); padding-top:16px; min-height:60px}
+  .p{opacity:0; transform:translateY(6px); transition:opacity .32s var(--ease), transform .32s var(--ease)}
+  .p.in{opacity:1; transform:none}
+  .p.flash{animation:burn .5s var(--ease)}
+  @keyframes burn{0%{color:#000;text-shadow:0 0 4px rgba(20,19,16,.5)}100%{color:var(--ink);text-shadow:none}}
+  .hash{font:600 12px/1.5 var(--mono); word-break:break-all}
+  .link{font:600 11.5px/1.55 var(--mono); word-break:break-all; color:var(--ink)}
+  .copy{appearance:none; margin-top:8px; border:1px solid var(--hair2); background:transparent; color:var(--mid);
+    font:600 9px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; padding:7px 11px; cursor:pointer; transition:background .2s,color .2s}
+  .copy:hover{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .conf{font:600 12px/1 var(--mono); letter-spacing:.06em}
+
+  /* margin callouts for wide screens (the printer bed) */
+  .callout{position:absolute; width:200px; font:500 11px/1.45 var(--mono); color:#43403a; z-index:5}
+  .callout .k{display:block; font:700 9px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--mid); margin-bottom:6px}
+  .callout::before{content:""; position:absolute; top:6px; height:1px; background:var(--hair2)}
+  .callout.left{right:calc(50% + var(--tape)/2 + 30px); text-align:right}
+  .callout.left::before{left:100%; width:26px}
+  .callout.right{left:calc(50% + var(--tape)/2 + 30px)}
+  .callout.right::before{right:100%; width:26px}
+  @media(max-width:1180px){.callout{display:none}}
+
+  /* content blocks */
+  .h2{font:700 clamp(24px,4vw,40px)/1 var(--grot); letter-spacing:-.025em; margin-bottom:6px}
+  .lede{font:500 13.5px/1.65 var(--mono); color:#2b2822; max-width:52ch; margin-top:14px}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--hair2); border:1px solid var(--hair2); margin-top:20px}
+  @media(max-width:560px){.two{grid-template-columns:1fr}}
+  .mode{background:var(--paper); padding:18px 18px 20px}
+  .mode .t{font:700 12px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px}
+  .mode .tag{font:600 9px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--mid); border:1px solid var(--hair2); padding:4px 7px; display:inline-block; margin-bottom:12px}
+  .mode .b{font-size:12.5px; line-height:1.55; color:#332f28}
+  .rows{margin-top:8px}
+  .row{display:grid; grid-template-columns:150px 1fr; gap:16px; padding:14px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  .row:last-child{border-bottom:0}
+  @media(max-width:520px){.row{grid-template-columns:1fr; gap:4px}}
+  .row .rt{font:700 10px/1.3 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--mid)}
+  .row .rd{font-size:13px; line-height:1.55; color:#2b2822}
+  .row .rd b{font-weight:700; color:var(--ink)}
+  .steps{margin-top:8px}
+  .step{display:grid; grid-template-columns:26px 1fr; gap:14px; padding:13px 0; border-bottom:1px dashed var(--hair); align-items:baseline}
+  .step:last-child{border-bottom:0}
+  .step .n{font:700 12px/1 var(--mono); color:var(--mid)}
+  .step .st b{display:block; font:700 12.5px/1.3 var(--mono); letter-spacing:.02em; margin-bottom:3px}
+  .step .st span{font-size:12.5px; line-height:1.55; color:#332f28}
+
+  pre.code{background:var(--ink); color:var(--paper); padding:16px 18px; overflow-x:auto;
+    font:500 12px/1.75 var(--mono); position:relative; margin-top:8px}
+  pre.code .c{color:#9a958b}
+  pre.code b{color:var(--paper); font-weight:700}
+  .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+  .btn{appearance:none; text-decoration:none; border:1.5px solid var(--ink); color:var(--ink); background:transparent;
+    font:700 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; padding:13px 18px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease); display:inline-block}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  footer .foot{display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; align-items:flex-end}
+  footer .foot .meta{font:500 11px/1.7 var(--mono); color:var(--mid); text-align:right}
+  footer a.u{text-decoration:none; border-bottom:1px solid var(--hair2)}
+  footer a.u:hover{border-color:var(--ink)}
+
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity .7s var(--ease), transform .7s var(--ease)}
+  .reveal.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.001s!important; transition-duration:.001s!important}.reveal{opacity:1;transform:none}}
+</style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="wrap nav-inner">
-      <span class="brand">hood<b>pay</b></span>
-      <div class="nav-links">
-        <a href="#demo">Demo</a>
-        <a href="#embed">Embed</a>
-        <a href="links.html">Payment links</a>
-        <a href="verify.html">Verify</a>
-        <a href="security.html">Security</a>
-        <a class="cta" href="https://github.com/nirholas/hood-pay">GitHub</a>
-      </div>
-    </div>
-  </nav>
+<header class="head">
+  <span class="dot" aria-hidden="true"></span>
+  <span>hood-pay · thermal</span>
+  <span class="sn">robinhood chain 4663 · usdg</span>
+  <span class="mech" aria-hidden="true"><i></i></span>
+</header>
 
-  <header class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <span class="eyebrow"><span class="dot"></span> USDG · Robinhood Chain · 4663</span>
-        <h1>Accept <span class="grad">USDG</span> like Stripe accepts cards.</h1>
-        <p class="lede">An embeddable checkout widget, hosted payment links that run with no backend, and a reorg-safe verifier with webhooks. Non-custodial by construction.</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="#demo">Try the live demo</a>
-          <a class="btn" href="#embed">Copy the embed</a>
+<nav class="ruler" aria-label="Sections">
+  <span class="cursor" id="cursor"></span>
+  <a href="#ringup" aria-current="true">Ring&nbsp;up</a>
+  <a href="#attribute">Attribute</a>
+  <a href="#stack">Stack</a>
+  <a href="#watcher">Settle</a>
+  <a href="#safe">Custody</a>
+  <a href="#get">Get&nbsp;it</a>
+</nav>
+
+<main>
+  <div class="stage">
+    <div class="tape" id="tape">
+      <div class="torn top" aria-hidden="true"></div>
+
+      <!-- ===== RING UP (hero + signature interaction) ===== -->
+      <section class="blk" id="ringup">
+        <div class="lead">// merchant terminal</div>
+        <div class="big grot">The receipt<br>prints itself.</div>
+        <p class="sub">A plain USDG <span style="border-bottom:1px solid var(--hair2)">transfer</span> carries no invoice field. hood-pay attributes every payment two honest ways. Type an amount and ring it up: the dust fingerprint, the real payment link, and the router reference all print below. Nothing is sent anywhere.</p>
+
+        <div class="term" role="group" aria-label="Checkout terminal">
+          <div class="fields">
+            <div class="field">
+              <label for="amt">Amount · USD</label>
+              <input id="amt" inputmode="decimal" value="25.00" aria-label="Amount in dollars" />
+            </div>
+            <div class="field">
+              <label for="memo">Memo</label>
+              <input id="memo" value="Invoice 7" maxlength="40" aria-label="Memo" />
+            </div>
+            <div class="segs" role="group" aria-label="Network">
+              <span class="seg"><button data-net="mainnet" aria-pressed="true">mainnet · 4663</button></span>
+              <span class="seg"><button data-net="testnet" aria-pressed="false">testnet · 46630</button></span>
+            </div>
+            <div class="segs" role="group" aria-label="Attribution mode">
+              <span class="seg"><button data-mode="router" aria-pressed="true">router · reference</button></span>
+              <span class="seg"><button data-mode="direct" aria-pressed="false">direct · dust</button></span>
+            </div>
+          </div>
+          <button class="ring" id="ring"><span class="fill"></span><span class="lbl">&#9616; Ring up sale</span></button>
+
+          <div class="receipt" id="receipt" aria-live="polite">
+            <div class="line"><span class="l">terminal</span><span class="r" style="color:var(--mid)">idle · press ring up</span></div>
+          </div>
         </div>
-        <div class="status-strip">
-          <span class="chip"><span class="live">●</span> mainnet <b id="mainnet-block">…</b></span>
-          <span class="chip">testnet <b id="testnet-block">…</b></span>
-          <span class="chip">USDG <b id="usdg-info">…</b></span>
+
+        <div class="callout left" style="top:38%">
+          <span class="k">payTo</span>
+          A checksummed Robinhood Chain address. viem's getAddress rejects a mistyped one before a link is ever built.
         </div>
-      </div>
-
-      <div id="demo" class="demo-card">
-        <h3>Live testnet checkout</h3>
-        <p class="muted">Real widget, real chain 46630. Connect an EIP-6963 wallet, switch to Robinhood testnet, pay test USDG. Nothing here is a mock.</p>
-        <div id="checkout"></div>
-      </div>
-    </div>
-  </header>
-
-  <section id="features">
-    <div class="wrap">
-      <h2 class="section-title">Three pieces, each usable alone</h2>
-      <p class="section-sub">Ship a whole checkout, or drop in just the part you need. Every module is typed, tree-shakeable, and verified against on-chain USDG.</p>
-      <div class="grid">
-        <div class="feature">
-          <div class="ic">W</div>
-          <h4>Checkout widget</h4>
-          <p>One <code class="inline">&lt;script&gt;</code> and one div. Connect wallet, ensure chain 4663, pay USDG. Under 27 kB gzipped, every visual state designed.</p>
+        <div class="callout right" style="top:64%">
+          <span class="k">the fragment</span>
+          The payment request lives after the URL's <b>#</b> — the browser never sends it to a server, so a hosted link page leaks nothing.
         </div>
-        <div class="feature">
-          <div class="ic">L</div>
-          <h4>Hosted payment links</h4>
-          <p>The request is encoded in the URL fragment, so a link is a full checkout that runs entirely client-side. No server, no database, no fee.</p>
+      </section>
+
+      <hr class="tear" />
+
+      <!-- ===== ATTRIBUTE ===== -->
+      <section class="blk reveal" id="attribute">
+        <div class="lead">// the memo problem</div>
+        <div class="h2 grot">USDG has no memo.<br>Two ways to fix that.</div>
+        <p class="lede">USDG is a plain ERC-20; its <span style="border-bottom:1px solid var(--hair2)">transfer</span> can't say which invoice it settles. So a payment is fingerprinted either on-chain or in the amount itself — never guessed.</p>
+        <div class="two">
+          <div class="mode">
+            <div class="tag">on-chain</div>
+            <div class="t">Router mode</div>
+            <div class="b">The buyer pays through the stateless, non-custodial <b>HoodPayRouter</b>. Its <span style="border-bottom:1px solid var(--hair)">pay(token, payTo, amount, ref)</span> pulls funds straight to the merchant via transferFrom and emits <b>PaymentReceived(reference, payer, payTo, token, amount)</b> — exact attribution regardless of the amount. No owner, no pause, no balance held.</div>
+          </div>
+          <div class="mode">
+            <div class="tag">zero contracts</div>
+            <div class="t">Direct mode</div>
+            <div class="b">The invoice amount itself is fingerprinted in USDG's unused low decimal digits: 25.00 becomes <b>25.00&#8202;42&#8202;00</b>, its last four digits a per-invoice dust marker. A bare transfer settles it, and it works with any ERC-20. <span style="border-bottom:1px solid var(--hair)">directCollisionProbability(k)</span> bounds the odds for k concurrent invoices.</div>
+          </div>
         </div>
-        <div class="feature">
-          <div class="ic">V</div>
-          <h4>Merchant verify</h4>
-          <p>A reorg-safe watcher confirms amounts on-chain (never from the DOM), fires signed webhooks, and records to an idempotent SQLite ledger.</p>
+      </section>
+
+      <hr class="tear" />
+
+      <!-- ===== STACK ===== -->
+      <section class="blk reveal" id="stack">
+        <div class="lead">// three pieces, each stands alone</div>
+        <div class="h2 grot">Core, widget,<br>and verify.</div>
+        <div class="rows">
+          <div class="row"><div class="rt">Core · hood-pay</div><div class="rd">Networks, the payment-request type and URL-fragment link codec, the reference/dust attribution scheme, and unsigned-tx builders for direct transfers and router-mode payments. <b>No wallet, no server.</b></div></div>
+          <div class="row"><div class="rt">Widget · /widget</div><div class="rd">An embeddable checkout that mounts on any <b>[data-hoodpay]</b> element or via mountCheckout() — no bundler required. Wallet discovery and chain add/switch run through <b>hood-connect</b> (EIP-6963 / EIP-3085), never re-implemented here.</div></div>
+          <div class="row"><div class="rt">Verify · /verify</div><div class="rd">Node-only: a reorg-safe on-chain payment watcher, an idempotent <b>SQLite</b> ledger, HMAC-signed webhooks, and refund helpers for the merchant side.</div></div>
         </div>
-      </div>
+        <div class="callout left" style="top:52%">
+          <span class="k">peer dep</span>
+          viem &#8805; 2.55. hood-connect and hoodchain install automatically.
+        </div>
+      </section>
+
+      <hr class="tear" />
+
+      <!-- ===== WATCHER / SETTLE ===== -->
+      <section class="blk reveal" id="watcher">
+        <div class="lead">// merchant side · reorg-safe</div>
+        <div class="h2 grot">Settled means<br>settled.</div>
+        <p class="lede">The watcher only counts a payment once it is buried deep enough that a reorg can't take it back — then it fires a signed webhook and never fires twice.</p>
+        <div class="steps">
+          <div class="step"><div class="n">01</div><div class="st"><b>Scan at depth</b><span>awaitPayment / checkPayment only read blocks at depth &#8805; confirmations below the head (default 30, ~3s of Robinhood Chain's ~100ms blocks).</span></div></div>
+          <div class="step"><div class="n">02</div><div class="st"><b>Re-fetch every block hash</b><span>Each candidate log's block hash is re-fetched by number and compared. A block reorged out after the scan but before the re-check is dropped.</span></div></div>
+          <div class="step"><div class="n">03</div><div class="st"><b>Idempotent ledger</b><span>An SQLite ledger reserves dust fingerprints, enforces monotonic status transitions, and records transfers replay-safe. A confirmed result is stable under any reorg shallower than confirmations.</span></div></div>
+          <div class="step"><div class="n">04</div><div class="st"><b>Signed webhook</b><span>Delivery is HMAC-SHA256 signed and constant-time verified; a stale timestamp is rejected (5-minute default). The ledger stays the source of truth for amounts.</span></div></div>
+        </div>
+      </section>
+
+      <hr class="tear" />
+
+      <!-- ===== CUSTODY ===== -->
+      <section class="blk reveal" id="safe">
+        <div class="lead">// there are no keys here</div>
+        <div class="h2 grot">Non-custodial,<br>always.</div>
+        <div class="rows">
+          <div class="row"><div class="rt">Buyer keys</div><div class="rd">The widget only builds unsigned <b>approve / transfer / pay</b> calls for the buyer's own EIP-6963 wallet to sign. hood-pay never holds them.</div></div>
+          <div class="row"><div class="rt">Merchant keys</div><div class="rd">Refunds build unsigned calls for the merchant's own signer (<b>sendRefund</b> or any viem WalletClient). buildRefundTx, refundOverageTx, refundReceivedTx.</div></div>
+          <div class="row"><div class="rt">Addresses</div><div class="rd">Every address (payTo, token, router) is validated against its <b>EIP-55 checksum</b>. A mixed-case address with one wrong character throws before a link exists.</div></div>
+          <div class="row"><div class="rt">Not a Stock Token</div><div class="rd">hood-pay settles in USDG or any ERC-20 a merchant configures — it never touches Robinhood Chain's tokenized-equity Stock Tokens.</div></div>
+        </div>
+      </section>
+
+      <hr class="tear" />
+
+      <!-- ===== GET IT ===== -->
+      <section class="blk reveal" id="get">
+        <div class="lead">// install</div>
+        <div class="h2 grot">Ship a checkout<br>in one script tag.</div>
+        <p class="lede">The widget auto-mounts every element with <b>data-hoodpay</b> on load. No build step, no server, no keys.</p>
+        <pre class="code"><button class="copy" data-copy="widget" style="position:absolute;top:12px;right:12px">copy</button><span class="c">&lt;!-- drop-in checkout, auto-mounts --&gt;</span>
+&lt;div <b>data-hoodpay</b>
+     data-pay-to="0x4022de2D…0564f402"
+     data-amount="25.00"
+     data-memo="Invoice 7"&gt;&lt;/div&gt;
+&lt;script src="https://unpkg.com/hood-pay/widget.js"&gt;&lt;/script&gt;</pre>
+        <pre class="code"><button class="copy" data-copy="npm" style="position:absolute;top:12px;right:12px">copy</button><span class="c"># or from a bundler / Node</span>
+npm install <b>hood-pay</b>   <span class="c"># viem &gt;= 2.55 peer</span>
+
+<span class="c"># make a payment link from the CLI</span>
+npx hood-pay link --to 0x4022… --amount 25 --memo "Invoice 7"
+
+<span class="c"># watch + verify a payment, no code</span>
+npx hood-pay verify --to 0x4022… --amount 25.0042</pre>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/hood-pay">npm</a>
+          <a class="btn" href="https://github.com/nirholas/hood-pay">source</a>
+          <a class="btn" href="https://github.com/nirholas/hood-pay#readme">docs</a>
+        </div>
+      </section>
+
+      <hr class="tear" />
+
+      <footer class="blk">
+        <div class="line"><span class="l">merchant</span><span class="r">non-custodial</span></div>
+        <div class="line"><span class="l">chain</span><span class="r">robinhood · 4663</span></div>
+        <div class="line"><span class="l">settle</span><span class="r">usdg · 6 decimals</span></div>
+        <hr class="rule solid" />
+        <div class="center" style="margin:16px 0 8px"><span class="stamp paid"><span class="d"></span>thank you</span></div>
+        <div class="barcode small" aria-hidden="true"></div>
+        <hr class="rule" />
+        <div class="foot">
+          <div class="big grot" style="font-size:clamp(26px,6vw,44px)">hood-<br>pay</div>
+          <div class="meta">
+            USDG · viem &#8805; 2.55 · Node &#8805; 20<br>
+            <a class="u" href="https://github.com/nirholas/hood-pay">github.com/nirholas/hood-pay</a><br>
+            <a class="u" href="https://www.npmjs.com/package/hood-pay">npmjs.com/package/hood-pay</a><br>
+            built by <a class="u" href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
+          </div>
+        </div>
+      </footer>
+
+      <div class="torn" aria-hidden="true"></div>
     </div>
-  </section>
+  </div>
+</main>
 
-  <section id="embed">
-    <div class="wrap">
-      <h2 class="section-title">Embed in two lines</h2>
-      <p class="section-sub">Point <code class="inline">data-pay-to</code> at your address, set an amount, done. The buyer's wallet signs; funds go straight to you.</p>
-      <div class="codewrap">
-        <button class="copy" data-copy="embed-code">Copy</button>
-        <pre id="embed-code"><span class="c">&lt;!-- your merchant address + the amount you want to charge --&gt;</span>
-<span class="k">&lt;div</span> data-hoodpay
-     data-pay-to=<span class="s">"0x4022de2D36C334E73C7a108805Cea11C0564f402"</span>
-     data-amount=<span class="s">"25.00"</span>
-     data-memo=<span class="s">"Order 1042"</span><span class="k">&gt;&lt;/div&gt;</span>
-<span class="k">&lt;script</span> src=<span class="s">"https://nirholas.github.io/hood-pay/hood-pay.min.js"</span><span class="k">&gt;&lt;/script&gt;</span></pre>
-      </div>
+<script>
+"use strict";
+/* ---------- real payment-link codec (matches hood-pay's documented format) ---------- */
+const PAY_TO = '0x4022de2D36C334E73C7a108805Cea11C0564f402';
+const NET = { mainnet:{ chainId:4663, label:'mainnet' }, testnet:{ chainId:46630, label:'testnet' } };
+const b64url = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+function encodePaymentRequest(req){ return '1.' + b64url(JSON.stringify(req)); }
+function decodePaymentRequest(frag){
+  const raw = frag.replace(/^#/,''); const dot = raw.indexOf('.');
+  return JSON.parse(b64urlDecode(raw.slice(dot+1)));
+}
+const LINK_BASE = 'https://nirholas.github.io/hood-pay/pay.html';
 
-      <h3 style="margin-top:28px; font-size:1.15rem; letter-spacing:-0.01em;">Or mount it programmatically</h3>
-      <div class="codewrap">
-        <button class="copy" data-copy="js-code">Copy</button>
-        <pre id="js-code"><span class="k">import</span> { mountCheckout } <span class="k">from</span> <span class="s">'hood-pay/widget'</span>
+/* ---------- dust fingerprint (low 4 USDG decimals reserved) ---------- */
+const USDG_DECIMALS = 6;
+function baseRaw(amountStr){
+  // round to whole cents so the low 4 raw digits (0.0001 .. 0.9999) stay reserved
+  const n = Math.max(0, Math.round(parseFloat(amountStr||'0')*100));
+  return BigInt(n) * 10000n; // cents -> 6dp raw, low 4 digits zeroed
+}
+function randomDust(){ return 1 + Math.floor(Math.random()*9999); } // [1,9999]
+function formatRaw(raw){
+  const s = raw.toString().padStart(USDG_DECIMALS+1,'0');
+  const whole = s.slice(0, s.length-USDG_DECIMALS);
+  const frac = s.slice(s.length-USDG_DECIMALS);
+  return whole + '.' + frac;
+}
 
-mountCheckout(<span class="s">'#checkout'</span>, {
-  payTo: <span class="s">'0x4022de2D36C334E73C7a108805Cea11C0564f402'</span>,
-  amount: <span class="s">'25.00'</span>,          <span class="c">// or 'dynamic' for tips / pay-what-you-want</span>
-  memo: <span class="s">'Order 1042'</span>,
-  onSuccess: (receipt) =&gt; console.log(<span class="s">'paid'</span>, receipt.txHash)
-})</pre>
-      </div>
-    </div>
-  </section>
+/* ---------- real 32-byte reference + real sha-256 digest ---------- */
+const toHex = bytes => '0x' + [...bytes].map(b=>b.toString(16).padStart(2,'0')).join('');
+function newReference(){ return toHex(crypto.getRandomValues(new Uint8Array(32))); }
+async function sha256Hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return toHex(new Uint8Array(buf));
+}
 
-  <section id="verify-cta">
-    <div class="wrap split">
-      <div class="prose">
-        <h3>Confirm payments on your server</h3>
-        <p>The widget never decides whether a payment is real - your verifier does, by reading the chain. <code class="inline">awaitPayment</code> watches for the transfer (or router event), waits out reorgs, and returns a terminal status your shop can trust.</p>
-        <ul>
-          <li><strong>paid / underpaid / overpaid / expired</strong> - every outcome is explicit.</li>
-          <li>Signed webhooks, Stripe-style, with an idempotent SQLite ledger.</li>
-          <li>Refund helpers for overages and abandoned invoices.</li>
-        </ul>
-        <p><a href="verify.html">Read the verify + webhook guide →</a></p>
-      </div>
-      <div class="codewrap">
-        <button class="copy" data-copy="verify-code">Copy</button>
-        <pre id="verify-code"><span class="k">import</span> { networkInfo } <span class="k">from</span> <span class="s">'hood-pay'</span>
-<span class="k">import</span> { awaitPayment, createReader } <span class="k">from</span> <span class="s">'hood-pay/verify'</span>
-<span class="k">import</span> { parseUnits } <span class="k">from</span> <span class="s">'viem'</span>
+/* ---------- terminal state ---------- */
+let net = 'mainnet', mode = 'router', busy = false;
+document.querySelectorAll('[data-net]').forEach(b=>b.addEventListener('click',()=>{
+  net = b.dataset.net;
+  document.querySelectorAll('[data-net]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+}));
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
+  mode = b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+}));
 
-<span class="k">const</span> info = networkInfo(<span class="s">'mainnet'</span>)
-<span class="k">const</span> reader = createReader(<span class="s">'mainnet'</span>)
+const receipt = document.getElementById('receipt');
+const ring = document.getElementById('ring');
+const short = (s,head=10,tail=8)=> s.length>head+tail+1 ? s.slice(0,head)+'…'+s.slice(-tail) : s;
 
-<span class="k">const</span> result = <span class="k">await</span> awaitPayment(
-  {
-    token: info.usdg.address,
-    payTo: <span class="s">'0x4022de2D36C334E73C7a108805Cea11C0564f402'</span>,
-    expectedRaw: parseUnits(<span class="s">'25.00'</span>, info.usdg.decimals)
-  },
-  { reader, fromBlock: <span class="k">await</span> reader.getBlockNumber() }
-)
-<span class="c">// result.status === 'paid'</span></pre>
-      </div>
-    </div>
-  </section>
+function printRow(labelHtml, valueHtml, cls){
+  const div = document.createElement('div');
+  div.className = 'p ' + (cls||'');
+  div.innerHTML = labelHtml==null
+    ? `<div class="${cls==='hash'?'hash':(cls==='link'?'link':'')}">${valueHtml}</div>`
+    : `<div class="line"><span class="l">${labelHtml}</span><span class="r">${valueHtml}</span></div>`;
+  receipt.appendChild(div);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ div.classList.add('in','flash'); }));
+  return div;
+}
+const wait = ms => new Promise(r=>setTimeout(r,ms));
 
-  <footer>
-    <div class="wrap footer-inner">
-      <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
-      <span>All rights reserved · USDG is a plain ERC-20 (6 decimals) on Robinhood Chain 4663</span>
-    </div>
-  </footer>
+async function ringUp(){
+  if(busy) return; busy = true;
+  ring.disabled = true; ring.classList.add('busy');
+  ring.querySelector('.lbl').textContent = 'printing…';
+  receipt.innerHTML = '';
 
-  <script src="live.js"></script>
-  <script src="hood-pay.min.js"></script>
-  <script>
-    // Live testnet demo. Uses test USDG on chain 46630 - the widget builds an
-    // unsigned transfer for the buyer's own wallet to sign; this page holds no
-    // keys and moves no funds on its own.
-    (function () {
-      var TESTNET_USDG = { address: '0x7E955252E15c84f5768B83c41a71F9eba181802F', symbol: 'USDG', decimals: 6 };
-      function mount() {
-        if (!window.HoodPay) { setTimeout(mount, 60); return; }
-        try {
-          window.HoodPay.mount('#checkout', {
-            payTo: '0x4022de2D36C334E73C7a108805Cea11C0564f402',
-            amount: '1.00',
-            network: 'testnet',
-            token: TESTNET_USDG,
-            memo: 'hood-pay live demo (testnet)'
-          });
-        } catch (e) {
-          document.getElementById('checkout').textContent = 'demo failed to mount: ' + e.message;
-        }
-      }
-      mount();
-    })();
+  const amt = document.getElementById('amt').value.trim() || '0.00';
+  const memo = document.getElementById('memo').value.trim() || '';
+  const cents = Math.max(0, Math.round(parseFloat(amt||'0')*100));
+  const amountStr = (cents/100).toFixed(2);
 
-    // Copy buttons.
-    document.querySelectorAll('.copy').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var el = document.getElementById(btn.getAttribute('data-copy'));
-        navigator.clipboard.writeText(el.innerText).then(function () {
-          btn.textContent = 'Copied';
-          btn.classList.add('ok');
-          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1400);
-        });
-      });
-    });
-  </script>
+  const req = { v:1, network:net, payTo:PAY_TO, amount:amountStr, memo };
+  const ref = newReference();
+  if(mode==='router') req.reference = ref;
+
+  const raw = baseRaw(amountStr);
+  const dust = randomDust();
+  const expectedRaw = mode==='direct' ? raw + BigInt(dust) : raw;
+  const link = LINK_BASE + '#' + encodePaymentRequest(req);
+  const digest = await sha256Hex(encodePaymentRequest(req));
+
+  printRow('hood-pay', 'ROBINHOOD CHAIN ' + NET[net].chainId);
+  await wait(150);
+  printRow(null, '·'.repeat(30), '');
+  await wait(120);
+  printRow('memo', (memo||'—').toUpperCase());
+  await wait(150);
+  printRow('1×  '+ (memo||'item'), amountStr + ' USD');
+  await wait(150);
+  printRow(null, '·'.repeat(30), '');
+  await wait(120);
+  printRow('subtotal', amountStr + ' USD');
+  await wait(150);
+  printRow('settle in', 'USDG · ' + USDG_DECIMALS + 'dp');
+  await wait(180);
+  if(mode==='direct'){
+    printRow('amount due', '<b style="font-weight:700">'+formatRaw(expectedRaw)+'</b> USDG');
+    await wait(120);
+    printRow('dust marker', '·'+String(dust).padStart(4,'0')+' (low 4 digits)');
+  }else{
+    printRow('amount due', '<b style="font-weight:700">'+amountStr+'</b> USDG');
+    await wait(120);
+    printRow('router ref', short(ref,10,8));
+  }
+  await wait(180);
+  printRow('payer', short(PAY_TO,8,6));
+  await wait(120);
+  printRow('mode', mode==='router' ? 'HoodPayRouter · pay()' : 'direct transfer');
+  await wait(180);
+  printRow(null, '·'.repeat(30), '');
+  await wait(120);
+
+  const linkEl = printRow(null, 'PAYMENT LINK', '');
+  linkEl.querySelector('div').style.cssText = 'font:700 9px/1 var(--mono);letter-spacing:.2em;color:var(--mid);margin-bottom:6px;text-transform:uppercase';
+  const lk = printRow(null, link.replace(/</g,'&lt;'), 'link');
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy'; copyBtn.textContent = 'copy link';
+  copyBtn.style.opacity = '1'; copyBtn.style.transform = 'none';
+  copyBtn.addEventListener('click', ()=>{ navigator.clipboard.writeText(link).then(()=>{
+    const t=copyBtn.textContent; copyBtn.textContent='copied ✓'; setTimeout(()=>copyBtn.textContent=t,1200);
+  }).catch(()=>{}); });
+  lk.appendChild(copyBtn);
+  await wait(180);
+
+  const dgLabel = printRow(null, 'SHA-256(REQUEST)', '');
+  dgLabel.querySelector('div').style.cssText = 'font:700 9px/1 var(--mono);letter-spacing:.2em;color:var(--mid);margin:8px 0 6px;text-transform:uppercase';
+  printRow(null, digest, 'hash');
+  await wait(180);
+  printRow(null, '·'.repeat(30), '');
+
+  await wait(140);
+  const statusEl = printRow('status', '<span class="stamp wait"><span class="d"></span>discovering</span>');
+  const rv = statusEl.querySelector('.r');
+  await wait(500);
+  rv.innerHTML = '<span class="conf" style="color:var(--mid)">0 / 30 conf</span>';
+  for(let c=1;c<=30;c++){
+    await wait(c<24 ? 34 : 70);
+    rv.innerHTML = '<span class="conf">'+c+' / 30 conf</span>';
+  }
+  await wait(220);
+  rv.innerHTML = '<span class="stamp paid"><span class="d"></span>paid</span>';
+
+  await wait(160);
+  printRow(null, '·'.repeat(30), '');
+  const thanks = printRow(null, 'NON-CUSTODIAL · SIGNED WEBHOOK SENT', '');
+  thanks.querySelector('div').style.cssText = 'text-align:center;font:700 10px/1.5 var(--mono);letter-spacing:.18em;color:var(--mid);text-transform:uppercase';
+
+  ring.classList.remove('busy');
+  ring.querySelector('.lbl').textContent = '▐ Ring up another';
+  ring.disabled = false;
+  busy = false;
+}
+ring.addEventListener('click', ringUp);
+
+/* prove the codec round-trips (dev sanity, no output on success) */
+(function selfTest(){
+  const r = { v:1, network:'mainnet', payTo:PAY_TO, amount:'25.00', memo:'Invoice 7', reference:newReference() };
+  const back = decodePaymentRequest('#'+encodePaymentRequest(r));
+  if(back.payTo!==r.payTo || back.amount!==r.amount || back.reference!==r.reference){
+    console.error('payment-link codec round-trip failed', r, back);
+  }
+})();
+
+/* ---------- copy buttons in code blocks ---------- */
+const SNIP = {
+  widget: '<div data-hoodpay data-pay-to="0x4022de2D36C334E73C7a108805Cea11C0564f402" data-amount="25.00" data-memo="Invoice 7"></div>\n<script src="https://unpkg.com/hood-pay/widget.js"><\/script>',
+  npm: 'npm install hood-pay'
+};
+document.querySelectorAll('.copy[data-copy]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(SNIP[btn.dataset.copy]||'').then(()=>{
+      const t=btn.textContent; btn.textContent='copied ✓'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); }, {threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- ruler nav ---------- */
+const links = [...document.querySelectorAll('.ruler a')];
+const secs = links.map(a=>document.querySelector(a.getAttribute('href')));
+const cursor = document.getElementById('cursor');
+function updateRuler(){
+  let idx=0, mid=innerHeight*0.4;
+  secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top<=mid) idx=i; });
+  links.forEach((a,i)=>a.setAttribute('aria-current', i===idx));
+  const rr = document.querySelector('.ruler').getBoundingClientRect();
+  const r = links[idx].getBoundingClientRect();
+  cursor.style.height = r.height+'px';
+  cursor.style.transform = `translateY(${r.top - rr.top}px)`;
+}
+links.forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth', block:'start'}); }));
+addEventListener('scroll', ()=>requestAnimationFrame(updateRuler), {passive:true});
+addEventListener('resize', updateRuler); updateRuler();
+</script>
 </body>
 </html>

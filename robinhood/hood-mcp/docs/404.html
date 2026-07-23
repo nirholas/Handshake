@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>hood-mcp: needle off scale (404)</title>
+<meta name="robots" content="noindex" />
+<link rel="canonical" href="https://nirholas.github.io/hood-mcp/" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><g fill='none' stroke='%23e9e6df' stroke-width='2' stroke-linecap='round'><path d='M5 22 A11 11 0 0 1 27 22'/><path d='M16 22 L11 11'/><path d='M16 22 L21 13'/></g><circle cx='16' cy='22' r='2' fill='%23e9e6df'/></svg>" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--ink:#0b0b0c;--paper:#e9e6df;--graphite:#78746c;
+    --mono:ui-monospace,"SFMono-Regular","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif}
+  body{background:var(--paper);color:var(--ink);font-family:var(--grot);min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;padding:clamp(24px,6vw,88px);gap:22px}
+  .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.34em;text-transform:uppercase;color:var(--graphite)}
+  h1{font-size:clamp(48px,11vw,140px);font-weight:700;letter-spacing:-.03em;line-height:.9}
+  p{max-width:52ch;font-size:clamp(16px,1.7vw,21px);color:#2b2823;line-height:1.5}
+  svg{width:clamp(120px,22vw,200px);height:auto}
+  .arc{fill:none;stroke:rgba(11,11,12,.32);stroke-width:1.6}
+  .nd{stroke:var(--ink);stroke-width:2.6;stroke-linecap:round;transform-origin:100px 110px;
+    animation:swing 3.2s cubic-bezier(.34,1.4,.44,1) infinite alternate}
+  @keyframes swing{from{transform:rotate(-58deg)}to{transform:rotate(62deg)}}
+  @media(prefers-reduced-motion:reduce){.nd{animation:none;transform:rotate(70deg)}}
+  a{display:inline-flex;align-self:flex-start;text-decoration:none;border:1px solid var(--ink);color:var(--ink);
+    font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:15px 22px;
+    transition:background .25s,color .25s}
+  a:hover{background:var(--ink);color:var(--paper)}
+</style>
+</head>
+<body>
+  <div class="eyebrow">404 / needle off scale</div>
+  <svg viewBox="0 0 200 130" aria-hidden="true">
+    <path class="arc" d="M12 110 A88 88 0 0 1 188 110"/>
+    <line class="nd" x1="100" y1="110" x2="100" y2="30"/>
+    <circle cx="100" cy="110" r="6" fill="#0b0b0c"/>
+  </svg>
+  <h1>Off the dial.</h1>
+  <p>That page isn't in the registry. The instrument only reads pages that exist. Turn back to the premium instrument and pick a ticker.</p>
+  <a href="https://nirholas.github.io/hood-mcp/">back to the instrument</a>
+</body>
+</html>

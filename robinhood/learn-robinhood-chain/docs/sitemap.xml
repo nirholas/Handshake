@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/01-what-is-robinhood-chain/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/02-connect-and-read/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/03-stock-tokens-explained/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/04-live-price-ticker/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/05-portfolio-tracker/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/06-swapping-on-chain/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/07-streaming-the-chain/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/08-sell-your-api-for-usdg/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/09-ai-agent-chain-access/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/10-autonomous-trading-agent/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/11-launch-a-coin/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://nirholas.github.io/learn-robinhood-chain/12-ship-it/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>

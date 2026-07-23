@@ -1,130 +1,619 @@
-<title>hood-mcp — MCP servers for Robinhood Chain</title>
-<meta name="description" content="Model Context Protocol servers for Robinhood Chain: zero-config Stock Token data plus a guarded, spend-capped trading server for AI agents." />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>" />
-<link rel="stylesheet" href="site.css" />
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-mcp: tune the Stock Token premium instrument</title>
+<meta name="description" content="MCP servers for Robinhood Chain (chain 4663). Turn the tuning dial and watch a dual-needle instrument read the gap between a Stock Token's Chainlink oracle price and its live DEX price: the premium your agent trades against. A zero-config data server and an opt-in, spend-capped trading server." />
+<link rel="canonical" href="https://nirholas.github.io/hood-mcp/" />
+<meta name="theme-color" content="#0b0b0c" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-mcp: the premium instrument" />
+<meta property="og:description" content="A dual-needle analog instrument reads the spread between the Chainlink oracle and the live DEX for every Robinhood Chain Stock Token. Turn the dial. The needles swing. That gap is the trade." />
+<meta property="og:url" content="https://nirholas.github.io/hood-mcp/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="hood-mcp: the premium instrument" />
+<meta name="twitter:description" content="MCP servers for Robinhood Chain. Tune a dual-needle instrument across Stock Tokens; the gap between oracle and DEX is the premium your agent trades." />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><g fill='none' stroke='%23e9e6df' stroke-width='2' stroke-linecap='round'><path d='M5 22 A11 11 0 0 1 27 22'/><path d='M16 22 L11 11'/><path d='M16 22 L21 13'/></g><circle cx='16' cy='22' r='2' fill='%23e9e6df'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood-mcp","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Model Context Protocol servers for Robinhood Chain (chain ID 4663): a zero-config read-only data server (Stock Token quotes with Chainlink + DEX premium, multiplier-correct portfolios, memecoin launches, chain stats) and an explicitly opt-in trading server (guarded swaps and USDG transfers with hard spend caps and a confirm gate).","softwareVersion":"0.1.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hood-mcp","codeRepository":"https://github.com/nirholas/robinhood-chain-mcp"}
+</script>
+<style>
+  :root{
+    --ink:#0b0b0c; --paper:#e9e6df; --graphite:#78746c; --steel:#4a4842;
+    --hair:rgba(11,11,12,.15); --hair2:rgba(11,11,12,.32);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --needle:cubic-bezier(.34,1.4,.44,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+  body{
+    background:var(--paper); color:var(--ink); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
 
-<nav class="top">
-  <div class="wrap">
-    <div class="brand"><span class="tick">hood</span>-mcp</div>
-    <div class="links">
-      <a href="index.html" aria-current="page">Overview</a>
-      <a href="install.html">Install</a>
-      <a href="tools.html">Tools</a>
-      <a href="safety.html">Safety model</a>
-      <a href="https://github.com/nirholas/robinhood-chain-mcp">GitHub</a>
-    </div>
-  </div>
+  /* film grain + scanline */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(11,11,12,.035) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply; opacity:.5;
+  }
+  .scan{position:fixed; left:0; right:0; height:2px; z-index:9998; pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(11,11,12,.20),transparent);
+    animation:scan 8s linear infinite; will-change:transform}
+  @keyframes scan{0%{transform:translateY(-10vh)}100%{transform:translateY(110vh)}}
+  @media(prefers-reduced-motion:reduce){.scan{display:none} *{animation-duration:.001s!important; transition-duration:.001s!important}}
+
+  /* rail */
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--hair); background:var(--paper); mix-blend-mode:multiply}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite); position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--ink); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--ink); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--hair2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--ink);border-color:var(--ink)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--ink);height:40px;top:0;
+    transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:720px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(60px,9vh,116px) clamp(20px,5vw,88px); border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--ink)}
+
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.96}
+  h1{font-size:clamp(38px,6vw,84px)}
+  h2{font-size:clamp(29px,4.8vw,60px)}
+  .lede{max-width:60ch; font-size:clamp(17px,1.7vw,23px); line-height:1.42; color:#26241f}
+
+  /* ============ INSTRUMENT (hero + signature interaction) ============ */
+  #inst{min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding-top:clamp(48px,7vh,80px); padding-bottom:clamp(30px,4vh,56px)}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.04em; margin-bottom:16px; white-space:pre-wrap; min-height:1.7em}
+  @media(max-width:720px){.boot{font-size:10.5px; letter-spacing:0}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  #inst .eyebrow{margin-bottom:18px}
+  .headline{max-width:15ch}
+  .headline .lo{color:var(--graphite)}
+  .sub{margin-top:16px; max-width:54ch; font-size:clamp(15px,1.4vw,19px); color:#2b2823}
+
+  .rig{margin-top:clamp(20px,3vh,38px); display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+    gap:clamp(22px,3.5vw,56px); align-items:center}
+  @media(max-width:900px){.rig{grid-template-columns:1fr; gap:26px}}
+  @media(min-width:901px){.headline{font-size:clamp(40px,4.6vw,68px)}}
+
+  /* the gauge */
+  .gauge{position:relative; width:100%; max-width:500px; margin:0 auto; aspect-ratio:400/258; user-select:none}
+  .gauge svg{width:100%; height:100%; display:block; overflow:visible}
+  .face-arc{fill:none; stroke:var(--hair2); stroke-width:1.4}
+  .face-band{fill:none; stroke:var(--ink); stroke-width:2}
+  .tick{stroke:var(--graphite); stroke-width:1}
+  .tick.major{stroke:var(--ink); stroke-width:1.6}
+  .tick-lab{fill:var(--graphite); font:600 8.5px/1 var(--mono); letter-spacing:.06em}
+  .needle{transition:transform .95s var(--needle); transform-box:view-box; transform-origin:200px 220px; will-change:transform}
+  @media(prefers-reduced-motion:reduce){.needle{transition:transform .001s}}
+  .needle.oracle line{stroke:var(--ink); stroke-width:2.4; stroke-linecap:round}
+  .needle.oracle .cw{stroke:var(--paper); stroke-width:5; stroke-linecap:round}
+  .needle.dex line{stroke:var(--ink); stroke-width:2.4; stroke-linecap:round; stroke-dasharray:4 4}
+  .needle.dex .cw{stroke:var(--paper); stroke-width:6; stroke-linecap:round}
+  .hub{fill:var(--ink)}
+  .hub-ring{fill:none; stroke:var(--paper); stroke-width:2}
+  .lgd{position:absolute; left:0; right:0; bottom:-2px; display:flex; justify-content:center; gap:26px; font:600 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite)}
+  .lgd i{display:inline-block; width:20px; height:0; border-top:2.4px solid var(--ink); margin-right:8px; vertical-align:middle}
+  .lgd i.d{border-top-style:dashed}
+
+  /* readout column */
+  .panel{border:1px solid var(--ink); background:transparent}
+  .panel .hd{display:flex; justify-content:space-between; align-items:baseline; padding:14px 18px; border-bottom:1px solid var(--hair)}
+  .panel .hd .tk{font:700 34px/1 var(--grot); letter-spacing:-.03em}
+  @media(max-width:900px){.panel .hd .tk{font-size:28px}}
+  .panel .hd .co{font:500 11px/1.3 var(--mono); letter-spacing:.06em; color:var(--graphite); text-align:right; max-width:16ch}
+  .rd{display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--hair)}
+  .rd .cell{padding:14px 18px; border-right:1px solid var(--hair)}
+  .rd .cell:last-child{border-right:0}
+  .rd .k{font:600 9.5px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .rd .v{font:600 22px/1 var(--mono); margin-top:9px; font-feature-settings:"zero","ss01"}
+  @media(max-width:900px){.rd .v{font-size:19px}}
+  .prem{display:flex; align-items:baseline; justify-content:space-between; padding:16px 18px; gap:14px}
+  .prem .k{font:600 9.5px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .prem .big{font:700 42px/.9 var(--grot); letter-spacing:-.03em; transition:transform .3s var(--ease); display:inline-block}
+  @media(max-width:900px){.prem .big{font-size:34px}}
+  .prem .tag{font:600 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; border:1px solid var(--ink); padding:6px 10px}
+  .prem.disc .tag{background:var(--ink); color:var(--paper)}
+  .foot{display:flex; justify-content:space-between; padding:12px 18px; font:500 10.5px/1.4 var(--mono); color:var(--graphite); letter-spacing:.03em; border-top:1px solid var(--hair)}
+
+  /* the tuner dial */
+  .tuner{margin-top:clamp(24px,4vh,44px)}
+  .tuner .cap{display:flex; align-items:center; gap:12px; font:600 10px/1 var(--mono); letter-spacing:.28em; text-transform:uppercase; color:var(--graphite); margin-bottom:12px}
+  .tuner .cap::before{content:"◄"; font-size:8px}
+  .tuner .cap span{letter-spacing:.14em; text-transform:none; font-weight:500}
+  .dialwrap{position:relative; border:1px solid var(--ink); overflow:hidden; background:rgba(11,11,12,.02); touch-action:pan-y; cursor:grab}
+  .dialwrap:active{cursor:grabbing}
+  .dialwrap:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+  .dialwrap::before,.dialwrap::after{content:""; position:absolute; top:0; bottom:0; width:64px; z-index:4; pointer-events:none}
+  .dialwrap::before{left:0; background:linear-gradient(90deg,var(--paper),transparent)}
+  .dialwrap::after{right:0; background:linear-gradient(270deg,var(--paper),transparent)}
+  .center-ind{position:absolute; left:50%; top:0; bottom:0; width:0; z-index:5; pointer-events:none; border-left:1.6px solid var(--ink)}
+  .center-ind::before,.center-ind::after{content:""; position:absolute; left:-5px; border:5px solid transparent}
+  .center-ind::before{top:-1px; border-top-color:var(--ink)}
+  .center-ind::after{bottom:-1px; border-bottom-color:var(--ink)}
+  .knurl{position:absolute; inset:0; z-index:1; opacity:.5; pointer-events:none;
+    background:repeating-linear-gradient(90deg,var(--hair2) 0 1px,transparent 1px 11px)}
+  .strip{position:relative; z-index:2; display:flex; align-items:center; height:74px; will-change:transform}
+  .stop{flex:0 0 auto; width:96px; text-align:center; cursor:pointer; opacity:.4;
+    transition:opacity .3s var(--ease), transform .3s var(--ease)}
+  .stop.on{opacity:1; transform:scale(1.06)}
+  .stop .t{font:700 17px/1 var(--grot); letter-spacing:-.02em}
+  .stop .p{font:600 9.5px/1 var(--mono); letter-spacing:.06em; margin-top:6px; color:var(--graphite)}
+  .stop.on .p{color:var(--ink)}
+
+  .scrollcue{margin-top:clamp(20px,4vh,40px); font:600 10px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase; color:var(--graphite); display:flex; align-items:center; gap:10px}
+  .scrollcue i{display:block; width:26px; height:1px; background:var(--graphite); position:relative; overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--ink);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+  /* panels / grids */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(30px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:34px}}
+  .install{border:1px solid var(--ink); background:var(--ink); color:var(--paper); padding:22px 22px;
+    font:500 13.5px/1.85 var(--mono); position:relative; overflow-x:auto; word-break:break-word}
+  .install .c,.install .p,.install .pc{display:block}
+  .install .c{color:#8b8781; margin-top:15px}
+  .install .c:first-child{margin-top:0}
+  .install .p::before{content:"$ "; color:#8b8781}
+  .install .pc{color:var(--paper)}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid rgba(233,230,223,.3);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(233,230,223,.14)}
+
+  /* two-server split */
+  .split{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--ink); margin-top:12px}
+  @media(max-width:760px){.split{grid-template-columns:1fr}}
+  .srv{padding:26px 24px 28px; border-right:1px solid var(--hair)}
+  .srv:last-child{border-right:0}
+  @media(max-width:760px){.srv{border-right:0; border-bottom:1px solid var(--hair)}.srv:last-child{border-bottom:0}}
+  .srv .badge{display:inline-block; font:600 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; padding:6px 10px; border:1px solid var(--ink); margin-bottom:16px}
+  .srv .badge.hot{background:var(--ink); color:var(--paper)}
+  .srv h3{font:700 24px/1.05 var(--grot); letter-spacing:-.02em; margin-bottom:10px}
+  .srv p{font-size:15px; color:#2c2925; line-height:1.5; max-width:42ch}
+  .srv .cmd{margin-top:16px; font:500 12.5px/1.6 var(--mono); border-top:1px solid var(--hair); padding-top:14px; color:var(--steel); word-break:break-all}
+  .srv .cmd b{color:var(--ink); font-weight:600}
+
+  /* tool table as instrument panel */
+  .tools{border-top:1px solid var(--hair); margin-top:clamp(24px,4vh,48px)}
+  .tools .tr{display:grid; grid-template-columns:220px 1fr; gap:22px; padding:16px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.tools .tr{grid-template-columns:1fr; gap:5px}}
+  .tools .tr .nm{font:600 13px/1.3 var(--mono); letter-spacing:.02em; color:var(--ink)}
+  .tools .tr .ds{font-size:15.5px; color:#2c2925; max-width:60ch}
+  .tools .tr .ds b{font-weight:700}
+
+  /* safety fuses */
+  .fuse{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:12px}
+  @media(max-width:860px){.fuse{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.fuse{grid-template-columns:1fr}}
+  .fuse .f{border:1px solid var(--hair2); padding:18px}
+  .fuse .f .h{font:700 13px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px; display:flex; gap:8px; align-items:baseline}
+  .fuse .f .h .no{color:var(--graphite); font-size:10px}
+  .fuse .f .b{font-size:14px; color:#2c2925; line-height:1.45}
+  .fuse .f .b span{font-family:var(--mono); font-size:12px}
+
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  .note{margin-top:22px; border-left:2px solid var(--ink); padding:4px 0 4px 18px; font-size:14.5px; color:#2c2925; max-width:70ch; line-height:1.55}
+  .note b{font-weight:700}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--ink)}
+
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+</style>
+</head>
+<body>
+<div class="scan" aria-hidden="true"></div>
+
+<nav class="rail" aria-label="Sections">
+  <b>hood·mcp</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#inst" aria-current="true">Tune</a>
+  <a class="stn" href="#read">Read</a>
+  <a class="stn" href="#servers">Servers</a>
+  <a class="stn" href="#tools">Tools</a>
+  <a class="stn" href="#safety">Safety</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
 </nav>
 
-<main class="wrap">
-  <section class="hero" style="border-top:none;">
-    <div class="badges">
-      <span class="badge">chain 4663</span>
-      <span class="badge free">data server: free, zero-config</span>
-      <span class="badge guarded">trading server: opt-in, spend-capped</span>
+<main>
+  <!-- ============ INSTRUMENT ============ -->
+  <section id="inst">
+    <p class="boot mono" id="boot"></p>
+    <div class="eyebrow"><span class="n">00</span> / THE PREMIUM INSTRUMENT · chain 4663</div>
+    <h1 class="headline">The oracle and<br>the market<br><span class="lo">rarely agree.</span></h1>
+    <p class="sub">Every Robinhood Chain Stock Token has two prices: what Chainlink says the share is worth, and what the DEX will actually pay. The gap between them is the premium your agent trades against. Turn the dial. Read the instrument.</p>
+
+    <div class="rig">
+      <div>
+        <div class="gauge" id="gauge" role="img" aria-label="Dual-needle instrument comparing Chainlink oracle price to live DEX price">
+          <svg viewBox="0 0 400 258" aria-hidden="true">
+            <path class="face-arc" id="arc" d=""/>
+            <path class="face-band" id="band" d=""/>
+            <g id="ticks"></g>
+            <g class="needle dex" id="n-dex">
+              <line class="cw" x1="200" y1="220" x2="200" y2="150"/>
+              <line x1="200" y1="220" x2="200" y2="66"/>
+            </g>
+            <g class="needle oracle" id="n-oracle">
+              <line class="cw" x1="200" y1="220" x2="200" y2="150"/>
+              <line x1="200" y1="220" x2="200" y2="58"/>
+            </g>
+            <circle class="hub" cx="200" cy="220" r="11"/>
+            <circle class="hub-ring" cx="200" cy="220" r="6"/>
+          </svg>
+          <div class="lgd"><span><i></i>oracle · chainlink</span><span><i class="d"></i>dex · uniswap</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel" id="panel">
+          <div class="hd"><div class="tk" id="p-tk">AAPL</div><div class="co" id="p-co">Apple Inc · tokenized share</div></div>
+          <div class="rd">
+            <div class="cell"><div class="k">oracle</div><div class="v" id="p-oracle">$0.00</div></div>
+            <div class="cell"><div class="k">dex</div><div class="v" id="p-dex">$0.00</div></div>
+          </div>
+          <div class="prem" id="p-prembox">
+            <div><div class="k">premium vs oracle</div><div class="big" id="p-prem">+0.00%</div></div>
+            <div class="tag" id="p-tag">premium</div>
+          </div>
+          <div class="foot"><span id="p-mult">uiMultiplier 1.000000</span><span id="p-liq">liq $0</span></div>
+        </div>
+        <div class="note" style="margin-top:18px">Numbers are a self-contained demo. Point <span class="mono">get_stock_quote</span> at the live chain for the real feed.</div>
+      </div>
     </div>
-    <h1>MCP servers for <span class="grad">Robinhood Chain</span></h1>
-    <p class="lede">
-      Stock Token quotes, multiplier-correct portfolios, memecoin launches, and chain stats —
-      free and read-only. Plus a separate, explicitly opt-in trading server with hard spend caps
-      and a confirm gate for agents that want to act, not just look.
-    </p>
-    <div class="cta">
-      <a class="btn primary" href="install.html">Install in 60 seconds</a>
-      <a class="btn" href="tools.html">Browse tools</a>
-      <a class="btn" href="https://github.com/nirholas/robinhood-chain-mcp">View source</a>
+
+    <div class="tuner">
+      <div class="cap"><span>turn the dial · drag, click a ticker, or ← →</span></div>
+      <div class="dialwrap" id="dialwrap" tabindex="0" role="slider" aria-label="Stock Token selector" aria-valuemin="0" aria-valuemax="9" aria-valuenow="0" aria-valuetext="AAPL">
+        <div class="knurl" aria-hidden="true"></div>
+        <div class="center-ind" aria-hidden="true"></div>
+        <div class="strip" id="strip"></div>
+      </div>
     </div>
+
+    <div class="scrollcue"><i></i> read the gap</div>
   </section>
 
-  <section>
-    <h2>A real session</h2>
-    <p class="section-lede">
-      This is an unedited MCP tool call against the live server in this repo, captured against
-      Robinhood Chain mainnet during the build — the same stdio transport Claude Code, Claude
-      Desktop, and Cursor use.
-    </p>
-    <div class="transcript">
-      <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp;claude · hood-mcp connected</div>
-      <div class="body">
-        <div class="user">What's GME trading at on Robinhood Chain, and what's the premium over the oracle price?</div>
-        <div class="tool-call">→ calling <span class="name">get_stock_quote</span>({ "symbol": "GME" })</div>
-        <pre class="tool-result">{
-  "symbol": "GME",
-  "name": "GameStop • Robinhood Token",
-  "chainlink": { "priceUsd": 21.76125, "ageSeconds": 169330 },
-  "dexPriceUsd": 20.521686,
-  "premiumPct": -5.6962,
-  "premiumNote": "positive = DEX trades above oracle",
-  "uiMultiplier": "1000000000000000000",
-  "underlyingSharePriceUsd": 21.76125,
-  "sources": ["chainlink", "uniswap-v3", "robinhood-chain-rpc"]
-}</pre>
-        <div class="answer">
-          The Chainlink oracle prices the GME Stock Token at <strong>$21.76</strong>. It's actually
-          trading at <strong>$20.52</strong> on the token's Uniswap v3 pool — a
-          <strong>5.70% discount</strong> to the oracle. The <code>uiMultiplier</code> is
-          <code>1e18</code> (1:1), so that's also the underlying share price: no split or
-          reinvested-dividend adjustment has happened yet.
+  <!-- ============ READ ============ -->
+  <section id="read">
+    <div class="eyebrow"><span class="n">01</span> / WHAT THE NEEDLES MEAN</div>
+    <div class="cols">
+      <div>
+        <h2>Two feeds,<br>one truth,<br>one spread.</h2>
+        <p class="lede" style="margin-top:22px">The oracle needle reads the Chainlink price feed, the reference the token is supposed to track. The DEX needle reads the live Uniswap v3 mid on Robinhood Chain, what the market will actually fill. When they diverge, an agent that can see both has an edge one that can't will never notice.</p>
+      </div>
+      <div>
+        <div class="tools" style="margin-top:0; border-top:1px solid var(--hair)">
+          <div class="tr"><div class="nm">oracle · chainlink</div><div class="ds">The on-chain price feed round data. This is the "should be" number, the underlying share's value, delivered by the same infrastructure the token issuer references.</div></div>
+          <div class="tr"><div class="nm">dex · uniswap v3</div><div class="ds">The pool's live mid, read directly on-chain (GeckoTerminal has not indexed chain 4663 yet). This is the "is" number: where a swap clears right now.</div></div>
+          <div class="tr"><div class="nm">premium / discount</div><div class="ds"><b>(dex − oracle) ÷ oracle.</b> Positive means the token trades rich to its underlying; negative means it's cheap. Thin liquidity, weekend gaps, and corporate actions all open it.</div></div>
+          <div class="tr"><div class="nm">uiMultiplier</div><div class="ds">A split or corporate action changes what a raw balance is worth. <b>get_portfolio</b> reads the multiplier so a position is valued in real shares, never raw units.</div></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section>
-    <h2>Two servers</h2>
-    <p class="section-lede">One package, two binaries, two very different trust levels.</p>
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>hood-mcp <span class="pill free">free</span></h3>
-        <p>
-          9 read-only tools. No API key, no wallet, no config — runs against the public RPC out
-          of the box. Stock Token quotes with live oracle + DEX premium, multiplier-correct
-          portfolios, memecoin data, launch scanning, chain stats.
-        </p>
+  <!-- ============ SERVERS ============ -->
+  <section id="servers">
+    <div class="eyebrow"><span class="n">02</span> / TWO SERVERS · one package</div>
+    <div class="cols">
+      <div>
+        <h2>A data server<br>anyone can add.<br>A trading server<br>you opt into.</h2>
+        <p class="lede" style="margin-top:22px">Point Claude Code, Claude Desktop, Cursor, or any stdio MCP client at it. The data server needs no key, no wallet, no config. It talks to the public Robinhood Chain RPC and answers tool calls immediately. The trading server is a separate binary that refuses to start unless you deliberately turn it on.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/hood-mcp">npm</a>
+          <a class="btn" href="https://github.com/nirholas/robinhood-chain-mcp">source</a>
+          <a class="btn" href="https://registry.modelcontextprotocol.io">mcp registry</a>
+        </div>
       </div>
-      <div class="card">
-        <h3>hood-mcp-trading <span class="pill guarded">opt-in</span></h3>
-        <p>
-          4 tools for one configured wallet. Refuses to start without an explicit kill switch.
-          Every mutating call is spend-capped in USD and requires a second, confirmed call to
-          broadcast. See the <a href="safety.html">safety model</a>.
-        </p>
+      <div>
+        <div class="install">
+          <button class="copy" data-copy="add">COPY</button><span class="c"># Claude Code: one line, read-only</span><span class="p" id="cmd-add">claude mcp add hood-mcp -- npx -y hood-mcp</span><span class="c"># any stdio client</span><span class="p">npx -y hood-mcp</span><span class="c"># trading (opt-in, spend-capped)</span><span class="p">HOOD_MCP_ENABLE_TRADING=1 \</span><span class="pc">ROBINHOOD_CHAIN_PRIVATE_KEY=0x… \</span><span class="pc">npx -y hood-mcp-trading</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="srv">
+        <span class="badge">01 · data</span>
+        <h3>hood-mcp</h3>
+        <p>Zero-config, read-only. stdio by default; pass <span class="mono">--http</span> for Streamable HTTP on port 8730 with <span class="mono">POST /mcp</span> and <span class="mono">GET /health</span>. Nine tools across quotes, portfolios, coins, launches, and chain stats.</p>
+        <div class="cmd"><b>npx -y hood-mcp</b> &nbsp;·&nbsp; no key, no wallet</div>
+      </div>
+      <div class="srv">
+        <span class="badge hot">02 · trading</span>
+        <h3>hood-mcp-trading</h3>
+        <p>A separate binary, stdio only. It will not boot without <b>both</b> <span class="mono">HOOD_MCP_ENABLE_TRADING=1</span> and a private key. Guarded swaps and USDG transfers, every fund-moving call behind a preview and a hard cap.</p>
+        <div class="cmd"><b>HOOD_MCP_ENABLE_TRADING=1</b> &nbsp;·&nbsp; refuses to start otherwise</div>
       </div>
     </div>
   </section>
 
-  <section>
-    <h2>Why this exists</h2>
-    <p class="section-lede">
-      Robinhood Chain launched 2026-07-01. As of this build, the ecosystem has exactly two other
-      MCP servers for the chain — both zero-star, read-only hobby projects a few days old.
-      This is the productized one: a full data surface plus a trading surface built to a real
-      safety bar, not a demo.
-    </p>
-    <div class="grid cols-3">
-      <div class="card">
-        <h3>Multiplier-correct</h3>
-        <p>Stock Tokens implement ERC-8056. Raw balances understate positions after a split or
-        reinvested dividend — this server does the share math right, same as the underlying
-        <code>hoodchain</code> SDK.</p>
+  <!-- ============ TOOLS ============ -->
+  <section id="tools">
+    <div class="eyebrow"><span class="n">03</span> / THE DATA SURFACE · 9 tools</div>
+    <h2>Everything the instrument<br>reads, as a tool call.</h2>
+    <p class="lede" style="margin-top:22px">The gauge above is one tool: <span class="mono">get_stock_quote</span>. Here is the rest of the read-only surface, each returning structured JSON an agent can reason over.</p>
+    <div class="tools" id="tools-list"></div>
+  </section>
+
+  <!-- ============ SAFETY ============ -->
+  <section id="safety">
+    <div class="eyebrow"><span class="n">04</span> / THE TRADING GUARDS</div>
+    <h2>Four gates before<br>anything is signed.</h2>
+    <p class="lede" style="margin-top:22px">The trading server moves real value on a real chain: there is no sandbox. So the guards are enforced in code, as thrown errors, not as polite instructions in a prompt.</p>
+    <div class="fuse">
+      <div class="f"><div class="h"><span class="no">01</span> kill switch</div><div class="b">The process refuses to start without <span>HOOD_MCP_ENABLE_TRADING=1</span>. Off by default, always.</div></div>
+      <div class="f"><div class="h"><span class="no">02</span> eligibility gate</div><div class="b">Buying a Stock Token throws unless <span>HOOD_MCP_ACKNOWLEDGE_ELIGIBILITY=1</span>, so they're barred to US/CA/UK/CH persons. Memecoins are unrestricted.</div></div>
+      <div class="f"><div class="h"><span class="no">03</span> spend caps</div><div class="b">Every call is valued in USD and checked against <span>MAX_SPEND_USDG</span> (per-call, default 25) and <span>MAX_SESSION_USDG</span> (per-process, default 100) before signing. Fails closed if it can't be priced.</div></div>
+      <div class="f"><div class="h"><span class="no">04</span> confirm gate</div><div class="b">The first <span>execute_swap</span> / <span>transfer_usdg</span> returns a simulation and signs nothing. Only a second call with <span>confirm: true</span> and identical args broadcasts.</div></div>
+    </div>
+    <div class="note"><b>Stock Tokens are tokenized debt securities</b> (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. Additional limits apply in Canada, the UK, and Switzerland. hood-mcp only <b>displays</b> Stock Token data by default; the eligibility gate exists so acquiring one is a deliberate, acknowledged act. Not affiliated with Robinhood Markets, Inc.</div>
+  </section>
+
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">05</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>One line to read<br>the whole chain.</h2>
+        <p class="lede" style="margin-top:22px">The data server is a single <span class="mono">npx</span> away, no account, no signup. Add the trading binary and two environment variables only when you actually want an agent that can act, behind every guard above.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/robinhood-chain-mcp#readme">read the docs</a>
+          <a class="btn" href="https://nirholas.github.io/robinhood-chain-sdk/">hoodchain sdk</a>
+        </div>
       </div>
-      <div class="card">
-        <h3>Real upstreams</h3>
-        <p>Chainlink, Uniswap v3, Blockscout, GeckoTerminal, DefiLlama — no cached fixtures, no
-        placeholder data. Every tool call hits the chain or a real API.</p>
-      </div>
-      <div class="card">
-        <h3>Guarded by default</h3>
-        <p>The trading server ships with spend caps and a confirm gate on by default. An agent
-        cannot move funds on the first call, ever.</p>
+      <div>
+        <div class="install">
+          <button class="copy" data-copy="get">COPY</button><span class="c"># add to any MCP client</span><span class="p" id="cmd-get">claude mcp add hood-mcp -- npx -y hood-mcp</span><span class="c"># optional: private RPC + network</span><span class="p">export HOOD_MCP_NETWORK=mainnet</span><span class="p">export ALCHEMY_KEY=…</span><span class="c"># trading, only when you mean it</span><span class="p">export HOOD_MCP_ENABLE_TRADING=1</span><span class="p">export HOOD_MCP_MAX_SPEND_USDG=25</span>
+        </div>
       </div>
     </div>
   </section>
 
   <footer>
-    Apache License 2.0 © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
-    <a href="https://three.ws">three.ws</a> ·
-    <a href="https://github.com/nirholas/robinhood-chain-mcp">github.com/nirholas/robinhood-chain-mcp</a>
+    <div class="big">hood-<br>mcp</div>
+    <div class="meta">
+      MCP · Robinhood Chain 4663 · Node ≥ 20<br>
+      <a href="https://github.com/nirholas/robinhood-chain-mcp">github.com/nirholas/robinhood-chain-mcp</a><br>
+      <a href="https://www.npmjs.com/package/hood-mcp">npmjs.com/package/hood-mcp</a><br>
+      built on <a href="https://nirholas.github.io/robinhood-chain-sdk/">hoodchain</a> by <a href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
+    </div>
   </footer>
 </main>
+
+<script>
+"use strict";
+
+/* ---------- demo instrument data (clearly a demo) ---------- */
+const TOKENS = [
+  {t:'AAPL', co:'Apple Inc',            oracle:229.42, dex:231.18, liq:'1.9M'},
+  {t:'TSLA', co:'Tesla Inc',            oracle:248.90, dex:246.10, liq:'2.4M'},
+  {t:'NVDA', co:'NVIDIA Corp',          oracle:128.55, dex:130.02, liq:'3.1M'},
+  {t:'GME',  co:'GameStop Corp',        oracle:24.18,  dex:25.90,  liq:'0.6M'},
+  {t:'MSTR', co:'MicroStrategy',        oracle:168.30, dex:165.02, liq:'0.9M'},
+  {t:'COIN', co:'Coinbase Global',      oracle:241.77, dex:244.51, liq:'1.2M'},
+  {t:'HOOD', co:'Robinhood Markets',    oracle:66.40,  dex:67.85,  liq:'1.5M'},
+  {t:'SPY',  co:'SPDR S&P 500 ETF',     oracle:548.20, dex:549.10, liq:'4.2M'},
+  {t:'AMZN', co:'Amazon.com Inc',       oracle:184.30, dex:183.05, liq:'2.0M'},
+  {t:'META', co:'Meta Platforms',       oracle:512.40, dex:517.66, liq:'1.7M'},
+];
+const RANGE = 0.08;              // ±8% maps to full ±120° sweep
+const SWEEP = 120;               // degrees each side of vertical
+const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* ---------- gauge face geometry ---------- */
+const CX=200, CY=220, R=168;
+function polar(deg, r){ const a=(deg-90)*Math.PI/180; return [CX+r*Math.cos(a), CY+r*Math.sin(a)]; }
+function arcPath(r){
+  const [x0,y0]=polar(-SWEEP,r), [x1,y1]=polar(SWEEP,r);
+  return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 1 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+}
+(function buildFace(){
+  document.getElementById('arc').setAttribute('d', arcPath(R));
+  document.getElementById('band').setAttribute('d', arcPath(R-8));
+  let s='';
+  for(let i=-8;i<=8;i++){
+    const deg = i/8*SWEEP;
+    const major = (i%4===0);
+    const [xa,ya]=polar(deg, R-10), [xb,yb]=polar(deg, R-(major?26:18));
+    s += `<line class="tick ${major?'major':''}" x1="${xa.toFixed(1)}" y1="${ya.toFixed(1)}" x2="${xb.toFixed(1)}" y2="${yb.toFixed(1)}"/>`;
+    if(major){
+      const [lx,ly]=polar(deg, R-42);
+      const lab = (i===0?'PAR':(i>0?'+':'')+ (i/8*RANGE*100).toFixed(0)+'%');
+      s += `<text class="tick-lab" x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="middle">${lab}</text>`;
+    }
+  }
+  document.getElementById('ticks').innerHTML = s;
+})();
+
+function fracToDeg(f){ return (Math.max(0,Math.min(1,f))-0.5)*2*SWEEP; }
+
+const nOracle=document.getElementById('n-oracle'), nDex=document.getElementById('n-dex');
+const P = {
+  tk:document.getElementById('p-tk'), co:document.getElementById('p-co'),
+  oracle:document.getElementById('p-oracle'), dex:document.getElementById('p-dex'),
+  prem:document.getElementById('p-prem'), tag:document.getElementById('p-tag'),
+  prembox:document.getElementById('p-prembox'), mult:document.getElementById('p-mult'), liq:document.getElementById('p-liq'),
+};
+
+let current=0;
+function render(i, animate){
+  const d = TOKENS[i]; current=i;
+  const prem = (d.dex - d.oracle)/d.oracle;
+  const dexF = 0.5 + prem/(2*RANGE);
+  nOracle.style.transform = `rotate(0deg)`;                 // oracle = PAR reference
+  nDex.style.transform = `rotate(${fracToDeg(dexF).toFixed(2)}deg)`;
+
+  P.tk.textContent = d.t;
+  P.co.textContent = d.co + ' · tokenized share';
+  P.oracle.textContent = fmt(d.oracle);
+  P.dex.textContent = fmt(d.dex);
+  const pct = prem*100;
+  P.prem.textContent = (pct>=0?'+':'') + pct.toFixed(2) + '%';
+  const disc = pct<0;
+  P.prembox.classList.toggle('disc', disc);
+  P.tag.textContent = disc ? 'discount' : 'premium';
+  P.mult.textContent = 'uiMultiplier 1.000000';
+  P.liq.textContent = 'liq $' + d.liq;
+  if(animate){ P.prem.style.transform='scale(1.09)'; setTimeout(()=>P.prem.style.transform='',190); }
+}
+
+/* ---------- the tuner dial ---------- */
+const STOP_W = 96;
+const strip = document.getElementById('strip');
+const dialwrap = document.getElementById('dialwrap');
+TOKENS.forEach((d,i)=>{
+  const el=document.createElement('div'); el.className='stop'; el.dataset.i=i;
+  const prem=((d.dex-d.oracle)/d.oracle*100);
+  el.innerHTML = `<div class="t">${d.t}</div><div class="p">${prem>=0?'+':''}${prem.toFixed(1)}%</div>`;
+  el.addEventListener('click', ()=>{ if(!moved) select(i,true); });
+  strip.appendChild(el);
+});
+const stops=[...strip.children];
+
+let offset=0, dragging=false, startX=0, startOffset=0, moved=false;
+
+function centerOffsetFor(i){ return dialwrap.clientWidth/2 - (i*STOP_W + STOP_W/2); }
+function applyOffset(px, withTransition){
+  strip.style.transition = withTransition ? 'transform .55s var(--ease)' : 'none';
+  strip.style.transform = `translateX(${px}px)`;
+  offset = px;
+}
+function markActive(i){ stops.forEach((s,k)=>s.classList.toggle('on', k===i)); }
+function nearestIndex(){ return Math.round((dialwrap.clientWidth/2 - offset - STOP_W/2)/STOP_W); }
+function clampIdx(i){ return Math.max(0, Math.min(TOKENS.length-1, i)); }
+
+function select(i, animate){
+  i = clampIdx(i);
+  applyOffset(centerOffsetFor(i), true);
+  markActive(i);
+  render(i, animate);
+  dialwrap.setAttribute('aria-valuenow', i);
+  dialwrap.setAttribute('aria-valuetext', TOKENS[i].t);
+}
+
+dialwrap.addEventListener('pointerdown', e=>{
+  dragging=true; moved=false; startX=e.clientX; startOffset=offset;
+  strip.style.transition='none'; dialwrap.setPointerCapture(e.pointerId);
+});
+dialwrap.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  const dx=e.clientX-startX; if(Math.abs(dx)>3) moved=true;
+  applyOffset(startOffset+dx, false);
+  const i=clampIdx(nearestIndex());
+  if(i!==current){ markActive(i); render(i,false); }
+});
+function endDrag(e){
+  if(!dragging) return; dragging=false;
+  try{ dialwrap.releasePointerCapture(e.pointerId); }catch(_){}
+  if(moved){ select(nearestIndex(), true); setTimeout(()=>{moved=false;},0); }
+}
+dialwrap.addEventListener('pointerup', endDrag);
+dialwrap.addEventListener('pointercancel', endDrag);
+dialwrap.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){ e.preventDefault(); select(current+1,true); }
+  else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ e.preventDefault(); select(current-1,true); }
+  else if(e.key==='Home'){ e.preventDefault(); select(0,true); }
+  else if(e.key==='End'){ e.preventDefault(); select(TOKENS.length-1,true); }
+});
+addEventListener('resize', ()=>{ applyOffset(centerOffsetFor(current), false); });
+
+/* first paint */
+render(0,false);
+markActive(0);
+requestAnimationFrame(()=>{ applyOffset(centerOffsetFor(0), false); setTimeout(()=>render(0,true), 480); });
+
+/* ---------- boot line ---------- */
+(function boot(){
+  const el=document.getElementById('boot');
+  const line='● hoodchain connected · chain 4663 · 95 stock tokens · public rpc · ready';
+  [...line].forEach((ch,i)=>{ const s=document.createElement('span'); s.textContent=ch; s.style.animationDelay=(i*12+120)+'ms'; el.appendChild(s); });
+})();
+
+/* ---------- tools table ---------- */
+const TOOLS = [
+  ['get_stock_quote','Chainlink price + Uniswap DEX price + premium/discount + share price for a ticker. <b>The instrument above.</b>'],
+  ['get_portfolio','Multiplier-correct Stock Token portfolio + USDG balance for any address, valued in real shares, not raw units.'],
+  ['list_stock_tokens','The full 95-token Stock Token registry: ticker, name, contract, Chainlink feed.'],
+  ['get_chain_stats','Latest block, gas price, TVL, and network totals for chain 4663.'],
+  ['get_coin','Price, volume, liquidity, and holders for any token by address (memecoin or Stock Token).'],
+  ['list_trending_coins',"The chain's trending pools right now, ranked."],
+  ['get_recent_launches','Recent NOXA + The Odyssey launches, scanned straight from on-chain logs.'],
+  ['watch_launches','Watch live for new launches for up to 120 seconds: a streaming tool call.'],
+  ['search_token','Find a token by ticker, name, or address across the whole chain.'],
+];
+const tbody=document.getElementById('tools-list');
+TOOLS.forEach(t=>{
+  const r=document.createElement('div'); r.className='tr rise';
+  r.innerHTML=`<div class="nm">${t[0]}</div><div class="ds">${t[1]}</div>`;
+  tbody.appendChild(r);
+});
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText('claude mcp add hood-mcp -- npx -y hood-mcp').then(()=>{
+      const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal on scroll ---------- */
+const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i%3*70)+'ms'; io.observe(el); });
+
+/* ---------- rail ---------- */
+const stations=[...document.querySelectorAll('.rail .stn')];
+const secs=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0, mid=innerHeight*0.4;
+  secs.forEach((sec,i)=>{ const r=sec.getBoundingClientRect(); if(r.top<=mid) idx=i; });
+  stations.forEach((s,i)=>s.setAttribute('aria-current', i===idx));
+  const active=stations[idx];
+  const railRect=document.querySelector('.rail').getBoundingClientRect();
+  const r=active.getBoundingClientRect();
+  carriage.style.height=r.height+'px';
+  carriage.style.transform=`translateY(${r.top-railRect.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'}); }));
+addEventListener('scroll',()=>requestAnimationFrame(updateRail),{passive:true});
+addEventListener('resize',updateRail); updateRail();
+</script>
+</body>
+</html>

@@ -6,6 +6,17 @@
 
 The wallet + onboarding kit for Robinhood Chain dApps.
 
+## Website
+
+Landing page with a live marble-run on-ramp (add → bridge → connect), served from [`docs/`](./docs):
+**https://nirholas.github.io/hood-connect/**
+
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/?to=/:account/pages/new)
+[![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?logo=netlify&logoColor=white)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-connect)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-101418?logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-connect)
+
+The site is a single self-contained `docs/index.html` (inline CSS + JS, zero external requests, works from `file://`). `wrangler.toml`, `netlify.toml`, and `vercel.json` all publish `docs/`.
+
 Chain 4663 is not a default network in any wallet, so every dApp on it needs the same three
 things before it can do anything useful: **add network, fund via bridge, connect**. Today each
 team hand-rolls that flow. hood-connect makes it one component (React) or three function calls

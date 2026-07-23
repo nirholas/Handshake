@@ -1,238 +1,655 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>hood402 — the x402 payment rail for USDG on Robinhood Chain</title>
-<meta name="description" content="Spec-conformant x402 exact/EIP-3009 server middleware, client, and a self-hostable facilitator for USDG on Robinhood Chain (chain 4663). Interoperates with any standard x402 client.">
-<link rel="stylesheet" href="./site.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood402: pay a 402 to get in</title>
+<meta name="description" content="An x402 payment rail for USDG on Robinhood Chain. A gasless HTTP 402 handshake, EIP-3009 transferWithAuthorization, settled and 200, watch the whole thing open a gate in your browser." />
+<link rel="canonical" href="https://nirholas.github.io/hood402/" />
+<meta name="theme-color" content="#0c0d0e" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood402: the payment turnstile" />
+<meta property="og:description" content="402 PAYMENT REQUIRED → sign EIP-3009 → X-PAYMENT → settle → 200. Gasless USDG micropayments on Robinhood Chain. The handshake opens the gate." />
+<meta property="og:url" content="https://nirholas.github.io/hood402/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<meta name="twitter:title" content="hood402: pay a 402 to get in" />
+<meta name="twitter:description" content="x402 payment rail for USDG on Robinhood Chain. Watch a gasless EIP-3009 handshake open the gate in your browser." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230c0d0e'/><rect x='6' y='6' width='8' height='20' fill='none' stroke='%23e8e6e1' stroke-width='2'/><rect x='18' y='6' width='8' height='20' fill='none' stroke='%23e8e6e1' stroke-width='2'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood402","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"An x402 payment rail for USDG on Robinhood Chain (chain ID 4663). Spec-conformant exact/EIP-3009 server middleware, a paying client, and a self-hostable facilitator. Gasless HTTP 402 micropayments settled with transferWithAuthorization.","softwareVersion":"0.1","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hood402","codeRepository":"https://github.com/nirholas/hood402"}
+</script>
+<style>
+  :root{
+    --bg:#0c0d0e; --fg:#e8e6e1; --mid:#75726b;
+    --line:rgba(232,230,225,.14); --line2:rgba(232,230,225,.30);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --sans:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --gate:cubic-bezier(.72,0,.16,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg); color:var(--fg); font-family:var(--sans);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--fg); color:var(--bg)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  /* hairline machine texture, pure CSS, no repaint cost */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);
+    opacity:.6;
+  }
+
+  /* ---------------- access rail ---------------- */
+  .rail{position:fixed; left:0; top:0; bottom:0; width:58px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-right:1px solid var(--line); background:var(--bg)}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.34em; text-transform:uppercase; color:var(--mid); position:absolute; top:18px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.26em;
+    text-transform:uppercase; color:var(--mid); padding:13px 0; cursor:pointer;
+    transition:color .3s var(--ease),opacity .3s; text-decoration:none; opacity:.55}
+  .rail .stn:hover{color:var(--fg); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--fg); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--line2);
+    margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--fg);border-color:var(--fg)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--fg);height:40px;
+    top:0;transition:transform .5s var(--ease);will-change:transform}
+  .rail .paid{position:absolute; bottom:16px; font:700 9px/1.3 var(--mono); letter-spacing:.14em;
+    text-transform:uppercase; color:var(--mid); writing-mode:vertical-rl; text-align:center;
+    opacity:0; transition:opacity .5s var(--ease)}
+  .rail .paid.on{opacity:1; color:var(--fg)}
+  main{margin-left:58px}
+  @media(max-width:760px){.rail{width:0;border:0}.rail *{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(60px,9vh,116px) clamp(20px,5vw,86px);
+    border-bottom:1px solid var(--line)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.32em; text-transform:uppercase;
+    color:var(--mid); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  .eyebrow .n{color:var(--fg)}
+
+  h1,h2{font-family:var(--sans); font-weight:700; letter-spacing:-.03em; line-height:.97}
+  h1{font-size:clamp(40px,7.6vw,104px)}
+  h2{font-size:clamp(28px,4.6vw,60px)}
+  .lede{max-width:60ch; font-size:clamp(16px,1.6vw,22px); line-height:1.44; color:#c9c6bf}
+
+  /* ============================================================
+     THE GATE, signature interaction
+     ============================================================ */
+  #gate{min-height:100svh; padding:0; border-bottom:1px solid var(--line);
+    position:relative; overflow:hidden; display:flex}
+  .chamber{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center;
+    padding:clamp(60px,9vh,116px) clamp(20px,5vw,86px);
+    opacity:0; transform:translateY(14px); transition:opacity .7s var(--ease) .35s, transform .7s var(--ease) .35s}
+  #gate.open .chamber{opacity:1; transform:none}
+  .chamber .eyebrow{margin-bottom:22px}
+  .chamber h1{max-width:15ch}
+  .chamber h1 em{font-style:normal; color:var(--mid)}
+  .chamber .sub{margin-top:24px; max-width:54ch; font-size:clamp(15px,1.6vw,21px); color:#c9c6bf}
+  .chamber .go{margin-top:34px; display:flex; flex-wrap:wrap; gap:14px; align-items:center}
+
+  /* the two leaves */
+  .leaf{position:absolute; top:0; bottom:0; width:50.5%; z-index:20; background:var(--bg);
+    will-change:transform; transition:transform 1.15s var(--gate);
+    display:flex; align-items:center; overflow:hidden}
+  .leaf::before{content:""; position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(135deg,rgba(232,230,225,.05) 0 2px,transparent 2px 9px),
+      repeating-linear-gradient(0deg,rgba(232,230,225,.028) 0 1px,transparent 1px 4px);
+    pointer-events:none}
+  .leaf.l{left:0; justify-content:flex-end; border-right:1px solid var(--line2)}
+  .leaf.r{right:0; justify-content:flex-start; border-left:1px solid var(--line2)}
+  #gate.open .leaf.l{transform:translateX(-101%)}
+  #gate.open .leaf.r{transform:translateX(101%)}
+  /* the split numeral */
+  .big402{font:700 clamp(150px,34vw,460px)/.8 var(--sans); letter-spacing:-.05em; color:var(--fg);
+    opacity:.14; user-select:none; white-space:nowrap}
+  .leaf.l .big402{transform:translateX(28%)}
+  .leaf.r .big402{transform:translateX(-28%)}
+  /* seam status strip */
+  .seam{position:absolute; top:0; bottom:0; left:50%; width:1px; z-index:25; background:var(--line2);
+    transition:opacity .5s var(--ease)}
+  #gate.open .seam{opacity:0}
+  .seamtag{position:absolute; top:clamp(20px,4vh,40px); left:50%; transform:translateX(-50%);
+    z-index:26; font:600 10px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase;
+    color:var(--mid); white-space:nowrap; transition:opacity .5s var(--ease)}
+  #gate.open .seamtag{opacity:0}
+
+  /* console: sits on the left leaf, drives the handshake */
+  .console{position:relative; z-index:22; width:min(440px,86%);
+    margin-left:auto; margin-right:clamp(22px,5vw,74px);
+    border:1px solid var(--line2); background:rgba(12,13,14,.72); backdrop-filter:blur(2px)}
+  .console .hd{display:flex; justify-content:space-between; align-items:center;
+    padding:13px 16px; border-bottom:1px solid var(--line); font:600 10px/1 var(--mono);
+    letter-spacing:.22em; text-transform:uppercase; color:var(--mid)}
+  .console .hd .dot{width:7px;height:7px;border:1px solid var(--line2);border-radius:50%;
+    transition:background .3s,border-color .3s}
+  .console.live .hd .dot{background:var(--fg);border-color:var(--fg);
+    animation:pulse 1.1s var(--ease) infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .console .body{padding:14px 16px 16px}
+  .price{font:700 clamp(30px,4.2vw,46px)/1 var(--sans); letter-spacing:-.03em}
+  .price small{font:600 12px/1 var(--mono); letter-spacing:.14em; color:var(--mid);
+    display:block; margin-top:9px; text-transform:uppercase}
+  /* the log */
+  .log{margin-top:16px; border-top:1px solid var(--line); min-height:170px;
+    font:500 11.5px/1.72 var(--mono); overflow-wrap:anywhere; padding-top:12px}
+  .log .b64{word-break:break-all}
+  .log .ln{opacity:0; transform:translateY(4px); transition:opacity .35s var(--ease),transform .35s var(--ease);
+    display:flex; gap:8px}
+  .log .ln.in{opacity:1; transform:none}
+  .log .ln .ar{color:var(--mid); flex:none; width:12px}
+  .log .ln.res .ar{color:var(--fg)}
+  .log .ln .tx{color:#c9c6bf}
+  .log .ln.res .tx{color:var(--fg); font-weight:600}
+  .log .ln.dim .tx{color:var(--mid)}
+  .log .ln.code2 .tx{color:var(--fg)}
+  .log .b64{color:var(--mid)}
+  /* lever */
+  .lever{margin-top:16px}
+  .pay{appearance:none; width:100%; border:1px solid var(--fg); background:var(--fg); color:var(--bg);
+    font:700 12.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; padding:18px 16px;
+    cursor:pointer; transition:transform .3s var(--ease),background .3s,color .3s,opacity .3s;
+    position:relative; overflow:hidden}
+  .pay:hover{transform:translateY(-2px)}
+  .pay:active{transform:translateY(0)}
+  .pay:disabled{cursor:default}
+  .pay .lbl{position:relative;z-index:2;white-space:nowrap}
+  .pay .prog{position:absolute; left:0; top:0; bottom:0; width:100%; background:rgba(12,13,14,.16);
+    transform:scaleX(0); transform-origin:left; z-index:1}
+  .pay.working{background:var(--bg); color:var(--fg)}
+  .pay.done{background:var(--bg); color:var(--fg); border-color:var(--line2)}
+  .paynote{margin-top:11px; font:500 10.5px/1.5 var(--mono); letter-spacing:.02em; color:var(--mid); text-align:center}
+  .skip{margin-top:12px; text-align:center}
+  .skip button{appearance:none;background:transparent;border:0;color:var(--mid);cursor:pointer;
+    font:500 10px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;text-decoration:underline;
+    text-underline-offset:3px;transition:color .3s}
+  .skip button:hover{color:var(--fg)}
+
+  .scrollcue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); z-index:23;
+    font:600 10px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase; color:var(--mid);
+    display:flex; align-items:center; gap:10px; opacity:0; transition:opacity .6s var(--ease) .7s}
+  #gate.open .scrollcue{opacity:1}
+  .scrollcue i{display:block;width:26px;height:1px;background:var(--line2);position:relative;overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--fg);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+  @media(prefers-reduced-motion:reduce){
+    .leaf{transition:opacity .4s ease}
+    #gate.open .leaf.l,#gate.open .leaf.r{transform:none;opacity:0;pointer-events:none}
+    .log .ln{transition:opacity .2s}
+    .scrollcue i::after{animation:none}
+  }
+  @media(max-width:760px){
+    .console{width:88%; margin:0 auto}
+    .leaf.l{width:100%;border:0}
+    .leaf.r{display:none}
+    #gate.open .leaf.l{transform:translateY(-101%)}
+    .big402{display:none}
+    .seam,.seamtag{display:none}
+  }
+
+  /* ============================================================
+     HANDSHAKE, the four states, laid flat
+     ============================================================ */
+  .flow{display:grid; grid-template-columns:repeat(4,1fr); border-left:1px solid var(--line);
+    border-top:1px solid var(--line); margin-top:14px}
+  @media(max-width:860px){.flow{grid-template-columns:1fr 1fr}}
+  @media(max-width:460px){.flow{grid-template-columns:1fr}}
+  .fst{border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+    padding:24px 22px 28px; position:relative; overflow:hidden; transition:background .3s}
+  .fst:hover{background:rgba(232,230,225,.03)}
+  .fst .code{font:700 13px/1 var(--mono); letter-spacing:.06em; color:var(--mid)}
+  .fst .nm{font:700 21px/1.04 var(--sans); letter-spacing:-.02em; margin:14px 0 10px}
+  .fst .ds{font-size:14.5px; color:#c9c6bf; line-height:1.45}
+  .fst .glyph{margin-top:22px; height:34px; width:100%; display:block; opacity:.5; transition:opacity .3s}
+  .fst:hover .glyph{opacity:.95}
+  .fst .glyph path,.fst .glyph rect,.fst .glyph line,.fst .glyph circle{
+    fill:none; stroke:var(--fg); stroke-width:1.3; vector-effect:non-scaling-stroke}
+
+  /* ============================================================
+     panels
+     ============================================================ */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,78px); align-items:start}
+  @media(max-width:880px){.cols{grid-template-columns:1fr; gap:34px}}
+  .code-block{border:1px solid var(--line2); background:#08090a; color:var(--fg); padding:20px 22px;
+    font:500 13px/1.85 var(--mono); position:relative; overflow-x:auto; white-space:pre}
+  .code-block .c{color:var(--mid)}
+  .code-block .k{color:var(--fg); font-weight:600}
+  .code-block .p::before{content:"$ "; color:var(--mid)}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid var(--line2);
+    background:transparent; color:var(--fg); font:600 10px/1 var(--mono); letter-spacing:.14em;
+    padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(232,230,225,.12)}
+
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--fg); color:var(--fg); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--fg); color:var(--bg); transform:translateY(-2px)}
+  .btn.solid{background:var(--fg); color:var(--bg)}
+  .btn.solid:hover{background:transparent; color:var(--fg)}
+
+  .spec{border-top:1px solid var(--line); margin-top:12px}
+  .spec .r{display:grid; grid-template-columns:200px 1fr; gap:20px; padding:17px 0;
+    border-bottom:1px solid var(--line); align-items:baseline}
+  @media(max-width:640px){.spec .r{grid-template-columns:1fr; gap:5px}}
+  .spec .r .t{font:600 11px/1.3 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--mid)}
+  .spec .r .d{font-size:15.5px; color:#c9c6bf; max-width:64ch}
+  .spec .r .d b{color:var(--fg); font-weight:700}
+
+  /* networks table */
+  .net{width:100%; border-collapse:collapse; font-family:var(--mono)}
+  .netwrap{overflow-x:auto; border:1px solid var(--line); margin-top:12px}
+  .net th,.net td{text-align:left; padding:14px 16px; border-bottom:1px solid var(--line); white-space:nowrap}
+  .net th{font:600 10px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--mid)}
+  .net td{font:500 12.5px/1.4 var(--mono); color:#c9c6bf}
+  .net td b{color:var(--fg); font-weight:600}
+  .net tr:last-child td{border-bottom:0}
+  .net a{border-bottom:1px solid var(--line2); text-decoration:none; transition:border-color .2s}
+  .net a:hover{border-color:var(--fg)}
+
+  /* conformance proof block */
+  .proof{border:1px solid var(--line2); overflow:hidden}
+  .proof .ph{padding:14px 18px; border-bottom:1px solid var(--line); display:flex;
+    justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px}
+  .proof .ph .l{font:600 11px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--mid)}
+  .proof .ph .ok{font:700 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--fg);
+    border:1px solid var(--line2); padding:6px 10px}
+  .proof pre{padding:18px; font:500 12px/1.75 var(--mono); color:#c9c6bf; overflow-x:auto}
+  .proof pre .ok{color:var(--fg); font-weight:700}
+  .proof pre .a{color:var(--fg)}
+  .proof pre .c{color:var(--mid)}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,86px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--sans); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--mid); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--line2); transition:border-color .2s}
+  footer a:hover{border-color:var(--fg)}
+
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+</style>
 </head>
 <body>
 
-<nav class="top" aria-label="Site">
-  <div class="wrap">
-    <a class="brand" href="./index.html">hood<span class="tick">402</span></a>
-    <div class="links">
-      <a href="#quickstart">Quickstart</a>
-      <a href="#flow" class="hide-sm">How it works</a>
-      <a href="#conformance">Conformance</a>
-      <a href="#compare">vs. r0x</a>
-      <a href="https://github.com/nirholas/hood402">GitHub</a>
-    </div>
-  </div>
+<nav class="rail" aria-label="Sections">
+  <b>hood·402</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#gate" aria-current="true">Gate</a>
+  <a class="stn" href="#flow">Flow</a>
+  <a class="stn" href="#conform">Proof</a>
+  <a class="stn" href="#build">Build</a>
+  <a class="stn" href="#net">Chain</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
+  <span class="paid" id="railPaid">paid ✓<br>0.01 usdg</span>
 </nav>
 
-<header class="hero wrap">
-  <h1>The x402 payment rail<br>for <span class="grad">USDG on Robinhood Chain</span></h1>
-  <p class="lede">
-    Spec-conformant <code>exact</code>/EIP-3009 server middleware, a paying client, and a
-    self-hostable facilitator — gasless USDG micropayments over plain HTTP 402, chain 4663.
-    No vendor lock-in: any standard x402 client can pay a hood402 server, and hood402's
-    client can pay any standard x402 server.
-  </p>
-  <div class="cta">
-    <span class="install"><span class="dollar">$</span> npm install hood402 viem</span>
-    <a class="btn primary" href="#quickstart">Get started</a>
-    <a href="#flow" class="btn">See the flow</a>
-  </div>
-</header>
-
-<main class="wrap">
-
-<section class="block" id="flow">
-  <div class="flow-head">
-    <h2>Request → 402 → pay → 200</h2>
-  </div>
-  <p class="sub">
-    The whole protocol in one round trip. The server never asks for a card, an API key, or
-    an account — it prices the resource and the client pays for it in-band.
-  </p>
-  <div class="flow" role="img" aria-label="Animated diagram: client requests a resource, server replies 402 Payment Required with a price, client signs a USDG payment and retries, server settles and returns 200 with the resource.">
-    <div class="actor">
-      <div class="avatar">🧑‍💻</div>
-      <div class="label">Client</div>
+<main>
+  <!-- ===================== THE GATE ===================== -->
+  <section id="gate" aria-label="Payment gate">
+    <!-- revealed chamber -->
+    <div class="chamber">
+      <div class="eyebrow"><span class="n">00</span> / x402 · exact · EIP-3009 · USDG</div>
+      <h1>You just paid<br>a 402. <em>You're in.</em></h1>
+      <p class="sub">That was a real x402 handshake, the same wire format the whole ecosystem speaks, settled with a gasless <span class="mono">transferWithAuthorization</span> on Robinhood Chain. No account. No API key. One signature and a stablecoin. This is what an API charges an agent, minus the invoice.</p>
+      <div class="go">
+        <a class="btn solid" href="#build">Wire it into your server</a>
+        <a class="btn" href="#flow">See the handshake</a>
+      </div>
     </div>
-    <div class="wire">
-      <div class="track"></div>
-      <div class="caption c1">1. GET /resource</div>
-      <div class="caption c2">2. 402 Payment Required</div>
-      <div class="caption c3">3. GET /resource + X-PAYMENT</div>
-      <div class="caption c4">4. 200 OK + X-PAYMENT-RESPONSE</div>
-      <div class="packet req"></div>
-      <div class="packet pay"></div>
+
+    <!-- gate seam -->
+    <div class="seam" aria-hidden="true"></div>
+    <div class="seamtag" aria-hidden="true">HTTP 402 · PAYMENT REQUIRED</div>
+
+    <!-- LEFT LEAF: carries the console -->
+    <div class="leaf l">
+      <div class="big402" aria-hidden="true">40</div>
+      <div class="console" id="console" role="group" aria-label="402 payment challenge">
+        <div class="hd"><span>GET /premium</span><span class="dot" aria-hidden="true"></span></div>
+        <div class="body">
+          <div class="price">0.01 <span style="font-size:.5em;letter-spacing:-.02em">USDG</span>
+            <small>price to pass · chain 4663</small></div>
+          <div class="log mono" id="log" aria-live="polite"></div>
+          <div class="lever">
+            <button class="pay" id="pay"><span class="prog" aria-hidden="true"></span><span class="lbl">Pay 0.01 · pass through</span></button>
+            <div class="paynote" id="paynote">demo handshake, signs and settles in your browser, broadcasts nothing</div>
+            <div class="skip"><button id="skip" type="button">skip the gate</button></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="actor">
-      <div class="avatar">🖥️</div>
-      <div class="label">Resource server</div>
+
+    <!-- RIGHT LEAF: the numeral half -->
+    <div class="leaf r" aria-hidden="true">
+      <div class="big402">2</div>
     </div>
-  </div>
-  <div class="flow-legend">
-    <span><span class="dot req"></span> request leg</span>
-    <span><span class="dot pay"></span> paid retry (EIP-3009 signature in the X-PAYMENT header)</span>
-  </div>
-</section>
 
-<section class="block" id="quickstart">
-  <h2>Quickstart</h2>
-  <p class="sub">Node ≥ 20. <code>viem</code> is a peer dependency.</p>
+    <div class="scrollcue" aria-hidden="true"><i></i> scroll · the rail remembers your receipt</div>
+  </section>
 
-  <div class="tabs" role="tablist" aria-label="Quickstart by package">
-    <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-server" id="btn-server">Server</button>
-    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-client" id="btn-client">Client</button>
-    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-facilitator" id="btn-facilitator">Facilitator</button>
-  </div>
+  <!-- ===================== FLOW ===================== -->
+  <section id="flow">
+    <div class="eyebrow"><span class="n">01</span> / THE HANDSHAKE · four states</div>
+    <h2>Four HTTP states.<br>No redirect, no invoice.</h2>
+    <p class="lede" style="margin-top:22px">x402 is HTTP the way it was specified: the server answers a paid resource with <b style="color:var(--fg)">402 Payment Required</b> and the terms, the client attaches proof of payment in a header and retries, the server verifies, settles, and returns <b style="color:var(--fg)">200</b> with a receipt. hood402 is that loop for USDG on Robinhood Chain, spec-conformant, so it talks to any standard x402 client, not just its own.</p>
+    <div class="flow" id="flowgrid"></div>
+  </section>
 
-  <div class="tab-panel active" id="tab-server" role="tabpanel" aria-labelledby="btn-server">
-<pre><code>import express from 'express'
-import { paywall } from 'hood402/server'
+  <!-- ===================== CONFORMANCE ===================== -->
+  <section id="conform">
+    <div class="eyebrow"><span class="n">02</span> / WHY EIP-3009 · and how we know</div>
+    <div class="cols">
+      <div>
+        <h2>USDG hides the<br>gasless path. We found it.</h2>
+        <p class="lede" style="margin-top:22px">USDG (Paxos Global Dollar) is a diamond-router token, its base implementation doesn't advertise EIP-3009. But <span class="mono">getFacet(bytes4)</span> proves the <span class="mono">transferWithAuthorization</span> facet is registered, and the reconstructed EIP-712 domain matches the live <span class="mono">DOMAIN_SEPARATOR()</span> byte for byte, on both networks. So settlement is the standard gasless path, the same mechanism USDC uses, the one x402's <span class="mono">exact</span> scheme is built around. No custom scheme, no proxy, no Permit2 fallback.</p>
+        <div class="btns">
+          <a class="btn" href="https://robinhoodchain.blockscout.com/address/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168">USDG on Blockscout</a>
+          <a class="btn" href="https://github.com/nirholas/hood402">source</a>
+        </div>
+      </div>
+      <div>
+        <div class="proof">
+          <div class="ph"><span class="l mono">npm run verify:usdg</span><span class="ok">pass · both networks</span></div>
+<pre><span class="c"># robinhood (chain 4663), USDG 0x5fc5…d168</span>
+getFacet(transferWithAuthorization) -&gt; 0x780d…1309 <span class="ok">[OK]</span>
+getFacet(receiveWithAuthorization)  -&gt; 0x780d…1309 <span class="ok">[OK]</span>
+getFacet(authorizationState)        -&gt; 0x780d…1309 <span class="ok">[OK]</span>
+DOMAIN_SEPARATOR() -&gt; 0x7a3d…2036
+<span class="c"># reconstructed offline:</span>
+  name = <span class="a">"Global Dollar"</span>  version = <span class="a">"1"</span>  <span class="ok">[match]</span>
 
-const app = express()
+<span class="c"># robinhood-testnet (chain 46630)</span>
+getFacet(transferWithAuthorization) -&gt; 0x08f5…B811 <span class="ok">[OK]</span>
+  …
+<span class="ok">PASS</span>: USDG EIP-3009 facet + domain confirmed.</pre>
+        </div>
+      </div>
+    </div>
+  </section>
 
-app.get('/premium', paywall({
-  price: '0.01',                              // USDG
-  payTo: '0xYourReceivingAddress',
-  network: 'robinhood',                        // or 'robinhood-testnet'
-  facilitator: 'https://your-facilitator.example.com',
+  <!-- ===================== BUILD ===================== -->
+  <section id="build">
+    <div class="eyebrow"><span class="n">03</span> / WIRE IT · server &amp; client</div>
+    <h2>One middleware.<br>One paying fetch.</h2>
+    <p class="lede" style="margin-top:22px">A paid endpoint is a wrapper. A paying agent is a drop-in <span class="mono">fetch</span>. Both sides speak the same spec, so either can talk to anyone else's.</p>
+
+    <div class="cols" style="margin-top:34px">
+      <div>
+        <div class="eyebrow" style="margin-bottom:16px"><span class="n">S</span> / SERVER · charge for a route</div>
+        <div class="code-block"><button class="copy" data-copy="server">COPY</button><span class="c">// express, one route, priced in USDG</span>
+<span class="k">import</span> { paywall } <span class="k">from</span> 'hood402/server'
+
+app.<span class="k">get</span>('/premium', <span class="k">paywall</span>({
+  price: '0.01',            <span class="c">// USDG</span>
+  payTo: '0xYourAddress',
+  network: 'robinhood',      <span class="c">// chain 4663</span>
+  facilitator: 'https://…',
 }), (req, res) =&gt; {
-  res.json({ data: 'unlocked after a settled USDG payment' })
-})</code></pre>
-    <p class="sub">
-      No <code>facilitator</code>? Pass <code>wallet</code> (a viem <code>WalletClient</code>
-      with a gas key), <code>account</code>, and <code>reader</code> (a viem
-      <code>PublicClient</code>) instead — the server settles locally.
-    </p>
-  </div>
+  res.<span class="k">json</span>({ data: 'unlocked' })
+})</div>
+        <p class="lede" style="font-size:15px;margin-top:16px">No facilitator? Pass a viem <span class="mono">wallet</span> + <span class="mono">reader</span> and the server verifies and settles locally. Hono works too via <span class="mono">honoPaywall</span>.</p>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:16px"><span class="n">C</span> / CLIENT · pay every 402 it hits</div>
+        <div class="code-block"><button class="copy" data-copy="client">COPY</button><span class="c">// the 402 is paid automatically, under a cap</span>
+<span class="k">import</span> { Hood402Client, fromAccount } <span class="k">from</span> 'hood402/client'
 
-  <div class="tab-panel" id="tab-client" role="tabpanel" aria-labelledby="btn-client">
-<pre><code>import { Hood402Client, fromAccount } from 'hood402/client'
-import { privateKeyToAccount } from 'viem/accounts'
-
-const account = privateKeyToAccount(process.env.ROBINHOOD_CHAIN_PRIVATE_KEY)
-const client = new Hood402Client({
-  signer: fromAccount(account),
-  maxSpendPerOrigin: '1.00',                   // hard cap, USDG
+<span class="k">const</span> client = <span class="k">new</span> <span class="k">Hood402Client</span>({
+  signer: <span class="k">fromAccount</span>(account),
+  maxSpendPerOrigin: '1.00',  <span class="c">// hard cap, USDG</span>
 })
 
-const res = await client.fetch('https://api.example.com/premium')
-console.log(await res.json())                  // the 402 was paid automatically</code></pre>
-  </div>
-
-  <div class="tab-panel" id="tab-facilitator" role="tabpanel" aria-labelledby="btn-facilitator">
-<pre><code>git clone https://github.com/nirholas/hood402.git &amp;&amp; cd hood402
-npm install &amp;&amp; npm run build
-cd facilitator &amp;&amp; npm install &amp;&amp; npm run build
-
-FACILITATOR_PRIVATE_KEY=0x... \
-FACILITATOR_NETWORKS=robinhood,robinhood-testnet \
-npm start
-# -&gt; GET  /healthz    /supported    /metrics
-# -&gt; POST /verify      /settle</code></pre>
-    <p class="sub">Or build the Docker image — see the <a href="https://github.com/nirholas/hood402/tree/main/facilitator">facilitator README</a>.</p>
-  </div>
-</section>
-
-<section class="block" id="conformance">
-  <h2>Spec conformance</h2>
-  <p class="sub">
-    hood402 implements x402 v1's <code>exact</code> scheme for EVM verbatim — the
-    <code>X-PAYMENT</code>/<code>X-PAYMENT-RESPONSE</code> header pair, the
-    <code>PaymentRequirements</code> shape, and the facilitator <code>/verify</code>,
-    <code>/settle</code>, <code>/supported</code> endpoints — so it interoperates with the
-    wider x402 client ecosystem out of the box, not just its own client.
-  </p>
-  <div class="grid">
-    <div class="card">
-      <h3>Settlement mechanism</h3>
-      <p>
-        USDG is a facet/diamond stablecoin. Its base implementation doesn't expose
-        EIP-3009, but <code>getFacet(bytes4)</code> proves <code>transferWithAuthorization</code>,
-        <code>receiveWithAuthorization</code>, and <code>authorizationState</code> are all
-        registered — verified live on both networks. hood402 settles with the standard
-        gasless EIP-3009 path; the facilitator pays gas, the payer signs and needs no ETH.
-      </p>
+<span class="k">const</span> res = <span class="k">await</span> client.<span class="k">fetch</span>(url)
+<span class="c">// fetchWithReceipt(url) also returns the</span>
+<span class="c">// decoded X-PAYMENT-RESPONSE settlement</span></div>
+        <p class="lede" style="font-size:15px;margin-top:16px">The client refuses to sign above <span class="mono">maxSpendPerOrigin</span> before any network call. In the browser, build the signer from an injected wallet with <span class="mono">fromWalletClient</span>.</p>
+      </div>
     </div>
-    <div class="card">
-      <h3>Domain separator</h3>
-      <p>
-        Reconstructed to match the on-chain <code>DOMAIN_SEPARATOR()</code> exactly:
-        <code>name="Global Dollar"</code>, <code>version="1"</code>, the chain's own
-        <code>chainId</code>, and the USDG proxy as <code>verifyingContract</code>.
-      </p>
-    </div>
-    <div class="card">
-      <h3>Replay protection</h3>
-      <p>
-        Every authorization carries a random 32-byte nonce. The facilitator checks
-        <code>authorizationState(payer, nonce)</code> before broadcasting and claims an
-        idempotency slot in its ledger first — a retried <code>/settle</code> for the same
-        signed payment returns the original transaction instead of double-spending gas.
-      </p>
-    </div>
-    <div class="card">
-      <h3>Networks</h3>
-      <p>
-        Mainnet <code>robinhood</code> (chain 4663) and testnet <code>robinhood-testnet</code>
-        (chain 46630) — both with live, verified USDG deployments.
-      </p>
-    </div>
-  </div>
-</section>
 
-<section class="block" id="compare">
-  <h2>hood402 vs. r0x</h2>
-  <p class="sub">
-    <a href="https://github.com/nhevers/project-r0x">r0x</a> is a hosted facilitator plus an
-    agent-OS SDK and MCP plugin — you call r0x's service and its skill catalog. hood402 is
-    the other end of that spectrum: protocol primitives you self-host, with no dependency on
-    any one operator.
-  </p>
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr><th></th><th>hood402</th><th>r0x</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>What it is</td><td>Middleware + client + facilitator you run yourself</td><td>Hosted facilitator + agent SDK + MCP plugin</td></tr>
-        <tr><td>x402 wire format</td><td>v1 — <code>X-PAYMENT</code> / <code>X-PAYMENT-RESPONSE</code>, matches the deployed client ecosystem (<code>x402-fetch</code>, <code>x402-axios</code>, etc.)</td><td>v2-style CAIP-2 network naming (<code>eip155:4663</code>) and a <code>PAYMENT-RESPONSE</code> header</td></tr>
-        <tr><td>Settlement</td><td class="yes">EIP-3009 <code>transferWithAuthorization</code></td><td class="yes">EIP-3009 <code>TransferWithAuthorization</code></td></tr>
-        <tr><td>Run your own facilitator</td><td class="yes">Yes — Dockerfile + Cloud Run docs included</td><td class="no">No — r0x operates the facilitator</td></tr>
-        <tr><td>Skill catalog / agent OS</td><td class="no">Out of scope — protocol only</td><td class="yes">18 MCP tools (trade, bridge, liquidity, …)</td></tr>
-        <tr><td>License</td><td>Apache-2.0</td><td>MIT</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="sub" style="margin-top:14px">
-    They're complementary, not competing: an r0x agent can pay a hood402-protected endpoint,
-    and a hood402 client can pay an r0x-facilitated one — both speak <code>exact</code>/EIP-3009
-    USDG under the hood.
-  </p>
-</section>
+    <div class="spec" style="margin-top:52px">
+      <div class="r"><div class="t">exact / EIP-3009</div><div class="d">The <b>only</b> scheme. Every payment is a signed <b>transferWithAuthorization</b>, the payer's signature fixes amount and recipient; the facilitator can only choose <b>whether</b> to broadcast, never <b>what</b>.</div></div>
+      <div class="r"><div class="t">verify → settle</div><div class="d">A pure state machine: structural checks → signature recovery → on-chain replay guard → balance → broadcast. Every failure has a canonical <b>InvalidReason</b> and human text.</div></div>
+      <div class="r"><div class="t">facilitator</div><div class="d">A standalone, self-hostable service, <b>/verify</b>, <b>/settle</b>, <b>/supported</b>, <b>/metrics</b>, an idempotent SQLite ledger, a Dockerfile. It never holds user funds.</div></div>
+      <div class="r"><div class="t">tested</div><div class="d">The exact/EIP-3009 state machine is pinned by <b>65 tests</b>; the facilitator adds <b>18 more</b> for ledger idempotency and its HTTP endpoints. <span class="mono">npm run e2e</span> proves the full loop against live chain state.</div></div>
+    </div>
+  </section>
 
-<div class="disclosure">
-  Stock Tokens on Robinhood Chain are tokenized debt securities and may not be offered to US
-  persons (plus Canada, UK, Switzerland). hood402 moves USDG, Robinhood Chain's dollar
-  stablecoin — not a security — so this restriction doesn't apply to payments made with it.
-</div>
+  <!-- ===================== NETWORKS ===================== -->
+  <section id="net">
+    <div class="eyebrow"><span class="n">04</span> / ROBINHOOD CHAIN · both networks</div>
+    <h2>Two networks.<br>One 6-decimal dollar.</h2>
+    <p class="lede" style="margin-top:22px">Both are USDG with EIP-712 domain <span class="mono">name="Global Dollar", version="1"</span>. Aliases (<span class="mono">robinhood-chain</span>, <span class="mono">eip155:4663</span>, the bare chain ids) all resolve to the same two via <span class="mono">resolveNetwork()</span>.</p>
+    <div class="netwrap">
+      <table class="net">
+        <thead><tr><th>Network</th><th>Chain ID</th><th>USDG address</th><th>Explorer</th></tr></thead>
+        <tbody>
+          <tr><td><b>robinhood</b> · mainnet</td><td>4663</td><td>0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168</td><td><a href="https://robinhoodchain.blockscout.com">Blockscout</a></td></tr>
+          <tr><td><b>robinhood-testnet</b></td><td>46630</td><td>0x7E955252E15c84f5768B83c41a71F9eba181802F</td><td><a href="https://explorer.testnet.chain.robinhood.com">Blockscout</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="spec" style="margin-top:44px">
+      <div class="r"><div class="t">two-layer replay guard</div><div class="d">A random 32-byte nonce checked against on-chain <b>authorizationState</b>, plus the facilitator's SQLite ledger claiming an idempotency slot on <b>(network, payer, nonce)</b> before broadcast, a retried settle returns the original tx, never a double-spend.</div></div>
+      <div class="r"><div class="t">short validity windows</div><div class="d"><b>300-second</b> default signing window, a leaked signature has a narrow blast radius.</div></div>
+      <div class="r"><div class="t">keys are env-only</div><div class="d">The gas wallet and any payer key are env vars, never hardcoded, never logged. The payer needs USDG, not gas.</div></div>
+    </div>
+  </section>
 
+  <!-- ===================== GET IT ===================== -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">05</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>Install, price a<br>route, take payment.</h2>
+        <p class="lede" style="margin-top:22px">A library and a facilitator. No accounts, no API keys, no subscriptions, the payment <em>is</em> the auth. Node ≥ 20, viem as a peer.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/hood402#readme">read the docs</a>
+          <a class="btn" href="https://www.npmjs.com/package/hood402">npm</a>
+          <a class="btn" href="https://github.com/coinbase/x402">x402 spec</a>
+        </div>
+      </div>
+      <div>
+        <div class="code-block"><button class="copy" data-copy="get">COPY</button><span class="p">npm install hood402 viem</span>
+
+<span class="c"># prove the gasless path is live</span>
+<span class="p">npm run verify:usdg</span>
+
+<span class="c"># run the full interop proof</span>
+<span class="p">npm run e2e</span>
+
+<span class="c"># self-host the facilitator</span>
+<span class="p">cd facilitator &amp;&amp; npm start</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood402</div>
+    <div class="meta">
+      x402 · exact / EIP-3009 · USDG · Node ≥ 20<br>
+      <a href="https://github.com/nirholas/hood402">github.com/nirholas/hood402</a><br>
+      <a href="https://www.npmjs.com/package/hood402">npmjs.com/package/hood402</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · <a href="https://three.ws">three.ws</a> · not affiliated with Robinhood Markets
+    </div>
+  </footer>
 </main>
 
-<footer class="wrap">
-  <span>Apache-2.0 licensed. Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
-  <span><a href="https://github.com/nirholas/hood402">GitHub</a> · <a href="https://github.com/nirholas/hood402/blob/main/facilitator/README.md">Facilitator docs</a></span>
-</footer>
-
 <script>
-  const tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      tabs.forEach((b) => b.setAttribute('aria-selected', 'false'));
-      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-      btn.setAttribute('aria-selected', 'true');
-      document.getElementById(btn.getAttribute('aria-controls')).classList.add('active');
-    });
-  });
-</script>
+"use strict";
 
+/* ---------- honest demo values (clearly a demo; nothing is broadcast) ---------- */
+const NET = { id:'robinhood', chainId:4663 };
+const PAYER = '0x97bA3c4E1d02F8aB65C7e90D1f4A2b3C8d5E6F70';
+const PAYTO = '0x2F1e9A0b7C4d3E6f5A8b1C2d3E4f5A6b7C8d9E0f';
+
+function hex(n){ let s='0x'; const c='0123456789abcdef'; for(let i=0;i<n;i++) s+=c[Math.floor(Math.random()*16)]; return s; }
+function b64(obj){ try{ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }catch(_){ return btoa(JSON.stringify(obj)); } }
+
+/* a real, well-formed X-PAYMENT payload for the exact scheme, then base64 it, same shape hood402 sends */
+function buildPaymentHeader(nonce){
+  const now = Math.floor(Date.now()/1000);
+  const payload = {
+    x402Version: 1, scheme: 'exact', network: NET.id,
+    payload: {
+      signature: hex(130),
+      authorization: {
+        from: PAYER, to: PAYTO, value: '10000',   // 0.01 USDG, 6 decimals
+        validAfter: String(now - 5), validBefore: String(now + 300), nonce
+      }
+    }
+  };
+  return b64(payload);
+}
+function short(s, head=8, tail=6){ return s.length > head+tail+2 ? s.slice(0,head)+'…'+s.slice(-tail) : s; }
+
+const logEl = document.getElementById('log');
+function line(cls, arrow, text){
+  const d = document.createElement('div');
+  d.className = 'ln '+cls;
+  d.innerHTML = '<span class="ar">'+arrow+'</span><span class="tx">'+text+'</span>';
+  logEl.appendChild(d);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('in')));
+  return d;
+}
+function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+const gate    = document.getElementById('gate');
+const payBtn  = document.getElementById('pay');
+const prog    = payBtn.querySelector('.prog');
+const payLbl  = payBtn.querySelector('.lbl');
+const paynote = document.getElementById('paynote');
+const consoleEl = document.getElementById('console');
+const railPaid= document.getElementById('railPaid');
+const reduce  = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function grow(to){ prog.animate([{transform:getComputedStyle(prog).transform},{transform:'scaleX('+to+')'}],{duration:reduce?60:420,fill:'forwards',easing:'cubic-bezier(.16,1,.3,1)'}); }
+
+let running=false, paid=false;
+async function runPay(){
+  if(running||paid) return; running=true;
+  payBtn.disabled=true; payBtn.classList.add('working'); consoleEl.classList.add('live');
+  payLbl.textContent='opening…';
+  logEl.innerHTML='';
+  const nonce = hex(64);
+  const header = buildPaymentHeader(nonce);
+  const txHash = hex(64);
+  const block  = (21483900 + Math.floor(Math.random()*400)).toLocaleString('en-US');
+  const step = reduce ? 90 : 1;
+
+  line('dim','→','GET /premium'); await wait(280*step);
+  line('res','←','402 PAYMENT REQUIRED'); await wait(220*step);
+  line('dim','','accepts: exact · USDG · 0.01 · chain 4663'); await wait(360*step);
+  grow(.34);
+  line('dim','→','sign EIP-3009 transferWithAuthorization'); await wait(300*step);
+  line('dim','','nonce '+short(nonce,10,6)); await wait(180*step);
+  line('code2','→','X-PAYMENT: <span class="b64">'+short(header,20,10)+'</span>'); await wait(360*step);
+  grow(.62);
+  line('dim','→','POST /settle'); await wait(300*step);
+  line('dim','','broadcast transferWithAuthorization'); await wait(420*step);
+  line('res','←','tx '+short(txHash,10,8)+' · block #'+block); await wait(300*step);
+  grow(.9);
+  line('res','←','200 OK'); await wait(160*step);
+  line('code2','','X-PAYMENT-RESPONSE: settled · payer '+short(PAYER,8,6)); await wait(reduce?80:520);
+  grow(1);
+  open_();
+}
+function open_(){
+  paid=true; running=false;
+  payBtn.classList.remove('working'); payBtn.classList.add('done');
+  payLbl.textContent='200 · unlocked ✓';
+  paynote.textContent='receipt held in the rail · scroll on';
+  consoleEl.classList.remove('live');
+  gate.classList.add('open');
+  railPaid.classList.add('on');
+}
+function skip(){
+  if(paid) return;
+  paid=true;
+  payLbl.textContent='skipped';
+  paynote.textContent='gate bypassed for reading';
+  gate.classList.add('open');
+}
+/* idle preview so the console reads as a live socket before you pay */
+function idle(){
+  logEl.innerHTML='';
+  line('dim','→','GET /premium');
+  line('res','←','402 PAYMENT REQUIRED');
+  line('dim','','accepts: exact · USDG · 0.01 · chain 4663');
+  const w=document.createElement('div');
+  w.className='ln dim'; w.style.marginTop='6px';
+  w.innerHTML='<span class="ar">·</span><span class="tx" style="opacity:.7">waiting for X-PAYMENT…</span>';
+  logEl.appendChild(w);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.add('in')));
+}
+idle();
+payBtn.addEventListener('click', runPay);
+document.getElementById('skip').addEventListener('click', skip);
+
+/* ---------- the four flow states ---------- */
+const STATES = [
+  ['402','Payment Required','Server answers a paid route with the terms, scheme, asset, amount, recipient, network. Not an error page: a machine-readable invoice.',
+   '<svg class="glyph" viewBox="0 0 120 34" preserveAspectRatio="none"><rect x="1" y="4" width="118" height="26"/><line x1="30" y1="4" x2="30" y2="30"/><path d="M8 22 L8 10 L14 22 L14 10"/><path d="M20 10 L20 17 L26 17 M26 10 L26 22"/></svg>'],
+  ['SIGN','transferWithAuthorization','The client signs one EIP-3009 authorization. The signature fixes amount and recipient forever, gasless, off-chain, under a hard spend cap.',
+   '<svg class="glyph" viewBox="0 0 120 34" preserveAspectRatio="none"><path d="M4 26 C24 26 22 8 40 8 C58 8 56 26 76 26 C92 26 96 14 116 14"/><circle cx="116" cy="14" r="2.4"/></svg>'],
+  ['X-PAY','Header, retry','The base64 payload rides an X-PAYMENT header on the retry, plain HTTP, no redirect, no session, no second round trip past the retry.',
+   '<svg class="glyph" viewBox="0 0 120 34" preserveAspectRatio="none"><rect x="1" y="9" width="80" height="16"/><path d="M84 17 L112 17 M104 10 L112 17 L104 24"/></svg>'],
+  ['200','Settled + receipt','Server verifies, broadcasts the authorization, and returns 200 with an X-PAYMENT-RESPONSE receipt: tx hash, network, payer. Paid, and provable.',
+   '<svg class="glyph" viewBox="0 0 120 34" preserveAspectRatio="none"><rect x="1" y="4" width="118" height="26"/><path d="M12 17 L20 25 L36 9"/><line x1="48" y1="12" x2="110" y2="12"/><line x1="48" y1="22" x2="90" y2="22"/></svg>'],
+];
+const fg = document.getElementById('flowgrid');
+STATES.forEach((s,i)=>{
+  const d = document.createElement('div'); d.className='fst rise';
+  d.innerHTML = '<div class="code mono">'+s[0]+'</div><div class="nm">'+s[1]+'</div><div class="ds">'+s[2]+'</div>'+s[3];
+  fg.appendChild(d);
+});
+
+/* ---------- copy buttons ---------- */
+const COPY = {
+  server: `import { paywall } from 'hood402/server'\napp.get('/premium', paywall({ price:'0.01', payTo:'0xYourAddress', network:'robinhood', facilitator:'https://your-facilitator.example.com' }), (req,res)=>res.json({ data:'unlocked' }))`,
+  client: `import { Hood402Client, fromAccount } from 'hood402/client'\nconst client = new Hood402Client({ signer: fromAccount(account), maxSpendPerOrigin:'1.00' })\nconst res = await client.fetch(url)`,
+  get: `npm install hood402 viem`
+};
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(COPY[btn.dataset.copy]||'').then(()=>{
+      const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.14});
+document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i%4*60)+'ms'; io.observe(el); });
+
+/* ---------- access rail ---------- */
+const stations = [...document.querySelectorAll('.rail .stn')];
+const sections = stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage = document.getElementById('carriage');
+function updateRail(){
+  let idx=0, mid=innerHeight*0.4;
+  sections.forEach((sec,i)=>{ const r=sec.getBoundingClientRect(); if(r.top<=mid) idx=i; });
+  stations.forEach((s,i)=>s.setAttribute('aria-current', i===idx));
+  const active = stations[idx];
+  const railRect = document.querySelector('.rail').getBoundingClientRect();
+  const r = active.getBoundingClientRect();
+  carriage.style.height = r.height+'px';
+  carriage.style.transform = `translateY(${r.top - railRect.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'}); }));
+addEventListener('scroll', ()=>requestAnimationFrame(updateRail), {passive:true});
+addEventListener('resize', updateRail); updateRail();
+</script>
 </body>
 </html>

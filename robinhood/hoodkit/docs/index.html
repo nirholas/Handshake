@@ -1,365 +1,785 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>hoodkit — the power-user toolkit for Robinhood Chain</title>
-<meta name="description" content="Streaming, caching, batching, a local indexer, agent strategy primitives, and React hooks for Robinhood Chain (4663). Built on hoodchain.">
-<link rel="stylesheet" href="./site.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hoodkit — patch the signal chain for Robinhood Chain</title>
+<meta name="description" content="A power-user toolkit for Robinhood Chain: real-time streams with reconnect gap-fill, a read-through cache with request coalescing, multicall batching, and a local SQLite indexer. Patch the modules together and watch the data flow." />
+<link rel="canonical" href="https://nirholas.github.io/hoodkit/" />
+<meta name="theme-color" content="#0b0b0c" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hoodkit — the signal patchbay" />
+<meta property="og:description" content="Drag patch cables between stream, cache, indexer and your app. Complete the patch and the pipeline goes live — a toolkit you assemble with your cursor." />
+<meta property="og:url" content="https://nirholas.github.io/hoodkit/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><circle cx='8' cy='11' r='2.6' fill='none' stroke='%23e9e6df' stroke-width='2'/><circle cx='24' cy='21' r='2.6' fill='none' stroke='%23e9e6df' stroke-width='2'/><path d='M8 11 C 16 27 16 27 24 21' fill='none' stroke='%23e9e6df' stroke-width='2'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hoodkit","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Power-user toolkit for Robinhood Chain (chain ID 4663): real-time streams with reconnect gap-fill, read-through caching with request coalescing, multicall batching, a local SQLite indexer (holders/OHLCV/volume), agent strategy primitives, and SSR-safe React hooks.","softwareVersion":"0.1.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hoodkit","codeRepository":"https://github.com/nirholas/hoodkit"}
+</script>
+<style>
+  :root{
+    --ink:#0b0b0c; --paper:#e9e6df; --graphite:#78746c; --white:#f7f5f0;
+    --hair:rgba(11,11,12,.15); --hair2:rgba(11,11,12,.30);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--paper); color:var(--ink); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(11,11,12,.035) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply; opacity:.5;
+  }
+  .scan{position:fixed; left:0; right:0; height:2px; z-index:9998; pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(11,11,12,.20),transparent);
+    animation:scan 8s linear infinite; will-change:transform}
+  @keyframes scan{0%{transform:translateY(-10vh)}100%{transform:translateY(110vh)}}
+  @media(prefers-reduced-motion:reduce){.scan{display:none} *{animation-duration:.001s!important}}
+
+  /* signal rail */
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--hair); background:var(--paper); mix-blend-mode:multiply}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite); position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--ink); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--ink); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--hair2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--ink);border-color:var(--ink)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--ink);height:40px;
+    top:0;transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:720px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(56px,8vh,110px) clamp(20px,5vw,88px); border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--ink)}
+
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.96}
+  h1{font-size:clamp(40px,7.6vw,104px)}
+  h2{font-size:clamp(30px,5vw,64px)}
+  .lede{max-width:62ch; font-size:clamp(17px,1.7vw,23px); line-height:1.42; color:#26241f}
+
+  /* ============ RIG (hero + the signature interaction) ============ */
+  #rig{min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding-bottom:clamp(40px,6vh,72px)}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.04em; margin-bottom:20px; white-space:pre-wrap}
+  @media(max-width:720px){.boot{font-size:10.5px; letter-spacing:0}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  h1.headline{max-width:15ch}
+  h1 .lo{color:var(--graphite)}
+  .sub{margin-top:22px; max-width:56ch; font-size:clamp(16px,1.6vw,21px); color:#2b2823}
+
+  .patchwrap{position:relative; margin-top:clamp(26px,4vh,44px); border:1px solid var(--hair2);
+    background:linear-gradient(180deg,rgba(11,11,12,.015),transparent);
+    padding:clamp(22px,3vw,44px) clamp(18px,3vw,52px); overflow:hidden}
+  .patchwrap::before{content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:radial-gradient(circle at 1px 1px, rgba(11,11,12,.13) 1px, transparent 0);
+    background-size:22px 22px; opacity:.55}
+  .cables{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; overflow:visible}
+  .cables path.cable{fill:none; stroke:var(--ink); stroke-width:2.4; stroke-linecap:round;
+    opacity:0; transition:opacity .35s var(--ease)}
+  .cables path.cable.on{opacity:1}
+  .cables path.cable.hit{stroke:transparent; stroke-width:18; pointer-events:stroke; cursor:pointer; opacity:1}
+  .cables path.ghost{fill:none; stroke:var(--graphite); stroke-width:2.2; stroke-dasharray:2 7;
+    stroke-linecap:round; opacity:.9}
+  .cables .pkt{fill:var(--ink)}
+
+  .rack{position:relative; z-index:4; display:grid; grid-template-columns:repeat(4,1fr);
+    gap:clamp(30px,5vw,58px) clamp(34px,5vw,76px); align-items:start}
+  @media(min-width:761px){
+    .rack{grid-template-rows:auto auto}
+    .mod[data-slot="stream"]{grid-column:1;grid-row:1}
+    .mod[data-slot="cache"]{grid-column:2;grid-row:1}
+    .mod[data-slot="indexer"]{grid-column:3;grid-row:1}
+    .mod[data-slot="app"]{grid-column:4;grid-row:1}
+    .mod[data-slot="react"]{grid-column:2;grid-row:2}
+    .mod[data-slot="strategy"]{grid-column:3;grid-row:2}
+  }
+  @media(max-width:760px){.rack{grid-template-columns:1fr 1fr; gap:52px 44px}}
+  @media(max-width:480px){.rack{grid-template-columns:1fr; gap:46px}}
+
+  .mod{position:relative; border:1.5px solid var(--ink); background:var(--paper);
+    padding:14px 15px 16px; min-height:96px; transition:box-shadow .4s var(--ease); }
+  .mod[data-slot="app"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .mod .mh{display:flex; align-items:baseline; justify-content:space-between; gap:8px}
+  .mod .mn{font:700 15px/1 var(--grot); letter-spacing:-.01em}
+  .mod .mt{font:600 9px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .mod[data-slot="app"] .mt{color:rgba(247,245,240,.6)}
+  .mod .md{margin-top:9px; font:500 11.5px/1.42 var(--mono); color:#332f28; letter-spacing:.01em}
+  .mod[data-slot="app"] .md{color:rgba(247,245,240,.82)}
+  .mod .led{position:absolute; top:12px; right:13px; width:6px; height:6px; border-radius:50%;
+    border:1px solid var(--hair2); transition:background .35s,border-color .35s,box-shadow .45s}
+  .mod[data-slot="app"] .led{border-color:rgba(247,245,240,.4)}
+  .mod.live .led{background:var(--ink); border-color:var(--ink); box-shadow:0 0 0 3px rgba(11,11,12,.12)}
+  .mod[data-slot="app"].live .led{background:var(--paper); border-color:var(--paper); box-shadow:0 0 0 3px rgba(247,245,240,.22)}
+  .mod.live{box-shadow:0 0 0 1px var(--ink)}
+  .mod.nudge{animation:nudge .34s var(--ease)}
+  @keyframes nudge{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+  /* jacks */
+  .jack{position:absolute; width:20px; height:20px; border-radius:50%; border:0; padding:0;
+    background:var(--paper); cursor:crosshair; z-index:6; display:grid; place-items:center;
+    transition:transform .25s var(--ease); touch-action:none}
+  .mod[data-slot="app"] .jack{background:var(--ink)}
+  .jack::before{content:""; width:16px; height:16px; border-radius:50%; border:2px solid var(--ink);
+    box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 5px var(--ink)}
+  .mod[data-slot="app"] .jack::before{border-color:var(--paper); box-shadow:inset 0 0 0 3px var(--ink), inset 0 0 0 5px var(--paper)}
+  .jack:focus-visible{outline:2px solid var(--ink); outline-offset:3px}
+  .jack.armed::before{animation:armpulse 1s ease-in-out infinite}
+  @keyframes armpulse{0%,100%{box-shadow:inset 0 0 0 3px var(--paper), inset 0 0 0 5px var(--ink)}50%{box-shadow:inset 0 0 0 2px var(--paper), inset 0 0 0 8px var(--ink)}}
+  .jack.wired::before{box-shadow:inset 0 0 0 2px var(--paper), inset 0 0 0 7px var(--ink)}
+  .mod[data-slot="app"] .jack.wired::before{box-shadow:inset 0 0 0 2px var(--ink), inset 0 0 0 7px var(--paper)}
+  .jack .lab{position:absolute; font:600 8px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--graphite); white-space:nowrap; pointer-events:none}
+  .mod[data-slot="app"] .jack .lab{color:rgba(247,245,240,.6)}
+  /* desktop: in left, out right */
+  .jack.in{left:-10px; top:50%; transform:translateY(-50%)}
+  .jack.in.armed,.jack.in.hoverable{transform:translateY(-50%) scale(1.22)}
+  .jack.out{right:-10px; top:50%; transform:translateY(-50%)}
+  .jack.out.armed,.jack.out.hoverable{transform:translateY(-50%) scale(1.22)}
+  .jack.in .lab{right:27px; top:50%; transform:translateY(-50%)}
+  .jack.out .lab{left:27px; top:50%; transform:translateY(-50%)}
+  @media(hover:hover){ .jack:hover{transform:translateY(-50%) scale(1.22)} }
+  /* satellite modules: top input jack */
+  .jack.in.top{left:50%; top:-10px; transform:translateX(-50%)}
+  .jack.in.top.armed{transform:translateX(-50%) scale(1.22)}
+  .jack.in.top .lab{left:50%; top:-16px; transform:translateX(-50%); right:auto}
+  @media(hover:hover){ .jack.in.top:hover{transform:translateX(-50%) scale(1.22)} }
+
+  @media(max-width:480px){
+    .jack.in{left:50%; top:-10px; right:auto; transform:translateX(-50%)}
+    .jack.in.armed{transform:translateX(-50%) scale(1.22)}
+    .jack.out{left:50%; right:auto; top:auto; bottom:-10px; transform:translateX(-50%)}
+    .jack.out.armed{transform:translateX(-50%) scale(1.22)}
+    .jack.in .lab,.jack.in.top .lab{left:50%; top:-16px; right:auto; transform:translateX(-50%)}
+    .jack.out .lab{left:50%; top:auto; bottom:-16px; transform:translateX(-50%)}
+    @media(hover:hover){ .jack.in:hover,.jack.out:hover,.jack.in.top:hover{transform:translateX(-50%) scale(1.22)} }
+  }
+
+  .patchbar{margin-top:22px; display:flex; flex-wrap:wrap; align-items:center; gap:16px 22px}
+  .seatall{appearance:none; border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+    font:600 12px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; padding:15px 26px;
+    cursor:pointer; transition:transform .3s var(--ease),background .3s,color .3s}
+  .seatall:hover{transform:translateY(-2px)} .seatall:active{transform:translateY(0)}
+  .seatall:disabled{opacity:.45; cursor:default; transform:none}
+  .seatall.reset{background:var(--paper); color:var(--ink)}
+  .hint{font:500 12px/1.45 var(--mono); color:var(--graphite); letter-spacing:.02em; max-width:46ch}
+  .hint kbd{font:inherit; border:1px solid var(--hair2); padding:1px 5px; border-radius:3px}
+
+  .status{margin-top:24px; border:1px solid var(--hair2); display:grid; grid-template-columns:150px 1fr}
+  @media(max-width:520px){.status{grid-template-columns:1fr}}
+  .status .sk{font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite);
+    padding:15px 16px; border-right:1px solid var(--hair); background:rgba(11,11,12,.02); display:flex; align-items:center; gap:10px}
+  @media(max-width:520px){.status .sk{border-right:0; border-bottom:1px solid var(--hair)}}
+  .status .sk .dot{width:7px;height:7px;border-radius:50%;border:1px solid var(--graphite)}
+  .status.online .sk{color:var(--ink)}
+  .status.online .sk .dot{background:var(--ink); border-color:var(--ink); animation:beat 1.6s ease-in-out infinite}
+  @keyframes beat{0%,100%{box-shadow:0 0 0 0 rgba(11,11,12,.25)}50%{box-shadow:0 0 0 4px rgba(11,11,12,0)}}
+  .status .sv{padding:13px 16px; font:500 12.5px/1.5 var(--mono); color:var(--ink); min-height:46px; display:flex; align-items:center}
+  .patchlog{margin:0; padding:12px 16px 14px; list-style:none; border-top:1px solid var(--hair); grid-column:1/-1;
+    font:500 12px/1.9 var(--mono); color:#332f28; min-height:30px}
+  .patchlog li{opacity:0; transform:translateY(6px); transition:opacity .4s var(--ease),transform .4s var(--ease)}
+  .patchlog li.in{opacity:1; transform:none}
+  .patchlog li::before{content:"› "; color:var(--graphite)}
+  .patchlog li b{font-weight:700}
+
+  .scrollcue{margin-top:26px; font:600 10px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase;
+    color:var(--graphite); display:inline-flex; align-items:center; gap:10px}
+  .scrollcue i{display:block; width:26px; height:1px; background:var(--graphite); position:relative; overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--ink);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+  /* ============ MODULES / signal library ============ */
+  .lib{display:grid; grid-template-columns:repeat(3,1fr); border-left:1px solid var(--hair); border-top:1px solid var(--hair); margin-top:14px}
+  @media(max-width:860px){.lib{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.lib{grid-template-columns:1fr}}
+  .cell{border-right:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:22px 20px 26px; position:relative; overflow:hidden; transition:background .3s}
+  .cell:hover{background:rgba(11,11,12,.03)}
+  .cell .id{font:600 10px/1 var(--mono); letter-spacing:.2em; color:var(--graphite)}
+  .cell .nm{font:700 20px/1.05 var(--grot); letter-spacing:-.02em; margin:12px 0 8px}
+  .cell .ds{font-size:14.5px; color:#2c2925; line-height:1.42}
+  .cell .ex{margin-top:14px; font:500 11.5px/1.5 var(--mono); color:var(--graphite); word-break:break-word}
+  .cell .wave{display:block; margin-top:18px; height:24px; width:100%; opacity:.42; transition:opacity .3s}
+  .cell .wave path{fill:none; stroke:var(--ink); stroke-width:1.2}
+  .cell:hover .wave{opacity:.9}
+
+  /* ============ RELIABILITY (gap-fill) ============ */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(30px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:34px}}
+  .gapviz{border:1px solid var(--hair2); background:rgba(11,11,12,.02); padding:22px 20px 24px}
+  .gapviz .gl{font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite); display:flex; justify-content:space-between; margin-bottom:16px}
+  .blocks{display:flex; gap:5px; align-items:flex-end; height:64px}
+  .blocks .blk{flex:1; height:100%; background:var(--hair2); border:1px solid var(--hair2); transition:background .3s var(--ease),transform .5s var(--ease); transform:scaleY(.18); transform-origin:bottom; will-change:transform}
+  .blocks .blk.filled{background:var(--ink); border-color:var(--ink)}
+  .blocks .blk.gap{background:var(--paper); border:1px dashed var(--hair2); transform:scaleY(1)}
+  .blocks .blk.refill{background:var(--ink); border-color:var(--ink)}
+  .gapcap{margin-top:16px; font:500 12px/1.6 var(--mono); color:#332f28; min-height:3.2em}
+  .gapcap b{font-weight:700}
+  .gapmark{display:inline-block; padding:2px 6px; background:var(--ink); color:var(--paper); font-weight:700}
+
+  .fuse{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:26px}
+  @media(max-width:860px){.fuse{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.fuse{grid-template-columns:1fr}}
+  .fuse .f{border:1px solid var(--hair2); padding:18px}
+  .fuse .f .h{font:700 13px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px}
+  .fuse .f .b{font-size:14px; color:#2c2925; line-height:1.45}
+
+  /* ============ INSTALL / GET ============ */
+  .install{border:1px solid var(--ink); background:var(--ink); color:var(--paper); padding:20px 22px;
+    font:500 13.5px/1.9 var(--mono); position:relative; overflow-x:auto}
+  .install .c{color:#8b8781}
+  .install .p::before{content:"$ "; color:#8b8781}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid rgba(233,230,223,.3);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(233,230,223,.14)}
+
+  .spec{border-top:1px solid var(--hair); margin-top:26px}
+  .spec .r{display:grid; grid-template-columns:150px 1fr; gap:20px; padding:16px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.spec .r{grid-template-columns:1fr; gap:5px}}
+  .spec .r .t{font:600 11px/1.3 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite)}
+  .spec .r .d{font-size:15px; color:#25231f; max-width:60ch}
+  .spec .r .d b{font-weight:700}
+
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--ink)}
+
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+</style>
 </head>
 <body>
+<div class="scan" aria-hidden="true"></div>
 
-<nav class="top" aria-label="Site">
-  <div class="wrap">
-    <a class="brand" href="./index.html">hood<span class="tick">kit</span></a>
-    <div class="links">
-      <a href="#quickstart">Quickstart</a>
-      <a href="#modules" class="hide-sm">Modules</a>
-      <a href="#decision">hoodkit vs hood-js</a>
-      <a href="./guides.html">Guides</a>
-      <a href="./api/index.html">API reference</a>
-      <a href="https://github.com/nirholas/hoodkit">GitHub</a>
-    </div>
-  </div>
+<nav class="rail" aria-label="Sections">
+  <b>hoodkit</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#rig" aria-current="true">Patch</a>
+  <a class="stn" href="#modules">Modules</a>
+  <a class="stn" href="#reliability">Gap&#8209;fill</a>
+  <a class="stn" href="#install">Install</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
 </nav>
 
-<header class="hero wrap">
-  <h1>The power-user toolkit for<br><span class="grad">Robinhood Chain</span></h1>
-  <p class="lede">
-    Where <code>hood-js</code> hides complexity, <code>hoodkit</code> weaponizes it: reconnecting
-    real-time streams, request-coalescing cache, multicall batching, a local SQLite indexer for
-    holders and OHLCV, agent strategy primitives (PnL, TWAP, spend caps), and SSR-safe React
-    hooks — all built on the <a href="https://nirholas.github.io/robinhood-chain-sdk/">hoodchain</a>
-    core SDK.
-  </p>
-  <div class="cta">
-    <span class="install"><span class="dollar">$</span> npm install hoodkit hoodchain viem</span>
-    <a class="btn primary" href="#quickstart">Get started</a>
-    <a class="btn" href="./api/index.html">API reference</a>
-  </div>
+<main>
+  <!-- ============ RIG ============ -->
+  <section id="rig">
+    <p class="boot mono" id="boot"></p>
+    <div class="eyebrow"><span class="n">00</span> / SIGNAL PATCHBAY · chain 4663</div>
+    <h1 class="headline">Patch the pipeline.<br><span class="lo">Then it runs itself.</span></h1>
+    <p class="sub">hoodkit is four modules you wire together: a real-time <b>stream</b>, a read-through <b>cache</b>, a local <b>indexer</b>, and your app. Drag a cable from an output jack to an input jack. Seat all three and the signal chain goes live — the same shape your code assembles in about a dozen lines.</p>
 
-  <div class="board-head">
-    <h2>Stock Tokens, live</h2>
-    <span class="status" id="board-status"><span class="dot"></span><span id="board-status-text">connecting to chain 4663…</span></span>
-  </div>
-  <div class="board" id="board" aria-live="polite"></div>
-  <div class="board-error" id="board-error">
-    Could not reach the public RPC (<code>rpc.mainnet.chain.robinhood.com</code>) from your
-    browser. It may be briefly unavailable, or an extension is blocking cross-origin
-    requests — check the <a href="https://robinhoodchain.blockscout.com">explorer</a> and reload.
-  </div>
-  <p class="board-note">
-    This board is the exact pattern <code>streamPrices()</code> wraps: poll every feed in one
-    multicall, emit only on a changed Chainlink round. Here it's raw JSON-RPC so the page works
-    with zero dependencies; the package version is a few lines with reconnect + backpressure handling.
-  </p>
-
-  <div class="board-head">
-    <h2>Live launches — NOXA + The Odyssey</h2>
-    <span class="status" id="launch-status"><span class="dot"></span><span id="launch-status-text">watching factory logs…</span></span>
-  </div>
-  <div class="launch-panel" id="launch-panel">
-    <div class="launch-empty" id="launch-empty">watching for new launches — this polls live, leave it open</div>
-  </div>
-  <p class="board-note">
-    The exact pattern <code>streamLaunches()</code> wraps: poll <code>eth_getLogs</code> for both
-    factories, decode <code>TokenLaunched</code> / <code>TokenCreated</code>, advance a cursor only
-    after a chunk fully delivers — so a dropped connection re-scans the missed range instead of
-    silently skipping it.
-  </p>
-</header>
-
-<main class="wrap">
-
-<section class="block" id="quickstart">
-  <h2>Quickstart</h2>
-  <p class="sub">Node ≥ 20. <code>hoodchain</code> and <code>viem</code> are peer dependencies. <code>better-sqlite3</code>, <code>react</code>, and <code>ws</code> are optional — only needed for the modules that use them.</p>
-<pre><code>npm install hoodkit hoodchain viem</code></pre>
-<pre><code>import { createHoodClient } from 'hoodchain'
-import { streamSwaps, createHoodCache, plan, createIndexer } from 'hoodkit'
-
-const hood = createHoodClient()
-
-// Reconnecting, gap-filled swap stream
-const swaps = await streamSwaps(hood, { token: '0x…WEN' })
-swaps.on('data', (s) =&gt; console.log(s.buysToken0 ? 'BUY' : 'SELL', s.price))
-
-// Request-coalescing cache — 100 concurrent reads, 1 RPC call
-const cache = createHoodCache(hood)
-await Promise.all(Array.from({ length: 100 }, () =&gt; cache.getQuote('AAPL')))
-
-// Local SQLite index: holders, OHLCV candles, 24h volume
-const indexer = await createIndexer({ client: hood, path: './hood.sqlite', tokens: ['0x…'] })
-await indexer.sync({ fromBlock: 0n })
-console.log(indexer.holderCount('0x…'), indexer.candles('0x…', '1h'))</code></pre>
-  <p class="sub" style="margin-top:16px">React hooks live at the <code>hoodkit/react</code> subpath:</p>
-<pre><code>import { HoodProvider, useQuote, useLaunches } from 'hoodkit/react'
-
-function Ticker() {
-  const { data } = useQuote('AAPL')
-  return &lt;span&gt;{data ? `$${data.priceUsd.toFixed(2)}` : '…'}&lt;/span&gt;
-}</code></pre>
-</section>
-
-<section class="block" id="modules">
-  <h2>Modules</h2>
-  <p class="sub">Import only what you use. Heavy deps (<code>better-sqlite3</code>, <code>react</code>) are optional peers — the core install stays light.</p>
-  <div class="grid">
-    <div class="card">
-      <h3><code>stream</code></h3>
-      <p>Backpressure-safe <code>Stream&lt;T&gt;</code> (event-emitter AND async-iterator) over prices, swaps, launches, and portfolio changes. Gap-fill log cursor: a dropped connection re-scans the missed block range, never silently skips it.</p>
-      <a class="card-link" href="./guides.html#stream">Guide →</a>
+    <div class="patchwrap">
+      <svg class="cables" id="cables" aria-hidden="true"></svg>
+      <div class="rack" id="rack">
+        <div class="mod" data-slot="stream">
+          <span class="led"></span>
+          <div class="mh"><span class="mn">Stream</span><span class="mt">source</span></div>
+          <div class="md">Chainlink ticks · v3 swaps · launches</div>
+          <button class="jack out" data-jack="s_out" data-port="out" data-slot="stream" aria-label="Stream output — start a cable"><span class="lab">out</span></button>
+        </div>
+        <div class="mod" data-slot="cache">
+          <span class="led"></span>
+          <div class="mh"><span class="mn">Cache</span><span class="mt">coalesce</span></div>
+          <div class="md">N identical reads → one RPC call</div>
+          <button class="jack in" data-jack="c_in" data-port="in" data-slot="cache" aria-label="Cache input"><span class="lab">in</span></button>
+          <button class="jack out" data-jack="c_out" data-port="out" data-slot="cache" aria-label="Cache output"><span class="lab">out</span></button>
+        </div>
+        <div class="mod" data-slot="indexer">
+          <span class="led"></span>
+          <div class="mh"><span class="mn">Indexer</span><span class="mt">sqlite</span></div>
+          <div class="md">holders · OHLCV · 24h vol · 0 RPC</div>
+          <button class="jack in" data-jack="i_in" data-port="in" data-slot="indexer" aria-label="Indexer input"><span class="lab">in</span></button>
+          <button class="jack out" data-jack="i_out" data-port="out" data-slot="indexer" aria-label="Indexer output"><span class="lab">out</span></button>
+        </div>
+        <div class="mod" data-slot="app">
+          <span class="led"></span>
+          <div class="mh"><span class="mn">Your app</span><span class="mt">sink</span></div>
+          <div class="md">bot · dashboard · agent</div>
+          <button class="jack in" data-jack="a_in" data-port="in" data-slot="app" aria-label="Your app input"><span class="lab">in</span></button>
+        </div>
+        <div class="mod" data-slot="react">
+          <span class="led"></span>
+          <div class="mh"><span class="mn">React</span><span class="mt">aux · hooks</span></div>
+          <div class="md">useQuote · usePortfolio · SSR-safe</div>
+          <button class="jack in top" data-jack="r_in" data-port="in" data-slot="react" aria-label="React hooks input"><span class="lab">in</span></button>
+        </div>
+        <div class="mod" data-slot="strategy">
+          <span class="led"></span>
+          <div class="mh"><span class="mn">Strategy</span><span class="mt">aux · agent</span></div>
+          <div class="md">PnL · triggers · dry-run TWAP · caps</div>
+          <button class="jack in top" data-jack="x_in" data-port="in" data-slot="strategy" aria-label="Strategy input"><span class="lab">in</span></button>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <h3><code>cache</code></h3>
-      <p>Read-through cache with request coalescing — N concurrent identical reads become 1 upstream call — and per-datatype TTLs. Pluggable store: in-memory LRU by default, bring your own Redis adapter.</p>
-      <a class="card-link" href="./guides.html#cache">Guide →</a>
-    </div>
-    <div class="card">
-      <h3><code>batch</code></h3>
-      <p><code>plan()</code> batches arbitrary reads into the fewest Multicall3 round-trips, chunked and failure-isolated. <code>createBatcher()</code> is a DataLoader-style batcher: unrelated call sites sharing one tick collapse into one multicall automatically.</p>
-      <a class="card-link" href="./guides.html#batch">Guide →</a>
-    </div>
-    <div class="card">
-      <h3><code>indexer</code></h3>
-      <p>A local SQLite indexer: incremental sync from the last synced block, <code>holders()</code>, <code>candles()</code> (real OHLCV from swap events), <code>volume24h()</code> — all answered with zero RPC once synced.</p>
-      <a class="card-link" href="./guides.html#indexer">Guide →</a>
-    </div>
-    <div class="card">
-      <h3><code>strategy</code></h3>
-      <p>What autonomous agents need: multiplier-aware <code>Position</code> PnL tracking, a <code>TwapExecutor</code> with per-slice slippage bounds and a hard <code>SpendCap</code>, price-cross triggers, and a real <code>eth_call</code> dry-run mode.</p>
-      <a class="card-link" href="./guides.html#strategy">Guide →</a>
-    </div>
-    <div class="card">
-      <h3><code>react</code></h3>
-      <p><code>hoodkit/react</code>: <code>useQuote</code>, <code>usePortfolio</code>, <code>useLaunches</code>, <code>useSwap</code> over the stream/cache layers. SSR-safe — every subscription lives inside <code>useEffect</code>.</p>
-      <a class="card-link" href="./guides.html#react">Guide →</a>
-    </div>
-  </div>
 
-  <div class="disclosure">
-    <strong>Stock Token eligibility.</strong> hoodkit inherits hoodchain's eligibility gate:
-    reads are unrestricted, but any swap whose output is a canonical Stock Token throws until the
-    operator's client sets <code>acknowledgeStockTokenEligibility: true</code>. Stock Tokens are
-    tokenized debt securities and may not be offered, sold, or delivered to US persons (additional
-    limits: Canada, UK, Switzerland).
-  </div>
-</section>
+    <div class="patchbar">
+      <button class="seatall" id="seatall">Seat all cables</button>
+      <p class="hint" id="hint">Drag from an <b>out</b> jack to an <b>in</b> jack — or tap one then the other. <kbd>Tab</kbd> + <kbd>Enter</kbd> works too.</p>
+    </div>
 
-<section class="block" id="decision">
-  <h2>hoodkit vs hood-js vs the core SDK</h2>
-  <p class="sub">An honest decision table. Most apps start with <code>hood-js</code> and never need more.</p>
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr><th>You need</th><th>Reach for</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>A quote, a swap, a portfolio read — one-off scripts, simple UIs</td><td><code>hoodchain</code> directly</td></tr>
-        <tr><td>The friendliest possible API surface, sane defaults baked in</td><td><code>hood-js</code></td></tr>
-        <tr><td>Real-time UI that must survive dropped connections without missing events</td><td><code>hoodkit</code> (<code>stream</code>)</td></tr>
-        <tr><td>A backend serving many users hitting the same hot reads</td><td><code>hoodkit</code> (<code>cache</code> + <code>batch</code>)</td></tr>
-        <tr><td>Holder counts, price charts, or trade history without re-scanning logs every request</td><td><code>hoodkit</code> (<code>indexer</code>)</td></tr>
-        <tr><td>An autonomous agent that trades, tracks PnL, and must never overspend</td><td><code>hoodkit</code> (<code>strategy</code>)</td></tr>
-        <tr><td>A React dashboard wired to live chain data</td><td><code>hoodkit/react</code></td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="sub" style="margin-top:14px">
-    hoodkit depends on hoodchain for every primitive (addresses, ABIs, the client, the registry) —
-    it never re-implements chain plumbing, only the operational layer around it: what happens when
-    a socket drops, when 100 requests want the same data at once, or when you need six months of
-    trade history without paying for it in RPC calls every time.
-  </p>
-</section>
+    <div class="status" id="status">
+      <div class="sk"><span class="dot"></span><span id="statuslabel">standby</span></div>
+      <div class="sv" id="statusval">0 / 3 core cables patched · signal idle</div>
+      <ul class="patchlog" id="patchlog"></ul>
+    </div>
 
+    <div class="scrollcue">scroll · the modules <i></i></div>
+  </section>
+
+  <!-- ============ MODULES ============ -->
+  <section id="modules">
+    <div class="eyebrow"><span class="n">01</span> / SIX MODULES · one entry point</div>
+    <h2>Every jack on that board<br>is a real export.</h2>
+    <p class="lede" style="margin-top:22px">One <span class="mono">createHoodClient()</span> from <b>hoodchain</b> flows through all of them. Import only what you patch — hoodkit is side-effect-free and tree-shakes to nothing you don't call.</p>
+    <div class="lib" id="lib"></div>
+  </section>
+
+  <!-- ============ RELIABILITY ============ -->
+  <section id="reliability">
+    <div class="eyebrow"><span class="n">02</span> / THE GUARANTEE · reconnect gap-fill</div>
+    <div class="cols">
+      <div>
+        <h2>A dropped RPC never<br>drops an event.</h2>
+        <p class="lede" style="margin-top:22px">Every RPC-backed stream sits behind one gap-fill engine. It keeps a persistent block cursor that only advances <b>after</b> a range is decoded and pushed. Lose the connection and the exact same range is re-read next tick — so no confirmed swap, transfer, or launch is ever silently skipped.</p>
+        <div class="fuse">
+          <div class="f"><div class="h">backpressure</div><div class="b">A slow <span class="mono">for await</span> consumer never grows memory unboundedly — one source, bounded buffer.</div></div>
+          <div class="f"><div class="h">overflow policy</div><div class="b"><span class="mono">latest</span> for price ticks, <span class="mono">drop-oldest</span> or <span class="mono">block</span> where every value counts.</div></div>
+          <div class="f"><div class="h">coalescing</div><div class="b">100 concurrent <span class="mono">getQuote</span> calls collapse into ~1 upstream round-trip.</div></div>
+          <div class="f"><div class="h">zero-RPC reads</div><div class="b">Holder, candle and volume queries answer from the local SQLite index, not the chain.</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="gapviz">
+          <div class="gl"><span>runLogCursor · block feed</span><span id="gaptag">syncing</span></div>
+          <div class="blocks" id="blocks"></div>
+          <div class="gapcap mono" id="gapcap">Cursor advancing block by block, each range decoded and pushed before the head moves.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INSTALL ============ -->
+  <section id="install">
+    <div class="eyebrow"><span class="n">03</span> / INSTALL</div>
+    <div class="cols">
+      <div>
+        <h2>Patch it in<br>real code.</h2>
+        <p class="lede" style="margin-top:22px">The three core modules, wired the same way you just wired the board. <b>hoodchain</b> and <b>viem</b> are peers — hoodkit never bundles them, so your app pins the versions.</p>
+        <div class="spec">
+          <div class="r"><div class="t">stream</div><div class="d"><b>streamPrices / streamSwaps / streamLaunches / streamPortfolio</b> — a backpressure-safe <span class="mono">Stream&lt;T&gt;</span> that is both an emitter and an async iterable.</div></div>
+          <div class="r"><div class="t">cache</div><div class="d"><b>createHoodCache</b> — read-through with request coalescing and per-datatype TTLs. Pluggable <span class="mono">CacheStore</span> for Redis or KV.</div></div>
+          <div class="r"><div class="t">batch</div><div class="d"><b>plan / createBatcher</b> — Multicall3 batching with per-read failure isolation; a DataLoader-style batcher coalesces across unrelated code paths.</div></div>
+          <div class="r"><div class="t">indexer</div><div class="d"><b>createIndexer</b> — incremental SQLite sync of Transfer + Swap events; resumes from the last block, answers queries with zero RPC.</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="install">
+          <button class="copy" data-copy="install">COPY</button>
+<span class="c"># install — hoodchain + viem are peers</span>
+<span class="p" id="cmd-install">npm install hoodkit hoodchain viem</span>
+
+<span class="c"># the patch, in code:</span>
+<span class="c"># stream → cache → indexer → your app</span>
+<span class="p">import { createHoodClient } from 'hoodchain'</span>
+<span class="p">import { streamPrices, createHoodCache,</span>
+<span class="p">&nbsp;&nbsp;createIndexer } from 'hoodkit'</span>
+
+<span class="p">const hood = createHoodClient()</span>
+<span class="p">const cache = createHoodCache(hood)</span>
+<span class="p">const idx = await createIndexer({ client: hood,</span>
+<span class="p">&nbsp;&nbsp;path: './hood.sqlite', tokens: ['0x…'] })</span>
+
+<span class="p">for await (const t of streamPrices(hood))</span>
+<span class="p">&nbsp;&nbsp;render(t.symbol, t.priceUsd)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">04</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>Built on hoodchain.<br>Ships with React hooks.</h2>
+        <p class="lede" style="margin-top:22px">Optional peers unlock the aux modules: <span class="mono">better-sqlite3</span> for the indexer, <span class="mono">react &gt;=18</span> for the SSR-safe hooks. Missing a peer for a feature you call throws a clear install instruction — never a silent failure.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/hoodkit">npm</a>
+          <a class="btn" href="https://github.com/nirholas/hoodkit">source</a>
+          <a class="btn" href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+        </div>
+      </div>
+      <div>
+        <div class="install">
+          <button class="copy" data-copy="react">COPY</button>
+<span class="c"># React: SSR-safe hooks over the same layers</span>
+<span class="p" id="cmd-react">npm install hoodkit react</span>
+
+<span class="p">import { HoodProvider, useQuote,</span>
+<span class="p">&nbsp;&nbsp;useLaunches } from 'hoodkit/react'</span>
+
+<span class="c"># live Chainlink price, updates on round advance</span>
+<span class="p">const { data } = useQuote('AAPL')</span>
+
+<span class="c"># optional peer, only if you patch it in</span>
+<span class="p">npm install better-sqlite3   # indexer</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood<br>kit</div>
+    <div class="meta">
+      Node ≥ 20 · viem-native · streams · cache · indexer<br>
+      <a href="https://github.com/nirholas/hoodkit">github.com/nirholas/hoodkit</a><br>
+      <a href="https://www.npmjs.com/package/hoodkit">npmjs.com/package/hoodkit</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · powered by <a href="https://three.ws">three.ws</a>
+    </div>
+  </footer>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Apache-2.0 © 2026 nirholas</span>
-    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
-  </div>
-</footer>
-
 <script>
-// Live Stock Token board — raw JSON-RPC eth_call to each Chainlink feed, no libraries.
-// latestRoundData() selector 0xfeaf968c; answer = second 32-byte word, 8 decimals.
-const RPC = 'https://rpc.mainnet.chain.robinhood.com'
-const TOKENS = [
-  { symbol: 'AAPL', name: 'Apple', feed: '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0' },
-  { symbol: 'TSLA', name: 'Tesla', feed: '0x4A1166a659A55625345e9515b32adECea5547C38' },
-  { symbol: 'NVDA', name: 'NVIDIA', feed: '0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15' },
-  { symbol: 'MSFT', name: 'Microsoft', feed: '0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E' },
-  { symbol: 'META', name: 'Meta Platforms', feed: '0x7C38C00C30BEe9378381E7B6135d7283356D71b1' },
-  { symbol: 'AMZN', name: 'Amazon', feed: '0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C' },
-  { symbol: 'GOOGL', name: 'Alphabet', feed: '0xF6f373a037c30F0e5010d854385cA89185AE638b' },
-  { symbol: 'COIN', name: 'Coinbase', feed: '0xA3a468A452940B7D6b69991207B508c609a98Ef2' },
-]
+"use strict";
 
-const board = document.getElementById('board')
-const statusEl = document.getElementById('board-status')
-const statusText = document.getElementById('board-status-text')
-const errorEl = document.getElementById('board-error')
-const tiles = new Map()
-const lastPrice = new Map()
+/* ---------- boot line ---------- */
+(function boot(){
+  const el = document.getElementById('boot');
+  const line = '● hoodchain client ready · public RPC · chain 4663 · patch a cable to begin';
+  [...line].forEach((ch,i)=>{ const s=document.createElement('span'); s.textContent=ch; s.style.animationDelay=(i*13+120)+'ms'; el.appendChild(s); });
+})();
 
-for (const t of TOKENS) {
-  const tile = document.createElement('div')
-  tile.className = 'tile'
-  tile.innerHTML =
-    '<div class="sym">' + t.symbol + '</div>' +
-    '<div class="co">' + t.name + '</div>' +
-    '<div class="px skeleton">$0000.00</div>' +
-    '<div class="meta"></div>'
-  board.appendChild(tile)
-  tiles.set(t.symbol, tile)
+/* ================= THE PATCHBAY ================= */
+const svg = document.getElementById('cables');
+const wrap = svg.parentElement;
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+const EDGES = {                         // directed: out -> in
+  s_out:{ c_in:1, r_in:1 },
+  c_out:{ i_in:1, x_in:1 },
+  i_out:{ a_in:1 },
+};
+const CORE = [['s_out','c_in'],['c_out','i_in'],['i_out','a_in']];
+const LABELS = {
+  's_out|c_in':['Stream → Cache','ticks &amp; swaps flow into the read-through cache; identical reads <b>coalesce</b>.'],
+  'c_out|i_in':['Cache → Indexer','decoded events land in local <b>SQLite</b> — holders, OHLCV, 24h volume.'],
+  'i_out|a_in':['Indexer → Your app','your bot or dashboard queries the index with <b>zero RPC</b> at read time.'],
+  's_out|r_in':['Stream → React','the same stream drives SSR-safe hooks: <b>useQuote</b>, <b>useLaunches</b>.'],
+  'c_out|x_in':['Cache → Strategy','cached reads feed <b>PnL</b>, price triggers and a dry-run <b>TWAP</b>.'],
+};
+
+const jacks = {};
+document.querySelectorAll('.jack').forEach(j=>{ jacks[j.dataset.jack] = j; });
+const mods = {};
+document.querySelectorAll('.mod').forEach(m=>{ mods[m.dataset.slot] = m; });
+const jackSlot = { s_out:'stream', c_in:'cache', c_out:'cache', i_in:'indexer', i_out:'indexer', a_in:'app', r_in:'react', x_in:'strategy' };
+
+const connections = new Map();          // "from|to" -> conn
+let armed = null, ghost = null, pointerActive = false, downPt = null, lastGhostPt = null;
+
+function jackCenter(id){
+  const r = jacks[id].getBoundingClientRect();
+  const w = wrap.getBoundingClientRect();
+  return { x: r.left + r.width/2 - w.left, y: r.top + r.height/2 - w.top };
+}
+function cablePath(a, b){
+  const dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy);
+  const horiz = Math.abs(dx) >= Math.abs(dy);
+  const k = Math.max(38, Math.abs(dx)*0.42);
+  const sag = Math.min(60, dist*0.20) + 10;
+  const c1x = a.x + (horiz ? k : 8), c2x = b.x - (horiz ? k : 8);
+  return `M ${a.x} ${a.y} C ${c1x} ${a.y+sag}, ${c2x} ${b.y+sag}, ${b.x} ${b.y}`;
+}
+function makePath(cls){ const p=document.createElementNS(SVGNS,'path'); p.setAttribute('class',cls); svg.appendChild(p); return p; }
+function key(from,to){ return from+'|'+to; }
+function isValid(from,to){ return !!(EDGES[from] && EDGES[from][to]); }
+
+function connect(from, to){
+  if(!isValid(from,to)) return false;
+  const k = key(from,to);
+  if(connections.has(k)) return false;
+  const d = cablePath(jackCenter(from), jackCenter(to));
+  const path = makePath('cable'); path.setAttribute('d', d);
+  const hit = makePath('cable hit'); hit.setAttribute('d', d);
+  const packets = spawnPackets(path);
+  const conn = { path, hit, packets, from, to };
+  connections.set(k, conn);
+  hit.addEventListener('click', ()=>disconnect(k));
+  requestAnimationFrame(()=>path.classList.add('on'));
+  jacks[from].classList.add('wired'); jacks[to].classList.add('wired');
+  mods[jackSlot[from]].classList.add('live'); mods[jackSlot[to]].classList.add('live');
+  logConn(from,to); updateStatus();
+  return true;
+}
+function disconnect(k){
+  const c = connections.get(k); if(!c) return;
+  c.path.remove(); c.hit.remove(); c.packets.forEach(p=>p.el.remove());
+  connections.delete(k); refreshFlags(); removeLog(c.from,c.to); updateStatus();
+}
+function refreshFlags(){
+  const uj=new Set(), um=new Set();
+  connections.forEach(c=>{ uj.add(c.from); uj.add(c.to); um.add(jackSlot[c.from]); um.add(jackSlot[c.to]); });
+  Object.keys(jacks).forEach(id=> jacks[id].classList.toggle('wired', uj.has(id)));
+  Object.keys(mods).forEach(s=> mods[s].classList.toggle('live', um.has(s)));
 }
 
-async function rpc(method, params) {
-  const res = await fetch(RPC, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-  })
-  if (!res.ok) throw new Error('RPC ' + res.status)
-  const json = await res.json()
-  if (json.error) throw new Error(json.error.message || 'RPC error')
-  return json.result
+/* packets travel via getPointAtLength (cheap, few nodes) */
+function spawnPackets(path){
+  const len = path.getTotalLength();
+  const n = Math.max(2, Math.round(len/130));
+  const arr = [];
+  for(let i=0;i<n;i++){
+    const el = document.createElementNS(SVGNS,'circle');
+    el.setAttribute('class','pkt'); el.setAttribute('r','3.1'); svg.appendChild(el);
+    arr.push({ el, path, len, t: i/n, speed: 0.11 + Math.random()*0.03 });
+  }
+  return arr;
 }
-
-async function rpcBatch(calls) {
-  const body = calls.map((c, id) => ({
-    jsonrpc: '2.0', id,
-    method: 'eth_call',
-    params: [{ to: c.feed, data: '0xfeaf968c' }, 'latest'],
-  }))
-  const res = await fetch(RPC, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error('RPC ' + res.status)
-  return res.json()
+let lastTs = 0;
+function tick(ts){
+  const dt = Math.min(0.05, (ts - lastTs)/1000 || 0); lastTs = ts;
+  connections.forEach(c=>{ c.packets.forEach(p=>{
+    p.t += p.speed*dt; if(p.t>1) p.t-=1;
+    const pt = p.path.getPointAtLength(p.t*p.len);
+    p.el.setAttribute('cx', pt.x); p.el.setAttribute('cy', pt.y);
+  }); });
+  requestAnimationFrame(tick);
 }
+requestAnimationFrame(tick);
 
-function decodeRound(hex) {
-  if (!hex || hex === '0x' || hex.length < 2 + 64 * 5) return null
-  const word = (i) => hex.slice(2 + 64 * i, 2 + 64 * (i + 1))
-  const answer = BigInt('0x' + word(1))
-  const updatedAt = Number(BigInt('0x' + word(3)))
-  return { price: Number(answer) / 1e8, updatedAt }
+function reflow(){
+  const w = wrap.getBoundingClientRect();
+  svg.setAttribute('viewBox', `0 0 ${w.width} ${w.height}`);
+  connections.forEach(c=>{
+    const d = cablePath(jackCenter(c.from), jackCenter(c.to));
+    c.path.setAttribute('d', d); c.hit.setAttribute('d', d);
+    c.packets.forEach(p=>{ p.len = c.path.getTotalLength(); });
+  });
+  if(armed && ghost && lastGhostPt) drawGhost(lastGhostPt);
 }
+new ResizeObserver(()=>reflow()).observe(wrap);
+addEventListener('resize', reflow);
 
-function fmtAge(updatedAt) {
-  const s = Math.max(0, Math.floor(Date.now() / 1000) - updatedAt)
-  if (s < 90) return s + 's ago'
-  if (s < 5400) return Math.round(s / 60) + 'm ago'
-  if (s < 172800) return Math.round(s / 3600) + 'h ago'
-  return Math.round(s / 86400) + 'd ago'
+/* arming + ghost */
+function arm(id){
+  if(!EDGES[id]) return;
+  disarm();
+  armed = id; jacks[id].classList.add('armed');
+  ghost = makePath('ghost');
+  markTargets(id, true);
+  hint('cable armed — drop it on a glowing <b>in</b> jack');
 }
+function disarm(){
+  if(armed){ jacks[armed].classList.remove('armed'); markTargets(armed,false); }
+  armed = null; lastGhostPt = null;
+  if(ghost){ ghost.remove(); ghost = null; }
+}
+function markTargets(from,on){
+  const t = EDGES[from] || {};
+  Object.keys(t).forEach(to=>{ if(!connections.has(key(from,to))) jacks[to].classList.toggle('hoverable', on); });
+}
+function drawGhost(pt){
+  if(!ghost || !armed) return;
+  lastGhostPt = pt; ghost.setAttribute('d', cablePath(jackCenter(armed), pt));
+}
+function localPt(e){ const w = wrap.getBoundingClientRect(); return { x:e.clientX-w.left, y:e.clientY-w.top }; }
 
-async function refreshPrices() {
-  try {
-    const results = await rpcBatch(TOKENS)
-    const byId = new Map(results.map((r) => [r.id, r]))
-    let ok = 0
-    TOKENS.forEach((t, id) => {
-      const round = decodeRound(byId.get(id)?.result)
-      const tile = tiles.get(t.symbol)
-      const px = tile.querySelector('.px')
-      const meta = tile.querySelector('.meta')
-      if (!round || round.price <= 0) {
-        px.classList.remove('skeleton')
-        px.textContent = '—'
-        meta.textContent = 'no answer'
-        return
-      }
-      ok += 1
-      const prev = lastPrice.get(t.symbol)
-      px.classList.remove('skeleton', 'up', 'down')
-      if (prev !== undefined && round.price !== prev) {
-        px.classList.add(round.price > prev ? 'up' : 'down')
-      }
-      lastPrice.set(t.symbol, round.price)
-      px.textContent = '$' + round.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      meta.textContent = 'updated ' + fmtAge(round.updatedAt)
-    })
-    statusEl.className = 'status live'
-    statusText.textContent = 'live · ' + ok + '/' + TOKENS.length + ' feeds · refreshes every 15s'
-    errorEl.classList.remove('visible')
-  } catch (e) {
-    statusEl.className = 'status error'
-    statusText.textContent = 'RPC unreachable'
-    errorEl.classList.add('visible')
-    for (const tile of tiles.values()) tile.querySelector('.px').classList.remove('skeleton')
+document.querySelectorAll('.jack').forEach(j=>{
+  const id = j.dataset.jack, isOut = !!EDGES[id];
+  j.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    pointerActive = true; downPt = { x:e.clientX, y:e.clientY };
+    if(isOut){ if(armed!==id) arm(id); drawGhost(localPt(e)); }
+    else if(armed && isValid(armed,id)){ if(connect(armed,id)) disarm(); else nudge(jackSlot[id]); }
+  });
+  j.addEventListener('keydown', e=>{
+    if(e.key!=='Enter' && e.key!==' ') return;
+    e.preventDefault();
+    if(isOut){ armed===id ? disarm() : arm(id); }
+    else if(armed && isValid(armed,id)){ if(connect(armed,id)) disarm(); }
+    else hint('arm an <b>out</b> jack first, then press this one');
+  });
+});
+addEventListener('pointermove', e=>{ if(armed && ghost) drawGhost(localPt(e)); });
+addEventListener('pointerup', e=>{
+  if(!pointerActive) return; pointerActive = false;
+  if(!armed) return;
+  const moved = downPt && Math.hypot(e.clientX-downPt.x, e.clientY-downPt.y) > 8;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const jackEl = el && el.closest && el.closest('.jack');
+  if(jackEl){
+    const to = jackEl.dataset.jack;
+    if(isValid(armed,to)){ if(connect(armed,to)) disarm(); }
+    else if(to !== armed){ nudge(jackSlot[to]); if(moved) disarm(); }
+  } else if(moved){ disarm(); }
+});
+function nudge(slot){ const m=mods[slot]; if(!m) return; m.classList.remove('nudge'); void m.offsetWidth; m.classList.add('nudge'); }
+
+/* status + log */
+const statusEl=document.getElementById('status'), statusLabel=document.getElementById('statuslabel'),
+      statusVal=document.getElementById('statusval'), logEl=document.getElementById('patchlog');
+const logItems = new Map();
+let wasOnline = false;
+function logConn(from,to){
+  const [title, body] = LABELS[key(from,to)] || [from+' → '+to, ''];
+  const li = document.createElement('li');
+  li.innerHTML = `<b>${title}</b> — ${body}`;
+  logEl.appendChild(li); requestAnimationFrame(()=>li.classList.add('in'));
+  logItems.set(key(from,to), li);
+}
+function removeLog(from,to){ const li=logItems.get(key(from,to)); if(li){ li.remove(); logItems.delete(key(from,to)); } }
+function updateStatus(){
+  const coreDone = CORE.filter(([a,b])=>connections.has(key(a,b))).length;
+  const total = connections.size, online = coreDone === CORE.length;
+  statusEl.classList.toggle('online', online);
+  statusLabel.textContent = online ? 'online' : (total ? 'patching' : 'standby');
+  if(online){
+    statusVal.innerHTML = `<b>PIPELINE ONLINE</b> · stream → cache → indexer → app · ${total} cable${total>1?'s':''} live`;
+    if(!wasOnline){ hint('pipeline online — this is the shape your code assembles. Scroll on.'); wasOnline = true; }
+  } else {
+    wasOnline = false;
+    statusVal.textContent = `${coreDone} / 3 core cables patched · ${total?('+'+(total-coreDone)+' aux'):'signal idle'}`;
   }
 }
+function hint(html){ document.getElementById('hint').innerHTML = html; }
 
-// Live launch feed — raw eth_getLogs poll against NOXA + Odyssey factories.
-const NOXA_FACTORY = '0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB'
-const ODYSSEY_FACTORIES = ['0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80', '0x6Ce85c4b7cE12903E5867652C265bCcce57f935F', '0xD7601cEe401306fdea5833c6898181D9c770F800']
-const NOXA_TOPIC = '0xdb51ea9ad51ab453a65a4cb7e60c3cb378c9501bb002609f8f97778fb6c4235a'
-const ODYSSEY_TOPIC = '0xa52263eeb2ea349365a35c006fc978b0b85eb109fe50959959c829b329bebf9e'
+/* seat all / reset */
+const seatBtn = document.getElementById('seatall');
+let seating = false;
+seatBtn.addEventListener('click', ()=>{
+  if(seating) return;
+  if(CORE.every(([a,b])=>connections.has(key(a,b)))){
+    [...connections.keys()].forEach(disconnect); disarm();
+    seatBtn.textContent='Seat all cables'; seatBtn.classList.remove('reset');
+    hint('board cleared — patch it yourself, or seat all again'); return;
+  }
+  seating = true; seatBtn.disabled = true; disarm();
+  const steps = [...CORE, ['s_out','r_in'], ['c_out','x_in']].filter(([a,b])=>!connections.has(key(a,b)));
+  let i=0;
+  (function step(){
+    if(i>=steps.length){ seating=false; seatBtn.disabled=false; seatBtn.textContent='Reset board'; seatBtn.classList.add('reset'); return; }
+    const [a,b]=steps[i++]; connect(a,b); setTimeout(step, 320);
+  })();
+});
 
-const launchPanel = document.getElementById('launch-panel')
-const launchEmpty = document.getElementById('launch-empty')
-const launchStatusEl = document.getElementById('launch-status')
-const launchStatusText = document.getElementById('launch-status-text')
-let launchCursor = null
-const MAX_ROWS = 15
+/* ================= signal library ================= */
+const MODULES = [
+  ['stream','Stream','Chainlink ticks, v3 swaps, launches and portfolio deltas as one backpressure-safe Stream&lt;T&gt;.','streamPrices(hood, [\'AAPL\',\'TSLA\'])'],
+  ['cache','Cache','Read-through cache with request coalescing — N identical reads become one upstream call.','createHoodCache(hood).getQuote(\'AAPL\')'],
+  ['batch','Batch','Multicall3 batching with per-read failure isolation; a DataLoader-style auto-batcher.','plan(hood, reads) · createBatcher(hood)'],
+  ['indexer','Indexer','Incremental local SQLite: holders, OHLCV candles, rolling 24h volume — zero RPC at query time.','createIndexer({ path, tokens })'],
+  ['strategy','Strategy','Weighted-avg-cost PnL, price-cross triggers, hard spend caps, a dry-run-by-default TWAP executor.','createTwapExecutor(hood, cfg)'],
+  ['react','React','SSR-safe hooks: render inert on the server, hydrate on the client. Live quotes and launches.','useQuote(\'AAPL\') · useLaunches()'],
+];
+const wavePaths = [
+  'M0 20 L14 20 L20 6 L28 20 L44 20 L50 12 L58 20 L100 20',
+  'M0 22 C20 22 24 6 40 6 C56 6 60 20 100 20',
+  'M0 24 L30 24 L30 6 L54 6 L54 20 L100 20',
+  'M0 20 L20 20 L20 8 L40 8 L40 20 L60 20 L60 8 L80 8 L80 20 L100 20',
+  'M0 22 L18 22 L18 14 L36 14 L36 22 L54 22 L54 14 L72 14 L72 22 L100 22',
+  'M0 14 C16 14 16 6 26 6 C40 6 40 22 54 22 C68 22 68 10 80 10 L100 10',
+];
+const lib = document.getElementById('lib');
+MODULES.forEach((m,i)=>{
+  const c=document.createElement('div'); c.className='cell rise';
+  c.innerHTML = `<div class="id">${String(i+1).padStart(2,'0')} · ${m[0]}</div>
+    <div class="nm">${m[1]}</div>
+    <div class="ds">${m[2]}</div>
+    <div class="ex mono">${m[3]}</div>
+    <svg class="wave" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true"><path d="${wavePaths[i%wavePaths.length]}"/></svg>`;
+  lib.appendChild(c);
+});
 
-function addr32(topicOrData) {
-  return '0x' + topicOrData.slice(-40)
-}
-
-function renderLaunch(launchpad, token, blockNumber) {
-  if (launchEmpty.isConnected) launchEmpty.remove()
-  const row = document.createElement('div')
-  row.className = 'launch-row'
-  row.innerHTML =
-    '<span class="pill pill-' + launchpad + '">' + launchpad + '</span>' +
-    '<span class="addr">' + token.slice(0, 6) + '…' + token.slice(-4) + '</span>' +
-    '<span class="block">block ' + blockNumber + '</span>'
-  launchPanel.prepend(row)
-  while (launchPanel.children.length > MAX_ROWS) launchPanel.lastChild.remove()
-}
-
-async function pollLaunches() {
-  try {
-    const head = parseInt(await rpc('eth_blockNumber', []), 16)
-    if (launchCursor === null) {
-      launchCursor = head // live-only: start watching from now, no historical backfill
-      launchStatusEl.className = 'status live'
-      launchStatusText.textContent = 'live · watching from block ' + head
-      return
+/* ================= gap-fill viz ================= */
+(function gapfill(){
+  const host=document.getElementById('blocks'), cap=document.getElementById('gapcap'), tag=document.getElementById('gaptag');
+  const N=26, GAP_START=14, GAP_LEN=5, blks=[];
+  for(let i=0;i<N;i++){ const b=document.createElement('div'); b.className='blk'; host.appendChild(b); blks.push(b); }
+  let phase=0, i=0, started=false, timer=0;
+  const H=()=>0.28+Math.random()*0.72;
+  const set=h=>cap.innerHTML=h, reset=()=>blks.forEach(b=>{b.className='blk'; b.style.transform='scaleY(.18)';});
+  function run(){
+    clearTimeout(timer);
+    if(phase===0){
+      if(i<GAP_START){ blks[i].classList.add('filled'); blks[i].style.transform=`scaleY(${H()})`; i++; timer=setTimeout(run,88); }
+      else { phase=1; tag.textContent='connection dropped'; set('RPC connection <span class="gapmark">dropped</span> mid-sync. A naive stream loses these blocks forever.'); timer=setTimeout(run,720); }
+    } else if(phase===1){
+      for(let g=GAP_START; g<GAP_START+GAP_LEN; g++) blks[g].className='blk gap';
+      phase=2; timer=setTimeout(run,900);
+    } else if(phase===2){
+      tag.textContent='gap-filling'; let g=GAP_START;
+      (function fill(){
+        if(g<GAP_START+GAP_LEN){ blks[g].className='blk refill'; blks[g].style.transform=`scaleY(${H()})`; g++; timer=setTimeout(fill,150); }
+        else { set('The cursor <span class="gapmark">re-read the exact same range</span> — every confirmed event recovered, in order.'); phase=3; timer=setTimeout(run,700); }
+      })();
+    } else if(phase===3){
+      if(i<N){ blks[i].classList.add('filled'); blks[i].style.transform=`scaleY(${H()})`; i++; timer=setTimeout(run,88); }
+      else { tag.textContent='synced'; set('Head reached. <b>No confirmed event silently skipped</b> — the guarantee behind every hoodkit stream.');
+        timer=setTimeout(()=>{ phase=0;i=0; reset(); set('Cursor advancing block by block, each range decoded and pushed before the head moves.'); tag.textContent='syncing'; timer=setTimeout(run,600); }, 3400); }
     }
-    if (head <= launchCursor) return
-    const fromBlock = '0x' + (launchCursor + 1).toString(16)
-    const toBlock = '0x' + head.toString(16)
-    const [noxaLogs, odysseyLogs] = await Promise.all([
-      rpc('eth_getLogs', [{ address: NOXA_FACTORY, topics: [NOXA_TOPIC], fromBlock, toBlock }]),
-      rpc('eth_getLogs', [{ address: ODYSSEY_FACTORIES, topics: [ODYSSEY_TOPIC], fromBlock, toBlock }]),
-    ])
-    const events = [
-      ...noxaLogs.map((l) => ({ launchpad: 'noxa', token: addr32(l.topics[1]), blockNumber: parseInt(l.blockNumber, 16) })),
-      ...odysseyLogs.map((l) => ({ launchpad: 'odyssey', token: addr32(l.topics[1]), blockNumber: parseInt(l.blockNumber, 16) })),
-    ].sort((a, b) => a.blockNumber - b.blockNumber)
-    for (const e of events) renderLaunch(e.launchpad, e.token, e.blockNumber)
-    launchCursor = head
-    launchStatusText.textContent = 'live · block ' + head + (events.length ? ' · +' + events.length + ' new' : '')
-  } catch (e) {
-    launchStatusEl.className = 'status error'
-    launchStatusText.textContent = 'RPC unreachable'
   }
+  new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting && !started){ started=true; run(); } }),{threshold:.3}).observe(host);
+})();
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const map = { install:'npm install hoodkit hoodchain viem', react:'npm install hoodkit react' };
+    navigator.clipboard.writeText(map[btn.dataset.copy]||'').then(()=>{
+      const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i%3*70)+'ms'; io.observe(el); });
+
+/* ---------- signal rail ---------- */
+const stations=[...document.querySelectorAll('.rail .stn')];
+const railSections=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0, mid=innerHeight*0.4;
+  railSections.forEach((sec,i)=>{ const r=sec.getBoundingClientRect(); if(r.top<=mid) idx=i; });
+  stations.forEach((s,i)=>s.setAttribute('aria-current', i===idx));
+  const active=stations[idx], railRect=document.querySelector('.rail').getBoundingClientRect(), r=active.getBoundingClientRect();
+  carriage.style.height=r.height+'px'; carriage.style.transform=`translateY(${r.top-railRect.top}px)`;
 }
-
-refreshPrices()
-setInterval(refreshPrices, 15000)
-pollLaunches()
-setInterval(pollLaunches, 4000)
+stations.forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'}); }));
+addEventListener('scroll', ()=>requestAnimationFrame(updateRail), {passive:true});
+addEventListener('resize', updateRail);
+reflow(); updateRail();
 </script>
-
 </body>
 </html>

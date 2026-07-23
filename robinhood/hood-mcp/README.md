@@ -6,7 +6,22 @@ Two servers, one package: a **zero-config data server** any MCP client can add i
 an **explicitly opt-in trading server** for wallets that want to act. Built on
 [`hoodchain`](https://nirholas.github.io/robinhood-chain-sdk/), the TypeScript SDK for the chain.
 
-Docs: **https://nirholas.github.io/robinhood-chain-mcp/**
+Docs: **https://nirholas.github.io/hood-mcp/**
+
+## Website
+
+The docs site (`docs/`) is a single self-contained `index.html` (inline CSS + JS, zero external
+requests, works from `file://`). Its centerpiece is an **analog tuning instrument**: a dual-needle
+gauge that reads the gap between a Stock Token's Chainlink oracle price and its live DEX price.
+Turn the dial to sweep across tickers and the needles swing to the new spread, the number your
+agent trades against. Deploy the folder anywhere static:
+
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?style=flat-square)](https://dash.cloudflare.com/?to=/:account/pages/new)
+[![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?style=flat-square)](https://app.netlify.com/start)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-101418?style=flat-square)](https://vercel.com/new)
+
+`wrangler.toml`, `netlify.toml`, and `vercel.json` are checked in and all point at `docs/`; on
+GitHub Pages, set Settings → Pages → Deploy from a branch → `main` → `/docs`.
 
 ## Why
 

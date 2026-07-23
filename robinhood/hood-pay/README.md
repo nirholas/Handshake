@@ -13,6 +13,22 @@ usable on its own:
 - **Verify** (`hood-pay/verify`, Node-only): a reorg-safe on-chain payment watcher, an idempotent
   SQLite ledger, signed webhooks, and refund helpers for the merchant side.
 
+## Website — [nirholas.github.io/hood-pay](https://nirholas.github.io/hood-pay/)
+
+The project site is an interactive **thermal receipt printer**: the whole page is one long receipt tape. Type an amount and ring up a sale, and a real payment link (the exact base64url URL-fragment codec this package uses), the direct-mode dust fingerprint, and a real 32-byte router reference print onto the tape line by line, then the reorg-safe watcher settles it to `PAID`. Everything runs client-side, nothing is sent anywhere. It is a single self-contained page in [`docs/`](docs/), so it deploys anywhere static.
+
+Deploy your own copy in one click:
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hood-pay)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-pay)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-pay&project-name=hood-pay&output-directory=docs)
+
+| Target | How |
+| --- | --- |
+| **GitHub Pages** | Settings → Pages → Source: `main` / `/docs`. Serves at `nirholas.github.io/hood-pay/`. No build step. |
+| **Cloudflare Pages** | The button above, or `wrangler pages deploy docs`. Config in [`wrangler.toml`](wrangler.toml). |
+| **Netlify / Vercel** | The buttons above. Publish directory is `docs/` ([`netlify.toml`](netlify.toml), [`vercel.json`](vercel.json)). |
+
 USDG (Robinhood Chain's dollar stablecoin) is a plain ERC-20 whose `transfer` carries no memo or
 invoice-reference field. A bare `transfer` cannot say which invoice it settles. hood-pay solves that two ways: **router
 mode**, where the buyer pays through the stateless, non-custodial `HoodPayRouter` contract

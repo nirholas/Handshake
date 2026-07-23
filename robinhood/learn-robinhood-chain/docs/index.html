@@ -1,202 +1,651 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Learn Robinhood Chain — From zero to shipping an autonomous agent on Robinhood Chain.</title>
-<meta name="description" content="From zero to shipping an autonomous agent on Robinhood Chain. Twelve on-chain-verified tutorials for building on Robinhood Chain (chain ID 4663).">
-<meta property="og:title" content="Learn Robinhood Chain — From zero to shipping an autonomous agent on Robinhood Chain.">
-<meta property="og:description" content="From zero to shipping an autonomous agent on Robinhood Chain. Twelve on-chain-verified tutorials for building on Robinhood Chain (chain ID 4663).">
-<meta property="og:type" content="article">
-<meta name="theme-color" content="#0b0d10">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/styles.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>learn-robinhood-chain, interrogate chain 4663 until you understand it</title>
+<meta name="description" content="A learning site for Robinhood Chain (chain ID 4663) built as a Socratic dialogue: you don't scroll a tutorial, you ask the chain questions and it answers. Twelve verified tutorials underneath, from your first RPC read to an autonomous agent." />
+<link rel="canonical" href="https://nirholas.github.io/learn-robinhood-chain/" />
+<meta name="theme-color" content="#0c0c0d" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="learn-robinhood-chain, the chain doesn't lecture, interrogate it" />
+<meta property="og:description" content="Learn Robinhood Chain by asking it questions. A branching Socratic dialogue over chain 4663, Stock Tokens, the uiMultiplier trap, USDG, the sequencer firehose, backing twelve on-chain-verified tutorials." />
+<meta property="og:url" content="https://nirholas.github.io/learn-robinhood-chain/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="learn-robinhood-chain, interrogate chain 4663" />
+<meta name="twitter:description" content="You don't read this course. You ask the chain questions and it answers. Twelve verified tutorials on Robinhood Chain, from first read to autonomous agent." />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230c0c0d'/><path d='M9 8 L9 24 M9 8 Q19 8 19 13 Q19 18 9 18 M17 18 L23 24' fill='none' stroke='%23e8e6e0' stroke-width='2.2' stroke-linecap='square'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Course","name":"learn-robinhood-chain","description":"A Socratic-dialogue learning site for Robinhood Chain (chain ID 4663): twelve tutorials from a first RPC read to an autonomous trading agent, every one verified against live on-chain data.","provider":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"url":"https://nirholas.github.io/learn-robinhood-chain/","inLanguage":"en","isAccessibleForFree":true,"about":["Robinhood Chain","Stock Tokens","ERC-8056","uiMultiplier","USDG","hoodchain SDK"],"hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT3H"}}
+</script>
+<style>
+  :root{
+    --ink:#0c0c0d; --paper:#e8e6e0; --graphite:#807c73; --dim:#57544d;
+    --hair:rgba(232,230,224,.14); --hair2:rgba(232,230,224,.28);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.12vw,18px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--ink); color:var(--paper); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--paper); color:var(--ink)}
+  a{color:inherit}
+  .mono{font-family:var(--mono)}
+  em{font-style:normal; color:var(--paper)}
+  b{font-weight:700}
 
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(232,230,224,.05), transparent 60%),
+      radial-gradient(100% 60% at 50% 120%, rgba(0,0,0,.5), transparent 60%);
+  }
+  .tick{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:linear-gradient(var(--hair) 1px, transparent 1px);
+    background-size:100% 5px; -webkit-mask-image:linear-gradient(transparent, #000 30%, #000 70%, transparent);
+    mask-image:linear-gradient(transparent, #000 30%, #000 70%, transparent);}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.001s!important; transition-duration:.001s!important}}
+
+  main{position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 clamp(18px,4vw,60px)}
+
+  .topbar{display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+    padding:22px 0 0; font:600 11px/1 var(--mono); letter-spacing:.28em; text-transform:uppercase; color:var(--graphite)}
+  .topbar .id{color:var(--paper)}
+  .topbar a{text-decoration:none; opacity:.7; transition:opacity .3s}
+  .topbar a:hover{opacity:1}
+
+  section{padding:clamp(46px,7vh,96px) 0; border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.32em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--paper)}
+
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.98}
+  h1{font-size:clamp(38px,7.4vw,104px)}
+  h1 .lo{color:var(--graphite)}
+  h2{font-size:clamp(28px,4.6vw,58px)}
+  .lede{max-width:60ch; font-size:clamp(16px,1.6vw,22px); line-height:1.45; color:#c9c6be}
+
+  /* ======================= THE DIALOGUE (signature) ======================= */
+  #ask{min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding-top:clamp(30px,6vh,64px)}
+  .subhead{margin-top:24px; max-width:54ch; font-size:clamp(16px,1.55vw,21px); color:#c9c6be}
+
+  .interrog{margin-top:clamp(30px,5vh,52px); display:grid; grid-template-columns:1fr 210px; gap:clamp(22px,3vw,48px); align-items:start}
+  @media(max-width:820px){.interrog{grid-template-columns:1fr; gap:26px}}
+
+  .transcript{border-left:1px solid var(--hair2); padding-left:clamp(18px,2.4vw,30px); min-height:150px; position:relative}
+  .primer{position:relative; padding-top:2px}
+  .primer::before{content:""; position:absolute; left:calc(-1 * clamp(18px,2.4vw,30px) - 4px); top:7px;
+    width:7px; height:7px; border-radius:50%; background:var(--paper); border:1px solid var(--paper)}
+  .primer .who{font:600 10px/1 var(--mono); letter-spacing:.26em; text-transform:uppercase; color:var(--graphite); margin-bottom:9px}
+  .primer .a{font-size:clamp(15.5px,1.55vw,19px); line-height:1.55; color:#c9c6be; max-width:60ch}
+  .primer .a b{color:var(--paper); font-weight:600}
+  .primer .a .cur{display:inline-block; width:.5ch; height:1.05em; background:var(--paper); vertical-align:-2px; margin-left:2px; animation:blink 1s steps(1) infinite}
+  .exch{position:relative; margin-bottom:26px; opacity:0; transform:translateY(10px); animation:rise .5s var(--ease) forwards}
+  @keyframes rise{to{opacity:1; transform:none}}
+  .exch::before{content:""; position:absolute; left:calc(-1 * clamp(18px,2.4vw,30px) - 4px); top:7px;
+    width:7px; height:7px; border-radius:50%; background:var(--ink); border:1px solid var(--hair2)}
+  .exch.chain::before{background:var(--paper); border-color:var(--paper)}
+  .who{font:600 10px/1 var(--mono); letter-spacing:.26em; text-transform:uppercase; color:var(--graphite); margin-bottom:9px}
+  .exch.you .who{color:var(--dim)}
+  .q{font-size:clamp(16px,1.7vw,21px); font-weight:600; letter-spacing:-.01em; color:#a6a29a}
+  .a{font-size:clamp(15.5px,1.55vw,19px); line-height:1.55; color:var(--paper); max-width:62ch; min-height:1.5em}
+  .a .hl{font-family:var(--mono); font-size:.88em; color:var(--paper); border-bottom:1px solid var(--hair2); padding-bottom:1px; white-space:nowrap}
+  .a .cur{display:inline-block; width:.5ch; height:1.05em; background:var(--paper); vertical-align:-2px; margin-left:1px; animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .goto{display:inline-flex; align-items:center; gap:9px; margin-top:14px; text-decoration:none;
+    font:600 12px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--ink);
+    background:var(--paper); padding:12px 18px; transition:transform .3s var(--ease),opacity .3s}
+  .goto:hover{transform:translateX(3px)}
+  .goto span{font-size:15px}
+
+  .forks{margin-top:8px}
+  .forkhint{font:600 10px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase; color:var(--graphite); margin-bottom:14px;
+    display:flex; align-items:center; gap:10px}
+  .forkhint::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .opt{display:block; width:100%; text-align:left; appearance:none; background:transparent; cursor:pointer;
+    border:1px solid var(--hair2); color:var(--paper); font-family:var(--grot);
+    font-size:clamp(15px,1.5vw,18px); font-weight:500; letter-spacing:-.01em; line-height:1.32;
+    padding:15px 16px 15px 46px; position:relative; margin-bottom:10px;
+    transition:border-color .25s,background .25s,transform .25s var(--ease); opacity:0; transform:translateY(8px)}
+  .opt.show{opacity:1; transform:none}
+  .opt .num{position:absolute; left:15px; top:14px; font:600 12px/1 var(--mono); color:var(--graphite); transition:color .25s}
+  .opt:hover{border-color:var(--paper); background:rgba(232,230,224,.05); transform:translateX(3px)}
+  .opt:hover .num{color:var(--paper)}
+  .opt:focus-visible{outline:2px solid var(--paper); outline-offset:2px}
+  .opt.spent{opacity:.4; cursor:default}
+  .opt.spent:hover{transform:none; border-color:var(--hair); background:transparent}
+
+  .restart{appearance:none; background:transparent; border:1px solid var(--hair2); color:var(--graphite);
+    font:600 11px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; padding:11px 16px; cursor:pointer;
+    margin-top:8px; transition:color .25s,border-color .25s}
+  .restart:hover{color:var(--paper); border-color:var(--paper)}
+
+  .map{position:sticky; top:26px}
+  .map .cap{font:600 10px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase; color:var(--graphite); margin-bottom:16px}
+  .map svg{width:100%; height:auto; display:block; overflow:visible}
+  .map .stat{margin-top:18px; font:500 12px/1.9 var(--mono); color:var(--graphite)}
+  .map .stat b{color:var(--paper); font-weight:600}
+  @media(max-width:820px){.map{position:static; order:-1; display:flex; gap:26px; align-items:center; justify-content:space-between}
+    .map svg{max-width:150px} .map .cap{margin-bottom:0}}
+  @media(max-width:480px){.map svg{display:none}}
+
+  .scrollcue{margin-top:clamp(24px,4vh,44px); font:600 10px/1 var(--mono);
+    letter-spacing:.28em; text-transform:uppercase; color:var(--graphite); display:flex; align-items:center; gap:10px}
+  .scrollcue i{display:block; width:26px; height:1px; background:var(--graphite); position:relative; overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--paper);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+  /* ======================= CURRICULUM ======================= */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,72px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:30px}}
+
+  .toc{border-top:1px solid var(--hair)}
+  .toc a{display:grid; grid-template-columns:34px 1fr auto; gap:16px; align-items:baseline;
+    padding:17px 4px; border-bottom:1px solid var(--hair); text-decoration:none;
+    transition:background .25s,padding-left .25s var(--ease)}
+  .toc a:hover{background:rgba(232,230,224,.04); padding-left:12px}
+  .toc a .no{font:600 12px/1 var(--mono); color:var(--graphite)}
+  .toc a .tl{font-size:clamp(16px,1.7vw,20px); font-weight:600; letter-spacing:-.01em}
+  .toc a .tl small{display:block; font:500 13px/1.4 var(--grot); color:#9d998f; letter-spacing:0; margin-top:4px; max-width:52ch}
+  .toc a .mt{font:600 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite); white-space:nowrap; text-align:right}
+  .toc a:hover .mt{color:var(--paper)}
+  .sec-label{font:600 11px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite);
+    padding:22px 0 8px; display:block}
+
+  .facts{display:grid; grid-template-columns:1fr 1fr; border-left:1px solid var(--hair); border-top:1px solid var(--hair)}
+  @media(max-width:480px){.facts{grid-template-columns:1fr}}
+  .fact{border-right:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:20px 18px 24px}
+  .fact .v{font:700 clamp(24px,3.2vw,38px)/1 var(--grot); letter-spacing:-.03em}
+  .fact .k{font:500 13px/1.4 var(--grot); color:#9d998f; margin-top:8px}
+
+  .stand{border:1px solid var(--hair2); padding:clamp(22px,3vw,36px)}
+  .stand h3{font:700 clamp(19px,2vw,26px)/1.1 var(--grot); letter-spacing:-.02em; margin-bottom:16px}
+  .stand ul{list-style:none}
+  .stand li{position:relative; padding:11px 0 11px 26px; border-bottom:1px solid var(--hair); font-size:15.5px; color:#c9c6be; line-height:1.5}
+  .stand li:last-child{border-bottom:0}
+  .stand li::before{content:"\2192"; position:absolute; left:0; top:11px; color:var(--graphite); font-family:var(--mono)}
+
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--paper); color:var(--paper); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--paper); color:var(--ink); transform:translateY(-2px)}
+  .btn.solid{background:var(--paper); color:var(--ink)}
+  .btn.solid:hover{background:transparent; color:var(--paper)}
+
+  .install{border:1px solid var(--hair2); background:rgba(232,230,224,.03); padding:20px 22px;
+    font:500 13.5px/1.9 var(--mono); position:relative; overflow-x:auto; margin-top:8px}
+  .install .c{color:var(--graphite)}
+  .install .p::before{content:"$ "; color:var(--graphite)}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid var(--hair2);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(232,230,224,.1)}
+
+  footer{padding:clamp(38px,6vh,68px) 0; display:flex; flex-wrap:wrap; justify-content:space-between; gap:22px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,68px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--paper)}
+
+  .rise2{opacity:0; transform:translateY(20px); transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  .rise2.in{opacity:1; transform:none}
+</style>
 </head>
-<body class="page-home">
-<a class="skip-link" href="#main">Skip to content</a>
-<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<header class="topbar">
-  <div class="topbar-inner">
-    <a class="brand" href="./">
-      <span class="brand-mark" aria-hidden="true">R</span>
-      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
-    </a>
-    <div class="topbar-actions">
-      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
-        <span class="search-open-label">Search</span><kbd>/</kbd>
-      </button>
-      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
-      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
-      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
-    </div>
+<body>
+<div class="tick" aria-hidden="true"></div>
+
+<main>
+  <div class="topbar">
+    <span class="id">learn·robinhood-chain</span>
+    <span><a href="#curriculum">Curriculum</a> &nbsp;·&nbsp; <a href="#standard">Standard</a> &nbsp;·&nbsp; <a href="#start">Start</a></span>
   </div>
-</header>
-<div class="layout">
-  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
-    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
-  </aside>
-  <div class="sidebar-scrim" hidden></div>
-  <main class="landing" id="main">
-  <section class="hero">
-    <div class="hero-inner">
-      <p class="eyebrow">Chain ID 4663 · Arbitrum Orbit L2 · ETH gas · ~100ms blocks</p>
-      <h1>Build on <span class="grad">Robinhood Chain</span>.</h1>
-      <p class="lede">From zero to shipping an autonomous agent on Robinhood Chain. Twelve tutorials, each performed on-chain, from your first RPC read to a live autonomous agent — built on the open-source <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a> SDK.</p>
-      <div class="hero-cta">
-        <a class="btn btn-primary" href="01-what-is-robinhood-chain/">Start learning</a>
-        <a class="btn btn-ghost" href="04-live-price-ticker/">Jump to code</a>
+
+  <!-- ================= THE DIALOGUE ================= -->
+  <section id="ask">
+    <div class="eyebrow"><span class="n">00</span> / SOCRATIC · a conversation with chain 4663</div>
+    <h1>The chain doesn't<br>lecture. <span class="lo">Ask it.</span></h1>
+    <p class="subhead">Most courses talk at you. This one answers. Pick a question and Robinhood Chain replies, then hands you the next thing worth asking. Learn it the way you learn anything real: by interrogation. Twelve verified tutorials sit underneath every thread.</p>
+
+    <div class="interrog">
+      <div>
+        <div class="transcript" id="transcript" aria-live="polite">
+          <div class="primer" id="primer">
+            <div class="who">Chain 4663</div>
+            <div class="a">I'm chain <b>4663</b>, an Arbitrum Orbit L2 carrying tokenized US equities. Ask me anything below and I'll answer, then hand you the next question worth asking. <b>Pick one to begin.</b><span class="cur"></span></div>
+          </div>
+        </div>
+        <div class="forks">
+          <div class="forkhint" id="forkhint">Ask the chain</div>
+          <div id="opts"></div>
+          <button class="restart" id="restart" hidden>&#8635; start the conversation over</button>
+        </div>
       </div>
-      <div class="chain-strip" id="chain-strip" aria-label="Live chain stats">
-        <div class="stat"><span class="stat-label">Block height</span><span class="stat-value" id="stat-block">…</span></div>
-        <div class="stat"><span class="stat-label">Gas price</span><span class="stat-value" id="stat-gas">…</span></div>
-        <div class="stat"><span class="stat-label">AAPL token</span><span class="stat-value" id="stat-aapl">…</span></div>
-        <div class="stat"><span class="stat-label">USDG supply</span><span class="stat-value" id="stat-usdg">…</span></div>
+
+      <aside class="map">
+        <div>
+          <div class="cap">Thread</div>
+          <svg id="treemap" viewBox="0 0 120 60" preserveAspectRatio="xMidYMin meet" aria-hidden="true"></svg>
+        </div>
+        <div class="stat">
+          <div>depth <b id="st-depth">0</b></div>
+          <div>asked <b id="st-asked">0</b> / 24</div>
+          <div>topic <b id="st-topic">open</b></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="scrollcue"><i></i> or read the twelve tutorials below</div>
+  </section>
+
+  <!-- ================= CURRICULUM ================= -->
+  <section id="curriculum">
+    <div class="eyebrow"><span class="n">01</span> / THE CURRICULUM · zero to autonomous agent</div>
+    <div class="cols">
+      <div>
+        <h2 class="rise2">Twelve tutorials.<br>Every one performed<br>on-chain first.</h2>
+        <p class="lede rise2" style="margin-top:22px">Foundations build the mental model, Building ships real apps, then Monetizing &amp; agents turns the chain into revenue. Each lesson names the one before it that it depends on, but you can jump straight to a section if you already know the basics.</p>
+        <div class="facts rise2" style="margin-top:34px">
+          <div class="fact"><div class="v">4663</div><div class="k">mainnet chain ID (testnet 46630), an Arbitrum Orbit L2</div></div>
+          <div class="fact"><div class="v">95</div><div class="k">tokenized Stock Tokens, each priced by a Chainlink feed</div></div>
+          <div class="fact"><div class="v">~150ms</div><div class="k">the firehose edge, decoded before RPC sees the block</div></div>
+          <div class="fact"><div class="v">0</div><div class="k">CDN calls at runtime, the whole site works from file://</div></div>
+        </div>
       </div>
-      <p class="chain-strip-note" id="chain-strip-note">Live from the public RPC in your browser.</p>
+      <div>
+        <nav class="toc" aria-label="Tutorials">
+          <span class="sec-label">Foundations</span>
+          <a href="01-what-is-robinhood-chain/"><span class="no">01</span><span class="tl">What Robinhood Chain actually is<small>The mental model from zero, an Orbit L2 with a stock exchange in its token registry.</small></span><span class="mt">10 min</span></a>
+          <a href="02-connect-and-read/"><span class="no">02</span><span class="tl">Connect and read the chain in 5 minutes<small>One RPC endpoint, one read, prices on your screen.</small></span><span class="mt">5 min</span></a>
+          <a href="03-stock-tokens-explained/"><span class="no">03</span><span class="tl">Stock Tokens explained for developers<small>The uiMultiplier trap every other tutorial assumes you understand.</small></span><span class="mt">12 min</span></a>
+          <span class="sec-label">Building</span>
+          <a href="04-live-price-ticker/"><span class="no">04</span><span class="tl">Your first app: a live price ticker<small>Raw client-side JSON-RPC, no SDK, no build step.</small></span><span class="mt">15 min</span></a>
+          <a href="05-portfolio-tracker/"><span class="no">05</span><span class="tl">Portfolio tracker done right<small>Multiplier-correct valuation across all 95 tokens in one multicall.</small></span><span class="mt">15 min</span></a>
+          <a href="06-swapping-on-chain/"><span class="no">06</span><span class="tl">Swapping on-chain: quotes, slippage, execution<small>Uniswap v3 the honest way, a quote that never fabricates a fill.</small></span><span class="mt">20 min</span></a>
+          <a href="07-streaming-the-chain/"><span class="no">07</span><span class="tl">Streaming the chain: launchpads + firehose<small>Decode the raw sequencer feed before RPC sees a block.</small></span><span class="mt">18 min</span></a>
+          <span class="sec-label">Monetizing &amp; agents</span>
+          <a href="08-sell-your-api-for-usdg/"><span class="no">08</span><span class="tl">Sell your API for USDG with x402<small>HTTP 402, a USDG price, verified payment, and a real bug, documented.</small></span><span class="mt">25 min</span></a>
+          <a href="09-ai-agent-chain-access/"><span class="no">09</span><span class="tl">Give your AI agent chain access with MCP<small>Hand an LLM typed chain tools it can't misuse.</small></span><span class="mt">22 min</span></a>
+          <a href="10-autonomous-trading-agent/"><span class="no">10</span><span class="tl">Build an autonomous trading agent<small>A strategy loop on real prices with guardrails that throw, not ask.</small></span><span class="mt">30 min</span></a>
+          <a href="11-launch-a-coin/"><span class="no">11</span><span class="tl">Launch a coin programmatically<small>NOXA and The Odyssey launchpads from a script.</small></span><span class="mt">20 min</span></a>
+          <span class="sec-label">Capstone</span>
+          <a href="12-ship-it/"><span class="no">12</span><span class="tl">Ship it: deploy and go mainnet<small>From testnet reads to a mainnet deployment you'd stake on.</small></span><span class="mt">18 min</span></a>
+        </nav>
+      </div>
     </div>
   </section>
-  <div class="curriculum">
-    <div class="curriculum-head">
-      <h2 class="section-h">The curriculum</h2>
-      <button class="reset-progress" type="button" id="reset-progress" hidden>Reset progress</button>
+
+  <!-- ================= STANDARD ================= -->
+  <section id="standard">
+    <div class="eyebrow"><span class="n">02</span> / THE HONESTY STANDARD</div>
+    <div class="cols">
+      <div>
+        <h2 class="rise2">Nothing here<br>is secondhand.</h2>
+        <p class="lede rise2" style="margin-top:22px">Every tutorial was performed against the real chain before it was written, mainnet reads, testnet writes where a funded wallet existed. The prices are real prices. The transaction hashes are real hashes. A tutorial that wasn't run doesn't ship.</p>
+        <div class="btns rise2">
+          <a class="btn solid" href="https://github.com/nirholas/robinhood-chain-sdk">the hoodchain SDK</a>
+          <a class="btn" href="https://docs.robinhood.com/chain/">chain docs</a>
+        </div>
+      </div>
+      <div class="stand rise2">
+        <h3>What "verified" means in this repo</h3>
+        <ul>
+          <li>Every command shown was actually run; every output block is a real, unedited capture, or is explicitly labeled otherwise.</li>
+          <li>Where a step couldn't be verified in the build environment, a faucet gated behind a browser challenge, an unverified factory ABI, the tutorial says so plainly, with the specific reason.</li>
+          <li>When testing surfaced a real bug, Tutorial 8's payment-verification example did, the lesson keeps the broken version beside the fix. A tutorial that never shows what wrong looks like isn't teaching.</li>
+          <li>Every code sample sits on one open-source SDK, <b>hoodchain</b>, so the same three lines you read here are the three lines you ship.</li>
+        </ul>
+      </div>
     </div>
-    <p class="progress-line"><span id="progress-count">0</span> of 12 completed · progress is saved in your browser</p>
-    
-    <section class="curriculum-group">
-      <h2 class="curriculum-group-title">Foundations</h2>
-      <div class="card-grid">
-        <a class="tut-card" href="01-what-is-robinhood-chain/" data-slug="01-what-is-robinhood-chain">
-          <span class="tut-card-idx">01</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">What Robinhood Chain actually is</span>
-            <span class="tut-card-desc">Architecture, chain IDs, and what's real vs hype — the no-token fact, the US-person restriction, and permissionless deployment, all sourced.</span>
-            <span class="tut-card-time">10 min</span>
-          </span>
-        </a><a class="tut-card" href="02-connect-and-read/" data-slug="02-connect-and-read">
-          <span class="tut-card-idx">02</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Connect and read the chain in 5 minutes</span>
-            <span class="tut-card-desc">Add the network to a wallet, get testnet funds, and make your first read against mainnet with viem — a real block number and gas price in your terminal.</span>
-            <span class="tut-card-time">5 min</span>
-          </span>
-        </a><a class="tut-card" href="03-stock-tokens-explained/" data-slug="03-stock-tokens-explained">
-          <span class="tut-card-idx">03</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Stock Tokens explained for developers</span>
-            <span class="tut-card-desc">ERC-20 + a Chainlink feed + ERC-8056 uiMultiplier(). The split/dividend trap, with a worked example showing the wrong and the right valuation.</span>
-            <span class="tut-card-time">12 min</span>
-          </span>
-        </a>
+  </section>
+
+  <!-- ================= START ================= -->
+  <section id="start">
+    <div class="eyebrow"><span class="n">03</span> / START</div>
+    <div class="cols">
+      <div>
+        <h2 class="rise2">You already<br>started.</h2>
+        <p class="lede rise2" style="margin-top:22px">You've been asking the right questions. Clone the course, preview it locally, and pick up wherever the dialogue left you, Tutorial 1 from zero, Tutorial 3 for the multiplier trap, Tutorials 8&#8211;11 for money and agents.</p>
+        <div class="btns rise2">
+          <a class="btn solid" href="01-what-is-robinhood-chain/">begin at tutorial 1</a>
+          <a class="btn" href="https://github.com/nirholas/learn-robinhood-chain">source on github</a>
+        </div>
       </div>
-    </section>
-    <section class="curriculum-group">
-      <h2 class="curriculum-group-title">Building</h2>
-      <div class="card-grid">
-        <a class="tut-card" href="04-live-price-ticker/" data-slug="04-live-price-ticker">
-          <span class="tut-card-idx">04</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Your first app: a live price ticker</span>
-            <span class="tut-card-desc">Build a terminal price ticker that streams multiplier-adjusted Chainlink quotes for any Stock Token, with staleness handling done right.</span>
-            <span class="tut-card-time">15 min</span>
-          </span>
-        </a><a class="tut-card" href="05-portfolio-tracker/" data-slug="05-portfolio-tracker">
-          <span class="tut-card-idx">05</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Portfolio tracker done right</span>
-            <span class="tut-card-desc">Value any address's Stock Token holdings in one multicall — and understand exactly why a naive tracker reports the wrong number after a split.</span>
-            <span class="tut-card-time">15 min</span>
-          </span>
-        </a><a class="tut-card" href="06-swapping-on-chain/" data-slug="06-swapping-on-chain">
-          <span class="tut-card-idx">06</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Swapping on-chain: quotes, slippage, execution</span>
-            <span class="tut-card-desc">Quote a Uniswap v3 swap across every fee tier, set slippage correctly, and execute on testnet — with a Stock Token eligibility sidebar.</span>
-            <span class="tut-card-time">20 min</span>
-          </span>
-        </a><a class="tut-card" href="07-streaming-the-chain/" data-slug="07-streaming-the-chain">
-          <span class="tut-card-idx">07</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Streaming the chain: launchpads + firehose</span>
-            <span class="tut-card-desc">Watch NOXA and The Odyssey for new memecoin launches, then tap the raw sequencer firehose to see transactions ~100ms before they're queryable.</span>
-            <span class="tut-card-time">18 min</span>
-          </span>
-        </a>
+      <div class="rise2">
+        <div class="install">
+          <button class="copy" data-copy="git clone https://github.com/nirholas/learn-robinhood-chain">COPY</button>
+<span class="c"># clone and preview the whole course</span>
+<span class="p">git clone https://github.com/nirholas/learn-robinhood-chain</span>
+<span class="p">cd learn-robinhood-chain</span>
+<span class="p">npm install</span>
+<span class="p">npm run dev</span>
+<span class="c"># builds content/ and serves at localhost:4173</span>
+        </div>
+        <p class="lede" style="margin-top:18px; font-size:15px; color:#9d998f">Prerequisites: Node &#8805; 20 and a terminal. A wallet you control for the write-step tutorials (6, 8, 10, 11), testnet funds are enough, no mainnet capital required to finish the course.</p>
       </div>
-    </section>
-    <section class="curriculum-group">
-      <h2 class="curriculum-group-title">Monetizing &amp; agents</h2>
-      <div class="card-grid">
-        <a class="tut-card" href="08-sell-your-api-for-usdg/" data-slug="08-sell-your-api-for-usdg">
-          <span class="tut-card-idx">08</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Sell your API for USDG with x402</span>
-            <span class="tut-card-desc">Put a Stock Token data endpoint behind an HTTP 402 paywall settled in USDG, and take your first real on-chain payment — from zero to a paid request.</span>
-            <span class="tut-card-time">25 min</span>
-          </span>
-        </a><a class="tut-card" href="09-ai-agent-chain-access/" data-slug="09-ai-agent-chain-access">
-          <span class="tut-card-idx">09</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Give your AI agent chain access with MCP</span>
-            <span class="tut-card-desc">Build a Model Context Protocol server that exposes Robinhood Chain reads as tools, then wire it into Claude Code, Claude Desktop, or Cursor — with a real transcript.</span>
-            <span class="tut-card-time">22 min</span>
-          </span>
-        </a><a class="tut-card" href="10-autonomous-trading-agent/" data-slug="10-autonomous-trading-agent">
-          <span class="tut-card-idx">10</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Build an autonomous trading agent</span>
-            <span class="tut-card-desc">A paper-mode trading agent with a real strategy, hard spend caps, and a kill switch — risk-first framing before a single lira of real capital.</span>
-            <span class="tut-card-time">30 min</span>
-          </span>
-        </a><a class="tut-card" href="11-launch-a-coin/" data-slug="11-launch-a-coin">
-          <span class="tut-card-idx">11</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Launch a coin programmatically</span>
-            <span class="tut-card-desc">How Robinhood Chain's launchpads work, how to decode their events, and the responsible path to launching a token on testnet from code.</span>
-            <span class="tut-card-time">20 min</span>
-          </span>
-        </a>
-      </div>
-    </section>
-    <section class="curriculum-group">
-      <h2 class="curriculum-group-title">Capstone</h2>
-      <div class="card-grid">
-        <a class="tut-card" href="12-ship-it/" data-slug="12-ship-it">
-          <span class="tut-card-idx">12</span>
-          <span class="tut-card-check" aria-hidden="true"></span>
-          <span class="tut-card-body">
-            <span class="tut-card-title">Ship it: deploy and go mainnet</span>
-            <span class="tut-card-desc">Deploy your static app to Pages, your API to Cloud Run, and walk the going-mainnet checklist: funding, keys, spend caps, and monitoring.</span>
-            <span class="tut-card-time">18 min</span>
-          </span>
-        </a>
-      </div>
-    </section>
-  </div>
-  <footer class="site-footer">
-    <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
-    <p class="disclaimer">Educational material. Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. Nothing here is financial advice.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">interrogate<br>the chain.</div>
+    <div class="meta">
+      Robinhood Chain · ID 4663 · Arbitrum Orbit<br>
+      <a href="https://github.com/nirholas/learn-robinhood-chain">github.com/nirholas/learn-robinhood-chain</a><br>
+      <a href="https://github.com/nirholas/robinhood-chain-sdk">the hoodchain SDK</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · <a href="https://three.ws">three.ws</a> · not affiliated with Robinhood Markets
+    </div>
   </footer>
 </main>
-</div>
-<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
-  <div class="search-panel">
-    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
-    <ul class="search-results" id="search-results" aria-live="polite"></ul>
-    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
-  </div>
-</div>
-<script defer src="assets/app.js"></script><script defer src="assets/ticker.js"></script><script defer src="assets/search.js"></script>
+
+<script>
+"use strict";
+/* =====================================================================
+   The conversation graph. Every answer is grounded in the real repo:
+   chain 4663, Stock Tokens, the uiMultiplier / ERC-8056 trap, USDG,
+   the two launchpads, the sequencer firehose, the hoodchain SDK,
+   the twelve tutorials. Nothing invented.
+   ===================================================================== */
+const NODES = {
+  start:{ topic:"open", next:["what","build","why"] },
+
+  what:{ topic:"foundations",
+    q:"What are you, exactly?",
+    a:"An Arbitrum Orbit L2. Chain ID {4663} on mainnet, {46630} on testnet, I settle to Ethereum but run my own execution layer, my own sequencer, my own feed. What makes me worth learning isn't the rollup. It's that Robinhood put tokenized US equities on me. That part nobody else has.",
+    next:["equities","sequencer","orbit"] },
+
+  orbit:{ topic:"foundations",
+    q:"Orbit, so you're just another rollup?",
+    a:"Mechanically, yes. What lives on me is the difference. Most rollups host memecoins and a DEX. I host {95 Stock Tokens}, AAPL, SGOV, WEEK, each a real claim priced by a Chainlink feed, plus {USDG}, plus two native launchpads. A rollup with a stock exchange wired into its token registry.",
+    next:["equities","usdg","launch"] },
+
+  equities:{ topic:"stock tokens",
+    q:"Show me a Stock Token.",
+    a:"WEEK lives at {0xc93a...099f}. Its balance is an ordinary ERC-20 number, and that number is a lie until you scale it. On {2026-07-15}, 1 raw WEEK token was {2.0062 shares}. The scale factor is {uiMultiplier()}. Miss it and every position you paint is wrong.",
+    next:["multiplier","ticker","registry"] },
+
+  multiplier:{ topic:"the trap",
+    q:"Why would a token lie about its own balance?",
+    a:"Corporate actions. When a stock splits or reinvests a dividend, raw balances can't move, they're immutable ledger entries. So the issuer bumps one number, {uiMultiplier()}, and every correct integration scales by it exactly once. That's {ERC-8056}. Skip it: you understate holdings. Apply it twice: you double-count the split. It is the one piece of domain knowledge every tutorial here assumes.",
+    next:["pricetrap","erc8056","portfolio"] },
+
+  pricetrap:{ topic:"the trap",
+    q:"So where does it actually go wrong?",
+    a:"Valuation. On me, Chainlink feed answers are already multiplier-adjusted, the price of one TOKEN, not one share. So you scale the balance, never the feed price. At block {10,745,112} the SGOV/USDG pool priced the token at {$100.6075}, the feed at {$100.6215}, the unadjusted share at {$100.5252}. Three numbers; using the wrong one twice is the bug Tutorial 5 exists to prevent.",
+    next:["portfolio","erc8056"] },
+
+  erc8056:{ topic:"the trap", link:["03-stock-tokens-explained/","Read Tutorial 3 - Stock Tokens for developers"],
+    q:"Give me the whole trap in one lesson.",
+    a:"Tutorial 3. It's the shortest path in the course and the one every other lesson leans on: what {uiMultiplier()} is, why {balanceOfUI} floors the way it does, and the single table that tells you when to apply the multiplier and when the feed already did it for you. Skim it even if you skip everything else.",
+    next:["portfolio","registry"] },
+
+  registry:{ topic:"stock tokens",
+    q:"How do I not hand-type 95 addresses?",
+    a:"You don't. The {hoodchain} SDK ships the whole registry, 95 tokens, their feeds, decimals, multipliers, so the raw {viem} read from Tutorial 2 collapses to three lines in Tutorial 4. The course shows both on purpose: the by-hand version so you understand it, the SDK version so you'd actually use it.",
+    next:["sdk","ticker"] },
+
+  ticker:{ topic:"building", link:["04-live-price-ticker/","Build it - Tutorial 4, the live price ticker"],
+    q:"What's the fastest thing I can ship?",
+    a:"A live price ticker. Tutorial 4: raw client-side JSON-RPC, no SDK, no build step, decode the Chainlink answer by hand and paint it to the page. It's dependency-free and it's the reference the rest of the course points back to. Fifteen minutes, real prices.",
+    next:["portfolio","stream"] },
+
+  portfolio:{ topic:"building", link:["05-portfolio-tracker/","Build it - Tutorial 5, the portfolio tracker"],
+    q:"Can I value a whole portfolio correctly?",
+    a:"Tutorial 5. It sweeps all 95 tokens in a single multicall, applies each multiplier exactly once, and derives cost basis from fills, because I report what you hold, never what you paid. It's where the multiplier theory from Tutorial 3 becomes a number you can trust in a dashboard.",
+    next:["swap","sdk"] },
+
+  swap:{ topic:"building", link:["06-swapping-on-chain/","Build it - Tutorial 6, swapping on-chain"],
+    q:"How do I trade on you?",
+    a:"Uniswap v3, the honest way. Tutorial 6 quotes with real slippage and only executes with a funded testnet key, without one it prints the quote and exits rather than fabricating a transaction. The same code path that swaps a testnet pool swaps a mainnet memecoin.",
+    next:["stream","launch"] },
+
+  sequencer:{ topic:"streaming",
+    q:"You mentioned your own feed. What's on it?",
+    a:"The raw Arbitrum Nitro sequencer feed, the firehose. Decode it and you see typed transactions roughly {100-300ms} before an RPC node reports the block. Tutorial 7 hand-decodes it into a clean transaction shape. It's the difference between reacting to the chain and reading it as it happens.",
+    next:["stream","launch"] },
+
+  stream:{ topic:"streaming", link:["07-streaming-the-chain/","Build it - Tutorial 7, streaming the chain"],
+    q:"What do I do with a firehose?",
+    a:"Watch things be born. Tutorial 7 merges the sequencer feed with the two launchpads, {NOXA} and {The Odyssey}, into one Launch shape, so a new coin, a swap, a mint all arrive in the same stream milliseconds early. Front-of-block awareness without running your own node.",
+    next:["launch","agent"] },
+
+  launch:{ topic:"launchpads", link:["11-launch-a-coin/","Build it - Tutorial 11, launch a coin"],
+    q:"You said memecoins too?",
+    a:"Two native launchpads, {NOXA} and {The Odyssey}. Stream both, watch a coin the instant it exists, or launch your own programmatically in Tutorial 11. Stock exchange upstairs, casino in the basement. Same chain, same block.",
+    next:["x402","agent"] },
+
+  build:{ topic:"building",
+    q:"What can I actually build here?",
+    a:"Twelve tutorials, zero to an autonomous agent. A live price ticker in fifteen minutes. A multiplier-correct portfolio. On-chain swaps with real slippage. A firehose that beats RPC by milliseconds. A paid API that charges {USDG}. An MCP server that hands an LLM the chain. Pick a thread, they all lead somewhere real.",
+    next:["ticker","x402","agent"] },
+
+  why:{ topic:"open",
+    q:"Why should I care about tokenized stocks on a rollup?",
+    a:"Because it's programmable equity exposure that never closes. A Stock Token is an ERC-20 you can read, value, swap, lend, and wire into an agent with the same tools you'd use for any token, no brokerage API, no market hours, no gatekeeping. The catch is the {uiMultiplier}, and getting that right is most of what this course teaches.",
+    next:["equities","trust","build"] },
+
+  trust:{ topic:"the standard",
+    q:"Why should I trust a word of this?",
+    a:"Because none of it is secondhand. Every command in every tutorial was run against me for real before it was written, mainnet reads, testnet writes where a funded wallet existed. Real prices, real transaction hashes, real firehose numbers. Where something couldn't be verified, the tutorial says so, with the reason. A lesson that wasn't performed doesn't ship.",
+    next:["sdk","start"] },
+
+  sdk:{ topic:"the SDK",
+    q:"What am I building with?",
+    a:"{hoodchain}, one open-source TypeScript SDK. The 95-token registry, Chainlink quotes, multiplier-correct portfolios, Uniswap v3 swaps, {USDG}, launchpad watchers, and the sequencer firehose. Every tutorial sits on it. Read one price in three lines, or drop to raw {viem} and do it by hand, the course shows both, so you understand the thing you're abbreviating.",
+    next:["registry","start"] },
+
+  usdg:{ topic:"money", link:["08-sell-your-api-for-usdg/","Build it - Tutorial 8, sell your API for USDG"],
+    q:"What's USDG and why does it matter?",
+    a:"The stablecoin the chain settles in. It matters because of one quirk: {USDG has no EIP-2612 permit}, so any payment flow needs an explicit on-chain {approve} step baked in from day one, not bolted on later. Tutorial 8 hits exactly this while wiring x402, and documents the bug it caused rather than smoothing it over.",
+    next:["x402","agent"] },
+
+  x402:{ topic:"money", link:["08-sell-your-api-for-usdg/","Build it - Tutorial 8, the x402 paid API"],
+    q:"How do I get paid on-chain?",
+    a:"x402. Return HTTP {402}, quote a price in {USDG}, verify the payment on-chain, then serve the data. Tutorial 8 built exactly that pipeline, and found a real bug in its own payment verification while writing it. The lesson keeps the broken version next to the fix, because that's more useful than a lesson that never shows what wrong looks like.",
+    next:["agent","usdg"] },
+
+  agent:{ topic:"agents", link:["10-autonomous-trading-agent/","Build it - Tutorial 10, the autonomous agent"],
+    q:"Can an AI agent drive you?",
+    a:"Yes, two ways. Tutorial 9 wraps the chain as MCP tools an LLM can call but can't misuse, typed inputs, no invalid combination is constructible. Tutorial 10 goes further: an autonomous strategy loop on real prices, with guardrails enforced in code, a thrown error, not a polite instruction. Money and agents are Tutorials 8 through 11; they stand on their own once you've done 4 through 6.",
+    next:["x402","start"] },
+
+  start:{ topic:"start", link:["01-what-is-robinhood-chain/","Open Tutorial 1 and begin"],
+    q:"Fine - where do I begin?",
+    a:"Tutorial 1 if you've never touched me. Tutorial 3 if you can already reach an EVM chain and just want the multiplier trap. Tutorials 8 through 11 if you're here for money and agents. The whole course is right below this conversation, but you already began. You've been asking the exact questions the tutorials answer.",
+    next:["what","build","trust"] }
+};
+
+const transcript = document.getElementById('transcript');
+const optsEl = document.getElementById('opts');
+const forkhint = document.getElementById('forkhint');
+const restartBtn = document.getElementById('restart');
+const stDepth = document.getElementById('st-depth');
+const stAsked = document.getElementById('st-asked');
+const stTopic = document.getElementById('st-topic');
+const treemap = document.getElementById('treemap');
+const SVGNS = "http://www.w3.org/2000/svg";
+
+const asked = new Set();
+let depth = 0;
+const pathNodes = [];
+let typingTimer = null;
+let busy = false;
+
+function renderAnswerHTML(str){
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc(str).replace(/\{([^{}]+)\}/g, (_,t)=>'<span class="hl">'+t+'</span>');
+}
+function plainAnswer(str){ return str.replace(/[{}]/g,''); }
+
+function typeAnswer(el, raw, done){
+  const plain = plainAnswer(raw);
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce){ el.innerHTML = renderAnswerHTML(raw); done&&done(); return; }
+  el.innerHTML = '<span class="cur"></span>';
+  const cur = el.querySelector('.cur');
+  const textNode = document.createTextNode('');
+  el.insertBefore(textNode, cur);
+  let i = 0;
+  const total = plain.length;
+  const step = Math.max(1, Math.round(total/140));
+  clearInterval(typingTimer);
+  typingTimer = setInterval(()=>{
+    i += step;
+    textNode.textContent = plain.slice(0, i);
+    if(i >= total){
+      clearInterval(typingTimer);
+      el.innerHTML = renderAnswerHTML(raw);
+      done&&done();
+    }
+  }, 15);
+}
+
+function drawMap(){
+  treemap.innerHTML = '';
+  const n = pathNodes.length;
+  if(n === 0){ treemap.setAttribute('viewBox','0 0 120 60'); return; }
+  const cx = 60, top = 12, gap = Math.min(30, 176/Math.max(n,1));
+  for(let k=0;k<n;k++){
+    const y = top + k*gap;
+    if(k>0){
+      const line = document.createElementNS(SVGNS,'line');
+      line.setAttribute('x1',cx); line.setAttribute('y1',top+(k-1)*gap);
+      line.setAttribute('x2',cx); line.setAttribute('y2',y);
+      line.setAttribute('stroke','rgba(232,230,224,.3)'); line.setAttribute('stroke-width','1');
+      treemap.appendChild(line);
+    }
+    const stubs = pathNodes[k].stubs||0;
+    for(let s=0;s<stubs;s++){
+      const dir = s%2===0?1:-1;
+      const x2 = cx+dir*(12+6*Math.floor(s/2));
+      const stub = document.createElementNS(SVGNS,'line');
+      stub.setAttribute('x1',cx); stub.setAttribute('y1',y);
+      stub.setAttribute('x2',x2); stub.setAttribute('y2',y-6);
+      stub.setAttribute('stroke','rgba(232,230,224,.16)'); stub.setAttribute('stroke-width','1');
+      treemap.appendChild(stub);
+      const tip = document.createElementNS(SVGNS,'circle');
+      tip.setAttribute('cx',x2); tip.setAttribute('cy',y-6); tip.setAttribute('r','1.4');
+      tip.setAttribute('fill','rgba(232,230,224,.3)');
+      treemap.appendChild(tip);
+    }
+    const dot = document.createElementNS(SVGNS,'circle');
+    dot.setAttribute('cx',cx); dot.setAttribute('cy',y); dot.setAttribute('r', k===n-1?'3.4':'2.4');
+    dot.setAttribute('fill', k===n-1?'#e8e6e0':'rgba(232,230,224,.55)');
+    treemap.appendChild(dot);
+  }
+  treemap.setAttribute('viewBox',`0 0 120 ${Math.max(60, top + (n-1)*gap + 16)}`);
+}
+
+function appendExchange(node, onDone){
+  const you = document.createElement('div');
+  you.className = 'exch you';
+  you.innerHTML = '<div class="who">You</div><div class="q"></div>';
+  you.querySelector('.q').textContent = node.q;
+  transcript.appendChild(you);
+
+  const chain = document.createElement('div');
+  chain.className = 'exch chain';
+  chain.innerHTML = '<div class="who">Chain 4663</div><div class="a"></div>';
+  transcript.appendChild(chain);
+  const aEl = chain.querySelector('.a');
+
+  chain.scrollIntoView({behavior:'smooth', block:'center'});
+  typeAnswer(aEl, node.a, ()=>{
+    if(node.link){
+      const link = document.createElement('a');
+      link.className = 'goto';
+      link.href = node.link[0];
+      link.innerHTML = node.link[1] + ' <span>&#8594;</span>';
+      chain.appendChild(link);
+    }
+    onDone && onDone();
+  });
+}
+
+function renderForks(ids){
+  optsEl.innerHTML = '';
+  const list = ids.filter(id => NODES[id] && NODES[id].q);
+  forkhint.textContent = depth===0 ? 'Ask the chain' : 'Ask a follow-up';
+  list.forEach((id,idx)=>{
+    const node = NODES[id];
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (asked.has(id)?' spent':'');
+    btn.type = 'button';
+    btn.innerHTML = '<span class="num">'+(idx+1)+'</span>';
+    const label = document.createElement('span');
+    label.textContent = node.q + (asked.has(id)?'  (seen)':'');
+    btn.appendChild(label);
+    btn.addEventListener('click', ()=>choose(id));
+    optsEl.appendChild(btn);
+    requestAnimationFrame(()=> setTimeout(()=>btn.classList.add('show'), idx*70));
+  });
+  restartBtn.hidden = depth===0;
+}
+
+function choose(id){
+  if(busy) return;
+  const node = NODES[id];
+  if(!node) return;
+  busy = true;
+  optsEl.querySelectorAll('.opt').forEach(o=>o.style.pointerEvents='none');
+  const primer = document.getElementById('primer');
+  if(primer) primer.remove();
+
+  depth++;
+  asked.add(id);
+  const stubs = Math.max(0, (node.next||[]).filter(x=>NODES[x] && NODES[x].q && !asked.has(x)).length - 1);
+  pathNodes.push({id, stubs});
+
+  stDepth.textContent = depth;
+  stAsked.textContent = asked.size;
+  stTopic.textContent = node.topic || 'open';
+  drawMap();
+
+  appendExchange(node, ()=>{
+    renderForks(node.next || ['start']);
+    busy = false;
+  });
+}
+
+addEventListener('keydown', e=>{
+  if(busy) return;
+  if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  const n = parseInt(e.key,10);
+  if(n>=1 && n<=9){
+    const btn = optsEl.querySelectorAll('.opt')[n-1];
+    if(btn){ btn.click(); }
+  }
+});
+
+function reset(){
+  clearInterval(typingTimer);
+  transcript.innerHTML = '<div class="primer" id="primer"><div class="who">Chain 4663</div><div class="a">I\'m chain <b>4663</b>, an Arbitrum Orbit L2 carrying tokenized US equities. Ask me anything below and I\'ll answer, then hand you the next question worth asking. <b>Pick one to begin.</b><span class="cur"></span></div></div>';
+  asked.clear(); depth=0; pathNodes.length=0; busy=false;
+  stDepth.textContent='0'; stAsked.textContent='0'; stTopic.textContent='open';
+  drawMap();
+  renderForks(NODES.start.next);
+}
+restartBtn.addEventListener('click', reset);
+
+renderForks(NODES.start.next);
+drawMap();
+
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(btn.dataset.copy||'').then(()=>{
+      const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+const io = new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
+document.querySelectorAll('.rise2').forEach(el=>io.observe(el));
+</script>
 </body>
 </html>
