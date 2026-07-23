@@ -96,6 +96,10 @@ We checked every single sell for diamond-hands regret, against each token's FULL
 
 Total SOL lost to selling too early, across the entire experiment: zero. The fleet has no paperhands problem. Every sell was vindicated by the tape. The money was lost at entry, and the fix lives on the buy side.
 
+DON'T TRUST US, REPLAY IT
+
+The full write-up ships an interactive backtester: the real per-minute price history of 77 trades, your exit rules against the fleet's, same coins, same candles. Load "let winners run" and it gets worse; load "tight scalper" and the whole loss flips positive. On a market where the median coin dies within the hour, the biggest exit-policy lever is refusing to wait for a moonshot that never comes. Thirty seconds, your own hands, real data.
+
 THE EMBARRASSING PART
 
 The fleet is supposed to be self-improving: an optimizer reads each arm's real record every 6 hours and tunes its knobs inside hard bounds. After two days of "running", we audited it and found it had never applied a single change.
@@ -245,7 +249,7 @@ So the crossing arm is built: enters on the first 50-cross, sells initials at 1.
 **17/**
 All 90 trades published and individually graded, with on-chain receipts, every model thesis verbatim, the 83k-coin counterfactual, the paperhands audit, charts, and the raw dataset as JSON.
 
-No cherry-picking. The ledger does not let us.
+No cherry-picking. The ledger does not let us. It even ships an interactive backtester so you can replay all 77 candle-covered trades against your own exit rules and beat us if you can.
 
 https://three.ws/blog/all-90-trades
 
