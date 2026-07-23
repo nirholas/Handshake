@@ -10,6 +10,19 @@ own client.
 
 Docs: **https://nirholas.github.io/hood402/**
 
+## Website
+
+An interactive, single-file site lives in [`docs/`](./docs) and is served at
+**https://nirholas.github.io/hood402/**. The core section is gated behind a live HTTP 402
+turnstile: sign, pay, and watch the real `402 → X-PAYMENT → settle → 200` handshake open the
+gate. Zero external requests; it works straight from `file://`.
+
+Deploy your own copy (publishes the `docs/` folder as a static site):
+
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hood402)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood402)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood402)
+
 ## Why EIP-3009, and how we know
 
 USDG (Paxos Global Dollar) is a facet/diamond-router stablecoin. Its base implementation
