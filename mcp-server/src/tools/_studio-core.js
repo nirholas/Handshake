@@ -413,7 +413,7 @@ async function forgeFreeOnce({ base, prompt, tierId, imageUrls }) {
 		payload:
 			Array.isArray(imageUrls) && imageUrls.length
 				? { image_urls: imageUrls, prompt: prompt || undefined, tier: tierId }
-				: { prompt, tier: tierId, backend: 'nvidia', path: 'image' },
+				: { prompt, tier: tierId, path: 'image' },
 		submitTimeoutMs: 90_000,
 		allowSyncDone: true,
 	});

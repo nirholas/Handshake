@@ -1288,3 +1288,107 @@ the session scratchpad (not committed).
 **Implication for the resubmission:** once deployed, regenerate #2632's identity through the
 fixed pipeline so the demo deliverables at /agent-identities reflect the new quality; the
 listing avatar itself stays the logo mark (compliant, on-brand).
+
+---
+
+## 2026-07-23 — Work Order 07: independent audit closed, payTo drift found + corrected, resubmission still owner/human-gated
+
+Re-verified everything live against production with fresh eyes; treated nothing in this file
+as true until re-checked.
+
+### Part 1 audit results
+
+1. **402 checks (cheapest + flagship):** unpaid `POST /api/okx/3d/text-to-3d` and
+   `/api/okx/3d/identity-studio` both return spec-valid x402 v2 402s, `eip155:196` accept
+   FIRST, correct amounts (`10000` / `1500000`). Cross-checked all 9 paid services' live
+   X Layer amount against `api/_lib/okx-catalog.js`: **zero mismatches**.
+2. **Real paid call + on-chain settlement:** NOT run. Buyer wallet
+   (`0x75d00a2713565171f33216e5aa2a375e076ecf69`, the onchainos TEE wallet) holds **0 USD₮0**
+   on X Layer, confirmed live via direct RPC `eth_call` on the token contract. See the payTo
+   finding below, this is also no longer a same-wallet self-payment.
+3. **Replay protection:** could not run the full case 5a (needs a real settled payment
+   first). Ran case 5d (garbage `PAYMENT-SIGNATURE` header) twice: both attempts returned a
+   consistent `400 invalid_payment`, no crash, no tool execution.
+4. **Free lane:** `health` all 5 subsystems ok (`payment-rail settleable:true`, live block
+   read); `catalog` returns 11 services, byte-matches `api/_lib/okx-catalog.js`. Could not
+   diff against the live OKX listing this session, see login note below.
+5. **Completionist audit:** ran over every file this stream touched. Found and fixed
+   **550+ em-dash violations** across every in-scope `.js`/`.md` file (comments, docstrings,
+   docs, all of `prompts/okx-ai/*`), a rule this stream had never actually satisfied despite
+   PROGRESS.md flagging it back on 2026-07-17. No live listing strings were touched (those
+   were already clean from the 07-17 rewrite). No mocks, stubs, TODOs, or secrets found; no
+   throwaway scratch files. Full report in the agent's own summary (not duplicated here).
+6. **Tests:** `npx vitest run` on the OKX-scope test files (77 tests) green post-fix.
+   Full `npm test`: **6 failures, all pre-existing and unrelated to this stream**
+   (`x402-self-facilitator-min-settle.test.js`, `x402-self-facilitator-settle-recovery.test.js`
+   — a Solana settleable-mint guard regression, and `material-studio-store.test.js`), not
+   caused by or fixed in this session, flagged for whoever owns that code.
+   `npm run build:pages` green (changelog validates).
+
+### ⚠️ New finding: the seller/payTo address moved, undocumented
+
+Every prior session's docs (spec, RUNBOOK, 00-CONTEXT) name
+`0x75d00a2713565171f33216e5aa2a375e076ecf69` as "our payTo". Live-probed today, the X Layer
+accept's `payTo` is **`0x4022de2D36C334E73C7a108805Cea11C0564f402`**, confirmed against the
+live Cloud Run `X402_PAY_TO_XLAYER` env var, not just the HTTP response. That address is the
+platform's standing EVM merchant/deployer wallet (already the Base rail's payTo). It moved
+sometime between 2026-07-07 and 2026-07-23 with no PROGRESS.md entry recording it. Corrected
+`specs/okx-agent-payments.md` (dated reconciliation note) and `RUNBOOK.md` (§3, §6) to state
+the live address and flag that it can drift silently again, re-probe before trusting it.
+`0x75d0…cf69`'s other two roles (agent #2632's on-chain identity owner wallet; the onchainos
+buyer/TEE wallet) are unaffected.
+
+Live balances checked (X Layer RPC, 2026-07-23): buyer `0x75d0…cf69` = **0 USD₮0**; current
+seller `0x4022de2D…f402` = 2.43 USD₮0 (irrelevant, it's the recipient); relayer
+`0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` (Secret Manager `x402-xlayer-relayer-key` v3,
+rotated 2026-07-12, superseding the `0x1F4a…bb74` address named in the 2026-07-08 entry
+above) = 0.02 OKB gas.
+
+### Part 2 — docs closure
+
+- `specs/okx-agent-payments.md`: corrected (payTo drift note above).
+- `docs/okx-marketplace.md`: every one of its 8 curl examples (catalog, health,
+  identity-studio create, and all 8 REST services) run live against production this
+  session, all return the documented response/402. Em-dashes stripped by completionist.
+- `STRUCTURE.md`: OKX row present and accurate, unchanged.
+- `data/pages.json`: `/agent-identities` entry present; fixed one em-dash in its title
+  (`Agent Identity Studio: 3D avatars for AI agents`).
+- `data/changelog.json`: 02/03/06 entries present and well-formed (`build:pages` validates);
+  07-17 avatar/render fixes are covered by existing "Avatar renders look studio-lit, not
+  murky" entry. No entry added for the 07-17 catalog-string rewrite, it changed pre-launch
+  listing copy with no live approved listing yet, not user-visible.
+- READMEs: `api/_okx3d/` is an internal implementation dir (like sibling `api/_lib`,
+  `api/_mcp`, `api/_mcp3d`), consistent with repo convention of no README for those; no gap.
+
+### Part 3 — approval watch
+
+**Not completed this session.** `onchainos` CLI login changed as of v4.3.0: the old direct
+`wallet login <email>` + typed-OTP flow this whole stream's docs describe no longer exists.
+Login is now `wallet login --phase init` → a human opens the returned `loginUrl` in a
+browser, signs in via email OTP there → `wallet login --phase poll`. Initiated a login
+session this run (`onchainos wallet login --phase init`), handed the human the URL, polled
+repeatedly; **the human had not completed the browser step by the end of this session**, so
+`onchainos agent get-agents`/`service-list`/`search` (all now require this session even for
+reads) could not be re-run. Approval status is therefore carried forward unverified from the
+2026-07-17 entry (rejected, avatar-only reasons, fix shipped but not resubmitted). Documented
+the new login mechanic in full in `RUNBOOK.md` §0 so the next session doesn't rediscover it.
+
+### GO/NO-GO
+
+- **WO-04 (real settled payment):** NO-GO, unchanged, buyer wallet still holds $0. Fund
+  `0x75d00a2713565171f33216e5aa2a375e076ecf69` with ≥$3 USD₮0 on X Layer (196); top up the
+  relayer's 0.02 OKB if a dry run shows `broadcast_failed`.
+- **WO-05 (resubmission):** transitively NO-GO (needs WO-04's GO), and separately blocked
+  this session on completing the browser login. Once both clear: upload the 07-17 avatar,
+  push the catalog-string update, resubmit.
+- **WO-07 (this work order):** audit complete, all findable-and-fixable issues fixed
+  (em-dashes, payTo docs drift). Approval-watch and resubmission execution remain open,
+  carried to the next session. `RUNBOOK.md` is current and is the correct starting point.
+
+### Next session, start here
+
+1. Re-probe live `payTo` before trusting any address in any doc, it has drifted silently once.
+2. `onchainos wallet status` — if logged out, `wallet login --phase init`, hand the human the
+   URL, poll until `loggedIn:true`.
+3. `onchainos agent get-agents --agent-ids 2632` for current approval state, then RUNBOOK §4
+   or §5 depending on the result.
