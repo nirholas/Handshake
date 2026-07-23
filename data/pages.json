@@ -1065,6 +1065,14 @@
 					"added": "2026-06-15"
 				},
 				{
+					"path": "/tracker",
+					"title": "KOL Tracker",
+					"description": "Solana crypto KOLs ranked by realized P&L computed from their own wallet's on-chain trade history, with win rate, volume, trade count, and X follower counts for verified handles.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-07-23"
+				},
+				{
 					"path": "/integrity",
 					"title": "Custody Integrity",
 					"description": "Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana — verify the latest root yourself, no account required.",

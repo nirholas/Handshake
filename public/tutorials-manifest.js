@@ -514,6 +514,16 @@
 			previewModel: '/animations/soldier.glb',
 			ctaPrimary: { label: 'Open Vanity Wallet', href: '/vanity-wallet' },
 		},
+		{
+			slug: 'arm-an-agent-sniper',
+			tier: 'advanced',
+			title: 'Arm an Autonomous Sniper on Your Agent',
+			blurb: 'Fund your agent\'s wallet and arm it to trade fresh pump.fun launches on its own: entry filters, an on-chain safety simulation before every buy, a strict exit ladder, and a hash-chained decision ledger you can audit trade by trade.',
+			builds: 'A live autonomous sniper strategy trading real SOL from your agent\'s wallet',
+			time: '30 min',
+			previewModel: '/animations/soldier.glb',
+			ctaPrimary: { label: 'Open Mission Control', href: '/terminal' },
+		},
 	];
 
 	const TIER_META = {

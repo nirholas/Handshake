@@ -5267,6 +5267,10 @@
 			"schedule": "0 3 * * *"
 		},
 		{
+			"path": "/api/cron/kol-tracker-refresh",
+			"schedule": "*/10 * * * *"
+		},
+		{
 			"path": "/api/cron/quota-check",
 			"schedule": "0 * * * *"
 		},

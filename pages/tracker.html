@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title data-i18n="tracker.meta_title">KOL Tracker · three.ws</title>
+		<meta name="description" content="Track Solana crypto KOLs by real, on-chain P&L — realized profit, win rate, volume, and trade count computed from their own wallet activity, with X follower counts for the handles we've verified." data-i18n-attr="content:tracker.meta_description"/>
+		<link rel="canonical" href="https://three.ws/tracker" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/tracker" />
+		<meta property="og:title" content="KOL Tracker · three.ws" data-i18n-attr="content:tracker.meta_og_title"/>
+		<meta property="og:description" content="Solana crypto KOLs ranked by real, on-chain P&L — not self-reported numbers." data-i18n-attr="content:tracker.meta_og_description"/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=KOL+Tracker&amp;d=Solana+crypto+KOLs+ranked+by+real%2C+on-chain+P%26L&amp;p=%2Ftracker" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="KOL Tracker · three.ws" data-i18n-attr="content:tracker.meta_twitter_title"/>
+		<meta name="twitter:description" content="Solana crypto KOLs ranked by real, on-chain P&L, win rate, and volume." data-i18n-attr="content:tracker.meta_twitter_description"/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=KOL+Tracker&amp;d=Solana+crypto+KOLs+ranked+by+real%2C+on-chain+P%26L&amp;p=%2Ftracker" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<style>
+			.tk-shell { max-width: 1080px; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
+			.tk-hero { padding: var(--space-xl) 0 var(--space-md); }
+			.tk-kicker { display: inline-flex; align-items: center; gap: var(--space-xs); font: var(--weight-semibold) var(--text-2xs)/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 var(--space-sm); }
+			.tk-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 60%, transparent); animation: tk-pulse 1.8s ease infinite; }
+			@keyframes tk-pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 55%, transparent); } 70% { box-shadow: 0 0 0 6px transparent; } }
+			.tk-title { font: var(--weight-bold) var(--text-2xl)/1.05 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-sm); letter-spacing: -0.02em; }
+			.tk-sub { font: var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0; max-width: 68ch; }
+
+			.tk-controls { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; margin: var(--space-lg) 0 var(--space-md); }
+			.tk-seg { display: inline-flex; gap: var(--space-3xs); padding: var(--space-3xs); background: var(--surface-1); border: 1px solid var(--color-border); border-radius: var(--radius-pill); }
+			.tk-seg-btn { appearance: none; border: 0; background: transparent; cursor: pointer; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); font: var(--weight-medium) var(--text-md)/1 var(--font-body); color: var(--color-text-dim); transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); white-space: nowrap; }
+			.tk-seg-btn:hover { color: var(--color-text); }
+			.tk-seg-btn.is-active { background: var(--surface-3); color: var(--color-text-bright); }
+			.tk-seg-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+			.tk-count { margin-left: auto; font: var(--weight-medium) var(--text-sm)/1 var(--font-mono); color: var(--color-text-faint); }
+
+			.tk-board-wrap { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--surface-1); overflow-x: auto; }
+			.tk-board { min-width: 720px; }
+			.tk-head, .tk-row { display: grid; grid-template-columns: 44px 1.6fr 1fr 0.9fr 1fr 0.8fr 0.7fr; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); }
+			.tk-head { background: var(--surface-2); border-bottom: 1px solid var(--color-border); font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); position: sticky; top: 0; }
+			.tk-col-num { text-align: right; }
+			.tk-row { border-bottom: 1px solid var(--color-border); transition: background var(--duration-fast) var(--ease-standard); }
+			.tk-row:last-child { border-bottom: 0; }
+			.tk-row:hover { background: var(--surface-2); }
+			.tk-rank { font: var(--weight-bold) var(--text-md)/1 var(--font-mono); color: var(--color-text-dim); }
+			.tk-rank.is-top { color: var(--color-text-bright); }
+			.tk-medal { font-size: 16px; }
+			.tk-kol { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }
+			.tk-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--surface-3); flex: none; border: 1px solid var(--color-border); }
+			.tk-avatar-fallback { display: flex; align-items: center; justify-content: center; font: var(--weight-semibold) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); font-family: var(--font-mono); }
+			.tk-kol-meta { min-width: 0; }
+			.tk-handle { display: block; font: var(--weight-medium) var(--text-md)/1.2 var(--font-body); color: var(--color-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			a.tk-handle:hover { color: var(--color-text-bright); text-decoration: underline; }
+			.tk-wallet { display: block; font: var(--weight-regular) var(--text-2xs)/1.2 var(--font-mono); color: var(--color-text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.tk-value { font: var(--weight-semibold) var(--text-md)/1 var(--font-mono); color: var(--color-text-bright); text-align: right; }
+			.tk-value.tk-up { color: var(--color-success); }
+			.tk-value.tk-down { color: var(--color-danger); }
+			.tk-value.tk-muted { color: var(--color-text-faint); font-weight: var(--weight-regular); }
+			.tk-source { display: inline-block; margin-left: 6px; font: var(--weight-medium) var(--text-2xs)/1 var(--font-mono); color: var(--color-text-faint); vertical-align: middle; }
+
+			.tk-state { padding: var(--space-2xl) var(--space-md); text-align: center; }
+			.tk-state-title { font: var(--weight-semibold) var(--text-lg)/1.2 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-xs); }
+			.tk-state-msg { font: var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0 auto var(--space-md); max-width: 52ch; }
+			.tk-state .tk-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; border: 0; cursor: pointer; }
+
+			.tk-skel-row { display: grid; grid-template-columns: 44px 1.6fr 1fr 0.9fr 1fr 0.8fr 0.7fr; gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); min-width: 720px; }
+			.tk-skel { height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: tk-shimmer 1.4s ease infinite; }
+			.tk-skel.circle { width: 32px; height: 32px; border-radius: 50%; }
+			@keyframes tk-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+			@media (prefers-reduced-motion: reduce) { .tk-skel, .tk-live-dot { animation: none; } }
+
+			.tk-footer-links { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
+			.tk-footer-links a { font: var(--weight-medium) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); text-decoration: none; padding: var(--space-xs) var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-pill); transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+			.tk-footer-links a:hover { color: var(--color-text-bright); border-color: var(--color-text-dim); }
+
+			@media (max-width: 640px) {
+				.tk-title { font-size: var(--text-xl); }
+			}
+		</style>
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="KOL Tracker — three.ws">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"KOL Tracker","description":"Solana crypto KOLs ranked by real, on-chain P&L, win rate, volume, and trade count.","url":"https://three.ws/tracker","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="tk-shell" aria-labelledby="tk-title">
+			<section class="tk-hero">
+				<p class="tk-kicker" data-i18n-html="tracker.on_chain_updates_live"><span class="tk-live-dot" aria-hidden="true"></span> On-chain · updates live</p>
+				<h1 id="tk-title" class="tk-title" data-i18n="tracker.kol_tracker">KOL Tracker</h1>
+				<p class="tk-sub" data-i18n="tracker.solana_crypto_kols_ranked_by_realized_p">Solana crypto KOLs ranked by realized P&amp;L computed straight from their own wallet's trade history — not a self-reported number. Follower counts shown only for handles we've verified control the wallet.</p>
+			</section>
+
+			<section class="tk-controls" aria-label="Tracker window">
+				<div class="tk-seg" role="tablist" aria-label="Window" id="tk-window">
+					<button class="tk-seg-btn" data-window="24h" role="tab" aria-selected="false" data-i18n="tracker.24h">24H</button>
+					<button class="tk-seg-btn is-active" data-window="7d" role="tab" aria-selected="true" data-i18n="tracker.7d">7D</button>
+					<button class="tk-seg-btn" data-window="30d" role="tab" aria-selected="false" data-i18n="tracker.30d">30D</button>
+				</div>
+				<span class="tk-count" id="tk-count"></span>
+			</section>
+
+			<div class="tk-board-wrap">
+				<section class="tk-board" aria-label="Tracked KOLs" aria-busy="true">
+					<div class="tk-head" role="row" aria-hidden="true">
+						<span>#</span>
+						<span data-i18n="tracker.kol">KOL</span>
+						<span class="tk-col-num" id="tk-pnl-label" data-i18n="tracker.7d_pnl">7D PnL</span>
+						<span class="tk-col-num" data-i18n="tracker.followers">Followers</span>
+						<span class="tk-col-num" id="tk-vol-label" data-i18n="tracker.7d_volume">7D Volume</span>
+						<span class="tk-col-num" data-i18n="tracker.win_rate">Win Rate</span>
+						<span class="tk-col-num" data-i18n="tracker.trades">Trades</span>
+					</div>
+					<div id="tk-rows" aria-live="polite"></div>
+				</section>
+			</div>
+
+			<nav class="tk-footer-links" aria-label="Other leaderboards">
+				<a href="/leaderboard" data-i18n="tracker.trader_leaderboard">Trader Leaderboard →</a>
+				<a href="/smart-money" data-i18n="tracker.smart_money_radar">Smart Money Radar →</a>
+				<a href="/rankings" data-i18n="tracker.creator_rankings">Creator Rankings →</a>
+			</nav>
+		</main>
+
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+
+		<script type="module">
+			const rowsEl = document.getElementById('tk-rows');
+			const boardEl = rowsEl.closest('.tk-board');
+			const countEl = document.getElementById('tk-count');
+			const windowSeg = document.getElementById('tk-window');
+			const pnlLabel = document.getElementById('tk-pnl-label');
+			const volLabel = document.getElementById('tk-vol-label');
+
+			const WINDOW_LABEL = { '24h': '24H', '7d': '7D', '30d': '30D' };
+			let state = { window: '7d', loading: false };
+
+			const esc = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
+
+			function fmtUsd(v) {
+				if (v == null) return '—';
+				const abs = Math.abs(v);
+				const sign = v < 0 ? '-' : '+';
+				if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
+				if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(1)}K`;
+				return `${sign}$${abs.toFixed(0)}`;
+			}
+			function fmtVolume(v) {
+				if (v == null) return '—';
+				if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`;
+				if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
+				return `$${v.toFixed(0)}`;
+			}
+			function fmtFollowers(v) {
+				if (v == null) return '—';
+				if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+				if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+				return String(v);
+			}
+			function fmtWinRate(v) { return v == null ? '—' : `${Math.round(v * 100)}%`; }
+			function fmtTrades(v) { return v == null ? '—' : String(v); }
+			function shortWallet(w) { return w ? `${w.slice(0, 4)}…${w.slice(-4)}` : ''; }
+
+			function medal(rank) {
+				if (rank === 1) return '<span class="tk-medal" aria-hidden="true">🥇</span>';
+				if (rank === 2) return '<span class="tk-medal" aria-hidden="true">🥈</span>';
+				if (rank === 3) return '<span class="tk-medal" aria-hidden="true">🥉</span>';
+				return '';
+			}
+
+			function avatarCell(r) {
+				if (r.avatarUrl) return `<img class="tk-avatar" src="${esc(r.avatarUrl)}" alt="" loading="lazy" />`;
+				const src = r.xHandle || r.label || r.wallet || '?';
+				const ch = esc(src[0] || '?').toUpperCase();
+				return `<span class="tk-avatar tk-avatar-fallback" aria-hidden="true">${ch}</span>`;
+			}
+
+			function pnlCell(r) {
+				if (r.pnlUsd == null) return '<span class="tk-value tk-muted">—</span>';
+				const cls = r.pnlUsd > 0 ? 'tk-up' : r.pnlUsd < 0 ? 'tk-down' : '';
+				const src = r.pnlSource === 'onchain' ? '' : r.pnlSource ? `<span class="tk-source" title="Sourced from ${esc(r.pnlSource)}, not live on-chain trades">(${esc(r.pnlSource)})</span>` : '';
+				return `<span class="tk-value ${cls}">${fmtUsd(r.pnlUsd)}</span>${src}`;
+			}
+
+			function rowHtml(r, rank) {
+				const displayName = r.xHandle ? `@${r.xHandle}` : (r.label || shortWallet(r.wallet));
+				const handleHtml = r.xHandle
+					? `<a class="tk-handle" href="https://x.com/${esc(r.xHandle)}" target="_blank" rel="noopener noreferrer nofollow">${esc(displayName)}</a>`
+					: `<span class="tk-handle">${esc(displayName)}</span>`;
+				const rankCls = rank <= 3 ? 'tk-rank is-top' : 'tk-rank';
+				return `
+					<div class="tk-row" role="row">
+						<span class="${rankCls}">${medal(rank) || '#' + rank}</span>
+						<span class="tk-kol">${avatarCell(r)}<span class="tk-kol-meta">${handleHtml}<span class="tk-wallet">${esc(shortWallet(r.wallet))}</span></span></span>
+						<span class="tk-col-num">${pnlCell(r)}</span>
+						<span class="tk-value tk-col-num">${fmtFollowers(r.followerCount)}</span>
+						<span class="tk-value tk-col-num">${fmtVolume(r.volumeUsd)}</span>
+						<span class="tk-value tk-col-num">${fmtWinRate(r.winRate)}</span>
+						<span class="tk-value tk-col-num">${fmtTrades(r.trades)}</span>
+					</div>`;
+			}
+
+			function skeleton() {
+				let h = '';
+				for (let i = 0; i < 10; i++) {
+					h += `<div class="tk-skel-row"><span class="tk-skel" style="width:20px"></span><span style="display:flex;align-items:center;gap:10px"><span class="tk-skel circle"></span><span class="tk-skel" style="width:110px"></span></span><span class="tk-skel" style="width:60px;justify-self:end"></span><span class="tk-skel" style="width:50px;justify-self:end"></span><span class="tk-skel" style="width:60px;justify-self:end"></span><span class="tk-skel" style="width:40px;justify-self:end"></span><span class="tk-skel" style="width:30px;justify-self:end"></span></div>`;
+				}
+				rowsEl.innerHTML = h;
+			}
+
+			function showState(copy) {
+				rowsEl.innerHTML = `<div class="tk-state"><p class="tk-state-title">${esc(copy.title)}</p><p class="tk-state-msg">${esc(copy.msg)}</p></div>`;
+			}
+
+			async function load() {
+				if (state.loading) return;
+				state.loading = true;
+				skeleton();
+				boardEl.setAttribute('aria-busy', 'true');
+				const label = WINDOW_LABEL[state.window];
+				pnlLabel.textContent = `${label} PnL`;
+				volLabel.textContent = `${label} Volume`;
+				try {
+					const res = await fetch(`/api/kol/tracker?window=${encodeURIComponent(state.window)}&limit=100`);
+					if (!res.ok) throw new Error('HTTP ' + res.status);
+					const data = await res.json();
+					const rows = data.rows || [];
+					countEl.textContent = rows.length ? `${rows.length} KOLs` : '';
+					if (!rows.length) {
+						showState({ title: 'No KOLs tracked yet', msg: 'The tracked-wallet list is empty for this window. Check back soon.' });
+						return;
+					}
+					rowsEl.innerHTML = rows.map((r, i) => rowHtml(r, i + 1)).join('');
+				} catch (err) {
+					showState({ title: "Couldn't load the tracker", msg: err.message || 'Something went wrong.' });
+				} finally {
+					state.loading = false;
+					boardEl.setAttribute('aria-busy', 'false');
+				}
+			}
+
+			windowSeg.addEventListener('click', (e) => {
+				const btn = e.target.closest('.tk-seg-btn');
+				if (!btn || btn.classList.contains('is-active')) return;
+				windowSeg.querySelectorAll('.tk-seg-btn').forEach((b) => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
+				btn.classList.add('is-active');
+				btn.setAttribute('aria-selected', 'true');
+				state.window = btn.dataset.window;
+				load();
+			});
+			windowSeg.addEventListener('keydown', (e) => {
+				if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+				const btns = [...windowSeg.querySelectorAll('.tk-seg-btn')];
+				const i = btns.findIndex((b) => b.classList.contains('is-active'));
+				const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
+				next.focus(); next.click();
+				e.preventDefault();
+			});
+
+			load();
+		</script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

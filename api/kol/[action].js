@@ -1,12 +1,9 @@
 // Consolidated KOL endpoints dispatcher.
 
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireAdmin } from '../_lib/admin.js';
-import { putObject, getObjectBuffer } from '../_lib/r2.js';
+import { loadWallets, saveImportedWallets } from '../../src/kol/wallet-store.js';
 
 // ── wallets (Birdeye P&L proxy) ───────────────────────────────────────────────
 
@@ -125,41 +122,6 @@ async function handleWallets(req, res) {
 	return json(res, 200, { data });
 }
 
-const WALLETS_PATH = path.resolve(
-	path.dirname(fileURLToPath(import.meta.url)),
-	'../../src/kol/wallets.json',
-);
-
-// Imported wallets live in R2 — the Vercel filesystem is read-only at runtime,
-// so writes to the bundled wallets.json can never persist (or even succeed).
-const WALLETS_R2_KEY = 'kol/wallets.json';
-
-async function loadBundledWallets() {
-	try {
-		return JSON.parse(await readFile(WALLETS_PATH, 'utf8'));
-	} catch {
-		return [];
-	}
-}
-
-async function loadImportedWallets() {
-	try {
-		const buf = await getObjectBuffer(WALLETS_R2_KEY);
-		const parsed = JSON.parse(buf.toString('utf8'));
-		return Array.isArray(parsed) ? parsed : [];
-	} catch {
-		return []; // nothing imported yet (or storage unreachable) — bundled list only
-	}
-}
-
-// Merged view: R2-stored imports take precedence over the bundled seed file.
-async function loadWallets() {
-	const [bundled, imported] = await Promise.all([loadBundledWallets(), loadImportedWallets()]);
-	const byWallet = new Map(bundled.map((w) => [w.wallet, w]));
-	for (const w of imported) byWallet.set(w.wallet, w);
-	return [...byWallet.values()];
-}
-
 // ── import-gmgn ───────────────────────────────────────────────────────────────
 
 async function handleImportGmgn(req, res) {
@@ -180,16 +142,28 @@ async function handleImportGmgn(req, res) {
 	} catch (err) {
 		return error(res, 400, 'validation_error', err.message);
 	}
+	// Optional admin-supplied wallet→X-handle map — the only way an xHandle ever
+	// enters the tracked list. Never inferred or scraped: an admin who has verified
+	// a real KOL controls a wallet (e.g. a signed message, a public self-disclosure)
+	// attaches it here explicitly.
+	const HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/;
+	const xHandles = body.xHandles && typeof body.xHandles === 'object' ? body.xHandles : {};
+	for (const [wallet, handle] of Object.entries(xHandles)) {
+		if (typeof handle !== 'string' || !HANDLE_RE.test(handle.replace(/^@/, ''))) continue;
+		const entry = parsed.find((e) => e.wallet === wallet);
+		if (entry) entry.xHandle = handle.replace(/^@/, '');
+	}
 	const existing = await loadWallets();
 	const byWallet = new Map(existing.map((w) => [w.wallet, w]));
-	for (const entry of parsed) byWallet.set(entry.wallet, entry);
+	for (const entry of parsed) {
+		const prev = byWallet.get(entry.wallet);
+		// Preserve a previously-attached xHandle across a re-import that doesn't repeat it.
+		if (prev?.xHandle && !entry.xHandle) entry.xHandle = prev.xHandle;
+		byWallet.set(entry.wallet, entry);
+	}
 	const merged = [...byWallet.values()];
 	try {
-		await putObject({
-			key: WALLETS_R2_KEY,
-			body: JSON.stringify(merged, null, '\t') + '\n',
-			contentType: 'application/json',
-		});
+		await saveImportedWallets(merged);
 	} catch (err) {
 		console.error('[kol/import-gmgn] R2 write failed:', err?.message || err);
 		return error(res, 503, 'storage_unavailable', 'failed to persist imported wallets');
@@ -248,12 +222,31 @@ async function handleTrades(req, res) {
 	return json(res, 200, { mint, trades: result.trades, wallets: KOL_WALLETS.length });
 }
 
+// ── tracker ───────────────────────────────────────────────────────────────────
+
+async function handleTracker(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const window = url.searchParams.get('window') || '7d';
+	if (!['24h', '7d', '30d'].includes(window))
+		return error(res, 400, 'validation_error', 'window must be 24h, 7d, or 30d');
+	const limitRaw = url.searchParams.get('limit');
+	const limit = Math.min(Math.max(Number(limitRaw) || 100, 1), 100);
+	const { getKolTracker } = await import('../../src/kol/tracker.js');
+	const rows = await getKolTracker({ window, limit });
+	return json(res, 200, { window, rows });
+}
+
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
 const DISPATCH = {
 	'import-gmgn': handleImportGmgn,
 	leaderboard: handleLeaderboard,
 	trades: handleTrades,
+	tracker: handleTracker,
 	wallets: handleWallets,
 };
 

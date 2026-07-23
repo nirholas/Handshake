@@ -31,7 +31,7 @@ function consumeFifo(lots, sellTokens, proceedsUsd) {
  * Pure FIFO P&L computation. Exported for unit testing.
  *
  * @param {{ trades: Array, currentPrices?: Object, windowSecs?: number }} opts
- * @returns {{ realizedUsd, unrealizedUsd, totalUsd, winRate, trades, openPositions }}
+ * @returns {{ realizedUsd, unrealizedUsd, totalUsd, winRate, trades, volumeUsd, openPositions }}
  */
 export function computeWalletPnl({ trades, currentPrices = {}, windowSecs = Infinity }) {
 	const now = Date.now() / 1000;
@@ -46,10 +46,12 @@ export function computeWalletPnl({ trades, currentPrices = {}, windowSecs = Infi
 	let realizedUsd = 0;
 	let closedTrades = 0;
 	let winningTrades = 0;
+	let volumeUsd = 0;
 
 	for (const trade of sorted) {
 		const { mint, type, tokenAmount, solAmount, usdPrice } = trade;
 		const tradeUsd = solAmount * usdPrice;
+		volumeUsd += tradeUsd;
 
 		if (type === 'buy') {
 			if (!lots[mint]) lots[mint] = [];
@@ -87,6 +89,7 @@ export function computeWalletPnl({ trades, currentPrices = {}, windowSecs = Infi
 		totalUsd: realizedUsd + unrealizedUsd,
 		winRate,
 		trades: sorted.length,
+		volumeUsd,
 		openPositions,
 	};
 }
