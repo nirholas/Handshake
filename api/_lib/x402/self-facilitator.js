@@ -179,6 +179,17 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 		return { ok: false, reason: `pay_to_not_allowlisted:${payTo.toBase58()}` };
 	}
 
+	// The mint must be one the platform actually issues 402s for (USDC, plus
+	// $THREE when configured). The requirement is caller-supplied: without
+	// this pin a junk mint passes every check below — including the
+	// sponsor-funded ATA create — so each call would burn sponsor ATA rent +
+	// fees settling a worthless transfer, repeatable per fresh mint. Fail
+	// closed when no settleable mint is configured at all.
+	const settleableMints = [env.X402_ASSET_MINT_SOLANA, env.THREE_TOKEN_MINT].filter(Boolean);
+	if (!settleableMints.includes(mint.toBase58())) {
+		return { ok: false, reason: `mint_not_settleable:${mint.toBase58()}` };
+	}
+
 	const expectedReceiverAta = getAssociatedTokenAddressSync(
 		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 	);

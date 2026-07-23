@@ -22,7 +22,7 @@ import {
 	createTransferCheckedInstruction,
 } from '@solana/spl-token';
 
-const { verifyRingPayment } = await import('../api/_lib/x402/self-facilitator.js');
+const { verifyRingPayment, validateRingTransaction } = await import('../api/_lib/x402/self-facilitator.js');
 
 const DECIMALS = 6;
 const AMOUNT_ATOMIC = 1000n; // 0.001 USDC
@@ -42,6 +42,10 @@ function buildSelfPayPayment({ amount = AMOUNT_ATOMIC } = {}) {
 	const transferIx = createTransferCheckedInstruction(
 		sourceAta, mint, destAta, buyer.publicKey, amount, DECIMALS,
 	);
+	// The facilitator only settles mints the platform issues 402s for (pinned
+	// to the configured env mints after the 2026-07-23 audit); model this
+	// synthetic mint as the configured one.
+	process.env.X402_ASSET_MINT_SOLANA = mint.toBase58();
 	const message = new TransactionMessage({
 		payerKey: buyer.publicKey,
 		recentBlockhash: '11111111111111111111111111111111',
@@ -63,12 +67,16 @@ function buildSelfPayPayment({ amount = AMOUNT_ATOMIC } = {}) {
 }
 
 let prevPayTo;
+let prevAssetMint;
 beforeEach(() => {
 	prevPayTo = process.env.X402_PAY_TO_SOLANA;
+	prevAssetMint = process.env.X402_ASSET_MINT_SOLANA;
 });
 afterEach(() => {
 	if (prevPayTo === undefined) delete process.env.X402_PAY_TO_SOLANA;
 	else process.env.X402_PAY_TO_SOLANA = prevPayTo;
+	if (prevAssetMint === undefined) delete process.env.X402_ASSET_MINT_SOLANA;
+	else process.env.X402_ASSET_MINT_SOLANA = prevAssetMint;
 });
 
 describe('verifyRingPayment settleability gate', () => {
