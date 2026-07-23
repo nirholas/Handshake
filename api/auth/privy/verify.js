@@ -14,6 +14,7 @@ import {
 	createSession,
 	sessionCookie,
 	destroySession,
+	isSameSiteOrigin,
 } from '../../_lib/auth.js';
 import { fetchPrivyWallets, extractIdentity } from '../../_lib/privy.js';
 import { env } from '../../_lib/env.js';
@@ -31,6 +32,14 @@ const bodySchema = z.object({
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
+
+	// Login-CSRF guard: this endpoint SETS a session cookie. Without an origin
+	// check, attacker content on any credentialed-allowlisted origin could POST
+	// their own Privy token through the victim's browser and plant a session
+	// for the attacker's account, so the victim's later actions land there.
+	if (!isSameSiteOrigin(req)) {
+		return error(res, 403, 'forbidden', 'cross-site request blocked');
+	}
 
 	const ip = clientIp(req);
 	const rl = await limits.authIp(ip);
