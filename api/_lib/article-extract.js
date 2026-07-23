@@ -15,10 +15,13 @@
 //                WordPress-style feeds, a teaser for the rest)
 //   4. preview — honest metadata-only preview with a read-at-source CTA
 //
-// Every rung is SSRF-guarded: the caller validates the target is a public URL
-// before we ever hand it to the reader service (which would otherwise proxy it).
+// Every rung is SSRF-guarded by the shared platform guard (./ssrf-guard.js):
+// all DNS answers are validated (not just the first), the connection is pinned
+// to the validated IP, and every redirect hop is re-validated before it is
+// followed. The reader rung additionally validates the target before handing
+// it to the reader service (which would otherwise proxy it).
 
-import { lookup } from 'node:dns/promises';
+import { assertSafePublicUrl, fetchSafePublicUrlPinned } from './ssrf-guard.js';
 import { stripHtml } from './news.js';
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -30,60 +33,31 @@ const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 const BROWSER_UA =
 	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
-// ── SSRF protection ────────────────────────────────────────────────────────
-
-function isPrivateOrReservedHost(hostname) {
-	const host = hostname.toLowerCase();
-	if (['localhost', 'metadata.google.internal', 'metadata.google', 'instance-data'].includes(host)) return true;
-	const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-	if (v4) {
-		const [, a, b] = v4.map(Number);
-		if (
-			a === 0 || a === 10 || a === 127 ||
-			(a === 169 && b === 254) ||
-			(a === 172 && b >= 16 && b <= 31) ||
-			(a === 192 && b === 168)
-		) return true;
-	}
-	const bare = host.replace(/^\[|\]$/g, '');
-	if (bare === '::1' || /^(fc|fd)/i.test(bare) || /^fe[89ab]/i.test(bare)) return true;
-	return false;
-}
-
-export async function assertPublicUrl(urlString) {
-	const parsed = new URL(urlString);
-	if (!/^https?:$/.test(parsed.protocol)) throw new Error('only http(s) urls are supported');
-	if (isPrivateOrReservedHost(parsed.hostname)) throw new Error('url targets a private address');
-	// DNS-rebinding guard: resolve and re-check the actual address
-	if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname) && !parsed.hostname.includes(':')) {
-		const { address } = await lookup(parsed.hostname);
-		if (isPrivateOrReservedHost(address)) throw new Error('url resolves to a private address');
-	}
-}
-
 // ── Rung 1: direct HTML ────────────────────────────────────────────────────
 
 export async function fetchArticleHtml(url) {
-	await assertPublicUrl(url);
-	const resp = await fetch(url, {
-		headers: {
-			'user-agent': BROWSER_UA,
-			accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-			'accept-language': 'en-US,en;q=0.9',
+	// Pinned fetch: DNS is fully validated, the socket connects only to the
+	// checked address, and redirect hops are re-validated, so a publisher (or
+	// a hostile link submitted to /api/news/article?url=) cannot 302 us into
+	// the metadata service or an internal address. maxBytes caps the stream.
+	const resp = await fetchSafePublicUrlPinned(
+		url,
+		{
+			headers: {
+				'user-agent': BROWSER_UA,
+				accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+				'accept-language': 'en-US,en;q=0.9',
+			},
+			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 		},
-		redirect: 'follow',
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-	});
+		{ maxBytes: MAX_RESPONSE_BYTES },
+	);
 	if (!resp.ok) throw Object.assign(new Error(`source responded ${resp.status}`), { status: resp.status });
 	const contentType = resp.headers.get('content-type') || '';
 	if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
 		throw new Error(`unsupported content type: ${contentType.split(';')[0] || 'unknown'}`);
 	}
-	const declared = parseInt(resp.headers.get('content-length') || '0', 10);
-	if (declared > MAX_RESPONSE_BYTES) throw new Error('article page too large');
-	const html = await resp.text();
-	if (html.length > MAX_RESPONSE_BYTES) throw new Error('article page too large');
-	return html;
+	return resp.text();
 }
 
 export function extractParagraphs(html) {
@@ -175,21 +149,26 @@ export function paragraphsFromReaderMarkdown(md) {
 }
 
 export async function fetchViaReader(url) {
-	await assertPublicUrl(url);
+	// Validate the target ourselves before handing it to the reader service:
+	// r.jina.ai would otherwise fetch (and proxy back) anything, including
+	// addresses we are forbidden to touch.
+	await assertSafePublicUrl(url);
 	// r.jina.ai renders the page and returns readable markdown. Keyless and
 	// free; a token unlocks higher limits but is not required.
-	const resp = await fetch(`https://r.jina.ai/${url}`, {
-		headers: {
-			accept: 'text/plain',
-			'x-return-format': 'markdown',
-			'user-agent': BROWSER_UA,
+	const resp = await fetchSafePublicUrlPinned(
+		`https://r.jina.ai/${url}`,
+		{
+			headers: {
+				accept: 'text/plain',
+				'x-return-format': 'markdown',
+				'user-agent': BROWSER_UA,
+			},
+			signal: AbortSignal.timeout(READER_TIMEOUT_MS),
 		},
-		redirect: 'follow',
-		signal: AbortSignal.timeout(READER_TIMEOUT_MS),
-	});
+		{ maxBytes: MAX_RESPONSE_BYTES },
+	);
 	if (!resp.ok) throw Object.assign(new Error(`reader responded ${resp.status}`), { status: resp.status });
 	const md = await resp.text();
-	if (md.length > MAX_RESPONSE_BYTES) throw new Error('reader response too large');
 	return paragraphsFromReaderMarkdown(md);
 }
 
