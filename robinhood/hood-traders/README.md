@@ -15,6 +15,21 @@ swaps, hard risk caps, and a live decision-journal dashboard.
 > misconfigured risk cap. Start in paper mode. Use a wallet you can afford to lose. You are
 > responsible for every transaction this software signs on your behalf.
 
+## Website
+
+The site in [`docs/`](./docs) is served at **https://nirholas.github.io/hood-traders/**. The
+fleet is a top-down **radar**: each agent is a blip, and as the sweep passes one it reveals that
+agent's strategy, live P&L, win rate and open position in the read-out panel. Click any blip or
+roster row to lock focus. The fleet shown is a paper-mode demo with synthetic P&L, clearly
+labelled; the strategy edge/failure copy mirrors the live `strategy.meta`. Zero external
+requests, works from `file://`.
+
+Deploy your own copy (publishes the `docs/` folder as a static site):
+
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hood-traders)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-traders)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-traders)
+
 Built on [`hoodchain`](../robinhood-chain-sdk) — the Robinhood Chain (chain ID 4663) TypeScript
 SDK for Stock Tokens, Chainlink quotes, Uniswap v3 swaps, USDG, and launchpad watchers.
 `hoodkit`/`hood-js` (the wave-2 convenience wrappers) had not shipped at the time this package
