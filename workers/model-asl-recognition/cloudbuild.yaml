@@ -41,6 +41,10 @@ steps:
       - --region=${_REGION}
       - --service-account=${_RUN_SA}
       - --platform=managed
+      # gen2: the LiteRT native runtime maps a shared object with an
+      # executable stack, which gen1's gVisor sandbox rejects at import
+      # ("cannot enable executable stack"); gen2 runs on full Linux.
+      - --execution-environment=gen2
       - --port=8080
       - --cpu=4
       - --memory=4Gi
