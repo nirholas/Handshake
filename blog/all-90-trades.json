@@ -179,7 +179,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $DRONENALD on a new_mint trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0020 SOL expecting a profitable exit.",
    "buy_sig": "214YhevxHwfmxtD4z77v53QvdGHg5Lu2jZfDMHzauCrvUNMrKX7jWQs2eg5byk6iGtcVfrUrL8HUnptmXWJaQvv4",
-   "sell_sig": "SIMULATED"
+   "sell_sig": "SIMULATED",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 5253,
+    "now_mc_usd": 2172,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 2,
@@ -206,7 +218,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $BITS on a new_mint trigger with 0.05% price impact; firewall verdict allow (score 100). Committed 0.0500 SOL expecting a profitable exit.",
    "buy_sig": "3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY",
-   "sell_sig": "mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH"
+   "sell_sig": "mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 27376,
+    "now_mc_usd": 2206,
+    "now_vs_exit_multiple": 0.081,
+    "post_exit_high_mc_usd": 15257,
+    "post_exit_high_vs_exit_multiple": 0.557,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 15257
+   }
   },
   {
    "n": 3,
@@ -233,7 +264,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $ENTHUIST on a intel_confirmed trigger with 0.51% price impact; firewall verdict warn (score 84). Committed 0.1500 SOL expecting a profitable exit.",
    "buy_sig": "58SnedweAjUZD1QxkDwQJxCazj9BmTgWXFei5xuGaCvKbM9agxkAdzP72AA8y6Z4NvuWnDFypzwvM4DDgSLrB2WP",
-   "sell_sig": "SIMULATED"
+   "sell_sig": "SIMULATED",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 5221,
+    "now_mc_usd": 2169,
+    "now_vs_exit_multiple": 0.415,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 4,
@@ -260,7 +303,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $LOOONG on a new_mint trigger with 0.03% price impact; firewall verdict allow (score 100). Committed 0.0500 SOL expecting a profitable exit.",
    "buy_sig": "4jRHHS4ZJRdkNh7aPytynYEMBPdkewgB6wq1zhKiFhBR3nZb4XqsGECjkTaLNA2tjpDmcyQSTNsq7JurSDdhBx1v",
-   "sell_sig": "4JUpg2KPJ4WZQ1nKqjASfm6xEPyMpERAwWbp2F9gQ6tfTwm8Df6AZXa51ChhNqkW36HSozCpj1XHyK7LFfmEX6DR"
+   "sell_sig": "4JUpg2KPJ4WZQ1nKqjASfm6xEPyMpERAwWbp2F9gQ6tfTwm8Df6AZXa51ChhNqkW36HSozCpj1XHyK7LFfmEX6DR",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 24085,
+    "now_mc_usd": 2247,
+    "now_vs_exit_multiple": 0.093,
+    "post_exit_high_mc_usd": 13713,
+    "post_exit_high_vs_exit_multiple": 0.569,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 5,
@@ -287,7 +342,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $SMOKE on a intel_confirmed trigger with 0.51% price impact; firewall verdict warn (score 84). Committed 0.1500 SOL expecting a profitable exit.",
    "buy_sig": "oi7HfJN2WrSpTK6yWKU5EJziVVNNt6NccVa72BvK9KNuFPVGPsiCXXDR1XheTdsa8eVEiCumM5f2otxbbEJCjjy",
-   "sell_sig": "4bEdkrxu8dUdW22SZWfUMqNB5SsASTUxrb2f3MTJu6epirScWCgYjvk8dHmcYa7R87pDMGtVRU7ZjZS5b35Fe6H9"
+   "sell_sig": "4bEdkrxu8dUdW22SZWfUMqNB5SsASTUxrb2f3MTJu6epirScWCgYjvk8dHmcYa7R87pDMGtVRU7ZjZS5b35Fe6H9",
+   "entry_intel": {
+    "quality_score": 30,
+    "unique_buyers": 4,
+    "unique_sellers": 2,
+    "organic_score": 0.4892,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5270,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.412,
+    "post_exit_high_mc_usd": 2186,
+    "post_exit_high_vs_exit_multiple": 0.415,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 3566
+   }
   },
   {
    "n": 6,
@@ -314,7 +388,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $WET on a intel_confirmed trigger with 0.54% price impact; firewall verdict allow (score 100). Committed 0.1500 SOL expecting a profitable exit.",
    "buy_sig": "3wqnpwwqoJ6rvv6WTAi3omV5yp3hb4o8c84qX8shoTcQpWgk3dwCpPidXDSMuE9T8n6LHVhjwqJo3cu3tsqNt5F2",
-   "sell_sig": "3CET8PBRqwsjD8pokBxSMzYU4DESrvh94yqzJJUy8V95uVC7ttuoraGLM5MV7h8eUuZV1mqYFLu8X6L9AQwWw4Zb"
+   "sell_sig": "3CET8PBRqwsjD8pokBxSMzYU4DESrvh94yqzJJUy8V95uVC7ttuoraGLM5MV7h8eUuZV1mqYFLu8X6L9AQwWw4Zb",
+   "entry_intel": {
+    "quality_score": 45,
+    "unique_buyers": 0,
+    "unique_sellers": 0,
+    "organic_score": 0.45,
+    "bundle_score": 0,
+    "concentration_top10": 0
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5272,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.412,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2200
+   }
   },
   {
    "n": 7,
@@ -341,7 +434,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $YES YOU on a intel_confirmed trigger with 0.54% price impact; firewall verdict allow (score 100). Committed 0.1500 SOL expecting a profitable exit.",
    "buy_sig": "vZnwjNmEoVJFhxkAKu448UfT9w2e8DNQY4JfQiW1iYQ1qLkPTMjaanRFNdLydwohBTNHkErhoyyC2VJMLvYs4cD",
-   "sell_sig": "3gvP31mrTrmZskKiMyAqLteUHLJUDCbbFme2B3D9CJyLK83x13aqNDeruEA5Nt5J56CgqouhnuhovXzLBYt8h4ZK"
+   "sell_sig": "3gvP31mrTrmZskKiMyAqLteUHLJUDCbbFme2B3D9CJyLK83x13aqNDeruEA5Nt5J56CgqouhnuhovXzLBYt8h4ZK",
+   "entry_intel": {
+    "quality_score": 45,
+    "unique_buyers": 0,
+    "unique_sellers": 0,
+    "organic_score": 0.45,
+    "bundle_score": 0,
+    "concentration_top10": 0
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5272,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.412,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2204
+   }
   },
   {
    "n": 8,
@@ -368,7 +480,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $MEOWPIN on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0500 SOL expecting a profitable exit.",
    "buy_sig": "3zkWZ4gftRbFbqWkNvRRrRNkB2CJuM6FKpBY97n4GpF7dtRLYRM46yDLxNThFjXwMYKppioiSxwJneRu6VxLd3YB",
-   "sell_sig": "3JYvFAF8LeyhsKwufzkdWC4DGT9wEyzXcWmni5vsSAtiNc2EHw1oP4WH1sRFcN71PMsi1YxvvqA5yayDrBhMWrLB"
+   "sell_sig": "3JYvFAF8LeyhsKwufzkdWC4DGT9wEyzXcWmni5vsSAtiNc2EHw1oP4WH1sRFcN71PMsi1YxvvqA5yayDrBhMWrLB",
+   "entry_intel": {
+    "quality_score": 75,
+    "unique_buyers": 35,
+    "unique_sellers": 26,
+    "organic_score": 0.7842,
+    "bundle_score": 0,
+    "concentration_top10": 0.9712
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 19386,
+    "now_mc_usd": 2174,
+    "now_vs_exit_multiple": 0.112,
+    "post_exit_high_mc_usd": 6809,
+    "post_exit_high_vs_exit_multiple": 0.351,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 12844
+   }
   },
   {
    "n": 9,
@@ -395,7 +526,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $KYDEN on a intel_confirmed trigger with 0.52% price impact; firewall verdict warn (score 84). Committed 0.1500 SOL expecting a profitable exit.",
    "buy_sig": "34o2Nb3pCgZHgC4MiJCv9rziQEnHJpKpUPNz3s1Qeb832Mcii4q9KBiQpxB4tsdA62CCh6TWgQkdJHNru8orc4jE",
-   "sell_sig": "2zUaksiZbbVvLR12H9vknPspYVP6jZNvg3GGhpjjeXhoPEn8cmqJfS1uyhH3WXgKUZDquUJPxYxeuS6DWX8cNdTw"
+   "sell_sig": "2zUaksiZbbVvLR12H9vknPspYVP6jZNvg3GGhpjjeXhoPEn8cmqJfS1uyhH3WXgKUZDquUJPxYxeuS6DWX8cNdTw",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5271,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.412,
+    "post_exit_high_mc_usd": 2433,
+    "post_exit_high_vs_exit_multiple": 0.462,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2709
+   }
   },
   {
    "n": 10,
@@ -422,7 +572,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $SADCAT on a intel_confirmed trigger with 0.54% price impact; firewall verdict allow (score 100). Committed 0.1500 SOL expecting a profitable exit.",
    "buy_sig": "2QLNqPk4maD4mq3U9aS1jyH3AiifgKM8GMtixRfBFtWgFu37DWD5r15hwvUnshoQGqPZQS3qWUU9gPp8vJ1v2xqu",
-   "sell_sig": "2nFUd3Fhs228Gm4HqWXVmWJppB2oxwrKPUYqJBbiPnjwmmLAggQQ2db2DR7SFfGVgRe6pbusgpFhCLtAX6aJYDjJ"
+   "sell_sig": "2nFUd3Fhs228Gm4HqWXVmWJppB2oxwrKPUYqJBbiPnjwmmLAggQQ2db2DR7SFfGVgRe6pbusgpFhCLtAX6aJYDjJ",
+   "entry_intel": {
+    "quality_score": 45,
+    "unique_buyers": 0,
+    "unique_sellers": 0,
+    "organic_score": 0.45,
+    "bundle_score": 0,
+    "concentration_top10": 0
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5272,
+    "now_mc_usd": 2169,
+    "now_vs_exit_multiple": 0.412,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2200
+   }
   },
   {
    "n": 11,
@@ -449,7 +618,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $CLOUSEAU on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0500 SOL expecting a profitable exit.",
    "buy_sig": "2XVVverSj1rhgMxb139JYsoKK8LYA1JJ6wjCHPg3qipi2xswwrGiV2ZbnMVjS7rPAFiEvCn5x3y2ZCLZUNauiJMU",
-   "sell_sig": "q8T3WtDYN1YKqT3XhkFBUG8XJse6gGCxuExaB8cBSeWVxYkocB3pbZMeYAsb1B29rXDrEUkXwCKeZTpPX1hr4qT"
+   "sell_sig": "q8T3WtDYN1YKqT3XhkFBUG8XJse6gGCxuExaB8cBSeWVxYkocB3pbZMeYAsb1B29rXDrEUkXwCKeZTpPX1hr4qT",
+   "entry_intel": {
+    "quality_score": 76,
+    "unique_buyers": 68,
+    "unique_sellers": 36,
+    "organic_score": 0.7914,
+    "bundle_score": 0.1628,
+    "concentration_top10": 0.8827
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 22143,
+    "now_mc_usd": 2184,
+    "now_vs_exit_multiple": 0.099,
+    "post_exit_high_mc_usd": 9861,
+    "post_exit_high_vs_exit_multiple": 0.445,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 14055
+   }
   },
   {
    "n": 12,
@@ -476,7 +664,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $ANSEM on a new_mint trigger with 0.03% price impact; firewall verdict warn (score 70). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4urmiwqc4gFq5PP5V8TjwThx8nYKqvt252AkoxCyqysGuf4Xc6XzX8AGmLfJacPXFQMVm4Vm6t4SGTKN9qKdPcrK",
-   "sell_sig": "3Kw4z2AR1iKHakV7B67dZHkPHXcRRh2ETc2PCqK43Du2M8MxjEQausGyCn4uKwn6NjW5bzdPWzVqyfd4DMfjDttN"
+   "sell_sig": "3Kw4z2AR1iKHakV7B67dZHkPHXcRRh2ETc2PCqK43Du2M8MxjEQausGyCn4uKwn6NjW5bzdPWzVqyfd4DMfjDttN",
+   "entry_intel": {
+    "quality_score": 0,
+    "unique_buyers": 19,
+    "unique_sellers": 15,
+    "organic_score": 0.331,
+    "bundle_score": 0.4836,
+    "concentration_top10": 0.9893
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5251,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 5915
+   }
   },
   {
    "n": 13,
@@ -503,7 +710,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $JIMOTHY on a new_mint trigger with 0.02% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2fhiMgkQqdEXZQMA8zPFAoy96kjojCGcHpe8BNzdwgDyagj46am6x1qsvx9k9BCmTf4cqkYn8v3cLpqC6973vkwM",
-   "sell_sig": "4fgX4wHeA1CBiRWK23EZss6hKqDGBoLkR5fiBc6pKtwbM8LYeN2ouuTM92CbbbK3YFXibeeUPX4tFT6TnxGbtbea"
+   "sell_sig": "4fgX4wHeA1CBiRWK23EZss6hKqDGBoLkR5fiBc6pKtwbM8LYeN2ouuTM92CbbbK3YFXibeeUPX4tFT6TnxGbtbea",
+   "entry_intel": {
+    "quality_score": 68,
+    "unique_buyers": 52,
+    "unique_sellers": 57,
+    "organic_score": 0.7634,
+    "bundle_score": 0.2962,
+    "concentration_top10": 0.9975
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5411,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.401,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 5208
+   }
   },
   {
    "n": 14,
@@ -530,7 +756,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $PJT on a new_mint trigger with 0.03% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "62RpqH3zs6bmf8i2ypCxbnkCji9CAW5bbJ87tTYv2MXUWJmq6qFcDviu8zX7GyFM3Y51bmCz12LHsj1b1JVZTyBH",
-   "sell_sig": "w8Ee7nHW1N3scwph81MxhoZuqXPwapoenELTYVbFNuQwJj4TKbQdjqS5UXz7pWzqKmKGHtPQu2P5duFZque5eG4"
+   "sell_sig": "w8Ee7nHW1N3scwph81MxhoZuqXPwapoenELTYVbFNuQwJj4TKbQdjqS5UXz7pWzqKmKGHtPQu2P5duFZque5eG4",
+   "entry_intel": {
+    "quality_score": 31,
+    "unique_buyers": 4,
+    "unique_sellers": 1,
+    "organic_score": 0.5082,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5247,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2309
+   }
   },
   {
    "n": 15,
@@ -557,7 +802,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $$DELU on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "27DNPxEVqapbffJppxWjNTbuzcqkmCzWzHiAs1igW24LjPEVmf6bXaHHqGoKqeoaGkXypXdbc3scCS4RpLBiH3dG",
-   "sell_sig": "29NuFZb5JDi2LZLUXe2EFM6LWyLxGkNNZL1AtaQWRie8sZvtoWKJCP7M5GFZTzfwkwFUhWCSE8aqHrxrzBZh2s6q"
+   "sell_sig": "29NuFZb5JDi2LZLUXe2EFM6LWyLxGkNNZL1AtaQWRie8sZvtoWKJCP7M5GFZTzfwkwFUhWCSE8aqHrxrzBZh2s6q",
+   "entry_intel": {
+    "quality_score": 7,
+    "unique_buyers": 2,
+    "unique_sellers": 1,
+    "organic_score": 0.31,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2348
+   }
   },
   {
    "n": 16,
@@ -584,7 +848,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $POZE on a new_mint trigger with 0.02% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2jGREMdBPy7JLaYMk7fdo3kbfTsA2CrsNtM8BF9a5vQCphPzRVi8PJXJBU1YLQFQxSCvH1KDkAjUjEJ2SD86EShx",
-   "sell_sig": "31kcdBSvdwrni4xzGuVAnWZyDZkmpkG9wRagz1Z2oJYy4eAJxvR7LJMFdboz6eeiXLzL35umo12ekqiAdcisJzpx"
+   "sell_sig": "31kcdBSvdwrni4xzGuVAnWZyDZkmpkG9wRagz1Z2oJYy4eAJxvR7LJMFdboz6eeiXLzL35umo12ekqiAdcisJzpx",
+   "entry_intel": {
+    "quality_score": 31,
+    "unique_buyers": 41,
+    "unique_sellers": 40,
+    "organic_score": 0.5154,
+    "bundle_score": 0.202,
+    "concentration_top10": 0.6812
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5335,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.407,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 4629
+   }
   },
   {
    "n": 17,
@@ -611,7 +894,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $MELON on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "FQBkeWFyJhZ2rAvngU7oBBrhVTsSkuCb1JXt6XFodKdd832nGXdTficshmvSjXUACKF7R2kqnd6cbTMMZqoGTKK",
-   "sell_sig": "3cDh5df2q5osyCztLAwqfX7UG3Ey9D2vaWtrUo816imWkcYbfs2KSa6LKwoUzkz42EczLQ4NgEVbYKjKkLLRfgJb"
+   "sell_sig": "3cDh5df2q5osyCztLAwqfX7UG3Ey9D2vaWtrUo816imWkcYbfs2KSa6LKwoUzkz42EczLQ4NgEVbYKjKkLLRfgJb",
+   "entry_intel": {
+    "quality_score": 30,
+    "unique_buyers": 3,
+    "unique_sellers": 1,
+    "organic_score": 0.4477,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2218
+   }
   },
   {
    "n": 18,
@@ -638,7 +940,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $TRIPPLEBBL on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "tQbvqseBibJfwPrKtudRvtsSQH1Msjm7cEndKsdqiXGeDbtNXeHuDhcKiLxqPePbMi18qu24pPW911fGoXF4ejx",
-   "sell_sig": "2GjVbbQd15udFkbEgsubDDWxXdMJJQFEDbdHcnJUMnDepHnjBgkpw1VB5ki8fQ4hD7Q9HPs5nSfdJzFpWqFzuiBD"
+   "sell_sig": "2GjVbbQd15udFkbEgsubDDWxXdMJJQFEDbdHcnJUMnDepHnjBgkpw1VB5ki8fQ4hD7Q9HPs5nSfdJzFpWqFzuiBD",
+   "entry_intel": {
+    "quality_score": 27,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.4898,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 6018,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.361,
+    "post_exit_high_mc_usd": 2313,
+    "post_exit_high_vs_exit_multiple": 0.384,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2523
+   }
   },
   {
    "n": 19,
@@ -665,7 +986,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $SKE on a new_mint trigger with 0.02% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4aGimro4N8M2H8p7jJU5njpWjViGSn6MsY7VPSfP1MUW3QXh7fXsviSfUwVvmcpBRGisEG4ngunn7w79f4io2dRa",
-   "sell_sig": "9gmCti8m3HVEU6NFka6q1kvbWVPYX2UToxcuC8M8irHnJetH614J1ZfWTg8Xm5ekikmzpbPVVQeN17HojcYhVeY"
+   "sell_sig": "9gmCti8m3HVEU6NFka6q1kvbWVPYX2UToxcuC8M8irHnJetH614J1ZfWTg8Xm5ekikmzpbPVVQeN17HojcYhVeY",
+   "entry_intel": {
+    "quality_score": 42,
+    "unique_buyers": 15,
+    "unique_sellers": 13,
+    "organic_score": 0.641,
+    "bundle_score": 0.4111,
+    "concentration_top10": 0.9992
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5462,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.397,
+    "post_exit_high_mc_usd": 2208,
+    "post_exit_high_vs_exit_multiple": 0.404,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 3971
+   }
   },
   {
    "n": 20,
@@ -692,7 +1032,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $TEST on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "L8Wn5YRLKu5n1SH34s7hq3fVpbk7b5SiD5UMsoEqBN61PBDjXYxYdiK9G3PSr2u1dZuSbZC2keNUDkuf2Ltzvdt",
-   "sell_sig": "4Hv9qGK8yHV1vXHhtp7JV29yFA856bqghx4DuPJfB6sFBqrippawJKpXekSbSDpYn82QJ8Pcma7QE46mjCjGV2ek"
+   "sell_sig": "4Hv9qGK8yHV1vXHhtp7JV29yFA856bqghx4DuPJfB6sFBqrippawJKpXekSbSDpYn82QJ8Pcma7QE46mjCjGV2ek",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2196
+   }
   },
   {
    "n": 21,
@@ -719,7 +1078,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $JARRETT on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3MGaXfJ1SuTMeaQ1VSvnAUNXaKDocRJNxh35MDr1vm7UeJfbeLmTfY9aDKspCQvFY4N58w3g98stTt8xFeUhkktR",
-   "sell_sig": "RdV5P3qKsju4UhRX5u4ziKMk2rFCkDLb7DvJgvZpVmN4dbND4MmM65tuVhz5hQkTrW6jNyUsoKCv39CMaPKppzE"
+   "sell_sig": "RdV5P3qKsju4UhRX5u4ziKMk2rFCkDLb7DvJgvZpVmN4dbND4MmM65tuVhz5hQkTrW6jNyUsoKCv39CMaPKppzE",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2191
+   }
   },
   {
    "n": 22,
@@ -746,7 +1124,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $HOUSE on a intel_confirmed trigger with 0.02% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2tvE2et8cAvym1QfbWx2zTgshS9XKr1V1WfkZae9kG1pGPjS8c7GPTekd6vXy9PQggNvbADcNZ66VJZeCDCzrN3E",
-   "sell_sig": "5FwxKvGF9EGitXjrvaDPWxceWR9BxToVvsxjzvfZyz5TCJxpzkoqpc2tbEkxYZ1sopufYdoQ7esmGFPHW4v778Zb"
+   "sell_sig": "5FwxKvGF9EGitXjrvaDPWxceWR9BxToVvsxjzvfZyz5TCJxpzkoqpc2tbEkxYZ1sopufYdoQ7esmGFPHW4v778Zb",
+   "entry_intel": {
+    "quality_score": 79,
+    "unique_buyers": 39,
+    "unique_sellers": 22,
+    "organic_score": 0.8003,
+    "bundle_score": 0.2567,
+    "concentration_top10": 0.8143
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 13784,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.157,
+    "post_exit_high_mc_usd": 5889,
+    "post_exit_high_vs_exit_multiple": 0.427,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 7503
+   }
   },
   {
    "n": 23,
@@ -773,7 +1170,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $AG on a new_mint trigger with 0.03% price impact; firewall verdict warn (score 84). Committed 0.0500 SOL expecting a profitable exit.",
    "buy_sig": "oCLrRvdUt1oGYyu5C8BB7d2GW81LygXAUdQJG9XjAMRPQH7jKWf3E6EKgbK5j4Y7Ew6NzxViiAkDn6rpJg5vYcK",
-   "sell_sig": "eU6JTMcJzk2khdWX2YAJyt37F3p5gTt4E22p6RxS4M625tZhqkgTaFgT8eCeXmAvfNLn5MKv7Hkn8JbYiYJLPX4"
+   "sell_sig": "eU6JTMcJzk2khdWX2YAJyt37F3p5gTt4E22p6RxS4M625tZhqkgTaFgT8eCeXmAvfNLn5MKv7Hkn8JbYiYJLPX4",
+   "entry_intel": {
+    "quality_score": 63,
+    "unique_buyers": 26,
+    "unique_sellers": 8,
+    "organic_score": 0.7392,
+    "bundle_score": 0.2163,
+    "concentration_top10": 0.9476
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 25467,
+    "now_mc_usd": 11594,
+    "now_vs_exit_multiple": 0.455,
+    "post_exit_high_mc_usd": 14830,
+    "post_exit_high_vs_exit_multiple": 0.582,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "pumped",
+    "ath_mc_usd": 14830
+   }
   },
   {
    "n": 24,
@@ -800,7 +1216,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $ROGERS on a intel_confirmed trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "ANu5VSHsDGVLrp5PQH9xFB2SJHv61ThvCQBDEgzsjKDKsodUCzEFRkBDw2kTEWmDMjWaMkEvuHT4qq4cPbmYvk6",
-   "sell_sig": "2sWjuYtpgc8HV5xwbvU6kKbVAp3MfgqPtxN9DTvb5R5D9opc9yQdqsmwq9WMPAyEk7gkKeU4TGYoyCqjbdVaSMk1"
+   "sell_sig": "2sWjuYtpgc8HV5xwbvU6kKbVAp3MfgqPtxN9DTvb5R5D9opc9yQdqsmwq9WMPAyEk7gkKeU4TGYoyCqjbdVaSMk1",
+   "entry_intel": {
+    "quality_score": 45,
+    "unique_buyers": 0,
+    "unique_sellers": 0,
+    "organic_score": 0.45,
+    "bundle_score": 0,
+    "concentration_top10": 0
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5251,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2203
+   }
   },
   {
    "n": 25,
@@ -827,7 +1262,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $ROGERS on a intel_confirmed trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "fDyzBYmLVPBeyt3eWU6FpgQV9SXyCiCbeXZe1tTZDaybh3uK572dAdkMnQxFjur5AcQju5NvGbH6A3nQgt5Zjtu",
-   "sell_sig": "eEs5xHFfbB4kJMw8sfJibSCBHAN6ibLg5Dk5N5k33E684mTQoqErmEyFcgNUDEcNvPYqh8QUXkwMvAzcbbWDSGk"
+   "sell_sig": "eEs5xHFfbB4kJMw8sfJibSCBHAN6ibLg5Dk5N5k33E684mTQoqErmEyFcgNUDEcNvPYqh8QUXkwMvAzcbbWDSGk",
+   "entry_intel": {
+    "quality_score": 45,
+    "unique_buyers": 0,
+    "unique_sellers": 0,
+    "organic_score": 0.45,
+    "bundle_score": 0,
+    "concentration_top10": 0
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5245,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 2203
+   }
   },
   {
    "n": 26,
@@ -854,7 +1308,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $GABRIEL on a intel_confirmed trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4nWTrDsef9weqC53YLS78CWyBkBCfY9X7qMECTVjYpHxe4uHCbgyCjeNkiv4ozZeYLhHzkvUvExUG2LiPPYYXifa",
-   "sell_sig": "kQGJbJreXWX1xoaZeeenKVA9HD5xJcAc6wxEScc9U3khKgCPq31FqxsEBYXHkSaT9RQ5Y8HtT3JsCQPHmbxTTRj"
+   "sell_sig": "kQGJbJreXWX1xoaZeeenKVA9HD5xJcAc6wxEScc9U3khKgCPq31FqxsEBYXHkSaT9RQ5Y8HtT3JsCQPHmbxTTRj",
+   "entry_intel": {
+    "quality_score": 13,
+    "unique_buyers": 5,
+    "unique_sellers": 0,
+    "organic_score": 0.3857,
+    "bundle_score": 0.483,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5247,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": "rugged",
+    "ath_mc_usd": 3263
+   }
   },
   {
    "n": 27,
@@ -881,7 +1354,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $OCFK on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4Y7uJ6aQaNygFc714eJP5eN9erKcAjFpmUmxs2qN2a5Vyn2CVwZPFwFjTFHiTkkouVSs6BFTJCUti9GFXNUHnujD",
-   "sell_sig": "3EgBaX1KERDz2WckPDhgcptYPtSreaz5jHWR7YAU5QTL8eDWdfrA8Y5tdEBBW7DHUeWS3Eb4spKpnNrhZKTuV7NK"
+   "sell_sig": "3EgBaX1KERDz2WckPDhgcptYPtSreaz5jHWR7YAU5QTL8eDWdfrA8Y5tdEBBW7DHUeWS3Eb4spKpnNrhZKTuV7NK",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5978,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 34281069,
+    "now_mc_usd": 1620,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 21212439,
+    "post_exit_high_vs_exit_multiple": 0.619,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 28,
@@ -908,7 +1400,26 @@
    "llm_thesis": "Strong memetic quality and timely narrative align with market sentiment.",
    "rationale": "Sniped $HOME on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2oRM8CykSKQfMbme34vDC1SNb42WoJCwRgVoJr1ufmmSCrjsEbu3EH8Pw7PSGE5Toc6PNxi9a8SJFruQT5Tk3JQu",
-   "sell_sig": "3Z7bX2bWeZHHEzw1i97gUuEsvdmfpjNhiLAn1m45Wz4C4usWHq45JJ1E68BHxoQdKcvv4fP95yqG6BjXeAeuUPes"
+   "sell_sig": "3Z7bX2bWeZHHEzw1i97gUuEsvdmfpjNhiLAn1m45Wz4C4usWHq45JJ1E68BHxoQdKcvv4fP95yqG6BjXeAeuUPes",
+   "entry_intel": {
+    "quality_score": 24,
+    "unique_buyers": 3,
+    "unique_sellers": 2,
+    "organic_score": 0.47,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5253,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 29,
@@ -935,7 +1446,26 @@
    "llm_thesis": "HOME token has strong memetic quality and a plausible narrative.",
    "rationale": "Sniped $HOME on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "zCRoSoiWY6Uk1AFP3ukBvVQjmkZJwz4QGa7jRF69b2uQ2afy3JPEYWWCYvVXkEfc67iCW5XNQsTo9sDvTyfVou5",
-   "sell_sig": "3McFqr9kUSMEpYB42MbnB9JmuZjcMEnXztGyGDKqLNPUNxcF1HBBhVBYk61xT3qRR3gvPpPMorKHzdDNiAW84SWq"
+   "sell_sig": "3McFqr9kUSMEpYB42MbnB9JmuZjcMEnXztGyGDKqLNPUNxcF1HBBhVBYk61xT3qRR3gvPpPMorKHzdDNiAW84SWq",
+   "entry_intel": {
+    "quality_score": 24,
+    "unique_buyers": 3,
+    "unique_sellers": 2,
+    "organic_score": 0.47,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5250,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 30,
@@ -962,7 +1492,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $XJCF on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "s8LNsqTww9Af4kXWcdS5YwrjXG5pb3M6gAW4TKmH5dGmzS8AoXkYyFJcdcNUAGw2tx8TE5VLcDcRZe5STaSUD5G",
-   "sell_sig": "8iaM7W9cQq4hyRpZaRNvXdFMKtHm2vKugL6dB8k9EYxAPJuwFmUsKQ4sFHGMnaTvG2ZojUapX5objYEGwfuJM7t"
+   "sell_sig": "8iaM7W9cQq4hyRpZaRNvXdFMKtHm2vKugL6dB8k9EYxAPJuwFmUsKQ4sFHGMnaTvG2ZojUapX5objYEGwfuJM7t",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5956,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 40035795,
+    "now_mc_usd": 1498,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 1503,
+    "post_exit_high_vs_exit_multiple": 0,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 31,
@@ -989,7 +1538,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $UX3U on a graduation_ride trigger with 0.99% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "66UJNgHbCRqP1bs4LCVMhQefNtmSw3ohSL1ZERaF4rR4zBe4K68WNa2E4vZN2J9r86ZNsqHwuqAHuCAWE86jVHwq",
-   "sell_sig": "5qDWLuRXL5qvoS4ofaUHDzTpnft2MiQvcfvfTAYDgEtNVBRHvH3VmL6BNbe7Xa4o3g8si71J1ytCKaDWV5dm2orB"
+   "sell_sig": "5qDWLuRXL5qvoS4ofaUHDzTpnft2MiQvcfvfTAYDgEtNVBRHvH3VmL6BNbe7Xa4o3g8si71J1ytCKaDWV5dm2orB",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5968,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 2120289,
+    "now_mc_usd": 1388,
+    "now_vs_exit_multiple": 0.001,
+    "post_exit_high_mc_usd": 1402,
+    "post_exit_high_vs_exit_multiple": 0.001,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 32,
@@ -1016,7 +1584,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $2UDR on a graduation_ride trigger with 1.25% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "d8v8pErPe2prAMrMtpTNnkpeYNgCADDQa3wr4NsEaBSuTMrYtqj4ZHfJgtticVusvpHcEtMaKU4Aj2A6DX4Svvv",
-   "sell_sig": "5Cbn5HP4tQprrXNM6bSGDCfFXYu88y1c86GisvtJcJyvRPbqyeKCWob6UJhANErNd15pkFM3FqK1Pq2D1w7qsNzX"
+   "sell_sig": "5Cbn5HP4tQprrXNM6bSGDCfFXYu88y1c86GisvtJcJyvRPbqyeKCWob6UJhANErNd15pkFM3FqK1Pq2D1w7qsNzX",
+   "entry_intel": {
+    "quality_score": 45,
+    "unique_buyers": 0,
+    "unique_sellers": 0,
+    "organic_score": 0.45,
+    "bundle_score": 0,
+    "concentration_top10": 0
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 10177,
+    "now_mc_usd": 1814,
+    "now_vs_exit_multiple": 0.178,
+    "post_exit_high_mc_usd": 1914,
+    "post_exit_high_vs_exit_multiple": 0.188,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 33,
@@ -1043,7 +1630,26 @@
    "llm_thesis": "Moderately strong market realness and balanced buyer/seller ratio justify a momentum position.",
    "rationale": "Sniped $ONE on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5AnADM9As9Yhbmc7q7SyzcqHzXaQYWS73ShifoYav7Mq9pzk11NNP8pmmvKak7vgGi3kMUgYHRwTuFTptk1UtUV3",
-   "sell_sig": "5boE4SVCeweYQhQdZNNBKLqqofMYkDV8Fy58Ly3gsnUYdJmcG4Cxyqu42Wt68jCTTmD9rkq9mkJuCCfpGnKKUGjE"
+   "sell_sig": "5boE4SVCeweYQhQdZNNBKLqqofMYkDV8Fy58Ly3gsnUYdJmcG4Cxyqu42Wt68jCTTmD9rkq9mkJuCCfpGnKKUGjE",
+   "entry_intel": {
+    "quality_score": 76,
+    "unique_buyers": 52,
+    "unique_sellers": 30,
+    "organic_score": 0.7656,
+    "bundle_score": 0.1833,
+    "concentration_top10": 0.8703
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 17500,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.124,
+    "post_exit_high_mc_usd": 10006,
+    "post_exit_high_vs_exit_multiple": 0.572,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 34,
@@ -1070,7 +1676,26 @@
    "llm_thesis": "Genuine two-sided market and moderate market realness justify a small momentum position.",
    "rationale": "Sniped $ONE on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4ADCUvsc9vgvepcUMAyAdhasBGvxPNVFyW5GfRe9av9i2P6SGbLQ24yMhrxz2jnATzk66UVcEnkyaRMrC16q7yRZ",
-   "sell_sig": "31mFniq3oixxxpWQTS7rLJSDzUyv2egVZ5Wc6jZsTktEeEEU442p6Y6VnMF5TCro4yEh8ccEJXvQrgSQhUvPiZNQ"
+   "sell_sig": "31mFniq3oixxxpWQTS7rLJSDzUyv2egVZ5Wc6jZsTktEeEEU442p6Y6VnMF5TCro4yEh8ccEJXvQrgSQhUvPiZNQ",
+   "entry_intel": {
+    "quality_score": 76,
+    "unique_buyers": 52,
+    "unique_sellers": 30,
+    "organic_score": 0.7656,
+    "bundle_score": 0.1833,
+    "concentration_top10": 0.8703
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 17495,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.124,
+    "post_exit_high_mc_usd": 10006,
+    "post_exit_high_vs_exit_multiple": 0.572,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 35,
@@ -1097,7 +1722,26 @@
    "llm_thesis": "Genuine two-sided market and moderate market realness score justify a small momentum position.",
    "rationale": "Sniped $掌握 on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2MjHUZ1skK84mdXQ2D5YgsSe19y4tF5uwLeJ64QexCXdJudswyAEkPKafWYEFH8XgjMbQtrveLBVdjTAZRcfxHc7",
-   "sell_sig": "2v3a9cL28D9aovRgPXLv7db9jBRtRjds3PVnGj8Vtq8dMf5khzhnWF65cieLYt1EeyjKrLQjszkKkJdF2vCWCqAQ"
+   "sell_sig": "2v3a9cL28D9aovRgPXLv7db9jBRtRjds3PVnGj8Vtq8dMf5khzhnWF65cieLYt1EeyjKrLQjszkKkJdF2vCWCqAQ",
+   "entry_intel": {
+    "quality_score": 78,
+    "unique_buyers": 41,
+    "unique_sellers": 22,
+    "organic_score": 0.7692,
+    "bundle_score": 0.2364,
+    "concentration_top10": 0.925
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 40784,
+    "now_mc_usd": 1976,
+    "now_vs_exit_multiple": 0.048,
+    "post_exit_high_mc_usd": 33559,
+    "post_exit_high_vs_exit_multiple": 0.823,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 36,
@@ -1124,7 +1768,26 @@
    "llm_thesis": "Strong memetic quality and decent market realness justify a small momentum position.",
    "rationale": "Sniped $ELON on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2eBiYb9znvAHK1vymNsWFqZ5zYSkY2VvoedjT3GhKmycoLxXcMmZPFchhGc8SJF9TDhLVnD8Ps3rTjWRnbQY9vT",
-   "sell_sig": "5cXaFeP5jPRKopbj3e9NYzDWMzgQHZ9ix9ypo1yAEkH44SjnEHiip3feSTTxmHCLSWSBi82Cu1Bfa4d3e49RgK8R"
+   "sell_sig": "5cXaFeP5jPRKopbj3e9NYzDWMzgQHZ9ix9ypo1yAEkH44SjnEHiip3feSTTxmHCLSWSBi82Cu1Bfa4d3e49RgK8R",
+   "entry_intel": {
+    "quality_score": 82,
+    "unique_buyers": 37,
+    "unique_sellers": 22,
+    "organic_score": 0.826,
+    "bundle_score": 0.2206,
+    "concentration_top10": 0.8446
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 12994,
+    "now_mc_usd": 2195,
+    "now_vs_exit_multiple": 0.169,
+    "post_exit_high_mc_usd": 13306,
+    "post_exit_high_vs_exit_multiple": 1.024,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 37,
@@ -1151,7 +1814,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $DBRD on a graduation_ride trigger with 1.19% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2UwRFmCefeh2K6hbjVjJqdPouvA9yqhL6bA5eh88yz2jx2pvTUyaBt1419GfY9aQ1XAkVgFdExxPK9yy8tNh9ZZg",
-   "sell_sig": "5VgZ33RyUfEtGNdstchhxQjqxU3jUkR4F2395gcbQYeWWUuRX9ZF2NFSzCCmY9coB17dGMHqZyBb3MXgU6kzkEnR"
+   "sell_sig": "5VgZ33RyUfEtGNdstchhxQjqxU3jUkR4F2395gcbQYeWWUuRX9ZF2NFSzCCmY9coB17dGMHqZyBb3MXgU6kzkEnR",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 137916,
+    "now_mc_usd": 1489,
+    "now_vs_exit_multiple": 0.011,
+    "post_exit_high_mc_usd": 1577,
+    "post_exit_high_vs_exit_multiple": 0.011,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 38,
@@ -1178,7 +1860,26 @@
    "llm_thesis": "Pink grasshopper has a relatively real market with diverse buyers and sellers.",
    "rationale": "Sniped $PINK on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2LUnWFMvMYDEEox8JX15uvoaSLTZtYwRhgt5Bb8c28eDdtqfBfRffxo93tiukwBwwVJKHrN6DXoFR4LbzaDyRWwx",
-   "sell_sig": "NopypDB9gWKinyCBDCBBXv6zb2xr9UPWmp11hSGfAE7ZPfD15VHVrSYRCA18oaiGBTQExurwrCa6jNBHu1GvnGQ"
+   "sell_sig": "NopypDB9gWKinyCBDCBBXv6zb2xr9UPWmp11hSGfAE7ZPfD15VHVrSYRCA18oaiGBTQExurwrCa6jNBHu1GvnGQ",
+   "entry_intel": {
+    "quality_score": 34,
+    "unique_buyers": 89,
+    "unique_sellers": 69,
+    "organic_score": 0.5208,
+    "bundle_score": 0.1056,
+    "concentration_top10": 0.5344
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5260,
+    "now_mc_usd": 2172,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": 2183,
+    "post_exit_high_vs_exit_multiple": 0.415,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 39,
@@ -1205,7 +1906,26 @@
    "llm_thesis": "Pink grasshopper has a relatively real market with diverse buyers and sellers.",
    "rationale": "Sniped $PINK on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2Rag3ohdAB39ycBTK18LyjKTsaPveciPUFRy7wVsdtdkuaZQPLCdG9RQrRzzRWijNwKA3xfvak66FfCdPHpVwA6R",
-   "sell_sig": "3RpM621wjXcTpFuspbnPTmczdBZnwFMxY7Resmyp2n7NRy2aLz6wWXxRJfcWSGJ3XVdXzsTA31CaBTC1HLFHg2FZ"
+   "sell_sig": "3RpM621wjXcTpFuspbnPTmczdBZnwFMxY7Resmyp2n7NRy2aLz6wWXxRJfcWSGJ3XVdXzsTA31CaBTC1HLFHg2FZ",
+   "entry_intel": {
+    "quality_score": 34,
+    "unique_buyers": 89,
+    "unique_sellers": 69,
+    "organic_score": 0.5208,
+    "bundle_score": 0.1056,
+    "concentration_top10": 0.5344
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5257,
+    "now_mc_usd": 2172,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": 2183,
+    "post_exit_high_vs_exit_multiple": 0.415,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 40,
@@ -1232,7 +1952,26 @@
    "llm_thesis": "Pink grasshopper has a relatively high market realness score indicating genuine two-sided market demand.",
    "rationale": "Sniped $PINK on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5F1XseodXuNEtQHwxEWqaipmmNFDqTvjup2G81MM9ezv6hWut24kTiAMKQ3cfsbadiCwmXnQuYZ7KGrTeze4mirz",
-   "sell_sig": "4bgYkBBZg6rBrjMSdeaNnKXgtUfcuNjj27Vr3JFqGMBZ6SZNhtqAUTMEUnzNkNzS8t185vWCrf1s5gRzNeF9xUp3"
+   "sell_sig": "4bgYkBBZg6rBrjMSdeaNnKXgtUfcuNjj27Vr3JFqGMBZ6SZNhtqAUTMEUnzNkNzS8t185vWCrf1s5gRzNeF9xUp3",
+   "entry_intel": {
+    "quality_score": 34,
+    "unique_buyers": 89,
+    "unique_sellers": 69,
+    "organic_score": 0.5208,
+    "bundle_score": 0.1056,
+    "concentration_top10": 0.5344
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5253,
+    "now_mc_usd": 2172,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": 2183,
+    "post_exit_high_vs_exit_multiple": 0.416,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 41,
@@ -1259,7 +1998,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $HMIM on a graduation_ride trigger with 1.14% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3cPJ1iYDgjkD574od5rTZQDJdUfzPwcYco5x6UQ69NQNWA1sQ3SVDXe138mVfXwq5MLoXH3hSH5JkviSWY3P3oQc",
-   "sell_sig": "W8d92ARqJdqWNSKzM7P7CxxDLQfAfgvSEzJSazbnwk5E5QdBkdYYENTBNfjNMmiKeNZKxGKGuaTszCsfF64kTpu"
+   "sell_sig": "W8d92ARqJdqWNSKzM7P7CxxDLQfAfgvSEzJSazbnwk5E5QdBkdYYENTBNfjNMmiKeNZKxGKGuaTszCsfF64kTpu",
+   "entry_intel": {
+    "quality_score": 50,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.617,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 251303,
+    "now_mc_usd": 1423,
+    "now_vs_exit_multiple": 0.006,
+    "post_exit_high_mc_usd": 1437,
+    "post_exit_high_vs_exit_multiple": 0.006,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 42,
@@ -1286,7 +2044,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $Y4HE on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4vUqfx4Lu9GEjMWrzQkQ2Yk3QkHfJSwEoBNdvYTngY2YidtNgAWsWiqguDnzBoJZUQe4pEY9yG3TtXnnVASfVYgz",
-   "sell_sig": "4x9YDUehcEG3d6U1KE21Z3N1ZiZA7t6FUeK5K6ipwreEtzmhpiMTfTXi6u2aD1SKep2hwVyf8cekwCGrdZFuyYc6"
+   "sell_sig": "4x9YDUehcEG3d6U1KE21Z3N1ZiZA7t6FUeK5K6ipwreEtzmhpiMTfTXi6u2aD1SKep2hwVyf8cekwCGrdZFuyYc6",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5969,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 27595866,
+    "now_mc_usd": 1480,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 1514,
+    "post_exit_high_vs_exit_multiple": 0,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 43,
@@ -1313,7 +2090,26 @@
    "llm_thesis": "Moderately real market with diverse buyers warrants a small momentum position.",
    "rationale": "Sniped $WHITEBULL on a llm_intel trigger with 0.01% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5KnwEGAXq6GaHvwqLyDRJ9NbjnKnbvwDTvdBqMBYdcT7AmZgxnGFQmqaguRxRnVaYtgZXATxq5yzwukrL5sbgHpg",
-   "sell_sig": "gHn32VNqqBidP55xLXXAqUCS46bjQpb4sEBa2axJi6yeoXasiibtJx4aS73fGziQFDc5bcScbuYa7Dr4C8n9gpy"
+   "sell_sig": "gHn32VNqqBidP55xLXXAqUCS46bjQpb4sEBa2axJi6yeoXasiibtJx4aS73fGziQFDc5bcScbuYa7Dr4C8n9gpy",
+   "entry_intel": {
+    "quality_score": 30,
+    "unique_buyers": 37,
+    "unique_sellers": 12,
+    "organic_score": 0.5049,
+    "bundle_score": 0.1941,
+    "concentration_top10": 0.6137
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 41664,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.052,
+    "post_exit_high_mc_usd": 19796,
+    "post_exit_high_vs_exit_multiple": 0.475,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 44,
@@ -1340,7 +2136,26 @@
    "llm_thesis": "Strong real-market signal with multiple buyers and substantial wallet holding",
    "rationale": "Sniped $DEPE on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "39YjJq5qnSv4WbRVWjuPdoEdmcdzMko43RKCxrBhYpDjGjGoGgYHTSGcx5coycKtVVtu1kb4DhPhkEas3rktm84j",
-   "sell_sig": "PNKvurqwfjPEpAbrPMSdaqT6T1CvyZpKEbmuucTwrhGqQNvXDjrGwujfe2ErLk2vueq7MLixLjR4VNBPeRJYFby"
+   "sell_sig": "PNKvurqwfjPEpAbrPMSdaqT6T1CvyZpKEbmuucTwrhGqQNvXDjrGwujfe2ErLk2vueq7MLixLjR4VNBPeRJYFby",
+   "entry_intel": {
+    "quality_score": 95,
+    "unique_buyers": 51,
+    "unique_sellers": 31,
+    "organic_score": 0.8383,
+    "bundle_score": 0.1885,
+    "concentration_top10": 0.8978
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 37396,
+    "now_mc_usd": 2469,
+    "now_vs_exit_multiple": 0.066,
+    "post_exit_high_mc_usd": 19566,
+    "post_exit_high_vs_exit_multiple": 0.523,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 45,
@@ -1367,7 +2182,26 @@
    "llm_thesis": "CQUACK's memetic name and symbol may attract initial speculative interest.",
    "rationale": "Sniped $CQUACK on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2DYZf5YfB3vMcx7HfhrnEkErmvJj4Q1FiwiHX9ptcB5vdcNcssS68x2T4N7kBRbix6fyfCsSwCEkJiiiDfmX2GDk",
-   "sell_sig": "3tLcf8wSL1Km77CHqGoPrRfB6FPJvqqBaVgs6ggB66TWmuWcVBxnnkZqiqhyUeWd49RmiWSRYNpo3hTthsMzae5o"
+   "sell_sig": "3tLcf8wSL1Km77CHqGoPrRfB6FPJvqqBaVgs6ggB66TWmuWcVBxnnkZqiqhyUeWd49RmiWSRYNpo3hTthsMzae5o",
+   "entry_intel": {
+    "quality_score": 7,
+    "unique_buyers": 2,
+    "unique_sellers": 1,
+    "organic_score": 0.31,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 46,
@@ -1394,7 +2228,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $MRSUE on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2tboUwQVWFUTw18rE66izQtK6RicGRhQSyR6m3AWSY7WxzHYwYATA7bTQK7KwysBufsB4d7VoouSNeFib9tLyKti",
-   "sell_sig": "YqA5YFXeyMAapXBnL9y6u2fsVAECTnjCmeS4QymaP8Zesdy4xGiwQhwneBRmZA2dtxEmBxofLpSKFve18v7Fx4q"
+   "sell_sig": "YqA5YFXeyMAapXBnL9y6u2fsVAECTnjCmeS4QymaP8Zesdy4xGiwQhwneBRmZA2dtxEmBxofLpSKFve18v7Fx4q",
+   "entry_intel": {
+    "quality_score": 25,
+    "unique_buyers": 2,
+    "unique_sellers": 0,
+    "organic_score": 0.36,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 47,
@@ -1421,7 +2274,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $AQZS on a graduation_ride trigger with 0.89% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4w4XVx5KbdofW4we3kHGaGJgj6ngi1RHZgcBBdGokZHeVUdSP8YzDjoUpgGy4a5yGKUn1iY6yV6Gzahj51Rs563g",
-   "sell_sig": "5mEEYxbqWVAKrQCqB9GEdr3SzydFXzMzNfSuisEfH9J3xJ2G98jtiNTCZVRLVUNN25ifL5ZKcYfBt7RGNkJB6ZB4"
+   "sell_sig": "5mEEYxbqWVAKrQCqB9GEdr3SzydFXzMzNfSuisEfH9J3xJ2G98jtiNTCZVRLVUNN25ifL5ZKcYfBt7RGNkJB6ZB4",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5977,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 3974392,
+    "now_mc_usd": 1382,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 1955006,
+    "post_exit_high_vs_exit_multiple": 0.492,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 48,
@@ -1448,7 +2320,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $FLIPPENING on a new_mint trigger with 0.03% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "42dx4KkXYHWWGhBwGzrRLNPZDKCrMe24Uwo4wFyYj66MnYEVrYVhkEur9mHeXkgEfqDgh2KNeytP5gaGSB57Fo7h",
-   "sell_sig": "5opN7ydf5bVnYetJLHf6Gyz9C6f6htWsCDXrCYXRnAdVEiM2ya6hRWpRmQnUSne9DRa13GBUJ5uA7MKoyWG12Uo1"
+   "sell_sig": "5opN7ydf5bVnYetJLHf6Gyz9C6f6htWsCDXrCYXRnAdVEiM2ya6hRWpRmQnUSne9DRa13GBUJ5uA7MKoyWG12Uo1",
+   "entry_intel": {
+    "quality_score": 0,
+    "unique_buyers": 6,
+    "unique_sellers": 3,
+    "organic_score": 0.3259,
+    "bundle_score": 0.6667,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5247,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 49,
@@ -1475,7 +2366,26 @@
    "llm_thesis": "Memetic quality of 'TO THE MOON' is high and could attract significant attention",
    "rationale": "Sniped $MOON on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4P84G5PkarcJ31eSt3Hi32WvKMrnQ8KzWf5NYfFSbf9qrPaihVF1gd7b5dBUANbHrkU2odpKFv77tUf9Yr7JuWB8",
-   "sell_sig": "4dtXkCf3vrqSk1kdSxGiihtaUwuimEDRntCRrzau5wi1tmgoapzryx5e3ECv3wL4r7h11FTvePMEzwgUMaXyA8KM"
+   "sell_sig": "4dtXkCf3vrqSk1kdSxGiihtaUwuimEDRntCRrzau5wi1tmgoapzryx5e3ECv3wL4r7h11FTvePMEzwgUMaXyA8KM",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 50,
@@ -1502,7 +2412,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $JMBU on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4ZjXauYYseAXEJkbARxrvmQBtZXwCDzPUaJNB8mJS6EUySFhJsXL6r21A6dXV9cx1d9fFaaCLSJz5BZPKHk6NgcY",
-   "sell_sig": "2ZfioUgWLaVB7aKfHmW33otcXYKah5H1xhF82oVg8sLSV5EM3NyFFPHV2UKMMbDwgCmmzkA1dSoTD9e9t46NnoNU"
+   "sell_sig": "2ZfioUgWLaVB7aKfHmW33otcXYKah5H1xhF82oVg8sLSV5EM3NyFFPHV2UKMMbDwgCmmzkA1dSoTD9e9t46NnoNU",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.596,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 30472559,
+    "now_mc_usd": 1389,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 30818920,
+    "post_exit_high_vs_exit_multiple": 1.011,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 51,
@@ -1529,7 +2458,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $YMDU on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4KQJW6VKKeqGzE4fbLhSbGx2DmHAssNsjdRWNypQMRbQsrcPou9huAqPo3jg2EqiwZt1pobykMhAL9V67dw3KREB",
-   "sell_sig": "5PHb23YAMmSiVa5ggNNVveb8eu6nKfBaVeFV7EKWKrdzYyinStmM6kUyW2sAS5SV3TcAsoQfJqKbkaY44racVTws"
+   "sell_sig": "5PHb23YAMmSiVa5ggNNVveb8eu6nKfBaVeFV7EKWKrdzYyinStmM6kUyW2sAS5SV3TcAsoQfJqKbkaY44racVTws",
+   "entry_intel": {
+    "quality_score": 44,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5987,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 34770,
+    "now_mc_usd": 1488,
+    "now_vs_exit_multiple": 0.043,
+    "post_exit_high_mc_usd": 1569,
+    "post_exit_high_vs_exit_multiple": 0.045,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 52,
@@ -1556,7 +2504,26 @@
    "llm_thesis": "Strong memetic name and ticker align with current market sentiment.",
    "rationale": "Sniped $DIAMOND on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2o3ELuxvMtLa3FiCKxRi4P5G4y4s3RzeKfBrVTFtAtcMJDQdxGCT7vwgZ9eUxvVnShY6PyFLyEmBdfv2Rj8c4bWm",
-   "sell_sig": "2QrFAJBQrAFSmMbcqfZ9TPtmvac5r49qKAMtnsNRsfRLrVV2Poowkxb99WCkoYehqWWErXaYxHAQHjePPUJWzUPb"
+   "sell_sig": "2QrFAJBQrAFSmMbcqfZ9TPtmvac5r49qKAMtnsNRsfRLrVV2Poowkxb99WCkoYehqWWErXaYxHAQHjePPUJWzUPb",
+   "entry_intel": {
+    "quality_score": 7,
+    "unique_buyers": 2,
+    "unique_sellers": 1,
+    "organic_score": 0.31,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5258,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": 2191,
+    "post_exit_high_vs_exit_multiple": 0.417,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 53,
@@ -1583,7 +2550,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $6DAQ on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "58JXtLd485udrvbWJ4F5mCEbSaanP1WS4XETQAEaqYXdoi3SoBMwEVgr5tPphEm7Y4AaJRSV4uCtswFUAei82TQo",
-   "sell_sig": "3qGmGeLb7WhepQjLvCkbpR1LpXv66La2QGEzTinFmqiGWM7UxaoRnyEJKZwjGEDkZ1iW5DzdRY2CeHDVFD7FaTGo"
+   "sell_sig": "3qGmGeLb7WhepQjLvCkbpR1LpXv66La2QGEzTinFmqiGWM7UxaoRnyEJKZwjGEDkZ1iW5DzdRY2CeHDVFD7FaTGo",
+   "entry_intel": {
+    "quality_score": 22,
+    "unique_buyers": 5,
+    "unique_sellers": 0,
+    "organic_score": 0.5029,
+    "bundle_score": 0.6,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 83716,
+    "now_mc_usd": 1516,
+    "now_vs_exit_multiple": 0.018,
+    "post_exit_high_mc_usd": 1537,
+    "post_exit_high_vs_exit_multiple": 0.018,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 54,
@@ -1610,7 +2596,26 @@
    "llm_thesis": "Moderately genuine market_realness and decent buyer distribution justify a momentum position.",
    "rationale": "Sniped $TUTU on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2jFXv2qG7gNpohJmvHDXJVHGuev7Ks4bBNCHkDhmAYNFVFGJUS3mw6VKgCmZJzZHrSHH2Vv4yWHrQB5z8VbWk8yH",
-   "sell_sig": "3k2aa7JHVS1TDrncHyRFthWAgxzMhKKFtUnvU9ed2DpdV3d2VfPJcBcBKoHC3Eay6icx5Kjm5yQ9DbmtQ93Gqf7h"
+   "sell_sig": "3k2aa7JHVS1TDrncHyRFthWAgxzMhKKFtUnvU9ed2DpdV3d2VfPJcBcBKoHC3Eay6icx5Kjm5yQ9DbmtQ93Gqf7h",
+   "entry_intel": {
+    "quality_score": 83,
+    "unique_buyers": 52,
+    "unique_sellers": 33,
+    "organic_score": 0.7925,
+    "bundle_score": 0.1468,
+    "concentration_top10": 0.8533
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 14169,
+    "now_mc_usd": 2319,
+    "now_vs_exit_multiple": 0.164,
+    "post_exit_high_mc_usd": 11091,
+    "post_exit_high_vs_exit_multiple": 0.783,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 55,
@@ -1637,7 +2642,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $FXPP on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3DocFMRiSsvWXEAZVqFU2diBbJoi5JBXkdTe9twFjDwbkYxLhsx2AjZ5xkyMjY2Pwh2375g43Rsv31nmHtUyU58",
-   "sell_sig": "2jDySRnZ61Kg7G2x11sgcXVepEpkLWuDPWY5RvAmWQzFHJgAnWjE93WE2Fh9Un9WpnioH5tHjduqLMSMTKNvtwVi"
+   "sell_sig": "2jDySRnZ61Kg7G2x11sgcXVepEpkLWuDPWY5RvAmWQzFHJgAnWjE93WE2Fh9Un9WpnioH5tHjduqLMSMTKNvtwVi",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5967,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 49443662,
+    "now_mc_usd": 1733,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 2458,
+    "post_exit_high_vs_exit_multiple": 0,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 56,
@@ -1664,7 +2688,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $AWYJ on a graduation_ride trigger with 1.14% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3V8VLJdCZRR8FnfFG6Vn8kHqsYEhTZnDcAiCkuNYQZaq437Cke3CjhdpGa7pqjahqLyCCsg3bWz53C4jC5XfZCNY",
-   "sell_sig": "h27tvPgWiA6hLYQ9jWJEYHv1XG43qXGS9V7TpHCQxQuyv43mz3fdvqkpGNUtiWcFhQSEJE34ZRZHYCqAcePihKr"
+   "sell_sig": "h27tvPgWiA6hLYQ9jWJEYHv1XG43qXGS9V7TpHCQxQuyv43mz3fdvqkpGNUtiWcFhQSEJE34ZRZHYCqAcePihKr",
+   "entry_intel": {
+    "quality_score": 50,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.617,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 257383,
+    "now_mc_usd": 1426,
+    "now_vs_exit_multiple": 0.006,
+    "post_exit_high_mc_usd": 1439,
+    "post_exit_high_vs_exit_multiple": 0.006,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 57,
@@ -1691,7 +2734,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $5V3E on a graduation_ride trigger with 1.14% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "32mY5um3D1vCQQmXK5s5ETNwhUahAEi3s1a2e2cBuZNckD8jNfc9RkrWiH4ivA178NNgUszrt77NY1MG9TaDHesR",
-   "sell_sig": "3oNCcMqVqY1tMW88mQvExKE9J6Q7RJSozWgFX2meBh1RN4e7rpap3UFUs27HgaXgCJCRm49Jcq1F5S9xGvrvysW"
+   "sell_sig": "3oNCcMqVqY1tMW88mQvExKE9J6Q7RJSozWgFX2meBh1RN4e7rpap3UFUs27HgaXgCJCRm49Jcq1F5S9xGvrvysW",
+   "entry_intel": {
+    "quality_score": 50,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.617,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 4051,
+    "now_mc_usd": 3644,
+    "now_vs_exit_multiple": 0.899,
+    "post_exit_high_mc_usd": 5005,
+    "post_exit_high_vs_exit_multiple": 1.236,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 58,
@@ -1718,7 +2780,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $CHRF on a graduation_ride trigger with 1.14% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3tdD8wmEP4db8wJi4q4JRfeezLXbsKuAHwiYmimdtc1FcWnNcZbF9iv8K9cJ4gCeRvaQEU4gUaqYPdPxwu9WEasx",
-   "sell_sig": "dKjaAZ8HnwKH2cJJNzmF35kquGR7UQiWAGo8feV7qcDUxCbvQt5q6X53CnKPERhFoaUcrAWPaeT7KWprtMn5p1v"
+   "sell_sig": "dKjaAZ8HnwKH2cJJNzmF35kquGR7UQiWAGo8feV7qcDUxCbvQt5q6X53CnKPERhFoaUcrAWPaeT7KWprtMn5p1v",
+   "entry_intel": {
+    "quality_score": 50,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.617,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 6737,
+    "now_mc_usd": 3771,
+    "now_vs_exit_multiple": 0.56,
+    "post_exit_high_mc_usd": 3795,
+    "post_exit_high_vs_exit_multiple": 0.563,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 59,
@@ -1745,7 +2826,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $QFJM on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5fRgUcLKx1mM1hS23qTo9bQ4Ng2TqjNw8CZVCX8pBN8eqfQXSxLZGVSPiQVaAWzem9Spdhd5ZWiYT2jiqMvSmHn9",
-   "sell_sig": "4Jyb4bBv6GodJLxFvt5xsmxrDKmXtUpU7wSHEsSgueeZyyDc9DVgCPev8bnpUqkkUb2mU5cf2UrVWvCzC8M3EVYm"
+   "sell_sig": "4Jyb4bBv6GodJLxFvt5xsmxrDKmXtUpU7wSHEsSgueeZyyDc9DVgCPev8bnpUqkkUb2mU5cf2UrVWvCzC8M3EVYm",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5955,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 53484541,
+    "now_mc_usd": 1761,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 33419046,
+    "post_exit_high_vs_exit_multiple": 0.625,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 60,
@@ -1772,7 +2872,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $4WKU on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3mjBVV6Ar7aVpw8HryfMWhPe1Ag2kC3Vcdd3XJXsb6cNfqP7cm6w1YGFv4ssWmgTHW7BmrHXTCAdZrdECyvnTNxd",
-   "sell_sig": "2dh4DKfXFXfVP6mbYTpETxqJxv1aSkctrXHcx9esMGmirESBQv8RVhPxhqGPGFLPHhSQ8uYZJJWnpEpeCgV8jvyh"
+   "sell_sig": "2dh4DKfXFXfVP6mbYTpETxqJxv1aSkctrXHcx9esMGmirESBQv8RVhPxhqGPGFLPHhSQ8uYZJJWnpEpeCgV8jvyh",
+   "entry_intel": {
+    "quality_score": 22,
+    "unique_buyers": 5,
+    "unique_sellers": 0,
+    "organic_score": 0.5032,
+    "bundle_score": 0.6,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 95125,
+    "now_mc_usd": 1511,
+    "now_vs_exit_multiple": 0.016,
+    "post_exit_high_mc_usd": 1520,
+    "post_exit_high_vs_exit_multiple": 0.016,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 61,
@@ -1799,7 +2918,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $U8OL on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "39VfU4KdMGanbmgDDtQuP6R1icwf9qPpgwxysDxuWyUvSbiRtJGpqYQQmdxvy8SEatYt6FEf7G1Efxtp6gJ2epWe",
-   "sell_sig": "4hCvfzKyWs2TtxBE2vfmk6P4fMuCTMRUKi2gdVNmSLqHu9WhgwYYucJRyrVAXn5PpiAYWSDDN2W32vC8edxcWs7J"
+   "sell_sig": "4hCvfzKyWs2TtxBE2vfmk6P4fMuCTMRUKi2gdVNmSLqHu9WhgwYYucJRyrVAXn5PpiAYWSDDN2W32vC8edxcWs7J",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5956,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 48359811,
+    "now_mc_usd": 1842,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 1841,
+    "post_exit_high_vs_exit_multiple": 0,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 62,
@@ -1826,7 +2964,26 @@
    "llm_thesis": "Strong momentum with genuine market demand",
    "rationale": "Sniped $BIRRY on a llm_intel trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2JtzZ4PsFF6VRdMiaeMdUz2NSLimaoLMppNHvP6ym9pnv2m3nE1pxTsecbm5wrKguCKvbCoK7PLAbb64JqtdnMRZ",
-   "sell_sig": "3r55xeV4gkYBBVxa6uSmN8Ms8tf5uVarKhN5LSaFMnWFTLTRDwTbLZWptXCCPJi2Gj6su3ocDzrBtGRPMHZGw8an"
+   "sell_sig": "3r55xeV4gkYBBVxa6uSmN8Ms8tf5uVarKhN5LSaFMnWFTLTRDwTbLZWptXCCPJi2Gj6su3ocDzrBtGRPMHZGw8an",
+   "entry_intel": {
+    "quality_score": 84,
+    "unique_buyers": 51,
+    "unique_sellers": 46,
+    "organic_score": 0.8401,
+    "bundle_score": 0.2244,
+    "concentration_top10": 0.7345
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 63,
@@ -1853,7 +3010,26 @@
    "llm_thesis": "Genuine two-sided market indicated by high market_realness score.",
    "rationale": "Sniped $BLACKHOLE on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3a8nJQmLNAeLAugRyjngyfffeRHwhyzHXDQoGGARh2AfsuCVV4aHYfHQeDsXscANLUg4cGk9Z9bUekzgbMX4Qs7Q",
-   "sell_sig": "3kG79Py54KQU1kuiH3EAfPqTobbeM9fjR6hAoLxZ82frRZXwjFuETDe8CFskKgthWmaZfnRCwo4Ug6y1gEumhn31"
+   "sell_sig": "3kG79Py54KQU1kuiH3EAfPqTobbeM9fjR6hAoLxZ82frRZXwjFuETDe8CFskKgthWmaZfnRCwo4Ug6y1gEumhn31",
+   "entry_intel": {
+    "quality_score": 83,
+    "unique_buyers": 54,
+    "unique_sellers": 33,
+    "organic_score": 0.8167,
+    "bundle_score": 0.1896,
+    "concentration_top10": 0.8671
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 29585,
+    "now_mc_usd": 2194,
+    "now_vs_exit_multiple": 0.074,
+    "post_exit_high_mc_usd": 14830,
+    "post_exit_high_vs_exit_multiple": 0.501,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 64,
@@ -1880,7 +3056,26 @@
    "llm_thesis": "Strong market realness and diverse buyer base justify a momentum position.",
    "rationale": "Sniped $BOSS on a llm_intel trigger with 0.03% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "MVJ9vVvfDRkQnyjyE9VvS9JNAPVUxizFekGUxP8ppesxmc9nxU39KTt6KtUdkiDHZt9pUvWTJ2HuBiAMgQ1udMr",
-   "sell_sig": "m2EYbCGJ1rhMbJfi4D5MUDBu5XhRSgZAfwa1sNjKKei1GVGUgyirsA2SVDDAkmPsBdLvRwmT6LCQNErGKJw33Zr"
+   "sell_sig": "m2EYbCGJ1rhMbJfi4D5MUDBu5XhRSgZAfwa1sNjKKei1GVGUgyirsA2SVDDAkmPsBdLvRwmT6LCQNErGKJw33Zr",
+   "entry_intel": {
+    "quality_score": 39,
+    "unique_buyers": 44,
+    "unique_sellers": 36,
+    "organic_score": 0.5552,
+    "bundle_score": 0.1008,
+    "concentration_top10": 0.7896
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5269,
+    "now_mc_usd": 2175,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": 2181,
+    "post_exit_high_vs_exit_multiple": 0.414,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 65,
@@ -1907,7 +3102,26 @@
    "llm_thesis": "Strong memetic name and timely narrative suggest potential for real momentum.",
    "rationale": "Sniped $$RUGHUNTER on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "41u8RyAW9x6vkifP8QM3mvQbNzcQG9hBKUXoSFwxYvQFxSyvrYkHw2GiXtKTs3kyi96HsZWHuB9TMLJ1SSwxeokY",
-   "sell_sig": "4JLMsmKwYPfRKNW1DTSuvECxM1cMqZiQV2mTAETCfyWkc1Bsc7op788u5wj2DnkkdECSFS1k8VVparL47ep4sNsb"
+   "sell_sig": "4JLMsmKwYPfRKNW1DTSuvECxM1cMqZiQV2mTAETCfyWkc1Bsc7op788u5wj2DnkkdECSFS1k8VVparL47ep4sNsb",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5252,
+    "now_mc_usd": 2172,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 66,
@@ -1934,7 +3148,26 @@
    "llm_thesis": "Memetic token name and low market cap may attract speculative buyers.",
    "rationale": "Sniped $RCC on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "4YEjbyy4kKNxc2XGH7ivQmzqTUA4ECtdX92uru9hn4hpbAzC7fxhkQtAfYfEPLK4rVLLKYpcJYH1vcERv46gePFf",
-   "sell_sig": "5QHUkpr3cPRiQzDu9YCCvmBUeG6egv5ToWhqfo9cAYBGaiDXvVxc9sWDD1fB3cz9ihLJk3dbvKdKeyYDseNMXUJG"
+   "sell_sig": "5QHUkpr3cPRiQzDu9YCCvmBUeG6egv5ToWhqfo9cAYBGaiDXvVxc9sWDD1fB3cz9ihLJk3dbvKdKeyYDseNMXUJG",
+   "entry_intel": {
+    "quality_score": 0,
+    "unique_buyers": 3,
+    "unique_sellers": 2,
+    "organic_score": 0.4116,
+    "bundle_score": 0.525,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 67,
@@ -1961,7 +3194,26 @@
    "llm_thesis": "Strong memetic potential with a catchy name and timely narrative.",
    "rationale": "Sniped $COOK on a llm_intel trigger with 0.03% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "58YN66FzxC3nqEwcWzZT6pcZzFmQgjXFzpeE5GA14RebtVqKUuH3Ma9mvnPRGuEWpc2febcknnQ1oPGcW72LKJqZ",
-   "sell_sig": "2tfWHSCT8yFtbfE52X4LSbPNLcN8VjSmzy67k5NUuHzrgws6ZzCGizvN71f1SNhCuxnzfxVwf8D9fDVvGL5KZkck"
+   "sell_sig": "2tfWHSCT8yFtbfE52X4LSbPNLcN8VjSmzy67k5NUuHzrgws6ZzCGizvN71f1SNhCuxnzfxVwf8D9fDVvGL5KZkck",
+   "entry_intel": {
+    "quality_score": 20,
+    "unique_buyers": 3,
+    "unique_sellers": 1,
+    "organic_score": 0.4285,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 6867,
+    "now_mc_usd": 2491,
+    "now_vs_exit_multiple": 0.363,
+    "post_exit_high_mc_usd": 2841,
+    "post_exit_high_vs_exit_multiple": 0.414,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 68,
@@ -1988,7 +3240,26 @@
    "llm_thesis": "Strong memetic potential from 'swole' and 'doge' combination",
    "rationale": "Sniped $DOGE on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5YQFSrKHGmtVXNMurqc87cHnhnU42vMff4Vh6gjuBJmnqzDwFoWTNQ1v5hf2wVtTazkRTRivYdKr3jMaWP6qk6C4",
-   "sell_sig": "2XhP5rYxHzsf8JQ3835BbD7zsNwRHFEMruQuFeibPwscSk2RjERB1FvQrTQsCzaEg4HQHj7jNBf76znb7tR6nhZG"
+   "sell_sig": "2XhP5rYxHzsf8JQ3835BbD7zsNwRHFEMruQuFeibPwscSk2RjERB1FvQrTQsCzaEg4HQHj7jNBf76znb7tR6nhZG",
+   "entry_intel": {
+    "quality_score": 30,
+    "unique_buyers": 3,
+    "unique_sellers": 1,
+    "organic_score": 0.5208,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 69,
@@ -2015,7 +3286,26 @@
    "llm_thesis": "REC exhibits strong market_realness signals and timely narrative",
    "rationale": "Sniped $REC on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "JdgR4VjVcP1HX6f5xwGz5GjR5G9FgtR5Qcz12qeVHqdWLHU7nKwFFYMoQkuecfp2trwTDx5BEeEDVuWKRfBjpaA",
-   "sell_sig": "3M1JDnvZVGUPZhPSmcZwJfa4JtqhMzvmMWJkR16avMZDmZiojskrRworn82d3sYQ8m3S64naBXTZzAb4ZHAzFPVv"
+   "sell_sig": "3M1JDnvZVGUPZhPSmcZwJfa4JtqhMzvmMWJkR16avMZDmZiojskrRworn82d3sYQ8m3S64naBXTZzAb4ZHAzFPVv",
+   "entry_intel": {
+    "quality_score": 23,
+    "unique_buyers": 4,
+    "unique_sellers": 2,
+    "organic_score": 0.4553,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 70,
@@ -2042,7 +3332,26 @@
    "llm_thesis": "DUCK has a decent market_realness score and a relatively balanced buyer-seller ratio.",
    "rationale": "Sniped $DUCK on a llm_intel trigger with 0.01% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "X6GpUitp5F4sp7GqRdQS6X9mgRfEEsJC6b5kjnvBgYALUxSEDMwAjxnK1F3ycSvyoWJyLCPZduN1v3VSLQbi2Mw",
-   "sell_sig": "3XWzmFtAuSXovRLFRwd6iXw2iueG9ywZdYusfBv8Nv159JRQqLm4GFN3HbcHYXhB2dpPU8RxBixeB6YWDUgXenuY"
+   "sell_sig": "3XWzmFtAuSXovRLFRwd6iXw2iueG9ywZdYusfBv8Nv159JRQqLm4GFN3HbcHYXhB2dpPU8RxBixeB6YWDUgXenuY",
+   "entry_intel": {
+    "quality_score": 78,
+    "unique_buyers": 48,
+    "unique_sellers": 24,
+    "organic_score": 0.7823,
+    "bundle_score": 0.1944,
+    "concentration_top10": 0.8605
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 49102,
+    "now_mc_usd": 2185,
+    "now_vs_exit_multiple": 0.045,
+    "post_exit_high_mc_usd": 40087,
+    "post_exit_high_vs_exit_multiple": 0.816,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 71,
@@ -2069,7 +3378,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $AEVON on a graduation_ride trigger with 1.25% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "28toKm1e1RGikeTQiwqPSe7nnkQ9GhhSaJb1jPbLPmBU7XW7h7tfMoctNe6QvqH3pRmQpUAc8Eekwj8nzsGPaBb6",
-   "sell_sig": "2FNvyX9kFxk8g7TzTEcqjUVeU6yideRWtT8Yq4ZPcJdoNFAGRpyM9ufA4SFeRGDJf7GFoAQKTxrituHBvEZxMGov"
+   "sell_sig": "2FNvyX9kFxk8g7TzTEcqjUVeU6yideRWtT8Yq4ZPcJdoNFAGRpyM9ufA4SFeRGDJf7GFoAQKTxrituHBvEZxMGov",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 80495,
+    "now_mc_usd": 2634,
+    "now_vs_exit_multiple": 0.033,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 72,
@@ -2096,7 +3417,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $JROOL on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2FiYZi1GkErcQ6QWuzBCjYYwPbfvd4P2GCvheLqZfys4XcWJvT7RA4Ca3znuwZCN9dciDXaLHT8e6Bier5UxB8fD",
-   "sell_sig": "3TL94ZrKC3m659bMrRdNNR3pfkweUy89LGN3FaatymKSdfekryiC3edpd6sEJwAeg2Swa26ZBxs16ZVyPNSP5GPB"
+   "sell_sig": "3TL94ZrKC3m659bMrRdNNR3pfkweUy89LGN3FaatymKSdfekryiC3edpd6sEJwAeg2Swa26ZBxs16ZVyPNSP5GPB",
+   "entry_intel": {
+    "quality_score": 24,
+    "unique_buyers": 2,
+    "unique_sellers": 0,
+    "organic_score": 0.3597,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5251,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 73,
@@ -2123,7 +3463,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $WALTER on a graduation_ride trigger with 1.25% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "58S3WgMK9fKcEpbG8Dm7xcG2TYYiw62TBKVSyezgJ79ST3pGfaXEsr8drZAoXLgpRQtxAweNPoj2B8GgJYodRh2r",
-   "sell_sig": "3A9umJdUAK68QAjgWLNLmj37TWzfFqttASbbY6YrL6REyyeBEvuGoPGYXp6ZhycyWHGNt9dJ4NwtHdcQfkU3dteL"
+   "sell_sig": "3A9umJdUAK68QAjgWLNLmj37TWzfFqttASbbY6YrL6REyyeBEvuGoPGYXp6ZhycyWHGNt9dJ4NwtHdcQfkU3dteL",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 74229,
+    "now_mc_usd": 6027,
+    "now_vs_exit_multiple": 0.081,
+    "post_exit_high_mc_usd": 31026,
+    "post_exit_high_vs_exit_multiple": 0.418,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 74,
@@ -2150,7 +3502,26 @@
    "llm_thesis": "RACOIN has a relatively genuine market with diverse buyers and sellers.",
    "rationale": "Sniped $RACOIN on a llm_intel trigger with 0.01% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "kg77xn2BuXqPfxeQpAToRMWRyiMBVhn7YzEi52W1LBYRUY83Smpjh2nmsW6Fab95RrtePSnR54tskbB1sYEa3T3",
-   "sell_sig": "REUibcHUsDt2HCxc9BpRYFY87e6fvmjRV2oKYxDri9TeTaKSqjJjvxYo4KGmuF4mh7sSXZMgAesN8kPYkpQebsS"
+   "sell_sig": "REUibcHUsDt2HCxc9BpRYFY87e6fvmjRV2oKYxDri9TeTaKSqjJjvxYo4KGmuF4mh7sSXZMgAesN8kPYkpQebsS",
+   "entry_intel": {
+    "quality_score": 26,
+    "unique_buyers": 43,
+    "unique_sellers": 8,
+    "organic_score": 0.4936,
+    "bundle_score": 0.247,
+    "concentration_top10": 0.5903
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5629,
+    "now_mc_usd": 2171,
+    "now_vs_exit_multiple": 0.386,
+    "post_exit_high_mc_usd": 2192,
+    "post_exit_high_vs_exit_multiple": 0.389,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 75,
@@ -2177,7 +3548,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $VFX on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3AXFqqv4RMdYiTZeem68GWRzzxFgLK5X2kHqgPnEaaDpV7AiXNKnSgRGrv7sQadabEMM5iWzwpTC9eiESTYhM6nW",
-   "sell_sig": "4GL73TJ1Fo6dJyk97cRAn8qNQPxDxRJh6z567b21BEbfUhzvJDqAJ7ym7EMinyBCoNiZMufq77nKoBvvrKLwkgt6"
+   "sell_sig": "4GL73TJ1Fo6dJyk97cRAn8qNQPxDxRJh6z567b21BEbfUhzvJDqAJ7ym7EMinyBCoNiZMufq77nKoBvvrKLwkgt6",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 99353,
+    "now_mc_usd": 5183,
+    "now_vs_exit_multiple": 0.052,
+    "post_exit_high_mc_usd": 46155,
+    "post_exit_high_vs_exit_multiple": 0.465,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 76,
@@ -2204,7 +3587,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $FLL on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3cyMrLSUm4YQnm8yCDy9vy9MsrkyX25kjNv2mp6doAo4zRY42U67XwzpyPMWhmK2eJxkL1DCkmm4H9XwbwX36k96",
-   "sell_sig": "3XKYRe9Vgj2cgUGuqw94DugWrkfcmzYM5rNN8Zzfiw74zsr6QJ6cmPqQr7UYnMRJPoPz6cEoWjBGV5SrCcicM5Z"
+   "sell_sig": "3XKYRe9Vgj2cgUGuqw94DugWrkfcmzYM5rNN8Zzfiw74zsr6QJ6cmPqQr7UYnMRJPoPz6cEoWjBGV5SrCcicM5Z",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 99101,
+    "now_mc_usd": 3467,
+    "now_vs_exit_multiple": 0.035,
+    "post_exit_high_mc_usd": 46459,
+    "post_exit_high_vs_exit_multiple": 0.469,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 77,
@@ -2231,7 +3626,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $FREE on a new_mint trigger with 0.04% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2CR2E5tPNdpVzjbQ7uJhZ4EeG7C3tF4ztip4gW2yPS2kYxc9VqLzaZmivtfuwsE3ypSwoRzjVcLXxUT1daFTgKSV",
-   "sell_sig": "3XRyTcx49Ah2CuPsTYZfKhqU3G3v4sFZPhJjjAWby7iBzrXrfF7h5vDPegvza4j2eWxM3B2XpFfFdGTNZJBv9r1Q"
+   "sell_sig": "3XRyTcx49Ah2CuPsTYZfKhqU3G3v4sFZPhJjjAWby7iBzrXrfF7h5vDPegvza4j2eWxM3B2XpFfFdGTNZJBv9r1Q",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 78,
@@ -2258,7 +3672,26 @@
    "llm_thesis": "SAVIOR may have organic demand due to a compelling narrative and the creator's launch history",
    "rationale": "Sniped $SAVIOUR on a llm_intel trigger with 0.04% price impact; firewall verdict warn (score 84). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5vipir2MKQKQNHrDA6nVrRV9wUx3MmtbCMC2u419ucmE5u2W8HFgJy1TRahP7wgnsBjax94p64qts6o145ny4kBW",
-   "sell_sig": "2E5ZFqKfi17KBkDKXTZiWRA4joSxPWhaVMrFsHSFMrL4KW4RhmzyvrGzmJfA26jexBPGp1nyi924EZmhuAK4VUUL"
+   "sell_sig": "2E5ZFqKfi17KBkDKXTZiWRA4joSxPWhaVMrFsHSFMrL4KW4RhmzyvrGzmJfA26jexBPGp1nyi924EZmhuAK4VUUL",
+   "entry_intel": {
+    "quality_score": 4,
+    "unique_buyers": 1,
+    "unique_sellers": 0,
+    "organic_score": 0.28,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5248,
+    "now_mc_usd": 2170,
+    "now_vs_exit_multiple": 0.413,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 79,
@@ -2285,7 +3718,26 @@
    "llm_thesis": "MCP Genesis has a reasonably high market_realness score indicating genuine two-sided market activity.",
    "rationale": "Sniped $MCP on a llm_intel trigger with 0.01% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3hStaap3zHFtCh8mobqh6hJqcpT3wbjKbydwzWBCpt2AaL6HVbdiaQB7qYsTrhEUXex9N8Ag6d1aFLiYgFut1Sd",
-   "sell_sig": "i7KvnkdqUjdT2zEWAVhb9e75f1z9PxnWfdPDc62eMTqRUxkVsHbuKnXFebNapDqWk9drBfqxKg22tBtjekkk3dE"
+   "sell_sig": "i7KvnkdqUjdT2zEWAVhb9e75f1z9PxnWfdPDc62eMTqRUxkVsHbuKnXFebNapDqWk9drBfqxKg22tBtjekkk3dE",
+   "entry_intel": {
+    "quality_score": 37,
+    "unique_buyers": 108,
+    "unique_sellers": 34,
+    "organic_score": 0.5477,
+    "bundle_score": 0.1414,
+    "concentration_top10": 0.3248
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 32977,
+    "now_mc_usd": 2589,
+    "now_vs_exit_multiple": 0.079,
+    "post_exit_high_mc_usd": 45600,
+    "post_exit_high_vs_exit_multiple": 1.383,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 80,
@@ -2312,7 +3764,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $RWA on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2oyvX6YjMkLqaoPhji53zswWTxdWkZtPSyQEj9juN1JLmK16xTrV9LkofHTkDbigEB2KpYZ1PRCVwmPRU1vPRkAn",
-   "sell_sig": "2wYSo99Em8hooTAoQYUQsQSU2uUsXjSwGLqBmXL1dp6iUmeRLQLhJNe1P2xtSWt3siSwNPCkRwFQdyz1Ug2C3C3a"
+   "sell_sig": "2wYSo99Em8hooTAoQYUQsQSU2uUsXjSwGLqBmXL1dp6iUmeRLQLhJNe1P2xtSWt3siSwNPCkRwFQdyz1Ug2C3C3a",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 78671,
+    "now_mc_usd": 3108,
+    "now_vs_exit_multiple": 0.04,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 81,
@@ -2339,7 +3803,26 @@
    "llm_thesis": "Genuine two-sided market and moderate market realness score indicate potential for real momentum.",
    "rationale": "Sniped $COREY on a llm_intel trigger with 0.02% price impact; firewall verdict warn (score 86). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "31GDdmcabG5wpovNjSqKTNWzgmebxJSjG41s9fFz673m7SqT233FRxkgi18BEHkoHjAL5cw6Skh99DmiYV6T4Ns5",
-   "sell_sig": "4QkAsfYVwZgARUutp6tuxXGen7Et9zHTomhwAj3hheekPdmKuVDVgEPVCVURvsR3recacTWC2dKwr3iPfxLvZc1i"
+   "sell_sig": "4QkAsfYVwZgARUutp6tuxXGen7Et9zHTomhwAj3hheekPdmKuVDVgEPVCVURvsR3recacTWC2dKwr3iPfxLvZc1i",
+   "entry_intel": {
+    "quality_score": 15,
+    "unique_buyers": 41,
+    "unique_sellers": 27,
+    "organic_score": 0.4509,
+    "bundle_score": 0.33,
+    "concentration_top10": 0.8721
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 7306,
+    "now_mc_usd": 2369,
+    "now_vs_exit_multiple": 0.324,
+    "post_exit_high_mc_usd": 2522,
+    "post_exit_high_vs_exit_multiple": 0.345,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 82,
@@ -2366,7 +3849,26 @@
    "llm_thesis": "A moderate momentum position in APE is worth taking due to a decent two-sided market and a sizable dev buy.",
    "rationale": "Sniped $APE on a llm_intel trigger with 0.03% price impact; firewall verdict warn (score 70). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5zRnRPwHpoqagsSQbADvJXqa7KFDTDQb8252cyyLCj32BqtVoDcSAH9PwiTAytZzzgtuaAk4gf3rzLTp7kin5nke",
-   "sell_sig": "4HRegva2GWrNAfJ7igbZ6jVefzMevEtkaA2R9fGbBbEz3HxTu6VFc37yMKhCh2fyVui7F3GzZzoonkSD2btEJniQ"
+   "sell_sig": "4HRegva2GWrNAfJ7igbZ6jVefzMevEtkaA2R9fGbBbEz3HxTu6VFc37yMKhCh2fyVui7F3GzZzoonkSD2btEJniQ",
+   "entry_intel": {
+    "quality_score": 16,
+    "unique_buyers": 24,
+    "unique_sellers": 20,
+    "organic_score": 0.4622,
+    "bundle_score": 0.2042,
+    "concentration_top10": 0.9719
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 5313,
+    "now_mc_usd": 2197,
+    "now_vs_exit_multiple": 0.414,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 83,
@@ -2393,7 +3895,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $CWARDIN on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "48XKkBjnq8FDUGvfghhh3sC1e6ehryBaGzieGXYkpH7ZBHfWj1SJdeSnHNeEnzCA47x6KUZBvvSSwSazTXjz1hmW",
-   "sell_sig": "61X8qdSnxrfAJgSPn9BQNwjfrVdeh98GWeL4Qy3ukiEDmCTYyqiUJziWVnJAPHFym6QmfkdYeRbu5vqfPqVuchEx"
+   "sell_sig": "61X8qdSnxrfAJgSPn9BQNwjfrVdeh98GWeL4Qy3ukiEDmCTYyqiUJziWVnJAPHFym6QmfkdYeRbu5vqfPqVuchEx",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 82366,
+    "now_mc_usd": 3038,
+    "now_vs_exit_multiple": 0.037,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 84,
@@ -2420,7 +3934,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $BENNER on a graduation_ride trigger with 1.20% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "31VK6XqCndHXPBgwpGKSroSsVzSVbkWCqLYJKnFhdVbtpU8FqSpVgiMnu8gXTbKRp4WTHf3LhGJrtt4VNGqxUvpC",
-   "sell_sig": "5tPMbwqDNAcpRbL58QPFVdBthf2Ym5cRpg5sfXDhrUnzRwHUx4QH8Pom8hDLJQ6zW3LSHpeRiqD3NFZ1oPM2rqVq"
+   "sell_sig": "5tPMbwqDNAcpRbL58QPFVdBthf2Ym5cRpg5sfXDhrUnzRwHUx4QH8Pom8hDLJQ6zW3LSHpeRiqD3NFZ1oPM2rqVq",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 82120,
+    "now_mc_usd": 3038,
+    "now_vs_exit_multiple": 0.037,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 85,
@@ -2447,7 +3973,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $AGIGUY on a graduation_ride trigger with 1.19% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "3KTFL7GNpvXGb7tn8iV4rQkCUtso6Nm4RDyYTwd9GiW5rTgLLXKgPcVRNwhdNCPPLgpajBUYBvjDu8j9UhNyxtYX",
-   "sell_sig": "5k6PNTxfiK3WG55PXv6hvTMpHou1sN31Z9rtRMnS5izrvJ5DfBYRTm7ceeQ4pJ6aFiVxQPTN6BfYEhFGuhii7QWK"
+   "sell_sig": "5k6PNTxfiK3WG55PXv6hvTMpHou1sN31Z9rtRMnS5izrvJ5DfBYRTm7ceeQ4pJ6aFiVxQPTN6BfYEhFGuhii7QWK",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 83683,
+    "now_mc_usd": 3029,
+    "now_vs_exit_multiple": 0.036,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 86,
@@ -2474,7 +4012,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $DRQY on a graduation_ride trigger with 0.30% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "z1mbwTwxWJNJXY7KXJxUDXbjRmrtm7qv4dcTWPnDJWA2XiujhT91i8Exy5NC33tnnqkuEj9XDyoWJhPWzxWx45q",
-   "sell_sig": "4HuA8qYdb3UpBDviuo3WG5d1dnJqKPkBF2NfeH3RWUHXCyRFGbbSphHUGGyH8SJUSJhBp5tw45aG1tXT54mFTtWK"
+   "sell_sig": "4HuA8qYdb3UpBDviuo3WG5d1dnJqKPkBF2NfeH3RWUHXCyRFGbbSphHUGGyH8SJUSJhBp5tw45aG1tXT54mFTtWK",
+   "entry_intel": {
+    "quality_score": 43,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.5974,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 47830590,
+    "now_mc_usd": 1722,
+    "now_vs_exit_multiple": 0,
+    "post_exit_high_mc_usd": 51051658,
+    "post_exit_high_vs_exit_multiple": 1.067,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 87,
@@ -2501,7 +4058,26 @@
    "llm_thesis": null,
    "rationale": "Sniped $MOHC on a graduation_ride trigger with 1.19% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "dydCoBLV6cARya6osK5nTK2Boje8WxiLPzDrjRVYhNz7ksEoTkDSXm452UBj23sANT4iP2etgXK2tt53sNzhwqR",
-   "sell_sig": "2AW5rHThYCs2vhr7svsVMoMANf4KXjyJDZAbpT1MuoTUAfg5ahdhyWcEQfKwYjDLpXuc2AnhxPWLyAPx2TLteUwi"
+   "sell_sig": "2AW5rHThYCs2vhr7svsVMoMANf4KXjyJDZAbpT1MuoTUAfg5ahdhyWcEQfKwYjDLpXuc2AnhxPWLyAPx2TLteUwi",
+   "entry_intel": {
+    "quality_score": 50,
+    "unique_buyers": 3,
+    "unique_sellers": 0,
+    "organic_score": 0.617,
+    "bundle_score": 0,
+    "concentration_top10": 1
+   },
+   "post_exit": {
+    "implied_exit_mc_usd": 230800,
+    "now_mc_usd": 1459,
+    "now_vs_exit_multiple": 0.006,
+    "post_exit_high_mc_usd": null,
+    "post_exit_high_vs_exit_multiple": null,
+    "never_traded_after_exit": true,
+    "candle_granularity": "1h",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 88,
@@ -2528,7 +4104,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $HANU.P on a graduation_ride trigger with 0.95% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "2LxjcHmYw1GJgFMmFPy749ozhbWtcTqS1BZLGbS77CjamkTtkepsDXRHcsbrEerrrooFGKXeCrrx5whe3H7yGgzF",
-   "sell_sig": "4wDukGp1hUYZ7YLrpzqLJpf73YA1uHW9mFcGWUdcQzhsJxfkFPMXQBVoT7XB3pEB3xiyxvdXTZuwXBnKxuk7QG3U"
+   "sell_sig": "4wDukGp1hUYZ7YLrpzqLJpf73YA1uHW9mFcGWUdcQzhsJxfkFPMXQBVoT7XB3pEB3xiyxvdXTZuwXBnKxuk7QG3U",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 118030,
+    "now_mc_usd": 5081,
+    "now_vs_exit_multiple": 0.043,
+    "post_exit_high_mc_usd": 5242,
+    "post_exit_high_vs_exit_multiple": 0.044,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 89,
@@ -2555,7 +4143,19 @@
    "llm_thesis": null,
    "rationale": "Sniped $$MRH on a graduation_ride trigger with 1.19% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "5kwTKYHNPEkrr6NTtscetwHHwVsFoe8eyWYedECmBPE7ssxFdiYEJas9xKcA2Yi3gRffnZX65a9Z1ab24wWCZEe3",
-   "sell_sig": "46vVoUX5wWjcZaHrSGdWjWmFycGMk1HeP3GPXBwtnKsFbhZWbhVvD1U3hfjahPuBoWHZK9BJ7yPJrmnLgQNiXF33"
+   "sell_sig": "46vVoUX5wWjcZaHrSGdWjWmFycGMk1HeP3GPXBwtnKsFbhZWbhVvD1U3hfjahPuBoWHZK9BJ7yPJrmnLgQNiXF33",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 90094,
+    "now_mc_usd": 3012,
+    "now_vs_exit_multiple": 0.033,
+    "post_exit_high_mc_usd": 39186,
+    "post_exit_high_vs_exit_multiple": 0.435,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   },
   {
    "n": 90,
@@ -2582,7 +4182,145 @@
    "llm_thesis": null,
    "rationale": "Sniped $BDAG on a graduation_ride trigger with 1.25% price impact; firewall verdict allow (score 100). Committed 0.0100 SOL expecting a profitable exit.",
    "buy_sig": "DXtv7cbafLgcdL9KdeFGfdD48adC48wSLaM5cRRxu2F5SyzVFsWymVKGbXSVADtcVG7DdGJttwogvNk1tUHyhEF",
-   "sell_sig": "21jMZHUhiGGqEqRZcaQn7sKhxXzaNnyc7Yc5bsfzsEvmx9Q9xAEBQsre9ENcgSg6rFhYdHxFvbjPAWMd2LuHiUPT"
+   "sell_sig": "21jMZHUhiGGqEqRZcaQn7sKhxXzaNnyc7Yc5bsfzsEvmx9Q9xAEBQsre9ENcgSg6rFhYdHxFvbjPAWMd2LuHiUPT",
+   "entry_intel": null,
+   "post_exit": {
+    "implied_exit_mc_usd": 95584,
+    "now_mc_usd": 5302,
+    "now_vs_exit_multiple": 0.055,
+    "post_exit_high_mc_usd": 46016,
+    "post_exit_high_vs_exit_multiple": 0.481,
+    "never_traded_after_exit": false,
+    "candle_granularity": "1m",
+    "lifetime_outcome": null,
+    "ath_mc_usd": null
+   }
   }
- ]
+ ],
+ "counterfactual": {
+  "window": {
+   "start": "2026-07-20T00:00:00Z",
+   "end": "2026-07-23T04:00:00Z"
+  },
+  "funnel": {
+   "observed": 82994,
+   "conviction_scored": 45784,
+   "quality_scored": 82994,
+   "outcome_labeled": 42995,
+   "bought": 72
+  },
+  "conviction_bands": [
+   {
+    "band": "unscored",
+    "n": 18510,
+    "graduated": 354,
+    "pumped": 1581,
+    "rugged": 15938,
+    "flat": 637,
+    "good_rate": 0.1045
+   },
+   {
+    "band": "0+",
+    "n": 20319,
+    "graduated": 522,
+    "pumped": 1874,
+    "rugged": 17136,
+    "flat": 787,
+    "good_rate": 0.1179
+   },
+   {
+    "band": "30+",
+    "n": 4041,
+    "graduated": 131,
+    "pumped": 571,
+    "rugged": 3276,
+    "flat": 63,
+    "good_rate": 0.1737
+   },
+   {
+    "band": "50+",
+    "n": 71,
+    "graduated": 9,
+    "pumped": 46,
+    "rugged": 16,
+    "flat": 0,
+    "good_rate": 0.7746
+   }
+  ],
+  "high_conviction_50plus": {
+   "coins": 110,
+   "bought": 0,
+   "labeled": 71,
+   "graduated": 9,
+   "pumped": 46,
+   "rugged": 16,
+   "good_rate": 0.7746,
+   "max_score_in_window": 61
+  },
+  "biggest_missed": [
+   {
+    "symbol": "USOH",
+    "mint": "ZEQWnUDZVtGb152LJJyhtQTBEAdZUFEibbK1amhpump",
+    "outcome": "graduated",
+    "ath_mc_usd": 160547284,
+    "ath_multiple": 73975,
+    "quality_score": 43,
+    "conviction": null,
+    "unique_buyers": 3
+   },
+   {
+    "symbol": "DOW",
+    "mint": "EvwoREa1idcHcY55bMzrEt3tSw9Tv7ssMB2qmcmpump",
+    "outcome": "graduated",
+    "ath_mc_usd": 134304128,
+    "ath_multiple": 61692,
+    "quality_score": 36,
+    "conviction": 20,
+    "unique_buyers": 3
+   },
+   {
+    "symbol": "NTFS",
+    "mint": "xddNGoC7NpF1B8iHvaVn9mtoixhobpgHxCeSQaHpump",
+    "outcome": "graduated",
+    "ath_mc_usd": 76214871,
+    "ath_multiple": 35170,
+    "quality_score": 43,
+    "conviction": 21,
+    "unique_buyers": 3
+   },
+   {
+    "symbol": "USWR",
+    "mint": "pwAHEhXXjVJytTJr9zudmFjBSJPdFCLeMFi1zJJpump",
+    "outcome": "graduated",
+    "ath_mc_usd": 67492813,
+    "ath_multiple": 31158,
+    "quality_score": 43,
+    "conviction": 21,
+    "unique_buyers": 3
+   },
+   {
+    "symbol": "VORF",
+    "mint": "Kh8LiWcmi3v3Ro3qY1Pfgi7Kq3HvQN1ZDXBE1iRpump",
+    "outcome": "graduated",
+    "ath_mc_usd": 25320600,
+    "ath_multiple": 11674,
+    "quality_score": 43,
+    "conviction": 21,
+    "unique_buyers": 3
+   }
+  ]
+ },
+ "paperhands": {
+  "sells_checked": 90,
+  "above_exit_today": 0,
+  "median_now_vs_exit_multiple": 0.361,
+  "max_now_vs_exit_multiple": 0.899,
+  "candle_verified": {
+   "tokens_with_post_exit_prints": 53,
+   "tokens_never_traded_after_exit": 37,
+   "post_exit_high_at_or_above_1_5x": 0,
+   "median_post_exit_high_multiple": 0.427,
+   "regret_sol_at_1_5x_threshold": 0
+  }
+ }
 }

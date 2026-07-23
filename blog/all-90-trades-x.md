@@ -54,6 +54,39 @@ WHAT ELSE THE DATA SAYS
 
 5. The system's self-rated confidence carries real signal: decisions logged at ~0.6 confidence were right 32% of the time, decisions at ~0.4 were right 9%. Humbling numbers, but the ordering means it can be calibrated.
 
+THE 83,000 COINS WE DIDN'T BUY
+
+The trades are half the record. While the fleet was live it observed 82,994 launches in three days, Oracle-scored 45,784, watched 42,995 to a labeled outcome, and bought 72. Under 1 in 1,000.
+
+That labeled set finally answers whether our conviction scorer works at scale:
+
+```
+conviction   coins    pumped-or-graduated
+unscored     18,510        10.5%
+0-30         20,319        11.8%
+30-50         4,041        17.4%
+50+              71        77.5%   <- seven times the base rate
+```
+
+And the fleet bought ZERO of the 110 coins that crossed conviction 50. The reason is painfully mechanical: one arm gated at conviction 35 (too low, admitted the 17% band), the other at 65. The highest score any coin reached all window was 61. The two gates bracketed the profitable band and covered none of it. The strict arm could never mathematically fire.
+
+We checked for hindsight bias: 104 of the 110 have an archived first score, and all 104 were already at 50+ the first time they were ever scored. The signal was on the board before the outcomes.
+
+THE ONES THAT GOT AWAY
+
+The biggest skipped winner ran to a $161M ATH cap. Should we feel bad? At the moment our systems observed it, it showed 3 visible buyers and quality 43/100, statistically identical to the 36,000 rugs in the same dataset. Its run started after our observation window closed.
+
+That is the structural lesson: a minute-zero sniper is blind to every winner whose story starts at minute thirty. No threshold fixes that. A second look at 30 and 60 minutes does.
+
+THE PAPERHANDS AUDIT
+
+We checked every single sell for diamond-hands regret, against each token's FULL price history (candle data for all 85 tokens, minute-level where the coin's life fits in minute candles):
+
+1. Where does each coin trade NOW vs where we sold? 0 of 90 above our exit. Best 0.90x, median 0.36x, 37 of 90 down >90% since we left.
+2. What was the highest price each token EVER printed after our exit candle? 37 of 90 tokens never traded again at all (we were literally the last one out). Of the 53 that did, median post-exit high is 0.43x our exit and ZERO reached 1.5x. The single closest call: a trailing stop shook one arm out at +10.6% and the token poked 1.38x higher, worth ~0.004 SOL.
+
+Total SOL lost to selling too early, across the entire experiment: zero. The fleet has no paperhands problem. Every sell was vindicated by the tape. The money was lost at entry, and the fix lives on the buy side.
+
 THE EMBARRASSING PART
 
 The fleet is supposed to be self-improving: an optimizer reads each arm's real record every 6 hours and tunes its knobs inside hard bounds. After two days of "running", we audited it and found it had never applied a single change.
@@ -81,7 +114,7 @@ The experiment continues. Budgets now flow toward whatever performs, and the nex
 
 ---
 
-## Version B: thread (12 posts)
+## Version B: thread (16 posts)
 
 **1/**
 We gave 11 AI agents their own Solana wallets and real SOL, pointed them at the pump.fun firehose, and stopped touching the keyboard.
@@ -129,19 +162,54 @@ Five positions had stops at -15% or -30% and realized -78% to -99.9%. The stop f
 Tail defense happens at entry and sizing, not at exit.
 
 **8/**
-Our conviction model graded every launch 0-100. The fleet mostly ignored it.
+The trades are only half the record. While the fleet ran, it OBSERVED 82,994 launches in 3 days, scored 45,784 with our conviction model, and bought 72.
 
-Sub-30-conviction entries: 19% win rate, most of the losses.
-Entries above 50 conviction: zero. Not one.
-
-The arms that skipped the gate funded the lesson. The gate is now on.
+Under 1 in 1,000. The other 82,922 coins are the more interesting dataset.
 
 **9/**
+Because 42,995 of those skipped coins got outcome labels, we can test the conviction model at scale:
+
+```
+conviction  coins   pumped or graduated
+unscored   18,510       10.5%
+0-30       20,319       11.8%
+30-50       4,041       17.4%
+50+            71       77.5%
+```
+
+7x the base rate. Sitting in production.
+
+**10/**
+How many of the 110 coins that crossed conviction 50 did the fleet buy?
+
+Zero.
+
+One arm's gate was set at 35 (too low: it bought the 17% band). The other at 65. The highest score all window was 61. The two gates bracketed the money band and covered none of it.
+
+Nobody chose this. Threshold audits matter.
+
+**11/**
+The biggest coin we skipped ran to a $161M ATH.
+
+At the moment our systems watched it: 3 visible buyers, quality 43/100. Statistically identical to the 36,000 rugs in the same dataset. Its run started AFTER our window closed.
+
+Minute-zero snipers are structurally blind to minute-thirty winners.
+
+**12/**
+We audited every sell for paperhands against each token's FULL candle history:
+
+37 of 90 tokens never printed another trade after our exit. We were the last one out.
+
+Of the 53 that kept trading, the highest post-exit print reached 1.5x our exit exactly zero times. Median: 0.43x.
+
+Every single sell was vindicated by the tape. The losses live on the buy side.
+
+**13/**
 The embarrassing part: the fleet is supposed to self-improve. An optimizer reads each arm's record every 6 hours and tunes its knobs.
 
 After two days of "running", we audited it. It had never applied a single change.
 
-**10/**
+**14/**
 The DB driver accepts a dynamic column in WHERE but not in SET:
 
 ```js
@@ -153,18 +221,18 @@ await sql`update strategies
 
 Green dashboards. Zero learning. Fixed, plus a second loop whose scheduler job never existed.
 
-**11/**
+**15/**
 The rule we wrote down for every autonomous system we build:
 
 Health is measured by rows in your audit tables, not by your HTTP status codes.
 
 "The cron returns 200" and "the loop is learning" are unrelated statements.
 
-**12/**
-All 90 trades are published, individually graded, with on-chain receipts, every model thesis verbatim, charts, and the raw dataset as JSON.
+**16/**
+All 90 trades published and individually graded, with on-chain receipts, every model thesis verbatim, the 83k-coin counterfactual, the paperhands audit, charts, and the raw dataset as JSON.
 
 No cherry-picking. The ledger does not let us.
 
 https://three.ws/blog/all-90-trades
 
-The experiment continues.
+Next up: an arm that trades the conviction-50 crossing.
