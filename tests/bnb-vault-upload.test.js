@@ -56,6 +56,32 @@ vi.mock('../api/_lib/ssrf.js', async () => {
 	return { ...actual, assertPublicHttpsUrl: vi.fn(async (url) => url) };
 });
 
+// ssrf-guard.js's pinned fetch opens raw sockets (no sandbox egress either).
+// Route it through the per-test global.fetch stub so those stubs keep driving
+// the glbUrl branch, and enforce opts.maxBytes the way the real guard does so
+// the handler's MaxBytesExceededError → 413 mapping is genuinely exercised.
+vi.mock('../api/_lib/ssrf-guard.js', async () => {
+	const actual = await vi.importActual('../api/_lib/ssrf-guard.js');
+	return {
+		...actual,
+		fetchSafePublicUrlPinned: vi.fn(async (url, init, opts) => {
+			const resp = await global.fetch(url, init);
+			if (opts?.maxBytes == null) return resp;
+			const buf = await resp.arrayBuffer();
+			if (buf.byteLength > opts.maxBytes) {
+				throw new actual.MaxBytesExceededError(buf.byteLength, opts.maxBytes);
+			}
+			return {
+				ok: resp.ok,
+				status: resp.status,
+				headers: resp.headers ?? new Headers(),
+				arrayBuffer: async () => buf,
+				text: async () => Buffer.from(buf).toString('utf8'),
+			};
+		}),
+	};
+});
+
 const { default: handler } = await import('../api/bnb/vault-upload.js');
 const { GreenfieldWriteError } = await import('../api/_lib/bnb/greenfield-write.js');
 const { cacheGet } = await import('../api/_lib/cache.js');
