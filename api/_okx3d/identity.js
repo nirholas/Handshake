@@ -25,7 +25,7 @@
 import { createHash } from 'node:crypto';
 import { putObject, getObjectBuffer, publicUrl } from '../_lib/r2.js';
 import { encodeJobToken, decodeJobToken } from '../_lib/forge-job-token.js';
-import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
+import { assertSafePublicUrl, fetchSafePublicUrlPinned } from '../_lib/ssrf-guard.js';
 import { llmComplete } from '../_lib/llm.js';
 import { PRESETS } from '../../src/pose-presets.js';
 
@@ -392,11 +392,18 @@ export async function validateReferenceImage(url) {
 	await assertSafePublicUrl(url, { allowHttp: true });
 	let res;
 	try {
-		res = await fetch(url, {
-			method: 'GET',
-			headers: { range: 'bytes=0-0' },
-			signal: AbortSignal.timeout(15_000),
-		});
+		// Pinned guard fetch: validation alone leaves a DNS-rebinding window and
+		// a validated host could redirect to an internal address. The byte cap
+		// bounds hosts that ignore the Range header and stream the whole image.
+		res = await fetchSafePublicUrlPinned(
+			url,
+			{
+				method: 'GET',
+				headers: { range: 'bytes=0-0' },
+				signal: AbortSignal.timeout(15_000),
+			},
+			{ allowHttp: true, maxBytes: 16 * 1024 * 1024 },
+		);
 	} catch (err) {
 		throw pipelineError(
 			'reference_image_unreachable',

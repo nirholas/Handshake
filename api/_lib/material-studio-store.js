@@ -36,6 +36,7 @@
 import { randomUUID } from 'node:crypto';
 import { putObject, publicUrl } from './r2.js';
 import { assertPublicHttpsUrl } from './ssrf.js';
+import { fetchSafePublicUrlPinned, MaxBytesExceededError } from './ssrf-guard.js';
 import { watsonxConfig, watsonxChatComplete } from './watsonx.js';
 import { materialVariants, materialPreset, MATERIAL_PRESET_NAMES } from '@three-ws/viewer-presets';
 import { seedLineage, appendVersion, branchFrom, buildLineageChain } from '../../mcp-server/src/tools/_lineage.js';
@@ -79,8 +80,22 @@ function stripJsonFence(text) {
 async function fetchGlbBytes(url) {
 	let resp;
 	try {
-		resp = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+		// Pinned guard fetch: the URL is validated upstream, but a validated
+		// host could still redirect to an internal address, and validation
+		// alone leaves a DNS-rebinding window. The streaming cap replaces the
+		// old post-hoc length check.
+		resp = await fetchSafePublicUrlPinned(
+			url,
+			{ signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
+			{ maxBytes: MAX_SOURCE_GLB_BYTES },
+		);
 	} catch (err) {
+		if (err instanceof MaxBytesExceededError) {
+			throw new MaterialStudioError(`source GLB exceeds the ${MAX_SOURCE_GLB_BYTES}-byte limit`, {
+				status: 413,
+				code: 'source_too_large',
+			});
+		}
 		throw new MaterialStudioError(`could not fetch glb_url: ${err.message}`, {
 			status: 502,
 			code: 'fetch_failed',
@@ -94,12 +109,6 @@ async function fetchGlbBytes(url) {
 	}
 	const buf = Buffer.from(await resp.arrayBuffer());
 	if (!buf.length) throw new MaterialStudioError('glb_url is empty', { status: 502, code: 'empty_source' });
-	if (buf.length > MAX_SOURCE_GLB_BYTES) {
-		throw new MaterialStudioError(`source GLB is ${buf.length} bytes; max is ${MAX_SOURCE_GLB_BYTES}`, {
-			status: 413,
-			code: 'source_too_large',
-		});
-	}
 	if (!isGlbMagic(buf)) {
 		throw new MaterialStudioError('glb_url is not a binary glTF (.glb) — its bytes lack the "glTF" magic header', {
 			status: 415,

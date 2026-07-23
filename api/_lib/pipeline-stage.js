@@ -19,6 +19,7 @@
 
 import { createRegenProvider } from '../_providers/gcp.js';
 import { validatePublicUrl, resolvePublicHost, SsrfError } from './ssrf.js';
+import { fetchSafePublicUrlPinned, MaxBytesExceededError } from './ssrf-guard.js';
 import { putObject, publicUrl } from './r2.js';
 
 // Poll cadence + budget. The x402 payment authorization carries
@@ -132,11 +133,19 @@ function magicMatches(kind, bytes) {
 export async function sniffRemoteAsset(url, kind = 'glb') {
 	let resp;
 	try {
-		resp = await fetch(url, {
-			redirect: 'follow',
-			headers: { range: 'bytes=0-63', accept: '*/*' },
-			signal: AbortSignal.timeout(15_000),
-		});
+		// Pinned guard fetch: the URL was validated upstream, but a plain
+		// redirect-following fetch would let a validated host 302 us to an
+		// internal address. Every hop is re-validated and the socket is pinned
+		// to the checked IP. The byte cap only bounds hosts that ignore the
+		// Range header and stream the whole asset.
+		resp = await fetchSafePublicUrlPinned(
+			url,
+			{
+				headers: { range: 'bytes=0-63', accept: '*/*' },
+				signal: AbortSignal.timeout(15_000),
+			},
+			{ maxBytes: MAX_OUTPUT_BYTES },
+		);
 	} catch (err) {
 		throw new StageError(`could not fetch ${kind}: ${err.message}`, {
 			status: 502,
@@ -252,8 +261,22 @@ export async function persistStageOutput({ resultUrl, key, contentType, kind = '
 	}
 	let resp;
 	try {
-		resp = await fetch(resultUrl, { signal: AbortSignal.timeout(OUTPUT_FETCH_TIMEOUT_MS) });
+		// Worker-returned URL: lower trust than our own storage. Pinned guard
+		// fetch so a compromised worker reply cannot redirect the retrieve into
+		// an internal address; the streaming cap replaces the old post-hoc
+		// length check so an over-limit body never buffers in full.
+		resp = await fetchSafePublicUrlPinned(
+			resultUrl,
+			{ signal: AbortSignal.timeout(OUTPUT_FETCH_TIMEOUT_MS) },
+			{ maxBytes: MAX_OUTPUT_BYTES },
+		);
 	} catch (err) {
+		if (err instanceof MaxBytesExceededError) {
+			throw new StageError(`worker output exceeds the ${MAX_OUTPUT_BYTES}-byte limit`, {
+				status: 502,
+				code: 'output_too_large',
+			});
+		}
 		throw new StageError(`could not retrieve worker output: ${err.message}`, {
 			status: 502,
 			code: 'output_fetch_failed',
@@ -268,12 +291,6 @@ export async function persistStageOutput({ resultUrl, key, contentType, kind = '
 	const buf = Buffer.from(await resp.arrayBuffer());
 	if (!buf.length) {
 		throw new StageError('worker output was empty', { status: 502, code: 'empty_output' });
-	}
-	if (buf.length > MAX_OUTPUT_BYTES) {
-		throw new StageError(`worker output is ${buf.length} bytes; max is ${MAX_OUTPUT_BYTES}`, {
-			status: 502,
-			code: 'output_too_large',
-		});
 	}
 	if (!magicMatches(kind, new Uint8Array(buf.subarray(0, 64)))) {
 		throw new StageError(

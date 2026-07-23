@@ -49,6 +49,7 @@ import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { assertPublicHttpsUrl } from '../_lib/ssrf.js';
+import { fetchSafePublicUrlPinned, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 import { assertBscAddress, BNB_CHAINS } from '../_lib/bnb/chains.js';
 import { encryptGlb, VAULT_CRYPTO_PARAMS } from '../_lib/bnb/vault-crypto.js';
 import { ensureBucket, createObject, GreenfieldWriteError, MAX_VAULT_OBJECT_BYTES } from '../_lib/bnb/greenfield-write.js';
@@ -103,8 +104,21 @@ async function fetchGlbBytes(rawUrl) {
 	}
 	let resp;
 	try {
-		resp = await fetch(safeUrl, { signal: AbortSignal.timeout(30_000) });
+		// Pinned guard fetch: validation alone leaves a validate-then-connect
+		// window, and a validated host could redirect to an internal address.
+		// The streaming cap keeps an over-limit body from ever buffering.
+		resp = await fetchSafePublicUrlPinned(
+			safeUrl,
+			{ signal: AbortSignal.timeout(30_000) },
+			{ maxBytes: MAX_INPUT_GLB_BYTES },
+		);
 	} catch (err) {
+		if (err instanceof MaxBytesExceededError) {
+			throw new VaultUploadError(`GLB exceeds the ${MAX_INPUT_GLB_BYTES}-byte limit`, { status: 413, code: 'glb_too_large' });
+		}
+		if (err?.code === 'ssrf_blocked') {
+			throw new VaultUploadError(`glbUrl rejected: ${err.message}`, { status: 400, code: 'invalid_url' });
+		}
 		throw new VaultUploadError(`could not fetch glbUrl: ${err.message}`, { status: 502, code: 'fetch_failed' });
 	}
 	if (!resp.ok) {
