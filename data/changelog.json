@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-23",
+			"title": "The sniper learns from its own postmortem: conviction-crossing entries and smarter trailing stops",
+			"summary": "Two upgrades shipped straight from the 90-trade analysis. First, a new oracle_crossing trigger: instead of judging a coin at launch, when the conviction scorer has no signal yet, an arm can now buy the moment a coin first crosses its conviction bar. Measured over the fleet window, that band pumped or graduated 77.5% of the time versus an 11.8% base rate, and the crossing lands a median of two minutes after launch. The formerly idle strict arm is re-armed on it with a sell-the-initials ladder. Second, trailing stops now arm only once a position has been above breakeven; armed underwater they only converted recoverable dips into locked losses while the hard stop-loss already capped the downside.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/blog/all-90-trades"
+		},
+		{
+			"date": "2026-07-23",
+			"title": "Fixed: wallets showing $0 of $THREE on the tiers page",
+			"summary": "Holders reported the site not recognising their $THREE balance: /three showed \"You hold $0\" (Member tier) for wallets with real bags, across Phantom, Solflare, and Brave Wallet. Root cause: when our primary balance provider ran out of quota, the backup on-chain read only queried the classic SPL token program, and $THREE (like all pump.fun coins) lives on Token-2022, so it was invisible. The backup path now reads both token programs and rides the same deep multi-provider RPC failover as the rest of the platform, so holder tiers, fee discounts, and quota boosts resolve correctly even when individual RPC providers are down.",
+			"tags": [
+				"fix"
+			],
+			"link": "/three"
+		},
+		{
+			"date": "2026-07-23",
 			"title": "Opening a 3D object gives you a viewer, not a chatbot",
 			"summary": "Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an \"Ask the agent\" box and prompts like \"Why are you embodied?\" that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing — Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.",
 			"tags": [

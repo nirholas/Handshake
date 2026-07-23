@@ -3,7 +3,6 @@ import { solanaConnection } from '../_lib/solana/connection.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
-const TOKEN_PROGRAM = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
 export default wrap(async (req, res) => {
@@ -24,14 +23,18 @@ export default wrap(async (req, res) => {
 	}
 
 	const connection = solanaConnection({ url: RPC, commitment: 'confirmed' });
+	// Filter by MINT, not by token program: $THREE is a Token-2022 mint, so a
+	// classic-program-only query never sees it (every holder read as balance 0).
+	// The mint filter matches the holder's account under whichever program owns
+	// the mint, and returns only that account instead of the whole wallet.
 	const accounts = await connection.getParsedTokenAccountsByOwner(owner, {
-		programId: TOKEN_PROGRAM,
+		mint: new PublicKey(THREE_MINT),
 	});
 
-	const threeAccount = accounts.value.find((a) => a.account.data.parsed.info.mint === THREE_MINT);
-	const balance = threeAccount
-		? Number(threeAccount.account.data.parsed.info.tokenAmount.uiAmount ?? 0)
-		: 0;
+	const balance = accounts.value.reduce(
+		(sum, a) => sum + Number(a.account.data.parsed.info.tokenAmount.uiAmount ?? 0),
+		0,
+	);
 
 	return json(res, 200, {
 		has_pass: balance > 0,

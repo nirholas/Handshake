@@ -193,7 +193,16 @@ async function handleConfirm(req, res) {
 		const tokenBalances = tx.meta?.postTokenBalances || [];
 		const preBalances   = tx.meta?.preTokenBalances  || [];
 		const matchingTransfer = tx.transaction.message.instructions.find((ix) => {
-			if (ix.programId?.toString() !== 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') return false;
+			// Either SPL token program: $THREE (like all pump.fun mints) is Token-2022,
+			// so a classic-program-only match forced every $THREE payment onto the
+			// balance-delta fallback below.
+			const prog = ix.programId?.toString();
+			if (
+				prog !== 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' &&
+				prog !== 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'
+			) {
+				return false;
+			}
 			const parsed = ix.parsed;
 			if (parsed?.type !== 'transferChecked' && parsed?.type !== 'transfer') return false;
 			const info = parsed.info;

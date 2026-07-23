@@ -171,6 +171,9 @@ export function normalizeRpcUrl(raw) {
 // tick — that re-hammering was the source of the 429 retry storm in the logs.
 // Plain rate-limits, auth rejections, and transient 5xx/network blips cool down
 // for shorter, proportionate windows.
+// Per-attempt fetch bound inside the rotating fetch: one hung provider must cost
+// at most this before the rotation moves to the next lane.
+const ATTEMPT_TIMEOUT_MS = 10_000;
 const QUOTA_COOLDOWN_MS = 6 * 3_600_000; // 6h — daily/monthly quota exhausted
 const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m — transient 429
 const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m — bad/expired key on this provider only
@@ -241,7 +244,13 @@ function inferNetwork(url) {
 // connection rotates across them — so no single free quota becomes the bottleneck
 // and a provider running dry transparently fails over to the next.
 function extraFallbackUrls() {
-	return (process.env.SOLANA_RPC_FALLBACK_URLS || '')
+	// SOLANA_RPC_FALLBACKS was the balances-layer-only fallback var before the
+	// balance reads moved onto this canonical chain (2026-07-23); it is read here
+	// too so an operator value set under either name keeps working. Entries that
+	// duplicate a keyed provider above dedupe away.
+	return [process.env.SOLANA_RPC_FALLBACK_URLS, process.env.SOLANA_RPC_FALLBACKS]
+		.filter(Boolean)
+		.join(',')
 		.split(',')
 		.map((s) => normalizeRpcUrl(s))
 		.filter(Boolean);
@@ -521,7 +530,15 @@ export function makeRotatingFetch(endpoints) {
 		// empty `[]`) straight to the browser.
 		const tryEndpoint = async (url) => {
 			try {
-				const resp = await fetch(url, init);
+				// Bound every attempt so one hanging provider can never absorb the whole
+				// request budget (undici's default timeouts run to minutes): the attempt
+				// aborts, cools briefly, and the rotation moves on. A caller-supplied
+				// signal still applies on top via AbortSignal.any.
+				const attemptSignal = AbortSignal.timeout(ATTEMPT_TIMEOUT_MS);
+				const resp = await fetch(url, {
+					...init,
+					signal: init?.signal ? AbortSignal.any([init.signal, attemptSignal]) : attemptSignal,
+				});
 				if (shouldRotate(resp.status)) {
 					// Read the body only on the failure path (we never return it) so a
 					// quota signal can pick the long cooldown.

@@ -17,6 +17,7 @@
 import { cacheGet, cacheSet, cacheDel } from './cache.js';
 import { getMetadataForMints } from './token-metadata.js';
 import { solPriceUsd } from './sol-price.js';
+import { solanaRpcEndpoints, makeRotatingFetch, markEndpointCooldown } from './solana/connection.js';
 
 const BALANCES_TTL_S = 60;
 // Last-known-good snapshot lifetime. A long horizon so a wallet that briefly
@@ -25,18 +26,6 @@ const BALANCES_TTL_S = 60;
 // successful read.
 const BALANCES_LKG_TTL_S = 24 * 60 * 60;
 
-// The last-resort public RPCs, tried in order when Helius is absent or quota-
-// exhausted. `api.mainnet-beta.solana.com` aggressively rate-limits and its CDN
-// returns 404/403 under load — a single endpoint is a single point of failure
-// (it was the source of the `upstream 404: Not Found` net-worth 502s), so we
-// rotate a small pool. SOLANA_RPC_URL overrides the primary; SOLANA_RPC_FALLBACKS
-// (comma-separated) appends more. Dedup, drop falsy.
-const PUBLIC_SOL_RPCS = [
-	process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-	...(process.env.SOLANA_RPC_FALLBACKS
-		? process.env.SOLANA_RPC_FALLBACKS.split(',').map((s) => s.trim())
-		: ['https://solana-rpc.publicnode.com']),
-].filter((v, i, a) => v && a.indexOf(v) === i);
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
 function heliusRpc() {
 	const key = process.env.HELIUS_API_KEY;
@@ -109,6 +98,12 @@ function isQuotaError(err) {
 function tripHeliusCooldown(err, category) {
 	heliusCooldownUntil = Date.now() + HELIUS_QUOTA_COOLDOWN_MS;
 	heliusQuotaTrips++;
+	// Park Helius in the process-wide endpoint cooldown too, so the raw-RPC
+	// fallback chain below (which includes the same Helius URL) skips it instead
+	// of re-discovering the exhausted quota one doomed rotation at a time. A true
+	// quota signal in the message picks the long (hours) window.
+	const helius = heliusRpc();
+	if (helius) markEndpointCooldown(helius, 429, String(err?.message || ''));
 	warnThrottled(
 		category,
 		`[balances] helius quota/rate-limited — skipping it for ${Math.round(HELIUS_QUOTA_COOLDOWN_MS / 60_000)}min, using public RPC: ${err?.message}`,
@@ -120,6 +115,9 @@ export function __resetBalancesBreaker() {
 	heliusCooldownUntil = 0;
 	heliusQuotaTrips = 0;
 	_warnedAt.clear();
+	// Rebuild the rotating pool too, so a test that mutates the RPC env vars gets
+	// a chain reflecting them rather than the first build's snapshot.
+	_rotatingRpc = null;
 }
 
 async function fetchJson(url, opts = {}) {
@@ -137,39 +135,34 @@ async function fetchJson(url, opts = {}) {
 	return r.json();
 }
 
-async function solRpc(body, { allowFallback = true } = {}) {
-	const helius = heliusRpc();
-	// Skip Helius entirely while its quota is known-exhausted (breaker open) — no
-	// doomed round-trip, no per-request warning. When fallback isn't allowed the
-	// caller explicitly wants Helius, so we still try (and surface) it.
-	if (helius && (allowFallback ? heliusAvailable() : true)) {
-		try {
-			return await fetchJson(helius, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(body),
-			});
-		} catch (err) {
-			if (!allowFallback) throw err;
-			if (isQuotaError(err)) tripHeliusCooldown(err, 'helius:quota');
-			else warnThrottled('helius:fail', `[balances] helius failed, falling back to public RPC: ${err?.message}`);
-		}
-	}
-	// Try each public RPC in turn — one endpoint's 404/403/429 under load must not
-	// fail the whole read. Only when every fallback is exhausted do we throw.
-	let lastErr;
-	for (const url of PUBLIC_SOL_RPCS) {
-		try {
-			return await fetchJson(url, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(body),
-			});
-		} catch (err) {
-			lastErr = err;
-		}
-	}
-	throw lastErr ?? Object.assign(new Error('no Solana RPC configured'), { status: 502 });
+// Raw JSON-RPC over the CANONICAL platform-wide failover chain (solanaRpcEndpoints:
+// explicit SOLANA_RPC_URL, QuickNode, Helius, Alchemy, operator fallbacks,
+// keyless public lanes, paid last-resort), sharing the process-wide endpoint
+// cooldown map with every other Solana caller. The previous private pool here
+// (default public mainnet-beta + SOLANA_RPC_FALLBACKS) went dark whenever Helius
+// was quota-exhausted: publicnode hard-blocks getTokenAccountsByOwner-by-programId
+// (403) and the public mainnet-beta endpoint 429s per-method, so every wallet
+// silently read as holding $0 and the whole holder-tier lever collapsed to Member.
+// makeRotatingFetch also classifies 200-status JSON-RPC error bodies (quota
+// -32429, paid-tier gates like Tatum's -16401) as failover signals, so a provider
+// answering 200 + error can never surface as an empty-but-successful balance.
+let _rotatingRpc = null;
+function rotatingRpc() {
+	if (!_rotatingRpc) _rotatingRpc = makeRotatingFetch(solanaRpcEndpoints('mainnet'));
+	return _rotatingRpc;
+}
+
+async function solRpc(body) {
+	// One bound for the whole rotation so a deep chain of slow lanes can never
+	// stall the holder-gate / portfolio path indefinitely. Individual attempts are
+	// already capped inside the rotating fetch, so this only backstops the sum.
+	const r = await rotatingRpc()(null, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(body),
+		signal: AbortSignal.timeout(30_000),
+	});
+	return r.json();
 }
 
 // -- Solana price helpers --
@@ -291,6 +284,15 @@ async function getSolanaBalancesViaDas(address) {
 				},
 			}),
 		});
+		// A 200-status JSON-RPC error envelope (how some gateways answer quota
+		// exhaustion) must throw, not read as "no assets", so the caller trips the
+		// breaker and takes the fallback chain instead of caching an empty portfolio.
+		if (resp?.error) {
+			throw Object.assign(
+				new Error(`helius DAS error ${resp.error.code ?? ''}: ${resp.error.message ?? 'unknown'}`),
+				{ status: 502 },
+			);
+		}
 		const result = resp?.result;
 		if (!result) break;
 		if (page === 1 && result.nativeBalance) {
@@ -405,23 +407,31 @@ async function getSolanaBalancesViaDas(address) {
 
 // -- Solana balance fallback: plain RPC + DB metadata cache --
 
+// Both SPL token programs. pump.fun mints (including $THREE) are Token-2022,
+// so a fallback that queried only the classic program silently dropped them,
+// while Helius DAS covers both. That meant every wallet's $THREE "disappeared"
+// exactly when Helius was quota-exhausted and reads degraded to raw RPC, which
+// zeroed the whole holder-tier lever (the "site shows You hold $0" reports).
+const SPL_TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const SPL_TOKEN_2022_PROGRAM = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+
 async function getSolanaBalancesFallback(address) {
 	const solResp = await solRpc({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [address] });
 	const lamports = solResp.result?.value ?? 0;
 	const solAmount = lamports / 1e9;
 
-	const tokenResp = await solRpc({
-		jsonrpc: '2.0',
-		id: 2,
-		method: 'getTokenAccountsByOwner',
-		params: [
-			address,
-			{ programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
-			{ encoding: 'jsonParsed' },
-		],
-	});
+	const [legacyResp, t22Resp] = await Promise.all(
+		[SPL_TOKEN_PROGRAM, SPL_TOKEN_2022_PROGRAM].map((programId, i) =>
+			solRpc({
+				jsonrpc: '2.0',
+				id: 2 + i,
+				method: 'getTokenAccountsByOwner',
+				params: [address, { programId }, { encoding: 'jsonParsed' }],
+			}),
+		),
+	);
 
-	const tokenAccounts = tokenResp.result?.value ?? [];
+	const tokenAccounts = [...(legacyResp.result?.value ?? []), ...(t22Resp.result?.value ?? [])];
 	const fungible = tokenAccounts
 		.map((a) => {
 			const info = a.account?.data?.parsed?.info;
