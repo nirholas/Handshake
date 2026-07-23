@@ -11,6 +11,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
+# The LiteRT wrapper .so ships with an executable-stack ELF marking it does
+# not actually need; Cloud Run's kernel (gen1 AND gen2) refuses to load such
+# objects ("cannot enable executable stack"). Clear the flag at build time.
+RUN apt-get update && apt-get install -y --no-install-recommends patchelf \
+    && patchelf --clear-execstack /usr/local/lib/python3.11/site-packages/ai_edge_litert/_pywrap_tensorflow_interpreter_wrapper.so \
+    && apt-get purge -y patchelf && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
 # Kaggle ASLFR 1st-place model (Apache-2.0, Christof Henkel; trained on
 # Google's FSboard corpus, CC BY 4.0). Baked into the image so the service
 # cold-starts ready with no weights-bucket dependency.
