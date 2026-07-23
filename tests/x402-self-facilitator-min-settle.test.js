@@ -31,6 +31,9 @@ function buildPayment({ amount, sponsor } = {}) {
 	const buyer = Keypair.generate();
 	const recipientOwner = Keypair.generate();
 	const mint = Keypair.generate().publicKey;
+	// The facilitator only settles mints the platform issues 402s for (env-pinned
+	// after the 2026-07-23 audit); model this synthetic mint as configured.
+	process.env.X402_ASSET_MINT_SOLANA = mint.toBase58();
 	const feePayerKey = sponsor ? sponsor.publicKey : buyer.publicKey;
 
 	const sourceAta = getAssociatedTokenAddressSync(mint, buyer.publicKey);
@@ -59,12 +62,16 @@ function buildPayment({ amount, sponsor } = {}) {
 }
 
 let prevPayTo;
+let prevAssetMint;
 beforeEach(() => {
 	prevPayTo = process.env.X402_PAY_TO_SOLANA;
+	prevAssetMint = process.env.X402_ASSET_MINT_SOLANA;
 });
 afterEach(() => {
 	if (prevPayTo === undefined) delete process.env.X402_PAY_TO_SOLANA;
 	else process.env.X402_PAY_TO_SOLANA = prevPayTo;
+	if (prevAssetMint === undefined) delete process.env.X402_ASSET_MINT_SOLANA;
+	else process.env.X402_ASSET_MINT_SOLANA = prevAssetMint;
 });
 
 describe('settleRingPayment minimum-settle guard', () => {

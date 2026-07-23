@@ -28,6 +28,9 @@ function buildSelfPay(amount = 10_000) {
 	const buyer = Keypair.generate();
 	const recipientOwner = Keypair.generate();
 	const mint = Keypair.generate().publicKey;
+	// The facilitator only settles mints the platform issues 402s for (env-pinned
+	// after the 2026-07-23 audit); model this synthetic mint as configured.
+	process.env.X402_ASSET_MINT_SOLANA = mint.toBase58();
 	const sourceAta = getAssociatedTokenAddressSync(mint, buyer.publicKey);
 	const destAta = getAssociatedTokenAddressSync(mint, recipientOwner.publicKey);
 	const transferIx = createTransferCheckedInstruction(
@@ -55,10 +58,16 @@ function buildSelfPay(amount = 10_000) {
 
 describe('settleRingPayment already-landed recovery', () => {
 	let prevPayTo;
-	beforeEach(() => { prevPayTo = process.env.X402_PAY_TO_SOLANA; });
+	let prevAssetMint;
+	beforeEach(() => {
+		prevPayTo = process.env.X402_PAY_TO_SOLANA;
+		prevAssetMint = process.env.X402_ASSET_MINT_SOLANA;
+	});
 	afterEach(() => {
 		if (prevPayTo === undefined) delete process.env.X402_PAY_TO_SOLANA;
 		else process.env.X402_PAY_TO_SOLANA = prevPayTo;
+		if (prevAssetMint === undefined) delete process.env.X402_ASSET_MINT_SOLANA;
+		else process.env.X402_ASSET_MINT_SOLANA = prevAssetMint;
 	});
 
 	it('recovers success when broadcast says "simulation failed" but the signature landed with no error', async () => {
