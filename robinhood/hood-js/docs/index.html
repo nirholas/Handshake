@@ -1,327 +1,505 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>hood-js — five lines to your first Robinhood Chain trade</title>
-<meta name="description" content="The 'just works' wrapper for Robinhood Chain (4663): stock prices, portfolios, trending memecoins, launch streams, and swaps in one import.">
-<link rel="stylesheet" href="./site.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%B6%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-js: weigh the 4.55 kB Robinhood Chain wrapper</title>
+<meta name="description" content="The five-lines-to-your-first-trade wrapper for Robinhood Chain (chain 4663). 4.55 kB gzipped, sideEffects:false, promise-first. Put it on a balance against your bundle budget and toggle imports to watch it tree-shake." />
+<link rel="canonical" href="https://nirholas.github.io/hood-js/" />
+<meta name="theme-color" content="#131313" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-js: a library you can weigh" />
+<meta property="og:description" content="One import to your first Robinhood Chain trade. 4.55 kB gzipped against a 15 kB budget. Toggle the exports you use and watch the balance tilt as it tree-shakes." />
+<meta property="og:url" content="https://nirholas.github.io/hood-js/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23131313'/><path d='M16 6 V24 M8 24 H24 M6 12 H26' fill='none' stroke='%23f3f2ee' stroke-width='1.6'/><path d='M6 12 L3 18 H9 Z M26 12 L23 18 H29 Z' fill='none' stroke='%23f3f2ee' stroke-width='1.4'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood-js","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20, browsers","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"The five-lines-to-your-first-trade wrapper for Robinhood Chain (ID 4663). One import, sensible defaults, promise-first, browser + Node: stock prices, portfolios, trending memecoins, launch streams, and swaps. 4.55 kB gzipped.","softwareVersion":"0.1.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hood-js","codeRepository":"https://github.com/nirholas/hood-js"}
+</script>
+<style>
+  :root{
+    --ink:#131313; --paper:#f3f2ee; --graphite:#736f68; --steel:#adaaa2;
+    --hair:rgba(19,19,19,.12); --hair2:rgba(19,19,19,.28);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{background:var(--paper); color:var(--ink); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  /* fine measurement grid, pure CSS */
+  body::before{content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(19,19,19,.022) 0 1px,transparent 1px 4px);
+    mix-blend-mode:multiply; opacity:.6}
+
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--hair); background:var(--paper)}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite); position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--ink); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--ink); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--hair2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--ink);border-color:var(--ink)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--ink);height:40px;top:0;
+    transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:760px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(60px,9vh,120px) clamp(20px,5vw,88px); border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--ink)}
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.96}
+  h1{font-size:clamp(38px,7vw,98px)}
+  h2{font-size:clamp(29px,5vw,62px)}
+  .lede{max-width:60ch; font-size:clamp(16px,1.6vw,22px); line-height:1.44; color:#242320}
+
+  /* ============ HERO / THE BALANCE ============ */
+  #weigh{min-height:100svh; display:grid; grid-template-columns:1.02fr 0.98fr; gap:clamp(28px,4vw,72px);
+    align-items:center; padding-top:clamp(56px,8vh,104px); padding-bottom:clamp(40px,6vh,72px)}
+  @media(max-width:940px){#weigh{grid-template-columns:1fr; align-items:start; gap:30px}}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.03em; margin-bottom:18px}
+  @media(max-width:760px){.boot{font-size:10.5px}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  .herohead{max-width:14ch}
+  .herohead .lo{color:var(--graphite)}
+  .sub{margin-top:20px; max-width:44ch; font-size:clamp(15px,1.5vw,19px); color:#2a2925}
+
+  /* toggle grid = the interaction */
+  .imports{margin-top:26px}
+  .imports .cap{font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite); margin-bottom:12px; display:flex; justify-content:space-between; align-items:center}
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px}
+  @media(max-width:420px){.grid{grid-template-columns:1fr}}
+  .tog{appearance:none; text-align:left; border:1px solid var(--hair2); background:transparent; color:var(--ink);
+    padding:11px 12px; cursor:pointer; position:relative; transition:border-color .25s,background .25s; overflow:hidden}
+  .tog:hover{border-color:var(--ink)}
+  .tog .nm{font:600 12px/1 var(--mono); letter-spacing:.02em; display:flex; align-items:center; gap:8px}
+  .tog .box{width:9px;height:9px;border:1px solid var(--hair2); flex:none; transition:all .25s}
+  .tog[aria-pressed="true"] .box{background:var(--ink); border-color:var(--ink)}
+  .tog .bar{margin-top:9px; height:3px; background:var(--hair2); position:relative; overflow:hidden}
+  .tog .bar i{position:absolute; inset:0; background:var(--ink); transform-origin:left; transition:transform .35s var(--ease)}
+  .tog[aria-pressed="false"]{opacity:.5}
+  .tog[aria-pressed="false"] .bar i{transform:scaleX(0)!important}
+  .tog .w{font:500 9.5px/1 var(--mono); color:var(--graphite); margin-top:6px; letter-spacing:.04em}
+  .tog.locked{cursor:default; opacity:1; border-style:dashed}
+  .tog.locked .box{background:var(--graphite); border-color:var(--graphite)}
+  .tog .need{position:absolute; top:9px; right:10px; font:600 8px/1 var(--mono); letter-spacing:.14em; color:var(--graphite); text-transform:uppercase}
+
+  .readbar{margin-top:18px; display:flex; flex-wrap:wrap; gap:20px; align-items:baseline; border-top:1px solid var(--hair); padding-top:16px}
+  .readbar .n{font:700 clamp(26px,3.4vw,40px)/1 var(--grot); letter-spacing:-.02em}
+  .readbar .n small{font:600 13px/1 var(--mono); color:var(--graphite); letter-spacing:.04em}
+  .readbar .lab{font:500 11px/1.4 var(--mono); color:var(--graphite); letter-spacing:.02em; max-width:20ch}
+
+  /* the scale svg */
+  .scalewrap{position:relative; align-self:center; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--hair2); background:linear-gradient(180deg,transparent,rgba(19,19,19,.02));
+    height:clamp(360px,66vh,560px); width:100%; padding:22px 18px}
+  @media(max-width:940px){.scalewrap{height:clamp(320px,52vh,460px)}}
+  .scalewrap svg{width:100%; height:100%; overflow:visible}
+  .scalewrap .cap2{position:absolute; left:14px; top:12px; font:600 9.5px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--graphite)}
+  .scalewrap .verdict{position:absolute; left:14px; right:14px; bottom:12px; font:600 11px/1.4 var(--mono); letter-spacing:.02em; color:var(--ink)}
+  .sk-line{stroke:var(--ink); stroke-width:2.4; fill:none; stroke-linecap:round}
+  .sk-thin{stroke:var(--ink); stroke-width:1.2; fill:none; stroke-linecap:round}
+  .sk-hair{stroke:rgba(19,19,19,.35); stroke-width:1; fill:none}
+  .sk-fill{fill:var(--ink)}
+  .sk-txt{font-family:var(--mono); fill:var(--ink); font-weight:600}
+  .sk-txt.mut{fill:var(--graphite)}
+
+  /* generic blocks */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:32px}}
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+  .code{border:1px solid var(--ink); background:var(--ink); color:var(--paper); padding:20px 22px;
+    font:500 13px/1.85 var(--mono); position:relative; overflow-x:auto; white-space:pre}
+  .code .c{color:#89857f} .code .k{color:#cfccc4} .code .s{color:#b9b6ae}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid rgba(243,242,238,.26);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(243,242,238,.14)}
+
+  /* API table */
+  .apit{border-top:1px solid var(--hair); margin-top:34px}
+  .apit .r{display:grid; grid-template-columns:220px 1fr 92px; gap:20px; padding:15px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.apit .r{grid-template-columns:1fr; gap:5px}}
+  .apit .r .call{font:600 13px/1.4 var(--mono); letter-spacing:.01em; color:var(--ink)}
+  .apit .r .d{font-size:15px; color:#26241f; max-width:58ch}
+  .apit .r .wal{font:600 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite); text-align:right}
+  @media(max-width:640px){.apit .r .wal{text-align:left}}
+  .apit .r .wal.y{color:var(--ink)}
+
+  /* error codes */
+  .errs{display:grid; grid-template-columns:repeat(3,1fr); border-left:1px solid var(--hair); border-top:1px solid var(--hair); margin-top:32px}
+  @media(max-width:860px){.errs{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.errs{grid-template-columns:1fr}}
+  .errs .e{border-right:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:18px 18px 22px; transition:background .3s}
+  .errs .e:hover{background:rgba(19,19,19,.03)}
+  .errs .e .code{font:700 13px/1 var(--mono); letter-spacing:.02em}
+  .errs .e .when{font-size:13.5px; color:#2c2925; line-height:1.4; margin-top:9px}
+
+  .fuse{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:14px}
+  @media(max-width:860px){.fuse{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.fuse{grid-template-columns:1fr}}
+  .fuse .f{border:1px solid var(--hair2); padding:18px}
+  .fuse .f .h{font:700 12.5px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px}
+  .fuse .f .b{font-size:13.5px; color:#2c2925; line-height:1.45}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--ink)}
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){.rise{opacity:1;transform:none}}
+</style>
 </head>
 <body>
-
-<nav class="top" aria-label="Site">
-  <div class="wrap">
-    <a class="brand" href="./index.html">hood<span class="tick">-js</span></a>
-    <div class="links">
-      <a href="#repl">Try it live</a>
-      <a href="#quickstart" class="hide-sm">Quickstart</a>
-      <a href="#api">API</a>
-      <a href="https://github.com/nirholas/hood-js">GitHub</a>
-    </div>
-  </div>
+<nav class="rail" aria-label="Sections">
+  <b>hood·js</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#weigh" aria-current="true">Weigh</a>
+  <a class="stn" href="#api">API</a>
+  <a class="stn" href="#errors">Errors</a>
+  <a class="stn" href="#browser">Browser</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
 </nav>
 
-<header class="hero wrap">
-  <h1>Five lines to your<br><span class="grad">first Robinhood Chain trade</span></h1>
-  <p class="lede">
-    One import, sensible defaults, promise-first. Stock Token prices, multiplier-correct
-    portfolios, trending memecoins, live launch streams, and swaps — chain ID 4663, public
-    RPC by default. No wallet needed until you actually swap.
-  </p>
-  <div class="cta">
-    <span class="install"><span class="dollar">$</span> npm install hood-js viem</span>
-    <a class="btn primary" href="#repl">Try it live</a>
-    <a class="btn" href="#quickstart">Quickstart</a>
-  </div>
-</header>
+<main>
+  <!-- ============ WEIGH / BALANCE ============ -->
+  <section id="weigh">
+    <div class="herotext">
+      <p class="boot mono" id="boot"></p>
+      <div class="eyebrow"><span class="n">00</span> / A LIBRARY YOU CAN WEIGH</div>
+      <h1 class="herohead">Five lines<br><span class="lo">to your first<br>trade.</span></h1>
+      <p class="sub">hood-js is the one-import wrapper for Robinhood Chain (ID 4663): prices, portfolios, trending coins, launch streams, swaps. It ships at <b>4.55&nbsp;kB gzipped</b> and it's <span class="mono">sideEffects:false</span>, so your bundler drops everything you don't import. Toggle the exports you actually use and watch it tree-shake on the scale.</p>
 
-<main class="wrap">
+      <div class="imports">
+        <div class="cap"><span>imports · click to tree-shake</span><span id="selcount">10 / 10</span></div>
+        <div class="grid" id="grid"></div>
+      </div>
 
-<section class="block" id="repl">
-  <div class="repl-head">
-    <h2>Type a real call. Get a real answer.</h2>
-    <span class="status" id="repl-status"><span class="dot"></span><span id="repl-status-text">loading viem + registry…</span></span>
-  </div>
-  <p class="sub">
-    This runs live in your browser — real <code>eth_call</code>s to Robinhood Chain's public
-    RPC and a real fetch to GeckoTerminal, using <a href="https://esm.sh/viem">viem via esm.sh</a>
-    (no bundler, no server, no fake data). Supports <code>price</code>, <code>prices</code>,
-    <code>coins</code>, and single-hop <code>quote</code>. <code>portfolio</code> and
-    <code>swap</code> need the full package in Node.
-  </p>
+      <div class="readbar">
+        <div class="n mono" id="kb">4.55<small> kB</small></div>
+        <div class="lab">modeled from the measured <b>4.55&nbsp;kB</b> gzipped total ·<br>weighed against the <b>15&nbsp;kB</b> budget hood-js sets itself</div>
+      </div>
+    </div>
 
-  <div class="repl">
-    <div class="repl-out" id="repl-out" aria-live="polite"></div>
-    <form class="repl-form" id="repl-form">
-      <span class="prompt">&gt;</span>
-      <input id="repl-input" type="text" autocomplete="off" spellcheck="false"
-        placeholder="hood.price('TSLA')" aria-label="hood-js command">
-      <button type="submit" id="repl-run">Run</button>
-    </form>
-  </div>
-  <div class="repl-chips">
-    <button class="chip" data-cmd="hood.price('TSLA')">hood.price('TSLA')</button>
-    <button class="chip" data-cmd="hood.prices(['AAPL','TSLA','NVDA'])">hood.prices([...])</button>
-    <button class="chip" data-cmd="hood.coins({limit:5})">hood.coins({limit:5})</button>
-    <button class="chip" data-cmd="hood.quote({sell:'USDG',buy:'WETH',amount:100})">hood.quote({...})</button>
-  </div>
-</section>
+    <div class="scalewrap">
+      <div class="cap2">balance · gzip vs budget</div>
+      <svg id="scale" viewBox="0 0 440 300" role="img" aria-label="A balance scale weighing the selected hood-js bundle against its 15 kB budget. The lighter the selection, the higher the hood-js pan rises.">
+        <!-- stand -->
+        <line class="sk-line" x1="140" y1="286" x2="300" y2="286"/>
+        <line class="sk-thin" x1="220" y1="286" x2="220" y2="86"/>
+        <!-- fulcrum -->
+        <path class="sk-line" d="M220 74 L212 90 L228 90 Z"/>
+        <!-- beam -->
+        <line id="beam" class="sk-line" x1="70" y1="84" x2="370" y2="84"/>
+        <circle id="hub" class="sk-fill" cx="220" cy="84" r="4"/>
+        <!-- strings -->
+        <path id="strL" class="sk-hair" d="M70 84 L52 170 M70 84 L88 170"/>
+        <path id="strR" class="sk-hair" d="M370 84 L352 170 M370 84 L388 170"/>
+        <!-- left pan (hood-js) -->
+        <g id="panL">
+          <path class="sk-line" d="M40 172 Q70 202 100 172"/>
+          <text class="sk-txt mut" x="70" y="220" text-anchor="middle" font-size="9" letter-spacing="1">HOOD-JS</text>
+          <g id="discs"></g>
+        </g>
+        <!-- right pan (budget) -->
+        <g id="panR">
+          <path class="sk-line" d="M340 172 Q370 200 400 172"/>
+          <rect x="356" y="120" width="28" height="52" class="sk-line" fill="none"/>
+          <text class="sk-txt" x="370" y="150" text-anchor="middle" font-size="11">15</text>
+          <text class="sk-txt mut" x="370" y="216" text-anchor="middle" font-size="9" letter-spacing="1">BUDGET kB</text>
+        </g>
+      </svg>
+      <div class="verdict" id="verdict"></div>
+    </div>
+  </section>
 
-<section class="block" id="quickstart">
-  <h2>Quickstart</h2>
-  <p class="sub">Node ≥ 20. viem is a peer dependency.</p>
-<pre><code>npm install hood-js viem</code></pre>
-<pre><code>import hood from 'hood-js'
+  <!-- ============ API ============ -->
+  <section id="api">
+    <div class="eyebrow"><span class="n">01</span> / ONE IMPORT, SENSIBLE DEFAULTS</div>
+    <div class="cols">
+      <div>
+        <h2>No RPC URL.<br>No ABI. No config.</h2>
+        <p class="lede" style="margin-top:22px">Public RPC by default. Every read call needs nothing at all: no wallet, no key. Only <code class="mono">swap</code> needs one. Every function is async and throws a single <code class="mono">HoodError</code> on failure, never a raw viem error. It wraps <a href="https://github.com/nirholas/robinhood-chain-sdk" style="border-bottom:1px solid var(--hair2)">hoodchain</a> the way <span class="mono">axios</span> wraps <span class="mono">http</span>.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/hood-js">npm</a>
+          <a class="btn" href="https://github.com/nirholas/hood-js">source</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="qs">COPY</button><span class="k">import</span> hood <span class="k">from</span> <span class="s">'hood-js'</span>
 
-const { usd } = await hood.price('AAPL')
-console.log(`AAPL: $${usd}`)
+<span class="k">const</span> { usd } = <span class="k">await</span> hood.price(<span class="s">'AAPL'</span>)
+<span class="k">const</span> top   = <span class="k">await</span> hood.coins({ limit: 5 })
+<span class="k">const</span> q     = <span class="k">await</span> hood.quote({
+  sell: <span class="s">'USDG'</span>, buy: <span class="s">'WETH'</span>, amount: 100 })
+<span class="c">// spread the quote straight into swap()</span>
+<span class="k">const</span> { url } = <span class="k">await</span> hood.swap({ ...q, wallet })</div>
+      </div>
+    </div>
 
-const top = await hood.coins({ limit: 5 })
-for (const c of top) console.log(c.symbol, `$${c.priceUsd}`, `${c.change24h}%`)
+    <div class="apit" id="apit"></div>
+  </section>
 
-const q = await hood.quote({ sell: 'USDG', buy: 'WETH', amount: 100 })
-const { hash, url } = await hood.swap({ ...q, wallet: process.env.PK })
-console.log('done:', url)</code></pre>
-</section>
+  <!-- ============ ERRORS ============ -->
+  <section id="errors">
+    <div class="eyebrow"><span class="n">02</span> / ONE ERROR TYPE, STABLE CODES</div>
+    <h2>Every failure is a<br>HoodError.</h2>
+    <p class="lede" style="margin-top:22px">Plain-language <code class="mono">message</code>, a stable <code class="mono">code</code> you can branch on, and the original error on <code class="mono">cause</code>. Never a raw viem stack. A batched <code class="mono">prices()</code> never fails wholesale over one bad ticker: unpriced symbols come back <code class="mono">null</code>, only a single <code class="mono">price()</code> throws.</p>
+    <div class="errs" id="errs"></div>
+  </section>
 
-<section class="block" id="api">
-  <h2>API reference</h2>
-  <p class="sub">Every read needs nothing — no key, no wallet. Only <code>swap</code> does.</p>
-  <div class="table-scroll">
-  <table>
-    <thead><tr><th>Call</th><th>Returns</th><th>Wallet?</th></tr></thead>
-    <tbody>
-      <tr><td><code>hood.price(symbol)</code></td><td>live USD price for one Stock Token</td><td>no</td></tr>
-      <tr><td><code>hood.prices([symbols])</code></td><td>batched multicall, same order</td><td>no</td></tr>
-      <tr><td><code>hood.portfolio(address)</code></td><td>multiplier-correct, USD-valued positions</td><td>no</td></tr>
-      <tr><td><code>hood.coins({ limit?, window? })</code></td><td>trending memecoins (launchpads + Uniswap)</td><td>no</td></tr>
-      <tr><td><code>hood.launches({ live? }, cb?)</code></td><td>recent or streamed NOXA / Odyssey launches</td><td>no</td></tr>
-      <tr><td><code>hood.quote({ sell, buy, amount })</code></td><td>a swap quote — spread into <code>swap()</code></td><td>no</td></tr>
-      <tr><td><code>hood.swap({ ...quote, wallet })</code></td><td>executed swap: hash, url, amounts</td><td><strong>yes</strong></td></tr>
-      <tr><td><code>hood.config({ ... })</code></td><td><code>hood</code> (chainable)</td><td>—</td></tr>
-      <tr><td><code>hood.testnet()</code> / <code>hood.mainnet()</code></td><td><code>hood</code> (chainable)</td><td>—</td></tr>
-    </tbody>
-  </table>
-  </div>
+  <!-- ============ BROWSER ============ -->
+  <section id="browser">
+    <div class="eyebrow"><span class="n">03</span> / BROWSER &amp; NODE, SAME IMPORT</div>
+    <div class="cols">
+      <div>
+        <h2>Runs from a<br>script tag.</h2>
+        <p class="lede" style="margin-top:22px">A plain <code class="mono">&lt;script type="module"&gt;</code> against any ESM CDN, no bundler required. For <code class="mono">swap()</code> in the browser, pass <code class="mono">window.ethereum</code> (or any EIP-1193 provider) as the wallet and hood-js drives it directly. In Node, pass a <code class="mono">0x</code> private key read from an env var.</p>
+        <div class="fuse">
+          <div class="f"><div class="h">Chainlink</div><div class="b">Live Stock Token prices, multiplier-correct via ERC-8056.</div></div>
+          <div class="f"><div class="h">GeckoTerminal</div><div class="b">Trending memecoin stats, no key required.</div></div>
+          <div class="f"><div class="h">Uniswap v3</div><div class="b">Fee-tier probing + two-hop routing for the best output.</div></div>
+          <div class="f"><div class="h">Testnet</div><div class="b"><code>hood.testnet()</code> switches every call to chain 46630.</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="cdn">COPY</button><span class="c">&lt;!-- no build step --&gt;</span>
+<span class="k">&lt;script</span> type=<span class="s">"module"</span><span class="k">&gt;</span>
+  <span class="k">import</span> hood <span class="k">from</span>
+    <span class="s">'https://esm.sh/hood-js'</span>
+  <span class="k">const</span> { usd } = <span class="k">await</span> hood.price(<span class="s">'AAPL'</span>)
+  document.body.textContent = <span class="s">`AAPL: $${usd}`</span>
+<span class="k">&lt;/script&gt;</span></div>
+        <p class="sub" style="margin-top:18px; max-width:none; font-size:13px; color:var(--graphite)"><b style="color:var(--ink)">Stock Token eligibility.</b> Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered or sold to US persons (also Canada, UK, Switzerland). Buying one throws <span class="mono">NEEDS_ELIGIBILITY</span> until you acknowledge eligibility; reading, holding, and selling are never gated. Memecoins are never gated.</p>
+      </div>
+    </div>
+  </section>
 
-  <div class="disclosure">
-    <strong>Stock Token eligibility.</strong> Stock Tokens are tokenized debt securities
-    (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US
-    persons (additional limits: Canada, UK, Switzerland). Reading data is unrestricted;
-    buying one throws until you call <code>hood.config({ acknowledgeEligibility: true })</code>,
-    affirming eligibility. Memecoins are never gated.
-  </div>
-</section>
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">04</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>Install, and<br>you're trading.</h2>
+        <p class="lede" style="margin-top:22px"><code class="mono">viem</code> is the only peer. Read calls run against the public RPC out of the box. The quickstart below is verbatim what ships in the repo root as <code class="mono">quickstart.mjs</code>.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/hood-js#readme">read the docs</a>
+          <a class="btn" href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+        </div>
+      </div>
+      <div>
+        <div class="code"><button class="copy" data-copy="get">COPY</button><span class="c"># Node >= 20, or any modern browser</span>
+<span class="s">$</span> npm install hood-js viem
 
-<section class="block" id="errors">
-  <h2>One error type, always friendly</h2>
-  <p class="sub">Never a raw viem stack trace — a <code>HoodError</code> with a plain-language message and a stable <code>code</code>.</p>
-  <div class="grid">
-    <div class="card"><h3>Offline validation</h3><p>Bad arguments (empty symbol, negative amount, missing wallet) fail instantly with <code>BAD_INPUT</code> — no network round-trip.</p></div>
-    <div class="card"><h3>Typed codes</h3><p><code>UNKNOWN_SYMBOL</code>, <code>NO_FEED</code>, <code>STALE_PRICE</code>, <code>NO_ROUTE</code>, <code>NEEDS_WALLET</code>, <code>NEEDS_ELIGIBILITY</code>, and more.</p></div>
-    <div class="card"><h3><code>cause</code> preserved</h3><p>The original hoodchain/viem error rides along on <code>err.cause</code> for debugging — nothing is hidden, just translated.</p></div>
-  </div>
-</section>
+<span class="c"># run the shipped quickstart verbatim</span>
+<span class="s">$</span> node quickstart.mjs
 
+<span class="c"># own code: 4.55 kB gzipped (budget 15)</span>
+<span class="s">$</span> npm run build && npm run size</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood-<br>js</div>
+    <div class="meta">
+      4.55 kB gzipped · sideEffects:false · Node &amp; browser<br>
+      <a href="https://github.com/nirholas/hood-js">github.com/nirholas/hood-js</a><br>
+      <a href="https://www.npmjs.com/package/hood-js">npmjs.com/package/hood-js</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
+    </div>
+  </footer>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>Apache-2.0 © 2026 nirholas</span>
-    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
-  </div>
-</footer>
+<script>
+"use strict";
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-<script type="module">
-import { createPublicClient, http, parseUnits, formatUnits } from 'https://esm.sh/viem@2.55.1'
-import { robinhood } from 'https://esm.sh/viem@2.55.1/chains'
+/* ---------- boot ---------- */
+(function(){
+  const el=document.getElementById('boot');
+  const line='● hood-js 0.1.0 · chain 4663 · 4.55 kB gzipped · sideEffects:false';
+  [...line].forEach((ch,i)=>{const s=document.createElement('span');s.textContent=ch;s.style.animationDelay=(reduce?0:i*12+100)+'ms';el.appendChild(s);});
+})();
 
-const aggregatorV3Abi = [
-  { type: 'function', name: 'latestRoundData', stateMutability: 'view', inputs: [],
-    outputs: [
-      { name: 'roundId', type: 'uint80' }, { name: 'answer', type: 'int256' },
-      { name: 'startedAt', type: 'uint256' }, { name: 'updatedAt', type: 'uint256' },
-      { name: 'answeredInRound', type: 'uint80' },
-    ] },
-]
-const quoterV2Abi = [
-  { type: 'function', name: 'quoteExactInputSingle', stateMutability: 'nonpayable',
-    inputs: [{ name: 'params', type: 'tuple', components: [
-      { name: 'tokenIn', type: 'address' }, { name: 'tokenOut', type: 'address' },
-      { name: 'amountIn', type: 'uint256' }, { name: 'fee', type: 'uint24' },
-      { name: 'sqrtPriceLimitX96', type: 'uint160' } ] }],
-    outputs: [
-      { name: 'amountOut', type: 'uint256' }, { name: 'sqrtPriceX96After', type: 'uint160' },
-      { name: 'initializedTicksCrossed', type: 'uint32' }, { name: 'gasEstimate', type: 'uint256' } ] },
-]
+/* ---------- copy ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  const map={
+    qs:"import hood from 'hood-js'\nconst { usd } = await hood.price('AAPL')",
+    cdn:"import hood from 'https://esm.sh/hood-js'",
+    get:'npm install hood-js viem'
+  };
+  btn.addEventListener('click',()=>{navigator.clipboard&&navigator.clipboard.writeText(map[btn.dataset.copy]||'').then(()=>{const t=btn.textContent;btn.textContent='COPIED';setTimeout(()=>btn.textContent=t,1200);}).catch(()=>{});});
+});
 
-// Verified mainnet addresses (see robinhood-chain-sdk/src/addresses.ts — same source of truth).
-const USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
-const WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
-const QUOTER_V2 = '0x33e885eD0Ec9bF04EcfB19341582aADCb4c8A9E7'
-const V3_FEE_TIERS = [100, 500, 3000, 10000]
-const USDG_DECIMALS = 6
+/* ---------- reveal (observer defined here; observed after dynamic rows exist) ---------- */
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+function observeRises(){ document.querySelectorAll('.rise:not([data-obs])').forEach((el,i)=>{el.dataset.obs='1';el.style.transitionDelay=(i%3*60)+'ms';io.observe(el);}); }
 
-const statusEl = document.getElementById('repl-status')
-const statusText = document.getElementById('repl-status-text')
-const outEl = document.getElementById('repl-out')
-const form = document.getElementById('repl-form')
-const input = document.getElementById('repl-input')
-const runBtn = document.getElementById('repl-run')
+/* ---------- rail ---------- */
+const stations=[...document.querySelectorAll('.rail .stn')];
+const secs=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0,mid=innerHeight*0.4;
+  secs.forEach((s,i)=>{const r=s.getBoundingClientRect();if(r.top<=mid)idx=i;});
+  stations.forEach((s,i)=>s.setAttribute('aria-current',i===idx));
+  const a=stations[idx],railR=document.querySelector('.rail').getBoundingClientRect(),r=a.getBoundingClientRect();
+  carriage.style.height=r.height+'px';carriage.style.transform=`translateY(${r.top-railR.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:reduce?'auto':'smooth'});}));
+addEventListener('scroll',()=>requestAnimationFrame(updateRail),{passive:true});
+addEventListener('resize',updateRail);updateRail();
 
-let client, bySymbol
-let ready = false
+/* ---------- API table ---------- */
+const API=[
+  ['hood.price(symbol)','Live Chainlink price for one Stock Token.',false],
+  ['hood.prices([symbols])','The same, batched into one multicall; unpriced come back null.',false],
+  ['hood.portfolio(address)','Multiplier-correct, USD-valued positions (ERC-8056 shares).',false],
+  ['hood.coins({ limit, window })','Live memecoin prices + 24h stats across launchpads + Uniswap.',false],
+  ['hood.launches({ live }, cb?)','Recent launches, or a live on-chain stream you can unwatch.',false],
+  ['hood.quote({ sell, buy, amount })','Best Uniswap v3 route across fee tiers + two-hop paths.',false],
+  ['hood.swap({ ...quote, wallet })','Executes it; returns hash, url, amounts, status.',true],
+  ['hood.config({ rpcUrl, ... })','Chainable overrides: RPC, Alchemy key, eligibility.',false],
+  ['hood.testnet() / .mainnet()','Switch every subsequent call between 4663 and 46630.',false],
+];
+const apit=document.getElementById('apit');
+API.forEach(a=>{
+  const r=document.createElement('div'); r.className='r rise';
+  r.innerHTML=`<div class="call mono">${a[0]}</div><div class="d">${a[1]}</div><div class="wal ${a[2]?'y':''}">${a[2]?'wallet':'no wallet'}</div>`;
+  apit.appendChild(r);
+});
 
-function line(cls, text) {
-  const div = document.createElement('div')
-  div.className = 'repl-line ' + cls
-  div.textContent = text
-  outEl.appendChild(div)
-  outEl.scrollTop = outEl.scrollHeight
+/* ---------- error codes ---------- */
+const ERR=[
+  ['UNKNOWN_SYMBOL',"Ticker isn't a canonical Stock Token."],
+  ['NO_FEED','Token exists but has no live Chainlink feed.'],
+  ['STALE_PRICE','Feed answer older than the staleness window (72h default).'],
+  ['BAD_PRICE','Feed returned a non-positive or incomplete answer.'],
+  ['NO_ROUTE','No swappable Uniswap v3 route between the two tokens.'],
+  ['NEEDS_WALLET','swap() called with no wallet.'],
+  ['NEEDS_ELIGIBILITY','Buying a Stock Token without acknowledging eligibility.'],
+  ['BAD_INPUT','An argument is malformed, caught before any network call.'],
+  ['NETWORK',"Couldn't reach the chain or GeckoTerminal."],
+];
+const errs=document.getElementById('errs');
+ERR.forEach(e=>{const d=document.createElement('div');d.className='e rise';d.innerHTML=`<div class="code mono">${e[0]}</div><div class="when">${e[1]}</div>`;errs.appendChild(d);});
+
+/* now that all .rise rows exist, start observing them */
+observeRises();
+
+/* =========================================================
+   THE BALANCE / signature interaction
+   Left pan = selected hood-js bundle (modeled shares of the
+   real 4.55 kB gzipped total). Right pan = the 15 kB budget.
+   Toggling exports tree-shakes the bundle: the pan rises.
+   Geometry is recomputed each rAF; a spring eases the tilt.
+   ========================================================= */
+const BASE=0.20; // runtime client + HoodError, always shipped
+const EXPORTS=[
+  ['price',0.30,false],['prices',0.20,false],['portfolio',0.55,false],
+  ['coins',0.65,false],['launches',0.60,false],['quote',0.85,false],
+  ['swap',0.95,true],['config',0.15,false],['testnet/mainnet',0.10,false],
+];
+const FULL=BASE+EXPORTS.reduce((s,e)=>s+e[1],0); // = 4.55
+const state=EXPORTS.map(()=>true);
+
+const grid=document.getElementById('grid');
+const selcount=document.getElementById('selcount');
+const kbEl=document.getElementById('kb');
+const verdict=document.getElementById('verdict');
+const discs=document.getElementById('discs');
+
+// locked base chip
+const base=document.createElement('div'); base.className='tog locked';
+base.innerHTML=`<div class="nm"><span class="box"></span>runtime + HoodError</div><div class="bar"><i style="transform:scaleX(${BASE/0.95})"></i></div><div class="w">${BASE.toFixed(2)} kB · always shipped</div>`;
+grid.appendChild(base);
+
+EXPORTS.forEach((e,i)=>{
+  const b=document.createElement('button'); b.className='tog'; b.type='button'; b.setAttribute('aria-pressed','true');
+  b.innerHTML=`<div class="nm"><span class="box"></span>${e[0]}</div>${e[2]?'<span class="need">wallet</span>':''}<div class="bar"><i style="transform:scaleX(${e[1]/0.95})"></i></div><div class="w">${e[1].toFixed(2)} kB modeled</div>`;
+  b.addEventListener('click',()=>{ state[i]=!state[i]; b.setAttribute('aria-pressed',state[i]); recompute(); });
+  grid.appendChild(b);
+});
+
+let selKB=FULL, target=0, angle=0, raf=null;
+function computeKB(){
+  let kb=BASE, n=0;
+  EXPORTS.forEach((e,i)=>{ if(state[i]){ kb+=e[1]; n++; } });
+  return {kb, n};
+}
+function recompute(){
+  const {kb,n}=computeKB();
+  selKB=kb;
+  kbEl.innerHTML=`${kb.toFixed(2)}<small> kB</small>`;
+  selcount.textContent=`${n} / ${EXPORTS.length}`;
+  const pct=Math.round((kb/15)*100);
+  verdict.textContent=`${kb.toFixed(2)} kB of the 15 kB budget · ${(15-kb).toFixed(2)} kB headroom (${pct}%)`;
+  // discs on left pan: one stacked plate per selected export, width scaled by weight
+  discs.innerHTML='';
+  const cx=70, baseY=194; let k=0;
+  EXPORTS.forEach((e,i)=>{ if(!state[i])return;
+    const w=12+e[1]*17; const rectY=baseY-(k*6);
+    discs.insertAdjacentHTML('beforeend',`<rect x="${(cx-w/2).toFixed(1)}" y="${(rectY-5).toFixed(1)}" width="${w.toFixed(1)}" height="5" rx="1.4" fill="none" stroke="#131313" stroke-width="1.1"/>`);
+    k++;
+  });
+  // target tilt: lighter selection (less kB) → hood-js pan rises higher (bigger positive angle)
+  target = 0.045 + (1 - kb/FULL) * 0.12;   // radians, ~2.6deg .. ~9.4deg
+  if(reduce){ angle=target; layout(); return; }
+  if(!raf) raf=requestAnimationFrame(tick);
+}
+function tick(){
+  angle += (target-angle)*0.16;
+  layout();
+  if(Math.abs(target-angle)>0.0004){ raf=requestAnimationFrame(tick); }
+  else { angle=target; layout(); raf=null; }
 }
 
-function echo(cmd) {
-  const div = document.createElement('div')
-  div.className = 'repl-line in'
-  div.innerHTML = '<span class="prompt">&gt;</span>'
-  div.appendChild(document.createTextNode(cmd))
-  outEl.appendChild(div)
-  outEl.scrollTop = outEl.scrollHeight
+const CX=220, CY=84, ARM=150, HANG=86;
+const beam=document.getElementById('beam'), hub=document.getElementById('hub');
+const strL=document.getElementById('strL'), strR=document.getElementById('strR');
+const panL=document.getElementById('panL'), panR=document.getElementById('panR');
+// pans authored around left(70,~172) and right(370,~172) at level; translate them by delta.
+function layout(){
+  const s=Math.sin(angle), c=Math.cos(angle);
+  const lx=CX-c*ARM, ly=CY-s*ARM;   // left end (rises: angle>0 → ly<CY)
+  const rx=CX+c*ARM, ry=CY+s*ARM;   // right end (sinks)
+  beam.setAttribute('x1',lx.toFixed(1)); beam.setAttribute('y1',ly.toFixed(1));
+  beam.setAttribute('x2',rx.toFixed(1)); beam.setAttribute('y2',ry.toFixed(1));
+  // strings from ends to pan tops (pan authored top ~172)
+  const lpx=70, rpx=370;                     // pan x stays fixed (hangs vertically)
+  const lpy=ly+HANG, rpy=ry+HANG;
+  strL.setAttribute('d',`M${lx.toFixed(1)} ${ly.toFixed(1)} L${lpx-18} ${lpy.toFixed(1)} M${lx.toFixed(1)} ${ly.toFixed(1)} L${lpx+18} ${lpy.toFixed(1)}`);
+  strR.setAttribute('d',`M${rx.toFixed(1)} ${ry.toFixed(1)} L${rpx-18} ${rpy.toFixed(1)} M${rx.toFixed(1)} ${ry.toFixed(1)} L${rpx+18} ${rpy.toFixed(1)}`);
+  panL.setAttribute('transform',`translate(0 ${(ly+HANG-172).toFixed(1)})`);
+  panR.setAttribute('transform',`translate(0 ${(ry+HANG-172).toFixed(1)})`);
 }
-
-function looseParse(argsSrc) {
-  let t = argsSrc.replace(/([{,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":')
-  t = t.replace(/'([^']*)'/g, '"$1"')
-  return JSON.parse('[' + t + ']')
-}
-
-async function price(symbol) {
-  const token = bySymbol.get(String(symbol).toUpperCase())
-  if (!token) throw new Error(`"${symbol}" is not a known Stock Token. Try AAPL, TSLA, NVDA, MSFT…`)
-  if (!token.feed) throw new Error(`"${token.symbol}" has no live Chainlink feed — can't be priced.`)
-  const round = await client.readContract({ address: token.feed, abi: aggregatorV3Abi, functionName: 'latestRoundData' })
-  return { symbol: token.symbol, usd: Number(round[1]) / 1e8, updatedAt: new Date(Number(round[3]) * 1000).toISOString() }
-}
-
-async function prices(symbols) {
-  if (!Array.isArray(symbols)) throw new Error('prices() needs an array of tickers.')
-  return Promise.all(symbols.map((s) => price(s).catch(() => ({ symbol: s, usd: null, updatedAt: null }))))
-}
-
-async function coins(opts = {}) {
-  const limit = opts.limit ?? 10
-  const url = `https://api.geckoterminal.com/api/v2/networks/robinhood/trending_pools?include=base_token,dex&duration=24h&page=1`
-  const res = await fetch(url, { headers: { accept: 'application/json' } })
-  if (!res.ok) throw new Error(`GeckoTerminal HTTP ${res.status}`)
-  const body = await res.json()
-  const tokenById = new Map((body.included || []).filter((i) => i.type === 'token').map((i) => [i.id, i]))
-  return (body.data || []).slice(0, limit).map((pool) => {
-    const a = pool.attributes
-    const baseId = pool.relationships?.base_token?.data?.id
-    const base = baseId ? tokenById.get(baseId) : undefined
-    return {
-      symbol: base?.attributes?.symbol ?? a.name.split(' / ')[0],
-      priceUsd: Number(a.base_token_price_usd) || 0,
-      change24h: a.price_change_percentage?.h24 != null ? Number(a.price_change_percentage.h24) : null,
-      dex: pool.relationships?.dex?.data?.id ?? 'unknown',
-    }
-  })
-}
-
-async function resolveAddr(ref) {
-  const upper = String(ref).toUpperCase()
-  if (upper === 'USDG') return { address: USDG, decimals: USDG_DECIMALS, label: 'USDG' }
-  if (upper === 'WETH' || upper === 'ETH') return { address: WETH, decimals: 18, label: 'WETH' }
-  const token = bySymbol.get(upper)
-  if (!token) throw new Error(`"${ref}" isn't USDG/WETH or a known Stock Token. The in-browser demo only quotes those (memecoins need the Node package).`)
-  return { address: token.address, decimals: token.decimals, label: token.symbol }
-}
-
-async function quote({ sell, buy, amount }) {
-  if (sell == null || buy == null || amount == null) throw new Error('quote needs { sell, buy, amount }.')
-  const tokenIn = await resolveAddr(sell)
-  const tokenOut = await resolveAddr(buy)
-  const amountIn = parseUnits(String(amount), tokenIn.decimals)
-  let best = null
-  for (const fee of V3_FEE_TIERS) {
-    try {
-      const { result } = await client.simulateContract({
-        address: QUOTER_V2, abi: quoterV2Abi, functionName: 'quoteExactInputSingle',
-        args: [{ tokenIn: tokenIn.address, tokenOut: tokenOut.address, amountIn, fee, sqrtPriceLimitX96: 0n }],
-      })
-      if (!best || result[0] > best.amountOut) best = { fee, amountOut: result[0] }
-    } catch { /* pool at this tier may not exist or has no liquidity for this size */ }
-  }
-  if (!best) throw new Error(`No direct v3 pool with liquidity for ${tokenIn.label} → ${tokenOut.label} at this amount. The in-browser demo only tries single-hop routes — the Node package also tries two-hop routes via WETH/USDG.`)
-  const buyAmount = formatUnits(best.amountOut, tokenOut.decimals)
-  return { sell: tokenIn.label, buy: tokenOut.label, sellAmount: String(amount), buyAmount, feeTier: best.fee }
-}
-
-const METHODS = { price, prices, coins, quote }
-
-async function run(cmd) {
-  echo(cmd)
-  const match = cmd.trim().match(/^hood\.(\w+)\((.*)\)$/s)
-  if (!match) {
-    line('err', `Couldn't parse "${cmd}". Try: hood.price('TSLA')`)
-    return
-  }
-  const [, methodName, argsSrc] = match
-  const fn = METHODS[methodName]
-  if (!fn) {
-    line('err', `hood.${methodName}() isn't supported in this browser demo. Supported here: ${Object.keys(METHODS).join(', ')}. portfolio()/swap() need the Node package.`)
-    return
-  }
-  if (!ready) {
-    line('err', 'Still connecting to Robinhood Chain — try again in a second.')
-    return
-  }
-  try {
-    const args = looseParse(argsSrc)
-    const result = await fn(...args)
-    line('out', JSON.stringify(result, null, 2))
-  } catch (err) {
-    line('err', err.message || String(err))
-  }
-}
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault()
-  const cmd = input.value.trim()
-  if (!cmd) return
-  input.value = ''
-  run(cmd)
-})
-
-document.querySelectorAll('.chip').forEach((chip) => {
-  chip.addEventListener('click', () => {
-    input.value = chip.dataset.cmd
-    run(chip.dataset.cmd)
-  })
-})
-
-async function init() {
-  try {
-    client = createPublicClient({ chain: robinhood, transport: http() })
-    const res = await fetch('./stock-tokens.json')
-    const registry = await res.json()
-    bySymbol = new Map(registry.tokens.map((t) => [t.symbol.toUpperCase(), t]))
-    const chainId = await client.getChainId()
-    ready = true
-    statusEl.className = 'status live'
-    statusText.textContent = `live · chain ${chainId} · ${registry.tokenCount} Stock Tokens loaded`
-    line('hint', `Connected to Robinhood Chain (${chainId}). Try a command below, or click a chip.`)
-    run("hood.price('TSLA')")
-  } catch (err) {
-    statusEl.className = 'status error'
-    statusText.textContent = 'connection failed'
-    line('err', 'Could not load viem or the token registry: ' + (err?.message || err))
-  }
-}
-
-init()
+recompute();
 </script>
-
 </body>
 </html>

@@ -5,6 +5,17 @@
 One import, sensible defaults, promise-first, browser and Node. Built on top of
 [`hoodchain`](https://github.com/nirholas/robinhood-chain-sdk) — think `axios` to its `http`.
 
+## Website
+
+Landing page with a live balance scale that tree-shakes the bundle as you toggle imports, served from [`docs/`](./docs):
+**https://nirholas.github.io/hood-js/**
+
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/?to=/:account/pages/new)
+[![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?logo=netlify&logoColor=white)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-js)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-101418?logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-js)
+
+The site is a single self-contained `docs/index.html` (inline CSS + JS, zero external requests, works from `file://`). `wrangler.toml`, `netlify.toml`, and `vercel.json` all publish `docs/`.
+
 ```js
 import hood from 'hood-js'
 
