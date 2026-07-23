@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-23",
+			"title": "Text-to-motion is live: describe a move, get a new animation",
+			"summary": "The text_to_animation tool and POST /api/forge-motion now generate real, brand-new motion from a prompt like \"a celebratory jump\" or \"a slow tai-chi sweep\" and retarget it onto any rigged avatar, on a new self-hosted GPU worker (MDM, MIT-licensed). Unlike the curated animation library, this motion doesn't pre-exist: it's synthesized per prompt. Also: generation surfaces (/ar, /ar/studio, and MCP tool responses) now show a real GPU-warming state with an honest countdown and live stage labels instead of a silent spinner when a lane is cold, and the sketch-to-3D and text-to-3D GPU lanes got their scale-up ceilings raised to absorb more concurrent traffic.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-07-23",
 			"title": "Fixed unreadable text on a few pages, added an automated accessibility check",
 			"summary": "The AGI, Alpha Co-pilot, and Search pages weren't painting their dark background at all in some load paths, leaving light-mode text rendered on a white canvas instead of the platform's near-black theme, a real readability bug, not just a contrast nitpick. Fixed the underlying stylesheets so every page reliably paints the dark canvas. Also tightened up a few too-faint labels (Forge's card timestamps, the getting-started progress widget) that fell just short of accessible contrast, and wired an automated accessibility scan (axe-core) into the test suite covering the platform's 30 highest-traffic pages, so regressions like this get caught before they ship.",
 			"tags": [

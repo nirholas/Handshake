@@ -31,6 +31,14 @@
 			<description>Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.</description>
 		</item>
 		<item>
+			<title>3D generations look dramatically more real, at every quality tier</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-23:3D generations look dramatically more real, at every quality tier</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every text-to-3D generation now routes through a photoreal reference photo by default, at every tier, not just the paid one. Previously the fastest free lane skipped straight to shape generation from your words alone; now it always paints a studio-lit reference photo first (and, on our self-hosted engine, front/side/back turnaround views for a fuller reconstruction), then a quality check scores that photo before the expensive 3D step even starts, retrying once if it falls short. The prompt-rewrite step also got smarter: people, animals, vehicles, food, buildings, and objects each get their own material and construction guidance instead of one generic description. Repeating an idea within 24 hours reuses its reference photo instantly instead of regenerating it.</description>
+		</item>
+		<item>
 			<title>A full notification center, plus two new things it tells you about</title>
 			<link>https://three.ws/notifications</link>
 			<guid isPermaLink="false">2026-07-23:A full notification center, plus two new things it tells you about</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>We audited every 3D viewer on the platform, from the IRL AR placer and avatar talk mode to the marketplace lobby, the coin snapshot view, the trading floor, the demo pages, and the embeddable avatar widget, and brought them all up to one cinematic bar: filmic tone mapping, correct color management, and real photographic HDRI lighting (not a flat studio guess) reflecting off skin, chrome, and fabric alike. A model now looks the same whether you're seeing it on your own profile, in a marketplace card, embedded on someone else's site, or standing on a street corner in AR. Lower-end phones automatically get a lighter version (capped resolution, simplified lighting) so nothing chugs or overheats.</description>
+		</item>
+		<item>
+			<title>Fixed unreadable text on a few pages, added an automated accessibility check</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-23:Fixed unreadable text on a few pages, added an automated accessibility check</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The AGI, Alpha Co-pilot, and Search pages weren't painting their dark background at all in some load paths, leaving light-mode text rendered on a white canvas instead of the platform's near-black theme, a real readability bug, not just a contrast nitpick. Fixed the underlying stylesheets so every page reliably paints the dark canvas. Also tightened up a few too-faint labels (Forge's card timestamps, the getting-started progress widget) that fell just short of accessible contrast, and wired an automated accessibility scan (axe-core) into the test suite covering the platform's 30 highest-traffic pages, so regressions like this get caught before they ship.</description>
 		</item>
 		<item>
 			<title>Fixed: wallets showing $0 of $THREE on the tiers page</title>
@@ -117,6 +133,14 @@
 			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>A full-platform security audit landed fixes for every confirmed finding. Paid API endpoints now reject concurrent replays of the same payment, so one payment can never be redeemed twice for generation work. The Solana payment facilitator only settles USDC and $THREE, closing a path that could waste platform funds on junk tokens. Server fetches that follow user-supplied links (article reader, scene export, vault uploads, agent-to-agent calls) are pinned to pre-validated addresses and re-checked on every redirect, shutting down server-side request forgery against internal services. Sign-in and registration pages validate post-login redirect targets, blocking phishing-grade open redirects, and wallet/payment flows reject cross-site posts. Two scheduled jobs now refuse to run unauthenticated if their secret is ever missing, matching the rest of the fleet.</description>
+		</item>
+		<item>
+			<title>Text-to-motion is live: describe a move, get a new animation</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-07-23:Text-to-motion is live: describe a move, get a new animation</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The text_to_animation tool and POST /api/forge-motion now generate real, brand-new motion from a prompt like &quot;a celebratory jump&quot; or &quot;a slow tai-chi sweep&quot; and retarget it onto any rigged avatar, on a new self-hosted GPU worker (MDM, MIT-licensed). Unlike the curated animation library, this motion doesn't pre-exist: it's synthesized per prompt. Also: generation surfaces (/ar, /ar/studio, and MCP tool responses) now show a real GPU-warming state with an honest countdown and live stage labels instead of a silent spinner when a lane is cold, and the sketch-to-3D and text-to-3D GPU lanes got their scale-up ceilings raised to absorb more concurrent traffic.</description>
 		</item>
 		<item>
 			<title>The Concierge becomes a Shopify shopping assistant, with product cards</title>

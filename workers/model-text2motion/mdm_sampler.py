@@ -127,7 +127,17 @@ class MdmSampler:
         horizon = min(MAX_MOTION_LEN, max(2, int(round(n_frames * HUMANML_FPS / max(n_frames, 1))) or n_frames))
         horizon = min(MAX_MOTION_LEN, max(2, n_frames))
 
-        model_kwargs = {"y": {"text": [prompt], "lengths": torch.tensor([horizon], device=self.device)}}
+        # MDM.forward reads `y['mask'].shape[-1]` unconditionally (see model/mdm.py:
+        # `is_valid_mask = y['mask'].shape[-1] > 1`) even though this deployment's
+        # checkpoint has mask_frames=False, so the key must exist regardless. A
+        # single unpadded prompt at exactly `horizon` frames has no padding, so
+        # the honest mask a real (non-padded) batch's collate would produce is
+        # all-ones over the full length — shape (bs, 1, 1, horizon), matching
+        # sample/generate.py's own `model_kwargs['y']['mask']` convention.
+        mask = torch.ones((1, 1, 1, horizon), dtype=torch.bool, device=self.device)
+        model_kwargs = {
+            "y": {"text": [prompt], "lengths": torch.tensor([horizon], device=self.device), "mask": mask}
+        }
         if self._guidance_param != 1:
             model_kwargs["y"]["scale"] = torch.ones(1, device=self.device) * self._guidance_param
         sample_fn = self._diffusion.p_sample_loop
@@ -170,13 +180,33 @@ def _decode_to_smpl(sample):
     intended place to calibrate the residual SMPL-rest vs. Wolf3D-rest
     orientation offset.
     """
+    import torch
     from data_loaders.humanml.scripts.motion_process import recover_from_ric
     from data_loaders.humanml.utils import paramUtil
 
-    # sample: (1, njoints, nfeats, T) → (T, features)
-    feats = sample.squeeze(0).permute(2, 0, 1).contiguous()  # (T, njoints, nfeats)
     n_joints = 22
-    positions = recover_from_ric(feats.float(), n_joints)  # (T, 22, 3)
+
+    # sample: (1, njoints=263, nfeats=1, T) → (T, 263). NOT
+    # `.squeeze(0).permute(2,0,1)` (a prior version of this code did that): that
+    # reorders to (T, 263, 1) and leaves the size-1 nfeats axis trailing, so
+    # `recover_from_ric`'s `data[..., 0]` etc. (which assume the LAST dim is the
+    # 263-wide feature vector) silently slice the wrong axis instead of failing
+    # loudly. `.squeeze(1)` first removes nfeats, then permute puts T first.
+    feats = sample.squeeze(0).squeeze(1).permute(1, 0).float()  # (T, 263)
+
+    # The diffusion model samples in HumanML3D's NORMALIZED feature space
+    # (zero mean / unit std over the training set) — recover_from_ric expects
+    # real units. Denormalize with the checkpoint-independent HumanML3D dataset
+    # stats MDM ships in its own repo (`dataset/t2m_{mean,std}.npy`, small
+    # precomputed arrays, not a license-gated model file), exactly the
+    # `inv_transform` upstream's own sample/generate.py applies before calling
+    # this same recover_from_ric.
+    # PYTHONPATH=/opt/mdm is fixed by the Dockerfile's `git clone ... /opt/mdm`.
+    mean = torch.from_numpy(np.load("/opt/mdm/dataset/t2m_mean.npy")).float().to(feats.device)
+    std = torch.from_numpy(np.load("/opt/mdm/dataset/t2m_std.npy")).float().to(feats.device)
+    feats = feats * std + mean
+
+    positions = recover_from_ric(feats, n_joints)  # (T, 22, 3)
     positions = positions.cpu().numpy().astype(np.float64)
 
     parents = _parents_from_kinematic_chain(paramUtil.t2m_kinematic_chain, n_joints)
