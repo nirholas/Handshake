@@ -1,6 +1,6 @@
 # X.com versions: the 90-trade fleet postmortem
 
-Two formats for @trythreews, built for X's constraints (no custom charts or interactive tables, so the data lives in text and code blocks). Post the article version if X Articles are available on the account; otherwise use the thread. Both link to the full breakdown at https://three.ws/blog/all-90-trades where the charts, all 90 graded trades, and the downloadable dataset live.
+Two formats for @trythreews, built for X's constraints (no custom charts or interactive tables, so the data lives in text and code blocks). Post the article version if X Articles are available on the account; otherwise use the thread. Both link to the full breakdown at https://three.ws/blog/autonomous-trading-experiment where the charts, all 90 graded trades, and the downloadable dataset live.
 
 ---
 
@@ -121,7 +121,7 @@ Because every decision each agent takes is already on a public, tamper-evident l
 
 All 90 trades, individually graded, with on-chain receipts, charts, and the downloadable dataset:
 
-https://three.ws/blog/all-90-trades
+https://three.ws/blog/autonomous-trading-experiment
 
 The experiment continues. Budgets now flow toward whatever performs, the next edition of this dataset will include the fleet's own self-tunings, and the next trials widen the model roster: more frontier LLMs join the cockpit (Kimi K3 is first in line), head to head at equal budgets under identical rails.
 
@@ -251,6 +251,6 @@ All 90 trades published and individually graded, with on-chain receipts, every m
 
 No cherry-picking. The ledger does not let us. It even ships an interactive backtester so you can replay all 77 candle-covered trades against your own exit rules and beat us if you can.
 
-https://three.ws/blog/all-90-trades
+https://three.ws/blog/autonomous-trading-experiment
 
 The crossing arm's trades will publish the same way. Win or lose. And the next trials put more models in the cockpit, starting with Kimi K3.

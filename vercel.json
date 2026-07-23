@@ -4499,6 +4499,13 @@
 			"dest": "/blog/index.html"
 		},
 		{
+			"src": "/blog/all-90-trades(/.*)?",
+			"status": 308,
+			"headers": {
+				"Location": "/blog/autonomous-trading-experiment"
+			}
+		},
+		{
 			"src": "/blog/([a-z0-9-]+)/?",
 			"dest": "/blog/$1.html"
 		},

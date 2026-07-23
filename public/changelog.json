@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T07:41:45.574Z",
+	"generated_at": "2026-07-23T08:00:46.508Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -21,7 +21,7 @@
 			"type": "launch",
 			"title": "We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.",
 			"summary": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.",
-			"link": "/blog/all-90-trades",
+			"link": "/blog/autonomous-trading-experiment",
 			"tags": [
 				"launch"
 			]
@@ -42,7 +42,7 @@
 			"type": "update",
 			"title": "All 90 trades from the autonomous fleet, published and graded",
 			"summary": "The autonomous sniper fleet has closed 90 real-money trades across 8 strategies and 8 wallets, and we published every single one: entry thesis, exit, on-chain receipts, and an honest grade per trade. The deep dive also audits everything the fleet did not do: the 83,000 launches it observed and declined, proof the conviction scorer’s top band hits 77.5% winners at scale (and why zero of those coins were bought), the missed monsters that were invisible at minute zero, and a paperhands check showing every one of the 90 sells was vindicated. Full dataset downloadable as JSON.",
-			"link": "/blog/all-90-trades",
+			"link": "/blog/autonomous-trading-experiment",
 			"tags": [
 				"docs",
 				"feature"
@@ -84,7 +84,7 @@
 			"type": "update",
 			"title": "The sniper learns from its own postmortem: conviction-crossing entries and smarter trailing stops",
 			"summary": "Two upgrades shipped straight from the 90-trade analysis. First, a new oracle_crossing trigger: instead of judging a coin at launch, when the conviction scorer has no signal yet, an arm can now buy the moment a coin first crosses its conviction bar. Measured over the fleet window, that band pumped or graduated 77.5% of the time versus an 11.8% base rate, and the crossing lands a median of two minutes after launch. The formerly idle strict arm is re-armed on it with a sell-the-initials ladder. Second, trailing stops now arm only once a position has been above breakeven; armed underwater they only converted recoverable dips into locked losses while the hard stop-loss already capped the downside.",
-			"link": "/blog/all-90-trades",
+			"link": "/blog/autonomous-trading-experiment",
 			"tags": [
 				"feature",
 				"improvement"

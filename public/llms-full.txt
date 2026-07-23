@@ -2284,7 +2284,7 @@ Editorial index of three.ws launches and long-form posts.
 
 ### We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.
 
-URL: https://three.ws/blog/all-90-trades
+URL: https://three.ws/blog/autonomous-trading-experiment
 
 Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.
 
