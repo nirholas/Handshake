@@ -151,6 +151,7 @@ export class NichAgent {
 								`<option value="${opt.id}"${opt.id === this._modelChoice ? ' selected' : ''}>${_escapeHTML(opt.label)}</option>`,
 						).join('')}
 					</select>
+					<button class="nich-signcam" aria-label="Sign in ASL with your camera" aria-pressed="false" title="Sign into your camera and I’ll transcribe the fingerspelling into the message box">🎥</button>
 					<button class="nich-sign" aria-label="Toggle sign language replies" aria-pressed="false" title="Replies in ASL: the avatar signs every answer">🤟</button>
 					<span class="nich-emotion-dot" id="nich-emotion-dot" title="Agent emotional state"></span>
 					${this.layout === 'embedded' ? '' : '<button class="nich-close" aria-label="Close">&times;</button>'}
@@ -161,7 +162,6 @@ export class NichAgent {
 			</div>
 			<div class="nich-controls">
 				<input type="text" class="nich-input" placeholder="Ask the agent…" autocomplete="off" maxlength="4000" />
-				<button class="nich-signcam" aria-label="Sign in ASL with your camera" aria-pressed="false" title="Sign into your camera and I’ll transcribe the fingerspelling into the message box">🎥</button>
 				<button class="nich-send" aria-label="Send">
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
 				</button>
