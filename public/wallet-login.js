@@ -31,7 +31,20 @@ try {
 }
 
 const params = new URLSearchParams(location.search);
-const next   = window.__loginNext || params.get('next') || sessionStorage.getItem('login_redirect') || '/dashboard';
+// safeNext: inline copy of src/safe-next.js (tests/safe-next.test.js drift-guards it).
+function safeNext(raw, fallback = '/dashboard') {
+	if (typeof raw !== 'string' || raw.length === 0) return fallback;
+	// Require a single leading '/': '//evil.com' is protocol-relative, and a
+	// backslash anywhere lets '/\evil.com' normalize to '//evil.com' in the
+	// URL parser.
+	if (!raw.startsWith('/') || raw.startsWith('//')) return fallback;
+	if (raw.includes('\\')) return fallback;
+	// Control characters can smuggle a scheme past naive prefix checks.
+	// eslint-disable-next-line no-control-regex
+	if (/[ -]/.test(raw)) return fallback;
+	return raw;
+}
+const next   = safeNext(window.__loginNext || params.get('next') || sessionStorage.getItem('login_redirect'), '/dashboard');
 sessionStorage.removeItem('login_redirect');
 
 function setErr(m) {

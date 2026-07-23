@@ -396,3 +396,4 @@ tests/openai-comarketing-language.test.js
 
 # local research datasets (large, regenerable; see datasets/*/README.md)
 /datasets/
+SECURITY-AUDIT.md

@@ -819,7 +819,23 @@
 
 			// Registration form submit
 			const params = new URLSearchParams(location.search);
-			const next = params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
+			// safeNext: inline copy of src/safe-next.js (tests/safe-next.test.js drift-guards it).
+function safeNext(raw, fallback = '/dashboard') {
+	if (typeof raw !== 'string' || raw.length === 0) return fallback;
+	// Require a single leading '/': '//evil.com' is protocol-relative, and a
+	// backslash anywhere lets '/\evil.com' normalize to '//evil.com' in the
+	// URL parser.
+	if (!raw.startsWith('/') || raw.startsWith('//')) return fallback;
+	if (raw.includes('\\')) return fallback;
+	// Control characters can smuggle a scheme past naive prefix checks.
+	// eslint-disable-next-line no-control-regex
+	if (/[ -]/.test(raw)) return fallback;
+	return raw;
+}
+			const next = safeNext(
+				params.get('next') || sessionStorage.getItem('login_redirect'),
+				'/create',
+			);
 			sessionStorage.removeItem('login_redirect');
 			window.__loginNext = next;
 			const form = document.getElementById('f');

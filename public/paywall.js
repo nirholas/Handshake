@@ -32,6 +32,26 @@
 		}
 	}
 
+	// safeNavUrl: inline copy of src/safe-next.js (tests/safe-next.test.js drift-guards it).
+function safeNavUrl(raw, fallback = '/') {
+	if (typeof raw !== 'string' || raw.length === 0) return fallback;
+	// eslint-disable-next-line no-control-regex
+	if (raw.includes('\\') || /[ -]/.test(raw)) return fallback;
+	// Same-origin relative path.
+	if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
+	// Absolute URL: http(s) only, so javascript:/data:/vbscript: can never
+	// reach an href or location sink. The WHATWG parser strips leading
+	// whitespace and C0 controls before scheme parsing, and lowercases the
+	// scheme, so ' javascript:...' and 'JaVaScRiPt:...' both fail here.
+	try {
+		const u = new URL(raw);
+		if (u.protocol === 'https:' || u.protocol === 'http:') return u.href;
+	} catch {
+		// Not a parseable absolute URL: fall through to the fallback.
+	}
+	return fallback;
+}
+
 	function getReturnUrl() {
 		var params = getParams();
 		var ret = params.get('return');
@@ -92,9 +112,11 @@
 	function render(requirements) {
 		var returnUrl = getReturnUrl();
 
-		// Wire the close button
+		// Wire the close button. The return URL comes from the query string, so
+		// it must pass the scheme guard: a crafted link could otherwise turn the
+		// close button into a javascript: execution sink in this origin.
 		var closeBtn = document.getElementById('close-btn');
-		if (closeBtn) closeBtn.href = returnUrl;
+		if (closeBtn) closeBtn.href = safeNavUrl(returnUrl);
 
 		if (!requirements || !requirements.length) {
 			// No requirements decoded — show generic message
