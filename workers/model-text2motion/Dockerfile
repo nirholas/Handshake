@@ -21,17 +21,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # torch first (cached layer), matching the CUDA 12.1 base.
 RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
 
-# MDM (Motion Diffusion Model, MIT) is not a pip package — clone it, install its
-# requirements, and put it on PYTHONPATH (mdm_sampler.py imports from it).
+# MDM (Motion Diffusion Model, MIT) is not a pip package — clone it and put it
+# on PYTHONPATH (mdm_sampler.py imports from it). The repo ships an
+# `environment.yml` (conda, Python 3.7 / torch 1.7 / cuda 11.0), not a
+# `requirements.txt` — pinning that stack would conflict with the torch 2.3.1
+# /cu121 install above, so this installs the actual pip-importable surface
+# `mdm_sampler.py` touches (create_model_and_diffusion → model.mdm → CLIP +
+# model.rotation2xyz → model.smpl → smplx; diffusion.*; data_loaders.humanml.*
+# → scipy/tqdm). spacy is NOT installed: it's part of MDM's HumanML3D dataset
+# *training* pipeline (text tokenization for building the dataset cache), which
+# this inference-only worker never imports — confirmed by walking every
+# module-level import reachable from `create_model_and_diffusion`.
 RUN git clone --depth 1 https://github.com/GuyTevet/motion-diffusion-model.git /opt/mdm \
-    && pip install -r /opt/mdm/requirements.txt \
-    && pip install git+https://github.com/openai/CLIP.git \
-    && python -m spacy download en_core_web_sm
+    && pip install scipy tqdm smplx \
+    && pip install git+https://github.com/openai/CLIP.git
 
-# MDM auxiliary data (CLIP weights, glove, evaluators) and the SMPL body models
-# + the trained checkpoint are mounted at runtime from the weights bucket
-# (MOTION_MODEL_DIR=/weights/mdm) — they are large and license-gated, so they
-# live in Cloud Storage, not the image.
+# MDM auxiliary data (glove, evaluators) and the trained checkpoint are mounted
+# at runtime from the weights bucket (MOTION_MODEL_DIR=/weights/mdm). The real
+# SMPL body model (`body_models/smpl/SMPL_NEUTRAL.pkl`) is NOT staged: it is
+# gated behind SMPL's own registration/license (smpl.is.tue.mpg.de) and this
+# worker never needs it — `model.mdm.MDM` eagerly constructs a
+# `Rotation2xyz`/`SMPL` submodule that loads it, but that submodule's OUTPUT
+# (SMPL vertex/joint xyz) is never consumed here: motion comes back from the
+# diffusion sampler as HumanML3D feature vectors, decoded via `recover_from_ric`
+# + this worker's own direction-alignment IK (see mdm_sampler.py's
+# `_positions_to_local_quats`). `mdm_sampler.py` monkeypatches
+# `model.mdm.Rotation2xyz` to a real (but license-file-free) `nn.Module` stand-in
+# before constructing the model, purely so `.to(device)`/`.eval()` — which walk
+# into `self.rot2xyz.smpl_model` — have a real module to call, never a mock of
+# actual generation output.
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt

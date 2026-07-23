@@ -54,10 +54,59 @@
 // (persisted to R2, same as textToImage), model is a provider/model label, and
 // lane is 'vertex-reference' or the fallthrough provider's own label.
 
+import { createHash } from 'node:crypto';
 import { getGcpAccessToken } from './gcp-auth.js';
 import { putObject, publicUrl } from './r2.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { textToImage } from '../_mcp3d/text-to-image.js';
+import { parseJsonLoose } from './vision.js';
+import { getRedis } from './redis.js';
+
+// Reference-set cache: the SAME enhanced prompt (already director-rewritten,
+// so two users typing differently-worded ideas that converge on one directed
+// spec both benefit) within 24h reuses its generated reference image set
+// instead of re-spending a Vertex image (and QA-scoring) call. Keyed on a hash
+// of everything that changes the output — prompt, aspect, negatives — mirroring
+// the content-addressing idiom in forge-cache.js. Fail-open in every direction:
+// no Redis, or any command error, degrades to "miss", never blocking generation.
+const REF_CACHE_PREFIX = 'fr:ref:';
+const REF_CACHE_TTL_S = Math.max(0, Number(process.env.FORGE_REFERENCE_CACHE_TTL_S) || 24 * 3600);
+
+function referenceCacheKey(prompt, { aspectRatio, negativePrompt }) {
+	const text = String(prompt || '').trim().toLowerCase();
+	if (!text) return null;
+	const basis = JSON.stringify([text, aspectRatio || '1:1', String(negativePrompt || '').trim().toLowerCase()]);
+	return createHash('sha256').update(basis).digest('hex').slice(0, 40);
+}
+
+function referenceCacheEnabled() {
+	if (/^(0|false|off|no)$/i.test(String(process.env.FORGE_REFERENCE_CACHE ?? '').trim())) return false;
+	return Boolean(getRedis());
+}
+
+async function getCachedReference(key) {
+	const r = getRedis();
+	if (!r || !key || !referenceCacheEnabled()) return null;
+	try {
+		const raw = await r.get(`${REF_CACHE_PREFIX}${key}`);
+		if (!raw) return null;
+		const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
+		return value && typeof value.imageUrl === 'string' && value.imageUrl ? value : null;
+	} catch {
+		return null;
+	}
+}
+
+async function putCachedReference(key, value) {
+	const r = getRedis();
+	if (!r || !key || !referenceCacheEnabled()) return;
+	if (!value?.imageUrl) return;
+	try {
+		await r.set(`${REF_CACHE_PREFIX}${key}`, JSON.stringify(value), { ex: REF_CACHE_TTL_S });
+	} catch {
+		/* best-effort */
+	}
+}
 
 // Gemini image model on Vertex ("Nano Banana"): live, credit-billed, uses the
 // :generateContent shape. Overridable without a code change.
@@ -205,6 +254,77 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 	return { b64, mime: imgPart.inlineData.mimeType || 'image/png', model: `vertex-ai/${model}` };
 }
 
+// ── Reference-image QA gate ──────────────────────────────────────────────────
+// GPU reconstruction time (self-host TRELLIS/Hunyuan3D, or a paid vendor) is
+// far more expensive than one more Gemini vision call, so before handing a
+// reference off to the mesh step we score it with a cheap Vertex flash vision
+// pass: is the subject complete, centered, photorealistic, and the background
+// clean? A single retry with corrective feedback folded into the instruction
+// gets a second roll; whichever scored higher ships (best-of-2), never a hard
+// gate — any scoring failure just ships the first image unscored.
+const QA_PASS_SCORE = Number(process.env.FORGE_REFERENCE_QA_PASS_SCORE) || 70;
+const QA_MODEL = process.env.VERTEX_QUALITY_MODEL || 'gemini-2.5-flash';
+
+function qaRubric(prompt) {
+	return [
+		'You are a quality inspector for a text-to-3D pipeline. You are shown ONE reference image that will be ' +
+			'reconstructed into a 3D mesh — its quality directly determines the mesh quality.',
+		prompt ? `It was generated for this subject: "${String(prompt).slice(0, 300)}".` : '',
+		'Judge four things: (1) is exactly ONE subject present, fully in frame, not cropped or cut off; ' +
+			'(2) is it centered; (3) does it read as a real photograph (not a cartoon, illustration, or CG render); ' +
+			'(4) is the background a plain, clean, uncluttered studio sweep with nothing else in the scene.',
+		'Reply with ONLY this JSON object, nothing else:',
+		'{"score": <int 0-100 overall>, "complete": <bool>, "centered": <bool>, "photoreal": <bool>, ' +
+			'"clean_background": <bool>, "issue": "<one short phrase naming the main problem, or empty string>"}',
+	].filter(Boolean).join(' ');
+}
+
+// Score one generated reference image via the same Vertex Gemini vision lane.
+// Returns a normalized verdict or null on any failure (fail-open: the caller
+// ships the image unscored rather than blocking on a QA outage).
+async function scoreReferenceImage({ b64, mime, prompt }) {
+	try {
+		const project = process.env.GOOGLE_CLOUD_PROJECT;
+		if (!project) return null;
+		const location = process.env.GOOGLE_CLOUD_LOCATION_QUALITY || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+		const token = await getGcpAccessToken();
+		const host = location === 'global' ? 'https://aiplatform.googleapis.com' : `https://${location}-aiplatform.googleapis.com`;
+		const endpoint = `${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${QA_MODEL}:generateContent`;
+		const res = await fetch(endpoint, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+			body: JSON.stringify({
+				contents: [{ role: 'user', parts: [{ text: qaRubric(prompt) }, { inlineData: { mimeType: mime, data: b64 } }] }],
+				generationConfig: {
+					temperature: 0,
+					responseMimeType: 'application/json',
+					maxOutputTokens: 300,
+					thinkingConfig: { thinkingBudget: 0 },
+				},
+			}),
+			signal: AbortSignal.timeout(15_000),
+		});
+		if (!res.ok) return null;
+		const data = await res.json();
+		const text = (data?.candidates?.[0]?.content?.parts || []).map((p) => p?.text || '').join('').trim();
+		if (!text) return null;
+		const raw = parseJsonLoose(text);
+		const score = Number(raw?.score);
+		if (!Number.isFinite(score)) return null;
+		return {
+			score: Math.max(0, Math.min(100, Math.round(score))),
+			complete: raw?.complete !== false,
+			centered: raw?.centered !== false,
+			photoreal: raw?.photoreal !== false,
+			cleanBackground: raw?.clean_background !== false,
+			issue: typeof raw?.issue === 'string' ? raw.issue.slice(0, 160) : '',
+		};
+	} catch (err) {
+		console.warn(`[forge-reference-image] QA scoring failed, shipping unscored: ${err?.message}`);
+		return null;
+	}
+}
+
 // Generate the reconstruction reference image for a directed text→3D prompt.
 //
 //   generateReferenceImage(directedPrompt, {
@@ -227,13 +347,56 @@ export async function generateReferenceImage(
 			? String(negativePrompt).trim()
 			: subjectNegativePrompt(prompt, { realistic: true });
 
+	// Same directed prompt (+aspect +negatives) within 24h reuses its reference
+	// set instead of re-spending a Vertex image generation + QA-scoring pass.
+	// Credits are approved, but latency is a UX cost this avoids for free.
+	const cacheKey = referenceCacheKey(prompt, { aspectRatio, negativePrompt: negatives });
+	const cached = await getCachedReference(cacheKey);
+	if (cached) {
+		console.log(`[forge-reference-image] cache hit (24h) for key ${cacheKey}`);
+		return { ...cached, lane: 'vertex-reference-cached' };
+	}
+
 	if (vertexImageEnabled()) {
 		try {
 			const instruction = buildReferenceInstruction(prompt, negatives);
-			const { b64, model } = await generateViaVertex({ instruction, aspectRatio });
-			const imageUrl = await persistImageBase64(b64);
-			console.log(`[forge-reference-image] served by ${model} (vertex-reference lane)`);
-			return { imageUrl, model, lane: 'vertex-reference' };
+			let generated = await generateViaVertex({ instruction, aspectRatio });
+			let verdict = await scoreReferenceImage({ b64: generated.b64, mime: generated.mime, prompt });
+
+			// One retry with corrective feedback on a scoring failure: fold the
+			// vision model's own named issue into the instruction as an explicit
+			// "the previous attempt failed on X, fix it" line, then keep whichever
+			// of the two attempts scored higher (best-of-2). GPU reconstruction
+			// time dwarfs the cost of one extra vision call, so this is cheap
+			// insurance against a bad reference wasting the expensive step downstream.
+			if (verdict && verdict.score < QA_PASS_SCORE) {
+				const issue = verdict.issue || 'the subject was incomplete, off-center, not photoreal, or the background was cluttered';
+				const retryInstruction = `${instruction} IMPORTANT: a previous attempt at this shot failed on: ${issue}. Fix that specifically this time.`;
+				try {
+					const retried = await generateViaVertex({ instruction: retryInstruction, aspectRatio });
+					const retryVerdict = await scoreReferenceImage({ b64: retried.b64, mime: retried.mime, prompt });
+					if (!verdict || (retryVerdict && retryVerdict.score > verdict.score)) {
+						generated = retried;
+						verdict = retryVerdict;
+					}
+				} catch (err) {
+					console.warn(`[forge-reference-image] QA retry generation failed, keeping first attempt: ${err?.message}`);
+				}
+			}
+
+			if (verdict) {
+				console.log(
+					`[forge-reference-image] qa score=${verdict.score} complete=${verdict.complete} ` +
+						`centered=${verdict.centered} photoreal=${verdict.photoreal} clean_bg=${verdict.cleanBackground}` +
+						(verdict.issue ? ` issue="${verdict.issue}"` : ''),
+				);
+			}
+
+			const imageUrl = await persistImageBase64(generated.b64);
+			console.log(`[forge-reference-image] served by ${generated.model} (vertex-reference lane)`);
+			const result = { imageUrl, model: generated.model, qaScore: verdict?.score ?? null };
+			await putCachedReference(cacheKey, result);
+			return { ...result, lane: 'vertex-reference' };
 		} catch (err) {
 			// Any Vertex failure (unconfigured token, safety block, throttle, tier
 			// change) degrades to the existing chain - the reference image still gets

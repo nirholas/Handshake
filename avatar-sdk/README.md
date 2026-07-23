@@ -96,9 +96,12 @@ The package exposes focused subpath exports so you only ship what you use.
 ### `<three-ws-viewer>`
 
 A minimal viewer element: loads a GLB at `src`, frames it, and renders with
-`OrbitControls` and a `RoomEnvironment` image-based light. Supports
-`EXT_meshopt_compression` and `KHR_draco_mesh_compression` GLBs transparently
-(both decoders are lazy-loaded on first use).
+`OrbitControls` and real photographic HDRI image-based lighting (patch:
+previously a procedural `RoomEnvironment`; now fetches a curated HDRI from
+three.ws and falls back to the procedural room on a slow network or a
+CSP-blocked embed). Supports `EXT_meshopt_compression` and
+`KHR_draco_mesh_compression` GLBs transparently (both decoders are
+lazy-loaded on first use).
 
 | Attribute | Description |
 |---|---|

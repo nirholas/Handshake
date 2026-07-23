@@ -588,6 +588,27 @@ Returns `{ mint, sources: [...], dexscreener?, jupiter?, solana?, skipped: [...]
 
 ---
 
+### `text_to_animation`
+
+Generate a brand-new motion from a natural-language prompt ("waving confidently", "a slow tai-chi sweep") with a text-to-motion diffusion model (MDM, MIT), then retarget it onto a caller-supplied rigged humanoid GLB — the same retarget engine `apply_animation` uses. Unlike the curated animation library, the motion does not pre-exist: it's synthesized for the prompt, on the self-host `model-text2motion` GPU worker (`workers/model-text2motion/`).
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "prompt":            { "type": "string", "minLength": 3, "maxLength": 1000 },
+    "model_url":         { "type": "string", "format": "uri", "description": "Public https URL of a rigged humanoid .glb to animate." },
+    "duration_seconds":  { "type": "number", "minimum": 1, "maximum": 10, "default": 4 }
+  },
+  "required": ["prompt", "model_url"],
+  "additionalProperties": false
+}
+```
+
+Returns the retargeted three.js `AnimationClip` JSON (or a baked animated GLB) plus a retarget report, the same shape `apply_animation` returns. Requires the text2motion worker configured on the deployment (`GCP_TEXT2MOTION_URL`) — errors with `-32001` if unset. Also reachable outside MCP via `POST /api/forge-motion` (`GET /api/forge-motion?job=<id>` to poll).
+
+---
+
 ## Rate limits
 
 | Scope            | Limit                    |

@@ -40,8 +40,40 @@ class MdmSampler:
         from types import SimpleNamespace
 
         import torch
+        import torch.nn as nn
+        import model.mdm as mdm_module
         from model.cfg_sampler import ClassifierFreeSampleModel
         from utils.model_util import create_model_and_diffusion, load_model_wo_clip
+
+        # MDM.__init__ unconditionally builds `self.rot2xyz = Rotation2xyz(...)`,
+        # whose constructor loads the real SMPL body model (a .pkl gated behind
+        # SMPL's own registration/license at smpl.is.tue.mpg.de — not something
+        # an automated pipeline can fetch). This worker never calls
+        # `rot2xyz(...)` (the thing that would actually need real SMPL data):
+        # motion comes back from the diffusion sampler as HumanML3D feature
+        # vectors, decoded via `recover_from_ric` + this module's own
+        # direction-alignment IK (`_positions_to_local_quats`), never via
+        # rotation2xyz. But `MDM._apply`/`MDM.train` (invoked by the
+        # `.to(device)`/`.eval()` calls below, which is how the model actually
+        # loads onto the GPU) reach into `self.rot2xyz.smpl_model._apply`/
+        # `.train`, so it still needs to be a real `nn.Module` — just one that
+        # never had to load a license-gated file to exist. Patched on the
+        # already-imported `model.mdm` module object so it takes effect
+        # regardless of import order.
+        class _StubSmplModel(nn.Module):
+            def forward(self, *a, **kw):
+                raise RuntimeError("SMPL rotation2xyz output is not used by this worker")
+
+        class _StubRotation2xyz:
+            def __init__(self, device, dataset="amass"):
+                self.device = device
+                self.dataset = dataset
+                self.smpl_model = _StubSmplModel().to(device)
+
+            def __call__(self, *a, **kw):
+                raise RuntimeError("Rotation2xyz.__call__ is not used by this worker")
+
+        mdm_module.Rotation2xyz = _StubRotation2xyz
 
         # utils.parser_util.generate_args() takes no parameters and parses
         # sys.argv (a CLI-only entry point, not usable from a server process —
@@ -63,7 +95,16 @@ class MdmSampler:
         model, diffusion = create_model_and_diffusion(args, dummy_data)
         state = torch.load(os.path.join(self.model_dir, "model.pt"), map_location="cpu")
         load_model_wo_clip(model, state)
-        model.to(self.device).eval()
+        # NOT `model.to(device).eval()`: torch's Module.to() returns
+        # `self._apply(convert)` (verified against torch 2.3.1's own source),
+        # but MDM's `_apply` override (`def _apply(self, fn): super()._apply(fn);
+        # self.rot2xyz.smpl_model._apply(fn)`) never returns `self` — an
+        # upstream bug that makes `.to()` return None regardless of which
+        # smpl_model is attached. `model` itself is still correctly mutated
+        # in place, so call `.to()`/`.eval()` for their side effects only and
+        # keep using the original reference.
+        model.to(self.device)
+        model.eval()
         # Classifier-free guidance sampling wrapper — matches sample/generate.py's
         # own gating (skip the wrapper entirely when guidance_param == 1).
         if self._guidance_param != 1:

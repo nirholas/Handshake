@@ -146,6 +146,17 @@ const POLL_HINT =
 	'Call generation_status with this job_id to check progress. ' +
 	'Reconstruction typically finishes in 30–90 seconds.';
 
+// An MCP tool call is one-shot text, not a pollable UI — so the honesty bar
+// (CLAUDE.md: no fabricated progress) means baking the REAL eta_seconds this
+// job was submitted with into the poll instruction, not a generic static
+// range. Falls back to `fallback` (a category-appropriate static estimate)
+// only when the caller genuinely has no eta signal for this lane.
+function pollHint(etaSeconds, fallback) {
+	const eta = Number(etaSeconds) > 0 ? Math.round(Number(etaSeconds)) : null;
+	if (eta == null) return `Call generation_status with this job_id to check progress. ${fallback}`;
+	return `Call generation_status with this job_id to check progress — usually ~${eta}s.`;
+}
+
 // Ceiling on a GLB copied into durable storage by save_avatar. Matches the
 // reconstruct + forge pipelines so a runaway model can't ingest an unbounded blob.
 const MAX_GLB_BYTES = 64 * 1024 * 1024;
@@ -427,6 +438,7 @@ async function submitGeometryJob({
 		kind: submitted.kind,
 		taskId: submitted.taskId,
 	});
+	const etaSeconds = estimateEtaSeconds({ backendId, tier });
 
 	return {
 		content: [
@@ -434,7 +446,8 @@ async function submitGeometryJob({
 				type: 'text',
 				text:
 					`Started ${isImageMode ? 'image-to-3D' : 'text-to-3D'} on the ${engineLabelFor(backendId)} ` +
-					`(${path} path, ${tier.id} tier).\nJob ID: ${token}\n${POLL_HINT}`,
+					`(${path} path, ${tier.id} tier).\nJob ID: ${token}\n` +
+					pollHint(etaSeconds, 'Reconstruction typically finishes in 30–90 seconds.'),
 			},
 		],
 		structuredContent: {
@@ -446,7 +459,7 @@ async function submitGeometryJob({
 			engine: engineIdFor(backendId),
 			prompt: prompt || null,
 			source_image_url: isImageMode ? primaryImage : null,
-			eta_seconds: estimateEtaSeconds({ backendId, tier }),
+			eta_seconds: etaSeconds,
 			estimated_credits: estimateCredits({ backendId, path, tier }),
 		},
 	};
@@ -632,7 +645,8 @@ export const toolDefs = [
 						text:
 							`Started generating a 3D model for "${args.prompt}" (${tier.id} tier).\n` +
 							`Reference image: ${imageUrl}\n` +
-							`Job ID: ${job.extJobId}\n${POLL_HINT}`,
+							`Job ID: ${job.extJobId}\n` +
+							pollHint(job.eta, 'Reconstruction typically finishes in 30–90 seconds.'),
 					},
 				],
 				structuredContent: {
@@ -771,7 +785,9 @@ export const toolDefs = [
 				content: [
 					{
 						type: 'text',
-						text: `${summary}\nJob ID: ${job.extJobId}\n${POLL_HINT}`,
+						text:
+							`${summary}\nJob ID: ${job.extJobId}\n` +
+							pollHint(job.eta, 'Reconstruction typically finishes in 30–90 seconds.'),
 					},
 				],
 				structuredContent: {
@@ -1017,7 +1033,7 @@ export const toolDefs = [
 					text:
 						`Started reconstructing a 3D scene from the video (${params.mode}).\n` +
 						`Job ID: ${job.extJobId}\n` +
-						'Poll with generation_status. Reconstruction typically takes a few minutes for a longer clip.',
+						pollHint(job.eta, 'Reconstruction typically takes a few minutes for a longer clip.'),
 				}],
 				structuredContent: {
 					job_id: job.extJobId,
@@ -1143,7 +1159,7 @@ export const toolDefs = [
 						type: 'text',
 						text:
 							`Background removal started.\nJob ID: ${job.extJobId}\n` +
-							'Poll with generation_status. Typically completes in 3–10 seconds.',
+							pollHint(job.eta, 'Typically completes in 3–10 seconds.'),
 					},
 				],
 				structuredContent: {
@@ -1220,7 +1236,7 @@ export const toolDefs = [
 						type: 'text',
 						text:
 							`Mesh processing started (${args.operation || 'full'}).\nJob ID: ${job.extJobId}\n` +
-							'Poll with generation_status. Typically completes in 10–60 seconds.',
+							pollHint(job.eta, 'Typically completes in 10–60 seconds.'),
 					},
 				],
 				structuredContent: {
@@ -1301,7 +1317,7 @@ export const toolDefs = [
 						type: 'text',
 						text:
 							`Stylization started (${style}).\nJob ID: ${job.extJobId}\n` +
-							'Poll with generation_status. Typically completes in 10–40 seconds.',
+							pollHint(job.eta, 'Typically completes in 10–40 seconds.'),
 					},
 				],
 				structuredContent: {
@@ -1397,7 +1413,7 @@ export const toolDefs = [
 						type: 'text',
 						text:
 							`Segmentation started (${args.method || 'auto'}).\nJob ID: ${job.extJobId}\n` +
-							'Poll with generation_status — when done it lists every named part. Typically completes in 10–60 seconds.',
+							`${pollHint(job.eta, 'Typically completes in 10–60 seconds.')} When done it lists every named part.`,
 					},
 				],
 				structuredContent: {
@@ -1485,7 +1501,7 @@ export const toolDefs = [
 						type: 'text',
 						text:
 							`Texture generation started for "${args.prompt}".\nJob ID: ${job.extJobId}\n` +
-							'Poll with generation_status. Typically completes in 2–5 minutes.',
+							pollHint(job.eta, 'Typically completes in 2–5 minutes.'),
 					},
 				],
 				structuredContent: {
@@ -1614,7 +1630,7 @@ export const toolDefs = [
 						text:
 							`Region retexture started${args.prompt ? ` for "${args.prompt}"` : ''}.\n` +
 							`Job ID: ${job.extJobId}\n` +
-							'Poll with generation_status. Typically completes in 30–90 seconds. ' +
+							`${pollHint(job.eta, 'Typically completes in 30–90 seconds.')} ` +
 							'To stack edits, feed the resulting GLB back in as mesh_url.',
 					},
 				],

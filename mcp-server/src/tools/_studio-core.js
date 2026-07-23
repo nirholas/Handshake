@@ -309,9 +309,6 @@ function meshDirectorInstruction(prompt) {
 	);
 }
 
-// Back-compat constant (subject-agnostic) for any caller still importing it
-// directly; runMeshForge below now calls meshDirectorInstruction(prompt).
-const MESH_DIRECTOR_INSTRUCTION = meshDirectorInstruction('');
 
 function avatarDirectorInstruction(prompt) {
 	const subject = classifySubjectLite(prompt) === 'animal' ? 'animal' : 'person';
@@ -333,9 +330,6 @@ function avatarDirectorInstruction(prompt) {
 	);
 }
 
-// Back-compat constant (person default) for any caller still importing it
-// directly; runForgeAvatar/runTextToAvatar below now call avatarDirectorInstruction(prompt).
-const AVATAR_DIRECTOR_INSTRUCTION = avatarDirectorInstruction('');
 
 // ---------------------------------------------------------------------------
 // forge_free — text → textured 3D GLB on the FREE NVIDIA NIM (TRELLIS) lane.
@@ -566,7 +560,7 @@ export async function runMeshForge({ prompt, image_url, image_urls, aspect_ratio
 		directedPrompt = await directPrompt({
 			base,
 			rawPrompt: trimmedPrompt,
-			instruction: MESH_DIRECTOR_INSTRUCTION,
+			instruction: meshDirectorInstruction(trimmedPrompt),
 			model: env('MESH_FORGE_DIRECTOR_MODEL'),
 		});
 	}
@@ -756,7 +750,7 @@ export async function runForgeAvatar({
 		directedPrompt = await directPrompt({
 			base,
 			rawPrompt: trimmedPrompt,
-			instruction: AVATAR_DIRECTOR_INSTRUCTION,
+			instruction: avatarDirectorInstruction(trimmedPrompt),
 		});
 	}
 	const effectivePrompt = directedPrompt || trimmedPrompt;
@@ -1069,8 +1063,20 @@ export async function runTextToAvatar({ prompt, images, seed, texture }) {
 			reason: !version ? 'REPLICATE_TEXT_TO_AVATAR_MODEL is not set' : 'REPLICATE_API_TOKEN is not set',
 		});
 	}
+	// Granite avatar director (text mode only, fail-soft): without this the
+	// Replicate lane reconstructed straight from the raw words with none of the
+	// photoreal briefing the platform's own forge_avatar chain already gets.
+	let effectivePrompt = prompt;
+	if (prompt && (!images || images.length === 0) && env('TEXT_TO_AVATAR_DIRECTOR', '1') !== '0') {
+		const directed = await directPrompt({
+			base: apiBaseFrom(['MESH_FORGE_API_BASE']),
+			rawPrompt: prompt,
+			instruction: avatarDirectorInstruction(prompt),
+		});
+		if (directed) effectivePrompt = directed;
+	}
 	const input = {
-		prompt: prompt || undefined,
+		prompt: effectivePrompt || undefined,
 		image: images && images.length ? images[0] : undefined,
 		images: images && images.length ? images : undefined,
 		seed: typeof seed === 'number' ? seed : undefined,

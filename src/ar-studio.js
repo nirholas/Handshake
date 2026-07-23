@@ -38,6 +38,7 @@ import {
 } from './ar/studio-coords.js';
 import { StudioNet } from './ar/studio-net.js';
 import { MultiPlaceSession } from './ar/multi-place.js';
+import { forgeStageNarration } from './shared/forge-frames.js';
 import {
 	createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
 	PINCH_SCALE_MAX, PINCH_SCALE_MIN,
@@ -1397,13 +1398,25 @@ async function startForge(prompt) {
 	const seq = ++forgeSeq;
 	if (forgeGo) forgeGo.disabled = true;
 	const t0 = Date.now();
-	forgeChipState('working', `Forging "${prompt.length > 42 ? `${prompt.slice(0, 39)}…` : prompt}"`);
+	// Real ETA + cold-start signal from the initial /api/forge response (see
+	// api/_lib/forge-lane-health.js#coldStartFor). No poll response repeats
+	// these fields, so they're captured once here and folded into every later
+	// forgeStageNarration() call via the shared eta_seconds/cold_start contract.
+	let etaSeconds = null;
+	let coldStart = false;
+	forgeChipState('working', 'Sending your prompt to the forge…');
+	const setStage = (status) => {
+		if (!forgeChip) return;
+		const elapsedS = (Date.now() - t0) / 1000;
+		const remaining = etaSeconds != null ? Math.max(0, Math.round(etaSeconds - elapsedS)) : null;
+		const narration = forgeStageNarration({ status, eta_seconds: remaining ?? undefined });
+		const label = forgeChip.querySelector('.ars-chip-label');
+		const el = forgeChip.querySelector('.ars-chip-elapsed');
+		if (label) label.textContent = coldStart && status !== 'done' ? `Cold start — ${narration}` : narration;
+		if (el) el.textContent = `${Math.round(elapsedS)}s`;
+	};
 	const elapsed = setInterval(() => {
-		if (forgeChip?.dataset.state === 'working') {
-			const s = Math.round((Date.now() - t0) / 1000);
-			const el = forgeChip.querySelector('.ars-chip-elapsed');
-			if (el) el.textContent = `${s}s`;
-		}
+		if (forgeChip?.dataset.state === 'working') setStage('running');
 	}, 1000);
 
 	try {
@@ -1421,10 +1434,13 @@ async function startForge(prompt) {
 			throw new Error(data.message || `The forge is busy — try again in about ${secs}s.`);
 		}
 		if (!res.ok) throw new Error(data.message || `The generator returned ${res.status}.`);
+		if (Number(data.eta_seconds) > 0) etaSeconds = Math.round(Number(data.eta_seconds));
+		coldStart = Boolean(data.cold_start);
 
 		let done = data;
 		if (!(data.status === 'done' && data.glb_url)) {
 			if (!data.job_id) throw new Error('The forge did not accept the job. Try again.');
+			setStage('queued');
 			done = await pollForge(data.job_id, seq);
 		}
 		if (!done || seq !== forgeSeq) return;

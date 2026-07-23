@@ -263,6 +263,11 @@
 
 		var POLL_MS = 3000, MAX_POLL_MS = 300000, LS_KEY = 'twx_ar_forge_recent';
 		var runSeq = 0, elapsedTimer = null, current = null; // { glb, prompt }
+
+		function overlay(el) {
+			[idle, working, failed].forEach(function (n) { n.classList.add('hidden'); });
+			if (el) el.classList.remove('hidden');
+		}
 		// Real ETA + cold-start signal from the initial /api/forge response (see
 		// api/_lib/forge-lane-health.js#coldStartFor + estimateEtaSeconds). No poll
 		// response repeats these, so they're captured once at submit time and the

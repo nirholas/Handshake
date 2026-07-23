@@ -8,7 +8,8 @@ import { buildForgeFreeTool } from '../mcp-server/src/tools/forge-free.js';
 //   - input is validated before any network call,
 //   - the synchronous-done forge response is shaped into a free result,
 //   - a queued job is polled to completion,
-//   - the request pins backend:"nvidia" so the happy path is never the paid lane,
+//   - the request never pins a paid backend — the router's own free-lane
+//     default (photoreal image-intermediate pipeline first) picks the engine,
 //   - upstream states (not_configured / busy / failed) become designed toolErrors
 //     (ok:false → isError, which on a paid tool cancels billing; here it just
 //     gives the caller a stable error contract).
@@ -99,8 +100,12 @@ describe('forge_free — handler', () => {
 		const [url, opts] = fetchMock.mock.calls[0];
 		expect(url).toMatch(/\/api\/forge$/);
 		const body = JSON.parse(opts.body);
-		// The free lane must be pinned so the happy path is never the paid Replicate lane.
-		expect(body).toMatchObject({ backend: 'nvidia', path: 'image', prompt: 'a glossy white robot mascot' });
+		// No backend pin: the forge router's own free-lane default resolves to the
+		// zero-cost photoreal image-intermediate pipeline (self-host TRELLIS →
+		// Hunyuan3D → HuggingFace → NVIDIA NIM last resort), never the paid
+		// Replicate lane, without forcing NVIDIA's native text-only preview.
+		expect(body).toMatchObject({ path: 'image', prompt: 'a glossy white robot mascot' });
+		expect(body.backend).toBeUndefined();
 		// Tier defaults to draft (fast, free).
 		expect(body.tier).toBe('draft');
 
