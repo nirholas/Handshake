@@ -13,6 +13,7 @@
 
 import { sql } from './db.js';
 import { solanaRpcEndpoints } from './solana/connection.js';
+import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 import {
 	truncate,
 	resolveGateway,
@@ -29,6 +30,9 @@ import {
 const MPL_AGENT_IDENTITY_PROGRAM = '1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p';
 
 const FETCH_TIMEOUT_MS = 6_000;
+// On-chain metadata JSON is small by convention; anything larger is not a
+// metadata document. Also the streaming cap the pinned guard enforces.
+const MAX_METADATA_BYTES = 1024 * 1024;
 
 // Pick the best available mainnet RPC. solanaRpcEndpoints prefers Helius (which
 // also answers DAS getAsset on the same URL), falling back to public nodes.
@@ -41,19 +45,24 @@ function mainnetRpc() {
 async function fetchJsonWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
 	const resolved = resolveGateway(url);
 	if (!resolved) return null;
-	const ctrl = new AbortController();
-	const t = setTimeout(() => ctrl.abort(), timeoutMs);
 	try {
-		const r = await fetch(resolved, {
-			signal: ctrl.signal,
-			headers: { accept: 'application/json', 'user-agent': 'three.ws-onchain-indexer/1.0 (+https://three.ws)' },
-		});
+		// metadataUri / json_uri values come from on-chain accounts anyone can
+		// register, i.e. attacker-controlled URLs. The pinned guard keeps the
+		// crawl from being turned into an SSRF against internal services from
+		// the Cloud Run network, and caps the body so a hostile host cannot
+		// stream unbounded bytes into the instance.
+		const r = await fetchSafePublicUrlPinned(
+			resolved,
+			{
+				signal: AbortSignal.timeout(timeoutMs),
+				headers: { accept: 'application/json', 'user-agent': 'three.ws-onchain-indexer/1.0 (+https://three.ws)' },
+			},
+			{ maxBytes: MAX_METADATA_BYTES },
+		);
 		if (!r.ok) return null;
 		return await r.json();
 	} catch {
 		return null;
-	} finally {
-		clearTimeout(t);
 	}
 }
 

@@ -23,6 +23,7 @@ import { ALL_EXTENSIONS, KHRLightsPunctual } from '@gltf-transform/extensions';
 import { mergeDocuments, prune, dedup, unpartition } from '@gltf-transform/functions';
 import * as THREE from 'three';
 import { MOOD_LIGHT, ISLAND_RADIUS, normalizeDiorama } from '../../src/diorama/schema.js';
+import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 
 // Matches TARGET_FOOTPRINT in src/diorama/renderer.js — keeps a forged object's
 // on-screen size in the exported GLB identical to the live diorama stage.
@@ -291,19 +292,18 @@ async function fetchGlb(url) {
 	if (!/^https?:\/\//i.test(url)) {
 		throw new Error(`refusing non-http glbUrl: ${url}`);
 	}
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const res = await fetch(url, { signal: controller.signal });
-		if (!res.ok) throw new Error(`GLB fetch failed: HTTP ${res.status}`);
-		const buf = new Uint8Array(await res.arrayBuffer());
-		if (buf.byteLength > MAX_SOURCE_GLB_BYTES) {
-			throw new Error(`GLB too large (${buf.byteLength} bytes)`);
-		}
-		return buf;
-	} finally {
-		clearTimeout(timer);
-	}
+	// glbUrl is caller-controlled (diorama objects arrive in the POST body, and
+	// the same surface is reachable via the export_scene MCP tool), so the fetch
+	// goes through the pinned SSRF guard: full DNS validation, IP pinned at
+	// connect, every redirect hop re-validated. Otherwise a crafted diorama
+	// turns the export endpoint into a blind SSRF from the Cloud Run network.
+	const res = await fetchSafePublicUrlPinned(
+		url,
+		{ signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
+		{ maxBytes: MAX_SOURCE_GLB_BYTES },
+	);
+	if (!res.ok) throw new Error(`GLB fetch failed: HTTP ${res.status}`);
+	return new Uint8Array(await res.arrayBuffer());
 }
 
 // ── Math helpers ─────────────────────────────────────────────────────────
