@@ -95,7 +95,14 @@ function internalHeaders() {
 // whose consumers poll anyway (the public /api/3d/generate) passes a wider
 // window so a slow-but-working lane returns done instead of burning the GPU
 // work into a client-side timeout. Interactive surfaces keep the 90s default.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, submitTimeoutMs }) {
+// `clientKey` is a stable, opaque per-caller handle forwarded as the x-forge-client
+// header so /api/forge attributes the durable creation (forge_creations row) to the
+// real caller instead of collapsing it to the shared 'anon' bucket. It scopes the
+// gallery/claim surface to one client without any account. Forge salts+hashes it, so
+// the raw value never reaches the DB. Deliberately NOT the caller IP forwarded as
+// x-forwarded-for: that would collide with forge's own per-IP free-lane limiter and
+// halve the ceiling — identity attribution and rate limiting stay decoupled.
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, submitTimeoutMs, clientKey }) {
 	const submitWindowMs = Number(submitTimeoutMs) > 0 ? Number(submitTimeoutMs) : 90_000;
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
@@ -110,7 +117,11 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		try {
 			res = await fetch(`${base}/api/forge`, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json', ...(withInternal ? internalHeaders() : {}) },
+				headers: {
+					'content-type': 'application/json',
+					...(clientKey ? { 'x-forge-client': clientKey } : {}),
+					...(withInternal ? internalHeaders() : {}),
+				},
 				body: JSON.stringify(payload),
 				signal: AbortSignal.timeout(submitWindowMs),
 			});

@@ -62,6 +62,28 @@ const UPGRADE = Object.freeze({
 	docs: '/docs/3d-api',
 });
 
+// Derive a stable, opaque per-caller handle so the free-API lane stops writing
+// anonymous rows into the forge_creations flywheel — its highest-growth surface.
+// Two sources, in order of durability:
+//   1) a caller-supplied stable id (x-forge-client, or x-agent-id for agent
+//      frameworks) — lets a repeat agent accrue a real, later-claimable body of
+//      work under one handle, unifying with any direct /api/forge or SDK usage;
+//   2) else the caller's own IP, so even fully anonymous traffic segments per
+//      client instead of collapsing to a single 'anon' bucket.
+// The raw value is forwarded only as x-forge-client (see startForge): forge
+// salts+sha256s it into client_key, so nothing here reaches the DB in the clear,
+// and the real IP never rides x-forwarded-for into forge's own per-IP limiter.
+function pickHeader(req, name) {
+	const raw = req.headers?.[name];
+	const v = Array.isArray(raw) ? raw[0] : raw;
+	return typeof v === 'string' ? v.trim() : '';
+}
+export function agentClientId(req, ip) {
+	const supplied = pickHeader(req, 'x-forge-client') || pickHeader(req, 'x-agent-id');
+	if (supplied) return supplied.slice(0, 200);
+	return ip && ip !== '0.0.0.0' ? `ip:${ip}` : '';
+}
+
 // Recommended seconds a polling agent should wait between polls. Derived from the
 // lane's ETA so a fast draft is polled promptly and a slow job sparingly: a
 // well-behaved agent that honors this stays under the poll flood-guard
@@ -281,6 +303,9 @@ async function generate(req, res) {
 			path: 'image',
 			tier: 'draft',
 			submitTimeoutMs: 240_000,
+			// Attribute the durable creation to this caller so the flywheel isn't
+			// blind on the free lane (and a repeat agent can later claim its work).
+			clientKey: agentClientId(req, ip),
 		});
 	} catch (err) {
 		return failFromLane(res, err);

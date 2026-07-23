@@ -443,7 +443,7 @@ export function cors(
 	res.setHeader('access-control-allow-methods', methods);
 	res.setHeader(
 		'access-control-allow-headers',
-		'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-forge-seed',
+		'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed',
 	);
 	// x402: clients (drop-in modal, x402-fetch) must read these to drive the
 	// 402-pay-retry flow and surface settlement receipts. Without `expose`,
