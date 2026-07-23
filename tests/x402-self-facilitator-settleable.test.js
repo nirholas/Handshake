@@ -68,15 +68,19 @@ function buildSelfPayPayment({ amount = AMOUNT_ATOMIC } = {}) {
 
 let prevPayTo;
 let prevAssetMint;
+let prevThreeMint;
 beforeEach(() => {
 	prevPayTo = process.env.X402_PAY_TO_SOLANA;
 	prevAssetMint = process.env.X402_ASSET_MINT_SOLANA;
+	prevThreeMint = process.env.THREE_TOKEN_MINT;
 });
 afterEach(() => {
 	if (prevPayTo === undefined) delete process.env.X402_PAY_TO_SOLANA;
 	else process.env.X402_PAY_TO_SOLANA = prevPayTo;
 	if (prevAssetMint === undefined) delete process.env.X402_ASSET_MINT_SOLANA;
 	else process.env.X402_ASSET_MINT_SOLANA = prevAssetMint;
+	if (prevThreeMint === undefined) delete process.env.THREE_TOKEN_MINT;
+	else process.env.THREE_TOKEN_MINT = prevThreeMint;
 });
 
 describe('verifyRingPayment settleability gate', () => {
@@ -177,5 +181,48 @@ describe('verifyRingPayment settleability gate', () => {
 		});
 		expect(res.isValid).toBe(false);
 		expect(simulated).toBe(false);
+	});
+});
+
+describe('mint pin (2026-07-23 audit: junk-mint sponsor drain)', () => {
+	it('rejects a well-formed transfer whose mint is not a configured settleable asset', async () => {
+		const p = buildSelfPayPayment(); // sets X402_ASSET_MINT_SOLANA to its mint
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		// Point the configured settleable mint ELSEWHERE: the tx's mint is now
+		// junk as far as the facilitator is concerned, which is exactly the
+		// attack shape — sponsor funds ATA rent + fees for a worthless token.
+		process.env.X402_ASSET_MINT_SOLANA = Keypair.generate().publicKey.toBase58();
+		delete process.env.THREE_TOKEN_MINT;
+		let simulated = false;
+		const conn = {
+			simulateTransaction: async () => { simulated = true; return { value: { err: null } }; },
+			getTokenAccountBalance: async () => ({ value: { amount: '999999999' } }),
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.isValid).toBe(false);
+		expect(res.invalidReason).toMatch(/^mint_not_settleable:/);
+		// Static rejection must happen before any simulation RPC is touched.
+		expect(simulated).toBe(false);
+	});
+
+	it('fails closed when no settleable mint is configured at all', () => {
+		const p = buildSelfPayPayment();
+		delete process.env.X402_ASSET_MINT_SOLANA;
+		delete process.env.THREE_TOKEN_MINT;
+		const tx = VersionedTransaction.deserialize(
+			Buffer.from(p.paymentPayload.transaction, 'base64'),
+		);
+		const out = validateRingTransaction({
+			txBase64: p.paymentPayload.transaction,
+			requirement: p.requirement,
+			feePayerPubkey: tx.message.staticAccountKeys[0],
+			allowlist: new Set([p.payTo]),
+		});
+		expect(out.ok).toBe(false);
+		expect(out.reason).toMatch(/^mint_not_settleable:/);
 	});
 });
