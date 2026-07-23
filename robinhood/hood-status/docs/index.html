@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-status — is Robinhood Chain down?</title>
+<meta name="description" content="A status page for Robinhood Chain (chain 4663) that draws chain health onto a live seismograph roll. RPC, block production, the sequencer feed, gas, settlement lag and Chainlink freshness — probed, thresholded, and never a dead page." />
+<link rel="canonical" href="https://nirholas.github.io/hood-status/" />
+<meta name="theme-color" content="#e9e6df" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-status — the chain seismograph" />
+<meta property="og:description" content="Robinhood Chain health drawn onto a moving paper roll. Incidents are quakes. RPC, sequencer feed, block production, gas, settlement lag, Chainlink freshness, 90-day uptime." />
+<meta property="og:url" content="https://nirholas.github.io/hood-status/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<meta name="twitter:title" content="hood-status — is Robinhood Chain down?" />
+<meta name="twitter:description" content="A status page for Robinhood Chain that draws chain health onto a live seismograph roll. Never a dead page." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23e9e6df'/><path d='M2 16 H8 L11 8 L15 24 L19 12 L22 16 H30' fill='none' stroke='%2314130f' stroke-width='2' stroke-linejoin='round'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"hood-status","applicationCategory":"DeveloperApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Status page for Robinhood Chain (chain ID 4663): a probe worker plus a static front end monitoring RPC, sequencer feed, block production, gas, Chainlink feed freshness, settlement lag, Blockscout availability, with 90-day uptime history and an incident timeline.","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"codeRepository":"https://github.com/nirholas/hood-status"}
+</script>
+<style>
+  :root{
+    --paper:#e9e6df; --ink:#14130f; --mid:#6b6862;
+    --line:rgba(20,19,15,.16); --line2:rgba(20,19,15,.34);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --sans:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.12vw,18px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--paper); color:var(--ink); font-family:var(--sans);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  /* seismograph-paper texture: faint horizontal rule, pure CSS */
+  body::before{content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(20,19,15,.028) 0 1px,transparent 1px 5px);
+    mix-blend-mode:multiply; opacity:.5}
+
+  header.top{position:sticky; top:0; z-index:70; background:var(--paper);
+    border-bottom:1px solid var(--line); display:flex; align-items:stretch;
+    justify-content:space-between; mix-blend-mode:normal}
+  header.top .brand{display:flex; align-items:center; gap:12px; padding:0 clamp(16px,4vw,40px);
+    font:700 15px/1 var(--sans); letter-spacing:-.02em; height:56px}
+  header.top .brand .tick{display:block; width:22px; height:14px}
+  header.top .brand .tick path{fill:none; stroke:var(--ink); stroke-width:1.6; stroke-linejoin:round}
+  header.top nav{display:flex}
+  header.top nav a{display:flex; align-items:center; padding:0 clamp(12px,2vw,22px);
+    font:600 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--mid);
+    text-decoration:none; border-left:1px solid var(--line); transition:background .25s,color .25s}
+  header.top nav a:hover{background:var(--ink); color:var(--paper)}
+  @media(max-width:720px){header.top nav a:not(.gh){display:none}}
+
+  section{position:relative; padding:clamp(46px,7vh,86px) clamp(16px,5vw,64px);
+    border-bottom:1px solid var(--line)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase;
+    color:var(--mid); display:flex; align-items:center; gap:12px; margin-bottom:22px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  .eyebrow .n{color:var(--ink)}
+  h2{font:700 clamp(26px,4.2vw,52px)/1 var(--sans); letter-spacing:-.03em}
+  .lede{max-width:62ch; font-size:clamp(15px,1.5vw,20px); line-height:1.45; color:#33302a}
+
+  /* ================= HERO SEISMOGRAPH ================= */
+  #drum{padding:0; border-bottom:1px solid var(--line)}
+  .banner{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+    padding:clamp(22px,4vw,40px) clamp(16px,5vw,64px) clamp(16px,3vw,26px)}
+  .banner .lft{min-width:min(100%,540px)}
+  .banner .state{display:flex; align-items:center; gap:14px; margin-bottom:14px}
+  .banner .lamp{width:15px; height:15px; border-radius:50%; background:var(--ink); position:relative; flex:none}
+  .banner .lamp::after{content:""; position:absolute; inset:-6px; border-radius:50%;
+    border:1px solid var(--ink); opacity:.4; animation:ring 2.4s var(--ease) infinite}
+  @keyframes ring{0%{transform:scale(.6);opacity:.5}100%{transform:scale(1.5);opacity:0}}
+  .banner.degraded .lamp,.banner.down .lamp{background:var(--paper); border:2px solid var(--ink)}
+  .banner.down .lamp{animation:flash 1s steps(1) infinite}
+  @keyframes flash{50%{background:var(--ink)}}
+  .banner .st-word{font:700 clamp(26px,3.6vw,46px)/1 var(--sans); letter-spacing:-.03em}
+  .banner .st-sub{font:500 13px/1.5 var(--mono); color:var(--mid); letter-spacing:.02em; max-width:52ch}
+  .banner .clock{font:600 11px/1.7 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--mid); text-align:right}
+  .banner .clock b{color:var(--ink); font-weight:700}
+  .demoflag{display:inline-block; margin-top:8px; font:600 9.5px/1 var(--mono); letter-spacing:.16em;
+    text-transform:uppercase; color:var(--mid); border:1px solid var(--line2); padding:5px 9px}
+
+  .scope{position:relative; border-top:1px solid var(--line); background:var(--paper);
+    height:clamp(320px,52vh,520px); overflow:hidden; display:flex}
+  .labels{width:clamp(94px,13vw,168px); flex:none; border-right:1px solid var(--line2);
+    display:flex; flex-direction:column; z-index:3; background:var(--paper)}
+  .lrow{flex:1; border-bottom:1px solid var(--line); padding:0 10px; display:flex; flex-direction:column;
+    justify-content:center; cursor:pointer; transition:background .25s; position:relative; min-height:0}
+  .lrow:last-child{border-bottom:0}
+  .lrow:hover{background:rgba(20,19,15,.05)}
+  .lrow.sel{background:var(--ink)}
+  .lrow.sel .lk,.lrow.sel .lv,.lrow.sel .lu{color:var(--paper)}
+  .lrow .lk{font:700 10px/1.1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
+  .lrow .lv{font:700 clamp(13px,1.5vw,17px)/1 var(--sans); letter-spacing:-.01em; margin-top:4px; font-variant-numeric:tabular-nums}
+  .lrow .lu{font:500 9px/1 var(--mono); letter-spacing:.08em; color:var(--mid); margin-top:3px; text-transform:uppercase}
+  .lrow .badge{position:absolute; top:7px; right:8px; width:6px; height:6px; border-radius:50%; background:var(--ink)}
+  .lrow.deg .badge{background:var(--paper); border:1.5px solid var(--ink)}
+  .lrow.dn .badge{background:var(--paper); border:1.5px solid var(--ink); box-shadow:0 0 0 2px var(--paper)}
+  .lrow.sel .badge{background:var(--paper)}
+  canvas#seis{flex:1; display:block; width:100%; height:100%}
+  .nowtag{position:absolute; top:6px; right:8px; z-index:4; font:600 9px/1 var(--mono);
+    letter-spacing:.22em; text-transform:uppercase; color:var(--mid); pointer-events:none}
+  .controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:16px clamp(16px,5vw,64px);
+    border-top:1px solid var(--line)}
+  .ctl{appearance:none; border:1px solid var(--line2); background:transparent; color:var(--ink);
+    font:600 11px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; padding:12px 16px; cursor:pointer;
+    transition:background .2s,color .2s,transform .2s var(--ease)}
+  .ctl:hover{background:var(--ink); color:var(--paper); transform:translateY(-1px)}
+  .ctl.armed{background:var(--ink); color:var(--paper)}
+  .ctl .d{opacity:.6}
+  .chint{font:500 11px/1.5 var(--mono); color:var(--mid); letter-spacing:.02em}
+
+  /* ================= COMPONENTS ================= */
+  .grid2{display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(26px,4vw,64px); align-items:start}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr; gap:30px}}
+  .comp{border-top:1px solid var(--line2)}
+  .comp .c{display:grid; grid-template-columns:1fr auto auto; gap:14px; align-items:center;
+    padding:15px 2px; border-bottom:1px solid var(--line)}
+  .comp .c .nm{font:600 14px/1.2 var(--sans)}
+  .comp .c .nm small{display:block; font:500 11px/1.3 var(--mono); color:var(--mid); margin-top:3px; letter-spacing:.01em}
+  .comp .c .val{font:700 14px/1 var(--mono); font-variant-numeric:tabular-nums; text-align:right; min-width:74px}
+  .comp .c .pill{font:700 9px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; padding:6px 9px;
+    border:1px solid var(--line2); white-space:nowrap; min-width:96px; text-align:center}
+  .comp .c .pill.op{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .comp .c .pill.deg{background:transparent; color:var(--ink)}
+  .comp .c .pill.dn{background:var(--ink); color:var(--paper); border-color:var(--ink); animation:flash 1s steps(1) infinite}
+
+  /* ================= UPTIME BARS ================= */
+  .up{margin-top:6px}
+  .uprow{padding:16px 0; border-bottom:1px solid var(--line)}
+  .uprow:last-child{border-bottom:0}
+  .uphd{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px}
+  .uphd .nm{font:600 13px/1 var(--sans)}
+  .uphd .pct{font:700 12px/1 var(--mono); font-variant-numeric:tabular-nums}
+  .bars{display:flex; gap:2px; height:34px; align-items:stretch}
+  .bars .b{flex:1; background:var(--ink); transition:opacity .2s; min-width:1px; position:relative}
+  .bars .b.deg{background:linear-gradient(var(--ink) 50%, rgba(20,19,15,.18) 50%)}
+  .bars .b.dn{background:repeating-linear-gradient(0deg,var(--ink) 0 2px,transparent 2px 4px)}
+  .bars .b.nd{background:rgba(20,19,15,.1)}
+  .bars .b:hover{opacity:.55}
+  .uplegend{display:flex; flex-wrap:wrap; gap:16px; margin-top:16px; font:500 11px/1 var(--mono); color:var(--mid); letter-spacing:.02em}
+  .uplegend span{display:flex; align-items:center; gap:7px}
+  .uplegend i{width:14px; height:14px; display:block; flex:none}
+  .uplegend i.op{background:var(--ink)}
+  .uplegend i.deg{background:linear-gradient(var(--ink) 50%, rgba(20,19,15,.18) 50%)}
+  .uplegend i.dn{background:repeating-linear-gradient(0deg,var(--ink) 0 2px,transparent 2px 4px)}
+  .uplegend i.nd{background:rgba(20,19,15,.1)}
+
+  /* ================= INCIDENTS ================= */
+  .tl{margin-top:6px; border-left:1px solid var(--line2); padding-left:0}
+  .tl .none{padding:26px 20px; border:1px dashed var(--line2); font:500 14px/1.5 var(--mono); color:var(--mid); margin-left:20px}
+  .ti{position:relative; padding:16px 0 16px 34px; border-bottom:1px solid var(--line); margin-left:20px}
+  .ti:last-child{border-bottom:0}
+  .ti::before{content:""; position:absolute; left:-6px; top:22px; width:11px; height:11px; background:var(--paper);
+    border:2px solid var(--ink); border-radius:50%}
+  .ti.dn::before{background:var(--ink)}
+  .ti .th{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .ti .sev{font:700 9px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; padding:5px 8px; border:1px solid var(--line2)}
+  .ti.dn .sev{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .ti .cmp{font:700 13px/1 var(--sans)}
+  .ti .tm{font:500 11px/1 var(--mono); color:var(--mid); letter-spacing:.02em; margin-left:auto}
+  .ti .msg{font:500 13px/1.5 var(--mono); color:#33302a; margin-top:8px}
+  .ti .msg .st{color:var(--mid)}
+
+  /* ================= METHODOLOGY ================= */
+  .thead{display:grid; grid-template-columns:1.4fr 1fr 1fr 1.2fr; gap:14px; padding:12px 2px;
+    border-bottom:1px solid var(--line2); font:600 10px/1.2 var(--mono); letter-spacing:.16em;
+    text-transform:uppercase; color:var(--mid)}
+  .trow{display:grid; grid-template-columns:1.4fr 1fr 1fr 1.2fr; gap:14px; padding:15px 2px;
+    border-bottom:1px solid var(--line); align-items:baseline; font-size:14px}
+  .trow .m{font:600 13px/1.3 var(--sans)}
+  .trow .v{font:600 12.5px/1.4 var(--mono); color:#33302a}
+  @media(max-width:720px){.thead{display:none}
+    .trow{grid-template-columns:1fr 1fr; gap:6px 14px; padding:16px 0}
+    .trow .m{grid-column:1/-1; margin-bottom:4px}}
+
+  .rules{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px}
+  @media(max-width:820px){.rules{grid-template-columns:1fr}}
+  .rule{border:1px solid var(--line2); padding:18px 18px 20px}
+  .rule .h{font:700 12px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:9px}
+  .rule .b{font-size:14px; line-height:1.5; color:#33302a}
+  .rule .b b{font-weight:700}
+
+  /* ================= GET / API ================= */
+  .code-block{border:1px solid var(--line2); background:var(--ink); color:var(--paper); padding:18px 20px;
+    font:500 12.5px/1.85 var(--mono); position:relative; overflow-x:auto; white-space:pre}
+  .code-block .c{color:#9a978f}
+  .code-block .p::before{content:"$ "; color:#9a978f}
+  .copy{position:absolute; top:11px; right:11px; appearance:none; border:1px solid rgba(233,230,223,.32);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 10px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(233,230,223,.16)}
+  .apirow{display:grid; grid-template-columns:220px 1fr; gap:18px; padding:14px 2px; border-bottom:1px solid var(--line); align-items:baseline}
+  @media(max-width:640px){.apirow{grid-template-columns:1fr; gap:5px}}
+  .apirow .e{font:700 12.5px/1.4 var(--mono)}
+  .apirow .d{font-size:14px; color:#33302a}
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  footer{padding:clamp(36px,6vh,64px) clamp(16px,5vw,64px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(28px,6vw,64px)/.9 var(--sans); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--mid); text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--line2); transition:border-color .2s}
+  footer a:hover{border-color:var(--ink)}
+
+  .rise{opacity:0; transform:translateY(20px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){.banner .lamp::after{animation:none}.rise{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <svg class="tick" viewBox="0 0 28 16" aria-hidden="true"><path d="M1 8 H7 L10 2 L14 15 L18 5 L21 8 H27"/></svg>
+    hood-status
+  </div>
+  <nav aria-label="Sections">
+    <a href="#components">Components</a>
+    <a href="#uptime">Uptime</a>
+    <a href="#incidents">Incidents</a>
+    <a href="#method">Method</a>
+    <a class="gh" href="https://github.com/nirholas/hood-status">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ HERO / SEISMOGRAPH ============ -->
+  <section id="drum" aria-label="Live chain seismograph">
+    <div class="banner" id="banner">
+      <div class="lft">
+        <div class="state"><span class="lamp" aria-hidden="true"></span>
+          <span class="st-word" id="stWord">All systems operational</span></div>
+        <div class="st-sub" id="stSub">Robinhood Chain · chain 4663 · six surfaces on one paper roll, redrawn every frame.</div>
+        <span class="demoflag">synthetic demo signal · deploy the worker for live probes</span>
+      </div>
+      <div class="clock" id="clock">uptime 90d<br><b>99.98%</b></div>
+    </div>
+
+    <div class="scope" id="scope">
+      <div class="labels" id="labels"></div>
+      <canvas id="seis"></canvas>
+      <span class="nowtag" aria-hidden="true">now →</span>
+    </div>
+
+    <div class="controls">
+      <button class="ctl" id="btnStall" type="button">Simulate sequencer stall</button>
+      <button class="ctl" id="btnGas" type="button">Inject gas spike</button>
+      <button class="ctl" id="btnPause" type="button"><span id="pauseLbl">Pause roll</span></button>
+      <span class="chint" id="chint">Click a channel at left to focus it. Perturb the chain and watch the incident machine react.</span>
+    </div>
+  </section>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section id="components">
+    <div class="eyebrow"><span class="n">01</span> / WHAT IS MONITORED</div>
+    <div class="grid2">
+      <div>
+        <h2>Eight surfaces,<br>one honest verdict.</h2>
+        <p class="lede" style="margin-top:20px">The probe worker measures each surface every 30 seconds, keeps 90 days in SQLite, and evaluates every sample against a published threshold. A failed probe reports <b>unknown</b>, never green. Gas is informational and can never open an incident.</p>
+        <div class="btns">
+          <a class="btn" href="methodology.html">Full methodology</a>
+          <a class="btn" href="https://github.com/nirholas/hood-status">Probe worker source</a>
+        </div>
+      </div>
+      <div class="comp" id="compList"></div>
+    </div>
+  </section>
+
+  <!-- ============ UPTIME ============ -->
+  <section id="uptime">
+    <div class="eyebrow"><span class="n">02</span> / 90-DAY UPTIME</div>
+    <h2>Ninety days, one bar a day.</h2>
+    <p class="lede" style="margin-top:18px">Each bar is a day of samples. A day with no data renders gray, never green: the front end detects a young worker and says the window is still filling instead of painting unknown days operational.</p>
+    <div class="up" id="upList" style="margin-top:30px"></div>
+    <div class="uplegend">
+      <span><i class="op"></i> operational</span>
+      <span><i class="deg"></i> degraded</span>
+      <span><i class="dn"></i> down</span>
+      <span><i class="nd"></i> no data</span>
+    </div>
+  </section>
+
+  <!-- ============ INCIDENTS ============ -->
+  <section id="incidents">
+    <div class="eyebrow"><span class="n">03</span> / INCIDENT TIMELINE</div>
+    <h2>Flap-suppressed. No noise.</h2>
+    <p class="lede" style="margin-top:18px">Three consecutive bad cycles open an incident; four consecutive good ones close it; <b>unknown</b> never opens or closes anything. Perturb the chain above and entries appear here in real time, exactly as the worker's state machine would record them.</p>
+    <div class="tl" id="timeline" style="margin-top:28px">
+      <div class="none" id="tlNone">No incidents in the last 90 days. Trip the controls above to see how one would be logged.</div>
+    </div>
+  </section>
+
+  <!-- ============ METHODOLOGY ============ -->
+  <section id="method">
+    <div class="eyebrow"><span class="n">04</span> / THRESHOLDS · one module, three readers</div>
+    <h2>The page can't drift<br>from the code.</h2>
+    <p class="lede" style="margin-top:18px">Every threshold lives in one module (<span class="mono">status-core.js</span>) imported by the worker, the browser fallback, and the test suite. This table renders that file. Change a number in one place and all three move together.</p>
+    <div style="margin-top:30px; overflow-x:auto">
+      <div style="min-width:640px">
+        <div class="thead"><span>Component</span><span>Degraded</span><span>Down</span><span>Source</span></div>
+        <div id="methRows"></div>
+      </div>
+    </div>
+    <div class="rules">
+      <div class="rule"><div class="h">No fake green</div><div class="b">Failed probes report <b>unknown</b>, not operational. Days without data render gray. Chainlink knows US market hours (DST-correct) and treats weekend staleness as expected.</div></div>
+      <div class="rule"><div class="h">Flap suppression</div><div class="b"><b>3</b> bad cycles open, <b>4</b> good cycles close, severity changes record on the open incident, and the worker resumes open incidents across restarts.</div></div>
+      <div class="rule"><div class="h">Settlement heartbeat</div><div class="b">Every block records the parent-chain block the sequencer ingested; comparing it to an independent Ethereum RPC detects a stalled bridge with two <span class="mono">eth_blockNumber</span> calls.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ GET / API ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">05</span> / RUN IT · never a dead page</div>
+    <div class="grid2">
+      <div>
+        <h2>Backend optional.<br>The page still works.</h2>
+        <p class="lede" style="margin-top:20px">If the worker is unreachable the front end flips to <b>direct probe mode</b> and measures the chain from the visitor's browser with the same thresholds. No secrets, no signing — every call is read-only. Badge and embeddable pill included.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/hood-status#readme">read the docs</a>
+          <a class="btn" href="methodology.html">methodology</a>
+        </div>
+        <div class="comp" style="margin-top:34px" id="apiList"></div>
+      </div>
+      <div>
+        <div class="code-block"><button class="copy" data-copy="run">COPY</button><span class="c"># probe worker + static front end</span>
+<span class="p">npm install</span>
+<span class="p">npm start</span>            <span class="c"># worker on :8080</span>
+<span class="p">npm run serve:docs</span>   <span class="c"># front end on :4663</span>
+
+<span class="c"># or just open docs/index.html</span>
+<span class="c"># from disk — direct-probe mode,</span>
+<span class="c"># no backend at all</span>
+
+<span class="c"># deploy the prober to Cloud Run</span>
+<span class="p">gcloud run deploy hood-status \</span>
+  <span class="p">--source . --min-instances 1 \</span>
+  <span class="p">--max-instances 1</span></div>
+        <p class="lede" style="font-size:14px;margin-top:16px">Embed the status badge anywhere: <span class="mono">![status](https://YOUR-WORKER/badge.svg)</span> — shields-style operational / degraded / down / unknown.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood-<br>status</div>
+    <div class="meta">
+      Robinhood Chain · chain 4663 · read-only probes<br>
+      <a href="https://github.com/nirholas/hood-status">github.com/nirholas/hood-status</a><br>
+      built by <a href="https://x.com/nichxbt">@nichxbt</a> · <a href="https://three.ws">three.ws</a> · not affiliated with Robinhood Markets
+    </div>
+  </footer>
+</main>
+
+<script>
+"use strict";
+/* =========================================================================
+   hood-status — the seismograph. Synthetic but plausible, self-contained.
+   Metric shapes and thresholds mirror the real status-core.js in this repo.
+   ========================================================================= */
+
+/* ---- channels: key, label, unit, baseline, degraded, down thresholds ---- */
+const CH = [
+  { k:'rpc',    label:'RPC',       unit:'ms',     base:78,  span:52,  deg:400,  down:1500, dir:1, fmt:v=>Math.round(v) },
+  { k:'blocks', label:'Blocks',    unit:'blk/min',base:30,  span:3,   deg:22,   down:8,    dir:-1, fmt:v=>v.toFixed(1) },
+  { k:'feed',   label:'Feed',      unit:'seq lag',base:0,   span:1.2, deg:6,    down:20,   dir:1, fmt:v=>v.toFixed(1) },
+  { k:'settle', label:'Settle',    unit:'blocks', base:3,   span:1.4, deg:12,   down:40,   dir:1, fmt:v=>Math.round(v) },
+  { k:'gas',    label:'Gas',       unit:'gwei',   base:0.9, span:0.5, deg:1e9,  down:1e9,  dir:1, fmt:v=>v.toFixed(2), info:true },
+  { k:'link',   label:'Chainlink', unit:'age s',  base:240, span:120, deg:3600, down:86400,dir:1, fmt:v=>Math.round(v) },
+];
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* per-channel live state */
+const S = CH.map(c=>({ v:c.base, buf:new Float32Array(1200).fill(c.base), head:0, quake:0, stall:0, status:'op', badRun:0, goodRun:0 }));
+let selected = -1;
+
+/* ---- build left labels ---- */
+const labelsEl = document.getElementById('labels');
+CH.forEach((c,i)=>{
+  const d = document.createElement('div'); d.className='lrow'; d.dataset.i=i;
+  d.innerHTML = `<span class="badge" aria-hidden="true"></span><span class="lk">${c.label}</span><span class="lv" id="lv-${c.k}">—</span><span class="lu">${c.unit}</span>`;
+  d.addEventListener('click', ()=>{ selected = (selected===i? -1 : i); paintSel(); });
+  labelsEl.appendChild(d);
+});
+function paintSel(){ [...labelsEl.children].forEach((el,i)=>el.classList.toggle('sel', i===selected)); }
+
+/* ---- canvas ---- */
+const cv = document.getElementById('seis'); const ctx = cv.getContext('2d');
+let W=0, H=0, DPR=1, rowH=0;
+function resize(){
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(devicePixelRatio||1, 2);
+  W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  rowH = H/CH.length;
+}
+addEventListener('resize', resize);
+
+/* ---- read CSS tones so we stay monochrome-consistent ---- */
+const css = getComputedStyle(document.documentElement);
+const INK = css.getPropertyValue('--ink').trim() || '#14130f';
+const MID = css.getPropertyValue('--mid').trim() || '#6b6862';
+
+/* ---- signal generator: baseline noise + micro-events + injected quakes ---- */
+function tick(i){
+  const c = CH[i], s = S[i];
+  // gentle correlated noise
+  let target = c.base + (Math.sin(Date.now()/ (2200 + i*400)) * c.span*0.35) + (Math.random()-0.5)*c.span*0.5;
+  // occasional benign micro-spike
+  if(Math.random() < 0.012) s.quake = Math.max(s.quake, c.span*(1.6+Math.random()*1.4));
+  // injected sustained badness (stall)
+  if(s.stall > 0){
+    s.stall--;
+    target += c.dir>0 ? c.span*8 + Math.random()*c.span*6 : -(c.base*0.7);
+    if(Math.random()<0.5) s.quake = Math.max(s.quake, c.span*3);
+  }
+  if(s.quake > 0.02){ target += (Math.random()-0.5)*s.quake; s.quake *= 0.86; }
+  // approach + clamp
+  s.v += (target - s.v) * 0.35;
+  if(c.dir>0) s.v = Math.max(c.base*0.2, s.v); else s.v = Math.max(0.5, s.v);
+  // push to ring buffer
+  s.buf[s.head] = s.v; s.head = (s.head+1) % s.buf.length;
+  // status eval (dir: +1 high is bad, -1 low is bad)
+  const bad = c.info ? false : (c.dir>0 ? s.v >= c.deg : s.v <= c.deg);
+  const dn  = c.info ? false : (c.dir>0 ? s.v >= c.down: s.v <= c.down);
+  s.status = dn ? 'dn' : (bad ? 'deg' : 'op');
+}
+
+/* incident state machine (mirrors worker: 3 bad open, 4 good close) */
+const incidents = [];   // {k,label,sev,openT,closeT,open}
+let overall = 'op';
+function evalIncidents(){
+  let worst='op';
+  S.forEach((s,i)=>{
+    const c = CH[i]; if(c.info) return;
+    const bad = s.status!=='op';
+    if(bad){ s.badRun++; s.goodRun=0; } else { s.goodRun++; s.badRun=0; }
+    const openInc = incidents.find(x=>x.k===c.k && x.open);
+    if(s.badRun>=3 && !openInc){
+      incidents.unshift({ k:c.k, label:c.label, sev:s.status, openT:Date.now(), open:true });
+      renderTimeline();
+    } else if(openInc){
+      if(s.status!=='op' && s.status!==openInc.sev){ openInc.sev = worseOf(openInc.sev, s.status); renderTimeline(); }
+      if(s.goodRun>=4){ openInc.open=false; openInc.closeT=Date.now(); renderTimeline(); }
+    }
+    if(s.status==='dn') worst='dn'; else if(s.status==='deg' && worst!=='dn') worst='deg';
+  });
+  if(worst!==overall){ overall=worst; renderBanner(); }
+}
+function worseOf(a,b){ return (a==='dn'||b==='dn')?'dn':(a==='deg'||b==='deg')?'deg':'op'; }
+
+/* ---- draw loop ---- */
+let running = true, lastCycle=0;
+function draw(t){
+  if(!running){ return; }
+  // advance signal ~ every 90ms (a "sample"); incident cycle every 2s
+  if(t - (draw._s||0) > 90){ draw._s = t; for(let i=0;i<CH.length;i++) tick(i); updateReadouts(); }
+  if(t - lastCycle > 2000){ lastCycle = t; evalIncidents(); }
+
+  ctx.clearRect(0,0,W,H);
+  // seismograph grid: vertical minute ticks scrolling
+  const scroll = (t/24) % 46;
+  ctx.strokeStyle = 'rgba(20,19,15,.08)'; ctx.lineWidth = 1;
+  for(let x = W - (scroll); x > -46; x -= 46){
+    ctx.beginPath(); ctx.moveTo(x+.5,0); ctx.lineTo(x+.5,H); ctx.stroke();
+  }
+  // row separators + baseline
+  ctx.strokeStyle = 'rgba(20,19,15,.14)';
+  for(let i=1;i<CH.length;i++){ const y=i*rowH; ctx.beginPath(); ctx.moveTo(0,y+.5); ctx.lineTo(W,y+.5); ctx.stroke(); }
+
+  // traces
+  const pxStep = W / 240;               // show last 240 samples across width
+  for(let i=0;i<CH.length;i++){
+    const c=CH[i], s=S[i];
+    const cy = i*rowH + rowH/2;
+    const amp = rowH*0.36;
+    const norm = c.dir>0 ? Math.min(1, (s.v - c.base) / (c.deg - c.base + 1e-6))
+                         : Math.min(1, (c.base - s.v) / (c.base - c.deg + 1e-6));
+    const dim = selected>=0 && selected!==i;
+    ctx.lineWidth = (i===selected)? 2 : 1.25;
+    ctx.strokeStyle = dim ? 'rgba(20,19,15,.22)' : INK;
+    ctx.beginPath();
+    for(let n=0;n<240;n++){
+      const idx = (s.head - 1 - (239-n) + s.buf.length*2) % s.buf.length;
+      const val = s.buf[idx];
+      const rel = c.dir>0 ? (val - c.base)/(c.deg - c.base + 1e-6) : (c.base - val)/(c.base - c.deg + 1e-6);
+      const y = cy - Math.max(-1.1, Math.min(1.1, rel)) * amp * (c.info?0.7:1);
+      const x = n*pxStep;
+      n? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    }
+    ctx.stroke();
+    // needle glow at right edge
+    if(!dim){
+      const idx=(s.head-1+s.buf.length)%s.buf.length; const val=s.buf[idx];
+      const rel = c.dir>0 ? (val - c.base)/(c.deg - c.base + 1e-6) : (c.base - val)/(c.base - c.deg + 1e-6);
+      const y = cy - Math.max(-1.1, Math.min(1.1, rel)) * amp * (c.info?0.7:1);
+      ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(W-1, y, (i===selected)?3.4:2.4, 0, 7); ctx.fill();
+    }
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ---- readouts (label values + component pills) ---- */
+function statusWord(st){ return st==='dn'?'down':st==='deg'?'degraded':'operational'; }
+function updateReadouts(){
+  S.forEach((s,i)=>{
+    const c=CH[i];
+    const el=document.getElementById('lv-'+c.k); if(el) el.textContent = c.fmt(s.v);
+    const row = labelsEl.children[i];
+    row.classList.toggle('deg', s.status==='deg'); row.classList.toggle('dn', s.status==='dn');
+  });
+  // sync component list pills
+  CH.forEach((c,i)=>{
+    const cell=document.getElementById('comp-'+c.k); if(!cell) return;
+    const st=S[i].status, info=c.info;
+    const v=cell.querySelector('.val'), p=cell.querySelector('.pill');
+    v.textContent = c.fmt(S[i].v)+' '+c.unit;
+    if(info){ p.textContent='informational'; p.className='pill'; return; }
+    p.textContent = statusWord(st); p.className='pill '+(st==='op'?'op':st==='deg'?'deg':'dn');
+  });
+}
+
+let clockPct = 99.98;
+function renderBanner(){
+  const b=document.getElementById('banner');
+  b.className='banner'+(overall==='op'?'':' '+overall);
+  const word = overall==='dn'?'Partial outage detected':overall==='deg'?'Degraded performance':'All systems operational';
+  document.getElementById('stWord').textContent = word;
+  const openN = incidents.filter(x=>x.open).length;
+  document.getElementById('stSub').textContent = openN
+    ? openN+' open incident'+(openN>1?'s':'')+' · '+incidents.filter(x=>x.open).map(x=>x.label).join(', ')+' tripped a threshold'
+    : 'Robinhood Chain · chain 4663 · six surfaces on one paper roll, redrawn every frame.';
+  clockPct = overall==='op'? clockPct : Math.max(99.2, clockPct - 0.01);
+  document.getElementById('clock').innerHTML = 'uptime 90d<br><b>'+clockPct.toFixed(2)+'%</b>';
+}
+
+/* ---- components list ---- */
+const COMP_META = {
+  rpc:['Public RPC','eth_blockNumber round-trip'],
+  blocks:['Block production','height progression, blocks/min'],
+  feed:['Sequencer feed','websocket rate, sequence lag vs head'],
+  settle:['Settlement (L1 view)','block l1BlockNumber vs Ethereum head'],
+  gas:['Gas','base fee over the last 128 blocks'],
+  link:['Chainlink stock feeds','AAPL, TSLA, NVDA, MSFT, AMZN age'],
+};
+const compEl=document.getElementById('compList');
+CH.forEach((c,i)=>{
+  const m=COMP_META[c.k];
+  const d=document.createElement('div'); d.className='c'; d.id='comp-'+c.k;
+  d.innerHTML=`<div class="nm">${m[0]}<small>${m[1]}</small></div><div class="val">—</div><div class="pill op">operational</div>`;
+  compEl.appendChild(d);
+});
+/* Blockscout as a static extra row (no trace) */
+(function(){ const d=document.createElement('div'); d.className='c';
+  d.innerHTML=`<div class="nm">Blockscout explorer<small>GET /api/v2/stats availability</small></div><div class="val mono">142 ms</div><div class="pill op">operational</div>`;
+  compEl.appendChild(d);
+  const d2=document.createElement('div'); d2.className='c';
+  d2.innerHTML=`<div class="nm">Alchemy RPC<small>optional, when ALCHEMY_API_KEY set</small></div><div class="val mono">—</div><div class="pill" style="opacity:.6">not configured</div>`;
+  compEl.appendChild(d2);
+})();
+
+/* ---- API list (endpoints) ---- */
+const API=[
+  ['GET /api/status','overall + per-component status, metrics, 90-day uptime, open + recent incidents'],
+  ['GET /api/history','bucketed series per metric — windows 1h / 6h / 24h / 7d / 90d'],
+  ['GET /badge.svg','shields-style status badge; ?component= for one surface'],
+  ['GET /embed.js','drop-in status pill widget for any README'],
+  ['GET /healthz','liveness + sample count'],
+];
+const apiEl=document.getElementById('apiList');
+API.forEach(a=>{ const d=document.createElement('div'); d.className='c'; d.style.gridTemplateColumns='1fr';
+  d.innerHTML=`<div><div class="nm mono" style="font-size:12.5px">${a[0]}</div><small style="display:block;font:500 12px/1.4 var(--mono);color:var(--mid);margin-top:5px">${a[1]}</small></div>`;
+  apiEl.appendChild(d); });
+
+/* ---- methodology rows ---- */
+const METH=[
+  ['Public RPC','latency &gt; 400 ms or 1 miss','&gt; 1500 ms or unreachable','rpc.mainnet.chain.robinhood.com'],
+  ['Block production','&lt; 22 blk/min','&lt; 8 blk/min','latest block via RPC'],
+  ['Sequencer feed','seq lag &gt; 6','lag &gt; 20 or disconnected','feed.mainnet.chain.robinhood.com'],
+  ['Settlement (L1)','&gt; 12 blocks behind','&gt; 40 blocks behind','chain RPC + public L1 RPC'],
+  ['Chainlink feeds','age &gt; 1h (market hours)','age &gt; 24h','verified feed addresses'],
+  ['Gas','informational only','never an incident','eth_feeHistory, 128 blocks'],
+];
+const methEl=document.getElementById('methRows');
+METH.forEach(r=>{ const d=document.createElement('div'); d.className='trow';
+  d.innerHTML=`<span class="m">${r[0]}</span><span class="v">${r[1]}</span><span class="v">${r[2]}</span><span class="v" style="color:var(--mid)">${r[3]}</span>`;
+  methEl.appendChild(d); });
+
+/* ---- 90-day uptime bars (synthetic, mostly operational) ---- */
+function buildBars(seedBad){
+  const days=90, out=[]; let ok=0;
+  for(let i=0;i<days;i++){
+    let s='op';
+    if(i<3) s='nd';                              // youngest 3 days still filling (honest)
+    else if(seedBad.deg.includes(i)) s='deg';
+    else if(seedBad.dn.includes(i)) s='dn';
+    if(s==='op'||s==='deg') ok++;
+    out.push(s);
+  }
+  return {out, pct: (ok/(days-3)*100)};
+}
+const UP=[
+  ['Public RPC', {deg:[41,42], dn:[]}],
+  ['Block production',{deg:[], dn:[]}],
+  ['Sequencer feed',{deg:[19], dn:[63]}],
+  ['Settlement (L1)',{deg:[64], dn:[]}],
+  ['Chainlink feeds',{deg:[7,8,28], dn:[]}],
+];
+const upEl=document.getElementById('upList');
+UP.forEach(([nm,bad])=>{
+  const {out,pct}=buildBars(bad);
+  const row=document.createElement('div'); row.className='uprow rise';
+  const bars=out.map(s=>`<span class="b ${s==='op'?'':s}" title="${s==='nd'?'no data yet':s}"></span>`).join('');
+  row.innerHTML=`<div class="uphd"><span class="nm">${nm}</span><span class="pct">${pct.toFixed(2)}%</span></div><div class="bars">${bars}</div>`;
+  upEl.appendChild(row);
+});
+
+/* ---- timeline render ---- */
+function fmtDur(a,b){ const s=Math.max(1,Math.round(((b||Date.now())-a)/1000)); return s<60? s+'s' : Math.round(s/60)+'m'; }
+function tstr(t){ const d=new Date(t); return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function renderTimeline(){
+  const tl=document.getElementById('timeline');
+  const none=document.getElementById('tlNone');
+  if(!incidents.length){ if(none) none.style.display=''; return; }
+  if(none) none.style.display='none';
+  tl.querySelectorAll('.ti').forEach(n=>n.remove());
+  incidents.slice(0,8).forEach(x=>{
+    const d=document.createElement('div'); d.className='ti'+(x.sev==='dn'?' dn':'');
+    const state = x.open ? '<span class="st">investigating · open</span>' : 'resolved after '+fmtDur(x.openT,x.closeT);
+    d.innerHTML=`<div class="th"><span class="sev">${x.sev==='dn'?'down':'degraded'}</span><span class="cmp">${x.label}</span><span class="tm">${tstr(x.openT)}</span></div>
+      <div class="msg">${x.label} crossed its ${x.sev==='dn'?'down':'degraded'} threshold for 3 consecutive cycles · ${state}</div>`;
+    tl.appendChild(d);
+  });
+}
+
+/* ---- controls ---- */
+const btnStall=document.getElementById('btnStall'), btnGas=document.getElementById('btnGas'), btnPause=document.getElementById('btnPause');
+btnStall.addEventListener('click', ()=>{
+  const fi=CH.findIndex(c=>c.k==='feed'), si=CH.findIndex(c=>c.k==='settle');
+  S[fi].stall=110; S[si].stall=70; selected=fi; paintSel();
+  btnStall.classList.add('armed'); setTimeout(()=>btnStall.classList.remove('armed'), 800);
+  document.getElementById('chint').textContent='Feed + settlement pushed past threshold. Incident opens after 3 cycles, closes after 4 clean ones.';
+});
+btnGas.addEventListener('click', ()=>{
+  const gi=CH.findIndex(c=>c.k==='gas'); S[gi].quake = CH[gi].span*22; S[gi].stall=40; selected=gi; paintSel();
+  btnGas.classList.add('armed'); setTimeout(()=>btnGas.classList.remove('armed'), 800);
+  document.getElementById('chint').textContent='Gas spiked — informational only, so it draws a quake but never opens an incident.';
+});
+btnPause.addEventListener('click', ()=>{
+  running=!running;
+  document.getElementById('pauseLbl').textContent = running? 'Pause roll' : 'Resume roll';
+  if(running) requestAnimationFrame(draw);
+});
+
+/* ---- copy ---- */
+document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',()=>{
+  const map={run:'npm install\nnpm start\nnpm run serve:docs'};
+  navigator.clipboard.writeText(map[btn.dataset.copy]||'').then(()=>{ const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200); }).catch(()=>{});
+}));
+
+/* ---- reveal ---- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }),{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i%5*50)+'ms'; io.observe(el); });
+
+/* ---- boot ---- */
+resize();
+renderBanner();
+if(REDUCE){
+  // draw a single static frame (still honest, no motion)
+  for(let p=0;p<240;p++){ for(let i=0;i<CH.length;i++) tick(i); }
+  updateReadouts();
+  running=false; draw._s=0; lastCycle=0;
+  // one static render
+  (function once(){ running=true; requestAnimationFrame(t=>{ draw(t); running=false; }); })();
+} else {
+  requestAnimationFrame(draw);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>404 · hood-status</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23e9e6df'/><path d='M2 16 H8 L11 8 L15 24 L19 12 L22 16 H30' fill='none' stroke='%2314130f' stroke-width='2' stroke-linejoin='round'/></svg>" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--paper:#e9e6df;--ink:#14130f;--mid:#6b6862;--line:rgba(20,19,15,.34);
+    --mono:ui-monospace,"SFMono-Regular","Menlo","Consolas",monospace;
+    --sans:"Helvetica Neue","Inter","Arial",system-ui,sans-serif}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);min-height:100svh;
+    display:flex;align-items:center;justify-content:center;padding:32px}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(20,19,15,.028) 0 1px,transparent 1px 5px);mix-blend-mode:multiply;opacity:.5}
+  .w{max-width:560px;position:relative;z-index:2}
+  .n{font:600 11px/1 var(--mono);letter-spacing:.3em;text-transform:uppercase;color:var(--mid);
+    display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  .n::after{content:"";flex:1;height:1px;background:var(--line)}
+  svg.flat{width:100%;height:70px;display:block;margin:8px 0 4px}
+  svg.flat path{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+  h1{font:700 clamp(56px,16vw,130px)/.85 var(--sans);letter-spacing:-.04em}
+  p{margin-top:18px;color:#33302a;font-size:18px;line-height:1.5;max-width:46ch}
+  a{display:inline-block;margin-top:28px;border:1px solid var(--ink);color:var(--ink);text-decoration:none;
+    font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;padding:15px 22px;transition:background .25s,color .25s}
+  a:hover{background:var(--ink);color:var(--paper)}
+</style>
+</head>
+<body>
+  <div class="w">
+    <div class="n">404 · flatline</div>
+    <svg class="flat" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 35 H400"/></svg>
+    <h1>404</h1>
+    <p>No trace on this channel. The page you asked for isn't on the roll, and a flat line is the one reading we never fake.</p>
+    <a href="/hood-status/">← back to the seismograph</a>
+  </div>
+</body>
+</html>
