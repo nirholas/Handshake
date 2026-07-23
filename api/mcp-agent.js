@@ -63,7 +63,13 @@ export default wrap(async (req, res) => {
 	// open — see reservePaymentProof.
 	let releaseProof = async () => {};
 	if (x402Ctx) {
-		const guard = await reservePaymentProof('/api/mcp-agent', req.headers['x-payment']);
+		const guard = await reservePaymentProof(
+			'/api/mcp-agent',
+			// authenticateRequest accepts BOTH payment headers (v1 X-PAYMENT and
+			// the v2 payment-signature dialect); the guard must key on whichever
+			// one carried the proof or a v2 replay slips past it unclaimed.
+			req.headers['x-payment'] || req.headers['payment-signature'],
+		);
 		if (!guard.ok) {
 			return sendJsonRpcError(res, null, -32000, 'payment_in_flight', { retry_after: 1 });
 		}

@@ -42,10 +42,12 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
+	claimSlotOrRespond,
 	extractIdFromHeader,
 	hashPaymentProof,
 	hashRequestPayload,
 	paymentIdentifierExtension,
+	releaseSlot,
 	storeResponse,
 	writeCachedResponse,
 	writeConflict,
@@ -329,6 +331,7 @@ export default wrap(async (req, res) => {
 	let paymentId = null;
 	let payloadHash = null;
 	let paymentHash = null;
+	let ownsReservation = false;
 	if (!bypass) {
 		const clientPaymentId = extractIdFromHeader(paymentHeader);
 		payloadHash = hashRequestPayload({ method: 'POST', url: ROUTE, body: rawBody });
@@ -345,6 +348,12 @@ export default wrap(async (req, res) => {
 					reason: lookup.reason,
 				});
 			}
+			// Close the check-then-act window: N concurrent requests carrying the
+			// same payment could all miss the cache, all launch a pipeline, and
+			// all settle before the first response was stored. The NX claim
+			// admits exactly one; the rest are answered inside claimSlotOrRespond.
+			ownsReservation = await claimSlotOrRespond({ res, route: ROUTE, paymentId, payloadHash, paymentHash });
+			if (!ownsReservation) return;
 		}
 	}
 
@@ -353,6 +362,7 @@ export default wrap(async (req, res) => {
 		try {
 			verified = await verifyPayment({ paymentHeader, requirements });
 		} catch (err) {
+			if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 			if (err.status === 402) return send402(res, { ...challenge, error: err.message });
 			return error(res, err.status || 502, err.code || 'verify_failed', err.message);
 		}
@@ -369,6 +379,7 @@ export default wrap(async (req, res) => {
 			options: plan.options,
 		});
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return respondStageError(res, err);
 	}
 
@@ -377,6 +388,7 @@ export default wrap(async (req, res) => {
 		try {
 			settled = await settlePayment({ verified });
 		} catch (err) {
+			if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 			return error(res, err.status || 502, err.code || 'settle_failed', err.message);
 		}
 		res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
@@ -396,6 +408,7 @@ export default wrap(async (req, res) => {
 		network: env.X402_PAY_TO_SOLANA ? NETWORK_SOLANA_MAINNET : NETWORK_BASE_MAINNET,
 	});
 	if (!job) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(
 			res,
 			503,

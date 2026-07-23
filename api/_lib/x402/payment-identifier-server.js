@@ -181,6 +181,41 @@ export async function releaseSlot({ route, paymentId }) {
 	await cache.release(route, paymentId);
 }
 
+// Claim the in-flight slot for a payment, answering the request directly when
+// the slot is already taken. The hand-rolled paid endpoints (api/x402/*.js)
+// run check-then-act: cache lookup, verify, paid work, settle, THEN store.
+// Without this claim, N concurrent requests carrying the same X-PAYMENT all
+// miss the cache, all run the paid work, and all settle before the first
+// response is stored — one payment, N deliveries. paidEndpoint closes the
+// same window with reserveSlot at api/_lib/x402-paid-endpoint.js.
+//
+// Returns true when THIS request owns the slot and may proceed; false when a
+// response was already written (cached replay, payload conflict, or another
+// request in flight) and the caller must return immediately. Every failure
+// return after a successful claim must releaseSlot() so a transient error
+// never locks a legitimate payer out of retrying; the success path needs no
+// release because storeResponse() overwrites the slot with the cached entry.
+export async function claimSlotOrRespond({ res, route, paymentId, payloadHash, paymentHash, ttlSeconds }) {
+	const owns = await reserveSlot({ route, paymentId, ttlSeconds });
+	if (owns) return true;
+	const recheck = await checkCache({ route, paymentId, payloadHash, paymentHash });
+	if (recheck.kind === 'hit') {
+		writeCachedResponse(res, recheck.entry);
+		return false;
+	}
+	if (recheck.kind === 'conflict') {
+		writeConflict(res, {
+			route,
+			attemptedHash: recheck.attemptedHash,
+			existingHash: recheck.existingHash,
+			reason: recheck.reason,
+		});
+		return false;
+	}
+	writeInflight(res);
+	return false;
+}
+
 // Always-on replay guard for endpoints that hand-roll the x402 dance (the MCP
 // servers, launchpad/invoke) instead of using paidEndpoint(). paidEndpoint
 // closes the verify→deliver→settle window with a proof-hash reservation; this is

@@ -190,6 +190,25 @@ export async function consumeIntent(intentId) {
 }
 
 /**
+ * Undo a consumeIntent() win when the paid work then fails. Atomically flips
+ * the intent back to 'paid' (only a row currently 'consumed' transitions) so
+ * the buyer can retry instead of losing a paid intent to a transient handler
+ * error. Pair with consume-first delivery flows: consume as the single-use
+ * lock, execute, and releaseIntent() on the error path.
+ *
+ * @returns {Promise<boolean>} true if this call performed the revert.
+ */
+export async function releaseIntent(intentId) {
+	const rows = await sql`
+		update agent_payment_intents
+		set status = 'paid'
+		where id = ${intentId} and status = 'consumed'
+		returning id
+	`;
+	return rows.length > 0;
+}
+
+/**
  * Helper: respond with the manifest only (no 402), for prefetch/discovery
  * via `GET /api/agents/:id/x402/:skill/manifest`.
  */

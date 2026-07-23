@@ -38,10 +38,12 @@ import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
+	claimSlotOrRespond,
 	extractIdFromHeader,
 	hashPaymentProof,
 	hashRequestPayload,
 	paymentIdentifierExtension,
+	releaseSlot,
 	storeResponse,
 	writeCachedResponse,
 	writeConflict,
@@ -293,6 +295,11 @@ export default wrap(async (req, res) => {
 	// dedup key (reproducible only by the original payer), making replay
 	// protection unconditional. Same idiom as api/_lib/x402-paid-endpoint.js.
 	const paymentId = clientPaymentId || (paymentHash ? `proof:${paymentHash}` : null);
+	// Close the check-then-act window: N concurrent requests carrying the same
+	// payment could all miss the cache, all run the paid work, and all settle
+	// before the first response was stored. The NX claim admits exactly one;
+	// the rest are answered inside claimSlotOrRespond (replay/conflict/in-flight).
+	let ownsReservation = false;
 	if (paymentId) {
 		const lookup = await checkCache({ route: ROUTE, paymentId, payloadHash, paymentHash });
 		if (lookup.kind === 'hit') return writeCachedResponse(res, lookup.entry);
@@ -304,25 +311,34 @@ export default wrap(async (req, res) => {
 				reason: lookup.reason,
 			});
 		}
+		ownsReservation = await claimSlotOrRespond({ res, route: ROUTE, paymentId, payloadHash, paymentHash });
+		if (!ownsReservation) return;
 	}
 
 	let verified;
 	try {
 		verified = await verifyPayment({ paymentHeader, requirements });
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		if (err.status === 402) return send402(res, { ...challenge, error: err.message });
 		return error(res, err.status || 502, err.code || 'verify_failed', err.message);
 	}
 
 	const mint = String(req.query?.mint || '').trim();
-	if (!mint) return error(res, 400, 'missing_mint', 'query param "mint" is required');
-	if (!BASE58_RE.test(mint))
+	if (!mint) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
+		return error(res, 400, 'missing_mint', 'query param "mint" is required');
+	}
+	if (!BASE58_RE.test(mint)) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(res, 400, 'invalid_mint', 'mint must be a base58 SPL address (32–44 chars)');
+	}
 
 	let result;
 	try {
 		result = await buildMesh(mint);
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(res, err.status || 500, err.code || 'internal_error', err.message);
 	}
 
@@ -330,6 +346,7 @@ export default wrap(async (req, res) => {
 	try {
 		settled = await settlePayment({ verified });
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
 	}
 

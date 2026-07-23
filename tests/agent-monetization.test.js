@@ -47,6 +47,19 @@ vi.mock('../api/_lib/csrf.js', () => ({
 	generateToken: vi.fn(async () => 'test-csrf-token'),
 }));
 
+// skill-runtime only runs for skills NOT in the handler's built-in HANDLERS
+// map (the tests all use the built-in 'echo' except the consume-first revert
+// case, which drives this mock to a throw).
+const runtimeState = { fail: false };
+vi.mock('../api/_lib/skill-runtime.js', () => ({
+	makeRuntime: vi.fn(() => ({
+		invoke: vi.fn(async () => {
+			if (runtimeState.fail) throw new Error('provider down');
+			return { ok: true };
+		}),
+	})),
+}));
+
 // ── Handler imports (after mocks) ─────────────────────────────────────────────
 
 const { default: pricingSkillHandler } = await import('../api/agents/_id/pricing/[skill].js');
@@ -406,6 +419,9 @@ describe('Revenue Attribution', () => {
 			payload: null,
 			end_time: null,
 		}]);
+		// consumeIntent UPDATE ... RETURNING id → this request wins the
+		// paid→consumed claim before the skill executes.
+		sqlState.queue.push([{ id: intentId }]);
 
 		const { status: first } = await invoke(x402Handler, {
 			method: 'POST',
@@ -428,6 +444,97 @@ describe('Revenue Attribution', () => {
 			body: { agent_id: agent.id, skill: 'echo', args: {} },
 		});
 		expect(second).toBe(402);
+	});
+
+	// ── consume-first single-use lock (2026-07-23 audit) ─────────────────────
+	// The handler used to execute the skill BEFORE consuming the intent: two
+	// concurrent invokes both passed verifyPaid and BOTH delivered the paid
+	// work for one on-chain payment. The atomic paid→consumed transition now
+	// happens first; only the winner executes.
+
+	it('concurrent loser of the paid→consumed race gets 409 and the skill never executes', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+		const intentId = 'intent-race-001';
+
+		sqlState.queue.push([agent]);
+		sqlState.queue.push([]); // priceFor → meta fallback
+		sqlState.queue.push([]); // hasSkillAccess → x402 path
+		sqlState.queue.push([{
+			id: intentId,
+			agent_id: agent.id,
+			currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			amount: '1000000',
+			status: 'paid',
+			paid_at: new Date().toISOString(),
+			payload: null,
+			end_time: null,
+		}]);
+		// consumeIntent UPDATE ... RETURNING id → EMPTY: another in-flight
+		// request already won the transition.
+		sqlState.queue.push([]);
+
+		const { status, body } = await invoke(x402Handler, {
+			method: 'POST',
+			url: '/api/agents/x402/invoke',
+			headers: { 'x-payment-intent': intentId },
+			body: { agent_id: agent.id, skill: 'echo', args: {} },
+		});
+
+		expect(status).toBe(409);
+		expect(body.error).toBe('payment_in_flight');
+		// No revenue insert may happen for the loser.
+		expect(sqlState.calls.some((c) => String(c.query).includes('agent_revenue_events'))).toBe(false);
+	});
+
+	it('a handler failure after winning the claim restores the intent to paid', async () => {
+		// 'summarize' must be DECLARED on the agent or invoke 404s at the
+		// unknown-skill gate before ever reaching the payment path.
+		const { agent, session } = createTestAgent({ skills: ['summarize'] });
+		authState.session = session;
+		const intentId = 'intent-revert-001';
+		runtimeState.fail = true;
+
+		sqlState.queue.push([agent]);
+		sqlState.queue.push([]); // priceFor → meta fallback
+		sqlState.queue.push([]); // hasSkillAccess → x402 path
+		sqlState.queue.push([{
+			id: intentId,
+			agent_id: agent.id,
+			currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			amount: '1000000',
+			status: 'paid',
+			paid_at: new Date().toISOString(),
+			payload: null,
+			end_time: null,
+		}]);
+		sqlState.queue.push([{ id: intentId }]); // consumeIntent wins
+		sqlState.queue.push([{ id: intentId }]); // releaseIntent reverts consumed→paid
+
+		try {
+			await invoke(x402Handler, {
+				method: 'POST',
+				url: '/api/agents/x402/invoke',
+				headers: { 'x-payment-intent': intentId },
+				// 'summarize' is not a built-in handler → executeSkill goes through
+				// the mocked runtime, which throws.
+				body: { agent_id: agent.id, skill: 'summarize', args: {} },
+			});
+		} catch {
+			// invoke() may surface the 500 envelope as a thrown error depending on
+			// the wrap() mapping; the assertions below target the SQL trail.
+		} finally {
+			runtimeState.fail = false;
+		}
+
+		const updates = sqlState.calls
+			.map((c) => String(c.query))
+			.filter((q) => q.includes('update agent_payment_intents'));
+		expect(updates).toHaveLength(2);
+		expect(updates[0]).toContain("set status = 'consumed'");
+		expect(updates[1]).toContain("set status = 'paid'");
+		// No revenue for a call that never delivered.
+		expect(sqlState.calls.some((c) => String(c.query).includes('agent_revenue_events'))).toBe(false);
 	});
 });
 

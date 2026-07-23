@@ -39,10 +39,12 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
+	claimSlotOrRespond,
 	extractIdFromHeader,
 	hashPaymentProof,
 	hashRequestPayload,
 	paymentIdentifierExtension,
+	releaseSlot,
 	storeResponse,
 	writeCachedResponse,
 	writeConflict,
@@ -293,11 +295,19 @@ async function handlePurchase(req, res, address) {
 		});
 	}
 
+	// Close the check-then-act window: N concurrent requests carrying the same
+	// payment could all miss the cache, all verify, and all race reserveForPurchase
+	// (the loser strands a reservation on a payment that never settles). The NX
+	// claim admits exactly one; the rest are answered inside claimSlotOrRespond.
+	const ownsReservation = await claimSlotOrRespond({ res, route: ROUTE, paymentId, payloadHash, paymentHash });
+	if (!ownsReservation) return;
+
 	// 1) verify the payment.
 	let verified;
 	try {
 		verified = await verifyPayment({ paymentHeader, requirements });
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		if (err.status === 402) return send402(res, { ...challenge, error: err.message });
 		return error(res, err.status || 502, err.code || 'verify_failed', err.message);
 	}
@@ -309,9 +319,11 @@ async function handlePurchase(req, res, address) {
 	try {
 		reservation = await reserveForPurchase(address, { paymentId, purchaser });
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(res, 502, 'reserve_failed', err.message);
 	}
 	if (!reservation.ok) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		const code = reservation.reason === 'not_found' ? 404 : 409;
 		return error(res, code, 'unavailable', `address ${address} could not be reserved (${reservation.reason}) — it may have just sold`);
 	}
@@ -322,11 +334,15 @@ async function handlePurchase(req, res, address) {
 	let bundle;
 	try {
 		const peek = await peekReservedSecret(address, { paymentId });
-		if (!peek.ok) return error(res, 500, 'reveal_failed', `secret not retrievable (${peek.reason})`);
+		if (!peek.ok) {
+			if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
+			return error(res, 500, 'reveal_failed', `secret not retrievable (${peek.reason})`);
+		}
 		bundle = JSON.parse(await openSecret(peek.ciphertext, peek.scheme));
 	} catch (err) {
 		// Decrypt/KMS failure BEFORE settle: don't charge. Reservation is left in
 		// place (buyer's payment can be retried against the same reserved row).
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(res, 502, 'decrypt_failed', 'could not decrypt the stored key — not charged, retry shortly');
 	}
 
@@ -335,6 +351,7 @@ async function handlePurchase(req, res, address) {
 	try {
 		settled = await settlePayment({ verified });
 	} catch (err) {
+		if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
 	}
 
