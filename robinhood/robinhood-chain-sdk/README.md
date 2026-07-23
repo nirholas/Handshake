@@ -18,6 +18,16 @@ Odyssey, and the raw sequencer firehose.
 
 Docs: **https://nirholas.github.io/robinhood-chain-sdk/** · API reference: `/api` on the docs site
 
+## Website
+
+A single-file, zero-dependency landing page lives in [`docs/`](./docs) — a **method x-ray**: click any SDK call and it peels open to the exact on-chain machinery underneath (real Multicall3 `aggregate3`, ABI selectors, `eth_call`, live chain-4663 addresses). It opens straight from `docs/index.html` (no build step) and deploys to GitHub Pages or any static host (output directory `docs`):
+
+[![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/robinhood-chain-sdk)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/robinhood-chain-sdk)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/robinhood-chain-sdk)
+
+Live: **https://nirholas.github.io/robinhood-chain-sdk/**
+
 ## Install
 
 ```bash
