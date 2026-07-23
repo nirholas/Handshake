@@ -38,7 +38,7 @@ Fingerspelling spells English words letter by letter; it is not grammatical ASL,
 ## Roadmap
 
 1. **Lexical sign dictionary** — captured clips (commissioned signers, community capture through [Motion Swap](https://three.ws/motion-swap), permissively licensed video) served as a `sign-language` library category and fed to `compileUtterance` so common words are signed, not spelled.
-2. **Sign recognition** — webcam ASL input transcribed to text for the chat (the reverse direction), so signed conversations work both ways.
+2. **Sign recognition** — webcam ASL input transcribed to text for the chat (the reverse direction), so signed conversations work both ways. The recognition worker is built ([workers/model-asl-recognition](../workers/model-asl-recognition)): continuous fingerspelling transcription on CPU using the Kaggle-2023 1st-place model (Apache-2.0 weights, CC BY 4.0 corpus), with landmarks extracted in the browser so video never leaves the device. Remaining: deploy plus the webcam capture UI in chat.
 3. **Non-manual markers** — eyebrow and mouth blendshape tracks alongside the hand tracks.
 4. **Standalone package** — the engines are platform-free by design and will ship as an npm package plus reference integration.
 
