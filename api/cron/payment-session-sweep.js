@@ -24,9 +24,17 @@ export const maxDuration = 30;
 
 const BATCH_LIMIT = Number(process.env.PAYMENT_SESSION_SWEEP_BATCH) || 100;
 
-function requireCron(req, res) {
+export function requireCron(req, res) {
 	const secret = process.env.CRON_SECRET;
-	if (!secret) return false; // allow in dev if no secret set
+	if (!secret) {
+		// Fail closed, same as the rest of /api/cron: an unset CRON_SECRET must
+		// never silently open the endpoint. This sweep moves money (it refunds
+		// session budgets into credit balances), so a misconfigured deploy
+		// would otherwise expose unauthenticated money-moving on demand.
+		res.writeHead(503, { 'content-type': 'application/json' });
+		res.end(JSON.stringify({ error: 'not_configured', error_description: 'CRON_SECRET unset' }));
+		return true; // handled
+	}
 	const provided = req.headers['x-cron-secret'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
 	if (!provided || !constantTimeEquals(provided, secret)) {
 		res.writeHead(401, { 'content-type': 'application/json' });
