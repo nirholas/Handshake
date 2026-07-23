@@ -1,122 +1,639 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>hood-alerts · Robinhood Chain alert bots</title>
-  <meta name="description" content="Real-time Telegram, Discord, and X (Twitter) alerts for Robinhood Chain (4663): memecoin launches, graduations, whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings." />
-  <link rel="preconnect" href="https://rpc.mainnet.chain.robinhood.com" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-alerts: set the wire, watch it fire</title>
+<meta name="description" content="Real-time alerts for Robinhood Chain (chain 4663). Set the rules with physical faders and switches: whale size, premium band, which detectors run. Synthetic chain events fire down the wire in real time and stack into a live ticker in front of you. Telegram and Discord bots, x402 USDG premium." />
+<link rel="canonical" href="https://nirholas.github.io/hood-alerts/" />
+<meta name="theme-color" content="#0b0b0c" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-alerts: the alert wire" />
+<meta property="og:description" content="Tune the alert rules on a physical console and watch Robinhood Chain events fire down the wire into a live ticker. Telegram + Discord bots on one detection engine." />
+<meta property="og:url" content="https://nirholas.github.io/hood-alerts/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="hood-alerts: the alert wire" />
+<meta name="twitter:description" content="Set the rules with faders and switches; watch Robinhood Chain alerts fire down the wire in real time. Telegram + Discord + x402 premium." />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><g fill='none' stroke='%23e9e6df' stroke-width='2' stroke-linecap='round'><path d='M3 16 L12 16 L15 8 L18 24 L21 16 L29 16'/></g><circle cx='24' cy='16' r='2.4' fill='%23e9e6df'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"hood-alerts","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js >= 20","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Real-time alert layer for Robinhood Chain (chain ID 4663): Telegram and Discord bots on one shared detection engine that watches launches, graduations, whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings. Free tier plus x402 USDG premium.","softwareVersion":"0.2.0","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"downloadUrl":"https://www.npmjs.com/package/hood-alerts","codeRepository":"https://github.com/nirholas/hood-alerts"}
+</script>
+<style>
+  :root{
+    --ink:#0b0b0c; --panel:#141417; --panel2:#191a1e; --paper:#e9e6df;
+    --graphite:#8b877f; --dim:#b3afa6;
+    --line:rgba(233,230,223,.14); --line2:rgba(233,230,223,.30); --line3:rgba(233,230,223,.55);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+  body{
+    background:var(--ink); color:var(--paper); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--paper); color:var(--ink)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  /* grain + scan on dark */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(233,230,223,.02) 0 1px,transparent 1px 3px);
+    opacity:.6;
+  }
+  .scan{position:fixed; left:0; right:0; height:2px; z-index:9998; pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(233,230,223,.16),transparent);
+    animation:scan 8s linear infinite; will-change:transform}
+  @keyframes scan{0%{transform:translateY(-10vh)}100%{transform:translateY(110vh)}}
+  @media(prefers-reduced-motion:reduce){.scan{display:none} *{animation-duration:.001s!important; transition-duration:.001s!important}}
+
+  /* rail */
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--line); background:var(--ink)}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite); position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--paper); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--paper); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--line2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--paper);border-color:var(--paper)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--paper);height:40px;top:0;
+    transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:720px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(58px,9vh,112px) clamp(20px,5vw,88px); border-bottom:1px solid var(--line)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:24px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+  .eyebrow .n{color:var(--paper)}
+  .live{display:inline-flex; align-items:center; gap:7px; color:var(--paper)}
+  .live .dot{width:7px;height:7px;border-radius:50%;background:var(--paper);animation:blink 1.4s steps(1) infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.95}
+  h1{font-size:clamp(38px,6vw,84px)}
+  h2{font-size:clamp(29px,4.8vw,60px)}
+  .lede{max-width:60ch; font-size:clamp(17px,1.7vw,23px); line-height:1.42; color:var(--dim)}
+
+  /* ============ WIRE (hero + signature interaction) ============ */
+  #wire{padding-top:clamp(48px,7vh,84px); padding-bottom:clamp(34px,5vh,64px)}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.04em; margin-bottom:16px; white-space:pre-wrap; min-height:1.7em}
+  @media(max-width:720px){.boot{font-size:10.5px; letter-spacing:0}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  .headline{max-width:16ch}
+  .headline .lo{color:var(--graphite)}
+  .sub{margin-top:16px; max-width:56ch; font-size:clamp(15px,1.45vw,20px); color:var(--dim)}
+
+  /* the live wire track */
+  .track{margin-top:clamp(26px,4vh,44px); position:relative; height:78px; border:1px solid var(--line2);
+    background:var(--panel); overflow:hidden}
+  .track .lane{position:absolute; left:0; right:0; top:50%; height:1px; background:var(--line); transform:translateY(-50%)}
+  .track .cap{position:absolute; top:50%; transform:translateY(-50%); font:600 9.5px/1.3 var(--mono);
+    letter-spacing:.16em; text-transform:uppercase; color:var(--graphite); z-index:3}
+  .track .cap.src{left:14px; max-width:120px}
+  .track .cap.dst{right:14px; text-align:right}
+  .track .node{position:absolute; top:50%; transform:translateY(-50%); width:9px; height:9px; z-index:3}
+  .track .node.src{left:96px; border:1.5px solid var(--line3); border-radius:50%}
+  .track .node.dst{right:150px; border:1.5px solid var(--line3)}
+  .gate{position:absolute; top:0; bottom:0; left:46%; width:0; z-index:2; border-left:1.6px dashed var(--line3);
+    transition:border-color .2s}
+  .gate.flash{border-left-color:var(--paper)}
+  .gate .lbl{position:absolute; bottom:6px; left:8px; white-space:nowrap; font:600 9px/1.3 var(--mono);
+    letter-spacing:.1em; text-transform:uppercase; color:var(--graphite)}
+  .gate .lbl b{color:var(--paper); font-weight:600}
+  .pulse{position:absolute; top:50%; left:96px; width:10px; height:10px; margin-top:-5px; z-index:4;
+    background:var(--paper); border-radius:50%; will-change:transform,opacity}
+  .pulse.fail{background:transparent; border:1.5px solid var(--line3)}
+  .meters{display:flex; gap:26px; margin-top:14px; font:600 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite)}
+  .meters b{color:var(--paper); font-weight:700; font-size:13px}
+
+  .rig{margin-top:clamp(22px,3.4vh,40px); display:grid; grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr); gap:clamp(20px,3vw,44px); align-items:stretch}
+  @media(max-width:900px){.rig{grid-template-columns:1fr; gap:22px}}
+
+  /* console */
+  .console{border:1px solid var(--line2); background:var(--panel); padding:20px 22px 24px}
+  .console .ch{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:20px}
+  .console .ch .t{font:600 10px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--graphite)}
+  .fader{margin-bottom:20px}
+  .fader .fl{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:11px}
+  .fader .fl .k{font:600 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
+  .fader .fl .v{font:700 16px/1 var(--mono); font-feature-settings:"zero"}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:2px; background:var(--line2); outline:none; cursor:grab; margin:8px 0}
+  input[type=range]:active{cursor:grabbing}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:14px; height:26px; background:var(--paper); border:0; cursor:grab}
+  input[type=range]::-moz-range-thumb{width:14px; height:26px; background:var(--paper); border:0; border-radius:0; cursor:grab}
+  input[type=range]:focus-visible{outline:1px solid var(--line3); outline-offset:6px}
+  .switches{border-top:1px solid var(--line); padding-top:18px; display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .sw{appearance:none; border:1px solid var(--line2); background:transparent; color:var(--paper);
+    display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 13px; cursor:pointer;
+    font:600 11px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; transition:background .2s,border-color .2s}
+  .sw:hover{border-color:var(--line3)}
+  .sw .st{font-size:9px; letter-spacing:.14em; color:var(--graphite); border:1px solid var(--line2); padding:4px 6px}
+  .sw[aria-pressed="true"]{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+  .sw[aria-pressed="true"] .st{color:var(--ink); border-color:rgba(11,11,12,.3)}
+  .sw .lock{font-size:8px; letter-spacing:.1em; color:var(--graphite)}
+  .sw[aria-pressed="true"] .lock{color:rgba(11,11,12,.55)}
+
+  /* ticker */
+  .ticker{border:1px solid var(--line2); background:var(--panel); display:flex; flex-direction:column; min-height:340px}
+  .ticker .th{display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); flex:0 0 auto}
+  .ticker .th .t{font:600 10px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--graphite)}
+  .feed{position:relative; overflow:hidden; flex:1 1 auto; padding:6px 0}
+  .card{display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; padding:13px 18px;
+    border-bottom:1px solid var(--line); animation:drop .5s var(--ease)}
+  .card:last-child{border-bottom:0}
+  @keyframes drop{from{opacity:0; transform:translateY(-10px)}to{opacity:1; transform:none}}
+  .card .g{width:34px; height:34px; border:1px solid var(--line2); display:flex; align-items:center; justify-content:center;
+    font:700 11px/1 var(--mono); letter-spacing:.04em}
+  .card .body .t{font:600 14.5px/1.25 var(--grot); letter-spacing:-.01em}
+  .card .body .s{font:500 11px/1.3 var(--mono); color:var(--graphite); margin-top:4px; letter-spacing:.02em}
+  .card .r{text-align:right; white-space:nowrap}
+  .card .r .val{font:700 14px/1 var(--mono); font-feature-settings:"zero"}
+  .card .r .pl{display:inline-block; margin-top:7px; font:600 8.5px/1 var(--mono); letter-spacing:.12em;
+    border:1px solid var(--line2); padding:4px 6px; color:var(--graphite)}
+  .feed .empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;
+    text-align:center; font:500 13px/1.5 var(--mono); color:var(--graphite); letter-spacing:.02em}
+
+  .scrollcue{margin-top:clamp(18px,3.4vh,34px); font:600 10px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase; color:var(--graphite); display:flex; align-items:center; gap:10px}
+  .scrollcue i{display:block; width:26px; height:1px; background:var(--graphite); position:relative; overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--paper);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+  /* generic layouts */
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(30px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:34px}}
+  .rows{border-top:1px solid var(--line); margin-top:clamp(22px,4vh,44px)}
+  .rows .r{display:grid; grid-template-columns:200px 150px 1fr; gap:20px; padding:16px 0; border-bottom:1px solid var(--line); align-items:baseline}
+  @media(max-width:760px){.rows .r{grid-template-columns:1fr; gap:5px}}
+  .rows .r .nm{font:600 14px/1.3 var(--grot); letter-spacing:-.01em}
+  .rows .r .tp{font:600 10.5px/1.3 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--graphite)}
+  .rows .r .ds{font-size:15px; color:var(--dim); max-width:56ch}
+
+  .install{border:1px solid var(--line2); background:var(--panel); color:var(--paper); padding:22px;
+    font:500 13.5px/1.85 var(--mono); position:relative; overflow-x:auto; word-break:break-word}
+  .install .c,.install .p,.install .pc{display:block}
+  .install .c{color:var(--graphite); margin-top:15px}
+  .install .c:first-child{margin-top:0}
+  .install .p::before{content:"$ "; color:var(--graphite)}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid var(--line2);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(233,230,223,.1)}
+
+  .cmdbox{border:1px solid var(--line2); background:var(--panel); padding:22px 24px; font:500 13px/2.1 var(--mono)}
+  .cmdbox .l{display:grid; grid-template-columns:150px 1fr; gap:16px; padding:5px 0}
+  @media(max-width:560px){.cmdbox .l{grid-template-columns:1fr; gap:2px; padding:8px 0}}
+  .cmdbox .l .cmd{color:var(--paper)}
+  .cmdbox .l .exp{color:var(--graphite)}
+
+  /* three transports */
+  .trio{display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--line2); margin-top:12px}
+  @media(max-width:820px){.trio{grid-template-columns:1fr}}
+  .trio .tp{padding:24px 22px 26px; border-right:1px solid var(--line)}
+  .trio .tp:last-child{border-right:0}
+  @media(max-width:820px){.trio .tp{border-right:0; border-bottom:1px solid var(--line)}.trio .tp:last-child{border-bottom:0}}
+  .trio .tp .bd{font:600 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--graphite); margin-bottom:14px}
+  .trio .tp h3{font:700 22px/1.05 var(--grot); letter-spacing:-.02em; margin-bottom:10px}
+  .trio .tp p{font-size:14.5px; color:var(--dim); line-height:1.5}
+  .trio .tp .tag{display:inline-block; margin-top:14px; font:600 9.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--line2); padding:6px 9px; color:var(--graphite)}
+
+  /* pricing */
+  .price{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line2); margin-top:12px}
+  @media(max-width:640px){.price{grid-template-columns:1fr}}
+  .price .col{padding:26px 24px}
+  .price .col.pro{background:var(--panel); border-left:1px solid var(--line)}
+  @media(max-width:640px){.price .col.pro{border-left:0; border-top:1px solid var(--line)}}
+  .price .col .tier{font:600 11px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--graphite); margin-bottom:16px}
+  .price .col .amt{font:700 40px/.9 var(--grot); letter-spacing:-.03em; margin-bottom:20px}
+  .price .col .amt small{font:500 13px/1 var(--mono); color:var(--graphite); letter-spacing:.04em}
+  .price ul{list-style:none}
+  .price li{font-size:14.5px; color:var(--dim); padding:9px 0 9px 22px; position:relative; border-top:1px solid var(--line)}
+  .price li:first-child{border-top:0}
+  .price li::before{content:"+"; position:absolute; left:0; color:var(--paper); font-family:var(--mono)}
+  .price li.no{color:var(--graphite)}
+  .price li.no::before{content:"×"; color:var(--graphite)}
+
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--line2); color:var(--paper); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease),border-color .25s}
+  .btn:hover{background:var(--paper); color:var(--ink); border-color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--paper); border-color:var(--line2)}
+
+  .note{margin-top:22px; border-left:2px solid var(--line3); padding:4px 0 4px 18px; font-size:14.5px; color:var(--dim); max-width:72ch; line-height:1.55}
+  .note b{color:var(--paper); font-weight:700}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--line2); transition:border-color .2s}
+  footer a:hover{border-color:var(--paper)}
+
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+</style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="wrap">
-      <span class="brand"><span class="dot"></span> hood-alerts</span>
-      <a class="link" href="index.html">Live feed</a>
-      <a class="link hide-sm" href="commands.html">Commands</a>
-      <a class="link" href="premium.html">Premium</a>
-      <a class="link hide-sm" href="self-host.html">Self-host</a>
-      <span class="spacer"></span>
-      <a class="gh" href="https://github.com/nirholas/hood-alerts" target="_blank" rel="noopener">GitHub</a>
-    </div>
-  </nav>
+<div class="scan" aria-hidden="true"></div>
 
-  <header class="hero">
-    <div class="wrap">
-      <span class="chip"><span class="live"></span> Live · Robinhood Chain · ID 4663</span>
-      <h1>Alerts for the chain that<br /><span class="grad">never sleeps.</span></h1>
-      <p class="sub">Telegram and Discord bots, plus auto-posting to X (Twitter), that watch Robinhood Chain in real time: launches, graduations, whale trades, Stock Token moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings.</p>
-      <div class="cta">
-        <a class="btn primary" href="commands.html">See the commands</a>
-        <a class="btn ghost" href="#live">Watch it live ↓</a>
+<nav class="rail" aria-label="Sections">
+  <b>hood·alerts</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#wire" aria-current="true">Wire</a>
+  <a class="stn" href="#detect">Detect</a>
+  <a class="stn" href="#bots">Bots</a>
+  <a class="stn" href="#premium">Premium</a>
+  <a class="stn" href="#host">Host</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
+</nav>
+
+<main>
+  <!-- ============ WIRE ============ -->
+  <section id="wire">
+    <p class="boot mono" id="boot"></p>
+    <div class="eyebrow"><span class="n">00</span> / THE ALERT WIRE · chain 4663 · <span class="live"><span class="dot"></span>live</span></div>
+    <h1 class="headline">Set the wire.<br><span class="lo">Watch it fire.</span></h1>
+    <p class="sub">One detection engine watches Robinhood Chain. You set the rules with physical faders and switches; matching events fire down the wire in real time and stack into the ticker. This is the same gate the Telegram and Discord bots run, made visible.</p>
+
+    <div class="track" id="track" aria-hidden="true">
+      <span class="cap src">detector</span>
+      <span class="node src"></span>
+      <span class="lane"></span>
+      <span class="gate" id="gate"><span class="lbl" id="gatelbl">gate</span></span>
+      <span class="node dst"></span>
+      <span class="cap dst">ticker &#8594;</span>
+    </div>
+    <div class="meters">
+      <span>fired <b id="m-fired">0</b></span>
+      <span>filtered <b id="m-filtered">0</b></span>
+      <span>rate <b id="m-rate">0</b>/min</span>
+    </div>
+
+    <div class="rig">
+      <div class="console" aria-label="Alert rule console">
+        <div class="ch"><span class="t">console · rules</span><span class="t">chain 4663</span></div>
+        <div class="fader">
+          <div class="fl"><span class="k">whale size ≥</span><span class="v" id="v-whale">$5.0k</span></div>
+          <input type="range" id="s-whale" min="1000" max="100000" step="1000" value="5000" aria-label="Whale trade size threshold in USD" />
+        </div>
+        <div class="fader">
+          <div class="fl"><span class="k">premium band ≥</span><span class="v" id="v-prem">3.0%</span></div>
+          <input type="range" id="s-prem" min="5" max="200" step="5" value="30" aria-label="Stock Token premium/discount band in percent" />
+        </div>
+        <div class="switches" id="switches">
+          <button class="sw" data-topic="launches" aria-pressed="true">launches<span class="st">on</span></button>
+          <button class="sw" data-topic="graduations" aria-pressed="true">graduations<span class="st">on</span></button>
+          <button class="sw" data-topic="whales" aria-pressed="true">whales<span class="st">on</span></button>
+          <button class="sw" data-topic="premiums" aria-pressed="false">premiums<span class="lock">pro</span><span class="st">off</span></button>
+          <button class="sw" data-topic="rugs" aria-pressed="false">rugs<span class="lock">pro</span><span class="st">off</span></button>
+          <button class="sw" data-topic="holders" aria-pressed="true">holders<span class="st">on</span></button>
+        </div>
+      </div>
+
+      <div class="ticker">
+        <div class="th"><span class="t">live ticker</span><span class="t"><span class="live"><span class="dot"></span>streaming</span></span></div>
+        <div class="feed" id="feed">
+          <div class="empty" id="empty">every switch is off. flip one to arm the wire.</div>
+        </div>
       </div>
     </div>
-  </header>
 
-  <section id="live">
-    <div class="wrap">
-      <div class="section-head">
-        <div class="kicker">Live premium detector</div>
-        <h2>What would be alerting right now</h2>
-        <p>The Stock Token arbitrage signal, computed in your browser from the public RPC. When a token's DEX mid drifts from its Chainlink oracle, premium subscribers get a card like this.</p>
+    <div class="scrollcue"><i></i> what it detects</div>
+  </section>
+
+  <!-- ============ DETECT ============ -->
+  <section id="detect">
+    <div class="eyebrow"><span class="n">01</span> / WHAT IT DETECTS</div>
+    <h2>Seven detectors,<br>one shared engine.</h2>
+    <p class="lede" style="margin-top:22px">Every event is deduped per fingerprint, routed through a premium / quiet-hours / digest gate, and rendered as a platform-native card with links back to the explorer and three.ws/markets/robinhood.</p>
+    <div class="rows" id="detectors"></div>
+  </section>
+
+  <!-- ============ BOTS ============ -->
+  <section id="bots">
+    <div class="eyebrow"><span class="n">02</span> / THREE TRANSPORTS · one router</div>
+    <h2>Telegram, Discord,<br>and X, off one gate.</h2>
+    <p class="lede" style="margin-top:22px">Both bots share one command router, so the UX is identical modulo native slash-command versus <span class="mono">/command arg</span> syntax. Leave a token unset and that transport simply stays dark; the engine and console transport keep running regardless.</p>
+
+    <div class="trio">
+      <div class="tp">
+        <div class="bd">01 · inbound</div>
+        <h3>Telegram</h3>
+        <p>Message the bot, <span class="mono">watch whales 10000</span>, done. Built on grammY; registers its command list on startup. In groups, mutating commands are admin-only.</p>
+        <span class="tag">grammY · two-way</span>
       </div>
-      <div class="feed-meta">
-        <span>Chain head <b id="live-block">…</b></span>
-        <span><b id="live-count">…</b> markets tracked</span>
-        <span>Updated <b id="live-updated">…</b></span>
+      <div class="tp">
+        <div class="bd">02 · inbound</div>
+        <h3>Discord</h3>
+        <p>Native slash commands, guild-visible immediately on startup. Built on discord.js; alerts render as embeds. Same router, same topics, same thresholds.</p>
+        <span class="tag">discord.js · slash</span>
       </div>
-      <div id="live-error" class="feed-error" style="display:none"></div>
-      <div id="live-cards" class="cards">
-        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      <div class="tp">
+        <div class="bd">03 · broadcast</div>
+        <h3>X (Twitter)</h3>
+        <p>Broadcast-only. Posts a fixed topic set via the official API v2 (OAuth1, signed in-house) or a self-hosted XActions session. Every post is compacted to 280 chars, URL never truncated.</p>
+        <span class="tag">official or xactions</span>
       </div>
-      <p class="feed-note">Read-only, live from <code>rpc.mainnet.chain.robinhood.com</code>. Prices are already Chainlink multiplier-adjusted. This is display data, not investment advice.</p>
+    </div>
+
+    <div class="cmdbox" style="margin-top:36px" aria-label="Bot commands">
+      <div class="l"><span class="cmd">watch &lt;what&gt; [n]</span><span class="exp">launches · graduations · whales [usd] · premiums [pct] · rugs [pct] · TICKER · 0xADDRESS</span></div>
+      <div class="l"><span class="cmd">unwatch &lt;what|all&gt;</span><span class="exp">stop watching a topic, or everything</span></div>
+      <div class="l"><span class="cmd">list</span><span class="exp">your active subscriptions</span></div>
+      <div class="l"><span class="cmd">threshold &lt;what&gt; &lt;n&gt;</span><span class="exp">change a subscription's threshold</span></div>
+      <div class="l"><span class="cmd">digest on|off [min]</span><span class="exp">batch alerts into digests (default 60 min)</span></div>
+      <div class="l"><span class="cmd">quiet &lt;from&gt; &lt;to&gt;</span><span class="exp">quiet hours in UTC, e.g. quiet 22 7</span></div>
+      <div class="l"><span class="cmd">premium</span><span class="exp">premium status and how to upgrade</span></div>
     </div>
   </section>
 
-  <section>
-    <div class="wrap">
-      <div class="section-head">
-        <div class="kicker">Real alerts, real chain</div>
-        <h2>Seven detectors, one stream</h2>
-        <p>Captured from live mainnet during the build. Each renders as an inline card in Telegram and a rich embed in Discord.</p>
+  <!-- ============ PREMIUM ============ -->
+  <section id="premium">
+    <div class="eyebrow"><span class="n">03</span> / FREE VS PREMIUM · x402 on-chain</div>
+    <div class="cols">
+      <div>
+        <h2>The arb signals<br>are paid.<br>The rest is free.</h2>
+        <p class="lede" style="margin-top:22px">The premium/discount arbitrage feed and the liquidity-pull rug warning are the premium detectors. Everything else runs free, forever. Premium is paid on Robinhood Chain itself via x402: sign a USDG authorization, and the entitlement activates only once the transfer settles on-chain. A signature alone buys nothing.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://www.npmjs.com/package/hood-alerts">npm</a>
+          <a class="btn" href="https://github.com/nirholas/hood-alerts">source</a>
+          <a class="btn" href="https://github.com/nirholas/hood402">hood402 · x402</a>
+        </div>
       </div>
-      <div class="cards">
-        <div class="card">
-          <div class="row"><span class="sym">New launch: on NOXA</span><span class="badge flat">launch</span></div>
-          <div class="prices"><span>Instant Uniswap v3 pool, no bonding curve</span><span>Creator, first pool, and block, the moment it lists</span></div>
-        </div>
-        <div class="card">
-          <div class="row"><span class="sym">Whale buy</span><span class="badge prem">≥ threshold</span></div>
-          <div class="prices"><span>Configurable USD floor, per-token or chain-wide</span><span>Odyssey bonding curve and Uniswap v3, valued in USD</span></div>
-        </div>
-        <div class="card">
-          <div class="row"><span class="sym">RKLB premium</span><span class="badge prem">+12.15%</span></div>
-          <div class="prices"><span>DEX mid <b>$75.32</b> vs Chainlink <b>$67.16</b></span><span>On-chain buyers paying above the oracle</span></div>
-        </div>
-        <div class="card">
-          <div class="row"><span class="sym">MSTR discount</span><span class="badge disc">-8.65%</span></div>
-          <div class="prices"><span>DEX mid <b>$85.81</b> vs Chainlink <b>$93.94</b></span><span>Trading below oracle on-chain</span></div>
-        </div>
-        <div class="card">
-          <div class="row"><span class="sym">Liquidity pull</span><span class="badge disc">rug warning</span></div>
-          <div class="prices"><span>Quote reserves dropped past your threshold</span><span>An early warning, minutes before the chart</span></div>
-        </div>
-        <div class="card">
-          <div class="row"><span class="sym">Holder milestone</span><span class="badge flat">1,000</span></div>
-          <div class="prices"><span>Crossed a holder-count milestone</span><span>Growth signal from Blockscout counters</span></div>
+      <div>
+        <div class="price">
+          <div class="col">
+            <div class="tier">free</div>
+            <div class="amt">$0</div>
+            <ul>
+              <li>3 subscriptions</li>
+              <li>Launches, graduations, whales</li>
+              <li>Price moves, holder milestones</li>
+              <li>Batched: one alert / 60s, rest fold into a digest</li>
+              <li class="no">Premium arb signal</li>
+              <li class="no">Liquidity-pull rug warning</li>
+            </ul>
+          </div>
+          <div class="col pro">
+            <div class="tier">premium</div>
+            <div class="amt">5 <small>USDG / 30 days</small></div>
+            <ul>
+              <li>Unlimited subscriptions</li>
+              <li>Real-time delivery (your quiet hours only)</li>
+              <li><b>premiums</b> Stock Token arb signal</li>
+              <li><b>rugs</b> liquidity-pull warning</li>
+              <li>Paid via x402 USDG, chain 4663</li>
+              <li>Settles on-chain before it activates</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section>
-    <div class="wrap">
-      <div class="section-head">
-        <div class="kicker">How it works</div>
-        <h2>One engine. Both platforms. Your rules.</h2>
+  <!-- ============ HOST ============ -->
+  <section id="host">
+    <div class="eyebrow"><span class="n">04</span> / SELF-HOST</div>
+    <div class="cols">
+      <div>
+        <h2>Runs with zero<br>config first.</h2>
+        <p class="lede" style="margin-top:22px">With no environment variables the engine still runs: detectors connect to the public Robinhood Chain RPC, alerts print as structured JSON on the console transport, and <span class="mono">/healthz</span> comes up on :8080. That is the smoke-test mode. Add a Telegram and/or Discord token to go live on those platforms.</p>
+        <div class="note">The console transport is not a fallback, it's the proof: a fresh self-host confirms the pipeline works on real chain events before you touch a bot token.</div>
       </div>
-      <div class="grid">
-        <div class="feat"><span class="tag">detect</span><h3>Every event, deduped</h3><p>A single stream consumer fans out to every subscriber with per-event dedup, so you hear about a launch once, not once per pool.</p></div>
-        <div class="feat"><span class="tag">route</span><h3>Thresholds you set</h3><p>Whale floors in USD, price moves in percent, premium and rug thresholds per subscription. Watch a ticker, a token address, or the whole chain.</p></div>
-        <div class="feat"><span class="tag">respect</span><h3>Quiet hours and digests</h3><p>Batch alerts into a digest, mute overnight in your timezone, and stay under a hard per-minute cap so you are never flooded.</p></div>
-        <div class="feat"><span class="tag">group</span><h3>Group-chat ready</h3><p>Add the bot to a Telegram group or Discord server; config commands are admin-only, alerts land for everyone.</p></div>
-        <div class="feat"><span class="tag">premium</span><h3>Arb and rug detectors</h3><p>The Stock Token premium/discount signal and the liquidity-pull rug warning are the premium tier. Free tier covers launches, whales, and moves.</p></div>
-        <div class="feat"><span class="tag">host</span><h3>One container</h3><p>Engine plus both bots plus a health endpoint in a single process. Deploy to Cloud Run with min-instances 1 and go.</p></div>
-        <div class="feat"><span class="tag">broadcast</span><h3>X (Twitter), your choice of mode</h3><p>Official X API v2 (OAuth1, your own developer app) or a free self-hosted <a href="https://github.com/nirholas/XActions" target="_blank" rel="noopener">xactions</a> instance — pick whichever fits, config-driven topics, no code changes.</p></div>
+      <div>
+        <div class="install">
+          <button class="copy">COPY</button><span class="c"># smoke test: console transport, no tokens</span><span class="p" id="cmd-host">npm install</span><span class="p">npm run dev</span><span class="c"># go live: fill in a bot token, then</span><span class="p">npm run build</span><span class="p">npm start</span><span class="c"># one container: engine + HTTP + both bots</span><span class="p">docker build -f hood-alerts/Dockerfile -t hood-alerts .</span>
+        </div>
+        <div class="cmdbox" style="margin-top:18px">
+          <div class="l"><span class="cmd">GET /</span><span class="exp">service metadata + endpoint list</span></div>
+          <div class="l"><span class="cmd">GET /healthz</span><span class="exp">uptime, last event, per-type counts</span></div>
+          <div class="l"><span class="cmd">GET /premium/status</span><span class="exp">tier + expiry for a chat</span></div>
+          <div class="l"><span class="cmd">POST /premium/activate</span><span class="exp">the x402 purchase flow (402 → settle → 200)</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">05</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>Point it at the chain.<br>Flip the switches.</h2>
+        <p class="lede" style="margin-top:22px">One long-running process holds the engine, the HTTP server, and both bots. Run it as a warm service with a volume at <span class="mono">/data</span> so subscriptions, entitlements, and the delivery log survive restarts. SIGTERM flushes pending digests before exit.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/hood-alerts#readme">read the docs</a>
+          <a class="btn" href="https://t.me/BotFather">create a bot</a>
+        </div>
+      </div>
+      <div>
+        <div class="install">
+          <button class="copy">COPY</button><span class="c"># from the parent robinhood/ directory</span><span class="p">docker build -f hood-alerts/Dockerfile \</span><span class="pc">  -t hood-alerts .</span><span class="c"># run as a warm service, volume at /data</span><span class="p">gcloud run deploy hood-alerts \</span><span class="pc">  --min-instances=1 --no-cpu-throttling \</span><span class="pc">  --port=8080</span>
+        </div>
       </div>
     </div>
   </section>
 
   <footer>
-    <div class="wrap">
-      <div>
-        <span class="brand"><span class="dot"></span> hood-alerts</span>
-        <p class="legal">Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons (with further limits in Canada, the UK, and Switzerland). hood-alerts displays public on-chain data only and does not offer, solicit, or facilitate any purchase of Stock Tokens. Not investment advice.</p>
-      </div>
-      <div>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></div>
+    <div class="big">hood-<br>alerts</div>
+    <div class="meta">
+      Robinhood Chain 4663 · Telegram · Discord · X<br>
+      <a href="https://github.com/nirholas/hood-alerts">github.com/nirholas/hood-alerts</a><br>
+      <a href="https://www.npmjs.com/package/hood-alerts">npmjs.com/package/hood-alerts</a><br>
+      MIT · built by <a href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
     </div>
   </footer>
+</main>
 
-  <script src="app.js"></script>
+<script>
+"use strict";
+
+/* ---------- boot line ---------- */
+(function boot(){
+  const el=document.getElementById('boot');
+  const line='● detection engine online · chain 4663 · public rpc · dedup + gate armed';
+  [...line].forEach((ch,i)=>{ const s=document.createElement('span'); s.textContent=ch; s.style.animationDelay=(i*12+120)+'ms'; el.appendChild(s); });
+})();
+
+/* ---------- console state ---------- */
+const state = {
+  whale: 5000, prem: 3.0,
+  topics: { launches:true, graduations:true, whales:true, premiums:false, rugs:false, holders:true },
+};
+const MEMES = ['DOGZ','PEPE4663','HOODCAT','NOXAINU','ODYSSEY','WIFHOOD','BONKR','GIGA','MOONPIG','FROGE'];
+const STOCKS = ['AAPL','TSLA','NVDA','GME','MSTR','COIN','SPY','AMZN'];
+const PLATS = ['TG','DC','X'];
+const rand = a => a[Math.floor(Math.random()*a.length)];
+const ri = (lo,hi) => Math.floor(Math.random()*(hi-lo+1))+lo;
+
+/* range faders */
+function paint(el){ const p=(el.value-el.min)/(el.max-el.min)*100; el.style.background=`linear-gradient(90deg,var(--paper) 0 ${p}%,var(--line2) ${p}% 100%)`; }
+const sWhale=document.getElementById('s-whale'), sPrem=document.getElementById('s-prem');
+const vWhale=document.getElementById('v-whale'), vPrem=document.getElementById('v-prem');
+function fmtK(n){ return n>=1000 ? '$'+(n/1000).toFixed(1)+'k' : '$'+n; }
+function syncWhale(){ state.whale=+sWhale.value; vWhale.textContent=fmtK(state.whale); paint(sWhale); updateGate(); }
+function syncPrem(){ state.prem=+sPrem.value/10; vPrem.textContent=state.prem.toFixed(1)+'%'; paint(sPrem); updateGate(); }
+sWhale.addEventListener('input', syncWhale);
+sPrem.addEventListener('input', syncPrem);
+
+/* switches */
+document.querySelectorAll('.sw').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const on = btn.getAttribute('aria-pressed')!=='true';
+    btn.setAttribute('aria-pressed', on);
+    btn.querySelector('.st').textContent = on?'on':'off';
+    state.topics[btn.dataset.topic]=on;
+    updateGate();
+  });
+});
+
+const gate=document.getElementById('gate'), gatelbl=document.getElementById('gatelbl');
+function updateGate(){
+  const active = Object.entries(state.topics).filter(([,v])=>v).map(([k])=>k);
+  gatelbl.innerHTML = active.length
+    ? `whale ≥ <b>${fmtK(state.whale)}</b> · prem ≥ <b>${state.prem.toFixed(1)}%</b> · ${active.length} on`
+    : 'all detectors off';
+  const anyOn = active.length>0;
+  const empty=document.getElementById('empty');
+  if(empty) empty.textContent = anyOn ? 'armed. waiting for the next matching event…' : 'every switch is off. flip one to arm the wire.';
+}
+
+/* ---------- event generation ---------- */
+function makeEvent(){
+  const pool=['launch','graduation','whale','premium','rug','holder'];
+  const kind=rand(pool);
+  if(kind==='launch'){ const lp=rand(['NOXA','The Odyssey']); return {kind, topic:'launches', tok:rand(MEMES), g:'LN', t:`New launch · ${rand(MEMES)}`, s:`${lp} · instant pool`, val:'LP live', pass: state.topics.launches}; }
+  if(kind==='graduation'){ return {kind, topic:'graduations', g:'GR', t:`Graduated · ${rand(MEMES)}`, s:'Odyssey curve → Uniswap v3', val:'migrated', pass: state.topics.graduations}; }
+  if(kind==='whale'){ const usd=ri(1,120)*1000; const side=rand(['buy','sell']); return {kind, topic:'whales', g:'WH', t:`Whale ${side} · ${rand(MEMES)}`, s:'chain-wide swap', val:'$'+(usd/1000).toFixed(0)+'k', pass: state.topics.whales && usd>=state.whale}; }
+  if(kind==='premium'){ const st=rand(STOCKS); const p=(Math.random()*24-12); return {kind, topic:'premiums', g:'PR', t:`${st} ${p>=0?'premium':'discount'}`, s:'DEX mid vs Chainlink', val:(p>=0?'+':'')+p.toFixed(1)+'%', pass: state.topics.premiums && Math.abs(p)>=state.prem}; }
+  if(kind==='rug'){ const pull=ri(22,80); return {kind, topic:'rugs', g:'RG', t:`Liquidity pull · ${rand(MEMES)}`, s:'quote reserves dropping', val:'-'+pull+'%', pass: state.topics.rugs}; }
+  const ms=rand(['1,000','10,000','25,000','100,000']); return {kind, topic:'holders', g:'HD', t:`${rand(MEMES)} crossed ${ms}`, s:'holder milestone', val:ms, pass: state.topics.holders};
+}
+
+/* ---------- the wire animation ---------- */
+const track=document.getElementById('track');
+const feed=document.getElementById('feed');
+let SRC_X=96, DST_X=0, GATE_X=0;
+function measure(){ const w=track.clientWidth; DST_X=w-160; GATE_X=w*0.46; }
+measure(); addEventListener('resize', measure);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let fired=0, filtered=0, times=[];
+const mFired=document.getElementById('m-fired'), mFiltered=document.getElementById('m-filtered'), mRate=document.getElementById('m-rate');
+
+function pushCard(ev){
+  const empty=document.getElementById('empty'); if(empty) empty.remove();
+  const c=document.createElement('div'); c.className='card';
+  const plat=rand(PLATS);
+  const now=new Date();
+  const ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  c.innerHTML = `<div class="g">${ev.g}</div>
+    <div class="body"><div class="t">${ev.t}</div><div class="s">${ev.s} · ${ts}</div></div>
+    <div class="r"><div class="val">${ev.val}</div><div class="pl">${plat}</div></div>`;
+  feed.prepend(c);
+  while(feed.querySelectorAll('.card').length>8){ feed.querySelector('.card:last-child').remove(); }
+  fired++; mFired.textContent=fired;
+  times.push(Date.now()); times=times.filter(t=>Date.now()-t<60000);
+  mRate.textContent = times.length;
+}
+
+function spawnPulse(ev){
+  if(reduce){ if(ev.pass) pushCard(ev); else { filtered++; mFiltered.textContent=filtered; } return; }
+  const d=document.createElement('span'); d.className='pulse'+(ev.pass?'':' fail');
+  track.appendChild(d);
+  const target = ev.pass ? DST_X : GATE_X;
+  const dur = 1.15 * (target - SRC_X) / Math.max(1,(DST_X - SRC_X));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    d.style.transition=`transform ${dur.toFixed(2)}s linear`;
+    d.style.transform=`translateX(${(target-SRC_X).toFixed(0)}px)`;
+  }));
+  setTimeout(()=>{
+    if(ev.pass){ gate.classList.add('flash'); setTimeout(()=>gate.classList.remove('flash'),160); }
+  }, dur*1000*0.9);
+  setTimeout(()=>{
+    if(ev.pass){ pushCard(ev); d.remove(); }
+    else{ filtered++; mFiltered.textContent=filtered; d.style.transition='opacity .3s'; d.style.opacity='0'; setTimeout(()=>d.remove(),320); }
+  }, dur*1000);
+}
+
+/* loop */
+let loopTimer=null;
+function tick(){
+  const anyOn = Object.values(state.topics).some(Boolean);
+  if(anyOn && document.visibilityState==='visible'){
+    // bias toward events on active topics so the wire feels responsive
+    let ev=makeEvent(), tries=0;
+    while(!state.topics[ev.topic] && tries<3){ ev=makeEvent(); tries++; }
+    spawnPulse(ev);
+  }
+  loopTimer=setTimeout(tick, ri(650,1150));
+}
+
+/* init */
+paint(sWhale); paint(sPrem); syncWhale(); syncPrem(); updateGate();
+setTimeout(tick, 900);
+document.addEventListener('visibilitychange', ()=>{ /* loop self-gates on visibility */ });
+
+/* ---------- detectors table ---------- */
+const DET=[
+  ['New token launch','launches','NOXA (instant Uniswap v3 pool) and The Odyssey (bonding curve).'],
+  ['Bonding-curve graduation','graduations','An Odyssey curve fills and migrates to a locked Uniswap v3 pool.'],
+  ['Whale trades','whales · token','Curve trades and v3 swaps chain-wide, threshold in USD.'],
+  ['Stock Token price moves','stock:SYMBOL','Chainlink feed, rolling window, signed percent change.'],
+  ['Premium / discount arb','premiums · pro','DEX mid vs Chainlink, hysteresis ladder at 1/2/3/5/10/20/50%.'],
+  ['Holder milestones','token:0x…','Blockscout holder count crossing 10 through 100,000.'],
+  ['Liquidity-pull rug','rugs · pro','A tracked pool\'s quote reserves dropping sharply. An early warning, not proof.'],
+];
+const dtb=document.getElementById('detectors');
+DET.forEach(d=>{
+  const r=document.createElement('div'); r.className='r rise';
+  r.innerHTML=`<div class="nm">${d[0]}</div><div class="tp">${d[1]}</div><div class="ds">${d[2]}</div>`;
+  dtb.appendChild(r);
+});
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const box=btn.parentElement;
+    const txt=[...box.querySelectorAll('.p,.pc')].map(s=>s.textContent).join('\n');
+    navigator.clipboard.writeText(txt).then(()=>{
+      const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal + rail ---------- */
+const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i%3*60)+'ms'; io.observe(el); });
+
+const stations=[...document.querySelectorAll('.rail .stn')];
+const secs=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0, mid=innerHeight*0.4;
+  secs.forEach((sec,i)=>{ const r=sec.getBoundingClientRect(); if(r.top<=mid) idx=i; });
+  stations.forEach((s,i)=>s.setAttribute('aria-current', i===idx));
+  const active=stations[idx];
+  const railRect=document.querySelector('.rail').getBoundingClientRect();
+  const r=active.getBoundingClientRect();
+  carriage.style.height=r.height+'px';
+  carriage.style.transform=`translateY(${r.top-railRect.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'}); }));
+addEventListener('scroll',()=>requestAnimationFrame(updateRail),{passive:true});
+addEventListener('resize',updateRail); updateRail();
+</script>
 </body>
 </html>

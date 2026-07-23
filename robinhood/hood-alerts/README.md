@@ -7,6 +7,22 @@ X (Twitter) auto-posting, backed by one shared detection engine that watches lau
 whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and
 liquidity-pull rug warnings. Free tier plus x402 USDG premium.
 
+## Website
+
+The docs site (`docs/`) is a single self-contained `index.html` (inline CSS + JS, zero external
+requests, works from `file://`). Its centerpiece is a **configurable alert wire**: set the rules
+with physical faders and switches (whale size, premium band, which detectors run) and watch
+simulated Robinhood Chain events fire down the wire in real time and stack into a live ticker.
+It is the same gate the Telegram and Discord bots run, made visible. Deploy the folder anywhere
+static:
+
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?style=flat-square)](https://dash.cloudflare.com/?to=/:account/pages/new)
+[![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?style=flat-square)](https://app.netlify.com/start)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-101418?style=flat-square)](https://vercel.com/new)
+
+`wrangler.toml`, `netlify.toml`, and `vercel.json` are checked in and all point at `docs/`; on
+GitHub Pages, set Settings → Pages → Deploy from a branch → `main` → `/docs`.
+
 ## What it detects
 
 | Detector | Topic | Source |
@@ -252,10 +268,12 @@ premium-wiring guide: the `docs/` site.
 
 ## Docs site (GitHub Pages)
 
-`docs/` is a static, hand-built site (no framework, no build step): open `docs/index.html` locally,
-or serve it from GitHub Pages. Its landing page renders a **live** premium/discount feed client-side
-straight from the public RPC (real Chainlink feeds vs real DEX pools, no server). One-time setup:
-Settings -> Pages -> Deploy from a branch -> `main` -> `/docs`.
+`docs/` is a single self-contained `index.html` (no framework, no build step, inline CSS + JS, zero
+external requests, works from `file://`): open `docs/index.html` locally, or serve it from GitHub
+Pages. Its centerpiece is the **configurable alert wire** described under [Website](#website) above:
+faders and switches for the rule set, and a self-contained event simulation that fires matching
+alerts down the wire into a live ticker so you can see exactly what the gate does before wiring a
+bot. One-time setup: Settings -> Pages -> Deploy from a branch -> `main` -> `/docs`.
 
 ## Architecture notes
 
