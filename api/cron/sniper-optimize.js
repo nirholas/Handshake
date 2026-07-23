@@ -29,6 +29,32 @@ import { proposeAdjustments } from '../_lib/sniper-optimizer.js';
 
 const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
 
+// Enact one tuning on a strategy row. Explicit per-column statements on purpose:
+// the neon http driver rejects a dynamic column identifier in SET position
+// (`set ${sql(field)} = $1` throws "syntax error at or near $1"), which silently
+// turned every apply-mode run into a no-op. The field is already whitelisted by
+// the optimizer's BOUNDS; anything unknown is refused loudly.
+async function applyProposal(strategyId, field, value) {
+	switch (field) {
+		case 'take_profit_pct':
+			return sql`update agent_sniper_strategies set take_profit_pct = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'trailing_stop_pct':
+			return sql`update agent_sniper_strategies set trailing_stop_pct = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'stop_loss_pct':
+			return sql`update agent_sniper_strategies set stop_loss_pct = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'max_hold_seconds':
+			return sql`update agent_sniper_strategies set max_hold_seconds = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'min_quality_score':
+			return sql`update agent_sniper_strategies set min_quality_score = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'min_oracle_score':
+			return sql`update agent_sniper_strategies set min_oracle_score = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'per_trade_lamports':
+			return sql`update agent_sniper_strategies set per_trade_lamports = ${value}, updated_at = now() where id = ${strategyId}`;
+		default:
+			throw new Error(`optimizer refused to write unknown field '${field}'`);
+	}
+}
+
 function requireCron(req, res) {
 	const secret = process.env.CRON_SECRET || env.CRON_SECRET;
 	if (!secret) { error(res, 503, 'not_configured', 'CRON_SECRET unset'); return false; }
@@ -145,12 +171,8 @@ export default wrapCron(async (req, res) => {
 			if (willApply) {
 				// Enact each proposal on the strategy row (bounded values only).
 				for (const p of proposals) {
-					await sql`
-						update agent_sniper_strategies
-						set ${sql(p.field)} = ${p.to}, updated_at = now()
-						where id = ${r.strategy_id}
-					`;
-				}
+						await applyProposal(r.strategy_id, p.field, p.to);
+					}
 				// Log the tuning to the agent's tamper-evident ledger so the loop's
 				// own decisions are auditable next to the trades that drove them.
 				const dec = await recordDecision({
