@@ -36,7 +36,7 @@
 function safeNavUrl(raw, fallback = '/') {
 	if (typeof raw !== 'string' || raw.length === 0) return fallback;
 	// eslint-disable-next-line no-control-regex
-	if (raw.includes('\\') || /[ -]/.test(raw)) return fallback;
+	if (raw.includes('\\') || /[\u0000-\u001f]/.test(raw)) return fallback;
 	// Same-origin relative path.
 	if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
 	// Absolute URL: http(s) only, so javascript:/data:/vbscript: can never

@@ -99,7 +99,7 @@ function safeNext(raw, fallback = '/dashboard') {
 	if (raw.includes('\\')) return fallback;
 	// Control characters can smuggle a scheme past naive prefix checks.
 	// eslint-disable-next-line no-control-regex
-	if (/[ -]/.test(raw)) return fallback;
+	if (/[\u0000-\u001f]/.test(raw)) return fallback;
 	return raw;
 }
 			const next = safeNext(params.get('next'), '/dashboard/');
