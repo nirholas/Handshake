@@ -3,6 +3,15 @@
    "browse" surface reads as part of the same family, not a bolt-on. */
 @import './ui-juice.css';
 
+/* This page doesn't load /style.css, so nothing else paints the near-black
+   canvas — without this, --ink/--ink-dim text renders on the browser's white
+   default background instead of --bg-0. */
+body {
+	background: var(--bg-0, #0a0a0a);
+	color: var(--ink, #e8e8e8);
+	min-height: 100vh;
+}
+
 .sr-shell { max-width: 1200px; margin: 0 auto; padding: var(--space-xl, 40px) var(--space-md, 16px) var(--space-2xl, 64px); }
 
 .sr-hero { text-align: center; margin-bottom: var(--space-xl, 40px); }

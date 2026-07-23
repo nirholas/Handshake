@@ -78,7 +78,7 @@
 .twg-pill-label { white-space: nowrap; letter-spacing: -0.01em; }
 .twg-pill-count {
 	font-variant-numeric: tabular-nums;
-	color: rgba(255, 255, 255, 0.38);
+	color: var(--ink-dim, #888888);
 	font-weight: 500;
 }
 .twg-pill.is-complete .twg-pill-count { color: var(--success, #4ade80); }

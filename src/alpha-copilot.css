@@ -4,6 +4,15 @@
 
 @import '/tokens.css';
 
+/* This page doesn't load /style.css, so nothing else paints the near-black
+   canvas — without this, --ink/--ink-dim text renders on the browser's white
+   default background instead of --bg-0. */
+body {
+	background: var(--bg-0);
+	color: var(--ink);
+	min-height: 100vh;
+}
+
 .ac-shell {
 	max-width: 1180px;
 	margin: 0 auto;
