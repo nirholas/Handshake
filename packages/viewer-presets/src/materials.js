@@ -28,15 +28,39 @@ export const MATERIAL_PRESETS = Object.freeze({
 	chrome: freeze({ label: 'Chrome', color: '#c9ced4', metalness: 1, roughness: 0.05, envMapIntensity: 1.6 }),
 	gold: freeze({ label: 'Gold', color: '#ffcf5c', metalness: 1, roughness: 0.18, envMapIntensity: 1.4 }),
 	copper: freeze({ label: 'Copper', color: '#c4744a', metalness: 1, roughness: 0.28, envMapIntensity: 1.3 }),
-	brushedSteel: freeze({ label: 'Brushed steel', color: '#b7bcc2', metalness: 0.95, roughness: 0.45, envMapIntensity: 1.1 }),
+	// Real brushed-metal anisotropy: the elongated micro-grooves from brushing
+	// scatter reflections along one axis only. anisotropy/anisotropyRotation
+	// are MeshPhysicalMaterial-only fields (three >=0.140) — assignPreset()
+	// sets them just like clearcoat/transmission, guarded so plain
+	// MeshStandardMaterial targets silently skip the field.
+	brushedSteel: freeze({ label: 'Brushed steel', color: '#b7bcc2', metalness: 0.95, roughness: 0.45, envMapIntensity: 1.1, anisotropy: 0.85, anisotropyRotation: 0 }),
 	gunmetal: freeze({ label: 'Gunmetal', color: '#3b4048', metalness: 0.9, roughness: 0.5, envMapIntensity: 1 }),
 	matte: freeze({ label: 'Matte plastic', color: '#8b90a0', metalness: 0, roughness: 0.9, envMapIntensity: 0.6 }),
 	glossy: freeze({ label: 'Glossy plastic', color: '#4f8bff', metalness: 0, roughness: 0.18, envMapIntensity: 1 }),
 	rubber: freeze({ label: 'Rubber', color: '#26282c', metalness: 0, roughness: 0.95, envMapIntensity: 0.4 }),
 	ceramic: freeze({ label: 'Glazed ceramic', color: '#f2efe9', metalness: 0, roughness: 0.28, envMapIntensity: 1 }),
+	// Legacy fake-glass look (opacity blend, no real refraction) — kept for
+	// callers/tests that expect the old cheap preset. `realGlass` below is the
+	// physically-correct KHR_materials_transmission version.
 	glass: freeze({ label: 'Glass', color: '#dff1ff', metalness: 0, roughness: 0.05, envMapIntensity: 1.5, transparent: true, opacity: 0.35 }),
+	// Real glass via transmission (light actually refracts through the
+	// surface rather than alpha-blending) + IOR 1.45 (soda-lime glass).
+	// Requires a MeshPhysicalMaterial + the renderer's transmission render
+	// target (three.js sets this up automatically once `transmission > 0`).
+	realGlass: freeze({ label: 'Glass (real)', color: '#f4fbff', metalness: 0, roughness: 0.03, envMapIntensity: 1.4, transmission: 1, thickness: 0.6, ior: 1.45, attenuationColor: '#eef8ff', attenuationDistance: 1.2 }),
 	wood: freeze({ label: 'Wood', color: '#8a5a34', metalness: 0, roughness: 0.72, envMapIntensity: 0.6 }),
 	stone: freeze({ label: 'Stone', color: '#8d8b86', metalness: 0, roughness: 0.85, envMapIntensity: 0.5 }),
+	fabric: freeze({ label: 'Fabric', color: '#6b6456', metalness: 0, roughness: 0.88, envMapIntensity: 0.4, sheen: 0.6, sheenColor: '#8a8272', sheenRoughness: 0.7 }),
+	// Real human skin: 0 metalness, 0.45-0.6 roughness (measured range for
+	// bare skin), a warm sheen layer approximating subsurface scattering, and
+	// a below-default specular F0 (skin reflects ~2.8% at normal incidence
+	// vs. the ~4% MeshStandardMaterial default) so highlights read soft.
+	skin: freeze({ label: 'Skin', color: '#e8b892', metalness: 0, roughness: 0.52, envMapIntensity: 0.7, sheen: 0.35, sheenColor: '#ffe0c2', sheenRoughness: 0.6, specularIntensity: 0.6 }),
+	// Automotive base-coat + clearcoat: KHR_materials_clearcoat. The base
+	// coat carries the color/metalness, the clearcoat is a separate, always
+	// non-metal, near-mirror lacquer layer on top — this is what makes car
+	// paint read as "wet" rather than flat metallic.
+	carPaint: freeze({ label: 'Car paint', color: '#b3101c', metalness: 0.6, roughness: 0.35, envMapIntensity: 1.2, clearcoat: 1, clearcoatRoughness: 0.03 }),
 	neon: freeze({ label: 'Neon', color: '#0b0b12', metalness: 0, roughness: 0.4, emissive: '#00ffd5', emissiveIntensity: 1.6, envMapIntensity: 0.8 }),
 	holographic: freeze({ label: 'Holographic', color: '#b6a8ff', metalness: 1, roughness: 0.12, emissive: '#2a1f5c', emissiveIntensity: 0.35, envMapIntensity: 1.8 }),
 });
@@ -159,8 +183,16 @@ function isStandardLike(m) {
 	return !!m && 'metalness' in m && 'roughness' in m && !!m.color && typeof m.color.getHex === 'function';
 }
 
+// Physical-only (MeshPhysicalMaterial) scalar/color fields a preset may set.
+// Absent on plain MeshStandardMaterial, so every read/write below is guarded
+// by an `in m` check — a preset with clearcoat/transmission/anisotropy still
+// applies its color/metalness/roughness cleanly to a Standard-only target,
+// it just quietly skips the physical-only layer.
+const PHYSICAL_SCALAR_FIELDS = ['clearcoat', 'clearcoatRoughness', 'transmission', 'thickness', 'ior', 'sheen', 'sheenRoughness', 'specularIntensity', 'anisotropy', 'anisotropyRotation', 'attenuationDistance'];
+const PHYSICAL_COLOR_FIELDS = ['sheenColor', 'attenuationColor', 'specularColor'];
+
 function captureMaterial(m) {
-	return {
+	const cap = {
 		m,
 		color: m.color.getHex(),
 		metalness: m.metalness,
@@ -171,6 +203,9 @@ function captureMaterial(m) {
 		transparent: m.transparent,
 		opacity: m.opacity,
 	};
+	for (const f of PHYSICAL_SCALAR_FIELDS) if (f in m) cap[f] = m[f];
+	for (const f of PHYSICAL_COLOR_FIELDS) if (m[f]) cap[f] = m[f].getHex();
+	return cap;
 }
 
 function restoreMaterial(cap) {
@@ -183,6 +218,8 @@ function restoreMaterial(cap) {
 	m.envMapIntensity = cap.envMapIntensity;
 	m.transparent = cap.transparent;
 	m.opacity = cap.opacity;
+	for (const f of PHYSICAL_SCALAR_FIELDS) if (f in cap) m[f] = cap[f];
+	for (const f of PHYSICAL_COLOR_FIELDS) if (f in cap && m[f]) m[f].setHex(cap[f]);
 	m.needsUpdate = true;
 }
 
@@ -195,13 +232,29 @@ function assignPreset(THREE, m, cfg) {
 		m.emissiveIntensity = cfg.emissiveIntensity != null ? cfg.emissiveIntensity : cfg.emissive ? 1 : 0;
 	}
 	if (cfg.envMapIntensity != null && 'envMapIntensity' in m) m.envMapIntensity = cfg.envMapIntensity;
-	if (cfg.transparent != null) {
+	for (const f of PHYSICAL_SCALAR_FIELDS) {
+		if (cfg[f] != null && f in m) m[f] = cfg[f];
+	}
+	for (const f of PHYSICAL_COLOR_FIELDS) {
+		if (cfg[f] != null && m[f]) m[f].set(cfg[f]);
+	}
+	if (cfg.transmission != null && 'transmission' in m) {
+		// Real transmission replaces alpha-blend transparency entirely — a
+		// realGlass preset must not also carry the old opacity-blend path.
+		m.transparent = false;
+		m.opacity = 1;
+	} else if (cfg.transparent != null) {
 		m.transparent = !!cfg.transparent;
 		if (cfg.opacity != null) m.opacity = cfg.opacity;
 	} else {
-		// Opaque preset: undo any prior transparency so switching glass→chrome is clean.
+		// Opaque preset: undo any prior transparency/transmission so switching
+		// glass→chrome is clean.
 		m.transparent = false;
 		m.opacity = 1;
+		if ('transmission' in m) m.transmission = 0;
+		if ('clearcoat' in m && cfg.clearcoat == null) m.clearcoat = 0;
+		if ('anisotropy' in m && cfg.anisotropy == null) m.anisotropy = 0;
+		if ('sheen' in m && cfg.sheen == null) m.sheen = 0;
 	}
 	m.needsUpdate = true;
 }
@@ -302,4 +355,18 @@ function freeze(o) {
  * @property {number} [envMapIntensity]
  * @property {boolean} [transparent]
  * @property {number} [opacity]          0..1, only with transparent
+ * @property {number} [clearcoat]           0..1, MeshPhysicalMaterial only (KHR_materials_clearcoat)
+ * @property {number} [clearcoatRoughness]  0..1
+ * @property {number} [transmission]        0..1, MeshPhysicalMaterial only (KHR_materials_transmission)
+ * @property {number} [thickness]           world units, paired with transmission
+ * @property {number} [ior]                 1..2.333, index of refraction
+ * @property {string} [attenuationColor]    hex, paired with transmission
+ * @property {number} [attenuationDistance] world units
+ * @property {number} [sheen]               0..1, MeshPhysicalMaterial only
+ * @property {string} [sheenColor]           hex
+ * @property {number} [sheenRoughness]       0..1
+ * @property {number} [specularIntensity]   0..1, MeshPhysicalMaterial only
+ * @property {string} [specularColor]        hex
+ * @property {number} [anisotropy]           0..1, MeshPhysicalMaterial only (KHR_materials_anisotropy)
+ * @property {number} [anisotropyRotation]   radians
  */

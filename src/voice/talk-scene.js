@@ -18,23 +18,16 @@
 import {
 	Timer,
 	WebGLRenderer,
-	SRGBColorSpace,
-	ACESFilmicToneMapping,
-	PCFSoftShadowMap,
 	Scene,
-	PMREMGenerator,
 	AmbientLight,
 	DirectionalLight,
 	PerspectiveCamera,
 	AnimationMixer,
 	Box3,
-	PlaneGeometry,
-	ShadowMaterial,
-	Mesh,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { applyCinematicDefaults, loadEnvironment, detectQualityTier, updateGroundContactShadow } from '../shared/cinematic-render.js';
 import { computeFraming, CAMERA_PRESETS } from './camera-presets.js';
 import { TalkEmotes } from './talk-emotes.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
@@ -99,17 +92,10 @@ export class TalkScene {
 			alpha: true,
 			preserveDrawingBuffer: true,
 		});
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-		this.renderer.outputColorSpace = SRGBColorSpace;
-		this.renderer.toneMapping = ACESFilmicToneMapping;
-		this.renderer.toneMappingExposure = 1.0;
-		// Soft ground-contact shadow, matching the IRL placement viewer's
-		// PCFSoftShadowMap upgrade — a ShadowMaterial catcher (added once the
-		// avatar loads, see _setupGroundShadow) renders invisible except where
-		// the key light casts a shadow, so it doesn't break this scene's
-		// transparent background.
-		this.renderer.shadowMap.enabled = true;
-		this.renderer.shadowMap.type = PCFSoftShadowMap;
+		// Cinematic defaults (ACES tone mapping, sRGB output, soft shadows,
+		// pixel-ratio cap) shared with every other viewer on the platform.
+		const qualityTier = detectQualityTier();
+		applyCinematicDefaults(this.renderer, { exposure: 1.0, tier: qualityTier });
 
 		const { width, height } = sizeOf(container);
 		this.renderer.setSize(width, height, false);
@@ -119,10 +105,9 @@ export class TalkScene {
 		this.scene = new Scene();
 		this.scene.background = null; // transparent so the page bg shows through
 
-		// Image-based lighting via RoomEnvironment — same look-and-feel choice
-		// model-viewer uses when no environment-image is set.
-		const pmrem = new PMREMGenerator(this.renderer);
-		this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+		// Real HDRI image-based lighting (falls back to procedural RoomEnvironment
+		// on mobile tier or fetch failure).
+		loadEnvironment(this.renderer, this.scene, qualityTier === 'mobile' ? null : 'studio');
 
 		// Fill + key + rim for visual depth.
 		this.scene.add(new AmbientLight(0xffffff, 0.4));
@@ -336,18 +321,7 @@ export class TalkScene {
 	// the loaded model's own bounding box, so it works for any avatar height.
 	_setupGroundShadow() {
 		if (!this.root) return;
-		const b = new Box3().setFromObject(this.root);
-		if (!Number.isFinite(b.min.y)) return; // empty/degenerate bounds — nothing to catch a shadow
-		const footprint = Math.max(b.max.x - b.min.x, b.max.z - b.min.z, 1);
-		const size = footprint * 6;
-		if (!this._groundShadow) {
-			this._groundShadow = new Mesh(new PlaneGeometry(1, 1), new ShadowMaterial({ opacity: 0.35 }));
-			this._groundShadow.rotation.x = -Math.PI / 2;
-			this._groundShadow.receiveShadow = true;
-			this.scene.add(this._groundShadow);
-		}
-		this._groundShadow.scale.set(size, size, 1);
-		this._groundShadow.position.set((b.min.x + b.max.x) / 2, b.min.y, (b.min.z + b.max.z) / 2);
+		this._groundShadow = updateGroundContactShadow(this.scene, this.root, this._groundShadow);
 	}
 
 	_frameAvatar() {

@@ -11,11 +11,11 @@ import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 
 export const RESOURCE_DESCRIPTION =
-	'three.ws 3D Studio MCP — Streamable HTTP (MCP 2025-06-18) that turns text or images into ' +
+	'three.ws 3D Studio MCP: Streamable HTTP (MCP 2025-06-18) that turns text or images into ' +
 	'interactive, animation-ready 3D models: text_to_3d (prompt → GLB), image_to_3d (1–4 reference ' +
 	'views → GLB), generation_status (poll a job for the finished model), auto_rig_model, plus mesh ' +
 	'editing (retexture, remesh, stylize, segment) and PBR material generation. Connect with a ' +
-	'three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet — no API key. ' +
+	'three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no API key. ' +
 	'Operated by three.ws.';
 
 // Endpoint-level v2 bazaar discovery entry, shaped exactly like the validator
@@ -65,7 +65,7 @@ function studioBazaarExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names: text_to_3d, image_to_3d, generation_status, auto_rig_model, retexture_model, remesh_model, stylize_model, segment_model, generate_material, direct_prompt — see tools/list.',
+					'For tools/call: { name, arguments }. Tool names: text_to_3d, image_to_3d, generation_status, auto_rig_model, retexture_model, remesh_model, stylize_model, segment_model, generate_material, direct_prompt, see tools/list.',
 			},
 		},
 	};

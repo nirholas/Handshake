@@ -15,7 +15,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -215,6 +215,14 @@
 			"headers": {
 				"content-security-policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://challenges.cloudflare.com https://3d-agent.vercel.app https://three.ws https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-frame-options": "SAMEORIGIN"
+			},
+			"continue": true
+		},
+		{
+			"src": "/hdri/(.*)\\.hdr",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cache-control": "public, max-age=31536000, immutable"
 			},
 			"continue": true
 		},
@@ -2389,6 +2397,14 @@
 		{
 			"src": "/collection/",
 			"dest": "/collection.html"
+		},
+		{
+			"src": "/notifications",
+			"dest": "/notifications.html"
+		},
+		{
+			"src": "/notifications/",
+			"dest": "/notifications.html"
 		},
 		{
 			"src": "/marketplace/analytics",
@@ -5557,6 +5573,10 @@
 		{
 			"path": "/api/cron/forge-off-crown",
 			"schedule": "7 0 * * 1"
+		},
+		{
+			"path": "/api/cron/quality-bench",
+			"schedule": "23 3 * * 1"
 		}
 	]
 }

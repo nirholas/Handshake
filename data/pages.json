@@ -191,6 +191,14 @@
 					"added": "2026-06-17"
 				},
 				{
+					"path": "/notifications",
+					"title": "Notifications",
+					"description": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place, filterable by category.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"added": "2026-07-12"
+				},
+				{
 					"path": "/skills",
 					"title": "Skills Marketplace",
 					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
@@ -1888,7 +1896,7 @@
 				},
 				{
 					"path": "/agent-identities",
-					"title": "Agent Identity Studio — 3D avatars for AI agents",
+					"title": "Agent Identity Studio: 3D avatars for AI agents",
 					"description": "Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.",
 					"priority": 0.8,
 					"changefreq": "weekly",

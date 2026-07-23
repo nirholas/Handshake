@@ -36,6 +36,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { TRIANGULATION } from './triangulation.js';
 import { log } from '../shared/log.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
 
 const MODEL_URL =
 	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
@@ -306,8 +307,11 @@ function ensureViewer() {
 	const renderer = new WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = SRGBColorSpace;
+	const tier = detectQualityTier();
+	applyCinematicDefaults(renderer, { tier });
 	viewerHost.appendChild(renderer.domElement);
+
+	loadEnvironment(renderer, scene, tier === 'mobile' ? null : 'studio');
 
 	scene.add(new HemisphereLight(0xffffff, 0x333333, 1.2));
 	const dir = new DirectionalLight(0xffffff, 1.4);

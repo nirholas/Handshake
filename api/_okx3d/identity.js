@@ -1,4 +1,4 @@
-// Agent Identity Studio pipeline — the engine behind the paid
+// Agent Identity Studio pipeline, the engine behind the paid
 // /api/okx/3d/identity-studio A2MCP service (see api/_lib/okx-catalog.js).
 //
 // Turns a brand brief into a complete 3D identity for an AI agent:
@@ -8,9 +8,9 @@
 //         → posed studio renders (/api/render/avatar-clip + sharp compositing)
 //         → PFP crop (square, reads at 128px) + full-body set, persisted to R2.
 //
-// Every GPU/render stage is driven over the deployed three.ws HTTP surfaces —
+// Every GPU/render stage is driven over the deployed three.ws HTTP surfaces,
 // the exact pattern the npx MCP server (mcp-server/src/tools/_studio-core.js)
-// uses — so this module behaves identically inside the Vercel function and in
+// uses, so this module behaves identically inside the Vercel function and in
 // a local run (scripts/okx-identity-demo.mjs), and holds no provider keys.
 //
 // Job model: state lives as one JSON document in R2. create() validates the
@@ -19,7 +19,7 @@
 // identity_status poll advances the pipeline by ONE bounded step (a single
 // upstream poll, or one render), so no request outlives its function budget
 // and polling is what drives the job to completion. Failed generate/rig
-// stages retry free up to MAX_STAGE_ATTEMPTS — the buyer pays once, for
+// stages retry free up to MAX_STAGE_ATTEMPTS, the buyer pays once, for
 // deliverables, not for our transient failures.
 
 import { createHash } from 'node:crypto';
@@ -40,7 +40,7 @@ const MAX_STAGE_ATTEMPTS = 3;
 // The PFP pose is pinned to a neutral standing preset: the head-crop geometry
 // below assumes the top of the model's alpha bounding box is the head, which
 // raised-arm poses would break. Full-body poses draw from a shortlist that
-// reads well as a brand identity (confident, natural stances — no floor poses).
+// reads well as a brand identity (confident, natural stances, no floor poses).
 const PFP_POSE = 'contrapposto';
 const FULLBODY_POSES = [
 	'hands-on-hips',
@@ -64,7 +64,7 @@ export const IDENTITY_DIRECTOR_INSTRUCTION =
 	'outfit, materials, colors, and one signature visual motif. Standing neutral pose, arms slightly ' +
 	'away from the body, plain background. No scene, no props held across the body, no multiple ' +
 	'characters, no text or logos. The brief may be in any language; ALWAYS write the prompt in ' +
-	'English. Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
+	'English. Output ONLY the rewritten prompt as a single line, no preamble, no quotes.';
 
 function pipelineError(code, message, extra = {}) {
 	return Object.assign(new Error(message), { code, ...extra });
@@ -108,7 +108,7 @@ async function saveState(state) {
 // ---------------------------------------------------------------------------
 
 // LLM prompt director over the in-process free-provider chain (Groq → OpenRouter
-// → NVIDIA NIM via api/_lib/llm.js — the same server keys the platform funds).
+// → NVIDIA NIM via api/_lib/llm.js, the same server keys the platform funds).
 // Runs in-process instead of over the deployed /api/chat SSE endpoint: this
 // module executes inside the Vercel function, and a server-to-server call to
 // /api/chat is anonymous, so it hits the anon rate limiter / provider gate and
@@ -134,7 +134,7 @@ async function directIdentityPrompt({ agentName, brief, styleHints }) {
 	return refined.length >= 3 && refined.length <= 1000 ? refined : null;
 }
 
-// The generation lane's text→image encoder truncates/chokes on long prompts —
+// The generation lane's text→image encoder truncates/chokes on long prompts,
 // verified against production /api/forge: ~250-char prompts generate cleanly,
 // ~430-char prompts fail. Keep every prompt we send under this budget, cut at
 // a word boundary.
@@ -148,17 +148,17 @@ function clampPrompt(text, max = MAX_GENERATION_PROMPT_CHARS) {
 }
 
 // Deterministic fallback when the director is unreachable. Forces the humanoid
-// framing rigging requires — an identity brief ("a finance data agent") rarely
+// framing rigging requires, an identity brief ("a finance data agent") rarely
 // names a humanoid subject, so unlike forge_avatar there is no humanoid gate
 // here: the subject is BY CONSTRUCTION a humanoid character embodying the
 // brief. A text-to-3D encoder wants a visual SUBJECT, not backstory, so this
 // leads with the (visual) style hints and reduces the brief to its first
-// sentence — the core descriptor — rather than dumping the whole narrative and
+// sentence, the core descriptor, rather than dumping the whole narrative and
 // truncating it mid-clause. Stays inside the generation prompt budget (~130
 // chars of frame text leaves ~170 for hints + subject) and never leaves a
 // dangling comma or half-word at a cut.
 export function fallbackIdentityPrompt({ brief, styleHints }) {
-	// The style hints ARE the visual direction — give them priority and their own
+	// The style hints ARE the visual direction, give them priority and their own
 	// budget so a long brief can never crowd them out of the prompt.
 	const hints = styleHints ? cleanClause(clampPrompt(styleHints, 90)) : '';
 	// First sentence only (handles both Latin ".!?" and CJK "。！？").
@@ -189,7 +189,7 @@ export async function shapeIdentityPrompt({ agentName, brief, styleHints }) {
 }
 
 // ---------------------------------------------------------------------------
-// /api/forge client (submit / single poll / rig) — adapted from the npx MCP
+// /api/forge client (submit / single poll / rig), adapted from the npx MCP
 // server's _studio-core.js, minus the internal polling loop: this pipeline
 // polls upstream once per identity_status call instead of blocking.
 // ---------------------------------------------------------------------------
@@ -197,7 +197,7 @@ export async function shapeIdentityPrompt({ agentName, brief, styleHints }) {
 async function submitForge(base, payload) {
 	let res;
 	try {
-		// The default free lane (NVIDIA NIM TRELLIS) completes SYNCHRONOUSLY —
+		// The default free lane (NVIDIA NIM TRELLIS) completes SYNCHRONOUSLY,
 		// the submit response can take minutes and already carry the finished
 		// GLB, so the submit timeout must cover a full generation, not just an
 		// enqueue ack. Async backends still return a job_id quickly.
@@ -230,7 +230,7 @@ async function pollForgeOnce(base, jobId) {
 			signal: AbortSignal.timeout(15_000),
 		});
 	} catch (err) {
-		// A transient poll failure is not a job failure — report still-running.
+		// A transient poll failure is not a job failure, report still-running.
 		return { status: 'running', _pollError: String(err?.message || err) };
 	}
 	const data = await res.json().catch(() => ({}));
@@ -311,7 +311,7 @@ async function renderTransparent(base, { glbUrl, posePresetId, theta, size = 160
 }
 
 // Trim the transparent render to the model's alpha bounding box. Returns the
-// trimmed buffer plus its dimensions — the head-crop math keys off these.
+// trimmed buffer plus its dimensions, the head-crop math keys off these.
 async function trimToModel(sharp, png) {
 	const trimmed = await sharp(png).trim({ threshold: 8 }).png().toBuffer({ resolveWithObject: true });
 	return { buffer: trimmed.data, width: trimmed.info.width, height: trimmed.info.height };
@@ -368,7 +368,7 @@ async function uploadRender(id, name, png) {
 // Job lifecycle
 // ---------------------------------------------------------------------------
 
-// Deterministic pose plan seeded from the job id — reproducible per job, varied
+// Deterministic pose plan seeded from the job id, reproducible per job, varied
 // across jobs. Slot n picks from the remaining shortlist by seed byte.
 export function buildRenderPlan(id) {
 	const seed = createHash('sha256').update(id).digest();
@@ -479,7 +479,7 @@ export async function createIdentityJob({
 		error: null,
 	});
 	if (state.gen.glbUrl) {
-		// Synchronous free-lane completion — jump straight to rigging.
+		// Synchronous free-lane completion, jump straight to rigging.
 		await beginRig(base, state);
 	}
 	return { jobId: encodeIdentityJobToken(id), state };
@@ -498,7 +498,7 @@ async function beginRig(base, state) {
 	return saveState(state);
 }
 
-// A generate/rig/render failure retries free while attempts remain — the
+// A generate/rig/render failure retries free while attempts remain, the
 // buyer paid for deliverables, not for our transient upstream weather. The
 // retry itself happens on the NEXT status poll (the failed stage's job handle
 // is cleared, and advance re-submits), so one bad resubmission can never go
@@ -521,7 +521,7 @@ async function failStage(state, stage, err) {
 		state.error = { stage, code: err?.code || 'provider_error', message: String(err?.message || err), retrying: true };
 		if (stage === 'generate') state.gen.jobId = null;
 		else if (stage === 'rig') state.rig.jobId = null;
-		// render: cursor stays put — the next poll re-runs the same render.
+		// render: cursor stays put, the next poll re-runs the same render.
 		state.attempts[stage] = attempts + 1;
 		return saveState(state);
 	}
@@ -535,7 +535,7 @@ export async function advanceIdentityJob(id, { base = BASE } = {}) {
 	const state = await loadState(id);
 	if (!state) return null;
 
-	// Rate-limit backoff window — this poll is a no-op until it elapses.
+	// Rate-limit backoff window, this poll is a no-op until it elapses.
 	if (state.nextAttemptAt && Date.now() < state.nextAttemptAt) return state;
 	if (state.nextAttemptAt) {
 		delete state.nextAttemptAt;
@@ -543,7 +543,7 @@ export async function advanceIdentityJob(id, { base = BASE } = {}) {
 
 	if (state.stage === 'generate') {
 		if (!state.gen.glbUrl && !state.gen.jobId) {
-			// A previous attempt failed — this poll performs the free retry.
+			// A previous attempt failed, this poll performs the free retry.
 			try {
 				const gen = await submitForge(
 					base,
@@ -573,7 +573,7 @@ export async function advanceIdentityJob(id, { base = BASE } = {}) {
 		if (state.stage === 'generate' && state.gen.glbUrl) await beginRig(base, state);
 	} else if (state.stage === 'rig') {
 		if (!state.rig.jobId) {
-			// Rig submission failed earlier — retry it on this poll.
+			// Rig submission failed earlier, retry it on this poll.
 			await beginRig(base, state);
 		} else {
 			const status = await pollForgeOnce(base, state.rig.jobId);

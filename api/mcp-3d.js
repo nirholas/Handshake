@@ -1,8 +1,8 @@
-// three.ws 3D Studio — MCP server (Streamable HTTP transport, MCP 2025-06-18).
-// POST /api/mcp-3d — tool calls   GET /api/mcp-3d — SSE   DELETE — terminate.
+// three.ws 3D Studio: MCP server (Streamable HTTP transport, MCP 2025-06-18).
+// POST /api/mcp-3d: tool calls   GET /api/mcp-3d: SSE   DELETE: terminate.
 //
-// A second, focused MCP server alongside /api/mcp: it does one thing — turn
-// text or images into interactive 3D models — and shares the main server's
+// A second, focused MCP server alongside /api/mcp: it does one thing, turn
+// text or images into interactive 3D models, and shares the main server's
 // OAuth/x402 auth, rate limiting, and transport plumbing. Registered with the
 // MCP Registry as io.github.nirholas/three-ws-3d-studio (see server-3d.json).
 import { cors, readJson, wrap } from './_lib/http.js';
@@ -39,7 +39,7 @@ export default wrap(async (req, res) => {
 	// discovery so the OAuth flow starts where it should.
 	const body = await readJson(req, 1_000_000);
 
-	// x402 price for the WHOLE request — the sum of every priced studio
+	// x402 price for the WHOLE request, the sum of every priced studio
 	// tools/call in the (possibly batched) body, tier-aware for the generation
 	// tools. The advertised 402 amount, the verified payment, and the settled
 	// charge are all keyed off this total, mirroring /api/x402/forge pricing.
@@ -75,7 +75,7 @@ export default wrap(async (req, res) => {
 	// signed payment proof across dispatch+settle so a captured/retried X-PAYMENT
 	// can't re-run the priced (and here often generation-grade) tools before the
 	// first settle lands. Released in the finally; the consumed on-chain nonce
-	// blocks any replay thereafter. Fails open — see reservePaymentProof.
+	// blocks any replay thereafter. Fails open, see reservePaymentProof.
 	let releaseProof = async () => {};
 	if (x402Ctx) {
 		const guard = await reservePaymentProof(
@@ -97,9 +97,9 @@ export default wrap(async (req, res) => {
 
 		// OAuth users run tools operator-funded (bounded by rate limits). x402
 		// callers pay per tool: the verified payment covers the batch's summed
-		// per-tool price (tier-aware for generation — see _mcp3d/pricing.js), and
+		// per-tool price (tier-aware for generation, see _mcp3d/pricing.js), and
 		// settling it here means the charge lands only after the work succeeded.
-		// Only settle if a call succeeded — a wholesale failure is free.
+		// Only settle if a call succeeded, a wholesale failure is free.
 		if (x402Ctx) {
 			const anySuccess = responses.some(
 				(r) => r && !r.error && !(r.result && r.result.isError),

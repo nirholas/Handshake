@@ -14,10 +14,8 @@ import {
 	MeshBasicMaterial,
 	MeshStandardMaterial,
 	CanvasTexture,
-	PCFShadowMap,
 	PerspectiveCamera,
 	PlaneGeometry,
-	PMREMGenerator,
 	Quaternion,
 	Scene,
 	ShadowMaterial,
@@ -26,11 +24,11 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
 import { reserveWebGLContext } from './webgl-budget.js';
 import { log } from './shared/log.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 
 const AVATAR_URL = '/avatars/default.glb';
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
@@ -79,16 +77,17 @@ export function initWalkPreview(container) {
 		joystickEl.remove();
 		return;
 	}
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = PCFShadowMap;
+	// Filmic tone mapping + correct sRGB output + soft VSM shadows: the shared
+	// bar every viewer on the platform now matches (src/shared/cinematic-render.js).
+	const qualityTier = detectQualityTier();
+	applyCinematicDefaults(renderer, { tier: qualityTier });
 	// Count this context against the shared budget so <agent-3d> grids on the
 	// same page leave room for it (see webgl-budget.js / element.js).
 	reserveWebGLContext();
 
 	const scene = new Scene();
-	const pmrem = new PMREMGenerator(renderer);
-	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+	// Real outdoor-sky HDRI IBL, matching its sibling /walk-embed.
+	loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'outdoor');
 
 	// Lights
 	const ambient = new AmbientLight(0xffffff, 0.55);

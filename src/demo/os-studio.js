@@ -12,7 +12,6 @@ import {
 	Color,
 	PerspectiveCamera,
 	WebGLRenderer,
-	SRGBColorSpace,
 	HemisphereLight,
 	DirectionalLight,
 	GridHelper,
@@ -22,6 +21,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment, updateGroundContactShadow } from '../shared/cinematic-render.js';
 
 const PUBLIC_STUDIO = 'https://m3-org.github.io/CharacterStudio';
 
@@ -117,6 +117,7 @@ window.addEventListener('message', async (event) => {
 // ── Preview viewer ─────────────────────────────────────────────────────────
 
 let previewState = null;
+let previewGroundShadow = null;
 
 async function renderPreview(blob) {
 	previewViewer.style.display = 'block';
@@ -133,8 +134,10 @@ async function renderPreview(blob) {
 		loader.setMeshoptDecoder(await getMeshoptDecoder());
 		const gltf = await loader.loadAsync(url);
 		gltf.scene.userData.kind = 'avatar';
+		gltf.scene.traverse((n) => { if (n.isMesh) n.castShadow = true; });
 		scene.add(gltf.scene);
 		fitToObject(previewState, gltf.scene);
+		previewGroundShadow = updateGroundContactShadow(scene, gltf.scene, previewGroundShadow);
 		const box = new Box3().setFromObject(gltf.scene);
 		const size = new Vector3();
 		box.getSize(size);
@@ -162,12 +165,17 @@ function initViewer(host) {
 	const renderer = new WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = SRGBColorSpace;
+	const tier = detectQualityTier();
+	applyCinematicDefaults(renderer, { tier });
 	host.appendChild(renderer.domElement);
+
+	loadEnvironment(renderer, scene, tier === 'mobile' ? null : 'studio');
 
 	scene.add(new HemisphereLight(0xffffff, 0x444444, 1.2));
 	const dir = new DirectionalLight(0xffffff, 1.5);
 	dir.position.set(2, 4, 3);
+	dir.castShadow = true;
+	dir.shadow.mapSize.set(1024, 1024);
 	scene.add(dir);
 
 	const grid = new GridHelper(4, 8, 0x222222, 0x111111);

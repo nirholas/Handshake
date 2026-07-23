@@ -90,14 +90,17 @@ describe('forge-tiers — self-hosted TRELLIS routing precedence', () => {
 		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true })).toBe('trellis_selfhost');
 	});
 
-	it('does not disturb the native text→3D default (NVIDIA) or the high-tier textured engine', () => {
+	it('leads text prompts with the self-host photoreal reference pipeline too; high stays on self-host TRELLIS', () => {
 		process.env.MODEL_TRELLIS_URL = 'https://trellis.example.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
 		process.env.HF_TOKEN = 'hf_test';
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		// Text prompts at draft/standard still get NVIDIA's native single-hop lane.
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('nvidia');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false })).toBe('nvidia');
+		// Text prompts at draft/standard now default to the self-host TRELLIS
+		// image-intermediate lane too — NVIDIA's native single-hop text→mesh
+		// preview skips the photoreal reference image, so it is no longer a
+		// named tier default anywhere (see forge-tiers.js FREE_DEFAULT_FOR_TIERS).
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false })).toBe('trellis_selfhost');
 		// High names our self-host Hunyuan3D engine; unconfigured here, so the
 		// candidate walk falls to the self-host TRELLIS lane.
 		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('trellis_selfhost');

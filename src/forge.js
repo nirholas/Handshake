@@ -106,6 +106,7 @@ const els = {
 	forgeShareBtn: document.getElementById('forge-share-btn'),
 	segmentBtn: document.getElementById('forge-segment-btn'),
 	openInComposer: document.getElementById('open-in-composer'),
+	irlBtn: document.getElementById('forge-irl-btn'),
 	categoryPicker: document.getElementById('forge-category-picker'),
 	savedChip: document.getElementById('result-saved'),
 	creations: document.getElementById('creations'),
@@ -1887,6 +1888,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	// Cross-link into Parts Studio with this exact model pre-loaded.
 	if (els.segmentBtn) els.segmentBtn.href = `/segment?mesh=${encodeURIComponent(glbUrl)}`;
 	if (els.openInComposer) els.openInComposer.href = `/compose?glb=${encodeURIComponent(glbUrl)}`;
+	if (els.irlBtn) els.irlBtn.href = `/irl?avatar=${encodeURIComponent(glbUrl)}`;
 	// Offer "Refine" when a higher tier exists and this job can be re-run. Use the
 	// tier the result was actually produced at (meta), falling back to the current
 	// selection for re-opened gallery models that don't carry tier metadata.

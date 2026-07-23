@@ -64,6 +64,24 @@ function getDracoLoader() {
 	return _dracoPromise;
 }
 
+// Real photographic IBL — every viewer on the platform is lit by an actual
+// HDRI, not just the procedural RoomEnvironment. `<three-ws-viewer>` embeds
+// on arbitrary third-party sites, so a root-relative path (`/hdri/studio.hdr`)
+// would resolve against the HOST page's origin and 404; this fetches from
+// three.ws's own absolute origin, same pattern as AR_LAUNCH_ORIGIN above.
+// Lazy + memoized: the decoded HDRI texture is shared across every viewer
+// instance on the page (each still gets its own PMREM-derived env map, so
+// per-instance disposal never affects a sibling viewer).
+let _hdriPromise = null;
+function getHdriTexture() {
+	if (!_hdriPromise) {
+		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
+			new RGBELoader().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`),
+		);
+	}
+	return _hdriPromise;
+}
+
 // Low-power heuristic: coarse pointer (touch) + few cores/little memory almost
 // always means an entry-level phone. `deviceMemory` is Chromium-only and
 // absent on iOS/Firefox, so it only ever *adds* signal, never gates alone.
@@ -263,9 +281,27 @@ class ThreeWsViewerElement extends HTMLElement {
 		// instead — visually close, meaningfully cheaper on first paint.
 		if (!this._lowPower) {
 			const pmrem = new PMREMGenerator(this._renderer);
+			pmrem.compileEquirectangularShader();
+			// Paint immediately with the procedural room so the model is never
+			// unlit while the real HDRI streams in over the network — then swap
+			// to the photographic environment once it lands.
 			this._envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 			this._scene.environment = this._envTex;
-			pmrem.dispose();
+			getHdriTexture()
+				.then((hdrTexture) => {
+					if (!this._renderer || !this._scene) { pmrem.dispose(); return; } // torn down before it landed
+					const prevEnv = this._envTex;
+					this._envTex = pmrem.fromEquirectangular(hdrTexture).texture;
+					this._scene.environment = this._envTex;
+					prevEnv?.dispose();
+					pmrem.dispose();
+				})
+				.catch(() => {
+					// Real HDRI unreachable from this embed's host (offline, CSP,
+					// blocked cross-origin request) — the procedural room stays as
+					// a correct, if less photographic, fallback.
+					pmrem.dispose();
+				});
 		}
 
 		this._scene.add(new AmbientLight(0xffffff, this._lowPower ? 0.75 : 0.55));

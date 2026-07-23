@@ -1,11 +1,11 @@
 {
-	"$comment": "Agent Identity Studio demo identities — the saved inputs and pipeline outputs behind three.ws/agent-identities. Each entry is a REAL run of the production pipeline (scripts/okx-identity-demo.mjs); results are written back here by the script, never by hand.",
+	"$comment": "Agent Identity Studio demo identities, the saved inputs and pipeline outputs behind three.ws/agent-identities. Each entry is a REAL run of the production pipeline (scripts/okx-identity-demo.mjs); results are written back here by the script, never by hand.",
 	"identities": [
 		{
 			"slug": "ledgerlynx",
 			"kind": "finance data agent",
 			"agentName": "LedgerLynx",
-			"brief": "A meticulous on-chain accounting agent that reconciles wallets and flags anomalies in real time. Calm, precise, incorruptible — dresses like a sharp auditor from the future.",
+			"brief": "A meticulous on-chain accounting agent that reconciles wallets and flags anomalies in real time. Calm, precise, incorruptible, dresses like a sharp auditor from the future.",
 			"styleHints": "deep navy and silver palette, brushed-metal accents, subtle circuit-trace pinstripes",
 			"result": {
 				"jobIdPrefix": "f1.eyJwIjoib2t4a",
@@ -159,7 +159,7 @@
 		},
 		{
 			"slug": "three-ws-3d-studio",
-			"kind": "our own listing — OKX.AI agent #2632",
+			"kind": "our own listing, OKX.AI agent #2632",
 			"agentName": "three.ws 3D Studio",
 			"brief": "The 3D identity studio of three.ws: an artisan engineer agent that forges avatars, rigs skeletons, and lights studio renders for other AI agents. Equal parts craftsman and machine.",
 			"styleHints": "charcoal work jacket with violet and cyan accents, holographic measuring tools, craftsman apron",

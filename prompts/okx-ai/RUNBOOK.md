@@ -1,4 +1,4 @@
-# OKX.AI Operator Runbook — agent #2632 "three.ws 3D Studio"
+# OKX.AI Operator Runbook: agent #2632 "three.ws 3D Studio"
 
 The operator's guide for launch day and the days before it. Written for a zero-context
 human or agent: every command below was run from this repo and its real output recorded.
@@ -7,10 +7,30 @@ human or agent: every command below was run from this repo and its real output r
 - **Full history:** [`PROGRESS.md`](PROGRESS.md).
 - **Public docs:** [`docs/okx-marketplace.md`](../../docs/okx-marketplace.md), [`specs/okx-agent-payments.md`](../../specs/okx-agent-payments.md).
 
-**CLI:** `onchainos` v4.2.0+ at `~/.local/bin/onchainos`. The read commands below need no
-login. Every **write** (update, activate, resubmit) requires an email-OTP login as
-`claude@three.ws` — a human must read the code from that inbox. Agents cannot complete a
-write on their own.
+**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.3.0 as of 2026-07-23; check drift with
+`onchainos --version`). The read commands below need no login. Every **write** (update,
+activate, resubmit) needs an authenticated session as `claude@three.ws`. **Login mechanics
+changed as of v4.3.0** (older sessions in `PROGRESS.md` describe a direct `wallet login
+<email>` + OTP-typed flow; that no longer exists):
+
+```bash
+onchainos wallet login --phase init
+# -> {"authSessionId": "...", "loginUrl": "https://web3.okx.com/account/sociallogin?...", "opened": true}
+```
+
+A human must open `loginUrl` in a browser, choose email, enter `claude@three.ws`, and complete
+the emailed OTP there (agents cannot type OTP into this flow directly, it never surfaces as a
+CLI prompt). Then poll for completion (long-running, times out at 120s per call, re-issue as
+needed while the human finishes the browser step):
+
+```bash
+onchainos wallet login --phase poll --session-id <authSessionId>
+onchainos wallet status   # loggedIn: true once done
+```
+
+`onchainos agent get-agents` / `service-list` / `search` need this session even though they
+are reads (they 401 with "session expired" when logged out). Only `curl` against our own
+`/api/okx/3d/*` endpoints (§7) and public RPC reads are truly login-free.
 
 ---
 
@@ -33,9 +53,9 @@ Verified output (2026-07-10):
 
 | Field | Meaning |
 | --- | --- |
-| `approvalDisplayStatus` | Review state. `5` = **Listing rejected** (our current state). The CLI also returns `approvalLabel`, the human string — **trust `approvalLabel` over memorising numbers**; the numeric map is OKX's and is not documented publicly. |
+| `approvalDisplayStatus` | Review state. `5` = **Listing rejected** (our current state). The CLI also returns `approvalLabel`, the human string, **trust `approvalLabel` over memorising numbers**; the numeric map is OKX's and is not documented publicly. |
 | `approvalLabel` | Same state as text: `"Listing rejected"`, `"Listing approved"`, `"Under review"`. |
-| `approvalRemark` | The reviewer's stated reason. **Currently empty** — the 2026-07-04 rejection reason arrived only by email, not through this field. Do not assume a rejection reason will appear here. |
+| `approvalRemark` | The reviewer's stated reason. **Currently empty**, the 2026-07-04 rejection reason arrived only by email, not through this field. Do not assume a rejection reason will appear here. |
 | `status` | Listing state. `2` = **not listed**. |
 | `soldCount` | Lifetime sales. `0` today. First non-zero value is our first revenue. |
 | `role` | `2` = ASP (Agent Service Provider). |
@@ -51,15 +71,16 @@ onchainos agent get-agents --agent-ids 2632 \
 
 ## 2. Known drift: the live listing is NOT our current catalog
 
-Verified 2026-07-10. The listing still carries the **old, rejected** service set. It has
-**7** services; our catalog module [`api/_lib/okx-catalog.js`](../../api/_lib/okx-catalog.js)
-defines **11**, and **not one name matches**.
+Last confirmed 2026-07-10 (service-list read needs the login session in §0 above; re-run once
+logged in to refresh this). The listing carried the **old, rejected** service set: **7**
+services vs. our catalog module [`api/_lib/okx-catalog.js`](../../api/_lib/okx-catalog.js)'s
+**11**, not one name matching.
 
 ```bash
-onchainos agent service-list --agent-id 2632   # → data[0].total = 7
+onchainos agent service-list --agent-id 2632   # → data[0].total = 7 (as of 2026-07-10)
 ```
 
-| Live on the listing (7) | Our catalog module (11) |
+| Live on the listing (7, as of 2026-07-10) | Our catalog module (11) |
 | --- | --- |
 | Text & Image to 3D Model | Agent Identity Studio |
 | Video to 3D Scene Capture | Text to 3D Model (GLB) |
@@ -74,33 +95,64 @@ onchainos agent service-list --agent-id 2632   # → data[0].total = 7
 | | 3D Studio Health (free) |
 
 This is expected: **WO-05 (relisting) has never run**, because it is hard-gated on WO-04.
-Nothing is broken — but do not read the live listing as a description of what we sell today.
-The catalog module is the source of truth; the listing is stale until WO-05 executes.
+Nothing is broken, but do not read the live listing as a description of what we sell today.
+The catalog module is the source of truth; the listing is stale until WO-05 executes. Note
+also that the catalog's listing strings were rewritten 2026-07-17 (`f68ce55bb`) to match OKX's
+documented description format (numbered "Provide: 1. ... 2. ..." lists, no tech jargon, no
+price-in-name), verify against the CURRENT `api/_lib/okx-catalog.js`, not the table above,
+which mirrors the module as of 2026-07-10.
 
 ---
 
 ## 3. The one blocker: settlement funding
 
 Everything else is code-complete. The rail reports `settleable: true` in production, but no
-funded call has ever settled on-chain — the payer wallet is empty, so real attempts return
-`insufficient_balance`.
+funded call has ever settled on-chain.
 
-**To unblock, the owner funds one wallet:**
+**⚠️ Correction (2026-07-23, WO-07 audit): the seller/payTo address has moved.** Every earlier
+session in `PROGRESS.md` (and the pre-2026-07-23 text below in this file) names
+`0x75d00a2713565171f33216e5aa2a375e076ecf69` as "the payTo wallet". Live-probed today, the
+X Layer accept's `payTo` is **`0x4022de2D36C334E73C7a108805Cea11C0564f402`**, the platform's
+standard EVM merchant/deployer wallet (already the Base rail's `payTo`, see
+`contracts/DEPLOYMENTS.md`), evidently consolidated onto X Layer sometime between 2026-07-07
+and 2026-07-23 with no PROGRESS.md entry recording it. Confirmed against the live Cloud Run
+env var (`X402_PAY_TO_XLAYER`), not just the HTTP challenge, so this is the real seller address,
+not a caching artifact. `0x75d0…cf69` still has two other real roles that are unaffected: it is
+agent #2632's **on-chain identity owner wallet**, and it is the **onchainos buyer/TEE wallet**
+this session's `payment pay` command signs from, so a "self-payment" test is no longer
+self-payment (buyer `0x75d0…cf69` → seller `0x4022de2D…f402`), which is arguably a more
+realistic E2E test, not a problem, but the funding target below is what actually needs money.
+
+**Wallet balances checked live 2026-07-23 (X Layer RPC `rpc.xlayer.tech`, direct `eth_call`):**
+
+| Wallet | Role | Token | Balance |
+| --- | --- | --- | --- |
+| `0x75d00a2713565171f33216e5aa2a375e076ecf69` | Buyer (onchainos TEE wallet) + agent identity owner | USD₮0 | **0** |
+| `0x4022de2D36C334E73C7a108805Cea11C0564f402` | Seller / payTo (current) | USD₮0 | 2.427731 (irrelevant to the buyer-side test, it's the recipient not the payer) |
+| `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` | Relayer (`X402_XLAYER_RELAYER_KEY`, Secret Manager `x402-xlayer-relayer-key` v3, rotated 2026-07-12; superseded the `0x1F4a…bb74` address `PROGRESS.md` names from 2026-07-08) | OKB (gas) | 0.02 |
+
+**To unblock, the owner funds the BUYER wallet** (the seller already has funds; gas at the
+relayer is thin but present):
 
 | | |
 | --- | --- |
-| Wallet (payer + seller) | `0x75d00a2713565171f33216e5aa2a375e076ecf69` |
+| Wallet to fund | `0x75d00a2713565171f33216e5aa2a375e076ecf69` (buyer) |
 | Chain | X Layer, chainId **196** (`eip155:196`) |
-| Token | `0x779ded0c9e1022225f8e0630b35a9b54be713736` |
-| Amount | ~$5 of the fee token, plus OKB dust for gas |
+| Token | `0x779ded0c9e1022225f8e0630b35a9b54be713736` (USD₮0) |
+| Amount | ≥$3 to cover one paid call of every catalog service once each; ~$5 for buffer |
+
+Re-verify the relayer's OKB balance is still enough for ≥3 settlement tx before relying on
+0.02 OKB, top up a few cents' worth if a dry run shows `broadcast_failed`/out-of-gas.
 
 Once funded, run [`04-e2e-real-payment-test.md`](04-e2e-real-payment-test.md). It needs ≥3
 real settlements with transaction hashes. **Only then** does WO-05 (resubmission) unlock.
 
 Until a real settlement exists, `docs/okx-marketplace.md` must not claim observed on-chain
-settlement — its "Payment semantics" section states the contract as implemented and
+settlement, its "Payment semantics" section states the contract as implemented and
 unit-tested, with an explicit note that no funded settlement has occurred. Keep that note
-until the first tx hash lands, then update both that section and `PROGRESS.md`.
+until the first tx hash lands, then update both that section and `PROGRESS.md`. Also re-probe
+`payTo` live before trusting any address in this file, the mid-stream address change above
+went unrecorded once; it can happen again silently on a future deploy.
 
 ---
 
@@ -113,14 +165,14 @@ This is the holder-visible moment. Work the list top to bottom.
    onchainos agent get-agents --agent-ids 2632     # status should leave 2 ("not listed")
    onchainos agent service-list --agent-id 2632    # services present, prices correct
    ```
-   Reconcile the service names against `api/_lib/okx-catalog.js` — see §2. If they still
+   Reconcile the service names against `api/_lib/okx-catalog.js`, see §2. If they still
    differ, WO-05 did not take; re-run it before announcing.
 
 2. **Search as a buyer would.** We must actually appear:
    ```bash
    onchainos agent search --query "3D avatar rigging GLB"
    ```
-   Verified 2026-07-10: returns 2 results, **agent 2632 absent** (correct — we are not
+   Verified 2026-07-10: returns 2 results, **agent 2632 absent** (correct, we are not
    listed). After approval this must return us. Check the card copy reads well and the
    prices are right.
 
@@ -133,7 +185,7 @@ This is the holder-visible moment. Work the list top to bottom.
    `/api/cron/changelog-push` cron posts the entry once the deploy that ships
    it is live. No manual push step.
 
-4. **Set the agent's own avatar live** if WO-06's dogfood upload was deferred (it was — the
+4. **Set the agent's own avatar live** if WO-06's dogfood upload was deferred (it was, the
    asset is generated but never written on-chain). This is an on-chain write: OTP required.
 
 5. **Record it.** Append the approval, the date, and the first listing screenshot/output to
@@ -144,7 +196,7 @@ This is the holder-visible moment. Work the list top to bottom.
 ## 5. Branch: **REJECTED AGAIN** (`approvalDisplayStatus: 5`)
 
 1. **Capture the exact reason.** Check `approvalRemark` first, then the `claude@three.ws`
-   inbox — the 2026-07-04 rejection came by email with `approvalRemark` empty, so assume the
+   inbox, the 2026-07-04 rejection came by email with `approvalRemark` empty, so assume the
    email is authoritative.
    ```bash
    onchainos agent get-agents --agent-ids 2632 \
@@ -153,10 +205,20 @@ This is the holder-visible moment. Work the list top to bottom.
 2. **Append the verbatim remark to `PROGRESS.md`** with the date. Never paraphrase a
    reviewer.
 3. **Map the reason to the work order that owns it**, fix there, and re-run
-   [`05-relisting-resubmission.md`](05-relisting-resubmission.md). For reference, the
-   2026-07-04 rejection ("your A2MCP service has not been integrated with the OKX Agent
-   Payments Protocol standard") was owned by the payment rail, now implemented in
-   [`api/_lib/x402-xlayer-okx.js`](../../api/_lib/x402-xlayer-okx.js).
+   [`05-relisting-resubmission.md`](05-relisting-resubmission.md). Precedent:
+   - 2026-07-04 rejection ("your A2MCP service has not been integrated with the OKX Agent
+     Payments Protocol standard") was owned by the payment rail, implemented in
+     [`api/_lib/x402-xlayer-okx.js`](../../api/_lib/x402-xlayer-okx.js).
+   - 2026-07-17 rejection (avatar not aligned with agent positioning / not polished; wrong
+     dimensions/corners) was owned by the listing avatar. Fixed: a logo-style 440x440 square
+     avatar at [`prompts/okx-ai/assets/okx-avatar-440.png`](assets/okx-avatar-440.png)
+     (reproducible via `node prompts/okx-ai/assets/render-avatar.mjs`), plus a root-cause fix
+     to the render pipeline itself (missing IBL environment made every avatar/PFP render dark
+     and murky, see `api/_lib/render-clip.js` / `api/_lib/avatar-render.js`, shipped
+     2026-07-17). **As of this audit (2026-07-23) the fixed avatar has not yet been uploaded
+     on-chain** (`agent upload` + `agent update` need the login session from §0, then a human
+     confirms the write), that upload plus the catalog-string resubmission (§2) is the next
+     concrete action once login completes.
 
 ---
 
@@ -166,7 +228,7 @@ This is the holder-visible moment. Work the list top to bottom.
 | --- | --- |
 | Did we sell? | `onchainos agent get-agents --agent-ids 2632` → `soldCount` |
 | What did buyers say? | `onchainos agent feedback-list` (verified present: "Query Agent reviews") |
-| Where does revenue land? | The agent wallet `0x75d0…cf69` on X Layer (196) — the same wallet that pays. Confirm the first payout against the settlement tx hash from WO-04. |
+| Where does revenue land? | The seller/payTo wallet on X Layer (196), **verify live**, it has moved before (see §3); as of 2026-07-23 it is `0x4022de2D36C334E73C7a108805Cea11C0564f402`, the platform's standard EVM merchant wallet, not the buyer wallet. Confirm the first payout against the settlement tx hash from WO-04. |
 | Where do errors surface? | The existing error-reporting path in [`api/_mcp/payments.js`](../../api/_mcp/payments.js); paid-endpoint failures answer **before** settlement, so a failed job never charges a buyer. |
 | Daily watch | `soldCount`, `approvalLabel`, and the paid-endpoint health/catalog free routes (§7). |
 
@@ -174,7 +236,7 @@ This is the holder-visible moment. Work the list top to bottom.
 
 ## 7. Free routes worth probing any day
 
-These need no payment, no key, and no login — they are the fastest signal that the surface
+These need no payment, no key, and no login, they are the fastest signal that the surface
 is healthy:
 
 ```bash

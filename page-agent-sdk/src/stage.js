@@ -21,6 +21,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildMorphMap } from './lipsync.js';
+import { DEFAULT_ASSET_BASE } from './catalog.js';
 
 // Catalog rigs served by three.ws (e.g. cz.glb) carry EXT_meshopt_compression;
 // GLTFLoader throws "setMeshoptDecoder must be called" without a decoder.
@@ -31,6 +32,24 @@ function getMeshoptDecoder() {
 		_meshoptPromise = import('three/addons/libs/meshopt_decoder.module.js').then((m) => m.MeshoptDecoder);
 	}
 	return _meshoptPromise;
+}
+
+// Real photographic IBL, not just the procedural RoomEnvironment. <page-agent>
+// embeds on arbitrary third-party pages, so a root-relative path would
+// resolve against the HOST page's origin and 404 — fetch from three.ws's own
+// absolute origin instead (same origin catalog.js already uses for rig
+// assets). Lazy + memoized: the decoded texture is shared across every stage
+// on the page; each still derives its own PMREM env map, so per-stage
+// disposal never affects a sibling.
+const HDRI_ORIGIN = new URL(DEFAULT_ASSET_BASE).origin;
+let _hdriPromise = null;
+function getHdriTexture() {
+	if (!_hdriPromise) {
+		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
+			new RGBELoader().loadAsync(`${HDRI_ORIGIN}/hdri/studio.hdr`),
+		);
+	}
+	return _hdriPromise;
 }
 
 const FRAMING = {
@@ -74,9 +93,27 @@ export class AvatarStage {
 		this.renderer.toneMappingExposure = 1.05;
 
 		const pmrem = new PMREMGenerator(this.renderer);
+		pmrem.compileEquirectangularShader();
+		// Paint immediately with the procedural room so the agent is never
+		// unlit while the real HDRI streams in over the network — then swap to
+		// the photographic environment once it lands.
 		this._envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 		this.scene.environment = this._envTex;
-		pmrem.dispose();
+		getHdriTexture()
+			.then((hdrTexture) => {
+				if (!this.renderer || !this.scene) { pmrem.dispose(); return; } // torn down before it landed
+				const prevEnv = this._envTex;
+				this._envTex = pmrem.fromEquirectangular(hdrTexture).texture;
+				this.scene.environment = this._envTex;
+				prevEnv?.dispose();
+				pmrem.dispose();
+			})
+			.catch(() => {
+				// Real HDRI unreachable from this embed's host (offline, CSP,
+				// blocked cross-origin request) — the procedural room stays as a
+				// correct, if less photographic, fallback.
+				pmrem.dispose();
+			});
 
 		this.scene.add(new AmbientLight(0xffffff, 0.6));
 		const key = new DirectionalLight(0xffffff, 1.4);

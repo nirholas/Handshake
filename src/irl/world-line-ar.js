@@ -18,6 +18,7 @@ import {
 } from 'three';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { mountPinIdle } from './pin-idle.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
 
 // ── Agent voice (TTS) ────────────────────────────────────────────────────────
 let _voiceAudio = null;
@@ -286,10 +287,12 @@ export class WorldLineCeremony {
 		try {
 			const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 			const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
-			renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+			const qualityTier = detectQualityTier();
+			applyCinematicDefaults(renderer, { tier: qualityTier });
 			const size = 160;
 			renderer.setSize(size, size, false);
 			const scene = new Scene();
+			loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio');
 			scene.add(new AmbientLight(0xffffff, 1.1));
 			const key = new DirectionalLight(0xffffff, 1.2); key.position.set(1, 2, 2); scene.add(key);
 			const cam = new PerspectiveCamera(35, 1, 0.1, 100);
@@ -334,9 +337,12 @@ export class WorldLineCeremony {
 		try {
 			const renderer = new WebGLRenderer({ alpha: true, antialias: true });
 			renderer.xr.enabled = true;
+			const arQualityTier = detectQualityTier();
+			applyCinematicDefaults(renderer, { tier: arQualityTier });
 			renderer.setSize(window.innerWidth, window.innerHeight);
 			document.body.appendChild(renderer.domElement);
 			const scene = new Scene();
+			loadEnvironment(renderer, scene, arQualityTier === 'mobile' ? null : 'studio');
 			scene.add(new AmbientLight(0xffffff, 1.2));
 			const cam = new PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
 			const reticle = new Mesh(

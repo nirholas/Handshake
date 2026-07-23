@@ -34,6 +34,7 @@ import {
 	ToneMappingMode,
 } from 'postprocessing';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 
 // Tier → hex color
 const TIER_COLOR = {
@@ -77,14 +78,24 @@ export function mountOracleGraph(canvas, labelContainer) {
 	const H = () => canvas.clientHeight || 520;
 
 	const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.setSize(W(), H(), false);
-	renderer.outputColorSpace = 'srgb';
+	// Shared cinematic bar for sRGB output + tiered pixel ratio cap. Tone
+	// mapping stays NoToneMapping on the renderer itself: this scene already
+	// runs ACES filmic through the postprocessing ToneMappingEffect below
+	// (composed alongside bloom), so setting it on the renderer too would
+	// double-apply the curve.
+	const tier = detectQualityTier();
+	applyCinematicDefaults(renderer, { tier });
 	renderer.toneMapping = NoToneMapping;
+	renderer.setSize(W(), H(), false);
 
 	const scene = new Scene();
 	scene.background = new Color(0x05060c);
 	scene.fog = new FogExp2(0x05060c, 0.012);
+	// Conviction spheres use MeshStandardMaterial (real PBR, reacts to light),
+	// so a real HDRI gives them genuine specular highlights beyond the flat
+	// key/rim/ambient rig below. No ground-contact shadow: the graph floats
+	// in open space with no floor/pedestal for a shadow to land on.
+	loadEnvironment(renderer, scene, tier === 'mobile' ? null : 'sunset');
 	// Fill + key + rim so the metallic spheres read as 3D from every orbit
 	// angle. The emissive glow (below) carries the tier color and feeds bloom;
 	// these lights give the spheres form so they don't look like flat discs.

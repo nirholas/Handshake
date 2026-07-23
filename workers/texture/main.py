@@ -40,7 +40,12 @@ API contract:
     prompt: str,       # texture description, e.g. "worn leather, dark brown"
     negative_prompt?: str,
     num_views?: int,   # 4 or 8 (default: 8)
-    texture_size?: int # 512|1024|2048 (default: 1024)
+    texture_size?: int, # 512|1024|2048 (default: 1024)
+    material_class?: str # person|metal|wood|fabric|plastic|glass — sets the
+                          # baked roughness/metallic factors to measured
+                          # real-world values instead of a flat guess, and
+                          # nudges the SDXL prompt with material-appropriate
+                          # descriptors (see MATERIAL_CLASS_PBR below).
   } → 202 { task_id, status }
 
   POST /retexture_region {
@@ -144,6 +149,28 @@ VIEWPOINTS_8 = [
     (315, 15),
 ]
 VIEWPOINTS_4 = [(0, 0), (90, 0), (180, 0), (270, 0)]
+
+# Measured-value PBR defaults per material class (see prompt 04's "material
+# presets that match reality"). Keyed by the director's material
+# classification (api/_lib/forge-director-prompts.js) — these are the same
+# real-world roughness/metallic ranges @three-ws/viewer-presets uses for its
+# skin/carPaint/brushedSteel/realGlass presets, applied here to the BAKED
+# texture atlas so a lane that never runs Material Studio still ships a
+# physically-plausible material out of the box instead of the flat
+# metallic=0/roughness=0.8 guess every class used to get.
+MATERIAL_CLASS_PBR = {
+    "person": {"metallic": 0.0, "roughness": 0.52, "prompt_suffix": "realistic human skin texture, subtle pores, soft even lighting"},
+    "metal": {"metallic": 0.9, "roughness": 0.35, "prompt_suffix": "brushed metal, subtle micro-scratches, realistic metallic reflections"},
+    "wood": {"metallic": 0.0, "roughness": 0.72, "prompt_suffix": "natural wood grain, matte varnish, realistic wood texture"},
+    "fabric": {"metallic": 0.0, "roughness": 0.88, "prompt_suffix": "woven fabric texture, soft matte cloth, visible weave"},
+    "plastic": {"metallic": 0.0, "roughness": 0.35, "prompt_suffix": "smooth injection-molded plastic, slight glossy sheen"},
+    "glass": {"metallic": 0.0, "roughness": 0.05, "prompt_suffix": "clear glass, subtle reflections, glossy transparent surface"},
+}
+DEFAULT_MATERIAL_PBR = {"metallic": 0.0, "roughness": 0.8, "prompt_suffix": ""}
+
+
+def _resolve_material_pbr(material_class: Optional[str]) -> dict:
+    return MATERIAL_CLASS_PBR.get((material_class or "").strip().lower(), DEFAULT_MATERIAL_PBR)
 
 
 def _load_pipeline() -> None:
@@ -413,8 +440,12 @@ def _run_texturing(
     negative_prompt: str,
     num_views: int,
     texture_size: int,
+    material_class: Optional[str] = None,
 ) -> bytes:
     import trimesh
+
+    pbr = _resolve_material_pbr(material_class)
+    effective_prompt = f"{prompt}, {pbr['prompt_suffix']}" if pbr["prompt_suffix"] else prompt
 
     mesh = _load_mesh(mesh_url)
     viewpoints = VIEWPOINTS_8 if num_views >= 8 else VIEWPOINTS_4
@@ -425,20 +456,20 @@ def _run_texturing(
         for az, el in viewpoints
     ]
 
-    log.info("Generating texture views with SDXL+ControlNet")
+    log.info("Generating texture views with SDXL+ControlNet (material_class=%s)", material_class or "default")
     view_images = [
-        _generate_view_texture(d, prompt, negative_prompt, texture_size, seed=i * 42)
+        _generate_view_texture(d, effective_prompt, negative_prompt, texture_size, seed=i * 42)
         for i, d in enumerate(depth_maps)
     ]
 
     log.info("Projecting views onto UV atlas (%dpx)", texture_size)
     texture_atlas = _project_texture_onto_uv(mesh, view_images, viewpoints, texture_size)
 
-    log.info("Baking textured GLB")
+    log.info("Baking textured GLB with metallic=%.2f roughness=%.2f", pbr["metallic"], pbr["roughness"])
     material = trimesh.visual.material.PBRMaterial(
         baseColorTexture=texture_atlas,
-        metallicFactor=0.0,
-        roughnessFactor=0.8,
+        metallicFactor=pbr["metallic"],
+        roughnessFactor=pbr["roughness"],
     )
     mesh.visual = trimesh.visual.TextureVisuals(uv=mesh.visual.uv, material=material)
 
@@ -730,10 +761,11 @@ async def _process(
     negative_prompt: str,
     num_views: int,
     texture_size: int,
+    material_class: Optional[str] = None,
 ) -> None:
     await _run_task(
         task_id,
-        lambda: _run_texturing(mesh_url, prompt, negative_prompt, num_views, texture_size),
+        lambda: _run_texturing(mesh_url, prompt, negative_prompt, num_views, texture_size, material_class),
         label="texture",
     )
 
@@ -776,12 +808,23 @@ class TextureRequest(BaseModel):
     # trained at, risking both L4 VRAM headroom and per-view coherence, so it
     # is deliberately left off the accepted set below.
     texture_size: int = Field(default=2048)
+    material_class: Optional[str] = Field(
+        default=None,
+        description="person|metal|wood|fabric|plastic|glass — measured-value roughness/metallic bake + prompt hint",
+    )
 
     @field_validator("texture_size")
     @classmethod
     def validate_size(cls, v: int) -> int:
         if v not in (512, 1024, 2048):
             raise ValueError("texture_size must be 512, 1024, or 2048")
+        return v
+
+    @field_validator("material_class")
+    @classmethod
+    def validate_material_class(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip().lower() not in MATERIAL_CLASS_PBR:
+            raise ValueError(f"material_class must be one of {sorted(MATERIAL_CLASS_PBR)}")
         return v
 
 
@@ -806,6 +849,7 @@ async def texture_mesh(
         body.negative_prompt,
         body.num_views,
         body.texture_size,
+        body.material_class,
     )
     return {"task_id": task_id, "status": "queued"}
 

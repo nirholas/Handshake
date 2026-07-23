@@ -11,8 +11,7 @@
 // Colyseus), reused here so a coin community is a first-class 3D space.
 
 import {
-	Scene, WebGLRenderer, PerspectiveCamera, Group, Vector3, PCFShadowMap, SRGBColorSpace,
-	ACESFilmicToneMapping,
+	Scene, WebGLRenderer, PerspectiveCamera, Group, Vector3, SRGBColorSpace,
 	Mesh, MeshStandardMaterial, MeshBasicMaterial, CircleGeometry, RingGeometry,
 	CylinderGeometry, PlaneGeometry,
 	TextureLoader, DoubleSide,
@@ -28,6 +27,7 @@ import { createDistrict } from './district.js';
 import { DISTRICT, clampToBounds } from './world-zones.js';
 import { PhysicsWorld } from '../physics/physics-world.js';
 import { detectProfile, createFrameWatchdog } from '../club-perf.js';
+import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
 import {
 	createFrameGovernor, trackWindowFocus, getPowerSaver, onPowerSaverChange,
 	FPS_ACTIVE, FPS_IDLE, FPS_SAVER,
@@ -683,13 +683,13 @@ export class CoinCommunities {
 		}
 		r.setSize(window.innerWidth, window.innerHeight);
 		if (this._transparentBg) r.setClearColor(0x000000, 0);
-		r.shadowMap.type = PCFShadowMap;
-		r.outputColorSpace = SRGBColorSpace;
-		// ACES keeps the cool moonlight key and the bright avatars from clipping;
-		// exposure is tuned for the dark monochrome arena (the LDR gradient backdrop
-		// doesn't need the heavy pull the old HDR daylight sky did).
-		r.toneMapping = ACESFilmicToneMapping;
-		r.toneMappingExposure = 1.0;
+		// Cinematic defaults (ACES tone mapping, sRGB output, VSM soft shadows,
+		// pixel-ratio cap) shared with every other viewer on the platform. Exposure
+		// is tuned for the dark monochrome arena (the LDR gradient backdrop doesn't
+		// need the heavy pull the old HDR daylight sky did). _applyPerfTier() below
+		// still owns the final pixel-ratio/shadow-enabled call so power-saver mode
+		// and the 'low' tier keep degrading exactly as before.
+		applyCinematicDefaults(r, { exposure: 1.0, tier: this._perfTier === 'low' ? 'mobile' : this._perfTier });
 		this.renderer = r;
 		this._applyPerfTier();
 		window.addEventListener('resize', () => this._onResize());
@@ -739,6 +739,11 @@ export class CoinCommunities {
 		// the coin totem, and netcode.
 		const scene = new Scene();
 		this.scene = scene;
+
+		// Real HDRI image-based lighting for the plaza (falls back to procedural
+		// RoomEnvironment on the 'low' tier or fetch failure). 'outdoor' fits the
+		// open-air metaverse plaza better than a studio backdrop.
+		loadEnvironment(this.renderer, scene, this._perfTier === 'low' ? null : 'outdoor');
 
 		// Far plane reaches the sky dome; near stays tight for close avatars.
 		// Initial FOV matches the follow mode's (camera-modes.js) so the first

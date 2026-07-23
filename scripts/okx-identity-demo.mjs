@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Run the Agent Identity Studio pipeline for the demo identities in
-// data/agent-identities.json — REAL runs of the production pipeline (the same
+// data/agent-identities.json, REAL runs of the production pipeline (the same
 // module the /api/okx/3d/identity-studio endpoint executes), driven locally:
 //
 //   node --env-file=.env.local scripts/okx-identity-demo.mjs [slug] [--force]
@@ -80,7 +80,7 @@ async function runIdentity(entry) {
 	}
 	const rig = await verifyRiggedGlb(desc.deliverables.rigged_glb_url);
 	console.log(
-		`  ✓ done in ${Math.round((Date.now() - started) / 1000)}s — rig verified: ` +
+		`  ✓ done in ${Math.round((Date.now() - started) / 1000)}s, rig verified: ` +
 			`${rig.joints} joints, ${rig.skinnedPrimitives} skinned primitives, ${Math.round(rig.bytes / 1024)}KB`,
 	);
 	return {

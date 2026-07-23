@@ -24,6 +24,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { tokenText, pca3, normalizeCoordsToRadius, cosineNeighbors } from './embedding.js';
+import { applyCinematicDefaults, detectQualityTier } from '../shared/cinematic-render.js';
 
 // ---- DOM ------------------------------------------------------------------
 const $ = (id) => document.getElementById(id);
@@ -422,7 +423,12 @@ function boot() {
 		fatalOverlay('<strong>This experience needs WebGL.</strong><br/>Your browser could not create a WebGL context.');
 		return false;
 	}
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+	// Shared cinematic bar (ACES tone mapping, sRGB output, tiered pixel ratio
+	// cap). No HDRI/IBL here: every material in this scene is MeshBasicMaterial
+	// or PointsMaterial (unlit/emissive-style stars + additive glow sprites),
+	// so environment reflections would never be visible - only the tone
+	// mapping's highlight rolloff matters for this surface.
+	applyCinematicDefaults(renderer, { tier: detectQualityTier() });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	scene = new Scene();

@@ -1,4 +1,4 @@
-// x402 protocol — facilitator-mediated micropayments.
+// x402 protocol, facilitator-mediated micropayments.
 // Spec: https://x402.org / https://github.com/coinbase/x402
 //
 // This module implements the *standard* x402 wire flow used by agentic.market,
@@ -16,7 +16,7 @@
 //   }
 //
 // In addition to the body, the same envelope is emitted base64-encoded as the
-// `payment-required` HTTP response header — required by agentic.market's
+// `payment-required` HTTP response header, required by agentic.market's
 // Bazaar validator, which reads the header on its discovery probe.
 //
 // Networks use CAIP-2 IDs in v2: `eip155:<chainId>` for EVM, `solana:<genesis-prefix>`
@@ -85,7 +85,7 @@ export const X402_VERSION = 2;
 // requirement opts into the Permit2 asset-transfer method, the facilitator
 // (CDP's x402ExactPermit2Proxy) lets the payer skip broadcasting the Permit2
 // approval themselves. EIP-2612 sponsorship is the preferred path for tokens
-// that implement EIP-2612 (Base USDC v2 does — the facilitator submits the
+// that implement EIP-2612 (Base USDC v2 does, the facilitator submits the
 // off-chain permit via settleWithPermit). ERC-20 approval sponsorship is the
 // universal fallback for any other ERC-20: the client signs (but does not
 // broadcast) a raw approve(Permit2, MaxUint256) tx and the facilitator
@@ -105,7 +105,7 @@ export const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 export const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
 
 // Networks the CDP facilitator settles when credentials are configured.
-// Confirmed against the live /supported probe — CDP advertises exact for Base
+// Confirmed against the live /supported probe, CDP advertises exact for Base
 // and Arbitrum but NOT Optimism, so Optimism is deliberately absent: no accept
 // entry routes there, and listing it only made /api/x402-status report 503.
 const CDP_EVM_NETWORKS = new Set([
@@ -128,7 +128,7 @@ const DIRECT_NETWORKS = new Set([NETWORK_BSC_MAINNET]);
 //
 // Returns null when:
 //   1. The source accept is not an EVM `exact` entry (BSC direct + Solana).
-//   2. CDP credentials are missing — Permit2 settlement is a CDP-only path
+//   2. CDP credentials are missing, Permit2 settlement is a CDP-only path
 //      (PayAI's facilitator only advertises `exact` with EIP-3009). Emitting
 //      a Permit2 sibling we can't actually settle would mislead clients into
 //      signing a typed-data we'd then reject at /verify time.
@@ -157,7 +157,7 @@ function pushEvmAccepts(out, accept) {
 }
 
 // One v2 PaymentRequirements entry per supported network. Base mainnet first
-// — agentic.market's validator inspects the first entry for its supported-network
+//, agentic.market's validator inspects the first entry for its supported-network
 // check, and Base is the most broadly recognized option in the Bazaar.
 //
 // In v2, `resource` / `description` / `mimeType` are top-level on the 402 body
@@ -190,9 +190,9 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
 		});
 		// $THREE alongside USDC on the same Solana rail (opt-in via
-		// X402_ACCEPT_THREE_SOLANA — see env.js). Pushed AFTER the USDC entry so
+		// X402_ACCEPT_THREE_SOLANA, see env.js). Pushed AFTER the USDC entry so
 		// clients that pick the first Solana accept keep settling USDC; the modal
-		// surfaces both as a token chooser. Same fee-payer co-sign path — the
+		// surfaces both as a token chooser. Same fee-payer co-sign path, the
 		// checkout server transfers any SPL mint, so no extra wiring is needed.
 		if (env.X402_ACCEPT_THREE_SOLANA && env.X402_FEE_PAYER_SOLANA) {
 			out.push({
@@ -218,7 +218,7 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 		});
 	}
 	if (env.X402_PAY_TO_BSC) {
-		// BSC uses the contract-mediated "direct" scheme — see x402-bsc-direct.js
+		// BSC uses the contract-mediated "direct" scheme, see x402-bsc-direct.js
 		// for the wire flow. Clients call ThreeWSPayments.pay(ref) themselves and
 		// hand back the resulting tx hash via the X-PAYMENT header.
 		out.push({
@@ -236,7 +236,7 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 			},
 		});
 	}
-	// OKX Agent Payments Protocol rail — USD₮0 on X Layer (eip155:196), per
+	// OKX Agent Payments Protocol rail, USD₮0 on X Layer (eip155:196), per
 	// specs/okx-agent-payments.md. Advertised only when settlement is actually
 	// possible (OKX facilitator creds or the direct-redemption relayer key).
 	// USD₮0 shares USDC's 6-decimal atomic scale, so per-tool amounts carry
@@ -248,7 +248,7 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 }
 
 // Lazy CDP auth-headers factory. createCdpAuthHeaders() returns an async fn that,
-// when invoked, returns { verify, settle, supported, list } header maps — each
+// when invoked, returns { verify, settle, supported, list } header maps, each
 // including a Correlation-Context tag and (when keys are set) a per-operation
 // signed JWT in Authorization. We instantiate once per process; the inner fn
 // re-signs on every call (JWTs are short-lived).
@@ -278,20 +278,20 @@ export function facilitatorFor(network) {
 		const solana = resolveSolanaFacilitator();
 		return { url: solana.url, token: env.X402_FACILITATOR_TOKEN_SOLANA, self: solana.self };
 	}
-	// BSC settles via on-chain pay() — no facilitator needed. The {direct:true}
+	// BSC settles via on-chain pay(), no facilitator needed. The {direct:true}
 	// marker tells verifyPayment/settlePayment to bypass HTTP entirely and call
 	// the local verifier in x402-bsc-direct.js.
 	if (DIRECT_NETWORKS.has(network) || network === 'bsc') {
 		return { direct: true };
 	}
-	// X Layer settles via the OKX Agent Payments Protocol rail — the official
+	// X Layer settles via the OKX Agent Payments Protocol rail, the official
 	// OKX facilitator when credentialed, direct EIP-3009 redemption otherwise.
 	// The {okxXLayer:true} marker routes to x402-xlayer-okx.js.
 	if (network === NETWORK_XLAYER_MAINNET || network === 'xlayer') {
 		return { okxXLayer: true };
 	}
 	// EVM mainnets supported by Coinbase CDP. When CDP keys are set, route all
-	// of them through CDP (required for CDP Bazaar / agentic.market — only
+	// of them through CDP (required for CDP Bazaar / agentic.market, only
 	// endpoints whose first verify+settle is processed by CDP get cataloged).
 	// Base mainnet falls back to X402_FACILITATOR_URL_BASE (PayAI by default)
 	// when CDP keys are absent; other EVM chains require CDP.
@@ -319,13 +319,13 @@ export function facilitatorFor(network) {
 // CDP creds are set, otherwise to X402_FACILITATOR_URL_BASE. Treat Base as
 // settleable ONLY when we can trust it will verify+settle:
 //
-//   1. CDP credentials are configured — Base routes to Coinbase's facilitator, a
+//   1. CDP credentials are configured, Base routes to Coinbase's facilitator, a
 //      known-good, platform-trusted path.
 //   2. The operator has EXPLICITLY opted in via X402_ADVERTISE_BASE=true.
 //
 // A bare X402_FACILITATOR_URL_BASE being SET is deliberately NOT enough. Prod had
 // it pointed at a facilitator host that answers every /verify with `404 Application
-// not found` — so a Base accept was advertised (buyers pick it first), the buyer
+// not found`, so a Base accept was advertised (buyers pick it first), the buyer
 // paid, verification 404'd, and they got a 502. A URL string is not proof the
 // endpoint behind it works; only CDP or a deliberate operator opt-in is. Self-heals
 // the moment either is set. Solana is unaffected: it settles via whatever
@@ -341,24 +341,24 @@ export function baseSettleable() {
 // will reject AFTER the buyer has paid. Solana settlement routes via
 // resolveSolanaFacilitator():
 //
-//   • EXTERNAL facilitator (PayAI, or an explicit non-self URL) — it holds its
+//   • EXTERNAL facilitator (PayAI, or an explicit non-self URL), it holds its
 //     own sponsor key and co-signs; we trust that path, so the accept settles.
-//   • Our SELF-hosted facilitator — settle co-signs sponsor-mode payments with
+//   • Our SELF-hosted facilitator, settle co-signs sponsor-mode payments with
 //     X402_FEE_PAYER_SECRET_BASE58 (api/_lib/x402/self-facilitator.js). Without
 //     that secret loaded, EVERY sponsor-mode settle throws
 //     `sponsor_key_unconfigured` and the buyer eats a 502 AFTER submitting a
-//     signed payment — the exact production failure this gate closes (80× 502 on
+//     signed payment, the exact production failure this gate closes (80× 502 on
 //     /api/x402/dance-tip, crypto-intel, three-intel in the 2026-07-03 export).
 //     So self-routing is settleable only when the co-signing secret is present.
 //
 // The 402 challenge already requires X402_FEE_PAYER_SOLANA (the advertised
 // sponsor PUBKEY); this adds the matching requirement that we can actually SIGN
-// for it. Self-heals the instant the secret is set — no redeploy needed.
+// for it. Self-heals the instant the secret is set, no redeploy needed.
 export function solanaSettleable() {
 	const route = resolveSolanaFacilitator();
 	if (!route.self) return true; // external facilitator co-signs with its own key
 	// SELF-PAY (X402_RING_SELF_PAY): the buyer signs its own 1-signature fee and the
-	// self-facilitator only BROADCASTS the already-signed tx — no sponsor key is
+	// self-facilitator only BROADCASTS the already-signed tx, no sponsor key is
 	// used (settleRingPayment's `if (!selfPay)` branch skips loadFeePayerKeypair).
 	// So self-routing is settleable when self-pay is on, even with no sponsor
 	// secret. Sponsor mode still requires the co-signing secret.
@@ -370,7 +370,7 @@ export function solanaSettleable() {
 // call send402()/verifyPayment() directly instead of going through paidEndpoint().
 // Emits the platform-standard accept set for a USDC price:
 //
-//   1. Solana first — the always-on, self-hosted settle rail (first-accept clients
+//   1. Solana first, the always-on, self-hosted settle rail (first-accept clients
 //      and wallet modals settle here).
 //   2. Base second, but ONLY when baseSettleable() (CDP creds or explicit opt-in)
 //      AND the Base pay-to/asset are configured. A dead or unconfigured Base
@@ -489,8 +489,8 @@ const FACILITATOR_TIMEOUT_MS_DEFAULT = (() => {
 
 // Upstream statuses that signal a transient facilitator / payment-network
 // hiccup (gateway down, settlement service overloaded) rather than a rejected
-// payment. A 4xx — including 402 (payment required), 409 (idempotency
-// conflict), and 400-with-isValid:false — is a definitive answer and is never
+// payment. A 4xx, including 402 (payment required), 409 (idempotency
+// conflict), and 400-with-isValid:false, is a definitive answer and is never
 // retried.
 const TRANSIENT_FACILITATOR_STATUS = new Set([502, 503, 504]);
 
@@ -523,14 +523,14 @@ async function callFacilitator(
 	if (idempotencyKey) {
 		// Both casing variants appear in the wild (PayAI uses `Idempotency-Key`,
 		// some Cloudflare-fronted facilitators normalize to lowercase). Send both
-		// for maximum compatibility — fetch headers are case-insensitive on the
+		// for maximum compatibility, fetch headers are case-insensitive on the
 		// wire so this is just a Node-level convenience.
 		headers['Idempotency-Key'] = idempotencyKey;
 	}
 	// Retries are only safe for idempotent calls: /verify mutates no state, and
 	// /settle carries the deterministic Idempotency-Key from buildIdempotencyKey
 	// so a re-sent settle is de-duplicated by the facilitator instead of paying
-	// twice. A settle without a key (legacy callers) gets a single attempt — we
+	// twice. A settle without a key (legacy callers) gets a single attempt, we
 	// won't risk a double-spend to recover from a blip.
 	const retryable = path === '/verify' || Boolean(idempotencyKey);
 	const serializedBody = JSON.stringify(body);
@@ -546,12 +546,12 @@ async function callFacilitator(
 				signal: AbortSignal.timeout(timeoutMs || FACILITATOR_TIMEOUT_MS_DEFAULT),
 			});
 		} catch (err) {
-			// Network failure / timeout — transient. Retry once for idempotent
+			// Network failure / timeout, transient. Retry once for idempotent
 			// calls before giving up.
 			if (retryable && attempt < retries) {
 				attempt += 1;
 				console.warn(
-					`[x402] facilitator ${path} unreachable (host=${host}, network=${network}): ${err.message} — retry ${attempt}/${retries} in 500ms`,
+					`[x402] facilitator ${path} unreachable (host=${host}, network=${network}): ${err.message}, retry ${attempt}/${retries} in 500ms`,
 				);
 				await new Promise((r) => setTimeout(r, 500));
 				continue;
@@ -584,12 +584,12 @@ async function callFacilitator(
 			}
 		}
 		if (!res.ok) {
-			// PayAI returns 400 with { isValid: false } for invalid payments —
+			// PayAI returns 400 with { isValid: false } for invalid payments,
 			// pass through so verifyPayment can emit a clean 402 to the caller.
 			if (path === '/verify' && data.isValid === false) return data;
 			const detail = summarizeUpstream(data, text);
 			// A 400 from /verify means the facilitator rejected the *payment
-			// payload itself* (malformed X-PAYMENT header, wrong scheme, etc.) —
+			// payload itself* (malformed X-PAYMENT header, wrong scheme, etc.),
 			// that's a client error, not an upstream outage. CDP signals it with
 			// an `errorMessage` and no `isValid` field, so the PayAI passthrough
 			// above misses it and we'd otherwise 502. Normalize to an
@@ -604,13 +604,13 @@ async function callFacilitator(
 					invalidReason: detail || 'payment payload rejected by facilitator',
 				};
 			}
-			// Transient upstream 5xx — the payment network or settlement service
+			// Transient upstream 5xx, the payment network or settlement service
 			// blinked. Retry once for idempotent calls; the Idempotency-Key keeps
 			// a re-sent settle from double-paying.
 			if (retryable && TRANSIENT_FACILITATOR_STATUS.has(res.status) && attempt < retries) {
 				attempt += 1;
 				console.warn(
-					`[x402] facilitator ${path} ${res.status} (host=${host}, network=${network}): ${detail} — retry ${attempt}/${retries} in 500ms`,
+					`[x402] facilitator ${path} ${res.status} (host=${host}, network=${network}): ${detail}, retry ${attempt}/${retries} in 500ms`,
 				);
 				await new Promise((r) => setTimeout(r, 500));
 				continue;
@@ -633,7 +633,7 @@ async function callFacilitator(
 // /api/x402-status to surface misconfigurations before a paying client hits them.
 //
 // When CDP credentials are configured we probe every CDP-supported EVM network,
-// not just Base — `wk.js` advertises Arbitrum acceptance for /api/x402/model-check
+// not just Base, `wk.js` advertises Arbitrum acceptance for /api/x402/model-check
 // and `permit2VariantOf` emits Permit2 siblings on any EVM `exact` accept, so
 // the status surface needs to confirm the facilitator supports each of those
 // networks. Without CDP creds, Base is the only EVM we can actually settle.
@@ -646,8 +646,8 @@ export async function probeFacilitators() {
 		...evmNetworks.map((network) => ({ network, ...facilitatorFor(network) })),
 		{ network: NETWORK_SOLANA_MAINNET, ...facilitatorFor(NETWORK_SOLANA_MAINNET) },
 	];
-	// The self-hosted facilitator is probed whenever its flag is on — even when
-	// an explicit external URL wins the routing — and reported as a distinct
+	// The self-hosted facilitator is probed whenever its flag is on, even when
+	// an explicit external URL wins the routing, and reported as a distinct
 	// entry, so a mis-enveloped deploy shows the self facilitator's health right
 	// next to wherever settlement actually routes.
 	if (selfFacilitatorEnabled()) {
@@ -763,7 +763,7 @@ function detectAssetTransferMethod(paymentPayload) {
 // True for accepts[] entries that exist only to advertise an authentication
 // alternative (USE-21 auth-hints): zero-amount placeholders flagged with
 // `extra.authRequired`. They are redeemed by presenting the matching auth
-// header (Authorization / SIGN-IN-WITH-X) BEFORE the payment dance — never by
+// header (Authorization / SIGN-IN-WITH-X) BEFORE the payment dance, never by
 // an X-PAYMENT header. verifyPayment must exclude them from requirement
 // matching so the invariant is enforced structurally rather than relying on
 // the real entries happening to sort first: otherwise a crafted payload (e.g.
@@ -778,14 +778,14 @@ function isAuthHintAccept(requirement) {
 
 // Match the decoded payload to one of the offered requirements. The match is
 // by (network, assetTransferMethod) when we can detect the method from the
-// payload shape — needed because we now publish two accept entries per EVM
+// payload shape, needed because we now publish two accept entries per EVM
 // network (EIP-3009 first, Permit2 sibling second), and the facilitator's
 // /verify call has to receive the same `extra` block the client signed
 // against. Falls back to first-match-by-network for non-EVM payloads (Solana
 // SPL, BSC direct).
 function selectRequirement(paymentPayload, allRequirements) {
 	// OKX-dialect payloads (PAYMENT-SIGNATURE header) carry the chosen entry as
-	// `accepted` instead of top-level scheme/network — see x402-xlayer-okx.js.
+	// `accepted` instead of top-level scheme/network, see x402-xlayer-okx.js.
 	const network =
 		paymentPayload?.network ||
 		paymentPayload?.accepted?.network ||
@@ -816,7 +816,7 @@ function selectRequirement(paymentPayload, allRequirements) {
 // Extract the signed amount from a v2 PaymentPayload, regardless of scheme.
 // Returns a BigInt in the asset's atomic units (USDC → 6-decimal micros).
 // Returns null when the payload's amount can't be located without trusting
-// the facilitator — Solana SPL transfers carry the amount inside an opaque
+// the facilitator, Solana SPL transfers carry the amount inside an opaque
 // serialized transaction we won't parse client-side, so we leave that check
 // to the facilitator + the on-chain confirmation. Returning null means
 // "facilitator-trusted amount"; returning a BigInt means "we just verified
@@ -828,7 +828,7 @@ function selectRequirement(paymentPayload, allRequirements) {
 export function decodeSignedAmount(paymentPayload) {
 	const inner = paymentPayload?.payload;
 	if (!inner || typeof inner !== 'object') return null;
-	// EIP-3009 transferWithAuthorization — `authorization.value` is the
+	// EIP-3009 transferWithAuthorization, `authorization.value` is the
 	// EIP-712 typed-data field clients sign. uint256 string in atomic units.
 	if (inner.authorization && typeof inner.authorization === 'object') {
 		const v = inner.authorization.value;
@@ -840,7 +840,7 @@ export function decodeSignedAmount(paymentPayload) {
 			}
 		}
 	}
-	// Permit2 PermitWitnessTransferFrom — `permitted.amount` is what the user
+	// Permit2 PermitWitnessTransferFrom, `permitted.amount` is what the user
 	// authorizes. @x402/evm exposes the structured permit object pre-broadcast.
 	if (inner.permit2Authorization && typeof inner.permit2Authorization === 'object') {
 		const permitted = inner.permit2Authorization?.permit?.permitted;
@@ -877,12 +877,12 @@ export function decodeSignedAmount(paymentPayload) {
 export function decodeSignedRecipient(paymentPayload) {
 	const inner = paymentPayload?.payload;
 	if (!inner || typeof inner !== 'object') return null;
-	// EIP-3009 transferWithAuthorization — `authorization.to` is signed.
+	// EIP-3009 transferWithAuthorization, `authorization.to` is signed.
 	if (inner.authorization && typeof inner.authorization === 'object') {
 		const to = inner.authorization.to;
 		if (typeof to === 'string' && to) return to.toLowerCase();
 	}
-	// Permit2 — the spend recipient travels in the witness/transfer details.
+	// Permit2, the spend recipient travels in the witness/transfer details.
 	// Clients shape this a few ways; check the known locations and bail out
 	// (null = facilitator-trusted) rather than guess when none are present.
 	if (inner.permit2Authorization && typeof inner.permit2Authorization === 'object') {
@@ -900,7 +900,7 @@ export function decodeSignedRecipient(paymentPayload) {
 // generate distinct keys.
 function buildIdempotencyKey({ paymentPayload, requirement }) {
 	const material = JSON.stringify({
-		// Order matters for deterministic hashing — stringify the fields in a
+		// Order matters for deterministic hashing, stringify the fields in a
 		// fixed shape rather than the raw payload (which has insertion-order
 		// dependence in some clients).
 		network: requirement?.network,
@@ -919,11 +919,11 @@ function buildIdempotencyKey({ paymentPayload, requirement }) {
 // on `directVerified` so settlePayment can synthesise a response without
 // re-hitting the RPC.
 //
-// `builderCode` is the extension block we declared on the 402 challenge —
+// `builderCode` is the extension block we declared on the 402 challenge,
 // when present, we reject any payment whose `extensions[BUILDER_CODE].a`
 // does not exactly echo the declared app code (anti-tamper). Built so the
 // resource server enforces the echo invariant the spec normally puts on the
-// facilitator — important because not every facilitator implements it yet,
+// facilitator, important because not every facilitator implements it yet,
 // and the on-chain calldata suffix needs trustworthy `a` to be useful.
 //
 // When the caller doesn't pass `builderCode`, we derive it from
@@ -933,14 +933,14 @@ function buildIdempotencyKey({ paymentPayload, requirement }) {
 // explicitly to opt out (e.g. test harnesses).
 // CDP's /verify and /settle validate the forwarded paymentPayload against a
 // strict envelope schema. Clients speaking the PAYMENT-SIGNATURE dialect
-// (@x402/fetch v2, OKX) echo unsigned listing copy into the payload —
-// `resource` and `extensions` blocks copied verbatim from our own 402 body —
+// (@x402/fetch v2, OKX) echo unsigned listing copy into the payload,
+// `resource` and `extensions` blocks copied verbatim from our own 402 body,
 // and CDP rejects the whole payment when that echo trips its validator
 // ("'paymentPayload' is invalid: must match one of [x402V2PaymentPayload,
 // x402V1PaymentPayload]"). That let per-endpoint listing copy break payment
 // settlement (14 endpoints deterministically failed while 31 passed, split
-// purely by echoed content). None of the echoed fields are signed — the
-// EIP-712 / SPL signature covers `payload` only — and none are needed to
+// purely by echoed content). None of the echoed fields are signed, the
+// EIP-712 / SPL signature covers `payload` only, and none are needed to
 // verify or settle, so for CDP we forward the minimal envelope it always
 // accepts. Non-CDP facilitators (PayAI, the self-facilitator) keep the
 // original payload untouched.
@@ -958,7 +958,7 @@ function minimalPaymentPayloadForCdp(paymentPayload) {
 export async function verifyPayment({ paymentHeader, requirements, builderCode }) {
 	const all = Array.isArray(requirements) ? requirements : [requirements];
 	// Auth-hint placeholder entries (amount="0" / extra.authRequired) are never
-	// payable via X-PAYMENT — drop them before matching so the zero-amount
+	// payable via X-PAYMENT, drop them before matching so the zero-amount
 	// bypass can't be reached regardless of accepts[] ordering. The auth-hint
 	// redemption path never calls verifyPayment (it short-circuits on the auth
 	// header in x402-paid-endpoint.js), so this filter only ever removes
@@ -967,7 +967,7 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 	if (!payable.length) {
 		throw new X402Error(
 			'invalid_payment',
-			'this resource has no payable accepts[] entries — use the advertised authentication method instead of X-PAYMENT',
+			'this resource has no payable accepts[] entries, use the advertised authentication method instead of X-PAYMENT',
 			402,
 		);
 	}
@@ -1012,7 +1012,7 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 		}
 	}
 	// Defense-in-depth recipient check. The EIP-712 signature commits to the
-	// recipient, so confirm the payer signed funds to OUR payTo — a compromised
+	// recipient, so confirm the payer signed funds to OUR payTo, a compromised
 	// facilitator can't redirect a wrong-recipient authorization past us. Null
 	// (Solana SPL / unknown shape) falls through to facilitator trust.
 	const signedRecipient = decodeSignedRecipient(paymentPayload);
@@ -1057,7 +1057,7 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 		);
 	}
 	// Facilitator response cross-check. When it echoes network/asset (most do),
-	// confirm they match the requirement we sent — a compromised or buggy
+	// confirm they match the requirement we sent, a compromised or buggy
 	// facilitator could otherwise verify a payment intended for chain A as if
 	// it were chain B. Missing echoed fields don't fail (older facilitators).
 	if (result.network && result.network !== requirement.network) {
@@ -1081,7 +1081,7 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 	// Solana defense-in-depth: the amount/recipient live inside the opaque
 	// serialized transaction, so the facilitator was historically the only
 	// guard. Statically decode the signed SPL transfer and reject if it pays
-	// us less than required (or to the wrong ATA/mint) — symmetric with the
+	// us less than required (or to the wrong ATA/mint), symmetric with the
 	// EVM signed-amount/recipient checks above. Undecodable payloads stay
 	// facilitator-trusted (inconclusive) so a parsing quirk never blocks a
 	// valid payment.
@@ -1096,7 +1096,7 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 
 // Settle the verified payment on-chain via the matching facilitator.
 // For direct-scheme networks (BSC), the user already broadcast the tx during
-// verifyPayment — settle just synthesises the response shape callers expect.
+// verifyPayment, settle just synthesises the response shape callers expect.
 //
 // Two call shapes supported:
 //   1. settlePayment({ verified })   ← preferred. `verified` is the object
@@ -1197,7 +1197,7 @@ export function encodePaymentResponseHeader(settleResult, extensions) {
 		network: settleResult.network,
 		payer: settleResult.payer,
 		// SettleResponse extras the OKX Agent Payments Protocol receipt carries
-		// (specs/okx-agent-payments.md §1.4): `status` ("success"/"pending" —
+		// (specs/okx-agent-payments.md §1.4): `status` ("success"/"pending",
 		// pending buyers poll /settle/status), `amount` in atomic units. Other
 		// rails' facilitators don't return them; absent stays absent.
 		...(settleResult.status ? { status: settleResult.status } : {}),
@@ -1214,9 +1214,9 @@ export function encodePaymentResponseHeader(settleResult, extensions) {
 // challenge, the /.well-known/x402.json discovery file, and any operator
 // dashboards stay in sync.
 export const RESOURCE_DESCRIPTION =
-	'three.ws MCP — Streamable HTTP transport (MCP 2025-06-18) exposing 3D avatar viewer, glTF/GLB model validation/inspection/optimization, and Solana agent data as JSON-RPC 2.0 tool calls. Pay-per-call in USDC on Base mainnet (eip155:8453) or Solana mainnet. ≤256 tools/call output, ≤32-message JSON-RPC batches. Operated by three.ws.';
+	'three.ws MCP, Streamable HTTP transport (MCP 2025-06-18) exposing 3D avatar viewer, glTF/GLB model validation/inspection/optimization, and Solana agent data as JSON-RPC 2.0 tool calls. Pay-per-call in USDC on Base mainnet (eip155:8453) or Solana mainnet. ≤256 tools/call output, ≤32-message JSON-RPC batches. Operated by three.ws.';
 
-// Build the bazaar.schema *meta-schema* — the JSON Schema that validates the
+// Build the bazaar.schema *meta-schema*, the JSON Schema that validates the
 // `{input, output}` shape of the extension itself, NOT the endpoint's response
 // body. The user's response-body schema gets nested at
 // `schema.properties.output.properties.example`. Matches the reference
@@ -1275,7 +1275,7 @@ export function buildBazaarSchema({
 	return schema;
 }
 
-// Bazaar discovery extension — shape required by agentic.market's validator.
+// Bazaar discovery extension, shape required by agentic.market's validator.
 // `info.input.{type,method,body|queryParams|pathParams}` describes how to call
 // the resource; `info.output.{type,example}` shows what comes back; top-level
 // `schema` is the meta-schema built by `buildBazaarSchema` above.
@@ -1317,7 +1317,7 @@ export function bazaarExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, solana_register, solana_reputation, and others — see tools/list.',
+					'For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, solana_register, solana_reputation, and others, see tools/list.',
 			},
 		},
 	};
@@ -1377,7 +1377,7 @@ export function bazaarExtension() {
 
 // True when any offered requirement asks the client to use the Permit2
 // asset-transfer method. When so, we automatically advertise BOTH gas-
-// sponsoring extensions at the top level — the facilitator (CDP's
+// sponsoring extensions at the top level, the facilitator (CDP's
 // x402ExactPermit2Proxy) submits the approval atomically with settlement so
 // the payer never broadcasts the approval tx themselves. EIP-2612 is the
 // preferred path for tokens that implement it (Base USDC v2 does);
@@ -1393,7 +1393,7 @@ function hasPermit2Accept(accepts) {
 // Build the v2 PaymentRequired body. Top-level `resource` carries url/description/
 // mimeType (per v2 spec); per-accept entries no longer repeat them.
 //
-// `description`, `mimeType`, and `bazaar` are per-route — each paid endpoint
+// `description`, `mimeType`, and `bazaar` are per-route, each paid endpoint
 // wants its own catalog entry on agentic.market, not the MCP boilerplate.
 // Callers may pass an `extensions` object to add or override entries (e.g. an
 // endpoint that wants to declare a custom extension); when omitted we still
@@ -1403,7 +1403,7 @@ function hasPermit2Accept(accepts) {
 // on-chain attribution without having to opt in per-route.
 // USE-13: `serviceName`, `tags`, `iconUrl` belong on the `resource` object
 // per the Bazaar spec. Facilitators apply soft-drop validation so silently
-// invalid fields are skipped, but we keep them within limits here too —
+// invalid fields are skipped, but we keep them within limits here too,
 // printable-ASCII, ≤32 chars (serviceName/tag), ≤5 tags, absolute https URL.
 export async function build402Body({
 	resourceUrl,
@@ -1435,7 +1435,7 @@ export async function build402Body({
 	// x402-paid-endpoint.js wrapper pre-signs and passes offers via
 	// extraExtensions to avoid signing twice; hand-rolled callers (launchpad,
 	// vanity, etc.) get offers here automatically. Signing failure is silently
-	// absorbed — the protocol stays valid without the extension.
+	// absorbed, the protocol stays valid without the extension.
 	if (!extraExtensions?.[OFFER_RECEIPT]) {
 		try {
 			const offersFragment = await buildOffersExtension(
@@ -1483,7 +1483,7 @@ export async function build402Body({
 // Ceiling for the base64 PAYMENT-REQUIRED header mirror. Node's default
 // http client limit is 16 KB for the ENTIRE header block, and x402scan's
 // registration probe flags any response whose headers exceed 16 KB
-// (HEADERS_OVERFLOW — "some clients will fail to parse this response").
+// (HEADERS_OVERFLOW, "some clients will fail to parse this response").
 // Endpoints with rich bazaar schemas + per-accept signed offers were
 // emitting 11–17 KB headers, which the production LB then dropped entirely.
 // 8 KB leaves comfortable room for the ~0.5 KB of ordinary headers.
@@ -1506,7 +1506,7 @@ function bazaarWithoutInfo(bazaar) {
 // `schema.properties.input.properties.{body|queryParams}` and
 // `schema.properties.output.properties.example`), but replaces the potentially
 // large per-field JSON Schemas with `{ type: 'object' }`. The canonical JSON
-// body still carries the full, detailed schema — this is only the size-capped
+// body still carries the full, detailed schema, this is only the size-capped
 // header fallback for routes whose real schema is too big to mirror verbatim.
 function compactDiscoveryBazaar(bazaar) {
 	const schema = bazaar?.schema;
@@ -1559,10 +1559,10 @@ function compactDiscoveryBazaar(bazaar) {
 // payment-execution extensions (signed offers, gas-sponsoring hints, SIWX /
 // auth-hints, builder-code) but KEEP the `bazaar` discovery extension, because
 // agent-discovery crawlers (agentcash, x402scan's Bazaar) read the challenge
-// from THIS header, not the JSON body — dropping bazaar makes every paid route
+// from THIS header, not the JSON body, dropping bazaar makes every paid route
 // look schema-less to them. We try, in order: full bazaar, bazaar without the
-// `info` examples, then a compact bazaar with `{type:'object'}` field schemas —
-// picking the first that fits — before falling back to the extension-less slim
+// `info` examples, then a compact bazaar with `{type:'object'}` field schemas,
+// picking the first that fits, before falling back to the extension-less slim
 // mirror, then null. Header-only payers still get everything needed to pay
 // (accepts is always complete); the JSON body remains the canonical, complete
 // envelope with the full detailed schemas per the v2 spec.
@@ -1592,7 +1592,7 @@ export async function send402(res, opts = {}) {
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
 	// v2 spec: the full envelope ({x402Version, error, resource, accepts,
-	// extensions}) ships in the response body — that is the canonical read
+	// extensions}) ships in the response body, that is the canonical read
 	// for `@x402/fetch` and other SDK clients. The `PAYMENT-REQUIRED` header
 	// carries a base64 mirror for header-only crawlers, capped by
 	// paymentRequiredHeaderValue() so the total header block stays parseable

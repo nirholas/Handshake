@@ -1,12 +1,12 @@
-// OKX.AI marketplace services — one Vercel function, many fronts.
+// OKX.AI marketplace services, one Vercel function, many fronts.
 // Routes /api/okx/3d/<service> per the catalog in api/_lib/okx-catalog.js:
 //
-//   /api/okx/3d/catalog          GET, free — machine-readable service index
-//   /api/okx/3d/health           GET, free — live subsystem health (real probes)
+//   /api/okx/3d/catalog          GET, free, machine-readable service index
+//   /api/okx/3d/health           GET, free, live subsystem health (real probes)
 //   /api/okx/3d/identity-studio  A2MCP (MCP Streamable HTTP): POST tool calls,
 //                                GET SSE, DELETE terminate. create_identity is
 //                                x402-priced; identity_status + getting_started
-//                                are free. Transport mirrors api/mcp-3d.js —
+//                                are free. Transport mirrors api/mcp-3d.js,
 //                                verify → dispatch → settle-on-success.
 //   /api/okx/3d/<paid service>   REST (work order 03): plain JSON POST, one
 //                                capability + one price per endpoint. Unpaid
@@ -85,7 +85,7 @@ async function probe(name, fn) {
 async function healthReport() {
 	const subsystems = await Promise.all([
 		probe('generation', async () => {
-			// /api/forge serves its catalog/config on GET without starting a job —
+			// /api/forge serves its catalog/config on GET without starting a job,
 			// reachable + parseable proves the generation front door is up.
 			const res = await fetch(`${BASE}/api/forge`, {
 				headers: { accept: 'application/json' },
@@ -117,7 +117,7 @@ async function healthReport() {
 			}
 		}),
 		probe('retarget', async () => {
-			// The animation library the retarget service reads clips from — a
+			// The animation library the retarget service reads clips from, a
 			// reachable, non-empty manifest proves the clip lane is servable.
 			const res = await fetch(`${BASE}/animations/manifest.json`, {
 				headers: { accept: 'application/json' },
@@ -146,7 +146,7 @@ async function healthReport() {
 }
 
 // Per-service accepts: the OKX X Layer entry leads (that is the rail this
-// surface exists for — the buyer CLI auto-selects the first `exact` entry),
+// surface exists for, the buyer CLI auto-selects the first `exact` entry),
 // followed by the platform's existing rails so non-OKX agents can pay too.
 // One service, one price: every entry carries the same catalog amount.
 function restRequirements(resourceUrl, entry) {
@@ -156,7 +156,7 @@ function restRequirements(resourceUrl, entry) {
 	return out;
 }
 
-// Free GET descriptor — per-service discovery, mirroring GET /api/x402/forge:
+// Free GET descriptor, per-service discovery, mirroring GET /api/x402/forge:
 // what it does, what it costs, how to call it. No payment, no account.
 function restDescriptor(res, entry) {
 	return json(
@@ -170,7 +170,7 @@ function restDescriptor(res, entry) {
 			price_usd: entry.priceUsd,
 			description: listingDescription(entry),
 			input_schema: entry.inputSchema,
-			poll: 'GET /api/forge?job=<job_id> — free',
+			poll: 'GET /api/forge?job=<job_id>, free',
 			catalog: `${BASE}/api/okx/3d/catalog`,
 		},
 		{ 'cache-control': 'public, max-age=300' },
@@ -213,7 +213,7 @@ async function handleRestService(req, res, entry) {
 			res,
 			503,
 			'rail_unconfigured',
-			'No payment rail is configured on this deployment — set the X Layer envs per specs/okx-agent-payments.md.',
+			'No payment rail is configured on this deployment, set the X Layer envs per specs/okx-agent-payments.md.',
 		);
 	}
 
@@ -259,7 +259,7 @@ async function handleRestService(req, res, entry) {
 			return error(res, err.status || 502, err.code || 'verify_failed', err.message);
 		}
 
-		// Engine runs AFTER verify, BEFORE settle — a thrown engine error means
+		// Engine runs AFTER verify, BEFORE settle, a thrown engine error means
 		// the buyer was not charged, and we say so.
 		let result;
 		try {
@@ -268,7 +268,7 @@ async function handleRestService(req, res, entry) {
 			const status = err.status || 502;
 			const message =
 				status >= 500
-					? 'The service could not complete and your payment was not taken — please retry shortly.'
+					? 'The service could not complete and your payment was not taken, please retry shortly.'
 					: err.message;
 			if (status >= 500) console.warn(`[okx/3d/${entry.id}] engine failed (${status}): ${err?.message || err}`);
 			return error(res, status, err.code || 'service_failed', message);
@@ -315,7 +315,7 @@ async function handleIdentityStudio(req, res) {
 	const resourcePath = '/api/okx/3d/identity-studio';
 	const resourceUrl = resolveResourceUrl(req, resourcePath);
 	// The flagship sells on OKX.AI, so its 402 must LEAD with the X Layer
-	// (eip155:196) accept — exactly like the WO-03 REST services — or an OKX
+	// (eip155:196) accept, exactly like the WO-03 REST services, or an OKX
 	// buyer can't pay it. Priced at the create_identity fee; gated on the X Layer
 	// envs being present. Prepended into the MCP challenge + verify path.
 	const xlayerAccepts = xlayerSettleable()
@@ -359,7 +359,7 @@ async function handleIdentityStudio(req, res) {
 	if (batch.length > 16) return sendJsonRpcError(res, null, -32600, 'batch too large (max 16)');
 
 	// Single-use lock on the payment proof across dispatch+settle, mirroring
-	// /api/mcp-3d — a replayed X-PAYMENT can't run a second job before the
+	// /api/mcp-3d, a replayed X-PAYMENT can't run a second job before the
 	// first settle lands.
 	let releaseProof = async () => {};
 	if (x402Ctx) {
@@ -382,7 +382,7 @@ async function handleIdentityStudio(req, res) {
 
 		// Settle only after the work was accepted: a create_identity that failed
 		// validation (bad brief, unreachable reference image) returns isError and
-		// the payment is never settled — the pay-only-on-acceptance promise the
+		// the payment is never settled, the pay-only-on-acceptance promise the
 		// catalog description makes.
 		if (x402Ctx) {
 			const anySuccess = responses.some((r) => r && !r.error && !(r.result && r.result.isError));
@@ -437,7 +437,7 @@ export default wrap(async (req, res) => {
 	return json(res, 404, {
 		error: 'unknown_service',
 		message: known
-			? `service "${service}" is catalogued but not yet routable — see the catalog for status`
+			? `service "${service}" is catalogued but not yet routable, see the catalog for status`
 			: `no such service "${service}"`,
 		services: OKX_CATALOG.map((e) => e.endpoint),
 	});

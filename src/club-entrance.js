@@ -59,6 +59,7 @@ import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
 import { getPowerSaver } from './shared/frame-governor.js';
 import { log } from './shared/log.js';
 import { isExpressEntry } from './shared/club-express.js';
+import { loadEnvironment } from './shared/cinematic-render.js';
 
 const TOUR_URL = '/club/venue/tour.glb';
 const ALLEYWAY_URL = '/club/venue/alleyway.glb';
@@ -234,6 +235,17 @@ async function start(canvasEl) {
 	const fill = new PointLight(0xffd9c2, 2.4, 12, 1.6);
 	fill.position.set(0, 2.4, 0);
 	scene.add(fill);
+
+	// Real HDRI image-based lighting on top of the hand-placed rig above, so
+	// reflective surfaces (chrome trim, wet asphalt, the avatar's own skin/eyes)
+	// pick up believable environment light instead of flat ambient-only shading.
+	// Reuses the same profile.tier the render-budget system already computed
+	// (src/club-perf.js) rather than re-detecting capability — on the 'low'
+	// tier we skip the network HDRI fetch entirely (procedural fallback via
+	// `preset: null`) since a struggling device shouldn't spend bandwidth/GPU
+	// on IBL it can't afford to render anyway. 'sunset' fits the neon
+	// evening-alley mood better than the neutral studio/outdoor presets.
+	loadEnvironment(renderer, scene, profile.tier === 'low' ? null : 'sunset').catch(() => {});
 
 	// ── Postprocessing — the same cinematic stack as the pole stage ──────────
 	// Bloom makes the neon door/sign actually glow, ACES gives filmic colour,

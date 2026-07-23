@@ -119,6 +119,17 @@ console.log(job.glb_url); // downloadable, textured GLB
 - **Photo input** accepts up to four views of one object; text-only engines are filtered out of the photo modes automatically.
 - Rate limits are per client IP on the shared 3D generation buckets.
 
+## Measuring realism
+
+Any change that could affect output quality (a tier's sampler budget, a new
+lane, a prompt-enhancement change) should be checked against the realism
+benchmark before and after: `node scripts/quality-bench.mjs` runs a fixed
+23-prompt set through this real `/api/forge` path and scores the result with
+Vertex Gemini vision; `node scripts/quality-bench.mjs --compare=latest,previous`
+exits nonzero on a >1.0 mean-score drop. See
+[data/quality-bench/README.md](../data/quality-bench/README.md) and the
+dashboard at [/quality-bench](https://three.ws/quality-bench) (internal).
+
 ## Related
 
 - [The Forge pipeline](./forge-pipeline.md) is the architecture deep dive: the engine grid, routing, failover, job lifecycle, workers, and payments, end to end. [How the Forge works](./how-forge-works.md) is the same story in plain language.

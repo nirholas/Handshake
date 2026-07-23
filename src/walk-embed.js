@@ -24,11 +24,9 @@ import {
 	HemisphereLight,
 	Mesh,
 	MeshStandardMaterial,
-	PCFShadowMap,
 	PerspectiveCamera,
 	Plane,
 	AnimationMixer,
-	PMREMGenerator,
 	Raycaster,
 	Scene,
 	ShadowMaterial,
@@ -37,12 +35,12 @@ import {
 	WebGLRenderer,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import nipplejs from 'nipplejs';
 import { getMeshoptDecoder } from './viewer/internal.js';
 
 import { AnimationManager } from './animation-manager.js';
 import { log } from './shared/log.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 import {
 	OUTBOUND,
 	installEmbedBridge,
@@ -313,19 +311,22 @@ function emit(type, payload = {}) {
 
 // ── Renderer / scene ──────────────────────────────────────────────────────
 const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 const HAS_SOLID_BG = !!(BG_PARAM && BG_PARAM !== 'transparent');
 // Paint the actual bg color (not opaque black) so ?bg=#101820 renders the
 // requested color. Transparent embeds keep alpha 0 so the host shows through.
 renderer.setClearColor(HAS_SOLID_BG ? new Color(BG_PARAM) : 0x000000, HAS_SOLID_BG ? 1 : 0);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFShadowMap;
+// Filmic tone mapping + correct sRGB output + soft VSM shadows: the shared bar
+// every viewer on the platform now matches (src/shared/cinematic-render.js).
+const qualityTier = detectQualityTier();
+applyCinematicDefaults(renderer, { tier: qualityTier });
 
 const scene = new Scene();
 
-const pmrem = new PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+// Real outdoor-sky HDRI IBL: walking scenes read better under an outdoor
+// preset than the studio default. Falls back to a procedural environment on
+// fetch failure or mobile tier.
+loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'outdoor');
 
 scene.add(new AmbientLight(0xffffff, 0.55));
 const hemi = new HemisphereLight(0xbcd6ff, 0x202830, 0.6);

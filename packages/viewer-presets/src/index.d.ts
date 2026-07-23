@@ -68,6 +68,25 @@ export interface MaterialPreset {
 	envMapIntensity?: number;
 	transparent?: boolean;
 	opacity?: number;
+	/** 0..1, MeshPhysicalMaterial only (KHR_materials_clearcoat) */
+	clearcoat?: number;
+	clearcoatRoughness?: number;
+	/** 0..1, MeshPhysicalMaterial only (KHR_materials_transmission) */
+	transmission?: number;
+	thickness?: number;
+	/** index of refraction, 1..2.333 */
+	ior?: number;
+	attenuationColor?: string;
+	attenuationDistance?: number;
+	/** 0..1, MeshPhysicalMaterial only */
+	sheen?: number;
+	sheenColor?: string;
+	sheenRoughness?: number;
+	specularIntensity?: number;
+	specularColor?: string;
+	/** 0..1, MeshPhysicalMaterial only (KHR_materials_anisotropy) */
+	anisotropy?: number;
+	anisotropyRotation?: number;
 }
 
 export interface MaterialVariant {

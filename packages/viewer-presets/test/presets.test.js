@@ -51,6 +51,29 @@ function fakeRoot(materials) {
 	return { traverse: (fn) => nodes.forEach(fn) };
 }
 
+// A MeshPhysicalMaterial-shaped fake — adds the clearcoat/transmission/sheen/
+// anisotropy fields real MeshStandardMaterial lacks, so presets that use them
+// (skin, carPaint, realGlass, brushedSteel) have something to write into.
+function fakePhysicalMaterial() {
+	return {
+		...fakeStandardMaterial(),
+		clearcoat: 0,
+		clearcoatRoughness: 0,
+		transmission: 0,
+		thickness: 0,
+		ior: 1.5,
+		attenuationColor: new FakeColor(0xffffff),
+		attenuationDistance: Infinity,
+		sheen: 0,
+		sheenColor: new FakeColor(0x000000),
+		sheenRoughness: 1,
+		specularIntensity: 1,
+		specularColor: new FakeColor(0xffffff),
+		anisotropy: 0,
+		anisotropyRotation: 0,
+	};
+}
+
 test('LIGHT_CONFIG preserves visage angles', () => {
 	assert.equal(LIGHT_CONFIG.fillLightAngle, Math.PI / 3);
 	assert.equal(LIGHT_CONFIG.backLightAngle, Math.PI / 8);
@@ -259,4 +282,61 @@ test('materialVariants is deterministic per seed and honors count', () => {
 test('materialVariants clamps count into [1,64]', () => {
 	assert.equal(materialVariants('wood', { count: 0 }).length, 1);
 	assert.equal(materialVariants('wood', { count: 999 }).length, 64);
+});
+
+// ── measured-value physical presets ──────────────────────────────────────────
+
+test('MATERIAL_PRESETS exposes the measured-value physical presets', () => {
+	assert.equal(MATERIAL_PRESETS.skin.metalness, 0);
+	assert.ok(MATERIAL_PRESETS.skin.roughness >= 0.45 && MATERIAL_PRESETS.skin.roughness <= 0.6);
+	assert.equal(MATERIAL_PRESETS.carPaint.clearcoat, 1);
+	assert.equal(MATERIAL_PRESETS.realGlass.transmission, 1);
+	assert.equal(MATERIAL_PRESETS.realGlass.ior, 1.45);
+	assert.ok(MATERIAL_PRESETS.brushedSteel.anisotropy > 0);
+});
+
+test('applyMaterialPreset writes clearcoat onto a MeshPhysicalMaterial target', () => {
+	const mat = fakePhysicalMaterial();
+	applyMaterialPreset(FakeTHREE, fakeRoot([mat]), 'carPaint');
+	assert.equal(mat.clearcoat, 1);
+	assert.equal(mat.clearcoatRoughness, MATERIAL_PRESETS.carPaint.clearcoatRoughness);
+	assert.equal(mat.metalness, MATERIAL_PRESETS.carPaint.metalness);
+});
+
+test('applyMaterialPreset writes transmission onto a MeshPhysicalMaterial target and clears legacy transparency', () => {
+	const mat = fakePhysicalMaterial();
+	applyMaterialPreset(FakeTHREE, fakeRoot([mat]), 'realGlass');
+	assert.equal(mat.transmission, 1);
+	assert.equal(mat.ior, 1.45);
+	assert.equal(mat.transparent, false, 'transmission replaces alpha-blend, not stacks with it');
+});
+
+test('applyMaterialPreset writes sheen onto skin and anisotropy onto brushedSteel', () => {
+	const skinMat = fakePhysicalMaterial();
+	applyMaterialPreset(FakeTHREE, fakeRoot([skinMat]), 'skin');
+	assert.equal(skinMat.sheen, MATERIAL_PRESETS.skin.sheen);
+	assert.equal(skinMat.specularIntensity, MATERIAL_PRESETS.skin.specularIntensity);
+
+	const steelMat = fakePhysicalMaterial();
+	applyMaterialPreset(FakeTHREE, fakeRoot([steelMat]), 'brushedSteel');
+	assert.equal(steelMat.anisotropy, MATERIAL_PRESETS.brushedSteel.anisotropy);
+});
+
+test('applyMaterialPreset physical fields are a no-op on a plain Standard-shaped material', () => {
+	const mat = fakeStandardMaterial(); // no clearcoat/transmission/sheen/anisotropy fields
+	const handle = applyMaterialPreset(FakeTHREE, fakeRoot([mat]), 'carPaint');
+	assert.equal(handle.count, 1, 'still applies the standard-material fields');
+	assert.equal(mat.metalness, MATERIAL_PRESETS.carPaint.metalness);
+	assert.equal('clearcoat' in mat, false);
+});
+
+test('applyMaterialPreset restore() reverts physical fields exactly', () => {
+	const mat = fakePhysicalMaterial();
+	const before = { clearcoat: mat.clearcoat, transmission: mat.transmission, sheen: mat.sheen };
+	const handle = applyMaterialPreset(FakeTHREE, fakeRoot([mat]), 'realGlass');
+	assert.notEqual(mat.transmission, before.transmission);
+	handle.restore();
+	assert.equal(mat.clearcoat, before.clearcoat);
+	assert.equal(mat.transmission, before.transmission);
+	assert.equal(mat.sheen, before.sheen);
 });

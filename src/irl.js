@@ -5,7 +5,6 @@
 // Walking + joystick from walk-embed. Camera mode makes the real floor the stage.
 
 import {
-	ACESFilmicToneMapping,
 	AmbientLight,
 	Box3,
 	BoxGeometry,
@@ -22,7 +21,6 @@ import {
 	OrthographicCamera,
 	PerspectiveCamera,
 	PlaneGeometry,
-	PMREMGenerator,
 	Quaternion,
 	Raycaster,
 	Scene,
@@ -35,11 +33,10 @@ import {
 	TorusGeometry,
 	Vector2,
 	Vector3,
-	VSMShadowMap,
 	WebGLRenderer,
 	WebGLRenderTarget,
 } from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { applyCinematicDefaults, loadEnvironment, detectQualityTier } from './shared/cinematic-render.js';
 import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
 import { WebXRSession } from './ar/webxr.js';
@@ -202,24 +199,15 @@ function setStatus(msg, { error = false, warn = false, loading = false, sticky =
 
 // ── Renderer / scene ──────────────────────────────────────────────────────
 const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.setClearColor(0x000000, 0);
-renderer.shadowMap.enabled = true;
-// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
-// PCFShadowMap at runtime (console warning, worse shadow edges). VSMShadowMap
-// is the still-supported soft-shadow type — same intent, actually honored.
-renderer.shadowMap.type = VSMShadowMap;
-// Filmic tone mapping is what separates "sticker pasted on the camera feed"
-// from "object standing in the room" — highlight rolloff + midtone contrast,
-// the same treatment Quick Look applies to a USDZ. Exposure compensates for
-// ACES's overall darkening at these light levels.
-renderer.toneMapping = ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+// Filmic tone mapping + VSM soft shadows + IBL from a real HDRI: the shared
+// bar every viewer on the platform now matches (src/shared/cinematic-render.js).
+const qualityTier = detectQualityTier();
+applyCinematicDefaults(renderer, { exposure: 1.15, tier: qualityTier });
 
 const scene = new Scene();
-const pmrem = new PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio');
 
 // Keyed like a studio portrait, not a flood: the IBL carries the specular/rim
 // detail, the sun carries shape + shadow. The old 0.55 ambient + 0.6 hemi fill
@@ -2927,8 +2915,7 @@ function setCameraQuiet(quiet) {
 function rebuildAfterContextRestore() {
 	try {
 		const prevEnv = scene.environment;
-		scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-		prevEnv?.dispose?.();
+		loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio').then(() => prevEnv?.dispose?.());
 	} catch (e) {
 		log.warn('[irl] environment rebuild after context restore failed:', e);
 	}

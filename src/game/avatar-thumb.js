@@ -8,12 +8,13 @@
 
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, Group, Box3, Vector3,
-	HemisphereLight, DirectionalLight, AmbientLight, SRGBColorSpace,
+	HemisphereLight, DirectionalLight, AmbientLight,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AnimationManager } from '../animation-manager.js';
 import { loadManifest, getLocomotionDefs, CLIP_IDLE, dracoLoader, meshoptReady } from './avatar-rig.js';
 import { log } from '../shared/log.js';
+import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
 
 const SIZE = 160; // square render target, downscaled by the chip's CSS box
 
@@ -34,10 +35,15 @@ function ensureRenderer() {
 	if (_failed) return false;
 	try {
 		_renderer = new WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
-		_renderer.setPixelRatio(1);
+		// Cinematic defaults (ACES tone mapping, sRGB output) shared with every
+		// other viewer on the platform. Product-shot style HDRI, loaded once for
+		// this shared offscreen renderer (not per-thumbnail) and fire-and-forget
+		// so it never blocks the first render.
+		applyCinematicDefaults(_renderer, { exposure: 1.1, tier: 'medium' });
+		_renderer.setPixelRatio(1); // fixed thumbnail resolution, independent of quality tier
 		_renderer.setSize(SIZE, SIZE, false);
-		_renderer.outputColorSpace = SRGBColorSpace;
 		_scene = new Scene();
+		loadEnvironment(_renderer, _scene, 'studio');
 		_scene.add(new HemisphereLight(0xffffff, 0x404a5a, 1.15));
 		const key = new DirectionalLight(0xffffff, 1.7);
 		key.position.set(1.6, 2.4, 2.0);

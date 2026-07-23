@@ -1,0 +1,267 @@
+{
+	"$comment": "Fixed realism benchmark for the 3D forge pipeline. Never edit an existing id's prompt/subjectClass once a run has been committed against it \u2014 scores across runs are only comparable when the input is byte-identical. Add new ids instead. See data/quality-bench/README.md.",
+	"version": 1,
+	"prompts": [
+		{
+			"id": "qb01",
+			"subjectClass": "people-portrait",
+			"prompt": "photorealistic portrait bust of a middle-aged woman with short curly gray hair, wearing a navy wool sweater, neutral studio lighting, plain background",
+			"watch": [
+				"plastic/waxy skin shading",
+				"flattened facial geometry",
+				"hair fused into a solid cap",
+				"asymmetric or melted eyes"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb02",
+			"subjectClass": "people-fullbody",
+			"prompt": "a barefoot young man in worn denim overalls standing relaxed with arms at his sides, full body, photorealistic, studio lighting, plain background",
+			"watch": [
+				"broken limb proportions",
+				"melted hands or feet",
+				"blob geometry at joints",
+				"fabric fused to skin"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb03",
+			"subjectClass": "animals",
+			"prompt": "an alert red fox sitting upright in autumn leaves, photorealistic fur detail, studio lighting, plain background",
+			"watch": [
+				"fur clumping into a plastic shell",
+				"incorrect leg count or fused legs",
+				"flattened muzzle geometry"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb04",
+			"subjectClass": "animals",
+			"prompt": "a bottlenose dolphin leaping out of ocean water, wet skin highlights, mid-air pose, plain background",
+			"watch": [
+				"rubbery/matte skin instead of wet highlights",
+				"fin geometry collapse",
+				"water splash baked as a flat texture blob"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb05",
+			"subjectClass": "food",
+			"prompt": "a fresh strawberry shortcake slice on a white ceramic plate, whipped cream and berry juice, photorealistic, studio lighting",
+			"watch": [
+				"waxy/plastic food texture",
+				"cream and cake layers fused into one blob",
+				"berries rendered as flat decals"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb06",
+			"subjectClass": "food",
+			"prompt": "a wood-fired margherita pizza fresh from the oven, melted mozzarella and basil leaves, photorealistic, studio lighting",
+			"watch": [
+				"toppings fused into the crust",
+				"unrealistic uniform char pattern",
+				"cheese rendered as a flat opaque disc"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb07",
+			"subjectClass": "vehicles",
+			"prompt": "a vintage 1960s cafe racer motorcycle, chrome exhaust pipe and brown leather seat, photorealistic studio render, plain background",
+			"watch": [
+				"melted/matte chrome",
+				"spoke wheel geometry collapsing into a disc",
+				"engine block reduced to a blob"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb08",
+			"subjectClass": "vehicles",
+			"prompt": "a modern electric pickup truck, matte black paint, photorealistic studio render, three-quarter view, plain background",
+			"watch": [
+				"panel gaps missing",
+				"glass rendered as an opaque blob",
+				"wheel well geometry distortion"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb09",
+			"subjectClass": "tools",
+			"prompt": "a well-worn wooden-handled claw hammer with a scratched steel head, photorealistic studio render, plain background",
+			"watch": [
+				"wood grain smeared or melted",
+				"claw geometry fused into a solid wedge",
+				"steel head losing its metallic highlight"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb10",
+			"subjectClass": "tools",
+			"prompt": "a professional stainless steel chef's knife with a dark walnut handle, photorealistic studio render, plain background",
+			"watch": [
+				"blade thickness errors (too thick/blobby)",
+				"handle grain distortion",
+				"edge geometry not reading as sharp"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb11",
+			"subjectClass": "furniture",
+			"prompt": "a mid-century modern leather lounge chair with tapered walnut legs, photorealistic studio render, plain background",
+			"watch": [
+				"leg geometry collapsing or fusing to the seat",
+				"leather seam distortion",
+				"cushion volume looking inflated/blobby"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb12",
+			"subjectClass": "architecture",
+			"prompt": "a small stone cottage with a thatched roof and a wooden plank door, moss growing on the walls, photorealistic exterior render",
+			"watch": [
+				"thatch roof reduced to a smooth blob",
+				"door/window openings melting shut",
+				"stone texture tiling repetition"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb13",
+			"subjectClass": "architecture",
+			"prompt": "a modern glass and steel skyscraper facade viewed from street level, photorealistic render",
+			"watch": [
+				"window grid distortion or bleeding",
+				"glass rendered fully opaque",
+				"steel mullions fused into the glass"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb14",
+			"subjectClass": "nature",
+			"prompt": "a moss-covered granite boulder beside a mountain stream, wet rock texture, photorealistic render",
+			"watch": [
+				"texture tiling repetition",
+				"blobby silhouette with no rock facets",
+				"moss painted as a flat green decal"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb15",
+			"subjectClass": "nature",
+			"prompt": "a single red maple leaf with dew drops on its surface, veins clearly visible, macro photorealistic render, plain background",
+			"watch": [
+				"flat/plastic leaf surface with no thickness",
+				"dew drops merging into the leaf as a texture smear",
+				"veins missing entirely"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb16",
+			"subjectClass": "fantasy",
+			"prompt": "an ornate dragon-scale armored gauntlet, battle-worn, photorealistic metal and leather materials, plain background",
+			"watch": [
+				"scale pattern melting into a smooth surface",
+				"finger joint geometry fusing shut",
+				"metal losing specular highlights"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb17",
+			"subjectClass": "fantasy",
+			"prompt": "a glowing enchanted crystal staff wrapped in aged leather cord, photorealistic render, plain background",
+			"watch": [
+				"crystal rendered as an opaque blob with no internal glow",
+				"leather cord fused flat to the shaft",
+				"glow baked as a flat texture instead of an emissive read"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb18",
+			"subjectClass": "people-portrait",
+			"prompt": "photorealistic headshot of an elderly man with a full white beard and weathered skin, warm window light, plain background",
+			"watch": [
+				"plastic/waxy skin shading",
+				"beard geometry melting into the chin",
+				"wrinkles missing or painted as flat lines"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb19",
+			"subjectClass": "animals",
+			"prompt": "a resting golden retriever puppy lying on a wooden floor, photorealistic fur detail, plain background",
+			"watch": [
+				"fur clumping into a plastic shell",
+				"paw geometry fusing into a single pad",
+				"eyes losing wet specular highlight"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb20",
+			"subjectClass": "furniture",
+			"prompt": "an antique brass floor lamp with a pleated cream fabric shade, photorealistic studio render, plain background",
+			"watch": [
+				"brass rendered as a flat matte blob with no reflections",
+				"shade pleats melting into a smooth cone",
+				"base geometry losing its turned-metal detail"
+			],
+			"mode": "text"
+		},
+		{
+			"id": "qb21",
+			"subjectClass": "furniture",
+			"prompt": "reconstruct this antique wooden chair as a photorealistic textured 3D model, preserving its carved details and worn finish",
+			"referenceImage": "refs/chair.jpg",
+			"watch": [
+				"carved backrest detail melting into a smooth panel",
+				"leg taper collapsing",
+				"wood grain texture washed out or tiling"
+			],
+			"mode": "image",
+			"referenceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Antique_Wooden_Chair_from_Bharat.jpg/960px-Antique_Wooden_Chair_from_Bharat.jpg"
+		},
+		{
+			"id": "qb22",
+			"subjectClass": "apparel",
+			"prompt": "reconstruct this running shoe as a photorealistic textured 3D model, preserving the mesh upper, sole tread, and logo details",
+			"referenceImage": "refs/sneaker.jpg",
+			"watch": [
+				"mesh upper turned into a solid plastic shell",
+				"sole tread pattern lost or smeared",
+				"logo geometry melting"
+			],
+			"mode": "image",
+			"referenceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Imani-bahati-unpaired-gray-nike-running-shoe.jpg/960px-Imani-bahati-unpaired-gray-nike-running-shoe.jpg"
+		},
+		{
+			"id": "qb23",
+			"subjectClass": "tableware",
+			"prompt": "reconstruct this covered teapot as a photorealistic textured 3D model, preserving its lid, spout, and carved surface detail",
+			"referenceImage": "refs/teapot.jpg",
+			"watch": [
+				"spout or lid fusing to the body",
+				"carved surface detail flattened to a texture decal",
+				"handle geometry collapsing"
+			],
+			"mode": "image",
+			"referenceImageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Covered_teapot%2C_China%2C_early_19th_century%2C_nephrite%2C_Honolulu_Museum_of_Art.jpg/960px-Covered_teapot%2C_China%2C_early_19th_century%2C_nephrite%2C_Honolulu_Museum_of_Art.jpg"
+		}
+	]
+}

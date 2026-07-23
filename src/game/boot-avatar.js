@@ -17,7 +17,7 @@
 
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, Box3, Vector3,
-	HemisphereLight, DirectionalLight, AmbientLight, SRGBColorSpace,
+	HemisphereLight, DirectionalLight, AmbientLight,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AnimationManager } from '../animation-manager.js';
@@ -27,6 +27,7 @@ import {
 } from './avatar-rig.js';
 import { getRequestedAvatar } from './play-handoff.js';
 import { log } from '../shared/log.js';
+import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
 
 const REDUCED_MOTION = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const TURN_SPEED = 0.5; // radians/sec — a slow, premium turntable
@@ -42,11 +43,15 @@ function boot() {
 
 	try {
 		renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-		renderer.outputColorSpace = SRGBColorSpace;
+		// Cinematic defaults (ACES tone mapping, sRGB output). This view is on
+		// screen for well under 6s (the loader's own safety net), so the
+		// environment uses the procedural fallback (no HDRI network fetch) to
+		// never compete with the real scene bundle's download.
+		applyCinematicDefaults(renderer, { exposure: 1.1, tier: 'medium' });
 		sizeToBox();
 
 		scene = new Scene();
+		loadEnvironment(renderer, scene, null);
 		scene.add(new HemisphereLight(0xffffff, 0x202028, 1.1));
 		const key = new DirectionalLight(0xffffff, 1.9);
 		key.position.set(1.4, 2.6, 2.2);

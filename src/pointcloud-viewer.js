@@ -21,6 +21,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
+import { applyCinematicDefaults, detectQualityTier } from './shared/cinematic-render.js';
 
 export const COLOR_MODES = ['rgb', 'mono', 'height', 'depth'];
 
@@ -45,7 +46,12 @@ export class PointCloudViewer {
 
 		// preserveDrawingBuffer so screenshot()/toDataURL reliably capture the frame.
 		this.renderer = new WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+		// Shared cinematic bar for ACES tone mapping + sRGB output + tiered
+		// pixel ratio cap - this still improves the color reproduction of
+		// vertex-coloured points. No HDRI/IBL and no ground-contact shadow:
+		// a point cloud has no surface materials for an environment map to
+		// reflect off of and no shadow-catching mesh to receive on.
+		applyCinematicDefaults(this.renderer, { tier: detectQualityTier() });
 		host.appendChild(this.renderer.domElement);
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);

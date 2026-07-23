@@ -67,14 +67,16 @@ describe('freeLaneCandidates — ordered, configured, de-duplicated', () => {
 		]);
 	});
 
-	it('keeps the native NVIDIA text→3D default first for text prompts', () => {
+	it('leads text prompts with the self-host photoreal reference pipeline; native NVIDIA text lane trails', () => {
 		configureAllLanes();
-		// Text (userImages=false): the tier-named native lane leads, then self-host.
+		// Text (userImages=false): the tier-named image-intermediate lane leads (the
+		// reference-image pipeline), NVIDIA's native text→mesh preview is the last
+		// free-lane resort since it skips the photoreal reference image entirely.
 		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
-			'nvidia',
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
+			'nvidia',
 		]);
 	});
 
@@ -101,27 +103,28 @@ describe('FORGE_SELFHOST_PRIMARY — hoist our own GPU fleet ahead of hosted fre
 		}
 	});
 
-	it('off (default) keeps the native NVIDIA text lane leading', () => {
+	it('off (default) already leads with self-host TRELLIS — the photoreal reference default', () => {
 		configureAllLanes();
 		delete process.env.FORGE_SELFHOST_PRIMARY;
 		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
-			'nvidia',
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
+			'nvidia',
 		]);
 	});
 
-	it('on: self-host workers lead for text, hosted lanes remain as fallthrough', () => {
+	it('on: self-host workers lead for text, hosted lanes remain as fallthrough (no-op vs. off)', () => {
 		configureAllLanes();
 		process.env.FORGE_SELFHOST_PRIMARY = '1';
-		// nvidia (tier-named) is demoted below our own fleet; order within each group
-		// is preserved, so hosted nvidia/huggingface stay in place as fallthrough.
+		// The named draft/standard default is now itself a self-host lane
+		// (trellis_selfhost), so hoisting self-host ahead of hosted lanes is a
+		// no-op here — the order matches the flag-off case exactly.
 		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
 			'trellis_selfhost',
 			'hunyuan3d',
-			'nvidia',
 			'huggingface',
+			'nvidia',
 		]);
 	});
 
@@ -140,7 +143,7 @@ describe('FORGE_SELFHOST_PRIMARY — hoist our own GPU fleet ahead of hosted fre
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		process.env.HF_TOKEN = 'hf_test';
 		process.env.FORGE_SELFHOST_PRIMARY = '1';
-		expect(freeLaneCandidates('image', 'draft', false)).toEqual(['nvidia', 'huggingface']);
+		expect(freeLaneCandidates('image', 'draft', false)).toEqual(['huggingface', 'nvidia']);
 	});
 
 	it('on: routes an unnamed text prompt to self-host TRELLIS via the resolver', () => {
@@ -204,18 +207,20 @@ describe('resolveBackendIdWithHealth — prefer healthy self-host → other free
 		);
 	});
 
-	it('prefers the native NVIDIA lane for healthy text, then self-host when it is down', () => {
+	it('leads text with self-host TRELLIS regardless of NVIDIA health; falls to the next lane when self-host is down', () => {
+		// trellis_selfhost has no health entry (unknown) — missing telemetry never
+		// demotes the preferred lane, so it wins even though nvidia reports 'ok'.
 		expect(
 			resolveBackendIdWithHealth({ path: 'image', tier: 'draft', userImages: false, health: { nvidia: 'ok' } }),
-		).toBe('nvidia');
+		).toBe('trellis_selfhost');
 		expect(
 			resolveBackendIdWithHealth({
 				path: 'image',
 				tier: 'draft',
 				userImages: false,
-				health: { nvidia: 'down', trellis_selfhost: 'ok' },
+				health: { trellis_selfhost: 'down', hunyuan3d: 'ok' },
 			}),
-		).toBe('trellis_selfhost');
+		).toBe('hunyuan3d');
 	});
 
 	it('honors an explicitly named backend regardless of health', () => {

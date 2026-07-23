@@ -1447,6 +1447,12 @@ export const toolDefs = [
 					enum: [512, 1024, 2048],
 					default: 1024,
 				},
+				material_class: {
+					type: 'string',
+					enum: ['person', 'metal', 'wood', 'fabric', 'plastic', 'glass'],
+					description:
+						'Optional. Bakes measured real-world roughness/metallic values for this material family instead of a flat guess, and nudges the prompt with material-appropriate descriptors (e.g. "metal" adds brushed-metal micro-detail cues).',
+				},
 			},
 			required: ['mesh_url', 'prompt'],
 			additionalProperties: false,
@@ -1470,6 +1476,7 @@ export const toolDefs = [
 					negative_prompt: args.negative_prompt,
 					num_views: args.num_views || 8,
 					texture_size: args.texture_size || 1024,
+					material_class: args.material_class || null,
 				},
 			});
 			return {

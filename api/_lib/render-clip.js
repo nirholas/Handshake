@@ -10,13 +10,13 @@
 //   4. Renders one PNG.
 //
 // The same module powers both transparent OG cards and the full clip
-// renderer — single source of truth for headless three.js rendering so the
+// renderer, single source of truth for headless three.js rendering so the
 // MCP tool, the OG card, and any future video renderer share lighting +
 // framing.
 
 // puppeteer-core + @sparticuz/chromium-min are loaded lazily inside getBrowser()
 // so Vercel's NFT doesn't statically trace the chromium tree for every route
-// that transitively imports this module — that trace caused 45-min build hangs.
+// that transitively imports this module, that trace caused 45-min build hangs.
 import { env } from './env.js';
 import { fetchModel } from './fetch-model.js';
 import { PRESETS } from '../../src/pose-presets.js';
@@ -89,7 +89,7 @@ renderer.setSize(${width}, ${height}, false);
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 // Neutral (Khronos PBR Neutral) tone mapping renders asset colors faithfully
-// without the shadow-crushing ACES rolloff — the right choice for a product
+// without the shadow-crushing ACES rolloff, the right choice for a product
 // render where the character must read clearly.
 renderer.toneMapping = THREE.NeutralToneMapping;
 renderer.toneMappingExposure = 1.15;
@@ -102,7 +102,7 @@ const camera = new THREE.PerspectiveCamera(28, ${width}/${height}, 0.01, 100);
 
 // Image-based lighting is what makes PBR materials read: metal and glossy
 // surfaces draw their reflections from scene.environment, so with none set they
-// collapse to near-black — the "dark, murky" render. RoomEnvironment is three's
+// collapse to near-black, the "dark, murky" render. RoomEnvironment is three's
 // built-in procedural studio environment (no external HDR asset to host).
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;

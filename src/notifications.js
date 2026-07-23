@@ -64,7 +64,7 @@ function tryAcquireFetchLock() {
 	} catch { return true; }
 }
 
-const TYPE_ICON = {
+export const TYPE_ICON = {
 	skill_purchased:          '💵',
 	skill_purchase_confirmed: '✅',
 	skill_gift_received:      '🎁',
@@ -87,9 +87,11 @@ const TYPE_ICON = {
 	agent_review:             '⭐',
 	forge_complete:           '✨',
 	forge_failed:             '⚠️',
+	quest_complete:           '🏆',
+	royalty_paid:             '💰',
 };
 
-function notifLabel(n) {
+export function notifLabel(n) {
 	const p = n.payload || {};
 	switch (n.type) {
 		case 'skill_purchased':
@@ -151,6 +153,16 @@ function notifLabel(n) {
 			return p.prompt
 				? `Your generation "${String(p.prompt).slice(0, 60)}" failed. Tap to retry`
 				: `A 3D generation failed. Tap to retry`;
+		case 'quest_complete':
+			return p.mission
+				? `You finished "${p.mission}"${p.gold ? ` — earned ${p.gold} gold` : ''}`
+				: `You finished a quest`;
+		case 'royalty_paid':
+			return p.usd
+				? `${p.actor || 'A fork of your avatar'} paid you $${Number(p.usd).toFixed(3)} in royalties`
+				: p.sol
+					? `${p.actor || 'A fork of your avatar'} paid you ${Number(p.sol).toFixed(4)} SOL in royalties`
+					: `${p.actor || 'A fork of your avatar'} paid you a royalty`;
 		default:
 			return n.type.replace(/_/g, ' ');
 	}
@@ -170,7 +182,7 @@ function irlPayLabel(amount, mint) {
 	return label ? `${human} ${label}` : human;
 }
 
-function notifLink(n) {
+export function notifLink(n) {
 	const p = n.payload || {};
 	const raw = p.link
 		|| (p.tx_signature ? `https://solscan.io/tx/${encodeURIComponent(p.tx_signature)}` : null)
@@ -193,7 +205,7 @@ function safeNavUrl(raw) {
 // HTML-escape untrusted notification text before it goes into innerHTML/attrs.
 // Notification payloads carry other users' actor/skill/item names, so every
 // interpolated value is treated as hostile.
-function escNotif(s) {
+export function escNotif(s) {
 	return String(s == null ? '' : s)
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
@@ -201,7 +213,7 @@ function escNotif(s) {
 		.replace(/"/g, '&quot;');
 }
 
-function relTime(dateStr) {
+export function relTime(dateStr) {
 	const diff = Date.now() - new Date(dateStr).getTime();
 	const m = Math.floor(diff / 60_000);
 	if (m < 1) return 'just now';
@@ -213,7 +225,7 @@ function relTime(dateStr) {
 
 // Fire-and-forget funnel beacon for the in-app channel. The push channel is
 // instrumented from the service worker; this closes the loop for inbox opens.
-function trackInApp(notificationId, event) {
+export function trackInApp(notificationId, event) {
 	fetch('/api/notifications/track', {
 		method: 'POST',
 		credentials: 'include',
@@ -405,6 +417,7 @@ class NotificationInbox {
 				</div>
 			</div>
 			<div class="notif-panel-body" aria-live="polite" aria-atomic="false"></div>
+			<a href="/notifications" class="notif-panel-viewall">See all notifications</a>
 		`;
 		el.querySelector('.notif-mark-all').addEventListener('click', (e) => {
 			e.stopPropagation();

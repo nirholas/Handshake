@@ -64,5 +64,7 @@ options:
   machineType: E2_HIGHCPU_32
   logging: CLOUD_LOGGING_ONLY
 
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
 # Model download + CUDA deps push the build past the 10-minute default.
 timeout: 3600s

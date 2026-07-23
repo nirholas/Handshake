@@ -81,6 +81,8 @@ export const USER_EVENT_TYPES = new Set([
 	'agent_review',      // someone reviewed your agent; { actor, agent_id, agent_name, rating, link }
 	'dm_received',       // a friend sent you a DM while you were away; { actor, link }
 	'pump_launch_filled',// a launch you own graduated its bonding curve; { name, mint, link }
+	'quest_complete',    // a /play mission or co-op heist you finished; { mission, gold, coop, link }
+	'royalty_paid',      // a fork of your avatar paid an upstream royalty; { actor, sol, usd, depth, signature, link }
 	// types already produced by purchase-confirm / buy-asset confirm flows
 	'skill_purchased',
 	'skill_purchase_confirmed',

@@ -19,6 +19,14 @@ Geometry comes from the generation lanes ([model-triposg](../model-triposg/),
 [model-trellis](../model-trellis/), etc.); this worker is the *surface* stage that
 turns bare geometry into a finished, material-clad GLB.
 
+The viewer applies one more realism layer on top at load time, for free: any
+GLB with recognizable skin/eye/hair mesh names gets its materials upgraded to
+`MeshPhysicalMaterial` with measured-value skin sheen, wet-cornea clearcoat
+eyes, and double-sided hair (`src/shared/avatar-material-realism.js`, wired
+into `src/viewer.js`'s `setContent()`) — this runs regardless of which lane or
+worker produced the mesh, so it is not a texture-worker concern, but it is the
+other half of "the surface reads as real" this campaign targets.
+
 ## How it runs
 
 Ships as the Cloud Run service **`texture-service`** in **`us-central1`**, built
@@ -88,6 +96,7 @@ curl -X POST https://$SERVICE_URL/texture \
 | `negative_prompt` | no | `blurry, low quality, distorted, watermark` | |
 | `num_views` | no | `8` | `4` or `8` render viewpoints |
 | `texture_size` | no | `1024` | `512`, `1024`, or `2048` |
+| `material_class` | no | — | `person`, `metal`, `wood`, `fabric`, `plastic`, or `glass` — bakes measured real-world roughness/metallic factors for that class instead of a flat guess, and appends material-appropriate descriptors to the SDXL prompt (see `MATERIAL_CLASS_PBR` in `main.py`) |
 
 ### `POST /retexture_region` → `202`
 

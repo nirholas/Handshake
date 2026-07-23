@@ -1,13 +1,13 @@
-// OKX.AI REST services — engine adapters for the decomposed 3D studio.
+// OKX.AI REST services: engine adapters for the decomposed 3D studio.
 //
 // One exported invoke() per catalog row (api/_lib/okx-catalog.js), each a thin
-// wrapper over an engine the platform already runs — NO duplicated pipeline
+// wrapper over an engine the platform already runs, NO duplicated pipeline
 // logic:
 //
 //   text-to-3d       → /api/forge submit on the free NVIDIA NIM TRELLIS lane
 //                      (draft tier) via _mcp-studio/forge-client.js
 //   text-to-3d-pro   → Granite art director (fail-soft) + /api/forge submit at
-//                      standard/high tier — the mesh_forge chain
+//                      standard/high tier, the mesh_forge chain
 //   image-to-3d      → /api/forge submit, image lane (TRELLIS reconstruct)
 //   rig              → /api/forge?action=rig submit (UniRig worker)
 //   avatar           → the forge_avatar chain: generate to completion, then
@@ -17,7 +17,7 @@
 //   fbx-export       → remesh_model MCP tool handler, operation=convert
 //
 // Contract with the route (api/okx/3d/[service].js): invoke AFTER payment
-// verification and BEFORE settlement — a thrown error means the buyer is not
+// verification and BEFORE settlement, a thrown error means the buyer is not
 // charged. Async lanes return { status:'queued', job_id, poll_url } (polling
 // GET /api/forge?job=<id> is free, no payment or account); fast lanes return
 // their result inline with status:'done'.
@@ -26,7 +26,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { catalogEntry } from '../_lib/okx-catalog.js';
-import { MESH_DIRECTOR, resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
+import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 import {
 	originFromReq,
 	viewerUrl,
@@ -87,11 +87,11 @@ function queuedResponse(job, extra = {}) {
 	};
 }
 
-// Prompt used by text-to-3d-pro — the same single-subject art-director spec
+// Prompt used by text-to-3d-pro, the same single-subject art-director spec
 // mesh_forge uses (imported from _lib/forge-director-prompts.js, the shared
 // source of truth across api/_mcp-studio/tools.js, this file, and /api/forge).
 
-// Humanoid gate for the avatar chain — mirror of the forge_avatar steer in
+// Humanoid gate for the avatar chain, mirror of the forge_avatar steer in
 // api/_mcp-studio/tools.js so both surfaces refuse the same obvious objects.
 const NON_HUMANOID = /\b(chair|sofa|couch|table|desk|lamp|car|truck|vehicle|building|house|tree|plant|sword|gun|bottle|cup|mug|phone|laptop|rock|stone|food|fruit|flower|dog|cat|horse|cow|fish|bird|dragon|snake|spider|dinosaur)\b/i;
 const HUMANOID = /\b(human|person|man|woman|boy|girl|character|avatar|hero|warrior|knight|robot|android|figure|mascot|humanoid|biped|wizard|elf|orc|zombie|ninja|soldier|astronaut)\b/i;
@@ -122,7 +122,7 @@ async function callStudioTool(name, args, { req, payer }) {
 }
 
 const HANDLERS = {
-	// $0.01 — the free NVIDIA NIM TRELLIS lane, draft tier, submit-then-poll.
+	// $0.01, the free NVIDIA NIM TRELLIS lane, draft tier, submit-then-poll.
 	async 'text-to-3d'(args, ctx) {
 		const job = await startForge(ctx.base, {
 			prompt: args.prompt,
@@ -133,7 +133,7 @@ const HANDLERS = {
 		return queuedResponse(job, { mode: 'text_to_3d', tier: 'draft' });
 	},
 
-	// $0.30 — Granite director (fail-soft) + the standard/high generation lane.
+	// $0.30, Granite director (fail-soft) + the standard/high generation lane.
 	// Known brand marks skip the director for the deterministic lexicon spec.
 	async 'text-to-3d-pro'(args, ctx) {
 		const tier = args.tier === 'high' ? 'high' : 'standard';
@@ -153,7 +153,7 @@ const HANDLERS = {
 		return queuedResponse(job, { mode: 'text_to_3d', tier });
 	},
 
-	// $0.30 — image lane (TRELLIS reconstruct of caller-supplied views).
+	// $0.30, image lane (TRELLIS reconstruct of caller-supplied views).
 	async 'image-to-3d'(args, ctx) {
 		const job = await startForge(ctx.base, {
 			prompt: args.prompt || undefined,
@@ -163,13 +163,13 @@ const HANDLERS = {
 		return queuedResponse(job, { mode: 'image_to_3d' });
 	},
 
-	// $0.25 — UniRig auto-rigging, submit-then-poll.
+	// $0.25, UniRig auto-rigging, submit-then-poll.
 	async rig(args, ctx) {
 		const job = await startRig(ctx.base, args.glb_url);
 		return queuedResponse(job, { mode: 'rig' });
 	},
 
-	// $0.50 — the forge_avatar chain: mesh to completion, then the rig job.
+	// $0.50, the forge_avatar chain: mesh to completion, then the rig job.
 	// The mesh GLB is returned even while the rig is still polling, so a rig
 	// failure never loses the paid generation.
 	async avatar(args, ctx) {
@@ -178,7 +178,7 @@ const HANDLERS = {
 		}
 		if (args.prompt && !args.image_url && args.allow_non_humanoid !== true && looksNonHumanoid(args.prompt)) {
 			throw inputError(
-				'That looks like an object rather than a character. Auto-rigging needs a humanoid figure — use text-to-3d for objects, or set allow_non_humanoid to override.',
+				'That looks like an object rather than a character. Auto-rigging needs a humanoid figure, use text-to-3d for objects, or set allow_non_humanoid to override.',
 			);
 		}
 		const gen = await generate(
@@ -191,7 +191,7 @@ const HANDLERS = {
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 		if (gen._timedOut || !gen.glb_url) {
-			const e = new Error('Generation took too long — you were not charged; try again.');
+			const e = new Error('Generation took too long, you were not charged; try again.');
 			e.status = 504;
 			e.code = 'generation_timeout';
 			throw e;
@@ -204,19 +204,19 @@ const HANDLERS = {
 		});
 	},
 
-	// $0.10 — in-process clip retargeting; completes inside the request.
+	// $0.10, in-process clip retargeting; completes inside the request.
 	async retarget(args, ctx) {
 		const result = await callStudioTool('apply_animation', args, ctx);
 		return { status: 'done', ...(result.structuredContent || {}) };
 	},
 
-	// $0.02 — deterministic pose-seed resolution; completes inside the request.
+	// $0.02, deterministic pose-seed resolution; completes inside the request.
 	async 'pose-seed'(args, ctx) {
 		const result = await callStudioTool('pose_model', { prompt: args.prompt }, ctx);
 		return { status: 'done', ...(result.structuredContent || {}) };
 	},
 
-	// $0.10 — remesh convert (rig-preserving FBX by default), submit-then-poll.
+	// $0.10, remesh convert (rig-preserving FBX by default), submit-then-poll.
 	async 'fbx-export'(args, ctx) {
 		const result = await callStudioTool(
 			'remesh_model',

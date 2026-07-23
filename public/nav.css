@@ -251,6 +251,16 @@
 .notif-panel-body::-webkit-scrollbar { width: 4px; }
 .notif-panel-body::-webkit-scrollbar-track { background: transparent; }
 .notif-panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+.notif-panel-viewall {
+	display: block; text-align: center;
+	padding: 10px; flex-shrink: 0;
+	font-size: var(--text-sm); font-weight: 500; color: rgba(255,255,255,0.5);
+	border-top: 1px solid rgba(255,255,255,0.08);
+	text-decoration: none;
+	transition: color 0.12s, background 0.12s;
+}
+.notif-panel-viewall:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+.notif-panel-viewall:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: -2px; }
 
 /* notification rows */
 .notif-row {

@@ -3069,6 +3069,9 @@
 						<button class="chip" type="button" data-i18n="forge.a_glazed_ceramic_teapot_2">a glazed ceramic teapot</button>
 						<button class="chip" type="button" data-i18n="forge.a_sci_fi_combat_helmet_brushed_metal_2">a sci-fi combat helmet, brushed metal</button>
 						<button class="chip" type="button" data-i18n="forge.a_low_poly_red_fox_sitting_2">a low-poly red fox, sitting</button>
+						<button class="chip" type="button" data-i18n="forge.a_worn_leather_messenger_bag">a worn leather messenger bag, brass buckles</button>
+						<button class="chip" type="button" data-i18n="forge.a_crystal_dragon_figurine">a crystal dragon figurine, catching the light</button>
+						<button class="chip" type="button" data-i18n="forge.a_chrome_toaster">a chrome toaster, mid-century diner style</button>
 					</div>
 					<p class="forge-empty-hint" data-i18n="forge.or_click_a_starter_it_generates_immediately">Or click a starter: it generates immediately.</p>
 				</div>
@@ -3308,6 +3311,35 @@
 								</svg>
 								View in AR
 							</button>
+							<a
+								class="btn btn-ghost"
+								id="forge-irl-btn"
+								href="/irl"
+								title="Place this model in your real room, anchored and shareable (IRL)"
+							 data-i18n-attr="title:forge.place_this_model_in_your_real_title">
+								<svg
+									width="15"
+									height="15"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+								>
+									<path d="M12 2v4" />
+									<path d="M12 18v4" />
+									<path d="M4.93 4.93l2.83 2.83" />
+									<path d="M16.24 16.24l2.83 2.83" />
+									<path d="M2 12h4" />
+									<path d="M18 12h4" />
+									<path d="M4.93 19.07l2.83-2.83" />
+									<path d="M16.24 7.76l2.83-2.83" />
+									<circle cx="12" cy="12" r="3" />
+								</svg>
+								Place IRL
+							</a>
 							<button
 								class="btn btn-refine is-hidden"
 								type="button"
@@ -3501,6 +3533,9 @@
 		<script type="module" src="/src/forge-prompt-studio.js"></script>
 		<script type="module" src="/src/forge-enhance.js"></script>
 		<script type="module" src="/src/forge-refine.js"></script>
+		<script type="module" src="/src/forge-rig.js"></script>
+		<script type="module" src="/src/forge-materials.js"></script>
+		<script type="module" src="/src/forge-conversational-refine.js"></script>
 			<script type="module" src="/src/forge-stylize.js"></script>
 		<script type="module" src="/src/forge-optimize.js"></script>
 		<script type="module" src="/src/forge-gameready.js"></script>

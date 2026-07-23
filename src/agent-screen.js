@@ -38,6 +38,7 @@ import { createAgentScreenClient } from './shared/agent-screen-client.js';
 import { mountAgentReactions } from './agent-reactions.js';
 import { handleTourFrame } from './agent-screen-tour.js';
 import { buildRunCommand, buildRunCommandHtml, RUNTIME_LABELS } from './agent-screen-runcmd.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 import { createNewsroomAnchor } from './agent-screen-anchor.js';
 import { createTreasuryCockpit } from './agent-screen-treasury.js';
 import { MirrorPanel } from './agent-screen-mirror.js';
@@ -965,8 +966,15 @@ async function boot(id) {
 	const webcamRenderer = new WebGLRenderer({ antialias: true, alpha: true });
 	webcamRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	webcamRenderer.setClearColor(0x0a0d1a, 1);
+	// ACES + sRGB + soft shadows, shared bar (src/shared/cinematic-render.js).
+	const webcamQualityTier = detectQualityTier();
+	applyCinematicDefaults(webcamRenderer, { tier: webcamQualityTier });
 
 	const webcamScene = new Scene();
+	// Real HDRI IBL for specular/rim detail on the avatar bust. No ground-contact
+	// shadow here: this is a tight head-and-shoulders webcam crop with no floor
+	// in frame, so a shadow catcher plane would never be visible.
+	loadEnvironment(webcamRenderer, webcamScene, webcamQualityTier === 'mobile' ? null : 'studio');
 	webcamScene.add(new AmbientLight(0xffffff, 0.7));
 	const sun = new DirectionalLight(0xffffff, 1.2);
 	sun.position.set(1.5, 2.5, 2);

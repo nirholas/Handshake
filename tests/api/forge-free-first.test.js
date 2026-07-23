@@ -158,9 +158,12 @@ describe('forge free-first reconstruct ordering', () => {
 			expect(res.body.backend).toBe('huggingface');
 			expect(res.body.mode).toBe('text_to_3d');
 			expect(res.body.glb_url).toBe('https://cdn.example/hf.glb');
-			// NVIDIA NIM was attempted first (and failed), then the FREE HF lane served
-			// it — the paid Replicate reconstruct was NEVER invoked.
-			expect(nvidiaTextTo3d).toHaveBeenCalled();
+			// The default resolver now leads with the image-intermediate reference
+			// pipeline: with HF configured (and no self-host worker), it resolves
+			// straight to the FREE HuggingFace lane — NVIDIA's native text→mesh
+			// preview (which skips the photoreal reference image) is never even
+			// attempted, and the paid Replicate reconstruct is NEVER invoked either.
+			expect(nvidiaTextTo3d).not.toHaveBeenCalled();
 			expect(hfSubmit).toHaveBeenCalled();
 			expect(replicateSubmit).not.toHaveBeenCalled();
 		} finally {
@@ -261,12 +264,17 @@ describe('forge free-first reconstruct ordering', () => {
 		// The flag flips ORDER, not availability. With free-first OFF the paid
 		// Replicate default is attempted FIRST; HF still serves as the post-failure
 		// fallback (so the request doesn't dead-end), but only after Replicate is hit.
+		// The tier-default resolver now resolves straight to 'huggingface' when it's
+		// configured (the photoreal-reference-by-default fix), so this legacy
+		// paid-vs-free ordering — internal to the 'trellis' backend's own reconstruct
+		// fallback — is exercised via an EXPLICIT backend pick rather than the
+		// implicit default.
 		process.env.HF_TOKEN = 'test-hf-token';
 		process.env.FORGE_PREFER_FREE = 'false';
 		replicateSubmit.mockClear();
 		hfSubmit.mockClear();
 		try {
-			const req = makeReq({ prompt: 'a red ceramic mug', tier: 'standard', path: 'image' });
+			const req = makeReq({ prompt: 'a red ceramic mug', tier: 'standard', path: 'image', backend: 'trellis' });
 			const res = makeRes();
 			await handler(req, res);
 

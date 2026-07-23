@@ -26,10 +26,10 @@
 import {
 	AnimationMixer, Box3, CanvasTexture, Color, DirectionalLight, GridHelper, Group,
 	HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry,
-	PMREMGenerator, Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
+	Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
 } from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 
 import { EstimatedLighting } from './ar/estimated-lighting.js';
 import {
@@ -122,23 +122,23 @@ if (!canvas || !hud) {
 const renderer = new WebGLRenderer({
 	canvas, alpha: true, antialias: true, preserveDrawingBuffer: true,
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000, 0);
+// Filmic tone mapping + correct sRGB output + soft shadows: the shared bar
+// every viewer on the platform now matches (src/shared/cinematic-render.js).
+const qualityTier = detectQualityTier();
+applyCinematicDefaults(renderer, { tier: qualityTier });
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.02, 200);
 camera.position.set(0, EYE_HEIGHT_M, 0);
 
-// PBR environment so forge materials (metal, glass, emissive) read correctly
-// against a real room — same RoomEnvironment the main viewer uses.
-try {
-	const pmrem = new PMREMGenerator(renderer);
-	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-	pmrem.dispose();
-} catch (err) {
+// Real HDRI IBL (studio preset) so forge materials (metal, glass, emissive)
+// read correctly against a real room; falls back to the procedural
+// RoomEnvironment on fetch failure or mobile tier.
+loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio').catch((err) => {
 	log.warn('environment map failed', err);
-}
+});
 
 const HEMI_BASE = 1.0;
 const SUN_BASE = 1.15;

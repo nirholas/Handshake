@@ -97,10 +97,28 @@ so the plane fades in seamlessly.
 
 Where the rig above tunes how a scene is *lit*, this module tunes how a model's
 *surfaces* read. `MATERIAL_PRESETS` is a curated set of physically-plausible
-MeshStandardMaterial looks — `chrome`, `gold`, `copper`, `brushedSteel`,
-`gunmetal`, `matte`, `glossy`, `rubber`, `ceramic`, `glass`, `wood`, `stone`,
-`neon`, `holographic` — each a frozen parameter set (color, metalness, roughness,
-emissive, envMapIntensity, and transparency for glass).
+looks — `chrome`, `gold`, `copper`, `brushedSteel`, `gunmetal`, `matte`,
+`glossy`, `rubber`, `ceramic`, `glass`, `realGlass`, `wood`, `stone`, `fabric`,
+`skin`, `carPaint`, `neon`, `holographic` — each a frozen parameter set.
+
+Most presets are plain `MeshStandardMaterial` fields (color, metalness,
+roughness, emissive, envMapIntensity, transparency for the legacy `glass`).
+A few use **measured, physically-real** `MeshPhysicalMaterial`-only fields —
+`applyMaterialPreset` writes these when the target material has the field and
+silently skips them on a plain Standard material:
+
+| Preset | Physical fields | Real-world basis |
+|---|---|---|
+| `skin` | `sheen`, `sheenColor`, `sheenRoughness`, `specularIntensity` | roughness 0.45–0.6 (measured bare-skin range), 0 metalness, sheen approximates subsurface scattering, specular F0 below the 0.04 default (skin reflects ~2.8%) |
+| `carPaint` | `clearcoat`, `clearcoatRoughness` | KHR_materials_clearcoat — a near-mirror lacquer layer over a metallic base coat |
+| `realGlass` | `transmission`, `thickness`, `ior`, `attenuationColor`, `attenuationDistance` | KHR_materials_transmission — real refraction, not alpha blending; `ior: 1.45` is soda-lime glass |
+| `brushedSteel` | `anisotropy`, `anisotropyRotation` | KHR_materials_anisotropy — directional micro-groove scattering from brushing |
+| `fabric` | `sheen`, `sheenColor`, `sheenRoughness` | soft grazing-angle highlight woven cloth shows |
+
+`realGlass` and `glass` are deliberately both kept: `glass` is the cheap
+opacity-blend look (works on any renderer, any material type); `realGlass`
+needs a `MeshPhysicalMaterial` and the renderer's transmission pass but
+actually refracts what's behind it.
 
 ```js
 import { applyMaterialPreset, materialVariants } from '@three-ws/viewer-presets/materials';

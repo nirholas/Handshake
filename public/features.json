@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T13:34:39.248Z",
+	"generated_at": "2026-07-23T13:42:42.333Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -220,6 +220,16 @@
 					"title": "My Collection",
 					"description": "View all the skills and subscriptions you've unlocked on three.ws.",
 					"added": "2026-06-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/notifications",
+					"title": "Notifications",
+					"description": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place, filterable by category.",
+					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2325,7 +2335,7 @@
 				},
 				{
 					"path": "/agent-identities",
-					"title": "Agent Identity Studio — 3D avatars for AI agents",
+					"title": "Agent Identity Studio: 3D avatars for AI agents",
 					"description": "Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.",
 					"added": "2026-07-06",
 					"auth": null,

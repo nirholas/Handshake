@@ -58,18 +58,39 @@ DEFAULT_FPS = 30
 
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
+_ready: Optional[asyncio.Event] = None
+_load_error: Optional[str] = None
 _tasks: dict[str, dict] = {}
 _model = None  # lazily-loaded MDM sampler
 
 
+async def _load_model_bg() -> None:
+    global _load_error
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, _load_model)
+        _ready.set()
+        log.info("text2motion ready — max_concurrent=%d", MAX_CONCURRENT)
+    except Exception as exc:  # noqa: BLE001
+        _load_error = safe_error(exc, context="MDM checkpoint load")
+        log.error("MDM model load FAILED: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem
+    global _bucket, _sem, _ready
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, _load_model)
-    log.info("text2motion ready — max_concurrent=%d", MAX_CONCURRENT)
+    _ready = asyncio.Event()
+    # Load the checkpoint in the BACKGROUND and yield immediately — uvicorn
+    # runs the ASGI lifespan before binding the socket, and the full load
+    # (MDM transformer + CUDA transfer from the GCS FUSE-mounted weights dir)
+    # can run past Cloud Run's startup TCP-probe window on a cold instance.
+    # Backgrounding opens the port at once; requests that arrive before the
+    # load completes wait on `_ready` in `_run_inference`. Same pattern as
+    # model-trellis / model-triposg.
+    asyncio.create_task(_load_model_bg())
+    log.info("text2motion starting, model loading in background (max_concurrent=%d)", MAX_CONCURRENT)
     yield
 
 
@@ -134,16 +155,25 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
 
 @app.get("/health")
 async def health() -> dict:
-    return {"ok": True, "model_loaded": _model is not None}
+    return {
+        "ok": True,
+        "model_loaded": _model is not None,
+        "status": "ready" if _model is not None else ("failed" if _load_error else "loading"),
+        "load_error": _load_error,
+    }
 
 
 async def _run_inference(task_id: str, prompt: str, n_frames: int, fps: int) -> None:
-    assert _sem is not None and _bucket is not None
+    assert _sem is not None and _bucket is not None and _ready is not None
     async with _sem:
         _tasks[task_id]["status"] = "running"
         started = time.time()
         loop = asyncio.get_event_loop()
         try:
+            try:
+                await asyncio.wait_for(_ready.wait(), timeout=600)
+            except asyncio.TimeoutError:
+                raise RuntimeError(_load_error or "model load timed out")
             poses, trans = await loop.run_in_executor(None, _generate_motion, prompt, n_frames)
             clip = smpl_motion_to_clip(poses, trans, fps=fps, name=_safe_name(prompt))
             payload = json.dumps(clip).encode("utf-8")

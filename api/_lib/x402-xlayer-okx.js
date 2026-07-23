@@ -1,4 +1,4 @@
-// OKX Agent Payments Protocol rail — x402 `exact` + EIP-3009 on X Layer (chain 196).
+// OKX Agent Payments Protocol rail, x402 `exact` + EIP-3009 on X Layer (chain 196).
 //
 // The OKX.AI marketplace (agents hire agents; A2MCP services) requires sellers
 // to speak its x402 v2 dialect on X Layer. The wire contract in
@@ -12,25 +12,25 @@
 //   2. The accepts entry: { scheme:'exact', network:'eip155:196', amount:<base
 //      units>, payTo, maxTimeoutSeconds:86400, asset:<USD₮0>, extra:{ symbol:
 //      'USDT', name:'USD₮0', version:'1', transferMethod:'eip3009' } }.
-//      extra.name/version are the token's EIP-712 domain — USD₮0's on-chain
+//      extra.name/version are the token's EIP-712 domain, USD₮0's on-chain
 //      domain is name "USD₮0", version "1" (verified via eth_call).
 //   3. The buyer replays with `PAYMENT-SIGNATURE: <base64 JSON>` decoding to
 //      { x402Version:2, accepted:<chosen accepts entry>, payload:{
 //        authorization:{from,to,value,validAfter,validBefore,nonce}, signature },
-//      resource } — note `accepted`, not the standard x402 top-level
+//      resource }, note `accepted`, not the standard x402 top-level
 //      scheme/network fields.
 //   4. Verification is seller-side and on-chain: EIP-712 signature recovery
-//      (ERC-1271-aware — OKX agentic wallets may be smart accounts), recipient/
+//      (ERC-1271-aware, OKX agentic wallets may be smart accounts), recipient/
 //      amount/time-window checks, unused authorizationState, and a balanceOf
 //      check. Insufficient balance re-issues the 402 with top-level
-//      error:"insufficient_balance" — the exact behavior captured from the
+//      error:"insufficient_balance", the exact behavior captured from the
 //      approved seller.
 //   5. Settlement routes through OKX's official facilitator when OKX SA API
-//      credentials are configured — POST https://web3.okx.com/api/v6/pay/x402/
+//      credentials are configured, POST https://web3.okx.com/api/v6/pay/x402/
 //      settle with syncSettle:true (HMAC-SHA256 auth; the exact client the
 //      official @okxweb3/app-x402-core SDK ships). Verification likewise gets
 //      a facilitator /verify pass on top of the local checks. Without OKX
-//      creds, the seller redeems the authorization DIRECTLY — broadcasts
+//      creds, the seller redeems the authorization DIRECTLY, broadcasts
 //      transferWithAuthorization from a relayer key (OKB gas); per the
 //      protocol docs "settlement happens on-chain when the recipient redeems
 //      the authorization."
@@ -58,13 +58,13 @@ export const XLAYER_CHAIN_ID = 196;
 
 // USD₮0's EIP-712 domain, verified on-chain (name()/symbol() both return
 // "USD₮0") and matched against the live approved-seller 402s (extra.name
-// "USD₮0", extra.version "1"). The ₮ is U+20AE — keep it exact: the domain
+// "USD₮0", extra.version "1"). The ₮ is U+20AE, keep it exact: the domain
 // separator hashes the byte string.
 const USDT0_DOMAIN_NAME = 'USD₮0';
 const USDT0_DOMAIN_VERSION = '1';
 const USDT0_SYMBOL = 'USDT';
 
-// EIP-3009 typed data — the struct the buyer's wallet signs.
+// EIP-3009 typed data, the struct the buyer's wallet signs.
 const TRANSFER_WITH_AUTHORIZATION_TYPES = {
 	TransferWithAuthorization: [
 		{ name: 'from', type: 'address' },
@@ -128,7 +128,7 @@ const EIP3009_ABI = [
 	},
 ];
 
-// RPC failover for chain 196 — X Layer is not in the shared erc8004 chain
+// RPC failover for chain 196, X Layer is not in the shared erc8004 chain
 // registry, so the endpoint list lives here: explicit override first, then
 // viem's curated default, then OKX's public node.
 function xlayerEndpoints() {
@@ -155,7 +155,7 @@ export function okxFacilitatorConfigured() {
 	return Boolean(env.OKX_API_KEY && env.OKX_SECRET_KEY && env.OKX_PASSPHRASE);
 }
 
-// Singleton facilitator client (official SDK). syncSettle:true — the seller
+// Singleton facilitator client (official SDK). syncSettle:true, the seller
 // waits for on-chain confirmation before responding, per the SDK's
 // recommended seller configuration, so PAYMENT-RESPONSE always carries a
 // confirmed transaction.
@@ -174,7 +174,7 @@ function okxFacilitator() {
 
 // Can we actually settle on X Layer right now? Advertise the rail only when
 // the receiver, the asset, and a working settlement route (OKX facilitator
-// creds, or the direct-redemption relayer key) are all configured — the same
+// creds, or the direct-redemption relayer key) are all configured, the same
 // never-402-then-502 rule baseSettleable()/solanaSettleable() enforce.
 export function xlayerSettleable() {
 	return Boolean(
@@ -381,7 +381,7 @@ export async function verifyOkxXLayerPayment({ paymentPayload, requirement }) {
 		throw new X402Error('invalid_payment', 'insufficient_balance', 402);
 	}
 
-	// Facilitator pass — when the OKX SA API creds are configured, the official
+	// Facilitator pass, when the OKX SA API creds are configured, the official
 	// facilitator gets the final word on validity (it is also the settlement
 	// submitter). The local checks above stay as defense-in-depth, mirroring
 	// how the CDP/PayAI paths cross-check facilitator answers.
@@ -433,9 +433,9 @@ function relayerAccount() {
 }
 
 // Settle the verified payment. Primary route: the official OKX facilitator
-// (POST /api/v6/pay/x402/settle, syncSettle:true) — it broadcasts the
+// (POST /api/v6/pay/x402/settle, syncSettle:true), it broadcasts the
 // EIP-3009 redemption and waits for confirmation. Fallback (no OKX creds):
-// redeem directly — broadcast transferWithAuthorization from the relayer
+// redeem directly, broadcast transferWithAuthorization from the relayer
 // (OKB gas) and wait for inclusion. Both return the same {success,
 // transaction, network, payer} shape the other facilitator paths yield, so
 // X-PAYMENT-RESPONSE / PAYMENT-RESPONSE emission is identical.
@@ -466,7 +466,7 @@ export async function settleOkxXLayerPayment({ verified, requirement, paymentPay
 		}
 		// syncSettle:true → status "success" with a confirmed tx. A "pending"
 		// (async facilitator mode) still means the facilitator accepted the
-		// settlement — surface it with the tx for /settle/status polling.
+		// settlement, surface it with the tx for /settle/status polling.
 		if (!result?.success && result?.status !== 'pending') {
 			throw new X402Error(
 				'settle_failed',
@@ -517,7 +517,7 @@ export async function settleOkxXLayerPayment({ verified, requirement, paymentPay
 				transaction: hash,
 				network: NETWORK_XLAYER_MAINNET,
 				payer: verified.payer,
-				// Direct redemption waited for the receipt — the transfer is
+				// Direct redemption waited for the receipt, the transfer is
 				// confirmed, matching the facilitator's syncSettle "success".
 				status: 'success',
 				amount: verified.amount,
@@ -548,7 +548,7 @@ function splitSignature(signature) {
 
 // Live subsystem probe for the free health endpoint (WO-03's "real checks, not
 // {ok:true}"): RPC liveness, fee-token readability, and whether the settlement
-// relayer is configured + gas-funded. Never throws — health reports state.
+// relayer is configured + gas-funded. Never throws, health reports state.
 export async function xlayerRailHealth() {
 	const out = {
 		network: NETWORK_XLAYER_MAINNET,

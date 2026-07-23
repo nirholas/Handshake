@@ -170,14 +170,19 @@ describe('Self-host lane health + cold-start coverage (triposg + hunyuan3d)', ()
 	});
 });
 
-describe('Free/default tier is unchanged (no regression)', () => {
-	it('draft text prompt still leads with native NVIDIA NIM', () => {
+describe('Free/default tier now leads with the photoreal reference-image pipeline', () => {
+	// Owner directive: every tier defaults to the image-intermediate (reference
+	// photo → mesh) lane, never NVIDIA's native text→mesh preview, because that
+	// reference image is the single highest-leverage lever on realism. NVIDIA
+	// stays free and explicitly selectable, and remains the final fallthrough so
+	// a text prompt never dead-ends on a deployment with no self-host/HF lane.
+	it('draft text prompt leads with self-host TRELLIS; native NVIDIA NIM is the last resort', () => {
 		configureAllLanes();
 		expect(freeLaneCandidates('image', 'draft', false)).toEqual([
-			'nvidia',
 			'trellis_selfhost',
 			'hunyuan3d',
 			'huggingface',
+			'nvidia',
 		]);
 	});
 
@@ -186,6 +191,6 @@ describe('Free/default tier is unchanged (no regression)', () => {
 		const plain = freeLaneCandidates('image', 'standard', false);
 		expect(freeLaneCandidates('image', 'standard', false, 'hardsurface')).toEqual(plain);
 		expect(freeLaneCandidates('image', 'standard', false, 'organic')).toEqual(plain);
-		expect(plain[0]).toBe('nvidia');
+		expect(plain[0]).toBe('trellis_selfhost');
 	});
 });

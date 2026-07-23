@@ -98,9 +98,13 @@ describe('forge-tiers — NVIDIA NIM backend registration', () => {
 		const draftEst = nv.estimates.image.find((e) => e.tier === 'draft');
 		expect(draftEst.eta_seconds).toBeGreaterThan(0);
 		expect(draftEst.credits).toBeNull();
-		// The tier-aware default map advertises a free engine for every tier.
-		expect(cat.default_backend_for_tier.draft.image).toBe('nvidia');
-		expect(cat.default_backend_for_tier.standard.image).toBe('nvidia');
+		// The tier-aware default map advertises a free engine for every tier. With
+		// only NVIDIA + HuggingFace configured (no self-host worker) in this test,
+		// HuggingFace — an image-intermediate, reference-capable lane — outranks
+		// NVIDIA's native text-only preview at every tier, matching the
+		// photoreal-reference-by-default policy.
+		expect(cat.default_backend_for_tier.draft.image).toBe('huggingface');
+		expect(cat.default_backend_for_tier.standard.image).toBe('huggingface');
 		expect(cat.default_backend_for_tier.high.image).toBe('huggingface');
 	});
 

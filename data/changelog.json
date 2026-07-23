@@ -15547,6 +15547,16 @@
 			]
 		},
 		{
+			"date": "2026-07-23",
+			"title": "Real materials: skin, glass, and car paint that actually behave like the real thing",
+			"summary": "Avatars now get a subtle skin sheen, wet-looking corneas, and double-sided hair automatically the moment a humanoid model loads in any three.ws viewer, no extra step needed. Restyle Studio's material presets grew a real-physics tier alongside the classic looks: skin, car paint with a genuine clearcoat layer, brushed steel with directional anisotropic highlights, and a real-glass preset that actually refracts (KHR_materials_transmission) instead of faking transparency. The AI restyle tool (\"make it chrome\", \"cyberpunk neon\") can now propose clearcoat, transmission, and sheen too when an instruction calls for it. The text-guided texture worker also gained an optional material_class hint (person/metal/wood/fabric/plastic/glass) that bakes measured real-world roughness values instead of one flat guess for every material.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/restyle"
+		},
+		{
 			"date": "2026-07-22",
 			"title": "Animation Studio toolbar cleanup",
 			"summary": "The Animation Studio (/pose) got a UI pass: toolbar buttons no longer render as oversized circles behind FK and Save, the toolbar fits on laptop screens with pose import/export and screenshots collected under a new overflow menu, the language picker moved into the footer so it stops covering the timeline, error messages show their warning color again, and on phones the animation library and pose presets are reachable instead of hidden.",

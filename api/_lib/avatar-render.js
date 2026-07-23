@@ -1,14 +1,14 @@
-// Avatar render core — the headless-chromium + three.js pipeline that turns a
+// Avatar render core, the headless-chromium + three.js pipeline that turns a
 // stored GLB into a PNG/JPEG/WebP, plus the param-resolution and R2 cache layer
 // around it. Extracted so BOTH the public HTTP endpoint (api/avatar/render.js)
-// and the render_avatar_image MCP tool share one implementation — there is no
+// and the render_avatar_image MCP tool share one implementation, there is no
 // duplicated chromium code anywhere else.
 
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 // puppeteer-core + @sparticuz/chromium-min are loaded lazily inside getBrowser()
 // so Vercel's NFT does not statically trace the chromium binary tree on every
-// route in a function package — that trace was the 45-min build timeout.
+// route in a function package, that trace was the 45-min build timeout.
 import { env } from './env.js';
 import { publicUrl, putObject, headObject } from './r2.js';
 import { PRESETS } from '../../src/pose-presets.js';
@@ -217,7 +217,7 @@ export async function renderAvatarImage({ avatar, glbUrl, params, awaitUpload = 
 			return { cached: true, key, imageUrl: publicUrl(key), buffer: null, contentType };
 		}
 	} catch {
-		// Cache miss — render fresh.
+		// Cache miss, render fresh.
 	}
 
 	const cameraOrbit = { theta: params.scenePreset.theta, phi: params.scenePreset.phi, radius: null };
@@ -347,7 +347,7 @@ renderer.setSize(${width}, ${height}, false);
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 // Neutral (Khronos PBR Neutral) tone mapping renders asset colors faithfully
-// without the shadow-crushing ACES rolloff — the right choice for a product
+// without the shadow-crushing ACES rolloff, the right choice for a product
 // render where the character must read clearly.
 renderer.toneMapping = THREE.NeutralToneMapping;
 renderer.toneMappingExposure = 1.15;
@@ -360,7 +360,7 @@ const camera = new THREE.PerspectiveCamera(28, ${width}/${height}, 0.01, 100);
 
 // Image-based lighting is what makes PBR materials read: metal and glossy
 // surfaces draw their reflections from scene.environment, so with none set they
-// collapse to near-black — the "dark, murky" render. RoomEnvironment is three's
+// collapse to near-black, the "dark, murky" render. RoomEnvironment is three's
 // built-in procedural studio environment (no external HDR asset to host).
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;

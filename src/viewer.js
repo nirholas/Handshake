@@ -56,6 +56,7 @@ import { setClips, playAllClips } from './viewer/animation.js';
 import { computeFramingExtent, computeFramingWidth } from './viewer/framing.js';
 import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
+import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from './shared/avatar-material-realism.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import {
 	CinematicPipeline,
@@ -1250,6 +1251,12 @@ export class Viewer {
 				node.castShadow = true;
 			}
 		});
+
+		// Skin/eye/hair realism pass — name-matched, so props and non-humanoid
+		// meshes are never touched. See src/shared/avatar-material-realism.js.
+		if (looksLikeAvatarMesh(object)) {
+			applyAvatarMaterialRealism(object);
+		}
 
 		this.state.punctualLights = true;
 		this.content.traverse((node) => {

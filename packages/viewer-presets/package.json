@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/viewer-presets",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Tuned visual presets for three.ws avatar viewers — light rigs, floor reflection, bloom, and PBR material presets (chrome/gold/glass/…) with seeded variants.",
 	"keywords": [
 		"three.ws",

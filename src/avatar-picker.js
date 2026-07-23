@@ -137,14 +137,19 @@ const _thumbCache = new Map(); // glbUrl → data:image/png
 async function getOffscreenCtx() {
 	if (_offscreenCtx) return _offscreenCtx;
 	const [{ WebGLRenderer, Scene, PerspectiveCamera, AmbientLight, DirectionalLight, Box3, Vector3 },
-	       { GLTFLoader }, { getMeshoptDecoder }] = await Promise.all([
+	       { GLTFLoader }, { getMeshoptDecoder },
+	       { applyCinematicDefaults, loadEnvironment }] = await Promise.all([
 		import('three'),
 		import('three/addons/loaders/GLTFLoader.js'),
 		import('./viewer/internal.js'),
+		import('./shared/cinematic-render.js'),
 	]);
 	const cvs = document.createElement('canvas');
 	cvs.width = 256; cvs.height = 256;
 	const renderer = new WebGLRenderer({ canvas: cvs, antialias: true, alpha: true });
+	// Cinematic defaults (ACES tone mapping, sRGB output) shared with every other
+	// viewer on the platform; product-shot studio HDRI for the picker thumbnails.
+	applyCinematicDefaults(renderer, { exposure: 1.1, tier: 'medium' });
 	renderer.setPixelRatio(1);
 	renderer.setSize(256, 256);
 	renderer.setClearColor(0x000000, 0);
@@ -152,6 +157,7 @@ async function getOffscreenCtx() {
 	camera.position.set(0, 1.3, 2.2);
 	camera.lookAt(0, 1.0, 0);
 	const scene = new Scene();
+	loadEnvironment(renderer, scene, 'studio');
 	scene.add(new AmbientLight(0xffffff, 1.0));
 	const sun = new DirectionalLight(0xffffff, 1.4);
 	sun.position.set(2, 4, 3);

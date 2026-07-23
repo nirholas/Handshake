@@ -205,6 +205,7 @@
 		"test:core": "vitest run --maxWorkers=1",
 		"test:gate": "node scripts/test-gate.mjs",
 		"test:e2e": "playwright test",
+		"audit:a11y": "playwright test tests/e2e/a11y-top-pages.spec.js",
 		"test:pages": "node scripts/test-pages.mjs",
 		"verify:ibm": "node scripts/verify-ibm-pages.mjs",
 		"verify:zauth": "node scripts/verify-zauth-runtime.mjs",
@@ -378,6 +379,7 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.12.1",
 		"@playwright/test": "^1.60.0",
 		"@x402/fetch": "^2.14.0",
 		"es-module-lexer": "^2.0.0",

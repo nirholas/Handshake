@@ -16,7 +16,13 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
-import { MESH_DIRECTOR, AVATAR_DIRECTOR, resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
+import {
+	meshDirectorFor,
+	meshSubjectClass,
+	avatarDirectorFor,
+	classifySubject,
+	resolveLogoPrompt,
+} from '../_lib/forge-director-prompts.js';
 import { checkPromptSafety } from './safety.js';
 import {
 	originFromReq,
@@ -227,9 +233,29 @@ async function handleForgeFree(args, _auth, req) {
 	// 402/timeout. True high-by-default lands when the async self-host Hunyuan3D
 	// worker deploys (GCP_HUNYUAN3D_URL).
 	const tier = VALID_TIER.has(args.tier) ? args.tier : 'standard';
+	// Known brand marks resolve deterministically; everything else runs the
+	// subject-classified Granite director (fail-soft: original prompt on any
+	// failure) so this free lane gets the same photoreal-reference treatment as
+	// mesh_forge instead of reconstructing straight from the raw words.
+	let effective = prompt;
+	let markImageUrls;
+	const knownMark = resolveLogoPrompt(prompt);
+	if (knownMark) {
+		effective = knownMark.prompt;
+		if (knownMark.imagePath) markImageUrls = [`${base}${knownMark.imagePath}`];
+	} else {
+		const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt);
+		if (directed) effective = directed;
+	}
 	let job;
 	try {
-		job = await generate(base, { prompt, path: 'image', tier, internal: true }, { timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' });
+		job = await generate(
+			base,
+			markImageUrls
+				? { prompt: effective, imageUrls: markImageUrls, tier, internal: true }
+				: { prompt: effective, path: 'image', tier, internal: true },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
+		);
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
@@ -251,11 +277,20 @@ async function handleTextToAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(err.userMessage ? err.message : 'That image URL could not be used.');
 	}
+	// Granite avatar director (text mode only, fail-soft): without this the raw
+	// words reconstructed straight into TRELLIS/Hunyuan3D with no photoreal
+	// reference-image briefing at all — the realism gap forge_avatar already closes.
+	let effective = prompt;
+	if (prompt && !imageUrl) {
+		const subject = classifySubject(prompt) === 'animal' ? 'animal' : 'person';
+		const directed = await directPrompt(avatarDirectorFor(subject), prompt);
+		if (directed) effective = directed;
+	}
 	let job;
 	try {
 		job = await generate(
 			base,
-			{ prompt: prompt || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -292,7 +327,7 @@ async function handleMeshForge(args, _auth, req) {
 			effective = knownMark.prompt;
 			if (knownMark.imagePath) markImageUrls = [`${base}${knownMark.imagePath}`];
 		} else {
-			const directed = await directPrompt(MESH_DIRECTOR, prompt);
+			const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt);
 			if (directed) effective = directed;
 		}
 	}
@@ -357,7 +392,8 @@ async function handleForgeAvatar(args, _auth, req) {
 	// Stage 1 — generate the mesh (Granite director in text mode, fail-soft).
 	let effective = prompt;
 	if (prompt && !imageUrl) {
-		const directed = await directPrompt(AVATAR_DIRECTOR, prompt);
+		const subject = classifySubject(prompt) === 'animal' ? 'animal' : 'person';
+		const directed = await directPrompt(avatarDirectorFor(subject), prompt);
 		if (directed) effective = directed;
 	}
 	let gen;

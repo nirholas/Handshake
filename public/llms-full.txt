@@ -139,6 +139,12 @@ URL: https://three.ws/collection
 
 View all the skills and subscriptions you've unlocked on three.ws.
 
+### Notifications
+
+URL: https://three.ws/notifications
+
+Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place, filterable by category.
+
 ### Skills Marketplace
 
 URL: https://three.ws/skills
@@ -793,6 +799,12 @@ URL: https://three.ws/leaderboard
 
 Pump.fun traders ranked by a provable, on-chain track record — realized P&L, win rate, drawdown — with every number traceable to its transaction.
 
+### KOL Tracker
+
+URL: https://three.ws/tracker
+
+Solana crypto KOLs ranked by realized P&L computed from their own wallet's on-chain trade history, with win rate, volume, trade count, and X follower counts for verified handles.
+
 ### Custody Integrity
 
 URL: https://three.ws/integrity
@@ -1400,7 +1412,7 @@ URL: https://three.ws/chat
 
 Talk to your agent. Voice, text, and tool-use in one interface.
 
-### Agent Identity Studio — 3D avatars for AI agents
+### Agent Identity Studio: 3D avatars for AI agents
 
 URL: https://three.ws/agent-identities
 

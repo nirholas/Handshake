@@ -76,6 +76,7 @@ import {
 } from '../quests.js';
 import { hydratePlayer, loadPlayer, savePlayer, flushPlayer } from '../playerStore.js';
 import { publishFeedEvent } from '../feed.js';
+import { reportQuestComplete } from '../quest-notify.js';
 
 // Platform entry gate (wallet-first sign-in + game-token balance). When a game
 // token is pinned (PLAY_GATE_MINT, falling back to THREE_MINT) every join must
@@ -1474,6 +1475,12 @@ export class WalkRoom extends Room {
 			},
 			`${player?.account || client.sessionId}:${mission.id}`,
 		);
+		// Per-user bell notification, distinct from the anonymous ticker above —
+		// only fires for a player whose presence ticket verified a real account.
+		const accountUid = client.userData?.accountUid;
+		if (accountUid) {
+			reportQuestComplete({ accountUid, mission: mission.title, gold, coop, coin: this.state.coin || '' });
+		}
 	}
 
 	_handleRename(client, payload) {

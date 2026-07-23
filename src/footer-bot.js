@@ -13,6 +13,7 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
 import { reserveWebGLContext } from './webgl-budget.js';
+import { loadEnvironment } from './shared/cinematic-render.js';
 
 // The footer bot is purely decorative. Every failure mode here — no mount
 // point, a browser that refuses a WebGL context (context budget exhausted, GPU
@@ -46,6 +47,13 @@ import { reserveWebGLContext } from './webgl-budget.js';
 	reserveWebGLContext();
 
 	const scene = new Scene();
+	// This widget mounts on every page load, site-wide. A real HDRI fetch would
+	// add a network request (and PMREM compile cost) to every page for a small,
+	// purely decorative mascot that most users never look at directly — not
+	// worth the tradeoff. Pass `null` so loadEnvironment installs the
+	// procedural RoomEnvironment instead: still correct PBR image-based
+	// lighting (soft, neutral, no washed-out flat shading), zero network cost.
+	loadEnvironment(renderer, scene, null);
 
 	// Match model-viewer camera-orbit="0deg 80deg 9m" field-of-view="35deg"
 	const camera = new PerspectiveCamera(35, w / h, 0.1, 100);

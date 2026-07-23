@@ -53,6 +53,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { fetchFirstOrNull } from '../shared/failover-fetch.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
 
 const MCP_ENDPOINT = '/api/pump-fun-mcp';
 // The one and only coin — featured on the no-mint landing.
@@ -306,10 +307,17 @@ let coinGlowColor = new Color(0x6ea8ff);
 
 function initScene() {
 	renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-	renderer.outputColorSpace = SRGBColorSpace;
+	// Shared cinematic bar: ACES tone mapping + sRGB output color space +
+	// tiered pixel ratio cap (replaces the old sRGB-only line). The medallion
+	// is a real textured/metallic MeshStandardMaterial product shot, so it
+	// gets a real HDRI for genuine reflections too. No ground-contact shadow:
+	// the coin and holder galaxy spin freely in starfield space with no
+	// floor/pedestal for a shadow to land on.
+	const tier = detectQualityTier();
+	applyCinematicDefaults(renderer, { tier });
 
 	scene = new Scene();
+	loadEnvironment(renderer, scene, tier === 'mobile' ? null : 'studio');
 
 	camera = new PerspectiveCamera(45, 1, 0.1, 200);
 	camera.position.set(0, 1.6, 6.2);

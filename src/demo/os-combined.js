@@ -32,6 +32,7 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { TRIANGULATION } from './triangulation.js';
 import { log } from '../shared/log.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment, updateGroundContactShadow } from '../shared/cinematic-render.js';
 
 const MODEL_URL =
 	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
@@ -64,6 +65,7 @@ let landmarker = null;
 let landmarkerLoading = null;
 let viewer = null;
 let bodyRoot = null;
+let groundShadow = null;
 let faceMesh = null;
 let selfieImg = null;
 let lastGlbBlob = null;
@@ -103,8 +105,10 @@ async function loadBody(url, label) {
 		}
 		bodyRoot = gltf.scene;
 		bodyRoot.name = 'body-root';
+		bodyRoot.traverse((n) => { if (n.isMesh) n.castShadow = true; });
 		viewer.scene.add(bodyRoot);
 		fitToObject(viewer, bodyRoot);
+		groundShadow = updateGroundContactShadow(viewer.scene, bodyRoot, groundShadow);
 		viewerOverlay.style.display = 'none';
 		const headBone = findHeadBone(bodyRoot);
 		const bones = countBones(bodyRoot);
@@ -304,12 +308,17 @@ function ensureViewer() {
 	const renderer = new WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = SRGBColorSpace;
+	const tier = detectQualityTier();
+	applyCinematicDefaults(renderer, { tier });
 	viewerHost.appendChild(renderer.domElement);
+
+	loadEnvironment(renderer, scene, tier === 'mobile' ? null : 'studio');
 
 	scene.add(new HemisphereLight(0xffffff, 0x333333, 1.2));
 	const dir = new DirectionalLight(0xffffff, 1.5);
 	dir.position.set(2, 4, 3);
+	dir.castShadow = true;
+	dir.shadow.mapSize.set(1024, 1024);
 	scene.add(dir);
 
 	const grid = new GridHelper(4, 8, 0x222222, 0x111111);

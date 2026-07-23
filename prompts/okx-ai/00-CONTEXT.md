@@ -1,4 +1,4 @@
-# OKX.AI Launch — Shared Context (read this FIRST, every prompt requires it)
+# OKX.AI Launch: Shared Context (read this FIRST, every prompt requires it)
 
 You are working on getting **three.ws listed and selling on OKX.AI**, OKX's on-chain agent
 marketplace (agents hire agents; payments settle on X Layer). This file is the single source
@@ -29,15 +29,14 @@ of truth for facts every work order depends on. Do not re-derive these; do not c
 
 ## Our existing code (the thing being fixed)
 
-- **A2MCP endpoint**: [api/mcp-3d.js](../../api/mcp-3d.js) — MCP server for the 3D studio, prices
+- **A2MCP endpoint**: [api/mcp-3d.js](../../api/mcp-3d.js), MCP server for the 3D studio, prices
   tool batches via `priceBatch` + `studioX402Amount` ([api/_mcp3d/pricing.js](../../api/_mcp3d/pricing.js)).
-- **402 challenge builder**: `paymentRequirements()` in [api/_lib/x402-spec.js](../../api/_lib/x402-spec.js)
-  — emits x402 v2 `accepts` entries for **Solana / Base / BSC / Arbitrum via Coinbase/PayAI/CDP
+- **402 challenge builder**: `paymentRequirements()` in [api/_lib/x402-spec.js](../../api/_lib/x402-spec.js), emits x402 v2 `accepts` entries for **Solana / Base / BSC / Arbitrum via Coinbase/PayAI/CDP
   facilitators. There is NO X Layer entry and NO OKX facilitator entry. This is the exact
   reason we were rejected.**
 - Payment helpers: [api/_mcp/payments.js](../../api/_mcp/payments.js) (`send402`, `sendX402Error`),
   settlement via `settlePayment` in x402-spec.js.
-- The MCP tools themselves (mesh generation, rigging, retargeting) work and are deployed —
+- The MCP tools themselves (mesh generation, rigging, retargeting) work and are deployed,
   the rejection is ONLY about the payment rail.
 
 ## Client-side protocol knowledge already in this repo
@@ -55,10 +54,10 @@ verifies/settles, exact required fields) is what prompt 01 pins down.
 
 - **3D category is EMPTY.** Query "3D model avatar rendering game asset" → 1 result, a novelty
   trading-card generator. No text→3D, no rigging, no avatars. We would be first and only.
-- **The winning pattern** — "Onchain Data Explorer", **174 sales** (most-sold agent found):
+- **The winning pattern**, "Onchain Data Explorer", **174 sales** (most-sold agent found):
   ~19 tiny, sharply-scoped A2MCP endpoints, micro-priced ($0.000015–$0.000075 per call).
   Granular + cheap + composable + free discovery endpoints.
-- **The losing pattern** — "TO1 Intelligence": 100+ services sprayed at $0.25 → 0 sales.
+- **The losing pattern**, "TO1 Intelligence": 100+ services sprayed at $0.25 → 0 sales.
 - Everything that sells is **A2MCP fixed-price**. A2A "negotiated" listings ≈ 0 sales.
 - Creative/media: 2 agents total, both 2D, both 0 sales. Prices $0.5–$1.0.
 
@@ -87,7 +86,7 @@ for the 6-digit OTP from that inbox and run `onchainos wallet verify <otp>`. Nev
    Never simulate a payment where a real one is specified.
 4. **Concurrent agents share this worktree.** Stage explicit paths only (never `git add -A`),
    re-check `git status` before committing.
-5. **Push with `git push threews main`** — the only push target (owner decision 2026-07-07).
+5. **Push with `git push threews main`**, the only push target (owner decision 2026-07-07).
    Never push, pull, fetch, or merge `threeD` (retired `nirholas/3D-Agent` mirror, diverged history).
 6. **`npx vercel build` trap:** it overwrites `api/*.js` in place. If you ran it, check
    `head -1` of changed api files for `__defProp` before committing; recover with
@@ -96,16 +95,16 @@ for the 6-digit OTP from that inbox and run `onchainos wallet verify <otp>`. Nev
    re-activate (resubmission), preserving the agent ID.
 8. **Progress log:** append a dated entry to `prompts/okx-ai/PROGRESS.md` when you finish
    (create it if absent): what you did, what you verified, what's blocked, what's next.
-   The next work order's chat has no memory of yours — this file is the handoff.
+   The next work order's chat has no memory of yours, this file is the handoff.
 
 ## Work-order sequence
 
 | # | File | Depends on |
 |---|---|---|
-| 01 | `01-protocol-research.md` — pin down the seller-side OKX payments spec | — |
-| 02 | `02-payments-integration.md` — implement OKX rail on our endpoint | 01 |
-| 03 | `03-service-decomposition.md` — split into micro-priced A2MCP services | 02 |
-| 04 | `04-e2e-real-payment-test.md` — pay ourselves for real, verify settlement | 02, 03 |
-| 05 | `05-relisting-resubmission.md` — update #2632 + resubmit for review | 04 |
-| 06 | `06-agent-pfp-wedge.md` — the "avatars for OKX agents" flagship service | 02 (parallel ok) |
-| 07 | `07-final-audit-and-watch.md` — full audit, docs closure, approval watch | all |
+| 01 | `01-protocol-research.md`, pin down the seller-side OKX payments spec |, |
+| 02 | `02-payments-integration.md`, implement OKX rail on our endpoint | 01 |
+| 03 | `03-service-decomposition.md`, split into micro-priced A2MCP services | 02 |
+| 04 | `04-e2e-real-payment-test.md`, pay ourselves for real, verify settlement | 02, 03 |
+| 05 | `05-relisting-resubmission.md`, update #2632 + resubmit for review | 04 |
+| 06 | `06-agent-pfp-wedge.md`, the "avatars for OKX agents" flagship service | 02 (parallel ok) |
+| 07 | `07-final-audit-and-watch.md`, full audit, docs closure, approval watch | all |

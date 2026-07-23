@@ -26,7 +26,7 @@ import {
 	MeshStandardMaterial,
 	OrthographicCamera,
 	ACESFilmicToneMapping,
-	PCFSoftShadowMap,
+	VSMShadowMap,
 	PerspectiveCamera,
 	PlaneGeometry,
 	PMREMGenerator,
@@ -455,7 +455,9 @@ const renderer = new WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFSoftShadowMap;
+// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
+// PCFShadowMap at runtime; VSMShadowMap is the supported soft-shadow type.
+renderer.shadowMap.type = VSMShadowMap;
 // Filmic response to match the IRL/avatar-sdk render stack — the IBL below
 // already supplies real ambient light; ACES keeps its highlights from clipping.
 renderer.toneMapping = ACESFilmicToneMapping;

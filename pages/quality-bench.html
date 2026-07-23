@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Realism Quality Bench · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		.qb-wrap { max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.qb-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem; }
+		.qb-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0; }
+		.qb-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 2rem; }
+		.qb-controls { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+		.qb-controls select { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; }
+
+		.qb-empty { padding: 3rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+		.qb-empty code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; }
+
+		.qb-runs { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2.5rem; }
+		.qb-run-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 1rem; align-items: center; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); font-size: 13px; }
+		.qb-run-row.selected { border-color: rgba(124,92,255,0.5); background: rgba(124,92,255,0.08); }
+		.qb-run-row button { font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; }
+		.qb-run-mean { font-weight: 700; font-variant-numeric: tabular-nums; }
+		.qb-run-mean.good { color: #2fbf71; }
+		.qb-run-mean.warn { color: #f0a93b; }
+		.qb-run-mean.bad { color: #f87171; }
+
+		.qb-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; }
+
+		.qb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 2.5rem; }
+		.qb-cell { padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+		.qb-cell-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; }
+		.qb-cell-score { font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+		.qb-worst { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2.5rem; }
+		.qb-worst-item { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 0.85rem 1.1rem; border-radius: 10px; background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.15); }
+		.qb-worst-id { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); }
+		.qb-worst-critique { font-size: 12.5px; color: rgba(255,255,255,0.55); }
+		.qb-worst-score { font-weight: 800; color: #f87171; }
+
+		.qb-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		.qb-table th, .qb-table td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+		.qb-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
+		.qb-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+	</style>
+</head>
+<body>
+	<div class="qb-wrap">
+		<div class="qb-header">
+			<h1 class="qb-title">Realism Quality Bench</h1>
+		</div>
+		<p class="qb-sub">Fixed 23-prompt benchmark, judged by Vertex Gemini vision on photorealism / geometry / texture / prompt-adherence. Internal tooling — not a public surface.</p>
+
+		<div id="qb-content">
+			<div class="qb-empty">Loading run history…</div>
+		</div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module">
+		const el = document.getElementById('qb-content');
+		const DIMS = ['photorealism', 'geometryIntegrity', 'textureFidelity', 'promptAdherence'];
+
+		function scoreClass(mean) {
+			if (mean == null) return '';
+			if (mean >= 7.5) return 'good';
+			if (mean >= 5.5) return 'warn';
+			return 'bad';
+		}
+
+		function fmt(n) {
+			return typeof n === 'number' ? n.toFixed(2) : '—';
+		}
+
+		function renderEmpty(index) {
+			el.innerHTML = `<div class="qb-empty">No runs recorded yet. Kick one off with:<br/><br/><code>node scripts/quality-bench.mjs --tier=standard,high</code></div>`;
+		}
+
+		function meanByGroup(run, keyFn) {
+			const map = new Map();
+			for (const r of run.results || []) {
+				const key = keyFn(r);
+				if (!map.has(key)) map.set(key, []);
+				if (typeof r.meanScore === 'number') map.get(key).push(r.meanScore);
+			}
+			const out = {};
+			for (const [key, scores] of map) {
+				out[key] = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+			}
+			return out;
+		}
+
+		function worstN(run, n) {
+			const flat = [];
+			for (const r of run.results || []) {
+				for (const v of r.views || []) {
+					if (!v.avg) continue;
+					flat.push({ promptId: r.promptId, lane: r.lane, tier: r.tier, view: v.view, mean: v.avg.mean, critique: v.scores?.[0]?.critique || '' });
+				}
+			}
+			flat.sort((a, b) => a.mean - b.mean);
+			return flat.slice(0, n);
+		}
+
+		function renderRun(index, selectedFile, run) {
+			const byLane = meanByGroup(run, (r) => r.lane);
+			const byTier = meanByGroup(run, (r) => r.tier);
+			const bySubject = meanByGroup(run, (r) => r.subjectClass);
+			const worst = worstN(run, 5);
+
+			const runsHtml = index.map((s) => {
+				const cls = scoreClass(s.meanScore);
+				const sel = s.file === selectedFile ? ' selected' : '';
+				return `<div class="qb-run-row${sel}">
+					<div>${s.runId} <span style="color:rgba(255,255,255,0.35)">(${s.lanes?.length || 0} lanes, ${s.tiers?.join('/') || ''})</span></div>
+					<div>${s.resultCount} results</div>
+					<div class="qb-run-mean ${scoreClass(s.meanScore)}">${fmt(s.meanScore)}</div>
+					<button data-file="${s.file}">View</button>
+				</div>`;
+			}).join('');
+
+			const cellsHtml = (label, map) => Object.entries(map).map(([k, v]) => `
+				<div class="qb-cell">
+					<div class="qb-cell-label">${label}: ${k}</div>
+					<div class="qb-cell-score ${scoreClass(v)}">${fmt(v)}</div>
+				</div>`).join('');
+
+			const worstHtml = worst.map((w) => `
+				<div class="qb-worst-item">
+					<div class="qb-worst-id">${w.promptId} · ${w.lane}/${w.tier} · ${w.view}</div>
+					<div class="qb-worst-critique">${w.critique.replace(/</g, '&lt;')}</div>
+					<div class="qb-worst-score">${fmt(w.mean)}</div>
+				</div>`).join('') || '<div class="qb-empty">No scored views in this run.</div>';
+
+			const rows = (run.results || []).map((r) => `
+				<tr>
+					<td>${r.promptId}</td>
+					<td>${r.subjectClass}</td>
+					<td>${r.lane}</td>
+					<td>${r.tier}</td>
+					<td>${r.status}</td>
+					<td>${fmt(r.meanScore)}</td>
+				</tr>`).join('');
+
+			el.innerHTML = `
+				<div class="qb-section-title">Run history</div>
+				<div class="qb-runs">${runsHtml}</div>
+
+				<div class="qb-section-title">By lane — run ${run.runId}</div>
+				<div class="qb-grid">${cellsHtml('lane', byLane)}</div>
+
+				<div class="qb-section-title">By tier</div>
+				<div class="qb-grid">${cellsHtml('tier', byTier)}</div>
+
+				<div class="qb-section-title">By subject class</div>
+				<div class="qb-grid">${cellsHtml('subject', bySubject)}</div>
+
+				<div class="qb-section-title">Worst 5 (lowest-scoring views)</div>
+				<div class="qb-worst">${worstHtml}</div>
+
+				<div class="qb-section-title">All results</div>
+				<div class="qb-table-wrap">
+					<table class="qb-table">
+						<thead><tr><th>Prompt</th><th>Subject</th><th>Lane</th><th>Tier</th><th>Status</th><th>Mean</th></tr></thead>
+						<tbody>${rows}</tbody>
+					</table>
+				</div>
+			`;
+
+			el.querySelectorAll('.qb-run-row button').forEach((btn) => {
+				btn.addEventListener('click', () => loadRun(index, btn.dataset.file));
+			});
+		}
+
+		async function loadRun(index, file) {
+			el.innerHTML = '<div class="qb-empty">Loading run…</div>';
+			const res = await fetch(`/api/quality-bench?run=${encodeURIComponent(file)}`);
+			if (!res.ok) {
+				el.innerHTML = `<div class="qb-empty">Failed to load run "${file}".</div>`;
+				return;
+			}
+			const run = await res.json();
+			renderRun(index, file, run);
+		}
+
+		async function boot() {
+			try {
+				const res = await fetch('/api/quality-bench');
+				if (!res.ok) throw new Error(`status ${res.status}`);
+				const { runs } = await res.json();
+				if (!runs.length) return renderEmpty();
+				await loadRun(runs, runs[runs.length - 1].file);
+			} catch (err) {
+				el.innerHTML = `<div class="qb-empty">Could not load quality-bench data: ${String(err.message || err).replace(/</g, '&lt;')}</div>`;
+			}
+		}
+
+		boot();
+	</script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

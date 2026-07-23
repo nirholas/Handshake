@@ -37,6 +37,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { loadEnvironment } from './shared/cinematic-render.js';
 
 const REDUCED_MOTION = () =>
 	typeof window !== 'undefined' &&
@@ -92,6 +93,11 @@ export class HeroStage {
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.toneMappingExposure = 1.05;
+
+		// Real HDRI image-based lighting so the rings/stars pick up subtle
+		// reflected colour instead of relying on emissive materials alone.
+		// Falls back to a procedural room environment internally on fetch failure.
+		loadEnvironment(this.renderer, this.scene, 'studio');
 
 		this._buildRings();
 		this._buildStars();

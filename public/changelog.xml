@@ -31,6 +31,14 @@
 			<description>Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.</description>
 		</item>
 		<item>
+			<title>A full notification center, plus two new things it tells you about</title>
+			<link>https://three.ws/notifications</link>
+			<guid isPermaLink="false">2026-07-23:A full notification center, plus two new things it tells you about</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The bell in the nav now links to a dedicated /notifications page: your full history, filterable by category (sales, purchases, social, in person, market alerts, creations, account), with load-more paging so nothing gets lost past the dropdown's last 20. We also closed two gaps in what triggers a notification. Fork royalty streams (an avatar you created earning a slice of income from everyone who forked it) now notify the upstream creator the moment a payout confirms on-chain, with the SOL/USD amount and which fork paid it. And finishing a mission or co-op heist in /play now lands in your inbox too, not just the site-wide activity ticker. Both respect your existing per-category mute preferences in notification settings.</description>
+		</item>
+		<item>
 			<title>Agent wallet and portfolio views stay reliable when an RPC provider is capped</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-23:Agent wallet and portfolio views stay reliable when an RPC provider is capped</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an &quot;Ask the agent&quot; box and prompts like &quot;Why are you embodied?&quot; that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing — Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.</description>
+		</item>
+		<item>
+			<title>Real materials: skin, glass, and car paint that actually behave like the real thing</title>
+			<link>https://three.ws/restyle</link>
+			<guid isPermaLink="false">2026-07-23:Real materials: skin, glass, and car paint that actually behave like the real thing</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Avatars now get a subtle skin sheen, wet-looking corneas, and double-sided hair automatically the moment a humanoid model loads in any three.ws viewer, no extra step needed. Restyle Studio's material presets grew a real-physics tier alongside the classic looks: skin, car paint with a genuine clearcoat layer, brushed steel with directional anisotropic highlights, and a real-glass preset that actually refracts (KHR_materials_transmission) instead of faking transparency. The AI restyle tool (&quot;make it chrome&quot;, &quot;cyberpunk neon&quot;) can now propose clearcoat, transmission, and sheen too when an instruction calls for it. The text-guided texture worker also gained an optional material_class hint (person/metal/wood/fabric/plastic/glass) that bakes measured real-world roughness values instead of one flat guess for every material.</description>
 		</item>
 		<item>
 			<title>Restyled models now show up on your creator portfolio</title>
@@ -2335,6 +2351,14 @@
 			<description>How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.</description>
 		</item>
 		<item>
+			<title>Notifications</title>
+			<link>https://three.ws/notifications</link>
+			<guid isPermaLink="false">2026-07-12:Notifications</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place, filterable by category.</description>
+		</item>
+		<item>
 			<title>Rankings</title>
 			<link>https://three.ws/rankings</link>
 			<guid isPermaLink="false">2026-07-12:Rankings</guid>
@@ -4463,9 +4487,9 @@
 			<description>Our Solana vanity grinder, grind a brand-new address that starts with your ticker for a branded token mint or agent/treasury wallet, now reads like the flagship it is on the x402 agent marketplaces. The listing leads with what agents actually use it for, spells out both output formats (a raw keypair or an importable BIP-39 seed phrase), the character caps and the full price ladder ($0.01-$0.25 for a keypair, $0.05-$0.50 for a mnemonic), and the security model: nothing is ever stored, the secret is served once over TLS and stripped from the replay cache, and an optional sealed-delivery key means the plaintext never appears in the response or any log. The discovery schema is now complete enough for an agent to grind an address blind, and the premium pre-ground inventory tier is now indexable too, so all three vanity tiers surface on the marketplaces and can never drift from what the live payment charges. New reference doc at /docs/vanity.</description>
 		</item>
 		<item>
-			<title>Agent Identity Studio — 3D avatars for AI agents</title>
+			<title>Agent Identity Studio: 3D avatars for AI agents</title>
 			<link>https://three.ws/agent-identities</link>
-			<guid isPermaLink="false">2026-07-06:Agent Identity Studio — 3D avatars for AI agents</guid>
+			<guid isPermaLink="false">2026-07-06:Agent Identity Studio: 3D avatars for AI agents</guid>
 			<pubDate>Mon, 06 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.</description>

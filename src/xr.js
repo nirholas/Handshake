@@ -11,9 +11,7 @@ import {
 	HemisphereLight,
 	Mesh,
 	MeshStandardMaterial,
-	PCFShadowMap,
 	PerspectiveCamera,
-	PMREMGenerator,
 	Scene,
 	ShadowMaterial,
 	WebGLRenderer,
@@ -21,7 +19,6 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { AnimationManager } from './animation-manager.js';
 import { WebXRSession } from './ar/webxr.js';
 import { wireShareButton } from './irl/share-frame.js';
@@ -29,6 +26,7 @@ import { canUseQuickLook } from './ar/quick-look.js';
 import { canUseSceneViewer, openSceneViewer } from './ar/scene-viewer.js';
 import { log } from './shared/log.js';
 import { createAvatarPicker } from './avatar-picker.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 
 // ── DOM ──────────────────────────────────────────────────────────────────────
 
@@ -57,15 +55,14 @@ function setStatus(msg, type = 'idle') {
 // ── Three.js setup ───────────────────────────────────────────────────────────
 
 const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFShadowMap;
-renderer.outputColorSpace = 'srgb';
+// Filmic tone mapping + correct sRGB output + soft VSM shadows: the shared bar
+// every viewer on the platform now matches (src/shared/cinematic-render.js).
+const qualityTier = detectQualityTier();
+applyCinematicDefaults(renderer, { tier: qualityTier });
 
 const scene = new Scene();
-const pmrem = new PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio');
 
 const camera = new PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.01, 100);
 camera.position.set(0, 1.4, 2.6);

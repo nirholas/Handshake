@@ -1,4 +1,4 @@
-// Agent Identity Studio — MCP tool catalog, dispatcher, pricing, and 402
+// Agent Identity Studio, MCP tool catalog, dispatcher, pricing, and 402
 // challenge metadata for the /api/okx/3d/identity-studio A2MCP endpoint.
 // Prices and descriptions come from api/_lib/okx-catalog.js (single source of
 // truth shared with the free catalog service and the OKX listing).
@@ -38,7 +38,7 @@ const createIdentityDef = {
 	name: ENTRY.tool, // create_identity
 	title: 'Create Agent Identity (paid)',
 	description:
-		`$${ENTRY.priceUsd} per identity — ${ENTRY.describes.capability} ` +
+		`$${ENTRY.priceUsd} per identity, ${ENTRY.describes.capability} ` +
 		`Async: returns a job_id immediately; poll ${STATUS_TOOL} (free) every few seconds until ` +
 		'status is "done" (typically 3–6 minutes). You are charged only when the job is accepted: ' +
 		'invalid input or an unreachable reference image fails before settlement, and failed ' +
@@ -80,7 +80,7 @@ const identityStatusDef = {
 	name: STATUS_TOOL,
 	title: 'Identity Job Status (free)',
 	description:
-		'FREE — poll an Agent Identity Studio job. Each call advances the pipeline one step ' +
+		'FREE, poll an Agent Identity Studio job. Each call advances the pipeline one step ' +
 		'(generation → rig → renders) and reports progress; when status is "done" it returns the ' +
 		'deliverables: PFP PNG (1024 + 128 preview), full-body render set, rigged GLB, and a ' +
 		'three.ws viewer link. No payment or account required.',
@@ -120,7 +120,7 @@ const gettingStarted = buildGettingStartedTool({
 	priceFor: (name) => (name === ENTRY.tool ? { amount_usdc: Number(ENTRY.priceUsd) } : null),
 	access: [
 		`Pay per identity with x402 (USDC): $${ENTRY.priceUsd} per create_identity call.`,
-		`${STATUS_TOOL} and this tool are free — no payment, account, or key.`,
+		`${STATUS_TOOL} and this tool are free, no payment, account, or key.`,
 		'Full service index (free): https://three.ws/api/okx/3d/catalog',
 	],
 	links: {
@@ -143,7 +143,7 @@ export const TOOLS = Object.fromEntries(
 );
 
 // Free tools servable to the anonymous principal with no OAuth/x402: discovery
-// plus status polling — the "status/preview free" half of the service promise.
+// plus status polling, the "status/preview free" half of the service promise.
 // The paid tool is deliberately NOT here.
 export function isPublicIdentityTool(name) {
 	return name === GETTING_STARTED_TOOL || name === STATUS_TOOL;
@@ -168,7 +168,7 @@ export const dispatch = makeDispatcher({
 // 402 challenge metadata: how facilitators/indexers see this endpoint.
 export const IDENTITY_CHALLENGE = {
 	description:
-		'three.ws Agent Identity Studio — A2MCP (MCP Streamable HTTP) service that turns an AI ' +
+		'three.ws Agent Identity Studio, A2MCP (MCP Streamable HTTP) service that turns an AI ' +
 		"agent's brand brief into a complete 3D identity: rigged GLB avatar + posed studio renders " +
 		`with an OKX-avatar-slot PFP crop. $${ENTRY.priceUsd} per identity, USDC via x402; job ` +
 		'status polling is free. Operated by three.ws.',

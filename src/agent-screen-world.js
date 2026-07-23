@@ -20,6 +20,7 @@ import { createDayNightCycle } from './game/day-night.js';
 import {
 	worldClock, phaseLabel, daylightAmount, DEFAULT_CYCLE_MS,
 } from './shared/world-clock.js';
+import { applyCinematicDefaults, detectQualityTier } from './shared/cinematic-render.js';
 
 export { worldClock, phaseLabel, daylightAmount, DEFAULT_CYCLE_MS };
 
@@ -69,7 +70,13 @@ export function createAmbientWorld({ agentId, seed, container, cycleMs = DEFAULT
 
 	const renderer = new WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'low-power' });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-	renderer.shadowMap.enabled = true;
+	// ACES + sRGB + soft shadows only (src/shared/cinematic-render.js). No HDRI
+	// preset and no ground-contact shadow catcher here: this world already has
+	// its own real environment (createWorldEnvironment's biome sky + the
+	// deterministic day-night cycle) and its own ground plane with real NPCs
+	// casting real shadows on it (AmbientLife) — a static studio HDRI would
+	// fight the dynamic sky instead of complementing it.
+	applyCinematicDefaults(renderer, { tier: detectQualityTier() });
 	const canvas = renderer.domElement;
 	canvas.style.cssText = 'width:100%;height:100%;display:block;';
 	container.appendChild(canvas);

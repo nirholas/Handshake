@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T13:34:39.256Z",
+	"generated_at": "2026-07-23T13:42:42.342Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,16 @@
 			"link": "/blog/autonomous-trading-experiment",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
+			"title": "A full notification center, plus two new things it tells you about",
+			"summary": "The bell in the nav now links to a dedicated /notifications page: your full history, filterable by category (sales, purchases, social, in person, market alerts, creations, account), with load-more paging so nothing gets lost past the dropdown's last 20. We also closed two gaps in what triggers a notification. Fork royalty streams (an avatar you created earning a slice of income from everyone who forked it) now notify the upstream creator the moment a payout confirms on-chain, with the SOL/USD amount and which fork paid it. And finishing a mission or co-op heist in /play now lands in your inbox too, not just the site-wide activity ticker. Both respect your existing per-category mute preferences in notification settings.",
+			"link": "/notifications",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -85,6 +95,17 @@
 			"summary": "Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an \"Ask the agent\" box and prompts like \"Why are you embodied?\" that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing — Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.",
 			"link": "/objects",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-23",
+			"type": "update",
+			"title": "Real materials: skin, glass, and car paint that actually behave like the real thing",
+			"summary": "Avatars now get a subtle skin sheen, wet-looking corneas, and double-sided hair automatically the moment a humanoid model loads in any three.ws viewer, no extra step needed. Restyle Studio's material presets grew a real-physics tier alongside the classic looks: skin, car paint with a genuine clearcoat layer, brushed steel with directional anisotropic highlights, and a real-glass preset that actually refracts (KHR_materials_transmission) instead of faking transparency. The AI restyle tool (\"make it chrome\", \"cyberpunk neon\") can now propose clearcoat, transmission, and sheen too when an instruction calls for it. The text-guided texture worker also gained an optional material_class hint (person/metal/wood/fabric/plastic/glass) that bakes measured real-world roughness values instead of one flat guess for every material.",
+			"link": "/restyle",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},
@@ -3043,6 +3064,16 @@
 		{
 			"date": "2026-07-12",
 			"type": "launch",
+			"title": "Notifications",
+			"summary": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place, filterable by category.",
+			"link": "/notifications",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "launch",
 			"title": "Rankings",
 			"summary": "The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
 			"link": "/rankings",
@@ -5817,7 +5848,7 @@
 		{
 			"date": "2026-07-06",
 			"type": "launch",
-			"title": "Agent Identity Studio — 3D avatars for AI agents",
+			"title": "Agent Identity Studio: 3D avatars for AI agents",
 			"summary": "Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.",
 			"link": "/agent-identities",
 			"tags": [

@@ -28,13 +28,13 @@
 
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, AmbientLight, DirectionalLight,
-	PMREMGenerator, Box3, Vector3, Group, Color, RingGeometry, MeshBasicMaterial, Mesh,
+	Box3, Vector3, Group, Color, RingGeometry, MeshBasicMaterial, Mesh,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 import { getDecoders } from '../../src/viewer/internal.js';
+import { applyCinematicDefaults, loadEnvironment, detectQualityTier } from '../../src/shared/cinematic-render.js';
 
 import { AnimationManager } from '../../src/animation-manager.js';
 import { AvatarMouthTarget } from '../../src/voice/avatar-morph-target.js';
@@ -107,8 +107,12 @@ export class EmbodimentStage {
 
 		this.renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 		this.renderer.setSize(w, h);
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-		this.renderer.outputColorSpace = 'srgb';
+		// ACES tone mapping + correct sRGB output + soft shadow type + a
+		// pixel-ratio cap that respects the host device's real capability
+		// (the Apps SDK panel runs inside ChatGPT/Claude's own page, so we
+		// cannot assume a desktop-class GPU). Same bar every other viewer
+		// on the platform meets — see src/shared/cinematic-render.js.
+		applyCinematicDefaults(this.renderer, { tier: detectQualityTier() });
 		c.appendChild(this.renderer.domElement);
 		this.renderer.domElement.setAttribute('aria-label', 'Interactive 3D agent');
 		this.renderer.domElement.setAttribute('role', 'img');
@@ -126,10 +130,15 @@ export class EmbodimentStage {
 		// compounding repeated multiplications across calls.
 		this._baseLightIntensity = { ambient: this.ambient.intensity, key: this.keyLight.intensity, rim: this.rimLight.intensity };
 
-		const pmrem = new PMREMGenerator(this.renderer);
-		this._envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-		this.scene.environment = this._envTex;
-		pmrem.dispose();
+		// Embodiment mounts cross-origin, inside ChatGPT/Claude's own page — an
+		// absolute path like `/hdri/studio.hdr` would resolve against the HOST
+		// page's origin (chatgpt.com, claude.ai) and 404, not three.ws. Passing
+		// `null` skips the HDRI fetch entirely and uses the procedural
+		// RoomEnvironment fallback baked into loadEnvironment(), which needs no
+		// network request and is still a physically-plausible IBL source.
+		loadEnvironment(this.renderer, this.scene, null).then((envTex) => {
+			this._envTex = envTex;
+		});
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		this.controls.enableDamping = true;

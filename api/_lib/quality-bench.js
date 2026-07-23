@@ -1,0 +1,201 @@
+// Shared core for the realism eval harness (scripts/quality-bench.mjs — the full,
+// resumable, git-committed run — and api/cron/quality-bench.js — the bounded
+// weekly regression sweep that runs in-process on Cloud Run). One place for the
+// generate → render → judge pipeline so the two callers can never drift apart on
+// what "a scored view" means.
+//
+// See prompts/quality-bar/09-realism-eval-harness.md for the mission spec and
+// data/quality-bench/README.md for how to run/read/extend the bench.
+
+import { renderClip } from './render-clip.js';
+import { vertexGeminiAvailable, vertexGeminiChatUrl, vertexGeminiHeaders } from './vertex-gemini.js';
+
+// Judge model — fixed here (not env-tunable) so every run in the repo's history
+// used the same rung unless this constant itself changed via a reviewed commit.
+export const JUDGE_MODEL = 'google/gemini-2.5-pro';
+export const JUDGE_PROMPT_VERSION = 1;
+const JUDGE_MAX_TOKENS = 700;
+
+// Front, three-quarter, side — matches the studio-product framing render-clip.js
+// already uses for avatar thumbnails (phi=78deg, just above eye level).
+export const CANONICAL_VIEWS = [
+	{ label: 'front', theta: 0, phi: 78 },
+	{ label: 'three-quarter', theta: 40, phi: 78 },
+	{ label: 'side', theta: 90, phi: 78 },
+];
+
+export const RENDER_BACKGROUND = '#14151a';
+
+// Never receives forge's internal art-director/enhanced prompt text — only the
+// benchmark's own fixed prompt string and subject-class watchlist — so the judge
+// can't inflate prompt-adherence by grading against its own prior expansion
+// (anti-gaming rule in the mission spec).
+export function buildJudgePrompt({ prompt, subjectClass, watch, viewLabel }) {
+	return `You are a strict, expert 3D-asset realism critic. You are shown ONE rendered view ("${viewLabel}") of a textured 3D model generated from this brief:
+
+Subject class: ${subjectClass}
+Original brief: "${prompt}"
+
+Known failure modes to specifically check for on this subject class:
+${watch.map((w) => `- ${w}`).join('\n')}
+
+Score the render on four axes, 1-10 (10 = indistinguishable from a real photograph / studio 3D render, 1 = broken):
+- photorealism: does material/lighting/surface read as real, not "game asset" or plastic?
+- geometryIntegrity: is the mesh coherent (no blobs, no fused limbs/parts, no melted details)?
+- textureFidelity: are textures sharp, non-tiling, and free of baked-in artifacts?
+- promptAdherence: does the render actually depict the brief above?
+
+Reply with ONLY a JSON object, no markdown fence, no prose outside the JSON:
+{"photorealism": <1-10 integer>, "geometryIntegrity": <1-10 integer>, "textureFidelity": <1-10 integer>, "promptAdherence": <1-10 integer>, "critique": "<one sentence, concrete, naming the specific defect or strength you observed>"}`;
+}
+
+function parseJudgeJson(text) {
+	const trimmed = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+	const start = trimmed.search(/[{[]/);
+	const candidate = start >= 0 ? trimmed.slice(start) : trimmed;
+	const parsed = JSON.parse(candidate);
+	for (const k of ['photorealism', 'geometryIntegrity', 'textureFidelity', 'promptAdherence']) {
+		const n = Number(parsed[k]);
+		if (!Number.isFinite(n)) throw new Error(`judge reply missing numeric ${k}`);
+		parsed[k] = Math.max(1, Math.min(10, n));
+	}
+	if (typeof parsed.critique !== 'string') parsed.critique = '';
+	return parsed;
+}
+
+// One judge call against one rendered PNG. Throws on any failure (unconfigured
+// Vertex, transport error, unparseable reply) — callers must record that as a
+// failed score, never fabricate one.
+export async function judgeOnce({ png, promptEntry, viewLabel }) {
+	if (!vertexGeminiAvailable()) {
+		throw Object.assign(new Error('Vertex Gemini unavailable: GOOGLE_CLOUD_PROJECT is not set in this environment'), { code: 'judge_unconfigured' });
+	}
+	const headers = await vertexGeminiHeaders();
+	const text = buildJudgePrompt({ ...promptEntry, viewLabel });
+	const dataUri = `data:image/png;base64,${png.toString('base64')}`;
+	const body = {
+		model: JUDGE_MODEL,
+		temperature: 0,
+		max_tokens: JUDGE_MAX_TOKENS,
+		messages: [
+			{ role: 'user', content: [
+				{ type: 'text', text },
+				{ type: 'image_url', image_url: { url: dataUri } },
+			] },
+		],
+	};
+	const res = await fetch(vertexGeminiChatUrl(), { method: 'POST', headers, body: JSON.stringify(body) });
+	const data = await res.json().catch(() => ({}));
+	if (!res.ok) throw new Error(`judge call ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
+	const content = data?.choices?.[0]?.message?.content || '';
+	const parsed = parseJudgeJson(content);
+	return { ...parsed, modelVersion: data?.model || data?.modelVersion || JUDGE_MODEL };
+}
+
+export function avgScores(scores) {
+	const dims = ['photorealism', 'geometryIntegrity', 'textureFidelity', 'promptAdherence'];
+	const out = {};
+	for (const d of dims) out[d] = scores.reduce((s, x) => s + x[d], 0) / scores.length;
+	out.mean = dims.reduce((s, d) => s + out[d], 0) / dims.length;
+	return out;
+}
+
+function sleep(ms) {
+	return new Promise((r) => setTimeout(r, ms));
+}
+
+export async function loadCatalog(baseUrl) {
+	const res = await fetch(`${baseUrl}/api/forge?catalog`);
+	if (!res.ok) throw new Error(`catalog fetch failed: ${res.status}`);
+	return res.json();
+}
+
+export async function submitForge(baseUrl, { prompt, mode, referenceImageUrl, tier, backend }) {
+	const body = { prompt, tier, backend };
+	if (mode === 'image' && referenceImageUrl) body.image_urls = [referenceImageUrl];
+	const res = await fetch(`${baseUrl}/api/forge`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(body),
+	});
+	const data = await res.json().catch(() => ({}));
+	if (!res.ok) {
+		const err = new Error(data?.error || data?.message || `forge submit ${res.status}`);
+		err.status = res.status;
+		err.code = data?.code;
+		throw err;
+	}
+	return data;
+}
+
+export async function pollForge(baseUrl, jobId, { timeoutMs = 10 * 60 * 1000, intervalMs = 4000 } = {}) {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		const res = await fetch(`${baseUrl}/api/forge?job=${encodeURIComponent(jobId)}`);
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) throw new Error(data?.error || `poll ${res.status}`);
+		if (data.status === 'done') return data;
+		if (data.status === 'failed') {
+			const err = new Error(data?.error || 'generation failed');
+			err.code = 'generation_failed';
+			throw err;
+		}
+		await sleep(intervalMs);
+	}
+	throw new Error(`poll timed out after ${timeoutMs}ms`);
+}
+
+export async function generate(baseUrl, params) {
+	const submitted = await submitForge(baseUrl, params);
+	if (submitted.status === 'done' && submitted.glb_url) return submitted;
+	if (submitted.job_id) return pollForge(baseUrl, submitted.job_id);
+	throw new Error(`unexpected forge response shape: ${JSON.stringify(submitted).slice(0, 300)}`);
+}
+
+// Run one (prompt, lane, tier) combo end to end: generate -> render 3 views ->
+// judge each view twice -> average. Never throws for a generation/scoring
+// failure — returns a result object with status set instead, so a caller
+// iterating many combos never has one bad lane abort the whole sweep.
+export async function runOne(baseUrl, promptEntry, lane, tier) {
+	const result = { promptId: promptEntry.id, subjectClass: promptEntry.subjectClass, lane, tier, startedAt: new Date().toISOString() };
+	try {
+		const gen = await generate(baseUrl, {
+			prompt: promptEntry.prompt,
+			mode: promptEntry.mode,
+			referenceImageUrl: promptEntry.referenceImageUrl,
+			tier,
+			backend: lane,
+		});
+		result.glbUrl = gen.glb_url;
+		result.creationId = gen.creation_id ?? null;
+		result.views = [];
+		for (const view of CANONICAL_VIEWS) {
+			const viewResult = { view: view.label };
+			try {
+				const { png } = await renderClip({
+					glbUrl: gen.glb_url,
+					width: 1024,
+					height: 1024,
+					background: RENDER_BACKGROUND,
+					cameraOrbit: { theta: view.theta, phi: view.phi },
+				});
+				const scores = [];
+				for (let i = 0; i < 2; i += 1) scores.push(await judgeOnce({ png, promptEntry, viewLabel: view.label }));
+				viewResult.scores = scores;
+				viewResult.avg = avgScores(scores);
+			} catch (viewErr) {
+				viewResult.error = viewErr.message;
+			}
+			result.views.push(viewResult);
+		}
+		const okViews = result.views.filter((v) => v.avg);
+		result.status = okViews.length ? 'ok' : 'scoring_failed';
+		result.meanScore = okViews.length ? okViews.reduce((s, v) => s + v.avg.mean, 0) / okViews.length : null;
+	} catch (genErr) {
+		result.status = 'lane_failed';
+		result.error = genErr.message;
+		result.meanScore = 0;
+	}
+	result.finishedAt = new Date().toISOString();
+	return result;
+}

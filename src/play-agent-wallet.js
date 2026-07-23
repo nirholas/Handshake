@@ -15,7 +15,6 @@ import {
 	HemisphereLight, DirectionalLight, Mesh, MeshStandardMaterial, MeshBasicMaterial,
 	CircleGeometry, BoxGeometry, PlaneGeometry, RingGeometry, CylinderGeometry,
 	CanvasTexture, SRGBColorSpace, DoubleSide, GridHelper, Vector3, MathUtils,
-	ACESFilmicToneMapping, PCFShadowMap,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
@@ -23,6 +22,7 @@ import {
 	newAnim, CLIP_IDLE, CLIP_WALK,
 } from './game/avatar-rig.js';
 import { CC_AVATAR_KEY } from './game/play-handoff.js';
+import { applyCinematicDefaults, loadEnvironment, detectQualityTier } from './shared/cinematic-render.js';
 
 // ── config ──────────────────────────────────────────────────────────────────
 
@@ -103,10 +103,11 @@ const camera = new PerspectiveCamera(46, 1, 0.1, 80);
 camera.position.set(-1.6, 2.5, 6.4);
 
 const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFShadowMap;
-renderer.toneMapping = ACESFilmicToneMapping;
+// Cinematic defaults (ACES tone mapping, sRGB output, VSM soft shadows,
+// pixel-ratio cap) shared with every other viewer on the platform.
+const qualityTier = detectQualityTier();
+applyCinematicDefaults(renderer, { exposure: 1.15, tier: qualityTier });
+loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio');
 stageEl.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);

@@ -34,6 +34,20 @@ repeated signatures, classifies each against the runbook
 owner / env-action / investigate / self-healing, and prints the concrete action
 per finding. Agents drive the fix loop via the `/gcp-triage` skill.
 
+### `inspect-pbr-channels.mjs` — PBR channel matrix for any GLB
+
+```sh
+node scripts/inspect-pbr-channels.mjs public/avatars/fox.glb
+node scripts/inspect-pbr-channels.mjs --json https://storage.googleapis.com/three-ws-avatar-reconstructions/mesh.glb
+```
+
+Loads a local file or public https GLB with `@gltf-transform/core` and reports,
+per material, whether baseColor/normal/metallicRoughness/occlusion/emissive
+are a real texture, a flat factor, or missing, plus which `KHR_materials_*`
+extensions (clearcoat, transmission, sheen, ior, anisotropy, volume) are
+present. This is the ground truth for auditing whether a forge lane emits a
+full PBR set or just albedo, without opening the GLB in a 3D editor by hand.
+
 ### `set-r2-cors.mjs` — apply the bucket CORS policy
 
 Runs the canonical CORS policy against the R2 bucket holding all media

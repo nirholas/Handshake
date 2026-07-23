@@ -139,7 +139,7 @@ import {
 } from './_lib/forge-failover.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
-import { MESH_DIRECTOR, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
+import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
 // hosted NVCF gateway can degrade so a submit neither completes nor hands back a
@@ -1863,7 +1863,12 @@ async function startJob(req, res) {
 				if (knownMark) {
 					directedPrompt = knownMark.prompt;
 				} else {
-					const directed = await directPrompt(MESH_DIRECTOR, prompt).catch(() => null);
+					// Subject-classified briefing (person/animal/vehicle/food/architecture/
+					// object) so the director reaches for the material/construction cues
+					// that actually matter for THIS subject's failure mode.
+					const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt).catch(
+						() => null,
+					);
 					if (directed) directedPrompt = directed;
 				}
 			}

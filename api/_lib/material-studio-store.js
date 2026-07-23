@@ -177,7 +177,14 @@ async function writeAndValidate(doc) {
 // `materialIndex` when given). Geometry, accessors, and UVs are untouched —
 // this only ever calls the Material setters, never the Mesh/Primitive ones —
 // which is what guarantees "preserve mesh + UVs" through a restyle.
-function applyFactorsToDoc(doc, factors, materialIndex) {
+//
+// `factors` may additionally carry the measured-value extension fields
+// (clearcoatFactor/clearcoatRoughnessFactor, transmissionFactor, ior,
+// sheenColorFactor/sheenRoughnessFactor) — these are real KHR_materials_*
+// extensions, lazily attached to the document only when a factor set
+// actually uses them, so a plain restyle never grows a document with unused
+// extension declarations.
+async function applyFactorsToDoc(doc, factors, materialIndex) {
 	const materials = doc.getRoot().listMaterials();
 	if (!materials.length) {
 		throw new MaterialStudioError('source GLB has no materials to restyle', {
@@ -187,6 +194,21 @@ function applyFactorsToDoc(doc, factors, materialIndex) {
 	}
 	const targets =
 		Number.isInteger(materialIndex) && materials[materialIndex] ? [materials[materialIndex]] : materials;
+
+	const hasClearcoat = factors.clearcoatFactor != null || factors.clearcoatRoughnessFactor != null;
+	const hasTransmission = factors.transmissionFactor != null;
+	const hasIor = factors.ior != null;
+	const hasSheen = Array.isArray(factors.sheenColorFactor) || factors.sheenRoughnessFactor != null;
+
+	let KHRMaterialsClearcoat, KHRMaterialsTransmission, KHRMaterialsIOR, KHRMaterialsSheen;
+	if (hasClearcoat || hasTransmission || hasIor || hasSheen) {
+		// Extension classes import lazily — the (more common) factor-only
+		// restyle path never pays this cost.
+		({ KHRMaterialsClearcoat, KHRMaterialsTransmission, KHRMaterialsIOR, KHRMaterialsSheen } = await import(
+			'@gltf-transform/extensions'
+		));
+	}
+	let clearcoatExt, transmissionExt, iorExt, sheenExt;
 
 	for (const mat of targets) {
 		if (Array.isArray(factors.baseColorFactor) && factors.baseColorFactor.length === 4) {
@@ -200,6 +222,35 @@ function applyFactorsToDoc(doc, factors, materialIndex) {
 			mat.setEmissiveFactor(factors.emissiveFactor.map((v) => clamp01(v)));
 		}
 		if (factors.name) mat.setName(factors.name);
+
+		if (hasClearcoat) {
+			clearcoatExt = clearcoatExt || doc.createExtension(KHRMaterialsClearcoat);
+			const clearcoat = clearcoatExt.createClearcoat();
+			if (factors.clearcoatFactor != null) clearcoat.setClearcoatFactor(clamp01(factors.clearcoatFactor));
+			if (factors.clearcoatRoughnessFactor != null) {
+				clearcoat.setClearcoatRoughnessFactor(clamp01(factors.clearcoatRoughnessFactor));
+			}
+			mat.setExtension('KHR_materials_clearcoat', clearcoat);
+		}
+		if (hasTransmission) {
+			transmissionExt = transmissionExt || doc.createExtension(KHRMaterialsTransmission);
+			const transmission = transmissionExt.createTransmission().setTransmissionFactor(clamp01(factors.transmissionFactor));
+			mat.setExtension('KHR_materials_transmission', transmission);
+		}
+		if (hasIor) {
+			iorExt = iorExt || doc.createExtension(KHRMaterialsIOR);
+			const ior = iorExt.createIOR().setIOR(Math.min(2.333, Math.max(1, Number(factors.ior) || 1.5)));
+			mat.setExtension('KHR_materials_ior', ior);
+		}
+		if (hasSheen) {
+			sheenExt = sheenExt || doc.createExtension(KHRMaterialsSheen);
+			const sheen = sheenExt.createSheen();
+			if (Array.isArray(factors.sheenColorFactor) && factors.sheenColorFactor.length === 3) {
+				sheen.setSheenColorFactor(factors.sheenColorFactor.map((v) => clamp01(v)));
+			}
+			if (factors.sheenRoughnessFactor != null) sheen.setSheenRoughnessFactor(clamp01(factors.sheenRoughnessFactor));
+			mat.setExtension('KHR_materials_sheen', sheen);
+		}
 	}
 	return targets.length;
 }
@@ -305,10 +356,16 @@ export async function generateMaterialFactorsFromInstruction(instruction) {
 	}
 	const system =
 		'You are a 3D material author. Given a short restyle instruction (e.g. "make it chrome", "wooden", ' +
-		'"cyberpunk neon"), return ONLY a valid JSON object describing a glTF 2.0 PBR material with keys: ' +
-		'"name" (string), "baseColorFactor" ([r,g,b] 0-1), "metallicFactor" (0-1), "roughnessFactor" (0-1), ' +
-		'"emissiveFactor" ([r,g,b] 0-1, [0,0,0] unless the instruction implies glow/light), and "notes" ' +
-		'(one short sentence on the look). No markdown, no prose outside the JSON.';
+		'"cyberpunk neon", "car paint", "frosted glass"), return ONLY a valid JSON object describing a glTF 2.0 ' +
+		'PBR material with keys: "name" (string), "baseColorFactor" ([r,g,b] 0-1), "metallicFactor" (0-1), ' +
+		'"roughnessFactor" (0-1), "emissiveFactor" ([r,g,b] 0-1, [0,0,0] unless the instruction implies glow/light), ' +
+		'and "notes" (one short sentence on the look). Additionally, ONLY when the instruction implies these real ' +
+		'physical effects, include: "clearcoatFactor" (0-1) + "clearcoatRoughnessFactor" (0-1) for a lacquered/' +
+		'wet/car-paint/varnished look; "transmissionFactor" (0-1) + "ior" (1-2.333, real glass is ~1.45, water ' +
+		'~1.33, diamond ~2.42) for see-through glass/liquid/crystal; "sheenColorFactor" ([r,g,b] 0-1) + ' +
+		'"sheenRoughnessFactor" (0-1) for fabric/velvet/skin-like soft grazing highlights. Omit any key that does ' +
+		'not apply — do not invent clearcoat/transmission/sheen for a plain metal or plastic instruction. ' +
+		'No markdown, no prose outside the JSON.';
 	let result;
 	try {
 		result = await watsonxChatComplete(cfg, {
@@ -340,6 +397,12 @@ export async function generateMaterialFactorsFromInstruction(instruction) {
 		metallicFactor: typeof parsed.metallicFactor === 'number' ? parsed.metallicFactor : null,
 		roughnessFactor: typeof parsed.roughnessFactor === 'number' ? parsed.roughnessFactor : null,
 		emissiveFactor: Array.isArray(parsed.emissiveFactor) ? parsed.emissiveFactor.slice(0, 3) : [0, 0, 0],
+		clearcoatFactor: typeof parsed.clearcoatFactor === 'number' ? parsed.clearcoatFactor : null,
+		clearcoatRoughnessFactor: typeof parsed.clearcoatRoughnessFactor === 'number' ? parsed.clearcoatRoughnessFactor : null,
+		transmissionFactor: typeof parsed.transmissionFactor === 'number' ? parsed.transmissionFactor : null,
+		ior: typeof parsed.ior === 'number' ? parsed.ior : null,
+		sheenColorFactor: Array.isArray(parsed.sheenColorFactor) ? parsed.sheenColorFactor.slice(0, 3) : null,
+		sheenRoughnessFactor: typeof parsed.sheenRoughnessFactor === 'number' ? parsed.sheenRoughnessFactor : null,
 		notes: typeof parsed.notes === 'string' ? parsed.notes.slice(0, 300) : null,
 		model: result.model,
 		instruction: trimmed,
@@ -362,7 +425,7 @@ export async function restyleMaterialFromInstruction({
 	const factors = await generateMaterialFactorsFromInstruction(instruction);
 	const sourceBytes = await fetchGlbBytes(safeUrl);
 	const doc = await loadDocument(sourceBytes);
-	const materialsEdited = applyFactorsToDoc(doc, factors, materialIndex);
+	const materialsEdited = await applyFactorsToDoc(doc, factors, materialIndex);
 	const outBytes = await writeAndValidate(doc);
 	const persisted = await validateAndPersistGlb(Buffer.from(outBytes), { keyPrefix: 'material-studio/restyle' });
 
@@ -435,8 +498,14 @@ export async function generateSeededVariants({
 			roughnessFactor: variant.config.roughness,
 			emissiveFactor: variant.config.emissive ? hexToFactor(variant.config.emissive, [0, 0, 0]) : [0, 0, 0],
 			name: variant.label,
+			clearcoatFactor: variant.config.clearcoat ?? null,
+			clearcoatRoughnessFactor: variant.config.clearcoatRoughness ?? null,
+			transmissionFactor: variant.config.transmission ?? null,
+			ior: variant.config.ior ?? null,
+			sheenColorFactor: variant.config.sheenColor ? hexToFactor(variant.config.sheenColor, [0, 0, 0]) : null,
+			sheenRoughnessFactor: variant.config.sheenRoughness ?? null,
 		};
-		applyFactorsToDoc(doc, factors, materialIndex);
+		await applyFactorsToDoc(doc, factors, materialIndex);
 		const outBytes = await writeAndValidate(doc);
 		const persisted = await validateAndPersistGlb(Buffer.from(outBytes), {
 			keyPrefix: 'material-studio/variants',

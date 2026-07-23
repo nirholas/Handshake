@@ -18,6 +18,7 @@ import { getMeshoptDecoder } from './viewer/internal.js';
 import { reserveWebGLContext } from './webgl-budget.js';
 import { log } from './shared/log.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
+import { loadEnvironment } from './shared/cinematic-render.js';
 
 export function initAvatarDrop(sectionEl) {
 	const canvas  = sectionEl.querySelector('#drop-canvas');
@@ -45,6 +46,10 @@ export function initAvatarDrop(sectionEl) {
 	reserveWebGLContext();
 
 	const scene = new Scene();
+	// Real HDRI image-based lighting so the dropped avatar's PBR skin/materials
+	// pick up believable reflections instead of flat directional-only shading.
+	// Falls back to a procedural room environment internally on fetch failure.
+	loadEnvironment(renderer, scene, 'studio');
 
 	let PX_PER_UNIT = 120;
 	const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 100);

@@ -37,6 +37,7 @@ import {
 	CanvasTexture,
 } from 'three';
 import { momentumColor, glowIntensity } from './sentiment-heatmap-data.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 
 const SPACING = 1.55; // grid cell spacing
 const BASE_H = 0.18; // minimum pillar height (so a flat token still has presence)
@@ -109,12 +110,18 @@ export class SentimentHeatmap3D {
 			alpha: true,
 			preserveDrawingBuffer: true, // required for toDataURL frame capture
 		});
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		// Shared cinematic bar: ACES tone mapping + sRGB output + tiered pixel
+		// ratio cap. Pillars use MeshStandardMaterial (roughness/metalness),
+		// so a real HDRI below gives them genuine specular reflections, not
+		// just flat emissive glow.
+		const tier = detectQualityTier();
+		applyCinematicDefaults(renderer, { tier });
 		renderer.setClearColor(0x05060a, 1);
 		this.renderer = renderer;
 
 		const scene = new Scene();
 		this.scene = scene;
+		loadEnvironment(renderer, scene, tier === 'mobile' ? null : 'sunset');
 
 		const camera = new PerspectiveCamera(46, 1, 0.1, 100);
 		camera.position.set(0, 7, 11);

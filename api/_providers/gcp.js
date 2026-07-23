@@ -233,6 +233,12 @@ function buildWorkerRequest(request) {
 				negative_prompt: params?.negative_prompt || 'blurry, low quality, distorted',
 				num_views: params?.num_views || 8,
 				texture_size: params?.texture_size || 1024,
+				// person|metal|wood|fabric|plastic|glass — bakes measured-value
+				// roughness/metallic factors instead of the flat default and
+				// nudges the SDXL prompt with material-appropriate descriptors
+				// (workers/texture/main.py MATERIAL_CLASS_PBR). Optional: omit to
+				// keep the old flat-guess behavior.
+				material_class: params?.material_class || null,
 			},
 		};
 	}

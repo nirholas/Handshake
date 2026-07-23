@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 183,
+	"count": 184,
 	"paths": [
 		"/",
 		"/activity",
@@ -171,6 +171,7 @@
 		"/three-token",
 		"/tour",
 		"/tour-builder",
+		"/tracker",
 		"/trades",
 		"/trending",
 		"/tutorials",

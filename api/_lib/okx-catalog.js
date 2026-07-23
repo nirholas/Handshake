@@ -1,11 +1,11 @@
-// OKX.AI (X Layer agent marketplace) service catalog — the single source of
+// OKX.AI (X Layer agent marketplace) service catalog, the single source of
 // truth for every A2MCP service agent #2632 "three.ws 3D Studio" sells on
 // OKX.AI. Endpoints, the free catalog/health service, tests, AND the listing
 // update submitted to OKX all read from this module, so the live endpoints can
 // never drift from the marketplace listing.
 //
-// OKX listing format: every service carries a 2-part description — part 1 says
-// what the service does, part 2 says what the caller must provide — and each
+// OKX listing format: every service carries a 2-part description, part 1 says
+// what the service does, part 2 says what the caller must provide, and each
 // part must fit in 200 display-width characters, where East-Asian wide glyphs
 // count 2 and everything else counts 1 (OKX rejects over-length listings).
 // `validateCatalog()` enforces this; tests/okx-catalog.test.js runs it in CI.
@@ -51,7 +51,7 @@ function usdToAtomics(usd) {
 }
 
 // One row per marketplace service. Fields:
-//   id                  URL slug — the service's route is /api/okx/3d/<id>
+//   id                  URL slug, the service's route is /api/okx/3d/<id>
 //   name                Listing display name
 //   kind                'a2mcp' (MCP Streamable HTTP JSON-RPC) | 'rest' (plain JSON GET)
 //   describes           2-part OKX listing description { capability, input }
@@ -107,7 +107,7 @@ export const OKX_CATALOG = Object.freeze([
 					type: 'string',
 					format: 'uri',
 					description:
-						'Optional public image to guide the look. Validated before any charge — an ' +
+						'Optional public image to guide the look. Validated before any charge, an ' +
 						'unreachable URL fails the call without settling payment.',
 				},
 			},
@@ -116,7 +116,7 @@ export const OKX_CATALOG = Object.freeze([
 	// ── Work order 03: the decomposed 3D studio ────────────────────────────
 	// Micro-priced REST services, one capability per endpoint, all backed by
 	// the same engines /api/mcp-3d runs on (api/_okx3d/rest-services.js maps
-	// each id to its engine — no logic duplicated). Prices clear worst-case
+	// each id to its engine, no logic duplicated). Prices clear worst-case
 	// lane cost; the math is recorded in prompts/okx-ai/PROGRESS.md.
 	{
 		id: 'text-to-3d',
@@ -375,13 +375,13 @@ export function catalogEntry(id) {
 	return OKX_CATALOG.find((e) => e.id === id) || null;
 }
 
-// The OKX listing description string: part ① and part ② joined on a newline —
+// The OKX listing description string: part ① and part ② joined on a newline,
 // the layout the approved sellers use. Work order 05 submits this verbatim.
 export function listingDescription(entry) {
 	return `${entry.describes.capability}\n${entry.describes.input}`;
 }
 
-// The machine-readable index the free catalog service returns — the exact
+// The machine-readable index the free catalog service returns, the exact
 // payload OKX buyers (and work order 05's listing update) consume.
 export function catalogIndex() {
 	return {
@@ -402,7 +402,7 @@ export function catalogIndex() {
 	};
 }
 
-// Catalog integrity check — throws on the first malformed entry. Tests call
+// Catalog integrity check, throws on the first malformed entry. Tests call
 // this; anything that would get the listing rejected fails CI instead.
 export function validateCatalog(catalog = OKX_CATALOG) {
 	const seen = new Set();
@@ -437,7 +437,7 @@ export function validateCatalog(catalog = OKX_CATALOG) {
 		if (e.kind === 'a2mcp' && (!e.tool || !e.inputSchema)) {
 			throw new Error(`${ctx}: a2mcp row needs tool + inputSchema`);
 		}
-		// Paid REST rows must document their POST body — the catalog service and
+		// Paid REST rows must document their POST body, the catalog service and
 		// the listing both surface the schema, and buyers have nothing else.
 		if (e.kind === 'rest' && !free && !e.inputSchema) {
 			throw new Error(`${ctx}: paid rest row needs inputSchema`);

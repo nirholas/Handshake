@@ -56,6 +56,7 @@ import { gltfLoader, disposeGltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
 import { agentAvatarGlb, MANNEQUIN_GLB } from './shared/agent-3d.js';
 import { log } from './shared/log.js';
+import { loadEnvironment } from './shared/cinematic-render.js';
 
 // Reaction vocabulary mapped onto the real pre-baked clip library
 // (public/animations/manifest.json). Each kind picks deterministically from its
@@ -176,6 +177,12 @@ export function createStage({ canvas, overlay, onSelect, reducedMotion = false, 
 
 	const scene = new Scene();
 	scene.fog = new Fog(0x05050a, 16, 46);
+
+	// Real HDRI image-based lighting so the desks' PBR materials (screens,
+	// metal trim, avatar skin) pick up believable reflections instead of
+	// flat directional-light-only shading. Falls back to a procedural room
+	// environment internally on fetch failure, so this never blocks the stage.
+	loadEnvironment(renderer, scene, 'studio');
 
 	// A dealing-room vantage: raised and pulled back so several rows of desks read
 	// as a room, not a line-up. Looks slightly down into the pit.

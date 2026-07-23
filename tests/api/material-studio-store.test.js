@@ -23,7 +23,7 @@ let watsonxReply;
 
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async ({ key, body }) => {
-		uploadedObjects.push({ key, bytes: body.length ?? body.byteLength });
+		uploadedObjects.push({ key, bytes: body.length ?? body.byteLength, body: Buffer.from(body) });
 	}),
 	publicUrl: vi.fn((key) => `https://cdn.three.ws/${key}`),
 }));
@@ -156,6 +156,50 @@ describe('restyleMaterialFromInstruction', () => {
 		});
 		expect(uploadedObjects).toHaveLength(0);
 	});
+
+	it('applies clearcoat + transmission + sheen as real KHR material extensions and the output still validates', async () => {
+		watsonxReply = {
+			name: 'Wet car paint over frosted glass trim',
+			baseColorFactor: [0.55, 0.05, 0.08],
+			metallicFactor: 0.6,
+			roughnessFactor: 0.35,
+			emissiveFactor: [0, 0, 0],
+			clearcoatFactor: 1,
+			clearcoatRoughnessFactor: 0.03,
+			transmissionFactor: 0.9,
+			ior: 1.45,
+			sheenColorFactor: [0.9, 0.9, 0.95],
+			sheenRoughnessFactor: 0.5,
+			notes: 'glossy lacquered paint with a frosted glass accent',
+		};
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
+		const result = await restyleMaterialFromInstruction({
+			glbUrl: FIXTURE_URL,
+			instruction: 'car paint with a frosted glass trim',
+		});
+
+		expect(result.factors.clearcoatFactor).toBe(1);
+		expect(result.factors.transmissionFactor).toBe(0.9);
+		expect(result.factors.ior).toBe(1.45);
+		expect(uploadedObjects).toHaveLength(1); // gltf-validator (writeAndValidate) passed
+
+		// Re-parse the persisted bytes and confirm the extensions actually landed
+		// on the material, not just in the returned `factors` echo.
+		const { NodeIO } = await import('@gltf-transform/core');
+		const { ALL_EXTENSIONS } = await import('@gltf-transform/extensions');
+		const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+		const doc = await io.readBinary(new Uint8Array(uploadedObjects[0].body));
+		const mat = doc.getRoot().listMaterials()[0];
+		const clearcoat = mat.getExtension('KHR_materials_clearcoat');
+		const transmission = mat.getExtension('KHR_materials_transmission');
+		const ior = mat.getExtension('KHR_materials_ior');
+		const sheen = mat.getExtension('KHR_materials_sheen');
+		expect(clearcoat?.getClearcoatFactor()).toBeCloseTo(1);
+		expect(clearcoat?.getClearcoatRoughnessFactor()).toBeCloseTo(0.03);
+		expect(transmission?.getTransmissionFactor()).toBeCloseTo(0.9);
+		expect(ior?.getIOR()).toBeCloseTo(1.45);
+		expect(sheen?.getSheenRoughnessFactor()).toBeCloseTo(0.5);
+	});
 });
 
 describe('generateSeededVariants', () => {
@@ -186,6 +230,20 @@ describe('generateSeededVariants', () => {
 		await expect(generateSeededVariants({ glbUrl: FIXTURE_URL, preset: 'unobtainium' })).rejects.toMatchObject({
 			code: 'invalid_preset',
 		});
+	});
+
+	it('carries the carPaint preset clearcoat through to the persisted GLB as a real extension', async () => {
+		const { generateSeededVariants } = await import('../../api/_lib/material-studio-store.js');
+		const result = await generateSeededVariants({ glbUrl: FIXTURE_URL, preset: 'carPaint', seed: 3, count: 1 });
+		expect(uploadedObjects).toHaveLength(1);
+
+		const { NodeIO } = await import('@gltf-transform/core');
+		const { ALL_EXTENSIONS } = await import('@gltf-transform/extensions');
+		const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+		const doc = await io.readBinary(new Uint8Array(uploadedObjects[0].body));
+		const clearcoat = doc.getRoot().listMaterials()[0].getExtension('KHR_materials_clearcoat');
+		expect(clearcoat?.getClearcoatFactor()).toBeCloseTo(1);
+		expect(result.variants[0].config.clearcoat).toBe(1);
 	});
 
 	it('clamps an out-of-range count into [1, 12]', async () => {

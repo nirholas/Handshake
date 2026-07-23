@@ -24,6 +24,7 @@
 // real income paths (tip + money-stream settlement) in api/agents/solana-wallet.js.
 
 import { sql } from './db.js';
+import { insertNotification } from './notify.js';
 
 // ── Platform policy constants (the fairness guardrails) ──────────────────────
 
@@ -443,7 +444,7 @@ async function recordSkips(forkAgentId, sourceEventId, kind, network, splits) {
 async function settlePayouts({ forkAgentId, network, claimed, sourceEventId, kind }) {
 	// Load the fork's signer + verify it can cover the splits.
 	const [forkAgent] = await sql`
-		select id, user_id, meta from agent_identities where id = ${forkAgentId} and deleted_at is null limit 1
+		select id, user_id, name, meta from agent_identities where id = ${forkAgentId} and deleted_at is null limit 1
 	`;
 	if (!forkAgent?.meta?.encrypted_solana_secret) {
 		await failRows(claimed, 'fork_wallet_unavailable');
@@ -537,6 +538,19 @@ async function settlePayouts({ forkAgentId, network, claimed, sourceEventId, kin
 			`.catch(() => {});
 			await mirrorCustody({ forkAgentId, ancestorAgentId: t.ancestor_agent_id, recipient: t.to,
 				lamports: t.lamports, signature: r.signature, network, kind, rerouted: t.rerouted });
+			if (t.ancestor_owner_id) {
+				let usd = null;
+				try { const { lamportsToUsd } = await import('./agent-trade-guards.js'); usd = await lamportsToUsd(t.lamports); } catch { /* unpriced */ }
+				insertNotification(t.ancestor_owner_id, 'royalty_paid', {
+					actor: forkAgent.name || 'A fork of your avatar',
+					sol: Number(t.lamports) / 1e9,
+					usd,
+					depth: t.depth,
+					signature: r.signature,
+					tx_signature: r.signature,
+					link: `/agent/${encodeURIComponent(t.ancestor_agent_id)}`,
+				});
+			}
 		}
 	}
 }

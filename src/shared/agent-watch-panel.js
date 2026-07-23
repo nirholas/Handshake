@@ -22,6 +22,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
+import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './cinematic-render.js';
 
 // Top-level endpoint — this is the real-time frame+log SSE stream.
 const STREAM_URL   = (id) => `/api/agent-screen-stream?agentId=${encodeURIComponent(id)}`;
@@ -1231,6 +1232,12 @@ class WatchPanel {
 			renderer.setClearColor(0x0a0a0d, 1);
 			renderer.setSize(360, 480);
 			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+			// ACES + sRGB + real HDRI IBL, shared bar (src/shared/cinematic-render.js).
+			// No ground-contact shadow here: this is a tight face-crop headshot with
+			// no floor in frame, so a shadow catcher plane would never be visible.
+			const watchQualityTier = detectQualityTier();
+			applyCinematicDefaults(renderer, { tier: watchQualityTier });
+			loadEnvironment(renderer, webcamScene, watchQualityTier === 'mobile' ? null : 'studio');
 
 			this._webcamRenderer = renderer;
 			this._webcamScene    = webcamScene;
