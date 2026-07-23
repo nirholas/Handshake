@@ -1,318 +1,607 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>hood-api — Market data for Robinhood Chain</title>
-<meta name="description" content="Hosted REST API for Robinhood Chain: Stock Tokens, memecoin launchpads, cross-venue equity spreads, and a real-time firehose. Free tier + x402 micropayments." />
-<link rel="stylesheet" href="site.css" />
-<script src="samples.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-api: the Robinhood Chain data API, drawn as a transit map</title>
+<meta name="description" content="The hosted market-data API for Robinhood Chain (chain 4663), drawn as a transit map. Each line is a resource, each station an endpoint; cross the x402 fare gate to reach the paid ones. Stock Tokens priced against Chainlink and the DEX, cross-venue equity spreads, memecoin launchpads, and a real-time firehose." />
+<link rel="canonical" href="https://nirholas.github.io/hood-api/" />
+<meta name="theme-color" content="#ecebe6" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-api: the endpoint transit map" />
+<meta property="og:description" content="Route from request to response along a transit map of the Robinhood Chain data API. Free stations before the x402 fare gate, paid ones beyond it. The map is the docs." />
+<meta property="og:url" content="https://nirholas.github.io/hood-api/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="hood-api: the endpoint transit map" />
+<meta name="twitter:description" content="The Robinhood Chain data API as a subway map. Each line a resource, each station an endpoint. Cross the x402 fare gate for the paid ones." />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><g stroke='%23e9e6df' stroke-width='2' fill='none'><path d='M6 10 H26'/><path d='M6 16 H20'/><path d='M6 22 H24'/></g><circle cx='6' cy='10' r='2.4' fill='%230b0b0c' stroke='%23e9e6df' stroke-width='1.6'/><circle cx='26' cy='10' r='2.4' fill='%23e9e6df'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebAPI","name":"hood-api","description":"Hosted market-data API for Robinhood Chain (chain ID 4663): Stock Tokens with Chainlink + DEX premium/discount, memecoin launchpads, multiplier-correct portfolios, cross-venue tokenized-equity spreads, and a real-time firehose. Free tier plus x402-metered paid endpoints.","documentation":"https://nirholas.github.io/hood-api/","provider":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"termsOfService":"https://github.com/nirholas/hood-api","author":{"@type":"Person","name":"nirholas"}}
+</script>
+<style>
+  :root{
+    --ink:#0b0b0c; --paper:#ecebe6; --graphite:#767268; --steel:#403e39;
+    --hair:rgba(11,11,12,.14); --hair2:rgba(11,11,12,.30); --hair3:rgba(11,11,12,.5);
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --unit:clamp(14px,1.15vw,19px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+  body{
+    background:var(--paper); color:var(--ink); font-family:var(--grot);
+    font-size:var(--unit); line-height:1.5; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--ink); color:var(--paper)}
+  a{color:inherit}
+  .mono{font-family:var(--mono); font-feature-settings:"ss01","zero"}
+
+  body::before{
+    content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(11,11,12,.03) 0 1px,transparent 1px 3px);
+    mix-blend-mode:multiply; opacity:.5;
+  }
+  .scan{position:fixed; left:0; right:0; height:2px; z-index:9998; pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(11,11,12,.16),transparent);
+    animation:scan 8.5s linear infinite; will-change:transform}
+  @keyframes scan{0%{transform:translateY(-10vh)}100%{transform:translateY(110vh)}}
+  @media(prefers-reduced-motion:reduce){.scan{display:none} *{animation-duration:.001s!important; transition-duration:.001s!important}}
+
+  .rail{position:fixed; left:0; top:0; bottom:0; width:56px; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    border-right:1px solid var(--hair); background:var(--paper); mix-blend-mode:multiply}
+  .rail b{writing-mode:vertical-rl; transform:rotate(180deg); font:600 11px/1 var(--mono);
+    letter-spacing:.35em; text-transform:uppercase; color:var(--graphite); position:absolute; top:16px}
+  .rail .stn{writing-mode:vertical-rl; font:500 10px/1 var(--mono); letter-spacing:.28em;
+    text-transform:uppercase; color:var(--graphite); padding:14px 0; cursor:pointer;
+    transition:color .3s var(--ease); text-decoration:none; opacity:.6}
+  .rail .stn:hover{color:var(--ink); opacity:1}
+  .rail .stn[aria-current="true"]{color:var(--ink); opacity:1}
+  .rail .stn::before{content:"";display:block;width:5px;height:5px;border:1px solid var(--hair2);
+    border-radius:50%;margin:0 auto 8px;transition:all .3s var(--ease)}
+  .rail .stn[aria-current="true"]::before{background:var(--ink);border-color:var(--ink)}
+  .rail .carriage{position:absolute;left:-1px;width:2px;background:var(--ink);height:40px;top:0;
+    transition:transform .5s var(--ease);will-change:transform}
+  main{margin-left:56px}
+  @media(max-width:720px){.rail{width:0;border:0}.rail b,.rail .stn,.rail .carriage{display:none}main{margin-left:0}}
+
+  section{position:relative; padding:clamp(58px,9vh,112px) clamp(20px,5vw,88px); border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.34em; text-transform:uppercase;
+    color:var(--graphite); display:flex; align-items:center; gap:12px; margin-bottom:24px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .eyebrow .n{color:var(--ink)}
+
+  h1,h2{font-family:var(--grot); font-weight:700; letter-spacing:-.03em; line-height:.95}
+  h1{font-size:clamp(38px,6vw,84px)}
+  h2{font-size:clamp(29px,4.8vw,60px)}
+  .lede{max-width:60ch; font-size:clamp(17px,1.7vw,23px); line-height:1.42; color:#26241f}
+
+  /* ============ MAP (hero + signature interaction) ============ */
+  #map{padding-top:clamp(46px,7vh,80px); padding-bottom:clamp(30px,4vh,56px)}
+  .boot{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.04em; margin-bottom:16px; white-space:pre-wrap; min-height:1.7em}
+  @media(max-width:720px){.boot{font-size:10.5px; letter-spacing:0}}
+  .boot span{display:inline-block; white-space:pre; opacity:0; animation:type .5s var(--ease) forwards}
+  @keyframes type{to{opacity:1}}
+  .headline{max-width:17ch}
+  .headline .lo{color:var(--graphite)}
+  .sub{margin-top:16px; max-width:58ch; font-size:clamp(15px,1.45vw,20px); color:#2b2823}
+
+  .maprig{margin-top:clamp(24px,4vh,44px); display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:clamp(20px,2.6vw,40px); align-items:stretch}
+  @media(max-width:1000px){.maprig{grid-template-columns:1fr}}
+
+  .mapframe{border:1px solid var(--ink); background:transparent; position:relative; overflow:hidden}
+  .mapscroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch}
+  @media(max-width:1000px){.mapscroll svg{min-width:640px}}
+  .mapframe svg{display:block; width:100%; height:auto}
+  .line{fill:none; stroke:var(--ink); transition:opacity .3s var(--ease), stroke-width .3s}
+  .line.dim{opacity:.16}
+  .trunk{fill:none; stroke:var(--ink); stroke-width:2.4}
+  .gateline{stroke:var(--hair3); stroke-width:1.4; stroke-dasharray:5 5}
+  .gatecap{fill:var(--graphite); font:600 9px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
+  .zonecap{fill:var(--graphite); font:600 9.5px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase}
+  .linelab{fill:var(--ink); font:700 11px/1 var(--mono); letter-spacing:.02em}
+  .stn-g{cursor:pointer}
+  .stn-g:focus{outline:none}
+  .stn-dot{fill:var(--paper); stroke:var(--ink); stroke-width:2.2; transition:transform .25s var(--ease)}
+  .stn-g:hover .stn-dot,.stn-g:focus-visible .stn-dot{transform:scale(1.28)}
+  .stn-dot.paid{fill:var(--ink)}
+  .stn-inner{fill:var(--paper)}
+  .stn-term{fill:var(--ink); stroke:var(--ink)}
+  .stn-lab{fill:var(--steel); font:600 9px/1.2 var(--mono); letter-spacing:.01em; transition:fill .25s}
+  .stn-price{fill:var(--graphite); font:600 8px/1 var(--mono); letter-spacing:.04em}
+  .stn-g[aria-selected="true"] .stn-lab{fill:var(--ink)}
+  .stn-halo{fill:none; stroke:var(--ink); stroke-width:1.4; opacity:0; transition:opacity .25s, transform .25s var(--ease); transform-box:fill-box; transform-origin:center}
+  .stn-g[aria-selected="true"] .stn-halo{opacity:1}
+  .train{fill:var(--ink); transition:transform .7s var(--ease); will-change:transform}
+  @media(prefers-reduced-motion:reduce){.train{transition:none}}
+
+  /* detail panel */
+  .detail{border:1px solid var(--ink); background:transparent; display:flex; flex-direction:column; min-height:100%}
+  .detail .dh{padding:16px 18px; border-bottom:1px solid var(--hair)}
+  .detail .dh .top{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px}
+  .detail .dh .linetag{font:600 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--graphite); display:inline-flex; align-items:center; gap:8px}
+  .detail .dh .linetag i{display:inline-block; width:18px; height:0; border-top:2.6px solid var(--ink)}
+  .detail .dh .fare{font:700 10px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--ink); padding:6px 9px}
+  .detail .dh .fare.paid{background:var(--ink); color:var(--paper)}
+  .detail .dh .path{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+  .detail .dh .method{font:700 12px/1 var(--mono); letter-spacing:.08em; border:1px solid var(--ink); padding:4px 7px}
+  .detail .dh .p{font:600 clamp(15px,1.5vw,19px)/1.2 var(--mono); word-break:break-all}
+  .detail .dsum{padding:14px 18px; font-size:14.5px; color:#2b2823; line-height:1.5; border-bottom:1px solid var(--hair)}
+  .detail .params{padding:12px 18px; border-bottom:1px solid var(--hair)}
+  .detail .params .lab{font:600 9px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite); margin-bottom:10px}
+  .detail .params .row{display:grid; grid-template-columns:120px 1fr; gap:12px; padding:6px 0; font-size:13px}
+  .detail .params .row .pk{font-family:var(--mono); font-size:12px; color:var(--ink)}
+  .detail .params .row .pv{color:var(--steel); font-family:var(--mono); font-size:11.5px}
+  .detail .params .none{font-size:13px; color:var(--graphite); font-family:var(--mono)}
+  .detail .io{flex:1 1 auto; display:flex; flex-direction:column}
+  .detail .io .seg{border-bottom:1px solid var(--hair)}
+  .detail .io .seg:last-child{border-bottom:0}
+  .detail .io .lab{display:flex; justify-content:space-between; align-items:center; padding:11px 18px 4px;
+    font:600 9px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--graphite)}
+  .detail .io pre{padding:2px 18px 14px; font:500 12px/1.6 var(--mono); overflow-x:auto; color:var(--ink); white-space:pre}
+  .detail .io .req pre{color:var(--steel)}
+  .copy-i{appearance:none; border:1px solid var(--hair2); background:transparent; color:var(--graphite);
+    font:600 8.5px/1 var(--mono); letter-spacing:.12em; padding:5px 8px; cursor:pointer; transition:all .2s}
+  .copy-i:hover{border-color:var(--ink); color:var(--ink)}
+
+  .scrollcue{margin-top:clamp(18px,3vh,32px); font:600 10px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase; color:var(--graphite); display:flex; align-items:center; gap:10px}
+  .scrollcue i{display:block; width:26px; height:1px; background:var(--graphite); position:relative; overflow:hidden}
+  .scrollcue i::after{content:"";position:absolute;inset:0;background:var(--ink);animation:sweep 2.4s var(--ease) infinite}
+  @keyframes sweep{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(30px,5vw,80px); align-items:start}
+  @media(max-width:860px){.cols{grid-template-columns:1fr; gap:34px}}
+
+  .versus{border-top:1px solid var(--hair); margin-top:clamp(22px,4vh,44px)}
+  .versus .r{display:grid; grid-template-columns:200px 1fr; gap:24px; padding:18px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.versus .r{grid-template-columns:1fr; gap:6px}}
+  .versus .r .nm{font:600 13px/1.3 var(--mono); letter-spacing:.02em}
+  .versus .r .ds{font-size:15.5px; color:#2b2823; max-width:60ch}
+  .versus .r .ds b{font-weight:700}
+
+  /* cross-venue spread table */
+  .spread{border:1px solid var(--ink); margin-top:12px; overflow-x:auto}
+  .spread table{width:100%; border-collapse:collapse; min-width:520px; font-family:var(--mono)}
+  .spread th,.spread td{text-align:right; padding:13px 16px; border-bottom:1px solid var(--hair); font-size:13px; white-space:nowrap}
+  .spread th{font:600 9.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite); text-align:right}
+  .spread th:first-child,.spread td:first-child{text-align:left}
+  .spread tr:last-child td{border-bottom:0}
+  .spread td .best{border:1px solid var(--ink); padding:2px 6px; font-size:11px}
+  .spread .sym{font-weight:700; font-family:var(--grot); font-size:15px; letter-spacing:-.01em}
+
+  .install{border:1px solid var(--ink); background:var(--ink); color:var(--paper); padding:22px;
+    font:500 13.5px/1.85 var(--mono); position:relative; overflow-x:auto; word-break:break-word}
+  .install .c,.install .p,.install .pc{display:block}
+  .install .c{color:#8b8781; margin-top:15px}
+  .install .c:first-child{margin-top:0}
+  .install .p::before{content:"$ "; color:#8b8781}
+  .install .pc{color:var(--paper)}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid rgba(236,235,230,.3);
+    background:transparent; color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(236,235,230,.14)}
+
+  .fuse{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:12px}
+  @media(max-width:820px){.fuse{grid-template-columns:1fr}}
+  .fuse .f{border:1px solid var(--hair2); padding:20px}
+  .fuse .f .h{font:700 13px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px}
+  .fuse .f .b{font-size:14px; color:#2b2823; line-height:1.5}
+  .fuse .f .b span{font-family:var(--mono); font-size:12px}
+
+  .chan{border-top:1px solid var(--hair); margin-top:24px}
+  .chan .r{display:grid; grid-template-columns:120px 1fr; gap:20px; padding:14px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:560px){.chan .r{grid-template-columns:1fr; gap:4px}}
+  .chan .r .k{font:600 12px/1.3 var(--mono); color:var(--ink)}
+  .chan .r .v{font-size:14.5px; color:#2b2823}
+
+  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px}
+  .btn{appearance:none; text-decoration:none; border:1px solid var(--ink); color:var(--ink); background:transparent;
+    font:600 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:15px 22px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease)}
+  .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--paper)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  .note{margin-top:22px; border-left:2px solid var(--ink); padding:4px 0 4px 18px; font-size:14.5px; color:#2b2823; max-width:72ch; line-height:1.55}
+  .note b{font-weight:700}
+
+  footer{padding:clamp(40px,6vh,72px) clamp(20px,5vw,88px); display:flex; flex-wrap:wrap;
+    justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font:700 clamp(30px,6vw,72px)/.9 var(--grot); letter-spacing:-.03em}
+  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); letter-spacing:.02em; text-align:right}
+  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
+  footer a:hover{border-color:var(--ink)}
+
+  .rise{opacity:0; transform:translateY(22px); transition:opacity .8s var(--ease),transform .8s var(--ease)}
+  .rise.in{opacity:1; transform:none}
+</style>
 </head>
 <body>
+<div class="scan" aria-hidden="true"></div>
 
-<nav class="top">
-  <div class="wrap">
-    <div class="brand">hood<span class="tick">-api</span></div>
-    <div class="links">
-      <a href="#endpoints">Endpoints</a>
-      <a href="#console" class="hide-sm">Console</a>
-      <a href="#x402">x402</a>
-      <a href="#pricing" class="hide-sm">Pricing</a>
-      <a href="openapi.json">OpenAPI</a>
-      <a href="https://github.com/nirholas/hood-api">GitHub</a>
-    </div>
-  </div>
+<nav class="rail" aria-label="Sections">
+  <b>hood·api</b>
+  <span class="carriage" id="carriage"></span>
+  <a class="stn" href="#map" aria-current="true">Map</a>
+  <a class="stn" href="#why">Why</a>
+  <a class="stn" href="#equities">Equities</a>
+  <a class="stn" href="#firehose">Firehose</a>
+  <a class="stn" href="#arch">Arch</a>
+  <a class="stn" href="#get">Get&nbsp;it</a>
 </nav>
 
-<div class="wrap">
+<main>
+  <!-- ============ MAP ============ -->
+  <section id="map">
+    <p class="boot mono" id="boot"></p>
+    <div class="eyebrow"><span class="n">00</span> / THE ENDPOINT TRANSIT MAP · chain 4663</div>
+    <h1 class="headline">Every endpoint<br>is a <span class="lo">station.</span></h1>
+    <p class="sub">The Robinhood Chain data API, drawn as a transit map. Each line is a resource; each station an endpoint. Ride a line from the request to its response. The free stations sit before the x402 fare gate, the metered ones beyond it. Tap any station: the map is the docs.</p>
 
-  <section class="hero">
-    <h1>The market-data layer<br /><span class="grad">Robinhood Chain</span> was missing.</h1>
-    <p class="lede">
-      Stock Tokens priced against Chainlink <em>and</em> the DEX, with the real premium or discount between them.
-      Memecoin launchpads. Multiplier-correct portfolios. The only place that prices the same ticker across
-      Robinhood Chain, xStocks, and Ondo Global Markets side by side. Free for the basics, metered with
-      <a href="#x402">x402</a> for the deep stuff — no API keys, no subscriptions.
-    </p>
-    <div class="cta">
-      <div class="install"><span class="dollar">$</span> curl {api}/v1/stocks</div>
-      <a class="btn primary" href="#console">Try it</a>
-      <a class="btn" href="#endpoints">See all endpoints</a>
+    <div class="maprig">
+      <div class="mapframe">
+        <div class="mapscroll">
+          <svg id="metro" viewBox="0 0 1000 470" role="group" aria-label="Interactive transit map of the API endpoints">
+            <g id="lines"></g>
+            <line class="gateline" id="gateline" x1="580" y1="34" x2="580" y2="440"/>
+            <text class="gatecap" id="gatecap-t" x="580" y="24" text-anchor="middle">x402 fare gate</text>
+            <text class="gatecap" id="gatecap-b" x="580" y="456" text-anchor="middle">pay to cross</text>
+            <text class="zonecap" x="150" y="24">free</text>
+            <text class="zonecap" x="960" y="24" text-anchor="end">paid · x402</text>
+            <g id="stations"></g>
+            <circle class="train" id="train" r="5.5" cx="140" cy="60"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="detail" id="detail" aria-live="polite">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <div class="scrollcue"><i></i> why it exists</div>
+  </section>
+
+  <!-- ============ WHY ============ -->
+  <section id="why">
+    <div class="eyebrow"><span class="n">01</span> / THE MISSING LAYER</div>
+    <div class="cols">
+      <div>
+        <h2>Nobody prices<br>these three<br>side by side.</h2>
+        <p class="lede" style="margin-top:22px">RWA.xyz is enterprise-paid. CoinGecko has no equity semantics: it can't tell you a Stock Token's premium over its underlying share, or that a <span class="mono">uiMultiplier()</span> corporate action just changed what a balance is worth. This API is that missing layer, built on the <span class="mono">hoodchain</span> SDK.</p>
+      </div>
+      <div>
+        <div class="versus">
+          <div class="r"><div class="nm">premium / discount</div><div class="ds">The same ticker's Chainlink oracle price and its live DEX mid, with the <b>signed spread</b> between them. A generic price feed shows one number; this shows the gap that is the trade.</div></div>
+          <div class="r"><div class="nm">multiplier-correct</div><div class="ds">Portfolios are valued through <span class="mono">uiMultiplier()</span>, so a split or corporate action never silently misprices a balance. Robinhood reports what you hold, never what it's worth in shares.</div></div>
+          <div class="r"><div class="nm">cross-venue</div><div class="ds">The only place that prices Robinhood Chain, xStocks, and Ondo Global Markets for one ticker in a single call, with the cheapest venue and the spread in bps.</div></div>
+          <div class="r"><div class="nm">no keys</div><div class="ds">Free tier is IP-rate-limited and generous. Paid endpoints meter with x402, USDC on Base. No API keys, no accounts, no subscriptions.</div></div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <div class="board-head">
-    <h2>Robinhood Chain, live</h2>
-    <span class="status" id="chain-status"><span class="dot"></span><span id="chain-status-text">connecting…</span></span>
-  </div>
-  <div class="board" id="chain-board">
-    <div class="tile"><div class="sym">Block height</div><div class="px skeleton" id="tile-block">—</div><div class="meta">chain 4663</div></div>
-    <div class="tile"><div class="sym">Gas price</div><div class="px skeleton" id="tile-gas">—</div><div class="meta">gwei, ETH gas</div></div>
-    <div class="tile"><div class="sym">AAPL · Chainlink</div><div class="px skeleton" id="tile-aapl">—</div><div class="meta">per token, multiplier-adjusted</div></div>
-    <div class="tile"><div class="sym">TSLA · Chainlink</div><div class="px skeleton" id="tile-tsla">—</div><div class="meta">per token, multiplier-adjusted</div></div>
-  </div>
-  <p class="board-note">Fetched directly from the public RPC in your browser — no server, no proxy, no API key.</p>
-
-  <section class="block" id="console">
-    <h2>Console</h2>
-    <p class="sub">
-      Point this at a deployed hood-api instance to run every endpoint live from the browser. Leave it blank and
-      each card below falls back to a real captured response — never a fabricated one.
-    </p>
-    <div class="install" style="width:100%; max-width: 640px;">
-      <span class="dollar">API</span>
-      <input id="api-base" type="text" placeholder="https://your-hood-api.example.com (optional)"
-        style="flex:1; background:transparent; border:none; color:inherit; font:inherit; outline:none;" />
-      <button class="btn" id="api-base-save" style="padding:5px 12px;">Save</button>
-    </div>
-  </section>
-
-  <section class="block" id="endpoints">
-    <h2>Free endpoints</h2>
-    <p class="sub">IP-rate-limited, generous, no key required. Every response carries <code>asOf</code> + <code>source</code>.</p>
-    <div id="free-endpoints"></div>
-  </section>
-
-  <section class="block" id="paid">
-    <h2>Paid endpoints</h2>
-    <p class="sub">Metered per-call via <a href="#x402">x402</a> — USDC on Base (mainnet) or Base Sepolia (testnet). No account, no invoice, no subscription.</p>
-    <div id="paid-endpoints"></div>
-  </section>
-
-  <section class="block" id="x402">
-    <h2>Paying with x402</h2>
-    <p class="sub">
-      Every paid route returns HTTP 402 with a signed <code>PaymentRequirements</code> challenge when called
-      without payment. A wallet-aware fetch wrapper pays it automatically and retries once.
-    </p>
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="challenge">1 — The 402 challenge</button>
-      <button class="tab-btn" data-tab="client">2 — Pay it</button>
-    </div>
-    <div class="tabpanel active" data-tab="challenge">
-      <pre><code id="x402-challenge-sample">loading…</code></pre>
-      <p class="samplemeta">Real response captured from a running hood-api instance with payments enabled — see the report for the live curl transcript.</p>
-    </div>
-    <div class="tabpanel" data-tab="client">
-      <pre><code>import { createSigner } from 'x402/types'
-import { wrapFetchWithPayment } from 'x402-fetch'
-
-// base-sepolia testnet key funded with a few cents of test USDC
-// (faucet.circle.com — browser + reCAPTCHA, no scriptable path)
-const signer = await createSigner('base-sepolia', process.env.PRIVATE_KEY)
-const fetchWithPay = wrapFetchWithPayment(fetch, signer)
-
-const res = await fetchWithPay('https://your-hood-api.example.com/v1/portfolio/0xYourAddress')
-const portfolio = await res.json()
-console.log(portfolio.totalUsd)
-
-// mainnet: createSigner('base', process.env.PRIVATE_KEY) — pays real USDC on Base.</code></pre>
-    </div>
-    <div class="disclosure">
-      Settlement network is chosen by the deployment (<code>X402_NETWORK=base</code> or <code>base-sepolia</code>),
-      not the caller. A deployment configured for Base mainnet only accepts real USDC; one configured for
-      Base Sepolia only accepts testnet USDC. Check <code>GET /v1/health</code> or the 402 challenge's
-      <code>network</code> field to see which.
-    </div>
-  </section>
-
-  <section class="block" id="pricing">
-    <h2>Pricing</h2>
-    <p class="sub">Free tier has no key and no quota beyond IP rate limits. Paid calls settle per-request — nothing to subscribe to, nothing to cancel.</p>
-    <div class="table-scroll">
+  <!-- ============ EQUITIES ============ -->
+  <section id="equities">
+    <div class="eyebrow"><span class="n">02</span> / CROSS-VENUE EQUITIES · /v1/equities</div>
+    <h2>One ticker,<br>three venues,<br>one spread.</h2>
+    <p class="lede" style="margin-top:22px">The <span class="mono">/v1/equities</span> line prices the same tokenized equity on Robinhood Chain, xStocks, and Ondo Global Markets at once, and tells you which venue is cheapest and by how many basis points. Sample rows below (demo values):</p>
+    <div class="spread">
       <table>
-        <thead><tr><th>Endpoint</th><th>Tier</th><th>Price</th><th>What you get</th></tr></thead>
-        <tbody>
-          <tr><td><code>/v1/health</code>, <code>/v1/chain</code></td><td><span class="pill free">FREE</span></td><td>—</td><td>Liveness + chain stats</td></tr>
-          <tr><td><code>/v1/stocks</code>, <code>/v1/stocks/{symbol}</code></td><td><span class="pill free">FREE</span></td><td>—</td><td>Chainlink + DEX price, premium/discount, liquidity</td></tr>
-          <tr><td><code>/v1/coins</code>, <code>/v1/coins/{address}</code>, <code>/v1/launches</code></td><td><span class="pill free">FREE</span></td><td>—</td><td>NOXA + Odyssey launchpad data</td></tr>
-          <tr><td><code>/v1/portfolio/{address}</code></td><td><span class="pill paid">PAID</span></td><td>$0.002</td><td>Multiplier-correct valuation, every position</td></tr>
-          <tr><td><code>/v1/stocks/{symbol}/history</code></td><td><span class="pill paid">PAID</span></td><td>$0.005</td><td>Deep OHLCV, up to 30 days</td></tr>
-          <tr><td><code>/v1/equities</code>, <code>/v1/equities/{symbol}</code></td><td><span class="pill paid">PAID</span></td><td>$0.01</td><td>Cross-venue spread vs xStocks + Ondo</td></tr>
-          <tr><td><code>/v1/firehose</code> → <code>wss /v1/ws</code></td><td><span class="pill paid">PAID</span></td><td>$0.01 / session</td><td>~10 min of real-time launches, trades, ticks, raw firehose</td></tr>
-        </tbody>
+        <thead><tr><th>ticker</th><th>rh chain</th><th>xstocks</th><th>ondo</th><th>cheapest</th><th>spread</th></tr></thead>
+        <tbody id="spread-body"></tbody>
       </table>
     </div>
+    <div class="note">CoinGecko supplies the xStocks and Ondo legs; Robinhood Chain is read on-chain (GeckoTerminal has not indexed chain 4663 yet). Every response carries <span class="mono">asOf</span> and <span class="mono">source</span> so provenance is never ambiguous.</div>
   </section>
 
-  <section class="block" id="errors">
-    <h2>Errors</h2>
-    <p class="sub">Every error is structured — never a bare 500.</p>
-    <pre><code>{
-  "error": "unknown_symbol",
-  "hint": "\"NOPE\" is not a canonical Robinhood Chain Stock Token. List them at /v1/stocks.",
-  "docs": "https://nirholas.github.io/hood-api/#errors"
-}</code></pre>
-  </section>
-
-  <section class="block">
-    <h2>Legal</h2>
-    <div class="disclosure">
-      Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered,
-      sold, or delivered to US persons (additional limits: Canada, UK, Switzerland). This API only <em>displays</em>
-      Stock Token data — unrestricted. It never executes a swap or acquisition.
+  <!-- ============ FIREHOSE ============ -->
+  <section id="firehose">
+    <div class="eyebrow"><span class="n">03</span> / THE FIREHOSE · one paid step</div>
+    <div class="cols">
+      <div>
+        <h2>Pay once.<br>Stream free.</h2>
+        <p class="lede" style="margin-top:22px">The <span class="mono">/v1/firehose</span> station is the only metered step: it mints a short-lived signed session token for $0.01. Open the WebSocket with that token and stream free for its ~10-minute life. The paywall stays on the cheap HTTP call while the long-lived connection needs no per-message billing.</p>
+        <p class="lede" style="margin-top:16px; font-size:16px">One shared upstream subscription per channel fans out to every socket: N paying clients never cost N sequencer connections, and an idle deployment makes zero background calls.</p>
+      </div>
+      <div>
+        <div class="install">
+          <button class="copy">COPY</button><span class="c"># 1. pay once for a session token (x402, $0.01)</span><span class="p">curl -H "X-PAYMENT: &lt;header&gt;" \</span><span class="pc">  {BASE}/v1/firehose</span><span class="c"># 2. connect and subscribe to any channels</span><span class="pc">wss://{host}/v1/ws?token=…&amp;channels=launches,ticks</span>
+        </div>
+        <div class="chan">
+          <div class="r"><div class="k">firehose</div><div class="v">Raw sequencer transactions, ~100 to 300ms pre-confirmation.</div></div>
+          <div class="r"><div class="k">launches</div><div class="v">New NOXA / Odyssey token launches (confirmed log watch).</div></div>
+          <div class="r"><div class="k">trades</div><div class="v">Odyssey bonding-curve buys and sells.</div></div>
+          <div class="r"><div class="k">ticks</div><div class="v">Chainlink Stock Token price changes, polled every 15s, emitted only on change.</div></div>
+        </div>
+      </div>
     </div>
   </section>
 
-</div>
+  <!-- ============ ARCH ============ -->
+  <section id="arch">
+    <div class="eyebrow"><span class="n">04</span> / ARCHITECTURE</div>
+    <h2>Typed routes,<br>real upstreams,<br>zero mocks.</h2>
+    <p class="lede" style="margin-top:22px">Hono with <span class="mono">@hono/zod-openapi</span> for typed routes and a generated OpenAPI 3.1 doc, <span class="mono">@hono/node-ws</span> for the firehose. Every test hits a real in-process instance against real RPC, Blockscout, DefiLlama, and CoinGecko: no recorded fixtures.</p>
+    <div class="fuse">
+      <div class="f"><div class="h">chain reads</div><div class="b"><span class="mono">hoodchain</span>: Chainlink quotes, Uniswap v3 DEX quotes and pools, the Stock Token registry, launchpad log scans, the sequencer firehose. RPC fails over public → Alchemy when <span class="mono">ALCHEMY_KEY</span> is set.</div></div>
+      <div class="f"><div class="h">payments</div><div class="b"><span class="mono">x402-hono</span> gates paid routes against the real facilitator (x402.org for Base Sepolia, CDP for Base mainnet USDC). No <span class="mono">X402_PAY_TO</span>? Paid routes return a clean 503 and the free tier still works.</div></div>
+      <div class="f"><div class="h">cache</div><div class="b">In-process TTL cache with single-flight de-duplication, tuned per resource to each upstream's real cadence: Chainlink feeds vs DefiLlama's daily TVL vs Blockscout holder counts.</div></div>
+    </div>
+  </section>
 
-<footer>
-  <div class="wrap">
-    <div>Apache-2.0 licensed. Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></div>
-    <div><a href="openapi.json">OpenAPI 3.1</a> · <a href="https://github.com/nirholas/hood-api">Source</a></div>
-  </div>
-</footer>
+  <!-- ============ GET ============ -->
+  <section id="get">
+    <div class="eyebrow"><span class="n">05</span> / GET IT</div>
+    <div class="cols">
+      <div>
+        <h2>Free tier runs<br>with no config.</h2>
+        <p class="lede" style="margin-top:22px">Every variable has a working default; the free tier needs none of them. Set <span class="mono">X402_PAY_TO</span> to a payout address to switch the paid endpoints on. Cloud Run is the preferred target for the always-on firehose; the HTTP routes run fine anywhere.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://github.com/nirholas/hood-api#readme">read the docs</a>
+          <a class="btn" href="https://github.com/nirholas/hood-api/blob/main/openapi.json">openapi 3.1</a>
+        </div>
+      </div>
+      <div>
+        <div class="install">
+          <button class="copy">COPY</button><span class="c"># local: free tier, no keys needed</span><span class="p">npm install</span><span class="p">npm run dev</span><span class="c"># deploy to Cloud Run (firehose-ready)</span><span class="p">gcloud run deploy hood-api --source . \</span><span class="pc">  --region us-central1 --allow-unauthenticated \</span><span class="pc">  --set-env-vars X402_PAY_TO=0xYourAddress</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">hood-<br>api</div>
+    <div class="meta">
+      Robinhood Chain 4663 · Hono · OpenAPI 3.1 · x402<br>
+      <a href="https://github.com/nirholas/hood-api">github.com/nirholas/hood-api</a><br>
+      <a href="https://www.npmjs.com/package/hood-api">npmjs.com/package/hood-api</a><br>
+      built on <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a> by <a href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
+    </div>
+  </footer>
+</main>
 
 <script>
-(function () {
-  'use strict';
-  var RPC = 'https://rpc.mainnet.chain.robinhood.com';
-  var STOCK_BEACON_APPL_FEED = '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0'; // AAPL Chainlink feed
-  var STOCK_TSLA_FEED = '0x4A1166a659A55625345e9515b32adECea5547C38'; // TSLA Chainlink feed
+"use strict";
+const BASE = 'https://hood-api.example.com';
 
-  function rpc(method, params) {
-    return fetch(RPC, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: method, params: params || [] }),
-    }).then(function (r) { return r.json(); }).then(function (j) {
-      if (j.error) throw new Error(j.error.message);
-      return j.result;
-    });
-  }
-
-  // latestRoundData() selector 0xfeaf968c, no args
-  function latestRoundData(feed) {
-    return rpc('eth_call', [{ to: feed, data: '0xfeaf968c' }, 'latest']).then(function (hex) {
-      var data = hex.slice(2);
-      var answer = BigInt('0x' + data.slice(64, 128));
-      return Number(answer) / 1e8;
-    });
-  }
-
-  function setTile(id, text) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = text;
-    el.classList.remove('skeleton');
-  }
-
-  function setStatus(ok, text) {
-    var el = document.getElementById('chain-status');
-    var t = document.getElementById('chain-status-text');
-    el.className = 'status ' + (ok ? 'live' : 'error');
-    t.textContent = text;
-  }
-
-  Promise.all([
-    rpc('eth_blockNumber').then(function (h) { setTile('tile-block', parseInt(h, 16).toLocaleString()); }),
-    rpc('eth_gasPrice').then(function (h) { setTile('tile-gas', (parseInt(h, 16) / 1e9).toFixed(4)); }),
-    latestRoundData(STOCK_BEACON_APPL_FEED).then(function (p) { setTile('tile-aapl', '$' + p.toFixed(2)); }),
-    latestRoundData(STOCK_TSLA_FEED).then(function (p) { setTile('tile-tsla', '$' + p.toFixed(2)); }),
-  ]).then(function () {
-    setStatus(true, 'live — public RPC, chain 4663');
-  }).catch(function (e) {
-    setStatus(false, 'RPC unreachable (' + e.message + ') — showing captured samples below instead');
-  });
-
-  // ---- API console + endpoint reference ----
-  var API_KEY = 'hood-api-console-base';
-  var apiBaseInput = document.getElementById('api-base');
-  apiBaseInput.value = localStorage.getItem(API_KEY) || '';
-  document.getElementById('api-base-save').addEventListener('click', function () {
-    localStorage.setItem(API_KEY, apiBaseInput.value.trim());
-    renderAll();
-  });
-
-  var SAMPLES = window.HOOD_API_SAMPLES || {};
-
-  var FREE = [
-    { path: '/v1/health', desc: 'Service liveness + RPC reachability.', sample: SAMPLES.health },
-    { path: '/v1/chain', desc: 'Chain stats: block height, gas, TVL, ETH price.', sample: SAMPLES.chain },
-    { path: '/v1/stocks', desc: 'All 95 Stock Tokens: Chainlink price, DEX price, premium/discount, liquidity.', sample: SAMPLES.stocks },
-    { path: '/v1/stocks/{symbol}', desc: 'One Stock Token in depth: candles, holders, feed metadata, links.', sample: SAMPLES.stockDetail, example: '/v1/stocks/TSLA' },
-    { path: '/v1/coins', desc: 'Memecoins: launchpad state, price, liquidity, holders, age.', sample: SAMPLES.coins, example: '/v1/coins?limit=8' },
-    { path: '/v1/coins/{address}', desc: 'Coin detail: launch info, graduation status, DEX stats, holders.' },
-    { path: '/v1/launches', desc: 'Recent + live launchpad activity (NOXA, The Odyssey).', sample: SAMPLES.launches, example: '/v1/launches?lookback=24h&limit=8' },
-  ];
-  var PAID = [
-    { path: '/v1/portfolio/{address}', price: '$0.002', desc: 'Multiplier-correct full portfolio with USD valuation.' },
-    { path: '/v1/stocks/{symbol}/history', price: '$0.005', desc: 'Deep OHLCV history, up to 30 days.' },
-    { path: '/v1/equities', price: '$0.01', desc: 'Cross-venue tokenized-equity spreads: Robinhood Chain vs xStocks vs Ondo.' },
-    { path: '/v1/equities/{symbol}', price: '$0.01', desc: 'Cross-venue price for one ticker.' },
-    { path: '/v1/firehose', price: '$0.01', desc: 'Mint a metered session for the real-time /v1/ws firehose (launches, trades, ticks, raw feed).' },
-  ];
-
-  function fmtSample(s) {
-    if (!s) return null;
-    return JSON.stringify(s.body, null, 2);
-  }
-
-  function endpointCard(e, tier) {
-    var div = document.createElement('div');
-    div.className = 'endpoint';
-    var pill = tier === 'paid' ? '<span class="pill paid">PAID</span>' : '<span class="pill free">FREE</span>';
-    var price = tier === 'paid' ? '<span class="price">' + e.price + '</span>' : '';
-    div.innerHTML =
-      '<div class="row1"><span class="pill get">GET</span>' + pill +
-      '<span class="path">' + e.path + '</span>' + price + '</div>' +
-      '<p class="desc">' + e.desc + '</p>' +
-      '<details><summary>Response</summary><pre><code class="resp">loading…</code></pre></details>';
-    var codeEl = div.querySelector('.resp');
-    var details = div.querySelector('details');
-    var loaded = false;
-
-    function load() {
-      if (loaded) return;
-      loaded = true;
-      var base = (localStorage.getItem(API_KEY) || '').replace(/\/$/, '');
-      var path = e.example || e.path;
-      if (base && path.indexOf('{') === -1) {
-        codeEl.textContent = 'fetching ' + base + path + ' …';
-        fetch(base + path).then(function (r) { return r.json(); }).then(function (json) {
-          codeEl.textContent = JSON.stringify(json, null, 2);
-        }).catch(function (err) {
-          codeEl.textContent = 'live fetch failed: ' + err.message + '\n\nFalling back to captured sample:\n\n' + (fmtSample(e.sample) || 'no sample captured for this endpoint');
-        });
-      } else {
-        var sample = fmtSample(e.sample);
-        codeEl.textContent = sample
-          ? sample
-          : 'no captured sample for this endpoint yet — path parameters required (' + e.path + ')';
-      }
-    }
-    details.addEventListener('toggle', function () { if (details.open) load(); });
-    return div;
-  }
-
-  function renderAll() {
-    var freeEl = document.getElementById('free-endpoints');
-    var paidEl = document.getElementById('paid-endpoints');
-    freeEl.innerHTML = '';
-    paidEl.innerHTML = '';
-    FREE.forEach(function (e) { freeEl.appendChild(endpointCard(e, 'free')); });
-    PAID.forEach(function (e) { paidEl.appendChild(endpointCard(e, 'paid')); });
-  }
-  renderAll();
-
-  // x402 challenge sample
-  var challengeSample = SAMPLES.portfolioChallenge;
-  document.getElementById('x402-challenge-sample').textContent = challengeSample
-    ? JSON.stringify(challengeSample.body, null, 2)
-    : 'GET /v1/portfolio/0x… without X-PAYMENT →\n\nHTTP 402\n{ "accepts": [ { "scheme": "exact", "network": "base-sepolia", ... } ] }';
-
-  // tabs
-  document.querySelectorAll('.tab-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var tab = btn.getAttribute('data-tab');
-      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
-      document.querySelectorAll('.tabpanel').forEach(function (p) {
-        p.classList.toggle('active', p.getAttribute('data-tab') === tab);
-      });
-    });
-  });
+/* ---------- boot ---------- */
+(function boot(){
+  const el=document.getElementById('boot');
+  const line='● hood-api · chain 4663 · 6 lines · 14 stations · free tier live · x402 gate armed';
+  [...line].forEach((ch,i)=>{ const s=document.createElement('span'); s.textContent=ch; s.style.animationDelay=(i*11+120)+'ms'; el.appendChild(s); });
 })();
-</script>
 
+/* ---------- map model ---------- */
+const LINES = [
+  {id:'chain',     y:60,  dash:'',            w:2,   label:'CHAIN'},
+  {id:'stocks',    y:128, dash:'',            w:3.6, label:'STOCKS'},
+  {id:'coins',     y:196, dash:'7 5',         w:2.4, label:'COINS'},
+  {id:'equities',  y:264, dash:'9 4 2 4',     w:2.4, label:'EQUITIES'},
+  {id:'portfolio', y:332, dash:'1 5',         w:2.6, label:'PORTFOLIO'},
+  {id:'firehose',  y:400, dash:'15 6',        w:2.4, label:'FIREHOSE'},
+];
+const TRUNK_X = 140;
+
+const EP = {
+  health:   {line:'chain', x:250, tier:'free', method:'GET', path:'/v1/health', short:'health',
+    sum:'Liveness and RPC reachability: chain ID, block height, and whether payments are enabled.',
+    params:[], res:{ ok:true, chainId:4663, block:8421337, rpcReachable:true, paymentsEnabled:false }},
+  chain:    {line:'chain', x:430, tier:'free', method:'GET', path:'/v1/chain', short:'chain',
+    sum:'Block height, gas (current/slow/average/fast gwei), TVL from DefiLlama, ETH price, and tx counts.',
+    params:[], res:{ block:8421337, gas:{ current:0.011, slow:0.009, average:0.011, fast:0.014 }, tvlUsd:48200000, ethUsd:3120.44, txCount24h:214882, asOf:'2026-07-23T18:02:11Z', source:['rpc','defillama','blockscout'] }},
+
+  stocks:   {line:'stocks', x:250, tier:'free', method:'GET', path:'/v1/stocks', short:'stocks',
+    sum:'All 95 Stock Tokens: Chainlink price, DEX price, premium/discount, uiMultiplier, liquidity, pool.',
+    params:[], res:{ count:95, stocks:[ { symbol:'AAPL', chainlink:229.42, dex:231.18, premiumPct:0.77, uiMultiplier:'1.000000', liquidityUsd:1900000, pool:'0x4f…c1a' } ], asOf:'2026-07-23T18:02:11Z', source:['chainlink','uniswap-v3'] }},
+  quote:    {line:'stocks', x:430, tier:'free', method:'GET', path:'/v1/stocks/{symbol}', short:'stocks/{symbol}',
+    sum:'One Stock Token in depth: Chainlink round data, DEX stats + 24h volume, OHLCV candles, holders, links.',
+    params:[['symbol','path · ticker, e.g. AAPL'],['interval','5m | 15m | 1h | 4h | 1d']],
+    res:{ symbol:'AAPL', name:'Apple Inc', chainlink:{ price:229.42, roundId:'110680...204', updatedAt:'2026-07-23T18:01:52Z' }, dex:{ price:231.18, volume24hUsd:842000, liquidityUsd:1900000, pool:'0x4f…c1a' }, premiumPct:0.77, uiMultiplier:'1.000000', candles:[['18:00',230.1,231.4,229.8,231.18]], holders:4120, asOf:'2026-07-23T18:02:11Z' }},
+  history:  {line:'stocks', x:720, tier:'paid', price:'$0.005', method:'GET', path:'/v1/stocks/{symbol}/history', short:'stocks/{symbol}/history',
+    sum:'Deep OHLCV reconstructed from swap logs, up to 30 days back. Metered via x402.',
+    params:[['symbol','path · ticker'],['interval','5m | 15m | 1h | 4h | 1d'],['lookback','1h | 6h | 24h | 7d | 30d']],
+    res:{ symbol:'AAPL', interval:'1h', lookback:'7d', reconstructedFrom:'swap-logs', candles:[['07-23T17:00',230.4,231.9,229.7,231.18,842000]], asOf:'2026-07-23T18:02:11Z' }},
+
+  coins:    {line:'coins', x:250, tier:'free', method:'GET', path:'/v1/coins', short:'coins',
+    sum:'Memecoins: launchpad state (bonding/graduated), price, liquidity, holders, age.',
+    params:[['limit','1 to 60']],
+    res:{ count:25, coins:[ { address:'0xaf…3f9', symbol:'HOODCAT', launchpad:'noxa', state:'graduated', priceUsd:0.00042, liquidityUsd:88000, holders:612, ageHours:31 } ], asOf:'2026-07-23T18:02:11Z', source:['blockscout','uniswap-v3'] }},
+  coin:     {line:'coins', x:390, tier:'free', method:'GET', path:'/v1/coins/{address}', short:'coins/{address}',
+    sum:'Coin detail: launch info, graduation status, DEX stats, holder and transfer counts.',
+    params:[['address','path · 0x contract or wallet']],
+    res:{ address:'0xaf…3f9', symbol:'HOODCAT', launchpad:'noxa', state:'graduated', graduatedAt:'2026-07-22T09:14:00Z', priceUsd:0.00042, dex:{ liquidityUsd:88000, volume24hUsd:23100, pool:'0x91…7de' }, holders:612, transfers:9840, asOf:'2026-07-23T18:02:11Z' }},
+  launches: {line:'coins', x:510, tier:'free', method:'GET', path:'/v1/launches', short:'launches',
+    sum:'Recent and live launchpad activity across NOXA and The Odyssey, scanned from on-chain logs.',
+    params:[['launchpad','noxa | odyssey'],['lookback','15m | 1h | 6h | 24h'],['limit','1 to 200']],
+    res:{ launchpad:'noxa', lookback:'1h', launches:[ { token:'0x2b…9c0', symbol:'NOXAINU', launchpad:'noxa', state:'bonding', at:'2026-07-23T17:58:04Z' } ], asOf:'2026-07-23T18:02:11Z' }},
+
+  equities: {line:'equities', x:700, tier:'paid', price:'$0.01', method:'GET', path:'/v1/equities', short:'equities',
+    sum:'Cross-venue spread table: Robinhood Chain vs xStocks vs Ondo, cheapest venue + spread in bps.',
+    params:[['limit','1 to 30']],
+    res:{ count:10, equities:[ { symbol:'AAPL', legs:{ robinhoodChain:231.18, xstocks:230.42, ondo:230.80 }, cheapest:'xstocks', spreadBps:33 } ], asOf:'2026-07-23T18:02:11Z', source:['chainlink','uniswap-v3','coingecko'] }},
+  eqsym:    {line:'equities', x:860, tier:'paid', price:'$0.01', method:'GET', path:'/v1/equities/{symbol}', short:'equities/{symbol}',
+    sum:'Cross-venue price for one ticker: the same three legs, cheapest venue, spread in bps.',
+    params:[['symbol','path · ticker, e.g. AAPL']],
+    res:{ symbol:'AAPL', legs:{ robinhoodChain:231.18, xstocks:230.42, ondo:230.80 }, cheapest:'xstocks', spreadBps:33, asOf:'2026-07-23T18:02:11Z' }},
+
+  portfolio:{line:'portfolio', x:700, tier:'paid', price:'$0.002', method:'GET', path:'/v1/portfolio/{address}', short:'portfolio/{address}',
+    sum:'Multiplier-correct portfolio: per-position balance, share-equivalent, USD value, explicit valuation basis.',
+    params:[['address','path · 0x wallet address']],
+    res:{ address:'0xaf…3f9', totalUsd:12840.55, usdg:'430.10', positions:[ { symbol:'AAPL', balance:'12.5', uiMultiplier:'1.000000', shareEquivalent:'12.5', priceUsd:231.18, valueUsd:2889.75, valuationBasis:'dex-mid' } ], asOf:'2026-07-23T18:02:11Z' }},
+
+  firehose: {line:'firehose', x:700, tier:'paid', price:'$0.01', method:'GET', path:'/v1/firehose', short:'firehose',
+    sum:'Mints a ~10-minute signed session token for the real-time WebSocket. One paid step, then stream free.',
+    params:[],
+    res:{ sessionToken:'eyJhbGciOi…', expiresAt:'2026-07-23T18:12:11Z', wsUrl:'wss://{host}/v1/ws?token=…', channels:['firehose','launches','trades','ticks'] }},
+  ws:       {line:'firehose', x:880, tier:'term', method:'WSS', path:'/v1/ws', short:'ws (terminus)',
+    sum:'The firehose WebSocket. Open with a session token; subscribe to any subset of channels. Free for the token life.',
+    params:[['token','query · session token from /v1/firehose'],['channels','firehose,launches,trades,ticks']],
+    res:{ channel:'launches', data:{ launchpad:'noxa', token:'0x2b…9c0', symbol:'NOXAINU' }, at:'2026-07-23T18:02:14Z' }},
+};
+const ORDER = ['health','chain','stocks','quote','history','coins','coin','launches','equities','eqsym','portfolio','firehose','ws'];
+
+/* ---------- build svg ---------- */
+const linesG=document.getElementById('lines'), stationsG=document.getElementById('stations');
+const lineById={}; LINES.forEach(l=>lineById[l.id]=l);
+// last x per line
+const lastX={}; ORDER.forEach(id=>{ const e=EP[id]; lastX[e.line]=Math.max(lastX[e.line]||0, e.x); });
+
+// trunk
+const trunk=document.createElementNS('http://www.w3.org/2000/svg','line');
+trunk.setAttribute('class','trunk'); trunk.setAttribute('x1',TRUNK_X); trunk.setAttribute('y1',LINES[0].y);
+trunk.setAttribute('x2',TRUNK_X); trunk.setAttribute('y2',LINES[LINES.length-1].y);
+linesG.appendChild(trunk);
+
+LINES.forEach(l=>{
+  const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ln.setAttribute('class','line'); ln.dataset.line=l.id;
+  ln.setAttribute('x1',TRUNK_X); ln.setAttribute('y1',l.y);
+  ln.setAttribute('x2',lastX[l.id]); ln.setAttribute('y2',l.y);
+  ln.setAttribute('stroke-width',l.w); if(l.dash) ln.setAttribute('stroke-dasharray',l.dash);
+  ln.setAttribute('stroke-linecap','round');
+  linesG.appendChild(ln);
+  // label
+  const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('class','linelab'); t.setAttribute('x',18); t.setAttribute('y',l.y+3.5);
+  t.textContent=l.label; linesG.appendChild(t);
+});
+
+const SVGNS='http://www.w3.org/2000/svg';
+function mk(tag,attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+ORDER.forEach(id=>{
+  const e=EP[id]; const y=lineById[e.line].y;
+  const g=mk('g',{class:'stn-g','data-id':id, tabindex:0, role:'button', 'aria-selected':'false'});
+  g.setAttribute('aria-label', e.method+' '+e.path);
+  const halo=mk('circle',{class:'stn-halo', cx:e.x, cy:y, r:12});
+  g.appendChild(halo);
+  if(e.tier==='term'){
+    g.appendChild(mk('rect',{class:'stn-term', x:e.x-3, y:y-11, width:6, height:22, rx:1}));
+  } else {
+    const dot=mk('circle',{class:'stn-dot'+(e.tier==='paid'?' paid':''), cx:e.x, cy:y, r:7.5});
+    g.appendChild(dot);
+    if(e.tier==='paid') g.appendChild(mk('circle',{class:'stn-inner', cx:e.x, cy:y, r:2.6}));
+  }
+  // label under station
+  const lab=mk('text',{class:'stn-lab', x:e.x, y:y+24, 'text-anchor':'middle'});
+  lab.textContent=e.short;
+  g.appendChild(lab);
+  if(e.tier==='paid'){
+    const pr=mk('text',{class:'stn-price', x:e.x, y:y+35, 'text-anchor':'middle'});
+    pr.textContent=e.price; g.appendChild(pr);
+  }
+  g.addEventListener('click', ()=>select(id));
+  g.addEventListener('keydown', ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); select(id); } });
+  stationsG.appendChild(g);
+});
+
+/* ---------- detail render + train ---------- */
+const detail=document.getElementById('detail');
+const train=document.getElementById('train');
+const allLines=[...document.querySelectorAll('.line')];
+const allStns=[...document.querySelectorAll('.stn-g')];
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function j(o){ return JSON.stringify(o,null,2); }
+
+let selected=null;
+function select(id){
+  const e=EP[id]; if(!e) return; selected=id;
+  // dim other lines, highlight this
+  allLines.forEach(ln=>ln.classList.toggle('dim', ln.dataset.line!==e.line));
+  allStns.forEach(g=>g.setAttribute('aria-selected', g.dataset.id===id ? 'true':'false'));
+  // move train to line y then translate to station x
+  const y=lineById[e.line].y;
+  train.setAttribute('cy', y); train.setAttribute('cx', TRUNK_X);
+  train.style.transition='none'; train.style.transform='translateX(0)';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    train.style.transition=''; train.style.transform=`translateX(${e.x-TRUNK_X}px)`;
+  }));
+  // on a narrow (scrolling) map, bring the selected station into view
+  const svg=document.getElementById('metro'), scroller=document.querySelector('.mapscroll');
+  if(scroller && svg.clientWidth>0 && scroller.scrollWidth>scroller.clientWidth+4){
+    const scale=svg.clientWidth/1000, tx=e.x*scale;
+    const goal=Math.max(0, Math.min(scroller.scrollWidth-scroller.clientWidth, tx-scroller.clientWidth/2));
+    scroller.scrollTo({left:goal, behavior:'smooth'});
+  }
+  // request example
+  let req;
+  if(e.method==='WSS'){ req = 'const ws = new WebSocket(\n  "wss://{host}/v1/ws?token=…&channels=launches,ticks"\n)'; }
+  else if(e.tier==='paid'){ req = 'curl -H "X-PAYMENT: <header>" \\\n  '+BASE+e.path; }
+  else { req = 'curl '+BASE+e.path; }
+  const params = e.params && e.params.length
+    ? '<div class="params"><div class="lab">query · path</div>'+e.params.map(p=>`<div class="row"><div class="pk">${esc(p[0])}</div><div class="pv">${esc(p[1])}</div></div>`).join('')+'</div>'
+    : '<div class="params"><div class="lab">query · path</div><div class="none">no parameters</div></div>';
+  const line=lineById[e.line];
+  const dashStyle = line.dash ? `border-top-style:dashed` : '';
+  const fare = e.tier==='paid' ? `<span class="fare paid">x402 · ${e.price}</span>` : (e.tier==='term'? `<span class="fare">session</span>` : `<span class="fare">free</span>`);
+  detail.innerHTML =
+    `<div class="dh">
+       <div class="top">
+         <span class="linetag"><i style="${dashStyle}"></i>${line.label} line</span>
+         ${fare}
+       </div>
+       <div class="path"><span class="method">${e.method}</span><span class="p">${esc(e.path)}</span></div>
+     </div>
+     <div class="dsum">${esc(e.sum)}</div>
+     ${params}
+     <div class="io">
+       <div class="seg req"><div class="lab">request<button class="copy-i" data-c="${encodeURIComponent(req)}">COPY</button></div><pre>${esc(req)}</pre></div>
+       <div class="seg"><div class="lab">${e.method==='WSS'?'message':'200 response'}<button class="copy-i" data-c="${encodeURIComponent(j(e.res))}">COPY</button></div><pre>${esc(j(e.res))}</pre></div>
+     </div>`;
+  detail.querySelectorAll('.copy-i').forEach(b=>b.addEventListener('click',()=>{
+    navigator.clipboard.writeText(decodeURIComponent(b.dataset.c)).then(()=>{ const t=b.textContent; b.textContent='COPIED'; setTimeout(()=>b.textContent=t,1100); }).catch(()=>{});
+  }));
+}
+select('quote');
+
+/* ---------- cross-venue spread table ---------- */
+const SPREAD=[
+  ['AAPL',231.18,230.42,230.80,'xstocks',33],
+  ['TSLA',246.10,247.55,247.02,'rh chain',59],
+  ['NVDA',130.02,129.44,129.71,'xstocks',45],
+  ['MSTR',165.02,166.30,165.88,'rh chain',77],
+  ['COIN',244.51,243.90,244.12,'xstocks',25],
+  ['SPY',549.10,548.72,548.95,'xstocks',7],
+];
+const sb=document.getElementById('spread-body');
+SPREAD.forEach(r=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="sym">${r[0]}</td><td>$${r[1].toFixed(2)}</td><td>$${r[2].toFixed(2)}</td><td>$${r[3].toFixed(2)}</td><td><span class="best">${r[4]}</span></td><td>${r[5]} bps</td>`;
+  sb.appendChild(tr);
+});
+
+/* ---------- copy blocks ---------- */
+document.querySelectorAll('.install .copy').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const box=btn.parentElement;
+    const txt=[...box.querySelectorAll('.p,.pc')].map(s=>s.textContent).join('\n');
+    navigator.clipboard.writeText(txt).then(()=>{ const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200); }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal + rail ---------- */
+const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:.12});
+document.querySelectorAll('.rise').forEach((el,i)=>{ el.style.transitionDelay=(i%3*60)+'ms'; io.observe(el); });
+
+const stations=[...document.querySelectorAll('.rail .stn')];
+const secs=stations.map(a=>document.querySelector(a.getAttribute('href')));
+const carriage=document.getElementById('carriage');
+function updateRail(){
+  let idx=0, mid=innerHeight*0.4;
+  secs.forEach((sec,i)=>{ const r=sec.getBoundingClientRect(); if(r.top<=mid) idx=i; });
+  stations.forEach((s,i)=>s.setAttribute('aria-current', i===idx));
+  const active=stations[idx];
+  const railRect=document.querySelector('.rail').getBoundingClientRect();
+  const r=active.getBoundingClientRect();
+  carriage.style.height=r.height+'px';
+  carriage.style.transform=`translateY(${r.top-railRect.top}px)`;
+}
+stations.forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'}); }));
+addEventListener('scroll',()=>requestAnimationFrame(updateRail),{passive:true});
+addEventListener('resize',updateRail); updateRail();
+</script>
 </body>
 </html>

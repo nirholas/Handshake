@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>hood-api: no line runs there (404)</title>
+<meta name="robots" content="noindex" />
+<link rel="canonical" href="https://nirholas.github.io/hood-api/" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0b0c'/><g stroke='%23e9e6df' stroke-width='2' fill='none'><path d='M6 10 H26'/><path d='M6 16 H20'/><path d='M6 22 H24'/></g><circle cx='6' cy='10' r='2.4' fill='%230b0b0c' stroke='%23e9e6df' stroke-width='1.6'/><circle cx='26' cy='10' r='2.4' fill='%23e9e6df'/></svg>" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--ink:#0b0b0c;--paper:#ecebe6;--graphite:#767268;
+    --mono:ui-monospace,"SFMono-Regular","Menlo","Consolas",monospace;
+    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif}
+  body{background:var(--paper);color:var(--ink);font-family:var(--grot);min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;padding:clamp(24px,6vw,88px);gap:22px}
+  .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.34em;text-transform:uppercase;color:var(--graphite)}
+  h1{font-size:clamp(48px,11vw,140px);font-weight:700;letter-spacing:-.03em;line-height:.9}
+  p{max-width:52ch;font-size:clamp(16px,1.7vw,21px);color:#2b2823;line-height:1.5}
+  svg{width:clamp(200px,46vw,360px);height:auto}
+  .ln{fill:none;stroke:rgba(11,11,12,.28);stroke-width:2}
+  .dot{fill:var(--paper);stroke:var(--ink);stroke-width:2.2}
+  .train{fill:var(--ink);transform-box:fill-box;transform-origin:center;
+    animation:run 3s cubic-bezier(.16,1,.3,1) infinite}
+  @keyframes run{0%{transform:translateX(0)}60%{transform:translateX(150px)}100%{transform:translateX(150px);opacity:0}}
+  @media(prefers-reduced-motion:reduce){.train{animation:none;transform:translateX(150px)}}
+  a{display:inline-flex;align-self:flex-start;text-decoration:none;border:1px solid var(--ink);color:var(--ink);
+    font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:15px 22px;
+    transition:background .25s,color .25s}
+  a:hover{background:var(--ink);color:var(--paper)}
+</style>
+</head>
+<body>
+  <div class="eyebrow">404 / no line runs there</div>
+  <svg viewBox="0 0 240 40" aria-hidden="true">
+    <line class="ln" x1="20" y1="20" x2="200" y2="20"/>
+    <circle class="dot" cx="20" cy="20" r="7"/>
+    <circle class="dot" cx="200" cy="20" r="7"/>
+    <circle class="train" cx="20" cy="20" r="4.5"/>
+  </svg>
+  <h1>End of the line.</h1>
+  <p>No station sits at that path. Ride back to the transit map and pick a line: chain, stocks, coins, equities, portfolio, or the firehose.</p>
+  <a href="https://nirholas.github.io/hood-api/">back to the map</a>
+</body>
+</html>

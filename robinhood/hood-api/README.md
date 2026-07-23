@@ -10,6 +10,21 @@ metered with [x402](#paying-with-x402) for the deep stuff — no API keys, no su
 
 Docs: **https://nirholas.github.io/hood-api/** · OpenAPI 3.1: [`openapi.json`](./openapi.json)
 
+## Website
+
+The docs site (`docs/`) is a single self-contained `index.html` (inline CSS + JS, zero external
+requests, works from `file://`). The whole API is drawn as an **endpoint transit map**: each line
+is a resource, each station an endpoint, and the free stations sit before the x402 fare gate while
+the metered ones sit beyond it. Tap any station to route from its request to a live request/response
+example. The map is the docs. Deploy the folder anywhere static:
+
+[![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?style=flat-square)](https://dash.cloudflare.com/?to=/:account/pages/new)
+[![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?style=flat-square)](https://app.netlify.com/start)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-101418?style=flat-square)](https://vercel.com/new)
+
+`wrangler.toml`, `netlify.toml`, and `vercel.json` are checked in and all point at `docs/`; on
+GitHub Pages, set Settings → Pages → Deploy from a branch → `main` → `/docs`.
+
 ## Why this exists
 
 RWA.xyz is enterprise-paid. CoinGecko has no equity semantics — it can't tell you a Stock
