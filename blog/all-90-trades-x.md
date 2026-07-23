@@ -119,7 +119,7 @@ All 90 trades, individually graded, with on-chain receipts, charts, and the down
 
 https://three.ws/blog/all-90-trades
 
-The experiment continues. Budgets now flow toward whatever performs, and the next edition of this dataset will include the fleet's own self-tunings.
+The experiment continues. Budgets now flow toward whatever performs, the next edition of this dataset will include the fleet's own self-tunings, and the next trials widen the model roster: more frontier LLMs join the cockpit (Kimi K3 is first in line), head to head at equal budgets under identical rails.
 
 ---
 
@@ -249,4 +249,4 @@ No cherry-picking. The ledger does not let us.
 
 https://three.ws/blog/all-90-trades
 
-The crossing arm's trades will publish the same way. Win or lose.
+The crossing arm's trades will publish the same way. Win or lose. And the next trials put more models in the cockpit, starting with Kimi K3.
