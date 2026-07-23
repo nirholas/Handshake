@@ -2934,8 +2934,8 @@
 						`camera-orbit="35deg 78deg auto" shadow-intensity="0" exposure="0.9" ` +
 						`style="width:100%;height:100%;pointer-events:none;--poster-color:transparent" ` +
 						`aria-hidden="true"></model-viewer>`
-					: `<div class="up-card-thumb-placeholder">${c.type === 'world' ? '⛰' : '◎'}</div>`;
-				const badge = c.type === 'world' ? 'World' : 'Model';
+					: `<div class="up-card-thumb-placeholder">${c.type === 'world' ? '⛰' : c.type === 'restyle' ? '✦' : '◎'}</div>`;
+				const badge = c.type === 'world' ? 'World' : c.type === 'restyle' ? 'Restyle' : 'Model';
 				const date = c.createdAt
 					? new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 					: '';

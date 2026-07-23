@@ -33,6 +33,8 @@ import {
 	generateSeededVariants,
 	validateAndPersistGlb,
 } from './_lib/material-studio-store.js';
+import { getSessionUser } from './_lib/auth.js';
+import { recordMaterialRestyle } from './_lib/material-restyle-store.js';
 
 const ROUTE = '/api/material-studio';
 const MAX_GLB_UPLOAD_BYTES = 64 * 1024 * 1024;
@@ -131,6 +133,17 @@ async function handleRestyle(req, res, ip) {
 		parentLineage: parseParentLineage(body.parent_lineage),
 		parentIndex: parseParentIndex(body.parent_index),
 	});
+	// Best-effort: attribute to the signed-in caller so it shows up on their
+	// public portfolio's Creations tab. Never blocks or fails generation.
+	const userId = await getSessionUser(req).then((u) => u?.id || null).catch(() => null);
+	recordMaterialRestyle({
+		userId,
+		action: 'restyle',
+		sourceUrl: result.sourceGlbUrl || glbUrl,
+		resultUrl: result.glbUrl,
+		instruction,
+		materialIndex: parseMaterialIndex(body.material_index) ?? null,
+	}).catch(() => {});
 	return json(res, 200, { ok: true, ...result });
 }
 
@@ -149,6 +162,25 @@ async function handleVariants(req, res, ip) {
 		parentLineage: parseParentLineage(body.parent_lineage),
 		parentIndex: parseParentIndex(body.parent_index),
 	});
+	// Best-effort: one row per generated variant so a prolific creator's whole
+	// colorway fan-out shows up on their portfolio, not just a single card.
+	const userId = await getSessionUser(req).then((u) => u?.id || null).catch(() => null);
+	if (userId && Array.isArray(result.variants)) {
+		Promise.all(
+			result.variants.map((v) =>
+				recordMaterialRestyle({
+					userId,
+					action: 'variants',
+					label: v.label || null,
+					sourceUrl: glbUrl,
+					resultUrl: v.glbUrl,
+					preset: typeof body.preset === 'string' ? body.preset : null,
+					seed: Number.isFinite(v.seed) ? v.seed : null,
+					materialIndex: parseMaterialIndex(body.material_index) ?? null,
+				}),
+			),
+		).catch(() => {});
+	}
 	return json(res, 200, { ok: true, ...result });
 }
 

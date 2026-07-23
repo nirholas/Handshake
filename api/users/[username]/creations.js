@@ -4,18 +4,19 @@
 // The main /api/users/:username response (api/users/[username].js) already
 // carries a user's avatars, agents, widgets, skills, plugins, coins, and
 // memories — everything that lives on a row keyed by owner_id/user_id in
-// its own first-class table. Forged 3D models (forge_creations) and worlds
-// (dioramas) are different: both tables are deliberately anonymous-by-design
-// (scoped to a hashed browser client_key so /forge and /diorama work with no
+// its own first-class table. Forged 3D models (forge_creations), worlds
+// (dioramas), and restyled models (material_restyles) are different: all
+// three tables are deliberately anonymous-by-design (scoped to a hashed
+// browser client_key so /forge, /diorama, and /restyle work with no
 // account), and only carry a user_id when the creator happened to be signed
-// in at generation/save time. This endpoint is the one place those two
-// creation types get aggregated and paginated for the profile's "Creations"
-// tab — split out of the main endpoint (like collectibles.js) so a prolific
+// in at generation/save time. This endpoint is the one place those creation
+// types get aggregated and paginated for the profile's "Creations" tab —
+// split out of the main endpoint (like collectibles.js) so a prolific
 // creator with hundreds of rows never slows down the profile's first paint.
 //
 //   GET /api/users/:username/creations                → first page (24)
 //   GET /api/users/:username/creations?before=<iso>    → next page (cursor)
-//   GET /api/users/:username/creations?type=model|world → one type only
+//   GET /api/users/:username/creations?type=model|world|restyle → one type only
 //
 // Public, no auth: the profile it backs is public. Anonymous creations
 // (user_id null — the majority of forge_creations/dioramas rows) never
@@ -26,6 +27,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { listCreationsByUser } from '../../_lib/forge-store.js';
 import { listDioramasByUser } from '../../_lib/diorama-store.js';
+import { listRestylesByUser } from '../../_lib/material-restyle-store.js';
 
 const SITE = 'https://three.ws';
 
@@ -51,48 +53,64 @@ export default wrap(async (req, res) => {
 	if (!user) return error(res, 404, 'not_found', 'user not found');
 
 	const url = new URL(req.url, 'http://x');
-	const typeFilter = url.searchParams.get('type'); // 'model' | 'world' | null (both)
+	const typeFilter = url.searchParams.get('type'); // 'model' | 'world' | 'restyle' | null (all)
 	const before = url.searchParams.get('before') || undefined;
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 48);
-	// Over-fetch each source so merging two independently-paginated lists still
+	// Over-fetch each source so merging independently-paginated lists still
 	// yields a full page of the true recency-merged feed, not an undercount.
 	const fetchLimit = limit + 1;
 
-	const [models, worlds] =
+	const [models, worlds, restyles] =
 		typeFilter === 'world'
-			? [[], await listDioramasByUser({ userId: user.id, limit: fetchLimit, before })]
+			? [[], await listDioramasByUser({ userId: user.id, limit: fetchLimit, before }), []]
 			: typeFilter === 'model'
-				? [await listCreationsByUser({ userId: user.id, limit: fetchLimit, before }), []]
-				: await Promise.all([
-						listCreationsByUser({ userId: user.id, limit: fetchLimit, before }),
-						listDioramasByUser({ userId: user.id, limit: fetchLimit, before }),
-					]);
+				? [await listCreationsByUser({ userId: user.id, limit: fetchLimit, before }), [], []]
+				: typeFilter === 'restyle'
+					? [[], [], await listRestylesByUser({ userId: user.id, limit: fetchLimit, before })]
+					: await Promise.all([
+							listCreationsByUser({ userId: user.id, limit: fetchLimit, before }),
+							listDioramasByUser({ userId: user.id, limit: fetchLimit, before }),
+							listRestylesByUser({ userId: user.id, limit: fetchLimit, before }),
+						]);
 
-	const items = [...models, ...worlds]
-		.map((it) =>
-			it.type === 'world'
-				? {
-						id: it.id,
-						type: 'world',
-						title: it.title,
-						prompt: it.prompt,
-						thumbnailUrl: it.thumbnailGlb,
-						category: it.mood,
-						viewerUrl: `${SITE}/diorama?id=${it.id}`,
-						createdAt: it.createdAt,
-					}
-				: {
-						id: it.id,
-						type: 'model',
-						title: it.prompt,
-						prompt: it.prompt,
-						thumbnailUrl: it.glbUrl,
-						category: it.category,
-						isRemix: it.isRemix,
-						viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
-						createdAt: it.createdAt,
-					},
-		)
+	const items = [...models, ...worlds, ...restyles]
+		.map((it) => {
+			if (it.type === 'world') {
+				return {
+					id: it.id,
+					type: 'world',
+					title: it.title,
+					prompt: it.prompt,
+					thumbnailUrl: it.thumbnailGlb,
+					category: it.mood,
+					viewerUrl: `${SITE}/diorama?id=${it.id}`,
+					createdAt: it.createdAt,
+				};
+			}
+			if (it.type === 'restyle') {
+				return {
+					id: it.id,
+					type: 'restyle',
+					title: it.prompt || (it.action === 'variants' ? 'Colorway variant' : 'Restyled model'),
+					prompt: it.prompt,
+					thumbnailUrl: it.glbUrl,
+					category: it.category,
+					viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
+					createdAt: it.createdAt,
+				};
+			}
+			return {
+				id: it.id,
+				type: 'model',
+				title: it.prompt,
+				prompt: it.prompt,
+				thumbnailUrl: it.glbUrl,
+				category: it.category,
+				isRemix: it.isRemix,
+				viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
+				createdAt: it.createdAt,
+			};
+		})
 		.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 		.slice(0, limit);
 

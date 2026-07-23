@@ -4,6 +4,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { listCreationsByUser, countCreationsByUser } from '../_lib/forge-store.js';
 import { listDioramasByUser, countDioramasByUser } from '../_lib/diorama-store.js';
+import { listRestylesByUser, countRestylesByUser } from '../_lib/material-restyle-store.js';
 import { getStreak, listBadges } from '../_lib/streaks.js';
 
 const CREATIONS_PAGE_SIZE = 24;
@@ -14,28 +15,41 @@ const SITE = 'https://three.ws';
 // lazily from GET /api/users/:username/creations (same merge logic, cursor
 // paginated) so this main endpoint stays fast even for a prolific creator.
 function toCreationCard(it) {
-	return it.type === 'world'
-		? {
-				id: it.id,
-				type: 'world',
-				title: it.title,
-				prompt: it.prompt,
-				thumbnailUrl: it.thumbnailGlb,
-				category: it.mood,
-				viewerUrl: `${SITE}/diorama?id=${it.id}`,
-				createdAt: it.createdAt,
-			}
-		: {
-				id: it.id,
-				type: 'model',
-				title: it.prompt,
-				prompt: it.prompt,
-				thumbnailUrl: it.glbUrl,
-				category: it.category,
-				isRemix: it.isRemix,
-				viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
-				createdAt: it.createdAt,
-			};
+	if (it.type === 'world') {
+		return {
+			id: it.id,
+			type: 'world',
+			title: it.title,
+			prompt: it.prompt,
+			thumbnailUrl: it.thumbnailGlb,
+			category: it.mood,
+			viewerUrl: `${SITE}/diorama?id=${it.id}`,
+			createdAt: it.createdAt,
+		};
+	}
+	if (it.type === 'restyle') {
+		return {
+			id: it.id,
+			type: 'restyle',
+			title: it.prompt || (it.action === 'variants' ? 'Colorway variant' : 'Restyled model'),
+			prompt: it.prompt,
+			thumbnailUrl: it.glbUrl,
+			category: it.category,
+			viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
+			createdAt: it.createdAt,
+		};
+	}
+	return {
+		id: it.id,
+		type: 'model',
+		title: it.prompt,
+		prompt: it.prompt,
+		thumbnailUrl: it.glbUrl,
+		category: it.category,
+		isRemix: it.isRemix,
+		viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
+		createdAt: it.createdAt,
+	};
 }
 
 export default wrap(async (req, res) => {
@@ -72,8 +86,10 @@ export default wrap(async (req, res) => {
 		shopRows,
 		modelRows,
 		worldRows,
+		restyleRows,
 		modelsCount,
 		worldsCount,
+		restylesCount,
 	] = await Promise.all([
 		sql`
 			select id, name, slug, description, storage_key, thumbnail_key, tags,
@@ -209,15 +225,18 @@ export default wrap(async (req, res) => {
 			order by ap.updated_at desc
 			limit 48
 		`.catch(() => []),
-		// Forged 3D models + saved worlds (dioramas) made while signed in — the
-		// two creation types that live in their own anonymous-by-design tables
-		// rather than an owner_id-keyed one (see api/_lib/migrations/
-		// 20260712010000_creator_portfolio_user_ids.sql). First page only;
-		// deeper pages come from GET /api/users/:username/creations.
+		// Forged 3D models, saved worlds (dioramas), and restyled models made
+		// while signed in — the three creation types that live in their own
+		// anonymous-by-design tables rather than an owner_id-keyed one (see
+		// api/_lib/migrations/20260712010000_creator_portfolio_user_ids.sql and
+		// 20260723140000_material_restyles.sql). First page only; deeper pages
+		// come from GET /api/users/:username/creations.
 		listCreationsByUser({ userId: user.id, limit: CREATIONS_PAGE_SIZE }),
 		listDioramasByUser({ userId: user.id, limit: CREATIONS_PAGE_SIZE }),
+		listRestylesByUser({ userId: user.id, limit: CREATIONS_PAGE_SIZE }),
 		countCreationsByUser({ userId: user.id }),
 		countDioramasByUser({ userId: user.id }),
+		countRestylesByUser({ userId: user.id }),
 	]);
 
 	// Streak + badges — the retention layer for the cross-surface leaderboard.
@@ -384,14 +403,15 @@ export default wrap(async (req, res) => {
 		social[row.provider] = row.username;
 	}
 
-	// Merge forged models + saved worlds into one recency-ordered feed. Each
-	// list is independently already sorted+capped at CREATIONS_PAGE_SIZE, so
-	// slicing after the merge is the true top-N across both types.
-	const creations = [...modelRows, ...worldRows]
+	// Merge forged models + saved worlds + restyled models into one
+	// recency-ordered feed. Each list is independently already sorted+capped
+	// at CREATIONS_PAGE_SIZE, so slicing after the merge is the true top-N
+	// across all three types.
+	const creations = [...modelRows, ...worldRows, ...restyleRows]
 		.map(toCreationCard)
 		.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 		.slice(0, CREATIONS_PAGE_SIZE);
-	const creationsTotal = (modelsCount ?? 0) + (worldsCount ?? 0);
+	const creationsTotal = (modelsCount ?? 0) + (worldsCount ?? 0) + (restylesCount ?? 0);
 	const creationsNext =
 		creationsTotal > creations.length && creations.length
 			? creations[creations.length - 1].createdAt
@@ -418,6 +438,7 @@ export default wrap(async (req, res) => {
 		creations: creationsTotal,
 		models: modelsCount ?? 0,
 		worlds: worldsCount ?? 0,
+		restyles: restylesCount ?? 0,
 		widget_views: Number(statsRow?.[0]?.total_widget_views ?? 0),
 		followers: followCounts?.followers ?? 0,
 		following: followCounts?.following ?? 0,
