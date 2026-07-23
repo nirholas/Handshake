@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T04:01:33.658Z",
+	"generated_at": "2026-07-23T05:06:22.570Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3737,7 +3737,7 @@
 				{
 					"path": "/blog/all-90-trades",
 					"title": "We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.",
-					"description": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. The complete dataset, the charts, and the finding that LLM-judged entries beat hand-tuned rules.",
+					"description": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.",
 					"added": "2026-07-23",
 					"auth": null,
 					"indexable": true,
