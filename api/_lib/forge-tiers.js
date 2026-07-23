@@ -368,21 +368,36 @@ export const DEFAULT_BACKEND_FOR_PATH = Object.freeze({
 	sketch: 'triposg',
 });
 
-// Free-for-us routing: every tier defaults to a zero-vendor-cost engine. The
-// tier picks WHICH free engine, so quality (and the price we charge the user)
-// scales without us ever spending on a paid API:
-//   • draft / standard → NVIDIA NIM TRELLIS — fast, free, native text→mesh.
-//   • high             → HuggingFace Hunyuan3D — textured, higher-fidelity, free.
-// These apply to text prompts and to the FLUX-synthesized reference the free
-// lanes reconstruct from. Photo submissions can't use the text-only NVIDIA lane,
-// so they fall to the free HuggingFace lane via FREE_FALLBACK_FOR_PATH below.
+// Free-for-us routing: every tier defaults to a zero-vendor-cost engine. Every
+// tier now names an IMAGE-INTERMEDIATE engine — a photoreal Vertex-Gemini
+// reference image is generated from the (Granite-directed) prompt first, then
+// reconstructed to a mesh — because that reference image is the single
+// highest-leverage lever on "does this look like a real photograph" the
+// platform has, and it must apply by default, not only at the high tier.
+//
+//   • draft / standard → our self-host TRELLIS worker (image-intermediate,
+//     fast, free); falls to Hunyuan3D / HuggingFace / (last) NVIDIA NIM via
+//     FREE_FALLBACK_FOR_PATH when self-host isn't configured.
+//   • high              → self-host Hunyuan3D — textured, higher-fidelity, free.
+//
+// NVIDIA's hosted TRELLIS preview (native text→mesh, no reference image) is
+// NEVER a named default here anymore — see BACKENDS.nvidia's `userImages:
+// false` and its own text-only conditioning: reconstructing directly from a
+// 77-char-truncated prompt with no photoreal reference is exactly the realism
+// hole this routing table now closes. It stays free, fast, and explicitly
+// selectable (`backend:'nvidia'`), and remains the final fallthrough in
+// FREE_FALLBACK_FOR_PATH so a text prompt still returns a model on a
+// deployment with no self-host/HuggingFace lane configured at all.
+// These apply to text prompts and to the Vertex-synthesized reference the free
+// lanes reconstruct from. Photo submissions carry their own reference image
+// already, so this table only decides which engine reconstructs it.
 // Charging is orthogonal: the High tier stays $THREE hold-or-pay gated in the
 // handler regardless of which free engine serves it — we charge for quality, not
 // to recover vendor cost. Paid backends (Replicate/Meshy/Tripo) stay explicitly
 // selectable at every tier.
 export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
-	draft: Object.freeze({ image: 'nvidia' }),
-	standard: Object.freeze({ image: 'nvidia' }),
+	draft: Object.freeze({ image: 'trellis_selfhost' }),
+	standard: Object.freeze({ image: 'trellis_selfhost' }),
 	// High names our self-host Hunyuan3D worker — the highest-fidelity engine we
 	// can run on our own GPUs. Until GCP_HUNYUAN3D_URL is configured the candidate
 	// walk falls to the per-path chain (self-host TRELLIS first). The external

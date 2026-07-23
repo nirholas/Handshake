@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-23T11:59:00.894Z",
+	"generated_at": "2026-07-23T13:34:39.248Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1301,6 +1301,16 @@
 					"title": "Trader Leaderboard",
 					"description": "Pump.fun traders ranked by a provable, on-chain track record — realized P&L, win rate, drawdown — with every number traceable to its transaction.",
 					"added": "2026-06-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tracker",
+					"title": "KOL Tracker",
+					"description": "Solana crypto KOLs ranked by realized P&L computed from their own wallet's on-chain trade history, with win rate, volume, trade count, and X follower counts for verified handles.",
+					"added": "2026-07-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

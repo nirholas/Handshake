@@ -86,8 +86,10 @@ curl -s -X POST https://three.ws/api/mcp-studio \
 
 ```bash
 # 1. Generate the figure (see generate-3d-model/reference.md for the submit/poll shape)
+#    "tier": "high" matches what forge_avatar/text_to_avatar request automatically —
+#    it is the tier the router maps to the self-host Hunyuan3D lane for IRL realism.
 curl -s -X POST https://three.ws/api/forge -H 'content-type: application/json' \
-  -d '{ "prompt": "a friendly cartoon astronaut in a glossy white suit" }'
+  -d '{ "prompt": "a friendly cartoon astronaut in a glossy white suit", "tier": "high" }'
 
 # 2. Rig the resulting GLB (see rig-a-model)
 curl -s -X POST "https://three.ws/api/forge?action=rig" -H 'content-type: application/json' \
@@ -107,6 +109,15 @@ curl -s -X POST "https://three.ws/api/forge?action=rig" -H 'content-type: applic
   body — best for a clean rig.
 - Name the silhouette and materials: `"a tall slender elf ranger in green leather
   armor"`. Avoid scenes, props held in hand, or multiple characters.
+- Hands are the hardest part of the mesh to get right. `forge_avatar` /
+  `text_to_avatar` already direct the generator toward relaxed, open hands with
+  fingers separated and visible (never a fist, never a hand hidden behind the
+  body or in a pocket) — do not fight that by asking for "hands on hips" or
+  "arms crossed" unless you accept a higher chance of fused-finger geometry.
+- Both avatar tools always request the platform's `high` quality tier under the
+  hood — the self-host Hunyuan3D lane (people/organic-subject strength, portrait
+  realism cues on the reference image) instead of the faster draft/standard
+  default. This is automatic; no input needed.
 
 ## Higher-fidelity & paid lanes
 

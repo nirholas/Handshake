@@ -272,10 +272,11 @@ const MESH_DIRECTOR_INSTRUCTION =
 
 const AVATAR_DIRECTOR_INSTRUCTION =
 	"You are a 3D character art director. Rewrite the user's idea into ONE concise prompt for a text-to-3D " +
-	'generator that will be auto-rigged. Describe a SINGLE full-body humanoid character standing in a neutral ' +
-	'pose with arms slightly away from the body, on a plain background. Name the body type, outfit, materials, ' +
-	'colors, and key features. No scene, no props held across the body, no multiple characters, no text or logos. ' +
-	'Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
+	'generator that will be auto-rigged. Describe a SINGLE full-body humanoid character standing in a relaxed ' +
+	'neutral pose with arms slightly away from the body, hands open and fingers separated and clearly visible ' +
+	'(never a closed fist, never a hand hidden behind the body or in a pocket), on a plain background. Name the ' +
+	'body type, outfit, materials, colors, and key features. No scene, no props held across the body, no multiple ' +
+	'characters, no text or logos. Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
 
 // ---------------------------------------------------------------------------
 // forge_free — text → textured 3D GLB on the FREE NVIDIA NIM (TRELLIS) lane.
@@ -698,15 +699,20 @@ export async function runForgeAvatar({
 	}
 	const effectivePrompt = directedPrompt || trimmedPrompt;
 
-	// Stage 1 — generate the textured mesh.
+	// Stage 1 — generate the textured mesh. Avatars are IRL-likeness-critical, so
+	// they always request the 'high' tier: that is the only tier the router maps
+	// to the self-host Hunyuan3D lane (people/organic-subject strength, portrait
+	// realism cues in the reference-image stage) ahead of the faster/lower-fidelity
+	// free defaults (NVIDIA NIM at draft/standard). Without this the avatar chain
+	// silently ran on the standard tier's default lane and never saw Hunyuan3D.
 	const genStarted = Date.now();
 	let genJob;
 	try {
 		genJob = await submitForge({
 			base,
 			payload: imageMode
-				? { image_urls: views, prompt: effectivePrompt || undefined, aspect_ratio: aspect }
-				: { prompt: effectivePrompt, aspect_ratio: aspect },
+				? { image_urls: views, prompt: effectivePrompt || undefined, aspect_ratio: aspect, tier: 'high' }
+				: { prompt: effectivePrompt, aspect_ratio: aspect, tier: 'high' },
 			submitTimeoutMs: 30_000,
 			allowSyncDone: true,
 		});

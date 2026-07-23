@@ -11,6 +11,24 @@
 		},
 		{
 			"date": "2026-07-23",
+			"title": "A full notification center, plus two new things it tells you about",
+			"summary": "The bell in the nav now links to a dedicated /notifications page: your full history, filterable by category (sales, purchases, social, in person, market alerts, creations, account), with load-more paging so nothing gets lost past the dropdown's last 20. We also closed two gaps in what triggers a notification. Fork royalty streams (an avatar you created earning a slice of income from everyone who forked it) now notify the upstream creator the moment a payout confirms on-chain, with the SOL/USD amount and which fork paid it. And finishing a mission or co-op heist in /play now lands in your inbox too, not just the site-wide activity ticker. Both respect your existing per-category mute preferences in notification settings.",
+			"tags": [
+				"feature"
+			],
+			"link": "/notifications"
+		},
+		{
+			"date": "2026-07-23",
+			"title": "Avatars now generate on our strongest 3D lane by default",
+			"summary": "Every avatar made through the avatar tools (forge_avatar, text_to_avatar, and the /forge web page's avatar mode) now requests our highest-fidelity generation tier automatically, which routes people/character prompts to our self-hosted Hunyuan3D lane instead of the faster draft lane. That means better proportions, cleaner hands, and less texture warping at the neck and hairline, at no extra cost or extra steps. We also tuned the avatar prompt director to always ask for relaxed, open hands with fingers visible, since closed fists and hidden hands were the single biggest source of mangled-hand meshes. If auto-rigging ever fails after a great mesh generates, you still keep the finished mesh, rigging alone, and can retry rigging separately.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-23",
 			"title": "Restyled models now show up on your creator portfolio",
 			"summary": "Your public portfolio at /u/:username (and /profile for yourself) already collected your forged 3D models and saved worlds into one \"Creations\" feed alongside your avatars, agents, launched coins, skills, and plugins. Restyled models were the missing piece: an AI material restyle (\"make it chrome\", \"cyberpunk neon\") or a seeded colorway variant fan-out from the Restyle Studio now records to your account when you're signed in, and shows up in Creations with a live 3D thumbnail, the instruction or preset used, and a link to the viewer, right next to your other work.",
 			"tags": [

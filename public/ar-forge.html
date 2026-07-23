@@ -104,6 +104,24 @@
 		.elapsed { font-variant-numeric: tabular-nums; color: #737d8d; font-size: 12px; }
 		.idleart { font-size: 44px; line-height: 1; filter: saturate(.9); }
 
+		/* Skeleton preview: shown behind the working overlay instead of a bare
+		   spinner, so a cold-starting GPU lane still reads as "something real
+		   is happening" rather than an empty stage. */
+		.skeleton { position: absolute; inset: 0; opacity: 0; transition: opacity .25s ease; pointer-events: none; }
+		.skeleton.show { opacity: 1; }
+		.skeleton .blob {
+			position: absolute; left: 50%; top: 54%; width: min(58%, 260px); height: min(58%, 260px);
+			transform: translate(-50%, -50%); border-radius: 28% 32% 30% 26% / 30% 26% 32% 28%;
+			background: linear-gradient(120deg, rgba(255,255,255,0.05) 25%, rgba(110,168,254,0.14) 50%, rgba(255,255,255,0.05) 75%);
+			background-size: 220% 100%; animation: shimmer 1.8s ease-in-out infinite;
+		}
+		.skeleton .floor {
+			position: absolute; left: 50%; bottom: 18%; width: 60%; height: 14px; transform: translateX(-50%);
+			border-radius: 50%; background: rgba(255,255,255,0.05); filter: blur(2px);
+		}
+		@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -20% 0; } }
+		@media (prefers-reduced-motion: reduce) { .skeleton .blob { animation: none; background-position: 40% 0; } }
+
 		.actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(10,11,14,0.45); }
 		.actions .meta { flex: 1 1 100%; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		a.btn, button.btn {
@@ -186,6 +204,8 @@
 				<div class="muted">Type a prompt above, or tap an idea. Generation takes about a minute and the result is a real, downloadable GLB.</div>
 			</div>
 
+			<div id="skeleton" class="skeleton" aria-hidden="true"><div class="blob"></div><div class="floor"></div></div>
+
 			<div id="working" class="overlay hidden" aria-live="polite">
 				<div class="spinner" aria-hidden="true"></div>
 				<div class="h" id="worktitle">Forging your model…</div>
@@ -239,28 +259,58 @@
 		var shareBtn = $('share'), openViewer = $('open-viewer'), handoff = $('handoff');
 		var form = $('ask'), input = $('prompt'), go = $('go');
 		var workTitle = $('worktitle'), workMsg = $('workmsg'), elapsedEl = $('elapsed'), failMsg = $('failmsg');
-		var recentWrap = $('recent'), rail = $('rail');
+		var recentWrap = $('recent'), rail = $('rail'), skeletonEl = $('skeleton');
 
 		var POLL_MS = 3000, MAX_POLL_MS = 300000, LS_KEY = 'twx_ar_forge_recent';
 		var runSeq = 0, elapsedTimer = null, current = null; // { glb, prompt }
+		// Real ETA + cold-start signal from the initial /api/forge response (see
+		// api/_lib/forge-lane-health.js#coldStartFor + estimateEtaSeconds). No poll
+		// response repeats these, so they're captured once at submit time and the
+		// honest countdown below is derived locally from elapsed time, same
+		// approach as src/forge.js#honestFill.
+		var etaSeconds = null, coldStart = false;
 
-		function overlay(el) {
-			[idle, working, failed].forEach(function (n) { n.classList.add('hidden'); });
-			if (el) el.classList.remove('hidden');
+		// Map a real /api/forge poll status to a holder-readable stage line, the
+		// same contract as src/shared/forge-frames.js#forgeStageNarration (this
+		// page is a standalone static file with no bundler, so the logic is
+		// mirrored here rather than imported).
+		function stageNarration(status, elapsedS) {
+			var remaining = etaSeconds != null ? Math.max(1, Math.round(etaSeconds - elapsedS)) : null;
+			var remainSuffix = remaining ? (' — ~' + remaining + 's left') : '';
+			switch (status) {
+				case 'submitting':
+					return coldStart ? 'Waking a cold GPU worker…' : 'Sending your prompt to the forge.';
+				case 'queued':
+					return coldStart
+						? ('Cold-starting a free GPU lane' + remainSuffix)
+						: ('Queued on the free NVIDIA NIM lane' + remainSuffix);
+				case 'running':
+					return 'Sculpting geometry and painting textures' + remainSuffix + '.';
+				default:
+					return 'Forging' + remainSuffix + '.';
+			}
+		}
+		function setStage(status) {
+			var elapsedS = elapsedTimer ? (Date.now() - elapsedTimer.t0) / 1000 : 0;
+			workMsg.textContent = stageNarration(status, elapsedS);
 		}
 		function setBusy(b) {
 			go.disabled = b;
 			go.textContent = b ? 'Forging…' : 'Forge';
 			if (!b) { var s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '✦'; go.appendChild(s); }
 		}
-		function startElapsed() {
-			var t0 = Date.now();
+		function startElapsed(status) {
 			stopElapsed();
-			elapsedTimer = setInterval(function () {
-				elapsedEl.textContent = Math.round((Date.now() - t0) / 1000) + 's';
+			var t0 = Date.now();
+			var handle = setInterval(function () {
+				var s = (Date.now() - t0) / 1000;
+				elapsedEl.textContent = Math.round(s) + 's elapsed';
+				setStage(status);
 			}, 1000);
+			elapsedTimer = { handle: handle, t0: t0 };
+			elapsedEl.textContent = '0s elapsed';
 		}
-		function stopElapsed() { if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; } elapsedEl.textContent = ''; }
+		function stopElapsed() { if (elapsedTimer) { clearInterval(elapsedTimer.handle); elapsedTimer = null; } elapsedEl.textContent = ''; }
 
 		function isHttps(u) { try { return new URL(u).protocol === 'https:'; } catch (e) { return false; } }
 
