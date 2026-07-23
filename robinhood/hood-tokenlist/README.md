@@ -5,6 +5,22 @@ The canonical token list for **Robinhood Chain** (chain ID 4663), in the
 WETH, and every launchpad memecoin that passes a published, rules-based verification funnel.
 Every address is re-verified against live chain state on every refresh; nothing is hand-curated.
 
+## Website — [nirholas.github.io/hood-tokenlist](https://nirholas.github.io/hood-tokenlist/)
+
+The project site is an interactive **library card catalog**: the list is filed into drawers you pull open, and each token is an index card you flip through. The front carries the on-chain metadata (address, decimals, Chainlink feed, launchpad, V3 pool, launch block); flip it and the back shows the exact criteria that entry passed on-chain, rubber-stamped. Drawer-pull and card-flip are the navigation. It is a single self-contained page in [`docs/`](docs/) (real token data embedded inline, zero network requests), so it deploys anywhere static and works from `file://`.
+
+Deploy your own copy in one click:
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/nirholas/hood-tokenlist)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/nirholas/hood-tokenlist)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/nirholas/hood-tokenlist&project-name=hood-tokenlist&output-directory=docs)
+
+| Target | How |
+| --- | --- |
+| **GitHub Pages** | Settings → Pages → Source: `main` / `/docs`. Serves the site and the stable-URL `tokenlist.json` mirror at `nirholas.github.io/hood-tokenlist/`. No build step. |
+| **Cloudflare Pages** | The button above, or `wrangler pages deploy docs`. Config in [`wrangler.toml`](wrangler.toml). |
+| **Netlify / Vercel** | The buttons above. Publish directory is `docs/` ([`netlify.toml`](netlify.toml), [`vercel.json`](vercel.json)). |
+
 **Stable URL (always the current list):**
 
 ```

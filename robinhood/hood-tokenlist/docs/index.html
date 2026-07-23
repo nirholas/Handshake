@@ -1,154 +1,542 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>hood-tokenlist · The Robinhood Chain token list</title>
-<meta name="description" content="The canonical Uniswap-standard token list for Robinhood Chain (4663): every Stock Token, USDG, WETH, and rules-vetted memecoins, all verified on-chain.">
-<link rel="icon" href="./logos/list.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./styles.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>hood-tokenlist — the card catalog for Robinhood Chain tokens</title>
+<meta name="description" content="The canonical Uniswap-standard token list for Robinhood Chain (4663), as a library card catalog. Pull a drawer, flip the index cards: every Stock Token, USDG, WETH, and rules-vetted memecoin, each with its metadata and the inclusion criteria it passed on-chain." />
+<link rel="canonical" href="https://nirholas.github.io/hood-tokenlist/" />
+<meta name="theme-color" content="#1a1712" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="hood-tokenlist — the card catalog" />
+<meta property="og:description" content="Pull a drawer, flip the index cards. The canonical token list for Robinhood Chain: Stock Tokens, USDG, WETH and rules-vetted memecoins, every entry re-verified on-chain." />
+<meta property="og:url" content="https://nirholas.github.io/hood-tokenlist/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@nichxbt" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231a1712'/><rect x='5' y='7' width='22' height='8' fill='none' stroke='%23efeadd' stroke-width='1.6'/><rect x='5' y='17' width='22' height='8' fill='none' stroke='%23efeadd' stroke-width='1.6'/><circle cx='16' cy='11' r='1.4' fill='%23efeadd'/><circle cx='16' cy='21' r='1.4' fill='%23efeadd'/></svg>" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Dataset","name":"hood-tokenlist","description":"The canonical Uniswap-standard token list for Robinhood Chain (chain ID 4663): every Stock Token, USDG, WETH, and rules-vetted launchpad memecoin, each address re-verified against live chain state on every refresh.","license":"https://github.com/nirholas/hood-tokenlist/blob/main/LICENSE","creator":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"distribution":{"@type":"DataDownload","encodingFormat":"application/json","contentUrl":"https://nirholas.github.io/hood-tokenlist/tokenlist.json"},"url":"https://nirholas.github.io/hood-tokenlist/","keywords":"Robinhood Chain, token list, Stock Tokens, USDG, Chainlink, ERC-8056"}
+</script>
+<style>
+  :root{
+    --ink:#1a1712; --card:#efeadd; --cabinet:#c8c2b3; --mid:#6d6858;
+    --hair:rgba(26,23,18,.16); --hair2:rgba(26,23,18,.34);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--cabinet); color:var(--ink); font-family:var(--serif);
+    font-size:16px; line-height:1.5; overflow-x:hidden; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+  ::selection{background:var(--ink); color:var(--card)}
+  a{color:inherit}
+  .mono{font-family:var(--mono)}
+
+  /* paper grain over the whole room */
+  body::before{content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg,rgba(26,23,18,.022) 0 1px,transparent 1px 4px),
+      radial-gradient(140% 80% at 50% -20%, rgba(26,23,18,.06), transparent 55%);
+    mix-blend-mode:multiply; opacity:.7}
+
+  /* ===== top cabinet header ===== */
+  .top{position:sticky; top:0; z-index:70; background:var(--ink); color:var(--card);
+    display:flex; align-items:center; gap:16px; padding:0 clamp(14px,3vw,30px); height:42px;
+    font:600 10.5px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase; border-bottom:1px solid rgba(239,234,221,.14)}
+  .top .brand{font-weight:700}
+  .top .sn{opacity:.6}
+  .top nav{margin-left:auto; display:flex; gap:2px}
+  .top nav a{color:var(--card); opacity:.55; text-decoration:none; padding:6px 9px; letter-spacing:.16em;
+    transition:opacity .25s var(--ease)}
+  .top nav a:hover, .top nav a[aria-current="true"]{opacity:1}
+  @media(max-width:720px){.top .sn{display:none} .top nav a{padding:6px 6px}}
+  @media(max-width:520px){.top nav a:not(.pin){display:none}}
+
+  .wrap{max-width:1240px; margin:0 auto; padding:0 clamp(16px,4vw,40px)}
+  section{padding:clamp(44px,7vh,88px) 0; border-bottom:1px solid var(--hair)}
+  .eyebrow{font:600 10.5px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase; color:var(--mid);
+    display:flex; align-items:center; gap:12px; margin-bottom:22px}
+  .eyebrow::after{content:""; flex:1; height:1px; background:var(--hair)}
+  h1{font-family:var(--serif); font-weight:700; font-size:clamp(36px,5.4vw,70px); line-height:1.02; letter-spacing:-.015em}
+  h2{font-family:var(--serif); font-weight:700; font-size:clamp(26px,4vw,48px); line-height:1.04; letter-spacing:-.01em}
+  .lede{font-size:clamp(16px,1.7vw,20px); line-height:1.5; color:#332f26; max-width:60ch; margin-top:18px}
+  em.it{font-style:italic}
+
+  /* ===== HERO: catalog + reading desk ===== */
+  #catalog{padding-top:clamp(26px,4vh,42px); padding-bottom:clamp(40px,6vh,70px)}
+  .hero-head{max-width:56ch}
+  .callnum{font:600 11px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--mid); margin-bottom:16px}
+  .stable{display:inline-flex; align-items:center; gap:10px; margin-top:22px; flex-wrap:wrap}
+  .stable code{font:600 12.5px/1 var(--mono); background:var(--ink); color:var(--card); padding:11px 14px; letter-spacing:.02em; word-break:break-all}
+  .stable button{appearance:none; border:1.5px solid var(--ink); background:transparent; color:var(--ink);
+    font:700 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; padding:11px 14px; cursor:pointer; transition:background .2s,color .2s}
+  .stable button:hover{background:var(--ink); color:var(--card)}
+
+  .desk{display:grid; grid-template-columns:340px 1fr; gap:clamp(22px,3vw,44px); margin-top:clamp(26px,4vh,40px); align-items:start}
+  @media(max-width:880px){.desk{grid-template-columns:1fr; gap:26px}}
+
+  /* the cabinet of drawers */
+  .cabinet{background:var(--ink); padding:12px; box-shadow:0 30px 60px -44px rgba(26,23,18,.9); position:relative}
+  .cabinet .plate{font:700 9px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase; color:rgba(239,234,221,.5);
+    text-align:center; padding:7px 0 12px}
+  .drawer{display:block; width:100%; text-align:left; appearance:none; cursor:pointer; border:0;
+    background:var(--card); color:var(--ink); position:relative; margin-bottom:8px; padding:0;
+    box-shadow:inset 0 0 0 1px rgba(26,23,18,.18); transition:transform .45s var(--ease), box-shadow .45s var(--ease)}
+  .drawer:last-child{margin-bottom:0}
+  .drawer .inner{display:flex; align-items:center; gap:12px; padding:13px 14px}
+  .drawer .pull{width:22px; height:22px; border-radius:50%; border:2px solid var(--ink); flex:none; position:relative;
+    transition:transform .45s var(--ease)}
+  .drawer .pull::after{content:""; position:absolute; inset:5px; border-radius:50%; background:var(--ink); opacity:.14}
+  .drawer .lbl{flex:1; min-width:0}
+  .drawer .lbl b{display:block; font:700 13px/1.15 var(--mono); letter-spacing:.02em; text-transform:uppercase}
+  .drawer .lbl span{display:block; font:500 10px/1.3 var(--mono); letter-spacing:.1em; color:var(--mid); margin-top:4px; text-transform:uppercase}
+  .drawer .ct{font:700 15px/1 var(--serif); color:var(--mid); font-feature-settings:"tnum"}
+  .drawer::after{content:""; position:absolute; top:0; bottom:0; left:-12px; width:12px; background:linear-gradient(90deg,rgba(26,23,18,.45),transparent); opacity:0; transition:opacity .45s var(--ease)}
+  .drawer:hover{transform:translateX(4px)}
+  .drawer[aria-expanded="true"]{transform:translateX(16px); box-shadow:inset 0 0 0 1px var(--ink), -14px 0 24px -14px rgba(26,23,18,.7)}
+  .drawer[aria-expanded="true"]::after{opacity:1}
+  .drawer[aria-expanded="true"] .pull{transform:scale(1.14)}
+  .drawer.link .inner{color:var(--mid)}
+  .drawer.link:hover{transform:translateX(4px)}
+
+  /* the reading desk + index card */
+  .reader{position:relative; min-height:440px}
+  .find{display:flex; align-items:center; gap:0; border:1.5px solid var(--ink); background:var(--card); margin-bottom:16px}
+  .find label{font:700 9px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--mid); padding:0 12px; white-space:nowrap}
+  .find input{flex:1; border:0; background:transparent; outline:none; color:var(--ink);
+    font:600 13px/1 var(--mono); letter-spacing:.02em; padding:13px 12px 13px 0}
+  .find input::placeholder{color:var(--mid)}
+  .find .drawerName{font:700 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--card);
+    background:var(--ink); padding:13px 12px; white-space:nowrap}
+
+  .stack{position:relative; perspective:1600px}
+  .stack::before,.stack::after{content:""; position:absolute; inset:0; background:var(--card);
+    box-shadow:inset 0 0 0 1px var(--hair2); z-index:0}
+  .stack::before{transform:translate(8px,10px) rotate(1.1deg)}
+  .stack::after{transform:translate(4px,5px) rotate(-.7deg)}
+  .idxcard{position:relative; z-index:2; transform-style:preserve-3d; transition:transform .6s var(--ease); min-height:524px}
+  .idxcard.flipped{transform:rotateY(180deg)}
+  .idxcard.slidein{animation:slidein .5s var(--ease)}
+  @keyframes slidein{from{opacity:0; transform:translateX(26px) rotate(.8deg)}to{opacity:1; transform:none}}
+  .face{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    background:var(--card); box-shadow:0 24px 44px -34px rgba(26,23,18,.9), inset 0 0 0 1px var(--hair2);
+    padding:22px 24px 20px; display:flex; flex-direction:column;
+    background-image:linear-gradient(var(--card) 0 0), repeating-linear-gradient(0deg, transparent 0 30px, var(--hair) 30px 31px);
+    background-position:0 0, 0 84px; background-repeat:no-repeat, repeat}
+  .face.back{transform:rotateY(180deg)}
+  /* red margin line of an index card, rendered in ink to stay monochrome */
+  .face::before{content:""; position:absolute; left:54px; top:0; bottom:0; width:1.5px; background:var(--hair2)}
+
+  .cardtop{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-left:44px}
+  .tab{font:700 9px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--card); background:var(--ink); padding:6px 9px}
+  .cardcode{font:600 10px/1 var(--mono); letter-spacing:.16em; color:var(--mid); text-align:right}
+  .mono-monogram{margin:16px 0 4px 44px; display:flex; align-items:baseline; gap:14px}
+  .glyph{font:700 clamp(40px,7vw,62px)/.85 var(--serif); letter-spacing:-.02em}
+  .decimals{font:600 10px/1.3 var(--mono); letter-spacing:.1em; color:var(--mid); text-transform:uppercase}
+  .cardname{font-style:italic; font-size:clamp(18px,2.4vw,24px); line-height:1.15; margin:2px 0 0 44px; color:#2b2820}
+  .crows{margin:auto 0 0 44px; padding-top:14px}
+  .crow{display:grid; grid-template-columns:96px 1fr; gap:12px; padding:6px 0; align-items:baseline}
+  .crow .ck{font:700 9px/1.3 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--mid)}
+  .crow .cv{font:600 12px/1.4 var(--mono); word-break:break-all; color:var(--ink)}
+  .stamps{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 0 44px}
+  .rubber{font:700 9px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+    border:1.5px solid var(--ink); padding:6px 9px; transform:rotate(-1.4deg)}
+  .rubber.fill{background:var(--ink); color:var(--card)}
+  .backttl{font:700 10px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--mid); margin:2px 0 14px 44px}
+  .checks{margin:0 0 0 44px; list-style:none}
+  .checks li{position:relative; padding:5px 0 5px 22px; font-size:12.5px; line-height:1.35; border-bottom:1px solid var(--hair)}
+  .checks li:last-child{border-bottom:0}
+  .checks li::before{content:"✓"; position:absolute; left:0; top:6px; font:700 12px/1 var(--mono)}
+  .backnote{font-size:12px; line-height:1.45; color:#38342a; margin:12px 0 0 44px}
+
+  .cardnav{display:flex; align-items:center; gap:10px; margin-top:16px}
+  .cardnav button{appearance:none; border:1.5px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer;
+    font:700 11px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; padding:12px 14px; transition:background .2s,color .2s,transform .2s var(--ease)}
+  .cardnav button:hover{background:var(--ink); color:var(--card)}
+  .cardnav button:active{transform:translateY(1px)}
+  .cardnav .count{margin-left:auto; font:600 11px/1 var(--mono); letter-spacing:.12em; color:var(--mid)}
+  .cardnav .flip{margin-left:0}
+  .hintline{font:500 10.5px/1.4 var(--mono); letter-spacing:.06em; color:var(--mid); margin-top:12px}
+
+  .empty{position:relative; z-index:2; background:var(--card); box-shadow:inset 0 0 0 1px var(--hair2);
+    min-height:524px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px}
+  .empty b{font:700 13px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
+  .empty span{font-size:13px; color:var(--mid); margin-top:10px; max-width:32ch}
+
+  /* ===== content sections ===== */
+  .rules{display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--hair); border-left:1px solid var(--hair); margin-top:26px}
+  @media(max-width:820px){.rules{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.rules{grid-template-columns:1fr}}
+  .rule{border-right:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:20px 20px 24px; background:var(--card); position:relative}
+  .rule .rn{font:700 10px/1 var(--mono); letter-spacing:.16em; color:var(--mid)}
+  .rule .rt{font-family:var(--serif); font-weight:700; font-size:19px; margin:12px 0 6px; letter-spacing:-.01em}
+  .rule .rd{font-size:13.5px; line-height:1.5; color:#38342a}
+  .spec{border-top:1px solid var(--hair); margin-top:22px}
+  .spec .r{display:grid; grid-template-columns:220px 1fr; gap:20px; padding:16px 0; border-bottom:1px solid var(--hair); align-items:baseline}
+  @media(max-width:640px){.spec .r{grid-template-columns:1fr; gap:5px}}
+  .spec .r .t{font:700 11px/1.3 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--mid)}
+  .spec .r .d{font-size:15px; line-height:1.55; color:#332f26; max-width:64ch}
+  .spec .r .d b{font-weight:700}
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,4vw,60px); align-items:start; margin-top:24px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr; gap:28px}}
+  pre.code{background:var(--ink); color:var(--card); padding:18px 20px; overflow-x:auto;
+    font:500 12.5px/1.8 var(--mono); position:relative}
+  pre.code .c{color:#9a9484}
+  pre.code b{color:var(--card); font-weight:700}
+  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid rgba(239,234,221,.3);
+    background:transparent; color:var(--card); font:600 9px/1 var(--mono); letter-spacing:.14em; padding:7px 10px; cursor:pointer; transition:background .2s}
+  .copy:hover{background:rgba(239,234,221,.14)}
+  .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px}
+  .btn{appearance:none; text-decoration:none; border:1.5px solid var(--ink); color:var(--ink); background:transparent;
+    font:700 11px/1 var(--mono); letter-spacing:.13em; text-transform:uppercase; padding:14px 20px; cursor:pointer;
+    transition:background .25s,color .25s,transform .25s var(--ease); display:inline-block}
+  .btn:hover{background:var(--ink); color:var(--card); transform:translateY(-2px)}
+  .btn.solid{background:var(--ink); color:var(--card)}
+  .btn.solid:hover{background:transparent; color:var(--ink)}
+
+  footer{padding:clamp(40px,6vh,72px) 0}
+  footer .foot{display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px; align-items:flex-end}
+  footer .big{font-family:var(--serif); font-weight:700; font-size:clamp(30px,6vw,66px); line-height:.92; letter-spacing:-.02em}
+  footer .meta{font:500 11.5px/1.7 var(--mono); color:var(--mid); text-align:right}
+  footer a.u{text-decoration:none; border-bottom:1px solid var(--hair2)}
+  footer a.u:hover{border-color:var(--ink)}
+
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity .7s var(--ease), transform .7s var(--ease)}
+  .reveal.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.001s!important; transition-duration:.001s!important}.reveal{opacity:1;transform:none}.idxcard{transition:none}}
+</style>
 </head>
 <body>
-
-<header class="site">
-  <div class="wrap">
-    <a class="brand" href="./">
-      <span class="mark">H</span>
-      hood-tokenlist
-      <span id="list-version" style="color:var(--text-faint);font-weight:500;font-size:13px"></span>
-    </a>
-    <nav class="site-nav" aria-label="Site">
-      <a href="./" aria-current="page">Directory</a>
-      <a href="./criteria.html">Criteria</a>
-      <a href="./extensions.html">Extensions</a>
-      <a href="https://github.com/nirholas/hood-tokenlist">GitHub</a>
-    </nav>
-  </div>
+<header class="top">
+  <span class="brand">hood-tokenlist</span>
+  <span class="sn">robinhood chain · 4663</span>
+  <nav aria-label="Sections">
+    <a href="#catalog" class="pin" aria-current="true">Catalog</a>
+    <a href="#funnel">Criteria</a>
+    <a href="#stock">Stock rules</a>
+    <a href="#ext">Extensions</a>
+    <a href="#use" class="pin">Use it</a>
+  </nav>
 </header>
 
 <main>
-  <div class="wrap">
-    <section class="hero">
-      <h1>Every token on Robinhood Chain,<br><span class="grad">verified on-chain.</span></h1>
-      <p class="lede">
-        The canonical token list for Robinhood Chain (chain ID 4663) in the Uniswap token-lists
-        standard. Every Stock Token, USDG, WETH, and every memecoin that passes the published
-        rules-based criteria. No editorial picks, no unverified addresses.
-      </p>
-      <div class="stat-row" role="group" aria-label="List statistics">
-        <div class="stat"><div class="n" id="stat-tokens">·</div><div class="l">Tokens</div></div>
-        <div class="stat"><div class="n" id="stat-stocks">·</div><div class="l">Stock Tokens</div></div>
-        <div class="stat"><div class="n" id="stat-memes">·</div><div class="l">Memecoins</div></div>
-        <div class="stat"><div class="n live" id="stat-eth">·</div><div class="l">ETH / USD live</div></div>
-        <div class="stat"><div class="n live" id="stat-block">·</div><div class="l">Chain height</div></div>
-      </div>
-      <div class="url-bar">
-        <span style="color:var(--text-faint);font-size:13px;white-space:nowrap">Stable URL</span>
-        <code id="stable-url">https://nirholas.github.io/hood-tokenlist/tokenlist.json</code>
-        <button class="copy-btn" id="copy-url" aria-label="Copy the stable token list URL">Copy</button>
-      </div>
-    </section>
-
-    <div class="controls">
-      <input id="search" type="search" placeholder="Search ticker, name, or address ( / to focus )" aria-label="Search tokens">
-      <div class="seg" id="class-filter" role="group" aria-label="Filter by asset class">
-        <button data-class="all" aria-pressed="true">All</button>
-        <button data-class="stock-token" aria-pressed="false">Stocks</button>
-        <button data-class="memecoin" aria-pressed="false">Memecoins</button>
-        <button data-class="stablecoin" aria-pressed="false">Stable</button>
-        <button data-class="wrapped-native" aria-pressed="false">WETH</button>
-      </div>
-      <span class="result-count" id="result-count" aria-live="polite"></span>
-    </div>
-
-    <div class="table-scroll">
-      <table class="dir">
-        <thead>
-          <tr><th scope="col">Token</th><th scope="col">Class</th><th scope="col">Address</th><th scope="col">Chainlink price</th></tr>
-        </thead>
-        <tbody id="rows">
-          <tr class="skeleton-row"><td><div style="width:60%"></div></td><td><div style="width:70px"></div></td><td><div style="width:110px"></div></td><td><div style="width:70px"></div></td></tr>
-          <tr class="skeleton-row"><td><div style="width:45%"></div></td><td><div style="width:70px"></div></td><td><div style="width:110px"></div></td><td><div style="width:70px"></div></td></tr>
-          <tr class="skeleton-row"><td><div style="width:55%"></div></td><td><div style="width:70px"></div></td><td><div style="width:110px"></div></td><td><div style="width:70px"></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="state" id="table-state" hidden></div>
-    <p style="color:var(--text-faint);font-size:13px">
-      Last refreshed <span id="list-updated">·</span>. Prices stream live from each token's
-      Chainlink feed on Robinhood Chain. Click any row for details.
-    </p>
-  </div>
-
-  <section class="page-block" id="use">
-    <div class="wrap">
-      <h2>Use this list</h2>
-      <p>
-        One stable URL serves the always-current list. Point a DEX UI, wallet, or aggregator at
-        it, or install the npm package for typed access.
-      </p>
-      <div class="snippet-grid">
-        <div>
-          <h3>Uniswap and compatible interfaces</h3>
-<pre class="block"><span class="c">Manage token lists &gt; paste the URL:</span>
-<span class="s">https://nirholas.github.io/hood-tokenlist/tokenlist.json</span></pre>
-        </div>
-        <div>
-          <h3>JavaScript / TypeScript</h3>
-<pre class="block">npm i hood-tokenlist
-
-<span class="c">// typed helpers</span>
-import { stockTokens, memecoins, getToken } from 'hood-tokenlist'
-
-<span class="c">// or the raw JSON</span>
-import list from 'hood-tokenlist/tokenlist.json' with { type: 'json' }</pre>
-        </div>
-        <div>
-          <h3>Anything that speaks HTTP</h3>
-<pre class="block">curl -s https://nirholas.github.io/hood-tokenlist/tokenlist.json \
-  | jq '.tokens[] | select(.symbol=="AAPL")'</pre>
-        </div>
-        <div>
-          <h3>Stock Token positions, done right</h3>
-<pre class="block"><span class="c">// ERC-8056: true position = raw balance x uiMultiplier()</span>
-<span class="c">// Every stock entry sets extensions.supportsUiMultiplier</span>
-const truePosition = rawBalance * uiMultiplier / 10n**18n</pre>
-        </div>
+  <!-- ===== CATALOG (hero + signature interaction) ===== -->
+  <section id="catalog"><div class="wrap">
+    <div class="hero-head">
+      <div class="callnum">// card catalog · <span id="totalCount">341</span> entries · v<span id="ver">5.0.0</span></div>
+      <h1>Pull a drawer.<br>Flip the cards.</h1>
+      <p class="lede">The canonical Uniswap-standard token list for Robinhood Chain, filed like a library. Every Stock Token, USDG, WETH, and rules-vetted memecoin gets an index card carrying its on-chain metadata and the criteria it passed. Nothing is hand-curated; every address is re-verified against live chain state on each refresh.</p>
+      <div class="stable">
+        <code id="stableUrl">https://nirholas.github.io/hood-tokenlist/tokenlist.json</code>
+        <button id="copyUrl">copy stable url</button>
       </div>
     </div>
-  </section>
+
+    <div class="desk">
+      <div class="cabinet" id="cabinet" role="tablist" aria-label="Catalog drawers">
+        <div class="plate">— catalog drawers —</div>
+        <!-- drawers injected -->
+      </div>
+
+      <div class="reader">
+        <div class="find">
+          <span class="drawerName" id="drawerName">STOCK TOKENS</span>
+          <label for="find">find</label>
+          <input id="find" placeholder="ticker or name…" aria-label="Find a card in this drawer" autocomplete="off" />
+        </div>
+        <div class="stack" id="stack">
+          <div class="idxcard" id="idxcard" tabindex="0" role="group" aria-label="Index card" aria-live="polite">
+            <div class="face front" id="front"></div>
+            <div class="face back" id="back"></div>
+          </div>
+        </div>
+        <div class="cardnav">
+          <button id="prev" aria-label="Previous card">&larr; Prev</button>
+          <button id="flip" class="flip">Flip &#8635;</button>
+          <button id="next" aria-label="Next card">Next &rarr;</button>
+          <span class="count" id="count">01 / 14</span>
+        </div>
+        <p class="hintline">Drawer + flip is the navigation. &larr;/&rarr; step cards · Enter flips · type to find.</p>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- ===== FUNNEL ===== -->
+  <section id="funnel" class="reveal"><div class="wrap">
+    <div class="eyebrow">01 / how a memecoin earns a card</div>
+    <h2>Nine rules, all objective,<br>re-run every refresh.</h2>
+    <p class="lede">Stock Tokens come from the hoodchain registry and cross-check against Robinhood's own contracts registry. Memecoins have no registry, so a full event-history scan of the NOXA (<span class="mono">TokenLaunched</span>) and The Odyssey (<span class="mono">PoolMigrated</span>) launchpads is filtered through nine published criteria against live liquidity, holder and honeypot-simulation checks.</p>
+    <div class="rules" id="rulesGrid"></div>
+  </div></section>
+
+  <!-- ===== STOCK RULES ===== -->
+  <section id="stock" class="reveal"><div class="wrap">
+    <div class="eyebrow">02 / reading a Stock Token correctly</div>
+    <h2>Two rules integrators<br>must not skip.</h2>
+    <div class="spec">
+      <div class="r"><div class="t">ERC-8056 · uiMultiplier</div><div class="d">A true position is <b>raw balance &times; uiMultiplier()</b> (1e18-scaled). Every stock entry sets <b>extensions.supportsUiMultiplier: true</b>. Never display a raw balance as the position.</div></div>
+      <div class="r"><div class="t">feed prices are adjusted</div><div class="d">A Chainlink answer for a Stock Token is <b>already multiplier-adjusted</b> — never re-apply uiMultiplier to it.</div></div>
+      <div class="r"><div class="t">eligibility</div><div class="d">Stock Tokens are tokenized debt securities and may not be offered, sold, or delivered to US persons (also limited in Canada, UK, Switzerland). Every stock entry carries <b>extensions.eligibility: "not-for-us-persons"</b> so buy flows can gate on it. Displaying the data is unrestricted.</div></div>
+      <div class="r"><div class="t">verification</div><div class="d">On every refresh: on-chain symbol/name/decimals/uiMultiplier, a shared EIP-1967 beacon check, a cross-check against Robinhood's published contracts registry, and Chainlink feed answers.</div></div>
+    </div>
+  </div></section>
+
+  <!-- ===== EXTENSIONS ===== -->
+  <section id="ext" class="reveal"><div class="wrap">
+    <div class="eyebrow">03 / value-add per token</div>
+    <h2>Everything extra lives<br>in <span class="mono" style="font-size:.7em">extensions</span>.</h2>
+    <div class="spec">
+      <div class="r"><div class="t">assetClass</div><div class="d">One of <b>stock-token</b>, <b>memecoin</b>, <b>stablecoin</b>, <b>wrapped-native</b>.</div></div>
+      <div class="r"><div class="t">chainlinkFeed (+ decimals)</div><div class="d">The aggregator address and its answer decimals, for every priced token. <b>null</b> when no feed exists.</div></div>
+      <div class="r"><div class="t">supportsUiMultiplier</div><div class="d">ERC-8056 flag — true only for Stock Tokens.</div></div>
+      <div class="r"><div class="t">launchpad · uniswapV3Pool · launchBlock</div><div class="d">For memecoins: the launchpad (<b>noxa</b> / <b>odyssey</b>), the V3 pool and fee tier, and the block it launched at.</div></div>
+      <div class="r"><div class="t">eligibility</div><div class="d">The <b>not-for-us-persons</b> marker on Stock Tokens.</div></div>
+    </div>
+  </div></section>
+
+  <!-- ===== USE IT ===== -->
+  <section id="use" class="reveal"><div class="wrap">
+    <div class="eyebrow">04 / use it</div>
+    <h2>One URL, or one<br>npm install.</h2>
+    <div class="cols">
+      <div>
+        <p class="lede" style="margin-top:0">Paste the stable URL into any Uniswap-compatible interface, wallet, or aggregator under "Manage token lists". It always serves the current list; every address is re-verified on each refresh, and a refresh that changes nothing produces a byte-identical file, so diffs are always meaningful.</p>
+        <div class="btns">
+          <a class="btn solid" href="https://nirholas.github.io/hood-tokenlist/tokenlist.json">tokenlist.json</a>
+          <a class="btn" href="https://www.npmjs.com/package/hood-tokenlist">npm</a>
+          <a class="btn" href="https://github.com/nirholas/hood-tokenlist">source</a>
+        </div>
+      </div>
+      <div>
+        <pre class="code"><button class="copy" data-copy="npm">copy</button><span class="c"># as an npm package</span>
+npm i <b>hood-tokenlist</b>
+
+<span class="c"># typed helpers, or the raw JSON</span>
+import { tokens, stockTokens,
+  memecoins, getToken,
+  getTokensBySymbol,
+  pricedTokens } from 'hood-tokenlist'
+
+getToken('0xaF3D…93f9')   <span class="c">// AAPL</span>
+getTokensBySymbol('TSLA')  <span class="c">// [TSLA]</span>
+pricedTokens()             <span class="c">// has a feed</span></pre>
+      </div>
+    </div>
+  </div></section>
+
+  <footer><div class="wrap">
+    <div class="foot">
+      <div class="big">hood-<br>tokenlist</div>
+      <div class="meta">
+        Uniswap token-lists standard · chain 4663<br>
+        <a class="u" href="https://github.com/nirholas/hood-tokenlist">github.com/nirholas/hood-tokenlist</a><br>
+        <a class="u" href="https://www.npmjs.com/package/hood-tokenlist">npmjs.com/package/hood-tokenlist</a><br>
+        built by <a class="u" href="https://x.com/nichxbt">@nichxbt</a> · not affiliated with Robinhood Markets
+      </div>
+    </div>
+  </div></footer>
 </main>
 
-<div class="drawer" id="drawer" data-open="false" role="dialog" aria-modal="true" aria-label="Token details">
-  <div class="scrim"></div>
-  <div class="panel"></div>
-</div>
-
-<footer class="site">
-  <div class="wrap">
-    <span>Data verified against <a href="https://rpc.mainnet.chain.robinhood.com">mainnet RPC</a>, <a href="https://robinhoodchain.blockscout.com">Blockscout</a>, and <a href="https://docs.robinhood.com/chain/contracts">Robinhood's contract registry</a> on every refresh.</span>
-    <span class="spacer"></span>
-    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
-  </div>
-</footer>
-
-<script src="./tokenlist.data.js"></script>
-<script src="./app.js"></script>
 <script>
-  document.getElementById('copy-url').addEventListener('click', async (event) => {
-    const button = event.currentTarget
-    try {
-      await navigator.clipboard.writeText(document.getElementById('stable-url').textContent)
-      button.textContent = 'Copied'
-      setTimeout(() => { button.textContent = 'Copy' }, 1600)
-    } catch {
-      const range = document.createRange()
-      range.selectNodeContents(document.getElementById('stable-url'))
-      const selection = getSelection()
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-  })
+"use strict";
+/* ---------- real curated sample of the on-chain-verified list ---------- */
+const DATA = {"version":{"major":5,"minor":0,"patch":0},"count":341,"counts":{"stock":95,"meme":244,"base":2},"base":[{"sym":"USDG","name":"Global Dollar","addr":"0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168","dec":6,"cls":"stablecoin","feed":"0x61B7e5650328764B076A108EFF5fa7282a1B9aD2","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":false,"elig":null,"tags":["stablecoin","priced"]},{"sym":"WETH","name":"WETH","addr":"0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73","dec":18,"cls":"wrapped-native","feed":"0x78F3556b67E17Df817D51Ef5a990cDaF09E8d3A9","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":false,"elig":null,"tags":["wnative","priced"]}],"stocks":[{"sym":"AAPL","name":"Apple • Robinhood Token","addr":"0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9","dec":18,"cls":"stock-token","feed":"0x6B22A786bAa607d76728168703a39Ea9C99f2cD0","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"TSLA","name":"Tesla • Robinhood Token","addr":"0x322F0929c4625eD5bAd873c95208D54E1c003b2d","dec":18,"cls":"stock-token","feed":"0x4A1166a659A55625345e9515b32adECea5547C38","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"NVDA","name":"NVIDIA • Robinhood Token","addr":"0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC","dec":18,"cls":"stock-token","feed":"0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"MSFT","name":"Microsoft • Robinhood Token","addr":"0xe93237C50D904957Cf27E7B1133b510C669c2e74","dec":18,"cls":"stock-token","feed":"0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"AMZN","name":"Amazon • Robinhood Token","addr":"0x12f190a9F9d7D37a250758b26824B97CE941bF54","dec":18,"cls":"stock-token","feed":"0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"GOOGL","name":"Alphabet Class A • Robinhood Token","addr":"0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3","dec":18,"cls":"stock-token","feed":"0xF6f373a037c30F0e5010d854385cA89185AE638b","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"META","name":"Meta Platforms • Robinhood Token","addr":"0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35","dec":18,"cls":"stock-token","feed":"0x7C38C00C30BEe9378381E7B6135d7283356D71b1","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"SPY","name":"SPDR S&P 500 ETF Trust • Robinhood Token","addr":"0x117cc2133c37B721F49dE2A7a74833232B3B4C0C","dec":18,"cls":"stock-token","feed":"0x319724394D3A0e3669269846abE664Cd621f9f6A","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"COIN","name":"Coinbase • Robinhood Token","addr":"0x6330D8C3178a418788dF01a47479c0ce7CCF450b","dec":18,"cls":"stock-token","feed":"0xA3a468A452940B7D6b69991207B508c609a98Ef2","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"NFLX","name":"Netflix • Robinhood Token","addr":"0xE0444EF8BF4eD74f74FD73686e2ddF4C1c5591E8","dec":18,"cls":"stock-token","feed":null,"lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock"]},{"sym":"AMD","name":"AMD • Robinhood Token","addr":"0x86923f96303D656E4aa86D9d42D1e57ad2023fdC","dec":18,"cls":"stock-token","feed":"0x943A29E7ae51A4798823ca9eEd2ed533B2A22C72","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"QQQ","name":"Invesco QQQ • Robinhood Token","addr":"0xD5f3879160bc7c32ebb4dC785F8a4F505888de68","dec":18,"cls":"stock-token","feed":"0x80901d846d5D7B030F26B480776EE3b29374C2ae","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"MSTR","name":"Strategy Inc. • Robinhood Token","addr":"0xec262a75e413fAfD0dF80480274532C79D42da09","dec":18,"cls":"stock-token","feed":"0x396118bdFB181e6240E74D243F266B061c0edc3D","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]},{"sym":"PLTR","name":"Palantir Technologies • Robinhood Token","addr":"0x894E1EC2D74FFE5AEF8Dc8A9e84686acCB964F2A","dec":18,"cls":"stock-token","feed":"0x820ABedFF239034956B7A9d2F0a331f9F075eB4c","lp":null,"pool":null,"poolFee":null,"lb":null,"uim":true,"elig":"not-for-us-persons","tags":["stock","priced"]}],"memes":[{"sym":"AI","name":"Angel Investor","addr":"0xA0C26C04305e110114eE7a05B294E9EdAFeE7d3d","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x71d2a8AA61f0F2f1F666c95Ff95795f8248481Dc","poolFee":10000,"lb":917342,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"AMC","name":"AMC","addr":"0x6055706234Dd0CC9965400296f2Ca950941f6253","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x7a9531d4E1AdC94db544f692BBD0209B38d2E704","poolFee":10000,"lb":74959,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"Andy","name":"Robinhood Andy","addr":"0xf7a3B803E1129C2b4711b39df21E898645c6a03c","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x1859d07033d8E7956F77b1aAA666A20774e8C87a","poolFee":10000,"lb":4765975,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"ACATS","name":"ACATS","addr":"0x8072CF881809d1Ce5157589a64Cd11452cc5a0e2","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x3EAFaD46d88298A46910C634b8daAc5e54a0F4dc","poolFee":10000,"lb":750733,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"AIMLESS","name":"AIMLESS","addr":"0x8D05F9Ca5C1C58b02eE74330B67D1B7E92F80612","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0xadCd81346aB23f32c810582a625A501937F6234b","poolFee":10000,"lb":75571,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"ALFIE","name":"ALFIE","addr":"0x423aeeFccd5783F7A67F7b176aB0780CD853b4c8","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x8B18f9A2C7419Cf46013f3Ade030918a3C423E14","poolFee":10000,"lb":129148,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"Analyst","name":"TheAnalyst","addr":"0x7FCc196CD54f139D7Da239B07C677188B70D5239","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x1b5B44490f568Bca7107265C66AAF958a98acBc9","poolFee":10000,"lb":4289380,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"ANSEM","name":"The Black Bull","addr":"0x521934eA44568164cd3A578E5823DBa0dE700880","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0xd6f736daeD530Bb973cA32E7149Be17E22BaB3ff","poolFee":10000,"lb":4135814,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"APES","name":"Apes Together Strong","addr":"0xA114aB097F4E155Dbe112Ecf6925358bb17539f1","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0xd1F8edE4F4E03dB80bA18082C6F428d256AF31b6","poolFee":10000,"lb":4576507,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"ARISTOTLE","name":"Aristotle","addr":"0xD8653508adC0b30c453030436e2EeF7A4B14DBb6","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x80d0f685fDB016bEd09C8531b5bb60F9A8d0ba56","poolFee":10000,"lb":682934,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BANKLESS","name":"Bankless Coin","addr":"0x6de7f199d44f446CB245a613fa00d01640266A06","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x1765D6825f8743dC7B4fD9c7528e07cFB500C227","poolFee":10000,"lb":4434047,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BARRY","name":"Barry Marquet","addr":"0x31bAa98A98F52BBD2765B83003A2865A93B229bC","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x07c93cADC1DE10c34EAb1B0B3DF734bc04093f0a","poolFee":10000,"lb":4282592,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BBBY","name":"Bed Bath & Beyond","addr":"0x9eC764Ff7868712f57dC254a0Fe56f575bcB0eA1","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0xC75C9C1af86C5b68E2fc89020130AE8F25e00f37","poolFee":10000,"lb":4080635,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BCASHCAT","name":"Baby CASHCAT","addr":"0x2cc7a4fb0E0aF7156eD179455Ce64cf3D8078F5E","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x61A928BFb478Ba5cDF9622054cd7a5129a7FB25b","poolFee":10000,"lb":96771,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BEGGAR","name":"Beggar Robin Hood","addr":"0xa15E8847389BAF535307b1c185429B6B80296C21","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x17128F728f0c440779fEd428988D2cF49D9a0fD7","poolFee":10000,"lb":62300,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BELL","name":"Mr Bell","addr":"0x5b5daAB6e000B1D984b8E4eD5DB196aACF78Ccd0","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x5B7A19Ba15D053B8C37f5e544fBF95c35efE2c8D","poolFee":10000,"lb":756480,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BET","name":"Wall Street Bets","addr":"0x02937D5a2a789Bcc7E2635fB348647417a613F7f","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0x274b3D569369e033FCa7f875A15Fca083b11fe86","poolFee":10000,"lb":75410,"uim":false,"elig":null,"tags":["memecoin","noxa"]},{"sym":"BIH","name":"Bull in Hood","addr":"0xE555853720737512E3f8Ccf64159A087B4Da51db","dec":18,"cls":"memecoin","feed":null,"lp":"noxa","pool":"0xC42f4c9d251A597fe7077E85cF14331417A12012","poolFee":10000,"lb":4160200,"uim":false,"elig":null,"tags":["memecoin","noxa"]}]};
+
+const CLASS_LABEL = { "stock-token":"STOCK TOKEN", "memecoin":"MEMECOIN", "stablecoin":"STABLECOIN", "wrapped-native":"WRAPPED NATIVE" };
+const short = a => a.slice(0,6)+"…"+a.slice(-4);
+const monogram = sym => {
+  const clean = sym.replace(/[^A-Za-z0-9]/g,'');
+  return (clean.slice(0,4) || sym.slice(0,2)).toUpperCase();
+};
+
+const DRAWERS = [
+  { key:'stocks', title:'Stock Tokens', sub:'A–Z · hoodchain registry', count:DATA.counts.stock, sample:DATA.stocks.length },
+  { key:'memes',  title:'Memecoins',    sub:'NOXA / Odyssey · vetted', count:DATA.counts.meme,  sample:DATA.memes.length },
+  { key:'base',   title:'Base Assets',  sub:'USDG · WETH', count:DATA.counts.base, sample:DATA.base.length },
+  { key:'link',   title:'The Full List', sub:'tokenlist.json →', count:DATA.count, link:'https://nirholas.github.io/hood-tokenlist/tokenlist.json' },
+];
+
+/* ---------- populate top-line counts ---------- */
+const V = DATA.version;
+document.getElementById('ver').textContent = V.major+'.'+V.minor+'.'+V.patch;
+document.getElementById('totalCount').textContent = DATA.count;
+
+/* ---------- build the cabinet ---------- */
+const cabinet = document.getElementById('cabinet');
+DRAWERS.forEach(d=>{
+  const el = document.createElement(d.link ? 'a' : 'button');
+  el.className = 'drawer' + (d.link ? ' link' : '');
+  if(d.link){ el.href = d.link; }
+  else { el.type='button'; el.setAttribute('role','tab'); el.setAttribute('aria-expanded','false'); }
+  el.dataset.key = d.key;
+  el.innerHTML = `<div class="inner">
+    <span class="pull" aria-hidden="true"></span>
+    <span class="lbl"><b>${d.title}</b><span>${d.sub}</span></span>
+    <span class="ct">${d.count}</span>
+  </div>`;
+  cabinet.appendChild(el);
+});
+
+/* ---------- the reader ---------- */
+const front = document.getElementById('front');
+const back = document.getElementById('back');
+const idxcard = document.getElementById('idxcard');
+const stack = document.getElementById('stack');
+const countEl = document.getElementById('count');
+const drawerNameEl = document.getElementById('drawerName');
+const findInput = document.getElementById('find');
+
+let curKey='stocks', deck=DATA.stocks, filtered=DATA.stocks, idx=0, catalogTotal=DATA.counts.stock;
+
+function verifyLines(t){
+  if(t.cls==='memecoin'){
+    return ['provenance in the launchpad event log','settles against a known quote token','pool liquidity of at least $2,500','at least 7 days old','at least 50 holders','simulated sell + transfer succeed','schema-valid on-chain identity','no ticker spoofing of a Stock Token','one canonical token per symbol'];
+  }
+  if(t.cls==='stock-token'){
+    return ['on-chain symbol / name / decimals','uiMultiplier() present (ERC-8056)','shared EIP-1967 beacon match','cross-checked vs Robinhood registry', t.feed ? 'Chainlink feed answer verified' : 'no feed — identity only'];
+  }
+  return ['on-chain identity from official registry', t.feed ? 'feed verified by description()' : 'identity only','canonical base asset'];
+}
+function backNote(t){
+  if(t.cls==='memecoin') return 'Discovered by a full event-history scan of the '+ (t.lp||'launchpad').toUpperCase() +' launchpad from genesis, then filtered through the nine published criteria against live chain state. Re-run on every refresh.';
+  if(t.cls==='stock-token') return 'A tokenized debt security. Filed from the hoodchain registry with full Blockscout discovery; every field re-verified on-chain each refresh.';
+  return 'A base asset resolved from Robinhood Chain’s official contracts registry and verified on-chain.';
+}
+
+function renderCard(){
+  const t = filtered[idx];
+  idxcard.classList.remove('flipped');
+  if(!t){
+    stack.innerHTML = '<div class="empty"><b>No card here</b><span>Nothing in this drawer matches that call number. Clear the search to flip through the full set.</span></div>';
+    countEl.textContent = '00 / ' + String(filtered.length).padStart(2,'0');
+    return;
+  }
+  // ensure the card structure exists (may have been replaced by empty state)
+  if(!document.getElementById('front')){
+    stack.innerHTML = '<div class="idxcard" id="idxcard" tabindex="0" role="group" aria-label="Index card" aria-live="polite"><div class="face front" id="front"></div><div class="face back" id="back"></div></div>';
+  }
+  const f = document.getElementById('front'), b = document.getElementById('back'), card = document.getElementById('idxcard');
+  const code = (curKey==='stocks'?'STK':curKey==='memes'?'MEM':'BASE') + '-' + String(idx+1).padStart(3,'0');
+
+  const rows = [];
+  rows.push(['address', short(t.addr)]);
+  rows.push(['decimals', String(t.dec)]);
+  if(t.feed) rows.push(['chainlink', short(t.feed)]);
+  if(t.lp) rows.push(['launchpad', t.lp.toUpperCase()]);
+  if(t.pool) rows.push(['v3 pool', short(t.pool) + (t.poolFee?(' · '+(t.poolFee/10000)+'%'):'')]);
+  if(t.lb) rows.push(['launch blk', '#'+t.lb.toLocaleString('en-US')]);
+
+  f.innerHTML = `
+    <div class="cardtop"><span class="tab">${CLASS_LABEL[t.cls]||t.cls}</span><span class="cardcode">${code}<br>${t.tags.map(x=>x.toUpperCase()).join(' · ')}</span></div>
+    <div class="mono-monogram"><span class="glyph">${monogram(t.sym)}</span><span class="decimals">${t.sym}<br>${t.dec} dp</span></div>
+    <div class="cardname">${t.name}</div>
+    <div class="crows">${rows.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><span class="cv">${r[1]}</span></div>`).join('')}</div>`;
+
+  const stamps = [];
+  if(t.cls==='stock-token'){ stamps.push('<span class="rubber fill">not for us persons</span>'); stamps.push('<span class="rubber">ERC-8056</span>'); }
+  else if(t.cls==='memecoin'){ stamps.push('<span class="rubber fill">9 rules passed</span>'); stamps.push('<span class="rubber">'+(t.lp||'').toUpperCase()+'</span>'); }
+  else { stamps.push('<span class="rubber fill">base asset</span>'); if(t.feed) stamps.push('<span class="rubber">priced</span>'); }
+
+  b.innerHTML = `
+    <div class="cardtop"><span class="tab">verification</span><span class="cardcode">${code}<br>${t.sym}</span></div>
+    <div class="backttl">re-verified on every refresh</div>
+    <ul class="checks">${verifyLines(t).map(l=>`<li>${l}</li>`).join('')}</ul>
+    <div class="stamps">${stamps.join('')}</div>
+    <p class="backnote">${backNote(t)}</p>`;
+
+  card.classList.remove('slidein'); void card.offsetWidth; card.classList.add('slidein');
+  countEl.textContent = String(idx+1).padStart(2,'0') + ' / ' + String(filtered.length).padStart(2,'0');
+}
+
+function openDrawer(key){
+  const d = DRAWERS.find(x=>x.key===key);
+  if(!d || d.link) return;
+  curKey = key; deck = DATA[key]; filtered = deck; idx = 0;
+  catalogTotal = d.count;
+  drawerNameEl.textContent = d.title.toUpperCase();
+  findInput.value='';
+  document.querySelectorAll('.drawer[role="tab"]').forEach(b=>b.setAttribute('aria-expanded', b.dataset.key===key));
+  renderCard();
+}
+
+cabinet.addEventListener('click', e=>{
+  const dr = e.target.closest('.drawer');
+  if(!dr || dr.classList.contains('link')) return;
+  openDrawer(dr.dataset.key);
+});
+
+document.getElementById('next').addEventListener('click', ()=>{ if(!filtered.length) return; idx=(idx+1)%filtered.length; renderCard(); });
+document.getElementById('prev').addEventListener('click', ()=>{ if(!filtered.length) return; idx=(idx-1+filtered.length)%filtered.length; renderCard(); });
+document.getElementById('flip').addEventListener('click', ()=>{ const c=document.getElementById('idxcard'); if(c) c.classList.toggle('flipped'); });
+stack.addEventListener('click', e=>{ if(e.target.closest('.face')){ const c=document.getElementById('idxcard'); if(c) c.classList.toggle('flipped'); } });
+
+findInput.addEventListener('input', ()=>{
+  const q = findInput.value.trim().toLowerCase();
+  filtered = q ? deck.filter(t=> t.sym.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)) : deck;
+  idx = 0; renderCard();
+});
+
+/* keyboard: arrows step, enter/space flip when the reader has focus */
+document.addEventListener('keydown', e=>{
+  if(document.activeElement===findInput) return;
+  const inReader = document.activeElement && (document.activeElement.id==='idxcard' || document.activeElement.closest && document.activeElement.closest('.reader'));
+  if(e.key==='ArrowRight'){ if(filtered.length){ idx=(idx+1)%filtered.length; renderCard(); } }
+  else if(e.key==='ArrowLeft'){ if(filtered.length){ idx=(idx-1+filtered.length)%filtered.length; renderCard(); } }
+  else if((e.key==='Enter'||e.key===' ') && inReader){ e.preventDefault(); const c=document.getElementById('idxcard'); if(c) c.classList.toggle('flipped'); }
+});
+
+/* ---------- inclusion criteria grid ---------- */
+const RULES = [
+  ['Provenance','Launched through NOXA or The Odyssey — proven by the launchpad’s own on-chain event, not asserted.'],
+  ['Known quote','Trades against a recognized quote token, so a price actually exists.'],
+  ['Liquidity','At least $2,500 of live pool liquidity at refresh time.'],
+  ['Age','At least 7 days old — long enough to shake out instant rugs.'],
+  ['Holders','At least 50 distinct holders on-chain.'],
+  ['Honeypot sim','A simulated sell and transfer must both succeed.'],
+  ['Identity','Schema-valid on-chain symbol, name, and decimals.'],
+  ['No spoofing','Rejected if its ticker impersonates a Stock Token.'],
+  ['One per symbol','A single canonical token per symbol; collisions resolved deterministically.'],
+];
+const rulesGrid = document.getElementById('rulesGrid');
+RULES.forEach((r,i)=>{
+  const el = document.createElement('div'); el.className='rule';
+  el.innerHTML = `<div class="rn">RULE ${String(i+1).padStart(2,'0')}</div><div class="rt">${r[0]}</div><div class="rd">${r[1]}</div>`;
+  rulesGrid.appendChild(el);
+});
+
+/* ---------- copy buttons ---------- */
+document.getElementById('copyUrl').addEventListener('click', ()=>{
+  const btn = document.getElementById('copyUrl');
+  navigator.clipboard.writeText('https://nirholas.github.io/hood-tokenlist/tokenlist.json').then(()=>{
+    const t=btn.textContent; btn.textContent='copied ✓'; setTimeout(()=>btn.textContent=t,1300);
+  }).catch(()=>{});
+});
+document.querySelectorAll('.copy[data-copy]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText('npm i hood-tokenlist').then(()=>{
+      const t=btn.textContent; btn.textContent='copied ✓'; setTimeout(()=>btn.textContent=t,1200);
+    }).catch(()=>{});
+  });
+});
+
+/* ---------- reveal + nav ---------- */
+const io = new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); }, {threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+const navLinks = [...document.querySelectorAll('.top nav a')];
+const navSecs = navLinks.map(a=>document.querySelector(a.getAttribute('href')));
+function updateNav(){
+  let cur=0, mid=innerHeight*0.4;
+  navSecs.forEach((s,i)=>{ if(s && s.getBoundingClientRect().top<=mid) cur=i; });
+  navLinks.forEach((a,i)=>a.setAttribute('aria-current', i===cur));
+}
+navLinks.forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); document.querySelector(a.getAttribute('href')).scrollIntoView({behavior:'smooth'}); }));
+addEventListener('scroll', ()=>requestAnimationFrame(updateNav), {passive:true});
+updateNav();
+
+/* ---------- boot: open the first drawer ---------- */
+openDrawer('stocks');
 </script>
 </body>
 </html>
