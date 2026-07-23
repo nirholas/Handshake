@@ -55,6 +55,14 @@
 			<description>Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an &quot;Ask the agent&quot; box and prompts like &quot;Why are you embodied?&quot; that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing — Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.</description>
 		</item>
 		<item>
+			<title>Security hardening across payments, embeds, and account pages</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-23:Security hardening across payments, embeds, and account pages</guid>
+			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A full-platform security audit landed fixes for every confirmed finding. Paid API endpoints now reject concurrent replays of the same payment, so one payment can never be redeemed twice for generation work. The Solana payment facilitator only settles USDC and $THREE, closing a path that could waste platform funds on junk tokens. Server fetches that follow user-supplied links (article reader, scene export, vault uploads, agent-to-agent calls) are pinned to pre-validated addresses and re-checked on every redirect, shutting down server-side request forgery against internal services. Sign-in and registration pages validate post-login redirect targets, blocking phishing-grade open redirects, and wallet/payment flows reject cross-site posts. Two scheduled jobs now refuse to run unauthenticated if their secret is ever missing, matching the rest of the fleet.</description>
+		</item>
+		<item>
 			<title>The Concierge becomes a Shopify shopping assistant, with product cards</title>
 			<link>https://three.ws/tutorials/shopify-shopping-assistant</link>
 			<guid isPermaLink="false">2026-07-23:The Concierge becomes a Shopify shopping assistant, with product cards</guid>

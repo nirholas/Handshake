@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-23",
+			"title": "Security hardening across payments, embeds, and account pages",
+			"summary": "A full-platform security audit landed fixes for every confirmed finding. Paid API endpoints now reject concurrent replays of the same payment, so one payment can never be redeemed twice for generation work. The Solana payment facilitator only settles USDC and $THREE, closing a path that could waste platform funds on junk tokens. Server fetches that follow user-supplied links (article reader, scene export, vault uploads, agent-to-agent calls) are pinned to pre-validated addresses and re-checked on every redirect, shutting down server-side request forgery against internal services. Sign-in and registration pages validate post-login redirect targets, blocking phishing-grade open redirects, and wallet/payment flows reject cross-site posts. Two scheduled jobs now refuse to run unauthenticated if their secret is ever missing, matching the rest of the fleet.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-23",
 			"title": "The Concierge becomes a Shopify shopping assistant, with product cards",
 			"summary": "The embeddable AI concierge (the floating chat with a 3D avatar) now turns into a full shopping assistant on any Shopify store, from the same one script tag. It reads your live catalog and policies straight from Shopify's public endpoints, no app, no API key, and no product feed to keep in sync, then helps shoppers find the right thing and shows real product cards with the live image, price, and an add-to-cart button. It understands how people actually shop (\"a gift under $75\", \"cheapest hoodie\", \"anything on sale?\") and answers shipping and returns from your published policies. Because the cards are drawn from your real catalog, it can never invent a product, a price, or a discount.",
 			"tags": [
@@ -15544,7 +15552,9 @@
 			"date": "2026-07-20",
 			"title": "Sign Language gets its own home",
 			"summary": "There is now a dedicated Sign Language page at three.ws/sign-language: a live avatar signing on arrival, an input that fingerspells anything you type (words and numbers), the three ways avatars use ASL explained, and a webcam demo that reads your own fingerspelling. Find it in the Build menu under 3D and avatars, or the new card on the home page.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/sign-language"
 		}
 	]
