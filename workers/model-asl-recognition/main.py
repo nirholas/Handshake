@@ -24,7 +24,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
-from decode import FEATURE_COLUMNS, MAX_FRAMES, MIN_FRAMES, decode_logits, validate_frames
+from decode import FEATURE_COLUMNS, MAX_FRAMES, MIN_FRAMES, decode_with_confidence, validate_frames
 
 MODEL_PATH = os.environ.get("MODEL_PATH", "/models/model.tflite")
 API_KEY = os.environ.get("API_KEY", "")
@@ -81,8 +81,13 @@ async def transcribe(body: TranscribeBody, request: Request):
     t0 = time.time()
     async with _lock:
         logits = await asyncio.to_thread(_infer, arr)
-    text = decode_logits(logits)
-    return {"text": text, "frames": int(arr.shape[0]), "ms": int((time.time() - t0) * 1000)}
+    text, confidence = decode_with_confidence(logits)
+    return {
+        "text": text,
+        "confidence": round(confidence, 3),
+        "frames": int(arr.shape[0]),
+        "ms": int((time.time() - t0) * 1000),
+    }
 
 
 def _infer(arr: np.ndarray) -> np.ndarray:

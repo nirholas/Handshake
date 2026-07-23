@@ -11,7 +11,7 @@ import {
 
 describe('utteranceWords', () => {
 	it('normalizes to signable words', () => {
-		expect(utteranceWords('Hey, three.ws! 42')).toEqual(['HEY', 'THREEWS']);
+		expect(utteranceWords('Hey, three.ws! 42')).toEqual(['HEY', 'THREEWS', '42']);
 		expect(utteranceWords('$$$')).toEqual([]);
 	});
 });
@@ -70,7 +70,8 @@ describe('compileUtterance', () => {
 	});
 
 	it('throws on unsignable text', () => {
-		expect(() => compileUtterance('12345')).toThrow();
+		expect(() => compileUtterance('!!!')).toThrow();
+		expect(compileUtterance('12345').clip.duration).toBeGreaterThan(0);
 	});
 });
 

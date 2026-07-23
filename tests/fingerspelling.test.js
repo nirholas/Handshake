@@ -17,9 +17,12 @@ function quatAngleDeg(q) {
 }
 
 describe('letter shapes', () => {
-	it('defines all 26 letters', () => {
+	it('defines all 26 letters and 10 digits', () => {
 		for (let c = 65; c <= 90; c++) {
 			expect(LETTER_SHAPES[String.fromCharCode(c)], String.fromCharCode(c)).toBeTruthy();
+		}
+		for (let d = 0; d <= 9; d++) {
+			expect(LETTER_SHAPES[String(d)], String(d)).toBeTruthy();
 		}
 	});
 
@@ -42,12 +45,15 @@ describe('letter shapes', () => {
 		const seen = new Map();
 		for (const letter of Object.keys(LETTER_SHAPES)) {
 			const key = flat(letter);
-			// Some letters share a base handshape by design and differ only by
-			// wrist orientation or motion, which live in the clip: I/J, K/P,
-			// and the G/Q/Z family.
+			// Some signs share a base handshape by design and differ only by
+			// wrist orientation, motion, or context: I/J, K/P, the G/Q/Z
+			// family, and in real ASL digit 0 ≡ O and digit 2 ≡ V.
 			const clash = seen.get(key);
 			if (clash) {
-				expect(['I:J', 'G:Q', 'Q:Z', 'K:P'].includes(`${clash}:${letter}`), `${clash} vs ${letter}`).toBe(true);
+				expect(
+					['I:J', 'G:Q', 'Q:Z', 'K:P', '0:O', '2:V'].includes(`${clash}:${letter}`),
+					`${clash} vs ${letter}`,
+				).toBe(true);
 			}
 			seen.set(key, letter);
 		}
@@ -68,14 +74,16 @@ describe('letter shapes', () => {
 		expect(left.LeftHandRing2[2]).toBeCloseTo(-right.RightHandRing2[2], 6);
 	});
 
-	it('rejects unknown letters', () => {
-		expect(() => handshapeLocals('7', 'Right')).toThrow();
+	it('rejects unknown characters', () => {
+		expect(() => handshapeLocals('@', 'Right')).toThrow();
+		expect(handshapeLocals('7', 'Right')).toBeTruthy();
 	});
 });
 
 describe('normalizeWord', () => {
 	it('uppercases, strips non-letters, collapses spaces', () => {
 		expect(normalizeWord('  héllo,  world! ')).toBe('HLLO WORLD');
+		expect(normalizeWord('room 42')).toBe('ROOM 42');
 		expect(normalizeWord('three.ws')).toBe('THREEWS');
 		expect(normalizeWord('$$$')).toBe('');
 	});
@@ -147,7 +155,8 @@ describe('buildFingerspellingClip', () => {
 	});
 
 	it('rejects unspellable input', () => {
-		expect(() => buildFingerspellingClip('123')).toThrow();
+		expect(() => buildFingerspellingClip('...')).toThrow();
 		expect(() => buildFingerspellingClip('')).toThrow();
+		expect(buildFingerspellingClip('42').duration).toBeGreaterThan(0);
 	});
 });

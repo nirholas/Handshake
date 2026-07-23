@@ -167,7 +167,14 @@ export class SignInput {
 			});
 			const out = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(out.message || `transcription failed (${res.status})`);
-			return { text: out.text ?? '', frames: frames.length, ms: out.ms };
+			return {
+				text: out.text ?? '',
+				raw: out.raw ?? out.text ?? '',
+				confidence: out.confidence ?? null,
+				cleaned: !!out.cleaned,
+				frames: frames.length,
+				ms: out.ms,
+			};
 		} finally {
 			this.onState('idle');
 		}

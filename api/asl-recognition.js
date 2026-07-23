@@ -81,5 +81,40 @@ export default wrap(async (req, res) => {
 			message: out.detail || out.message || `worker returned ${r.status}`,
 		});
 	}
+	out.raw = out.text ?? '';
+	if (out.raw && body.clean !== false) {
+		out.text = await cleanTranscription(out.raw);
+		out.cleaned = out.text !== out.raw;
+	}
 	return json(res, 200, out);
 });
+
+/**
+ * Webcam fingerspelling decodes at a 10–20% character error rate; a
+ * constrained LLM pass recovers most of it ("esteredouble" → intended word).
+ * Fail-open: any LLM problem returns the raw decode untouched.
+ */
+async function cleanTranscription(raw) {
+	try {
+		const { llmComplete, llmConfigured } = await import('./_lib/llm.js');
+		if (!llmConfigured()) return raw;
+		const cleaned = await llmComplete({
+			system:
+				'You correct noisy ASL fingerspelling transcriptions. The input is a ' +
+				'machine decode of someone spelling letter by letter into a webcam; ' +
+				'roughly 1 in 6 characters may be wrong, split, or merged. Return ONLY ' +
+				'the most likely intended text, preserving meaning and proper nouns. ' +
+				'No explanations, no quotes. If the input already looks right, return it unchanged.',
+			user: raw,
+			maxTokens: 120,
+			timeoutMs: 8_000,
+		});
+		const text = (cleaned || '').trim();
+		// Guard against LLM refusals/essays: a cleanup should stay in the same
+		// size class as the input.
+		if (!text || text.length > raw.length * 2 + 20) return raw;
+		return text;
+	} catch {
+		return raw;
+	}
+}

@@ -29,8 +29,9 @@ const WORD_GAP_SECONDS = 0.18;
 const NORMAL_BLEND_MODE = 2500;
 
 /**
- * Split text into the word sequence the signer will perform. Only A–Z words
- * survive (fingerspelling has no digit/punctuation handshapes in this v1).
+ * Split text into the word sequence the signer will perform. Letters and
+ * digits survive (A–Z fingerspelling plus the ASL number handshapes 0–9);
+ * punctuation is dropped.
  */
 export function utteranceWords(text) {
 	return normalizeWord(text).split(' ').filter(Boolean);
@@ -112,7 +113,7 @@ export function compileUtterance(text, opts = {}) {
 		typeof opts.signs === 'function' ? opts.signs : (w) => (opts.signs ? opts.signs.get(w) : null) ?? null;
 
 	const words = utteranceWords(text);
-	if (!words.length) throw new Error('text has no signable characters (A-Z)');
+	if (!words.length) throw new Error('text has no signable characters (A-Z, 0-9)');
 
 	const merged = new Map();
 	let cursor = 0;

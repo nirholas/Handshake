@@ -701,7 +701,7 @@ export class AnimationLibrary {
 	spellWord(word) {
 		const letters = normalizeWord(word);
 		if (!letters) {
-			this.setStatus('Type a word to fingerspell — letters A–Z.', 'error');
+			this.setStatus('Type a word to fingerspell — letters and numbers.', 'error');
 			return false;
 		}
 		// Reflect the (normalized) word in the input so deep links read back.

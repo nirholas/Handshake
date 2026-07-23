@@ -37,12 +37,26 @@ MIN_FRAMES = 8
 def decode_logits(logits: np.ndarray) -> str:
     """(tokens, vocab) logits → text. Ids outside the printable character map
     (BOS/EOS/PAD) terminate or are dropped, matching the competition decode."""
-    logits = np.asarray(logits)
+    return decode_with_confidence(logits)[0]
+
+
+def decode_with_confidence(logits: np.ndarray) -> tuple[str, float]:
+    """(tokens, vocab) logits → (text, confidence).
+
+    Confidence is the mean softmax probability of the argmax character over
+    the decoded (printable) positions — 1.0 for a certain decode, near 1/vocab
+    for noise. 0.0 when nothing decodes.
+    """
+    logits = np.asarray(logits, dtype=np.float64)
     if logits.ndim != 2:
         raise ValueError(f"logits must be 2D (tokens, vocab); got {logits.shape}")
     ids = np.argmax(logits, axis=-1)
+    shifted = logits - logits.max(axis=-1, keepdims=True)
+    probs = np.exp(shifted)
+    probs /= probs.sum(axis=-1, keepdims=True)
     chars = []
-    for i in ids:
+    confidences = []
+    for pos, i in enumerate(ids):
         ch = ID_TO_CHAR.get(int(i))
         if ch is None:
             # First special token after any output ends the sequence; leading
@@ -51,7 +65,11 @@ def decode_logits(logits: np.ndarray) -> str:
                 break
             continue
         chars.append(ch)
-    return "".join(chars).strip()
+        confidences.append(float(probs[pos, int(i)]))
+    text = "".join(chars).strip()
+    if not text or not confidences:
+        return "", 0.0
+    return text, float(np.mean(confidences))
 
 
 def validate_frames(frames) -> np.ndarray:

@@ -83,7 +83,7 @@ curl -X POST 'https://three.ws/api/animations/clips' \
 - **Saving and selling need an account.** Export and download are open to everyone; saving to the library and listing for sale require sign-in.
 - **The sellable artifact is the baked GLB.** A marketplace listing sells the baked animated GLB, so the buyer gets a self-contained, playable file.
 - **Mannequin-only controls.** Build, skin color, and joint constraints apply to the primitive mannequin; on a loaded GLB avatar those controls are disabled.
-- **Fingerspelling spells A to Z.** The Spell box keeps letters and spaces and drops everything else (digits and punctuation have distinct signs that are not letter handshapes). It needs a loaded rigged avatar with finger bones; the mannequin and finger-less rigs are refused with an explanation.
+- **Fingerspelling spells letters and numbers.** The Spell box keeps A to Z, the ASL number handshapes 0 to 9, and spaces, and drops punctuation. It needs a loaded rigged avatar with finger bones; the mannequin and finger-less rigs are refused with an explanation.
 
 ## Related
 

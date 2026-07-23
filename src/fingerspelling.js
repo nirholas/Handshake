@@ -198,6 +198,18 @@ export const LETTER_SHAPES = {
 	X: { curl: { Index: [15, 95, 80], Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
 	Y: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'out' },
 	Z: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side', motion: 'Z' },
+	// ASL number handshapes 0–9 (static). 6–9 touch the thumb to one
+	// fingertip; the touched finger half-curls to meet the opposing thumb.
+	0: { curl: { Index: 0.55, Middle: 0.55, Ring: 0.55, Pinky: 0.55 }, thumb: 'oppose' },
+	1: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'across' },
+	2: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 9, Middle: -9 }, thumb: 'across' },
+	3: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 9, Middle: -9 }, thumb: 'out' },
+	4: { curl: {}, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'across' },
+	5: { curl: {}, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'out' },
+	6: { curl: { Pinky: 0.55 }, splay: { Index: 9, Middle: 0, Ring: -8 }, thumb: 'oppose' },
+	7: { curl: { Ring: 0.55 }, splay: { Index: 9, Middle: 0, Pinky: -10 }, thumb: 'oppose' },
+	8: { curl: { Middle: 0.55 }, splay: { Index: 9, Ring: -6, Pinky: -12 }, thumb: 'oppose' },
+	9: { curl: { Index: 0.55 }, splay: { Middle: 4, Ring: -4, Pinky: -12 }, thumb: 'oppose' },
 };
 
 // Wrist paths for the traced letters, keyed 0..1 across the letter window —
@@ -282,7 +294,7 @@ export const DEFAULT_TIMING = Object.freeze({
 export function normalizeWord(word) {
 	const cleaned = String(word ?? '')
 		.toUpperCase()
-		.replace(/[^A-Z ]+/g, '')
+		.replace(/[^A-Z0-9 ]+/g, '')
 		.replace(/ +/g, ' ')
 		.trim();
 	return cleaned;
@@ -306,14 +318,15 @@ function stableUuid(seed) {
 
 /**
  * Build an AnimationClip JSON document that fingerspells `word` on the right
- * hand. Only A–Z and spaces survive normalization; anything else is dropped.
+ * hand. Letters A–Z, digits 0–9, and spaces survive normalization; anything
+ * else is dropped.
  * Returns the same document shape the animation library serves, ready for
  * THREE.AnimationClip.parse + the platform retarget engine.
  */
 export function buildFingerspellingClip(word, opts = {}) {
 	const timing = { ...DEFAULT_TIMING, ...opts };
 	const letters = normalizeWord(word);
-	if (!letters) throw new Error('word has no spellable characters (A-Z)');
+	if (!letters) throw new Error('word has no spellable characters (A-Z, 0-9)');
 
 	const pose = signingPose();
 	const restHand = pose.RightHand;

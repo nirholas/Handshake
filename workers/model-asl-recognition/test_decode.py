@@ -74,3 +74,29 @@ def test_validate_frames_caps():
         validate_frames([[0.0] * 10 for _ in range(10)])
     with pytest.raises(ValueError):
         validate_frames([])
+
+
+def test_confidence_high_for_peaked_logits():
+    from decode import decode_with_confidence
+
+    text, conf = decode_with_confidence(one_hot(ids_for("hello")))
+    assert text == "hello"
+    assert conf > 0.95
+
+
+def test_confidence_low_for_flat_logits():
+    from decode import decode_with_confidence
+
+    flat = np.zeros((10, 63), dtype=np.float32)
+    flat[:, 5] += 0.01  # a barely-preferred char so something decodes
+    text, conf = decode_with_confidence(flat)
+    assert text != ""
+    assert conf < 0.05
+
+
+def test_confidence_zero_when_nothing_decodes():
+    from decode import decode_with_confidence
+
+    text, conf = decode_with_confidence(one_hot([60, 61, 62]))
+    assert text == ""
+    assert conf == 0.0

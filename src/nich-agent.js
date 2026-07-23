@@ -867,11 +867,18 @@ export class NichAgent {
 		if (this._signInput?.capturing) {
 			btn.disabled = true;
 			try {
-				const { text } = await this._signInput.stop();
+				const { text, confidence } = await this._signInput.stop();
 				const input = this.panel.querySelector('.nich-input');
 				if (text) {
 					input.value = (input.value ? `${input.value} ` : '') + text;
 					input.focus();
+					if (confidence != null && confidence < 0.4) {
+						this._addMessage(
+							'agent',
+							'I wasn’t confident about that one — check the text before sending, or try signing with your hand a bit closer to the camera.',
+							'status',
+						);
+					}
 				} else {
 					this._addMessage('agent', 'I couldn’t read any fingerspelling there — face the camera and spell a little slower.', 'status');
 				}

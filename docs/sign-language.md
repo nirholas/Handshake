@@ -6,7 +6,7 @@ three.ws avatars can communicate in American Sign Language. Today that means ASL
 
 ## What works today
 
-- **Fingerspell any word.** All 26 ASL handshapes, the traced J and Z motions, and the double-letter bounce, compiled on-device into a standard animation clip that plays on any rigged avatar with finger bones. Try it at [/pose](https://three.ws/pose), or share a spelled word: `https://three.ws/pose?spell=HELLO`.
+- **Fingerspell any word or number.** All 26 ASL letter handshapes, the number handshapes 0–9, the traced J and Z motions, and the double-letter bounce, compiled on-device into a standard animation clip that plays on any rigged avatar with finger bones. Try it at [/pose](https://three.ws/pose), or share a spelled word: `https://three.ws/pose?spell=HELLO`.
 - **Signed chat replies.** In the [/app](https://three.ws/app) agent chat, the 🤟 button in the chat header turns on sign-language mode: the avatar signs every assistant reply. Embedders get the same with one attribute on the web component:
 
 ```html
