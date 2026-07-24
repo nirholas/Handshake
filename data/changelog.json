@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-24",
+			"title": "The x402 facilitator now describes itself at its root URL",
+			"summary": "Opening https://three.ws/api/x402-facilitator in a browser used to return a bare \"not found\" error, since only the /verify, /settle, and /supported sub-paths were wired. The root now returns a self-describing discovery document: the service name, whether it's enabled, the payment networks and schemes it settles (USDC on Solana), the public receiver and fee-payer addresses, and the full endpoint list. Makes the self-hosted facilitator shareable and inspectable without guessing sub-paths.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/docs/x402-ring-economy"
+		},
+		{
 			"date": "2026-07-23",
 			"title": "Text-to-motion is live: describe a move, get a new animation",
 			"summary": "The text_to_animation tool and POST /api/forge-motion now generate real, brand-new motion from a prompt like \"a celebratory jump\" or \"a slow tai-chi sweep\" and retarget it onto any rigged avatar, on a new self-hosted GPU worker (MDM, MIT-licensed). Unlike the curated animation library, this motion doesn't pre-exist: it's synthesized per prompt. Also: generation surfaces (/ar, /ar/studio, and MCP tool responses) now show a real GPU-warming state with an honest countdown and live stage labels instead of a silent spinner when a lane is cold, and the sketch-to-3D and text-to-3D GPU lanes got their scale-up ceilings raised to absorb more concurrent traffic.",

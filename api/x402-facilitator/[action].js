@@ -80,6 +80,36 @@ export default wrap(async (req, res) => {
 
 	const action = actionFrom(req);
 
+	// GET /api/x402-facilitator (root) — self-describing discovery document. The
+	// bare path used to 404 (the route table only matched /:action), which reads as
+	// "broken" when someone opens the facilitator URL in a browser. This index names
+	// the service, its endpoints, the networks/schemes it settles, and the public
+	// receiver — no secret, no payment. It is descriptive only; verify/settle stay POST.
+	if (action === 'index' || action === '' || action === 'x402-facilitator') {
+		if (!method(req, res, ['GET'])) return;
+		const base = '/api/x402-facilitator';
+		return json(res, 200, {
+			service: 'three.ws self-hosted x402 facilitator',
+			description:
+				'Verifies and settles x402 USDC payments on Solana over our own RPC. ' +
+				'No third party touches settlement.',
+			x402Version: X402_VERSION,
+			enabled: SELF_FACILITATOR_ENABLED,
+			kinds: [
+				{ x402Version: X402_VERSION, scheme: 'exact', network: NETWORK_SOLANA_MAINNET },
+			],
+			payTo: env.X402_PAY_TO_SOLANA || null,
+			feePayer: env.X402_FEE_PAYER_SOLANA || null,
+			asset: env.X402_ASSET_MINT_SOLANA || null,
+			endpoints: {
+				supported: { method: 'GET', path: `${base}/supported` },
+				verify: { method: 'POST', path: `${base}/verify` },
+				settle: { method: 'POST', path: `${base}/settle` },
+			},
+			docs: 'https://three.ws/docs/x402-ring-economy',
+		});
+	}
+
 	// /supported is a public capability probe (no payment, no secret needed) so
 	// api/x402-status.js probeFacilitators() can confirm we advertise exact/solana.
 	if (action === 'supported') {

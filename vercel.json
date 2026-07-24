@@ -2481,6 +2481,10 @@
 			"dest": "/api/agents/x402/[action]?action=manifest"
 		},
 		{
+			"src": "/api/x402-facilitator/?",
+			"dest": "/api/x402-facilitator/[action]?action=index"
+		},
+		{
 			"src": "/api/x402-facilitator/([^/]+)",
 			"dest": "/api/x402-facilitator/[action]?action=$1"
 		},

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The x402 facilitator now describes itself at its root URL</title>
+			<link>https://three.ws/docs/x402-ring-economy</link>
+			<guid isPermaLink="false">2026-07-24:The x402 facilitator now describes itself at its root URL</guid>
+			<pubDate>Fri, 24 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Opening https://three.ws/api/x402-facilitator in a browser used to return a bare &quot;not found&quot; error, since only the /verify, /settle, and /supported sub-paths were wired. The root now returns a self-describing discovery document: the service name, whether it's enabled, the payment networks and schemes it settles (USDC on Solana), the public receiver and fee-payer addresses, and the full endpoint list. Makes the self-hosted facilitator shareable and inspectable without guessing sub-paths.</description>
+		</item>
+		<item>
 			<title>KOL Tracker</title>
 			<link>https://three.ws/tracker</link>
 			<guid isPermaLink="false">2026-07-23:KOL Tracker</guid>
