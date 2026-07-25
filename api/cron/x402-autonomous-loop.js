@@ -50,6 +50,7 @@ import {
 	DAILY_CAP_ATOMIC,
 } from '../_lib/x402/autonomous-registry.js';
 import { assertRingSpendInvariants } from '../_lib/x402/ring-allowlist.js';
+import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 
 const log = logger('x402-autonomous-loop');

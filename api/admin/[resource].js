@@ -13,9 +13,10 @@ export default wrap(async (req, res) => {
 	if (resource === 'stats') {
 		const [counts] = await sql`
 			select
-				(select count(*) from users where deleted_at is null)::int                          as total_users,
-				(select count(*) from users where deleted_at is null and created_at > now() - interval '7 days')::int as new_users_7d,
-				(select count(*) from users where deleted_at is null and created_at > now() - interval '30 days')::int as new_users_30d,
+				(select count(*) from users where deleted_at is null and not service_account)::int  as total_users,
+				(select count(*) from users where deleted_at is null and not service_account and created_at > now() - interval '7 days')::int as new_users_7d,
+				(select count(*) from users where deleted_at is null and not service_account and created_at > now() - interval '30 days')::int as new_users_30d,
+				(select count(*) from users where deleted_at is null and service_account)::int       as service_accounts,
 				(select count(*) from avatars where deleted_at is null)::int                        as total_avatars,
 				(select coalesce(sum(size_bytes),0) from avatars where deleted_at is null)::bigint  as total_bytes,
 				(select count(*) from agent_identities where deleted_at is null)::int               as total_agents,
@@ -29,13 +30,13 @@ export default wrap(async (req, res) => {
 		const recentSignups = await sql`
 			select date_trunc('day', created_at)::date as day, count(*)::int as users
 			from users
-			where deleted_at is null and created_at > now() - interval '30 days'
+			where deleted_at is null and not service_account and created_at > now() - interval '30 days'
 			group by 1 order by 1
 		`;
 
 		const planBreakdown = await sql`
 			select plan, count(*)::int as users
-			from users where deleted_at is null
+			from users where deleted_at is null and not service_account
 			group by plan order by users desc
 		`;
 

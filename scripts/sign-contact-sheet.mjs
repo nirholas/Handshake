@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * sign-contact-sheet.mjs — render the signing vocabulary (or the alphabet) as a
+ * sign-contact-sheet.mjs: render the signing vocabulary (or the alphabet) as a
  * single reviewable image.
  *
  * The numeric tests in tests/sign-*.test.js prove a hand reaches the right point
- * and two hands actually meet. They cannot tell you whether a sign is LEGIBLE —
- * that is a judgement made by looking, and it is how the arm-behind-the-body bug
+ * and two hands actually meet. They cannot tell you whether a sign is LEGIBLE.
+ * That is a judgement made by looking, and it is how the arm-behind-the-body bug
  * was caught in the first place. This drives a real browser through the real
  * retarget path and lays every sign out as one frame per cell, so a change to the
  * solver can be eyeballed across the whole vocabulary in one picture.

@@ -1,4 +1,4 @@
-// /sign-language — the dedicated home for three.ws's signing avatars.
+// /sign-language: the dedicated home for three.ws's signing avatars.
 //
 // A live avatar that signs on arrival, an input that spells or signs anything
 // you type, a webcam demo that transcribes your own fingerspelling, and a plain
@@ -17,7 +17,7 @@ import { log } from './shared/log.js';
 // The reference rig: light enough to animate smoothly everywhere, including on
 // software renderers. It carries no face blendshapes, so the non-manual markers
 // a signed question needs (raised brows, furrowed brows) are compiled into the
-// clip but have nothing to drive here — they land on any avatar that ships ARKit
+// clip but have nothing to drive here: they land on any avatar that ships ARKit
 // shapes, which most generated avatars do. See docs/sign-language.md.
 const HERO_AVATAR = '/avatars/cz.glb';
 
@@ -92,7 +92,7 @@ async function boot() {
 	const setRate = (value) => applySetting(() => { rate = value; });
 	const setDominant = (value) => applySetting(() => { dominant = value; });
 
-	// Tell the visitor which words were SIGNED and which were spelled — the
+	// Tell the visitor which words were SIGNED and which were spelled: the
 	// distinction is the whole point of having a dictionary.
 	const describeResult = ({ signed, spelled }) => {
 		const parts = [];
@@ -111,10 +111,15 @@ async function boot() {
 		rebuildSpeaker();
 	} catch (err) {
 		log.warn('[sign-language] stage mount failed', err?.message);
-		setStatus('Live preview unavailable — the spelling tools below still work.');
+		setStatus('Live preview unavailable: the spelling tools below still work.');
 	}
 
 	// ── Hero auto-signing loop ────────────────────────────────────────────────
+	// Signing is content, so it is never disabled: but auto-PLAYING on arrival
+	// is motion the visitor did not ask for. Under prefers-reduced-motion the
+	// hero waits for an explicit action (typing, a chip, a vocab word) instead
+	// of looping on its own.
+	const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 	async function heroTick() {
 		if (!heroActive || !speaker) return;
 		const phrase = DEMO_PHRASES[heroIndex % DEMO_PHRASES.length];
@@ -132,7 +137,8 @@ async function boot() {
 		clearTimeout(heroTimer);
 		speaker?.cancel();
 	};
-	if (speaker) heroTick();
+	if (speaker && !reducedMotion) heroTick();
+	else if (speaker) setStatus('Type anything and watch the avatar sign it.');
 
 	// ── Spell-anything input ──────────────────────────────────────────────────
 	const spellInput = $('#sl-spell-input');
@@ -232,7 +238,7 @@ async function boot() {
 				active = chip;
 				chip.setAttribute('aria-pressed', 'true');
 				lastPhrase = word;
-				setStatus(gloss ? `${word.toLowerCase()} — ${gloss}` : `Signing “${word.toLowerCase()}”`);
+				setStatus(gloss ? `${word.toLowerCase()}: ${gloss}` : `Signing “${word.toLowerCase()}”`);
 				try {
 					const result = await speaker.speak(word);
 					if (!result.superseded) chip.setAttribute('aria-pressed', 'false');
@@ -247,6 +253,23 @@ async function boot() {
 
 	// ── Webcam sign-in demo ───────────────────────────────────────────────────
 	wireWebcamDemo(setStatus);
+
+	// ── ?say= deep link ───────────────────────────────────────────────────────
+	// A shareable signing link, mirroring the studio's ?spell=: /sign-language
+	// ?say=hello+world signs the phrase on arrival (dictionary + spelling).
+	const say = new URLSearchParams(location.search).get('say');
+	if (say && speaker && normalizeWord(say)) {
+		stopHero();
+		heroActive = false;
+		if (spellInput) spellInput.value = say.slice(0, 48);
+		lastPhrase = say;
+		speaker
+			.speak(say)
+			.then((result) => {
+				if (!result.superseded) setStatus(describeResult(result));
+			})
+			.catch((e) => setStatus(e?.message || 'Could not sign that.'));
+	}
 }
 
 function wireWebcamDemo(setStatus) {
@@ -268,7 +291,7 @@ function wireWebcamDemo(setStatus) {
 					resultEl.textContent = text;
 					resultEl.dataset.state = confidence != null && confidence < 0.4 ? 'low' : 'ok';
 				} else {
-					resultEl.textContent = 'No fingerspelling read — try again, a little slower.';
+					resultEl.textContent = 'No fingerspelling read: try again, a little slower.';
 					resultEl.dataset.state = 'low';
 				}
 			} catch (e) {
@@ -306,7 +329,7 @@ function wireWebcamDemo(setStatus) {
 			resultEl.textContent = '';
 			resultEl.removeAttribute('data-state');
 		} catch (e) {
-			resultEl.textContent = e?.message || 'Camera unavailable — check browser permissions.';
+			resultEl.textContent = e?.message || 'Camera unavailable: check browser permissions.';
 			resultEl.dataset.state = 'low';
 			input?.cancel();
 		}

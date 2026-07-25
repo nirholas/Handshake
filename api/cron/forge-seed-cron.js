@@ -240,8 +240,8 @@ async function startNextJob(origin) {
 	const email = `${username}@forge.three.ws`;
 
 	const [user] = await sql`
-		insert into users (email, display_name, username, plan, email_verified, created_at, updated_at)
-		values (${email}, ${displayName}, ${username}, 'free', false, now(), now())
+		insert into users (email, display_name, username, plan, email_verified, service_account, created_at, updated_at)
+		values (${email}, ${displayName}, ${username}, 'free', false, true, now(), now())
 		on conflict do nothing
 		returning id
 	`;

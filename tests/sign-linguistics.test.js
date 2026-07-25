@@ -1,13 +1,13 @@
 /**
- * ASL phonological constraints — a lint over the sign vocabulary.
+ * ASL phonological constraints: a lint over the sign vocabulary.
  *
  * Two-handed signs are not free-form. Battison (1978) described two constraints
  * that hold across the whole language, and a sign that breaks one is almost
  * always an authoring mistake rather than a real exception:
  *
- *   Symmetry Condition — if BOTH hands move, they use the same handshape and
+ *   Symmetry Condition: if BOTH hands move, they use the same handshape and
  *     their movement is symmetrical.
- *   Dominance Condition — if the two hands take DIFFERENT handshapes, only the
+ *   Dominance Condition: if the two hands take DIFFERENT handshapes, only the
  *     dominant hand may move and the passive hand is limited to a small set of
  *     unmarked handshapes. Two hands sharing one handshape are unrestricted,
  *     which is why NAME (both hands in H, only the dominant one taps) is fine.

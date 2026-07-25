@@ -1,5 +1,5 @@
 /**
- * Sign-rig kinematics — unit tests.
+ * Sign-rig kinematics: unit tests.
  *
  * These guard the bug that made the signing avatar unusable: the arm was posed
  * with rotations authored against a skeleton convention the reference rig does
@@ -36,7 +36,7 @@ const near = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol;
 describe('measured rig frames', () => {
 	it('measures bone axes from the rig instead of assuming them', () => {
 		// cz.glb (Avaturn/Mixamo convention) aims bones down local +Y. The point
-		// is that this is READ, not hardcoded — so assert it matches the rig.
+		// is that this is READ, not hardcoded: so assert it matches the rig.
 		for (const bone of ['RightArm', 'RightForeArm', 'LeftArm', 'RightHandIndex1']) {
 			const axis = boneAxis(bone);
 			expect(vLen(axis)).toBeCloseTo(1, 6);

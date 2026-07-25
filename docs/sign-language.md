@@ -13,23 +13,23 @@ three.ws avatars can communicate in American Sign Language. Words with a sign ar
 <agent-3d agent-id="your-agent" chat sign-language></agent-3d>
 ```
 
-- **Sign INTO the chat with your camera.** The 🎥 button in the agent chat opens your webcam with a mirrored self-view: fingerspell at the camera, click again, and the transcription lands in the message box for review before sending. Landmarks are extracted in your browser (MediaPipe Holistic), so video never leaves your device — only pose coordinates go to the recognizer ([workers/model-asl-recognition](../workers/model-asl-recognition), the Kaggle-2023 1st-place fingerspelling model; Apache-2.0 weights, CC BY 4.0 corpus). Expect a 10–20% character error rate on webcam fingerspelling; the chat model is robust to it.
-- **Signed sentences, not lists of words.** A signer raises their hands once for a sentence and lowers them once at the end. The compiler does the same: only the first word leads in from rest, only the last settles back, and everything between keeps the hands up in signing space. You can also set the pace (0.5×, 0.75×, 1×) and switch the avatar to left-handed signing, since about one signer in ten is left-dominant.
+- **Sign INTO the chat with your camera.** The 🎥 button in the agent chat opens your webcam with a mirrored self-view: fingerspell at the camera, click again, and the transcription lands in the message box for review before sending. Landmarks are extracted in your browser (MediaPipe Holistic), so video never leaves your device: only pose coordinates go to the recognizer ([workers/model-asl-recognition](../workers/model-asl-recognition), the Kaggle-2023 1st-place fingerspelling model; Apache-2.0 weights, CC BY 4.0 corpus). Expect a 10–20% character error rate on webcam fingerspelling; the chat model is robust to it.
+- **Signed sentences, not lists of words.** A signer raises their hands once for a sentence and lowers them once at the end. The compiler does the same: only the first word leads in from rest, only the last settles back, and everything between keeps the hands up in signing space. You can also set the pace (0.5×, 0.75×, 1×) and switch the avatar to left-handed signing, since about one signer in ten is left-dominant. Under `prefers-reduced-motion` the page never auto-plays; signing starts only on an explicit action.
 - **Contact that actually touches.** Signs like FALL, HELP, GOOD and KNOW are defined by contact: two fingers stand *on* the flat palm, the fingertips touch the *forehead*. Those are solved from the posed geometry rather than from a fixed wrist coordinate, so the contact still lands on an avatar with longer fingers or a bigger head.
 - **Non-manual markers.** In ASL the face is grammar: raised brows mark a yes/no question, furrowed brows a wh-question. Signs carry those markers as blendshape lanes, applied on any avatar that ships ARKit face shapes (most generated avatars do). An avatar without them still signs; it just loses the marker.
-- **A lexical sign vocabulary.** Common words are SIGNED, not spelled: `HELLO`, `THANK`, `HAPPY`, `SORRY`, `HELP`, `LOVE`, `WANT`, `YALL` and the rest of [`src/sign-dictionary.js`](../src/sign-dictionary.js), two-handed where the sign is two-handed. Browse and play the whole vocabulary at [/sign-language](https://three.ws/sign-language). A word with no sign fingerspells, in the same clip, with no seam.
-- **Motion capture with hands.** The video-to-motion worker tracks 21 landmarks per hand and solves all 30 finger joints, so a video of a real signer becomes a retargetable animation clip — the path for growing the vocabulary from real signers.
+- **A lexical sign vocabulary.** Common words are SIGNED, not spelled: `HELLO`, `THANK`, `HAPPY`, `SORRY`, `HELP`, `LOVE`, `WANT`, `YALL` and the rest of [`src/sign-dictionary.js`](../src/sign-dictionary.js), two-handed where the sign is two-handed. Browse and play the whole vocabulary at [/sign-language](https://three.ws/sign-language), or share a signed phrase directly: `https://three.ws/sign-language?say=happy+to+meet+you`. A word with no sign fingerspells, in the same clip, with no seam.
+- **Motion capture with hands.** The video-to-motion worker tracks 21 landmarks per hand and solves all 30 finger joints, so a video of a real signer becomes a retargetable animation clip: the path for growing the vocabulary from real signers.
 
 ## How it works
 
-Signing is a spatial language. A sign is a handshape, a place on or in front of the body, and a movement between places — never a list of joint angles. The stack is built that way, as dependency-free JavaScript modules:
+Signing is a spatial language. A sign is a handshape, a place on or in front of the body, and a movement between places: never a list of joint angles. The stack is built that way, as dependency-free JavaScript modules:
 
-- [`src/sign-rig.js`](../src/sign-rig.js) — kinematics for the canonical skeleton. It **measures** the reference rig (bone axes, bone lengths, each hand's palm and thumb-side directions, where its fingertips are, the parent chain) from the generated bind pose in `src/animation-canonical-rest.js` rather than assuming a convention, then offers forward kinematics (`Pose`), a two-bone arm IK (`solveArm`) that puts a wrist at a POINT with a natural elbow, and the hand geometry (`handPoint`, `handPartOffset`) that contact is solved from. Assuming the convention instead of measuring it is what once left the signing arm pointing behind the avatar's back.
-- [`src/sign-handshapes.js`](../src/sign-handshapes.js) — the handshape catalogue: A–Z, 0–9, and the named shapes with no letter (`CLAW`, `FLAT_O`, `BENT_B`, `OPEN_8`, `ILY`). Each is per-finger curl, splay, and a thumb preset.
-- [`src/sign-clip.js`](../src/sign-clip.js) — the authoring layer: a resting signer to start and end from, `posePhase()` to solve one phase of a sign, and `SignTimeline` to string phases together with eased transitions, a breathing idle, and clip output.
-- [`src/sign-dictionary.js`](../src/sign-dictionary.js) — the vocabulary. Each sign lists its phases; `both:` poses two hands from one description because places and directions are body-relative, so the non-dominant hand mirrors for free.
-- [`src/fingerspelling.js`](../src/fingerspelling.js) — the manual alphabet. The hand sits in front of the dominant shoulder at jaw height, palm to the reader, and only the handshape changes between letters, which is what makes fingerspelling readable. `buildFingerspellingClip('HELLO')` returns the same `AnimationClip` JSON document the animation library serves.
-- [`src/sign-speech.js`](../src/sign-speech.js) — the signed counterpart of text-to-speech. `compileUtterance(text, { signs })` splits text into words, resolves each against a sign dictionary (lexical clips), fingerspells the misses, and concatenates everything into one continuous clip. `SignSpeaker` drives an avatar's `AnimationManager` like a TTS engine:
+- [`src/sign-rig.js`](../src/sign-rig.js), kinematics for the canonical skeleton. It **measures** the reference rig (bone axes, bone lengths, each hand's palm and thumb-side directions, where its fingertips are, the parent chain) from the generated bind pose in `src/animation-canonical-rest.js` rather than assuming a convention, then offers forward kinematics (`Pose`), a two-bone arm IK (`solveArm`) that puts a wrist at a POINT with a natural elbow, and the hand geometry (`handPoint`, `handPartOffset`) that contact is solved from. Assuming the convention instead of measuring it is what once left the signing arm pointing behind the avatar's back.
+- [`src/sign-handshapes.js`](../src/sign-handshapes.js), the handshape catalogue: A–Z, 0–9, and the named shapes with no letter (`CLAW`, `FLAT_O`, `BENT_B`, `OPEN_8`, `ILY`). Each is per-finger curl, splay, and a thumb preset.
+- [`src/sign-clip.js`](../src/sign-clip.js), the authoring layer: a resting signer to start and end from, `posePhase()` to solve one phase of a sign, and `SignTimeline` to string phases together with eased transitions, a breathing idle, and clip output.
+- [`src/sign-dictionary.js`](../src/sign-dictionary.js), the vocabulary. Each sign lists its phases; `both:` poses two hands from one description because places and directions are body-relative, so the non-dominant hand mirrors for free.
+- [`src/fingerspelling.js`](../src/fingerspelling.js), the manual alphabet. The hand sits in front of the dominant shoulder at jaw height, palm to the reader, and only the handshape changes between letters, which is what makes fingerspelling readable. `buildFingerspellingClip('HELLO')` returns the same `AnimationClip` JSON document the animation library serves.
+- [`src/sign-speech.js`](../src/sign-speech.js), the signed counterpart of text-to-speech. `compileUtterance(text, { signs })` splits text into words, resolves each against a sign dictionary (lexical clips), fingerspells the misses, and concatenates everything into one continuous clip. `SignSpeaker` drives an avatar's `AnimationManager` like a TTS engine:
 
 ```js
 import { SignSpeaker } from './sign-speech.js';
@@ -60,7 +60,7 @@ WELCOME: {
 
 Anchors (`forehead`, `nose`, `chin`, `mouth`, `sternum`, `belly`, `shoulder`, `hip`) are measured off the reference skeleton and follow the body, so a place on the chin stays on the chin when the head turns. Offsets are metres: `out` away from the midline, `in` toward it, `forward` toward the person reading. Directions take the same words. Because a sign is described anatomically, the same entry reads correctly on a tall avatar, a short one, and either hand.
 
-A sign defined by contact says so instead of guessing a coordinate. `touch` names the part of the acting hand, and what it meets — the other hand, or a place on the body:
+A sign defined by contact says so instead of guessing a coordinate. `touch` names the part of the acting hand, and what it meets: the other hand, or a place on the body:
 
 ```js
 FALL: {
@@ -117,13 +117,13 @@ None of this replaces a human interpreter. It makes an avatar legible to signers
 
 ## Roadmap
 
-1. **Captured signs** — clips from real signers (commissioned, community capture through [Motion Swap](https://three.ws/motion-swap), permissively licensed video) replacing authored entries word by word, through the same dictionary interface.
-2. **Word-level sign recognition** — the current recognizer reads fingerspelling; a 250-sign vocabulary model (MIT architecture retrained on the CC BY 4.0 PopSign corpus) will let common signs be recognized directly.
-3. **Review by Deaf signers** — the vocabulary is authored, not validated. Growing it past a core set should follow review and capture, not more authoring.
-4. **Standalone package** — the engines are platform-free by design and will ship as an npm package plus reference integration.
+1. **Captured signs**: clips from real signers (commissioned, community capture through [Motion Swap](https://three.ws/motion-swap), permissively licensed video) replacing authored entries word by word, through the same dictionary interface.
+2. **Word-level sign recognition**: the current recognizer reads fingerspelling; a 250-sign vocabulary model (MIT architecture retrained on the CC BY 4.0 PopSign corpus) will let common signs be recognized directly.
+3. **Review by Deaf signers**: the vocabulary is authored, not validated. Growing it past a core set should follow review and capture, not more authoring.
+4. **Standalone package**: the engines are platform-free by design and will ship as an npm package plus reference integration.
 
 ## Related
 
-- [Animation Studio](./animation-studio.md) — the Spell box, exports, and share links
-- [docs/animations.md](./animations.md) — clip formats and the retarget engine
-- [Motion Swap](https://three.ws/motion-swap) — video motion capture, including hands
+- [Animation Studio](./animation-studio.md), the Spell box, exports, and share links
+- [docs/animations.md](./animations.md), clip formats and the retarget engine
+- [Motion Swap](https://three.ws/motion-swap), video motion capture, including hands

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build-sign-goldens.mjs — snapshot where every sign puts the hands.
+ * build-sign-goldens.mjs: snapshot where every sign puts the hands.
  *
  * A sign is a shape in space, so the honest regression test is positional: at
  * fixed moments through each clip, where are the wrists, the fingertips, the
@@ -82,5 +82,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 	fs.mkdirSync(path.dirname(OUT), { recursive: true });
 	fs.writeFileSync(OUT, `${JSON.stringify(goldens, null, '\t')}\n`);
 	const count = Object.keys(goldens.signs).length + Object.keys(goldens.spelling).length;
-	console.log(`wrote ${path.relative(ROOT, OUT)} — ${count} clips × ${SAMPLES.length} samples`);
+	console.log(`wrote ${path.relative(ROOT, OUT)}: ${count} clips × ${SAMPLES.length} samples`);
 }

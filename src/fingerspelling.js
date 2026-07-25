@@ -1,9 +1,9 @@
-// ASL fingerspelling — turn a word into a canonical-skeleton animation clip that
+// ASL fingerspelling: turn a word into a canonical-skeleton animation clip that
 // spells it letter by letter on the dominant hand.
 //
 // Fingerspelling has a real citation form and this module follows it: the hand
 // sits in front of the dominant shoulder at about jaw height, palm to the person
-// reading, elbow down and relaxed. Only the handshape changes between letters —
+// reading, elbow down and relaxed. Only the handshape changes between letters;
 // the hand itself stays put, which is exactly what makes fingerspelling readable
 // and what a signer would correct first in a bad avatar.
 //
@@ -37,7 +37,7 @@ export const LETTER_SHAPES = HANDSHAPES;
 const SPELLING_PLACE = { anchor: 'chin', out: 0.24, up: -0.03, forward: 0.21 };
 
 // The citation orientation is fingers up, palm to the reader, and every letter
-// keeps it — the alphabet is unchanged. Only the four letters that are DEFINED
+// keeps it: the alphabet is unchanged. Only the four letters that are DEFINED
 // by a different orientation depart from it. Directions are body-relative:
 // `out` is away from the signer's midline, `in` toward it, `forward` toward the
 // person reading.
@@ -52,7 +52,7 @@ const LETTER_ORIENT = {
 };
 
 // Traced letters. Each step offsets the hand from the spelling place (metres,
-// body-relative) and may re-aim the fingers and palm — J swings the pinky down
+// body-relative) and may re-aim the fingers and palm: J swings the pinky down
 // and hooks it back in, Z jabs the index through the three strokes.
 const LETTER_MOTION = {
 	J: [
@@ -78,7 +78,7 @@ export const DEFAULT_TIMING = Object.freeze({
 });
 
 /**
- * Uppercase, drop anything unspellable, collapse whitespace. A–Z, 0–9 and
+ * Uppercase, drop anything unspellable, collapse whitespace. A-Z, 0-9 and
  * single spaces survive.
  * @param {string} word
  * @returns {string}
@@ -147,7 +147,7 @@ function readyPose(base, dominant) {
 
 /**
  * Build an AnimationClip JSON document that fingerspells `word` on the dominant
- * hand. Letters A–Z, digits 0–9, and spaces survive normalization; anything else
+ * hand. Letters A-Z, digits 0-9, and spaces survive normalization; anything else
  * is dropped.
  *
  * @param {string} word
@@ -159,7 +159,7 @@ function readyPose(base, dominant) {
  * }} [opts]
  *   `dominant` picks the signing hand ('Right' by default).
  *   `lead: false` starts with the hand already up in signing space and
- *   `settle: false` leaves it there — what a word in the MIDDLE of a sentence
+ *   `settle: false` leaves it there: what a word in the MIDDLE of a sentence
  *   needs, since a signer does not lower their arm between words.
  * @returns {object} clip document, ready for THREE.AnimationClip.parse + retarget
  */

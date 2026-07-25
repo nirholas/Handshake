@@ -1,8 +1,8 @@
-// Lexical ASL signs — the vocabulary an avatar signs instead of spelling.
+// Lexical ASL signs: the vocabulary an avatar signs instead of spelling.
 //
 // Fingerspelling is a fallback, not a language: a signer spells names and
 // loanwords and SIGNS everything else. This module holds the signs themselves,
-// written the way ASL is actually described — a handshape, a place on or in
+// written the way ASL is actually described: a handshape, a place on or in
 // front of the body, the direction the palm and fingers face, and a movement
 // through those places. Both hands are first-class: two-handed signs are the
 // normal case in ASL, and writing one is a single `both:` block because places
@@ -20,7 +20,7 @@
 //
 // Grammar note: these are citation-form signs strung together in English word
 // order. That is "signed English", not ASL grammar (which reorders, inflects
-// verbs spatially, and carries meaning in the face). The page says so plainly —
+// verbs spatially, and carries meaning in the face). The page says so plainly;
 // we are not pretending otherwise.
 
 import { SignTimeline, mirrorPhase, neutralPose, posePhase, restingPose } from './sign-clip.js';
@@ -262,7 +262,7 @@ export const SIGNS = Object.freeze({
 		],
 	},
 	FINISH: {
-		gloss: 'Both open hands flick out and down — done.',
+		gloss: 'Both open hands flick out and down: done.',
 		phases: [
 			{ t: 0.3, both: { shape: '5', at: { anchor: 'sternum', out: 0.1, up: 0.04, forward: 0.24 }, fingers: 'up', palm: 'back' } },
 			{ t: 0.24, both: { shape: '5', at: { anchor: 'sternum', out: 0.2, up: -0.08, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'down' }, head: { nod: 4 }, hold: 0.18 },
@@ -346,7 +346,7 @@ export function lookupSign(word) {
 export const DEFAULT_SIGN_TIMING = Object.freeze({
 	leadSeconds: 0.3,
 	tailSeconds: 0.38,
-	/** Scales every authored phase duration — the tempo control for chat. */
+	/** Scales every authored phase duration: the tempo control for chat. */
 	rate: 1,
 });
 

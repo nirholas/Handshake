@@ -1,7 +1,7 @@
-// Sign-rig — forward/inverse kinematics for the canonical skeleton, in plain JS.
+// Sign-rig: forward/inverse kinematics for the canonical skeleton, in plain JS.
 //
 // Signing is a spatial language: a sign is "flat hand, palm out, at the chin,
-// moving down-forward" — a LOCATION and an ORIENTATION, never a list of joint
+// moving down-forward": a LOCATION and an ORIENTATION, never a list of joint
 // angles. Authoring it as raw quaternions per bone is how the first pass of this
 // feature ended up with the signing arm pointing behind the avatar: it assumed
 // the reference rig aimed its bones down local +X from a T-pose, when cz.glb
@@ -10,7 +10,7 @@
 //
 // So this module reads the reference skeleton instead of assuming it. Everything
 // below is derived at load time from the generated bind-pose data
-// (src/animation-canonical-rest.js — rotations, positions, and parent chain of
+// (src/animation-canonical-rest.js: rotations, positions, and parent chain of
 // public/avatars/cz.glb):
 //
 //   • each bone's axis (the local direction that points at its child),
@@ -24,7 +24,7 @@
 // The output is the same absolute-local-rotation form the clip library stores,
 // so it retargets onto any rigged avatar through src/animation-retarget.js.
 //
-// Pure module: no three.js, no DOM — it runs in the browser, in Node, and in
+// Pure module: no three.js, no DOM: it runs in the browser, in Node, and in
 // vitest identically.
 
 import {
@@ -284,9 +284,9 @@ export function boneLength(bone) {
 }
 
 // Per-hand anatomy, measured from the bind pose rather than assumed:
-//   radial — from the pinky knuckle toward the index knuckle, i.e. the thumb
+//   radial: from the pinky knuckle toward the index knuckle, i.e. the thumb
 //            side of the hand (forward, +Z, on this palms-down T-pose rig),
-//   palm   — normal to the hand plane, flipped to the side the thumb tip sits
+//   palm: normal to the hand plane, flipped to the side the thumb tip sits
 //            on, which is the palm side for any relaxed humanoid hand.
 // Both are stored in WORLD terms; per-bone locals come from each bone's own
 // rest rotation, so the finger joints inherit the frame without mirror hacks.
@@ -361,7 +361,7 @@ export function fingerBones(side) {
 // fingertips touch the forehead"), not by where the wrist happens to be. Solving
 // that needs the geometry of the posed hand: where its fingertips are, where its
 // palm faces. Reading it off the skeleton is what makes contact survive a
-// different avatar — hand size and finger length change, and the contact still
+// different avatar: hand size and finger length change, and the contact still
 // lands, where a hardcoded wrist position would drift off the palm.
 
 // Skin sits outside the bone: contact points on a surface are offset off the
@@ -432,7 +432,7 @@ export function handPoint(pose, side, part = 'fingertips') {
 
 /**
  * The offset from the wrist to one of its own parts, expressed in the HAND's
- * local frame — so it depends only on the handshape, not on where the arm is.
+ * local frame: so it depends only on the handshape, not on where the arm is.
  * That is what lets the solver work backwards: given where a fingertip must
  * END UP and which way the hand faces, this says where the wrist has to go.
  *
@@ -507,7 +507,7 @@ export const ANCHORS = (() => {
 	return Object.freeze({
 		forward,
 		up,
-		/** Model-space width between the shoulders — the unit signs scale by. */
+		/** Model-space width between the shoulders: the unit signs scale by. */
 		shoulderSpan: vLen(vSub(shoulderL, shoulderR)),
 		head,
 		neck,
@@ -526,17 +526,17 @@ export const ANCHORS = (() => {
 		/**
 		 * Upper chest, where most two-handed signs live. Measured up from the
 		 * chest bone toward the neck rather than from the bone itself, which sits
-		 * at mid-torso — anchoring signs there hangs them at belly height.
+		 * at mid-torso: anchoring signs there hangs them at belly height.
 		 */
 		sternum: [0, chest[1] + (neck[1] - chest[1]) * 0.6, chest[2] + 0.02],
-		/** Mid torso — the low end of neutral signing space. */
+		/** Mid torso: the low end of neutral signing space. */
 		belly: [0, (chest[1] + hips[1]) / 2, chest[2]],
 	});
 })();
 
 /**
  * A point in signing space: an anchor (or explicit point) plus an offset in
- * body-relative axes — out (toward the signer's dominant side), up, and forward
+ * body-relative axes: out (toward the signer's dominant side), up, and forward
  * (toward the receiver). Offsets are in metres on the reference rig.
  *
  * @param {number[]|string} anchor  ANCHORS key or an explicit [x,y,z]
@@ -570,7 +570,7 @@ export class Pose {
 		/** @type {Map<string, number[]>} */
 		this.local = new Map(from ? from.local : []);
 		/**
-		 * Blendshape weights, 0–1 by name. ASL carries grammar on the face, so a
+		 * Blendshape weights, 0-1 by name. ASL carries grammar on the face, so a
 		 * pose is not complete without it: raised brows make a yes/no question,
 		 * furrowed brows a wh-question, and neither is optional decoration.
 		 * @type {Map<string, number>}
@@ -589,7 +589,7 @@ export class Pose {
 		this._worldP.clear();
 	}
 
-	/** Local rotation of `bone` — posed if set, otherwise the rig's rest. */
+	/** Local rotation of `bone`: posed if set, otherwise the rig's rest. */
 	getLocal(bone) {
 		return this.local.get(bone) ?? restLocal(bone);
 	}
@@ -625,7 +625,7 @@ export class Pose {
 			p = restPos(bone);
 		} else {
 			// The bone's fixed offset from its parent, carried by the parent's
-			// posed rotation — the rig's own bone lengths, never rescaled.
+			// posed rotation: the rig's own bone lengths, never rescaled.
 			const offsetLocal = qRotate(qConj(restWorld(parent)), vSub(restPos(bone), restPos(parent)));
 			p = vAdd(this.worldPos(parent), qRotate(this.worldQuat(parent), offsetLocal));
 		}
@@ -674,7 +674,7 @@ export class Pose {
 		return this.face.get(shape) ?? 0;
 	}
 
-	/** Plain `{bone: [x,y,z,w]}` of every posed bone — the clip track payload. */
+	/** Plain `{bone: [x,y,z,w]}` of every posed bone: the clip track payload. */
 	locals() {
 		return Object.fromEntries(this.local);
 	}
@@ -686,14 +686,14 @@ export class Pose {
  * Place a `side` wrist at a world-space point with a natural elbow, then orient
  * the hand.
  *
- * The elbow lands on the circle of valid solutions, pushed toward `pole` — a
+ * The elbow lands on the circle of valid solutions, pushed toward `pole`: a
  * world direction meaning "the elbow points that way". The default drops it
  * down, back, and slightly out, which is where a signer's elbow actually sits;
  * signs never lift the elbow to shoulder height unless the sign says so.
  *
  * Roll is anatomical, not arbitrary: the upper arm twists so the elbow flexes in
  * the plane the pole defines, and the forearm carries the pronation the palm
- * direction implies — so the wrist itself only ever holds the small residual,
+ * direction implies: so the wrist itself only ever holds the small residual,
  * which is what stops the "broken wrist" look.
  *
  * @param {Pose} pose        mutated in place
@@ -705,7 +705,7 @@ export class Pose {
  *   pole?: number[],
  *   reach?: number,
  * }} spec  `wrist` is the world target for the wrist joint; `fingers`/`palm` are
- *   world directions for the hand; `reach` (0–1) caps how straight the arm may
+ *   world directions for the hand; `reach` (0-1) caps how straight the arm may
  *   lock (0.98 default leaves a soft elbow).
  * @returns {Pose} the same pose
  */
@@ -746,7 +746,7 @@ export function solveArm(pose, side, spec) {
 	const wristPoint = vAdd(shoulder, vScale(toDir, dist));
 	const lowerDir = vNorm(vSub(wristPoint, elbow));
 
-	// The direction the forearm swings toward as the elbow closes — the anterior
+	// The direction the forearm swings toward as the elbow closes: the anterior
 	// side of the arm. Falls back to the pole when the arm is nearly straight.
 	let flexDir = vReject(lowerDir, upperDir);
 	if (vLen(flexDir) < 1e-4) flexDir = vScale(polePerp, -1);
@@ -778,7 +778,7 @@ export function solveArm(pose, side, spec) {
 }
 
 /**
- * Where the wrist actually landed for a solved arm — the reachability check the
+ * Where the wrist actually landed for a solved arm: the reachability check the
  * tests assert against, since IK clamps targets outside the arm's range.
  * @param {Pose} pose
  * @param {'Left'|'Right'} side

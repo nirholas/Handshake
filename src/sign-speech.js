@@ -1,4 +1,4 @@
-// Sign speech — the signed-language counterpart of text-to-speech.
+// Sign speech: the signed-language counterpart of text-to-speech.
 //
 // Give it text and it produces ONE canonical-skeleton AnimationClip document
 // that performs the whole utterance: each word is looked up in a sign
@@ -6,7 +6,7 @@
 // lane), and any word without a dictionary entry is fingerspelled through
 // src/fingerspelling.js. Compiling the utterance to a single clip means every
 // chat surface integrates the same way a TTS call does: compile → inject →
-// play once — no per-word sequencing, no playback-completion plumbing.
+// play once: no per-word sequencing, no playback-completion plumbing.
 //
 // The module is deliberately platform-free (no three.js, no DOM, no fetch):
 // the dictionary is injected, and the player is any object with the
@@ -31,21 +31,21 @@ const NORMAL_BLEND_MODE = 2500;
 
 /**
  * Split text into the word sequence the signer will perform. Letters and
- * digits survive (A–Z fingerspelling plus the ASL number handshapes 0–9);
+ * digits survive (A-Z fingerspelling plus the ASL number handshapes 0-9);
  * punctuation is dropped.
  */
 export function utteranceWords(text) {
 	return normalizeWord(text).split(' ').filter(Boolean);
 }
 
-// A lexical sign runs about this long in citation form — used only by the
+// A lexical sign runs about this long in citation form: used only by the
 // estimator, which decides how much text is worth signing before anything is
 // compiled.
 const SIGN_SECONDS = 1.1;
 
 /**
  * Rough signing duration in seconds for `text` under `timing`, before
- * compiling anything — used to cap chat replies to a watchable length. Words
+ * compiling anything: used to cap chat replies to a watchable length. Words
  * with a dictionary sign count as one sign; the rest are counted per letter.
  */
 export function estimateDuration(text, timing = CHAT_TIMING, { signed = true } = {}) {
@@ -193,7 +193,7 @@ export function compileUtterance(text, opts = {}) {
 }
 
 /**
- * SignSpeaker — drive an avatar's AnimationManager like a TTS engine.
+ * SignSpeaker: drive an avatar's AnimationManager like a TTS engine.
  *
  *   const speaker = new SignSpeaker({ manager });
  *   await speaker.speak('hello world');   // resolves when the signing ends

@@ -1,5 +1,5 @@
 /**
- * Lexical sign dictionary — unit tests.
+ * Lexical sign dictionary: unit tests.
  *
  * Signs are authored as places in signing space, so they can be checked the same
  * way a signer would check them: replay the compiled clip through forward
@@ -72,7 +72,7 @@ describe('compiled clips', () => {
 					expect(track.times[i], `${word}:${track.name}`).toBeGreaterThan(track.times[i - 1]);
 				}
 				if (track.type === 'number') {
-					// A face lane: one weight per key, inside 0–1, and neutral at both
+					// A face lane: one weight per key, inside 0-1, and neutral at both
 					// ends so a marker cannot stick to the face after the sign.
 					expect(track.name, word).toMatch(/^Face\.morphTargetInfluences\[\w+\]$/);
 					expect(track.values.length).toBe(track.times.length);

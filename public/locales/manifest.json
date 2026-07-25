@@ -17,11 +17,6 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "ja",
-			"name": "日本語",
-			"dir": "ltr"
-		},
-		{
 			"code": "ko",
 			"name": "한국어",
 			"dir": "ltr"

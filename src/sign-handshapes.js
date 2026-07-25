@@ -1,9 +1,9 @@
-// ASL handshapes — the finger configurations the signing stack shares between
+// ASL handshapes: the finger configurations the signing stack shares between
 // the manual alphabet (src/fingerspelling.js) and the lexical sign dictionary
 // (src/sign-dictionary.js).
 //
-// A handshape is described the way a signer describes it — how far each finger
-// curls, how the fingers spread, where the thumb sits — and compiled to local
+// A handshape is described the way a signer describes it: how far each finger
+// curls, how the fingers spread, where the thumb sits: and compiled to local
 // rotations on the canonical finger bones. This is the ORIGINAL, hand-tuned
 // handshape model, moved here unchanged so both lanes can share it: the letter
 // table, the curl weights, the thumb presets, and the axes they are tuned
@@ -38,16 +38,16 @@ const THUMB_PRESETS = {
 	oppose: { adduct: 40, curl: [18, 30, 22] },
 	// tip pinned between index and middle (T) / at the middle knuckle (K)
 	between: { adduct: 38, curl: [22, 30, 15] },
-	// barely engaged — the hand between letters and at rest
+	// barely engaged: the hand between letters and at rest
 	neutral: { adduct: 0, curl: [4, 4, 4] },
 };
 
 /**
- * The handshape catalogue. `curl` is 0–1 per finger (or explicit per-joint
+ * The handshape catalogue. `curl` is 0-1 per finger (or explicit per-joint
  * degrees), `splay` is degrees toward the thumb, `knuckle` adds bend at the
  * proximal joint only, and `thumb` names a preset.
  *
- * A–Z and 0–9 are the manual alphabet, unchanged.
+ * A-Z and 0-9 are the manual alphabet, unchanged.
  */
 export const HANDSHAPES = Object.freeze({
 	A: { curl: { Index: 1, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
@@ -77,7 +77,7 @@ export const HANDSHAPES = Object.freeze({
 	Y: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'out' },
 	Z: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
 
-	// ASL number handshapes 0–9 (static). 6–9 touch the thumb to one
+	// ASL number handshapes 0-9 (static). 6-9 touch the thumb to one
 	// fingertip; the touched finger half-curls to meet the opposing thumb.
 	0: { curl: { Index: 0.55, Middle: 0.55, Ring: 0.55, Pinky: 0.55 }, thumb: 'oppose' },
 	1: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'across' },
@@ -93,17 +93,17 @@ export const HANDSHAPES = Object.freeze({
 	// ── shapes with no letter of their own, used by the lexical signs ────────
 	/** The hand between letters and at rest: barely engaged, not a pose. */
 	RELAXED: { curl: { Index: [12, 12, 12], Middle: [12, 12, 12], Ring: [12, 12, 12], Pinky: [12, 12, 12] }, thumb: 'neutral' },
-	/** Flat hand, fingers together — the citation "flat B" used everywhere. */
+	/** Flat hand, fingers together: the citation "flat B" used everywhere. */
 	FLAT: { curl: {}, thumb: 'side' },
-	/** Flat hand bent at the knuckles — HAPPY, YOUR, the release of THANK-YOU. */
+	/** Flat hand bent at the knuckles: HAPPY, YOUR, the release of THANK-YOU. */
 	BENT_B: { curl: {}, knuckle: 50, thumb: 'across' },
 	/** Spread and curved, like holding a ball. */
 	CLAW: { curl: { Index: 0.45, Middle: 0.45, Ring: 0.45, Pinky: 0.45 }, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'oppose' },
-	/** Fingers together pinched to the thumb — the closing shape of many signs. */
+	/** Fingers together pinched to the thumb: the closing shape of many signs. */
 	FLAT_O: { curl: { Index: 0.6, Middle: 0.6, Ring: 0.6, Pinky: 0.6 }, knuckle: 20, thumb: 'oppose' },
-	/** Open hand with the middle finger dropped to the palm — FEEL, SICK. */
+	/** Open hand with the middle finger dropped to the palm: FEEL, SICK. */
 	OPEN_8: { curl: { Middle: 0.62 }, splay: { Index: 9, Ring: -6, Pinky: -12 }, thumb: 'out' },
-	/** Index and pinky out — the ILY / "rock on" family. */
+	/** Index and pinky out: the ILY / "rock on" family. */
 	ILY: { curl: { Middle: 1, Ring: 1 }, splay: { Index: 6, Pinky: -6 }, thumb: 'out' },
 });
 

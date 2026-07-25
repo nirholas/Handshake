@@ -1,12 +1,12 @@
-// Sign clip assembly — the shared authoring layer under fingerspelling and the
+// Sign clip assembly: the shared authoring layer under fingerspelling and the
 // lexical sign dictionary.
 //
 // It gives both lanes the same three things:
 //   • a resting signer (arms down, hands relaxed, spine settled) to start and
 //     end every utterance from, so signing enters and leaves naturally instead
 //     of snapping out of a bind pose,
-//   • `posePhase()`, which turns a readable sign description — "flat hand, palm
-//     out, at the chin" — into a solved full-body pose via the rig's IK,
+//   • `posePhase()`, which turns a readable sign description ("flat hand, palm
+//     out, at the chin") into a solved full-body pose via the rig's IK,
 //   • `SignTimeline`, which strings those poses together with eased transitions
 //     and emits the SAME AnimationClip JSON document the pre-baked clip library
 //     serves, so a sign retargets onto any rigged avatar with zero new playback
@@ -69,8 +69,8 @@ const BASE_DIRECTIONS = {
 };
 
 /**
- * Resolve a direction written the way a sign is described — `'up'`,
- * `['down', 'forward']`, `'in'` (toward the midline), `'out'` (away from it) —
+ * Resolve a direction written the way a sign is described (`'up'`,
+ * `['down', 'forward']`, `'in'` toward the midline, `'out'` away from it)
  * into a unit vector in model space. Explicit `[x,y,z]` passes through.
  *
  * @param {string|string[]|number[]} spec
@@ -141,7 +141,7 @@ function contactPoint(pose, side, touch) {
 // name the markers a sign can carry; they compile to ARKit-standard blendshape
 // weights, which is what most avatar pipelines (Ready Player Me, Avaturn, VRM
 // with ARKit shapes) expose. An avatar without them loses the marker and keeps
-// the sign — see the face lane in src/animation-retarget.js.
+// the sign: see the face lane in src/animation-retarget.js.
 export const FACE_MARKERS = Object.freeze({
 	/** Yes/no question: brows up, head slightly forward. */
 	question: { browInnerUp: 0.75, browOuterUpLeft: 0.6, browOuterUpRight: 0.6 },
@@ -155,7 +155,7 @@ export const FACE_MARKERS = Object.freeze({
 	pleasant: { mouthSmileLeft: 0.45, mouthSmileRight: 0.45, cheekSquintLeft: 0.3, cheekSquintRight: 0.3 },
 	/** Concern or apology (SORRY, BAD). */
 	concern: { browInnerUp: 0.45, mouthFrownLeft: 0.3, mouthFrownRight: 0.3 },
-	/** Effort or intensity — the "cs"/"mm" mouth of a close, careful sign. */
+	/** Effort or intensity: the "cs"/"mm" mouth of a close, careful sign. */
 	intense: { jawOpen: 0.12, eyeSquintLeft: 0.35, eyeSquintRight: 0.35, cheekPuff: 0.15 },
 	/** Nothing: a neutral face, which is itself a grammatical choice. */
 	neutral: {},
@@ -334,7 +334,7 @@ export function mirrorPhase(phase) {
  *   head?: { nod?: number, tilt?: number, turn?: number },
  *   torso?: { lean?: number, turn?: number },
  * }} spec  degrees for head/torso; `right`/`left` are {@link poseHand} specs and
- *   `both` applies one spec to each hand — which works because directions and
+ *   `both` applies one spec to each hand: which works because directions and
  *   places are body-relative, so a symmetric two-handed sign is written once.
  * @param {Pose} [base]  pose to build on (defaults to the resting signer)
  * @returns {Pose}
@@ -345,7 +345,7 @@ export function posePhase(spec, base = restingPose()) {
 
 	// Body first, arms second. The spine and neck carry the shoulders, so solving
 	// the arms afterwards puts the hands where the sign says regardless of how the
-	// torso leans — and lets a hand touch the chin AFTER the head has turned.
+	// torso leans: and lets a hand touch the chin AFTER the head has turned.
 	if (torso) {
 		// Spread the lean across the spine so the torso curves instead of hinging.
 		for (const [bone, share] of [['Spine', 0.4], ['Spine1', 0.35], ['Spine2', 0.25]]) {
@@ -389,7 +389,7 @@ export function posePhase(spec, base = restingPose()) {
 
 const NORMAL_BLEND_MODE = 2500;
 
-/** Smoothstep — the default ease for a transition between two sign phases. */
+/** Smoothstep: the default ease for a transition between two sign phases. */
 const EASES = {
 	linear: (u) => u,
 	smooth: (u) => u * u * (3 - 2 * u),
@@ -411,7 +411,7 @@ const MAX_KEY_GAP = 0.28;
 const BREATH = { period: 4.4, chest: 0.9, neck: 0.5, sway: 0.35 };
 
 function stableUuid(seed) {
-	// FNV-1a over the seed expanded to uuid shape — deterministic, so the same
+	// FNV-1a over the seed expanded to uuid shape: deterministic, so the same
 	// word compiles to the same document every time.
 	let h1 = 0x811c9dc5;
 	let h2 = 0x01000193;
@@ -485,7 +485,7 @@ export class SignTimeline {
 		return this;
 	}
 
-	/** Return to the resting signer over `seconds` — how every utterance ends. */
+	/** Return to the resting signer over `seconds`: how every utterance ends. */
 	settle(seconds) {
 		return this.to(this.base, seconds, { ease: 'in' });
 	}
