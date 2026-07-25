@@ -401,7 +401,14 @@ const appConfig = {
 				'marketplace-walk': resolve(__dirname, 'pages/marketplace-walk.html'),
 				'marketplace-analytics': resolve(__dirname, 'pages/marketplace-analytics.html'),
 				collection: resolve(__dirname, 'pages/collection.html'),
-				notifications: resolve(__dirname, 'pages/notifications.html'),
+				// Key must NOT be `notifications` — that key at the top of this input
+				// object is the nav-bell module (src/notifications.js), which nav.js
+				// loads on every page as /notifications.js. A duplicate key here
+				// silently replaced it (later key wins), so the bell only worked
+				// because this page's bundle happened to import the bell module
+				// transitively. HTML output paths come from the source file path,
+				// not the input key, so the page still emits dist/notifications.html.
+				'notifications-page': resolve(__dirname, 'pages/notifications.html'),
 				'agent-edit': resolve(__dirname, 'pages/agent-edit.html'),
 				'agent-mind': resolve(__dirname, 'pages/agent-mind.html'),
 				'avatar-edit': resolve(__dirname, 'pages/avatar-edit.html'),
