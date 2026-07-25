@@ -1,0 +1,12 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"scene": { "glbUrl": "https://assets.example/models/leaky.glb", "format": "glb" },
+	"camera": { "autoRotate": true },
+	"meta": {
+		"title": "Fine to keep",
+		"session_id": "sess_01HZY3AB",
+		"wallet": "THREEsynthetic111111111111111111111",
+		"price_usd": "0.25"
+	}
+}

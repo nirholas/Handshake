@@ -886,8 +886,24 @@ export const PROVIDERS = [
 		// is not a reason to fail a caller when six healthy alternates exist.
 		// Imported lazily so the happy path never loads @solana/web3.js.
 		bases: async () => {
-			const { solanaRpcEndpoints } = await import('../_lib/solana/connection.js');
-			return solanaRpcEndpoints('mainnet');
+			const { solanaRpcEndpoints, isEndpointCooling } = await import('../_lib/solana/connection.js');
+			// Hosts the process-wide RPC registry already knows are cooling (quota
+			// death, auth failure, recent 429) go to the back of the line, so the
+			// aggregator's capped attempts land on believed-healthy rungs first.
+			const pool = solanaRpcEndpoints('mainnet');
+			return [...pool.filter((u) => !isEndpointCooling(u)), ...pool.filter((u) => isEndpointCooling(u))];
+		},
+		// Share host health with the rest of the platform, both directions: skip
+		// hosts other subsystems (balances cron, indexers) found dead, and report
+		// what the aggregator sees back into the same registry, which sizes the
+		// cooldown to the failure class (6h quota death vs 10m transient 429).
+		isHostCooling: async (url) => {
+			const { isEndpointCooling } = await import('../_lib/solana/connection.js');
+			return isEndpointCooling(url);
+		},
+		reportHostFailure: async (url, status, bodyText) => {
+			const { markEndpointCooldown } = await import('../_lib/solana/connection.js');
+			markEndpointCooldown(url, status, bodyText);
 		},
 		requiresKey: false,
 		envVar: null,

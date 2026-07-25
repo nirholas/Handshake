@@ -1,0 +1,18 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"scene": {
+		"glbUrl": "https://assets.example/models/helmet.glb",
+		"format": "glb",
+		"poster": "https://assets.example/models/helmet-poster.webp",
+		"alt": "a weathered brass diving helmet"
+	},
+	"camera": { "autoRotate": true, "orbit": "25deg 82deg auto", "fieldOfView": "30deg" },
+	"environment": { "image": "neutral", "exposure": 1, "shadowIntensity": 1 },
+	"affordances": { "orbit": true, "zoom": true, "fullscreen": true, "download": true },
+	"meta": {
+		"title": "Brass diving helmet",
+		"prompt": "a weathered brass diving helmet, cracked glass porthole",
+		"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fassets.example%2Fmodels%2Fhelmet.glb"
+	}
+}

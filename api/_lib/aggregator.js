@@ -32,8 +32,12 @@ const POOLED_ATTEMPT_TIMEOUT_MS = 10_000;
 
 // How many distinct upstream hosts one call may try before giving up. Only
 // applies to providers that declare alternates (`provider.bases`); everything
-// else makes exactly one attempt, as before.
-const MAX_UPSTREAM_ATTEMPTS = 3;
+// else makes exactly one attempt, as before. Rate-limited hosts answer in
+// well under a second, so walking deep is cheap; observed in production
+// 2026-07-25: with the premium rungs quota-dead, 3 attempts died before
+// reaching the healthy public hosts below them. Slow hosts can't stretch this
+// out: the TOTAL_UPSTREAM_BUDGET_MS deadline below bounds the walk in time.
+const MAX_UPSTREAM_ATTEMPTS = 6;
 
 // Failure classes worth re-trying against a different host for the same
 // provider. A 4xx other than 429 is the caller's fault and repeats identically
@@ -208,10 +212,30 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 	// on the aggregator. Providers with no alternates make exactly one attempt,
 	// as before, so this costs a single-host provider nothing.
 	//
-	// The cooldown map feeds in here: a primary that failed a retryable way in
-	// the last HOST_COOLDOWN_MS is skipped up front (only when alternates exist
-	// to take its place), and alternates are tried freshest-first.
-	const primaryCooling = coolingDown(provider.base) && typeof provider.bases === 'function';
+	// Two layers of host health feed in here. The local cooldown map remembers
+	// what THIS aggregator saw fail; provider.isHostCooling (optional) consults a
+	// platform-wide registry other subsystems feed (the solana provider shares
+	// the RPC client's cooldown state, so a Helius key the balances cron found
+	// quota-dead is skipped here too, hours before the aggregator would have
+	// learned it the hard way). Either signal parks the primary, alternates
+	// only, never a single-host provider.
+	const externallyCooling = async (base) => {
+		if (typeof provider.isHostCooling !== 'function') return false;
+		try {
+			return Boolean(await provider.isHostCooling(base));
+		} catch {
+			return false;
+		}
+	};
+	// The failure counterpart: what the aggregator learns flows back into the
+	// same registry, sized to the failure class by the registry itself.
+	const reportFailure = (base, err) => {
+		if (typeof provider.reportHostFailure !== 'function') return;
+		const body = err?.detail ? JSON.stringify(err.detail) : '';
+		Promise.resolve(provider.reportHostFailure(base, err?.status ?? 0, body)).catch(() => {});
+	};
+
+	const primaryCooling = hasPool && (coolingDown(provider.base) || (await externallyCooling(provider.base)));
 
 	let firstErr;
 	if (!primaryCooling) {
@@ -222,6 +246,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 		} catch (err) {
 			if (!isRetryable(err)) throw err;
 			markBad(provider.base);
+			reportFailure(provider.base, err);
 			logHostFailure(provider, provider.base, err);
 			firstErr = err;
 		}
@@ -258,6 +283,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 		} catch (next) {
 			if (!isRetryable(next)) throw next;
 			markBad(base);
+			reportFailure(base, next);
 			logHostFailure(provider, base, next);
 			lastErr = next;
 		}

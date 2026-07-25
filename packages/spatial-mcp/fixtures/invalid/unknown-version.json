@@ -1,0 +1,6 @@
+{
+	"spatialMcpVersion": "0.2",
+	"kind": "model",
+	"scene": { "glbUrl": "https://assets.example/models/next.glb", "format": "glb" },
+	"camera": { "autoRotate": true }
+}

@@ -1,0 +1,6 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"scene": { "glbUrl": "https://assets.example/models/chair.glb", "format": "glb" },
+	"camera": { "autoRotate": "yes" }
+}

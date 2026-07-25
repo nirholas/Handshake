@@ -1,0 +1,7 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "scene",
+	"scene": { "glbUrl": "https://assets.example/scenes/plaza.glb", "format": "glb" },
+	"camera": { "autoRotate": true },
+	"futureField": { "renderersIgnoreMe": true }
+}

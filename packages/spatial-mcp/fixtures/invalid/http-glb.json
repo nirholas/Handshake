@@ -1,0 +1,6 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"scene": { "glbUrl": "http://assets.example/models/insecure.glb", "format": "glb" },
+	"camera": { "autoRotate": true }
+}

@@ -140,6 +140,7 @@ The `brain` attribute turns the 3D viewer into a conversational agent:
 | `brain` | LLM model ID. Registered Claude IDs: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-opus-4-6`, `claude-haiku-4-5-20251001`, `claude-fable-5`, `claude-mythos-5`. Free models (no key, routed through the platform proxy) are also accepted, e.g. `meta-llama/llama-3.3-70b-instruct:free`. Omit for a viewer-only display with no AI (provider `none`). |
 | `instructions` | System prompt for the agent's personality and role. |
 | `mode` | Layout mode: `inline` (flows with page content), `floating` (fixed bubble in a corner), `fullscreen`, or `section`. Default: `inline`. |
+| `sign-language` | The avatar signs every reply in ASL fingerspelling plus its sign vocabulary (any value except `off`/`false` enables it; works at boot or toggled at runtime). See the [sign language guide](sign-language.md). |
 
 The chat input and microphone button appear automatically when `brain` is set. The agent can play animations, look at the camera, and respond to voice input.
 

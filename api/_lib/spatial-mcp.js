@@ -16,4 +16,5 @@ export {
 	buildSpatialArtifact,
 	validateSpatialArtifact,
 	isConformantSpatialArtifact,
+	lintSpatialMeta,
 } from '../../public/spatial-mcp/spatial-validator.js';

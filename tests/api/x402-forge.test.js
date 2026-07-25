@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { Readable } from 'node:stream';
 
 // Env the 402 challenge builder reads. Set before importing the handler.
 beforeAll(() => {
@@ -107,17 +108,16 @@ function makeRes() {
 	};
 }
 
-// A request the handler can consume: async-iterable body + headers/method/url.
+// A request the handler can consume: a real Readable (readBody in
+// api/_lib/http.js reads via 'data'/'end' events like a Node IncomingMessage;
+// a real stream supports both events and for-await) + headers/method/url.
 function makeReq({ method = 'POST', url = '/api/x402/forge', headers = {}, body = null } = {}) {
 	const payload = body == null ? '' : typeof body === 'string' ? body : JSON.stringify(body);
-	return {
-		method,
-		url,
-		headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.7', ...headers },
-		async *[Symbol.asyncIterator]() {
-			if (payload) yield Buffer.from(payload, 'utf8');
-		},
-	};
+	const req = Readable.from(payload ? [Buffer.from(payload, 'utf8')] : []);
+	req.method = method;
+	req.url = url;
+	req.headers = { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.7', ...headers };
+	return req;
 }
 
 describe('GET /api/x402/forge — pricing discovery', () => {

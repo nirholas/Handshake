@@ -1,0 +1,19 @@
+{
+	"$comment": "Conformance corpus for Spatial MCP v0.1. Each entry names an artifact file and what a conformant validator must say about it: `valid` is the required verdict, `mustFlag` lists error paths a validator MUST report for an invalid artifact (it may report more), and `mustLint` lists data-minimization findings the reference lint reports (lint findings are advisory and never affect validity). Run your implementation over every entry; if it disagrees with a required verdict or misses a mustFlag path, it is not conformant. Asset URLs use the reserved `assets.example` host: fixtures exercise the validator, they are not fetchable.",
+	"spatialMcpVersion": "0.1",
+	"fixtures": [
+		{ "file": "valid/minimal.json", "valid": true, "note": "only the three required fields; expect recommendation warnings, zero errors" },
+		{ "file": "valid/model-full.json", "valid": true, "note": "every optional block populated the way three.ws forge tools emit it" },
+		{ "file": "valid/rigged-avatar.json", "valid": true, "note": "animation clips + persona binding" },
+		{ "file": "valid/ar-handoff.json", "valid": true, "note": "ar.supported backed by concrete assets" },
+		{ "file": "valid/forward-compat.json", "valid": true, "note": "unknown top-level field is a warning, never an error" },
+		{ "file": "invalid/http-glb.json", "valid": false, "mustFlag": ["scene.glbUrl"] },
+		{ "file": "invalid/missing-scene.json", "valid": false, "mustFlag": ["scene"] },
+		{ "file": "invalid/unknown-version.json", "valid": false, "mustFlag": ["spatialMcpVersion"] },
+		{ "file": "invalid/unknown-kind.json", "valid": false, "mustFlag": ["kind"] },
+		{ "file": "invalid/bad-format.json", "valid": false, "mustFlag": ["scene.format"] },
+		{ "file": "invalid/ar-supported-without-asset.json", "valid": false, "mustFlag": ["ar.supported"] },
+		{ "file": "invalid/bad-camera.json", "valid": false, "mustFlag": ["camera.autoRotate"] },
+		{ "file": "lint/privacy-leak.json", "valid": true, "mustLint": ["meta.session_id", "meta.wallet", "meta.price_usd"], "note": "conformant shape, but the meta block violates data minimization; the reference lint flags every listed path" }
+	]
+}

@@ -20,6 +20,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Readable } from 'node:stream';
 
 // A real rigged GLB fixture (Khronos BrainStem — 1 skin, 1 animation). Used as
 // the mocked final stage output so the end-to-end test can inspect a real asset.
@@ -127,12 +128,14 @@ function makeRes() {
 
 function makeReq({ method = 'POST', url = '/api/x402/pipeline', headers = {}, body = null } = {}) {
 	const payload = body == null ? '' : typeof body === 'string' ? body : JSON.stringify(body);
-	return {
-		method,
-		url,
-		headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9', ...headers },
-		async *[Symbol.asyncIterator]() { if (payload) yield Buffer.from(payload, 'utf8'); },
-	};
+	// A real Readable, not a hand-rolled async iterable: readBody (api/_lib/http.js)
+	// consumes the request via 'data'/'end' events, exactly like a Node
+	// IncomingMessage, and a real stream supports both events and for-await.
+	const req = Readable.from(payload ? [Buffer.from(payload, 'utf8')] : []);
+	req.method = method;
+	req.url = url;
+	req.headers = { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9', ...headers };
+	return req;
 }
 
 const PAID = { 'x-payment': 'stub-payment-proof' };

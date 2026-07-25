@@ -1,0 +1,6 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "hologram",
+	"scene": { "glbUrl": "https://assets.example/models/holo.glb", "format": "glb" },
+	"camera": { "autoRotate": true }
+}

@@ -1,0 +1,8 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "rigged-model",
+	"scene": { "glbUrl": "https://assets.example/avatars/scout.glb", "format": "glb" },
+	"camera": { "autoRotate": false },
+	"animation": { "autoplay": true, "clips": ["idle", "wave", "walk"] },
+	"persona": { "id": "psn_example_0001", "speakable": true }
+}

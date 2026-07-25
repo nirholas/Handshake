@@ -134,11 +134,11 @@ describe('aggregator upstream failover', () => {
 			}),
 		);
 
-		const pool = Array.from({ length: 10 }, (_, i) => `https://backup-${i}.invalid`);
+		const pool = Array.from({ length: 12 }, (_, i) => `https://backup-${i}.invalid`);
 		await expect(
 			executeUpstream({ provider: providerWithPool(pool), endpoint, query: {}, apiKey: null }),
 		).rejects.toMatchObject({ code: 'upstream_rate_limited' });
-		expect(seen).toHaveLength(3);
+		expect(seen).toHaveLength(6);
 	});
 
 	it('makes exactly one attempt for a provider with no alternates', async () => {
@@ -207,6 +207,51 @@ describe('aggregator upstream failover', () => {
 		const out = await executeUpstream({ provider: providerWithPool([]), endpoint, query: {}, apiKey: null });
 		expect(out).toEqual({ ok: true });
 		expect(seen[seen.length - 1]).toBe('primary.invalid');
+	});
+
+	it('skips a primary the platform-wide health registry says is cooling', async () => {
+		const seen = [];
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (input) => {
+				seen.push(hostOf(input));
+				return reply(200, { ok: true });
+			}),
+		);
+
+		const provider = {
+			...providerWithPool(['https://backup-a.invalid']),
+			isHostCooling: async (url) => url === 'https://primary.invalid',
+		};
+
+		const out = await executeUpstream({ provider, endpoint, query: {}, apiKey: null });
+		expect(out).toEqual({ ok: true });
+		// No local failure was ever recorded; the external registry alone diverts
+		// the call to the alternate.
+		expect(seen).toEqual(['backup-a.invalid']);
+	});
+
+	it('reports every retryable host failure back to the provider registry', async () => {
+		const reported = [];
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (input) =>
+				hostOf(input) === 'primary.invalid' ? reply(429, { error: 'slow down' }) : reply(200, { ok: true }),
+			),
+		);
+
+		const provider = {
+			...providerWithPool(['https://backup-a.invalid']),
+			reportHostFailure: async (url, status, body) => {
+				reported.push({ url, status, body });
+			},
+		};
+
+		const out = await executeUpstream({ provider, endpoint, query: {}, apiKey: null });
+		expect(out).toEqual({ ok: true });
+		expect(reported).toEqual([
+			{ url: 'https://primary.invalid', status: 429, body: JSON.stringify({ error: 'slow down' }) },
+		]);
 	});
 
 	it('answers inside the 25s total budget even when every host blackholes', async () => {

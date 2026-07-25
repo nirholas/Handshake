@@ -1,0 +1,49 @@
+{
+	"name": "@three-ws/spatial-mcp",
+	"version": "0.1.0",
+	"description": "Validator, builder, and conformance fixtures for Spatial MCP — the open (CC0) shape for returning a live, interactive 3D scene as a first-class MCP tool result.",
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"3d",
+		"glb",
+		"gltf",
+		"spatial",
+		"tool-result",
+		"structured-content",
+		"validator",
+		"three.ws"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "CC0-1.0",
+	"homepage": "https://three.ws/spatial-mcp",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/spatial-mcp"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./fixtures/manifest": "./fixtures/manifest.json"
+	},
+	"files": [
+		"src",
+		"fixtures",
+		"README.md"
+	],
+	"scripts": {
+		"test": "node --test tests/*.test.js"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

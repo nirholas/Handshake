@@ -1,0 +1,7 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"scene": { "glbUrl": "https://assets.example/models/lamp.glb", "format": "glb" },
+	"camera": { "autoRotate": true },
+	"ar": { "supported": true }
+}

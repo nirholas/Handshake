@@ -1,0 +1,6 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"scene": { "glbUrl": "https://assets.example/models/mesh.glb", "format": "usdz" },
+	"camera": { "autoRotate": true }
+}

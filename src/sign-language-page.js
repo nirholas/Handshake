@@ -14,12 +14,34 @@ import { normalizeWord } from './fingerspelling.js';
 import { SIGNS, signGloss, signLookup } from './sign-dictionary.js';
 import { log } from './shared/log.js';
 
-// The reference rig: light enough to animate smoothly everywhere, including on
-// software renderers. It carries no face blendshapes, so the non-manual markers
-// a signed question needs (raised brows, furrowed brows) are compiled into the
-// clip but have nothing to drive here: they land on any avatar that ships ARKit
-// shapes, which most generated avatars do. See docs/sign-language.md.
-const HERO_AVATAR = '/avatars/cz.glb';
+// Two hero rigs, because signing has two halves and no one avatar shows both
+// best. The classic rig is light enough to animate smoothly everywhere,
+// including on software renderers, but carries no face blendshapes. The
+// expressive rig ships the full ARKit shape set, so the non-manual markers a
+// signed question needs (raised brows, furrowed brows, a headshake's set jaw)
+// are actually visible on it. See docs/sign-language.md.
+const AVATARS = [
+	{ id: 'classic', label: 'Classic', url: '/avatars/cz.glb' },
+	{ id: 'expressive', label: 'Expressive face', url: '/avatars/default.glb' },
+];
+
+// Speed, hand, and rig survive a reload: a left-handed signer should not have
+// to re-declare themselves on every visit.
+const PREFS_KEY = 'threews:sign-prefs';
+function loadPrefs() {
+	try {
+		return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
+	} catch {
+		return {};
+	}
+}
+function savePrefs(prefs) {
+	try {
+		localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+	} catch {
+		/* private mode: settings just don't persist */
+	}
+}
 
 // Signing speed. Learners and many Deaf viewers want it slower, and signing is
 // content, so it cannot simply be reduced away like decorative motion.
@@ -47,7 +69,9 @@ async function boot() {
 	const stageHost = $('#sl-stage');
 	if (!stageHost) return;
 
-	const stage = new PoseStage(stageHost, { glbUrl: HERO_AVATAR, framing: 'portrait' });
+	const prefs = loadPrefs();
+	let avatar = AVATARS.find((a) => a.id === prefs.avatar) || AVATARS[0];
+	let stage = null;
 	let speaker = null;
 	let heroTimer = 0;
 	let heroIndex = 0;
@@ -61,12 +85,12 @@ async function boot() {
 	// Speed and dominant hand are baked into the compiled clips, so changing
 	// either rebuilds the speaker (cheap: the vocabulary is compiled lazily and
 	// cached per setting).
-	let rate = 1;
-	let dominant = 'Right';
+	let rate = SPEEDS.some((s) => s.rate === prefs.rate) ? prefs.rate : 1;
+	let dominant = prefs.dominant === 'Left' ? 'Left' : 'Right';
 	/** The last thing signed, so a settings change can show itself immediately. */
 	let lastPhrase = null;
 	const rebuildSpeaker = () => {
-		if (!stage.anim) return;
+		if (!stage?.anim) return;
 		speaker?.cancel();
 		speaker = new SignSpeaker({
 			manager: stage.anim,
@@ -86,6 +110,7 @@ async function boot() {
 	};
 	const applySetting = (fn) => {
 		fn();
+		savePrefs({ rate, dominant, avatar: avatar.id });
 		rebuildSpeaker();
 		replay();
 	};
@@ -101,18 +126,29 @@ async function boot() {
 		return parts.length ? parts.join(' · ') : 'Type anything and watch the avatar sign it.';
 	};
 
-	try {
-		const { supported } = await stage.mount();
-		stage.start();
-		if (!supported) {
-			setStatus('This avatar can’t sign, but the tools below still work.');
-			return;
+	/** Mount (or remount) the hero on the current rig. Returns whether it signs. */
+	const mountStage = async () => {
+		clearTimeout(heroTimer);
+		speaker?.cancel();
+		speaker = null;
+		stage?.dispose();
+		stage = new PoseStage(stageHost, { glbUrl: avatar.url, framing: 'portrait' });
+		try {
+			const { supported } = await stage.mount();
+			stage.start();
+			if (!supported) {
+				setStatus('This avatar can’t sign, but the tools below still work.');
+				return false;
+			}
+			rebuildSpeaker();
+			return true;
+		} catch (err) {
+			log.warn('[sign-language] stage mount failed', err?.message);
+			setStatus('Live preview unavailable: the spelling tools below still work.');
+			return false;
 		}
-		rebuildSpeaker();
-	} catch (err) {
-		log.warn('[sign-language] stage mount failed', err?.message);
-		setStatus('Live preview unavailable: the spelling tools below still work.');
-	}
+	};
+	await mountStage();
 
 	// ── Hero auto-signing loop ────────────────────────────────────────────────
 	// Signing is content, so it is never disabled: but auto-PLAYING on arrival
@@ -178,43 +214,55 @@ async function boot() {
 		});
 	});
 
-	// ── Signing speed and dominant hand ───────────────────────────────────────
-	const speedHost = $('#sl-speed');
-	if (speedHost) {
-		SPEEDS.forEach(({ label, rate }) => {
+	// ── Signing speed, dominant hand, and hero rig ────────────────────────────
+	/** A pill group: one button per option, exactly one pressed at a time. */
+	const buildOptions = (hostSel, options, pressed, onPick) => {
+		const host = $(hostSel);
+		if (!host) return;
+		options.forEach((option) => {
 			const btn = document.createElement('button');
 			btn.type = 'button';
 			btn.className = 'sl-opt';
-			btn.textContent = label;
-			btn.setAttribute('aria-pressed', String(rate === 1));
+			btn.textContent = option.label;
+			btn.setAttribute('aria-pressed', String(pressed(option)));
 			btn.addEventListener('click', () => {
-				speedHost.querySelectorAll('.sl-opt').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+				host.querySelectorAll('.sl-opt').forEach((b) => b.setAttribute('aria-pressed', 'false'));
 				btn.setAttribute('aria-pressed', 'true');
-				setRate(rate);
+				onPick(option);
 			});
-			speedHost.appendChild(btn);
+			host.appendChild(btn);
 		});
-	}
+	};
 
-	const handHost = $('#sl-hand');
-	if (handHost) {
+	buildOptions('#sl-speed', SPEEDS, (s) => s.rate === rate, (s) => setRate(s.rate));
+	buildOptions(
+		'#sl-hand',
 		[
 			{ label: 'Right-handed', side: 'Right' },
 			{ label: 'Left-handed', side: 'Left' },
-		].forEach(({ label, side }) => {
-			const btn = document.createElement('button');
-			btn.type = 'button';
-			btn.className = 'sl-opt';
-			btn.textContent = label;
-			btn.setAttribute('aria-pressed', String(side === 'Right'));
-			btn.addEventListener('click', () => {
-				handHost.querySelectorAll('.sl-opt').forEach((b) => b.setAttribute('aria-pressed', 'false'));
-				btn.setAttribute('aria-pressed', 'true');
-				setDominant(side);
-			});
-			handHost.appendChild(btn);
-		});
-	}
+		],
+		(o) => o.side === dominant,
+		(o) => setDominant(o.side),
+	);
+	// Switching rigs replaces the whole stage: the clips are rig-independent
+	// (they retarget on attach), so the speaker just rebuilds against the new
+	// skeleton and whatever was signing resumes on the new avatar.
+	let switchingRig = false;
+	buildOptions('#sl-rig', AVATARS, (a) => a.id === avatar.id, async (picked) => {
+		if (switchingRig || picked.id === avatar.id) return;
+		switchingRig = true;
+		avatar = picked;
+		savePrefs({ rate, dominant, avatar: avatar.id });
+		setStatus('Loading avatar…');
+		const ok = await mountStage();
+		switchingRig = false;
+		if (!ok) return;
+		if (picked.id === 'expressive') {
+			setStatus('This avatar has a face: questions raise the brows, negation furrows them.');
+		}
+		if (heroActive && !reducedMotion) heroTick();
+		else replay();
+	});
 
 	// ── Vocabulary: every word with a real sign, playable ─────────────────────
 	const vocabHost = $('#sl-vocab-chips');

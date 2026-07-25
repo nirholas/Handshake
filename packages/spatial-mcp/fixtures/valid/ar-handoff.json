@@ -1,0 +1,12 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "avatar",
+	"scene": { "glbUrl": "https://assets.example/avatars/guide.glb", "format": "glb" },
+	"camera": { "autoRotate": true },
+	"ar": {
+		"supported": true,
+		"usdzUrl": "https://assets.example/avatars/guide.usdz",
+		"glbUrl": "https://assets.example/avatars/guide.glb",
+		"launchUrl": "https://assets.example/ar?model=guide"
+	}
+}

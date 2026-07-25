@@ -1,0 +1,5 @@
+{
+	"spatialMcpVersion": "0.1",
+	"kind": "model",
+	"camera": { "autoRotate": true }
+}
