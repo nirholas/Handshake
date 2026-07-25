@@ -698,7 +698,7 @@
 			"descHead": "Generate a fresh texture for an untextured or poorly-textured GLB with t",
 			"descHash": "6cc85e4e6fb7",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
-			"schemaHash": "43f9aed91920"
+			"schemaHash": "c5702d76eb00"
 		},
 		{
 			"name": "retexture_region",
@@ -1300,6 +1300,35 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "28c55131a59d"
+		}
+	],
+	"packages/assistant-mcp/src/tools/build-assistant-widget.js": [
+		{
+			"name": "build_assistant_widget",
+			"title": "Build a paste-ready three.ws assistant widget embed",
+			"descHead": "Turn a config into a ready-to-embed three.ws assistant widget, a floatin",
+			"descHash": "4a9f57b922a5",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false,
+				"destructiveHint": false
+			},
+			"schemaHash": "83649c0d9765"
+		}
+	],
+	"packages/assistant-mcp/src/tools/list-assistant-options.js": [
+		{
+			"name": "list_assistant_options",
+			"title": "List every three.ws assistant widget option",
+			"descHead": "List everything you can configure on the three.ws assistant widget: the ",
+			"descHash": "8899e9de8655",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "5e88c107a2df"
 		}
 	],
 	"packages/audio-mcp/src/tools/audio-to-face.js": [
@@ -1985,6 +2014,45 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "646bbfff3c48"
+		}
+	],
+	"packages/concierge-mcp/src/tools/ask.js": [
+		{
+			"name": "concierge_ask",
+			"title": "Ask a website's AI concierge a question",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			}
+		}
+	],
+	"packages/concierge-mcp/src/tools/avatars.js": [
+		{
+			"name": "concierge_avatars",
+			"title": "List available Concierge avatars",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			}
+		}
+	],
+	"packages/concierge-mcp/src/tools/embed.js": [
+		{
+			"name": "concierge_embed",
+			"title": "Generate a Concierge embed snippet for a website",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			}
 		}
 	],
 	"packages/copy-mcp/src/tools/cancel-subscription.js": [
