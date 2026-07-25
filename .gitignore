@@ -389,6 +389,8 @@ prompts/robinhood-chain/11-toolkit-cli.md
 
 # archives at repo root are never committed
 /*.zip
+# except the OpenAI Select Partner tier assets (owner-provided brand kit)
+!/OAI Select Tier Assets-20260716T190344Z-1-001.zip
 tests/openai-comarketing-language.test.js
 
 # scratch OTP relay file used by scripts/get-mixamo-token.mjs

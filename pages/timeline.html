@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title data-i18n="timeline.meta_title">The Story So Far — three.ws Timeline</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#04050a" />
+		<meta name="description" content="Walk three.ws's history in 3D: every launch, partnership, listing, and milestone from soft-launch to today, laid out as a path you can orbit in 360° or walk end to end." data-i18n-attr="content:timeline.meta_description" />
+
+		<meta property="og:type" content="website">
+		<meta property="og:url" content="https://three.ws/timeline">
+		<meta property="og:title" content="The Story So Far — three.ws Timeline" data-i18n-attr="content:timeline.meta_og_title">
+		<meta property="og:description" content="Every three.ws milestone, in one explorable 3D timeline." data-i18n-attr="content:timeline.meta_og_description">
+		<meta property="og:image" content="https://three.ws/og-image.png">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="630">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:image" content="https://three.ws/og-image.png">
+		<link rel="canonical" href="https://three.ws/timeline" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			html, body { overflow: hidden; }
+			body { display: flex; flex-direction: column; min-height: 100vh; background: #04050a; }
+
+			.tl-header {
+				display: flex; align-items: center; gap: 1rem;
+				padding: 0.7rem 1.1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+				flex: none; z-index: 30; background: rgba(6, 8, 15, 0.9); backdrop-filter: blur(10px);
+			}
+			.tl-header .back {
+				display: inline-flex; align-items: center; gap: 0.45rem; color: rgba(255, 255, 255, 0.7);
+				text-decoration: none; font-size: 0.82rem; font-weight: 600; padding: 0.35rem 0.6rem; border-radius: 8px;
+			}
+			.tl-header .back:hover, .tl-header .back:focus-visible { color: #fff; background: rgba(255, 255, 255, 0.07); }
+			.tl-header h1 { font-size: 0.98rem; margin: 0; font-weight: 650; color: #eef2fa; }
+			.tl-header .sub { font-size: 0.72rem; color: rgba(255, 255, 255, 0.45); margin-left: auto; display: none; }
+			@media (min-width: 720px) { .tl-header .sub { display: inline; } }
+
+			#timeline-root { flex: 1; min-height: 0; position: relative; }
+
+			.tl-boot {
+				position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+				gap: 0.9rem; color: rgba(255, 255, 255, 0.7); font: 500 0.92rem system-ui, sans-serif; text-align: center; padding: 2rem;
+			}
+			.tl-boot .spinner {
+				width: 34px; height: 34px; border-radius: 50%;
+				border: 3px solid rgba(255, 255, 255, 0.12); border-top-color: #9ad0ff;
+				animation: tl-spin 0.85s linear infinite;
+			}
+			@keyframes tl-spin { to { transform: rotate(360deg); } }
+			.tl-boot a { color: #9ad0ff; }
+
+			/* No-WebGL / reduced-capability fallback: a plain, real, accessible list. */
+			.tl-fallback { position: absolute; inset: 0; overflow-y: auto; padding: 1.5rem 1rem 3rem; }
+			.tl-fallback ol { list-style: none; margin: 0 auto; padding: 0; max-width: 640px; display: flex; flex-direction: column; gap: 0.9rem; }
+			.tl-fallback li {
+				border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.9rem 1.05rem;
+				background: rgba(255, 255, 255, 0.03);
+			}
+			.tl-fallback .tl-date { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; }
+			.tl-fallback .tl-title { font-size: 0.98rem; font-weight: 650; color: #eef2fa; margin: 0.2rem 0 0.35rem; }
+			.tl-fallback .tl-summary { font-size: 0.85rem; line-height: 1.5; color: rgba(255, 255, 255, 0.7); margin: 0; }
+			.tl-fallback .tl-src { display: inline-block; margin-top: 0.5rem; font-size: 0.78rem; color: #9ad0ff; text-decoration: none; }
+		</style>
+	</head>
+	<body>
+		<script src="/nav.js"></script>
+		<header class="tl-header">
+			<a class="back" href="/partners" data-i18n-html="timeline.back"><span aria-hidden="true">←</span> Back</a>
+			<h1 data-i18n="timeline.title">The Story So Far</h1>
+			<span class="sub" data-i18n="timeline.subtitle">three.ws · a history you can walk through</span>
+		</header>
+		<main id="timeline-root">
+			<div class="tl-boot" id="timeline-boot">
+				<div class="spinner" aria-hidden="true"></div>
+				<div data-i18n="timeline.loading">Loading three.ws's story…</div>
+			</div>
+		</main>
+		<script type="module" src="/src/timeline.js"></script>
+		<script src="/footer.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -255,6 +255,14 @@
 					"added": "2026-06-22"
 				},
 				{
+					"path": "/timeline",
+					"title": "The Story So Far",
+					"description": "three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-25"
+				},
+				{
 					"path": "/tour",
 					"title": "Guided Tour",
 					"description": "A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.",
