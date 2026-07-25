@@ -41,6 +41,11 @@ export function ringTickConfig(e = process.env) {
 		// SPONSOR_SOL_FLOOR_LAMPORTS default (0.02 SOL) — below it, settlement is
 		// paused, so we skip the tick rather than fire calls that will 502.
 		solFloorLamports: num(e.X402_SPONSOR_SOL_FLOOR_LAMPORTS, 20_000_000),
+		// Cheap calls in flight at once (ring-tick-exec.js worker lanes). The
+		// settle carrier always runs alone first. 12 lanes clears ~94 calls in
+		// well under the 60 s tick window at typical 1-3 s per settle; 1 restores
+		// the old strictly-sequential behavior.
+		concurrency: Math.max(1, Math.floor(num(e.X402_RING_TICK_CONCURRENCY, 12))),
 	};
 }
 

@@ -69,11 +69,16 @@ import {
 	tickBudget,
 	gateOnRingConfig,
 } from '../_lib/x402/ring-tick-plan.js';
+import { runTickPicks } from '../_lib/x402/ring-tick-exec.js';
 
 const log = logger('x402-ring-tick');
 
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 const RING_SETTLE_DEFAULT_PRICE = '1000000'; // $1.00 — mirrors ring-settle.js (RING_SETTLE_DEFAULT_PRICE_ATOMICS)
+// Worst-case budget reservation per cheap call (atomics). Must cover the
+// priciest CHEAP_ENDPOINTS entry ($0.001–$0.01 today) — a cheap call whose 402
+// challenge exceeds its reservation is refused by payX402, not overspent.
+const CHEAP_RESERVATION_ATOMIC = 20_000; // $0.02
 
 // Redis keys: a monotonic per-minute tick counter and the cheap-rotation cursor.
 // Independent of the volume loop's cursor so the two drivers rotate separately.
@@ -334,30 +339,29 @@ export default wrapCron(async (req, res) => {
 			? { buyerFor: async () => { const c = await claimNextPayer(sql).catch(() => null); return c?.keypair || payer; } }
 			: {}),
 	};
-	const results = [];
-	let paid = 0, calls = 0, errors = 0, spent = 0, lastTxSig = null;
-	let floorHit = false;
-
-	for (const ep of picks) {
-		if (remaining <= 0) {
-			log.info('ring_tick_cap_reached', { endpoint: ep.key, spent_atomic: spent });
-			break;
-		}
-		const { result, paidAmount } = await settleAndRecord({
-			sql, runId, ep, origin, remaining, ctx: payCtx,
-			pipeline: 'ring-tick', namePrefix: 'Ring', payFn: payX402, log,
-		});
-		calls += 1;
-		if (!result.success) errors += 1;
-		if (result.paid) {
-			paid += 1; spent += paidAmount; remaining -= paidAmount;
-			if (result.txSig) lastTxSig = result.txSig;
-		}
-		results.push({ key: ep.key, paid: result.paid === true, success: result.success, status: result.status, amount_usdc: paidAmount / 1e6 });
-
-		// Mid-tick back-pressure: the floor was crossed after pre-flight. Stop the
-		// tick (don't keep firing settles that will fail) and alert once.
-		if (!result.success && isFloorSignal(result)) { floorHit = true; break; }
+	// Bounded-concurrency execution (ring-tick-exec.js): the settle carrier runs
+	// alone first, then the cheap calls fan out across cfg.concurrency worker
+	// lanes. Budget safety holds under concurrency because every launch reserves
+	// a worst-case slice of `remaining` and passes it as that call's own
+	// remainingCap — payX402 refuses any challenge above it. Mid-tick floor
+	// signals stop further launches; in-flight calls drain.
+	const exec = await runTickPicks({
+		picks,
+		remaining,
+		concurrency: cfg.concurrency,
+		settleFirst: plan.isSettleTick,
+		ringSettlePriceAtomic,
+		worstCaseCheapAtomic: CHEAP_RESERVATION_ATOMIC,
+		pay: (ep, capForCall) =>
+			settleAndRecord({
+				sql, runId, ep, origin, remaining: capForCall, ctx: payCtx,
+				pipeline: 'ring-tick', namePrefix: 'Ring', payFn: payX402, log,
+			}),
+		isFloorSignal,
+	});
+	const { results, calls, paid, errors, spent, lastTxSig, floorHit } = exec;
+	if (exec.capReached) {
+		log.info('ring_tick_cap_reached', { spent_atomic: spent, launched: calls, picks: picks.length });
 	}
 
 	if (floorHit) {

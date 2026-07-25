@@ -404,6 +404,24 @@ independently, so the ring tick never consumes the autonomous loop's
 | `X402_PRICE_RING_SETTLE` | $1.00 | the volume carrier's per-call size |
 | `X402_RING_TICK_CAP_ATOMIC` | $1.10 | per-tick spend ceiling (fits one settle + its cheap co-riders) |
 | `X402_RING_DAILY_CAP_ATOMIC` | $50.00 | ring-tick daily ceiling (separate budget) |
+| `X402_RING_TICK_CONCURRENCY` | 12 | cheap calls in flight at once (1 = strictly sequential) |
+
+### Scaling up: concurrency and reservations
+
+The tick's paid calls run through a bounded-concurrency executor
+([api/_lib/x402/ring-tick-exec.js](../api/_lib/x402/ring-tick-exec.js)): the
+ring-settle carrier runs alone first, then the cheap calls fan out across
+`X402_RING_TICK_CONCURRENCY` worker lanes, which is what lets a tick clear
+~90+ calls inside its 60 s window. Budget safety holds under concurrency by
+reservation: each launch reserves a worst-case slice ($0.02) of the remaining
+tick budget and gets that slice as its own `remainingCap`, which `payX402`
+enforces against the live 402 challenge, so concurrent calls can never
+collectively overspend the tick cap. Unspent slices are refunded as calls
+finish; a mid-tick SOL-floor signal stops further launches and drains what is
+in flight. Fee math when scaling: fees track *transaction count*, not USDC
+size — ~10,001 lamports per settle, so ~94 calls/min ≈ 135k tx/day ≈ 1.35
+SOL/day. Raise `X402_RING_DAILY_FEE_BUDGET_LAMPORTS`, the daily cap, and payer
+funding together (see the funding table in "Turning it on").
 
 At 3 calls/min the **traffic shape** is:
 
