@@ -15882,7 +15882,7 @@
 		{
 			"date": "2026-07-25",
 			"title": "Sign language page: an avatar with a face, settings that stick, and 84 languages",
-			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into all 84 site languages, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
+			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into every language the site ships, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
 			"tags": [
 				"improvement",
 				"docs"

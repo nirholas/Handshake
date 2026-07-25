@@ -148,7 +148,7 @@
 			<guid isPermaLink="false">2026-07-25:Sign language page: an avatar with a face, settings that stick, and 84 languages</guid>
 			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
-			<description>The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into all 84 site languages, and the sign-language embed attribute is now in the quick-start attribute reference for developers.</description>
+			<description>The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into every language the site ships, and the sign-language embed attribute is now in the quick-start attribute reference for developers.</description>
 		</item>
 		<item>
 			<title>Signing avatars now sign whole sentences, touch what they are supposed to touch, and can raise an eyebrow</title>
@@ -708,7 +708,7 @@
 			<guid isPermaLink="false">2026-07-20:Sign Language Avatars</guid>
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.</description>
+			<description>three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.</description>
 		</item>
 		<item>
 			<title>Audit any agent's trade decisions, linked from the write-ups</title>

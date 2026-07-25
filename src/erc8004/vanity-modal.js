@@ -14,6 +14,8 @@
  * Persistence is the caller's job (see deploy-button.js).
  */
 
+import { expectedAttempts } from '../solana/vanity/validation.js';
+
 const FREE_THRESHOLD = 5;
 const MAX_LENGTH = 6;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/;
@@ -41,9 +43,14 @@ function _coreCount() {
 	return Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 8));
 }
 
-function _estimateSeconds(prefixLen) {
-	if (prefixLen <= 0) return 0;
-	const attempts = Math.pow(58, prefixLen);
+// Estimate from the exact Base58 distribution, not 58^length. The leading
+// character is not uniform (a 44-digit encoding can only start with one of the
+// first 17 symbols), so two prefixes of the same length can differ 58x in cost:
+// quoting "Agent" and "zebra" as the same wait is simply wrong.
+function _estimateSeconds(prefix) {
+	if (!prefix || !prefix.length) return 0;
+	const attempts = expectedAttempts(prefix, '', false);
+	if (!Number.isFinite(attempts)) return Infinity;
 	return attempts / (RATE_PER_CORE * _coreCount());
 }
 
@@ -180,7 +187,7 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 				<div class="vm-chips" aria-label="Suggested prefixes">
 					${suggestions.map((s) => `
 						<button class="vm-chip" data-prefix="${_esc(s)}" type="button">
-							${_esc(s)}<span class="vm-chip-est">${_formatTime(_estimateSeconds(s.length))}</span>
+							${_esc(s)}<span class="vm-chip-est">${_formatTime(_estimateSeconds(s))}</span>
 						</button>`).join('')}
 				</div>
 
@@ -305,7 +312,7 @@ export function openVanityModal({ agentName = '', initial = '' } = {}) {
 			}
 			const sample = _previewSuffix(raw);
 			preview.innerHTML = `<span class="pfx">${_esc(raw)}</span><span class="rest">${_esc(sample.slice(raw.length))}</span>`;
-			estEl.textContent = `est. ${_formatTime(_estimateSeconds(raw.length))} on ${_coreCount()} cores`;
+			estEl.textContent = `est. ${_formatTime(_estimateSeconds(raw))} on ${_coreCount()} cores`;
 			tierEl.innerHTML = raw.length >= FREE_THRESHOLD
 				? `<span class="vm-paid">✦ Paid plan</span>`
 				: `<span style="color:#1b5e20;font-weight:600">Free</span>`;

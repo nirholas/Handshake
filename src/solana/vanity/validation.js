@@ -53,7 +53,14 @@ export function validatePattern(pattern) {
 }
 
 /**
- * Estimate expected attempts to find a Base58 prefix of the given length.
+ * Order-of-magnitude cost of an `n`-character pattern, for UI ladders that
+ * describe difficulty by length alone ("3 chars, seconds; 5 chars, hours").
+ *
+ * NOT the difficulty model. It ignores which characters were chosen, and the
+ * leading one alone swings the true cost by 58x, so anything that quotes,
+ * prices, attests or gates on difficulty must call `expectedAttempts` with the
+ * actual pattern instead.
+ *
  * @param {number} length
  * @returns {number}
  */

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T13:09:13.607Z",
+	"generated_at": "2026-07-25T13:14:31.817Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -192,7 +192,7 @@
 			"date": "2026-07-25",
 			"type": "update",
 			"title": "Sign language page: an avatar with a face, settings that stick, and 84 languages",
-			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into all 84 site languages, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
+			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into every language the site ships, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
 			"link": "/sign-language",
 			"tags": [
 				"improvement",
@@ -930,7 +930,7 @@
 			"date": "2026-07-20",
 			"type": "launch",
 			"title": "Sign Language Avatars",
-			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
+			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.",
 			"link": "/sign-language",
 			"tags": [
 				"launch"
