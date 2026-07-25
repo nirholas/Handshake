@@ -20,6 +20,7 @@ import { sql } from '../_lib/db.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { getSolBalance } from '../_lib/avatar-wallet.js';
+import { classifyAutonomy, describeTier } from '../_lib/sniper-autonomy.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days', all: null };
@@ -100,6 +101,7 @@ export default wrap(async (req, res) => {
 			s.min_market_cap_usd, s.max_market_cap_usd, s.require_socials,
 			s.min_oracle_score, s.min_quality_score, s.max_bundle_score, s.require_smart_money,
 			s.stop_loss_pct, s.trailing_stop_pct, s.take_profit_pct, s.max_hold_seconds,
+			s.initials_out_multiple, s.moonbag_min_pct, s.max_creator_launches, s.auto_optimize,
 			a.id as agent_id, a.name as agent_name, a.meta->>'solana_address' as wallet_address,
 			count(p.id) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED')                                 as closed,
 			count(p.id) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED' and p.realized_pnl_lamports > 0) as wins,
@@ -131,6 +133,15 @@ export default wrap(async (req, res) => {
 	const experiments = rows.map((r) => {
 		const closed = Number(r.closed) || 0;
 		const wins = Number(r.wins) || 0;
+		// Earned autonomy over the same window this board reports. The optimizer
+		// recomputes this independently on its own schedule; showing it here is what
+		// makes "why did that arm get a wider band" answerable without a DB query.
+		const autonomy = classifyAutonomy({
+			closed,
+			wins,
+			netPnlLamports: Number(r.realized_pnl_lamports) || 0,
+			avgPnlPct: r.avg_pnl_pct != null ? Number(r.avg_pnl_pct) : 0,
+		});
 		return {
 			strategy_id: r.strategy_id,
 			label: r.label || `${(r.decision_mode || 'rules') === 'llm' ? 'llm' : 'rules'}:${String(r.strategy_id).slice(0, 8)}`,
@@ -151,6 +162,15 @@ export default wrap(async (req, res) => {
 			trailing_stop_pct: r.trailing_stop_pct != null ? Number(r.trailing_stop_pct) : null,
 			take_profit_pct: r.take_profit_pct != null ? Number(r.take_profit_pct) : null,
 			max_hold_seconds: r.max_hold_seconds != null ? Number(r.max_hold_seconds) : null,
+			// Laddered exit: null multiple = classic single-shot full exit.
+			initials_out_multiple: r.initials_out_multiple != null ? Number(r.initials_out_multiple) : null,
+			moonbag_min_pct: r.moonbag_min_pct != null ? Number(r.moonbag_min_pct) : null,
+			max_creator_launches: r.max_creator_launches != null ? Number(r.max_creator_launches) : null,
+			// Earned autonomy: what this arm's own record has bought it.
+			autonomy_tier: autonomy.tier,
+			autonomy_reason: autonomy.reason,
+			autonomy_grants: describeTier(autonomy.tier),
+			auto_optimize: r.auto_optimize === true,
 			closed,
 			wins,
 			losses: Math.max(0, closed - wins),

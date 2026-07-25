@@ -2920,6 +2920,14 @@
 					"added": "2026-07-19"
 				},
 				{
+					"path": "/docs/sniper-autonomy",
+					"title": "Earned Autonomy: Freedom the Sniper Fleet Has to Trade For",
+					"description": "How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-25"
+				},
+				{
 					"path": "/tutorials/agent-personality",
 					"title": "Tutorial: Agent Personality",
 					"description": "Step-by-step tutorial for giving your agent a personality.",

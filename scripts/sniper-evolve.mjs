@@ -25,6 +25,11 @@
 //   revive      a retired arm once enough time has passed to re-test it (exploration).
 //   reallocate  shift the fixed fleet daily budget toward higher-fitness arms,
 //               with a floor so no arm starves and the experiment keeps exploring.
+//               Fitness is scaled by the arm's earned-autonomy tier
+//               (api/_lib/sniper-autonomy.js), so an arm with a proven profit
+//               concentrates more of the fleet budget and one that bleeds
+//               concentrates less. The fleet total and the per-arm floor are
+//               unchanged: this only decides how the same pot is divided.
 //
 // SAFETY BY CONSTRUCTION. The engine writes ONLY the fields in WRITABLE below.
 // It can never touch stop_loss_pct, firewall_level, max_price_impact, the daily
@@ -36,6 +41,7 @@
 
 import { execSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { budgetWeightFor, classifyAutonomy } from '../api/_lib/sniper-autonomy.js';
 const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');
 
@@ -116,6 +122,7 @@ export async function runEvolve({ apply = false, log = console.log } = {}) {
 			       count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED') real_n,
 			       count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED' and p.realized_pnl_lamports>0) real_w,
 			       coalesce(avg(p.realized_pnl_pct) filter (where p.status='closed' and p.buy_sig<>'SIMULATED'),0) real_avg_pct,
+			       coalesce(sum(p.realized_pnl_lamports) filter (where p.status='closed' and p.buy_sig<>'SIMULATED'),0) real_net_lamports,
 			       count(p.id) filter (where p.status='closed' and p.buy_sig='SIMULATED') paper_n,
 			       count(p.id) filter (where p.status='closed' and p.buy_sig='SIMULATED' and p.realized_pnl_lamports>0) paper_w
 			from agent_sniper_strategies s
@@ -127,17 +134,31 @@ export async function runEvolve({ apply = false, log = console.log } = {}) {
 		// Fitness: conservative win-edge over the base rate (Wilson lower bound) plus
 		// a realized-ROI term, real fills at full weight and paper at 1/3. An arm with
 		// no evidence yet gets a neutral exploration fitness so it keeps a budget floor.
+		//
+		// The earned-autonomy tier then scales the result. Win rate alone underrates
+		// an arm that hits rarely but pays well when it does, which is the normal
+		// shape of a profitable momentum arm; the tier is computed from realized net
+		// P&L and average edge, so an arm that actually makes money concentrates more
+		// of the fixed fleet budget and one that bleeds concentrates less. The fleet
+		// total never changes and the per-arm floor still keeps exploration alive.
 		const fitness = (a) => {
 			const realN = +a.real_n, realW = +a.real_w;
 			const paperN = +a.paper_n, paperW = +a.paper_w;
 			const n = realN + paperN / 3;
 			const w = realW + paperW / 3;
-			if (n < 1) return { score: baseRate, samples: 0, edge: 0, wl: wilson(0, 0) };
+			const autonomy = classifyAutonomy({
+				closed: realN,
+				wins: realW,
+				netPnlLamports: Number(a.real_net_lamports) || 0,
+				avgPnlPct: Number(a.real_avg_pct) || 0,
+			});
+			const weight = budgetWeightFor(autonomy.tier);
+			if (n < 1) return { score: baseRate, samples: 0, edge: 0, wl: wilson(0, 0), tier: autonomy.tier, weight };
 			const wl = wilson(w, Math.max(1, Math.round(n)));
 			const edge = wl.lo - baseRate;                    // provable edge over ground truth
 			const roi = Math.max(-1, Math.min(2, Number(a.real_avg_pct) / 100));
-			const score = Math.max(0, baseRate + edge * 2 + roi * 0.05);
-			return { score, samples: Math.round(n), edge, wl, roi };
+			const score = Math.max(0, (baseRate + edge * 2 + roi * 0.05) * weight);
+			return { score, samples: Math.round(n), edge, wl, roi, tier: autonomy.tier, weight };
 		};
 
 		const proposals = [];
@@ -175,7 +196,7 @@ export async function runEvolve({ apply = false, log = console.log } = {}) {
 				const nextLamports = String(Math.round(share * LAMPORTS));
 				const cur = String(a.daily_budget_lamports);
 				if (nextLamports !== cur) propose(a, 'reallocate', 'daily_budget_lamports', cur, nextLamports, f,
-					{ share_sol: +share.toFixed(4), fleet_sol: FLEET_DAILY_SOL, fitness: +f.score.toFixed(4) });
+					{ share_sol: +share.toFixed(4), fleet_sol: FLEET_DAILY_SOL, fitness: +f.score.toFixed(4), tier: f.tier, tier_weight: f.weight });
 			}
 		}
 
@@ -184,7 +205,7 @@ export async function runEvolve({ apply = false, log = console.log } = {}) {
 		log(`Fleet daily budget ${FLEET_DAILY_SOL} SOL across ${active.length} active arms. ${apply ? 'APPLYING' : 'DRY-RUN (no writes)'}.\n`);
 		for (const a of arms) {
 			const f = fitness(a);
-			log(`  ${(a.label || '?').padEnd(17)} ${a.enabled ? 'ON ' : 'off'} fitness ${f.score.toFixed(4)} · ${f.samples} samples · edge ${(f.edge * 100).toFixed(1)}pt`);
+			log(`  ${(a.label || '?').padEnd(17)} ${a.enabled ? 'ON ' : 'off'} ${f.tier.padEnd(10)} (x${f.weight}) fitness ${f.score.toFixed(4)} · ${f.samples} samples · edge ${(f.edge * 100).toFixed(1)}pt`);
 		}
 		log(`\n${proposals.length} proposed mutation(s):`);
 		for (const p of proposals) {

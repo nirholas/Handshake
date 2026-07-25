@@ -10,31 +10,34 @@
 // This never touches the deterministic safety rails (trade firewall, Mayhem
 // exclusion, budgets, concurrency). It only moves policy knobs, each bounded.
 //
+// EARNED AUTONOMY. The range, the step, and the set of writable fields are not
+// fixed: they come from the arm's tier (api/_lib/sniper-autonomy.js), which is
+// recomputed from its realized record on every run. A profitable arm gets wider
+// bounds, bigger steps, and access to fields a losing arm cannot touch (its entry
+// universe, its LLM confidence bar, the take-initials ladder); an arm that is
+// bleeding gets narrower bounds and half steps until it recovers. Callers that
+// pass no tier get 'standard', which is the historical behaviour exactly.
+//
 // Design: rules are ordered by priority; the first rule to claim a field wins,
 // so proposals never conflict. Each rule cites the evidence that triggered it.
+// Rules O/A/B/C/E tighten and run for every tier. Rules D/F/G/H hand room back to
+// an arm that earned it and are gated on tier + realized profit.
+
+import { atLeast, boundsFor, stepsFor, unsetOkFor, writableFor } from './sniper-autonomy.js';
 
 // Minimum closed real trades before the optimizer will act on an arm. Below
 // this the sample is noise and every rule no-ops.
 export const MIN_SAMPLE = 8;
 
-// Hard ranges per field. A proposal is clamped into [min,max]; null means the
-// field may be left unset (only take_profit_pct supports "unset → set").
-export const BOUNDS = {
-	take_profit_pct: { min: 15, max: 300 },
-	trailing_stop_pct: { min: 8, max: 50 },
-	stop_loss_pct: { min: 10, max: 50 },
-	max_hold_seconds: { min: 120, max: 7200 },
-	min_quality_score: { min: 0, max: 100 },
-	min_oracle_score: { min: 0, max: 100 },
-	// per_trade_lamports floor keeps a de-risked arm from rounding to dust; the
-	// ceiling is a hard absolute cap (0.2 SOL) the optimizer will never exceed
-	// regardless of how well an arm is doing. Real scaling past this is a human
-	// budget decision, by design.
-	per_trade_lamports: { min: 2_000_000, max: 200_000_000 },
-};
+// Hard ranges for the DEFAULT tier. Every tier's ranges live in
+// api/_lib/sniper-autonomy.js (TIER_BOUNDS); this export is the 'standard' row,
+// kept as the public constant so existing callers and tests read one source of
+// truth rather than a second copy that can drift.
+export const BOUNDS = boundsFor('standard');
 
-// Max change a single run may make to each field. Small steps → the loop
-// converges gradually and every move stays observable.
+// Max change a single run may make to each field at the DEFAULT tier. Small steps
+// → the loop converges gradually and every move stays observable. Higher tiers
+// scale these up (TIER_STEP_SCALE), probation halves them.
 export const STEP = {
 	take_profit_pct: 15,
 	trailing_stop_pct: 5,
@@ -43,12 +46,20 @@ export const STEP = {
 	min_quality_score: 5,
 	min_oracle_score: 5,
 	per_trade_fraction: 0.2, // ≤20% size change per run
+	// Tier-unlocked fields. Only reachable once an arm has earned the field.
+	llm_min_confidence: 0.05,
+	min_market_cap_usd: 5_000,
+	max_market_cap_usd: 25_000,
+	initials_out_multiple: 0.5,
+	moonbag_min_pct: 5,
+	max_creator_launches: 5,
 };
 
-// Fields that may be set from unset (null). For a filter threshold, null means
-// "no filter" and turning one on is a safe tightening; for take-profit it locks
-// gains. Stops/hold are deliberately excluded: null there is load-bearing.
-const UNSET_OK = new Set(['take_profit_pct', 'min_oracle_score', 'min_quality_score']);
+// Fields written as whole numbers. Everything else keeps its natural precision
+// (llm_min_confidence and initials_out_multiple are fractional by nature).
+const INTEGER_FIELDS = new Set([
+	'max_hold_seconds', 'per_trade_lamports', 'min_market_cap_usd', 'max_market_cap_usd', 'max_creator_launches',
+]);
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const num = (v) => (v == null ? null : Number(v));
@@ -108,17 +119,26 @@ function share(exitReasons, key, total) {
  *                          worstPnlPct, avgHoldSeconds, netPnlLamports,
  *                          exitReasons: {timeout, stop_loss, trailing_stop, take_profit,...} }
  * @param {object} config the current agent_sniper_strategies row
- * @returns {{ proposals: Array<{field,from,to,reason}>, sample:number, acted:boolean, notes:string[] }}
+ * @param {{ tier?: string }} [opts] earned-autonomy tier; omitted = 'standard'
+ * @returns {{ proposals: Array<{field,from,to,reason}>, sample:number, acted:boolean, notes:string[], tier:string }}
  */
-export function proposeAdjustments(stats, config) {
+export function proposeAdjustments(stats, config, opts = {}) {
 	const proposals = [];
 	const claimed = new Set();
 	const notes = [];
 	const sample = Number(stats?.closed) || 0;
 	const mode = (config?.decision_mode || 'rules');
 
+	// Tier decides how far, how fast, and which fields at all.
+	const tier = opts.tier || 'standard';
+	const bounds = boundsFor(tier);
+	const steps = stepsFor(tier, STEP);
+	const writable = writableFor(tier);
+	const unsetOk = unsetOkFor(tier);
+	const earned = atLeast('trusted', tier);
+
 	if (sample < MIN_SAMPLE) {
-		return { proposals, sample, acted: false, notes: [`sample ${sample} < ${MIN_SAMPLE}, no action`] };
+		return { proposals, sample, acted: false, tier, notes: [`sample ${sample} < ${MIN_SAMPLE}, no action`] };
 	}
 
 	const winRate = num(stats.winRate) ?? 0;
@@ -132,23 +152,29 @@ export function proposeAdjustments(stats, config) {
 	const perTrade = num(config.per_trade_lamports);
 	const quality = num(config.min_quality_score);
 	const oracle = num(config.min_oracle_score);
+	const confidence = num(config.llm_min_confidence);
+	const mcapMin = num(config.min_market_cap_usd);
+	const mcapMax = num(config.max_market_cap_usd);
+	const ladder = num(config.initials_out_multiple);
+	const creatorCap = num(config.max_creator_launches);
 
 	const propose = (field, to, reason) => {
 		if (claimed.has(field)) return;
-		const b = BOUNDS[field];
+		if (!writable.has(field)) return;   // the tier has not earned this field
+		const b = bounds[field];
 		if (!b) return;
 		const from = num(config[field]);
 		let target;
 		if (field === 'per_trade_lamports') {
 			target = to; // already computed absolute
 		} else {
-			const step = STEP[field];
-			target = boundedToward(from, to, step, b);
+			target = boundedToward(from, to, steps[field], b);
 		}
 		target = clamp(target, b.min, b.max);
-		if (field === 'max_hold_seconds' || field === 'per_trade_lamports') target = Math.round(target);
+		if (INTEGER_FIELDS.has(field)) target = Math.round(target);
+		else target = Number(target.toFixed(2));
 		if (from != null && target === from) return; // no-op
-		if (from == null && !UNSET_OK.has(field)) return; // some fields must not be set from unset
+		if (from == null && !unsetOk.has(field)) return; // some fields must not be set from unset
 		claimed.add(field);
 		proposals.push({ field, from, to: target, reason });
 	};
@@ -203,19 +229,83 @@ export function proposeAdjustments(stats, config) {
 		}
 	}
 
-	// Rule D: proven arm: scale size up, bounded, never past the hard ceiling.
-	if (winRate >= 60 && avg > 10 && sample >= MIN_SAMPLE * 1.5 && perTrade != null) {
-		propose('per_trade_lamports', Math.round(perTrade * (1 + STEP.per_trade_fraction * 0.75)),
-			`Proven arm (${winRate}% win rate, avg +${avg.toFixed(1)}% over ${sample} trades): scale size up ${Math.round(STEP.per_trade_fraction * 75)}% within the hard cap.`);
+	// Rule D: proven arm: scale size up, bounded, never past the tier's ceiling.
+	// Two ways to qualify. The classic one is a high win rate. The second exists
+	// because win rate is the wrong measure for a momentum arm: one that wins 36%
+	// of the time but is net profitable has a real edge and has earned more size.
+	// That second path is tier-gated, so only an arm the autonomy engine already
+	// judged profitable can take it.
+	const provenByWinRate = winRate >= 60 && avg > 10;
+	const provenByProfit = earned && netPnl > 0;
+	if ((provenByWinRate || provenByProfit) && sample >= MIN_SAMPLE * 1.5 && perTrade != null) {
+		const pct = Math.round(steps.per_trade_fraction * 75);
+		propose('per_trade_lamports', Math.round(perTrade * (1 + steps.per_trade_fraction * 0.75)),
+			provenByWinRate
+				? `Proven arm (${winRate}% win rate, avg +${avg.toFixed(1)}% over ${sample} trades): scale size up ${pct}% within the hard cap.`
+				: `Net profitable over ${sample} real trades (${(netPnl / 1e9).toFixed(4)} SOL, avg +${avg.toFixed(1)}%) despite a ${winRate}% win rate: an edge that pays does not need a high hit rate. Scale size up ${pct}% within the tier cap.`);
 	}
 
 	// Rule E: chronic loser: throttle size hard (short of auto-disable, which
 	// stays a human call).
 	if (winRate < 25 && netPnl < 0 && sample >= MIN_SAMPLE * 1.5 && perTrade != null) {
-		propose('per_trade_lamports', Math.round(perTrade * (1 - STEP.per_trade_fraction)),
+		propose('per_trade_lamports', Math.round(perTrade * (1 - steps.per_trade_fraction)),
 			`Sustained underperformance (${winRate}% win rate, net ${(netPnl / 1e9).toFixed(3)} SOL over ${sample} trades): throttle size. Consider disabling this arm.`);
 		notes.push('candidate_for_disable');
 	}
 
-	return { proposals, sample, acted: proposals.length > 0, notes };
+	// ── Earned freedom. Everything below hands room BACK to an arm that has proven
+	// it makes money, instead of only ever tightening it. All of it is gated on
+	// tier (trusted+) and on realized profit, all of it is bounded and reversible,
+	// and every field here is one a losing arm cannot reach at all.
+	const profitable = earned && netPnl > 0;
+
+	// Rule F: a profitable judge earns a lower bar. An LLM arm in the money is
+	// passing on launches it would have won; walk its confidence floor down so it
+	// takes more shots. Demotion reverses this automatically on the next run.
+	if (profitable && mode === 'llm' && confidence != null) {
+		propose('llm_min_confidence', confidence - steps.llm_min_confidence,
+			`Profitable judgment (net ${(netPnl / 1e9).toFixed(4)} SOL, avg +${avg.toFixed(1)}% over ${sample} trades): lower the confidence floor from ${confidence} so the model acts on more of what it sees. Widening exploration where the record says the judgment is sound.`);
+	}
+
+	// Rule G: a profitable arm earns a wider hunting ground. Widen the market-cap
+	// band outward on both sides and, at the top tier, loosen the serial-launcher
+	// cap. Only widens a band that exists: an arm with no band is already
+	// unrestricted and nothing here would restrict it.
+	if (profitable) {
+		if (mcapMin != null) {
+			propose('min_market_cap_usd', mcapMin - steps.min_market_cap_usd,
+				`Profitable over ${sample} trades: lower the entry floor from $${Math.round(mcapMin).toLocaleString('en-US')} to explore earlier launches this arm currently never sees.`);
+		}
+		if (mcapMax != null) {
+			propose('max_market_cap_usd', mcapMax + steps.max_market_cap_usd,
+				`Profitable over ${sample} trades: raise the entry ceiling from $${Math.round(mcapMax).toLocaleString('en-US')} to explore larger launches this arm currently never sees.`);
+		}
+		if (creatorCap != null) {
+			propose('max_creator_launches', creatorCap + steps.max_creator_launches,
+				`Profitable over ${sample} trades: loosen the serial-launcher cap from ${creatorCap} — a prolific creator is not automatically a bad one, and this arm has earned the right to test that.`);
+		}
+	}
+
+	// Rule H: a profitable arm whose winners run well past its average exit earns
+	// the take-initials ladder: recover the stake at 2x, keep a moon bag, let the
+	// rest ride the trailing stop. This is the one exit change that raises the
+	// ceiling instead of lowering it, so it is gated on an arm having shown it
+	// actually catches runners (best far above avg).
+	if (profitable && best - avg >= 25) {
+		if (ladder == null) {
+			propose('initials_out_multiple', 2,
+				`Winners run far past the average exit (best +${best.toFixed(0)}% vs avg +${avg.toFixed(1)}% over ${sample} trades) and the arm is net profitable: turn on the take-initials ladder. Recover the stake at 2x, keep the moon bag, let the remainder ride the trailing stop instead of full-exiting every winner.`);
+			notes.push('ladder_enabled');
+		} else {
+			// Ladder already on and still leaving upside on the table: keep more of
+			// each position riding after the initials come out.
+			const moonbag = num(config.moonbag_min_pct);
+			if (moonbag != null) {
+				propose('moonbag_min_pct', moonbag + steps.moonbag_min_pct,
+					`Ladder is on and winners still run well past the average exit (best +${best.toFixed(0)}% vs avg +${avg.toFixed(1)}%): raise the moon-bag floor from ${moonbag}% so more of each winner keeps riding after the stake is recovered.`);
+			}
+		}
+	}
+
+	return { proposals, sample, acted: proposals.length > 0, notes, tier };
 }

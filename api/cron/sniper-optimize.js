@@ -15,6 +15,14 @@
 // concurrency) are never touched here. The optimizer only moves policy knobs a
 // human owner already tunes, each clamped to a hard range.
 //
+// How wide that range is depends on the arm. Each run classifies every arm with
+// the earned-autonomy engine (api/_lib/sniper-autonomy.js) from its own realized
+// record: a profitable arm gets wider bounds, bigger steps, and unlocks fields a
+// losing arm cannot touch (its entry universe, its LLM confidence bar, the
+// take-initials ladder); a bleeding arm gets narrowed bounds and half steps. The
+// tier is recomputed from scratch every pass, so freedom is continuously earned
+// rather than granted once, and it is recorded on the run row and in the ledger.
+//
 // Controls:
 //   SNIPER_OPTIMIZER_MODE   = shadow | apply     (default shadow)
 //   SNIPER_OPTIMIZER_WINDOW = 24h | 7d | 30d     (default 7d)
@@ -26,6 +34,7 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { recordDecision } from '../_lib/reasoning-ledger.js';
 import { proposeAdjustments } from '../_lib/sniper-optimizer.js';
+import { classifyAutonomy, describeTier } from '../_lib/sniper-autonomy.js';
 
 const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
 
@@ -50,6 +59,20 @@ async function applyProposal(strategyId, field, value) {
 			return sql`update agent_sniper_strategies set min_oracle_score = ${value}, updated_at = now() where id = ${strategyId}`;
 		case 'per_trade_lamports':
 			return sql`update agent_sniper_strategies set per_trade_lamports = ${value}, updated_at = now() where id = ${strategyId}`;
+		// Tier-unlocked fields. The optimizer only ever emits these for an arm the
+		// autonomy engine placed at trusted or above; the switch is the second gate.
+		case 'llm_min_confidence':
+			return sql`update agent_sniper_strategies set llm_min_confidence = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'min_market_cap_usd':
+			return sql`update agent_sniper_strategies set min_market_cap_usd = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'max_market_cap_usd':
+			return sql`update agent_sniper_strategies set max_market_cap_usd = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'initials_out_multiple':
+			return sql`update agent_sniper_strategies set initials_out_multiple = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'moonbag_min_pct':
+			return sql`update agent_sniper_strategies set moonbag_min_pct = ${value}, updated_at = now() where id = ${strategyId}`;
+		case 'max_creator_launches':
+			return sql`update agent_sniper_strategies set max_creator_launches = ${value}, updated_at = now() where id = ${strategyId}`;
 		default:
 			throw new Error(`optimizer refused to write unknown field '${field}'`);
 	}
@@ -76,6 +99,8 @@ async function armStats(network, interval) {
 			s.per_trade_lamports, s.daily_budget_lamports, s.max_concurrent_positions,
 			s.take_profit_pct, s.trailing_stop_pct, s.stop_loss_pct, s.max_hold_seconds,
 			s.min_quality_score, s.min_oracle_score,
+			s.llm_min_confidence, s.min_market_cap_usd, s.max_market_cap_usd,
+			s.initials_out_multiple, s.moonbag_min_pct, s.max_creator_launches,
 			count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED')                              as closed,
 			count(p.id) filter (where p.status='closed' and p.buy_sig<>'SIMULATED' and p.realized_pnl_lamports>0) as wins,
 			coalesce(sum(p.realized_pnl_lamports) filter (where p.status='closed' and p.buy_sig<>'SIMULATED'),0)  as net_pnl_lamports,
@@ -128,7 +153,7 @@ export default wrapCron(async (req, res) => {
 	const maxApplies = Math.max(0, Number(process.env.SNIPER_OPTIMIZER_MAX_APPLIES ?? 5) || 5);
 	const network = 'mainnet';
 
-	const report = { mode, window: windowLabel, arms: 0, with_proposals: 0, applied: 0, skipped_optin: 0, errors: 0, runs: [] };
+	const report = { mode, window: windowLabel, arms: 0, with_proposals: 0, applied: 0, skipped_optin: 0, errors: 0, tiers: {}, runs: [] };
 	let rows = [];
 	let oracleByArm = new Map();
 	try {
@@ -159,7 +184,13 @@ export default wrapCron(async (req, res) => {
 				exitReasons: r.exit_reasons || {},
 				oracleBuckets: oracleByArm.get(r.strategy_id) || [],
 			};
-			const { proposals, sample, acted, notes } = proposeAdjustments(stats, r);
+			// Earned autonomy: the arm's own realized record decides how much rope it
+			// gets this run. Recomputed every pass, so a profitable arm widens as it
+			// keeps earning and a fading one narrows again without anyone stepping in.
+			const autonomy = classifyAutonomy(stats);
+			report.tiers[autonomy.tier] = (report.tiers[autonomy.tier] || 0) + 1;
+
+			const { proposals, sample, acted, notes } = proposeAdjustments(stats, r, { tier: autonomy.tier });
 			if (!acted) continue;
 			report.with_proposals++;
 
@@ -180,8 +211,8 @@ export default wrapCron(async (req, res) => {
 					kind: 'optimize',
 					subjectRef: r.strategy_id,
 					actionRef: `optimize:${r.strategy_id}:${Date.now()}`,
-					inputs: { window: windowLabel, sample, stats, proposals },
-					rationale: `Auto-tuned ${proposals.length} field(s) for arm "${r.label || r.strategy_id}" from ${sample} real trades over ${windowLabel}: ${proposals.map((p) => `${p.field} ${p.from ?? '(unset)'}→${p.to}`).join(', ')}.`,
+					inputs: { window: windowLabel, sample, stats, proposals, autonomy },
+					rationale: `Auto-tuned ${proposals.length} field(s) for arm "${r.label || r.strategy_id}" from ${sample} real trades over ${windowLabel} at autonomy tier "${autonomy.tier}" (${autonomy.reason}): ${proposals.map((p) => `${p.field} ${p.from ?? '(unset)'}→${p.to}`).join(', ')}.`,
 					prediction: { basis: 'bounded self-tuning from realized outcomes', metric: 'realized_pnl', direction: 'up' },
 					confidence: 0.5,
 					network,
@@ -192,15 +223,18 @@ export default wrapCron(async (req, res) => {
 
 			await sql`
 				insert into agent_sniper_optimizer_runs
-					(strategy_id, agent_id, network, mode, window_label, sample_size, evidence, proposals, applied, ledger_seq)
+					(strategy_id, agent_id, network, mode, window_label, sample_size, evidence, proposals, applied, ledger_seq,
+					 autonomy_tier, autonomy_reason)
 				values
 					(${r.strategy_id}, ${r.agent_id}, ${network}, ${mode}, ${windowLabel}, ${sample},
-					 ${JSON.stringify(stats)}::jsonb, ${JSON.stringify(proposals)}::jsonb, ${willApply}, ${ledgerSeq})
+					 ${JSON.stringify({ ...stats, autonomy })}::jsonb, ${JSON.stringify(proposals)}::jsonb, ${willApply}, ${ledgerSeq},
+					 ${autonomy.tier}, ${autonomy.reason})
 			`;
 
 			report.runs.push({
 				strategy_id: r.strategy_id, label: r.label || null, sample,
 				applied: willApply, opted_in: optedIn,
+				tier: autonomy.tier, tier_reason: autonomy.reason, tier_grants: describeTier(autonomy.tier),
 				proposals: proposals.map((p) => ({ field: p.field, from: p.from, to: p.to })),
 				notes,
 			});

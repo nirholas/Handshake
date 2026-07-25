@@ -12,6 +12,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { proposeAdjustments, bestOracleThreshold, MIN_SAMPLE, BOUNDS, STEP } from '../api/_lib/sniper-optimizer.js';
+import { boundsFor } from '../api/_lib/sniper-autonomy.js';
+
+const BOUNDS_TRUSTED = boundsFor('trusted');
 
 const baseConfig = {
 	decision_mode: 'rules',
@@ -103,6 +106,129 @@ describe('proposeAdjustments', () => {
 			baseConfig,
 		);
 		for (const p of r.proposals) expect(p.to).not.toBe(p.from);
+	});
+});
+
+describe('earned autonomy: the optimizer scales with the arm', () => {
+	// A profitable arm: net positive, real sample, winners that run past the average
+	// exit. This is the record that buys extra freedom.
+	const profitable = stats({
+		closed: 33, wins: 12, winRate: 36, avgPnlPct: 6, bestPnlPct: 71,
+		netPnlLamports: 2_671_000, exitReasons: { trailing_stop: 12, timeout: 11, stop_loss: 10 },
+	});
+
+	it('defaults to standard behaviour when no tier is passed', () => {
+		const untiered = proposeAdjustments(profitable, baseConfig);
+		const standard = proposeAdjustments(profitable, baseConfig, { tier: 'standard' });
+		expect(untiered.proposals).toEqual(standard.proposals);
+		expect(untiered.tier).toBe('standard');
+	});
+
+	it('refuses to touch an unlocked field for an arm that has not earned it', () => {
+		const config = { ...baseConfig, decision_mode: 'llm', llm_min_confidence: 0.65, min_market_cap_usd: 10_000 };
+		for (const tier of ['standard', 'probation']) {
+			const r = proposeAdjustments(profitable, config, { tier });
+			expect(r.proposals.find((p) => p.field === 'llm_min_confidence')).toBeFalsy();
+			expect(r.proposals.find((p) => p.field === 'min_market_cap_usd')).toBeFalsy();
+			expect(r.proposals.find((p) => p.field === 'initials_out_multiple')).toBeFalsy();
+		}
+	});
+
+	it('lowers a profitable LLM arm’s confidence floor so it takes more shots', () => {
+		const r = proposeAdjustments(
+			profitable,
+			{ ...baseConfig, decision_mode: 'llm', llm_min_confidence: 0.65 },
+			{ tier: 'trusted' },
+		);
+		const conf = r.proposals.find((p) => p.field === 'llm_min_confidence');
+		expect(conf).toBeTruthy();
+		expect(conf.to).toBeLessThan(0.65);
+		expect(conf.to).toBeGreaterThanOrEqual(BOUNDS_TRUSTED.llm_min_confidence.min);
+		// Float dust must never reach the DB.
+		expect(String(conf.to)).toMatch(/^0\.\d{1,2}$/);
+	});
+
+	it('widens a profitable arm’s market-cap band outward on both sides', () => {
+		const r = proposeAdjustments(
+			profitable,
+			{ ...baseConfig, min_market_cap_usd: 10_000, max_market_cap_usd: 100_000 },
+			{ tier: 'trusted' },
+		);
+		const lo = r.proposals.find((p) => p.field === 'min_market_cap_usd');
+		const hi = r.proposals.find((p) => p.field === 'max_market_cap_usd');
+		expect(lo.to).toBeLessThan(10_000);
+		expect(hi.to).toBeGreaterThan(100_000);
+	});
+
+	it('never narrows the universe of an arm with no band set', () => {
+		const r = proposeAdjustments(profitable, { ...baseConfig, min_market_cap_usd: null, max_market_cap_usd: null }, { tier: 'trusted' });
+		expect(r.proposals.find((p) => p.field === 'min_market_cap_usd')).toBeFalsy();
+		expect(r.proposals.find((p) => p.field === 'max_market_cap_usd')).toBeFalsy();
+	});
+
+	it('turns the take-initials ladder on for an earned arm whose winners run', () => {
+		const r = proposeAdjustments(profitable, { ...baseConfig, initials_out_multiple: null }, { tier: 'trusted' });
+		const ladder = r.proposals.find((p) => p.field === 'initials_out_multiple');
+		expect(ladder).toBeTruthy();
+		expect(ladder.from).toBe(null);
+		expect(ladder.to).toBe(2);
+		expect(r.notes).toContain('ladder_enabled');
+	});
+
+	it('scales a net-profitable arm up even at a low win rate', () => {
+		// 36% hit rate: Rule D's win-rate path never fires, the profit path must.
+		const r = proposeAdjustments(profitable, baseConfig, { tier: 'trusted' });
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		expect(size).toBeTruthy();
+		expect(size.to).toBeGreaterThan(baseConfig.per_trade_lamports);
+		expect(size.reason).toMatch(/does not need a high hit rate/);
+	});
+
+	it('still de-risks a losing arm at every tier, including the top one', () => {
+		const bleeding = stats({
+			closed: 30, wins: 1, winRate: 3, avgPnlPct: -13, netPnlLamports: -23_442_000,
+			exitReasons: { stop_loss: 24, timeout: 6 },
+		});
+		for (const tier of ['probation', 'standard', 'trusted', 'autonomous']) {
+			const r = proposeAdjustments(bleeding, baseConfig, { tier });
+			const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+			expect(size, `${tier} must cut size on a bleeding arm`).toBeTruthy();
+			expect(size.to).toBeLessThan(baseConfig.per_trade_lamports);
+			// A losing arm never gets a freedom proposal, whatever tier it holds.
+			expect(r.proposals.find((p) => p.field === 'llm_min_confidence')).toBeFalsy();
+			expect(r.proposals.find((p) => p.field === 'initials_out_multiple')).toBeFalsy();
+		}
+	});
+
+	it('clamps every proposal to the acting tier’s bounds', () => {
+		for (const tier of ['probation', 'standard', 'trusted', 'autonomous']) {
+			const r = proposeAdjustments(
+				profitable,
+				{ ...baseConfig, decision_mode: 'llm', llm_min_confidence: 0.4, min_market_cap_usd: 2_000, per_trade_lamports: 190_000_000 },
+				{ tier },
+			);
+			const b = boundsFor(tier);
+			for (const p of r.proposals) {
+				expect(p.to, `${tier}.${p.field}`).toBeGreaterThanOrEqual(b[p.field].min);
+				expect(p.to, `${tier}.${p.field}`).toBeLessThanOrEqual(b[p.field].max);
+			}
+		}
+	});
+
+	it('holds a probation arm to a smaller step than a standard one', () => {
+		const heavy = stats({
+			closed: 20, wins: 4, winRate: 20, avgPnlPct: -9, netPnlLamports: -30_000_000,
+			exitReasons: { stop_loss: 14, timeout: 6 },
+		});
+		const config = { ...baseConfig, min_quality_score: 40 };
+		const onProbation = proposeAdjustments(heavy, config, { tier: 'probation' });
+		const onStandard = proposeAdjustments(heavy, config, { tier: 'standard' });
+		const q = (r) => r.proposals.find((p) => p.field === 'min_quality_score')?.to;
+		expect(q(onProbation) - 40).toBeLessThan(q(onStandard) - 40);
+	});
+
+	it('reports the tier it acted under', () => {
+		expect(proposeAdjustments(profitable, baseConfig, { tier: 'autonomous' }).tier).toBe('autonomous');
 	});
 });
 

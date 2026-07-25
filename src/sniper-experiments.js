@@ -86,6 +86,28 @@ function modeBadge(x) {
 	return `<span class="xp-badge xp-badge-rules">rules</span>`;
 }
 
+// Earned autonomy: how much rope this arm's own record has bought it. Only shown
+// once an arm has moved off the default, so the board stays quiet by default and
+// a tier badge always means something happened.
+function tierBadge(x) {
+	const tier = x.autonomy_tier;
+	if (!tier || tier === 'standard') return '';
+	const title = `${x.autonomy_reason || ''} ${x.autonomy_grants || ''}`.trim();
+	return ` <span class="xp-badge xp-badge-tier xp-tier-${esc(tier)}" title="${esc(title)}">${esc(tier)}</span>`;
+}
+
+// The exit shape in one glance. A null ladder is the classic single-shot full
+// exit; a set one recovers the stake at Nx and keeps a moon bag riding.
+function exitLine(x) {
+	const bits = [`SL ${pct(-Math.abs(x.stop_loss_pct ?? 0), false)}`];
+	if (x.trailing_stop_pct != null) bits.push(`trail ${pct(x.trailing_stop_pct, false)}`);
+	if (x.max_hold_seconds != null) bits.push(`max ${holdFmt(x.max_hold_seconds)}`);
+	bits.push(x.initials_out_multiple != null
+		? `ladder ${x.initials_out_multiple}x, ${x.moonbag_min_pct ?? 15}% moon bag`
+		: 'no ladder');
+	return bits.join(' · ');
+}
+
 function renderControls() {
 	$('xp-controls').innerHTML = `
 		<div class="xp-seg" role="group" aria-label="Time window">
@@ -103,6 +125,21 @@ function renderControls() {
 			refresh();
 		});
 	});
+}
+
+// How much of the fleet has traded its way into extra freedom. An arm at trusted
+// or above gets wider tuning bounds, more of the fleet budget, and a richer
+// evidence pack in front of its judge; one on probation gets held tighter.
+function earnedTile(experiments) {
+	const count = (tier) => experiments.filter((x) => x.autonomy_tier === tier).length;
+	const earned = count('trusted') + count('autonomous');
+	const probation = count('probation');
+	return `
+		<div class="cv-card xp-tile" title="Tiers are recomputed from each arm's own realized record every optimizer run — freedom is continuously earned, never granted once.">
+			<span>Earned autonomy</span>
+			<b class="${earned > 0 ? 'xp-pos' : ''}">${earned} earned</b>
+			<i>${probation} on probation · ${experiments.length - earned - probation} standard</i>
+		</div>`;
 }
 
 function renderSummary(experiments, masterWallet) {
@@ -126,6 +163,7 @@ function renderSummary(experiments, masterWallet) {
 			<div class="cv-card xp-tile"><span>Fleet realized P&amp;L</span><b class="${pnlClass(totalPnl)}">${esc(sol(totalPnl))}</b><i>window: ${esc(windowKey)}</i></div>
 			<div class="cv-card xp-tile"><span>Fleet SOL on hand</span><b>${fleetSol.toFixed(3)} SOL</b><i>across ${experiments.filter((x) => x.wallet_address).length} wallets</i></div>
 			<div class="cv-card xp-tile"><span>Best arm</span><b>${best ? esc(best.label) : 'no trades yet'}</b><i>${best ? esc(sol(best.realized_pnl_sol)) : 'waiting on fills'}</i></div>
+			${earnedTile(experiments)}
 			${masterTile}
 		</div>`;
 }
@@ -148,11 +186,11 @@ function renderBoard(experiments) {
 			return `
 			<tr class="${x.enabled ? '' : 'xp-off'}">
 				<td>
-					<div class="xp-label">${esc(x.label)}${x.enabled ? '' : ' <span class="xp-paused">paused</span>'}</div>
+					<div class="xp-label">${esc(x.label)}${x.enabled ? '' : ' <span class="xp-paused">paused</span>'}${tierBadge(x)}</div>
 					<div class="xp-agent"><a href="/a/${esc(x.agent_id)}">${esc(x.agent_name || 'agent')}</a> ${modeBadge(x)} · <a href="${esc(x.ledger_url)}" title="Full decision-by-decision reasoning ledger, tamper-evident and on-chain anchored">ledger →</a></div>
 					${walletLine(x)}
 				</td>
-				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · SL ${esc(pct(-Math.abs(x.stop_loss_pct ?? 0), false))}${x.trailing_stop_pct != null ? ` · trail ${esc(pct(x.trailing_stop_pct, false))}` : ''}${x.max_hold_seconds != null ? ` · max ${esc(holdFmt(x.max_hold_seconds))}` : ''}</div></td>
+				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · ${esc(exitLine(x))}</div></td>
 				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}${paper}</td>
 				<td>${x.win_rate != null ? esc(String(x.win_rate)) + '%' : '·'}</td>
 				<td class="${pnlClass(x.realized_pnl_sol)}">${esc(sol(x.realized_pnl_sol))}</td>

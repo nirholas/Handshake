@@ -9,8 +9,17 @@
 // every mode: Mayhem exclusion, the trade firewall's real buy→sell round-trip,
 // budgets, concurrency, SOL headroom, and the shared spend policy.
 //
+// Earned context: an arm that has proven it makes money is handed more to decide
+// with (the ground-truth base rate, the learned signal weights, its own realized
+// record, and at the top tier the realized win-rate table and the model's own
+// calibration). See judge-knowledge.js. An arm that has not earned it sees
+// exactly the prompt this file has always sent.
+//
 // Cost + latency control:
-//   • One verdict per (mint, model), agents sharing a model share the call.
+//   • One verdict per (mint, model, knowledge depth). Arms at base depth still
+//     share a single call across a same-model fleet exactly as before; an arm
+//     with earned context is asking a different question, so it pays for its own
+//     call. That extra cost is the tier's, and only a profitable arm has one.
 //   • A small global concurrency cap; when the firehose outruns it, launches
 //     are skipped with a log line (never queued unboundedly).
 //   • OpenRouter is the primary route (one key, every experiment model). When
@@ -21,6 +30,7 @@ import { log } from './log.js';
 import { sql } from '../../api/_lib/db.js';
 import { llmComplete } from '../../api/_lib/llm.js';
 import { assessMarketRealness } from '../../api/_lib/market-realness.js';
+import { buildKnowledgePack } from './judge-knowledge.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -49,7 +59,7 @@ const SYSTEM_PROMPT = [
 	'{"buy": true|false, "confidence": <0..1>, "thesis": "<one short sentence>"}',
 ].join(' ');
 
-function launchBrief(mint) {
+function launchBrief(mint, knowledge = '') {
 	const fields = {
 		symbol: mint.symbol || null,
 		name: mint.name || null,
@@ -79,7 +89,7 @@ function launchBrief(mint) {
 			if (m.painted) lines.push('WARNING: this matches a painted-stairstep pattern (a rise with no real two-sided market), which historically wins far below the base rate.');
 		}
 	}
-	return `New pump.fun launch:\n${lines.join('\n')}`;
+	return `New pump.fun launch:\n${lines.join('\n')}${knowledge}`;
 }
 
 // Parse the model's reply into a verdict. Tolerates fences/prose around the
@@ -135,8 +145,8 @@ async function askOpenRouter({ model, user }) {
 	}
 }
 
-async function judge(mint, model) {
-	const user = launchBrief(mint);
+async function judge(mint, model, knowledge = '') {
+	const user = launchBrief(mint, knowledge);
 	const t0 = Date.now();
 	try {
 		const text = await askOpenRouter({ model, user });
@@ -176,7 +186,21 @@ function recordVerdict({ mint, network, requestedModel, verdict }) {
  */
 export async function judgeLaunch(mint, strat) {
 	const model = strat.llm_model || 'openrouter/auto';
-	const key = `${mint.mint}:${model}`;
+	const network = strat.network || 'mainnet';
+
+	// What this arm has earned the right to know. A read failure or an arm with no
+	// record yields an empty block, and the call proceeds on the original prompt.
+	const pack = await buildKnowledgePack({ strategyId: strat.id, network, model })
+		.catch((err) => {
+			log.warn('knowledge pack failed, judging on the base brief', { mint: mint.mint, model, err: err?.message });
+			return { tier: 'standard', depth: 'base', block: '' };
+		});
+
+	// Arms at base depth share one call per (mint, model) exactly as before. An arm
+	// with earned context is asking a materially different question, so it keys on
+	// its own strategy and pays for its own call.
+	const scope = pack.block ? `${pack.depth}:${strat.id}` : 'base';
+	const key = `${mint.mint}:${model}:${scope}`;
 	const cached = _verdicts.get(key);
 	if (cached && Date.now() - cached.ts < VERDICT_TTL_MS) return cached.promise;
 
@@ -185,9 +209,16 @@ export async function judgeLaunch(mint, strat) {
 		return null;
 	}
 	_active++;
-	const promise = judge(mint, model)
+	const promise = judge(mint, model, pack.block)
 		.then((verdict) => {
-			if (verdict) recordVerdict({ mint: mint.mint, network: strat.network || 'mainnet', requestedModel: model, verdict });
+			if (verdict) {
+				recordVerdict({ mint: mint.mint, network, requestedModel: model, verdict });
+				if (pack.block) {
+					log.info('llm judge ruled with earned context', {
+						mint: mint.mint, model, tier: pack.tier, knowledge: pack.depth, buy: verdict.buy, confidence: verdict.confidence,
+					});
+				}
+			}
 			return verdict;
 		})
 		.catch((err) => {

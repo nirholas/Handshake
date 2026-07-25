@@ -1,0 +1,200 @@
+/* /sniper/experiments — the strategy A/B scoreboard.
+ *
+ * Built entirely on the shared --cv-* design tokens from coin-pages.css, so the
+ * board inherits both themes and every surface/border/text colour stays in step
+ * with the rest of the crypto pages. Nothing here hardcodes a palette colour
+ * except the four tier accents, which are semantic (earned vs held back) and are
+ * defined against the token set so they invert with the theme.
+ */
+
+/* ── strategy cell ───────────────────────────────────────────────────────── */
+.xp-label {
+	font-weight: 600;
+	color: var(--cv-text);
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.xp-agent {
+	margin-top: 2px;
+	font-size: 0.8125rem;
+	color: var(--cv-text-2);
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.xp-agent a {
+	color: var(--cv-accent);
+	text-decoration: none;
+	border-radius: var(--cv-radius-sm);
+	transition: color 0.15s ease;
+}
+
+.xp-agent a:hover { color: var(--cv-accent-hover); text-decoration: underline; }
+.xp-agent a:focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 2px; }
+
+.xp-wallet {
+	margin-top: 3px;
+	font-family: var(--cv-font-mono);
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.xp-wallet a { color: var(--cv-text-2); text-decoration: none; }
+.xp-wallet a:hover { color: var(--cv-accent); }
+.xp-wallet a:focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 2px; }
+.xp-wallet-none { color: var(--cv-text-3); font-style: italic; }
+
+/* ── badges ──────────────────────────────────────────────────────────────── */
+.xp-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 1px 7px;
+	border-radius: 999px;
+	border: 1px solid var(--cv-border);
+	background: var(--cv-surface-2);
+	color: var(--cv-text-2);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+	cursor: help;
+}
+
+.xp-badge-llm {
+	border-color: color-mix(in srgb, var(--cv-accent) 40%, transparent);
+	background: color-mix(in srgb, var(--cv-accent) 12%, transparent);
+	color: var(--cv-accent);
+}
+
+.xp-badge-rules { font-family: var(--cv-font-mono); }
+
+/* Earned autonomy. Only rendered off the default tier, so any colour on the
+ * board means the arm's own record moved it up or down. */
+.xp-badge-tier { text-transform: uppercase; letter-spacing: 0.04em; }
+
+.xp-tier-trusted {
+	border-color: color-mix(in srgb, var(--cv-green) 45%, transparent);
+	background: var(--cv-green-soft);
+	color: var(--cv-green);
+}
+
+.xp-tier-autonomous {
+	border-color: var(--cv-green);
+	background: color-mix(in srgb, var(--cv-green) 22%, transparent);
+	color: var(--cv-green);
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--cv-green) 25%, transparent);
+}
+
+.xp-tier-probation {
+	border-color: color-mix(in srgb, var(--cv-red) 45%, transparent);
+	background: var(--cv-red-soft);
+	color: var(--cv-red);
+}
+
+.xp-paused {
+	font-size: 0.6875rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--cv-text-3);
+}
+
+/* ── conditions cell ─────────────────────────────────────────────────────── */
+.xp-cond { max-width: 340px; color: var(--cv-text-2); font-size: 0.8125rem; }
+
+.xp-cond-sub {
+	margin-top: 3px;
+	font-family: var(--cv-font-mono);
+	font-size: 0.6875rem;
+	color: var(--cv-text-3);
+}
+
+/* ── record cell ─────────────────────────────────────────────────────────── */
+.xp-open {
+	font-size: 0.75rem;
+	color: var(--cv-accent);
+	font-weight: 600;
+}
+
+.xp-paper {
+	margin-top: 2px;
+	font-size: 0.6875rem;
+	color: var(--cv-text-3);
+	font-style: italic;
+}
+
+/* ── P&L ─────────────────────────────────────────────────────────────────── */
+.xp-pos { color: var(--cv-green); font-weight: 600; }
+.xp-neg { color: var(--cv-red); font-weight: 600; }
+
+/* ── table + rows ────────────────────────────────────────────────────────── */
+.xp-table { width: 100%; font-size: 0.875rem; }
+.xp-table td { vertical-align: top; padding: 10px 12px; }
+.xp-table tbody tr { transition: background 0.15s ease; }
+.xp-table tbody tr:hover { background: var(--cv-surface-2); }
+.xp-off { opacity: 0.55; }
+
+/* ── window switch ───────────────────────────────────────────────────────── */
+.xp-seg {
+	display: inline-flex;
+	padding: 3px;
+	gap: 2px;
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	background: var(--cv-surface-2);
+}
+
+.xp-seg-btn {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: var(--cv-text-2);
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	padding: 5px 12px;
+	border-radius: var(--cv-radius);
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.xp-seg-btn:hover { background: var(--cv-surface-3); color: var(--cv-text); }
+.xp-seg-btn:focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 1px; }
+
+.xp-seg-btn.on {
+	background: var(--cv-surface);
+	color: var(--cv-text);
+	box-shadow: var(--cv-shadow-card);
+}
+
+/* ── summary tiles ───────────────────────────────────────────────────────── */
+.xp-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+}
+
+.xp-tile {
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.xp-tile span { font-size: 0.75rem; color: var(--cv-text-3); }
+.xp-tile b { font-size: 1.25rem; font-weight: 650; color: var(--cv-text); }
+.xp-tile i { font-size: 0.75rem; font-style: normal; color: var(--cv-text-3); }
+
+@media (max-width: 640px) {
+	.xp-cond { max-width: none; }
+	.xp-table { font-size: 0.8125rem; }
+	.xp-table td { padding: 8px; }
+}
