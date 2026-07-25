@@ -3321,6 +3321,16 @@ Each call resolves to one of four billing lanes, in this order:
 | **plan** | authenticate with a three.ws API key / OAuth token / session                 | uses the platform's upstream key, counts against your plan |
 | **x402** | send no credentials, no free quota left                                      | pay per call in USDC — the standard HTTP 402 challenge     |
 
+**Upstream failover (automatic, all lanes).** A provider backed by a pool of
+interchangeable hosts declares them in its descriptor (`bases`), and the
+aggregator walks that pool inside a single request when a host answers 429, a
+5xx, or is unreachable (up to 3 hosts per call; caller-fault 4xx never
+retries). A host that just failed is skipped for a short cooldown window while
+an alternate exists, so an upstream outage costs one discovery, not one per
+request. The `solana` provider fronts the platform's full priority-ordered RPC
+pool this way; single-host providers behave as plain pass-throughs with one
+attempt.
+
 ### The free tier
 
 This is what makes "free crypto API" true instead of marketing copy: an agent

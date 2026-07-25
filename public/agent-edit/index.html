@@ -693,7 +693,9 @@
 
 		<div class="toast" id="toast"></div>
 
-		<script type="module" src="./edit.js"></script>
+		<!-- Absolute: this page is served at /agent-edit as well as /agent-edit/, and a
+		     relative src resolves against the site root on the slash-less URL (404). -->
+		<script type="module" src="/agent-edit/edit.js"></script>
 		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

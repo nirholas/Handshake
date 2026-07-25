@@ -23,7 +23,7 @@
 // verbs spatially, and carries meaning in the face). The page says so plainly —
 // we are not pretending otherwise.
 
-import { SignTimeline, posePhase, restingPose } from './sign-clip.js';
+import { SignTimeline, mirrorPhase, neutralPose, posePhase, restingPose } from './sign-clip.js';
 
 // Where the non-dominant hand waits when it is a surface for the other hand to
 // act on (FALL, HELP, GOOD, STOP): flat, palm up, in front of the chest.
@@ -55,7 +55,7 @@ export const SIGNS = Object.freeze({
 	THANK: {
 		gloss: 'Flat hand moves out and down from the chin.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.03, up: -0.03, forward: 0.12 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 3 }, hold: 0.12 },
+			{ t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.01 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 3 }, hold: 0.12 },
 			{ t: 0.34, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.08, up: -0.16, forward: 0.28 }, fingers: ['forward', 'up'], palm: 'up' }, head: { nod: 6 }, hold: 0.16 },
 		],
 	},
@@ -106,8 +106,8 @@ export const SIGNS = Object.freeze({
 	FALL: {
 		gloss: 'Two legs stand on the flat palm, then tip over onto their back.',
 		phases: [
-			{ t: 0.32, left: BASE_PALM, right: { shape: 'V', at: { anchor: 'sternum', out: 0.02, up: 0.0, forward: 0.26 }, fingers: 'down', palm: 'back' }, hold: 0.16 },
-			{ t: 0.3, left: BASE_PALM, right: { shape: 'V', at: { anchor: 'sternum', out: 0.16, up: -0.07, forward: 0.27 }, fingers: ['out', 'forward'], palm: 'up' }, head: { turn: -4, tilt: 4 }, hold: 0.2 },
+			{ t: 0.32, left: BASE_PALM, right: { shape: 'V', touch: { part: 'fingertips', on: 'palm' }, fingers: 'down', palm: 'back' }, hold: 0.16 },
+			{ t: 0.3, left: BASE_PALM, right: { shape: 'V', touch: { part: 'edge', on: 'palm', out: 0.09, up: 0.02 }, fingers: ['out', 'forward'], palm: 'up' }, head: { turn: -4, tilt: 4 }, hold: 0.2 },
 		],
 	},
 	YALL: {
@@ -141,21 +141,21 @@ export const SIGNS = Object.freeze({
 	HELP: {
 		gloss: 'A-hand rides the flat palm upward.',
 		phases: [
-			{ t: 0.32, left: BASE_PALM, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: -0.06, forward: 0.26 }, fingers: 'up', palm: 'in' } },
-			{ t: 0.28, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.06, up: 0.02, forward: 0.26 } }, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: 0.05, forward: 0.28 }, fingers: 'up', palm: 'in' }, hold: 0.16 },
+			{ t: 0.32, left: BASE_PALM, right: { shape: 'A', touch: { part: 'wrist', on: 'palm' }, fingers: 'up', palm: 'in' } },
+			{ t: 0.28, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.06, up: 0.02, forward: 0.26 } }, right: { shape: 'A', touch: { part: 'wrist', on: 'palm' }, fingers: 'up', palm: 'in' }, hold: 0.16 },
 		],
 	},
 	GOOD: {
 		gloss: 'Flat hand comes down from the chin onto the other palm.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.03, up: -0.02, forward: 0.13 }, fingers: ['up', 'in'], palm: 'back' }, left: BASE_PALM, head: { nod: 3 } },
-			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.05, up: -0.02, forward: 0.25 }, fingers: ['forward', 'in'], palm: 'up' }, left: BASE_PALM, head: { nod: 5 }, hold: 0.18 },
+			{ t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.02 }, fingers: ['up', 'in'], palm: 'back' }, left: BASE_PALM, head: { nod: 3 } },
+			{ t: 0.3, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm' }, fingers: ['forward', 'in'], palm: 'up' }, left: BASE_PALM, head: { nod: 5 }, hold: 0.18 },
 		],
 	},
 	BAD: {
 		gloss: 'Flat hand leaves the chin and turns palm-down.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.03, up: -0.02, forward: 0.13 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 2 } },
+			{ t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.02 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 2 } },
 			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.14, up: -0.2, forward: 0.24 }, fingers: ['forward', 'out'], palm: 'down' }, head: { nod: -3, turn: -5 }, hold: 0.16 },
 		],
 	},
@@ -168,28 +168,28 @@ export const SIGNS = Object.freeze({
 	LEARN: {
 		gloss: 'Fingers lift knowledge off the palm to the forehead.',
 		phases: [
-			{ t: 0.32, left: BASE_PALM, right: { shape: 'CLAW', at: { anchor: 'sternum', out: 0.04, up: -0.04, forward: 0.27 }, fingers: 'down', palm: 'down' } },
+			{ t: 0.32, left: BASE_PALM, right: { shape: 'CLAW', touch: { part: 'fingertips', on: 'palm' }, fingers: 'down', palm: 'down' } },
 			{ t: 0.2, left: BASE_PALM, right: { shape: 'FLAT_O', at: { anchor: 'sternum', out: 0.04, up: 0.02, forward: 0.26 }, fingers: 'down', palm: 'back' } },
-			{ t: 0.32, left: BASE_PALM, right: { shape: 'FLAT_O', at: { anchor: 'forehead', out: 0.05, up: -0.05, forward: 0.1 }, fingers: ['up', 'back'], palm: 'down' }, hold: 0.16 },
+			{ t: 0.32, left: BASE_PALM, right: { shape: 'FLAT_O', touch: { to: 'forehead', part: 'fingertips', out: 0.04, up: -0.04, gap: 0.02 }, fingers: ['up', 'back'], palm: 'down' }, hold: 0.16 },
 		],
 	},
 	KNOW: {
 		gloss: 'Fingertips tap the forehead.',
 		phases: [
-			{ t: 0.3, right: { shape: 'BENT_B', at: { anchor: 'forehead', out: 0.1, up: -0.06, forward: 0.07 }, fingers: ['up', 'in'], palm: 'back' } },
-			{ t: 0.16, right: { shape: 'BENT_B', at: { anchor: 'forehead', out: 0.08, up: -0.06, forward: 0.04 }, fingers: ['up', 'in'], palm: 'back' }, hold: 0.14 },
+			{ t: 0.3, right: { shape: 'BENT_B', touch: { to: 'forehead', part: 'fingertips', out: 0.07, up: -0.05, gap: 0.03 }, fingers: ['up', 'in'], palm: 'back' } },
+			{ t: 0.16, right: { shape: 'BENT_B', touch: { to: 'forehead', part: 'fingertips', out: 0.07, up: -0.05 }, fingers: ['up', 'in'], palm: 'back' }, hold: 0.14 },
 		],
 	},
 	THINK: {
 		gloss: 'Index finger touches the temple.',
 		phases: [
-			{ t: 0.3, right: { shape: '1', at: { anchor: 'forehead', out: 0.09, up: -0.06, forward: 0.06 }, fingers: ['in', 'up'], palm: 'down' }, head: { tilt: 3 }, hold: 0.24 },
+			{ t: 0.3, right: { shape: '1', touch: { to: 'forehead', part: 'indextip', out: 0.08, up: -0.04 }, fingers: ['in', 'up'], palm: 'down' }, head: { tilt: 3 }, hold: 0.24 },
 		],
 	},
 	SEE: {
 		gloss: 'V-hand moves out from the eyes.',
 		phases: [
-			{ t: 0.3, right: { shape: 'V', at: { anchor: 'nose', out: 0.08, up: 0.02, forward: 0.1 }, fingers: ['up', 'forward'], palm: 'back' } },
+			{ t: 0.3, right: { shape: 'V', touch: { to: 'nose', part: 'fingertips', out: 0.05, up: -0.02, forward: 0.05, gap: 0.02 }, fingers: 'up', palm: 'back' } },
 			{ t: 0.3, right: { shape: 'V', at: { anchor: 'nose', out: 0.11, up: -0.02, forward: 0.26 }, fingers: 'forward', palm: 'down' }, hold: 0.16 },
 		],
 	},
@@ -204,23 +204,23 @@ export const SIGNS = Object.freeze({
 		gloss: 'Both flat-O hands tap fingertips together.',
 		phases: [
 			{ t: 0.3, both: { shape: 'FLAT_O', at: { anchor: 'sternum', out: 0.11, up: 0.0, forward: 0.26 }, fingers: 'in', palm: 'down' } },
-			{ t: 0.18, both: { shape: 'FLAT_O', at: { anchor: 'sternum', out: 0.05, up: 0.0, forward: 0.26 }, fingers: 'in', palm: 'down' } },
+			{ t: 0.18, both: { shape: 'FLAT_O', fingers: 'in', palm: 'down' }, left: { at: { anchor: 'sternum', out: 0.05, up: 0.0, forward: 0.26 } }, right: { touch: { part: 'fingertips', on: 'fingertips' } } },
 			{ t: 0.18, both: { shape: 'FLAT_O', at: { anchor: 'sternum', out: 0.11, up: 0.0, forward: 0.26 }, fingers: 'in', palm: 'down' } },
-			{ t: 0.18, both: { shape: 'FLAT_O', at: { anchor: 'sternum', out: 0.05, up: 0.0, forward: 0.26 }, fingers: 'in', palm: 'down' }, hold: 0.14 },
+			{ t: 0.18, both: { shape: 'FLAT_O', fingers: 'in', palm: 'down' }, left: { at: { anchor: 'sternum', out: 0.05, up: 0.0, forward: 0.26 } }, right: { touch: { part: 'fingertips', on: 'fingertips' } }, hold: 0.14 },
 		],
 	},
 	STOP: {
 		gloss: 'Flat hand chops down onto the other palm.',
 		phases: [
 			{ t: 0.3, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.04, up: 0.09, forward: 0.26 }, fingers: ['forward', 'up'], palm: 'in' } },
-			{ t: 0.2, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.04, up: -0.03, forward: 0.26 }, fingers: 'forward', palm: 'in' }, head: { nod: 3 }, hold: 0.2 },
+			{ t: 0.2, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', touch: { part: 'edge', on: 'palm' }, fingers: 'forward', palm: 'in' }, head: { nod: 3 }, hold: 0.2 },
 		],
 	},
 	WORK: {
 		gloss: 'One fist taps the back of the other wrist twice.',
 		phases: [
 			{ t: 0.32, left: { shape: 'S', at: { anchor: 'sternum', out: 0.02, up: -0.08, forward: 0.26 }, fingers: ['forward', 'in'], palm: 'down' }, right: { shape: 'S', at: { anchor: 'sternum', out: 0.03, up: 0.02, forward: 0.24 }, fingers: ['forward', 'in'], palm: 'down' } },
-			{ t: 0.16, left: { shape: 'S', at: { anchor: 'sternum', out: 0.02, up: -0.08, forward: 0.26 }, fingers: ['forward', 'in'], palm: 'down' }, right: { shape: 'S', at: { anchor: 'sternum', out: 0.03, up: -0.03, forward: 0.24 }, fingers: ['forward', 'in'], palm: 'down' } },
+			{ t: 0.16, left: { shape: 'S', at: { anchor: 'sternum', out: 0.02, up: -0.08, forward: 0.26 }, fingers: ['forward', 'in'], palm: 'down' }, right: { shape: 'S', touch: { part: 'palm', on: 'back' }, fingers: ['forward', 'in'], palm: 'down' } },
 			{ t: 0.16, left: { shape: 'S', at: { anchor: 'sternum', out: 0.02, up: -0.08, forward: 0.26 }, fingers: ['forward', 'in'], palm: 'down' }, right: { shape: 'S', at: { anchor: 'sternum', out: 0.03, up: 0.02, forward: 0.24 }, fingers: ['forward', 'in'], palm: 'down' } },
 			{ t: 0.16, left: { shape: 'S', at: { anchor: 'sternum', out: 0.02, up: -0.08, forward: 0.26 }, fingers: ['forward', 'in'], palm: 'down' }, right: { shape: 'S', at: { anchor: 'sternum', out: 0.03, up: -0.03, forward: 0.24 }, fingers: ['forward', 'in'], palm: 'down' }, hold: 0.14 },
 		],
@@ -242,8 +242,8 @@ export const SIGNS = Object.freeze({
 	NICE: {
 		gloss: 'Flat hand slides cleanly across the other palm.',
 		phases: [
-			{ t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', at: { anchor: 'sternum', out: -0.04, up: -0.05, forward: 0.24 }, fingers: ['forward', 'out'], palm: 'down' } },
-			{ t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.19, up: -0.05, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'down' }, hold: 0.16 },
+			{ t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm', out: -0.08 }, fingers: ['forward', 'out'], palm: 'down' } },
+			{ t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm', out: 0.15 }, fingers: ['forward', 'out'], palm: 'down' }, hold: 0.16 },
 		],
 	},
 	WELCOME: {
@@ -272,7 +272,7 @@ export const SIGNS = Object.freeze({
 		gloss: 'Bent hand arcs over and taps into the flat palm.',
 		phases: [
 			{ t: 0.32, left: BASE_PALM, right: { shape: 'BENT_B', at: { anchor: 'sternum', out: 0.2, up: 0.02, forward: 0.24 }, fingers: ['up', 'out'], palm: 'up' } },
-			{ t: 0.3, left: BASE_PALM, right: { shape: 'BENT_B', at: { anchor: 'sternum', out: 0.06, up: -0.05, forward: 0.26 }, fingers: ['down', 'in'], palm: 'down' }, hold: 0.16 },
+			{ t: 0.3, left: BASE_PALM, right: { shape: 'BENT_B', touch: { part: 'fingertips', on: 'palm' }, fingers: ['down', 'in'], palm: 'down' }, hold: 0.16 },
 		],
 	},
 	THREE: {
@@ -363,20 +363,24 @@ export function buildSignClip(word, opts = {}) {
 	const timing = { ...DEFAULT_SIGN_TIMING, ...opts };
 	const rate = timing.rate > 0 ? timing.rate : 1;
 	const base = opts.base ?? restingPose();
-	const tl = new SignTimeline({ base });
+	const lead = opts.lead !== false;
+	// Mid-utterance the hands are already up, so the sign opens from the neutral
+	// signing stance rather than from the arms hanging at the sides.
+	const tl = new SignTimeline({ base, open: lead ? base : neutralPose(base) });
 
+	const dominant = opts.dominant === 'Left' ? 'Left' : 'Right';
 	found.sign.phases.forEach((phase, i) => {
-		const seconds = ((phase.t ?? 0.3) + (i === 0 ? timing.leadSeconds : 0)) / rate;
-		tl.to(posePhase(phase, base), seconds, { ease: phase.ease ?? (i === 0 ? 'out' : 'smooth') });
+		const seconds = ((phase.t ?? 0.3) + (i === 0 && lead ? timing.leadSeconds : 0)) / rate;
+		const shaped = dominant === 'Left' ? mirrorPhase(phase) : phase;
+		tl.to(posePhase(shaped, base), seconds, { ease: phase.ease ?? (i === 0 ? 'out' : 'smooth') });
 		if (phase.hold) tl.hold(phase.hold / rate);
 	});
 
-	if (opts.settle === false) tl.hold(timing.tailSeconds / rate);
-	else tl.settle(timing.tailSeconds / rate);
+	if (opts.settle !== false) tl.settle(timing.tailSeconds / rate);
 
 	return tl.build({
 		name: opts.name ?? `sign-${found.name.toLowerCase()}`,
-		seed: `sign:${found.name}:${rate}`,
+		seed: `sign:${found.name}:${rate}:${lead}:${opts.settle !== false}:${dominant}`,
 	});
 }
 
@@ -389,9 +393,12 @@ export function buildSignClip(word, opts = {}) {
  */
 export function signLookup(opts = {}) {
 	const cache = new Map();
-	return (word) => {
-		if (!cache.has(word)) cache.set(word, buildSignClip(word, { ...opts, settle: false }));
-		return cache.get(word);
+	return (word, position = {}) => {
+		const lead = position.first !== false;
+		const settle = position.last !== false;
+		const key = `${word}|${lead}|${settle}|${opts.dominant ?? 'Right'}`;
+		if (!cache.has(key)) cache.set(key, buildSignClip(word, { ...opts, lead, settle }));
+		return cache.get(key);
 	};
 }
 

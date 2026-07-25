@@ -39,6 +39,14 @@
 			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.</description>
 		</item>
 		<item>
+			<title>Crypto API: automatic upstream failover ends most rate-limit errors</title>
+			<link>https://three.ws/crypto-api</link>
+			<guid isPermaLink="false">2026-07-25:Crypto API: automatic upstream failover ends most rate-limit errors</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The unified crypto API (/api/v1/x) no longer fails your call just because one upstream host had a bad moment. When a provider is backed by a pool of interchangeable hosts (the Solana read endpoints front the platform's full RPC pool), a rate-limited, unreachable, or erroring host now fails over to a healthy alternate within the same request. The API also remembers which host just failed for a short window, so during an outage only the first request pays the discovery cost and everything after routes straight to a working host. Rate-limit passthrough was the second-largest error class on the aggregator; this removes it for pooled providers.</description>
+		</item>
+		<item>
 			<title>Dress any avatar: the wardrobe now adds clothes, not just recolours them</title>
 			<link>https://three.ws/avatar-edit</link>
 			<guid isPermaLink="false">2026-07-25:Dress any avatar: the wardrobe now adds clothes, not just recolours them</guid>
@@ -55,12 +63,28 @@
 			<description>Agent directories and uptime monitors discover an x402 API by calling every endpoint it advertises with no arguments, to check the endpoint is alive and knows its own price. Our paid-only endpoints answered that correctly with a payment challenge, but the free-tier ones ran argument validation first and answered with an error, so about two dozen perfectly healthy endpoints were being graded as failing by a public trust monitor, roughly 14,000 times a month. A parameterless call now returns the standard 402 challenge on every endpoint, with the argument you would need named in an X-Param-Error header. Nothing changes for real callers: send any argument, even an empty one, and you get the specific validation error as before. The same probes were also the single biggest source of noise in our own error metrics, so a genuine outage in the crypto API is now visible instead of buried.</description>
 		</item>
 		<item>
+			<title>Our x402 facilitator now publishes a standard discovery catalog</title>
+			<link>https://three.ws/docs/x402-ring-economy</link>
+			<guid isPermaLink="false">2026-07-25:Our x402 facilitator now publishes a standard discovery catalog</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws self-hosted x402 facilitator serves a new public endpoint, GET /api/x402-facilitator/discovery/resources, listing every paid endpoint on the platform in the standard facilitator catalog format that x402 explorers and aggregators (like x402scan) crawl. It is the same catalog as /.well-known/x402.json, so listings on third-party explorers always match what the platform actually charges. This is groundwork for three.ws payments showing up on ecosystem explorers without routing settlement through any third party.</description>
+		</item>
+		<item>
 			<title>Selfie avatars now match the shape of your face, not just the colour of it</title>
 			<link>https://three.ws/create/selfie</link>
 			<guid isPermaLink="false">2026-07-25:Selfie avatars now match the shape of your face, not just the colour of it</guid>
 			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The selfie-to-avatar engine used to do one thing: take the face from your photo and paint it onto a standard head. From straight on it looked convincing, but the skull underneath was the same for everyone, so the moment the avatar turned it stopped being you. It now reshapes the head itself to your face: width, jaw, chin, cheekbones, brow, and how far the nose projects. That step had been written and tested for a while but had never actually reached the servers, so every avatar made until today was built the old way. Making it live also turned up a flaw in how the photo was read. Face measurements arrived scaled to the picture's width and height separately, which means a tall photo stretched the face before anything else happened, and that stretch was then treated as part of your bone structure. In practice the shape of your avatar's head partly depended on whether you shot the photo tall or square, which is not something anyone would expect. Measurements are now taken in true proportions, so the same face gives the same head regardless of how the photo was framed. Finally, the limits controlling how far the head is allowed to move toward your real shape were set before there was any way to measure the result. They were far too cautious, holding the head back to about two centimetres of change and quietly discarding real differences between faces. Measured across a forty-face test set covering a wide range of ages, complexions, beards, glasses and head coverings, retuning them cut the remaining shape error by 46 percent, and no face in the set came out worse. Choosing that limit needed a second measurement, because a test set of clean, well-lit photos will always argue for removing the limit entirely: it contains nothing for the limit to catch. So each test face was also degraded the way real photos are, with camera shake, a turned head, hair across the face, a dim room and a heavily shrunk upload, and checked for whether the same person still came out with the same head. The setting we shipped is the point where matching your face stops improving but sensitivity to photo quality keeps rising. In total, avatars now capture about 60 percent of the difference between a generic head and your real one, up from 26 percent. Rebuild your avatar at /create/selfie to get one made the new way.</description>
+		</item>
+		<item>
+			<title>Solana reads on the crypto API stop failing when one RPC host throttles us</title>
+			<link>https://three.ws/crypto-api</link>
+			<guid isPermaLink="false">2026-07-25:Solana reads on the crypto API stop failing when one RPC host throttles us</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Solana endpoints on the public crypto API (balance, token holdings, token supply, largest holders, transaction, account, priority fees) were pointed at a single RPC host. Whenever that host rate-limited us, the caller got the rate-limit error even though the platform keeps a priority-ordered pool of other RPC endpoints for exactly this situation. Those calls now move to the next healthy host automatically, up to three per request, and a host that has just failed is skipped for the next 30 seconds so one bad host does not slow down every request behind it. A genuinely bad request, like a malformed address, still returns its error immediately instead of being retried. This was the second-largest error class on the API.</description>
 		</item>
 		<item>
 			<title>The KOL Tracker is now reachable, and its numbers are real</title>

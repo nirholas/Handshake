@@ -30,6 +30,7 @@ import {
 	verifyRingPayment,
 	settleRingPayment,
 } from '../_lib/x402/self-facilitator.js';
+import { listDiscoveryResources } from '../_lib/x402/discovery-resources.js';
 
 function actionFrom(req) {
 	const q = req.query?.action;
@@ -105,9 +106,27 @@ export default wrap(async (req, res) => {
 				supported: { method: 'GET', path: `${base}/supported` },
 				verify: { method: 'POST', path: `${base}/verify` },
 				settle: { method: 'POST', path: `${base}/settle` },
+				discovery: { method: 'GET', path: `${base}/discovery/resources` },
 			},
 			docs: 'https://three.ws/docs/x402-ring-economy',
 		});
+	}
+
+	// GET /discovery/resources — the facilitator-standard catalog list that
+	// x402scan's crawler (useFacilitator().list()) pages through when this
+	// facilitator's registry entry carries a discoveryConfig. Serves the same
+	// canonical catalog as /.well-known/x402.json, projected to the legacy v1
+	// wire format the crawler validates. Public read, no payment. The route
+	// table maps the two-segment path to action=discovery-resources; the bare
+	// last-segment fallback in actionFrom() yields 'resources'.
+	if (action === 'discovery-resources' || action === 'resources') {
+		if (!method(req, res, ['GET'])) return;
+		const list = await listDiscoveryResources({
+			type: req.query?.type,
+			limit: req.query?.limit,
+			offset: req.query?.offset,
+		});
+		return json(res, 200, list, { 'cache-control': 'public, max-age=300' });
 	}
 
 	// /supported is a public capability probe (no payment, no secret needed) so

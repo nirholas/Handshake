@@ -25,6 +25,41 @@
   pre { margin:0; padding:14px; font-size:12px; line-height:1.5; overflow:auto; max-height:340px; color:#cbd3e1; }
   .note { margin-top:24px; font-size:13px; color:#9aa3b2; line-height:1.6; }
   code { color:#dbe9ff; }
+
+  /* Conformance surface — the validator's verdict, on screen, for every payload
+     the page renders. Status is carried by a glyph AND a word, never colour alone. */
+  :root { --ok:#4ade80; --err:#f87171; --warn:#fbbf24; }
+  .conf { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 14px; border-top:1px solid rgba(255,255,255,0.07); font-size:12px; color:#9aa3b2; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; border:1px solid; font-size:11px; font-weight:600; letter-spacing:.02em; }
+  .chip-ok   { color:var(--ok);   border-color:rgba(74,222,128,0.35);  background:rgba(74,222,128,0.10); }
+  .chip-err  { color:var(--err);  border-color:rgba(248,113,113,0.35); background:rgba(248,113,113,0.10); }
+  .chip-warn { color:var(--warn); border-color:rgba(251,191,36,0.32);  background:rgba(251,191,36,0.10); }
+
+  /* Payload checker */
+  .checker { display:grid; gap:12px; padding:14px; }
+  .checker-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .btn { font:inherit; font-size:12px; padding:7px 12px; border-radius:8px; cursor:pointer; color:#e8eaf0;
+         border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.04);
+         transition: background 140ms ease, border-color 140ms ease, transform 140ms ease; }
+  .btn:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.24); }
+  .btn:active { transform:translateY(1px); }
+  .btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .btn-primary { color:#cfe0ff; background:rgba(110,168,254,0.14); border-color:rgba(110,168,254,0.45); }
+  .btn-primary:hover { background:rgba(110,168,254,0.22); border-color:rgba(110,168,254,0.65); }
+  .checker textarea { width:100%; min-height:220px; resize:vertical; padding:12px; border-radius:10px;
+         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.5;
+         color:#cbd3e1; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.10); }
+  .checker textarea:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .report { display:grid; gap:6px; }
+  .report-pills { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .diag { display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:baseline;
+          padding:8px 10px; border-radius:8px; background:rgba(255,255,255,0.04); font-size:12.5px; line-height:1.5; }
+  .diag code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:nowrap; }
+  .diag-err  { box-shadow: inset 2px 0 0 var(--err); }
+  .diag-warn { box-shadow: inset 2px 0 0 var(--warn); }
+  .diag-note { color:#9aa3b2; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  @media (prefers-reduced-motion: reduce) { .btn { transition:none; } }
 </style>
 
 	<link rel="canonical" href="https://three.ws/spatial-mcp">
@@ -61,16 +96,38 @@
     <div class="card">
       <h2 data-i18n="spatial_mcp_index.three_ws_forge_free_artifact">three.ws forge_free → artifact</h2>
       <div id="stage-native" class="stage"></div>
+      <div id="conf-native" class="conf"></div>
     </div>
     <div class="card">
       <h2 data-i18n="spatial_mcp_index.foreign_tool_result_conformant_artifact">Foreign tool result → conformant artifact</h2>
       <div id="stage-foreign" class="stage"></div>
+      <div id="conf-foreign" class="conf"></div>
     </div>
   </div>
 
   <div class="card" style="margin-top:20px;">
     <h2 data-i18n="spatial_mcp_index.the_foreign_result_transformed_what_the_rend">The foreign result, transformed (what the renderer consumes)</h2>
     <pre id="artifact-json"></pre>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h2 data-i18n="spatial_mcp_index.check_your_own_payload">Check your own payload</h2>
+    <div class="checker">
+      <p class="lede" style="max-width:70ch;" data-i18n="spatial_mcp_index.checker_lede">
+        Paste a tool result below. The same validator the spec ships runs on it as you type, in your
+        browser, and names the field to fix rather than answering yes or no. Conformant payloads render
+        underneath; unusable ones get the designed fallback, never a blank frame.
+      </p>
+      <div class="checker-bar">
+        <button class="btn" type="button" data-preset="conformant" data-i18n="spatial_mcp_index.load_a_conformant_example">Load a conformant example</button>
+        <button class="btn" type="button" data-preset="broken" data-i18n="spatial_mcp_index.load_a_broken_example">Load a broken example</button>
+        <button class="btn btn-primary" type="button" id="check-render" data-i18n="spatial_mcp_index.render_this_payload">Render this payload</button>
+      </div>
+      <label class="sr-only" for="payload-input" data-i18n="spatial_mcp_index.spatial_mcp_artifact_json">Spatial MCP artifact JSON</label>
+      <textarea id="payload-input" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+      <div id="check-report" class="report" role="status" aria-live="polite"></div>
+      <div id="stage-check" class="stage"></div>
+    </div>
   </div>
 
   <p class="note" data-i18n-html="spatial_mcp_index.a_third_party_mcp_server_that_returns">

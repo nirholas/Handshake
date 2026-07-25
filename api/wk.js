@@ -1512,7 +1512,12 @@ function addOutputExample(r) {
 	return r;
 }
 
-async function handleX402Discovery(req, res) {
+// Builds the full x402 discovery document served at /.well-known/x402.json.
+// Exported so the self-facilitator's GET /discovery/resources action
+// (api/x402-facilitator/[action].js) can project the same catalog into the
+// facilitator-standard ListDiscoveryResourcesResponse consumed by x402scan's
+// crawler — one catalog, two wire formats, no drift.
+export async function buildX402DiscoveryDoc() {
 	const origin = env.APP_ORIGIN;
 	const mcpUrl = `${origin}/api/mcp`;
 	const mcp3dUrl = `${origin}/api/mcp-3d`;
@@ -1709,112 +1714,113 @@ async function handleX402Discovery(req, res) {
 	const agentServiceItems = await buildAgentServiceItems(origin);
 	const datapointItems = await buildDatapointItems(origin);
 
-	return json(
-		res,
-		200,
-		{
-			$schema: 'https://x402.org/schemas/discovery.json',
-			service: {
-				name: 'three.ws',
-				legal_name: 'three.ws',
-				tagline: '3D generation + crypto data + launch/trust tools for AI agents.',
-				description:
-					'three.ws — 3D generation + crypto data + launch/trust tools for AI agents. ' +
-					'Free Crypto Data API (token snapshots, security checks, holders, whales, trending, wallets — keyless) and free text→3D generation; ' +
-					'pay-per-call for Forge Pro, rigged avatars, vanity addresses, pump.fun token launches, and cross-chain trust checks (agent reputation, on-chain identity verify). ' +
-					'Reachable as paid REST endpoints (x402 v2) and MCP tool calls. USDC on Solana, Base, and Arbitrum mainnet.',
-				operator: 'three.ws',
-				mission:
-					'Give autonomous agents the tools they reach for mid-task — 3D assets, crypto data, launches, and trust — machine-native over HTTP 402.',
-				website: origin,
-				docs: `${origin}/docs/start-here`,
-				repository: 'https://github.com/nirholas/three.ws',
-				contact: `${origin}/`,
-				tags: [
-					'x402',
-					'x402-v2',
-					'mcp',
-					'agent-first',
-					'3d',
-					'text-to-3d',
-					'crypto-data',
-					'trust',
-					'token-launch',
-					'solana',
-					'base',
-					'arbitrum',
-					'usdc',
-				],
-				categories: ['3D', 'AI', 'Crypto', 'Data', 'Utility'],
-				environment: 'apex',
-				origin,
-			},
-			// `.filter(Boolean)` drops any resource whose IIFE returned null —
-			// e.g. permit2-paid-demo is omitted when CDP creds are missing,
-			// matching the runtime 402 behavior so we don't catalog a route that
-			// would fail at first paid call. The trailing .map(addOutputExample)
-			// backfills a realistic response example onto every entry so indexers
-			// render and rank each one (no empty result cards, no verifier warnings).
-			resources: [
-				{
-					path: '/api/mcp',
-					url: mcpUrl,
-					method: 'POST',
-					description:
-						'MCP 2025-06-18 Streamable HTTP transport — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data exposed as MCP tools. JSON-RPC 2.0 batch-aware. Currency: USDC.',
-					mimeType: 'application/json',
-					serviceName: mcpService.serviceName,
-					tags: mcpService.tags,
-					iconUrl: mcpService.iconUrl,
-					accepts: mcpAccepts,
-					extensions: extensionsForAccepts(mcpAccepts, bazaarExtension()),
-					links: {
-						openapi: `${origin}/openapi.json`,
-						docs: `${origin}/docs/mcp`,
-						agent_card: `${origin}/.well-known/agent-card.json`,
-						payment_config: `${origin}/.well-known/x402`,
-					},
-				},
-				{
-					path: '/api/mcp-3d',
-					url: mcp3dUrl,
-					method: 'POST',
-					description: STUDIO_CHALLENGE.description,
-					mimeType: 'application/json',
-					serviceName: STUDIO_CHALLENGE.serviceName,
-					tags: STUDIO_CHALLENGE.tags,
-					iconUrl: STUDIO_CHALLENGE.iconUrl,
-					accepts: mcp3dAccepts,
-					extensions: extensionsForAccepts(mcp3dAccepts, STUDIO_CHALLENGE.bazaar),
-					links: {
-						docs: `${origin}/docs/mcp-3d-studio`,
-						payment_config: `${origin}/.well-known/x402`,
-					},
-				},
-				// Every static /api/x402/* entry (model-check through wallet-connect),
-				// generated from the unified service catalog in catalog order. Editing
-				// a listing = editing api/_lib/service-catalog/services/<slug>.js.
-				...x402CatalogItems,
-				// USE-13: one Bazaar catalog row per priced MCP tool. The shared
-				// `/api/mcp` and `/api/mcp-3d` resources above are the transport
-				// entries; these are the individual paid tools facilitators
-				// index by toolName.
-				...mcpToolItems,
-				...studioToolItems,
-				// Agent-published paid endpoints (monetize_endpoint). Dynamic —
-				// one entry per active agent_paid_services listing.
-				...agentServiceItems,
-				// Datapoint fabric (/api/x402/d/…): a curated, runtime-derived
-				// slice of the 400k+ addressable single-datapoint endpoints, so
-				// indexers surface the fabric; the full id space is enumerated
-				// free at /api/x402/d.
-				...datapointItems,
-			]
-				.filter(Boolean)
-				.map(addOutputExample),
+	return {
+		$schema: 'https://x402.org/schemas/discovery.json',
+		service: {
+			name: 'three.ws',
+			legal_name: 'three.ws',
+			tagline: '3D generation + crypto data + launch/trust tools for AI agents.',
+			description:
+				'three.ws — 3D generation + crypto data + launch/trust tools for AI agents. ' +
+				'Free Crypto Data API (token snapshots, security checks, holders, whales, trending, wallets — keyless) and free text→3D generation; ' +
+				'pay-per-call for Forge Pro, rigged avatars, vanity addresses, pump.fun token launches, and cross-chain trust checks (agent reputation, on-chain identity verify). ' +
+				'Reachable as paid REST endpoints (x402 v2) and MCP tool calls. USDC on Solana, Base, and Arbitrum mainnet.',
+			operator: 'three.ws',
+			mission:
+				'Give autonomous agents the tools they reach for mid-task — 3D assets, crypto data, launches, and trust — machine-native over HTTP 402.',
+			website: origin,
+			docs: `${origin}/docs/start-here`,
+			repository: 'https://github.com/nirholas/three.ws',
+			contact: `${origin}/`,
+			tags: [
+				'x402',
+				'x402-v2',
+				'mcp',
+				'agent-first',
+				'3d',
+				'text-to-3d',
+				'crypto-data',
+				'trust',
+				'token-launch',
+				'solana',
+				'base',
+				'arbitrum',
+				'usdc',
+			],
+			categories: ['3D', 'AI', 'Crypto', 'Data', 'Utility'],
+			environment: 'apex',
+			origin,
 		},
-		{ 'cache-control': 'public, max-age=300' },
-	);
+		// `.filter(Boolean)` drops any resource whose IIFE returned null —
+		// e.g. permit2-paid-demo is omitted when CDP creds are missing,
+		// matching the runtime 402 behavior so we don't catalog a route that
+		// would fail at first paid call. The trailing .map(addOutputExample)
+		// backfills a realistic response example onto every entry so indexers
+		// render and rank each one (no empty result cards, no verifier warnings).
+		resources: [
+			{
+				path: '/api/mcp',
+				url: mcpUrl,
+				method: 'POST',
+				description:
+					'MCP 2025-06-18 Streamable HTTP transport — 3D avatar viewer, glTF model validation/inspection/optimization, and Solana agent data exposed as MCP tools. JSON-RPC 2.0 batch-aware. Currency: USDC.',
+				mimeType: 'application/json',
+				serviceName: mcpService.serviceName,
+				tags: mcpService.tags,
+				iconUrl: mcpService.iconUrl,
+				accepts: mcpAccepts,
+				extensions: extensionsForAccepts(mcpAccepts, bazaarExtension()),
+				links: {
+					openapi: `${origin}/openapi.json`,
+					docs: `${origin}/docs/mcp`,
+					agent_card: `${origin}/.well-known/agent-card.json`,
+					payment_config: `${origin}/.well-known/x402`,
+				},
+			},
+			{
+				path: '/api/mcp-3d',
+				url: mcp3dUrl,
+				method: 'POST',
+				description: STUDIO_CHALLENGE.description,
+				mimeType: 'application/json',
+				serviceName: STUDIO_CHALLENGE.serviceName,
+				tags: STUDIO_CHALLENGE.tags,
+				iconUrl: STUDIO_CHALLENGE.iconUrl,
+				accepts: mcp3dAccepts,
+				extensions: extensionsForAccepts(mcp3dAccepts, STUDIO_CHALLENGE.bazaar),
+				links: {
+					docs: `${origin}/docs/mcp-3d-studio`,
+					payment_config: `${origin}/.well-known/x402`,
+				},
+			},
+			// Every static /api/x402/* entry (model-check through wallet-connect),
+			// generated from the unified service catalog in catalog order. Editing
+			// a listing = editing api/_lib/service-catalog/services/<slug>.js.
+			...x402CatalogItems,
+			// USE-13: one Bazaar catalog row per priced MCP tool. The shared
+			// `/api/mcp` and `/api/mcp-3d` resources above are the transport
+			// entries; these are the individual paid tools facilitators
+			// index by toolName.
+			...mcpToolItems,
+			...studioToolItems,
+			// Agent-published paid endpoints (monetize_endpoint). Dynamic —
+			// one entry per active agent_paid_services listing.
+			...agentServiceItems,
+			// Datapoint fabric (/api/x402/d/…): a curated, runtime-derived
+			// slice of the 400k+ addressable single-datapoint endpoints, so
+			// indexers surface the fabric; the full id space is enumerated
+			// free at /api/x402/d.
+			...datapointItems,
+		]
+			.filter(Boolean)
+			.map(addOutputExample),
+	};
+}
+
+async function handleX402Discovery(req, res) {
+	return json(res, 200, await buildX402DiscoveryDoc(), {
+		'cache-control': 'public, max-age=300',
+	});
 }
 
 // ── dispatcher ────────────────────────────────────────────────────────────────

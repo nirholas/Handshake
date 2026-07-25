@@ -116,7 +116,8 @@ deploys from a human-authed CLI (command below).
 ```bash
 # Frontend changed? Build first — dist/ ships from the local build.
 # build:gcp = site build -> agent-3d CDN lib (build:lib:full) -> publish:lib
-# -> build:info -> check:dist, IN THAT ORDER. The order is load-bearing: the
+# -> build:info -> check:dist -> check:pages, IN THAT ORDER. The order is
+# load-bearing: the
 # site `vite build` WIPES dist/, so it must run before publish:lib mirrors the
 # lib into dist/. Plain `npm run build` is NOT enough (skips the lib publish, so
 # /agent-3d/latest/agent-3d.js 404s and the hero avatar dies). Hand-running
@@ -125,8 +126,9 @@ deploys from a human-authed CLI (command below).
 npm run build:gcp
 
 # Build image on Cloud Build (32-vCPU + BuildKit layer cache) + push + deploy.
-# Gated on check:dist AND db:check so an incomplete dist/ or an out-of-date
-# database can no longer ship.
+# Gated on check:dist, check:pages AND db:check so an incomplete dist/, an
+# unreachable page, or an out-of-date database can no longer ship. Ends with a
+# CDN purge and then smoke:prod against the live site.
 npm run deploy:gcp
 
 # Or do build + submit + CDN purge in one (from a clean worktree):
@@ -135,7 +137,17 @@ npm run deploy:gcp
 # Verify the deploy actually landed — /api/version reports the live commit SHA
 # and Cloud Run revision (stamped into dist/build-info.json by build:info):
 curl -s https://three.ws/api/version | jq '{commitShort, branch, builtAt, revision: .runtime.revision}'
+
+# Sweep every page declared in data/pages.json against the live site. deploy:gcp
+# runs this automatically after the purge; run it standalone any time.
+npm run smoke:prod
 ```
+
+> **The CDN purge is synchronous on purpose.** `deploy:gcp:purge-cdn` used to
+> pass `--async`, so anything verifying immediately afterwards read stale edge
+> content and reported phantom failures — a cached pre-deploy 404 for a page
+> that the new revision serves fine. Dropping `--async` costs ~3 s and makes
+> every post-deploy check trustworthy. Do not add it back.
 
 > **Never bypass `check:dist` by calling `gcloud builds submit` directly.** It is
 > the only thing standing between a half-built `dist/` and production. When it
@@ -147,6 +159,19 @@ curl -s https://three.ws/api/version | jq '{commitShort, branch, builtAt, revisi
 > `npm run build:lib:full && npm run publish:lib`) until `check:dist` is green.
 > This happened on 2026-07-09 (revision `three-ws-api-00034`), where the check
 > was overridden on the assumption its failure was unrelated to the change.
+
+> **`check:pages` guards a different failure: a page that ships unreachable.**
+> Every entry in `data/pages.json` feeds the sitemap, `llms.txt` and
+> `features.json`, so it is advertised to crawlers the moment it lands, whether
+> or not anything can serve it. `server/index.mjs`'s `resolveStatic()` has no
+> `.html` extension fallback by design, so a page built to `dist/<slug>.html`
+> is a hard 404 at `/<slug>` unless `vercel.json` carries a rewrite. That
+> shipped twice in three days: `/timeline` (fixed by `5688277bd`, "page shipped
+> without a route entry") and `/tracker` (advertised 2026-07-23, 404 until a
+> route landed two days later). `check:pages` resolves all ~424 declared paths
+> through the real route table and fails the build on any that dead-end. When it
+> fires it tells you which of the two causes applies: a missing `vercel.json`
+> rewrite, or a page that was never built (missing `vite.config.js` input entry).
 
 **Database migrations** live in `api/_lib/migrations/*.sql` and are tracked in
 the `schema_migrations` table (filename + sha256). Nothing applies them

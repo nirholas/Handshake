@@ -121,23 +121,51 @@ export function compileUtterance(text, opts = {}) {
 	const words = utteranceWords(text);
 	if (!words.length) throw new Error('text has no signable characters (A-Z, 0-9)');
 
+	// A signer raises their hands once for a sentence and lowers them once at the
+	// end. Only the first word leads in from rest and only the last settles back
+	// to it; every word between keeps the hands up in signing space, which is what
+	// makes a sentence read as one utterance instead of as a list of words.
+	const build = (word, position) =>
+		lookup(word, position) ??
+		buildFingerspellingClip(word, {
+			...timing,
+			name: `fs-${word.toLowerCase()}`,
+			lead: position.first,
+			settle: position.last,
+			dominant: opts.dominant,
+		});
+
+	const chosen = [];
+	let planned = 0;
+	let truncated = false;
+	for (let i = 0; i < words.length; i++) {
+		const position = { first: i === 0, last: false };
+		const segment = build(words[i], position);
+		const gap = chosen.length ? WORD_GAP_SECONDS : 0;
+		// Reserve room for the closing settle so the cap still holds once the last
+		// word is rebuilt with it.
+		if (chosen.length && planned + gap + segment.duration + timing.tailSeconds > maxSeconds) {
+			truncated = true;
+			break;
+		}
+		planned += gap + segment.duration;
+		chosen.push({ word: words[i], position, segment, signed: lookup(words[i], position) != null });
+	}
+
+	// Whichever word ended up last (the real last, or the one truncation stopped
+	// at) is the one that lowers the hands.
+	const closing = chosen[chosen.length - 1];
+	closing.position = { ...closing.position, last: true };
+	closing.segment = build(closing.word, closing.position);
+
 	const merged = new Map();
 	let cursor = 0;
 	const signed = [];
 	const spelled = [];
-	let truncated = false;
-
-	for (const word of words) {
-		const sign = lookup(word);
-		const segment = sign ?? buildFingerspellingClip(word, { ...timing, name: `fs-${word.toLowerCase()}` });
-		const segmentEnd = cursor + segment.duration + (cursor > 0 ? WORD_GAP_SECONDS : 0);
-		if (cursor > 0 && segmentEnd > maxSeconds) {
-			truncated = true;
-			break;
-		}
+	for (const entry of chosen) {
 		if (cursor > 0) cursor += WORD_GAP_SECONDS;
-		cursor = appendSegment(merged, segment, cursor);
-		(sign ? signed : spelled).push(word);
+		cursor = appendSegment(merged, entry.segment, cursor);
+		(entry.signed ? signed : spelled).push(entry.word);
 	}
 
 	// Rotation lanes only. A signed utterance is upper-body: it must never write
@@ -175,13 +203,15 @@ export function compileUtterance(text, opts = {}) {
  * `signs` (optional) is the lexical dictionary passed through to the compiler.
  */
 export class SignSpeaker {
-	constructor({ manager, signs = undefined, timing = null, maxSeconds = 45 } = {}) {
+	constructor({ manager, signs = undefined, timing = null, maxSeconds = 45, dominant = 'Right' } = {}) {
 		if (!manager) throw new Error('SignSpeaker needs a manager');
 		this.manager = manager;
+		/** Which hand leads. About one signer in ten signs left-dominant. */
+		this.dominant = dominant === 'Left' ? 'Left' : 'Right';
 		// Default to the built-in vocabulary: a signer signs the words they have
 		// signs for and only spells the rest. Pass `signs: null` for spelling-only,
 		// or your own lookup to override.
-		this.signs = signs === undefined ? signLookup() : signs;
+		this.signs = signs === undefined ? signLookup({ dominant: this.dominant }) : signs;
 		this.timing = timing;
 		this.maxSeconds = maxSeconds;
 		this._counter = 0;
@@ -199,6 +229,7 @@ export class SignSpeaker {
 			signs: this.signs,
 			timing: this.timing ?? undefined,
 			maxSeconds: this.maxSeconds,
+			dominant: this.dominant,
 			...opts,
 		});
 		const name = `sign-speech-${++this._counter}`;

@@ -65,6 +65,7 @@ zero other edits.
   name: 'CoinGecko',               // human label
   category: 'crypto-market-data',  // grouping for discovery
   base: 'https://api.coingecko.com/api/v3', // upstream base URL, no trailing slash
+  bases: async () => [...],        // OPTIONAL: interchangeable alternate hosts (see below)
   requiresKey: false,              // true when the upstream needs a key to function at all
   envVar: 'COINGECKO_API_KEY',     // env var holding three.ws's own platform key (or null)
   byokHeader: 'x-provider-key',    // header a caller uses to supply THEIR OWN key (or null)
@@ -89,6 +90,21 @@ zero other edits.
 Full field-by-field contract, including `upstreamMethod` (for a caller-facing GET that drives
 an upstream POST, e.g. Solana's single JSON-RPC endpoint) and `body`, is documented inline at
 the top of [`_providers.js`](_providers.js) — read it before adding a descriptor.
+
+### `bases` — upstream failover
+
+Set `bases` only when the provider fronts a **pool of interchangeable hosts** that answer the
+same requests, the way `solana` fronts the platform's RPC pool. It is an async function
+returning a priority-ordered list of base URLs.
+
+When it is set, a retryable failure on `base` (HTTP 429, an upstream 5xx, or an unreachable
+host) moves the call to the next host instead of surfacing to the caller; a 4xx other than 429
+is the caller's own mistake and is never retried. At most three hosts are tried per call, and a
+host that just failed is skipped for 30 seconds so only the first request of an outage pays the
+discovery cost. A provider without `bases` makes exactly one attempt, as it always did.
+
+Do **not** use it to point at a different upstream vendor: a fallback host must return the same
+response shape, because the endpoint's `transform()` runs on whatever answers.
 
 ### Adding a provider or endpoint
 

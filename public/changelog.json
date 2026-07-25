@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T09:58:05.519Z",
+	"generated_at": "2026-07-25T10:10:06.549Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,6 +49,17 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Crypto API: automatic upstream failover ends most rate-limit errors",
+			"summary": "The unified crypto API (/api/v1/x) no longer fails your call just because one upstream host had a bad moment. When a provider is backed by a pool of interchangeable hosts (the Solana read endpoints front the platform's full RPC pool), a rate-limited, unreachable, or erroring host now fails over to a healthy alternate within the same request. The API also remembers which host just failed for a short window, so during an outage only the first request pays the discovery cost and everything after routes straight to a working host. Rate-limit passthrough was the second-largest error class on the aggregator; this removes it for pooled providers.",
+			"link": "/crypto-api",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "Dress any avatar: the wardrobe now adds clothes, not just recolours them",
 			"summary": "Until now the wardrobe could only recolour or hide the clothes an avatar was generated with. It can now put NEW clothes on: the avatar editor's Wardrobe tab gained a Closet with racks of catalog pieces (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories). Click a piece and it binds to your avatar's skeleton and moves with every animation, whatever generator the avatar came from: forge characters, selfie reconstructions and uploaded models all work, because garments are fitted to the skeleton at wear-time instead of being authored for one specific body. The body is masked under whatever you wear so skin never pokes through the cloth, a piece that cannot fit a particular skeleton politely refuses instead of deforming into spaghetti, and every download is integrity-checked against the catalog before it touches your avatar. Saved outfits persist: the downloadable and embedded versions of your avatar come out dressed too.",
 			"link": "/avatar-edit",
@@ -70,12 +81,34 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Our x402 facilitator now publishes a standard discovery catalog",
+			"summary": "The three.ws self-hosted x402 facilitator serves a new public endpoint, GET /api/x402-facilitator/discovery/resources, listing every paid endpoint on the platform in the standard facilitator catalog format that x402 explorers and aggregators (like x402scan) crawl. It is the same catalog as /.well-known/x402.json, so listings on third-party explorers always match what the platform actually charges. This is groundwork for three.ws payments showing up on ecosystem explorers without routing settlement through any third party.",
+			"link": "/docs/x402-ring-economy",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "Selfie avatars now match the shape of your face, not just the colour of it",
 			"summary": "The selfie-to-avatar engine used to do one thing: take the face from your photo and paint it onto a standard head. From straight on it looked convincing, but the skull underneath was the same for everyone, so the moment the avatar turned it stopped being you. It now reshapes the head itself to your face: width, jaw, chin, cheekbones, brow, and how far the nose projects. That step had been written and tested for a while but had never actually reached the servers, so every avatar made until today was built the old way. Making it live also turned up a flaw in how the photo was read. Face measurements arrived scaled to the picture's width and height separately, which means a tall photo stretched the face before anything else happened, and that stretch was then treated as part of your bone structure. In practice the shape of your avatar's head partly depended on whether you shot the photo tall or square, which is not something anyone would expect. Measurements are now taken in true proportions, so the same face gives the same head regardless of how the photo was framed. Finally, the limits controlling how far the head is allowed to move toward your real shape were set before there was any way to measure the result. They were far too cautious, holding the head back to about two centimetres of change and quietly discarding real differences between faces. Measured across a forty-face test set covering a wide range of ages, complexions, beards, glasses and head coverings, retuning them cut the remaining shape error by 46 percent, and no face in the set came out worse. Choosing that limit needed a second measurement, because a test set of clean, well-lit photos will always argue for removing the limit entirely: it contains nothing for the limit to catch. So each test face was also degraded the way real photos are, with camera shake, a turned head, hair across the face, a dim room and a heavily shrunk upload, and checked for whether the same person still came out with the same head. The setting we shipped is the point where matching your face stops improving but sensitivity to photo quality keeps rising. In total, avatars now capture about 60 percent of the difference between a generic head and your real one, up from 26 percent. Rebuild your avatar at /create/selfie to get one made the new way.",
 			"link": "/create/selfie",
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Solana reads on the crypto API stop failing when one RPC host throttles us",
+			"summary": "The Solana endpoints on the public crypto API (balance, token holdings, token supply, largest holders, transaction, account, priority fees) were pointed at a single RPC host. Whenever that host rate-limited us, the caller got the rate-limit error even though the platform keeps a priority-ordered pool of other RPC endpoints for exactly this situation. Those calls now move to the next healthy host automatically, up to three per request, and a host that has just failed is skipped for the next 30 seconds so one bad host does not slow down every request behind it. A genuinely bad request, like a malformed address, still returns its error immediately instead of being retried. This was the second-largest error class on the API.",
+			"link": "/crypto-api",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

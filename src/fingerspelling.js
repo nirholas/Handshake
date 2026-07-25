@@ -25,7 +25,7 @@
 // prefers them, falling back here for anything with no sign of its own.
 
 import { HANDSHAPES, handshapeLocals } from './sign-handshapes.js';
-import { SignTimeline, posePhase, restingPose } from './sign-clip.js';
+import { SignTimeline, mirrorPhase, posePhase, restingPose } from './sign-clip.js';
 
 export { HANDSHAPES, handshapeLocals, restingPose };
 
@@ -112,31 +112,35 @@ function letterPlace(letter, offset) {
 export function letterPose(letter, opts = {}, base = restingPose()) {
 	if (!HANDSHAPES[letter]) throw new Error(`no handshape for letter "${letter}"`);
 	const orient = LETTER_ORIENT[letter] ?? {};
-	return posePhase(
+	return spellingPhase(
 		{
-			right: {
-				shape: letter,
-				at: letterPlace(letter, opts.offset),
-				fingers: opts.fingers ?? orient.fingers ?? 'up',
-				palm: opts.palm ?? orient.palm ?? 'forward',
-			},
-			// The reading eye follows the hand: a small turn and tilt toward the
-			// spelling hand is what a signer does and what makes this look alive.
-			head: { turn: -3, tilt: 1.5 },
-			torso: { turn: -2 },
+			shape: letter,
+			at: letterPlace(letter, opts.offset),
+			fingers: opts.fingers ?? orient.fingers ?? 'up',
+			palm: opts.palm ?? orient.palm ?? 'forward',
 		},
+		opts.dominant,
 		base,
 	);
 }
 
+/** One spelling pose: the dominant hand does the work, the body leans into it. */
+function spellingPhase(hand, dominant, base) {
+	const phase = {
+		right: hand,
+		// The reading eye follows the hand: a small turn and tilt toward the
+		// spelling hand is what a signer does and what makes this look alive.
+		head: { turn: -3, tilt: 1.5 },
+		torso: { turn: -2 },
+	};
+	return posePhase(dominant === 'Left' ? mirrorPhase(phase) : phase, base);
+}
+
 /** The neutral hand a word starts and ends from: same place, open and relaxed. */
-function readyPose(base) {
-	return posePhase(
-		{
-			right: { shape: 'RELAXED', at: letterPlace('A', { up: -0.03, forward: -0.03 }), fingers: 'up', palm: ['forward', 'in'] },
-			head: { turn: -3, tilt: 1.5 },
-			torso: { turn: -2 },
-		},
+function readyPose(base, dominant) {
+	return spellingPhase(
+		{ shape: 'RELAXED', at: letterPlace('A', { up: -0.03, forward: -0.03 }), fingers: 'up', palm: ['forward', 'in'] },
+		dominant,
 		base,
 	);
 }
@@ -147,7 +151,16 @@ function readyPose(base) {
  * is dropped.
  *
  * @param {string} word
- * @param {Partial<typeof DEFAULT_TIMING> & { name?: string, base?: import('./sign-rig.js').Pose, settle?: boolean }} [opts]
+ * @param {Partial<typeof DEFAULT_TIMING> & {
+ *   name?: string,
+ *   base?: import('./sign-rig.js').Pose,
+ *   lead?: boolean,
+ *   settle?: boolean,
+ * }} [opts]
+ *   `dominant` picks the signing hand ('Right' by default).
+ *   `lead: false` starts with the hand already up in signing space and
+ *   `settle: false` leaves it there — what a word in the MIDDLE of a sentence
+ *   needs, since a signer does not lower their arm between words.
  * @returns {object} clip document, ready for THREE.AnimationClip.parse + retarget
  */
 export function buildFingerspellingClip(word, opts = {}) {
@@ -156,17 +169,19 @@ export function buildFingerspellingClip(word, opts = {}) {
 	if (!letters) throw new Error('word has no spellable characters (A-Z, 0-9)');
 
 	const base = opts.base ?? restingPose();
-	const tl = new SignTimeline({ base });
-	const ready = readyPose(base);
+	const dominant = opts.dominant === 'Left' ? 'Left' : 'Right';
+	const ready = readyPose(base, dominant);
+	const lead = opts.lead !== false;
+	const tl = new SignTimeline({ base, open: lead ? base : ready });
 
-	// Lift into signing space, then spell.
-	tl.to(ready, timing.leadSeconds, { ease: 'out' });
+	// Lift into signing space, then spell. A continuing word is already there.
+	if (lead) tl.to(ready, timing.leadSeconds, { ease: 'out' });
 
 	let prev = null;
 	for (const ch of letters) {
 		if (ch === ' ') {
 			// A word break is a small drop and re-set of the hand, not a pause.
-			tl.to(readyPose(base), timing.transitionSeconds, { ease: 'smooth' });
+			tl.to(readyPose(base, dominant), timing.transitionSeconds, { ease: 'smooth' });
 			tl.hold(timing.holdSeconds * 0.5);
 			prev = null;
 			continue;
@@ -174,30 +189,30 @@ export function buildFingerspellingClip(word, opts = {}) {
 		if (prev === ch) {
 			// Doubled letter: bounce outward and back rather than holding one shape
 			// twice, which would read as a single letter.
-			tl.to(letterPose(ch, { offset: { out: 0.045, forward: -0.01 } }, base), timing.transitionSeconds * 0.55, { ease: 'out' });
+			tl.to(letterPose(ch, { offset: { out: 0.045, forward: -0.01 }, dominant }, base), timing.transitionSeconds * 0.55, { ease: 'out' });
 		}
 		const motion = LETTER_MOTION[ch];
 		if (motion) {
-			const step = (s) => letterPose(ch, { offset: s.offset, fingers: s.fingers, palm: s.palm }, base);
+			const step = (s) => letterPose(ch, { offset: s.offset, fingers: s.fingers, palm: s.palm, dominant }, base);
 			tl.to(step(motion[0]), timing.transitionSeconds, { ease: 'smooth' });
 			for (let i = 1; i < motion.length; i++) {
 				const span = (motion[i].at - motion[i - 1].at) * timing.motionSeconds;
 				tl.to(step(motion[i]), span, { ease: i === motion.length - 1 ? 'in' : 'linear' });
 			}
 		} else {
-			tl.to(letterPose(ch, {}, base), timing.transitionSeconds, { ease: 'smooth' });
+			tl.to(letterPose(ch, { dominant }, base), timing.transitionSeconds, { ease: 'smooth' });
 			tl.hold(timing.holdSeconds);
 		}
 		prev = ch;
 	}
 
-	// Drop the hand back to rest unless the caller is stitching more signing on.
-	if (opts.settle === false) tl.hold(timing.tailSeconds);
-	else tl.settle(timing.tailSeconds);
+	// Drop the hand back to rest unless the caller is stitching more signing on;
+	// mid-sentence the hand simply stays where it is and the next word takes over.
+	if (opts.settle !== false) tl.settle(timing.tailSeconds);
 
 	return tl.build({
 		name: opts.name ?? `fingerspell-${letters.toLowerCase().replace(/ /g, '-')}`,
-		seed: `fingerspell:${letters}:${timing.holdSeconds}:${timing.transitionSeconds}:${timing.leadSeconds}:${timing.tailSeconds}`,
+		seed: `fingerspell:${letters}:${timing.holdSeconds}:${timing.transitionSeconds}:${timing.leadSeconds}:${timing.tailSeconds}:${lead}:${opts.settle !== false}:${dominant}`,
 	});
 }
 

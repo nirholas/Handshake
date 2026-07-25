@@ -347,6 +347,144 @@ export function adductAxis(bone) {
 	return vNorm(vCross(boneAxis(bone), qRotate(qConj(restWorld(bone)), handDir)));
 }
 
+/** The five digits, and every finger bone of one hand in track order. */
+export const FINGERS = Object.freeze(['Index', 'Middle', 'Ring', 'Pinky']);
+export const FINGER_JOINTS = Object.freeze([1, 2, 3]);
+
+export function fingerBones(side) {
+	return [...FINGERS, 'Thumb'].flatMap((f) => FINGER_JOINTS.map((j) => `${side}Hand${f}${j}`));
+}
+
+// ── touchable parts of a hand ──────────────────────────────────────────────
+//
+// Signs are described by CONTACT ("two fingers stand on the flat palm", "the
+// fingertips touch the forehead"), not by where the wrist happens to be. Solving
+// that needs the geometry of the posed hand: where its fingertips are, where its
+// palm faces. Reading it off the skeleton is what makes contact survive a
+// different avatar — hand size and finger length change, and the contact still
+// lands, where a hardcoded wrist position would drift off the palm.
+
+// Skin sits outside the bone: contact points on a surface are offset off the
+// bone plane by roughly half a hand's thickness so two hands meet instead of
+// interpenetrating. Scaled from the rig's own hand length, not a magic number.
+const SURFACE = 0.14; // fraction of hand length
+
+/** Length past the last knuckle to the fingertip, estimated from the rig. */
+function tipExtension(side, finger) {
+	return boneLength(`${side}Hand${finger}2`) * 0.85;
+}
+
+/** World position of a fingertip under `pose` (past the final joint). */
+export function fingerTip(pose, side, finger) {
+	const distal = `${side}Hand${finger}3`;
+	return vAdd(pose.worldPos(distal), vScale(pose.worldDir(distal), tipExtension(side, finger)));
+}
+
+const mean = (points) => vScale(points.reduce(vAdd, [0, 0, 0]), 1 / points.length);
+
+/**
+ * World position of a named part of a posed hand.
+ *
+ * `palm`/`back` are surface points, offset off the bone plane so a hand resting
+ * on the palm sits ON it. `fingertips` is the pad of the index and middle
+ * fingers, which is what most contacting signs actually use.
+ *
+ * @param {Pose} pose
+ * @param {'Left'|'Right'} side
+ * @param {'wrist'|'palm'|'back'|'fingertips'|'indextip'|'middletip'|'thumbtip'|'knuckles'|'fingers'|'edge'} part
+ * @returns {number[]}
+ */
+export function handPoint(pose, side, part = 'fingertips') {
+	const hand = `${side}Hand`;
+	const q = pose.worldQuat(hand);
+	const normal = vNorm(qRotate(q, palmAxis(hand)));
+	const radial = vNorm(qRotate(q, radialAxis(hand)));
+	const thickness = boneLength(hand) * SURFACE;
+	const knuckles = () => FINGERS.map((f) => pose.worldPos(`${side}Hand${f}1`));
+	switch (part) {
+		case 'wrist':
+			return pose.worldPos(hand);
+		case 'palm':
+			return vAdd(mean([pose.worldPos(hand), ...knuckles()]), vScale(normal, thickness));
+		case 'back':
+			return vAdd(mean([pose.worldPos(hand), ...knuckles()]), vScale(normal, -thickness));
+		case 'knuckles':
+			return vAdd(mean(knuckles()), vScale(normal, thickness));
+		case 'fingers':
+			return vAdd(
+				mean([pose.worldPos(`${side}HandIndex2`), pose.worldPos(`${side}HandMiddle2`)]),
+				vScale(normal, thickness),
+			);
+		case 'edge':
+			return vAdd(pose.worldPos(`${side}HandPinky1`), vScale(radial, -thickness));
+		case 'indextip':
+			return fingerTip(pose, side, 'Index');
+		case 'middletip':
+			return fingerTip(pose, side, 'Middle');
+		case 'thumbtip':
+			return fingerTip(pose, side, 'Thumb');
+		case 'fingertips':
+			return mean([fingerTip(pose, side, 'Index'), fingerTip(pose, side, 'Middle')]);
+		default:
+			throw new Error(`unknown hand part "${part}"`);
+	}
+}
+
+/**
+ * The offset from the wrist to one of its own parts, expressed in the HAND's
+ * local frame — so it depends only on the handshape, not on where the arm is.
+ * That is what lets the solver work backwards: given where a fingertip must
+ * END UP and which way the hand faces, this says where the wrist has to go.
+ *
+ * @param {Pose} pose  supplies this hand's finger rotations
+ * @param {'Left'|'Right'} side
+ * @param {string} part
+ * @returns {number[]}
+ */
+export function handPartOffset(pose, side, part = 'fingertips') {
+	// Measure on a scratch pose whose arm is at rest, so the answer is purely the
+	// hand's own shape.
+	const scratch = new Pose();
+	for (const bone of fingerBones(side)) scratch.setLocal(bone, pose.getLocal(bone));
+	const hand = `${side}Hand`;
+	const point = handPoint(scratch, side, part);
+	return qRotate(qConj(scratch.worldQuat(hand)), vSub(point, scratch.worldPos(hand)));
+}
+
+// Anchors ride a bone, so a turned head carries the chin with it. Anything not
+// listed is fixed in model space.
+const ANCHOR_BONE = {
+	forehead: 'Head',
+	nose: 'Head',
+	chin: 'Head',
+	mouth: 'Head',
+	head: 'Head',
+	neck: 'Neck',
+	sternum: 'Spine2',
+	chest: 'Spine2',
+	belly: 'Spine1',
+	shoulder: 'Spine2',
+	hip: 'Hips',
+};
+
+/**
+ * An anchor's position under a POSE rather than at rest: the rest point is
+ * carried by whichever bone owns it, so a sign that touches the chin still
+ * touches the chin when the head has turned.
+ *
+ * @param {Pose} pose
+ * @param {string} name  ANCHORS key
+ * @param {{ out?: number, up?: number, forward?: number, side?: 'Left'|'Right' }} [offset]
+ * @returns {number[]}
+ */
+export function anchorPoint(pose, name, offset = {}) {
+	const rest = signPoint(name, offset);
+	const bone = ANCHOR_BONE[name];
+	if (!bone || !hasBone(bone)) return rest;
+	const local = qRotate(qConj(restWorld(bone)), vSub(rest, restPos(bone)));
+	return vAdd(pose.worldPos(bone), qRotate(pose.worldQuat(bone), local));
+}
+
 // ── the signing body: anchors and workspace ────────────────────────────────
 
 /**

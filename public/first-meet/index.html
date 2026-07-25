@@ -313,7 +313,9 @@
 		</div>
 
 		<script src="/dist-lib/agent-3d.js" type="module"></script>
-		<script type="module" src="./first-meet.js"></script>
+		<!-- Absolute: served at /first-meet as well as /first-meet/, and a relative src
+		     resolves against the site root on the slash-less URL (404). -->
+		<script type="module" src="/first-meet/first-meet.js"></script>
 		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

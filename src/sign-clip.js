@@ -15,16 +15,26 @@
 // Signs never write joint angles. They name a handshape, a place in signing
 // space, and which way the fingers and palm face; everything else is solved.
 
-import { applyHandshape, fingerBones } from './sign-handshapes.js';
+import { applyHandshape } from './sign-handshapes.js';
 import {
 	Pose,
+	anchorPoint,
+	boneAxis,
+	fingerBones,
+	handPartOffset,
+	handPoint,
+	orientQuat,
+	palmAxis,
 	qAxisAngle,
 	qMul,
+	qRotate,
 	qSlerp,
 	signPoint,
 	solveArm,
 	vAdd,
 	vNorm,
+	vScale,
+	vSub,
 } from './sign-rig.js';
 
 /**
@@ -85,16 +95,42 @@ export function direction(spec, side = 'Right') {
 
 /**
  * Resolve a place in signing space: an anchor name with body-relative offsets,
- * an explicit point, or a `[anchor, offsets]` pair.
+ * an explicit point, or an explicit `[x,y,z]`. Anchors are read from the POSE,
+ * so a place on the chin follows the chin when the head turns.
  * @param {string|object|number[]} spec
  * @param {'Left'|'Right'} side
+ * @param {Pose} [pose]
  * @returns {number[]}
  */
-export function place(spec, side = 'Right') {
+export function place(spec, side = 'Right', pose = null) {
 	if (Array.isArray(spec) && typeof spec[0] === 'number') return spec;
-	if (typeof spec === 'string') return signPoint(spec, { side });
-	const { anchor = 'sternum', ...offsets } = spec;
-	return signPoint(anchor, { ...offsets, side });
+	const { anchor = 'sternum', ...offsets } = typeof spec === 'string' ? { anchor: spec } : spec;
+	return pose
+		? anchorPoint(pose, anchor, { ...offsets, side })
+		: signPoint(anchor, { ...offsets, side });
+}
+
+/**
+ * Where a `touch:` spec says the acting hand must make contact, in world space.
+ * The target is either the other (already posed) hand or a place on the body.
+ *
+ * @param {Pose} pose
+ * @param {'Left'|'Right'} side   the acting hand
+ * @param {object} touch
+ * @returns {number[]}
+ */
+function contactPoint(pose, side, touch) {
+	const other = side === 'Left' ? 'Right' : 'Left';
+	const target = touch.to ?? 'other';
+	const base =
+		target === 'other' || target === 'left' || target === 'right'
+			? handPoint(pose, target === 'other' ? other : target === 'left' ? 'Left' : 'Right', touch.on ?? 'palm')
+			: place({ anchor: target, out: touch.out, up: touch.up, forward: touch.forward }, side, pose);
+	if (target !== 'other' && target !== 'left' && target !== 'right') return base;
+	// Offsets on a hand target are body-relative too, so a sign can sit a
+	// fingertip slightly up the palm without naming a coordinate.
+	const outward = side === 'Right' ? -1 : 1;
+	return vAdd(base, [outward * (touch.out ?? 0), touch.up ?? 0, touch.forward ?? 0]);
 }
 
 // ── the resting signer ─────────────────────────────────────────────────────
@@ -106,6 +142,30 @@ const REST_ARM = {
 	palm: 'in',
 	shape: 'RELAXED',
 };
+
+// Where the hands WAIT between two signs of the same utterance: low in front of
+// the body, still inside signing space. A signer does not drop their arms to
+// their sides between words, and an avatar that does reads as restarting the
+// sentence on every word.
+const NEUTRAL_ARM = {
+	at: { anchor: 'belly', out: 0.15, up: 0.07, forward: 0.21 },
+	fingers: ['up', 'forward', 'in'],
+	palm: 'in',
+	shape: 'RELAXED',
+};
+
+/**
+ * The signer's hands between signs: still up, still in signing space, doing
+ * nothing. Segments that continue an utterance open here instead of at
+ * {@link restingPose}.
+ * @param {Pose} [base]
+ * @returns {Pose}
+ */
+export function neutralPose(base = restingPose()) {
+	const pose = base.clone();
+	for (const side of ['Left', 'Right']) poseHand(pose, side, NEUTRAL_ARM);
+	return pose;
+}
 
 /**
  * A signer at rest: arms down, hands relaxed, chest open, head level. Every
@@ -141,13 +201,62 @@ export function restingPose() {
  */
 export function poseHand(pose, side, spec) {
 	if (spec.shape) applyHandshape(pose, spec.shape, side);
+	const hand = `${side}Hand`;
+	const fingers = direction(spec.fingers ?? 'up', side);
+	const palm = direction(spec.palm ?? 'forward', side);
+
+	let wrist;
+	if (spec.touch) {
+		// Solve the wrist BACKWARDS from the contact: the hand's orientation is
+		// already known from `fingers`/`palm`, so the offset from the wrist to the
+		// touching part is known too, and the wrist is wherever puts that part on
+		// the target. This is what keeps a fingertip on the palm (and out of it)
+		// when hand size or finger length changes.
+		const contact = contactPoint(pose, side, spec.touch);
+		const handQuat = orientQuat(boneAxis(hand), palmAxis(hand), fingers, palm);
+		const offset = qRotate(handQuat, handPartOffset(pose, side, spec.touch.part ?? 'fingertips'));
+		const clearance = spec.touch.gap ?? 0;
+		wrist = vSub(vSub(contact, offset), vScale(vNorm(offset), clearance));
+	} else {
+		wrist = place(spec.at ?? REST_ARM.at, side, pose);
+	}
+
 	solveArm(pose, side, {
-		wrist: place(spec.at ?? REST_ARM.at, side),
-		fingers: direction(spec.fingers ?? 'up', side),
-		palm: direction(spec.palm ?? 'forward', side),
+		wrist,
+		fingers,
+		palm,
 		pole: spec.pole ? direction(spec.pole, side) : undefined,
 	});
 	return pose;
+}
+
+/**
+ * Mirror a phase for a left-dominant signer: the hands swap roles, any contact
+ * that named a hand follows them, and the head and torso turn the other way.
+ * Places and directions need no mirroring at all, because they are written
+ * body-relative (`out`, `in`) rather than as coordinates.
+ *
+ * About one signer in ten is left-dominant, and signing left-handed is not an
+ * error to be corrected.
+ *
+ * @param {object} phase
+ * @returns {object}
+ */
+export function mirrorPhase(phase) {
+	const flipTouch = (hand) => {
+		if (!hand || typeof hand !== 'object' || !hand.touch) return hand;
+		const to = hand.touch.to;
+		const flipped = to === 'left' ? 'right' : to === 'right' ? 'left' : to;
+		return { ...hand, touch: { ...hand.touch, to: flipped } };
+	};
+	const out = { ...phase };
+	delete out.left;
+	delete out.right;
+	if (phase.right !== undefined) out.left = flipTouch(phase.right);
+	if (phase.left !== undefined) out.right = flipTouch(phase.left);
+	if (phase.head) out.head = { ...phase.head, turn: -(phase.head.turn ?? 0), tilt: -(phase.head.tilt ?? 0) };
+	if (phase.torso) out.torso = { ...phase.torso, turn: -(phase.torso.turn ?? 0) };
+	return out;
 }
 
 /**
@@ -167,13 +276,11 @@ export function poseHand(pose, side, spec) {
  */
 export function posePhase(spec, base = restingPose()) {
 	const pose = base.clone();
-	for (const side of ['Left', 'Right']) {
-		const own = spec[side.toLowerCase()];
-		const hand = own === 'rest' ? REST_ARM : spec.both ? { ...spec.both, ...(own ?? {}) } : own;
-		if (!hand) continue;
-		poseHand(pose, side, hand);
-	}
 	const { head, torso } = spec;
+
+	// Body first, arms second. The spine and neck carry the shoulders, so solving
+	// the arms afterwards puts the hands where the sign says regardless of how the
+	// torso leans — and lets a hand touch the chin AFTER the head has turned.
 	if (torso) {
 		// Spread the lean across the spine so the torso curves instead of hinging.
 		for (const [bone, share] of [['Spine', 0.4], ['Spine1', 0.35], ['Spine2', 0.25]]) {
@@ -195,6 +302,19 @@ export function posePhase(spec, base = restingPose()) {
 		pose.setLocal('Neck', qMul(pose.getLocal('Neck'), qSlerp([0, 0, 0, 1], q, 0.45)));
 		pose.setLocal('Head', qMul(pose.getLocal('Head'), qSlerp([0, 0, 0, 1], q, 0.55)));
 	}
+
+	// The hand being touched has to exist before the hand touching it, so a hand
+	// whose spec has no `touch` is posed first.
+	const hands = ['Left', 'Right']
+		.map((side) => {
+			const own = spec[side.toLowerCase()];
+			const hand = own === 'rest' ? REST_ARM : spec.both ? { ...spec.both, ...(own ?? {}) } : own;
+			return hand ? { side, hand } : null;
+		})
+		.filter(Boolean)
+		.sort((a, b) => (a.hand.touch ? 1 : 0) - (b.hand.touch ? 1 : 0));
+	for (const { side, hand } of hands) poseHand(pose, side, hand);
+
 	return pose;
 }
 
@@ -247,12 +367,18 @@ function stableUuid(seed) {
  *   const clip = tl.build({ name: 'sign-hello' });
  */
 export class SignTimeline {
-	/** @param {{ base?: Pose, breathe?: boolean }} [opts] */
-	constructor({ base = restingPose(), breathe = true } = {}) {
+	/**
+	 * @param {{ base?: Pose, open?: Pose, breathe?: boolean }} [opts]
+	 *   `base` is where `settle()` returns to. `open` is the pose at t=0, which
+	 *   differs from `base` for a segment continuing mid-utterance: the hands are
+	 *   already up in signing space, so the segment must not start from the arms
+	 *   hanging at the hips.
+	 */
+	constructor({ base = restingPose(), open = null, breathe = true } = {}) {
 		this.base = base;
 		this.breathe = breathe;
 		/** @type {{time:number, pose:Pose}[]} */
-		this.keys = [{ time: 0, pose: base }];
+		this.keys = [{ time: 0, pose: open ?? base }];
 		this.time = 0;
 	}
 

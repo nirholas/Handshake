@@ -26,6 +26,24 @@ const MAX_UPSTREAM_ATTEMPTS = 3;
 const RETRYABLE_CODES = new Set(['upstream_rate_limited', 'upstream_unreachable']);
 const isRetryable = (err) => RETRYABLE_CODES.has(err?.code) || err?.status === 502;
 
+// Short per-host memory of retryable failures. Without it, every request
+// re-discovers a dead primary the hard way (worst case the full 20s timeout)
+// before failing over; with it, only the first request of an outage pays that
+// cost and the rest go straight to a healthy alternate. State is per-instance
+// (each Cloud Run instance learns on its own), which is fine: the window is
+// short and a wrong guess only reorders attempts, never removes them.
+const HOST_COOLDOWN_MS = 30_000;
+const _hostCooldowns = new Map(); // base URL -> epoch ms until the host is trusted again
+
+const coolingDown = (base) => (_hostCooldowns.get(base) ?? 0) > Date.now();
+const markBad = (base) => _hostCooldowns.set(base, Date.now() + HOST_COOLDOWN_MS);
+const markGood = (base) => _hostCooldowns.delete(base);
+
+/** Clear per-host failure memory. Exported for tests, which share module state. */
+export function resetUpstreamHealth() {
+	_hostCooldowns.clear();
+}
+
 // Alternate hosts for a provider, primary first, resolved lazily and only when
 // the primary has already failed — a provider like `solana` fronts a pool of
 // interchangeable RPC endpoints, and resolving that pool can be expensive
@@ -86,62 +104,126 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 	// caller's query params. See the `solana` provider in api/v1/_providers.js.
 	const upstreamMethod = endpoint.upstreamMethod || endpoint.method;
 
-	if (endpoint.method === 'GET' && endpoint.query) {
-		for (const [k, v] of Object.entries(endpoint.query(query))) {
-			if (v != null && v !== '') url.searchParams.set(k, String(v));
+	// One attempt against one upstream host. Everything host-independent (the
+	// query builder, the body builder) is re-run per attempt because applyKey may
+	// write the key into the URL, which differs per host.
+	const attempt = async (base) => {
+		const url = new URL(base + path);
+
+		if (endpoint.method === 'GET' && endpoint.query) {
+			for (const [k, v] of Object.entries(endpoint.query(query))) {
+				if (v != null && v !== '') url.searchParams.set(k, String(v));
+			}
+		}
+
+		const headers = { accept: 'application/json' };
+		let outBody;
+		if (upstreamMethod === 'POST') {
+			// A GET-caller/POST-upstream endpoint has no caller body to forward — its
+			// `body()` builder consumes the caller's query params instead.
+			outBody = endpoint.body ? endpoint.body(endpoint.method === 'GET' ? query : body) : body;
+			headers['content-type'] = 'application/json';
+		}
+		provider.applyKey(headers, url, apiKey);
+
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+		let res;
+		try {
+			res = await fetch(url, {
+				method: upstreamMethod,
+				headers,
+				body: outBody != null ? JSON.stringify(outBody) : undefined,
+				signal: controller.signal,
+			});
+		} catch (err) {
+			clearTimeout(timer);
+			const e = new Error(`${provider.name} is unreachable`);
+			e.status = 504;
+			e.code = 'upstream_unreachable';
+			e.cause = err;
+			throw e;
+		}
+		clearTimeout(timer);
+
+		const text = await res.text();
+		let data;
+		try {
+			data = text ? JSON.parse(text) : null;
+		} catch {
+			data = text;
+		}
+
+		if (!res.ok) {
+			const e = new Error(
+				`${provider.name} returned ${res.status} for ${endpoint.id}`,
+			);
+			// Map upstream 5xx to 502 (we're the proxy); pass client-fault 4xx through.
+			e.status = res.status >= 500 ? 502 : res.status;
+			e.code = res.status === 429 ? 'upstream_rate_limited' : 'upstream_error';
+			e.detail = typeof data === 'object' ? data : { message: String(data).slice(0, 300) };
+			throw e;
+		}
+
+		return endpoint.transform ? endpoint.transform(data) : data;
+	};
+
+	// A provider whose upstream is a pool of interchangeable hosts (Solana RPC)
+	// should not hand the caller a 429 while a healthy alternate sits unused:
+	// the free lane's rate-limit passthrough was the second-largest error class
+	// on the aggregator. Providers with no alternates make exactly one attempt,
+	// as before, so this costs a single-host provider nothing.
+	//
+	// The cooldown map feeds in here: a primary that failed a retryable way in
+	// the last HOST_COOLDOWN_MS is skipped up front (only when alternates exist
+	// to take its place), and alternates are tried freshest-first.
+	const primaryCooling = coolingDown(provider.base) && typeof provider.bases === 'function';
+
+	let firstErr;
+	if (!primaryCooling) {
+		try {
+			const out = await attempt(provider.base);
+			markGood(provider.base);
+			return out;
+		} catch (err) {
+			if (!isRetryable(err)) throw err;
+			markBad(provider.base);
+			firstErr = err;
 		}
 	}
 
-	const headers = { accept: 'application/json' };
-	let outBody;
-	if (upstreamMethod === 'POST') {
-		// A GET-caller/POST-upstream endpoint has no caller body to forward — its
-		// `body()` builder consumes the caller's query params instead.
-		outBody = endpoint.body ? endpoint.body(endpoint.method === 'GET' ? query : body) : body;
-		headers['content-type'] = 'application/json';
-	}
-	provider.applyKey(headers, url, apiKey);
-
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-	let res;
-	try {
-		res = await fetch(url, {
-			method: upstreamMethod,
-			headers,
-			body: outBody != null ? JSON.stringify(outBody) : undefined,
-			signal: controller.signal,
-		});
-	} catch (err) {
-		clearTimeout(timer);
-		const e = new Error(`${provider.name} is unreachable`);
-		e.status = 504;
-		e.code = 'upstream_unreachable';
-		e.cause = err;
-		throw e;
-	}
-	clearTimeout(timer);
-
-	const text = await res.text();
-	let data;
-	try {
-		data = text ? JSON.parse(text) : null;
-	} catch {
-		data = text;
+	const alternates = await alternateBases(provider);
+	if (!alternates.length) {
+		if (firstErr) throw firstErr;
+		// The primary was skipped for cooldown but the pool came back empty:
+		// try it anyway rather than failing without a single attempt.
+		const out = await attempt(provider.base);
+		markGood(provider.base);
+		return out;
 	}
 
-	if (!res.ok) {
-		const e = new Error(
-			`${provider.name} returned ${res.status} for ${endpoint.id}`,
-		);
-		// Map upstream 5xx to 502 (we're the proxy); pass client-fault 4xx through.
-		e.status = res.status >= 500 ? 502 : res.status;
-		e.code = res.status === 429 ? 'upstream_rate_limited' : 'upstream_error';
-		e.detail = typeof data === 'object' ? data : { message: String(data).slice(0, 300) };
-		throw e;
-	}
+	// Healthy-looking alternates first, recently-failed ones after, and a
+	// skipped primary last so pool exhaustion still gives it one chance.
+	const ordered = [
+		...alternates.filter((b) => !coolingDown(b)),
+		...alternates.filter((b) => coolingDown(b)),
+		...(primaryCooling ? [provider.base] : []),
+	];
 
-	return endpoint.transform ? endpoint.transform(data) : data;
+	let lastErr = firstErr ?? null;
+	const budget = MAX_UPSTREAM_ATTEMPTS - (firstErr ? 1 : 0);
+	for (const base of ordered.slice(0, budget)) {
+		try {
+			const out = await attempt(base);
+			markGood(base);
+			return out;
+		} catch (next) {
+			if (!isRetryable(next)) throw next;
+			markBad(base);
+			lastErr = next;
+		}
+	}
+	throw lastErr;
 }
 
 // ── x402 pay-per-call path ────────────────────────────────────────────────────

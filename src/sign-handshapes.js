@@ -15,15 +15,11 @@
 // `FLAT_O`, `BENT_B`, `OPEN_8`), which the lexical signs need and the alphabet
 // never used.
 
-import { qAxisAngle, qMul, qNorm, vNorm } from './sign-rig.js';
+import { FINGERS, FINGER_JOINTS, fingerBones, qAxisAngle, qMul, qNorm, vNorm } from './sign-rig.js';
 
-export const FINGERS = ['Index', 'Middle', 'Ring', 'Pinky'];
-export const FINGER_JOINTS = [1, 2, 3];
-
-/** Every finger bone of one hand, in the order the clip tracks are emitted. */
-export function fingerBones(side) {
-	return [...FINGERS, 'Thumb'].flatMap((f) => FINGER_JOINTS.map((j) => `${side}Hand${f}${j}`));
-}
+// The skeleton's own structure lives in sign-rig.js; re-exported here so callers
+// that think in handshapes have one import.
+export { FINGERS, FINGER_JOINTS, fingerBones };
 
 // Per-joint shares of a full curl (proximal knuckles carry most of it).
 const CURL_WEIGHTS = [85, 100, 65];

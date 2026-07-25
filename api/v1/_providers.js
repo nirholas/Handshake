@@ -870,6 +870,15 @@ export const PROVIDERS = [
 		// (api/_lib/env.js) — a configured Helius/Quicknode/Triton URL, or the
 		// public mainnet endpoint as a working fallback.
 		base: SOLANA_RPC_BASE,
+		// The platform's full priority-ordered RPC pool (operator endpoint,
+		// QuickNode, Helius, Alchemy, then public hosts), used by the aggregator
+		// only after the primary answers 429/5xx — a public RPC rate-limiting us
+		// is not a reason to fail a caller when six healthy alternates exist.
+		// Imported lazily so the happy path never loads @solana/web3.js.
+		bases: async () => {
+			const { solanaRpcEndpoints } = await import('../_lib/solana/connection.js');
+			return solanaRpcEndpoints('mainnet');
+		},
 		requiresKey: false,
 		envVar: null,
 		byokHeader: null,

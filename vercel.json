@@ -2501,6 +2501,10 @@
 			"dest": "/api/x402-facilitator/[action]?action=index"
 		},
 		{
+			"src": "/api/x402-facilitator/discovery/resources",
+			"dest": "/api/x402-facilitator/[action]?action=discovery-resources"
+		},
+		{
 			"src": "/api/x402-facilitator/([^/]+)",
 			"dest": "/api/x402-facilitator/[action]?action=$1"
 		},

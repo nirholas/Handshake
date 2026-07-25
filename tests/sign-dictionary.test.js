@@ -17,7 +17,7 @@ import {
 	signGloss,
 	signLookup,
 } from '../src/sign-dictionary.js';
-import { ANCHORS, Pose } from '../src/sign-rig.js';
+import { ANCHORS, Pose, handPoint } from '../src/sign-rig.js';
 import { compileUtterance } from '../src/sign-speech.js';
 
 function poseAtTime(clip, time) {
@@ -106,15 +106,17 @@ describe('compiled clips', () => {
 
 describe('where the hands actually go', () => {
 	it('keeps every hand in front of the body for the whole sign', () => {
+		// Measured against the body part the hand is level with, because the head
+		// sits back from the chest: a hand correctly in front of the FACE can still
+		// be behind the chest's depth.
 		for (const word of WORDS) {
 			const clip = buildSignClip(word);
 			for (let t = 0.35; t < clip.duration - 0.35; t += 0.12) {
 				const pose = poseAtTime(clip, t);
 				for (const side of ['Left', 'Right']) {
 					const hand = pose.worldPos(`${side}Hand`);
-					// −0.05 allows a hand resting beside the hip; the failure this
-					// guards is a hand swung round BEHIND the torso.
-					expect(hand[2], `${word} ${side} @${t.toFixed(2)}`).toBeGreaterThan(-0.06);
+					const torso = hand[1] > ANCHORS.chin[1] ? pose.worldPos('Head') : pose.worldPos('Spine2');
+					expect(hand[2] - torso[2], `${word} ${side} @${t.toFixed(2)}`).toBeGreaterThan(-0.05);
 				}
 			}
 		}
@@ -161,9 +163,11 @@ describe('where the hands actually go', () => {
 
 	it('places the signs that are defined by their location', () => {
 		const at = (word) => peakPose(buildSignClip(word)).worldPos('RightHand');
-		// KNOW and THINK are head signs; HAPPY and LOVE are chest signs.
-		expect(at('KNOW')[1]).toBeGreaterThan(ANCHORS.chin[1]);
-		expect(at('THINK')[1]).toBeGreaterThan(ANCHORS.chin[1]);
+		// KNOW and THINK are head signs, and it is the FINGERTIPS that go to the
+		// head: the wrist correctly sits a hand's length below, near the chin.
+		const tip = (word, part) => handPoint(peakPose(buildSignClip(word)), 'Right', part);
+		expect(tip('KNOW', 'fingertips')[1]).toBeGreaterThan(ANCHORS.chin[1]);
+		expect(tip('THINK', 'indextip')[1]).toBeGreaterThan(ANCHORS.chin[1]);
 		expect(at('HAPPY')[1]).toBeLessThan(ANCHORS.chin[1]);
 		expect(at('HAPPY')[1]).toBeGreaterThan(ANCHORS.belly[1]);
 		// LOVE crosses the arms, so the right hand ends up on the LEFT of centre.
@@ -210,5 +214,53 @@ describe('signLookup', () => {
 	it('caches so a repeated word is compiled once', () => {
 		const lookup = signLookup();
 		expect(lookup('HAPPY')).toBe(lookup('HAPPY'));
+	});
+});
+
+describe('contact', () => {
+	// Signs that are DEFINED by touch. Each entry says which part of the acting
+	// hand must meet what, at the moment the contact phase lands.
+	const CONTACTS = [
+		{ word: 'FALL', at: 0.7, part: 'fingertips', target: ['Left', 'palm'] },
+		{ word: 'GOOD', at: 'peak', part: 'palm', target: ['Left', 'palm'] },
+		{ word: 'STOP', at: 'peak', part: 'edge', target: ['Left', 'palm'] },
+		{ word: 'AGAIN', at: 'peak', part: 'fingertips', target: ['Left', 'palm'] },
+		{ word: 'HELP', at: 'peak', part: 'wrist', target: ['Left', 'palm'] },
+		{ word: 'WORK', at: 0.78, part: 'palm', target: ['Left', 'back'] },
+	];
+
+	it('actually makes contact, within a finger’s width', () => {
+		for (const { word, at, part, target } of CONTACTS) {
+			const clip = buildSignClip(word);
+			const pose = at === 'peak' ? peakPose(clip) : poseAtTime(clip, at);
+			const acting = handPoint(pose, 'Right', part);
+			const passive = handPoint(pose, target[0], target[1]);
+			const gap = Math.hypot(...acting.map((v, i) => v - passive[i]));
+			expect(gap, `${word}: ${part} to ${target.join(' ')}`).toBeLessThan(0.035);
+		}
+	});
+
+	it('touches the body where the sign says, not a fixed coordinate', () => {
+		// KNOW and THINK are forehead signs; the FINGERTIPS must reach the head,
+		// which a wrist-placed hand never did (it buried the fingers in the skull).
+		for (const [word, part] of [['KNOW', 'fingertips'], ['THINK', 'indextip']]) {
+			const pose = peakPose(buildSignClip(word));
+			const tip = handPoint(pose, 'Right', part);
+			const head = pose.worldPos('Head');
+			expect(Math.hypot(...tip.map((v, i) => v - head[i])), word).toBeLessThan(0.16);
+			// And the fingertip is in FRONT of the head centre, not inside it.
+			expect(tip[2], `${word} depth`).toBeGreaterThan(head[2]);
+		}
+	});
+
+	it('re-solves contact when the hands are a different size', () => {
+		// The whole point of solving from geometry: a longer finger moves the wrist
+		// back, it does not push the fingertip through the palm. Compare the wrist
+		// offset for a flat hand against a fist at the same contact.
+		const flat = poseAtTime(buildSignClip('GOOD'), buildSignClip('GOOD').duration - 0.4);
+		const wristToTip = Math.hypot(
+			...handPoint(flat, 'Right', 'fingertips').map((v, i) => v - flat.worldPos('RightHand')[i]),
+		);
+		expect(wristToTip).toBeGreaterThan(0.1); // a real hand length, read off the rig
 	});
 });

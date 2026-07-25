@@ -177,6 +177,14 @@ then kept in a verified, watched, auto-fundable state:
     the sponsor" attack **and** enforces "only our wallets settle here".
   - **SOL floor.** Below `X402_SPONSOR_SOL_FLOOR_LAMPORTS` (default 0.02 SOL) the
     facilitator refuses to settle, pausing the loop before it can drain your SOL.
+  - **Discovery catalog.** `GET /api/x402-facilitator/discovery/resources` serves
+    the facilitator-standard resource list (`?limit=&offset=`, the
+    `ListDiscoveryResourcesResponse` shape crawled by x402scan and every client
+    built on the x402 npm package's `useFacilitator().list()`). It projects the
+    same canonical catalog as `/.well-known/x402.json` into the legacy v1 wire
+    format, so explorers indexing this facilitator list our paid endpoints
+    automatically. Projection lives in
+    [api/_lib/x402/discovery-resources.js](../api/_lib/x402/discovery-resources.js).
 - **Ring settlement endpoint** — [api/x402/ring-settle.js](../api/x402/ring-settle.js).
   Price-configurable (`X402_PRICE_RING_SETTLE`), internal (`discoverable:false`),
   returns a real economic-tick receipt.

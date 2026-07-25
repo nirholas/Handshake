@@ -54,14 +54,16 @@ for (const { rel, min } of distLibChecks) {
 // `npm run build` skipped (or run from a stale checkout) ships an incomplete
 // dist/ with no error — that's exactly how /dashboard and /pump-dashboard
 // 404'd in production on 2026-07-08 while check:dist reported green, because
-// this check only ever looked at the agent-3d embed bundle. Not a full sweep
-// of data/pages.json's 300 entries: most of those (docs/*, tutorials/*,
-// .well-known/*, sitemap.xml) are server-rendered at request time by api/**
-// handlers, not static build output, so a naive "every registered path must
-// have a dist/ file" check false-flags them. This list is the pages actually
-// known to be pure static Vite build output — extend it when another one
-// breaks the same way, rather than trying to infer static-vs-dynamic from
-// data/pages.json alone.
+// this check only ever looked at the agent-3d embed bundle. This list stays as
+// a fast, dependency-free tripwire for "was `npm run build` skipped entirely".
+//
+// The full sweep of data/pages.json now lives in scripts/check-pages.mjs, which
+// runs straight after this one in `build:gcp`. The reason it wasn't done here
+// is that a naive "every registered path must have a dist/ file" check
+// false-flags the ~200 entries served by api/** handlers at request time
+// (docs/*, tutorials/*, .well-known/*). check-pages.mjs resolves each path
+// through the real vercel.json route table instead, so it can tell a
+// server-rendered page from an unreachable one and needs no allowlist.
 const criticalStaticPages = ['/', '/dashboard', '/pump-dashboard', '/dashboard-next', '/create', '/discover'];
 
 function resolvesToFile(pagePath) {

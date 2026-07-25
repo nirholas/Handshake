@@ -7,7 +7,9 @@
 		<meta name="description" content="Connect your wallet and claim your on-chain three.ws."  data-i18n-attr="content:cz_index.meta_description"/>
 		<meta name="theme-color" content="#090909" />
 		<link rel="icon" href="/favicon.ico" />
-		<link rel="stylesheet" href="./cz.css" />
+		<!-- Absolute: served at /cz as well as /cz/, and a relative href resolves
+		     against the site root on the slash-less URL (404, unstyled page). -->
+		<link rel="stylesheet" href="/cz/cz.css" />
 		<script type="module">
 			const CDN = 'https://three.ws/agent-3d/latest/agent-3d.js';
 			const h = location.hostname;

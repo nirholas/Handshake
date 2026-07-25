@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-07-25",
+			"title": "Our x402 facilitator now publishes a standard discovery catalog",
+			"summary": "The three.ws self-hosted x402 facilitator serves a new public endpoint, GET /api/x402-facilitator/discovery/resources, listing every paid endpoint on the platform in the standard facilitator catalog format that x402 explorers and aggregators (like x402scan) crawl. It is the same catalog as /.well-known/x402.json, so listings on third-party explorers always match what the platform actually charges. This is groundwork for three.ws payments showing up on ecosystem explorers without routing settlement through any third party.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/x402-ring-economy"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Solana reads on the crypto API stop failing when one RPC host throttles us",
+			"summary": "The Solana endpoints on the public crypto API (balance, token holdings, token supply, largest holders, transaction, account, priority fees) were pointed at a single RPC host. Whenever that host rate-limited us, the caller got the rate-limit error even though the platform keeps a priority-ordered pool of other RPC endpoints for exactly this situation. Those calls now move to the next healthy host automatically, up to three per request, and a host that has just failed is skipped for the next 30 seconds so one bad host does not slow down every request behind it. A genuinely bad request, like a malformed address, still returns its error immediately instead of being retried. This was the second-largest error class on the API.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/crypto-api"
+		},
+		{
+			"date": "2026-07-25",
 			"title": "Our crypto API no longer reports itself as broken to the directories that rate it",
 			"summary": "Agent directories and uptime monitors discover an x402 API by calling every endpoint it advertises with no arguments, to check the endpoint is alive and knows its own price. Our paid-only endpoints answered that correctly with a payment challenge, but the free-tier ones ran argument validation first and answered with an error, so about two dozen perfectly healthy endpoints were being graded as failing by a public trust monitor, roughly 14,000 times a month. A parameterless call now returns the standard 402 challenge on every endpoint, with the argument you would need named in an X-Param-Error header. Nothing changes for real callers: send any argument, even an empty one, and you get the specific validation error as before. The same probes were also the single biggest source of noise in our own error metrics, so a genuine outage in the crypto API is now visible instead of buried.",
 			"tags": [
@@ -15758,6 +15778,16 @@
 				"feature",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Crypto API: automatic upstream failover ends most rate-limit errors",
+			"summary": "The unified crypto API (/api/v1/x) no longer fails your call just because one upstream host had a bad moment. When a provider is backed by a pool of interchangeable hosts (the Solana read endpoints front the platform's full RPC pool), a rate-limited, unreachable, or erroring host now fails over to a healthy alternate within the same request. The API also remembers which host just failed for a short window, so during an outage only the first request pays the discovery cost and everything after routes straight to a working host. Rate-limit passthrough was the second-largest error class on the aggregator; this removes it for pooled providers.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/crypto-api"
 		}
 	]
 }
