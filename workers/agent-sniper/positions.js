@@ -11,7 +11,7 @@ import { getTradeCtx } from './trade-client.js';
 import { getOpenPositions } from './strategy-store.js';
 import { executeSell } from './executor.js';
 import { quoteAmmSell } from './amm-exit.js';
-import { decideLadderedExit } from './exit-logic.js';
+import { decideLadderedExit, decideLiquidityDecay, moonbagAlways, moonbagFraction, updateStaleClock } from './exit-logic.js';
 import { screenPush } from './screen-push.js';
 
 async function tickPosition(cfg, pos) {
@@ -32,11 +32,38 @@ async function tickPosition(cfg, pos) {
 
 	const prevPeak = Number(pos.peak_value_lamports || pos.entry_quote_lamports || 0);
 	const peak = Math.max(prevPeak, value);
+
+	// Liquidity-decay clock: a value EXACTLY unchanged between sweeps means no
+	// one traded the coin at all. Underwater, that is dead liquidity, and the
+	// audit showed those positions squatting on their concurrency slot until the
+	// 30-minute timeout. The clock frees the slot in minutes instead.
+	const prevValue = pos.last_value_lamports != null ? Number(pos.last_value_lamports) : null;
+	const prevStale = pos.stale_since ? new Date(pos.stale_since).getTime() : null;
+	const staleSince = updateStaleClock(prevValue, Math.round(value), Number(pos.entry_quote_lamports || 0), prevStale, Date.now());
+
 	await sql`
 		UPDATE agent_sniper_positions
-		SET last_value_lamports = ${Math.round(value)}, peak_value_lamports = ${Math.round(peak)}, last_quoted_at = now()
+		SET last_value_lamports = ${Math.round(value)}, peak_value_lamports = ${Math.round(peak)},
+		    stale_since = ${staleSince != null ? new Date(staleSince).toISOString() : null},
+		    last_quoted_at = now()
 		WHERE id = ${pos.id}
 	`;
+
+	if (decideLiquidityDecay(staleSince, cfg.liquidityDecayS, Date.now())) {
+		// Dead market: exit and free the slot. Consistency with the moon-bag rule:
+		// a position still carrying its cost basis exits fully (nothing free about
+		// it), but one whose initials were already recovered is house money and
+		// keeps its floor riding even here: a free bag of a dead coin costs
+		// nothing, and "dead for five minutes" is not "dead forever".
+		const houseMoney = pos.initials_recovered === true && moonbagAlways(pos);
+		log.info('liquidity decay exit', { agent: pos.agent_id, mint: pos.mint, staleForS: Math.round((Date.now() - staleSince) / 1000), houseMoney });
+		await executeSell({
+			cfg, position: pos, reason: 'liquidity_decay',
+			fraction: houseMoney ? 1 - moonbagFraction(pos.moonbag_min_pct) : 1,
+			keepsMoonbag: houseMoney,
+		});
+		return;
+	}
 
 	const entry = Number(pos.entry_quote_lamports || 0);
 	const pnlPct = entry > 0 ? ((value - entry) / entry) * 100 : 0;

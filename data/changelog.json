@@ -3,6 +3,36 @@
 	"entries": [
 		{
 			"date": "2026-07-25",
+			"title": "Dress any avatar: the wardrobe now adds clothes, not just recolours them",
+			"summary": "Until now the wardrobe could only recolour or hide the clothes an avatar was generated with. It can now put NEW clothes on: the avatar editor's Wardrobe tab gained a Closet with racks of catalog pieces (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories). Click a piece and it binds to your avatar's skeleton and moves with every animation, whatever generator the avatar came from: forge characters, selfie reconstructions and uploaded models all work, because garments are fitted to the skeleton at wear-time instead of being authored for one specific body. The body is masked under whatever you wear so skin never pokes through the cloth, a piece that cannot fit a particular skeleton politely refuses instead of deforming into spaghetti, and every download is integrity-checked against the catalog before it touches your avatar. Saved outfits persist: the downloadable and embedded versions of your avatar come out dressed too.",
+			"tags": [
+				"feature"
+			],
+			"link": "/avatar-edit"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "The signing avatar's arm now sits where a signer's arm sits, and it signs real words",
+			"summary": "The signing avatar had a broken arm. Its handshapes were right, but the arm carrying them swung out to the side and behind the body, and the clip also dragged the avatar about a metre down through the floor, so you were watching correct fingerspelling performed somewhere over the avatar's shoulder. The cause was that the arm was posed with rotations written against a skeleton convention our reference avatar does not use. Arms are now solved instead of guessed: the code measures the actual skeleton (which way each bone points, how long it is, which way each palm faces) and then runs real inverse kinematics to put the wrist at a specific point in front of the body, with the elbow hanging where an elbow hangs. Fingerspelling now happens where signers do it, in front of the dominant shoulder at jaw height with the palm facing you, and the letters themselves are unchanged, to the digit. Because a hand can now be sent to a place on the body, the avatar also has a real sign vocabulary for the first time: thirty-two everyday words including hello, thank you, please, sorry, yes, no, happy, help, love, want, welcome, name, y'all and finish, two-handed where the sign is two-handed. Type a sentence and the words with signs are signed while the rest is fingerspelled, in one continuous motion, and the page tells you which was which. There is a new section on the sign-language page listing every word it can sign, each one playable. Both arms are now posed throughout, the idle hand rests at the side instead of hanging oddly, the avatar breathes during long holds, and the camera crops closer so you can actually see the hands.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/sign-language"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "The trading postmortem's findings are now enforced in code",
+			"summary": "Our published audit of the fleet's first 90 real trades ended with a list of fixes, and four of them are now live code instead of intentions. First, the overconfidence ceiling: the audit showed AI judge verdicts at 0.7 confidence performed best while verdicts above 0.9 went winless, so each AI-judged strategy now carries a confidence ceiling next to its floor, and a screaming-confident verdict is recorded but never funded. Second, named-model integrity: during the audit most calls to the named models were actually answered by cheaper fallback models, muddying the model-vs-model comparison, so the Grok and Claude strategies are now strict and will pause rather than trade on a fallback's judgment. Third, the liquidity-decay exit: a coin nobody is trading at all now gets sold after five quiet minutes instead of squatting on a trading slot for the full half-hour timeout, and this only applies underwater, so quiet winners still ride. Fourth, and most important operationally: the audit found two of the fleet's learning loops had been silently dead for two days behind green health checks, so a new hourly watchdog now asks every learning loop when it last actually wrote a row, and pages us when any answer is too old. A loop that has never written a row counts as the worst finding, not a pass.",
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
+			],
+			"link": "/docs/trading-experiment"
+		},
+		{
+			"date": "2026-07-25",
 			"title": "The Spatial MCP reference renderer actually renders again",
 			"summary": "Spatial MCP is our open, public-domain shape for handing back a live 3D scene as an AI tool result instead of a link, and three.ws/spatial-mcp is the page that proves it works. It has been showing two empty frames. The demo code asked for its renderer with a path relative to the page, and because the page is served both with and without a trailing slash, that path pointed at the site root on one of them and came back as a 404, so the renderer never loaded and neither scene appeared. The demo now loads as its own module file, which resolves correctly on either address and in local development, where the same page had been failing to build at all. Both frames are live again: you can orbit and zoom a real model on the left and, on the right, the same viewer displaying a model that arrived from a completely different server in a completely different format, converted by a six-line adapter shown as JSON underneath. That side-by-side is the whole argument for the standard, so it is worth having it work. The left frame is now a genuine model from our free text-to-3D lane rather than a borrowed sample, and the sample the page used to point at had itself gone dead upstream, which is why it also stayed blank once the renderer was fixed.",
 			"tags": [

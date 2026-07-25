@@ -100,7 +100,9 @@ def selfie_landmarks(image_path: Path) -> np.ndarray:
         landmarks = face_pipeline._get_landmarks_small_face(img)
     if landmarks is None:
         raise EvalError(f"no face detected in {image_path.name}")
-    return face_geometry.landmarks_to_array(landmarks)
+    # Pixel dimensions matter: without them the landmark frame carries the photo's
+    # aspect ratio as if it were face shape. See landmarks_to_array.
+    return face_geometry.landmarks_to_array(landmarks, *img.size)
 
 
 def head_landmark_points(glb_path: Path, face_map: face_geometry.FaceMap) -> np.ndarray:

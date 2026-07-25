@@ -25,7 +25,6 @@ import {
 	solveArm,
 	vAdd,
 	vNorm,
-	vScale,
 } from './sign-rig.js';
 
 /**

@@ -106,6 +106,44 @@ the ladder on by itself and records why. See
 all, so the ladder is only ever switched on for a strategy whose record shows it
 actually catches runners.
 
+## The post-audit fixes (from the published fleet postmortem)
+
+The [published audit](https://three.ws/blog/autonomous-trading-experiment) of the
+fleet's first 90 real trades produced three findings that are now code:
+
+**Overconfidence ceiling** (`llm_max_confidence`). The audit's calibration table
+showed judge verdicts in the 0.7 confidence band performed best while 0.9+
+verdicts went winless. Each LLM arm can now carry a confidence CEILING next to
+its floor: a buy verdict at or above it is recorded for calibration but never
+funded. The experiment arms run floor 0.65, ceiling 0.9. Gate:
+`llmVerdictGate` in [workers/agent-sniper/llm-judge.js](../workers/agent-sniper/llm-judge.js).
+
+**Named-model strictness** (`llm_strict_model`). During the audit window the LLM
+failover chain answered most named-model calls, so "Grok vs Claude" was really
+"fallback vs fallback". A strict arm now refuses to trade on any verdict whose
+answering model was a fallback (`fallback:*` tag): the verdict still lands in the
+judgment ledger, but the arm pauses rather than pollutes its own experiment. The
+grok and claude arms are strict; the auto-router arm is not (a fallback IS its
+router pick).
+
+**Liquidity-decay exit** (`liquidity_decay`). A bonding-curve quote only moves
+when someone trades, so a position whose re-quoted value is exactly frozen sweep
+after sweep is a coin nobody is trading. The audit found those squatting on
+concurrency slots until the 30-minute timeout. Now an underwater position whose
+value has not moved at all for `SNIPER_LIQUIDITY_DECAY_S` (default 300s) exits
+early with reason `liquidity_decay` and frees the slot. The clock never runs in
+profit (quiet winners belong to the trailing stop and the moon-bag rule), resets
+on any trade, and a house-money position keeps its moon-bag floor even here.
+
+**Row-count watchdog** (`/api/cron/sniper-loops-health`). The audit's worst
+operational finding: two learning loops ran dead for two days behind green
+health checks. An hourly cron now asks each autonomous loop (weight training,
+outcome labeling, LLM judging, optimizer, evolution, Oracle scoring) the one
+question that cannot lie, "when did you last write a row?", and pages the ops
+channel when any answer exceeds that loop's cadence-derived limit. A loop with
+no rows at all is the worst finding, not an exemption. Policy is pure and
+tested: [api/_lib/sniper-loops-health.js](../api/_lib/sniper-loops-health.js).
+
 ### No-Mayhem enforcement (`workers/agent-sniper/mayhem-gate.js`)
 
 `isMayhemMode` lives on the pump.fun bonding curve, not the new-mint firehose, so

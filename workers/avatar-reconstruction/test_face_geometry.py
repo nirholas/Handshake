@@ -169,6 +169,54 @@ def test_registration_preserves_rig_through_glb():
     print("ok  v2 registration survives GLB write with rig + 67 blendshapes intact")
 
 
+class _FakeLandmark:
+    """Stands in for a MediaPipe NormalizedLandmark (x, y, z in [0,1]-ish)."""
+
+    __slots__ = ("x", "y", "z")
+
+    def __init__(self, x, y, z):
+        self.x, self.y, self.z = float(x), float(y), float(z)
+
+
+def test_landmarks_are_independent_of_photo_aspect_ratio():
+    """
+    The same face shot at 3:4, 1:1 and 9:16 must produce the same morph.
+
+    MediaPipe normalises x by image width and y by image height, so its raw
+    output stretches with the photo's aspect ratio. Umeyama fits one uniform
+    scale and cannot undo an anisotropic one, so any leftover stretch survives
+    alignment and is read as facial identity — the camera's aspect ratio ends up
+    baked into the avatar's skull. Passing pixel dimensions restores an isotropic
+    frame. Without that, this test fails.
+    """
+    _, base, _, fmap = _load()
+    canon = fmap.canonical_norm
+
+    # One face in isotropic pixel space, then expressed in each photo's
+    # normalised coordinates — exactly what MediaPipe would return for a face
+    # occupying the same physical region of differently-shaped images.
+    face_px = (canon - canon.min(0)) / (canon.max(0) - canon.min(0)).max()
+    face_px[:, 1] *= -1  # canonical is y-up; image space is y-down
+
+    results = []
+    for width, height in ((864, 1152), (1024, 1024), (720, 1280)):
+        landmarks = [
+            _FakeLandmark(0.2 + p[0] * 0.6 * (720 / width),
+                          0.2 + p[1] * 0.6 * (720 / height),
+                          p[2] * 0.6 * (720 / width))
+            for p in face_px
+        ]
+        detected = fg.landmarks_to_array(landmarks, width, height)
+        results.append(fg.morph_head_to_landmarks(base, fmap, detected, strength=0.75))
+
+    reference = results[0]
+    scale = np.linalg.norm(reference.max(0) - reference.min(0))
+    for i, other in enumerate(results[1:], 1):
+        drift = np.linalg.norm(other - reference, axis=1).max() / scale
+        assert drift < 1e-6, f"aspect ratio {i} changed the head shape by {drift:.2%}"
+    print("ok  morph is invariant to source photo aspect ratio (3:4 / 1:1 / 9:16)")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:

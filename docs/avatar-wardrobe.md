@@ -1,0 +1,105 @@
+# Additive Wardrobe — dress any avatar from the garment catalog
+
+The wardrobe has two halves. The **subtractive** half has existed for a while:
+recolour or hide the garment layers an avatar's GLB already contains
+(`src/avatar-wardrobe.js`). This document covers the **additive** half: putting
+a garment ON an avatar that was never generated with it — a catalog shirt onto
+a Forge-generated character, a hairstyle onto a selfie reconstruction.
+
+Open any avatar in the editor (`/avatar-edit?id=…`), Wardrobe tab. The layer
+cards for the model's built-in garments render first; the **Closet** renders
+beneath them with one rack per slot (tops, bottoms, footwear, outerwear, hair,
+headwear, glasses, accessories). Click a piece to wear it, click again or "Take
+off" to remove it. Saving the avatar persists what it wears, and the baked GLB
+served to embeds, AR, and external engines includes the garments.
+
+## Why this is not the usual wardrobe
+
+Commercial avatar platforms author every garment against one skeleton they
+control, so "attach" is trivial — and their wardrobe only fits avatars from
+their own generator. Ours binds at runtime instead: a garment authored on its
+own skeleton, with its own bone naming and its own rest pose, is rebound onto
+whatever humanoid is loaded. That works because the platform already
+normalises arbitrary rigs to a canonical bone set
+([`src/glb-canonicalize.js`](../src/glb-canonicalize.js)) — the same machinery
+that lets any humanoid drive the animation clip library.
+
+Concretely, `attachGarment()`:
+
+1. rewrites the garment's skin indices from garment-bone-order into
+   avatar-bone-order by canonical name, with helper/twist joints the avatar
+   lacks falling back to their nearest mapped ancestor;
+2. re-indexes the garment's inverse bind matrices, keeping the **garment's**
+   values where the two skeletons correspond — which is what makes a T-pose
+   garment land correctly on an A-pose avatar;
+3. refuses any garment that binds under 60% of its skin **weight**
+   (`MIN_BIND_COVERAGE`) rather than attaching a mesh that would deform into
+   garbage;
+4. masks the body in the regions the garment declares it covers
+   (`occludes`), so skin never pokes through cloth.
+
+A garment with no skin at all (hat, glasses) is parented to a single joint
+(`rig.attachBone`) instead of deformed.
+
+## The pieces
+
+| Piece | Where | Job |
+|---|---|---|
+| Attachment engine | [`src/avatar-garment.js`](../src/avatar-garment.js) | Skin rebind, occlusion, slot occupancy — the runtime core |
+| Shared taxonomy | [`src/garment-taxonomy.js`](../src/garment-taxonomy.js) | Slots, body regions, region→bone map, coverage gate |
+| Catalog loader | [`src/garment-catalog.js`](../src/garment-catalog.js) | Fetch + validate manifests; drops anything malformed or unlicensed |
+| Closet UI + controller | [`src/garment-closet.js`](../src/garment-closet.js) | Racks/tiles in the editor, attach/detach queue, appearance sync |
+| Editor wiring | [`src/avatar-edit.js`](../src/avatar-edit.js) | Hydrate on load, persist `appearance.garments`, reset/save |
+| Server schema | [`api/_lib/validate.js`](../api/_lib/validate.js) | `appearance.garments` — one garment per slot, catalog-shaped refs |
+| Bake pass | [`api/_lib/bake-garments.js`](../api/_lib/bake-garments.js) | Same rebind on the @gltf-transform document, so exports are dressed |
+| Manifest contract | [`specs/GARMENT_MANIFEST.md`](../specs/GARMENT_MANIFEST.md) | What a wearable must declare to enter the catalog |
+
+## The catalog
+
+One public JSON array of Garment Manifest v1 documents:
+
+```
+https://storage.googleapis.com/three-ws-garments/garments/catalog.json
+```
+
+Assets live under `garments/<slot>/<id>/v<version>/` in the same bucket, one
+immutable directory per version. Every manifest pins its GLB's `sha256`; both
+the client and the baker verify the bytes before attaching, so a swapped or
+truncated download is refused, never worn.
+
+Validation is strict and central (`validateManifest`): unknown spec, unknown
+slot, unknown body region, malformed hash, or a licence outside the approved
+commercial set (CC0, CC-BY, MIT, Apache-2.0, BSD) drops the entry with a
+console warning. A broken manifest becomes a missing tile, not a broken avatar.
+
+## Persistence shape
+
+```json
+"appearance": {
+  "garments": [
+    { "slot": "top", "id": "oxford-shirt-white" },
+    { "slot": "footwear", "id": "low-top-sneakers" }
+  ]
+}
+```
+
+One garment per slot, max 8, enforced by the zod schema. Existence against the
+live catalog is deliberately NOT checked at save time — a garment retired from
+the catalog later degrades to "not worn" on the next load/bake instead of
+bricking the avatar.
+
+## Failure posture
+
+- Garment can't reach the skeleton → refused with the measured coverage in the
+  reason string; the slot keeps its previous occupant.
+- Catalog unreachable → closet shows a retry state; the rest of the editor is
+  unaffected.
+- Bake-time garment failure → logged and skipped; the bake always lands.
+- Non-humanoid model → the closet is withheld (`supportsWardrobe` gate), same
+  policy as the animation library's humanoid gate.
+
+## Related
+
+- [`docs/avatar-reconstruction.md`](avatar-reconstruction.md) — selfie → avatar
+- [`docs/avatar-fidelity-program.md`](avatar-fidelity-program.md) — identity fidelity program
+- [`specs/GARMENT_MANIFEST.md`](../specs/GARMENT_MANIFEST.md) — the wearable contract

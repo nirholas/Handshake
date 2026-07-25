@@ -91,8 +91,6 @@ export function normalizeWord(word) {
 		.trim();
 }
 
-const SIDE = 'Right';
-
 /** The letter's place in signing space, plus an optional metre offset. */
 function letterPlace(letter, offset) {
 	const spec = { ...SPELLING_PLACE, ...(LETTER_ORIENT[letter]?.at ?? {}) };

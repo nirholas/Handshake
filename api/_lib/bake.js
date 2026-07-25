@@ -176,6 +176,26 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 		}
 	}
 
+	// 2b) Additive catalog garments: skinned wearables rebound onto the avatar's
+	//     skeleton (specs/GARMENT_MANIFEST.md). Skips — not fails — any garment
+	//     that can't bind, so the bake always lands.
+	if (Array.isArray(appearance?.garments) && appearance.garments.length > 0) {
+		try {
+			const { applyGarments } = await import('./bake-garments.js');
+			const { attached, skipped } = await applyGarments(io, doc, appearance.garments, mergeDocuments);
+			if (skipped.length) {
+				console.warn(
+					`[bake] garments skipped: ${skipped.map((s) => `${s.id} (${s.reason})`).join(', ')}`,
+				);
+			}
+			if (attached.length) {
+				console.log(`[bake] garments baked: ${attached.join(', ')}`);
+			}
+		} catch (err) {
+			console.warn(`[bake] garment pass failed, baking without garments: ${err.message}`);
+		}
+	}
+
 	// 3) Tag + clean.
 	const asset = doc.getRoot().getAsset();
 	asset.generator =

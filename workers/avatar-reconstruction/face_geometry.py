@@ -15,10 +15,12 @@ Approach — sparse-to-dense identity transfer, fully commercial-clean:
      stable identity subset IS the person's face-shape deviation from neutral.
   3. Carry that per-landmark displacement onto the template head's corresponding
      vertices (precomputed nearest-vertex map), scaled into head units.
-  4. Diffuse the sparse displacements across all head vertices with a normalised
-     Gaussian RBF (partition of unity — local, bounded, never extrapolates), and
-     fade to zero outside the face region so the neck, scalp and back of the head
-     stay put.
+  4. Interpolate the sparse displacements across all head vertices with a
+     thin-plate spline, which passes exactly through the control points so
+     localised identity (a wider jaw, a longer nose) survives instead of being
+     averaged away — the failure mode of normalised-Gaussian/Shepard weighting.
+     A Gaussian off-face mask fades the field to zero away from the face, since
+     TPS extrapolates freely, so the neck, scalp and back of the head stay put.
   5. face_pipeline writes the morphed positions back with glb_ops.set_head_geometry,
      which preserves skinning and all 52 ARKit blendshapes + visemes.
 
@@ -304,7 +306,24 @@ def _median_nn_spacing(pts: np.ndarray) -> float:
 
 # ── MediaPipe adapter ────────────────────────────────────────────────────────
 
-def landmarks_to_array(landmarks) -> np.ndarray:
-    """MediaPipe NormalizedLandmark list → (N,3) array. y is flipped to +up so the
-    frame matches the canonical model (image space is y-down)."""
-    return np.array([[lm.x, -lm.y, lm.z] for lm in landmarks], dtype=np.float64)
+def landmarks_to_array(landmarks, width: float | None = None, height: float | None = None) -> np.ndarray:
+    """
+    MediaPipe NormalizedLandmark list → (N,3) array. y is flipped to +up so the
+    frame matches the canonical model (image space is y-down).
+
+    **Pass the source image's pixel dimensions.** MediaPipe normalises x by image
+    width and y by image *height*, so on any non-square photo the returned frame
+    is anisotropic: the same face in a 3:4 portrait and a 1:1 crop yields two
+    differently-proportioned point clouds. Umeyama fits a single uniform scale
+    and cannot undo that, so the aspect distortion survives alignment and is read
+    as facial identity — baking the camera's aspect ratio into the avatar's skull.
+    Scaling by (W, H, W) — z shares x's width normalisation — restores an
+    isotropic pixel frame where uniform-scale alignment is valid.
+
+    Dimensions are optional only so existing callers keep working; every caller
+    that has the image should pass them.
+    """
+    pts = np.array([[lm.x, -lm.y, lm.z] for lm in landmarks], dtype=np.float64)
+    if width and height:
+        pts *= np.array([float(width), float(height), float(width)])
+    return pts

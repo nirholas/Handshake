@@ -113,6 +113,12 @@ export function loadConfig() {
 		globalKill: bool('SNIPER_GLOBAL_KILL', false),
 		// Position re-quote / exit-evaluation cadence.
 		pollMs: Math.max(1_000, num('SNIPER_POLL_MS', 5_000)),
+		// Liquidity-decay exit: an underwater position whose quoted value has not
+		// moved AT ALL for this long (no one is trading the coin) exits early with
+		// reason 'liquidity_decay' instead of squatting on a concurrency slot until
+		// the 30-minute timeout. 0 disables. Default 5 minutes: on a minutes-old
+		// pump.fun launch, five minutes of literally zero trades is a dead market.
+		liquidityDecayS: Math.max(0, num('SNIPER_LIQUIDITY_DECAY_S', 300)),
 		// How often the strategy cache is refreshed from the DB.
 		strategyRefreshMs: Math.max(5_000, num('SNIPER_STRATEGY_REFRESH_MS', 15_000)),
 		// Platform-wide buy throttle — a backstop independent of per-agent caps.

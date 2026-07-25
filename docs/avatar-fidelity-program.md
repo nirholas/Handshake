@@ -1,8 +1,9 @@
 # Avatar fidelity program — owning selfie → avatar end to end
 
-**Goal:** a selfie-to-avatar engine that beats Avaturn on identity fidelity,
-runs entirely on infrastructure we own, and costs nothing per avatar. Not "good
-enough to avoid a bill" — better than the thing we would have paid for.
+**Goal:** a selfie-to-avatar engine that beats the leading commercial
+selfie-avatar products on identity fidelity, runs entirely on infrastructure we
+own, and costs nothing per avatar. Not "good enough to avoid a bill" — better
+than the thing we would have paid for.
 
 This is the program plan. The subsystem it improves is documented in
 [avatar-reconstruction.md](avatar-reconstruction.md); the worker lives in
@@ -10,16 +11,16 @@ This is the program plan. The subsystem it improves is documented in
 
 ## Why we are not buying this
 
-Avaturn sells exactly this capability, and their API is metered per avatar. Two
+Commercial vendors sell exactly this capability, metered per avatar. Two
 reasons we build instead:
 
 1. **It is the product.** three.ws is an avatar platform. Renting the step that
    turns a person into an avatar means the core of the product is someone
    else's, priced by them, rate-limited by them, and deprecable by them.
 2. **The architecture is already ours.** The worker fits a person onto a
-   pre-rigged fixed-topology template — the same approach Avaturn and Ready
-   Player Me use. The output is born rigged with 52 ARKit blendshapes and 15
-   visemes. What is missing is fidelity, and fidelity is a compute-and-research
+   pre-rigged fixed-topology template — the same approach the major commercial
+   avatar platforms use. The output is born rigged with 52 ARKit blendshapes
+   and 15 visemes. What is missing is fidelity, and fidelity is a compute-and-research
    problem, which is precisely what ~$100k of Google Cloud credits buys.
 
 Every stage is commercial-clean (Apache-2.0 / MIT / BSD / CC0). Holding that
@@ -35,8 +36,9 @@ Every track below is judged by one number, **Identity Shape Error (ISE)** —
 texture-blind, pose- and scale-invariant, dimensionless. Full definition and
 usage: [`workers/avatar-reconstruction/eval/README.md`](../workers/avatar-reconstruction/eval/README.md).
 
-Without it, "better than Avaturn" is an opinion and a research track can burn
-GPU-months moving a number nobody measured. With it, every change is a diff:
+Without it, "better than the commercial benchmark" is an opinion and a research
+track can burn GPU-months moving a number nobody measured. With it, every
+change is a diff:
 
 ```bash
 python -m eval.run_eval --compare eval/reports/v1.json eval/reports/v2.json

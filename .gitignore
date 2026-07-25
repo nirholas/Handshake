@@ -408,3 +408,6 @@ SECURITY-AUDIT.md
 /workers/avatar-reconstruction/eval/reports/
 # local Python venv for the eval harness — thousands of files, always regenerable
 /workers/avatar-reconstruction/.venv-eval/
+
+# Scratch harnesses for local 3D/pose debugging — never committed.
+scripts/.scratch/

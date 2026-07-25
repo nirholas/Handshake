@@ -551,7 +551,9 @@ def process(
             fmap = _get_face_map()
             if fmap is not None:
                 base_pos, _, faces = glb_ops.get_head_mesh_data(glb)
-                detected = face_geometry.landmarks_to_array(landmarks)
+                detected = face_geometry.landmarks_to_array(
+                    landmarks, *best_img.size
+                )
                 if detected.shape[0] >= fmap.canonical_norm.shape[0]:
                     morphed = face_geometry.morph_head_to_landmarks(base_pos, fmap, detected)
                     glb_ops.set_head_geometry(glb, morphed, faces=faces)

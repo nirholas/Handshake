@@ -61,6 +61,47 @@ export function decideExit(pos, value, peak, now = Date.now(), sentiment = null)
 	return null;
 }
 
+/**
+ * Liquidity-decay clock. A bonding-curve quote only moves when someone trades,
+ * so a position whose re-quoted value is EXACTLY unchanged sweep after sweep is
+ * a coin nobody is trading: dead liquidity. The July 2026 fleet audit found
+ * these squatting on concurrency slots for the full 30-minute timeout, the only
+ * exit that ever fired on them. This clock times them out in minutes instead.
+ *
+ * Semantics:
+ *   - The clock runs only while the position is UNDERWATER. A quiet coin above
+ *     entry is a winner consolidating, and the trailing stop / take-profit /
+ *     moon-bag machinery owns that case.
+ *   - Any value movement (any trade at all) resets the clock: one buyer is not
+ *     dead liquidity.
+ *   - Returns the new stale_since (epoch ms or null). Pure, no I/O.
+ *
+ * @param {number|null} prevValue  last sweep's quoted value (lamports), null on first sweep
+ * @param {number} value           this sweep's quoted value (lamports)
+ * @param {number} entry           cost basis (lamports)
+ * @param {number|null} staleSince current clock start (epoch ms) or null
+ * @param {number} now             epoch ms
+ * @returns {number|null}
+ */
+export function updateStaleClock(prevValue, value, entry, staleSince, now) {
+	const underwater = value < entry;
+	const unchanged = prevValue != null && Number(prevValue) === Number(value);
+	if (!underwater || !unchanged) return null;
+	return staleSince ?? now;
+}
+
+/**
+ * Should the position exit for dead liquidity? True once the stale clock has
+ * run for `decaySeconds`. The position is underwater by definition (the clock
+ * never runs in profit), so this is a full exit while the stake is still at
+ * risk; the caller keeps the moon-bag floor when the initials were already
+ * recovered (house money stays free even in a dead market).
+ */
+export function decideLiquidityDecay(staleSince, decaySeconds, now) {
+	if (staleSince == null || !(decaySeconds > 0)) return false;
+	return (now - staleSince) / 1000 >= decaySeconds;
+}
+
 /** A confident bearish sentiment read. minConfidence defaults to 0.7. */
 function isBearishFlip(sentiment) {
 	if (!sentiment || sentiment.signal !== 'bearish') return false;

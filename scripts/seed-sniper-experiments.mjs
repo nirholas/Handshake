@@ -104,6 +104,10 @@ const ARMS = [
 		note: 'no shields; Grok judges every launch',
 		set: {
 			decision_mode: 'llm', llm_model: 'x-ai/grok-4.3', llm_min_confidence: 0.65,
+			// Audit findings (blog/autonomous-trading-experiment): 0.9+ confidence
+			// verdicts went winless -> ceiling; fallback models answered most named
+			// calls -> strict, this arm trades only on Grok's own judgment.
+			llm_max_confidence: 0.9, llm_strict_model: true,
 			require_socials: false, min_market_cap_usd: null, max_market_cap_usd: null,
 			min_oracle_score: null, per_trade_lamports: '10000000', daily_budget_lamports: '50000000',
 			max_concurrent_positions: 1,
@@ -116,6 +120,9 @@ const ARMS = [
 		note: 'no shields; Claude Haiku judges every launch',
 		set: {
 			decision_mode: 'llm', llm_model: 'anthropic/claude-haiku-4.5', llm_min_confidence: 0.65,
+			// Same audit rationale as llm-grok: confidence ceiling + named-model
+			// strictness. This arm was the one most answered by fallbacks.
+			llm_max_confidence: 0.9, llm_strict_model: true,
 			require_socials: false, min_market_cap_usd: null, max_market_cap_usd: null,
 			min_oracle_score: null, per_trade_lamports: '10000000', daily_budget_lamports: '50000000',
 			max_concurrent_positions: 1,
@@ -128,6 +135,9 @@ const ARMS = [
 		note: 'no shields; the OpenRouter auto-router picks the judge',
 		set: {
 			decision_mode: 'llm', llm_model: 'openrouter/auto', llm_min_confidence: 0.65,
+			// Ceiling applies (overconfidence is model-agnostic); strictness does
+			// NOT: this arm is any-model by design, a fallback IS its router pick.
+			llm_max_confidence: 0.9, llm_strict_model: false,
 			require_socials: false, min_market_cap_usd: null, max_market_cap_usd: null,
 			min_oracle_score: null, per_trade_lamports: '10000000', daily_budget_lamports: '50000000',
 			max_concurrent_positions: 1,

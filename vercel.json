@@ -5255,6 +5255,10 @@
 			"schedule": "30 */12 * * *"
 		},
 		{
+			"path": "/api/cron/sniper-loops-health",
+			"schedule": "20 * * * *"
+		},
+		{
 			"path": "/api/cron/oracle-realized-labels",
 			"schedule": "*/30 * * * *"
 		},

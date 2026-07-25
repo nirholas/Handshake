@@ -57,6 +57,15 @@ export const avatarAppearance = z
 				message: 'appearance.morphs max 32 keys',
 			});
 		}
+		if (val?.garments) {
+			const slots = val.garments.map((g) => g.slot);
+			if (new Set(slots).size !== slots.length) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'appearance.garments: one garment per slot',
+				});
+			}
+		}
 	});
 
 // Avatars are GLB/GLTF models. Lock the content-type allowlist here so both

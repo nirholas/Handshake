@@ -32,18 +32,16 @@
 
 import { Bone, Matrix4, Skeleton, SkinnedMesh, Uint16BufferAttribute } from 'three';
 import { canonicalizeBoneName } from './glb-canonicalize.js';
+import {
+	GARMENT_SLOTS,
+	BODY_REGIONS,
+	REGION_BONES,
+	MIN_BIND_COVERAGE,
+} from './garment-taxonomy.js';
 
-/** Below this share of *weighted* garment bones resolving to avatar bones, the
- *  garment cannot deform sanely and we refuse rather than ship a mangled mesh.
- *  Mirrors the MIN_COVERAGE gate in src/animation-retarget.js. */
-export const MIN_BIND_COVERAGE = 0.6;
-
-/** Slots a garment may occupy. One garment per slot; attaching to an occupied
- *  slot detaches the incumbent. Kept deliberately in step with WARDROBE_SLOTS
- *  in src/avatar-wardrobe.js so the two panels describe the same taxonomy. */
-export const GARMENT_SLOTS = Object.freeze([
-	'top', 'bottom', 'footwear', 'outerwear', 'hair', 'headwear', 'glasses', 'accessory',
-]);
+// Shared vocabulary lives in src/garment-taxonomy.js (pure, also consumed by
+// the server-side baker). Re-exported so existing consumers keep one import.
+export { GARMENT_SLOTS, BODY_REGIONS, REGION_BONES, MIN_BIND_COVERAGE };
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Skeleton discovery
@@ -335,16 +333,6 @@ export function occupiedSlots(avatarRoot) {
  * ────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Body regions a garment can claim. A garment declares which it covers, and the
- * body's skin is masked there so it cannot poke through the cloth — the single
- * most visible artefact in any additive wardrobe.
- */
-export const BODY_REGIONS = Object.freeze([
-	'torso', 'upperArms', 'lowerArms', 'hands',
-	'hips', 'upperLegs', 'lowerLegs', 'feet', 'neck', 'scalp',
-]);
-
-/**
  * Hide the body wherever attached garments cover it.
  *
  * Two mechanisms, in order of fidelity:
@@ -394,20 +382,6 @@ export function applySkinOcclusion(avatarRoot, regions, opts = {}) {
 	const hidden = cullSkinByBones(skinMesh.geometry, indices, opts.cullThreshold ?? 0.5);
 	return { occluded: [...wanted], method: 'bone-cull', trianglesHidden: hidden };
 }
-
-/** Canonical bones that own each body region, for the mask-free fallback. */
-export const REGION_BONES = Object.freeze({
-	torso: ['Spine', 'Spine1', 'Spine2'],
-	upperArms: ['LeftArm', 'RightArm'],
-	lowerArms: ['LeftForeArm', 'RightForeArm'],
-	hands: ['LeftHand', 'RightHand'],
-	hips: ['Hips'],
-	upperLegs: ['LeftUpLeg', 'RightUpLeg'],
-	lowerLegs: ['LeftLeg', 'RightLeg'],
-	feet: ['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase'],
-	neck: ['Neck'],
-	scalp: ['Head'],
-});
 
 /**
  * Drop triangles whose vertices are predominantly weighted to `boneIndices`.

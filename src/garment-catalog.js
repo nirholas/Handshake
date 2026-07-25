@@ -10,7 +10,7 @@
 // browser and in vitest. Loading the GLB and binding it to an avatar is the
 // caller's job (src/avatar-garment.js `attachGarment`).
 
-import { GARMENT_SLOTS, BODY_REGIONS } from './avatar-garment.js';
+import { GARMENT_SLOTS, BODY_REGIONS } from './garment-taxonomy.js';
 
 export const GARMENT_SPEC_URI = 'https://three.ws/specs/garment-manifest-v1';
 export const GARMENT_CATALOG_URL =

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T09:07:42.742Z",
+	"generated_at": "2026-07-25T09:31:26.690Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,12 +49,33 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Dress any avatar: the wardrobe now adds clothes, not just recolours them",
+			"summary": "Until now the wardrobe could only recolour or hide the clothes an avatar was generated with. It can now put NEW clothes on: the avatar editor's Wardrobe tab gained a Closet with racks of catalog pieces (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories). Click a piece and it binds to your avatar's skeleton and moves with every animation, whatever generator the avatar came from: forge characters, selfie reconstructions and uploaded models all work, because garments are fitted to the skeleton at wear-time instead of being authored for one specific body. The body is masked under whatever you wear so skin never pokes through the cloth, a piece that cannot fit a particular skeleton politely refuses instead of deforming into spaghetti, and every download is integrity-checked against the catalog before it touches your avatar. Saved outfits persist: the downloadable and embedded versions of your avatar come out dressed too.",
+			"link": "/avatar-edit",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "The KOL Tracker is now reachable, and its numbers are real",
 			"summary": "The KOL Tracker page shipped listed in the sitemap but with no route behind it, so three.ws/tracker returned a 404 for everyone who followed the link, and the API behind it was answering with three placeholder rows left over from a test fixture. Both are fixed. The page is served, and it now ranks real Solana traders from the live kolscan board: realized profit, win rate and trade count for the 24h, 7d and 30d windows, enriched with our own on-chain FIFO profit calculation wherever we have the trades for a wallet. Every row states where its number came from, and when a source is unreachable the board shows an honest empty state instead of inventing traders. A new test blocks the whole class of mistake: any page advertised in the site index that has no route, or that never gets built, now fails the suite before it can reach production.",
 			"link": "/tracker",
 			"tags": [
 				"fix",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "The signing avatar's arm now sits where a signer's arm sits, and it signs real words",
+			"summary": "The signing avatar had a broken arm. Its handshapes were right, but the arm carrying them swung out to the side and behind the body, and the clip also dragged the avatar about a metre down through the floor, so you were watching correct fingerspelling performed somewhere over the avatar's shoulder. The cause was that the arm was posed with rotations written against a skeleton convention our reference avatar does not use. Arms are now solved instead of guessed: the code measures the actual skeleton (which way each bone points, how long it is, which way each palm faces) and then runs real inverse kinematics to put the wrist at a specific point in front of the body, with the elbow hanging where an elbow hangs. Fingerspelling now happens where signers do it, in front of the dominant shoulder at jaw height with the palm facing you, and the letters themselves are unchanged, to the digit. Because a hand can now be sent to a place on the body, the avatar also has a real sign vocabulary for the first time: thirty-two everyday words including hello, thank you, please, sorry, yes, no, happy, help, love, want, welcome, name, y'all and finish, two-handed where the sign is two-handed. Type a sentence and the words with signs are signed while the rest is fingerspelled, in one continuous motion, and the page tells you which was which. There is a new section on the sign-language page listing every word it can sign, each one playable. Both arms are now posed throughout, the idle hand rests at the side instead of hanging oddly, the avatar breathes during long holds, and the camera crops closer so you can actually see the hands.",
+			"link": "/sign-language",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -76,6 +97,18 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "The trading postmortem's findings are now enforced in code",
+			"summary": "Our published audit of the fleet's first 90 real trades ended with a list of fixes, and four of them are now live code instead of intentions. First, the overconfidence ceiling: the audit showed AI judge verdicts at 0.7 confidence performed best while verdicts above 0.9 went winless, so each AI-judged strategy now carries a confidence ceiling next to its floor, and a screaming-confident verdict is recorded but never funded. Second, named-model integrity: during the audit most calls to the named models were actually answered by cheaper fallback models, muddying the model-vs-model comparison, so the Grok and Claude strategies are now strict and will pause rather than trade on a fallback's judgment. Third, the liquidity-decay exit: a coin nobody is trading at all now gets sold after five quiet minutes instead of squatting on a trading slot for the full half-hour timeout, and this only applies underwater, so quiet winners still ride. Fourth, and most important operationally: the audit found two of the fleet's learning loops had been silently dead for two days behind green health checks, so a new hourly watchdog now asks every learning loop when it last actually wrote a row, and pages us when any answer is too old. A loop that has never written a row counts as the worst finding, not a pass.",
+			"link": "/docs/trading-experiment",
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
 			]
 		},
 		{
