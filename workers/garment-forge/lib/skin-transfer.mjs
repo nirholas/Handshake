@@ -1,21 +1,20 @@
-// Garment skinning core — fit a generated garment mesh to the canonical body
-// and give it skin weights by proximity transfer.
+// Garment skinning — TEST-HARNESS / REFERENCE implementation.
 //
-// Generated garment meshes arrive unrigged, at arbitrary scale, centred
-// arbitrarily. Auto-riggers are the wrong tool here — they predict skeletons
-// for BODIES. The correct treatment for a garment is the one clothing tools
-// use: place it around the reference body it will be worn on, then copy each
-// garment vertex's skin influence from the nearest point on the body surface.
-// The result deforms exactly like the flesh underneath it, which is the
-// definition of a well-skinned garment.
+// NOT the production skinning lane. The bake-off of 2026-07-25 (same shirt,
+// parametric base, canonical walk.json, scripts/garment-rig-bakeoff.mjs)
+// measured cloth-to-body deviation across the gait:
 //
-// The reference body is the platform's CC0 parametric base
-// (public/avatars/parametric-base.glb, mixamorig 52-bone skeleton — every name
-// canonicalizes via src/glb-canonicalize.js, so the emitted garment satisfies
-// `rig.skeleton: "three.ws-canonical-v1"` in specs/GARMENT_MANIFEST.md).
+//     rig-worker lane (production, main.py rig_composite):  mean 2.87 cm, p95  6.36 cm
+//     this proximity lane:                                  mean 5.88 cm, p95 13.06 cm
 //
-// Pure module: operates on @gltf-transform Documents, no HTTP, no GCS — fully
-// unit-testable (tests/garment-forge-skin-transfer.test.js).
+// The rig-worker path won decisively and the worker uses it exclusively. This
+// module is retained for one purpose: tests/garment-forge-skin-transfer.test.js
+// builds synthetic wearables with it offline (no GPU, no network) to prove the
+// runtime binder (src/avatar-garment.js attachGarment) accepts any conforming
+// `three.ws-canonical-v1` garment at MIN_BIND_COVERAGE. If the contract test
+// gains a committed fixture from the production lane, delete this file.
+//
+// Pure module: operates on @gltf-transform Documents — fully unit-testable.
 
 import { canonicalizeBoneName } from '../../../src/glb-canonicalize.js';
 import { REGION_BONES, BODY_REGIONS } from '../../../src/garment-taxonomy.js';
@@ -462,14 +461,26 @@ export function transferSkinWeights(garmentMesh, bodyDoc, doc) {
 
 /* ── occludes derivation ─────────────────────────────────────────────────── */
 
+/** Mirror of SLOT_OCCLUDABLE in garment_glb.py: regions a slot may hide at
+ *  all. Evidence decides within this set — a top can never hide feet. */
+export const SLOT_OCCLUDABLE = Object.freeze({
+	top: ['torso', 'upperArms', 'lowerArms', 'neck', 'hips', 'upperLegs'],
+	outerwear: ['torso', 'upperArms', 'lowerArms', 'neck', 'hips', 'upperLegs'],
+	bottom: ['hips', 'upperLegs', 'lowerLegs'],
+	footwear: ['feet', 'lowerLegs'],
+	hair: ['scalp'],
+	headwear: ['scalp'],
+	glasses: [],
+	accessory: [],
+});
+
 /**
  * Which body regions this garment covers, measured from where its transferred
- * skin weight actually landed. A region counts as covered once it carries at
- * least `threshold` of the garment's total weight — deliberately low, because
- * the spec says over-declare (hidden skin is invisible, exposed skin is the
- * artefact). The slot's own regions are always included as a floor.
+ * skin weight actually landed. Two gates, matching garment_glb.py: evidence
+ * (≥ threshold of total weight — 10%, because a waistband graze at a few
+ * percent must not amputate the pelvis) and per-slot plausibility.
  */
-export function deriveOccludes(garmentMesh, skin, slot, threshold = 0.05) {
+export function deriveOccludes(garmentMesh, skin, slot, threshold = 0.1) {
 	const names = canonicalJointNames(skin);
 	const regionOf = new Map();
 	for (const [region, bones] of Object.entries(REGION_BONES)) {
@@ -491,11 +502,12 @@ export function deriveOccludes(garmentMesh, skin, slot, threshold = 0.05) {
 		}
 	}
 
+	const allowed = new Set(SLOT_OCCLUDABLE[slot] || BODY_REGIONS);
 	const out = new Set(SLOT_REGIONS[slot] || []);
 	if (total > 0) {
 		for (const [region, w] of perRegion) {
 			if (w / total >= threshold) out.add(region);
 		}
 	}
-	return BODY_REGIONS.filter((r) => out.has(r));
+	return BODY_REGIONS.filter((r) => out.has(r) && allowed.has(r));
 }

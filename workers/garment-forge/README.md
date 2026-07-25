@@ -15,6 +15,26 @@ skin onto the target avatar's skeleton and refuses anything that binds under
 number before publishing and fails the job loudly rather than emitting a bad
 asset.
 
+## Skinning bake-off (why the rig-worker lane)
+
+Two candidate skinning paths were built independently and raced on 2026-07-25:
+the same generated shirt was skinned by (A) the rig-worker composite lane this
+worker uses and (B) a local proximity weight-transfer
+([lib/skin-transfer.mjs](lib/skin-transfer.mjs)), then both were attached to
+the parametric base and driven through the canonical walk clip
+([scripts/garment-rig-bakeoff.mjs](../../scripts/garment-rig-bakeoff.mjs)).
+Cloth-to-body deviation across the gait:
+
+| Path | mean | p95 | max |
+|---|---|---|---|
+| A rig-worker (production) | **2.87 cm** | **6.36 cm** | 16.12 cm |
+| B proximity transfer | 5.88 cm | 13.06 cm | 21.02 cm |
+
+A won decisively and is the only production lane. The proximity lib is kept
+solely as the offline test harness for the runtime binder's contract test
+(`tests/garment-forge-skin-transfer.test.js`) — see the note in its header.
+Re-run the bake-off whenever either path changes.
+
 ## How it works
 
 This is a **CPU orchestrator**, not a model host. Every heavy stage runs on a
