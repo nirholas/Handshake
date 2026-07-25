@@ -1,4 +1,4 @@
-// GET /api/forged — the public feed behind the /forged gallery: 3D props the
+// GET /api/forged: the public feed behind the /forged gallery: 3D props the
 // platform's autonomous agents BOUGHT with real on-chain USDC via x402, plus
 // the receipts that prove it.
 //
@@ -6,14 +6,14 @@
 // (settled by the self-hosted facilitator on Solana mainnet), the Forge
 // produced a GLB, and the prop landed in forge_autonomous_props carrying the
 // payment provenance (payer wallet, price, settlement signature). There are no
-// synthetic entries — if the agents haven't bought anything yet, the feed is
+// synthetic entries: if the agents haven't bought anything yet, the feed is
 // honestly empty. Written by api/_lib/x402/pipelines/forge-content.js.
 //
 // Views:
-//   GET /api/forged                       — recent renderable props (status done)
-//   GET /api/forged?category=crate        — filter by prop family
-//   GET /api/forged?status=all            — include queued/failed rows (audit view)
-//   GET /api/forged?limit=60              — page size (max 100)
+//   GET /api/forged                      : recent renderable props (status done)
+//   GET /api/forged?category=crate       : filter by prop family
+//   GET /api/forged?status=all           : include queued/failed rows (audit view)
+//   GET /api/forged?limit=60             : page size (max 100)
 //
 // Response: { props: [...], stats: { total, done, queued, spent_usdc,
 //             categories: {...}, latest_ts } }

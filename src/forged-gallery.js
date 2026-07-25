@@ -1,4 +1,4 @@
-// /forged — the agent-forged gallery: 3D props the platform's autonomous agents
+// /forged: the agent-forged gallery: 3D props the platform's autonomous agents
 // BOUGHT with real on-chain USDC via x402, with the receipts to prove it.
 //
 // Feed: GET /api/forged (forge_autonomous_props). Every card renders a live

@@ -1,6 +1,6 @@
 // api/_lib/x402/pipelines/forge-content.js
 //
-// 3D Forge Content Generation — autonomous pipeline (self/014).
+// 3D Forge Content Generation: autonomous pipeline (self/014).
 //
 // On each run it pays the paid three.ws Forge ($0.05 draft) to generate one
 // procedural prop (crate / barrel / furniture / terrain tile), rotating the
@@ -14,7 +14,7 @@
 //   2. Embeds the prop prompt (free NIM / OpenAI when configured, deterministic
 //      feature-hash fallback otherwise) and scores its diversity against the
 //      recent catalog: novelty = 1 − max cosine similarity, plus a k-means
-//      cluster id — both within a single embedder vector space.
+//      cluster id: both within a single embedder vector space.
 //   3. Inserts the generated prop into forge_autonomous_props (the asset-library
 //      + diversity table) carrying the public glb_url, prompt, category, tier,
 //      embedding, novelty and cluster id.
@@ -27,7 +27,7 @@
 // test) it bootstraps its own via bootstrapSolanaContext().
 //
 // DOWNSTREAM CONSUMER: the forge gallery / diversity dashboard reads
-// forge_autonomous_props — `glb_url` renders the prop, `category` filters the
+// forge_autonomous_props: `glb_url` renders the prop, `category` filters the
 // feed, and `novelty` + `cluster_id` drive the "how varied is the generated
 // catalog" metric (the embedding-clustering diversity measure). Inline-completed
 // draft jobs carry a directly-renderable public R2 `glb_url`; async jobs carry a
@@ -53,7 +53,7 @@ const log = logger('x402-forge-content');
 const ASSET = USDC_MINT || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 // Vector space tag for the dependency-free fallback embedding. Tagged distinctly
-// so it is NEVER compared against real NIM/OpenAI vectors — cosine only ever runs
+// so it is NEVER compared against real NIM/OpenAI vectors: cosine only ever runs
 // within a single embedder space (the rule embeddings.js enforces everywhere).
 const LOCAL_EMBED_TAG = 'local/feature-hash@96';
 const LOCAL_EMBED_DIM = 96;
@@ -101,7 +101,7 @@ const CATEGORIES = Object.freeze(Object.keys(PROP_CATALOG));
 
 // Deterministic, non-random selector: rotate the category by UTC hour so the
 // library cycles evenly across families, and step the prompt index by day so
-// successive same-category hours don't repeat the same prompt. No Math.random —
+// successive same-category hours don't repeat the same prompt. No Math.random -
 // two runs in the same hour pick the same prop, which the paid endpoint's
 // idempotency guard collapses rather than double-charging.
 export function nextForgeProp(now = Date.now()) {
@@ -145,7 +145,7 @@ async function embedProp(prompt) {
 				const [vec] = await embedPassages(tag, [prompt]);
 				if (vec?.length) return { embedder: tag, vector: Array.from(vec) };
 			} catch {
-				/* provider hiccup — fall through to the deterministic local space */
+				/* provider hiccup: fall through to the deterministic local space */
 			}
 		}
 	}
@@ -167,7 +167,7 @@ async function scoreDiversity(embedder, vector) {
 			LIMIT ${DIVERSITY_WINDOW}
 		`;
 	} catch {
-		// Table briefly unavailable — treat as an empty catalog (max novelty).
+		// Table briefly unavailable: treat as an empty catalog (max novelty).
 		return { novelty: 1, clusterId: 0, neighbors: 0 };
 	}
 
@@ -238,7 +238,7 @@ async function ensureSchema() {
 // poll token; the FREE poll endpoint (GET /api/forge?job=<id>) reports 'queued',
 // 'done' (with glb_url) or 'failed'. Each run sweeps a few pending rows so the
 // public gallery converges on renderable assets without a dedicated cron.
-// Never throws — a poll hiccup just retries on the next run.
+// Never throws: a poll hiccup just retries on the next run.
 const RESOLVE_BATCH = 5;
 async function resolveQueuedJobs(origin) {
 	let rows = [];
@@ -266,7 +266,7 @@ async function resolveQueuedJobs(origin) {
 			} else if (job?.status === 'failed') {
 				await sql`UPDATE forge_autonomous_props SET status = 'failed' WHERE id = ${row.id}`;
 			}
-		} catch { /* poll hiccup — retry next run */ }
+		} catch { /* poll hiccup: retry next run */ }
 	}
 	return resolved;
 }
@@ -294,7 +294,7 @@ async function recordCall(runId, { endpointUrl, amountAtomic, txSig, responseDat
 }
 
 // Embed, score diversity, and insert the generated prop. Returns the compact
-// summary used as value_extracted. Never throws — a DB/embedding hiccup returns a
+// summary used as value_extracted. Never throws: a DB/embedding hiccup returns a
 // summary carrying the error so the call is still recorded.
 async function persistProp({ runId, prompt, category, response, txSig = null, payer = null, amountAtomic = null }) {
 	const r = response && typeof response === 'object' ? response : {};
@@ -379,7 +379,7 @@ export async function run(ctx = {}) {
 	}
 
 	// Solana payment context: reuse the loop's, else bootstrap. A bootstrap
-	// failure means the wallet/RPC is unconfigured — exit gracefully, logged, no
+	// failure means the wallet/RPC is unconfigured: exit gracefully, logged, no
 	// payment attempted.
 	let { buyer, conn, blockhash, mintInfo } = ctx;
 	if (!buyer || !conn || !blockhash || !mintInfo) {
@@ -401,7 +401,7 @@ export async function run(ctx = {}) {
 	const t0 = Date.now();
 
 	// Pay for the generation. payX402 never throws for protocol/network faults
-	// (it returns a structured outcome) — but a hard fetch abort can still throw,
+	// (it returns a structured outcome): but a hard fetch abort can still throw,
 	// so guard it and record the failed call rather than crash the tick.
 	let result;
 	try {
@@ -432,7 +432,7 @@ export async function run(ctx = {}) {
 		endpointUrl,
 		amountAtomic: result.amountAtomic,
 		txSig: result.txSig,
-		// Keep the response lean — the prop row in forge_autonomous_props holds the
+		// Keep the response lean: the prop row in forge_autonomous_props holds the
 		// durable detail; log just the call status and key job pointers.
 		responseData: result.responseBody
 			? { status: result.responseBody.status, job_id: result.responseBody.job_id || null, glb_url: result.responseBody.glb_url || null, backend: result.responseBody.backend || null }
