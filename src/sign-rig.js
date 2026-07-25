@@ -338,6 +338,15 @@ export function splayAxis(bone) {
 	return vNorm(vCross(boneAxis(bone), radialAxis(bone)));
 }
 
+/**
+ * LOCAL adduction axis of a thumb joint: a POSITIVE angle swings the thumb in
+ * toward the fingers (across the palm), a negative one out away from them.
+ */
+export function adductAxis(bone) {
+	const handDir = restDirWorld(`${sideOf(bone)}Hand`);
+	return vNorm(vCross(boneAxis(bone), qRotate(qConj(restWorld(bone)), handDir)));
+}
+
 // ── the signing body: anchors and workspace ────────────────────────────────
 
 /**
@@ -366,7 +375,12 @@ export const ANCHORS = (() => {
 		neck,
 		chest,
 		hips,
+		/** Side-aware anchors: `signPoint('shoulder', { side })` picks the right one. */
 		shoulder: { Left: shoulderL, Right: shoulderR },
+		hip: {
+			Left: [Math.abs(shoulderL[0]) * 0.55, hips[1], hips[2]],
+			Right: [-Math.abs(shoulderR[0]) * 0.55, hips[1], hips[2]],
+		},
 		forehead: [0, head[1] + 0.07, head[2]],
 		chin: [0, chinY, head[2] + 0.03],
 		mouth: [0, chinY + 0.04, head[2] + 0.04],
@@ -388,9 +402,11 @@ export const ANCHORS = (() => {
  * @returns {number[]} model-space point
  */
 export function signPoint(anchor, offset = {}) {
-	const base = Array.isArray(anchor) ? anchor : ANCHORS[anchor];
-	if (!base) throw new Error(`unknown sign anchor "${anchor}"`);
 	const side = offset.side ?? 'Right';
+	let base = Array.isArray(anchor) ? anchor : ANCHORS[anchor];
+	// Side-aware anchors (shoulder, hip) resolve against the acting hand.
+	if (base && !Array.isArray(base)) base = base[side];
+	if (!base) throw new Error(`unknown sign anchor "${anchor}"`);
 	const outSign = side === 'Right' ? -1 : 1; // the right hand's "out" is −X
 	return [
 		base[0] + outSign * (offset.out ?? 0),

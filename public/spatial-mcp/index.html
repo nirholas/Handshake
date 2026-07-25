@@ -81,7 +81,10 @@
 </div>
 
 <script type="module">
-  import { renderSpatialArtifact } from './spatial-renderer.js';
+  // Absolute, not './' — the route serves this page at BOTH /spatial-mcp and
+  // /spatial-mcp/, and on the slash-less URL a relative specifier resolves
+  // against the site root (/spatial-renderer.js → 404, blank stages).
+  import { renderSpatialArtifact } from '/spatial-mcp/spatial-renderer.js';
 
   // A real, public demo GLB (three.js sample, https).
   const DEMO_GLB = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
