@@ -6,7 +6,7 @@
  * fidelity when supplied. Capture method (camera vs upload) is picked per slot.
  *
  * On submit, dispatches a `selfie:submit` CustomEvent on document with
- *   detail = { files: { frontal, left?, right? }, bodyType, avatarType, method }
+ *   detail = { files: { frontal, left?, right? }, avatarType, method }
  * which the selfie pipeline picks up to drive avatar reconstruction.
  *
  * Camera overlay uses the face-quality engine for real-time 468-point wireframe,
@@ -24,7 +24,6 @@ const ETA_FAST_SEC = 90;
 const ETA_HIGH_SEC = 120;
 
 const state = {
-	bodyType: /** @type {'male' | 'female'} */ ('male'),
 	avatarType: /** @type {'v1' | 'v2'} */ ('v1'),
 	files: /** @type {Record<string, File | null>} */ ({ frontal: null, left: null, right: null }),
 	lastMethod: /** @type {'camera' | 'upload' | null} */ (null),
@@ -54,9 +53,6 @@ const slotInputs = /** @type {NodeListOf<HTMLInputElement>} */ (
 	document.querySelectorAll('input[data-slot-input]')
 );
 const submitBtn = /** @type {HTMLButtonElement} */ (document.getElementById('submit-btn'));
-const bodyBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
-	document.querySelectorAll('[data-body]')
-);
 const styleBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
 	document.querySelectorAll('.style-card[data-type]')
 );
@@ -153,13 +149,6 @@ slotInputs.forEach((input) => {
 });
 
 // ── Selectors ──────────────────────────────────────────────────────────────
-bodyBtns.forEach((btn) => {
-	btn.addEventListener('click', () => {
-		const val = /** @type {'male'|'female'} */ (btn.getAttribute('data-body'));
-		state.bodyType = val;
-		bodyBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-	});
-});
 styleBtns.forEach((btn) => {
 	btn.addEventListener('click', () => {
 		const val = /** @type {'v1'|'v2'} */ (btn.getAttribute('data-type'));
@@ -182,7 +171,6 @@ submitBtn.addEventListener('click', () => {
 		new CustomEvent('selfie:submit', {
 			detail: {
 				files: { ...state.files },
-				bodyType: state.bodyType,
 				avatarType: state.avatarType,
 				method: state.lastMethod || (cameraSupported ? 'camera' : 'upload'),
 			},

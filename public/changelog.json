@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T11:02:28.277Z",
+	"generated_at": "2026-07-25T11:13:11.300Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,17 @@
 				"feature",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Closed the tab while your avatar was building? It finishes anyway now",
+			"summary": "Until today, a selfie avatar only completed while you kept the page open: your browser did the checking, and if you closed the tab after uploading, the engine finished your avatar but nobody ever came back to collect it. The job sat unfinished forever and your library never received the result. We found jobs stranded this way going back a month. The platform now checks in on every in-flight avatar itself, every few minutes, and files the finished result into your library exactly as if you had waited, so starting an avatar on your phone and pocketing it mid-build is now fine. The same pass also went back through every stranded job from the past month and delivered the ones whose results were still recoverable. Separately, the selfie page no longer shows a Masc and Femme body choice. Honest reason: the engine builds every avatar on one shared template body today, so that toggle changed nothing and never had, which is worse than not offering it. A real body choice, with sliders for build, height and more rather than two buttons, is planned on the parametric avatar base.",
+			"link": "/create/selfie",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

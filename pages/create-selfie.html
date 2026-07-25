@@ -1598,15 +1598,16 @@
 							</button>
 						</div>
 					</div>
-					<div class="opt-group">
-						<p class="opt-label" data-i18n="create_selfie.body">Body</p>
-						<div class="toggle" role="group" aria-label="Body type">
-							<button type="button" data-body="male" aria-pressed="true" data-i18n="create_selfie.masc">Masc</button>
-							<button type="button" data-body="female" aria-pressed="false" data-i18n="create_selfie.femme">
-								Femme
-							</button>
-						</div>
-					</div>
+					<!-- No body-type picker, deliberately. The reconstruction engine
+					     fits your face onto ONE shared template body today, so a
+					     Masc/Femme toggle here would change nothing — and this page
+					     shipped with exactly that: two buttons whose choice was sent,
+					     accepted, and silently ignored (the worker's male/female
+					     template files never existed). A control that does nothing is
+					     worse than no control. Body choice returns for real when
+					     reconstruction moves onto the parametric base (122 morph
+					     sliders — gender, build, height), tracked in
+					     docs/avatar-fidelity-program.md, Track 5. -->
 				</div>
 
 				<div id="submit-bar" class="submit-bar">

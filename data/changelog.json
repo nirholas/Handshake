@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-25",
+			"title": "Closed the tab while your avatar was building? It finishes anyway now",
+			"summary": "Until today, a selfie avatar only completed while you kept the page open: your browser did the checking, and if you closed the tab after uploading, the engine finished your avatar but nobody ever came back to collect it. The job sat unfinished forever and your library never received the result. We found jobs stranded this way going back a month. The platform now checks in on every in-flight avatar itself, every few minutes, and files the finished result into your library exactly as if you had waited, so starting an avatar on your phone and pocketing it mid-build is now fine. The same pass also went back through every stranded job from the past month and delivered the ones whose results were still recoverable. Separately, the selfie page no longer shows a Masc and Femme body choice. Honest reason: the engine builds every avatar on one shared template body today, so that toggle changed nothing and never had, which is worse than not offering it. A real body choice, with sliders for build, height and more rather than two buttons, is planned on the parametric avatar base.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/create/selfie"
+		},
+		{
+			"date": "2026-07-25",
 			"title": "Signing avatars now sign whole sentences, touch what they are supposed to touch, and can raise an eyebrow",
 			"summary": "Six things changed in the signing avatar. It was lowering its arms all the way to its sides between every single word, so a sentence read as a list of unrelated words; now the hands rise once at the start and lower once at the end, the way a person signs, and everything in between stays up in signing space. Signs that involve the two hands touching, like fall, help, good and again, were positioning each hand at fixed coordinates and hoping they met; they are now solved from the actual shape of the posed hand, so the fingers land on the palm even on an avatar with longer fingers or bigger hands, and the same is true of signs that touch the face, which previously buried the fingertips somewhere inside the head. The avatar can now raise its eyebrows: American Sign Language carries grammar on the face, where raised brows make a yes-or-no question and furrowed brows a what-or-why question, and signs now carry those markers to any avatar that has facial expressions built in. You can slow the signing down to three-quarter or half speed, which learners and many Deaf viewers want and which no amount of replaying a video at full speed substitutes for. You can switch the avatar to sign left-handed, because roughly one signer in ten is left-dominant and signing left-handed is not a mistake to be corrected. And the vocabulary is now checked automatically against two rules that hold across the whole language, so a new sign has to be well-formed and not merely render without crashing.",
 			"tags": [

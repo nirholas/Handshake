@@ -132,7 +132,6 @@ document.addEventListener('selfie:submit', (event) => {
 /**
  * @param {{
  *   files: Record<'frontal'|'left'|'right', File | null>,
- *   bodyType: 'male' | 'female',
  *   avatarType: 'v1' | 'v2',
  *   method: 'camera' | 'upload' | null,
  * }} detail
@@ -223,7 +222,7 @@ async function run(detail) {
 		name: defaultAvatarName(),
 		photos,
 		visibility: 'private',
-		params: { bodyType: detail.bodyType, style: detail.avatarType },
+		params: { style: detail.avatarType },
 		...(byok ? { provider_key: byok.key, provider_name: byok.provider } : {}),
 	};
 	const submitRes = await fetch(SUBMIT_ENDPOINT, {
