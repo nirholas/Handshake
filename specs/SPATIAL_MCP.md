@@ -74,7 +74,7 @@ A Spatial MCP artifact is a JSON object placed in a tool result's `structuredCon
 | `camera`,`environment`,`animation`,`persona`,`affordances`,`meta` | optional | objects; validated for type/shape only when present. |
 | `ar.*Url` | optional | https URLs; `ar.supported: true` requires at least one of `usdzUrl`/`glbUrl`/`launchUrl`. |
 
-**Data minimization.** `meta` is human-facing only. Never place session ids, job/creation/prediction ids, trace ids, wallet addresses, prices, or any auth/coin field anywhere in the artifact. The reference validator does not police this (it can't know your internal names), but conformant emitters MUST strip them — this is what keeps the shape reusable in crypto-free stores.
+**Data minimization.** `meta` is human-facing only. Never place session ids, job/creation/prediction ids, trace ids, wallet addresses, prices, or any auth/coin field anywhere in the artifact. Conformant emitters MUST strip them; this is what keeps the shape reusable in crypto-free stores. The reference implementation ships `lintSpatialMeta(artifact)`, which flags the common violations (suspicious key names in `meta` and in unknown top-level blocks, plus credential- and address-shaped values). Its findings are advisory warnings, never conformance errors: it cannot know your internal field names, so a clean lint is evidence, not proof, and the requirement stays on the emitter. The paste-in checker at [`/spatial-mcp`](https://three.ws/spatial-mcp) runs the lint on every payload.
 
 **Forward compatibility.** Unknown top-level fields are ignored by conformant renderers (a warning, not an error), so a host may carry extra data without breaking older renderers.
 

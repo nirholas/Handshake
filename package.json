@@ -85,7 +85,8 @@
 		"walk-sdk",
 		"tour-sdk",
 		"packages/alibaba-cloud-mcp",
-		"packages/tool-sdk"
+		"packages/tool-sdk",
+		"packages/spatial-mcp"
 	],
 	"main": "src/app.js",
 	"browserslist": [

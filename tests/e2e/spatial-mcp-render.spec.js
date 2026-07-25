@@ -118,6 +118,10 @@ test('the checker names the offending field on a broken payload', async ({ page 
 	await expect(report).toContainText('kind');
 	await expect(report).toContainText('camera.autoRotate');
 	await expect(report).toContainText('ar.supported');
+	// The data-minimization lint runs on every payload; the broken preset leaks
+	// an internal id and a price on purpose so the privacy findings are visible.
+	await expect(report).toContainText('meta.session_id');
+	await expect(report).toContainText('meta.price_usd');
 	await expect(report).not.toContainText('conformant, 0 errors');
 
 	// An unusable payload gets the designed fallback, never a blank frame.

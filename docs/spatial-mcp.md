@@ -3,9 +3,10 @@
 Spatial MCP is an open shape for returning a **live, interactive 3D scene** as an MCP tool result instead of a URL in text. A conformant host renders it inline — orbit, animate, place in AR — with an embedded component. three.ws is the reference implementation; the shape is renderer-agnostic and carries **no** payment, wallet, or coin surface, so it drops into crypto-free app stores unchanged.
 
 - **Spec:** [`specs/SPATIAL_MCP.md`](https://github.com/nirholas/three.ws/blob/main/specs/SPATIAL_MCP.md) (v0.1, CC0)
-- **Validator (import it):** `https://three.ws/spatial-mcp/spatial-validator.js` — `validateSpatialArtifact()`, `buildSpatialArtifact()`. Source: [`public/spatial-mcp/spatial-validator.js`](https://github.com/nirholas/three.ws/blob/main/public/spatial-mcp/spatial-validator.js); server-side code imports the same module via `api/_lib/spatial-mcp.js`.
+- **Validator (npm):** `npm install @three-ws/spatial-mcp` — `validateSpatialArtifact()`, `buildSpatialArtifact()`, `lintSpatialMeta()`, plus the conformance fixture corpus. Source: [`packages/spatial-mcp`](https://github.com/nirholas/three.ws/tree/main/packages/spatial-mcp).
+- **Validator (import by URL, no npm):** `https://three.ws/spatial-mcp/spatial-validator.js` — the same module, served directly. Source: [`public/spatial-mcp/spatial-validator.js`](https://github.com/nirholas/three.ws/blob/main/public/spatial-mcp/spatial-validator.js); server-side code imports it via `api/_lib/spatial-mcp.js`, and a CI drift guard keeps the npm copy byte-identical.
 - **Validator (MCP tool):** `validate_spatial_response({ artifact })` on the three.ws 3D Studio server
-- **Validator (no code at all):** paste a payload into the checker on [`/spatial-mcp`](https://three.ws/spatial-mcp) and read the diagnostics
+- **Validator (no code at all):** paste a payload into the checker on [`/spatial-mcp`](https://three.ws/spatial-mcp) and read the diagnostics, conformance and data-minimization lint both
 - **Reference renderer:** [`/spatial-mcp`](https://three.ws/spatial-mcp) — `public/spatial-mcp/spatial-renderer.js`
 
 ## Quick start — emit a conformant artifact
@@ -95,6 +96,21 @@ It applies `camera`/`environment`/`affordances`, plays `animation` when present,
 ## Data minimization (required for store-safe adoption)
 
 `meta` is human-facing only. Never place session/job/creation/prediction/trace ids, wallet addresses, prices, or any auth/coin field anywhere in the artifact. Strip them at emit time — this is what keeps the shape reusable across the Claude and OpenAI tracks.
+
+The reference lint flags the common violations:
+
+```js
+import { lintSpatialMeta } from '@three-ws/spatial-mcp';
+
+lintSpatialMeta(artifact);
+// [{ path: 'meta.session_id', message: 'looks like an internal/auth/coin field — the spec requires emitters to strip these (data minimization)' }]
+```
+
+Findings are advisory and never affect validity: the lint cannot know your internal field names, so a clean result is evidence, not proof. The checker on [`/spatial-mcp`](https://three.ws/spatial-mcp) runs it on every pasted payload.
+
+## Prove your implementation conformant
+
+`@three-ws/spatial-mcp` ships the fixture corpus (`fixtures/manifest.json` plus the artifacts it names): payloads a conformant validator must accept, reject with specific error paths, or lint. Run your implementation over every entry; disagreeing with a required verdict or missing a `mustFlag` path means non-conformance. The package's own test suite does exactly this, so the corpus and the reference validator can never drift apart.
 
 ## Who emits it on three.ws
 
