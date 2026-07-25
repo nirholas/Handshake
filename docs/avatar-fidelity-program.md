@@ -188,7 +188,39 @@ shadow, ears, the scalp, under the jaw — none of it is in the photo, and today
 those regions fall back to a tinted template texture. That mismatch is what
 reads as "avatar" rather than "person" the moment the head turns.
 
-Two candidate mechanisms, and the measurement in Track 3 decides between them.
+**Measure the opportunity first — it is bigger than it looks.** Of the head
+mesh's UV surface, only **19.2% is the face oval** the selfie actually covers.
+The other **80.8%** — ears, scalp, neck, under-jaw — is template texture the
+camera never saw, personalised solely by a global skin-tone tint. That is the
+real prize here, and it also bounds what the mechanisms below can achieve.
+
+**A landmark-driven warp cannot reach most of it.** MediaPipe's 468 landmarks are
+face-only: there are no ear, scalp or neck points, and `_warp_face_to_uv` masks
+to the face-oval polygon accordingly. So warping extra synthesised views through
+the existing path improves *lateral cheek and jaw* fidelity (where a frontal is
+foreshortened) but cannot texture the other 80.8%, because no correspondence
+exists there. Anyone picking this up should not expect the view-warp route to
+fill the scalp.
+
+**The mechanism that does reach it is projective texturing off the mesh we
+already have.** The head geometry is known (the morph just produced it), so a
+synthesised view can be projected through an estimated camera pose onto the mesh
+and resolved to UV by rasterisation plus a visibility test — no landmarks needed,
+and ears/scalp/neck fall out naturally. This is the recommended build, and it
+shares its camera-pose machinery with Track 3.
+
+Already fixed on the way in: the skin tint was being applied to the *whole*
+texture, including the face oval that had just been composited from the user's
+photograph — shifting the only region with true photographic colour toward an
+average of itself by ~1.4% of range. It is now masked to the regions the photo
+could not cover, which is what its own comment always said it was for
+(`test_face_pipeline.py` pins the mask behaviour, including that the tint still
+reaches every unprotected pixel — a mask that over-protected would leave a
+template-coloured neck against a photographic face, a worse artefact than the
+one being fixed).
+
+Two candidate mechanisms for the remainder, and the measurement in Track 3
+decides between them.
 
 **Do not inpaint the UV atlas directly.** A UV layout is not a photograph; a
 generative image model conditioned on one will produce photographically plausible

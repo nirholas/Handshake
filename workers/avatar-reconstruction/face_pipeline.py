@@ -338,14 +338,32 @@ def _extract_eye_colour(img_rgb: np.ndarray, landmarks: list, img_w: int, img_h:
     return patch.reshape(-1, 3).mean(axis=0)
 
 
-def _tint_texture(base: Image.Image, target_rgb: np.ndarray, strength: float = 0.35) -> Image.Image:
+def _tint_texture(
+    base: Image.Image,
+    target_rgb: np.ndarray,
+    strength: float = 0.35,
+    protect_mask: Optional[np.ndarray] = None,
+) -> Image.Image:
     """
     Colour-grade a texture toward target_rgb.
     Blends the texture's luminance with target colour at given strength.
+
+    `protect_mask` (float 0..1, texture-shaped) fades the tint out where it is 1.
+    Pass the face mask when tinting the skin: the face oval has just been
+    composited from the user's actual photograph and is the only region of the
+    model carrying true photographic colour, so shifting it toward a *sampled
+    average* of itself can only move it away from the truth. The tint exists to
+    pull the template's neck/ears/scalp toward the person's complexion — regions
+    the camera never saw — and that is exactly where it should apply.
     """
     arr = np.array(base.convert("RGB"), dtype=np.float32)
     mean = arr.mean(axis=(0, 1))
     shift = (target_rgb - mean) * strength
+    if protect_mask is not None:
+        # Broadcast (h,w) → (h,w,1) so the tint fades smoothly across the mask's
+        # feathered edge rather than leaving a hard seam at the oval boundary.
+        weight = np.clip(1.0 - protect_mask.astype(np.float32), 0.0, 1.0)[..., None]
+        shift = shift * weight
     tinted = np.clip(arr + shift, 0, 255).astype(np.uint8)
     return Image.fromarray(tinted)
 
@@ -537,9 +555,14 @@ def process(
     new_skin = _composite_face_onto_skin(skin_tex, warped_face, face_mask_uv)
     log.info("[%s] face composited onto skin texture (%.1fs)", job_id, time.time() - t0)
 
-    # 8. Skin-tone tint: ensure neck/hands roughly match face colour.
+    # 8. Skin-tone tint: pull the neck, ears and scalp toward the person's
+    # complexion. Only ~19% of the head's UV surface is the face oval the selfie
+    # actually covers; the other ~81% is template texture, and this tint is all
+    # that personalises it. Protect the oval itself — those pixels came straight
+    # from the photograph, so tinting them toward an average of themselves can
+    # only degrade the one region with true photographic colour.
     skin_tone = _extract_skin_tone(img_arr, landmarks, img_w, img_h)
-    new_skin = _tint_texture(new_skin, skin_tone, strength=0.25)
+    new_skin = _tint_texture(new_skin, skin_tone, strength=0.25, protect_mask=face_mask_uv)
 
     glb_ops.set_material_texture(glb, "Wolf3D_Skin", new_skin)
 
