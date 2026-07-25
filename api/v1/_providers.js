@@ -119,12 +119,22 @@ function slimDexProfileList(data, cap = 30) {
 
 // ── Solana JSON-RPC helpers ──────────────────────────────────────────────────
 
-// Solana RPC URL — same env resolution the rest of the platform uses
-// (api/_lib/env.js SOLANA_RPC_URL: configured Helius/Quicknode/Triton URL, or
-// the public mainnet endpoint). Computed once at module load per the registry
-// contract — a deploy that sets SOLANA_RPC_URL later needs a redeploy to pick
-// it up, same as every other provider `base`.
-const SOLANA_RPC_BASE = env.SOLANA_RPC_URL;
+// Primary Solana RPC — the best endpoint this deployment can name WITHOUT
+// loading the heavy connection pool: an explicit operator URL, else a keyed
+// provider (QuickNode/Helius/Alchemy), else the public endpoint. Production
+// sets no SOLANA_RPC_URL but does hold HELIUS_API_KEY/ALCHEMY_API_KEY, and
+// with the public endpoint as primary every call started with a near-certain
+// 429 from a GCP egress IP and burned a failover hop (or two) recovering.
+// Mirrors the priority order of solanaRpcEndpoints() in
+// api/_lib/solana/connection.js, which remains the failover pool (`bases`).
+// Computed once at module load per the registry contract — key changes need a
+// redeploy to pick up, same as every other provider `base`.
+const SOLANA_RPC_BASE =
+	(process.env.SOLANA_RPC_URL && env.SOLANA_RPC_URL) ||
+	process.env.QUICKNODE_RPC_URL ||
+	(process.env.HELIUS_API_KEY && `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`) ||
+	(process.env.ALCHEMY_API_KEY && `https://solana-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`) ||
+	env.SOLANA_RPC_URL;
 
 function rpcBody(method, params) {
 	return { jsonrpc: '2.0', id: 1, method, params };
