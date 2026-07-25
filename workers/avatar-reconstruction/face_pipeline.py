@@ -48,6 +48,21 @@ TEMPLATES_DIR = HERE / "templates"
 # the texture). Default on; set GEOMETRY_MORPH=0 to fall back to texture-only.
 GEOMETRY_MORPH_ENABLED = os.environ.get("GEOMETRY_MORPH", "1") != "0"
 
+# Skip the geometry morph (keep texture transfer) above this head yaw. A single
+# photo cannot constrain the self-occluded half of a turned face, so MediaPipe's
+# depth there is extrapolation and the morph would fit it as bone structure.
+#
+# 35° is deliberately generous. Benchmark evidence (`eval/adversarial`): the 40
+# clean reference faces peak at 2.7°; photos *of* photos — a poster, a phone
+# screen, a framed painting — read 9-18° and already produce heads inside the
+# real-face displacement band, so they need no blocking; a near-profile shot reads
+# 58.6° and is the sole input that pushes the head outside that band. The gate
+# therefore clears every genuine frontal by ~13x and still catches the one case
+# that measurably misbehaves. Raising it would admit unconstrained geometry;
+# lowering it risks rejecting real users, who (unlike this benchmark) do not shoot
+# perfect frontals.
+MAX_MORPH_YAW_DEG = float(os.environ.get("MAX_MORPH_YAW_DEG", "35"))
+
 _FACE_MAP: Optional[face_geometry.FaceMap] = None
 _FACE_MAP_LOADED = False
 
@@ -554,14 +569,27 @@ def process(
                 detected = face_geometry.landmarks_to_array(
                     landmarks, *best_img.size
                 )
-                if detected.shape[0] >= fmap.canonical_norm.shape[0]:
-                    morphed = face_geometry.morph_head_to_landmarks(base_pos, fmap, detected)
-                    glb_ops.set_head_geometry(glb, morphed, faces=faces)
-                    log.info("[%s] head geometry morphed to face identity (%.1fs)",
-                             job_id, time.time() - t0)
-                else:
+                yaw = (
+                    face_geometry.estimate_yaw_deg(detected, fmap)
+                    if detected.shape[0] >= fmap.canonical_norm.shape[0]
+                    else 0.0
+                )
+                if detected.shape[0] < fmap.canonical_norm.shape[0]:
                     log.warning("[%s] only %d landmarks — skipping geometry morph",
                                 job_id, detected.shape[0])
+                elif yaw > MAX_MORPH_YAW_DEG:
+                    # Too far turned for a single view to constrain the far side of
+                    # the face: MediaPipe's depth there is extrapolated, and morphing
+                    # would fit that guesswork into the skull. Texture transfer still
+                    # works from an angled shot, so keep it and leave the shape alone.
+                    log.warning("[%s] head yaw %.1f° > %.0f° — skipping geometry morph, "
+                                "keeping texture (single view cannot constrain the "
+                                "occluded side)", job_id, yaw, MAX_MORPH_YAW_DEG)
+                else:
+                    morphed = face_geometry.morph_head_to_landmarks(base_pos, fmap, detected)
+                    glb_ops.set_head_geometry(glb, morphed, faces=faces)
+                    log.info("[%s] head geometry morphed to face identity, yaw %.1f° (%.1fs)",
+                             job_id, yaw, time.time() - t0)
         except Exception as exc:  # noqa: BLE001 — refinement must never fail the job
             log.warning("[%s] geometry morph failed (%s) — keeping template shape",
                         job_id, exc)

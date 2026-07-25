@@ -233,6 +233,45 @@ def test_landmarks_are_independent_of_photo_aspect_ratio():
     print("ok  morph is invariant to source photo aspect ratio (3:4 / 1:1 / 9:16)")
 
 
+def test_yaw_estimate_tracks_actual_rotation():
+    """
+    `estimate_yaw_deg` must recover a known head rotation, because the morph gate
+    in face_pipeline refuses to reshape the skull above a yaw threshold and a
+    silently-wrong estimate would either admit unconstrained geometry or reject
+    real users' photos.
+
+    The canonical face is rotated by a known angle about the vertical axis and the
+    estimate must return it. Independent of scale and translation, since the
+    underlying alignment quotients both out.
+    """
+    _, _, _, fmap = _load()
+    canon = fmap.canonical_norm
+
+    for truth in (0.0, 10.0, 35.0, 58.0):
+        rad = np.radians(truth)
+        Ry = np.array([[np.cos(rad), 0.0, np.sin(rad)],
+                       [0.0, 1.0, 0.0],
+                       [-np.sin(rad), 0.0, np.cos(rad)]])
+        # scale + translate too: the estimate must be invariant to both
+        turned = 2.3 * (Ry @ canon.T).T + np.array([4.0, -1.5, 0.7])
+        got = fg.estimate_yaw_deg(turned, fmap)
+        assert abs(got - truth) < 0.5, f"yaw {truth}° estimated as {got:.1f}°"
+    print("ok  yaw estimate recovers known rotation (0/10/35/58°, scale+shift invariant)")
+
+
+def test_frontal_face_is_never_gated():
+    """
+    A neutral, frontal landmark set must read as ~0° yaw. If this drifts, the
+    pipeline's 35° gate would start skipping the morph for ordinary users — a
+    silent quality regression rather than a visible failure.
+    """
+    _, _, _, fmap = _load()
+    detected = fmap.canonical_norm + np.random.default_rng(7).normal(scale=0.01, size=fmap.canonical_norm.shape)
+    yaw = fg.estimate_yaw_deg(detected, fmap)
+    assert yaw < 5.0, f"frontal face estimated at {yaw:.1f}° yaw — would risk gating real users"
+    print(f"ok  frontal face reads {yaw:.2f}° yaw, far below the 35° morph gate")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:

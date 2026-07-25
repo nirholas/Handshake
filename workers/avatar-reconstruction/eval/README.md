@@ -153,6 +153,39 @@ not scored: that path is safe, because the job falls back to texture-only rather
 than morphing to garbage. A confident *wrong* detection is the dangerous case and
 is still unmeasured.
 
+## Audit safety (what happens on inputs that aren't the user's face)
+
+```bash
+python -m eval.make_adversarial --out eval/adversarial   # once
+python -m eval.detection_guard                            # audit
+```
+
+The other tools all assume the detector found the right face. This checks that
+assumption against 16 inputs where it shouldn't: pets, statues, dolls, masks,
+mannequins, faces on posters and phone screens and in paintings, crowds, and
+shots past the pose/quality envelope.
+
+Three results worth carrying forward:
+
+- **A face-plausibility gate cannot work.** MediaPipe FaceMesh is a fitted model;
+  it reports where a face *would* be, not whether one is there. A golden retriever
+  produced a better canonical fit (0.4758) than all 40 real humans
+  (0.5035-0.5238). Any residual threshold rejects real people first. Don't build
+  one.
+- **Wrong detections are already bounded.** Real faces move the head 0.2713-0.2839
+  from the template; every detected adversarial input lands 0.2586-0.2929, and
+  none exceeds the real-face maximum. Canonical alignment, `strength` damping, the
+  per-point clamp and the TPS off-face mask compose to keep any input on the
+  plausible-human-head manifold.
+- **Yaw is the exception, and is gated.** `face_pipeline.MAX_MORPH_YAW_DEG` (35°)
+  skips the morph and keeps the texture above a third of a turn, where the
+  occluded half of the face makes depth extrapolation rather than measurement.
+
+Read the displacement column asymmetrically: *above* the real-face band means more
+distortion than any genuine face and is a problem; *below* it means the result sat
+closer to the untouched template, which is the same safe place a non-detection
+lands.
+
 ## The reference set
 
 `--photos` is a directory of frontal faces, one file per sample, spanning what

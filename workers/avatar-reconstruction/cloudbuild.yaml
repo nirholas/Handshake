@@ -1,5 +1,5 @@
 # Cloud Build pipeline: build the avatar-reconstruction Docker image and deploy
-# it to Cloud Run (GPU) in us-central1.
+# it to Cloud Run (CPU-only — see the deploy step) in us-central1.
 #
 # Substitution variables (override via --substitutions flag or trigger config):
 #   _REGION         — Cloud Run region            (default: us-central1)
@@ -7,7 +7,7 @@
 #   _REPO           — Artifact Registry repo name  (default: avatar-reconstruction)
 #   _GCS_BUCKET     — Cloud Storage bucket for output GLBs
 #   _MIN_INSTANCES  — minimum warm instances       (default: 1)
-#   _MAX_INSTANCES  — maximum instances            (default: 3)
+#   _MAX_INSTANCES  — maximum instances            (default: 6)
 #
 # Required secrets in Secret Manager (must exist before first deploy):
 #   avatar-reconstruction-key — the API_KEY bearer secret
@@ -18,7 +18,8 @@ substitutions:
   _REPO: avatar-reconstruction
   _GCS_BUCKET: three-ws-avatar-reconstructions
   _MIN_INSTANCES: "1"   # keep one warm — face pipeline cold-start is ~15 s
-  _MAX_INSTANCES: "3"   # capped at 3 by GPU quota (NvidiaL4 no-zonal-redundancy)
+  _MAX_INSTANCES: "6"   # no longer GPU-bound (see the deploy step) — CPU-only,
+                        # so this scales on CPU quota rather than the 3-GPU pool
 
 steps:
   # ── Build ──────────────────────────────────────────────────────────────────
@@ -55,12 +56,23 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --port=8080
-      # GPU: NVIDIA L4 (24 GB VRAM) — sufficient for InstantMesh-large
-      - --gpu=1
-      - --gpu-type=nvidia-l4
-      - --no-gpu-zonal-redundancy
+      # NO GPU — deliberately. This service ran on an NVIDIA L4 for background
+      # removal (rembg/onnxruntime-gpu); every other stage (MediaPipe, TPS, GLB
+      # ops) is CPU-bound. Measured 2026-07-25: rembg took ~2.2 s per job with the
+      # L4 attached versus ~1.9 s on a plain CPU box, i.e. the CUDA provider was
+      # never actually engaging and the GPU bought nothing. Dropping it and
+      # spending the budget on cores instead is strictly better — end-to-end job
+      # time fell from ~4.8-5.8 s to ~4.2-4.7 s at byte-identical output quality
+      # (mean ISE 0.1595 both ways, 6-face check).
+      #
+      # This matters beyond this service: all L4 workers share ONE regional quota
+      # (NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion, granted 3) and the
+      # fleet was permanently over-subscribed at 4 warm instances. Returning this
+      # slot is what puts it back under its ceiling. Do not re-add a GPU here
+      # without a measurement showing a stage that genuinely uses one.
+      # See docs/ops/gcp-credits-plan.md.
       - --no-cpu-throttling
-      - --cpu=4
+      - --cpu=8
       - --memory=16Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
@@ -68,7 +80,7 @@ steps:
       - --timeout=120
       # Cloud Run IAM handles external auth; the service itself checks API_KEY.
       - --allow-unauthenticated
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,DEVICE=cuda
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},FIRESTORE_PROJECT=$PROJECT_ID,DEVICE=cpu
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

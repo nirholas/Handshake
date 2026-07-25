@@ -411,3 +411,4 @@ SECURITY-AUDIT.md
 
 # Scratch harnesses for local 3D/pose debugging — never committed.
 scripts/.scratch/
+/workers/avatar-reconstruction/eval/adversarial/

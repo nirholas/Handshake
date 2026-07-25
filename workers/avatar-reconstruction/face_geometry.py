@@ -340,6 +340,30 @@ def _median_nn_spacing(pts: np.ndarray) -> float:
 
 # ── MediaPipe adapter ────────────────────────────────────────────────────────
 
+def estimate_yaw_deg(detected_landmarks: np.ndarray, face_map: FaceMap) -> float:
+    """
+    Absolute head yaw in degrees, recovered from the same Umeyama alignment the
+    morph uses (so it costs one extra arctan and cannot disagree with it).
+
+    Why the morph needs this: a single photo only constrains the geometry it can
+    see. Past roughly a third of a turn the far side of the face is self-occluded,
+    MediaPipe's depth for those landmarks becomes extrapolation rather than
+    measurement, and the morph faithfully fits that noise into the skull.
+
+    Measured on the benchmark: the 40 clean reference faces sit at 0.9° mean /
+    2.7° worst, while a near-profile shot reads 58.6° and is the only input —
+    adversarial or real — that drives the head outside the displacement band every
+    genuine face produces. Photos *of* photos (a poster, a phone screen, a framed
+    painting) land in between at 9-18°, which is why the threshold is set well
+    above them: those already yield in-band heads and do not need blocking.
+    """
+    canon = face_map.canonical_norm
+    idx = face_map.stable_indices
+    det = np.asarray(detected_landmarks, dtype=np.float64)[: canon.shape[0]]
+    _, R, _ = umeyama(det[idx], canon[idx])
+    return float(abs(np.degrees(np.arctan2(-R[2, 0], np.hypot(R[0, 0], R[1, 0])))))
+
+
 def landmarks_to_array(landmarks, width: float | None = None, height: float | None = None) -> np.ndarray:
     """
     MediaPipe NormalizedLandmark list → (N,3) array. y is flipped to +up so the

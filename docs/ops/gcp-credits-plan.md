@@ -10,18 +10,20 @@ Six GPU services share those 3 GPUs:
 
 | Service | Role | minScale | maxScale |
 |---|---|---|---|
-| model-trellis | free text-to-3D lane (quality already maxed: steps 40, 4K textures) | 1 | 1 |
-| model-hunyuan3d | high-fidelity reconstruction + multi-view fusion | 1 | 1 |
+| model-trellis | free text-to-3D lane (quality already maxed: steps 40, 4K textures) | 1 | 3 |
+| model-hunyuan3d | high-fidelity reconstruction + multi-view fusion | 1 | 2 |
 | model-triposr | fast image-to-3D fallback | 0 | 2 |
 | model-triposg | image-to-3D | 0 | 2 |
-| unirig | auto-rigging | 1 | 2 |
-| avatar-reconstruction | photo-to-avatar | 1 | 3 |
+| ~~unirig~~ | retired (superseded by `workers/rig`) — **holds no GPU**, minScale 0 | 0 | — |
+| ~~avatar-reconstruction~~ | photo-to-avatar — **moved to CPU-only 2026-07-25, holds no GPU** (see below) | 1 | 6 |
 | model-hunyuan3d-21 | PBR realism lane, L4 build (min 0 since 2026-07-17; a pinned min 1 here starved every other rollout). KNOWN-BROKEN for actual jobs: 18 GiB tmpfs weight staging + 14 GiB model OOMs the 32 Gi L4 ceiling (signal 9 mid-load); see workers/model-hunyuan3d/README.md | 0 | 1 |
 
 `model-hunyuan3d-21-rtx` (same 2.1 PBR lane, warm min 1 / max 4) does NOT draw
 from this pool; it runs on the RTX PRO 6000 quota below.
 
-Four warm instances against a quota of 3 means the fleet is permanently at its ceiling: any concurrent generation forces failover to lower-quality lanes or queues. **This quota, not model parameters, is the current cap on 3D output quality and reliability.**
+**Resolved 2026-07-25 by returning a GPU nobody was using.** `avatar-reconstruction` held one of the three L4s solely for background removal (rembg / onnxruntime-gpu); every other stage (MediaPipe, TPS, GLB ops) is CPU-bound. Measured: rembg took **~2.2 s per job with the L4 attached versus ~1.9 s on a plain CPU box** — the CUDA provider was never engaging and the GPU was buying nothing. It now runs `--gpu=0 --cpu=8`, which is *faster* (end-to-end 4.2-4.7 s, was 4.8-5.8 s) at identical output quality (mean ISE 0.1595 both ways).
+
+Warm GPU demand therefore went from **3 of 3 (zero headroom)** to **2 of 3**. `model-trellis` (maxScale 3) and `model-hunyuan3d` (maxScale 2) were already permitted to burst and simply could not; that headroom is now real with no further config change. The lesson generalises: **before requesting more GPU quota, verify each holder actually uses its GPU.** A worker whose only GPU stage is an ONNX/rembg step is a prime suspect — check stage timings in its logs against the same stage on CPU.
 
 - A quota preference exists: `l4-no-zonal-us-central1-8`, raised to **preferred 16** on 2026-07-16 (was 8). Still reconciling as of 2026-07-17. Google reviews asynchronously; check with:
   `gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5`

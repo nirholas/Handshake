@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-25",
+			"title": "Signing avatars now sign whole sentences, touch what they are supposed to touch, and can raise an eyebrow",
+			"summary": "Six things changed in the signing avatar. It was lowering its arms all the way to its sides between every single word, so a sentence read as a list of unrelated words; now the hands rise once at the start and lower once at the end, the way a person signs, and everything in between stays up in signing space. Signs that involve the two hands touching, like fall, help, good and again, were positioning each hand at fixed coordinates and hoping they met; they are now solved from the actual shape of the posed hand, so the fingers land on the palm even on an avatar with longer fingers or bigger hands, and the same is true of signs that touch the face, which previously buried the fingertips somewhere inside the head. The avatar can now raise its eyebrows: American Sign Language carries grammar on the face, where raised brows make a yes-or-no question and furrowed brows a what-or-why question, and signs now carry those markers to any avatar that has facial expressions built in. You can slow the signing down to three-quarter or half speed, which learners and many Deaf viewers want and which no amount of replaying a video at full speed substitutes for. You can switch the avatar to sign left-handed, because roughly one signer in ten is left-dominant and signing left-handed is not a mistake to be corrected. And the vocabulary is now checked automatically against two rules that hold across the whole language, so a new sign has to be well-formed and not merely render without crashing.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/sign-language"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Turned-away selfies no longer guess at the shape of your head",
+			"summary": "When an avatar is built from a single photo, the half of your face pointing away from the camera is not in the picture at all. Up to now the shape step treated its estimate of that hidden half as though it were measured, so a photo taken at a steep angle could push made-up structure into the skull. The engine now checks how far the head is turned before reshaping anything. Past about a third of a turn it keeps the photo's colour and detail but leaves the head shape alone, which is the honest answer when the information simply is not there. The limit sits far away from ordinary selfies: across a forty-face test set of front-facing photos, the most turned one measured under three degrees against a threshold of thirty-five, so normal photos are unaffected. This came out of deliberately testing the engine on things that are not the user's face, including pets, statues, shop mannequins, carnival masks, faces on posters and phone screens, group shots and badly blurred or backlit photos. That testing produced a reassuring result worth stating plainly: none of them could push the avatar outside the range of head shapes real faces produce, because several safeguards already compound to keep any result on a plausible human head.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/create/selfie"
+		},
+		{
+			"date": "2026-07-25",
 			"title": "Our x402 facilitator now publishes a standard discovery catalog",
 			"summary": "The three.ws self-hosted x402 facilitator serves a new public endpoint, GET /api/x402-facilitator/discovery/resources, listing every paid endpoint on the platform in the standard facilitator catalog format that x402 explorers and aggregators (like x402scan) crawl. It is the same catalog as /.well-known/x402.json, so listings on third-party explorers always match what the platform actually charges. This is groundwork for three.ws payments showing up on ecosystem explorers without routing settlement through any third party.",
 			"tags": [
@@ -70,6 +89,17 @@
 				"infra"
 			],
 			"link": "/docs/trading-experiment"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Check any 3D tool result against the Spatial MCP standard, in the page, as you type",
+			"summary": "Spatial MCP is our open standard for handing back a live 3D scene as an AI tool result instead of a link, and until now three.ws/spatial-mcp only claimed that the payloads it displayed were valid. Now it proves it. The conformance checker the standard ships runs in your browser, and every scene on the page carries its verdict underneath: conformant, zero errors, and which version of the shape it speaks. Below that is a box you can paste your own tool result into. It checks the payload as you type and, instead of answering yes or no, names the exact field that is wrong and what it should be, so anyone writing an adapter for their own 3D tool can debug it on the page without reading the specification or installing anything. Load the deliberately broken example to see the whole thing at once: six mistakes, each naming its own field, and the fallback a real host would show a user for a payload it cannot render. Anything that passes renders immediately in the same viewer. The checker is the same code our own servers validate with, now published at a fixed address so third parties can import it directly, which means what the page tells you about a payload is exactly what a build will tell you. Two safeguards landed alongside it, because this page had been quietly showing two empty frames: one refuses to ship a page that asks for a file by a path that will not resolve, and one loads the page for real in a browser and fails if a scene does not appear or an asset it depends on has gone missing. The first immediately found the same defect on three more live pages, all fixed in this release: the agent editor was loading none of its code, the Czech landing page none of its styling, and the first-meet page none of its script.",
+			"tags": [
+				"feature",
+				"fix",
+				"infra"
+			],
+			"link": "/spatial-mcp"
 		},
 		{
 			"date": "2026-07-25",

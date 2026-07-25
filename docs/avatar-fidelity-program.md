@@ -85,13 +85,40 @@ each face is degraded on the fly (blur, 12° turn, occlusion, dim, 1/6 resolutio
 and scored on whether the same person still yields the same head. Fidelity and
 stability pull opposite ways, and shipped parameters sit at the knee (Track 1).
 
-**The remaining gap is the confidently-wrong detection.** All 75 degraded images
-still produced a face detection, so the regime that matters most is untested. A
-detection *failure* is safe — the job falls back to texture-only rather than
-morphing to garbage — but a detector returning a confident landmark set for the
-wrong thing (a face in a poster, a pet, a pattern in the background) is not, and
-nothing here bounds it. Closing this needs samples severe enough to break
-detection outright, plus non-face and multi-face images.
+The confidently-wrong detection is covered too, by a 16-sample adversarial set
+([`eval/make_adversarial.py`](../workers/avatar-reconstruction/eval/make_adversarial.py))
+spanning non-faces (pet, statue, doll, mask, mannequin), depicted faces (poster,
+phone screen, painting, magazine), crowds, and out-of-envelope shots
+(near-profile, hard backlight, motion blur, macro), audited by
+[`eval/detection_guard.py`](../workers/avatar-reconstruction/eval/detection_guard.py).
+That audit produced three findings, one of which killed the guard I was about to
+build:
+
+**A face-plausibility gate cannot work — do not rebuild one.** The natural design
+is to align landmarks to the canonical face and reject a large residual. MediaPipe
+FaceMesh is a *fitted model*: it does not decide whether something is a face, it
+reports where a face would be. A golden retriever scored 0.4758, a *better*
+canonical fit than all 40 real humans (0.5035-0.5238). Any threshold separating
+them rejects real people first.
+
+**The catastrophic failure mode does not exist in this architecture.** Head
+displacement from the template: real faces 0.2713-0.2839, every detected
+adversarial input 0.2586-0.2929, and **zero** ungated adversarial inputs distort
+more than a real face. A dog photo yields a slightly unusual *human* head, not a
+monstrous one. Four mechanisms compose to guarantee it: canonical alignment
+removes pose and scale, `strength` damps the residual, the per-point clamp bounds
+outliers, and the TPS off-face mask confines deformation to the face. Guarding the
+mesh against wrong detections is therefore unnecessary — which is worth knowing
+before someone spends a sprint on it.
+
+**Yaw was the one thing worth gating.** Real frontals peak at 2.7°; the
+near-profile shot reads 58.6° and was the sole input pushing the head outside the
+real-face band. Past roughly a third of a turn the far side of the face is
+self-occluded, so its depth is extrapolation and the morph fits guesswork as bone
+structure. `face_pipeline.MAX_MORPH_YAW_DEG` (35°) now skips the morph and keeps
+texture transfer above that, clearing every genuine frontal by ~13x. Photos of
+photos sit at 9-18°, already produce in-band heads, and are deliberately not
+blocked.
 
 ### Track 1 — Ship the morph that is already written `[done]`
 
@@ -161,13 +188,30 @@ shadow, ears, the scalp, under the jaw — none of it is in the photo, and today
 those regions fall back to a tinted template texture. That mismatch is what
 reads as "avatar" rather than "person" the moment the head turns.
 
-Imagen inpainting on Vertex AI fills the unseen regions conditioned on the
-observed face, in UV space so the result stays inside the template's texture
-layout. Pure GCP, pre-approved, no licence exposure, usage-priced.
+Two candidate mechanisms, and the measurement in Track 3 decides between them.
 
-ISE will not move — it is a geometry metric. This track needs a texture metric
-alongside it, and that is part of the track: masked SSIM / LPIPS against held-out
-views, plus a seam-continuity check across the UV boundary.
+**Do not inpaint the UV atlas directly.** A UV layout is not a photograph; a
+generative image model conditioned on one will produce photographically plausible
+but UV-incoherent content, and the seams land exactly where the head turns.
+
+**Do synthesise additional camera views and warp them through the existing path.**
+Each view goes through the same landmark-driven TPS warp as the frontal
+(`_warp_face_to_uv`), so coverage of cheeks, ears and jawline is UV-coherent by
+construction rather than by hoping the model understood the atlas.
+
+Crucially, the finding that kills multi-view for *geometry* (Track 3) does not
+kill it for *texture*. Rotated synthesised views measure as a different person
+geometrically, but the same-pose control shows appearance is reproduced faithfully
+(0.0069 divergence), and texture needs plausible skin, not millimetre-accurate
+landmarks. A 3/4 view that is 0.03 off in face shape still carries the correct
+complexion, beard, hairline and ear into the regions a frontal cannot see. The
+severity of the error differs by an order of magnitude between the two uses.
+
+ISE will not move — it is a geometry metric, texture-blind by design. This track
+must bring its own: masked SSIM / LPIPS against held-out views, plus a
+seam-continuity check across the UV boundary. Gate the synthesised view on the
+same-pose identity check before compositing, so a bad generation is rejected
+rather than painted on.
 
 ### Track 3 — Dense identity geometry by per-subject optimisation
 
@@ -186,10 +230,29 @@ current head, compare to the photo, backpropagate to vertex positions, repeat.
   survives. Vertex count and order never change, so `glb_ops.set_head_geometry`
   writes the result back without touching skinning or morph targets — the
   property `test_face_geometry.py` already pins.
-- **Multi-view from one photo:** synthesise consistent 3/4 and profile views
-  with Vertex image models, then fit against all views at once. Single-view
-  depth ambiguity is the ceiling on shape accuracy, and this attacks it directly.
-  The multi-view fusion pattern already exists in `workers/model-hunyuan3d`.
+- **Multi-view from one photo — MEASURED AND REJECTED for geometry.** The plan
+  was to synthesise 3/4 and profile views with a Vertex image model and fit
+  against all of them at once. It does not survive contact with the identity
+  metric. Asking `gemini-2.5-flash-image` for the same person turned 30°:
+
+  | comparison | identity-shape divergence |
+  |---|---|
+  | same-pose regeneration (control) | **0.0069** |
+  | synthesised 3/4 view (19.7° yaw) | 0.0396 |
+  | a *different real person* | 0.0358 (range 0.0268-0.0489) |
+
+  The control matters: at unchanged pose the model reproduces the person ~5x more
+  faithfully than a stranger, so identity preservation is genuinely good. But once
+  the head is rotated, the recoverable face geometry is **statistically
+  indistinguishable from a different person**. Whether the cause is the model
+  drifting under pose change or MediaPipe's depth being pose-dependent (likely
+  both), the signal is too degraded to fit a skull to. Feeding it to a
+  differentiable fit would optimise confidently toward someone who does not exist.
+
+  Do not revive this leg on synthesised views. It needs genuine multi-pose capture
+  — several real frames of the actual user, which the `/scan` flow already
+  collects — and the metric above is the acceptance test any such source must pass
+  before it drives geometry.
 
 No third-party weights, no face dataset, no licence question: it optimises
 against the user's own photo. It is GPU-hungry per avatar, which is exactly the
