@@ -52,6 +52,9 @@ globalThis.Image = FakeImage;
 globalThis.Blob = Blob;
 
 const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+// Meshopt-compressed avatars (xbot, cz, the realistic set) decode with the
+// pure-WASM decoder three ships; no workers, so it runs in plain Node.
+const { MeshoptDecoder } = await import('three/addons/libs/meshopt_decoder.module.js');
 const { attachGarment, applySkinOcclusion, MIN_BIND_COVERAGE } =
 	await import('../src/avatar-garment.js');
 
@@ -66,6 +69,7 @@ async function fetchBytes(source) {
 
 function loadGlb(bytes) {
 	const loader = new GLTFLoader();
+	loader.setMeshoptDecoder(MeshoptDecoder);
 	return new Promise((res, rej) => {
 		loader.parse(
 			bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
