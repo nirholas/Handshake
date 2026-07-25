@@ -20,6 +20,7 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, put, esc, relTime, ApiError } from '../api.js';
+import { apiFetch } from '../../api.js';
 import { errorStateHTML, emptyStateHTML, skeletonHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 
 // Scopes accepted by /api/keys — match api/keys/index.js ALLOWED_SCOPES exactly.
@@ -822,7 +823,7 @@ async function runMcpTest(host, key) {
 		// The plaintext key is hashed server-side and can't be replayed, so the
 		// test endpoint validates this key by id (ownership, revoked, expired) and
 		// runs the initialize → tools/list handshake with its real scope.
-		const res = await fetch('/api/developer/mcp-test', {
+		const res = await apiFetch('/api/developer/mcp-test', {
 			method: 'POST',
 			credentials: 'include',
 			headers: { accept: 'application/json', 'content-type': 'application/json' },

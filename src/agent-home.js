@@ -8,6 +8,7 @@
  * Embeddable anywhere: main page identity card, /agent/:id home page.
  */
 
+import { apiFetch } from './api.js';
 import { ACTION_TYPES } from './agent-protocol.js';
 import { MEMORY_TYPES } from './agent-memory.js';
 import { mountPumpFunCard } from './agent-home-pumpfun.js';
@@ -457,11 +458,14 @@ export class AgentHome {
 			el.classList.add('is-saving');
 
 			try {
-				const resp = await fetch(`/api/agents/${this.identity.id}`, {
+				// apiFetch carries the single-use CSRF token this cookie-session PUT
+				// needs; allowAnonymous keeps the 401 local-save branch below reachable.
+				const resp = await apiFetch(`/api/agents/${this.identity.id}`, {
 					method: 'PUT',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },
 					body: JSON.stringify({ [field]: next }),
+					allowAnonymous: true,
 				});
 
 				// Not authenticated — save is local-only, don't treat as an error.

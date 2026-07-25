@@ -23,6 +23,7 @@
 
 		<script type="module">
 			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+			import { apiFetch } from '/src/api.js';
 
 			const statusEl = document.getElementById('status');
 			const contentEl = document.getElementById('content');
@@ -50,7 +51,7 @@
 			}
 
 			async function saveStrategy(agentId, strategy) {
-				const r = await fetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, {
+				const r = await apiFetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },

@@ -90,9 +90,16 @@ export async function execute({ agent, host, args }) {
 	const periodSeconds = 7 * 24 * 3600;
 
 	try {
+		// Cookie-session mutation: attach the single-use double-submit CSRF token.
+		// Inlined (not imported from /src/api.js) because this file is also
+		// dynamically imported server-side by api/cron/run-subscriptions.js.
+		const csrf = await fetch('/api/csrf-token', { credentials: 'include' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j) => j?.data?.token || '')
+			.catch(() => '');
 		const res = await fetch('/api/subscriptions', {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
 			credentials: 'include',
 			body: JSON.stringify({
 				agentId,

@@ -13,6 +13,7 @@
 // or typo'd config never breaks <agent-3d> boot.
 
 import { encryptBlob, bytesToBase64, base64ToBytes } from './crypto.js';
+import { apiFetch } from '../api.js';
 import { log } from '../shared/log.js';
 
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
@@ -389,11 +390,14 @@ export class Memory {
 		const existingId = this._remoteIds.get(file);
 		if (existingId) entry.id = existingId;
 		try {
-			const resp = await fetch('/api/agent-memory', {
+			// allowAnonymous: this background sync swallows failures silently; a 401
+			// must stay a silent no-op, not a login redirect.
+			const resp = await apiFetch('/api/agent-memory', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
 				body: JSON.stringify({ agentId: this.namespace, entry }),
+				allowAnonymous: true,
 			});
 			if (!resp.ok) return;
 			const { entry: saved } = await resp.json();

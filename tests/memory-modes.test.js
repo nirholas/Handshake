@@ -100,11 +100,13 @@ describe('Memory.load — remote', () => {
 			.mockResolvedValueOnce({ ok: true, json: async () => ({ entries: [] }) });
 		const mem = await Memory.load({ mode: 'remote', namespace: 'agent-uuid', fetchFn });
 
-		// Subsequent write hits the global fetch (the upsert path is hard-wired
-		// to it). Stub it for the assertion.
-		const upsert = vi.fn().mockResolvedValue({
-			ok: true,
-			json: async () => ({ entry: { id: 'srv-id-1' } }),
+		// Subsequent write goes through apiFetch on the global fetch: first a
+		// single-use CSRF token issue, then the upsert carrying that token.
+		const upsert = vi.fn(async (url) => {
+			if (String(url).startsWith('/api/csrf-token')) {
+				return { ok: true, json: async () => ({ data: { token: 'tok-1' } }) };
+			}
+			return { ok: true, json: async () => ({ entry: { id: 'srv-id-1' } }) };
 		});
 		globalThis.fetch = upsert;
 
@@ -115,13 +117,17 @@ describe('Memory.load — remote', () => {
 			body: 'hit a real DB',
 		});
 
-		// _remoteUpsert is fire-and-forget — flush it.
+		// _remoteUpsert is fire-and-forget; flush it (token fetch + upsert are
+		// two chained awaits, so drain the timer queue twice).
+		await new Promise((r) => setTimeout(r, 0));
 		await new Promise((r) => setTimeout(r, 0));
 
-		expect(upsert).toHaveBeenCalledOnce();
-		const [url, init] = upsert.mock.calls[0];
+		expect(upsert).toHaveBeenCalledTimes(2);
+		expect(upsert.mock.calls[0][0]).toBe('/api/csrf-token');
+		const [url, init] = upsert.mock.calls[1];
 		expect(url).toBe('/api/agent-memory');
 		expect(init.method).toBe('POST');
+		expect(new Headers(init.headers).get('x-csrf-token')).toBe('tok-1');
 		const sent = JSON.parse(init.body);
 		expect(sent.agentId).toBe('agent-uuid');
 		expect(sent.entry.type).toBe('feedback');

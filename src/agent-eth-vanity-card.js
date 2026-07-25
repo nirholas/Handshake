@@ -22,6 +22,7 @@
  */
 
 import { keccak_256 } from '@noble/hashes/sha3';
+import { apiFetch } from './api.js';
 import { grindCreate2Vanity } from './eth/vanity/grinder.js';
 import {
 	validatePattern, validateAddress, validateInitCodeHash,
@@ -351,14 +352,14 @@ export function mountAgentEthVanityCard({ panel, identity, onAssigned }) {
 		root.querySelector('[data-act="replace"]').addEventListener('click', async () => {
 			if (!confirm('Replace the saved CREATE2 vanity record? The address above and any deploy history will no longer be associated with this agent.')) return;
 			try {
-				await fetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
+				await apiFetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
 				state.record = null; state.mode = 'form'; state.err = null; state.deployStatusByChain = {}; render();
 			} catch (e) { state.err = e.message; render(); }
 		});
 		root.querySelector('[data-act="remove"]').addEventListener('click', async () => {
 			if (!confirm('Remove the saved CREATE2 vanity record?')) return;
 			try {
-				await fetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
+				await apiFetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
 				state.record = null; state.err = null; state.deployStatusByChain = {}; render();
 			} catch (e) { state.err = e.message; render(); }
 		});
@@ -403,7 +404,7 @@ export function mountAgentEthVanityCard({ panel, identity, onAssigned }) {
 				onProgress:   (p) => { state.progress = p; render(); },
 			});
 
-			const res = await fetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, {
+			const res = await apiFetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -422,7 +423,7 @@ export function mountAgentEthVanityCard({ panel, identity, onAssigned }) {
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) {
 				if (res.status === 409) {
-					await fetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
+					await apiFetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
 					return onGrindAndAssign();
 				}
 				throw new Error(data.error_description || `save failed (${res.status})`);
@@ -496,7 +497,7 @@ export function mountAgentEthVanityCard({ panel, identity, onAssigned }) {
 			const receipt = await tx.wait();
 			if (receipt?.status !== 1) throw new Error('deploy reverted');
 
-			const mark = await fetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity/deployed`, {
+			const mark = await apiFetch(`/api/agents/${encodeURIComponent(identity.id)}/eth-vanity/deployed`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },

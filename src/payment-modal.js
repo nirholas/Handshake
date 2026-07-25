@@ -13,6 +13,7 @@ import { formatUsdcEq, formatSolEq } from './shared/usd-price.js';
 import { buildReceiptHTML, buildReceiptText } from './shared/payment-receipt.js';
 import { showAddFunds } from './shared/add-funds.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
 
 const USDC_DECIMALS = 6;
@@ -600,7 +601,7 @@ export class SkillPaymentModal {
 		this._setStatus('Creating purchase…');
 		let purchase;
 		try {
-			const r = await fetch('/api/marketplace/purchase', {
+			const r = await apiFetch('/api/marketplace/purchase', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				credentials: 'include',
@@ -736,7 +737,7 @@ export class SkillPaymentModal {
 	async _pollConfirm(reference, maxMs = 60_000) {
 		const deadline = Date.now() + maxMs;
 		while (Date.now() < deadline) {
-			const r = await fetch(`/api/marketplace/purchase/${reference}/confirm`, {
+			const r = await apiFetch(`/api/marketplace/purchase/${reference}/confirm`, {
 				method: 'POST',
 				credentials: 'include',
 			});
@@ -871,7 +872,7 @@ export class PaymentChip {
 				setStatus('Creating purchase…');
 				let purch;
 				try {
-					const r = await fetch('/api/marketplace/purchase', {
+					const r = await apiFetch('/api/marketplace/purchase', {
 						method: 'POST',
 						headers: { 'content-type': 'application/json' },
 						credentials: 'include',
@@ -1030,7 +1031,7 @@ export class PaymentChip {
 	async _pollConfirm(reference, maxMs = 60_000) {
 		const deadline = Date.now() + maxMs;
 		while (Date.now() < deadline) {
-			const r = await fetch(`/api/marketplace/purchase/${reference}/confirm`, {
+			const r = await apiFetch(`/api/marketplace/purchase/${reference}/confirm`, {
 				method: 'POST',
 				credentials: 'include',
 			});

@@ -408,6 +408,7 @@
 	<div id="toasts"></div>
 
 <script type="module">
+	import { apiFetch } from '/src/api.js';
 	// ── Presets ─────────────────────────────────────────────────────────────
 	const PRESETS = {
 		momentum: {
@@ -714,8 +715,8 @@
 	provisionBtn.onclick = async () => {
 		if (!agentSel.value) return;
 		provisionBtn.disabled = true; provisionBtn.textContent = 'Provisioning…';
-		const r = await fetch(`/api/agents/${agentSel.value}/solana?network=${netSel.value}`, {
-			method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}',
+		const r = await apiFetch(`/api/agents/${agentSel.value}/solana?network=${netSel.value}`, {
+			method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}', allowAnonymous: true,
 		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
 		if (r?.data?.address) {
 			currentWallet = { address: r.data.address, sol: r.data.sol ?? 0 };

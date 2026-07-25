@@ -62,6 +62,7 @@ import {
 	BSC_TESTNET_CHAIN_ID,
 } from './gasless-register.js';
 import { onchainBadgeHTML, ensureOnchainBadgeStyles } from '../shared/onchain-badge.js';
+import { apiFetch } from '../api.js';
 import { log } from '../shared/log.js';
 ensureOnchainBadgeStyles();
 
@@ -864,7 +865,7 @@ export class RegisterUI {
 			return;
 		}
 		try {
-			const res = await fetch(
+			const res = await apiFetch(
 				`/api/agents/${encodeURIComponent(this._backendAgentId)}/wallet`,
 				{
 					method: 'POST',

@@ -704,7 +704,13 @@
 			document.getElementById('sign-out-everywhere-btn').addEventListener('click', async () => {
 				const btn = document.getElementById('sign-out-everywhere-btn');
 				btn.disabled = true;
-				await fetch('/api/auth/logout-everywhere', { method: 'POST', credentials: 'include' }).finally(() => {
+				// Cookie-session mutation: attach the single-use double-submit CSRF
+				// token (this page's local apiFetch helper does not carry one).
+				const csrf = await fetch('/api/csrf-token', { credentials: 'include' })
+					.then((r) => (r.ok ? r.json() : null))
+					.then((j) => j?.data?.token || '')
+					.catch(() => '');
+				await fetch('/api/auth/logout-everywhere', { method: 'POST', credentials: 'include', headers: { 'x-csrf-token': csrf } }).finally(() => {
 					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
 					location.href = '/login';
 				});

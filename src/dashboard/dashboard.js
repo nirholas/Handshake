@@ -1,6 +1,7 @@
 // Dashboard single-file app. Uses native DOM — no framework.
 // Keeps bundle small and ensures anything rendering <model-viewer> works without bundler.
 
+import { apiFetch } from '/src/api.js';
 import { mountAgentSolanaWalletCard } from '/src/agent-solana-wallet.js';
 import { mountAgentVanityGrinderCard } from '/src/agent-vanity-grinder.js';
 import { onchainBadgeHTML } from '/src/shared/onchain-badge.js';
@@ -1166,7 +1167,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 							append_link: linkEl.checked,
 						}
 					: { text, agent_id: avatar.agent_id || avatar.id, append_link: linkEl.checked };
-			const r = await fetch('/api/x/post', {
+			const r = await apiFetch('/api/x/post', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -1208,7 +1209,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 		if (isNaN(when.getTime())) return setMsg('Could not parse that date.', '#ffb3b3');
 		setMsg('Scheduling…');
 		try {
-			const r = await fetch('/api/x/schedule', {
+			const r = await apiFetch('/api/x/schedule', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -1232,7 +1233,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	disconnectBtn.addEventListener('click', async () => {
 		if (!confirm('Disconnect your X account from three.ws?')) return;
 		try {
-			await fetch('/api/x/status', { method: 'DELETE', credentials: 'include' });
+			await apiFetch('/api/x/status', { method: 'DELETE', credentials: 'include' });
 			loadXPanel({ host, meterEl, bodyEl, avatar });
 		} catch (err) {
 			setMsg(err.message, '#ffb3b3');
@@ -1276,7 +1277,7 @@ async function loadXReviews(host) {
 				const id = btn.getAttribute('data-approve');
 				btn.disabled = true;
 				try {
-					const r = await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
+					const r = await apiFetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
 						method: 'PATCH',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
@@ -1300,7 +1301,7 @@ async function loadXReviews(host) {
 				const id = btn.getAttribute('data-reject');
 				btn.disabled = true;
 				try {
-					await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
+					await apiFetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
 						method: 'DELETE',
 						credentials: 'include',
 					});
@@ -1451,7 +1452,7 @@ async function loadXTriggers(host, avatar) {
 		const config = readConfigFromUI(kind);
 		const existing = byKind[kind];
 		if (existing) {
-			const r = await fetch(`/api/x/triggers?id=${encodeURIComponent(existing.id)}`, {
+			const r = await apiFetch(`/api/x/triggers?id=${encodeURIComponent(existing.id)}`, {
 				method: 'PATCH',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -1461,7 +1462,7 @@ async function loadXTriggers(host, avatar) {
 			byKind[kind] = (await r.json()).trigger;
 		} else {
 			const autoPublish = !host.querySelector('[data-trig-review-all]')?.checked;
-			const r = await fetch('/api/x/triggers', {
+			const r = await apiFetch('/api/x/triggers', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -1485,7 +1486,7 @@ async function loadXTriggers(host, avatar) {
 			const ids = Object.values(byKind).map((t) => t.id);
 			for (const id of ids) {
 				try {
-					const r = await fetch(`/api/x/triggers?id=${encodeURIComponent(id)}`, {
+					const r = await apiFetch(`/api/x/triggers?id=${encodeURIComponent(id)}`, {
 						method: 'PATCH',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
@@ -1570,7 +1571,7 @@ async function loadScheduledPosts(host) {
 				const id = btn.getAttribute('data-cancel');
 				btn.disabled = true;
 				try {
-					await fetch(`/api/x/schedule?id=${encodeURIComponent(id)}`, {
+					await apiFetch(`/api/x/schedule?id=${encodeURIComponent(id)}`, {
 						method: 'DELETE',
 						credentials: 'include',
 					});
@@ -1999,7 +2000,7 @@ async function attachAvatarToDefaultAgent(avatarId) {
 	if (!meRes.ok) return;
 	const { agent } = await meRes.json();
 	if (!agent) return;
-	await fetch(`/api/agents/${agent.id}`, {
+	await apiFetch(`/api/agents/${agent.id}`, {
 		method: 'PUT',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
@@ -2714,7 +2715,7 @@ function bindOnchainDeploy(body, agent) {
 			const chainId =
 				Number((await window.ethereum?.request?.({ method: 'eth_chainId' })) || 0) ||
 				undefined;
-			await fetch(`/api/agents/${encodeURIComponent(agent.id)}/wallet`, {
+			await apiFetch(`/api/agents/${encodeURIComponent(agent.id)}/wallet`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -3146,7 +3147,7 @@ async function renderMonetization(root) {
 			msg.style.color = '#888';
 			msg.textContent = 'Removing…';
 			try {
-				const r = await fetch(
+				const r = await apiFetch(
 					`/api/agents/${agentId}/pricing/${encodeURIComponent(skill)}?hard=true`,
 					{ method: 'DELETE', credentials: 'include' },
 				);
@@ -3204,7 +3205,7 @@ async function renderMonetization(root) {
 			msg.style.color = '#888';
 			msg.textContent = 'Saving…';
 			try {
-				const r = await fetch(
+				const r = await apiFetch(
 					`/api/agents/${agentId}/pricing/${encodeURIComponent(skill)}`,
 					{
 						method: 'PUT',
@@ -3287,7 +3288,7 @@ async function renderMonetization(root) {
 		msgEl.style.color = '#888';
 		msgEl.textContent = 'Saving…';
 		try {
-			const r = await fetch('/api/billing/payout-wallets', {
+			const r = await apiFetch('/api/billing/payout-wallets', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
@@ -3433,7 +3434,7 @@ async function renderSubscriptions(root) {
 			btn.disabled = true;
 			let r = null;
 			try {
-				r = await fetch(`/api/subscriptions/plans/${btn.dataset.id}`, {
+				r = await apiFetch(`/api/subscriptions/plans/${btn.dataset.id}`, {
 					method: 'DELETE',
 					credentials: 'include',
 				});
@@ -3453,7 +3454,7 @@ async function renderSubscriptions(root) {
 			btn.disabled = true;
 			let r = null;
 			try {
-				r = await fetch(`/api/subscriptions/${btn.dataset.id}`, {
+				r = await apiFetch(`/api/subscriptions/${btn.dataset.id}`, {
 					method: 'DELETE',
 					credentials: 'include',
 				});
@@ -3491,7 +3492,7 @@ async function renderSubscriptions(root) {
 			msg.textContent = 'Creating…';
 			let r = null;
 			try {
-				r = await fetch('/api/subscriptions/plans', {
+				r = await apiFetch('/api/subscriptions/plans', {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },
@@ -4017,7 +4018,7 @@ let _remotePrefsTimer = null;
 function scheduleRemotePrefsSync(prefs) {
 	clearTimeout(_remotePrefsTimer);
 	_remotePrefsTimer = setTimeout(() => {
-		fetch('/api/dashboard/prefs', {
+		apiFetch('/api/dashboard/prefs', {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
@@ -4122,7 +4123,7 @@ async function renderAccount(root) {
 			return;
 		}
 		try {
-			const res = await fetch('/api/auth/profile', {
+			const res = await apiFetch('/api/auth/profile', {
 				method: 'PATCH',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },

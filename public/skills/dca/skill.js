@@ -1,6 +1,22 @@
 // DCA skill — client-side setup and execute handlers.
 // Server-side execution (onPeriod) lives in api/cron/run-dca.js.
 
+// Cookie-session mutations need the double-submit CSRF token: fetch a
+// single-use token from /api/csrf-token and echo it in x-csrf-token. Inlined
+// (not imported from /src/api.js) because this file is also loaded outside
+// the page module graph (skill sandbox worker, server-side cron import).
+async function csrfToken(fetchImpl) {
+	const f = fetchImpl || fetch;
+	try {
+		const r = await f('/api/csrf-token', { credentials: 'include' });
+		if (!r.ok) return '';
+		const j = await r.json();
+		return j?.data?.token || '';
+	} catch {
+		return '';
+	}
+}
+
 // ── Per-chain config ──────────────────────────────────────────────────────────
 
 const CHAIN_CONFIG = {
@@ -133,7 +149,7 @@ export async function execute({ agent, host, args = {} }) {
 	// Store strategy server-side
 	const res = await fetch('/api/dca-strategies', {
 		method: 'POST',
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', 'x-csrf-token': await csrfToken() },
 		credentials: 'include',
 		body: JSON.stringify({
 			agent_id: agent.id,
@@ -182,6 +198,7 @@ export async function stop_dca(args, ctx) {
 
 	const res = await ctx.fetch(`/api/dca-strategies/${encodeURIComponent(strategy_id)}`, {
 		method: 'DELETE',
+		headers: { 'x-csrf-token': await csrfToken(ctx.fetch) },
 	});
 	if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
 	return { ok: true };

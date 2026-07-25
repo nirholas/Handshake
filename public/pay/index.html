@@ -857,6 +857,7 @@
 </div>
 
 <script type="module">
+import { apiFetch } from '/src/api.js';
 const $ = (id) => document.getElementById(id);
 const conv = $('conv'), stepsEl = $('steps'), receiptEl = $('receipt');
 const promptEl = $('prompt'), sendBtn = $('send'), quickEl = $('quick');
@@ -1013,7 +1014,7 @@ genBtn.addEventListener('click', async () => {
   genSpinner.style.display = '';
   genBtn.childNodes[1].textContent = ' Generating…';
   try {
-    const r = await fetch(`/api/agents/${pendingGenAgentId}/solana`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    const r = await apiFetch(`/api/agents/${pendingGenAgentId}/solana`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', allowAnonymous: true });
     if (!r.ok) throw new Error((await r.json()).error || 'gen_failed');
     genOverlay.classList.remove('show');
     // reload agents to get the new address
@@ -1777,11 +1778,14 @@ async function run(call, displayLabel) {
   window.addEventListener('pagehide', onUnload, { once: true });
 
   try {
-    const res = await fetch('/api/x402-pay', {
+    // allowAnonymous: platform-mode demo calls work signed out; a 401 must
+    // render in the console below, not bounce the page to /login.
+    const res = await apiFetch('/api/x402-pay', {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
       body: JSON.stringify(selectedAgent ? { ...call, agentId: selectedAgent.id } : call),
       signal: ctrl.signal,
+      allowAnonymous: true,
     });
     if (!res.ok || !res.body) {
       const text = await res.text();

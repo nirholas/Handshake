@@ -8,6 +8,7 @@
 // means the user is not signed in — the badge stays hidden.
 
 import { isPushSupported, getPushState, getPushConfig, enablePush } from './push-notifications.js';
+import { apiFetch } from './api.js';
 
 const POLL_INTERVAL = 30_000;
 const AUTH_HINT_KEY = '3dagent:auth-hint';
@@ -566,7 +567,7 @@ class NotificationInbox {
 		this._updateBadge();
 		rowEl?.classList.remove('is-unread');
 		rowEl?.querySelector('.notif-unread-dot')?.remove();
-		fetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST', credentials: 'include' }).catch(() => {});
+		apiFetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST', credentials: 'include', allowAnonymous: true }).catch(() => {});
 	}
 
 	async _markAllRead() {
@@ -577,7 +578,7 @@ class NotificationInbox {
 		this._updateBadge();
 		this._renderBody();
 		try {
-			await fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include' });
+			await apiFetch('/api/notifications/read-all', { method: 'POST', credentials: 'include', allowAnonymous: true });
 		} catch { /* fire-and-forget */ }
 	}
 }

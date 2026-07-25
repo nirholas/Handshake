@@ -14,6 +14,7 @@ import { AvatarCreator } from './avatar-creator.js';
 import { resolveURI, isDecentralizedURI } from './ipfs.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { isSafeQueryModelUrl } from './shared/safe-model-url.js';
+import { apiFetch } from './api.js';
 
 // Resolve a model URL for loading: expand decentralized URIs (ipfs:/ar:) via the
 // gateway, then route r2.dev assets through the dev /r2-proxy so cross-origin
@@ -952,7 +953,7 @@ class App {
 			if (this._editingAgentId) {
 				// Update existing agent's avatar
 				if (avatarId) {
-					await fetch(`/api/agents/${this._editingAgentId}`, {
+					await apiFetch(`/api/agents/${this._editingAgentId}`, {
 						method: 'PUT',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
@@ -970,7 +971,7 @@ class App {
 				let agentId = data?.agent?.id;
 
 				if (!agentId) {
-					const created = await fetch('/api/agents', {
+					const created = await apiFetch('/api/agents', {
 						method: 'POST',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
@@ -981,7 +982,7 @@ class App {
 				}
 
 				if (agentId && avatarId) {
-					await fetch(`/api/agents/${agentId}`, {
+					await apiFetch(`/api/agents/${agentId}`, {
 						method: 'PUT',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },

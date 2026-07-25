@@ -20,6 +20,7 @@
 import { grindVanity } from '../../solana/vanity/grinder.js';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { apiFetch } from '../../api.js';
 
 /**
  * @param {object} opts
@@ -56,7 +57,7 @@ export async function provisionVanityForAgent(opts) {
 	// base58-encoded secret_key and (optional) vanity_prefix — see
 	// api/agents/solana-wallet.js for the contract.
 	const secretBase58 = bs58.encode(ground.secretKey);
-	const resp = await fetch(`/api/agents/${encodeURIComponent(opts.agentId)}/solana`, {
+	const resp = await apiFetch(`/api/agents/${encodeURIComponent(opts.agentId)}/solana`, {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },

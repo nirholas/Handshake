@@ -23,6 +23,7 @@
 
 		<script type="module">
 			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+			import { apiFetch } from '/src/api.js';
 
 			const statusEl = document.getElementById('status');
 			const contentEl = document.getElementById('content');
@@ -91,7 +92,7 @@
 			}
 
 			async function registerWithAgent(agentId, domain) {
-				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns/register`, {
+				const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/sns/register`, {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },
@@ -129,7 +130,7 @@
 				const walletAddress = provider.publicKey?.toBase58?.();
 				if (!walletAddress) throw new Error('Wallet did not return a public key');
 
-				const prepRes = await fetch(
+				const prepRes = await apiFetch(
 					`/api/agents/${encodeURIComponent(agentId)}/sns/register-prep`,
 					{
 						method: 'POST',
@@ -183,7 +184,7 @@
 				// Poll for confirmation up to ~30s, then ask the API to mark it attached.
 				for (let i = 0; i < 15; i++) {
 					await new Promise((r) => setTimeout(r, 2000));
-					const confirmRes = await fetch(
+					const confirmRes = await apiFetch(
 						`/api/agents/${encodeURIComponent(agentId)}/sns/register-confirm`,
 						{
 							method: 'POST',

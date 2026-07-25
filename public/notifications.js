@@ -422,14 +422,27 @@
 			});
 	}
 
+	// Cookie-session mutations need the double-submit CSRF token: fetch a
+	// single-use token from /api/csrf-token and echo it in x-csrf-token.
+	// (Kept inline so this file stays a self-contained nav-injected script.)
+	function csrfToken() {
+		return fetch('/api/csrf-token', { credentials: 'include' })
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (j) { return (j && j.data && j.data.token) || ''; })
+			.catch(function () { return ''; });
+	}
+
 	function markOneRead(n) {
 		if (n.read_at) return;
 		n.read_at = new Date().toISOString();
 		unread = Math.max(0, unread - 1);
 		updateBadge();
 		if (open) render();
-		fetch('/api/notifications/' + encodeURIComponent(n.id) + '/read', {
-			method: 'POST', credentials: 'include', keepalive: true,
+		csrfToken().then(function (token) {
+			return fetch('/api/notifications/' + encodeURIComponent(n.id) + '/read', {
+				method: 'POST', credentials: 'include', keepalive: true,
+				headers: { 'x-csrf-token': token },
+			});
 		}).catch(function () {});
 	}
 
@@ -439,8 +452,12 @@
 		unread = 0;
 		updateBadge();
 		render();
-		fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include', keepalive: true })
-			.catch(function () {});
+		csrfToken().then(function (token) {
+			return fetch('/api/notifications/read-all', {
+				method: 'POST', credentials: 'include', keepalive: true,
+				headers: { 'x-csrf-token': token },
+			});
+		}).catch(function () {});
 	}
 
 	// ── Polling (badge upkeep while signed in) ─────────────────────────────────

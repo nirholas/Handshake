@@ -106,6 +106,7 @@
 		<script src="/nav.js" defer></script>
 		<script type="module">
 			import { glbBlobToUsdzBlob } from '/src/usdz-pipeline.js';
+			import { apiFetch } from '/src/api.js';
 
 			const $ = (id) => document.getElementById(id);
 			const log = $('log');
@@ -195,7 +196,7 @@
 					logLine('upload ok', 'ok');
 
 					logLine('PATCHing avatar with usdz_key…', 'info');
-					const patch = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+					const patch = await apiFetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
 						method: 'PATCH',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },

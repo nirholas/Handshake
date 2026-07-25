@@ -1,4 +1,5 @@
 import { exportEditedGLB } from './glb-export.js';
+import { apiFetch } from '../api.js';
 
 const MAX_BYTES = 25 * 1024 * 1024;
 
@@ -84,11 +85,14 @@ export async function saveEditedAvatar(session, { avatarId, onStep = () => {} } 
 	const glbUrl = parsed.origin + parsed.pathname;
 	let patchRes;
 	try {
-		const res = await fetch(`/api/avatars/${avatarId}`, {
+		// allowAnonymous: a 401 here must surface as SaveError('auth'), not a
+		// redirect, so the editor can show its own sign-in prompt.
+		const res = await apiFetch(`/api/avatars/${avatarId}`, {
 			method: 'PATCH',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ glbUrl, storage_key: presign.storage_key }),
+			allowAnonymous: true,
 		});
 		if (res.status === 401) throw new SaveError('auth', 'Not signed in');
 		if (!res.ok) {

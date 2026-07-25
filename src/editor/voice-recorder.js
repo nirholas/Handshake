@@ -5,6 +5,8 @@
 //   recorder.mount();   // renders into containerEl
 //   recorder.destroy(); // removes listeners + DOM
 
+import { apiFetch } from '../api.js';
+
 const MIN_DURATION = 30; // seconds — warn if below this
 const SAMPLE_TEXT = "Hello, I'm your agent. How can I help you today?";
 
@@ -349,7 +351,7 @@ export class VoiceRecorder {
 		if (!confirm('Remove this agent\'s cloned voice? It will revert to browser TTS.')) return;
 		this._setStatus('spin', 'Removing voice…');
 		try {
-			const res = await fetch(`/api/agents/${this._agentId}/voice`, {
+			const res = await apiFetch(`/api/agents/${this._agentId}/voice`, {
 				method: 'DELETE',
 				credentials: 'include',
 			});

@@ -23,6 +23,7 @@
  */
 
 import * as THREE from 'three';
+import { apiFetch } from './api.js';
 import { createLogger } from './shared/log.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
@@ -1335,7 +1336,7 @@ async function saveOutfit() {
 	if (!avatarApiId) { toast('Use Export GLB to save this scene'); return; }
 	showLoading('Saving outfit…');
 	try {
-		const res = await fetch(`/api/avatars/${encodeURIComponent(avatarApiId)}`, {
+		const res = await apiFetch(`/api/avatars/${encodeURIComponent(avatarApiId)}`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json', ...CH },
 			body: JSON.stringify({ accessories: attached }),

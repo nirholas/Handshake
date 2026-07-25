@@ -9,6 +9,7 @@
  */
 
 import { BrowserProvider, Contract } from 'ethers';
+import { apiFetch } from '../api.js';
 import { CHAIN_META, addressExplorerUrl, txExplorerUrl } from '../erc8004/chain-meta.js';
 import { DELEGATION_MANAGER_DEPLOYMENTS, DELEGATION_MANAGER_ABI } from '../erc7710/abi.js';
 import { GrantPermissionsModal } from './grant-modal.js';
@@ -311,7 +312,7 @@ class ManagePanel {
 
 		// Mirror to server
 		try {
-			const res = await fetch('/api/permissions/revoke', {
+			const res = await apiFetch('/api/permissions/revoke', {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },

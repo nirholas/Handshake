@@ -267,6 +267,7 @@
 
 		<script type="module">
 			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+			import { apiFetch } from '/src/api.js';
 
 			const TYPES = ['user', 'feedback', 'project', 'reference'];
 			const TYPE_LABELS = { user: 'User', feedback: 'Feedback', project: 'Project', reference: 'Reference' };
@@ -329,7 +330,7 @@
 			}
 
 			async function deleteMemory(id) {
-				const r = await fetch(`/api/agent-memory/${encodeURIComponent(id)}`, {
+				const r = await apiFetch(`/api/agent-memory/${encodeURIComponent(id)}`, {
 					method: 'DELETE',
 					credentials: 'include',
 				});
@@ -338,7 +339,7 @@
 			}
 
 			async function saveMemory(agentId, entry) {
-				const r = await fetch('/api/agent-memory', {
+				const r = await apiFetch('/api/agent-memory', {
 					method: 'POST',
 					credentials: 'include',
 					headers: { 'content-type': 'application/json' },

@@ -1,6 +1,7 @@
 // ── brain.js — Persona builder + multi-model playground ─────────────────────
 
 import { sanitizeUrl } from './shared/sanitize-url.js';
+import { apiFetch } from './api.js';
 
 // ── Provider registry ────────────────────────────────────────────────────────
 const PROVIDERS = [
@@ -367,7 +368,7 @@ async function autoSavePersonaToAgent(label) {
 				...(state.persona.interests || []),
 			],
 		};
-		const res = await fetch(`/api/agents/${agentId}`, {
+		const res = await apiFetch(`/api/agents/${agentId}`, {
 			method: 'PUT',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
@@ -567,7 +568,7 @@ async function savePersonaToAgent() {
 				...(state.persona.interests || []),
 			],
 		};
-		const res = await fetch(`/api/agents/${agentId}`, {
+		const res = await apiFetch(`/api/agents/${agentId}`, {
 			method: 'PUT',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },

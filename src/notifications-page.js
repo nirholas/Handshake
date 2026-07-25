@@ -5,6 +5,7 @@
 // "hundreds of items" overflow case the dropdown never has to handle.
 
 import { TYPE_ICON, notifLabel, notifLink, escNotif, relTime, trackInApp } from './notifications.js';
+import { apiFetch } from './api.js';
 
 const AUTH_HINT_KEY = '3dagent:auth-hint';
 const PAGE_SIZE = 30;
@@ -129,7 +130,7 @@ function markOneRead(id, rowEl) {
 	unread = Math.max(0, unread - 1);
 	rowEl?.classList.remove('is-unread');
 	rowEl?.querySelector('.n-dot')?.remove();
-	fetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST', credentials: 'include' }).catch(() => {});
+	apiFetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: 'POST', credentials: 'include', allowAnonymous: true }).catch(() => {});
 }
 
 async function markAllRead() {
@@ -139,7 +140,7 @@ async function markAllRead() {
 	unread = 0;
 	render();
 	try {
-		await fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include' });
+		await apiFetch('/api/notifications/read-all', { method: 'POST', credentials: 'include', allowAnonymous: true });
 	} catch { /* fire-and-forget */ }
 }
 
@@ -150,7 +151,7 @@ function deleteOne(id) {
 	all = all.filter((n) => n.id !== id);
 	if (wasUnread) unread = Math.max(0, unread - 1);
 	if (!filtered().length) renderEmpty();
-	fetch(`/api/notifications/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' }).catch(() => {});
+	apiFetch(`/api/notifications/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include', allowAnonymous: true }).catch(() => {});
 }
 
 async function loadPage(before) {

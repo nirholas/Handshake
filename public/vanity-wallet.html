@@ -573,6 +573,7 @@
 	</footer>
 
 	<script type="module">
+		import { apiFetch } from '/src/api.js';
 		import { grindVanity } from '/src/solana/vanity/grinder.js';
 		import { validatePattern, expectedAttempts, effectiveLength, formatTimeEstimate, MAX_PATTERN_LENGTH } from '/src/solana/vanity/validation.js';
 
@@ -1013,7 +1014,7 @@
 					// Replacing an existing wallet: detach it first so the POST below
 					// provisions cleanly instead of being rejected with a 409.
 					if (replacing) {
-						const del = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/solana`, {
+						const del = await apiFetch(`/api/agents/${encodeURIComponent(sel.value)}/solana`, {
 							method: 'DELETE',
 							credentials: 'include',
 						});
@@ -1024,7 +1025,7 @@
 							return;
 						}
 					}
-					const r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/solana`, {
+					const r = await apiFetch(`/api/agents/${encodeURIComponent(sel.value)}/solana`, {
 						method: 'POST',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },

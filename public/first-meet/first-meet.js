@@ -1,5 +1,9 @@
 // First meet onboarding flow for newly created avatars
 
+// apiFetch, not raw fetch, for mutations: cookie sessions need the single-use
+// CSRF token it attaches. Loaded as a module script, so /src/api.js resolves.
+import { apiFetch } from '/src/api.js';
+
 const STEPS = ['name', 'bio', 'voice', 'greet', 'done'];
 let currentStep = 0;
 let state = {
@@ -265,7 +269,7 @@ function findVoice(voiceId) {
 
 async function persistState() {
 	// 1. PATCH avatar name + description
-	await fetch(`/api/avatars/${state.avatarId}`, {
+	await apiFetch(`/api/avatars/${state.avatarId}`, {
 		method: 'PATCH',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
@@ -282,7 +286,7 @@ async function persistState() {
 	const agentMeta = { voice: state.voice, bodyType: state.bodyType };
 	if (!state.agent) {
 		// POST new agent
-		const res = await fetch('/api/agents', {
+		const res = await apiFetch('/api/agents', {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
@@ -298,7 +302,7 @@ async function persistState() {
 		state.agent = data.agent;
 	} else {
 		// PATCH existing agent
-		const res = await fetch(`/api/agents/${state.agent.id}`, {
+		const res = await apiFetch(`/api/agents/${state.agent.id}`, {
 			method: 'PATCH',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },

@@ -9,6 +9,7 @@
  */
 
 import { AbiCoder, getAddress } from 'ethers';
+import { apiFetch } from '../api.js';
 import { ensureWallet } from '../erc8004/agent-registry.js';
 import { encodeScopedDelegation, signDelegation } from './toolkit.js';
 import { CAVEAT_ENFORCERS } from '../erc7710/abi.js';
@@ -941,7 +942,7 @@ export class GrantPermissionsModal {
 
 		let data;
 		try {
-			const res = await fetch('/api/permissions/grant', {
+			const res = await apiFetch('/api/permissions/grant', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({

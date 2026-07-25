@@ -13,6 +13,7 @@
  */
 
 import { saveRemoteGlbToAccount } from './account.js';
+import { apiFetch } from './api.js';
 import { attachAvatarToAgent } from './attach-avatar-to-agent.js';
 import { load as loadGuest, clear as clearGuest } from './guest-avatar.js';
 import { TalkScene } from './voice/talk-scene.js';
@@ -636,7 +637,7 @@ async function generateAndUploadUsdz(avatarId, glbBlob) {
 			body: usdzBlob,
 		});
 		if (!put.ok) return;
-		await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+		await apiFetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
 			method: 'PATCH',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },

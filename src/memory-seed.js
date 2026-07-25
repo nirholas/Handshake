@@ -10,6 +10,8 @@
  *   mountMemorySeed(document.getElementById('container'), { agentId: '...' });
  */
 
+import { apiFetch } from './api.js';
+
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
 	({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -92,7 +94,7 @@ export async function saveMemoryToAgent(agentId, content, opts = {}) {
 			synthesized_at: new Date().toISOString(),
 		},
 	};
-	const r = await fetch('/api/agent-memory', {
+	const r = await apiFetch('/api/agent-memory', {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
@@ -115,7 +117,7 @@ export async function loadAgentMemories(agentId, opts = {}) {
 }
 
 export async function deleteAgentMemory(agentId, memoryId) {
-	await fetch(`/api/agent-memory/${memoryId}?agentId=${encodeURIComponent(agentId)}`, {
+	await apiFetch(`/api/agent-memory/${memoryId}?agentId=${encodeURIComponent(agentId)}`, {
 		method: 'DELETE',
 		credentials: 'include',
 	});
@@ -129,7 +131,7 @@ export async function addAgentMemory(agentId, entry) {
 		tags: entry.tags || [],
 		salience: entry.salience ?? 0.5,
 	};
-	const r = await fetch('/api/agent-memory', {
+	const r = await apiFetch('/api/agent-memory', {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },

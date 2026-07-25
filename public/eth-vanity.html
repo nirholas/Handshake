@@ -285,6 +285,7 @@
 
 	<script type="module">
 		import { keccak_256 } from '@noble/hashes/sha3';
+		import { apiFetch } from '/src/api.js';
 		import { grindCreate2Vanity } from '/src/eth/vanity/grinder.js';
 		import {
 			validatePattern, validateAddress, validateInitCodeHash,
@@ -786,7 +787,7 @@
 					deployer_label:    presetLabel,
 				};
 				try {
-					let r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, {
+					let r = await apiFetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, {
 						method: 'POST',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
@@ -797,13 +798,13 @@
 						if (!confirm('This agent already has a CREATE2 vanity record. Replace it?')) {
 							btn.disabled = false; status.textContent = ''; return;
 						}
-						const del = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
+						const del = await apiFetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, { method: 'DELETE', credentials: 'include' });
 						if (!del.ok) {
 							const dd = await del.json().catch(() => ({}));
 							status.innerHTML = `<span style="color:var(--bad-fg)">Could not remove existing record: ${esc(dd.error_description || del.status)}</span>`;
 							btn.disabled = false; return;
 						}
-						r = await fetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, {
+						r = await apiFetch(`/api/agents/${encodeURIComponent(sel.value)}/eth-vanity`, {
 							method: 'POST', credentials: 'include',
 							headers: { 'content-type': 'application/json' },
 							body: JSON.stringify(payload),

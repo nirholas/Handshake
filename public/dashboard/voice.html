@@ -22,6 +22,7 @@
 
 		<script type="module">
 			import { mountAgentPicker } from '/src/dashboard/_agent-picker.js';
+			import { apiFetch } from '/src/api.js';
 
 			const statusEl = document.getElementById('status');
 			const contentEl = document.getElementById('content');
@@ -47,7 +48,7 @@
 			}
 
 			async function deleteVoice(agentId) {
-				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/voice`, {
+				const r = await apiFetch(`/api/agents/${encodeURIComponent(agentId)}/voice`, {
 					method: 'DELETE',
 					credentials: 'include',
 				});
@@ -105,7 +106,7 @@
 			}
 
 			async function uploadClone(agentId, blob, durationSec) {
-				const r = await fetch(
+				const r = await apiFetch(
 					`/api/agents/${encodeURIComponent(agentId)}/voice/clone?name=${encodeURIComponent(
 						(document.getElementById('voice-name').value || 'Agent Voice').slice(0, 100),
 					)}`,

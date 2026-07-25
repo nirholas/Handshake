@@ -247,6 +247,20 @@
 			mountHeaderUser({ slot: '#header-user-slot', activePath: '/dashboard/sessions' });
 		</script>
 		<script>
+			// Cookie-session mutations need the double-submit CSRF token: fetch a
+			// single-use token from /api/csrf-token and echo it in x-csrf-token.
+			// (Classic script block, so it can't import apiFetch from /src/api.js.)
+			async function csrfToken() {
+				try {
+					const r = await fetch('/api/csrf-token', { credentials: 'include' });
+					if (!r.ok) return '';
+					const j = await r.json();
+					return (j && j.data && j.data.token) || '';
+				} catch {
+					return '';
+				}
+			}
+
 			function showToast(message, isError = false) {
 				const toast = document.createElement('div');
 				toast.className = 'toast' + (isError ? ' error' : '');
@@ -393,6 +407,7 @@
 					const res = await fetch(`/api/auth/sessions/${sessionId}`, {
 						method: 'DELETE',
 						credentials: 'include',
+						headers: { 'x-csrf-token': await csrfToken() },
 					});
 
 					if (!res.ok) {
@@ -434,6 +449,7 @@
 					const res = await fetch('/api/auth/sessions', {
 						method: 'DELETE',
 						credentials: 'include',
+						headers: { 'x-csrf-token': await csrfToken() },
 					});
 
 					if (!res.ok) throw new Error('Failed to sign out');

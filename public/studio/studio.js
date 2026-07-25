@@ -5,6 +5,7 @@
 // /public/* is served verbatim by Vercel — the build doesn't transform it.
 // Keep this list in sync with src/widget-types.js as new types light up.
 
+import { apiFetch } from '/src/api.js';
 import { mountLaunchPanel } from './launch-panel.js';
 import { mountKnowledgePanel } from './knowledge-panel.js';
 
@@ -1880,7 +1881,7 @@ async function deleteWidget() {
 	if (!state.editingId) return;
 	if (!confirm('Delete this widget permanently? This cannot be undone.')) return;
 	try {
-		const res = await fetch(`/api/widgets/${encodeURIComponent(state.editingId)}`, {
+		const res = await apiFetch(`/api/widgets/${encodeURIComponent(state.editingId)}`, {
 			method: 'DELETE',
 			credentials: 'include',
 		});
