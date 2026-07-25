@@ -54,6 +54,21 @@ const coolingDown = (base) => (_hostCooldowns.get(base) ?? 0) > Date.now();
 const markBad = (base) => _hostCooldowns.set(base, Date.now() + HOST_COOLDOWN_MS);
 const markGood = (base) => _hostCooldowns.delete(base);
 
+// One greppable line per failed upstream host. The production triage loop
+// (gcloud logging read on textPayload) keys off the [aggregator-failover] tag;
+// keep it stable.
+const logHostFailure = (provider, base, err) => {
+	let host;
+	try {
+		host = new URL(base).host;
+	} catch {
+		host = String(base);
+	}
+	console.warn(
+		`[aggregator-failover] provider=${provider.id} host=${host} code=${err?.code || 'unknown'} status=${err?.status || 0}`,
+	);
+};
+
 /** Clear per-host failure memory. Exported for tests, which share module state. */
 export function resetUpstreamHealth() {
 	_hostCooldowns.clear();
@@ -207,6 +222,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 		} catch (err) {
 			if (!isRetryable(err)) throw err;
 			markBad(provider.base);
+			logHostFailure(provider, provider.base, err);
 			firstErr = err;
 		}
 	}
@@ -242,6 +258,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 		} catch (next) {
 			if (!isRetryable(next)) throw next;
 			markBad(base);
+			logHostFailure(provider, base, next);
 			lastErr = next;
 		}
 	}
