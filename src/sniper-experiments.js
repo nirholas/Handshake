@@ -197,7 +197,7 @@ function renderBoard(experiments) {
 		.map((x) => {
 			const record = x.closed > 0 ? `${x.wins}W · ${x.losses}L` : 'no fills';
 			const bags = Number(x.moonbags) > 0
-				? `<div class="xp-moonbag" title="Free moon bags still riding from this arm's winners. Cost basis already recovered, so worth zero at worst.">🌙 ${x.moonbags} moon bag${x.moonbags === 1 ? '' : 's'} · ${Number(x.moonbag_value_sol || 0).toFixed(4)} SOL</div>`
+				? `<div class="xp-moonbag" title="Free moon bags still riding from this arm's winners. The cost basis already came back, so each one is worth zero at worst and uncapped at best. Not counted as profit until sold.">🌙 ${x.moonbags} bag${x.moonbags === 1 ? '' : 's'} · ${Number(x.moonbag_value_sol || 0).toFixed(4)} SOL</div>`
 				: '';
 			const paper = x.paper_closed > 0 || x.paper_open > 0
 				? `<div class="xp-paper" title="Simulate-mode record: real quotes, no broadcast">paper: ${x.paper_wins}W · ${x.paper_closed - x.paper_wins}L${x.paper_open ? ` · ${x.paper_open} open` : ''} · ${esc(sol(x.paper_pnl_sol))}</div>`

@@ -531,9 +531,9 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 export async function executeSell({ cfg, position, reason, fraction = 1, recoversInitials = false, keepsMoonbag = false }) {
 	return withAgentLock(position.agent_id, async () => {
 		// Laddered exits sell only PART of the bag. Two different partials exist:
-		//   recoversInitials — the take-initials leg; the position stays OPEN and the
+		//   recoversInitials: the take-initials leg; the position stays OPEN and the
 		//                      moon bag keeps trading under the exit rules.
-		//   keepsMoonbag     — a terminal exit that still refuses to sell the last
+		//   keepsMoonbag:     a terminal exit that still refuses to sell the last
 		//                      slice; the position CLOSES for accounting (its P&L is
 		//                      booked and its concurrency slot is freed) while the
 		//                      remaining tokens are retained and ride indefinitely.
@@ -628,7 +628,6 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 			// remainder keeps its own proportional basis.
 			const soldCostBasis = partial ? (entryFull * ppm) / 1_000_000n : entryFull;
 			const legPnl = expectedOut - soldCostBasis;
-			const legPnlPct = soldCostBasis > 0n ? (Number(legPnl) / Number(soldCostBasis)) * 100 : 0;
 			const priorRealized = BigInt(position.realized_pnl_lamports || '0');
 			const cumRealized = priorRealized + legPnl;
 

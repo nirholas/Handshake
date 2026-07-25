@@ -108,7 +108,10 @@
 }
 
 /* ── conditions cell ─────────────────────────────────────────────────────── */
-.xp-cond { max-width: 300px; color: var(--cv-text-2); font-size: 0.8125rem; }
+/* `width` rather than `max-width`: table auto-layout treats max-width on a cell
+ * as a suggestion it is free to ignore, which is how this column ended up wider
+ * than its own cap. A width acts as the preferred size the algorithm honours. */
+.xp-cond { width: 300px; color: var(--cv-text-2); font-size: 0.8125rem; }
 
 .xp-cond-sub {
 	margin-top: 3px;
@@ -138,9 +141,12 @@
 	font-size: 0.6875rem;
 	font-weight: 600;
 	color: var(--cv-green);
-	white-space: nowrap;
 	cursor: help;
 }
+
+/* The record cell stacks up to four lines (W/L, open, moon bags, paper). Give it
+ * a floor so none of them overflow into the conditions column beside it. */
+.xp-table td:nth-child(3) { min-width: 130px; }
 
 /* ── P&L ─────────────────────────────────────────────────────────────────── */
 .xp-pos { color: var(--cv-green); font-weight: 600; }
@@ -148,7 +154,20 @@
 
 /* ── table + rows ────────────────────────────────────────────────────────── */
 .xp-table { width: 100%; font-size: 0.875rem; }
-.xp-table td { vertical-align: top; padding: 10px 12px; }
+
+/* The shared .cv-table sets `white-space: nowrap` and right-aligns every cell,
+ * which suits a grid of figures but not this board: the first three columns hold
+ * prose that then refuses to wrap and spills across the column beside it. Reset
+ * them to normal flow and re-apply the numeric treatment only where it belongs. */
+.xp-table td {
+	vertical-align: top;
+	padding: 10px 12px;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.xp-table th:nth-child(-n + 3) { text-align: left; }
 
 /* The strategy cell carries four stacked lines (label + tier, agent + mode,
  * ledger link, wallet + balance). Without a floor it collapses to the width of
@@ -156,8 +175,13 @@
 .xp-table th:first-child,
 .xp-table td:first-child { min-width: 250px; }
 
+/* The record cell stacks up to four lines (W/L, open, moon bags, paper). */
+.xp-table td:nth-child(3) { min-width: 140px; }
+
 /* Numeric columns read as a column of figures, not ragged text. */
-.xp-table td:nth-child(n + 4) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.xp-table th:nth-child(n + 4),
+.xp-table td:nth-child(n + 4) { white-space: nowrap; text-align: right; }
+.xp-table td:nth-child(n + 4) { font-variant-numeric: tabular-nums; }
 
 .xp-table tbody tr { transition: background 0.15s ease; }
 .xp-table tbody tr:hover { background: var(--cv-surface-2); }
