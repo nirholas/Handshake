@@ -92,6 +92,15 @@ const X402_FACILITATOR_GLOBAL_PER_HOUR = Math.max(
 	600,
 	Number(process.env.X402_FACILITATOR_GLOBAL_PER_HOUR) || 12000,
 );
+// Per-IP facilitator ceiling. The ring tick settles every paid call through
+// the self-hosted facilitator from ONE egress IP (verify + settle = 2 hits per
+// call), so at 94 calls/min the old hardcoded 60/min starved the ring itself
+// (observed 2026-07-25: http_429 cascade, whole ticks failing). Env-tunable
+// with the old value as the floor; external abusers still hit this wall.
+const X402_FACILITATOR_IP_PER_MIN = Math.max(
+	60,
+	Number(process.env.X402_FACILITATOR_IP_PER_MIN) || 60,
+);
 
 // A limiter that always denies. Used in production for cost/money-moving buckets
 // when Redis is absent: better to 503 a paid action than to silently allow
@@ -1083,7 +1092,11 @@ export const limits = {
 	// attacker IP. CRITICAL like verify — fail closed, since rejecting a settle just
 	// leaves the buyer holding funds to retry, which beats unbounded fee burn.
 	x402FacilitatorIp: (ip) =>
-		getLimiter('x402:facilitator:ip', { limit: 60, window: '1 m', critical: true }).limit(ip),
+		getLimiter('x402:facilitator:ip', {
+			limit: X402_FACILITATOR_IP_PER_MIN,
+			window: '1 m',
+			critical: true,
+		}).limit(ip),
 	x402FacilitatorGlobal: () =>
 		getLimiter('x402:facilitator:global', {
 			limit: X402_FACILITATOR_GLOBAL_PER_HOUR,
