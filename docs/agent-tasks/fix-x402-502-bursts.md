@@ -23,6 +23,7 @@ Hard data already gathered, do not re-derive it:
 
 ## Constraints
 
+- OWNER RULE, overrides everything: do not modify anything that is working today. Free lanes, paid endpoints that settle correctly, the forge, the gallery, all of it is frozen. Only touch provably-broken paths, and prefer additive changes (new module, new config) over edits to shared working code. If a fix seems to require changing a working path, stop and flag it in your report instead of doing it. Server tuning (keep-alive timeouts, cache backend) counts as fixing a broken path only if you first prove the current values are causing the 502s.
 - Do NOT touch the autonomous trading bots (the arms described at three.ws/blog/autonomous-trading-experiment). They are out of scope.
 - Do not reduce loop volume to make the errors go away; the point is that the platform sustains the load.
 - Config-only `gcloud run services update` changes are pre-approved. Use `--update-env-vars`, never `--set-env-vars`.

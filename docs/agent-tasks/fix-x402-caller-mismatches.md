@@ -19,6 +19,7 @@ The autonomous x402 buyer loop logs its calls to the `x402_autonomous_log` Neon 
 
 ## Constraints
 
+- OWNER RULE, overrides everything: do not modify anything that is working today. A caller with zero or near-zero successes is broken and fair game; an endpoint that answers correctly to a well-formed request is working and frozen. Fix the broken caller side, never "loosen" or rewrite a working endpoint. Prefer additive changes over edits to shared loop code that working services flow through; if you must touch a shared path, prove behavior is unchanged for the working services in your report.
 - Do NOT touch the autonomous trading bots (three.ws/blog/autonomous-trading-experiment). Out of scope.
 - Real payments only; no mocked settlement. Per-call prices are the existing configured micro-prices; do not raise prices in this task.
 - Production deploy of code changes needs owner approval: commit locally, prepare the deploy, state the one remaining command.

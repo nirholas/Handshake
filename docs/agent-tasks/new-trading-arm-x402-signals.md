@@ -31,6 +31,7 @@ Funding a new wallet and every real trade are on-chain spend actions. Wire every
 
 ## Constraints
 
+- OWNER RULE, overrides everything: do not modify anything that is working today. This arm is strictly additive: new files, new wallet, new roster entry. Zero edits to existing arms or to shared execution code unless provably behavior-neutral, and even then minimal.
 - Solana only. Real payments, real trades, no mocks anywhere.
 - CLAUDE.md rules apply, including: never use em-dash or en-dash characters anywhere; changelog entry when the arm goes live; docs update (`docs/agent-sniper.md` or the blog data page, follow existing patterns).
 

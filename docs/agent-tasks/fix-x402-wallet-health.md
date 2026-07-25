@@ -22,6 +22,7 @@ Wallet-side failures in `x402_autonomous_log` (Neon, `DATABASE_URL` in `.env`):
 
 ## Constraints
 
+- OWNER RULE, overrides everything: do not modify anything that is working today. Balance top-ups and removing dead roster entries are in scope; rewriting settle paths, caps logic, or rebalance code that currently functions is not. If the existing rebalance automation is genuinely broken (prove it), fix it minimally or add a new complementary mechanism rather than replacing it.
 - Do NOT touch the autonomous trading bots or their wallets (three.ws/blog/autonomous-trading-experiment). Ring wallets only.
 - Never print or log private keys. Never move funds without the explicit confirmation described above.
 - Config-only `gcloud run services update` changes are pre-approved; use `--update-env-vars` (merges), never `--set-env-vars`.
