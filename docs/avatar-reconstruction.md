@@ -71,6 +71,11 @@ is unencumbered.
 
 ## Roadmap — beating Avaturn on fidelity
 
+> The active plan built on this roadmap — tracks, owners, capacity and credit
+> allocation — is [avatar-fidelity-program.md](avatar-fidelity-program.md).
+> Fidelity claims are scored with the ISE metric in
+> [`workers/avatar-reconstruction/eval/`](../workers/avatar-reconstruction/eval/README.md).
+
 Phase 2 captures gross face identity (proportions, projection) but not fine
 geometry. The path to and past Avaturn quality, with the verified licence for
 each link:

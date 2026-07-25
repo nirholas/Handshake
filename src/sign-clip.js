@@ -155,20 +155,24 @@ export function poseHand(pose, side, spec) {
  * Build a whole-body pose for one phase of a sign.
  *
  * @param {{
+ *   both?: object,
  *   right?: object|'rest',
  *   left?: object|'rest',
  *   head?: { nod?: number, tilt?: number, turn?: number },
  *   torso?: { lean?: number, turn?: number },
- * }} spec  degrees for head/torso; `right`/`left` are {@link poseHand} specs.
+ * }} spec  degrees for head/torso; `right`/`left` are {@link poseHand} specs and
+ *   `both` applies one spec to each hand — which works because directions and
+ *   places are body-relative, so a symmetric two-handed sign is written once.
  * @param {Pose} [base]  pose to build on (defaults to the resting signer)
  * @returns {Pose}
  */
 export function posePhase(spec, base = restingPose()) {
 	const pose = base.clone();
 	for (const side of ['Left', 'Right']) {
-		const hand = spec[side.toLowerCase()];
+		const own = spec[side.toLowerCase()];
+		const hand = own === 'rest' ? REST_ARM : spec.both ? { ...spec.both, ...(own ?? {}) } : own;
 		if (!hand) continue;
-		poseHand(pose, side, hand === 'rest' ? REST_ARM : hand);
+		poseHand(pose, side, hand);
 	}
 	const { head, torso } = spec;
 	if (torso) {

@@ -30,11 +30,18 @@
 			const mod = which === 'old'
 				? await import('/scripts/.scratch/fingerspelling-old.js')
 				: await import('/src/fingerspelling.js');
-			const dict = mode === 'sign' ? await import('/src/sign-dictionary.js') : null;
+			const dictUrl = '/src/sign-' + 'dictionary.js';
+			const dict = (mode === 'sign' || mode === 'vocab') ? await import(/* @vite-ignore */ dictUrl) : null;
 
 			// Build the clip + the times to sample.
 			let clip, samples;
-			if (mode === 'sign' && dict) {
+			if (mode === 'vocab') {
+				// One cell per sign, at the moment its last phase lands.
+				const words = (params.get('words') || Object.keys(dict.SIGNS).join(',')).split(',');
+				window.__vocab = words.map((w) => ({ word: w, clip: dict.buildSignClip(w) }));
+				clip = window.__vocab[0].clip;
+				samples = window.__vocab.map((v) => ({ t: v.clip.duration - 0.42, label: v.word, word: v.word }));
+			} else if (mode === 'sign' && dict) {
 				clip = dict.buildSignClip(word);
 				const n = +(params.get('n') || 8);
 				samples = Array.from({ length: n }, (_, i) => ({
@@ -85,16 +92,31 @@
 			key.position.set(1.5, 2.5, 3);
 			scene.add(key, new THREE.AmbientLight(0xffffff, 0.4));
 
-			const gltf = await new GLTFLoader().loadAsync('/avatars/cz.glb');
+			const { getMeshoptDecoder } = await import('/src/viewer/internal.js');
+			const loader = new GLTFLoader();
+			loader.setMeshoptDecoder(await getMeshoptDecoder());
+			const gltf = await loader.loadAsync('/avatars/cz.glb');
 			const model = gltf.scene;
 			model.traverse((n) => { if (n.isMesh) n.frustumCulled = false; });
 			scene.add(model);
 
 			const anim = new AnimationManager();
 			anim.attach(model);
-			anim.injectClip('sign', clip, { loop: false });
-			const action = anim.actions.get('sign');
-			if (!action) throw new Error('clip did not bind');
+			const actions = new Map();
+			if (mode === 'vocab') {
+				for (const v of window.__vocab) {
+					anim.injectClip(v.word, v.clip, { loop: false });
+					const a = anim.actions.get(v.word);
+					if (!a) throw new Error('clip did not bind: ' + v.word);
+					actions.set(v.word, a);
+				}
+			} else {
+				anim.injectClip('sign', clip, { loop: false });
+				const a = anim.actions.get('sign');
+				if (!a) throw new Error('clip did not bind');
+				actions.set('sign', a);
+			}
+			const action = actions.values().next().value;
 			action.play();
 			action.paused = true;
 
@@ -113,8 +135,15 @@
 
 			renderer.clear();
 			samples.forEach((s, i) => {
-				action.time = Math.min(s.t, clip.duration - 1e-4);
-				anim.mixer.update(0);
+				// A fresh mixer per cell: swapping actions on one mixer leaves stale
+				// accumulator state that silently blends toward the bind pose.
+				const src = s.word ? actions.get(s.word) : action;
+				const m = new THREE.AnimationMixer(model);
+				const act = m.clipAction(src.getClip());
+				act.play();
+				act.paused = true;
+				act.time = Math.max(0, s.t);
+				m.update(0);
 				model.updateWorldMatrix(true, true);
 
 				const col = i % cols;
@@ -123,8 +152,14 @@
 				const y = H - (row + 1) * cellH;
 				renderer.setViewport(x, y, cellW, cellH);
 				renderer.setScissor(x, y, cellW, cellH);
-				camera.position.set(0, 1.5 + camY * 0.0, 1.85);
-				camera.lookAt(0, 1.34, 0);
+				// Track the head so a clip that moves the root still frames the signing.
+				let head = null;
+				model.traverse((n) => { if (!head && /head$/i.test(n.name)) head = n; });
+				const hp = new THREE.Vector3();
+				head.getWorldPosition(hp);
+				const focus = new THREE.Vector3(0, hp.y - 0.36, 0);
+				camera.position.set(0, focus.y + 0.18, 2.0);
+				camera.lookAt(focus);
 				camera.updateProjectionMatrix();
 				renderer.render(scene, camera);
 			});

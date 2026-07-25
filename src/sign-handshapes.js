@@ -1,19 +1,21 @@
-// ASL handshapes — the finger configurations both lanes of the signing stack
-// share: the manual alphabet (fingerspelling) and the lexical sign dictionary.
+// ASL handshapes — the finger configurations the signing stack shares between
+// the manual alphabet (src/fingerspelling.js) and the lexical sign dictionary
+// (src/sign-dictionary.js).
 //
-// A handshape is described the way a signer would describe it — how far each
-// finger curls, how the fingers spread, where the thumb sits — never as raw
-// joint quaternions. The compiler turns that description into local rotations
-// about axes MEASURED from the reference skeleton (src/sign-rig.js), so the same
-// description drives either hand with no mirrored sign flipping, and a rig whose
-// finger bones rest at a different angle still curls its fingers into the palm
-// instead of sideways.
+// A handshape is described the way a signer describes it — how far each finger
+// curls, how the fingers spread, where the thumb sits — and compiled to local
+// rotations on the canonical finger bones. This is the ORIGINAL, hand-tuned
+// handshape model, moved here unchanged so both lanes can share it: the letter
+// table, the curl weights, the thumb presets, and the axes they are tuned
+// against are exactly what the alphabet already spelled with. Nothing in this
+// file changes the shape of a letter.
 //
 // Handshape names follow standard ASL naming: the letters and digits that double
 // as shapes (`B`, `S`, `1`, `5`, …) plus the named ones that don't (`CLAW`,
-// `FLAT_O`, `BENT_B`, `OPEN_8`).
+// `FLAT_O`, `BENT_B`, `OPEN_8`), which the lexical signs need and the alphabet
+// never used.
 
-import { adductAxis, curlAxis, qAxisAngle, qMul, qNorm, splayAxis } from './sign-rig.js';
+import { qAxisAngle, qMul, qNorm, vNorm } from './sign-rig.js';
 
 export const FINGERS = ['Index', 'Middle', 'Ring', 'Pinky'];
 export const FINGER_JOINTS = [1, 2, 3];
@@ -23,86 +25,88 @@ export function fingerBones(side) {
 	return [...FINGERS, 'Thumb'].flatMap((f) => FINGER_JOINTS.map((j) => `${side}Hand${f}${j}`));
 }
 
-// Share of a full curl carried by each joint. The proximal knuckle leads, the
-// middle joint closes hardest, the tip trails — the proportions a relaxed hand
-// actually closes with, which is what keeps a fist from reading as a claw.
-const CURL_WEIGHTS = [78, 100, 62];
+// Per-joint shares of a full curl (proximal knuckles carry most of it).
+const CURL_WEIGHTS = [85, 100, 65];
 
-// Thumb positions, as adduction (toward the fingers, across the palm) plus a
-// per-joint curl. Every ASL handshape uses one of these five.
+// Thumb presets, as [joint1, joint2, joint3] rotations composed from curl
+// about the thumb hinge and swing toward/away from the palm. Tuned for the
+// right hand and mirrored for the left via axis sign.
 const THUMB_PRESETS = {
-	/** Alongside the index, pointing with the fingers — A, G, L-less shapes. */
-	side: { adduct: 18, curl: [10, 12, 6], lift: 6 },
-	/** Extended clear of the palm — L, Y, 5, and the "thumb out" shapes. */
-	out: { adduct: -48, curl: [0, 0, 0], lift: 10 },
-	/** Folded across the closed fingers — B, S, E, M, N. */
-	across: { adduct: 52, curl: [26, 40, 26], lift: -4 },
-	/** Opposing the fingertips, as in O, C, F and the 6–9 digits. */
-	oppose: { adduct: 36, curl: [20, 32, 24], lift: 2 },
-	/** Tucked between fingers — T, K, P. */
-	between: { adduct: 34, curl: [24, 30, 16], lift: -2 },
+	// resting against the index side, pointing along the fingers
+	side: { adduct: 22, curl: [8, 10, 5] },
+	// extended away from the palm (L / Y / thumbs-out shapes)
+	out: { adduct: -55, curl: [0, 0, 0] },
+	// folded across the palm, under or over the curled fingers
+	across: { adduct: 55, curl: [30, 45, 30] },
+	// opposing the fingertips (O / F / D circles)
+	oppose: { adduct: 40, curl: [18, 30, 22] },
+	// tip pinned between index and middle (T) / at the middle knuckle (K)
+	between: { adduct: 38, curl: [22, 30, 15] },
+	// barely engaged — the hand between letters and at rest
+	neutral: { adduct: 0, curl: [4, 4, 4] },
 };
 
 /**
  * The handshape catalogue. `curl` is 0–1 per finger (or explicit per-joint
- * degrees), `splay` is degrees toward the thumb (negative = toward the pinky),
- * `knuckle` bends only the proximal joint (the flat-then-bent shapes), and
- * `thumb` names a preset.
+ * degrees), `splay` is degrees toward the thumb, `knuckle` adds bend at the
+ * proximal joint only, and `thumb` names a preset.
+ *
+ * A–Z and 0–9 are the manual alphabet, unchanged.
  */
 export const HANDSHAPES = Object.freeze({
 	A: { curl: { Index: 1, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
-	B: { curl: {}, splay: { Index: 2, Middle: 1, Ring: -1, Pinky: -3 }, thumb: 'across' },
-	C: { curl: { Index: 0.42, Middle: 0.45, Ring: 0.48, Pinky: 0.5 }, thumb: 'oppose' },
-	D: { curl: { Middle: 0.72, Ring: 0.72, Pinky: 0.72 }, thumb: 'oppose' },
-	E: { curl: { Index: 0.82, Middle: 0.85, Ring: 0.85, Pinky: 0.82 }, thumb: 'across' },
-	F: { curl: { Index: 0.55 }, splay: { Middle: 7, Ring: 0, Pinky: -9 }, thumb: 'oppose' },
+	B: { curl: {}, thumb: 'across' },
+	C: { curl: { Index: 0.45, Middle: 0.45, Ring: 0.45, Pinky: 0.45 }, thumb: 'oppose' },
+	D: { curl: { Middle: 0.7, Ring: 0.7, Pinky: 0.7 }, thumb: 'oppose' },
+	E: { curl: { Index: 0.85, Middle: 0.85, Ring: 0.85, Pinky: 0.85 }, thumb: 'across' },
+	F: { curl: { Index: 0.55 }, splay: { Middle: 6, Ring: 0, Pinky: -8 }, thumb: 'oppose' },
 	G: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
-	H: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 2, Middle: -2 }, thumb: 'side' },
+	H: { curl: { Ring: 1, Pinky: 1 }, thumb: 'side' },
 	I: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'across' },
 	J: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'across' },
-	K: { curl: { Middle: [42, 12, 8], Ring: 1, Pinky: 1 }, splay: { Index: 10, Middle: -6 }, thumb: 'between' },
+	K: { curl: { Middle: [40, 15, 10], Ring: 1, Pinky: 1 }, thumb: 'between' },
 	L: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'out' },
-	M: { curl: { Index: 0.72, Middle: 0.74, Ring: 0.76, Pinky: 0.95 }, thumb: 'across' },
-	N: { curl: { Index: 0.72, Middle: 0.74, Ring: 0.95, Pinky: 0.95 }, thumb: 'across' },
-	O: { curl: { Index: 0.52, Middle: 0.55, Ring: 0.58, Pinky: 0.6 }, thumb: 'oppose' },
-	P: { curl: { Middle: [42, 12, 8], Ring: 1, Pinky: 1 }, splay: { Index: 10, Middle: -6 }, thumb: 'between' },
+	M: { curl: { Index: 0.75, Middle: 0.75, Ring: 0.75, Pinky: 0.95 }, thumb: 'across' },
+	N: { curl: { Index: 0.75, Middle: 0.75, Ring: 0.95, Pinky: 0.95 }, thumb: 'across' },
+	O: { curl: { Index: 0.55, Middle: 0.55, Ring: 0.55, Pinky: 0.55 }, thumb: 'oppose' },
+	P: { curl: { Middle: [40, 15, 10], Ring: 1, Pinky: 1 }, thumb: 'between' },
 	Q: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
-	R: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: -7, Middle: 9 }, thumb: 'across' },
+	R: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: -6, Middle: 8 }, thumb: 'across' },
 	S: { curl: { Index: 1, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'across' },
-	T: { curl: { Index: 0.88, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'between' },
-	U: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 1, Middle: -1 }, thumb: 'across' },
-	V: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 10, Middle: -10 }, thumb: 'across' },
-	W: { curl: { Pinky: 1 }, splay: { Index: 11, Middle: 0, Ring: -11 }, thumb: 'across' },
-	X: { curl: { Index: [18, 92, 78], Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
+	T: { curl: { Index: 0.9, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'between' },
+	U: { curl: { Ring: 1, Pinky: 1 }, thumb: 'across' },
+	V: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 9, Middle: -9 }, thumb: 'across' },
+	W: { curl: { Pinky: 1 }, splay: { Index: 10, Middle: 0, Ring: -10 }, thumb: 'across' },
+	X: { curl: { Index: [15, 95, 80], Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
 	Y: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'out' },
 	Z: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
 
-	// ASL number handshapes. 6–9 touch the thumb to one fingertip, so the
-	// touched finger half-curls to meet the opposing thumb.
-	0: { curl: { Index: 0.52, Middle: 0.55, Ring: 0.58, Pinky: 0.6 }, thumb: 'oppose' },
+	// ASL number handshapes 0–9 (static). 6–9 touch the thumb to one
+	// fingertip; the touched finger half-curls to meet the opposing thumb.
+	0: { curl: { Index: 0.55, Middle: 0.55, Ring: 0.55, Pinky: 0.55 }, thumb: 'oppose' },
 	1: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'across' },
-	2: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 10, Middle: -10 }, thumb: 'across' },
-	3: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 10, Middle: -10 }, thumb: 'out' },
-	4: { curl: {}, splay: { Index: 11, Middle: 4, Ring: -5, Pinky: -13 }, thumb: 'across' },
-	5: { curl: {}, splay: { Index: 12, Middle: 4, Ring: -5, Pinky: -14 }, thumb: 'out' },
-	6: { curl: { Pinky: 0.55 }, splay: { Index: 9, Middle: 0, Ring: -9 }, thumb: 'oppose' },
-	7: { curl: { Ring: 0.55 }, splay: { Index: 9, Middle: 0, Pinky: -11 }, thumb: 'oppose' },
-	8: { curl: { Middle: 0.55 }, splay: { Index: 9, Ring: -7, Pinky: -13 }, thumb: 'oppose' },
-	9: { curl: { Index: 0.55 }, splay: { Middle: 5, Ring: -5, Pinky: -13 }, thumb: 'oppose' },
+	2: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 9, Middle: -9 }, thumb: 'across' },
+	3: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: 9, Middle: -9 }, thumb: 'out' },
+	4: { curl: {}, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'across' },
+	5: { curl: {}, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'out' },
+	6: { curl: { Pinky: 0.55 }, splay: { Index: 9, Middle: 0, Ring: -8 }, thumb: 'oppose' },
+	7: { curl: { Ring: 0.55 }, splay: { Index: 9, Middle: 0, Pinky: -10 }, thumb: 'oppose' },
+	8: { curl: { Middle: 0.55 }, splay: { Index: 9, Ring: -6, Pinky: -12 }, thumb: 'oppose' },
+	9: { curl: { Index: 0.55 }, splay: { Middle: 4, Ring: -4, Pinky: -12 }, thumb: 'oppose' },
 
-	// Shapes with no letter name of their own.
-	/** Spread and curved, like holding a ball — used by many "grab" signs. */
-	CLAW: { curl: { Index: 0.45, Middle: 0.45, Ring: 0.45, Pinky: 0.45 }, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'oppose' },
+	// ── shapes with no letter of their own, used by the lexical signs ────────
+	/** The hand between letters and at rest: barely engaged, not a pose. */
+	RELAXED: { curl: { Index: [12, 12, 12], Middle: [12, 12, 12], Ring: [12, 12, 12], Pinky: [12, 12, 12] }, thumb: 'neutral' },
 	/** Flat hand, fingers together — the citation "flat B" used everywhere. */
-	FLAT: { curl: {}, splay: { Index: 2, Middle: 1, Ring: -1, Pinky: -3 }, thumb: 'side' },
-	/** Flat hand bent at the knuckles — HAPPY, THANK YOU's release, YOUR. */
-	BENT_B: { curl: {}, knuckle: 52, thumb: 'across' },
+	FLAT: { curl: {}, thumb: 'side' },
+	/** Flat hand bent at the knuckles — HAPPY, YOUR, the release of THANK-YOU. */
+	BENT_B: { curl: {}, knuckle: 50, thumb: 'across' },
+	/** Spread and curved, like holding a ball. */
+	CLAW: { curl: { Index: 0.45, Middle: 0.45, Ring: 0.45, Pinky: 0.45 }, splay: { Index: 10, Middle: 3, Ring: -4, Pinky: -12 }, thumb: 'oppose' },
 	/** Fingers together pinched to the thumb — the closing shape of many signs. */
-	FLAT_O: { curl: { Index: 0.6, Middle: 0.62, Ring: 0.64, Pinky: 0.66 }, knuckle: 22, thumb: 'oppose' },
+	FLAT_O: { curl: { Index: 0.6, Middle: 0.6, Ring: 0.6, Pinky: 0.6 }, knuckle: 20, thumb: 'oppose' },
 	/** Open hand with the middle finger dropped to the palm — FEEL, SICK. */
 	OPEN_8: { curl: { Middle: 0.62 }, splay: { Index: 9, Ring: -6, Pinky: -12 }, thumb: 'out' },
-	/** Relaxed, slightly-curled hand: what a hand does when it isn't signing. */
-	RELAXED: { curl: { Index: 0.18, Middle: 0.22, Ring: 0.26, Pinky: 0.3 }, thumb: 'side' },
 	/** Index and pinky out — the ILY / "rock on" family. */
 	ILY: { curl: { Middle: 1, Ring: 1 }, splay: { Index: 6, Pinky: -6 }, thumb: 'out' },
 });
@@ -110,14 +114,14 @@ export const HANDSHAPES = Object.freeze({
 /** Names of every handshape, for docs and tooling. */
 export const HANDSHAPE_NAMES = Object.freeze(Object.keys(HANDSHAPES));
 
-function jointDegrees(spec) {
+function fingerJointDegrees(spec) {
 	if (Array.isArray(spec)) return spec;
 	const amount = typeof spec === 'number' ? spec : 0;
 	return CURL_WEIGHTS.map((w) => w * amount);
 }
 
 /**
- * Compile a handshape into local rotations for one hand's finger bones.
+ * Compile one handshape into finger-bone local quats for one side.
  *
  * @param {string} name  a HANDSHAPES key (letter, digit, or named shape)
  * @param {'Left'|'Right'} [side]
@@ -125,33 +129,29 @@ function jointDegrees(spec) {
  */
 export function handshapeLocals(name, side = 'Right') {
 	const shape = HANDSHAPES[name];
-	if (!shape) throw new Error(`no handshape "${name}"`);
+	if (!shape) throw new Error(`no handshape for letter "${name}"`);
+	const s = side === 'Left' ? 1 : -1;
+	const curlAxis = [0, 0, -s]; // hinge toward the palm (palms-down rest)
+	const splayAxis = [0, 1, 0];
 	const locals = {};
-
 	for (const finger of FINGERS) {
-		const curl = jointDegrees(shape.curl?.[finger] ?? 0);
+		const deg = fingerJointDegrees(shape.curl?.[finger] ?? 0);
 		const splay = shape.splay?.[finger] ?? 0;
-		for (const j of FINGER_JOINTS) {
-			const bone = `${side}Hand${finger}${j}`;
-			const bend = curl[j - 1] + (j === 1 ? (shape.knuckle ?? 0) : 0);
-			let q = qAxisAngle(curlAxis(bone), bend);
-			// Spread happens at the knuckle only, and always outside the curl so
-			// a curled finger still fans from the same origin.
-			if (j === 1 && splay) q = qMul(qAxisAngle(splayAxis(bone), splay), q);
-			locals[bone] = qNorm(q);
+		for (let j = 0; j < 3; j++) {
+			let q = qAxisAngle(curlAxis, deg[j] + (j === 0 ? (shape.knuckle ?? 0) : 0));
+			if (j === 0 && splay) q = qMul(q, qAxisAngle(splayAxis, splay * -s));
+			locals[`${side}Hand${finger}${j + 1}`] = qNorm(q);
 		}
 	}
-
-	const thumb = THUMB_PRESETS[shape.thumb ?? 'side'];
-	for (const j of FINGER_JOINTS) {
-		const bone = `${side}HandThumb${j}`;
-		let q = qAxisAngle(curlAxis(bone), thumb.curl[j - 1]);
-		if (j === 1) {
-			// The base joint also swings the thumb across the palm (adduction) and
-			// lifts it off the palm plane, which is what separates an A from an S.
-			q = qMul(qMul(qAxisAngle(adductAxis(bone), thumb.adduct), qAxisAngle(splayAxis(bone), thumb.lift ?? 0)), q);
-		}
-		locals[bone] = qNorm(q);
+	const preset = THUMB_PRESETS[shape.thumb ?? 'side'];
+	// Thumb rest points ~45° between the fingers and the palm-forward axis;
+	// adduction swings it about the palm normal (toward/away from the palm
+	// centre), curl bends its hinge toward the palm. Axes are side-mirrored.
+	const thumbHinge = vNorm([-s * 0.5, 0, -0.85]);
+	for (let j = 0; j < 3; j++) {
+		let q = qAxisAngle(thumbHinge, preset.curl[j]);
+		if (j === 0) q = qMul(qAxisAngle([0, 1, 0], preset.adduct * -s), q);
+		locals[`${side}HandThumb${j + 1}`] = qNorm(q);
 	}
 	return locals;
 }

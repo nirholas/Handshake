@@ -266,7 +266,7 @@ const _axisCache = new Map();
 
 /**
  * The bone's own axis: the LOCAL direction that points at its child. ~[0,1,0]
- * on Mixamo/Avaturn rigs, but measured rather than assumed.
+ * on most canonical humanoid rigs, but measured rather than assumed.
  * @param {string} bone
  * @returns {number[]}
  */
@@ -385,8 +385,12 @@ export const ANCHORS = (() => {
 		chin: [0, chinY, head[2] + 0.03],
 		mouth: [0, chinY + 0.04, head[2] + 0.04],
 		nose: [0, head[1] + 0.02, head[2] + 0.05],
-		/** Upper chest, where most two-handed signs live. */
-		sternum: [0, chest[1] + 0.06, chest[2] + 0.02],
+		/**
+		 * Upper chest, where most two-handed signs live. Measured up from the
+		 * chest bone toward the neck rather than from the bone itself, which sits
+		 * at mid-torso — anchoring signs there hangs them at belly height.
+		 */
+		sternum: [0, chest[1] + (neck[1] - chest[1]) * 0.6, chest[2] + 0.02],
 		/** Mid torso — the low end of neutral signing space. */
 		belly: [0, (chest[1] + hips[1]) / 2, chest[2]],
 	});

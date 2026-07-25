@@ -34,29 +34,21 @@ export const LETTER_SHAPES = HANDSHAPES;
 
 // Where fingerspelling happens: in front of the dominant shoulder, jaw height,
 // far enough forward to clear the body and be read comfortably.
-const SPELLING_PLACE = { anchor: 'chin', out: 0.19, up: -0.06, forward: 0.17 };
+const SPELLING_PLACE = { anchor: 'chin', out: 0.24, up: -0.03, forward: 0.21 };
 
-// Per-letter departures from the citation orientation (fingers up, palm to the
-// reader). Directions are body-relative: `out` is away from the signer's
-// midline, `in` toward it, `forward` toward the person reading.
+// The citation orientation is fingers up, palm to the reader, and every letter
+// keeps it — the alphabet is unchanged. Only the four letters that are DEFINED
+// by a different orientation depart from it. Directions are body-relative:
+// `out` is away from the signer's midline, `in` toward it, `forward` toward the
+// person reading.
 const LETTER_ORIENT = {
 	// G and H lie the hand over: fingers point at the reader, palm toward the
 	// signer's other side.
-	G: { fingers: ['forward', 'up'], palm: 'in', at: { anchor: 'chin', out: 0.17, up: -0.12, forward: 0.2 } },
-	H: { fingers: ['forward', 'up'], palm: 'in', at: { anchor: 'chin', out: 0.17, up: -0.12, forward: 0.2 } },
+	G: { fingers: ['forward', 'up'], palm: 'in', at: { anchor: 'chin', out: 0.19, up: -0.11, forward: 0.21 } },
+	H: { fingers: ['forward', 'up'], palm: 'in', at: { anchor: 'chin', out: 0.19, up: -0.11, forward: 0.21 } },
 	// P and Q are K and G turned down toward the floor, and sit lower.
-	P: { fingers: ['down', 'forward'], palm: 'in', at: { anchor: 'chin', out: 0.17, up: -0.24, forward: 0.19 } },
-	Q: { fingers: ['down', 'forward'], palm: 'back', at: { anchor: 'chin', out: 0.15, up: -0.26, forward: 0.17 } },
-	// The thumb-out shapes read best angled slightly inward.
-	L: { palm: ['forward', 'in'] },
-	Y: { palm: ['forward', 'in'] },
-	// The closed shapes turn a few degrees off square so the knuckles catch light.
-	A: { palm: ['forward', 'out'] },
-	S: { palm: ['forward', 'out'] },
-	T: { palm: ['forward', 'out'] },
-	M: { palm: ['forward', 'out'] },
-	N: { palm: ['forward', 'out'] },
-	E: { palm: ['forward', 'out'] },
+	P: { fingers: ['down', 'forward'], palm: 'in', at: { anchor: 'chin', out: 0.19, up: -0.24, forward: 0.2 } },
+	Q: { fingers: ['down', 'forward'], palm: 'back', at: { anchor: 'chin', out: 0.17, up: -0.26, forward: 0.18 } },
 };
 
 // Traced letters. Each step offsets the hand from the spelling place (metres,

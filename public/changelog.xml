@@ -47,6 +47,14 @@
 			<description>The KOL Tracker page shipped listed in the sitemap but with no route behind it, so three.ws/tracker returned a 404 for everyone who followed the link, and the API behind it was answering with three placeholder rows left over from a test fixture. Both are fixed. The page is served, and it now ranks real Solana traders from the live kolscan board: realized profit, win rate and trade count for the 24h, 7d and 30d windows, enriched with our own on-chain FIFO profit calculation wherever we have the trades for a wallet. Every row states where its number came from, and when a source is unreachable the board shows an honest empty state instead of inventing traders. A new test blocks the whole class of mistake: any page advertised in the site index that has no route, or that never gets built, now fails the suite before it can reach production.</description>
 		</item>
 		<item>
+			<title>The Spatial MCP reference renderer actually renders again</title>
+			<link>https://three.ws/spatial-mcp</link>
+			<guid isPermaLink="false">2026-07-25:The Spatial MCP reference renderer actually renders again</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Spatial MCP is our open, public-domain shape for handing back a live 3D scene as an AI tool result instead of a link, and three.ws/spatial-mcp is the page that proves it works. It has been showing two empty frames. The demo code asked for its renderer with a path relative to the page, and because the page is served both with and without a trailing slash, that path pointed at the site root on one of them and came back as a 404, so the renderer never loaded and neither scene appeared. The demo now loads as its own module file, which resolves correctly on either address and in local development, where the same page had been failing to build at all. Both frames are live again: you can orbit and zoom a real model on the left and, on the right, the same viewer displaying a model that arrived from a completely different server in a completely different format, converted by a six-line adapter shown as JSON underneath. That side-by-side is the whole argument for the standard, so it is worth having it work. The left frame is now a genuine model from our free text-to-3D lane rather than a borrowed sample, and the sample the page used to point at had itself gone dead upstream, which is why it also stayed blank once the renderer was fixed.</description>
+		</item>
+		<item>
 			<title>The trading fleet never sells 100% of a winner again</title>
 			<link>https://three.ws/sniper/experiments</link>
 			<guid isPermaLink="false">2026-07-25:The trading fleet never sells 100% of a winner again</guid>

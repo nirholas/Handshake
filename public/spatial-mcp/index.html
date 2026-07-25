@@ -80,45 +80,9 @@
   </p>
 </div>
 
-<script type="module">
-  // Absolute, not './' — the route serves this page at BOTH /spatial-mcp and
-  // /spatial-mcp/, and on the slash-less URL a relative specifier resolves
-  // against the site root (/spatial-renderer.js → 404, blank stages).
-  import { renderSpatialArtifact } from '/spatial-mcp/spatial-renderer.js';
-
-  // A real, public demo GLB (three.js sample, https).
-  const DEMO_GLB = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
-
-  // 1) A native three.ws artifact (what forge_free's structuredContent.spatial looks like).
-  const native = {
-    spatialMcpVersion: '0.1',
-    kind: 'model',
-    scene: { glbUrl: DEMO_GLB, format: 'glb' },
-    camera: { autoRotate: true },
-    environment: { image: 'neutral', exposure: 1, shadowIntensity: 1 },
-    affordances: { orbit: true, zoom: true, fullscreen: true, download: true },
-    meta: { title: 'Damaged helmet', prompt: 'a battle-worn sci-fi helmet' },
-  };
-  renderSpatialArtifact(document.getElementById('stage-native'), native);
-
-  // 2) A FOREIGN tool result in some other server's shape…
-  const foreignResult = { model_url: DEMO_GLB, thumbnail: null, name: 'A helmet from another server' };
-
-  // …transformed into a conformant artifact by a 6-line adapter (the portability proof).
-  function toSpatialArtifact(foreign) {
-    return {
-      spatialMcpVersion: '0.1',
-      kind: 'model',
-      scene: { glbUrl: foreign.model_url, format: 'glb', ...(foreign.thumbnail ? { poster: foreign.thumbnail } : {}) },
-      camera: { autoRotate: true },
-      affordances: { orbit: true, zoom: true },
-      meta: { title: foreign.name },
-    };
-  }
-  const transformed = toSpatialArtifact(foreignResult);
-  renderSpatialArtifact(document.getElementById('stage-foreign'), transformed);
-  document.getElementById('artifact-json').textContent = JSON.stringify(transformed, null, 2);
-</script>
+<!-- The demo driver is a sibling module, not an inline script: see the comment at
+     the top of demo.js for why an inline import cannot work on this route. -->
+<script type="module" src="/spatial-mcp/demo.js"></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

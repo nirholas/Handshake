@@ -77,10 +77,18 @@ describe('compileUtterance', () => {
 
 describe('estimateDuration', () => {
 	it('tracks compiled duration closely for plain fingerspelling', () => {
+		// `signed: false` matches compileUtterance with no dictionary — both spell
+		// every word.
 		const text = 'hello world';
-		const est = estimateDuration(text, CHAT_TIMING);
+		const est = estimateDuration(text, CHAT_TIMING, { signed: false });
 		const real = compileUtterance(text).clip.duration;
 		expect(Math.abs(est - real)).toBeLessThan(1.0);
+	});
+
+	it('counts a dictionary word as one sign, not as its letters', () => {
+		expect(estimateDuration('welcome', CHAT_TIMING)).toBeLessThan(
+			estimateDuration('welcome', CHAT_TIMING, { signed: false }),
+		);
 	});
 });
 

@@ -14,6 +14,7 @@
 // a standalone package.
 
 import { DEFAULT_TIMING, buildFingerspellingClip, normalizeWord } from './fingerspelling.js';
+import { lookupSign, signLookup } from './sign-dictionary.js';
 
 // Chat replies favour pace over ceremony: quicker holds and transitions than
 // the studio default, so a sentence stays watchable.
@@ -37,19 +38,24 @@ export function utteranceWords(text) {
 	return normalizeWord(text).split(' ').filter(Boolean);
 }
 
+// A lexical sign runs about this long in citation form — used only by the
+// estimator, which decides how much text is worth signing before anything is
+// compiled.
+const SIGN_SECONDS = 1.1;
+
 /**
  * Rough signing duration in seconds for `text` under `timing`, before
- * compiling anything — used to cap chat replies to a watchable length.
+ * compiling anything — used to cap chat replies to a watchable length. Words
+ * with a dictionary sign count as one sign; the rest are counted per letter.
  */
-export function estimateDuration(text, timing = CHAT_TIMING) {
+export function estimateDuration(text, timing = CHAT_TIMING, { signed = true } = {}) {
 	const words = utteranceWords(text);
-	const letters = words.reduce((n, w) => n + w.length, 0);
-	return (
-		timing.leadSeconds +
-		timing.tailSeconds +
-		letters * (timing.holdSeconds + timing.transitionSeconds) +
-		Math.max(0, words.length - 1) * WORD_GAP_SECONDS
-	);
+	let seconds = timing.leadSeconds + timing.tailSeconds;
+	for (const word of words) {
+		if (signed && lookupSign(word)) seconds += SIGN_SECONDS;
+		else seconds += word.length * (timing.holdSeconds + timing.transitionSeconds);
+	}
+	return seconds + Math.max(0, words.length - 1) * WORD_GAP_SECONDS;
 }
 
 // Append `clip`'s tracks to the merged timeline starting at `offset`. Bones
@@ -134,12 +140,14 @@ export function compileUtterance(text, opts = {}) {
 		(sign ? signed : spelled).push(word);
 	}
 
+	// Rotation lanes only. A signed utterance is upper-body: it must never write
+	// the root's translation, which on a rig whose hips rest a metre off the
+	// floor would drop the whole avatar through it.
 	const tracks = [];
 	for (const [name, lane] of merged) {
-		if (name === 'Hips.position') continue; // re-added as a single origin key
+		if (name.endsWith('.position') || name.endsWith('.scale')) continue;
 		tracks.push({ type: lane.type, name, times: lane.times, values: lane.values });
 	}
-	tracks.push({ type: 'vector', name: 'Hips.position', times: [0], values: [0, 0, 0] });
 
 	return {
 		clip: {
@@ -167,10 +175,13 @@ export function compileUtterance(text, opts = {}) {
  * `signs` (optional) is the lexical dictionary passed through to the compiler.
  */
 export class SignSpeaker {
-	constructor({ manager, signs = null, timing = null, maxSeconds = 45 } = {}) {
+	constructor({ manager, signs = undefined, timing = null, maxSeconds = 45 } = {}) {
 		if (!manager) throw new Error('SignSpeaker needs a manager');
 		this.manager = manager;
-		this.signs = signs;
+		// Default to the built-in vocabulary: a signer signs the words they have
+		// signs for and only spells the rest. Pass `signs: null` for spelling-only,
+		// or your own lookup to override.
+		this.signs = signs === undefined ? signLookup() : signs;
 		this.timing = timing;
 		this.maxSeconds = maxSeconds;
 		this._counter = 0;

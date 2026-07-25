@@ -399,3 +399,12 @@ tests/openai-comarketing-language.test.js
 # local research datasets (large, regenerable; see datasets/*/README.md)
 /datasets/
 SECURITY-AUDIT.md
+
+# avatar fidelity evaluation: reference faces are real people / licensed stock and
+# never belong in git; reports and rendered GLBs are regenerable outputs.
+# Mirror the reference set via gs://three-ws-avatar-reconstructions/eval-refs/
+# (see workers/avatar-reconstruction/eval/README.md).
+/workers/avatar-reconstruction/eval/refs/
+/workers/avatar-reconstruction/eval/reports/
+# local Python venv for the eval harness — thousands of files, always regenerable
+/workers/avatar-reconstruction/.venv-eval/
