@@ -42,3 +42,7 @@ images:
 options:
   machineType: E2_HIGHCPU_8
   logging: CLOUD_LOGGING_ONLY
+
+# The project's default compute SA was deleted; every manual build must pin the
+# dedicated build SA or Cloud Build refuses the submission.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
