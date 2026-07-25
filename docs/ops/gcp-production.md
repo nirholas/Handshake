@@ -246,9 +246,31 @@ phases.
 
 ## Crons (Cloud Scheduler)
 
-The 76 schedules in `vercel.json` `crons` are mirrored 1:1 to Cloud Scheduler
-jobs in us-central1, named `cron-api-cron-<name>`. All 76 are **ENABLED**
-(Vercel's crons died with the deployment, so there is no double-fire risk).
+The schedules in `vercel.json` `crons` are mirrored to Cloud Scheduler jobs in
+us-central1, mostly named `cron--api-cron-<name>` (a few older ones use a bare
+name, so **match by target URI, not by job name**, when auditing). Vercel's crons
+died with the deployment, so there is no double-fire risk.
+
+**The mirror is not automatically enforced — verify it after editing `crons`.**
+As of 2026-07-25 there were 98 entries in `vercel.json` and 96 scheduler jobs;
+five declared crons had **no scheduler job at all** and had therefore never run
+in production: `kol-tracker-refresh`, `forge-thumbnail-backfill`,
+`forge-off-crown`, `quality-bench`, and `confirm-pending-purchases` (that last
+one has no handler file either — it is a phantom entry that would 404, so
+nothing is stuck behind it). Declaring a cron in `vercel.json` does nothing on
+its own; only the sync script below creates the job.
+
+```bash
+# Audit: which declared crons have no scheduler job targeting them?
+python3 - <<'EOF'
+import json, subprocess
+crons = [c['path'] for c in json.load(open('vercel.json'))['crons']]
+jobs = json.loads(subprocess.run(['gcloud','scheduler','jobs','list','--location','us-central1',
+  '--project','aerial-vehicle-466722-p5','--format=json'], capture_output=True, text=True).stdout)
+have = {(j.get('httpTarget') or {}).get('uri','').split('.run.app',1)[-1].split('?')[0] for j in jobs}
+print('\n'.join(p for p in crons if p not in have) or 'all mirrored')
+EOF
+```
 
 ```bash
 # Sync after editing crons in vercel.json (idempotent create-or-update):

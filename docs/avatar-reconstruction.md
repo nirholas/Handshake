@@ -11,6 +11,35 @@ blendshapes instead of a bare mesh that still needs auto-rigging.
 - **Worker:** [`workers/avatar-reconstruction/`](../workers/avatar-reconstruction) — FastAPI on a Cloud Run L4 GPU.
 - **Backend provider:** [`api/_providers/gcp.js`](../api/_providers/gcp.js), selected by `AVATAR_REGEN_PROVIDER=gcp` (see [`api/_lib/regen-provider.js`](../api/_lib/regen-provider.js)).
 - **User entry points:** the selfie/upload flow and text→avatar prompt flow in [`api/avatars/_actions.js`](../api/avatars/_actions.js) (`POST /api/avatars/reconstruct`).
+- **Completion:** normally driven by the browser polling `/api/avatars/regenerate-status`, which runs the finalize stages inline. [`api/cron/reconstruct-sweep.js`](../api/cron/reconstruct-sweep.js) is the server-side backstop for when it isn't — see below.
+
+## Who finishes the job
+
+A reconstruct job is advanced by whoever polls it. The `/create/selfie` page
+polls every few seconds, and each poll pulls provider status and runs the shared
+finalize stages in [`reconstruct-finalize.js`](../api/_lib/reconstruct-finalize.js).
+
+That made the browser tab load-bearing. Close it mid-build and the worker still
+finished the GLB and stored it durably in GCS, but nothing ever collected it: the
+job row stayed `queued`/`running` forever and the avatar never reached the user's
+library. Production had 26 jobs stranded that way, the oldest from 2026-05-31,
+invisible to `db-retention` (which only prunes terminal rows).
+
+`reconstruct-sweep` closes that hole. Every 5 minutes it picks up reconstruct
+jobs quiet for over 3 minutes and runs **the same finalize stages** the browser
+poll would have, so an abandoned job still lands in the library. Design notes:
+
+- **30-day rescue window**, far longer than the auto-rig sweep's 6 hours. The
+  worker's GLBs (GCS) and job state (Firestore) are both durable, so a weeks-old
+  abandoned job is still genuinely deliverable to a real user.
+- Past that window, and for jobs whose provider is no longer pollable with
+  platform credentials, rows are failed out with an honest reason — the open set
+  must not grow without bound.
+- **BYOK jobs (meshy/tripo) stay browser-driven.** They authenticate with the
+  user's own key, which the status poll resolves from request context; a cron has
+  no user context to decrypt it. They age out via the same window.
+- A provider 404 (`gcp_task_missing`) is terminal here, so a job whose worker
+  record is genuinely gone resolves instead of being retried forever.
 
 ## How it works
 
