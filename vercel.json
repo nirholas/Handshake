@@ -335,6 +335,14 @@
 			"dest": "/aws/index.html"
 		},
 		{
+			"src": "/openai",
+			"dest": "/openai/index.html"
+		},
+		{
+			"src": "/openai/",
+			"dest": "/openai/index.html"
+		},
+		{
 			"src": "/billing/keys",
 			"dest": "/billing/keys.html"
 		},

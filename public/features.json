@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-24T22:24:11.413Z",
+	"generated_at": "2026-07-25T06:19:59.640Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -306,6 +306,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/timeline",
+					"title": "The Story So Far",
+					"description": "three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.",
+					"added": "2026-07-25",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/tour",
 					"title": "Guided Tour",
 					"description": "A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.",
@@ -348,8 +358,18 @@
 				{
 					"path": "/partners",
 					"title": "Partner Ecosystem",
-					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
+					"description": "three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/openai",
+					"title": "three.ws is an OpenAI Select Partner",
+					"description": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.",
+					"added": "2026-07-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3819,6 +3839,16 @@
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
 					"added": "2026-07-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/blog/three-ws-openai-select-partner",
+					"title": "three.ws Named an OpenAI Select Partner",
+					"description": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
+					"added": "2026-07-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

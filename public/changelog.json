@@ -1,11 +1,52 @@
 {
-	"generated_at": "2026-07-24T22:24:11.420Z",
+	"generated_at": "2026-07-25T06:19:59.647Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-25",
+			"type": "launch",
+			"title": "The Story So Far",
+			"summary": "three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.",
+			"link": "/timeline",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "launch",
+			"title": "three.ws is an OpenAI Select Partner",
+			"summary": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.",
+			"link": "/openai",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "launch",
+			"title": "three.ws Named an OpenAI Select Partner",
+			"summary": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
+			"link": "/blog/three-ws-openai-select-partner",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "three.ws is an OpenAI Select Partner",
+			"summary": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. A new page at /openai lays out everything the platform already ships on OpenAI surfaces: the free, keyless 3D Studio MCP connector for ChatGPT with nine tools (text to 3D, avatars, auto-rigging, conversational refinement, and a living agent body), the custom GPT Actions surface for plans without connectors, one-tap AR on iOS and Android, and Spatial MCP, the open CC0 shape for returning a live 3D scene as a tool result. The partner directory at /partners was also rewritten to list only the programs three.ws is actually enrolled in today, with NVIDIA correctly described as Inception membership.",
+			"link": "/openai",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-07-24",
 			"type": "update",
@@ -554,7 +595,7 @@
 			"date": "2026-07-21",
 			"type": "update",
 			"title": "three.ws joins the NVIDIA Inception program",
-			"summary": "three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.",
+			"summary": "three.ws has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.",
 			"link": null,
 			"tags": [
 				"infra"
@@ -9087,7 +9128,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Partner Ecosystem",
-			"summary": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
+			"summary": "three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 			"link": "/partners",
 			"tags": [
 				"launch"

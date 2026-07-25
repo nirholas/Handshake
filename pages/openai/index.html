@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>three.ws is an OpenAI Select Partner — 3D for ChatGPT</title>
+	<meta name="description" content="three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation." />
+	<link rel="canonical" href="https://three.ws/openai" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws is an OpenAI Select Partner" />
+	<meta property="og:description" content="Free 3D generation inside ChatGPT: connect the three.ws 3D Studio MCP server and get an interactive model inline, riggable, animatable, and placeable in AR." />
+	<meta property="og:url" content="https://three.ws/openai" />
+	<meta property="og:image" content="https://three.ws/partners/openai/openai-select-partner@3x.png" />
+	<meta property="og:image:alt" content="OpenAI Partner Network — Select Partner badge" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws is an OpenAI Select Partner" />
+	<meta name="twitter:description" content="Free 3D generation inside ChatGPT: connect the three.ws 3D Studio MCP server and get an interactive model inline." />
+	<meta name="twitter:image" content="https://three.ws/partners/openai/openai-select-partner@3x.png" />
+	<meta name="twitter:site" content="@trythreews" />
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<script src="/nav.js" defer></script>
+	<style>
+		:root {
+			color-scheme: dark;
+			--accent: #ffffff; --accent2: #cccccc;
+			--border: #222222; --bg: #000000;
+			--panel: #141414; --panel2: #1a1a1a;
+			--text: #e8e8f0; --muted: #8b8b99;
+			--oai: #10a37f;
+		}
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body { font: 16px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; }
+		a { color: inherit; }
+		:focus-visible { outline: 2px solid var(--oai); outline-offset: 3px; border-radius: 6px; }
+
+		main { max-width: 900px; margin: 0 auto; padding: 72px 24px 120px; }
+
+		/* ── Hero ─────────────────────────────────────────────── */
+		.eyebrow { display: inline-flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px 7px 12px; font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+		.eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--oai); box-shadow: 0 0 12px var(--oai); }
+		.eyebrow strong { color: var(--text); font-weight: 500; }
+
+		h1 { font-size: clamp(36px, 6vw, 56px); letter-spacing: -0.03em; line-height: 1.05; font-weight: 600; margin-bottom: 20px; }
+		h1 .gradient { background: linear-gradient(110deg, #ffffff 30%, #9fe8d4 85%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+		.lede { font-size: clamp(17px, 2vw, 19px); color: var(--muted); line-height: 1.55; max-width: 660px; margin-bottom: 36px; }
+		.lede strong { color: var(--text); font-weight: 500; }
+
+		.badge-plate { display: inline-block; background: #ffffff; border-radius: 20px; padding: 18px 22px; margin-bottom: 36px; transition: transform .18s ease, box-shadow .18s ease; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+		.badge-plate:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(16,163,127,.22), 0 0 0 1px rgba(255,255,255,.16); }
+		.badge-plate img { display: block; width: 260px; max-width: 100%; height: auto; }
+
+		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 88px; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter .15s, background .15s, transform .15s; }
+		.btn-primary { background: var(--accent); color: #000; }
+		.btn-primary:hover { filter: brightness(.9); }
+		.btn-primary:active { transform: translateY(1px); }
+		.btn-sec { background: var(--panel); border: 1px solid var(--border); color: var(--text); }
+		.btn-sec:hover { background: var(--panel2); border-color: #333; }
+		.btn-sec:active { transform: translateY(1px); }
+		.btn svg { width: 16px; height: 16px; }
+
+		section { margin-bottom: 80px; }
+		section h2 { font-size: clamp(24px, 3.5vw, 32px); letter-spacing: -0.02em; line-height: 1.15; font-weight: 600; margin-bottom: 14px; }
+		section .sub { color: var(--muted); font-size: 16px; margin-bottom: 30px; max-width: 640px; }
+
+		/* ── Surfaces ─────────────────────────────────────────── */
+		.surface-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+		.surface { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
+		a.surface { text-decoration: none; display: block; }
+		a.surface:hover { border-color: #2f4d45; background: var(--panel2); transform: translateY(-2px); }
+		.surface .icon { width: 36px; height: 36px; border-radius: 9px; background: rgba(16,163,127,.1); border: 1px solid rgba(16,163,127,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+		.surface h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.01em; }
+		.surface p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+		.surface .more { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 13px; color: #6fd6b8; }
+
+		/* ── Connect ──────────────────────────────────────────── */
+		.connect { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+		.connect-row { padding: 15px 22px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: baseline; }
+		.connect-row:last-child { border-bottom: none; }
+		.connect-row .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+		.connect-row .v { font-size: 14px; }
+		.connect-row code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: #6fd6b8; word-break: break-all; }
+
+		pre { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-top: 16px; overflow-x: auto; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
+		pre .c { color: var(--muted); }
+		pre .s { color: #6fd6b8; }
+
+		/* ── Tools ────────────────────────────────────────────── */
+		.tools { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+		.tool { padding: 15px 22px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 210px 1fr; gap: 20px; align-items: baseline; }
+		.tool:last-child { border-bottom: none; }
+		.tool code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: #6fd6b8; }
+		.tool .desc { font-size: 14px; color: var(--muted); }
+
+		.note { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; font-size: 14px; color: var(--muted); margin-top: 14px; }
+		.note strong { color: var(--text); }
+		.note a { color: #6fd6b8; text-decoration: none; }
+		.note a:hover { text-decoration: underline; }
+
+		.disclaimer { font-size: 12px; color: var(--muted); margin-top: 64px; line-height: 1.6; max-width: 720px; }
+
+		@media (max-width: 720px) {
+			main { padding: 52px 20px 96px; }
+			.connect-row, .tool { grid-template-columns: 1fr; gap: 5px; }
+			.badge-plate img { width: 220px; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			* { transition: none !important; }
+		}
+	</style>
+
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"three.ws is an OpenAI Select Partner","description":"three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Free 3D generation inside ChatGPT through the three.ws 3D Studio MCP server.","url":"https://three.ws/openai","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/partners/openai/openai-select-partner@3x.png"}]}</script>
+</head>
+<body>
+
+<header><div id="nav-container"></div></header>
+
+<main>
+
+	<div class="eyebrow">
+		<span class="dot" aria-hidden="true"></span>
+		<strong>OpenAI Select Partner</strong>
+		<span>·</span>
+		<span>OpenAI Partner Network</span>
+	</div>
+
+	<h1>3D, natively, inside <span class="gradient">ChatGPT</span>.</h1>
+
+	<p class="lede">
+		three.ws has been named an <strong>OpenAI Select Partner</strong> within the OpenAI Partner Network.
+		The platform's free 3D Studio connector turns a sentence into an interactive, textured 3D model that
+		renders inline in the conversation, then rigs it, animates it, and places it in your room in AR.
+		No key, no account, no cost.
+	</p>
+
+	<div class="badge-plate">
+		<img src="/partners/openai/openai-select-partner.svg" width="375" height="177" alt="OpenAI Partner Network — Select Partner" />
+	</div>
+
+	<div class="cta-row">
+		<a href="/docs/mcp-studio" class="btn btn-primary">
+			Connect it to ChatGPT
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+		</a>
+		<a href="/forge" class="btn btn-sec">Try it in the browser</a>
+		<a href="/blog/three-ws-openai-select-partner" class="btn btn-sec">Read the announcement</a>
+	</div>
+
+	<section>
+		<h2>What we ship on OpenAI surfaces.</h2>
+		<p class="sub">Four live surfaces, all free and keyless. Every one of them is open source.</p>
+
+		<div class="surface-grid">
+
+			<a class="surface" href="/docs/mcp-studio">
+				<div class="icon" aria-hidden="true">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6fd6b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 22V12"/></svg>
+				</div>
+				<h3>three.ws 3D Studio (Apps SDK)</h3>
+				<p>An MCP connector for ChatGPT with nine free tools. Results render in an interactive
+				<code>model-viewer</code> widget inline in the chat, with a declared widget CSP so models load in real ChatGPT.</p>
+				<span class="more">Connector docs
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+			<a class="surface" href="/docs/api-reference">
+				<div class="icon" aria-hidden="true">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6fd6b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H4z"/><path d="M8 20h8M12 16v4"/></svg>
+				</div>
+				<h3>Custom GPT Actions</h3>
+				<p>The same free lane as a REST Actions surface for the "three.ws 3D Studio" custom GPT, with an
+				age-13+ safety gate and store-clean responses. Covers plans without connector support.</p>
+				<span class="more">API reference
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+			<a class="surface" href="/spatial-mcp">
+				<div class="icon" aria-hidden="true">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6fd6b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18"/></svg>
+				</div>
+				<h3>Spatial MCP</h3>
+				<p>An open, CC0 response shape for returning a live 3D scene as a first-class tool result: scene GLB,
+				camera, environment, animation, AR handoff. Any client can render it, not just ours.</p>
+				<span class="more">Live demo
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+			<a class="surface" href="/docs/chatgpt-ar">
+				<div class="icon" aria-hidden="true">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6fd6b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M7.5 9.5 12 12l4.5-2.5M12 12v6"/></svg>
+				</div>
+				<h3>AR from the conversation</h3>
+				<p>Every generated model carries a one-tap AR link. iOS gets a Quick Look USDZ converted on the fly,
+				Android gets a Scene Viewer intent, desktop gets the WebGL viewer.</p>
+				<span class="more">How it works
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+		</div>
+	</section>
+
+	<section>
+		<h2>Connect the server.</h2>
+		<p class="sub">Add it as a connector with no authentication. It answers every request synchronously over POST.</p>
+
+		<div class="connect">
+			<div class="connect-row">
+				<span class="k">URL</span>
+				<span class="v"><code>https://three.ws/api/mcp-studio</code></span>
+			</div>
+			<div class="connect-row">
+				<span class="k">Transport</span>
+				<span class="v">Streamable HTTP (JSON-RPC over POST)</span>
+			</div>
+			<div class="connect-row">
+				<span class="k">Auth</span>
+				<span class="v">None. No key, no account, no wallet.</span>
+			</div>
+			<div class="connect-row">
+				<span class="k">Protocol</span>
+				<span class="v">MCP <code>2025-06-18</code></span>
+			</div>
+			<div class="connect-row">
+				<span class="k">Manifest</span>
+				<span class="v"><a href="https://github.com/nirholas/three.ws/blob/main/server-studio.json" target="_blank" rel="noopener"><code>server-studio.json</code></a></span>
+			</div>
+		</div>
+
+<pre><span class="c"># list the tools from any MCP client</span>
+curl -s <span class="s">https://three.ws/api/mcp-studio</span> \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</span></pre>
+	</section>
+
+	<section>
+		<h2>The generation tools.</h2>
+		<p class="sub">Six generation tools plus three persona tools that give an assistant a living, lip-syncing body in the panel. All nine free, all operator-funded.</p>
+
+		<div class="tools">
+			<div class="tool"><code>forge_free</code><span class="desc">Generate a textured 3D model from a text prompt. Returns a GLB.</span></div>
+			<div class="tool"><code>text_to_avatar</code><span class="desc">Generate a 3D avatar from a prompt or a reference image.</span></div>
+			<div class="tool"><code>mesh_forge</code><span class="desc">Art-directed mesh generation from text or an image.</span></div>
+			<div class="tool"><code>rig_mesh</code><span class="desc">Add a humanoid skeleton to an existing GLB so it can be animated.</span></div>
+			<div class="tool"><code>forge_avatar</code><span class="desc">One call: generate the mesh and rig it, behind a humanoid gate.</span></div>
+			<div class="tool"><code>refine_model</code><span class="desc">Iterate by describing a change ("make it metallic"), with a revertable version lineage.</span></div>
+			<div class="tool"><code>create_agent_persona</code><span class="desc">Turn a generated avatar into a persistent, named body that reloads by id.</span></div>
+			<div class="tool"><code>get_agent_persona</code><span class="desc">Reload a persona in a fresh session. The id is the capability.</span></div>
+			<div class="tool"><code>persona_say</code><span class="desc">Make the body speak a line: lip-sync, expression, and gesture blended together.</span></div>
+		</div>
+
+		<div class="note">
+			<strong>Zero crypto surface.</strong> This server exposes 3D generation only. The paid, wallet-enabled
+			studio is a separate endpoint at <code>/api/mcp-3d</code> and shares none of this surface. Full contract in the
+			<a href="/docs/mcp-studio">3D Studio docs</a>.
+		</div>
+	</section>
+
+	<section>
+		<h2>Why it matters.</h2>
+		<p class="sub">
+			Assistants are excellent at text and images and have had nothing to say in three dimensions. A model
+			you can orbit, rig, animate, and stand in your living room is a different kind of answer than a picture of one.
+			three.ws exists to make that response type ordinary: an open protocol shape, a free connector, and an
+			open-source stack under all of it. Being named an OpenAI Select Partner is the endorsement to go build
+			more of it.
+		</p>
+		<div class="cta-row" style="margin-bottom:0">
+			<a href="/forge" class="btn btn-primary">
+				Generate a model
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+			</a>
+			<a href="https://github.com/nirholas/three.ws" class="btn btn-sec" target="_blank" rel="noopener">
+				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3C5.4.3 0 5.7 0 12.3c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.8 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.8-1.6 8.2-6.1 8.2-11.4C24 5.7 18.6.3 12 .3z"/></svg>
+				View source
+			</a>
+			<a href="/partners" class="btn btn-sec">All partners</a>
+		</div>
+	</section>
+
+	<p class="disclaimer">
+		three.ws is an independent member of the OpenAI Partner Network at the Select tier. This page describes
+		three.ws products that integrate with OpenAI platforms; it is not an OpenAI product and is not endorsed by
+		OpenAI beyond the partner designation shown. OpenAI, ChatGPT, and the OpenAI Partner Network badge are
+		trademarks of OpenAI. Learn more about the network at
+		<a href="https://openai.com/business/partners/" target="_blank" rel="noopener" style="color:#6fd6b8;text-decoration:none">openai.com/business/partners</a>.
+	</p>
+
+</main>
+
+<div id="footer-container"></div>
+
+<script src="/brand.js" defer></script>
+<script src="/footer.js"></script>
+<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+<script type="module" src="/i18n.js"></script>
+</body>
+</html>

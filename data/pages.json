@@ -297,10 +297,18 @@
 				{
 					"path": "/partners",
 					"title": "Partner Ecosystem",
-					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
+					"description": "three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-27"
+				},
+				{
+					"path": "/openai",
+					"title": "three.ws is an OpenAI Select Partner",
+					"description": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-25"
 				},
 				{
 					"path": "/pricing",
@@ -3021,6 +3029,15 @@
 					"changefreq": "monthly",
 					"lastmod": "2026-07-16",
 					"added": "2026-07-16"
+				},
+				{
+					"path": "/blog/three-ws-openai-select-partner",
+					"title": "three.ws Named an OpenAI Select Partner",
+					"description": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-25",
+					"added": "2026-07-25"
 				},
 				{
 					"path": "/blog/three-ws-alibaba-cloud-partnership",

@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-25",
+			"title": "three.ws is an OpenAI Select Partner",
+			"summary": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. A new page at /openai lays out everything the platform already ships on OpenAI surfaces: the free, keyless 3D Studio MCP connector for ChatGPT with nine tools (text to 3D, avatars, auto-rigging, conversational refinement, and a living agent body), the custom GPT Actions surface for plans without connectors, one-tap AR on iOS and Android, and Spatial MCP, the open CC0 shape for returning a live 3D scene as a tool result. The partner directory at /partners was also rewritten to list only the programs three.ws is actually enrolled in today, with NVIDIA correctly described as Inception membership.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/openai"
+		},
+		{
 			"date": "2026-07-24",
 			"title": "The x402 facilitator now describes itself at its root URL",
 			"summary": "Opening https://three.ws/api/x402-facilitator in a browser used to return a bare \"not found\" error, since only the /verify, /settle, and /supported sub-paths were wired. The root now returns a self-describing discovery document: the service name, whether it's enabled, the payment networks and schemes it settles (USDC on Solana), the public receiver and fee-payer addresses, and the full endpoint list. Makes the self-hosted facilitator shareable and inspectable without guessing sub-paths.",
@@ -15466,7 +15476,7 @@
 		{
 			"date": "2026-07-21",
 			"title": "three.ws joins the NVIDIA Inception program",
-			"summary": "three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.",
+			"summary": "three.ws has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.",
 			"tags": [
 				"infra"
 			]

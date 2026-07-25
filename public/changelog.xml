@@ -7,6 +7,38 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The Story So Far</title>
+			<link>https://three.ws/timeline</link>
+			<guid isPermaLink="false">2026-07-25:The Story So Far</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.</description>
+		</item>
+		<item>
+			<title>three.ws is an OpenAI Select Partner</title>
+			<link>https://three.ws/openai</link>
+			<guid isPermaLink="false">2026-07-25:three.ws is an OpenAI Select Partner</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.</description>
+		</item>
+		<item>
+			<title>three.ws Named an OpenAI Select Partner</title>
+			<link>https://three.ws/blog/three-ws-openai-select-partner</link>
+			<guid isPermaLink="false">2026-07-25:three.ws Named an OpenAI Select Partner</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.</description>
+		</item>
+		<item>
+			<title>three.ws is an OpenAI Select Partner</title>
+			<link>https://three.ws/openai</link>
+			<guid isPermaLink="false">2026-07-25:three.ws is an OpenAI Select Partner</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. A new page at /openai lays out everything the platform already ships on OpenAI surfaces: the free, keyless 3D Studio MCP connector for ChatGPT with nine tools (text to 3D, avatars, auto-rigging, conversational refinement, and a living agent body), the custom GPT Actions surface for plans without connectors, one-tap AR on iOS and Android, and Spatial MCP, the open CC0 shape for returning a live 3D scene as a tool result. The partner directory at /partners was also rewritten to list only the programs three.ws is actually enrolled in today, with NVIDIA correctly described as Inception membership.</description>
+		</item>
+		<item>
 			<title>The x402 facilitator now describes itself at its root URL</title>
 			<link>https://three.ws/docs/x402-ring-economy</link>
 			<guid isPermaLink="false">2026-07-24:The x402 facilitator now describes itself at its root URL</guid>
@@ -428,7 +460,7 @@
 			<guid isPermaLink="false">2026-07-21:three.ws joins the NVIDIA Inception program</guid>
 			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
-			<description>three.ws LLC has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.</description>
+			<description>three.ws has been accepted into NVIDIA Inception, NVIDIA's global program for startups building with accelerated computing. It is a natural home for this platform: every 3D generation lane already runs on NVIDIA GPUs, from the free text-to-3D forge to photo avatars, auto-rigging, and motion capture. Membership opens access to NVIDIA's startup benefits, including GPU capacity, software, and engineering resources, and they will go straight into faster generations and higher-quality avatars.</description>
 		</item>
 		<item>
 			<title>Zen mode in Play: hide the whole interface with one key</title>
@@ -6980,7 +7012,7 @@
 			<guid isPermaLink="false">2026-06-27:Partner Ecosystem</guid>
 			<pubDate>Sat, 27 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.</description>
+			<description>three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.</description>
 		</item>
 		<item>
 			<title>Recording Pipeline — the data loop, live</title>

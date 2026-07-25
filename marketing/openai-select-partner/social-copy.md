@@ -1,0 +1,98 @@
+# Social copy: OpenAI Select Partner
+
+OpenAI supplied approved starter messaging and approved hashtags. Both variants
+below keep that messaging intact and add the concrete product line underneath, so
+the post says something a developer can act on.
+
+Attach the badge with every post:
+`https://three.ws/partners/openai/openai-select-partner@3x.png`
+
+---
+
+## LinkedIn (approved messaging, extended)
+
+> We're excited to share that three.ws has been named an **OpenAI Select Partner**.
+>
+> As part of the OpenAI Partner Network, we look forward to continuing our work
+> with OpenAI to help organizations build, deploy, and scale AI solutions
+> responsibly and effectively.
+>
+> What that sits on top of: assistants have been excellent at text and images for
+> years and have had almost nothing to say in three dimensions. three.ws is the 3D
+> layer. Our free 3D Studio connector gives ChatGPT nine keyless tools that turn a
+> sentence into an interactive, textured 3D model rendered inline in the
+> conversation, rig it, animate it, and place it in your room in AR. No key, no
+> account, no cost.
+>
+> We're proud to be part of this next chapter.
+> Learn more: https://three.ws/openai and https://openai.com/business/partners/
+>
+> \#OpenAISelectPartner \#OpenAIPartnerNetwork \#EnterpriseAI
+
+## LinkedIn (short, approved messaging verbatim)
+
+> We're excited to share that three.ws has been named an OpenAI Select Partner.
+>
+> As part of the OpenAI Partner Network, we look forward to continuing our work
+> with OpenAI to help organizations build, deploy, and scale AI solutions
+> responsibly and effectively.
+>
+> We're proud to be part of this next chapter. Learn more:
+> https://openai.com/business/partners/
+>
+> \#OpenAISelectPartner \#OpenAIPartnerNetwork \#EnterpriseAI
+
+## X / @trythreews thread
+
+**1/**
+> three.ws has been named an OpenAI Select Partner.
+>
+> As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
+> help organizations build, deploy, and scale AI solutions responsibly.
+>
+> Here's what that sits on top of. 🧵
+
+**2/**
+> Assistants are excellent at text and images. Ask one for a robot mascot and you
+> get a picture of one.
+>
+> That's fine until you need to animate it, print it, drop it into a game, or put
+> it on your desk.
+
+**3/**
+> Our 3D Studio connector gives ChatGPT nine tools: text to 3D, avatars from a
+> prompt or a photo, auto-rigging, one-call rigged avatars, conversational
+> refinement, and a living body that lip-syncs replies.
+>
+> Free. Keyless. No account.
+
+**4/**
+> Results render interactively inline in the conversation, and every model carries
+> a one-tap AR link: Quick Look USDZ on iOS, Scene Viewer on Android, WebGL on
+> desktop.
+
+**5/**
+> The response shape is open. Spatial MCP is CC0: scene GLB, camera, environment,
+> animation, AR handoff, returned as a first-class tool result instead of a bare
+> URL. Any client can render it, not just ours.
+>
+> https://three.ws/spatial-mcp
+
+**6/**
+> Connect it with no auth:
+> https://three.ws/api/mcp-studio
+>
+> Everything we ship on OpenAI surfaces: https://three.ws/openai
+>
+> \#OpenAISelectPartner \#OpenAIPartnerNetwork
+
+---
+
+## Notes
+
+- Use the exact phrase **"OpenAI Select Partner"** when referring to the status.
+  Do not shorten it to "OpenAI partner" or imply a tier above Select.
+- Do not claim endorsement of three.ws products by OpenAI. The partner
+  designation is the claim; the product copy stands on its own.
+- The press release is a separate, gated artifact. See
+  [`README.md`](README.md).

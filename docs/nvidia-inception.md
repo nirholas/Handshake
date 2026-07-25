@@ -1,6 +1,6 @@
 # NVIDIA Inception membership
 
-three.ws LLC is a member of the **NVIDIA Inception program**, NVIDIA's global program for startups building on accelerated computing. Membership was accepted in July 2026.
+three.ws is a member of the **NVIDIA Inception program**, NVIDIA's global program for startups building on accelerated computing. Membership was accepted in July 2026.
 
 This page explains what that means in practice: what already runs on NVIDIA, what membership adds, and where it shows up in the product.
 

@@ -187,6 +187,12 @@ URL: https://three.ws/pitch
 
 The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.
 
+### The Story So Far
+
+URL: https://three.ws/timeline
+
+three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.
+
 ### Guided Tour
 
 URL: https://three.ws/tour
@@ -215,7 +221,13 @@ Live avatars, agents, 3D models, worlds, and launches across three.ws — filter
 
 URL: https://three.ws/partners
 
-three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
+three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.
+
+### three.ws is an OpenAI Select Partner
+
+URL: https://three.ws/openai
+
+three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.
 
 ### Pricing
 
@@ -2323,6 +2335,12 @@ What actually happens between typing a prompt on three.ws and downloading a text
 URL: https://three.ws/blog/three-ws-quicknode-startup-program
 
 three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
+
+### three.ws Named an OpenAI Select Partner
+
+URL: https://three.ws/blog/three-ws-openai-select-partner
+
+three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.
 
 ### three.ws Joins the Alibaba Cloud Partner Network
 
