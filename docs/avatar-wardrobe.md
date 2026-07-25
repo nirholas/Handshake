@@ -36,7 +36,13 @@ Concretely, `attachGarment()`:
    (`MIN_BIND_COVERAGE`) rather than attaching a mesh that would deform into
    garbage;
 4. masks the body in the regions the garment declares it covers
-   (`occludes`), so skin never pokes through cloth.
+   (`occludes`), so skin never pokes through cloth. Declarations are clamped
+   at apply time to the slot's plausible region set (`SLOT_OCCLUDABLE` in
+   [`src/garment-taxonomy.js`](../src/garment-taxonomy.js)): a shirt cannot
+   hide the legs, and headwear/hair can hide nothing at all, because the
+   `scalp` region resolves to the Head bone and culling it would take the
+   avatar's face with it. The same clamp runs in the server-side baker, so a
+   legacy or third-party manifest can never produce a defaced avatar.
 
 A garment with no skin at all (hat, glasses) is parented to a single joint
 (`rig.attachBone`) instead of deformed.

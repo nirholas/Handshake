@@ -95,6 +95,14 @@
 			<description>Until now the wardrobe could only recolour or hide the clothes an avatar was generated with. It can now put NEW clothes on: the avatar editor's Wardrobe tab gained a Closet with racks of catalog pieces (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories). Click a piece and it binds to your avatar's skeleton and moves with every animation, whatever generator the avatar came from: forge characters, selfie reconstructions and uploaded models all work, because garments are fitted to the skeleton at wear-time instead of being authored for one specific body. The body is masked under whatever you wear so skin never pokes through the cloth, a piece that cannot fit a particular skeleton politely refuses instead of deforming into spaghetti, and every download is integrity-checked against the catalog before it touches your avatar. Saved outfits persist: the downloadable and embedded versions of your avatar come out dressed too.</description>
 		</item>
 		<item>
+			<title>Fixed: saving your avatar's look from the editor</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-25:Fixed: saving your avatar's look from the editor</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Saving an outfit or appearance change from the avatar editor failed silently after a recent security hardening of the API. The editor now signs its save requests correctly, and a safety rule was added so no garment can ever hide your avatar's face, whatever its metadata claims.</description>
+		</item>
+		<item>
 			<title>Garment generation is now open to everyone: API and agent tools</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-25:Garment generation is now open to everyone: API and agent tools</guid>
@@ -173,6 +181,14 @@
 			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>Two additions make our public-domain 3D tool-result standard something you can prove an implementation against, not just read about. First, a conformance test kit: thirteen real payloads a correct implementation must accept, reject, or flag, each with the required verdict written down. Run your own validator or renderer over them and you know whether it conforms, instead of asserting it. The kit lives with the validator and builder in a dependency-free package in the repository, @three-ws/spatial-mcp, kept byte-identical to the module served at three.ws/spatial-mcp/spatial-validator.js by a test that fails if the two ever drift; the npm registry publish is queued, and importing the module straight from that address works today with no install at all. Second, a data-minimization lint. The standard has always required that artifacts carry no session ids, wallet addresses, prices, or credentials, because that is what makes the format safe for app stores that do not allow crypto surfaces, but the specification previously admitted nothing checked this. Now lintSpatialMeta flags suspicious field names and credential-shaped values, the checker page runs it on everything you paste, and the deliberately broken example on the page leaks an internal id and a price on purpose so you can watch the lint catch both. Lint findings are advisory and never block a valid render, since no tool can know every private field name; the obligation stays with the emitter, but the common mistakes no longer pass silently. The developer dashboard's Web SDK card was also corrected: it was advertising a package that does not contain the viewer, loading a script from an address that does not exist, and demonstrating attributes the component does not have. It now shows the real package, the real script address, and markup that works when pasted.</description>
+		</item>
+		<item>
+			<title>The closet is now stocked: every wardrobe slot has real pieces</title>
+			<link>https://three.ws/avatar-edit</link>
+			<guid isPermaLink="false">2026-07-25:The closet is now stocked: every wardrobe slot has real pieces</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The avatar editor's closet grew from a single test shirt to a full starter wardrobe generated on our own GPU pipeline: jackets, tees, jeans, sneakers, caps, sunglasses, hairstyles and bags, with at least one piece in all 8 slots. Every piece is integrity-checked and verified to bind to any humanoid avatar before it appears. The closet also opens instantly now, and a saved outfit re-downloads all its pieces in parallel instead of one at a time.</description>
 		</item>
 		<item>
 			<title>The KOL Tracker is now reachable, and its numbers are real</title>
@@ -708,7 +724,7 @@
 			<guid isPermaLink="false">2026-07-20:Sign Language Avatars</guid>
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.</description>
+			<description>three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.</description>
 		</item>
 		<item>
 			<title>Audit any agent's trade decisions, linked from the write-ups</title>

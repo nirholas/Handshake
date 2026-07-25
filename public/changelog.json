@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T13:14:31.817Z",
+	"generated_at": "2026-07-25T13:18:47.854Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -125,6 +125,17 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Fixed: saving your avatar's look from the editor",
+			"summary": "Saving an outfit or appearance change from the avatar editor failed silently after a recent security hardening of the API. The editor now signs its save requests correctly, and a safety rule was added so no garment can ever hide your avatar's face, whatever its metadata claims.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "Garment generation is now open to everyone: API and agent tools",
 			"summary": "The garment generator that fills the wardrobe catalog is now a public surface. Developers can create wearables with one HTTP call (POST /api/garment-forge with a description and a slot, then poll the job), and AI agents get the same power through three new MCP tools: generate_garment, garment_status, and list_garment_catalog. Every generated piece is validated end to end before it publishes, appears in the shared catalog immediately, and fits any humanoid avatar. The catalog now covers tops, jeans, sneakers, and a leather jacket, with more slots filling in.",
 			"link": null,
@@ -231,6 +242,17 @@
 				"sdk",
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "The closet is now stocked: every wardrobe slot has real pieces",
+			"summary": "The avatar editor's closet grew from a single test shirt to a full starter wardrobe generated on our own GPU pipeline: jackets, tees, jeans, sneakers, caps, sunglasses, hairstyles and bags, with at least one piece in all 8 slots. Every piece is integrity-checked and verified to bind to any humanoid avatar before it appears. The closet also opens instantly now, and a saved outfit re-downloads all its pieces in parallel instead of one at a time.",
+			"link": "/avatar-edit",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -930,7 +952,7 @@
 			"date": "2026-07-20",
 			"type": "launch",
 			"title": "Sign Language Avatars",
-			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.",
+			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
 			"link": "/sign-language",
 			"tags": [
 				"launch"

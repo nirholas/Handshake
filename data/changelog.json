@@ -15908,6 +15908,25 @@
 				"improvement"
 			],
 			"link": "/vanity"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "The closet is now stocked: every wardrobe slot has real pieces",
+			"summary": "The avatar editor's closet grew from a single test shirt to a full starter wardrobe generated on our own GPU pipeline: jackets, tees, jeans, sneakers, caps, sunglasses, hairstyles and bags, with at least one piece in all 8 slots. Every piece is integrity-checked and verified to bind to any humanoid avatar before it appears. The closet also opens instantly now, and a saved outfit re-downloads all its pieces in parallel instead of one at a time.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/avatar-edit"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Fixed: saving your avatar's look from the editor",
+			"summary": "Saving an outfit or appearance change from the avatar editor failed silently after a recent security hardening of the API. The editor now signs its save requests correctly, and a safety rule was added so no garment can ever hide your avatar's face, whatever its metadata claims.",
+			"tags": [
+				"fix",
+				"security"
+			]
 		}
 	]
 }
