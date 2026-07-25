@@ -78,12 +78,20 @@ Faces are synthesised rather than collected: no real person's biometrics in a
 benchmark that gets copied between machines, no licensing terms, and any agent
 can rebuild the identical set.
 
-**The remaining gap is adversarial samples.** Every reference face is a clean
-frontal portrait, so the set contains no landmark mis-detections and is blind to
-everything the outlier machinery exists for. Blurry, off-angle, occluded,
-low-light and low-resolution samples are the single most valuable addition, and
-until they exist, any parameter governing robustness has to be set on physical
-grounds rather than by the sweep (see Track 1).
+Because every reference face is a clean frontal portrait, ISE alone cannot see
+what the outlier machinery is for, so the set is paired with
+[`eval/robustness.py`](../workers/avatar-reconstruction/eval/robustness.py):
+each face is degraded on the fly (blur, 12° turn, occlusion, dim, 1/6 resolution)
+and scored on whether the same person still yields the same head. Fidelity and
+stability pull opposite ways, and shipped parameters sit at the knee (Track 1).
+
+**The remaining gap is the confidently-wrong detection.** All 75 degraded images
+still produced a face detection, so the regime that matters most is untested. A
+detection *failure* is safe — the job falls back to texture-only rather than
+morphing to garbage — but a detector returning a confident landmark set for the
+wrong thing (a face in a poster, a pet, a pattern in the background) is not, and
+nothing here bounds it. Closing this needs samples severe enough to break
+detection outright, plus non-face and multi-face images.
 
 ### Track 1 — Ship the morph that is already written `[done]`
 
@@ -107,20 +115,41 @@ frame; drift is now 0. Pinned by a test that fails on the old path.
 
 **Defaults that had never been measured.** A sweep over the 40-face set
 ([`eval/tune_morph.py`](../workers/avatar-reconstruction/eval/tune_morph.py))
-moved `strength` / `max_displacement_frac` from 0.75 / 0.18 to **0.6 / 0.45**:
-mean ISE 0.2947 → 0.1684, i.e. from 26% to 58% below the texture-only floor, a
-43% cut, with **no face made worse**. The old clamp permitted only ~1.9 cm of
-travel per control point and was throttling genuine facial variation rather than
-rejecting outliers.
+moved `strength` / `max_displacement_frac` off 0.75 / 0.18, whose clamp permitted
+only ~1.9 cm of travel per control point and was throttling genuine facial
+variation rather than rejecting outliers. Every setting in the usable range beat
+it, and **no face was made worse** by the change.
 
-The sweep's own optimum was looser still (0.65, ~6.7 cm, 60.2% below floor) and
-was **deliberately not shipped**. Every reference face is a clean portrait, so
-the benchmark contains nothing for the clamp to reject and will always push it
-toward zero clamping; 6.7 cm exceeds plausible human facial variation and would
-pass a mis-detection straight through to the mesh. 0.45 takes nearly all the
-measurable gain while keeping real outlier rejection. This is the concrete case
-for the adversarial samples called for in Track 0 — until they exist, this
-parameter cannot be tuned honestly.
+Setting the clamp on fidelity alone is not possible: a benchmark of clean
+portraits contains nothing for a clamp to reject, so it will always recommend no
+clamping at all. That produced the program's second measurement tool,
+[`eval/robustness.py`](../workers/avatar-reconstruction/eval/robustness.py),
+which asks the complementary question — **does a degraded photo of the same
+person still give the same head?** Each face is blurred, turned 12°, occluded,
+dimmed and downsampled to 1/6 resolution, and the score is the divergence from
+the clean-photo head. The person did not change, so all of it is the pipeline
+reacting to photo quality rather than identity.
+
+| clamp | ISE | vs floor | instability |
+|---|---|---|---|
+| 0.18 (was shipped) | 0.2932 | 26.5% | 0.0027 |
+| 0.45 | 0.1684 | 57.8% | 0.0053 |
+| **0.55 (shipped)** | **0.1591** | **60.1%** | **0.0057** |
+| 0.65 (sweep optimum) | 0.1587 | 60.2% | 0.0060 |
+| 1.00 | 0.1587 | 60.2% | 0.0060 |
+
+Fidelity flatlines past 0.65 while instability keeps climbing, so anything looser
+is pure downside; across the usable range each step buys ~40-50x more fidelity
+than it costs in stability. 0.55 is the knee. A first pass shipped 0.45 on
+physical reasoning before the robustness data existed, which turned out to be
+2.3 points of fidelity too conservative — a fair illustration of why the second
+metric was worth building.
+
+**Still unmeasured:** all 75 degraded images yielded a face detection, so the
+catastrophic regime the clamp ultimately guards is untested. A detection
+*failure* is safe (the job degrades to texture-only); a confident *wrong*
+detection is not, and nothing bounds that yet. That is the remaining Track 0
+work.
 
 Cost: negligible. As predicted, the largest fidelity gain per unit of effort in
 the program, because the work was already paid for.
@@ -190,7 +219,7 @@ GPU per avatar against a fleet already at its ceiling.
 
 ### Track 5 — Fully-owned body (v3)
 
-The reconstruction template is a Wolf3D/RPM base — the last third-party asset in
+The reconstruction template is a third-party Wolf3D base — the last such asset in
 the pipeline. **The replacement already exists in this repo** and the roadmap
 entry above is out of date: [`public/avatars/parametric-base.glb`](../public/avatars)
 is a CC0 MakeHuman/MPFB2 body (vendored via [naver/anny](https://github.com/naver/anny)
@@ -220,7 +249,7 @@ looks for `templates/male.glb` and `female.glb`, neither of which exists, so eve
 request silently falls back to `default.glb`. The parameter has never done
 anything.
 
-Staging the existing RPM bases as those two files is the obvious patch and is the
+Staging the existing stock bases as those two files is the obvious patch and is the
 wrong move. `public/avatars/realistic-male.glb` is topology-compatible (same 2162-
 vertex `Wolf3D_Head`) but carries only 60 morph targets against `default.glb`'s
 67, so it would silently drop seven expressions. `realistic-female.glb` is a

@@ -120,7 +120,38 @@ job submissions. This is how the current 0.6 / 0.45 defaults were chosen.
 Read its output with the blind spots above in mind. The sweep's numerical optimum
 is not automatically the right ship: a benchmark of clean portraits will always
 push `max_displacement_frac` toward "no clamping at all", because it contains
-nothing for the clamp to reject.
+nothing for the clamp to reject. Pair it with the stability score below.
+
+## Check robustness (the other half of the tradeoff)
+
+```bash
+python -m eval.robustness --photos eval/refs --detail
+```
+
+ISE asks "is the shape right?". This asks **"does a worse photo of the same
+person still give the same head?"** Each reference face is degraded the way real
+selfies are — camera shake, a 12° head turn, hair or a hand across the face, a
+dim room, a 1/6-resolution upload — and the score is the divergence between the
+head built from the clean photo and the head built from the degraded one, in the
+same interocular-normalised units as ISE. The person did not change, so all of it
+is the pipeline reacting to photo quality instead of identity.
+
+This is what makes `max_displacement_frac` decidable. The two sweeps pull in
+opposite directions, and the shipped value is the knee:
+
+| clamp | ISE | vs floor | instability |
+|---|---|---|---|
+| 0.18 | 0.2932 | 26.5% | 0.0027 |
+| 0.45 | 0.1684 | 57.8% | 0.0053 |
+| **0.55** | **0.1591** | **60.1%** | **0.0057** |
+| 0.65 | 0.1587 | 60.2% | 0.0060 |
+| 1.00 | 0.1587 | 60.2% | 0.0060 |
+
+Fidelity flatlines past 0.65 while instability keeps rising, so looser is pure
+downside. Note a degradation that defeats face detection entirely is reported but
+not scored: that path is safe, because the job falls back to texture-only rather
+than morphing to garbage. A confident *wrong* detection is the dangerous case and
+is still unmeasured.
 
 ## The reference set
 

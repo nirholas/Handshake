@@ -3358,6 +3358,24 @@ through to the standard x402 402 challenge (pay per call), or succeeds
 immediately if you send a three.ws API key or a BYOK header instead. No dead
 end, no silent downgrade.
 
+**Calling an endpoint with no arguments at all** returns the 402 challenge
+rather than a `400 missing_param`, on every endpoint, free-marked or not. This
+is the discovery path: x402 directory crawlers and uptime monitors sweep the
+whole catalog parameterless to confirm each endpoint is alive and priced, and a
+400 would report a healthy endpoint as broken. The challenge names the resource
+and its price like any other 402, and an `X-Param-Error` header carries the
+specific argument you would need to make the call for real:
+
+```bash
+curl -si "https://three.ws/api/v1/x/coingecko/price" | head -2
+# HTTP/2 402
+# x-param-error: query param "ids" is required
+```
+
+Send **any** argument and you are treated as a real caller: `?ids=` (present but
+empty) answers `400 missing_param` with the message above, because at that point
+the specific error is the useful reply.
+
 **Current free quotas** (also machine-readable via `GET /api/v1/x` below —
 every endpoint's `free` field is `{ perMin, perDay }` or `false`):
 

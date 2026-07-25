@@ -41,6 +41,18 @@ function parseQuery(req) {
 	return q;
 }
 
+// A request carrying no query arguments and no JSON body is a catalog sweep,
+// not an attempt to call the endpoint. Used to tell a discovery probe apart
+// from a caller who genuinely got the arguments wrong (see serveFreeLane).
+export function isParameterlessProbe(req) {
+	const q = { ...(req.query || {}) };
+	delete q.slug;
+	if (Object.keys(q).length > 0) return false;
+	const search = new URL(req.url, 'http://internal').searchParams;
+	for (const _ of search) return false;
+	return true;
+}
+
 // ── free tier lane ──────────────────────────────────────────────────────────
 // An unauthenticated caller (no BYOK key, no three.ws credentials) on an
 // endpoint marked `free: { perMin, perDay }` (api/v1/_providers.js) gets a real
@@ -86,6 +98,31 @@ async function serveFreeLane({ req, res, provider, endpoint }) {
 	try {
 		out = await executeUpstream({ provider, endpoint, query, body, apiKey: key });
 	} catch (err) {
+		// An uncredentialed call with no arguments at all is a discovery probe,
+		// not a caller mistake: x402 directory crawlers and uptime/trust monitors
+		// (x402scan, the Bazaar validator, x402-observer) sweep every registered
+		// endpoint parameterless to check it is alive and priced. Answering 400
+		// makes a healthy paid endpoint look broken in public trust listings —
+		// which is exactly what our free-tier endpoints were doing while the
+		// paid-only ones correctly answered 402. Hand the probe to the paid rail
+		// for its 402 challenge, the same probe-friendliness rule the
+		// wrong-method branch already applies. A caller who sent SOME arguments
+		// is trying to use the API and still gets the specific 400.
+		if (err?.code === 'missing_param' && isParameterlessProbe(req)) {
+			// The challenge body shape is spec-locked by the x402 bazaar format,
+			// so the "which param is missing" hint rides a header (same reason
+			// the free-tier reset hint does).
+			res.setHeader('x-param-error', String(err.message || 'required query param missing'));
+			recordEvent({
+				kind: 'api',
+				tool: `v1.x.${provider.id}.${endpoint.id}`,
+				status: 'probe',
+				latencyMs: Date.now() - started,
+				meta: { billing: 'free', key_source: source, code: 'missing_param', ip },
+			});
+			await getPaidHandler(provider, endpoint)(req, res);
+			return true;
+		}
 		recordEvent({
 			kind: 'api',
 			tool: `v1.x.${provider.id}.${endpoint.id}`,

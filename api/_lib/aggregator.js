@@ -15,6 +15,32 @@ import { readBody } from './http.js';
 
 const UPSTREAM_TIMEOUT_MS = 20_000;
 
+// How many distinct upstream hosts one call may try before giving up. Only
+// applies to providers that declare alternates (`provider.bases`); everything
+// else makes exactly one attempt, as before.
+const MAX_UPSTREAM_ATTEMPTS = 3;
+
+// Failure classes worth re-trying against a different host for the same
+// provider. A 4xx other than 429 is the caller's fault and repeats identically
+// everywhere, so it is never retried.
+const RETRYABLE_CODES = new Set(['upstream_rate_limited', 'upstream_unreachable']);
+const isRetryable = (err) => RETRYABLE_CODES.has(err?.code) || err?.status === 502;
+
+// Alternate hosts for a provider, primary first, resolved lazily and only when
+// the primary has already failed — a provider like `solana` fronts a pool of
+// interchangeable RPC endpoints, and resolving that pool can be expensive
+// (api/_lib/solana/connection.js pulls in @solana/web3.js), so the happy path
+// never pays for it.
+async function alternateBases(provider) {
+	if (typeof provider.bases !== 'function') return [];
+	try {
+		const list = await provider.bases();
+		return Array.isArray(list) ? list.filter((b) => typeof b === 'string' && b && b !== provider.base) : [];
+	} catch {
+		return [];
+	}
+}
+
 /**
  * Resolve the upstream key to use for a call.
  * BYOK (caller-supplied) wins; else the platform env key; else null.
@@ -50,7 +76,6 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 	}
 
 	const path = typeof endpoint.path === 'function' ? endpoint.path(query) : endpoint.path;
-	const url = new URL(provider.base + path);
 
 	// `endpoint.method` is the caller-facing HTTP verb (what the aggregator front
 	// door requires the request to use); `endpoint.upstreamMethod` — optional,
