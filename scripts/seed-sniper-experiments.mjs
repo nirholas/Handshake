@@ -158,6 +158,7 @@ const BOOST_ARM = {
 	label: 'boost-ride',
 	group: 'boost',
 	agentName: 'Sniper Arm: Boost Ride',
+	agentDescription: 'Autonomous sniper experiment arm: buys the pump AMM at migration and sells into the BOOST buyback window.',
 	note: 'buy the AMM at migration, sell into the 5-min BOOST buyback window',
 	ownerUser: 'a6a6aed1-9ecc-40cd-889b-340895ee4d8c',
 	strategy: {
@@ -184,8 +185,51 @@ const BOOST_ARM = {
 	},
 };
 
-async function provisionBoostArm(pool) {
-	const arm = BOOST_ARM;
+// ── llm-kimi: the multi-model bracket begins (postmortem roadmap) ────────────
+// The published audit promised new frontier-model pilots "starting with
+// Moonshot's Kimi K3" once named-model routing held. llm_strict_model makes the
+// slot safe to open: if the model id is wrong or the router falls back, the arm
+// records verdicts for calibration but never spends, so a misrouted pilot costs
+// exactly nothing. Sizing and exits mirror the other LLM arms at the budget
+// floor; the evolution loop reallocates from there on evidence.
+const KIMI_ARM = {
+	label: 'llm-kimi',
+	group: 'llm',
+	agentName: 'Sniper Arm: Kimi Judge',
+	agentDescription: 'Autonomous sniper experiment arm: Moonshot Kimi K3 judges every observed launch; no rule shields, strict named-model integrity.',
+	note: 'no shields; Kimi K3 judges every launch (strict: fallback verdicts never trade)',
+	ownerUser: 'a6a6aed1-9ecc-40cd-889b-340895ee4d8c',
+	strategy: {
+		enabled: true,
+		kill_switch: false,
+		trigger: 'intel_confirmed',
+		decision_mode: 'llm',
+		llm_model: 'moonshotai/kimi-k3',
+		llm_min_confidence: 0.65,
+		llm_max_confidence: 0.9,
+		llm_strict_model: true,
+		require_socials: false,
+		require_sol_quote: true,
+		min_market_cap_usd: null,
+		max_market_cap_usd: null,
+		min_oracle_score: null,
+		per_trade_lamports: '10000000',
+		daily_budget_lamports: '20000000',
+		max_concurrent_positions: 1,
+		slippage_bps: 500,
+		max_price_impact_pct: 10,
+		stop_loss_pct: 30,
+		trailing_stop_pct: 20,
+		take_profit_pct: 60,
+		max_hold_seconds: 1800,
+		initials_out_multiple: null,
+		auto_fund_enabled: true,
+	},
+};
+
+const PROVISIONED_ARMS = [BOOST_ARM, KIMI_ARM];
+
+async function provisionArm(pool, arm) {
 	// 1. find-or-create the agent identity (idempotent on name + owner).
 	const { rows: agents } = await pool.query(
 		'select id from agent_identities where user_id = $1 and name = $2 and deleted_at is null',
@@ -200,8 +244,7 @@ async function provisionBoostArm(pool) {
 		const { rows: created } = await pool.query(
 			`insert into agent_identities (user_id, name, description, is_public)
 			 values ($1, $2, $3, false) returning id`,
-			[arm.ownerUser, arm.agentName,
-			 'Autonomous sniper experiment arm: buys the pump AMM at migration and sells into the BOOST buyback window.'],
+			[arm.ownerUser, arm.agentName, arm.agentDescription],
 		);
 		agentId = created[0].id;
 		console.log(`        created agent ${agentId}`);
@@ -293,7 +336,9 @@ for (const arm of ARMS) {
 	updated++;
 }
 
-if (!ONLY || ONLY === BOOST_ARM.label) await provisionBoostArm(pool);
+for (const arm of PROVISIONED_ARMS) {
+	if (!ONLY || ONLY === arm.label) await provisionArm(pool, arm);
+}
 
 if (APPLY) console.log(`\nDone: ${updated} strategies updated.`);
 else console.log('\nDry-run only. Re-run with --apply to write.');

@@ -39,6 +39,14 @@
 			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.</description>
 		</item>
 		<item>
+			<title>A twelfth trading strategy joins the fleet: Kimi takes a cockpit</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-25:A twelfth trading strategy joins the fleet: Kimi takes a cockpit</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Our trading postmortem promised that once named-model integrity held, new frontier models would get their own seats in the experiment, starting with Moonshot's Kimi. That seat now exists: a twelfth autonomous strategy with its own agent and its own Solana wallet, where Kimi K3 judges every observed launch under exactly the same safety rails, budgets, and exit discipline as the Grok and Claude arms. It launches in strict mode, meaning that if its calls are ever answered by a cheaper fallback model, those verdicts are recorded for calibration but never spend a lamport, so a misconfigured model slot costs nothing by construction. It starts at the fleet's minimum daily budget and earns more only the way every other arm does: by performing. Its trades, theses, and wallet are public on the experiments board like everything else.</description>
+		</item>
+		<item>
 			<title>Agent-bought 3D models now appear in the gallery with their on-chain receipt</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-25:Agent-bought 3D models now appear in the gallery with their on-chain receipt</guid>
