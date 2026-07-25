@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { llmVerdictGate } from '../workers/agent-sniper/llm-judge.js';
 import { decideLiquidityDecay, updateStaleClock } from '../workers/agent-sniper/exit-logic.js';
-import { LOOPS, classifyLoopHealth, describeStale } from '../api/_lib/sniper-loops-health.js';
+import { LOOPS, classifyLoopHealth, describeStale, findWalletlessArms } from '../api/_lib/sniper-loops-health.js';
 
 describe('llmVerdictGate', () => {
 	const strat = { llm_min_confidence: 0.65, llm_max_confidence: 0.9, llm_strict_model: false };
@@ -141,5 +141,35 @@ describe('classifyLoopHealth (count rows, not status codes)', () => {
 		const { ok, stale } = classifyLoopHealth([probe('not-a-loop', 0)], NOW);
 		expect(ok).toHaveLength(0);
 		expect(stale).toHaveLength(0);
+	});
+});
+
+describe('findWalletlessArms (the oracle-strict zombie class)', () => {
+	const arm = (over) => ({
+		strategy_id: 'S1', label: 'oracle-strict', enabled: true,
+		wallet: null, daily_budget_lamports: '45957000', ...over,
+	});
+
+	it('flags an enabled arm with no wallet — the exact production failure', () => {
+		const z = findWalletlessArms([arm()]);
+		expect(z).toHaveLength(1);
+		expect(z[0].label).toBe('oracle-strict');
+		expect(z[0].budgetSol).toBeCloseTo(0.045957);
+	});
+
+	it('treats a blank address like a missing one', () => {
+		expect(findWalletlessArms([arm({ wallet: '  ' })])).toHaveLength(1);
+	});
+
+	it('passes funded arms and ignores disabled ones', () => {
+		expect(findWalletlessArms([
+			arm({ wallet: 'HBgNvnffvbKRzE1vgmvTfKLNq2taETKZJDpZRHcAm8Ca' }),
+			arm({ enabled: false }),
+		])).toHaveLength(0);
+	});
+
+	it('never throws on empty or missing input', () => {
+		expect(findWalletlessArms([])).toEqual([]);
+		expect(findWalletlessArms(null)).toEqual([]);
 	});
 });

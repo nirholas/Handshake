@@ -96,6 +96,30 @@ export function classifyLoopHealth(probes, now) {
 	return { ok, stale };
 }
 
+/**
+ * Fleet integrity: an ENABLED strategy whose agent holds no Solana wallet is a
+ * zombie arm. It passes every status check, receives budget from the evolution
+ * loop, generates candidates, and then every single buy dies at no_wallet. This
+ * is how oracle-strict sat armed on the conviction-50 crossing (the strongest
+ * signal in the July 2026 dataset) for two days without a trade. Pure.
+ *
+ * @param {Array<{label:string|null, strategy_id:string, wallet:string|null, enabled:boolean, daily_budget_lamports?:string|number|null}>} rows
+ * @returns {Array<{label:string, strategy_id:string, budgetSol:number}>} zombie arms
+ */
+export function findWalletlessArms(rows) {
+	const out = [];
+	for (const r of rows || []) {
+		if (r.enabled !== true) continue;
+		if (r.wallet != null && String(r.wallet).trim() !== '') continue;
+		out.push({
+			label: r.label || r.strategy_id,
+			strategy_id: r.strategy_id,
+			budgetSol: Number(r.daily_budget_lamports || 0) / 1e9,
+		});
+	}
+	return out;
+}
+
 /** Human line for one stale loop, used in the ops alert body. */
 export function describeStale(entry) {
 	const age = entry.ageMs === Infinity

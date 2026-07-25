@@ -274,6 +274,22 @@ for (const arm of ARMS) {
 		`update agent_sniper_strategies set ${assignments}, updated_at = now() where agent_id = $1 and network = $2`,
 		[arm.agent, NETWORK, ...cols.map((c) => set[c])],
 	);
+
+	// Wallet backfill. The reshape path used to assume every armed agent already
+	// held a wallet, and oracle-strict proved it wrong: the arm sat enabled on the
+	// strongest signal in the dataset (the conviction-50 crossing) for two days
+	// while every candidate died at no_wallet, because its agent had no Solana
+	// address. ensureAgentWallet is idempotent (no-ops on a healthy wallet), so
+	// every applied reshape now heals this class of arm instead of skipping it.
+	const { rows: [ident] } = await pool.query(
+		"select user_id, meta->>'solana_address' as addr from agent_identities where id = $1 and deleted_at is null",
+		[arm.agent],
+	);
+	if (ident && !ident.addr) {
+		const { ensureAgentWallet } = await import('../api/_lib/agent-wallet.js');
+		const wallet = await ensureAgentWallet(arm.agent, ident.user_id, { reason: 'sniper_experiment_seed_backfill' });
+		console.log(`        wallet BACKFILLED ${wallet.address} (agent was armed but walletless — auto-funder will top it up)`);
+	}
 	updated++;
 }
 

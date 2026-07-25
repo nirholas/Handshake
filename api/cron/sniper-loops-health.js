@@ -18,7 +18,7 @@ import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-import { LOOPS, classifyLoopHealth, describeStale } from '../_lib/sniper-loops-health.js';
+import { LOOPS, classifyLoopHealth, describeStale, findWalletlessArms } from '../_lib/sniper-loops-health.js';
 
 const NETWORK = 'mainnet';
 
@@ -56,6 +56,31 @@ export default wrapCron(async (req, res) => {
 	const broken = probes.filter((p) => p.probeError);
 	const { ok, stale } = classifyLoopHealth(probes.filter((p) => !p.probeError), Date.now());
 
+	// Fleet integrity: enabled arms whose agent has no wallet. These pass every
+	// status check and can never trade (every buy dies at no_wallet). Discovered
+	// the hard way: oracle-strict sat armed on the conviction-50 crossing for two
+	// days as exactly this kind of zombie.
+	let zombies = [];
+	try {
+		const rows = await sql`
+			select s.id as strategy_id, s.label, s.enabled, s.daily_budget_lamports,
+			       a.meta->>'solana_address' as wallet
+			from agent_sniper_strategies s
+			join agent_identities a on a.id = s.agent_id and a.deleted_at is null
+			where s.network = ${NETWORK} and s.enabled = true
+		`;
+		zombies = findWalletlessArms(rows);
+	} catch (err) {
+		broken.push({ name: 'fleet-integrity', probeError: err?.message || 'query failed' });
+	}
+	if (zombies.length) {
+		await Promise.resolve(sendOpsAlert(
+			`🎯 agent-sniper — ${zombies.length} armed strateg${zombies.length === 1 ? 'y' : 'ies'} have NO WALLET`,
+			zombies.map((z) => `${z.label}: enabled with ${z.budgetSol.toFixed(3)} SOL/day budget and no Solana wallet — every buy dies at no_wallet. Heal with: node scripts/seed-sniper-experiments.mjs --apply --only ${z.label}`).join('\n'),
+			{ signature: 'sniper:armed-walletless' },
+		)).catch(() => {});
+	}
+
 	if (stale.length) {
 		// One alert per run covering every stale loop, deduped hourly on a stable
 		// signature so a dead loop pages once an hour until it produces rows again.
@@ -75,10 +100,11 @@ export default wrapCron(async (req, res) => {
 	}
 
 	return json(res, 200, {
-		ok: stale.length === 0 && broken.length === 0,
+		ok: stale.length === 0 && broken.length === 0 && zombies.length === 0,
 		checked: probes.length,
 		stale: stale.map((s) => ({ name: s.name, last_at: s.lastAt, age_h: s.ageMs === Infinity ? null : Math.round(s.ageMs / 3600_000 * 10) / 10 })),
 		healthy: ok.map((s) => s.name),
+		walletless_arms: zombies.map((z) => z.label),
 		probe_errors: broken.map((b) => ({ name: b.name, error: b.probeError })),
 	});
 });
