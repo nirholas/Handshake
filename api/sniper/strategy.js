@@ -321,6 +321,7 @@ async function upsertStrategy(req, res, userId) {
 		alpha_narrative_keywords: null, alpha_min_quality_score: null,
 		decision_mode: 'rules', llm_model: null, llm_min_confidence: null,
 		llm_max_confidence: null, llm_strict_model: false, moonbag_always: true,
+		initials_out_multiple: 2,
 		label: null, experiment_group: null,
 	};
 
@@ -368,9 +369,11 @@ async function upsertStrategy(req, res, userId) {
 		// wallet up from the launcher master. Arming a strategy never moves money
 		// on its own — this must be turned on deliberately.
 		auto_fund_enabled: 'auto_fund_enabled' in p ? Boolean(p.auto_fund_enabled) : (cur.auto_fund_enabled ?? false),
-		// Laddered take-initials exit (opt-in). initials_out_multiple = the × entry
-		// at which to sell enough to recover the cost basis and hold a moon bag;
-		// null = classic single-shot exit. moonbag_min_pct = the floor always kept.
+		// Laddered take-initials exit (fleet default, owner rule 2026-07-25): at
+		// initials_out_multiple × entry, sell exactly enough to recover the cost
+		// basis and let the rest ride behind the trailing stop. New strategies get
+		// 2× unless the creator sets a value; an explicit null opts back into the
+		// classic single-shot exit. moonbag_min_pct = the floor always kept.
 		initials_out_multiple: 'initials_out_multiple' in p ? (p.initials_out_multiple == null || p.initials_out_multiple === '' ? null : Math.max(1.01, Number(p.initials_out_multiple))) : (cur.initials_out_multiple != null ? Number(cur.initials_out_multiple) : null),
 		moonbag_min_pct: 'moonbag_min_pct' in p ? Math.max(0, Math.min(95, Number(p.moonbag_min_pct))) : (cur.moonbag_min_pct != null ? Number(cur.moonbag_min_pct) : 15),
 		// Experiment identity + decision mode. 'llm' replaces the rule shields with

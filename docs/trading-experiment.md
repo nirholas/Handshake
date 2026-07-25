@@ -94,14 +94,18 @@ Set `moonbag_always = false` on a strategy to opt a single arm out. The column
 defaults to true and a null is read as true, so every existing strategy has the
 rule without a backfill.
 
-The proactive 2x ladder is **opt-in**: a strategy with no `initials_out_multiple`
-does not take initials early. It still never fully exits a winner, though: the
-fleet-wide moon-bag rule below covers that independently.
+The proactive 2x ladder is the **fleet default** (owner rule, 2026-07-25): every
+strategy is born with `initials_out_multiple = 2`, so the first time a position
+doubles, the initial stake comes off the table and the remainder rides. Setting
+the field to an explicit null through the arm API opts a single arm back into
+the classic single-shot exit; even then it never fully exits a winner, because
+the fleet-wide moon-bag rule below covers that independently.
 
-There are two ways in. A human sets it directly (this script, or the arm API),
-**or** an arm earns it: once the autonomy engine places an arm at `trusted` or
-above and its winners demonstrably run past its average exit, the optimizer turns
-the ladder on by itself and records why. See
+The multiple itself stays tunable. A human sets it directly (this script, or the
+arm API), **or** an arm earns the right to have it tuned: once the autonomy
+engine places an arm at `trusted` or above and its winners demonstrably run past
+its average exit, the optimizer adjusts the multiple by itself within its bounds
+and records why. See
 [Earned autonomy](./sniper-autonomy.md). A losing arm cannot reach the field at
 all, so the ladder is only ever switched on for a strategy whose record shows it
 actually catches runners.

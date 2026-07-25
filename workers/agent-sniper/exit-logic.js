@@ -165,9 +165,10 @@ export function moonbagExitFraction(entry, value, moonbag, houseMoney) {
  * position to sell. This is the live-trading source of truth (positions.js);
  * `decideExit` above stays the single-shot decider the backtester replays.
  *
- * The ladder is OPT-IN: with no `initials_out_multiple` set it is byte-for-byte
- * the classic full-exit behavior (sellFraction 1 on any decideExit reason), so
- * existing strategies are unchanged. When set, it encodes the owner's rule:
+ * With no `initials_out_multiple` set this is byte-for-byte the classic
+ * full-exit behavior (sellFraction 1 on any decideExit reason). Since
+ * 2026-07-25 the fleet default is 2 (schema default + strategy-API default);
+ * a null is an explicit per-arm opt-out. When set, it encodes the owner's rule:
  *
  *   - Protective exits are always FULL exits of whatever remains, and the hard
  *     stop-loss still wins: stop_loss → signal_flip → trailing_stop.
