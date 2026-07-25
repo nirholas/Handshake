@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T12:34:19.789Z",
+	"generated_at": "2026-07-25T12:38:30.850Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -80,6 +80,16 @@
 					"title": "Object Library",
 					"description": "Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.",
 					"added": "2026-07-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/forged",
+					"title": "Agent-Forged Gallery",
+					"description": "3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.",
+					"added": "2026-07-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

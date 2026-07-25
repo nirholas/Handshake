@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-25T12:34:19.799Z",
+	"generated_at": "2026-07-25T12:38:30.945Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-25",
+			"type": "launch",
+			"title": "Agent-Forged Gallery",
+			"summary": "3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.",
+			"link": "/forged",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-25",
 			"type": "launch",
@@ -126,6 +136,17 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Long 3D generations in the free studio now hand you the result instead of giving up",
+			"summary": "The free 3D studio tools (the ones ChatGPT and other agents call: forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar, refine_model) waited up to three minutes for a generation and then reported failure, even though the model kept rendering and usually finished a minute or two later. On our current primary 3D lane most generations take four to six minutes, which meant nearly every call through those tools looked broken while perfectly good models piled up unseen. Now, when a generation outlives the inline wait, the tool answers with a live job handle: a status of pending, plus a public poll link that returns the finished model's download and viewer links the moment it completes. Nothing about fast generations changes; they still return the finished model directly.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "Our crypto API no longer reports itself as broken to the directories that rate it",
 			"summary": "Agent directories and uptime monitors discover an x402 API by calling every endpoint it advertises with no arguments, to check the endpoint is alive and knows its own price. Our paid-only endpoints answered that correctly with a payment challenge, but the free-tier ones ran argument validation first and answered with an error, so about two dozen perfectly healthy endpoints were being graded as failing by a public trust monitor, roughly 14,000 times a month. A parameterless call now returns the standard 402 challenge on every endpoint, with the argument you would need named in an X-Param-Error header. Nothing changes for real callers: send any argument, even an empty one, and you get the specific validation error as before. The same probes were also the single biggest source of noise in our own error metrics, so a genuine outage in the crypto API is now visible instead of buried.",
 			"link": "/crypto-api",
@@ -154,6 +175,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Sign language page: an avatar with a face, settings that stick, and 84 languages",
+			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into all 84 site languages, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
+			"link": "/sign-language",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
