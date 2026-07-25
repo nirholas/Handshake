@@ -209,6 +209,44 @@ describe('aggregator upstream failover', () => {
 		expect(seen[seen.length - 1]).toBe('primary.invalid');
 	});
 
+	it('answers inside the 25s total budget even when every host blackholes', async () => {
+		vi.useFakeTimers();
+		try {
+			const seen = [];
+			// Every host hangs until its abort timer fires; only the deadline can
+			// end this call.
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(
+					(input, init) =>
+						new Promise((_, reject) => {
+							seen.push(hostOf(input));
+							init.signal.addEventListener('abort', () => reject(new Error('aborted')));
+						}),
+				),
+			);
+
+			const started = Date.now();
+			const pending = executeUpstream({
+				provider: providerWithPool(['https://backup-a.invalid', 'https://backup-b.invalid']),
+				endpoint,
+				query: {},
+				apiKey: null,
+			}).catch((err) => ({ err, settledAt: Date.now() }));
+
+			await vi.advanceTimersByTimeAsync(30_000);
+			const { err, settledAt } = await pending;
+
+			// Pooled attempts abort at 10s each; the third gets only the 5s left in
+			// the budget, so the caller has an answer at 25s, inside the LB's 30s.
+			expect(err).toMatchObject({ code: 'upstream_unreachable' });
+			expect(seen).toEqual(['primary.invalid', 'backup-a.invalid', 'backup-b.invalid']);
+			expect(settledAt - started).toBeLessThanOrEqual(25_000);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it('gives a skipped primary a last chance when every alternate fails', async () => {
 		const seen = [];
 		vi.stubGlobal(

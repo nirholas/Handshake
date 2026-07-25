@@ -15,6 +15,21 @@ import { readBody } from './http.js';
 
 const UPSTREAM_TIMEOUT_MS = 20_000;
 
+// The external HTTPS load balancer cuts every response at 30s (three-ws-backend
+// timeoutSec: 30), so the whole call, retries included, must answer inside
+// that. One shared deadline per executeUpstream call; every attempt's abort
+// timer fits in whatever remains, and a retry never starts with less than
+// MIN_ATTEMPT_MS on the clock. Without this, a blackholed primary (20s) plus
+// one alternate (20s) overruns the LB and the caller sees its 502 instead of
+// our answer.
+const TOTAL_UPSTREAM_BUDGET_MS = 25_000;
+const MIN_ATTEMPT_MS = 1_000;
+
+// A pooled provider treats a host this slow as down: aborting early leaves
+// budget to actually use the alternates the pool exists for. Single-host
+// providers keep the full UPSTREAM_TIMEOUT_MS, since waiting is all they can do.
+const POOLED_ATTEMPT_TIMEOUT_MS = 10_000;
+
 // How many distinct upstream hosts one call may try before giving up. Only
 // applies to providers that declare alternates (`provider.bases`); everything
 // else makes exactly one attempt, as before.
@@ -104,6 +119,10 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 	// caller's query params. See the `solana` provider in api/v1/_providers.js.
 	const upstreamMethod = endpoint.upstreamMethod || endpoint.method;
 
+	const hasPool = typeof provider.bases === 'function';
+	const deadline = Date.now() + TOTAL_UPSTREAM_BUDGET_MS;
+	const perAttemptCap = hasPool ? POOLED_ATTEMPT_TIMEOUT_MS : UPSTREAM_TIMEOUT_MS;
+
 	// One attempt against one upstream host. Everything host-independent (the
 	// query builder, the body builder) is re-run per attempt because applyKey may
 	// write the key into the URL, which differs per host.
@@ -127,7 +146,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 		provider.applyKey(headers, url, apiKey);
 
 		const controller = new AbortController();
-		const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+		const timer = setTimeout(() => controller.abort(), Math.min(perAttemptCap, deadline - Date.now()));
 		let res;
 		try {
 			res = await fetch(url, {
@@ -213,6 +232,9 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 	let lastErr = firstErr ?? null;
 	const budget = MAX_UPSTREAM_ATTEMPTS - (firstErr ? 1 : 0);
 	for (const base of ordered.slice(0, budget)) {
+		// A retry that cannot get a meaningful slice of the deadline is not worth
+		// starting; surface the best error we have while the LB is still listening.
+		if (lastErr && deadline - Date.now() < MIN_ATTEMPT_MS) break;
 		try {
 			const out = await attempt(base);
 			markGood(base);

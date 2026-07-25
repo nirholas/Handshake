@@ -3327,9 +3327,11 @@ aggregator walks that pool inside a single request when a host answers 429, a
 5xx, or is unreachable (up to 3 hosts per call; caller-fault 4xx never
 retries). A host that just failed is skipped for a short cooldown window while
 an alternate exists, so an upstream outage costs one discovery, not one per
-request. The `solana` provider fronts the platform's full priority-ordered RPC
-pool this way; single-host providers behave as plain pass-throughs with one
-attempt.
+request. The whole chain runs under a 25s deadline (pooled attempts abort at
+10s each) so the caller always gets the aggregator's answer, never a load
+balancer timeout. The `solana` provider fronts the platform's full
+priority-ordered RPC pool this way; single-host providers behave as plain
+pass-throughs with one attempt.
 
 ### The free tier
 
