@@ -104,10 +104,13 @@ Every build and deploy MUST pin these explicitly or it fails with
 - **Runtime SA:** `three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com`
   (pass via `--service-account` on every `gcloud run deploy`)
 
-Known gap: the build SA lacks `roles/run.admin` + `iam.serviceAccountUser` on
-the runtime SA, so the **deploy step inside `server/cloudbuild.yaml` fails**;
-the build+push steps succeed. Until an owner grants those two roles, finish
-deploys from a human-authed CLI (command below).
+Resolved (verified 2026-07-25): the build SA now holds `roles/run.admin` (plus
+`cloudbuild.builds.builder`), and `gcloud builds submit` runs the full
+build+push+deploy pipeline end to end. Recent deploys (revisions 00272, 00276)
+were created by exactly this path, so no human-authed CLI finish is needed
+anymore. If a future submit fails at the deploy step with a permissions error,
+re-check this binding first: `gcloud projects get-iam-policy
+aerial-vehicle-466722-p5 --filter="bindings.members:three-ws-build@"`.
 
 ---
 
