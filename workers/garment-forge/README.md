@@ -4,8 +4,9 @@ Turns "a white oxford cotton dress shirt" into an asset the additive wardrobe
 can put on **any** humanoid avatar: a garment GLB skinned to the three.ws
 canonical skeleton, a manifest that passes every validation rule in
 [specs/GARMENT_MANIFEST.md](../../specs/GARMENT_MANIFEST.md), and a thumbnail,
-published to the immutable catalog layout in
-`gs://three-ws-model-weights/garments/`.
+published to the immutable catalog layout in `gs://three-ws-garments/garments/`
+(the public bucket [src/garment-catalog.js](../../src/garment-catalog.js)
+serves the wardrobe closet from).
 
 The runtime consumer is `attachGarment()` in
 [src/avatar-garment.js](../../src/avatar-garment.js): it rebinds the garment's
@@ -109,12 +110,11 @@ as every build in this project must.
 
 One-time infra the service depends on (already applied):
 
-- `avatar-reconstruction-sa@` has `roles/storage.objectAdmin` on
-  `three-ws-model-weights` (writes garments/**, jobs, catalog) and
-  `roles/aiplatform.user` on the project (Vertex image lane).
-- `three-ws-model-weights` carries a CORS policy allowing `GET` from any
-  origin, so published garment GLBs are readable by the viewer, per the
-  manifest spec's CORS requirement.
+- `avatar-reconstruction-sa@` has project-level `roles/storage.objectAdmin`
+  (writes to both buckets) and `roles/aiplatform.user` (Vertex image lane).
+- `three-ws-garments` is uniformly public-read with a permissive GET CORS
+  policy, satisfying the manifest spec's CORS requirement; job records and
+  rig staging stay in `three-ws-avatar-reconstructions`.
 
 ## Local tests (no GPU, no network)
 
@@ -132,7 +132,8 @@ suite runs inside `docker build`, so a regression cannot ship.
 | Var | Default | Meaning |
 |---|---|---|
 | `API_KEY` | (secret) | shared bearer secret (`avatar-reconstruction-key`); also sent to the mesh/rig workers |
-| `GCS_BUCKET` | (required) | bucket holding `garments/**` (`three-ws-model-weights`) |
+| `GCS_BUCKET` | (required) | job records + rig staging (`three-ws-avatar-reconstructions`) |
+| `PUBLISH_BUCKET` | (required) | public catalog bucket (`three-ws-garments`) |
 | `MESH_WORKER_URLS` | (required) | comma-separated `/infer`-contract mesh workers, priority order |
 | `RIG_URL` | (required) | `model-rig` base URL |
 | `REFBODY_PATH` | `/app/assets/refbody.glb` | reference body baked into the image |

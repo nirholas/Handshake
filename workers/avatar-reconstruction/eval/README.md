@@ -40,6 +40,25 @@ Two numbers give it meaning:
 A region breakdown (oval / nose / cheeks / brow / jaw) says *where* the shape is
 wrong, which is what decides where the next fidelity push goes.
 
+### What ISE cannot see
+
+- **Anything off the face.** The metric samples the head only at the 468 landmark
+  correspondence vertices, which are exactly the morph's control points. The
+  scalp, ears, neck and back of the head are never measured, so `falloff` — which
+  governs how the displacement decays away from the face — is invisible to ISE by
+  construction. Never tune `falloff` against this score; the back-of-head
+  assertions in [`test_face_geometry.py`](../test_face_geometry.py) are what guard
+  that region.
+- **Texture.** By design. A texture change scores identically. Track 2 in
+  [the program plan](../../../docs/avatar-fidelity-program.md) needs its own
+  metric.
+- **Failure modes absent from the reference set.** The set is clean frontal
+  portraits, so it contains no landmark mis-detections and cannot tell you
+  anything about outlier rejection. This is why `max_displacement_frac` is set on
+  physical grounds rather than at the sweep's numerical optimum, and why
+  adversarial samples (blurry, off-angle, occluded, low-light) are the most
+  valuable addition to the reference set.
+
 ## Score one reconstruction
 
 ```bash
@@ -86,21 +105,45 @@ individual face that got worse**. A change can improve the mean while wrecking a
 subset of faces; the mean alone hides exactly the regression that matters. Exits
 non-zero when the mean did not improve, so it works as a gate.
 
-## The reference set
-
-`--photos` is a directory of frontal selfies, one file per sample. Choose faces
-that span what the pipeline must handle: skin tone, age, face shape, facial
-hair, glasses, head covering, lighting, camera quality. A mean over a narrow set
-hides the failures that matter most.
-
-Reference photos are **not committed** — they are either real people's faces or
-licensed stock, and neither belongs in git. Keep them in
-`eval/refs/` (gitignored) and mirror the set to
-`gs://three-ws-avatar-reconstructions/eval-refs/` so every agent and every CI run
-scores against an identical set:
+## Tune the morph against the score
 
 ```bash
-gsutil -m rsync -r gs://three-ws-avatar-reconstructions/eval-refs eval/refs
+python -m eval.tune_morph --photos eval/refs --detail
+```
+
+Sweeps `strength` x `max_displacement_frac` over every reference face and reports
+the best mean ISE, the worst individual face, and how many faces a setting makes
+worse than the shipped default. Runs offline — landmarks are detected once, then
+each combination is applied in-process — so a full grid is minutes, not a day of
+job submissions. This is how the current 0.6 / 0.45 defaults were chosen.
+
+Read its output with the blind spots above in mind. The sweep's numerical optimum
+is not automatically the right ship: a benchmark of clean portraits will always
+push `max_displacement_frac` toward "no clamping at all", because it contains
+nothing for the clamp to reject.
+
+## The reference set
+
+`--photos` is a directory of frontal faces, one file per sample, spanning what
+the pipeline must handle: skin tone, age, face shape, facial hair, glasses, head
+covering, lighting, camera quality. A mean over a narrow set hides the failures
+that matter most.
+
+Build it with:
+
+```bash
+python -m eval.make_refs --out eval/refs --upload
+```
+
+The faces are **synthesised, not collected** ([`make_refs.py`](make_refs.py)) over
+a deterministic grid of the platform's own diversity matrix. That keeps real
+people's biometrics out of a benchmark that gets copied between machines and
+uploaded to buckets, avoids any licensing question, and lets any agent rebuild
+the identical set. They stay gitignored regardless — 40 PNGs do not belong in
+git — and mirror to `gs://three-ws-avatar-reconstructions/eval-refs/`:
+
+```bash
+gcloud storage rsync -r gs://three-ws-avatar-reconstructions/eval-refs eval/refs
 ```
 
 A score is only comparable to another score taken on the same reference set.

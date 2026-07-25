@@ -3,9 +3,11 @@ substitutions:
   _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
   _SERVICE: garment-forge
   _REPO: garment-forge
-  # Garment assets, catalog, and job records live in the weights bucket, per
-  # the storage layout pinned in specs/GARMENT_MANIFEST.md.
-  _GCS_BUCKET: three-ws-model-weights
+  # Job records + rig staging share the fleet's worker-artifact bucket;
+  # published garments + catalog go to the public bucket the runtime consumer
+  # (src/garment-catalog.js) reads.
+  _GCS_BUCKET: three-ws-avatar-reconstructions
+  _PUBLISH_BUCKET: three-ws-garments
   # Mesh generation failover chain, priority order: warm RTX 2.1 primary,
   # L4 2.1 fallback, TRELLIS last (different model, always-compatible API).
   _MESH_WORKER_URLS: https://model-hunyuan3d-21-rtx-lp642k3kpa-uc.a.run.app,https://model-hunyuan3d-21-lp642k3kpa-uc.a.run.app,https://model-trellis-lp642k3kpa-uc.a.run.app
@@ -61,7 +63,7 @@ steps:
       - --max-instances=2
       - --timeout=600
       - --allow-unauthenticated
-      - --set-env-vars=^;^GCS_BUCKET=${_GCS_BUCKET};MESH_WORKER_URLS=${_MESH_WORKER_URLS};RIG_URL=${_RIG_URL};GOOGLE_CLOUD_PROJECT=$PROJECT_ID;VERTEX_IMAGEN_MODEL=gemini-2.5-flash-image;VERTEX_IMAGEN_LOCATION=global;VERTEX_IMAGE_SIZE=2K;MAX_CONCURRENT=2
+      - --set-env-vars=^;^GCS_BUCKET=${_GCS_BUCKET};PUBLISH_BUCKET=${_PUBLISH_BUCKET};MESH_WORKER_URLS=${_MESH_WORKER_URLS};RIG_URL=${_RIG_URL};GOOGLE_CLOUD_PROJECT=$PROJECT_ID;VERTEX_IMAGEN_MODEL=gemini-2.5-flash-image;VERTEX_IMAGEN_LOCATION=global;VERTEX_IMAGE_SIZE=2K;MAX_CONCURRENT=2
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:
