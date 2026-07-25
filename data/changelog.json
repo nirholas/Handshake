@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-25",
+			"title": "Sign-language avatar now shows the full body",
+			"summary": "The live signing avatar on the sign-language page was framed from the waist up, so you could not see the whole figure. The camera now frames the avatar head to toe, and you can still orbit and zoom in for handshape detail.",
+			"tags": [
+				"fix"
+			],
+			"link": "/sign-language"
+		},
+		{
+			"date": "2026-07-25",
 			"title": "Long 3D generations in the free studio now hand you the result instead of giving up",
 			"summary": "The free 3D studio tools (the ones ChatGPT and other agents call: forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar, refine_model) waited up to three minutes for a generation and then reported failure, even though the model kept rendering and usually finished a minute or two later. On our current primary 3D lane most generations take four to six minutes, which meant nearly every call through those tools looked broken while perfectly good models piled up unseen. Now, when a generation outlives the inline wait, the tool answers with a live job handle: a status of pending, plus a public poll link that returns the finished model's download and viewer links the moment it completes. Nothing about fast generations changes; they still return the finished model directly.",
 			"tags": [
@@ -15923,6 +15932,33 @@
 			"date": "2026-07-25",
 			"title": "Fixed: saving your avatar's look from the editor",
 			"summary": "Saving an outfit or appearance change from the avatar editor failed silently after a recent security hardening of the API. The editor now signs its save requests correctly, and a safety rule was added so no garment can ever hide your avatar's face, whatever its metadata claims.",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Trading fleet: initial buy-in comes off the table at 2x, the rest rides",
+			"summary": "Every autonomous trading arm now banks its initial stake the first time a position doubles: it sells exactly enough to recover the buy-in and lets the remaining tokens ride behind the trailing stop. Combined with the moon-bag rule from earlier today, no arm ever sells 100% of a winner, and once a coin hits 2x the position is playing with house money. Arms the performance optimizer already tunes keep their earned settings.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Trader profiles now show the moon-bags",
+			"summary": "A closed trade that kept a moon-bag no longer reads as a 100% sell. Trader pages and share cards now tag those exits (initials out, rest rides), show each bag's live value, and count total bags riding at zero cost basis in the headline metrics.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/traders"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Signed-in actions across the site work again",
+			"summary": "A recent security hardening required every account-changing request to carry a one-time security token, but 35 places in the app were still sending requests the old way, so actions like editing an agent, posting from the dashboard, buying on the marketplace, granting permissions, clearing notifications and managing sessions failed silently for signed-in users. Every affected surface now signs its requests correctly.",
 			"tags": [
 				"fix",
 				"security"

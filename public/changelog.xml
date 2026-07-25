@@ -23,6 +23,14 @@
 			<description>How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.</description>
 		</item>
 		<item>
+			<title>Forge Max: Highest-Quality Text &amp; Image to 3D</title>
+			<link>https://three.ws/forge-max</link>
+			<guid isPermaLink="false">2026-07-25:Forge Max: Highest-Quality Text &amp; Image to 3D</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The Forge's maximum-quality lane, opened directly: High tier pinned (200k-poly geometry, 4K PBR and HD textures, subject-aware engine routing). A $THREE holder perk; also unlockable with your own Meshy, Tripo, or Rodin key.</description>
+		</item>
+		<item>
 			<title>The Story So Far</title>
 			<link>https://three.ws/timeline</link>
 			<guid isPermaLink="false">2026-07-25:The Story So Far</guid>
@@ -159,6 +167,22 @@
 			<description>The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into every language the site ships, and the sign-language embed attribute is now in the quick-start attribute reference for developers.</description>
 		</item>
 		<item>
+			<title>Sign-language avatar now shows the full body</title>
+			<link>https://three.ws/sign-language</link>
+			<guid isPermaLink="false">2026-07-25:Sign-language avatar now shows the full body</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The live signing avatar on the sign-language page was framed from the waist up, so you could not see the whole figure. The camera now frames the avatar head to toe, and you can still orbit and zoom in for handshape detail.</description>
+		</item>
+		<item>
+			<title>Signed-in actions across the site work again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-25:Signed-in actions across the site work again</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A recent security hardening required every account-changing request to carry a one-time security token, but 35 places in the app were still sending requests the old way, so actions like editing an agent, posting from the dashboard, buying on the marketplace, granting permissions, clearing notifications and managing sessions failed silently for signed-in users. Every affected surface now signs its requests correctly.</description>
+		</item>
+		<item>
 			<title>Signing avatars now sign whole sentences, touch what they are supposed to touch, and can raise an eyebrow</title>
 			<link>https://three.ws/sign-language</link>
 			<guid isPermaLink="false">2026-07-25:Signing avatars now sign whole sentences, touch what they are supposed to touch, and can raise an eyebrow</guid>
@@ -239,12 +263,28 @@
 			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. A new page at /openai lays out everything the platform already ships on OpenAI surfaces: the free, keyless 3D Studio MCP connector for ChatGPT with nine tools (text to 3D, avatars, auto-rigging, conversational refinement, and a living agent body), the custom GPT Actions surface for plans without connectors, one-tap AR on iOS and Android, and Spatial MCP, the open CC0 shape for returning a live 3D scene as a tool result. The partner directory at /partners was also rewritten to list only the programs three.ws is actually enrolled in today, with NVIDIA correctly described as Inception membership.</description>
 		</item>
 		<item>
+			<title>Trader profiles now show the moon-bags</title>
+			<link>https://three.ws/traders</link>
+			<guid isPermaLink="false">2026-07-25:Trader profiles now show the moon-bags</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A closed trade that kept a moon-bag no longer reads as a 100% sell. Trader pages and share cards now tag those exits (initials out, rest rides), show each bag's live value, and count total bags riding at zero cost basis in the headline metrics.</description>
+		</item>
+		<item>
 			<title>Trading arms now earn their freedom from their own track record</title>
 			<link>https://three.ws/sniper/experiments</link>
 			<guid isPermaLink="false">2026-07-25:Trading arms now earn their freedom from their own track record</guid>
 			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The autonomous trading fleet used to give every strategy the same leash: the same limits on how far its settings could move, the same short list of settings it could change, and the same information in front of it before each decision. A strategy that had been making money for weeks was kept in exactly the same box as one that had never had a winning day. Now each arm is graded on its own real, on-chain results and placed in one of four tiers. A profitable arm gets a wider range to work in, moves faster, unlocks settings a losing arm can't touch (which launches it hunts, how confident it needs to be before buying, and the take-initials exit that banks your stake at 2x and lets the rest ride), takes a bigger share of the fleet's fixed daily budget, and is shown far more evidence before it decides: how often launches actually succeed, which signals genuinely predict a winner, its own trading history, and how well its own past calls turned out. A bleeding arm is held tighter instead. Grading is on realized profit rather than win rate, so an arm that wins only a third of its trades but makes real money is rewarded, while one that wins most of its trades and still loses money is not. Every tier is re-earned continuously, so an arm that stops paying loses the extra rope automatically. None of it can touch the safety limits: the trade firewall, the daily loss cap, position limits, and a hard stop-loss apply at every tier, no matter how well an arm is doing. Each arm's tier and the evidence behind it are visible on the experiments board.</description>
+		</item>
+		<item>
+			<title>Trading fleet: initial buy-in comes off the table at 2x, the rest rides</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-25:Trading fleet: initial buy-in comes off the table at 2x, the rest rides</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every autonomous trading arm now banks its initial stake the first time a position doubles: it sells exactly enough to recover the buy-in and lets the remaining tokens ride behind the trailing stop. Combined with the moon-bag rule from earlier today, no arm ever sells 100% of a winner, and once a coin hits 2x the position is playing with house money. Arms the performance optimizer already tunes keep their earned settings.</description>
 		</item>
 		<item>
 			<title>Turned-away selfies no longer guess at the shape of your head</title>
@@ -724,7 +764,7 @@
 			<guid isPermaLink="false">2026-07-20:Sign Language Avatars</guid>
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.</description>
+			<description>three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.</description>
 		</item>
 		<item>
 			<title>Audit any agent's trade decisions, linked from the write-ups</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T13:18:47.854Z",
+	"generated_at": "2026-07-25T13:34:08.886Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Earned Autonomy: Freedom the Sniper Fleet Has to Trade For",
 			"summary": "How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.",
 			"link": "/docs/sniper-autonomy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "launch",
+			"title": "Forge Max: Highest-Quality Text & Image to 3D",
+			"summary": "The Forge's maximum-quality lane, opened directly: High tier pinned (200k-poly geometry, 4K PBR and HD textures, subject-aware engine routing). A $THREE holder perk; also unlockable with your own Meshy, Tripo, or Rodin key.",
+			"link": "/forge-max",
 			"tags": [
 				"launch"
 			]
@@ -213,6 +223,27 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Sign-language avatar now shows the full body",
+			"summary": "The live signing avatar on the sign-language page was framed from the waist up, so you could not see the whole figure. The camera now frames the avatar head to toe, and you can still orbit and zoom in for handshape detail.",
+			"link": "/sign-language",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Signed-in actions across the site work again",
+			"summary": "A recent security hardening required every account-changing request to carry a one-time security token, but 35 places in the app were still sending requests the old way, so actions like editing an agent, posting from the dashboard, buying on the marketplace, granting permissions, clearing notifications and managing sessions failed silently for signed-in users. Every affected surface now signs its requests correctly.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "Signing avatars now sign whole sentences, touch what they are supposed to touch, and can raise an eyebrow",
 			"summary": "Six things changed in the signing avatar. It was lowering its arms all the way to its sides between every single word, so a sentence read as a list of unrelated words; now the hands rise once at the start and lower once at the end, the way a person signs, and everything in between stays up in signing space. Signs that involve the two hands touching, like fall, help, good and again, were positioning each hand at fixed coordinates and hoping they met; they are now solved from the actual shape of the posed hand, so the fingers land on the palm even on an avatar with longer fingers or bigger hands, and the same is true of signs that touch the face, which previously buried the fingertips somewhere inside the head. The avatar can now raise its eyebrows: American Sign Language carries grammar on the face, where raised brows make a yes-or-no question and furrowed brows a what-or-why question, and signs now carry those markers to any avatar that has facial expressions built in. You can slow the signing down to three-quarter or half speed, which learners and many Deaf viewers want and which no amount of replaying a video at full speed substitutes for. You can switch the avatar to sign left-handed, because roughly one signer in ten is left-dominant and signing left-handed is not a mistake to be corrected. And the vocabulary is now checked automatically against two rules that hold across the whole language, so a new sign has to be well-formed and not merely render without crashing.",
 			"link": "/sign-language",
@@ -324,11 +355,31 @@
 		{
 			"date": "2026-07-25",
 			"type": "update",
+			"title": "Trader profiles now show the moon-bags",
+			"summary": "A closed trade that kept a moon-bag no longer reads as a 100% sell. Trader pages and share cards now tag those exits (initials out, rest rides), show each bag's live value, and count total bags riding at zero cost basis in the headline metrics.",
+			"link": "/traders",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
 			"title": "Trading arms now earn their freedom from their own track record",
 			"summary": "The autonomous trading fleet used to give every strategy the same leash: the same limits on how far its settings could move, the same short list of settings it could change, and the same information in front of it before each decision. A strategy that had been making money for weeks was kept in exactly the same box as one that had never had a winning day. Now each arm is graded on its own real, on-chain results and placed in one of four tiers. A profitable arm gets a wider range to work in, moves faster, unlocks settings a losing arm can't touch (which launches it hunts, how confident it needs to be before buying, and the take-initials exit that banks your stake at 2x and lets the rest ride), takes a bigger share of the fleet's fixed daily budget, and is shown far more evidence before it decides: how often launches actually succeed, which signals genuinely predict a winner, its own trading history, and how well its own past calls turned out. A bleeding arm is held tighter instead. Grading is on realized profit rather than win rate, so an arm that wins only a third of its trades but makes real money is rewarded, while one that wins most of its trades and still loses money is not. Every tier is re-earned continuously, so an arm that stops paying loses the extra rope automatically. None of it can touch the safety limits: the trade firewall, the daily loss cap, position limits, and a hard stop-loss apply at every tier, no matter how well an arm is doing. Each arm's tier and the evidence behind it are visible on the experiments board.",
 			"link": "/sniper/experiments",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Trading fleet: initial buy-in comes off the table at 2x, the rest rides",
+			"summary": "Every autonomous trading arm now banks its initial stake the first time a position doubles: it sells exactly enough to recover the buy-in and lets the remaining tokens ride behind the trailing stop. Combined with the moon-bag rule from earlier today, no arm ever sells 100% of a winner, and once a coin hits 2x the position is playing with house money. Arms the performance optimizer already tunes keep their earned settings.",
+			"link": "/sniper/experiments",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -952,7 +1003,7 @@
 			"date": "2026-07-20",
 			"type": "launch",
 			"title": "Sign Language Avatars",
-			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
+			"summary": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.",
 			"link": "/sign-language",
 			"tags": [
 				"launch"
