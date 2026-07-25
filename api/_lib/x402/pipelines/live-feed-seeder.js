@@ -194,15 +194,17 @@ export async function run(ctx = {}) {
 	const origin = ctx.origin || env.APP_ORIGIN || 'https://three.ws';
 	const endpointUrl = `${origin}/api/x402-pay`;
 
-	// The demo payment pays from the platform wallet (X402_AGENT_SOLANA_SECRET_BASE58,
-	// via loadAgentKeypair in api/x402-pay.js). When that secret is unset the POST
-	// below is guaranteed to return 503 config_missing (still handled gracefully
-	// below), but firing it every tick logs a 5xx on /api/x402-pay and flags the
-	// endpoint's health for nothing. Short-circuit before the request. The endpoint
-	// only accepts this secret as the platform wallet in every real deployment (its
-	// dev-keypair file exists on no server), so the secret's presence is the exact
-	// signal; seeding resumes on its own the moment the wallet is set.
-	if (!process.env.X402_AGENT_SOLANA_SECRET_BASE58) {
+	// The demo payment pays from the platform wallet via /api/x402-pay, which
+	// loads X402_SEED_SOLANA_SECRET_BASE58 FIRST and only falls back to
+	// X402_AGENT_SOLANA_SECRET_BASE58 (see api/x402-pay.js). When NEITHER secret
+	// is set the POST below is guaranteed to return 503 config_missing (still
+	// handled gracefully below), but firing it every tick logs a 5xx on
+	// /api/x402-pay and flags the endpoint's health for nothing. Short-circuit
+	// before the request. This pre-flight previously required the AGENT secret
+	// alone and skipped every tick on deployments that (correctly) configure only
+	// the seed wallet: 470+ wallet_unconfigured rows per 48h for a wallet that
+	// existed. Seeding resumes on its own the moment either secret is set.
+	if (!process.env.X402_SEED_SOLANA_SECRET_BASE58 && !process.env.X402_AGENT_SOLANA_SECRET_BASE58) {
 		return {
 			success: false,
 			skipped: true,
