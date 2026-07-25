@@ -59,7 +59,7 @@
 				{
 					"path": "/sign-language",
 					"title": "Sign Language Avatars",
-					"description": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.",
+					"description": "three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back with your webcam. The whole loop, live in 3D.",
 					"priority": 0.9,
 					"changefreq": "weekly",
 					"added": "2026-07-20",
@@ -463,6 +463,14 @@
 					"priority": 0.9,
 					"changefreq": "weekly",
 					"added": "2026-07-17"
+				},
+				{
+					"path": "/forge-max",
+					"title": "Forge Max: Highest-Quality Text & Image to 3D",
+					"description": "The Forge's maximum-quality lane, opened directly: High tier pinned (200k-poly geometry, 4K PBR and HD textures, subject-aware engine routing). A $THREE holder perk; also unlockable with your own Meshy, Tripo, or Rodin key.",
+					"priority": 0.9,
+					"changefreq": "weekly",
+					"added": "2026-07-25"
 				},
 				{
 					"path": "/restyle",

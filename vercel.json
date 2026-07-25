@@ -1203,6 +1203,10 @@
 			"dest": "/forge.html"
 		},
 		{
+			"src": "/forge-max/?",
+			"dest": "/forge.html"
+		},
+		{
 			"src": "/restyle/?",
 			"dest": "/restyle.html"
 		},

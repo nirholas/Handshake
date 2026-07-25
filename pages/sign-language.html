@@ -18,11 +18,11 @@
 		<meta property="og:description" content="Avatars that sign in ASL. Fingerspell anything, get signed chat replies, and sign back with your webcam, live in 3D."  data-i18n-attr="content:sign_language.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/sign-language" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=three.ws+avatars+sign+in+American+Sign+Language%3A+fingerspell+any+word+or+number%2C+get+signed+chat+replies%2C+and+sign+back+to+the+AI+with+your+webcam+%E2%80%94+the+whole&amp;p=%2Fsign-language" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=three.ws+avatars+sign+in+American+Sign+Language%3A+fingerspell+any+word+or+number%2C+get+signed+chat+replies%2C+and+sign+back+with+your+webcam.+The+whole+loop%2C+live&amp;p=%2Fsign-language" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="Sign Language Avatars · three.ws"  data-i18n-attr="content:sign_language.meta_twitter_title"/>
 		<meta name="twitter:description" content="Avatars that sign in ASL: fingerspelling, signed chat replies, and webcam sign input, live in 3D."  data-i18n-attr="content:sign_language.meta_twitter_description"/>
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=three.ws+avatars+sign+in+American+Sign+Language%3A+fingerspell+any+word+or+number%2C+get+signed+chat+replies%2C+and+sign+back+to+the+AI+with+your+webcam+%E2%80%94+the+whole&amp;p=%2Fsign-language" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=three.ws+avatars+sign+in+American+Sign+Language%3A+fingerspell+any+word+or+number%2C+get+signed+chat+replies%2C+and+sign+back+with+your+webcam.+The+whole+loop%2C+live&amp;p=%2Fsign-language" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
@@ -75,6 +75,8 @@
 				transition: background .12s ease, border-color .12s ease;
 			}
 			.sl-btn:hover:not(:disabled) { background: rgba(167,139,250,.28); border-color: rgba(167,139,250,.75); }
+			.sl-btn:active:not(:disabled) { transform: scale(.98); background: rgba(167,139,250,.34); }
+			.sl-btn:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 1px; }
 			.sl-btn:disabled { opacity: .6; cursor: default; }
 			.sl-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 			.sl-phrase-chip {
@@ -83,6 +85,8 @@
 				transition: border-color .12s ease, color .12s ease;
 			}
 			.sl-phrase-chip:hover { border-color: rgba(167,139,250,.6); color: var(--ink); }
+			.sl-phrase-chip:active { transform: scale(.97); background: rgba(167,139,250,.14); }
+			.sl-phrase-chip:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 1px; }
 
 			/* Capability cards */
 			.sl-caps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: clamp(40px, 6vw, 72px); }
@@ -92,6 +96,8 @@
 			.sl-cap p { color: var(--ink-dim); font-size: 14px; line-height: 1.6; margin: 0 0 16px; flex: 1 1 auto; }
 			.sl-cap-link { color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(167,139,250,.5); align-self: flex-start; padding-bottom: 1px; }
 			.sl-cap-link:hover { border-bottom-color: rgba(167,139,250,.9); }
+			.sl-cap-link:active { color: var(--ink-dim); }
+			.sl-cap-link:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 2px; border-radius: 4px; }
 
 			/* Webcam demo */
 			.sl-webcam { margin-top: clamp(40px, 6vw, 72px); border: 1px solid var(--stroke); border-radius: 20px; padding: clamp(24px, 4vw, 40px); background: var(--surface-1); }
@@ -119,6 +125,7 @@
 			}
 			.sl-opt:hover { color: var(--ink); }
 			.sl-opt:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 1px; }
+			.sl-opt:active { transform: scale(.96); }
 			.sl-opt[aria-pressed='true'] { color: var(--ink); background: rgba(167,139,250,.2); }
 
 			/* Vocabulary */
@@ -135,9 +142,13 @@
 			}
 			.sl-vocab-chip::before { content: '🤟'; font-size: 12px; opacity: .65; }
 			.sl-vocab-chip:hover { color: var(--ink); border-color: rgba(167,139,250,.6); transform: translateY(-1px); }
+			.sl-vocab-chip:active { transform: translateY(0) scale(.97); }
 			.sl-vocab-chip:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 2px; }
 			.sl-vocab-chip[aria-pressed='true'] { color: var(--ink); background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.7); }
-			@media (prefers-reduced-motion: reduce) { .sl-vocab-chip:hover { transform: none; } }
+			@media (prefers-reduced-motion: reduce) {
+				.sl-vocab-chip:hover, .sl-vocab-chip:active, .sl-opt:active,
+				.sl-btn:active:not(:disabled), .sl-phrase-chip:active { transform: none; }
+			}
 
 			/* Honest scope note */
 			.sl-note { margin-top: clamp(36px, 5vw, 56px); border-left: 2px solid rgba(167,139,250,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 72ch; }

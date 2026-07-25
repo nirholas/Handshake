@@ -132,7 +132,9 @@ async function boot() {
 		speaker?.cancel();
 		speaker = null;
 		stage?.dispose();
-		stage = new PoseStage(stageHost, { glbUrl: avatar.url, framing: 'portrait' });
+		// Full-body framing: the whole avatar stays in frame, and the orbit
+		// controls let anyone zoom into the signing space when they want detail.
+		stage = new PoseStage(stageHost, { glbUrl: avatar.url });
 		try {
 			const { supported } = await stage.mount();
 			stage.start();

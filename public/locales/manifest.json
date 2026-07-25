@@ -37,11 +37,6 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "pt-BR",
-			"name": "Português (BR)",
-			"dir": "ltr"
-		},
-		{
 			"code": "ar",
 			"name": "العربية",
 			"dir": "rtl"
@@ -77,6 +72,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "fil",
+			"name": "Filipino",
+			"dir": "ltr"
+		},
+		{
 			"code": "zh-TW",
 			"name": "繁體中文",
 			"dir": "ltr"
@@ -94,11 +94,6 @@
 		{
 			"code": "nl",
 			"name": "Nederlands",
-			"dir": "ltr"
-		},
-		{
-			"code": "uk",
-			"name": "Українська",
 			"dir": "ltr"
 		},
 		{

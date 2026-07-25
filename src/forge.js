@@ -3034,11 +3034,49 @@ if (els.forgeShareBtn) {
 // on the photo tab, making "image to 3D" a first-class destination instead of
 // a second tab hidden behind a text-first title. The alias also gets its own
 // document title so history/tabs read as what the user searched for.
+// A route alias owns the tab title: the <title> tag carries data-i18n, so the
+// locale loader would retranslate it back to the Forge default after load
+// unless the attribute comes off first.
+function claimDocumentTitle(title) {
+	document.querySelector('title')?.removeAttribute('data-i18n');
+	document.title = title;
+}
+
 (() => {
 	const path = location.pathname.replace(/\/+$/, '');
 	const wanted = new URLSearchParams(location.search).get('mode') || (path === '/image-to-3d' ? 'image' : '');
 	if (wanted === 'image') setMode('image');
-	if (path === '/image-to-3d') document.title = 'Image to 3D — Turn a Photo into a 3D Model · three.ws';
+	if (path === '/image-to-3d') claimDocumentTitle('Image to 3D — Turn a Photo into a 3D Model · three.ws');
+})();
+
+// Quality deep links: /forge-max is the designated maximum-quality lane. It
+// lands on the Forge with the High tier pinned (200k-poly target, 4K PBR + HD
+// textures, subject-aware engine routing), so "the best the platform can
+// produce" has a stable URL instead of living behind a selector. ?tier=draft|
+// standard|high presets the selector on any forge URL the same way. selectTier
+// validates its input, so an unknown ?tier= value is a no-op; the High-tier
+// $THREE gate still applies exactly as if the user clicked the button.
+(() => {
+	const path = location.pathname.replace(/\/+$/, '');
+	const isMax = path === '/forge-max';
+	const tierParam = (new URLSearchParams(location.search).get('tier') || '').toLowerCase();
+	const wanted = tierParam || (isMax ? 'high' : '');
+	if (wanted) selectTier(wanted);
+	if (!isMax) return;
+	claimDocumentTitle('Forge Max: Highest-Quality Text & Image to 3D · three.ws');
+	// Re-brand the header for the dedicated destination. Dropping the i18n
+	// attributes keeps the locale loader from clobbering the swapped copy.
+	const h1 = document.querySelector('.forge-head h1');
+	const tag = document.querySelector('.forge-head p');
+	if (h1) {
+		h1.removeAttribute('data-i18n');
+		h1.textContent = 'Forge Max';
+	}
+	if (tag) {
+		tag.removeAttribute('data-i18n-html');
+		tag.textContent =
+			'The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk.';
+	}
 })();
 
 // Hooks for the companion modules (forge-dropzone.js, forge-showcase.js) —

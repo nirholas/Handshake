@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T13:14:31.798Z",
+	"generated_at": "2026-07-25T14:50:10.429Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -557,6 +557,16 @@
 					"title": "Image to 3D — Turn a Photo into a 3D Model",
 					"description": "Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.",
 					"added": "2026-07-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/forge-max",
+					"title": "Forge Max: Highest-Quality Text & Image to 3D",
+					"description": "The Forge's maximum-quality lane, opened directly: High tier pinned (200k-poly geometry, 4K PBR and HD textures, subject-aware engine routing). A $THREE holder perk; also unlockable with your own Meshy, Tripo, or Rodin key.",
+					"added": "2026-07-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

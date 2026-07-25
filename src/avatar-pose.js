@@ -182,9 +182,12 @@ export class PoseStage {
 		const portrait = this.framing === 'portrait';
 		const cx = portrait ? center.x : 0;
 		const cz = portrait ? center.z : 0;
-		const target = new Vector3(cx, height * (portrait ? 0.8 : 0.55), cz);
-		const dist = height * (portrait ? 0.92 : 1.6);
-		this.camera.position.set(cx, height * (portrait ? 0.83 : 0.62), cz + dist);
+		// Full framing must contain the whole figure: at fov 35 the visible span
+		// is ~0.63*dist, so 1.75*height centered at 0.52*height leaves a few
+		// percent of margin above the head and below the feet.
+		const target = new Vector3(cx, height * (portrait ? 0.8 : 0.52), cz);
+		const dist = height * (portrait ? 0.92 : 1.75);
+		this.camera.position.set(cx, height * (portrait ? 0.83 : 0.58), cz + dist);
 		this.camera.near = Math.max(0.01, dist / 100);
 		this.camera.far = dist * 20;
 		this.camera.updateProjectionMatrix();
