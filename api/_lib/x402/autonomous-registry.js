@@ -2388,7 +2388,10 @@ const SELF_ENDPOINTS = [
 		path: '/api/x402/forge',
 		method: 'POST',
 		body: null,
-		cooldown_s: 3600,
+		// 30 min → up to 48 standard-tier props/day (~$7/day), sized for the
+		// /forged gallery to grow visibly every day (owner volume directive,
+		// 2026-07-25).
+		cooldown_s: 1800,
 		priority: 55,
 		pipeline: 'forge',
 		enabled: true,

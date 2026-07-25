@@ -2,9 +2,11 @@
 //
 // 3D Forge Content Generation: autonomous pipeline (self/014).
 //
-// On each run it pays the paid three.ws Forge ($0.05 draft) to generate one
-// procedural prop (crate / barrel / furniture / terrain tile), rotating the
-// category each hour so the public asset library stays balanced across families.
+// On each run it pays the paid three.ws Forge (standard tier) to generate one
+// procedural prop from a combinatorial, platform-aligned catalog (club decor,
+// AR objects, diorama set-dressing, avatar items, vehicles, containers,
+// furniture, terrain tiles), hash-walked per hour so the /forged gallery stays
+// varied and balanced across families.
 // Each call is a real on-chain USDC payment from the seed wallet via the shared
 // payX402 client. The pipeline:
 //
@@ -63,54 +65,150 @@ const LOCAL_EMBED_DIM = 96;
 const DIVERSITY_WINDOW = 200;
 
 // ── Procedural prop catalog ────────────────────────────────────────────────────
-// Curated text→3D prompts grouped by the prop families named in the spec. Each
-// run rotates the CATEGORY (so the catalog stays balanced) and varies the prompt
-// within it (so successive same-category runs don't collide).
+// Combinatorial text→3D prompt space, aligned to the surfaces that actually
+// consume props: the /forged gallery, the /club stage, AR Studio placements,
+// diorama set-dressing, and avatar-adjacent items. Each category holds base
+// SUBJECTS; STYLES and FINISHES multiply them into thousands of distinct
+// prompts (8 categories × ~8 subjects × 10 styles × 8 finishes ≈ 5k combos),
+// so at 24-48 props/day the catalog effectively never loops, while staying
+// fully deterministic per hour (see nextForgeProp).
 const PROP_CATALOG = Object.freeze({
-	crate: [
-		'a weathered wooden shipping crate, iron banded corners, game-ready prop',
-		'a stack of military supply crates, stenciled markings, matte finish',
-		'a cracked sci-fi cargo container, glowing seams, low-poly',
-		'an antique tea crate, rope handles, worn paint, stylized',
-		'a reinforced steel ammo crate, latches and rivets, PBR textured',
+	'club-decor': [
+		'a DJ booth with turntables and a mixer',
+		'a large stage loudspeaker stack',
+		'a mirrored disco ball on a short chain mount',
+		'a neon bar sign on a metal frame',
+		'a velvet-rope stanchion pair',
+		'a cocktail bar counter with bottle shelf',
+		'a stage spotlight rig on a tripod',
+		'a standing subwoofer cabinet with glowing ring',
 	],
-	barrel: [
-		'a rusted oil barrel, dented metal, peeling paint, game prop',
-		'an oak wine barrel, iron hoops, cellar-aged wood grain',
-		'a glowing toxic-waste barrel, hazard stripes, stylized',
-		'a wooden gunpowder barrel, rope binding, weathered planks',
-		'a sci-fi coolant drum, brushed aluminium, warning decals',
+	'ar-object': [
+		'a potted monstera plant in a ceramic pot',
+		'a desk lamp with an articulated arm',
+		'a retro arcade cabinet',
+		'a coffee table with a glass top',
+		'a floor-standing globe on a wooden stand',
+		'a vintage record player console',
+		'a small bookshelf filled with books',
+		'a pedestal fan with round cage',
+	],
+	'diorama-set': [
+		'a market stall with a striped awning',
+		'a stone fountain with a round basin',
+		'a wrought-iron street lamppost',
+		'a small arched footbridge',
+		'a phone booth',
+		'a food cart with an umbrella',
+		'a park bench with cast-iron ends',
+		'a windmill with cloth sails',
+	],
+	'avatar-item': [
+		'a wide-brim wizard hat',
+		'a hiking backpack with straps and buckles',
+		'a round wooden shield with a metal boss',
+		'an electric guitar with a strap',
+		'a katana with sheath',
+		'a pirate tricorn hat',
+		'a skateboard with printed deck art',
+		'a knight helmet with hinged visor',
+	],
+	vehicle: [
+		'a compact hover scooter',
+		'a vintage moped',
+		'a go-kart with roll bar',
+		'a small wooden rowboat with oars',
+		'a delivery drone with four rotors',
+		'a bumper car',
+		'a snowmobile',
+		'a hot air balloon with basket',
+	],
+	container: [
+		'a wooden shipping crate with iron-banded corners',
+		'a barrel with riveted hoops',
+		'a treasure chest with a heavy hasp',
+		'a sci-fi cargo pod with glowing seams',
+		'a stack of supply crates with stenciled markings',
+		'a coolant drum with warning decals',
+		'an apothecary cabinet with small drawers',
+		'a woven picnic basket with hinged lids',
 	],
 	furniture: [
-		'a rustic wooden tavern stool, three legs, hand-carved, low-poly',
-		'a medieval banquet table, heavy oak, worn surface, game-ready',
-		'a worn leather armchair, brass studs, stylized PBR',
-		'a sci-fi crew bunk, foldable metal frame, clean lowpoly',
-		'an ornate Victorian writing desk, brass fittings, dark walnut',
+		'a tavern stool, three-legged and hand-carved',
+		'a banquet table of heavy planks',
+		'a worn leather armchair with brass studs',
+		'an ornate writing desk with drawers',
+		'a canopy bed with carved posts',
+		'a rocking chair',
+		'a bar cart on casters',
+		'a folding director chair',
 	],
 	terrain: [
-		'a modular rocky cliff terrain tile, mossy stone, seamless edges',
-		'a desert dune terrain tile, rippled sand, sparse rocks, low-poly',
-		'a snowy mountain terrain tile, jagged rock and ice, game-ready',
-		'a lush grassland terrain tile, scattered boulders, stylized',
-		'a volcanic terrain tile, cracked obsidian, glowing lava veins',
+		'a modular rocky cliff terrain tile with seamless edges',
+		'a desert dune terrain tile with sparse rocks',
+		'a snowy mountain terrain tile with jagged ice',
+		'a lush grassland terrain tile with scattered boulders',
+		'a volcanic terrain tile with glowing lava veins',
+		'a coral reef seabed terrain tile',
+		'a mossy forest floor terrain tile with roots',
+		'a cracked salt-flat terrain tile',
 	],
 });
 
+// Style and finish axes multiply the subject list. Every entry must read well
+// appended to any subject above; no contradictions with category wording.
+const STYLES = Object.freeze([
+	'low-poly game-ready',
+	'stylized hand-painted',
+	'realistic PBR textured',
+	'sci-fi with glowing accents',
+	'medieval fantasy',
+	'steampunk with brass fittings',
+	'weathered post-apocalyptic',
+	'clean minimalist modern',
+	'voxel blocky',
+	'retro 1980s neon',
+]);
+const FINISHES = Object.freeze([
+	'matte finish',
+	'worn paint and scuffed edges',
+	'polished metal highlights',
+	'rich wood grain',
+	'soft pastel palette',
+	'bold saturated colors',
+	'rusted and patinated',
+	'iridescent sheen',
+]);
+
 const CATEGORIES = Object.freeze(Object.keys(PROP_CATALOG));
 
-// Deterministic, non-random selector: rotate the category by UTC hour so the
-// library cycles evenly across families, and step the prompt index by day so
-// successive same-category hours don't repeat the same prompt. No Math.random -
-// two runs in the same hour pick the same prop, which the paid endpoint's
-// idempotency guard collapses rather than double-charging.
+// Small deterministic integer hash (xorshift-style avalanche). Turns the hour
+// counter into an effectively random (but reproducible) walk over the prompt
+// space, so consecutive hours land on unrelated (category, subject, style)
+// combinations instead of marching through the lists in order.
+function mix(n, salt) {
+	let h = (n ^ (salt * 0x9e3779b1)) >>> 0;
+	h ^= h >>> 16;
+	h = Math.imul(h, 0x85ebca6b) >>> 0;
+	h ^= h >>> 13;
+	h = Math.imul(h, 0xc2b2ae35) >>> 0;
+	h ^= h >>> 16;
+	return h >>> 0;
+}
+
+// Deterministic, non-random selector over the combinatorial space. No
+// Math.random — two runs in the same hour pick the same prop, which the paid
+// endpoint's idempotency guard collapses rather than double-charging. The hash
+// walk makes successive hours look random while covering all categories evenly
+// in expectation (~5k distinct prompts before any repeat is likely).
 export function nextForgeProp(now = Date.now()) {
 	const hour = Math.floor(now / 3_600_000);
-	const day = Math.floor(now / 86_400_000);
-	const category = CATEGORIES[hour % CATEGORIES.length];
-	const prompts = PROP_CATALOG[category];
-	const prompt = prompts[(hour + day) % prompts.length];
-	return { category, prompt };
+	const category = CATEGORIES[mix(hour, 1) % CATEGORIES.length];
+	const subjects = PROP_CATALOG[category];
+	const subject = subjects[mix(hour, 2) % subjects.length];
+	const style = STYLES[mix(hour, 3) % STYLES.length];
+	const finish = FINISHES[mix(hour, 4) % FINISHES.length];
+	return { category, prompt: `${subject}, ${style}, ${finish}, 3D prop` };
 }
 
 // ── Embedding ──────────────────────────────────────────────────────────────────
@@ -397,7 +495,7 @@ export async function run(ctx = {}) {
 	if (resolvedCount) log.info('forge_content_jobs_resolved', { count: resolvedCount });
 
 	const { category, prompt } = nextForgeProp();
-	const body = { prompt, tier: 'draft', aspect_ratio: '1:1' };
+	const body = { prompt, tier: 'standard', aspect_ratio: '1:1' };
 	const t0 = Date.now();
 
 	// Pay for the generation. payX402 never throws for protocol/network faults
