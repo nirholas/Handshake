@@ -97,10 +97,14 @@ describe('position lifecycle — take initials, hold a moon bag, never cut 100% 
 		expect(decideLadderedExit(pos({ initials_recovered: true }), 3 * ENTRY, 3 * ENTRY, T)).toBe(null);
 	});
 
-	it('the moon bag exits FULLY on the 25% trailing stop', () => {
+	it('the 25% trailing stop banks the moon bag down to the floor, never to zero', () => {
+		// The stake is already home, so this bag is free. The trailing stop books the
+		// gain but always leaves the floor riding: a free bag is worth zero at worst
+		// and uncapped at best, and selling the last slice gives that up for nothing.
 		const d = decideLadderedExit(pos({ initials_recovered: true }), 3 * ENTRY, 4 * ENTRY, T);
 		expect(d.reason).toBe('trailing_stop');
-		expect(d.sellFraction).toBe(1);
+		expect(d.sellFraction).toBeLessThan(1);
+		expect(d.keepsMoonbag).toBe(true);
 	});
 
 	it('the hard 35% stop-loss is a full exit and wins every conflict', () => {

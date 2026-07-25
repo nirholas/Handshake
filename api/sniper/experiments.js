@@ -116,7 +116,13 @@ export default wrap(async (req, res) => {
 			count(p.id) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED')                                  as paper_closed,
 			count(p.id) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED' and p.realized_pnl_lamports > 0)  as paper_wins,
 			count(p.id) filter (where p.status = 'open' and p.buy_sig = 'SIMULATED')                                    as paper_open,
-			coalesce(sum(p.realized_pnl_lamports) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED'), 0)    as paper_pnl_lamports
+			coalesce(sum(p.realized_pnl_lamports) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED'), 0)    as paper_pnl_lamports,
+			-- Moon bags: winners this arm banked but deliberately never fully sold.
+			-- Free by construction (their cost basis came back on the sold leg), so
+			-- they are upside carried at no risk, tracked apart from realized P&L
+			-- because nothing here is realized until a bag is actually sold.
+			count(p.id) filter (where p.moonbag_base_amount > 0)                                                    as moonbags,
+			coalesce(sum(p.moonbag_last_value_lamports) filter (where p.moonbag_base_amount > 0), 0)                as moonbag_value_lamports
 		from agent_sniper_strategies s
 		join agent_identities a on a.id = s.agent_id and a.deleted_at is null
 		left join agent_sniper_positions p
@@ -193,6 +199,9 @@ export default wrap(async (req, res) => {
 			paper_wins: Number(r.paper_wins) || 0,
 			paper_open: Number(r.paper_open) || 0,
 			paper_pnl_sol: lamportsToSol(r.paper_pnl_lamports),
+			// Held moon bags: never counted as profit, because they are not realized.
+			moonbags: Number(r.moonbags) || 0,
+			moonbag_value_sol: lamportsToSol(r.moonbag_value_lamports),
 		};
 	});
 

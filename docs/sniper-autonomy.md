@@ -65,9 +65,12 @@ and position size. Reaching `trusted` unlocks four more:
 - `min_market_cap_usd` / `max_market_cap_usd`: a wider hunting ground, widened
   outward only. An arm with no band set is already unrestricted and nothing here
   will restrict it.
-- `initials_out_multiple`, the [take-initials ladder](./trading-experiment.md):
-  recover the stake at 2x, keep a moon bag, let the rest ride the trailing stop.
-  Turned on only for an arm whose winners demonstrably run past its average exit.
+- `initials_out_multiple`, the proactive
+  [take-initials ladder](./trading-experiment.md): recover the stake as soon as
+  the position hits 2x rather than waiting for an exit to trigger. Turned on only
+  for an arm whose winners demonstrably run past its average exit. Note this is
+  only the *early* recovery: never fully selling a winner is fleet-wide policy
+  that applies at every tier, ladder or no ladder.
 
 `autonomous` adds `max_creator_launches`, so a proven arm can test whether a
 prolific creator is really a bad one.

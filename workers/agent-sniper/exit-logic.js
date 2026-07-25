@@ -76,13 +76,47 @@ export function ladderMultiple(n) {
 	return x != null && x > 1 ? x : null;
 }
 
-/** Moon-bag floor as a fraction of the position that must ALWAYS be kept on the
- * take-initials event. Default 15%, clamped to [0, 0.95] so a sell can never be
- * the whole bag. */
+/** Moon-bag floor as a fraction of the position that must ALWAYS be kept on any
+ * exit that is in profit. Default 15%, clamped to [0, 0.95] so a sell can never
+ * be the whole bag. */
 export function moonbagFraction(n) {
 	const x = pct(n);
 	const frac = x == null ? 15 : x;
 	return Math.max(0, Math.min(0.95, frac / 100));
+}
+
+/**
+ * Is the never-full-exit rule active for this position? Default ON, fleet-wide.
+ * Only an explicit `moonbag_always === false` turns it off, so every existing
+ * strategy row (where the column is null) gets the rule without a backfill.
+ */
+export function moonbagAlways(pos) {
+	return pos?.moonbag_always !== false;
+}
+
+/**
+ * How much of the remaining position to sell on a terminal exit that is allowed
+ * to keep a moon bag. Never returns 1: a bag always rides.
+ *
+ *   - House money (the stake is already recovered): the whole remainder is free,
+ *     so bank the gain down to the floor and keep the floor riding.
+ *   - Still carrying cost basis but exiting in profit: sell exactly enough to
+ *     return the stake (entry/value), capped by the floor. This is the case the
+ *     rule exists for. A trailing stop at +40% used to dump 100% of the bag for a
+ *     few thousandths of a SOL; now it recovers the cost and the rest rides free.
+ *
+ * Pure. Exported for tests.
+ *
+ * @param {number} entry   cost basis of the remaining position (lamports)
+ * @param {number} value   current value of the remaining position (lamports)
+ * @param {number} moonbag floor as a fraction (0..0.95)
+ * @param {boolean} houseMoney true once initials have been recovered
+ */
+export function moonbagExitFraction(entry, value, moonbag, houseMoney) {
+	const cap = 1 - moonbag;
+	if (!(value > 0)) return cap;
+	const target = houseMoney ? cap : entry / value;
+	return Math.max(0, Math.min(target, cap));
 }
 
 /**
@@ -117,38 +151,67 @@ export function moonbagFraction(n) {
  * @returns {{ reason: string, sellFraction: number, recoversInitials?: boolean }|null}
  */
 export function decideLadderedExit(pos, value, peak, now = Date.now(), sentiment = null) {
-	const mult = ladderMultiple(pos.initials_out_multiple);
-	if (mult == null) {
-		// Ladder off → classic single-shot full exit (unchanged behavior).
-		const reason = decideExit(pos, value, peak, now, sentiment);
-		return reason ? { reason, sellFraction: 1 } : null;
-	}
-
 	const entry = Number(BigInt(pos.entry_quote_lamports || '0'));
 	if (!(entry > 0)) return null;
+
+	const mult = ladderMultiple(pos.initials_out_multiple);
+	const moonbag = moonbagFraction(pos.moonbag_min_pct);
+	const always = moonbagAlways(pos);
+	const recovered = pos.initials_recovered === true;
 	const sl = pct(pos.stop_loss_pct);
 	const ts = pct(pos.trailing_stop_pct);
 	const tp = pct(pos.take_profit_pct);
-	const moonbag = moonbagFraction(pos.moonbag_min_pct);
-	const recovered = pos.initials_recovered === true;
 
-	// Protective exits — full exit of the remainder; stop-loss wins on conflict.
-	if (sl != null && value <= entry * (1 - sl / 100)) return { reason: 'stop_loss', sellFraction: 1 };
-	if (isBearishFlip(sentiment) && value < entry) return { reason: 'signal_flip', sellFraction: 1 };
-	if (ts != null && peak > 0 && value <= peak * (1 - ts / 100)) return { reason: 'trailing_stop', sellFraction: 1 };
-
-	// Take-initials — the first profit event, once, before initials are recovered.
-	if (!recovered && value >= entry * mult) {
-		const recoverFraction = entry / value; // f·value = cost basis
-		const sellFraction = Math.max(0, Math.min(recoverFraction, 1 - moonbag));
+	// ── 1. Which reason fires. Priority is unchanged and the hard stop still wins.
+	let reason = null;
+	if (sl != null && value <= entry * (1 - sl / 100)) {
+		reason = 'stop_loss';
+	} else if (isBearishFlip(sentiment) && value < entry) {
+		reason = 'signal_flip';
+	} else if (ts != null && peak > entry && value <= peak * (1 - ts / 100)) {
+		// `peak > entry`, not `peak > 0`: the trailing stop arms only once the
+		// position has actually been green. Armed underwater it is a machine for
+		// realizing small losses (measured across the fleet's first 90 real trades),
+		// and the hard stop-loss above already caps the downside. decideExit has
+		// always done this; the ladder path used to arm at any peak, so every
+		// ladder-on strategy carried the below-breakeven trail this rules out.
+		reason = 'trailing_stop';
+	} else if (mult != null && !recovered && value >= entry * mult) {
+		// Take-initials: the proactive first profit event, fired once.
+		const sellFraction = Math.max(0, Math.min(entry / value, 1 - moonbag));
 		if (sellFraction > 0) return { reason: 'take_initials', sellFraction, recoversInitials: true };
 	}
 
-	// Moon-bag ceiling — optional classic take-profit, only AFTER initials are out.
-	if (recovered && tp != null && value >= entry * (1 + tp / 100)) return { reason: 'take_profit', sellFraction: 1 };
+	if (reason == null) {
+		if (tp != null && value >= entry * (1 + tp / 100) && (recovered || mult == null)) {
+			// A take-profit ceiling. With a ladder armed it only applies after the
+			// initials are out, so the ceiling can never pre-empt the ladder.
+			reason = 'take_profit';
+		} else {
+			const heldS = (now - new Date(pos.opened_at).getTime()) / 1000;
+			if (pos.max_hold_seconds != null && heldS >= pos.max_hold_seconds) reason = 'timeout';
+		}
+	}
+	if (reason == null) return null;
 
-	// Timeout — full exit of the remainder.
-	const heldS = (now - new Date(pos.opened_at).getTime()) / 1000;
-	if (pos.max_hold_seconds != null && heldS >= pos.max_hold_seconds) return { reason: 'timeout', sellFraction: 1 };
-	return null;
+	// ── 2. How much to sell. The owner's rule: we never sell 100% of a position
+	// that is in profit, and we never sell 100% of a position whose stake is
+	// already recovered. Once the cost basis is back, the remainder is free: a bag
+	// that goes to zero cost us nothing, and a bag that runs is the whole point.
+	// Selling the last 15% to bank a few thousandths of a SOL trades away all of
+	// that upside for a rounding error.
+	if (!always) return { reason, sellFraction: 1 };
+
+	// Kill switch and a stop-loss on money still at risk stay full exits. Before
+	// the stake is recovered the position is OUR money, not house money, so
+	// "hold a free bag" does not apply: there is nothing free about it yet, and
+	// the hard downside cap is the one rule the ladder never overrides.
+	const houseMoney = recovered;
+	const inProfit = value > entry;
+	if (!houseMoney && !inProfit) return { reason, sellFraction: 1 };
+	if (!houseMoney && reason === 'stop_loss') return { reason, sellFraction: 1 };
+
+	const sellFraction = moonbagExitFraction(entry, value, moonbag, houseMoney);
+	if (!(sellFraction > 0)) return null; // nothing worth selling; let the bag ride
+	return { reason, sellFraction, keepsMoonbag: true };
 }

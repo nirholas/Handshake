@@ -59,6 +59,7 @@ async function tickPosition(cfg, pos) {
 			reason: exit.reason,
 			fraction: exit.sellFraction,
 			recoversInitials: exit.recoversInitials === true,
+			keepsMoonbag: exit.keepsMoonbag === true,
 		});
 	}
 }

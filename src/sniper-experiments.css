@@ -131,6 +131,17 @@
 	font-style: italic;
 }
 
+/* Free upside still riding. Distinct from realized P&L on purpose: nothing here
+ * is booked until a bag is sold. */
+.xp-moonbag {
+	margin-top: 3px;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	color: var(--cv-green);
+	white-space: nowrap;
+	cursor: help;
+}
+
 /* ── P&L ─────────────────────────────────────────────────────────────────── */
 .xp-pos { color: var(--cv-green); font-weight: 600; }
 .xp-neg { color: var(--cv-red); font-weight: 600; }

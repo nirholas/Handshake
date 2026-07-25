@@ -528,20 +528,30 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
  * Close `position` for `reason`. Re-quotes fresh for slippage, builds the sell,
  * broadcasts (live), records realized P&L.
  */
-export async function executeSell({ cfg, position, reason, fraction = 1, recoversInitials = false }) {
+export async function executeSell({ cfg, position, reason, fraction = 1, recoversInitials = false, keepsMoonbag = false }) {
 	return withAgentLock(position.agent_id, async () => {
-		// Laddered exits sell only PART of the bag (take-initials). Resolve the sell
-		// size in ppm of the current base amount so the moon-bag remainder is exact
-		// with no float drift, and decide up front whether this closes the position.
+		// Laddered exits sell only PART of the bag. Two different partials exist:
+		//   recoversInitials — the take-initials leg; the position stays OPEN and the
+		//                      moon bag keeps trading under the exit rules.
+		//   keepsMoonbag     — a terminal exit that still refuses to sell the last
+		//                      slice; the position CLOSES for accounting (its P&L is
+		//                      booked and its concurrency slot is freed) while the
+		//                      remaining tokens are retained and ride indefinitely.
+		// Resolve the sell size in ppm of the current base amount so the remainder is
+		// exact with no float drift.
 		const f = Number(fraction);
 		const fullBase = BigInt(position.base_amount);
 		const ppm = f > 0 && f < 1 ? BigInt(Math.max(1, Math.min(999_999, Math.round(f * 1_000_000)))) : 1_000_000n;
 		let sellBaseBig = ppm === 1_000_000n ? fullBase : (fullBase * ppm) / 1_000_000n;
 		const partial = sellBaseBig > 0n && sellBaseBig < fullBase;
 		if (sellBaseBig <= 0n) sellBaseBig = fullBase; // degenerate fraction → full exit
+		// A partial that isn't a take-initials leg is a moon-bag close. If the
+		// fraction degenerated to a full sell there is no bag left to keep, so the
+		// flag drops with it rather than recording an empty bag.
+		const retainsMoonbag = keepsMoonbag && partial && !recoversInitials;
 		const tag = { agent: position.agent_id, mint: position.mint, symbol: position.symbol, reason, partial };
 		await sql`UPDATE agent_sniper_positions SET status = 'closing' WHERE id = ${position.id} AND status = 'open'`;
-		screenPush(`${partial ? 'Taking initials on' : 'Selling'} $${(position.symbol || position.mint.slice(0, 6)).toUpperCase()}: ${reason}`, 'trade');
+		screenPush(`${partial ? (retainsMoonbag ? 'Banking profit, keeping a moon bag on' : 'Taking initials on') : 'Selling'} $${(position.symbol || position.mint.slice(0, 6)).toUpperCase()}: ${reason}`, 'trade');
 
 		try {
 			const loaded = await loadAgentKeypair(position.agent_id, position.user_id, 'sniper_sell');
@@ -622,7 +632,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 			const priorRealized = BigInt(position.realized_pnl_lamports || '0');
 			const cumRealized = priorRealized + legPnl;
 
-			if (partial) {
+			if (partial && !retainsMoonbag) {
 				// Take-initials: keep the position OPEN with the moon-bag remainder.
 				// Scale the cost basis down with the tokens, flag initials recovered so
 				// the ladder fires once, and RESET the trailing high-water to the
@@ -657,19 +667,41 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 
 			const pnl = legPnl;
 			const pnlPct = entryFull > 0n ? (Number(cumRealized) / Number(entryFull)) * 100 : 0;
+			// Tokens kept back on a moon-bag close, and the cost basis still sitting in
+			// them. Once initials were recovered that basis is ~0, which is the whole
+			// point: the bag is free, so a bag that goes to zero costs nothing and a
+			// bag that runs is pure upside. The position still books CLOSED here so its
+			// realized P&L lands in every existing report and its concurrency slot is
+			// released; only the tokens stay behind.
+			const keptBase = retainsMoonbag ? fullBase - sellBaseBig : 0n;
+			const keptEntry = retainsMoonbag ? entryFull - soldCostBasis : 0n;
+			const keptValueEst = retainsMoonbag && sellBaseBig > 0n
+				? Math.round((Number(expectedOut) * Number(keptBase)) / Number(sellBaseBig))
+				: 0;
 			await sql`
 				UPDATE agent_sniper_positions SET
 					status = 'closed', exit_reason = ${reason}, sell_sig = ${sig},
 					exit_quote_lamports = ${expectedOut.toString()},
 					realized_pnl_lamports = ${cumRealized.toString()},
 					realized_pnl_pct = ${pnlPct},
+					moonbag_base_amount = ${keptBase.toString()},
+					moonbag_entry_lamports = ${keptEntry.toString()},
+					moonbag_last_value_lamports = ${keptValueEst},
+					moonbag_opened_at = ${retainsMoonbag ? new Date().toISOString() : null},
 					error = ${null},
 					closed_at = now()
 				WHERE id = ${position.id}
 			`;
-			await recordJournal({ position, cfg, event: 'exit', reason, sig, venue, soldFraction: 1, legPnlLamports: legPnl });
+			await recordJournal({
+				position, cfg, event: retainsMoonbag ? 'exit_moonbag' : 'exit', reason, sig, venue,
+				soldFraction: retainsMoonbag ? f : 1, legPnlLamports: legPnl,
+				...(retainsMoonbag ? { remainingBase: keptBase } : {}),
+			});
 			const pnlSol = lamportsToSol(cumRealized);
-			log.trade('sell', { ...tag, venue, mode: cfg.mode, sig, pnl_sol: pnlSol, pnl_pct: pnlPct.toFixed(1) });
+			log.trade(retainsMoonbag ? 'sell-keep-moonbag' : 'sell', {
+				...tag, venue, mode: cfg.mode, sig, pnl_sol: pnlSol, pnl_pct: pnlPct.toFixed(1),
+				...(retainsMoonbag ? { kept_moonbag_base: keptBase.toString(), sold_fraction: f } : {}),
+			});
 			// Price the realized SOL delta into USD best-effort for the live PnL
 			// ticker. A pricing hiccup just omits realizedUsd — the viewer's ticker
 			// falls back to SOL, which is the unit the sell actually returned.
@@ -678,13 +710,21 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 				const solUsd = await lamportsToUsd(1_000_000_000n);
 				if (Number.isFinite(solUsd)) realizedUsd = pnlSol * solUsd;
 			} catch { /* pricing offline — SOL-only ticker */ }
+			const sym = (position.symbol || position.mint.slice(0, 6)).toUpperCase();
 			screenPush(
-				`Sold $${(position.symbol || position.mint.slice(0, 6)).toUpperCase()} — ${pnlPct >= 0 ? 'profit' : 'loss'}: ${pnlSol >= 0 ? '+' : ''}${pnlSol.toFixed(4)} SOL`,
+				retainsMoonbag
+					? `Banked ${pnlSol >= 0 ? '+' : ''}${pnlSol.toFixed(4)} SOL on $${sym} and kept a free moon bag riding`
+					: `Sold $${sym}: ${pnlPct >= 0 ? 'profit' : 'loss'} ${pnlSol >= 0 ? '+' : ''}${pnlSol.toFixed(4)} SOL`,
 				'trade',
-				{ phase: 'exit', mint: position.mint, symbol: position.symbol || null, solDelta: pnlSol, pct: pnlPct, realizedUsd },
+				{
+					phase: retainsMoonbag ? 'exit_moonbag' : 'exit',
+					mint: position.mint, symbol: position.symbol || null,
+					solDelta: pnlSol, pct: pnlPct, realizedUsd,
+					...(retainsMoonbag ? { moonbagBase: keptBase.toString() } : {}),
+				},
 			);
 			notifySell({ agentName: position.agent_name || position.agent_id, symbol: position.symbol, mint: position.mint, pnlSol, pnlPct, exitReason: reason, mode: cfg.mode, sig, chatId: position.telegram_chat_id || null });
-			return { status: 'closed', sig, pnl: pnl.toString(), venue };
+			return { status: 'closed', sig, pnl: pnl.toString(), venue, moonbagBase: keptBase.toString() };
 		} catch (err) {
 			// A failed sell must NOT terminate the position — leave it 'open' so the
 			// next tick retries the exit rather than stranding the bag as 'failed'.

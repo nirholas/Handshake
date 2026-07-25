@@ -122,7 +122,14 @@ export async function getOpenPositions(network) {
 	return sql`
 		SELECT p.*, s.take_profit_pct, s.stop_loss_pct, s.trailing_stop_pct,
 		       s.max_hold_seconds, s.slippage_bps, s.user_id AS strat_user_id,
-		       s.kill_switch, s.telegram_chat_id
+		       s.kill_switch, s.telegram_chat_id,
+		       -- Exit-ladder + moon-bag policy. These live on the STRATEGY row, and
+		       -- decideLadderedExit reads them off the position object it is handed.
+		       -- Omitting them here silently disabled the take-initials ladder for
+		       -- every position ever opened: pos.initials_out_multiple came back
+		       -- undefined, ladderMultiple() read that as "ladder off", and the loop
+		       -- fell through to a classic full exit no matter what the strategy said.
+		       s.initials_out_multiple, s.moonbag_min_pct, s.moonbag_always
 		FROM agent_sniper_positions p
 		JOIN agent_sniper_strategies s ON s.id = p.strategy_id
 		WHERE p.network = ${network}

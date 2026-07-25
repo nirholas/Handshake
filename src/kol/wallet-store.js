@@ -1,8 +1,13 @@
-// Shared tracked-wallet loader — bundled seed file + R2 admin imports.
+// Shared tracked-wallet loader — bundled curation file + R2 admin imports.
 //
 // Extracted from api/kol/[action].js so the tracker aggregator (src/kol/tracker.js)
 // and the wallets/import-gmgn endpoints read the exact same merged list instead of
 // two independently-maintained copies of this logic.
+//
+// These entries carry curation (label, xHandle, an imported P&L figure), not the
+// tracker's wallet universe: that comes from the live kolscan board. The bundled
+// wallets.json ships empty on purpose — every wallet in it is an explicit admin
+// decision, never a placeholder to make a page look populated.
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';

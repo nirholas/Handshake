@@ -1211,6 +1211,10 @@
 			"dest": "/timeline.html"
 		},
 		{
+			"src": "/tracker/?",
+			"dest": "/tracker.html"
+		},
+		{
 			"src": "/forge-studio/?",
 			"dest": "/forge-studio.html"
 		},

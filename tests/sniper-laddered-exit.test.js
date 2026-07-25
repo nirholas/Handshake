@@ -1,11 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { decideLadderedExit, moonbagFraction, ladderMultiple } from '../workers/agent-sniper/exit-logic.js';
+import { decideLadderedExit, moonbagAlways, moonbagExitFraction, moonbagFraction, ladderMultiple } from '../workers/agent-sniper/exit-logic.js';
 import { mayhemVerdict } from '../workers/agent-sniper/mayhem-gate.js';
 
 // The owner's rule, pinned in math:
 //  - buy, and when up ~2x sell enough to recover the INITIAL cost basis;
-//  - NEVER cut 100% of a position on the way up (always keep a moon bag);
-//  - hold the rest, protected by the trailing stop; stop-loss still wins.
+//  - NEVER cut 100% of a position that is in profit: a moon bag always rides,
+//    on every terminal reason (trailing stop, take-profit, timeout), whether or
+//    not the take-initials ladder ever fired;
+//  - once the stake is home the remainder is FREE, so a bag that goes to zero
+//    costs nothing and a bag that runs is the entire upside. Selling the last
+//    slice to bank a rounding error trades that away;
+//  - a loss exit on money still at risk is still a FULL exit, and the hard
+//    stop-loss still wins. Nothing is free until the stake is back.
 
 const ENTRY = 1_000_000_000; // 1 SOL cost basis (lamports)
 const base = (over = {}) => ({
@@ -70,11 +76,13 @@ describe('take-initials ladder', () => {
 	});
 });
 
-describe('protective exits are always FULL and stop-loss wins', () => {
+describe('a loss exit is still a FULL exit and stop-loss wins', () => {
 	it('stop-loss fires a full exit before initials', () => {
+		// Money still at risk: nothing here is free, so the hard downside cap stands.
 		const d = decideLadderedExit(base(), 0.6 * ENTRY, 1 * ENTRY, NOW);
 		expect(d.reason).toBe('stop_loss');
 		expect(d.sellFraction).toBe(1);
+		expect(d.keepsMoonbag).toBeFalsy();
 	});
 
 	it('stop-loss beats a simultaneous initials band (stop-loss precedence)', () => {
@@ -82,34 +90,149 @@ describe('protective exits are always FULL and stop-loss wins', () => {
 		// price collapsed below stop even though initials were configured.
 		const d = decideLadderedExit(base(), 0.5 * ENTRY, 2.5 * ENTRY, NOW);
 		expect(d.reason).toBe('stop_loss');
-	});
-
-	it('trailing stop fully exits the moon bag after initials recovered', () => {
-		// Recovered; peak 4x, now down 20%+ from peak → trailing.
-		const d = decideLadderedExit(base({ initials_recovered: true }), 3.1 * ENTRY, 4 * ENTRY, NOW);
-		expect(d.reason).toBe('trailing_stop');
 		expect(d.sellFraction).toBe(1);
 	});
 
-	it('timeout fully exits the remainder', () => {
+	it('a timeout underwater with no initials recovered exits fully', () => {
+		const d = decideLadderedExit(
+			base({ max_hold_seconds: 60 }),
+			0.8 * ENTRY, 0.9 * ENTRY,
+			new Date('2026-07-03T02:00:00Z').getTime(),
+		);
+		expect(d.reason).toBe('timeout');
+		expect(d.sellFraction).toBe(1);
+	});
+
+	it('a bearish signal flip underwater exits fully', () => {
+		const d = decideLadderedExit(base(), 0.9 * ENTRY, 1 * ENTRY, NOW, { signal: 'bearish', confidence: 0.9 });
+		expect(d.reason).toBe('signal_flip');
+		expect(d.sellFraction).toBe(1);
+	});
+});
+
+describe('the owner rule: never sell 100% of a position in profit', () => {
+	it('keeps a moon bag when the trailing stop fires on house money', () => {
+		// Initials already recovered: the whole remainder is free. Bank the gain down
+		// to the floor, never to zero.
+		const d = decideLadderedExit(base({ initials_recovered: true }), 3.1 * ENTRY, 4 * ENTRY, NOW);
+		expect(d.reason).toBe('trailing_stop');
+		expect(d.sellFraction).toBeCloseTo(0.85);
+		expect(d.sellFraction).toBeLessThan(1);
+		expect(d.keepsMoonbag).toBe(true);
+	});
+
+	it('keeps a moon bag on a timeout in profit', () => {
 		const d = decideLadderedExit(
 			base({ initials_recovered: true, max_hold_seconds: 60 }),
 			1.5 * ENTRY, 1.6 * ENTRY,
 			new Date('2026-07-03T02:00:00Z').getTime(),
 		);
 		expect(d.reason).toBe('timeout');
-		expect(d.sellFraction).toBe(1);
+		expect(d.sellFraction).toBeCloseTo(0.85);
+		expect(d.keepsMoonbag).toBe(true);
 	});
-});
 
-describe('ladder off = classic behavior (non-breaking)', () => {
-	it('with no initials_out_multiple, take_profit is a normal full exit', () => {
+	it('recovers the stake instead of dumping 100% for a rounding error', () => {
+		// THE case the rule exists for. Ladder never fired (the 2x band was never
+		// reached), trailing stop trips at +40%. The old behavior sold the entire bag
+		// to bank a few thousandths of a SOL. Now it sells exactly the cost basis and
+		// the rest rides free.
+		const d = decideLadderedExit(base(), 1.4 * ENTRY, 1.8 * ENTRY, NOW);
+		expect(d.reason).toBe('trailing_stop');
+		expect(d.sellFraction).toBeCloseTo(1 / 1.4); // entry/value: the stake, exactly
+		expect(d.sellFraction).toBeLessThan(1);
+		expect(d.keepsMoonbag).toBe(true);
+	});
+
+	it('applies with the ladder switched off, because this is fleet policy', () => {
 		const d = decideLadderedExit(
 			base({ initials_out_multiple: null, take_profit_pct: 80 }),
 			2 * ENTRY, 2 * ENTRY, NOW,
 		);
 		expect(d.reason).toBe('take_profit');
+		expect(d.sellFraction).toBeCloseTo(0.5); // recovers the stake, keeps half free
+		expect(d.keepsMoonbag).toBe(true);
+	});
+
+	it('keeps a bag even when a stop-loss hits AFTER initials came back', () => {
+		// A stop on house money is a stop on free shares. There is nothing to protect
+		// (the stake is already home), so the bag rides rather than being dumped.
+		const d = decideLadderedExit(base({ initials_recovered: true }), 0.6 * ENTRY, 2 * ENTRY, NOW);
+		expect(d.reason).toBe('stop_loss');
+		expect(d.sellFraction).toBeCloseTo(0.85);
+		expect(d.keepsMoonbag).toBe(true);
+	});
+
+	it('never returns a full exit on any profitable reason', () => {
+		const cases = [
+			['trailing_stop', base({ initials_recovered: true }), 3.1 * ENTRY, 4 * ENTRY, NOW],
+			['take_profit', base({ initials_recovered: true, take_profit_pct: 50 }), 2 * ENTRY, 2 * ENTRY, NOW],
+			['timeout', base({ initials_recovered: true, max_hold_seconds: 1 }), 5 * ENTRY, 5 * ENTRY, new Date('2026-07-03T02:00:00Z').getTime()],
+		];
+		for (const [expected, pos, value, peak, now] of cases) {
+			const d = decideLadderedExit(pos, value, peak, now);
+			expect(d.reason, expected).toBe(expected);
+			expect(d.sellFraction, `${expected} must never be a full exit`).toBeLessThan(1);
+		}
+	});
+
+	it('honours an explicit opt-out for a strategy that must fully exit', () => {
+		const d = decideLadderedExit(
+			base({ initials_recovered: true, moonbag_always: false }),
+			3.1 * ENTRY, 4 * ENTRY, NOW,
+		);
+		expect(d.reason).toBe('trailing_stop');
 		expect(d.sellFraction).toBe(1);
+		expect(d.keepsMoonbag).toBeFalsy();
+	});
+
+	it('is on by default for every existing strategy row (null = on)', () => {
+		expect(moonbagAlways({})).toBe(true);
+		expect(moonbagAlways({ moonbag_always: null })).toBe(true);
+		expect(moonbagAlways({ moonbag_always: undefined })).toBe(true);
+		expect(moonbagAlways({ moonbag_always: false })).toBe(false);
+	});
+});
+
+describe('moonbagExitFraction', () => {
+	it('sells exactly the stake back when cost basis is still carried', () => {
+		expect(moonbagExitFraction(100, 200, 0.15, false)).toBeCloseTo(0.5);
+		expect(moonbagExitFraction(100, 400, 0.15, false)).toBeCloseTo(0.25);
+	});
+
+	it('banks down to the floor once the money is free', () => {
+		expect(moonbagExitFraction(100, 200, 0.15, true)).toBeCloseTo(0.85);
+		expect(moonbagExitFraction(100, 10_000, 0.15, true)).toBeCloseTo(0.85);
+	});
+
+	it('never sells the whole bag, whatever the inputs', () => {
+		for (const houseMoney of [true, false]) {
+			for (const [entry, value] of [[100, 100], [100, 1], [100, 1e12], [0, 100]]) {
+				const f = moonbagExitFraction(entry, value, 0.15, houseMoney);
+				expect(f).toBeLessThanOrEqual(0.85);
+				expect(f).toBeGreaterThanOrEqual(0);
+			}
+		}
+	});
+
+	it('respects a custom floor', () => {
+		expect(moonbagExitFraction(100, 500, 0.5, true)).toBeCloseTo(0.5);
+		expect(moonbagExitFraction(100, 500, 0.9, true)).toBeCloseTo(0.1);
+	});
+});
+
+describe('the trailing stop arms only once the position has been green', () => {
+	it('does not trail a position whose peak never cleared entry', () => {
+		// A below-breakeven trail converts a recoverable dip into a locked loss while
+		// protecting nothing: the hard stop-loss already caps the downside. decideExit
+		// has always guarded this; the ladder path used to arm at any peak.
+		const d = decideLadderedExit(base(), 0.75 * ENTRY, 0.95 * ENTRY, NOW);
+		expect(d).toBe(null);
+	});
+
+	it('trails normally once the peak cleared entry', () => {
+		const d = decideLadderedExit(base(), 1.2 * ENTRY, 1.6 * ENTRY, NOW);
+		expect(d.reason).toBe('trailing_stop');
 	});
 });
 

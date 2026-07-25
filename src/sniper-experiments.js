@@ -130,6 +130,21 @@ function renderControls() {
 // How much of the fleet has traded its way into extra freedom. An arm at trusted
 // or above gets wider tuning bounds, more of the fleet budget, and a richer
 // evidence pack in front of its judge; one on probation gets held tighter.
+// Moon bags the fleet is still holding. Deliberately NOT added to realized P&L:
+// nothing here is realized until a bag is sold, and the whole point of the rule is
+// that these ride indefinitely. Shown because upside you cannot see is upside you
+// will not believe in.
+function moonbagTile(experiments) {
+	const bags = experiments.reduce((a, x) => a + (Number(x.moonbags) || 0), 0);
+	const value = experiments.reduce((a, x) => a + (Number(x.moonbag_value_sol) || 0), 0);
+	return `
+		<div class="cv-card xp-tile" title="Winners the fleet banked but never fully sold. Their cost basis came back on the sold leg, so every one of these is free: worth zero at worst, uncapped at best. Not counted as profit until sold.">
+			<span>Moon bags riding</span>
+			<b>${bags}</b>
+			<i>${bags ? `${value.toFixed(4)} SOL at last quote, cost basis zero` : 'no bags held yet'}</i>
+		</div>`;
+}
+
 function earnedTile(experiments) {
 	const count = (tier) => experiments.filter((x) => x.autonomy_tier === tier).length;
 	const earned = count('trusted') + count('autonomous');
@@ -163,6 +178,7 @@ function renderSummary(experiments, masterWallet) {
 			<div class="cv-card xp-tile"><span>Fleet realized P&amp;L</span><b class="${pnlClass(totalPnl)}">${esc(sol(totalPnl))}</b><i>window: ${esc(windowKey)}</i></div>
 			<div class="cv-card xp-tile"><span>Fleet SOL on hand</span><b>${fleetSol.toFixed(3)} SOL</b><i>across ${experiments.filter((x) => x.wallet_address).length} wallets</i></div>
 			<div class="cv-card xp-tile"><span>Best arm</span><b>${best ? esc(best.label) : 'no trades yet'}</b><i>${best ? esc(sol(best.realized_pnl_sol)) : 'waiting on fills'}</i></div>
+			${moonbagTile(experiments)}
 			${earnedTile(experiments)}
 			${masterTile}
 		</div>`;
@@ -180,6 +196,9 @@ function renderBoard(experiments) {
 	const rows = experiments
 		.map((x) => {
 			const record = x.closed > 0 ? `${x.wins}W · ${x.losses}L` : 'no fills';
+			const bags = Number(x.moonbags) > 0
+				? `<div class="xp-moonbag" title="Free moon bags still riding from this arm's winners. Cost basis already recovered, so worth zero at worst.">🌙 ${x.moonbags} moon bag${x.moonbags === 1 ? '' : 's'} · ${Number(x.moonbag_value_sol || 0).toFixed(4)} SOL</div>`
+				: '';
 			const paper = x.paper_closed > 0 || x.paper_open > 0
 				? `<div class="xp-paper" title="Simulate-mode record: real quotes, no broadcast">paper: ${x.paper_wins}W · ${x.paper_closed - x.paper_wins}L${x.paper_open ? ` · ${x.paper_open} open` : ''} · ${esc(sol(x.paper_pnl_sol))}</div>`
 				: '';
@@ -191,7 +210,7 @@ function renderBoard(experiments) {
 					${walletLine(x)}
 				</td>
 				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · ${esc(exitLine(x))}</div></td>
-				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}${paper}</td>
+				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}${bags}${paper}</td>
 				<td>${x.win_rate != null ? esc(String(x.win_rate)) + '%' : '·'}</td>
 				<td class="${pnlClass(x.realized_pnl_sol)}">${esc(sol(x.realized_pnl_sol))}</td>
 				<td class="${pnlClass(x.roi_pct)}">${esc(pct(x.roi_pct))}</td>

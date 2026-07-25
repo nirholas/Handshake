@@ -49,15 +49,54 @@ sellFraction = min( entry / current_value , 1 − moonbag_floor )
 After the take-initials leg, the position stays **open** with the moon bag, its
 trailing-stop high-water is reset to the remaining value (so the pre-sale peak
 doesn't instantly trip the trailing stop), and the ladder is marked recovered so
-it fires exactly once. The remainder then exits only on the **trailing stop**,
-the **stop-loss**, the optional take-profit ceiling, or the **timeout** — all
-full exits of what remains.
+it fires exactly once.
 
 Priority order (stop-loss always wins): `stop_loss → signal_flip → trailing_stop
 → take_initials → take_profit(ceiling) → timeout`.
 
-The ladder is **opt-in**: a strategy with no `initials_out_multiple` keeps the
-classic single-shot full-exit behavior, so existing strategies are unchanged.
+## We never sell 100% of a winner
+
+This is fleet policy, not a per-strategy option, and it applies whether or not
+the take-initials ladder above ever fired.
+
+**Once a position's cost basis is back, the remainder is free.** A free bag is
+worth zero at worst and uncapped at best. Selling that last slice to bank a few
+thousandths of a SOL trades away every possible outcome above it for a rounding
+error. So a terminal exit that is **in profit** sells down to the moon-bag floor
+(`moonbag_min_pct`, default 15%) and the retained tokens ride indefinitely.
+
+| Situation | What happens |
+|---|---|
+| Trailing stop / take-profit / timeout, **in profit** | Sell enough to return the stake (or bank down to the floor if the stake is already home). The rest rides. |
+| Any terminal exit **after** initials were recovered | Sell down to the floor. Never to zero: none of it is our money any more. |
+| Stop-loss with the stake **still at risk** | **Full exit.** Nothing is free yet, and the hard downside cap is the one rule nothing overrides. |
+| Timeout or signal-flip **underwater**, initials never recovered | **Full exit**, same reason. |
+| Kill switch | **Full exit**, always. An owner pulling the switch means out. |
+
+Worked example, the case the rule exists for: an arm enters at 1 SOL, the price
+runs to 1.4x but never reaches the 2x ladder band, then the trailing stop trips.
+The old behavior sold 100% of the bag to realize about +0.0028 SOL. The rule now
+sells `1/1.4 = 71%` (exactly the stake) and keeps 29% riding at zero cost basis.
+
+**A held bag does not block the arm.** The position still books `status='closed'`
+when this happens, so its realized P&L lands in every existing report unchanged
+and its `max_concurrent_positions` slot is released immediately. Only the tokens
+stay behind, recorded on the position row (`moonbag_base_amount`,
+`moonbag_entry_lamports`) and surfaced on
+[/sniper/experiments](https://three.ws/sniper/experiments).
+
+Because loss exits still sell out completely, rugs close fully and only *winners*
+leave a bag behind. That bounds the retained-rent cost to the number of winners
+rather than the number of trades (each held SPL token account locks about
+0.002 SOL of rent).
+
+Set `moonbag_always = false` on a strategy to opt a single arm out. The column
+defaults to true and a null is read as true, so every existing strategy has the
+rule without a backfill.
+
+The proactive 2x ladder is **opt-in**: a strategy with no `initials_out_multiple`
+does not take initials early. It still never fully exits a winner, though: the
+fleet-wide moon-bag rule below covers that independently.
 
 There are two ways in. A human sets it directly (this script, or the arm API),
 **or** an arm earns it: once the autonomy engine places an arm at `trusted` or
