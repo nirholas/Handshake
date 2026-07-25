@@ -148,7 +148,8 @@ def _run_stages(job_id: str, prompt: str, slot: str, tier: str,
 
     progress("validate")
     stats = garment_glb.skin_stats(garment_bytes)
-    occludes = garment_glb.derive_occludes(stats["bone_mass"], stats["total_mass"])
+    occludes = garment_glb.derive_occludes(stats["bone_mass"], stats["total_mass"],
+                                           slot=slot)
     bones = garment_glb.weighted_bones(stats["bone_mass"], stats["total_mass"])
 
     garment_id = f"{garment_glb.slugify(prompt)}-{job_id[:6]}"

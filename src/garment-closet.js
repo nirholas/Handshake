@@ -124,6 +124,42 @@ export class GarmentCloset {
 			this._reoccludeAll();
 			this.onDirty();
 			this.onChanged();
+			if (import.meta.env?.DEV && typeof window !== 'undefined') {
+				// Dev-only breadcrumb for headless QA drivers (never in prod builds).
+				const { Vector3 } = await import('three');
+				window.__closetDebug = window.__closetDebug || [];
+				window.__closetDebug.push({
+					id: manifest.id,
+					slot: manifest.slot,
+					coverage: result.coverage,
+					meshes: result.meshes.map((m) => {
+						m.skeleton?.update?.();
+						const pos = m.geometry?.attributes?.position;
+						const box = { min: [1e9, 1e9, 1e9], max: [-1e9, -1e9, -1e9] };
+						const v = new Vector3();
+						const step = Math.max(1, Math.floor((pos?.count || 0) / 200));
+						for (let i = 0; i < (pos?.count || 0); i += step) {
+							v.fromBufferAttribute(pos, i);
+							m.applyBoneTransform(i, v);
+							v.applyMatrix4(m.matrixWorld);
+							for (let a = 0; a < 3; a++) {
+								box.min[a] = Math.min(box.min[a], v.getComponent(a));
+								box.max[a] = Math.max(box.max[a], v.getComponent(a));
+							}
+						}
+						return {
+							name: m.name,
+							visible: m.visible,
+							parent: m.parent?.name || m.parent?.type,
+							vertCount: pos?.count,
+							worldBox: box,
+							matrixWorld: [...m.matrixWorld.elements].map((x) => +x.toFixed(3)),
+							materialType: Array.isArray(m.material) ? m.material.map((x) => x.type).join() : m.material?.type,
+							boneSample: m.skeleton?.bones?.[1]?.getWorldPosition(new Vector3()).toArray().map((x) => +x.toFixed(3)),
+						};
+					}),
+				});
+			}
 			return result;
 		});
 	}

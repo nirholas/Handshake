@@ -245,6 +245,10 @@ async function bootScene() {
 			onChanged: () => renderChips(),
 		});
 		await closet.hydrate(currentAppearance.garments);
+		// The wardrobe panel may have rendered before the scene finished booting,
+		// leaving its closet section in the waiting state — re-render now that
+		// the closet exists so the racks appear without a tab round-trip.
+		renderActivePanel();
 
 		// Ambient idle layer — breathing, micro-saccades, blink, weight shift.
 		// Static preview here (no AgentProtocol); IdleAnimation's no-op stub

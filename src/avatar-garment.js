@@ -32,6 +32,7 @@
 
 import {
 	Bone,
+	DoubleSide,
 	Float32BufferAttribute,
 	Matrix4,
 	Skeleton,
@@ -65,6 +66,11 @@ export function findAvatarSkeleton(root) {
 	const byUuid = new Map();
 	root?.traverse?.((obj) => {
 		if (!obj?.isSkinnedMesh || !obj.skeleton?.bones?.length) return;
+		// Attached garments share the avatar's skeleton but must never be
+		// mistaken for the body: occlusion culls "the skin", and a garment
+		// with more vertices than the body would otherwise cull ITSELF the
+		// moment it outweighed the mesh it is dressing.
+		if (obj.userData?.garmentSlot) return;
 		const count = obj.geometry?.attributes?.position?.count || 0;
 		const entry = byUuid.get(obj.skeleton.uuid);
 		if (entry) { entry.weight += count; return; }
@@ -281,13 +287,27 @@ export function attachGarment(avatarRoot, garmentRoot, opts = {}) {
 		const mesh = new SkinnedMesh(geometry, src.material);
 		mesh.name = src.name || `garment:${slot}`;
 		mesh.frustumCulled = false;   // skinned bounds go stale under animation
+		// Cloth is seen from inside at collars, cuffs and hems; single-sided
+		// garment materials render those openings as black voids.
+		for (const mat of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+			if (mat && mat.side !== DoubleSide) { mat.side = DoubleSide; mat.needsUpdate = true; }
+		}
 		mesh.castShadow = true;
 		mesh.receiveShadow = true;
 		mesh.userData.garmentSlot = slot;
 
 		const inverses = reindexBoneInverses(src.skeleton, avatarSkeleton, remap);
 		parent.add(mesh);
-		mesh.bind(new Skeleton(avatarSkeleton.bones, inverses), src.bindMatrix.clone());
+		// three.js multiplies a SkinnedMesh's OWN matrixWorld on top of the
+		// skinning result, so the garment must carry the body mesh's exact
+		// local transform: a sibling left at identity renders displaced or
+		// scaled whenever the body mesh node is not itself identity (viewers
+		// commonly scale/rotate the container). Match it verbatim.
+		mesh.position.copy(avatarMesh.position);
+		mesh.quaternion.copy(avatarMesh.quaternion);
+		mesh.scale.copy(avatarMesh.scale);
+		mesh.updateMatrixWorld(true);
+		mesh.bind(new Skeleton(avatarSkeleton.bones, inverses), avatarMesh.bindMatrix.clone());
 		attached.push(mesh);
 	}
 

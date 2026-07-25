@@ -255,8 +255,22 @@ check("full coverage when all joints resolve", abs(stats["coverage"] - 1.0) < 1e
 occ = derive_occludes(stats["bone_mass"], stats["total_mass"])
 check("occludes torso from Spine mass", "torso" in occ, str(occ))
 check("occludes upperArms from LeftArm mass", "upperArms" in occ, str(occ))
-check("occludes hips from the 20% share", "hips" in occ, str(occ))
-check("no phantom regions", all(r in ("torso", "upperArms", "hips") for r in occ), str(occ))
+# The synthetic's Hips mass is 0.2 of one vertex = 6.7% of total garment
+# weight — a waistband graze. Under the evidence threshold (10%) a graze must
+# NOT hide the pelvis; that exact over-declaration amputated the avatar's
+# lower body with the first live-seeded shirt.
+check("6.7% hip graze does not occlude hips", "hips" not in occ, str(occ))
+check("no phantom regions", all(r in ("torso", "upperArms") for r in occ), str(occ))
+# Slot plausibility clamp: evidence alone is not enough. The same weight
+# spread on a footwear-slot garment must not hide torso or hips, and a shirt
+# whose waistband carries a trace of Hips mass must not amputate the legs.
+occ_clamped = derive_occludes(stats["bone_mass"], stats["total_mass"], slot="footwear")
+check("slot clamp: footwear cannot occlude torso/hips", occ_clamped == [], str(occ_clamped))
+occ_top = derive_occludes(stats["bone_mass"], stats["total_mass"], slot="top")
+check("slot clamp: top keeps its evidenced regions", occ_top == occ, f"{occ_top} vs {occ}")
+trace = {"Spine": 0.97, "Hips": 0.03}
+occ_trace = derive_occludes(trace, 1.0, slot="top")
+check("3% hip graze does not hide the pelvis", occ_trace == ["torso"], str(occ_trace))
 bones = weighted_bones(stats["bone_mass"], stats["total_mass"])
 check("rig.bones in canonical order", bones == ["Hips", "Spine", "LeftArm"], str(bones))
 

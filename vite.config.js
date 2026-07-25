@@ -2261,8 +2261,17 @@ support: resolve(__dirname, 'pages/support.html'),
 					if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 					try {
 						const upstream = new URL(req.url, DEV_API_PROXY);
+						// Forward the caller's credentials: without them this refetch is
+						// anonymous, so private avatars 404 in dev even when the browser
+						// session is logged in (the editor's fetchAvatar sends cookies).
 						const resp = await fetch(upstream.href, {
-							headers: { accept: 'application/json' },
+							headers: {
+								accept: 'application/json',
+								...(req.headers.cookie ? { cookie: req.headers.cookie } : {}),
+								...(req.headers.authorization
+									? { authorization: req.headers.authorization }
+									: {}),
+							},
 						});
 						const text = await resp.text();
 						const rewritten = text.replace(R2_PUBLIC_RE, '/r2-proxy/');

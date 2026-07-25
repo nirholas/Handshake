@@ -53,10 +53,28 @@ COMMERCIAL_SPDX = frozenset({
 })
 
 # A region must carry at least this share of the garment's total skin weight
-# to be declared in `occludes`. Deliberately LOW: the spec says over-declare
-# (hidden skin is invisible, exposed skin is the worst artefact), so any
-# region the garment meaningfully touches gets declared.
-OCCLUDES_MIN_SHARE = 0.01
+# to be declared in `occludes`. Weight share is a proxy for coverage, and a
+# LOW threshold over-declares catastrophically: a shirt whose waistband picks
+# up 1-2% of its weight on Hips would hide the avatar's entire pelvis and legs
+# (verified live: the first seeded shirt amputated the lower body). 10%
+# requires the garment to genuinely dress a region before hiding its skin;
+# the per-slot plausibility clamp below is the second gate.
+OCCLUDES_MIN_SHARE = 0.10
+
+# Regions a garment in a given slot is ALLOWED to occlude, regardless of how
+# its skin weight spreads. Evidence (weight share) decides within this set; a
+# top can never hide feet no matter what the skinning says. `top` includes
+# hips/upperLegs because dresses and long jackets ship under that slot.
+SLOT_OCCLUDABLE = {
+    "top": ("torso", "upperArms", "lowerArms", "neck", "hips", "upperLegs"),
+    "outerwear": ("torso", "upperArms", "lowerArms", "neck", "hips", "upperLegs"),
+    "bottom": ("hips", "upperLegs", "lowerLegs"),
+    "footwear": ("feet", "lowerLegs"),
+    "hair": ("scalp",),
+    "headwear": ("scalp",),
+    "glasses": (),
+    "accessory": (),
+}
 
 # A canonical bone enters the manifest's rig.bones list above this weight
 # share: enough to filter numeric noise without dropping real influences.
@@ -471,11 +489,13 @@ def skin_stats(glb_bytes: bytes) -> dict:
 
 
 def derive_occludes(bone_mass: dict[str, float], total_mass: float,
-                    min_share: float = OCCLUDES_MIN_SHARE) -> list[str]:
-    """Body regions whose bones carry ≥ min_share of the garment's skin
-    weight, in BODY_REGIONS order. Over-declares by design (low threshold):
-    hiding a covered square centimetre of skin is invisible, exposing one is
-    the most obvious artefact an additive wardrobe can produce."""
+                    min_share: float = OCCLUDES_MIN_SHARE,
+                    slot: str | None = None) -> list[str]:
+    """Body regions this garment hides, in BODY_REGIONS order. Two gates:
+    evidence (the region's bones carry ≥ min_share of the garment's skin
+    weight — weight is a proxy for where the cloth actually sits) and
+    plausibility (the region is in SLOT_OCCLUDABLE for the slot — a shirt
+    whose waistband grazes the hip bones must not amputate the legs)."""
     if total_mass <= 0:
         return []
     region_mass: dict[str, float] = {}
@@ -483,7 +503,9 @@ def derive_occludes(bone_mass: dict[str, float], total_mass: float,
         region = region_of_bone(bone)
         if region:
             region_mass[region] = region_mass.get(region, 0.0) + mass
-    return [r for r in BODY_REGIONS if region_mass.get(r, 0.0) / total_mass >= min_share]
+    allowed = set(SLOT_OCCLUDABLE.get(slot, BODY_REGIONS)) if slot else set(BODY_REGIONS)
+    return [r for r in BODY_REGIONS
+            if r in allowed and region_mass.get(r, 0.0) / total_mass >= min_share]
 
 
 def weighted_bones(bone_mass: dict[str, float], total_mass: float,
