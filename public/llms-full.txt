@@ -2254,6 +2254,12 @@ URL: https://three.ws/docs/agent-sniper
 
 How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.
 
+### Earned Autonomy: Freedom the Sniper Fleet Has to Trade For
+
+URL: https://three.ws/docs/sniper-autonomy
+
+How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.
+
 ### Tutorial: Agent Personality
 
 URL: https://three.ws/tutorials/agent-personality

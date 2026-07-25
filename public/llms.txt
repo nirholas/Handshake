@@ -392,6 +392,7 @@ Docs, tutorials, and reference.
 - [Docs: AR Viewing](https://three.ws/docs/ar): Documentation for augmented-reality viewing of three.ws models and avatars.
 - [Docs: BNB Payments](https://three.ws/docs/bnb-payments): Documentation for paying with BNB on three.ws.
 - [Agent Sniper: Autonomous On-Chain Trading](https://three.ws/docs/agent-sniper): How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.
+- [Earned Autonomy: Freedom the Sniper Fleet Has to Trade For](https://three.ws/docs/sniper-autonomy): How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.
 - [Tutorial: Agent Personality](https://three.ws/tutorials/agent-personality): Step-by-step tutorial for giving your agent a personality.
 - [Tutorial: Animate Your Avatar](https://three.ws/tutorials/animate-your-avatar): Step-by-step tutorial for animating your avatar with the built-in clip library.
 - [Tutorial: Build a Scene](https://three.ws/tutorials/build-a-scene): Step-by-step tutorial for building a 3D scene.

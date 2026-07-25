@@ -11,11 +11,11 @@
 // This module is the pure policy that decides that. Given one arm's real trading
 // record it returns a TIER, and the tier scales four things:
 //
-//   1. BOUNDS    — how far the optimizer may move each knob.
-//   2. STEP      — how fast it may move it per run.
-//   3. WRITABLE  — which knobs it may touch at all (higher tiers unlock the entry
+//   1. BOUNDS:    how far the optimizer may move each knob.
+//   2. STEP:      how fast it may move it per run.
+//   3. WRITABLE:  which knobs it may touch at all (higher tiers unlock the entry
 //                  universe, the LLM confidence bar, and the take-initials ladder).
-//   4. KNOWLEDGE — how much evidence the LLM judge is handed before it decides.
+//   4. KNOWLEDGE: how much evidence the LLM judge is handed before it decides.
 //
 // Plus a budget weight the evolution loop uses to concentrate the fixed fleet
 // budget on earned arms.
@@ -125,10 +125,10 @@ export const TIER_BUDGET_WEIGHT = {
 
 /**
  * How much evidence the LLM judge is handed before it rules on a launch.
- *   base     — the launch brief + market-realness read (the historical prompt).
- *   informed — plus the ground-truth base rate, the learned signal weights, and
+ *   base:     the launch brief + market-realness read (the historical prompt).
+ *   informed: plus the ground-truth base rate, the learned signal weights, and
  *              this arm's own realized track record.
- *   full     — plus the conditional win-rate table (which signal buckets actually
+ *   full:     plus the conditional win-rate table (which signal buckets actually
  *              win) and the arm's own verdict calibration.
  */
 export const TIER_KNOWLEDGE = {

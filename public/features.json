@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T06:19:59.640Z",
+	"generated_at": "2026-07-25T08:25:10.036Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3702,6 +3702,16 @@
 					"title": "Agent Sniper: Autonomous On-Chain Trading",
 					"description": "How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.",
 					"added": "2026-07-19",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/sniper-autonomy",
+					"title": "Earned Autonomy: Freedom the Sniper Fleet Has to Trade For",
+					"description": "How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.",
+					"added": "2026-07-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

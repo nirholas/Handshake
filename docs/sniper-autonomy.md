@@ -60,12 +60,12 @@ so anything that does not pass a tier is unchanged.
 Every tier can tune stops, take-profit, hold time, the quality and oracle floors,
 and position size. Reaching `trusted` unlocks four more:
 
-- `llm_min_confidence` — a profitable judge earns a lower bar, so it acts on more
+- `llm_min_confidence`: a profitable judge earns a lower bar, so it acts on more
   of what it sees instead of passing on launches it would have won.
-- `min_market_cap_usd` / `max_market_cap_usd` — a wider hunting ground, widened
+- `min_market_cap_usd` / `max_market_cap_usd`: a wider hunting ground, widened
   outward only. An arm with no band set is already unrestricted and nothing here
   will restrict it.
-- `initials_out_multiple` — the [take-initials ladder](./trading-experiment.md):
+- `initials_out_multiple`, the [take-initials ladder](./trading-experiment.md):
   recover the stake at 2x, keep a moon bag, let the rest ride the trailing stop.
   Turned on only for an arm whose winners demonstrably run past its average exit.
 
@@ -84,13 +84,13 @@ this only decides how the same pot is divided.
 This is the "more knowledge" half, and it is built in
 [`workers/agent-sniper/judge-knowledge.js`](../workers/agent-sniper/judge-knowledge.js).
 
-- **base** (probation, standard) — the launch brief and the market-realness read.
+- **base** (probation, standard): the launch brief and the market-realness read.
   Exactly the prompt the judge has always received.
-- **informed** (trusted) — plus the ground-truth base rate (what fraction of
+- **informed** (trusted): plus the ground-truth base rate (what fraction of
   launches actually win, so the model knows how skeptical its prior should be),
   the learned signal weights retrained every 15 minutes from labeled outcomes,
   and the arm's own realized record.
-- **full** (autonomous) — plus the conditional win-rate table (per signal bucket,
+- **full** (autonomous): plus the conditional win-rate table (per signal bucket,
   the realized win rate versus baseline: what actually happened, not a
   correlation the model has to interpret) and the model's own calibration, so it
   can correct its own bias.
@@ -131,14 +131,14 @@ and every tier keeps a bounded stop.
 
 The tier is visible in three places:
 
-- **[/sniper/experiments](https://three.ws/sniper/experiments)** — a badge on any
+- **[/sniper/experiments](https://three.ws/sniper/experiments)**: a badge on any
   arm that has moved off `standard`, with the evidence in its tooltip, plus an
   "Earned autonomy" summary tile. `GET /api/sniper/experiments` returns
   `autonomy_tier`, `autonomy_reason` and `autonomy_grants` per arm.
-- **`agent_sniper_optimizer_runs`** — every run records the `autonomy_tier` and
+- **`agent_sniper_optimizer_runs`**: every run records the `autonomy_tier` and
   `autonomy_reason` it acted under, so you can see which tier an arm held when a
   given knob moved.
-- **the Reasoning Ledger** — an applied tuning names the tier and its evidence in
+- **the Reasoning Ledger**: an applied tuning names the tier and its evidence in
   the rationale, next to the trades it learned from.
 
 ## Worked example
@@ -162,10 +162,10 @@ tighter rather than rewarded for the hit rate.
 
 ## Related
 
-- [Agent Sniper](./agent-sniper.md) — the trading pipeline the arms run on
-- [The 10 SOL trading experiment](./trading-experiment.md) — the exit thesis the
+- [Agent Sniper](./agent-sniper.md): the trading pipeline the arms run on
+- [The 10 SOL trading experiment](./trading-experiment.md): the exit thesis the
   ladder implements
-- [`api/_lib/sniper-optimizer.js`](../api/_lib/sniper-optimizer.js) — the tuning
+- [`api/_lib/sniper-optimizer.js`](../api/_lib/sniper-optimizer.js): the tuning
   rules, tier-scaled
-- [`scripts/sniper-evolve.mjs`](../scripts/sniper-evolve.mjs) — the portfolio
+- [`scripts/sniper-evolve.mjs`](../scripts/sniper-evolve.mjs): the portfolio
   layer, tier-weighted

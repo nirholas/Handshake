@@ -1,4 +1,4 @@
-/* /sniper/experiments — the strategy A/B scoreboard.
+/* /sniper/experiments: the strategy A/B scoreboard.
  *
  * Built entirely on the shared --cv-* design tokens from coin-pages.css, so the
  * board inherits both themes and every surface/border/text colour stays in step
@@ -108,7 +108,7 @@
 }
 
 /* ── conditions cell ─────────────────────────────────────────────────────── */
-.xp-cond { max-width: 340px; color: var(--cv-text-2); font-size: 0.8125rem; }
+.xp-cond { max-width: 300px; color: var(--cv-text-2); font-size: 0.8125rem; }
 
 .xp-cond-sub {
 	margin-top: 3px;
@@ -138,6 +138,16 @@
 /* ── table + rows ────────────────────────────────────────────────────────── */
 .xp-table { width: 100%; font-size: 0.875rem; }
 .xp-table td { vertical-align: top; padding: 10px 12px; }
+
+/* The strategy cell carries four stacked lines (label + tier, agent + mode,
+ * ledger link, wallet + balance). Without a floor it collapses to the width of
+ * the numeric columns and every line wraps mid-phrase. */
+.xp-table th:first-child,
+.xp-table td:first-child { min-width: 250px; }
+
+/* Numeric columns read as a column of figures, not ragged text. */
+.xp-table td:nth-child(n + 4) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 .xp-table tbody tr { transition: background 0.15s ease; }
 .xp-table tbody tr:hover { background: var(--cv-surface-2); }
 .xp-off { opacity: 0.55; }

@@ -135,7 +135,7 @@ function earnedTile(experiments) {
 	const earned = count('trusted') + count('autonomous');
 	const probation = count('probation');
 	return `
-		<div class="cv-card xp-tile" title="Tiers are recomputed from each arm's own realized record every optimizer run — freedom is continuously earned, never granted once.">
+		<div class="cv-card xp-tile" title="Tiers are recomputed from each arm's own realized record every optimizer run. Freedom is continuously earned, never granted once.">
 			<span>Earned autonomy</span>
 			<b class="${earned > 0 ? 'xp-pos' : ''}">${earned} earned</b>
 			<i>${probation} on probation · ${experiments.length - earned - probation} standard</i>

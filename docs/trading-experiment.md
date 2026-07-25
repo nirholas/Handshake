@@ -59,6 +59,14 @@ Priority order (stop-loss always wins): `stop_loss → signal_flip → trailing_
 The ladder is **opt-in**: a strategy with no `initials_out_multiple` keeps the
 classic single-shot full-exit behavior, so existing strategies are unchanged.
 
+There are two ways in. A human sets it directly (this script, or the arm API),
+**or** an arm earns it: once the autonomy engine places an arm at `trusted` or
+above and its winners demonstrably run past its average exit, the optimizer turns
+the ladder on by itself and records why. See
+[Earned autonomy](./sniper-autonomy.md). A losing arm cannot reach the field at
+all, so the ladder is only ever switched on for a strategy whose record shows it
+actually catches runners.
+
 ### No-Mayhem enforcement (`workers/agent-sniper/mayhem-gate.js`)
 
 `isMayhemMode` lives on the pump.fun bonding curve, not the new-mint firehose, so

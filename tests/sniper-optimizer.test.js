@@ -227,6 +227,15 @@ describe('earned autonomy: the optimizer scales with the arm', () => {
 		expect(q(onProbation) - 40).toBeLessThan(q(onStandard) - 40);
 	});
 
+	it('never emits a NaN proposal from a malformed column value', () => {
+		const r = proposeAdjustments(
+			profitable,
+			{ ...baseConfig, decision_mode: 'llm', llm_min_confidence: 'not-a-number', min_market_cap_usd: undefined, per_trade_lamports: 'oops' },
+			{ tier: 'trusted' },
+		);
+		for (const p of r.proposals) expect(Number.isFinite(p.to), `${p.field} → ${p.to}`).toBe(true);
+	});
+
 	it('reports the tier it acted under', () => {
 		expect(proposeAdjustments(profitable, baseConfig, { tier: 'autonomous' }).tier).toBe('autonomous');
 	});

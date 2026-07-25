@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Earned Autonomy: Freedom the Sniper Fleet Has to Trade For</title>
+			<link>https://three.ws/docs/sniper-autonomy</link>
+			<guid isPermaLink="false">2026-07-25:Earned Autonomy: Freedom the Sniper Fleet Has to Trade For</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.</description>
+		</item>
+		<item>
 			<title>The Story So Far</title>
 			<link>https://three.ws/timeline</link>
 			<guid isPermaLink="false">2026-07-25:The Story So Far</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. A new page at /openai lays out everything the platform already ships on OpenAI surfaces: the free, keyless 3D Studio MCP connector for ChatGPT with nine tools (text to 3D, avatars, auto-rigging, conversational refinement, and a living agent body), the custom GPT Actions surface for plans without connectors, one-tap AR on iOS and Android, and Spatial MCP, the open CC0 shape for returning a live 3D scene as a tool result. The partner directory at /partners was also rewritten to list only the programs three.ws is actually enrolled in today, with NVIDIA correctly described as Inception membership.</description>
+		</item>
+		<item>
+			<title>Trading arms now earn their freedom from their own track record</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-25:Trading arms now earn their freedom from their own track record</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The autonomous trading fleet used to give every strategy the same leash: the same limits on how far its settings could move, the same short list of settings it could change, and the same information in front of it before each decision. A strategy that had been making money for weeks was kept in exactly the same box as one that had never had a winning day. Now each arm is graded on its own real, on-chain results and placed in one of four tiers. A profitable arm gets a wider range to work in, moves faster, unlocks settings a losing arm can't touch (which launches it hunts, how confident it needs to be before buying, and the take-initials exit that banks your stake at 2x and lets the rest ride), takes a bigger share of the fleet's fixed daily budget, and is shown far more evidence before it decides: how often launches actually succeed, which signals genuinely predict a winner, its own trading history, and how well its own past calls turned out. A bleeding arm is held tighter instead. Grading is on realized profit rather than win rate, so an arm that wins only a third of its trades but makes real money is rewarded, while one that wins most of its trades and still loses money is not. Every tier is re-earned continuously, so an arm that stops paying loses the extra rope automatically. None of it can touch the safety limits: the trade firewall, the daily loss cap, position limits, and a hard stop-loss apply at every tier, no matter how well an arm is doing. Each arm's tier and the evidence behind it are visible on the experiments board.</description>
 		</item>
 		<item>
 			<title>The x402 facilitator now describes itself at its root URL</title>

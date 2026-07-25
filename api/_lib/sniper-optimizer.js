@@ -171,6 +171,10 @@ export function proposeAdjustments(stats, config, opts = {}) {
 			target = boundedToward(from, to, steps[field], b);
 		}
 		target = clamp(target, b.min, b.max);
+		// A non-numeric column value (num() of a bad string is NaN, and NaN != null)
+		// would otherwise propagate all the way into an UPDATE. Refuse it here:
+		// clamp cannot rescue a NaN and nothing downstream re-checks.
+		if (!Number.isFinite(target)) return;
 		if (INTEGER_FIELDS.has(field)) target = Math.round(target);
 		else target = Number(target.toFixed(2));
 		if (from != null && target === from) return; // no-op
@@ -282,7 +286,7 @@ export function proposeAdjustments(stats, config, opts = {}) {
 		}
 		if (creatorCap != null) {
 			propose('max_creator_launches', creatorCap + steps.max_creator_launches,
-				`Profitable over ${sample} trades: loosen the serial-launcher cap from ${creatorCap} — a prolific creator is not automatically a bad one, and this arm has earned the right to test that.`);
+				`Profitable over ${sample} trades: loosen the serial-launcher cap from ${creatorCap}. A prolific creator is not automatically a bad one, and this arm has earned the right to test that.`);
 		}
 	}
 

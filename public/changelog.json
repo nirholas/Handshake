@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-25T06:19:59.647Z",
+	"generated_at": "2026-07-25T08:25:10.042Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-25",
+			"type": "launch",
+			"title": "Earned Autonomy: Freedom the Sniper Fleet Has to Trade For",
+			"summary": "How a trading arm's own realized record decides how much rope it gets: the four tiers, what each unlocks in the optimizer and the fleet budget, how much evidence the LLM judge is handed, and the safety rails no amount of profit can unlock.",
+			"link": "/docs/sniper-autonomy",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-25",
 			"type": "launch",
@@ -45,6 +55,17 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Trading arms now earn their freedom from their own track record",
+			"summary": "The autonomous trading fleet used to give every strategy the same leash: the same limits on how far its settings could move, the same short list of settings it could change, and the same information in front of it before each decision. A strategy that had been making money for weeks was kept in exactly the same box as one that had never had a winning day. Now each arm is graded on its own real, on-chain results and placed in one of four tiers. A profitable arm gets a wider range to work in, moves faster, unlocks settings a losing arm can't touch (which launches it hunts, how confident it needs to be before buying, and the take-initials exit that banks your stake at 2x and lets the rest ride), takes a bigger share of the fleet's fixed daily budget, and is shown far more evidence before it decides: how often launches actually succeed, which signals genuinely predict a winner, its own trading history, and how well its own past calls turned out. A bleeding arm is held tighter instead. Grading is on realized profit rather than win rate, so an arm that wins only a third of its trades but makes real money is rewarded, while one that wins most of its trades and still loses money is not. Every tier is re-earned continuously, so an arm that stops paying loses the extra rope automatically. None of it can touch the safety limits: the trade firewall, the daily loss cap, position limits, and a hard stop-loss apply at every tier, no matter how well an arm is doing. Each arm's tier and the evidence behind it are visible on the experiments board.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
