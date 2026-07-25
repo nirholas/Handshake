@@ -87,6 +87,14 @@
 			<description>Until now the wardrobe could only recolour or hide the clothes an avatar was generated with. It can now put NEW clothes on: the avatar editor's Wardrobe tab gained a Closet with racks of catalog pieces (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories). Click a piece and it binds to your avatar's skeleton and moves with every animation, whatever generator the avatar came from: forge characters, selfie reconstructions and uploaded models all work, because garments are fitted to the skeleton at wear-time instead of being authored for one specific body. The body is masked under whatever you wear so skin never pokes through the cloth, a piece that cannot fit a particular skeleton politely refuses instead of deforming into spaghetti, and every download is integrity-checked against the catalog before it touches your avatar. Saved outfits persist: the downloadable and embedded versions of your avatar come out dressed too.</description>
 		</item>
 		<item>
+			<title>Garment generation is now open to everyone: API and agent tools</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-25:Garment generation is now open to everyone: API and agent tools</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The garment generator that fills the wardrobe catalog is now a public surface. Developers can create wearables with one HTTP call (POST /api/garment-forge with a description and a slot, then poll the job), and AI agents get the same power through three new MCP tools: generate_garment, garment_status, and list_garment_catalog. Every generated piece is validated end to end before it publishes, appears in the shared catalog immediately, and fits any humanoid avatar. The catalog now covers tops, jeans, sneakers, and a leather jacket, with more slots filling in.</description>
+		</item>
+		<item>
 			<title>Our crypto API no longer reports itself as broken to the directories that rate it</title>
 			<link>https://three.ws/crypto-api</link>
 			<guid isPermaLink="false">2026-07-25:Our crypto API no longer reports itself as broken to the directories that rate it</guid>

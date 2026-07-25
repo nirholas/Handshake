@@ -15,6 +15,7 @@ import { toolDefs as oracleDefs } from './tools/oracle.js';
 import { toolDefs as traderDefs } from './tools/trader.js';
 import { toolDefs as tokenizeDefs } from './tools/tokenize.js';
 import { toolDefs as cryptoDataDefs } from './tools/crypto-data.js';
+import { toolDefs as garmentDefs } from './tools/garments.js';
 
 const baseDefs = [
 	...avatarDefs,
@@ -29,6 +30,7 @@ const baseDefs = [
 	...traderDefs,
 	...tokenizeDefs,
 	...cryptoDataDefs,
+	...garmentDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.

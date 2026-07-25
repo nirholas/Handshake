@@ -607,6 +607,51 @@ Generate a brand-new motion from a natural-language prompt ("waving confidently"
 
 Returns the retargeted three.js `AnimationClip` JSON (or a baked animated GLB) plus a retarget report, the same shape `apply_animation` returns. Requires the text2motion worker configured on the deployment (`GCP_TEXT2MOTION_URL`) — errors with `-32001` if unset. Also reachable outside MCP via `POST /api/forge-motion` (`GET /api/forge-motion?job=<id>` to poll).
 
+### `generate_garment`
+
+Turn a text prompt ("a red varsity jacket") into a rigged, wearable garment published to the three.ws wardrobe catalog: reference image (Vertex image lane) → PBR mesh (self-host GPU fleet) → skinned to the canonical humanoid skeleton with full-body context (`model-rig`) → validated against every rule in `specs/GARMENT_MANIFEST.md`, including the 60% bind-coverage gate, before publish. Asynchronous (about 7 minutes); poll with `garment_status`.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "prompt": { "type": "string", "minLength": 3, "maxLength": 500 },
+    "slot":   { "type": "string", "enum": ["top", "bottom", "footwear", "outerwear", "hair", "headwear", "glasses", "accessory"] }
+  },
+  "required": ["prompt", "slot"],
+  "additionalProperties": false
+}
+```
+
+Returns `{ job_id, status, eta_seconds }`. The finished garment appears in the public catalog automatically and attaches to any humanoid avatar via the additive wardrobe (`docs/avatar-wardrobe.md`). Requires `GCP_GARMENT_FORGE_URL` on the deployment — errors with `-32001` if unset. Also reachable outside MCP via `POST /api/garment-forge`.
+
+### `garment_status`
+
+Poll a `generate_garment` job. While running, reports the pipeline stage (`image → mesh → compose → rig → extract → validate → publish`); when done, returns the published `glb_url`, `manifest_url`, thumbnail, measured bind `coverage`, and the occluded body regions.
+
+```json
+{
+  "type": "object",
+  "properties": { "job_id": { "type": "string" } },
+  "required": ["job_id"],
+  "additionalProperties": false
+}
+```
+
+### `list_garment_catalog`
+
+Fetch the public wardrobe catalog: every published garment manifest (id, slot, name, GLB url, thumbnail, occluded regions, license), optionally filtered by `slot`. Any entry attaches to any humanoid avatar.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "slot": { "type": "string", "enum": ["top", "bottom", "footwear", "outerwear", "hair", "headwear", "glasses", "accessory"] }
+  },
+  "additionalProperties": false
+}
+```
+
 ---
 
 ## Rate limits

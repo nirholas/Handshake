@@ -15848,6 +15848,15 @@
 				"infra"
 			],
 			"link": "/crypto-api"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Garment generation is now open to everyone: API and agent tools",
+			"summary": "The garment generator that fills the wardrobe catalog is now a public surface. Developers can create wearables with one HTTP call (POST /api/garment-forge with a description and a slot, then poll the job), and AI agents get the same power through three new MCP tools: generate_garment, garment_status, and list_garment_catalog. Every generated piece is validated end to end before it publishes, appears in the shared catalog immediately, and fits any humanoid avatar. The catalog now covers tops, jeans, sneakers, and a leather jacket, with more slots filling in.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
 		}
 	]
 }
