@@ -57,6 +57,9 @@ export function isBakeable(appearance) {
 	if (appearance.morphs && Object.keys(appearance.morphs).length > 0) return true;
 	if (appearance.colors && Object.keys(appearance.colors).length > 0) return true;
 	if (Array.isArray(appearance.hidden) && appearance.hidden.length > 0) return true;
+	// Additive catalog garments (specs/GARMENT_MANIFEST.md) bake via
+	// bake-garments.js — a garments-only outfit is absolutely bakeable.
+	if (Array.isArray(appearance.garments) && appearance.garments.length > 0) return true;
 	return false;
 }
 

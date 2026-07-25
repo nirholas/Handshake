@@ -143,8 +143,10 @@ describe('isBakeable', () => {
 		expect(isBakeable({ morphs: { Smile: 0.5 } })).toBe(true);
 		expect(isBakeable({ colors: { outfit: '#ff0000' } })).toBe(true);
 		expect(isBakeable({ hidden: ['outfit'] })).toBe(true);
+		expect(isBakeable({ garments: [{ slot: 'top', id: 'oxford-shirt-white' }] })).toBe(true);
 		expect(isBakeable({ colors: {} })).toBe(false);
 		expect(isBakeable({ hidden: [] })).toBe(false);
+		expect(isBakeable({ garments: [] })).toBe(false);
 	});
 });
 
