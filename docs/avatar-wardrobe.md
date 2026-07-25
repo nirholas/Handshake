@@ -73,6 +73,28 @@ slot, unknown body region, malformed hash, or a licence outside the approved
 commercial set (CC0, CC-BY, MIT, Apache-2.0, BSD) drops the entry with a
 console warning. A broken manifest becomes a missing tile, not a broken avatar.
 
+## Generating new garments
+
+The catalog is fed by the Garment Forge
+([`workers/garment-forge/`](../workers/garment-forge/README.md)): a text
+prompt becomes a rigged, validated, published catalog piece in about seven
+minutes. The platform endpoint is a thin proxy over that worker:
+
+```
+POST /api/garment-forge   { "prompt": "a red varsity jacket", "slot": "outerwear" }
+                          → 202 { job_id, status, eta_seconds }
+GET  /api/garment-forge?job=<id>
+                          → { status, stage, glb_url, manifest_url, coverage, occludes }
+```
+
+`stage` walks `image → mesh → compose → rig → extract → validate → publish`.
+When the job reports `done`, the piece is already live in the catalog above;
+a closet refresh (`loadCatalog({ force: true })`) shows it immediately. Every
+published piece passed the same ≥60% bind-coverage gate the closet enforces,
+measured against the canonical body before publish, so a generated garment
+can never be a tile the closet then refuses to wear. Offline proof harness:
+`node scripts/verify-garment.mjs <manifest url> [avatar.glb]`.
+
 ## Persistence shape
 
 ```json

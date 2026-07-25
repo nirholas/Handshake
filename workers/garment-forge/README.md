@@ -113,6 +113,12 @@ watch -n 10 "curl -s $URL/jobs/$JOB -H 'authorization: Bearer $KEY' | python3 -m
 A finished job reports the published `manifest_url`, `glb_url`, and the
 measured `coverage`.
 
+The platform exposes this worker publicly (rate-limited, key held server-side)
+at `POST /api/garment-forge` + `GET /api/garment-forge?job=<id>` via
+[api/garment-forge.js](../../api/garment-forge.js) and the
+`GCP_GARMENT_FORGE_URL` env var on `three-ws-api`; see the "Generating new
+garments" section of [docs/avatar-wardrobe.md](../../docs/avatar-wardrobe.md).
+
 ## Deploy
 
 ```bash

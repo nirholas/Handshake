@@ -59,7 +59,13 @@ steps:
       - --port=8080
       - --cpu=4
       - --memory=8Gi
-      - --min-instances=0
+      # Jobs run as post-202 background work, so the CPU must stay allocated
+      # between requests (throttled CPU starves a job the moment pollers go
+      # quiet) and one instance stays warm so a scale-to-zero reclaim cannot
+      # kill a pipeline mid-flight. The stale-job watchdog in main.py is the
+      # backstop for the remaining reclaim windows (deploys, crashes).
+      - --no-cpu-throttling
+      - --min-instances=1
       - --max-instances=2
       - --timeout=600
       - --allow-unauthenticated

@@ -78,6 +78,12 @@ RIG_URL = os.environ["RIG_URL"].rstrip("/")
 REFBODY_PATH = os.environ.get("REFBODY_PATH", "/app/assets/refbody.glb")
 GARMENT_YAW_DEG = float(os.environ.get("GARMENT_YAW_DEG", "0"))
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
+# A job whose record has not advanced in this long is dead: the instance that
+# owned it was reclaimed mid-pipeline. Every live stage persists a transition
+# well inside this window (the worst full run, with both hunyuan rungs failing
+# over to trellis, stays under ~35 minutes), so a poll that finds an older
+# running/queued record reports failure instead of "running" forever.
+JOB_STALE_S = float(os.environ.get("JOB_STALE_S", "2700"))
 
 _bucket: Optional[storage.Bucket] = None          # jobs + rig staging
 _publish_bucket: Optional[storage.Bucket] = None  # public garment catalog
@@ -252,12 +258,35 @@ async def generate(
     return {"job_id": job_id, "status": "queued"}
 
 
+async def _fail_if_stale(job: dict) -> dict:
+    """Watchdog: an in-flight record that stopped advancing belongs to a
+    reclaimed instance. Convert it to a terminal failure (and persist that)
+    so no client polls a zombie forever."""
+    if job.get("status") not in ("queued", "running"):
+        return job
+    try:
+        updated = datetime.fromisoformat(job.get("updated_at", ""))
+    except ValueError:
+        return job
+    age = (datetime.now(timezone.utc) - updated).total_seconds()
+    if age <= JOB_STALE_S:
+        return job
+    log.error("[%s] stale for %.0fs at stage %s; marking failed",
+              job.get("job_id"), age, job.get("stage"))
+    return await _update_job(
+        job["job_id"], status="failed",
+        error=f"job stalled at stage '{job.get('stage')}' "
+              f"(no progress for {int(age)}s); the owning instance was likely "
+              "reclaimed. Retry the generation.",
+    )
+
+
 @app.get("/jobs/{job_id}")
 async def get_job(job_id: str, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
     job = _jobs.get(job_id)
     if job is not None:
-        return job
+        return await _fail_if_stale(job)
     loop = asyncio.get_event_loop()
     try:
         data = await loop.run_in_executor(None, _job_blob(job_id).download_as_bytes)
@@ -268,7 +297,7 @@ async def get_job(job_id: str, authorization: str = Header(...)) -> dict:
                             detail=safe_error(exc, context="job lookup")) from exc
     job = json.loads(data)
     _jobs[job_id] = job
-    return job
+    return await _fail_if_stale(job)
 
 
 @app.get("/health")
