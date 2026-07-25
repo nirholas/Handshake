@@ -47,7 +47,14 @@ import { ed25519 } from '@noble/curves/ed25519.js';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex, hexToBytes, concatBytes } from '@noble/hashes/utils';
 
-import { expectedAttempts, validatePattern, BASE58_ALPHABET } from './validation.js';
+import {
+	expectedAttempts,
+	difficultyModel,
+	validatePattern,
+	BASE58_ALPHABET,
+	DIFFICULTY_MODEL,
+	DIFFICULTY_MODEL_V1,
+} from './validation.js';
 import { addressMatchesPattern } from './verifiable-grind.js';
 import { computeRarity } from './rarity.js';
 
@@ -227,7 +234,7 @@ export function buildCertificateCore({
 		attempts: Number.isFinite(attempts) ? Math.round(attempts) : null,
 		difficulty: {
 			expectedAttempts: Math.round(expectedAttempts(pat.prefix || '', pat.suffix || '', pat.ignoreCase)),
-			model: '58^effectiveLength',
+			model: DIFFICULTY_MODEL,
 		},
 		rarity,
 		freshness: {
@@ -489,23 +496,33 @@ export function verifyProofOfGrind(cert, opts = {}) {
 	}
 
 	// 4. Difficulty claim is the honest probability model.
+	//
+	// A certificate is checked against the model it was *issued* under, named in
+	// its own signed `difficulty.model` field. Certificates predating the Base58
+	// leading-character correction declare v1 and keep verifying; re-scoring them
+	// under v2 would retroactively brand honestly-issued receipts as fraudulent.
+	// Absent field ⇒ v1, since every certificate issued before the correction
+	// carried the uniform model.
+	const certModel = cert.difficulty?.model || DIFFICULTY_MODEL_V1;
 	{
 		const pat = cert.pattern || {};
-		const expected = Math.round(expectedAttempts(pat.prefix || '', pat.suffix || '', !!pat.ignoreCase));
+		const expected = Math.round(difficultyModel(certModel)(pat.prefix || '', pat.suffix || '', !!pat.ignoreCase));
 		const ok = Number(cert.difficulty?.expectedAttempts) === expected;
+		const stale = certModel !== DIFFICULTY_MODEL;
 		add(
 			'difficulty',
 			'Difficulty matches the honest model',
 			ok,
 			ok
-				? `expectedAttempts = ${expected} (58^effective for this pattern)`
-				: `certificate claims ${cert.difficulty?.expectedAttempts}, honest model = ${expected}`,
+				? `expectedAttempts = ${expected} under ${certModel}` +
+					(stale ? ` (superseded by ${DIFFICULTY_MODEL}; the claim is honest for its era)` : '')
+				: `certificate claims ${cert.difficulty?.expectedAttempts}, ${certModel} model = ${expected}`,
 		);
 	}
 
 	// 5. Rarity claim recomputes from the pattern (coordinated with the gallery).
 	if (cert.rarity) {
-		const r = computeRarity(cert.pattern || {});
+		const r = computeRarity({ ...(cert.pattern || {}), model: certModel });
 		const ok = Number(cert.rarity.score) === r.rarityScore && cert.rarity.tier === r.tier;
 		add(
 			'rarity',

@@ -76,11 +76,15 @@ describe('normalizeBountyPattern', () => {
 	it('rejects non-Base58 characters', () => {
 		expect(() => normalizeBountyPattern({ prefix: 'l0O' })).toThrow(); // 0,O,l are excluded
 	});
-	it('computes difficulty', () => {
+	it('computes difficulty from the exact Base58 distribution', () => {
 		const r = normalizeBountyPattern({ prefix: 'ab' });
 		expect(r.prefix).toBe('ab');
 		expect(r.combinedLength).toBe(2);
-		expect(r.expectedAttempts).toBe(58 * 58);
+		// Not 58² = 3364. 'a' can only lead a 43-digit encoding (~5.9% of keys),
+		// so it costs ~999 attempts, not 58 — a bounty priced at 58² would
+		// underfund the grinder it is meant to pay by ~17×.
+		expect(r.expectedAttempts).toBe(57960);
+		expect(r.expectedAttempts / (58 * 58)).toBeCloseTo(17.23, 1);
 	});
 });
 

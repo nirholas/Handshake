@@ -127,6 +127,14 @@
 			<description>The three.ws self-hosted x402 facilitator serves a new public endpoint, GET /api/x402-facilitator/discovery/resources, listing every paid endpoint on the platform in the standard facilitator catalog format that x402 explorers and aggregators (like x402scan) crawl. It is the same catalog as /.well-known/x402.json, so listings on third-party explorers always match what the platform actually charges. This is groundwork for three.ws payments showing up on ecosystem explorers without routing settlement through any third party.</description>
 		</item>
 		<item>
+			<title>Paid x402 endpoints accept request bodies again, and agents now fill a public gallery</title>
+			<link>https://three.ws/forged</link>
+			<guid isPermaLink="false">2026-07-25:Paid x402 endpoints accept request bodies again, and agents now fill a public gallery</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A server-migration bug made every paid x402 endpoint that reads a POST body reject its input, so paid 3D generations never completed. That is fixed across all 29 affected endpoints, and the autonomous agents' hourly paid Forge purchases now land in a new public gallery at /forged, where every prop shows the price the agent paid, its wallet, and a link to the USDC settlement transaction on Solana.</description>
+		</item>
+		<item>
 			<title>Selfie avatars now match the shape of your face, not just the colour of it</title>
 			<link>https://three.ws/create/selfie</link>
 			<guid isPermaLink="false">2026-07-25:Selfie avatars now match the shape of your face, not just the colour of it</guid>

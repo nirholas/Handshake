@@ -65,7 +65,14 @@ import { hmac } from '@noble/hashes/hmac';
 import { hkdf } from '@noble/hashes/hkdf';
 import { bytesToHex, hexToBytes, concatBytes } from '@noble/hashes/utils';
 
-import { validatePattern, BASE58_ALPHABET, expectedAttempts } from './validation.js';
+import {
+	validatePattern,
+	BASE58_ALPHABET,
+	expectedAttempts,
+	difficultyModel,
+	DIFFICULTY_MODEL,
+	DIFFICULTY_MODEL_V1,
+} from './validation.js';
 
 export const PROTOCOL_VERSION = 'three-vanity/v1';
 export const RECEIPT_TYPE = 'three-vanity-receipt';
@@ -470,18 +477,22 @@ export function verifyVanityReceipt(receipt, opts = {}) {
 		);
 	}
 
-	// 4. Difficulty claim is the honest probability model.
+	// 4. Difficulty claim is the honest probability model — the one the receipt
+	//    was ISSUED under, named in its own signed `difficulty.model`. Receipts
+	//    predating the Base58 leading-character correction declare v1 and must
+	//    keep verifying; an absent field means v1.
 	{
 		const pat = receipt.pattern || {};
-		const expected = Math.round(expectedAttempts(pat.prefix || '', pat.suffix || '', !!pat.ignoreCase));
+		const model = receipt.difficulty?.model || DIFFICULTY_MODEL_V1;
+		const expected = Math.round(difficultyModel(model)(pat.prefix || '', pat.suffix || '', !!pat.ignoreCase));
 		const ok = Number(receipt.difficulty?.expectedAttempts) === expected;
 		add(
 			'difficulty',
 			'Difficulty matches the honest model',
 			ok,
 			ok
-				? `expectedAttempts = ${expected} (58^effective for this pattern)`
-				: `receipt claims ${receipt.difficulty?.expectedAttempts}, honest model = ${expected}`,
+				? `expectedAttempts = ${expected} under ${model}`
+				: `receipt claims ${receipt.difficulty?.expectedAttempts}, ${model} model = ${expected}`,
 		);
 	}
 

@@ -33,6 +33,29 @@ export const REGION_BONES = Object.freeze({
 	scalp: ['Head'],
 });
 
+/** Regions each slot is allowed to occlude, enforced wherever a manifest's
+ *  `occludes` is APPLIED (closet, baker), not just where it is generated.
+ *  Two constraints meet here: plausibility (a shirt's waistband graze must not
+ *  hide the legs) and granularity (`scalp` resolves to the Head bone, and
+ *  Head-bone occlusion cannot separate scalp from face: culling it deletes
+ *  the avatar's face, so no slot may claim it; caps and hair simply cover). */
+export const SLOT_OCCLUDABLE = Object.freeze({
+	top: ['torso', 'upperArms', 'lowerArms', 'neck', 'hips', 'upperLegs'],
+	outerwear: ['torso', 'upperArms', 'lowerArms', 'neck', 'hips', 'upperLegs'],
+	bottom: ['hips', 'upperLegs', 'lowerLegs'],
+	footwear: ['feet', 'lowerLegs'],
+	hair: [],
+	headwear: [],
+	glasses: [],
+	accessory: [],
+});
+
+/** A manifest's `occludes` filtered to what its slot may actually hide. */
+export function clampOccludes(slot, occludes) {
+	const allowed = SLOT_OCCLUDABLE[slot] || [];
+	return (Array.isArray(occludes) ? occludes : []).filter((r) => allowed.includes(r));
+}
+
 /** Below this share of *weighted* garment bones resolving to avatar bones, the
  *  garment cannot deform sanely and is refused rather than shipped mangled. */
 export const MIN_BIND_COVERAGE = 0.6;

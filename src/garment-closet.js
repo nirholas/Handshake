@@ -23,6 +23,7 @@ import {
 	supportsWardrobe,
 	GARMENT_SLOTS,
 } from './avatar-garment.js';
+import { clampOccludes } from './garment-taxonomy.js';
 import { loadCatalog, bySlot, verifyModelBytes } from './garment-catalog.js';
 import { log } from './shared/log.js';
 
@@ -232,7 +233,13 @@ export class GarmentCloset {
 		}
 		const regions = new Set();
 		for (const { manifest } of this._attached.values()) {
-			for (const r of manifest.occludes || []) regions.add(r);
+			// Clamp at apply time, not just at generation: a legacy or third-party
+			// manifest must not be able to hide regions its slot cannot cover.
+			for (const r of clampOccludes(manifest.slot, manifest.occludes)) regions.add(r);
+		}
+		if (import.meta.env?.DEV && typeof window !== 'undefined') {
+			// Dev-only breadcrumb for headless QA: the exact region set being hidden.
+			window.__closetOcclusion = [...regions];
 		}
 		if (!regions.size) return;
 

@@ -26,6 +26,7 @@ import { canonicalizeBoneName } from '../../src/glb-canonicalize.js';
 import {
 	REGION_BONES,
 	MIN_BIND_COVERAGE,
+	clampOccludes,
 } from '../../src/garment-taxonomy.js';
 import { sanitizeCatalog } from '../../src/garment-catalog.js';
 
@@ -377,7 +378,10 @@ export async function applyGarments(io, doc, garmentRefs, mergeDocumentsFn, opts
 
 		if (attachedAny) {
 			attached.push(ref.id);
-			for (const region of manifest.occludes || []) occludeRegions.add(region);
+			// Same apply-time clamp as the closet: a manifest cannot hide regions
+			// its slot may not cover (and `scalp` is never cullable: Head-bone
+			// granularity would take the face with it).
+			for (const region of clampOccludes(manifest.slot, manifest.occludes)) occludeRegions.add(region);
 		}
 	}
 

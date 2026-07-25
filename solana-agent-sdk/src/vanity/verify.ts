@@ -152,23 +152,121 @@ export function candidateAddress(
   return { address: bs58.encode(ed25519.getPublicKey(seed)), seed };
 }
 
+const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const BASE58_INDEX = new Map([...BASE58_ALPHABET].map((c, i) => [c, i]));
+
+/** Difficulty model identifiers, mirroring src/solana/vanity/validation.js. */
+export const DIFFICULTY_MODEL_V1 = "58^effectiveLength";
+export const DIFFICULTY_MODEL_V2 = "base58-exact/v2";
+export const DIFFICULTY_MODEL = DIFFICULTY_MODEL_V2;
+
 /** Per-character expected attempts: how many of 58 chars satisfy a position. */
 function matchesPerChar(ch: string, ignoreCase: boolean): number {
   if (!ignoreCase) return 1;
-  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   const lower = ch.toLowerCase();
   const upper = ch.toUpperCase();
-  if (lower !== upper && alphabet.includes(lower) && alphabet.includes(upper)) return 2;
+  if (lower !== upper && BASE58_ALPHABET.includes(lower) && BASE58_ALPHABET.includes(upper)) return 2;
   return 1;
 }
 
-/** Honest probability model: expected attempts for a pattern (mirrors validation.js). */
+const KEY_BYTES = 32;
+const TOTAL = 1n << BigInt(8 * KEY_BYTES);
+const POW58: bigint[] = [1n];
+for (let i = 1; i <= 64; i++) POW58.push(POW58[i - 1]! * 58n);
+const SCALE = 10n ** 25n;
+
+/**
+ * Count the 32-byte values whose Base58 encoding begins with `prefix`.
+ *
+ * Base58 is a positional encoding of a 256-bit integer, not a string of
+ * independent symbols, so the leading character is *not* uniform: 2²⁵⁶/58⁴³ ≈
+ * 17.05 means a 44-digit encoding can only lead with one of the first 17
+ * symbols, while the ~5.9% of keys short enough for 43 digits can lead with
+ * anything. The spread is 58×. Leading '1's are leading zero *bytes*.
+ */
+function prefixCount(prefix: string): bigint {
+  if (!prefix) return TOTAL;
+  for (const ch of prefix) if (!BASE58_INDEX.has(ch)) return 0n;
+
+  let zeros = 0;
+  while (zeros < prefix.length && prefix[zeros] === "1") zeros++;
+  if (zeros > KEY_BYTES) return 0n;
+  const rest = prefix.slice(zeros);
+  if (rest === "") return TOTAL >> BigInt(8 * zeros);
+
+  const width = KEY_BYTES - zeros;
+  if (width < 1) return 0n;
+  const lo = 1n << BigInt(8 * (width - 1));
+  const hi = 1n << BigInt(8 * width);
+
+  let value = 0n;
+  for (const ch of rest) value = value * 58n + BigInt(BASE58_INDEX.get(ch)!);
+
+  let count = 0n;
+  for (let pad = 0; pad + rest.length <= 64; pad++) {
+    const unit = POW58[pad]!;
+    const start = value * unit;
+    if (start >= hi) break;
+    const end = (value + 1n) * unit;
+    const a = start > lo ? start : lo;
+    const b = end < hi ? end : hi;
+    if (b > a) count += b - a;
+  }
+  return count;
+}
+
+/** Every Base58-valid case spelling of `pattern` (empty when unreachable). */
+function caseVariants(pattern: string): string[] {
+  let out: string[] = [""];
+  for (const ch of pattern) {
+    const lower = ch.toLowerCase();
+    const upper = ch.toUpperCase();
+    const set = new Set<string>();
+    if (BASE58_INDEX.has(ch)) set.add(ch);
+    if (lower !== upper) {
+      if (BASE58_INDEX.has(lower)) set.add(lower);
+      if (BASE58_INDEX.has(upper)) set.add(upper);
+    }
+    if (set.size === 0) return [];
+    const options = [...set];
+    out = out.flatMap((head) => options.map((c) => head + c));
+  }
+  return out;
+}
+
+/**
+ * Exact expected attempts for a pattern under the true Base58 distribution.
+ * Mirrors src/solana/vanity/base58-distribution.js byte-for-byte; the parity
+ * suite proves the two implementations agree.
+ */
 export function expectedAttempts(prefix = "", suffix = "", ignoreCase = false): number {
+  let p = 1;
+  if (prefix) {
+    const variants = ignoreCase ? caseVariants(prefix) : [prefix];
+    if (variants.length === 0) return Infinity;
+    let count = 0n;
+    for (const variant of variants) count += prefixCount(variant);
+    if (count === 0n) return Infinity;
+    p *= Number((count * SCALE) / TOTAL) / 1e25;
+  }
+  for (const ch of suffix || "") {
+    p *= matchesPerChar(ch, ignoreCase) / 58;
+  }
+  return p > 0 ? 1 / p : Infinity;
+}
+
+/** The superseded uniform-1/58 model, kept so pre-correction receipts verify. */
+export function expectedAttemptsUniform(prefix = "", suffix = "", ignoreCase = false): number {
   let attempts = 1;
   for (const ch of (prefix || "") + (suffix || "")) {
     attempts *= 58 / matchesPerChar(ch, ignoreCase);
   }
   return attempts;
+}
+
+/** Resolve the difficulty function a receipt was issued under. */
+export function difficultyModel(model?: string) {
+  return model === DIFFICULTY_MODEL_V1 ? expectedAttemptsUniform : expectedAttempts;
 }
 
 export function addressMatchesPattern(address: string, pattern: VanityPattern): boolean {
@@ -340,16 +438,22 @@ export function verifyVanityReceipt(
     );
   }
 
-  // 4. Difficulty is the honest model.
+  // 4. Difficulty is the honest model — the one the receipt was ISSUED under,
+  //    named in its own signed `difficulty.model`. Receipts predating the
+  //    Base58 leading-character correction declare v1 and must keep verifying;
+  //    an absent field means v1, since every pre-correction receipt used it.
   {
     const p = receipt.pattern || {};
-    const expected = Math.round(expectedAttempts(p.prefix || "", p.suffix || "", !!p.ignoreCase));
+    const model = receipt.difficulty?.model || DIFFICULTY_MODEL_V1;
+    const expected = Math.round(difficultyModel(model)(p.prefix || "", p.suffix || "", !!p.ignoreCase));
     const ok = Number(receipt.difficulty?.expectedAttempts) === expected;
     add(
       "difficulty",
       "Difficulty matches the honest model",
       ok,
-      ok ? `expectedAttempts = ${expected}` : `claims ${receipt.difficulty?.expectedAttempts}, honest model = ${expected}`,
+      ok
+        ? `expectedAttempts = ${expected} under ${model}`
+        : `claims ${receipt.difficulty?.expectedAttempts}, ${model} model = ${expected}`,
     );
   }
 

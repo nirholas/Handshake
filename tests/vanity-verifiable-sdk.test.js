@@ -19,7 +19,7 @@ import {
 	canonicalReceiptBytes,
 	projectSignedCore,
 } from '../src/solana/vanity/verifiable-grind.js';
-import { expectedAttempts } from '../src/solana/vanity/validation.js';
+import { expectedAttempts, DIFFICULTY_MODEL } from '../src/solana/vanity/validation.js';
 import { sealToRecipient, generateRecipientKeypair } from '../src/solana/vanity/sealed-envelope.js';
 
 // SDK source (TS via vitest's esbuild transform).
@@ -49,7 +49,7 @@ function serverReceipt({ prefix = 'a', sealTo = null } = {}) {
 		winningIndex: r.index,
 		attempts: r.attempts,
 		durationMs: 7,
-		difficulty: { expectedAttempts: Math.round(expectedAttempts(prefix, '', false)), model: '58^effectiveLength' },
+		difficulty: { expectedAttempts: Math.round(expectedAttempts(prefix, '', false)), model: DIFFICULTY_MODEL },
 		sealed: !!sealTo,
 		sealedScheme: sealTo ? 'x25519-hkdf-sha256-aes256gcm/v1' : null,
 		sealedRecipient: sealTo ? sealTo.recipient : null,

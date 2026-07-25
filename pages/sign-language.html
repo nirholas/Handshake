@@ -4,24 +4,24 @@
 		<meta charset="utf-8" />
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Sign Language Avatars · three.ws</title>
+		<title data-i18n="sign_language.meta_title">Sign Language Avatars · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
-			content="three.ws avatars sign in American Sign Language. Fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D."
-		/>
+			content="three.ws avatars sign in American Sign Language. Fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam: the whole loop, live in 3D."
+		 data-i18n-attr="content:sign_language.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/sign-language" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Sign Language Avatars · three.ws" />
-		<meta property="og:description" content="Avatars that sign in ASL. Fingerspell anything, get signed chat replies, and sign back with your webcam — live in 3D." />
+		<meta property="og:title" content="Sign Language Avatars · three.ws"  data-i18n-attr="content:sign_language.meta_og_title"/>
+		<meta property="og:description" content="Avatars that sign in ASL. Fingerspell anything, get signed chat replies, and sign back with your webcam, live in 3D."  data-i18n-attr="content:sign_language.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/sign-language" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=three.ws+avatars+sign+in+American+Sign+Language%3A+fingerspell+any+word+or+number%2C+get+signed+chat+replies%2C+and+sign+back+to+the+AI+with+your+webcam+%E2%80%94+the+whole&amp;p=%2Fsign-language" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Sign Language Avatars · three.ws" />
-		<meta name="twitter:description" content="Avatars that sign in ASL — fingerspelling, signed chat replies, and webcam sign input, live in 3D." />
+		<meta name="twitter:title" content="Sign Language Avatars · three.ws"  data-i18n-attr="content:sign_language.meta_twitter_title"/>
+		<meta name="twitter:description" content="Avatars that sign in ASL: fingerspelling, signed chat replies, and webcam sign input, live in 3D."  data-i18n-attr="content:sign_language.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Sign+Language+Avatars&amp;d=three.ws+avatars+sign+in+American+Sign+Language%3A+fingerspell+any+word+or+number%2C+get+signed+chat+replies%2C+and+sign+back+to+the+AI+with+your+webcam+%E2%80%94+the+whole&amp;p=%2Fsign-language" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -32,7 +32,7 @@
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
-		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sign Language Avatars","description":"three.ws avatars sign in American Sign Language: fingerspelling for any word or number, signed chat replies, and webcam sign-to-text recognition — the full loop, live in 3D.","url":"https://three.ws/sign-language","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sign Language Avatars","description":"three.ws avatars sign in American Sign Language: fingerspelling for any word or number, signed chat replies, and webcam sign-to-text recognition: the full loop, live in 3D.","url":"https://three.ws/sign-language","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 		<style>
 			.sl-main { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
@@ -150,7 +150,7 @@
 			}
 		</style>
 	
-	<meta property="og:image:alt" content="Sign Language Avatars — three.ws">
+	<meta property="og:image:alt" content="Sign Language Avatars · three.ws">
 </head>
 	<body>
 		<header>
@@ -166,16 +166,16 @@
 				</div>
 
 				<div class="sl-hero-copy">
-					<span class="sl-chip"><span class="sl-chip-dot"></span> American Sign Language · live in 3D</span>
-					<h1>Your avatar speaks sign language.</h1>
-					<p class="sl-hero-lede">
+					<span class="sl-chip" data-i18n-html="sign_language.american_sign_language_live_in_3d"><span class="sl-chip-dot"></span> American Sign Language · live in 3D</span>
+					<h1 data-i18n="sign_language.your_avatar_speaks_sign_language">Your avatar speaks sign language.</h1>
+					<p class="sl-hero-lede" data-i18n="sign_language.three_ws_avatars_fingerspell_any_word_or">
 						three.ws avatars fingerspell any word or number in ASL, sign every chat reply,
 						and read your own signing back from a webcam. The whole conversation, both
 						directions, in 3D that runs in the browser.
 					</p>
 
 					<div class="sl-try">
-						<div class="sl-try-label">Try it — type anything</div>
+						<div class="sl-try-label">Try it: type anything</div>
 						<div class="sl-input-row">
 							<input
 								id="sl-spell-input"
@@ -186,26 +186,26 @@
 								aria-label="Text for the avatar to sign"
 								autocomplete="off"
 							/>
-							<button id="sl-spell-btn" class="sl-btn" type="button">🤟 Sign it</button>
+							<button id="sl-spell-btn" class="sl-btn" type="button" data-i18n="sign_language.sign_it">🤟 Sign it</button>
 						</div>
 						<div class="sl-chips">
-							<button class="sl-phrase-chip" type="button" data-sl-phrase="THANK YOU">thank you</button>
-							<button class="sl-phrase-chip" type="button" data-sl-phrase="I LOVE THREE WS">i love three.ws</button>
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="THANK YOU" data-i18n="sign_language.thank_you">thank you</button>
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="I LOVE THREE WS" data-i18n="sign_language.i_love_three_ws">i love three.ws</button>
 							<button class="sl-phrase-chip" type="button" data-sl-phrase="42">42</button>
-							<button class="sl-phrase-chip" type="button" data-sl-phrase="GM">gm</button>
+							<button class="sl-phrase-chip" type="button" data-sl-phrase="GM" data-i18n="sign_language.gm">gm</button>
 						</div>
 
 						<div class="sl-settings">
 							<div class="sl-setting">
-								<span class="sl-setting-label" id="sl-speed-label">Speed</span>
+								<span class="sl-setting-label" id="sl-speed-label" data-i18n="sign_language.speed">Speed</span>
 								<div class="sl-opts" id="sl-speed" role="group" aria-labelledby="sl-speed-label"></div>
 							</div>
 							<div class="sl-setting">
-								<span class="sl-setting-label" id="sl-hand-label">Signing hand</span>
+								<span class="sl-setting-label" id="sl-hand-label" data-i18n="sign_language.signing_hand">Signing hand</span>
 								<div class="sl-opts" id="sl-hand" role="group" aria-labelledby="sl-hand-label"></div>
 							</div>
 							<div class="sl-setting">
-								<span class="sl-setting-label" id="sl-rig-label">Avatar</span>
+								<span class="sl-setting-label" id="sl-rig-label" data-i18n="sign_language.avatar">Avatar</span>
 								<div class="sl-opts" id="sl-rig" role="group" aria-labelledby="sl-rig-label"></div>
 							</div>
 						</div>
@@ -216,39 +216,39 @@
 			<section class="sl-caps" aria-label="What sign language avatars can do">
 				<article class="sl-cap">
 					<span class="sl-cap-icon">🤟</span>
-					<h3>Fingerspell anything</h3>
-					<p>
-						All 26 ASL letter handshapes plus the numbers 0–9, with the traced J and Z
+					<h3 data-i18n="sign_language.fingerspell_anything">Fingerspell anything</h3>
+					<p data-i18n="sign_language.all_26_asl_letter_handshapes_plus_the">
+						All 26 ASL letter handshapes plus the numbers 0-9, with the traced J and Z
 						and the double-letter bounce. Type a word in the Animation Studio and export
 						the signing as an animated GLB, or share it as a link.
 					</p>
-					<a class="sl-cap-link" href="/pose">Open the Animation Studio →</a>
+					<a class="sl-cap-link" href="/pose" data-i18n="sign_language.open_the_animation_studio">Open the Animation Studio →</a>
 				</article>
 				<article class="sl-cap">
 					<span class="sl-cap-icon">💬</span>
-					<h3>Signed chat replies</h3>
-					<p>
-						Turn on sign mode in the agent chat and the avatar signs every answer —
+					<h3 data-i18n="sign_language.signed_chat_replies">Signed chat replies</h3>
+					<p data-i18n-html="sign_language.turn_on_sign_mode_in_the_agent">
+						Turn on sign mode in the agent chat and the avatar signs every answer:
 						library signs where they exist, fingerspelling for the rest. Any embedded
 						avatar gets it with one <code>sign-language</code> attribute.
 					</p>
-					<a class="sl-cap-link" href="/app">Chat with an agent →</a>
+					<a class="sl-cap-link" href="/app" data-i18n="sign_language.chat_with_an_agent">Chat with an agent →</a>
 				</article>
 				<article class="sl-cap">
 					<span class="sl-cap-icon">🎥</span>
-					<h3>Sign back with your camera</h3>
-					<p>
-						Fingerspell into your webcam and the AI reads it to text — landmarks are
+					<h3 data-i18n="sign_language.sign_back_with_your_camera">Sign back with your camera</h3>
+					<p data-i18n="sign_language.fingerspell_into_your_webcam_and_the_ai">
+						Fingerspell into your webcam and the AI reads it to text: landmarks are
 						extracted on your device, so the video never leaves your machine. The demo
 						below runs the same recognizer.
 					</p>
-					<a class="sl-cap-link" href="#sl-webcam">Try the webcam demo ↓</a>
+					<a class="sl-cap-link" href="#sl-webcam" data-i18n="sign_language.try_the_webcam_demo">Try the webcam demo ↓</a>
 				</article>
 			</section>
 
 			<section class="sl-vocab" id="sl-vocab" aria-label="Words the avatar signs rather than spells">
-				<h2>It signs these. It doesn’t spell them.</h2>
-				<p>
+				<h2 data-i18n="sign_language.it_signs_these_it_doesn_t_spell">It signs these. It doesn’t spell them.</h2>
+				<p data-i18n-html="sign_language.a_signer_spells_names_and_loanwords_and">
 					A signer spells names and loanwords and <em>signs</em> everything else. These
 					words have real signs in the avatar’s vocabulary: a handshape, a place on the
 					body, and a movement, on one or both hands. Pick one to watch it. Everything
@@ -258,8 +258,8 @@
 			</section>
 
 			<section class="sl-webcam" id="sl-webcam" aria-label="Webcam sign recognition demo">
-				<h2>Sign to us — we’ll read it</h2>
-				<p>
+				<h2 data-i18n="sign_language.sign_to_us_and_we_ll_read">Sign to us and we’ll read it</h2>
+				<p data-i18n="sign_language.click_start_fingerspell_a_word_at_your">
 					Click start, fingerspell a word at your camera, then stop. Your browser turns
 					the video into hand and body landmarks locally; only those coordinates are sent
 					for recognition. Webcam fingerspelling is imperfect (expect the odd wrong
@@ -268,19 +268,19 @@
 				<div class="sl-webcam-grid">
 					<div id="sl-cam-preview" hidden></div>
 					<div class="sl-cam-side">
-						<button id="sl-cam-btn" class="sl-btn" type="button">🎥 Start signing</button>
+						<button id="sl-cam-btn" class="sl-btn" type="button" data-i18n="sign_language.start_signing">🎥 Start signing</button>
 						<div id="sl-cam-result" class="sl-cam-result" aria-live="polite"></div>
-						<p class="sl-cam-hint">
+						<p class="sl-cam-hint" data-i18n="sign_language.best_results_good_light_hand_in_frame">
 							Best results: good light, hand in frame, one letter at a time. Numbers and
-							the full A–Z alphabet are supported.
+							the full A-Z alphabet are supported.
 						</p>
 					</div>
 				</div>
 			</section>
 
-			<p class="sl-note">
+			<p class="sl-note" data-i18n-html="sign_language.honest_scope_words_with_a_sign_are">
 				Honest scope: words with a sign are signed, everything else is fingerspelled letter by letter. Signs are strung together in English word order, which is signed English,
-				not ASL grammar — real ASL reorders sentences, inflects verbs through space, and
+				not ASL grammar: real ASL reorders sentences, inflects verbs through space, and
 				carries grammar on the face. The vocabulary above is a starting set and is meant to
 				grow. Read the <a href="/docs/sign-language">full breakdown</a>.
 			</p>

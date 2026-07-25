@@ -33,6 +33,7 @@ import {
 	attachGarment,
 	bindCoverage,
 	buildBoneRemap,
+	clampOccludes,
 	cullSkinByBones,
 	detachSlot,
 	findAvatarSkeleton,
@@ -356,5 +357,28 @@ describe('findAvatarSkeleton', () => {
 		root.add(bodyMesh);
 
 		expect(findAvatarSkeleton(root).mesh).toBe(bodyMesh);
+	});
+});
+
+describe('clampOccludes', () => {
+	it('keeps evidenced regions a slot may plausibly cover', () => {
+		expect(clampOccludes('top', ['torso', 'upperArms'])).toEqual(['torso', 'upperArms']);
+		expect(clampOccludes('bottom', ['hips', 'upperLegs', 'lowerLegs']))
+			.toEqual(['hips', 'upperLegs', 'lowerLegs']);
+	});
+
+	it('drops regions outside the slot (waistband graze cannot hide legs)', () => {
+		expect(clampOccludes('footwear', ['torso', 'hips', 'feet'])).toEqual(['feet']);
+	});
+
+	it('never lets headwear or hair occlude scalp: Head-bone culling would take the face', () => {
+		expect(clampOccludes('headwear', ['scalp'])).toEqual([]);
+		expect(clampOccludes('hair', ['scalp'])).toEqual([]);
+	});
+
+	it('is safe on unknown slots and malformed occludes', () => {
+		expect(clampOccludes('nonsense', ['torso'])).toEqual([]);
+		expect(clampOccludes('top', undefined)).toEqual([]);
+		expect(clampOccludes('top', 'torso')).toEqual([]);
 	});
 });

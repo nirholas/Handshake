@@ -3917,6 +3917,10 @@
 			"dest": "/objects.html"
 		},
 		{
+			"src": "/forged/?",
+			"dest": "/forged.html"
+		},
+		{
 			"src": "/gallery",
 			"dest": "/gallery/index.html"
 		},

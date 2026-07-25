@@ -55,6 +55,12 @@ URL: https://three.ws/objects
 
 Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.
 
+### Agent-Forged Gallery
+
+URL: https://three.ws/forged
+
+3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.
+
 ### Diorama
 
 URL: https://three.ws/diorama

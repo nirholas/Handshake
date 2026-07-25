@@ -56,7 +56,7 @@ import {
 } from '../_lib/x402/payment-identifier-server.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
-import { validatePattern, expectedAttempts } from '../../src/solana/vanity/validation.js';
+import { validatePattern, expectedAttempts, DIFFICULTY_MODEL } from '../../src/solana/vanity/validation.js';
 import {
 	sealToRecipient,
 	parseX25519Key,
@@ -173,7 +173,7 @@ const DISCOVERY_OUTPUT_EXAMPLE = {
 	winningIndex: 3041,
 	attempts: 3042,
 	durationMs: 1180,
-	difficulty: { expectedAttempts: 3364, model: '58^effectiveLength' },
+	difficulty: { expectedAttempts: 57960, model: DIFFICULTY_MODEL },
 	sealed: true,
 	sealedScheme: SEALED_ENVELOPE_SCHEME,
 	sealedRecipient: '<Base58 X25519 recipient>',
@@ -326,7 +326,7 @@ async function grindAndBuildReceipt({ prefix, suffix, ignoreCase, sealTo, client
 
 	const difficulty = {
 		expectedAttempts: Math.round(expectedAttempts(prefix, suffix, ignoreCase)),
-		model: '58^effectiveLength',
+		model: DIFFICULTY_MODEL,
 	};
 
 	// Seal the secret to the buyer when an X25519 key is supplied. The signed

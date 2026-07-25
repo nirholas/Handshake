@@ -590,6 +590,7 @@ const appConfig = {
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),
 				objects: resolve(__dirname, 'pages/objects.html'),
+				forged: resolve(__dirname, 'pages/forged.html'),
 				'avatar-engines': resolve(__dirname, 'pages/avatar-engines.html'),
 				splat: resolve(__dirname, 'pages/splat.html'),
 				capture: resolve(__dirname, 'pages/capture.html'),

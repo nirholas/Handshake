@@ -45,11 +45,13 @@ import {
 	BODY_REGIONS,
 	REGION_BONES,
 	MIN_BIND_COVERAGE,
+	SLOT_OCCLUDABLE,
+	clampOccludes,
 } from './garment-taxonomy.js';
 
 // Shared vocabulary lives in src/garment-taxonomy.js (pure, also consumed by
 // the server-side baker). Re-exported so existing consumers keep one import.
-export { GARMENT_SLOTS, BODY_REGIONS, REGION_BONES, MIN_BIND_COVERAGE };
+export { GARMENT_SLOTS, BODY_REGIONS, REGION_BONES, MIN_BIND_COVERAGE, SLOT_OCCLUDABLE, clampOccludes };
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Skeleton discovery

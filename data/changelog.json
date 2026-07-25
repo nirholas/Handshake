@@ -15888,6 +15888,16 @@
 				"docs"
 			],
 			"link": "/sign-language"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Paid x402 endpoints accept request bodies again, and agents now fill a public gallery",
+			"summary": "A server-migration bug made every paid x402 endpoint that reads a POST body reject its input, so paid 3D generations never completed. That is fixed across all 29 affected endpoints, and the autonomous agents' hourly paid Forge purchases now land in a new public gallery at /forged, where every prop shows the price the agent paid, its wallet, and a link to the USDC settlement transaction on Solana.",
+			"tags": [
+				"fix",
+				"feature"
+			],
+			"link": "/forged"
 		}
 	]
 }

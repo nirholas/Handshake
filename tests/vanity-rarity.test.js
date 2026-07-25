@@ -12,7 +12,11 @@ import {
 	CHAR_BITS,
 } from '../src/solana/vanity/rarity.js';
 import { toPublicEntry, PUBLIC_FIELDS } from '../api/_lib/vanity-gallery-store.js';
-import { expectedAttempts } from '../src/solana/vanity/validation.js';
+import {
+	expectedAttempts,
+	DIFFICULTY_MODEL,
+	DIFFICULTY_MODEL_V1,
+} from '../src/solana/vanity/validation.js';
 
 describe('rarity base math is the honest difficulty model', () => {
 	it('empty pattern is Common with zero score', () => {
@@ -31,14 +35,22 @@ describe('rarity base math is the honest difficulty model', () => {
 		}
 	});
 
-	it('tier cuts land on whole-character boundaries (58^n in bits)', () => {
-		// 2 chars → 2·log2(58) ≈ 11.72 bits → Rare floor.
-		expect(computeRarity({ prefix: 'So' }).tier).toBe('rare');
-		expect(computeRarity({ prefix: 'So' }).rarityBits).toBeCloseTo(2 * CHAR_BITS, 1);
-		// 3 chars no bonus → Epic floor (3·log2(58) ≈ 17.57).
-		expect(computeRarity({ prefix: 'xqz' }).tier).toBe('epic');
-		// 5 chars no bonus → Mythic floor (5·log2(58) ≈ 29.29).
+	it('tiers are cut on bits of work, not on character count', () => {
+		// Base58 is a positional encoding of a 256-bit integer, so the leading
+		// character is not uniform: a 44-digit encoding can only ever lead with
+		// one of the first 17 symbols. 'A' leads ~58× more often than 'z' does.
+		// Two patterns of identical length therefore represent genuinely
+		// different amounts of work and must not share a tier.
+		const easyLead = computeRarity({ prefix: 'Ao' });
+		const hardLead = computeRarity({ prefix: 'zo' });
+		expect(hardLead.expectedAttempts).toBeGreaterThan(easyLead.expectedAttempts * 50);
+		expect(easyLead.tier).toBe('uncommon');
+		expect(hardLead.tier).toBe('rare');
+
+		// The ladder itself is still expressed in whole characters' worth of
+		// work — that definition is model-independent and stays put.
 		expect(computeRarity({ prefix: 'abcde' }).tier).toBe('mythic');
+		expect(RARITY_TIERS.find((t) => t.id === 'rare').minBits).toBeCloseTo(2 * CHAR_BITS, 6);
 	});
 
 	it('longer prefixes are categorically rarer (monotonic in base difficulty)', () => {
@@ -90,10 +102,24 @@ describe('rarity bonuses are real, bounded, and documented', () => {
 
 	it('exact frozen vector for "cat" (regression lock)', () => {
 		const r = computeRarity({ prefix: 'cat' });
+		expect(r.tier).toBe('legendary');
+		expect(r.rarityScore).toBe(2448);
+		// 'c' is one of the 40 symbols that can only lead a 43-digit encoding,
+		// so it costs ~999 attempts rather than the 58 a uniform model assumes.
+		expect(r.baseBits).toBe(21.68);
+		expect(r.bonusBits).toBe(2.8);
+		expect(r.model).toBe(DIFFICULTY_MODEL);
+	});
+
+	it('reproduces a pre-correction score when asked for the v1 model', () => {
+		// Certificates issued before the Base58 correction attest v1 numbers.
+		// Re-scoring them under v2 would brand honest receipts as fraudulent, so
+		// the old model has to stay reproducible forever.
+		const r = computeRarity({ prefix: 'cat', model: DIFFICULTY_MODEL_V1 });
 		expect(r.tier).toBe('epic');
 		expect(r.rarityScore).toBe(2037);
 		expect(r.baseBits).toBe(17.57);
-		expect(r.bonusBits).toBe(2.8);
+		expect(r.model).toBe(DIFFICULTY_MODEL_V1);
 	});
 });
 

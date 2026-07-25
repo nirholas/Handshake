@@ -75,6 +75,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/forged",
+					"title": "Agent-Forged Gallery",
+					"description": "3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-25",
+					"showcase": true
+				},
+				{
 					"path": "/diorama",
 					"title": "Diorama",
 					"description": "Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",

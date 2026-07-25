@@ -15,8 +15,12 @@
  * ── The base: bits of work ───────────────────────────────────────────────────
  * The grinder is a Bernoulli trial per candidate address. The expected number of
  * attempts to satisfy a prefix/suffix is `expectedAttempts()` from validation.js
- * (the mean of a geometric distribution: 58^effectiveLength, adjusted for
- * case-insensitive characters). We work in *bits*:
+ * — the mean of a geometric distribution over the *exact* Base58 positional
+ * distribution, not a uniform 1/58 per character. The leading character is up to
+ * 17× harder or 3.4× easier than uniform depending on which symbol it is (see
+ * [base58-distribution.js](./base58-distribution.js)), so treating it as uniform
+ * mis-states the work by more than a whole character's worth of difficulty. We
+ * work in *bits*:
  *
  *     baseBits = log2(expectedAttempts(prefix, suffix, ignoreCase))
  *
@@ -56,7 +60,7 @@
  * cards). Behaviour is pinned by fixed vectors in tests/vanity-rarity.test.js.
  */
 
-import { expectedAttempts, effectiveLength } from './validation.js';
+import { difficultyModel, effectiveLength, DIFFICULTY_MODEL } from './validation.js';
 import { ENGLISH_WORDLIST } from './bip39-english.js';
 
 // Real, auditable wordset. BIP-39 English is 2048 curated lowercase words (3–8
@@ -145,18 +149,21 @@ function isPalindrome(s) {
  * @param {string} [pattern.prefix]
  * @param {string} [pattern.suffix]
  * @param {boolean} [pattern.ignoreCase=false]
+ * @param {string} [pattern.model] difficulty model id; defaults to the current
+ *   one. Pass a certificate's `difficulty.model` to reproduce a rarity claim
+ *   exactly as it was issued.
  * @returns {{
  *   prefix:string, suffix:string, ignoreCase:boolean,
  *   expectedAttempts:number, baseBits:number, bonusBits:number, rarityBits:number,
  *   rarityScore:number, tier:string, tierLabel:string, accent:string,
- *   effectiveLength:number,
+ *   effectiveLength:number, model:string,
  *   bonuses: Array<{ id:string, label:string, bits:number, detail:string }>
  * }}
  */
-export function computeRarity({ prefix = '', suffix = '', ignoreCase = false } = {}) {
+export function computeRarity({ prefix = '', suffix = '', ignoreCase = false, model } = {}) {
 	const pre = prefix || '';
 	const suf = suffix || '';
-	const attempts = expectedAttempts(pre, suf, ignoreCase);
+	const attempts = difficultyModel(model)(pre, suf, ignoreCase);
 	const baseBits = attempts > 1 ? log2(attempts) : 0;
 
 	const bonuses = [];
@@ -216,6 +223,7 @@ export function computeRarity({ prefix = '', suffix = '', ignoreCase = false } =
 		tierLabel: tier.label,
 		accent: tier.accent,
 		effectiveLength: round2(effectiveLength(attempts)),
+		model: model || DIFFICULTY_MODEL,
 		bonuses,
 	};
 }

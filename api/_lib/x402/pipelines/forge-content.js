@@ -223,9 +223,52 @@ async function ensureSchema() {
 		CREATE INDEX IF NOT EXISTS forge_autonomous_props_cat_ts_idx
 		ON forge_autonomous_props (category, ts DESC)
 	`;
+	// Payment provenance: every prop links back to the on-chain USDC payment that
+	// bought it (payer wallet, price, settlement signature). This is what the
+	// public /forged gallery renders as the receipts trail.
+	await sql`ALTER TABLE forge_autonomous_props ADD COLUMN IF NOT EXISTS tx_sig text`;
+	await sql`ALTER TABLE forge_autonomous_props ADD COLUMN IF NOT EXISTS payer text`;
+	await sql`ALTER TABLE forge_autonomous_props ADD COLUMN IF NOT EXISTS amount_atomic bigint`;
 	// The autonomous log predates the run()-style pipelines; add the
 	// value_extracted column this pipeline records its prop summary into (idempotent).
 	await sql`ALTER TABLE x402_autonomous_log ADD COLUMN IF NOT EXISTS value_extracted jsonb`;
+}
+
+// Resolve previously-queued generations. Async forge jobs hand back a job_id
+// poll token; the FREE poll endpoint (GET /api/forge?job=<id>) reports 'queued',
+// 'done' (with glb_url) or 'failed'. Each run sweeps a few pending rows so the
+// public gallery converges on renderable assets without a dedicated cron.
+// Never throws — a poll hiccup just retries on the next run.
+const RESOLVE_BATCH = 5;
+async function resolveQueuedJobs(origin) {
+	let rows = [];
+	try {
+		rows = await sql`
+			SELECT id, job_id FROM forge_autonomous_props
+			WHERE status = 'queued' AND job_id IS NOT NULL
+			ORDER BY ts ASC
+			LIMIT ${RESOLVE_BATCH}
+		`;
+	} catch {
+		return 0;
+	}
+	let resolved = 0;
+	for (const row of rows) {
+		try {
+			const res = await fetch(`${origin}/api/forge?job=${encodeURIComponent(row.job_id)}`, {
+				headers: { 'user-agent': 'threews-x402-autonomous/1.0' },
+			});
+			if (!res.ok) continue;
+			const job = await res.json();
+			if (job?.status === 'done' && job.glb_url) {
+				await sql`UPDATE forge_autonomous_props SET status = 'done', glb_url = ${job.glb_url} WHERE id = ${row.id}`;
+				resolved += 1;
+			} else if (job?.status === 'failed') {
+				await sql`UPDATE forge_autonomous_props SET status = 'failed' WHERE id = ${row.id}`;
+			}
+		} catch { /* poll hiccup — retry next run */ }
+	}
+	return resolved;
 }
 
 // Per-call row into x402_autonomous_log including value_extracted. The loop also
@@ -253,7 +296,7 @@ async function recordCall(runId, { endpointUrl, amountAtomic, txSig, responseDat
 // Embed, score diversity, and insert the generated prop. Returns the compact
 // summary used as value_extracted. Never throws — a DB/embedding hiccup returns a
 // summary carrying the error so the call is still recorded.
-async function persistProp({ runId, prompt, category, response }) {
+async function persistProp({ runId, prompt, category, response, txSig = null, payer = null, amountAtomic = null }) {
 	const r = response && typeof response === 'object' ? response : {};
 	const tier = r.tier || 'draft';
 	const mode = r.mode || 'text_to_3d';
@@ -281,11 +324,13 @@ async function persistProp({ runId, prompt, category, response }) {
 		await sql`
 			INSERT INTO forge_autonomous_props
 				(run_id, prompt, category, tier, mode, backend,
-				 job_id, glb_url, status, embedder, embedding, novelty, cluster_id)
+				 job_id, glb_url, status, embedder, embedding, novelty, cluster_id,
+				 tx_sig, payer, amount_atomic)
 			VALUES
 				(${runId || null}, ${prompt}, ${category}, ${tier}, ${mode}, ${backend},
 				 ${jobId}, ${glbUrl}, ${status}, ${embedder},
-				 ${JSON.stringify(embedded.vector)}::jsonb, ${novelty}, ${clusterId})
+				 ${JSON.stringify(embedded.vector)}::jsonb, ${novelty}, ${clusterId},
+				 ${txSig}, ${payer}, ${amountAtomic})
 		`;
 		stored = true;
 	} catch (err) {
@@ -346,6 +391,11 @@ export async function run(ctx = {}) {
 		}
 	}
 
+	// Sweep previously-queued jobs toward 'done' before paying for a new one so
+	// the gallery keeps converging even if this tick's generation is skipped.
+	const resolvedCount = await resolveQueuedJobs(origin);
+	if (resolvedCount) log.info('forge_content_jobs_resolved', { count: resolvedCount });
+
 	const { category, prompt } = nextForgeProp();
 	const body = { prompt, tier: 'draft', aspect_ratio: '1:1' };
 	const t0 = Date.now();
@@ -369,7 +419,13 @@ export async function run(ctx = {}) {
 	// rejection / cap-skip / HTTP error still gets a recorded log row below.
 	let value = null;
 	if (result.success) {
-		value = await persistProp({ runId, prompt, category, response: result.responseBody });
+		value = await persistProp({
+			runId, prompt, category,
+			response: result.responseBody,
+			txSig: result.txSig || null,
+			payer: buyer?.publicKey?.toBase58?.() || null,
+			amountAtomic: result.paid ? result.amountAtomic : 0,
+		});
 	}
 
 	await recordCall(runId, {

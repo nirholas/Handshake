@@ -18,6 +18,7 @@ Entry points into the product.
 - [Character Library](https://three.ws/character-library): 106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.
 - [Sign Language Avatars](https://three.ws/sign-language): three.ws avatars sign in American Sign Language: fingerspell any word or number, get signed chat replies, and sign back to the AI with your webcam — the whole loop, live in 3D.
 - [Object Library](https://three.ws/objects): Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.
+- [Agent-Forged Gallery](https://three.ws/forged): 3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.
 - [Diorama](https://three.ws/diorama): Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.
 - [Mocap Studio](https://three.ws/mocap-studio): Drive a 3D avatar with your webcam — real-time facial motion capture in the browser, no rig and no download.
 - [Coin Autopilot](https://three.ws/autopilot): A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.

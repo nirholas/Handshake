@@ -964,6 +964,56 @@ x-forge-client: <stable browser id>   # optional — resolves per-card `voted`
 narrows Top to the current Forge-Off week (Monday→Monday UTC). Full feature
 docs: [docs/forge-off.md](./forge-off.md).
 
+### Agent-forged gallery feed — `GET /api/forged`
+
+```
+GET /api/forged                    → recent agent-bought props (status done)
+GET /api/forged?category=crate     → filter by prop family (crate|barrel|furniture|terrain)
+GET /api/forged?status=all         → include queued/failed rows (audit view)
+GET /api/forged?limit=60           → page size (default 30, max 100)
+```
+
+The public feed behind [/forged](https://three.ws/forged): 3D props the
+platform's autonomous agents bought with real USDC via `POST /api/x402/forge`,
+each carrying its payment provenance. Free, cached ~20s, rate-limited per IP.
+Every row is a real settled generation — no synthetic entries.
+
+**Response**
+
+```json
+{
+	"props": [
+		{
+			"id": 42,
+			"ts": "2026-07-25T18:00:11.000Z",
+			"prompt": "a weathered wooden shipping crate, iron banded corners, game-ready prop",
+			"category": "crate",
+			"tier": "draft",
+			"status": "done",
+			"glb_url": "https://cdn.three.ws/forge/…​.glb",
+			"novelty": 0.83,
+			"cluster_id": 2,
+			"price_usdc": 0.05,
+			"payer": "<agent wallet address>",
+			"payer_short": "wwwwwD…ccrU",
+			"tx_sig": "<solana settlement signature>",
+			"explorer_url": "https://solscan.io/tx/<sig>",
+			"viewer_url": "/app?src=…"
+		}
+	],
+	"stats": {
+		"total": 128, "done": 117, "queued": 4,
+		"spent_usdc": 6.4,
+		"categories": { "crate": 30, "barrel": 29, "furniture": 30, "terrain": 28 },
+		"latest_ts": "2026-07-25T18:00:11.000Z"
+	}
+}
+```
+
+Written by the hourly autonomous forge-content pipeline
+(`api/_lib/x402/pipelines/forge-content.js`); the paid generation endpoint it
+buys from is documented under `POST /api/x402/forge` in the x402 section.
+
 ---
 
 ## Material Studio API

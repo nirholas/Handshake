@@ -25,7 +25,7 @@ import {
 	verifyReceiptSignature,
 	verifyVanityReceipt,
 } from '../src/solana/vanity/verifiable-grind.js';
-import { expectedAttempts } from '../src/solana/vanity/validation.js';
+import { expectedAttempts, DIFFICULTY_MODEL } from '../src/solana/vanity/validation.js';
 
 // Fixed test vectors — all-byte-value seeds so the vectors are reproducible and
 // readable. serverSeed = 0x00..1f, clientSeed = 0xff..e0, nonce/signing fixed.
@@ -55,6 +55,7 @@ function buildSignedReceipt({ prefix = 'a', suffix = '', ignoreCase = false } = 
 		durationMs: 42,
 		difficulty: {
 			expectedAttempts: Math.round(expectedAttempts(prefix, suffix, ignoreCase)),
+			model: DIFFICULTY_MODEL,
 		},
 		sealedRecipient: bs58.encode(Uint8Array.from({ length: 32 }, () => 9)),
 		sealedEpk: bs58.encode(Uint8Array.from({ length: 32 }, () => 7)),

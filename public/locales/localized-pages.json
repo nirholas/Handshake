@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 185,
+	"count": 186,
 	"paths": [
 		"/",
 		"/activity",
@@ -151,6 +151,7 @@
 		"/screener",
 		"/search",
 		"/shopper",
+		"/sign-language",
 		"/signals",
 		"/skills",
 		"/smart-money",
