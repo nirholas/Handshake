@@ -120,6 +120,31 @@ export function findWalletlessArms(rows) {
 	return out;
 }
 
+/**
+ * Named-model routing health. The July 2026 audit note "the failover chain
+ * answering most calls muddied the model-vs-model comparison" turned out to be
+ * an OpenRouter account sitting at zero credits for weeks: the key stayed
+ * valid, every completion 402'd, the free chain silently absorbed the traffic,
+ * and no check anywhere measured it. This one does: given the last hour's
+ * verdict counts, alarm when fallbacks answered nearly everything. Pure.
+ *
+ * @param {{ total:number, fallback:number }} counts verdicts in the window
+ * @param {{ minSample?:number, maxShare?:number }} [opts]
+ * @returns {{ degraded:boolean, share:number|null, detail:string }}
+ */
+export function classifyLlmRouting(counts, { minSample = 20, maxShare = 0.9 } = {}) {
+	const total = Number(counts?.total) || 0;
+	const fallback = Number(counts?.fallback) || 0;
+	if (total < minSample) return { degraded: false, share: null, detail: `only ${total} verdicts in window (need ${minSample})` };
+	const share = fallback / total;
+	return {
+		degraded: share >= maxShare,
+		share: Number(share.toFixed(3)),
+		detail: `${fallback}/${total} verdicts answered by fallback models (${Math.round(share * 100)}%). ` +
+			'The named models are not answering: check OpenRouter credits/keys. Strict arms are paused until this clears; verdicts still record for calibration.',
+	};
+}
+
 /** Human line for one stale loop, used in the ops alert body. */
 export function describeStale(entry) {
 	const age = entry.ageMs === Infinity

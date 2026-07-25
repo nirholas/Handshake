@@ -18,7 +18,7 @@ import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-import { LOOPS, classifyLoopHealth, describeStale, findWalletlessArms } from '../_lib/sniper-loops-health.js';
+import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms } from '../_lib/sniper-loops-health.js';
 
 const NETWORK = 'mainnet';
 
@@ -81,6 +81,30 @@ export default wrapCron(async (req, res) => {
 		)).catch(() => {});
 	}
 
+	// Named-model routing: are the arms' named models actually answering, or is
+	// the free fallback chain absorbing everything (as it silently did for weeks
+	// on a zero-credit OpenRouter account)? answered_by records who really
+	// replied; the fallback tag is set by the judge at answer time.
+	let routing = { degraded: false, share: null, detail: 'not probed' };
+	try {
+		const [row] = await sql`
+			select count(*)::int as total,
+			       count(*) filter (where answered_by ilike 'fallback:%' or model ilike 'fallback:%')::int as fallback
+			from sniper_llm_verdicts
+			where network = ${NETWORK} and created_at > now() - interval '1 hour'
+		`;
+		routing = classifyLlmRouting(row || {});
+	} catch (err) {
+		broken.push({ name: 'llm-routing', probeError: err?.message || 'query failed' });
+	}
+	if (routing.degraded) {
+		await Promise.resolve(sendOpsAlert(
+			'🎯 agent-sniper — named LLM judges are NOT answering (fallback chain absorbing calls)',
+			routing.detail,
+			{ signature: 'sniper:llm-routing-degraded' },
+		)).catch(() => {});
+	}
+
 	if (stale.length) {
 		// One alert per run covering every stale loop, deduped hourly on a stable
 		// signature so a dead loop pages once an hour until it produces rows again.
@@ -100,11 +124,12 @@ export default wrapCron(async (req, res) => {
 	}
 
 	return json(res, 200, {
-		ok: stale.length === 0 && broken.length === 0 && zombies.length === 0,
+		ok: stale.length === 0 && broken.length === 0 && zombies.length === 0 && !routing.degraded,
 		checked: probes.length,
 		stale: stale.map((s) => ({ name: s.name, last_at: s.lastAt, age_h: s.ageMs === Infinity ? null : Math.round(s.ageMs / 3600_000 * 10) / 10 })),
 		healthy: ok.map((s) => s.name),
 		walletless_arms: zombies.map((z) => z.label),
+		llm_routing: routing,
 		probe_errors: broken.map((b) => ({ name: b.name, error: b.probeError })),
 	});
 });

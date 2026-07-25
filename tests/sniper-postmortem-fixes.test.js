@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { llmVerdictGate } from '../workers/agent-sniper/llm-judge.js';
 import { decideLiquidityDecay, updateStaleClock } from '../workers/agent-sniper/exit-logic.js';
-import { LOOPS, classifyLoopHealth, describeStale, findWalletlessArms } from '../api/_lib/sniper-loops-health.js';
+import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms } from '../api/_lib/sniper-loops-health.js';
 
 describe('llmVerdictGate', () => {
 	const strat = { llm_min_confidence: 0.65, llm_max_confidence: 0.9, llm_strict_model: false };
@@ -141,6 +141,35 @@ describe('classifyLoopHealth (count rows, not status codes)', () => {
 		const { ok, stale } = classifyLoopHealth([probe('not-a-loop', 0)], NOW);
 		expect(ok).toHaveLength(0);
 		expect(stale).toHaveLength(0);
+	});
+});
+
+describe('classifyLlmRouting (the zero-credit OpenRouter outage class)', () => {
+	it('alarms when fallbacks absorb nearly all verdicts', () => {
+		const r = classifyLlmRouting({ total: 100, fallback: 98 });
+		expect(r.degraded).toBe(true);
+		expect(r.share).toBeCloseTo(0.98);
+		expect(r.detail).toMatch(/OpenRouter credits/);
+	});
+
+	it('stays quiet on a healthy mix', () => {
+		expect(classifyLlmRouting({ total: 100, fallback: 20 }).degraded).toBe(false);
+	});
+
+	it('never alarms on a thin sample', () => {
+		const r = classifyLlmRouting({ total: 5, fallback: 5 });
+		expect(r.degraded).toBe(false);
+		expect(r.share).toBe(null);
+	});
+
+	it('sits exactly on the 90% line', () => {
+		expect(classifyLlmRouting({ total: 100, fallback: 90 }).degraded).toBe(true);
+		expect(classifyLlmRouting({ total: 100, fallback: 89 }).degraded).toBe(false);
+	});
+
+	it('survives missing input', () => {
+		expect(classifyLlmRouting(null).degraded).toBe(false);
+		expect(classifyLlmRouting({}).degraded).toBe(false);
 	});
 });
 
