@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-25T09:31:26.690Z",
+	"generated_at": "2026-07-25T09:38:33.403Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -54,6 +54,17 @@
 			"link": "/avatar-edit",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Selfie avatars now match the shape of your face, not just the colour of it",
+			"summary": "The selfie-to-avatar engine used to do one thing: take the face from your photo and paint it onto a standard head. From straight on it looked convincing, but the skull underneath was the same for everyone, so the moment the avatar turned it stopped being you. It now reshapes the head itself to your face: width, jaw, chin, cheekbones, brow, and how far the nose projects. That step had been written and tested for a while but had never actually reached the servers, so every avatar made until today was built the old way. Making it live also turned up a flaw in how the photo was read. Face measurements arrived scaled to the picture's width and height separately, which means a tall photo stretched the face before anything else happened, and that stretch was then treated as part of your bone structure. In practice the shape of your avatar's head partly depended on whether you shot the photo tall or square, which is not something anyone would expect. Measurements are now taken in true proportions, so the same face gives the same head regardless of how the photo was framed. Finally, the limits controlling how far the head is allowed to move toward your real shape were set before there was any way to measure the result. They were far too cautious, holding the head back to about two centimetres of change and quietly discarding real differences between faces. Measured across a forty-face test set covering a wide range of ages, complexions, beards, glasses and head coverings, retuning them cut the remaining shape error by 43 percent, and no face in the set came out worse. Rebuild your avatar at /create/selfie to get one made the new way.",
+			"link": "/create/selfie",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -131,6 +142,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Type a garment, get a wearable: the Garment Forge",
+			"summary": "The wardrobe's closet no longer depends on hand-authored pieces. A new generation service turns a plain text prompt (\"a white oxford dress shirt\") into a finished catalog garment: it photographs the idea with the platform's image model, sculpts a textured 3D mesh on the GPU fleet, fits the piece onto the canonical body, rigs it so it moves with every animation, and publishes it to the public wardrobe catalog with its manifest and thumbnail. Every published piece is validated end to end (including the 60% skeleton-binding gate) before it can ever reach an avatar.",
+			"link": null,
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{

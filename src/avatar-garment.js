@@ -30,7 +30,14 @@
 //      becomes avatarRestWorld · garmentRestWorld⁻¹, which is precisely the
 //      transform that carries the garment from its rest into the avatar's.
 
-import { Bone, Matrix4, Skeleton, SkinnedMesh, Uint16BufferAttribute } from 'three';
+import {
+	Bone,
+	Float32BufferAttribute,
+	Matrix4,
+	Skeleton,
+	SkinnedMesh,
+	Uint16BufferAttribute,
+} from 'three';
 import { canonicalizeBoneName } from './glb-canonicalize.js';
 import {
 	GARMENT_SLOTS,
@@ -176,9 +183,11 @@ export function remapSkinAttributes(geometry, remap) {
 		}
 	}
 
+	// Fresh attributes, not in-place copies: loader-produced geometries can
+	// carry interleaved or normalized-integer skin attributes, which neither
+	// accept copyArray nor store floats.
 	geometry.setAttribute('skinIndex', new Uint16BufferAttribute(outIndex, 4));
-	geometry.attributes.skinWeight.copyArray(outWeight);
-	geometry.attributes.skinWeight.needsUpdate = true;
+	geometry.setAttribute('skinWeight', new Float32BufferAttribute(outWeight, 4));
 	return geometry;
 }
 

@@ -25,7 +25,7 @@ This spec pins exactly that minimum.
   "slot": "top",
   "version": 1,
   "model": {
-    "uri": "https://storage.googleapis.com/three-ws-model-weights/garments/top/oxford-shirt-white/v1/garment.glb",
+    "uri": "https://storage.googleapis.com/three-ws-garments/garments/top/oxford-shirt-white/v1/garment.glb",
     "format": "gltf-binary",
     "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
     "sizeBytes": 184320,
@@ -101,13 +101,13 @@ A garment whose meshes are **not** skinned (a hat, glasses, an earring) needs no
 A catalog is a JSON array of manifests served from one URL, so the wardrobe panel does one fetch:
 
 ```
-gs://three-ws-model-weights/garments/catalog.json
+gs://three-ws-garments/garments/catalog.json
 ```
 
 Storage layout, one immutable directory per version so a published garment is never mutated under a live client:
 
 ```
-gs://three-ws-model-weights/garments/<slot>/<id>/v<version>/
+gs://three-ws-garments/garments/<slot>/<id>/v<version>/
     garment.glb
     manifest.json
     thumb.webp
