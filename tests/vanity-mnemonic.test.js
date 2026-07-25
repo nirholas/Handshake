@@ -125,8 +125,8 @@ describe('parseDerivationPath / deriveEd25519PrivateKey', () => {
 describe('grindVanityMnemonic', () => {
 	it('grinds a 1-char prefix and returns an importable phrase', () => {
 		// 'A' is in the easy leading band (~17 expected attempts). The original
-		// version of this test ground 'z' — a hard-band symbol needing ~982
-		// attempts — and flaked on slower CI hosts, which is what surfaced the
+		// version of this test ground 'z', a hard-band symbol needing ~982
+		// attempts, and flaked on slower CI hosts, which is what surfaced the
 		// leading-character bug in the first place.
 		const r = grindVanityMnemonic({ prefix: 'A', timeBudgetMs: 20_000 });
 		expect(r.publicKey.startsWith('A')).toBe(true);

@@ -8,20 +8,25 @@
  * characters and wrong for the *leading* one, because Base58 is a positional
  * numeral encoding of a 32-byte integer, not a string of independent symbols.
  *
- * A 32-byte value spans [0, 2²⁵⁶). Base58 encodes it in 44 digits when the value
- * is ≥ 58⁴³ and 43 digits otherwise, and 2²⁵⁶ / 58⁴³ ≈ 17.05 — so a 44-digit
- * encoding can only ever lead with one of the first 17 alphabet symbols, while
- * the ~5.9% of values short enough to encode in 43 digits can lead with anything.
- * The result is a 58× spread in how hard a leading character is to hit:
+ * A Solana key is 32 bytes; once leading zero bytes are stripped it spans
+ * [2²⁴⁸, 2²⁵⁶). Base58 encodes such a value in 44 digits when it is at least
+ * 58⁴³ and 43 digits otherwise, and two ratios carve the alphabet up:
  *
- *     '2'…'H'  P ≈ 5.906e-2   (3.43× *easier* than the uniform model claims)
- *     'J'      P ≈ 1.434e-2   (0.83×)
- *     'K'…'z'  P ≈ 1.018e-3   (0.059× — 17× *harder* than claimed)
- *     '1'      P ≈ 3.906e-3   (a leading zero byte, 1/256)
+ *     2²⁵⁶ / 58⁴³ ≈ 17.05  so 44-digit encodings lead with symbols 1..17
+ *     2²⁴⁸ / 58⁴² ≈ 3.90   so 43-digit encodings lead with symbols 3..57
+ *
+ * which yields six bands, spanning 58× in how hard a leading character is to hit:
+ *
+ *     '1'      P = 3.906e-3   (a leading zero byte, exactly 1/256)
+ *     '2'-'3'  P = 5.804e-2   (44-digit encodings only)
+ *     '4'      P = 5.814e-2   (plus the sliver of 43-digit that clears 2²⁴⁸)
+ *     '5'-'H'  P = 5.904e-2   (3.43× *easier* than the uniform model claims)
+ *     'J'      P = 1.433e-2   (0.83×, where the 44-digit range runs out)
+ *     'K'-'z'  P = 1.001e-3   (17.2× *harder* than claimed, 40 of the 58 symbols)
  *
  * Measured against the uniform model on the live inventory, the median address
  * was 17× harder to grind than its stored difficulty claimed, and patterns
- * leading with '2'–'H' were up to 1.75× easier. Since price and rarity tier are
+ * leading with '2'-'H' were up to 1.75× easier. Since price and rarity tier are
  * both derived from difficulty, the whole book was mispriced in both directions.
  *
  * ── What this module computes ────────────────────────────────────────────────
@@ -30,9 +35,9 @@
  * encode to a string with the requested prefix. It handles leading-zero bytes
  * (which encode as '1') and arbitrary prefix lengths.
  *
- * Trailing characters genuinely are uniform — the low-order digits of a huge
+ * Trailing characters genuinely are uniform, the low-order digits of a huge
  * uniform integer are equidistributed to within O(58ⁿ / 2²⁴⁸), far below double
- * precision — so `suffixProbability` stays 58⁻ⁿ.
+ * precision, so `suffixProbability` stays 58⁻ⁿ.
  *
  * Pure and isomorphic: no I/O, no crypto, identical in browser and server.
  * Pinned against direct sampling of real keypairs in tests/vanity-rarity.test.js.
@@ -67,7 +72,7 @@ const SCALE_N = 1e25;
 function prefixCount(prefix) {
 	if (!prefix) return TOTAL;
 	for (const ch of prefix) {
-		if (!INDEX.has(ch)) return 0n; // not a Base58 symbol — unreachable
+		if (!INDEX.has(ch)) return 0n; // not a Base58 symbol, unreachable
 	}
 
 	// Leading '1's are leading *zero bytes*, not digits of the numeral.
@@ -158,7 +163,7 @@ export function prefixProbability(prefix, ignoreCase = false) {
  *
  * Unlike the prefix, this really is 58⁻ⁿ: the low-order digits of a uniform
  * 256-bit integer are equidistributed to within O(58ⁿ / 2²⁴⁸), which is ~1e-64
- * at the 6-character ceiling — far below double precision.
+ * at the 6-character ceiling, far below double precision.
  *
  * @param {string} suffix
  * @param {boolean} [ignoreCase=false]

@@ -53,7 +53,7 @@ const KEY_DECODERS: Record<string, (s: string) => Uint8Array> = {
  * string, refusing to guess when the string is genuinely ambiguous.
  *
  * Base58's alphabet is a subset of Base64url's and Base64url spends exactly 43
- * characters on 32 bytes — the same length Base58 uses for the ~5.4% of keys
+ * characters on 32 bytes, the same length Base58 uses for the ~5.4% of keys
  * small enough to need only 43 digits. So a bare 43-character string can encode
  * two different keys. Picking one silently is how a buyer ends up unable to open
  * an envelope they paid for, so an unresolvable string throws instead. An
@@ -145,7 +145,7 @@ export function generateRecipientKeypair(): { publicKey: string; secretKey: stri
   // Keep drawing until BOTH Base58 forms are 44 characters.
   //
   // Base64url encodes 32 bytes in exactly 43 characters, and Base58's alphabet
-  // is a subset of Base64url's — so a 43-character Base58 key is also a valid
+  // is a subset of Base64url's, so a 43-character Base58 key is also a valid
   // Base64url string decoding to a *different* key, and a bare `sealTo=` value
   // cannot say which was meant. 44 characters is unambiguous, and only ~5.4% of
   // keys are short enough to need 43, so this costs ~11% of one extra keygen

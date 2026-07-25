@@ -26,7 +26,7 @@ This tutorial covers the full lifecycle: **grind in the browser → (optionally)
 
 ## How grinding works (two minutes of theory)
 
-The address space is the Base58 alphabet (`123…ABC…xyz`, minus the ambiguous `0 O I l` — 58 symbols). Each character you pin multiplies the work by ~58, so a rough ladder looks like this:
+The address space is the Base58 alphabet (`123…ABC…xyz`, minus the ambiguous `0 O I l`, 58 symbols). Each character you pin multiplies the work by ~58, so a rough ladder looks like this:
 
 | Pattern length | Expected attempts | Feel |
 |---|---|---|
@@ -40,11 +40,11 @@ The address space is the Base58 alphabet (`123…ABC…xyz`, minus the ambiguous
 
 | Your prefix starts with | Difficulty vs. the flat 58ⁿ guess |
 |---|---|
-| `2`–`H` | **3.4× easier** |
+| `2`-`H` | **3.4× easier** |
 | `J` | about the same |
-| `K`–`z` (40 of the 58 symbols) | **17× harder** |
+| `K`-`z` (40 of the 58 symbols) | **17× harder** |
 
-So `Agent…` is dramatically cheaper to grind than `zebra…`, even though both are five characters. Suffixes have no such skew — the *last* characters of an address are uniform at 1/58 each, which is why moving a pattern to the suffix is often the cheapest way to get the look you want.
+So `Agent…` is dramatically cheaper to grind than `zebra…`, even though both are five characters. Suffixes have no such skew, the *last* characters of an address are uniform at 1/58 each, which is why moving a pattern to the suffix is often the cheapest way to get the look you want.
 
 A **case-insensitive** match (matching letters in any case) roughly halves the work per letter, at the cost of not choosing the casing of the result.
 
@@ -80,9 +80,9 @@ The estimate comes from the exact Base58 distribution and your selected core cou
 expectedAttempts = 1 / ( P(address starts with your prefix) × 58^-len(suffix) )
 ```
 
-The prefix term is counted exactly rather than approximated as `58^-n` — it is the fraction of all 2²⁵⁶ possible keys whose encoding begins with your prefix, which is what makes the first-character table above fall out. Case-insensitivity sums the probabilities of every Base58-valid spelling (note `i`, `o` and `L` have only one valid case, since the alphabet drops `I`, `O` and `l`).
+The prefix term is counted exactly rather than approximated as `58^-n`, it is the fraction of all 2²⁵⁶ possible keys whose encoding begins with your prefix, which is what makes the first-character table above fall out. Case-insensitivity sums the probabilities of every Base58-valid spelling (note `i`, `o` and `L` have only one valid case, since the alphabet drops `I`, `O` and `l`).
 
-This is the same difficulty math the paid receipt commits to — see [src/solana/vanity/base58-distribution.js](../../src/solana/vanity/base58-distribution.js) for the derivation and [src/solana/vanity/validation.js](../../src/solana/vanity/validation.js) for the model dispatch. Receipts name their model in `difficulty.model`, so a receipt issued before this correction still verifies against the model it was issued under.
+This is the same difficulty math the paid receipt commits to, see [src/solana/vanity/base58-distribution.js](../../src/solana/vanity/base58-distribution.js) for the derivation and [src/solana/vanity/validation.js](../../src/solana/vanity/validation.js) for the model dispatch. Receipts name their model in `difficulty.model`, so a receipt issued before this correction still verifies against the model it was issued under.
 
 > **Tip:** the suggested-pattern chips (`AGNT…`, `…pump`, `GM…gm`, …) each show their own estimate. They're a fast way to see how dramatically each extra character costs you.
 
@@ -170,7 +170,7 @@ The page runs every check locally and shows a pass/fail line for each:
 - **commitment** — `SHA-256(serverSeed)` equals the published commitment, so the server was locked to that seed before grinding.
 - **derivation** — re-deriving the master seed and the candidate at `winningIndex` reproduces exactly `receipt.address`.
 - **pattern** — the address actually satisfies the requested prefix/suffix.
-- **difficulty** — `difficulty.expectedAttempts` equals the honest rounded value under the model named in `difficulty.model` (`base58-exact/v2` for anything issued since 2026-07-25).
+- **difficulty**, `difficulty.expectedAttempts` equals the honest rounded value under the model named in `difficulty.model` (`base58-exact/v2` for anything issued since 2026-07-25).
 - **signature** — the Ed25519 signature verifies, **and** the receipt's signing key matches the one pinned from the well-known document (impostors who self-sign under a different key fail here).
 - **custody** *(if you opened the seal)* — the decrypted seed's public key equals `receipt.address`.
 
@@ -258,7 +258,7 @@ So the grind searches for a **salt** that produces a contract address matching y
 You learned to mine a Solana vanity address and to operate the proof-of-grind protocol around it:
 
 - **Grind in the browser** ([/vanity-wallet](/vanity-wallet)) — pick a prefix/suffix, choose case sensitivity and cores, grind locally with WASM Web Workers, and download the key. Nothing leaves your device.
-- **Difficulty is ~58 per character, except the first** — the leading symbol ranges from 3.4× easier to 17× harder than a flat `58ⁿ` guess; case-insensitive roughly halves per letter.
+- **Difficulty is ~58 per character, except the first**, the leading symbol ranges from 3.4× easier to 17× harder than a flat `58ⁿ` guess; case-insensitive roughly halves per letter.
 - **Provably-fair paid grind** — when the server holds the work, `three-vanity/v1` proves the key was fresh, your entropy was mixed in, and no copy was kept.
 - **Verify** ([/vanity/verify](/vanity/verify)) — paste a receipt to re-check commitment, derivation, pattern, difficulty, signature, and (optionally) custody, all in your browser, pinned to the live service key.
 - **Gallery** ([/vanity/gallery](/vanity/gallery)) — appraise any address or opt-in publish a verified, secret-free receipt to the rarity leaderboard.

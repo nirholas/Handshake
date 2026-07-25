@@ -37,7 +37,7 @@ once, over TLS, and never stored.
 > **What can you actually match?** Base58 excludes `0`, `O`, `I`, `l`. An address
 > is 32 random bytes Base58-encoded, so its **leading** character is not
 > uniformly distributed: the 40 symbols from `K` to `z` are **~17× harder** to
-> lead with than `2`–`H`, a 58× spread across the alphabet. Suffix characters
+> lead with than `2`-`H`, a 58× spread across the alphabet. Suffix characters
 > *are* uniform at 1/58. Quotes, prices and rarity all use the exact
 > distribution rather than a flat 58ⁿ estimate, so a `zebra…` prefix is priced
 > as the genuinely harder grind it is, and an `Agent…` prefix is not overcharged.
@@ -103,7 +103,7 @@ tier for the requested pattern.
 | `ignoreCase` | `1`/`true` matches the pattern case-insensitively (faster, less specific). |
 | `format` | `keypair` (default) or `mnemonic`. |
 | `strength` | Mnemonic only: `128` (12 words, default) or `256` (24 words). |
-| `sealTo` | Optional X25519 public key (Base58/Base64url/hex) — see [Security model](#security-model). Prefix with `base58:`, `base64url:` or `hex:` to be explicit; a bare 43-character string is a valid encoding under two of them and is rejected rather than guessed. Keys from our SDK's `generateRecipientKeypair()` are always unambiguous. |
+| `sealTo` | Optional X25519 public key (Base58/Base64url/hex), see [Security model](#security-model). Prefix with `base58:`, `base64url:` or `hex:` to be explicit; a bare 43-character string is a valid encoding under two of them and is rejected rather than guessed. Keys from our SDK's `generateRecipientKeypair()` are always unambiguous. |
 
 ### Example
 

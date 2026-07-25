@@ -1,8 +1,8 @@
 // The Base58 difficulty model exists in three independently-shipped artifacts:
 //
-//   1. src/solana/vanity/base58-distribution.js  — the site + API
-//   2. solana-agent-sdk/src/vanity/verify.ts     — the published TS SDK verifier
-//   3. mcp-server/src/lib/base58-distribution.js — the standalone MCP npm package
+//   1. src/solana/vanity/base58-distribution.js, the site + API
+//   2. solana-agent-sdk/src/vanity/verify.ts, the published TS SDK verifier
+//   3. mcp-server/src/lib/base58-distribution.js, the standalone MCP npm package
 //
 // Each is zero-dependency by design and cannot import the others, so the code is
 // deliberately duplicated. Duplication without a parity check is how the three

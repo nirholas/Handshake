@@ -247,6 +247,14 @@
 			<description>The wardrobe's closet no longer depends on hand-authored pieces. A new generation service turns a plain text prompt (&quot;a white oxford dress shirt&quot;) into a finished catalog garment: it photographs the idea with the platform's image model, sculpts a textured 3D mesh on the GPU fleet, fits the piece onto the canonical body, rigs it so it moves with every animation, and publishes it to the public wardrobe catalog with its manifest and thumbnail. Every published piece is validated end to end (including the 60% skeleton-binding gate) before it can ever reach an avatar.</description>
 		</item>
 		<item>
+			<title>Vanity address difficulty, rarity and prices are now exact</title>
+			<link>https://three.ws/vanity</link>
+			<guid isPermaLink="false">2026-07-25:Vanity address difficulty, rarity and prices are now exact</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every vanity address quote, rarity score and price was built on the assumption that all 58 Base58 characters are equally likely. That holds for the end of an address but not the start: Base58 encodes an address as one large number, so an address can only begin with certain characters unless it happens to be short enough, which makes the 40 symbols from K to z about 17 times harder to lead with than 2 through H. The whole product now uses the exact distribution instead. The 385 addresses in the shop were re-rated and repriced, some up and some down, so what you pay matches the work behind the address. Receipts issued before today still verify against the model they were issued under, and the grinders now decline a pattern they cannot finish in time, quoting the real attempt count, instead of running out the clock and returning nothing.</description>
+		</item>
+		<item>
 			<title>The x402 facilitator now describes itself at its root URL</title>
 			<link>https://three.ws/docs/x402-ring-economy</link>
 			<guid isPermaLink="false">2026-07-24:The x402 facilitator now describes itself at its root URL</guid>

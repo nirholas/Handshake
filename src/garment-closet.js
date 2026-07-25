@@ -55,6 +55,9 @@ export class GarmentCloset {
 		this._alphaMapped = null; // material we last set an alphaMap on
 		this.onDirty = onDirty || (() => {});
 		this.onChanged = onChanged || (() => {});
+		// Extra change listeners (the rendered rack section subscribes its
+		// worn-state refresh here, so hydration marks tiles as pieces land).
+		this._subs = new Set();
 		// slot → { manifest, result } for what is live in the scene right now
 		this._attached = new Map();
 		this._loader = null;
@@ -123,8 +126,7 @@ export class GarmentCloset {
 			this._attached.set(manifest.slot, { manifest, result });
 			this._syncWorking();
 			this._reoccludeAll();
-			this.onDirty();
-			this.onChanged();
+			this._emitChanged();
 			if (import.meta.env?.DEV && typeof window !== 'undefined') {
 				// Dev-only breadcrumb for headless QA drivers (never in prod builds).
 				const { Vector3 } = await import('three');
@@ -171,9 +173,20 @@ export class GarmentCloset {
 			this._detachNow(slot);
 			this._syncWorking();
 			this._reoccludeAll();
-			this.onDirty();
-			this.onChanged();
+			this._emitChanged();
 		});
+	}
+
+	_emitChanged() {
+		this.onDirty();
+		this.onChanged();
+		for (const fn of this._subs) fn();
+	}
+
+	/** Listen for attach/detach changes. Returns an unsubscribe function. */
+	subscribe(fn) {
+		this._subs.add(fn);
+		return () => this._subs.delete(fn);
 	}
 
 	/**
@@ -184,9 +197,16 @@ export class GarmentCloset {
 	async hydrate(refs) {
 		const { garments } = await loadCatalog();
 		const index = new Map(garments.map((g) => [`${g.slot}/${g.id}`, g]));
+		const wanted = (refs || []).map((ref) => ({ ref, manifest: index.get(`${ref.slot}/${ref.id}`) || null }));
+		// Warm the GLB cache in parallel before the serialized attach loop: on a
+		// saved multi-piece outfit the downloads dominate wall time, and they
+		// don't need to wait for each other. A failed prefetch self-evicts from
+		// the cache (_fetchModel), so attach() retries it and reports normally.
+		for (const { manifest } of wanted) {
+			if (manifest) this._fetchModel(manifest).catch(() => {});
+		}
 		const missing = [];
-		for (const ref of refs || []) {
-			const manifest = index.get(`${ref.slot}/${ref.id}`);
+		for (const { ref, manifest } of wanted) {
 			if (!manifest) { missing.push(ref); continue; }
 			const res = await this.attach(manifest);
 			if (!res.ok) missing.push(ref);
@@ -372,6 +392,12 @@ function wireSection(container, closet, catalog) {
 	const byKey = new Map(catalog.garments.map((g) => [`${g.slot}/${g.id}`, g]));
 	const status = container.querySelector('.gc-status');
 	const setStatus = (msg) => { if (status) status.textContent = msg || ''; };
+
+	// Follow closet changes that don't originate from this DOM (hydration of a
+	// saved outfit, discard-changes re-hydrate). Re-rendering the section
+	// replaces the subscription so a stale closure never leaks.
+	container.__gcUnsub?.();
+	container.__gcUnsub = closet.subscribe(() => refresh());
 
 	const refresh = () => {
 		const worn = closet.attached();

@@ -23,7 +23,9 @@
 				--docs-bg: #09090f;
 				--sidebar-bg: #0c0c13;
 				--border: rgba(255, 255, 255, 0.07);
-				--text-muted: rgba(224, 224, 224, 0.5);
+				/* 0.62 alpha, not 0.5: composited on --docs-bg #09090f that's 6.1:1
+				   contrast (axe AA needs 4.5:1; 0.5 measured 4.32 and failed). */
+				--text-muted: rgba(224, 224, 224, 0.62);
 				--text-body: rgba(224, 224, 224, 0.85);
 			}
 			*,
@@ -199,7 +201,9 @@
 				font-weight: 700;
 				letter-spacing: 0.1em;
 				text-transform: uppercase;
-				color: rgba(255, 255, 255, 0.28);
+				/* 0.55 alpha, not 0.28: on --sidebar-bg #0c0c13 that's 6.3:1 (axe AA
+				   needs 4.5:1 even for bold text this small; 0.28 measured 2.43). */
+				color: rgba(255, 255, 255, 0.55);
 				padding: 0 var(--space-sm) 5px var(--space-md);
 			}
 			.sidebar-link {

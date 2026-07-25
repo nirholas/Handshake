@@ -48,7 +48,7 @@ describe('rarity base math is the honest difficulty model', () => {
 		expect(hardLead.tier).toBe('rare');
 
 		// The ladder itself is still expressed in whole characters' worth of
-		// work — that definition is model-independent and stays put.
+		// work, that definition is model-independent and stays put.
 		expect(computeRarity({ prefix: 'abcde' }).tier).toBe('mythic');
 		expect(RARITY_TIERS.find((t) => t.id === 'rare').minBits).toBeCloseTo(2 * CHAR_BITS, 6);
 	});

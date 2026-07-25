@@ -362,15 +362,13 @@ function buildCard(c) {
 	// No title attribute: the prompt is already visible in .meta below the thumb,
 	// and the native tooltip clips over the card art on hover.
 	card.dataset.prompt = c.prompt || '';
-	card.tabIndex = 0;
-	card.setAttribute('role', 'button');
-	card.setAttribute('aria-label', `Open in viewer: ${c.prompt || 'forged model'}`);
-	// The whole card opens the viewer, but a nested Remix <button> lives in the
-	// footer — a clickable card wrapping a button is a nested-interactive WCAG
-	// failure (4.1.2). Instead the card is a plain container and the primary
-	// "open" action is a stretched, transparent <button> overlay (.showcase-open)
-	// that covers the card; Remix sits above it via z-index. One real button per
-	// action, no nesting, native keyboard (Enter/Space) on both.
+	// The whole card opens the viewer, but nested vote/Remix <button>s and the
+	// x402 <a> live in the footer, and a role="button" card wrapping them is a
+	// nested-interactive WCAG failure (4.1.2, axe flagged 12 nodes per page).
+	// So the card is a plain container and the primary "open" action is a
+	// stretched, transparent <button> overlay (.showcase-open) appended at the
+	// end of buildCard; the footer sits above it via z-index. One real button
+	// per action, no nesting, native keyboard (Enter/Space) on both.
 
 	if (c.preview_image_url) {
 		// Plan A: stored thumbnail
@@ -485,13 +483,14 @@ function buildCard(c) {
 
 	const open = () =>
 		document.dispatchEvent(new CustomEvent('forge:open-creation', { detail: { creation: c } }));
-	card.addEventListener('click', open);
-	card.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			open();
-		}
-	});
+	// The stretched primary action (see the nested-interactive note at the top
+	// of buildCard). A real <button>, so Enter/Space come free.
+	const openBtn = document.createElement('button');
+	openBtn.type = 'button';
+	openBtn.className = 'showcase-open';
+	openBtn.setAttribute('aria-label', `Open in viewer: ${c.prompt || 'forged model'}`);
+	openBtn.addEventListener('click', open);
+	card.appendChild(openBtn);
 
 	return card;
 }

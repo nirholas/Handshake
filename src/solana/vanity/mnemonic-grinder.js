@@ -9,7 +9,7 @@
  * buyer can type into any wallet — at the same address.
  *
  * Cost model: each attempt runs PBKDF2-HMAC-SHA512 (2048 iterations) + an
- * HMAC-SHA512 chain, so throughput is ~350 keypairs/sec single-threaded —
+ * HMAC-SHA512 chain, so throughput is ~350 keypairs/sec single-threaded, 
  * roughly 100× slower than the WASM keypair grinder. On budget exhaustion we
  * throw GrindExhaustedError so the x402 endpoint declines to charge the buyer.
  * Longer mnemonic patterns belong on the user's own machine.
@@ -17,7 +17,7 @@
  * A character-count cap alone is NOT a safe ceiling. Base58's leading character
  * spans a 58× difficulty range (see base58-distribution.js), so "2 characters"
  * covers everything from `A?` (~982 attempts, under 3 seconds) to `z?` (~57k
- * attempts, ~2.7 minutes) — the latter far past any serverless budget. Requests
+ * attempts, ~2.7 minutes), the latter far past any serverless budget. Requests
  * used to be accepted on length alone, grind for the full 45 seconds, and fail;
  * the buyer got nothing and we burned the compute. `assertFeasible` now rejects
  * those up front with the real numbers, and the length cap stays only as a
@@ -77,8 +77,8 @@ export function assertMnemonicFeasible(prefix, suffix, ignoreCase, timeBudgetMs)
 				`(~${seconds}s at ${MNEMONIC_ATTEMPTS_PER_SECOND}/sec), but the ${Math.round(
 					timeBudgetMs / 1000,
 				)}s budget only affords ~${Math.round(affordable).toLocaleString('en-US')} ` +
-				`— about a ${chance}% chance of a hit. Base58's leading character is not uniform: ` +
-				`the 40 symbols from 'K' to 'z' are ~17× harder to lead with than '2'–'H'. ` +
+				`, about a ${chance}% chance of a hit. Base58's leading character is not uniform: ` +
+				`the 40 symbols from 'K' to 'z' are ~17× harder to lead with than '2'-'H'. ` +
 				`Try a prefix starting with one of 2-9 or A-H, move the pattern to the suffix ` +
 				`(uniform 1/58 per character), or grind it on your own machine.`,
 		),

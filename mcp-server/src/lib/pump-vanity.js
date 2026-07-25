@@ -62,7 +62,7 @@ export function isValidVanityPrefix(prefix) {
 //
 // This was 58^n (or 33^n when case-folding), which treats every position as an
 // independent uniform symbol. That is right for a suffix and wrong for the
-// leading character by up to 17× — see base58-distribution.js. Getting it wrong
+// leading character by up to 17×, see base58-distribution.js. Getting it wrong
 // meant a "2-character" budget that clears `A?` in a second and cannot clear
 // `z?` at all.
 export { expectedAttempts as estimateAttempts } from './base58-distribution.js';

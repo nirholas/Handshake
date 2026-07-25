@@ -438,7 +438,7 @@ export function verifyVanityReceipt(
     );
   }
 
-  // 4. Difficulty is the honest model — the one the receipt was ISSUED under,
+  // 4. Difficulty is the honest model, the one the receipt was ISSUED under,
   //    named in its own signed `difficulty.model`. Receipts predating the
   //    Base58 leading-character correction declare v1 and must keep verifying;
   //    an absent field means v1, since every pre-correction receipt used it.

@@ -126,18 +126,18 @@ matches(address, prefix, suffix, ignoreCase):
 ```
 
 The Base58 alphabet excludes `0 O I l`. **Difficulty** is the mean of a geometric
-distribution — the expected number of candidates to a hit — computed as the
+distribution, the expected number of candidates to a hit, computed as the
 reciprocal of the probability that a random address satisfies the pattern.
 
 Base58 is a positional encoding of a 256-bit integer, **not** a string of
 independent symbols, so the *leading* character is not uniform. A 32-byte key
 encodes to 44 digits when its value is at least 58⁴³ and 43 digits otherwise, and
-2²⁵⁶ / 58⁴³ ≈ 17.05 — so a 44-digit encoding can only ever lead with one of the
+2²⁵⁶ / 58⁴³ ≈ 17.05, so a 44-digit encoding can only ever lead with one of the
 first 17 symbols, while the ~5.9% of keys short enough for 43 digits can lead
 with anything. Trailing characters *are* uniform.
 
 ```
-prefixProbability(prefix):                  // EXACT — count, do not approximate
+prefixProbability(prefix):                  // EXACT, count, do not approximate
     zeros = number of leading '1's in prefix  // a '1' is a leading zero BYTE
     rest  = prefix without those leading '1's
     if rest == "": return 2^(256 - 8*zeros) / 2^256
@@ -167,11 +167,11 @@ The resulting per-symbol leading probabilities fall into six bands:
 | Leading symbol | P(lead) | vs uniform 1/58 |
 |---|---|---|
 | `1` | 1/256 | 0.23× |
-| `2`–`3` | 5.804e-2 | 3.37× easier |
+| `2`-`3` | 5.804e-2 | 3.37× easier |
 | `4` | 5.814e-2 | 3.37× easier |
-| `5`–`H` | 5.904e-2 | 3.43× easier |
+| `5`-`H` | 5.904e-2 | 3.43× easier |
 | `J` | 1.433e-2 | 0.83× |
-| `K`–`z` | 1.001e-3 | 17.2× harder |
+| `K`-`z` | 1.001e-3 | 17.2× harder |
 
 ### 4.1 Difficulty model versioning
 
@@ -184,7 +184,7 @@ under the model named in `difficulty.model`:
 | `58^effectiveLength` | Superseded: every character treated as uniform 1/58. Wrong for the leading character by up to 17×. |
 
 A verifier MUST check a receipt against the model the receipt itself declares,
-and MUST treat an absent `difficulty.model` as `58^effectiveLength` — every
+and MUST treat an absent `difficulty.model` as `58^effectiveLength`, every
 receipt issued before the correction carried that model. Re-scoring an old
 receipt under the new model would brand an honestly-issued attestation as
 fraudulent.
@@ -255,7 +255,7 @@ recompute — never trust — each of the following. All must pass.
 3. **derivation** — re-derive `masterSeed` (§2) and `address_{winningIndex}`
    (§3); it MUST equal `receipt.address`.
 4. **pattern** — `receipt.address` satisfies `receipt.pattern` (§4).
-5. **difficulty** — `difficulty.expectedAttempts == round(expectedAttempts(…))`
+5. **difficulty**, `difficulty.expectedAttempts == round(expectedAttempts(…))`
    under the model named in `difficulty.model` (§4.1), NOT under the verifier's
    current default.
 6. **signature** — Ed25519-verify the canonical message (§6) against the pinned

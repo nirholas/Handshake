@@ -244,11 +244,11 @@ async function bootScene() {
 			onDirty: () => updateDirtyState(),
 			onChanged: () => renderChips(),
 		});
-		await closet.hydrate(currentAppearance.garments);
-		// The wardrobe panel may have rendered before the scene finished booting,
-		// leaving its closet section in the waiting state — re-render now that
-		// the closet exists so the racks appear without a tab round-trip.
+		// Racks render as soon as the closet exists — the catalog browse must not
+		// wait behind re-downloading a saved outfit (hydrate below marks tiles
+		// worn as each piece lands, via onChanged re-renders).
 		renderActivePanel();
+		await closet.hydrate(currentAppearance.garments);
 
 		// Ambient idle layer — breathing, micro-saccades, blink, weight shift.
 		// Static preview here (no AgentProtocol); IdleAnimation's no-op stub
@@ -286,7 +286,9 @@ async function fetchPresets() {
 
 async function saveAppearance() {
 	setStatus('spin', 'Saving and baking…');
-	const r = await fetch(`/api/avatars/${encodeURIComponent(avatar.id)}`, {
+	// apiFetch, not raw fetch: mutations need the single-use CSRF token it
+	// auto-carries; a raw PATCH 403s against api/_lib/csrf.js enforcement.
+	const r = await apiFetch(`/api/avatars/${encodeURIComponent(avatar.id)}`, {
 		method: 'PATCH',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },

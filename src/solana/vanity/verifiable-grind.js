@@ -477,7 +477,7 @@ export function verifyVanityReceipt(receipt, opts = {}) {
 		);
 	}
 
-	// 4. Difficulty claim is the honest probability model — the one the receipt
+	// 4. Difficulty claim is the honest probability model, the one the receipt
 	//    was ISSUED under, named in its own signed `difficulty.model`. Receipts
 	//    predating the Base58 leading-character correction declare v1 and must
 	//    keep verifying; an absent field means v1.

@@ -15,7 +15,7 @@
  * ── The base: bits of work ───────────────────────────────────────────────────
  * The grinder is a Bernoulli trial per candidate address. The expected number of
  * attempts to satisfy a prefix/suffix is `expectedAttempts()` from validation.js
- * — the mean of a geometric distribution over the *exact* Base58 positional
+ *, the mean of a geometric distribution over the *exact* Base58 positional
  * distribution, not a uniform 1/58 per character. The leading character is up to
  * 17× harder or 3.4× easier than uniform depending on which symbol it is (see
  * [base58-distribution.js](./base58-distribution.js)), so treating it as uniform

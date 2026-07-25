@@ -86,10 +86,10 @@ function matchesPerChar(ch, ignoreCase) {
  * `difficulty` block so a receipt issued under the old model still verifies
  * against the model it was actually issued under.
  *
- *   v1 `58^effectiveLength` — every character uniform at 1/58. Correct for
+ *   v1 `58^effectiveLength`, every character uniform at 1/58. Correct for
  *      suffixes, wrong for the leading character by up to 17× (see
  *      base58-distribution.js). Retained for verification only.
- *   v2 `base58-exact/v2`    — exact Base58 positional distribution.
+ *   v2 `base58-exact/v2`, exact Base58 positional distribution.
  */
 export const DIFFICULTY_MODEL_V1 = '58^effectiveLength';
 export const DIFFICULTY_MODEL_V2 = 'base58-exact/v2';
@@ -97,7 +97,7 @@ export const DIFFICULTY_MODEL = DIFFICULTY_MODEL_V2;
 
 /**
  * Expected attempts to grind an address that starts with `prefix` and ends
- * with `suffix` — the mean of a geometric distribution, i.e. the reciprocal of
+ * with `suffix`, the mean of a geometric distribution, i.e. the reciprocal of
  * the per-address match probability under the exact Base58 distribution.
  *
  * The leading character is *not* uniform (Base58 is a positional encoding of a
@@ -118,7 +118,7 @@ export function expectedAttempts(prefix = '', suffix = '', ignoreCase = false) {
 /**
  * The superseded uniform-1/58 model, kept so certificates and inventory priced
  * before the correction still verify against the model they were issued under.
- * Do not use for new quotes — see `expectedAttempts`.
+ * Do not use for new quotes, see `expectedAttempts`.
  *
  * @param {string} [prefix]
  * @param {string} [suffix]

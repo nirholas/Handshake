@@ -20,7 +20,7 @@
  *
  * WHAT IT TOUCHES
  * ---------------
- * Only rows with status='available' — unsold stock. A sold or destroyed row
+ * Only rows with status='available', unsold stock. A sold or destroyed row
  * keeps the numbers it was transacted at; the price a buyer actually paid is a
  * fact about the past, not a value to recompute. Every touched row is stamped
  * difficulty_model='base58-exact/v2' so a partially-migrated book is visible.
@@ -127,7 +127,7 @@ if (backupPath) {
 }
 
 if (!apply) {
-	console.log('\nDRY RUN — re-run with --apply to write.');
+	console.log('\nDRY RUN, re-run with --apply to write.');
 	process.exit(0);
 }
 

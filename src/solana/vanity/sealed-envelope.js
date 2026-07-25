@@ -66,7 +66,7 @@ function randomBytes(n) {
 
 /**
  * Run every decoder that accepts `s` and return the one 32-byte key they agree
- * on. Throws when two decoders yield two *different* 32-byte keys — that is a
+ * on. Throws when two decoders yield two *different* 32-byte keys, that is a
  * real ambiguity in the input, and picking one is how a buyer ends up with an
  * envelope sealed to a key they do not hold.
  */
@@ -118,7 +118,7 @@ function fromBase64url(str) {
 
 /**
  * Encodings `parseX25519Key` accepts, and the `name:` prefix that names each
- * one explicitly. An explicit prefix is the only way to be certain — see below.
+ * one explicitly. An explicit prefix is the only way to be certain, see below.
  */
 const KEY_DECODERS = {
 	hex: (s) => {
@@ -135,14 +135,14 @@ const KEY_DECODERS = {
  *
  * ── The ambiguity this resolves ──────────────────────────────────────────────
  * Base58's alphabet is a strict SUBSET of Base64url's, and Base64url encodes 32
- * bytes in exactly 43 characters — the same length Base58 produces for the ~5.4%
+ * bytes in exactly 43 characters, the same length Base58 produces for the ~5.4%
  * of keys small enough to need only 43 digits. So a bare 43-character string can
  * be a valid encoding of two *different* 32-byte keys, with nothing in the string
  * itself to say which.
  *
  * Guessing is not harmless here. The previous implementation tried Base58 first
  * whenever the string contained no `-` or `_`, which measured at **1.5% of
- * Base64url keys mis-parsed, 95% of those silently** — the same characters
+ * Base64url keys mis-parsed, 95% of those silently**, the same characters
  * decoded to a valid-looking but wrong 32-byte key, the secret was sealed to it,
  * and the buyer could not open the envelope they had paid for.
  *
@@ -291,7 +291,7 @@ export async function openSealedText(envelope, recipientSecretKey) {
  * Every 32-byte value this module Base58-encodes is re-parsed later by
  * `parseX25519Key`, and a 43-character Base58 string is indistinguishable from
  * a Base64url one (see that function). Constraining generation keeps the wire
- * format byte-identical while making every value we emit unambiguous — which
+ * format byte-identical while making every value we emit unambiguous, which
  * matters most for the ephemeral key, since a 43-character `epk` would make
  * ~5.4% of sealed envelopes unopenable.
  *
@@ -313,7 +313,7 @@ export function generateRecipientKeypair() {
 	// Keep drawing until the public key's Base58 form is 44 characters.
 	//
 	// Base64url encodes 32 bytes in exactly 43 characters, and Base58's alphabet
-	// is a subset of Base64url's — so a 43-character Base58 key is also a valid
+	// is a subset of Base64url's, so a 43-character Base58 key is also a valid
 	// Base64url string decoding to a *different* key, and a bare `sealTo=` value
 	// cannot say which was meant (see `parseX25519Key`). 44 characters is
 	// unambiguous, and only ~5.4% of keys are short enough to need 43, so this

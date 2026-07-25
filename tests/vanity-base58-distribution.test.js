@@ -1,8 +1,8 @@
 // Pins the exact Base58 positional distribution that every vanity difficulty,
 // price, bounty and rarity claim is derived from.
 //
-// The point of these tests is that the model is checked against *reality* — real
-// Ed25519 keypairs, sampled and counted — not against a restatement of the same
+// The point of these tests is that the model is checked against *reality*, real
+// Ed25519 keypairs, sampled and counted, not against a restatement of the same
 // formula it implements. A closed form that only agrees with itself is how the
 // uniform-1/58 model survived as long as it did.
 
@@ -43,7 +43,7 @@ describe('the leading character is not uniform', () => {
 		const band = (chars) => [...chars].map((c) => prefixProbability(c));
 		const allEqual = (xs) => xs.every((x) => Math.abs(x - xs[0]) < 1e-15);
 
-		// '1' is not a digit at all — it is a leading zero *byte*.
+		// '1' is not a digit at all, it is a leading zero *byte*.
 		expect(prefixProbability('1')).toBeCloseTo(1 / 256, 12);
 
 		// '2','3': 44-digit encodings only. No 32-byte key is small enough to
@@ -56,7 +56,7 @@ describe('the leading character is not uniform', () => {
 		expect(prefixProbability('4')).toBeGreaterThan(prefixProbability('3'));
 		expect(prefixProbability('4')).toBeLessThan(prefixProbability('5'));
 
-		// '5'…'H': 44-digit plus a full 43-digit slice — the easiest band.
+		// '5'…'H': 44-digit plus a full 43-digit slice, the easiest band.
 		expect(allEqual(band('56789ABCDEFGH'))).toBe(true);
 		expect(prefixProbability('5')).toBeCloseTo(0.05904034, 7);
 
@@ -105,14 +105,14 @@ describe('the leading character is not uniform', () => {
 
 describe('multi-character prefixes', () => {
 	it('is exact for the leading symbol and uniform thereafter', () => {
-		// P('ab') = P(lead 'a') · 1/58 — the second position carries no skew.
+		// P('ab') = P(lead 'a') · 1/58, the second position carries no skew.
 		expect(prefixProbability('ab')).toBeCloseTo(prefixProbability('a') / 58, 15);
 		expect(prefixProbability('abc')).toBeCloseTo(prefixProbability('a') / 58 / 58, 17);
 	});
 
 	it('is monotonically harder as the prefix grows', () => {
-		// Note "Sol" is *not* a legal Base58 prefix — the alphabet drops
-		// lowercase L — which is exactly why patterns are validated, not assumed.
+		// Note "Sol" is *not* a legal Base58 prefix, the alphabet drops
+		// lowercase L, which is exactly why patterns are validated, not assumed.
 		let previous = 1;
 		for (const p of ['S', 'So', 'Son', 'Soni', 'Sonic']) {
 			const current = prefixProbability(p);

@@ -15898,6 +15898,16 @@
 				"feature"
 			],
 			"link": "/forged"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Vanity address difficulty, rarity and prices are now exact",
+			"summary": "Every vanity address quote, rarity score and price was built on the assumption that all 58 Base58 characters are equally likely. That holds for the end of an address but not the start: Base58 encodes an address as one large number, so an address can only begin with certain characters unless it happens to be short enough, which makes the 40 symbols from K to z about 17 times harder to lead with than 2 through H. The whole product now uses the exact distribution instead. The 385 addresses in the shop were re-rated and repriced, some up and some down, so what you pay matches the work behind the address. Receipts issued before today still verify against the model they were issued under, and the grinders now decline a pattern they cannot finish in time, quoting the real attempt count, instead of running out the clock and returning nothing.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/vanity"
 		}
 	]
 }

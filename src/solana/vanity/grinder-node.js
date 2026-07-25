@@ -59,8 +59,8 @@ const FEASIBILITY_MARGIN = 3;
  *
  * `MAX_SERVER_PATTERN_LENGTH` alone is not a sufficient guard. Base58's leading
  * character spans a 58× difficulty range (see base58-distribution.js), so a
- * 3-character pattern is ~57k attempts when it leads with '2'–'H' and ~3.3M when
- * it leads with 'K'–'z' — the latter needs ~132s, three times the budget. Such a
+ * 3-character pattern is ~57k attempts when it leads with '2'-'H' and ~3.3M when
+ * it leads with 'K'-'z', the latter needs ~132s, three times the budget. Such a
  * request used to be accepted, grind for the full 45s, and fail.
  *
  * @param {string} prefix
@@ -81,9 +81,9 @@ export function assertKeypairFeasible(prefix, suffix, ignoreCase, timeBudgetMs) 
 			`pattern needs ~${Math.round(expected).toLocaleString('en-US')} attempts ` +
 				`(~${seconds}s at ${KEYPAIR_ATTEMPTS_PER_SECOND.toLocaleString('en-US')}/sec), but the ` +
 				`${Math.round(timeBudgetMs / 1000)}s budget only affords ` +
-				`~${Math.round(affordable).toLocaleString('en-US')} — about a ${chance}% chance of a hit. ` +
+				`~${Math.round(affordable).toLocaleString('en-US')}, about a ${chance}% chance of a hit. ` +
 				`Base58's leading character is not uniform: the 40 symbols from 'K' to 'z' are ~17× ` +
-				`harder to lead with than '2'–'H'. Try a prefix starting with one of 2-9 or A-H, move ` +
+				`harder to lead with than '2'-'H'. Try a prefix starting with one of 2-9 or A-H, move ` +
 				`the pattern to the suffix (uniform 1/58 per character), or grind it in the browser at ` +
 				`/vanity, which parallelizes across all your cores.`,
 		),
