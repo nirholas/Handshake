@@ -203,21 +203,25 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs } = {}) {
 }
 
 // Run a submit→poll cycle end to end, returning the terminal job payload.
+// A timed-out payload keeps `job_id` so the caller can hand the (still
+// running) job back to the client as a pollable handle instead of an error.
 export async function generate(base, submitArgs, { timeoutEnv } = {}) {
 	const job = await startForge(base, submitArgs);
 	if (job.status === 'done' && job.glb_url) return job;
-	return pollJob(base, job.job_id, {
+	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
 	});
+	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }
 
 export async function rig(base, glbUrl, { timeoutEnv } = {}) {
 	const job = await startRig(base, glbUrl);
-	return pollJob(base, job.job_id, {
+	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
 	});
+	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }
 
 // IBM Granite prompt director. Rewrites a rough idea into a tight single-subject

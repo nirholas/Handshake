@@ -7,8 +7,11 @@
 // anchored to the prior model, returning a revertable/branchable version lineage.
 // Responses carry ONLY what a client needs
 // to show the model — a GLB URL, a viewer link, the kind, and the prompt — with
-// every internal identifier (job id, creation id, prediction id, backend name,
-// trace) stripped, per OpenAI's data-minimization policy. Each tool links the
+// every internal identifier (creation id, prediction id, backend name, trace)
+// stripped, per OpenAI's data-minimization policy. One deliberate exception:
+// a job that outlives the inline wait budget returns its PUBLIC poll handle
+// (the same job token the auth-free /api/forge REST lane hands any anonymous
+// caller) — without it the still-running work would be unreachable. Each tool links the
 // Apps SDK widget via _meta["openai/outputTemplate"] and returns structuredContent
 // the widget renders. No coin, token, wallet, or payment surface anywhere.
 
@@ -127,6 +130,30 @@ function toolError(message) {
 		content: [{ type: 'text', text: message }],
 		structuredContent: { error: true, message },
 		isError: true,
+	};
+}
+
+// Success envelope for a job that outlived the inline wait budget but IS still
+// running. This used to be an error, which threw away real work: with the
+// self-host TRELLIS lane as forge primary a generation takes 4-6 minutes, the
+// inline wait is 3, so every hosted studio call "failed" while its model
+// quietly finished minutes later and the caller never learned. The job handle
+// is public (the free /api/forge poll endpoint takes it with no auth), so hand
+// it over and let the caller collect the result.
+function pendingResult({ base, jobId, what, prompt }) {
+	const pollUrl = `${base}/api/forge?job=${encodeURIComponent(jobId)}`;
+	const message =
+		`The ${what} is still rendering (heavier scenes take a few minutes). ` +
+		`It keeps running — poll ${pollUrl} until status is "done", then use its glb_url ` +
+		`(view at ${base}/viewer?src=<glb_url>).`;
+	return {
+		content: [{ type: 'text', text: message }],
+		structuredContent: {
+			status: 'pending',
+			jobId,
+			pollUrl,
+			...(prompt ? { prompt } : {}),
+		},
 	};
 }
 
@@ -259,6 +286,7 @@ async function handleForgeFree(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url });
 }
@@ -296,6 +324,7 @@ async function handleTextToAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -347,6 +376,7 @@ async function handleMeshForge(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -366,6 +396,7 @@ async function handleRigMesh(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model' });
 	if (job._timedOut || !job.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true });
 }
@@ -406,6 +437,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
+	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined });
 	if (gen._timedOut || !gen.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 
 	// Stage 2 — auto-rig the generated mesh.
@@ -431,6 +463,7 @@ async function handleForgeAvatar(args, _auth, req) {
 			},
 		};
 	}
+	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined });
 	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
 }
@@ -514,6 +547,7 @@ async function handleRefineModel(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'refined model', prompt: prompt || undefined });
 	if (job._timedOut || !job.glb_url) return toolError('Refinement is taking longer than expected. Please try again.');
 
 	const lineage = appendVersion(baseLineage, {
