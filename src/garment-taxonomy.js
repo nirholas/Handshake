@@ -36,3 +36,12 @@ export const REGION_BONES = Object.freeze({
 /** Below this share of *weighted* garment bones resolving to avatar bones, the
  *  garment cannot deform sanely and is refused rather than shipped mangled. */
 export const MIN_BIND_COVERAGE = 0.6;
+
+/** Pixel codes for the baked body-region occlusion mask
+ *  (scripts/build-body-region-mask.mjs → parametric-base.regions.png).
+ *  Spread values (not 1..10) so a resampled/filtered read still snaps to the
+ *  right region: codes are 24 apart, so up to ±11 of interpolation error is
+ *  recoverable by nearest-code matching. 0 = unassigned. */
+export const REGION_MASK_VALUES = Object.freeze(
+	Object.fromEntries(BODY_REGIONS.map((region, i) => [region, (i + 1) * 24])),
+);

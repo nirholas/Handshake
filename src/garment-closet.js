@@ -42,12 +42,16 @@ export class GarmentCloset {
 	 * @param {() => object} opts.getWorking       workingAppearance accessor — a
 	 *        getter (not a reference) because the editor REASSIGNS the working
 	 *        object on load/save/reset; a captured reference would go stale.
+	 * @param {string} [opts.regionMaskUrl]        baked body-region mask PNG for
+	 *        this avatar's base body (pixel-exact occlusion; bone-cull otherwise)
 	 * @param {() => void} [opts.onDirty]
 	 * @param {() => void} [opts.onChanged]        re-render hook (state text, chips)
 	 */
-	constructor({ getRoot, getWorking, onDirty, onChanged }) {
+	constructor({ getRoot, getWorking, regionMaskUrl, onDirty, onChanged }) {
 		this.getRoot = getRoot;
 		this.getWorking = getWorking;
+		this.regionMaskUrl = regionMaskUrl || null;
+		this._alphaMapped = null; // material we last set an alphaMap on
 		this.onDirty = onDirty || (() => {});
 		this.onChanged = onChanged || (() => {});
 		// slot → { manifest, result } for what is live in the scene right now
@@ -184,11 +188,52 @@ export class GarmentCloset {
 		if (!root) return;
 		const body = findAvatarSkeleton(root);
 		if (body?.mesh?.geometry) restoreSkin(body.mesh.geometry);
+		if (this._alphaMapped) {
+			this._alphaMapped.alphaMap = null;
+			this._alphaMapped.alphaTest = 0;
+			this._alphaMapped.needsUpdate = true;
+			this._alphaMapped = null;
+		}
 		const regions = new Set();
 		for (const { manifest } of this._attached.values()) {
 			for (const r of manifest.occludes || []) regions.add(r);
 		}
-		if (regions.size) applySkinOcclusion(root, [...regions]);
+		if (!regions.size) return;
+
+		if (this.regionMaskUrl) {
+			// Pixel-exact path: baked UV mask drives the skin's alphaMap. Async
+			// (mask + three load once); the cull below is NOT run first so the
+			// mesh never double-hides — on mask failure we fall through to it.
+			this._applyMaskOcclusion(root, body, [...regions]).catch((err) => {
+				log('garment-closet', `mask occlusion failed, falling back to bone-cull: ${err?.message || err}`);
+				applySkinOcclusion(root, [...regions]);
+			});
+			return;
+		}
+		applySkinOcclusion(root, [...regions]);
+	}
+
+	async _applyMaskOcclusion(root, body, regions) {
+		const [{ loadRegionMask, maskToAlphaRGBA }, THREE] = await Promise.all([
+			import('./garment-region-mask.js'),
+			import('three'),
+		]);
+		const mask = await loadRegionMask(this.regionMaskUrl);
+		const material = Array.isArray(body.mesh.material) ? body.mesh.material[0] : body.mesh.material;
+		if (!material) throw new Error('body mesh has no material');
+
+		const rgba = maskToAlphaRGBA(mask.data, regions);
+		const texture = new THREE.DataTexture(rgba, mask.width, mask.height, THREE.RGBAFormat);
+		// glTF UV convention (v down, flipY=false) — matches how the mask was
+		// rasterized row 0 = v 0, and how GLTFLoader configures its textures.
+		texture.flipY = false;
+		texture.needsUpdate = true;
+
+		material.alphaMap = texture;
+		material.alphaTest = 0.5;
+		material.transparent = false; // alphaTest cuts; no blend cost
+		material.needsUpdate = true;
+		this._alphaMapped = material;
 	}
 
 	async _fetchModel(manifest) {

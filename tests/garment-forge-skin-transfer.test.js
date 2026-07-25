@@ -121,6 +121,55 @@ describe('fit + transfer on the real body', () => {
 		}
 	});
 
+	it('interpolates weights across the body surface instead of snapping to one vertex', async () => {
+		// A synthetic body: one triangle whose corners are fully weighted to
+		// three DIFFERENT joints. A garment vertex hovering over the triangle's
+		// centre must receive a ~equal blend of all three — a nearest-vertex
+		// snap would give it exactly one.
+		const { Document } = await import('@gltf-transform/core');
+		const bodyDoc = new Document();
+		const buffer = bodyDoc.createBuffer();
+		const scene = bodyDoc.createScene('s');
+		bodyDoc.getRoot().setDefaultScene(scene);
+		const j0 = bodyDoc.createNode('Hips');
+		const j1 = bodyDoc.createNode('Spine');
+		const j2 = bodyDoc.createNode('Head');
+		j0.addChild(j1); j1.addChild(j2); scene.addChild(j0);
+		const ibm = new Float32Array(3 * 16);
+		for (let i = 0; i < 3; i++) ibm.set([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], i * 16);
+		const skin = bodyDoc.createSkin('skin')
+			.setInverseBindMatrices(bodyDoc.createAccessor().setType('MAT4').setArray(ibm).setBuffer(buffer));
+		skin.addJoint(j0); skin.addJoint(j1); skin.addJoint(j2);
+		const prim = bodyDoc.createPrimitive()
+			.setAttribute('POSITION', bodyDoc.createAccessor().setType('VEC3')
+				.setArray(new Float32Array([0,0,0, 1,0,0, 0,1,0])).setBuffer(buffer))
+			.setAttribute('JOINTS_0', bodyDoc.createAccessor().setType('VEC4')
+				.setArray(new Uint16Array([0,0,0,0, 1,0,0,0, 2,0,0,0])).setBuffer(buffer))
+			.setAttribute('WEIGHTS_0', bodyDoc.createAccessor().setType('VEC4')
+				.setArray(new Float32Array([1,0,0,0, 1,0,0,0, 1,0,0,0])).setBuffer(buffer))
+			.setIndices(bodyDoc.createAccessor().setType('SCALAR')
+				.setArray(new Uint16Array([0, 1, 2])).setBuffer(buffer));
+		scene.addChild(bodyDoc.createNode('body').setMesh(bodyDoc.createMesh('m').addPrimitive(prim)).setSkin(skin));
+
+		// Garment: a single unindexed vertex above the triangle's centroid.
+		const gDoc = new Document();
+		const gBuf = gDoc.createBuffer();
+		const gPrim = gDoc.createPrimitive()
+			.setAttribute('POSITION', gDoc.createAccessor().setType('VEC3')
+				.setArray(new Float32Array([1 / 3, 1 / 3, 0.05])).setBuffer(gBuf));
+		const gMesh = gDoc.createMesh('g').addPrimitive(gPrim);
+
+		transferSkinWeights(gMesh, bodyDoc, gDoc);
+		const w = gMesh.listPrimitives()[0].getAttribute('WEIGHTS_0').getArray();
+		const j = gMesh.listPrimitives()[0].getAttribute('JOINTS_0').getArray();
+		const byJoint = new Map();
+		for (let c = 0; c < 4; c++) byJoint.set(j[c], (byJoint.get(j[c]) || 0) + w[c]);
+		// All three joints present, each near 1/3 — the barycentric signature.
+		expect(byJoint.get(0)).toBeGreaterThan(0.2);
+		expect(byJoint.get(1)).toBeGreaterThan(0.2);
+		expect(byJoint.get(2)).toBeGreaterThan(0.2);
+	});
+
 	it('derives occludes that include the slot floor', async () => {
 		const bodyDoc = await io.readBinary(baseBytes);
 		const { doc, mesh } = buildTubeDoc();

@@ -232,9 +232,15 @@ async function bootScene() {
 		// Additive wardrobe: re-attach saved catalog garments onto the live
 		// skeleton. Unknown/retired garments degrade to "not worn" inside
 		// hydrate rather than failing the whole boot.
+		const baseUrl = avatar.base_model_url || avatar.model_url || '';
 		closet = new GarmentCloset({
 			getRoot: () => scene?.root || null,
 			getWorking: () => workingAppearance,
+			// The parametric base ships a baked UV region mask, giving worn
+			// garments pixel-exact skin occlusion. Other bodies use bone-cull.
+			regionMaskUrl: baseUrl.includes('parametric-base')
+				? '/avatars/parametric-base.regions.png'
+				: null,
 			onDirty: () => updateDirtyState(),
 			onChanged: () => renderChips(),
 		});

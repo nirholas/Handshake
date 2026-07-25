@@ -50,6 +50,7 @@ A garment with no skin at all (hat, glasses) is parented to a single joint
 | Catalog loader | [`src/garment-catalog.js`](../src/garment-catalog.js) | Fetch + validate manifests; drops anything malformed or unlicensed |
 | Closet UI + controller | [`src/garment-closet.js`](../src/garment-closet.js) | Racks/tiles in the editor, attach/detach queue, appearance sync |
 | Editor wiring | [`src/avatar-edit.js`](../src/avatar-edit.js) | Hydrate on load, persist `appearance.garments`, reset/save |
+| Region mask (pixel-exact occlusion) | Baker [`scripts/build-body-region-mask.mjs`](../scripts/build-body-region-mask.mjs) → `public/avatars/parametric-base.regions.png`, sampler [`src/garment-region-mask.js`](../src/garment-region-mask.js) | On the parametric base, worn garments cut the skin via a baked UV mask (alphaMap) instead of triangle culling; any other body falls back to bone-cull |
 | Server schema | [`api/_lib/validate.js`](../api/_lib/validate.js) | `appearance.garments` — one garment per slot, catalog-shaped refs |
 | Bake pass | [`api/_lib/bake-garments.js`](../api/_lib/bake-garments.js) | Same rebind on the @gltf-transform document, so exports are dressed |
 | Manifest contract | [`specs/GARMENT_MANIFEST.md`](../specs/GARMENT_MANIFEST.md) | What a wearable must declare to enter the catalog |
