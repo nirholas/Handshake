@@ -72,6 +72,13 @@ export default wrapCron(async (req, res) => {
 	// never targets.
 	const targets = [];
 	const errors = [];
+	// A non-master signer whose SECRET resolves to the master's own wallet (env
+	// aliasing, e.g. THREE_BUYBACK_SECRET_KEY_B64 set to the master key). Its
+	// balance IS the master's balance, so it can never be a refill target — before
+	// this check, every sweep listed it as underfunded, filterToRegistry rejected
+	// the master-to-itself transfer, and the pair of alerts re-fired forever
+	// (~10k repeats each) while misreporting the count of genuinely dry engines.
+	const masterAliased = [];
 	// Fallback env vars can resolve two registry entries to the SAME wallet
 	// (e.g. x402-ring-payer falling back to the agent key) — top it up once.
 	const seenPubkeys = new Set();
@@ -81,6 +88,10 @@ export default wrapCron(async (req, res) => {
 		if (!resolved.configured) continue;
 		if (resolved.decodeError || !resolved.pubkey) {
 			errors.push({ name: spec.name, reason: 'secret_decode_failed' });
+			continue;
+		}
+		if (resolved.pubkey === ECONOMY_MASTER_ADDRESS) {
+			masterAliased.push(spec.name);
 			continue;
 		}
 		if (seenPubkeys.has(resolved.pubkey)) continue;
@@ -202,6 +213,7 @@ export default wrapCron(async (req, res) => {
 			master_operating_sol: masterOperatingSol,
 			reclaim,
 			fuel,
+			master_aliased: masterAliased,
 			read_errors: errors,
 		});
 	}
@@ -260,6 +272,17 @@ export default wrapCron(async (req, res) => {
 		);
 	}
 
+	// A signer aliased to the master is a standing config condition, not a
+	// per-sweep event: say it once per name (stable signature → one ops_alerts
+	// row), and never count it among dry engines.
+	for (const name of masterAliased) {
+		await sendOpsAlert(
+			`ℹ️ Signer "${name}" resolves to the economy master wallet`,
+			`${name}'s secret decodes to the master (${ECONOMY_MASTER_ADDRESS}), so its balance rides the master's and it is excluded from refill targets. If this aliasing is unintended, point ${name}'s env secret at its own keypair.`,
+			{ signature: `economy-alias-master:${name}`, severity: 'info' },
+		);
+	}
+
 	// An off-registry target reaching the sweep means a bad caller/target list.
 	// No SOL moved (the allowlist blocked it), but a human should know why.
 	for (const r of result.rejected || []) {
@@ -284,6 +307,7 @@ export default wrapCron(async (req, res) => {
 		master_deficit_sol: Number(masterDeficitSol.toFixed(6)),
 		reclaim,
 		fuel,
+		master_aliased: masterAliased,
 		read_errors: errors,
 		run_id: runId,
 		ledger,
