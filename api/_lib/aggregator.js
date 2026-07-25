@@ -79,7 +79,7 @@ export function resetUpstreamHealth() {
 }
 
 // Alternate hosts for a provider, primary first, resolved lazily and only when
-// the primary has already failed — a provider like `solana` fronts a pool of
+// the primary has already failed: a provider like `solana` fronts a pool of
 // interchangeable RPC endpoints, and resolving that pool can be expensive
 // (api/_lib/solana/connection.js pulls in @solana/web3.js), so the happy path
 // never pays for it.

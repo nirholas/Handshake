@@ -3,7 +3,7 @@
 //
 // With FORGE_SELFHOST_PRIMARY set in production, the free forge lane runs on
 // self-host TRELLIS at 4-6 minutes per model while the studio's inline wait is
-// 3 minutes (STUDIO_FORGE_TIMEOUT_MS default 180s) — so every hosted
+// 3 minutes (STUDIO_FORGE_TIMEOUT_MS default 180s): so every hosted
 // forge_free call answered "Generation is taking longer than expected" while
 // its model quietly completed minutes later and the caller never learned the
 // job existed. The timed-out path now carries the job_id forward and the tool

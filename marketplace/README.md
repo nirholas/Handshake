@@ -1,4 +1,4 @@
-# marketplace/ — Claude Code plugin marketplace
+# marketplace/: Claude Code plugin marketplace
 
 The plugin marketplace this repo serves to Claude Code users. Adding
 `nirholas/three.ws` as a marketplace makes every plugin under
@@ -13,7 +13,7 @@ The plugin marketplace this repo serves to Claude Code users. Adding
 
 | Plugin | What it does |
 | --- | --- |
-| [three-ws-3d](plugins/three-ws-3d/) | Generate textured 3D models and rigged avatars from text or images inside Claude Code — free text→3D lane plus the paid x402 tools (`text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`), each returning a GLB URL + three.ws viewer link. Bundles the three.ws MCP server. |
+| [three-ws-3d](plugins/three-ws-3d/) | Generate textured 3D models and rigged avatars from text or images inside Claude Code: free text→3D lane plus the paid x402 tools (`text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`), each returning a GLB URL + three.ws viewer link. Bundles the three.ws MCP server. |
 | [three-ws-developer](plugins/three-ws-developer/) | Developer tooling for building ON three.ws: scaffold an agent, configure `@three-ws/mcp-server`, get runnable code for the paid MCP tools. |
 
 Each plugin directory is self-contained: `.claude-plugin/plugin.json`

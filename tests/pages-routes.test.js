@@ -1,7 +1,7 @@
 // Every static page we advertise must actually be built and routed.
 //
 // data/pages.json is the source of truth for the sitemap, llms.txt, features.json
-// and the changelog — a path listed there is published to search engines and to
+// and the changelog: a path listed there is published to search engines and to
 // agents. Twice now a page has landed with a pages.json entry, an HTML source
 // file and a changelog line, but no wiring to serve it (/timeline, /tracker), so
 // the advertised URL 404'd in production while every index claimed it existed.
@@ -13,7 +13,7 @@
 // Only paths backed by a pages/<name>.html source are checked. Most declared
 // paths (docs/*, tutorials/*, .well-known/*) are rendered at request time by
 // api/** handlers, so a blanket "every path needs a route" sweep would
-// false-flag them — the same reasoning as scripts/check-dist.mjs.
+// false-flag them: the same reasoning as scripts/check-dist.mjs.
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
@@ -31,7 +31,7 @@ const declaredPaths = pagesConfig.sections.flatMap((section) =>
 	(section.pages || []).map((page) => page.path),
 );
 
-// Declared paths whose HTML is authored under pages/ — i.e. pure static build
+// Declared paths whose HTML is authored under pages/: i.e. pure static build
 // output, the class of page this guard covers.
 const staticPages = declaredPaths
 	.map((pagePath) => ({ pagePath, source: `pages${pagePath.replace(/\/$/, '')}.html` }))
@@ -43,8 +43,8 @@ const rewrites = vercelConfig.routes.filter(
 	(route) => typeof route.src === 'string' && route.dest && !route.status,
 );
 
-// The dest need not be the page's own filename — /ar renders ar-forge.html and
-// /events/<slug> uses a captured dest — so the rule is that some rewrite claims
+// The dest need not be the page's own filename: /ar renders ar-forge.html and
+// /events/<slug> uses a captured dest: so the rule is that some rewrite claims
 // the path and lands on an HTML document, not on the identity catch-all.
 const hasRoute = (pagePath) =>
 	rewrites.some((route) => route.dest.endsWith('.html') && new RegExp(`^${route.src}$`).test(pagePath));

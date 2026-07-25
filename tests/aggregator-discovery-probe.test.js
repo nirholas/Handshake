@@ -5,7 +5,7 @@
 // validator, x402-observer's trust monitor) call every registered endpoint with
 // no arguments to check it is alive and priced. Our paid-only endpoints answered
 // that sweep correctly with a 402 challenge, but the free-tier ones ran param
-// validation first and answered 400 — so roughly 14k parameterless probes over
+// validation first and answered 400: so roughly 14k parameterless probes over
 // 30 days scored a working catalog as failing, and drowned the real error rate
 // in usage_events at the same time.
 //

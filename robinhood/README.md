@@ -1,7 +1,7 @@
-# robinhood/ — the Robinhood Chain suite
+# robinhood/: the Robinhood Chain suite
 
 Everything three.ws builds for **Robinhood Chain** (Robinhood's Arbitrum
-Orbit L2, chain ID 4663) — Robinhood Crypto only. Solana remains the home
+Orbit L2, chain ID 4663): Robinhood Crypto only. Solana remains the home
 chain; these are additional crypto surfaces, and each subproject below has its
 own README with install and usage.
 

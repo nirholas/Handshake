@@ -16,7 +16,7 @@ This is the hot loop only. Everything around it lives in JS:
 
 ## Why raw curve25519-dalek
 
-Each candidate needs only `SHA-512(seed) → clamp → scalar·G → compress` — the
+Each candidate needs only `SHA-512(seed) → clamp → scalar·G → compress`: the
 ed25519 public-key derivation without constructing ed25519-dalek's full
 `SigningKey`. The output is bit-for-bit identical to
 `SigningKey::from_bytes(seed).verifying_key().to_bytes()`, and skipping the
@@ -42,7 +42,7 @@ wasm-pack build --release --target web
 
 Copy the artifacts from `pkg/` into `src/solana/vanity/wasm/` to update the
 module the site ships. The release profile pins `lto = "fat"`, a single
-codegen unit, and `wasm-opt -O3 --enable-simd` — keep those; the grinder's
+codegen unit, and `wasm-opt -O3 --enable-simd`: keep those; the grinder's
 value is throughput.
 
 `publish = false` is intentional: this crate is an internal build input, not a

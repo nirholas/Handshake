@@ -3,7 +3,7 @@
 -- Three seed/bot crons create users with synthetic *.three.ws emails
 -- (avaturn-seed-cron, forge-seed-cron, circulation's agent personas; a
 -- retired fleet seeder left @fleet.three.ws rows). As of 2026-07-25 they are
--- 19,282 of the 20,337 rows in users — 95% — so every "total users" or
+-- 19,282 of the 20,337 rows in users: 95%: so every "total users" or
 -- "signups this week" read was measuring cron output, not people.
 -- (@wallet.local is NOT tagged: those are real humans signing in with a
 -- wallet, given a placeholder email by the SIWS/SIWE flow.)

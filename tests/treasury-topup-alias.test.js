@@ -7,7 +7,7 @@
 // and the paired alerts ("could not refill 3 engine(s)" / "blocked an
 // off-registry target (is_master)") re-fired ~10k times each while the count of
 // genuinely dry engines read one too high. The alias is a standing config
-// condition, not a per-sweep event — it belongs in `master_aliased`, out of
+// condition, not a per-sweep event: it belongs in `master_aliased`, out of
 // `targets`, and in one info alert, not two warn storms.
 //
 // Exercised through the real handler in ?dry=1 mode: same signer resolution and
