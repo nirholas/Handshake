@@ -35,7 +35,7 @@ const SUBSYSTEMS = [
 async function lastActivity(table, ts) {
 	if (!table) return null;
 	try {
-		const rows = await sql.query(`SELECT extract(epoch from max(${ts})) * 1000 AS ms FROM ${table}`);
+		const rows = await sql(`SELECT extract(epoch from max(${ts})) * 1000 AS ms FROM ${table}`);
 		return rows?.[0]?.ms != null ? Number(rows[0].ms) : null;
 	} catch { return null; }
 }

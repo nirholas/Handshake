@@ -83,7 +83,7 @@ async function upsertTripwireVerdict({ subsystem, reconciled, runId, detail }) {
 export async function lastActivityMs(table, tsColumn = 'created_at') {
 	try {
 		// table/column are internal literals, never user input.
-		const rows = await sql.query(`SELECT extract(epoch from max(${tsColumn})) * 1000 AS ms FROM ${table}`);
+		const rows = await sql(`SELECT extract(epoch from max(${tsColumn})) * 1000 AS ms FROM ${table}`);
 		const ms = rows?.[0]?.ms;
 		return ms != null ? Number(ms) : null;
 	} catch {

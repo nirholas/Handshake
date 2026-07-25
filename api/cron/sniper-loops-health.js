@@ -38,7 +38,7 @@ async function probeLoop(loop) {
 	try {
 		const where = loop.networkColumn ? `where ${loop.networkColumn} = $1` : '';
 		const params = loop.networkColumn ? [NETWORK] : [];
-		const rows = await sql.query(
+		const rows = await sql(
 			`select max(${loop.column}) as last_at from ${loop.table} ${where}`,
 			params,
 		);
