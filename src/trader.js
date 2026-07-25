@@ -129,6 +129,7 @@ function metricsGrid(m) {
 		${metric('Coins traded', String(m.unique_coins), `${m.closed_count} closed trades`)}
 		${snipe}
 		${metric('Open exposure', m.open_count ? fmtSol(m.open_exposure_sol, { sign: false }) : '<span class="lb-muted">none</span>', m.open_count ? `${m.open_count} open · ${unreal}` : 'flat')}
+		${m.moonbags_held > 0 ? metric('Moon-bags riding', String(m.moonbags_held), `~${fmtSol(m.moonbag_value_sol, { sign: false })} at zero cost basis`) : ''}
 	`;
 }
 
@@ -266,11 +267,14 @@ function closedRows(closed) {
 			t.self_dealing
 				? '<span class="tp-tag tp-tag-self" title="Trade on a coin this account launched — excluded from the credited score">self-deal</span>'
 				: '',
+			t.moonbag_held
+				? `<span class="tp-tag tp-tag-moonbag" title="Not a full exit: the initial buy-in was sold and ${t.moonbag_value_sol != null ? `~${fmtSol(t.moonbag_value_sol, { sign: false })} of` : ''} tokens still ride at zero cost basis">moon-bag held</span>`
+				: '',
 		].filter(Boolean).join('');
 		return `<tr${t.self_dealing ? ' class="tp-row-muted"' : ''}>
 			<td><div class="tp-coin"><span class="tp-coin-sym">${escapeHtml(t.symbol || t.name || '—')}</span><span class="tp-coin-mint">${escapeHtml(shortAddr(t.mint, 4, 4))}</span>${tags}</div></td>
 			<td>${pnl}<div class="tp-metric-sub">${pct}</div></td>
-			<td><span class="tp-reason">${escapeHtml(t.exit_reason || '—')}</span></td>
+			<td><span class="tp-reason">${escapeHtml(t.exit_reason || '—')}</span>${t.moonbag_held ? '<div class="tp-metric-sub">initials out, rest rides</div>' : ''}</td>
 			<td>${held}</td>
 			<td>${relTime(t.closed_at)}</td>
 			<td>${proof || '—'}</td>
@@ -549,6 +553,9 @@ function downloadCard() {
 		['ROI', fmtPct(m.roi_pct, { sign: true })],
 		['TRADES', String(m.closed_count)],
 	];
+	// The moon-bag stat is the policy statement: sells recover the buy-in, the
+	// rest rides. Only shown once at least one bag is actually held.
+	if (m.moonbags_held > 0) stats.push(['MOON-BAGS', String(m.moonbags_held)]);
 	const sx = 64, sy = 470, sw = (W - 128) / stats.length;
 	stats.forEach(([label, val], i) => {
 		const x = sx + i * sw;

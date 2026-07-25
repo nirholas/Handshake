@@ -385,6 +385,14 @@ export function computeTraderMetrics(positions, { solUsd = null, selfDealMints =
 		unique_coins: coins.size,
 		churn_pct: Number(churnPct.toFixed(2)),
 
+		// Moon-bag policy in numbers: closed rows where the initials came out but
+		// tokens still ride. "Closed" here means the stake is recovered, not that
+		// the trader sold 100% — these two fields are what makes that legible.
+		moonbags_held: closed.filter((p) => Number(p.moonbag_base_amount || 0) > 0).length,
+		moonbag_value_sol: Number((closed.reduce(
+			(a, p) => a + (Number(p.moonbag_base_amount || 0) > 0 ? big(p.moonbag_last_value_lamports || 0) : 0), 0,
+		) / LAMPORTS_PER_SOL).toFixed(6)),
+
 		// What they made it on — the single top-earning coin plus a short breakdown,
 		// each number traceable to the closed positions above. `top_coin` is null
 		// only when the trader has no closed positions with a mint in this window.
@@ -475,7 +483,8 @@ export async function fetchTraderPositions({ agentId, network, window = 'all', n
 				select p.id, p.agent_id, p.wallet, p.mint, p.symbol, p.name, p.status, p.exit_reason,
 				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
 				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
-				       p.opened_at, p.closed_at
+				       p.opened_at, p.closed_at,
+				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered
 				from agent_sniper_positions p
 				where p.agent_id = ${agentId} and p.network = ${network}
 				  and (p.status in ('open','opening','closing') or p.closed_at >= ${start})
@@ -485,7 +494,8 @@ export async function fetchTraderPositions({ agentId, network, window = 'all', n
 				select p.id, p.agent_id, p.wallet, p.mint, p.symbol, p.name, p.status, p.exit_reason,
 				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
 				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
-				       p.opened_at, p.closed_at
+				       p.opened_at, p.closed_at,
+				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered
 				from agent_sniper_positions p
 				where p.agent_id = ${agentId} and p.network = ${network}
 				order by coalesce(p.closed_at, p.opened_at) desc
@@ -556,6 +566,11 @@ async function copierCountForAgent(agentId, network) {
 
 /** Shape a closed position for the profile history + Proof tab (every number → tx). */
 export function shapeClosed(p, network) {
+	// A closed row with a moon-bag is NOT a 100% sell: the initials came out and
+	// the remaining tokens still ride (owner policy: sell the buy-in at 2x, hold
+	// the rest even to zero). Surface that or the track record misreads as
+	// full exits.
+	const moonbagTokens = p.moonbag_base_amount != null ? Number(p.moonbag_base_amount) : 0;
 	return {
 		id: p.id,
 		mint: p.mint,
@@ -570,6 +585,10 @@ export function shapeClosed(p, network) {
 		closed_at: p.closed_at,
 		buy_url: solscanUrl(p.buy_sig, network),
 		sell_url: solscanUrl(p.sell_sig, network),
+		moonbag_held: moonbagTokens > 0,
+		moonbag_value_sol: moonbagTokens > 0 && p.moonbag_last_value_lamports != null
+			? big(p.moonbag_last_value_lamports) / LAMPORTS_PER_SOL
+			: null,
 	};
 }
 
@@ -842,6 +861,7 @@ export async function getLeaderboard({
 				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
 				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
 				       p.opened_at, p.closed_at,
+				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered,
 				       a.user_id as agent_user_id, a.name as agent_name, a.avatar_url as agent_avatar, a.profile_image_url as agent_image
 				from agent_sniper_positions p
 				join agent_identities a on a.id = p.agent_id
@@ -853,6 +873,7 @@ export async function getLeaderboard({
 				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
 				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
 				       p.opened_at, p.closed_at,
+				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered,
 				       a.user_id as agent_user_id, a.name as agent_name, a.avatar_url as agent_avatar, a.profile_image_url as agent_image
 				from agent_sniper_positions p
 				join agent_identities a on a.id = p.agent_id

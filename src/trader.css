@@ -164,6 +164,7 @@
 .tp-tag { display: inline-block; margin-left: var(--space-2xs); font-size: var(--text-2xs); padding: 1px var(--space-2xs); border-radius: var(--radius-pill); border: 1px solid var(--stroke); white-space: nowrap; vertical-align: middle; }
 .tp-tag-snipe { color: var(--wallet-accent-strong, #a78bfa); border-color: color-mix(in srgb, var(--wallet-accent-strong, #a78bfa) 45%, transparent); background: color-mix(in srgb, var(--wallet-accent-strong, #a78bfa) 12%, transparent); }
 .tp-tag-self { color: var(--warn, #fbbf24); border-color: color-mix(in srgb, var(--warn, #fbbf24) 45%, transparent); background: color-mix(in srgb, var(--warn, #fbbf24) 12%, transparent); }
+.tp-tag-moonbag { color: var(--pos, #4ade80); border-color: color-mix(in srgb, var(--pos, #4ade80) 45%, transparent); background: color-mix(in srgb, var(--pos, #4ade80) 12%, transparent); }
 .tp-row-muted td { opacity: 0.62; }
 .tp-row-muted:hover td { opacity: 0.85; }
 .tp-proof-link { color: var(--ink-dim); text-decoration: none; font-size: var(--text-2xs); border-bottom: 1px dotted var(--stroke-strong); white-space: nowrap; }

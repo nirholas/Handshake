@@ -354,3 +354,38 @@ describe('windowStartIso', () => {
 		expect([...WINDOWS].sort()).toEqual(['24h', '30d', '7d', 'all']);
 	});
 });
+
+describe('moon-bag legibility (a closed row with a bag is NOT a 100% sell)', () => {
+	const SOLL = 1e9;
+	const bagged = {
+		status: 'closed', mint: 'MOON', symbol: 'M', realized_pnl_lamports: String(1 * SOLL),
+		realized_pnl_pct: 125, entry_quote_lamports: String(1 * SOLL), exit_quote_lamports: String(2 * SOLL),
+		opened_at: '2026-01-02T00:00:00.000Z', closed_at: '2026-01-02T00:10:00.000Z', buy_sig: 'b9', sell_sig: 's9',
+		moonbag_base_amount: '10224801450', moonbag_last_value_lamports: String(0.25 * SOLL), initials_recovered: true,
+	};
+
+	it('shapeClosed carries the held bag and its live value', async () => {
+		const { shapeClosed } = await import('../api/_lib/trader-stats.js');
+		const row = shapeClosed(bagged, 'mainnet');
+		expect(row.moonbag_held).toBe(true);
+		expect(row.moonbag_value_sol).toBeCloseTo(0.25);
+	});
+
+	it('shapeClosed reports no bag for a genuine full exit (and legacy rows)', async () => {
+		const { shapeClosed } = await import('../api/_lib/trader-stats.js');
+		expect(shapeClosed({ ...bagged, moonbag_base_amount: '0' }, 'mainnet').moonbag_held).toBe(false);
+		expect(shapeClosed({ ...bagged, moonbag_base_amount: null, moonbag_last_value_lamports: null }, 'mainnet').moonbag_held).toBe(false);
+	});
+
+	it('metrics count bags held and sum their riding value', () => {
+		const m = computeTraderMetrics([...FIXTURE, bagged], { solUsd: 200 });
+		expect(m.moonbags_held).toBe(1);
+		expect(m.moonbag_value_sol).toBeCloseTo(0.25);
+	});
+
+	it('a book with no bags reports zero, not null', () => {
+		const m = computeTraderMetrics(FIXTURE, { solUsd: 200 });
+		expect(m.moonbags_held).toBe(0);
+		expect(m.moonbag_value_sol).toBe(0);
+	});
+});

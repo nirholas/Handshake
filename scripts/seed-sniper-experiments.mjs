@@ -180,7 +180,9 @@ const BOOST_ARM = {
 		trailing_stop_pct: 8,
 		take_profit_pct: 20,
 		max_hold_seconds: 240,
-		initials_out_multiple: null, // ladder off — a 4-minute ride full-exits
+		// Owner directive 2026-07-25: EVERY arm sells its initial buy-in at 2x
+		// and rides the rest. Even a 4-minute boost ride keeps the moon-bag.
+		initials_out_multiple: 2,
 		auto_fund_enabled: true,
 	},
 };
@@ -222,7 +224,7 @@ const KIMI_ARM = {
 		trailing_stop_pct: 20,
 		take_profit_pct: 60,
 		max_hold_seconds: 1800,
-		initials_out_multiple: null,
+		initials_out_multiple: 2, // owner directive: initials out at 2x, ride the rest
 		auto_fund_enabled: true,
 	},
 };
