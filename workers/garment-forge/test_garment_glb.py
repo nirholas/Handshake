@@ -271,6 +271,17 @@ check("slot clamp: top keeps its evidenced regions", occ_top == occ, f"{occ_top}
 trace = {"Spine": 0.97, "Hips": 0.03}
 occ_trace = derive_occludes(trace, 1.0, slot="top")
 check("3% hip graze does not hide the pelvis", occ_trace == ["torso"], str(occ_trace))
+# scalp is categorically un-occludable: it resolves to the Head bone, and
+# Head-bone culling cannot separate scalp from face. A cap or hairstyle whose
+# weight sits 100% on Head must still declare occludes=[] or the avatar loses
+# its face at attach time.
+head_only = {"Head": 1.0}
+check("headwear on Head occludes nothing",
+      derive_occludes(head_only, 1.0, slot="headwear") == [],
+      str(derive_occludes(head_only, 1.0, slot="headwear")))
+check("hair on Head occludes nothing",
+      derive_occludes(head_only, 1.0, slot="hair") == [],
+      str(derive_occludes(head_only, 1.0, slot="hair")))
 bones = weighted_bones(stats["bone_mass"], stats["total_mass"])
 check("rig.bones in canonical order", bones == ["Hips", "Spine", "LeftArm"], str(bones))
 

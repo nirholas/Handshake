@@ -72,8 +72,9 @@ pure glTF work in between:
 6. **Validate + publish**: skin-weight statistics produce the bind coverage,
    the `occludes` declaration (any REGION_BONES region carrying ≥ 10% of the
    garment's skin weight, then clamped to the slot's plausible region set,
-   `SLOT_OCCLUDABLE` — a shirt's waistband graze must not amputate the
-   avatar's legs), and the manifest's `rig.bones`. All 6 manifest validation rules run in-process;
+   `SLOT_OCCLUDABLE`: a shirt's waistband graze must not amputate the
+   avatar's legs, and headwear/hair may occlude nothing at all), and the
+   manifest's `rig.bones`. All 6 manifest validation rules run in-process;
    any failure fails the job. On success `garment.glb`, `manifest.json`, and
    `thumb.webp` (from the reference image) land in
    `garments/<slot>/<id>/v<version>/` and the manifest is appended to

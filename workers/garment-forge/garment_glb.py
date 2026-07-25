@@ -70,8 +70,11 @@ SLOT_OCCLUDABLE = {
     "outerwear": ("torso", "upperArms", "lowerArms", "neck", "hips", "upperLegs"),
     "bottom": ("hips", "upperLegs", "lowerLegs"),
     "footwear": ("feet", "lowerLegs"),
-    "hair": ("scalp",),
-    "headwear": ("scalp",),
+    # scalp is NEVER occludable: it resolves to the Head bone, and Head-bone
+    # occlusion cannot separate scalp from face, so culling it deletes the
+    # avatar's face. Caps and hair simply cover; they hide nothing.
+    "hair": (),
+    "headwear": (),
     "glasses": (),
     "accessory": (),
 }

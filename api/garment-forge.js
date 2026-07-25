@@ -59,7 +59,7 @@ async function startJob(req, res, cfg) {
 	if (prompt.length < 3 || prompt.length > 500) {
 		return json(res, 400, {
 			error: 'invalid_prompt',
-			message: 'Describe the garment in 3–500 characters (e.g. "a white oxford dress shirt").',
+			message: 'Describe the garment in 3 to 500 characters (e.g. "a white oxford dress shirt").',
 		});
 	}
 	if (!GARMENT_SLOTS.includes(slot)) {
