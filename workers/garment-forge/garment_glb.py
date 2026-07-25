@@ -45,10 +45,11 @@ from canonical_bones import (
 SPEC_URI = "https://three.ws/specs/garment-manifest-v1"
 
 # SPDX identifiers the catalog accepts (validation rule 6: recognised SPDX,
-# commercial use permitted). Extend deliberately, never guess.
+# commercial use permitted). Kept in exact lockstep with COMMERCIAL_LICENSES
+# in src/garment-catalog.js: publishing anything the runtime consumer would
+# reject is a dead catalog entry.
 COMMERCIAL_SPDX = frozenset({
-    "CC0-1.0", "MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause",
-    "CC-BY-4.0", "Unlicense", "Zlib",
+    "CC0-1.0", "CC-BY-4.0", "MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause",
 })
 
 # A region must carry at least this share of the garment's total skin weight

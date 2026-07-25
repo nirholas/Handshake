@@ -87,16 +87,32 @@ def test_wider_face_widens_head():
 
 
 def test_outlier_clamped():
-    """A single wild landmark must not blow up the mesh (displacement clamp)."""
+    """
+    A single wild landmark must not blow up the mesh, at whatever clamp is in
+    force — including the shipped default, which the ISE sweep may retune.
+
+    The bound is asserted against the clamp actually passed rather than a literal,
+    so retuning `max_displacement_frac` cannot silently turn this into a test of
+    a value nobody ships.
+    """
     _, base, _, fmap = _load()
     detected = fmap.canonical_norm.copy()
     detected[fmap.stable_indices[0]] += np.array([5.0, 5.0, 5.0])  # absurd outlier
-    morphed = fg.morph_head_to_landmarks(base, fmap, detected, strength=1.0)
-    move = np.linalg.norm(morphed - base, axis=1).max()
-    clamp = 0.18 * fmap.head_face_scale
-    assert move <= clamp * 1.5 + 1e-6, f"outlier not clamped: max move {move:.4f} vs clamp {clamp:.4f}"
-    assert np.isfinite(morphed).all(), "non-finite vertices after morph"
-    print(f"ok  outlier landmark clamped (max move {move:.4f} ≤ ~{clamp:.4f})")
+
+    import inspect
+    shipped = inspect.signature(fg.morph_head_to_landmarks).parameters["max_displacement_frac"].default
+
+    for frac in (0.18, shipped, 0.65):
+        morphed = fg.morph_head_to_landmarks(
+            base, fmap, detected, strength=1.0, max_displacement_frac=frac
+        )
+        move = np.linalg.norm(morphed - base, axis=1).max()
+        clamp = frac * fmap.head_face_scale
+        assert move <= clamp * 1.5 + 1e-6, (
+            f"outlier not clamped at frac={frac}: max move {move:.4f} vs clamp {clamp:.4f}"
+        )
+        assert np.isfinite(morphed).all(), "non-finite vertices after morph"
+    print(f"ok  outlier landmark clamped at every frac (shipped default {shipped})")
 
 
 def test_roundtrip_through_glb():

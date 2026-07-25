@@ -40,10 +40,19 @@ closes that gap:
 3. That displacement is carried onto the head's corresponding vertices (a
    nearest-vertex map precomputed by `precompute_uv.py`), scaled into head units,
    and clamped to reject landmark/pose outliers.
-4. A **normalised-Gaussian RBF** (partition of unity — local, bounded, no
-   extrapolation) diffuses the sparse displacements across all 2162 head vertices,
-   with a locality mask that fades the morph to zero off the face so the scalp,
-   ears and neck stay put.
+4. A **thin-plate spline** interpolates the sparse displacements across all 2162
+   head vertices. TPS passes exactly through its control points, so localised
+   identity (a wider jaw, a longer nose) survives instead of being averaged away
+   — the failure mode of normalised-Gaussian/Shepard weighting. TPS extrapolates
+   freely, so a Gaussian locality mask fades the field to zero off the face and
+   the scalp, ears and neck stay put.
+
+`strength` and `max_displacement_frac` default to **0.6 / 0.45**, chosen by an
+ISE sweep over the 40-face reference set (`python -m eval.tune_morph`), not by
+eye. They cut mean ISE 43% against the original 0.75 / 0.18, whose ~1.9 cm
+displacement ceiling was throttling genuine facial variation rather than
+rejecting outliers. See [avatar-fidelity-program.md](avatar-fidelity-program.md)
+for why the sweep's own looser optimum was deliberately not shipped.
 
 Because vertex count and order never change, `glb_ops.set_head_geometry` writes
 the morphed positions (and recomputed normals) back **without disturbing the

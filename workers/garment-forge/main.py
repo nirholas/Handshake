@@ -28,7 +28,10 @@ different instances still see one record, and the service can scale to zero.
 Environment variables:
   API_KEY          shared bearer secret (avatar-reconstruction-key), used both
                    to authenticate callers and to call the other workers
-  GCS_BUCKET       bucket holding garments/** (three-ws-model-weights)
+  GCS_BUCKET       job records + rig staging (three-ws-avatar-reconstructions,
+                   the same worker-artifact bucket the rest of the fleet uses)
+  PUBLISH_BUCKET   public catalog bucket holding garments/** (three-ws-garments,
+                   the bucket src/garment-catalog.js reads)
   MESH_WORKER_URLS comma-separated /infer-contract mesh workers, priority order
   RIG_URL          model-rig base URL
   REFBODY_PATH     reference body GLB baked into the image
@@ -68,6 +71,7 @@ log = logging.getLogger("garment-forge")
 
 API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
+PUBLISH_BUCKET = os.environ["PUBLISH_BUCKET"]
 MESH_WORKER_URLS = [u.strip().rstrip("/") for u in
                     os.environ["MESH_WORKER_URLS"].split(",") if u.strip()]
 RIG_URL = os.environ["RIG_URL"].rstrip("/")
@@ -75,14 +79,15 @@ REFBODY_PATH = os.environ.get("REFBODY_PATH", "/app/assets/refbody.glb")
 GARMENT_YAW_DEG = float(os.environ.get("GARMENT_YAW_DEG", "0"))
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
 
-_bucket: Optional[storage.Bucket] = None
+_bucket: Optional[storage.Bucket] = None          # jobs + rig staging
+_publish_bucket: Optional[storage.Bucket] = None  # public garment catalog
 _sem: Optional[asyncio.Semaphore] = None
 _refbody: Optional[bytes] = None
 _jobs: dict[str, dict] = {}
 
 
 def _job_blob(job_id: str):
-    return _bucket.blob(f"garments/jobs/{job_id}.json")
+    return _bucket.blob(f"garment-jobs/{job_id}.json")
 
 
 async def _update_job(job_id: str, **fields) -> dict:
@@ -99,8 +104,10 @@ async def _update_job(job_id: str, **fields) -> dict:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem, _refbody
-    _bucket = storage.Client().bucket(GCS_BUCKET)
+    global _bucket, _publish_bucket, _sem, _refbody
+    client = storage.Client()
+    _bucket = client.bucket(GCS_BUCKET)
+    _publish_bucket = client.bucket(PUBLISH_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     with open(REFBODY_PATH, "rb") as fh:
         _refbody = fh.read()
@@ -145,8 +152,8 @@ def _run_stages(job_id: str, prompt: str, slot: str, tier: str,
     bones = garment_glb.weighted_bones(stats["bone_mass"], stats["total_mass"])
 
     garment_id = f"{garment_glb.slugify(prompt)}-{job_id[:6]}"
-    version = pipeline.next_version(_bucket, slot, garment_id)
-    base = (f"https://storage.googleapis.com/{_bucket.name}/garments/"
+    version = pipeline.next_version(_publish_bucket, slot, garment_id)
+    base = (f"https://storage.googleapis.com/{_publish_bucket.name}/garments/"
             f"{slot}/{garment_id}/v{version}")
     manifest = garment_glb.build_manifest(
         garment_id=garment_id,
@@ -169,7 +176,7 @@ def _run_stages(job_id: str, prompt: str, slot: str, tier: str,
 
     progress("publish")
     thumb = pipeline.make_thumbnail(image_bytes)
-    urls = pipeline.publish(_bucket, slot, garment_id, version,
+    urls = pipeline.publish(_publish_bucket, slot, garment_id, version,
                             garment_bytes, manifest, thumb)
     return {
         **urls,

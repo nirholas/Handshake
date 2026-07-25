@@ -21,9 +21,12 @@ generate an arbitrary mesh). Two phases, both commercial-clean:
    avatar reads as *that person* instead of their texture on a generic head.
    Umeyama-aligns the landmarks to MediaPipe's neutral canonical face, carries
    the identity residual onto the head's corresponding vertices (precomputed
-   nearest-vertex map), and diffuses it with a normalised-Gaussian RBF that fades
-   to zero off the face. Vertex count/order are preserved, so `glb_ops.set_head_geometry`
-   writes it back **without disturbing skinning or any blendshape**.
+   nearest-vertex map), and interpolates it across the head with a thin-plate
+   spline that passes through the control points, under a Gaussian mask that
+   fades the field to zero off the face. Vertex count/order are preserved, so
+   `glb_ops.set_head_geometry` writes it back **without disturbing skinning or
+   any blendshape**. The `strength` / `max_displacement_frac` defaults are set by
+   an ISE sweep over the reference set — see [`eval/`](eval/README.md).
 
 `precompute_uv.py` builds `face_uv_map.json` at image-build time: the canonical
 face model, the landmark→head-vertex correspondence, and the skin UV mapping.

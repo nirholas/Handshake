@@ -121,8 +121,8 @@ def morph_head_to_landmarks(
     face_map: FaceMap,
     detected_landmarks: np.ndarray,
     *,
-    strength: float = 0.75,
-    max_displacement_frac: float = 0.18,
+    strength: float = 0.6,
+    max_displacement_frac: float = 0.45,
     falloff: float = 1.6,
 ) -> np.ndarray:
     """
@@ -137,6 +137,7 @@ def morph_head_to_landmarks(
                             <1 keeps the result on a plausible face manifold.
         max_displacement_frac: clamp per-control displacement to this fraction of
                             the face scale — rejects landmark/pose outliers.
+                            0.45 ≈ 4.7 cm of travel per control point.
         falloff:            Gaussian RBF radius as a multiple of the median
                             control-point spacing. Larger = smoother/broader.
 
@@ -156,6 +157,20 @@ def morph_head_to_landmarks(
     residual = det_aligned - canon                     # identity deviation (norm units)
 
     # 2. Carry to head units and clamp outliers.
+    #
+    # Defaults (strength 0.6, clamp 0.45) come from an ISE sweep over the 40-face
+    # reference set — `python -m eval.tune_morph`. They cut mean ISE 43% against
+    # the original 0.75/0.18, from 26% to 58% below the texture-only floor, with
+    # no face made worse. The old 0.18 clamp allowed only ~1.9 cm of travel per
+    # control point and was throttling genuine facial variation, not outliers.
+    #
+    # The sweep's own optimum was a looser 0.65 (~6.7 cm), and it is NOT used:
+    # every reference face is a clean frontal portrait, so the benchmark contains
+    # no landmark failures and cannot see what the clamp is for. 6.7 cm exceeds
+    # plausible human facial variation and would pass a mis-detection straight
+    # through to the mesh. 0.45 takes almost all of the measurable gain while
+    # keeping real outlier rejection. Tuning this empirically needs adversarial
+    # samples (blurry, off-angle, occluded, low-light) in the reference set.
     disp = residual[idx] * face_map.head_face_scale * float(strength)  # (K,3)
     clamp = max_displacement_frac * face_map.head_face_scale
     mag = np.linalg.norm(disp, axis=1, keepdims=True)
