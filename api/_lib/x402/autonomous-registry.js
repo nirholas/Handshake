@@ -2710,17 +2710,19 @@ const SELF_ENDPOINTS = [
 	// is set. Value sink: x402_ring_ledger (kind='sweep'). See
 	// pipelines/ring-rebalance.js.
 	//
-	// Cooldown 120s (was 300s): the per-minute ring tick cycles the payer float
-	// far faster than the old 5-min volume-only cadence, so the rebalancer must
-	// keep up or the payer drains between sweeps. Sweep threshold is env-tunable
-	// via X402_RING_MIN_SWEEP_ATOMIC.
+	// Cooldown 60s (was 120s, before that 300s): with the settle carrier firing
+	// every minute at $10.00, a 2-minute sweep cadence let the payer drain to
+	// its floor between sweeps and degraded most settle ticks to cheap-only
+	// (observed 2026-07-25 at the 94-call/min scale). The sweep must match the
+	// settle cadence. Sweep threshold is env-tunable via
+	// X402_RING_MIN_SWEEP_ATOMIC.
 	{
 		id: 'ring-rebalance',
 		name: 'Ring Rebalancer',
 		path: '/api/x402/ring-settle',
 		method: 'POST',
 		body: null,
-		cooldown_s: 120,
+		cooldown_s: 60,
 		priority: 20,
 		pipeline: 'volume',
 		enabled: true,
