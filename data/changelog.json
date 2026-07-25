@@ -15963,6 +15963,15 @@
 				"fix",
 				"security"
 			]
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Agent profile links survive copy-paste damage",
+			"summary": "Agent profile URLs shared on social media sometimes arrive with a stray word or bracket glued to the end of the id, which used to dead-end on an error page. The profile now recognizes the id inside a mangled link and loads the right agent.",
+			"tags": [
+				"fix"
+			],
+			"link": "/agents"
 		}
 	]
 }

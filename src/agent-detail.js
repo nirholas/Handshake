@@ -3071,8 +3071,16 @@ async function resolveAsAvatar(id) {
 
 async function loadAgent(id) {
 	if (!id) return { error: 'missing id', agent: null, notFound: true };
-	if (!UUID_RE.test(id))
-		return { error: 'invalid id (expected UUID)', agent: null, notFound: true };
+	if (!UUID_RE.test(id)) {
+		// Links shared through social posts arrive with trailing junk glued to
+		// the id (a word joined by a lost linebreak, a stray bracket from
+		// markdown). Salvage a leading UUID instead of dead-ending the visit.
+		const salvaged = id.match(
+			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+		)?.[0];
+		if (!salvaged) return { error: 'invalid id (expected UUID)', agent: null, notFound: true };
+		id = salvaged;
+	}
 
 	let rec;
 	try {
