@@ -19,6 +19,7 @@
 //   { content, model, provider, latency_ms, tokens_used, input_tokens, output_tokens }
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -139,8 +140,7 @@ export default paidEndpoint({
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
 
 	async handler({ req }) {
-		const chunks = [];
-		for await (const c of req) chunks.push(c);
+		const chunks = [await readBody(req, 1_000_000)];
 		const rawBody = Buffer.concat(chunks).toString();
 
 		let body;

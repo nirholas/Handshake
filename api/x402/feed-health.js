@@ -16,6 +16,7 @@
 //     but the merge step that writes public/changelog.json was not rerun)
 
 import { readFileSync } from 'node:fs';
+import { readBody } from '../_lib/http.js';
 import { XMLParser } from 'fast-xml-parser';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
@@ -224,8 +225,7 @@ export default paidEndpoint({
 			body = req.body;
 		} else {
 			try {
-				const chunks = [];
-				for await (const c of req) chunks.push(c);
+				const chunks = [await readBody(req, 1_000_000)];
 				const raw = Buffer.concat(chunks).toString('utf8');
 				if (raw) body = JSON.parse(raw);
 			} catch { /* tolerate an empty/unparseable body → unsupported_feed below */ }

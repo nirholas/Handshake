@@ -34,6 +34,7 @@
 //                                 in error messages, not for sending)
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
@@ -208,8 +209,7 @@ export default paidEndpoint({
 		// Parse body — require { bot: "changelog" }.
 		let bot = null;
 		try {
-			const chunks = [];
-			for await (const c of req) chunks.push(c);
+			const chunks = [await readBody(req, 1_000_000)];
 			const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 			if (body.bot && typeof body.bot === 'string') bot = body.bot.trim();
 		} catch { /* leave bot null */ }

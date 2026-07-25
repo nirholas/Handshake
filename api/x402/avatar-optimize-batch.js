@@ -14,6 +14,7 @@
 // Response 200: { analyzed, critical_count, warn_count, total_size_bytes, avatars[] }
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
@@ -154,8 +155,7 @@ export default paidEndpoint({
 		// Parse optional body params.
 		let limit = MAX_BATCH;
 		try {
-			const chunks = [];
-			for await (const c of req) chunks.push(c);
+			const chunks = [await readBody(req, 1_000_000)];
 			const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 			if (body.limit && typeof body.limit === 'number') {
 				limit = Math.max(1, Math.min(MAX_BATCH, Math.floor(body.limit)));

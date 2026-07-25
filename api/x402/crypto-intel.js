@@ -19,6 +19,7 @@
 // both sources fail the call 503s before settlement and the buyer isn't charged.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -192,8 +193,7 @@ export default paidEndpoint({
 	async handler({ req }) {
 		let topic = 'sol';
 		try {
-			const chunks = [];
-			for await (const c of req) chunks.push(c);
+			const chunks = [await readBody(req, 1_000_000)];
 			const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 			if (body.topic && typeof body.topic === 'string') {
 				topic = body.topic.toLowerCase().trim().slice(0, 30);

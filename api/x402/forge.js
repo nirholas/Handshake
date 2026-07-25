@@ -30,7 +30,7 @@
 // failsafe when X402_PAY_TO_SOLANA is unset; production sets it, so the live
 // route quotes Solana only.
 
-import { wrap, cors, error, json, rateLimited } from '../_lib/http.js';
+import { wrap, cors, error, json, rateLimited, readBody } from '../_lib/http.js';
 import {
 	NETWORK_BASE_MAINNET,
 	NETWORK_SOLANA_MAINNET,
@@ -568,10 +568,15 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	// Read the raw body once so we can both validate and hash it for idempotency.
+	// Must go through readBody: the Cloud Run server's body parsers drain the
+	// request stream before handlers run (bytes preserved on req.rawBody), so a
+	// direct stream read here yields an empty body in production.
 	let rawBody = '';
-	const chunks = [];
-	for await (const c of req) chunks.push(c);
-	rawBody = Buffer.concat(chunks).toString('utf8');
+	try {
+		rawBody = (await readBody(req, 1_000_000)).toString('utf8');
+	} catch (err) {
+		return error(res, err.status || 400, 'body_read_failed', err.message || 'could not read request body');
+	}
 	// Re-expose the parsed body to parseRequest via a tiny shim (readJson reads
 	// the stream, which is already consumed — parse here instead).
 	let parsed;

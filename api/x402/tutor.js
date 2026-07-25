@@ -20,6 +20,7 @@
 //                 questionCount, attestation }
 
 import { randomUUID, createHash } from 'crypto';
+import { readBody } from '../_lib/http.js';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
@@ -165,8 +166,7 @@ export default paidEndpoint({
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
 
 	async handler({ req }) {
-		const chunks = [];
-		for await (const c of req) chunks.push(c);
+		const chunks = [await readBody(req, 1_000_000)];
 		const rawBody = Buffer.concat(chunks).toString();
 
 		let body;

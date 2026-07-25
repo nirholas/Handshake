@@ -22,6 +22,7 @@
 // Solana/EVM chain state on demand — one endpoint that scores across all of them.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -344,8 +345,7 @@ const SWEEP_BAZAAR = {
 // Read + parse the JSON body off the raw request stream (same idiom as the
 // other POST x402 endpoints — req.body is not pre-parsed in this runtime).
 async function readJsonBody(req) {
-	const chunks = [];
-	for await (const c of req) chunks.push(c);
+	const chunks = [await readBody(req, 1_000_000)];
 	if (!chunks.length) return {};
 	return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }

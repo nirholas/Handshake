@@ -281,3 +281,68 @@ export function validateSpatialArtifact(payload) {
 export function isConformantSpatialArtifact(payload) {
 	return validateSpatialArtifact(payload).valid;
 }
+
+// ── Data-minimization lint ───────────────────────────────────────────────────
+// The spec REQUIRES emitters to strip internal identifiers, wallets, prices, and
+// auth material from the artifact: that is what keeps the shape reusable in
+// crypto-free stores. The spec used to admit "the reference validator does not
+// police this". This lint closes that gap as far as a generic checker can: it
+// cannot know your internal field names, but it can flag the ones everyone uses.
+
+// Key names that have no business in a human-facing artifact. Checked against
+// meta (the free-form block) and any unknown top-level field an emitter carried.
+const SUSPICIOUS_KEY = /(session|job|creation|prediction|trace|request|task|tenant|user)[-_]?id$|^(wallet|address|mint|price|amount|cost|fee|token|secret|bearer|auth|signature|payment)|api[-_]?key/i;
+
+// Value shapes that look like credentials or on-chain identifiers, wherever they
+// appear in meta: EVM address, plausible base58 account, JWT, bearer/hex secrets.
+const SUSPICIOUS_VALUE = [
+	{ re: /^0x[0-9a-fA-F]{40}$/, what: 'an EVM address' },
+	{ re: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/, what: 'a base58 account/mint-shaped value' },
+	{ re: /^ey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{5,}\./, what: 'a JWT' },
+	{ re: /^(sk|pk|rk)[-_][A-Za-z0-9]{16,}$/, what: 'an API-key-shaped value' },
+];
+
+/**
+ * Lint an artifact for data-minimization violations. Returns warnings, not
+ * errors: field names are heuristics, and a false positive must never block a
+ * conformant render. An empty array means nothing suspicious was found, not a
+ * guarantee — emitters still own the requirement.
+ *
+ * @param {any} payload
+ * @returns {Array<{path:string, message:string}>}
+ */
+export function lintSpatialMeta(payload) {
+	const findings = [];
+	if (!isPlainObject(payload)) return findings;
+
+	const scan = (obj, base) => {
+		for (const [key, value] of Object.entries(obj)) {
+			const path = `${base}.${key}`;
+			if (SUSPICIOUS_KEY.test(key)) {
+				findings.push({ path, message: 'looks like an internal/auth/coin field — the spec requires emitters to strip these (data minimization)' });
+				continue;
+			}
+			if (typeof value === 'string') {
+				// URLs are the block's job (viewerUrl, poster); skip them.
+				if (/^https:\/\//.test(value)) continue;
+				const hit = SUSPICIOUS_VALUE.find((s) => s.re.test(value.trim()));
+				if (hit) findings.push({ path, message: `value looks like ${hit.what} — strip it before emitting (data minimization)` });
+			} else if (isPlainObject(value)) {
+				scan(value, path);
+			}
+		}
+	};
+
+	if (isPlainObject(payload.meta)) scan(payload.meta, 'meta');
+	// Unknown top-level fields are already a conformance warning; here they also
+	// get the privacy check, because that is where internal ids tend to ride.
+	for (const key of Object.keys(payload)) {
+		if (TOP_LEVEL_KEYS.has(key)) continue;
+		if (SUSPICIOUS_KEY.test(key)) {
+			findings.push({ path: key, message: 'looks like an internal/auth/coin field — the spec requires emitters to strip these (data minimization)' });
+		} else if (isPlainObject(payload[key])) {
+			scan(payload[key], key);
+		}
+	}
+	return findings;
+}

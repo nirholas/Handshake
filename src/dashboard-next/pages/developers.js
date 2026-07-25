@@ -865,21 +865,20 @@ function renderSDKsTab(root) {
 				</div>
 				<p class="dev-sdk-desc">Drop-in web component for any website. Works with vanilla JS, React, Vue, Svelte, or any framework.</p>
 				<div class="dev-code-block"><pre><code>&lt;!-- NPM --&gt;
-npm install @three-ws/sdk
+npm install @three-ws/avatar
 
 &lt;!-- CDN (zero build step) --&gt;
-&lt;script src="https://cdn.three.ws/sdk/latest/viewer.min.js"&gt;&lt;/script&gt;
+&lt;script type="module"
+  src="https://three.ws/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;
 
 &lt;!-- Usage --&gt;
-&lt;three-ws-viewer
+&lt;agent-3d
   avatar-id="YOUR_AVATAR_ID"
-  width="400"
-  height="400"
-  controls
-&gt;&lt;/three-ws-viewer&gt;</code></pre></div>
+  style="width:400px;height:400px"
+&gt;&lt;/agent-3d&gt;</code></pre></div>
 				<div class="dev-sdk-links">
 					<a href="/dashboard/api" class="dn-btn ghost">Documentation</a>
-					<a href="https://www.npmjs.com/package/@three-ws/sdk" target="_blank" class="dn-btn ghost">NPM Package</a>
+					<a href="https://www.npmjs.com/package/@three-ws/avatar" target="_blank" class="dn-btn ghost">NPM Package</a>
 				</div>
 			</div>
 

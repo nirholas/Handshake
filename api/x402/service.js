@@ -13,7 +13,7 @@
 // The slug arrives as ?slug=<slug> via the vercel rewrite for
 // /api/x402/service/(.*). Unknown / archived slugs 404 before any 402 challenge.
 
-import { error, cors } from '../_lib/http.js';
+import { error, cors, readBody as readRawBody } from '../_lib/http.js';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -36,8 +36,7 @@ function slugFromReq(req) {
 // req; we drain it once here (the payment header is already verified by then).
 async function readBody(req) {
 	try {
-		const chunks = [];
-		for await (const c of req) chunks.push(c);
+		const chunks = [await readRawBody(req, 1_000_000)];
 		const raw = Buffer.concat(chunks).toString('utf8');
 		return raw ? JSON.parse(raw) : null;
 	} catch {

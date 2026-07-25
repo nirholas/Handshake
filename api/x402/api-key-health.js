@@ -21,6 +21,7 @@
 //   Redis alert (x402:api-key-health:expiry-alert) when expiry < 24 h.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
@@ -153,8 +154,7 @@ export default paidEndpoint({
 			body = req.body;
 		} else {
 			try {
-				const chunks = [];
-				for await (const c of req) chunks.push(c);
+				const chunks = [await readBody(req, 1_000_000)];
 				const raw = Buffer.concat(chunks).toString('utf8');
 				if (raw) body = JSON.parse(raw);
 			} catch { /* tolerate an empty/unparseable body → default scope */ }

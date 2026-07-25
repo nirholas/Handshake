@@ -25,7 +25,7 @@
 // When no issuer is configured the GET path returns 404 — there's nothing to
 // publish — and the POST canary truthfully reports verified:false (not_configured).
 
-import { cors, json, error } from '../_lib/http.js';
+import { cors, json, error, readBody as readRawBody } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getIssuer } from '../_lib/x402/offer-receipt-issuer.js';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
@@ -252,8 +252,7 @@ async function readBody(req) {
 	// edge / test environments that hand a raw IncomingMessage.
 	if (req.body && typeof req.body === 'object') return req.body;
 	try {
-		const chunks = [];
-		for await (const c of req) chunks.push(c);
+		const chunks = [await readRawBody(req, 1_000_000)];
 		const raw = Buffer.concat(chunks).toString('utf8');
 		return raw ? JSON.parse(raw) : {};
 	} catch {

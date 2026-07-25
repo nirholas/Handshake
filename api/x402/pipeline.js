@@ -25,7 +25,7 @@
 // X402_PAY_TO_SOLANA is unset). GET (no payment) returns the live stage grammar
 // and per-stage pricing so agents can discover cost + capability before paying.
 
-import { wrap, cors, error, json, rateLimited } from '../_lib/http.js';
+import { wrap, cors, error, json, rateLimited, readBody } from '../_lib/http.js';
 import {
 	NETWORK_BASE_MAINNET,
 	NETWORK_SOLANA_MAINNET,
@@ -274,8 +274,7 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	// Read the raw body once (validate + hash for idempotency).
-	const chunks = [];
-	for await (const c of req) chunks.push(c);
+	const chunks = [await readBody(req, 1_000_000)];
 	const rawBody = Buffer.concat(chunks).toString('utf8');
 
 	let plan;

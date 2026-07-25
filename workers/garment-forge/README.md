@@ -70,9 +70,10 @@ pure glTF work in between:
    garment's geometry, skin matrices, and textures survive), and joint names
    are canonicalized (`mixamorig:LeftArm` → `LeftArm`).
 6. **Validate + publish**: skin-weight statistics produce the bind coverage,
-   the `occludes` declaration (any REGION_BONES region carrying ≥ 1% of the
-   garment's skin weight; deliberately over-declared per the spec), and the
-   manifest's `rig.bones`. All 6 manifest validation rules run in-process;
+   the `occludes` declaration (any REGION_BONES region carrying ≥ 10% of the
+   garment's skin weight, then clamped to the slot's plausible region set,
+   `SLOT_OCCLUDABLE` — a shirt's waistband graze must not amputate the
+   avatar's legs), and the manifest's `rig.bones`. All 6 manifest validation rules run in-process;
    any failure fails the job. On success `garment.glb`, `manifest.json`, and
    `thumb.webp` (from the reference image) land in
    `garments/<slot>/<id>/v<version>/` and the manifest is appended to

@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { PublicKey } from '@solana/web3.js';
 import { solanaConnection, solanaRpcEndpoints, isEndpointCooling } from '../../_lib/solana/connection.js';
 import { sql } from '../../_lib/db.js';
-import { cors, json, method, wrap, error, readJson, rateLimited, serverError, respondError } from '../../_lib/http.js';
+import { cors, json, method, wrap, error, readBody, readJson, rateLimited, serverError, respondError } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { parse } from '../../_lib/validate.js';
@@ -95,15 +95,11 @@ export const handleAttestations = wrap(async (req, res) => {
 
 // ── solana-attest-event ───────────────────────────────────────────────────────
 
-async function readBuffered(req) {
-	const chunks = [];
-	let total = 0;
-	for await (const c of req) {
-		chunks.push(c);
-		total += c.length;
-		if (total > MAX_BODY_BYTES) throw Object.assign(new Error('payload too large'), { status: 413 });
-	}
-	return Buffer.concat(chunks);
+// readBody, not a direct stream read: the Cloud Run server's body parsers drain
+// the stream before handlers run (bytes preserved on req.rawBody). readBody
+// rejects with { status: 413 } past the limit, matching the old behavior.
+function readBuffered(req) {
+	return readBody(req, MAX_BODY_BYTES);
 }
 
 const attestEventSchema = z.object({

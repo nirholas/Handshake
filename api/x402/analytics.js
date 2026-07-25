@@ -27,6 +27,7 @@
 // 'agent-spend-leaderboard' for the agent_leaderboard report).
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody as readRawBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -199,8 +200,7 @@ const atomicsToUsd = (atomics) => Math.round((Number(atomics || 0) / 1e6) * 1e6)
 async function readBody(req) {
 	if (req.body && typeof req.body === 'object') return req.body;
 	try {
-		const chunks = [];
-		for await (const c of req) chunks.push(c);
+		const chunks = [await readRawBody(req, 1_000_000)];
 		const raw = Buffer.concat(chunks).toString('utf8').trim();
 		return raw ? JSON.parse(raw) : {};
 	} catch {

@@ -20,6 +20,7 @@
 //   cooldown_ttl_seconds       — longest cooldown TTL remaining (seconds); null if none
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
@@ -203,8 +204,7 @@ export default paidEndpoint({
 			body = req.body;
 		} else {
 			try {
-				const chunks = [];
-				for await (const c of req) chunks.push(c);
+				const chunks = [await readBody(req, 1_000_000)];
 				const raw = Buffer.concat(chunks).toString('utf8');
 				if (raw) body = JSON.parse(raw);
 			} catch { /* tolerate an empty/unparseable body → missing_endpoint below */ }

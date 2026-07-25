@@ -24,6 +24,7 @@
 // 2 hours; new tools land in mcp_tool_registry for agent feature flagging.
 
 import { createHash } from 'node:crypto';
+import { readBody } from '../_lib/http.js';
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
@@ -191,8 +192,7 @@ export default paidEndpoint({
 	async handler({ req }) {
 		let mode = 'discover';
 		try {
-			const chunks = [];
-			for await (const c of req) chunks.push(c);
+			const chunks = [await readBody(req, 1_000_000)];
 			const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 			if (body.mode === 'list') mode = 'list';
 			// 'sync' is the autonomous loop alias for 'discover' (catalog diff + persist)

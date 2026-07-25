@@ -18,6 +18,7 @@
 // continued into a settled response.
 
 import { createRegenProvider } from '../_providers/gcp.js';
+import { readBody } from './http.js';
 import { validatePublicUrl, resolvePublicHost, SsrfError } from './ssrf.js';
 import { fetchSafePublicUrlPinned, MaxBytesExceededError } from './ssrf-guard.js';
 import { putObject, publicUrl } from './r2.js';
@@ -42,20 +43,24 @@ export class StageError extends Error {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Read + parse the JSON request body. The paidEndpoint rail does not consume the
-// stream (it only inspects headers), so the paid handler reads it here. A
-// malformed or oversized body throws before any worker call.
+// Read + parse the JSON request body via readBody (api/_lib/http.js): the Cloud
+// Run server's body parsers drain the raw stream before handlers run (bytes
+// preserved on req.rawBody), so a direct stream read yields an empty body in
+// production. A malformed or oversized body throws before any worker call.
 export async function readJsonBody(req, maxBytes = 8_192) {
-	const chunks = [];
-	let total = 0;
-	for await (const c of req) {
-		total += c.length;
-		if (total > maxBytes) {
+	let buf;
+	try {
+		buf = await readBody(req, maxBytes);
+	} catch (err) {
+		if (err?.status === 413) {
 			throw new StageError('request body too large', { status: 413, code: 'body_too_large' });
 		}
-		chunks.push(c);
+		throw new StageError(err?.message || 'could not read request body', {
+			status: err?.status || 400,
+			code: 'body_read_failed',
+		});
 	}
-	const raw = Buffer.concat(chunks).toString('utf8').trim();
+	const raw = buf.toString('utf8').trim();
 	if (!raw) return {};
 	try {
 		return JSON.parse(raw);

@@ -16,6 +16,7 @@
 // Response 200: see mode-specific output below.
 
 import { randomUUID } from 'node:crypto';
+import { readBody } from '../_lib/http.js';
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
@@ -254,8 +255,7 @@ export default paidEndpoint({
 		let mode = 'canary';
 		let budget = 0.01;
 		try {
-			const chunks = [];
-			for await (const c of req) chunks.push(c);
+			const chunks = [await readBody(req, 1_000_000)];
 			const raw = Buffer.concat(chunks).toString('utf8');
 			if (raw) {
 				const body = JSON.parse(raw);

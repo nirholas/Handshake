@@ -15,7 +15,7 @@
 //                                engine → settle → PAYMENT-RESPONSE. GET is
 //                                the free per-service descriptor. Engines in
 //                                api/_okx3d/rest-services.js.
-import { cors, error, json, readJson, wrap } from '../../_lib/http.js';
+import { cors, error, json, readBody, readJson, wrap } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import {
 	buildExactRequirements,
@@ -195,9 +195,9 @@ async function handleRestService(req, res, entry) {
 	if (!rl.success)
 		return json(res, 429, { error: 'rate_limited', retry_after: Math.ceil((rl.reset - Date.now()) / 1000) });
 
-	const chunks = [];
-	for await (const c of req) chunks.push(c);
-	const rawBody = Buffer.concat(chunks).toString('utf8');
+	// readBody, not a direct stream read: the Cloud Run server's body parsers
+	// drain the stream before handlers run (bytes preserved on req.rawBody).
+	const rawBody = (await readBody(req, 1_000_000)).toString('utf8');
 	let body;
 	try {
 		body = rawBody ? JSON.parse(rawBody) : {};
