@@ -1207,6 +1207,10 @@
 			"dest": "/restyle.html"
 		},
 		{
+			"src": "/timeline/?",
+			"dest": "/timeline.html"
+		},
+		{
 			"src": "/forge-studio/?",
 			"dest": "/forge-studio.html"
 		},
