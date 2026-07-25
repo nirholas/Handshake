@@ -28,6 +28,24 @@ export const avatarAppearance = z
 		// hex validity is enforced in validateAppearance() (accessories.js).
 		colors: z.record(z.string().regex(/^#[0-9a-fA-F]{6}$/)).optional(),
 		hidden: z.array(z.string().min(1).max(32)).max(8).optional(),
+		// Additive catalog garments ({slot, id} refs into the garment catalog —
+		// specs/GARMENT_MANIFEST.md). Slot list mirrors GARMENT_SLOTS in
+		// src/avatar-garment.js; existence against the live catalog is checked
+		// at bake time so a retired garment degrades to "not worn", not a 400.
+		garments: z
+			.array(
+				z
+					.object({
+						slot: z.enum([
+							'top', 'bottom', 'footwear', 'outerwear',
+							'hair', 'headwear', 'glasses', 'accessory',
+						]),
+						id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(64),
+					})
+					.strict(),
+			)
+			.max(8)
+			.optional(),
 	})
 	.strict()
 	.superRefine((val, ctx) => {

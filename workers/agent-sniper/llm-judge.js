@@ -236,6 +236,36 @@ export async function judgeLaunch(mint, strat) {
 	return promise;
 }
 
+/**
+ * Decide whether a verdict may FUND A BUY for this strategy. The verdict itself
+ * is always recorded (skips teach calibration); this gate only controls money.
+ * Pure, exported for tests. Returns { pass, reason }.
+ *
+ * Three checks, each from the July 2026 fleet audit:
+ *   floor       — the classic llm_min_confidence bar (default 0.6).
+ *   ceiling     — llm_max_confidence. The audit's calibration table showed the
+ *                 0.7 band was the best performer and 0.9+ verdicts went
+ *                 WINLESS: a screaming-confident model is a miscalibrated one,
+ *                 and the gate now treats it that way instead of rewarding it.
+ *   strict model— llm_strict_model. During the audit window the failover chain
+ *                 answered most named-model calls, which muddied the
+ *                 model-vs-model comparison. A strict arm refuses to trade on a
+ *                 fallback's judgment: better a paused experiment than a
+ *                 polluted one.
+ */
+export function llmVerdictGate(verdict, strat) {
+	if (!verdict || verdict.buy !== true) return { pass: false, reason: 'no_buy' };
+	const conf = Number(verdict.confidence);
+	const floor = Number(strat?.llm_min_confidence ?? 0.6);
+	if (!Number.isFinite(conf) || conf < floor) return { pass: false, reason: 'below_floor' };
+	const ceiling = strat?.llm_max_confidence != null ? Number(strat.llm_max_confidence) : null;
+	if (ceiling != null && Number.isFinite(ceiling) && conf >= ceiling) return { pass: false, reason: 'overconfident' };
+	if (strat?.llm_strict_model === true && String(verdict.model || '').startsWith('fallback:')) {
+		return { pass: false, reason: 'fallback_model' };
+	}
+	return { pass: true, reason: 'ok' };
+}
+
 /** Test seam: reset shared state. */
 export function _resetLlmJudge() {
 	_verdicts.clear();

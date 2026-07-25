@@ -24,6 +24,7 @@ import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel } from './avatar-sculpt.js';
 import { renderWardrobePanel } from './avatar-wardrobe.js';
+import { GarmentCloset, renderClosetSection } from './garment-closet.js';
 import { renderRigPanel } from './avatar-rig.js';
 import { AvatarWalkPreview } from './avatar-edit-walk.js';
 import { apiFetch } from './api.js';
@@ -72,7 +73,10 @@ let walkPreview = null;
 // the UI has committed (locally) and will save. We're dirty when they differ.
 // `previewedId` is what's *temporarily* applied on hover, never persisted.
 let currentAppearance = null;
-let workingAppearance = { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [] };
+let workingAppearance = { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [] };
+// Additive-wardrobe controller (catalog garments skinned onto this avatar's
+// skeleton at runtime). Created once the scene root exists.
+let closet = null;
 let previewedId = null;
 
 // Monotonic token guards async preset loads from out-of-order arrivals when
@@ -225,6 +229,17 @@ async function bootScene() {
 		});
 		await accessoryManager.hydrateFromAppearance(currentAppearance);
 
+		// Additive wardrobe: re-attach saved catalog garments onto the live
+		// skeleton. Unknown/retired garments degrade to "not worn" inside
+		// hydrate rather than failing the whole boot.
+		closet = new GarmentCloset({
+			getRoot: () => scene?.root || null,
+			getWorking: () => workingAppearance,
+			onDirty: () => updateDirtyState(),
+			onChanged: () => renderChips(),
+		});
+		await closet.hydrate(currentAppearance.garments);
+
 		// Ambient idle layer — breathing, micro-saccades, blink, weight shift.
 		// Static preview here (no AgentProtocol); IdleAnimation's no-op stub
 		// covers the SPEAK / LOOK_AT subscriptions. Seeded by avatar id so two
@@ -345,6 +360,17 @@ function renderActivePanel() {
 				updateDirtyState();
 			},
 		});
+		// The closet (additive catalog garments) renders beneath the layer
+		// cards. It exists even for models with no built-in layers — being able
+		// to ADD a garment is exactly what a layerless avatar needs.
+		const closetMount = document.createElement('div');
+		closetMount.id = 'ae-closet';
+		panel.appendChild(closetMount);
+		if (closet) {
+			renderClosetSection({ container: closetMount, closet });
+		} else {
+			closetMount.innerHTML = '<div class="gc-loading">Closet opens when the avatar finishes loading…</div>';
+		}
 		return;
 	}
 
@@ -909,6 +935,10 @@ function bindHeader() {
 			}
 			workingAppearance = clone(currentAppearance);
 			if (accessoryManager) await accessoryManager.hydrateFromAppearance(workingAppearance);
+			if (closet) {
+				closet.clear();
+				await closet.hydrate(workingAppearance.garments);
+			}
 		});
 		renderChips();
 		renderActivePanel();
@@ -942,7 +972,7 @@ function setStatus(kind, text) {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 function normalizeAppearance(a) {
-	if (!a) return { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [] };
+	if (!a) return { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [] };
 	return {
 		outfit: a.outfit || null,
 		accessories: Array.isArray(a.accessories) ? [...a.accessories] : [],
@@ -952,6 +982,10 @@ function normalizeAppearance(a) {
 		// it, so editing accessories never silently strips a studio look.
 		colors: a.colors && typeof a.colors === 'object' ? { ...a.colors } : {},
 		hidden: Array.isArray(a.hidden) ? [...a.hidden] : [],
+		// Additive catalog garments worn by this avatar ({slot, id} refs).
+		garments: Array.isArray(a.garments)
+			? a.garments.filter((g) => g && g.slot && g.id).map((g) => ({ slot: g.slot, id: g.id }))
+			: [],
 	};
 }
 
@@ -964,6 +998,7 @@ function collapseAppearance(a) {
 	if (a.morphs && Object.keys(a.morphs).length) out.morphs = { ...a.morphs };
 	if (a.colors && Object.keys(a.colors).length) out.colors = { ...a.colors };
 	if (a.hidden?.length) out.hidden = [...a.hidden];
+	if (a.garments?.length) out.garments = a.garments.map((g) => ({ slot: g.slot, id: g.id }));
 	return Object.keys(out).length ? out : null;
 }
 
@@ -989,5 +1024,9 @@ function appearanceEquals(a, b) {
 	const hb = new Set(b?.hidden || []);
 	if (ha.size !== hb.size) return false;
 	for (const v of ha) if (!hb.has(v)) return false;
+	const ga = new Set((a?.garments || []).map((g) => `${g.slot}/${g.id}`));
+	const gb = new Set((b?.garments || []).map((g) => `${g.slot}/${g.id}`));
+	if (ga.size !== gb.size) return false;
+	for (const v of ga) if (!gb.has(v)) return false;
 	return true;
 }

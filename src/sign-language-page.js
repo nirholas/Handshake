@@ -11,13 +11,15 @@
 import { PoseStage } from './avatar-pose.js';
 import { SignSpeaker } from './sign-speech.js';
 import { normalizeWord } from './fingerspelling.js';
+import { SIGNS, signGloss } from './sign-dictionary.js';
 import { log } from './shared/log.js';
 
 const HERO_AVATAR = '/avatars/cz.glb';
 
 // Phrases the hero cycles through so a first-time visitor immediately sees the
-// avatar signing real content, not a static pose.
-const DEMO_PHRASES = ['HELLO', 'WELCOME TO THREE WS', 'ASK ME ANYTHING', 'NICE TO MEET YOU'];
+// avatar signing real content, not a static pose. Each mixes lexical signs with
+// fingerspelling, which is what the feature actually does.
+const DEMO_PHRASES = ['HELLO', 'HAPPY TO MEET YOU', 'WELCOME TO THREE WS', 'THANK YOU YALL'];
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -72,6 +74,16 @@ async function boot() {
 	// ── Spell-anything input ──────────────────────────────────────────────────
 	const spellInput = $('#sl-spell-input');
 	const spellBtn = $('#sl-spell-btn');
+
+	// Tell the visitor which words were SIGNED and which were spelled — the
+	// distinction is the whole point of having a dictionary.
+	const describeResult = ({ signed, spelled }) => {
+		const parts = [];
+		if (signed?.length) parts.push(`signed ${signed.map((w) => w.toLowerCase()).join(', ')}`);
+		if (spelled?.length) parts.push(`spelled ${spelled.map((w) => w.toLowerCase()).join(', ')}`);
+		return parts.length ? parts.join(' · ') : 'Type anything and watch the avatar sign it.';
+	};
+
 	const spellIt = async () => {
 		if (!speaker) return;
 		const raw = spellInput.value.trim();
@@ -84,8 +96,8 @@ async function boot() {
 		heroActive = false;
 		setStatus(`Signing: “${norm.toLowerCase()}”`);
 		try {
-			await speaker.speak(raw);
-			setStatus('Type anything and watch the avatar sign it.');
+			const result = await speaker.speak(raw);
+			if (!result.superseded) setStatus(describeResult(result));
 		} catch (e) {
 			setStatus(e?.message || 'Could not sign that.');
 		}
@@ -104,6 +116,40 @@ async function boot() {
 			spellIt();
 		});
 	});
+
+	// ── Vocabulary: every word with a real sign, playable ─────────────────────
+	const vocabHost = $('#sl-vocab-chips');
+	if (vocabHost) {
+		const words = Object.keys(SIGNS).sort();
+		let active = null;
+		for (const word of words) {
+			const chip = document.createElement('button');
+			chip.type = 'button';
+			chip.className = 'sl-vocab-chip';
+			chip.setAttribute('role', 'listitem');
+			chip.setAttribute('aria-pressed', 'false');
+			chip.textContent = word.toLowerCase();
+			const gloss = signGloss(word);
+			if (gloss) chip.title = gloss;
+			chip.addEventListener('click', async () => {
+				if (!speaker) return;
+				stopHero();
+				heroActive = false;
+				active?.setAttribute('aria-pressed', 'false');
+				active = chip;
+				chip.setAttribute('aria-pressed', 'true');
+				setStatus(gloss ? `${word.toLowerCase()} — ${gloss}` : `Signing “${word.toLowerCase()}”`);
+				try {
+					const result = await speaker.speak(word);
+					if (!result.superseded) chip.setAttribute('aria-pressed', 'false');
+				} catch {
+					chip.setAttribute('aria-pressed', 'false');
+					setStatus('Could not sign that.');
+				}
+			});
+			vocabHost.appendChild(chip);
+		}
+	}
 
 	// ── Webcam sign-in demo ───────────────────────────────────────────────────
 	wireWebcamDemo(setStatus);

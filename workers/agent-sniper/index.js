@@ -263,9 +263,12 @@ async function main() {
 						};
 						judgeLaunch(judgeMint, strat).then((verdict) => {
 							if (!verdict) return;
-							const minConf = Number(strat.llm_min_confidence ?? 0.6);
-							if (!verdict.buy || verdict.confidence < minConf) {
-								log.info('llm judge pass', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence });
+							// Floor + overconfidence ceiling + named-model strictness in one
+							// gate (llmVerdictGate). The verdict is already recorded either
+							// way; only the money is gated here.
+							const gate = llmVerdictGate(verdict, strat);
+							if (!gate.pass) {
+								log.info('llm judge pass', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence, gate: gate.reason });
 								return;
 							}
 							log.info('llm judge buy', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });

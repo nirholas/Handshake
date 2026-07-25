@@ -107,6 +107,24 @@
 			.sl-cam-result[data-state='ok'] { border-color: rgba(56,211,159,.5); }
 			.sl-cam-hint { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
 
+			/* Vocabulary */
+			.sl-vocab { margin-top: clamp(48px, 6vw, 76px); }
+			.sl-vocab h2 { font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -.02em; margin: 0 0 10px; }
+			.sl-vocab > p { color: var(--ink-dim); font-size: 15px; line-height: 1.65; max-width: 70ch; margin: 0 0 20px; }
+			.sl-vocab-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+			.sl-vocab-chip {
+				display: inline-flex; align-items: center; gap: 7px;
+				border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-2); color: var(--ink-dim);
+				padding: 7px 14px; font-size: 13px; font-weight: 600; letter-spacing: .01em;
+				cursor: pointer; transition: color .16s ease, border-color .16s ease, transform .16s ease, background .16s ease;
+			}
+			.sl-vocab-chip::before { content: '🤟'; font-size: 12px; opacity: .65; }
+			.sl-vocab-chip:hover { color: var(--ink); border-color: rgba(167,139,250,.6); transform: translateY(-1px); }
+			.sl-vocab-chip:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 2px; }
+			.sl-vocab-chip[aria-pressed='true'] { color: var(--ink); background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.7); }
+			@media (prefers-reduced-motion: reduce) { .sl-vocab-chip:hover { transform: none; } }
+
 			/* Honest scope note */
 			.sl-note { margin-top: clamp(36px, 5vw, 56px); border-left: 2px solid rgba(167,139,250,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 72ch; }
 
@@ -199,6 +217,17 @@
 				</article>
 			</section>
 
+			<section class="sl-vocab" id="sl-vocab" aria-label="Words the avatar signs rather than spells">
+				<h2>It signs these — it doesn’t spell them</h2>
+				<p>
+					A signer spells names and loanwords and <em>signs</em> everything else. These
+					words have real signs in the avatar’s vocabulary: a handshape, a place on the
+					body, and a movement, on one or both hands. Pick one to watch it. Everything
+					else in a sentence still fingerspells.
+				</p>
+				<div class="sl-vocab-chips" id="sl-vocab-chips" role="list"></div>
+			</section>
+
 			<section class="sl-webcam" id="sl-webcam" aria-label="Webcam sign recognition demo">
 				<h2>Sign to us — we’ll read it</h2>
 				<p>
@@ -221,11 +250,11 @@
 			</section>
 
 			<p class="sl-note">
-				Fingerspelling spells words letter by letter; it is not full grammatical ASL, which
-				has its own grammar and facial-expression markers. Lexical signs come from recordings
-				of real signers through our motion-capture pipeline, never synthesized guesses — which
-				is why the sign dictionary grows deliberately. Read the
-				<a href="/docs/sign-language">full breakdown</a>.
+				Honest scope: words with a sign are signed, everything else is fingerspelled letter
+				by letter. Signs are strung together in English word order, which is signed English,
+				not ASL grammar — real ASL reorders sentences, inflects verbs through space, and
+				carries grammar on the face. The vocabulary above is a starting set and is meant to
+				grow. Read the <a href="/docs/sign-language">full breakdown</a>.
 			</p>
 		</main>
 

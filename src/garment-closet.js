@@ -38,15 +38,16 @@ const SLOT_LABELS = {
 export class GarmentCloset {
 	/**
 	 * @param {object} opts
-	 * @param {() => object|null} opts.getRoot   live avatar scene root
-	 * @param {object} opts.working              workingAppearance (mutated: .garments)
+	 * @param {() => object|null} opts.getRoot     live avatar scene root
+	 * @param {() => object} opts.getWorking       workingAppearance accessor — a
+	 *        getter (not a reference) because the editor REASSIGNS the working
+	 *        object on load/save/reset; a captured reference would go stale.
 	 * @param {() => void} [opts.onDirty]
-	 * @param {() => void} [opts.onChanged]      re-render hook (state text, chips)
+	 * @param {() => void} [opts.onChanged]        re-render hook (state text, chips)
 	 */
-	constructor({ getRoot, working, onDirty, onChanged }) {
+	constructor({ getRoot, getWorking, onDirty, onChanged }) {
 		this.getRoot = getRoot;
-		this.working = working;
-		this.working.garments = Array.isArray(working.garments) ? working.garments : [];
+		this.getWorking = getWorking;
 		this.onDirty = onDirty || (() => {});
 		this.onChanged = onChanged || (() => {});
 		// slot → { manifest, result } for what is live in the scene right now
@@ -169,7 +170,9 @@ export class GarmentCloset {
 	}
 
 	_syncWorking() {
-		this.working.garments = [...this._attached.values()].map(({ manifest }) => ({
+		const working = this.getWorking?.();
+		if (!working) return;
+		working.garments = [...this._attached.values()].map(({ manifest }) => ({
 			slot: manifest.slot,
 			id: manifest.id,
 		}));
