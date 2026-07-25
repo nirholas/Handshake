@@ -9,12 +9,19 @@
  * buyer can type into any wallet — at the same address.
  *
  * Cost model: each attempt runs PBKDF2-HMAC-SHA512 (2048 iterations) + an
- * HMAC-SHA512 chain, so throughput is ~200–250 keypairs/sec single-threaded —
- * roughly 100× slower than the WASM keypair grinder. The honest server ceiling
- * is therefore a 2-character combined pattern (~3.4k expected attempts, found
- * inside the default 45s budget the large majority of the time). On budget
- * exhaustion we throw GrindExhaustedError so the x402 endpoint declines to
- * charge the buyer. Longer mnemonic patterns belong on the user's own machine.
+ * HMAC-SHA512 chain, so throughput is ~350 keypairs/sec single-threaded —
+ * roughly 100× slower than the WASM keypair grinder. On budget exhaustion we
+ * throw GrindExhaustedError so the x402 endpoint declines to charge the buyer.
+ * Longer mnemonic patterns belong on the user's own machine.
+ *
+ * A character-count cap alone is NOT a safe ceiling. Base58's leading character
+ * spans a 58× difficulty range (see base58-distribution.js), so "2 characters"
+ * covers everything from `A?` (~982 attempts, under 3 seconds) to `z?` (~57k
+ * attempts, ~2.7 minutes) — the latter far past any serverless budget. Requests
+ * used to be accepted on length alone, grind for the full 45 seconds, and fail;
+ * the buyer got nothing and we burned the compute. `assertFeasible` now rejects
+ * those up front with the real numbers, and the length cap stays only as a
+ * coarse outer guard.
  */
 
 import { validatePattern, expectedAttempts } from './validation.js';
@@ -28,6 +35,56 @@ import { GrindExhaustedError } from './grinder-node.js';
 export const MAX_MNEMONIC_PATTERN_LENGTH = 2;
 
 const DEFAULT_TIME_BUDGET_MS = 45_000;
+
+/**
+ * Measured single-threaded throughput of the mnemonic grind loop (mnemonic →
+ * PBKDF2 seed → SLIP-10 chain → Ed25519 public key). Override with
+ * `MNEMONIC_GRIND_RATE` where the host is slower than the reference machine.
+ */
+export const MNEMONIC_ATTEMPTS_PER_SECOND = Number(
+	globalThis.process?.env?.MNEMONIC_GRIND_RATE || 350,
+);
+
+/**
+ * Minimum ratio of affordable attempts to expected attempts before we accept a
+ * job. A geometric grind succeeds within `n` attempts with probability
+ * 1 − e^(−n/E), so n/E ≥ 3 means we finish ~95% of the time. Below that the
+ * buyer is more likely to get a timeout than an address, which is worse than an
+ * immediate, honest rejection.
+ */
+const FEASIBILITY_MARGIN = 3;
+
+/**
+ * Reject a pattern the budget cannot realistically satisfy, with the real
+ * numbers rather than a generic timeout 45 seconds later.
+ *
+ * @param {string} prefix
+ * @param {string} suffix
+ * @param {boolean} ignoreCase
+ * @param {number} timeBudgetMs
+ * @throws {Error} status 400 / code `pattern_infeasible`
+ */
+export function assertMnemonicFeasible(prefix, suffix, ignoreCase, timeBudgetMs) {
+	const expected = expectedMnemonicAttempts(prefix, suffix, ignoreCase);
+	const affordable = (timeBudgetMs / 1000) * MNEMONIC_ATTEMPTS_PER_SECOND;
+	if (expected * FEASIBILITY_MARGIN <= affordable) return;
+
+	const seconds = Math.ceil(expected / MNEMONIC_ATTEMPTS_PER_SECOND);
+	const chance = Math.round((1 - Math.exp(-affordable / expected)) * 100);
+	throw Object.assign(
+		new Error(
+			`pattern needs ~${Math.round(expected).toLocaleString('en-US')} attempts ` +
+				`(~${seconds}s at ${MNEMONIC_ATTEMPTS_PER_SECOND}/sec), but the ${Math.round(
+					timeBudgetMs / 1000,
+				)}s budget only affords ~${Math.round(affordable).toLocaleString('en-US')} ` +
+				`— about a ${chance}% chance of a hit. Base58's leading character is not uniform: ` +
+				`the 40 symbols from 'K' to 'z' are ~17× harder to lead with than '2'–'H'. ` +
+				`Try a prefix starting with one of 2-9 or A-H, move the pattern to the suffix ` +
+				`(uniform 1/58 per character), or grind it on your own machine.`,
+		),
+		{ status: 400, code: 'pattern_infeasible', expectedAttempts: Math.round(expected) },
+	);
+}
 
 // How often to re-check the wall-clock budget. The per-attempt cost is high
 // (~4–5ms), so a small batch keeps the budget check responsive without adding
@@ -92,6 +149,8 @@ export function grindVanityMnemonic(opts = {}) {
 			{ status: 400, code: 'pattern_too_long' },
 		);
 	}
+
+	assertMnemonicFeasible(prefix, suffix, ignoreCase, timeBudgetMs);
 
 	const wantPrefix = prefix ? (ignoreCase ? prefix.toLowerCase() : prefix) : null;
 	const wantSuffix = suffix ? (ignoreCase ? suffix.toLowerCase() : suffix) : null;

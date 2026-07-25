@@ -124,8 +124,12 @@ describe('parseDerivationPath / deriveEd25519PrivateKey', () => {
 
 describe('grindVanityMnemonic', () => {
 	it('grinds a 1-char prefix and returns an importable phrase', () => {
-		const r = grindVanityMnemonic({ prefix: 'z', timeBudgetMs: 20_000 });
-		expect(r.publicKey.startsWith('z')).toBe(true);
+		// 'A' is in the easy leading band (~17 expected attempts). The original
+		// version of this test ground 'z' — a hard-band symbol needing ~982
+		// attempts — and flaked on slower CI hosts, which is what surfaced the
+		// leading-character bug in the first place.
+		const r = grindVanityMnemonic({ prefix: 'A', timeBudgetMs: 20_000 });
+		expect(r.publicKey.startsWith('A')).toBe(true);
 		expect(r.wordCount).toBe(12);
 		expect(r.derivationPath).toBe(DEFAULT_DERIVATION_PATH);
 		expect(r.attempts).toBeGreaterThan(0);
@@ -153,9 +157,44 @@ describe('grindVanityMnemonic', () => {
 		expect(MAX_MNEMONIC_PATTERN_LENGTH).toBe(2);
 	});
 
-	it('throws GrindExhaustedError when the budget runs out', () => {
-		// A 2-char pattern with a near-zero budget cannot be found in time.
-		expect(() => grindVanityMnemonic({ prefix: 'zz', timeBudgetMs: 1 })).toThrow();
+	it('rejects an infeasible pattern up front instead of burning the budget', () => {
+		// 'zz' needs ~57k attempts (~2.7 min). Accepting it, grinding for the
+		// full budget and failing leaves the buyer with nothing and costs us the
+		// compute; the honest answer is an immediate 400 carrying the real cost.
+		let thrown;
+		const startedAt = performance.now();
+		try {
+			grindVanityMnemonic({ prefix: 'zz', timeBudgetMs: 45_000 });
+		} catch (err) {
+			thrown = err;
+		}
+		expect(thrown?.code).toBe('pattern_infeasible');
+		expect(thrown?.status).toBe(400);
+		expect(thrown.expectedAttempts).toBeGreaterThan(50_000);
+		expect(thrown.message).toMatch(/leading character is not uniform/);
+		// The whole point is that it does not grind first.
+		expect(performance.now() - startedAt).toBeLessThan(1_000);
+	});
+
+	it('accepts the same length when the leading character is an easy one', () => {
+		// Identical character count, 58× less work: a length-only cap cannot tell
+		// these apart, which is why the guard is difficulty-based.
+		expect(expectedMnemonicAttempts('Az', '', false)).toBeLessThan(
+			expectedMnemonicAttempts('zz', '', false) / 50,
+		);
+		const r = grindVanityMnemonic({ prefix: 'Az', timeBudgetMs: 45_000 });
+		expect(r.publicKey.startsWith('Az')).toBe(true);
+	});
+
+	it('explains a rejection with numbers a buyer can act on', () => {
+		try {
+			grindVanityMnemonic({ prefix: 'zz', timeBudgetMs: 45_000 });
+			throw new Error('should have been rejected');
+		} catch (err) {
+			expect(err.message).toMatch(/attempts/);
+			expect(err.message).toMatch(/budget only affords/);
+			expect(err.message).toMatch(/suffix/); // an actionable alternative
+		}
 	});
 
 	it('requires at least one of prefix/suffix', () => {

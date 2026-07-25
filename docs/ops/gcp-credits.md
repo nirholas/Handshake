@@ -636,11 +636,16 @@ so the margin is enormous — the entire point of grinding on free credits:
 | 4-char, case-sensitive | ~11.3M | 452 | $0.0019 | $6–$13 |
 | 5-char, case-sensitive | ~656M | 26,244 | $0.11 | $30–$50 |
 
-**Finding — Base58 leading-char bias:** a 32-byte value's *leading* Base58 char is
-**not** uniformly distributed, so a case-**sensitive** prefix can be far harder than
-the naive 58ⁿ estimate (some leading chars are near-impossible). The grinder caps
-per-target attempts (`MAX_ATTEMPTS_PER_TARGET`, default 200M) and gives up on such
-targets instead of hanging a worker. **Case-insensitive prefixes and suffixes
+**Finding — Base58 leading-char bias (now fixed in the model, 2026-07-25):** a
+32-byte value's *leading* Base58 char is **not** uniformly distributed, so a
+case-**sensitive** prefix can be far harder than the naive 58ⁿ estimate. This was
+originally handled operationally — the grinder caps per-target attempts
+(`MAX_ATTEMPTS_PER_TARGET`, default 200M) and gives up on such targets instead of
+hanging a worker — while difficulty, pricing and rarity kept using the flat 58ⁿ
+model. That is now corrected: `src/solana/vanity/base58-distribution.js` computes
+the exact distribution (`K`–`z` are 17.2× harder to lead with than `5`–`H`), and
+the live inventory was repriced under it. The attempt cap remains as a runtime
+backstop. **Case-insensitive prefixes and suffixes
 (uniform tail) are dramatically cheaper per useful address** — weight target lists
 toward them. Revenue math: even 200 addresses cost cents of credits to grind and
 list at $1–$50 each — a four-figure sellable asset for a near-zero credit outlay.

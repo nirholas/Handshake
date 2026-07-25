@@ -1,5 +1,9 @@
 # Task: Fix x402 ring wallet health (SOL floors, unconfigured wallets, USDC float)
 
+## UPDATE 2026-07-25 (owner funded the ring, read before acting)
+
+The owner deposited 2 SOL into the sponsor wallet and it has been distributed: payer `X4o2Uu…` now holds ~0.15 SOL + ~$54 USDC (0.6 SOL was swapped to USDC via Jupiter, tx `ReVNCLDvGH9hgCs9rpKkKqMpeC7Zw5xTStaPNN1nByMy5RLyg4TYw5ZqT9y5KgZC1EnztxnPzdn3J3MDkC6sgpm`), sponsor ~0.26 SOL, treasury ~0.30 SOL, and each agent wallet ~0.07 SOL. Daily caps were raised on Cloud Run (autonomous $30→$100/day, ring settle $150→$500/day). Do NOT ask the owner for more funding and do NOT re-run a top-up. Your remaining scope: items 1, 2 and 5 below, plus root-causing why the automated rebalancer swept 0.5 SOL of fresh funding straight back to the owner master wallet (`wwwqvAbN4R…`) within seconds of the deposit; that sweep fights any future funding and its threshold or logic likely needs tuning. An automated rebalancer IS active (it moved funds within seconds on 2026-07-25 13:01 UTC); find it before changing anything.
+
 ## Context (verified 2026-07-25)
 
 The x402 ring economy recirculates real USDC between three.ws-controlled Solana wallets, settled by our own facilitator (`docs/x402-ring-economy.md` is required reading; self-pay is the operative default, so each payer wallet pays its own ~5,000 lamport fee and its SOL balance is the hard stop that pauses the loop).

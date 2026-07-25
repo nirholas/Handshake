@@ -35,11 +35,16 @@ the currency an agent on Base or Solana already holds — and the key is deliver
 once, over TLS, and never stored.
 
 > **What can you actually match?** Base58 excludes `0`, `O`, `I`, `l`. An address
-> is 32 random bytes Base58-encoded, so its **leading** characters are not
-> uniformly distributed — a given prefix can be markedly harder than the naive
-> 58ⁿ estimate, while suffix characters are uniform. Each extra character
-> multiplies expected work by ~58, which is why the char caps and price ladder
-> climb steeply.
+> is 32 random bytes Base58-encoded, so its **leading** character is not
+> uniformly distributed: the 40 symbols from `K` to `z` are **~17× harder** to
+> lead with than `2`–`H`, a 58× spread across the alphabet. Suffix characters
+> *are* uniform at 1/58. Quotes, prices and rarity all use the exact
+> distribution rather than a flat 58ⁿ estimate, so a `zebra…` prefix is priced
+> as the genuinely harder grind it is, and an `Agent…` prefix is not overcharged.
+> Each *additional* character still multiplies expected work by ~58, which is why
+> the char caps and price ladder climb steeply. If a pattern cannot be found
+> inside the request's time budget, the endpoint declines it up front with the
+> real attempt count instead of grinding to a timeout.
 
 ---
 
@@ -98,7 +103,7 @@ tier for the requested pattern.
 | `ignoreCase` | `1`/`true` matches the pattern case-insensitively (faster, less specific). |
 | `format` | `keypair` (default) or `mnemonic`. |
 | `strength` | Mnemonic only: `128` (12 words, default) or `256` (24 words). |
-| `sealTo` | Optional X25519 public key (Base58/Base64url/hex) — see [Security model](#security-model). |
+| `sealTo` | Optional X25519 public key (Base58/Base64url/hex) — see [Security model](#security-model). Prefix with `base58:`, `base64url:` or `hex:` to be explicit; a bare 43-character string is a valid encoding under two of them and is rejected rather than guessed. Keys from our SDK's `generateRecipientKeypair()` are always unambiguous. |
 
 ### Example
 

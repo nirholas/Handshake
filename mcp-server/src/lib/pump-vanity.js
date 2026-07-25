@@ -57,14 +57,15 @@ export function isValidVanityPrefix(prefix) {
 	return true;
 }
 
-// Estimated attempts ≈ 58^n (per pattern position). Used by callers to set
+// Expected attempts under the exact Base58 distribution. Used by callers to set
 // a reasonable maxIterations and to surface difficulty in error messages.
-export function estimateAttempts({ prefix, suffix, ignoreCase = false } = {}) {
-	const len = (prefix?.length || 0) + (suffix?.length || 0);
-	if (len === 0) return 1;
-	const alphabetSize = ignoreCase ? 33 : 58; // lowercase-folded alphabet ≈ 33 distinct
-	return Math.pow(alphabetSize, len);
-}
+//
+// This was 58^n (or 33^n when case-folding), which treats every position as an
+// independent uniform symbol. That is right for a suffix and wrong for the
+// leading character by up to 17× — see base58-distribution.js. Getting it wrong
+// meant a "2-character" budget that clears `A?` in a second and cannot clear
+// `z?` at all.
+export { expectedAttempts as estimateAttempts } from './base58-distribution.js';
 
 /**
  * Grind a Solana Keypair whose base58 address matches a prefix and/or suffix.

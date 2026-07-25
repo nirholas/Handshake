@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import bs58 from 'bs58';
+import { x25519 } from '@noble/curves/ed25519.js';
 
 import {
 	sealToRecipient,
@@ -81,10 +82,58 @@ describe('sealed-envelope', () => {
 		const raw = parseX25519Key(publicKey);
 		const hex = Buffer.from(raw).toString('hex');
 		const b64 = toBase64url(raw);
-		for (const form of [publicKey, hex, b64]) {
+		// Explicit prefixes are always unambiguous; bare forms are covered below.
+		for (const form of [publicKey, hex, `base58:${publicKey}`, `hex:${hex}`, `base64url:${b64}`]) {
 			const env = await sealToRecipient('ok', form);
 			expect(await openSealedText(env, secretKey)).toBe('ok');
 		}
+	});
+
+	it('generates recipient keys that are unambiguous on the wire', () => {
+		// Base64url spends exactly 43 characters on 32 bytes and Base58's alphabet
+		// is a subset of Base64url's, so a 43-character Base58 key is ALSO a valid
+		// Base64url string for a different key. Generating only 44-character keys
+		// means a bare `sealTo=` from our own SDK can never be misread.
+		for (let i = 0; i < 200; i++) {
+			const kp = generateRecipientKeypair();
+			// Both halves: the secret travels through the same parser on open.
+			expect(kp.publicKey).toHaveLength(44);
+			expect(kp.secretKey).toHaveLength(44);
+		}
+	});
+
+	it('never silently seals to the wrong key when an encoding is ambiguous', async () => {
+		// A hand-rolled caller can still submit a 43-character key. The old parser
+		// tried Base58 first whenever the string had no '-' or '_', which measured
+		// at 1.5% of Base64url keys decoding to a valid-looking but WRONG key: the
+		// buyer paid, got a sealed envelope, and could not open it. Refusing to
+		// guess is the only outcome that cannot do that.
+		let ambiguous = 0;
+		for (let i = 0; i < 400 && ambiguous < 1; i++) {
+			const secret = x25519.utils.randomSecretKey();
+			const raw = x25519.getPublicKey(secret);
+			const b58 = bs58.encode(raw);
+			if (b58.length !== 43) continue; // only 43-char keys collide
+			ambiguous++;
+			// Bare form is refused with an actionable error...
+			let err;
+			try {
+				parseX25519Key(b58);
+			} catch (e) {
+				err = e;
+			}
+			expect(err?.code).toBe('ambiguous_recipient_key');
+			expect(err?.status).toBe(400);
+			expect(err.message).toMatch(/base58:/);
+			// ...and the prefix the message suggests actually resolves it.
+			expect(Buffer.from(parseX25519Key(`base58:${b58}`))).toEqual(Buffer.from(raw));
+		}
+		expect(ambiguous, 'expected to draw at least one 43-char key in 400 tries').toBe(1);
+	});
+
+	it('rejects an unknown encoding prefix rather than guessing', () => {
+		const { publicKey } = generateRecipientKeypair();
+		expect(() => parseX25519Key(`base32:${publicKey}`)).toThrow(/not valid/i);
 	});
 
 	it('throws a 400-tagged error on a wrong-length recipient key', () => {

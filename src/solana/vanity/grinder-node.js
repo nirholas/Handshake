@@ -24,9 +24,9 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 import { initSync, grind } from './wasm/vanity_grinder.js';
-import { validatePattern, estimateAttempts, BASE58_ALPHABET } from './validation.js';
+import { validatePattern, estimateAttempts, expectedAttempts, BASE58_ALPHABET } from './validation.js';
 
-export { BASE58_ALPHABET, validatePattern, estimateAttempts };
+export { BASE58_ALPHABET, validatePattern, estimateAttempts, expectedAttempts };
 
 // Largest combined (prefix + suffix) length the server will grind. Past this,
 // the expected attempt count blows past what a single WASM thread can clear
@@ -41,6 +41,55 @@ const DEFAULT_TIME_BUDGET_MS = 45_000;
 // Keypairs generated per WASM call. Large enough that per-call overhead is
 // negligible, small enough that we re-check the time budget promptly.
 const BATCH_SIZE = 20_000;
+
+/** Measured single-threaded WASM throughput. Override where the host is slower. */
+export const KEYPAIR_ATTEMPTS_PER_SECOND = Number(
+	globalThis.process?.env?.KEYPAIR_GRIND_RATE || 25_000,
+);
+
+/**
+ * Minimum ratio of affordable to expected attempts before a job is accepted.
+ * A geometric grind clears `n` attempts with probability 1 − e^(−n/E), so n/E ≥ 3
+ * finishes ~95% of the time.
+ */
+const FEASIBILITY_MARGIN = 3;
+
+/**
+ * Reject a pattern the budget cannot realistically satisfy.
+ *
+ * `MAX_SERVER_PATTERN_LENGTH` alone is not a sufficient guard. Base58's leading
+ * character spans a 58× difficulty range (see base58-distribution.js), so a
+ * 3-character pattern is ~57k attempts when it leads with '2'–'H' and ~3.3M when
+ * it leads with 'K'–'z' — the latter needs ~132s, three times the budget. Such a
+ * request used to be accepted, grind for the full 45s, and fail.
+ *
+ * @param {string} prefix
+ * @param {string} suffix
+ * @param {boolean} ignoreCase
+ * @param {number} timeBudgetMs
+ * @throws {Error} status 400 / code `pattern_infeasible`
+ */
+export function assertKeypairFeasible(prefix, suffix, ignoreCase, timeBudgetMs) {
+	const expected = expectedAttempts(prefix || '', suffix || '', ignoreCase);
+	const affordable = (timeBudgetMs / 1000) * KEYPAIR_ATTEMPTS_PER_SECOND;
+	if (expected * FEASIBILITY_MARGIN <= affordable) return;
+
+	const seconds = Math.ceil(expected / KEYPAIR_ATTEMPTS_PER_SECOND);
+	const chance = Math.round((1 - Math.exp(-affordable / expected)) * 100);
+	throw Object.assign(
+		new Error(
+			`pattern needs ~${Math.round(expected).toLocaleString('en-US')} attempts ` +
+				`(~${seconds}s at ${KEYPAIR_ATTEMPTS_PER_SECOND.toLocaleString('en-US')}/sec), but the ` +
+				`${Math.round(timeBudgetMs / 1000)}s budget only affords ` +
+				`~${Math.round(affordable).toLocaleString('en-US')} — about a ${chance}% chance of a hit. ` +
+				`Base58's leading character is not uniform: the 40 symbols from 'K' to 'z' are ~17× ` +
+				`harder to lead with than '2'–'H'. Try a prefix starting with one of 2-9 or A-H, move ` +
+				`the pattern to the suffix (uniform 1/58 per character), or grind it in the browser at ` +
+				`/vanity, which parallelizes across all your cores.`,
+		),
+		{ status: 400, code: 'pattern_infeasible', expectedAttempts: Math.round(expected) },
+	);
+}
 
 let wasmReady = false;
 
@@ -106,12 +155,19 @@ function ensureWasm() {
 
 /**
  * Estimate the combined difficulty (expected attempts) for a pattern.
+ *
+ * Uses the exact Base58 distribution rather than 58^length: the leading
+ * character spans a 58× difficulty range, so a length-only estimate is wrong by
+ * up to 17× in either direction. See
+ * [base58-distribution.js](./base58-distribution.js).
+ *
  * @param {string} prefix
  * @param {string} suffix
+ * @param {boolean} [ignoreCase=false]
  * @returns {number}
  */
-export function expectedAttemptsFor(prefix, suffix) {
-	return estimateAttempts((prefix?.length || 0) + (suffix?.length || 0));
+export function expectedAttemptsFor(prefix, suffix, ignoreCase = false) {
+	return expectedAttempts(prefix || '', suffix || '', ignoreCase);
 }
 
 /**
@@ -166,6 +222,8 @@ export function grindVanityNode(opts = {}) {
 			{ status: 400, code: 'pattern_too_long' },
 		);
 	}
+
+	assertKeypairFeasible(prefix, suffix, ignoreCase, timeBudgetMs);
 
 	ensureWasm();
 

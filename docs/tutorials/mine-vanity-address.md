@@ -26,7 +26,7 @@ This tutorial covers the full lifecycle: **grind in the browser → (optionally)
 
 ## How grinding works (two minutes of theory)
 
-The address space is the Base58 alphabet (`123…ABC…xyz`, minus the ambiguous `0 O I l` — 58 symbols). To match `n` chosen characters you expect to try about `58ⁿ` random keypairs:
+The address space is the Base58 alphabet (`123…ABC…xyz`, minus the ambiguous `0 O I l` — 58 symbols). Each character you pin multiplies the work by ~58, so a rough ladder looks like this:
 
 | Pattern length | Expected attempts | Feel |
 |---|---|---|
@@ -35,6 +35,16 @@ The address space is the Base58 alphabet (`123…ABC…xyz`, minus the ambiguous
 | 4 chars | ~11M | a minute on several cores |
 | 5 chars | ~633M | minutes to hours |
 | 6+ chars | billions | a fleet, or a bounty |
+
+**The first character is the exception, and it matters a lot.** Base58 encodes an address as one big 256-bit number, not as a string of independent symbols. A 32-byte key needs 44 Base58 digits unless it happens to be small enough for 43, and since 2²⁵⁶ / 58⁴³ ≈ 17, a 44-digit address can only ever *start* with one of the first 17 symbols. Anything later in the alphabet has to come from the ~5.9% of keys that fit in 43 digits:
+
+| Your prefix starts with | Difficulty vs. the flat 58ⁿ guess |
+|---|---|
+| `2`–`H` | **3.4× easier** |
+| `J` | about the same |
+| `K`–`z` (40 of the 58 symbols) | **17× harder** |
+
+So `Agent…` is dramatically cheaper to grind than `zebra…`, even though both are five characters. Suffixes have no such skew — the *last* characters of an address are uniform at 1/58 each, which is why moving a pattern to the suffix is often the cheapest way to get the look you want.
 
 A **case-insensitive** match (matching letters in any case) roughly halves the work per letter, at the cost of not choosing the casing of the result.
 
@@ -64,13 +74,15 @@ type a prefix or suffix to see estimated time
 rough estimate: ~40s on 4 cores      [tier: slow — minutes+]
 ```
 
-The estimate comes from the honest `58ⁿ` model and your selected core count. The page calculates expected attempts as:
+The estimate comes from the exact Base58 distribution and your selected core count:
 
 ```
-expectedAttempts = product over each pattern character of (58 / matchesPerChar)
+expectedAttempts = 1 / ( P(address starts with your prefix) × 58^-len(suffix) )
 ```
 
-where `matchesPerChar` is `2` for a letter when case-insensitive is on (both cases are valid Base58), otherwise `1`. This is the same difficulty math the paid receipt commits to — see [src/solana/vanity/validation.js](../../src/solana/vanity/validation.js).
+The prefix term is counted exactly rather than approximated as `58^-n` — it is the fraction of all 2²⁵⁶ possible keys whose encoding begins with your prefix, which is what makes the first-character table above fall out. Case-insensitivity sums the probabilities of every Base58-valid spelling (note `i`, `o` and `L` have only one valid case, since the alphabet drops `I`, `O` and `l`).
+
+This is the same difficulty math the paid receipt commits to — see [src/solana/vanity/base58-distribution.js](../../src/solana/vanity/base58-distribution.js) for the derivation and [src/solana/vanity/validation.js](../../src/solana/vanity/validation.js) for the model dispatch. Receipts name their model in `difficulty.model`, so a receipt issued before this correction still verifies against the model it was issued under.
 
 > **Tip:** the suggested-pattern chips (`AGNT…`, `…pump`, `GM…gm`, …) each show their own estimate. They're a fast way to see how dramatically each extra character costs you.
 
@@ -136,7 +148,7 @@ If you buy a grind from the paid endpoint (`/api/x402/vanity-verifiable`, an x40
 
 1. the key came from entropy the server **committed to before** it knew your pattern (no precomputed table of keys);
 2. **your own entropy** (`clientSeed`) was mixed in, so neither party alone controlled the address;
-3. the address really derives from the revealed seed, matches your pattern, and the difficulty claim is the honest `58ⁿ` model;
+3. the address really derives from the revealed seed, matches your pattern, and the difficulty claim matches the model the receipt names in `difficulty.model`;
 4. the receipt was **signed by the real three.ws service key**, not an impostor;
 5. (optionally) the key you recovered from the sealed envelope is byte-for-byte the one the receipt describes — **you alone hold it**.
 
@@ -158,7 +170,7 @@ The page runs every check locally and shows a pass/fail line for each:
 - **commitment** — `SHA-256(serverSeed)` equals the published commitment, so the server was locked to that seed before grinding.
 - **derivation** — re-deriving the master seed and the candidate at `winningIndex` reproduces exactly `receipt.address`.
 - **pattern** — the address actually satisfies the requested prefix/suffix.
-- **difficulty** — `difficulty.expectedAttempts` equals the honest rounded `58ⁿ` value.
+- **difficulty** — `difficulty.expectedAttempts` equals the honest rounded value under the model named in `difficulty.model` (`base58-exact/v2` for anything issued since 2026-07-25).
 - **signature** — the Ed25519 signature verifies, **and** the receipt's signing key matches the one pinned from the well-known document (impostors who self-sign under a different key fail here).
 - **custody** *(if you opened the seal)* — the decrypted seed's public key equals `receipt.address`.
 
@@ -246,7 +258,7 @@ So the grind searches for a **salt** that produces a contract address matching y
 You learned to mine a Solana vanity address and to operate the proof-of-grind protocol around it:
 
 - **Grind in the browser** ([/vanity-wallet](/vanity-wallet)) — pick a prefix/suffix, choose case sensitivity and cores, grind locally with WASM Web Workers, and download the key. Nothing leaves your device.
-- **Difficulty is `58ⁿ`** — every character multiplies the work; case-insensitive roughly halves per letter.
+- **Difficulty is ~58 per character, except the first** — the leading symbol ranges from 3.4× easier to 17× harder than a flat `58ⁿ` guess; case-insensitive roughly halves per letter.
 - **Provably-fair paid grind** — when the server holds the work, `three-vanity/v1` proves the key was fresh, your entropy was mixed in, and no copy was kept.
 - **Verify** ([/vanity/verify](/vanity/verify)) — paste a receipt to re-check commitment, derivation, pattern, difficulty, signature, and (optionally) custody, all in your browser, pinned to the live service key.
 - **Gallery** ([/vanity/gallery](/vanity/gallery)) — appraise any address or opt-in publish a verified, secret-free receipt to the rarity leaderboard.
