@@ -3,7 +3,7 @@
 Spatial MCP is an open shape for returning a **live, interactive 3D scene** as an MCP tool result instead of a URL in text. A conformant host renders it inline — orbit, animate, place in AR — with an embedded component. three.ws is the reference implementation; the shape is renderer-agnostic and carries **no** payment, wallet, or coin surface, so it drops into crypto-free app stores unchanged.
 
 - **Spec:** [`specs/SPATIAL_MCP.md`](https://github.com/nirholas/three.ws/blob/main/specs/SPATIAL_MCP.md) (v0.1, CC0)
-- **Validator (npm):** `npm install @three-ws/spatial-mcp` — `validateSpatialArtifact()`, `buildSpatialArtifact()`, `lintSpatialMeta()`, plus the conformance fixture corpus. Source: [`packages/spatial-mcp`](https://github.com/nirholas/three.ws/tree/main/packages/spatial-mcp).
+- **Validator (package):** [`packages/spatial-mcp`](https://github.com/nirholas/three.ws/tree/main/packages/spatial-mcp) — `@three-ws/spatial-mcp`: `validateSpatialArtifact()`, `buildSpatialArtifact()`, `lintSpatialMeta()`, plus the conformance fixture corpus. Dependency-free; the npm registry publish is queued, and the import-by-URL below works today.
 - **Validator (import by URL, no npm):** `https://three.ws/spatial-mcp/spatial-validator.js` — the same module, served directly. Source: [`public/spatial-mcp/spatial-validator.js`](https://github.com/nirholas/three.ws/blob/main/public/spatial-mcp/spatial-validator.js); server-side code imports it via `api/_lib/spatial-mcp.js`, and a CI drift guard keeps the npm copy byte-identical.
 - **Validator (MCP tool):** `validate_spatial_response({ artifact })` on the three.ws 3D Studio server
 - **Validator (no code at all):** paste a payload into the checker on [`/spatial-mcp`](https://three.ws/spatial-mcp) and read the diagnostics, conformance and data-minimization lint both
@@ -100,7 +100,7 @@ It applies `camera`/`environment`/`affordances`, plays `animation` when present,
 The reference lint flags the common violations:
 
 ```js
-import { lintSpatialMeta } from '@three-ws/spatial-mcp';
+import { lintSpatialMeta } from 'https://three.ws/spatial-mcp/spatial-validator.js';
 
 lintSpatialMeta(artifact);
 // [{ path: 'meta.session_id', message: 'looks like an internal/auth/coin field — the spec requires emitters to strip these (data minimization)' }]
