@@ -18,7 +18,7 @@ import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
-import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms } from '../_lib/sniper-loops-health.js';
+import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms, isFallbackAnswer } from '../_lib/sniper-loops-health.js';
 
 const NETWORK = 'mainnet';
 
@@ -83,17 +83,25 @@ export default wrapCron(async (req, res) => {
 
 	// Named-model routing: are the arms' named models actually answering, or is
 	// the free fallback chain absorbing everything (as it silently did for weeks
-	// on a zero-credit OpenRouter account)? answered_by records who really
-	// replied; the fallback tag is set by the judge at answer time.
+	// on a zero-credit OpenRouter account)? The ledger keys rows by the REQUESTED
+	// model, so fallback detection is answered_by vs model mismatch, classified
+	// in JS by the tested isFallbackAnswer (a prefix-only SQL filter read 0%
+	// during a real outage).
 	let routing = { degraded: false, share: null, detail: 'not probed' };
 	try {
-		const [row] = await sql`
-			select count(*)::int as total,
-			       count(*) filter (where answered_by ilike 'fallback:%' or model ilike 'fallback:%')::int as fallback
+		const rows = await sql`
+			select model, answered_by, count(*)::int as n
 			from sniper_llm_verdicts
 			where network = ${NETWORK} and created_at > now() - interval '1 hour'
+			group by model, answered_by
 		`;
-		routing = classifyLlmRouting(row || {});
+		let total = 0;
+		let fallback = 0;
+		for (const r of rows) {
+			total += r.n;
+			if (isFallbackAnswer(r.model, r.answered_by)) fallback += r.n;
+		}
+		routing = classifyLlmRouting({ total, fallback });
 	} catch (err) {
 		broken.push({ name: 'llm-routing', probeError: err?.message || 'query failed' });
 	}

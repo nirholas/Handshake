@@ -121,12 +121,39 @@ export function findWalletlessArms(rows) {
 }
 
 /**
+ * Is one verdict row a fallback answer? The ledger stores the REQUESTED model
+ * in `model` (the experiment arm's identity, also the on-conflict key), so a
+ * `fallback:` prefix never reaches that column. What the worker's judge writes
+ * on the two paths (workers/agent-sniper/llm-judge.js):
+ *   OpenRouter answered  -> answered_by === model (same string, same variable)
+ *   free-chain fallback  -> answered_by = the raw free model name ("llama-3.1-8b-instant")
+ * So the truth test is a MISMATCH between answered_by and model, not a prefix.
+ * The first probe shipped prefix-only and read 0/225 fallbacks during a full
+ * OpenRouter outage: a false negative from exactly the silence class this
+ * watchdog exists to catch. Pure.
+ *
+ * @param {string|null|undefined} model      requested model recorded on the row
+ * @param {string|null|undefined} answeredBy who actually replied (null on pre-column rows)
+ * @returns {boolean}
+ */
+export function isFallbackAnswer(model, answeredBy) {
+	const req = String(model || '').trim().toLowerCase();
+	const ans = String(answeredBy || '').trim().toLowerCase();
+	if (req.startsWith('fallback:') || ans.startsWith('fallback:')) return true;
+	// No answered_by (legacy row) = unknown; never count unknowns as fallbacks,
+	// a false page teaches operators to ignore the real one.
+	if (!ans) return false;
+	return ans !== req;
+}
+
+/**
  * Named-model routing health. The July 2026 audit note "the failover chain
  * answering most calls muddied the model-vs-model comparison" turned out to be
  * an OpenRouter account sitting at zero credits for weeks: the key stayed
  * valid, every completion 402'd, the free chain silently absorbed the traffic,
  * and no check anywhere measured it. This one does: given the last hour's
- * verdict counts, alarm when fallbacks answered nearly everything. Pure.
+ * verdict counts (fallbacks classified per isFallbackAnswer), alarm when
+ * fallbacks answered nearly everything. Pure.
  *
  * @param {{ total:number, fallback:number }} counts verdicts in the window
  * @param {{ minSample?:number, maxShare?:number }} [opts]
@@ -137,11 +164,14 @@ export function classifyLlmRouting(counts, { minSample = 20, maxShare = 0.9 } = 
 	const fallback = Number(counts?.fallback) || 0;
 	if (total < minSample) return { degraded: false, share: null, detail: `only ${total} verdicts in window (need ${minSample})` };
 	const share = fallback / total;
+	const degraded = share >= maxShare;
 	return {
-		degraded: share >= maxShare,
+		degraded,
 		share: Number(share.toFixed(3)),
 		detail: `${fallback}/${total} verdicts answered by fallback models (${Math.round(share * 100)}%). ` +
-			'The named models are not answering: check OpenRouter credits/keys. Strict arms are paused until this clears; verdicts still record for calibration.',
+			(degraded
+				? 'The named models are not answering: check OpenRouter credits/keys. Strict arms are paused until this clears; verdicts still record for calibration.'
+				: 'Named-model routing is healthy.'),
 	};
 }
 

@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { llmVerdictGate } from '../workers/agent-sniper/llm-judge.js';
 import { decideLiquidityDecay, updateStaleClock } from '../workers/agent-sniper/exit-logic.js';
-import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms } from '../api/_lib/sniper-loops-health.js';
+import { LOOPS, classifyLlmRouting, classifyLoopHealth, describeStale, findWalletlessArms, isFallbackAnswer } from '../api/_lib/sniper-loops-health.js';
 
 describe('llmVerdictGate', () => {
 	const strat = { llm_min_confidence: 0.65, llm_max_confidence: 0.9, llm_strict_model: false };
@@ -141,6 +141,30 @@ describe('classifyLoopHealth (count rows, not status codes)', () => {
 		const { ok, stale } = classifyLoopHealth([probe('not-a-loop', 0)], NOW);
 		expect(ok).toHaveLength(0);
 		expect(stale).toHaveLength(0);
+	});
+});
+
+describe('isFallbackAnswer (the ledger keys rows by REQUESTED model)', () => {
+	it('flags the real outage shape: named model answered by a free-chain model', () => {
+		// The exact rows observed live on 2026-07-25 while the prefix-only SQL read 0%.
+		expect(isFallbackAnswer('moonshotai/kimi-k3', 'Meta-Llama-3_3-70B-Instruct')).toBe(true);
+		expect(isFallbackAnswer('anthropic/claude-haiku-4.5', 'llama-3.1-8b-instant')).toBe(true);
+		expect(isFallbackAnswer('openrouter/auto', 'llama-3.3-70b-versatile')).toBe(true);
+	});
+
+	it('passes when the requested model itself replied', () => {
+		expect(isFallbackAnswer('x-ai/grok-4.3', 'x-ai/grok-4.3')).toBe(false);
+		expect(isFallbackAnswer('moonshotai/kimi-k3', ' Moonshotai/Kimi-K3 ')).toBe(false); // case/space tolerant
+	});
+
+	it('still honors an explicit fallback: prefix on either side', () => {
+		expect(isFallbackAnswer('fallback:ovh', 'ovh')).toBe(true);
+		expect(isFallbackAnswer('moonshotai/kimi-k3', 'fallback:groq#instant')).toBe(true);
+	});
+
+	it('never counts a legacy row with no answered_by as a fallback', () => {
+		expect(isFallbackAnswer('moonshotai/kimi-k3', null)).toBe(false);
+		expect(isFallbackAnswer('moonshotai/kimi-k3', '')).toBe(false);
 	});
 });
 
