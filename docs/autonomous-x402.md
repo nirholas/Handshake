@@ -36,6 +36,17 @@ Each tick:
 
 Payments are real on chain — no mocks, no simulations.
 
+Two per-tick balance reads act as hard pause switches in front of every paid
+call, because neither cap above can see them: the payer's **USDC float** (an
+empty float skips paid entries instead of signing payments that die at settle
+with "Simulation failed") and the sponsor fee wallet's **SOL settle floor**
+(below `X402_SPONSOR_SOL_FLOOR_LAMPORTS` the self-facilitator fail-closes every
+sponsor-mode settle, so the loop skips paid entries rather than hammering
+hundreds of doomed 502s per hour). Both fire one deduped CRITICAL ops alert
+naming the wallet; free endpoints and `run()`-style monitors keep running while
+paused, and `api/cron/treasury-topup` refuels the wallets when the economy
+master holds funds.
+
 ## Configuration
 
 | Env var | Default | Purpose |
@@ -187,7 +198,8 @@ corroborate — the ops financial-integrity surface alerts on those. Detail:
 | Sink | Written by |
 |---|---|
 | `x402_autonomous_log` | Every call (success or failure), with `signal_data` / `value_extracted`. |
-| `oracle_intel_signals` | `oracle` / `sniper` entries, keyed by source + topic; consumed by the sniper oracle gate. |
+| `oracle_intel_signals` | `oracle` / `sniper` entries, keyed by source + topic; consumed by the sniper oracle gate. Each row carries `tx_signature`, the settle signature of the paid call that bought it, so a gate decision can cite its receipt (surfaced as `signal_receipts` on gate results). |
+| `forge_creations` | Every settled `POST /api/x402/forge` generation (any buyer, not just this loop). The row lands in the public community gallery with `x402_payer` / `x402_tx_sig` / `x402_price_atomic` provenance; the gallery renders a Solscan-linked "x402 · $price" badge. Inline-done lanes materialize immediately; async lanes store the full job token and `api/cron/forge-finalize` completes them server-side. |
 | `agent_custody_events` | The USDC spend, with `category: 'x402'` (see [Money feed](money-feed.md)). |
 | `x402_volume_metrics` | Per-endpoint proof-of-volume + liveness ledger from the Volume Bootstrap Loop (see [x402 revenue](x402-revenue.md#proof-of-volume--x402_volume_metrics)). |
 | `payment_reconciliation` | One verdict per settlement claim from the daily reconciliation job (see [x402 revenue](x402-revenue.md#reconciliation--payment_reconciliation)). |

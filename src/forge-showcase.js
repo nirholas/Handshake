@@ -81,6 +81,8 @@ function ensureShowcaseVoteStyles() {
 		.showcase-cat-badge.model-cat-creature  { background: rgba(251,146,60,.18);  color: #fdba74; }
 		.showcase-cat-badge.model-cat-vehicle   { background: rgba(56,189,248,.18);  color: #7dd3fc; }
 		.showcase-cat-badge.model-cat-other     { background: rgba(255,255,255,.08); color: #a1a1aa; }
+		.showcase-x402-badge { background: rgba(20,241,149,.14); color: #5eead4; text-decoration: none; transition: background .15s ease; z-index: 2; position: relative; }
+		.showcase-x402-badge:hover, .showcase-x402-badge:focus-visible { background: rgba(20,241,149,.28); outline: none; }
 	`;
 	document.head.appendChild(style);
 }
@@ -438,6 +440,22 @@ function buildCard(c) {
 		catBadge.textContent = catLabel;
 		catBadge.title = `Model category: ${catLabel}`;
 		foot.appendChild(catBadge);
+	}
+
+	// x402 provenance: this model was bought by an agent with real on-chain
+	// USDC. The badge links to the settle transaction so the receipt is one
+	// click away; stopPropagation keeps it from opening the viewer.
+	if (c.x402?.tx_sig) {
+		const pay = document.createElement('a');
+		pay.className = 'showcase-cat-badge showcase-x402-badge';
+		pay.href = `https://solscan.io/tx/${encodeURIComponent(c.x402.tx_sig)}`;
+		pay.target = '_blank';
+		pay.rel = 'noopener noreferrer';
+		pay.textContent = c.x402.price_usdc != null ? `x402 · $${c.x402.price_usdc}` : 'x402';
+		pay.title = `Paid via x402 by ${c.x402.payer ? `${c.x402.payer.slice(0, 4)}…${c.x402.payer.slice(-4)}` : 'an agent'}. View settle transaction`;
+		pay.setAttribute('aria-label', 'Paid via x402. View settle transaction on Solscan');
+		pay.addEventListener('click', (e) => e.stopPropagation());
+		foot.appendChild(pay);
 	}
 
 	// Right-aligned actions: upvote + Remix, kept together so the footer reads

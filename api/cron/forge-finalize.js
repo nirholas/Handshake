@@ -36,6 +36,8 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { materializeCreation, markFailed, forgeStoreEnabled } from '../_lib/forge-store.js';
 import { notifyForgeComplete, notifyForgeFailed } from '../_lib/forge-notify.js';
 import { createRegenProvider as createGcpProvider } from '../_providers/gcp.js';
+import { createNvidiaProvider } from '../_providers/nvidia.js';
+import { decodeJobToken } from '../_lib/forge-job-token.js';
 
 export const maxDuration = 60;
 
@@ -107,6 +109,12 @@ export default wrapCron(async (req, res) => {
 		// No GCP_RECONSTRUCTION_KEY on this deployment: envelope rows can't be
 		// polled here; the hard TTL below still reaps them.
 	}
+	let nvidia = null;
+	try {
+		nvidia = createNvidiaProvider();
+	} catch {
+		// NIM unconfigured: forge-token rows can't be polled here; hard TTL reaps.
+	}
 
 	const out = { done: 0, failed: 0, timed_out: 0, still_running: 0, unpollable: 0 };
 
@@ -156,7 +164,41 @@ export default wrapCron(async (req, res) => {
 
 			// queued / running / poll blip: fall through to the TTL check.
 		} else if (!envelope) {
-			out.unpollable++;
+			// The paid x402 lane stores the FULL signed forge token (provider +
+			// upstream task id) so unattended agent purchases can be completed
+			// server-side here, so an agent that got its poll_url answer and moved on
+			// still ends with a finished gallery row, not a TTL orphan.
+			const forgeToken = decodeJobToken(row.replicate_job_id);
+			if (forgeToken?.provider === 'nvidia' && forgeToken.taskId && nvidia) {
+				const status = await nvidia
+					.status({ kind: forgeToken.kind, taskId: forgeToken.taskId })
+					.catch(() => null);
+				if (status?.status === 'done' && status.resultGlbUrl) {
+					const durable = await materializeCreation({
+						replicateJobId: row.replicate_job_id,
+						clientKey: row.client_key,
+						glbUrl: status.resultGlbUrl,
+					});
+					if (durable) {
+						out.done++;
+						continue;
+					}
+					out.still_running++;
+					continue;
+				}
+				if (status?.status === 'failed') {
+					await markFailed({
+						replicateJobId: row.replicate_job_id,
+						clientKey: row.client_key,
+						error: status.error || 'generation failed',
+					});
+					out.failed++;
+					continue;
+				}
+				// queued / running / poll blip: fall through to the TTL check.
+			} else {
+				out.unpollable++;
+			}
 		}
 
 		if (ageMinutes > HARD_TTL_MINUTES) {

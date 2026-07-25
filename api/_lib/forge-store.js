@@ -72,6 +72,44 @@ export function validModelCategory(v) {
 	return typeof v === 'string' && MODEL_CATEGORIES.includes(v) ? v : null;
 }
 
+// x402 payment provenance, shaped for read-path spreads. Only rows created by
+// the paid /api/x402/forge lane carry these; every other lane spreads nothing,
+// so existing consumers see no new keys on non-x402 items.
+function x402Provenance(r) {
+	if (!r?.x402_tx_sig && !r?.x402_payer) return {};
+	return {
+		x402: {
+			payer: r.x402_payer ?? null,
+			tx_sig: r.x402_tx_sig ?? null,
+			price_usdc: r.x402_price_atomic != null ? Number(r.x402_price_atomic) / 1e6 : null,
+		},
+	};
+}
+
+// Stamp the on-chain receipt onto a creation the paid x402 lane just recorded:
+// who paid, the settle signature, and the price. Keyed the same way as every
+// other store writer (replicate_job_id + client_key) so it can only touch the
+// row its caller created. Best-effort: a miss is logged, never thrown.
+export async function attachX402Provenance({ replicateJobId, clientKey, payer, txSig, priceAtomic }) {
+	if (!forgeStoreEnabled() || !replicateJobId || !clientKey) return false;
+	try {
+		const rows = await sql`
+			update forge_creations
+			set x402_payer = ${payer ?? null},
+				x402_tx_sig = ${txSig ?? null},
+				x402_price_atomic = ${Number.isFinite(Number(priceAtomic)) ? Number(priceAtomic) : null},
+				updated_at = now()
+			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey}
+			returning id
+		`;
+		return rows.length > 0;
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] attachX402Provenance skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] attachX402Provenance failed:', err?.message);
+		return false;
+	}
+}
+
 export async function createCreation({
 	clientKey,
 	ipHash,
@@ -511,6 +549,7 @@ export async function getPublicCreation({ id }) {
 		const rows = await sql`
 			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.preview_image_url, fc.outcome,
 				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
+				fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 				u.username as creator_username
 			from forge_creations fc
 			left join users u on u.id = fc.user_id and u.deleted_at is null
@@ -536,6 +575,7 @@ export async function getPublicCreation({ id }) {
 			// Real, opt-in attribution only — set when the model was forged while
 			// signed in. Never invented for anonymous generations.
 			creatorUsername: r.creator_username || null,
+			...x402Provenance(r),
 		};
 	} catch (err) {
 		console.error('[forge-store] getPublicCreation failed:', err?.message);
@@ -756,6 +796,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url,
 					fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path,
 					fc.model_category, fc.created_at, fc.vote_count,
+					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 					(v.voter_key is not null) as voted
 				from forge_creations fc
 				left join forge_votes v on v.creation_id = fc.id and v.voter_key = ${vk}
@@ -769,6 +810,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url,
 					fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path,
 					fc.model_category, fc.created_at, fc.vote_count,
+					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 					(v.voter_key is not null) as voted
 				from forge_creations fc
 				left join forge_votes v on v.creation_id = fc.id and v.voter_key = ${vk}
@@ -791,6 +833,7 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 			created_at: r.created_at,
 			vote_count: Number(r.vote_count) || 0,
 			voted: Boolean(r.voted),
+			...x402Provenance(r),
 		}));
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] listShowcase skipped (db unavailable):', err?.message);
@@ -911,6 +954,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 			? await sql`
 				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.model_category,
 					fc.parent_creation_id, fc.created_at,
+					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 					u.username, u.display_name, u.avatar_url
 				from forge_creations fc
 				left join users u on u.id = fc.user_id and u.deleted_at is null and u.username is not null
@@ -922,6 +966,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 			: await sql`
 				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.model_category,
 					fc.parent_creation_id, fc.created_at,
+					fc.x402_payer, fc.x402_tx_sig, fc.x402_price_atomic,
 					u.username, u.display_name, u.avatar_url
 				from forge_creations fc
 				left join users u on u.id = fc.user_id and u.deleted_at is null and u.username is not null
@@ -941,6 +986,7 @@ export async function listRecentCreations({ limit = 24, before } = {}) {
 			username: r.username || null,
 			displayName: r.display_name || null,
 			avatarUrl: r.avatar_url || null,
+			...x402Provenance(r),
 		}));
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] listRecentCreations skipped (db unavailable):', err?.message);

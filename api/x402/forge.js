@@ -83,6 +83,14 @@ import {
 	FORGE_BAZAAR,
 } from '../_lib/forge-listing.js';
 import { llmComplete } from '../_lib/llm.js';
+import { randomUUID } from 'node:crypto';
+import {
+	attachX402Provenance,
+	createCreation,
+	forgeStoreEnabled,
+	hashClient,
+	materializeCreation,
+} from '../_lib/forge-store.js';
 
 const ROUTE = '/api/x402/forge';
 const REQUIRED_SCOPE = 'x402:bypass';
@@ -719,7 +727,61 @@ export default wrap(async (req, res) => {
 			paymentResponseHeader,
 		});
 	}
+
+	// Gallery + provenance: every settled generation becomes a real forge_creations
+	// row, so agent-economy output lands in the same community gallery as every
+	// other lane, stamped with who paid, the settle signature, and the price.
+	if (!parsed.isHealthCheck) {
+		await recordPaidCreation({ parsed, result, settled, priceAtomics });
+	}
 });
+
+// Record a settled paid generation into forge_creations with x402 provenance.
+// Inline-done lanes (HF reconstruct, synchronous NIM) materialize immediately:
+// the GLB is copied durable and the row goes straight to 'done', visible in the
+// gallery within one feed refresh. Async lanes store the FULL job token as the
+// job key; api/cron/forge-finalize decodes it and completes the row
+// server-side, so the artifact lands even if the buyer never polls. Runs after
+// the response is sent; every step is best-effort, and a store hiccup must never
+// affect the buyer, who already has their result.
+async function recordPaidCreation({ parsed, result, settled, priceAtomics }) {
+	if (!forgeStoreEnabled() || !result || result.status === 'failed') return;
+	try {
+		const payer = settled?.payer || null;
+		// One stable pseudo-identity per paying wallet: their creations group in
+		// "recent" feeds the same way a browser's do, without inventing a user.
+		const clientKey = hashClient(`x402:${payer || 'anon'}`);
+		const jobKey = result.job_id || `x402-${randomUUID().replace(/-/g, '')}`;
+		const created = await createCreation({
+			clientKey,
+			ipHash: null,
+			prompt: parsed.prompt || (parsed.isImageMode ? 'image reconstruction (x402)' : ''),
+			aspect: parsed.aspect,
+			previewImageUrl: null,
+			replicateJobId: jobKey,
+			textToImageModel: null,
+			viewsRequested: parsed.imageUrls?.length ?? 0,
+			viewsUsed: null,
+			multiview: (parsed.imageUrls?.length ?? 0) > 1,
+			backend: result.backend ?? null,
+			tier: result.tier ?? null,
+			path: 'x402',
+		});
+		if (!created) return;
+		await attachX402Provenance({
+			replicateJobId: jobKey,
+			clientKey,
+			payer,
+			txSig: settled?.transaction || null,
+			priceAtomic: priceAtomics,
+		});
+		if (result.status === 'done' && result.glb_url) {
+			await materializeCreation({ replicateJobId: jobKey, clientKey, glbUrl: result.glb_url });
+		}
+	} catch (err) {
+		console.warn(`[x402/forge] gallery record failed (buyer unaffected): ${err?.message || err}`);
+	}
+}
 
 // Validate a parsed body object (the stream is already consumed by the handler).
 // Mirrors parseRequest but takes an object instead of the request stream.

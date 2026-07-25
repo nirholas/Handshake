@@ -40,6 +40,10 @@ const RUG_FRESH_MINUTES = Number(process.env.SNIPER_RUGPULL_FRESH_MIN || 60);
 let _macroCache = null;
 let _macroCacheTs = 0;
 const MACRO_TTL_MS = 120_000;
+// Settle signatures of the paid x402 calls behind the current macro adjustment,
+// refreshed together with _macroCache. Surfaced on gate results so every trade
+// decision carries the on-chain receipts of the signals that shaped it.
+let _macroReceipts = [];
 
 // Per-coin sentiment cache (separate from the conviction cache).
 const _sentCache = new Map(); // key → { adj, ts }
@@ -66,7 +70,7 @@ async function getMacroAdjustment() {
 	}
 	try {
 		const rows = await sql`
-			select source_id, topic, signal, confidence, ts
+			select source_id, topic, signal, confidence, tx_signature, ts
 			from oracle_intel_signals
 			where topic in ('solana', 'bitcoin', 'pump')
 			  and ts > now() - interval '1 hour'
@@ -87,6 +91,7 @@ async function getMacroAdjustment() {
 
 		let adjustment = 0;
 		const WEIGHTS = { solana: 1.2, bitcoin: 0.8, pump: 1.5 };
+		const receipts = [];
 
 		for (const [topic, row] of Object.entries(latest)) {
 			const w = WEIGHTS[topic] ?? 1.0;
@@ -102,10 +107,18 @@ async function getMacroAdjustment() {
 				adjustment -= Math.round(5 * w * confFactor);
 			}
 			// 'neutral' → no adjustment.
+
+			// Payment provenance: the settle signature of the x402 call that bought
+			// this signal, so a trade decision can point at the exact on-chain
+			// payment that informed it (journal + /sniper surfaces).
+			if (sig === 'bearish' || sig === 'bullish') {
+				receipts.push({ topic, signal: sig, tx_signature: row.tx_signature || null });
+			}
 		}
 
 		// Clamp: never move the bar more than ±15 points.
 		adjustment = Math.max(-15, Math.min(15, adjustment));
+		_macroReceipts = receipts;
 		_macroCache = adjustment;
 		_macroCacheTs = Date.now();
 		return adjustment;
@@ -289,8 +302,14 @@ export async function oracleGate(mint, network, strat) {
 			reason: `oracle_below_min:${score}<${effectiveMin}${breakdown}`,
 			macro_adjustment: macroAdj,
 			coin_adjustment: coinAdj,
+			...(macroAdj !== 0 && _macroReceipts.length ? { signal_receipts: _macroReceipts } : {}),
 		};
 	}
 
-	return { pass: true, macro_adjustment: macroAdj, coin_adjustment: coinAdj };
+	return {
+		pass: true,
+		macro_adjustment: macroAdj,
+		coin_adjustment: coinAdj,
+		...(macroAdj !== 0 && _macroReceipts.length ? { signal_receipts: _macroReceipts } : {}),
+	};
 }

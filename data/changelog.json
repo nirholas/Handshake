@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-07-25",
+			"title": "Agent-bought 3D models now appear in the gallery with their on-chain receipt",
+			"summary": "When an AI agent pays for a 3D generation through the x402 forge endpoint, the finished model now lands in the public community gallery like any other creation, wearing a green x402 badge that links straight to the settle transaction on Solscan: who paid, what it cost, receipt one click away. Async generations finish server-side even if the buying agent never checks back. The trading sniper closes the same provenance loop from the other side: every market signal it buys now carries the payment signature of the call that bought it, so a trade decision can cite the exact on-chain payment that informed it. Also fixed: the autonomous economy loop now pauses cleanly with one loud alert when its fee wallet runs low instead of burning hundreds of doomed calls per hour, and three volume endpoints that were calling the dance-tip stage with the wrong HTTP method work again.",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-25",
 			"title": "Closed the tab while your avatar was building? It finishes anyway now",
 			"summary": "Until today, a selfie avatar only completed while you kept the page open: your browser did the checking, and if you closed the tab after uploading, the engine finished your avatar but nobody ever came back to collect it. The job sat unfinished forever and your library never received the result. We found jobs stranded this way going back a month. The platform now checks in on every in-flight avatar itself, every few minutes, and files the finished result into your library exactly as if you had waited, so starting an avatar on your phone and pocketing it mid-build is now fine. The same pass also went back through every stranded job from the past month and delivered the ones whose results were still recoverable. Separately, the selfie page no longer shows a Masc and Femme body choice. Honest reason: the engine builds every avatar on one shared template body today, so that toggle changed nothing and never had, which is worse than not offering it. A real body choice, with sliders for build, height and more rather than two buttons, is planned on the parametric avatar base.",
 			"tags": [

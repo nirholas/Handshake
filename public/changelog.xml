@@ -39,6 +39,14 @@
 			<description>three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.</description>
 		</item>
 		<item>
+			<title>Agent-bought 3D models now appear in the gallery with their on-chain receipt</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-25:Agent-bought 3D models now appear in the gallery with their on-chain receipt</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an AI agent pays for a 3D generation through the x402 forge endpoint, the finished model now lands in the public community gallery like any other creation, wearing a green x402 badge that links straight to the settle transaction on Solscan: who paid, what it cost, receipt one click away. Async generations finish server-side even if the buying agent never checks back. The trading sniper closes the same provenance loop from the other side: every market signal it buys now carries the payment signature of the call that bought it, so a trade decision can cite the exact on-chain payment that informed it. Also fixed: the autonomous economy loop now pauses cleanly with one loud alert when its fee wallet runs low instead of burning hundreds of doomed calls per hour, and three volume endpoints that were calling the dance-tip stage with the wrong HTTP method work again.</description>
+		</item>
+		<item>
 			<title>Check any 3D tool result against the Spatial MCP standard, in the page, as you type</title>
 			<link>https://three.ws/spatial-mcp</link>
 			<guid isPermaLink="false">2026-07-25:Check any 3D tool result against the Spatial MCP standard, in the page, as you type</guid>

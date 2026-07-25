@@ -133,25 +133,26 @@ async function recordLog(runId, entry, { amountAtomic, txSig, responseData, dura
 	}
 }
 
-async function upsertOracleSignal(entry, signalData) {
+async function upsertOracleSignal(entry, signalData, txSig = null) {
 	if (!signalData || entry.pipeline !== 'oracle') return;
 	try {
 		await sql`
 			INSERT INTO oracle_intel_signals
-				(source_id, topic, signal, headline, confidence, price_usd, raw, ts)
+				(source_id, topic, signal, headline, confidence, price_usd, raw, tx_signature, ts)
 			VALUES
 				(${entry.id}, ${signalData.topic || entry.id},
 				 ${signalData.signal || null}, ${signalData.headline || null},
 				 ${signalData.confidence || null}, ${signalData.price_usd || null},
-				 ${JSON.stringify(signalData)}, now())
+				 ${JSON.stringify(signalData)}, ${txSig}, now())
 			ON CONFLICT (source_id, topic)
 			DO UPDATE SET
-				signal     = EXCLUDED.signal,
-				headline   = EXCLUDED.headline,
-				confidence = EXCLUDED.confidence,
-				price_usd  = EXCLUDED.price_usd,
-				raw        = EXCLUDED.raw,
-				ts         = now()
+				signal       = EXCLUDED.signal,
+				headline     = EXCLUDED.headline,
+				confidence   = EXCLUDED.confidence,
+				price_usd    = EXCLUDED.price_usd,
+				raw          = EXCLUDED.raw,
+				tx_signature = EXCLUDED.tx_signature,
+				ts           = now()
 		`;
 	} catch (err) {
 		// Table may not exist yet — suppress, it will be created by the migration.
@@ -198,18 +199,23 @@ async function ensureSchema() {
 	try {
 		await sql`
 			CREATE TABLE IF NOT EXISTS oracle_intel_signals (
-				source_id   text NOT NULL,
-				topic       text NOT NULL,
-				signal      text,
-				headline    text,
-				confidence  numeric(5,2),
-				price_usd   numeric(20,8),
-				raw         jsonb,
-				ts          timestamptz DEFAULT now(),
+				source_id    text NOT NULL,
+				topic        text NOT NULL,
+				signal       text,
+				headline     text,
+				confidence   numeric(5,2),
+				price_usd    numeric(20,8),
+				raw          jsonb,
+				tx_signature text,
+				ts           timestamptz DEFAULT now(),
 				PRIMARY KEY (source_id, topic)
 			)
 		`;
 	} catch { /* already exists */ }
+	try {
+		// Pre-migration deployments created the table without the receipt column.
+		await sql`ALTER TABLE oracle_intel_signals ADD COLUMN IF NOT EXISTS tx_signature text`;
+	} catch { /* concurrent tick or insufficient privileges; migration covers it */ }
 }
 
 async function getDailySpend(redis) {
@@ -367,6 +373,40 @@ export default wrapCron(async (req, res) => {
 		);
 	}
 
+	// ── Sponsor SOL floor: the settle ceiling neither cap can see ────────────
+	// This loop builds SPONSOR-mode payments (buildPaymentTx without selfPay), so
+	// every settle is fee-paid by the sponsor wallet, and the self-facilitator
+	// fail-closes the moment that wallet dips under SPONSOR_SOL_FLOOR_LAMPORTS.
+	// Without this read, a below-floor sponsor still probes, signs, and POSTs a
+	// payment for every ready entry, and every one dies at settle with a 502
+	// (observed: ~420 fee_wallet_below_floor rejects/hour, for days). Read the
+	// sponsor balance once per tick and treat below-floor as a hard pause on paid
+	// calls: free endpoints and run()-style monitors keep running, and ONE deduped
+	// CRITICAL alert names the wallet instead of a silent failure wave.
+	// `null` = balance read failed; unknown must not read as "paused".
+	const sponsorPubkey = env.X402_FEE_PAYER_SOLANA || null;
+	let sponsorSolLamports = null;
+	if (sponsorPubkey) {
+		try {
+			sponsorSolLamports = await conn.getBalance(new PublicKey(sponsorPubkey), 'confirmed');
+		} catch (err) {
+			log.warn('sponsor_sol_read_failed', { message: err?.message });
+		}
+	}
+	const sponsorFloorPaused =
+		sponsorSolLamports !== null && sponsorSolLamports < SPONSOR_SOL_FLOOR_LAMPORTS;
+	if (sponsorFloorPaused) {
+		log.warn('autonomous_sponsor_sol_floor', { sponsor: sponsorPubkey, lamports: sponsorSolLamports, floor: SPONSOR_SOL_FLOOR_LAMPORTS });
+		await sendOpsAlert(
+			'⛔ x402 autonomous loop paused: sponsor wallet below SOL settle floor',
+			`Sponsor ${sponsorPubkey} holds ${(sponsorSolLamports / 1e9).toFixed(6)} SOL, below the ` +
+				`${(SPONSOR_SOL_FLOOR_LAMPORTS / 1e9).toFixed(3)} SOL settle floor. The self-facilitator ` +
+				'fail-closes every settle at this level, so all paid calls are skipped this tick (free and ' +
+				'monitoring entries keep running). Fund the sponsor with SOL (or let treasury-topup refuel it) to resume.',
+			{ signature: `x402-autonomous-sponsor-sol-floor:${sponsorPubkey}` },
+		);
+	}
+
 	// ── Process each entry ────────────────────────────────────────────────────
 	const results = [];
 	let remainingCap = DAILY_CAP_ATOMIC - dailySpentSoFar;
@@ -511,6 +551,14 @@ export default wrapCron(async (req, res) => {
 				continue;
 			}
 
+			// Below the settle floor every sponsor-mode payment is rejected by the
+			// facilitator before broadcast; skip BEFORE building/signing/POSTing.
+			if (sponsorFloorPaused) {
+				results.push({ id: entry.id, status: 'skip', reason: 'sponsor_sol_floor_paused' });
+				await setCooldown(redis, entry); // SOL won't appear mid-cooldown; stop re-probing
+				continue;
+			}
+
 			amountAtomic = Number(accept.amount || 0);
 			if (amountAtomic > remainingCap) {
 				log.info('autonomous_cap_would_exceed', { id: entry.id, amount: amountAtomic, remaining: remainingCap });
@@ -578,7 +626,9 @@ export default wrapCron(async (req, res) => {
 				await incrementDailySpend(redis, amountAtomic);
 				if (entry.extractSignal) signalData = entry.extractSignal(responseBody);
 				await setCooldown(redis, entry);
-				if (signalData) await upsertOracleSignal(entry, signalData);
+				// The settle signature rides along so the sniper's oracle gate can cite
+				// the exact on-chain payment behind each signal it acts on.
+				if (signalData) await upsertOracleSignal(entry, signalData, txSig);
 				await runStoreValue(entry, { sql, redis, responseBody, signalData, runId, targetUrl, targetContext, endpointUrl, origin, durationMs: Date.now() - t0, success, amountAtomic, txSig });
 			} else {
 				errorMsg = `http_${paidRes.status}`;
