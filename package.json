@@ -162,6 +162,8 @@
 		"build:animations": "node scripts/build-animations.mjs",
 		"convert:fbx": "node scripts/fbx-to-glb.mjs",
 		"build:canonical-rest": "node scripts/build-canonical-rest.mjs",
+		"build:sign-goldens": "node scripts/build-sign-goldens.mjs",
+		"sign:sheet": "node scripts/sign-contact-sheet.mjs",
 		"extract:animations": "node scripts/extract-glb-animations.mjs && npm run build:animations",
 		"bake:mannequin": "node scripts/bake-mannequin-glb.mjs",
 		"build:club-props": "node scripts/build-club-props.mjs",

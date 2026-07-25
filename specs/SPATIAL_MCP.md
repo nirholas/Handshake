@@ -2,7 +2,7 @@
 
 **Version 0.1** · Open specification · License: CC0 / public domain (adopt freely)
 
-> Reference implementation: [three.ws](https://three.ws). Validator: `api/_lib/spatial-mcp.js`. Reference renderer: [`/spatial-mcp`](https://three.ws/spatial-mcp). Adoption guide: [`docs/spatial-mcp.md`](../docs/spatial-mcp.md).
+> Reference implementation: [three.ws](https://three.ws). Validator: `public/spatial-mcp/spatial-validator.js`, published at `https://three.ws/spatial-mcp/spatial-validator.js`. Reference renderer + live conformance checker: [`/spatial-mcp`](https://three.ws/spatial-mcp). Adoption guide: [`docs/spatial-mcp.md`](../docs/spatial-mcp.md).
 
 ## The problem
 
@@ -80,7 +80,13 @@ A Spatial MCP artifact is a JSON object placed in a tool result's `structuredCon
 
 ## Conformance
 
-Validate an artifact with `validateSpatialArtifact(payload)` (`api/_lib/spatial-mcp.js`) or the MCP tool `validate_spatial_response({ artifact })` on the three.ws 3D Studio server. Both return actionable diagnostics:
+Validate an artifact three ways, all the same implementation:
+
+- **Import it** from `https://three.ws/spatial-mcp/spatial-validator.js` (source: `public/spatial-mcp/spatial-validator.js`; server-side code re-exports it via `api/_lib/spatial-mcp.js`). Dependency-free, runs in a browser or in Node.
+- **Call the MCP tool** `validate_spatial_response({ artifact })` on the three.ws 3D Studio server.
+- **Paste it** into the checker on [`/spatial-mcp`](https://three.ws/spatial-mcp), which validates as you type and renders whatever passes.
+
+All three return actionable diagnostics:
 
 ```js
 { valid: false, version: "0.1",

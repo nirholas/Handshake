@@ -52,6 +52,9 @@
   .checker textarea:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
   .report { display:grid; gap:6px; }
   .report-pills { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  /* The checker's own stage sits inside a padded card, so it needs its own edge to
+     read as a viewport rather than as empty card space. */
+  #stage-check { border:1px solid rgba(255,255,255,0.08); border-radius:10px; background:rgba(0,0,0,0.22); }
   .diag { display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:baseline;
           padding:8px 10px; border-radius:8px; background:rgba(255,255,255,0.04); font-size:12.5px; line-height:1.5; }
   .diag code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space:nowrap; }

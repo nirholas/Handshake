@@ -68,11 +68,22 @@ describe('compiled clips', () => {
 			expect(clip, word).toBeTruthy();
 			expect(clip.duration, word).toBeGreaterThan(0.5);
 			for (const track of clip.tracks) {
-				expect(track.type, `${word}:${track.name}`).toBe('quaternion');
-				expect(track.values.length).toBe(track.times.length * 4);
 				for (let i = 1; i < track.times.length; i++) {
 					expect(track.times[i], `${word}:${track.name}`).toBeGreaterThan(track.times[i - 1]);
 				}
+				if (track.type === 'number') {
+					// A face lane: one weight per key, inside 0–1, and neutral at both
+					// ends so a marker cannot stick to the face after the sign.
+					expect(track.name, word).toMatch(/^Face\.morphTargetInfluences\[\w+\]$/);
+					expect(track.values.length).toBe(track.times.length);
+					for (const v of track.values) expect(v, `${word}:${track.name}`).toBeGreaterThanOrEqual(0);
+					for (const v of track.values) expect(v, `${word}:${track.name}`).toBeLessThanOrEqual(1);
+					expect(track.values[0], word).toBe(0);
+					expect(track.values.at(-1), word).toBe(0);
+					continue;
+				}
+				expect(track.type, `${word}:${track.name}`).toBe('quaternion');
+				expect(track.values.length).toBe(track.times.length * 4);
 				for (let i = 0; i < track.values.length; i += 4) {
 					expect(Math.hypot(...track.values.slice(i, i + 4))).toBeCloseTo(1, 6);
 				}
@@ -84,8 +95,24 @@ describe('compiled clips', () => {
 		for (const word of WORDS) {
 			const names = buildSignClip(word).tracks.map((t) => t.name);
 			expect(names.some((n) => n.startsWith('Hips')), word).toBe(false);
-			expect(names.every((n) => n.endsWith('.quaternion')), word).toBe(true);
+			// Bone rotations and face weights only: no translation, no scale.
+			expect(
+				names.every((n) => n.endsWith('.quaternion') || n.includes('morphTargetInfluences')),
+				word,
+			).toBe(true);
 		}
+	});
+
+	it('carries non-manual markers on the signs whose grammar needs them', () => {
+		const shapes = (word) =>
+			buildSignClip(word)
+				.tracks.filter((t) => t.type === 'number')
+				.map((t) => t.name.match(/\[(\w+)\]/)[1]);
+		// A wh-question furrows the brows; a plain pointing sign carries no marker.
+		expect(shapes('WHAT')).toContain('browDownLeft');
+		expect(shapes('SORRY')).toContain('browInnerUp');
+		expect(shapes('HAPPY')).toContain('mouthSmileLeft');
+		expect(shapes('YOU')).toEqual([]);
 	});
 
 	it('is deterministic', () => {

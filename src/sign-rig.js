@@ -569,6 +569,13 @@ export class Pose {
 	constructor(from = null) {
 		/** @type {Map<string, number[]>} */
 		this.local = new Map(from ? from.local : []);
+		/**
+		 * Blendshape weights, 0–1 by name. ASL carries grammar on the face, so a
+		 * pose is not complete without it: raised brows make a yes/no question,
+		 * furrowed brows a wh-question, and neither is optional decoration.
+		 * @type {Map<string, number>}
+		 */
+		this.face = new Map(from ? from.face : []);
 		this._worldQ = new Map();
 		this._worldP = new Map();
 	}
@@ -652,6 +659,19 @@ export class Pose {
 		}
 		const rl = refLocal ?? palmAxis(bone);
 		return this.setWorldQuat(bone, orientQuat(axisLocal, rl, dirWorld, refWorld));
+	}
+
+	/** Set blendshape weights by name, merging with whatever is already set. */
+	setFace(weights) {
+		for (const [shape, value] of Object.entries(weights ?? {})) {
+			this.face.set(shape, Math.max(0, Math.min(1, value)));
+		}
+		return this;
+	}
+
+	/** Weight of one blendshape under this pose (0 when unset). */
+	getFace(shape) {
+		return this.face.get(shape) ?? 0;
 	}
 
 	/** Plain `{bone: [x,y,z,w]}` of every posed bone — the clip track payload. */

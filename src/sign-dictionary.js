@@ -48,15 +48,15 @@ export const SIGNS = Object.freeze({
 	HELLO: {
 		gloss: 'Flat hand salutes out from the temple.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'forehead', out: 0.11, up: -0.03, forward: 0.1 }, fingers: ['up', 'in'], palm: ['forward', 'down'] }, head: { nod: 2 }, hold: 0.1 },
-			{ t: 0.32, right: { shape: 'FLAT', at: { anchor: 'forehead', out: 0.21, up: -0.07, forward: 0.18 }, fingers: ['up', 'out'], palm: 'forward' }, head: { nod: -2 }, hold: 0.18 },
+			{ face: 'pleasant', t: 0.3, right: { shape: 'FLAT', at: { anchor: 'forehead', out: 0.11, up: -0.03, forward: 0.1 }, fingers: ['up', 'in'], palm: ['forward', 'down'] }, head: { nod: 2 }, hold: 0.1 },
+			{ face: 'pleasant', t: 0.32, right: { shape: 'FLAT', at: { anchor: 'forehead', out: 0.21, up: -0.07, forward: 0.18 }, fingers: ['up', 'out'], palm: 'forward' }, head: { nod: -2 }, hold: 0.18 },
 		],
 	},
 	THANK: {
 		gloss: 'Flat hand moves out and down from the chin.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.01 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 3 }, hold: 0.12 },
-			{ t: 0.34, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.08, up: -0.16, forward: 0.28 }, fingers: ['forward', 'up'], palm: 'up' }, head: { nod: 6 }, hold: 0.16 },
+			{ face: 'pleasant', t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.01 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 3 }, hold: 0.12 },
+			{ face: 'pleasant', t: 0.34, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.08, up: -0.16, forward: 0.28 }, fingers: ['forward', 'up'], palm: 'up' }, head: { nod: 6 }, hold: 0.16 },
 		],
 	},
 	PLEASE: {
@@ -72,35 +72,35 @@ export const SIGNS = Object.freeze({
 	SORRY: {
 		gloss: 'A-hand circles over the heart.',
 		phases: [
-			{ t: 0.3, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: 0.02, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 } },
-			{ t: 0.26, right: { shape: 'A', at: { anchor: 'sternum', out: 0.1, up: -0.04, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 } },
-			{ t: 0.26, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: -0.09, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 } },
-			{ t: 0.26, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: 0.02, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 }, hold: 0.12 },
+			{ face: 'concern', t: 0.3, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: 0.02, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 } },
+			{ face: 'concern', t: 0.26, right: { shape: 'A', at: { anchor: 'sternum', out: 0.1, up: -0.04, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 } },
+			{ face: 'concern', t: 0.26, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: -0.09, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 } },
+			{ face: 'concern', t: 0.26, right: { shape: 'A', at: { anchor: 'sternum', out: 0.03, up: 0.02, forward: 0.14 }, fingers: 'up', palm: 'back' }, head: { nod: 5, tilt: 3 }, hold: 0.12 },
 		],
 	},
 	YES: {
 		gloss: 'S-hand nods at the wrist, like a head saying yes.',
 		phases: [
-			{ t: 0.28, right: { shape: 'S', at: NEUTRAL, fingers: 'up', palm: 'forward' }, head: { nod: 3 } },
-			{ t: 0.18, right: { shape: 'S', at: NEUTRAL, fingers: ['forward', 'down'], palm: ['forward', 'down'] }, head: { nod: 7 } },
-			{ t: 0.18, right: { shape: 'S', at: NEUTRAL, fingers: 'up', palm: 'forward' }, head: { nod: 2 } },
-			{ t: 0.18, right: { shape: 'S', at: NEUTRAL, fingers: ['forward', 'down'], palm: ['forward', 'down'] }, head: { nod: 7 }, hold: 0.12 },
+			{ face: 'question', t: 0.28, right: { shape: 'S', at: NEUTRAL, fingers: 'up', palm: 'forward' }, head: { nod: 3 } },
+			{ face: 'question', t: 0.18, right: { shape: 'S', at: NEUTRAL, fingers: ['forward', 'down'], palm: ['forward', 'down'] }, head: { nod: 7 } },
+			{ face: 'question', t: 0.18, right: { shape: 'S', at: NEUTRAL, fingers: 'up', palm: 'forward' }, head: { nod: 2 } },
+			{ face: 'question', t: 0.18, right: { shape: 'S', at: NEUTRAL, fingers: ['forward', 'down'], palm: ['forward', 'down'] }, head: { nod: 7 }, hold: 0.12 },
 		],
 	},
 	NO: {
 		gloss: 'Index and middle finger snap shut against the thumb.',
 		phases: [
-			{ t: 0.28, right: { shape: 'U', at: { anchor: 'chin', out: 0.14, up: -0.1, forward: 0.24 }, fingers: ['forward', 'up'], palm: ['down', 'forward'] }, head: { turn: 4 } },
-			{ t: 0.2, right: { shape: 'FLAT_O', at: { anchor: 'chin', out: 0.14, up: -0.1, forward: 0.24 }, fingers: ['forward', 'up'], palm: ['down', 'forward'] }, head: { turn: -4 }, hold: 0.16 },
+			{ face: 'negate', t: 0.28, right: { shape: 'U', at: { anchor: 'chin', out: 0.14, up: -0.1, forward: 0.24 }, fingers: ['forward', 'up'], palm: ['down', 'forward'] }, head: { turn: 4 } },
+			{ face: 'negate', t: 0.2, right: { shape: 'FLAT_O', at: { anchor: 'chin', out: 0.14, up: -0.1, forward: 0.24 }, fingers: ['forward', 'up'], palm: ['down', 'forward'] }, head: { turn: -4 }, hold: 0.16 },
 		],
 	},
 	HAPPY: {
 		gloss: 'Both flat hands brush up the chest in circles.',
 		phases: [
-			{ t: 0.3, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.14, up: -0.13, forward: 0.16 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: -2 } },
-			{ t: 0.24, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.16, up: 0.01, forward: 0.19 }, fingers: ['up', 'in'], palm: ['back', 'down'] }, head: { nod: -4 } },
-			{ t: 0.24, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.14, up: -0.13, forward: 0.16 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: -2 } },
-			{ t: 0.24, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.16, up: 0.01, forward: 0.19 }, fingers: ['up', 'in'], palm: ['back', 'down'] }, head: { nod: -4 }, hold: 0.14 },
+			{ face: 'pleasant', t: 0.3, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.14, up: -0.13, forward: 0.16 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: -2 } },
+			{ face: 'pleasant', t: 0.24, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.16, up: 0.01, forward: 0.19 }, fingers: ['up', 'in'], palm: ['back', 'down'] }, head: { nod: -4 } },
+			{ face: 'pleasant', t: 0.24, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.14, up: -0.13, forward: 0.16 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: -2 } },
+			{ face: 'pleasant', t: 0.24, both: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.16, up: 0.01, forward: 0.19 }, fingers: ['up', 'in'], palm: ['back', 'down'] }, head: { nod: -4 }, hold: 0.14 },
 		],
 	},
 	FALL: {
@@ -141,28 +141,28 @@ export const SIGNS = Object.freeze({
 	HELP: {
 		gloss: 'A-hand rides the flat palm upward.',
 		phases: [
-			{ t: 0.32, left: BASE_PALM, right: { shape: 'A', touch: { part: 'wrist', on: 'palm' }, fingers: 'up', palm: 'in' } },
-			{ t: 0.28, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.06, up: 0.02, forward: 0.26 } }, right: { shape: 'A', touch: { part: 'wrist', on: 'palm' }, fingers: 'up', palm: 'in' }, hold: 0.16 },
+			{ face: 'intense', t: 0.32, left: BASE_PALM, right: { shape: 'A', touch: { part: 'wrist', on: 'palm' }, fingers: 'up', palm: 'in' } },
+			{ face: 'intense', t: 0.28, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.06, up: 0.02, forward: 0.26 } }, right: { shape: 'A', touch: { part: 'wrist', on: 'palm' }, fingers: 'up', palm: 'in' }, hold: 0.16 },
 		],
 	},
 	GOOD: {
 		gloss: 'Flat hand comes down from the chin onto the other palm.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.02 }, fingers: ['up', 'in'], palm: 'back' }, left: BASE_PALM, head: { nod: 3 } },
-			{ t: 0.3, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm' }, fingers: ['forward', 'in'], palm: 'up' }, left: BASE_PALM, head: { nod: 5 }, hold: 0.18 },
+			{ face: 'pleasant', t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.02 }, fingers: ['up', 'in'], palm: 'back' }, left: BASE_PALM, head: { nod: 3 } },
+			{ face: 'pleasant', t: 0.3, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm' }, fingers: ['forward', 'in'], palm: 'up' }, left: BASE_PALM, head: { nod: 5 }, hold: 0.18 },
 		],
 	},
 	BAD: {
 		gloss: 'Flat hand leaves the chin and turns palm-down.',
 		phases: [
-			{ t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.02 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 2 } },
-			{ t: 0.3, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.14, up: -0.2, forward: 0.24 }, fingers: ['forward', 'out'], palm: 'down' }, head: { nod: -3, turn: -5 }, hold: 0.16 },
+			{ face: 'negate', t: 0.3, right: { shape: 'FLAT', touch: { to: 'chin', part: 'fingertips', out: 0.02, forward: 0.02 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 2 } },
+			{ face: 'negate', t: 0.3, right: { shape: 'FLAT', at: { anchor: 'chin', out: 0.14, up: -0.2, forward: 0.24 }, fingers: ['forward', 'out'], palm: 'down' }, head: { nod: -3, turn: -5 }, hold: 0.16 },
 		],
 	},
 	LOVE: {
 		gloss: 'Both arms cross over the heart.',
 		phases: [
-			{ t: 0.36, left: { shape: 'S', at: { anchor: 'sternum', out: -0.07, up: 0.02, forward: 0.15 }, fingers: ['up', 'in'], palm: 'back' }, right: { shape: 'S', at: { anchor: 'sternum', out: -0.07, up: -0.05, forward: 0.17 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 4, tilt: 3 }, hold: 0.3 },
+			{ face: 'pleasant', t: 0.36, left: { shape: 'S', at: { anchor: 'sternum', out: -0.07, up: 0.02, forward: 0.15 }, fingers: ['up', 'in'], palm: 'back' }, right: { shape: 'S', at: { anchor: 'sternum', out: -0.07, up: -0.05, forward: 0.17 }, fingers: ['up', 'in'], palm: 'back' }, head: { nod: 4, tilt: 3 }, hold: 0.3 },
 		],
 	},
 	LEARN: {
@@ -196,8 +196,8 @@ export const SIGNS = Object.freeze({
 	WANT: {
 		gloss: 'Both claw hands draw in toward the body.',
 		phases: [
-			{ t: 0.32, both: { shape: 'CLAW', at: { anchor: 'sternum', out: 0.11, up: -0.04, forward: 0.32 }, fingers: 'forward', palm: 'up' } },
-			{ t: 0.3, both: { shape: 'CLAW', at: { anchor: 'sternum', out: 0.11, up: -0.08, forward: 0.19 }, fingers: ['forward', 'up'], palm: 'up' }, head: { nod: 3 }, hold: 0.16 },
+			{ face: 'intense', t: 0.32, both: { shape: 'CLAW', at: { anchor: 'sternum', out: 0.11, up: -0.04, forward: 0.32 }, fingers: 'forward', palm: 'up' } },
+			{ face: 'intense', t: 0.3, both: { shape: 'CLAW', at: { anchor: 'sternum', out: 0.11, up: -0.08, forward: 0.19 }, fingers: ['forward', 'up'], palm: 'up' }, head: { nod: 3 }, hold: 0.16 },
 		],
 	},
 	MORE: {
@@ -212,8 +212,8 @@ export const SIGNS = Object.freeze({
 	STOP: {
 		gloss: 'Flat hand chops down onto the other palm.',
 		phases: [
-			{ t: 0.3, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.04, up: 0.09, forward: 0.26 }, fingers: ['forward', 'up'], palm: 'in' } },
-			{ t: 0.2, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', touch: { part: 'edge', on: 'palm' }, fingers: 'forward', palm: 'in' }, head: { nod: 3 }, hold: 0.2 },
+			{ face: 'intense', t: 0.3, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.04, up: 0.09, forward: 0.26 }, fingers: ['forward', 'up'], palm: 'in' } },
+			{ face: 'intense', t: 0.2, left: { ...BASE_PALM, at: { anchor: 'sternum', out: 0.04, up: -0.06, forward: 0.26 } }, right: { shape: 'FLAT', touch: { part: 'edge', on: 'palm' }, fingers: 'forward', palm: 'in' }, head: { nod: 3 }, hold: 0.2 },
 		],
 	},
 	WORK: {
@@ -242,23 +242,23 @@ export const SIGNS = Object.freeze({
 	NICE: {
 		gloss: 'Flat hand slides cleanly across the other palm.',
 		phases: [
-			{ t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm', out: -0.08 }, fingers: ['forward', 'out'], palm: 'down' } },
-			{ t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm', out: 0.15 }, fingers: ['forward', 'out'], palm: 'down' }, hold: 0.16 },
+			{ face: 'pleasant', t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm', out: -0.08 }, fingers: ['forward', 'out'], palm: 'down' } },
+			{ face: 'pleasant', t: 0.32, left: { ...BASE_PALM, fingers: ['forward', 'out'] }, right: { shape: 'FLAT', touch: { part: 'palm', on: 'palm', out: 0.15 }, fingers: ['forward', 'out'], palm: 'down' }, hold: 0.16 },
 		],
 	},
 	WELCOME: {
 		gloss: 'Open palm sweeps in toward the body, inviting.',
 		phases: [
-			{ t: 0.32, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.22, up: -0.04, forward: 0.3 }, fingers: ['forward', 'out'], palm: 'up' }, head: { turn: -4 } },
-			{ t: 0.34, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.02, up: -0.06, forward: 0.22 }, fingers: ['forward', 'in'], palm: 'up' }, head: { nod: 4 }, hold: 0.18 },
+			{ face: 'pleasant', t: 0.32, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.22, up: -0.04, forward: 0.3 }, fingers: ['forward', 'out'], palm: 'up' }, head: { turn: -4 } },
+			{ face: 'pleasant', t: 0.34, right: { shape: 'FLAT', at: { anchor: 'sternum', out: 0.02, up: -0.06, forward: 0.22 }, fingers: ['forward', 'in'], palm: 'up' }, head: { nod: 4 }, hold: 0.18 },
 		],
 	},
 	WHAT: {
 		gloss: 'Both palms turn up and shake, with a questioning brow.',
 		phases: [
-			{ t: 0.3, both: { shape: '5', at: { anchor: 'sternum', out: 0.15, up: -0.08, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'up' }, head: { tilt: 3, nod: -3 } },
-			{ t: 0.16, both: { shape: '5', at: { anchor: 'sternum', out: 0.18, up: -0.06, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'up' }, head: { tilt: 3, nod: -3 } },
-			{ t: 0.16, both: { shape: '5', at: { anchor: 'sternum', out: 0.15, up: -0.08, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'up' }, head: { tilt: 3, nod: -3 }, hold: 0.16 },
+			{ face: 'wh', t: 0.3, both: { shape: '5', at: { anchor: 'sternum', out: 0.15, up: -0.08, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'up' }, head: { tilt: 3, nod: -3 } },
+			{ face: 'wh', t: 0.16, both: { shape: '5', at: { anchor: 'sternum', out: 0.18, up: -0.06, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'up' }, head: { tilt: 3, nod: -3 } },
+			{ face: 'wh', t: 0.16, both: { shape: '5', at: { anchor: 'sternum', out: 0.15, up: -0.08, forward: 0.26 }, fingers: ['forward', 'out'], palm: 'up' }, head: { tilt: 3, nod: -3 }, hold: 0.16 },
 		],
 	},
 	FINISH: {

@@ -133,6 +133,71 @@ function contactPoint(pose, side, touch) {
 	return vAdd(base, [outward * (touch.out ?? 0), touch.up ?? 0, touch.forward ?? 0]);
 }
 
+// ── non-manual markers ─────────────────────────────────────────────────────
+//
+// In ASL the face is grammar, not decoration: raised brows mark a yes/no
+// question, furrowed brows a wh-question, a headshake carries negation, and the
+// same manual sign means different things under different markers. These presets
+// name the markers a sign can carry; they compile to ARKit-standard blendshape
+// weights, which is what most avatar pipelines (Ready Player Me, Avaturn, VRM
+// with ARKit shapes) expose. An avatar without them loses the marker and keeps
+// the sign — see the face lane in src/animation-retarget.js.
+export const FACE_MARKERS = Object.freeze({
+	/** Yes/no question: brows up, head slightly forward. */
+	question: { browInnerUp: 0.75, browOuterUpLeft: 0.6, browOuterUpRight: 0.6 },
+	/** Wh-question (WHAT, WHY, HOW): brows down and drawn together. */
+	wh: { browDownLeft: 0.7, browDownRight: 0.7, eyeSquintLeft: 0.25, eyeSquintRight: 0.25 },
+	/** Negation, alongside the headshake the sign itself carries. */
+	negate: { browDownLeft: 0.4, browDownRight: 0.4, mouthPucker: 0.2 },
+	/** Topic marker: brows up, held. */
+	topic: { browInnerUp: 0.55, browOuterUpLeft: 0.45, browOuterUpRight: 0.45 },
+	/** Pleasure, on signs that carry it lexically (HAPPY, GOOD, NICE). */
+	pleasant: { mouthSmileLeft: 0.45, mouthSmileRight: 0.45, cheekSquintLeft: 0.3, cheekSquintRight: 0.3 },
+	/** Concern or apology (SORRY, BAD). */
+	concern: { browInnerUp: 0.45, mouthFrownLeft: 0.3, mouthFrownRight: 0.3 },
+	/** Effort or intensity — the "cs"/"mm" mouth of a close, careful sign. */
+	intense: { jawOpen: 0.12, eyeSquintLeft: 0.35, eyeSquintRight: 0.35, cheekPuff: 0.15 },
+	/** Nothing: a neutral face, which is itself a grammatical choice. */
+	neutral: {},
+});
+
+/**
+ * Resolve a phase's `face:` into blendshape weights. Accepts a marker name, a
+ * list of them, or explicit `{shapeName: weight}`.
+ * @param {string|string[]|object} spec
+ * @returns {Record<string, number>}
+ */
+export function faceWeights(spec) {
+	if (!spec) return {};
+	if (typeof spec === 'object' && !Array.isArray(spec)) {
+		// Explicit weights, or a marker name with an intensity: { question: 0.5 }.
+		const out = {};
+		for (const [key, value] of Object.entries(spec)) {
+			if (FACE_MARKERS[key]) {
+				for (const [shape, w] of Object.entries(FACE_MARKERS[key])) out[shape] = w * value;
+			} else {
+				out[key] = value;
+			}
+		}
+		return out;
+	}
+	const names = Array.isArray(spec) ? spec : [spec];
+	const out = {};
+	for (const name of names) {
+		const marker = FACE_MARKERS[name];
+		if (!marker) throw new Error(`unknown face marker "${name}"`);
+		for (const [shape, w] of Object.entries(marker)) out[shape] = Math.max(out[shape] ?? 0, w);
+	}
+	return out;
+}
+
+// Every shape any marker can touch. A phase that does not use a shape must still
+// drive it to zero, or a marker from an earlier phase would stick to the face for
+// the rest of the utterance.
+const FACE_SHAPES = Object.freeze([
+	...new Set(Object.values(FACE_MARKERS).flatMap((m) => Object.keys(m))),
+]);
+
 // ── the resting signer ─────────────────────────────────────────────────────
 
 /** Where a relaxed arm hangs: down the side, elbow soft, palm toward the thigh. */
@@ -303,6 +368,8 @@ export function posePhase(spec, base = restingPose()) {
 		pose.setLocal('Head', qMul(pose.getLocal('Head'), qSlerp([0, 0, 0, 1], q, 0.55)));
 	}
 
+	if (spec.face) pose.setFace(faceWeights(spec.face));
+
 	// The hand being touched has to exist before the hand touching it, so a hand
 	// whose spec has no `touch` is posed first.
 	const hands = ['Left', 'Right']
@@ -447,6 +514,21 @@ export class SignTimeline {
 			}
 			tracks.push({ type: 'quaternion', name: `${bone}.quaternion`, times: [...times], values });
 		}
+
+		// Face lanes, only for the shapes this clip actually uses. Authored against
+		// a placeholder node; src/animation-retarget.js re-points them at whichever
+		// meshes on the target avatar own each shape, and drops them when it has no
+		// face at all.
+		for (const shape of FACE_SHAPES) {
+			if (!keys.some((k) => k.pose.getFace(shape) > 0)) continue;
+			tracks.push({
+				type: 'number',
+				name: `Face.morphTargetInfluences[${shape}]`,
+				times: [...times],
+				values: keys.map((k) => k.pose.getFace(shape)),
+			});
+		}
+
 		return {
 			name,
 			duration: times[times.length - 1],
@@ -457,11 +539,15 @@ export class SignTimeline {
 	}
 }
 
-/** Per-bone slerp between two poses. */
+/** Per-bone slerp plus per-shape lerp between two poses. */
 function blend(a, b, t) {
 	const out = new Pose(a);
 	const bones = new Set([...a.local.keys(), ...b.local.keys()]);
 	for (const bone of bones) out.setLocal(bone, qSlerp(a.getLocal(bone), b.getLocal(bone), t));
+	const shapes = new Set([...a.face.keys(), ...b.face.keys()]);
+	for (const shape of shapes) {
+		out.face.set(shape, a.getFace(shape) + (b.getFace(shape) - a.getFace(shape)) * t);
+	}
 	return out;
 }
 

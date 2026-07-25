@@ -16,6 +16,7 @@ import {
 	clipHipBaselineY,
 	hipRestLocalHeight,
 	hipsParentWorldQuat,
+	morphTargetMapFromObject,
 	retargetClip,
 } from './animation-retarget.js';
 import { relaxUndrivenArms } from './animation-arm-relax.js';
@@ -203,6 +204,10 @@ export class AnimationManager {
 		// World rotation of the Hips' parent (within the model), so root motion is
 		// re-expressed in the rig's own frame and travels the right way on any rig.
 		this._hipsParentWorldQuat = hipsParentWorldQuat(model);
+		// Blendshapes this avatar carries, so a clip's face lanes (the non-manual
+		// markers a signed question needs) can be re-pointed at its own meshes. An
+		// avatar with no face shapes simply gets no face lanes.
+		this._morphTargets = morphTargetMapFromObject(model);
 		// Rest height of the Hips in the parent's local units (metres for a
 		// metre-native rig, ~100 for a centimetre-scale Mixamo armature). Hip
 		// tracks set the Hips' *local* position, so _retarget scales each clip by
@@ -244,6 +249,7 @@ export class AnimationManager {
 			targetRest: this._canonicalRest,
 			targetWorldRest: this._canonicalWorldRest,
 			hipsParentWorldQuat: this._hipsParentWorldQuat,
+			morphTargets: this._morphTargets,
 			hipScale,
 		});
 		return out;
@@ -318,6 +324,7 @@ export class AnimationManager {
 		this._canonicalRest = null;
 		this._canonicalWorldRest = null;
 		this._hipsParentWorldQuat = null;
+		this._morphTargets = null;
 		this._hipTargetLocalY = 0;
 		this._canonicalClipsSupported = false;
 		this.actions.clear();

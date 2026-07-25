@@ -9,12 +9,25 @@
 // (src/sign-speech.js) drives it exactly like a text-to-speech engine.
 
 import { PoseStage } from './avatar-pose.js';
-import { SignSpeaker } from './sign-speech.js';
+import { CHAT_TIMING, SignSpeaker } from './sign-speech.js';
 import { normalizeWord } from './fingerspelling.js';
-import { SIGNS, signGloss } from './sign-dictionary.js';
+import { SIGNS, signGloss, signLookup } from './sign-dictionary.js';
 import { log } from './shared/log.js';
 
+// The reference rig: light enough to animate smoothly everywhere, including on
+// software renderers. It carries no face blendshapes, so the non-manual markers
+// a signed question needs (raised brows, furrowed brows) are compiled into the
+// clip but have nothing to drive here — they land on any avatar that ships ARKit
+// shapes, which most generated avatars do. See docs/sign-language.md.
 const HERO_AVATAR = '/avatars/cz.glb';
+
+// Signing speed. Learners and many Deaf viewers want it slower, and signing is
+// content, so it cannot simply be reduced away like decorative motion.
+const SPEEDS = [
+	{ label: '0.5×', rate: 0.5 },
+	{ label: '0.75×', rate: 0.75 },
+	{ label: '1×', rate: 1 },
+];
 
 // Phrases the hero cycles through so a first-time visitor immediately sees the
 // avatar signing real content, not a static pose. Each mixes lexical signs with
@@ -22,6 +35,13 @@ const HERO_AVATAR = '/avatars/cz.glb';
 const DEMO_PHRASES = ['HELLO', 'HAPPY TO MEET YOU', 'WELCOME TO THREE WS', 'THANK YOU YALL'];
 
 const $ = (sel, root = document) => root.querySelector(sel);
+
+/** Stretch every duration in the chat timing so the whole utterance slows. */
+function scaleTiming(rate) {
+	const out = {};
+	for (const [key, value] of Object.entries(CHAT_TIMING)) out[key] = value / rate;
+	return out;
+}
 
 async function boot() {
 	const stageHost = $('#sl-stage');
@@ -38,6 +58,49 @@ async function boot() {
 		if (status) status.textContent = msg || '';
 	};
 
+	// Speed and dominant hand are baked into the compiled clips, so changing
+	// either rebuilds the speaker (cheap: the vocabulary is compiled lazily and
+	// cached per setting).
+	let rate = 1;
+	let dominant = 'Right';
+	/** The last thing signed, so a settings change can show itself immediately. */
+	let lastPhrase = null;
+	const rebuildSpeaker = () => {
+		if (!stage.anim) return;
+		speaker?.cancel();
+		speaker = new SignSpeaker({
+			manager: stage.anim,
+			dominant,
+			signs: signLookup({ dominant, rate }),
+			timing: rate === 1 ? null : scaleTiming(rate),
+		});
+	};
+	const replay = async () => {
+		if (!speaker || !lastPhrase) return;
+		try {
+			const result = await speaker.speak(lastPhrase);
+			if (!result.superseded) setStatus(describeResult(result));
+		} catch {
+			/* a superseded replay is not an error worth surfacing */
+		}
+	};
+	const applySetting = (fn) => {
+		fn();
+		rebuildSpeaker();
+		replay();
+	};
+	const setRate = (value) => applySetting(() => { rate = value; });
+	const setDominant = (value) => applySetting(() => { dominant = value; });
+
+	// Tell the visitor which words were SIGNED and which were spelled — the
+	// distinction is the whole point of having a dictionary.
+	const describeResult = ({ signed, spelled }) => {
+		const parts = [];
+		if (signed?.length) parts.push(`signed ${signed.map((w) => w.toLowerCase()).join(', ')}`);
+		if (spelled?.length) parts.push(`spelled ${spelled.map((w) => w.toLowerCase()).join(', ')}`);
+		return parts.length ? parts.join(' · ') : 'Type anything and watch the avatar sign it.';
+	};
+
 	try {
 		const { supported } = await stage.mount();
 		stage.start();
@@ -45,7 +108,7 @@ async function boot() {
 			setStatus('This avatar can’t sign, but the tools below still work.');
 			return;
 		}
-		speaker = new SignSpeaker({ manager: stage.anim });
+		rebuildSpeaker();
 	} catch (err) {
 		log.warn('[sign-language] stage mount failed', err?.message);
 		setStatus('Live preview unavailable — the spelling tools below still work.');
@@ -75,15 +138,6 @@ async function boot() {
 	const spellInput = $('#sl-spell-input');
 	const spellBtn = $('#sl-spell-btn');
 
-	// Tell the visitor which words were SIGNED and which were spelled — the
-	// distinction is the whole point of having a dictionary.
-	const describeResult = ({ signed, spelled }) => {
-		const parts = [];
-		if (signed?.length) parts.push(`signed ${signed.map((w) => w.toLowerCase()).join(', ')}`);
-		if (spelled?.length) parts.push(`spelled ${spelled.map((w) => w.toLowerCase()).join(', ')}`);
-		return parts.length ? parts.join(' · ') : 'Type anything and watch the avatar sign it.';
-	};
-
 	const spellIt = async () => {
 		if (!speaker) return;
 		const raw = spellInput.value.trim();
@@ -94,6 +148,7 @@ async function boot() {
 		}
 		stopHero();
 		heroActive = false;
+		lastPhrase = raw;
 		setStatus(`Signing: “${norm.toLowerCase()}”`);
 		try {
 			const result = await speaker.speak(raw);
@@ -117,6 +172,44 @@ async function boot() {
 		});
 	});
 
+	// ── Signing speed and dominant hand ───────────────────────────────────────
+	const speedHost = $('#sl-speed');
+	if (speedHost) {
+		SPEEDS.forEach(({ label, rate }) => {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'sl-opt';
+			btn.textContent = label;
+			btn.setAttribute('aria-pressed', String(rate === 1));
+			btn.addEventListener('click', () => {
+				speedHost.querySelectorAll('.sl-opt').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+				btn.setAttribute('aria-pressed', 'true');
+				setRate(rate);
+			});
+			speedHost.appendChild(btn);
+		});
+	}
+
+	const handHost = $('#sl-hand');
+	if (handHost) {
+		[
+			{ label: 'Right-handed', side: 'Right' },
+			{ label: 'Left-handed', side: 'Left' },
+		].forEach(({ label, side }) => {
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'sl-opt';
+			btn.textContent = label;
+			btn.setAttribute('aria-pressed', String(side === 'Right'));
+			btn.addEventListener('click', () => {
+				handHost.querySelectorAll('.sl-opt').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+				btn.setAttribute('aria-pressed', 'true');
+				setDominant(side);
+			});
+			handHost.appendChild(btn);
+		});
+	}
+
 	// ── Vocabulary: every word with a real sign, playable ─────────────────────
 	const vocabHost = $('#sl-vocab-chips');
 	if (vocabHost) {
@@ -138,6 +231,7 @@ async function boot() {
 				active?.setAttribute('aria-pressed', 'false');
 				active = chip;
 				chip.setAttribute('aria-pressed', 'true');
+				lastPhrase = word;
 				setStatus(gloss ? `${word.toLowerCase()} — ${gloss}` : `Signing “${word.toLowerCase()}”`);
 				try {
 					const result = await speaker.speak(word);

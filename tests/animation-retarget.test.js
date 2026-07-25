@@ -21,6 +21,7 @@ import {
 	Skeleton,
 	BufferGeometry,
 	QuaternionKeyframeTrack,
+	NumberKeyframeTrack,
 	VectorKeyframeTrack,
 	AnimationClip,
 	Object3D,
@@ -610,5 +611,68 @@ describe('world-delta correctness — limb retarget preserves world motion', () 
 		const actual = arm.getWorldQuaternion(new Quaternion());
 
 		expect(worldDirErr(actual, expected)).toBeGreaterThan(5);
+	});
+});
+
+describe('face (morph target) lanes', () => {
+	/** A rig with two meshes that share some blendshapes and differ on others. */
+	function faceRig() {
+		const root = new Object3D();
+		root.name = 'Armature';
+		const hips = new Bone();
+		hips.name = 'Hips';
+		root.add(hips);
+		const head = new Object3D();
+		head.name = 'Wolf3D_Head';
+		head.morphTargetDictionary = { browInnerUp: 0, mouthSmileLeft: 1 };
+		head.morphTargetInfluences = [0, 0];
+		const teeth = new Object3D();
+		teeth.name = 'Wolf3D_Teeth';
+		teeth.morphTargetDictionary = { mouthSmileLeft: 0 };
+		teeth.morphTargetInfluences = [0];
+		root.add(head, teeth);
+		return root;
+	}
+
+	const faceClip = () =>
+		new AnimationClip('sign', 1, [
+			new QuaternionKeyframeTrack('Hips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1]),
+			new NumberKeyframeTrack('Face.morphTargetInfluences[browInnerUp]', [0, 1], [0, 0.8]),
+			new NumberKeyframeTrack('Face.morphTargetInfluences[mouthSmileLeft]', [0, 1], [0, 0.5]),
+			new NumberKeyframeTrack('Face.morphTargetInfluences[tongueOut]', [0, 1], [0, 1]),
+		]);
+
+	it('re-points each face lane at every mesh that owns the shape', () => {
+		const root = faceRig();
+		const { clip, face } = retargetClipToObject(faceClip(), root);
+		const names = clip.tracks.map((t) => t.name);
+		// browInnerUp lives on one mesh, mouthSmileLeft on two, tongueOut on none.
+		expect(names).toContain('Wolf3D_Head.morphTargetInfluences[browInnerUp]');
+		expect(names).toContain('Wolf3D_Head.morphTargetInfluences[mouthSmileLeft]');
+		expect(names).toContain('Wolf3D_Teeth.morphTargetInfluences[mouthSmileLeft]');
+		expect(names.some((n) => n.includes('tongueOut'))).toBe(false);
+		expect(face).toBe(3);
+	});
+
+	it('drops the whole face lane on a rig with no blendshapes, keeping the motion', () => {
+		const root = new Object3D();
+		const hips = new Bone();
+		hips.name = 'Hips';
+		root.add(hips);
+		const { clip, coverage, face } = retargetClipToObject(faceClip(), root);
+		expect(face).toBe(0);
+		expect(clip.tracks.map((t) => t.name)).toEqual(['Hips.quaternion']);
+		// Face lanes must not drag bone coverage down and fail the retarget.
+		expect(coverage).toBe(1);
+	});
+
+	it('leaves a clip with no face lanes untouched', () => {
+		const root = faceRig();
+		const plain = new AnimationClip('walk', 1, [
+			new QuaternionKeyframeTrack('Hips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1]),
+		]);
+		const { clip, face } = retargetClipToObject(plain, root);
+		expect(face).toBe(0);
+		expect(clip.tracks).toHaveLength(1);
 	});
 });

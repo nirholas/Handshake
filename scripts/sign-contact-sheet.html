@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>sign contact sheet</title>
+		<style>
+			html, body { margin: 0; background: #2f5bb7; }
+			canvas { display: block; }
+			#labels { position: fixed; inset: 0; pointer-events: none; font: 700 20px system-ui; color: #ffe600; }
+			#labels div { position: absolute; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+		</style>
+	</head>
+	<body>
+		<!--
+			Dev-only contact sheet for the signing lane. Not part of the site build
+			(vite's inputs are enumerated explicitly in vite.config.js) — it is loaded
+			by scripts/sign-contact-sheet.mjs against `npm run dev`.
+
+			Signing is judged by eye: whether a handshape reads, whether two hands
+			actually meet, whether an arm looks like an arm. The numeric tests in
+			tests/sign-*.test.js catch geometry regressions, but only a picture shows
+			whether a sign is legible. This renders every sign (or every letter) as one
+			frame per cell so the whole vocabulary can be reviewed at a glance.
+
+			Query params:
+			  mode=vocab|letters|frames|sign   what to lay out (default vocab)
+			  words=HELLO,HAPPY                 subset for vocab mode
+			  word=ABCDEF                       the word for letters/frames/sign mode
+			  avatar=/avatars/cz.glb            which rig to render on
+			  dominant=Right|Left               signing hand
+			  cols, w, h, n                     grid shape and frame count
+		-->
+		<div id="labels"></div>
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+			import { AnimationManager } from '/src/animation-manager.js';
+			import { getMeshoptDecoder } from '/src/viewer/internal.js';
+			import { DEFAULT_TIMING, buildFingerspellingClip } from '/src/fingerspelling.js';
+			import { SIGNS, buildSignClip } from '/src/sign-dictionary.js';
+
+			const params = new URLSearchParams(location.search);
+			const mode = params.get('mode') || 'vocab';
+			const word = params.get('word') || 'ABCDEFGHIJKL';
+			const dominant = params.get('dominant') === 'Left' ? 'Left' : 'Right';
+			const cols = +(params.get('cols') || 6);
+			const cellW = +(params.get('w') || 240);
+			const cellH = +(params.get('h') || 300);
+
+			// Each cell is {clip, time, label}. Building one clip per cell keeps the
+			// cells independent, which matters because a single mixer carries state
+			// between actions and would quietly blend one sign into the next.
+			const cells = [];
+			if (mode === 'vocab') {
+				const words = (params.get('words') || Object.keys(SIGNS).join(',')).split(',');
+				for (const w of words) {
+					const clip = buildSignClip(w, { dominant });
+					if (clip) cells.push({ clip, time: clip.duration - 0.42, label: w });
+				}
+			} else if (mode === 'sign') {
+				const clip = buildSignClip(word, { dominant });
+				const n = +(params.get('n') || 8);
+				for (let i = 0; i < n; i++) {
+					const t = (clip.duration * (i + 0.5)) / n;
+					cells.push({ clip, time: t, label: `${t.toFixed(2)}s` });
+				}
+			} else if (mode === 'frames') {
+				const clip = buildFingerspellingClip(word, { dominant });
+				const n = +(params.get('n') || 12);
+				for (let i = 0; i < n; i++) {
+					const t = (clip.duration * i) / (n - 1);
+					cells.push({ clip, time: t, label: `${t.toFixed(2)}s` });
+				}
+			} else {
+				// One cell per letter, sampled in the middle of that letter's hold.
+				const letters = [...word.toUpperCase().replace(/[^A-Z0-9]/g, '')];
+				const clip = buildFingerspellingClip(letters.join(''), { dominant });
+				let t = DEFAULT_TIMING.leadSeconds;
+				for (const ch of letters) {
+					const traced = ch === 'J' || ch === 'Z';
+					const span = traced ? DEFAULT_TIMING.motionSeconds : DEFAULT_TIMING.holdSeconds;
+					const mid = t + DEFAULT_TIMING.transitionSeconds + span * (traced ? 0.85 : 0.6);
+					t += DEFAULT_TIMING.transitionSeconds + span;
+					cells.push({ clip, time: mid, label: ch });
+				}
+			}
+			if (!cells.length) throw new Error('nothing to render');
+
+			const rows = Math.ceil(cells.length / cols);
+			const W = cols * cellW;
+			const H = rows * cellH;
+
+			const renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setPixelRatio(1);
+			renderer.setSize(W, H);
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.autoClear = false;
+			renderer.setScissorTest(true);
+			document.body.appendChild(renderer.domElement);
+
+			const scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x2f5bb7);
+			const pmrem = new THREE.PMREMGenerator(renderer);
+			scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+			pmrem.dispose();
+			scene.add(new THREE.HemisphereLight(0xffffff, 0x39404d, 1));
+			const key = new THREE.DirectionalLight(0xffffff, 1.6);
+			key.position.set(1.5, 2.5, 3);
+			scene.add(key, new THREE.AmbientLight(0xffffff, 0.4));
+
+			const loader = new GLTFLoader();
+			loader.setMeshoptDecoder(await getMeshoptDecoder());
+			const gltf = await loader.loadAsync(params.get('avatar') || '/avatars/cz.glb');
+			const model = gltf.scene;
+			model.traverse((n) => { if (n.isMesh) n.frustumCulled = false; });
+			scene.add(model);
+
+			// Retarget through the real runtime path, so the sheet shows what the site
+			// shows rather than what the authoring code intended.
+			const anim = new AnimationManager();
+			anim.attach(model);
+			const bound = new Map();
+			for (const cell of cells) {
+				if (bound.has(cell.clip)) continue;
+				const name = `cell-${bound.size}`;
+				anim.injectClip(name, cell.clip, { loop: false });
+				const action = anim.actions.get(name);
+				if (!action) throw new Error(`clip did not bind: ${cell.label}`);
+				bound.set(cell.clip, action.getClip());
+			}
+
+			const camera = new THREE.PerspectiveCamera(30, cellW / cellH, 0.05, 50);
+			const labels = document.getElementById('labels');
+			const head = (() => {
+				let found = null;
+				model.traverse((n) => { if (!found && /head$/i.test(n.name)) found = n; });
+				return found;
+			})();
+			const headPos = new THREE.Vector3();
+
+			renderer.clear();
+			cells.forEach((cell, i) => {
+				// A fresh mixer per cell: swapping actions on one mixer leaves stale
+				// accumulator state that silently blends the pose toward the bind pose.
+				const mixer = new THREE.AnimationMixer(model);
+				const action = mixer.clipAction(bound.get(cell.clip));
+				action.play();
+				action.paused = true;
+				action.time = Math.max(0, Math.min(cell.time, cell.clip.duration - 1e-4));
+				mixer.update(0);
+				model.updateWorldMatrix(true, true);
+
+				const col = i % cols;
+				const row = (i / cols) | 0;
+				renderer.setViewport(col * cellW, H - (row + 1) * cellH, cellW, cellH);
+				renderer.setScissor(col * cellW, H - (row + 1) * cellH, cellW, cellH);
+				head.getWorldPosition(headPos);
+				const focus = new THREE.Vector3(0, headPos.y - 0.36, 0);
+				camera.position.set(0, focus.y + 0.18, 2);
+				camera.lookAt(focus);
+				camera.updateProjectionMatrix();
+				renderer.render(scene, camera);
+
+				const el = document.createElement('div');
+				el.textContent = cell.label;
+				el.style.left = `${col * cellW + 12}px`;
+				el.style.top = `${row * cellH + 10}px`;
+				labels.appendChild(el);
+			});
+
+			document.title = 'ready';
+		</script>
+	</body>
+</html>

@@ -80,10 +80,14 @@ for (const urlForm of URL_FORMS) {
 
 			// A viewer element proves the artifact was accepted. Only `loaded` proves
 			// the GLB behind it exists and decoded.
+			// 60s: the success path settles in ~3s locally, so this is headroom for a
+			// cold CI box on a multi-megabyte GLB, not a wait we expect to use. Keeping
+			// it tight matters because this is the assertion a dead asset trips, and a
+			// failing test should say so quickly.
 			await expect
 				.poll(() => viewer.evaluate((el) => el.loaded === true), {
 					message: `${stage.label}: GLB never finished loading`,
-					timeout: 120_000,
+					timeout: 60_000,
 				})
 				.toBe(true);
 

@@ -60,6 +60,10 @@ const SOURCE_WORLD_REST = new Map(
 // rig that already matches the authoring convention round-trips bit-for-bit.
 const BIND_EPSILON = 1e-6;
 
+// Track property prefix for a blendshape lane, e.g.
+// `Face.morphTargetInfluences[browInnerUp]`.
+const MORPH_PROPERTY = 'morphTargetInfluences[';
+
 const _v = new Vector3();
 const _q = new Quaternion();
 
@@ -72,6 +76,7 @@ const _q = new Quaternion();
  * @property {number} coverage  matched / total (0–1).
  * @property {string[]} dropped Canonical bone names the target rig lacks.
  * @property {number} hipScale  Factor applied to hip translation (1 = none).
+ * @property {number} face      Blendshape lanes bound on the target (0 = no face).
  */
 
 /**
@@ -208,6 +213,27 @@ export function canonicalWorldRestMapFromRig(rig) {
 	for (const { key, node } of rig.getBones?.() || []) {
 		if (node && !map.has(key)) map.set(key, worldRestQuat(node, null));
 	}
+	return map;
+}
+
+/**
+ * Map every blendshape name the target carries to the mesh nodes that own it, so
+ * a face lane authored once can be re-pointed at this avatar. Faces are commonly
+ * split across several meshes (head, teeth, brows), and all of them need driving.
+ *
+ * @param {import('three').Object3D} root
+ * @returns {Map<string,string[]>}
+ */
+export function morphTargetMapFromObject(root) {
+	const map = new Map();
+	root.traverse((node) => {
+		if (!node?.morphTargetDictionary || !node.name) return;
+		for (const shape of Object.keys(node.morphTargetDictionary)) {
+			if (!map.has(shape)) map.set(shape, []);
+			const meshes = map.get(shape);
+			if (!meshes.includes(node.name)) meshes.push(node.name);
+		}
+	});
 	return map;
 }
 
@@ -418,7 +444,7 @@ export function clipHipBaselineY(clip) {
  *
  * @param {AnimationClip} clip
  * @param {Map<string,string>} canonicalToNode
- * @param {{ hipScale?: number, minCoverage?: number }} [opts]
+ * @param {{ hipScale?: number, minCoverage?: number, morphTargets?: Map<string,string[]> }} [opts]
  * @returns {RetargetResult}
  */
 export function retargetClip(clip, canonicalToNode, opts = {}) {
@@ -428,6 +454,7 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 	const hipsPosCorrection = hipPositionCorrection(opts.hipsParentWorldQuat, corrections);
 	const dropped = [];
 	const tracks = [];
+	const faceTracks = [];
 	// Denominator counts only *retargetable* tracks (see below), so a clip baked
 	// with per-bone position/scale channels still reports honest coverage.
 	let total = 0;
@@ -437,6 +464,31 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 		if (dot === -1) continue;
 		const boneRaw = track.name.slice(0, dot);
 		const property = track.name.slice(dot + 1);
+
+		// Face (morph-target) lanes. Signing carries grammar on the face — raised
+		// brows make a question, furrowed brows a wh-question — so a clip may drive
+		// blendshapes as well as bones. They are authored against a placeholder node
+		// (`Face.morphTargetInfluences[browInnerUp]`) and re-pointed here at whatever
+		// mesh on THIS avatar owns that shape, because the mesh is named differently
+		// on every rig and a face is often split across several. An avatar with no
+		// such shape simply loses the lane: the sign still performs, just without the
+		// marker. They never count toward bone coverage, so a face-less rig is not
+		// judged to have failed the retarget.
+		if (property.startsWith(MORPH_PROPERTY)) {
+			const shape = property.slice(MORPH_PROPERTY.length, -1);
+			const meshes = opts.morphTargets instanceof Map ? opts.morphTargets.get(shape) : null;
+			if (!meshes?.length) {
+				dropped.push(shape);
+				continue;
+			}
+			for (const meshName of meshes) {
+				const next = track.clone();
+				next.name = `${meshName}.${property}`;
+				faceTracks.push(next);
+			}
+			continue;
+		}
+
 		const canonical = canonicalizeBoneName(boneRaw) || boneRaw;
 
 		// The clips are baked from cz with a full position/quaternion/scale channel
@@ -484,11 +536,11 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 	const matched = tracks.length;
 	const coverage = total > 0 ? matched / total : 0;
 	if (coverage < minCoverage) {
-		return { clip: null, matched, total, coverage, dropped, hipScale };
+		return { clip: null, matched, total, coverage, dropped, hipScale, face: 0 };
 	}
 	const out = clip.clone();
-	out.tracks = tracks;
-	return { clip: out, matched, total, coverage, dropped, hipScale };
+	out.tracks = [...tracks, ...faceTracks];
+	return { clip: out, matched, total, coverage, dropped, hipScale, face: faceTracks.length };
 }
 
 /**
@@ -539,6 +591,7 @@ export function retargetClipToRig(clip, rig, opts = {}) {
 		targetRest,
 		targetWorldRest,
 		hipsParentWorldQuat: hipsParent,
+		morphTargets: opts.morphTargets ?? (rig.root ? morphTargetMapFromObject(rig.root) : undefined),
 	});
 }
 
@@ -561,6 +614,7 @@ export function retargetClipToObject(clip, root, opts = {}) {
 		targetRest,
 		targetWorldRest,
 		hipsParentWorldQuat: hipsParentWorld,
+		morphTargets: opts.morphTargets ?? morphTargetMapFromObject(root),
 	});
 }
 

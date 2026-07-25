@@ -3,8 +3,9 @@
 Spatial MCP is an open shape for returning a **live, interactive 3D scene** as an MCP tool result instead of a URL in text. A conformant host renders it inline — orbit, animate, place in AR — with an embedded component. three.ws is the reference implementation; the shape is renderer-agnostic and carries **no** payment, wallet, or coin surface, so it drops into crypto-free app stores unchanged.
 
 - **Spec:** [`specs/SPATIAL_MCP.md`](https://github.com/nirholas/three.ws/blob/main/specs/SPATIAL_MCP.md) (v0.1, CC0)
-- **Validator (code):** [`api/_lib/spatial-mcp.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/spatial-mcp.js) — `validateSpatialArtifact()`, `buildSpatialArtifact()`
+- **Validator (import it):** `https://three.ws/spatial-mcp/spatial-validator.js` — `validateSpatialArtifact()`, `buildSpatialArtifact()`. Source: [`public/spatial-mcp/spatial-validator.js`](https://github.com/nirholas/three.ws/blob/main/public/spatial-mcp/spatial-validator.js); server-side code imports the same module via `api/_lib/spatial-mcp.js`.
 - **Validator (MCP tool):** `validate_spatial_response({ artifact })` on the three.ws 3D Studio server
+- **Validator (no code at all):** paste a payload into the checker on [`/spatial-mcp`](https://three.ws/spatial-mcp) and read the diagnostics
 - **Reference renderer:** [`/spatial-mcp`](https://three.ws/spatial-mcp) — `public/spatial-mcp/spatial-renderer.js`
 
 ## Quick start — emit a conformant artifact
@@ -32,13 +33,17 @@ return {
 ## Validate before you ship
 
 ```js
-import { validateSpatialArtifact } from './spatial-mcp.js';
+import { validateSpatialArtifact } from 'https://three.ws/spatial-mcp/spatial-validator.js';
 
 const { valid, errors, warnings } = validateSpatialArtifact(spatial);
 if (!valid) throw new Error('non-conformant: ' + errors.map(e => `${e.path}: ${e.message}`).join('; '));
 ```
 
 `errors` and `warnings` each name the offending `path` and the fix, so you can correct output rather than guess. Wire it into CI as an invariant over every 3D tool's real output (three.ws does — see `tests/spatial-mcp.test.js`).
+
+The validator is dependency-free and runs anywhere: a browser, a Node tool, a CI step. It is the same module the reference page loads, so what the page reports about a payload is what your build will report.
+
+**Or validate nothing yourself.** The checker on [`/spatial-mcp`](https://three.ws/spatial-mcp) runs that module in your browser against whatever you paste, as you type, and lists every `path` with its fix. It also ships a deliberately broken example so you can see the diagnostics before you have a payload of your own. Conformant payloads render in place; unusable ones show the renderer's designed fallback, which is what a host would show a user.
 
 Agents can validate over MCP without importing anything:
 
@@ -70,7 +75,7 @@ function toSpatialArtifact(f) {
 }
 ```
 
-The live demo at [`/spatial-mcp`](https://three.ws/spatial-mcp) renders exactly this transform beside a native three.ws artifact — the same renderer displays both, proving portability.
+The live demo at [`/spatial-mcp`](https://three.ws/spatial-mcp) renders exactly this transform beside a native three.ws artifact — the same renderer displays both, proving portability. Both frames carry the validator's verdict underneath, so the conformance claim on that page is demonstrated rather than asserted.
 
 ## Render it yourself
 

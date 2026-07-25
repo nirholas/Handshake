@@ -107,6 +107,20 @@
 			.sl-cam-result[data-state='ok'] { border-color: rgba(56,211,159,.5); }
 			.sl-cam-hint { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
 
+			/* Speed + dominant hand */
+			.sl-settings { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; }
+			.sl-setting { display: flex; align-items: center; gap: 9px; }
+			.sl-setting-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+			.sl-opts { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--surface-2); }
+			.sl-opt {
+				appearance: none; border: 0; background: transparent; color: var(--ink-dim);
+				font: inherit; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+				cursor: pointer; transition: color .14s ease, background .14s ease;
+			}
+			.sl-opt:hover { color: var(--ink); }
+			.sl-opt:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 1px; }
+			.sl-opt[aria-pressed='true'] { color: var(--ink); background: rgba(167,139,250,.2); }
+
 			/* Vocabulary */
 			.sl-vocab { margin-top: clamp(48px, 6vw, 76px); }
 			.sl-vocab h2 { font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -.02em; margin: 0 0 10px; }
@@ -179,6 +193,17 @@
 							<button class="sl-phrase-chip" type="button" data-sl-phrase="I LOVE THREE WS">i love three.ws</button>
 							<button class="sl-phrase-chip" type="button" data-sl-phrase="42">42</button>
 							<button class="sl-phrase-chip" type="button" data-sl-phrase="GM">gm</button>
+						</div>
+
+						<div class="sl-settings">
+							<div class="sl-setting">
+								<span class="sl-setting-label" id="sl-speed-label">Speed</span>
+								<div class="sl-opts" id="sl-speed" role="group" aria-labelledby="sl-speed-label"></div>
+							</div>
+							<div class="sl-setting">
+								<span class="sl-setting-label" id="sl-hand-label">Signing hand</span>
+								<div class="sl-opts" id="sl-hand" role="group" aria-labelledby="sl-hand-label"></div>
+							</div>
 						</div>
 					</div>
 				</div>
