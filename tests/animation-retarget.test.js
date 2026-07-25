@@ -28,10 +28,14 @@ import {
 	Quaternion,
 	Vector3,
 	Euler,
+	Uint16BufferAttribute,
+	Float32BufferAttribute,
 } from 'three';
 import {
 	canonicalNodeMapFromObject,
 	canonicalRestMapFromObject,
+	hipGroundLocalY,
+	hipRestLocalHeight,
 	hipsParentWorldQuat,
 	retargetClip,
 	retargetClipToObject,
@@ -674,5 +678,108 @@ describe('face (morph target) lanes', () => {
 		const { clip, face } = retargetClipToObject(plain, root);
 		expect(face).toBe(0);
 		expect(clip.tracks).toHaveLength(1);
+	});
+});
+
+describe('hipRestLocalHeight', () => {
+	// A half-metre chibi rig with real geometry bounds: body spans floor..top,
+	// hips partway up. Built like a GLB import: bones + a skinned mesh whose
+	// geometry carries the body's vertical extent.
+	function makeMeasuredRig({ floorY, topY, hipsY }) {
+		const root = new Object3D();
+		const hips = new Bone();
+		hips.name = 'Hips';
+		hips.position.y = hipsY;
+		root.add(hips);
+		const geo = new BufferGeometry();
+		geo.setFromPoints([new Vector3(0, floorY, 0), new Vector3(0, topY, 0)]);
+		// Real skin attributes: SkinnedMesh.computeBoundingBox (used by
+		// Box3.setFromObject) walks them per vertex.
+		geo.setAttribute(
+			'skinIndex',
+			new Uint16BufferAttribute(new Uint16Array([0, 0, 0, 0, 0, 0, 0, 0]), 4),
+		);
+		geo.setAttribute(
+			'skinWeight',
+			new Float32BufferAttribute(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0]), 4),
+		);
+		const mesh = new SkinnedMesh(geo);
+		root.add(mesh);
+		// Update world matrices BEFORE bind so the inverse bind matrices capture
+		// the true bind pose (as a GLB's authored IBMs would); binding at
+		// identity would re-shift every vertex by the hips offset.
+		root.updateMatrixWorld(true);
+		mesh.bind(new Skeleton([hips]));
+		return root;
+	}
+
+	it('measures a ground-native rig unchanged (floor at 0)', () => {
+		const root = makeMeasuredRig({ floorY: 0, topY: 1, hipsY: 0.24 });
+		expect(hipRestLocalHeight(root)).toBeCloseTo(0.24, 5);
+	});
+
+	it('measures above the model floor for an origin-centered rig', () => {
+		// Same body exported origin-centered: floor at -0.5, hips world at -0.26.
+		// Measured from world zero this reads negative and used to skip hip
+		// scaling entirely, flinging the rig to the clip's metre-scale height.
+		const root = makeMeasuredRig({ floorY: -0.5, topY: 0.5, hipsY: -0.26 });
+		expect(hipRestLocalHeight(root)).toBeCloseTo(0.24, 5);
+	});
+
+	it('measures above the floor after a viewer recenters the content', () => {
+		// Viewer.setContent subtracts the bbox center from the content root; the
+		// hips height above the feet must survive that shift.
+		const root = makeMeasuredRig({ floorY: 0, topY: 1, hipsY: 0.24 });
+		root.position.y -= 0.5;
+		root.updateMatrixWorld(true);
+		expect(hipRestLocalHeight(root)).toBeCloseTo(0.24, 5);
+	});
+});
+
+describe('hipGroundLocalY + hip track offset', () => {
+	function measuredRig({ floorY, topY, hipsY }) {
+		const root = new Object3D();
+		const hips = new Bone();
+		hips.name = 'Hips';
+		hips.position.y = hipsY;
+		root.add(hips);
+		const geo = new BufferGeometry();
+		geo.setFromPoints([new Vector3(0, floorY, 0), new Vector3(0, topY, 0)]);
+		geo.setAttribute(
+			'skinIndex',
+			new Uint16BufferAttribute(new Uint16Array([0, 0, 0, 0, 0, 0, 0, 0]), 4),
+		);
+		geo.setAttribute(
+			'skinWeight',
+			new Float32BufferAttribute(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0]), 4),
+		);
+		const mesh = new SkinnedMesh(geo);
+		root.add(mesh);
+		root.updateMatrixWorld(true);
+		mesh.bind(new Skeleton([hips]));
+		return root;
+	}
+
+	it('is 0 for a ground-native rig', () => {
+		const root = measuredRig({ floorY: 0, topY: 1, hipsY: 0.24 });
+		expect(hipGroundLocalY(root)).toBeCloseTo(0, 5);
+	});
+
+	it('reports the local floor of an origin-centered rig', () => {
+		const root = measuredRig({ floorY: -0.5, topY: 0.5, hipsY: -0.26 });
+		expect(hipGroundLocalY(root)).toBeCloseTo(-0.5, 5);
+	});
+
+	it('offsets the hip position track Y so the clip ground lands on the rig floor', () => {
+		const clip = makeCanonicalClip(); // Hips.position Y keys: 1.0, 1.1
+		const map = canonicalNodeMapFromObject(makeRig(CANONICAL_RIG));
+		const r = retargetClip(clip, map, { hipScale: 0.24, hipOffsetY: -0.5 });
+		const pos = r.clip.tracks.find((t) => t.name === 'Hips.position');
+		// scaled then offset: 1.0 * 0.24 - 0.5, 1.1 * 0.24 - 0.5
+		expect(pos.values[1]).toBeCloseTo(-0.26, 5);
+		expect(pos.values[4]).toBeCloseTo(-0.236, 5);
+		// X/Z stay un-offset.
+		expect(pos.values[0]).toBeCloseTo(0, 5);
+		expect(pos.values[2]).toBeCloseTo(0, 5);
 	});
 });

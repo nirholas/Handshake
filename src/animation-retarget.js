@@ -17,7 +17,7 @@
 // Pure module — three + the canonicalizer only — so it runs unchanged in the
 // browser (the /pose gallery) and in Node (the apply_animation MCP tool, vitest).
 
-import { AnimationClip, Quaternion, Vector3 } from 'three';
+import { AnimationClip, Box3, Quaternion, Vector3 } from 'three';
 import { canonicalizeBoneName } from './glb-canonicalize.js';
 import { CANONICAL_REST, CANONICAL_REST_WORLD } from './animation-canonical-rest.js';
 
@@ -387,6 +387,18 @@ export function hipRestHeight(rig) {
 	return _v.y;
 }
 
+// Bounding-box bottom of the model, or NaN when it can't be computed. Guarded:
+// three's pose-aware SkinnedMesh.computeBoundingBox walks skin attributes per
+// vertex and throws on synthetic rigs whose geometry lacks them; a rig we can't
+// measure just keeps the pre-floor behavior instead of failing the mount.
+function safeFloorY(root) {
+	try {
+		return new Box3().setFromObject(root).min.y;
+	} catch {
+		return NaN;
+	}
+}
+
 const _hipScalePos = new Vector3();
 const _hipScaleQuat = new Quaternion();
 const _hipScaleScale = new Vector3();
@@ -419,11 +431,53 @@ export function hipRestLocalHeight(root) {
 	if (!hips || !hips.parent) return 0;
 	hips.updateWorldMatrix(true, false);
 	hips.getWorldPosition(_hipScalePos);
-	const worldY = _hipScalePos.y;
+	let worldY = _hipScalePos.y;
+	// Measure above the model's own floor (its bounding-box bottom), not above
+	// world y=0. Viewers recenter content around the origin (setContent
+	// subtracts the bbox center) and origin-centered GLB exports put the floor
+	// below zero; measured from world zero, both read as "hips at or below the
+	// ground", which skipped scaling and let the metre-authored hip track fling
+	// a small rig into the air. Clips author ground at 0, so hips-above-floor
+	// is the like-for-like height. For a ground-native rig floorY is 0 and
+	// nothing changes.
+	const floorY = safeFloorY(root);
+	if (Number.isFinite(floorY)) worldY -= floorY;
 	hips.parent.matrixWorld.decompose(_hipScalePos, _hipScaleQuat, _hipScaleScale);
 	const parentScale = (_hipScaleScale.x + _hipScaleScale.y + _hipScaleScale.z) / 3;
 	if (!(parentScale > 1e-6) || !(worldY > 0) || !Number.isFinite(worldY)) return 0;
 	return worldY / parentScale;
+}
+
+/**
+ * The model's floor (bounding-box bottom) expressed in the hips-parent's local
+ * frame — the Y a hip-position track must be offset by so the clip's ground
+ * (authored at 0) lands on this rig's actual ground. 0 for a ground-native rig
+ * (floor at local 0); negative for an origin-centered export (floor below the
+ * local origin). Returns 0 when it can't be determined, which leaves the
+ * retarget exactly as before.
+ *
+ * @param {import('three').Object3D} root
+ * @returns {number}
+ */
+export function hipGroundLocalY(root) {
+	let hips = null;
+	root.traverse((n) => {
+		if (!hips && n.isBone && n.name && canonicalizeBoneName(n.name) === 'Hips') hips = n;
+	});
+	if (!hips) {
+		root.traverse((n) => {
+			if (!hips && n.name && canonicalizeBoneName(n.name) === 'Hips') hips = n;
+		});
+	}
+	if (!hips || !hips.parent) return 0;
+	hips.updateWorldMatrix(true, false);
+	const floorY = safeFloorY(root);
+	if (!Number.isFinite(floorY)) return 0;
+	hips.getWorldPosition(_hipScalePos);
+	// The floor point under the hips, mapped into the parent's local frame so
+	// the offset composes with the track's local-position values.
+	const local = hips.parent.worldToLocal(new Vector3(_hipScalePos.x, floorY, _hipScalePos.z));
+	return Number.isFinite(local.y) ? local.y : 0;
 }
 
 // First Y value of a `Hips.position` track — the height the clip's root motion
@@ -444,11 +498,12 @@ export function clipHipBaselineY(clip) {
  *
  * @param {AnimationClip} clip
  * @param {Map<string,string>} canonicalToNode
- * @param {{ hipScale?: number, minCoverage?: number, morphTargets?: Map<string,string[]> }} [opts]
+ * @param {{ hipScale?: number, hipOffsetY?: number, minCoverage?: number, morphTargets?: Map<string,string[]> }} [opts]
  * @returns {RetargetResult}
  */
 export function retargetClip(clip, canonicalToNode, opts = {}) {
 	const hipScale = Number.isFinite(opts.hipScale) && opts.hipScale > 0 ? opts.hipScale : 1;
+	const hipOffsetY = Number.isFinite(opts.hipOffsetY) ? opts.hipOffsetY : 0;
 	const minCoverage = opts.minCoverage ?? MIN_COVERAGE;
 	const corrections = bindCorrections(opts.targetRest, opts.targetWorldRest);
 	const hipsPosCorrection = hipPositionCorrection(opts.hipsParentWorldQuat, corrections);
@@ -528,6 +583,13 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 			if (hipsPosCorrection) rotateVectorTrack(next.values, hipsPosCorrection);
 			if (hipScale !== 1) {
 				for (let i = 0; i < next.values.length; i++) next.values[i] *= hipScale;
+			}
+			// Land the clip's ground (authored at 0) on this rig's actual floor:
+			// origin-centered exports keep their floor below the local origin, and
+			// without this offset the scaled track still hovers the body a
+			// floor-height above the mesh.
+			if (hipOffsetY !== 0) {
+				for (let i = 1; i < next.values.length; i += 3) next.values[i] += hipOffsetY;
 			}
 		}
 		tracks.push(next);

@@ -14,6 +14,7 @@ import {
 	canonicalRestMapFromObject,
 	canonicalWorldRestMapFromObject,
 	clipHipBaselineY,
+	hipGroundLocalY,
 	hipRestLocalHeight,
 	hipsParentWorldQuat,
 	morphTargetMapFromObject,
@@ -214,6 +215,10 @@ export class AnimationManager {
 		// this ÷ the clip's authored baseline — without it a 0.01-scaled rig's
 		// hips collapse to the floor (metre-valued track × 0.01 parent ≈ 1cm).
 		this._hipTargetLocalY = hipRestLocalHeight(model);
+		// Where this rig's floor sits in the hips-parent's local frame (0 for a
+		// ground-native export). The retarget adds it to the hip track so the
+		// clip's ground lands on the model's actual ground.
+		this._hipGroundLocalY = hipGroundLocalY(model);
 		this._canonicalClipsSupported = _modelSupportsCanonicalClips(model);
 
 		for (const [name, clip] of this.clips) {
@@ -251,6 +256,7 @@ export class AnimationManager {
 			hipsParentWorldQuat: this._hipsParentWorldQuat,
 			morphTargets: this._morphTargets,
 			hipScale,
+			hipOffsetY: this._hipGroundLocalY || 0,
 		});
 		return out;
 	}
@@ -326,6 +332,7 @@ export class AnimationManager {
 		this._hipsParentWorldQuat = null;
 		this._morphTargets = null;
 		this._hipTargetLocalY = 0;
+		this._hipGroundLocalY = 0;
 		this._canonicalClipsSupported = false;
 		this.actions.clear();
 		this.currentAction = null;
