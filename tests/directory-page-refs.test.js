@@ -103,7 +103,7 @@ describe('directory-served public pages', () => {
 	});
 
 	describe.each(pages)('$rel', ({ name, html }) => {
-		// Rule A — a relative subresource ref breaks on the slash-less clean URL.
+		// Rule A: a relative subresource ref breaks on the slash-less clean URL.
 		it('references every subresource absolutely', () => {
 			const relative = subresourceRefs(html)
 				.filter((r) => isRelativeRef(r.value))
@@ -111,7 +111,7 @@ describe('directory-served public pages', () => {
 			expect(relative).toEqual([]);
 		});
 
-		// Rule B — an inline module cannot import a file inside public/ by either
+		// Rule B: an inline module cannot import a file inside public/ by either
 		// form, so it must be a sibling module referenced with <script src>.
 		it('never inline-imports a module from inside public/', () => {
 			const offenders = inlineModuleImports(html)
