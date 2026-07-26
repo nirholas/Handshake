@@ -193,6 +193,7 @@ async function boot() {
 		stopHero();
 		heroActive = false;
 		lastPhrase = raw;
+		syncShare();
 		setStatus(`Signing: “${norm.toLowerCase()}”`);
 		try {
 			const result = await speaker.speak(raw);
@@ -206,6 +207,39 @@ async function boot() {
 		if (e.key === 'Enter') {
 			e.preventDefault();
 			spellIt();
+		}
+	});
+	// "/" focuses the input from anywhere on the page, the way search boxes do.
+	document.addEventListener('keydown', (e) => {
+		const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
+		if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && spellInput) {
+			e.preventDefault();
+			spellInput.focus();
+		}
+	});
+
+	// ── Share the signed phrase ───────────────────────────────────────────────
+	// Every phrase is a URL (?say=), so anything the avatar just signed can be
+	// handed to someone else as a link that signs on arrival.
+	const shareBtn = $('#sl-share-btn');
+	const shareUrl = () =>
+		`${location.origin}/sign-language?say=${encodeURIComponent(lastPhrase.trim())}`;
+	const syncShare = () => {
+		if (shareBtn) shareBtn.hidden = !lastPhrase || !normalizeWord(lastPhrase);
+	};
+	shareBtn?.addEventListener('click', async () => {
+		if (!lastPhrase) return;
+		const url = shareUrl();
+		try {
+			if (navigator.share) {
+				await navigator.share({ title: 'Watch this signed in ASL', url });
+				setStatus('Shared.');
+			} else {
+				await navigator.clipboard.writeText(url);
+				setStatus('Link copied. Anyone who opens it sees this signed.');
+			}
+		} catch (e) {
+			if (e?.name !== 'AbortError') setStatus('Could not share: copy the URL from the address bar.');
 		}
 	});
 	// Quick-phrase chips.
@@ -288,6 +322,7 @@ async function boot() {
 				active = chip;
 				chip.setAttribute('aria-pressed', 'true');
 				lastPhrase = word;
+				syncShare();
 				setStatus(gloss ? `${word.toLowerCase()}: ${gloss}` : `Signing “${word.toLowerCase()}”`);
 				try {
 					const result = await speaker.speak(word);
@@ -313,6 +348,7 @@ async function boot() {
 		heroActive = false;
 		if (spellInput) spellInput.value = say.slice(0, 48);
 		lastPhrase = say;
+		syncShare();
 		speaker
 			.speak(say)
 			.then((result) => {
