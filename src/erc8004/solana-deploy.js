@@ -87,6 +87,52 @@ async function waitForSolanaConfirmation(conn, signature, timeoutMs) {
 }
 
 /**
+ * Wallet extensions (Phantom and Phantom-compatible injectors) throw
+ * `{ code: -32603, message: 'An internal error has occurred' }` when their
+ * background service worker is wedged or asleep. A second call after a short
+ * pause routinely succeeds, so retry once before surfacing the failure.
+ */
+const WALLET_INTERNAL_ERROR = -32603;
+
+export function isWalletInternalError(e) {
+	return e?.code === WALLET_INTERNAL_ERROR
+		|| /internal error has occurred/i.test(e?.message || '');
+}
+
+export async function withWalletRetry(step, fn) {
+	try {
+		return await fn();
+	} catch (first) {
+		if (!isWalletInternalError(first)) throw tagStep(first, step);
+		await new Promise((r) => setTimeout(r, 800));
+		try {
+			return await fn();
+		} catch (second) {
+			throw tagStep(second, step);
+		}
+	}
+}
+
+const STEP_LABELS = {
+	connect: 'Wallet connection failed',
+	prepare: 'Could not build the mint transaction',
+	sign: 'Wallet signature failed',
+	send: 'Could not broadcast the transaction',
+};
+
+/** Prefix the failing step onto the error without losing code/status. */
+export function tagStep(e, step) {
+	if (e?.step) return e;
+	const label = STEP_LABELS[step] || step;
+	const err = new Error(`${label}: ${e?.message || String(e)}`);
+	err.step = step;
+	if (e?.code !== undefined) err.code = e.code;
+	if (e?.status !== undefined) err.status = e.status;
+	if (e?.txSignature !== undefined) err.txSignature = e.txSignature;
+	return err;
+}
+
+/**
  * Run the Solana deploy flow end-to-end.
  *
  * @param {object} opts
@@ -110,7 +156,7 @@ export async function runSolanaDeploy({ agent, network, vanity }) {
 		throw err;
 	}
 
-	const conn = await wallet.connect();
+	const conn = await withWalletRetry('connect', () => wallet.connect());
 	const walletAddress = (conn?.publicKey || wallet.publicKey)?.toString();
 	if (!walletAddress) throw new Error('Could not read Solana wallet address.');
 
@@ -173,14 +219,19 @@ export async function runSolanaDeploy({ agent, network, vanity }) {
 	// `signAndSendTransaction` routes through the wallet's own RPC, which
 	// returns 403 "Access forbidden" intermittently on mainnet.
 	const endpoint = RPC[network] || RPC.mainnet;
-	const signed = await wallet.signTransaction(tx);
+	const signed = await withWalletRetry('sign', () => wallet.signTransaction(tx));
 	const conn2 = new Connection(endpoint, 'confirmed');
 	const raw = signed.serialize();
-	const signature = await conn2.sendRawTransaction(raw, {
-		skipPreflight: false,
-		preflightCommitment: 'confirmed',
-		maxRetries: 5,
-	});
+	let signature;
+	try {
+		signature = await conn2.sendRawTransaction(raw, {
+			skipPreflight: false,
+			preflightCommitment: 'confirmed',
+			maxRetries: 5,
+		});
+	} catch (e) {
+		throw tagStep(e, 'send');
+	}
 
 	// Wait for confirmation before calling the server.
 	const conn3 = new Connection(endpoint, 'confirmed');

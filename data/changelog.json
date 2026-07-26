@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-26",
+			"title": "Agent minting recovers from wallet extension crashes",
+			"summary": "Minting an agent on Solana could fail with an unexplained \"An internal error has occurred\" when the wallet extension's background process was wedged, before any transaction was built and with no SOL spent. The deploy flow now retries the wallet call once automatically, and if it still fails the error names the exact step (connecting, signing, or broadcasting) and tells you how to recover: unlock or restart the wallet extension and try again.",
+			"tags": [
+				"fix"
+			],
+			"link": "/create-agent"
+		},
+		{
+			"date": "2026-07-26",
 			"title": "Sniper fleet learns faster: honest honeypot verdicts and no more invisible losers",
 			"summary": "Two fixes to the autonomous trading fleet from auditing its own record. The trade firewall now checks which leg of the simulated buy-and-sell round-trip failed: only a failed sell (the real cannot-exit shape) blocks a coin, while a buy leg that could not fund or price the probe is a warning instead of a false honeypot verdict. And the self-tuning optimizer no longer lets a strategy that has never won keep betting at full size below the minimum sample: zero wins over six or more real trades now triggers an automatic size reduction.",
 			"tags": [

@@ -126,6 +126,14 @@ function _classifyDeployError(raw, err = null) {
 		/user rejected|user denied|cancelled|reject/i.test(m)) {
 		return 'You cancelled the signature request — no transaction was sent. Click Deploy to try again.';
 	}
+	// Wallet extension internal crash (Phantom and compatibles throw
+	// code -32603 "An internal error has occurred" when their background
+	// worker is wedged; the flow already retried once before landing here).
+	if (code === -32603 || /internal error has occurred/i.test(m)) {
+		return 'Your Solana wallet extension hit an internal error before any transaction was sent (no SOL was spent). '
+			+ 'Unlock the wallet, or restart it from your browser’s extension manager, then click Deploy again. '
+			+ 'If it keeps happening, disable other wallet extensions that may be overriding it and reload this page.';
+	}
 	// Insufficient gas / funds
 	if (/insufficient funds|not enough|gas/i.test(m)) {
 		return 'Insufficient funds — make sure your wallet has enough ETH (or SOL) to cover gas. Top up and retry.';

@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-26T20:51:49.889Z",
+	"generated_at": "2026-07-26T20:58:48.329Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Agent minting recovers from wallet extension crashes",
+			"summary": "Minting an agent on Solana could fail with an unexplained \"An internal error has occurred\" when the wallet extension's background process was wedged, before any transaction was built and with no SOL spent. The deploy flow now retries the wallet call once automatically, and if it still fails the error names the exact step (connecting, signing, or broadcasting) and tells you how to recover: unlock or restart the wallet extension and try again.",
+			"link": "/create-agent",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-07-26",
 			"type": "update",
