@@ -404,11 +404,16 @@ export async function submitProtected({ network, connection, payer, instructions
 	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
 		attempts = attempt + 1;
 
-		// Escalate the priority fee on each retry; floor + ceiling clamp it.
+		// Escalate the priority fee on each retry; floor + ceiling clamp it. The
+		// ramp is steep on purpose (1x, 3x, 5x): a retry means the network outbid
+		// us during a congested launch window, and re-bidding 60% higher was losing
+		// the same auction again (EXEC_EXHAUSTED clusters in peak hours). The
+		// ceiling caps the worst case at CU_PRICE_CEILING x cuLimit, well under a
+		// position's size.
 		const feeFloor = CU_PRICE_FLOOR[tipMode] || CU_PRICE_FLOOR.off;
 		const priorityFeeMicroLamports = Math.min(
 			CU_PRICE_CEILING,
-			Math.max(feeFloor, Math.round(priorityFeeBase * (1 + attempt * 0.6))),
+			Math.max(feeFloor, Math.round(priorityFeeBase * (1 + attempt * 2))),
 		);
 
 		// Decide whether THIS attempt rides the Jito bundle. The first attempt(s) try
@@ -469,48 +474,52 @@ export async function submitProtected({ network, connection, payer, instructions
 
 		try {
 			if (tryJito) {
-				const res = await sendJitoBundle(tx, signature, connection).catch((e) => {
-					// Jito unreachable / rejected: record honestly and fall back. We do NOT
-					// claim a landing — control falls through to the protected re-send of the
-					// SAME signed tx (Solana dedupes), so the tip tx still has a chance to land.
-					fallbackReason = `jito_unavailable:${e?.code || 'error'}`;
-					return null;
-				});
-				if (res?.landed) {
+				// Race BOTH lanes with the SAME signed tx. Solana dedupes by signature,
+				// so at most one landing exists and the tip spend is identical to the
+				// old serial flow (the protected re-send always carried the tip too).
+				// What changes is latency: the public broadcast no longer waits out the
+				// bundle poll window, which was costing the sniper ~12s of prime launch
+				// time per attempt on a lane that lands a small minority of the time.
+				const jitoTagged = sendJitoBundle(tx, signature, connection)
+					.then((r) => ({ lane: 'jito', r }))
+					.catch((e) => {
+						// Jito unreachable / rejected: record honestly. We do NOT claim a
+						// landing — the protected lane is already racing the same tx.
+						fallbackReason = `jito_unavailable:${e?.code || 'error'}`;
+						return { lane: 'jito', r: null };
+					});
+				const protTagged = sendProtected(tx, signature, connection, blockhashCtx, confirmTimeoutMs)
+					.then((r) => ({ lane: 'protected', r }))
+					.catch((e) => {
+						lastErr = e;
+						return { lane: 'protected', r: null, err: e };
+					});
+
+				// First landing wins; if the first lane to settle didn't land, wait for
+				// the other before giving up the attempt.
+				let outcome = await Promise.race([jitoTagged, protTagged]);
+				if (!outcome.r?.landed) {
+					outcome = await (outcome.lane === 'jito' ? protTagged : jitoTagged);
+				}
+				if (outcome.r?.landed) {
 					return {
 						signature,
-						slot: res.slot,
-						route: tipMode === 'turbo' ? 'jito_turbo' : 'jito_economy',
+						slot: outcome.r.slot,
+						// Route label reflects the lane that actually reported the landing.
+						route: outcome.lane === 'jito' ? (tipMode === 'turbo' ? 'jito_turbo' : 'jito_economy') : 'protected',
 						tipLamports: Number(tipLamports),
 						priorityFeeMicroLamports,
 						attempts,
 						landedMs: Date.now() - t0,
-						fallbackReason: null,
+						fallbackReason: outcome.lane === 'jito' ? null : (fallbackReason || 'jito_not_landed'),
 					};
 				}
-				// Bundle didn't land (or Jito errored). The SAME signed tx (tip included)
-				// may still land via a normal RPC broadcast — re-send it protected before
-				// giving up this attempt.
-				if (res && fallbackReason == null) fallbackReason = 'jito_not_landed';
-				const prot = await sendProtected(tx, signature, connection, blockhashCtx, confirmTimeoutMs).catch((e) => {
-					lastErr = e;
-					return null;
-				});
-				if (prot?.landed) {
-					return {
-						signature,
-						slot: prot.slot,
-						// The tip tx landed via the public lane — honest route label.
-						route: 'protected',
-						tipLamports: Number(tipLamports),
-						priorityFeeMicroLamports,
-						attempts,
-						landedMs: Date.now() - t0,
-						fallbackReason: fallbackReason || 'jito_not_landed',
-					};
-				}
-				// Neither lane landed this attempt — retry with a fresh blockhash + higher
-				// fee/tip. Stop attempting Jito if it's the one that's down.
+				// Neither lane landed. A hard on-chain revert is terminal: the same
+				// instructions would revert again on every retry.
+				const protSettled = await protTagged;
+				if (protSettled.err?.code === 'TX_ERR') throw protSettled.err;
+				if (fallbackReason == null) fallbackReason = 'jito_not_landed';
+				// Retry with a fresh blockhash + higher fee/tip.
 				continue;
 			}
 

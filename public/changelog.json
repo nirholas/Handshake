@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-26T20:58:48.329Z",
+	"generated_at": "2026-07-26T21:12:09.017Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -19,12 +19,43 @@
 		{
 			"date": "2026-07-26",
 			"type": "update",
+			"title": "Agent trades land faster during congested launch windows",
+			"summary": "The trade execution engine now broadcasts through its MEV-protected lane and the Jito bundle lane at the same time instead of waiting up to 12 seconds for a bundle verdict before falling back, and it raises its priority-fee bid much more steeply when a send does not land on the first try. Fewer sniper entries and exits should fail with exhausted retries during peak hours, and the ones that land should land sooner.",
+			"link": "/blog/autonomous-trading-experiment",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Large token images no longer break coin launches",
+			"summary": "Uploading a big token image (a phone photo, a high-resolution PNG) during a coin launch used to fail with an unhelpful error because the image outgrew a server upload limit. The launch flow now shrinks oversized images right in your browser before uploading, and the server accepts everything the launch form allows, so any image you pick just works.",
+			"link": "/studio",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
 			"title": "Sniper fleet learns faster: honest honeypot verdicts and no more invisible losers",
 			"summary": "Two fixes to the autonomous trading fleet from auditing its own record. The trade firewall now checks which leg of the simulated buy-and-sell round-trip failed: only a failed sell (the real cannot-exit shape) blocks a coin, while a buy leg that could not fund or price the probe is a warning instead of a false honeypot verdict. And the self-tuning optimizer no longer lets a strategy that has never won keep betting at full size below the minimum sample: zero wins over six or more real trades now triggers an automatic size reduction.",
 			"link": "/blog/autonomous-trading-experiment",
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "The Chat app is back at three.ws/chat",
+			"summary": "For the last month, visiting three.ws/chat silently redirected to the agent app, and the standalone chat's files had been dropped from the production build during the infrastructure migration. The full Chat app is now restored at /chat: the fast, private chat UI where your keys and entire conversation history stay in your browser, with support for OpenRouter, OpenAI, Anthropic, Groq, Mistral, and local models via Ollama, plus tool use, image input, branching history, and end-to-end encrypted sync. The deploy pipeline now builds and verifies the chat app on every release, so it cannot silently disappear again.",
+			"link": "/chat",
+			"tags": [
+				"fix",
+				"feature"
 			]
 		},
 		{
@@ -254,7 +285,7 @@
 			"date": "2026-07-25",
 			"type": "update",
 			"title": "Sign language page: an avatar with a face, settings that stick, and 84 languages",
-			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. The whole page is also translated into every language the site ships, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
+			"summary": "The /sign-language page gained an Avatar setting: alongside the light classic rig there is now an expressive avatar whose face actually shows the grammar signed questions need (raised brows on a yes/no question, furrowed brows on negation). Your signing speed, dominant hand, and avatar choice now persist across visits, so a left-handed signer sets it once. After the avatar signs something, a share chip copies a link that signs the same phrase for whoever opens it, and pressing / focuses the input from anywhere on the page. The whole page is also translated into every language the site ships, and the sign-language embed attribute is now in the quick-start attribute reference for developers.",
 			"link": "/sign-language",
 			"tags": [
 				"improvement",

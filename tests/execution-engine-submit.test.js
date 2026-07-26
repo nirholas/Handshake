@@ -73,6 +73,44 @@ describe('submitProtected', () => {
 		expect(programIds).toContain('11111111111111111111111111111111');
 	});
 
+	it('races the protected lane against the Jito bundle instead of waiting out the poll window', async () => {
+		// Jito lane: sendBundle accepts, then statuses stay pending forever; tip
+		// floor endpoint 404s (engine falls back to the mode floor). Chain status
+		// confirms instantly, so the protected lane should land within ms while the
+		// serial flow would have burned the first 700ms bundle-poll sleep and
+		// returned a jito route label.
+		const fetchMock = vi.fn(async (url, init) => {
+			if (String(url).includes('tip_floor')) return { ok: false, status: 404, text: async () => '' };
+			const body = init?.body ? JSON.parse(init.body) : {};
+			if (body.method === 'sendBundle') return { ok: true, json: async () => ({ result: 'bundle-1' }) };
+			return { ok: true, json: async () => ({ result: { value: [{ status: 'Pending' }] } }) };
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		try {
+			const captured = {};
+			const conn = mockConnection(captured);
+			const payer = Keypair.generate();
+			const dest = Keypair.generate().publicKey;
+			const t0 = Date.now();
+			const res = await submitProtected({
+				network: 'mainnet',
+				connection: conn,
+				payer,
+				instructions: [SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: dest, lamports: 1000 })],
+				opts: { tipMode: 'economy' },
+			});
+			expect(res.route).toBe('protected');
+			expect(res.fallbackReason).toBeTruthy();
+			expect(conn.sendRawTransaction).toHaveBeenCalled();
+			// Well under one bundle-poll sleep: the lanes ran in parallel.
+			expect(Date.now() - t0).toBeLessThan(700);
+			// The economy tip transfer still rode along on the protected tx.
+			expect(res.tipLamports).toBeGreaterThan(0);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
 	it('signs with the fee-payer plus extraSigners', async () => {
 		const captured = {};
 		const conn = mockConnection(captured);
