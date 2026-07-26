@@ -33,11 +33,21 @@
 import { sql } from '../_lib/db.js';
 import { cors, json, wrapCron } from '../_lib/http.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
-import { materializeCreation, markFailed, forgeStoreEnabled } from '../_lib/forge-store.js';
+import { materializeCreation, markFailed, forgeStoreEnabled, createCreation } from '../_lib/forge-store.js';
 import { notifyForgeComplete, notifyForgeFailed } from '../_lib/forge-notify.js';
 import { createRegenProvider as createGcpProvider } from '../_providers/gcp.js';
 import { createNvidiaProvider } from '../_providers/nvidia.js';
-import { decodeJobToken } from '../_lib/forge-job-token.js';
+import { decodeJobToken, encodeJobToken } from '../_lib/forge-job-token.js';
+import {
+	pickRedispatchLane,
+	submitFailoverJob,
+	bindJobSuccessor,
+	MAX_FAILOVER_HOPS,
+} from '../_lib/forge-failover.js';
+import { markLaneUnhealthy } from '../_lib/forge-lane-health.js';
+import { resolveTier } from '../_lib/forge-tiers.js';
+import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
+import { getRedis } from '../_lib/redis.js';
 
 export const maxDuration = 60;
 
@@ -48,6 +58,18 @@ const GRACE_MINUTES = 2;
 // lane (self-host TRELLIS high tier behind a full queue) finishes well inside
 // 30 minutes; beyond it the worker task has been evicted or lost.
 const HARD_TTL_MINUTES = 45;
+// Browser clients poll attended for up to 12 minutes (src/forge.js MAX_POLL_MS)
+// and run their own poll-time lane failover. The cron defers acting on a failed
+// self-host poll until that window has passed, so it can never race a live
+// browser into a duplicate redispatch of the same generation.
+const ATTENDED_POLL_BUDGET_MINUTES = 13;
+// Hop/attempted memory for cron-built failover chains, keyed by the successor's
+// worker envelope. Same lifetime as the poll path's successor bindings.
+const CRON_HOP_PREFIX = 'fr:cron-hop:';
+const CRON_HOP_TTL_S = 2 * 3600;
+// Mirrors the poll path's NVCF alias/resub keys (api/forge.js pollNvidiaStatus)
+// so attended and unattended recovery share one once-per-job budget.
+const NVCF_ALIAS_TTL_S = 3600;
 
 export function requireCron(req, res) {
 	const secret = process.env.CRON_SECRET;
@@ -81,6 +103,87 @@ export function decodeWorkerEnvelope(replicateJobId) {
 	}
 }
 
+async function readCronHop(replicateJobId) {
+	const r = getRedis();
+	if (!r) return null;
+	try {
+		const raw = await r.get(`${CRON_HOP_PREFIX}${replicateJobId}`);
+		const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
+		return value && Number.isFinite(value.hop) ? value : null;
+	} catch {
+		return null;
+	}
+}
+
+async function writeCronHop(replicateJobId, value) {
+	const r = getRedis();
+	if (!r) return;
+	try {
+		await r.set(`${CRON_HOP_PREFIX}${replicateJobId}`, JSON.stringify(value), { ex: CRON_HOP_TTL_S });
+	} catch {
+		// Best-effort: a lost hop record loosens the chain cap by one, nothing more.
+	}
+}
+
+// Unattended twin of the poll handler's automatic lane failover (api/forge.js
+// pollJob). The 30-minute worker orphan class lands here by construction: the
+// worker only declares an orphan long after every browser has stopped polling,
+// so the cron is the ONLY consumer of that failure — and before this it
+// dead-ended the job permanently. The original inputs are still on the row;
+// resubmit to the next healthy lane instead. The successor gets its own
+// creation row (same client/user), so this same cron sweeps it to completion
+// and the completion notification still fires for a model, not a failure.
+async function tryCronRedispatch(row) {
+	if (!row.preview_image_url || row.path === 'sketch') return false;
+	const prior = await readCronHop(row.replicate_job_id);
+	const hop = prior ? prior.hop : 0;
+	if (hop >= MAX_FAILOVER_HOPS) return false;
+	const attempted = [...new Set([...(prior?.attempted || []), row.backend].filter(Boolean))];
+	const nextLane = await pickRedispatchLane({ attempted });
+	if (!nextLane) return false;
+	try {
+		const submitted = await submitFailoverJob({
+			backend: nextLane,
+			imageUrl: row.preview_image_url,
+			prompt: row.prompt,
+			tierId: row.tier,
+			path: row.path,
+		});
+		// The redispatch reconstructs from the primary stored view, so a
+		// multi-view original degrades visibly (views_used: 1), never silently —
+		// same provenance contract as the attended failover.
+		await createCreation({
+			clientKey: row.client_key,
+			userId: row.user_id ?? null,
+			prompt: row.prompt,
+			previewImageUrl: row.preview_image_url,
+			replicateJobId: submitted.extJobId,
+			viewsRequested: 1,
+			viewsUsed: 1,
+			multiview: false,
+			backend: nextLane,
+			tier: row.tier,
+			path: row.path,
+		});
+		await writeCronHop(submitted.extJobId, { hop: hop + 1, attempted });
+		// A late attended poller still holds the original f1 handle. Job tokens
+		// are deterministic (HMAC over the same payload), so re-encoding the
+		// envelope reconstructs the exact string that client polls — bind the
+		// successor chain on it so resolveLiveJob chases to the live job.
+		await bindJobSuccessor(
+			encodeJobToken({ provider: 'gcp', kind: null, taskId: row.replicate_job_id }),
+			{ handle: submitted.handle, backend: nextLane, hop: hop + 1, attempted },
+		);
+		console.warn(
+			`[forge-finalize] job failed on ${row.backend}; unattended auto-failover #${hop + 1} → ${nextLane}`,
+		);
+		return true;
+	} catch (err) {
+		console.warn(`[forge-finalize] redispatch failed: ${err?.message || err}`);
+		return false;
+	}
+}
+
 export default wrapCron(async (req, res) => {
 	cors(req, res, { methods: 'GET,POST,OPTIONS' });
 	if (req.method?.toUpperCase() === 'OPTIONS') return;
@@ -93,7 +196,7 @@ export default wrapCron(async (req, res) => {
 
 	const rows = await sql`
 		select id, replicate_job_id, client_key, user_id, prompt, preview_image_url,
-			backend, tier, created_at
+			backend, tier, path, created_at
 		from forge_creations
 		where status = 'generating'
 			and replicate_job_id is not null
@@ -116,7 +219,7 @@ export default wrapCron(async (req, res) => {
 		// NIM unconfigured: forge-token rows can't be polled here; hard TTL reaps.
 	}
 
-	const out = { done: 0, failed: 0, timed_out: 0, still_running: 0, unpollable: 0 };
+	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: 0, still_running: 0, unpollable: 0 };
 
 	for (const row of rows) {
 		const ageMinutes = (Date.now() - Date.parse(row.created_at)) / 60_000;
@@ -150,6 +253,26 @@ export default wrapCron(async (req, res) => {
 			}
 
 			if (status?.status === 'failed') {
+				// Inside the attended window a live browser may poll this failure
+				// seconds from now and run its own failover; acting here would race
+				// it into duplicate GPU work. Leave the row — an attended client
+				// resolves it, and an abandoned one ages into the branch below.
+				if (ageMinutes < ATTENDED_POLL_BUDGET_MINUTES) {
+					out.still_running++;
+					continue;
+				}
+				if (row.backend) await markLaneUnhealthy(row.backend).catch(() => {});
+				if (await tryCronRedispatch(row)) {
+					await markFailed({
+						replicateJobId: row.replicate_job_id,
+						clientKey: row.client_key,
+						error: status.error || 'generation failed',
+					});
+					out.failed_over++;
+					// No failure notification: the successor row carries the job on,
+					// and its completion (or terminal failure) notifies instead.
+					continue;
+				}
 				await markFailed({
 					replicateJobId: row.replicate_job_id,
 					clientKey: row.client_key,
@@ -193,6 +316,83 @@ export default wrapCron(async (req, res) => {
 						error: status.error || 'generation failed',
 					});
 					out.failed++;
+					continue;
+				}
+				// queued / running / poll blip: fall through to the TTL check.
+			} else if (row.backend === 'nvidia' && nvidia) {
+				// Browser/free-lane NIM rows store the BARE NVCF request id (only the
+				// x402 lane stores the signed token), so they used to be unpollable
+				// here and died at the hard TTL as "generation timed out" even when
+				// the GPU had finished. Poll the bare id directly — chasing the alias
+				// an attended expiry recovery may have written first.
+				const alias = await cacheGet(`nvcf:alias:${row.replicate_job_id}`).catch(() => null);
+				const taskId = typeof alias === 'string' && alias ? alias : row.replicate_job_id;
+				const status = await nvidia.status({ taskId }).catch(() => null);
+				if (status?.status === 'done' && status.resultGlbUrl) {
+					const durable = await materializeCreation({
+						replicateJobId: row.replicate_job_id,
+						clientKey: row.client_key,
+						glbUrl: status.resultGlbUrl,
+					});
+					if (durable) {
+						out.done++;
+						if (row.user_id) {
+							notifyForgeComplete({
+								userId: row.user_id,
+								creationId: durable.id,
+								prompt: row.prompt,
+								previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
+							});
+						}
+						continue;
+					}
+					out.still_running++;
+					continue;
+				}
+				if (status?.code === 'nvcf_expired' && row.prompt) {
+					// The request id is dead but the inputs live on the row — the same
+					// never-dead-end recovery the attended poll runs, sharing its
+					// once-per-job resub lock so the two paths can't double-submit.
+					// The alias keeps the row's handle stable; the next tick polls the
+					// resubmitted task and materializes onto this same row.
+					if (await acquireLock(`nvcf:resub:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S)) {
+						try {
+							const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
+							if (resub.taskId) {
+								await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
+								console.warn(
+									`[forge-finalize] NVCF request expired; resubmitted unattended job (creation ${row.id})`,
+								);
+								out.resubmitted++;
+								continue;
+							}
+							if (resub.resultGlbUrl) {
+								const durable = await materializeCreation({
+									replicateJobId: row.replicate_job_id,
+									clientKey: row.client_key,
+									glbUrl: resub.resultGlbUrl,
+								});
+								if (durable) {
+									out.done++;
+									continue;
+								}
+							}
+						} catch (err) {
+							console.warn(`[forge-finalize] NVCF resubmit failed: ${err?.message || err}`);
+						}
+					}
+					// Lock held by a prior recovery or the resubmit failed: fall through
+					// to the TTL check so a second expiry fails honestly, not instantly.
+				} else if (status?.status === 'failed') {
+					await markFailed({
+						replicateJobId: row.replicate_job_id,
+						clientKey: row.client_key,
+						error: status.error || 'generation failed',
+					});
+					out.failed++;
+					if (row.user_id) {
+						notifyForgeFailed({ userId: row.user_id, prompt: row.prompt, error: status.error });
+					}
 					continue;
 				}
 				// queued / running / poll blip: fall through to the TTL check.

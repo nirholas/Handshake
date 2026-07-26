@@ -170,6 +170,35 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
 
 ---
 
+## 🟡 503 with "exceeded its quota limit for … nvidia_l4_gpu_allocation" (gpu-quota-starved)
+
+```
+HTTP 503 GET /health   (model-* service)   textPayload: The request failed because the project exceeded its quota limit for run.googleapis.com/nvidia_l4_gpu_allocation_no_zonal_redundancy
+```
+
+- **Source:** every L4 GPU engine draws from ONE regional pool
+  (`NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion`, granted 3 in
+  us-central1). When warm `min-instances` across the fleet pin all of them, a
+  min-0 service can never allocate: every request, including the Cloud
+  Scheduler health ping, 503s without an instance ever starting.
+- **Resolve (env-action, pre-approved):** find the idle holder first. Measure
+  real job traffic (POST requests, not liveness pings) for each warm GPU
+  service over a few days; a warm L4 with zero jobs is dead weight. Free it:
+  `gcloud run services update <service> --region us-central1 --min-instances=0`.
+  2026-07-26 case: `model-hunyuan3d` held a warm L4 with 0 jobs in 3 days while
+  `model-text2motion` 503'd for hours; freeing it brought text2motion back
+  (health 200, ~14 s cold start) with no code change.
+- **Quota raise:** a preference to 16 is filed and reconciling:
+  `gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5`
+  (`l4-no-zonal-us-central1-8`). us-east4 also holds 3 granted L4s if a lane is
+  ever worth porting. Fleet map and the do-not-repeat lessons:
+  [docs/ops/gcp-credits-plan.md](gcp-credits-plan.md).
+- **Monitor signature:** `gpu-quota-starved` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified
+  `env-action` (matches on the request entry's textPayload).
+
+---
+
 ## 🟡 `[x402-audit] insert failed … db query exceeded 3000ms deadline`
 
 - **Source:** [api/_lib/x402/audit-log.js](../../api/_lib/x402/audit-log.js) `logPaymentEvent`.
@@ -287,6 +316,65 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
 
 ---
 
+## 🟢 HTTP 503 `/api/community/*`, `/api/clash*` — `cc_unconfigured` (cc-unconfigured-503)
+
+```
+HTTP 503 GET /api/community/worlds   body: {"error":"cc_unconfigured","error_description":"CoinCommunities is not configured"}
+```
+
+- **Source:** [api/community/worlds.js](../../api/community/worlds.js) throws
+  its designed `UnconfiguredError` 503 because `CC_API_KEY` is not set. Swept
+  2026-07-26: the key exists nowhere — not on the Cloud Run service, not in
+  `.env`/`.env.local`, not in Secret Manager. The coin-worlds lobby renders its
+  empty state; nothing is crashing.
+- **Resolve (owner, credential):** provision a CoinCommunities API key
+  (api.coin-communities.xyz), then:
+  `gcloud run services update three-ws-api --region us-central1 --update-env-vars CC_API_KEY=<key>`.
+- **Monitor signature:** `cc-unconfigured-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
+## 🟢 HTTP 503 `/health` on a model worker, UA `Google-Cloud-Scheduler` — `worker-coldstart-health-503`
+
+- **Source:** the keep-warm Cloud Scheduler probe hitting a GPU/model worker
+  (model-text2motion, model-hunyuan3d-21, model-rig, ...) while the instance is
+  cold-booting. These workers stream hundreds of MB of weights before their
+  server reports ready, so a probe landing in that 30-60s window gets a 503.
+- **What it means:** nothing is wrong; the probe exists precisely to absorb
+  this cold start so a user never pays it. Verified 2026-07-26 on
+  model-text2motion: 503 at 21:xx, "text2motion ready" logged 30 seconds later.
+- **Resolve:** 🟢 nothing required. Investigate only if the SAME service shows
+  this across several consecutive sweeps, which means it is crash-looping
+  instead of finishing boot (`npm run logs -- -s <service> --since 1h`).
+- **Monitor signature:** `worker-coldstart-health-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`.
+
+---
+
+## 🟢 `[pump/launch-agent] send failed ... pre-broadcast simulation failed` — `pump-launch-sim-rejected`
+
+```
+ERROR  502 POST /api/pump/launch-agent
+[pump/launch-agent] send failed Error: pre-broadcast simulation failed: {"InstructionError":[1,{"Custom":6015}]}
+```
+
+- **Source:** [api/pump/launch-agent.js](../../api/pump/launch-agent.js). The
+  handler simulates every launch transaction before broadcasting it.
+- **What it means:** the simulation REFUSED a launch that would have failed
+  on-chain (pump program custom errors: curve state raced another buyer,
+  slippage moved, metadata rejected). That refusal protects the user's fees;
+  the caller gets a clean 502 and a retry lands (2026-07-26 case: the same
+  user's 201 followed within a minute).
+- **Resolve:** 🟢 nothing required for isolated occurrences. Investigate if
+  the 502 group on `/api/pump/launch-agent` becomes sustained or one wallet
+  repeats the failure many times (then decode the specific custom error code
+  against the pump program's IDL).
+- **Monitor signature:** `pump-launch-sim-rejected` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`.
+
+---
+
 ## The owner runbook — every fix as an exact command
 
 Everything red/yellow above, condensed to the actions only the owner can take,
@@ -356,17 +444,3 @@ gcloud run services update three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --update-env-vars CACHE_REDIS_CMD_TIMEOUT_MS=5000
 # Helius 429s: raise the plan/quota in the Helius dashboard (public-RPC fallback covers the gap).
 ```
-
-### sns-floating-rejection: `Error: Invalid name account provided` (self-healing)
-
-A bare ERROR-severity stack from `@bonfida/spl-name-service` lands roughly
-every 12 minutes, raised by the autonomous ring agents resolving names through
-`/api/x402/pay-by-name`. Every first-party call site (`src/solana/sns.js`,
-`api/x402/pay-by-name.js`) wraps `resolve()` in try/catch and answers a correct
-200/404; the escaping copy is a floating rejection out of the library's
-internals for unregistered names. Verified 2026-07-26: no 5xx correlates with
-these entries and a local repro of the caught path leaks nothing.
-
-Log noise only; no action. Escalate to `investigate` only if a 5xx group
-appears on `/api/sns`, `/api/v1/resolve`, or `/api/x402/pay-by-name` in the
-same window.

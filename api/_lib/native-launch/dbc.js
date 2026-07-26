@@ -13,7 +13,7 @@ async function sdk() {
 	return _sdk;
 }
 
-export const DBC_PROGRAM_ID = 'dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSmaKN';
+export const DBC_PROGRAM_ID = 'dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN';
 
 const clients = new Map(); // network -> DynamicBondingCurveClient
 

@@ -309,7 +309,9 @@ async function boot() {
 			const chip = document.createElement('button');
 			chip.type = 'button';
 			chip.className = 'sl-vocab-chip';
-			chip.setAttribute('role', 'listitem');
+			// No role="listitem": overriding a button's role forbids aria-pressed
+			// (axe aria-allowed-attr, critical). The host is a role="group" with an
+			// aria-label instead of a faked list.
 			chip.setAttribute('aria-pressed', 'false');
 			chip.textContent = word.toLowerCase();
 			const gloss = signGloss(word);

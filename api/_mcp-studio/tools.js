@@ -34,6 +34,7 @@ import {
 	irlUrl,
 	generate,
 	rig,
+	pollOnce,
 	directPrompt,
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
@@ -140,11 +141,16 @@ function toolError(message) {
 // quietly finished minutes later and the caller never learned. The job handle
 // is public (the free /api/forge poll endpoint takes it with no auth), so hand
 // it over and let the caller collect the result.
-function pendingResult({ base, jobId, what, prompt }) {
-	const pollUrl = `${base}/api/forge?job=${encodeURIComponent(jobId)}`;
+function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds }) {
+	// The ChatGPT pipeline's own endpoint, not /api/forge — the whole point of
+	// the clone is that this surface can evolve independently.
+	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
+	const eta = Number.isFinite(etaRemainingSeconds) && etaRemainingSeconds > 0 ? Math.round(etaRemainingSeconds) : null;
 	const message =
-		`The ${what} is still rendering (heavier scenes take a few minutes). ` +
-		`It keeps running — poll ${pollUrl} until status is "done", then use its glb_url ` +
+		`The ${what} is still rendering (heavier scenes take a few minutes)` +
+		`${eta ? ` — roughly ${eta}s to go` : ''}. ` +
+		`It keeps running — call the check_job tool with this job_id${eta ? ` in ~${eta}s` : ' shortly'} to collect it, ` +
+		`or poll ${pollUrl} until status is "done", then use its glb_url ` +
 		`(view at ${base}/viewer?src=<glb_url>).`;
 	return {
 		content: [{ type: 'text', text: message }],
@@ -152,6 +158,7 @@ function pendingResult({ base, jobId, what, prompt }) {
 			status: 'pending',
 			jobId,
 			pollUrl,
+			...(eta ? { etaRemainingSeconds: eta } : {}),
 			...(prompt ? { prompt } : {}),
 		},
 	};
@@ -212,12 +219,16 @@ function failureMessage(err) {
 	switch (err?.code) {
 		case 'timeout':
 			return 'Generation is taking longer than expected. Please try again.';
-		case 'busy':
-			return 'The 3D generator is busy right now. Please try again in a moment.';
+		case 'busy': {
+			const wait = Number(err?.retryAfter);
+			return Number.isFinite(wait) && wait > 0
+				? `The 3D generator is busy right now. Try again in about ${Math.ceil(wait)}s.`
+				: 'The 3D generator is busy right now. Please try again in a moment.';
+		}
 		case 'not_configured':
 			return 'This capability is temporarily unavailable. Please try again later.';
 		case 'generation_failed':
-			return 'Generation failed for this prompt. Try rephrasing or simplifying it.';
+			return 'Generation failed for this prompt. Try again — a retry is routed to a healthy engine — or rephrase it.';
 		default:
 			return 'Could not generate the model right now. Please try again.';
 	}
@@ -286,7 +297,7 @@ async function handleForgeFree(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt, etaRemainingSeconds: job.eta_remaining_seconds });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url });
 }
@@ -324,7 +335,7 @@ async function handleTextToAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, etaRemainingSeconds: job.eta_remaining_seconds });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -376,7 +387,7 @@ async function handleMeshForge(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, etaRemainingSeconds: job.eta_remaining_seconds });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -396,7 +407,7 @@ async function handleRigMesh(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model' });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', etaRemainingSeconds: job.eta_remaining_seconds });
 	if (job._timedOut || !job.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true });
 }
@@ -437,7 +448,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined });
+	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, etaRemainingSeconds: gen.eta_remaining_seconds });
 	if (gen._timedOut || !gen.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 
 	// Stage 2 — auto-rig the generated mesh.
@@ -463,7 +474,7 @@ async function handleForgeAvatar(args, _auth, req) {
 			},
 		};
 	}
-	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined });
+	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, etaRemainingSeconds: rigged.eta_remaining_seconds });
 	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
 }
@@ -547,7 +558,14 @@ async function handleRefineModel(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'refined model', prompt: prompt || undefined });
+	if (job._timedOut && job.job_id)
+		return pendingResult({
+			base,
+			jobId: job.job_id,
+			what: 'refined model',
+			prompt: composed || undefined,
+			etaRemainingSeconds: job.eta_remaining_seconds,
+		});
 	if (job._timedOut || !job.glb_url) return toolError('Refinement is taking longer than expected. Please try again.');
 
 	const lineage = appendVersion(baseLineage, {
@@ -559,6 +577,43 @@ async function handleRefineModel(args, _auth, req) {
 		...(parentIndex !== undefined ? { parentIndex } : {}),
 	});
 	return refineOk({ glbUrl: job.glb_url, base, prompt: composed, instruction, lineage, activeIndex: lineage.length - 1 });
+}
+
+// Collect a generation that outlived a tool call's inline wait. One status
+// probe, no loop: done renders the full result envelope in the widget, still
+// running returns a fresh pending envelope with updated timing, failed returns
+// the same clean failure copy the generating tools use. Without this tool the
+// only way back to a pending job was browsing the raw poll URL.
+async function handleCheckJob(args, _auth, req) {
+	const base = originFromReq(req);
+	const jobId = String(args.job_id || '').trim();
+	if (!jobId) return toolError('Provide the job_id a pending generation returned.');
+	let data;
+	try {
+		data = await pollOnce(base, jobId);
+	} catch (err) {
+		return toolError(failureMessage(err));
+	}
+	if (data.status === 'done' && data.glb_url) {
+		return ok({
+			glbUrl: data.glb_url,
+			base,
+			kind: 'model',
+			prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
+			referenceImageUrl: data.preview_image_url,
+		});
+	}
+	if (data.status === 'failed') {
+		// data.error is already sanitized server-side (sanitizeJobError): safe copy.
+		return toolError(data.error ? `Generation failed: ${data.error}` : failureMessage({ code: 'generation_failed' }));
+	}
+	return pendingResult({
+		base,
+		jobId,
+		what: 'model',
+		prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
+		etaRemainingSeconds: data.eta_remaining_seconds,
+	});
 }
 
 // ── definitions ─────────────────────────────────────────────────────────────
@@ -734,6 +789,35 @@ const DEFS = [
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Refining your 3D model…', 'Here is the refined model'),
 		handler: handleRefineModel,
+	},
+	{
+		name: 'check_job',
+		title: 'Check a pending 3D generation',
+		description:
+			'Check on a 3D generation that returned status "pending" and collect the finished model. Pass the ' +
+			'job_id from the pending result. While it is still rendering you get updated timing; call again after ' +
+			'the suggested wait. When it is done the model renders inline in the interactive 3D viewer.',
+		inputSchema: {
+			type: 'object',
+			additionalProperties: false,
+			required: ['job_id'],
+			properties: {
+				job_id: {
+					type: 'string',
+					minLength: 8,
+					maxLength: 4096,
+					description: 'The job_id (or jobId) a pending generation returned.',
+				},
+			},
+		},
+		annotations: {
+			readOnlyHint: true, // a status probe; creates nothing
+			destructiveHint: false,
+			idempotentHint: true, // same job_id, same answer until the job advances
+			openWorldHint: true,
+		},
+		_meta: widgetMeta('Checking your 3D model…', 'Here is your 3D model'),
+		handler: handleCheckJob,
 	},
 ];
 

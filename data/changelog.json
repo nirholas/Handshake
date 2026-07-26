@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-26",
+			"title": "The Worlds lobby stays live through market-data outages",
+			"summary": "The coin-worlds lobby used to go dark when both of its external trending feeds (Birdeye and pump.fun) were down or rate-limited at the same time. It now falls back to the platform's own launch recorder, which ingests thousands of new pump.fun coins per hour, so the lobby keeps showing real, current coins even when every outside feed fails.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/worlds"
+		},
+		{
+			"date": "2026-07-26",
 			"title": "Coin charts show a clean no-data state for dead markets",
 			"summary": "Asking for the price chart of a coin with no market history returned an error that looked like an outage. It now returns an empty series and the chart renders its no-data state instead.",
 			"tags": [

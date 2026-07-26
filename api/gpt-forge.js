@@ -2975,7 +2975,29 @@ async function pollJob(req, res, jobId) {
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
 	}
-	return json(res, 200, { job_id: jobId, status: result.status || 'running', ...metaFields });
+	// Pending polls carry timing — elapsed since submit plus the lane's typical
+	// total — so agent surfaces (ChatGPT sees ONLY poll frames after submit) can
+	// narrate real progress and a sane retry cadence instead of N identical
+	// "still running" frames. eta_remaining_seconds is floored at 5: the estimate
+	// is a typical duration, not a deadline, and a negative countdown reads as
+	// "stuck" for a job that is merely slower than average.
+	const elapsedSeconds = meta?.created_at
+		? Math.max(0, Math.round((Date.now() - Date.parse(meta.created_at)) / 1000))
+		: null;
+	const etaSeconds = meta?.backend ? estimateEtaSeconds({ backendId: meta.backend, tier: meta.tier }) : null;
+	return json(res, 200, {
+		job_id: jobId,
+		status: result.status || 'running',
+		...metaFields,
+		...(elapsedSeconds != null ? { elapsed_seconds: elapsedSeconds } : {}),
+		...(etaSeconds != null
+			? {
+					eta_seconds: etaSeconds,
+					eta_remaining_seconds:
+						elapsedSeconds != null ? Math.max(5, etaSeconds - elapsedSeconds) : etaSeconds,
+				}
+			: {}),
+	});
 }
 
 export default wrap(async (req, res) => {

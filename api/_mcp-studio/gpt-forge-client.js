@@ -125,8 +125,13 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 	try {
 		({ res, data } = await attempt(tier, !!internal));
 	} catch (err) {
-		if (err?.code !== 'timeout' || tier !== 'high') throw err;
-		({ res, data } = await attempt('standard', false));
+		if (err?.code !== 'timeout') throw err;
+		// One more shot at the accept path before giving up: the async lanes 202
+		// in milliseconds, so a submit that blocked to the deadline almost always
+		// hit a blocking-lane (HF Space) or cold-start hiccup. High tier degrades
+		// to the async standard router; other tiers retry as submitted.
+		if (tier === 'high') ({ res, data } = await attempt('standard', false));
+		else ({ res, data } = await attempt(tier, !!internal));
 	}
 	if (res.status === 402 && tier === 'high') ({ res, data } = await attempt('standard', false));
 	if (res.status === 503) throw failure('not_configured', data?.message || '3D generation is not configured on this deployment');
@@ -161,31 +166,74 @@ export async function startRig(base, glbUrl) {
 // coded failure on a failed job, or returns { _timedOut: true } at the deadline.
 export async function pollJob(base, jobId, { timeoutMs, intervalMs } = {}) {
 	const tMs = timeoutMs || DEFAULT_TIMEOUT_MS;
-	const iMs = intervalMs || DEFAULT_POLL_MS;
 	const deadline = Date.now() + tMs;
+	// Gentle backoff: start at the configured cadence and stretch toward a cap,
+	// so a minutes-long self-host job costs ~a third of the self-calls a fixed
+	// 3s cadence would fire at the shared mcp3dStatus rate bucket.
+	let iMs = intervalMs || DEFAULT_POLL_MS;
+	const maxIMs = Math.max(iMs, envNum('STUDIO_POLL_MAX_MS', 10_000));
 	let last = null;
+	let softFails = 0;
 	while (Date.now() < deadline) {
-		let res;
+		let res = null;
+		let data = {};
 		try {
 			res = await fetch(`${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
 				headers: { accept: 'application/json' },
 				signal: AbortSignal.timeout(Math.max(iMs * 3, 15_000)),
 			});
-		} catch (err) {
-			if (err?.name === 'AbortError' || err?.name === 'TimeoutError') {
-				await sleep(iMs);
-				continue;
-			}
-			throw failure('provider_error', `generation poll failed: ${err?.message || err}`);
+			data = await res.json().catch(() => ({}));
+		} catch {
+			res = null;
 		}
-		const data = await res.json().catch(() => ({}));
+		// Transient conditions — a network blip, the shared status rate bucket
+		// answering 429, a 5xx from a rolling deploy — must NOT kill the loop:
+		// the job is still running server-side and this handle is the only way
+		// back to it. Only a clean, definitive 4xx (bad/expired job id) throws.
+		if (!res || res.status === 429 || res.status >= 500) {
+			if (++softFails >= 20) {
+				// Persistently unreachable — hand back the pending shape so the
+				// caller returns a pollable handle, never a dead error.
+				return { ...(last || {}), _timedOut: true };
+			}
+			await sleep(iMs);
+			iMs = Math.min(maxIMs, Math.round(iMs * 1.35));
+			continue;
+		}
 		if (!res.ok) throw failure('provider_error', data?.message || `generation poll returned ${res.status}`);
+		softFails = 0;
 		last = data;
 		if (data.status === 'done' && data.glb_url) return data;
-		if (data.status === 'failed') throw failure('generation_failed', data.error || 'generation failed');
+		if (data.status === 'failed') {
+			throw failure('generation_failed', data.error || 'generation failed', {
+				retryBackends: Array.isArray(data.retry_backends) ? data.retry_backends : undefined,
+			});
+		}
 		await sleep(iMs);
+		iMs = Math.min(maxIMs, Math.round(iMs * 1.35));
 	}
 	return { ...(last || {}), _timedOut: true };
+}
+
+// Single status probe for the check_job tool: one GET, no loop. Throws a coded
+// failure only on a definitive non-2xx; the caller decides how to render each
+// status.
+export async function pollOnce(base, jobId) {
+	let res;
+	try {
+		res = await fetch(`${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(15_000),
+		});
+	} catch (err) {
+		if (err?.name === 'TimeoutError' || err?.name === 'AbortError')
+			throw failure('timeout', 'the status check timed out; try again');
+		throw failure('provider_error', `the status check is unreachable: ${err?.message || err}`);
+	}
+	const data = await res.json().catch(() => ({}));
+	if (res.status === 429) throw failure('busy', data?.message || 'status checks are rate limited; try again shortly', { retryAfter: data?.retry_after });
+	if (!res.ok) throw failure('provider_error', data?.message || `the status check returned ${res.status}`);
+	return data;
 }
 
 // Run a submit→poll cycle end to end, returning the terminal job payload.

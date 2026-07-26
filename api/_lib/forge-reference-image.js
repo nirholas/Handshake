@@ -58,6 +58,7 @@ import { createHash } from 'node:crypto';
 import { getGcpAccessToken } from './gcp-auth.js';
 import { putObject, publicUrl } from './r2.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
+import { isProviderRefusal } from './ai-image-lanes.js';
 import { textToImage } from '../_mcp3d/text-to-image.js';
 import { parseJsonLoose } from './vision.js';
 import { getRedis } from './redis.js';
@@ -221,37 +222,53 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 		return res;
 	};
 
-	let res = await request(true);
-	if (res.status === 400) {
-		// Peek at the error: only retry-without-size when it is specifically about
-		// imageConfig/imageSize, so a genuine bad request still fails fast.
-		const detail = await res.text().catch(() => '');
-		if (/imageSize|imageConfig/i.test(detail)) {
-			res = await request(false);
-		} else {
-			throw Object.assign(new Error(`Vertex reference image 400: ${detail.slice(0, 200)}`), {
-				providerStatus: 400,
-			});
+	const attempt = async () => {
+		let res = await request(true);
+		if (res.status === 400) {
+			// Peek at the error: only retry-without-size when it is specifically about
+			// imageConfig/imageSize, so a genuine bad request still fails fast.
+			const detail = await res.text().catch(() => '');
+			if (/imageSize|imageConfig/i.test(detail)) {
+				res = await request(false);
+			} else {
+				throw Object.assign(new Error(`Vertex reference image 400: ${detail.slice(0, 200)}`), {
+					providerStatus: 400,
+				});
+			}
 		}
+		if (!res.ok) {
+			const detail = await res.text().catch(() => '');
+			const err = Object.assign(
+				new Error(`Vertex reference image returned ${res.status}: ${detail.slice(0, 200)}`),
+				{ providerStatus: res.status },
+			);
+			if (res.status === 429) err.code = 'rate_limited';
+			throw err;
+		}
+		const data = await res.json();
+		const parts = data?.candidates?.[0]?.content?.parts || [];
+		const imgPart = parts.find((p) => p?.inlineData?.data);
+		const b64 = imgPart?.inlineData?.data;
+		if (!b64) {
+			const reason = data?.candidates?.[0]?.finishReason;
+			throw new Error(`Vertex reference image produced no image${reason ? ` (finishReason: ${reason})` : ''}`);
+		}
+		return { b64, mime: imgPart.inlineData.mimeType || 'image/png', model: `vertex-ai/${model}` };
+	};
+
+	try {
+		return await attempt();
+	} catch (err) {
+		// A no-image response with a transient finishReason (NO_IMAGE, OTHER — not
+		// the refusal classes) is a known Gemini flake worth exactly one re-roll:
+		// falling through to the generic text→image ladder loses the art-directed
+		// instruction, the negatives, and the QA gate, which is a far worse image
+		// than a second attempt at this lane. Refusals and HTTP errors re-throw
+		// unchanged so genuine blocks and outages still fail fast.
+		const noImage = /produced no image/i.test(String(err?.message || ''));
+		if (!noImage || isProviderRefusal(err)) throw err;
+		return await attempt();
 	}
-	if (!res.ok) {
-		const detail = await res.text().catch(() => '');
-		const err = Object.assign(
-			new Error(`Vertex reference image returned ${res.status}: ${detail.slice(0, 200)}`),
-			{ providerStatus: res.status },
-		);
-		if (res.status === 429) err.code = 'rate_limited';
-		throw err;
-	}
-	const data = await res.json();
-	const parts = data?.candidates?.[0]?.content?.parts || [];
-	const imgPart = parts.find((p) => p?.inlineData?.data);
-	const b64 = imgPart?.inlineData?.data;
-	if (!b64) {
-		const reason = data?.candidates?.[0]?.finishReason;
-		throw new Error(`Vertex reference image produced no image${reason ? ` (finishReason: ${reason})` : ''}`);
-	}
-	return { b64, mime: imgPart.inlineData.mimeType || 'image/png', model: `vertex-ai/${model}` };
 }
 
 // ── Reference-image QA gate ──────────────────────────────────────────────────

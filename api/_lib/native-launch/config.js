@@ -53,7 +53,10 @@ export function curveBuildParams() {
 			tokenQuoteDecimal: 9, // TokenDecimal.NINE (SOL)
 			tokenAuthorityOption: 1, // TokenAuthorityOption.Immutable
 			totalTokenSupply: NATIVE_LANE.totalSupply,
-			leftover: 0,
+			// The DBC program requires curve + migration + leftover to sum exactly
+			// to the fixed supply; leftover 0 fails its rounding check on-chain
+			// (InvalidTokenSupply). One base unit of dust satisfies it.
+			leftover: 1,
 		},
 		fee: {
 			baseFeeParams: {

@@ -3,7 +3,8 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<!-- No maximum-scale: it blocks pinch-zoom (axe meta-viewport, WCAG 1.4.4). -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title data-i18n="characters.meta_title">Characters — three.ws</title>
 	<meta name="description" content="Discover AI characters on three.ws. Chat, trade, and create."  data-i18n-attr="content:characters.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />

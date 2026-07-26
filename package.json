@@ -268,7 +268,7 @@
 		"@bnb-chain/greenfield-js-sdk": "^2.2.2",
 		"@bnb-chain/mpp": "^0.2.0",
 		"@bnb-chain/reed-solomon": "^1.1.4",
-		"@bonfida/spl-name-service": "0.1.67",
+		"@bonfida/spl-name-service": "^3.0.26",
 		"@chenglou/pretext": "^0.0.7",
 		"@coin-communities/sdk": "^1.2.1",
 		"@coinbase/x402": "^2.1.0",

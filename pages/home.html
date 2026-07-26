@@ -1168,7 +1168,9 @@
 			color: #7ec8f8; font-weight: 700; font-size: 10.5px;
 			text-transform: uppercase; letter-spacing: 0.10em;
 		}
-		.foot-ca-addr { opacity: .55; font-size: 10.5px; }
+		/* No opacity dim: text-3 at .55 measured ~2.5:1 (axe AA needs 4.5:1),
+		   and the $THREE contract address should be legible anyway. */
+		.foot-ca-addr { font-size: 10.5px; }
 		.foot-ca { min-width: 0; max-width: 100%; }
 		.foot-ca-addr { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 		@media (max-width: 480px) { .foot-inner { flex-direction: column; align-items: flex-start; } .foot-ca { width: 100%; justify-content: flex-start; } }

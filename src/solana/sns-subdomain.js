@@ -202,7 +202,10 @@ export async function createNamedSubdomain({
 		parentKp.publicKey,
 	);
 
-	const transferIxs = await sns.transferSubdomain(connection, fullName, newOwnerKey, true);
+	// v3 returns a single TransactionInstruction (v0.1.x-era callers expected an
+	// array) — normalize so the spread below works against either shape.
+	const transferRes = await sns.transferSubdomain(connection, fullName, newOwnerKey, true);
+	const transferIxs = Array.isArray(transferRes) ? transferRes : [transferRes];
 
 	const ixs = [...createIxs, urlRecordIx, ...transferIxs];
 	const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');

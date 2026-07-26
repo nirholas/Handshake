@@ -53,6 +53,24 @@ export async function reconcileVanishedBag({ ctx, position, reason }) {
 		const ownerPk = new ctx.web3.PublicKey(owner);
 		const accounts = await ctx.connection.getParsedTokenAccountsByOwner(ownerPk, { mint: mintPk });
 		const tokenAccounts = (accounts?.value || []).map((a) => a.pubkey);
+		// A sell that emptied the bag often CLOSES the token account in the same tx
+		// (rent reclaim), so the live-accounts lookup above comes back empty and the
+		// emptying tx could never be found: positions pinged reconcile_pending for
+		// 30+ hours while their arm's concurrency slot stayed wedged. A closed
+		// account's ADDRESS still carries its signature history, so derive the ATA
+		// for both token programs and search those addresses too.
+		const seen = new Set(tokenAccounts.map((a) => a.toBase58()));
+		const ASSOCIATED_TOKEN_PROGRAM = new ctx.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+		for (const tokenProgram of ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']) {
+			const [ata] = ctx.web3.PublicKey.findProgramAddressSync(
+				[ownerPk.toBuffer(), new ctx.web3.PublicKey(tokenProgram).toBuffer(), mintPk.toBuffer()],
+				ASSOCIATED_TOKEN_PROGRAM,
+			);
+			if (!seen.has(ata.toBase58())) {
+				seen.add(ata.toBase58());
+				tokenAccounts.push(ata);
+			}
+		}
 		if (!tokenAccounts.length) return false;
 
 		for (const ata of tokenAccounts) {

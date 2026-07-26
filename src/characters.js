@@ -100,7 +100,7 @@ function cardHtml(ch) {
 			${ch.description ? `<p class="chs-card-desc">${escHtml(ch.description)}</p>` : ''}
 			${statsHtml}
 			${tokenHtml}
-			${ch.solana_address ? `<div class="chs-card-wallet" style="margin-top:8px">${walletChipHTML(ch, { link: false, showPending: false, dense: true })}</div>` : ''}
+			${ch.solana_address ? `<div class="chs-card-wallet" style="margin-top:8px">${walletChipHTML(ch, { link: false, popover: false, showPending: false, dense: true })}</div>` : ''}
 		</a>`;
 }
 

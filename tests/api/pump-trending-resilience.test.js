@@ -23,7 +23,13 @@ vi.mock('../../api/_lib/rate-limit.js', async (importActual) => {
 	const actual = await importActual();
 	return {
 		...actual,
-		limits: { ...actual.limits, publicIp: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })) },
+		limits: {
+			...actual.limits,
+			publicIp: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
+			// The handler moved to the dedicated lobby bucket (435652d20); stub it
+			// too or the real limiter 429s the second request in a test.
+			marketFeedIp: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
+		},
 		clientIp: () => '203.0.113.9',
 	};
 });
@@ -97,12 +103,18 @@ describe('pump/trending resilience', () => {
 	});
 
 	it('trips the Birdeye breaker so the next cache-miss skips it', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-06-21T00:00:00Z'));
 		const handler = await freshHandler();
 		mockFetch({ birdeyeOk: false, pumpOk: true });
-		// First call: Birdeye fails (trips breaker), pump serves it, caches at limit=5.
+		// First call: Birdeye fails (trips breaker), pump serves it, caches the batch.
 		await handler(makeReq('/api/pump/trending?limit=5'), makeRes());
 		global.fetch.mockClear();
-		// limit=40 misses the limit=5 cache → refetch; breaker open → Birdeye skipped.
+		// getTrendingSlim caches one canonical batch that serves EVERY limit, so a
+		// bigger limit no longer misses. Force a real miss by moving past the 30s
+		// fresh TTL while staying inside the 60s Birdeye cooldown: the refetch must
+		// skip Birdeye and go straight to pump.fun.
+		vi.setSystemTime(new Date('2026-06-21T00:00:45Z')); // +45s
 		await handler(makeReq('/api/pump/trending?limit=40'), makeRes());
 
 		const urls = global.fetch.mock.calls.map((c) => String(c[0]));
