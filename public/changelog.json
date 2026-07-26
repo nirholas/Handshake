@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-26T21:20:51.694Z",
+	"generated_at": "2026-07-26T21:22:38.483Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -44,6 +44,17 @@
 			"link": "/studio",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Paying agents now get an honest answer when settlement capacity runs dry",
+			"summary": "Our x402 payment rail sponsors the network fee on Solana settlements from a platform wallet, and it refuses to settle when that wallet drops below its safety floor: that guard is deliberate and stays. What was wrong is how the refusal read from the outside. Buyers received a generic server error (HTTP 502) after they had already signed a payment, so agent trust monitors scored the platform as broken, and buying agents burned calls signing payments that could never complete during a dry spell. Now the whole path degrades honestly: while the sponsor wallet is below its floor, paid endpoints stop advertising the Solana payment option up front (other networks stay available), anything that still reaches settlement answers with a proper temporarily-unavailable status (HTTP 503) that tells clients to retry later, and no signed payment is ever consumed by a doomed attempt. Everything springs back automatically the moment the wallet is topped up, and a genuinely unexplained settlement failure still reports as the hard error it is.",
+			"link": "/x402",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

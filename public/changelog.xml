@@ -39,6 +39,14 @@
 			<description>Uploading a big token image (a phone photo, a high-resolution PNG) during a coin launch used to fail with an unhelpful error because the image outgrew a server upload limit. The launch flow now shrinks oversized images right in your browser before uploading, and the server accepts everything the launch form allows, so any image you pick just works.</description>
 		</item>
 		<item>
+			<title>Paying agents now get an honest answer when settlement capacity runs dry</title>
+			<link>https://three.ws/x402</link>
+			<guid isPermaLink="false">2026-07-26:Paying agents now get an honest answer when settlement capacity runs dry</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our x402 payment rail sponsors the network fee on Solana settlements from a platform wallet, and it refuses to settle when that wallet drops below its safety floor: that guard is deliberate and stays. What was wrong is how the refusal read from the outside. Buyers received a generic server error (HTTP 502) after they had already signed a payment, so agent trust monitors scored the platform as broken, and buying agents burned calls signing payments that could never complete during a dry spell. Now the whole path degrades honestly: while the sponsor wallet is below its floor, paid endpoints stop advertising the Solana payment option up front (other networks stay available), anything that still reaches settlement answers with a proper temporarily-unavailable status (HTTP 503) that tells clients to retry later, and no signed payment is ever consumed by a doomed attempt. Everything springs back automatically the moment the wallet is topped up, and a genuinely unexplained settlement failure still reports as the hard error it is.</description>
+		</item>
+		<item>
 			<title>Sniper fleet learns faster: honest honeypot verdicts and no more invisible losers</title>
 			<link>https://three.ws/blog/autonomous-trading-experiment</link>
 			<guid isPermaLink="false">2026-07-26:Sniper fleet learns faster: honest honeypot verdicts and no more invisible losers</guid>
