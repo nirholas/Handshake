@@ -31,6 +31,14 @@
 			<description>Every payment checkout on the platform (cosmetics, club entry, NPC services, asset remixes, billboard slots, bazaar services and more) now lists your agents as payment methods alongside Phantom and other browser wallets. If an agent holds USDC in its own wallet, picking it settles the payment server-side under that agent's spend limits, with no wallet popup and no browser extension required. Underfunded agents show their exact balance and stay disabled until topped up.</description>
 		</item>
 		<item>
+			<title>Coin charts show a clean no-data state for dead markets</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-07-26:Coin charts show a clean no-data state for dead markets</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Asking for the price chart of a coin with no market history returned an error that looked like an outage. It now returns an empty series and the chart renders its no-data state instead.</description>
+		</item>
+		<item>
 			<title>Large token images no longer break coin launches</title>
 			<link>https://three.ws/studio</link>
 			<guid isPermaLink="false">2026-07-26:Large token images no longer break coin launches</guid>
@@ -85,6 +93,14 @@
 			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Opening the walk page used to show &quot;Coin worlds are temporarily unavailable&quot; whenever the community service behind the picker was unreachable, hiding every world behind a wall. The picker now falls back to the live pump.fun trending feed, so you can always browse and enter the hottest coin worlds; community stats simply reappear when the service comes back.</description>
+		</item>
+		<item>
+			<title>The Worlds lobby stays live through market-data outages</title>
+			<link>https://three.ws/worlds</link>
+			<guid isPermaLink="false">2026-07-26:The Worlds lobby stays live through market-data outages</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The coin-worlds lobby used to go dark when both of its external trending feeds (Birdeye and pump.fun) were down or rate-limited at the same time. It now falls back to the platform's own launch recorder, which ingests thousands of new pump.fun coins per hour, so the lobby keeps showing real, current coins even when every outside feed fails.</description>
 		</item>
 		<item>
 			<title>Agent-Forged Gallery</title>
