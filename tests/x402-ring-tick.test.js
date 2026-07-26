@@ -4,6 +4,7 @@ import {
 	ringTickConfig,
 	planTick,
 	planBackpressure,
+	governedCalls,
 	minUsdcForTick,
 	dailyRemaining,
 	tickBudget,
@@ -281,5 +282,63 @@ describe('price-vs-cap coherence', () => {
 		} finally {
 			spy.mockRestore();
 		}
+	});
+});
+
+describe('ring-tick runway governor', () => {
+	const base = {
+		configuredCalls: 94,
+		floorLamports: 20_000_000,   // 0.02 SOL untouchable floor
+		feePerCallLamports: 7_000,
+		runwayDays: 3,
+	};
+
+	it('rich payer runs at the configured rate, unthrottled', () => {
+		// 5 SOL spendable / 3d / 7000 lamports = ~237k calls/day = 164/min > 94
+		const g = governedCalls({ ...base, solLamports: 5_020_000_000 });
+		expect(g.calls).toBe(94);
+		expect(g.throttled).toBe(false);
+	});
+
+	it('lean payer throttles below the configured rate', () => {
+		// 0.5 SOL spendable / 3d / 7000 = ~23.8k calls/day = 16/min
+		const g = governedCalls({ ...base, solLamports: 520_000_000 });
+		expect(g.calls).toBe(16);
+		expect(g.throttled).toBe(true);
+	});
+
+	it('payer at the floor yields zero calls (runway exhausted)', () => {
+		const g = governedCalls({ ...base, solLamports: 20_000_000 });
+		expect(g.calls).toBe(0);
+		expect(g.throttled).toBe(true);
+	});
+
+	it('below one call/min rounds down to zero, never negative', () => {
+		// 0.01 SOL spendable / 3d / 7000 = 476/day < 1440
+		const g = governedCalls({ ...base, solLamports: 30_000_000 });
+		expect(g.calls).toBe(0);
+	});
+
+	it('NaN balance (RPC fault) fails closed to zero calls', () => {
+		const g = governedCalls({ ...base, solLamports: Number.NaN });
+		expect(g.calls).toBe(0);
+		expect(g.throttled).toBe(true);
+	});
+
+	it('never raises above configuredCalls no matter the balance', () => {
+		const g = governedCalls({ ...base, configuredCalls: 3, solLamports: 100_000_000_000 });
+		expect(g.calls).toBe(3);
+	});
+
+	it('config exposes governor knobs with sane defaults and overrides', () => {
+		const dflt = ringTickConfig({});
+		expect(dflt.feePerCallLamports).toBe(7_000);
+		expect(dflt.runwayDays).toBe(3);
+		const set = ringTickConfig({
+			X402_RING_FEE_PER_CALL_LAMPORTS: '6500',
+			X402_RING_TARGET_RUNWAY_DAYS: '7',
+		});
+		expect(set.feePerCallLamports).toBe(6_500);
+		expect(set.runwayDays).toBe(7);
 	});
 });

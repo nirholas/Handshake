@@ -46,7 +46,36 @@ export function ringTickConfig(e = process.env) {
 		// well under the 60 s tick window at typical 1-3 s per settle; 1 restores
 		// the old strictly-sequential behavior.
 		concurrency: Math.max(1, Math.floor(num(e.X402_RING_TICK_CONCURRENCY, 12))),
+		// Runway governor inputs. feePerCallLamports is the conservative per-call
+		// fee estimate (measured 6,300-7,800 on mainnet self-pay); runwayDays is
+		// how long the payer's spendable SOL must last at the governed rate. The
+		// governor only ever throttles DOWN from `calls`; it never raises it.
+		feePerCallLamports: Math.max(1, Math.floor(num(e.X402_RING_FEE_PER_CALL_LAMPORTS, 7_000))),
+		runwayDays: Math.max(0.5, num(e.X402_RING_TARGET_RUNWAY_DAYS, 3)),
 	};
+}
+
+// ── Runway governor ─────────────────────────────────────────────────────────────
+// Scale this tick's paid-call count to the SOL the payer actually holds, so the
+// ring burns its fee runway over `runwayDays` instead of sprinting to the floor
+// and flat-lining until the next manual funding. Spendable = balance - floor
+// (the floor stays untouchable). The governed rate makes funding the throttle:
+// more SOL in the payer = more calls/min, automatically, and as the balance
+// drains the rate tapers instead of cliff-dying. Pure: same inputs → same
+// decision. Returns { calls, callsPerDayBudget, throttled }.
+export function governedCalls({
+	configuredCalls, solLamports, floorLamports, feePerCallLamports, runwayDays,
+}) {
+	if (!Number.isFinite(solLamports)) {
+		return { calls: 0, callsPerDayBudget: 0, throttled: true };
+	}
+	const spendable = Math.max(0, solLamports - floorLamports);
+	const callsPerDayBudget = Math.floor(
+		spendable / Math.max(0.5, runwayDays) / Math.max(1, feePerCallLamports),
+	);
+	const callsPerMin = Math.floor(callsPerDayBudget / 1440);
+	const calls = Math.max(0, Math.min(configuredCalls, callsPerMin));
+	return { calls, callsPerDayBudget, throttled: calls < configuredCalls };
 }
 
 // ── Cadence: which endpoints does this tick pay? ────────────────────────────────

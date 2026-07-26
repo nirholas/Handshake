@@ -150,6 +150,15 @@ One-time infra the service depends on (already applied):
 python3 workers/garment-forge/test_garment_glb.py
 ```
 
+## Catalog quality audit
+
+`npm run audit:garments` sweeps the LIVE catalog: consumer validation, sha256,
+the real `attachGarment()` bind, and the walk-gait cloth-to-body deviation
+metric for every published piece, with per-slot p95 ceilings. Hard failures
+(validation reject, hash mismatch, attach refusal) exit non-zero, so run it
+after any seeding batch or placement change; ceiling breaches are review
+flags, printed with the numbers.
+
 33 checks over the pure glTF pipeline: canonicalization, placement math,
 composition, body-strip + buffer repack, coverage/occludes derivation, and
 each of the 6 manifest validation rules failing for its own reason. The same

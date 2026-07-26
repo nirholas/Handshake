@@ -76,6 +76,24 @@ _SLOT_POSE_HINTS = {
 }
 
 
+def _post_with_retry(client: httpx.Client, url: str, *, json_body: dict,
+                     headers: dict, attempts: int = 3) -> httpx.Response:
+    """POST with bounded backoff on transient failures (429/5xx/network).
+    4xx other than 429 returns immediately: the caller handles semantics."""
+    last_exc: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            res = client.post(url, json=json_body, headers=headers)
+            if res.status_code == 429 or res.status_code >= 500:
+                last_exc = RuntimeError(f"{url} returned {res.status_code}")
+            else:
+                return res
+        except httpx.HTTPError as exc:
+            last_exc = exc
+        time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError(f"gave up after {attempts} attempts: {last_exc}")
+
+
 def generate_reference_image(prompt: str, slot: str) -> tuple[bytes, str]:
     """Text prompt → ghost-mannequin product photo via the platform's live
     Vertex AI image lane. Returns (png/jpeg bytes, model label)."""
@@ -101,11 +119,11 @@ def generate_reference_image(prompt: str, slot: str) -> tuple[bytes, str]:
     headers = {"authorization": f"Bearer {_access_token()}",
                "content-type": "application/json"}
     with httpx.Client(timeout=120) as client:
-        res = client.post(endpoint, json=body, headers=headers)
+        res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
         if res.status_code == 400:
             # Older image models reject the imageSize knob; retry without it.
             del body["generationConfig"]["imageConfig"]["imageSize"]
-            res = client.post(endpoint, json=body, headers=headers)
+            res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
         res.raise_for_status()
         data = res.json()
 
@@ -131,10 +149,23 @@ def _poll_task(client: httpx.Client, base_url: str, task_id: str, api_key: str,
                timeout_s: float, result_field: str) -> str:
     deadline = time.time() + timeout_s
     headers = {"authorization": f"Bearer {api_key}"}
+    # A single flaky poll (worker restarting, LB hiccup, 502) must not kill a
+    # multi-minute GPU job; only a persistent failure streak is a real outage.
+    consecutive_errors = 0
     while time.time() < deadline:
-        res = client.get(f"{base_url}/tasks/{task_id}", headers=headers)
-        res.raise_for_status()
-        task = res.json()
+        try:
+            res = client.get(f"{base_url}/tasks/{task_id}", headers=headers)
+            res.raise_for_status()
+            task = res.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            consecutive_errors += 1
+            if consecutive_errors >= 6:
+                raise RuntimeError(
+                    f"lost contact with {base_url} while polling {task_id}: {exc}"
+                ) from exc
+            time.sleep(MESH_POLL_S)
+            continue
+        consecutive_errors = 0
         status = task.get("status")
         if status == "done":
             url = task.get(result_field)

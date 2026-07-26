@@ -66,6 +66,7 @@ import {
 	ringTickConfig,
 	planTick,
 	planBackpressure,
+	governedCalls,
 	tickBudget,
 	gateOnRingConfig,
 } from '../_lib/x402/ring-tick-plan.js';
@@ -291,13 +292,45 @@ export default wrapCron(async (req, res) => {
 		});
 	}
 
+	// ── Runway governor: throttle this tick to the payer's funded SOL runway ──
+	// Spendable SOL above the floor must last cfg.runwayDays at the governed
+	// rate. Funding the payer raises the rate automatically; a draining balance
+	// tapers it instead of sprinting to the floor and flat-lining the ring.
+	const gov = governedCalls({
+		configuredCalls: cfg.calls,
+		solLamports,
+		floorLamports: cfg.solFloorLamports,
+		feePerCallLamports: cfg.feePerCallLamports,
+		runwayDays: cfg.runwayDays,
+	});
+	if (gov.calls <= 0) {
+		await recordSkip(runId, origin, 'runway_exhausted', {
+			sol_lamports: Number.isFinite(solLamports) ? solLamports : null,
+			floor_lamports: cfg.solFloorLamports,
+			calls_per_day_budget: gov.callsPerDayBudget,
+		});
+		await sendOpsAlert(
+			'x402 ring tick paused: runway_exhausted',
+			`payer spendable SOL cannot sustain 1 call/min for ${cfg.runwayDays}d (sol=${solLamports}, floor=${cfg.solFloorLamports}); fund the payer to resume`,
+			{ signature: 'ring-tick:runway_exhausted' },
+		);
+		log.warn('ring_tick_runway_exhausted', { sol_lamports: solLamports, calls_per_day_budget: gov.callsPerDayBudget });
+		return json(res, 200, { ok: true, skipped: true, reason: 'runway_exhausted', run_id: runId });
+	}
+	if (gov.throttled) {
+		log.info('ring_tick_runway_throttle', {
+			configured_calls: cfg.calls, governed_calls: gov.calls,
+			calls_per_day_budget: gov.callsPerDayBudget, runway_days: cfg.runwayDays,
+		});
+	}
+
 	// ── Plan this tick (cursor reserved AFTER the degrade decision so the
 	// reservation matches the cheap slots actually fired) ──────────────────────
-	const cheapNeeded = Math.max(0, cfg.calls - (pbp.settleTick ? 1 : 0));
+	const cheapNeeded = Math.max(0, gov.calls - (pbp.settleTick ? 1 : 0));
 	const cheapStart = await reserveCheapCursor(redis, cheapNeeded);
 	const plan = planTick({
 		tickSeq,
-		calls: cfg.calls,
+		calls: gov.calls,
 		// Force the post-degrade decision: 1 → every tick settles, 0 → none does.
 		settleEveryN: pbp.settleTick ? 1 : 0,
 		cheapCount: CHEAP_ENDPOINTS.length,

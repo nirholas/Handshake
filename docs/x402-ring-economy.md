@@ -16,6 +16,25 @@ control.
 > *not* to do. The public organic-revenue feed is a separate surface
 > ([/api/x402-revenue](../api/x402-revenue.js)).
 
+## The runway governor: funding IS the throttle
+
+The per-minute ring tick no longer fires a fixed `X402_RING_TICK_CALLS` blindly.
+`governedCalls()` (`api/_lib/x402/ring-tick-plan.js`) scales each tick's call
+count so the payer's spendable SOL (balance minus the untouchable floor) lasts
+`X402_RING_TARGET_RUNWAY_DAYS` (default 3) at the governed rate, assuming
+`X402_RING_FEE_PER_CALL_LAMPORTS` (default 7,000, the conservative end of the
+measured 6,300-7,800 self-pay cost) per call. Consequences:
+
+- Fund the payer more, the ring speeds up automatically. Let it drain, the rate
+  tapers smoothly instead of sprinting to the floor and flat-lining until the
+  next manual top-up (the failure mode that killed the ring daily at the
+  94-calls/min fixed rate).
+- The governor only throttles DOWN from the configured rate, never above it,
+  so `X402_RING_TICK_CALLS` remains the hard ceiling.
+- When spendable SOL cannot sustain even 1 call/min for the runway window, the
+  tick skips with reason `runway_exhausted` (one throttled ops alert), which is
+  the loud "fund the payer" signal.
+
 ## Burning the least SOL — two levers
 
 On-chain settlement has a **hard floor**: every Solana transaction costs a base
