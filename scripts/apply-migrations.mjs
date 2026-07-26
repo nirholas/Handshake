@@ -30,7 +30,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..');
 const MIG_DIR = path.resolve(REPO_ROOT, 'api', '_lib', 'migrations');
 
-// Load .env.local if present (same pattern as seed-skills.js)
+// Load .env.local then .env; first definition wins, so .env.local overrides
+// .env without shadowing keys it doesn't define (a sparse .env.local used to
+// stop .env from being read at all, which broke db:check in deploy worktrees).
 for (const envFile of ['.env.local', '.env']) {
 	try {
 		const raw = readFileSync(path.resolve(REPO_ROOT, envFile), 'utf8');
@@ -43,7 +45,6 @@ for (const envFile of ['.env.local', '.env']) {
 			}
 			process.env[m[1]] = val;
 		}
-		break;
 	} catch { /* file not present */ }
 }
 
