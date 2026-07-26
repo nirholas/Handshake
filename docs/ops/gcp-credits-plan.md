@@ -11,7 +11,9 @@ Six GPU services share those 3 GPUs:
 | Service | Role | minScale | maxScale |
 |---|---|---|---|
 | model-trellis | free text-to-3D lane (quality already maxed: steps 40, 4K textures) | 1 | 3 |
-| model-hunyuan3d | high-fidelity reconstruction + multi-view fusion | 1 | 2 |
+| model-hunyuan3d | high-fidelity reconstruction + multi-view fusion (min 0 since 2026-07-26: zero jobs in 3 days while its warm L4 starved model-text2motion; see below) | 0 | 2 |
+| model-rig | auto-rigging lane (workers/rig; ~10 jobs/day) | 1 | 2 |
+| model-text2motion | text-to-motion clips for the animation library | 0 | 2 |
 | model-triposr | fast image-to-3D fallback | 0 | 2 |
 | model-triposg | image-to-3D | 0 | 2 |
 | ~~unirig~~ | retired (superseded by `workers/rig`) — **holds no GPU**, minScale 0 | 0 | — |
@@ -24,6 +26,8 @@ from this pool; it runs on the RTX PRO 6000 quota below.
 **Resolved 2026-07-25 by returning a GPU nobody was using.** `avatar-reconstruction` held one of the three L4s solely for background removal (rembg / onnxruntime-gpu); every other stage (MediaPipe, TPS, GLB ops) is CPU-bound. Measured: rembg took **~2.2 s per job with the L4 attached versus ~1.9 s on a plain CPU box** — the CUDA provider was never engaging and the GPU was buying nothing. It now runs `--gpu=0 --cpu=8`, which is *faster* (end-to-end 4.2-4.7 s, was 4.8-5.8 s) at identical output quality (mean ISE 0.1595 both ways).
 
 Warm GPU demand therefore went from **3 of 3 (zero headroom)** to **2 of 3**. `model-trellis` (maxScale 3) and `model-hunyuan3d` (maxScale 2) were already permitted to burst and simply could not; that headroom is now real with no further config change. The lesson generalises: **before requesting more GPU quota, verify each holder actually uses its GPU.** A worker whose only GPU stage is an ONNX/rembg step is a prime suspect — check stage timings in its logs against the same stage on CPU.
+
+**Repeated 2026-07-26 with a second flavor of the same lesson: verify each warm holder actually gets jobs.** The pool had crept back to 3 of 3 pinned (`model-trellis`, `model-hunyuan3d`, `model-rig`), and `model-text2motion` (min 0) could not allocate at all — every request including the scheduler health ping 503'd with `exceeded its quota limit for … nvidia_l4_gpu_allocation_no_zonal_redundancy`, for hours. Measured real job traffic over 3 days: trellis 229 POSTs, rig 30, **hunyuan3d 0**. Setting `model-hunyuan3d --min-instances=0` freed its L4; text2motion came back immediately (health 200, ~14 s cold start). The triage monitor now classifies this signature (`gpu-quota-starved` in scripts/gcp-triage.mjs) so the diagnosis is automatic next time.
 
 - A quota preference exists: `l4-no-zonal-us-central1-8`, raised to **preferred 16** on 2026-07-16 (was 8). Still reconciling as of 2026-07-17. Google reviews asynchronously; check with:
   `gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5`
