@@ -231,16 +231,25 @@ function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride 
 		// operator-fixable state, not "nothing is wired". Surface a retryable 503 with
 		// an actionable message instead of a 500 that reads as a permanent config
 		// error, and never after taking a payment. Self-heals when the secret is set.
-		const solanaGatedOnSecret =
+		const solanaConfigured =
 			networks.some((n) => resolveNetwork(n) === NETWORK_SOLANA_MAINNET) &&
 			(payToOverride?.solana || env.X402_PAY_TO_SOLANA) &&
 			env.X402_FEE_PAYER_SOLANA &&
-			env.X402_ASSET_MINT_SOLANA &&
-			!solanaSettleable();
-		if (solanaGatedOnSecret) {
+			env.X402_ASSET_MINT_SOLANA;
+		if (solanaConfigured && !solanaSettleable()) {
 			throw new X402Error(
 				'settlement_unavailable',
 				'paidEndpoint: Solana settlement is temporarily unavailable — the self-facilitator co-signing key (X402_FEE_PAYER_SECRET_BASE58) is not configured. Retry once it is set.',
+				503,
+			);
+		}
+		// Same transient class, different cause: fully wired but the sponsor
+		// wallet is under its SOL settle floor. Self-heals when treasury-topup
+		// (or the operator) refunds the wallet.
+		if (solanaConfigured && sponsorKnownBelowFloor()) {
+			throw new X402Error(
+				'settlement_unavailable',
+				'paidEndpoint: settlement is temporarily unavailable — the sponsor wallet is below its SOL settle floor. Retry after it is refunded.',
 				503,
 			);
 		}

@@ -200,7 +200,11 @@
 	     dim     secondary/muted text (above)
 	     faint   tertiary hints, disabled, watermark labels */
 	--ink-bright: #ffffff;
-	--ink-faint:  rgba(255, 255, 255, 0.45);
+	/* 0.55, not 0.45: on the #0a0a0a shell 0.45 composites to ~4.2:1, under
+	   the 4.5:1 WCAG AA floor axe enforces on hint text; 0.55 measures 6.1:1.
+	   (Genuinely disabled controls are exempt from AA and can dim further via
+	   opacity at the component level.) */
+	--ink-faint:  rgba(255, 255, 255, 0.55);
 
 	/* Elevation / shadow (B01) — three depth tiers. Mirrors the component layer
 	   in style.css so any surface can express depth without hand-rolling shadows.
@@ -339,7 +343,8 @@
 	--ink-bright: #0a0c12;
 	--ink: #1d212b;
 	--ink-dim: #5a616f;
-	--ink-faint: rgba(15, 18, 28, 0.45);
+	/* 0.62, not 0.45: on white 0.45 composites to ~3.5:1; 0.62 measures 5.5:1. */
+	--ink-faint: rgba(15, 18, 28, 0.62);
 
 	/* Accent — white is invisible on light, so light gets a real accent. */
 	--accent: #2563eb;

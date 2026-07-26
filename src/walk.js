@@ -1814,6 +1814,7 @@ async function enableAR() {
 	} catch {}
 
 	arActive = true;
+	dayNight.setPaused(true); // the real room's estimated lighting owns the rig now
 	stage.classList.add('is-ar');
 	arBtn.setAttribute('aria-pressed', 'true');
 	terrain.mesh.visible = false; // hide the world ground; the room is the floor in AR
@@ -1870,12 +1871,21 @@ function disableAR() {
 	groundShadowCatcher.material.opacity = 0.32;
 	scene.background = null; // CSS gradient on #walk-stage shows through
 
-	// Restore camera FOV and lighting defaults.
+	// Restore camera FOV and the environment's authored lighting (the AR pass
+	// mutated intensities and the hemi tint to match the real room), then hand
+	// the rig back to the day/night cycle at the current time of day.
 	camera.fov = 50;
 	camera.updateProjectionMatrix();
-	ambientLight.intensity = 0.55;
-	sun.intensity = 1.4;
-	hemi.color.set(0xbcd6ff);
+	const envMeta = walkManifest ? getEnvironment(walkManifest, currentEnvName) : null;
+	if (envMeta) {
+		applyLighting(envMeta, { ambientLight, hemi, sun });
+	} else {
+		ambientLight.intensity = 0.55;
+		sun.intensity = 1.4;
+		hemi.color.set(0xbcd6ff);
+	}
+	dayNight.setPaused(false);
+	dayNight.update(Date.now(), true);
 
 	// Hide blob shadow.
 	blobShadow.material.opacity = 0;
