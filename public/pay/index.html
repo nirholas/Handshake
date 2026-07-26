@@ -633,8 +633,9 @@
     border-color: var(--border-strong) var(--border-strong) var(--panel);
   }
   .chain-tab .chip {
+    /* No opacity dim: .7 over --muted measured 3.6:1 (AA needs 4.5:1). */
     font-family: var(--mono); font-size: 10px; color: var(--muted);
-    margin-left: 6px; opacity: .7;
+    margin-left: 6px;
   }
 
   /* BSC panel — sits inside section.chat as a sibling of .conv + .composer.

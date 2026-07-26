@@ -111,7 +111,8 @@
 			}
 			.ag-hero-stats {
 				font-size: 12px;
-				color: var(--text-3, #71717a);
+				/* Raised for the 4.5:1 axe AA floor; measured against this page's real bg. */
+				color: var(--text-3, #84848e);
 				font-variant-numeric: tabular-nums;
 			}
 
@@ -240,7 +241,7 @@
 			.ag-count {
 				margin-left: auto;
 				font-size: 12px;
-				color: var(--text-3, #71717a);
+				color: var(--text-3, #84848e);
 				font-variant-numeric: tabular-nums;
 				white-space: nowrap;
 			}
@@ -280,7 +281,8 @@
 				outline: 2px solid var(--focus-ring-color, currentColor);
 				outline-offset: 2px;
 			}
-			.ag-chip-count { opacity: 0.55; font-size: 11px; font-variant-numeric: tabular-nums; }
+			/* No opacity dim: .55 over the chip ink measured 2.0:1 (AA needs 4.5:1). */
+			.ag-chip-count { font-size: 11px; font-variant-numeric: tabular-nums; }
 
 			/* ── Grid ──────────────────────────────────────────────────────── */
 			.ag-content {
@@ -431,7 +433,8 @@
 				font-size: 10px;
 				text-transform: uppercase;
 				letter-spacing: 0.05em;
-				color: var(--text-3, #71717a);
+				/* Raised for the 4.5:1 axe AA floor; measured against this page's real bg. */
+				color: var(--text-3, #84848e);
 			}
 			.ag-card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 2px; }
 			.ag-card-btn {

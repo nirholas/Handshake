@@ -610,7 +610,9 @@ function renderHierarchy() {
 	objectList.innerHTML = '';
 	if (sceneObjects.size === 0) {
 		const e = document.createElement('div');
-		e.style.cssText = 'padding:14px 12px;font-size:11px;color:#3d3d4a;';
+		// var(--ink-mute), not the old hardcoded #3d3d4a: that hex measured
+		// 1.9:1 on the panel bg (axe AA needs 4.5:1); the page token passes.
+		e.style.cssText = 'padding:14px 12px;font-size:11px;color:var(--ink-mute,#8a8a94);';
 		e.textContent = 'No objects — load an avatar or forge an item.';
 		objectList.appendChild(e);
 		return;

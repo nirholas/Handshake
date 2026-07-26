@@ -560,12 +560,14 @@ body.is-dragover .dropzone {
  */
 
 /* Legacy 3D viewer/editor chrome (the wordmark + upload-bar header). Scoped
- * with :not(.nav):not(:has(#nav-container)) so it never leaks onto the
- * canonical global navigation, which is injected as a sticky
- * <header class="nav"> inside a <header><div id="nav-container"></header>
- * wrapper. Without this scope the fixed height + overflow-y:hidden below
- * clipped the shared nav on every page that loads style.css. */
-header:not(.nav):not(:has(#nav-container)) {
+ * to CLASSLESS headers only: every legacy chrome header is a bare <header>,
+ * while the canonical nav (<header class="nav">, or the <header> wrapper
+ * holding #nav-container) and any page's own semantic header (e.g. genesis's
+ * <header class="gx-head"> hero) carry a class or the container. The previous
+ * :not(.nav) scope leaked this fixed-height, overflow-x:auto strip onto every
+ * classed page header, squashing it to 55px and creating a keyboard-
+ * unreachable scroll region (axe scrollable-region-focusable on /genesis). */
+header:not([class]):not(:has(#nav-container)) {
 	display: flex;
 	flex-shrink: 0;
 	background: rgba(0, 0, 0, 0.8);
@@ -1016,7 +1018,8 @@ header h1 .wordmark-logo {
 }
 
 @media screen and (max-width: 700px) {
-	header:not(.nav):not(:has(#nav-container)) {
+	/* Same classless-header scope as the desktop rule above. */
+	header:not([class]):not(:has(#nav-container)) {
 		padding: 0 1em;
 		height: 3rem;
 		line-height: 3rem;

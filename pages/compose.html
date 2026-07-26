@@ -22,8 +22,11 @@
 			:root {
 				--bg:#07070f; --surface:#0c0c17; --surface2:#111120;
 				--border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.04);
-				--ink:#e4e4e7; --ink-dim:#71717a; --ink-mute:#3d3d4a;
-				--accent:#6366f1; --accent-dim:rgba(99,102,241,0.16);
+				/* Raised for the 4.5:1 axe AA floor; measured against this page's real bg. */
+				--ink:#e4e4e7; --ink-dim:#84848e; --ink-mute:#8a8a94;
+				/* indigo-600, not -500: white button labels on #6366f1 measured 4.47:1,
+				   a hair under the 4.5:1 axe AA floor; #4f46e5 measures 6.3:1. */
+				--accent:#4f46e5; --accent-dim:rgba(99,102,241,0.16);
 				--accent-border:rgba(99,102,241,0.4); --accent-text:#a5b4fc;
 				--danger:#f87171;
 				--font:system-ui,-apple-system,sans-serif;
