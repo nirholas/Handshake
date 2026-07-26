@@ -32,6 +32,12 @@ const CLASS_ORDER = { owner: 0, 'env-action': 1, investigate: 2, 'self-healing':
 
 const KNOWN_SIGNATURES = [
 	{
+		id: 'sns-resolve-floating-rejection',
+		match: /^Error: Invalid name account provided/i,
+		class: 'self-healing',
+		action: `Bonfida resolve() of an unregistered .sol name leaks a floating rejection from library internals (~every 12 min from ring agents hitting pay-by-name). Every first-party call site catches; the served response is a correct 200/404 and no 5xx correlates. Log noise only. Re-investigate ONLY if a matching 5xx group appears on an sns/pay-by-name route. ${RUNBOOK} §sns-floating-rejection.`,
+	},
+	{
 		id: 'ring-guard-violated',
 		match: /\[ring-invariants\] SPEND PATH DISABLED/i,
 		class: 'owner',
@@ -110,11 +116,11 @@ const KNOWN_SIGNATURES = [
 // `investigate`.
 const KNOWN_HTTP_SIGNATURES = [
 	{
-		id: 'ring-payer-refill-crash-503',
-		test: (g) => g.status >= 500 && g.path.startsWith('/api/x402')
-			&& g.userAgent.includes('threews-x402-autonomous'),
-		class: 'investigate',
-		action: `The x402 ring payer runs to 0 USDC and its 6-min self-pay returns 503. The payer is NOT truly unfunded — it holds SOL, and economy-rebalance (ECONOMY_REBALANCE_ENABLED=1) is meant to self-swap that SOL->USDC to the 10-USDC floor every tick. Root cause fixed in commit 8a767ae87: economy-rebalance.js assigned loadSignerKeypair's wrapper to \`keypair\` and read \`keypair.publicKey\` (undefined) -> executeSwap crashed "Cannot read properties of undefined (reading 'toBase58')" on every leg, so no refill happened. VERIFY after deploy: POST /api/cron/economy-rebalance (Bearer CRON_SECRET) returns results[].status "swapped" (not "failed"), then payer USDC climbs back above floor and the 503s stop. If it still returns "failed" post-deploy, re-investigate executeSwap/buildSwapTx. ${RUNBOOK} §ring-duplicate-signature.`,
+		id: 'x402-wallets-dry-5xx',
+		test: (g) => g.status >= 500 && (g.path.startsWith('/api/x402') || g.path === '/api/mcp')
+			&& /threews-x402-(autonomous|seed)/.test(g.userAgent),
+		class: 'owner',
+		action: `5xx on paid x402 routes from the platform's own agent traffic means the economy wallets are out of SOL for tx fees (symptom map: 502 = fee wallet below SOL floor, 503 = payer self-pay refused). The economy-rebalance keypair crash is FIXED and LIVE (commit bb02839f9); when it reports skipped: "insufficient_sol_surplus" there is genuinely nothing left to swap. At the 94-calls/min ring shape the burn is ~1-1.4 SOL/day. Owner action: send SOL (or USDC) to the economy master WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW; treasury-topup distributes to engines within minutes and economy-rebalance restores the payer's USDC float. Verify recovery: POST /api/cron/economy-rebalance (Bearer CRON_SECRET) returns results[].status "swapped", healthz x402_settle returns to ok, 5xx storm stops. Alternative to daily funding: throttle the ring to funded runway (X402_RING_TICK_CONCURRENCY and cadence knobs). ${RUNBOOK} §x402-wallets-dry.`,
 	},
 ];
 

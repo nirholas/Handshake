@@ -139,6 +139,37 @@ HTTP 502 POST /api/x402/<any endpoint>   ua: threews-x402-autonomous/1.0   (~334
 
 ---
 
+## 🔴 5xx storm on paid x402 routes from platform agent traffic (x402-wallets-dry)
+
+```
+HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or threews-x402-seed/1.0
+```
+
+- **Source:** the platform's own agent economy (ring, seeders, autonomous
+  buyers) paying its own endpoints while the economy wallets are out of SOL
+  for transaction fees.
+- **Symptom map:** `502` = fee wallet below its SOL floor; `503` = the payer's
+  self-pay refused; `402` from a ring agent = its buyer wallet is out of USDC.
+- **Not a code bug.** The economy-rebalance keypair crash (assigned
+  `loadSignerKeypair`'s wrapper to `keypair`, read `.publicKey` of undefined)
+  is fixed and live in commit `bb02839f9`. When
+  `POST /api/cron/economy-rebalance` (Bearer `CRON_SECRET`) answers
+  `skipped: insufficient_sol_surplus`, the wallets genuinely hold nothing to
+  swap; at the 94-calls/min ring shape the burn is ~1-1.4 SOL/day.
+- **Resolve (owner, money):** send SOL (or USDC) to the economy master
+  `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`. The treasury-topup cron
+  distributes to the engines within minutes and economy-rebalance restores the
+  payer's USDC float. Recovery is visible as: rebalance returns
+  `results[].status: "swapped"`, healthz `x402_settle` back to `ok`, the 5xx
+  storm stops.
+- **Alternative to daily funding:** throttle the ring to funded runway
+  (`X402_RING_TICK_CONCURRENCY`, cadence and cap knobs on the Cloud Run
+  service) so burn matches what the owner wants to spend.
+- **Monitor signature:** `x402-wallets-dry-5xx` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
 ## 🟡 `[x402-audit] insert failed … db query exceeded 3000ms deadline`
 
 - **Source:** [api/_lib/x402/audit-log.js](../../api/_lib/x402/audit-log.js) `logPaymentEvent`.
@@ -325,3 +356,17 @@ gcloud run services update three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --update-env-vars CACHE_REDIS_CMD_TIMEOUT_MS=5000
 # Helius 429s: raise the plan/quota in the Helius dashboard (public-RPC fallback covers the gap).
 ```
+
+### sns-floating-rejection: `Error: Invalid name account provided` (self-healing)
+
+A bare ERROR-severity stack from `@bonfida/spl-name-service` lands roughly
+every 12 minutes, raised by the autonomous ring agents resolving names through
+`/api/x402/pay-by-name`. Every first-party call site (`src/solana/sns.js`,
+`api/x402/pay-by-name.js`) wraps `resolve()` in try/catch and answers a correct
+200/404; the escaping copy is a floating rejection out of the library's
+internals for unregistered names. Verified 2026-07-26: no 5xx correlates with
+these entries and a local repro of the caught path leaks nothing.
+
+Log noise only; no action. Escalate to `investigate` only if a 5xx group
+appears on `/api/sns`, `/api/v1/resolve`, or `/api/x402/pay-by-name` in the
+same window.
