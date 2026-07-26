@@ -34,6 +34,23 @@ are reads (they 401 with "session expired" when logged out). Only `curl` against
 
 ---
 
+## 0.5 After ANY codespace rebuild: revive the chat bot (found the hard way, 2026-07-26)
+
+The marketplace chat bot for #2632 is a LOCAL `okx-a2a` daemon + the wallet session, both
+outside the repo. A codespace rebuild silently wipes them and OKX chat tests then time out
+with "no delivery in 30 min". Revive, in order:
+
+1. Reinstall `onchainos` (checksum-verified installer, `.agents/skills/okx-agentic-wallet/_shared/preflight.md`) and `npm i -g @okxweb3/a2a-node@latest`.
+2. `okx-a2a daemon start`, then `okx-a2a switch-runtime --json`, `okx-a2a setup --json`.
+3. Complete the browser login (§0). The daemon retries `agent get` every minute and picks
+   the session up on its own; `okx-a2a agent refresh --json` must then report
+   `agentCount >= 1`, `activeClients >= 1`. That is the "bot online" proof.
+4. Regenerate the responder briefing so chat answers know the catalog:
+   `node scripts/okx-listing-payload.mjs --briefing > ~/.okx-agent-task/workspace/CLAUDE.md`
+5. `okx-a2a agent bypass on` (answers without permission stalls) and
+   `okx-a2a doctor --non-interactive` for a final sweep. Measured reply latency through
+   the full claude adapter path: ~12 s per message.
+
 ## 1. Daily status check
 
 One command. Run it, read three fields.
