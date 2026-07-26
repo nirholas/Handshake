@@ -1392,3 +1392,80 @@ the new login mechanic in full in `RUNBOOK.md` §0 so the next session doesn't r
    URL, poll until `loggedIn:true`.
 3. `onchainos agent get-agents --agent-ids 2632` for current approval state, then RUNBOOK §4
    or §5 depending on the result.
+
+---
+
+## 2026-07-26: New rejection (service description / parameters / usage examples) + A2A chat found OFFLINE; both fixes staged, resubmission still login-gated
+
+Two inputs arrived via the owner: (1) a fresh OKX review rejection email for "three.ws 3D
+Studio": "The service you submitted is missing a complete description, parameter details,
+and usage examples. Please make these updates and resubmit ... via chat." (2) A contact at
+OKX ran the marketplace chat test against the agent and every message timed out with
+"no delivery in 30 min", with the note that the bot is offline and must respond faster;
+they will retest once we say it is fixed.
+
+### Root cause of the chat timeouts: the A2A runtime did not exist on this machine
+
+The codespace was rebuilt at some point after 2026-07-23: `onchainos` (was at
+~/.local/bin) and the `okx-a2a` daemon (`@okxweb3/a2a-node`) were both GONE, and the
+wallet session with them (`wallet status` -> loggedIn:false, accountCount 0). OKX A2A
+chat delivery rides the local daemon's XMTP identity; with no daemon and no session, agent
+#2632 has no reachable inbox, so "no delivery in 30 min" is exactly right. Fixed this
+session:
+
+- Reinstalled `onchainos` v4.4.0 (checksum-verified installer) and `@okxweb3/a2a-node`
+  0.1.10 globally.
+- `okx-a2a daemon start` -> running, linux-systemd user autostart installed;
+  `switch-runtime` -> provider `claude`, ready; `setup --json` -> `state:"ready"`,
+  provider auth ready. Inbound chats are answered automatically by the daemon through the
+  Claude CLI once the agent identity loads.
+- REMAINING GATE: `agent refresh` reports `agentCount: 0, activeClients: 0` because the
+  wallet is logged out. A human must complete the browser login (v4.3+ flow, RUNBOOK §0)
+  as claude@three.ws; then `okx-a2a agent refresh --json` picks up #2632 and the bot is
+  live. Login session was initiated this run and the URL handed to the owner.
+- TRAP for future sessions: any codespace rebuild silently kills the chat bot (CLIs,
+  daemon, and session all live outside the repo). After every rebuild: reinstall both
+  CLIs, restart the daemon, re-login, re-refresh. A codespace that idles also stops the
+  daemon; for the OKX retest keep this workspace awake, and longer-term the daemon
+  belongs on an always-on host.
+
+### Listing fix: usage examples added to every catalog row
+
+The 2026-07-17 rewrite gave every row the 2-part format (capability + "Provide: 1. ..."
+parameter list) but no usage examples, and the new rejection explicitly demands examples.
+Every `describes.input` in `api/_lib/okx-catalog.js` now carries a short "Example: ..."
+usage line (e.g. text-to-3d: "Example: a brass steampunk owl, full body"). All 11 rows
+re-validated within the 200 display-width per-part limit; `validateCatalog()` + 56 tests
+green (okx-3d-services, okx-identity-studio, service-catalog).
+
+DECISION (deliberate): the older skill invariants say "no example prompts" in
+serviceDescription, but the reviewer's written rejection explicitly requires usage
+examples; the reviewer's current instruction wins. If `validate-listing` flags the
+examples during the update flow, keep them and note the conflict in the submission chat.
+
+Note the live listing has likely still carried the STALE pre-rewrite service rows all
+along (7 services, old names, thin descriptions, no parameter lists); if the reviewer
+re-probed those rows this rejection is fully explained. The resubmission must replace the
+full service set, not just re-activate.
+
+### New tool: scripts/okx-listing-payload.mjs
+
+Builds the `agent update --service` JSON straight from the catalog module:
+`node scripts/okx-listing-payload.mjs` prints the 11 create-format entries;
+`onchainos agent service-list --agent-id 2632 | node scripts/okx-listing-payload.mjs
+--delta` prints the full replace delta (delete stale rows by name, update name matches,
+create the rest). Submission can no longer drift from the module.
+
+### Resubmission runbook from here (in order)
+
+1. Human completes the browser login (claude@three.ws). `wallet status` -> loggedIn:true.
+2. `okx-a2a agent refresh --json` -> agentCount >= 1; confirm the OKX contact's chat test
+   now gets replies, fast.
+3. Deploy so the live `/api/okx/3d/catalog` serves the new example-bearing strings
+   (three-copy rule: module == live == submission). One command: `npm run deploy:gcp:full`
+   from a clean worktree (owner-gated).
+4. `onchainos agent service-list --agent-id 2632 | node scripts/okx-listing-payload.mjs
+   --delta` -> `agent update` with that delta (+ the 07-17 440x440 avatar upload if not
+   yet applied), `validate-listing` batch pass, human confirms the diff card.
+5. Re-activate (`--preferred-language en-US`), then tell the OKX contact to retest, and
+   resubmit for review via the OKX support chat per the rejection email.

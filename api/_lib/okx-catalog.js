@@ -71,9 +71,9 @@ export const OKX_CATALOG = Object.freeze([
 				'animation-ready GLB avatar plus posed studio renders, including a square profile ' +
 				'picture and full-body shots.',
 			input:
-				'Provide: 1. the agent name 2. a personality or brand brief in any language 3. optional ' +
-				'style hints 4. an optional reference image. Returns a job you can check for free until ' +
-				'delivery is ready.',
+				'Provide: 1. the agent name 2. a brand or personality brief in any language 3. optional ' +
+				'style hints 4. an optional reference image. Example: name LedgerLynx, brief: a calm ' +
+				'on-chain accounting agent.',
 		},
 		priceUsd: '1.50',
 		amountAtomics: usdToAtomics(1.5),
@@ -129,8 +129,8 @@ export const OKX_CATALOG = Object.freeze([
 				'when the job is accepted.',
 			input:
 				'Provide: 1. a text description of one object or character, 3 to 1000 characters ' +
-				'2. an optional aspect ratio. Returns the model link, or a job you can check for free ' +
-				'until it is done.',
+				'2. an optional aspect ratio. Example: a brass steampunk owl, full body. Returns the ' +
+				'model link or a free-to-check job.',
 		},
 		priceUsd: '0.01',
 		amountAtomics: usdToAtomics(0.01),
@@ -156,9 +156,9 @@ export const OKX_CATALOG = Object.freeze([
 				'textured GLB model. Standard tier by default; the high tier adds maximum detail and ' +
 				'PBR materials.',
 			input:
-				'Provide: 1. a text description, 3 to 1000 characters 2. an optional quality tier, ' +
-				'standard or high 3. an optional aspect ratio. Returns the model link, or a job you can ' +
-				'check for free.',
+				'Provide: 1. a text description 2. an optional quality tier, standard or high 3. an ' +
+				'optional aspect ratio. Example: an ornate elven longsword, tier high. Returns the ' +
+				'model link or a free-to-check job.',
 		},
 		priceUsd: '0.30',
 		amountAtomics: usdToAtomics(0.3),
@@ -185,7 +185,8 @@ export const OKX_CATALOG = Object.freeze([
 				'product shots or concept art into usable 3D assets.',
 			input:
 				'Provide: 1. one to four public photo links of the same object 2. an optional text ' +
-				'hint. Returns the model link, or a job you can check for free until it is done.',
+				'hint. Example: front and side photos of one sneaker. Returns the model link or a ' +
+				'free-to-check job.',
 		},
 		priceUsd: '0.30',
 		amountAtomics: usdToAtomics(0.3),
@@ -215,8 +216,9 @@ export const OKX_CATALOG = Object.freeze([
 				'Rigs a static humanoid GLB model into an animation-ready character: adds a skeleton and ' +
 				'skin weights so the model can be posed and animated in any engine.',
 			input:
-				'Provide: 1. a public link to the static GLB model. Humanoid models rig best. Returns a ' +
-				'job you can check for free until the rigged model is ready.',
+				'Provide: 1. a public link to the static GLB model. Humanoid models rig best. Example: ' +
+				'a knight character model. Returns a job you can check for free until the rigged model ' +
+				'is ready.',
 		},
 		priceUsd: '0.25',
 		amountAtomics: usdToAtomics(0.25),
@@ -240,8 +242,8 @@ export const OKX_CATALOG = Object.freeze([
 				'rigging pass is wasted.',
 			input:
 				'Provide: 1. a text description of a full-body character, or a reference image link ' +
-				'2. optionally allow non-humanoid subjects. Returns the mesh plus a rigging job you can ' +
-				'check for free.',
+				'2. optionally allow non-humanoid subjects. Example: a heroic knight in silver armor, ' +
+				'full body.',
 		},
 		priceUsd: '0.50',
 		amountAtomics: usdToAtomics(0.5),
@@ -268,7 +270,7 @@ export const OKX_CATALOG = Object.freeze([
 				'request.',
 			input:
 				'Provide: 1. a public link to the rigged GLB model 2. the animation name 3. an optional ' +
-				'output format and playback speed.',
+				'output format and playback speed. Example: your knight model plus the walk animation.',
 		},
 		priceUsd: '0.10',
 		amountAtomics: usdToAtomics(0.1),
@@ -296,8 +298,8 @@ export const OKX_CATALOG = Object.freeze([
 				'map for humanoid rigs. The same description always returns the same pose. Finishes ' +
 				'within the request.',
 			input:
-				'Provide: 1. a pose description, 1 to 500 characters. Returns the seed, per-joint ' +
-				'rotations, and a preview link.',
+				'Provide: 1. a pose description, 1 to 500 characters. Example: confident standing ' +
+				'pose, arms crossed. Returns the seed, per-joint rotations, and a preview link.',
 		},
 		priceUsd: '0.02',
 		amountAtomics: usdToAtomics(0.02),
@@ -320,7 +322,8 @@ export const OKX_CATALOG = Object.freeze([
 				'skin weights, and blendshapes. Also exports OBJ, STL, PLY, USDZ, and 3MF formats.',
 			input:
 				'Provide: 1. a public link to the GLB model 2. an optional target format, FBX by ' +
-				'default. Returns a job you can check for free until the converted file is ready.',
+				'default; OBJ, STL, PLY, USDZ, and 3MF also work. Example: your rigged knight model ' +
+				'to FBX for Unity.',
 		},
 		priceUsd: '0.10',
 		amountAtomics: usdToAtomics(0.1),
@@ -345,7 +348,9 @@ export const OKX_CATALOG = Object.freeze([
 				'Free machine-readable index of every three.ws 3D Studio service on OKX.AI: names, ' +
 				'descriptions, prices, endpoints, and input formats, always in sync with the live ' +
 				'services.',
-			input: 'Provide nothing. No parameters, no payment, no account required.',
+			input:
+				'Provide nothing. No parameters, no payment, no account required. Example: fetch ' +
+				'the link to list every service with names, prices, and input details.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,
@@ -361,7 +366,9 @@ export const OKX_CATALOG = Object.freeze([
 			capability:
 				'Free live health status for the systems behind every paid service: generation, rigging, ' +
 				'rendering, storage, and the payment rail, from real checks rather than a fixed reply.',
-			input: 'Provide nothing. No parameters, no payment, no account required.',
+			input:
+				'Provide nothing. No parameters, no payment, no account required. Example: fetch ' +
+				'the link to confirm all systems are up before buying a paid service.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,
