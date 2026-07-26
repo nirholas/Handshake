@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-26T21:12:09.017Z",
+	"generated_at": "2026-07-26T21:20:51.694Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,6 +29,16 @@
 		{
 			"date": "2026-07-26",
 			"type": "update",
+			"title": "Agents can now pay for things from their own wallets",
+			"summary": "Every payment checkout on the platform (cosmetics, club entry, NPC services, asset remixes, billboard slots, bazaar services and more) now lists your agents as payment methods alongside Phantom and other browser wallets. If an agent holds USDC in its own wallet, picking it settles the payment server-side under that agent's spend limits, with no wallet popup and no browser extension required. Underfunded agents show their exact balance and stay disabled until topped up.",
+			"link": "/bazaar",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
 			"title": "Large token images no longer break coin launches",
 			"summary": "Uploading a big token image (a phone photo, a high-resolution PNG) during a coin launch used to fail with an unhelpful error because the image outgrew a server upload limit. The launch flow now shrinks oversized images right in your browser before uploading, and the server accepts everything the launch form allows, so any image you pick just works.",
 			"link": "/studio",
@@ -50,12 +60,34 @@
 		{
 			"date": "2026-07-26",
 			"type": "update",
+			"title": "Text-to-animation works again, from a second GPU region",
+			"summary": "Describe a motion in words and get an animation clip back: that lane had been silently dead. Every graphics card slot in our primary compute region was pinned by the always-on 3D generation engines, so the motion model's server could never get a card to start on, and every request failed. We had a second region with three granted GPU slots sitting completely unused, so the motion service now runs there, with the platform routed to it. A three-second test through the public API returned a finished 90-frame clip in under half a minute. The primary-region copy stays parked as spare capacity for when our larger GPU quota request is granted, and the always-on engines keep their cards; nothing else moved.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
 			"title": "The Chat app is back at three.ws/chat",
 			"summary": "For the last month, visiting three.ws/chat silently redirected to the agent app, and the standalone chat's files had been dropped from the production build during the infrastructure migration. The full Chat app is now restored at /chat: the fast, private chat UI where your keys and entire conversation history stay in your browser, with support for OpenRouter, OpenAI, Anthropic, Groq, Mistral, and local models via Ollama, plus tool use, image input, branching history, and end-to-end encrypted sync. The deploy pipeline now builds and verifies the chat app on every release, so it cannot silently disappear again.",
 			"link": "/chat",
 			"tags": [
 				"fix",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "The coin-world picker stays live even when the community service is down",
+			"summary": "Opening the walk page used to show \"Coin worlds are temporarily unavailable\" whenever the community service behind the picker was unreachable, hiding every world behind a wall. The picker now falls back to the live pump.fun trending feed, so you can always browse and enter the hottest coin worlds; community stats simply reappear when the service comes back.",
+			"link": "/temporary",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
