@@ -5612,9 +5612,9 @@
 			"path": "/api/cron/quality-bench",
 			"schedule": "23 3 * * 1"
 		},
-    {
-      "path": "/api/cron/garment-catalog-audit",
-      "schedule": "20 6 * * *"
-    }
+		{
+			"path": "/api/cron/garment-catalog-audit",
+			"schedule": "20 6 * * *"
+		}
 	]
 }
