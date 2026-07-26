@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-26",
+			"title": "Sniper fleet learns faster: honest honeypot verdicts and no more invisible losers",
+			"summary": "Two fixes to the autonomous trading fleet from auditing its own record. The trade firewall now checks which leg of the simulated buy-and-sell round-trip failed: only a failed sell (the real cannot-exit shape) blocks a coin, while a buy leg that could not fund or price the probe is a warning instead of a false honeypot verdict. And the self-tuning optimizer no longer lets a strategy that has never won keep betting at full size below the minimum sample: zero wins over six or more real trades now triggers an automatic size reduction.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/blog/autonomous-trading-experiment"
+		},
+		{
 			"date": "2026-07-25",
 			"title": "Sign-language avatar now shows the full body",
 			"summary": "The live signing avatar on the sign-language page was framed from the waist up, so you could not see the whole figure. The camera now frames the avatar head to toe, and you can still orbit and zoom in for handshape detail.",

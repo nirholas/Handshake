@@ -29,6 +29,11 @@ import { atLeast, boundsFor, stepsFor, unsetOkFor, writableFor } from './sniper-
 // this the sample is noise and every rule no-ops.
 export const MIN_SAMPLE = 8;
 
+// Exception floor for arms with ZERO wins. A 0-for-6 record with net losses is
+// evidence enough to shrink the bet while the sample grows (only Rule E may act
+// on it); waiting for the general MIN_SAMPLE let winless arms bleed unthrottled.
+export const MIN_SAMPLE_WINLESS = 6;
+
 // Hard ranges for the DEFAULT tier. Every tier's ranges live in
 // api/_lib/sniper-autonomy.js (TIER_BOUNDS); this export is the 'standard' row,
 // kept as the public constant so existing callers and tests read one source of
@@ -137,7 +142,16 @@ export function proposeAdjustments(stats, config, opts = {}) {
 	const unsetOk = unsetOkFor(tier);
 	const earned = atLeast('trusted', tier);
 
-	if (sample < MIN_SAMPLE) {
+	// A winless arm is not noise. Every pattern rule below waits for MIN_SAMPLE,
+	// but an arm that has NEVER won while losing real money is already a pattern:
+	// it gets the single de-risking rule (Rule E) and nothing else, so it cannot
+	// bleed indefinitely under the radar of the general sample gate.
+	const wins = num(stats?.wins) ?? 0;
+	const winlessBleeder =
+		wins === 0 && sample >= MIN_SAMPLE_WINLESS &&
+		(num(stats?.netPnlLamports) ?? 0) < 0 && num(config?.per_trade_lamports) != null;
+
+	if (sample < MIN_SAMPLE && !winlessBleeder) {
 		return { proposals, sample, acted: false, tier, notes: [`sample ${sample} < ${MIN_SAMPLE}, no action`] };
 	}
 
@@ -182,6 +196,16 @@ export function proposeAdjustments(stats, config, opts = {}) {
 		claimed.add(field);
 		proposals.push({ field, from, to: target, reason });
 	};
+
+	// Winless-arm fast path: below MIN_SAMPLE only this one de-risking move may
+	// act; the pattern rules (O/A/B/C and the earned-freedom set) still wait for
+	// a real sample.
+	if (sample < MIN_SAMPLE && winlessBleeder) {
+		propose('per_trade_lamports', Math.round(perTrade * (1 - steps.per_trade_fraction)),
+			`Zero wins in ${sample} real trades (net ${(netPnl / 1e9).toFixed(3)} SOL): shrink the bet while the sample grows. Pattern rules stay quiet until ${MIN_SAMPLE} closes.`);
+		notes.push('winless_below_min_sample', 'candidate_for_disable');
+		return { proposals, sample, acted: proposals.length > 0, tier, notes };
+	}
 
 	// Rule O: Oracle-aware entry. If the arm's realized wins concentrate above a
 	// conviction floor, tune min_oracle_score toward it. Runs FIRST so this
@@ -250,10 +274,14 @@ export function proposeAdjustments(stats, config, opts = {}) {
 	}
 
 	// Rule E: chronic loser: throttle size hard (short of auto-disable, which
-	// stays a human call).
-	if (winRate < 25 && netPnl < 0 && sample >= MIN_SAMPLE * 1.5 && perTrade != null) {
+	// stays a human call). A winless arm qualifies from MIN_SAMPLE up without
+	// waiting for the larger sustained-underperformance sample: zero wins IS the
+	// evidence, and the move is small, bounded, and reversed by Rule D on a win.
+	if (((winRate < 25 && sample >= MIN_SAMPLE * 1.5) || winlessBleeder) && netPnl < 0 && perTrade != null) {
 		propose('per_trade_lamports', Math.round(perTrade * (1 - steps.per_trade_fraction)),
-			`Sustained underperformance (${winRate}% win rate, net ${(netPnl / 1e9).toFixed(3)} SOL over ${sample} trades): throttle size. Consider disabling this arm.`);
+			winlessBleeder && sample < MIN_SAMPLE * 1.5
+				? `Zero wins in ${sample} real trades (net ${(netPnl / 1e9).toFixed(3)} SOL): throttle size while the record stays winless. Consider disabling this arm.`
+				: `Sustained underperformance (${winRate}% win rate, net ${(netPnl / 1e9).toFixed(3)} SOL over ${sample} trades): throttle size. Consider disabling this arm.`);
 		notes.push('candidate_for_disable');
 	}
 

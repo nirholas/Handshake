@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-25T14:50:10.435Z",
+	"generated_at": "2026-07-26T20:51:49.889Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Sniper fleet learns faster: honest honeypot verdicts and no more invisible losers",
+			"summary": "Two fixes to the autonomous trading fleet from auditing its own record. The trade firewall now checks which leg of the simulated buy-and-sell round-trip failed: only a failed sell (the real cannot-exit shape) blocks a coin, while a buy leg that could not fund or price the probe is a warning instead of a false honeypot verdict. And the self-tuning optimizer no longer lets a strategy that has never won keep betting at full size below the minimum sample: zero wins over six or more real trades now triggers an automatic size reduction.",
+			"link": "/blog/autonomous-trading-experiment",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-07-25",
 			"type": "launch",
@@ -108,6 +119,16 @@
 				"feature",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Chibi and origin-centered avatars no longer float during animations",
+			"summary": "Avatars with unusual proportions or models exported centered on the origin could leap a full body-height into the air the moment an animation played, leaving only their feet visible on agent profiles. The animation system now measures a rig's hip height from its own feet, so every avatar stays grounded no matter how it was exported.",
+			"link": "/agents",
+			"tags": [
+				"fix"
 			]
 		},
 		{

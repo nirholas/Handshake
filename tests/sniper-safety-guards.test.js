@@ -24,7 +24,7 @@ import { mayhemVerdict, mayhemGate } from '../workers/agent-sniper/mayhem-gate.j
 import { marketCapBandReason, scoreMint } from '../workers/agent-sniper/scorer.js';
 import { checkDailyLoss } from '../api/_lib/agent-trade-guards.js';
 import { effectiveDailyLossLimitLamports } from '../workers/agent-sniper/strategy-store.js';
-import { criticalFirewallReason } from '../api/_lib/trade-firewall.js';
+import { criticalFirewallReason, classifyRoundTripRevert } from '../api/_lib/trade-firewall.js';
 import { withinMasterDailyCap, masterDailyOutflowSol } from '../api/_lib/launcher-funding.js';
 
 describe('parseAgentIds (worker agent scoping)', () => {
@@ -103,6 +103,31 @@ describe('criticalFirewallReason (fail-closed: warnings that mean "unproven", no
 	});
 	it('ignores a critical code that actually passed', () => {
 		expect(criticalFirewallReason({ checks: [{ status: 'pass', reason: 'mint_authority_active' }] })).toBeNull();
+	});
+});
+
+describe('classifyRoundTripRevert (only a SELL-leg revert has the honeypot shape)', () => {
+	// The real false positive from production: the probe payer could not fund the
+	// simulated buy (system program 0x1) and the coin was blocked as a "honeypot".
+	it('classifies an underfunded BUY leg as a warn, not a honeypot', () => {
+		const v = classifyRoundTripRevert(
+			{ InstructionError: [1, { Custom: 1 }] },
+			['Transfer: insufficient lamports 143824832, need 296296295', 'Program failed'],
+			3,
+		);
+		expect(v).toMatchObject({ leg: 'buy', status: 'warn', reason: 'buy_leg_underfunded' });
+	});
+	it('classifies any other BUY-leg revert (e.g. slippage) as a warn', () => {
+		const v = classifyRoundTripRevert({ InstructionError: [2, { Custom: 6001 }] }, ['TooMuchSolRequired'], 3);
+		expect(v).toMatchObject({ leg: 'buy', status: 'warn', reason: 'buy_leg_reverted' });
+	});
+	it('keeps a SELL-leg revert as a fatal honeypot fail', () => {
+		const v = classifyRoundTripRevert({ InstructionError: [4, { Custom: 3012 }] }, [], 3);
+		expect(v).toMatchObject({ leg: 'sell', status: 'fail', reason: 'roundtrip_reverted' });
+	});
+	it('fails closed when the failing instruction cannot be attributed', () => {
+		expect(classifyRoundTripRevert('AccountNotFound', [], 3)).toMatchObject({ status: 'fail', reason: 'roundtrip_reverted' });
+		expect(classifyRoundTripRevert({ InsufficientFundsForRent: {} }, [], 3)).toMatchObject({ status: 'fail' });
 	});
 });
 

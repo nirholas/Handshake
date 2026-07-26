@@ -43,6 +43,7 @@ const PENALTY = Object.freeze({
 	mint_authority_active: 22, // infinite-supply risk (dev can mint more)
 	freeze_authority_active: 28, // dev can freeze your tokens — you can't sell
 	sim_unavailable: 18, // couldn't prove the round-trip (degraded)
+	buy_leg_reverted: 10, // the sim's BUY leg failed (balance/slippage): not a honeypot shape
 	concentration: 16, // one wallet holds an outsized share
 	dev_dumped: 14, // dev sold inside the observation window
 	bundle: 12, // coordinated-launch likelihood
@@ -199,6 +200,32 @@ async function checkVenue(network, mintPk, cacheKey) {
 	}
 }
 
+/**
+ * Classify a reverted round-trip simulation by WHICH leg failed. The honeypot
+ * shape is "you can buy but you cannot sell": only a SELL-leg failure has it,
+ * and only it stays a fatal `roundtrip_reverted`. A BUY-leg revert says nothing
+ * about sellability. On the pump.fun curve the sell path is the curve program
+ * itself, so buy-leg reverts were pure false positives: most commonly the probe
+ * payer not affording the simulated buy (system program error 0x1,
+ * "insufficient lamports"), else the curve moving past the quote's slippage
+ * mid-launch. Both would fail the real entry too, but neither is a trapped
+ * exit. Pure — safe to unit-test.
+ * @param {object|string} simErr `simulateTransaction().value.err`
+ * @param {string[]} logs simulation logs
+ * @param {number} buyIxCount instructions in the buy leg (sell ixs follow them)
+ * @returns {{ leg:'buy'|'sell', status:'warn'|'fail', reason:string, err:string }}
+ */
+export function classifyRoundTripRevert(simErr, logs, buyIxCount) {
+	const err = typeof simErr === 'object' ? JSON.stringify(simErr).slice(0, 200) : String(simErr);
+	const ixIndex = Array.isArray(simErr?.InstructionError) ? Number(simErr.InstructionError[0]) : null;
+	if (ixIndex != null && Number.isFinite(ixIndex) && ixIndex < buyIxCount) {
+		const underfunded = (logs || []).some((l) => /insufficient lamports/i.test(String(l)));
+		return { leg: 'buy', status: 'warn', reason: underfunded ? 'buy_leg_underfunded' : 'buy_leg_reverted', err };
+	}
+	// Sell leg, or an unattributable failure: keep the fail-closed reading.
+	return { leg: 'sell', status: 'fail', reason: 'roundtrip_reverted', err };
+}
+
 // ── check 3: simulated buy→sell round-trip (the honeypot detector) ────────────
 // Build a real buy of `quoteAmount`, then a real sell of the tokens that buy
 // would yield, pack BOTH legs into one v0 message, and simulate it on real RPC
@@ -286,11 +313,11 @@ async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection 
 	const unitsConsumed = sim?.value?.unitsConsumed ?? null;
 
 	if (simErr) {
-		// The round-trip reverted. The buy on its own is what a normal trader does;
-		// a revert when a sell is appended is the classic honeypot shape.
+		const verdict = classifyRoundTripRevert(simErr, logs, buyBuilt.instructions.length);
 		return {
-			res: result('round_trip', 'fail', 'roundtrip_reverted', {
-				err: typeof simErr === 'object' ? JSON.stringify(simErr).slice(0, 200) : String(simErr),
+			res: result('round_trip', verdict.status, verdict.reason, {
+				leg: verdict.leg,
+				err: verdict.err,
 				log_tail: logs.slice(-4),
 				units_consumed: unitsConsumed,
 			}),
@@ -437,6 +464,14 @@ function compose(checks, simulated) {
 			case 'simulation_unavailable':
 				score -= PENALTY.sim_unavailable;
 				reasons.push('The round-trip simulation could not run (RPC unavailable) — safety could not be fully verified.');
+				break;
+			case 'buy_leg_underfunded':
+				score -= PENALTY.buy_leg_reverted;
+				reasons.push('The simulated buy leg could not be funded at this size, so the sell leg went unproven; this is a wallet-balance condition, not a honeypot signal.');
+				break;
+			case 'buy_leg_reverted':
+				score -= PENALTY.buy_leg_reverted;
+				reasons.push('The simulated buy leg reverted (the market likely moved past the quoted slippage), so the sell leg went unproven; the entry itself may fail at execution.');
 				break;
 			case 'high_price_impact':
 				score -= PENALTY.price_impact;

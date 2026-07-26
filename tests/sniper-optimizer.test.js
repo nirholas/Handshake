@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { proposeAdjustments, bestOracleThreshold, MIN_SAMPLE, BOUNDS, STEP } from '../api/_lib/sniper-optimizer.js';
+import { proposeAdjustments, bestOracleThreshold, MIN_SAMPLE, MIN_SAMPLE_WINLESS, BOUNDS, STEP } from '../api/_lib/sniper-optimizer.js';
 import { boundsFor } from '../api/_lib/sniper-autonomy.js';
 
 const BOUNDS_TRUSTED = boundsFor('trusted');
@@ -42,6 +42,49 @@ describe('proposeAdjustments', () => {
 		const r = proposeAdjustments(stats({ closed: MIN_SAMPLE - 1 }), baseConfig);
 		expect(r.acted).toBe(false);
 		expect(r.proposals).toHaveLength(0);
+	});
+
+	// The production blind spot this rule closes: rules-proven sat at 0 wins in
+	// 6 closes and intel-quality at 0 in 11, both bleeding at full size because
+	// every throttle rule waited for a bigger sample.
+	it('throttles a winless arm below MIN_SAMPLE (and proposes nothing else)', () => {
+		const r = proposeAdjustments(
+			stats({ closed: MIN_SAMPLE_WINLESS, wins: 0, winRate: 0, avgPnlPct: -30, netPnlLamports: -56_000_000, exitReasons: { stop_loss: 4, timeout: 2 } }),
+			baseConfig,
+		);
+		expect(r.acted).toBe(true);
+		expect(r.proposals).toHaveLength(1);
+		expect(r.proposals[0].field).toBe('per_trade_lamports');
+		expect(r.proposals[0].to).toBeLessThan(baseConfig.per_trade_lamports);
+		expect(r.notes).toContain('candidate_for_disable');
+	});
+
+	it('throttles a winless arm between MIN_SAMPLE and the sustained-underperformance sample', () => {
+		const r = proposeAdjustments(
+			stats({ closed: 11, wins: 0, winRate: 0, avgPnlPct: -25, netPnlLamports: -126_000_000, exitReasons: { stop_loss: 6, timeout: 5 } }),
+			baseConfig,
+		);
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		expect(size).toBeTruthy();
+		expect(size.to).toBeLessThan(baseConfig.per_trade_lamports);
+		expect(r.notes).toContain('candidate_for_disable');
+	});
+
+	it('still no-ops a winless arm below the winless floor', () => {
+		const r = proposeAdjustments(
+			stats({ closed: MIN_SAMPLE_WINLESS - 1, wins: 0, winRate: 0, netPnlLamports: -10_000_000 }),
+			baseConfig,
+		);
+		expect(r.acted).toBe(false);
+		expect(r.proposals).toHaveLength(0);
+	});
+
+	it('does not throttle a small winless sample that is not losing money', () => {
+		const r = proposeAdjustments(
+			stats({ closed: MIN_SAMPLE_WINLESS, wins: 0, winRate: 0, netPnlLamports: 0 }),
+			baseConfig,
+		);
+		expect(r.acted).toBe(false);
 	});
 
 	it('sets a take-profit when winners are timing out unrealized (the first-trade lesson)', () => {
