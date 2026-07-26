@@ -61,6 +61,44 @@ function fileToDataUrl(file) {
 	});
 }
 
+// Token images travel to /api/pump/build-metadata as base64 JSON, which
+// inflates raw bytes by 4/3. Files at or under this size always fit the API's
+// 4 MB raw ceiling once encoded, so they ship untouched (this also preserves
+// animated GIFs). Anything larger is downscaled in the browser rather than
+// rejected. Twin of the helper in src/pump/pump-modals.js (the two launch
+// surfaces are bundled separately and cannot share a module).
+const IMAGE_PASSTHROUGH_BYTES = 3 * 1024 * 1024;
+const IMAGE_MAX_DIM = 1024;
+
+async function downscaleTokenImage(file) {
+	let bitmap;
+	try {
+		bitmap = await createImageBitmap(file);
+	} catch {
+		return null;
+	}
+	const scale = Math.min(1, IMAGE_MAX_DIM / Math.max(bitmap.width, bitmap.height));
+	const canvas = document.createElement('canvas');
+	canvas.width  = Math.max(1, Math.round(bitmap.width * scale));
+	canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+	canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+	bitmap.close?.();
+	const encode = (type, quality) => new Promise((r) => canvas.toBlob(r, type, quality));
+	// PNG first to keep transparency; JPEG only when PNG is still too big.
+	let blob = await encode('image/png');
+	if (!blob || blob.size > IMAGE_PASSTHROUGH_BYTES) {
+		for (const quality of [0.92, 0.85, 0.75]) {
+			const jpeg = await encode('image/jpeg', quality);
+			if (jpeg) blob = jpeg;
+			if (jpeg && jpeg.size <= IMAGE_PASSTHROUGH_BYTES) break;
+		}
+	}
+	if (!blob || blob.size > IMAGE_PASSTHROUGH_BYTES) return null;
+	const base = (file.name || 'token').replace(/\.[^.]+$/, '');
+	const ext = blob.type === 'image/jpeg' ? 'jpg' : 'png';
+	return new File([blob], `${base}.${ext}`, { type: blob.type });
+}
+
 function friendlyError(msg) {
 	const m = String(msg || '');
 	if (/user rejected|rejected the request/i.test(m)) return 'Wallet signing cancelled.';
@@ -984,15 +1022,19 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		if (el) { el.textContent = s.imageError; el.hidden = !s.imageError; }
 	}
 
-	function handleImageFile(file) {
+	async function handleImageFile(file) {
 		if (!file) return;
 		if (!file.type.startsWith('image/')) {
 			setImageError('That file is not an image. Use a PNG, JPG, GIF, or WebP.');
 			return;
 		}
-		if (file.size > 4 * 1024 * 1024) {
-			setImageError('Image must be under 4 MB. Resize it and try again.');
-			return;
+		if (file.size > IMAGE_PASSTHROUGH_BYTES) {
+			setImageError('Optimizing image…');
+			file = await downscaleTokenImage(file);
+			if (!file) {
+				setImageError('Could not shrink that image under 4 MB. Use a smaller one.');
+				return;
+			}
 		}
 		setImageError('');
 		s.imageFile = file;

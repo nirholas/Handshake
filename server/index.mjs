@@ -23,8 +23,8 @@
 //  - req.query merges URL search params (repeated keys → array), then
 //    dest-rewrite query params, then route params — later wins, as on Vercel.
 //  - req.body is pre-parsed for JSON / urlencoded / text / octet-stream at
-//    Vercel's 4.5 MB limit; multipart and other types stay unconsumed so
-//    upload handlers can read the raw stream.
+//    an 8 MB limit (Cloud Run's ceiling is 32 MB); multipart and other types
+//    stay unconsumed so upload handlers can read the raw stream.
 //  - SSE works: compression skips text/event-stream, and the HTTP server's
 //    idle timeouts are lifted (Cloud Run enforces the real deadline).
 //
@@ -41,7 +41,10 @@ const ROOT = path.resolve(__dirname, '..');
 const API_ROOT = path.join(ROOT, 'api');
 const DIST_ROOT = path.join(ROOT, 'dist');
 const PORT = Number(process.env.PORT) || 8080;
-const BODY_LIMIT = '4.5mb'; // Vercel serverless body limit
+// 8 MB fits the 6 M-char base64 token image build-metadata's schema accepts
+// (base64 inflates raw bytes by 4/3, so the old Vercel-era 4.5 MB limit
+// rejected images the schema allowed). Cloud Run's own ceiling is 32 MB.
+const BODY_LIMIT = '8mb';
 
 // ---------------------------------------------------------------------------
 // vercel.json route table, split at the {handle: "filesystem"} marker.

@@ -445,6 +445,44 @@ function openGovernance({ mint, currentBps }) {
 	});
 }
 
+// Token images travel to /api/pump/build-metadata as base64 JSON, which
+// inflates raw bytes by 4/3. Files at or under this size always fit the API's
+// 4 MB raw ceiling once encoded, so they ship untouched (this also preserves
+// animated GIFs). Anything larger is downscaled in the browser rather than
+// rejected. Twin of the helper in public/studio/launch-panel.js (the two
+// launch surfaces are bundled separately and cannot share a module).
+const IMAGE_PASSTHROUGH_BYTES = 3 * 1024 * 1024;
+const IMAGE_MAX_DIM = 1024;
+
+async function downscaleTokenImage(file) {
+	let bitmap;
+	try {
+		bitmap = await createImageBitmap(file);
+	} catch {
+		return null;
+	}
+	const scale = Math.min(1, IMAGE_MAX_DIM / Math.max(bitmap.width, bitmap.height));
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+	canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+	canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+	bitmap.close?.();
+	const encode = (type, quality) => new Promise((r) => canvas.toBlob(r, type, quality));
+	// PNG first to keep transparency; JPEG only when PNG is still too big.
+	let blob = await encode('image/png');
+	if (!blob || blob.size > IMAGE_PASSTHROUGH_BYTES) {
+		for (const quality of [0.92, 0.85, 0.75]) {
+			const jpeg = await encode('image/jpeg', quality);
+			if (jpeg) blob = jpeg;
+			if (jpeg && jpeg.size <= IMAGE_PASSTHROUGH_BYTES) break;
+		}
+	}
+	if (!blob || blob.size > IMAGE_PASSTHROUGH_BYTES) return null;
+	const base = (file.name || 'token').replace(/\.[^.]+$/, '');
+	const ext = blob.type === 'image/jpeg' ? 'jpg' : 'png';
+	return new File([blob], `${base}.${ext}`, { type: blob.type });
+}
+
 // ── Launch wizard ──────────────────────────────────────────────────────────
 // formData: { name, symbol, description, initialBuy, feeTier, image (File|null) }
 // Steps: 1 = token details (pre-filled) + metadata generation
@@ -459,11 +497,18 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 	async function buildMetadata(name, symbol, description) {
 		let imageDataUrl = null;
 		if (formData?.image instanceof File) {
+			let imageFile = formData.image;
+			if (imageFile.size > IMAGE_PASSTHROUGH_BYTES) {
+				imageFile = await downscaleTokenImage(imageFile);
+				if (!imageFile) {
+					throw new Error('Token image is too large. Use an image under 4 MB.');
+				}
+			}
 			imageDataUrl = await new Promise((resolve) => {
 				const reader = new FileReader();
 				reader.onload = (e) => resolve(e.target.result);
 				reader.onerror = () => resolve(null);
-				reader.readAsDataURL(formData.image);
+				reader.readAsDataURL(imageFile);
 			});
 		}
 		const descSource = description || formData?.description || identity?.description || '';

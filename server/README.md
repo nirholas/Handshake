@@ -43,7 +43,9 @@ Handler-facing parity:
 - `req.query` merges search params (repeated keys → arrays), dest-rewrite
   query params, then route params — later wins, as on Vercel.
 - `req.body` is pre-parsed for JSON / urlencoded / `text/*` /
-  `application/octet-stream` at Vercel's 4.5 MB limit; multipart and other
+  `application/octet-stream` at an 8 MB limit (Cloud Run's ceiling is 32 MB;
+  the old Vercel-era 4.5 MB limit rejected base64 token images the
+  build-metadata schema allows); multipart and other
   types stay unconsumed for raw-stream handlers.
 - SSE streams work: compression exempts `text/event-stream` and the server's
   idle timeouts are lifted (Cloud Run's request timeout is the real limit).
