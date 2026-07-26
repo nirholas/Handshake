@@ -97,7 +97,12 @@ SLOT_BOXES = {
     "bottom":    {"center": (0.0, 0.50, 0.02),  "size": (0.50, 0.90, 0.35), "fit": 1},
     "footwear":  {"center": (0.0, 0.09, 0.07),  "size": (0.60, 0.18, 0.30), "fit": 2},
     "hair":      {"center": (0.0, 1.58, 0.03),  "size": (0.30, 0.25, 0.30), "fit": 0},
-    "headwear":  {"center": (0.0, 1.60, 0.03),  "size": (0.30, 0.22, 0.30), "fit": 0},
+    # Headwear is CONTAIN-fit (bounded on every axis): generated caps carry
+    # deep brims, so scaling by width alone let a 2:1 depth:width cap jut some
+    # 30 cm past the face (walk-gait audit 2026-07-26: cap p95 21-23 cm vs the
+    # 15 cm slot ceiling). Containing the whole mesh in the box sizes the dome
+    # to the skull and the brim comes along at cap proportions.
+    "headwear":  {"center": (0.0, 1.60, 0.03),  "size": (0.30, 0.22, 0.30), "fit": "contain"},
     "glasses":   {"center": (0.0, 1.547, 0.11), "size": (0.18, 0.08, 0.12), "fit": 0},
     "accessory": {"center": (0.0, 1.20, 0.05),  "size": (0.35, 0.35, 0.25), "fit": 0},
 }
@@ -159,9 +164,16 @@ def garment_placement(meshes: list[trimesh.Trimesh], slot: str, yaw_deg: float =
     lo, hi = _bounds(rotated)
     extent = hi - lo
     fit = box["fit"]
-    if extent[fit] <= 1e-9:
-        raise ValueError(f"degenerate garment mesh (zero extent on fit axis {fit})")
-    scale = box["size"][fit] / extent[fit]
+    if fit == "contain":
+        # Uniform scale bounded by EVERY axis: the largest scale at which the
+        # whole mesh still fits inside the slot box, whatever its aspect.
+        if np.any(extent <= 1e-9):
+            raise ValueError("degenerate garment mesh (zero extent on a contain axis)")
+        scale = float(np.min(np.asarray(box["size"], dtype=np.float64) / extent))
+    else:
+        if extent[fit] <= 1e-9:
+            raise ValueError(f"degenerate garment mesh (zero extent on fit axis {fit})")
+        scale = box["size"][fit] / extent[fit]
 
     center = (lo + hi) / 2.0
     target = np.array(box["center"], dtype=np.float64)

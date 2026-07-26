@@ -245,6 +245,20 @@ single = trimesh.creation.box(extents=(0.1, 0.1, 0.3))
 check("single component is not snapped",
       snap_pair_to_feet([single.copy()])[0].centroid[0] == single.centroid[0])
 
+# Headwear is contain-fit: a cap with a deep brim (depth 2x width) must be
+# bounded by the box on EVERY axis, so depth becomes the limiting dimension
+# and the width scales down with it instead of blowing the brim past the face.
+cap = trimesh.creation.box(extents=(1.0, 0.9, 2.0))
+head_place = garment_placement([cap], "headwear")
+placed_cap = cap.copy()
+placed_cap.apply_transform(head_place)
+head_box = SLOT_BOXES["headwear"]
+cap_ext = placed_cap.bounds[1] - placed_cap.bounds[0]
+check("headwear contained on depth", abs(cap_ext[2] - head_box["size"][2]) < 1e-6,
+      f"depth={cap_ext[2]}")
+check("headwear width shrinks with depth", cap_ext[0] <= head_box["size"][0] + 1e-9,
+      f"width={cap_ext[0]}")
+
 # ── composition ─────────────────────────────────────────────────────────────
 
 composite = compose_scene(box_glb, plain_body_glb(), "top")
