@@ -16021,6 +16021,16 @@
 			"link": "/studio"
 		},
 		{
+			"date": "2026-07-26",
+			"title": "The coin-world picker stays live even when the community service is down",
+			"summary": "Opening the walk page used to show \"Coin worlds are temporarily unavailable\" whenever the community service behind the picker was unreachable, hiding every world behind a wall. The picker now falls back to the live pump.fun trending feed, so you can always browse and enter the hottest coin worlds; community stats simply reappear when the service comes back.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/temporary"
+		},
+		{
 			"date": "2026-07-25",
 			"title": "Chibi and origin-centered avatars no longer float during animations",
 			"summary": "Avatars with unusual proportions or models exported centered on the origin could leap a full body-height into the air the moment an animation played, leaving only their feet visible on agent profiles. The animation system now measures a rig's hip height from its own feet, so every avatar stays grounded no matter how it was exported.",

@@ -10,6 +10,7 @@
 // hard error. A short-lived stale cache survives a brief outage on BOTH sources.
 
 import { normalizeGatewayURL } from '../../src/ipfs.js';
+import { sql } from './db.js';
 
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
 const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
@@ -21,6 +22,15 @@ const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
 // minutes old than blanked out with a 502 during an upstream blip.
 let _cache = { value: null, storedAt: 0, expiresAt: 0, limit: 0 };
 const TTL_MS = 30_000;
+// Every upstream fetch asks for this many rows regardless of the caller's
+// limit, so ONE cache entry serves every consumer. Before this, the cache was
+// keyed by the requesting limit: frequent small-limit callers (the home card)
+// kept the cache too small for large-limit callers (communities wants 24),
+// whose own fetches then burned the rate-limited Birdeye key (free tier is
+// ~1 req/s; the burst 429'd and tripped the breaker) and 503'd. Birdeye's
+// trending endpoint serves at most 20 rows per call, so a >20 caller gets a
+// full feed of 20 rather than an error.
+const FETCH_LIMIT = 20;
 // How long a cached feed may be served as a stale fallback after every live
 // upstream has failed. Bounds how old the market data can get during an outage.
 const STALE_MAX_MS = 10 * 60_000;
@@ -34,10 +44,11 @@ const BIRDEYE_COOLDOWN_MS = 60_000;
 let _birdeyeCooldownUntil = 0;
 
 // Serve a cached feed past its TTL when live upstreams are down. Returns the
-// sliced value if the slot holds enough items and is within the stale window,
-// else null.
+// sliced value while it is within the stale window, else null. A cache holding
+// fewer rows than asked still serves: a short trending list beats an outage
+// envelope.
 function serveStale(limit, now) {
-	if (!_cache.value || _cache.limit < limit) return null;
+	if (!_cache.value) return null;
 	if (now - _cache.storedAt > STALE_MAX_MS) return null;
 	return _cache.value.slice(0, limit);
 }
@@ -116,29 +127,68 @@ async function fetchPumpFun(limit) {
 	return data.length ? data : null;
 }
 
+// Last-rung fallback: our own recorder pipeline. pump_coin_intel ingests every
+// pump.fun launch continuously (thousands of rows per hour), so when both
+// external feeds are down or egress-blocked, the platform's own database still
+// knows what is moving. Most-bought coins observed in the last 6 hours, mapped
+// to the same slim shape. price_usd stays null (the recorder stores lamport
+// flows, not USD quotes) — same contract as the pump.fun rung.
+async function fetchDbTrending(limit) {
+	try {
+		const rows = await sql`
+			SELECT mint, symbol, name, image_uri
+			FROM pump_coin_intel
+			WHERE first_seen_at > now() - interval '6 hours'
+			ORDER BY buy_volume_lamports DESC NULLS LAST
+			LIMIT ${limit}
+		`;
+		const data = rows
+			.map((r, i) => ({
+				mint: r.mint || '',
+				symbol: r.symbol || '?',
+				name: r.name || r.symbol || '',
+				logo: normalizeGatewayURL(r.image_uri || '') || null,
+				price_usd: null,
+				rank: i + 1,
+			}))
+			.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
+		return data.length ? data : null;
+	} catch {
+		return null;
+	}
+}
+
 /**
  * Get up to `limit` trending tokens (thin projection), cached 30s with a stale
- * fallback across a Birdeye→pump.fun failover.
+ * fallback across a Birdeye→pump.fun→recorder-DB failover.
  *
  * @param {number} limit
  * @returns {Promise<{ data: object[]|null, stale: boolean }>}
- *   `data: null` only when both live sources are down AND no usable stale cache
+ *   `data: null` only when every live source is down AND no usable stale cache
  *   exists — callers translate that into their own 502/503 envelope.
  */
 export async function getTrendingSlim(limit) {
 	const now = Date.now();
-	if (_cache.value && _cache.limit >= limit && _cache.expiresAt > now) {
+	if (_cache.value && _cache.expiresAt > now) {
 		return { data: _cache.value.slice(0, limit), stale: false };
 	}
 
-	let data = await fetchBirdeye(limit);
-	if (!data) data = await fetchPumpFun(limit);
+	// Always fetch the canonical batch, never the caller's limit: one cache
+	// entry serves every consumer, and the rate-limited Birdeye key is hit at
+	// most once per TTL instead of once per distinct limit.
+	const fetchN = Math.max(FETCH_LIMIT, limit);
+	let data = await fetchBirdeye(FETCH_LIMIT);
+	if (!data) data = await fetchPumpFun(fetchN);
+	if (!data) data = await fetchDbTrending(fetchN);
 	if (!data) {
 		const stale = serveStale(limit, now);
 		if (stale) return { data: stale, stale: true };
+		// Every rung failed — say so once per miss; this is the moment a lobby
+		// endpoint is about to hand back its outage envelope.
+		console.warn('[pump-trending] all sources failed (birdeye, pump.fun, recorder db) and no stale cache');
 		return { data: null, stale: false };
 	}
 
-	_cache = { value: data, storedAt: now, expiresAt: now + TTL_MS, limit };
-	return { data, stale: false };
+	_cache = { value: data, storedAt: now, expiresAt: now + TTL_MS, limit: data.length };
+	return { data: data.slice(0, limit), stale: false };
 }

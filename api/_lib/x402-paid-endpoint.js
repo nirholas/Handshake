@@ -249,7 +249,7 @@ function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride 
 		if (solanaConfigured && sponsorKnownBelowFloor()) {
 			throw new X402Error(
 				'settlement_unavailable',
-				'paidEndpoint: settlement is temporarily unavailable — the sponsor wallet is below its SOL settle floor. Retry after it is refunded.',
+				'paidEndpoint: settlement is temporarily unavailable, the sponsor wallet is below its SOL settle floor. Retry after it is refunded.',
 				503,
 			);
 		}

@@ -366,7 +366,7 @@ const _solCache = new Map(); // pubkeyB58 → { lamports, at }
 const SOL_CACHE_MS = 20_000;
 
 // Last observed floor state, readable synchronously. buildRequirements (the
-// 402 challenge builder) is sync and hot, so it cannot await a balance read —
+// 402 challenge builder) is sync and hot, so it cannot await a balance read,
 // but it CAN consult what the settle path most recently observed and stop
 // advertising a Solana accept that is guaranteed to die at settle. Validity is
 // deliberately longer than the balance cache: during a dry spell settles keep

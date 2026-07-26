@@ -33,8 +33,8 @@
 //
 // Signed-in three.ws users additionally see their AGENTS' own custodial wallets
 // as payment methods: picking one settles the payment entirely server-side via
-// POST /api/x402-pay (owner-authenticated, CSRF-gated, per-agent spend caps) —
-// no browser wallet popup. On third-party merchant embeds the session cookie
+// POST /api/x402-pay (owner-authenticated, CSRF-gated, per-agent spend caps),
+// with no browser wallet popup. On third-party merchant embeds the session cookie
 // never travels cross-origin, so that option simply doesn't render.
 
 const VERSION = '0.2.0';
@@ -159,7 +159,7 @@ export function solanaWalletLabel(provider) {
 // next to the injected browser wallets so an agent holding USDC can buy
 // without Phantom ever opening.
 
-let _agentWalletsCache = null; // { at: epoch-ms, list } — invalidated after a payment
+let _agentWalletsCache = null; // { at: epoch-ms, list }; invalidated after a payment
 const AGENT_WALLETS_TTL_MS = 30_000;
 
 async function fetchAgentWallets() {
@@ -168,7 +168,7 @@ async function fetchAgentWallets() {
 	}
 	try {
 		const res = await fetch(`${ORIGIN}/api/x402-pay?agents=1`, { credentials: 'include' });
-		if (!res.ok) return null; // signed out (401) or unavailable — option not offered
+		if (!res.ok) return null; // signed out (401) or unavailable: option not offered
 		const data = await res.json();
 		const list = (Array.isArray(data?.agents) ? data.agents : [])
 			.filter((a) => a && a.solana_address)
@@ -196,7 +196,7 @@ async function fetchCsrfToken() {
 // POST /api/x402-pay as SSE and pump lifecycle events ('challenge' | 'built' |
 // 'settled' | 'result' | 'error') to onEvent. Resolves the final result
 // envelope; throws an Error carrying `.code` / `.envelope` on failure. Mirrors
-// src/agent-x402-pay.js payX402Stream — inlined because this drop-in script
+// src/agent-x402-pay.js payX402Stream, inlined because this drop-in script
 // cannot import bundled app modules.
 async function payFromAgentWallet({ agentId, url, method, body, serviceLabel, csrfToken }, onEvent = () => {}) {
 	const res = await fetch(`${ORIGIN}/api/x402-pay`, {
@@ -1282,7 +1282,7 @@ class CheckoutModal {
 			`);
 		}
 
-		// Agent custodial wallets — server-signed, no popup. Offered only when the
+		// Agent custodial wallets: server-signed, no popup. Offered only when the
 		// Solana accept charges USDC, matching the server-side mint pin in
 		// api/x402-pay (it refuses to sign any other SPL asset from an agent key).
 		const agentButtons = [];
@@ -1297,7 +1297,7 @@ class CheckoutModal {
 					<button class="x402-wallet-btn" data-agent-wallet="${escapeHtml(agent.id)}" ${short ? 'disabled' : ''}>
 						<div class="x402-wallet-icon x402-agent">${escapeHtml((agent.name || 'A').slice(0, 1).toUpperCase())}</div>
 						<span class="x402-wallet-name">${escapeHtml(agent.name || 'Agent')}<span class="x402-wallet-sub">agent wallet · pays without a popup</span></span>
-						<span class="x402-wallet-meta">${known ? `${agent.usdc.toFixed(2)} USDC${short ? ' — short' : ''}` : 'USDC'}</span>
+						<span class="x402-wallet-meta">${known ? `${agent.usdc.toFixed(2)} USDC${short ? ' · short' : ''}` : 'USDC'}</span>
 					</button>
 				`);
 			}

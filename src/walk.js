@@ -3915,9 +3915,12 @@ async function loadEnvDialogue(meta) {
 // greeter/wanderer/guide trio unless the table provides an explicit `npcs` list.
 // Guarded by `token` so a rapid env re-selection discards a superseded spawn.
 async function applyNpcsForEnv(meta, token) {
-	if (!walkNpcs) return;
 	const table = await loadEnvDialogue(meta);
 	if (token !== envApplyToken) return; // a newer swap already took over
+	// Record the environment's named landmarks for the radar even before the
+	// NPC system boots; the guide leads to these, so they belong on the map.
+	envLandmarks = Array.isArray(table.landmarks) ? table.landmarks : [];
+	if (!walkNpcs) return;
 	walkNpcs.spawn({
 		cast: Array.isArray(table.npcs) ? table.npcs : null,
 		landmarks: Array.isArray(table.landmarks) ? table.landmarks : null,
@@ -4331,12 +4334,29 @@ function toggleGifRecording() {
 	else startGifRecording();
 }
 
-// ── Minimap ──────────────────────────────────────────────────────────────
-// Small top-down canvas in the bottom-right corner showing player positions
-// and environment bounds.
-let minimapVisible = false;
-const MINIMAP_SIZE = 160;
-const MINIMAP_WORLD_RADIUS = 14; // world units visible in the minimap
+// ── Minimap: the shared /play GTA-style radar ────────────────────────────
+// The same rotating radar /play mounts (src/game/hud/minimap.js): the map
+// turns under a fixed player arrow, compass N rides the rim, the boundary ring
+// marks the walkable disc, and live blips track remote players (their
+// nameplate colors), NPC companions, live agent desks, the guide's landmarks,
+// and the scenery you weave through. Always on like /play; M or the dock
+// button toggles it, and the choice persists.
+const MINIMAP_PREF_KEY = 'walk:minimap';
+let minimapVisible = (() => {
+	try {
+		return localStorage.getItem(MINIMAP_PREF_KEY) !== '0';
+	} catch {
+		return true;
+	}
+})();
+
+const minimap = new Minimap();
+minimap.setRange(16); // world metres centre to edge, sized to the 12 m disc
+minimap.setBoundary(GROUND_RADIUS);
+
+// Landmarks for the current environment (from its dialogue table), drawn as
+// amber POI blips so the guide NPC's destinations are findable on the radar.
+let envLandmarks = [];
 
 const minimapContainer = (() => {
 	const el = document.createElement('div');
@@ -4346,60 +4366,45 @@ const minimapContainer = (() => {
 		'z-index:6',
 		'right:16px',
 		'bottom:calc(28px + env(safe-area-inset-bottom, 0))',
-		'width:' + MINIMAP_SIZE + 'px',
-		'height:' + MINIMAP_SIZE + 'px',
-		'border-radius:12px',
-		'overflow:hidden',
-		'background:rgba(10,10,10,0.7)',
-		'border:1px solid rgba(255,255,255,0.1)',
-		'backdrop-filter:blur(6px)',
-		'-webkit-backdrop-filter:blur(6px)',
-		'display:none',
+		'cursor:crosshair',
 		'opacity:0',
 		'transition:opacity 0.2s ease',
-		'cursor:crosshair',
 	].join(';');
+	el.appendChild(minimap.root);
 	document.body.appendChild(el);
 	return el;
 })();
+if (minimapVisible) {
+	requestAnimationFrame(() => {
+		minimapContainer.style.opacity = '1';
+	});
+} else {
+	minimapContainer.style.display = 'none';
+}
 
-const minimapCanvas = (() => {
-	const c = document.createElement('canvas');
-	c.width = MINIMAP_SIZE * 2; // 2x for retina
-	c.height = MINIMAP_SIZE * 2;
-	c.style.cssText = 'width:100%;height:100%;display:block';
-	minimapContainer.appendChild(c);
-	return c;
-})();
-
-const minimapCtx = minimapCanvas.getContext('2d');
-
-// Waypoint: click on minimap to set a target position for the avatar
+// Waypoint: click/tap the radar to send the avatar walking there. The radar
+// rotates with the player, so the click runs through the map's inverse
+// projection back to world space.
 let waypointTarget = null;
-const WAYPOINT_SPEED = 2.0;
 const WAYPOINT_ARRIVE_DIST = 0.3;
 
 minimapContainer.addEventListener('click', (e) => {
 	const rect = minimapContainer.getBoundingClientRect();
-	const nx = (e.clientX - rect.left) / rect.width;
-	const ny = (e.clientY - rect.top) / rect.height;
-	// Map from minimap coords to world coords
-	// minimap center = avatar position
-	const wx = avatarRig.position.x + (nx - 0.5) * MINIMAP_WORLD_RADIUS * 2;
-	const wz = avatarRig.position.z + (ny - 0.5) * MINIMAP_WORLD_RADIUS * 2;
-	// Clamp to ground radius
-	const r = Math.hypot(wx, wz);
-	if (r > GROUND_RADIUS - 0.5) {
-		const k = (GROUND_RADIUS - 0.5) / r;
-		waypointTarget = { x: wx * k, z: wz * k };
-	} else {
-		waypointTarget = { x: wx, z: wz };
-	}
-	setStatus('Waypoint set — avatar walking to target');
+	if (!rect.width) return;
+	const k = minimap.size / rect.width; // CSS may scale the map (phone breakpoint)
+	const w = minimap.worldFromScreen((e.clientX - rect.left) * k, (e.clientY - rect.top) * k);
+	// Clamp to the walkable disc.
+	const r = Math.hypot(w.x, w.z);
+	const max = GROUND_RADIUS - 0.5;
+	waypointTarget = r > max ? { x: (w.x / r) * max, z: (w.z / r) * max } : { x: w.x, z: w.z };
+	setStatus('Waypoint set: avatar walking to target');
 });
 
 function toggleMinimap() {
 	minimapVisible = !minimapVisible;
+	try {
+		localStorage.setItem(MINIMAP_PREF_KEY, minimapVisible ? '1' : '0');
+	} catch {}
 	if (minimapVisible) {
 		minimapContainer.style.display = 'block';
 		requestAnimationFrame(() => {
@@ -4416,87 +4421,43 @@ function toggleMinimap() {
 
 function updateMinimapFrame() {
 	if (!minimapVisible) return;
-	const ctx = minimapCtx;
-	const s = MINIMAP_SIZE * 2;
-	const half = s / 2;
-	const scale = s / (MINIMAP_WORLD_RADIUS * 2);
+	minimap.setViewer({ x: avatarRig.position.x, z: avatarRig.position.z, yaw: avatarYaw });
 
-	ctx.clearRect(0, 0, s, s);
-
-	// Background
-	ctx.fillStyle = 'rgba(10,10,10,0.6)';
-	ctx.fillRect(0, 0, s, s);
-
-	// Ground disc outline
-	ctx.save();
-	ctx.translate(half, half);
-	const groundPxR = GROUND_RADIUS * scale;
-	const offsetX = -avatarRig.position.x * scale;
-	const offsetZ = -avatarRig.position.z * scale;
-	ctx.beginPath();
-	ctx.arc(offsetX, offsetZ, groundPxR, 0, Math.PI * 2);
-	ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-	ctx.lineWidth = 1;
-	ctx.stroke();
-	ctx.fillStyle = 'rgba(255,255,255,0.03)';
-	ctx.fill();
-
-	// Environment props indicator — a dot per static obstacle (trees, towers,
-	// pedestals, desks) so the minimap reflects the scenery the avatar weaves
-	// through. Positions come from the live collider set.
-	ctx.fillStyle = 'rgba(255,255,255,0.2)';
+	const blips = [];
+	// Scenery: one faint dot per static obstacle, from the live collider set.
 	for (const o of worldObstacles) {
-		const px = o.position.x * scale + offsetX;
-		const pz = o.position.z * scale + offsetZ;
-		ctx.beginPath();
-		ctx.arc(px, pz, 2, 0, Math.PI * 2);
-		ctx.fill();
+		blips.push({ x: o.position.x, z: o.position.z, kind: 'prop' });
 	}
-
-	// Remote players
-	for (const [sid, rp] of remotePlayers) {
-		const px = (rp.rig.position.x - avatarRig.position.x) * scale;
-		const pz = (rp.rig.position.z - avatarRig.position.z) * scale;
-		ctx.beginPath();
-		ctx.arc(px, pz, 4, 0, Math.PI * 2);
-		const colorHex = '#' + (rp._color ?? 0xff8844).toString(16).padStart(6, '0');
-		ctx.fillStyle = colorHex;
-		ctx.fill();
+	// The guide NPC's landmarks (named spots from the dialogue table).
+	for (const lm of envLandmarks) {
+		if (Array.isArray(lm?.pos)) blips.push({ x: lm.pos[0], z: lm.pos[2], kind: 'poi' });
 	}
-
-	// Waypoint indicator
-	if (waypointTarget) {
-		const wpx = (waypointTarget.x - avatarRig.position.x) * scale;
-		const wpz = (waypointTarget.z - avatarRig.position.z) * scale;
-		ctx.beginPath();
-		ctx.arc(wpx, wpz, 5, 0, Math.PI * 2);
-		ctx.strokeStyle = '#4ade80';
-		ctx.lineWidth = 2;
-		ctx.stroke();
-		// Pulsing ring
-		const pulse = (performance.now() % 1500) / 1500;
-		ctx.beginPath();
-		ctx.arc(wpx, wpz, 5 + pulse * 8, 0, Math.PI * 2);
-		ctx.strokeStyle = `rgba(74,222,128,${0.5 - pulse * 0.5})`;
-		ctx.lineWidth = 1;
-		ctx.stroke();
+	// Live agent desks (cyan) and NPC companions (violet).
+	if (walkAgentDesks) {
+		for (const d of walkAgentDesks.positions()) {
+			blips.push({ x: d.x, z: d.z, kind: 'poi', color: '#7fd1ff' });
+		}
 	}
+	if (walkNpcs) {
+		for (const n of walkNpcs.positions()) {
+			blips.push({ x: n.x, z: n.z, kind: 'poi', color: '#c9a6ff' });
+		}
+	}
+	// Remote players, in their nameplate colors.
+	for (const rp of remotePlayers.values()) {
+		blips.push({
+			x: rp.rig.position.x,
+			z: rp.rig.position.z,
+			kind: 'peer',
+			color: '#' + (rp._color ?? 0xff8844).toString(16).padStart(6, '0'),
+		});
+	}
+	if (waypointTarget) blips.push({ x: waypointTarget.x, z: waypointTarget.z, kind: 'waypoint' });
 
-	// Local player (green arrow at center)
-	ctx.save();
-	ctx.rotate(-avatarYaw);
-	ctx.beginPath();
-	ctx.moveTo(0, -7);
-	ctx.lineTo(5, 5);
-	ctx.lineTo(0, 2);
-	ctx.lineTo(-5, 5);
-	ctx.closePath();
-	ctx.fillStyle = '#4ade80';
-	ctx.fill();
-	ctx.restore();
-
-	ctx.restore();
+	minimap.setBlips(blips);
+	minimap.tick();
 }
+
 
 // ── Help overlay first-visit auto-show ───────────────────────────────────
 const HELP_FIRST_VISIT_KEY = 'walk:help-shown';

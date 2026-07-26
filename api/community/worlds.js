@@ -5,8 +5,8 @@
 // Failover: when CoinCommunities is unconfigured (no CC_API_KEY) or its
 // upstream errors, the lobby falls back to the live pump.fun trending feed
 // (Birdeye → pump.fun frontend, same chain as every world). Entering a world
-// never needed CoinCommunities — only Town chat does, and Town has its own
-// designed locked state — so the picker stays alive on real market data.
+// never needed CoinCommunities (only Town chat does, and Town has its own
+// designed locked state), so the picker stays alive on real market data.
 // Fallback cards carry `social: false` (no members/posts/likes to show) and
 // the response is tagged with its `source` so clients can render accordingly.
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
@@ -63,7 +63,7 @@ export default wrap(async (req, res) => {
 		return json(res, 200, { data: { worlds, source: 'pump-trending' } });
 	}
 
-	// Both CoinCommunities and the trending failover are unavailable — keep the
+	// Both CoinCommunities and the trending failover are unavailable: keep the
 	// original per-cause envelope so clients show the right designed state.
 	if (!api) {
 		return error(res, 503, 'cc_unconfigured', 'CoinCommunities is not configured');
