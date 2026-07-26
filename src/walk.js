@@ -75,6 +75,9 @@ import { applyWorldNameplate } from './shared/living-avatar.js';
 import { createWalkCapture } from './walk-capture.js';
 import { createMarketplaceGallery } from './marketplace-gallery.js';
 import { createAgentDeskManager, fetchLiveAgentDesks } from './walk-agent-desk.js';
+import { createWalkDayNight } from './walk-day-night.js';
+import { Minimap } from './game/hud/minimap.js';
+import './game/hud/world-hud.css';
 
 // Walk-Browse: on /marketplace-walk the page boots with ?gallery=marketplace and
 // the engine becomes a strollable 3D marketplace hall. See marketplace-gallery.js.
@@ -490,6 +493,12 @@ sun.shadow.bias = -0.0005;
 scene.add(sun);
 // sun.target must be in the scene for position updates to take effect.
 scene.add(sun.target);
+
+// Day/night cycle: the same deterministic world clock /play runs on, driving
+// this rig's sun arc, sky gradient, light levels, and IBL strength. Armed per
+// environment (outdoor stages only) in applyEnvironmentMeta(); paused while AR
+// passthrough owns the lighting.
+const dayNight = createWalkDayNight({ ambientLight, hemi, sun, scene, stageEl: stage });
 
 // Ground — opaque disc in non-AR mode, swapped to a shadow-only catcher in AR.
 const groundOpaque = new Mesh(
@@ -2484,6 +2493,10 @@ function tick() {
 	// 5. Update speech bubbles (3D -> 2D projection)
 	updateSpeechBubbles();
 
+	// 5b. Advance the shared world clock's sky (no-op indoors / in AR, where the
+	//     estimated room lighting owns the rig).
+	if (!arActive) dayNight.update();
+
 	// 6. Update minimap
 	updateMinimapFrame();
 
@@ -3811,6 +3824,10 @@ function applyEnvironmentMeta(meta) {
 	swapTerrain(meta);
 	applyLighting(meta, { ambientLight, hemi, sun });
 	applySky(meta, stage);
+	// Arm (outdoor) or disarm (indoor/void) the day/night cycle. When armed it
+	// immediately re-drives the lights + sky applyLighting/applySky just set, so
+	// entering a world at night never flashes noon.
+	dayNight.setEnvironment(meta);
 	clearDynamicMeshes();
 	buildCollidersFromMeta(meta);
 	contentBillboard?.placeOnTerrain();

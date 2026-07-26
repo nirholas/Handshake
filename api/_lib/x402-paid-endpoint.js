@@ -185,7 +185,13 @@ function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride 
 			(!solTo ||
 				!env.X402_FEE_PAYER_SOLANA ||
 				!env.X402_ASSET_MINT_SOLANA ||
-				!solanaSettleable())
+				!solanaSettleable() ||
+				// Sponsor recently observed under its SOL settle floor (sync,
+				// cache-backed, fail-open): every sponsor-mode settle is refused at
+				// that level, so advertising the accept just makes the buyer sign a
+				// payment that dies with settlement_unavailable. Drop Solana until
+				// the wallet is refunded; other networks keep the endpoint payable.
+				sponsorKnownBelowFloor())
 		)
 			continue;
 		if (net === NETWORK_BSC_MAINNET && (!bscTo || !env.X402_ASSET_ADDRESS_BSC)) continue;
