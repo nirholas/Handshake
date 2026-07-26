@@ -8,8 +8,8 @@
 const TAU = Math.PI * 2;
 
 export class Minimap {
-	constructor() {
-		this.size = 184;            // CSS px; canvas backing scales by DPR
+	constructor({ size } = {}) {
+		this.size = size || 184;    // CSS px; canvas backing scales by DPR
 		this.range = 70;           // world metres from centre to edge
 		this.viewer = { x: 0, z: 0, yaw: 0 };
 		this.blips = [];
@@ -40,11 +40,27 @@ export class Minimap {
 		this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 	}
 
-	setRange(m) { this.range = Math.max(20, m); }
+	setRange(m) { this.range = Math.max(10, m); }
 	setBoundary(r) { this.boundary = Number(r) || 0; }
 	setViewer(v) { if (v) this.viewer = { x: v.x || 0, z: v.z || 0, yaw: v.yaw || 0 }; }
-	// Blips: [{ x, z, kind:'peer'|'poi'|'waypoint'|'party', label?, color? }]
+	// Blips: [{ x, z, kind:'peer'|'poi'|'waypoint'|'party'|'prop', label?, color? }]
 	setBlips(list) { this.blips = Array.isArray(list) ? list : []; }
+
+	// Inverse of _project: a point on the (rotating) map back to world space.
+	// sx/sy are CSS px relative to the map's top-left, which is what a click handler
+	// gets from a bounding rect. Lets hosts implement tap-to-set-waypoint.
+	worldFromScreen(sx, sy) {
+		const c = this.size / 2;
+		const ppm = c / this.range;
+		const rx = (sx - c) / ppm, ry = (sy - c) / ppm;
+		const y = this.viewer.yaw;
+		const cos = Math.cos(y), sin = Math.sin(y);
+		// Forward map: mx = dx·cos − dz·sin, my = −(dx·sin + dz·cos). Invert:
+		return {
+			x: this.viewer.x + rx * cos - ry * sin,
+			z: this.viewer.z - rx * sin - ry * cos,
+		};
+	}
 
 	// Project a world point to map space with the player facing screen-up. Returns
 	// {sx, sy, inside} where inside is false past the map edge (drawn as a rim arrow).
@@ -99,8 +115,15 @@ export class Minimap {
 			const edge = R - 6;
 			const clamped = dist > edge;
 			if (clamped) { const k = edge / dist; bx *= k; by *= k; }
-			const color = b.color || (b.kind === 'party' ? '#7fd1ff' : b.kind === 'poi' ? '#ffd166' : b.kind === 'waypoint' ? '#fff' : 'rgba(255,255,255,0.85)');
-			if (b.kind === 'waypoint') {
+			const color = b.color || (b.kind === 'party' ? '#7fd1ff' : b.kind === 'poi' ? '#ffd166' : b.kind === 'waypoint' ? '#fff' : b.kind === 'prop' ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.85)');
+			if (b.kind === 'prop') {
+				// Scenery dot: a faint map texture, never clamped to the rim.
+				if (clamped) continue;
+				ctx.beginPath();
+				ctx.arc(c + bx, c + by, 1.8, 0, TAU);
+				ctx.fillStyle = color;
+				ctx.fill();
+			} else if (b.kind === 'waypoint') {
 				// A diamond waypoint marker.
 				ctx.save();
 				ctx.translate(c + bx, c + by); ctx.rotate(Math.PI / 4);

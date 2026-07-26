@@ -37,6 +37,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "pt-BR",
+			"name": "Português (BR)",
+			"dir": "ltr"
+		},
+		{
 			"code": "ar",
 			"name": "العربية",
 			"dir": "rtl"

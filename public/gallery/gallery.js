@@ -766,9 +766,11 @@ function renderForgeCard(c) {
 
 	const card = document.createElement('div');
 	card.className = 'gallery-card forge-card' + (hasModel ? '' : ' forge-card--no-model');
-	card.tabIndex = 0;
-	card.setAttribute('role', 'button');
-	card.setAttribute('aria-label', `Open in Forge: ${escapeAttr(label)}`);
+	// Plain container, NOT role="button": the card wraps a Remix <button> and a
+	// View <a>, and an interactive card wrapping them is a nested-interactive
+	// WCAG failure (4.1.2) plus aria-prohibited-attr (aria-label on a div).
+	// The primary "open" action is a stretched transparent <a> appended at the
+	// end of renderForgeCard; the footer sits above it via z-index.
 
 	// Thumbnail — real image when available, deterministic gradient otherwise
 	const thumb = document.createElement('div');
@@ -880,16 +882,13 @@ function renderForgeCard(c) {
 	body.appendChild(foot);
 	card.appendChild(body);
 
-	card.addEventListener('click', (e) => {
-		if (e.target.closest('button, a')) return;
-		window.location.href = openUrl;
-	});
-	card.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			window.location.href = openUrl;
-		}
-	});
+	// Stretched primary action (see the note at the top of renderForgeCard):
+	// a real link, so keyboard and middle-click work natively.
+	const stretch = document.createElement('a');
+	stretch.className = 'forge-card-stretch';
+	stretch.href = openUrl;
+	stretch.setAttribute('aria-label', `Open in Forge: ${escapeAttr(label)}`);
+	card.appendChild(stretch);
 	return card;
 }
 

@@ -85,19 +85,26 @@ RIG_BONES_MIN_SHARE = 0.001
 
 # ── Slot placement boxes on the reference body ──────────────────────────────
 # center (x, y, z) and size (w, h, d) in reference-body meters; `fit` is the
-# axis (0=x, 1=y) whose extent the garment is scaled to match. Height-fit for
-# body-length garments, width-fit for items whose height varies wildly with
-# style (shoes, hair, glasses).
+# axis (0=x, 1=y, 2=z) whose extent the garment is scaled to match. Height-fit
+# for body-length garments, width-fit for items whose height varies wildly
+# with style (hair, glasses). Footwear is DEPTH-fit: a product-photo pair has
+# its shoes nearly touching, so pair width says nothing about shoe size, while
+# foot length is invariant to the pair gap. (Refbody feet, measured from skin
+# weights: length 0.243, per-foot width 0.096, centers at x = +/-0.222.)
 SLOT_BOXES = {
     "top":       {"center": (0.0, 1.14, 0.03),  "size": (0.90, 0.56, 0.45), "fit": 1},
     "outerwear": {"center": (0.0, 1.05, 0.03),  "size": (1.00, 0.80, 0.50), "fit": 1},
     "bottom":    {"center": (0.0, 0.50, 0.02),  "size": (0.50, 0.90, 0.35), "fit": 1},
-    "footwear":  {"center": (0.0, 0.09, 0.06),  "size": (0.60, 0.18, 0.32), "fit": 0},
+    "footwear":  {"center": (0.0, 0.09, 0.07),  "size": (0.60, 0.18, 0.30), "fit": 2},
     "hair":      {"center": (0.0, 1.58, 0.03),  "size": (0.30, 0.25, 0.30), "fit": 0},
     "headwear":  {"center": (0.0, 1.60, 0.03),  "size": (0.30, 0.22, 0.30), "fit": 0},
     "glasses":   {"center": (0.0, 1.547, 0.11), "size": (0.18, 0.08, 0.12), "fit": 0},
     "accessory": {"center": (0.0, 1.20, 0.05),  "size": (0.35, 0.35, 0.25), "fit": 0},
 }
+
+# Where each foot's center sits on the reference body (x), for snapping a
+# placed shoe pair onto the actual stance. Measured with the box numbers above.
+FOOT_CENTERS_X = (-0.222, 0.222)
 
 GARMENT_PREFIX = "garment"
 REFBODY_PREFIX = "refbody"
@@ -175,14 +182,51 @@ def compose_scene(garment_bytes: bytes, refbody_bytes: bytes, slot: str,
     body = _scene_meshes(refbody_bytes)
 
     placement = garment_placement(garment, slot, yaw_deg)
+    placed_garment = []
+    for m in garment:
+        placed = m.copy()
+        placed.apply_transform(placement)
+        placed_garment.append(placed)
+    if slot == "footwear":
+        placed_garment = snap_pair_to_feet(placed_garment)
+
     scene = trimesh.Scene()
     for i, m in enumerate(body):
         scene.add_geometry(m, node_name=f"{REFBODY_PREFIX}_{i}", geom_name=f"{REFBODY_PREFIX}_{i}")
-    for i, m in enumerate(garment):
-        placed = m.copy()
-        placed.apply_transform(placement)
-        scene.add_geometry(placed, node_name=f"{GARMENT_PREFIX}_{i}", geom_name=f"{GARMENT_PREFIX}_{i}")
+    for i, m in enumerate(placed_garment):
+        scene.add_geometry(m, node_name=f"{GARMENT_PREFIX}_{i}", geom_name=f"{GARMENT_PREFIX}_{i}")
     return scene.export(file_type="glb")
+
+
+def snap_pair_to_feet(meshes: list[trimesh.Trimesh]) -> list[trimesh.Trimesh]:
+    """Move each shoe of a placed pair onto its foot. Product-photo pairs sit
+    nearly touching at the midline; depth-fit sizes them right but leaves both
+    shoes bunched around x=0 while the refbody's stance is wide. Split the
+    geometry into connected components, classify each by centroid side, and
+    translate each side group so its center lands on that foot's x. A mesh
+    with no clear left/right split (a single shoe, sandals fused at a strap)
+    is left where placement put it."""
+    components: list[trimesh.Trimesh] = []
+    for m in meshes:
+        try:
+            components.extend(m.split(only_watertight=False))
+        except Exception:  # noqa: BLE001: splitting is best-effort
+            components.append(m)
+    if len(components) < 2:
+        return meshes
+    left = [c for c in components if c.centroid[0] < 0]
+    right = [c for c in components if c.centroid[0] >= 0]
+    if not left or not right:
+        return meshes
+    out = []
+    for group, target_x in ((left, FOOT_CENTERS_X[0]), (right, FOOT_CENTERS_X[1])):
+        lo = np.min([c.bounds[0] for c in group], axis=0)
+        hi = np.max([c.bounds[1] for c in group], axis=0)
+        dx = target_x - (lo[0] + hi[0]) / 2.0
+        for c in group:
+            c.apply_translation((dx, 0.0, 0.0))
+            out.append(c)
+    return out
 
 
 # ────────────────────────────────────────────────────────────────────────────

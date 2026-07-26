@@ -228,6 +228,12 @@ export class WalkNet {
 			this.room.onMessage('chat', (msg) => this._emit('chat', msg));
 			// Friends (Task 15): live DM + request/accept events pushed by the social hub.
 			this.room.onMessage('social', (msg) => this._emit('social', msg));
+			// The shared WalkRoom pushes more types than this page consumes
+			// (quests, game:king, floor:beat, profile, …) and the deployed server
+			// may add types this bundle predates. Catch-all relay: consumers
+			// subscribe to 'message' for anything beyond chat/social, and
+			// colyseus stops warning about unregistered types on every push.
+			this.room.onMessage('*', (type, msg) => this._emit('message', type, msg));
 
 			this.room.onLeave((code) => {
 				this._setStatus('offline');

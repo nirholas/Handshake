@@ -30,8 +30,14 @@
 // The modal handles wallet connect (Phantom for Solana, window.ethereum for
 // Base USDC via EIP-3009), drives the 402 → sign → retry flow, and shows the
 // result. Vanilla JS, no bundler required.
+//
+// Signed-in three.ws users additionally see their AGENTS' own custodial wallets
+// as payment methods: picking one settles the payment entirely server-side via
+// POST /api/x402-pay (owner-authenticated, CSRF-gated, per-agent spend caps) —
+// no browser wallet popup. On third-party merchant embeds the session cookie
+// never travels cross-origin, so that option simply doesn't render.
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 // Real-funds gate: before the first payment, the user must accept the three.ws
 // Risk Disclosure (three.ws/legal/risk). Loaded lazily and failure-tolerant on
@@ -143,6 +149,114 @@ export function solanaWalletLabel(provider) {
 	if (provider?.isBackpack) return 'Backpack';
 	if (provider?.isSolflare) return 'Solflare';
 	return 'Solana wallet';
+}
+
+// ── Agent-wallet payment method ──────────────────────────────────────────────
+// A signed-in user's agents each hold a custodial Solana wallet server-side
+// (agent_identities.meta), and POST /api/x402-pay pays an x402 endpoint from
+// that wallet with ownership auth, a single-use CSRF token, and the per-agent
+// spend policy enforced before any funds move. The picker lists those agents
+// next to the injected browser wallets so an agent holding USDC can buy
+// without Phantom ever opening.
+
+let _agentWalletsCache = null; // { at: epoch-ms, list } — invalidated after a payment
+const AGENT_WALLETS_TTL_MS = 30_000;
+
+async function fetchAgentWallets() {
+	if (_agentWalletsCache && Date.now() - _agentWalletsCache.at < AGENT_WALLETS_TTL_MS) {
+		return _agentWalletsCache.list;
+	}
+	try {
+		const res = await fetch(`${ORIGIN}/api/x402-pay?agents=1`, { credentials: 'include' });
+		if (!res.ok) return null; // signed out (401) or unavailable — option not offered
+		const data = await res.json();
+		const list = (Array.isArray(data?.agents) ? data.agents : [])
+			.filter((a) => a && a.solana_address)
+			.sort((a, b) => (Number(b.usdc) || 0) - (Number(a.usdc) || 0));
+		_agentWalletsCache = { at: Date.now(), list };
+		return list;
+	} catch (_) {
+		return null;
+	}
+}
+
+// Single-use CSRF token for the settle call (api/_lib/csrf.js burns tokens on
+// first use, so one is fetched per payment, never cached).
+async function fetchCsrfToken() {
+	try {
+		const res = await fetch(`${ORIGIN}/api/csrf-token`, { credentials: 'include' });
+		if (!res.ok) return null;
+		const j = await res.json().catch(() => null);
+		return j?.data?.token || null;
+	} catch (_) {
+		return null;
+	}
+}
+
+// POST /api/x402-pay as SSE and pump lifecycle events ('challenge' | 'built' |
+// 'settled' | 'result' | 'error') to onEvent. Resolves the final result
+// envelope; throws an Error carrying `.code` / `.envelope` on failure. Mirrors
+// src/agent-x402-pay.js payX402Stream — inlined because this drop-in script
+// cannot import bundled app modules.
+async function payFromAgentWallet({ agentId, url, method, body, serviceLabel, csrfToken }, onEvent = () => {}) {
+	const res = await fetch(`${ORIGIN}/api/x402-pay`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: {
+			'content-type': 'application/json',
+			accept: 'text/event-stream',
+			...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+		},
+		body: JSON.stringify({ agentId, url, method, body, service_label: serviceLabel, stream: true }),
+	});
+	// A non-stream error (auth, rate limit, validation) comes back as JSON, not SSE.
+	const ctype = res.headers.get('content-type') || '';
+	if (!res.ok && !ctype.includes('text/event-stream')) {
+		const data = await res.json().catch(() => ({}));
+		const err = new Error(data?.error_description || data?.error || `payment failed (${res.status})`);
+		err.code = data?.code || data?.error;
+		err.status = res.status;
+		throw err;
+	}
+	if (!res.body) throw new Error('payment stream unavailable');
+
+	const reader = res.body.getReader();
+	const decoder = new TextDecoder();
+	let buffer = '';
+	let result = null;
+	let failure = null;
+	const dispatchEvent = (event, raw) => {
+		let data = null;
+		try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
+		if (event === 'result') result = data;
+		if (event === 'error') failure = data;
+		try { onEvent(event, data); } catch (_) { /* a UI handler throwing must not break the pump */ }
+	};
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		buffer += decoder.decode(value, { stream: true });
+		let sep;
+		while ((sep = buffer.indexOf('\n\n')) >= 0) {
+			const frame = buffer.slice(0, sep);
+			buffer = buffer.slice(sep + 2);
+			let event = 'message';
+			let data = '';
+			for (const line of frame.split('\n')) {
+				if (line.startsWith('event:')) event = line.slice(6).trim();
+				else if (line.startsWith('data:')) data += line.slice(5).trim();
+			}
+			if (data || event !== 'message') dispatchEvent(event, data);
+		}
+	}
+	if (failure) {
+		const err = new Error(failure.error_description || failure.error || 'payment failed');
+		err.code = failure.code;
+		err.envelope = failure;
+		throw err;
+	}
+	if (!result) throw new Error('payment ended without a result');
+	return result;
 }
 
 // Compute the buyer-facing donation for a Solana `accept` under a merchant's
@@ -714,8 +828,15 @@ const STYLES = `
 }
 .x402-wallet-icon.x402-phantom { background: linear-gradient(135deg, #ab9ff2, #534bb1); color: #fff; }
 .x402-wallet-icon.x402-metamask { background: linear-gradient(135deg, #f6851b, #e2761b); color: #fff; }
+.x402-wallet-icon.x402-agent { background: linear-gradient(135deg, #22c55e, #0ea5e9); color: #fff; }
 .x402-wallet-name { flex: 1; text-align: left; }
+.x402-wallet-sub { display: block; font-size: 11px; color: #8a90a8; font-weight: 500; margin-top: 1px; }
 .x402-wallet-meta { font-size: 11px; color: #8a90a8; font-weight: 500; }
+.x402-wallet-group-label {
+	font-size: 11px; font-weight: 700; color: #8a90a8;
+	text-transform: uppercase; letter-spacing: 0.06em;
+	margin: 4px 0 0;
+}
 
 .x402-pay-btn {
 	width: 100%; padding: 14px 16px;
@@ -882,6 +1003,8 @@ const STYLES = `
 	.x402-wallet-btn:hover:not(:disabled) { background: #252525; border-color: #0a84ff; }
 	.x402-wallet-icon { background: #2e2e2e; }
 	.x402-wallet-meta { color: #6b7088; }
+	.x402-wallet-sub { color: #6b7088; }
+	.x402-wallet-group-label { color: #6b7088; }
 	.x402-pay-btn { background: #ffffff; color: #0f0f0f; }
 	.x402-pay-btn:hover:not(:disabled) { background: #e7e9ee; }
 	.x402-pay-btn:disabled { background: #2e2e2e; color: #5a6378; }
@@ -1010,7 +1133,7 @@ class CheckoutModal {
 	_focusFirst() {
 		if (!this.modalEl) return;
 		const primary = this.modalEl.querySelector(
-			'[data-wallet]:not([disabled]), [data-retry], .x402-pay-btn:not([disabled])',
+			'[data-agent-wallet]:not([disabled]), [data-wallet]:not([disabled]), [data-retry], .x402-pay-btn:not([disabled])',
 		);
 		(primary || this._focusable()[0] || this.modalEl).focus();
 	}
@@ -1105,6 +1228,7 @@ class CheckoutModal {
 	}
 
 	renderConnect() {
+		this.currentView = 'connect';
 		const solanaProvider = detectSolanaProvider();
 		const phantomDetected = !!solanaProvider;
 		const evmDetected = typeof window !== 'undefined' && window.ethereum;
@@ -1157,6 +1281,27 @@ class CheckoutModal {
 				</button>
 			`);
 		}
+
+		// Agent custodial wallets — server-signed, no popup. Offered only when the
+		// Solana accept charges USDC, matching the server-side mint pin in
+		// api/x402-pay (it refuses to sign any other SPL asset from an agent key).
+		const agentButtons = [];
+		const agentSym = (solanaAccept?.extra?.name || 'USDC').replace(/^USD Coin$/, 'USDC');
+		if (solanaAccept && agentSym === 'USDC' && Array.isArray(this.agentWallets) && this.agentWallets.length) {
+			const decimals = Number(solanaAccept.extra?.decimals ?? 6);
+			const priceUsdc = Number(solanaAccept.amount) / 10 ** decimals;
+			for (const agent of this.agentWallets.slice(0, 4)) {
+				const known = typeof agent.usdc === 'number';
+				const short = known && agent.usdc < priceUsdc;
+				agentButtons.push(`
+					<button class="x402-wallet-btn" data-agent-wallet="${escapeHtml(agent.id)}" ${short ? 'disabled' : ''}>
+						<div class="x402-wallet-icon x402-agent">${escapeHtml((agent.name || 'A').slice(0, 1).toUpperCase())}</div>
+						<span class="x402-wallet-name">${escapeHtml(agent.name || 'Agent')}<span class="x402-wallet-sub">agent wallet · pays without a popup</span></span>
+						<span class="x402-wallet-meta">${known ? `${agent.usdc.toFixed(2)} USDC${short ? ' — short' : ''}` : 'USDC'}</span>
+					</button>
+				`);
+			}
+		}
 		if (evmAccept) {
 			buttons.push(`
 				<button class="x402-wallet-btn" data-wallet="evm" ${evmDetected ? '' : 'disabled'}>
@@ -1184,13 +1329,20 @@ class CheckoutModal {
 						: `<span class="x402-payee-addr">${escapeHtml(payeeShort)}</span>`
 				}</div>`
 			: '';
+		const walletList = agentButtons.length
+			? `<div class="x402-wallet-group-label">Your agents</div>${agentButtons.join('')}` +
+				(buttons.length ? `<div class="x402-wallet-group-label">Browser wallets</div>${buttons.join('')}` : '')
+			: buttons.join('');
+		const trustLine = agentButtons.length
+			? 'Agent wallets pay from their own balance under your spend limits — no popup. Browser wallets ask you to approve in the wallet. Settled on-chain either way.'
+			: 'You approve the payment in your own wallet — funds move only when the service runs, settled on-chain.';
 		this.bodyEl.innerHTML = `
 			${this.renderSteps('connect', { discover: 'done' })}
 			${payeeBox}
 			${fallbackBox}
 			${givingBox}
-			<div class="x402-wallet-buttons">${buttons.join('')}</div>
-			<div class="x402-trust">You approve the payment in your own wallet — funds move only when the service runs, settled on-chain.</div>
+			<div class="x402-wallet-buttons">${walletList}</div>
+			<div class="x402-trust">${trustLine}</div>
 		`;
 		const giveEl = this.bodyEl.querySelector('[data-giving]');
 		if (giveEl) giveEl.addEventListener('change', (e) => { this.includeDonation = !!e.target.checked; });
@@ -1202,9 +1354,17 @@ class CheckoutModal {
 			else if (wallet === 'evm') this.runEvm(evmAccept);
 		};
 		this.bodyEl.querySelectorAll('[data-wallet]').forEach((b) => b.addEventListener('click', onClick));
+		const onAgentClick = (e) => {
+			const btn = e.target.closest('[data-agent-wallet]');
+			if (!btn || btn.disabled) return;
+			const agent = (this.agentWallets || []).find((a) => String(a.id) === btn.dataset.agentWallet);
+			if (agent) this.runAgentWallet(solanaAccept, agent);
+		};
+		this.bodyEl.querySelectorAll('[data-agent-wallet]').forEach((b) => b.addEventListener('click', onAgentClick));
 	}
 
 	renderSiwxChoice({ siwxSolana, siwxEvm }) {
+		this.currentView = 'siwx';
 		const priceText = formatAmount(this.accept.amount, this.accept.extra?.decimals ?? 6);
 		// One primary button — internally we pick the wallet kind that matches
 		// the supported SIWX chains AND the detected wallets. Phantom wins ties
@@ -1236,6 +1396,7 @@ class CheckoutModal {
 	}
 
 	renderProgress(activeId, meta = {}) {
+		this.currentView = 'progress';
 		this.bodyEl.innerHTML = this.renderSteps(activeId, {
 			discover: 'done',
 			connect: 'done',
@@ -1246,6 +1407,7 @@ class CheckoutModal {
 	}
 
 	renderError(stepId, message) {
+		this.currentView = 'error';
 		this.bodyEl.innerHTML = `
 			${this.renderSteps(stepId, {
 				...(stepId !== 'discover' ? { discover: 'done' } : {}),
@@ -1264,6 +1426,7 @@ class CheckoutModal {
 	// can't cover the price. Shows needed / balance / shortfall, the connected
 	// wallet (copy + explorer), and a retry that re-runs once the buyer tops up.
 	renderInsufficientFunds(info) {
+		this.currentView = 'insufficient';
 		const addr = info.owner || '';
 		const addrShort = addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '—';
 		const viewUrl = addressExplorerUrl(info.network, addr);
@@ -1308,6 +1471,7 @@ class CheckoutModal {
 	}
 
 	renderDone({ result, payment, siwx }) {
+		this.currentView = 'done';
 		const resultStr = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
 		let receiptHtml;
 		if (siwx) {
@@ -1384,6 +1548,18 @@ class CheckoutModal {
 			const evm = challenge.accepts.find(isEip3009Accept);
 			this.accept = solana || evm || challenge.accepts[0];
 			this.setPrice(this.accept);
+			// Agent wallets settle Solana USDC only (api/x402-pay pins the mint), so
+			// only look them up when this checkout offers that rail. The fetch runs in
+			// the background and injects the extra buttons into the picker when it
+			// lands — the browser-wallet buttons never wait on it.
+			if (solana) {
+				if (this.agentWallets === undefined) this.agentWallets = null;
+				fetchAgentWallets().then((list) => {
+					if (this.disposed) return;
+					this.agentWallets = Array.isArray(list) && list.length ? list : null;
+					if (this.agentWallets && this.currentView === 'connect') this.renderConnect();
+				});
+			}
 			this.renderConnect();
 		} catch (err) {
 			this.renderError('discover', err.message || String(err));
@@ -1471,6 +1647,86 @@ class CheckoutModal {
 				return;
 			}
 			this.renderError(this.payerAddress ? 'authorize' : 'connect', friendlyError(err));
+		}
+	}
+
+	// Pay from an agent's custodial wallet — the whole build/sign/settle happens
+	// server-side in /api/x402-pay under the agent's spend policy, streamed back
+	// as SSE so the step timeline stays live. No wallet popup at any point.
+	async runAgentWallet(accept, agent) {
+		if (!(await ensureRiskAckSafe('x402-pay'))) { this.close('cancelled'); return; }
+		this.accept = accept;
+		this.setPrice(accept);
+		this.payerAddress = agent.solana_address;
+		const agentName = agent.name || 'agent';
+		const decimals = Number(accept.extra?.decimals ?? 6);
+		const priceUsdc = Number(accept.amount) / 10 ** decimals;
+		try {
+			// Pre-flight shortfall guard from the balance the picker already loaded —
+			// same UX contract as assertBalance, no extra RPC read. The server
+			// re-checks everything authoritatively before signing.
+			if (typeof agent.usdc === 'number' && agent.usdc < priceUsdc) {
+				const err = new Error('insufficient funds');
+				err.code = 'insufficient_funds';
+				err.insufficient = {
+					symbol: 'USDC',
+					network: accept.network,
+					owner: agent.solana_address,
+					required: formatAmount(accept.amount, decimals),
+					balance: agent.usdc.toFixed(2),
+					shortfall: (priceUsdc - agent.usdc).toFixed(2),
+				};
+				throw err;
+			}
+			this.renderProgress('connect', { text: `Using ${agentName}'s wallet…` });
+			const csrfToken = await fetchCsrfToken();
+			if (!csrfToken) {
+				throw new Error('Your three.ws session has expired — sign in again to pay from an agent wallet.');
+			}
+			this.renderProgress('authorize', { text: `Paying ${formatAmount(accept.amount, decimals)} USDC from ${agentName}'s wallet…` });
+			const final = await payFromAgentWallet(
+				{
+					agentId: agent.id,
+					url: new URL(this.opts.endpoint, location.href).href,
+					method: this.opts.method || 'GET',
+					body: this.opts.body,
+					serviceLabel: this.opts.merchant || null,
+					csrfToken,
+				},
+				(event, data) => {
+					if (this.disposed) return;
+					if (event === 'built') {
+						this.renderProgress('authorize', { text: 'Payment signed by the agent wallet…' });
+					} else if (event === 'settled') {
+						this.renderProgress('verify', {
+							text: data?.tx ? `Settled on-chain · ${String(data.tx).slice(0, 8)}…` : 'Settling on-chain…',
+						});
+					}
+				},
+			);
+			_agentWalletsCache = null; // the balance just changed — next picker rereads it
+			const payment = {
+				transaction: final?.payment?.tx || null,
+				network: final?.payment?.network || accept.network,
+				payer: final?.payment?.payer || agent.solana_address,
+			};
+			this.resolve?.({
+				ok: true,
+				result: final?.result,
+				payment,
+				agent: { id: agent.id, name: agent.name || null },
+				response: { status: 200, headers: {} },
+			});
+			if (this.opts.autoClose) this.close('done');
+			else this.renderDone({ result: final?.result, payment });
+		} catch (err) {
+			if (err?.code === 'insufficient_funds') {
+				this.renderInsufficientFunds(err.insufficient);
+				return;
+			}
+			// Spend-policy refusals arrive with the server's own explanation
+			// (daily cap, per-call cap, frozen wallet) — surface them verbatim.
+			this.renderError('authorize', friendlyError(err));
 		}
 	}
 

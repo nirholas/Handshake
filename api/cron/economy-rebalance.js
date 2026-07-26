@@ -25,8 +25,17 @@ import { logAudit } from '../_lib/audit.js';
 
 // Which engine wallets spend USDC and therefore want a USDC floor kept topped up
 // from their SOL. floorUsd is env-overridable per role.
+//
+// selfPayFee: this wallet ALSO pays its own SOL network fee on every self-pay
+// ring settle, so it has a second, independent need: SOL. Without it the
+// planner only ever saw the USDC side, and a payer that drifted under the
+// 0.02 SOL settle floor while holding plenty of USDC deadlocked the whole
+// ring (July 2026, twice): the facilitator rejected every settle while the
+// rebalancer reported "above_floor". The SOL leg only arms when the wallet is
+// genuinely below its registry minSol (true starvation, not routine drift),
+// and refills toward refillTo so one swap buys days of fee runway.
 const USDC_WALLETS = [
-	{ role: 'x402-ring-payer', floorEnv: 'ECONOMY_REBALANCE_RING_USDC_FLOOR', floorDflt: 10 },
+	{ role: 'x402-ring-payer', floorEnv: 'ECONOMY_REBALANCE_RING_USDC_FLOOR', floorDflt: 10, selfPayFee: true },
 	{ role: 'a2a-payer', floorEnv: 'ECONOMY_REBALANCE_A2A_USDC_FLOOR', floorDflt: 5 },
 ];
 
@@ -84,6 +93,16 @@ export default wrapCron(async (req, res) => {
 		const { sol, usdc } = await readWallet(connection, pubkey);
 		const floorUsd = Number(process.env[cfg.floorEnv]) || cfg.floorDflt;
 		wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'usdc', floorUsd });
+
+		// Self-pay fee wallets get a second row for their SOL need. Same name on
+		// purpose: the executor resolves the signing key by name, and both legs
+		// are self-swaps on the same wallet. Armed only below the registry minSol
+		// so routine drift never triggers it, and targeting refillTo (not minSol)
+		// so the swap buys real runway instead of landing exactly on the floor.
+		if (cfg.selfPayFee && sol < (spec.minSol ?? 0)) {
+			const targetSol = spec.refillTo ?? (spec.minSol ?? 0) * 3;
+			wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'sol', floorUsd: targetSol * solPriceUsd });
+		}
 	}
 
 	const { plan, skipped } = planRebalance({ solPriceUsd, wallets });

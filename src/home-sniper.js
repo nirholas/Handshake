@@ -162,18 +162,24 @@ function makeTape(root) {
 			`<span class="snipe-rmeta"><span class="snipe-rsym">$${esc(sym.toUpperCase())}</span> ` +
 			`<span class="snipe-ragent">${esc(agent)}${tagEl}</span></span>` +
 			(pctLabel ? `<span class="snipe-rpnl ${pnlClass(item.pnl_pct)}">${esc(pctLabel)}</span>` : `<span class="snipe-rpnl flat">·</span>`);
+		// Rows live in a <ul>, so the direct child must be an <li> (axe "list"
+		// rule); the link, when there is one, goes inside it.
+		const li = document.createElement('li');
 		const el = document.createElement(url ? 'a' : 'div');
 		el.className = 'snipe-row' + (animate && !reducedMotion() ? ' enter' : '');
 		if (url) { el.href = url; el.target = '_blank'; el.rel = 'noopener'; }
 		el.innerHTML = inner;
-		return el;
+		li.appendChild(el);
+		return li;
 	}
 
 	function reset() { if (list) list.innerHTML = ''; }
 
 	function empty(msg) {
 		if (!list) return;
-		list.innerHTML = `<div class="snipe-tape-msg">${esc(msg)}</div>`;
+		// <li>, not <div>: the tape is a <ul>, and a non-li child is an axe
+		// "list" violation (ul must directly contain li/script/template only).
+		list.innerHTML = `<li class="snipe-tape-msg">${esc(msg)}</li>`;
 	}
 
 	function add(item, animate) {

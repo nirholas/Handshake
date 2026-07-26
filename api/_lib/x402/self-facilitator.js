@@ -365,12 +365,31 @@ export function txBase64FromPayload(paymentPayload) {
 const _solCache = new Map(); // pubkeyB58 → { lamports, at }
 const SOL_CACHE_MS = 20_000;
 
+// Last observed floor state, readable synchronously. buildRequirements (the
+// 402 challenge builder) is sync and hot, so it cannot await a balance read —
+// but it CAN consult what the settle path most recently observed and stop
+// advertising a Solana accept that is guaranteed to die at settle. Validity is
+// deliberately longer than the balance cache: during a dry spell settles keep
+// probing (refreshing this), and 60s of staleness only delays re-advertising
+// by less than the treasury-topup cadence that refunds the wallet.
+const FLOOR_STATE_MS = 60_000;
+let _floorState = { below: false, at: 0 };
+
+export function sponsorKnownBelowFloor(now = Date.now()) {
+	return _floorState.below && now - _floorState.at < FLOOR_STATE_MS;
+}
+
+function noteFloorState(lamports, now) {
+	_floorState = { below: lamports < SPONSOR_SOL_FLOOR_LAMPORTS, at: now };
+}
+
 export async function sponsorSolLamports(conn, feePayerPubkey, now = Date.now()) {
 	const key = feePayerPubkey.toBase58();
 	const hit = _solCache.get(key);
 	if (hit && hit.lamports != null && now - hit.at < SOL_CACHE_MS) return hit.lamports;
 	const lamports = await conn.getBalance(feePayerPubkey, 'confirmed');
 	_solCache.set(key, { lamports, at: now });
+	noteFloorState(lamports, now);
 	return lamports;
 }
 
@@ -378,7 +397,10 @@ export async function sponsorSolLamports(conn, feePayerPubkey, now = Date.now())
 // approaching the floor without another RPC round-trip.
 function bumpSolCache(pubkeyB58, deltaLamports) {
 	const hit = _solCache.get(pubkeyB58);
-	if (hit && hit.lamports != null) hit.lamports = Math.max(0, hit.lamports - deltaLamports);
+	if (hit && hit.lamports != null) {
+		hit.lamports = Math.max(0, hit.lamports - deltaLamports);
+		noteFloorState(hit.lamports, Date.now());
+	}
 }
 
 async function confirmSignature(conn, signature, timeoutMs = 30_000) {

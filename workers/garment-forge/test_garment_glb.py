@@ -211,6 +211,40 @@ center_y = (placed.bounds[1][1] + placed.bounds[0][1]) / 2
 check("placement fits slot height", abs(height - top["size"][1]) < 1e-6, f"height={height}")
 check("placement centers on slot", abs(center_y - top["center"][1]) < 1e-6, f"cy={center_y}")
 
+# Footwear is depth-fit: a pair whose shoes nearly touch must size by foot
+# length, not by the (meaningless) pair width. Two 0.1-wide boxes 0.02 apart,
+# each 0.5 long in z: after placement the pair depth equals the slot's z size
+# regardless of the tiny pair width.
+shoe_l = trimesh.creation.box(extents=(0.1, 0.1, 0.5))
+shoe_l.apply_translation((-0.06, 0.0, 0.0))
+shoe_r = trimesh.creation.box(extents=(0.1, 0.1, 0.5))
+shoe_r.apply_translation((0.06, 0.0, 0.0))
+foot_place = garment_placement([shoe_l, shoe_r], "footwear")
+pair = [m.copy() for m in (shoe_l, shoe_r)]
+for m in pair:
+    m.apply_transform(foot_place)
+lo = np.min([m.bounds[0] for m in pair], axis=0)
+hi = np.max([m.bounds[1] for m in pair], axis=0)
+foot_box = SLOT_BOXES["footwear"]
+check("footwear fits by depth", abs((hi[2] - lo[2]) - foot_box["size"][2]) < 1e-6,
+      f"depth={hi[2] - lo[2]}")
+check("footwear pair stays narrow (no width blow-up)", (hi[0] - lo[0]) < 0.30,
+      f"width={hi[0] - lo[0]}")
+
+# snap_pair_to_feet: each shoe lands centered on its foot; a single component
+# (one shoe, fused sandals) is left alone.
+from garment_glb import FOOT_CENTERS_X, snap_pair_to_feet  # noqa: E402
+snapped = snap_pair_to_feet([m.copy() for m in pair])
+sn_left = [c for c in snapped if c.centroid[0] < 0]
+sn_right = [c for c in snapped if c.centroid[0] >= 0]
+lx = (min(c.bounds[0][0] for c in sn_left) + max(c.bounds[1][0] for c in sn_left)) / 2
+rx = (min(c.bounds[0][0] for c in sn_right) + max(c.bounds[1][0] for c in sn_right)) / 2
+check("left shoe snaps to left foot", abs(lx - FOOT_CENTERS_X[0]) < 1e-6, f"lx={lx}")
+check("right shoe snaps to right foot", abs(rx - FOOT_CENTERS_X[1]) < 1e-6, f"rx={rx}")
+single = trimesh.creation.box(extents=(0.1, 0.1, 0.3))
+check("single component is not snapped",
+      snap_pair_to_feet([single.copy()])[0].centroid[0] == single.centroid[0])
+
 # ── composition ─────────────────────────────────────────────────────────────
 
 composite = compose_scene(box_glb, plain_body_glb(), "top")

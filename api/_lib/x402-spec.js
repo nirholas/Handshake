@@ -1154,11 +1154,22 @@ export async function settlePayment(args) {
 		{ idempotencyKey },
 	);
 	if (!result.success) {
-		throw new X402Error(
-			'settle_failed',
-			`settle failed: ${result.errorReason || 'unknown reason'}`,
-			502,
-		);
+		const reason = result.errorReason || 'unknown reason';
+		// A sponsor/fee wallet under its SOL floor is transient operator capacity,
+		// not a broken endpoint: it self-heals the moment treasury-topup (or the
+		// operator) refunds the wallet. Answering 502 here made every trust
+		// monitor, buyer, and internal pipeline read a funding gap as an outage
+		// (tens of thousands of 502 settle_failed rows during the July 2026 dry
+		// spells). 503 + the retryable code tells callers to back off and retry;
+		// genuinely unexplained settle failures stay 502.
+		if (/^(fee_wallet_below_floor|sponsor_sol_floor|sol_floor)/.test(reason)) {
+			throw new X402Error(
+				'settlement_unavailable',
+				`settlement temporarily unavailable: ${reason} (sponsor wallet below its SOL floor; retry after it is refunded)`,
+				503,
+			);
+		}
+		throw new X402Error('settle_failed', `settle failed: ${reason}`, 502);
 	}
 	// Defense-in-depth: a compromised facilitator could return success for
 	// settlement on a different chain or to a different recipient. Cross-check

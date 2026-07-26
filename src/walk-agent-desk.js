@@ -426,7 +426,16 @@ export function createAgentDeskManager({ scene, camera }) {
 		desks.clear();
 	}
 
-	return { spawn, update, dispose };
+	// Live desk positions for the host's radar (one POI blip per live agent).
+	function positions() {
+		const out = [];
+		for (const desk of desks.values()) {
+			out.push({ x: desk.group.position.x, z: desk.group.position.z });
+		}
+		return out;
+	}
+
+	return { spawn, update, dispose, positions };
 }
 
 /**

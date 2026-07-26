@@ -50,6 +50,7 @@ import {
 	verifyPayment,
 } from './x402-spec.js';
 import { declareBuilderCodeExtension } from './x402-builder-code.js';
+import { sponsorKnownBelowFloor } from './x402/self-facilitator.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,

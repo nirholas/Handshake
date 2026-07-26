@@ -525,6 +525,22 @@ body.gallery-page {
 	gap: 10px;
 	padding-top: 8px;
 	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	/* Above .forge-card-stretch so Remix/View stay clickable. */
+	position: relative;
+	z-index: 2;
+}
+/* Stretched primary card action (renderForgeCard in gallery.js): a real <a>
+   covering the card instead of role="button" on the card itself, so the
+   footer's own controls are not nested inside an interactive element. */
+.forge-card-stretch {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border-radius: inherit;
+}
+.forge-card-stretch:focus-visible {
+	outline: 2px solid var(--accent, #fff);
+	outline-offset: -2px;
 }
 .gallery-card-meta {
 	font-size: 11px;

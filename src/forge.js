@@ -38,8 +38,11 @@ const POLL_INTERVAL_MS = 2500;
 // real generation, not the average one, or the client abandons jobs the server
 // finishes. Queue wait does not count against this window (see pollUntilDone).
 const MAX_POLL_MS = 12 * 60 * 1000;
-const MAX_VIEWS = 6;
-const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right'];
+// One slot per reference view the server accepts (api/forge.js MAX_VIEWS = 6).
+// MAX_VIEWS is derived from the labels so the slot grid, the pips, the "N of M
+// views" copy, and the fill logic can never disagree about how many exist.
+const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right', 'Top', '3/4'];
+const MAX_VIEWS = VIEW_LABELS.length;
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
@@ -1148,7 +1151,7 @@ function firstFreeSlot() {
 }
 
 function nextFreeAfter(i) {
-	for (let j = i + 1; j < MAX_VIEWS; j++) {
+	for (let j = i + 1; j < slots.length; j++) {
 		if (slots[j].state === 'empty' || slots[j].state === 'error') return j;
 	}
 	return -1;

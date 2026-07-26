@@ -155,9 +155,15 @@ export class CoinLobby {
 
 		card.appendChild(el('div', 'cw__symbol', w.symbol ? `$${w.symbol}` : 'world'));
 		const stats = el('div', 'cw__stats');
-		stats.appendChild(el('span', null, `${compactNum(w.members)} members`));
-		stats.appendChild(el('span', 'cw__dot', '·'));
-		stats.appendChild(el('span', null, `${compactNum(w.posts)} posts`));
+		if (w.social === false) {
+			// Trending-feed fallback world: no community counts exist, so show
+			// the coin's name instead of a row of zeros.
+			stats.appendChild(el('span', null, w.name || 'trending on pump.fun'));
+		} else {
+			stats.appendChild(el('span', null, `${compactNum(w.members)} members`));
+			stats.appendChild(el('span', 'cw__dot', '·'));
+			stats.appendChild(el('span', null, `${compactNum(w.posts)} posts`));
+		}
 		card.appendChild(stats);
 
 		const enter = el('span', 'cw__enter', 'Enter →');

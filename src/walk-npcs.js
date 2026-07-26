@@ -816,5 +816,16 @@ export function createWalkNpcs(opts) {
 		return npcs.length;
 	}
 
-	return { spawn, despawn, update, setEnabled, isEnabled, setTtsEnabled, count };
+	// Live world positions of the spawned cast; the host's radar draws these
+	// as POI blips so companions are findable when they wander off-screen.
+	function positions() {
+		const out = [];
+		for (const n of npcs) {
+			if (n._disposed) continue;
+			out.push({ x: n.rig.position.x, z: n.rig.position.z, label: n.name });
+		}
+		return out;
+	}
+
+	return { spawn, despawn, update, setEnabled, isEnabled, setTtsEnabled, count, positions };
 }

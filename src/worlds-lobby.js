@@ -349,11 +349,14 @@ function worldCard(w) {
 		]),
 		el('div', { class: 'wl-card-body' }, [
 			el('div', { class: 'wl-card-sym', text: symbol }),
-			el('div', { class: 'wl-card-stats' }, [
-				stat(PEOPLE_SVG, w.members, 'members'),
-				stat(CHAT_SVG, w.posts, 'posts'),
-				stat(HEART_SVG, w.likes, 'likes'),
-			]),
+			w.social === false
+				? // Trending-feed fallback world: no community counts, show the name.
+					el('div', { class: 'wl-card-stats', text: w.name || 'trending on pump.fun' })
+				: el('div', { class: 'wl-card-stats' }, [
+						stat(PEOPLE_SVG, w.members, 'members'),
+						stat(CHAT_SVG, w.posts, 'posts'),
+						stat(HEART_SVG, w.likes, 'likes'),
+					]),
 		]),
 		el('span', { class: 'wl-card-enter', text: 'Enter →' }),
 	]);
