@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-26T21:28:09.133Z",
+	"generated_at": "2026-07-26T21:31:06.781Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-26",
+			"type": "launch",
+			"title": "Wardrobe",
+			"summary": "The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.",
+			"link": "/wardrobe",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-26",
 			"type": "update",
@@ -131,6 +141,16 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Trading fleet: no more stuck positions blocking an agent from trading",
+			"summary": "Some completed sells close their token account on-chain to reclaim rent, and the fleet could not see those exits: the position looked open forever and quietly blocked its agent from taking any new trades (four agents sat idle up to 34 hours). The reconciler now reads the full on-chain history even for closed accounts, books the real proceeds, and frees the agent immediately.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"fix"
 			]
 		},
 		{

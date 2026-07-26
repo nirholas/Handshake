@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Wardrobe</title>
+			<link>https://three.ws/wardrobe</link>
+			<guid isPermaLink="false">2026-07-26:Wardrobe</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.</description>
+		</item>
+		<item>
 			<title>Agent minting recovers from wallet extension crashes</title>
 			<link>https://three.ws/create-agent</link>
 			<guid isPermaLink="false">2026-07-26:Agent minting recovers from wallet extension crashes</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The coin-worlds lobby used to go dark when both of its external trending feeds (Birdeye and pump.fun) were down or rate-limited at the same time. It now falls back to the platform's own launch recorder, which ingests thousands of new pump.fun coins per hour, so the lobby keeps showing real, current coins even when every outside feed fails.</description>
+		</item>
+		<item>
+			<title>Trading fleet: no more stuck positions blocking an agent from trading</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-26:Trading fleet: no more stuck positions blocking an agent from trading</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some completed sells close their token account on-chain to reclaim rent, and the fleet could not see those exits: the position looked open forever and quietly blocked its agent from taking any new trades (four agents sat idle up to 34 hours). The reconciler now reads the full on-chain history even for closed accounts, books the real proceeds, and frees the agent immediately.</description>
 		</item>
 		<item>
 			<title>Agent-Forged Gallery</title>

@@ -16095,6 +16095,15 @@
 				"feature"
 			],
 			"link": "/bazaar"
+		},
+		{
+			"date": "2026-07-26",
+			"title": "Trading fleet: no more stuck positions blocking an agent from trading",
+			"summary": "Some completed sells close their token account on-chain to reclaim rent, and the fleet could not see those exits: the position looked open forever and quietly blocked its agent from taking any new trades (four agents sat idle up to 34 hours). The reconciler now reads the full on-chain history even for closed accounts, books the real proceeds, and frees the agent immediately.",
+			"tags": [
+				"fix"
+			],
+			"link": "/sniper/experiments"
 		}
 	]
 }
