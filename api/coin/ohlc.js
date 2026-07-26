@@ -59,7 +59,14 @@ export default wrap(async (req, res) => {
 
 	try {
 		const { data } = await buildPriceChart(id, days);
-		if (!data.length) return error(res, 502, 'no_data', 'no price history for this coin');
+		// An empty series is an answer (dead or unlisted market), not an outage:
+		// 200 keeps it CDN-cacheable and out of the 5xx monitors; the chart UI
+		// renders its designed no-data state for anything shorter than 2 points.
+		if (!data.length) {
+			return json(res, 200, { data: [], days }, {
+				'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
+			});
+		}
 		return json(res, 200, { data, days }, {
 			'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
 		});
