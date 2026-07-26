@@ -521,6 +521,17 @@ app.use((err, req, res, next) => {
 	if (res.headersSent) return next(err);
 	const status = err?.status || err?.statusCode;
 	if (status && status >= 400 && status < 500) {
+		// body-parser tags over-limit payloads with type 'entity.too.large'.
+		// Surface a specific code + human message so client error paths (which
+		// read error/error_description) say something actionable.
+		if (err?.type === 'entity.too.large' || status === 413) {
+			res.status(413).json({
+				error: 'payload_too_large',
+				error_description: 'Request body is too large. Images must be under 4 MB.',
+				message: err.message,
+			});
+			return;
+		}
 		res.status(status).json({ error: 'bad_request', message: err.message });
 		return;
 	}
