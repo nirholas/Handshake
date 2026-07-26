@@ -32,12 +32,6 @@ const CLASS_ORDER = { owner: 0, 'env-action': 1, investigate: 2, 'self-healing':
 
 const KNOWN_SIGNATURES = [
 	{
-		id: 'sns-resolve-floating-rejection',
-		match: /^Error: Invalid name account provided/i,
-		class: 'self-healing',
-		action: `Bonfida resolve() of an unregistered .sol name leaks a floating rejection from library internals (~every 12 min from ring agents hitting pay-by-name). Every first-party call site catches; the served response is a correct 200/404 and no 5xx correlates. Log noise only. Re-investigate ONLY if a matching 5xx group appears on an sns/pay-by-name route. ${RUNBOOK} §sns-floating-rejection.`,
-	},
-	{
 		id: 'ring-guard-violated',
 		match: /\[ring-invariants\] SPEND PATH DISABLED/i,
 		class: 'owner',
@@ -109,6 +103,12 @@ const KNOWN_SIGNATURES = [
 		class: 'self-healing',
 		action: `x402 pay-by-name resolve() hit a .sol name with no on-chain account. resolveName() catches it and returns a clean 404 to the caller; the ERROR line is @bonfida/spl-name-service leaking a sibling promise rejection from its multi-strategy lookup (the awaited path is caught, the orphan is not). No user impact. ${RUNBOOK} §sns-name-not-found.`,
 	},
+	{
+		id: 'pump-launch-sim-rejected',
+		match: /\[pump\/launch-agent\] send failed .*pre-broadcast simulation failed/i,
+		class: 'self-healing',
+		action: `The pump.fun launch handler simulates every transaction before broadcasting; this line is the simulation REFUSING a launch that would have failed on-chain (program custom errors: slippage moved, mint state raced, metadata rejected), which protects the user's fees. The caller gets a clean 502 and a retry succeeds (verify: a 201 from the same route usually follows within minutes). Investigate only if the same wallet repeats the failure many times or the 502 rate on /api/pump/launch-agent becomes a sustained group. ${RUNBOOK} §pump-launch-sim-rejected.`,
+	},
 ];
 
 // Known signatures for request-log (5xx) groups. `test` sees the http group:
@@ -116,11 +116,35 @@ const KNOWN_SIGNATURES = [
 // `investigate`.
 const KNOWN_HTTP_SIGNATURES = [
 	{
+		// MUST precede worker-coldstart-health-503: a quota-starved 503 also
+		// arrives as 503 /health from the scheduler, but the instance never
+		// started at all — that is allocation starvation, not a cold boot.
+		id: 'gpu-quota-starved',
+		test: (g) => g.status === 503 && /exceeded its quota limit/i.test(g.detail),
+		class: 'env-action',
+		action: `Cloud Run cannot allocate a GPU for this service: the shared L4 pool (NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion, granted 3 in us-central1) is fully pinned by warm min-instances. Fix order: (1) find the idle holder — measure real job traffic per warm GPU service (POST requests, not health pings) and set the idle one to --min-instances=0 (config-only, pre-approved); 2026-07-26 case: model-hunyuan3d held a warm L4 with zero jobs in 3 days while model-text2motion starved. (2) Check the pending raise: gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5 (preference l4-no-zonal-us-central1-8, preferred 16). Fleet map + lessons: docs/ops/gcp-credits-plan.md. ${RUNBOOK} §gpu-quota-starved.`,
+	},
+	{
+		id: 'worker-coldstart-health-503',
+		test: (g) => g.status === 503 && g.path === '/health' && /Google-Cloud-Scheduler/i.test(g.userAgent),
+		class: 'self-healing',
+		action: `A keep-warm scheduler probe hit a GPU/model worker while it was cold-booting (weights stream for 30-60s before the server reports ready); the very purpose of the probe is to absorb that cold start. Verify the service logged its "ready" line shortly after (npm run logs -- -s <service> --since 1h) and move on. Investigate only if the SAME service repeats this across multiple sweeps, which means it is crash-looping instead of booting. ${RUNBOOK} §worker-coldstart-health.`,
+	},
+	{
 		id: 'x402-wallets-dry-5xx',
 		test: (g) => g.status >= 500 && (g.path.startsWith('/api/x402') || g.path === '/api/mcp')
 			&& /threews-x402-(autonomous|seed)/.test(g.userAgent),
 		class: 'owner',
 		action: `5xx on paid x402 routes from the platform's own agent traffic means the economy wallets are out of SOL for tx fees (symptom map: 502 = fee wallet below SOL floor, 503 = payer self-pay refused). The economy-rebalance keypair crash is FIXED and LIVE (commit bb02839f9); when it reports skipped: "insufficient_sol_surplus" there is genuinely nothing left to swap. At the 94-calls/min ring shape the burn is ~1-1.4 SOL/day. Owner action: send SOL (or USDC) to the economy master WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW; treasury-topup distributes to engines within minutes and economy-rebalance restores the payer's USDC float. Verify recovery: POST /api/cron/economy-rebalance (Bearer CRON_SECRET) returns results[].status "swapped", healthz x402_settle returns to ok, 5xx storm stops. Alternative to daily funding: throttle the ring to funded runway (X402_RING_TICK_CONCURRENCY and cadence knobs). ${RUNBOOK} §x402-wallets-dry.`,
+	},
+	{
+		id: 'cc-unconfigured-503',
+		// Every /api/community/* and /api/clash route wraps the same client and
+		// answers the same designed 503 when CC_API_KEY is absent — match the
+		// whole family, not just the worlds lobby.
+		test: (g) => g.status === 503 && (g.path.startsWith('/api/community/') || g.path.startsWith('/api/clash')),
+		class: 'owner',
+		action: `/api/community/worlds returns its designed 503 cc_unconfigured: CC_API_KEY exists nowhere (Cloud Run env, .env, Secret Manager — swept 2026-07-26). The coin-worlds lobby stays empty until the owner provisions a CoinCommunities API key (api.coin-communities.xyz), then: gcloud run services update three-ws-api --region us-central1 --update-env-vars CC_API_KEY=<key>. Harmless noise until then. ${RUNBOOK} §cc-unconfigured.`,
 	},
 ];
 
@@ -251,7 +275,12 @@ export function buildFindings(entries) {
 				title: `HTTP ${status} ${entry.httpRequest.requestMethod} ${path}`,
 				count: 0, firstSeen: ts, lastSeen: ts,
 				sample: `${entry.httpRequest.requestUrl} (ua: ${entry.httpRequest.userAgent || '-'})`,
+				detail: '',
 			};
+			// Cloud Run rides the request's failure explanation (quota exhaustion,
+			// no-instance aborts) in the request entry's textPayload; keep the first
+			// one so message-based HTTP signatures can match on it.
+			if (!g.detail && typeof entry.textPayload === 'string') g.detail = entry.textPayload.slice(0, 300);
 			g.count++;
 			if (ts < g.firstSeen) g.firstSeen = ts;
 			if (ts > g.lastSeen) g.lastSeen = ts;

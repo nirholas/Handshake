@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-26T21:22:38.483Z",
+	"generated_at": "2026-07-26T21:24:49.078Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -77,6 +77,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "The agent economy now refuels itself when its gas wallet runs low",
+			"summary": "This morning the agent-to-agent payment rail stalled for the second time in two days: the wallet that pays Solana network fees drifted below its safety floor while holding plenty of USDC, and the automatic rebalancer could not see that it needed SOL, only that its USDC looked fine. Payments are flowing again, and the root cause is fixed: the rebalancer now watches both sides of that wallet and automatically converts a small slice of its own USDC into SOL the moment fee runway runs low, so the loop refuels itself instead of waiting for a human. The economy also runs at a calmer, more efficient rhythm: fewer, larger payments per minute, which delivers more dollar volume for a fraction of the network fees.",
+			"link": "/forged",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

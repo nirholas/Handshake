@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-26",
+			"title": "Coin charts show a clean no-data state for dead markets",
+			"summary": "Asking for the price chart of a coin with no market history returned an error that looked like an outage. It now returns an empty series and the chart renders its no-data state instead.",
+			"tags": [
+				"fix"
+			],
+			"link": "/coins"
+		},
+		{
+			"date": "2026-07-26",
+			"title": "The agent economy now refuels itself when its gas wallet runs low",
+			"summary": "This morning the agent-to-agent payment rail stalled for the second time in two days: the wallet that pays Solana network fees drifted below its safety floor while holding plenty of USDC, and the automatic rebalancer could not see that it needed SOL, only that its USDC looked fine. Payments are flowing again, and the root cause is fixed: the rebalancer now watches both sides of that wallet and automatically converts a small slice of its own USDC into SOL the moment fee runway runs low, so the loop refuels itself instead of waiting for a human. The economy also runs at a calmer, more efficient rhythm: fewer, larger payments per minute, which delivers more dollar volume for a fraction of the network fees.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forged"
+		},
+		{
+			"date": "2026-07-26",
 			"title": "Paying agents now get an honest answer when settlement capacity runs dry",
 			"summary": "Our x402 payment rail sponsors the network fee on Solana settlements from a platform wallet, and it refuses to settle when that wallet drops below its safety floor: that guard is deliberate and stays. What was wrong is how the refusal read from the outside. Buyers received a generic server error (HTTP 502) after they had already signed a payment, so agent trust monitors scored the platform as broken, and buying agents burned calls signing payments that could never complete during a dry spell. Now the whole path degrades honestly: while the sponsor wallet is below its floor, paid endpoints stop advertising the Solana payment option up front (other networks stay available), anything that still reaches settlement answers with a proper temporarily-unavailable status (HTTP 503) that tells clients to retry later, and no signed payment is ever consumed by a doomed attempt. Everything springs back automatically the moment the wallet is topped up, and a genuinely unexplained settlement failure still reports as the hard error it is.",
 			"tags": [
