@@ -1334,7 +1334,7 @@ class CheckoutModal {
 				(buttons.length ? `<div class="x402-wallet-group-label">Browser wallets</div>${buttons.join('')}` : '')
 			: buttons.join('');
 		const trustLine = agentButtons.length
-			? 'Agent wallets pay from their own balance under your spend limits — no popup. Browser wallets ask you to approve in the wallet. Settled on-chain either way.'
+			? 'Agent wallets pay from their own balance under your spend limits, with no popup. Browser wallets ask you to approve in the wallet. Settled on-chain either way.'
 			: 'You approve the payment in your own wallet — funds move only when the service runs, settled on-chain.';
 		this.bodyEl.innerHTML = `
 			${this.renderSteps('connect', { discover: 'done' })}
@@ -1551,7 +1551,7 @@ class CheckoutModal {
 			// Agent wallets settle Solana USDC only (api/x402-pay pins the mint), so
 			// only look them up when this checkout offers that rail. The fetch runs in
 			// the background and injects the extra buttons into the picker when it
-			// lands — the browser-wallet buttons never wait on it.
+			// lands; the browser-wallet buttons never wait on it.
 			if (solana) {
 				if (this.agentWallets === undefined) this.agentWallets = null;
 				fetchAgentWallets().then((list) => {
@@ -1650,7 +1650,7 @@ class CheckoutModal {
 		}
 	}
 
-	// Pay from an agent's custodial wallet — the whole build/sign/settle happens
+	// Pay from an agent's custodial wallet: the whole build/sign/settle happens
 	// server-side in /api/x402-pay under the agent's spend policy, streamed back
 	// as SSE so the step timeline stays live. No wallet popup at any point.
 	async runAgentWallet(accept, agent) {
@@ -1662,7 +1662,7 @@ class CheckoutModal {
 		const decimals = Number(accept.extra?.decimals ?? 6);
 		const priceUsdc = Number(accept.amount) / 10 ** decimals;
 		try {
-			// Pre-flight shortfall guard from the balance the picker already loaded —
+			// Pre-flight shortfall guard from the balance the picker already loaded;
 			// same UX contract as assertBalance, no extra RPC read. The server
 			// re-checks everything authoritatively before signing.
 			if (typeof agent.usdc === 'number' && agent.usdc < priceUsdc) {
@@ -1681,7 +1681,7 @@ class CheckoutModal {
 			this.renderProgress('connect', { text: `Using ${agentName}'s wallet…` });
 			const csrfToken = await fetchCsrfToken();
 			if (!csrfToken) {
-				throw new Error('Your three.ws session has expired — sign in again to pay from an agent wallet.');
+				throw new Error('Your three.ws session has expired. Sign in again to pay from an agent wallet.');
 			}
 			this.renderProgress('authorize', { text: `Paying ${formatAmount(accept.amount, decimals)} USDC from ${agentName}'s wallet…` });
 			const final = await payFromAgentWallet(
@@ -1704,7 +1704,7 @@ class CheckoutModal {
 					}
 				},
 			);
-			_agentWalletsCache = null; // the balance just changed — next picker rereads it
+			_agentWalletsCache = null; // the balance just changed; the next picker rereads it
 			const payment = {
 				transaction: final?.payment?.tx || null,
 				network: final?.payment?.network || accept.network,
@@ -1725,7 +1725,7 @@ class CheckoutModal {
 				return;
 			}
 			// Spend-policy refusals arrive with the server's own explanation
-			// (daily cap, per-call cap, frozen wallet) — surface them verbatim.
+			// (daily cap, per-call cap, frozen wallet): surface them verbatim.
 			this.renderError('authorize', friendlyError(err));
 		}
 	}

@@ -6,7 +6,7 @@ This is the **consume** side of x402. If you want to *build* an endpoint that ta
 
 **Prerequisites:**
 
-- A browser wallet: **Phantom** (or Solflare) for Solana, or **MetaMask** / **Coinbase Wallet** for Base (EVM). The checkout detects whichever is installed. **Or no browser wallet at all:** if you're signed in to three.ws and one of your agents holds USDC in its own wallet, the checkout offers that agent as a payment method and settles server-side — no extension, no popup (see "Paying" below).
+- A browser wallet: **Phantom** (or Solflare) for Solana, or **MetaMask** / **Coinbase Wallet** for Base (EVM). The checkout detects whichever is installed. **Or no browser wallet at all:** if you're signed in to three.ws and one of your agents holds USDC in its own wallet, the checkout offers that agent as a payment method and settles server-side, with no extension and no popup (see "Paying" below).
 - A small USDC balance on the network you'll pay from. Most calls are $0.001–$0.01, so ~$1 USDC funds thousands of them. On Solana you also need a little SOL for the account; on Base the signature is gasless from your side.
 - Light JavaScript familiarity for the programmatic path (Steps 5–6). The UI paths (Steps 2–4) need none.
 
@@ -38,7 +38,7 @@ There are two distinct problems: **finding** an endpoint and **paying** it.
 
 - For **Solana**, the wallet can only sign serialized transactions, so the module posts the challenge's `accept` to `/api/x402-checkout?action=prepare` (`api/x402-checkout.js`), gets back a partially-signed SPL `transferChecked`, has Phantom add the buyer's signature, then `?action=encode`s it into the `X-PAYMENT` header.
 - For **Base / EVM**, the wallet signs an EIP-3009 `transferWithAuthorization` typed-data message locally — no server prep needed.
-- For an **agent wallet** (signed-in three.ws users only), no browser wallet is involved at all. The modal lists your agents with their live USDC balances (from `/api/x402-pay?agents=1`), and picking one sends the payment through `POST /api/x402-pay` — the server decrypts the agent's custodial key (audit-logged), enforces the agent's per-call/daily spend policy *before* signing, builds and settles the SPL transfer, and streams progress back. Underfunded agents render disabled with their exact balance; the option pays Solana USDC only, and never appears on third-party merchant embeds (the session cookie doesn't travel cross-origin).
+- For an **agent wallet** (signed-in three.ws users only), no browser wallet is involved at all. The modal lists your agents with their live USDC balances (from `/api/x402-pay?agents=1`), and picking one sends the payment through `POST /api/x402-pay`: the server decrypts the agent's custodial key (audit-logged), enforces the agent's per-call/daily spend policy *before* signing, builds and settles the SPL transfer, and streams progress back. Underfunded agents render disabled with their exact balance; the option pays Solana USDC only, and never appears on third-party merchant embeds (the session cookie doesn't travel cross-origin).
 
 Either way the signed payload is base64-encoded into `X-PAYMENT`, the gated request is retried once, and the unlocked result plus the decoded `X-PAYMENT-RESPONSE` receipt come back.
 
@@ -68,7 +68,7 @@ Find an HTTP service you want and click **Try it** on its card.
 
 1. The drop-in payment modal opens, having already re-fetched the live 402 challenge to confirm the current price (prices can change; the card is a cached hint, the modal is the source of truth).
 2. The modal shows the **price**, the **network**, and **who you're paying** — the on-chain `payTo` address, linked to a block explorer so you can verify the recipient before committing.
-3. Pick your wallet. The modal only offers wallets that match a network in the challenge's `accepts` and are actually detected in your browser; undetected ones render disabled with an "install" hint. Signed-in users with funded agents also see a **"Your agents"** group at the top — picking one skips the wallet popup entirely and pays from the agent's own USDC under its spend limits.
+3. Pick your wallet. The modal only offers wallets that match a network in the challenge's `accepts` and are actually detected in your browser; undetected ones render disabled with an "install" hint. Signed-in users with funded agents also see a **"Your agents"** group at the top; picking one skips the wallet popup entirely and pays from the agent's own USDC under its spend limits.
 4. Approve the payment in your wallet. Before prompting you, the modal does a fail-open balance pre-check — if it can positively read that your wallet is short, it shows an insufficient-funds state with the exact shortfall and an explorer link, instead of letting you sign a doomed transaction.
 5. The platform settles on-chain and retries the call. The card's receipt area fills in with the result and a link to the on-chain transaction.
 

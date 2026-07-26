@@ -8,7 +8,8 @@ files under `pages/` or `public/`.
 
 The cluster's spine is the **x402 pay-per-call** loop: hit a paid endpoint → get
 `402 Payment Required` with `paymentRequirements` → pay (server-held agent wallet,
-or the user's Phantom/MetaMask wallet via the shared `/x402.js` modal) → re-send the
+or the user's Phantom/MetaMask wallet, via the shared `/x402.js` modal, which also
+offers a signed-in user's own agents as server-side payers) → re-send the
 request with an `X-PAYMENT` header → facilitator verifies + settles on-chain →
 endpoint runs and returns the result. The "agent economy" demos wrap this loop in a
 choreographed two-agent narrative driven by Server-Sent Events.

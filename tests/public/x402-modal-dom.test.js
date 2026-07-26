@@ -158,7 +158,7 @@ describe('x402 payment modal — trust + a11y', () => {
 
 // ── Agent-wallet payment method ──────────────────────────────────────────────
 // A signed-in user's agents (each with a custodial Solana wallet) appear in the
-// picker and settle server-side via POST /api/x402-pay — no wallet popup. These
+// picker and settle server-side via POST /api/x402-pay with no wallet popup. These
 // tests fake the three session-bound endpoints (?agents=1, /api/csrf-token, the
 // SSE settle) and assert the picker, the funded/short gating, and that the
 // resolved envelope keeps the browser-path shape ({ ok, result, payment }).
@@ -180,7 +180,7 @@ function sseResponse(events) {
 	};
 }
 
-describe('x402 payment modal — agent wallet method', () => {
+describe('x402 payment modal: agent wallet method', () => {
 	const TX = 'AgentTxSig1111111111111111111111111111111111';
 	let agents;
 	let payPosts;
@@ -237,7 +237,7 @@ describe('x402 payment modal — agent wallet method', () => {
 		expect(funded.textContent).toContain('Scout');
 		expect(funded.textContent).toContain('5.00 USDC');
 
-		// 0.001 USDC cannot cover the 0.01 USDC price — offered but disabled.
+		// 0.001 USDC cannot cover the 0.01 USDC price: offered but disabled.
 		const broke = document.querySelector('[data-agent-wallet="agent-2"]');
 		expect(broke.disabled).toBe(true);
 		expect(broke.textContent).toContain('short');
