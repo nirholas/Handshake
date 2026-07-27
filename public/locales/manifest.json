@@ -82,18 +82,8 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "zh-TW",
-			"name": "繁體中文",
-			"dir": "ltr"
-		},
-		{
 			"code": "it",
 			"name": "Italiano",
-			"dir": "ltr"
-		},
-		{
-			"code": "pl",
-			"name": "Polski",
 			"dir": "ltr"
 		},
 		{
@@ -149,11 +139,6 @@
 		{
 			"code": "da",
 			"name": "Dansk",
-			"dir": "ltr"
-		},
-		{
-			"code": "no",
-			"name": "Norsk",
 			"dir": "ltr"
 		},
 		{
@@ -214,11 +199,6 @@
 		{
 			"code": "kn",
 			"name": "ಕನ್ನಡ",
-			"dir": "ltr"
-		},
-		{
-			"code": "ml",
-			"name": "മലയാളം",
 			"dir": "ltr"
 		},
 		{

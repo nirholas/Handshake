@@ -8211,7 +8211,7 @@
 		"shaping_persona_voice": "تشكيل الشخصية والصوت",
 		"share_the_reveal_a_shareable_agent_card": "<strong>شارك الكشف</strong> <span>بطاقة وكيل قابلة للمشاركة</span>",
 		"sign_in": "تسجيل الدخول",
-		"sign_in_to_claim_your_agent_and": "سجّل الدخول للمطالبة بوكيلك ومحفظته. يكتب التكوين إلى حسابك <b>.",
+		"sign_in_to_claim_your_agent_and": "سجّل الدخول للمطالبة بوكيلك ومحفظته. جينيسيس يسجل في حساب <b>your</b>.",
 		"skip_to_genesis": "تخطي إلى التكوين",
 		"spin_up_another_agent": "أنشئ وكيلًا آخر",
 		"start_from_a_public_avatar_forking_mints": "ابدأ من صورة رمزية عامة — النسخ يصك محفظة جديدة تملكها",
@@ -16877,7 +16877,7 @@
 		"subscribers": "المشتركين",
 		"top_edge": "أفضل ميزة",
 		"verified_publishers": "الناشرون المعتمدون",
-		"verified_traders_publish_their_live_entry_ex": "يقوم المتداولون المعتمدون بنشر إشارات دخول/خروج حية كـ مصادر مدفوعة. يدفع وكيلك <strong>لكل إشارة</strong> أو <strong>لكل فترة</strong> من USDC من محفظته الخاصة، ثم يعكس الصفقة تلقائيًا من خلال جدار الحماية + محرك MEV - كل إنفاق محمي، كل ملء مدقق. كل إشارة ترتبط بملء حقيقي على السلسلة<strong> وتراكم نتيجة محققة، لذا يتم ترتيب المصادر حسب <strong>الميزة المثبتة</strong>، وليس عدد المتابعين."
+		"verified_traders_publish_their_live_entry_ex": "المتداولون الموثقون ينشرون إشارات الدخول/الخروج المباشرة الخاصة بهم كخلاصات مدفوعة. يدفع وكيلك <strong>لكل إشارة</strong> أو <strong>لكل حقبة</strong> بـ USDC من محفظته الخاصة، ثم يعكس الصفقة تلقائيًا عبر جدار الحماية + محرك MEV — كل إنفاق محمي، وكل تنفيذ مدقق. ترتبط كل إشارة بـ <strong>تنفيذ حقيقي على السلسلة</strong> وتحقق نتيجة فعلية، لذا تُصنّف الخلاصات بناءً على <strong>أفضلية مثبتة</strong>، وليس بعدد المتابعين أبدًا."
 	},
 	"sitemap_index": {
 		"2500_new_3d_animations_coming_right_up": "<a href=\"/news/2057721370310775223\"> <span class=\"sm-title\">٢٥٠٠ رسوم متحركة ثلاثية الأبعاد جديدة قادمة قريبًا.</span> <span class=\"sm-path\">/news/2057721370310775223</span> <span class=\"sm-desc\">٢٥٠٠ رسوم متحركة ثلاثية الأبعاد جديدة قادمة قريبًا. وكيلك على وشك أن يمتلك شخصية أكثر بكثير. مكتبة رسوم متحركة كاملة لاستوديو الوضعيات — دورات المشي، ردود الفعل، التعبيرات، وكل ما بينهما. سيتم إطلاقها على three.ws/pose هذا الأسبوع.</span> </a>",
@@ -16960,7 +16960,7 @@
 		"characters_characters_discover_ai_characters": "<a href=\"/characters\"> <span class=\"sm-title\">الشخصيات</span> <span class=\"sm-path\">/characters</span> <span class=\"sm-desc\">اكتشف شخصيات الذكاء الاصطناعي على three.ws. دردش، تداول، وأنشئ.</span> </a>",
 		"chat_chat_talk_to_your_agent_voice": "<a href=\"/chat\"> <span class=\"sm-title\">الدردشة</span> <span class=\"sm-path\">/chat</span> <span class=\"sm-desc\">تحدث إلى وكيلك. صوت، نص، واستخدام الأدوات في واجهة واحدة.</span> </a>",
 		"check_out_our_pulsemcp_page_three_ws": "<a href=\"/news/2052791935585407403\"> <span class=\"sm-title\">اطلع على صفحة @PulseMCP الخاصة بنا — three.ws مدرج في دليل خادم MCP الرسمي.</span> <span class=\"sm-path\">/news/2052791935585407403</span> <span class=\"sm-desc\">اطلع على صفحة @PulseMCP الخاصة بنا — three.ws مدرج في دليل خادم MCP الرسمي. pulsemcp.com — المركز المجتمعي الرائد لمنظومة MCP. يمنح three.ws كلود وأي عميل MCP القدرة على إنشاء وكلاء ثلاثية الأبعاد، سك هوية على السلسلة، وإرفاق نقطة نهاية دفع x402...</span> </a>",
-		"claim_threews_sol_subdomain_threews_claim_cl": "<a href=\"/threews/claim\"> <span class=\"sm-title\">احجز نطاقك الفرعي threews.sol</span> <span class=\"sm-path\">/threews/claim</span> <span class=\"sm-desc\">احجز نطاقك الفرعي الخاص بك <name>.threews.sol واحصل على صفحة عرض شخصية قابلة للحل عبر Brave.</span> </a>",
+		"claim_threews_sol_subdomain_threews_claim_cl": "<a href=\"/threews/claim\"> <span class=\"sm-title\">احجز نطاقك الفرعي threews.sol</span> <span class=\"sm-path\">/threews/claim</span> <span class=\"sm-desc\">احجز نطاقك الفرعي الخاص بك &lt;name&gt;.threews.sol واحصل على صفحة عرض شخصية قابلة للحل بواسطة Brave.</span> </a>",
 		"claim_your_wallet_verified_pump_fun_track": "<a href=\"/claim-wallet\"> <span class=\"sm-title\">احجز محفظتك — سجل أداء pump.fun موثق</span> <span class=\"sm-path\">/claim-wallet</span> <span class=\"sm-desc\">الصق محفظتك Solana لترى سجل أدائك pump.fun القابل للإثبات — نسبة الفوز، نقاط الأموال الذكية، علامة السمعة، وتاريخ العملات. سجّل الدخول لحجزها كبطاقة المتداول الرسمية three.ws الخاصة بك.</span> </a>",
 		"clear_the_filter_or_press_k_for": "امسح الفلتر، أو اضغط <kbd>&#8984;K</kbd> للبحث الشامل &mdash; فهو يشمل الوكلاء، العملات، والمهارات أيضًا.",
 		"clip_director_every_trade_becomes_content_cl": "<a href=\"/clip-director\"> <span class=\"sm-title\">مدير المقاطع: كل صفقة تتحول إلى محتوى</span> <span class=\"sm-path\">/clip-director</span> <span class=\"sm-desc\">حوّل أي صفقة pump.fun حقيقية مغلقة لوكيل متداول إلى بطاقة قابلة للمشاركة مثالية لكل منصة (X، تليجرام، أو خلاصة التطبيق): جذب صادق، الرقم الحقيقي، رد فعل أفاتار، ورابط إثبات على السلسلة. كل من المكاسب والخسائر تحصل على بطاقة.</span> </a>",
@@ -17582,7 +17582,7 @@
 		"read_the_integration": "اقرأ التكامل",
 		"render": "Render <code>render_agent</code>",
 		"say_a_line_out_loud_with_emotional": "قل جملة بصوت عالٍ مع عاطفة — تحيات، سرد فعل، رد فعل عليك.",
-		"set_your_agent_id_a_uuid_or": "حدد <strong>Agent ID</strong> الخاص بك — UUID أو <code>@handle</code> الذي تنسخه من <a href=\"/dashboard\">لوحة التحكم الخاصة بك three.ws. يرتبط الصورة بهوية السلسلة هذه عند فتح اللوحة.",
+		"set_your_agent_id_a_uuid_or": "عيّن <strong>معرّف وكيلك</strong> — وهو UUID أو <code>@handle</code> الذي تنسخه من <a href=\"/dashboard\">لوحة تحكمك three.ws</a>. يرتبط الأفاتار بتلك الهوية على السلسلة عند فتح اللوحة.",
 		"skip_to_main_content": "انتقل إلى المحتوى الرئيسي",
 		"speak": "تحدث <code>speak</code>",
 		"speraxos_is_evm_native_and_settles_agent": "SperaxOS هو EVM-native ويقوم بتسوية مدفوعات الوكلاء عبر <strong>x402 على USDC على Base</strong> (<code>x402.sperax.io</code>) — نفس قاعدة x402 rail three.ws التي تعمل بالفعل. لوحة الصورة غير مرتبطة بسلسلة معينة: تقوم بعرض وتحريك بغض النظر عن السلسلة التي يتعامل معها وكيلك المرتبط.",
@@ -17939,8 +17939,8 @@
 		"support_best_effort_usually_within_a_few": "<span class=\"dot\"></span> الدعم · جهد أفضل، عادةً خلال بضعة أيام عمل",
 		"support_three_ws": "support@three.ws",
 		"the_more_of_this_you_give_us": "كلما زادت المعلومات التي تقدمها لنا مسبقًا، كلما أسرعنا في إعادة الإنتاج.",
-		"the_region_you_target_via_defaults_to": "المنطقة <b> التي تستهدفها عبر <code>WATSONX_URL</code> (تكون افتراضيًا <code>us-south</code>) ونص الخطأ الكامل <b>نص الخطأ الكامل</b>.",
-		"the_tool_you_called_or": "الأداة <b> التي استدعيتها — <code>ibm_granite_chat</code>، <code>ibm_granite_code</code>، <code>ibm_granite_embed</code>، <code>ibm_granite_analyze</code>، أو <code>ibm_granite_forecast</code>.",
+		"the_region_you_target_via_defaults_to": "الـ<b>region</b> المستهدفة عبر <code>WATSONX_URL</code> (الافتراضي: <code>us-south</code>) و<b>full error text</b>.",
+		"the_tool_you_called_or": "الأداة <b>التي استدعيتها</b>: <code>ibm_granite_chat</code>، <code>ibm_granite_code</code>، <code>ibm_granite_embed</code>، <code>ibm_granite_analyze</code>، أو <code>ibm_granite_forecast</code>.",
 		"three_ws": "three.ws",
 		"three_ws_2": "three.ws",
 		"three_ws_ibm_x402_mcp": "<span class=\"card-dot\" style=\"width:7px;height:7px;border-radius:50%;background:var(--brand-blue);box-shadow:0 0 10px var(--brand-blue)\"></span> @three-ws/ibm-x402-mcp",
@@ -17952,7 +17952,7 @@
 		"what_to_include_in_a_bug_report": "ماذا تتضمن في تقرير خطأ",
 		"x402_mcp_for_ibm_granite": "x402 MCP لـ IBM Granite",
 		"x402_tools_are_pay_per_call_in": "أدوات x402 تدفع لكل مكالمة في USDC",
-		"your_package_version_and_node_version_this": "إصدار حزمة <b> الخاص بك</b> وإصدار Node <b> (<code>node -v</code> — يحتاج هذا الخادم إلى Node ≥ 20)، بالإضافة إلى عميل MCP ونظام التشغيل الخاص بك."
+		"your_package_version_and_node_version_this": "إصدار <b>الحزمة</b> و<b>إصدار Node</b> الخاص بك (<code>node -v</code> — يتطلب الخادم Node إصدار 20 فما فوق)، بالإضافة إلى MCPالعميل ونظام التشغيل."
 	},
 	"swarms": {
 		"meta_description": "اجمع رأس المال مع وكلاء الذكاء الاصطناعي الآخرين في خزينة قابلة للتدقيق على السلسلة. يتداول السرب على أساس توافق الوزن بالسمعة ويوزع الأرباح بالتناسب على كل عضو.",
@@ -19372,7 +19372,7 @@
 		"paid_calls": "مكالمات مدفوعة",
 		"pause_resume_live_feed_p_title": "إيقاف / استئناف البث المباشر (p)",
 		"pause_the_live_feed_arialabel": "إيقاف البث المباشر",
-		"real_usdc_flowing_into_three_ws_s": "تدفق حقيقي من USDC إلى <strong>into</strong> نقاط three.ws المدفوعة الخاصة بـ x402 — في اللحظة التي تصل فيها كل تسوية على السلسلة. مرآة <a href=\"/pulse\">نبض المال</a>: ذلك البث يظهر ما تنفقه الوكلاء <em>؛ هذا يظهر ما تكسبه المنصة <em>. كل صف حقيقي وقابل للتحقق من قبل المستكشف.",
+		"real_usdc_flowing_into_three_ws_s": "USDC حقيقي يتدفق <strong>إلى</strong> نقاط نهاية x402 المدفوعة الخاصة بـ three.ws — لحظة وصول كل تسوية إلى السلسلة. مرآة لـ <a href=\"/pulse\">Money Pulse</a>: ذاك الفيد يظهر ما <em>ينفقه</em> الوكلاء؛ وهذا يظهر ما <em>تكسبه</em> المنصة. كل صف حقيقي وقابل للتحقق عبر المستكشف.",
 		"run_rate_hr": "معدل التشغيل · /ساعة",
 		"search_p_pause_s_sound_e_export": "<kbd>/</kbd> بحث · <kbd>p</kbd> إيقاف · <kbd>s</kbd> صوت · <kbd>e</kbd> تصدير · <kbd>1–4</kbd> نافذة",
 		"settled_usdc": "تم التسوية USDC",

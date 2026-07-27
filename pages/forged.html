@@ -4,24 +4,24 @@
 		<meta charset="utf-8" />
 		<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Agent-Forged Gallery · three.ws</title>
+		<title data-i18n="forged.meta_title">Agent-Forged Gallery · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction."
-		/>
+		 data-i18n-attr="content:forged.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/forged" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent-Forged Gallery · three.ws" />
-		<meta property="og:description" content="3D props bought by autonomous AI agents with real USDC over x402, each with its on-chain receipt." />
+		<meta property="og:title" content="Agent-Forged Gallery · three.ws"  data-i18n-attr="content:forged.meta_og_title"/>
+		<meta property="og:description" content="3D props bought by autonomous AI agents with real USDC over x402, each with its on-chain receipt."  data-i18n-attr="content:forged.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/forged" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Agent-Forged+Gallery&amp;d=3D+props+bought+by+autonomous+AI+agents+with+real+USDC+over+x402.+Every+asset+carries+its+on-chain+receipt%3A+the+paying+agent+wallet%2C+the+price%2C+and+the+Solana&amp;p=%2Fforged" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Agent-Forged Gallery · three.ws" />
-		<meta name="twitter:description" content="3D props bought by autonomous AI agents with real USDC over x402." />
+		<meta name="twitter:title" content="Agent-Forged Gallery · three.ws"  data-i18n-attr="content:forged.meta_twitter_title"/>
+		<meta name="twitter:description" content="3D props bought by autonomous AI agents with real USDC over x402."  data-i18n-attr="content:forged.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Agent-Forged+Gallery&amp;d=3D+props+bought+by+autonomous+AI+agents+with+real+USDC+over+x402.+Every+asset+carries+its+on-chain+receipt%3A+the+paying+agent+wallet%2C+the+price%2C+and+the+Solana&amp;p=%2Fforged" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -183,10 +183,10 @@
 			<section class="ch-hero">
 				<div class="ch-hero-chip">
 					<span class="ch-hero-dot" aria-hidden="true"></span>
-					<span>Agent-Forged Gallery</span>
+					<span data-i18n="forged.agent_forged_gallery">Agent-Forged Gallery</span>
 				</div>
-				<h1>3D props bought by AI agents, receipts included</h1>
-				<p>
+				<h1 data-i18n="forged.3d_props_bought_by_ai_agents_receipts">3D props bought by AI agents, receipts included</h1>
+				<p data-i18n="forged.every_asset_here_was_purchased_by_one">
 					Every asset here was purchased by one of the platform's autonomous agents with real USDC over
 					the x402 payment protocol: the agent paid the Forge, the Forge generated the prop, and the
 					settlement landed on Solana. Each card shows the price paid, the paying agent wallet, and a
@@ -194,9 +194,9 @@
 					public asset library, one paid generation at a time.
 				</p>
 				<div class="ch-hero-actions">
-					<a href="/forge" class="ch-hbtn ch-hbtn--primary">Forge your own</a>
-					<a href="/objects" class="ch-hbtn ch-hbtn--secondary">Object Library</a>
-					<a href="/x402" class="ch-hbtn ch-hbtn--secondary">About x402</a>
+					<a href="/forge" class="ch-hbtn ch-hbtn--primary" data-i18n="forged.forge_your_own">Forge your own</a>
+					<a href="/objects" class="ch-hbtn ch-hbtn--secondary" data-i18n="forged.object_library">Object Library</a>
+					<a href="/x402" class="ch-hbtn ch-hbtn--secondary" data-i18n="forged.about_x402">About x402</a>
 					<span class="ch-hero-stats" data-role="hero-stats" aria-live="polite"></span>
 				</div>
 			</section>
@@ -208,10 +208,10 @@
 					<kbd class="ch-search-kbd" aria-hidden="true">/</kbd>
 				</div>
 				<select class="ch-sort" data-role="sort" aria-label="Sort props">
-					<option value="newest">Newest first</option>
-					<option value="oldest">Oldest first</option>
-					<option value="priciest">Highest price</option>
-					<option value="novel">Most novel</option>
+					<option value="newest" data-i18n="forged.newest_first">Newest first</option>
+					<option value="oldest" data-i18n="forged.oldest_first">Oldest first</option>
+					<option value="priciest" data-i18n="forged.highest_price">Highest price</option>
+					<option value="novel" data-i18n="forged.most_novel">Most novel</option>
 				</select>
 				<span class="ch-count" data-role="count" aria-live="polite"></span>
 			</div>
@@ -228,27 +228,27 @@
 
 			<div data-role="empty" class="ch-state" hidden>
 				<div class="ch-state-icon">🤖</div>
-				<h2>The agents haven't forged anything yet</h2>
-				<p>
+				<h2 data-i18n="forged.the_agents_haven_t_forged_anything_yet">The agents haven't forged anything yet</h2>
+				<p data-i18n="forged.the_autonomous_loop_pays_the_forge_for">
 					The autonomous loop pays the Forge for a new prop every hour, and finished assets appear here
 					with their on-chain receipts. Check back shortly, or generate your own 3D model right now on
 					the free lane.
 				</p>
-				<a href="/forge" class="ch-hbtn ch-hbtn--primary">Generate a 3D model</a>
+				<a href="/forge" class="ch-hbtn ch-hbtn--primary" data-i18n="forged.generate_a_3d_model">Generate a 3D model</a>
 			</div>
 
 			<div data-role="empty-search" class="ch-state" hidden>
 				<div class="ch-state-icon">🔍</div>
-				<h2>No matches</h2>
-				<p>No props match your search.</p>
-				<button class="ch-hbtn ch-hbtn--secondary" data-role="clear-search">Clear search</button>
+				<h2 data-i18n="forged.no_matches">No matches</h2>
+				<p data-i18n="forged.no_props_match_your_search">No props match your search.</p>
+				<button class="ch-hbtn ch-hbtn--secondary" data-role="clear-search" data-i18n="forged.clear_search">Clear search</button>
 			</div>
 
 			<div data-role="error" class="ch-state" hidden>
 				<div class="ch-state-icon">⚠️</div>
-				<h2>Couldn't load the gallery</h2>
-				<p data-role="error-msg">Something went wrong loading the agent-forged gallery.</p>
-				<button class="ch-hbtn ch-hbtn--secondary" data-role="retry">Try again</button>
+				<h2 data-i18n="forged.couldn_t_load_the_gallery">Couldn't load the gallery</h2>
+				<p data-role="error-msg" data-i18n="forged.something_went_wrong_loading_the_agent_forge">Something went wrong loading the agent-forged gallery.</p>
+				<button class="ch-hbtn ch-hbtn--secondary" data-role="retry" data-i18n="forged.try_again">Try again</button>
 			</div>
 		</main>
 

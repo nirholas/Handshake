@@ -3,8 +3,8 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Build a self-correcting 3D collectible set with three.ws text-to-3D, function calling, and vision</title>
-<meta name="description" content="An executable tutorial: an AI art director designs a themed 3D prop set with parallel function calls to the free three.ws text-to-3D API, inspects each render with vision, and rebuilds what fails. Interactive galleries inline."><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title data-i18n="cookbook_index.meta_title">Build a self-correcting 3D collectible set with three.ws text-to-3D, function calling, and vision</title>
+<meta name="description" content="An executable tutorial: an AI art director designs a themed 3D prop set with parallel function calls to the free three.ws text-to-3D API, inspects each render with vision, and rebuilds what fails. Interactive galleries inline." data-i18n-attr="content:cookbook_index.meta_description"><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7799,8 +7799,8 @@ a.anchor-link {
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="Cookbook: self-correcting 3D with function calling · three.ws">
-	<meta property="og:description" content="An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.">
+	<meta property="og:title" content="Cookbook: self-correcting 3D with function calling · three.ws" data-i18n-attr="content:cookbook_index.meta_og_title">
+	<meta property="og:description" content="An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it." data-i18n-attr="content:cookbook_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/cookbook">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Cookbook%3A+self-correcting+3D+with+function+calling&amp;d=An+executable+tutorial%3A+an+AI+art+director+turns+a+one-line+brief+into+a+themed+set+of+real+3D+props+with+parallel+function+calls%2C+inspects+each+render+with&amp;p=%2Fcookbook">
 	<meta property="og:image:width" content="1200">
@@ -7809,20 +7809,20 @@ a.anchor-link {
 	<meta property="og:image:alt" content="Cookbook: self-correcting 3D with function calling — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Cookbook: self-correcting 3D with function calling · three.ws">
-	<meta name="twitter:description" content="An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.">
+	<meta name="twitter:title" content="Cookbook: self-correcting 3D with function calling · three.ws" data-i18n-attr="content:cookbook_index.meta_twitter_title">
+	<meta name="twitter:description" content="An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it." data-i18n-attr="content:cookbook_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Cookbook%3A+self-correcting+3D+with+function+calling&amp;d=An+executable+tutorial%3A+an+AI+art+director+turns+a+one-line+brief+into+a+themed+set+of+real+3D+props+with+parallel+function+calls%2C+inspects+each+render+with&amp;p=%2Fcookbook">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Cookbook: self-correcting 3D with function calling","description":"An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.","url":"https://three.ws/cookbook","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Cookbook%3A+self-correcting+3D+with+function+calling&d=An+executable+tutorial%3A+an+AI+art+director+turns+a+one-line+brief+into+a+themed+set+of+real+3D+props+with+parallel+function+calls%2C+inspects+each+render+with&p=%2Fcookbook"}]}</script>
 </head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <div id="tws-cookbook-bar" style="position:sticky;top:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;background:#0b0d12;border-bottom:1px solid #232838;font-family:ui-sans-serif,-apple-system,'Segoe UI',Roboto,sans-serif;">
   <div style="display:flex;align-items:center;gap:14px;min-width:0;">
-    <a href="/" style="color:#e7e9f0;text-decoration:none;font-weight:650;font-size:14px;flex:none;">three.ws</a>
-    <span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8b7bf7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">// executable tutorial &middot; function calling &times; text-to-3D</span>
+    <a href="/" style="color:#e7e9f0;text-decoration:none;font-weight:650;font-size:14px;flex:none;" data-i18n="cookbook_index.three_ws">three.ws</a>
+    <span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8b7bf7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-i18n="cookbook_index.executable_tutorial_function_calling_text_to">// executable tutorial &middot; function calling &times; text-to-3D</span>
   </div>
   <div style="display:flex;gap:8px;flex:none;">
-    <a href="/cookbook/text_to_3d_with_function_calling.ipynb" download style="font-size:12px;color:#8b93a7;text-decoration:none;border:1px solid #232838;padding:4px 12px;border-radius:999px;">download .ipynb</a>
-    <a href="/api/3d" style="font-size:12px;color:#8b93a7;text-decoration:none;border:1px solid #232838;padding:4px 12px;border-radius:999px;">3D API</a>
+    <a href="/cookbook/text_to_3d_with_function_calling.ipynb" download style="font-size:12px;color:#8b93a7;text-decoration:none;border:1px solid #232838;padding:4px 12px;border-radius:999px;" data-i18n="cookbook_index.download_ipynb">download .ipynb</a>
+    <a href="/api/3d" style="font-size:12px;color:#8b93a7;text-decoration:none;border:1px solid #232838;padding:4px 12px;border-radius:999px;" data-i18n="cookbook_index.3d_api">3D API</a>
   </div>
 </div>
 
@@ -7833,89 +7833,89 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Build-a-self-correcting-3D-collectible-set-with-three.ws-text-to-3D,-function-calling,-and-vision">Build a self-correcting 3D collectible set with three.ws text-to-3D, function calling, and vision<a class="anchor-link" href="#Build-a-self-correcting-3D-collectible-set-with-three.ws-text-to-3D,-function-calling,-and-vision">¶</a></h1><p>Language models make excellent <em>art directors</em> and hopeless <em>sculptors</em>. A model
+<h1 id="Build-a-self-correcting-3D-collectible-set-with-three.ws-text-to-3D,-function-calling,-and-vision" data-i18n-html="cookbook_index.build_a_self_correcting_3d_collectible_set">Build a self-correcting 3D collectible set with three.ws text-to-3D, function calling, and vision<a class="anchor-link" href="#Build-a-self-correcting-3D-collectible-set-with-three.ws-text-to-3D,-function-calling,-and-vision">¶</a></h1><p data-i18n-html="cookbook_index.language_models_make_excellent_art_directors">Language models make excellent <em>art directors</em> and hopeless <em>sculptors</em>. A model
 can imagine a coherent set of props for a scene, but it cannot produce geometry.
 Function calling fixes that: give the model a text-to-3D tool and it can build
 what it imagines.</p>
-<p>But generative tools miss. Once in a while a prop comes back as a formless blob,
+<p data-i18n-html="cookbook_index.but_generative_tools_miss_once_in_a">But generative tools miss. Once in a while a prop comes back as a formless blob,
 or the one feature that mattered is missing. So this notebook builds the whole
 loop, not just the happy path. You hand an <strong>AI art director</strong> a one-line brief
 ("a wizard's study", "a windowsill of houseplants") and the model:</p>
 <ol>
-<li>designs a matching set of individual props,</li>
-<li>calls a real text-to-3D API once per prop <strong>in parallel</strong>,</li>
-<li><strong>inspects a rendered image of every model it built</strong>, grading each one
+<li data-i18n="cookbook_index.designs_a_matching_set_of_individual_props">designs a matching set of individual props,</li>
+<li data-i18n-html="cookbook_index.calls_a_real_text_to_3d_api">calls a real text-to-3D API once per prop <strong>in parallel</strong>,</li>
+<li data-i18n-html="cookbook_index.inspects_a_rendered_image_of_every_model"><strong>inspects a rendered image of every model it built</strong>, grading each one
 against the brief with a structured verdict,</li>
-<li>regenerates any prop that failed, using the critic's own revised prompt,</li>
+<li data-i18n="cookbook_index.regenerates_any_prop_that_failed_using_the">regenerates any prop that failed, using the critic's own revised prompt,</li>
 </ol>
-<p>and the results render as an interactive 3D gallery <strong>inside the notebook</strong>:
+<p data-i18n-html="cookbook_index.and_the_results_render_as_an_interactive">and the results render as an interactive 3D gallery <strong>inside the notebook</strong>:
 orbit, zoom, and launch each model in AR.</p>
-<p>Most function-calling examples return text or JSON. This one returns real,
+<p data-i18n="cookbook_index.most_function_calling_examples_return_text_o">Most function-calling examples return text or JSON. This one returns real,
 downloadable 3D objects, and then turns the model's vision on its own output.
 That generate, render, inspect, repair loop is the shape you need any time a
 tool's output is generative and can silently miss: image generation, chart
 rendering, UI screenshots, 3D.</p>
 <p><img alt="Pipeline architecture: a one-line brief goes to a gpt-5-mini art director, which issues parallel function calls to the keyless three.ws text-to-3D API; each GLB is rendered to a PNG and inspected by a vision critic returning a structured verdict; failed props are rebuilt once from the critic's revised prompt; passing props render in an interactive 3D gallery" src="/cookbook/pipeline.svg"/></p>
-<p>The committed run below turns the one-line brief "chunky potted houseplants
+<p data-i18n="cookbook_index.the_committed_run_below_turns_the_one">The committed run below turns the one-line brief "chunky potted houseplants
 for a sunny windowsill" into this set. Three of the six props failed vision QA
 and were each rebuilt once from the critic's own revised prompts; five of six
 pass after the bounded repair:</p>
 <p><img alt="The finished houseplant set after vision QA: six potted plants generated from one brief; the three that failed QA (golden barrel cactus, monstera sapling, trailing pothos) were each rebuilt once from the critic's revised prompts" src="/cookbook/houseplant-set.png"/></p>
-<h2 id="What-you'll-learn">What you'll learn<a class="anchor-link" href="#What-you'll-learn">¶</a></h2><ol>
-<li>Wrap an external REST API as a <strong>function tool</strong> and describe it so the model
+<h2 id="What-you'll-learn" data-i18n-html="cookbook_index.what_you_ll_learn">What you'll learn<a class="anchor-link" href="#What-you'll-learn">¶</a></h2><ol>
+<li data-i18n-html="cookbook_index.wrap_an_external_rest_api_as_a">Wrap an external REST API as a <strong>function tool</strong> and describe it so the model
 produces clean arguments.</li>
-<li>Run the <strong>Responses API tool-calling loop</strong>, handling <strong>multiple parallel
+<li data-i18n-html="cookbook_index.run_the_responses_api_tool_calling_loop">Run the <strong>Responses API tool-calling loop</strong>, handling <strong>multiple parallel
 <code>function_call</code> items</strong> in a single turn.</li>
-<li>Close the loop with <strong>vision QA</strong>: render each tool result to an image and
+<li data-i18n-html="cookbook_index.close_the_loop_with_vision_qa_render">Close the loop with <strong>vision QA</strong>: render each tool result to an image and
 have the model grade its own work into a <strong>strict structured-output schema</strong>.</li>
-<li>Run <strong>bounded self-repair</strong>: turn a failed grade into a better generation
+<li data-i18n-html="cookbook_index.run_bounded_self_repair_turn_a_failed">Run <strong>bounded self-repair</strong>: turn a failed grade into a better generation
 prompt, exactly once.</li>
-<li>Turn raw tool output into a rich, interactive result (a live
+<li data-i18n-html="cookbook_index.turn_raw_tool_output_into_a_rich">Turn raw tool output into a rich, interactive result (a live
 <a href="https://modelviewer.dev/"><code>&lt;model-viewer&gt;</code></a> gallery).</li>
 </ol>
-<h2 id="The-tools">The tools<a class="anchor-link" href="#The-tools">¶</a></h2><p>The 3D tool is the free, keyless <a href="https://three.ws">three.ws</a> text-to-3D
+<h2 id="The-tools" data-i18n-html="cookbook_index.the_tools">The tools<a class="anchor-link" href="#The-tools">¶</a></h2><p data-i18n-html="cookbook_index.the_3d_tool_is_the_free_keyless">The 3D tool is the free, keyless <a href="https://three.ws">three.ws</a> text-to-3D
 endpoint. It runs an open text-to-3D model (Microsoft
 <a href="https://github.com/microsoft/TRELLIS">TRELLIS</a> on NVIDIA NIM) and returns a
 standard <a href="https://www.khronos.org/gltf/">glTF 2.0</a> <code>.glb</code>. The QA step uses a
 second keyless endpoint from the same API, which renders any GLB to a PNG.
 Neither needs an account or API key, so both are free to run.</p>
-<h2 id="Prerequisites">Prerequisites<a class="anchor-link" href="#Prerequisites">¶</a></h2><table>
+<h2 id="Prerequisites" data-i18n-html="cookbook_index.prerequisites">Prerequisites<a class="anchor-link" href="#Prerequisites">¶</a></h2><table>
 <thead>
 <tr>
-<th>You need</th>
-<th>Used for</th>
-<th>Notes</th>
+<th data-i18n="cookbook_index.you_need">You need</th>
+<th data-i18n="cookbook_index.used_for">Used for</th>
+<th data-i18n="cookbook_index.notes">Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Python 3.10+</td>
-<td>running the notebook</td>
-<td>the tool wrappers use PEP 604 union annotations (added in 3.10)</td>
+<td data-i18n="cookbook_index.python_3_10">Python 3.10+</td>
+<td data-i18n="cookbook_index.running_the_notebook">running the notebook</td>
+<td data-i18n="cookbook_index.the_tool_wrappers_use_pep_604_union">the tool wrappers use PEP 604 union annotations (added in 3.10)</td>
 </tr>
 <tr>
 <td><code>OPENAI_API_KEY</code></td>
-<td>the art director's reasoning and vision QA</td>
-<td>a full run costs a few cents with <code>gpt-5-mini</code></td>
+<td data-i18n="cookbook_index.the_art_director_s_reasoning_and_vision">the art director's reasoning and vision QA</td>
+<td data-i18n-html="cookbook_index.a_full_run_costs_a_few_cents">a full run costs a few cents with <code>gpt-5-mini</code></td>
 </tr>
 <tr>
 <td><code>openai</code>, <code>requests</code>, <code>pillow</code></td>
-<td>API clients and PNG contact sheets</td>
-<td>installed by the first cell</td>
+<td data-i18n="cookbook_index.api_clients_and_png_contact_sheets">API clients and PNG contact sheets</td>
+<td data-i18n="cookbook_index.installed_by_the_first_cell">installed by the first cell</td>
 </tr>
 <tr>
-<td>An HTML-rendering environment</td>
-<td>the interactive 3D galleries (orbit, zoom, AR)</td>
-<td>Jupyter, JupyterLab, VS Code, or Colab; static views like GitHub get a baked PNG contact sheet beneath each gallery</td>
+<td data-i18n="cookbook_index.an_html_rendering_environment">An HTML-rendering environment</td>
+<td data-i18n="cookbook_index.the_interactive_3d_galleries_orbit_zoom_ar">the interactive 3D galleries (orbit, zoom, AR)</td>
+<td data-i18n="cookbook_index.jupyter_jupyterlab_vs_code_or_colab_static">Jupyter, JupyterLab, VS Code, or Colab; static views like GitHub get a baked PNG contact sheet beneath each gallery</td>
 </tr>
 <tr>
-<td>A three.ws account</td>
-<td>nothing</td>
-<td>both 3D endpoints are keyless and free; there is nothing to sign up for</td>
+<td data-i18n="cookbook_index.a_three_ws_account">A three.ws account</td>
+<td data-i18n="cookbook_index.nothing">nothing</td>
+<td data-i18n="cookbook_index.both_3d_endpoints_are_keyless_and_free">both 3D endpoints are keyless and free; there is nothing to sign up for</td>
 </tr>
 </tbody>
 </table>
-<p><strong>The notebook ships fully executed, and live calls are opt-in.</strong> Every result
+<p><strong data-i18n="cookbook_index.the_notebook_ships_fully_executed_and_live">The notebook ships fully executed, and live calls are opt-in.</strong> Every result
 below is real committed output from a live run, readable without executing
 anything. The <code>RUN_LIVE</code> flag in the Setup cell (default <code>False</code>) gates every
 cell that calls an external service, so a plain Run All makes no network calls
@@ -7934,7 +7934,7 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Setup">Setup<a class="anchor-link" href="#Setup">¶</a></h2>
+<h2 id="Setup" data-i18n-html="cookbook_index.setup">Setup<a class="anchor-link" href="#Setup">¶</a></h2>
 </div>
 </div>
 </div>
@@ -8041,13 +8041,13 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1.-A-tool-that-makes-real-3D">1. A tool that makes real 3D<a class="anchor-link" href="#1.-A-tool-that-makes-real-3D">¶</a></h2><p>three.ws exposes a small, keyless endpoint that turns a prompt into a textured
+<h2 id="1.-A-tool-that-makes-real-3D" data-i18n-html="cookbook_index.1_a_tool_that_makes_real_3d">1. A tool that makes real 3D<a class="anchor-link" href="#1.-A-tool-that-makes-real-3D">¶</a></h2><p data-i18n-html="cookbook_index.three_ws_exposes_a_small_keyless_endpoint">three.ws exposes a small, keyless endpoint that turns a prompt into a textured
 <code>.glb</code>:</p>
 <ul>
-<li><strong>Submit:</strong> <code>POST https://three.ws/api/3d/generate</code> with <code>{"prompt": "..."}</code></li>
-<li><strong>Poll:</strong> <code>GET https://three.ws/api/3d/generate?job=&lt;id&gt;</code> while <code>status</code> is <code>pending</code></li>
+<li data-i18n-html="cookbook_index.submit_with"><strong>Submit:</strong> <code>POST https://three.ws/api/3d/generate</code> with <code>{"prompt": "..."}</code></li>
+<li data-i18n-html="cookbook_index.poll_while_is"><strong>Poll:</strong> <code>GET https://three.ws/api/3d/generate?job=&lt;id&gt;</code> while <code>status</code> is <code>pending</code></li>
 </ul>
-<p>Generation usually finishes inside the first request and returns
+<p data-i18n-html="cookbook_index.generation_usually_finishes_inside_the_first">Generation usually finishes inside the first request and returns
 <code>"status": "done"</code> directly; the poll loop only runs when the free lane is busy.
 A finished response looks like this:</p>
 <div class="highlight"><pre><span></span><span class="p">{</span>
@@ -8059,10 +8059,10 @@ A finished response looks like this:</p>
 <span class="w">  </span><span class="nt">"free"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
 <span class="p">}</span>
 </pre></div>
-<p>The free lane is the <em>draft</em> tier: one subject, draft-fidelity geometry, no
+<p data-i18n-html="cookbook_index.the_free_lane_is_the_draft_tier">The free lane is the <em>draft</em> tier: one subject, draft-fidelity geometry, no
 rigging. It has a generous per-IP rate limit protecting a shared GPU allocation;
 over the limit it returns <code>429</code> with a <code>Retry-After</code> header.</p>
-<p>The wrapper below submits, polls if needed, retries transient failures, and
+<p data-i18n-html="cookbook_index.the_wrapper_below_submits_polls_if_needed">The wrapper below submits, polls if needed, retries transient failures, and
 backs off for the lane's <code>Retry-After</code> when it hits the rate limit (capped at
 two minutes, with a 15-second default when the header is absent), so a busy
 moment slows a batch instead of failing it. When the lane finishes a job
@@ -8193,14 +8193,14 @@ function the model will call, no mocking.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="2.-A-gallery-to-show-it-off">2. A gallery to show it off<a class="anchor-link" href="#2.-A-gallery-to-show-it-off">¶</a></h2><p>A <code>.glb</code> is not much fun as a URL in a print statement. The helper below renders
+<h2 id="2.-A-gallery-to-show-it-off" data-i18n-html="cookbook_index.2_a_gallery_to_show_it_off">2. A gallery to show it off<a class="anchor-link" href="#2.-A-gallery-to-show-it-off">¶</a></h2><p data-i18n-html="cookbook_index.a_is_not_much_fun_as_a">A <code>.glb</code> is not much fun as a URL in a print statement. The helper below renders
 any list of generations as an interactive grid using
 <a href="https://modelviewer.dev/"><code>&lt;model-viewer&gt;</code></a>, the open web component for glTF.
 Each card orbits on its own and links out to the full viewer and to AR.</p>
-<p>Hand it the dicts <code>generate_3d_model</code> returns and it renders the grid inline.
+<p data-i18n-html="cookbook_index.hand_it_the_dicts_returns_and_it">Hand it the dicts <code>generate_3d_model</code> returns and it renders the grid inline.
 It also handles the empty case, so it is safe to call even if every generation
 in a batch failed.</p>
-<p>One catch: <code>&lt;model-viewer&gt;</code> needs a live <code>&lt;script&gt;</code> tag, and static notebook
+<p data-i18n-html="cookbook_index.one_catch_needs_a_live_tag_and">One catch: <code>&lt;model-viewer&gt;</code> needs a live <code>&lt;script&gt;</code> tag, and static notebook
 views (GitHub, the cookbook site) strip scripts. So the helper also fetches one
 static server-side render per model, from a second keyless endpoint on the same
 API that we will meet properly in the QA section, and stitches them into a
@@ -8349,7 +8349,7 @@ grid; static views still see the models.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3.-The-payoff,-by-hand">3. The payoff, by hand<a class="anchor-link" href="#3.-The-payoff,-by-hand">¶</a></h2><p>Before we bring in the model, let's run the pipeline manually to confirm the
+<h2 id="3.-The-payoff,-by-hand" data-i18n-html="cookbook_index.3_the_payoff_by_hand">3. The payoff, by hand<a class="anchor-link" href="#3.-The-payoff,-by-hand">¶</a></h2><p data-i18n-html="cookbook_index.before_we_bring_in_the_model_let">Before we bring in the model, let's run the pipeline manually to confirm the
 parts work: pick a themed set of props, generate them <strong>in parallel</strong>, and
 render the gallery. <code>safe_generate</code> isolates each prop so one failure never sinks
 the batch. Every model below was generated live by this cell.</p>
@@ -8440,34 +8440,34 @@ the batch. Every model below was generated live by this cell.</p>
 </style>
 <script src="https://unpkg.com/@google/model-viewer@^3.5.0/dist/model-viewer.min.js" type="module"></script>
 <div class="head">
-<span class="eyebrow">// three.ws × function calling</span>
-<h3>A wizard's study</h3><p class="sub">Four props, one sentence each, generated on the free three.ws draft lane and rendered inline. Drag to orbit; tap AR on a phone.</p>
+<span class="eyebrow" data-i18n="cookbook_index.three_ws_function_calling">// three.ws × function calling</span>
+<h3 data-i18n="cookbook_index.a_wizard_s_study">A wizard's study</h3><p class="sub" data-i18n="cookbook_index.four_props_one_sentence_each_generated_on">Four props, one sentence each, generated on the free three.ws draft lane and rendered inline. Drag to orbit; tap AR on a phone.</p>
 </div>
 <div class="grid">
 <figure>
 <model-viewer alt="Candelabra" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fbdb5072f-0cea-4a78-b6fe-178b13901283.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.candelabra_openar">
 <span class="name">Candelabra</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fbdb5072f-0cea-4a78-b6fe-178b13901283.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fbdb5072f-0cea-4a78-b6fe-178b13901283.glb&amp;title=a%20tarnished%20bronze%20candelabra%20with%20three%20twisted%20arms%20and%20melted%20white%20candles" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Telescope" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F8561bcec-0132-451c-9612-303c05069a2f.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.telescope_openar">
 <span class="name">Telescope</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F8561bcec-0132-451c-9612-303c05069a2f.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F8561bcec-0132-451c-9612-303c05069a2f.glb&amp;title=a%20brass%20spyglass%20telescope%20on%20a%20mahogany%20tripod" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Scale" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fb4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.scale_openar">
 <span class="name">Scale</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fb4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fb4fe7d49-fe8a-41b0-91cb-d2713ca71988.glb&amp;title=an%20antique%20brass%20balance%20scale%20with%20two%20chained%20pans" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Book stack" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.book_stack_openar">
 <span class="name">Book stack</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1af8831c-b92b-4fe5-a0c5-4c8052d9ba5d.glb&amp;title=a%20stack%20of%20three%20old%20leather%20books%20with%20gilded%20spines" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
@@ -8491,11 +8491,11 @@ the batch. Every model below was generated live by this cell.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="4.-Let-the-model-art-direct">4. Let the model art-direct<a class="anchor-link" href="#4.-Let-the-model-art-direct">¶</a></h2><p>Now we hand the wheel to the model. We describe <code>generate_3d_model</code> as a function
+<h2 id="4.-Let-the-model-art-direct" data-i18n-html="cookbook_index.4_let_the_model_art_direct">4. Let the model art-direct<a class="anchor-link" href="#4.-Let-the-model-art-direct">¶</a></h2><p data-i18n-html="cookbook_index.now_we_hand_the_wheel_to_the">Now we hand the wheel to the model. We describe <code>generate_3d_model</code> as a function
 tool, give the model a brief, and let it decide <em>which</em> props make a coherent set
 and call the tool for each one. The prompt-writing we did by hand becomes the
 model's job.</p>
-<p>The tool takes two fields: a short <code>name</code> for the gallery label and a <code>prompt</code>
+<p data-i18n-html="cookbook_index.the_tool_takes_two_fields_a_short">The tool takes two fields: a short <code>name</code> for the gallery label and a <code>prompt</code>
 that must be a single, clear subject (the draft lane models one subject best).</p>
 </div>
 </div>
@@ -8548,23 +8548,23 @@ that must be a single, clear subject (the draft lane models one subject best).</
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="How-the-loop-works">How the loop works<a class="anchor-link" href="#How-the-loop-works">¶</a></h3><p>The loop is the standard Responses API tool-calling pattern, with one upgrade:
+<h3 id="How-the-loop-works" data-i18n-html="cookbook_index.how_the_loop_works">How the loop works<a class="anchor-link" href="#How-the-loop-works">¶</a></h3><p data-i18n-html="cookbook_index.the_loop_is_the_standard_responses_api">The loop is the standard Responses API tool-calling pattern, with one upgrade:
 the model emits <strong>several</strong> <code>function_call</code> items in a single turn (one per
 prop), so we run them concurrently.</p>
 <ol>
-<li>Send the conversation plus the tool definitions.</li>
-<li>Append the model's entire <code>output</code> to the conversation. Reasoning models
+<li data-i18n="cookbook_index.send_the_conversation_plus_the_tool_definiti">Send the conversation plus the tool definitions.</li>
+<li data-i18n-html="cookbook_index.append_the_model_s_entire_to_the">Append the model's entire <code>output</code> to the conversation. Reasoning models
 pair each <code>function_call</code> with a <code>reasoning</code> item, and the API rejects a
 follow-up turn that has one without the other, so append everything rather
 than cherry-picking the calls.</li>
-<li>For every <code>function_call</code> the model returned this turn, run the real
+<li data-i18n-html="cookbook_index.for_every_the_model_returned_this_turn">For every <code>function_call</code> the model returned this turn, run the real
 function (all of them in parallel) and append a <code>function_call_output</code> for
 each.</li>
-<li>Send the updated conversation back so the model can react, call more tools,
+<li data-i18n="cookbook_index.send_the_updated_conversation_back_so_the">Send the updated conversation back so the model can react, call more tools,
 or write its final summary.</li>
-<li>Repeat until the model stops calling tools.</li>
+<li data-i18n="cookbook_index.repeat_until_the_model_stops_calling_tools">Repeat until the model stops calling tools.</li>
 </ol>
-<p>Each tool call is wrapped so that a single failed generation reports its error
+<p data-i18n="cookbook_index.each_tool_call_is_wrapped_so_that">Each tool call is wrapped so that a single failed generation reports its error
 back to the model instead of crashing the run.</p>
 </div>
 </div>
@@ -8645,7 +8645,7 @@ back to the model instead of crashing the run.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Give it a brief and watch it work. The model invents the prop list, writes a
+<p data-i18n-html="cookbook_index.give_it_a_brief_and_watch_it">Give it a brief and watch it work. The model invents the prop list, writes a
 clean prompt for each, and the tool turns every one into real geometry. Try your
 own brief by editing <code>WINDOWSILL_BRIEF</code> at the top of the next cell (keep
 <code>THEME</code> matching):</p>
@@ -8757,48 +8757,48 @@ If you want:
 </style>
 <script src="https://unpkg.com/@google/model-viewer@^3.5.0/dist/model-viewer.min.js" type="module"></script>
 <div class="head">
-<span class="eyebrow">// three.ws × function calling</span>
-<h3>A windowsill of houseplants</h3><p class="sub">Designed and built by the model from a single-line brief.</p>
+<span class="eyebrow" data-i18n="cookbook_index.three_ws_function_calling_2">// three.ws × function calling</span>
+<h3 data-i18n="cookbook_index.a_windowsill_of_houseplants">A windowsill of houseplants</h3><p class="sub" data-i18n="cookbook_index.designed_and_built_by_the_model_from">Designed and built by the model from a single-line brief.</p>
 </div>
 <div class="grid">
 <figure>
 <model-viewer alt="Echeveria (Teal Pot)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F27ddad74-8f99-43c9-9f91-5cf7aabfe12d.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.echeveria_teal_pot_openar">
 <span class="name">Echeveria (Teal Pot)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F27ddad74-8f99-43c9-9f91-5cf7aabfe12d.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F27ddad74-8f99-43c9-9f91-5cf7aabfe12d.glb&amp;title=A%20single%20chunky%20stylized%20Echeveria%20succulent%3A%20a%20tight%20rosette%20of%20plump%2C%20rounded%20" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Golden Barrel Cactus (Concrete Pot)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F22c6800f-e486-4a10-9f88-4c510bf8c798.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.golden_barrel_cactus_concrete_pot_openar">
 <span class="name">Golden Barrel Cactus (Concrete Pot)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F22c6800f-e486-4a10-9f88-4c510bf8c798.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F22c6800f-e486-4a10-9f88-4c510bf8c798.glb&amp;title=A%20single%20chunky%20golden%20barrel%20cactus%20(Echinocactus)%20with%20rounded%20vertical%20ribs%20a" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Aloe Vera (Terracotta Pot)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F218f74b1-13ba-41b4-adea-b4efe5bf8b9c.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.aloe_vera_terracotta_pot_openar">
 <span class="name">Aloe Vera (Terracotta Pot)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F218f74b1-13ba-41b4-adea-b4efe5bf8b9c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F218f74b1-13ba-41b4-adea-b4efe5bf8b9c.glb&amp;title=A%20single%20chunky%20Aloe%20vera%20plant%20with%205%E2%80%937%20thick%20succulent%20leaves%2C%20slightly%20serrat" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Monstera Sapling (Mustard Enamel Pot)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1f41e824-a08f-410d-a356-ec9baeceaa0a.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.monstera_sapling_mustard_enamel_pot_openar">
 <span class="name">Monstera Sapling (Mustard Enamel Pot)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1f41e824-a08f-410d-a356-ec9baeceaa0a.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F1f41e824-a08f-410d-a356-ec9baeceaa0a.glb&amp;title=A%20small%2C%20chunky%20Monstera%20deliciosa%20sapling%20with%20three%20broad%20glossy%20leaves%20that%20f" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Snake Plant (Woven Basket)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F34005674-edeb-4584-9a2c-bcfac97f3746.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.snake_plant_woven_basket_openar">
 <span class="name">Snake Plant (Woven Basket)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F34005674-edeb-4584-9a2c-bcfac97f3746.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F34005674-edeb-4584-9a2c-bcfac97f3746.glb&amp;title=A%20single%20chunky%20snake%20plant%20(Sansevieria)%20with%204%E2%80%936%20upright%2C%20thick%20lanceolate%20lea" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Trailing Pothos (Half-Moon Planter)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd82aba38-3a30-405d-b73f-b3121e51c36b.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.trailing_pothos_half_moon_planter_openar">
 <span class="name">Trailing Pothos (Half-Moon Planter)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd82aba38-3a30-405d-b73f-b3121e51c36b.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd82aba38-3a30-405d-b73f-b3121e51c36b.glb&amp;title=A%20single%20trailing%20pothos%20(Epipremnum)%20with%20several%20chunky%20heart-shaped%20leaves%20on" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
@@ -8822,31 +8822,31 @@ If you want:
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5.-The-model-inspects-its-own-work">5. The model inspects its own work<a class="anchor-link" href="#5.-The-model-inspects-its-own-work">¶</a></h2><p>So far the loop trusts every generation. But text-to-3D is a lossy, generative
+<h2 id="5.-The-model-inspects-its-own-work" data-i18n-html="cookbook_index.5_the_model_inspects_its_own_work">5. The model inspects its own work<a class="anchor-link" href="#5.-The-model-inspects-its-own-work">¶</a></h2><p data-i18n="cookbook_index.so_far_the_loop_trusts_every_generation">So far the loop trusts every generation. But text-to-3D is a lossy, generative
 process: once in a while the geometry comes back as a vague blob, or the key
 feature the prompt asked for simply is not there. Most pipelines ship whatever
 came back, because nothing in them can see.</p>
-<p>Our model can. three.ws exposes the same headless renderer it uses for its own
+<p data-i18n-html="cookbook_index.our_model_can_three_ws_exposes_the">Our model can. three.ws exposes the same headless renderer it uses for its own
 share cards: <code>GET /api/render/glb?glbUrl=...</code> returns a PNG of any GLB, no key
 required. That closes the loop: render each generated model to an image, show
 that image back to the model together with the brief and the original prompt,
 and ask for a verdict.</p>
-<p>Two implementation choices here are worth copying into any pipeline:</p>
+<p data-i18n="cookbook_index.two_implementation_choices_here_are_worth_co">Two implementation choices here are worth copying into any pipeline:</p>
 <ul>
-<li><strong>Structured output, not prose.</strong> The critique uses a strict JSON schema, so
+<li data-i18n-html="cookbook_index.structured_output_not_prose_the_critique_use"><strong>Structured output, not prose.</strong> The critique uses a strict JSON schema, so
 <code>passed</code> is a real boolean you can branch on, and <code>revised_prompt</code> is directly
 machine-usable rather than advice buried in a paragraph.</li>
-<li><strong>QA fails open.</strong> If the renderer is unavailable, the prop keeps its draft
+<li data-i18n-html="cookbook_index.qa_fails_open_if_the_renderer_is"><strong>QA fails open.</strong> If the renderer is unavailable, the prop keeps its draft
 and the verdict records that the check was skipped. A guardrail that can take
 down the pipeline it guards is worse than no guardrail.</li>
-<li><strong>The critic is calibrated to the tier.</strong> A draft lane judged against
+<li data-i18n-html="cookbook_index.the_critic_is_calibrated_to_the_tier"><strong>The critic is calibrated to the tier.</strong> A draft lane judged against
 production standards fails everything, and an over-eager critic writes
 1,000-character "revised prompts" that a single-subject generator cannot use.
 The system prompt tells the critic what normal looks like at this tier, to
 fail only on identity (could a stranger name the subject?), and to keep any
 rewrite short and concrete.</li>
 </ul>
-<p>This is the same shape as a model-graded eval, run inline: the critic grades
+<p data-i18n="cookbook_index.this_is_the_same_shape_as_a">This is the same shape as a model-graded eval, run inline: the critic grades
 output against intent, and the grade is data.</p>
 </div>
 </div>
@@ -8987,7 +8987,7 @@ output against intent, and the grade is data.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The helper below shows a QA pass the honest way: each card pairs the render
+<p data-i18n="cookbook_index.the_helper_below_shows_a_qa_pass">The helper below shows a QA pass the honest way: each card pairs the render
 the critic inspected (downscaled for the card grid) with the verdict it
 produced. Like the galleries, the helper also emits the pass as one plain PNG
 built from the full-resolution renders, with a green (pass) or red (retry) bar
@@ -9153,49 +9153,49 @@ the houseplant set:</p>
 .twq .badge.bad{color:#f87171;border-color:#5e3030;}
 .twq .crit{margin:7px 0 0;font-size:12px;line-height:1.45;color:var(--muted);}
 </style>
-<span class="eyebrow">// vision QA</span>
-<h3>What the critic saw</h3><p class="sub">Each card is the exact image the model inspected, with its structured verdict.</p>
+<span class="eyebrow" data-i18n="cookbook_index.vision_qa">// vision QA</span>
+<h3 data-i18n="cookbook_index.what_the_critic_saw">What the critic saw</h3><p class="sub" data-i18n="cookbook_index.each_card_is_the_exact_image_the">Each card is the exact image the model inspected, with its structured verdict.</p>
 <div class="grid">
 <figure>
 <img alt="render of Echeveria (Teal Pot)" src="data:image/jpeg;base64,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"/>
 <figcaption>
-<div class="row"><span class="name">Echeveria (Teal Pot)</span><span class="badge ok">pass</span></div>
-<p class="crit">Pass — The model clearly reads as a chunky, stylized Echeveria in a squat teal pot: the tight rosette of plump leaves, mint-to-emerald gradient, and glazed pot with a visible rim match the collectible/toy-like brief and sit well within draft-tier detail.</p>
+<div class="row"><span class="name" data-i18n="cookbook_index.echeveria_teal_pot">Echeveria (Teal Pot)</span><span class="badge ok" data-i18n="cookbook_index.pass">pass</span></div>
+<p class="crit" data-i18n="cookbook_index.pass_the_model_clearly_reads_as_a">Pass — The model clearly reads as a chunky, stylized Echeveria in a squat teal pot: the tight rosette of plump leaves, mint-to-emerald gradient, and glazed pot with a visible rim match the collectible/toy-like brief and sit well within draft-tier detail.</p>
 </figcaption>
 </figure>
 <figure>
 <img alt="render of Golden Barrel Cactus (Concrete Pot)" src="data:image/jpeg;base64,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"/>
 <figcaption>
-<div class="row"><span class="name">Golden Barrel Cactus (Concrete Pot)</span><span class="badge bad">retry</span></div>
-<p class="crit">The render shows a chunky golden barrel cactus body but the concrete pot, saucer, and pebble topdressing are missing—so it fails the ‘potted houseplant’ prop requirement and doesn’t match the set theme. The cactus also appears overly spiny and disconnected from a visible planter.</p>
+<div class="row"><span class="name" data-i18n="cookbook_index.golden_barrel_cactus_concrete_pot">Golden Barrel Cactus (Concrete Pot)</span><span class="badge bad" data-i18n="cookbook_index.retry">retry</span></div>
+<p class="crit" data-i18n="cookbook_index.the_render_shows_a_chunky_golden_barrel">The render shows a chunky golden barrel cactus body but the concrete pot, saucer, and pebble topdressing are missing—so it fails the ‘potted houseplant’ prop requirement and doesn’t match the set theme. The cactus also appears overly spiny and disconnected from a visible planter.</p>
 </figcaption>
 </figure>
 <figure>
 <img alt="render of Aloe Vera (Terracotta Pot)" src="data:image/jpeg;base64,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"/>
 <figcaption>
-<div class="row"><span class="name">Aloe Vera (Terracotta Pot)</span><span class="badge ok">pass</span></div>
-<p class="crit">Readable, single-subject render: a chunky aloe-style succulent with thick green leaves and a warm matte terracotta pot with visible soil. Silhouette, scale, and hand-painted chunky style read clearly for the collectible set, so it passes draft-tier QA.</p>
+<div class="row"><span class="name" data-i18n="cookbook_index.aloe_vera_terracotta_pot">Aloe Vera (Terracotta Pot)</span><span class="badge ok" data-i18n="cookbook_index.pass_2">pass</span></div>
+<p class="crit" data-i18n="cookbook_index.readable_single_subject_render_a_chunky_aloe">Readable, single-subject render: a chunky aloe-style succulent with thick green leaves and a warm matte terracotta pot with visible soil. Silhouette, scale, and hand-painted chunky style read clearly for the collectible set, so it passes draft-tier QA.</p>
 </figcaption>
 </figure>
 <figure>
 <img alt="render of Monstera Sapling (Mustard Enamel Pot)" src="data:image/jpeg;base64,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/wAChRUdFTyK9yFCKdwoooqiwooooAKKKKADrxW5YXyMjSdFjDFR7AYrDpyyMgZVPDDB+lY1qXtEc+Io+0VixNdma1dWPMkpYj0FVSxbGTnAwPpSYpauEFHY0hTUdgoooqzQKjc/MvpUlFJq4CLjy2II6VKAF289qosNrEc0Zbsx/Os3ApMtov8ArKaQfIP1qvvk5+ZuevPWky2MbjijlC5ZwPLXPcU1cArzjFVyTjGTj0p8K5ce1PlC5MpytOooq0rEhRRRTAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigCKVckHFRhas0mBSsBX20hFWcD0FGB6CiwyttNTQrtBz3p9LRYQUUUUwCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k="/>
 <figcaption>
-<div class="row"><span class="name">Monstera Sapling (Mustard Enamel Pot)</span><span class="badge bad">retry</span></div>
-<p class="crit">The render looks like a dark, multi-leaf palm/fern in a brown ribbed pot rather than a small Monstera sapling: leaves are umbrella-like with radial cuts instead of three broad glossy Monstera leaves with simple fenestrations, and the pot reads as dark wood rather than mustard-yellow enamel, so the subject is ambiguous.</p>
+<div class="row"><span class="name" data-i18n="cookbook_index.monstera_sapling_mustard_enamel_pot">Monstera Sapling (Mustard Enamel Pot)</span><span class="badge bad" data-i18n="cookbook_index.retry_2">retry</span></div>
+<p class="crit" data-i18n="cookbook_index.the_render_looks_like_a_dark_multi">The render looks like a dark, multi-leaf palm/fern in a brown ribbed pot rather than a small Monstera sapling: leaves are umbrella-like with radial cuts instead of three broad glossy Monstera leaves with simple fenestrations, and the pot reads as dark wood rather than mustard-yellow enamel, so the subject is ambiguous.</p>
 </figcaption>
 </figure>
 <figure>
 <img alt="render of Snake Plant (Woven Basket)" src="data:image/jpeg;base64,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"/>
 <figcaption>
-<div class="row"><span class="name">Snake Plant (Woven Basket)</span><span class="badge ok">pass</span></div>
-<p class="crit">The render clearly shows a single stylized snake plant with multiple upright variegated leaves planted in a shallow woven basket with a cloth liner — the subject is identifiable and matches the cozy, handmade collectible theme despite soft textures and simplified geometry.</p>
+<div class="row"><span class="name" data-i18n="cookbook_index.snake_plant_woven_basket">Snake Plant (Woven Basket)</span><span class="badge ok" data-i18n="cookbook_index.pass_3">pass</span></div>
+<p class="crit" data-i18n="cookbook_index.the_render_clearly_shows_a_single_stylized">The render clearly shows a single stylized snake plant with multiple upright variegated leaves planted in a shallow woven basket with a cloth liner — the subject is identifiable and matches the cozy, handmade collectible theme despite soft textures and simplified geometry.</p>
 </figcaption>
 </figure>
 <figure>
 <img alt="render of Trailing Pothos (Half-Moon Planter)" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wAARCAEAAQADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5iooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiirthoeq6rj7Bpl7d56eRAzj9BSbS3ApUVevtB1bTADfaZe2uennQsmfzqj04NCaewXCiiimAUUVteHfBuueKvNOlWTTRw/6yUna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"/>
 <figcaption>
-<div class="row"><span class="name">Trailing Pothos (Half-Moon Planter)</span><span class="badge bad">retry</span></div>
-<p class="crit">The model looks like a dense, feathery bush in a dark round pot rather than a trailing pothos: the leaves are elongated/serrated instead of chunky heart-shaped, there’s no gold variegation, and the coral half‑moon planter and sunlit, collectible look are missing.</p>
+<div class="row"><span class="name" data-i18n="cookbook_index.trailing_pothos_half_moon_planter">Trailing Pothos (Half-Moon Planter)</span><span class="badge bad" data-i18n="cookbook_index.retry_3">retry</span></div>
+<p class="crit" data-i18n="cookbook_index.the_model_looks_like_a_dense_feathery">The model looks like a dense, feathery bush in a dark round pot rather than a trailing pothos: the leaves are elongated/serrated instead of chunky heart-shaped, there’s no gold variegation, and the coral half‑moon planter and sunlit, collectible look are missing.</p>
 </figcaption>
 </figure>
 </div>
@@ -9217,10 +9217,10 @@ the houseplant set:</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="6.-The-repair-loop">6. The repair loop<a class="anchor-link" href="#6.-The-repair-loop">¶</a></h2><p>A failed verdict is not a dead end, because the critic already wrote the fix.
+<h2 id="6.-The-repair-loop" data-i18n-html="cookbook_index.6_the_repair_loop">6. The repair loop<a class="anchor-link" href="#6.-The-repair-loop">¶</a></h2><p data-i18n-html="cookbook_index.a_failed_verdict_is_not_a_dead">A failed verdict is not a dead end, because the critic already wrote the fix.
 <code>repair</code> takes an inspected set, regenerates every failed prop from its
 <code>revised_prompt</code>, and re-inspects the result.</p>
-<p>One rule keeps this honest: <strong>the loop gets a budget of exactly one retry per
+<p data-i18n-html="cookbook_index.one_rule_keeps_this_honest_the_loop">One rule keeps this honest: <strong>the loop gets a budget of exactly one retry per
 prop.</strong> A self-correcting loop without a hard budget will happily spend forever
 (and real money) fighting a defect the underlying generator cannot fix. One
 retry captures most of the win; after that, ship the draft or flag it for a
@@ -9324,48 +9324,48 @@ human.</p>
 </style>
 <script src="https://unpkg.com/@google/model-viewer@^3.5.0/dist/model-viewer.min.js" type="module"></script>
 <div class="head">
-<span class="eyebrow">// three.ws × function calling</span>
-<h3>A windowsill of houseplants, after QA</h3><p class="sub">Every prop was inspected by the model; failures were rebuilt from the critic's own revised prompt.</p>
+<span class="eyebrow" data-i18n="cookbook_index.three_ws_function_calling_3">// three.ws × function calling</span>
+<h3 data-i18n="cookbook_index.a_windowsill_of_houseplants_after_qa">A windowsill of houseplants, after QA</h3><p class="sub" data-i18n="cookbook_index.every_prop_was_inspected_by_the_model">Every prop was inspected by the model; failures were rebuilt from the critic's own revised prompt.</p>
 </div>
 <div class="grid">
 <figure>
 <model-viewer alt="Echeveria (Teal Pot)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F27ddad74-8f99-43c9-9f91-5cf7aabfe12d.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.echeveria_teal_pot_openar_2">
 <span class="name">Echeveria (Teal Pot)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F27ddad74-8f99-43c9-9f91-5cf7aabfe12d.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F27ddad74-8f99-43c9-9f91-5cf7aabfe12d.glb&amp;title=A%20single%20chunky%20stylized%20Echeveria%20succulent%3A%20a%20tight%20rosette%20of%20plump%2C%20rounded%20" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Golden Barrel Cactus (Concrete Pot) · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F4c5cb09c-50f0-46aa-9c31-12f3dfaf605e.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.golden_barrel_cactus_concrete_pot_rebuilt_op">
 <span class="name">Golden Barrel Cactus (Concrete Pot) · rebuilt</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F4c5cb09c-50f0-46aa-9c31-12f3dfaf605e.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F4c5cb09c-50f0-46aa-9c31-12f3dfaf605e.glb&amp;title=Chunky%20golden%20barrel%20cactus%20with%20rounded%20vertical%20ribs%2C%20deep%20emerald%20body%20with%20l" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Aloe Vera (Terracotta Pot)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F218f74b1-13ba-41b4-adea-b4efe5bf8b9c.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.aloe_vera_terracotta_pot_openar_2">
 <span class="name">Aloe Vera (Terracotta Pot)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F218f74b1-13ba-41b4-adea-b4efe5bf8b9c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F218f74b1-13ba-41b4-adea-b4efe5bf8b9c.glb&amp;title=A%20single%20chunky%20Aloe%20vera%20plant%20with%205%E2%80%937%20thick%20succulent%20leaves%2C%20slightly%20serrat" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Monstera Sapling (Mustard Enamel Pot) · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F50fa977e-4ff7-4349-91cd-ef799fab63f2.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.monstera_sapling_mustard_enamel_pot_rebuilt">
 <span class="name">Monstera Sapling (Mustard Enamel Pot) · rebuilt</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F50fa977e-4ff7-4349-91cd-ef799fab63f2.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F50fa977e-4ff7-4349-91cd-ef799fab63f2.glb&amp;title=Small%20chunky%20Monstera%20deliciosa%20sapling%20with%20exactly%20three%20broad%20glossy%20leaves%2C%20" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Snake Plant (Woven Basket)" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F34005674-edeb-4584-9a2c-bcfac97f3746.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.snake_plant_woven_basket_openar_2">
 <span class="name">Snake Plant (Woven Basket)</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F34005674-edeb-4584-9a2c-bcfac97f3746.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F34005674-edeb-4584-9a2c-bcfac97f3746.glb&amp;title=A%20single%20chunky%20snake%20plant%20(Sansevieria)%20with%204%E2%80%936%20upright%2C%20thick%20lanceolate%20lea" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Trailing Pothos (Half-Moon Planter) · rebuilt" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9f8c40cb-5c21-447f-b5e8-3c53622a3462.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.trailing_pothos_half_moon_planter_rebuilt_op">
 <span class="name">Trailing Pothos (Half-Moon Planter) · rebuilt</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9f8c40cb-5c21-447f-b5e8-3c53622a3462.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9f8c40cb-5c21-447f-b5e8-3c53622a3462.glb&amp;title=Trailing%20pothos%20with%20several%20chunky%20heart-shaped%20glossy%20leaves%2C%20mid-green%20with%20y" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
@@ -9389,7 +9389,7 @@ human.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="7.-The-whole-pipeline,-one-call">7. The whole pipeline, one call<a class="anchor-link" href="#7.-The-whole-pipeline,-one-call">¶</a></h2><p>Everything above composes into a single function: art-direct, build in
+<h2 id="7.-The-whole-pipeline,-one-call" data-i18n-html="cookbook_index.7_the_whole_pipeline_one_call">7. The whole pipeline, one call<a class="anchor-link" href="#7.-The-whole-pipeline,-one-call">¶</a></h2><p data-i18n="cookbook_index.everything_above_composes_into_a_single_func">Everything above composes into a single function: art-direct, build in
 parallel, inspect with vision, repair once, and hand back a QA'd set. This is
 the cell to copy into your own project.</p>
 </div>
@@ -9527,41 +9527,41 @@ If you want variations (e.g., more weathering, different color palette, high-pol
 </style>
 <script src="https://unpkg.com/@google/model-viewer@^3.5.0/dist/model-viewer.min.js" type="module"></script>
 <div class="head">
-<span class="eyebrow">// three.ws × function calling</span>
-<h3>A deep-sea explorer's cabin</h3><p class="sub">Art-directed, built, inspected, and repaired by the model from one sentence. Drag to orbit; tap AR on a phone.</p>
+<span class="eyebrow" data-i18n="cookbook_index.three_ws_function_calling_4">// three.ws × function calling</span>
+<h3 data-i18n="cookbook_index.a_deep_sea_explorer_s_cabin">A deep-sea explorer's cabin</h3><p class="sub" data-i18n="cookbook_index.art_directed_built_inspected_and_repaired_by">Art-directed, built, inspected, and repaired by the model from one sentence. Drag to orbit; tap AR on a phone.</p>
 </div>
 <div class="grid">
 <figure>
 <model-viewer alt="Observation Porthole Hatch" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.observation_porthole_hatch_openar">
 <span class="name">Observation Porthole Hatch</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb&amp;title=Wall-mounted%20circular%20observation%20porthole%20hatch%2C%2060%20cm%20diameter.%20Thick%20triple-l" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Bioluminescent Specimen Jar" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.bioluminescent_specimen_jar_openar">
 <span class="name">Bioluminescent Specimen Jar</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9634f11c-bc5a-4adb-9673-6f85ddf42fe3.glb&amp;title=A%20single%20squat%20cylindrical%20glass%20specimen%20jar%20with%20a%20removable%20aged-brass%20clamp%20" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Pressure Gauge Cluster" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.pressure_gauge_cluster_openar">
 <span class="name">Pressure Gauge Cluster</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F74c8a2e6-e1fa-42a3-bcb9-f4c646d3eb5c.glb&amp;title=Front-facing%20wall-mounted%20cluster%20of%20three%20round%20vintage%20pressure%20gauges%20on%20a%20sm" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Submersible Sextant" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F648d9372-89ce-402e-8f9d-a50a70b7909c.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.submersible_sextant_openar">
 <span class="name">Submersible Sextant</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F648d9372-89ce-402e-8f9d-a50a70b7909c.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F648d9372-89ce-402e-8f9d-a50a70b7909c.glb&amp;title=Handheld%20submersible%20sextant%2C%2020%20cm%20wide%20crescent%20bronze%20limb%20with%20engraved%20fine" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
 </figure>
 <figure>
 <model-viewer alt="Instrument Chest" auto-rotate="" auto-rotate-delay="0" camera-controls="" environment-image="neutral" exposure="1.05" interaction-prompt="none" rotation-per-second="20deg" shadow-intensity="1" src="https://three.ws/api/glb?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb"></model-viewer>
-<figcaption>
+<figcaption data-i18n-html="cookbook_index.instrument_chest_openar">
 <span class="name">Instrument Chest</span>
 <span class="links"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb" rel="noopener" target="_blank">open</a><a href="https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F430ba5a0-f755-4286-92e8-ef1bc410cd9f.glb&amp;title=A%20single%20compact%20instrument%20chest%3A%20a%20tabletop%20wooden%20lockbox%20made%20from%20oiled%20oak" rel="noopener" target="_blank">AR</a></span>
 </figcaption>
@@ -9585,56 +9585,56 @@ If you want variations (e.g., more weathering, different color palette, high-pol
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Error-handling-and-troubleshooting">Error handling and troubleshooting<a class="anchor-link" href="#Error-handling-and-troubleshooting">¶</a></h2><p>Every failure path in this notebook is handled where it occurs, so a run
+<h2 id="Error-handling-and-troubleshooting" data-i18n-html="cookbook_index.error_handling_and_troubleshooting">Error handling and troubleshooting<a class="anchor-link" href="#Error-handling-and-troubleshooting">¶</a></h2><p data-i18n="cookbook_index.every_failure_path_in_this_notebook_is">Every failure path in this notebook is handled where it occurs, so a run
 degrades instead of crashing. What that looks like in practice:</p>
 <table>
 <thead>
 <tr>
-<th>Symptom</th>
-<th>Cause</th>
-<th>What the notebook does</th>
+<th data-i18n="cookbook_index.symptom">Symptom</th>
+<th data-i18n="cookbook_index.cause">Cause</th>
+<th data-i18n="cookbook_index.what_the_notebook_does">What the notebook does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>429</code> on submit or poll</td>
-<td>per-IP rate limit on the free lane</td>
-<td>honors the <code>Retry-After</code> header, then retries; mid-poll it keeps waiting on the <strong>same</strong> job rather than resubmitting it</td>
+<td data-i18n-html="cookbook_index.on_submit_or_poll"><code>429</code> on submit or poll</td>
+<td data-i18n="cookbook_index.per_ip_rate_limit_on_the_free">per-IP rate limit on the free lane</td>
+<td data-i18n-html="cookbook_index.honors_the_header_then_retries_mid_poll">honors the <code>Retry-After</code> header, then retries; mid-poll it keeps waiting on the <strong>same</strong> job rather than resubmitting it</td>
 </tr>
 <tr>
-<td><code>502</code> / <code>503</code> / <code>504</code> on submit</td>
-<td>brief GPU-lane saturation</td>
-<td>makes up to three submit attempts (two retries) with a pause between them</td>
+<td data-i18n-html="cookbook_index.on_submit"><code>502</code> / <code>503</code> / <code>504</code> on submit</td>
+<td data-i18n="cookbook_index.brief_gpu_lane_saturation">brief GPU-lane saturation</td>
+<td data-i18n="cookbook_index.makes_up_to_three_submit_attempts_two">makes up to three submit attempts (two retries) with a pause between them</td>
 </tr>
 <tr>
-<td><code>5xx</code> or a network blip on a poll</td>
-<td>edge hiccup while a job is queued</td>
-<td>keeps waiting on the <strong>same</strong> job until the deadline; the job is never resubmitted</td>
+<td data-i18n-html="cookbook_index.or_a_network_blip_on_a_poll"><code>5xx</code> or a network blip on a poll</td>
+<td data-i18n="cookbook_index.edge_hiccup_while_a_job_is_queued">edge hiccup while a job is queued</td>
+<td data-i18n-html="cookbook_index.keeps_waiting_on_the_same_job_until">keeps waiting on the <strong>same</strong> job until the deadline; the job is never resubmitted</td>
 </tr>
 <tr>
-<td>A job stays <code>pending</code> past the timeout</td>
-<td>long queue on the free lane</td>
-<td>raises <code>GenerationError</code>; inside the art-director loop that error is reported back to the model as the tool result instead of crashing the run</td>
+<td data-i18n-html="cookbook_index.a_job_stays_past_the_timeout">A job stays <code>pending</code> past the timeout</td>
+<td data-i18n="cookbook_index.long_queue_on_the_free_lane">long queue on the free lane</td>
+<td data-i18n-html="cookbook_index.raises_inside_the_art_director_loop_that">raises <code>GenerationError</code>; inside the art-director loop that error is reported back to the model as the tool result instead of crashing the run</td>
 </tr>
 <tr>
-<td>Other <code>4xx</code> on submit</td>
-<td>prompt rejected by the lane</td>
-<td>not retried; surfaces immediately so you can fix the prompt</td>
+<td data-i18n-html="cookbook_index.other_on_submit">Other <code>4xx</code> on submit</td>
+<td data-i18n="cookbook_index.prompt_rejected_by_the_lane">prompt rejected by the lane</td>
+<td data-i18n="cookbook_index.not_retried_surfaces_immediately_so_you_can">not retried; surfaces immediately so you can fix the prompt</td>
 </tr>
 <tr>
-<td>Render endpoint unavailable</td>
-<td>the QA snapshot call failed</td>
-<td>QA <strong>fails open</strong>: the prop is kept and marked passed, because a guardrail that can take down the pipeline it guards is worse than no guardrail</td>
+<td data-i18n="cookbook_index.render_endpoint_unavailable">Render endpoint unavailable</td>
+<td data-i18n="cookbook_index.the_qa_snapshot_call_failed">the QA snapshot call failed</td>
+<td data-i18n-html="cookbook_index.qa_fails_open_the_prop_is_kept">QA <strong>fails open</strong>: the prop is kept and marked passed, because a guardrail that can take down the pipeline it guards is worse than no guardrail</td>
 </tr>
 <tr>
-<td>The vision call fails during QA</td>
-<td>transient OpenAI API error, or an unparseable verdict</td>
-<td>same fail-open stance: the prop keeps its draft with a "critic unavailable" passed verdict</td>
+<td data-i18n="cookbook_index.the_vision_call_fails_during_qa">The vision call fails during QA</td>
+<td data-i18n="cookbook_index.transient_openai_api_error_or_an_unparseable">transient OpenAI API error, or an unparseable verdict</td>
+<td data-i18n="cookbook_index.same_fail_open_stance_the_prop_keeps">same fail-open stance: the prop keeps its draft with a "critic unavailable" passed verdict</td>
 </tr>
 <tr>
-<td>A rebuild fails</td>
-<td>the repair generation itself errored</td>
-<td>keeps the original draft prop and its original verdict</td>
+<td data-i18n="cookbook_index.a_rebuild_fails">A rebuild fails</td>
+<td data-i18n="cookbook_index.the_repair_generation_itself_errored">the repair generation itself errored</td>
+<td data-i18n="cookbook_index.keeps_the_original_draft_prop_and_its">keeps the original draft prop and its original verdict</td>
 </tr>
 </tbody>
 </table>
@@ -9648,38 +9648,38 @@ degrades instead of crashing. What that looks like in practice:</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Production-checklist">Production checklist<a class="anchor-link" href="#Production-checklist">¶</a></h2><p>Promoting this pattern from a notebook into a service? Check these first:</p>
+<h2 id="Production-checklist" data-i18n-html="cookbook_index.production_checklist">Production checklist<a class="anchor-link" href="#Production-checklist">¶</a></h2><p data-i18n="cookbook_index.promoting_this_pattern_from_a_notebook_into">Promoting this pattern from a notebook into a service? Check these first:</p>
 <table>
 <thead>
 <tr>
-<th>Area</th>
-<th>Check</th>
+<th data-i18n="cookbook_index.area">Area</th>
+<th data-i18n="cookbook_index.check">Check</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Budgets</td>
-<td>every loop here is bounded (one art-director conversation, one repair per prop, three submit attempts); keep it that way when you raise the limits</td>
+<td data-i18n="cookbook_index.budgets">Budgets</td>
+<td data-i18n="cookbook_index.every_loop_here_is_bounded_one_art">every loop here is bounded (one art-director conversation, one repair per prop, three submit attempts); keep it that way when you raise the limits</td>
 </tr>
 <tr>
-<td>Poll cadence</td>
-<td>keep honoring <code>retryAfter</code> / <code>Retry-After</code>; a fleet of impatient pollers is indistinguishable from an attack</td>
+<td data-i18n="cookbook_index.poll_cadence">Poll cadence</td>
+<td data-i18n-html="cookbook_index.keep_honoring_a_fleet_of_impatient_pollers">keep honoring <code>retryAfter</code> / <code>Retry-After</code>; a fleet of impatient pollers is indistinguishable from an attack</td>
 </tr>
 <tr>
-<td>Caching</td>
-<td><code>glbUrl</code> results are immutable; cache them keyed by prompt so repeat briefs and retried jobs cost nothing</td>
+<td data-i18n="cookbook_index.caching">Caching</td>
+<td data-i18n-html="cookbook_index.results_are_immutable_cache_them_keyed_by"><code>glbUrl</code> results are immutable; cache them keyed by prompt so repeat briefs and retried jobs cost nothing</td>
 </tr>
 <tr>
-<td>Concurrency</td>
-<td>the free draft lane is per-IP rate-limited; keep <code>max_workers</code> modest (four here) or move to a keyed lane</td>
+<td data-i18n="cookbook_index.concurrency">Concurrency</td>
+<td data-i18n-html="cookbook_index.the_free_draft_lane_is_per_ip">the free draft lane is per-IP rate-limited; keep <code>max_workers</code> modest (four here) or move to a keyed lane</td>
 </tr>
 <tr>
-<td>Fidelity</td>
-<td>the draft lane is single-subject and unrigged by design; three.ws serves higher-poly PBR and rigged lanes with the same tool shape when quality matters</td>
+<td data-i18n="cookbook_index.fidelity">Fidelity</td>
+<td data-i18n="cookbook_index.the_draft_lane_is_single_subject_and">the draft lane is single-subject and unrigged by design; three.ws serves higher-poly PBR and rigged lanes with the same tool shape when quality matters</td>
 </tr>
 <tr>
-<td>Evals</td>
-<td>log every structured verdict; the pass rate over time is a free model-graded eval of your whole asset pipeline</td>
+<td data-i18n="cookbook_index.evals">Evals</td>
+<td data-i18n="cookbook_index.log_every_structured_verdict_the_pass_rate">log every structured verdict; the pass rate over time is a free model-graded eval of your whole asset pipeline</td>
 </tr>
 </tbody>
 </table>
@@ -9693,29 +9693,29 @@ degrades instead of crashing. What that looks like in practice:</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="When-to-use-this-pattern">When to use this pattern<a class="anchor-link" href="#When-to-use-this-pattern">¶</a></h2><table>
+<h2 id="When-to-use-this-pattern" data-i18n-html="cookbook_index.when_to_use_this_pattern">When to use this pattern<a class="anchor-link" href="#When-to-use-this-pattern">¶</a></h2><table>
 <thead>
 <tr>
-<th>Use generate / render / inspect / repair when</th>
-<th>Skip it when</th>
+<th data-i18n="cookbook_index.use_generate_render_inspect_repair_when">Use generate / render / inspect / repair when</th>
+<th data-i18n="cookbook_index.skip_it_when">Skip it when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>the tool's output is <strong>generative</strong> and can miss silently (3D, images, charts, UI code)</td>
-<td>the tool returns deterministic data (a database row, a price); validate with schemas instead</td>
+<td data-i18n-html="cookbook_index.the_tool_s_output_is_generative_and">the tool's output is <strong>generative</strong> and can miss silently (3D, images, charts, UI code)</td>
+<td data-i18n="cookbook_index.the_tool_returns_deterministic_data_a_databa">the tool returns deterministic data (a database row, a price); validate with schemas instead</td>
 </tr>
 <tr>
-<td>quality is judged visually, so only a vision pass can grade it</td>
-<td>correctness is checkable in code (types, ranges, invariants)</td>
+<td data-i18n="cookbook_index.quality_is_judged_visually_so_only_a">quality is judged visually, so only a vision pass can grade it</td>
+<td data-i18n="cookbook_index.correctness_is_checkable_in_code_types_range">correctness is checkable in code (types, ranges, invariants)</td>
 </tr>
 <tr>
-<td>a retry with a better prompt plausibly fixes a failure</td>
-<td>failures need a human decision, not a rewrite</td>
+<td data-i18n="cookbook_index.a_retry_with_a_better_prompt_plausibly">a retry with a better prompt plausibly fixes a failure</td>
+<td data-i18n="cookbook_index.failures_need_a_human_decision_not_a">failures need a human decision, not a rewrite</td>
 </tr>
 <tr>
-<td>you can afford one render and one vision call per artifact</td>
-<td>you are latency-bound and would rather ship drafts than gate on QA</td>
+<td data-i18n="cookbook_index.you_can_afford_one_render_and_one">you can afford one render and one vision call per artifact</td>
+<td data-i18n="cookbook_index.you_are_latency_bound_and_would_rather">you are latency-bound and would rather ship drafts than gate on QA</td>
 </tr>
 </tbody>
 </table>
@@ -9729,26 +9729,26 @@ degrades instead of crashing. What that looks like in practice:</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Where-to-go-from-here">Where to go from here<a class="anchor-link" href="#Where-to-go-from-here">¶</a></h2><p>You now have a model that turns one sentence into a coherent, QA'd set of real
+<h2 id="Where-to-go-from-here" data-i18n-html="cookbook_index.where_to_go_from_here">Where to go from here<a class="anchor-link" href="#Where-to-go-from-here">¶</a></h2><p data-i18n="cookbook_index.you_now_have_a_model_that_turns">You now have a model that turns one sentence into a coherent, QA'd set of real
 3D assets, and a way to show them off. A few directions:</p>
 <ul>
-<li><strong>Give it more tools.</strong> The same loop can hold a web-search tool and an image
+<li data-i18n-html="cookbook_index.give_it_more_tools_the_same_loop"><strong>Give it more tools.</strong> The same loop can hold a web-search tool and an image
 tool alongside this one; the model picks per request. 3D just became one more
 capability the model can reach for.</li>
-<li><strong>Turn the critic into an eval.</strong> The verdicts are already structured data.
+<li data-i18n-html="cookbook_index.turn_the_critic_into_an_eval_the"><strong>Turn the critic into an eval.</strong> The verdicts are already structured data.
 Log them and you have a model-graded eval of your asset pipeline for free:
 track the pass rate over time as you change prompts, models, or generation
 settings.</li>
-<li><strong>Higher fidelity.</strong> The free draft lane is single-subject and unrigged.
+<li data-i18n-html="cookbook_index.higher_fidelity_the_free_draft_lane_is"><strong>Higher fidelity.</strong> The free draft lane is single-subject and unrigged.
 three.ws also serves higher-poly PBR and rigged-avatar lanes for production
 assets, with the same tool shape and a different endpoint.</li>
-<li><strong>Wire it into a pipeline.</strong> Every result carries a <code>glbUrl</code> (drop into
+<li data-i18n-html="cookbook_index.wire_it_into_a_pipeline_every_result"><strong>Wire it into a pipeline.</strong> Every result carries a <code>glbUrl</code> (drop into
 Blender, Unity, Unreal, or three.js), a <code>viewerUrl</code>, and an <code>arUrl</code> for phones.</li>
-<li><strong>Point another agent at it.</strong> <code>GET https://three.ws/api/3d</code> lists the
+<li data-i18n-html="cookbook_index.point_another_agent_at_it_lists_the"><strong>Point another agent at it.</strong> <code>GET https://three.ws/api/3d</code> lists the
 endpoints and <code>GET https://three.ws/api/3d/openapi.json</code> is a full OpenAPI 3.1
 spec a typed client or tool-loader can import directly.</li>
 </ul>
-<p>The pattern generalizes twice over: any capability the model lacks becomes
+<p data-i18n="cookbook_index.the_pattern_generalizes_twice_over_any_capab">The pattern generalizes twice over: any capability the model lacks becomes
 reachable the moment you wrap its API as a function tool, and any generative
 tool becomes trustworthy the moment you render its output where the model can
 see it and let it grade its own work.</p>
@@ -9762,20 +9762,22 @@ see it and let it grade its own work.</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="References">References<a class="anchor-link" href="#References">¶</a></h2><ul>
-<li><a href="https://platform.openai.com/docs/guides/function-calling">Function calling</a> - OpenAI guide</li>
-<li><a href="https://platform.openai.com/docs/guides/images-vision">Images and vision</a> - OpenAI guide</li>
-<li><a href="https://platform.openai.com/docs/guides/structured-outputs">Structured outputs</a> - OpenAI guide</li>
-<li><a href="https://platform.openai.com/docs/api-reference/responses">Responses API</a> - API reference</li>
-<li><a href="https://modelviewer.dev/"><code>&lt;model-viewer&gt;</code></a> - open web component for rendering glTF/GLB</li>
-<li><a href="https://www.khronos.org/gltf/">glTF 2.0</a> - the 3D asset format returned by the API</li>
-<li><a href="https://github.com/microsoft/TRELLIS">Microsoft TRELLIS</a> - the open text-to-3D model behind the free lane</li>
-<li><a href="https://three.ws/api/3d">three.ws 3D API</a> - endpoint discovery, with a full spec at <a href="https://three.ws/api/3d/openapi.json"><code>/api/3d/openapi.json</code></a></li>
+<h2 id="References" data-i18n-html="cookbook_index.references">References<a class="anchor-link" href="#References">¶</a></h2><ul>
+<li data-i18n-html="cookbook_index.function_calling_openai_guide"><a href="https://platform.openai.com/docs/guides/function-calling">Function calling</a> - OpenAI guide</li>
+<li data-i18n-html="cookbook_index.images_and_vision_openai_guide"><a href="https://platform.openai.com/docs/guides/images-vision">Images and vision</a> - OpenAI guide</li>
+<li data-i18n-html="cookbook_index.structured_outputs_openai_guide"><a href="https://platform.openai.com/docs/guides/structured-outputs">Structured outputs</a> - OpenAI guide</li>
+<li data-i18n-html="cookbook_index.responses_api_api_reference"><a href="https://platform.openai.com/docs/api-reference/responses">Responses API</a> - API reference</li>
+<li data-i18n-html="cookbook_index.open_web_component_for_rendering_gltf_glb"><a href="https://modelviewer.dev/"><code>&lt;model-viewer&gt;</code></a> - open web component for rendering glTF/GLB</li>
+<li data-i18n-html="cookbook_index.gltf_2_0_the_3d_asset_format"><a href="https://www.khronos.org/gltf/">glTF 2.0</a> - the 3D asset format returned by the API</li>
+<li data-i18n-html="cookbook_index.microsoft_trellis_the_open_text_to_3d"><a href="https://github.com/microsoft/TRELLIS">Microsoft TRELLIS</a> - the open text-to-3D model behind the free lane</li>
+<li data-i18n-html="cookbook_index.three_ws_3d_api_endpoint_discovery_with"><a href="https://three.ws/api/3d">three.ws 3D API</a> - endpoint discovery, with a full spec at <a href="https://three.ws/api/3d/openapi.json"><code>/api/3d/openapi.json</code></a></li>
 </ul>
 </div>
 </div>
 </div>
 </div>
 </main>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

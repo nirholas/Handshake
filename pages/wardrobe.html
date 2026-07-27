@@ -4,24 +4,24 @@
 		<meta charset="utf-8" />
 		<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Wardrobe · three.ws</title>
+		<title data-i18n="wardrobe.meta_title">Wardrobe · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime."
-		/>
+		 data-i18n-attr="content:wardrobe.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/wardrobe" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Wardrobe · three.ws" />
-		<meta property="og:description" content="Browse the open garment catalog, inspect pieces in 3D, and generate new wearables from a text prompt." />
+		<meta property="og:title" content="Wardrobe · three.ws"  data-i18n-attr="content:wardrobe.meta_og_title"/>
+		<meta property="og:description" content="Browse the open garment catalog, inspect pieces in 3D, and generate new wearables from a text prompt."  data-i18n-attr="content:wardrobe.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/wardrobe" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Wardrobe&amp;d=The+open+garment+catalog+for+3D+avatars%3A+browse+every+wearable%2C+inspect+it+in+3D%2C+and+generate+new+pieces+from+a+text+prompt.+Every+piece+binds+to+any+humanoid&amp;p=%2Fwardrobe" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Wardrobe · three.ws" />
-		<meta name="twitter:description" content="Browse the open garment catalog, inspect pieces in 3D, and generate new wearables from a text prompt." />
+		<meta name="twitter:title" content="Wardrobe · three.ws"  data-i18n-attr="content:wardrobe.meta_twitter_title"/>
+		<meta name="twitter:description" content="Browse the open garment catalog, inspect pieces in 3D, and generate new wearables from a text prompt."  data-i18n-attr="content:wardrobe.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Wardrobe&amp;d=The+open+garment+catalog+for+3D+avatars%3A+browse+every+wearable%2C+inspect+it+in+3D%2C+and+generate+new+pieces+from+a+text+prompt.+Every+piece+binds+to+any+humanoid&amp;p=%2Fwardrobe" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -197,9 +197,9 @@
 
 		<main class="wd-main">
 			<header class="wd-hero">
-				<span class="wd-hero-chip"><span class="wd-hero-dot"></span> live catalog</span>
-				<h1>The Wardrobe</h1>
-				<p>
+				<span class="wd-hero-chip" data-i18n-html="wardrobe.live_catalog"><span class="wd-hero-dot"></span> live catalog</span>
+				<h1 data-i18n="wardrobe.the_wardrobe">The Wardrobe</h1>
+				<p data-i18n-html="wardrobe.every_piece_here_is_a_real_rigged">
 					Every piece here is a real, rigged 3D garment that binds to <em>any</em> humanoid avatar at
 					runtime: no fixed skeleton, no vendor lock. Browse the catalog, inspect a piece in 3D, then
 					open your avatar's editor and wear it. Or describe something new and the forge will build,
@@ -208,8 +208,8 @@
 			</header>
 
 			<section class="wd-gen" aria-labelledby="wd-gen-title">
-				<h2 id="wd-gen-title">Generate a new piece</h2>
-				<p class="wd-gen-sub">
+				<h2 id="wd-gen-title" data-i18n="wardrobe.generate_a_new_piece">Generate a new piece</h2>
+				<p class="wd-gen-sub" data-i18n="wardrobe.a_text_prompt_becomes_a_wearable_reference">
 					A text prompt becomes a wearable: reference photo, 3D mesh, placement on the canonical body,
 					auto-rigging, validation, publish. Watch every real stage below. Finished pieces are public
 					and instantly wearable by anyone.
@@ -218,7 +218,7 @@
 					<input data-role="gen-prompt" class="wd-gen-prompt" type="text" maxlength="500"
 						placeholder='e.g. "a forest green corduroy chore jacket"' aria-label="Describe the garment" />
 					<select data-role="gen-slot" class="wd-gen-slot" aria-label="Wardrobe slot"></select>
-					<button data-role="gen-submit" class="wd-gen-submit" type="submit">Forge it</button>
+					<button data-role="gen-submit" class="wd-gen-submit" type="submit" data-i18n="wardrobe.forge_it">Forge it</button>
 				</form>
 				<div data-role="gen-stages" class="wd-stages" aria-live="polite"></div>
 				<p data-role="gen-status" class="wd-gen-status" role="status" aria-live="polite"></p>
@@ -244,23 +244,23 @@
 
 			<div data-role="empty" class="wd-state" hidden>
 				<div class="wd-state-icon">🧥</div>
-				<h2>The racks are empty</h2>
-				<p>No pieces are published yet. Be the first: describe a garment above and the forge will
+				<h2 data-i18n="wardrobe.the_racks_are_empty">The racks are empty</h2>
+				<p data-i18n="wardrobe.no_pieces_are_published_yet_be_the">No pieces are published yet. Be the first: describe a garment above and the forge will
 					build and publish it for everyone.</p>
 			</div>
 
 			<div data-role="empty-search" class="wd-state" hidden>
 				<div class="wd-state-icon">🔍</div>
-				<h2>No matches</h2>
-				<p>No pieces match your filters.</p>
-				<button class="wd-hbtn" data-role="clear-search" type="button">Clear search</button>
+				<h2 data-i18n="wardrobe.no_matches">No matches</h2>
+				<p data-i18n="wardrobe.no_pieces_match_your_filters">No pieces match your filters.</p>
+				<button class="wd-hbtn" data-role="clear-search" type="button" data-i18n="wardrobe.clear_search">Clear search</button>
 			</div>
 
 			<div data-role="error" class="wd-state" hidden>
 				<div class="wd-state-icon">⚠️</div>
-				<h2>The wardrobe didn't load</h2>
-				<p data-role="error-msg">Something went wrong loading the catalog.</p>
-				<button class="wd-hbtn" data-role="retry" type="button">Try again</button>
+				<h2 data-i18n="wardrobe.the_wardrobe_didn_t_load">The wardrobe didn't load</h2>
+				<p data-role="error-msg" data-i18n="wardrobe.something_went_wrong_loading_the_catalog">Something went wrong loading the catalog.</p>
+				<button class="wd-hbtn" data-role="retry" type="button" data-i18n="wardrobe.try_again">Try again</button>
 			</div>
 		</main>
 

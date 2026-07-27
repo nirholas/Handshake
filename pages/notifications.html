@@ -5,8 +5,8 @@
 		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Notifications · three.ws</title>
-		<meta name="description" content="Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place." />
+		<title data-i18n="notifications.meta_title">Notifications · three.ws</title>
+		<meta name="description" content="Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place."  data-i18n-attr="content:notifications.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -102,15 +102,15 @@
 		<link rel="canonical" href="https://three.ws/notifications">
 		<meta property="og:type" content="website">
 		<meta property="og:site_name" content="three.ws">
-		<meta property="og:title" content="Notifications · three.ws">
-		<meta property="og:description" content="Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place.">
+		<meta property="og:title" content="Notifications · three.ws" data-i18n-attr="content:notifications.meta_og_title">
+		<meta property="og:description" content="Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place." data-i18n-attr="content:notifications.meta_og_description">
 		<meta property="og:url" content="https://three.ws/notifications">
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Notifications&amp;d=Every+payment%2C+sale%2C+remix%2C+follow%2C+quest%2C+and+royalty+notification+on+three.ws+%E2%80%94+all+in+one+place%2C+filterable+by+category.&amp;p=%2Fnotifications">
 		<meta property="og:image:width" content="1200">
 		<meta property="og:image:height" content="630">
 		<meta name="twitter:card" content="summary_large_image">
-		<meta name="twitter:title" content="Notifications · three.ws">
-		<meta name="twitter:description" content="Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place.">
+		<meta name="twitter:title" content="Notifications · three.ws" data-i18n-attr="content:notifications.meta_twitter_title">
+		<meta name="twitter:description" content="Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place." data-i18n-attr="content:notifications.meta_twitter_description">
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Notifications&amp;d=Every+payment%2C+sale%2C+remix%2C+follow%2C+quest%2C+and+royalty+notification+on+three.ws+%E2%80%94+all+in+one+place%2C+filterable+by+category.&amp;p=%2Fnotifications">
 		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Notifications","description":"Every payment, sale, remix, follow, quest, and royalty notification on three.ws.","url":"https://three.ws/notifications","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -125,37 +125,37 @@
 		<main class="page-shell">
 			<div class="page-hero">
 				<div>
-					<h1>Notifications</h1>
-					<p>Everything that happened while you were away.</p>
+					<h1 data-i18n="notifications.notifications">Notifications</h1>
+					<p data-i18n="notifications.everything_that_happened_while_you_were_away">Everything that happened while you were away.</p>
 				</div>
 				<div class="page-actions">
-					<a href="/dashboard/settings" class="n-btn" aria-label="Notification preferences">⚙ Preferences</a>
-					<button type="button" id="n-mark-all" class="n-btn">Mark all read</button>
+					<a href="/dashboard/settings" class="n-btn" aria-label="Notification preferences" data-i18n="notifications.preferences" data-i18n-attr="aria-label:notifications.notification_preferences_arialabel">⚙ Preferences</a>
+					<button type="button" id="n-mark-all" class="n-btn" data-i18n="notifications.mark_all_read">Mark all read</button>
 				</div>
 			</div>
 
 			<div id="n-auth-wall" class="n-auth-wall" hidden>
-				<h2>Sign in to see your notifications</h2>
-				<p>Track payments, sales, follows, remixes, quests, and royalties across three.ws.</p>
-				<a href="/login?next=/notifications" class="n-btn">Sign in</a>
+				<h2 data-i18n="notifications.sign_in_to_see_your_notifications">Sign in to see your notifications</h2>
+				<p data-i18n="notifications.track_payments_sales_follows_remixes_quests">Track payments, sales, follows, remixes, quests, and royalties across three.ws.</p>
+				<a href="/login?next=/notifications" class="n-btn" data-i18n="notifications.sign_in">Sign in</a>
 			</div>
 
 			<div id="n-error" class="n-error" hidden></div>
 
 			<div id="n-main" hidden>
 				<div class="n-tabs" id="n-tabs" role="tablist">
-					<button class="n-tab active" role="tab" aria-selected="true" data-type="">All</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="sales">Sales & earnings</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="purchases">Purchases</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="social">Social</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="irl">In person</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="alerts">Market alerts</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="creations">Creations</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="account">Account</button>
+					<button class="n-tab active" role="tab" aria-selected="true" data-type="" data-i18n="notifications.all">All</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="sales" data-i18n="notifications.sales_earnings">Sales & earnings</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="purchases" data-i18n="notifications.purchases">Purchases</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="social" data-i18n="notifications.social">Social</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="irl" data-i18n="notifications.in_person">In person</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="alerts" data-i18n="notifications.market_alerts">Market alerts</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="creations" data-i18n="notifications.creations">Creations</button>
+					<button class="n-tab" role="tab" aria-selected="false" data-type="account" data-i18n="notifications.account">Account</button>
 				</div>
 				<div id="n-list" class="n-list"></div>
 				<div id="n-load-more" class="n-load-more" hidden>
-					<button type="button" id="n-load-more-btn" class="n-btn">Load more</button>
+					<button type="button" id="n-load-more-btn" class="n-btn" data-i18n="notifications.load_more">Load more</button>
 				</div>
 			</div>
 		</main>

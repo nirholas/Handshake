@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Realism Quality Bench · three.ws</title>
+	<title data-i18n="quality_bench.meta_title">Realism Quality Bench · three.ws</title>
 	<meta name="robots" content="noindex, nofollow" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
@@ -53,9 +53,9 @@
 <body>
 	<div class="qb-wrap">
 		<div class="qb-header">
-			<h1 class="qb-title">Realism Quality Bench</h1>
+			<h1 class="qb-title" data-i18n="quality_bench.realism_quality_bench">Realism Quality Bench</h1>
 		</div>
-		<p class="qb-sub">Fixed 23-prompt benchmark, judged by Vertex Gemini vision on photorealism / geometry / texture / prompt-adherence. Internal tooling — not a public surface.</p>
+		<p class="qb-sub" data-i18n="quality_bench.fixed_23_prompt_benchmark_judged_by_vertex">Fixed 23-prompt benchmark, judged by Vertex Gemini vision on photorealism / geometry / texture / prompt-adherence. Internal tooling — not a public surface.</p>
 
 		<div id="qb-content">
 			<div class="qb-empty">Loading run history…</div>
