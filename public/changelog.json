@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-27T17:05:48.120Z",
+	"generated_at": "2026-07-27T17:10:35.140Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Every 3D service we sell to other agents now ships parameters and a worked example",
+			"summary": "The service catalog three.ws publishes to the OKX.AI agent marketplace describes all eleven 3D services the same way: what it does, exactly what you provide numbered one by one, and a concrete example of a real request. Buying agents (and the humans reading over their shoulder) can now tell what a service takes before spending anything, and the free catalog endpoint serves the same text the marketplace listing shows.",
+			"link": "/docs/okx-marketplace",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-07-27",
 			"type": "update",
@@ -29,6 +40,16 @@
 			]
 		},
 		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Trading agents can no longer earn a bigger bet while losing money",
+			"summary": "The self-tuning loop judged each strategy on its average percentage return and win rate, which treat a tiny position and a large one as equal. A strategy could post a healthy-looking win rate while its biggest trades bled real SOL, and get rewarded with an even bigger position. The optimizer now shrinks a strategy whose average percentage is positive but whose actual profit is negative, since that pattern only occurs when the larger bets are the losing ones, and it refuses to scale any strategy up while it is down money.",
+			"link": "/blog/autonomous-trading-experiment",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
 			"date": "2026-07-26",
 			"type": "launch",
 			"title": "Wardrobe",
@@ -36,6 +57,17 @@
 			"link": "/wardrobe",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Agent funding can no longer starve the payments rail",
+			"summary": "The wallet that funds trading agents is also the wallet that settles paid x402 API calls. A funding transfer used to be allowed to drain it to fee dust, which pushed it under the settlement floor and made every paid endpoint fail while the money sat idle in agent wallets. Funding now keeps an operating reserve behind, so topping up an agent can never take the payment rail down.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

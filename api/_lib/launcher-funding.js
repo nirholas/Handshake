@@ -29,6 +29,27 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 const MASTER_ENV = 'LAUNCHER_MASTER_SECRET_KEY_B64';
 const MASTER_FALLBACK_ENV = 'PUMP_X402_LAUNCHER_SECRET_KEY_B64';
 
+// SOL the master must still hold AFTER any funding transfer.
+//
+// This wallet is not only the launcher/sniper funding root: the same keypair is
+// the x402 ring payer (it resolves to one pubkey through both SignerSpecs, which
+// is why treasury-topup reports it as "coin-launcher-master+x402-ring-payer").
+// In self-pay mode the facilitator hard-rejects a settle when the PAYER is under
+// SPONSOR_SOL_FLOOR (0.02 SOL), so a funding transfer that left only transfer
+// fees behind silently killed the entire paid-endpoint rail. That is exactly how
+// the ring died on 2026-07-25 and again on 2026-07-26: the sniper auto-funder
+// pulled arm top-ups until the shared wallet fell ~100 lamports under the floor,
+// and every x402 settle 502'd while 3+ SOL sat idle in agent wallets.
+//
+// The floor is deliberately well above 0.02 so a burst of settles between two
+// funding runs can never cross it. Override per-environment if the roles are
+// ever split onto separate keypairs.
+const DEFAULT_MASTER_RESERVE_SOL = 0.05;
+export function masterReserveSol() {
+	const n = Number(process.env.LAUNCHER_MASTER_RESERVE_SOL);
+	return Number.isFinite(n) && n >= 0 ? n : DEFAULT_MASTER_RESERVE_SOL;
+}
+
 /**
  * Load the master launch wallet keypair, or null when neither env is set.
  * @returns {Promise<import('@solana/web3.js').Keypair|null>}
@@ -185,11 +206,16 @@ export async function fundAgentForLaunch({
 	if (!master) return { ok: false, reason: 'master launch wallet not configured' };
 
 	const conn = solanaConnection(network);
-	// Keep a fee buffer so the master never empties below the cost of the very
-	// transfer it is about to sign.
+	// Keep a fee buffer AND the shared-wallet operating reserve, so the master
+	// never empties below the cost of this transfer plus the SOL its other role
+	// (x402 ring payer) needs to keep settling. See masterReserveSol().
+	const reserve = masterReserveSol();
 	const { sol: masterSol } = await getSolBalance(conn, master.publicKey);
-	if (masterSol < amount + 0.002) {
-		return { ok: false, reason: `master balance ${masterSol} SOL below ${amount} + fees` };
+	if (masterSol < amount + 0.002 + reserve) {
+		return {
+			ok: false,
+			reason: `master balance ${masterSol} SOL below ${amount} + fees + ${reserve} reserve`,
+		};
 	}
 
 	const lamports = Math.round(amount * LAMPORTS_PER_SOL);
