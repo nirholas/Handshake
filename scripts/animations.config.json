@@ -270,7 +270,8 @@
   "source": "Offabean Dance.fbx",
   "label": "Offabean Dance",
   "icon": "🫘",
-  "loop": true
+  "loop": true,
+  "recenterHips": true
  },
  {
   "name": "dance",

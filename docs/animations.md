@@ -33,6 +33,24 @@ There are 5 animation collections across the codebase. They are separate and use
 4. Update `public/animations/registry.json` so the new clip is catalogued under the `clips` collection
 5. Optionally wire a slot in `src/runtime/animation-slots.js` so the agent plays it automatically
 
+### Config entry fields
+
+`name`, `source`, `label`, `icon`, and `loop` are the required basics. The rest correct a source whose rig carries a baked transform the retargeter cannot see on its own:
+
+| Field | Effect |
+| ----- | ------ |
+| `trim` | Cut the clip to its first N seconds. Use on a long looping source where only the opening beat is ever played. |
+| `uprightFix` | Remove a constant orientation bias from the Hips track. Needed when a source bakes its up-axis conversion onto the Hips instead of a parent node, which lands the avatar on its back (`scripts/upright-hips.mjs`). |
+| `recenterHips` | Remove a constant translation offset from the Hips track, anchoring the clip's first frame to the reference rig's rest Hips. Needed when a source bakes the armature's own transform onto the Hips, which leaves the avatar standing off its mark and floating (`scripts/recenter-hips.mjs`). Authored root motion is preserved. |
+
+Both correction flags are opt-in and self-gating: a clip already upright or already on its mark is returned unchanged, so applying one to a healthy clip is a no-op. They are opt-in rather than automatic so an authored pose (a yoga fold, a clip that deliberately walks in from off-screen) is never silently "corrected".
+
+Hip units are detected from the clip data, not the file extension. Raw Mixamo FBX is centimetre-baked and gets scaled to metres; a source round-tripped through Blender or glTF-Transform already exports metres and is left alone.
+
+### If a source file is missing
+
+Some retarget sources are deliberately never committed (`animation-sources/mx-*.fbx` is gitignored), so a clean checkout will not have them. When a configured clip's source is absent but its built JSON is already in `clips/`, the build republishes the built clip and logs `PREBUILT`. Only an entry with neither a source nor a built clip fails. Retiring a clip is therefore done by removing its config entry, not by deleting its source.
+
 ## Agent slots
 
 Slots are the fixed vocabulary the agent avatar uses to express emotion/gesture. They resolve to clip names at runtime. Defined in `src/runtime/animation-slots.js`.

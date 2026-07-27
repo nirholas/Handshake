@@ -190,12 +190,34 @@ and split into per-clip GLBs by
 
 ## Custom mocap
 
-> _No custom-mocap clips have shipped yet._
-
 When a non-Mixamo source lands here (custom recording, third-party studio,
 etc.), add a section below covering: the clip name, the licensor, the license
 terms (commercial use, attribution requirements, derivative works), and a
 link to the signed agreement or storefront receipt.
+
+### `av-offabean-dance` — provenance unconfirmed
+
+| Field | Value |
+| ----- | ----- |
+| Clip name | `av-offabean-dance` |
+| Source | <https://github.com/nvr-ndr/offabean_dance> (`offabean_dance.fbx`) |
+| Licensor | Unknown |
+| License | **None declared** — the repository ships no `LICENSE` file and no terms in a README |
+| Rig | Mixamo "Beta" character (`Beta_Joints` / `Beta_Surface`, 65-joint `mixamorig:` skeleton) |
+
+The retargeted clip carries only the motion; the source mesh and textures are
+discarded at build time, so nothing of the Beta character ships. The skeleton
+and the 16.1s choreography are Mixamo-rigged, but this repository is not an
+Adobe/Mixamo distribution channel and declares no license, so the Mixamo
+Terms of Use grant recorded at the top of this file **cannot be assumed to
+cover it**: that grant runs to the account that exported the asset, and we
+have no evidence of who that was.
+
+Unresolved before this clip ships publicly: confirm with the repository owner
+(`nvr-ndr`) whether the choreography is their own work or a stock Mixamo clip,
+and on what terms three.ws may redistribute it. If it turns out to be an
+unmodified stock Mixamo animation exported under an authenticated account, it
+belongs in the Mixamo table above instead and this section can be deleted.
 
 ## Pole choreography (pending)
 

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-27",
+			"title": "A new dance joins the animation library, and two rig quirks that used to break imports are now handled",
+			"summary": "There is a new 16-second dance, Offabean Dance, in the animation gallery, and like every clip in the library it plays on any humanoid avatar you own. Getting it in surfaced two problems in how we import animations. We assumed every file of its type measured distances the same way, and this one did not, which shrank the dancer to a hundredth of its size and sank it into the floor. Its rig also carried a hidden offset that stood the dancer a metre and a half behind its mark and left it floating. Both are now detected and corrected from the file itself, so the next animation with either quirk simply works. Separately, rebuilding the library on a fresh copy of the code used to quietly drop a dozen live animations whose source files we intentionally do not store; they are preserved now.",
+			"tags": [
+				"feature",
+				"fix"
+			],
+			"link": "/animations"
+		},
+		{
+			"date": "2026-07-27",
 			"title": "Search engines can now find the translated version of 160 more pages",
 			"summary": "We tell search engines which languages a page is available in so someone searching in Japanese finds the Japanese version rather than the English one. The list of pages that got those signals was built by guessing each page's file from its address, and the guess only covered one of the four layouts we actually use. Pages living in a subfolder were treated as having no translations at all, so 160 fully translated pages, including the cookbook, the gallery, the demos and our OpenAI partner page, were telling search engines they existed only in English. Coverage goes from 186 pages to 346.",
 			"tags": [

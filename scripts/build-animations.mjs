@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve, basename } from 'node:path';
 import { Blob } from 'node:buffer';
 import { liftHipsUpright } from './upright-hips.mjs';
+import { recenterHips } from './recenter-hips.mjs';
 
 // three's loaders + exporter touch a handful of DOM globals; stub them out for node.
 globalThis.self = globalThis;
@@ -171,6 +172,17 @@ function collectBoneNames(root) {
 	return names;
 }
 
+// The reference rig's rest Hips position — the mark a re-centered clip is
+// anchored to (see recenter-hips.mjs). Read from the rig rather than hardcoded
+// so swapping cz.glb for a future reference rig stays correct.
+function collectRestHips(root) {
+	let rest = null;
+	root.traverse((n) => {
+		if (n.isBone && n.name === 'Hips' && !rest) rest = n.position.toArray();
+	});
+	return rest;
+}
+
 // A humanoid hips position track in meters never exceeds ~2m of magnitude;
 // centimeter-authored rigs (Mixamo FBX, three.js Soldier/Michelle GLBs) sit
 // around 100. Anything past this threshold is unambiguously centimeter data.
@@ -274,12 +286,16 @@ async function main() {
 
 	// Lazy-load the reference rig only if at least one clip needs retargeting.
 	let avaturnBones = null;
+	let restHips = null;
 	async function getRig() {
 		if (avaturnBones) return avaturnBones;
 		console.log('[animations] loading reference Avaturn rig:', basename(REFERENCE_GLB));
 		const reference = await loadGLB(REFERENCE_GLB);
 		avaturnBones = collectBoneNames(reference.scene);
-		console.log(`[animations] reference rig has ${avaturnBones.size} bones`);
+		restHips = collectRestHips(reference.scene);
+		console.log(
+			`[animations] reference rig has ${avaturnBones.size} bones, rest hips [${(restHips ?? []).map((v) => v.toFixed(3)).join(', ')}]`,
+		);
 		return avaturnBones;
 	}
 
@@ -387,6 +403,18 @@ async function main() {
 				if (lift.changed) {
 					console.log(
 						`[animations] upright ${def.name.padEnd(12)} ${lift.tiltBefore.toFixed(0)}° → ${lift.tiltAfter.toFixed(0)}°`,
+					);
+				}
+			}
+			// Sources with the armature transform baked onto the Hips track stand
+			// permanently off-origin. Runs after uprightFix so the offset is
+			// measured in the corrected frame. Opt-in per source; a no-op on clips
+			// already starting on their mark.
+			if (def.recenterHips) {
+				const shift = recenterHips(json, restHips);
+				if (shift.changed) {
+					console.log(
+						`[animations] recenter ${def.name.padEnd(12)} shifted [${shift.offset.map((v) => v.toFixed(2)).join(', ')}] (${shift.distance.toFixed(2)}m)`,
 					);
 				}
 			}

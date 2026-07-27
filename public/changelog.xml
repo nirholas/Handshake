@@ -15,6 +15,14 @@
 			<description>A detailed model can take several minutes, longer than an assistant will wait inside a single tool call. Those generations used to look like failures even though the GPU finished the model minutes later. The ChatGPT 3D Studio now returns a live handle with a countdown of how much time is left, and a new check_job tool collects the finished model when it lands. Poll responses carry elapsed time and a remaining estimate that counts down, the assistant sees progress instead of identical waiting frames, and the inline viewer shows a real &quot;still rendering&quot; panel rather than an empty one. A generation whose GPU worker dies mid-job is now automatically retried on a healthy engine instead of being written off, including when nobody is watching the page.</description>
 		</item>
 		<item>
+			<title>A new dance joins the animation library, and two rig quirks that used to break imports are now handled</title>
+			<link>https://three.ws/animations</link>
+			<guid isPermaLink="false">2026-07-27:A new dance joins the animation library, and two rig quirks that used to break imports are now handled</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>There is a new 16-second dance, Offabean Dance, in the animation gallery, and like every clip in the library it plays on any humanoid avatar you own. Getting it in surfaced two problems in how we import animations. We assumed every file of its type measured distances the same way, and this one did not, which shrank the dancer to a hundredth of its size and sank it into the floor. Its rig also carried a hidden offset that stood the dancer a metre and a half behind its mark and left it floating. Both are now detected and corrected from the file itself, so the next animation with either quirk simply works. Separately, rebuilding the library on a fresh copy of the code used to quietly drop a dozen live animations whose source files we intentionally do not store; they are preserved now.</description>
+		</item>
+		<item>
 			<title>A translation run can no longer fail quietly into English</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-27:A translation run can no longer fail quietly into English</guid>
