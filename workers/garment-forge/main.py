@@ -54,7 +54,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
-from google.api_core.exceptions import NotFound
+from google.api_core.exceptions import NotFound, PreconditionFailed
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
@@ -84,6 +84,14 @@ MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
 # over to trellis, stays under ~35 minutes), so a poll that finds an older
 # running/queued record reports failure instead of "running" forever.
 JOB_STALE_S = float(os.environ.get("JOB_STALE_S", "2700"))
+# How many times a job may be re-driven after losing its instance before it is
+# declared permanently failed. A reclaimed instance is normal Cloud Run
+# behaviour (scale-to-zero, revision rollout), not a defect in the job, so the
+# first losses must not kill it; a job that keeps dying past this is genuinely
+# broken and should stop consuming capacity.
+MAX_ATTEMPTS = int(os.environ.get("JOB_MAX_ATTEMPTS", "3"))
+# Identity of this process, recorded on a claim so logs show who owns a job.
+INSTANCE_ID = os.environ.get("K_REVISION", "local") + ":" + uuid.uuid4().hex[:8]
 
 _bucket: Optional[storage.Bucket] = None          # jobs + rig staging
 _publish_bucket: Optional[storage.Bucket] = None  # public garment catalog
@@ -94,6 +102,82 @@ _jobs: dict[str, dict] = {}
 
 def _job_blob(job_id: str):
     return _bucket.blob(f"garment-jobs/{job_id}.json")
+
+
+# ── Durable work claiming ───────────────────────────────────────────────────
+# The job RECORD is durable in GCS, but the work used to live only in this
+# process's FastAPI background queue: submit 20 jobs to a MAX_CONCURRENT=2
+# service and 18 sit on the semaphore until Cloud Run reclaims the instance
+# (scale-to-zero or a revision rollout), taking them with it. Their records
+# then sat at "queued" until the watchdog buried them (observed 2026-07-26:
+# 12 of 22 batch jobs lost this way).
+#
+# So work is CLAIMED at execution time, not at submit time: a job is only
+# owned once a live instance holds a semaphore slot and wins an atomic
+# generation-matched write on its record. Anything not claimed (or claimed by
+# an instance that then died) stays recoverable, and POST /sweep re-drives it.
+
+def _claimable(job: dict, now: datetime) -> bool:
+    """A queued job nobody owns, or a running job whose owner went silent past
+    the stale window (its instance is gone)."""
+    status = job.get("status")
+    if status not in ("queued", "running"):
+        return False
+    if int(job.get("attempts", 0)) >= MAX_ATTEMPTS:
+        return False
+    if status == "queued":
+        return True
+    try:
+        updated = datetime.fromisoformat(job.get("updated_at", ""))
+    except ValueError:
+        return True
+    return (now - updated).total_seconds() > JOB_STALE_S
+
+
+def _try_claim(job_id: str) -> Optional[dict]:
+    """Atomically take ownership of a job. Returns the claimed record, or None
+    if another instance won the race or the job is not claimable. Blocking:
+    always called through run_in_executor."""
+    blob = _job_blob(job_id)
+    try:
+        blob.reload()
+        generation = blob.generation
+        job = json.loads(blob.download_as_bytes())
+    except NotFound:
+        return None
+    if not _claimable(job, datetime.now(timezone.utc)):
+        return None
+    job.update(
+        status="running",
+        stage="claimed",
+        attempts=int(job.get("attempts", 0)) + 1,
+        owner=INSTANCE_ID,
+        updated_at=datetime.now(timezone.utc).isoformat(),
+    )
+    try:
+        blob.upload_from_string(json.dumps(job), content_type="application/json",
+                                if_generation_match=generation)
+    except PreconditionFailed:
+        return None  # another instance claimed it first
+    _jobs[job_id] = job
+    return job
+
+
+def _list_claimable_ids(limit: int) -> list[str]:
+    """Job ids that need driving, oldest first. Blocking."""
+    now = datetime.now(timezone.utc)
+    out: list[tuple[str, str]] = []
+    for blob in _bucket.list_blobs(prefix="garment-jobs/"):
+        if not blob.name.endswith(".json"):
+            continue
+        try:
+            job = json.loads(blob.download_as_bytes())
+        except Exception:  # noqa: BLE001: a half-written record is skipped
+            continue
+        if _claimable(job, now):
+            out.append((job.get("updated_at", ""), job.get("job_id", "")))
+    out.sort()
+    return [jid for _, jid in out[:limit] if jid]
 
 
 async def _update_job(job_id: str, **fields) -> dict:
@@ -198,36 +282,69 @@ def _run_stages(job_id: str, prompt: str, slot: str, tier: str,
     }
 
 
-async def _process_job(job_id: str, prompt: str, slot: str, tier: str,
-                       yaw_deg: float) -> None:
+async def _drive_job(job_id: str) -> None:
+    """Run one job end to end, claiming it first so exactly one live instance
+    owns it. Everything needed to run is read from the durable record, so a
+    sweep can drive a job this process never saw submitted."""
     async with _sem:
         loop = asyncio.get_event_loop()
-        t0 = time.time()
+        job = await loop.run_in_executor(None, _try_claim, job_id)
+        if job is None:
+            return  # someone else owns it, or it is already terminal
+        await _process_job(
+            job_id,
+            job.get("prompt", ""),
+            job.get("slot", ""),
+            job.get("tier", "high"),
+            float(job.get("yaw_deg", GARMENT_YAW_DEG)),
+        )
+    # Slot is free again: drain any backlog left by a reclaimed instance
+    # without waiting for the next sweep tick.
+    await _drive_next()
 
-        def progress(stage: str) -> None:
-            # Persist synchronously from the worker thread: a poll may land
-            # on another instance the moment the stage flips.
-            job = _jobs.setdefault(job_id, {"job_id": job_id})
-            job.update(status="running", stage=stage,
-                       updated_at=datetime.now(timezone.utc).isoformat())
-            _job_blob(job_id).upload_from_string(
-                json.dumps(job), content_type="application/json")
-            log.info("[%s] stage: %s", job_id, stage)
 
-        try:
-            result = await loop.run_in_executor(
-                None, _run_stages, job_id, prompt, slot, tier, yaw_deg, progress)
-            await _update_job(job_id, status="done", stage="done",
-                              elapsed_ms=int((time.time() - t0) * 1000), **result)
-            log.info("[%s] done in %.1fs → %s (coverage %.3f)",
-                     job_id, time.time() - t0, result["glb_url"], result["coverage"])
-        except Exception as exc:  # noqa: BLE001: surfaced via job status
-            await _update_job(
-                job_id, status="failed",
-                error=safe_error(exc, context=f"[{job_id}] garment pipeline"),
-                elapsed_ms=int((time.time() - t0) * 1000),
-            )
-            log.error("[%s] failed: %s", job_id, exc)
+async def _drive_next() -> None:
+    loop = asyncio.get_event_loop()
+    try:
+        ids = await loop.run_in_executor(None, _list_claimable_ids, 1)
+    except Exception as exc:  # noqa: BLE001: backlog drain is best-effort
+        log.warning("backlog scan failed: %s", exc)
+        return
+    for jid in ids:
+        asyncio.create_task(_drive_job(jid))
+
+
+async def _process_job(job_id: str, prompt: str, slot: str, tier: str,
+                       yaw_deg: float) -> None:
+    """Run the pipeline for an ALREADY CLAIMED job. Callers hold the
+    semaphore slot; this function owns only the stage progression."""
+    loop = asyncio.get_event_loop()
+    t0 = time.time()
+
+    def progress(stage: str) -> None:
+        # Persist synchronously from the worker thread: a poll may land
+        # on another instance the moment the stage flips.
+        job = _jobs.setdefault(job_id, {"job_id": job_id})
+        job.update(status="running", stage=stage,
+                   updated_at=datetime.now(timezone.utc).isoformat())
+        _job_blob(job_id).upload_from_string(
+            json.dumps(job), content_type="application/json")
+        log.info("[%s] stage: %s", job_id, stage)
+
+    try:
+        result = await loop.run_in_executor(
+            None, _run_stages, job_id, prompt, slot, tier, yaw_deg, progress)
+        await _update_job(job_id, status="done", stage="done",
+                          elapsed_ms=int((time.time() - t0) * 1000), **result)
+        log.info("[%s] done in %.1fs → %s (coverage %.3f)",
+                 job_id, time.time() - t0, result["glb_url"], result["coverage"])
+    except Exception as exc:  # noqa: BLE001: surfaced via job status
+        await _update_job(
+            job_id, status="failed",
+            error=safe_error(exc, context=f"[{job_id}] garment pipeline"),
+            elapsed_ms=int((time.time() - t0) * 1000),
+        )
+        log.error("[%s] failed: %s", job_id, exc)
 
 
 class GenerateRequest(BaseModel):

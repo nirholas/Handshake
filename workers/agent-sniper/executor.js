@@ -574,7 +574,42 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 						if (reconciled) return { status: 'closed', reason: 'reconciled_onchain' };
 						// Emptying tx not found yet (history lag); hold for the next sweep
 						// rather than re-broadcasting a sell that cannot succeed.
-						await sql`UPDATE agent_sniper_positions SET status = 'open', error = 'reconcile_pending', last_quoted_at = now() WHERE id = ${position.id}`;
+						//
+						// Two guards, both learned from production. The status guard: this
+						// UPDATE used to write status='open' unconditionally, which
+						// resurrected positions closed concurrently (by a reconcile in
+						// another sweep, or by an operator) — they kept sell_sig, closed_at
+						// and realized P&L while reading 'open', so a settled trade counted
+						// as live risk and held a concurrency slot. The time bound: the park
+						// itself had none, so a bag whose emptying tx could never be found
+						// re-parked every sweep forever and wedged that slot permanently.
+						const pendingSince = position.reconcile_pending_since
+							? new Date(position.reconcile_pending_since).getTime()
+							: null;
+						if (pendingSince != null && Date.now() - pendingSince >= RECONCILE_GIVE_UP_MS) {
+							// The bag is provably gone but its proceeds are unknowable from
+							// chain history. Book it closed so the slot frees, and leave
+							// realized P&L NULL rather than inventing a number — every P&L
+							// query filters NULL out, so an unknown exit skews no report.
+							await sql`
+								UPDATE agent_sniper_positions SET
+									status = 'closed', exit_reason = 'error',
+									error = 'reconcile_unresolved',
+									reconcile_pending_since = NULL, closed_at = now()
+								WHERE id = ${position.id} AND status <> 'closed'
+							`;
+							log.warn('reconcile gave up; bag gone, proceeds unknown', {
+								...tag, pending_hours: ((Date.now() - pendingSince) / 3_600_000).toFixed(1),
+							});
+							return { status: 'closed', reason: 'reconcile_unresolved' };
+						}
+						await sql`
+							UPDATE agent_sniper_positions SET
+								status = 'open', error = 'reconcile_pending',
+								reconcile_pending_since = coalesce(reconcile_pending_since, now()),
+								last_quoted_at = now()
+							WHERE id = ${position.id} AND status <> 'closed'
+						`;
 						return { status: 'retry', reason: 'reconcile_pending' };
 					}
 					if (realBalance < sellBaseBig) {

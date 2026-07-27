@@ -64,7 +64,19 @@ const flag = (name, fallback) => {
 	return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
 };
 const CATALOG_URL = flag('catalog', GARMENT_CATALOG_URL);
-const AVATAR_PATH = resolve(process.cwd(), flag('avatar', 'public/avatars/parametric-base.glb'));
+// The FIRST avatar is the gait reference (the canonical body the forge places
+// against); the rest are cross-rig bind checks. The platform's whole claim is
+// that a garment fits any humanoid, so a catalog piece that binds on the
+// canonical base and fails on a foreign rig is a real defect, not a nicety.
+// Every default here canonicalizes through a different naming convention.
+const DEFAULT_AVATARS = [
+	'public/avatars/parametric-base.glb',   // canonical mixamorig base (gait reference)
+	'public/avatars/xbot.glb',              // Mixamo export, meshopt-compressed
+	'public/avatars/cz.glb',                // the reference rig the clip library was baked from
+	'public/avatars/realistic-male.glb',    // studio body
+];
+const AVATAR_PATHS = (flag('avatars', '') ? flag('avatars', '').split(',') : DEFAULT_AVATARS)
+	.map((p) => resolve(process.cwd(), p.trim()));
 
 // p95 cloth-to-body ceilings (meters) per slot before a garment is flagged
 // for review. Body-hugging slots sit tight; loose slots (hair, bags) ride
@@ -137,9 +149,21 @@ function gaitStats(root, body, garmentMesh, clip) {
 	};
 }
 
-const avatarBytes = readFileSync(AVATAR_PATH);
+const avatars = AVATAR_PATHS.map((path) => ({ path, name: path.split('/').pop(), bytes: readFileSync(path) }));
 const clipJson = JSON.parse(readFileSync(resolve(process.cwd(), 'public/animations/clips/walk.json'), 'utf8'));
 const walkClip = AnimationClip.parse(clipJson.clip || clipJson);
+console.log(`rigs: ${avatars.map((a) => a.name).join(', ')} (first is the gait reference)`);
+
+/** Bind one garment onto one avatar; returns the attach result + scene root. */
+async function bindOn(avatar, glbBytes, slot) {
+	const loaded = await loadGlb(avatar.bytes);
+	const root = new Group();
+	root.add(loaded.scene);
+	root.updateMatrixWorld(true);
+	const garment = await loadGlb(glbBytes);
+	garment.scene.updateMatrixWorld(true);
+	return { root, res: attachGarment(root, garment.scene, { slot }) };
+}
 
 const raw = await (await fetch(CATALOG_URL)).json();
 const { garments, rejected } = sanitizeCatalog(raw);
@@ -156,15 +180,19 @@ for (const m of garments) {
 		const sha = createHash('sha256').update(glb).digest('hex');
 		if (sha !== m.model.sha256) throw new Error('sha256 mismatch');
 
-		const avatar = await loadGlb(avatarBytes);
-		const root = new Group();
-		root.add(avatar.scene);
-		root.updateMatrixWorld(true);
-		const garment = await loadGlb(glb);
-		garment.scene.updateMatrixWorld(true);
-
-		const res = attachGarment(root, garment.scene, { slot: m.slot });
-		if (!res.ok) throw new Error(`attach refused: ${res.reason}`);
+		// Cross-rig binding: every declared rig must accept the garment. A
+		// refusal on ANY of them is a hard failure, because the catalog's
+		// promise is that a piece fits whatever humanoid is loaded.
+		const { root, res } = await bindOn(avatars[0], glb, m.slot);
+		if (!res.ok) throw new Error(`attach refused on ${avatars[0].name}: ${res.reason}`);
+		const rigCoverage = [`${avatars[0].name.replace('.glb', '')}=${res.coverage.toFixed(2)}`];
+		for (const other of avatars.slice(1)) {
+			const alt = await bindOn(other, glb, m.slot);
+			if (!alt.res.ok) {
+				throw new Error(`attach refused on ${other.name}: ${alt.res.reason}`);
+			}
+			rigCoverage.push(`${other.name.replace('.glb', '')}=${alt.res.coverage.toFixed(2)}`);
+		}
 
 		let body = null;
 		root.traverse((o) => {
@@ -179,9 +207,9 @@ for (const m of garments) {
 		const flag = stats.p95 > ceiling ? '  << WARN p95 over slot ceiling' : '';
 		if (flag) warns.push(label);
 		console.log(
-			`ok    ${label.padEnd(52)} coverage=${res.coverage.toFixed(3)} `
+			`ok    ${label.padEnd(52)} rigs[${rigCoverage.join(' ')}] `
 			+ `gait mean=${(stats.mean * 100).toFixed(1)}cm p95=${(stats.p95 * 100).toFixed(1)}cm `
-			+ `max=${(stats.max * 100).toFixed(1)}cm (n=${stats.n})${flag}`,
+			+ `max=${(stats.max * 100).toFixed(1)}cm${flag}`,
 		);
 	} catch (err) {
 		hardFailures++;

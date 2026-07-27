@@ -102,6 +102,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "uk",
+			"name": "Українська",
+			"dir": "ltr"
+		},
+		{
 			"code": "fa",
 			"name": "فارسی",
 			"dir": "rtl"
@@ -239,6 +244,11 @@
 		{
 			"code": "az",
 			"name": "Azərbaycan dili",
+			"dir": "ltr"
+		},
+		{
+			"code": "pa",
+			"name": "ਪੰਜਾਬੀ",
 			"dir": "ltr"
 		}
 	]

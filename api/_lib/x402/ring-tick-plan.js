@@ -52,6 +52,15 @@ export function ringTickConfig(e = process.env) {
 		// governor only ever throttles DOWN from `calls`; it never raises it.
 		feePerCallLamports: Math.max(1, Math.floor(num(e.X402_RING_FEE_PER_CALL_LAMPORTS, 7_000))),
 		runwayDays: Math.max(0.5, num(e.X402_RING_TARGET_RUNWAY_DAYS, 3)),
+		// USDC float (atomics) the ring tick must LEAVE UNSPENT for the
+		// artifact-producing pipelines (forge props, avatar rigs) that share the
+		// payer. Ring-settle recirculates money in a circle and produces nothing
+		// but volume; a paid forge call produces a real asset in the public
+		// gallery. Without this reserve the $10 settles drain the float and every
+		// $0.15 prop purchase fails verify (observed 2026-07-26: props 0/90 while
+		// $0.001 health canaries still fit through at 58/72). Default $1.00 buys
+		// several draft props between rebalancer sweeps.
+		artifactReserveAtomic: num(e.X402_ARTIFACT_RESERVE_ATOMIC, 1_000_000),
 	};
 }
 
@@ -146,14 +155,24 @@ export function assessBackpressure({ solLamports, usdcAtomic, floorLamports, min
 // minUsdcAtomic } — `backpressure` is the FINAL assessment for the tick as planned.
 export function planBackpressure({
 	isSettleTick, solLamports, usdcAtomic, floorLamports, ringSettlePriceAtomic, tipHeadroomAtomic = 20_000,
+	// Float the ring must leave for artifact-producing pipelines that share this
+	// payer. Subtracted from the balance the ring is allowed to see, so a settle
+	// that would eat the reserve degrades to a cheap-only tick instead of
+	// starving the forge. See ringTickConfig().artifactReserveAtomic.
+	artifactReserveAtomic = 0,
 }) {
+	const spendableUsdc = Number.isFinite(usdcAtomic)
+		? Math.max(0, usdcAtomic - artifactReserveAtomic)
+		: usdcAtomic;
 	const minUsdc = minUsdcForTick({ isSettleTick, ringSettlePriceAtomic, tipHeadroomAtomic });
-	const bp = assessBackpressure({ solLamports, usdcAtomic, floorLamports, minUsdcAtomic: minUsdc });
+	const bp = assessBackpressure({ solLamports, usdcAtomic: spendableUsdc, floorLamports, minUsdcAtomic: minUsdc });
 	if (bp.ok || !isSettleTick || bp.reason !== 'insufficient_payer_usdc') {
 		return { settleTick: isSettleTick, backpressure: bp, degraded: false, minUsdcAtomic: minUsdc };
 	}
 	const minCheap = minUsdcForTick({ isSettleTick: false, ringSettlePriceAtomic, tipHeadroomAtomic });
-	const cheapBp = assessBackpressure({ solLamports, usdcAtomic, floorLamports, minUsdcAtomic: minCheap });
+	// Cheap tips are re-assessed against the SAME reserved-aside balance: the
+	// artifact float is off-limits to every ring call, not just the settle.
+	const cheapBp = assessBackpressure({ solLamports, usdcAtomic: spendableUsdc, floorLamports, minUsdcAtomic: minCheap });
 	return { settleTick: false, backpressure: cheapBp, degraded: cheapBp.ok, minUsdcAtomic: minCheap };
 }
 

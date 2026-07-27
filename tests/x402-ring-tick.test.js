@@ -342,3 +342,51 @@ describe('ring-tick runway governor', () => {
 		expect(set.runwayDays).toBe(7);
 	});
 });
+
+// ── Artifact reserve: ring churn must not starve the value-producing pipelines ──
+describe('ring-tick artifact reserve', () => {
+	const FLOOR = 20_000_000;
+	const SETTLE = 10_000_000;   // $10 ring-settle, the shape that drained the float
+	const RESERVE = 1_000_000;   // $1.00 held back for forge props
+	const base = {
+		solLamports: 500_000_000, floorLamports: FLOOR,
+		ringSettlePriceAtomic: SETTLE, artifactReserveAtomic: RESERVE,
+	};
+
+	it('a settle that would eat the reserve degrades to cheap-only', () => {
+		// $10.50 held: enough for the $10 settle only by spending into the reserve.
+		const r = planBackpressure({ ...base, isSettleTick: true, usdcAtomic: 10_500_000 });
+		expect(r.settleTick).toBe(false);
+		expect(r.degraded).toBe(true);
+	});
+
+	it('a settle clear of the reserve still fires', () => {
+		// $11.50 held: $10 settle leaves the full $1 reserve intact.
+		const r = planBackpressure({ ...base, isSettleTick: true, usdcAtomic: 11_500_000 });
+		expect(r.settleTick).toBe(true);
+		expect(r.backpressure.ok).toBe(true);
+	});
+
+	it('cheap tips cannot nibble the reserve either', () => {
+		// $1.01 held: only $0.01 is spendable, under the $0.02 tip headroom.
+		const r = planBackpressure({ ...base, isSettleTick: false, usdcAtomic: 1_010_000 });
+		expect(r.backpressure.ok).toBe(false);
+		expect(r.backpressure.reason).toBe('insufficient_payer_usdc');
+	});
+
+	it('zero reserve preserves the previous behaviour exactly', () => {
+		const withZero = planBackpressure({ ...base, artifactReserveAtomic: 0, isSettleTick: true, usdcAtomic: 10_500_000 });
+		expect(withZero.settleTick).toBe(true);
+		expect(withZero.backpressure.ok).toBe(true);
+	});
+
+	it('an RPC fault still reports rpc_balance_unavailable, not a reserve skip', () => {
+		const r = planBackpressure({ ...base, isSettleTick: true, usdcAtomic: Number.NaN });
+		expect(r.backpressure.reason).toBe('rpc_balance_unavailable');
+	});
+
+	it('config exposes the reserve with a $1.00 default and an override', () => {
+		expect(ringTickConfig({}).artifactReserveAtomic).toBe(1_000_000);
+		expect(ringTickConfig({ X402_ARTIFACT_RESERVE_ATOMIC: '2500000' }).artifactReserveAtomic).toBe(2_500_000);
+	});
+});

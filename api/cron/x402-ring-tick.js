@@ -263,6 +263,7 @@ export default wrapCron(async (req, res) => {
 	const pbp = planBackpressure({
 		isSettleTick: wantSettle, solLamports, usdcAtomic,
 		floorLamports: cfg.solFloorLamports, ringSettlePriceAtomic,
+		artifactReserveAtomic: cfg.artifactReserveAtomic,
 	});
 	const bp = pbp.backpressure;
 	if (!bp.ok) {

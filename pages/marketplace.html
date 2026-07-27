@@ -1047,12 +1047,15 @@
 				text-decoration: underline;
 			}
 			.market-card-avatar .byline .card-author.muted {
-				color: #71717a;
+				/* Raised for the 4.5:1 axe AA floor on the card bg (#71717a was 4.0:1). */
+				color: #84848e;
 				font-style: italic;
 				font-weight: 400;
 			}
 			.market-card-avatar .byline .dot {
-				color: #404040;
+				/* #404040 measured 1.9:1; the separator is decorative but axe still
+				   scores it as text. */
+				color: #6e6e78;
 			}
 			.market-card-avatar .card-tags {
 				display: flex;

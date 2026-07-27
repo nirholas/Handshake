@@ -37,6 +37,8 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { getRedis, isRedisAuthError } from '../_lib/redis.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { logger } from '../_lib/usage.js';
+import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
+import { readPayerUsdcAtomic } from './x402-autonomous-loop.js';
 
 const log = logger('x402-seed-cron');
 
@@ -165,6 +167,47 @@ function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists 
 	return Buffer.from(vtx.serialize()).toString('base64');
 }
 
+/**
+ * Decide what a tick should actually send, from the two wallet balances that
+ * determine whether a payment can succeed at all.
+ *
+ * Every call in a batch shares one sponsor (pays the SOL fee) and one payer
+ * (pays the USDC), so both conditions are decided before the first transaction
+ * is built. Without this gate a dry treasury turns each tick into `batchSize`
+ * doomed payments: observed 2026-07-26, 6,314 `fee_wallet_below_floor` settle
+ * failures and 745 `simulation_failed` verify rejects, i.e. hours of 502s on
+ * /api/x402/dance-tip plus wasted RPC, for an outcome fixed in advance. The
+ * ring tick and the autonomous loop already gate on these; the seeder was the
+ * last paid lane that did not.
+ *
+ * A `null` balance means the read FAILED, not zero. Unknown leaves the path
+ * open (the same contract readPayerUsdcAtomic documents) so that a transient
+ * RPC blip can never silently halt seeding.
+ *
+ * @param {object} a
+ * @param {number|null} a.sponsorSolLamports  fee payer's SOL, or null if unread
+ * @param {number|null} a.payerUsdcAtomic     seeder's USDC (6dp), or null if unread
+ * @param {number} a.priceAtomic              price of one call, atomic USDC
+ * @param {number} a.batchSize                configured calls per tick
+ * @returns {{ skip: string|null, batch: number }} `skip` names the blocking
+ *   condition (and `batch` is 0); otherwise `batch` is what the payer can fund.
+ */
+export function planSeedBatch({ sponsorSolLamports, payerUsdcAtomic, priceAtomic, batchSize }) {
+	if (sponsorSolLamports !== null && sponsorSolLamports < SPONSOR_SOL_FLOOR_LAMPORTS) {
+		return { skip: 'sponsor_sol_below_floor', batch: 0 };
+	}
+	// A price of 0 would make "how many can we afford" meaningless; treat an
+	// unusable price as unknown and let the configured batch stand.
+	if (!Number.isFinite(priceAtomic) || priceAtomic <= 0 || payerUsdcAtomic === null) {
+		return { skip: null, batch: batchSize };
+	}
+	const affordable = Math.floor(payerUsdcAtomic / priceAtomic);
+	if (affordable < 1) return { skip: 'payer_usdc_exhausted', batch: 0 };
+	// Right-size rather than overshoot: a float that funds 12 of 60 tips should
+	// send 12 real payments, not 60 of which 48 fail at verify.
+	return { skip: null, batch: Math.min(batchSize, affordable) };
+}
+
 // Push an entry to the shared x402 activity feed in Redis.
 async function pushFeedEntry(entry) {
 	const r = getRedis();
@@ -240,19 +283,52 @@ export default wrapCron(async (req, res) => {
 	}
 
 	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
-	const [{ blockhash }, mintInfo, receiverAtaInfo] = await Promise.all([
-		conn.getLatestBlockhash('confirmed'),
-		getMint(conn, new PublicKey(accept.asset)),
-		conn.getAccountInfo(getAssociatedTokenAddressSync(
-			new PublicKey(accept.asset),
-			new PublicKey(accept.payTo),
-			false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-		)),
-	]);
+	// The two balance reads ride along in this batch, so the preflight below
+	// costs no extra wall-clock on a healthy tick.
+	const [{ blockhash }, mintInfo, receiverAtaInfo, sponsorSolLamports, payerUsdcAtomic] =
+		await Promise.all([
+			conn.getLatestBlockhash('confirmed'),
+			getMint(conn, new PublicKey(accept.asset)),
+			conn.getAccountInfo(getAssociatedTokenAddressSync(
+				new PublicKey(accept.asset),
+				new PublicKey(accept.payTo),
+				false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+			)),
+			conn.getBalance(new PublicKey(accept.extra.feePayer), 'confirmed').catch(() => null),
+			readPayerUsdcAtomic(conn, buyer.publicKey),
+		]);
 	const receiverAtaExists = receiverAtaInfo !== null;
 
-	// ── Step 3: build BATCH_SIZE signed transactions (synchronous) ────────────
-	const txBases = Array.from({ length: BATCH_SIZE }, () =>
+	// ── Pre-flight: never fire a batch whose outcome is already decided ───────
+	const plan = planSeedBatch({
+		sponsorSolLamports,
+		payerUsdcAtomic,
+		priceAtomic: Number(accept.amount),
+		batchSize: BATCH_SIZE,
+	});
+	if (plan.skip) {
+		log.warn(`${plan.skip}_skip`, {
+			feePayer: accept.extra.feePayer,
+			payer: buyer.publicKey.toBase58(),
+			sponsor_lamports: sponsorSolLamports,
+			payer_usdc_atomic: payerUsdcAtomic,
+		});
+		return json(res, 200, {
+			ok: false,
+			skipped: true,
+			reason: plan.skip,
+			feePayer: accept.extra.feePayer,
+			payer: buyer.publicKey.toBase58(),
+			sponsor_sol: sponsorSolLamports === null ? null : sponsorSolLamports / 1e9,
+			floor_sol: SPONSOR_SOL_FLOOR_LAMPORTS / 1e9,
+			payer_usdc: payerUsdcAtomic === null ? null : payerUsdcAtomic / 1e6,
+			price_usdc: Number(accept.amount) / 1e6,
+		});
+	}
+
+	// ── Step 3: build the signed transactions (synchronous) ───────────────────
+	const affordable = plan.batch;
+	const txBases = Array.from({ length: affordable }, () =>
 		buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists }),
 	);
 
@@ -308,7 +384,8 @@ export default wrapCron(async (req, res) => {
 
 	const payerAddress = buyer.publicKey.toBase58();
 	log.info('x402_seed_tick', {
-		batch: BATCH_SIZE,
+		batch: affordable,
+		configured_batch: BATCH_SIZE,
 		succeeded: succeeded.length,
 		failed,
 		payer: payerAddress,
@@ -318,7 +395,8 @@ export default wrapCron(async (req, res) => {
 
 	return json(res, 200, {
 		ok: true,
-		batch: BATCH_SIZE,
+		batch: affordable,
+		configured_batch: BATCH_SIZE,
 		succeeded: succeeded.length,
 		failed,
 		payer: payerAddress,

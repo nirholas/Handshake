@@ -6,6 +6,13 @@
  *     Body: { item_type, item_id }
  *     Creates a pending asset_purchases row, returns Solana Pay params.
  *
+ *   POST /api/marketplace/buy-asset   (with agent_id)
+ *     Body: { item_type, item_id, agent_id }
+ *     Autonomous purchase: the buyer agent's OWN custodial wallet signs and
+ *     settles server-side, with no browser wallet involved. Mirrors
+ *     /api/marketplace/purchase-as-agent (which does the same for skills) and
+ *     shares its daily spend cap via api/_lib/agent-purchase.js.
+ *
  *   GET  /api/marketplace/buy-asset/:reference
  *     Returns { status, tx_signature, confirmed_at } for the caller.
  *
@@ -31,6 +38,13 @@ import { buildGaslessPurchaseTx } from '../_lib/solana/gasless-tx.js';
 import { insertNotification } from '../_lib/notify.js';
 import { normalizeReferralCode } from '../_lib/referrals.js';
 import { verifyEvmUsdcPayment, evmChainId } from '../_lib/evm-payment-verify.js';
+import {
+	loadBuyerAgentKeypair,
+	sendAgentPurchaseTransfer,
+	sumDailyPurchaseAtomics,
+	readPurchaseCap,
+	capExceededMessage,
+} from '../_lib/agent-purchase.js';
 
 const REFERENCE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const ITEM_TYPES = ['avatar', 'agent', 'plugin'];
@@ -125,6 +139,27 @@ async function handleCreate(req, res) {
 		typeof body?.buyer_public_key === 'string' && REFERENCE_RE.test(body.buyer_public_key)
 			? body.buyer_public_key
 			: null;
+	// Optional buyer agent → autonomous purchase paid from that agent's own
+	// custodial wallet, settled server-side (no browser wallet at all).
+	const agentId = typeof body?.agent_id === 'string' && body.agent_id.trim() ? body.agent_id.trim() : null;
+
+	// Verify ownership BEFORE any pricing work, and take the per-agent purchase
+	// rate limit (the coarse per-IP gate above does not bound a single agent's
+	// autonomous spend rate).
+	let buyerAgent = null;
+	if (agentId) {
+		const rlAgent = await limits.agentBuy(agentId);
+		if (!rlAgent.success) {
+			return rateLimited(res, rlAgent, 'too many autonomous purchases — try again later');
+		}
+		const [agent] = await sql`
+			SELECT id, user_id, name, meta FROM agent_identities
+			WHERE id = ${agentId} AND deleted_at IS NULL
+		`;
+		if (!agent) return error(res, 404, 'not_found', 'buyer agent not found');
+		if (agent.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
+		buyerAgent = agent;
+	}
 
 	const [price] = await sql`
 		SELECT amount, currency_mint, chain, mint_decimals, owner_user_id
@@ -142,6 +177,26 @@ async function handleCreate(req, res) {
 	const payoutAddress = await resolveSellerPayout(seller.userId, price.chain);
 	if (!payoutAddress) {
 		return error(res, 412, 'creator_wallet_missing', 'seller has not configured a payout wallet');
+	}
+
+	// An agent wallet can only sign Solana SPL transfers; an EVM-priced asset has
+	// no server-side agent path, so say that plainly instead of falling through to
+	// a browser-wallet payload the caller did not ask for.
+	if (agentId && price.chain !== 'solana') {
+		return error(res, 400, 'unsupported_chain',
+			`agent wallets pay on solana; this asset is priced on '${price.chain}'`);
+	}
+
+	// Daily autonomous-purchase cap — cheap pre-check. Shared with skill
+	// purchases (api/_lib/agent-purchase.js), so one budget covers both. This read
+	// is a TOCTOU on its own; the authoritative re-check runs after the pending
+	// row exists, below.
+	const cap = agentId ? readPurchaseCap(buyerAgent.meta) : { enabled: false };
+	if (cap.enabled) {
+		const spent = await sumDailyPurchaseAtomics({ userId: auth.userId, currencyMint: price.currency_mint });
+		if (spent + BigInt(price.amount) > cap.limitAtomics) {
+			return error(res, 402, 'spend_cap_exceeded', capExceededMessage(cap.limitUsdc));
+		}
 	}
 
 	// Already-owned: any confirmed asset purchase returns the existing row.
@@ -192,6 +247,22 @@ async function handleCreate(req, res) {
 		row = inserted;
 	}
 
+	// ── Autonomous path: the agent's own wallet pays, server-side ──────────────
+	if (agentId) {
+		return payAsAgent({
+			res,
+			auth,
+			agent: buyerAgent,
+			row,
+			price,
+			payoutAddress,
+			itemType,
+			itemId,
+			label: seller.label,
+			cap,
+		});
+	}
+
 	// Gasless checkout: sponsor the network fee with a pre-signed
 	// VersionedTransaction when the buyer's Solana wallet is connected. A whole
 	// asset is a single full-amount transfer to the seller (no platform fee leg).
@@ -233,6 +304,124 @@ async function handleCreate(req, res) {
 			...gaslessBlock,
 		},
 	});
+}
+
+// ── Autonomous purchase (agent wallet) ─────────────────────────────────────
+//
+// Runs once the pending asset_purchases row exists. Order is load-bearing:
+// re-check the cap against the persisted row (race-safe), recover the key, pay,
+// verify the on-chain transfer, then finalize through the SAME
+// finalizeAssetConfirm() the browser path uses — so receipts, revenue and
+// notifications are identical no matter who signed.
+async function payAsAgent({ res, auth, agent, row, price, payoutAddress, itemType, itemId, label, cap }) {
+	const fail = async (reason) => {
+		await sql`
+			UPDATE asset_purchases SET status = 'failed', updated_at = now()
+			WHERE reference = ${row.reference} AND status = 'pending'
+		`.catch(() => {});
+		console.warn('[buy-asset] agent purchase failed:', reason);
+	};
+
+	// Authoritative cap enforcement: our pending row is persisted and counted, so
+	// this SUM sees every concurrent in-flight purchase. Voiding here aborts
+	// BEFORE any transaction is broadcast.
+	if (cap.enabled) {
+		const spent = await sumDailyPurchaseAtomics({ userId: auth.userId, currencyMint: row.currency_mint });
+		if (spent > cap.limitAtomics) {
+			await fail('spend_cap_exceeded_reserved');
+			return error(res, 402, 'spend_cap_exceeded', capExceededMessage(cap.limitUsdc));
+		}
+	}
+
+	let buyer;
+	try {
+		buyer = await loadBuyerAgentKeypair({
+			agentId: agent.id,
+			userId: auth.userId,
+			reason: 'autonomous_asset_purchase',
+			meta: { item_type: itemType, item_id: itemId, reference: row.reference },
+		});
+	} catch (e) {
+		await fail('wallet_unavailable');
+		if (e?.code === 'no_buyer_wallet') {
+			return error(res, 412, 'no_buyer_wallet',
+				'buyer agent has no Solana wallet — provision via POST /api/agents/:id/solana');
+		}
+		return error(res, 500, 'wallet_decrypt_failed', 'could not load the agent wallet');
+	}
+
+	let txSignature;
+	try {
+		txSignature = await sendAgentPurchaseTransfer({
+			connection: solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' }),
+			keypair: buyer.keypair,
+			currencyMint: row.currency_mint,
+			recipient: payoutAddress,
+			amountAtomics: row.amount,
+			referenceKey: new PublicKey(row.reference),
+		});
+	} catch (e) {
+		await fail(e?.message || 'tx_send_failed');
+		// The send threw before confirmation, so no funds moved — say so plainly
+		// rather than leaving the owner unsure whether to retry.
+		return error(res, 502, 'tx_send_failed',
+			'the payment could not be sent from the agent wallet and nothing was charged; check the agent has enough USDC and a little SOL, then try again');
+	}
+
+	// Verify what actually landed on-chain before granting the asset. The transfer
+	// carries the Solana Pay reference, so this is the same validation the browser
+	// path runs — a short or misdirected transfer becomes 'tipped', never a grant.
+	try {
+		await rpc().withFallback((conn) =>
+			validateTransfer(
+				conn,
+				txSignature,
+				{
+					recipient: new PublicKey(payoutAddress),
+					amount: new BigNumber(row.amount).dividedBy(new BigNumber(10).pow(price.mint_decimals ?? 6)),
+					splToken: new PublicKey(row.currency_mint),
+					reference: new PublicKey(row.reference),
+				},
+				{ commitment: 'confirmed' },
+			),
+		);
+	} catch (e) {
+		const [pur] = await sql`
+			SELECT id, seller_user_id FROM asset_purchases WHERE reference = ${row.reference}
+		`;
+		await sql`
+			UPDATE asset_purchases
+			SET status = 'tipped', tx_signature = ${txSignature}, confirmed_at = now(), updated_at = now()
+			WHERE reference = ${row.reference} AND status = 'pending'
+		`;
+		if (pur) {
+			await insertNotification(pur.seller_user_id, 'asset_payment_mismatch', {
+				item_type: itemType, item_id: itemId,
+				expected_amount: String(row.amount),
+				tx_signature: txSignature, purchase_id: pur.id, reason: e?.message,
+			}).catch(() => {});
+		}
+		return error(res, 409, 'transfer_mismatch', e?.message || 'on-chain transfer did not match expected', {
+			status: 'tipped', tx_signature: txSignature,
+		});
+	}
+
+	const [pur] = await sql`
+		SELECT id, buyer_user_id, item_type, item_id, seller_user_id, amount,
+		       currency_mint, chain, reference, payout_address, referrer_user_id
+		FROM asset_purchases WHERE reference = ${row.reference}
+	`;
+	if (!pur) return error(res, 500, 'purchase_missing', 'purchase row vanished mid-flight');
+
+	// Same finalize as the browser path: receipt, revenue, both notifications.
+	// It writes the 200 envelope, to which we add the agent attribution.
+	const originalJson = res.json;
+	return finalizeAssetConfirm(
+		Object.assign(Object.create(Object.getPrototypeOf(res)), res, { json: originalJson }),
+		pur,
+		txSignature,
+		{ paid_by_agent: { id: agent.id, name: agent.name || null, address: buyer.address }, label },
+	);
 }
 
 // ── Status ─────────────────────────────────────────────────────────────────

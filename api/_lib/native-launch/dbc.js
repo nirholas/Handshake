@@ -5,7 +5,7 @@
 // so both lanes share RPC selection, rotation, and priority-fee behavior.
 
 import { getConnection, buildUnsignedTxBase64, solanaPubkey, txProgramIds } from '../pump.js';
-import { curveBuildParams, configKeyFor } from './config.js';
+import { curveBuildParams, configKeyFor, NATIVE_LANE } from './config.js';
 
 let _sdk = null;
 async function sdk() {
@@ -112,23 +112,45 @@ export function txInvokesDbcProgram(tx) {
 	return txProgramIds(tx).has(DBC_PROGRAM_ID);
 }
 
-// Live pool snapshot for the detail/quote surfaces.
-// Throws { status: 404, code: 'pool_not_found' } when the mint has no pool.
-export async function getPoolState({ network = 'mainnet', mint } = {}) {
+// The pool address is deterministic from (quote=WSOL, baseMint, config), so
+// derive it instead of scanning with getPoolByBaseMint — that helper needs
+// getProgramAccounts, which several RPC tiers block outright.
+export async function derivePool({ network = 'mainnet', mint } = {}) {
+	const { deriveDbcPoolAddress } = await sdk();
+	const { NATIVE_MINT } = await import('@solana/spl-token');
+	const configKey = requireConfigKey(network);
+	return deriveDbcPoolAddress(NATIVE_MINT, solanaPubkey(mint), solanaPubkey(configKey));
+}
+
+async function fetchPool({ network, mint }) {
 	const client = await getDbcClient({ network });
-	const found = await client.state.getPoolByBaseMint(solanaPubkey(mint));
-	if (!found) {
+	const pool = await derivePool({ network, mint });
+
+	// getPool decodes the anchor account as `{ poolState: VirtualPool }`; older
+	// SDK builds returned the state flat. Accept both so an SDK bump can't
+	// silently break every read surface.
+	const raw = await client.state.getPool(pool);
+	const account = raw?.poolState ?? raw;
+	if (!account?.config) {
 		throw Object.assign(new Error('no native pool for mint'), {
 			status: 404,
 			code: 'pool_not_found',
 		});
 	}
-	const pool = found.publicKey;
+	// `account` is the flat state (field reads); `wrapped` is the shape
+	// swapQuote() expects, which dereferences virtualPool.poolState.
+	const wrapped = raw?.poolState ? raw : { poolState: account };
+	return { client, pool, account, wrapped };
+}
+
+// Live pool snapshot for the detail/quote surfaces.
+// Throws { status: 404, code: 'pool_not_found' } when the mint has no pool.
+export async function getPoolState({ network = 'mainnet', mint } = {}) {
+	const { client, pool, account } = await fetchPool({ network, mint });
 	const [progress, threshold] = await Promise.all([
 		client.state.getPoolQuoteTokenCurveProgress(pool),
 		client.state.getPoolMigrationQuoteThreshold(pool),
 	]);
-	const account = found.account;
 	return {
 		pool: pool.toBase58(),
 		config: account.config.toBase58(),
@@ -141,34 +163,33 @@ export async function getPoolState({ network = 'mainnet', mint } = {}) {
 }
 
 // Buy quote against the live curve: `solIn` SOL -> tokens out (pre-slippage).
-export async function quoteBuy({ network = 'mainnet', mint, solIn } = {}) {
-	const client = await getDbcClient({ network });
-	const { swapQuote } = await sdk();
+export async function quoteBuy({ network = 'mainnet', mint, solIn, slippageBps = 100 } = {}) {
 	const BN = (await import('bn.js')).default;
-
-	const found = await client.state.getPoolByBaseMint(solanaPubkey(mint));
-	if (!found) {
-		throw Object.assign(new Error('no native pool for mint'), {
-			status: 404,
-			code: 'pool_not_found',
-		});
-	}
-	const config = await client.state.getPoolConfig(found.account.config);
+	const { client, pool, account, wrapped } = await fetchPool({ network, mint });
+	const config = await client.state.getPoolConfig(account.config);
 	const slot = await getConnection({ network }).getSlot();
-	const quote = swapQuote({
-		virtualPool: found.account,
+	// client.pool.swapQuote takes a params object; the module-level swapQuote
+	// export is positional — use the client so an argument-order change in the
+	// SDK can't silently mis-price a quote.
+	const quote = client.pool.swapQuote({
+		virtualPool: wrapped,
 		config,
 		swapBaseForQuote: false,
 		amountIn: new BN(Math.round(solIn * 1e9)),
-		slippageBps: 0,
+		slippageBps,
 		hasReferral: false,
+		eligibleForFirstSwapWithMinFee: false,
 		currentPoint: new BN(slot),
 	});
+	const lamports = (v) => Number((v ?? 0).toString()) / 1e9;
+	const tokens = (v) => Number((v ?? 0).toString()) / 10 ** NATIVE_LANE.decimals;
 	return {
-		pool: found.publicKey.toBase58(),
+		pool: pool.toBase58(),
 		sol_in: solIn,
-		tokens_out: Number(quote.amountOut.toString()) / 10 ** 6,
-		min_tokens_out: Number((quote.minimumAmountOut ?? quote.amountOut).toString()) / 10 ** 6,
-		trading_fee_sol: Number((quote.fee?.trading ?? 0).toString()) / 1e9,
+		slippage_bps: slippageBps,
+		tokens_out: tokens(quote.outputAmount),
+		min_tokens_out: tokens(quote.minimumAmountOut ?? quote.outputAmount),
+		trading_fee_sol: lamports(quote.tradingFee),
+		protocol_fee_sol: lamports(quote.protocolFee),
 	};
 }
