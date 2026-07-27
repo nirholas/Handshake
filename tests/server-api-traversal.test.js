@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { startTestServer } from './helpers/test-server.js';
 
 // Guards a critical auth/route-gating bypass: dispatchApi() splits the /api path
 // on "/" and only THEN percent-decodes each segment. An encoded separator
@@ -13,35 +12,16 @@ import { fileURLToPath } from 'node:url';
 // This test boots the real server and asserts traversal probes 404 while normal
 // routes still resolve.
 
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-const PORT = 18453;
-const BASE = `http://127.0.0.1:${PORT}`;
-
+let BASE;
 let server;
 
-async function waitForServer(timeoutMs = 20000) {
-	const deadline = Date.now() + timeoutMs;
-	while (Date.now() < deadline) {
-		try {
-			const res = await fetch(`${BASE}/api/healthz`, { redirect: 'manual' });
-			if (res.status > 0) return;
-		} catch { /* not up yet */ }
-		await new Promise((r) => setTimeout(r, 250));
-	}
-	throw new Error('server did not start in time');
-}
-
 beforeAll(async () => {
-	server = spawn(process.execPath, ['server/index.mjs'], {
-		cwd: repoRoot,
-		env: { ...process.env, PORT: String(PORT), NODE_ENV: 'test' },
-		stdio: 'ignore',
-	});
-	await waitForServer();
+	server = await startTestServer();
+	BASE = server.base;
 }, 30000);
 
 afterAll(() => {
-	server?.kill('SIGKILL');
+	server?.close();
 });
 
 describe('api dispatcher rejects path traversal', () => {

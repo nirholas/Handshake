@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { startTestServer } from './helpers/test-server.js';
 
 // Guards a real production outage class: vercel.json pretty routes that rewrite
 // to an API function with query captures ("/oracle/coin/<mint>" →
@@ -13,38 +12,20 @@ import { fileURLToPath } from 'node:url';
 //
 // This test boots the real server and asserts the pretty route serves the page.
 
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-const PORT = 18452;
-const BASE = `http://127.0.0.1:${PORT}`;
 // Any syntactically valid base58 mint works: the page must render its shell
 // even when the DB and pump.fun are unreachable (both are best-effort).
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
+let BASE;
 let server;
 
-async function waitForServer(timeoutMs = 20000) {
-	const deadline = Date.now() + timeoutMs;
-	while (Date.now() < deadline) {
-		try {
-			const res = await fetch(`${BASE}/api/oracle-share`, { redirect: 'manual' });
-			if (res.status > 0) return;
-		} catch { /* not up yet */ }
-		await new Promise((r) => setTimeout(r, 250));
-	}
-	throw new Error('server did not start in time');
-}
-
 beforeAll(async () => {
-	server = spawn(process.execPath, ['server/index.mjs'], {
-		cwd: repoRoot,
-		env: { ...process.env, PORT: String(PORT), NODE_ENV: 'test' },
-		stdio: 'ignore',
-	});
-	await waitForServer();
+	server = await startTestServer();
+	BASE = server.base;
 }, 30000);
 
 afterAll(() => {
-	server?.kill('SIGKILL');
+	server?.close();
 });
 
 describe('rewrite-dest query params reach handlers on req.url', () => {

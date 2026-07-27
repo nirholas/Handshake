@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { startTestServer } from './helpers/test-server.js';
 import { fileURLToPath } from 'node:url';
 import { globSync } from 'node:fs';
 
@@ -40,28 +40,15 @@ describe('method() guard is negated at every call site', () => {
 });
 
 describe('POST /api/diorama answers instead of hanging', () => {
-	const PORT = 18477;
-	const BASE = `http://127.0.0.1:${PORT}`;
+	let BASE;
 	let server;
 
 	beforeAll(async () => {
-		server = spawn(process.execPath, ['server/index.mjs'], {
-			cwd: repoRoot,
-			env: { ...process.env, PORT: String(PORT), NODE_ENV: 'test' },
-			stdio: 'ignore',
-		});
-		const deadline = Date.now() + 20000;
-		while (Date.now() < deadline) {
-			try {
-				const res = await fetch(`${BASE}/api/diorama`, { redirect: 'manual' });
-				if (res.status > 0) return;
-			} catch { /* not up yet */ }
-			await new Promise((r) => setTimeout(r, 250));
-		}
-		throw new Error('server did not start in time');
+		server = await startTestServer();
+		BASE = server.base;
 	}, 30000);
 
-	afterAll(() => server?.kill());
+	afterAll(() => server?.close());
 
 	// The unknown-action branch sits after the method guard and before any rate
 	// limiter, LLM call, or DB read — so this asserts the guard alone, with no

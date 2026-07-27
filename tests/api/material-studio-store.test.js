@@ -15,17 +15,27 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const FIXTURE_GLB_PATH = resolve(process.cwd(), 'public/avatars/fox.glb');
-const FIXTURE_URL = 'https://cdn.three.ws/fixtures/fox.glb';
+const FIXTURE_URL = 'https://three.ws/cdn/fixtures/fox.glb';
 
 let fixtureBytes;
 let uploadedObjects;
 let watsonxReply;
 
+// The stand-in CDN origin these tests assert against. publicUrl() is mocked
+// away entirely, so the real S3_PUBLIC_DOMAIN never applies here; what matters
+// is that every URL assertion below is anchored to the SAME base the mock
+// returns. Three of them once hardcoded a different host and silently failed
+// the moment the mock's base changed.
+const CDN_BASE = 'https://three.ws/cdn';
+/** Matches a persisted object URL under `prefix`, e.g. material-studio/restyle. */
+const persistedGlbUrl = (prefix) =>
+	new RegExp(`^${CDN_BASE.replace(/[.\\/]/g, '\\$&')}/${prefix}/.+\\.glb$`);
+
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async ({ key, body }) => {
 		uploadedObjects.push({ key, bytes: body.length ?? body.byteLength, body: Buffer.from(body) });
 	}),
-	publicUrl: vi.fn((key) => `https://cdn.three.ws/${key}`),
+	publicUrl: vi.fn((key) => `https://three.ws/cdn/${key}`),
 }));
 
 vi.mock('../../api/_lib/ssrf.js', () => ({
@@ -93,7 +103,7 @@ describe('restyleMaterialFromInstruction', () => {
 			instruction: 'make it chrome',
 		});
 
-		expect(result.glbUrl).toMatch(/^https:\/\/cdn\.three\.ws\/material-studio\/restyle\/.+\.glb$/);
+		expect(result.glbUrl).toMatch(persistedGlbUrl('material-studio/restyle'));
 		expect(result.sourceGlbUrl).toBe(FIXTURE_URL);
 		expect(result.factors.metallicFactor).toBe(1);
 		expect(result.materialsEdited).toBeGreaterThan(0);
@@ -118,7 +128,7 @@ describe('restyleMaterialFromInstruction', () => {
 		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
 		const parentLineage = [
 			{ index: 0, parentIndex: null, glbUrl: FIXTURE_URL, refKind: 'origin' },
-			{ index: 1, parentIndex: 0, glbUrl: 'https://cdn.three.ws/material-studio/variants/abc.glb', instruction: 'Chrome 3', refKind: 'variant' },
+			{ index: 1, parentIndex: 0, glbUrl: 'https://three.ws/cdn/material-studio/variants/abc.glb', instruction: 'Chrome 3', refKind: 'variant' },
 		];
 		const result = await restyleMaterialFromInstruction({
 			glbUrl: FIXTURE_URL,
@@ -212,7 +222,7 @@ describe('generateSeededVariants', () => {
 		expect(a.variants).toHaveLength(3);
 		expect(a.variants.map((v) => v.config.color)).toEqual(b.variants.map((v) => v.config.color));
 		expect(a.variants.map((v) => v.seed)).toEqual(b.variants.map((v) => v.seed));
-		for (const v of a.variants) expect(v.glbUrl).toMatch(/^https:\/\/cdn\.three\.ws\/material-studio\/variants\/.+\.glb$/);
+		for (const v of a.variants) expect(v.glbUrl).toMatch(persistedGlbUrl('material-studio/variants'));
 	});
 
 	it('fans every variant off the SAME shared parent rather than chaining them', async () => {
@@ -257,7 +267,7 @@ describe('validateAndPersistGlb', () => {
 	it('accepts a real GLB and rejects non-GLB bytes', async () => {
 		const { validateAndPersistGlb, MaterialStudioError } = await import('../../api/_lib/material-studio-store.js');
 		const good = await validateAndPersistGlb(fixtureBytes, { keyPrefix: 'material-studio/checkpoints' });
-		expect(good.url).toMatch(/^https:\/\/cdn\.three\.ws\/material-studio\/checkpoints\/.+\.glb$/);
+		expect(good.url).toMatch(persistedGlbUrl('material-studio/checkpoints'));
 
 		await expect(validateAndPersistGlb(Buffer.from('not a glb'))).rejects.toBeInstanceOf(MaterialStudioError);
 	});

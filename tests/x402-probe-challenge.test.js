@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { startTestServer } from './helpers/test-server.js';
 
 // Guards the x402 discovery contract: registry probes (x402scan, 402index,
 // Bazaar validators) hit paid routes with whatever method they like, carrying
@@ -15,43 +14,23 @@ import { fileURLToPath } from 'node:url';
 // The server boots with a Base receiver configured so challenges carry a
 // non-empty accepts[]; no facilitator, DB, or Redis is needed to emit a 402.
 
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-const PORT = 18453;
-const BASE = `http://127.0.0.1:${PORT}`;
-
+let BASE;
 let server;
 
-async function waitForServer(timeoutMs = 20000) {
-	const deadline = Date.now() + timeoutMs;
-	while (Date.now() < deadline) {
-		try {
-			const res = await fetch(`${BASE}/api/healthz`);
-			if (res.status > 0) return;
-		} catch { /* not up yet */ }
-		await new Promise((r) => setTimeout(r, 250));
-	}
-	throw new Error('server did not start in time');
-}
-
 beforeAll(async () => {
-	server = spawn(process.execPath, ['server/index.mjs'], {
-		cwd: repoRoot,
+	server = await startTestServer({
 		env: {
-			...process.env,
-			PORT: String(PORT),
-			NODE_ENV: 'test',
 			// Minimal payable-lane env so buildRequirements() yields a Base accept.
 			X402_PAY_TO_BASE: '0x4022de2d36c334e73c7a108805cea11c0564f402',
 			X402_ASSET_ADDRESS_BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
 			X402_ADVERTISE_BASE: 'true',
 		},
-		stdio: 'ignore',
 	});
-	await waitForServer();
+	BASE = server.base;
 }, 30000);
 
 afterAll(() => {
-	server?.kill('SIGKILL');
+	server?.close();
 });
 
 async function expectChallenge(res) {
