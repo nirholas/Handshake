@@ -182,6 +182,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "he",
+			"name": "עברית",
+			"dir": "rtl"
+		},
+		{
 			"code": "bg",
 			"name": "Български",
 			"dir": "ltr"
