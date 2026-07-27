@@ -211,8 +211,8 @@ function retargetClip(clip, avaturnBones, { scaleHips = true } = {}) {
 		// Mixamo bakes hip translation in cm even after FBXLoader rescaling.
 		// Without this, the avatar floats ~100m in the air for clips that have
 		// vertical motion (Joyful Jump, Falling, etc.) and slides off-screen
-		// for any clip with horizontal motion. Avaturn GLBs already use meters,
-		// so the caller passes scaleHips:false for those.
+		// for any clip with horizontal motion. Sources already authored in
+		// meters get scaleHips:false from the caller's unit detection.
 		if (scaleHips && stripped === 'Hips' && property === 'position') {
 			for (let i = 0; i < newTrack.values.length; i++) {
 				newTrack.values[i] *= HIPS_POSITION_SCALE;
@@ -295,6 +295,29 @@ async function main() {
 		const outPath = resolve(OUT_DIR, outName);
 
 		if (!existsSync(fbxPath)) {
+			// Retarget sources are build-time inputs and some are deliberately
+			// never committed (`animation-sources/mx-*.fbx` in .gitignore), so a
+			// clean checkout legitimately lacks them. The built clip in OUT_DIR is
+			// the committed artifact, so republish it rather than dropping a live
+			// clip for want of an input we never intended to keep. Retiring a clip
+			// is still done by removing its config entry, which is what the
+			// regression guard below treats as the source of truth.
+			if (existsSync(outPath)) {
+				const existing = JSON.parse(readFileSync(outPath, 'utf8'));
+				manifest.push({
+					name: def.name,
+					url: `${URL_PREFIX}${outName}`,
+					label: def.label,
+					icon: def.icon,
+					loop: def.loop !== false,
+					...(def.category ? { category: def.category } : {}),
+					...(existing.duration ? { duration: existing.duration } : {}),
+				});
+				console.log(`[animations] PREBUILT ${def.name.padEnd(12)} (source ${def.source} absent)`);
+				skipCount++;
+				okCount++;
+				continue;
+			}
 			console.warn(`[animations] SKIP ${def.name}: missing source ${def.source}`);
 			failCount++;
 			continue;
@@ -336,11 +359,13 @@ async function main() {
 				failCount++;
 				continue;
 			}
-			// FBX (Mixamo) hips are always centimeter-baked; GLB sources are
-			// usually meter-scale Avaturn exports — but not always (the three.js
-			// Soldier GLBs are cm-authored), so detect from the data instead of
-			// trusting the extension.
-			const scaleHips = !isGlb || hipsLooksCentimeterScale(sourceClip);
+			// Hip units are detected from the data, never from the extension.
+			// Raw Mixamo FBX is centimeter-baked and GLB is usually a meter-scale
+			// Avaturn export, but both have exceptions: the three.js Soldier GLBs
+			// are cm-authored, and an FBX round-tripped through Blender or
+			// glTF-Transform comes back in meters. Trusting the extension there
+			// divides hips by 100 and sinks the avatar into the floor.
+			const scaleHips = hipsLooksCentimeterScale(sourceClip);
 			const { clip, matched, total, dropped } = retargetClip(sourceClip, bones, { scaleHips });
 			const matchPct = (matched / total) * 100;
 			if (matchPct < 60) {

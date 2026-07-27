@@ -303,6 +303,14 @@
 		"duration": 18.549999237060547
 	},
 	{
+		"name": "av-offabean-dance",
+		"url": "/animations/clips/av-offabean-dance.json",
+		"label": "Offabean Dance",
+		"icon": "🫘",
+		"loop": true,
+		"duration": 16.100000381469727
+	},
+	{
 		"name": "dance",
 		"url": "/animations/clips/dance.json",
 		"label": "Dance",
