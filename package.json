@@ -119,6 +119,7 @@
 		"i18n:translate": "node scripts/i18n-translate.mjs",
 		"i18n:lint": "node scripts/i18n-translate.mjs --lint",
 		"i18n:repair": "node scripts/i18n-translate.mjs --repair",
+		"i18n:backfill": "node scripts/i18n-backfill.mjs",
 		"changelog:gaps": "node scripts/changelog-gaps.mjs",
 		"changelog:push": "node scripts/changelog-telegram.mjs",
 		"changelog:push:x": "node scripts/changelog-x.mjs",

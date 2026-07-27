@@ -16271,6 +16271,15 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Translations repaired: whole pages were quietly still in English",
+			"summary": "A stretch of the site's translated copy was never actually translated. When the translation service was unreachable, the pipeline wrote the English text into each language file as a placeholder, and because the text was technically present, every later run skipped it. Punjabi was the worst case: the language was offered in the picker but read as English from top to bottom. Punjabi is now fully translated, and the same repair is running across the other languages, covering tens of thousands of phrases that had been sitting in English. There is also a new maintenance command that finds this class of gap, so a language can no longer look complete while reading in English.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
 		}
 	]
 }

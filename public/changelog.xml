@@ -119,6 +119,14 @@
 			<description>A trade that sold successfully but whose confirmation timed out could get stuck: the agent kept treating the finished position as live, which used up one of its limited slots for new trades. Five positions were stuck at once, one for over 40 hours, leaving parts of the fleet unable to trade. Finished trades are now recognised from their on-chain record, a stuck position is released automatically instead of waiting forever, and the database itself now refuses to move a settled trade back to open.</description>
 		</item>
 		<item>
+			<title>Translations repaired: whole pages were quietly still in English</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Translations repaired: whole pages were quietly still in English</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A stretch of the site's translated copy was never actually translated. When the translation service was unreachable, the pipeline wrote the English text into each language file as a placeholder, and because the text was technically present, every later run skipped it. Punjabi was the worst case: the language was offered in the picker but read as English from top to bottom. Punjabi is now fully translated, and the same repair is running across the other languages, covering tens of thousands of phrases that had been sitting in English. There is also a new maintenance command that finds this class of gap, so a language can no longer look complete while reading in English.</description>
+		</item>
+		<item>
 			<title>Wardrobe</title>
 			<link>https://three.ws/wardrobe</link>
 			<guid isPermaLink="false">2026-07-26:Wardrobe</guid>
