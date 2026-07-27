@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-27
+
+- **Hats and shoes now sit where they belong** — Generated caps could come out with brims jutting past the face, and sneakers could hover away from the feet, because the forge sized those pieces by width alone: a deep-brimmed cap or a photographed pair of shoes standing close together gave the sizing step no useful signal. Caps are now scaled to fit the head on every dimension, and shoes are sized by foot length and placed onto each foot individually. Measured on a walking avatar, the worst-case gap between shoe and foot dropped from 34cm to 3cm, and cap overhang from 21cm to 8cm. Every piece in the catalog is now checked automatically: it must load, match its published fingerprint, and bind correctly onto four different avatar skeletons before it counts as good, with the pieces that failed the new bar replaced. A daily check also watches the live catalog for anything that breaks after the fact. `[improvement, fix]`
+
 ## 2026-07-26
 
 - **Wardrobe** (`/wardrobe`) — The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.

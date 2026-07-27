@@ -153,11 +153,22 @@ python3 workers/garment-forge/test_garment_glb.py
 ## Catalog quality audit
 
 `npm run audit:garments` sweeps the LIVE catalog: consumer validation, sha256,
-the real `attachGarment()` bind, and the walk-gait cloth-to-body deviation
-metric for every published piece, with per-slot p95 ceilings. Hard failures
-(validation reject, hash mismatch, attach refusal) exit non-zero, so run it
-after any seeding batch or placement change; ceiling breaches are review
-flags, printed with the numbers.
+the real `attachGarment()` bind on FOUR different humanoid rigs (the canonical
+base plus Mixamo/meshopt, the clip-library reference rig, and a studio body),
+and the walk-gait cloth-to-body deviation metric, with per-slot p95 ceilings.
+Cross-rig binding is a hard gate, not a nicety: the catalog's whole promise is
+that a piece fits whatever humanoid is loaded, so a refusal on any rig fails
+the run. Hard failures (validation reject, hash mismatch, attach refusal on any
+rig) exit non-zero, so run it after any seeding batch or placement change;
+ceiling breaches are review flags, printed with the numbers.
+
+```
+npm run audit:garments                          # default 4-rig sweep
+node scripts/audit-garments.mjs --avatars a.glb,b.glb   # pick your own rigs
+```
+
+Baseline 2026-07-27: 23 entries, all binding at 1.00 coverage on all four
+rigs, 0 hard failures.
 
 33 checks over the pure glTF pipeline: canonicalization, placement math,
 composition, body-strip + buffer repack, coverage/occludes derivation, and

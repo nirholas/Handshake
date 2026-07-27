@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-26T21:53:27.194Z",
+	"generated_at": "2026-07-27T17:05:08.480Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Hats and shoes now sit where they belong",
+			"summary": "Generated caps could come out with brims jutting past the face, and sneakers could hover away from the feet, because the forge sized those pieces by width alone: a deep-brimmed cap or a photographed pair of shoes standing close together gave the sizing step no useful signal. Caps are now scaled to fit the head on every dimension, and shoes are sized by foot length and placed onto each foot individually. Measured on a walking avatar, the worst-case gap between shoe and foot dropped from 34cm to 3cm, and cap overhang from 21cm to 8cm. Every piece in the catalog is now checked automatically: it must load, match its published fingerprint, and bind correctly onto four different avatar skeletons before it counts as good, with the pieces that failed the new bar replaced. A daily check also watches the live catalog for anything that breaks after the fact.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-07-26",
 			"type": "launch",
