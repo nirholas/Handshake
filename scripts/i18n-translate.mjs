@@ -197,8 +197,22 @@ function httpError(provider, status, body, retryAfter) {
  * rewrite an entire catalog into English and leave lint green. Marked so the
  * run can abort instead.
  */
-function configError(message) {
+export function configError(message) {
 	return Object.assign(new Error(message), { isConfigError: true });
+}
+
+/**
+ * Should this failure abort the run instead of falling back to English?
+ *
+ * True for anything that means "the credentials are wrong", which fails
+ * identically on every key: an absent key or project (configError), and an
+ * auth rejection from the provider (401/403). The English fallback exists for
+ * the occasional value a model cannot render as valid JSON; applied to a
+ * credential failure it silently rewrites a whole catalog into English and
+ * exits 0.
+ */
+export function isFatalAuthFailure(err) {
+	return Boolean(err?.isConfigError || err?.status === 401 || err?.status === 403);
 }
 
 function modelName() {
@@ -314,10 +328,11 @@ async function callAnthropic(prompt) {
 // always does. Falling back to the CLI is what makes the committed default
 // provider actually runnable locally instead of failing into English.
 let _cliToken = { value: null, expiresAt: 0 };
-async function vertexToken() {
+async function vertexToken({ fresh = false } = {}) {
+	if (fresh) _cliToken = { value: null, expiresAt: 0 };
 	try {
 		const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
-		return await getGcpAccessToken();
+		if (!fresh) return await getGcpAccessToken();
 	} catch (err) {
 		if (err?.code !== 'unconfigured') throw err;
 	}
@@ -347,10 +362,9 @@ async function callVertex(prompt) {
 	}
 	const location = process.env.GOOGLE_CLOUD_LOCATION_GEMINI || 'global';
 	const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
-	const token = await vertexToken();
-	const res = await fetch(
-		`https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`,
-		{
+	const url = `https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`;
+	const send = (token) =>
+		fetch(url, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
 			body: JSON.stringify({
@@ -360,8 +374,23 @@ async function callVertex(prompt) {
 				max_tokens: 8192,
 				messages: [{ role: 'user', content: prompt }],
 			}),
-		},
-	);
+		});
+
+	let res = await send(await vertexToken());
+	// A token that was valid at mint time can be revoked long before it expires
+	// (a Workspace reauth policy invalidates outstanding gcloud tokens), and a
+	// bulk run holds one for hours. Re-mint once on 401/403 rather than letting
+	// a stale token turn into thousands of English-baked keys.
+	if (res.status === 401 || res.status === 403) {
+		res = await send(await vertexToken({ fresh: true }));
+		if (res.status === 401 || res.status === 403) {
+			throw configError(
+				`vertex ${res.status}: credentials are not valid even after re-minting. ` +
+					'Run `gcloud auth login` (this environment revokes tokens on a reauth policy), ' +
+					'or pass --provider=gemini with GOOGLE_API_KEY set.',
+			);
+		}
+	}
 	if (!res.ok)
 		throw httpError('vertex', res.status, await res.text(), Number(res.headers.get('retry-after')) || 0);
 	const data = await res.json();
@@ -466,7 +495,7 @@ async function callBackendWithRetry(call, langName, payload, attempt = 0) {
 	} catch (err) {
 		// A missing key or project is not transient - retrying it just burns the
 		// backoff budget on an outcome that cannot change.
-		if (err?.isConfigError) throw err;
+		if (isFatalAuthFailure(err)) throw err;
 		// Free tiers rate-limit hard; honor Retry-After and back off more on a 429
 		// than on a transient parse/5xx error.
 		const max = err.status === 429 ? 5 : 2;
@@ -568,7 +597,7 @@ async function translateLocale(code) {
 			// the run instead: nothing already translated is lost (the pipeline
 			// persists after each chunk) and the operator gets the one line that
 			// actually tells them what to fix.
-			if (err?.isConfigError) throw err;
+			if (isFatalAuthFailure(err)) throw err;
 			if (keys.length > 1) {
 				const mid = Math.ceil(keys.length / 2);
 				await translateKeySet(keys.slice(0, mid));

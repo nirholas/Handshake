@@ -19,6 +19,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildMasker, lintLocale, markupDrift, tagSignature } from '../scripts/lib/i18n-shared.mjs';
+import { configError, isFatalAuthFailure } from '../scripts/i18n-translate.mjs';
 
 const masker = buildMasker(['$THREE', 'three.ws', 'x402']);
 const roundTrip = (text, translate = (s) => s) => {
@@ -113,5 +114,41 @@ describe('lintLocale', () => {
 	it('passes a translation that kept its markup', () => {
 		const problems = lintLocale(source, { sdk: { snippet: 'Setze <code>&lt;agent-3d&gt;</code> ein', amp: 'Kaufen & verkaufen' } }, { code: 'de' });
 		expect(problems).toEqual([]);
+	});
+});
+
+/**
+ * The English fallback is the pipeline's graceful path for a value a model
+ * cannot render as valid JSON. Applied to a credential failure it is a
+ * catastrophe instead: the failure repeats identically on every key, so a whole
+ * catalog is rewritten into English while lint stays green and the run exits 0.
+ * That has now happened three ways in this repo (no .env, no gcloud token, and
+ * a token revoked mid-run by a Workspace reauth policy), so the classifier that
+ * separates the two is pinned here.
+ */
+describe('isFatalAuthFailure', () => {
+	it('is fatal when the backend is not configured at all', () => {
+		expect(isFatalAuthFailure(configError('GOOGLE_CLOUD_PROJECT not set'))).toBe(true);
+	});
+
+	it('is fatal on a 401, which is what a revoked token looks like mid-run', () => {
+		expect(isFatalAuthFailure(Object.assign(new Error('vertex 401'), { status: 401 }))).toBe(true);
+	});
+
+	it('is fatal on a 403', () => {
+		expect(isFatalAuthFailure(Object.assign(new Error('vertex 403'), { status: 403 }))).toBe(true);
+	});
+
+	it('is NOT fatal on a rate limit, which retry and backoff do handle', () => {
+		expect(isFatalAuthFailure(Object.assign(new Error('429'), { status: 429 }))).toBe(false);
+	});
+
+	it('is NOT fatal on a server error or a bad model reply', () => {
+		expect(isFatalAuthFailure(Object.assign(new Error('500'), { status: 500 }))).toBe(false);
+		expect(isFatalAuthFailure(new Error('no JSON object in response'))).toBe(false);
+	});
+
+	it('tolerates a missing error object', () => {
+		expect(isFatalAuthFailure(undefined)).toBe(false);
 	});
 });
