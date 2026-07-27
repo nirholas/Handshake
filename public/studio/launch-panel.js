@@ -133,6 +133,21 @@ const PUMP_URL = (mint) => `https://pump.fun/coin/${mint}`;
 const LP_CSS = `
 .lp{display:flex;flex-direction:column;gap:.9rem}
 
+/* Launch-lane toggle (pump.fun vs the three.ws curve) */
+.lp-lane{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;padding:.25rem;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px}
+.lp-lane button{padding:.5rem .6rem;border-radius:7px;cursor:pointer;background:transparent;
+  border:1px solid transparent;color:rgba(255,255,255,.5);font-size:.8rem;font-weight:600;
+  transition:all .15s;line-height:1.2;text-align:center}
+.lp-lane button:hover:not(.on):not([disabled]){color:rgba(255,255,255,.85);background:rgba(255,255,255,.03)}
+.lp-lane button.on{background:rgba(164,240,188,.12);border-color:rgba(164,240,188,.32);color:#c8f0d8}
+.lp-lane button:focus-visible{outline:2px solid rgba(164,240,188,.55);outline-offset:1px}
+.lp-lane button[disabled]{opacity:.4;cursor:not-allowed}
+.lp-lane-sub{display:block;font-size:.62rem;color:rgba(255,255,255,.32);font-weight:400;margin-top:.18rem;letter-spacing:.01em}
+.lp-lane button.on .lp-lane-sub{color:rgba(200,240,216,.62)}
+.lp-lane-note{font-size:.7rem;color:rgba(200,240,216,.8);line-height:1.5;padding:.45rem .65rem;
+  background:rgba(164,240,188,.06);border:1px solid rgba(164,240,188,.18);border-radius:8px}
+
 /* Wallet-source toggle */
 .lp-src{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;padding:.25rem;
   background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px}
@@ -508,6 +523,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		// coin type: 'agent' (default — buyback-bound), 'regular' (plain pump.fun coin),
 		// 'mayhem' (pump.fun mayhem mode), 'usdc' (USDC-denominated agent — coming soon)
 		coinType: 'agent',
+
+		// launch lane: 'pump' (pump.fun, the reach lane) or 'native' (three.ws's own
+		// bonding curve). Populated from GET /api/native-launch/config — when the
+		// native lane has no curve config deployed on this network the toggle is
+		// hidden entirely and every launch stays on pump.
+		lane: 'pump',
+		laneInfo: null,        // { trade_fee_bps, fee_split, graduation_sol_approx, … } | null
+		laneAvailable: false,
 
 		// wallet source: 'connected' (Phantom/Backpack) or 'agent' (custodial agent wallet)
 		walletSource: 'connected',
@@ -1012,6 +1035,35 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		render();
 	}
 
+	function switchLane(next) {
+		if (!['pump', 'native'].includes(next)) return;
+		if (next === s.lane || (next === 'native' && !s.laneAvailable)) return;
+		s.lane = next;
+		s.errorMsg = '';
+		// The native lane builds a transaction the launcher's own wallet signs;
+		// there is no server-signed custodial path for it yet, so switching lanes
+		// also switches the signer back to the connected wallet.
+		if (next === 'native' && s.walletSource !== 'connected') {
+			s.walletSource = 'connected';
+			stopAgentBalancePoll();
+		}
+		render();
+	}
+
+	// Ask the server whether the native curve lane is deployed on this network.
+	// Failure is silent by design: no config, no toggle, launches stay on pump.
+	async function loadLaneInfo() {
+		try {
+			const r = await fetch('/api/native-launch/config', { credentials: 'include' });
+			if (!r.ok) return;
+			const info = await r.json();
+			if (!info || info.error || !info.available) return;
+			s.laneInfo = info;
+			s.laneAvailable = true;
+			render();
+		} catch { /* lane stays hidden */ }
+	}
+
 	// ── Image handling ─────────────────────────────────────────────────────
 
 	// Inline image error, DOM-patched so showing it never re-renders the form
@@ -1154,7 +1206,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				s._metaUrl = md.metadata_url; s._metaKey = metaKey;
 			}
 
-			if (s.walletSource === 'agent') {
+			// The agent (custodial, server-signed) path exists only for the pump
+			// lane; the native curve is always signed by the launcher's wallet.
+			if (s.walletSource === 'agent' && s.lane !== 'native') {
 				await launchViaAgentWallet(nameTrim, symTrim);
 			} else {
 				await launchViaConnectedWallet(nameTrim, symTrim);
@@ -1234,12 +1288,22 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const payer = w.publicKey?.toBase58?.() || w.publicKey?.toString?.();
 		if (!payer) throw new Error('Could not read wallet public key.');
 
-		const isUsdc = s.coinType === 'usdc';
+		const isNative = s.lane === 'native';
+		const isUsdc = !isNative && s.coinType === 'usdc';
 		const buyIn  = Math.max(0, parseFloat(s.initialBuy) || 0);
-		const pr = await fetch('/api/pump/launch-prep', {
-			method: 'POST', credentials: 'include',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({
+		// The native lane runs three.ws's own bonding curve: SOL-quoted, no coin
+		// variants, no on-chain buyback binding — so it takes the base fields only.
+		const prepUrl = isNative ? '/api/native-launch/launch-prep' : '/api/pump/launch-prep';
+		const prepBody = isNative
+			? {
+				...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
+				wallet_address: payer,
+				name: nameTrim, symbol: symTrim, uri: s._metaUrl,
+				mint_address: ground.publicKey,
+				sol_buy_in: buyIn,
+				network: 'mainnet',
+			}
+			: {
 				...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
 				wallet_address: payer,
 				name: nameTrim, symbol: symTrim, uri: s._metaUrl,
@@ -1250,7 +1314,11 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 					? { usdc_buy_in: buyIn, quote_mint: USDC_MAINNET_MINT }
 					: { sol_buy_in: buyIn }),
 				network: 'mainnet',
-			}),
+			};
+		const pr = await fetch(prepUrl, {
+			method: 'POST', credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(prepBody),
 		});
 		const prep = await pr.json();
 		if (prep.error) throw new Error(prep.error_description || prep.error);
@@ -1286,7 +1354,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		} catch (confErr) {
 			if (confErr.code === 'CONFIRM_TIMEOUT') {
 				s.phase = 'confirm-timeout';
-				s.pendingConfirm = { prepId: prep.prep_id, sig, network: 'mainnet' };
+				s.pendingConfirm = { prepId: prep.prep_id, sig, network: 'mainnet', lane: s.lane };
 				render(); return;
 			}
 			throw confErr;
@@ -1335,8 +1403,11 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	}
 
 	// Called after confirmed on-chain (normal path or escape-hatch path)
-	async function finalizeConfirm(prepId, sig) {
-		const cr = await fetch('/api/pump/launch-confirm', {
+	async function finalizeConfirm(prepId, sig, lane = s.lane) {
+		const confirmUrl = lane === 'native'
+			? '/api/native-launch/launch-confirm'
+			: '/api/pump/launch-confirm';
+		const cr = await fetch(confirmUrl, {
 			method: 'POST', credentials: 'include',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ prep_id: prepId, tx_signature: sig }),
@@ -1344,9 +1415,11 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const confirmed = await cr.json();
 		if (confirmed.error) throw new Error(confirmed.error_description || confirmed.error);
 
-		// Extract mint from what we already know (stored in pendingConfirm or parent scope)
-		// The server echoes pump_agent_mint which has the mint address
-		const mintAddr = confirmed.pump_agent_mint?.mint || s.pendingConfirm?.mint || null;
+		// Each lane echoes its own recorded row; both carry the mint address.
+		const mintAddr = confirmed.pump_agent_mint?.mint
+			|| confirmed.native_launch?.mint
+			|| s.pendingConfirm?.mint
+			|| null;
 		if (mintAddr) s.mint = mintAddr;
 		s.phase = 'success'; s.pendingConfirm = null;
 		render();
@@ -1545,7 +1618,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 					return;
 				}
 				if (st.err) throw new Error(`On-chain error: ${JSON.stringify(st.err)}`);
-				await finalizeConfirm(s.pendingConfirm.prepId, s.pendingConfirm.sig);
+				await finalizeConfirm(s.pendingConfirm.prepId, s.pendingConfirm.sig, s.pendingConfirm.lane || 'pump');
 			} catch (e) {
 				s.errorMsg = friendlyError(e.message || String(e));
 				s.phase = 'error'; s.pendingConfirm = null; render();
@@ -1690,7 +1763,33 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const dis  = busy ? 'disabled' : '';
 		const cost = estimatedCost();
 
-		const sourceToggleHtml = `<div class="lp-src" role="radiogroup" aria-label="Launch wallet">
+		const isNative = s.lane === 'native';
+
+		// Lane picker — only rendered once the server confirms three.ws's own
+		// curve is deployed on this network, so an unconfigured deployment shows
+		// exactly the pump-only UI it had before.
+		const laneToggleHtml = s.laneAvailable
+			? `<div class="lp-lane" role="radiogroup" aria-label="Launch lane">
+				<button type="button" role="radio" aria-checked="${!isNative}" data-lane="pump" class="${!isNative ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+					pump.fun<span class="lp-lane-sub">Maximum reach</span>
+				</button>
+				<button type="button" role="radio" aria-checked="${isNative}" data-lane="native" class="${isNative ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+					three.ws<span class="lp-lane-sub">Our own curve</span>
+				</button>
+			</div>`
+			: '';
+
+		const laneNoteHtml = isNative && s.laneInfo
+			? `<div class="lp-lane-note">Launches on three.ws's own bonding curve. ${
+				(s.laneInfo.trade_fee_bps / 100).toFixed(s.laneInfo.trade_fee_bps % 100 ? 2 : 0)
+			}% trading fee, ${s.laneInfo.fee_split.creator_percent}% of it to you. Graduates at ~${
+				s.laneInfo.graduation_sol_approx
+			} SOL raised into a locked liquidity pool you keep earning fees from.</div>`
+			: '';
+
+		// The native lane has no server-signed path, so its signer is always the
+		// connected wallet and the wallet-source toggle is withheld.
+		const sourceToggleHtml = isNative ? '' : `<div class="lp-src" role="radiogroup" aria-label="Launch wallet">
 			<button type="button" role="radio" aria-checked="${s.walletSource === 'connected'}" data-src="connected" class="${s.walletSource === 'connected' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				Connected wallet<span class="lp-src-sub">Phantom / Backpack</span>
 			</button>
@@ -1699,8 +1798,12 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			</button>
 		</div>`;
 
+		// Coin variants (mayhem / buyback-bound agent / USDC pair / delegated
+		// rewards) are pump.fun program features; the native curve has none of
+		// them, so the whole picker is withheld on that lane rather than shown
+		// with dead options.
 		const ct = s.coinType;
-		const coinTypeHtml = `<div class="lp-coin" role="radiogroup" aria-label="Coin type">
+		const coinTypeHtml = isNative ? '' : `<div class="lp-coin" role="radiogroup" aria-label="Coin type">
 			<button type="button" role="radio" aria-checked="${ct === 'regular'}" data-coin="regular" class="regular ${ct === 'regular' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				<span class="lp-coin-emoji">🪙</span>Regular<span class="lp-coin-sub">Plain pump.fun</span>
 			</button>
@@ -1718,7 +1821,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			</button>
 		</div>`;
 
-		const coinNoteHtml = ct === 'mayhem'
+		const coinNoteHtml = isNative
+			? ''
+			: ct === 'mayhem'
 			? `<div class="lp-coin-note mayhem">Mayhem coins launch on pump.fun's high-volatility mode. No agent buyback or payments — pure speculation.</div>`
 			: ct === 'usdc'
 				? `<div class="lp-coin-note usdc">USDC-paired agent coin. Bonding curve quotes in USDC instead of SOL — your initial buy and all subsequent trades settle through the wallet's USDC ATA. Buyback share still applies, denominated in USDC.</div>`
@@ -1730,7 +1835,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		// USDC coins are agent-buyback-bound (same on-chain agent identity flow
 		// as 'agent'), so surface the buyback slider for both variants.
-		const showBuyback = ct === 'agent' || ct === 'usdc';
+		const showBuyback = !isNative && (ct === 'agent' || ct === 'usdc');
 
 		let walletHtml;
 		if (s.walletSource === 'agent') {
@@ -1819,6 +1924,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 					title="Short pitch (up to 500 chars). Shown on pump.fun and on your agent page.">${esc(s.description)}</textarea>
 				<div class="lp-field-msg" id="lp-desc-msg" ${descBad ? '' : 'hidden'}>Description is required.</div>
 			</div>
+			${laneToggleHtml}
+			${laneNoteHtml}
 			${coinTypeHtml}
 			${coinNoteHtml}
 			${(() => {
@@ -1879,7 +1986,15 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const mint     = s.mint || '';
 		const sym      = s.symbol.trim() || 'TOKEN';
 		const agentId  = s.resolvedAgentId || av?.agent_id;
-		const shareText = `Just launched $${sym} on pump.fun 🎉 Built with three.ws\n${PUMP_URL(mint)}`;
+		// A native-lane coin has no pump.fun page, and the coin-detail page is
+		// still pump-only (it reads price/trades/safety from pump endpoints), so
+		// the announcement points at the agent page — a surface that resolves for
+		// both lanes — instead of a link that would 404.
+		const launchedNative = s.lane === 'native';
+		const nativeShareUrl = agentId ? `https://three.ws/agents/${agentId}` : 'https://three.ws';
+		const shareText = launchedNative
+			? `Just launched $${sym} on three.ws 🎉\n${nativeShareUrl}`
+			: `Just launched $${sym} on pump.fun 🎉 Built with three.ws\n${PUMP_URL(mint)}`;
 
 		const mintDisplay = stampedMintMarkup(mint);
 
@@ -1893,7 +2008,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			</div>
 			<span class="lp-ok-verified">✓ three.ws coin</span>
 			<div class="lp-ok-links">
-				<a class="lp-ext" href="${esc(PUMP_URL(mint))}" target="_blank" rel="noopener">pump.fun ↗</a>
+				${launchedNative
+					? ''
+					: `<a class="lp-ext" href="${esc(PUMP_URL(mint))}" target="_blank" rel="noopener">pump.fun ↗</a>`}
 				<a class="lp-ext" href="https://solscan.io/token/${esc(mint)}" target="_blank" rel="noopener">Solscan ↗</a>
 				${s.launchSig ? `<a class="lp-ext" href="${esc(SOLSCAN(s.launchSig))}" target="_blank" rel="noopener">Launch tx ↗</a>` : ''}
 				${agentId ? `<a class="lp-ext" href="/agents/${esc(agentId)}">Agent page ↗</a>` : ''}
@@ -2024,6 +2141,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				});
 			});
 		};
+		wireRadioGroup('.lp-lane', 'lane', switchLane);
 		wireRadioGroup('.lp-src',  'src',  switchSource);
 		wireRadioGroup('.lp-coin', 'coin', switchCoinType);
 
@@ -2132,6 +2250,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	render();
 	setTimeout(tryAutoConnect, 250);
+	loadLaneInfo(); // reveals the three.ws curve lane when it's deployed
 	if (av && av.id !== DEMO_ID) checkExistingMint(av);
 	if (prefill?.imageUrl) loadPrefillImage(prefill.imageUrl);
 
