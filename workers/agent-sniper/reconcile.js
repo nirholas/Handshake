@@ -110,6 +110,7 @@ export async function reconcileVanishedBag({ ctx, position, reason }) {
 						realized_pnl_lamports = ${realized.toString()},
 						realized_pnl_pct = ${pct},
 						error = 'reconciled_onchain',
+						reconcile_pending_since = NULL,
 						closed_at = now()
 					WHERE id = ${position.id}
 				`;

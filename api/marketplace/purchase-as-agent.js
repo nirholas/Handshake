@@ -10,7 +10,9 @@
  * Safety controls:
  *   - Per-agent rate limit: 10 purchases/hour  (limits.agentBuy)
  *   - Per-IP rate limit: 30 writes/10 min       (limits.authIp)
- *   - Daily spend cap: enforced against sum of today's confirmed+pending purchases.
+ *   - Daily spend cap: enforced against the sum of today's confirmed+pending
+ *     purchases across BOTH skills and whole assets (see _lib/agent-purchase.js),
+ *     so one budget covers every autonomous purchase this agent makes.
  *     Set buyer_agent.meta.auto_purchase_daily_limit_usdc (e.g. 10 = $10/day).
  *     Default: no cap.
  *   - Self-dealing (buyer_user_id === seller_user_id): allowed but flagged in DB.
@@ -34,6 +36,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
 import { confirmSkillPurchase, resolvePayoutAddress, logEvent } from '../_lib/purchase-confirm.js';
+import { sumDailyPurchaseAtomics, readPurchaseCap, capExceededMessage } from '../_lib/agent-purchase.js';
 import { z } from 'zod';
 
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
@@ -141,25 +144,12 @@ export default wrap(async (req, res) => {
 	// inserted (see below). On its own this check is a TOCTOU: concurrent
 	// purchases all read the same pre-spend SUM and each pass, collectively
 	// blowing past the cap and spending real funds beyond the user's limit.
-	const limitUsdc = buyer.meta?.auto_purchase_daily_limit_usdc;
-	const capEnabled = typeof limitUsdc === 'number' && limitUsdc > 0;
-	const limitAtomics = capEnabled ? BigInt(Math.round(limitUsdc * 10 ** USDC_DECIMALS)) : 0n;
-	const dayStart = () => {
-		const d = new Date();
-		d.setUTCHours(0, 0, 0, 0);
-		return d.toISOString();
-	};
-	const sumSpentAtomics = async () => {
-		const [spent] = await sql`
-			SELECT COALESCE(SUM(amount), 0)::bigint AS total
-			FROM skill_purchases
-			WHERE user_id = ${auth.userId}
-			  AND created_at >= ${dayStart()}
-			  AND currency_mint = ${price.currency_mint}
-			  AND status NOT IN ('failed', 'expired')
-		`;
-		return BigInt(spent?.total ?? 0);
-	};
+	// The cap spans skills AND whole assets (shared with /api/marketplace/buy-asset
+	// via _lib/agent-purchase.js), so a budget spent on assets is not silently
+	// available again here.
+	const { enabled: capEnabled, limitUsdc, limitAtomics } = readPurchaseCap(buyer.meta);
+	const sumSpentAtomics = () =>
+		sumDailyPurchaseAtomics({ userId: auth.userId, currencyMint: price.currency_mint });
 	if (capEnabled) {
 		const spentAtomics = await sumSpentAtomics();
 		if (spentAtomics + BigInt(price.amount) > limitAtomics) {
@@ -167,8 +157,7 @@ export default wrap(async (req, res) => {
 				buyer_agent_id, skill, spent: spentAtomics.toString(),
 				amount: price.amount, limit_atomics: limitAtomics.toString(),
 			});
-			return error(res, 402, 'spend_cap_exceeded',
-				`daily spend cap of ${limitUsdc} USDC reached — increase meta.auto_purchase_daily_limit_usdc or wait until UTC midnight`);
+			return error(res, 402, 'spend_cap_exceeded', capExceededMessage(limitUsdc));
 		}
 	}
 

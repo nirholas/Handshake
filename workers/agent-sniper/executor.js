@@ -83,6 +83,13 @@ async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, pri
 	}
 }
 
+// How long a position may sit in reconcile_pending (bag provably gone, emptying
+// tx not found) before the executor gives up, books it closed with unknown
+// proceeds, and frees the arm's concurrency slot. Generous enough to cover RPC
+// history lag by orders of magnitude — the observed lag is seconds to minutes,
+// and anything still unresolved after this is not coming back.
+const RECONCILE_GIVE_UP_MS = 6 * 60 * 60 * 1000;
+
 // ── per-agent serialization ────────────────────────────────────────────────
 // Single-worker assumption: a per-agent in-process lock makes the budget +
 // concurrency checks race-free without a DB reservation. (Scaling to N workers
