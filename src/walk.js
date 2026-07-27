@@ -4435,8 +4435,13 @@ const minimapContainer = (() => {
 	el.style.cssText = [
 		'position:fixed',
 		'z-index:6',
-		'right:16px',
-		'bottom:calc(28px + env(safe-area-inset-bottom, 0))',
+		// Bottom-left, the corner /play's world HUD parks its radar in, lifted
+		// clear of the movement stick (140px pad at bottom 28). The bottom-RIGHT
+		// corner is the walk companion mascot's (200x280, right/bottom 16) — the
+		// old minimap sat under it and only got away with it by defaulting to
+		// hidden. This radar is on by default, so it needs a corner of its own.
+		'left:16px',
+		'bottom:calc(180px + env(safe-area-inset-bottom, 0))',
 		'cursor:crosshair',
 		'opacity:0',
 		'transition:opacity 0.2s ease',
