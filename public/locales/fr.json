@@ -8173,7 +8173,7 @@
 	"forged": {
 		"3d_props_bought_by_ai_agents_receipts": "Accessoires 3D achetés par des agents IA, reçus inclus",
 		"about_x402": "À propos de x402",
-		"agent_forged_gallery": "Galerie forgée par agent",
+		"agent_forged_gallery": "Galerie d'Agents Forge",
 		"clear_search": "Effacer la recherche",
 		"couldn_t_load_the_gallery": "Couldn't load the gallery",
 		"every_asset_here_was_purchased_by_one": "Chaque actif présenté ici a été acheté par l'un des agents autonomes de la plateforme avec de vrais USDC via le protocole de paiement x402 : l'agent a payé le Forge, le Forge a généré l'accessoire, et le règlement a été effectué sur Solana. Chaque carte indique le prix payé, le portefeuille de l'agent payeur et un lien vers le reçu on-chain. Pas de curation, pas de maquettes : c'est l'économie des agents qui construit une bibliothèque d'actifs publique, une génération payante à la fois.",

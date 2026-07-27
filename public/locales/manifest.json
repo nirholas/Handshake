@@ -47,11 +47,6 @@
 			"dir": "rtl"
 		},
 		{
-			"code": "hi",
-			"name": "हिन्दी",
-			"dir": "ltr"
-		},
-		{
 			"code": "ru",
 			"name": "Русский",
 			"dir": "ltr"
@@ -74,6 +69,11 @@
 		{
 			"code": "th",
 			"name": "ไทย",
+			"dir": "ltr"
+		},
+		{
+			"code": "fil",
+			"name": "Filipino",
 			"dir": "ltr"
 		},
 		{
@@ -100,6 +100,11 @@
 			"code": "uk",
 			"name": "Українська",
 			"dir": "ltr"
+		},
+		{
+			"code": "fa",
+			"name": "فارسی",
+			"dir": "rtl"
 		},
 		{
 			"code": "bn",
@@ -239,6 +244,11 @@
 		{
 			"code": "pa",
 			"name": "ਪੰਜਾਬੀ",
+			"dir": "ltr"
+		},
+		{
+			"code": "ha",
+			"name": "Hausa",
 			"dir": "ltr"
 		}
 	]
