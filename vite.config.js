@@ -277,6 +277,12 @@ const appConfig = {
 		],
 		exclude: ['@three-ws/agent-payments'],
 	},
+	// Web Workers go through their OWN rollup pass, so build.rollupOptions below
+	// does not reach them: without this the grinder workers shipped unguarded
+	// `Object.hasOwn` (eoa-grinder-worker did) and died on the same old WebViews.
+	worker: {
+		rollupOptions: { output: { banner: LEGACY_RUNTIME_POLYFILL } },
+	},
 	build: {
 		chunkSizeWarningLimit: 1000,
 		// Skip computing gzip/brotli sizes during build — saves several seconds on
@@ -2718,6 +2724,10 @@ support: resolve(__dirname, 'pages/support.html'),
 const libConfig = {
 	resolve: {
 		dedupe: ['three'],
+	},
+	// Same separate-rollup-pass caveat as the app config above.
+	worker: {
+		rollupOptions: { output: { banner: LEGACY_RUNTIME_POLYFILL } },
 	},
 	build: {
 		outDir: 'dist-lib',
