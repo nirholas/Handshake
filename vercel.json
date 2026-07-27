@@ -3241,8 +3241,8 @@
 			"dest": "/api/pump/[action]?action=launches"
 		},
 		{
-			"src": "/api/launchpad/(config|quote|pool|launch-prep|launch-confirm|launches)",
-			"dest": "/api/launchpad/[action]?action=$1"
+			"src": "/api/native-launch/(config|quote|pool|launch-prep|launch-confirm|launches)",
+			"dest": "/api/native-launch/[action]?action=$1"
 		},
 		{
 			"src": "/api/pump/coin",
@@ -5623,6 +5623,10 @@
 		{
 			"path": "/api/cron/garment-catalog-audit",
 			"schedule": "20 6 * * *"
+		},
+		{
+			"path": "/api/cron/garment-job-sweep",
+			"schedule": "*/10 * * * *"
 		}
 	]
 }

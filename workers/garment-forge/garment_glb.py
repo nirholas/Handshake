@@ -91,6 +91,19 @@ RIG_BONES_MIN_SHARE = 0.001
 # its shoes nearly touching, so pair width says nothing about shoe size, while
 # foot length is invariant to the pair gap. (Refbody feet, measured from skin
 # weights: length 0.243, per-foot width 0.096, centers at x = +/-0.222.)
+#
+# Each slot's fit axis is the dimension that is INVARIANT for that kind of
+# item, which is why they differ and why contain-fit is not the universal
+# answer (it was the right fix for headwear alone, see below):
+#   hair     width tracks head width; length varies hugely by style, so a
+#            contain-fit would crush shoulder-length hair into the box.
+#   glasses  width tracks face width; long temples would shrink a contain-fit
+#            pair until it no longer spans the face.
+#   accessory width is the least style-dependent axis (a bag's strap length is
+#            not a size signal).
+# The walk-gait audit (npm run audit:garments) is the detector if any of these
+# ever drifts: 2026-07-27 baseline has all three comfortably inside their
+# ceilings (hair p95 13.4 of 20 cm, glasses 10.9 of 12, accessory 8.0 of 25).
 SLOT_BOXES = {
     "top":       {"center": (0.0, 1.14, 0.03),  "size": (0.90, 0.56, 0.45), "fit": 1},
     "outerwear": {"center": (0.0, 1.05, 0.03),  "size": (1.00, 0.80, 0.50), "fit": 1},
