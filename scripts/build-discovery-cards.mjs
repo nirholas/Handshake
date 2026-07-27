@@ -17,7 +17,7 @@
 //     with live counts and the discovery-doc URL. Hand-written skills stay.
 //   • public/.well-known/ai-plugin.json — descriptions updated to the current
 //     platform framing (viewer + paid x402 data/3D APIs).
-//   • public/crypto-agent-manifest.json — repoints the dead cdn.three.ws
+//   • public/crypto-agent-manifest.json — repoints the dead cdn.three.ws host (no DNS; the first-party CDN is /cdn/<r2-key>)
 //     sample body at the live default avatar and pins a current model id.
 //
 // Run: npm run build:discovery   (wired into prebuild so every deploy is fresh)
