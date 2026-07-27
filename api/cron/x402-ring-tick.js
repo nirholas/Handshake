@@ -303,6 +303,7 @@ export default wrapCron(async (req, res) => {
 		floorLamports: cfg.solFloorLamports,
 		feePerCallLamports: cfg.feePerCallLamports,
 		runwayDays: cfg.runwayDays,
+		minCalls: cfg.minCalls,
 	});
 	if (gov.calls <= 0) {
 		await recordSkip(runId, origin, 'runway_exhausted', {

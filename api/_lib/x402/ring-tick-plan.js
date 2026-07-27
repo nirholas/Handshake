@@ -52,6 +52,10 @@ export function ringTickConfig(e = process.env) {
 		// governor only ever throttles DOWN from `calls`; it never raises it.
 		feePerCallLamports: Math.max(1, Math.floor(num(e.X402_RING_FEE_PER_CALL_LAMPORTS, 7_000))),
 		runwayDays: Math.max(0.5, num(e.X402_RING_TARGET_RUNWAY_DAYS, 3)),
+		// Heartbeat floor: calls/min the governor still allows while the payer is
+		// ABOVE the hard SOL floor but below the balance the runway target wants.
+		// 0 restores the strict runway-only behavior. See governedCalls().
+		minCalls: Math.max(0, Math.floor(num(e.X402_RING_MIN_CALLS, 1))),
 		// USDC float (atomics) the ring tick must LEAVE UNSPENT for the
 		// artifact-producing pipelines (forge props, avatar rigs) that share the
 		// payer. Ring-settle recirculates money in a circle and produces nothing
@@ -71,20 +75,39 @@ export function ringTickConfig(e = process.env) {
 // (the floor stays untouchable). The governed rate makes funding the throttle:
 // more SOL in the payer = more calls/min, automatically, and as the balance
 // drains the rate tapers instead of cliff-dying. Pure: same inputs → same
-// decision. Returns { calls, callsPerDayBudget, throttled }.
+// decision. Returns { calls, callsPerDayBudget, throttled, heartbeat }.
+//
+// HEARTBEAT (`minCalls`, default 1): above the hard SOL floor the governor never
+// returns 0. Runway-only governing left a dead band between the floor and
+// "floor + runwayDays of 1 call/min" (0.03 SOL at the stock knobs) in which the
+// ring did nothing at all — and doing nothing is self-reinforcing: no calls means
+// no settles, no settles means no treasury USDC, no USDC means no sweep, no
+// revshare, no fuel swap, so the economy can never restart itself from its own
+// balances (observed 2026-07-26: 58 consecutive `runway_exhausted` ticks with
+// 0.047 SOL of spendable capital sitting idle across the ring wallets). The hard
+// floor is the real protection — `assessBackpressure` stops the rail there — so
+// spending the band slowly at the heartbeat rate strictly dominates hoarding it.
 export function governedCalls({
-	configuredCalls, solLamports, floorLamports, feePerCallLamports, runwayDays,
+	configuredCalls, solLamports, floorLamports, feePerCallLamports, runwayDays, minCalls = 1,
 }) {
 	if (!Number.isFinite(solLamports)) {
-		return { calls: 0, callsPerDayBudget: 0, throttled: true };
+		return { calls: 0, callsPerDayBudget: 0, throttled: true, heartbeat: false };
 	}
 	const spendable = Math.max(0, solLamports - floorLamports);
 	const callsPerDayBudget = Math.floor(
 		spendable / Math.max(0.5, runwayDays) / Math.max(1, feePerCallLamports),
 	);
 	const callsPerMin = Math.floor(callsPerDayBudget / 1440);
-	const calls = Math.max(0, Math.min(configuredCalls, callsPerMin));
-	return { calls, callsPerDayBudget, throttled: calls < configuredCalls };
+	// At or below the floor there is nothing to spend: stop, and let the
+	// runway_exhausted skip fire as the loud "fund the payer" signal.
+	const beat = spendable > 0 ? Math.max(0, Math.floor(minCalls)) : 0;
+	const calls = Math.max(0, Math.min(configuredCalls, Math.max(callsPerMin, beat)));
+	return {
+		calls,
+		callsPerDayBudget,
+		throttled: calls < configuredCalls,
+		heartbeat: calls > 0 && calls > callsPerMin,
+	};
 }
 
 // ── Cadence: which endpoints does this tick pay? ────────────────────────────────

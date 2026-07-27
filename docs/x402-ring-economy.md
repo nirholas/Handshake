@@ -31,9 +31,37 @@ measured 6,300-7,800 self-pay cost) per call. Consequences:
   94-calls/min fixed rate).
 - The governor only throttles DOWN from the configured rate, never above it,
   so `X402_RING_TICK_CALLS` remains the hard ceiling.
-- When spendable SOL cannot sustain even 1 call/min for the runway window, the
-  tick skips with reason `runway_exhausted` (one throttled ops alert), which is
-  the loud "fund the payer" signal.
+- **Heartbeat (`X402_RING_MIN_CALLS`, default 1).** Above the hard SOL floor the
+  governor never returns 0. Runway-only governing left a dead band between the
+  floor and "floor + `runwayDays` of 1 call/min" (0.03 SOL at stock knobs) where
+  the ring did nothing — and doing nothing is self-reinforcing: no calls means no
+  settles, no settles means no treasury USDC, so no sweep, no revshare, no fuel
+  swap, and the economy cannot restart itself from its own balances. Observed
+  2026-07-26: 58 consecutive `runway_exhausted` ticks while spendable SOL sat
+  idle. The hard floor is the real protection (`assessBackpressure` stops the
+  rail there), so spending the band at the heartbeat rate strictly dominates
+  hoarding it. Set `X402_RING_MIN_CALLS=0` to restore strict runway-only mode.
+- Only at or below the floor does the tick skip with `runway_exhausted` (one
+  throttled ops alert), the loud "fund the payer" signal.
+
+### Known limitation: the governor governs one tenant of a shared wallet
+
+`governedCalls()` throttles the **ring tick only**, but the ring payer is shared
+with roughly a dozen other paid pipelines (`health`, `volume`, `oracle`,
+`sniper`, `datapoint`, `3d`, `ring-agents`, …) that spend ungoverned. Measured
+2026-07-27: in one 20-minute window the ring tick was throttled to 2 paid calls
+while co-tenant pipelines completed ~200. A governor that throttles one tenant
+while others drain the same runway protects nothing under real scarcity — it
+just decides *which* pipeline gets starved. Two follow-ups, in order of value:
+
+1. **Meter the wallet, not the pipeline.** Move the runway budget into a shared
+   accounting key (the same place `ringDailySpent()` lives) so every pipeline
+   draws from one governed allowance.
+2. **Watch the wallet that actually pays.** The governor reads the ring payer's
+   balance, but sponsor-mode settles are fee-paid by the sponsor/master
+   (confirmed on-chain: `accountKeys[0]` is the master on co-tenant payments, 2
+   signatures, 10,001 lamports). In mixed mode the governed balance and the
+   burned balance are different wallets.
 
 ## Burning the least SOL — two levers
 

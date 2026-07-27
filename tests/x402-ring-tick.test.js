@@ -313,10 +313,41 @@ describe('ring-tick runway governor', () => {
 		expect(g.throttled).toBe(true);
 	});
 
-	it('below one call/min rounds down to zero, never negative', () => {
-		// 0.01 SOL spendable / 3d / 7000 = 476/day < 1440
+	it('keeps a heartbeat above the floor when the runway target wants zero', () => {
+		// 0.01 SOL spendable / 3d / 7000 = 476/day < 1440 → runway says 0/min, but
+		// the payer is above the hard floor, so the heartbeat keeps the ring alive.
+		// Hoarding this band is what deadlocked the economy (no calls → no settles
+		// → no sweep → no fuel → no recovery).
 		const g = governedCalls({ ...base, solLamports: 30_000_000 });
+		expect(g.calls).toBe(1);
+		expect(g.heartbeat).toBe(true);
+		expect(g.throttled).toBe(true);
+	});
+
+	it('minCalls=0 restores strict runway-only governing', () => {
+		const g = governedCalls({ ...base, solLamports: 30_000_000, minCalls: 0 });
 		expect(g.calls).toBe(0);
+		expect(g.heartbeat).toBe(false);
+	});
+
+	it('honours a larger heartbeat but never above the configured rate', () => {
+		const g = governedCalls({ ...base, solLamports: 30_000_000, minCalls: 5 });
+		expect(g.calls).toBe(5);
+		const capped = governedCalls({
+			...base, configuredCalls: 2, solLamports: 30_000_000, minCalls: 5,
+		});
+		expect(capped.calls).toBe(2);
+	});
+
+	it('the heartbeat never fires at or below the floor', () => {
+		expect(governedCalls({ ...base, solLamports: 20_000_000, minCalls: 9 }).calls).toBe(0);
+		expect(governedCalls({ ...base, solLamports: 1_000_000, minCalls: 9 }).calls).toBe(0);
+	});
+
+	it('does not flag heartbeat when the runway itself sustains the rate', () => {
+		const g = governedCalls({ ...base, solLamports: 520_000_000 });
+		expect(g.calls).toBe(16);
+		expect(g.heartbeat).toBe(false);
 	});
 
 	it('NaN balance (RPC fault) fails closed to zero calls', () => {
