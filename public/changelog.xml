@@ -31,6 +31,22 @@
 			<description>For a long time our developer documentation, API response examples, and the skill file that AI agents read to embed a 3D avatar all pointed model and image URLs at an address that does not exist: there was never a DNS record behind it. Copy one of those examples and you got a connection failure, and an agent following the embed instructions produced a body URL that could never load. It appeared 181 times across 55 files, including every code sample in the 3D and MCP API references. All of them now point at the asset CDN we actually run, which serves the same files from three.ws itself, allows any site to load them, and caches at the edge for a month. The Spatial MCP reference page moved onto it too, which fixes something subtle: it had been loading its example model from a storage origin that is rate-limited and only answers requests from our own domain, so anyone copying that example to prove the standard is portable was blocked by the very page meant to demonstrate portability. A new check refuses to let a dead asset address into the codebase again, and it also pins the route the working URLs depend on, so the two cannot drift apart.</description>
 		</item>
 		<item>
+			<title>Garment generation no longer loses jobs when it scales down</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Garment generation no longer loses jobs when it scales down</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Requesting a batch of garments could silently drop most of them: the queue lived in one server's memory, so anything waiting disappeared when that server was recycled. Jobs are now durable and picked up by whichever server is free, with automatic retries, so a queued piece finishes even if the machine that took the request goes away.</description>
+		</item>
+		<item>
+			<title>Generated garments are checked for shape, not just fit</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Generated garments are checked for shape, not just fit</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A garment can be skinned perfectly and still be the wrong shape: one generated hairstyle came back as a curtain nearly as tall as the avatar wearing it. Pieces are now measured against the body at two points, when they are made and again when they are worn, so a malformed mesh is refused and regenerated instead of ending up on someone's avatar.</description>
+		</item>
+		<item>
 			<title>Hats and shoes now sit where they belong</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-27:Hats and shoes now sit where they belong</guid>
@@ -61,6 +77,14 @@
 			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Walk your avatar into the park at dusk and it actually looks like dusk. The sun rises, arcs overhead and sets, the sky graduates from night through dawn to day, and the lights and reflections follow it, all driven by the same shared world clock the coin worlds run on, so everyone standing in the same world sees the same sky at the same moment. Indoor stages keep their authored lighting and the cycle steps aside while the camera passthrough is on. The corner map was also replaced with the rotating radar from the coin worlds: it turns under a fixed player arrow, keeps a compass and the world boundary in view, and now shows other players in their nameplate colours alongside companions, live agent desks, the named landmarks your guide walks to, and the scenery around you. Click or tap the radar to send your avatar walking there. Press M to hide or show it and it remembers your choice.</description>
+		</item>
+		<item>
+			<title>The wardrobe now has a full closet, and a page of its own</title>
+			<link>https://three.ws/wardrobe</link>
+			<guid isPermaLink="false">2026-07-27:The wardrobe now has a full closet, and a page of its own</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The garment catalog grew to 32 pieces covering every slot: hoodies, flannels, polos, knit sweaters, blazers, field jackets, chinos, joggers, shorts, a midi skirt, hairstyles from pixie to afro, beanies, a fedora, eyeglasses, a backpack and a scarf. There is also a new Wardrobe page where anyone can browse every piece, spin it in 3D, and describe a new garment for the forge to build, rig and publish in about seven minutes.</description>
 		</item>
 		<item>
 			<title>The x402 payment lanes now stop when the treasury runs dry</title>

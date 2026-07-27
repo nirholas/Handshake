@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-27T17:48:14.418Z",
+	"generated_at": "2026-07-27T17:49:08.594Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -37,6 +37,28 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Garment generation no longer loses jobs when it scales down",
+			"summary": "Requesting a batch of garments could silently drop most of them: the queue lived in one server's memory, so anything waiting disappeared when that server was recycled. Jobs are now durable and picked up by whichever server is free, with automatic retries, so a queued piece finishes even if the machine that took the request goes away.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Generated garments are checked for shape, not just fit",
+			"summary": "A garment can be skinned perfectly and still be the wrong shape: one generated hairstyle came back as a curtain nearly as tall as the avatar wearing it. Pieces are now measured against the body at two points, when they are made and again when they are worn, so a malformed mesh is refused and regenerated instead of ending up on someone's avatar.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -80,6 +102,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "The wardrobe now has a full closet, and a page of its own",
+			"summary": "The garment catalog grew to 32 pieces covering every slot: hoodies, flannels, polos, knit sweaters, blazers, field jackets, chinos, joggers, shorts, a midi skirt, hairstyles from pixie to afro, beanies, a fedora, eyeglasses, a backpack and a scarf. There is also a new Wardrobe page where anyone can browse every piece, spin it in 3D, and describe a new garment for the forge to build, rig and publish in about seven minutes.",
+			"link": "/wardrobe",
+			"tags": [
+				"feature"
 			]
 		},
 		{
