@@ -3,11 +3,12 @@ Unit tests for the texture stage of the selfie → avatar pipeline.
 
 Run: python3 test_face_pipeline.py   (asserts; exits non-zero on failure)
 
-Scope note: only ~19% of the head's UV surface is the face oval the selfie
-actually covers. The other ~81% — ears, scalp, neck, under-jaw — is template
-texture that the camera never saw, and the skin tint is currently the only thing
-personalising it. That asymmetry is why the tint's mask behaviour matters enough
-to pin: it must reach everything the photo could not, and nothing the photo did.
+Scope note: the face oval the selfie covers is only 10.4% of the head's texels
+(9.4% of its surface area). Ears, scalp, neck and under-jaw are reached by
+projective texturing (face_projection.py) and, where even that cannot see, by
+the skin tint alone. That asymmetry is why the tint's mask behaviour matters
+enough to pin: it must reach everything the photo could not, and nothing the
+photo did.
 """
 
 import sys
@@ -58,7 +59,7 @@ def test_protected_region_keeps_its_photographic_colour():
 
 def test_tint_still_reaches_every_unprotected_pixel():
     """
-    The tint's whole job is the ~81% of the head the camera never saw. A mask
+    The tint's whole job is the ~90% of the head the camera never saw. A mask
     that accidentally suppressed it there would leave a template-coloured neck
     against a photographic face — a worse artefact than the one being fixed.
     """

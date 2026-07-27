@@ -92,6 +92,67 @@ ARKit expression survive intact. This is verified end-to-end in
 Toggle Phase 2 with the `GEOMETRY_MORPH` env var (default `1`). It degrades
 cleanly to texture-only if anything fails; the shape refinement never fails a job.
 
+### Phase 3: projective texturing (the rest of the head)
+
+Phases 1 and 2 both stop at the face. The face-oval polygon Phase 1 composites
+into is only **10.4% of the head's texels** (9.4% of its surface area), because
+MediaPipe's 468 landmarks are face-only: there are no ear, scalp or neck points,
+so outside the oval there is no correspondence to warp with. Everything else was
+template texture personalised by a single global skin tint.
+
+[`face_projection.py`](../workers/avatar-reconstruction/face_projection.py) takes
+the other route. Phase 2 leaves us the head's real 3D shape, which turns the
+problem from *find matching points* into *find where each surface point lands in
+the photo*:
+
+1. **Fit the camera** with a closed-form Umeyama similarity between the head's
+   landmark vertices and MediaPipe's *3D* landmarks. This is the only use of
+   landmarks, and they locate the camera rather than establishing surface
+   correspondence.
+
+   This started as `cv2.solvePnP` and had to be replaced, which is worth
+   recording. `landmark_vtx` is nearest-vertex and **many-to-one**: on the
+   shipped template, 468 landmarks collapse onto just **262 distinct head
+   vertices**, so hundreds of landmarks share one 3D point while sitting at
+   different 2D positions. That is a contradiction no camera can satisfy.
+   Measured on the reference faces, RANSAC found 25-35% inliers and returned a
+   solution *behind the camera* on half of them, with the depth sign flipping
+   between runs and coordinate conventions.
+
+   Because MediaPipe reports 3D landmarks, the alignment is 3D-to-3D rather than
+   2D-to-3D, and Umeyama solves it in closed form with a reflection guard: no
+   RANSAC, no depth-sign ambiguity, nothing that can diverge. Duplicate
+   correspondences are averaged first so a vertex is not weighted by how many
+   landmarks happened to land on it. The result is a weak-perspective (scaled
+   orthographic) camera, which is the right model for a selfie anyway: head
+   depth is centimetres against a camera distance of tens, so foreshortening
+   across the head is small. **10 of 10 reference faces now fit**, against 50%
+   failure with PnP.
+2. **Rasterize the head in UV space** so every texel carries its 3D position and
+   normal.
+3. **Project and sample.** Each texel's 3D position goes through the camera into
+   the photo. Ears, jawline and neck fall out for free.
+
+Four gates decide whether a texel may be painted at all, because projection will
+otherwise paint the back of a head with whatever pixel lies behind it. The texel
+must land inside the photo, face the camera (confidence falls off as
+cos^1.5 of the view angle), survive a depth-buffer occlusion test that catches
+the nose shadowing the cheek, and sample a foreground pixel per the rembg alpha.
+A texel failing any gate keeps its existing colour rather than inventing one. The
+result blends *under* the Phase 1 composite, which stays authoritative where the
+landmark warp applies, and is capped at `MAX_BLEND = 0.85` so a slightly-wrong
+pose degrades to a tint rather than a visibly wrong image.
+
+Measured on the shipped template by
+[`eval/measure_projection_coverage.py`](../workers/avatar-reconstruction/eval/measure_projection_coverage.py),
+photographic coverage of the head rises from **10.4% to 37.5%, a 3.6x increase**,
+holding up as the subject turns (38.8% at 15 degrees, 39.5% at 30).
+
+Toggle with `PROJECTIVE_TEXTURE` (default `1`). Like the morph, it degrades
+cleanly: a pose that will not solve logs and leaves the warp-only skin in place.
+It runs *after* the geometry morph, since projecting onto the template and then
+morphing would slide the texture off the features it was sampled from.
+
 > **Fixed in this change:** `precompute_uv.py` and `glb_ops` previously read the
 > interleaved head buffer stride-unaware, so `face_uv_map.json` was built on
 > corrupted vertex data. The reader is now stride-aware, which also repairs the
@@ -123,7 +184,8 @@ each link:
 | **v1 (shipped)** | Real face-shape morph (sparse) | MediaPipe Face Mesh | Apache-2.0 — clean |
 | **v2 (recommended)** | Dense identity geometry, fused via `register_head_to_target` | **MICA + FLAME**, commercial licence from MPI | Paid MPI commercial licence — clean once signed. FLAME's fixed topology + expression basis map straight to ARKit |
 | **v2 (fallback)** | Dense identity, no licence fee | HRN re-based on **FLAME-2023-Open** (CC-BY-4.0) | Clean, but weeks of GPU R&D to retrain the identity regressor |
-| **v2 (texture)** | Full-head photoreal texture (fills cheeks/ears/scalp the selfie can't see) | **Imagen** inpaint on Vertex AI | GCP — pre-approved |
+| **v2 (texture)** SHIPPED | Projective texturing off the morphed mesh: fills ears, jawline and neck from the *same* photo (10.4% to 37.5% of the head) | none, geometry we already have | Clean; no new model or licence |
+| **v3 (texture)** | Inpaint what no camera saw (scalp, far cheek) | **Imagen** inpaint on Vertex AI | GCP, pre-approved |
 | **v3** | Drop the RPM-template dependency for a fully-owned body | **Anny** (parametric body) + **ICT-FaceKit** (ARKit-52) + deformation transfer | Anny Apache-2.0 + CC0; ICT-FaceKit + DT MIT — clean |
 
 **Rejected: FaceLift (ICCV'25)** — initially floated as the clean v2 model, but

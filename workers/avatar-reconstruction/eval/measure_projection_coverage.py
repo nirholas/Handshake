@@ -3,9 +3,9 @@ Measure how much of the head's skin atlas actually carries photographic colour,
 before and after projective texturing.
 
 This is the number the whole Track 2 exercise is judged on. The face-oval warp
-covers 19.2% of the head's UV surface; the claim for projection is that it
-reaches a large share of the remaining 80.8% (ears, jawline, neck, forehead to
-the hairline) from the same single photo. A claim like that is worth nothing
+covers 10.4% of the head's texels; the claim for projection is that it reaches a
+large share of the remaining ~90% (ears, jawline, neck, forehead to the
+hairline) from the same single photo. A claim like that is worth nothing
 unless it is measured on the real template mesh with a real face, so this script
 does exactly that and prints the split.
 
@@ -24,6 +24,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import face_geometry as fg  # noqa: E402
 import face_pipeline as fp  # noqa: E402
 import face_projection as fpr  # noqa: E402
 import glb_ops  # noqa: E402
@@ -51,20 +52,8 @@ def measure(image_path: str) -> dict | None:
     tex = glb_ops.get_material_texture(glb, "Wolf3D_Skin")
     tex_w, tex_h = tex.size
 
-    # Only texels the head mesh actually uses count as denominator. The skin
-    # atlas is shared with the body, so measuring against the whole 1024 square
-    # would flatter every number here by counting texels no head vertex touches.
-    _, _, covered = fpr._rasterize_uv(positions, uvs, faces, normals, tex_w, tex_h)
-    head_texels = int(covered.sum())
-    if head_texels == 0:
-        return None
-
     lm_idx = np.asarray(uv_map["landmark_vtx"], dtype=np.int64)
-    n = min(len(landmarks), len(lm_idx))
-    pts2d = np.array(
-        [[landmarks[i].x * img_w, landmarks[i].y * img_h] for i in range(n)],
-        dtype=np.float64,
-    )
+    detected = fg.landmarks_to_array(landmarks, img_w, img_h)
 
     fg_alpha = np.array(fg_img.convert("RGBA"), dtype=np.uint8)[:, :, 3].astype(np.float32) / 255.0
     out = fpr.project_photo_to_uv(
@@ -74,15 +63,20 @@ def measure(image_path: str) -> dict | None:
         normals=normals,
         uvs=uvs,
         faces=faces,
-        landmarks_2d=pts2d,
-        landmark_vertices=positions[lm_idx[:n]],
+        landmarks_3d=detected,
+        vertex_indices=lm_idx,
         tex_w=tex_w,
         tex_h=tex_h,
     )
     if out is None:
         return {"name": os.path.basename(image_path), "pose": False}
 
-    _, weight = out
+    _, weight, covered = out
+    # Only texels the head mesh actually uses count as denominator (see
+    # project_photo_to_uv), so the figure is not flattered by body-only texels.
+    head_texels = int(covered.sum())
+    if head_texels == 0:
+        return None
     oval = (face_mask_uv > 0.5) & covered
     painted = (weight > 0.01) & covered
     return {

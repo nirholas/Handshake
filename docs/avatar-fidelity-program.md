@@ -188,26 +188,77 @@ shadow, ears, the scalp, under the jaw — none of it is in the photo, and today
 those regions fall back to a tinted template texture. That mismatch is what
 reads as "avatar" rather than "person" the moment the head turns.
 
-**Measure the opportunity first — it is bigger than it looks.** Of the head
-mesh's UV surface, only **19.2% is the face oval** the selfie actually covers.
-The other **80.8%** — ears, scalp, neck, under-jaw — is template texture the
-camera never saw, personalised solely by a global skin-tone tint. That is the
-real prize here, and it also bounds what the mechanisms below can achieve.
+**Measure the opportunity first, it is bigger than it looks.** Of the head
+mesh's texels, only **10.4% is the face oval** the selfie actually covers (9.4%
+of its actual surface area). The other **~90%**, ears, scalp, neck, under-jaw,
+is template texture the camera never saw, personalised solely by a global
+skin-tone tint. That is the real prize here, and it also bounds what the
+mechanisms below can achieve.
+
+> An earlier revision of this doc quoted 19.2% / 80.8%. That was measured
+> against the wrong denominator (it counted atlas texels the head mesh does not
+> use). Re-measured against head-only texels on the shipped template it is
+> 10.4%, so the gap was *larger* than first reported, not smaller. The number is
+> now produced by `eval/measure_projection_coverage.py` rather than by hand.
 
 **A landmark-driven warp cannot reach most of it.** MediaPipe's 468 landmarks are
 face-only: there are no ear, scalp or neck points, and `_warp_face_to_uv` masks
 to the face-oval polygon accordingly. So warping extra synthesised views through
 the existing path improves *lateral cheek and jaw* fidelity (where a frontal is
-foreshortened) but cannot texture the other 80.8%, because no correspondence
+foreshortened) but cannot texture the other ~90%, because no correspondence
 exists there. Anyone picking this up should not expect the view-warp route to
 fill the scalp.
 
 **The mechanism that does reach it is projective texturing off the mesh we
-already have.** The head geometry is known (the morph just produced it), so a
-synthesised view can be projected through an estimated camera pose onto the mesh
-and resolved to UV by rasterisation plus a visibility test — no landmarks needed,
-and ears/scalp/neck fall out naturally. This is the recommended build, and it
-shares its camera-pose machinery with Track 3.
+already have. SHIPPED.** [`face_projection.py`](../workers/avatar-reconstruction/face_projection.py)
+solves the camera by PnP against the head's landmark vertices, rasterises the
+head in UV space so every texel knows its 3D position and normal, then projects
+each texel into the photo and samples it. No landmarks are needed for the
+surface itself, so ears, jawline and neck fall out naturally.
+
+Four gates keep it honest, because projection will otherwise paint the back of a
+head with whatever pixel lies behind it: the texel must land inside the photo,
+face the camera, survive a depth-buffer occlusion test, and sample a foreground
+pixel. Anything failing a gate keeps its existing colour. The result blends
+*under* the face-oval composite, which stays authoritative where the landmark
+warp already applies, and is capped at `MAX_BLEND` so a slightly-wrong pose
+degrades to a tint rather than to a visibly wrong image.
+
+**Measured on the shipped Wolf3D head** (`eval/measure_projection_coverage.py`),
+photographic coverage of the head goes from **10.4% to 37.5%, a 3.6x increase**,
+and holds up as the subject turns (37.4% at 15 degrees, 38.0% at 30):
+
+| Camera | Projection reaches | New beyond the oval | Total photographic |
+|---|---|---|---|
+| Frontal | 36.1% | 27.1% | **37.5%** |
+| 15 deg turn | 37.4% | 28.5% | 38.8% |
+| 30 deg turn | 38.0% | 29.1% | 39.5% |
+
+Two decisions are worth recording because both nearly went the wrong way.
+
+**The camera model.** The obvious approach, `cv2.solvePnP` against the head's
+landmark vertices, does not work here and the synthetic tests did not catch it:
+they generated 2D points by projecting the same 3D points, so the
+correspondences were perfect by construction. On real photos they are not.
+`landmark_vtx` is many-to-one, collapsing 468 landmarks onto 262 head vertices,
+so hundreds of landmarks share a 3D point while sitting at different 2D
+positions. RANSAC found 25-35% inliers and put the head *behind the camera* on
+half the reference faces. The replacement fits a weak-perspective camera by
+closed-form Umeyama against MediaPipe's 3D landmarks, after averaging duplicate
+correspondences: 10 of 10 reference faces now fit, mean coverage 36.9% with a
+range of only 36.2-37.5%. The lesson is that a synthetic test built from the
+same generative model it validates proves the arithmetic and nothing about the
+data.
+
+**The facing falloff.** cos^3 with a 0.15 floor stops painting at 58 degrees from
+the camera, which **rejects the ears outright**. Ears sit at 70-90 degrees from a
+frontal camera and are a large share of the surface this exists to reach, so
+that setting would have left the headline gap unclosed while appearing to
+address it. The shipped curve is cos^1.5 with a 0.06 floor, which admits them as
+a light wash. Coverage of no-landmark surface measured 0% before the change and
+91% after.
+
+The camera-pose machinery is shared with Track 3.
 
 Already fixed on the way in: the skin tint was being applied to the *whole*
 texture, including the face oval that had just been composited from the user's

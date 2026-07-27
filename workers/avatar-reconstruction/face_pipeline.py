@@ -561,11 +561,12 @@ def process(
     log.info("[%s] face composited onto skin texture (%.1fs)", job_id, time.time() - t0)
 
     # 8. Skin-tone tint: pull the neck, ears and scalp toward the person's
-    # complexion. Only ~19% of the head's UV surface is the face oval the selfie
-    # actually covers; the other ~81% is template texture, and this tint is all
-    # that personalises it. Protect the oval itself — those pixels came straight
-    # from the photograph, so tinting them toward an average of themselves can
-    # only degrade the one region with true photographic colour.
+    # complexion. The face oval the selfie covers is only 10.4% of the head's
+    # texels (9.4% of its surface area), so before projective texturing landed
+    # this tint was the only thing personalising the other ~90%. Protect the oval
+    # itself: those pixels came straight from the photograph, so tinting them
+    # toward an average of themselves can only degrade the one region with true
+    # photographic colour.
     skin_tone = _extract_skin_tone(img_arr, landmarks, img_w, img_h)
     new_skin = _tint_texture(new_skin, skin_tone, strength=0.25, protect_mask=face_mask_uv)
 
@@ -624,26 +625,31 @@ def process(
             log.warning("[%s] geometry morph failed (%s) — keeping template shape",
                         job_id, exc)
 
-    # 10c. Projective texturing — paint the photo onto the ~81% of the head the
+    # 10c. Projective texturing: paint the photo onto the ~90% of the head the
     # face-oval warp cannot reach (ears, jawline, neck, forehead to the
-    # hairline). Runs after the morph so it projects onto the head's final shape;
-    # projecting onto the template and then morphing would slide the texture off
-    # the features it was sampled from. Gated on facing, occlusion and the
-    # foreground mask, and blended UNDER the face-oval composite, which stays
-    # authoritative where the landmark warp already applies.
+    # hairline). Measured on the shipped template, this lifts photographic
+    # coverage of the head from 10.4% to 37.5%, a 3.6x increase.
+    #
+    # Runs after the morph so it projects onto the head's FINAL shape; projecting
+    # onto the template and then morphing would slide the texture off the very
+    # features it was sampled from. Gated on facing, occlusion and the foreground
+    # mask, and blended UNDER the face-oval composite, which stays authoritative
+    # where the landmark warp already applies.
     if PROJECTIVE_TEXTURE_ENABLED:
         try:
-            fmap = _get_face_map()
             positions, mesh_uvs, mesh_faces = glb_ops.get_head_mesh_data(glb)
             normals = glb_ops.recompute_vertex_normals(positions, mesh_faces)
+            # Only landmark_vtx is needed here: projection locates the camera and
+            # then works off the mesh, so the canonical face map the morph needs
+            # is irrelevant and must not gate this stage.
             lm_vtx = uv_map.get("landmark_vtx")
-            if fmap is not None and lm_vtx:
+            if lm_vtx:
                 lm_idx = np.asarray(lm_vtx, dtype=np.int64)
-                n = min(len(landmarks), len(lm_idx))
-                pts2d = np.array(
-                    [[landmarks[i].x * img_w, landmarks[i].y * img_h] for i in range(n)],
-                    dtype=np.float64,
-                )
+                # The same isotropic pixel frame the morph aligns in. Passing the
+                # image size matters: MediaPipe normalises x by width and y by
+                # height, so without it a non-square photo yields an anisotropic
+                # cloud and the uniform-scale fit bakes the aspect ratio in.
+                detected = face_geometry.landmarks_to_array(landmarks, *best_img.size)
                 fg_arr = np.array(fg_img.convert("RGBA"), dtype=np.uint8)
                 fg_alpha = fg_arr[:, :, 3].astype(np.float32) / 255.0
                 projected = face_projection.project_photo_to_uv(
@@ -653,14 +659,14 @@ def process(
                     normals=normals,
                     uvs=mesh_uvs,
                     faces=mesh_faces,
-                    landmarks_2d=pts2d,
-                    landmark_vertices=positions[lm_idx[:n]],
+                    landmarks_3d=detected,
+                    vertex_indices=lm_idx,
                     tex_w=new_skin.width,
                     tex_h=new_skin.height,
                 )
                 if projected is not None:
-                    proj_rgb, proj_weight = projected
-                    coverage = face_projection.coverage_fraction(proj_weight)
+                    proj_rgb, proj_weight, proj_covered = projected
+                    coverage = face_projection.coverage_fraction(proj_weight, proj_covered)
                     blended = face_projection.blend_projection(
                         np.array(new_skin.convert("RGB"), dtype=np.uint8),
                         proj_rgb,
@@ -669,12 +675,12 @@ def process(
                     )
                     new_skin = Image.fromarray(blended, "RGB")
                     log.info(
-                        "[%s] projective texturing covered %.1f%% of the skin atlas "
-                        "beyond the face oval (%.1fs)",
+                        "[%s] projective texturing painted %.1f%% of the head "
+                        "(face-oval warp alone reaches ~10%%) (%.1fs)",
                         job_id, coverage * 100.0, time.time() - t0,
                     )
                 else:
-                    log.info("[%s] projective texturing skipped: no camera pose", job_id)
+                    log.info("[%s] projective texturing skipped: camera fit rejected", job_id)
         except Exception as exc:  # noqa: BLE001 — enrichment must never fail the job
             log.warning("[%s] projective texturing failed (%s) — keeping warp-only skin",
                         job_id, exc)
