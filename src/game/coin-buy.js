@@ -155,6 +155,12 @@ class TradeModal {
 		// Firewall verdict for the current (mint, amount). 'block' disables Buy.
 		this.safetyVerdict = null;
 		this._safetySeq = 0;
+		// Selected payer. null = the browser wallet (default); otherwise an owned
+		// agent whose custodial wallet signs server-side, so the trade needs no
+		// wallet extension at all. Only offered for SOL-denominated trades, which
+		// is what /api/agents/:id/solana/trade accepts.
+		this._payerAgent = null;
+		this._agents = null;
 		this._build();
 		this._detectP = this._detectDenom();
 		this._refreshWallet();
@@ -195,6 +201,7 @@ class TradeModal {
 		]);
 
 		this.walletLine = el('div', { class: 'cc-buy-wallet' });
+		this.payerLine = el('div', { class: 'cc-buy-payer', hidden: true });
 
 		// Pre-trade rug/honeypot firewall verdict — rendered right above the CTA on
 		// buys. A 'block' disables the Buy button; the user can still review checks.
@@ -248,6 +255,7 @@ class TradeModal {
 			this.feeLine,
 			this.slipRow,
 			this.walletLine,
+			this.payerLine,
 			this.smartMoneyHost,
 			this.safetyHost,
 			this.cta,
@@ -366,6 +374,9 @@ class TradeModal {
 				this._refreshBalances();
 				this._quote();
 				this._syncCta();
+				// The coin prices in USDC, which the agent-trade endpoint does not
+				// take, so withdraw the payer row (and any selection made on it).
+				this._renderPayers();
 			}
 		} catch { /* keep optimistic SOL — prep still auto-detects server-side */ }
 	}
@@ -391,6 +402,112 @@ class TradeModal {
 			this._wallet = w;
 		}
 		this._syncCta();
+		this._refreshPayers();
+	}
+
+	// ------------------------------------------------------------- agent payer
+	// An owned agent with SOL in its own custodial wallet can place this trade
+	// server-side via /api/agents/:id/solana/trade, the same endpoint the wallet
+	// hub uses, with the same spend guardrails, so no browser wallet is needed.
+	// Signed-out users and USDC-denominated buys (which that endpoint does not
+	// take) simply never see the row.
+	async _refreshPayers() {
+		if (this._agents === null) {
+			this._agents = [];
+			try {
+				const res = await fetch('/api/x402-pay?agents=1', { credentials: 'include' });
+				if (res.ok) {
+					const data = await res.json();
+					this._agents = (Array.isArray(data?.agents) ? data.agents : []).filter((a) => a?.solana_address);
+				}
+			} catch { /* signed out or offline; browser-wallet path is unaffected */ }
+		}
+		this._renderPayers();
+	}
+
+	_renderPayers() {
+		if (!this.payerLine) return;
+		const eligible = this.denom.kind === 'sol' && this._agents?.length;
+		if (!eligible) {
+			// A payer that is no longer offerable must not stay silently selected.
+			if (this._payerAgent) { this._payerAgent = null; this._syncCta(); }
+			this.payerLine.hidden = true;
+			this.payerLine.textContent = '';
+			return;
+		}
+		this.payerLine.hidden = false;
+		this.payerLine.textContent = '';
+		const select = el('select', { class: 'cc-buy-payer-select', 'aria-label': 'Pay with' });
+		select.append(el('option', { value: '', text: 'Browser wallet' }));
+		for (const a of this._agents.slice(0, 8)) {
+			const bal = typeof a.sol === 'number' ? ` · ${a.sol.toFixed(3)} SOL` : '';
+			select.append(el('option', { value: a.id, text: `${a.name || 'Agent'}${bal}` }));
+		}
+		select.value = this._payerAgent?.id || '';
+		select.addEventListener('change', () => {
+			this._payerAgent = this._agents.find((a) => String(a.id) === select.value) || null;
+			this._setStatus('', '', true);
+			this._syncCta();
+		});
+		this.payerLine.append(el('span', { class: 'cc-buy-payer-label', text: 'Pay with' }), select);
+	}
+
+	// Place the trade from the selected agent's custodial wallet. One request:
+	// the server enforces ownership, the agent's spend limits and the trade
+	// firewall, signs, submits and confirms.
+	async _tradeAsAgent(side) {
+		const agent = this._payerAgent;
+		if (!agent) return;
+		this.busy = true; this._syncCta();
+		try {
+			const body = { side, mint: this.coin.mint, network: NETWORK, slippage_bps: this.slippageBps };
+			if (side === 'buy') {
+				body.sol_amount = this.amount;
+			} else {
+				const tokens = this._sellBaseUnits();
+				if (!tokens || tokens === '0') { this._setStatus('Enter an amount to sell.', 'err'); this.busy = false; this._syncCta(); return; }
+				body.token_amount_raw = tokens;
+			}
+			this._setStatus(`${side === 'buy' ? 'Buying' : 'Selling'} from ${agent.name || 'your agent'}'s wallet…`, '');
+
+			const csrf = await fetch('/api/csrf-token', { credentials: 'include' })
+				.then((r) => (r.ok ? r.json() : null))
+				.then((j) => j?.data?.token || null)
+				.catch(() => null);
+			const res = await fetch(`/api/agents/${encodeURIComponent(agent.id)}/solana/trade`, {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json', ...(csrf ? { 'x-csrf-token': csrf } : {}) },
+				body: JSON.stringify(body),
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				const e = new Error(data.error_description || data.message || data.error || `trade failed (${res.status})`);
+				e.status = res.status;
+				throw e;
+			}
+
+			const sig = data.data?.signature || data.signature || null;
+			// Prefer the server's own explorer link (it knows the network it signed on).
+			const url = data.data?.explorer || (sig ? solanaTxExplorerUrl(NETWORK, sig) : null);
+			const verbPast = side === 'buy' ? 'Bought' : 'Sold';
+			this.cta.textContent = `${verbPast} ${side === 'buy' ? this.sym : this.symTokens} ✓`;
+			this._setStatusNode(
+				el('span', {}, [
+					`${verbPast} from ${agent.name || 'your agent'}'s wallet. `,
+					...(url ? [el('a', { href: url, target: '_blank', rel: 'noopener', text: 'View on Solscan ↗' })] : []),
+				]),
+				'ok',
+			);
+			this.busy = false;
+			this.cta.disabled = true;
+			// The agent's SOL changed, so the payer row's balances are stale.
+			this._agents = null;
+			setTimeout(() => { this._refreshBalances(); this._refreshPayers(); }, 1500);
+		} catch (err) {
+			this.busy = false; this._syncCta();
+			this._handleTradeError(err, side, () => this._tradeAsAgent(side));
+		}
 	}
 
 	// Fetch the wallet's USDC balance (USDC buys) and coin holdings (sells). A
@@ -477,8 +594,12 @@ class TradeModal {
 		const connected = !!w?.publicKey;
 		if (this.busy) { this.cta.disabled = true; return; }
 		const verb = this.mode === 'sell' ? 'sell' : 'buy';
-		if (!w) { this.cta.textContent = `Get Phantom to ${verb}`; this.ctaLabel = 'install'; this.cta.disabled = false; return; }
-		if (!connected) { this.cta.textContent = 'Connect wallet'; this.ctaLabel = 'connect'; this.cta.disabled = false; return; }
+		// An agent payer signs server-side, so the browser-wallet install/connect
+		// gates below do not apply to it.
+		if (!this._payerAgent) {
+			if (!w) { this.cta.textContent = `Get Phantom to ${verb}`; this.ctaLabel = 'install'; this.cta.disabled = false; return; }
+			if (!connected) { this.cta.textContent = 'Connect wallet'; this.ctaLabel = 'connect'; this.cta.disabled = false; return; }
+		}
 
 		if (this.mode === 'sell') {
 			// Holdings are advisory: a read can lag the chain, so a typed sell is
@@ -504,7 +625,10 @@ class TradeModal {
 			return;
 		}
 		this.ctaLabel = 'buy';
-		this.cta.textContent = this.amount > 0 ? `Buy ${this.amount} ${this.denom.label} of ${this.sym}` : 'Enter an amount';
+		const payerSuffix = this._payerAgent ? ` with ${this._payerAgent.name || 'agent'}` : '';
+		this.cta.textContent = this.amount > 0
+			? `Buy ${this.amount} ${this.denom.label} of ${this.sym}${payerSuffix}`
+			: 'Enter an amount';
 		this.cta.disabled = !(this.amount > 0);
 	}
 
@@ -715,6 +839,11 @@ class TradeModal {
 	// --------------------------------------------------------------- actions
 	async _onCta() {
 		if (this.busy) return;
+		// Agent payer: the server signs, so skip the browser-wallet install /
+		// connect handshake entirely and place the trade directly.
+		if (this._payerAgent) {
+			return this._tradeAsAgent(this.mode === 'sell' ? 'sell' : 'buy');
+		}
 		const w = detectSolanaWallet();
 		if (!w) { window.open('https://phantom.app/', '_blank', 'noopener'); return; }
 		if (!w.publicKey) {

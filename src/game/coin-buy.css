@@ -164,6 +164,26 @@
 .cc-buy-wallet-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cc-live); box-shadow: var(--cc-glow); flex: none; }
 .cc-buy-wallet-off { color: var(--cc-faint); }
 
+/* Payer picker: trade from an owned agent's custodial wallet (server-signed,
+   no extension) instead of the browser wallet. Hidden unless the user is
+   signed in with agents AND the coin is SOL-denominated. */
+.cc-buy-payer {
+	display: flex; align-items: center; gap: 8px; margin-top: 8px;
+	color: var(--cc-dim); font-size: 12px;
+}
+.cc-buy-payer[hidden] { display: none; }
+.cc-buy-payer-label { color: var(--cc-faint); flex: none; }
+.cc-buy-payer-select {
+	flex: 1; min-width: 0;
+	padding: 6px 8px; border-radius: 8px;
+	border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04);
+	color: var(--cc-text); font-size: 12px; font-family: inherit;
+	cursor: pointer;
+	transition: border-color 0.12s ease, background 0.12s ease;
+}
+.cc-buy-payer-select:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.06); }
+.cc-buy-payer-select:focus-visible { outline: 2px solid var(--cc-live); outline-offset: 2px; }
+
 .cc-buy-cta {
 	width: 100%; margin-top: 14px; padding: 14px;
 	background: var(--cc-accent); color: var(--cc-ink);

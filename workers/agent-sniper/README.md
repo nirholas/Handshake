@@ -94,6 +94,36 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 > position with its actual proceeds (`error = 'reconciled_onchain'`) instead of
 > retrying a sell that can only revert (pump error 6023, `NotEnoughTokensToSell`);
 > a short balance clamps the sell to what the wallet really holds.
+>
+> The search covers the DERIVED associated-token address for both token programs,
+> not just live token accounts: an emptying sell usually closes the account in the
+> same transaction to reclaim rent, and a closed account keeps its signature
+> history but disappears from an account listing.
+>
+> **When the emptying tx cannot be found**, the position parks as
+> `reconcile_pending` with `reconcile_pending_since` stamped. A park is not free:
+> `countOpenPositions()` counts `opening`/`open`/`closing`, so a parked position
+> holds one of its arm's `max_concurrent_positions` slots. Two bounds keep that
+> from becoming permanent:
+>
+> - After `RECONCILE_GIVE_UP_MS` (6 h) the position books `closed` with
+>   `error = 'reconcile_unresolved'` and realized P&L left **NULL** — the bag is
+>   provably gone but its proceeds are unknowable, and every P&L query filters
+>   NULL out, so the slot frees without inventing a number.
+> - A `closing` lock older than 10 minutes is released back to `open` by
+>   `getOpenPositions()`. `closing` is held for seconds around a broadcast, so an
+>   older one is an abandoned attempt from a worker restart; the release keys off
+>   `last_quoted_at`, so a position still being worked is never disturbed.
+>
+> **A settled position can never return to `open`.** A database trigger
+> (`sniper_block_resurrect`) coerces the status back and records the attempt in
+> `sniper_resurrect_attempts`. The invariant lives in the DB because the worker is
+> deployed separately: an old image with the unguarded park cannot violate it, and
+> a non-empty recent window in that table means such an image is still running.
+>
+> To clear positions already parked without waiting for a worker deploy:
+> `node scripts/sniper-reconcile-wedged.mjs` (re-reads every real on-chain balance
+> and skips anything still holding tokens).
 
 ## Decision modes and the experiment fleet
 

@@ -2286,6 +2286,39 @@ div.ad-hero-avatar canvas {
 .payment-wallet-area a {
 	color: var(--ad-text);
 }
+/* Agent-wallet payment options: an owned agent pays from its own custodial
+   balance, so there is no browser-wallet popup at all. Rendered above the
+   browser wallet buttons and visually separated from them. */
+.agent-wallet-options {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding-bottom: 10px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--ad-line);
+}
+.agent-wallet-options .agent-wallet-label {
+	margin: 0 0 2px;
+}
+.agent-wallet-pick {
+	background: transparent;
+	color: var(--ad-text);
+	border: 1px solid var(--ad-green);
+	text-align: left;
+	transition: background 0.12s ease, border-color 0.12s ease;
+}
+.agent-wallet-pick:hover:not(:disabled) {
+	background: rgba(74, 222, 128, 0.12);
+}
+.agent-wallet-pick:disabled {
+	border-color: var(--ad-line-2);
+	color: var(--ad-dim);
+	cursor: not-allowed;
+}
+.agent-wallet-pick:focus-visible {
+	outline: 2px solid var(--ad-green);
+	outline-offset: 2px;
+}
 .btn-primary,
 .payment-confirm-btn {
 	width: 100%;

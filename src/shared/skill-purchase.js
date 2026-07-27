@@ -518,6 +518,11 @@ function updateWalletUI() {
 			<p>Connected via <strong>${escapeHtml(connectedWallet.name)}</strong>: ${pk.slice(0, 4)}…${pk.slice(-4)}</p>
 			<button class="btn-secondary" id="payment-disconnect-btn">Disconnect</button>`;
 		$('payment-disconnect-btn').addEventListener('click', disconnectWallet);
+		// A connected browser wallet does not hide the agent-wallet option: the
+		// buyer may still prefer to spend an agent's balance rather than their own.
+		if ($('payment-confirm-btn')?.dataset.mode === 'asset') {
+			renderAgentWalletOptions().catch(() => {});
+		}
 		refreshConfirmEnabled();
 		return;
 	}
@@ -552,6 +557,12 @@ function updateWalletUI() {
 		});
 	}
 	$('payment-show-qr')?.addEventListener('click', startQrPurchase);
+	// Asset purchases can also be paid by an owned agent's wallet, which needs no
+	// browser wallet at all. Rendered asynchronously so the balance read never
+	// delays the wallet buttons above.
+	if ($('payment-confirm-btn')?.dataset.mode === 'asset') {
+		renderAgentWalletOptions().catch(() => {});
+	}
 	refreshConfirmEnabled();
 }
 
@@ -829,6 +840,118 @@ export function openAssetPurchaseFlow(asset) {
 	setupGiftUI({ enabled: false });
 	$('payment-modal-overlay').hidden = false;
 	updateWalletUI();
+}
+
+// ── Agent-wallet asset purchase ─────────────────────────────────────────────
+//
+// An owned agent with USDC in its own custodial wallet can buy an asset without
+// any browser wallet: POST /api/marketplace/buy-asset with `agent_id` makes the
+// server sign from that wallet, under the agent's daily purchase cap, and return
+// the confirmed purchase in one round trip (no prepare → sign → confirm dance).
+
+let _agentWalletsPromise = null;
+
+// Owned agents + live USDC/SOL balances. Cached per page load: the picker may
+// re-render several times (wallet connect/disconnect) and each render must not
+// re-hit the balance endpoint. Returns [] when signed out or unavailable, so the
+// section simply doesn't render.
+function fetchOwnedAgentWallets({ force = false } = {}) {
+	if (force) _agentWalletsPromise = null;
+	if (!_agentWalletsPromise) {
+		_agentWalletsPromise = fetch('/api/x402-pay?agents=1', { credentials: 'include' })
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j) => (Array.isArray(j?.agents) ? j.agents.filter((a) => a?.solana_address) : []))
+			.catch(() => []);
+	}
+	return _agentWalletsPromise;
+}
+
+// Render the "Your agents" block into the modal's wallet area for asset mode.
+// Called after the browser-wallet buttons are in place, so the agent options
+// appear first without the wallet list waiting on this network read.
+async function renderAgentWalletOptions() {
+	const walletArea = $('payment-wallet-area');
+	const asset = pendingAssetPurchase;
+	if (!walletArea || !asset) return;
+
+	const agents = await fetchOwnedAgentWallets();
+	// The modal may have closed or switched modes while this was in flight.
+	if (!agents.length || pendingAssetPurchase !== asset || $('payment-modal-overlay')?.hidden) return;
+	if (walletArea.querySelector('.agent-wallet-pick')) return; // already rendered
+
+	const decimals = Number(asset.price?.mint_decimals ?? 6);
+	const priceUsdc = Number(asset.price?.amount || 0) / Math.pow(10, decimals);
+	const block = document.createElement('div');
+	block.className = 'agent-wallet-options';
+	block.innerHTML = `
+		<p class="muted small agent-wallet-label">Pay from an agent's own wallet, no popup</p>
+		${agents.slice(0, 4).map((a) => {
+			const short = typeof a.usdc === 'number' && a.usdc < priceUsdc;
+			const bal = typeof a.usdc === 'number' ? `${a.usdc.toFixed(2)} USDC` : 'balance unavailable';
+			return `<button class="btn-primary agent-wallet-pick" data-agent-id="${escapeHtml(a.id)}" ${short ? 'disabled' : ''}
+				title="${escapeHtml(a.solana_address)}">
+				Pay with ${escapeHtml(a.name || 'agent')} · ${escapeHtml(bal)}${short ? ' (not enough)' : ''}
+			</button>`;
+		}).join('')}
+	`;
+	walletArea.prepend(block);
+	block.querySelectorAll('.agent-wallet-pick').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const agent = agents.find((a) => String(a.id) === btn.dataset.agentId);
+			if (agent) handleAssetPurchaseAsAgent(agent);
+		});
+	});
+}
+
+// Buy the pending asset from `agent`'s custodial wallet. One POST: the server
+// enforces ownership, the rate limit and the daily cap, signs, verifies the
+// on-chain transfer, and grants the asset.
+async function handleAssetPurchaseAsAgent(agent) {
+	const asset = pendingAssetPurchase;
+	if (!asset) { setStatus('No asset selected.', 'err'); return; }
+	const confirmBtn = $('payment-confirm-btn');
+	if (confirmBtn) confirmBtn.disabled = true;
+	$('payment-wallet-area')?.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+	setStatus(`Paying from ${agent.name || 'agent'}'s wallet…`);
+
+	try {
+		const r = await apiPostWithCsrf('/api/marketplace/buy-asset', {
+			item_type: asset.item_type,
+			item_id: asset.item_id,
+			agent_id: agent.id,
+		});
+		const j = await r.json().catch(() => ({}));
+		if (!r.ok) throw new Error(j.error_description || j.error || 'Purchase failed');
+
+		_agentWalletsPromise = null; // balance changed
+		const target = assetViewTarget(asset);
+		if (j.data?.already_owned) {
+			renderPaymentSuccess({
+				title: 'Already owned',
+				message: `You already purchased ${asset.label}.`,
+				primaryHref: target.href,
+				primaryLabel: target.label,
+			});
+			return;
+		}
+		showToast(`${asset.label} purchased by ${agent.name || 'your agent'}.`, { type: 'success' });
+		renderPaymentSuccess({
+			title: `${asset.label} purchased`,
+			message: `Paid from ${agent.name || 'your agent'}'s wallet. ${
+				asset.item_type === 'avatar' ? 'Your new avatar' : asset.item_type === 'agent' ? 'Your new agent' : 'Your purchase'
+			} is in your dashboard.`,
+			primaryHref: target.href,
+			primaryLabel: target.label,
+		});
+		cfg.onPurchased(asset.item_id).catch(() => {});
+	} catch (e) {
+		log.error('[skill-purchase] agent asset purchase failed', e);
+		showToast(e.message || 'Purchase failed', { type: 'error' });
+		setStatus(e.message || 'Purchase failed', 'err');
+		if (confirmBtn) confirmBtn.disabled = false;
+		// Re-render so the agent buttons (and their balances) come back enabled.
+		updateWalletUI();
+	}
 }
 
 async function createPendingAssetPurchase(itemType, itemId, buyerPublicKey = null) {

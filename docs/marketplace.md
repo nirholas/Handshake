@@ -20,8 +20,35 @@ before anything is granted.
 | **Trial** (time-boxed skill access) | — | `start-trial.js` | `skill_purchases` (status `trial`) |
 | **Bundle** | — | `purchase-bundle.js` | `skill_purchases` |
 
-Agents can buy on their own behalf through `purchase-as-agent.js`, paying from
-their custodial wallet (see [Agent wallets](agent-wallets.md)).
+Agents can buy on their own behalf, paying from their custodial wallet (see
+[Agent wallets](agent-wallets.md)) with no browser wallet involved:
+
+| Buying | Endpoint | Request |
+|---|---|---|
+| A **skill** | `POST /api/marketplace/purchase-as-agent` | `{ buyer_agent_id, seller_agent_id, skill }` |
+| An **asset** | `POST /api/marketplace/buy-asset` | `{ item_type, item_id, agent_id }` |
+
+Both are owner-authenticated (the session user must own the buying agent),
+CSRF-gated, rate-limited to 10 autonomous purchases per hour per agent, and
+settle in a single request: the server decrypts the agent key (audit-logged),
+signs an SPL `transferChecked` carrying the Solana Pay reference, submits it via
+`submitProtected`, validates the transfer on-chain, then grants through the same
+finalize path a browser purchase uses. Nothing is granted on an unverified
+transfer; a short or misdirected payment lands as `tipped`, never a grant.
+
+**One daily budget covers both.** `agent_identities.meta.auto_purchase_daily_limit_usdc`
+(a number, e.g. `10` = $10/day; unset means no cap) is summed across
+`skill_purchases` **and** `asset_purchases` by
+[`api/_lib/agent-purchase.js`](../api/_lib/agent-purchase.js), so budget spent on
+skills is not available again for assets. Enforcement is two-phase: a cheap
+pre-check, then an authoritative re-check after the pending row is written, which
+makes it race-safe against concurrent purchases (the persisted row is counted by
+the same SUM). Exceeding it returns `402 spend_cap_exceeded` before any
+transaction is broadcast.
+
+In the UI, the asset purchase modal lists owned agents with live USDC balances
+above the browser-wallet buttons; underfunded agents render disabled. Agent
+purchases are Solana-only: an EVM-priced asset returns `400 unsupported_chain`.
 
 ## Purchase flow (Solana Pay)
 

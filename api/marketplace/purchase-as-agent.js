@@ -224,8 +224,7 @@ export default wrap(async (req, res) => {
 				purchase_id: pur.id, buyer_agent_id, skill,
 				spent: spentAtomics.toString(), limit_atomics: limitAtomics.toString(),
 			});
-			return error(res, 402, 'spend_cap_exceeded',
-				`daily spend cap of ${limitUsdc} USDC reached — increase meta.auto_purchase_daily_limit_usdc or wait until UTC midnight`);
+			return error(res, 402, 'spend_cap_exceeded', capExceededMessage(limitUsdc));
 		}
 	}
 

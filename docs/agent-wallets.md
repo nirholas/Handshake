@@ -26,13 +26,14 @@ This is the same secret box used for coin treasuries and the launcher, so every 
 
 ## Who can spend
 
-Four paths move funds out of an agent wallet, and **all four pass through one policy module** before anything is signed:
+Five paths move funds out of an agent wallet, and **all five pass through one policy module** before anything is signed:
 
 | Path | Trigger |
 |------|---------|
 | Withdraw | The owner sweeps funds out |
-| x402 pay | The agent pays for a paid API call |
-| Trade | A discretionary buy/sell from the wallet hub |
+| x402 pay | The agent pays for a paid API call. Also reachable from any paid checkout on the site: the [x402 payment modal](tutorials/pay-for-x402-service.md) lists a signed-in user's agents next to Phantom, and picking one settles from that agent's wallet with no popup |
+| Trade | A discretionary buy/sell from the wallet hub, or from the in-world coin widget's **Pay with** selector (SOL-denominated coins) |
+| Purchase | The agent buys a marketplace skill or asset for itself (see [Marketplace](marketplace.md)), under its own daily purchase cap |
 | Snipe | The autonomous sniper worker executes a strategy |
 
 Because enforcement lives at the signing boundary rather than in each feature, a new feature cannot accidentally introduce an unguarded spend path.
