@@ -383,6 +383,39 @@ function noteFloorState(lamports, now) {
 	_floorState = { below: lamports < SPONSOR_SOL_FLOOR_LAMPORTS, at: now };
 }
 
+// Keep the floor state warm on instances that never settle.
+//
+// The state above is per-process and was only written by the settle path, so a
+// Cloud Run instance serving nothing but 402 challenges never learned the
+// sponsor was dry and kept advertising a Solana accept that could not settle.
+// Callers on the challenge path invoke this WITHOUT awaiting: it refreshes at
+// most once per SOL_CACHE_MS per instance, swallows every error (an RPC blip
+// must never affect a challenge), and leaves the state untouched on failure so
+// the fail-open default stands. First request after a cold start still
+// advertises Solana; every request after it is accurate.
+let _floorRefreshInFlight = null;
+
+export function refreshSponsorFloorState(now = Date.now()) {
+	const pubkey = env.X402_FEE_PAYER_SOLANA;
+	if (!pubkey) return;
+	if (_floorRefreshInFlight) return;
+	const hit = _solCache.get(pubkey);
+	if (hit && hit.lamports != null && now - hit.at < SOL_CACHE_MS) return;
+
+	_floorRefreshInFlight = (async () => {
+		try {
+			const conn = solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+			const lamports = await conn.getBalance(new PublicKey(pubkey), 'confirmed');
+			_solCache.set(pubkey, { lamports, at: Date.now() });
+			noteFloorState(lamports, Date.now());
+		} catch {
+			/* RPC unreachable: keep the last known state, fail open */
+		} finally {
+			_floorRefreshInFlight = null;
+		}
+	})();
+}
+
 export async function sponsorSolLamports(conn, feePayerPubkey, now = Date.now()) {
 	const key = feePayerPubkey.toBase58();
 	const hit = _solCache.get(key);

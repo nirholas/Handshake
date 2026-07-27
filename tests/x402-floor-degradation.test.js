@@ -72,6 +72,37 @@ describe('sponsorKnownBelowFloor', () => {
 		expect(sponsorKnownBelowFloor()).toBe(false);
 	});
 
+	it('warms itself on instances that never settle', async () => {
+		// The gap this closes: the floor state used to be written only by the
+		// settle path, so an instance serving nothing but 402 challenges kept
+		// advertising a Solana accept while the sponsor was dry.
+		process.env.X402_FEE_PAYER_SOLANA = 'SponsorSponsorSponsorSponsorSponsorSponsor9';
+		vi.doMock('../api/_lib/solana/connection.js', () => ({
+			solanaConnection: () => ({ getBalance: async () => 19_000_000 }),
+		}));
+		const { refreshSponsorFloorState, sponsorKnownBelowFloor } = await import('../api/_lib/x402/self-facilitator.js');
+
+		expect(sponsorKnownBelowFloor()).toBe(false); // nothing observed yet
+		refreshSponsorFloorState();
+		await new Promise((r) => setTimeout(r, 20)); // fire-and-forget settles
+		expect(sponsorKnownBelowFloor()).toBe(true);
+		vi.doUnmock('../api/_lib/solana/connection.js');
+	});
+
+	it('leaves the state untouched when the balance read fails', async () => {
+		process.env.X402_FEE_PAYER_SOLANA = 'SponsorSponsorSponsorSponsorSponsorSponsorA';
+		vi.doMock('../api/_lib/solana/connection.js', () => ({
+			solanaConnection: () => ({ getBalance: async () => { throw new Error('rpc down'); } }),
+		}));
+		const { refreshSponsorFloorState, sponsorKnownBelowFloor } = await import('../api/_lib/x402/self-facilitator.js');
+
+		refreshSponsorFloorState();
+		await new Promise((r) => setTimeout(r, 20));
+		// Fail open: an RPC outage must not pause payments.
+		expect(sponsorKnownBelowFloor()).toBe(false);
+		vi.doUnmock('../api/_lib/solana/connection.js');
+	});
+
 	it('expires: a stale observation stops pausing the challenge', async () => {
 		const { sponsorSolLamports, sponsorKnownBelowFloor } = await import('../api/_lib/x402/self-facilitator.js');
 		const pubkey = { toBase58: () => 'SponsorSponsorSponsorSponsorSponsorSponsor3' };

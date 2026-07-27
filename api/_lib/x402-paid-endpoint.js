@@ -50,7 +50,7 @@ import {
 	verifyPayment,
 } from './x402-spec.js';
 import { declareBuilderCodeExtension } from './x402-builder-code.js';
-import { sponsorKnownBelowFloor } from './x402/self-facilitator.js';
+import { sponsorKnownBelowFloor, refreshSponsorFloorState } from './x402/self-facilitator.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
@@ -435,6 +435,11 @@ export function paidEndpoint(spec) {
 			typeof resourceUrlBuilder === 'function'
 				? resourceUrlBuilder(req)
 				: resolveResourceUrl(req, route);
+		// Keep this instance's sponsor floor state warm so the challenge below
+		// reflects reality. Deliberately not awaited: at most one balance read per
+		// 20s per instance, and a slow or failed RPC must never delay a 402.
+		refreshSponsorFloorState();
+
 		let requirements;
 		try {
 			requirements = buildRequirements({
