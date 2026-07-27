@@ -18,7 +18,13 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { flatten, prune, translatingLocales, untranslated } from '../scripts/i18n-backfill.mjs';
+import {
+	flatten,
+	prune,
+	translatableWords,
+	translatingLocales,
+	untranslated,
+} from '../scripts/i18n-backfill.mjs';
 
 describe('flatten', () => {
 	it('maps a nested catalog to dot paths', () => {
@@ -128,5 +134,58 @@ describe('translatingLocales', () => {
 
 	it('returns nothing when no run is active, so the backfill is not blocked', () => {
 		expect(translatingLocales('')).toEqual(new Set());
+	});
+});
+
+describe('translatableWords', () => {
+	const GLOSSARY = ['three.ws', 'USDC', 'Solana', 'MCP'];
+
+	it('discounts brand terms, leaving too little to call a translation', () => {
+		// Not zero necessarily: what matters is that fewer than two real words
+		// survive, which is the threshold `untranslated` uses.
+		expect(translatableWords('three.ws 3D API', GLOSSARY).length).toBeLessThan(2);
+		expect(translatableWords('USDC (Solana)', GLOSSARY)).toHaveLength(0);
+	});
+
+	it('discounts markup, entities, numbers and URLs', () => {
+		expect(translatableWords('<b id="ad-rewards">0</b> SOL')).toEqual(['SOL']);
+		expect(translatableWords('OpenAPI 3.1')).toEqual(['OpenAPI']);
+		expect(translatableWords('SDP &middot; platform.solana.com')).toEqual(['SDP']);
+	});
+
+	it('keeps the real words of a genuine sentence', () => {
+		expect(translatableWords('Sign in with your wallet to continue', GLOSSARY)).toEqual([
+			'Sign', 'in', 'with', 'your', 'wallet', 'to', 'continue',
+		]);
+	});
+});
+
+describe('untranslated: strings that correctly stay English', () => {
+	const GLOSSARY = ['three.ws', 'USDC', 'Solana'];
+	// Each of these matches English in every language. Flagging them would clear
+	// and re-translate the same bytes on every run, forever.
+	const KEEP = [
+		'three.ws 3D API',
+		'OpenAPI 3.1',
+		'USDC (Solana)',
+		'\u00a9 2026 three.ws',
+		'A \u2192 Z',
+		'<b id="ad-rewards">0</b> SOL',
+	];
+
+	for (const value of KEEP) {
+		it(`leaves ${JSON.stringify(value)} alone`, () => {
+			expect(untranslated(value, value, GLOSSARY)).toBe(false);
+		});
+	}
+
+	it('still flags a real sentence that never got translated', () => {
+		const phrase = 'Your avatar speaks sign language';
+		expect(untranslated(phrase, phrase, GLOSSARY)).toBe(true);
+	});
+
+	it('keeps a brand-heavy string out of prune', () => {
+		const en = { footer: { copy: '\u00a9 2026 three.ws', cta: 'Start building today' } };
+		expect(prune(en, en, GLOSSARY)).toEqual({ footer: { copy: '\u00a9 2026 three.ws' } });
 	});
 });

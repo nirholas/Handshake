@@ -252,9 +252,19 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "or",
+			"name": "ଓଡ଼ିଆ",
+			"dir": "ltr"
+		},
+		{
 			"code": "ha",
 			"name": "Hausa",
 			"dir": "ltr"
+		},
+		{
+			"code": "ps",
+			"name": "پښتو",
+			"dir": "rtl"
 		}
 	]
 }

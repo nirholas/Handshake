@@ -19,9 +19,12 @@
 // exactly what it rendered before. The translator saves after every chunk, so an
 // interrupted run keeps everything it finished and re-running resumes.
 //
-// Only MULTI-WORD phrases are considered. A single word that matches English is
-// usually correct ("Avatar", "Solana", "3D", "OK") and re-translating it wastes
-// calls and risks damaging a right answer.
+// Matching English is not proof of a failure. A single word ("Avatar", "3D"),
+// a brand string ("three.ws 3D API"), a version ("OpenAPI 3.1"), a copyright
+// line, or a fragment that is mostly markup all stay identical in every
+// language, correctly. Only strings carrying two or more real words once
+// glossary terms, tags, URLs and numbers are discounted are considered, so the
+// tool does not burn a call per run to get the same bytes back.
 //
 // Usage:
 //   node scripts/i18n-backfill.mjs                      # report only (default)
@@ -85,20 +88,49 @@ export function translatingLocales(psOutput) {
 	return codes;
 }
 
-/** A value worth re-translating: identical to English, and more than one word. */
-export const untranslated = (value, english) =>
-	typeof english === 'string' && value === english && /\s/.test(english.trim());
+// Plenty of multi-word strings are SUPPOSED to stay in English, and clearing
+// them just burns a translation call to get the same bytes back, every run,
+// forever: "three.ws 3D API", "OpenAPI 3.1", "USDC (Solana)", "© 2026 three.ws",
+// "A → Z", "<b id="x">0</b> SOL". Strip the parts no translator would change
+// (markup, entities, glossary terms, URLs, numbers, symbols) and see whether two
+// real words are left. If not, the string matching English proves nothing.
+const NOISE = [
+	/<[^>]*>/g, // HTML tags
+	/&[a-z#0-9]+;/gi, // entities
+	/\{\{[^}]*\}\}|\$\{[^}]*\}/g, // placeholders
+	/https?:\/\/\S+|\S+\.(?:ws|com|io|ai|app|fun|org|net)\b/gi, // URLs and hosts
+	/\d[\d.,:%-]*/g, // numbers, versions, percentages
+];
+
+export function translatableWords(text, doNotTranslate = []) {
+	let rest = String(text);
+	for (const term of doNotTranslate) {
+		rest = rest.split(term).join(' ');
+	}
+	for (const pattern of NOISE) rest = rest.replace(pattern, ' ');
+	// Keep only tokens that read as words: letters, at least two of them.
+	return rest.split(/[^\p{L}']+/u).filter((w) => w.length > 1);
+}
+
+/**
+ * A value worth re-translating: byte-identical to English, and carrying at least
+ * two real words once brand terms and markup are discounted.
+ */
+export const untranslated = (value, english, doNotTranslate = []) =>
+	typeof english === 'string' &&
+	value === english &&
+	translatableWords(english, doNotTranslate).length >= 2;
 
 /** Copy of `node` without the untranslated leaves, pruning emptied branches. */
-export function prune(node, english) {
+export function prune(node, english, doNotTranslate = []) {
 	const out = {};
 	for (const [key, value] of Object.entries(node || {})) {
 		const ref = (english || {})[key];
 		if (value && typeof value === 'object' && !Array.isArray(value)) {
-			const sub = prune(value, ref && typeof ref === 'object' ? ref : {});
+			const sub = prune(value, ref && typeof ref === 'object' ? ref : {}, doNotTranslate);
 			if (Object.keys(sub).length) out[key] = sub;
 		} else if (typeof value === 'string') {
-			if (!untranslated(value, ref)) out[key] = value;
+			if (!untranslated(value, ref, doNotTranslate)) out[key] = value;
 		} else {
 			out[key] = value;
 		}
@@ -114,6 +146,7 @@ function main() {
 		process.exit(1);
 	}
 	const englishFlat = flatten(source);
+	const glossary = cfg.doNotTranslate || [];
 
 	const manifestPath = resolve(ROOT, cfg.output, 'manifest.json');
 	const shipped = new Set((readJSON(manifestPath)?.locales || []).map((l) => l.code));
@@ -127,7 +160,7 @@ function main() {
 	const survey = codes
 		.map((code) => {
 			const flat = flatten(readJSON(localeDir(code)));
-			const stale = Object.keys(flat).filter((k) => untranslated(flat[k], englishFlat[k]));
+			const stale = Object.keys(flat).filter((k) => untranslated(flat[k], englishFlat[k], glossary));
 			return { code, stale: stale.length, total: Object.keys(flat).length };
 		})
 		.sort((a, b) => b.stale - a.stale);
@@ -178,7 +211,7 @@ function main() {
 
 		const path = localeDir(code);
 		const before = readJSON(path);
-		writeFileSync(path, `${JSON.stringify(prune(before, source), null, '\t')}\n`);
+		writeFileSync(path, `${JSON.stringify(prune(before, source, glossary), null, '\t')}\n`);
 		console.log(`\n→ ${code}: cleared ${stale} English-baked phrase(s), re-translating`);
 
 		const run = spawnSync(
