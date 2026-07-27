@@ -21,6 +21,7 @@ import {
 	checkDailyLoss, recordCustodyEvent,
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from '../../api/_lib/agent-trade-guards.js';
+import { shouldGiveUpReconcile } from './exit-logic.js';
 import { buildAmmSellInstructions, quoteAmmBuy, buildAmmBuyInstructions } from './amm-exit.js';
 import { getWalletBaseBalance, reconcileVanishedBag } from './reconcile.js';
 import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } from '../../api/_lib/trade-firewall.js';
@@ -590,10 +591,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 						// as live risk and held a concurrency slot. The time bound: the park
 						// itself had none, so a bag whose emptying tx could never be found
 						// re-parked every sweep forever and wedged that slot permanently.
-						const pendingSince = position.reconcile_pending_since
-							? new Date(position.reconcile_pending_since).getTime()
-							: null;
-						if (pendingSince != null && Date.now() - pendingSince >= RECONCILE_GIVE_UP_MS) {
+						if (shouldGiveUpReconcile(position.reconcile_pending_since, RECONCILE_GIVE_UP_MS)) {
 							// The bag is provably gone but its proceeds are unknowable from
 							// chain history. Book it closed so the slot frees, and leave
 							// realized P&L NULL rather than inventing a number — every P&L
@@ -606,7 +604,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 								WHERE id = ${position.id} AND status <> 'closed'
 							`;
 							log.warn('reconcile gave up; bag gone, proceeds unknown', {
-								...tag, pending_hours: ((Date.now() - pendingSince) / 3_600_000).toFixed(1),
+								...tag, pending_since: position.reconcile_pending_since,
 							});
 							return { status: 'closed', reason: 'reconcile_unresolved' };
 						}
@@ -730,6 +728,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 					moonbag_last_value_lamports = ${keptValueEst},
 					moonbag_opened_at = ${retainsMoonbag ? new Date().toISOString() : null},
 					error = ${null},
+					reconcile_pending_since = NULL,
 					closed_at = now()
 				WHERE id = ${position.id}
 			`;

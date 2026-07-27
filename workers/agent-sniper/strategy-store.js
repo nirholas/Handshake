@@ -111,14 +111,34 @@ export async function getRealizedNetLamports(agentId, network, sinceHours = 24) 
 	return BigInt(r?.net ?? '0');
 }
 
+// A sell marks its position 'closing' before broadcasting and clears the mark
+// when it settles, so 'closing' is a lock held for seconds. A row still holding
+// it much later can only be an abandoned attempt (worker restart or crash
+// mid-sell). Because 'closing' rows are invisible to the sweep below but still
+// counted by countOpenPositions(), an abandoned one silently costs its arm a
+// concurrency slot forever — one sat that way for 34 hours in production.
+const CLOSING_LOCK_STALE_MS = 10 * 60 * 1000;
+
 /**
  * Open positions across all agents — the position-loop work set.
  *
  * Graduated positions (error LIKE 'graduated%') are INCLUDED: the sweep
  * re-quotes them off the AMM pool and exits them there, so they no longer park
  * indefinitely. The sweep reads `error` to pick the venue (AMM vs curve).
+ *
+ * Abandoned 'closing' locks are released back to 'open' first (see above), so a
+ * crash mid-sell costs one sweep of delay instead of the slot. This is safe
+ * under the worker's single-instance assumption: a genuinely in-flight sell
+ * finishes in seconds, far inside the stale window.
  */
 export async function getOpenPositions(network) {
+	await sql`
+		UPDATE agent_sniper_positions
+		SET status = 'open'
+		WHERE network = ${network}
+		  AND status = 'closing'
+		  AND coalesce(last_quoted_at, opened_at) < now() - (${CLOSING_LOCK_STALE_MS} || ' milliseconds')::interval
+	`;
 	return sql`
 		SELECT p.*, s.take_profit_pct, s.stop_loss_pct, s.trailing_stop_pct,
 		       s.max_hold_seconds, s.slippage_bps, s.user_id AS strat_user_id,

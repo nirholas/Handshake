@@ -257,3 +257,29 @@ export function decideLadderedExit(pos, value, peak, now = Date.now(), sentiment
 	if (!(sellFraction > 0)) return null; // nothing worth selling; let the bag ride
 	return { reason, sellFraction, keepsMoonbag: true };
 }
+
+/**
+ * Has an unreconcilable position waited long enough to give up on?
+ *
+ * A position parks as `reconcile_pending` when its bag is provably gone from the
+ * wallet but the transaction that emptied it cannot be found in chain history.
+ * That park used to be unbounded, so a bag whose emptying tx never surfaced
+ * re-parked every sweep forever — and because countOpenPositions() counts it,
+ * the position held one of its arm's concurrency slots permanently. Observed in
+ * production: five positions wedged at once, one for over 40 hours, with the
+ * fleet unable to take new trades.
+ *
+ * Giving up books the position closed with UNKNOWN proceeds (realized P&L left
+ * null, never invented) purely to release the slot. Returns false when nothing
+ * is pending, so a healthy position can never trip it.
+ *
+ * @param {string|Date|null} pendingSince when the position first parked
+ * @param {number} giveUpMs how long a park may last
+ * @param {number} [now] epoch ms
+ */
+export function shouldGiveUpReconcile(pendingSince, giveUpMs, now = Date.now()) {
+	if (pendingSince == null || !(giveUpMs > 0)) return false;
+	const since = pendingSince instanceof Date ? pendingSince.getTime() : new Date(pendingSince).getTime();
+	if (!Number.isFinite(since)) return false;
+	return now - since >= giveUpMs;
+}
