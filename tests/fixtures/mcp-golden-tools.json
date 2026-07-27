@@ -1,6 +1,19 @@
 {
 	"api/_mcp-studio/tools.js": [
 		{
+			"name": "check_job",
+			"title": "Check a pending 3D generation",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "06fcfd29d4c4"
+		},
+		{
 			"name": "forge_avatar",
 			"title": "Generate a rigged, animation-ready avatar",
 			"descHead": "dynamic",
@@ -248,6 +261,47 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "19fef9f6debc"
+		}
+	],
+	"api/_mcp/tools/garments.js": [
+		{
+			"name": "garment_status",
+			"title": "Check a garment generation job",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "f9ed1e790516"
+		},
+		{
+			"name": "generate_garment",
+			"title": "Generate a wearable garment from a text prompt",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "7e5972f2e61f"
+		},
+		{
+			"name": "list_garment_catalog",
+			"title": "List the wardrobe garment catalog",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "9609ea7b118c"
 		}
 	],
 	"api/_mcp/tools/memory.js": [
