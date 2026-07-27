@@ -32,18 +32,21 @@
 
 import {
 	Bone,
+	Box3,
 	DoubleSide,
 	Float32BufferAttribute,
 	Matrix4,
 	Skeleton,
 	SkinnedMesh,
 	Uint16BufferAttribute,
+	Vector3,
 } from 'three';
 import { canonicalizeBoneName } from './glb-canonicalize.js';
 import {
 	GARMENT_SLOTS,
 	BODY_REGIONS,
 	REGION_BONES,
+	MAX_GARMENT_EXTENT_RATIO,
 	MIN_BIND_COVERAGE,
 	SLOT_OCCLUDABLE,
 	clampOccludes,
@@ -51,7 +54,39 @@ import {
 
 // Shared vocabulary lives in src/garment-taxonomy.js (pure, also consumed by
 // the server-side baker). Re-exported so existing consumers keep one import.
-export { GARMENT_SLOTS, BODY_REGIONS, REGION_BONES, MIN_BIND_COVERAGE, SLOT_OCCLUDABLE, clampOccludes };
+export {
+	GARMENT_SLOTS, BODY_REGIONS, REGION_BONES, MIN_BIND_COVERAGE,
+	MAX_GARMENT_EXTENT_RATIO, SLOT_OCCLUDABLE, clampOccludes,
+};
+
+/**
+ * Reject a garment whose bounding box is implausibly large next to the body it
+ * is being worn on. Returns a reason string, or null when the piece is sane.
+ *
+ * Bind coverage proves a garment DEFORMS correctly; it says nothing about its
+ * SIZE. A malformed mesh can be perfectly skinned and still be a curtain as
+ * big as the wearer (see MAX_GARMENT_EXTENT_RATIO). The forge refuses these at
+ * publish time, but the catalog is public and long-lived, so the wearer checks
+ * too. Scale-invariant by construction: garment and avatar are measured in the
+ * same scene, so centimetre-unit and metre-unit avatars behave identically.
+ */
+export function extentRejection(garmentRoot, avatarRoot, ratio = MAX_GARMENT_EXTENT_RATIO) {
+	const size = new Vector3();
+	const garment = new Box3().setFromObject(garmentRoot);
+	const avatar = new Box3().setFromObject(avatarRoot);
+	if (garment.isEmpty() || avatar.isEmpty()) return null;
+	avatar.getSize(size);
+	const avatarHeight = size.y;
+	if (!(avatarHeight > 0)) return null;
+	garment.getSize(size);
+	for (const [axis, extent] of [['width', size.x], ['height', size.y], ['depth', size.z]]) {
+		if (extent > avatarHeight * ratio) {
+			return `garment ${axis} is ${(extent / avatarHeight).toFixed(2)}x the avatar's height ` +
+				`(max ${ratio}x): the mesh is malformed, not just oversized`;
+		}
+	}
+	return null;
+}
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Skeleton discovery
@@ -263,6 +298,11 @@ export function attachGarment(avatarRoot, garmentRoot, opts = {}) {
 		else if (obj?.isMesh) rigid.push(obj);
 	});
 	if (!skinned.length && !rigid.length) return fail('garment contains no meshes');
+
+	// Size sanity before any binding work: a malformed mesh can pass every
+	// skinning gate and still be a curtain the size of the avatar.
+	const tooBig = extentRejection(garmentRoot, avatarRoot, opts.maxExtentRatio);
+	if (tooBig) return fail(tooBig);
 
 	const attached = [];
 	let worstCoverage = 1;

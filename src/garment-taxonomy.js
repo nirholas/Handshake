@@ -56,6 +56,20 @@ export function clampOccludes(slot, occludes) {
 	return (Array.isArray(occludes) ? occludes : []).filter((r) => allowed.includes(r));
 }
 
+/** Largest plausible size for a worn garment, as a multiple of the avatar's
+ *  own height. The wearer-side twin of the forge's per-slot `max_extent`
+ *  publish gate (workers/garment-forge/garment_glb.py): that one stops a
+ *  malformed mesh being published, this one stops an already-published or
+ *  third-party malformed mesh being WORN.
+ *
+ *  A generator asked for "long straight hair" returned a mesh 1.43 m deep on a
+ *  1.667 m body (0.86x its height) whose width profile was still perfect, so
+ *  every skinning gate passed it. Nothing a person wears spans most of their
+ *  own height on all axes: a full-length coat is ~0.55x tall and far less
+ *  deep, so 0.75x on any one axis sits above every real garment and well
+ *  below a runaway mesh. */
+export const MAX_GARMENT_EXTENT_RATIO = 0.75;
+
 /** Below this share of *weighted* garment bones resolving to avatar bones, the
  *  garment cannot deform sanely and is refused rather than shipped mangled. */
 export const MIN_BIND_COVERAGE = 0.6;

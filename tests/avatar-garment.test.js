@@ -22,6 +22,7 @@ import {
 	Float32BufferAttribute,
 	Group,
 	Matrix4,
+	Mesh,
 	MeshStandardMaterial,
 	Skeleton,
 	SkinnedMesh,
@@ -36,6 +37,7 @@ import {
 	clampOccludes,
 	cullSkinByBones,
 	detachSlot,
+	extentRejection,
 	findAvatarSkeleton,
 	occupiedSlots,
 	reindexBoneInverses,
@@ -380,5 +382,59 @@ describe('clampOccludes', () => {
 		expect(clampOccludes('nonsense', ['torso'])).toEqual([]);
 		expect(clampOccludes('top', undefined)).toEqual([]);
 		expect(clampOccludes('top', 'torso')).toEqual([]);
+	});
+});
+
+describe('extentRejection', () => {
+	// Measured against the avatar being worn, so the verdict is scale
+	// invariant: identical in metres or centimetres.
+	function bodyRoot(height = 1.667) {
+		const root = new Group();
+		const geo = new BufferGeometry();
+		geo.setAttribute('position', new Float32BufferAttribute(
+			[-0.2, 0, -0.1, 0.2, 0, -0.1, 0, height, 0.1], 3));
+		root.add(new Mesh(geo, new MeshStandardMaterial()));
+		return root;
+	}
+	function boxRoot(w, h, d) {
+		const root = new Group();
+		const geo = new BufferGeometry();
+		geo.setAttribute('position', new Float32BufferAttribute(
+			[-w / 2, -h / 2, -d / 2, w / 2, h / 2, d / 2, 0, 0, 0], 3));
+		root.add(new Mesh(geo, new MeshStandardMaterial()));
+		return root;
+	}
+
+	it('accepts a normally proportioned garment', () => {
+		// A full-length coat on a 1.667m body.
+		expect(extentRejection(boxRoot(0.5, 0.9, 0.35), bodyRoot())).toBeNull();
+	});
+
+	it('rejects the malformed 1.43m-deep hair curtain that shipped', () => {
+		const reason = extentRejection(boxRoot(0.30, 0.896, 1.431), bodyRoot());
+		expect(reason).toMatch(/depth/);
+		expect(reason).toMatch(/malformed/);
+	});
+
+	it('is scale invariant (centimetre-unit avatar behaves identically)', () => {
+		expect(extentRejection(boxRoot(30, 89.6, 143.1), bodyRoot(166.7))).toMatch(/depth/);
+		expect(extentRejection(boxRoot(50, 90, 35), bodyRoot(166.7))).toBeNull();
+	});
+
+	it('abstains when the avatar has no measurable height', () => {
+		expect(extentRejection(boxRoot(9, 9, 9), new Group())).toBeNull();
+	});
+
+	it('refuses to attach an oversized garment through attachGarment', () => {
+		const avatar = buildRig();
+		const root = new Group();
+		root.add(buildSkinnedMesh(avatar.skeleton, [
+			{ pos: new Vector3(0, 0, 0), bone: 0 },
+			{ pos: new Vector3(0, 1.667, 0), bone: 2 },
+		]));
+		root.updateMatrixWorld(true);
+		const res = attachGarment(root, boxRoot(0.3, 0.9, 1.5), { slot: 'hair' });
+		expect(res.ok).toBe(false);
+		expect(res.reason).toMatch(/malformed/);
 	});
 });
