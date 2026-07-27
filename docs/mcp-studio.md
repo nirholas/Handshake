@@ -60,15 +60,17 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-The server exposes **nine** tools: the six generation tools documented here, plus
-three persona/embodiment tools (`create_agent_persona`, `get_agent_persona`,
-`persona_say`) documented in the **Embodiment** section below. All nine are free
-and keyless.
+The server exposes **ten** tools: the six generation tools documented here, the
+`check_job` collector, plus three persona/embodiment tools
+(`create_agent_persona`, `get_agent_persona`, `persona_say`) documented in the
+**Embodiment** section below. All ten are free and keyless.
 
 All six generation tools are free and run operator-funded on the platform's own
 generation pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
 `idempotentHint:false`, `openWorldHint:true` (work runs against external model
-APIs; nothing is ever modified or deleted).
+APIs; nothing is ever modified or deleted). `check_job` is the exception: it is a
+pure status probe (`readOnlyHint:true`, `idempotentHint:true`) and never counts
+against the generation quota.
 
 | Tool | Title | Input | Returns |
 |---|---|---|---|
@@ -78,6 +80,7 @@ APIs; nothing is ever modified or deleted).
 | `rig_mesh` | Rig a 3D model for animation | `glb_url` | rigged GLB |
 | `forge_avatar` | Generate a rigged, animation-ready avatar | `prompt?` / `image_url?`, `allow_non_humanoid?` | rigged GLB avatar |
 | `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?` | refined GLB + version lineage |
+| `check_job` | Check a pending 3D generation and collect it | `job_id` | GLB model, or an updated pending state |
 
 ### Response shape
 
@@ -106,6 +109,42 @@ Rigged avatars additionally carry `irlUrl`, the living-agent handoff into
 [IRL](./irl.md), and the inline widget's AR button becomes **Bring it to life**.
 Every result also includes a `spatial` field, the open Spatial MCP artifact
 (`specs/SPATIAL_MCP.md`) so any Spatial-MCP renderer can display the model.
+
+### Pending generations (`check_job`)
+
+A detailed model can take longer than a single tool call should block for. When
+that happens the generating tool does **not** fail: it returns a success result
+carrying a pollable handle, and the job keeps running server-side.
+
+```json
+{
+  "status": "pending",
+  "jobId": "f1.eyJwIjoiZ2NwIiw…",
+  "pollUrl": "https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiw…",
+  "etaRemainingSeconds": 42,
+  "prompt": "a friendly round robot mascot, glossy white plastic"
+}
+```
+
+`etaRemainingSeconds` is the live estimate for the lane actually running the job
+(its typical duration minus time already elapsed), so the assistant knows how
+long to wait rather than retrying blind. Call `check_job` with that `jobId` to
+collect the result:
+
+- **done**: returns the ordinary success envelope (`glbUrl`, `viewerUrl`,
+  `arUrl`, …) and the model renders inline in the widget, exactly as if the
+  original call had finished in time.
+- **still rendering**: returns a fresh `pending` envelope with updated
+  `etaRemainingSeconds`. Call again after the suggested wait.
+- **failed**: returns a clean, actionable error.
+
+`check_job` is read-only and idempotent, and it does not consume generation
+quota, so collecting a model can never be rate-limited by the generation that
+created it. The inline widget renders the pending state as a designed
+"still rendering" panel with the live countdown, not an empty state.
+
+Any HTTP client can poll `pollUrl` directly instead; it is the same public,
+auth-free job handle the [3D API](/docs/3d-api) hands anonymous callers.
 
 ### Conversational refinement (`refine_model`)
 

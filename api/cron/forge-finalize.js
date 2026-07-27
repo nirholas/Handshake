@@ -125,6 +125,39 @@ async function writeCronHop(replicateJobId, value) {
 	}
 }
 
+/**
+ * Decide what this sweep may do with a self-host poll that came back FAILED.
+ * Pure: no clock, no I/O, no Redis - the caller supplies the resolved facts.
+ * Factored out (like decideSelfhostMissing in _lib/forge-selfhost-recovery.js)
+ * because the swarm-safety rule here is subtle enough to deserve its own tests:
+ * acting too early races a live browser into duplicate GPU work, and acting
+ * never is what made the orphan class permanent.
+ *
+ * @returns {'defer'|'redispatch'|'terminal'}
+ *   - defer: an attended client may still handle it; leave the row alone.
+ *   - redispatch: resubmit to the next healthy lane.
+ *   - terminal: nothing left to try; mark it failed and notify.
+ */
+export function decideFailedSweep({
+	ageMinutes,
+	hop = 0,
+	hasReferenceImage = false,
+	path = null,
+	attendedBudgetMinutes = ATTENDED_POLL_BUDGET_MINUTES,
+	maxHops = MAX_FAILOVER_HOPS,
+} = {}) {
+	// Inside the attended window a live browser runs its own poll-time failover.
+	// Acting here would duplicate that GPU work on the same generation.
+	if (Number.isFinite(ageMinutes) && ageMinutes < attendedBudgetMinutes) return 'defer';
+	// A redispatch reconstructs from the stored reference view, so a job without
+	// one has nothing to resubmit. Sketch keeps its single purpose-built lane
+	// (reconstruct models do badly on drawings).
+	if (!hasReferenceImage || path === 'sketch') return 'terminal';
+	// Bounded chain, same cap as the attended path.
+	if (hop >= maxHops) return 'terminal';
+	return 'redispatch';
+}
+
 // Unattended twin of the poll handler's automatic lane failover (api/forge.js
 // pollJob). The 30-minute worker orphan class lands here by construction: the
 // worker only declares an orphan long after every browser has stopped polling,
@@ -133,11 +166,16 @@ async function writeCronHop(replicateJobId, value) {
 // resubmit to the next healthy lane instead. The successor gets its own
 // creation row (same client/user), so this same cron sweeps it to completion
 // and the completion notification still fires for a model, not a failure.
-async function tryCronRedispatch(row) {
-	if (!row.preview_image_url || row.path === 'sketch') return false;
+async function tryCronRedispatch(row, ageMinutes) {
 	const prior = await readCronHop(row.replicate_job_id);
 	const hop = prior ? prior.hop : 0;
-	if (hop >= MAX_FAILOVER_HOPS) return false;
+	const decision = decideFailedSweep({
+		ageMinutes,
+		hop,
+		hasReferenceImage: Boolean(row.preview_image_url),
+		path: row.path,
+	});
+	if (decision !== 'redispatch') return false;
 	const attempted = [...new Set([...(prior?.attempted || []), row.backend].filter(Boolean))];
 	const nextLane = await pickRedispatchLane({ attempted });
 	if (!nextLane) return false;
@@ -257,12 +295,12 @@ export default wrapCron(async (req, res) => {
 				// seconds from now and run its own failover; acting here would race
 				// it into duplicate GPU work. Leave the row: an attended client
 				// resolves it, and an abandoned one ages into the branch below.
-				if (ageMinutes < ATTENDED_POLL_BUDGET_MINUTES) {
+				if (decideFailedSweep({ ageMinutes, hasReferenceImage: true }) === 'defer') {
 					out.still_running++;
 					continue;
 				}
 				if (row.backend) await markLaneUnhealthy(row.backend).catch(() => {});
-				if (await tryCronRedispatch(row)) {
+				if (await tryCronRedispatch(row, ageMinutes)) {
 					await markFailed({
 						replicateJobId: row.replicate_job_id,
 						clientKey: row.client_key,

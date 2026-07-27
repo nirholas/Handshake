@@ -239,7 +239,14 @@ components:
           type: integer
           description: >-
             Rough estimate of remaining generation time in seconds (pending
-            states only).
+            states only). Returned on both the initial submit and every
+            subsequent poll, recomputed from time already elapsed, so it
+            counts down as the job progresses. Use it to decide how long to
+            wait before calling checkModelJob again.
+        elapsedSeconds:
+          type: integer
+          description: >-
+            Seconds since the generation was submitted (pending states only).
         job:
           type: string
           description: Job handle to pass to checkModelJob (present when pending).

@@ -94,7 +94,7 @@ const SUBMIT_DONE = {
 	job_id: null,
 	creation_id: 'a1b2c3d4-0000-4000-8000-000000000001',
 	status: 'done',
-	glb_url: 'https://cdn.three.ws/forge/anon/a1b2c3d4.glb',
+	glb_url: 'https://three.ws/cdn/forge/anon/a1b2c3d4.glb',
 	durable: true,
 	backend: 'nvidia',
 	tier: 'draft',
@@ -105,7 +105,7 @@ const SUBMIT_QUEUED = {
 	creation_id: 'a1b2c3d4-0000-4000-8000-000000000002',
 	status: 'queued',
 };
-const POLL_DONE = { job_id: SUBMIT_QUEUED.job_id, status: 'done', glb_url: 'https://cdn.three.ws/forge/anon/done.glb', durable: true };
+const POLL_DONE = { job_id: SUBMIT_QUEUED.job_id, status: 'done', glb_url: 'https://three.ws/cdn/forge/anon/done.glb', durable: true };
 const POLL_RUNNING = { job_id: SUBMIT_QUEUED.job_id, status: 'running' };
 const POLL_FAILED = { job_id: SUBMIT_QUEUED.job_id, status: 'failed', error: 'the generator hit a snag' };
 
@@ -138,7 +138,7 @@ describe('shape helpers — Actions wire contract', () => {
 
 	it('shapeSubmit surfaces the painted concept image on done and pending states', async () => {
 		const { shapeSubmit } = await import('../../api/3d/studio.js');
-		const preview = 'https://cdn.three.ws/forge/anon/ref-view.png';
+		const preview = 'https://three.ws/cdn/forge/anon/ref-view.png';
 		const done = shapeSubmit({ ...SUBMIT_DONE, preview_image_url: preview }, 'https://three.ws', 'a robot');
 		expect(done.previewImageUrl).toBe(preview);
 		const pending = shapeSubmit(
@@ -191,6 +191,45 @@ describe('shape helpers — Actions wire contract', () => {
 		expect(err.status).toBe('error');
 		expect(err.error).toBe(POLL_FAILED.error);
 		expectCleanWire(err);
+	});
+
+	// The published Actions contract (openai-actions.yaml) documents etaSeconds on
+	// pending states. Before this, only the SUBMIT carried one, so a GPT polling a
+	// long generation saw N identical frames with no sense of progress and no basis
+	// for choosing a retry delay.
+	it('shapePoll forwards live countdown timing on pending states', async () => {
+		const { shapePoll } = await import('../../api/3d/studio.js');
+
+		const pending = shapePoll(
+			{ ...POLL_RUNNING, elapsed_seconds: 48, eta_remaining_seconds: 42, eta_seconds: 90 },
+			'https://three.ws',
+			SUBMIT_QUEUED.job_id,
+			'a tiny fox',
+		);
+		expect(pending.status).toBe('pending');
+		// The REMAINING estimate wins over the lane total: it is what a caller
+		// schedules its next poll against.
+		expect(pending.etaSeconds).toBe(42);
+		expect(pending.elapsedSeconds).toBe(48);
+		expectCleanWire(pending);
+
+		// An older server that only sends the lane total still yields an ETA.
+		const totalOnly = shapePoll({ ...POLL_RUNNING, eta_seconds: 90 }, 'https://three.ws', SUBMIT_QUEUED.job_id);
+		expect(totalOnly.etaSeconds).toBe(90);
+
+		// No timing at all: the fields are omitted, never emitted as null/NaN.
+		const bare = shapePoll(POLL_RUNNING, 'https://three.ws', SUBMIT_QUEUED.job_id);
+		expect('etaSeconds' in bare).toBe(false);
+		expect('elapsedSeconds' in bare).toBe(false);
+
+		// Terminal states never carry countdown timing.
+		const done = shapePoll(
+			{ ...POLL_DONE, eta_remaining_seconds: 5, elapsed_seconds: 100 },
+			'https://three.ws',
+			SUBMIT_QUEUED.job_id,
+		);
+		expect('etaSeconds' in done).toBe(false);
+		expect('elapsedSeconds' in done).toBe(false);
 	});
 });
 

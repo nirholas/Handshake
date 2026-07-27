@@ -8,8 +8,10 @@
 //   1. The clone client (gpt-forge-client.js) talks ONLY to /api/gpt-forge.
 //   2. The ChatGPT surfaces import the clone client; the agent surfaces keep
 //      the original. Neither side silently re-couples to the other.
-//   3. The two clients expose an identical public API, so tools written
-//      against one work against the other.
+//   3. The clone's public API is a SUPERSET of the original's, so anything
+//      written against forge-client keeps working on the ChatGPT clone. The
+//      clone may ADD exports (that is what "evolve independently" means); it
+//      must never DROP one.
 //   4. The cloned orchestrator actually serves: its public catalog is the
 //      SAME contract /api/forge serves (both read api/_lib/forge-tiers.js).
 //
@@ -42,10 +44,26 @@ describe('gpt-forge-client — endpoint isolation', () => {
 		}
 	});
 
-	it('exposes the exact same public API as forge-client', async () => {
+	it('exposes at least the same public API as forge-client', async () => {
 		const orig = await import('../../api/_mcp-studio/forge-client.js');
 		const clone = await import('../../api/_mcp-studio/gpt-forge-client.js');
-		expect(Object.keys(clone).sort()).toEqual(Object.keys(orig).sort());
+		const cloneKeys = new Set(Object.keys(clone));
+		// Every original export survives on the clone: a tool written against
+		// forge-client runs unchanged against the ChatGPT pipeline.
+		for (const key of Object.keys(orig)) expect(cloneKeys.has(key)).toBe(true);
+		// Same shape for each shared export (all functions today): a name that
+		// survives as a different KIND of thing would break callers just as hard.
+		for (const key of Object.keys(orig)) expect(typeof clone[key]).toBe(typeof orig[key]);
+	});
+
+	it('ChatGPT-only additions are exported as callable functions', async () => {
+		const orig = await import('../../api/_mcp-studio/forge-client.js');
+		const clone = await import('../../api/_mcp-studio/gpt-forge-client.js');
+		const added = Object.keys(clone).filter((k) => !(k in orig));
+		// pollOnce backs the check_job tool: a single status probe with no loop,
+		// the collector for a generation that outlived a tool call's inline wait.
+		expect(added).toContain('pollOnce');
+		for (const key of added) expect(typeof clone[key]).toBe('function');
 	});
 });
 

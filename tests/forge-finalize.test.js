@@ -4,7 +4,7 @@
 // Importing the cron module is safe: db/neon clients are created lazily.
 
 import { describe, it, expect } from 'vitest';
-import { decodeWorkerEnvelope } from '../api/cron/forge-finalize.js';
+import { decodeWorkerEnvelope, decideFailedSweep } from '../api/cron/forge-finalize.js';
 
 function pack(obj) {
 	return Buffer.from(JSON.stringify(obj), 'utf8').toString('base64url');
@@ -40,5 +40,44 @@ describe('decodeWorkerEnvelope', () => {
 	it('rejects base64url payloads that are not JSON objects', () => {
 		expect(decodeWorkerEnvelope(Buffer.from('"a string"').toString('base64url'))).toBeNull();
 		expect(decodeWorkerEnvelope(Buffer.from('42').toString('base64url'))).toBeNull();
+	});
+});
+
+// The unattended-failover decision. Evidence for why this exists: in a 7-day
+// production window, 8 of the trellis_selfhost failures were the literal
+// "task orphaned: no progress within 30 minutes (runner instance likely
+// restarted mid-job)". The worker only declares that orphan at 30 minutes, long
+// after the browser's 12-minute poll budget has expired, so the attended
+// failover in api/forge.js pollJob never saw them. The cron did see them, and
+// dead-ended every one. These jobs still had their prompt and reference image
+// on the row: fully recoverable work thrown away.
+describe('decideFailedSweep', () => {
+	it('defers while an attended client may still act, so no duplicate GPU work', () => {
+		expect(decideFailedSweep({ ageMinutes: 3, hasReferenceImage: true })).toBe('defer');
+		expect(decideFailedSweep({ ageMinutes: 12.9, hasReferenceImage: true })).toBe('defer');
+	});
+
+	it('redispatches an orphaned job once the attended window has passed', () => {
+		// The 30-minute worker orphan: exactly the class that used to die here.
+		expect(decideFailedSweep({ ageMinutes: 31, hasReferenceImage: true })).toBe('redispatch');
+		expect(decideFailedSweep({ ageMinutes: 13, hasReferenceImage: true })).toBe('redispatch');
+	});
+
+	it('has nothing to resubmit without a stored reference view', () => {
+		expect(decideFailedSweep({ ageMinutes: 31, hasReferenceImage: false })).toBe('terminal');
+	});
+
+	it('leaves sketch jobs on their purpose-built lane', () => {
+		expect(decideFailedSweep({ ageMinutes: 31, hasReferenceImage: true, path: 'sketch' })).toBe('terminal');
+	});
+
+	it('bounds the chain at the same hop cap as the attended failover', () => {
+		expect(decideFailedSweep({ ageMinutes: 31, hasReferenceImage: true, hop: 2 })).toBe('redispatch');
+		expect(decideFailedSweep({ ageMinutes: 31, hasReferenceImage: true, hop: 3 })).toBe('terminal');
+		expect(decideFailedSweep({ ageMinutes: 31, hasReferenceImage: true, hop: 99 })).toBe('terminal');
+	});
+
+	it('treats an unknowable age as past the attended window rather than deferring forever', () => {
+		expect(decideFailedSweep({ ageMinutes: undefined, hasReferenceImage: true })).toBe('redispatch');
 	});
 });
