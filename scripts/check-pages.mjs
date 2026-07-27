@@ -41,6 +41,43 @@ if (paths.length === 0) {
 
 const failures = [];
 
+// How far the running deployment trails the checkout, when both are knowable.
+// Returns a one-line human summary, or null when it cannot be established (no
+// /api/version, no git, an unrelated checkout): a diagnostic must never turn a
+// real failure report into an error of its own.
+async function deployLagReport(target) {
+	let liveCommit = null;
+	try {
+		const res = await fetch(`${target}/api/version`, {
+			signal: AbortSignal.timeout(timeoutMs),
+			headers: { 'user-agent': 'three.ws-check-pages' },
+		});
+		if (!res.ok) return null;
+		liveCommit = (await res.json())?.commit || null;
+	} catch {
+		return null;
+	}
+	if (!liveCommit) return null;
+
+	const { execFileSync } = await import('node:child_process');
+	const git = (args) =>
+		execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+	try {
+		git(['cat-file', '-e', `${liveCommit}^{commit}`]);
+		const behind = Number(git(['rev-list', '--count', `${liveCommit}..HEAD`]));
+		if (!Number.isFinite(behind) || behind <= 0) {
+			return `The running revision (${liveCommit.slice(0, 9)}) is up to date with this checkout, so the failures above are real routing bugs, not deploy lag.`;
+		}
+		return (
+			`The running revision (${liveCommit.slice(0, 9)}) is ${behind} commit(s) behind this checkout. ` +
+			`A page whose route landed in one of those commits is deploy lag, not a routing bug: deploy, then re-run. ` +
+			`Check one with: git merge-base --is-ancestor <route-commit> ${liveCommit.slice(0, 9)}`
+		);
+	} catch {
+		return null;
+	}
+}
+
 if (base) {
 	const target = base.replace(/\/$/, '');
 	let done = 0;
@@ -80,6 +117,14 @@ if (base) {
 		for (const f of failures.sort((a, b) => a.path.localeCompare(b.path))) {
 			console.error(`[check-pages]   ${String(f.status || 'ERR').padEnd(4)} ${f.path} ${f.note}`);
 		}
+		// Separate "the code is broken" from "the deployment is behind the code".
+		// A page whose route landed in a commit the running image predates is a
+		// deploy lag, not a routing bug, and reads identically as a bare 404 in
+		// the sweep above. Saying which one it is here saves the next reader the
+		// same investigation (this misfired on /wardrobe, whose route was 48
+		// commits ahead of the running revision).
+		const lag = await deployLagReport(target);
+		if (lag) console.error(`\n[check-pages] ${lag}`);
 		process.exit(1);
 	}
 	console.log(`[check-pages] OK — all ${paths.length} declared pages reachable on ${target}`);
