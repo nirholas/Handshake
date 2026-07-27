@@ -89,9 +89,40 @@ if (!has('onchainos') && !existsSync(onchainosBin)) {
 process.env.PATH = `${join(homedir(), '.local', 'bin')}:${process.env.PATH}`;
 step('onchainos', sh('onchainos --version', { allowFail: true }) || 'present');
 
-// 3. Daemon. `daemon start` is idempotent and reports a stale pid as not running.
-const daemonStatus = sh('okx-a2a daemon start', { allowFail: true });
-step('daemon', daemonStatus.split('\n').pop() || 'started');
+// 3. Daemon. `okx-a2a daemon start` delegates to an OS autostart unit, and this
+//    container has no systemd ("systemd is not running in this container"), so on
+//    a codespace that call installs the unit and silently leaves the daemon down.
+//    A crashed daemon also leaves a lock behind that blocks the next start
+//    ("stale pid=..." / "lockPid=..."). Clear the lock, try the supported path,
+//    then fall back to running the daemon process directly.
+function daemonState() {
+	return sh('okx-a2a daemon status', { allowFail: true });
+}
+
+if (!daemonState().startsWith('running')) {
+	const stale = daemonState();
+	if (stale.includes('stale') || stale.includes('lockPid')) {
+		rmSync(join(homedir(), '.okx-agent-task', 'run', 'daemon.lock'), { force: true, recursive: true });
+	}
+	sh('okx-a2a daemon start', { allowFail: true });
+	if (!daemonState().startsWith('running')) {
+		const log = join(homedir(), '.okx-agent-task', 'logs', 'run-nohup.log');
+		sh(`nohup okx-a2a run > ${log} 2>&1 & disown`, { allowFail: true });
+		// The daemon loads system config and XMTP state before it reports running.
+		const until = Date.now() + 20000;
+		while (Date.now() < until && !daemonState().startsWith('running')) {
+			execFileSync(process.execPath, ['-e', 'setTimeout(()=>{},1000)']);
+		}
+	}
+}
+
+const daemon = daemonState();
+if (!daemon.startsWith('running')) {
+	console.error(`\ndaemon would not start: ${daemon}`);
+	console.error('Check ~/.okx-agent-task/logs/run-nohup.log and logs/listener.log.');
+	process.exit(1);
+}
+step('daemon', daemon);
 
 // 4. Runtime wiring (which AI CLI answers chats) and final plugin setup.
 sh('okx-a2a switch-runtime --json', { allowFail: true });
