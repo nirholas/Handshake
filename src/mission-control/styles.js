@@ -33,7 +33,7 @@ const CSS = `
 .mc-topbar-spacer { flex: 1 1 auto; }
 .mc-conn-group { display: flex; align-items: center; gap: 10px; }
 .mc-conn { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); white-space: nowrap; }
-.mc-conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint,#555); flex: none; transition: background var(--duration-fast,140ms); }
+.mc-conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint,#8a8a8a); flex: none; transition: background var(--duration-fast,140ms); }
 .mc-conn[data-state="live"] .mc-conn-dot { background: var(--success,#4ade80); box-shadow: 0 0 6px color-mix(in srgb, var(--success,#4ade80) 70%, transparent); animation: mc-breathe 2.4s ease-in-out infinite; }
 .mc-conn[data-state="reconnecting"] .mc-conn-dot { background: var(--warn,#fbbf24); animation: mc-pulse 1s ease-in-out infinite; }
 .mc-conn[data-state="down"] .mc-conn-dot { background: var(--danger,#f87171); }
@@ -136,8 +136,8 @@ const CSS = `
 .mc-chart-ohlc { font-size: var(--text-2xs,.6875rem); color: var(--ink-faint,#8a8a8a); font-variant-numeric: tabular-nums; font-family: var(--font-mono, ui-monospace, monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mc-chart-ohlc b { color: var(--ink-dim,#999); font-weight: 600; }
 .mc-chart-right { display: flex; align-items: center; gap: 10px; flex: none; }
-.mc-chart-live { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-2xs,.6875rem); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint,#555); font-weight: 700; transition: color var(--duration-fast,140ms); }
-.mc-chart-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-faint,#555); transition: background var(--duration-fast,140ms); }
+.mc-chart-live { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-2xs,.6875rem); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint,#8a8a8a); font-weight: 700; transition: color var(--duration-fast,140ms); }
+.mc-chart-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-faint,#8a8a8a); transition: background var(--duration-fast,140ms); }
 .mc-chart-live[data-state="on"] { color: var(--success,#4ade80); }
 .mc-chart-live[data-state="on"] .mc-chart-live-dot { background: var(--success,#4ade80); box-shadow: 0 0 6px color-mix(in srgb, var(--success,#4ade80) 70%, transparent); animation: mc-breathe 2.4s ease-in-out infinite; }
 .mc-chart-ivs { display: inline-flex; gap: 2px; background: var(--surface-2,rgba(255,255,255,.04)); border: 1px solid var(--stroke,rgba(255,255,255,.08)); border-radius: var(--radius-sm,6px); padding: 2px; }
@@ -164,7 +164,7 @@ const CSS = `
 
 /* ── live trades tape ────────────────────────────────────────────────────── */
 .mc-tape-wrap { display: flex; flex-direction: column; min-height: 0; }
-.mc-tape-head { display: grid; grid-template-columns: 36px 44px 62px 1fr 62px 72px; gap: 0 6px; padding: 4px 8px; font-size: var(--text-2xs,.6875rem); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint,#555); border-bottom: 1px solid var(--stroke,rgba(255,255,255,.06)); font-weight: 700; }
+.mc-tape-head { display: grid; grid-template-columns: 36px 44px 62px 1fr 62px 72px; gap: 0 6px; padding: 4px 8px; font-size: var(--text-2xs,.6875rem); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint,#8a8a8a); border-bottom: 1px solid var(--stroke,rgba(255,255,255,.06)); font-weight: 700; }
 .mc-tape-body { overflow-y: auto; max-height: 220px; display: flex; flex-direction: column; }
 .mc-tape-row { display: grid; grid-template-columns: 36px 44px 62px 1fr 62px 72px; gap: 0 6px; padding: 4px 8px; font-size: var(--text-2xs,.6875rem); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--stroke,rgba(255,255,255,.04)); transition: background var(--duration-fast,140ms); align-items: center; animation: mc-rowin var(--duration-base,200ms) var(--ease-out,ease); }
 .mc-tape-row:hover { background: var(--surface-1,rgba(255,255,255,.03)); }
@@ -174,7 +174,7 @@ const CSS = `
 .mc-tape-row a { text-decoration: none; color: inherit; }
 .mc-tape-row a:hover { text-decoration: underline; }
 .mc-tape-col-amt { color: var(--ink-dim,#999); }
-.mc-tape-empty { padding: 18px 12px; color: var(--ink-faint,#555); font-size: var(--text-sm,.764rem); text-align: center; }
+.mc-tape-empty { padding: 18px 12px; color: var(--ink-faint,#8a8a8a); font-size: var(--text-sm,.764rem); text-align: center; }
 
 /* ── token security grid (GMGN-style stats) ──────────────────────────────── */
 .mc-sec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--stroke,rgba(255,255,255,.07)); border: 1px solid var(--stroke,rgba(255,255,255,.07)); border-radius: var(--mc-radius); overflow: hidden; margin-bottom: 10px; }
@@ -189,7 +189,7 @@ const CSS = `
 .mc-sec-check--ok { color: var(--success,#4ade80); background: color-mix(in srgb, var(--success,#4ade80) 10%, transparent); border-color: color-mix(in srgb, var(--success,#4ade80) 28%, transparent); }
 .mc-sec-check--warn { color: var(--warn,#fbbf24); background: color-mix(in srgb, var(--warn,#fbbf24) 10%, transparent); border-color: color-mix(in srgb, var(--warn,#fbbf24) 28%, transparent); }
 .mc-sec-check--fail { color: var(--danger,#f87171); background: color-mix(in srgb, var(--danger,#f87171) 10%, transparent); border-color: color-mix(in srgb, var(--danger,#f87171) 28%, transparent); }
-.mc-sec-check--dim { color: var(--ink-faint,#555); background: var(--surface-2,rgba(255,255,255,.04)); border-color: var(--stroke,rgba(255,255,255,.08)); }
+.mc-sec-check--dim { color: var(--ink-faint,#8a8a8a); background: var(--surface-2,rgba(255,255,255,.04)); border-color: var(--stroke,rgba(255,255,255,.08)); }
 .mc-sec-flags { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; }
 .mc-sec-flags li { font-size: var(--text-2xs,.6875rem); color: var(--warn,#fbbf24); background: color-mix(in srgb, var(--warn,#fbbf24) 8%, transparent); border: 1px solid color-mix(in srgb, var(--warn,#fbbf24) 24%, transparent); border-radius: var(--radius-pill,999px); padding: 2px 8px; }
 
@@ -263,7 +263,11 @@ const CSS = `
 }
 
 /* ── motion ──────────────────────────────────────────────────────────────── */
-@keyframes mc-rowin { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+/* Transform only, no opacity fade: this feed streams new rows continuously,
+   so a fading row is always on screen and its text spends ~260ms below the
+   4.5:1 contrast floor (axe caught it as a real colour-contrast failure on
+   /terminal). The slide alone reads as the same entrance. */
+@keyframes mc-rowin { from { transform: translateY(-6px); } to { transform: none; } }
 @keyframes mc-skel { 0%,100% { opacity: .45; } 50% { opacity: .9; } }
 @keyframes mc-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 @keyframes mc-breathe { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
