@@ -42,6 +42,11 @@
 			"dir": "rtl"
 		},
 		{
+			"code": "hi",
+			"name": "हिन्दी",
+			"dir": "ltr"
+		},
+		{
 			"code": "ru",
 			"name": "Русский",
 			"dir": "ltr"
@@ -219,11 +224,6 @@
 		{
 			"code": "kk",
 			"name": "Қазақша",
-			"dir": "ltr"
-		},
-		{
-			"code": "uz",
-			"name": "Oʻzbekcha",
 			"dir": "ltr"
 		},
 		{
