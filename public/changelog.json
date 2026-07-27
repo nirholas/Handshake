@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-27T17:10:35.140Z",
+	"generated_at": "2026-07-27T17:19:41.445Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "3D generations that run long now hand back a handle instead of an error",
+			"summary": "A detailed model can take several minutes, longer than an assistant will wait inside a single tool call. Those generations used to look like failures even though the GPU finished the model minutes later. The ChatGPT 3D Studio now returns a live handle with a countdown of how much time is left, and a new check_job tool collects the finished model when it lands. Poll responses carry elapsed time and a remaining estimate that counts down, the assistant sees progress instead of identical waiting frames, and the inline viewer shows a real \"still rendering\" panel rather than an empty one. A generation whose GPU worker dies mid-job is now automatically retried on a healthy engine instead of being written off, including when nobody is watching the page.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-07-27",
 			"type": "update",
@@ -26,6 +37,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "The 3D forge accepts all six reference photos again",
+			"summary": "The photo composer advertised six reference views but only built four slots, so filling the last one threw an error and stopped the upload. All six slots are now real and usable, which is the full set the generator accepts, and more views produce a sharper mesh. Text prompts also retry once when the concept-image step returns an empty result, instead of falling back to a lower-quality image lane.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -128,6 +150,17 @@
 			"link": "/x402",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-26",
+			"type": "update",
+			"title": "Selfie avatars now get your ears, jaw and neck, not just your face",
+			"summary": "Until now a selfie avatar only carried your real appearance on the face itself, which is about a tenth of the head. Everything else, the ears, the jawline, the neck and the forehead up to the hairline, was a stock texture nudged toward your skin tone. The reason was technical: the face-tracking landmarks that guide the transfer only exist on the face, so there was nothing to guide it anywhere else. The avatar now works out where the camera was standing and paints the photo directly onto the 3D head, which needs no landmarks at all. Photographic coverage of the head goes from 10% to 38%. It only paints what the camera genuinely saw: anything angled away, hidden behind the nose or jaw, or outside your silhouette keeps the stock texture rather than being invented.",
+			"link": "/create/selfie",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},

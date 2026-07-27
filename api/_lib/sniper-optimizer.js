@@ -20,7 +20,7 @@
 //
 // Design: rules are ordered by priority; the first rule to claim a field wins,
 // so proposals never conflict. Each rule cites the evidence that triggered it.
-// Rules O/A/B/C/E tighten and run for every tier. Rules D/F/G/H hand room back to
+// Rules O/A/B/C/S/E tighten and run for every tier. Rules D/F/G/H hand room back to
 // an arm that earned it and are gated on tier + realized profit.
 
 import { atLeast, boundsFor, stepsFor, unsetOkFor, writableFor } from './sniper-autonomy.js';
@@ -257,13 +257,35 @@ export function proposeAdjustments(stats, config, opts = {}) {
 		}
 	}
 
+	// Rule S: size-weighted divergence. `avgPnlPct` is an UNWEIGHTED mean of
+	// percentages, but positions across an arm differ in size by up to 50x, so a
+	// positive average percent alongside negative net lamports is arithmetically
+	// only possible one way: the arm's LARGER bets are its worse ones. Its edge
+	// does not scale, so the correct response is to shrink the bet, not to tune an
+	// exit percentage. Measured on the live fleet 2026-07-27: trailing-stop exits
+	// averaged +6.4% while netting -0.223 SOL, because the average trailing exit
+	// was a 0.053 SOL position against a 0.016 SOL fleet average.
+	//
+	// This runs BEFORE Rule D and claims per_trade_lamports first: an arm losing
+	// real money must never be handed a bigger position because its unweighted
+	// percentage or win rate looks healthy. That is the vanity metric the fleet's
+	// own postmortem named as lesson one.
+	const sizeDivergence = netPnl < 0 && avg > 0 && sample >= MIN_SAMPLE && perTrade != null;
+	if (sizeDivergence) {
+		propose('per_trade_lamports', Math.round(perTrade * (1 - steps.per_trade_fraction)),
+			`Average return is +${avg.toFixed(1)}% but the arm is down ${(netPnl / 1e9).toFixed(4)} SOL over ${sample} trades: the bigger bets are the losing ones, so the edge does not scale. Shrink position size rather than tune an exit.`);
+		notes.push('size_weighted_divergence');
+	}
+
 	// Rule D: proven arm: scale size up, bounded, never past the tier's ceiling.
-	// Two ways to qualify. The classic one is a high win rate. The second exists
-	// because win rate is the wrong measure for a momentum arm: one that wins 36%
-	// of the time but is net profitable has a real edge and has earned more size.
-	// That second path is tier-gated, so only an arm the autonomy engine already
-	// judged profitable can take it.
-	const provenByWinRate = winRate >= 60 && avg > 10;
+	// Two ways to qualify. The classic one is a high win rate, which ALSO requires
+	// not losing money: a 60%-win-rate arm can still bleed if its losses are its
+	// big positions, and rewarding that with more size compounds the bleed. The
+	// second exists because win rate is the wrong measure for a momentum arm: one
+	// that wins 36% of the time but is net profitable has a real edge and has
+	// earned more size. That second path is tier-gated, so only an arm the
+	// autonomy engine already judged profitable can take it.
+	const provenByWinRate = winRate >= 60 && avg > 10 && netPnl >= 0;
 	const provenByProfit = earned && netPnl > 0;
 	if ((provenByWinRate || provenByProfit) && sample >= MIN_SAMPLE * 1.5 && perTrade != null) {
 		const pct = Math.round(steps.per_trade_fraction * 75);

@@ -87,6 +87,42 @@ describe('proposeAdjustments', () => {
 		expect(r.acted).toBe(false);
 	});
 
+	// Lesson one of the fleet's own postmortem: win rate and unweighted average
+	// percent are vanity metrics. Position sizes vary ~50x, so an arm can post a
+	// positive average percent while losing real money on its big bets.
+	it('shrinks size when average percent is positive but net PnL is negative', () => {
+		const r = proposeAdjustments(
+			stats({ closed: 25, wins: 10, winRate: 40, avgPnlPct: 6.4, netPnlLamports: -223_000_000, exitReasons: { trailing_stop: 13, timeout: 12 } }),
+			baseConfig,
+		);
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		expect(size).toBeTruthy();
+		expect(size.to).toBeLessThan(baseConfig.per_trade_lamports);
+		expect(r.notes).toContain('size_weighted_divergence');
+	});
+
+	it('never scales a money-losing arm up on win rate alone', () => {
+		// 60% win rate and +12% average would have passed the old provenByWinRate
+		// gate and handed this arm a BIGGER position while it bled real SOL.
+		const r = proposeAdjustments(
+			stats({ closed: 20, wins: 12, winRate: 60, avgPnlPct: 12, netPnlLamports: -80_000_000 }),
+			baseConfig,
+		);
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		expect(size).toBeTruthy();
+		expect(size.to).toBeLessThan(baseConfig.per_trade_lamports); // shrunk, not grown
+	});
+
+	it('still scales a genuinely profitable high-win-rate arm up', () => {
+		const r = proposeAdjustments(
+			stats({ closed: 20, wins: 12, winRate: 60, avgPnlPct: 12, netPnlLamports: 40_000_000 }),
+			baseConfig,
+		);
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		expect(size).toBeTruthy();
+		expect(size.to).toBeGreaterThan(baseConfig.per_trade_lamports);
+	});
+
 	it('sets a take-profit when winners are timing out unrealized (the first-trade lesson)', () => {
 		const r = proposeAdjustments(
 			stats({ closed: 10, wins: 8, winRate: 80, avgPnlPct: 30, bestPnlPct: 46, exitReasons: { timeout: 6, trailing_stop: 4 } }),

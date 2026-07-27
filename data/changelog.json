@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-07-27",
+			"title": "3D generations that run long now hand back a handle instead of an error",
+			"summary": "A detailed model can take several minutes, longer than an assistant will wait inside a single tool call. Those generations used to look like failures even though the GPU finished the model minutes later. The ChatGPT 3D Studio now returns a live handle with a countdown of how much time is left, and a new check_job tool collects the finished model when it lands. Poll responses carry elapsed time and a remaining estimate that counts down, the assistant sees progress instead of identical waiting frames, and the inline viewer shows a real \"still rendering\" panel rather than an empty one. A generation whose GPU worker dies mid-job is now automatically retried on a healthy engine instead of being written off, including when nobody is watching the page.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-07-27",
+			"title": "The 3D forge accepts all six reference photos again",
+			"summary": "The photo composer advertised six reference views but only built four slots, so filling the last one threw an error and stopped the upload. All six slots are now real and usable, which is the full set the generator accepts, and more views produce a sharper mesh. Text prompts also retry once when the concept-image step returns an empty result, instead of falling back to a lower-quality image lane.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-27",
 			"title": "Trading agents can no longer earn a bigger bet while losing money",
 			"summary": "The self-tuning loop judged each strategy on its average percentage return and win rate, which treat a tiny position and a large one as equal. A strategy could post a healthy-looking win rate while its biggest trades bled real SOL, and get rewarded with an even bigger position. The optimizer now shrinks a strategy whose average percentage is positive but whose actual profit is negative, since that pattern only occurs when the larger bets are the losing ones, and it refuses to scale any strategy up while it is down money.",
 			"tags": [
@@ -16159,6 +16179,16 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-26",
+			"title": "Selfie avatars now get your ears, jaw and neck, not just your face",
+			"summary": "Until now a selfie avatar only carried your real appearance on the face itself, which is about a tenth of the head. Everything else, the ears, the jawline, the neck and the forehead up to the hairline, was a stock texture nudged toward your skin tone. The reason was technical: the face-tracking landmarks that guide the transfer only exist on the face, so there was nothing to guide it anywhere else. The avatar now works out where the camera was standing and paints the photo directly onto the 3D head, which needs no landmarks at all. Photographic coverage of the head goes from 10% to 38%. It only paints what the camera genuinely saw: anything angled away, hidden behind the nose or jaw, or outside your silhouette keeps the stock texture rather than being invented.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/create/selfie"
 		}
 	]
 }
