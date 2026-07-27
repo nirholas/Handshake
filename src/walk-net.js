@@ -107,6 +107,7 @@ export class WalkNet {
 			change: new Set(),  // (player, sessionId)
 			chat: new Set(),    // ({ id, name, text, ts })
 			social: new Set(),  // ({ type, ... }) — friends events: live DM, request/accept (Task 15)
+			message: new Set(), // (type, payload) — catch-all for every other room message
 		};
 		// Optional async presence-ticket supplier (Task 15). When provided, its
 		// resolved token rides the join so this coin world publishes the player's
@@ -132,7 +133,12 @@ export class WalkNet {
 	}
 
 	_emit(event, ...args) {
-		for (const fn of this._handlers[event]) {
+		// A missing bucket must never throw: _emit runs inside colyseus message
+		// callbacks, so an unknown event would escape into the socket's dispatch
+		// loop and surface as an uncaught TypeError on every room message.
+		const bucket = this._handlers[event];
+		if (!bucket) return;
+		for (const fn of bucket) {
 			try { fn(...args); } catch (e) { log.error(`[walk-net] ${event} handler threw:`, e); }
 		}
 	}
