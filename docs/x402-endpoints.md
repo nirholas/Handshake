@@ -62,6 +62,33 @@ The shared handler in `x402-paid-endpoint.js` builds the challenge
 (`buildRequirements()`), verifies the submitted payment, settles it, runs the
 endpoint logic, and issues a signed receipt.
 
+### When settlement capacity runs dry
+
+Solana settles in sponsor mode: the platform's fee wallet
+(`X402_FEE_PAYER_SOLANA`) co-signs and pays the network fee. The
+self-facilitator refuses to settle whenever that wallet drops below
+`X402_SPONSOR_SOL_FLOOR_LAMPORTS` (0.02 SOL), which protects the wallet from
+being drained to zero mid-flight. That refusal is **temporary capacity, not an
+outage**, and the whole path says so:
+
+| Layer                     | Behaviour while the sponsor is below its floor                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 402 challenge             | The Solana accept is **not advertised**. Other configured networks still are, so the endpoint stays payable.      |
+| No network left to offer  | `503 settlement_unavailable`, retryable, never the `500 no_payto_configured` misconfiguration error.             |
+| A payment that still lands | `503 settlement_unavailable`. Only a genuinely unexplained settle failure is `502 settle_failed`.                 |
+
+**Buyers should treat `503 settlement_unavailable` as retry-after**, the same as
+any capacity signal. No signed payment is consumed by a doomed settle, and the
+accept reappears automatically within about a minute of the wallet being
+refunded (each instance re-reads the balance at most once per 20s).
+
+Operators: the funding root tops the fee wallet back up automatically
+(`/api/cron/treasury-topup`). Because the master funding wallet *is* the sponsor
+wallet in the default deployment, the sweep reserves the settle floor plus
+`ECONOMY_MASTER_SPONSOR_HEADROOM_SOL` (0.03) on top of its own reserve, so
+funding engines can never starve settlement. Check the effective value in the
+cron's `sweepFloorSol` field.
+
 ## Where payments land
 
 Most endpoints pay the **platform receiver** (`X402_PAY_TO_SOLANA` /
