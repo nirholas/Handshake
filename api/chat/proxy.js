@@ -2,8 +2,23 @@ import { env } from '../_lib/env.js';
 import { cors, error, json, method, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { moderateAnonInput, refusalReply, lastUserMessage } from '../_lib/moderation.js';
+import { isFreeModelId, isLiveFreeModel, pickDefaultFreeModel } from '../_lib/openrouter-free.js';
 
 const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
+
+// How many live models to try before giving up. OpenRouter retires `:free`
+// endpoints without notice, and a saved conversation can name one for months
+// afterwards; rolling over to a live model keeps that chat working instead of
+// surfacing the upstream's raw "This model is unavailable for free" text.
+const MAX_MODEL_ATTEMPTS = 3;
+
+/** Upstream said the named model is gone / not free — not that the request was bad. */
+function isModelUnavailable(status, body) {
+	if (status !== 400 && status !== 404) return false;
+	return /unavailable for free|no endpoints found|not a valid model|no allowed providers|is not available/i.test(
+		body,
+	);
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -31,8 +46,17 @@ export default wrap(async (req, res) => {
 
 	const model = body?.model;
 	// Only allow free-tier OpenRouter models to prevent abuse.
-	if (!model || !model.endsWith(':free'))
+	if (!isFreeModelId(model))
 		return error(res, 400, 'invalid_model', 'Only free-tier models (ending in :free) are allowed via the built-in proxy');
+
+	// A model that OpenRouter no longer serves is swapped for a live one BEFORE
+	// the call, so a stale saved conversation costs no round-trip. When the live
+	// list is unreachable the model is taken at face value and the post-call
+	// rollover below is the safety net.
+	let activeModel = model;
+	if (!(await isLiveFreeModel(model))) {
+		activeModel = (await pickDefaultFreeModel({ exclude: [model] })) ?? model;
+	}
 
 	// Anonymous pre-moderation (FAIL-OPEN). This proxy is unauthenticated, so
 	// screen the visitor's latest message with the free NIM safety lane before
@@ -75,20 +99,53 @@ export default wrap(async (req, res) => {
 	// final: every key would fail the same way.
 	const keys = [...new Set([env.OPENROUTER_API_KEY, ...env.OPENROUTER_FALLBACK_KEYS].filter(Boolean))];
 	let upstream;
-	for (const [i, key] of keys.entries()) {
-		upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${key}`,
-				'Content-Type': 'application/json',
-				'HTTP-Referer': 'https://three.ws',
-				'X-Title': 'three.ws chat',
-			},
-			body: JSON.stringify(body),
-		});
-		if (![401, 402, 403, 429].includes(upstream.status) || i === keys.length - 1) break;
-		// Release the abandoned response so its connection returns to the pool.
-		await upstream.body?.cancel()?.catch?.(() => {});
+	const tried = [];
+	for (let attempt = 0; attempt < MAX_MODEL_ATTEMPTS; attempt += 1) {
+		tried.push(activeModel);
+		for (const [i, key] of keys.entries()) {
+			upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${key}`,
+					'Content-Type': 'application/json',
+					'HTTP-Referer': 'https://three.ws',
+					'X-Title': 'three.ws chat',
+				},
+				body: JSON.stringify({ ...body, model: activeModel }),
+			});
+			if (![401, 402, 403, 429].includes(upstream.status) || i === keys.length - 1) break;
+			// Release the abandoned response so its connection returns to the pool.
+			await upstream.body?.cancel()?.catch?.(() => {});
+		}
+
+		// A retired model answers identically on every key, so rolling the model
+		// is the only recovery. Reading the body here is safe: nothing has been
+		// streamed to the client yet.
+		if (upstream.status !== 400 && upstream.status !== 404) break;
+		const failedBody = await upstream.text();
+		if (!isModelUnavailable(upstream.status, failedBody)) {
+			// A genuine bad request — hand the upstream's own explanation back.
+			res.statusCode = upstream.status;
+			res.setHeader('content-type', upstream.headers.get('content-type') ?? 'application/json');
+			res.setHeader('cache-control', 'no-store');
+			res.end(failedBody);
+			return;
+		}
+		// Either way the current response is spent: roll to the next live model,
+		// or fall through to the friendly 503 below. Never re-read this body.
+		const next = await pickDefaultFreeModel({ exclude: tried });
+		upstream = null;
+		if (!next) break;
+		activeModel = next;
+	}
+
+	if (!upstream) {
+		return error(
+			res,
+			503,
+			'no_free_model',
+			'Every free model is unavailable right now. Please try again in a moment.',
+		);
 	}
 
 	if (upstream.status === 402) {

@@ -2,6 +2,7 @@ import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { cors, json, method, wrap, error, readJson } from '../_lib/http.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
+import { isLiveFreeModel, pickDefaultFreeModel } from '../_lib/openrouter-free.js';
 import { z } from 'zod';
 
 const DEFAULT_SYSTEM_PROMPT = `You are a helpful AI assistant on three.ws — a platform for 3D AI agents, Solana, and pump.fun.
@@ -24,10 +25,25 @@ const DEFAULTS = {
 	logo_url: null,
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
-	default_model: 'meta-llama/llama-3.3-70b-instruct:free',
+	// Resolved from the live free-model list at request time — see
+	// withLiveDefaultModel(). A hardcoded id here is exactly what broke chat:
+	// OpenRouter retired the configured default and every visitor's first
+	// message failed on it.
+	default_model: null,
 	agent_id: null,
 	system_prompt: DEFAULT_SYSTEM_PROMPT,
 };
+
+/**
+ * Replace a configured default model that OpenRouter no longer serves with the
+ * best live one, so the picker never opens on a dead id. The stored value is
+ * left untouched: it becomes authoritative again the moment it is live.
+ */
+async function withLiveDefaultModel(config) {
+	if (config.default_model && (await isLiveFreeModel(config.default_model))) return config;
+	const live = await pickDefaultFreeModel({ exclude: [config.default_model].filter(Boolean) });
+	return live ? { ...config, default_model: live } : config;
+}
 
 const bodySchema = z.object({
 	name: z.string().trim().min(1).max(100),
@@ -46,11 +62,11 @@ export default wrap(async (req, res) => {
 	// GET — fully public
 	if (req.method === 'GET') {
 		const [row] = await sql`SELECT name, logo_url, accent_color, tagline, default_model, agent_id, system_prompt FROM chat_brand_config WHERE key = 'global'`;
-		return json(res, 200, { data: row ?? DEFAULTS });
+		return json(res, 200, { data: await withLiveDefaultModel(row ?? DEFAULTS) });
 	}
 
 	// POST — admin key required (DB row takes precedence over env var, enabling keyless redeploy)
-	const [configRow] = await sql`SELECT admin_key FROM chat_brand_config WHERE key = 'global'`;
+	const [configRow] = await sql`SELECT admin_key, default_model FROM chat_brand_config WHERE key = 'global'`;
 	const adminKey = configRow?.admin_key || env.CHAT_ADMIN_KEY;
 	if (!adminKey) return error(res, 503, 'not_configured', 'Admin key is not configured');
 
@@ -68,6 +84,11 @@ export default wrap(async (req, res) => {
 		return error(res, err.status ?? 400, 'bad_request', err.message);
 	}
 
+	// default_model is NOT NULL in the schema, so an omitted one resolves to the
+	// best model live right now rather than to a hardcoded id that will retire.
+	const defaultModel =
+		body.default_model ?? (await pickDefaultFreeModel()) ?? configRow?.default_model ?? '';
+
 	const [row] = await sql`
 		UPDATE chat_brand_config
 		SET
@@ -75,7 +96,7 @@ export default wrap(async (req, res) => {
 			logo_url      = ${body.logo_url ?? null},
 			accent_color  = ${body.accent_color},
 			tagline       = ${body.tagline ?? DEFAULTS.tagline},
-			default_model = ${body.default_model ?? DEFAULTS.default_model},
+			default_model = ${defaultModel},
 			agent_id      = ${body.agent_id ?? null},
 			system_prompt = ${body.system_prompt ?? DEFAULT_SYSTEM_PROMPT},
 			updated_at    = now()
