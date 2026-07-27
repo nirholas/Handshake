@@ -146,6 +146,33 @@ curl -s https://three.ws/api/version | jq '{commitShort, branch, builtAt, revisi
 npm run smoke:prod
 ```
 
+> **A fresh deploy worktree needs THREE staged artifacts, not just
+> `node_modules`.** `build:gcp` shells into two nested projects that carry their
+> own dependency trees, and neither is in git. Hardlinking only the root
+> `node_modules` leaves both broken, and each one fails several minutes into the
+> build (2026-07-26: two consecutive dead builds, one exit 144, one exit 1):
+>
+> ```bash
+> git worktree add --detach /workspaces/.deploy-wt HEAD
+> cp -al /workspaces/three.ws/node_modules                /workspaces/.deploy-wt/node_modules
+> cp -al /workspaces/three.ws/chat/node_modules           /workspaces/.deploy-wt/chat/node_modules
+> cp -al /workspaces/three.ws/character-studio/build      /workspaces/.deploy-wt/character-studio/build
+> cp    /workspaces/three.ws/.env                         /workspaces/.deploy-wt/.env
+> ```
+>
+> - `character-studio/build` — `ensure:avatar-studio` only skips the heavy
+>   avatar-studio vite build when `character-studio/build/index.html` exists.
+>   Without it the build runs for real and gets OOM-killed (exit 144) on a box
+>   already hosting concurrent agent builds.
+> - `chat/node_modules` — `build:chat` runs `chat/scripts/ensure-deps.mjs`, whose
+>   `npm install` can finish "successfully" while still leaving
+>   `@sveltejs/vite-plugin-svelte` unresolvable, so `vite build` dies with
+>   `Cannot find package '.../@sveltejs/vite-plugin-svelte/index.js'`.
+> - `cp -al` (hardlink) only works on the SAME filesystem and is near-instant;
+>   plain `cp -r` of these trees costs minutes. If the destination directory
+>   already exists, `cp -al src dst` nests into `dst/build` — `rm -rf` the
+>   destination first.
+
 > **The CDN purge is synchronous on purpose.** `deploy:gcp:purge-cdn` used to
 > pass `--async`, so anything verifying immediately afterwards read stale edge
 > content and reported phantom failures — a cached pre-deploy 404 for a page
