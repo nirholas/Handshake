@@ -11,7 +11,11 @@ import { defineConfig } from '@playwright/test';
 // the cold transform finishes and bring down the next two tests with it.
 export default defineConfig({
 	testDir: 'tests/e2e',
-	timeout: 120_000,
+	// 300s, not 120s: the a11y floor spec runs axe over every top-30 page, and
+	// axe's colour-contrast pass is O(rendered nodes). /marketplace renders a
+	// ~77-card grid and legitimately takes ~4.3 min against the dev server
+	// (on-demand module transforms), so 120s timed it out as a phantom failure.
+	timeout: 300_000,
 	retries: 1,
 	fullyParallel: false,
 	use: {
