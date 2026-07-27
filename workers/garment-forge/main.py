@@ -59,6 +59,7 @@ from google.cloud import storage
 from pydantic import BaseModel, Field
 
 import garment_glb
+import job_queue
 import pipeline
 from canonical_bones import GARMENT_SLOTS
 from worker_security import require_api_key, safe_error
@@ -118,20 +119,7 @@ def _job_blob(job_id: str):
 # an instance that then died) stays recoverable, and POST /sweep re-drives it.
 
 def _claimable(job: dict, now: datetime) -> bool:
-    """A queued job nobody owns, or a running job whose owner went silent past
-    the stale window (its instance is gone)."""
-    status = job.get("status")
-    if status not in ("queued", "running"):
-        return False
-    if int(job.get("attempts", 0)) >= MAX_ATTEMPTS:
-        return False
-    if status == "queued":
-        return True
-    try:
-        updated = datetime.fromisoformat(job.get("updated_at", ""))
-    except ValueError:
-        return True
-    return (now - updated).total_seconds() > JOB_STALE_S
+    return job_queue.claimable(job, now, JOB_STALE_S, MAX_ATTEMPTS)
 
 
 def _try_claim(job_id: str) -> Optional[dict]:
@@ -145,15 +133,10 @@ def _try_claim(job_id: str) -> Optional[dict]:
         job = json.loads(blob.download_as_bytes())
     except NotFound:
         return None
-    if not _claimable(job, datetime.now(timezone.utc)):
+    now = datetime.now(timezone.utc)
+    if not _claimable(job, now):
         return None
-    job.update(
-        status="running",
-        stage="claimed",
-        attempts=int(job.get("attempts", 0)) + 1,
-        owner=INSTANCE_ID,
-        updated_at=datetime.now(timezone.utc).isoformat(),
-    )
+    job.update(job_queue.claim_fields(job, INSTANCE_ID, now))
     try:
         blob.upload_from_string(json.dumps(job), content_type="application/json",
                                 if_generation_match=generation)
@@ -398,26 +381,21 @@ async def _fail_if_stale(job: dict) -> dict:
     the job goes back to `queued` for the next sweep to re-drive; only a job
     that has burned MAX_ATTEMPTS is declared terminally failed, so a poller
     never watches a zombie and a recoverable job is never buried."""
-    if job.get("status") not in ("queued", "running"):
-        return job
-    try:
-        updated = datetime.fromisoformat(job.get("updated_at", ""))
-    except ValueError:
-        return job
-    age = (datetime.now(timezone.utc) - updated).total_seconds()
-    if age <= JOB_STALE_S:
+    action = job_queue.stale_action(job, datetime.now(timezone.utc),
+                                    JOB_STALE_S, MAX_ATTEMPTS)
+    if action is None:
         return job
     attempts = int(job.get("attempts", 0))
-    if attempts < MAX_ATTEMPTS:
-        log.warning("[%s] stale for %.0fs at stage %s (attempt %d/%d); requeueing",
-                    job.get("job_id"), age, job.get("stage"), attempts, MAX_ATTEMPTS)
+    if action == "requeue":
+        log.warning("[%s] lost its instance at stage %s (attempt %d/%d); requeueing",
+                    job.get("job_id"), job.get("stage"), attempts, MAX_ATTEMPTS)
         return await _update_job(job["job_id"], status="queued", stage="queued")
-    log.error("[%s] stale for %.0fs at stage %s after %d attempts; marking failed",
-              job.get("job_id"), age, job.get("stage"), attempts)
+    log.error("[%s] stale at stage %s after %d attempts; marking failed",
+              job.get("job_id"), job.get("stage"), attempts)
     return await _update_job(
         job["job_id"], status="failed",
-        error=f"job stalled at stage '{job.get('stage')}' "
-              f"(no progress for {int(age)}s) after {attempts} attempts. "
+        error=f"job stalled at stage '{job.get('stage')}' after {attempts} "
+              "attempts (each owning instance was reclaimed). "
               "Retry the generation.",
     )
 

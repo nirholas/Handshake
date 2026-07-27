@@ -19,7 +19,9 @@
 //
 // Guards — enforced on every sweep; the first two are on-chain reads, so they
 // hold even with no database:
-//   • RESERVE FLOOR  — never spend the master below ECONOMY_MASTER_RESERVE_SOL.
+//   • RESERVE FLOOR  — never spend the master below ECONOMY_MASTER_RESERVE_SOL,
+//                      raised to the x402 settle floor + headroom whenever the
+//                      master doubles as the sponsor wallet (sweepFloorSol).
 //   • PER-ENGINE CAP — bring an engine up to its refillTo only, and never move
 //                      more than ECONOMY_MASTER_PER_TOPUP_MAX_SOL to one engine
 //                      in a single sweep.
@@ -52,6 +54,33 @@ function num(envName, dflt) {
 // not sit fully locked behind a 1 SOL floor sized for a much larger treasury.
 /** Never spend the master below this — its own working reserve + rent + fees. */
 export const RESERVE_SOL = num('ECONOMY_MASTER_RESERVE_SOL', 0.02);
+
+// The master is ALSO the x402 sponsor fee wallet (X402_FEE_PAYER_SOLANA points
+// at it in production), and the self-facilitator fail-closes every settle the
+// moment that wallet dips under its own floor. Spending the master down to
+// RESERVE_SOL therefore parked it AT or BELOW the settle floor on every sweep:
+// the 2026-07-27 ledger shows a sweep taking the master 0.05408 to 0.02000 and
+// settlement dying seconds later, which is why funding it only ever bought a
+// few hours. The sweep now keeps the sponsor floor plus working headroom on top
+// of its own reserve, so topping up engines can never starve settlement.
+// Headroom default is deliberately generous relative to the floor: a sweep is
+// worth delaying, a settlement outage is not.
+const SPONSOR_FLOOR_SOL = num('X402_SPONSOR_SOL_FLOOR_LAMPORTS', 20_000_000) / 1e9;
+const SPONSOR_HEADROOM_SOL = num('ECONOMY_MASTER_SPONSOR_HEADROOM_SOL', 0.03);
+
+/**
+ * The balance the sweep must leave untouched: the master's own reserve, and,
+ * when the master doubles as the x402 sponsor, the settle floor plus headroom.
+ * Exported so the cron can report it and tests can pin the relationship.
+ */
+export function sweepFloorSol() {
+	const masterIsSponsor =
+		!!process.env.X402_FEE_PAYER_SOLANA &&
+		!!ECONOMY_MASTER_ADDRESS &&
+		process.env.X402_FEE_PAYER_SOLANA === ECONOMY_MASTER_ADDRESS;
+	if (!masterIsSponsor) return RESERVE_SOL;
+	return Math.max(RESERVE_SOL, round(SPONSOR_FLOOR_SOL + SPONSOR_HEADROOM_SOL));
+}
 /** Most SOL the master will move to any single engine in one sweep. */
 export const PER_TOPUP_MAX_SOL = num('ECONOMY_MASTER_PER_TOPUP_MAX_SOL', 0.5);
 /** Most SOL the master will move across all engines in one sweep. */
@@ -95,7 +124,7 @@ export async function loadEconomyMaster() {
  * @returns {{ plan: Array<{name:string,pubkey:string,sol:number}>, skipped: Array<{name:string,reason:string}>, totalSol:number, spendableSol:number }}
  */
 export function planTopUps(masterSol, targets) {
-	const spendableSol = Math.max(0, round(masterSol - RESERVE_SOL));
+	const spendableSol = Math.max(0, round(masterSol - sweepFloorSol()));
 	const runCap = Math.min(RUN_CAP_SOL, spendableSol);
 	// Neediest first, so a tight run cap protects the most-drained engines.
 	const ordered = [...targets].sort(
@@ -210,6 +239,7 @@ export async function sweepTopUps({ connection, targets, network = 'mainnet', dr
 			master: master.publicKey.toBase58(),
 			masterSol: round(masterSol),
 			reserveSol: RESERVE_SOL,
+			sweepFloorSol: sweepFloorSol(),
 			spendableSol,
 			plan,
 			funded: [],
@@ -243,6 +273,7 @@ export async function sweepTopUps({ connection, targets, network = 'mainnet', dr
 		master: master.publicKey.toBase58(),
 		masterSol: round(masterSol),
 		reserveSol: RESERVE_SOL,
+		sweepFloorSol: sweepFloorSol(),
 		spendableSol,
 		funded,
 		failed,
