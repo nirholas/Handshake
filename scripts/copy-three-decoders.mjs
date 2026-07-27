@@ -17,6 +17,14 @@ const repo = resolve(__dirname, '..');
 const src = join(repo, 'node_modules/three/examples/jsm/libs');
 const out = join(repo, 'public/three');
 
+// Recursive rm races with the directory walk on overlay/network filesystems
+// (codespaces, deploy worktrees with hardlinked node_modules) and throws
+// ENOTEMPTY. Node retries those internally, but only when maxRetries is set —
+// it defaults to 0. Without this a deploy build dies in prebuild.
+function rmDir(dir) {
+	rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+}
+
 if (!existsSync(src)) {
 	console.warn(`[copy-three-decoders] ${src} not found — skipping. Run npm install first.`);
 	process.exit(0);
@@ -37,7 +45,7 @@ const dracoDests = [join(out, 'draco'), join(repo, 'public/scene-studio/draco')]
 if (existsSync(dracoSrc)) {
 	for (const dracoOut of dracoDests) {
 		mkdirSync(dirname(dracoOut), { recursive: true });
-		rmSync(dracoOut, { recursive: true, force: true });
+		rmDir(dracoOut);
 		cpSync(dracoSrc, dracoOut, { recursive: true });
 		console.log(`[copy-three-decoders] draco/ → ${dracoOut.replace(repo + '/', '')}`);
 	}
@@ -50,7 +58,7 @@ const basisSrc = join(src, 'basis');
 const basisOut = join(out, 'basis');
 if (existsSync(basisSrc)) {
 	mkdirSync(dirname(basisOut), { recursive: true });
-	rmSync(basisOut, { recursive: true, force: true });
+	rmDir(basisOut);
 	cpSync(basisSrc, basisOut, { recursive: true });
 	console.log(`[copy-three-decoders] basis/ → ${basisOut.replace(repo + '/', '')}`);
 } else {
