@@ -16220,7 +16220,7 @@
 		{
 			"date": "2026-07-26",
 			"title": "Selfie avatars now get your ears, jaw and neck, not just your face",
-			"summary": "Until now a selfie avatar only carried your real appearance on the face itself, which is about a tenth of the head. Everything else, the ears, the jawline, the neck and the forehead up to the hairline, was a stock texture nudged toward your skin tone. The reason was technical: the face-tracking landmarks that guide the transfer only exist on the face, so there was nothing to guide it anywhere else. The avatar now works out where the camera was standing and paints the photo directly onto the 3D head, which needs no landmarks at all. Photographic coverage of the head goes from 10% to 38%. It only paints what the camera genuinely saw: anything angled away, hidden behind the nose or jaw, or outside your silhouette keeps the stock texture rather than being invented.",
+			"summary": "Until now a selfie avatar only carried your real appearance on the face itself, which is about a tenth of the head. Everything else, the ears, the jawline, the neck and the forehead up to the hairline, was a stock texture nudged toward your skin tone. The reason was technical: the face-tracking landmarks that guide the transfer only exist on the face, so there was nothing to guide it anywhere else. The avatar now works out where the camera was standing and paints the photo directly onto the 3D head, which needs no landmarks at all. Photographic coverage of the head goes from 10% to 41%. It only paints what the camera genuinely saw: anything angled away, hidden behind the nose or jaw, or outside your silhouette keeps the stock texture rather than being invented.",
 			"tags": [
 				"feature",
 				"improvement"

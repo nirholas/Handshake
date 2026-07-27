@@ -145,8 +145,9 @@ pose degrades to a tint rather than a visibly wrong image.
 
 Measured on the shipped template by
 [`eval/measure_projection_coverage.py`](../workers/avatar-reconstruction/eval/measure_projection_coverage.py),
-photographic coverage of the head rises from **10.4% to 37.5%, a 3.6x increase**,
-holding up as the subject turns (38.8% at 15 degrees, 39.5% at 30).
+photographic coverage of the head rises from **10.5% to 41.3%, a 3.9x increase**:
+the face oval keeps its 10.5% and projection adds 30.8% of ears, jawline, neck
+and forehead that no landmark describes.
 
 Toggle with `PROJECTIVE_TEXTURE` (default `1`). Like the morph, it degrades
 cleanly: a pose that will not solve logs and leaves the warp-only skin in place.

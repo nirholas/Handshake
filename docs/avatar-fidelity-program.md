@@ -224,17 +224,35 @@ pixel. Anything failing a gate keeps its existing colour. The result blends
 warp already applies, and is capped at `MAX_BLEND` so a slightly-wrong pose
 degrades to a tint rather than to a visibly wrong image.
 
-**Measured on the shipped Wolf3D head** (`eval/measure_projection_coverage.py`),
-photographic coverage of the head goes from **10.4% to 37.5%, a 3.6x increase**,
-and holds up as the subject turns (37.4% at 15 degrees, 38.0% at 30):
+**Measured on the shipped Wolf3D head with real faces**
+(`eval/measure_projection_coverage.py`), photographic coverage of the head goes
+from **10.5% to 41.3%, a 3.9x increase**:
 
-| Camera | Projection reaches | New beyond the oval | Total photographic |
-|---|---|---|---|
-| Frontal | 36.1% | 27.1% | **37.5%** |
-| 15 deg turn | 37.4% | 28.5% | 38.8% |
-| 30 deg turn | 38.0% | 29.1% | 39.5% |
+| | Share of the head's texels |
+|---|---|
+| Face-oval warp (what existed before) | 10.5% |
+| New surface from projection | 30.8% |
+| **Total photographic** | **41.3%** |
+
+The harness reports the oval and the projection separately on purpose, and that
+is what caught the sign bug below: while the signs were inverted, "new" came out
+exactly equal to "projected", meaning the projected region and the face oval did
+not overlap at all. That is impossible for a real camera, since the face is the
+most camera-facing surface on the head. A single headline coverage number would
+have looked healthy (it read 47%, higher than the correct 41%) and hidden it.
 
 Two decisions are worth recording because both nearly went the wrong way.
+
+**The signs.** Depth and view direction were both inverted, so the pipeline
+believed the front of the head pointed away from the lens. Every gate then
+rejected the face and painted the back of the head instead. All ten unit tests
+passed throughout, because each one *selects its test region by facing* and so
+adapts to whichever sign is in force. Only an absolute claim catches this, and
+there is now a test asserting that the surface the landmarks sit on faces the
+camera (it fails at -0.89 with the old signs). Umeyama's reflection guard forces
+a proper rotation and can absorb a sign flip in the correspondence, so the fitted
+frame's handedness cannot be reasoned about from MediaPipe's documented z
+convention; it has to be measured.
 
 **The camera model.** The obvious approach, `cv2.solvePnP` against the head's
 landmark vertices, does not work here and the synthetic tests did not catch it:
