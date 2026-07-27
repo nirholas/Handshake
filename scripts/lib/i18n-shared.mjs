@@ -116,9 +116,36 @@ export function mergeOrdered(source, existing = {}, translated = {}) {
 
 const PLACEHOLDER_RE = /\{\{[^}]+\}\}/g; // {{count}}
 const TAG_RE = /<\/?[a-zA-Z][^>]*>/g; // <br/>, <strong>, </strong>
+// HTML entities: named (&lt; &amp; &nbsp;) and numeric (&#39; &#x27;). Values
+// extracted from `data-i18n-html` elements carry raw markup, so an entity is
+// load-bearing source syntax, not decoration: a model that "helpfully" decodes
+// `&lt;50` to `<50` turns the string into a broken tag the moment the runtime
+// assigns it to innerHTML. Masked like a tag so the model never sees one.
+export const ENTITY_RE = /&(?:[a-zA-Z][a-zA-Z0-9]{1,31}|#\d{1,7}|#[xX][0-9a-fA-F]{1,6});/g;
 
 function escapeRe(s) {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Every HTML tag in a string, in a stable order, for comparing two renderings. */
+export function tagSignature(text) {
+	return (String(text ?? '').match(TAG_RE) || []).sort().join('');
+}
+
+/**
+ * True when a translation would render different MARKUP than its source.
+ *
+ * This is the check that matters, and it is stricter than counting entities.
+ * Values pulled from `data-i18n-html` elements go back out through innerHTML,
+ * so a model that decodes `<code>&lt;agent-3d&gt;</code>` into
+ * `<code><agent-3d></code>` has not made a typographic choice: it has turned a
+ * printed code sample into a live custom element that instantiates a 3D avatar
+ * inside the docs. Cosmetic entities (`&amp;`, `&mdash;`, `&#39;`) decode to
+ * the same glyph the reader sees either way and are deliberately NOT flagged,
+ * so the build gate only fires on drift that actually breaks a page.
+ */
+export function markupDrift(source, target) {
+	return tagSignature(source) !== tagSignature(target);
 }
 
 export function buildMasker(doNotTranslate = []) {
@@ -140,9 +167,12 @@ export function buildMasker(doNotTranslate = []) {
 				return sentinel(id);
 			});
 		};
-		// Order matters: placeholders and tags first, then literal glossary terms.
+		// Order matters: placeholders and tags first, then entities, then literal
+		// glossary terms. Tags outrank entities so `<a href="?a=1&amp;b=2">` is
+		// stashed whole instead of being split around a nested sentinel.
 		stash(PLACEHOLDER_RE);
 		stash(TAG_RE);
+		stash(ENTITY_RE);
 		for (const term of terms) {
 			if (!term) continue;
 			stash(new RegExp(escapeRe(term), 'g'));
@@ -152,7 +182,17 @@ export function buildMasker(doNotTranslate = []) {
 
 	function unmask(text, tokens) {
 		if (typeof text !== 'string') return text;
-		return text.replace(/\[\[T(\d+)\]\]/g, (_, i) => tokens[Number(i)] ?? '');
+		// One stashed run can contain another (a tag whose href holds a
+		// {{placeholder}}), and String.replace never rescans what it just
+		// inserted, so restore repeatedly until the text stops changing. Bounded:
+		// every pass either resolves a sentinel or the loop is already done.
+		let out = text;
+		for (let pass = 0; pass < 5; pass++) {
+			const next = out.replace(/\[\[T(\d+)\]\]/g, (_, i) => tokens[Number(i)] ?? '');
+			if (next === out) break;
+			out = next;
+		}
+		return out;
 	}
 
 	return { mask, unmask };
@@ -194,6 +234,14 @@ export function lintLocale(source, target, { code, doNotTranslate = [] } = {}) {
 			if (sv.includes(term) && !tv.includes(term)) {
 				problems.push(`[${code}] glossary term dropped in ${k}: "${term}"`);
 			}
+		}
+
+		// The translation must render the same markup as the source. The `key:`
+		// shape matters beyond readability - `--repair` parses these lines to
+		// decide which keys to re-translate.
+		if (markupDrift(sv, tv)) {
+			const show = (s) => (s.match(TAG_RE) || []).join(' ').slice(0, 120) || '∅';
+			problems.push(`[${code}] markup drift in ${k}: ${show(sv)} → ${show(tv)}`);
 		}
 	}
 

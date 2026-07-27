@@ -24,10 +24,13 @@
 //   node scripts/i18n-translate.mjs --locale=es     # one locale
 //   node scripts/i18n-translate.mjs --force         # retranslate everything
 //   node scripts/i18n-translate.mjs --lint          # validate only (build gate, no API key needed)
+//   node scripts/i18n-translate.mjs --repair        # re-translate only lint-failing keys
 //   node scripts/i18n-translate.mjs --dry-run       # report what would translate
+//   node scripts/i18n-translate.mjs --concurrency=8 # widen the chunk pool for a bulk run
 
 import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { config as dotenv } from 'dotenv';
 import JSON5 from 'json5';
 import {
 	ROOT,
@@ -41,7 +44,17 @@ import {
 	mergeOrdered,
 	buildMasker,
 	lintLocale,
+	markupDrift,
 } from './lib/i18n-shared.mjs';
+
+// The backend credentials live in .env alongside every other platform secret.
+// Without this the default provider (vertex) has no project, every call fails
+// its config check, and the run bakes English into the whole catalog - the
+// silent-English failure `i18n:backfill` exists to clean up afterwards. dotenv
+// never overrides a var already exported, so a one-off `GEMINI_API_KEY=… npm
+// run i18n:translate` still wins.
+dotenv({ path: new URL('../.env', import.meta.url), quiet: true });
+dotenv({ path: new URL('../.env.local', import.meta.url), quiet: true });
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);
@@ -56,6 +69,11 @@ const cfg = loadConfig();
 // --model=openai/gpt-4o-mini when the default GCP/Vertex path is unavailable).
 if (opt('provider')) cfg.provider = opt('provider');
 if (opt('model')) cfg.modelName = opt('model');
+// The committed concurrency is tuned for free-tier lanes that rate-limit hard.
+// A Vertex run billed to the platform's own project has far more headroom, and
+// a from-scratch locale is ~550 chunks, so let a bulk run open it up without
+// editing the config every other lane still depends on.
+if (opt('concurrency')) cfg.concurrency = Math.max(1, Number(opt('concurrency')) || cfg.concurrency);
 const sourcePath = resolve(ROOT, cfg.entry);
 const source = readJSON(sourcePath);
 if (!source) {
@@ -172,6 +190,17 @@ function httpError(provider, status, body, retryAfter) {
 	});
 }
 
+/**
+ * A backend that is not configured at all - no key, no project. Distinct from a
+ * key the model choked on, and it must never be treated like one: the per-key
+ * fallback bakes the English source, so an unconfigured provider would quietly
+ * rewrite an entire catalog into English and leave lint green. Marked so the
+ * run can abort instead.
+ */
+function configError(message) {
+	return Object.assign(new Error(message), { isConfigError: true });
+}
+
 function modelName() {
 	return cfg.modelName || PROVIDER_DEFAULT_MODEL[cfg.provider] || PROVIDER_DEFAULT_MODEL.gemini;
 }
@@ -207,7 +236,7 @@ async function callGemini(prompt) {
 		process.env.GOOGLE_API_KEY ||
 		process.env.GOOGLE_GENAI_API_KEY;
 	if (!key)
-		throw new Error(
+		throw configError(
 			'GEMINI_API_KEY (or GOOGLE_API_KEY) not set — free keys: https://aistudio.google.com/apikey',
 		);
 	const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName()}:generateContent?key=${key}`;
@@ -238,7 +267,7 @@ async function callGemini(prompt) {
 
 async function callAnthropic(prompt) {
 	const key = process.env.ANTHROPIC_API_KEY;
-	if (!key) throw new Error('ANTHROPIC_API_KEY not set');
+	if (!key) throw configError('ANTHROPIC_API_KEY not set');
 	const res = await fetch('https://api.anthropic.com/v1/messages', {
 		method: 'POST',
 		headers: {
@@ -278,19 +307,47 @@ async function callAnthropic(prompt) {
 // max_tokens (as the chat-completion callers elsewhere use) can burn the
 // whole budget on reasoning and return empty content with
 // finish_reason:"length". Use a generous ceiling, matching callAnthropic's.
+// Mint a Vertex access token, preferring the same service-account path every
+// other platform Vertex caller uses. That path is built for Cloud Run and
+// Vercel, where a service account is attached or pasted into the environment;
+// on a developer machine neither exists, but an authenticated `gcloud` almost
+// always does. Falling back to the CLI is what makes the committed default
+// provider actually runnable locally instead of failing into English.
+let _cliToken = { value: null, expiresAt: 0 };
+async function vertexToken() {
+	try {
+		const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
+		return await getGcpAccessToken();
+	} catch (err) {
+		if (err?.code !== 'unconfigured') throw err;
+	}
+	if (_cliToken.value && Date.now() < _cliToken.expiresAt) return _cliToken.value;
+	const { spawnSync } = await import('node:child_process');
+	const out = spawnSync('gcloud', ['auth', 'print-access-token'], { encoding: 'utf8' });
+	const token = out.status === 0 && out.stdout.trim();
+	if (!token) {
+		throw configError(
+			'No GCP credentials for vertex: set GCP_SERVICE_ACCOUNT_JSON, or run `gcloud auth login` ' +
+				'(the CLI token is used automatically). Alternatively pass --provider=gemini with GOOGLE_API_KEY set.',
+		);
+	}
+	// gcloud tokens last an hour; re-shell every 45 minutes rather than per call.
+	_cliToken = { value: token, expiresAt: Date.now() + 45 * 60 * 1000 };
+	return token;
+}
+
 async function callVertex(prompt) {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	if (!project) {
-		throw new Error(
+		throw configError(
 			'GOOGLE_CLOUD_PROJECT not set — vertex needs the same GCP project + credentials ' +
 				'(GCP_SERVICE_ACCOUNT_JSON, or the Cloud Run/GCE metadata server) as the rest of the ' +
 				'platform\'s Vertex AI callers.',
 		);
 	}
-	const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
 	const location = process.env.GOOGLE_CLOUD_LOCATION_GEMINI || 'global';
 	const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
-	const token = await getGcpAccessToken();
+	const token = await vertexToken();
 	const res = await fetch(
 		`https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`,
 		{
@@ -319,7 +376,7 @@ async function callVertex(prompt) {
 async function callOpenAICompat(prompt, providerName = cfg.provider, modelOverride = null) {
 	const spec = OPENAI_COMPAT[providerName];
 	const key = process.env[spec.envKey];
-	if (!key) throw new Error(`${spec.envKey} not set`);
+	if (!key) throw configError(`${spec.envKey} not set`);
 	const body = {
 		model: modelOverride || modelName(),
 		temperature: cfg.temperature ?? 0.2,
@@ -407,6 +464,9 @@ async function callBackendWithRetry(call, langName, payload, attempt = 0) {
 		if (!parsed || typeof parsed !== 'object') throw new Error('non-object response');
 		return parsed;
 	} catch (err) {
+		// A missing key or project is not transient - retrying it just burns the
+		// backoff budget on an outcome that cannot change.
+		if (err?.isConfigError) throw err;
 		// Free tiers rate-limit hard; honor Retry-After and back off more on a 429
 		// than on a transient parse/5xx error.
 		const max = err.status === 429 ? 5 : 2;
@@ -502,6 +562,13 @@ async function translateLocale(code) {
 		try {
 			out = await translateChunk(langName, payload);
 		} catch (err) {
+			// An unconfigured backend fails identically on every key, so the
+			// per-key English fallback below would march through the entire
+			// catalog rewriting it into English and finish "successfully". Fail
+			// the run instead: nothing already translated is lost (the pipeline
+			// persists after each chunk) and the operator gets the one line that
+			// actually tells them what to fix.
+			if (err?.isConfigError) throw err;
 			if (keys.length > 1) {
 				const mid = Math.ceil(keys.length / 2);
 				await translateKeySet(keys.slice(0, mid));
@@ -608,12 +675,18 @@ async function repairLocale(code, maxAttempts = 4) {
 		console.log(`◦ ${code}: not generated yet (skipped)`);
 		return { code, repaired: 0, baked: 0 };
 	}
-	// Only keys whose current value drops a glossary term or a placeholder.
+	// Only keys whose current value drops a glossary term, a placeholder, or an
+	// HTML entity - the three failures a re-translation reliably fixes.
 	const problems = lintLocale(source, existing, { code, doNotTranslate: cfg.doNotTranslate });
 	const failingKeys = [
 		...new Set(
 			problems
-				.map((p) => /(?:glossary term dropped|placeholder drift) in ([^:]+):/.exec(p)?.[1])
+				.map(
+					(p) =>
+						/(?:glossary term dropped|placeholder drift|markup drift) in ([^:]+):/.exec(
+							p,
+						)?.[1],
+				)
 				.filter(Boolean),
 		),
 	];
@@ -632,7 +705,8 @@ async function repairLocale(code, maxAttempts = 4) {
 		}
 		const srcVars = (sv.match(/\{\{[^}]+\}\}/g) || []).sort().join('|');
 		const tgtVars = (value.match(/\{\{[^}]+\}\}/g) || []).sort().join('|');
-		return srcVars === tgtVars;
+		if (srcVars !== tgtVars) return false;
+		return !markupDrift(sv, value);
 	};
 
 	let repaired = 0;

@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-07-27",
+			"title": "Translated pages no longer turn code samples into live 3D avatars",
+			"summary": "Our pages are written in English and machine-translated into 50 languages. When a page prints a code sample, the sample is stored in an escaped form so the browser shows it as text instead of running it. The translator did not know that, and on 289 pieces of copy across 46 languages it quietly un-escaped them. The worst case: a documentation page showing readers how to write the <agent-3d> embed tag stopped printing the tag and started running it, so a live 3D avatar appeared in the middle of the instructions and the sentence after it disappeared. Every one of those has been repaired, the translator now treats escaped markup as untouchable the same way it already protects $THREE and wallet addresses, and a new build check refuses to ship a translation whose markup does not match the English.",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "A translation run can no longer fail quietly into English",
+			"summary": "If the translation service was unreachable when a language was being built, the pipeline filled the gaps with the original English and finished reporting success. Nothing flagged it: the language looked complete, passed every check, and stayed in the language picker while reading as English. That is now impossible. A missing credential is recognised as a setup problem rather than a bad sentence, so the run stops immediately with the one line explaining what to fix, and everything already translated is kept. The pipeline also reads its credentials from the project's own configuration now, which is what made the failure so easy to trigger in the first place.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-27",
 			"title": "Chat works again: every built-in model had been retired",
 			"summary": "The AI provider behind three.ws's free chat models retired all five of the built-in models at once, without notice. Because the model names were written into the app, every new conversation opened on a model that no longer existed, and the first message anyone sent came back as \"This model is unavailable for free\" instead of an answer. Chat now reads the list of working models from the provider directly, every time, and opens on one that is actually running. If a model is retired mid-conversation, the request quietly rolls over to a working one instead of failing. The same fix covers the model pickers on the avatar, brain, embed and dashboard pages, which were offering the same dead models.",
 			"tags": [
