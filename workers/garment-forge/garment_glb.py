@@ -104,12 +104,30 @@ RIG_BONES_MIN_SHARE = 0.001
 # The walk-gait audit (npm run audit:garments) is the detector if any of these
 # ever drifts: 2026-07-27 baseline has all three comfortably inside their
 # ceilings (hair p95 13.4 of 20 cm, glasses 10.9 of 12, accessory 8.0 of 25).
+# `max_extent` (optional) is the plausibility envelope for the FINISHED,
+# placed mesh, in the same meters. The fit axis pins the invariant dimension
+# but nothing else bounds the others, so a generator that renders hair
+# streaming dramatically produced a mesh 1.43 m DEEP whose width was still a
+# perfect 0.30 (live defect 2026-07-27: it floated 36 cm above the crown and
+# measured p95 53 cm / max 78 cm off the body in the gait audit). A mesh that
+# far outside its envelope is malformed, not mis-scaled, and no placement math
+# rescues it, so the job FAILS with the numbers instead of publishing it. This
+# is the geometric sibling of the MIN_BIND_COVERAGE gate.
+#
+# `anchor` (optional, per axis) controls how the mesh lands in the box.
+# Hair hangs DOWN from the crown, so centering a tall hairstyle on the box
+# center pushes half of it above the head; anchoring its top to the top of the
+# box is what "sits on the head" actually means.
 SLOT_BOXES = {
     "top":       {"center": (0.0, 1.14, 0.03),  "size": (0.90, 0.56, 0.45), "fit": 1},
     "outerwear": {"center": (0.0, 1.05, 0.03),  "size": (1.00, 0.80, 0.50), "fit": 1},
     "bottom":    {"center": (0.0, 0.50, 0.02),  "size": (0.50, 0.90, 0.35), "fit": 1},
     "footwear":  {"center": (0.0, 0.09, 0.07),  "size": (0.60, 0.18, 0.30), "fit": 2},
-    "hair":      {"center": (0.0, 1.58, 0.03),  "size": (0.30, 0.25, 0.30), "fit": 0},
+    # Hair: width tracks head width (fit 0), the envelope allows everything
+    # from a pixie to waist-length (0.80 m tall), and the top anchors to the
+    # crown so length hangs down the back instead of floating overhead.
+    "hair":      {"center": (0.0, 1.58, 0.03),  "size": (0.30, 0.25, 0.30), "fit": 0,
+                  "max_extent": (0.34, 0.80, 0.40), "anchor_y": "top"},
     # Headwear is CONTAIN-fit (bounded on every axis): generated caps carry
     # deep brims, so scaling by width alone let a 2:1 depth:width cap jut some
     # 30 cm past the face (walk-gait audit 2026-07-26: cap p95 21-23 cm vs the
@@ -123,6 +141,53 @@ SLOT_BOXES = {
 # Where each foot's center sits on the reference body (x), for snapping a
 # placed shoe pair onto the actual stance. Measured with the box numbers above.
 FOOT_CENTERS_X = (-0.222, 0.222)
+
+# ── Proportion envelope: the publish gate for a malformed mesh ──────────────
+# Maximum plausible extent (w, h, d) in reference-body meters for a finished
+# garment in each slot. Placement scales along ONE axis (or contains, for
+# headwear), which sizes a well-formed mesh correctly but cannot save a
+# badly-proportioned one: a generated "long straight hair" arrived as a 1.43 m
+# DEEP curtain on a 1.667 m body, poking 36 cm above the skull, and published
+# because every other gate (bind coverage, manifest rules) passed. Scaling it
+# down would have made a tiny clump; the mesh itself is wrong, so the job must
+# fail and be regenerated rather than pollute the catalog.
+#
+# Set from measurement, not taste: `node scripts/measure-garment-extents.mjs`
+# prints per-slot maxima over the live catalog. Baseline 2026-07-27 (31 sane
+# pieces) sits comfortably inside every value below, and the one malformed
+# piece exceeds its slot on two axes at once. Re-run that script and widen a
+# value here if a legitimately-shaped garment is ever refused.
+SLOT_ENVELOPE = {
+    "top":       (0.90, 0.80, 0.45),   # observed max 0.59, 0.56, 0.27
+    "outerwear": (1.00, 1.10, 0.55),   # observed max 0.74, 0.80, 0.37
+    "bottom":    (0.75, 1.15, 0.55),   # observed max 0.52, 0.90, 0.36
+    "footwear":  (0.75, 0.35, 0.45),   # observed max 0.53, 0.10, 0.30
+    "hair":      (0.45, 0.75, 0.45),   # sane max 0.30, 0.32, 0.30; hair may hang to the hips
+    "headwear":  (0.45, 0.40, 0.45),   # observed max 0.29, 0.22, 0.30
+    "glasses":   (0.28, 0.20, 0.42),   # observed max 0.18, 0.06, 0.33 (long temples)
+    "accessory": (0.55, 0.75, 0.55),   # observed max 0.35, 0.55, 0.35
+}
+_AXIS_NAMES = ("width", "height", "depth")
+
+
+def proportion_failures(glb_bytes: bytes, slot: str) -> list[str]:
+    """Reasons this finished garment is too big to be what it claims to be.
+
+    Empty list = plausible. Any entry = a malformed mesh that must not be
+    published (see SLOT_ENVELOPE). Measured on the extracted garment, so it
+    reflects exactly what a wearer would load."""
+    envelope = SLOT_ENVELOPE.get(slot)
+    if envelope is None:
+        return [f"unknown slot '{slot}'"]
+    lo, hi = _bounds(_scene_meshes(glb_bytes))
+    extent = hi - lo
+    failures = []
+    for axis, limit in enumerate(envelope):
+        if extent[axis] > limit:
+            failures.append(
+                f"{_AXIS_NAMES[axis]} {extent[axis]:.2f}m exceeds the {slot} "
+                f"envelope of {limit:.2f}m (malformed mesh; regenerate)")
+    return failures
 
 GARMENT_PREFIX = "garment"
 REFBODY_PREFIX = "refbody"
@@ -190,10 +255,54 @@ def garment_placement(meshes: list[trimesh.Trimesh], slot: str, yaw_deg: float =
 
     center = (lo + hi) / 2.0
     target = np.array(box["center"], dtype=np.float64)
-    move = trimesh.transformations.translation_matrix(target - center * scale)
+    offset = target - center * scale
+    if box.get("anchor_y") == "top":
+        # Land the mesh's top on the top of the box rather than its center on
+        # the center: hair hangs down from the crown, it does not straddle it.
+        box_top = box["center"][1] + box["size"][1] / 2.0
+        offset[1] = box_top - hi[1] * scale
+    move = trimesh.transformations.translation_matrix(offset)
     scale_m = np.eye(4)
     scale_m[:3, :3] *= scale
     return move @ scale_m @ rot
+
+
+def assert_plausible_extents(meshes: list[trimesh.Trimesh], slot: str,
+                             placement: np.ndarray) -> np.ndarray:
+    """Reject a placed mesh that falls outside its slot's size envelope.
+
+    The fit axis pins one dimension; a generator can still hand back geometry
+    whose OTHER axes are wildly out of proportion (dramatically streaming
+    hair, a prop rendered with its packaging). Such a mesh is malformed rather
+    than mis-scaled: rescaling it to fit would shrink the invariant dimension
+    into uselessness, so the honest response is to fail the job with the
+    measurement, exactly as a sub-threshold bind coverage does.
+
+    Returns the placed extents (for logging) or raises ValueError.
+    """
+    box = SLOT_BOXES[slot]
+    placed = [m.copy() for m in meshes]
+    for m in placed:
+        m.apply_transform(placement)
+    lo, hi = _bounds(placed)
+    extent = hi - lo
+    limit = box.get("max_extent")
+    if limit is None:
+        return extent
+    limit = np.asarray(limit, dtype=np.float64)
+    over = extent > limit + 1e-9
+    if np.any(over):
+        axes = "xyz"
+        detail = ", ".join(
+            f"{axes[i]}={extent[i]:.3f}m (max {limit[i]:.3f}m)"
+            for i in range(3) if over[i]
+        )
+        raise ValueError(
+            f"generated {slot} mesh is out of proportion for its slot: {detail}. "
+            "The mesh is malformed rather than mis-scaled (rescaling it to fit "
+            "would shrink the fitted dimension into uselessness); regenerate."
+        )
+    return extent
 
 
 def compose_scene(garment_bytes: bytes, refbody_bytes: bytes, slot: str,
@@ -207,6 +316,9 @@ def compose_scene(garment_bytes: bytes, refbody_bytes: bytes, slot: str,
     body = _scene_meshes(refbody_bytes)
 
     placement = garment_placement(garment, slot, yaw_deg)
+    # Fail here, before a malformed mesh burns GPU minutes in the rigger and
+    # lands in the public catalog.
+    assert_plausible_extents(garment, slot, placement)
     placed_garment = []
     for m in garment:
         placed = m.copy()

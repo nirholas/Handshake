@@ -245,6 +245,39 @@ single = trimesh.creation.box(extents=(0.1, 0.1, 0.3))
 check("single component is not snapped",
       snap_pair_to_feet([single.copy()])[0].centroid[0] == single.centroid[0])
 
+# Hair anchors its TOP to the crown, so length hangs down the back instead of
+# floating above the head, and a wildly out-of-proportion mesh is REFUSED
+# rather than published. Both reproduce the live 2026-07-27 defect: a
+# "long straight black hair" mesh that came out 1.43 m deep and reached 36 cm
+# above the crown (gait p95 53 cm off the body).
+from garment_glb import assert_plausible_extents  # noqa: E402
+
+hair_box = SLOT_BOXES["hair"]
+crown = hair_box["center"][1] + hair_box["size"][1] / 2
+
+long_hair = trimesh.creation.box(extents=(0.30, 0.60, 0.20))
+hp = garment_placement([long_hair], "hair")
+placed_hair = long_hair.copy()
+placed_hair.apply_transform(hp)
+check("hair top anchors to the crown",
+      abs(placed_hair.bounds[1][1] - crown) < 1e-6, f"top={placed_hair.bounds[1][1]}")
+check("hair length hangs below the crown",
+      placed_hair.bounds[0][1] < crown, f"bottom={placed_hair.bounds[0][1]}")
+check("in-envelope hair is accepted",
+      assert_plausible_extents([long_hair], "hair", hp) is not None)
+
+# The real defect: width-fit is satisfied exactly, but depth is ~5x its
+# envelope, so the mesh must be refused with the measurement.
+runaway = trimesh.creation.box(extents=(0.30, 0.90, 1.45))
+runaway_place = garment_placement([runaway], "hair")
+try:
+    assert_plausible_extents([runaway], "hair", runaway_place)
+    check("runaway hair is refused", False, "no exception raised")
+except ValueError as exc:
+    check("runaway hair is refused", "out of proportion" in str(exc))
+    check("refusal names the offending axis and number",
+          "z=" in str(exc) and "max" in str(exc), str(exc)[:90])
+
 # Headwear is contain-fit: a cap with a deep brim (depth 2x width) must be
 # bounded by the box on EVERY axis, so depth becomes the limiting dimension
 # and the width scales down with it instead of blowing the brim past the face.
