@@ -1,5 +1,5 @@
 /**
- * recenter-hips.mjs — remove a constant Hips translation offset from a baked clip.
+ * recenter-hips.mjs: remove a constant Hips translation offset from a baked clip.
  *
  * Companion to `upright-hips.mjs`, which removes a constant *orientation* bias.
  * This module removes the constant *translation* bias that shows up in the same
@@ -9,7 +9,7 @@
  *
  * The retarget pipeline copies the Hips position track verbatim onto a canonical
  * (identity-rest) rig, so a baked armature offset is no longer cancelled by a
- * parent and the character stands permanently displaced from the origin — the
+ * parent and the character stands permanently displaced from the origin. The
  * `Offabean Dance` source lands ~1.5 m behind it and ~0.16 m above the rig's
  * standing hip height, which reads as an avatar floating off its mark and out of
  * frame. Every healthy clip in the library instead begins within a few
@@ -25,7 +25,7 @@
  * Opt-in per source via `recenterHips` in animations.config.json, for the same
  * reason `uprightFix` is opt-in: a clip authored to start off-origin (walking
  * into frame) must never be silently dragged onto the mark. The function is
- * self-gating regardless — an offset already within tolerance returns unchanged,
+ * self-gating regardless: an offset already within tolerance returns unchanged,
  * so applying it twice, or to a healthy clip, is a no-op.
  *
  * Operates on the three.js `AnimationClip.toJSON()` shape (`{ tracks: [{ name,
