@@ -15,6 +15,14 @@
 			<description>A detailed model can take several minutes, longer than an assistant will wait inside a single tool call. Those generations used to look like failures even though the GPU finished the model minutes later. The ChatGPT 3D Studio now returns a live handle with a countdown of how much time is left, and a new check_job tool collects the finished model when it lands. Poll responses carry elapsed time and a remaining estimate that counts down, the assistant sees progress instead of identical waiting frames, and the inline viewer shows a real &quot;still rendering&quot; panel rather than an empty one. A generation whose GPU worker dies mid-job is now automatically retried on a healthy engine instead of being written off, including when nobody is watching the page.</description>
 		</item>
 		<item>
+			<title>Chat works again: every built-in model had been retired</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-07-27:Chat works again: every built-in model had been retired</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The AI provider behind three.ws's free chat models retired all five of the built-in models at once, without notice. Because the model names were written into the app, every new conversation opened on a model that no longer existed, and the first message anyone sent came back as &quot;This model is unavailable for free&quot; instead of an answer. Chat now reads the list of working models from the provider directly, every time, and opens on one that is actually running. If a model is retired mid-conversation, the request quietly rolls over to a working one instead of failing. The same fix covers the model pickers on the avatar, brain, embed and dashboard pages, which were offering the same dead models.</description>
+		</item>
+		<item>
 			<title>Every 3D service we sell to other agents now ships parameters and a worked example</title>
 			<link>https://three.ws/docs/okx-marketplace</link>
 			<guid isPermaLink="false">2026-07-27:Every 3D service we sell to other agents now ships parameters and a worked example</guid>

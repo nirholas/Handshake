@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-27",
+			"title": "Chat works again: every built-in model had been retired",
+			"summary": "The AI provider behind three.ws's free chat models retired all five of the built-in models at once, without notice. Because the model names were written into the app, every new conversation opened on a model that no longer existed, and the first message anyone sent came back as \"This model is unavailable for free\" instead of an answer. Chat now reads the list of working models from the provider directly, every time, and opens on one that is actually running. If a model is retired mid-conversation, the request quietly rolls over to a working one instead of failing. The same fix covers the model pickers on the avatar, brain, embed and dashboard pages, which were offering the same dead models.",
+			"tags": [
+				"fix"
+			],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-07-27",
 			"title": "Every asset address in our docs and API examples now actually loads",
 			"summary": "For a long time our developer documentation, API response examples, and the skill file that AI agents read to embed a 3D avatar all pointed model and image URLs at an address that does not exist: there was never a DNS record behind it. Copy one of those examples and you got a connection failure, and an agent following the embed instructions produced a body URL that could never load. It appeared 181 times across 55 files, including every code sample in the 3D and MCP API references. All of them now point at the asset CDN we actually run, which serves the same files from three.ws itself, allows any site to load them, and caches at the edge for a month. The Spatial MCP reference page moved onto it too, which fixes something subtle: it had been loading its example model from a storage origin that is rate-limited and only answers requests from our own domain, so anyone copying that example to prove the standard is portable was blocked by the very page meant to demonstrate portability. A new check refuses to let a dead asset address into the codebase again, and it also pins the route the working URLs depend on, so the two cannot drift apart.",
 			"tags": [
