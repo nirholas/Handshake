@@ -186,13 +186,13 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs } = {}) {
 		} catch {
 			res = null;
 		}
-		// Transient conditions — a network blip, the shared status rate bucket
-		// answering 429, a 5xx from a rolling deploy — must NOT kill the loop:
+		// Transient conditions (a network blip, the shared status rate bucket
+		// answering 429, a 5xx from a rolling deploy) must NOT kill the loop:
 		// the job is still running server-side and this handle is the only way
 		// back to it. Only a clean, definitive 4xx (bad/expired job id) throws.
 		if (!res || res.status === 429 || res.status >= 500) {
 			if (++softFails >= 20) {
-				// Persistently unreachable — hand back the pending shape so the
+				// Persistently unreachable: hand back the pending shape so the
 				// caller returns a pollable handle, never a dead error.
 				return { ...(last || {}), _timedOut: true };
 			}

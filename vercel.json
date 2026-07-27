@@ -3929,6 +3929,10 @@
 			"dest": "/forged.html"
 		},
 		{
+			"src": "/wardrobe/?",
+			"dest": "/wardrobe.html"
+		},
+		{
 			"src": "/gallery",
 			"dest": "/gallery/index.html"
 		},

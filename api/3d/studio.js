@@ -130,14 +130,21 @@ export function shapePoll(data, base, jobId, title) {
 		};
 	}
 	// queued / running / anything transient → still pending; keep the title on the
-	// poll URL so it survives to the done response.
+	// poll URL so it survives to the done response. The published Actions contract
+	// (openai-actions.yaml) documents etaSeconds on pending states, so forward the
+	// live remaining estimate the poll now carries (falling back to the lane's
+	// total estimate) instead of leaving the GPT with N identical frames.
 	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
+	const etaRemaining = Number(data?.eta_remaining_seconds ?? data?.eta_seconds);
+	const elapsed = Number(data?.elapsed_seconds);
 	return {
 		status: 'pending',
 		job: jobId,
 		poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}${t}`,
 		...(preview ? { previewImageUrl: preview } : {}),
 		...(tier ? { tier } : {}),
+		...(Number.isFinite(etaRemaining) && etaRemaining > 0 ? { etaSeconds: Math.round(etaRemaining) } : {}),
+		...(Number.isFinite(elapsed) && elapsed >= 0 ? { elapsedSeconds: Math.round(elapsed) } : {}),
 	};
 }
 

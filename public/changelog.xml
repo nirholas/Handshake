@@ -103,6 +103,14 @@
 			<description>Opening the walk page used to show &quot;Coin worlds are temporarily unavailable&quot; whenever the community service behind the picker was unreachable, hiding every world behind a wall. The picker now falls back to the live pump.fun trending feed, so you can always browse and enter the hottest coin worlds; community stats simply reappear when the service comes back.</description>
 		</item>
 		<item>
+			<title>The Wardrobe opens: browse the garment catalog and forge your own pieces</title>
+			<link>https://three.ws/wardrobe</link>
+			<guid isPermaLink="false">2026-07-26:The Wardrobe opens: browse the garment catalog and forge your own pieces</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new public page, three.ws/wardrobe, shows every wearable in the garment catalog with search, slot filters, and an inline 3D viewer for any piece. It is also the first place anyone can generate a garment: type a description, pick a slot, and watch the real pipeline stages as the piece is built, rigged, validated, and published for everyone. Your avatar cards also gained a Customize button that opens the editor where outfits are worn and saved.</description>
+		</item>
+		<item>
 			<title>The Worlds lobby stays live through market-data outages</title>
 			<link>https://three.ws/worlds</link>
 			<guid isPermaLink="false">2026-07-26:The Worlds lobby stays live through market-data outages</guid>

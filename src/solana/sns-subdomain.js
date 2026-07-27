@@ -202,9 +202,18 @@ export async function createNamedSubdomain({
 		parentKp.publicKey,
 	);
 
-	// v3 returns a single TransactionInstruction (v0.1.x-era callers expected an
-	// array) — normalize so the spread below works against either shape.
-	const transferRes = await sns.transferSubdomain(connection, fullName, newOwnerKey, true);
+	// Pass the current owner explicitly: the subdomain account doesn't exist
+	// on-chain yet (its create ix is in this same tx), so letting the SDK look
+	// the owner up would throw. Right after createSubdomain the owner IS the
+	// parent owner. v3 returns a single TransactionInstruction (v0.1.x-era
+	// callers expected an array) — normalize so the spread below works.
+	const transferRes = await sns.transferSubdomain(
+		connection,
+		fullName,
+		newOwnerKey,
+		true,
+		parentKp.publicKey,
+	);
 	const transferIxs = Array.isArray(transferRes) ? transferRes : [transferRes];
 
 	const ixs = [...createIxs, urlRecordIx, ...transferIxs];

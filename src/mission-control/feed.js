@@ -45,7 +45,7 @@ export function createFeedPane({ store, bus, enrich, mount }) {
 		</div>
 		<div class="mc-filterbar" data-host="filterbar"></div>
 		<div class="mc-pane-body" data-host="body" tabindex="-1">
-			<div class="mc-vlist" data-host="vlist"><div class="mc-vlist-spacer" data-host="spacer"></div></div>
+			<div class="mc-vlist" data-host="vlist" role="listbox" aria-label="Token feed"><div class="mc-vlist-spacer" data-host="spacer" aria-hidden="true"></div></div>
 		</div>
 	`;
 

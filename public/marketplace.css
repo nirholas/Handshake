@@ -242,7 +242,7 @@ body.market-page > header {
 }
 .market-cat-chip .cat-chip-count {
 	font-size: 10px;
-	opacity: 0.6;
+	/* No opacity dim: 0.6 over the chip ink fails the 4.5:1 axe AA floor. */
 	font-weight: 600;
 }
 

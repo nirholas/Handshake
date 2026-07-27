@@ -8,7 +8,7 @@
 // its model quietly completed minutes later and the caller never learned the
 // job existed. The timed-out path now carries the job_id forward and the tool
 // hands back { status: 'pending', jobId, pollUrl } as a SUCCESS result; the
-// /api/forge?job= poll endpoint is public, so the handle is directly usable.
+// /api/gpt-forge?job= poll endpoint is public, so the handle is directly usable.
 
 import { describe, it, expect, vi } from 'vitest';
 
@@ -45,7 +45,7 @@ describe('studio pending handles', () => {
 		expect(result.isError).toBeFalsy();
 		expect(result.structuredContent.status).toBe('pending');
 		expect(result.structuredContent.jobId).toBe('job-abc123');
-		expect(result.structuredContent.pollUrl).toBe('https://three.ws/api/forge?job=job-abc123');
+		expect(result.structuredContent.pollUrl).toBe('https://three.ws/api/gpt-forge?job=job-abc123');
 		expect(result.content[0].text).toContain('still rendering');
 		expect(result.content[0].text).toContain(result.structuredContent.pollUrl);
 	});
@@ -57,7 +57,7 @@ describe('studio pending handles', () => {
 		expect(result.structuredContent).toMatchObject({
 			status: 'pending',
 			jobId: 'rig-xyz789',
-			pollUrl: 'https://three.ws/api/forge?job=rig-xyz789',
+			pollUrl: 'https://three.ws/api/gpt-forge?job=rig-xyz789',
 		});
 	});
 

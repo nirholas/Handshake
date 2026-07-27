@@ -259,7 +259,7 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 	try {
 		return await attempt();
 	} catch (err) {
-		// A no-image response with a transient finishReason (NO_IMAGE, OTHER — not
+		// A no-image response with a transient finishReason (NO_IMAGE, OTHER, but not
 		// the refusal classes) is a known Gemini flake worth exactly one re-roll:
 		// falling through to the generic text→image ladder loses the art-directed
 		// instruction, the negatives, and the QA gate, which is a far worse image

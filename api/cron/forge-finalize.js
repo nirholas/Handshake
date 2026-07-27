@@ -128,7 +128,7 @@ async function writeCronHop(replicateJobId, value) {
 // Unattended twin of the poll handler's automatic lane failover (api/forge.js
 // pollJob). The 30-minute worker orphan class lands here by construction: the
 // worker only declares an orphan long after every browser has stopped polling,
-// so the cron is the ONLY consumer of that failure — and before this it
+// so the cron is the ONLY consumer of that failure, and before this it
 // dead-ended the job permanently. The original inputs are still on the row;
 // resubmit to the next healthy lane instead. The successor gets its own
 // creation row (same client/user), so this same cron sweeps it to completion
@@ -150,8 +150,8 @@ async function tryCronRedispatch(row) {
 			path: row.path,
 		});
 		// The redispatch reconstructs from the primary stored view, so a
-		// multi-view original degrades visibly (views_used: 1), never silently —
-		// same provenance contract as the attended failover.
+		// multi-view original degrades visibly (views_used: 1), never silently:
+		// the same provenance contract as the attended failover.
 		await createCreation({
 			clientKey: row.client_key,
 			userId: row.user_id ?? null,
@@ -168,7 +168,7 @@ async function tryCronRedispatch(row) {
 		await writeCronHop(submitted.extJobId, { hop: hop + 1, attempted });
 		// A late attended poller still holds the original f1 handle. Job tokens
 		// are deterministic (HMAC over the same payload), so re-encoding the
-		// envelope reconstructs the exact string that client polls — bind the
+		// envelope reconstructs the exact string that client polls, so bind the
 		// successor chain on it so resolveLiveJob chases to the live job.
 		await bindJobSuccessor(
 			encodeJobToken({ provider: 'gcp', kind: null, taskId: row.replicate_job_id }),
@@ -255,7 +255,7 @@ export default wrapCron(async (req, res) => {
 			if (status?.status === 'failed') {
 				// Inside the attended window a live browser may poll this failure
 				// seconds from now and run its own failover; acting here would race
-				// it into duplicate GPU work. Leave the row — an attended client
+				// it into duplicate GPU work. Leave the row: an attended client
 				// resolves it, and an abandoned one ages into the branch below.
 				if (ageMinutes < ATTENDED_POLL_BUDGET_MINUTES) {
 					out.still_running++;
@@ -323,7 +323,7 @@ export default wrapCron(async (req, res) => {
 				// Browser/free-lane NIM rows store the BARE NVCF request id (only the
 				// x402 lane stores the signed token), so they used to be unpollable
 				// here and died at the hard TTL as "generation timed out" even when
-				// the GPU had finished. Poll the bare id directly — chasing the alias
+				// the GPU had finished. Poll the bare id directly, chasing the alias
 				// an attended expiry recovery may have written first.
 				const alias = await cacheGet(`nvcf:alias:${row.replicate_job_id}`).catch(() => null);
 				const taskId = typeof alias === 'string' && alias ? alias : row.replicate_job_id;

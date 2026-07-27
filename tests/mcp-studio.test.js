@@ -5,9 +5,10 @@ import { PERSONA_TOOL_CATALOG, PERSONA_TOOL_NAMES } from '../api/_mcp-studio/per
 import { dispatch } from '../api/_mcp-studio/dispatch.js';
 import { COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
 
-// The generation tools (render the model-viewer widget) + the three embodiment /
-// persona tools (render the living-body embed).
-const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model'];
+// The generation tools (render the model-viewer widget) + check_job (collects a
+// pending generation) + the three embodiment / persona tools (render the
+// living-body embed).
+const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
 const ALL = [...ALLOWED, ...PERSONA];
 
@@ -22,22 +23,23 @@ function mkReq() {
 const auth = { userId: null, rateKey: '127.0.0.1', scope: '' };
 
 describe('mcp-studio catalog', () => {
-	it('exposes exactly the six allowed generation tools', () => {
+	it('exposes exactly the allowed studio tools', () => {
 		const names = TOOL_CATALOG.map((t) => t.name).sort();
 		expect(names).toEqual([...ALLOWED].sort());
 		expect(TOOL_NAMES.sort()).toEqual([...ALLOWED].sort());
 	});
 
-	it('every tool has a title and correct generation annotations', () => {
+	it('every tool has a title and correct annotations', () => {
 		for (const t of TOOL_CATALOG) {
 			expect(typeof t.title).toBe('string');
 			expect(t.title.length).toBeGreaterThan(0);
-			expect(t.annotations).toMatchObject({
-				readOnlyHint: false,
-				destructiveHint: false,
-				idempotentHint: false,
-				openWorldHint: true,
-			});
+			// check_job is a status probe (read-only, idempotent); every generator
+			// creates a fresh asset per call.
+			expect(t.annotations).toMatchObject(
+				t.name === 'check_job'
+					? { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
+					: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+			);
 		}
 	});
 

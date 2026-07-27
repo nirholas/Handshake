@@ -198,7 +198,9 @@
 				<span class="ch-count" data-role="count" aria-live="polite"></span>
 			</div>
 
-			<div class="ch-chips" data-role="chips" role="tablist" aria-label="Filter by category"></div>
+			<!-- role="group", not "tablist": the chips are plain filter buttons, and tablist
+			     requires role="tab" children (axe aria-required-children, critical). -->
+			<div class="ch-chips" data-role="chips" role="group" aria-label="Filter by category"></div>
 
 			<div data-role="loading" class="ch-skeleton-grid" aria-label="Loading objects">
 				<div class="ch-skeleton"></div><div class="ch-skeleton"></div><div class="ch-skeleton"></div>

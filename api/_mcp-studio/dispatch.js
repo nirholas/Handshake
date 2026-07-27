@@ -21,9 +21,10 @@ import {
 	personaComponentCsp,
 } from './component.js';
 
-// The full catalog the free studio advertises: five generation tools + three
-// embodiment/persona tools. The persona tools render the persona widget (the
-// living-body embed) rather than the model-viewer widget, and they aren't in the
+// The full catalog the free studio advertises: the generation tools (five
+// generators + refine_model + the check_job collector) + three embodiment/
+// persona tools. The persona tools render the persona widget (the living-body
+// embed) rather than the model-viewer widget; they and check_job aren't in the
 // generation-quota set — see api/mcp-studio.js callsGenerationTool.
 const ALL_TOOL_CATALOG = [...TOOL_CATALOG, ...PERSONA_TOOL_CATALOG];
 const ALL_TOOLS = { ...TOOLS, ...PERSONA_TOOLS };
@@ -37,6 +38,9 @@ const INSTRUCTIONS = [
 	'forge_free(prompt) generates a model from text; text_to_avatar and mesh_forge generate an avatar or art-directed',
 	'mesh from text or a reference image; rig_mesh(glb_url) makes a static model animation-ready; forge_avatar does',
 	'generate + rig in one step. Each result includes a glbUrl and a viewerUrl and renders inline in a 3D viewer widget.',
+	'refine_model(glb_url, instruction) iterates on a generated model in plain language ("make it metallic") and keeps',
+	'a version lineage you can branch or revert. If a result comes back with status "pending", the model is still',
+	'rendering: call check_job(job_id) after the suggested wait to collect it.',
 	'To give the assistant a LIVING body: create_agent_persona(glb_url, name) saves a rigged model as a named,',
 	'persistent persona and returns a persona_id; persona_say(persona_id, text) makes that body lip-sync the reply and',
 	'emote; get_agent_persona(persona_id) brings the same body back in a later session. The persona renders inline and',

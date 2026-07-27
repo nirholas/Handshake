@@ -124,7 +124,7 @@ export const COMPONENT_HTML = `<!doctype html>
     <div id="loading" class="overlay">
       <div class="spinner" aria-hidden="true"></div>
       <div class="title">Generating your 3D model…</div>
-      <div class="muted">Text-to-3D runs on free GPU lanes and usually takes 15–60 seconds.</div>
+      <div class="muted">Runs on free GPU lanes. Drafts land in under a minute; detailed models can take a few minutes.</div>
     </div>
 
     <div id="empty" class="overlay hidden">
@@ -233,13 +233,34 @@ export const COMPONENT_HTML = `<!doctype html>
     versionsEl.classList.remove('hidden');
   }
 
+  var loadingTitle = loading.querySelector('.title');
+  var loadingMuted = loading.querySelector('.muted');
+  var defaultLoadingTitle = loadingTitle.textContent;
+  var defaultLoadingMuted = loadingMuted.textContent;
+
   function render(out) {
     if (!out) { mv.classList.add('veiled'); bar.classList.add('hidden'); versionsEl.classList.add('hidden'); show(empty); return; }
+    // A pending envelope means the job is real and still running server-side.
+    // Rendering it as "No model yet" (the old fallthrough) read as a failure;
+    // show the designed in-progress state with the live timing instead.
+    if (out.status === 'pending') {
+      clearTimeout(loadWatchdog);
+      mv.classList.add('veiled'); bar.classList.add('hidden'); versionsEl.classList.add('hidden');
+      loadingTitle.textContent = 'Still rendering your 3D model…';
+      var eta = Number(out.etaRemainingSeconds);
+      loadingMuted.textContent =
+        (isFinite(eta) && eta > 0 ? 'Roughly ' + Math.round(eta) + 's to go. ' : '') +
+        'It keeps running in the background. Ask to check the job to collect the finished model.';
+      show(loading);
+      return;
+    }
     if (out.error || out.message && !out.glbUrl) { fail(out.message || 'Generation did not return a model.'); return; }
     var glb = out.glbUrl;
     if (!isHttps(glb)) { mv.classList.add('veiled'); bar.classList.add('hidden'); versionsEl.classList.add('hidden'); show(empty); return; }
 
     swapping = false;
+    loadingTitle.textContent = defaultLoadingTitle;
+    loadingMuted.textContent = defaultLoadingMuted;
     show(loading);
     mv.classList.remove('fading');
     mv.classList.add('veiled');

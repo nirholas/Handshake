@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-26T21:28:09.121Z",
+	"generated_at": "2026-07-26T21:53:27.185Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -90,6 +90,16 @@
 					"title": "Agent-Forged Gallery",
 					"description": "3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.",
 					"added": "2026-07-25",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/wardrobe",
+					"title": "Wardrobe",
+					"description": "The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.",
+					"added": "2026-07-26",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

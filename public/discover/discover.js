@@ -506,9 +506,9 @@ function renderOnchainCard(item) {
 			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
 			${serviceChips ? `<div class="explore-card-svcs">${serviceChips}</div>` : ''}
 			<div class="explore-card-foot">
-				<a class="explore-card-owner" href="${escapeAttr(item.ownerExplorerUrl || '#')}" target="_blank" rel="noopener" title="${escapeAttr(item.owner)}">
-					${escapeHtml(item.ownerShort)}
-				</a>
+				${item.ownerShort && item.ownerExplorerUrl
+					? `<a class="explore-card-owner" href="${escapeAttr(item.ownerExplorerUrl)}" target="_blank" rel="noopener" title="${escapeAttr(item.owner)}">${escapeHtml(item.ownerShort)}</a>`
+					: '<span class="explore-card-owner-empty" aria-hidden="true"></span>'}
 				<div class="explore-card-actions">
 					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
 					${item.viewerUrl ? `<a class="explore-card-link" href="${escapeAttr(item.viewerUrl)}">View 3D</a>` : ''}
@@ -615,9 +615,9 @@ function renderSolanaCard(item) {
 			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
 			${skillChips ? `<div class="explore-card-svcs">${skillChips}</div>` : ''}
 			<div class="explore-card-foot">
-				<a class="explore-card-owner" href="${escapeAttr(item.ownerExplorerUrl || '#')}" target="_blank" rel="noopener" title="${escapeAttr(item.owner || '')}">
-					${escapeHtml(item.ownerShort || '')}
-				</a>
+				${(item.ownerShort || '') && item.ownerExplorerUrl
+					? `<a class="explore-card-owner" href="${escapeAttr(item.ownerExplorerUrl)}" target="_blank" rel="noopener" title="${escapeAttr(item.owner || '')}">${escapeHtml(item.ownerShort)}</a>`
+					: '<span class="explore-card-owner-empty" aria-hidden="true"></span>'}
 				<div class="explore-card-actions">
 					<a class="explore-card-link" href="${escapeAttr(detailUrl)}">Details</a>
 					<a class="explore-card-link" href="${escapeAttr(item.explorerUrl || '#')}" target="_blank" rel="noopener">Solscan</a>

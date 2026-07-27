@@ -1180,6 +1180,22 @@ export const env = {
 		return normalizeRpcUrl(opt('SOLANA_RPC_URL_DEVNET', '')) || 'https://api.devnet.solana.com';
 	},
 
+	// ── native launchpad (Meteora DBC lane) ──────────────────────────────
+	// Partner curve-config pubkeys, one per network — created once by
+	// scripts/native-launchpad-create-config.mjs. Unset → the native lane
+	// responds 503 lane_not_configured on that network.
+	get NATIVE_LAUNCH_CONFIG_KEY() {
+		return addr(opt('NATIVE_LAUNCH_CONFIG_KEY'));
+	},
+	get NATIVE_LAUNCH_CONFIG_KEY_DEVNET() {
+		return addr(opt('NATIVE_LAUNCH_CONFIG_KEY_DEVNET'));
+	},
+	// Platform trading-fee claimer + leftover receiver for native launches.
+	// Defaults (in the create-config script) to the treasury wallet.
+	get NATIVE_LAUNCH_FEE_WALLET() {
+		return addr(opt('NATIVE_LAUNCH_FEE_WALLET'));
+	},
+
 	// ── threews.sol subdomain minting ─────────────────────────────────────
 	// Parent .sol domain we mint subdomains under (e.g. `threews.sol`). The
 	// platform must own this domain on-chain via THREEWS_SOL_PARENT_SECRET_BASE58.

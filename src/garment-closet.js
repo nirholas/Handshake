@@ -347,7 +347,7 @@ export async function renderClosetSection({ container, closet }) {
 		container.innerHTML = `
 			<div class="gc-empty">
 				The closet is empty right now — new pieces land here as they're
-				published. Generate your own on <a href="/forge">/forge</a>.
+				published. Browse and generate pieces on <a href="/wardrobe">/wardrobe</a>.
 			</div>`;
 		return;
 	}

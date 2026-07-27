@@ -16104,6 +16104,15 @@
 				"fix"
 			],
 			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-07-26",
+			"title": "The Wardrobe opens: browse the garment catalog and forge your own pieces",
+			"summary": "A new public page, three.ws/wardrobe, shows every wearable in the garment catalog with search, slot filters, and an inline 3D viewer for any piece. It is also the first place anyone can generate a garment: type a description, pick a slot, and watch the real pipeline stages as the piece is built, rigged, validated, and published for everyone. Your avatar cards also gained a Customize button that opens the editor where outfits are worn and saved.",
+			"tags": [
+				"feature"
+			],
+			"link": "/wardrobe"
 		}
 	]
 }

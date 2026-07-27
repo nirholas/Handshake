@@ -1354,7 +1354,7 @@ function renderGrid() {
 		(state.filter === 'onchain' && state.onchainCursor);
 	if (hasMore) {
 		html += '<div class="market-scroll-sentinel" aria-hidden="true"></div>';
-		html += '<div class="market-loadmore-spinner" aria-label="Loading more…"></div>';
+		html += '<div class="market-loadmore-spinner" role="status" aria-label="Loading more…"></div>';
 	}
 
 	els.grid.removeAttribute('aria-busy');

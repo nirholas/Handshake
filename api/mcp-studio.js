@@ -22,7 +22,10 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { dispatch, PROTOCOL_VERSION } from './_mcp-studio/dispatch.js';
 import { TOOL_NAMES } from './_mcp-studio/tools.js';
 
-const GEN_TOOLS = new Set(TOOL_NAMES);
+// check_job is a status probe, not a generation: it must never burn the
+// caller's generation quota, or collecting a pending job could be rate-blocked
+// by the very generation that created it. It rides the transport cap only.
+const GEN_TOOLS = new Set(TOOL_NAMES.filter((name) => name !== 'check_job'));
 
 function rpcError(res, status, code, message, extra = {}) {
 	res.statusCode = status;

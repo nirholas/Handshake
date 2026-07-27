@@ -61,6 +61,12 @@ URL: https://three.ws/forged
 
 3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.
 
+### Wardrobe
+
+URL: https://three.ws/wardrobe
+
+The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.
+
 ### Diorama
 
 URL: https://three.ws/diorama

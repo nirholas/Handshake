@@ -340,6 +340,7 @@ function renderAvatarCards(host, avatars, agents) {
 					</div>
 					<div class="ame-avatar-footer-right">
 						<a class="ame-btn ghost tiny" href="/agents/${encodeURIComponent(av.id)}" title="View">View</a>
+						<a class="ame-btn ghost tiny" href="/avatar-edit?id=${encodeURIComponent(av.id)}" title="Customize: wardrobe, sculpt, animate">Customize</a>
 						<button class="ame-btn ghost tiny" data-action="selfie" data-avatar-id="${esc(av.id)}" title="Update from selfie">Selfie</button>
 						<button class="ame-btn ghost tiny" data-action="share" data-avatar-id="${esc(av.id)}" data-name="${name}" title="Share">Share</button>
 						<a class="ame-btn ghost tiny" href="/temporary?avatar=${encodeURIComponent(av.id)}" title="Walk">Walk</a>

@@ -84,6 +84,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/wardrobe",
+					"title": "Wardrobe",
+					"description": "The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-26",
+					"showcase": true
+				},
+				{
 					"path": "/diorama",
 					"title": "Diorama",
 					"description": "Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",

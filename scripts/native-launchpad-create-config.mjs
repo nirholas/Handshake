@@ -18,7 +18,7 @@
 
 import 'dotenv/config';
 import bs58 from 'bs58';
-import { Connection, Keypair, PublicKey, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { DynamicBondingCurveClient, buildCurveWithMarketCap } from '@meteora-ag/dynamic-bonding-curve-sdk';
 import { curveBuildParams } from '../api/_lib/native-launch/config.js';
@@ -85,9 +85,28 @@ const tx = await client.partner.createConfig({
 	payer: partner.publicKey,
 });
 
-const sig = await sendAndConfirmTransaction(connection, tx, [partner, configKeypair], {
-	commitment: 'confirmed',
-});
+// Poll for confirmation instead of sendAndConfirmTransaction: several devnet
+// RPCs (e.g. Alchemy) reject the signatureSubscribe websocket, which makes the
+// subscription-based confirm throw expiry errors on transactions that landed.
+tx.feePayer = partner.publicKey;
+tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+tx.sign(partner, configKeypair);
+const sig = await connection.sendRawTransaction(tx.serialize());
+let landed = false;
+for (let i = 0; i < 40 && !landed; i++) {
+	await new Promise((r) => setTimeout(r, 1500));
+	const st = await connection.getSignatureStatuses([sig]);
+	const s = st.value?.[0];
+	if (s?.err) {
+		console.error('transaction failed:', JSON.stringify(s.err));
+		process.exit(1);
+	}
+	landed = s?.confirmationStatus === 'confirmed' || s?.confirmationStatus === 'finalized';
+}
+if (!landed) {
+	console.error(`confirmation timed out — check the signature manually: ${sig}`);
+	process.exit(1);
+}
 
 console.log('');
 console.log(`config created: ${configKeypair.publicKey.toBase58()}`);

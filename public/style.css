@@ -8544,7 +8544,8 @@ textarea.erc8004-code {
 		SF Mono,
 		Menlo,
 		monospace;
-	color: rgba(255, 255, 255, 0.4);
+	/* 0.62, not 0.4: 0.4 measured ~3.5:1 on the card bg (axe AA needs 4.5:1). */
+	color: rgba(255, 255, 255, 0.62);
 	text-decoration: none;
 }
 .explore-card-owner:hover {

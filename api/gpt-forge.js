@@ -2975,8 +2975,8 @@ async function pollJob(req, res, jobId) {
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
 	}
-	// Pending polls carry timing — elapsed since submit plus the lane's typical
-	// total — so agent surfaces (ChatGPT sees ONLY poll frames after submit) can
+	// Pending polls carry timing (elapsed since submit plus the lane's typical
+	// total) so agent surfaces (ChatGPT sees ONLY poll frames after submit) can
 	// narrate real progress and a sane retry cadence instead of N identical
 	// "still running" frames. eta_remaining_seconds is floored at 5: the estimate
 	// is a typical duration, not a deadline, and a negative countdown reads as

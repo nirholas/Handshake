@@ -133,7 +133,7 @@ function render() {
 				<h3 class="wd-name" title="${esc(g.name)}">${esc(g.name)}</h3>
 				<p class="wd-meta">v${version} · ${esc(g.license || '')}${g.source?.kind === 'generated' ? ' · generated' : ''}</p>
 				<div class="wd-actions">
-					<a class="wd-btn wd-btn--primary" href="/avatars" title="Open one of your avatars in the editor, Wardrobe tab">Dress your avatar</a>
+					<a class="wd-btn wd-btn--primary" href="/a/me" title="Open one of your avatars in the editor, Wardrobe tab">Dress your avatar</a>
 				</div>
 			</div>
 		</article>`;

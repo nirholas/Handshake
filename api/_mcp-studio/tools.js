@@ -1,6 +1,6 @@
 // three.ws 3D Studio (free) — tool catalog + handlers.
 //
-// Six generation tools (five generators + refine_model), all FREE (no x402, no
+// Seven tools (five generators + refine_model + check_job), all FREE (no x402, no
 // wallet, no API key): the platform's server-side keys cover provider cost via
 // /api/forge (the public, auth-free twin of the paid pipeline). refine_model adds
 // conversational iteration — describe a change and it re-generates a new version
@@ -142,14 +142,14 @@ function toolError(message) {
 // is public (the free /api/forge poll endpoint takes it with no auth), so hand
 // it over and let the caller collect the result.
 function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds }) {
-	// The ChatGPT pipeline's own endpoint, not /api/forge — the whole point of
+	// The ChatGPT pipeline's own endpoint, not /api/forge: the whole point of
 	// the clone is that this surface can evolve independently.
 	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
 	const eta = Number.isFinite(etaRemainingSeconds) && etaRemainingSeconds > 0 ? Math.round(etaRemainingSeconds) : null;
 	const message =
 		`The ${what} is still rendering (heavier scenes take a few minutes)` +
-		`${eta ? ` — roughly ${eta}s to go` : ''}. ` +
-		`It keeps running — call the check_job tool with this job_id${eta ? ` in ~${eta}s` : ' shortly'} to collect it, ` +
+		`${eta ? ` (roughly ${eta}s to go)` : ''}. ` +
+		`It keeps running: call the check_job tool with this job_id${eta ? ` in ~${eta}s` : ' shortly'} to collect it, ` +
 		`or poll ${pollUrl} until status is "done", then use its glb_url ` +
 		`(view at ${base}/viewer?src=<glb_url>).`;
 	return {
@@ -228,7 +228,7 @@ function failureMessage(err) {
 		case 'not_configured':
 			return 'This capability is temporarily unavailable. Please try again later.';
 		case 'generation_failed':
-			return 'Generation failed for this prompt. Try again — a retry is routed to a healthy engine — or rephrase it.';
+			return 'Generation failed for this prompt. Try again (a retry is routed to a healthy engine) or rephrase it.';
 		default:
 			return 'Could not generate the model right now. Please try again.';
 	}
