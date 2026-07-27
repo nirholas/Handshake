@@ -18,7 +18,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { flatten, prune, untranslated } from '../scripts/i18n-backfill.mjs';
+import { flatten, prune, translatingLocales, untranslated } from '../scripts/i18n-backfill.mjs';
 
 describe('flatten', () => {
 	it('maps a nested catalog to dot paths', () => {
@@ -107,5 +107,26 @@ describe('prune', () => {
 
 	it('passes non-string values through untouched', () => {
 		expect(prune({ count: 3, flag: false }, {})).toEqual({ count: 3, flag: false });
+	});
+});
+
+describe('translatingLocales', () => {
+	const PS = [
+		'/usr/bin/node /repo/scripts/i18n-translate.mjs --locale=de --concurrency=8',
+		'/usr/bin/node /repo/scripts/i18n-translate.mjs --repair --locale=he',
+		'/usr/bin/node /repo/scripts/i18n-extract.mjs',
+		'grep --color i18n-translate.mjs',
+	].join('\n');
+
+	it('reads the locales other translate processes are writing', () => {
+		expect(translatingLocales(PS)).toEqual(new Set(['de', 'he']));
+	});
+
+	it('ignores lines that are not a translate run', () => {
+		expect(translatingLocales('node /repo/scripts/i18n-backfill.mjs --locale=fr')).toEqual(new Set());
+	});
+
+	it('returns nothing when no run is active, so the backfill is not blocked', () => {
+		expect(translatingLocales('')).toEqual(new Set());
 	});
 });

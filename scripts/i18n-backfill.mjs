@@ -67,6 +67,24 @@ export function flatten(node, prefix = '', out = {}) {
 	return out;
 }
 
+/**
+ * Locale codes another i18n-translate process is writing right now, read from
+ * the process table. Matches both `--locale=de` and `--repair --locale=de`.
+ * Exported for tests; returns an empty set wherever `ps` is unavailable, which
+ * degrades to the old always-proceed behaviour rather than blocking the tool.
+ */
+export function translatingLocales(psOutput) {
+	const out =
+		psOutput ?? spawnSync('ps', ['-eo', 'args'], { encoding: 'utf8' }).stdout ?? '';
+	const codes = new Set();
+	for (const line of out.split('\n')) {
+		if (!line.includes('i18n-translate.mjs')) continue;
+		const m = /--locale=([A-Za-z-]+)/.exec(line);
+		if (m) codes.add(m[1]);
+	}
+	return codes;
+}
+
 /** A value worth re-translating: identical to English, and more than one word. */
 export const untranslated = (value, english) =>
 	typeof english === 'string' && value === english && /\s/.test(english.trim());
@@ -127,10 +145,21 @@ function main() {
 		return;
 	}
 
-	// Two translators rewriting the same catalogs drop each other's keys.
-	const running = spawnSync('pgrep', ['-f', 'i18n-translate.mjs'], { encoding: 'utf8' });
-	if (running.stdout?.trim()) {
-		console.error('\nA translation run is already in progress; wait for it to finish first.');
+	// Two translators rewriting the SAME catalog drop each other's keys. Two
+	// working on different locales cannot: one file, one writer. Concurrent
+	// agents share this worktree and there is nearly always some locale being
+	// translated, so this check is per-locale rather than global -- a global
+	// check makes the backfill unrunnable instead of safe.
+	const busy = translatingLocales();
+	const collides = survey
+		.filter((r) => r.stale >= MIN && (!SHIPPED_ONLY || shipped.has(r.code) || only))
+		.map((r) => r.code)
+		.filter((code) => busy.has(code));
+	if (collides.length) {
+		console.error(
+			`\nAlready being translated by another process: ${collides.join(', ')}. ` +
+				'Wait for those to finish, or pass --locale= for one that is free.',
+		);
 		process.exit(1);
 	}
 
