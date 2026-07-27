@@ -163,7 +163,13 @@ function main() {
 		process.exit(1);
 	}
 
-	const passthrough = ['provider', 'model'].flatMap((n) => (opt(n) ? [`--${n}=${opt(n)}`] : []));
+	// A backfill is a bulk job by definition (thousands of keys per locale), so
+	// it needs the same knobs as a bulk translate -- notably --concurrency, whose
+	// committed default of 2 is tuned for rate-limited free tiers and turns a
+	// large repair into an overnight run.
+	const passthrough = ['provider', 'model', 'concurrency'].flatMap((n) =>
+		opt(n) ? [`--${n}=${opt(n)}`] : [],
+	);
 	let repaired = 0;
 
 	for (const { code, stale } of survey) {
