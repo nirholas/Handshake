@@ -31,12 +31,28 @@
 			<description>Generated caps could come out with brims jutting past the face, and sneakers could hover away from the feet, because the forge sized those pieces by width alone: a deep-brimmed cap or a photographed pair of shoes standing close together gave the sizing step no useful signal. Caps are now scaled to fit the head on every dimension, and shoes are sized by foot length and placed onto each foot individually. Measured on a walking avatar, the worst-case gap between shoe and foot dropped from 34cm to 3cm, and cap overhang from 21cm to 8cm. Every piece in the catalog is now checked automatically: it must load, match its published fingerprint, and bind correctly onto four different avatar skeletons before it counts as good, with the pieces that failed the new bar replaced. A daily check also watches the live catalog for anything that breaks after the fact.</description>
 		</item>
 		<item>
+			<title>Solana name registration works again, and embeds stop crashing on older phones</title>
+			<link>https://three.ws/embed</link>
+			<guid isPermaLink="false">2026-07-27:Solana name registration works again, and embeds stop crashing on older phones</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Claiming a .sol domain for an agent, and claiming your own name under threews.sol, both ran against a Solana naming library so old that the functions doing the registering had been renamed out from under us: the calls resolved to nothing and the whole attempt failed. The library is now current, every naming path has been re-checked against the live Solana mainnet, and handing a fresh subdomain to its new owner no longer trips over an account that the same transaction is still creating. Looking up a wallet's primary name also stops reporting a name the wallet no longer owns. Separately, the embeddable 3D avatar used a newer JavaScript feature than some older Android browsers ship, so the avatar page went blank instead of loading; the missing piece is now included in the embed, which matters because the embed is designed to run on other people's sites where we do not get to pick the browser.</description>
+		</item>
+		<item>
 			<title>The 3D forge accepts all six reference photos again</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-27:The 3D forge accepts all six reference photos again</guid>
 			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The photo composer advertised six reference views but only built four slots, so filling the last one threw an error and stopped the upload. All six slots are now real and usable, which is the full set the generator accepts, and more views produce a sharper mesh. Text prompts also retry once when the concept-image step returns an empty result, instead of falling back to a lower-quality image lane.</description>
+		</item>
+		<item>
+			<title>The walkaround world now has a real time of day and /play's radar</title>
+			<link>https://three.ws/temporary</link>
+			<guid isPermaLink="false">2026-07-27:The walkaround world now has a real time of day and /play's radar</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Walk your avatar into the park at dusk and it actually looks like dusk. The sun rises, arcs overhead and sets, the sky graduates from night through dawn to day, and the lights and reflections follow it, all driven by the same shared world clock the coin worlds run on, so everyone standing in the same world sees the same sky at the same moment. Indoor stages keep their authored lighting and the cycle steps aside while the camera passthrough is on. The corner map was also replaced with the rotating radar from the coin worlds: it turns under a fixed player arrow, keeps a compass and the world boundary in view, and now shows other players in their nameplate colours alongside companions, live agent desks, the named landmarks your guide walks to, and the scenery around you. Click or tap the radar to send your avatar walking there. Press M to hide or show it and it remembers your choice.</description>
 		</item>
 		<item>
 			<title>The x402 payment lanes now stop when the treasury runs dry</title>
@@ -53,6 +69,14 @@
 			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The self-tuning loop judged each strategy on its average percentage return and win rate, which treat a tiny position and a large one as equal. A strategy could post a healthy-looking win rate while its biggest trades bled real SOL, and get rewarded with an even bigger position. The optimizer now shrinks a strategy whose average percentage is positive but whose actual profit is negative, since that pattern only occurs when the larger bets are the losing ones, and it refuses to scale any strategy up while it is down money.</description>
+		</item>
+		<item>
+			<title>Trading agents no longer lose slots to settled trades</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-27:Trading agents no longer lose slots to settled trades</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A trade that sold successfully but whose confirmation timed out could get stuck: the agent kept treating the finished position as live, which used up one of its limited slots for new trades. Five positions were stuck at once, one for over 40 hours, leaving parts of the fleet unable to trade. Finished trades are now recognised from their on-chain record, a stuck position is released automatically instead of waiting forever, and the database itself now refuses to move a settled trade back to open.</description>
 		</item>
 		<item>
 			<title>Wardrobe</title>
@@ -189,6 +213,14 @@
 			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Some completed sells close their token account on-chain to reclaim rent, and the fleet could not see those exits: the position looked open forever and quietly blocked its agent from taking any new trades (four agents sat idle up to 34 hours). The reconciler now reads the full on-chain history even for closed accounts, books the real proceeds, and frees the agent immediately.</description>
+		</item>
+		<item>
+			<title>Your agents can buy assets and coins from their own wallets</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-07-26:Your agents can buy assets and coins from their own wallets</guid>
+			<pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Following the payment-method work in checkout, agents with their own funds can now also buy whole marketplace assets (avatars, agents, plugins) and trade coins in the in-world coin widget. The asset purchase window lists your agents with their USDC balances, and the coin widget gets a &quot;Pay with&quot; selector for SOL-priced coins. Both settle from the agent wallet server-side with no browser extension. One daily purchase limit now covers skills and assets together, so a budget spent on one is not quietly available again for the other.</description>
 		</item>
 		<item>
 			<title>Agent-Forged Gallery</title>

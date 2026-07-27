@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-27",
+			"title": "Solana name registration works again, and embeds stop crashing on older phones",
+			"summary": "Claiming a .sol domain for an agent, and claiming your own name under threews.sol, both ran against a Solana naming library so old that the functions doing the registering had been renamed out from under us: the calls resolved to nothing and the whole attempt failed. The library is now current, every naming path has been re-checked against the live Solana mainnet, and handing a fresh subdomain to its new owner no longer trips over an account that the same transaction is still creating. Looking up a wallet's primary name also stops reporting a name the wallet no longer owns. Separately, the embeddable 3D avatar used a newer JavaScript feature than some older Android browsers ship, so the avatar page went blank instead of loading; the missing piece is now included in the embed, which matters because the embed is designed to run on other people's sites where we do not get to pick the browser.",
+			"tags": [
+				"fix"
+			],
+			"link": "/embed"
+		},
+		{
+			"date": "2026-07-27",
+			"title": "The walkaround world now has a real time of day and /play's radar",
+			"summary": "Walk your avatar into the park at dusk and it actually looks like dusk. The sun rises, arcs overhead and sets, the sky graduates from night through dawn to day, and the lights and reflections follow it, all driven by the same shared world clock the coin worlds run on, so everyone standing in the same world sees the same sky at the same moment. Indoor stages keep their authored lighting and the cycle steps aside while the camera passthrough is on. The corner map was also replaced with the rotating radar from the coin worlds: it turns under a fixed player arrow, keeps a compass and the world boundary in view, and now shows other players in their nameplate colours alongside companions, live agent desks, the named landmarks your guide walks to, and the scenery around you. Click or tap the radar to send your avatar walking there. Press M to hide or show it and it remembers your choice.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/temporary"
+		},
+		{
+			"date": "2026-07-27",
 			"title": "3D generations that run long now hand back a handle instead of an error",
 			"summary": "A detailed model can take several minutes, longer than an assistant will wait inside a single tool call. Those generations used to look like failures even though the GPU finished the model minutes later. The ChatGPT 3D Studio now returns a live handle with a countdown of how much time is left, and a new check_job tool collects the finished model when it lands. Poll responses carry elapsed time and a remaining estimate that counts down, the assistant sees progress instead of identical waiting frames, and the inline viewer shows a real \"still rendering\" panel rather than an empty one. A generation whose GPU worker dies mid-job is now automatically retried on a healthy engine instead of being written off, including when nobody is watching the page.",
 			"tags": [
@@ -16189,6 +16208,24 @@
 				"improvement"
 			],
 			"link": "/create/selfie"
+		},
+		{
+			"date": "2026-07-26",
+			"title": "Your agents can buy assets and coins from their own wallets",
+			"summary": "Following the payment-method work in checkout, agents with their own funds can now also buy whole marketplace assets (avatars, agents, plugins) and trade coins in the in-world coin widget. The asset purchase window lists your agents with their USDC balances, and the coin widget gets a \"Pay with\" selector for SOL-priced coins. Both settle from the agent wallet server-side with no browser extension. One daily purchase limit now covers skills and assets together, so a budget spent on one is not quietly available again for the other.",
+			"tags": [
+				"feature"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Trading agents no longer lose slots to settled trades",
+			"summary": "A trade that sold successfully but whose confirmation timed out could get stuck: the agent kept treating the finished position as live, which used up one of its limited slots for new trades. Five positions were stuck at once, one for over 40 hours, leaving parts of the fleet unable to trade. Finished trades are now recognised from their on-chain record, a stuck position is released automatically instead of waiting forever, and the database itself now refuses to move a settled trade back to open.",
+			"tags": [
+				"fix"
+			],
+			"link": "/sniper/experiments"
 		}
 	]
 }
