@@ -23,6 +23,20 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 //   npm run build:all    → both
 const TARGET = process.env.TARGET || 'app';
 
+// Prepended to every emitted chunk (app AND lib). `Object.hasOwn` is an ES2022
+// *runtime API*, so esbuild's `target` never lowers it. It ships raw and throws
+// "Object.hasOwn is not a function" on anything older than Chrome 93 / Safari
+// 15.4. That killed /walk-embed outright on an Android 12 WebView (Chrome 91) in
+// production. The embed's whole point is running inside third-party pages we
+// don't control, so the floor has to be the old WebView, not our dev browser.
+// defineProperty (not assignment) keeps it non-enumerable like the native one,
+// so `for...in` over Object stays clean.
+const LEGACY_RUNTIME_POLYFILL =
+	'if(!Object.hasOwn){Object.defineProperty(Object,"hasOwn",{value:function(o,k){' +
+	'if(o==null)throw new TypeError("Cannot convert undefined or null to object");' +
+	'return Object.prototype.hasOwnProperty.call(Object(o),k)},' +
+	'configurable:true,writable:true});}';
+
 // Vercel serverless functions live under /api/* in production but Vite dev
 // does not run them. Forward /api/* to a real upstream (default: production)
 // so pages like /pumpfun see real SSE feeds and JSON responses in dev.
@@ -278,6 +292,10 @@ const appConfig = {
 				/^@three-ws\/agent-payments(\/.*)?$/,
 			],
 			output: {
+				// Every chunk, not just entries: with ES modules a shared chunk's
+				// body evaluates BEFORE the entry that imports it, so an
+				// entry-only banner would land too late to protect it.
+				banner: LEGACY_RUNTIME_POLYFILL,
 				manualChunks(id) {
 					// Node polyfills (buffer/process shims) get their own tiny chunk.
 					// Without this, Rollup colocates the `buffer` module inside the
@@ -2715,7 +2733,9 @@ const libConfig = {
 			// No externals — self-contained drop-in embed.
 			// inlineDynamicImports keeps the output as a single file so CDN
 			// consumers get one <script type="module"> with no chunk fetches.
-			output: { inlineDynamicImports: true },
+			// The lib IS the third-party embed, so it needs the old-WebView
+			// polyfill even more than the app does.
+			output: { inlineDynamicImports: true, banner: LEGACY_RUNTIME_POLYFILL },
 		},
 	},
 };

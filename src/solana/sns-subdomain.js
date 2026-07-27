@@ -206,7 +206,7 @@ export async function createNamedSubdomain({
 	// on-chain yet (its create ix is in this same tx), so letting the SDK look
 	// the owner up would throw. Right after createSubdomain the owner IS the
 	// parent owner. v3 returns a single TransactionInstruction (v0.1.x-era
-	// callers expected an array) — normalize so the spread below works.
+	// callers expected an array), so normalize before the spread below.
 	const transferRes = await sns.transferSubdomain(
 		connection,
 		fullName,

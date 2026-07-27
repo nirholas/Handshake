@@ -67,7 +67,7 @@ export async function reverseLookupAddress(addr) {
 		const { getFavoriteDomain } = await import('@bonfida/spl-name-service');
 		const owner = new PublicKey(addr);
 		const { reverse, stale } = await getFavoriteDomain(await makeConnection(), owner);
-		// A stale favorite is a domain the wallet no longer owns — showing it
+		// A stale favorite is a domain the wallet no longer owns; showing it
 		// would attribute someone else's name to this address.
 		if (stale) return null;
 		return reverse.endsWith('.sol') ? reverse : `${reverse}.sol`;
