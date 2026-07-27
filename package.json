@@ -254,7 +254,8 @@
 		"seed:skills": "node scripts/seed-skills.js",
 		"install:sdk": "npm install --prefix agent-payments-sdk && npm run build --prefix agent-payments-sdk && npm install ./agent-payments-sdk",
 		"claude": "./scripts/claude.sh",
-		"typecheck": "tsc -p jsconfig.json"
+		"typecheck": "tsc -p jsconfig.json",
+		"okx:bot": "node scripts/okx-bot-revive.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

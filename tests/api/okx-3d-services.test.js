@@ -202,6 +202,19 @@ describe('okx catalog — work order 03 rows', () => {
 		}
 	});
 
+	// OKX rejected the listing on 2026-07-26 for "missing a complete description,
+	// parameter details, and usage examples". Every row now carries all three, and
+	// this is the guard that keeps them from silently regressing.
+	it('every row states its parameters AND shows a usage example', () => {
+		for (const e of OKX_CATALOG) {
+			expect(e.describes.capability.length, `${e.id} capability`).toBeGreaterThan(40);
+			// Parameter details: the numbered "Provide:" list OKX's format asks for.
+			expect(e.describes.input, `${e.id} input`).toMatch(/^Provide/);
+			// Usage example: what the reviewer specifically found missing.
+			expect(e.describes.input, `${e.id} usage example`).toMatch(/Example: \S/);
+		}
+	});
+
 	it('the free catalog index carries every service 1:1', () => {
 		const ids = catalogIndex().services.map((s) => s.id);
 		for (const id of PAID_REST_IDS) expect(ids).toContain(id);

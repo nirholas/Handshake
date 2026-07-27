@@ -1469,3 +1469,57 @@ create the rest). Submission can no longer drift from the module.
    yet applied), `validate-listing` batch pass, human confirms the diff card.
 5. Re-activate (`--preferred-language en-US`), then tell the OKX contact to retest, and
    resubmit for review via the OKX support chat per the rejection email.
+
+### 2026-07-27 addendum: catalog fix LIVE in production; bot recovery reduced to one command
+
+Continuation of the 2026-07-26 entry. Verified against live production today:
+
+- **The usage-example rewrite is deployed and serving.** `GET /api/okx/3d/catalog` returns
+  11/11 rows carrying a `Example: ...` usage line alongside the numbered parameter list,
+  so the three-copy rule (module == live == submission) holds and the resubmission can go
+  out as soon as the login lands. Deploy ran from a clean worktree; the first attempt died
+  on a missing `DATABASE_URL` in that worktree (`db:check`), fixed by exporting it from
+  `.env`.
+- **402 + health re-probed:** unpaid `POST /api/okx/3d/text-to-3d` -> `HTTP 402` with
+  `accepts[0] = eip155:196` at `10000` (Solana and two Base entries after), and
+  `/api/okx/3d/health` reports all five subsystems ok with `payment-rail settleable:true`
+  at block 66402405. Nothing regressed while the listing work was in flight.
+- **Regression guard added.** `tests/api/okx-3d-services.test.js` now asserts every catalog
+  row has a substantial capability line, a `Provide:` parameter list, AND a usage example.
+  The exact rejection reason can no longer regress silently. 57 tests green.
+- **Changelog + docs:** holder entry added (improvement/docs, links `/docs/okx-marketplace`);
+  RUNBOOK 0.5 rewritten around the new one-command recovery.
+
+**The bot went offline again overnight, on its own.** The daemon was alive at 21:09 and
+dead ("stale pid") by 03:13 when the codespace idled. This is not a rebuild-only failure
+mode, so the revival checklist became a script: **`npm run okx:bot`**
+(`scripts/okx-bot-revive.mjs`). It installs both CLIs, starts the daemon, wires the runtime,
+regenerates the briefing from the catalog module, links the OKX skills into the AI
+workspace, sets permission bypass, and reports health. Exit 0 = online; exit 2 = staged but
+logged out, printing the login URL and follow-up commands.
+
+**New finding, a real answer-quality gap (fixed).** The daemon spawns the AI CLI with
+`cwd=~/.okx-agent-task/workspace`, and that directory had NO skills: a dry run showed the
+subsession loading only generic skills, none of `okx-agent-task`, `okx-agent-payments-protocol`,
+or our 3D skills. Task envelopes (accept / negotiate / deliver / dispute) would have been
+improvised instead of following the documented flow. Fixed by linking 12 relevant skills
+into `<workspace>/.claude/skills`; a dry run now shows all 11 okx/3d skills loaded and
+answers correctly ("Text to 3D Model (GLB) at $0.01 USDT is our fastest and cheapest lane").
+
+**Architecture note for whoever tries to make this always-on.** The `okx-a2a` AI adapter
+does NOT extract a reply from the CLI's stdout; it dispatches a prompt and expects the AI
+subsession itself to send the reply back through the CLI (`okx-a2a session send`). So
+swapping the agentic CLI for a one-shot LLM call (our own free `llmComplete` chain, which
+would need no personal login and could run anywhere) would silently break the task
+lifecycle, not just chat. The adapter does expose escape hatches for a custom host
+(`OKX_A2A_AI_<PROVIDER>_COMMAND` and `..._EXEC_ARGS_JSON` / `..._RESUME_ARGS_JSON`, with
+`{prompt}`/`{sessionId}`/`{cwd}` placeholders), so a headless box is possible, but it must
+run something genuinely agentic. Do not trade task correctness for hostability.
+
+**Still owner-gated, both single actions:**
+1. **OKX browser login** (email OTP as `claude@three.ws`) -> bot online, then
+   `service-list` diff -> `agent update` with the delta from
+   `scripts/okx-listing-payload.mjs --delta` -> re-activate -> tell the OKX contact to
+   retest and resubmit via support chat.
+2. **`gcloud auth login`** (the token expired again overnight, same failure the memory
+   file records) -> needed for any Cloud Run / VM work, not for the listing itself.

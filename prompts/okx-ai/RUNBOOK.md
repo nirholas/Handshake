@@ -34,22 +34,43 @@ are reads (they 401 with "session expired" when logged out). Only `curl` against
 
 ---
 
-## 0.5 After ANY codespace rebuild: revive the chat bot (found the hard way, 2026-07-26)
+## 0.5 The chat bot goes offline on its own: `npm run okx:bot`
 
-The marketplace chat bot for #2632 is a LOCAL `okx-a2a` daemon + the wallet session, both
-outside the repo. A codespace rebuild silently wipes them and OKX chat tests then time out
-with "no delivery in 30 min". Revive, in order:
+The marketplace chat bot for #2632 is a LOCAL `okx-a2a` daemon plus the `onchainos` wallet
+session, both outside this repo. A codespace rebuild wipes the CLIs; an idle nap kills the
+daemon (observed: alive 21:09, dead by 03:13 the same night). OKX-side chat tests then time
+out with "no delivery in 30 min", which is what got the listing flagged as offline on
+2026-07-26.
 
-1. Reinstall `onchainos` (checksum-verified installer, `.agents/skills/okx-agentic-wallet/_shared/preflight.md`) and `npm i -g @okxweb3/a2a-node@latest`.
-2. `okx-a2a daemon start`, then `okx-a2a switch-runtime --json`, `okx-a2a setup --json`.
-3. Complete the browser login (§0). The daemon retries `agent get` every minute and picks
-   the session up on its own; `okx-a2a agent refresh --json` must then report
-   `agentCount >= 1`, `activeClients >= 1`. That is the "bot online" proof.
-4. Regenerate the responder briefing so chat answers know the catalog:
-   `node scripts/okx-listing-payload.mjs --briefing > ~/.okx-agent-task/workspace/CLAUDE.md`
-5. `okx-a2a agent bypass on` (answers without permission stalls) and
-   `okx-a2a doctor --non-interactive` for a final sweep. Measured reply latency through
-   the full claude adapter path: ~12 s per message.
+**One command does the whole recovery:**
+
+```bash
+npm run okx:bot
+```
+
+It installs/updates both CLIs, starts the daemon, wires the runtime, regenerates the chat
+briefing from the live catalog module, links the OKX skills into the AI workspace, turns on
+permission bypass, and reports health. Exit code 0 = online. Exit code 2 = everything is
+staged but the wallet is logged out, and it prints the login URL a human must open (email
+OTP, `claude@three.ws`) plus the two follow-up commands.
+
+What it wires, and why each matters:
+
+| Piece | Why the bot is broken without it |
+|---|---|
+| `okx-a2a` daemon | Holds the XMTP identity chat is delivered to. |
+| Wallet session | The daemon takes every client offline the moment `onchainos agent get` 401s. |
+| `~/.okx-agent-task/workspace/CLAUDE.md` | The AI subsession's only knowledge of what we sell; generated from `api/_lib/okx-catalog.js` so prices can never drift from the endpoints. |
+| `.claude/skills` in that workspace | Without them the subsession has no `okx-agent-task` flow and improvises on task envelopes instead of following accept/negotiate/deliver. |
+| `agent bypass on` | Otherwise the subsession stalls on a tool-approval prompt nobody is there to answer, which reads to the buyer as an unresponsive bot. |
+
+Measured reply latency through the real adapter path: ~12 s bare, ~46 s with the full skill
+set loaded. Both are far inside OKX's 30-minute test window.
+
+**Known limitation:** a codespace cannot stay up on its own, so the bot dies whenever this
+workspace sleeps. Run `npm run okx:bot` right before an OKX retest window, and treat an
+always-on host (a small always-on VM running the same stack) as the durable fix. That move
+needs an AI-provider credential for the headless box, an owner action.
 
 ## 1. Daily status check
 
