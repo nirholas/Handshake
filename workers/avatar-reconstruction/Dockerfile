@@ -27,14 +27,22 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 # ── App code ──────────────────────────────────────────────────────────────────
+# Files are copied individually, so ADDING A NEW MODULE MEANS ADDING A LINE HERE.
+# Forget it and the image builds and pushes clean, then the container dies on
+# import with ModuleNotFoundError and the Cloud Run revision never passes its
+# health check. That is a full build cycle to discover. (Live traffic is safe:
+# the previous revision keeps serving when a new one fails to start.)
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY main.py          /app/main.py
 COPY face_pipeline.py /app/face_pipeline.py
 COPY face_geometry.py /app/face_geometry.py
+COPY face_projection.py /app/face_projection.py
 COPY glb_ops.py       /app/glb_ops.py
 COPY precompute_uv.py /app/precompute_uv.py
 COPY test_face_geometry.py /app/test_face_geometry.py
+COPY test_face_projection.py /app/test_face_projection.py
+COPY test_face_pipeline.py /app/test_face_pipeline.py
 
 # ── Template GLBs ─────────────────────────────────────────────────────────────
 # Bake both gender variants into the image so cold starts are instant.
