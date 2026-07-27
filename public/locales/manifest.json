@@ -47,6 +47,11 @@
 			"dir": "rtl"
 		},
 		{
+			"code": "hi",
+			"name": "हिन्दी",
+			"dir": "ltr"
+		},
+		{
 			"code": "ru",
 			"name": "Русский",
 			"dir": "ltr"
@@ -175,11 +180,6 @@
 			"code": "hu",
 			"name": "Magyar",
 			"dir": "ltr"
-		},
-		{
-			"code": "he",
-			"name": "עברית",
-			"dir": "rtl"
 		},
 		{
 			"code": "bg",
