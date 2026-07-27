@@ -9,7 +9,7 @@ export class AnthropicProvider {
 	constructor({
 		// Free OpenRouter Llama 3.3 70B — no per-token cost to the host.
 		// Owners can override with a paid Claude model via embed-policy.
-		model = 'meta-llama/llama-3.3-70b-instruct:free',
+		model = 'openai/gpt-oss-20b:free',
 		proxyURL,
 		apiKey,
 		agentId,

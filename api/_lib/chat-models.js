@@ -58,21 +58,23 @@ export const MODEL_CATALOG = {
 	'llama-3.1-8b-instant':       { provider: 'groq', tools: true },
 
 	// ── OpenRouter free tier — rate-limited per model; tool support varies ────
-	'meta-llama/llama-3.3-70b-instruct:free':     { provider: 'openrouter', tools: true },
-	'nousresearch/hermes-3-llama-3.1-405b:free':  { provider: 'openrouter', tools: true },
-	// GPT-OSS 120B is the historical platform default, but its free OpenRouter
-	// endpoint is intermittently moderation-gated (403 "requires moderation on
-	// OpenInference"). Kept usable for explicit callers (e.g. the /chat app), but
-	// never auto-selected for the primary path or auto-built fallback chains.
 	//
-	// T4.2 (anon moderation pre-filter) evaluated re-promoting this route and
-	// DECLINED: OpenRouter's "requires moderation" gate is an account-level
-	// policy toggle on OpenRouter's side — it is NOT satisfied by us pre-moderating
-	// upstream of the call (the gate fires before our verdict is ever relevant).
-	// Our NemoGuard pre-filter therefore does not unlock this endpoint; it stays
-	// demoted until the OpenRouter account's data/moderation setting is verified.
-	// (tasks/nvidia-nim/probes/moderation.md)
-	'openai/gpt-oss-120b:free':   { provider: 'openrouter', tools: true, moderationGated: true },
+	// OpenRouter retires `:free` endpoints with no notice, and a retired id is
+	// indistinguishable from a typo at call time ("This model is unavailable for
+	// free"). On 2026-07-27 every id this block previously listed was gone at
+	// once — meta-llama/llama-3.3-70b-instruct:free,
+	// nousresearch/hermes-3-llama-3.1-405b:free and openai/gpt-oss-120b:free —
+	// which silently took the whole OpenRouter free lane out of the ladder.
+	//
+	// The ids below were verified live, but treat them as perishable: the
+	// anonymous /chat lane no longer depends on any of them, because
+	// _lib/openrouter-free.js resolves models from OpenRouter's live list at
+	// request time. When one of these starts failing, check that module's live
+	// list first rather than assuming a provider outage.
+	'openai/gpt-oss-20b:free':                    { provider: 'openrouter', tools: true },
+	'nvidia/nemotron-3-super-120b-a12b:free':     { provider: 'openrouter', tools: true },
+	'google/gemma-4-31b-it:free':                 { provider: 'openrouter', tools: true },
+	'inclusionai/ling-3.0-flash:free':            { provider: 'openrouter', tools: true },
 
 	// ── OpenRouter paid (BYOK, ~$0.05/$0.10 per 1M tok) — IBM Granite lane ─────
 	// Cheap, tool-capable Granite 4.1 for the "embed a Granite agent" surface.
@@ -164,11 +166,14 @@ export function usableModels(models, { requireTools = false, allowGated = false 
 }
 
 /**
- * Default OpenRouter free model: the reliable, tool-capable Llama 3.3 70B free
- * endpoint. (Was GPT-OSS 120B, demoted for the moderation gate above.) Used as
- * the platform default wherever a free OpenRouter model is requested.
+ * Default OpenRouter free model: tool-capable GPT-OSS 20B, the surviving member
+ * of the GPT-OSS family after the 120B free endpoint was retired. Used as the
+ * platform default wherever a free OpenRouter model is requested.
+ *
+ * (Previously Llama 3.3 70B, which OpenRouter retired along with every other id
+ * this file used to name — see the free-tier block above.)
  */
-export const DEFAULT_FREE_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+export const DEFAULT_FREE_MODEL = 'openai/gpt-oss-20b:free';
 
 /** Default per-provider model when the caller doesn't name one. */
 export const PROVIDER_MODEL_DEFAULTS = {
@@ -210,7 +215,9 @@ export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'anthropi
  */
 export const OPENROUTER_SIBLINGS = [
 	DEFAULT_FREE_MODEL,
-	'nousresearch/hermes-3-llama-3.1-405b:free',
+	'nvidia/nemotron-3-super-120b-a12b:free',
+	'google/gemma-4-31b-it:free',
+	'inclusionai/ling-3.0-flash:free',
 ];
 
 /**

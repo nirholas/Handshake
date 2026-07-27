@@ -196,8 +196,8 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		// model). The primary key's :free rung 402s here, so the chain rotates to the
 		// fallback key's :free model.
 		expect(calls).toEqual([
-			{ auth: 'Bearer or-primary', model: 'meta-llama/llama-3.3-70b-instruct:free' },
-			{ auth: 'Bearer or-fallback', model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			{ auth: 'Bearer or-primary', model: 'openai/gpt-oss-20b:free' },
+			{ auth: 'Bearer or-fallback', model: 'openai/gpt-oss-20b:free' },
 		]);
 	});
 

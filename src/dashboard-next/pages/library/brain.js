@@ -38,7 +38,7 @@ const MODELS = [
 		brain_key: 'groq-llama',
 	},
 	{
-		model:   'meta-llama/llama-3.3-70b-instruct:free',
+		model:   'openai/gpt-oss-20b:free',
 		label:   'Llama 3.3 70B',
 		network: 'OpenRouter',
 		tier:    'Free · open-source',
@@ -47,7 +47,7 @@ const MODELS = [
 		brain_key: 'groq-llama',
 	},
 	{
-		model:   'openai/gpt-oss-120b:free',
+		model:   'nvidia/nemotron-3-super-120b-a12b:free',
 		label:   'GPT-OSS 120B',
 		network: 'OpenRouter',
 		tier:    'Free · OpenAI open-source',
@@ -56,7 +56,7 @@ const MODELS = [
 		brain_key: 'openai',
 	},
 	{
-		model:   'nousresearch/hermes-3-llama-3.1-405b:free',
+		model:   'google/gemma-4-31b-it:free',
 		label:   'Hermes 3 405B',
 		network: 'OpenRouter',
 		tier:    'Free · large open-source',
@@ -65,7 +65,7 @@ const MODELS = [
 		brain_key: 'groq-llama',
 	},
 ];
-const MODEL_DEFAULT = 'meta-llama/llama-3.3-70b-instruct:free';
+const MODEL_DEFAULT = 'openai/gpt-oss-20b:free';
 const MMAP = new Map(MODELS.map((m) => [m.model, m]));
 
 function friendly(err) {

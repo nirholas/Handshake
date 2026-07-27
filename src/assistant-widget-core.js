@@ -159,7 +159,7 @@ export function estimateSpeechMs(text) {
 /** Default chat models per BYOK provider (OpenAI-compatible endpoints). */
 export const BYOK_DEFAULT_MODELS = {
 	groq: 'llama-3.3-70b-versatile',
-	openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
+	openrouter: 'openai/gpt-oss-20b:free',
 };
 
 /** OpenAI-compatible chat-completions endpoints for BYOK lanes. */

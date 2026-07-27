@@ -213,7 +213,7 @@ describe('providerChain free-tier resilience rungs', () => {
 	it('the OpenRouter host-key rung uses the :free model — never the paid tier', () => {
 		const chain = providerChain();
 		const or = chain.find((p) => p.name === 'openrouter');
-		expect(or.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
+		expect(or.model).toBe('openai/gpt-oss-20b:free');
 		// The host key must never bill a paid OpenRouter model: no paid rung, and no
 		// separate openrouter:free rung (the single rung is already :free).
 		expect(chain.some((p) => p.model === 'meta-llama/llama-3.3-70b-instruct')).toBe(false);

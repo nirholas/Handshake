@@ -44,6 +44,7 @@ import {
 	vertexRequestHeaders,
 	toVertexBody,
 } from './vertex-claude.js';
+import { DEFAULT_FREE_MODEL } from './chat-models.js';
 
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 // Second Groq rung on a different model: Groq free-tier quotas are PER MODEL,
@@ -54,7 +55,12 @@ const GROQ_INSTANT_MODEL = 'llama-3.1-8b-instant';
 // Same Llama 3.3 70B on Cerebras' free tier (cloud.cerebras.ai) — optional
 // rung, active when CEREBRAS_API_KEY is configured.
 const CEREBRAS_MODEL = 'llama-3.3-70b';
-const OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct';
+// The FULL free model id, not a base id we append ':free' to. Appending assumes
+// every paid model has a free twin, and that assumption is what broke this lane:
+// meta-llama/llama-3.3-70b-instruct still exists, but its ':free' variant was
+// retired, so the composed id 404'd on every call while the base id looked fine.
+// Keep this in step with DEFAULT_FREE_MODEL in _lib/chat-models.js.
+const OPENROUTER_FREE_MODEL = DEFAULT_FREE_MODEL;
 // Gemini Flash-Lite on the AI Studio FREE tier (GEMINI_API_KEY): an external
 // free quota, so it stays on the cheapest model.
 const GEMINI_MODEL = 'gemini-2.5-flash-lite';
@@ -363,7 +369,7 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			name: i === 0 ? 'openrouter' : `openrouter#${i + 1}`,
 			key,
 			url: 'https://openrouter.ai/api/v1/chat/completions',
-			model: `${OPENROUTER_MODEL}:free`,
+			model: OPENROUTER_FREE_MODEL,
 			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
 		}));
 	});

@@ -66,7 +66,7 @@ globalThis.fetch = vi.fn(async () => ({
 	json: async () => ({}),
 }));
 
-const FREE_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+const FREE_MODEL = 'openai/gpt-oss-20b:free';
 
 beforeEach(async () => {
 	if (!customElements.get('agent-3d')) {

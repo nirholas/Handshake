@@ -12,9 +12,9 @@ import { PersonaInterview } from './persona-interview.js';
 // first so they're the default. The proxy translates request/response
 // shapes server-side, so the browser provider stays Anthropic-shape.
 const FREE_MODELS = [
-	{ id: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (OpenRouter · free)' },
-	{ id: 'openai/gpt-oss-120b:free', label: 'GPT-OSS 120B (OpenRouter · free)' },
-	{ id: 'nousresearch/hermes-3-llama-3.1-405b:free', label: 'Hermes 3 405B (OpenRouter · free)' },
+	{ id: 'openai/gpt-oss-20b:free', label: 'GPT-OSS 20B (OpenRouter · free)' },
+	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super 120B (OpenRouter · free)' },
+	{ id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B (OpenRouter · free)' },
 	{ id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Groq · free, sub-second)' },
 	{ id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Groq · free, fastest)' },
 ];
@@ -133,7 +133,7 @@ function defaultState() {
 		rig: 'mixamo',
 		boundingBoxHeight: 1.78,
 		brainProvider: 'anthropic',
-		brainModel: 'meta-llama/llama-3.3-70b-instruct:free',
+		brainModel: 'openai/gpt-oss-20b:free',
 		temperature: 0.7,
 		maxTokens: 4096,
 		thinking: 'auto',

@@ -134,7 +134,7 @@ const PROVIDER_DEFAULT_MODEL = {
 	gemini: 'gemini-2.5-flash',
 	vertex: 'google/gemini-2.5-flash',
 	groq: 'llama-3.3-70b-versatile',
-	openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
+	openrouter: 'openai/gpt-oss-20b:free',
 	nvidia: 'meta/llama-3.3-70b-instruct',
 	openai: 'gpt-4o-mini',
 	anthropic: 'claude-haiku-4-5-20251001',

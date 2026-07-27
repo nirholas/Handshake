@@ -61,17 +61,17 @@ const MODELS = {
 
 	// OpenRouter free tier (no per-token cost; daily rate cap shared across host).
 	// All are tool-call capable in OpenRouter's catalog.
-	'meta-llama/llama-3.3-70b-instruct:free': {
+	'openai/gpt-oss-20b:free': {
 		kind: 'openai',
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
 	},
-	'openai/gpt-oss-120b:free': {
+	'nvidia/nemotron-3-super-120b-a12b:free': {
 		kind: 'openai',
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
 	},
-	'nousresearch/hermes-3-llama-3.1-405b:free': {
+	'google/gemma-4-31b-it:free': {
 		kind: 'openai',
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
@@ -404,7 +404,7 @@ export default wrap(async (req, res) => {
 	const rawBody = await readJson(req);
 	const body = parse(bodySchema, rawBody);
 	const requestedModel =
-		body.model || policy.brain?.model || 'meta-llama/llama-3.3-70b-instruct:free';
+		body.model || policy.brain?.model || 'openai/gpt-oss-20b:free';
 
 	// Ordered fallback chain for 429 / 5xx from OpenRouter free tier:
 	//   1. Requested model (e.g. llama-3.3-70b:free)

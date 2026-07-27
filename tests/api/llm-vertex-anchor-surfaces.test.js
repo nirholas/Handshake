@@ -100,7 +100,7 @@ describe('shared vertex-gemini helper (api/_lib/vertex-gemini.js)', () => {
 });
 
 describe('brain (api/brain/chat.js): freeFallbackChain anchor', () => {
-	const spec = { openrouterModel: 'openai/gpt-oss-120b:free' };
+	const spec = { openrouterModel: 'nvidia/nemotron-3-super-120b-a12b:free' };
 
 	it('appends the anchor at the tail when a GCP project is set', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
@@ -246,7 +246,7 @@ describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => 
 	it('appends the anchor model as the final fallback when a GCP project is set', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		setAllProviderKeys();
-		const chain = modelFallbackChain('meta-llama/llama-3.3-70b-instruct:free');
+		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
 		expect(chain[chain.length - 1]).toBe('google/gemini-2.5-flash');
 		// Paid Anthropic stays ahead of it; the anchor is strictly last resort.
 		expect(chain.indexOf('claude-haiku-4-5-20251001')).toBeLessThan(
@@ -268,7 +268,7 @@ describe('anthropic-proxy (api/llm/anthropic.js): model fallback anchor', () => 
 	});
 
 	it('without a GCP project the anchor neither resolves nor joins the chain', () => {
-		const chain = modelFallbackChain('meta-llama/llama-3.3-70b-instruct:free');
+		const chain = modelFallbackChain('openai/gpt-oss-20b:free');
 		expect(chain).not.toContain('google/gemini-2.5-flash');
 		expect(resolveModelRoute('google/gemini-2.5-flash')).toBeNull();
 	});

@@ -54,7 +54,7 @@ export function defaultEmbedPolicy() {
 			proxy_url: null,
 			monthly_quota: 1000,
 			rate_limit_per_min: 10,
-			model: 'meta-llama/llama-3.3-70b-instruct:free',
+			model: 'openai/gpt-oss-20b:free',
 		},
 		storage: { primary: 'r2', pinned_ipfs: false, onchain_attested: false },
 	};

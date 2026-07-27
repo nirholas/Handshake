@@ -1004,22 +1004,22 @@ const MODEL_OPTIONS = [
 	{ id: 'auto', label: 'Auto (GPT-OSS 120B)', provider: null, model: null },
 	{
 		id: 'openrouter:gpt-oss',
-		label: 'GPT-OSS 120B (free)',
+		label: 'Nemotron 3 Super 120B (free)',
 		provider: 'openrouter',
-		model: 'openai/gpt-oss-120b:free',
+		model: 'nvidia/nemotron-3-super-120b-a12b:free',
 	},
 	{ id: 'anthropic:sonnet', label: 'Claude Sonnet 4.6', provider: 'anthropic', model: 'claude-sonnet-4-6' },
 	{
 		id: 'openrouter:llama-70b',
-		label: 'Llama 3.3 70B (free)',
+		label: 'GPT-OSS 20B (free)',
 		provider: 'openrouter',
-		model: 'meta-llama/llama-3.3-70b-instruct:free',
+		model: 'openai/gpt-oss-20b:free',
 	},
 	{
 		id: 'openrouter:hermes',
-		label: 'Hermes 3 405B (free)',
+		label: 'Gemma 4 31B (free)',
 		provider: 'openrouter',
-		model: 'nousresearch/hermes-3-llama-3.1-405b:free',
+		model: 'google/gemma-4-31b-it:free',
 	},
 	{
 		id: 'groq:llama-70b',

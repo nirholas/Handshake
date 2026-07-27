@@ -204,7 +204,7 @@ const DEFAULT_POLICY = {
 		proxy_url: null,
 		monthly_quota: 1000,
 		rate_limit_per_min: 10,
-		model: 'meta-llama/llama-3.3-70b-instruct:free',
+		model: 'openai/gpt-oss-20b:free',
 	},
 	storage: { primary: 'r2', pinned_ipfs: false, onchain_attested: false },
 };
@@ -506,12 +506,12 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			});
 	});
 
-	it('routes meta-llama/*:free models to OpenRouter with bearer auth', async () => {
+	it('routes free OpenRouter models to OpenRouter with bearer auth', async () => {
 		await invoke({
 			body: {
 				...VALID_BODY,
 				system: SYSTEM,
-				model: 'meta-llama/llama-3.3-70b-instruct:free',
+				model: 'openai/gpt-oss-20b:free',
 			},
 		});
 		const call = fetchState.calls[0];
@@ -534,7 +534,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		// it walks the chain and serves from the next configured lane.
 		delete process.env.OPENROUTER_API_KEY;
 		const { status } = await invoke({
-			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 		});
 		expect(status).toBe(200);
 		// Every attempted call skipped the unkeyed OpenRouter lane.
@@ -559,7 +559,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			});
 		};
 		const { status } = await invoke({
-			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 		});
 		expect(status).toBe(200);
 		expect(fetchState.calls.length).toBeGreaterThan(1);
@@ -573,7 +573,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		delete process.env.ANTHROPIC_API_KEY;
 		try {
 			const { status, body } = await invoke({
-				body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+				body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 			});
 			expect(status).toBe(503);
 			expect(body.error).toBe('provider_unavailable');
@@ -594,7 +594,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 		try {
 			const { status, body } = await invoke({
-				body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+				body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 			});
 			expect(status).toBe(200);
 			const call = fetchState.calls[0];
@@ -615,7 +615,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 		await invoke({
 			body: {
 				system: SYSTEM,
-				model: 'meta-llama/llama-3.3-70b-instruct:free',
+				model: 'openai/gpt-oss-20b:free',
 				max_tokens: 256,
 				temperature: 0.4,
 				messages: [
@@ -653,7 +653,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 			},
 		});
 		const sent = JSON.parse(fetchState.calls[0].init.body);
-		expect(sent.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
+		expect(sent.model).toBe('openai/gpt-oss-20b:free');
 		expect(sent.max_tokens).toBe(256);
 		expect(sent.temperature).toBe(0.4);
 		// System collapses into the first message.
@@ -731,7 +731,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 				usage: { prompt_tokens: 4, completion_tokens: 5 },
 			});
 		const { body } = await invoke({
-			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 		});
 		expect(body.content).toEqual([
 			{ type: 'tool_use', id: 'call_1', name: 'getTime', input: { tz: 'UTC' } },
@@ -741,7 +741,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 
 	it('debits OpenAI-shape token usage (prompt + completion) onto the agent', async () => {
 		await invoke({
-			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 		});
 		const monthKey = new Date().toISOString().slice(0, 7);
 		expect(redisStore.get(`llm:tokens:agent-1:${monthKey}`)).toBe(16);
@@ -749,7 +749,7 @@ describe('/api/llm/anthropic — free-provider routing', () => {
 
 	it('records usage with the upstream provider tag', async () => {
 		await invoke({
-			body: { ...VALID_BODY, model: 'meta-llama/llama-3.3-70b-instruct:free' },
+			body: { ...VALID_BODY, model: 'openai/gpt-oss-20b:free' },
 		});
 		expect(usageEvents[0]).toMatchObject({
 			kind: 'llm',

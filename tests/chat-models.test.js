@@ -15,6 +15,8 @@ import {
 } from '../api/_lib/chat-models.js';
 
 const GRANITE = 'ibm-granite/granite-4.1-8b';
+// A catalogued model that is deliberately never auto-selected.
+const GATED = 'claude-mythos-5';
 
 // Models removed from the catalog because they will never succeed: OpenRouter
 // 404 "No endpoints found" / no tool-capable endpoint. They must never appear
@@ -23,6 +25,14 @@ const DEAD_ROUTES = [
 	'mistralai/mistral-7b-instruct:free',
 	'meta-llama/llama-3.2-3b-instruct:free',
 	'openai/gpt-oss-120b', // non-free variant, never catalogued
+	// Retired by OpenRouter in July 2026. Every one of these was live in the
+	// catalog when its endpoint disappeared, which silently killed the whole
+	// OpenRouter free lane and took the /chat app down with it.
+	'openai/gpt-oss-120b:free',
+	'meta-llama/llama-3.3-70b-instruct:free',
+	'nousresearch/hermes-3-llama-3.1-405b:free',
+	'google/gemma-3-27b-it:free',
+	'qwen/qwen3-coder:free',
 ];
 
 describe('chat-models catalog', () => {
@@ -39,9 +49,9 @@ describe('chat-models catalog', () => {
 		}
 	});
 
-	it('marks gpt-oss-120b:free moderation-gated and tool-capable', () => {
-		expect(isModelModerationGated('openai/gpt-oss-120b:free')).toBe(true);
-		expect(modelSupportsTools('openai/gpt-oss-120b:free')).toBe(true);
+	it('marks a restricted-access model moderation-gated and tool-capable', () => {
+		expect(isModelModerationGated(GATED)).toBe(true);
+		expect(modelSupportsTools(GATED)).toBe(true);
 	});
 });
 
@@ -61,12 +71,12 @@ describe('usableModels (route selector)', () => {
 
 	it('excludes moderation-gated models from auto selection by default', () => {
 		const picked = usableModels(ALL, { requireTools: true });
-		expect(picked).not.toContain('openai/gpt-oss-120b:free');
+		expect(picked).not.toContain(GATED);
 	});
 
 	it('includes gated models only when explicitly allowed', () => {
-		const picked = usableModels(['openai/gpt-oss-120b:free'], { allowGated: true });
-		expect(picked).toContain('openai/gpt-oss-120b:free');
+		const picked = usableModels([GATED], { allowGated: true });
+		expect(picked).toContain(GATED);
 	});
 
 	it('drops unknown models entirely', () => {
@@ -90,7 +100,7 @@ describe('free-first ordering', () => {
 	});
 
 	it('does not lead the free tier with the moderation-gated model', () => {
-		expect(DEFAULT_FREE_MODEL).not.toBe('openai/gpt-oss-120b:free');
+		expect(DEFAULT_FREE_MODEL).not.toBe(GATED);
 		expect(isModelModerationGated(DEFAULT_FREE_MODEL)).toBe(false);
 		expect(modelSupportsTools(DEFAULT_FREE_MODEL)).toBe(true);
 	});
