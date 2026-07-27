@@ -42,11 +42,6 @@
 			"dir": "rtl"
 		},
 		{
-			"code": "hi",
-			"name": "हिन्दी",
-			"dir": "ltr"
-		},
-		{
 			"code": "ru",
 			"name": "Русский",
 			"dir": "ltr"
@@ -219,6 +214,11 @@
 		{
 			"code": "ne",
 			"name": "नेपाली",
+			"dir": "ltr"
+		},
+		{
+			"code": "kk",
+			"name": "Қазақша",
 			"dir": "ltr"
 		},
 		{
