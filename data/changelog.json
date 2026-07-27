@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-07-27",
+			"title": "Search engines can now find the translated version of 160 more pages",
+			"summary": "We tell search engines which languages a page is available in so someone searching in Japanese finds the Japanese version rather than the English one. The list of pages that got those signals was built by guessing each page's file from its address, and the guess only covered one of the four layouts we actually use. Pages living in a subfolder were treated as having no translations at all, so 160 fully translated pages, including the cookbook, the gallery, the demos and our OpenAI partner page, were telling search engines they existed only in English. Coverage goes from 186 pages to 346.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Pages that stayed English no matter which language you picked now translate",
+			"summary": "Switching the site to one of our 50 languages left a set of pages stubbornly in English, and for three different reasons. Every news post was one of them: the translations existed, in every language, but the news pages are rebuilt automatically and each rebuild dropped the markers that connect a page to its translations, so about 2,400 already-translated strings sat unused. The cookbook lost its markers the same way when the page was rewritten. And ten pages had never been connected at all, including the wardrobe and our OpenAI partner page. All of them are wired now, the news rebuild reconnects itself so it cannot drift again, and the copy that was genuinely never translated is being translated into every language.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-27",
 			"title": "Translated pages no longer turn code samples into live 3D avatars",
 			"summary": "Our pages are written in English and machine-translated into 50 languages. When a page prints a code sample, the sample is stored in an escaped form so the browser shows it as text instead of running it. The translator did not know that, and on 289 pieces of copy across 46 languages it quietly un-escaped them. The worst case: a documentation page showing readers how to write the <agent-3d> embed tag stopped printing the tag and started running it, so a live 3D avatar appeared in the middle of the instructions and the sentence after it disappeared. Every one of those has been repaired, the translator now treats escaped markup as untouchable the same way it already protects $THREE and wallet addresses, and a new build check refuses to ship a translation whose markup does not match the English.",
 			"tags": [

@@ -558,18 +558,36 @@ function writeIfChanged(file, content) {
 // data-i18n annotation. The dynamic sitemap (api/sitemap/[type].js) reads this
 // list to emit <xhtml:link hreflang> alternates for exactly those routes, so
 // hreflang coverage tracks annotation automatically with no second list to keep
-// in sync. Path → file uses the same clean-URL convention the server serves
-// (/what-is → pages/what-is.html, / → pages/home.html).
+// in sync. Path → file uses the same clean-URL conventions the server serves.
+//
+// All four locations matter. Checking only pages/<slug>.html silently drops the
+// 49 annotated pages that live at pages/<slug>/index.html (/openai) or under
+// public/ (/cookbook, /gallery, /demos, /pay …): fully translated pages that
+// nonetheless told search engines they had no alternates.
+export function localizedPageFile(path, exists = existsSync, dir = root) {
+	if (!path || path.startsWith('http')) return null;
+	const slug = path === '/' ? 'home' : path.replace(/^\/+|\/+$/g, '');
+	for (const rel of [
+		`pages/${slug}.html`,
+		`pages/${slug}/index.html`,
+		`public/${slug}.html`,
+		`public/${slug}/index.html`,
+	]) {
+		const file = resolve(dir, rel);
+		if (exists(file)) return file;
+	}
+	return null;
+}
+
 function buildLocalizedPages() {
 	const paths = [];
 	for (const p of allPages) {
-		if (!p.path || p.path.startsWith('http')) continue;
-		const slug = p.path === '/' ? 'home' : p.path.replace(/^\/+|\/+$/g, '');
-		const file = resolve(root, 'pages', `${slug}.html`);
+		const file = localizedPageFile(p.path);
+		if (!file) continue;
 		try {
-			if (existsSync(file) && readFileSync(file, 'utf8').includes('data-i18n')) paths.push(p.path);
+			if (readFileSync(file, 'utf8').includes('data-i18n')) paths.push(p.path);
 		} catch {
-			// unreadable — treat as not localized
+			// unreadable - treat as not localized
 		}
 	}
 	return JSON.stringify({ generated: true, count: paths.length, paths: paths.sort() }, null, '\t') + '\n';
