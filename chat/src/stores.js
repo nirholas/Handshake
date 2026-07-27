@@ -8,7 +8,9 @@ export const brandConfig = writable({
 	logo_url: null,
 	accent_color: '#6366f1',
 	tagline: 'Chat with any AI model',
-	default_model: 'openai/gpt-oss-120b:free',
+	// Overwritten by /api/chat/config, which resolves a model that is live now.
+	// Kept null so a stale id can never be the thing the picker opens on.
+	default_model: null,
 	agent_id: null,
 	system_prompt: '',
 });

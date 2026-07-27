@@ -9,13 +9,38 @@ import {
 	localProvidersEnabled,
 } from './stores.js';
 
+// First-paint seed ONLY — the real list comes from /api/chat/models, which
+// returns what OpenRouter is serving right now, ranked best-first.
+//
+// Do not treat these ids as durable. OpenRouter retires `:free` endpoints with
+// no notice: in July 2026 all five ids this list previously carried went dead at
+// once and every new conversation opened on a model that could not answer. The
+// app now replaces this seed with the live list as soon as it loads, and falls
+// back to a live id rather than to this array (see resolveDefaultModel).
 export const BUILTIN_MODELS = [
-	{ id: 'openai/gpt-oss-120b:free', name: 'GPT OSS 120B', provider: 'Built-in', modality: 'text->text' },
-	{ id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', provider: 'Built-in', modality: 'text->text' },
-	{ id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', provider: 'Built-in', modality: 'text->text' },
-	{ id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder', provider: 'Built-in', modality: 'text->text' },
-	{ id: 'nousresearch/hermes-3-llama-3.1-405b:free', name: 'Hermes 3 405B', provider: 'Built-in', modality: 'text->text' },
+	{ id: 'openai/gpt-oss-20b:free', name: 'GPT OSS 20B', provider: 'Built-in', modality: 'text->text' },
+	{ id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super 120B', provider: 'Built-in', modality: 'text->text' },
+	{ id: 'google/gemma-4-31b-it:free', name: 'Gemma 4 31B', provider: 'Built-in', modality: 'text->text' },
+	{ id: 'inclusionai/ling-3.0-flash:free', name: 'Ling 3.0 Flash', provider: 'Built-in', modality: 'text->text' },
+	{ id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra 550B', provider: 'Built-in', modality: 'text->text' },
 ];
+
+/**
+ * Pick the model a conversation should open on.
+ *
+ * Order: the configured default when it is actually available, else the first
+ * model the server says is live, else the local seed. The middle rung is the
+ * one that matters — it is what keeps chat working through a model retirement
+ * without a redeploy.
+ */
+export function resolveDefaultModel(available, configuredId) {
+	const live = Array.isArray(available) ? available : [];
+	return (
+		(configuredId && live.find((m) => m.id === configuredId)) ||
+		live[0] ||
+		BUILTIN_MODELS[0]
+	);
+}
 
 export const providers = [
 	{

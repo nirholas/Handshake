@@ -19,6 +19,7 @@
 		priorityOrder,
 		formatMultipleModelNames,
 		BUILTIN_MODELS,
+		resolveDefaultModel,
 	} from './providers.js';
 	import ModelSelector from './ModelSelector.svelte';
 	import CompanyLogo from './CompanyLogo.svelte';
@@ -1750,11 +1751,13 @@
 		const seenIds = new Set(serverFreeModels.map((m) => m.id));
 		models = [...serverFreeModels, ...userModels.filter((m) => !seenIds.has(m.id))];
 
-		// Auto-select default built-in model if no model chosen yet, or if the saved model no longer exists
+		// Auto-select the default model when none is chosen yet, or when the saved
+		// one is no longer being served. resolveDefaultModel prefers a LIVE model
+		// over the configured id, so a retired default cannot strand the picker on
+		// a model that answers every message with an error.
 		const savedModelStillValid = convo.models?.[0]?.id && models.some((m) => m.id === convo.models[0].id);
 		if (!savedModelStillValid) {
-			const defaultId = $brandConfig.default_model;
-			const defaultModel = models.find((m) => m.id === defaultId) ?? BUILTIN_MODELS[0];
+			const defaultModel = resolveDefaultModel(models, $brandConfig.default_model);
 			if (defaultModel) convo = { ...convo, models: [defaultModel] };
 		}
 	});
