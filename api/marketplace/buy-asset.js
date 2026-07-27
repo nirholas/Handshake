@@ -414,14 +414,10 @@ async function payAsAgent({ res, auth, agent, row, price, payoutAddress, itemTyp
 	if (!pur) return error(res, 500, 'purchase_missing', 'purchase row vanished mid-flight');
 
 	// Same finalize as the browser path: receipt, revenue, both notifications.
-	// It writes the 200 envelope, to which we add the agent attribution.
-	const originalJson = res.json;
-	return finalizeAssetConfirm(
-		Object.assign(Object.create(Object.getPrototypeOf(res)), res, { json: originalJson }),
-		pur,
-		txSignature,
-		{ paid_by_agent: { id: agent.id, name: agent.name || null, address: buyer.address }, label },
-	);
+	return finalizeAssetConfirm(res, pur, txSignature, {
+		paid_by_agent: { id: agent.id, name: agent.name || null, address: buyer.address },
+		label,
+	});
 }
 
 // ── Status ─────────────────────────────────────────────────────────────────
@@ -532,7 +528,7 @@ async function handleConfirm(req, res, reference) {
 // Atomic confirm + receipt + notifications for a verified asset payment. Shared
 // by the Solana and EVM confirm paths; `txSignature` is the Solana signature or
 // the EVM tx hash.
-async function finalizeAssetConfirm(res, pur, txSignature) {
+async function finalizeAssetConfirm(res, pur, txSignature, extra = null) {
 	const updated = await sql`
 		UPDATE asset_purchases
 		SET status = 'confirmed', tx_signature = ${txSignature}, confirmed_at = now(), updated_at = now()
@@ -584,7 +580,7 @@ async function finalizeAssetConfirm(res, pur, txSignature) {
 		});
 	}
 
-	return json(res, 200, { data: { status: 'confirmed', tx_signature: txSignature } });
+	return json(res, 200, { data: { status: 'confirmed', tx_signature: txSignature, ...(extra || {}) } });
 }
 
 // EVM asset confirm: the buyer submits the settlement tx hash; verify a USDC

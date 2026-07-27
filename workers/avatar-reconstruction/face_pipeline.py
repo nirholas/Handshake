@@ -33,6 +33,7 @@ from scipy.interpolate import RBFInterpolator
 
 import glb_ops
 import face_geometry
+import face_projection
 import pygltflib
 from worker_security import UnsafeUrlError, fetch_remote_bytes
 
@@ -62,6 +63,10 @@ GEOMETRY_MORPH_ENABLED = os.environ.get("GEOMETRY_MORPH", "1") != "0"
 # lowering it risks rejecting real users, who (unlike this benchmark) do not shoot
 # perfect frontals.
 MAX_MORPH_YAW_DEG = float(os.environ.get("MAX_MORPH_YAW_DEG", "35"))
+
+# Projective texturing (step 10c). On by default; set PROJECTIVE_TEXTURE=0 to
+# fall back to warp-only skin, which is what shipped before this landed.
+PROJECTIVE_TEXTURE_ENABLED = os.environ.get("PROJECTIVE_TEXTURE", "1") != "0"
 
 _FACE_MAP: Optional[face_geometry.FaceMap] = None
 _FACE_MAP_LOADED = False
@@ -564,7 +569,9 @@ def process(
     skin_tone = _extract_skin_tone(img_arr, landmarks, img_w, img_h)
     new_skin = _tint_texture(new_skin, skin_tone, strength=0.25, protect_mask=face_mask_uv)
 
-    glb_ops.set_material_texture(glb, "Wolf3D_Skin", new_skin)
+    # The skin texture is written after the geometry morph (step 10c), because
+    # projective texturing needs the head's final shape to know where each texel
+    # lands in the photo.
 
     # 9. Hair colour tint.
     hair_colour = _extract_hair_colour(img_arr, landmarks, img_w, img_h)
@@ -616,6 +623,63 @@ def process(
         except Exception as exc:  # noqa: BLE001 — refinement must never fail the job
             log.warning("[%s] geometry morph failed (%s) — keeping template shape",
                         job_id, exc)
+
+    # 10c. Projective texturing — paint the photo onto the ~81% of the head the
+    # face-oval warp cannot reach (ears, jawline, neck, forehead to the
+    # hairline). Runs after the morph so it projects onto the head's final shape;
+    # projecting onto the template and then morphing would slide the texture off
+    # the features it was sampled from. Gated on facing, occlusion and the
+    # foreground mask, and blended UNDER the face-oval composite, which stays
+    # authoritative where the landmark warp already applies.
+    if PROJECTIVE_TEXTURE_ENABLED:
+        try:
+            fmap = _get_face_map()
+            positions, mesh_uvs, mesh_faces = glb_ops.get_head_mesh_data(glb)
+            normals = glb_ops.recompute_vertex_normals(positions, mesh_faces)
+            lm_vtx = uv_map.get("landmark_vtx")
+            if fmap is not None and lm_vtx:
+                lm_idx = np.asarray(lm_vtx, dtype=np.int64)
+                n = min(len(landmarks), len(lm_idx))
+                pts2d = np.array(
+                    [[landmarks[i].x * img_w, landmarks[i].y * img_h] for i in range(n)],
+                    dtype=np.float64,
+                )
+                fg_arr = np.array(fg_img.convert("RGBA"), dtype=np.uint8)
+                fg_alpha = fg_arr[:, :, 3].astype(np.float32) / 255.0
+                projected = face_projection.project_photo_to_uv(
+                    photo_rgb=np.array(fg_img.convert("RGB"), dtype=np.uint8),
+                    foreground_mask=fg_alpha,
+                    positions=positions,
+                    normals=normals,
+                    uvs=mesh_uvs,
+                    faces=mesh_faces,
+                    landmarks_2d=pts2d,
+                    landmark_vertices=positions[lm_idx[:n]],
+                    tex_w=new_skin.width,
+                    tex_h=new_skin.height,
+                )
+                if projected is not None:
+                    proj_rgb, proj_weight = projected
+                    coverage = face_projection.coverage_fraction(proj_weight)
+                    blended = face_projection.blend_projection(
+                        np.array(new_skin.convert("RGB"), dtype=np.uint8),
+                        proj_rgb,
+                        proj_weight,
+                        protect=face_mask_uv,
+                    )
+                    new_skin = Image.fromarray(blended, "RGB")
+                    log.info(
+                        "[%s] projective texturing covered %.1f%% of the skin atlas "
+                        "beyond the face oval (%.1fs)",
+                        job_id, coverage * 100.0, time.time() - t0,
+                    )
+                else:
+                    log.info("[%s] projective texturing skipped: no camera pose", job_id)
+        except Exception as exc:  # noqa: BLE001 — enrichment must never fail the job
+            log.warning("[%s] projective texturing failed (%s) — keeping warp-only skin",
+                        job_id, exc)
+
+    glb_ops.set_material_texture(glb, "Wolf3D_Skin", new_skin)
 
     # 11. Serialize.
     result = glb_ops.save_glb(glb)

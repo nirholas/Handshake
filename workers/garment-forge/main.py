@@ -366,19 +366,38 @@ async def generate(
         raise HTTPException(status_code=422,
                             detail=f"slot must be one of {list(GARMENT_SLOTS)}")
     job_id = body.job_id or str(uuid.uuid4())
-    await _update_job(job_id, status="queued", stage="queued",
-                      prompt=body.prompt, slot=body.slot)
-    background_tasks.add_task(
-        _process_job, job_id, body.prompt, body.slot, body.tier,
-        body.yaw_deg if body.yaw_deg is not None else GARMENT_YAW_DEG,
+    # The record carries everything the pipeline needs, so ANY instance can
+    # drive this job later: submission and execution are decoupled on purpose.
+    await _update_job(
+        job_id, status="queued", stage="queued", attempts=0,
+        prompt=body.prompt, slot=body.slot, tier=body.tier,
+        yaw_deg=body.yaw_deg if body.yaw_deg is not None else GARMENT_YAW_DEG,
     )
+    background_tasks.add_task(_drive_job, job_id)
     return {"job_id": job_id, "status": "queued"}
 
 
+@app.post("/sweep")
+async def sweep(background_tasks: BackgroundTasks,
+                authorization: str = Header(...)) -> dict:
+    """Re-drive jobs whose owning instance is gone. Cloud Scheduler calls this
+    on a cadence; it is also safe to call by hand. Claiming is atomic, so
+    overlapping sweeps and live instances never double-run a job."""
+    _require_api_key(authorization)
+    loop = asyncio.get_event_loop()
+    ids = await loop.run_in_executor(None, _list_claimable_ids, MAX_CONCURRENT)
+    for jid in ids:
+        background_tasks.add_task(_drive_job, jid)
+    log.info("sweep re-driving %d job(s): %s", len(ids), ids)
+    return {"redriving": len(ids), "job_ids": ids}
+
+
 async def _fail_if_stale(job: dict) -> dict:
-    """Watchdog: an in-flight record that stopped advancing belongs to a
-    reclaimed instance. Convert it to a terminal failure (and persist that)
-    so no client polls a zombie forever."""
+    """Watchdog on the read path: an in-flight record that stopped advancing
+    lost its instance. Losing an instance is routine Cloud Run behaviour, so
+    the job goes back to `queued` for the next sweep to re-drive; only a job
+    that has burned MAX_ATTEMPTS is declared terminally failed, so a poller
+    never watches a zombie and a recoverable job is never buried."""
     if job.get("status") not in ("queued", "running"):
         return job
     try:
@@ -388,13 +407,18 @@ async def _fail_if_stale(job: dict) -> dict:
     age = (datetime.now(timezone.utc) - updated).total_seconds()
     if age <= JOB_STALE_S:
         return job
-    log.error("[%s] stale for %.0fs at stage %s; marking failed",
-              job.get("job_id"), age, job.get("stage"))
+    attempts = int(job.get("attempts", 0))
+    if attempts < MAX_ATTEMPTS:
+        log.warning("[%s] stale for %.0fs at stage %s (attempt %d/%d); requeueing",
+                    job.get("job_id"), age, job.get("stage"), attempts, MAX_ATTEMPTS)
+        return await _update_job(job["job_id"], status="queued", stage="queued")
+    log.error("[%s] stale for %.0fs at stage %s after %d attempts; marking failed",
+              job.get("job_id"), age, job.get("stage"), attempts)
     return await _update_job(
         job["job_id"], status="failed",
         error=f"job stalled at stage '{job.get('stage')}' "
-              f"(no progress for {int(age)}s); the owning instance was likely "
-              "reclaimed. Retry the generation.",
+              f"(no progress for {int(age)}s) after {attempts} attempts. "
+              "Retry the generation.",
     )
 
 
