@@ -22,11 +22,6 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "ko",
-			"name": "한국어",
-			"dir": "ltr"
-		},
-		{
 			"code": "fr",
 			"name": "Français",
 			"dir": "ltr"
@@ -40,11 +35,6 @@
 			"code": "pt-BR",
 			"name": "Português (BR)",
 			"dir": "ltr"
-		},
-		{
-			"code": "ar",
-			"name": "العربية",
-			"dir": "rtl"
 		},
 		{
 			"code": "hi",
@@ -82,8 +72,18 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "zh-TW",
+			"name": "繁體中文",
+			"dir": "ltr"
+		},
+		{
 			"code": "it",
 			"name": "Italiano",
+			"dir": "ltr"
+		},
+		{
+			"code": "pl",
+			"name": "Polski",
 			"dir": "ltr"
 		},
 		{
@@ -142,6 +142,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "no",
+			"name": "Norsk",
+			"dir": "ltr"
+		},
+		{
 			"code": "fi",
 			"name": "Suomi",
 			"dir": "ltr"
@@ -154,11 +159,6 @@
 		{
 			"code": "cs",
 			"name": "Čeština",
-			"dir": "ltr"
-		},
-		{
-			"code": "ro",
-			"name": "Română",
 			"dir": "ltr"
 		},
 		{
@@ -202,6 +202,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "ml",
+			"name": "മലയാളം",
+			"dir": "ltr"
+		},
+		{
 			"code": "as",
 			"name": "অসমীয়া",
 			"dir": "ltr"
@@ -209,11 +214,6 @@
 		{
 			"code": "ne",
 			"name": "नेपाली",
-			"dir": "ltr"
-		},
-		{
-			"code": "kk",
-			"name": "Қазақша",
 			"dir": "ltr"
 		},
 		{

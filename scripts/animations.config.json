@@ -266,6 +266,13 @@
   "loop": true
  },
  {
+  "name": "av-offabean-dance",
+  "source": "Offabean Dance.fbx",
+  "label": "Offabean Dance",
+  "icon": "🫘",
+  "loop": true
+ },
+ {
   "name": "dance",
   "source": "Hip Hop Dancing.fbx",
   "label": "Dance",

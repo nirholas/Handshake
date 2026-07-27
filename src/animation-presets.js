@@ -54,6 +54,7 @@ export const CLIP_CATEGORIES = Object.freeze({
 	'av-headbang': 'dance',
 	'av-boxer-dance': 'dance',
 	'av-rap-dance': 'dance',
+	'av-offabean-dance': 'dance',
 	'av-banging-tunes': 'dance',
 	'av-conductor': 'dance',
 	// Gestures & expression
