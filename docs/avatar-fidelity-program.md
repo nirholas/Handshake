@@ -225,14 +225,15 @@ warp already applies, and is capped at `MAX_BLEND` so a slightly-wrong pose
 degrades to a tint rather than to a visibly wrong image.
 
 **Measured on the shipped Wolf3D head with real faces**
-(`eval/measure_projection_coverage.py`), photographic coverage of the head goes
-from **10.5% to 41.3%, a 3.9x increase**:
+(`eval/measure_projection_coverage.py`), across all 40 reference faces
+photographic coverage of the head goes from **10.5% to 41.1%, a 3.9x increase**,
+and every one of the 40 fits a camera:
 
 | | Share of the head's texels |
 |---|---|
 | Face-oval warp (what existed before) | 10.5% |
-| New surface from projection | 30.8% |
-| **Total photographic** | **41.3%** |
+| New surface from projection | 30.6% (range 23.3-31.6%) |
+| **Total photographic** | **41.1%** (range 33.9-42.1%) |
 
 The harness reports the oval and the projection separately on purpose, and that
 is what caught the sign bug below: while the signs were inverted, "new" came out
