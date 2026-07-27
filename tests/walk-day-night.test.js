@@ -97,6 +97,30 @@ describe('walk day/night cycle', () => {
 		expect(riseX).not.toBe(0);
 	});
 
+	it('lingers on a warm dusk instead of flipping day to night', () => {
+		// The sky crossfade runs on a wider curve than the light levels, so the
+		// stretch either side of sunset is visibly graduated rather than a
+		// switch. Sample across dusk and require several distinct skies.
+		rig.cycle.setEnvironment(OUTDOOR);
+		const skies = new Set();
+		for (let p = 0.68; p <= 0.86; p += 0.01) {
+			rig.cycle.update(DEFAULT_CYCLE_MS * p);
+			skies.add(rig.stageEl.style.background);
+		}
+		expect(skies.size).toBeGreaterThan(6);
+	});
+
+	it('keeps the ground dark at dawn even while the sky is already colouring', () => {
+		rig.cycle.setEnvironment(OUTDOOR);
+		// Just before sunrise: the horizon has warmed but the sun has not risen,
+		// so the scene must still be lit like night, not like day.
+		const day = rig.cycle.update(DEFAULT_CYCLE_MS * 0.21);
+		expect(day).toBeLessThan(0.1);
+		expect(rig.sun.intensity).toBeLessThan(0.3);
+		// The sky, on the wider curve, has already left pure night behind.
+		expect(rig.stageEl.style.background).not.toContain('#05060f');
+	});
+
 	it('is deterministic: two independent instances agree exactly', () => {
 		const a = makeRig();
 		const b = makeRig();

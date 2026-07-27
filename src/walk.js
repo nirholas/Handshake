@@ -76,6 +76,16 @@ import { createWalkCapture } from './walk-capture.js';
 import { createMarketplaceGallery } from './marketplace-gallery.js';
 import { createAgentDeskManager, fetchLiveAgentDesks } from './walk-agent-desk.js';
 import { createWalkDayNight } from './walk-day-night.js';
+import {
+	createFrameGovernor,
+	trackWindowFocus,
+	getPowerSaver,
+	setPowerSaver,
+	onPowerSaverChange,
+	FPS_ACTIVE,
+	FPS_IDLE,
+	FPS_SAVER,
+} from './shared/frame-governor.js';
 import { Minimap } from './game/hud/minimap.js';
 import './game/hud/world-hud.css';
 
@@ -499,6 +509,12 @@ scene.add(sun.target);
 // environment (outdoor stages only) in applyEnvironmentMeta(); paused while AR
 // passthrough owns the lighting.
 const dayNight = createWalkDayNight({ ambientLight, hemi, sun, scene, stageEl: stage });
+
+// Frame pacing, shared with /play and /club. `powerSaver` is one preference
+// across every three.ws 3D surface, so turning it on here relieves those too.
+const frameGovernor = createFrameGovernor();
+const focusState = trackWindowFocus();
+let powerSaver = getPowerSaver();
 
 // Ground — opaque disc in non-AR mode, swapped to a shadow-only catcher in AR.
 const groundOpaque = new Mesh(
@@ -994,6 +1010,16 @@ const helpOverlay = (() => {
 	// and makes the controls feel dead. Dismissal is handled entirely by the
 	// window-level pointerdown listener below plus H / Esc, so the panel never
 	// needs to capture and the sticks underneath always stay live.
+	// Its own switches are the exception: they opt back into pointer events, but
+	// only while the panel is open (`.is-open`), so a hidden overlay still can't
+	// swallow a joystick touch. Without this the haptics / trail / NPC / power
+	// switches rendered but could never be clicked — the canvas got every event.
+	{
+		const s = document.createElement('style');
+		s.id = 'walk-help-overlay-style';
+		s.textContent = '#walk-help-overlay.is-open [data-help-keep]{pointer-events:auto}';
+		document.head.appendChild(s);
+	}
 	el.style.cssText = [
 		'position:fixed',
 		'inset:0',
@@ -1054,6 +1080,14 @@ const helpOverlay = (() => {
 				</button>
 			</div>
 			<div style="margin:14px 0 0;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:space-between" data-help-keep>
+				<span style="font-size:14px">Power saver<br><span style="font-size:11px;color:#888">30fps, lighter rendering</span></span>
+				<button type="button" id="walk-power-saver-toggle" role="switch" data-help-keep
+					aria-checked="${powerSaver}"
+					style="appearance:none;border:1px solid rgba(255,255,255,0.2);background:${powerSaver ? 'var(--accent,#7c5cff)' : 'rgba(255,255,255,0.08)'};color:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:13px;cursor:pointer">
+					${powerSaver ? 'On' : 'Off'}
+				</button>
+			</div>
+			<div style="margin:14px 0 0;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:space-between" data-help-keep>
 				<span style="font-size:14px">NPC companions</span>
 				<button type="button" id="walk-npc-toggle" role="switch" data-help-keep
 					aria-checked="${npcsEnabled}"
@@ -1098,6 +1132,34 @@ if (trailToggle) {
 	});
 }
 
+// Power saver on/off. The preference is shared across every three.ws 3D surface
+// (one localStorage key), so this toggle mirrors changes made in /play or /club
+// and pushes its own out to them. Applying it caps the loop at 30fps and drops
+// the renderer to 1x pixel ratio with shadows off for a cooler, quieter machine.
+const powerSaverToggle = helpOverlay.querySelector('#walk-power-saver-toggle');
+function applyPowerSaver(on) {
+	powerSaver = on;
+	renderer.setPixelRatio(on ? 1 : Math.min(window.devicePixelRatio, 2));
+	renderer.shadowMap.enabled = !on;
+	sun.castShadow = !on;
+	if (powerSaverToggle) {
+		powerSaverToggle.setAttribute('aria-checked', String(on));
+		powerSaverToggle.textContent = on ? 'On' : 'Off';
+		powerSaverToggle.style.background = on ? 'var(--accent,#7c5cff)' : 'rgba(255,255,255,0.08)';
+	}
+}
+if (powerSaver) applyPowerSaver(true);
+onPowerSaverChange((on) => applyPowerSaver(on));
+if (powerSaverToggle) {
+	powerSaverToggle.addEventListener('click', () => {
+		// dispatchEvent is synchronous, so onPowerSaverChange has already applied
+		// the new value (and updated `powerSaver`) by the time setStatus reads it.
+		setPowerSaver(!powerSaver);
+		setStatus(`Power saver: ${powerSaver ? 'on' : 'off'}`);
+		haptics.buzz(6);
+	});
+}
+
 // NPC companions on/off. Persisted; applied live — turning them on respawns the
 // current environment's cast, turning them off despawns and releases every NPC.
 const npcToggle = helpOverlay.querySelector('#walk-npc-toggle');
@@ -1128,6 +1190,7 @@ let helpVisible = false;
 function toggleHelp() {
 	helpVisible = !helpVisible;
 	helpOverlay.style.opacity = helpVisible ? '1' : '0';
+	helpOverlay.classList.toggle('is-open', helpVisible);
 	helpOverlay.setAttribute('aria-hidden', String(!helpVisible));
 }
 // Any pointer interaction dismisses the overlay. Capture phase + a
@@ -2214,7 +2277,16 @@ function readMoveInput() {
 	return { ix, iy };
 }
 
-function tick() {
+function tick(frameNow) {
+	requestAnimationFrame(tick);
+	// Frame governor (shared with /play and /club): rAF fires at the panel's
+	// refresh rate, so a 144Hz laptop rendered 2.4x the frames of a 60Hz one for
+	// pure heat. Cap real work at 60fps, drop to 30 when the window loses focus,
+	// and hold 30 under the user's power-saver preference. Skipped frames fold
+	// into the next dt, which every system below is already driven by.
+	const fpsCap = powerSaver ? FPS_SAVER : focusState.focused ? FPS_ACTIVE : FPS_IDLE;
+	if (!frameGovernor.shouldRun(frameNow ?? performance.now(), fpsCap)) return;
+
 	clock.update();
 	const dt = Math.min(clock.getDelta(), 0.05); // clamp huge frames after a tab switch
 
@@ -2516,7 +2588,6 @@ function tick() {
 	accumulateWalkMetrics(dt);
 
 	renderer.render(scene, camera);
-	requestAnimationFrame(tick);
 }
 
 function lerpAngle(a, b, t) {

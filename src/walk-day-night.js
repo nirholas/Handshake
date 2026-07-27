@@ -102,6 +102,12 @@ export function createWalkDayNight({ ambientLight, hemi, sun, scene, stageEl }) 
 		const alt = Math.sin(sunAngle); // sun altitude, -1..1
 		const horiz = Math.cos(sunAngle); // east(+) … west(−)
 		const day = smoothstep(-0.1, 0.18, alt);
+		// The sky crossfades over a much wider slice of the sun's arc than the
+		// light levels do. Tying both to `day` made dawn and dusk flip in a
+		// couple of seconds and left the world flat-lit the rest of the cycle;
+		// a wider curve lets the warm dusk palette actually linger on the
+		// horizon while the ground lighting still goes dark on schedule.
+		const skyMix = smoothstep(-0.45, 0.45, alt);
 
 		// --- Sun: arc along the environment's authored azimuth ------------------
 		const az = anchors.azimuth;
@@ -129,14 +135,14 @@ export function createWalkDayNight({ ambientLight, hemi, sun, scene, stageEl }) 
 		}
 
 		// --- Sky gradient (throttled: a CSS write only when it has shifted) -----
-		if (force || Math.abs(day - _lastSkyP) > 0.01) {
-			_lastSkyP = day;
-			if (day < 0.5) {
-				const k = day / 0.5; // night → dusk
+		if (force || Math.abs(skyMix - _lastSkyP) > 0.005) {
+			_lastSkyP = skyMix;
+			if (skyMix < 0.5) {
+				const k = skyMix / 0.5; // night → dusk
 				_top.set(NIGHT_SKY.top).lerp(_mix.set(DUSK_SKY.top), k);
 				_bot.set(NIGHT_SKY.bottom).lerp(_mix.set(DUSK_SKY.bottom), k);
 			} else {
-				const k = (day - 0.5) / 0.5; // dusk → the authored day sky
+				const k = (skyMix - 0.5) / 0.5; // dusk → the authored day sky
 				_top.set(DUSK_SKY.top).lerp(_dayTop, k);
 				_bot.set(DUSK_SKY.bottom).lerp(_dayBot, k);
 			}
