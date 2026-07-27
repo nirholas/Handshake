@@ -182,8 +182,14 @@ class WeakPerspectiveCamera:
         # the bottom of the photo, which reads as "nothing is visible" rather
         # than as an error.
         px = np.stack([mapped[:, 0], -mapped[:, 1]], axis=1)
-        # MediaPipe's z is smaller nearer the camera, so it is already a depth.
-        return px, mapped[:, 2]
+        # Depth sign is determined empirically, not from MediaPipe's documented z
+        # convention: Umeyama's reflection guard forces a proper rotation, which
+        # can absorb a sign flip in the correspondence and leave the fitted frame
+        # mirrored in z relative to the raw landmarks. The check that settles it
+        # is that the face must come out facing the camera; with the opposite
+        # sign the face oval measures -0.78 against the view axis, i.e. the
+        # pipeline believes the front of the head is pointing away.
+        return px, -mapped[:, 2]
 
     def view_direction(self) -> np.ndarray:
         """
@@ -192,10 +198,13 @@ class WeakPerspectiveCamera:
         Constant across the head under an orthographic model, which is the point:
         there is no camera centre to be wrong about, only a viewing axis.
         """
-        # Depth grows away from the camera, so the camera lies toward -z.
-        axis = self.R.T @ np.array([0.0, 0.0, -1.0])
+        # Paired with the depth sign above: the camera lies toward +z in the
+        # fitted frame. Verified by the face oval measuring +0.78 against this
+        # axis on the reference set, which is what a face pointing at the lens
+        # looks like.
+        axis = self.R.T @ np.array([0.0, 0.0, 1.0])
         n = np.linalg.norm(axis)
-        return axis / n if n > 0 else np.array([0.0, 0.0, -1.0])
+        return axis / n if n > 0 else np.array([0.0, 0.0, 1.0])
 
 
 def _dedupe_correspondences(
@@ -319,9 +328,16 @@ def _uv_barycentric_map(
     tri_map = np.full((tex_h, tex_w), -1, dtype=np.int32)
     bary_map = np.zeros((tex_h, tex_w, 3), dtype=np.float32)
 
-    # UV origin is bottom-left in glTF and top-left in an image.
+    # NO v-flip. glTF's UV origin is nominally bottom-left, so flipping looks
+    # correct in isolation, but this template's atlas and the precomputed
+    # `face_uv_map.json` both address it top-left (py = v * height) and the
+    # landmark warp composites against that. Flipping here writes the projected
+    # texture in mirrored, and makes the face-oval protect mask shield a band
+    # that is not the face. The symptom is silent: the avatar still renders, and
+    # the only tell is that projected coverage and the oval stop overlapping,
+    # which is what the coverage harness measures.
     px = uvs[:, 0] * (tex_w - 1)
-    py = (1.0 - uvs[:, 1]) * (tex_h - 1)
+    py = uvs[:, 1] * (tex_h - 1)
 
     for _t, tri in enumerate(faces):
         i0, i1, i2 = tri

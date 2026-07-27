@@ -145,6 +145,45 @@ def test_reaches_surface_no_landmark_describes():
     print(f"ok  reaches surface no landmark describes ({painted:.0%} of it painted)")
 
 
+def test_the_surface_under_the_landmarks_faces_the_camera():
+    """
+    The invariant that pins the depth and view-direction signs.
+
+    Landmarks come from a face, and a photographed face points at the lens. So
+    whatever surface the landmarks sit on MUST come out facing the camera. Get
+    the sign wrong and the pipeline believes the front of the head points away:
+    every gate then rejects the face and paints the back instead, silently, with
+    a perfectly plausible-looking coverage number.
+
+    This is not hypothetical. The shipped signs were inverted and every other
+    test here still passed, because they select their test regions BY facing and
+    so adapt to whichever sign is in force. Only an absolute claim catches it.
+    """
+    pos, nrm, uv, faces = _sphere()
+    patch = np.where((pos[:, 2] > 0.8) & (np.abs(pos[:, 1]) < 0.3))[0]
+    pts, _, _ = _synthetic_landmarks(pos, patch)
+
+    cam = fp.solve_camera(pts, patch, pos, 800, 800)
+    assert cam is not None
+    facing = nrm[patch] @ cam.view_direction()
+    assert facing.mean() > 0.5, (
+        f"the surface the landmarks sit on faces AWAY from the camera "
+        f"(mean {facing.mean():+.2f}); depth or view-direction sign is inverted"
+    )
+
+    # And it must actually be painted, not merely oriented correctly.
+    photo = np.full((800, 800, 3), 128, dtype=np.uint8)
+    _, weight, covered = fp.project_photo_to_uv(
+        photo, None, pos, nrm, uv, faces, pts, patch, 256, 256,
+    )
+    pos_map, _, _ = fp._rasterize_uv(pos, uv, faces, nrm, 256, 256)
+    near_patch = covered & (pos_map[:, :, 2] > 0.8) & (np.abs(pos_map[:, :, 1]) < 0.3)
+    assert near_patch.any(), "no texels found on the landmark patch"
+    painted = (weight[near_patch] > 0.01).mean()
+    assert painted > 0.8, f"only {painted:.0%} of the landmark surface was painted"
+    print(f"ok  the surface under the landmarks faces the camera and is painted ({painted:.0%})")
+
+
 def test_background_pixels_are_refused():
     """A texel projecting just off the silhouette must not pick up the wall."""
     pos, nrm, uv, faces = _sphere()
