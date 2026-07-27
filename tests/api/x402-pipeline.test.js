@@ -25,8 +25,8 @@ import { Readable } from 'node:stream';
 // A real rigged GLB fixture (Khronos BrainStem — 1 skin, 1 animation). Used as
 // the mocked final stage output so the end-to-end test can inspect a real asset.
 const RIGGED_GLB_PATH = resolve(process.cwd(), 'public/avatars/brainstem.glb');
-const RIGGED_GLB_URL = 'https://cdn.three.ws/forge/fixture/brainstem.glb';
-const GENERATE_GLB_URL = 'https://cdn.three.ws/forge/fixture/generated.glb';
+const RIGGED_GLB_URL = 'https://three.ws/cdn/forge/fixture/brainstem.glb';
+const GENERATE_GLB_URL = 'https://three.ws/cdn/forge/fixture/generated.glb';
 
 beforeAll(() => {
 	Object.assign(process.env, {
@@ -61,8 +61,8 @@ vi.mock('../../api/_lib/x402-spec.js', async (importActual) => {
 // synchronous done GLB so `generate` completes inline at submit time.
 const nvidiaMock = vi.hoisted(() => ({
 	createNvidiaProvider: vi.fn(() => ({
-		textTo3d: vi.fn(async () => ({ resultGlbUrl: 'https://cdn.three.ws/forge/fixture/generated.glb' })),
-		status: vi.fn(async () => ({ status: 'done', resultGlbUrl: 'https://cdn.three.ws/forge/fixture/generated.glb' })),
+		textTo3d: vi.fn(async () => ({ resultGlbUrl: 'https://three.ws/cdn/forge/fixture/generated.glb' })),
+		status: vi.fn(async () => ({ status: 'done', resultGlbUrl: 'https://three.ws/cdn/forge/fixture/generated.glb' })),
 	})),
 }));
 vi.mock('../../api/_providers/nvidia.js', () => nvidiaMock);
@@ -181,8 +181,8 @@ describe('POST /api/x402/pipeline — grammar validation matrix (pre-payment 400
 		{ name: 'empty stages', body: { stages: [] }, code: 'invalid_stages' },
 		{ name: 'unknown stage', body: { stages: ['generate', 'teleport'], prompt: 'a cat' }, code: 'unknown_stage' },
 		{ name: 'duplicate stage', body: { stages: ['generate', 'generate'], prompt: 'a cat' }, code: 'duplicate_stage' },
-		{ name: 'generate not first', body: { stages: ['rig', 'generate'], prompt: 'a cat', glb_url: 'https://cdn.three.ws/x.glb' }, code: 'invalid_order' },
-		{ name: 'out-of-canonical-order', body: { stages: ['stylize', 'rig'], glb_url: 'https://cdn.three.ws/x.glb' }, code: 'invalid_order' },
+		{ name: 'generate not first', body: { stages: ['rig', 'generate'], prompt: 'a cat', glb_url: 'https://three.ws/cdn/x.glb' }, code: 'invalid_order' },
+		{ name: 'out-of-canonical-order', body: { stages: ['stylize', 'rig'], glb_url: 'https://three.ws/cdn/x.glb' }, code: 'invalid_order' },
 		{ name: 'generate without prompt', body: { stages: ['generate', 'rig'] }, code: 'missing_prompt' },
 		{ name: 'no generate, no glb_url', body: { stages: ['rig'] }, code: 'missing_glb_url' },
 		{ name: 'bad glb_url', body: { stages: ['rig'], glb_url: 'ftp://nope' }, code: 'invalid_glb_url' },

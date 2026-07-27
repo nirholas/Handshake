@@ -38,7 +38,7 @@ function join(room, client) {
 	room.state.viewers.set(client.sessionId, { id: client.sessionId, ownerId: client.userData.ownerId, tsServer: Date.now() });
 }
 
-const HTTPS = 'https://cdn.three.ws/model.glb';
+const HTTPS = 'https://three.ws/cdn/model.glb';
 
 describe('StudioRoom — model:spawn', () => {
 	let room, alice;

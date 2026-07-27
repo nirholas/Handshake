@@ -69,6 +69,14 @@ pure glTF work in between:
    stripped back out. The binary buffer is rebuilt from scratch (only the
    garment's geometry, skin matrices, and textures survive), and joint names
    are canonicalized (`mixamorig:LeftArm` → `LeftArm`).
+   Placement also enforces a **size envelope** (`max_extent` in `SLOT_BOXES`).
+   The fit axis pins the invariant dimension, but nothing else bounds the
+   others, and a generator asked for "long straight hair" can return a mesh
+   1.4 m deep whose width is still a perfect 0.30 (live defect 2026-07-27: it
+   floated 36 cm above the crown and measured 78 cm off the body in the gait
+   audit). That mesh is malformed, not mis-scaled, so the job fails with the
+   measurement instead of publishing it. Hair additionally anchors its TOP to
+   the crown, so length hangs down the back rather than straddling the head.
 6. **Validate + publish**: skin-weight statistics produce the bind coverage,
    the `occludes` declaration (any REGION_BONES region carrying ≥ 10% of the
    garment's skin weight, then clamped to the slot's plausible region set,
@@ -144,10 +152,46 @@ One-time infra the service depends on (already applied):
   policy, satisfying the manifest spec's CORS requirement; job records and
   rig staging stay in `three-ws-avatar-reconstructions`.
 
+## Job durability: the record IS the queue
+
+A job's record in GCS (`garment-jobs/<id>.json`) is not just status for
+pollers, it is the work queue. Work is **claimed at execution time**: an
+instance only owns a job once it holds a concurrency slot AND wins an atomic
+generation-matched write on the record (`status: running`, `attempts+1`,
+`owner`). Everything the pipeline needs (prompt, slot, tier, yaw) is persisted
+at submit, so any instance can drive a job it never saw submitted.
+
+This exists because the obvious design silently loses work. Handing every
+submission to the instance's FastAPI background queue means jobs past
+`MAX_CONCURRENT` wait on an in-memory semaphore, and Cloud Run reclaiming that
+instance (idle scale-down, revision rollout, crash) takes them with it while
+their records sit at `queued`. A 22-piece catalog batch lost 12 that way on
+2026-07-26; the same pieces resubmitted two at a time all published.
+
+Recovery paths, in order of speed:
+
+1. **A freed slot drains the backlog.** When a job finishes, the instance
+   immediately looks for one more claimable job.
+2. **`POST /sweep`** (bearer `API_KEY`) claims up to `MAX_CONCURRENT`
+   orphaned jobs and drives them. Called every 10 minutes by
+   [api/cron/garment-job-sweep.js](../../api/cron/garment-job-sweep.js) via
+   Cloud Scheduler. Overlapping sweeps are safe: the claim is atomic, so a job
+   can never be double-run or double-published.
+3. **The read-path watchdog** (`GET /jobs/:id`) requeues a job whose owner
+   went silent past `JOB_STALE_S` instead of burying it, and only declares
+   terminal failure once `JOB_MAX_ATTEMPTS` (default 3) is spent, so a
+   reclaimed instance costs an attempt rather than the job.
+
+The claim policy is pure and unit-tested in
+[job_queue.py](job_queue.py) / [test_job_queue.py](test_job_queue.py) (22
+checks, a Docker build gate): who may claim, who may never be stolen, and
+what a stale record becomes.
+
 ## Local tests (no GPU, no network)
 
 ```bash
-python3 workers/garment-forge/test_garment_glb.py
+python3 workers/garment-forge/test_garment_glb.py   # pure glTF pipeline
+python3 workers/garment-forge/test_job_queue.py     # durable-queue policy
 ```
 
 ## Catalog quality audit

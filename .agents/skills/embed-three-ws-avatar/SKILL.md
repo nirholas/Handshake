@@ -27,7 +27,7 @@ the three.ws CDN with `access-control-allow-origin: *`, so it loads from any ori
 ></script>
 
 <agent-3d
-  body="https://cdn.three.ws/forge/anon/YOUR_MODEL.glb"
+  body="https://three.ws/cdn/forge/anon/YOUR_MODEL.glb"
   mode="section"
   kiosk
   poster="/images/avatar-poster.webp"
@@ -56,7 +56,7 @@ data:
 ## Getting a GLB for `body`
 
 Any humanoid GLB URL works. Models generated on three.ws come back on persistent
-`https://cdn.three.ws/forge/...` URLs you can use directly in `body` with no
+`https://three.ws/cdn/forge/...` URLs you can use directly in `body` with no
 re-hosting (self-hosting also works if you want control):
 
 - Generate from text or a reference image: the `create-3d-avatar` skill (rigged,

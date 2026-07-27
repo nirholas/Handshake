@@ -911,7 +911,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	'/api/x402/pipeline-rig': {
 		stage: 'rig',
 		input_url: 'https://three.ws/avatars/mannequin.glb',
-		output_url: 'https://cdn.three.ws/x402-pipeline/rig/abc123.glb',
+		output_url: 'https://three.ws/cdn/x402-pipeline/rig/abc123.glb',
 		bytes: 1940112,
 		persisted: true,
 		rig_type: 'biped',
@@ -919,7 +919,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	'/api/x402/pipeline-remesh': {
 		stage: 'remesh',
 		input_url: 'https://three.ws/avatars/mannequin.glb',
-		output_url: 'https://cdn.three.ws/x402-pipeline/remesh/abc123.glb',
+		output_url: 'https://three.ws/cdn/x402-pipeline/remesh/abc123.glb',
 		bytes: 812044,
 		persisted: true,
 		remesh_mode: 'quad',
@@ -931,7 +931,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	'/api/x402/pipeline-gameready': {
 		stage: 'gameready',
 		input_url: 'https://three.ws/avatars/mannequin.glb',
-		output_url: 'https://cdn.three.ws/x402-pipeline/gameready/abc123.glb',
+		output_url: 'https://three.ws/cdn/x402-pipeline/gameready/abc123.glb',
 		bytes: 640220,
 		persisted: true,
 		topology: 'quad',
@@ -943,7 +943,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	'/api/x402/pipeline-stylize': {
 		stage: 'stylize',
 		input_url: 'https://three.ws/avatars/mannequin.glb',
-		output_url: 'https://cdn.three.ws/x402-pipeline/stylize/abc123.glb',
+		output_url: 'https://three.ws/cdn/x402-pipeline/stylize/abc123.glb',
 		bytes: 512880,
 		persisted: true,
 		style: 'voxel',
@@ -953,7 +953,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	'/api/x402/pipeline-rembg': {
 		stage: 'rembg',
 		input_url: 'https://three.ws/avatars/thumbs/default.png',
-		output_url: 'https://cdn.three.ws/x402-pipeline/rembg/abc123.png',
+		output_url: 'https://three.ws/cdn/x402-pipeline/rembg/abc123.png',
 		bytes: 284112,
 		persisted: true,
 		model: 'rmbg2',
@@ -1462,7 +1462,7 @@ const MCP_TOOL_OUTPUT_SUMMARIES = Object.freeze({
 		mint: 'M1ntExamp1eDoNotUse1111111111111111111111111',
 		explorer_asset_url: 'https://core.metaplex.com/explorer/M1ntExamp1eDoNotUse1111111111111111111111111?env=devnet',
 		explorer_tx_url: 'https://explorer.solana.com/tx/5synthetictransactionsignature111111111111111111111111111111111111111111111111111111?cluster=devnet',
-		viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Favatars%2Fmidnight-robot.glb',
+		viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Favatars%2Fmidnight-robot.glb',
 		royalty: { percent: 5, requested_basis_points: 500, cap_basis_points: 1000, capped: false },
 	},
 	// Mirrors handleAnchor()'s structuredContent in api/_mcp3d/tools/provenance.js.

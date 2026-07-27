@@ -97,7 +97,7 @@ Three production paths. Pick whichever fits your use case:
 - **Selfie capture** — upload a photo, get a rigged 3D version of yourself in ~60 seconds. See [avatar-creation.md](./avatar-creation.md).
 - **Upload your own** — any glTF 2.0 / GLB with a humanoid rig works. Drop the file into the editor at [three.ws/create](https://three.ws/create) or POST to `/api/avatars`.
 
-Every avatar ends up as a hosted GLB URL (served from the `cdn.three.ws` asset CDN) plus a database record. When you wire one into an agent, the agent's manifest references it under `body.uri`.
+Every avatar ends up as a hosted GLB URL (served from the first-party asset CDN at `three.ws/cdn/<key>`) plus a database record. When you wire one into an agent, the agent's manifest references it under `body.uri`.
 
 ---
 

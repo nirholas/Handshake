@@ -35,8 +35,8 @@ describe('recordMaterialRestyle', () => {
 		const id = await recordMaterialRestyle({
 			userId: 'user-1',
 			action: 'restyle',
-			sourceUrl: 'https://cdn.three.ws/src.glb',
-			resultUrl: 'https://cdn.three.ws/out.glb',
+			sourceUrl: 'https://three.ws/cdn/src.glb',
+			resultUrl: 'https://three.ws/cdn/out.glb',
 			instruction: 'make it chrome',
 		});
 		expect(typeof id).toBe('string');
@@ -56,8 +56,8 @@ describe('recordMaterialRestyle', () => {
 		const id = await recordMaterialRestyle({
 			userId: 'user-1',
 			action: 'variants',
-			sourceUrl: 'https://cdn.three.ws/src.glb',
-			resultUrl: 'https://cdn.three.ws/variant-1.glb',
+			sourceUrl: 'https://three.ws/cdn/src.glb',
+			resultUrl: 'https://three.ws/cdn/variant-1.glb',
 			preset: 'chrome',
 			seed: 42,
 		});
@@ -78,8 +78,8 @@ describe('listRestylesByUser / countRestylesByUser', () => {
 				id: 'r1',
 				action: 'restyle',
 				label: null,
-				source_url: 'https://cdn.three.ws/src.glb',
-				result_url: 'https://cdn.three.ws/out.glb',
+				source_url: 'https://three.ws/cdn/src.glb',
+				result_url: 'https://three.ws/cdn/out.glb',
 				instruction: 'make it wooden',
 				preset: null,
 				created_at: '2026-07-23T00:00:00Z',
@@ -89,7 +89,7 @@ describe('listRestylesByUser / countRestylesByUser', () => {
 		expect(rows).toHaveLength(1);
 		expect(rows[0]).toMatchObject({
 			type: 'restyle',
-			glbUrl: 'https://cdn.three.ws/out.glb',
+			glbUrl: 'https://three.ws/cdn/out.glb',
 			prompt: 'make it wooden',
 			category: 'AI restyle',
 		});

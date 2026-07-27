@@ -28,7 +28,7 @@ Four real capabilities cover embodiment, reach, and trust:
    ```html
    <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
    <agent-3d
-     body="https://cdn.three.ws/models/brand-agent.glb"
+     body="https://three.ws/cdn/models/brand-agent.glb"
      brain="claude-sonnet-4-6"
      name="Lyra-bot"
      instructions="Official brand assistant. Answer product questions, link to pricing, stay on-brand."

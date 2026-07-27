@@ -120,8 +120,15 @@ describe('POST /api/chat/proxy — per-IP rate limit', () => {
 		const res = makeRes();
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
-		expect(fetchMock).toHaveBeenCalledTimes(1);
-		expect(fetchMock.mock.calls[0][0]).toContain('openrouter.ai');
+		// A bare count of 1 was stale: the proxy now checks OpenRouter's model
+		// catalog (/api/v1/models, via isLiveFreeModel) before forwarding, because
+		// `:free` endpoints get retired without notice and a saved conversation can
+		// name a dead one for months. So a healthy request makes TWO upstream
+		// calls, catalog then completion. Pin the contract that matters: exactly
+		// one completion is spent, and it goes to OpenRouter.
+		const completions = fetchMock.mock.calls.filter(([url]) => String(url).includes('/chat/completions'));
+		expect(completions).toHaveLength(1);
+		expect(completions[0][0]).toContain('openrouter.ai');
 	});
 
 	it('rejects non-:free models without calling upstream', async () => {

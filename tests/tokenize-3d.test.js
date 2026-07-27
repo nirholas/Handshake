@@ -17,8 +17,8 @@ import {
 import { mintTokenized3dAsset } from '../api/_lib/tokenize-3d.js';
 
 const OWNER = 'So11111111111111111111111111111111111111112';
-const GLB = 'https://cdn.three.ws/tokenized/abc/model.glb';
-const IMG = 'https://cdn.three.ws/tokenized/abc/thumb.png';
+const GLB = 'https://three.ws/cdn/tokenized/abc/model.glb';
+const IMG = 'https://three.ws/cdn/tokenized/abc/thumb.png';
 const VIEWER = 'https://three.ws/viewer?src=' + encodeURIComponent(GLB);
 
 describe('tokenize-3d metadata shape', () => {
@@ -226,7 +226,7 @@ function makeDeps(store, counters) {
 			counters.promote++;
 			return { glbUrl: GLB, imageUrl: IMG, glbIpfs: null, imageIpfs: null };
 		},
-		uploadMetadataJson: async () => ({ uri: 'https://cdn.three.ws/tokenized/abc/metadata.json', ipfs: null }),
+		uploadMetadataJson: async () => ({ uri: 'https://three.ws/cdn/tokenized/abc/metadata.json', ipfs: null }),
 		mintCoreAsset: async () => {
 			counters.mint++;
 			return { mint: 'MintAsset1111111111111111111111111111111111', signature: 'Sig111' };

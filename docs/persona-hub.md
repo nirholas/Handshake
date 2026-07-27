@@ -157,8 +157,8 @@ A successful response looks like:
   "avatar": {
     "id": "a-1",
     "name": "My Avatar",
-    "url": "https://cdn.three.ws/u/<user>/avatar.glb",
-    "thumbnail_url": "https://cdn.three.ws/u/<user>/avatar.png"
+    "url": "https://three.ws/cdn/u/<user>/avatar.glb",
+    "thumbnail_url": "https://three.ws/cdn/u/<user>/avatar.png"
   },
   "tenant_origin": "https://coolgame.three.ws",
   "alg": "ES256"
@@ -197,8 +197,8 @@ The base64url payload of the issued token decodes to:
   "avatar": {
     "id": "a-1",
     "name": "My Avatar",
-    "url": "https://cdn.three.ws/u/<user>/avatar.glb",
-    "thumbnail_url": "https://cdn.three.ws/u/<user>/avatar.png"
+    "url": "https://three.ws/cdn/u/<user>/avatar.glb",
+    "thumbnail_url": "https://three.ws/cdn/u/<user>/avatar.png"
   },
   "iss": "https://three.ws",
   "sub": "<three.ws user id>",

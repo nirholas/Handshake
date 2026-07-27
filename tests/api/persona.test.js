@@ -27,10 +27,10 @@ vi.mock('../../api/_lib/db.js', () => ({
 }));
 
 vi.mock('../../api/_lib/r2.js', () => ({
-	publicUrl: (key) => `https://cdn.three.ws/${key}`,
+	publicUrl: (key) => `https://three.ws/cdn/${key}`,
 	// thumbnailUrl mirrors r2.js: null for a missing key or the legacy *_og.png form.
 	thumbnailUrl: (key) =>
-		!key || /^https?:\/\/.*_og\.png$/i.test(key) ? null : `https://cdn.three.ws/${key}`,
+		!key || /^https?:\/\/.*_og\.png$/i.test(key) ? null : `https://three.ws/cdn/${key}`,
 }));
 
 vi.mock('../../api/_lib/crypto.js', () => ({
@@ -169,7 +169,7 @@ describe('POST /api/auth/persona/issue', () => {
 		expect(body.avatar).toEqual({
 			id: 'a-1',
 			name: 'My Avatar',
-			url: 'https://cdn.three.ws/u/1/a.glb',
+			url: 'https://three.ws/cdn/u/1/a.glb',
 			thumbnail_url: null,
 		});
 		expect(body.alg).toBe('HS256');
@@ -192,7 +192,7 @@ describe('POST /api/auth/persona/issue', () => {
 		});
 		expect(status).toBe(200);
 		expect(body.avatar.id).toBe('a-2');
-		expect(body.avatar.thumbnail_url).toBe('https://cdn.three.ws/u/1/other.png');
+		expect(body.avatar.thumbnail_url).toBe('https://three.ws/cdn/u/1/other.png');
 	});
 });
 
@@ -298,7 +298,7 @@ describe('GET /api/auth/persona/me', () => {
 		expect(status).toBe(200);
 		expect(body.user.email).toBe('u@three.ws');
 		expect(body.avatars).toHaveLength(2);
-		expect(body.avatars[1].thumbnail_url).toBe('https://cdn.three.ws/u/1/b.png');
+		expect(body.avatars[1].thumbnail_url).toBe('https://three.ws/cdn/u/1/b.png');
 	});
 });
 

@@ -11,7 +11,7 @@ const avatar = (over = {}) => ({
 	id: '11111111-1111-1111-1111-111111111111',
 	name: 'Robo',
 	slug: 'robo',
-	thumbnail_url: 'https://cdn.three.ws/t/robo.png',
+	thumbnail_url: 'https://three.ws/cdn/t/robo.png',
 	...over,
 });
 
@@ -37,8 +37,8 @@ describe('avatar search warmup — MCP response parsing', () => {
 		expect(out.topResults).toHaveLength(3);
 		// Only non-null thumbnails are surfaced (validates the pipeline resolved imagery).
 		expect(out.thumbnails).toEqual([
-			'https://cdn.three.ws/t/robo.png',
-			'https://cdn.three.ws/t/robo.png',
+			'https://three.ws/cdn/t/robo.png',
+			'https://three.ws/cdn/t/robo.png',
 		]);
 		expect(out.topResults[0]).toMatchObject({ id: avatar().id, name: 'Robo', slug: 'robo' });
 	});

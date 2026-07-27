@@ -9104,7 +9104,7 @@ The simplest possible setup — one script tag, one element, zero build step.
 	</head>
 	<body>
 		<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
-		<agent-3d body="https://cdn.three.ws/models/sample-avatar.glb"></agent-3d>
+		<agent-3d body="https://three.ws/cdn/models/sample-avatar.glb"></agent-3d>
 	</body>
 </html>
 ```
@@ -9121,7 +9121,7 @@ Add `brain=` and `instructions=` to turn the viewer into a conversational agent.
 <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 
 <agent-3d
-	body="https://cdn.three.ws/models/sample-avatar.glb"
+	body="https://three.ws/cdn/models/sample-avatar.glb"
 	brain="claude-sonnet-4-6"
 	name="Aria"
 	instructions="You are Aria, a friendly AI guide. Be warm, concise, and occasionally playful.
@@ -9144,7 +9144,7 @@ Pin the agent to a corner of the page so it persists as users scroll.
 <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 
 <agent-3d
-	body="https://cdn.three.ws/models/sample-avatar.glb"
+	body="https://three.ws/cdn/models/sample-avatar.glb"
 	brain="claude-sonnet-4-6"
 	instructions="You are a helpful product assistant. Answer questions about our features."
 	mode="floating"
@@ -9281,7 +9281,7 @@ For anything beyond a quick one-liner, define the agent in a manifest file and r
 		"stt": { "provider": "browser", "language": "en-US" }
 	},
 	"memory": { "mode": "local" },
-	"skills": [{ "uri": "https://cdn.three.ws/skills/wave/" }]
+	"skills": [{ "uri": "https://three.ws/cdn/skills/wave/" }]
 }
 ```
 
@@ -11018,7 +11018,11 @@ S3_ENDPOINT=https://...
 S3_ACCESS_KEY_ID=...
 S3_SECRET_ACCESS_KEY=...
 S3_BUCKET=3d-agent-avatars
-S3_PUBLIC_DOMAIN=https://cdn.three.ws        # CDN base URL for public model URLs
+S3_PUBLIC_DOMAIN=https://pub-<hash>.r2.dev   # bucket's public origin (R2 dev domain)
+# Public model URLs are served through the first-party CDN instead of that
+# origin: https://three.ws/cdn/<r2-key> (api/cdn-object.js). The r2.dev domain is
+# Cloudflare rate-limited and answers CORS with an exact-origin allowlist, so
+# prefer /cdn/ in anything user- or developer-facing.
 
 # Redis (rate limiting)
 UPSTASH_REDIS_REST_URL=...
@@ -11230,7 +11234,7 @@ Please **do not** file public GitHub issues for vulnerabilities. Disclosure runs
 
 The current threat model and hardening notes live in [specs/SECURITY.md](specs/SECURITY.md) and [docs/security.md](docs/security.md). The [Security Hardening](#security-hardening) section above summarises the in-tree controls.
 
-In-scope: this repository and its deployed surfaces (`three.ws`, `cdn.three.ws`, `*.three.ws`). Out-of-scope: third-party services we integrate with (Google Cloud, Neon, Cloudflare R2, Upstash, Privy, Anthropic, ElevenLabs, pump.fun) — please report directly to them.
+In-scope: this repository and its deployed surfaces (`three.ws` including the `/cdn/` asset route, and `*.three.ws`). Out-of-scope: third-party services we integrate with (Google Cloud, Neon, Cloudflare R2, Upstash, Privy, Anthropic, ElevenLabs, pump.fun) — please report directly to them.
 
 ---
 

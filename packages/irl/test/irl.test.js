@@ -53,7 +53,7 @@ test('nearby() sends the fix token in the x-irl-fix header and shapes pins to ca
 	const { fetch, calls } = stubFetch([
 		{ body: { pins: [
 			{ id: 'p1', agent_id: 'a1', lat: 40.74110, lng: -73.98970, heading: 90, distance_m: 12,
-			  avatar_url: 'https://cdn.three.ws/scout.glb', avatar_name: 'Scout', caption: 'gm',
+			  avatar_url: 'https://three.ws/cdn/scout.glb', avatar_name: 'Scout', caption: 'gm',
 			  x402_endpoint: null, view_count: 3, avatar_version: 2, is_mine: false, room_id: null },
 		] } },
 	]);
@@ -68,7 +68,7 @@ test('nearby() sends the fix token in the x-irl-fix header and shapes pins to ca
 	assert.equal(pins.length, 1);
 	assert.equal(pins[0].agentId, 'a1');
 	assert.equal(pins[0].distanceM, 12);
-	assert.equal(pins[0].avatarUrl, 'https://cdn.three.ws/scout.glb');
+	assert.equal(pins[0].avatarUrl, 'https://three.ws/cdn/scout.glb');
 	assert.equal(pins[0].viewCount, 3);
 	assert.equal(pins[0].isMine, false);
 	assert.equal(pins[0].raw.avatar_name, 'Scout');
@@ -87,13 +87,13 @@ test('nearby() rejects a non-finite radius before any network call', async () =>
 test('placePin() posts the body and exposes the permanent flag', async () => {
 	const { fetch, calls } = stubFetch([
 		{ status: 201, body: { pin: { id: 'p9', lat: 40.7411, lng: -73.9897, avatar_name: 'Scout',
-			caption: 'Say hi — I drop $THREE alpha here', avatar_url: 'https://cdn.three.ws/scout.glb',
+			caption: 'Say hi — I drop $THREE alpha here', avatar_url: 'https://three.ws/cdn/scout.glb',
 			expires_at: null, permanent: true } } },
 	]);
 	const client = createIrl({ fetch });
 	const { pin } = await client.placePin({
 		lat: 40.7411, lng: -73.9897, avatarName: 'Scout',
-		avatarUrl: 'https://cdn.three.ws/scout.glb', caption: 'Say hi — I drop $THREE alpha here',
+		avatarUrl: 'https://three.ws/cdn/scout.glb', caption: 'Say hi — I drop $THREE alpha here',
 	});
 
 	assert.equal(calls[0].url.pathname, '/api/irl/pins');

@@ -25,7 +25,7 @@ function stubFetch(responses) {
 
 test('forge() posts the prompt and shapes a synchronous done job', async () => {
 	const { fetch, calls } = stubFetch([
-		{ body: { job_id: null, creation_id: 'c1', status: 'done', glb_url: 'https://cdn.three.ws/a.glb', backend: 'nvidia', tier: 'standard', path: 'image', durable: true } },
+		{ body: { job_id: null, creation_id: 'c1', status: 'done', glb_url: 'https://three.ws/cdn/a.glb', backend: 'nvidia', tier: 'standard', path: 'image', durable: true } },
 	]);
 	const client = createForge({ fetch, baseUrl: 'https://three.ws' });
 	const res = await client.forge('a chrome robot');
@@ -36,7 +36,7 @@ test('forge() posts the prompt and shapes a synchronous done job', async () => {
 	assert.equal(sent.prompt, 'a chrome robot');
 	assert.ok(!('path' in sent), 'unset options are pruned from the body');
 	assert.equal(res.status, 'done');
-	assert.equal(res.glbUrl, 'https://cdn.three.ws/a.glb');
+	assert.equal(res.glbUrl, 'https://three.ws/cdn/a.glb');
 	assert.equal(res.viewerUrl, 'https://three.ws/forge?share=c1');
 	assert.equal(res.backend, 'nvidia');
 });
@@ -45,13 +45,13 @@ test('forge() polls a queued job until done', async () => {
 	const { fetch, calls } = stubFetch([
 		{ body: { job_id: 'j1', creation_id: 'c2', status: 'queued' } },
 		{ body: { job_id: 'j1', status: 'running' } },
-		{ body: { job_id: 'j1', creation_id: 'c2', status: 'done', glb_url: 'https://cdn.three.ws/b.glb' } },
+		{ body: { job_id: 'j1', creation_id: 'c2', status: 'done', glb_url: 'https://three.ws/cdn/b.glb' } },
 	]);
 	const ticks = [];
 	const client = createForge({ fetch });
 	const res = await client.forge('a fox', { pollIntervalMs: 1, onProgress: (j) => ticks.push(j.status) });
 
-	assert.equal(res.glbUrl, 'https://cdn.three.ws/b.glb');
+	assert.equal(res.glbUrl, 'https://three.ws/cdn/b.glb');
 	assert.equal(calls[1].url.searchParams.get('job'), 'j1');
 	assert.ok(ticks.includes('queued'));
 	assert.ok(ticks.includes('done'));
@@ -59,13 +59,13 @@ test('forge() polls a queued job until done', async () => {
 
 test('rig() targets action=rig with the glb_url', async () => {
 	const { fetch, calls } = stubFetch([
-		{ body: { job_id: null, creation_id: 'c3', status: 'done', glb_url: 'https://cdn.three.ws/rigged.glb' } },
+		{ body: { job_id: null, creation_id: 'c3', status: 'done', glb_url: 'https://three.ws/cdn/rigged.glb' } },
 	]);
 	const client = createForge({ fetch });
-	const res = await client.rig('https://cdn.three.ws/raw.glb');
+	const res = await client.rig('https://three.ws/cdn/raw.glb');
 	assert.equal(calls[0].url.searchParams.get('action'), 'rig');
-	assert.equal(JSON.parse(calls[0].init.body).glb_url, 'https://cdn.three.ws/raw.glb');
-	assert.equal(res.glbUrl, 'https://cdn.three.ws/rigged.glb');
+	assert.equal(JSON.parse(calls[0].init.body).glb_url, 'https://three.ws/cdn/raw.glb');
+	assert.equal(res.glbUrl, 'https://three.ws/cdn/rigged.glb');
 });
 
 test('the geometry path attaches the BYOK provider key header', async () => {

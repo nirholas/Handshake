@@ -679,7 +679,7 @@ Here is a realistic conversation showing how Claude uses the MCP tools end-to-en
 
 1. `get_avatar({ slug: "storm-mage" })` — resolves the UUID and model URL.
 
-2. `validate_model({ url: "https://cdn.three.ws/u/…/storm-mage.glb" })` — runs the Khronos validator.
+2. `validate_model({ url: "https://three.ws/cdn/u/…/storm-mage.glb" })` — runs the Khronos validator.
 
    Response:
    ```
@@ -688,7 +688,7 @@ Here is a realistic conversation showing how Claude uses the MCP tools end-to-en
      [WRN] NODE_EMPTY: node "Armature" has no mesh and no children
    ```
 
-3. `inspect_model({ url: "https://cdn.three.ws/u/…/storm-mage.glb" })` — structural overview.
+3. `inspect_model({ url: "https://three.ws/cdn/u/…/storm-mage.glb" })` — structural overview.
 
    Response:
    ```

@@ -55,7 +55,7 @@ function sampleProfile() {
 			activeSlot: 2,
 			xp: { combat: 1500, woodcutting: 3000, mining: 200, fishing: 75, cooking: 640 },
 			hp: 88, maxHp: 100, mount: 'horse',
-			cosmetic: 'https://cdn.three.ws/avatars/nico.glb',
+			cosmetic: 'https://three.ws/cdn/avatars/nico.glb',
 		},
 		cosmetics: { owned: ['hat_red', 'cape_blue', 'crown_gold'], equipped: 'crown_gold' },
 		lastRealm: 'whisperwood',
@@ -91,7 +91,7 @@ describe('PlayerStore — synchronous cache API', () => {
 		expect(typeof got.savedAt).toBe('number');
 		expect(s.hasPlayer('acct')).toBe(true);
 		// avatar URL, last position, placed structures all round-trip
-		expect(got.profile.cosmetic).toBe('https://cdn.three.ws/avatars/nico.glb');
+		expect(got.profile.cosmetic).toBe('https://three.ws/cdn/avatars/nico.glb');
 		expect(got.lastRealm).toBe('whisperwood');
 		expect(got.lastTx).toBe(12);
 		expect(got.lastTy).toBe(7);
@@ -110,7 +110,7 @@ describe('PlayerStore — synchronous cache API', () => {
 		// structures, last position, avatar survive the merge
 		expect(s.loadPlayer('acct').structures.whisperwood[0].kind).toBe('shack');
 		expect(s.loadPlayer('acct').lastRealm).toBe('whisperwood');
-		expect(s.loadPlayer('acct').profile.cosmetic).toBe('https://cdn.three.ws/avatars/nico.glb');
+		expect(s.loadPlayer('acct').profile.cosmetic).toBe('https://three.ws/cdn/avatars/nico.glb');
 	});
 });
 
@@ -142,7 +142,7 @@ describe('PlayerStore (durable / Upstash)', () => {
 		expect(b.loadPlayer('wallet:0xABC').cosmetics.equipped).toBe('crown_gold');
 		expect(b.loadPlayer('wallet:0xABC').quests.tutorial.done).toBe(true);
 		// The three new fields survive a restart too.
-		expect(b.loadPlayer('wallet:0xABC').profile.cosmetic).toBe('https://cdn.three.ws/avatars/nico.glb');
+		expect(b.loadPlayer('wallet:0xABC').profile.cosmetic).toBe('https://three.ws/cdn/avatars/nico.glb');
 		expect(b.loadPlayer('wallet:0xABC').lastRealm).toBe('whisperwood');
 		expect(b.loadPlayer('wallet:0xABC').lastTx).toBe(12);
 		expect(b.loadPlayer('wallet:0xABC').structures.whisperwood[0].kind).toBe('shack');

@@ -100,7 +100,7 @@ describe('finalForgeFrame ↔ parseForgeFrame round-trip', () => {
 	it('packs the GLB url + viewer link into the sidecar and reads it back', () => {
 		const frame = finalForgeFrame({
 			prompt: 'a glossy white robot mascot',
-			glbUrl: 'https://cdn.three.ws/forge/abc.glb',
+			glbUrl: 'https://three.ws/cdn/forge/abc.glb',
 			viewerUrl: 'https://three.ws/viewer?src=x',
 			tier: 'draft',
 			backend: 'nvidia',
@@ -111,7 +111,7 @@ describe('finalForgeFrame ↔ parseForgeFrame round-trip', () => {
 
 		const parsed = parseForgeFrame(frame);
 		expect(parsed).not.toBeNull();
-		expect(parsed.glbUrl).toBe('https://cdn.three.ws/forge/abc.glb');
+		expect(parsed.glbUrl).toBe('https://three.ws/cdn/forge/abc.glb');
 		expect(parsed.viewerUrl).toBe('https://three.ws/viewer?src=x');
 		expect(parsed.prompt).toBe('a glossy white robot mascot');
 		expect(parsed.tier).toBe('draft');
@@ -143,7 +143,7 @@ describe('sanitizeFrameMeta', () => {
 	it('keeps a valid forge sidecar and caps lengths', () => {
 		const out = sanitizeFrameMeta({
 			kind: 'forge',
-			glbUrl: 'https://cdn.three.ws/a.glb',
+			glbUrl: 'https://three.ws/cdn/a.glb',
 			viewerUrl: 'https://three.ws/viewer?src=a',
 			prompt: 'x'.repeat(1000),
 			tier: 'draft',
@@ -151,7 +151,7 @@ describe('sanitizeFrameMeta', () => {
 			durable: false,
 			injected: 'should be dropped',
 		});
-		expect(out.glbUrl).toBe('https://cdn.three.ws/a.glb');
+		expect(out.glbUrl).toBe('https://three.ws/cdn/a.glb');
 		expect(out.prompt.length).toBe(320);
 		expect(out.tier).toBe('draft');
 		expect('injected' in out).toBe(false);

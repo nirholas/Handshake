@@ -187,7 +187,7 @@ Adds an animation-ready humanoid skeleton and skin weights to a static GLB (UniR
 ```bash
 curl -i -X POST https://three.ws/api/okx/3d/rig \
   -H 'content-type: application/json' \
-  -d '{"glb_url":"https://cdn.three.ws/models/knight.glb"}'
+  -d '{"glb_url":"https://three.ws/cdn/models/knight.glb"}'
 ```
 
 ### Text → Rigged Avatar, $0.50
@@ -213,7 +213,7 @@ Completes inside the request. Clip names are free at
 ```bash
 curl -i -X POST https://three.ws/api/okx/3d/retarget \
   -H 'content-type: application/json' \
-  -d '{"model_url":"https://cdn.three.ws/models/knight-rigged.glb","animation":"idle"}'
+  -d '{"model_url":"https://three.ws/cdn/models/knight-rigged.glb","animation":"idle"}'
 ```
 
 ### Pose Seed, $0.02
@@ -236,7 +236,7 @@ Other formats: `obj`, `stl`, `ply`, `usdz`, `3mf`.
 ```bash
 curl -i -X POST https://three.ws/api/okx/3d/fbx-export \
   -H 'content-type: application/json' \
-  -d '{"model_url":"https://cdn.three.ws/models/knight-rigged.glb","format":"fbx"}'
+  -d '{"model_url":"https://three.ws/cdn/models/knight-rigged.glb","format":"fbx"}'
 ```
 
 ### Guarantees (all decomposed services)

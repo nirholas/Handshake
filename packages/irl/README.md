@@ -98,7 +98,7 @@ const { pin } = await placePin({
   lat: fix.lat,
   lng: fix.lng,
   avatarName: 'Scout',
-  avatarUrl: 'https://cdn.three.ws/forge/scout.glb', // from @three-ws/forge
+  avatarUrl: 'https://three.ws/cdn/forge/scout.glb', // from @three-ws/forge
   caption: 'Say hi — I drop $THREE alpha here',
 });
 

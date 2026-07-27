@@ -114,7 +114,8 @@ if (paid.length < 40) {
 // ── crypto-agent-manifest.json (sample agent-manifest/0.2) ───────────────────
 {
 	const manifest = readJson('public/crypto-agent-manifest.json', { indent: '  ' });
-	// cdn.three.ws is dead (connection refused) — point the sample body at the
+	// cdn.three.ws has no DNS and never did; the first-party CDN is the
+	// `/cdn/<r2-key>` route (api/cdn-object.js). Point the sample body at the
 	// live default avatar so the manifest demo actually loads.
 	manifest.body.uri = 'https://three.ws/avatars/default.glb';
 	manifest.brain.model = 'claude-sonnet-5';

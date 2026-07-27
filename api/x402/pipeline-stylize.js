@@ -93,7 +93,7 @@ export const BAZAAR = {
 			example: {
 				stage: 'stylize',
 				input_url: 'https://three.ws/avatars/mannequin.glb',
-				output_url: 'https://cdn.three.ws/x402-pipeline/stylize/abc123.glb',
+				output_url: 'https://three.ws/cdn/x402-pipeline/stylize/abc123.glb',
 				bytes: 512_880,
 				persisted: true,
 				style: 'voxel',

@@ -21,7 +21,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: { authedReadIp: vi.fn(async () => ({ success: true })) },
 	clientIp: () => '127.0.0.1',
 }));
-vi.mock('../api/_lib/r2.js', () => ({ thumbnailUrl: (key) => (key ? `https://cdn.three.ws/${key}` : null) }));
+vi.mock('../api/_lib/r2.js', () => ({ thumbnailUrl: (key) => (key ? `https://three.ws/cdn/${key}` : null) }));
 vi.mock('../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'http://localhost:3000' } }));
 
 const { default: meHandler } = await import('../api/me.js');

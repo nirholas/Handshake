@@ -101,7 +101,7 @@ describe('twistDelta / touchAngle', () => {
 
 describe('normalizeGlbUrl', () => {
 	it('accepts https URLs and site-relative paths', () => {
-		expect(normalizeGlbUrl('https://cdn.three.ws/m.glb')).toBe('https://cdn.three.ws/m.glb');
+		expect(normalizeGlbUrl('https://three.ws/cdn/m.glb')).toBe('https://three.ws/cdn/m.glb');
 		expect(normalizeGlbUrl('/avatars/default.glb')).toBe('/avatars/default.glb');
 		expect(normalizeGlbUrl('  https://x.co/a.glb  ')).toBe('https://x.co/a.glb');
 	});
@@ -118,7 +118,7 @@ describe('normalizeGlbUrl', () => {
 
 describe('scene (de)serialization', () => {
 	const placement = (over = {}) => ({
-		src: 'https://cdn.three.ws/m.glb', title: 'crate', x: 1.5, z: -2, yaw: 0.5, scale: 1.2, ...over,
+		src: 'https://three.ws/cdn/m.glb', title: 'crate', x: 1.5, z: -2, yaw: 0.5, scale: 1.2, ...over,
 	});
 
 	it('round-trips a valid scene', () => {

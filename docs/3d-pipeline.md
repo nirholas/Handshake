@@ -63,7 +63,7 @@ curl -s -X POST https://three.ws/api/x402/pipeline-rig \
 # 2. Pay with an x402 client (settles the 402 and retries automatically)
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-rig \
   --json '{"glb_url":"https://three.ws/forge/character.glb","rig_type":"biped"}'
-# → { "stage":"rig", "output_url":"https://cdn.three.ws/x402-pipeline/rig/….glb", ... }
+# → { "stage":"rig", "output_url":"https://three.ws/cdn/x402-pipeline/rig/….glb", ... }
 ```
 
 ### Remesh — `POST /api/x402/pipeline-remesh` — $0.03
@@ -122,7 +122,7 @@ mesh. **In:** an image (PNG/JPEG/WEBP/GIF). **Out:** a transparent PNG.
 ```bash
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-rembg \
   --json '{"image_url":"https://three.ws/uploads/photo.jpg","model":"rmbg2"}'
-# → { "stage":"rembg", "output_url":"https://cdn.three.ws/x402-pipeline/rembg/….png" }
+# → { "stage":"rembg", "output_url":"https://three.ws/cdn/x402-pipeline/rembg/….png" }
 ```
 
 Options: `model` (`rmbg2` | `u2net` | `isnet` | `u2net_human_seg` | `silueta`).

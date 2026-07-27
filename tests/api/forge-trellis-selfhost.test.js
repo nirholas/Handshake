@@ -129,7 +129,7 @@ describe('gcp provider — trellis mode wire contract', () => {
 		const fetchMock = vi.fn(async (url, opts) => {
 			expect(url).toBe('https://trellis.example.run.app/infer');
 			const body = JSON.parse(opts.body);
-			expect(body.images).toEqual(['https://cdn.three.ws/photo.png']);
+			expect(body.images).toEqual(['https://three.ws/cdn/photo.png']);
 			expect(body.body_type).toBe('neutral');
 			expect(opts.headers.authorization).toBe('Bearer secret');
 			return new Response(JSON.stringify({ task_id: 'task-123', status: 'queued' }), {
@@ -142,8 +142,8 @@ describe('gcp provider — trellis mode wire contract', () => {
 		const provider = createRegenProvider();
 		const submitted = await provider.submit({
 			mode: 'trellis',
-			sourceUrl: 'https://cdn.three.ws/photo.png',
-			params: { images: ['https://cdn.three.ws/photo.png'] },
+			sourceUrl: 'https://three.ws/cdn/photo.png',
+			params: { images: ['https://three.ws/cdn/photo.png'] },
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(submitted.extJobId).toBeTruthy();
@@ -181,8 +181,8 @@ describe('gcp provider — trellis mode wire contract', () => {
 		const provider = createRegenProvider();
 		const submitted = await provider.submit({
 			mode: 'trellis',
-			sourceUrl: 'https://cdn.three.ws/photo.png',
-			params: { images: ['https://cdn.three.ws/photo.png'] },
+			sourceUrl: 'https://three.ws/cdn/photo.png',
+			params: { images: ['https://three.ws/cdn/photo.png'] },
 		});
 		const status = await provider.status(submitted.extJobId);
 		expect(status.status).toBe('done');
@@ -260,8 +260,8 @@ describe('gcp provider — trellis quality forwarding', () => {
 			const quality = { ss_steps: 45, slat_steps: 45, simplify: 0.85, texture_size: 2048 };
 			await gcp.submit({
 				mode: 'trellis',
-				sourceUrl: 'https://cdn.three.ws/ref.png',
-				params: { images: ['https://cdn.three.ws/ref.png'], seed: 7, quality },
+				sourceUrl: 'https://three.ws/cdn/ref.png',
+				params: { images: ['https://three.ws/cdn/ref.png'], seed: 7, quality },
 			});
 			expect(calls).toHaveLength(1);
 			expect(calls[0].url).toContain('/infer');
@@ -287,13 +287,13 @@ describe('gcp provider — trellis quality forwarding', () => {
 			const gcp = mk();
 			await gcp.submit({
 				mode: 'trellis',
-				sourceUrl: 'https://cdn.three.ws/ref.png',
-				params: { images: ['https://cdn.three.ws/ref.png'], matte: true },
+				sourceUrl: 'https://three.ws/cdn/ref.png',
+				params: { images: ['https://three.ws/cdn/ref.png'], matte: true },
 			});
 			await gcp.submit({
 				mode: 'trellis',
-				sourceUrl: 'https://cdn.three.ws/ref.png',
-				params: { images: ['https://cdn.three.ws/ref.png'] },
+				sourceUrl: 'https://three.ws/cdn/ref.png',
+				params: { images: ['https://three.ws/cdn/ref.png'] },
 			});
 			expect(bodies[0].matte).toBe(true);
 			expect(bodies[1]).not.toHaveProperty('matte');
@@ -317,8 +317,8 @@ describe('gcp provider — trellis quality forwarding', () => {
 			const gcp = mk();
 			await gcp.submit({
 				mode: 'trellis',
-				sourceUrl: 'https://cdn.three.ws/ref.png',
-				params: { images: ['https://cdn.three.ws/ref.png'] },
+				sourceUrl: 'https://three.ws/cdn/ref.png',
+				params: { images: ['https://three.ws/cdn/ref.png'] },
 			});
 			expect(calls[0].body).not.toHaveProperty('quality');
 			expect(calls[0].body).not.toHaveProperty('seed');

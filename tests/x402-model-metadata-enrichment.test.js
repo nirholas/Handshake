@@ -9,7 +9,7 @@ import { getFullRegistry } from '../api/_lib/x402/autonomous-registry.js';
 
 // A minimal inspect_model structuredContent shape (matches src/gltf-inspect.js).
 const inspection = (over = {}) => ({
-	url: 'https://cdn.three.ws/u/x/model.glb',
+	url: 'https://three.ws/cdn/u/x/model.glb',
 	filename: 'model.glb',
 	container: 'glb',
 	generator: 'Khronos Blender glTF 2.0 exporter',
@@ -88,11 +88,11 @@ describe('model metadata enrichment — parseInspectResult', () => {
 
 describe('model metadata enrichment — inspectModelRpcBody', () => {
 	it('builds a tools/call envelope for inspect_model with the GLB url', () => {
-		const body = inspectModelRpcBody('https://cdn.three.ws/a.glb');
+		const body = inspectModelRpcBody('https://three.ws/cdn/a.glb');
 		expect(body).toMatchObject({
 			jsonrpc: '2.0',
 			method: 'tools/call',
-			params: { name: 'inspect_model', arguments: { url: 'https://cdn.three.ws/a.glb' } },
+			params: { name: 'inspect_model', arguments: { url: 'https://three.ws/cdn/a.glb' } },
 		});
 	});
 });

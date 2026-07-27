@@ -50,7 +50,7 @@ describe('runForgeAvatar — rig-stage kill-test', () => {
 					expect(body.tier).toBe('high');
 					return jsonResponse({
 						status: 'done',
-						glb_url: 'https://cdn.three.ws/mesh/kill-test.glb',
+						glb_url: 'https://three.ws/cdn/mesh/kill-test.glb',
 						creation_id: 'mesh-kill-test',
 						backend: 'hunyuan3d',
 					});
@@ -80,7 +80,7 @@ describe('runForgeAvatar — rig-stage kill-test', () => {
 		expect(result.rigError).toBeTruthy();
 		expect(result.rigError.code).toBe('rig_failed');
 		// ...and the real, finished mesh asset still attached and usable.
-		expect(result.meshGlbUrl).toBe('https://cdn.three.ws/mesh/kill-test.glb');
+		expect(result.meshGlbUrl).toBe('https://three.ws/cdn/mesh/kill-test.glb');
 		expect(result.viewerUrl).toContain(encodeURIComponent(result.meshGlbUrl));
 		expect(result.riggedGlbUrl).toBeNull();
 

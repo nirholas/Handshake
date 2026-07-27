@@ -48,8 +48,8 @@ vi.mock('../api/_lib/r2.js', () => ({
 		r2State.puts.push(opts);
 		return { key: opts.key };
 	}),
-	publicUrl: vi.fn((key) => `https://cdn.three.ws/${key}`),
-	presignGet: vi.fn(async ({ key }) => `https://cdn.three.ws/${key}?signed=1`),
+	publicUrl: vi.fn((key) => `https://three.ws/cdn/${key}`),
+	presignGet: vi.fn(async ({ key }) => `https://three.ws/cdn/${key}?signed=1`),
 }));
 
 vi.mock('../api/_lib/avatars.js', () => ({

@@ -106,7 +106,7 @@ export const BAZAAR = {
 			example: {
 				stage: 'gameready',
 				input_url: 'https://three.ws/avatars/mannequin.glb',
-				output_url: 'https://cdn.three.ws/x402-pipeline/gameready/abc123.glb',
+				output_url: 'https://three.ws/cdn/x402-pipeline/gameready/abc123.glb',
 				bytes: 640_220,
 				persisted: true,
 				topology: 'quad',

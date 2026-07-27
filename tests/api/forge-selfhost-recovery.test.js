@@ -10,7 +10,7 @@ import {
 // all image→3D — that the router used to treat as terminal on the first poll.
 
 describe('decideSelfhostMissing — never dead-end on a recoverable 404', () => {
-	const glbUrl = 'https://cdn.three.ws/forge/abc.glb';
+	const glbUrl = 'https://three.ws/cdn/forge/abc.glb';
 
 	it('passes through any result that is not the recoverable 404 class', () => {
 		expect(decideSelfhostMissing({ code: undefined, ageMs: 0 }).action).toBe('passthrough');

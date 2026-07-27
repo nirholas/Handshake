@@ -103,7 +103,7 @@ const SUBMIT_DONE = {
 	job_id: null,
 	creation_id: 'a1b2c3d4-0000-4000-8000-000000000001',
 	status: 'done',
-	glb_url: 'https://cdn.three.ws/forge/anon/a1b2c3d4.glb',
+	glb_url: 'https://three.ws/cdn/forge/anon/a1b2c3d4.glb',
 	durable: true,
 	backend: 'nvidia',
 	tier: 'draft',
@@ -119,7 +119,7 @@ const SUBMIT_QUEUED = {
 const POLL_DONE = {
 	job_id: SUBMIT_QUEUED.job_id,
 	status: 'done',
-	glb_url: 'https://cdn.three.ws/forge/anon/done.glb',
+	glb_url: 'https://three.ws/cdn/forge/anon/done.glb',
 	durable: true,
 };
 const POLL_RUNNING = { job_id: SUBMIT_QUEUED.job_id, status: 'running' };

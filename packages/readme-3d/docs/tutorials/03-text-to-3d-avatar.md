@@ -18,7 +18,7 @@ curl -s -X POST https://three.ws/api/v1/ai/text-to-3d \
 Generation takes up to a minute or two. When it completes inside the request window you get the model directly:
 
 ```json
-{ "data": { "status": "done", "glb_url": "https://cdn.three.ws/forge/anon/<id>.glb", "viewer_url": "..." } }
+{ "data": { "status": "done", "glb_url": "https://three.ws/cdn/forge/anon/<id>.glb", "viewer_url": "..." } }
 ```
 
 If it returns `"status": "pending"` instead, poll the included `poll_url` (`GET https://three.ws/api/forge?job=<job>`) every few seconds until `status` is `"done"`. Then download:

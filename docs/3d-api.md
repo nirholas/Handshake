@@ -126,9 +126,9 @@ model comes straight back:
 ```json
 {
   "status": "done",
-  "glbUrl": "https://cdn.three.ws/forge/anon/a1b2c3d4.glb",
-  "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fanon%2Fa1b2c3d4.glb",
-  "arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fanon%2Fa1b2c3d4.glb&title=a%20small%20ceramic%20robot%20figurine",
+  "glbUrl": "https://three.ws/cdn/forge/anon/a1b2c3d4.glb",
+  "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa1b2c3d4.glb",
+  "arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa1b2c3d4.glb&title=a%20small%20ceramic%20robot%20figurine",
   "format": "glb",
   "tier": "draft",
   "free": true,
@@ -179,7 +179,7 @@ GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robo
 { "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1...&title=...", "retryAfter": 3 }
 
 // ready
-{ "status": "done", "job": "f1...", "glbUrl": "https://cdn.three.ws/forge/anon/done.glb",
+{ "status": "done", "job": "f1...", "glbUrl": "https://three.ws/cdn/forge/anon/done.glb",
   "viewerUrl": "https://three.ws/viewer?src=...", "arUrl": "https://three.ws/api/ar?src=...&title=...",
   "format": "glb", "tier": "draft", "free": true }
 
@@ -214,9 +214,9 @@ curl -s -X POST https://three.ws/api/3d/generate \
 
 # 2. Poll until done, then download the GLB
 curl -s 'https://three.ws/api/3d/generate?job=f1...'
-# → { "status": "done", "glbUrl": "https://cdn.three.ws/forge/anon/....glb", ... }
+# → { "status": "done", "glbUrl": "https://three.ws/cdn/forge/anon/....glb", ... }
 
-curl -sL -o model.glb 'https://cdn.three.ws/forge/anon/....glb'
+curl -sL -o model.glb 'https://three.ws/cdn/forge/anon/....glb'
 ```
 
 The `glbUrl` is a real, durable GLB — open `viewerUrl` in a browser to inspect it,
@@ -352,7 +352,7 @@ tier at deploy time without touching settlement.
 
    ```bash
    curl -s 'https://three.ws/api/forge?job=f1.eyJ…'
-   # → { "status": "done", "glb_url": "https://cdn.three.ws/forge/…/model.glb", … }
+   # → { "status": "done", "glb_url": "https://three.ws/cdn/forge/…/model.glb", … }
    ```
 
    A draft prompt often finishes inside the submit window and comes back inline with

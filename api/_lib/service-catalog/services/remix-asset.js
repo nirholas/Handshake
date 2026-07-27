@@ -51,8 +51,8 @@ export default {
 	outputExample: {
 		ok: true,
 		remix: {
-			glbUrl: 'https://cdn.three.ws/forge/example-remix/model.glb',
-			viewerUrl: 'https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fexample-remix%2Fmodel.glb',
+			glbUrl: 'https://three.ws/cdn/forge/example-remix/model.glb',
+			viewerUrl: 'https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fexample-remix%2Fmodel.glb',
 			creationId: '11111111-2222-4333-8444-555555555555',
 			prompt: 'a low-poly fox, but make it metallic',
 			instruction: 'make it metallic',

@@ -47,7 +47,7 @@ export default {
 			name: 'three.ws',
 			symbol: 'THREE',
 			color: '#7c5cff',
-			imageUrl: 'https://cdn.three.ws/tokens/three.png',
+			imageUrl: 'https://three.ws/cdn/tokens/three.png',
 			hasImage: true,
 		},
 		glb: {

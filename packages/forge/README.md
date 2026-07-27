@@ -72,7 +72,7 @@ import { forge } from '@three-ws/forge';
 
 const model = await forge('a chrome robot with neon trim');
 
-console.log(model.glbUrl);    // → https://cdn.three.ws/forge/…​.glb (durable)
+console.log(model.glbUrl);    // → https://three.ws/cdn/forge/…​.glb (durable)
 console.log(model.viewerUrl); // → https://three.ws/forge?share=…​
 ```
 

@@ -33,7 +33,7 @@ const ORIGINAL_KEY = process.env.NVIDIA_API_KEY;
 // assert the decoded GLB bytes flow through to storage and the public URL flows
 // back out, without touching real object storage.
 const putObjectMock = vi.fn(async () => ({}));
-const publicUrlMock = vi.fn((key) => `https://cdn.three.ws/${key}`);
+const publicUrlMock = vi.fn((key) => `https://three.ws/cdn/${key}`);
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: (...args) => putObjectMock(...args),
 	publicUrl: (...args) => publicUrlMock(...args),
@@ -221,7 +221,7 @@ describe('nvidia provider — synchronous 200 completion persists the GLB', () =
 		// Provider hands back the durable public URL, no poll handle.
 		expect(job.kind).toBe('text-to-3d');
 		expect(job.taskId).toBeNull();
-		expect(job.resultGlbUrl).toBe(`https://cdn.three.ws/${putArg.key}`);
+		expect(job.resultGlbUrl).toBe(`https://three.ws/cdn/${putArg.key}`);
 	});
 });
 
@@ -245,7 +245,7 @@ describe('nvidia provider — 202-then-poll loop', () => {
 		expect(res.status).toBe('done');
 		expect(putObjectMock).toHaveBeenCalledTimes(1);
 		expect(putObjectMock.mock.calls[0][0].body.equals(glbBytes)).toBe(true);
-		expect(res.resultGlbUrl).toBe(`https://cdn.three.ws/${putObjectMock.mock.calls[0][0].key}`);
+		expect(res.resultGlbUrl).toBe(`https://three.ws/cdn/${putObjectMock.mock.calls[0][0].key}`);
 	});
 
 	it('reports failed when a finished poll carries no GLB artifact', async () => {

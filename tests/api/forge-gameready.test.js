@@ -38,7 +38,7 @@ vi.mock('../../api/_providers/gcp.js', () => ({
 
 // Stub R2 so the mirror writes to memory instead of a real bucket.
 const putObject = vi.fn(async () => {});
-const publicUrl = vi.fn((key) => `https://cdn.three.ws/${key}`);
+const publicUrl = vi.fn((key) => `https://three.ws/cdn/${key}`);
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject,
 	publicUrl,
@@ -272,7 +272,7 @@ describe('GET /api/forge-gameready?job=', () => {
 		expect(body.quad_ratio).toBe(0.92);
 		expect(body.textured).toBe(true);
 		// Both formats present and rehosted on our CDN.
-		expect(body.outputs.glb.url).toMatch(/^https:\/\/cdn\.three\.ws\/forge\/gameready\//);
+		expect(body.outputs.glb.url).toMatch(/^https:\/\/three\.ws\/cdn\/forge\/gameready\//);
 		expect(body.outputs.fbx.url).toMatch(/\.fbx$/);
 		// Each finished artifact was written to R2.
 		expect(putObject).toHaveBeenCalledTimes(2);

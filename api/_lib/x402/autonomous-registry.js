@@ -1164,9 +1164,13 @@ const SELF_ENDPOINTS = [
 	{
 		id: 'cosmetic-purchase-test',
 		name: 'Cosmetic Purchase Health Check',
-		path: '/api/x402/cosmetic-purchase',
-		method: 'POST',
-		body: { item: 'canary_test', quantity: 1, _health_check: true },
+		// GET with the real query contract (?id=&account=): the endpoint is a
+		// GET-only paidEndpoint reading req.query, so the POST body this canary
+		// sent could never satisfy it and every run answered 400 id_required
+		// (38 in 24h). `id` is a real catalogue item from /api/cosmetics/catalog.
+		path: '/api/x402/cosmetic-purchase?id=hat-baseball&account=canary-health-check',
+		method: 'GET',
+		body: null,
 		cooldown_s: 1800,
 		priority: 40,
 		pipeline: 'health',
@@ -1190,10 +1194,13 @@ const SELF_ENDPOINTS = [
 	{
 		id: 'health-token-intel',
 		name: 'Health: token-intel',
-		path: '/api/x402/token-intel',
-		method: 'POST',
-		// Canary: well-known USDC mint — stable, always has data.
-		body: { mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', network: 'mainnet' },
+		// GET with the mint in the query string: api/x402/token-intel.js is a
+		// GET-only paidEndpoint, so the POST this canary used to send was
+		// answered 405 on every run (109 in 24h) and the canary never once
+		// checked the endpoint it is named for.
+		path: '/api/x402/token-intel?mint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+		method: 'GET',
+		body: null,
 		cooldown_s: 600,
 		priority: 55,
 		pipeline: 'health',
@@ -1300,7 +1307,10 @@ const SELF_ENDPOINTS = [
 	{
 		id: 'health-agent-reputation',
 		name: 'Health: agent-reputation',
-		path: '/api/x402/agent-reputation',
+		// GET mode requires ?subject=. Without it every run answered 400
+		// missing_subject (90 in 24h) and the canary proved nothing. The subject
+		// is the platform's own $THREE mint, which always resolves.
+		path: '/api/x402/agent-reputation?subject=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
 		method: 'GET',
 		body: null,
 		cooldown_s: 600,
@@ -1521,7 +1531,10 @@ const SELF_ENDPOINTS = [
 		name: 'Health: symbol-availability',
 		path: '/api/x402/symbol-availability',
 		method: 'POST',
-		body: { symbol: 'HEALTH' },
+		// The batch mode takes `symbols` (array). The singular `symbol` this
+		// canary sent failed the contract on every run: 400 missing_symbols,
+		// 71 in 24h.
+		body: { symbols: ['HEALTH'] },
 		cooldown_s: 900,
 		priority: 40,
 		pipeline: 'health',

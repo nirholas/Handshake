@@ -2,9 +2,9 @@
   "name": "Knight",
   "symbol": "3D",
   "description": "A rigged knight, tokenized.",
-  "image": "https://cdn.three.ws/tokenized/EXAMPLE/thumb.png",
-  "animation_url": "https://cdn.three.ws/tokenized/EXAMPLE/model.glb",
-  "external_url": "https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Ftokenized%2FEXAMPLE%2Fmodel.glb",
+  "image": "https://three.ws/cdn/tokenized/EXAMPLE/thumb.png",
+  "animation_url": "https://three.ws/cdn/tokenized/EXAMPLE/model.glb",
+  "external_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Ftokenized%2FEXAMPLE%2Fmodel.glb",
   "seller_fee_basis_points": 500,
   "attributes": [
     {
@@ -60,7 +60,7 @@
     "category": "3d",
     "files": [
       {
-        "uri": "https://cdn.three.ws/tokenized/EXAMPLE/model.glb",
+        "uri": "https://three.ws/cdn/tokenized/EXAMPLE/model.glb",
         "type": "model/gltf-binary"
       },
       {
@@ -68,7 +68,7 @@
         "type": "model/gltf-binary"
       },
       {
-        "uri": "https://cdn.three.ws/tokenized/EXAMPLE/thumb.png",
+        "uri": "https://three.ws/cdn/tokenized/EXAMPLE/thumb.png",
         "type": "image/png"
       },
       {

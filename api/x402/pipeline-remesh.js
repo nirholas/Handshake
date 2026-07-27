@@ -106,7 +106,7 @@ export const BAZAAR = {
 			example: {
 				stage: 'remesh',
 				input_url: 'https://three.ws/avatars/mannequin.glb',
-				output_url: 'https://cdn.three.ws/x402-pipeline/remesh/abc123.glb',
+				output_url: 'https://three.ws/cdn/x402-pipeline/remesh/abc123.glb',
 				bytes: 812_044,
 				persisted: true,
 				remesh_mode: 'quad',

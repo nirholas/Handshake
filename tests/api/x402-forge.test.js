@@ -199,7 +199,7 @@ describe('POST /api/x402/forge — free NVIDIA NIM text lane', () => {
 			textTo3d: vi.fn(async () => ({
 				kind: 'text-to-3d',
 				taskId: null,
-				resultGlbUrl: 'https://cdn.three.ws/forge/nvidia/abc.glb',
+				resultGlbUrl: 'https://three.ws/cdn/forge/nvidia/abc.glb',
 			})),
 		});
 		const res = makeRes();
@@ -211,7 +211,7 @@ describe('POST /api/x402/forge — free NVIDIA NIM text lane', () => {
 		const body = JSON.parse(res.body);
 		expect(body.backend).toBe('nvidia');
 		expect(body.status).toBe('done');
-		expect(body.glb_url).toBe('https://cdn.three.ws/forge/nvidia/abc.glb');
+		expect(body.glb_url).toBe('https://three.ws/cdn/forge/nvidia/abc.glb');
 		expect(body.job_id).toBeNull();
 		// Settlement still ran — the buyer paid and received a model.
 		expect(res.headers['x-payment-response']).toBe('stub-payment-response');

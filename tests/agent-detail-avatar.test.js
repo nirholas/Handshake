@@ -74,7 +74,7 @@ describe('render3DAvatar', () => {
 // back to the mannequin. These lock the URL through the real render seam.
 describe('normalize() preserves the avatar model URL for the hero', () => {
 	it('carries avatar_model_url through so agentAvatarGlb resolves the real GLB', () => {
-		const glb = 'https://cdn.three.ws/u/abc/draft-x/horse.glb';
+		const glb = 'https://three.ws/cdn/u/abc/draft-x/horse.glb';
 		const agent = normalize({ id: 'a1', name: 'bossvernington', avatar_model_url: glb }, null);
 
 		expect(agent.avatar_model_url).toBe(glb);
@@ -83,7 +83,7 @@ describe('normalize() preserves the avatar model URL for the hero', () => {
 	});
 
 	it('carries avatar_glb_url through for on-chain/older record shapes', () => {
-		const glb = 'https://cdn.three.ws/u/abc/draft-x/model.glb';
+		const glb = 'https://three.ws/cdn/u/abc/draft-x/model.glb';
 		const agent = normalize({ id: 'a2', name: 'knight', avatar_glb_url: glb }, null);
 
 		expect(agent.avatar_glb_url).toBe(glb);

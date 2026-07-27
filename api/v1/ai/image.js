@@ -84,7 +84,7 @@ const INPUT_SCHEMA = {
 };
 
 const OUTPUT_EXAMPLE = {
-	url: 'https://cdn.three.ws/forge/refs/6f1c0c2e-2a4d-4b6e-9b1a-3c5d7e9f0a1b.jpg',
+	url: 'https://three.ws/cdn/forge/refs/6f1c0c2e-2a4d-4b6e-9b1a-3c5d7e9f0a1b.jpg',
 	provider: 'nvidia-nim',
 	model: 'black-forest-labs/flux.1-schnell',
 	width: 1024,

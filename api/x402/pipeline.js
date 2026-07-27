@@ -126,7 +126,7 @@ const OUTPUT_EXAMPLE = {
 	poll_url: '/api/forge?job=f1.eyJwIjoicGlwZWxpbmUifQ.sig',
 	price_usdc: '0.15',
 	stages: [
-		{ id: 'generate', status: 'done', output_url: 'https://cdn.three.ws/forge/…/model.glb' },
+		{ id: 'generate', status: 'done', output_url: 'https://three.ws/cdn/forge/…/model.glb' },
 		{ id: 'rig', status: 'running', output_url: null },
 	],
 };

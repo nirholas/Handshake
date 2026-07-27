@@ -679,8 +679,8 @@ silently.
 {
 	"data": {
 		"status": "done",
-		"glb_url": "https://cdn.three.ws/forge/anon/<id>.glb",
-		"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fanon%2F%3Cid%3E.glb",
+		"glb_url": "https://three.ws/cdn/forge/anon/<id>.glb",
+		"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F%3Cid%3E.glb",
 		"creation_id": "<uuid>",
 		"backend": "nvidia",
 		"tier": "draft"
@@ -756,7 +756,7 @@ content-safety gate before any GPU work starts.
 **Response, finished inline**
 
 ```json
-{ "status": "done", "glbUrl": "https://cdn.three.ws/forge/anon/<id>.glb", "viewerUrl": "https://three.ws/viewer?src=…", "arUrl": "https://three.ws/api/ar?src=…&title=a%20small%20ceramic%20robot%20figurine", "format": "glb" }
+{ "status": "done", "glbUrl": "https://three.ws/cdn/forge/anon/<id>.glb", "viewerUrl": "https://three.ws/viewer?src=…", "arUrl": "https://three.ws/api/ar?src=…&title=a%20small%20ceramic%20robot%20figurine", "format": "glb" }
 ```
 
 `arUrl` is the place-in-your-room link (`GET /api/ar`, documented below):
@@ -812,7 +812,7 @@ provider answers at all it **fails open** (`verdict.pass: true`,
 
 ```json
 {
-  "glbUrl": "https://cdn.three.ws/forge/anon/<id>.glb",
+  "glbUrl": "https://three.ws/cdn/forge/anon/<id>.glb",
   "prompt": "a medieval knight in full plate steel armor",
   "subject": "person",
   "tier": "standard",
@@ -990,7 +990,7 @@ Every row is a real settled generation — no synthetic entries.
 			"category": "crate",
 			"tier": "draft",
 			"status": "done",
-			"glb_url": "https://cdn.three.ws/forge/…​.glb",
+			"glb_url": "https://three.ws/cdn/forge/…​.glb",
 			"novelty": 0.83,
 			"cluster_id": 2,
 			"price_usdc": 0.05,
@@ -1053,7 +1053,7 @@ new lineage version.
 **Response**
 
 ```json
-{ "ok": true, "url": "https://cdn.three.ws/material-studio/checkpoints/<uuid>.glb", "bytes": 842113 }
+{ "ok": true, "url": "https://three.ws/cdn/material-studio/checkpoints/<uuid>.glb", "bytes": 842113 }
 ```
 
 ### AI restyle
@@ -1080,14 +1080,14 @@ are byte-identical to the source.
 ```json
 {
 	"ok": true,
-	"glbUrl": "https://cdn.three.ws/material-studio/restyle/<uuid>.glb",
-	"sourceGlbUrl": "https://cdn.three.ws/creations/<id>/mesh.glb",
+	"glbUrl": "https://three.ws/cdn/material-studio/restyle/<uuid>.glb",
+	"sourceGlbUrl": "https://three.ws/cdn/creations/<id>/mesh.glb",
 	"instruction": "make it chrome",
 	"factors": { "name": "Polished chrome", "baseColorFactor": [0.79, 0.81, 0.83], "metallicFactor": 1, "roughnessFactor": 0.05, "emissiveFactor": [0, 0, 0] },
 	"materialsEdited": 1,
 	"lineage": [
-		{ "index": 0, "parentIndex": null, "glbUrl": "https://cdn.three.ws/creations/<id>/mesh.glb", "refKind": "origin" },
-		{ "index": 1, "parentIndex": 0, "glbUrl": "https://cdn.three.ws/material-studio/restyle/<uuid>.glb", "instruction": "make it chrome", "refKind": "restyle" }
+		{ "index": 0, "parentIndex": null, "glbUrl": "https://three.ws/cdn/creations/<id>/mesh.glb", "refKind": "origin" },
+		{ "index": 1, "parentIndex": 0, "glbUrl": "https://three.ws/cdn/material-studio/restyle/<uuid>.glb", "instruction": "make it chrome", "refKind": "restyle" }
 	],
 	"activeIndex": 1
 }
@@ -1117,18 +1117,18 @@ as its own real, validated GLB**, not just a live preview swap.
 ```json
 {
 	"ok": true,
-	"sourceGlbUrl": "https://cdn.three.ws/creations/<id>/mesh.glb",
+	"sourceGlbUrl": "https://three.ws/cdn/creations/<id>/mesh.glb",
 	"preset": "chrome",
 	"seed": 42,
 	"count": 3,
 	"variants": [
-		{ "glbUrl": "https://cdn.three.ws/material-studio/variants/<uuid1>.glb", "label": "Chrome 1", "seed": 42, "config": { "color": "#c9ced4", "metalness": 1, "roughness": 0.05 }, "lineageIndex": 1 },
-		{ "glbUrl": "https://cdn.three.ws/material-studio/variants/<uuid2>.glb", "label": "Chrome 2", "seed": 43, "config": { "color": "#a1c9d4", "metalness": 0.94, "roughness": 0.09 }, "lineageIndex": 2 }
+		{ "glbUrl": "https://three.ws/cdn/material-studio/variants/<uuid1>.glb", "label": "Chrome 1", "seed": 42, "config": { "color": "#c9ced4", "metalness": 1, "roughness": 0.05 }, "lineageIndex": 1 },
+		{ "glbUrl": "https://three.ws/cdn/material-studio/variants/<uuid2>.glb", "label": "Chrome 2", "seed": 43, "config": { "color": "#a1c9d4", "metalness": 0.94, "roughness": 0.09 }, "lineageIndex": 2 }
 	],
 	"lineage": [
-		{ "index": 0, "parentIndex": null, "glbUrl": "https://cdn.three.ws/creations/<id>/mesh.glb", "refKind": "origin" },
-		{ "index": 1, "parentIndex": 0, "glbUrl": "https://cdn.three.ws/material-studio/variants/<uuid1>.glb", "instruction": "Chrome 1", "refKind": "variant" },
-		{ "index": 2, "parentIndex": 0, "glbUrl": "https://cdn.three.ws/material-studio/variants/<uuid2>.glb", "instruction": "Chrome 2", "refKind": "variant" }
+		{ "index": 0, "parentIndex": null, "glbUrl": "https://three.ws/cdn/creations/<id>/mesh.glb", "refKind": "origin" },
+		{ "index": 1, "parentIndex": 0, "glbUrl": "https://three.ws/cdn/material-studio/variants/<uuid1>.glb", "instruction": "Chrome 1", "refKind": "variant" },
+		{ "index": 2, "parentIndex": 0, "glbUrl": "https://three.ws/cdn/material-studio/variants/<uuid2>.glb", "instruction": "Chrome 2", "refKind": "variant" }
 	],
 	"activeIndex": 0
 }
@@ -1186,7 +1186,7 @@ outage never burns a free generation.
 
 ```json
 {
-	"url": "https://cdn.three.ws/forge/refs/<id>.jpg",
+	"url": "https://three.ws/cdn/forge/refs/<id>.jpg",
 	"provider": "nvidia-nim",
 	"model": "black-forest-labs/flux.1-schnell",
 	"width": 1024,
@@ -3598,7 +3598,7 @@ Omitting `limit` returns the full array exactly as before (no `offset`/`next_off
 			"loop": true,
 			"duration": 4.4,
 			"bytes": 1174283,
-			"url": "https://cdn.three.ws/animations/library/clips/mx-hip-hop-dancing.json"
+			"url": "https://three.ws/cdn/animations/library/clips/mx-hip-hop-dancing.json"
 		}
 	],
 	"total": 2400,

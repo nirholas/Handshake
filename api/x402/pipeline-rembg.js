@@ -80,7 +80,7 @@ export const BAZAAR = {
 			example: {
 				stage: 'rembg',
 				input_url: 'https://three.ws/avatars/thumbs/default.png',
-				output_url: 'https://cdn.three.ws/x402-pipeline/rembg/abc123.png',
+				output_url: 'https://three.ws/cdn/x402-pipeline/rembg/abc123.png',
 				bytes: 284_112,
 				persisted: true,
 				model: 'rmbg2',

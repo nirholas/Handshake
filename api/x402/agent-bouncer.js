@@ -116,15 +116,21 @@ const OUTPUT_EXAMPLE = {
 const OUTPUT_SCHEMA = {
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
-	required: ['ok', 'admitted', 'banned', 'tier', 'agent_id', 'reputation'],
+	required: ['ok', 'exists', 'admitted', 'banned', 'tier', 'agent_id', 'reputation'],
 	properties: {
 		ok: { type: 'boolean', const: true },
+		exists: {
+			type: 'boolean',
+			description:
+				'false when no agent is registered under this id. The call still returns a verdict (never admitted, tier "unknown", reputation null) rather than an error, so a buyer vetting an unknown counterparty gets the answer they paid for.',
+		},
 		admitted: { type: 'boolean', description: 'true when the agent clears the policy and is not banned.' },
 		banned: { type: 'boolean', description: 'true when the agent’s wallet is on the Club ban list.' },
 		tier: {
 			type: 'string',
-			enum: ['newcomer', 'regular', 'trusted', 'vip', 'banned'],
-			description: 'Door tier earned from the agent’s Solana track record.',
+			enum: ['unknown', 'newcomer', 'regular', 'trusted', 'vip', 'banned'],
+			description:
+				'Door tier earned from the agent’s Solana track record. "unknown" means no agent is registered under this id.',
 		},
 		reason: { type: ['string', 'null'], description: 'Primary reason when refused; null when admitted.' },
 		reasons: { type: 'array', items: { type: 'string' } },
@@ -133,7 +139,7 @@ const OUTPUT_SCHEMA = {
 		name: { type: ['string', 'null'] },
 		wallet_address: { type: ['string', 'null'] },
 		visits: { type: 'integer', minimum: 0, description: 'Prior settled club tips by this agent’s wallet.' },
-		reputation: { type: 'object' },
+		reputation: { type: ['object', 'null'], description: 'null when exists is false.' },
 		policy: { type: 'object' },
 		fetchedAt: { type: 'string', format: 'date-time' },
 	},
@@ -211,9 +217,42 @@ export default paidEndpoint({
 			allowNewcomers: q.allow_newcomers === undefined ? true : q.allow_newcomers !== 'false',
 		};
 
-		const verdict = await vetSolanaAgent({ agentId, policy });
+		// An identifier with no registered agent behind it is a real, useful
+		// answer for a door check ("no record, do not admit"), not an error. It
+		// used to 404, which meant a buyer who had already paid $0.01 to vet an
+		// unknown counterparty got an error instead of the verdict they bought,
+		// and the ring canary (RING_CANARY_UUID, documented in ring-catalog.js as
+		// returning "a truthful newcomer / not verified verdict rather than 404")
+		// failed 31 times a day. Nothing is fabricated: every reputation field is
+		// null/zero and `exists: false` says plainly that we hold no record.
+		let verdict;
+		try {
+			verdict = await vetSolanaAgent({ agentId, policy });
+		} catch (err) {
+			if (err?.code !== 'agent_not_found') throw err;
+			return {
+				ok: true,
+				exists: false,
+				// Never admitted: allow_newcomers covers a REGISTERED agent with no
+				// track record, not an id we cannot resolve at all.
+				admitted: false,
+				banned: false,
+				tier: 'unknown',
+				reason: 'no agent registered under this id',
+				reasons: ['no agent registered under this id'],
+				newcomer: true,
+				agent_id: agentId,
+				name: null,
+				wallet_address: null,
+				visits: 0,
+				reputation: null,
+				policy,
+				fetchedAt: new Date().toISOString(),
+			};
+		}
 
 		return {
+			exists: true,
 			ok: true,
 			admitted: verdict.admitted,
 			banned: verdict.banned,
