@@ -105,6 +105,74 @@ when there was nothing to collect. Dust guard: a sweep below
 `ECONOMY_SWEEPBACK_MIN_SOL` (default 0.01 SOL) is skipped so fees never exceed
 the return.
 
+## Agent-wallet reclaim: the other half of the fleet's SOL
+
+Sweepback and `reclaimIdleSol` both walk the **`SOLANA_SIGNERS` registry** — the
+eight engine wallets. That is not where most of the platform's SOL lives.
+`fundAgentForLaunch` ([`api/_lib/launcher-funding.js`](../api/_lib/launcher-funding.js))
+moves SOL master → **agent custody wallet** one way, and nothing ever moved it
+back: snipes recycle ~97 % of their capital, but the proceeds settle into the
+*agent's* wallet, so every cycle ratcheted SOL further from the engines.
+
+A full fleet audit on 2026-07-28 measured the result: **7.2 of the fleet's
+7.53 SOL sat in agent wallets while the eight engines held 0.31**, the master was
+25,461 lamports under its 0.004 SOL settle floor, and every x402 settle returned
+`fee_wallet_below_floor`. Nothing had leaked — fee burn over the whole week was
+0.141 SOL and lifetime sniper P&L was −0.15 SOL. The capital was simply somewhere
+the return path could not reach.
+
+`reclaimIdleAgentSol()` closes that loop. It runs inside
+[`/api/cron/treasury-topup`](../api/cron/treasury-topup.js) as self-healing step
+1b, only when there is a real deficit that the engine reclaim did not already
+cover, and reports under `agent_reclaim` in the cron's JSON.
+
+**The ownership boundary is the load-bearing guard.** Only wallets belonging to
+platform-owned agents are ever eligible:
+
+| Owner account | Swept? |
+| --- | --- |
+| `three-ws@users.three.ws.local` (the house account) | yes |
+| `*@agents.three.ws` (platform-created circulation bots) | yes |
+| Any signup account, wallet-auth account, or other email | **never** |
+
+That gate is enforced twice — once in SQL so a customer's agent never leaves the
+database, and again in `planAgentReclaim()` via `isPlatformOwnedAgent()` so a
+later edit to the query cannot widen the blast radius on its own. The destination
+is the same `ECONOMY_MASTER_ADDRESS` module constant every other sweep uses, never
+a parameter.
+
+Three more guards bound what it takes:
+
+- **Working capital is protected.** An agent with an *enabled* sniper strategy
+  keeps `AGENT_RECLAIM_TRADE_MULTIPLE` (default 2) times its own configured
+  per-trade size, so reclaim can never starve an agent that is actively trading.
+  An agent with no enabled strategy keeps only `AGENT_RECLAIM_IDLE_FLOOR_SOL`
+  (default 0.005) of transaction-fee headroom.
+- **Committed capital is untouchable.** Any agent holding an `open` or `closing`
+  sniper position is skipped outright (`capital_committed`).
+- **Bounded and non-oscillating.** At most `AGENT_RECLAIM_MAX_WALLETS` (default
+  40) wallets per run, biggest balances first, and each sweep is sized by the same
+  `reclaimableSol()` invariant the engine reclaim uses — the agent is always left
+  at floor *plus* a buffer, so a topup can never immediately re-fund a wallet
+  reclaim just emptied.
+
+Sweeps below `ECONOMY_SWEEPBACK_MIN_SOL` (0.01 SOL) are skipped as dust.
+
+To see what a run would do without moving anything:
+
+```bash
+curl -s -H "Authorization: Bearer $CRON_SECRET" \
+  'https://three.ws/api/cron/treasury-topup?dry=1' | jq .agent_reclaim
+```
+
+To audit where the fleet's SOL actually is at any time, including the split
+between platform and customer wallets:
+
+```bash
+node scripts/audit-wallet-flows.mjs                     # balances + reconciliation
+node scripts/audit-wallet-flows.mjs --trace <pubkey>    # per-wallet flow trace
+```
+
 ## Fuel: refilling the root from revenue
 
 Topup and sweepback only move SOL that already exists in the fleet. But the

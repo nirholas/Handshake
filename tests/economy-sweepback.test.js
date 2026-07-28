@@ -10,6 +10,10 @@ import {
 	reclaimableSol,
 	MIN_SWEEP_SOL,
 	DRAIN_HEADROOM_LAMPORTS,
+	planAgentReclaim,
+	agentReclaimFloorSol,
+	isPlatformOwnedAgent,
+	PLATFORM_AGENT_OWNER_EMAIL,
 } from '../api/_lib/economy-sweepback.js';
 
 // reclaimableSol: the emergency consolidation's sizing. The load-bearing property
@@ -188,4 +192,93 @@ test('ledger rows: hash-chainable with the same hashEntry the topup uses', () =>
 		assert.equal(hash.length, 64);
 		prev = hash;
 	}
+});
+
+// ── platform agent reclaim ───────────────────────────────────────────────────
+// The agent-wallet reclaim closes the one-way master → agent funding path that
+// stranded 7.2 of the fleet's 7.53 SOL while the fee wallet sat under its settle
+// floor. Its safety story is entirely in these pure functions: who may be swept,
+// and how much must be left behind.
+
+const PLATFORM = PLATFORM_AGENT_OWNER_EMAIL;
+const BOT = 'atlas22@agents.three.ws';
+
+test('isPlatformOwnedAgent accepts only house and bot accounts', () => {
+	assert.equal(isPlatformOwnedAgent(PLATFORM), true);
+	assert.equal(isPlatformOwnedAgent(BOT), true);
+	assert.equal(isPlatformOwnedAgent('ASHA@Agents.Three.WS'), true); // case-insensitive
+	// Customers, in every shape they appear in the users table.
+	assert.equal(isPlatformOwnedAgent('sol-0000000000000000@wallet.local'), false);
+	assert.equal(isPlatformOwnedAgent('someuser@users.three.ws.local'), false);
+	assert.equal(isPlatformOwnedAgent('someone@example.com'), false);
+	// Near-miss domains must not squeak through a suffix check.
+	assert.equal(isPlatformOwnedAgent('evil@notagents.three.ws.attacker.com'), false);
+	assert.equal(isPlatformOwnedAgent(null), false);
+	assert.equal(isPlatformOwnedAgent(''), false);
+	assert.equal(isPlatformOwnedAgent(undefined), false);
+});
+
+test('agentReclaimFloorSol leaves a working trader its trade capital', () => {
+	// An enabled strategy keeps 2x its own per-trade size, so reclaim can never
+	// starve an agent that is actively trading.
+	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: 0.05 }) >= 0.1);
+	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: 0.207 }) >= 0.414);
+	// No enabled strategy → only fee headroom is retained.
+	const idle = agentReclaimFloorSol({ enabled: false, perTradeSol: 0.5 });
+	assert.ok(idle > 0 && idle < 0.05);
+	// Malformed strategy rows fall back to the idle floor, never to zero.
+	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: 0 }) > 0);
+	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: NaN }) > 0);
+	assert.ok(agentReclaimFloorSol({}) > 0);
+});
+
+test('planAgentReclaim never plans a customer wallet, whatever the balance', () => {
+	const { plan, skipped } = planAgentReclaim([
+		{ agentId: 'a', name: 'Customer Sniper', address: 'Cust111', owner: 'sol-0000000000000000@wallet.local', sol: 2.13 },
+		{ agentId: 'b', name: 'Customer Agent', address: 'Cust222', owner: 'someuser@users.three.ws.local', sol: 0.136 },
+	]);
+	assert.equal(plan.length, 0);
+	assert.equal(skipped.length, 2);
+	assert.ok(skipped.every((s) => s.reason === 'not_platform_owned'));
+});
+
+test('planAgentReclaim skips agents with capital committed to open positions', () => {
+	const { plan, skipped } = planAgentReclaim([
+		{ agentId: 'a', name: 'Swarm 1', address: 'S1', owner: PLATFORM, sol: 5, openPositions: 1 },
+	]);
+	assert.equal(plan.length, 0);
+	assert.equal(skipped[0].reason, 'capital_committed');
+});
+
+test('planAgentReclaim leaves every swept agent at or above its floor', () => {
+	const candidates = [
+		{ agentId: 'a', name: 'three', address: 'T1', owner: PLATFORM, sol: 0.35147, strategy: { enabled: true, perTradeSol: 0.05 } },
+		{ agentId: 'b', name: 'Atlas #22', address: 'A1', owner: BOT, sol: 0.07839, strategy: { enabled: false } },
+		{ agentId: 'c', name: 'Swarm 2', address: 'S2', owner: PLATFORM, sol: 0.0354, strategy: { enabled: true, perTradeSol: 0.207 } },
+	];
+	const { plan } = planAgentReclaim(candidates);
+	for (const p of plan) {
+		const c = candidates.find((x) => x.address === p.address);
+		assert.ok(c.sol - p.sol >= p.floorSol, `${p.name} would drop below its floor`);
+	}
+	// Swarm 2 trades 0.207 SOL a pop and holds 0.0354 — far under floor, never swept.
+	assert.equal(plan.find((p) => p.name === 'Swarm 2'), undefined);
+	// The genuinely idle bot wallet is the kind of stranded capital this exists for.
+	assert.ok(plan.some((p) => p.name === 'Atlas #22'));
+});
+
+test('planAgentReclaim honours the dust guard and the per-run wallet cap', () => {
+	const dust = planAgentReclaim([
+		{ agentId: 'a', name: 'Persona', address: 'P1', owner: BOT, sol: 0.0051, strategy: { enabled: false } },
+	]);
+	assert.equal(dust.plan.length, 0);
+	assert.equal(dust.skipped[0].reason, 'at_or_below_floor');
+
+	const many = Array.from({ length: 10 }, (_, i) => ({
+		agentId: `a${i}`, name: `Persona ${i}`, address: `P${i}`, owner: BOT, sol: 1, strategy: { enabled: false },
+	}));
+	const capped = planAgentReclaim(many, { maxWallets: 3 });
+	assert.equal(capped.plan.length, 3);
+	assert.equal(capped.skipped.filter((s) => s.reason === 'run_cap_reached').length, 7);
+	assert.ok(capped.totalSol > 0);
 });

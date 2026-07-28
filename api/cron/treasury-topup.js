@@ -35,7 +35,7 @@ import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL, ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';
 import { recordSweep } from '../_lib/economy-ledger.js';
 import { refuelMasterFromUsdc } from '../_lib/economy-fuel.js';
-import { reclaimIdleSol } from '../_lib/economy-sweepback.js';
+import { reclaimIdleSol, reclaimIdleAgentSol } from '../_lib/economy-sweepback.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // How high to lift an engine when it falls below its floor, unless the spec
@@ -174,6 +174,30 @@ export default wrapCron(async (req, res) => {
 		);
 	}
 
+	// Self-healing, step 1b (the other half of the fleet's SOL): the engine reclaim
+	// above only walks the SOLANA_SIGNERS registry. Most of the platform's SOL lives
+	// one layer down, in PLATFORM-OWNED agent custody wallets, which had no return
+	// path at all — master → agent funding is one-way and snipe proceeds settle back
+	// into the agent, never the master. Without this the fleet can hold plenty of SOL
+	// while the fee wallet starves under its settle floor (audited 2026-07-28: 7.2 of
+	// 7.53 SOL stranded in agent wallets, engines at 0.31, rail fully 503). Customer
+	// agents are never touched — see reclaimIdleAgentSol's ownership gate.
+	let agentReclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [] };
+	if (totalDeficitSol > 0 && reclaim.reclaimedSol < totalDeficitSol) {
+		try {
+			agentReclaim = await reclaimIdleAgentSol({ connection, network: 'mainnet', dryRun });
+		} catch (e) {
+			agentReclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [], error: e?.message || 'agent_reclaim_failed' };
+		}
+	}
+	if (agentReclaim.reclaimedSol > 0 && !dryRun) {
+		await sendOpsAlert(
+			`♻️ Economy master reclaimed idle agent SOL`,
+			`pulled ${agentReclaim.reclaimedSol} SOL back from ${agentReclaim.moves.length} platform agent wallet(s) to cover a ${totalDeficitSol.toFixed(3)} SOL deficit.`,
+			{ signature: `economy-agent-reclaim:${agentReclaim.moves.map((m) => m.address).join(',')}` },
+		);
+	}
+
 	// Self-healing, step 2 (revenue): if reclaim did not close the gap, convert a
 	// small bounded slice of the master's own idle USDC into native SOL. The
 	// circulation loop leaks SOL to fees every tick, so without a source the funding
@@ -212,6 +236,7 @@ export default wrapCron(async (req, res) => {
 			master_deficit_sol: Number(masterDeficitSol.toFixed(6)),
 			master_operating_sol: masterOperatingSol,
 			reclaim,
+			agent_reclaim: agentReclaim,
 			fuel,
 			master_aliased: masterAliased,
 			read_errors: errors,
@@ -306,6 +331,7 @@ export default wrapCron(async (req, res) => {
 		master_sol: result.masterSol ?? null,
 		master_deficit_sol: Number(masterDeficitSol.toFixed(6)),
 		reclaim,
+		agent_reclaim: agentReclaim,
 		fuel,
 		master_aliased: masterAliased,
 		read_errors: errors,

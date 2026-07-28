@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-28",
+			"title": "The agent economy now refills its own fuel tank instead of quietly running dry",
+			"summary": "The live activity feed on /pulse had gone almost silent, and the cause turned out to be a plumbing problem rather than a lack of money. The platform funds its agents by sending them SOL to trade and launch with, but that path only ever ran one way. Agents kept what they were given plus whatever their trades returned, and the small shared wallet that pays the network fee on every agent-to-agent payment had no way to get any of it back. It eventually fell a fraction of a cent below the minimum it needs to sign a transaction, and every paid request across the platform started failing, even though the wider fleet was holding plenty. The funding cycle is now a full loop: when the fee wallet runs short, the platform automatically pulls idle SOL back from its own agent wallets to cover the gap. Agents that are actively trading keep their trading capital, agents holding an open position are left alone entirely, and wallets belonging to real users are never touched. We also added an audit tool that reports where every lamport in the fleet is sitting and where it has been moving.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-28",
 			"title": "Coin pages are back, and they can no longer be taken down by an expired market-data key",
 			"summary": "Every coin profile page was returning an error. The market-data provider we read prices and coin details from gives us a monthly call allowance, and once it ran out, every request we sent with our key was refused. The awkward part: the exact same request sent without the key was still being answered. We were effectively locking ourselves out. The pages are live again, and the fix is permanent rather than a one-off: when the key gets refused, we now set it aside for a while and retry the same request without it, so the pages keep serving and recover on their own when the allowance resets. We also repaired a 3D model service that was crash-looping because it tried to download a small config file from a public model host on every start and kept getting throttled. That file now ships with our own model storage, so the service starts without depending on anyone else.",
 			"tags": [

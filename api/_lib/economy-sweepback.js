@@ -418,6 +418,223 @@ export async function reclaimIdleSol({ connection, network = 'mainnet', dryRun =
 	};
 }
 
+// ── platform AGENT wallet reclaim ────────────────────────────────────────────
+//
+// reclaimIdleSol above walks the SOLANA_SIGNERS registry — the eight engine
+// wallets. Agent custody wallets are a different universe and were structurally
+// invisible to every return path: `fundAgentForLaunch` moves SOL master → agent
+// one way, and nothing ever moved it back. Snipes recycle ~97% of their capital
+// but the proceeds land in the AGENT wallet, so each cycle ratcheted SOL further
+// from the engines until the master could not pay a 5,036-lamport settle fee.
+// Audited 2026-07-28: 7.2 of the fleet's 7.53 SOL sat in agent wallets while the
+// engines held 0.31 and the whole x402 rail 503'd. This closes that loop.
+//
+// The ownership boundary is the load-bearing part. Only wallets belonging to
+// PLATFORM-OWNED agents may be swept — the `three-ws` house account and the
+// `*@agents.three.ws` circulation bots, which api/_lib/launcher-engine.js
+// documents as "platform-created bot accounts … never real end users". A
+// customer's agent is never touched, and the SQL gate plus a redundant in-JS
+// re-check make that true even if the query is later edited.
+
+/** House account that owns the platform's own (non-bot) agents. */
+export const PLATFORM_AGENT_OWNER_EMAIL = 'three-ws@users.three.ws.local';
+/** Email suffix of the platform-created circulation bot accounts. */
+export const PLATFORM_AGENT_EMAIL_SUFFIX = '@agents.three.ws';
+
+/** Floor left on an idle platform agent — enough to sign its own transactions. */
+const AGENT_IDLE_FLOOR_SOL = num('AGENT_RECLAIM_IDLE_FLOOR_SOL', 0.005);
+/** A trading agent keeps this many trades' worth of working capital. */
+const AGENT_ACTIVE_TRADE_MULTIPLE = num('AGENT_RECLAIM_TRADE_MULTIPLE', 2);
+/** Wallets touched per run — keeps the cron bounded and its fee cost predictable. */
+const AGENT_RECLAIM_MAX_WALLETS = num('AGENT_RECLAIM_MAX_WALLETS', 40);
+
+/**
+ * Operating floor for one platform agent. An agent running an ENABLED sniper
+ * strategy keeps enough for `AGENT_RECLAIM_TRADE_MULTIPLE` trades at its own
+ * configured size, so reclaim can never starve a working trader; an agent with
+ * no enabled strategy keeps only transaction-fee headroom. Pure.
+ *
+ * @param {{enabled?:boolean, perTradeSol?:number}} strategy
+ * @returns {number} floor in SOL
+ */
+export function agentReclaimFloorSol(strategy = {}) {
+	if (!strategy.enabled) return AGENT_IDLE_FLOOR_SOL;
+	const perTrade = Number(strategy.perTradeSol);
+	if (!Number.isFinite(perTrade) || perTrade <= 0) return AGENT_IDLE_FLOOR_SOL;
+	return round(Math.max(AGENT_IDLE_FLOOR_SOL, perTrade * AGENT_ACTIVE_TRADE_MULTIPLE));
+}
+
+/**
+ * Size the per-agent reclaim. Pure, so the safety invariants are unit-testable
+ * without a database or an RPC.
+ *
+ * Invariants:
+ *   · a non-platform owner is NEVER planned, whatever the balance
+ *   · an agent with committed capital (an open position) is never planned
+ *   · a planned agent always retains at least its floor (via reclaimableSol)
+ *
+ * @param {Array<{agentId:string,name:string,address:string,owner:string,sol:number,openPositions?:number,strategy?:{enabled?:boolean,perTradeSol?:number}}>} candidates
+ * @param {{minSweepSol?:number, maxWallets?:number}} [opts]
+ * @returns {{plan:Array<{agentId:string,name:string,address:string,sol:number,floorSol:number}>, skipped:Array<{name:string,reason:string}>, totalSol:number}}
+ */
+export function planAgentReclaim(candidates, opts = {}) {
+	const minSweep = Number.isFinite(opts.minSweepSol) ? opts.minSweepSol : MIN_SWEEP_SOL;
+	const maxWallets = Number.isFinite(opts.maxWallets) ? opts.maxWallets : AGENT_RECLAIM_MAX_WALLETS;
+	const plan = [];
+	const skipped = [];
+	let total = 0;
+	for (const c of candidates) {
+		if (!isPlatformOwnedAgent(c.owner)) {
+			skipped.push({ name: c.name, reason: 'not_platform_owned' });
+			continue;
+		}
+		if (Number(c.openPositions) > 0) {
+			skipped.push({ name: c.name, reason: 'capital_committed' });
+			continue;
+		}
+		if (c.address === ECONOMY_MASTER_ADDRESS) {
+			skipped.push({ name: c.name, reason: 'is_master' });
+			continue;
+		}
+		const floorSol = agentReclaimFloorSol(c.strategy);
+		const reclaimable = reclaimableSol(c.sol, floorSol, minSweep);
+		if (reclaimable <= 0) {
+			skipped.push({ name: c.name, reason: 'at_or_below_floor' });
+			continue;
+		}
+		if (plan.length >= maxWallets) {
+			skipped.push({ name: c.name, reason: 'run_cap_reached' });
+			continue;
+		}
+		plan.push({ agentId: c.agentId, name: c.name, address: c.address, sol: reclaimable, floorSol });
+		total = round(total + reclaimable);
+	}
+	return { plan, skipped, totalSol: total };
+}
+
+/**
+ * True only for the platform's own agent-owner accounts. Anything else — a real
+ * signup, a wallet-auth account, an unknown value — is a customer and is out.
+ * @param {string|null|undefined} ownerEmail
+ */
+export function isPlatformOwnedAgent(ownerEmail) {
+	if (!ownerEmail || typeof ownerEmail !== 'string') return false;
+	const email = ownerEmail.trim().toLowerCase();
+	return email === PLATFORM_AGENT_OWNER_EMAIL || email.endsWith(PLATFORM_AGENT_EMAIL_SUFFIX);
+}
+
+/**
+ * Pull idle SOL out of PLATFORM-OWNED agent custody wallets back to the economy
+ * master, so the fee wallet refills itself from capital the platform already owns
+ * instead of waiting on an external top-up. Destination is the same hard-locked
+ * ECONOMY_MASTER_ADDRESS constant every other sweep uses; no parameter redirects it.
+ *
+ * @param {object} args
+ * @param {import('@solana/web3.js').Connection} args.connection
+ * @param {'mainnet'|'devnet'} [args.network]
+ * @param {boolean} [args.dryRun]
+ * @param {number} [args.maxWallets]
+ * @returns {Promise<{master:string, reclaimedSol:number, moves:Array, skipped:Array, failed:Array, readErrors:Array}>}
+ */
+export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dryRun = false, maxWallets } = {}) {
+	const { PublicKey } = await import('@solana/web3.js');
+	const { sql } = await import('./db.js');
+	const master = ECONOMY_MASTER_ADDRESS;
+	const moves = [];
+	const failed = [];
+	const readErrors = [];
+
+	// Ownership is enforced in SQL first so a customer's agent never even leaves
+	// the database, and again in planAgentReclaim() so an edit here cannot widen
+	// the blast radius on its own.
+	const rows = await sql`
+		SELECT a.id                                        AS agent_id,
+		       a.name                                      AS name,
+		       a.meta->>'solana_address'                   AS address,
+		       a.meta->>'encrypted_solana_secret'          AS secret,
+		       LOWER(u.email)                              AS owner,
+		       s.enabled                                   AS strategy_enabled,
+		       s.per_trade_lamports                        AS per_trade_lamports,
+		       (SELECT COUNT(*) FROM agent_sniper_positions p
+		         WHERE p.agent_id = a.id AND p.status IN ('open', 'closing'))::int AS open_positions
+		FROM agent_identities a
+		JOIN users u ON u.id = a.user_id
+		LEFT JOIN agent_sniper_strategies s ON s.agent_id = a.id AND s.network = ${network}
+		WHERE a.deleted_at IS NULL
+		  AND a.meta->>'solana_address' IS NOT NULL
+		  AND a.meta->>'encrypted_solana_secret' IS NOT NULL
+		  AND (LOWER(u.email) = ${PLATFORM_AGENT_OWNER_EMAIL}
+		       OR LOWER(u.email) LIKE ${'%' + PLATFORM_AGENT_EMAIL_SUFFIX})
+	`;
+
+	const candidates = [];
+	for (const r of rows) {
+		let sol;
+		try {
+			sol = round((await connection.getBalance(new PublicKey(r.address), 'confirmed')) / LAMPORTS_PER_SOL);
+		} catch (e) {
+			readErrors.push({ name: r.name, address: r.address, reason: `rpc_error: ${e?.message}` });
+			continue;
+		}
+		candidates.push({
+			agentId: r.agent_id,
+			name: r.name || 'Agent',
+			address: r.address,
+			owner: r.owner,
+			secret: r.secret,
+			sol,
+			openPositions: r.open_positions,
+			strategy: {
+				enabled: Boolean(r.strategy_enabled),
+				perTradeSol: r.per_trade_lamports != null ? Number(r.per_trade_lamports) / LAMPORTS_PER_SOL : 0,
+			},
+		});
+	}
+	// Biggest balances first: the run cap should spend its budget where the SOL is.
+	candidates.sort((a, b) => b.sol - a.sol);
+
+	const { plan, skipped, totalSol } = planAgentReclaim(candidates, { maxWallets });
+	if (dryRun) {
+		return { master, reclaimedSol: totalSol, moves: plan.map((p) => ({ ...p, dryRun: true })), skipped, failed, readErrors };
+	}
+
+	const secrets = new Map(candidates.map((c) => [c.agentId, c.secret]));
+	const { recoverSolanaAgentKeypair } = await import('./agent-wallet.js');
+	for (const p of plan) {
+		try {
+			const keypair = await recoverSolanaAgentKeypair(secrets.get(p.agentId), {
+				agentId: p.agentId,
+				reason: 'economy_reclaim',
+				meta: { to: master, sol: p.sol },
+			});
+			if (keypair.publicKey.toBase58() !== p.address) {
+				failed.push({ name: p.name, address: p.address, sol: p.sol, reason: 'keypair_address_mismatch' });
+				continue;
+			}
+			const signature = await sendSol({
+				connection,
+				fromKeypair: keypair,
+				to: master,
+				lamports: Math.round(p.sol * LAMPORTS_PER_SOL),
+				memo: `three.ws reclaim ${p.name} → economy-master`,
+				network,
+			});
+			moves.push({ ...p, signature });
+		} catch (e) {
+			failed.push({ name: p.name, address: p.address, sol: p.sol, reason: e?.message || 'send_failed' });
+		}
+	}
+
+	return {
+		master,
+		reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)),
+		moves,
+		skipped,
+		failed,
+		readErrors,
+	};
+}
+
 function round(n) {
 	return Math.round(n * 1e9) / 1e9;
 }
