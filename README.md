@@ -1,5 +1,7 @@
 # three.ws        
 
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.nirholas%2Fthree.ws.svg)](https://mcptoplist.com/server/io.github.nirholas%2Fthree.ws)
+
 [**Website**](https://three.ws) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
 
 https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
