@@ -99,6 +99,8 @@ const NOISE = [
 	/&[a-z#0-9]+;/gi, // entities
 	/\{\{[^}]*\}\}|\$\{[^}]*\}/g, // placeholders
 	/https?:\/\/\S+|\S+\.(?:ws|com|io|ai|app|fun|org|net)\b/gi, // URLs and hosts
+	/(?:^|\s)\/[\w\-./]+/g, // route and file paths: /api/3d/openapi.json
+	/\b[\w-]+\.(?:json|js|mjs|ts|glb|gltf|png|jpg|svg|md|html|css)\b/gi, // filenames
 	/\d[\d.,:%-]*/g, // numbers, versions, percentages
 ];
 

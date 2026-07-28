@@ -2018,7 +2018,7 @@
 		"up_in_60_seconds": "60 秒内上线",
 		"useavatar": "useAvatar()",
 		"viewer_gzipped": "Viewer 已 Gzip 压缩",
-		"visibility_public_unlisted_private": "<span class=\"sdk-api-prop-name\">visibility</span><span class=\"sdk-api-prop-desc\">\"public\" | \"unlisted\" | \"private\"</span>",
+		"visibility_public_unlisted_private": "<span class=\"sdk-api-prop-name\">可见性</span><span class=\"sdk-api-prop-desc\">\"公开\" | \"不公开\" | \"私有\"</span>",
 		"vs_legacy_avatar_sdks": "对比传统头像 SDK",
 		"web_component": "Web 组件",
 		"web_component_2": "Web 组件",
@@ -2180,7 +2180,7 @@
 		"resource_details": "资源详情",
 		"results": "<span id=\"qlabel\"></span> 个结果",
 		"search": "搜索",
-		"sign_in_with_x": "sign-in-with-x",
+		"sign_in_with_x": "使用X登录",
 		"solana_any": "Solana（任意）",
 		"sort_by": "排序方式",
 		"type": "类型"
@@ -2230,7 +2230,7 @@
 	},
 	"bnb_latency": {
 		"a_chain_s_rpc_going_quiet_shows": "某条链的RPC静默时，仅该赛道显示“正在重连”；其他赛道比赛照常进行。四条赛道同时宕机则显示设计好的错误并带重试选项，绝非空白页面。",
-		"bnb_chain_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span><a href=\"/bnb\">BNB Chain × three.ws</a>",
+		"bnb_chain_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span><a href=\"/bnb\">BNB Chain × [[4]][[3]]",
 		"each_card_samples_real_blocks_or_slots": "每张卡片均从公共RPC采样真实区块（或Solana的槽位），并报告测量的平均间隔 — 迷你图显示最近24次实时读数，最高条即最快测量结果。",
 		"every_chain_s_public_rpc_is_unreachable": "目前所有链的公共RPC均无法访问 — 这是真实的服务中断，而非Bug。请重试，或稍后查看。",
 		"every_number_comes_from_which_samples_real": "所有数据均来自<code>/api/bnb/latency</code>，该接口在每次轮询时，从公共RPC采样真实区块（BNB通过<code>probeBlockTime</code>，与支持<a href=\"/bnb\">/bnb hub</a>证明条的功能相同）— 绝无预计算或硬编码。",
@@ -2977,7 +2977,7 @@
 		"meta_twitter_description": "3D IBM Granite 嵌入空间中的实时 Solana 代币。点击星体可查看 Granite 分析。",
 		"meta_twitter_title": "watsonx 星群 · three.ws × IBM",
 		"starting": "正在启动…",
-		"three_ws_ibm_watsonx": "<span class=\"dot\"></span><strong>three.ws</strong> × IBM watsonx",
+		"three_ws_ibm_watsonx": "<span class=\"dot\"></span><strong>[[4]][[3]] × IBM watsonx",
 		"watsonx_constellation": "watsonx <span class=\"g\">星群</span>"
 	},
 	"converter": {
@@ -7334,7 +7334,7 @@
 		"meta_title": "AR 与 WebXR — 将任何 3D 智能体置于您的真实世界 · three.ws",
 		"meta_twitter_description": "每个 three.ws 虚拟形象和 Forge 模型都带有一个“在 AR 中查看”按钮。安卓支持 WebXR，iOS 支持 Quick Look — 无需应用，无需下载。",
 		"meta_twitter_title": "AR 与 WebXR — 将任何 3D 智能体置于您的真实世界 · three.ws",
-		"microphone_camera_xr_spatial_tracking_fullsc": "\"microphone; camera; xr-spatial-tracking; fullscreen\"",
+		"microphone_camera_xr_spatial_tracking_fullsc": "\"麦克风; 摄像头; XR空间追踪; 全屏\"",
 		"module": "\"module\"",
 		"no_hard_limit": "无硬性限制",
 		"none": "无",
@@ -14080,7 +14080,7 @@
 		"related": "相关",
 		"shipping_next": "即将推出",
 		"software_path": "software-path",
-		"technology_partner": "technology-partner",
+		"technology_partner": "技术合作伙伴",
 		"the_aws_marketplace_channel_apn_software_pat": "<strong>AWS Marketplace 渠道。</strong>APN 软件路径成员有资格在 AWS Marketplace 上架 SaaS 产品，为 AWS 客户提供一个采购途径，支持统一账单、AWS 抵扣金和 EDP 承诺。three.ws SaaS 上架正在开发中。",
 		"the_aws_marketplace_integration_is_already_i": "AWS Marketplace 集成已在代码库中，位于 <a href=\"https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace\" rel=\"noopener\">api/aws-marketplace</a> — <code>ResolveCustomer</code> 用于履约、签名 SNS Webhook 用于订阅生命周期、计量使用情况报告以及合同权益检查。",
 		"the_aws_partner_network_is_the_global": "AWS 合作伙伴网络是全球范围内在 AWS 上构建、营销和销售解决方案的组织社区。成为软件路径成员，即代表 AWS 正式认可该公司向 AWS 客户交付软件产品。",

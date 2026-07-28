@@ -1963,7 +1963,7 @@
 		"meta_description": "حزمة SDK جاهزة لأفاتار ثلاثي الأبعاد للويب. مكون ويب، ربط React، منشئ iframe، تحميل GLB — بديل كامل ومفتوح لحزم SDK القديمة للأفاتار.",
 		"meta_og_description": "حزمة SDK جاهزة لأفاتار ثلاثي الأبعاد للويب. مكون ويب <agent-3d>، ربط React، منشئ iframe، تحميل GLB — بديل مفتوح لحزم SDK القديمة للأفاتار.",
 		"meta_og_title": "@three-ws/avatar SDK",
-		"meta_title": "Avatar SDK — @three-ws/avatar · three.ws",
+		"meta_title": "SDK الأفاتار — @three-ws/avatar · three.ws",
 		"meta_twitter_description": "حزمة SDK جاهزة لأفاتار ثلاثي الأبعاد — مكون ويب، React، iframe المنشئ، تحميل GLB.",
 		"meta_twitter_title": "@three-ws/avatar SDK · three.ws",
 		"mixamo_animations": "رسوم Mixamo المتحركة",
@@ -7304,7 +7304,7 @@
 		"browse_avatars": "تصفح الصور الرمزية ←",
 		"browse_avatars_2": "تصفح الصور الرمزية ←",
 		"capability": "الإمكانية",
-		"chrome_safari_15_4": "Chrome / Safari 15.4+",
+		"chrome_safari_15_4": "كروم / سفاري 15.4+",
 		"desktop_qr": "رمز QR لسطح المكتب",
 		"desktop_shows_a_qr_code_scan_it": "يعرض سطح المكتب رمز QR. امسحه بهاتفك وتفتح تجربة الواقع المعزز مباشرة — لا خطوات إضافية، لا تطبيق إضافي.",
 		"developer": "مطور",
@@ -7377,7 +7377,7 @@
 		"what_people_use_ar_for": "استخدامات الواقع المعزز",
 		"what_works_where": "ما الذي يعمل وأين",
 		"your_3d_agent_in_your_room": "وكيلك ثلاثي الأبعاد.<br>في غرفتك.",
-		"your_agent_id": "\"your-agent-id\"",
+		"your_agent_id": "\"معرف وكيلك\"",
 		"your_ai_agent_with_its_3d_body": "وكيلك المدعوم بالذكاء الاصطناعي — بجسده ثلاثي الأبعاد وشخصيته الحية — يقف في نفس الغرفة معك. تحدث إليه في الواقع المعزز، واحصل على ردود حقيقية."
 	},
 	"features_deploy": {
@@ -7660,7 +7660,7 @@
 		"voice_synthesis": "تركيب الصوت",
 		"when_you_re_ready_copy_the_generated": "عندما تكون جاهزًا، انسخ وسم <code style=\"font-family:var(--font-mono);font-size:0.9em\">&lt;script&gt;</code> المُنشأ والصقه في أي مكان — Webflow، WordPress، صفحة HTML مخصصة، أو تطبيق React. يظهر الودجت كزر عائم.",
 		"widget_builder": "<span class=\"fl-eyebrow-dot\" aria-hidden=\"true\"></span> منشئ الودجت",
-		"your_agent_id": "\"your-agent-id\""
+		"your_agent_id": "\"معرف وكيلك\""
 	},
 	"features_walk": {
 		"3d_avatar_ar": "<span class=\"fl-eyebrow-dot\" aria-hidden=\"true\"></span> أفاتار ثلاثي الأبعاد + واقع معزز",
@@ -8654,7 +8654,7 @@
 		"avatars_that_sign_in_asl": "أفاتار تتواصل بلغة الإشارة الأمريكية 🤟",
 		"await": "await",
 		"aws": "<span class=\"lbl\">AWS</span>",
-		"aws_marketplace": "AWS Marketplace",
+		"aws_marketplace": "سوق AWS",
 		"bacff13e_b64b_4ac0_860d_44f0168ad23b": "'bacff13e-b64b-4ac0-860d-44f0168ad23b'",
 		"back_flip": "<span class=\"wyg-anim-chip-icon\">&#x1F938;</span>شقلبة خلفية",
 		"banging_tunes": "<span class=\"wyg-anim-chip-icon\">&#x1F3B5;</span>ألحان صاخبة",
@@ -8747,7 +8747,7 @@
 		"dance_3": "<span class=\"wyg-anim-chip-icon\">&#x1F483;</span>رقص",
 		"dance_4": "💃 رقص",
 		"dark": "داكن",
-		"deep_research": "'deep-research'",
+		"deep_research": "'بحث-عميق'",
 		"defeated": "<span class=\"wyg-anim-chip-icon\">&#x1F61E;</span>مهزوم",
 		"deploy": "نشر",
 		"deploy_2": "نشر",
@@ -14580,7 +14580,7 @@
 		"voice_chat_talk_to_your_community_directly": "<strong>صوت + دردشة.</strong> تحدث إلى مجتمعك مباشرة في عالم ثلاثي الأبعاد."
 	},
 	"next_index": {
-		"15kb_shadow_dom_cors": "15KB · SHADOW DOM · CORS",
+		"15kb_shadow_dom_cors": "15 كيلوبايت · SHADOW DOM · CORS",
 		"atlas": "أطلس",
 		"blog": "مدونة",
 		"blog_2": "مدونة",
@@ -15318,7 +15318,7 @@
 		"ai": "AI",
 		"alibaba_cloud": "Alibaba Cloud",
 		"alibaba_cloud_extends_three_ws_into_apac": "توسع Alibaba Cloud نطاق three.ws إلى أسواق آسيا والمحيط الهادئ (APAC) من خلال دمج نموذج Qwen ونشر خوادم MCP الإقليمية. يصل وكلاء three.ws إلى جماهير عالمية باستدلال منخفض الكمون بالقرب من المستخدمين في آسيا.",
-		"amazon_web_services": "Amazon Web Services",
+		"amazon_web_services": "خدمات أمازون ويب",
 		"apac": "APAC",
 		"apps_sdk": "Apps SDK",
 		"audio2face": "Audio2Face",

@@ -1098,11 +1098,11 @@
 	"agent_trade": {
 		"402_challenge_oracle_replies_with_http_402": "<b>402 ಸವಾಲು.</b> ಒರಾಕಲ್ HTTP 402 ಪಾವತಿ ಅಗತ್ಯವಿದೆ ಎಂದು ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತದೆ ಮತ್ತು ಒಂದು x402 ಮ್ಯಾನಿಫೆಸ್ಟ್: SOL ನಲ್ಲಿ ಬೆಲೆ, ಸ್ವೀಕರಿಸುವವರು, ನೆಟ್‌ವರ್ಕ್ ಮತ್ತು ಮೆಮೊ.",
 		"a_description_of_the_live_flow_not": "ಲೈವ್ ಫ್ಲೋನ ವಿವರಣೆ — ಚಾಲನೆಯಲ್ಲಿರುವ ವ್ಯಾಪಾರವಲ್ಲ.",
-		"agent_buyer_secret": "AGENT_BUYER_SECRET",
+		"agent_buyer_secret": "ಏಜೆಂಟ್ ಖರೀದಿದಾರರ ರಹಸ್ಯ",
 		"agent_economy": "ಏಜೆಂಟ್ ಆರ್ಥಿಕತೆ",
-		"agent_seller_secret": "AGENT_SELLER_SECRET",
-		"agent_trade_network": "AGENT_TRADE_NETWORK",
-		"agent_trade_price_sol": "AGENT_TRADE_PRICE_SOL",
+		"agent_seller_secret": "ಏಜೆಂಟ್ ಮಾರಾಟಗಾರರ ರಹಸ್ಯ",
+		"agent_trade_network": "ಏಜೆಂಟ್ ವ್ಯಾಪಾರ ನೆಟ್‌ವರ್ಕ್",
+		"agent_trade_price_sol": "ಏಜೆಂಟ್ ವ್ಯಾಪಾರ ಬೆಲೆ SOL",
 		"ai_agent_token_trends": "AI ಏಜೆಂಟ್ ಟೋಕನ್ ಟ್ರೆಂಡ್‌ಗಳು",
 		"btc_market_sentiment": "BTC ಮಾರುಕಟ್ಟೆ ಭಾವನೆ",
 		"buyer_agent_nexus": "# ಖರೀದಿದಾರ ಏಜೆಂಟ್ (ನೆಕ್ಸಸ್)",
@@ -2540,7 +2540,7 @@
 		"arena": "⚔ ಅರೆನಾ",
 		"armies": "ಸೇನೆಗಳು",
 		"army_power": "ಸೇನೆಯ ಶಕ್ತಿ",
-		"coin_clash": "<span class=\"cl-title-line\">COIN</span> <span class=\"cl-title-line cl-title-em\">CLASH</span>",
+		"coin_clash": "<span class=\"cl-title-line\">ಕಾಯಿನ್</span> <span class=\"cl-title-line cl-title-em\">ಕ್ಲಾಶ್</span>",
 		"communities": "ಸಮುದಾಯಗಳು →",
 		"connecting_live_community_warfare_demo": "<span id=\"cl-live\" class=\"juice-live\" data-state=\"connecting\"><span class=\"juice-live-dot\" aria-hidden=\"true\"></span><span class=\"juice-live-txt\">ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ</span></span> ಲೈವ್ ಸಮುದಾಯ ಯುದ್ಧ <span class=\"cl-demo-badge\" title=\"A playable demo — the real product is far bigger\">ಡೆಮೊ</span>",
 		"ends_in": "ಕೊನೆಗೊಳ್ಳುತ್ತದೆ",
@@ -3520,7 +3520,7 @@
 		"widgets_8_types_turntable_to_live_feed": "<span class=\"feature-icon\" aria-hidden=\"true\">🧱</span> <span class=\"feature-name\">ವಿಜೆಟ್‌ಗಳು</span> <span class=\"feature-desc\">8 ವಿಧಗಳು: ಟರ್ನ್‌ಟೇಬಲ್‌ನಿಂದ ಲೈವ್ ಫೀಡ್‌ವರೆಗೆ</span> <span class=\"feature-try\" aria-hidden=\"true\">ನೋಡಿ →</span>",
 		"your_agent_unlocks": "ನಿಮ್ಮ ಏಜೆಂಟ್ ಅನ್‌ಲಾಕ್ ಮಾಡುತ್ತದೆ",
 		"your_avatar": "ನಿಮ್ಮ ಅವತಾರ",
-		"your_avatar_2": "your-avatar"
+		"your_avatar_2": "ನಿಮ್ಮ-ಅವತಾರ್"
 	},
 	"create_selfie": {
 		"add_a_front_facing_photo": "ಮುಂಭಾಗದ ಫೋಟೋ ಸೇರಿಸಿ",
@@ -7377,7 +7377,7 @@
 		"what_people_use_ar_for": "ಜನರು AR ಅನ್ನು ಯಾವುದಕ್ಕಾಗಿ ಬಳಸುತ್ತಾರೆ",
 		"what_works_where": "ಎಲ್ಲಿ ಏನು ಕೆಲಸ ಮಾಡುತ್ತದೆ",
 		"your_3d_agent_in_your_room": "ನಿಮ್ಮ 3D ಏಜೆಂಟ್.<br>ನಿಮ್ಮ ಕೋಣೆಯಲ್ಲಿ.",
-		"your_agent_id": "\"your-agent-id\"",
+		"your_agent_id": "\"ನಿಮ್ಮ-ಏಜೆಂಟ್-ಐಡಿ\"",
 		"your_ai_agent_with_its_3d_body": "ನಿಮ್ಮ AI ಏಜೆಂಟ್ — ಅದರ 3D ದೇಹ ಮತ್ತು ಲೈವ್ ವ್ಯಕ್ತಿತ್ವದೊಂದಿಗೆ — ನಿಮ್ಮಂತೆಯೇ ಅದೇ ಕೋಣೆಯಲ್ಲಿ ನಿಂತಿದೆ. AR ನಲ್ಲಿ ಅದರೊಂದಿಗೆ ಮಾತನಾಡಿ, ನೈಜ ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ಪಡೆಯಿರಿ."
 	},
 	"features_deploy": {
@@ -7660,7 +7660,7 @@
 		"voice_synthesis": "ಧ್ವನಿ ಸಂಶ್ಲೇಷಣೆ",
 		"when_you_re_ready_copy_the_generated": "ನೀವು ಸಿದ್ಧರಾದಾಗ, ರಚಿಸಿದ <code style=\"font-family:var(--font-mono);font-size:0.9em\">&lt;script&gt;</code> ಟ್ಯಾಗ್ ಅನ್ನು ನಕಲಿಸಿ ಮತ್ತು ಅದನ್ನು ಎಲ್ಲಿ ಬೇಕಾದರೂ ಅಂಟಿಸಿ — Webflow, WordPress, ಕಸ್ಟಮ್ HTML ಪುಟ, ಅಥವಾ React ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ. ವಿಜೆಟ್ ತೇಲುವ ಬಟನ್‌ನಂತೆ ಕಾಣಿಸುತ್ತದೆ.",
 		"widget_builder": "<span class=\"fl-eyebrow-dot\" aria-hidden=\"true\"></span>ವಿಜೆಟ್ ಬಿಲ್ಡರ್",
-		"your_agent_id": "\"your-agent-id\""
+		"your_agent_id": "\"ನಿಮ್ಮ-ಏಜೆಂಟ್-ಐಡಿ\""
 	},
 	"features_walk": {
 		"3d_avatar_ar": "<span class=\"fl-eyebrow-dot\" aria-hidden=\"true\"></span>3D ಅವತಾರ + AR",
@@ -9215,8 +9215,8 @@
 		"copy_snippet": "ಸ್ನಿಪ್ಪೆಟ್ ನಕಲಿಸಿ",
 		"cyberpunk_ninja": "ಸೈಬರ್‌ಪಂಕ್ ನಿಂಜಾ",
 		"data_x402_action": "data-x402-action",
-		"data_x402_endpoint": "data-x402-endpoint",
-		"data_x402_merchant": "data-x402-merchant",
+		"data_x402_endpoint": "data-x402-ಎಂಡ್‌ಪಾಯಿಂಟ್",
+		"data_x402_merchant": "data-x402-ಮರ್ಚೆಂಟ್",
 		"days": "ದಿನಗಳು",
 		"delivery_drone": "ಡೆಲಿವರಿ ಡ್ರೋನ್",
 		"describe_a_character_three_ws_generates_the": "ಒಂದು ಪಾತ್ರವನ್ನು ವಿವರಿಸಿ; three.ws ಟೆಕ್ಸ್ಚರ್ಡ್ ಮೆಶ್ ಅನ್ನು ಉತ್ಪಾದಿಸುತ್ತದೆ, ಸ್ಕೆಲಿಟನ್ ಅನ್ನು ಆಟೋ-ರಿಗ್ ಮಾಡುತ್ತದೆ ಮತ್ತು ಅದನ್ನು ನೇರವಾಗಿ ಅವತಾರ್ ಎಂಜಿನ್‌ಗೆ ಸೇರಿಸುತ್ತದೆ — ಅಲ್ಲಿ ಅದು ನಿಲ್ಲುತ್ತದೆ, ಉಸಿರಾಡುತ್ತದೆ ಮತ್ತು ಕೈ ಬೀಸುತ್ತದೆ. ಉಚಿತ, ವಾಲೆಟ್ ಇಲ್ಲ. ನಿಮ್ಮ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಲೈವ್ ಆಗಿ ಚಾಲನೆಯಲ್ಲಿರುವ ನಮ್ಮ ಅನಿಮೇಷನ್ ಲೈಬ್ರರಿಯನ್ನು <em>ಯಾವುದೇ</em> ಮಾನವ ರೂಪ ಧರಿಸಲು ಅನುಮತಿಸುವ ಅದೇ ಸಾರ್ವತ್ರಿಕ ರಿಗ್.",
@@ -9407,9 +9407,9 @@
 		"changelog": "ಬದಲಾವಣೆಗಳ ದಾಖಲೆ",
 		"check_symbol": "\"ಚಿಹ್ನೆ ಪರಿಶೀಲಿಸಿ\"",
 		"copy_snippet": "ಸ್ನಿಪ್ಪೆಟ್ ನಕಲಿಸಿ",
-		"data_x402_action": "data-x402-action",
-		"data_x402_endpoint": "data-x402-endpoint",
-		"data_x402_merchant": "data-x402-merchant",
+		"data_x402_action": "data-x402-ಆಕ್ಷನ್",
+		"data_x402_endpoint": "data-x402-ಎಂಡ್‌ಪಾಯಿಂಟ್",
+		"data_x402_merchant": "data-x402-ಮರ್ಚೆಂಟ್",
 		"days": "ದಿನಗಳು",
 		"delivery_drone": "ಡೆಲಿವರಿ ಡ್ರೋನ್",
 		"describe_an_object_to_generate_for_free": "ಉಚಿತವಾಗಿ ರಚಿಸಲು ಒಂದು ವಸ್ತುವನ್ನು ವಿವರಿಸಿ.",
@@ -9953,7 +9953,7 @@
 		"three_ws": "three.ws"
 	},
 	"launch_week": {
-		"0xdetweiler_undervalued_tech_rt": "@0xdetweiler \"undervalued tech\" RT",
+		"0xdetweiler_undervalued_tech_rt": "@0xdetweiler \"ಕಡಿಮೆ ಮೌಲ್ಯದ ತಂತ್ರಜ್ಞಾನ\" RT",
 		"10_replies": "10 ಪ್ರತ್ಯುತ್ತರಗಳು",
 		"10_replies_2": "10 ಪ್ರತ್ಯುತ್ತರಗಳು",
 		"10_replies_3": "10 ಪ್ರತ್ಯುತ್ತರಗಳು",
@@ -15316,13 +15316,13 @@
 		"ace": "ACE",
 		"agents_earn_and_spend_using_the_x402": "ಏಜೆಂಟ್‌ಗಳು x402 ಪಾವತಿ ಪ್ರೋಟೋಕಾಲ್ ಬಳಸಿ ಗಳಿಸುತ್ತಾರೆ ಮತ್ತು ಖರ್ಚು ಮಾಡುತ್ತಾರೆ. ಪಾಲುದಾರರು ಏಜೆಂಟ್-ಟು-ಏಜೆಂಟ್ ಮೈಕ್ರೋಪೇಮೆಂಟ್‌ಗಳ ಮೂಲಕ API ಮೇಲ್ಮೈಯನ್ನು ಹಣಗಳಿಸಬಹುದು.",
 		"ai": "AI",
-		"alibaba_cloud": "Alibaba Cloud",
+		"alibaba_cloud": "ಅಲಿಬಾಬಾ ಕ್ಲೌಡ್",
 		"alibaba_cloud_extends_three_ws_into_apac": "Alibaba Cloud three.ws ಅನ್ನು APAC ಮಾರುಕಟ್ಟೆಗಳಿಗೆ Qwen ಮಾದರಿ ಏಕೀಕರಣ ಮತ್ತು ಪ್ರಾದೇಶಿಕ MCP ಸರ್ವರ್ ನಿಯೋಜನೆಯೊಂದಿಗೆ ವಿಸ್ತರಿಸುತ್ತದೆ. ಏಷ್ಯಾದ ಬಳಕೆದಾರರಿಗೆ ಹತ್ತಿರವಿರುವ ಕಡಿಮೆ-ಲೇಟೆನ್ಸಿ ಇನ್‌ಫರೆನ್ಸ್‌ನೊಂದಿಗೆ three.ws ಏಜೆಂಟ್‌ಗಳು ಜಾಗತಿಕ ಪ್ರೇಕ್ಷಕರನ್ನು ತಲುಪುತ್ತವೆ.",
-		"amazon_web_services": "Amazon Web Services",
+		"amazon_web_services": "ಅಮೆಜಾನ್ ವೆಬ್ ಸರ್ವೀಸಸ್",
 		"apac": "APAC",
-		"apps_sdk": "Apps SDK",
+		"apps_sdk": "ಆ್ಯಪ್ಸ್ SDK",
 		"audio2face": "Audio2Face",
-		"azure_openai": "Azure OpenAI",
+		"azure_openai": "ಅಜೂರ್ ಓಪನ್‌ಎಐ",
 		"azure_openai_and_microsoft_copilot_integrati": "Azure OpenAI ಮತ್ತು Microsoft Copilot ಏಕೀಕರಣಗಳು three.ws ಏಜೆಂಟ್‌ಗಳು ಎಂಟರ್‌ಪ್ರೈಸ್ ಅಜೂರ್ ಟೆನೆಂಟ್‌ಗಳಲ್ಲಿ GPT-4 ವರ್ಗದ ಮಾದರಿಗಳಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸಲು ಅನುವು ಮಾಡಿಕೊಡುತ್ತವೆ — ಡೇಟಾ ರೆಸಿಡೆನ್ಸಿ, ಅನುಸರಣೆ ಮತ್ತು ಎಂಟರ್‌ಪ್ರೈಸ್ SSO ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಆನುವಂಶಿಕವಾಗಿ ಪಡೆಯುವುದರೊಂದಿಗೆ.",
 		"bare_metal": "ಬೇರ್ ಮೆಟಲ್",
 		"become_a_partner": "ಪಾಲುದಾರರಾಗಿ →",
@@ -15332,7 +15332,7 @@
 		"cloud_2": "ಕ್ಲೌಡ್",
 		"cloud_3": "ಕ್ಲೌಡ್",
 		"cloud_4": "ಕ್ಲೌಡ್",
-		"cloud_run": "Cloud Run",
+		"cloud_run": "ಕ್ಲೌಡ್ ರನ್",
 		"copilot": "Copilot",
 		"custom_gpt": "ಕಸ್ಟಮ್ GPT",
 		"deploy_an_agent": "ಒಂದು ಏಜೆಂಟ್ ನಿಯೋಜಿಸಿ",
@@ -15343,7 +15343,7 @@
 		"gaudi": "Gaudi",
 		"gemini": "Gemini",
 		"get_in_touch": "ಸಂಪರ್ಕಿಸಿ",
-		"google_cloud": "Google Cloud",
+		"google_cloud": "ಗೂಗಲ್ ಕ್ಲೌಡ್",
 		"google_cloud_powers_three_ws_inference_stora": "Google Cloud ಜಾಗತಿಕ ಮಟ್ಟದಲ್ಲಿ three.ws ಇನ್‌ಫರೆನ್ಸ್, ಸಂಗ್ರಹಣೆ ಮತ್ತು ನೈಜ-ಸಮಯದ ಸೇವೆಗೆ ಶಕ್ತಿ ನೀಡುತ್ತದೆ. Vertex AI ಏಕೀಕರಣವು ಏಜೆಂಟ್‌ಗಳಿಗೆ three.ws ಗುರುತು ಮತ್ತು ಪಾವತಿ ಪದರದ ಜೊತೆಗೆ ಜೆಮಿನಿ ಮಾದರಿಗಳನ್ನು ಬಳಸಲು ಅನುವು ಮಾಡಿಕೊಡುತ್ತದೆ.",
 		"gpu": "GPU",
 		"granite": "Granite",
@@ -15397,7 +15397,7 @@
 		"three_ws_is_a_member_of_the": "three.ws ಅನುಮೋದಿತ ಮೂಲಸೌಕರ್ಯ ಕ್ರೆಡಿಟ್‌ಗಳೊಂದಿಗೆ ಕ್ವಿಕ್‌ನೋಡ್ ಸ್ಟಾರ್ಟ್‌ಅಪ್ ಪ್ರೋಗ್ರಾಂನ ಸದಸ್ಯವಾಗಿದೆ. ಕ್ವಿಕ್‌ನೋಡ್‌ನ ಜಾಗತಿಕವಾಗಿ ವಿತರಿಸಿದ RPC ಎಂಡ್‌ಪಾಯಿಂಟ್‌ಗಳು ಏಜೆಂಟ್ ವ್ಯಾಲೆಟ್‌ಗಳ ಹಿಂದೆ, x402 ಸೆಟಲ್‌ಮೆಂಟ್ ಪರಿಶೀಲನೆ ಮತ್ತು ಲೈವ್ Solana ಮಾರುಕಟ್ಟೆ ಡೇಟಾಕ್ಕೆ ಚೈನ್ ಪ್ರವೇಶಕ್ಕೆ ಸಾಮರ್ಥ್ಯ ಮತ್ತು ಪುನರಾವರ್ತನೆಯನ್ನು ಸೇರಿಸುತ್ತವೆ.",
 		"three_ws_is_an_openai_select_partner": "three.ws OpenAI ಪಾರ್ಟ್‌ನರ್ ನೆಟ್‌ವರ್ಕ್‌ನಲ್ಲಿ OpenAI ಸೆಲೆಕ್ಟ್ ಪಾರ್ಟ್‌ನರ್. ಉಚಿತ three.ws 3D ಸ್ಟುಡಿಯೋ ಕನೆಕ್ಟರ್ ChatGPT ಗೆ ಒಂಬತ್ತು ಕೀಲೆಸ್ 3D ಪರಿಕರಗಳನ್ನು ನೀಡುತ್ತದೆ: ಟೆಕ್ಸ್ಟ್ ಟು ಮಾಡೆಲ್, ರಿಗ್ಡ್ ಅವತಾರ್‌ಗಳು, ಸಂಭಾಷಣಾ ಪರಿಷ್ಕರಣೆ, ಮತ್ತು ಜೀವಂತ ಏಜೆಂಟ್ ದೇಹ, ಇವೆಲ್ಲವೂ ಸಂಭಾಷಣೆಯಲ್ಲಿ ಸಂವಾದಾತ್ಮಕವಾಗಿ ನೇರವಾಗಿ ರೆಂಡರ್ ಆಗುತ್ತವೆ.",
 		"three_ws_runs_on_and_integrates_with": "three.ws ಪ್ರಮುಖ ಕ್ಲೌಡ್, AI ಮತ್ತು ಹಾರ್ಡ್‌ವೇರ್ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್‌ಗಳ ಮೇಲೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ ಮತ್ತು ಅವುಗಳೊಂದಿಗೆ ಸಂಯೋಜನೆಗೊಳ್ಳುತ್ತದೆ — ಪ್ರತಿ ಏಜೆಂಟ್‌ಗೆ ಎಂಟರ್‌ಪ್ರೈಸ್-ದರ್ಜೆಯ ಕಂಪ್ಯೂಟ್, ಗುರುತು ಮತ್ತು ವ್ಯಾಪ್ತಿಯನ್ನು ನೀಡುತ್ತದೆ.",
-		"vertex_ai": "Vertex AI",
+		"vertex_ai": "ವರ್ಟೆಕ್ಸ್ AI",
 		"watsonx_ai": "watsonx.ai",
 		"why_partner_with_three_ws": "three.ws ನೊಂದಿಗೆ ಏಕೆ ಪಾಲುದಾರರಾಗಬೇಕು?",
 		"x402": "x402"
@@ -15507,7 +15507,7 @@
 		"network": "ನೆಟ್‌ವರ್ಕ್",
 		"new_payment_session": "ಹೊಸ ಪಾವತಿ ಸೆಷನ್",
 		"once": "ಒಮ್ಮೆ",
-		"payment_session_token": "PAYMENT_SESSION_TOKEN",
+		"payment_session_token": "ಪಾವತಿ ಸೆಷನ್ ಟೋಕನ್",
 		"save_changes": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
 		"skip_to_main_content": "ಮುಖ್ಯ ವಿಷಯಕ್ಕೆ ತೆರಳಿ",
 		"solana_usdc": "Solana USDC"
@@ -15516,7 +15516,7 @@
 		"advanced_view_payment_requirements": "ಸುಧಾರಿತ — ಪಾವತಿ ಅವಶ್ಯಕತೆಗಳನ್ನು ವೀಕ್ಷಿಸಿ",
 		"base": "ಮೂಲ",
 		"close_title": "ಮುಚ್ಚಿ",
-		"coinbase_wallet": "<span class=\"wallet-icon\">🔵</span> <span class=\"wallet-name\">Coinbase Wallet</span> <span class=\"wallet-arrow\">›</span>",
+		"coinbase_wallet": "<span class=\"wallet-icon\">🔵</span> <span class=\"wallet-name\">ಕಾಯಿನ್‌ಬೇಸ್ ವಾಲೆಟ್</span> <span class=\"wallet-arrow\">›</span>",
 		"get_free_usdc_on_base_sepolia": "ಬೇಸ್ ಸೆಪೋಲಿಯಾದಲ್ಲಿ ಉಚಿತ USDC ಪಡೆಯಿರಿ →",
 		"learn_more": "<a href=\"https://x402.org/docs\" target=\"_blank\" rel=\"noopener\">ಹೆಚ್ಚು ತಿಳಿಯಿರಿ</a>",
 		"meta_description": "ಈ x402 ಎಂಡ್‌ಪಾಯಿಂಟ್‌ಗೆ ಪ್ರವೇಶ ಪಡೆಯಲು USDC ಮೂಲಕ ಪಾವತಿಸಿ.",
@@ -16795,13 +16795,13 @@
 		"markets": "ಮಾರುಕಟ್ಟೆಗಳು",
 		"meta_description": "Robinhood Chain ಮೆಮೆಕಾಯಿನ್‌ಗಾಗಿ ಲೈವ್ ಬೆಲೆ, ಲಿಕ್ವಿಡಿಟಿ, ಹೋಲ್ಡರ್‌ಗಳು ಮತ್ತು ನಿಜವಾದ ಖರೀದಿ ಹರಿವು.",
 		"meta_title": "Robinhood Chain ಕಾಯಿನ್ · three.ws",
-		"robinhood_chain": "Robinhood Chain"
+		"robinhood_chain": "ರಾಬಿನ್‌ಹುಡ್ ಚೈನ್"
 	},
 	"robinhood_stock": {
 		"markets": "ಮಾರುಕಟ್ಟೆಗಳು",
 		"meta_description": "ರಾಬಿನ್‌ಹುಡ್ ಚೈನ್ ಸ್ಟಾಕ್ ಟೋಕನ್‌ಗಾಗಿ ಲೈವ್ ಚೈನ್ಲಿಂಕ್ NAV, DEX ಪ್ರೀಮಿಯಂ/ರಿಯಾಯಿತಿ, ಹೋಲ್ಡರ್‌ಗಳು ಮತ್ತು ಕಾಂಟ್ರಾಕ್ಟ್ ಲಿಂಕ್‌ಗಳು.",
 		"meta_title": "ರಾಬಿನ್‌ಹುಡ್ ಚೈನ್ ಸ್ಟಾಕ್ ಟೋಕನ್ · three.ws",
-		"robinhood_chain": "Robinhood Chain",
+		"robinhood_chain": "ರಾಬಿನ್‌ಹುಡ್ ಚೈನ್",
 		"stock": "ಸ್ಟಾಕ್"
 	},
 	"scan": {

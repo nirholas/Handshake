@@ -153,6 +153,11 @@ describe('translatableWords', () => {
 		expect(translatableWords('SDP &middot; platform.solana.com')).toEqual(['SDP']);
 	});
 
+	it('discounts route paths and filenames, which are never copy', () => {
+		expect(translatableWords('/api/3d/openapi.json')).toHaveLength(0);
+		expect(translatableWords('see /docs/quick-start for setup').length).toBeGreaterThan(2);
+	});
+
 	it('keeps the real words of a genuine sentence', () => {
 		expect(translatableWords('Sign in with your wallet to continue', GLOSSARY)).toEqual([
 			'Sign', 'in', 'with', 'your', 'wallet', 'to', 'continue',
@@ -178,6 +183,17 @@ describe('untranslated: strings that correctly stay English', () => {
 			expect(untranslated(value, value, GLOSSARY)).toBe(false);
 		});
 	}
+
+	it('leaves an API path alone', () => {
+		expect(untranslated('/api/3d/openapi.json', '/api/3d/openapi.json', GLOSSARY)).toBe(false);
+	});
+
+	it('still flags short but genuinely translatable UI copy', () => {
+		// These read as English words and a translator should render them.
+		for (const phrase of ['Master wallet', 'Auto skeleton + skin weights']) {
+			expect(untranslated(phrase, phrase, GLOSSARY)).toBe(true);
+		}
+	});
 
 	it('still flags a real sentence that never got translated', () => {
 		const phrase = 'Your avatar speaks sign language';

@@ -2180,7 +2180,7 @@
 		"resource_details": "Детали ресурса",
 		"results": "результатов <span id=\"qlabel\"></span>",
 		"search": "Поиск",
-		"sign_in_with_x": "sign-in-with-x",
+		"sign_in_with_x": "Войти с X",
 		"solana_any": "Solana (любой)",
 		"sort_by": "Сортировать по",
 		"type": "Тип"
@@ -9656,7 +9656,7 @@
 		"provable_custody_live_on_chain": "Доказуемое кастодиальное хранение · в блокчейне"
 	},
 	"internal_avaturn_forge": {
-		"meta_title": "three.ws · avaturn forge harness"
+		"meta_title": "three.ws · оснастка avaturn forge"
 	},
 	"irl": {
 		"0_cm": "+0 см",
@@ -15029,7 +15029,7 @@
 		"is_real_buying_pressure_actually_showing_up": "— действительно ли проявляется реальное покупательское давление?",
 		"it_is_a_probability_not_a_prophecy": "Это вероятность, а не пророчество.",
 		"key_columns_oracle_reads": "Ключевые столбцы, считываемые Oracle",
-		"label_smart_money_score_win_rate_early": "label, smart_money_score, win_rate, early_win_rate, dump_rate, coins_traded, creator_count, creator_wins",
+		"label_smart_money_score_win_rate_early": "метка, показатель умных денег, коэффициент выигрышей, коэффициент ранних выигрышей, скорость сброса, торгуемые монеты, количество создателей, выигрыши создателей",
 		"lean": "Бережливый",
 		"learned_weights_logistic_calibration": "Обученные веса и логистическая калибровка",
 		"let_a_launch_be_a_feature_vector": "Пусть запуск будет вектором признаков <code class=\"t\">x</code>. Oracle вычисляет четыре базовые функции <code class=\"t\">f_k(x) ∈ [0,100]</code> для <code class=\"t\">k ∈ {ped, str, nar, mom}</code>, взвешенную оценку и ограниченный, зафиксированный результат:",
@@ -15146,7 +15146,7 @@
 		"simulate_vs_live": "Симуляция против Live",
 		"single_funder_cluster_50_30": "Кластер с одним фондером ≥50% (≥30%)",
 		"smart_money_is_not_a_hard_coded": "«Умные деньги» — это не жёстко закодированный список — они постоянно пересчитываются на основе результатов в графе <code class=\"t\">wallet_reputation</code>. Для кошельков, которые мозг ещё не оценил, Oracle использует <b>приоритет холодного старта</b> из тщательно отобранного набора известных кошельков (полученного из публичных данных KOL/кошельков), так что совершенно новая монета всё равно получает полезную оценку происхождения при первой проверке. Приоритет всегда: <b>заработанная репутация &gt; приоритет &gt; непроверенный</b>.",
-		"smart_money_score_smart_wallet_count_proven": "smart_money_score, smart_wallet_count, proven/total buy lamports, notable[]",
+		"smart_money_score_smart_wallet_count_proven": "показатель умных денег, количество умных кошельков, подтвержденные/общие купленные лампорты, примечательные[]",
 		"smart_money_sold_50_of_position": "«Умные деньги» продали ≥50% позиции",
 		"snipe_ratio_70_45": "Коэффициент снайпинга ≥70% (≥45%)",
 		"so_high_model_confidence_leans_on_the": "Высокая уверенность модели опирается на оценку виральности; низкая уверенность возвращается к категориальному приоритету. Без оценки <code class=\"t\">score = prior</code>. <code class=\"t\">Новая</code> монета добавляет причину «быстро, но хрупко»; <code class=\"t\">неизвестная</code> монета добавляет «обращаться с осторожностью».",
@@ -15158,7 +15158,7 @@
 		"structure_and_pedigree_can_veto_the_lowest": "# структура (и происхождение) могут наложить вето — побеждает самый низкий лимит",
 		"structure_wallet_graph_buy_pattern_expose_th": "<b>Структура / граф кошельков / паттерн покупок</b> раскрывают исходные данные «КАК» (процент органических покупок, процент бандлов, граф фондеров), чтобы вы могли проверить защитный механизм.",
 		"subscribe_a_telegram_chat_to_an_agent": "Подпишите чат Telegram на сигналы убеждённости агента.",
-		"symbol_name_image_category_creator_bundle_sc": "symbol, name, image, category, creator, bundle_score, organic_score, snipe_ratio, fresh_wallet_ratio, concentration_top10, bubblemap_connectivity, risk_flags, buy/sell counts, dev buy/sold",
+		"symbol_name_image_category_creator_bundle_sc": "символ, название, изображение, категория, создатель, оценка пакета, органическая оценка, коэффициент снайпинга, коэффициент новых кошельков, концентрация топ-10, связность bubblemap, флаги риска, количество покупок/продаж, покупки/продажи разработчика",
 		"system_at_a_glance": "Система с первого взгляда",
 		"table": "Таблица",
 		"term": "Термин",
@@ -15807,7 +15807,7 @@
 		"live_trades": "Живые сделки",
 		"meta_description": "Окунитесь в живой 3D-мир, где автономные ИИ-агенты торгуют pump.fun в реальном времени. Выберите своего аватара, пройдитесь по площадке и наблюдайте, как каждая сделка попадает ончейн — агенты празднуют победы и переживают поражения в реальном времени.",
 		"meta_og_description": "Живой 3D-мир автономных ИИ-агентов, торгующих pump.fun. Выберите аватара, войдите, наблюдайте за реальными сделками — проверяемыми ончейн.",
-		"meta_og_title": "Sniper Arena · three.ws",
+		"meta_og_title": "Снайперская Арена · three.ws",
 		"meta_title": "Sniper Arena — живой 3D-мир ИИ-агентов, торгующих pump.fun · three.ws",
 		"meta_twitter_description": "Выберите своего аватара, войдите в живую 3D-арену и наблюдайте, как автономные ИИ-агенты торгуют pump.fun в реальном времени. Каждая сделка проверяема ончейн.",
 		"meta_twitter_title": "Sniper Arena — живой 3D-мир ИИ-агентов, торгующих pump.fun",
@@ -15825,8 +15825,8 @@
 		"wins": "Победы"
 	},
 	"play_ufo": {
-		"coin_clash": "<span class=\"dot\"></span>Coin Clash",
-		"flappin_ufo": "Flappin UFO",
+		"coin_clash": "<span class=\"dot\"></span>Монетный Клэш",
+		"flappin_ufo": "Флэппин НЛО",
 		"flappin_ufo_was_an_external_arcade_demo": "Flappin UFO было внешней аркадной демо-версией, размещенной вне платформы, и ее развертывание больше не доступно онлайн. Чтобы не оставлять вас перед неработающим экраном, мы ее отключили — теперь все самое интересное происходит в живых three.ws проектах.",
 		"meta_description": "Аркадная демо-версия Flappin UFO была выведена из эксплуатации. Вместо этого исследуйте живые three.ws проекты — мир монетных сообществ, Sniper Arena и Coin Clash.",
 		"meta_og_description": "Эта аркадная демо-версия больше не доступна. Вместо этого погрузитесь в живые three.ws проекты.",
@@ -15835,11 +15835,11 @@
 		"meta_twitter_description": "Эта аркадная демо-версия больше недоступна. Вместо этого изучите актуальные three.ws-проекты.",
 		"meta_twitter_title": "Flappin UFO — архивная демо-версия · three.ws",
 		"retired": "Архив",
-		"sniper_arena": "<span class=\"dot\"></span>Sniper Arena",
+		"sniper_arena": "<span class=\"dot\"></span>Снайперская Арена",
 		"still_live": "Актуально",
 		"this_demo_has_flown_off": "Эта демо-версия улетела",
 		"this_demo_is_no_longer_avail_title": "Эта демо-версия больше недоступна",
-		"three_live": "<span class=\"dot\"></span>Three Live",
+		"three_live": "<span class=\"dot\"></span>Три Лайв",
 		"three_ws": "three.ws"
 	},
 	"playground": {
@@ -16497,10 +16497,10 @@
 		"live_sol_usd_price_is_loadin_title": "Загружается текущая цена SOL→USD. Капитализация отображается в SOL, затем переключится на USD.",
 		"meta_description": "Поток запусков новых токенов PumpFun на Solana в реальном времени, представленный 3D-агентом.",
 		"meta_og_description": "Лайв-фид каждого запуска pump.fun в реальном времени, с 3D-агентом, реагирующим вживую.",
-		"meta_og_title": "Pump Live · three.ws",
+		"meta_og_title": "Памп Лайв · three.ws",
 		"meta_title": "3D-Агент · PumpFun Live",
 		"meta_twitter_description": "Лайв-фид каждого запуска pump.fun в реальном времени, с 3D-агентом, реагирующим вживую.",
-		"meta_twitter_title": "Pump Live · three.ws",
+		"meta_twitter_title": "Памп Лайв · three.ws",
 		"new_tokens_on_pump_fun": "Новые токены на Pump.fun",
 		"oracle": "Оракул",
 		"pause": "⏸ Пауза",
@@ -16529,10 +16529,10 @@
 		"mcap": "Капитализация",
 		"meta_description": "3D-визуализация трендовых токенов на Pump.fun в реальном времени. Каждая сфера — это живая монета, размер которой определяется рыночной капитализацией.",
 		"meta_og_description": "3D-визуализатор трендовых токенов pump.fun — рыночные данные в реальном времени, представленные как интерактивная сцена.",
-		"meta_og_title": "Pump Visualizer · three.ws",
+		"meta_og_title": "Визуализатор Пампа · three.ws",
 		"meta_title": "3D-Агент · Pump.fun Визуализатор",
 		"meta_twitter_description": "3D-визуализатор трендовых токенов pump.fun — рыночные данные в реальном времени, представленные как интерактивная сцена.",
-		"meta_twitter_title": "Pump Visualizer · three.ws",
+		"meta_twitter_title": "Визуализатор Пампа · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Миграции",
 		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/мин</span>",
 		"new": "Новый",
@@ -18922,7 +18922,7 @@
 		"newest": "Новейшие",
 		"opt_in_and_secret_free_publishing_adds": "<strong>Добровольно и без секретов.</strong> Публикация добавляет в галерею только ваш публичный адрес и его метаданные о редкости — никогда ключ, сид или запечатанный конверт. Мы сначала повторно проверяем вашу квитанцию по активному сервисному ключу three.ws, поэтому здесь появляются только доказуемо честные гринды. Нет квитанции? <a href=\"/vanity-wallet\" style=\"color:#ffd54f\">Сгенерируйте доказуемо честный кошелек →</a>",
 		"prefix_chars": "Символы префикса",
-		"proof_of_grind": "Proof-of-Grind",
+		"proof_of_grind": "Пруф-оф-Гринд",
 		"publish_a_grind": "Опубликовать гринд",
 		"rarest": "Самые редкие",
 		"skip_to_main_content": "Перейти к основному содержимому",
@@ -19571,9 +19571,9 @@
 		"near_me": "Рядом со мной",
 		"privacy": "Конфиденциальность",
 		"quests": "Квесты",
-		"three_ws_world_lines_arialabel": "three.ws World Lines",
+		"three_ws_world_lines_arialabel": "three.ws Мировые линии",
 		"walk_to_an_agent_earn_a_proof": "Дойдите до агента. Получите доказательство присутствия.",
-		"world_lines": "<span class=\"glyph\"></span> World&nbsp;Lines"
+		"world_lines": "<span class=\"glyph\"></span> Мировые&nbsp;линии"
 	},
 	"worlds": {
 		"all": "Все",
