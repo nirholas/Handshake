@@ -1,0 +1,28 @@
+{
+  "paymentsSettled": 59307,
+  "rowsSharingSig": 12683,
+  "rowsSharingSigPct": 21.4,
+  "verifiesOk": 169392,
+  "onchainTxs": 46624,
+  "settlesWithoutSig": 0,
+  "distinctPayers": 9,
+  "distinctRecipients": 1,
+  "distinctEndpoints": 4133,
+  "endpointsFromLedger": 0,
+  "endpointsFromAutonomousLog": 4133,
+  "distinctServices": 5331,
+  "autonomousSuccessfulCalls": 109220,
+  "autonomousOnchainTxs": 41636,
+  "amountAtomicTotal": "1103544500",
+  "feeSolTotal": 4.522617183,
+  "firstTs": "2026-07-03T17:10:34.419Z",
+  "lastTs": "2026-07-28T19:14:39.641Z",
+  "spanDays": 25.09,
+  "spanDaysWhole": 25,
+  "networks": [
+    {
+      "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+      "rows": 59307
+    }
+  ]
+}
