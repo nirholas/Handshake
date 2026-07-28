@@ -20,7 +20,7 @@
 // and api/_lib/sol-price.js for the SOL-spot failover.
 
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
-import { COINGECKO_BASE } from './coingecko.js';
+import { COINGECKO_BASE, geckoHeaders } from './coingecko.js';
 import { downsample } from '../../src/shared/coin-format.js';
 
 const num = (v) => {
@@ -28,14 +28,9 @@ const num = (v) => {
 	return Number.isFinite(n) ? n : null;
 };
 
-// CoinGecko demo key (optional) lifts the public rate limit — same header the
-// shared geckoFetch uses. Absent key just means the stricter keyless tier.
-function geckoHeaders() {
-	const h = { accept: 'application/json', 'user-agent': 'three.ws/1.0' };
-	const key = (process.env.COINGECKO_API_KEY || '').trim();
-	if (key) h['x-cg-demo-api-key'] = key;
-	return h;
-}
+// Headers come from the shared geckoFetch client (geckoHeaders) so the demo-key
+// health state is process-wide: once geckoFetch benches an exhausted key, these
+// failover rungs stop attaching it too, instead of each burning a 429 first.
 
 const asPrice = (v) => {
 	const n = Number(v);

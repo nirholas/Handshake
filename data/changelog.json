@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-28",
+			"title": "Coin pages are back, and they can no longer be taken down by an expired market-data key",
+			"summary": "Every coin profile page was returning an error. The market-data provider we read prices and coin details from gives us a monthly call allowance, and once it ran out, every request we sent with our key was refused. The awkward part: the exact same request sent without the key was still being answered. We were effectively locking ourselves out. The pages are live again, and the fix is permanent rather than a one-off: when the key gets refused, we now set it aside for a while and retry the same request without it, so the pages keep serving and recover on their own when the allowance resets. We also repaired a 3D model service that was crash-looping because it tried to download a small config file from a public model host on every start and kept getting throttled. That file now ships with our own model storage, so the service starts without depending on anyone else.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/coins"
+		},
+		{
 			"date": "2026-07-27",
 			"title": "A new dance joins the animation library, and two rig quirks that used to break imports are now handled",
 			"summary": "There is a new 16-second dance, Offabean Dance, in the animation gallery, and like every clip in the library it plays on any humanoid avatar you own. Getting it in surfaced two problems in how we import animations. We assumed every file of its type measured distances the same way, and this one did not, which shrank the dancer to a hundredth of its size and sank it into the floor. Its rig also carried a hidden offset that stood the dancer a metre and a half behind its mark and left it floating. Both are now detected and corrected from the file itself, so the next animation with either quirk simply works. Separately, rebuilding the library on a fresh copy of the code used to quietly drop a dozen live animations whose source files we intentionally do not store; they are preserved now.",

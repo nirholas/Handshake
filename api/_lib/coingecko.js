@@ -41,11 +41,53 @@ async function durableStale(path) {
 	}
 }
 
-function headers() {
+// ── Demo-key health ──────────────────────────────────────────────────────────
+// The demo tier caps at 10,000 calls per MONTH. Once that cap is reached every
+// keyed request comes back 429 (error_code 10006) for the rest of the billing
+// period — while the SAME request without the key is still served by the
+// keyless public tier. So an exhausted key is strictly worse than no key: on
+// 2026-07-28 it took every /api/coin/detail, /tickers and /exchange call to a
+// 502 for hours because the key was attached to all of them.
+//
+// Treat the key as a resource that can go bad: when a keyed request is rejected
+// for an auth/quota reason, retry the same URL keyless and, if that works, park
+// the key for a cooldown so subsequent calls skip it entirely instead of paying
+// a wasted round trip. The key is re-probed after the cooldown, so a monthly
+// reset (or a key upgrade) heals on its own with no redeploy.
+const KEY_COOLDOWN_MS = 15 * 60_000;
+// 429 = quota exhausted or throttled; 401/403 = revoked or wrong-tier key.
+const KEY_FAULT_STATUSES = new Set([401, 403, 429]);
+let _keyBenchedUntil = 0;
+
+/** True when the demo key is currently benched (recently rejected). */
+export function isGeckoKeyBenched(now = Date.now()) {
+	return _keyBenchedUntil > now;
+}
+
+/** Bench the demo key so the next calls go out keyless. Exported for tests. */
+export function benchGeckoKey(now = Date.now()) {
+	_keyBenchedUntil = now + KEY_COOLDOWN_MS;
+}
+
+/** Clear the bench. Test-only hook; production heals via the cooldown. */
+export function resetGeckoKeyHealth() {
+	_keyBenchedUntil = 0;
+}
+
+/**
+ * Request headers for a CoinGecko call.
+ * @param {boolean} [withKey=true] false forces the keyless public tier.
+ */
+export function geckoHeaders(withKey = true) {
 	const h = { accept: 'application/json', 'user-agent': 'three.ws/1.0' };
 	const key = (process.env.COINGECKO_API_KEY || '').trim();
-	if (key) h['x-cg-demo-api-key'] = key;
+	if (key && withKey && !isGeckoKeyBenched()) h['x-cg-demo-api-key'] = key;
 	return h;
+}
+
+/** Did this response carry the demo key, and was it rejected for using it? */
+function keyWasRejected(headersUsed, status) {
+	return Boolean(headersUsed['x-cg-demo-api-key']) && KEY_FAULT_STATUSES.has(status);
 }
 
 /**
@@ -60,12 +102,23 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 	// A still-usable stale entry lets us ride out a throttled/failing upstream.
 	const stale = hit && hit.staleUntil > now ? hit.value : null;
 
+	const url = `${COINGECKO_BASE}${path}`;
 	let resp;
 	try {
-		resp = await fetch(`${COINGECKO_BASE}${path}`, {
-			headers: headers(),
-			signal: AbortSignal.timeout(timeoutMs),
-		});
+		const sent = geckoHeaders();
+		resp = await fetch(url, { headers: sent, signal: AbortSignal.timeout(timeoutMs) });
+		// An exhausted/revoked demo key rejects requests the keyless tier would
+		// still answer. Bench the key and retry once without it before falling
+		// back to stale data — the live payload beats a cached one.
+		if (keyWasRejected(sent, resp.status)) {
+			benchGeckoKey();
+			console.warn(`[coingecko] ${path} → ${resp.status} with demo key; benching key, retrying keyless`);
+			const keyless = await fetch(url, {
+				headers: geckoHeaders(false),
+				signal: AbortSignal.timeout(timeoutMs),
+			});
+			if (keyless.ok) resp = keyless;
+		}
 	} catch (netErr) {
 		// Network failure or timeout — serve stale if we have it, else surface.
 		if (stale !== null) {

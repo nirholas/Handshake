@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-27T23:29:26.349Z",
+	"generated_at": "2026-07-28T01:50:53.710Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "Coin pages are back, and they can no longer be taken down by an expired market-data key",
+			"summary": "Every coin profile page was returning an error. The market-data provider we read prices and coin details from gives us a monthly call allowance, and once it ran out, every request we sent with our key was refused. The awkward part: the exact same request sent without the key was still being answered. We were effectively locking ourselves out. The pages are live again, and the fix is permanent rather than a one-off: when the key gets refused, we now set it aside for a while and retry the same request without it, so the pages keep serving and recover on their own when the allowance resets. We also repaired a 3D model service that was crash-looping because it tried to download a small config file from a public model host on every start and kept getting throttled. That file now ships with our own model storage, so the service starts without depending on anyone else.",
+			"link": "/coins",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-07-27",
 			"type": "update",

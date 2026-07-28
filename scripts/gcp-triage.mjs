@@ -98,6 +98,12 @@ const KNOWN_SIGNATURES = [
 		action: `Forge lane failover fired; generation keeps succeeding on the next rung. Tied to Replicate credit if you want the paid lane back. ${RUNBOOK} §forge.`,
 	},
 	{
+		id: 'hf-hub-rate-limited',
+		match: /We had to rate limit your IP|429 Client Error: Too Many Requests for url: https:\/\/huggingface\.co|LocalEntryNotFoundError/i,
+		class: 'env-action',
+		action: `A model worker fetched weights from huggingface.co at startup and HF rate-limited the Cloud Run egress IP, so the container never listened and Cloud Run killed the revision (crash loop). Anonymous HF pulls are per-IP capped and Cloud Run IPs are shared — never depend on a live HF fetch at boot. Fix (config-only, pre-approved): stage the needed files into the HF cache layout under gs://three-ws-model-weights/hf-cache/hub/models--<org>--<repo>/{refs/main,snapshots/<sha>/...} (the weights bucket is already gcsfuse-mounted at /weights), then gcloud run services update <service> --region us-central1 --update-env-vars HF_HOME=/weights/hf-cache,HF_HUB_OFFLINE=1,HUGGING_FACE_HUB_TOKEN=<HF_TOKEN from .env>. Note the token env var: the pinned huggingface_hub reads the LEGACY name HUGGING_FACE_HUB_TOKEN, so setting HF_TOKEN alone changes nothing. 2026-07-28 case: model-triposr, facebook/dino-vitb16 config.json. ${RUNBOOK} §hf-hub-rate-limited.`,
+	},
+	{
 		id: 'sns-name-not-found',
 		match: /Invalid name account provided/i,
 		class: 'self-healing',
@@ -132,10 +138,23 @@ const KNOWN_HTTP_SIGNATURES = [
 	},
 	{
 		id: 'x402-wallets-dry-5xx',
+		// The ring calls its own paid routes under several user agents, not just
+		// the autonomous/seed drivers: persona agents ride "threews-ring-agent/
+		// <persona>" (api/_lib/x402/agents/persona-kit.js), plus the wallet
+		// monitor and thumbnail regen pipelines. Matching only two of them left
+		// the rest landing in `investigate` every sweep with the same root cause
+		// (2026-07-28: /api/x402/club-cover from threews-ring-agent/agora-citizen).
+		// Any "threews-*" agent is the platform paying itself — one signature.
 		test: (g) => g.status >= 500 && (g.path.startsWith('/api/x402') || g.path === '/api/mcp')
-			&& /threews-x402-(autonomous|seed)/.test(g.userAgent),
+			&& /^threews-/.test(g.userAgent),
 		class: 'owner',
 		action: `5xx on paid x402 routes from the platform's own agent traffic means the economy wallets are out of SOL for tx fees (symptom map: 502 = fee wallet below SOL floor, 503 = payer self-pay refused). The economy-rebalance keypair crash is FIXED and LIVE (commit bb02839f9); when it reports skipped: "insufficient_sol_surplus" there is genuinely nothing left to swap. At the 94-calls/min ring shape the burn is ~1-1.4 SOL/day. Owner action: send SOL (or USDC) to the economy master WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW; treasury-topup distributes to engines within minutes and economy-rebalance restores the payer's USDC float. Verify recovery: POST /api/cron/economy-rebalance (Bearer CRON_SECRET) returns results[].status "swapped", healthz x402_settle returns to ok, 5xx storm stops. Alternative to daily funding: throttle the ring to funded runway (X402_RING_TICK_CONCURRENCY and cadence knobs). ${RUNBOOK} §x402-wallets-dry.`,
+	},
+	{
+		id: 'coingecko-quota-exhausted-502',
+		test: (g) => g.status === 502 && g.path.startsWith('/api/coin/'),
+		class: 'env-action',
+		action: `502 on a /api/coin/* route means every CoinGecko rung failed and no cached last-good existed. The usual cause is the DEMO KEY, not the upstream: the demo tier caps at 10,000 calls per MONTH, and once exhausted every request carrying COINGECKO_API_KEY gets 429 while the identical keyless request is still served (2026-07-28: /coin/detail, /tickers and /exchange all 502'd for hours on an exhausted key). Confirm in one call: curl -s -H "x-cg-demo-api-key: $KEY" https://api.coingecko.com/api/v3/key — error_code 10006 is the cap. geckoFetch now benches a rejected key for 15 min and retries keyless on its own, so a lingering 502 means the keyless tier is ALSO throttled (the Cloud Run egress IP is shared). Fix: gcloud run services update three-ws-api --region us-central1 --remove-env-vars COINGECKO_API_KEY (config-only, pre-approved) to stop paying the round trip, and tell the owner the key needs a paid tier or a monthly reset. ${RUNBOOK} §coingecko-quota-exhausted.`,
 	},
 	{
 		id: 'cc-unconfigured-503',

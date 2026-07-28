@@ -167,6 +167,114 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   service) so burn matches what the owner wants to spend.
 - **Monitor signature:** `x402-wallets-dry-5xx` in
   [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+  It matches **any** `threews-*` user agent, because the ring calls its own paid
+  routes under several: `threews-x402-autonomous/1.0`, `threews-x402-seed`,
+  `threews-ring-agent/<persona>` (persona agents), `threews-x402-wallet-monitor`
+  and `threews-x402-thumbnail-regen`. Matching only the first two used to leak
+  the rest into `investigate` on every sweep with the same root cause.
+
+---
+
+## 🟡 HTTP 502 on `/api/coin/*` — `coingecko-quota-exhausted-502`
+
+```
+HTTP 502 GET /api/coin/detail?id=<coin-id>
+body: {"error":"upstream_error","error_description":"coin data is unavailable right now — retry shortly"}
+```
+
+- **Source:** [api/_lib/coingecko.js](../../api/_lib/coingecko.js) `geckoFetch()`
+  exhausted every rung — live fetch, in-memory stale buffer (30 min) and the
+  durable Upstash last-good copy (6 h) — so the handler surfaced its 502.
+- **What it usually means: the demo KEY, not the upstream.** CoinGecko's demo
+  tier caps at **10,000 calls per month**. Once the cap is hit, every request
+  carrying `COINGECKO_API_KEY` gets a 429 (`error_code: 10006`) for the rest of
+  the billing period — while the *identical request without the key* is still
+  answered by the keyless public tier. An exhausted key is therefore strictly
+  worse than no key. On **2026-07-28** it took `/api/coin/detail`, `/tickers`
+  and `/exchange` to a hard 502 for hours; the pages that survived only did so
+  off their durable last-good copies.
+- **Confirm in one call** (`$KEY` from the Cloud Run env):
+
+  ```sh
+  curl -s -H "x-cg-demo-api-key: $KEY" https://api.coingecko.com/api/v3/key
+  # {"status":{"error_code":10006,"error_message":"You've reached 10,000 calls limit. …"}}
+  ```
+
+- **Self-healing since 2026-07-28.** `geckoFetch` now treats the key as a
+  resource that can go bad: a keyed 401/403/429 benches the key for 15 minutes
+  and immediately retries the same URL keyless, and `geckoHeaders()` (shared
+  with [api/\_lib/market-fallbacks.js](../../api/_lib/market-fallbacks.js)) stops
+  attaching a benched key at all. A monthly quota reset or a key upgrade
+  recovers on its own with no redeploy. Pinned by
+  [tests/coingecko-key-health.test.js](../../tests/coingecko-key-health.test.js).
+- **Resolve:** a *lingering* 502 after that means the keyless tier is throttled
+  too (Cloud Run egress IPs are shared and CoinGecko rate-limits per IP). Stop
+  paying the wasted round trip, config-only and pre-approved:
+
+  ```sh
+  gcloud run services update three-ws-api --region us-central1 \
+    --remove-env-vars COINGECKO_API_KEY
+  ```
+
+  Then tell the owner the key needs a paid tier (or to wait for the monthly
+  reset). Re-add with `--update-env-vars COINGECKO_API_KEY=<key>` once renewed.
+- **Monitor signature:** `coingecko-quota-exhausted-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `env-action`.
+
+---
+
+## 🟡 `429 Client Error … huggingface.co` → `LocalEntryNotFoundError` on a model worker — `hf-hub-rate-limited`
+
+```
+requests.exceptions.HTTPError: 429 Client Error: Too Many Requests for url:
+  https://huggingface.co/facebook/dino-vitb16/resolve/main/config.json
+We had to rate limit your IP (2600:1900:0:2d0e::2801).
+huggingface_hub.utils._errors.LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub …
+ERROR:    Application startup failed. Exiting.
+Container called exit(3).
+Default STARTUP TCP probe failed 1 time consecutively for container "server-1" on port 8080.
+```
+
+- **Source:** a model worker whose model construction pulls a file from
+  huggingface.co **at startup**. 2026-07-28 case: `model-triposr`, whose
+  TripoSR `DINOSingleImageTokenizer` calls `hf_hub_download("facebook/dino-vitb16",
+  "config.json")` while building the graph — the TripoSR checkpoint itself was
+  already local on the gcsfuse mount, but that one 454-byte config was not.
+- **What it means:** anonymous HF pulls are rate-limited **per IP**, and Cloud
+  Run egress IPs are shared with the rest of the region. When HF says no, the
+  app never listens on `$PORT`, the startup probe fails, and Cloud Run kills the
+  revision — a crash loop that scales to zero and 503s every request. **No boot
+  path may depend on a live huggingface.co fetch.**
+- **The token trap:** the pinned `huggingface_hub` reads the **legacy**
+  `HUGGING_FACE_HUB_TOKEN` env var. Setting `HF_TOKEN` alone changes nothing
+  (verified: the retry 429'd identically).
+- **Resolve (config-only, pre-approved).** Stage the file into the HF cache
+  layout inside the already-mounted weights bucket, then point the worker at it.
+  `<sha>` is the repo's current commit from
+  `https://huggingface.co/api/models/<org>/<repo>` (field `sha`):
+
+  ```sh
+  # 1. build the cache layout locally
+  SHA=$(curl -s https://huggingface.co/api/models/facebook/dino-vitb16 | jq -r .sha)
+  D=hub/models--facebook--dino-vitb16
+  mkdir -p "$D/refs" "$D/snapshots/$SHA"
+  printf '%s' "$SHA" > "$D/refs/main"
+  curl -sL -o "$D/snapshots/$SHA/config.json" \
+    "https://huggingface.co/facebook/dino-vitb16/resolve/$SHA/config.json"
+
+  # 2. stage it (the bucket is gcsfuse-mounted at /weights on every model worker)
+  gsutil -m cp -r hub gs://three-ws-model-weights/hf-cache/
+
+  # 3. point the worker at it, offline
+  gcloud run services update model-triposr --region us-central1 \
+    --update-env-vars HF_HOME=/weights/hf-cache,HF_HUB_OFFLINE=1,HUGGING_FACE_HUB_TOKEN=<HF_TOKEN from .env>
+  ```
+
+  Plain files work — `hf_hub_download` only checks `refs/<revision>` for the
+  commit hash and then `os.path.exists()` on the snapshot path, so the blob
+  symlinks a real HF cache uses are not required.
+- **Monitor signature:** `hf-hub-rate-limited` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `env-action`.
 
 ---
 
