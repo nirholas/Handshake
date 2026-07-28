@@ -29,7 +29,7 @@ single most expensive call. One top-up covers the entire gauntlet plus retries.
 **Path B (default, already wired — direct relayer redemption):**
 | | |
 |---|---|
-| To | `0x238755DE16F8e45859d198cfF2f939326Ad38b47` (**corrected 2026-07-10** — STALE — LIVE relayer is this, derived from prod `x402-xlayer-relayer-key`; the old `0x1B60…AB2a` in git history was pre-rotation and must NOT be funded) (fresh relayer keypair; private key is in Vercel prod env `X402_XLAYER_RELAYER_KEY`, never committed) |
+| To | `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` (corrected 2026-07-28: the LIVE relayer, from Secret Manager `x402-xlayer-relayer-key` v3, rotated 2026-07-12; see RUNBOOK.md section 3. The older `0x238755DE...8b47` and `0x1B60...AB2a` addresses in git history are pre-rotation and must NOT be funded) |
 | Chain | X Layer mainnet, chainId 196 |
 | Token | **OKB** (native gas) |
 | Amount | **0.3 OKB** (each settle = 1 `transferWithAuthorization` tx ~80k gas; ~15–20 txs incl. retries ≪ 0.1 OKB — 0.3 is buffer) |
@@ -50,7 +50,7 @@ Path B still runs as fallback and produces a real on-chain tx either way.
 
 ## Total to send
 - **2.0 USD₮0** → `0x75d0…cf69` (X Layer)
-- **0.3 OKB** → `0x1B60…AB2a` (X Layer)  *(skip if providing OKX creds instead)*
+- **0.3 OKB** → `0xe81DE501…415B` (X Layer, the live relayer; see section 2)  *(skip if providing OKX creds instead)*
 - **0.10 USDC + 0.02 SOL** → `9PirGw…fnyc` (Solana)
 
 ≈ **$2.10 of stablecoin + ~$0.3 gas**. Everything above cost, one-time float (self-transfer).

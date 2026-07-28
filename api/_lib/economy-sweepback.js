@@ -29,6 +29,7 @@ import { SOLANA_SIGNERS, loadSignerKeypair } from './solana-signers.js';
 import { ECONOMY_MASTER_ADDRESS } from './economy-master.js';
 import { sendSol, LAMPORTS_PER_SOL } from './avatar-wallet.js';
 import { submitProtected } from './execution-engine.js';
+import { MIN_OPERATIONAL_WALLET_SOL } from './agent-trade-guards.js';
 
 // Same float the treasury-topup cron refills to — sweep only above it.
 const DEFAULT_REFILL_MULTIPLE = 3;
@@ -460,8 +461,17 @@ const AGENT_RECLAIM_MAX_WALLETS = num('AGENT_RECLAIM_MAX_WALLETS', 40);
 export function agentReclaimFloorSol(strategy = {}) {
 	if (!strategy.enabled) return AGENT_IDLE_FLOOR_SOL;
 	const perTrade = Number(strategy.perTradeSol);
-	if (!Number.isFinite(perTrade) || perTrade <= 0) return AGENT_IDLE_FLOOR_SOL;
-	return round(Math.max(AGENT_IDLE_FLOOR_SOL, perTrade * AGENT_ACTIVE_TRADE_MULTIPLE));
+	// An ENABLED arm always keeps at least what one complete trade costs. Sizing the
+	// floor on `per_trade × 2` alone ignored everything a buy needs BESIDES the buy
+	// — the token ATA's rent, the fee and tip headroom, and the round-trip probe the
+	// firewall simulates from this same wallet — so a small-size arm could be
+	// reclaimed down to 0.004 SOL and then abort every entry at a safety simulation
+	// it could no longer afford to run. Fully funded and operationally dead is the
+	// worst state to leave a trader in: it looks healthy on every dashboard.
+	const working = Number.isFinite(perTrade) && perTrade > 0
+		? perTrade * AGENT_ACTIVE_TRADE_MULTIPLE + MIN_OPERATIONAL_WALLET_SOL
+		: MIN_OPERATIONAL_WALLET_SOL;
+	return round(Math.max(AGENT_IDLE_FLOOR_SOL, working));
 }
 
 /**

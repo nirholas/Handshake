@@ -15,6 +15,8 @@
 //   • MakeHuman:       `upperarm.L`, `shin.L`, `clavicle.L` (shared with Unreal/Blender stems)
 //   • Simple rigs:     `shoulderL`, `elbowL`, `wristL`, `hipL`, `kneeL`, `ankleL`, `chest`
 //   • SMPL / SMPL-X:   `left_hip`, `left_knee`, `left_ankle`, `left_elbow`, `left_wrist` (side-word joints)
+//   • Roblox R15/R6:   `LowerTorso`, `UpperTorso`, `Torso`, `LeftUpperArm`, `Left Arm`
+//   • Second Life:     `mPelvis`, `mTorso`, `mChest`, `mCollarLeft`, `mShoulderLeft`, `mKneeRight`
 //   • snake_case:      `left_arm`, `Left_Arm`
 //   • kebab-case:      `left-arm`
 //   • lowercase:       `leftarm`, `lefthand`
@@ -129,6 +131,16 @@ const EXTRA_ALIASES = (() => {
 		['lowerNeck', 'Neck'], ['upperNeck', 'Neck'], ['neckLower', 'Neck'], ['neckUpper', 'Neck'],
 		// Reallusion CC3/CC4 splits the neck into twist joints; either drives the head chain.
 		['neckTwist01', 'Neck'], ['neckTwist02', 'Neck'],
+		// Roblox R15 (`LowerTorso`/`UpperTorso`) and R6 (`Torso`), plus the generic
+		// single-torso spellings simple rigs use. The pelvis IS the lower torso in
+		// R15, and the chest maps to Spine1 like VRM's `chest`.
+		['torso', 'Spine'], ['waist', 'Spine'],
+		['upperTorso', 'Spine1'], ['torsoUpper', 'Spine1'],
+		['lowerTorso', 'Hips'], ['torsoLower', 'Hips'],
+		['ribcage', 'Spine1'], ['ribs', 'Spine1'],
+		// Second Life / OpenSim centre chain (`m`-prefixed body bones).
+		['mPelvis', 'Hips'], ['mTorso', 'Spine'], ['mChest', 'Spine1'],
+		['mNeck', 'Neck'], ['mHead', 'Head'],
 	]) put(v, c);
 
 	// Side-paired limb bones, given as the LEFT spelling + its canonical; the
@@ -167,6 +179,14 @@ const EXTRA_ALIASES = (() => {
 		['leftWrist', 'LeftHand'],
 		['leftCollar', 'LeftShoulder'], ['leftClavicle', 'LeftShoulder'],
 		['leftToe', 'LeftToeBase'],
+		// Second Life / OpenSim limb chain: `m`-prefixed with a trailing side word
+		// (`mCollarLeft`, `mShoulderLeft`, `mKneeLeft`). `mShoulder` is the upper
+		// arm (the clavicle is `mCollar`), and the ankle is the articulating foot
+		// joint; `mFoot` (the ball, between ankle and toe) drives the toe bone.
+		['mCollarLeft', 'LeftShoulder'], ['mShoulderLeft', 'LeftArm'],
+		['mElbowLeft', 'LeftForeArm'], ['mWristLeft', 'LeftHand'],
+		['mHipLeft', 'LeftUpLeg'], ['mKneeLeft', 'LeftLeg'],
+		['mAnkleLeft', 'LeftFoot'], ['mFootLeft', 'LeftToeBase'], ['mToeLeft', 'LeftToeBase'],
 	];
 	for (const [lv, lc] of SIDED) {
 		put(lv, lc);
@@ -174,6 +194,7 @@ const EXTRA_ALIASES = (() => {
 		let rv;
 		if (/^left/.test(lv)) rv = lv.replace(/^left/, 'right');
 		else if (/^l[A-Z]/.test(lv)) rv = 'r' + lv.slice(1);
+		else if (/Left$/.test(lv)) rv = lv.replace(/Left$/, 'Right');
 		else if (/L$/.test(lv)) rv = lv.replace(/L$/, 'R');
 		else rv = lv;
 		put(rv, rc);

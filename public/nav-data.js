@@ -240,6 +240,13 @@ export const NAV_GROUPS = [
 						desc: 'Live, platform-wide feed of real agent wallet activity — tips, launches, trades & payments',
 					},
 					{
+						title: 'Agent Symphony',
+						href: '/symphony',
+						badge: 'Live',
+						badgeTone: 'live',
+						desc: 'The agent economy played as generative music: every real payment, trade & launch becomes a note',
+					},
+					{
 						title: 'On-chain Deployments',
 						href: '/deployments',
 						desc: 'Live cross-chain feed of every agent registered on the ERC-8004 Identity Registry, as it lands on-chain',

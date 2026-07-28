@@ -237,10 +237,11 @@ export function bucketUsage(services, quotas) {
 	return [...buckets.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function audit(opts) {
-	const grants = quotaGrants(opts.project);
-	const regions = opts.regions.map((region) => {
-		const services = gpuServices(region, opts.project);
+export function auditCapacity(opts) {
+	const project = opts.project || PROJECT;
+	const grants = quotaGrants(project);
+	const regions = (opts.regions?.length ? opts.regions : GPU_REGIONS).map((region) => {
+		const services = gpuServices(region, project);
 		const quotas = grants.get(region) || [];
 		const buckets = bucketUsage(services, quotas);
 		// The L4 no-redundancy pool is what every 3D engine shares; it is the
@@ -260,7 +261,7 @@ function audit(opts) {
 			starved: services.filter((s) => s.min === 0 && s.quotaId === L4_BUCKET),
 		};
 	});
-	return { project: opts.project, checkedAt: new Date().toISOString(), regions };
+	return { project, checkedAt: new Date().toISOString(), regions };
 }
 
 /** Where to put work, and how to get more capacity. Ordered by time-to-effect. */
@@ -541,7 +542,7 @@ if (opts.port) {
 } else if (opts.request != null) {
 	requestQuota(opts);
 } else {
-	const report = audit(opts);
+	const report = auditCapacity(opts);
 	if (opts.json) {
 		console.log(JSON.stringify({ ...report, recommendations: recommend(report) }, null, 2));
 	} else {

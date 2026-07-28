@@ -35,6 +35,7 @@ import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL, ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';
 import { recordSweep } from '../_lib/economy-ledger.js';
 import { refuelMasterFromUsdc } from '../_lib/economy-fuel.js';
+import { topUpUsdcEngines } from '../_lib/economy-usdc-topup.js';
 import { reclaimIdleSol, reclaimIdleAgentSol } from '../_lib/economy-sweepback.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -220,6 +221,30 @@ export default wrapCron(async (req, res) => {
 		);
 	}
 
+	// Self-healing, step 3 (the USDC side): the steps above keep SOL flowing, but
+	// the ring/a2a payers SPEND USDC, and their only refill path used to be
+	// swapping their own SOL on Jupiter. When a payer holds neither spare SOL nor
+	// USDC while the master sits on idle USDC revenue, settles die with SPL
+	// insufficient-funds inside arm's reach of the money (2026-07-28: payer at
+	// ~5 USDC failing every $10 ring-settle leg, master idle at 48 USDC). Top the
+	// engines up directly: no swap, no slippage, allowlist + caps + daily budget
+	// inside economy-usdc-topup.js.
+	let usdcTopup = { enabled: true, acted: false, reason: 'not_run' };
+	try {
+		usdcTopup = await topUpUsdcEngines({ connection, network: 'mainnet', dryRun });
+	} catch (e) {
+		usdcTopup = { enabled: true, acted: false, reason: `error: ${e?.message || 'usdc_topup_failed'}` };
+	}
+	if (usdcTopup.acted && !dryRun) {
+		for (const s of usdcTopup.sent || []) {
+			await sendOpsAlert(
+				`💵 Economy master topped up ${s.name} with USDC`,
+				`+$${s.sendUsd} USDC → ${s.pubkey}\ntx: ${s.signature}`,
+				{ signature: `economy-usdc-topup:${s.pubkey}:${s.signature}` },
+			);
+		}
+	}
+
 	const result = await sweepTopUps({ connection, targets, network: 'mainnet', dryRun });
 	if (dryRun) {
 		return json(res, 200, {
@@ -238,6 +263,7 @@ export default wrapCron(async (req, res) => {
 			reclaim,
 			agent_reclaim: agentReclaim,
 			fuel,
+			usdc_topup: usdcTopup,
 			master_aliased: masterAliased,
 			read_errors: errors,
 		});
@@ -333,6 +359,7 @@ export default wrapCron(async (req, res) => {
 		reclaim,
 		agent_reclaim: agentReclaim,
 		fuel,
+		usdc_topup: usdcTopup,
 		master_aliased: masterAliased,
 		read_errors: errors,
 		run_id: runId,

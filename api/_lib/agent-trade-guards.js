@@ -60,6 +60,28 @@ const MAX_ALLOWLIST = 50;
 // agent-wallet trade endpoint import this rather than redefining it.
 export const SOL_FEE_HEADROOM_LAMPORTS = 3_000_000n; // ~0.003 SOL
 
+// Rent-exempt minimum of the SPL token account a buy opens. Not optional and not
+// recoverable until the position closes, so any floor that ignores it is wrong.
+export const ATA_RENT_LAMPORTS = 2_039_280n;
+
+// What an entry costs BESIDES the buy itself: fee headroom + the token ATA's rent
+// + room for a priority fee and an MEV tip. A wallet holding only `size` cannot
+// actually buy `size`.
+export const ENTRY_HEADROOM_LAMPORTS = SOL_FEE_HEADROOM_LAMPORTS + ATA_RENT_LAMPORTS + 1_000_000n;
+
+// The least SOL an agent wallet can hold and still complete ONE trade end to end:
+// the entry overhead above, plus the firewall's round-trip probe reserve (it
+// simulates a real buy AND sell from this wallet), plus a minimum entry. Below
+// this a wallet looks funded and is operationally dead — every buy aborts at the
+// safety simulation it cannot afford to run.
+//
+// This is the number every system that MOVES SOL OUT of a trading wallet must
+// respect. It exists because two subsystems disagreed about it: the economy's
+// idle-capital reclaim kept `per_trade × 2` (as little as 0.004 SOL) while the
+// executor needed ~0.012 to place that same trade, so reclaim could strip an
+// enabled arm to a balance that could never buy anything.
+export const MIN_OPERATIONAL_WALLET_SOL = 0.012;
+
 export const SPEND_LIMIT_DEFAULTS = Object.freeze({
 	daily_usd: null,
 	per_tx_usd: null,

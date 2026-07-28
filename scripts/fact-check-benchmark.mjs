@@ -16,6 +16,13 @@
 //   FACT_CHECK_BYPASS_TOKEN=… node scripts/fact-check-benchmark.mjs
 //   FACT_CHECK_ENDPOINT=https://three.ws/api/x402/fact-check node scripts/fact-check-benchmark.mjs
 //
+// In-process mode (how the published numbers are produced): imports
+// api/x402/fact-check.js#_checkClaim directly and runs the REAL chain (live
+// search + live LLM) with no HTTP or payment layer in between. The Redis cache
+// is disabled for the run so every claim exercises the live chain instead of a
+// stale cached verdict:
+//   node --env-file=.env scripts/fact-check-benchmark.mjs --in-process
+//
 // The scoring core (scoreResults / summarize) is pure and unit-tested in
 // tests/api/fact-check-v2.test.js.
 
@@ -143,6 +150,10 @@ async function main() {
 	const claims = validateFixture(fixture);
 	console.log(`Loaded ${claims.length} benchmark claims (validated).`);
 
+	const inProcess =
+		process.argv.includes('--in-process') || process.env.FACT_CHECK_INPROCESS === '1';
+	if (inProcess) return mainInProcess(claims, fixture);
+
 	const endpoint = process.env.FACT_CHECK_ENDPOINT || 'https://three.ws/api/x402/fact-check';
 	const bypassToken = process.env.FACT_CHECK_BYPASS_TOKEN || '';
 
@@ -190,6 +201,66 @@ async function main() {
 	};
 	await mkdir(OUT_DIR, { recursive: true });
 	await writeFile(OUT_FILE, JSON.stringify(report, null, 2) + '\n');
+	console.log(`\nOverall accuracy: ${score.accuracy_pct}%  (${score.correct}/${score.total}, ${score.errors} errors)`);
+	console.log(`Wrote ${OUT_FILE}`);
+}
+
+// ── In-process mode ──────────────────────────────────────────────────────────
+// Runs the real chain by importing the endpoint's exported _checkClaim — the
+// same code path a paying caller hits, minus the HTTP/x402 wrapper. Used to
+// produce the published data/_generated numbers so the benchmark measures the
+// product's verdict quality, not payment plumbing.
+
+async function mainInProcess(claims, fixture) {
+	// Disable the shared Redis verdict cache for the run: a benchmark that reads
+	// week-old cached verdicts measures the cache, not the chain.
+	delete process.env.UPSTASH_REDIS_REST_URL;
+	delete process.env.UPSTASH_REDIS_REST_TOKEN;
+	delete process.env.three_KV_REST_API_URL;
+	delete process.env.three_KV_REST_API_TOKEN;
+	delete process.env.KV_REST_API_URL;
+	delete process.env.KV_REST_API_TOKEN;
+
+	const { _checkClaim } = await import('../api/x402/fact-check.js');
+	const endpoint = 'in-process:api/x402/fact-check.js#_checkClaim (real chain, no HTTP/x402 payment layer)';
+	console.log(`Running ${claims.length} claims in-process (live search + live LLM, cache disabled) …`);
+
+	const results = [];
+	const details = [];
+	for (const [i, c] of claims.entries()) {
+		let actual = null;
+		let detail = null;
+		try {
+			const r = await _checkClaim(c.claim, 'medium', null);
+			actual = r?.verdict ?? null;
+			detail = {
+				confidence: r?.confidence ?? null,
+				sources: (r?.sources || []).map((s) => ({ url: s.url, stance: s.stance, weight: s.weight })),
+			};
+		} catch (err) {
+			console.warn(`  [${i + 1}/${claims.length}] error: ${err.message}`);
+		}
+		const ok = actual === c.expected_verdict;
+		console.log(`  [${i + 1}/${claims.length}] ${ok ? 'PASS' : 'MISS'} expected=${c.expected_verdict} actual=${actual ?? 'ERR'} :: ${c.claim.slice(0, 60)}`);
+		results.push({ claim: c.claim, expected_verdict: c.expected_verdict, difficulty: c.difficulty, actual_verdict: actual });
+		details.push({ claim: c.claim, expected: c.expected_verdict, actual, ...detail });
+	}
+
+	const score = scoreResults(results);
+	const report = {
+		generated_at: new Date().toISOString(),
+		endpoint,
+		fixture_version: fixture.version || '1.0.0',
+		claim_count: claims.length,
+		...score,
+	};
+	await mkdir(OUT_DIR, { recursive: true });
+	await writeFile(OUT_FILE, JSON.stringify(report, null, 2) + '\n');
+	// Per-claim detail for diagnosis (not published; scratch aid for whoever is
+	// tuning the chain). Written next to nothing public.
+	if (process.env.FACT_CHECK_DETAIL_FILE) {
+		await writeFile(process.env.FACT_CHECK_DETAIL_FILE, JSON.stringify(details, null, 2) + '\n');
+	}
 	console.log(`\nOverall accuracy: ${score.accuracy_pct}%  (${score.correct}/${score.total}, ${score.errors} errors)`);
 	console.log(`Wrote ${OUT_FILE}`);
 }

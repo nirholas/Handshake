@@ -98,6 +98,22 @@ function cacheKey(claim, strictness, imageUrl) {
 
 // ── Verdict logic ─────────────────────────────────────────────────────────────
 
+// Verdict = direction of the stance-BEARING evidence, gated by how much of the
+// evidence engaged the claim at all. The previous version divided by TOTAL
+// weight (neutral sources included), so three tangential results could drown
+// two clear confirmations below the 0.65 bar, and an all-neutral result set
+// still returned "mixed" — which is how the 2026-07-08 benchmark collapsed to
+// 20% (every class predicted "mixed"). Rules now:
+//   • <2 sources, zero weight, or zero stance-bearing weight → insufficient:
+//     evidence that never engages the claim is absence of evidence, not
+//     disagreement.
+//   • A single stance-bearing source lost in otherwise-silent evidence
+//     (coverage <30%) is also insufficient — one loosely-matched page must not
+//     decide a verdict on its own.
+//   • Direction is judged over stance-bearing weight only: ≥70% one way →
+//     supported/contradicted; a real split → mixed.
+//   • Confidence blends dominance with coverage, so a unanimous verdict from
+//     thin engagement scores lower than one from broad engagement.
 function computeVerdict(sources) {
 	if (sources.length < 2) {
 		return { verdict: 'insufficient', confidence: 0.2 };
@@ -106,27 +122,41 @@ function computeVerdict(sources) {
 	let weightedSupport = 0;
 	let weightedContra = 0;
 	let totalWeight = 0;
+	let stanceBearing = 0;
 
 	for (const s of sources) {
 		totalWeight += s.weight;
-		if (s.stance === 'supports') weightedSupport += s.weight;
-		else if (s.stance === 'contradicts') weightedContra += s.weight;
+		if (s.stance === 'supports') {
+			weightedSupport += s.weight;
+			stanceBearing++;
+		} else if (s.stance === 'contradicts') {
+			weightedContra += s.weight;
+			stanceBearing++;
+		}
 	}
 
-	if (totalWeight === 0) {
-		return { verdict: 'insufficient', confidence: 0.2 };
+	const stanceWeight = weightedSupport + weightedContra;
+	if (totalWeight === 0 || stanceWeight === 0) {
+		return { verdict: 'insufficient', confidence: 0.3 };
 	}
 
-	const supportRatio = weightedSupport / totalWeight;
-	const contraRatio = weightedContra / totalWeight;
+	const coverage = stanceWeight / totalWeight;
+	if (stanceBearing === 1 && coverage < 0.3) {
+		return { verdict: 'insufficient', confidence: 0.35 };
+	}
 
-	if (supportRatio > 0.65) {
-		return { verdict: 'supported', confidence: Math.round(supportRatio * 100) / 100 };
+	const supportRatio = weightedSupport / stanceWeight;
+	const contraRatio = weightedContra / stanceWeight;
+	const confidence = (dominance) =>
+		Math.round(Math.min(0.98, dominance * (0.6 + 0.4 * Math.min(1, coverage * 2))) * 100) / 100;
+
+	if (supportRatio >= 0.7) {
+		return { verdict: 'supported', confidence: confidence(supportRatio) };
 	}
-	if (contraRatio > 0.65) {
-		return { verdict: 'contradicted', confidence: Math.round(contraRatio * 100) / 100 };
+	if (contraRatio >= 0.7) {
+		return { verdict: 'contradicted', confidence: confidence(contraRatio) };
 	}
-	return { verdict: 'mixed', confidence: 0.5 };
+	return { verdict: 'mixed', confidence: confidence(Math.max(supportRatio, contraRatio)) };
 }
 
 // ── Core fact-check pipeline ───────────────────────────────────────────────────

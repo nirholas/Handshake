@@ -510,6 +510,47 @@ ERROR  502 POST /api/pump/launch-agent
 
 ---
 
+## 🟢 `Error: seat reservation expired.` (Colyseus, three-ws-multiplayer) — `colyseus-seat-expired`
+
+- **Source:** `@colyseus/ws-transport` `WebSocketServer.onConnection`, on the
+  `three-ws-multiplayer` service.
+- **What it means:** matchmaking handed the client a seat, and the client did
+  not complete the WebSocket upgrade within the reservation TTL (slow network,
+  a closed tab, a mobile browser backgrounding the page mid-join). The server
+  correctly refuses the stale ticket; the client's next join request gets a
+  fresh seat. Observed cadence is a handful per week, which is normal churn
+  for public rooms.
+- **Resolve:** 🟢 nothing required. Investigate only if it spikes together
+  with real "can't join" reports (then suspect load-balancer or WebSocket
+  upgrade latency in front of the service, not Colyseus itself).
+- **Monitor signature:** `colyseus-seat-expired` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`.
+
+---
+
+## 🟢 `Uncaught signal: 10, pid=…, tid=…, fault_addr=0.` (three-ws-redis-proxy ONLY) — `redis-proxy-srh-crash`
+
+- **Source:** the pinned third-party image `hiett/serverless-redis-http:0.0.10`
+  (SRH, the Upstash-protocol HTTP proxy in front of Redis) running as
+  `three-ws-redis-proxy`.
+- **What it means:** the SRH runtime aborts sporadically (observed ~3x/day) and
+  Cloud Run restarts the instance. `minScale 2` keeps a warm sibling serving
+  during the restart, and the API's cache layer rides the blip via its circuit
+  breaker + in-memory fallback (see §cache above) — healthz `cache` stays `ok`
+  through these events, so there is no user impact at the observed rate.
+- **Resolve:** 🟢 nothing required day-to-day. The durable fix is bumping the
+  SRH image tag on `three-ws-redis-proxy`, which changes a running binary and
+  therefore waits for owner approval like any deploy. Investigate only if the
+  crash rate climbs to many per hour or healthz `cache` degrades.
+- **Scope note:** the monitor classifies this **only** for
+  `three-ws-redis-proxy`. An identical `Uncaught signal` line from any other
+  service stays `investigate` — do not generalize this signature.
+- **Monitor signature:** `redis-proxy-srh-crash` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), `self-healing`
+  (service-scoped via its `services` field).
+
+---
+
 ## The owner runbook — every fix as an exact command
 
 Everything red/yellow above, condensed to the actions only the owner can take,

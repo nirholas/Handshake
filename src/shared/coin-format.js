@@ -64,10 +64,29 @@ export function formatChartTick(ts, days) {
 	return `${d.toLocaleDateString('en-US', { month: 'short' })} '${String(d.getFullYear() % 100).padStart(2, '0')}`;
 }
 
-/** Relative age: "3m ago", "2h ago", "5d ago". Falls back to a short date past 14 days. */
+/**
+ * Normalize a timestamp to epoch ms. Accepts ISO strings, Date objects,
+ * epoch milliseconds, and epoch seconds (values below 1e12 are treated as
+ * seconds — that boundary is Sep 2001 in ms and year 33658 in seconds, so
+ * real timestamps are unambiguous). Returns NaN for unparseable input.
+ */
+export function toEpochMs(input) {
+	if (input == null || input === '') return NaN;
+	if (input instanceof Date) return input.getTime();
+	if (typeof input === 'number' && Number.isFinite(input)) {
+		return input < 1e12 ? input * 1000 : input;
+	}
+	if (typeof input === 'string' && /^\d+$/.test(input)) return toEpochMs(Number(input));
+	return new Date(input).getTime();
+}
+
+/**
+ * Relative age: "3m ago", "2h ago", "5d ago". Falls back to a short date past
+ * 14 days. Accepts any timestamp shape `toEpochMs` understands, so callers
+ * with unix-seconds or ms inputs share one contract.
+ */
 export function timeAgo(iso, now = Date.now()) {
-	if (!iso) return '';
-	const t = new Date(iso).getTime();
+	const t = toEpochMs(iso);
 	if (Number.isNaN(t)) return '';
 	const s = Math.max(0, Math.floor((now - t) / 1000));
 	if (s < 60) return 'just now';

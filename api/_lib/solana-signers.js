@@ -139,6 +139,10 @@ export const SOLANA_SIGNERS = [
 		env: 'A2A_PAYER_SOLANA_SECRET',
 		fallbackEnv: 'A2A_PAYER_SOLANA_PRIVATE_KEY',
 		minSol: 0.02,
+		// Settles mandates in USDC, so its USDC float is working capital: without
+		// this flag treasury-sweepback's token sweep clawed any refill straight
+		// back to the master on the next excess-mode run.
+		holdsTokens: true,
 		purpose: 'co-signs SPL TransferChecked for agent-to-agent mandate settlements',
 		network: 'mainnet',
 	},

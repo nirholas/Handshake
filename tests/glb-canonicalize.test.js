@@ -439,6 +439,49 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	// Roblox R15 (`LowerTorso`/`UpperTorso`, camelCase limbs) and R6 (`Torso`,
+	// space-separated limbs), plus the generic single-torso spellings.
+	it.each([
+		['LowerTorso',    'Hips'],
+		['UpperTorso',    'Spine1'],
+		['Torso',         'Spine'],
+		['Waist',         'Spine'],
+		['Ribcage',       'Spine1'],
+		['LeftUpperArm',  'LeftArm'],
+		['RightLowerArm', 'RightForeArm'],
+		['LeftUpperLeg',  'LeftUpLeg'],
+		['RightLowerLeg', 'RightLeg'],
+		['Left Arm',      'LeftArm'],
+		['Right Leg',     'RightLeg'],
+	])('maps Roblox R15/R6 and generic torso bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Second Life / OpenSim skeletons: `m`-prefixed bones with a trailing side
+	// word. `mShoulder` is the upper arm (the clavicle is `mCollar`); the ankle
+	// is the articulating foot joint and `mFoot` (the ball) drives the toe.
+	it.each([
+		['mPelvis',        'Hips'],
+		['mTorso',         'Spine'],
+		['mChest',         'Spine1'],
+		['mNeck',          'Neck'],
+		['mHead',          'Head'],
+		['mCollarLeft',    'LeftShoulder'],
+		['mCollarRight',   'RightShoulder'],
+		['mShoulderLeft',  'LeftArm'],
+		['mShoulderRight', 'RightArm'],
+		['mElbowLeft',     'LeftForeArm'],
+		['mWristRight',    'RightHand'],
+		['mHipLeft',       'LeftUpLeg'],
+		['mHipRight',      'RightUpLeg'],
+		['mKneeLeft',      'LeftLeg'],
+		['mAnkleRight',    'RightFoot'],
+		['mFootLeft',      'LeftToeBase'],
+		['mToeRight',      'RightToeBase'],
+	])('maps Second Life / OpenSim bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
 	// Rigify / Blender anatomical arm chain: side is a `.L`/`.R` suffix and the
 	// forearm is spelled `forearm` (not `lowerarm`/`elbow`). The suffix normalises
 	// to `forearml`, which the side-prefix spellings never reach — so before the

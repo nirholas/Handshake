@@ -128,6 +128,13 @@ export function sanitizeAnthropicBody(body, modelId) {
 	if (modelThinksByDefault(modelId) && (out.max_tokens ?? 0) < 4096) {
 		out.max_tokens = 4096;
 	}
+	// Embed system prompts are stable per agent and resent every turn; a cache
+	// breakpoint on a large one bills repeat turns at ~0.1x input price. Below
+	// each model's cacheable minimum the marker is silently ignored, so this is
+	// always safe to send. Callers already sending block arrays are left alone.
+	if (typeof out.system === 'string' && out.system.length >= 4096) {
+		out.system = [{ type: 'text', text: out.system, cache_control: { type: 'ephemeral' } }];
+	}
 	const t = out.thinking;
 	if (t && typeof t === 'object') {
 		if (ALWAYS_THINKING_MODELS.has(modelId)) {

@@ -32,7 +32,7 @@ describe('diagnoseStall', () => {
 	it('reports a wallet too thin to fund the safety simulation', () => {
 		const d = diagnoseStall({ strategy: healthy, balanceSol: MIN_WALLET_SOL - 0.001 });
 		expect(d).toMatchObject({ code: 'wallet_dry', blocking: true });
-		expect(d.message).toMatch(/0\.007/);
+		expect(d.message).toContain((MIN_WALLET_SOL - 0.001).toFixed(4));
 	});
 
 	it('leaves a funded wallet alone', () => {

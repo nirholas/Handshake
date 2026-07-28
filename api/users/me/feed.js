@@ -1,7 +1,8 @@
 // GET /api/users/me/feed — the platform activity feed: reverse-chronological
 // creation events (avatars, agents, coin launches, forged 3D models, saved
-// worlds) plus follow activity, merged from the same public records every
-// profile page already exposes (no separate event log to keep in sync).
+// worlds, Material Studio restyles) plus follow activity, merged from the
+// same public records every profile page already exposes (no separate event
+// log to keep in sync).
 //
 //   ?scope=following  (default) — only accounts the signed-in viewer follows.
 //                                  Requires a session; anonymous callers get 401
@@ -26,6 +27,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { listRecentCreations } from '../../_lib/forge-store.js';
 import { listDioramas } from '../../_lib/diorama-store.js';
+import { listRecentRestyles } from '../../_lib/material-restyle-store.js';
 
 const SITE = 'https://three.ws';
 
@@ -68,7 +70,7 @@ export default wrap(async (req, res) => {
 			return json(res, 200, { items: [], following_count: 0, scope, next: null });
 		}
 
-		const [avatarRows, agentRows, coinRows, modelRows, worldRows, followRows] = await Promise.all([
+		const [avatarRows, agentRows, coinRows, modelRows, worldRows, restyleRaw, followRows] = await Promise.all([
 			sql`
 				select a.id, a.name, a.thumbnail_key, a.created_at,
 				       u.username, u.display_name, u.avatar_url
@@ -129,6 +131,20 @@ export default wrap(async (req, res) => {
 				order by d.created_at desc
 				limit ${perKind}
 			`,
+			// Fail-soft: the material_restyles migration may not have landed on
+			// every deployment yet — a missing table must never 500 the feed.
+			sql`
+				select mr.id, mr.action, mr.label, mr.instruction, mr.preset,
+				       mr.result_url, mr.created_at,
+				       u.username, u.display_name, u.avatar_url
+				from material_restyles mr
+				join user_follows f on f.following_id = mr.user_id and f.follower_id = ${viewer.id}
+				join users u on u.id = mr.user_id and u.deleted_at is null and u.username is not null
+				where mr.user_id is not null
+				  ${before ? sql`and mr.created_at < ${before}` : sql``}
+				order by mr.created_at desc
+				limit ${perKind}
+			`.catch(() => []),
 			sql`
 				select f.created_at,
 				       uf.username as follower_username, uf.display_name as follower_display, uf.avatar_url as follower_avatar,
@@ -144,7 +160,25 @@ export default wrap(async (req, res) => {
 			`.catch(() => []),
 		]);
 
-		const items = mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, followRows });
+		const items = mergeItems({
+			avatarRows,
+			agentRows,
+			coinRows,
+			modelRows,
+			worldRows,
+			restyleRows: restyleRaw.map((r) => ({
+				id: r.id,
+				created_at: r.created_at,
+				glb_url: r.result_url,
+				prompt: r.instruction || r.preset || null,
+				action: r.action,
+				category: r.action === 'variants' ? 'colorway variant' : 'AI restyle',
+				username: r.username,
+				display_name: r.display_name,
+				avatar_url: r.avatar_url,
+			})),
+			followRows,
+		});
 		items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 		const page = items.slice(0, limit);
 
@@ -158,7 +192,7 @@ export default wrap(async (req, res) => {
 	}
 
 	// scope === 'all': platform-wide recent activity, no follow graph, no auth.
-	const [avatarRows, agentRows, coinRows, modelRows, worldRows, followRows] = await Promise.all([
+	const [avatarRows, agentRows, coinRows, modelRows, worldRows, restyleRecent, followRows] = await Promise.all([
 		sql`
 			select a.id, a.name, a.thumbnail_key, a.created_at,
 			       u.username, u.display_name, u.avatar_url
@@ -193,6 +227,7 @@ export default wrap(async (req, res) => {
 		`,
 		listRecentCreations({ limit: perKind, before }),
 		listDioramas({ scope: 'recent', limit: perKind, before }),
+		listRecentRestyles({ limit: perKind, before }),
 		sql`
 			select f.created_at,
 			       uf.username as follower_username, uf.display_name as follower_display, uf.avatar_url as follower_avatar,
@@ -231,6 +266,17 @@ export default wrap(async (req, res) => {
 			display_name: w.creatorDisplayName || w.creatorUsername,
 			avatar_url: w.creatorAvatarUrl,
 		})),
+		restyleRows: restyleRecent.map((r) => ({
+			id: r.id,
+			created_at: r.createdAt,
+			glb_url: r.glbUrl,
+			prompt: r.prompt,
+			action: r.action,
+			category: r.category,
+			username: r.username,
+			display_name: r.displayName,
+			avatar_url: r.avatarUrl,
+		})),
 		followRows,
 	});
 	items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -244,7 +290,7 @@ export default wrap(async (req, res) => {
 	});
 });
 
-function mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, followRows }) {
+function mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, restyleRows = [], followRows }) {
 	const items = [];
 
 	for (const r of avatarRows) {
@@ -313,6 +359,21 @@ function mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, fol
 			subtitle: r.mood || null,
 			href: `${SITE}/diorama?id=${r.id}`,
 			image: objects.find((o) => o && o.glbUrl)?.glbUrl || null,
+		});
+	}
+
+	for (const r of restyleRows) {
+		items.push({
+			kind: 'restyle',
+			id: r.id,
+			created_at: r.created_at,
+			actor: actorFrom(r),
+			title: r.prompt || (r.action === 'variants' ? 'Colorway variant' : 'Restyled model'),
+			subtitle: r.category || null,
+			href: `${SITE}/viewer?src=${encodeURIComponent(r.glb_url)}`,
+			// result_url is a GLB, not a raster image — render the kind glyph
+			// instead of a guaranteed-broken <img>.
+			image: null,
 		});
 	}
 

@@ -19,7 +19,7 @@ of truth for facts every work order depends on. Do not re-derive these; do not c
 |---|---|
 | Our agent ID | `#2632` |
 | Agent name | `three.ws 3D Studio` |
-| Owner wallet (X Layer) | `0x75d00a2713565171f33216e5aa2a375e076ecf69` |
+| Owner wallet (X Layer) | `0x75d00a2713565171f33216e5aa2a375e076ecf69` (buyer + agent identity owner ONLY; the live payTo/seller wallet is `0x4022de2D36C334E73C7a108805Cea11C0564f402`, see RUNBOOK.md section 3) |
 | Communication address | `0xfaBDeadF019267576a155E166110eDdA8BeE9729` |
 | Agent key UUID | `8848356c-f4a5-418a-a189-6a6ad72c8fdc` |
 | Marketplace chain | X Layer, chainId **196** (`eip155:196`) |

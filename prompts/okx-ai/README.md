@@ -17,9 +17,9 @@ facts) and ends by appending to `PROGRESS.md` (the cross-chat handoff log).
 
 | Order | File | What it does | Needs human for |
 |---|---|---|---|
-| 1 | `01-protocol-research.md` | Pin the seller-side payments spec from primary sources + live captures | OTP login; maybe dust funding |
-| 2 | `02-payments-integration.md` | Implement the OKX rail on our endpoint, tested | possibly `vercel env` values |
-| 3 | `03-service-decomposition.md` | Split into micro-priced services + free catalog |, |
+| 1 | `01-protocol-research.md` (retired: completed, in git history) | Pin the seller-side payments spec from primary sources + live captures | done |
+| 2 | `02-payments-integration.md` (retired: completed, in git history) | Implement the OKX rail on our endpoint, tested | done |
+| 3 | `03-service-decomposition.md` (retired: completed, in git history) | Split into micro-priced services + free catalog | done |
 | 4 | `04-e2e-real-payment-test.md` | Pay ourselves for real; settlement + adversarial gauntlet | **wallet funding**, OTP |
 | 5 | `05-relisting-resubmission.md` | Update #2632 + resubmit for review | OTP; confirm on-chain writes |
 | 6 | `06-agent-pfp-wedge.md` | "Agent Identity Studio", avatars for OKX agents (parallel after 02) | funding for test buys |

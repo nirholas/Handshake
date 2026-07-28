@@ -18,6 +18,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { auditCapacity, recommend as recommendCapacity } from './gpu-capacity.mjs';
 
 const PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 const HEALTHZ_URL = process.env.TRIAGE_HEALTHZ_URL || 'https://three.ws/api/healthz';
@@ -114,6 +115,21 @@ const KNOWN_SIGNATURES = [
 		match: /\[pump\/launch-agent\] send failed .*pre-broadcast simulation failed/i,
 		class: 'self-healing',
 		action: `The pump.fun launch handler simulates every transaction before broadcasting; this line is the simulation REFUSING a launch that would have failed on-chain (program custom errors: slippage moved, mint state raced, metadata rejected), which protects the user's fees. The caller gets a clean 502 and a retry succeeds (verify: a 201 from the same route usually follows within minutes). Investigate only if the same wallet repeats the failure many times or the 502 rate on /api/pump/launch-agent becomes a sustained group. ${RUNBOOK} §pump-launch-sim-rejected.`,
+	},
+	{
+		id: 'colyseus-seat-expired',
+		match: /Error: seat reservation expired\./i,
+		class: 'self-healing',
+		action: `Colyseus matchmaking issued a seat and the client never completed the WebSocket upgrade inside the reservation TTL (slow network, closed tab, backgrounded mobile browser). The server correctly refuses the stale ticket; the client's next join request gets a fresh seat. Steady low cadence is normal. Investigate only if it spikes alongside multiplayer connect complaints (then suspect LB/WebSocket latency, not Colyseus). ${RUNBOOK} §colyseus-seat-expired.`,
+	},
+	{
+		// Scoped to the service: an identical signal line from any OTHER service
+		// must stay `investigate` — this entry only explains the pinned SRH image.
+		id: 'redis-proxy-srh-crash',
+		match: /Uncaught signal: 10, pid=\d+, tid=\d+/i,
+		services: ['three-ws-redis-proxy'],
+		class: 'self-healing',
+		action: `The pinned hiett/serverless-redis-http (SRH) image aborts sporadically (~3x/day observed) and Cloud Run restarts it; minScale 2 keeps a warm sibling serving and the API's cache circuit breaker + memory fallback ride out the blip (healthz cache stays ok). No user impact at the observed rate. Durable fix when the owner approves an image change: bump the SRH image tag on three-ws-redis-proxy. Investigate only if the crash rate climbs to many per hour or healthz cache degrades. ${RUNBOOK} §redis-proxy-srh-crash.`,
 	},
 ];
 
@@ -257,9 +273,14 @@ export function fingerprint(message) {
 		.slice(0, 160);
 }
 
-export function classify(message) {
+export function classify(message, services) {
 	for (const sig of KNOWN_SIGNATURES) {
-		if (sig.match.test(message)) return sig;
+		if (!sig.match.test(message)) continue;
+		// A signature may scope itself to specific services (e.g. a known crash in
+		// one pinned third-party image); the same text from anywhere else must
+		// stay unclassified so it surfaces as `investigate`.
+		if (sig.services && !(services || []).some((s) => sig.services.includes(s))) continue;
+		return sig;
 	}
 	return null;
 }
@@ -323,7 +344,7 @@ export function buildFindings(entries) {
 
 	const findings = [];
 	for (const g of appGroups.values()) {
-		const sig = classify(g.sample) || classify(g.title);
+		const sig = classify(g.sample, [...g.services]) || classify(g.title, [...g.services]);
 		findings.push({
 			kind: 'app',
 			class: sig ? sig.class : 'investigate',
@@ -399,6 +420,40 @@ function renderReport({ opts, healthz, findings, scanned }) {
 	return lines.join('\n');
 }
 
+// A GPU-starvation finding names the symptom; the fix depends on where the free
+// capacity actually is, which only the per-region capacity audit knows. Rather
+// than making every triage run pay for that sweep, run it ONLY when the sweep
+// already saw starvation, and fold the concrete answer into the finding.
+function gpuCapacityFindings(findings) {
+	const starved = findings.filter((f) => f.signature === 'gpu-quota-starved');
+	if (!starved.length) return [];
+	let report;
+	try {
+		report = auditCapacity({ project: PROJECT });
+	} catch {
+		return []; // capacity audit is advisory; never let it fail the sweep
+	}
+	if (!report) return [];
+	const recs = recommendCapacity(report).filter((r) => r.priority <= 2);
+	if (!recs.length) return [];
+	const free = report.regions
+		.filter((r) => r.headroom > 0)
+		.map((r) => `${r.region} (${r.headroom} free of ${r.granted})`);
+	return [{
+		kind: 'capacity',
+		class: 'env-action',
+		signature: 'gpu-capacity-plan',
+		title: 'GPU capacity plan for the starvation above',
+		severity: 'WARNING',
+		count: starved.reduce((n, f) => n + f.count, 0),
+		services: [...new Set(starved.flatMap((f) => f.services))],
+		firstSeen: starved[0].firstSeen,
+		lastSeen: starved[starved.length - 1].lastSeen,
+		sample: free.length ? `unpinned GPUs available in: ${free.join(', ')}` : 'no region currently has an unpinned GPU',
+		action: `${recs.map((r, i) => `${i + 1}. ${r.detail} → ${r.command}`).join('  ')}  Full picture: npm run gpu. Fleet map: docs/ops/gcp-credits-plan.md.`,
+	}];
+}
+
 async function main() {
 	const opts = parseArgs(process.argv.slice(2));
 	const [healthz, entries] = await Promise.all([
@@ -406,6 +461,7 @@ async function main() {
 		Promise.resolve().then(() => readLogs(opts)),
 	]);
 	const findings = buildFindings(entries);
+	findings.push(...gpuCapacityFindings(findings));
 	const actionable = findings.filter((f) => f.class !== 'self-healing');
 	const unhealthy = !healthz.reachable
 		|| (healthz.degraded && healthz.degraded.length > 0)

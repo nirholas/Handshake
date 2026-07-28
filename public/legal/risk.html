@@ -1,37 +1,40 @@
 <!doctype html>
 <html lang="en">
 <head>
+	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title data-i18n="legal_risk.meta_title">Risk Disclosure · three.ws</title>
 	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/tokens.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
 	<style>
-		:root { color-scheme: dark; }
 		* { box-sizing: border-box; }
 		body {
 			font: 16px/1.7 -apple-system, system-ui, 'Segoe UI', sans-serif;
-			background: #000000;
-			color: #ccc;
+			background: var(--bg-0);
+			color: var(--ink);
 			margin: 0;
-			padding: 48px 24px 80px;
 		}
-		.wrap { max-width: 720px; margin: 0 auto; }
-		.brand { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #ffffff; margin: 0 0 32px; display: block; text-decoration: none; }
-		.header-logo { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
-		h1 { font-size: 32px; color: #eee; margin: 0 0 6px; letter-spacing: -.02em; }
-		.meta { color: #8a8a8a; font-size: 14px; margin: 0 0 40px; }
-		h2 { font-size: 18px; color: #eee; margin: 40px 0 10px; }
-		p, li { color: #aaa; font-size: 15px; }
+		.wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+		main.wrap:focus { outline: none; }
+		h1 { font-size: 32px; color: var(--ink-bright); margin: 0 0 6px; letter-spacing: -.02em; }
+		.meta { color: var(--ink-faint); font-size: 14px; margin: 0 0 40px; }
+		h2 { font-size: 18px; color: var(--ink-bright); margin: 40px 0 10px; }
+		p, li { color: var(--ink); font-size: 15px; }
 		ul { padding-left: 20px; }
 		li { margin-bottom: 6px; }
-		a { color: #cccccc; }
-		hr { border: none; border-top: 1px solid #1e1e1e; margin: 48px 0; }
-		.foot { color: #8a8a8a; font-size: 13px; }
+		a { color: var(--ink-bright); }
+		hr { border: none; border-top: 1px solid var(--stroke); margin: 48px 0; }
+		.foot { color: var(--ink-faint); font-size: 13px; }
 		.callout {
-			border: 1px solid #3a2f14; background: #14100a; border-radius: 10px;
+			border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+			background: color-mix(in srgb, var(--warn) 8%, var(--bg-0));
+			border-radius: 10px;
 			padding: 14px 18px; margin: 0 0 32px;
 		}
-		.callout p { color: #d8b96a; margin: 0; font-size: 15px; }
+		.callout p { color: color-mix(in srgb, var(--warn) 40%, var(--ink)); margin: 0; font-size: 15px; }
 	</style>
 
 	<meta name="description" content="Risk disclosure for real-funds features on three.ws: experimental software, total-loss risk, autonomous agents, no liability." data-i18n-attr="content:legal_risk.meta_description">
@@ -56,8 +59,9 @@
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
-<div class="wrap">
-	<a class="brand" href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
+	<header><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+<main id="main-content" class="wrap" tabindex="-1">
 	<h1 data-i18n="legal_risk.risk_disclosure">Risk Disclosure</h1>
 	<p class="meta" data-i18n-html="legal_risk.effective_july_3_2026_version_1_terms">Effective: July 3, 2026 &nbsp;·&nbsp; Version 1 &nbsp;·&nbsp; <a href="/legal/tos.html">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/privacy.html">Privacy Policy</a></p>
 
@@ -113,7 +117,9 @@
 
 	<hr />
 	<p class="foot" data-i18n-html="legal_risk.three_ws_terms_of_service_privacy_policy">three.ws · <a href="/legal/tos.html">Terms of Service</a> · <a href="/legal/privacy.html">Privacy Policy</a> · <a href="/legal/content-policy.html">Content Policy</a></p>
-</div>
+</main>
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

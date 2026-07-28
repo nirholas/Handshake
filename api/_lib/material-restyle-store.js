@@ -104,6 +104,55 @@ export async function listRestylesByUser({ userId, limit = 24, before } = {}) {
 	}
 }
 
+/**
+ * Platform-wide recent restyles for the activity feed (/api/users/me/feed
+ * scope=all), newest first, cursor-paginated. Mirrors forge-store's
+ * listRecentCreations: users are left-joined so anonymous restyles still
+ * appear (with a null username the client renders without a profile link).
+ */
+export async function listRecentRestyles({ limit = 24, before } = {}) {
+	if (!enabled()) return [];
+	const lim = Math.min(60, Math.max(1, Number(limit) || 24));
+	try {
+		const rows = before
+			? await sql`
+					select mr.id, mr.action, mr.label, mr.instruction, mr.preset,
+					       mr.result_url, mr.created_at,
+					       u.username, u.display_name, u.avatar_url
+					from material_restyles mr
+					left join users u on u.id = mr.user_id and u.deleted_at is null and u.username is not null
+					where mr.created_at < ${before}
+					order by mr.created_at desc limit ${lim}`
+			: await sql`
+					select mr.id, mr.action, mr.label, mr.instruction, mr.preset,
+					       mr.result_url, mr.created_at,
+					       u.username, u.display_name, u.avatar_url
+					from material_restyles mr
+					left join users u on u.id = mr.user_id and u.deleted_at is null and u.username is not null
+					order by mr.created_at desc limit ${lim}`;
+		return rows.map((r) => ({
+			id: r.id,
+			type: 'restyle',
+			action: r.action,
+			label: r.label,
+			glbUrl: r.result_url,
+			prompt: r.instruction || r.preset || null,
+			category: r.action === 'variants' ? 'colorway variant' : 'AI restyle',
+			createdAt: r.created_at,
+			username: r.username || null,
+			displayName: r.display_name || null,
+			avatarUrl: r.avatar_url || null,
+		}));
+	} catch (err) {
+		if (isDbUnavailableError(err)) {
+			console.warn('[material-restyle-store] listRecentRestyles skipped (db unavailable):', err?.message);
+		} else {
+			console.error('[material-restyle-store] listRecentRestyles failed:', err?.message);
+		}
+		return [];
+	}
+}
+
 /** Count of a signed-in creator's restyled models — profile stat strip. */
 export async function countRestylesByUser({ userId } = {}) {
 	if (!enabled() || !userId) return 0;

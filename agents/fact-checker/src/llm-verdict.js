@@ -79,11 +79,11 @@ export async function analyzeResults(claim, results) {
 	const numbered = results
 		.map(
 			(r, i) =>
-				`[${i + 1}] Title: ${r.title}\nURL: ${r.url}\nContent: ${r.snippet.slice(0, 500)}`,
+				`[${i + 1}] Title: ${r.title}\nURL: ${r.url}\nContent: ${r.snippet.slice(0, 900)}`,
 		)
 		.join('\n\n');
 
-	const prompt = `You are a fact-checking assistant. Given a claim and ${results.length} search result(s), analyze each result.
+	const prompt = `You are a rigorous fact-checker. Given a claim and ${results.length} search result(s), judge each result's stance toward the claim USING ONLY the provided content.
 
 Claim: "${claim}"
 
@@ -93,9 +93,12 @@ ${numbered}
 For each result (1 through ${results.length}), output:
 - excerpt: a 200-character or shorter direct quote or paraphrase from the content that is most relevant to the claim
 - stance: one of "supports", "contradicts", or "neutral"
-  - "supports" = the source backs the claim
-  - "contradicts" = the source refutes the claim
-  - "neutral" = the source is tangentially related but neither supports nor contradicts
+
+Stance rubric — commit to a stance whenever the content addresses the claim's central assertion:
+- "supports": the content affirms the claim's central assertion, including via paraphrase or equivalent figures (e.g. claim says 330 m, source says "about 330 metres" or "1,083 ft").
+- "contradicts": the content states something INCOMPATIBLE with the claim. A different number, a different record-holder, a different date, or an explicit negation is a contradiction, NOT neutral. If the claim says "the tallest is X" and the source names Y as tallest, that contradicts.
+- "neutral": ONLY when the content genuinely does not address the claim's central assertion (same broad topic but silent on the specific fact). Do not use neutral as a low-effort default; check the numbers and named entities first.
+- If the claim conjoins several assertions and the content affirms one while refuting another, choose the stance for the assertion the content speaks to most directly (supports if it affirms that part, contradicts if it refutes it).
 
 Output ONLY a valid JSON array with ${results.length} objects, in order, each with fields "excerpt" (string) and "stance" (string).
 No markdown, no explanation, just the JSON array.

@@ -29,6 +29,22 @@ export const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const USDC_ATOMICS = 10 ** USDC_DECIMALS;
 
+// The USDC-spending engine wallets and their floors: the shared allowlist for
+// every USDC refill path (the rebalance cron's swap legs AND the master's
+// direct topup in economy-usdc-topup.js), so the two can never disagree on who
+// qualifies or at what floor. floorUsd is env-overridable per role.
+//
+// selfPayFee: this wallet ALSO pays its own SOL network fee on every self-pay
+// ring settle, so it has a second, independent need: SOL. Without it the
+// planner only ever saw the USDC side, and a payer that drifted under the
+// settle floor while holding plenty of USDC deadlocked the whole ring (July
+// 2026, twice): the facilitator rejected every settle while the rebalancer
+// reported "above_floor".
+export const USDC_WALLETS = [
+	{ role: 'x402-ring-payer', floorEnv: 'ECONOMY_REBALANCE_RING_USDC_FLOOR', floorDflt: 10, selfPayFee: true },
+	{ role: 'a2a-payer', floorEnv: 'ECONOMY_REBALANCE_A2A_USDC_FLOOR', floorDflt: 5 },
+];
+
 function num(name, dflt) {
 	const v = Number(process.env[name]);
 	return Number.isFinite(v) && v >= 0 ? v : dflt;

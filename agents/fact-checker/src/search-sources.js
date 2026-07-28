@@ -1,7 +1,9 @@
 // Multi-source web search with fallback chain.
-// Priority: Brave → Tavily → Exa → Serper → Wikipedia full-text search →
-// DuckDuckGo instant answer.
+// Priority: Vertex-grounded Google Search → Brave → Tavily → Exa → Serper →
+// Wikipedia full-text search → DuckDuckGo instant answer.
 // At least 3 results are always returned (or a descriptive error thrown).
+
+import { webSearchAvailable, groundedSearch } from '../../../api/_lib/web-search.js';
 
 const TIMEOUT_MS = 10_000;
 
@@ -12,6 +14,35 @@ function withTimeout(promise, ms) {
 			setTimeout(() => reject(new Error(`Search timed out after ${ms}ms`)), ms),
 		),
 	]);
+}
+
+// ── Vertex-grounded Google Search (keyless, GCP service-account auth) ────────
+//
+// The one rung that works in production today: no Brave/Tavily/Exa/Serper key
+// is configured there, so without this the chain fell straight through to the
+// Wikipedia/DuckDuckGo fallbacks. Rides Gemini on Vertex AI with the built-in
+// google_search tool (api/_lib/web-search.js), gated on webSearchAvailable()
+// (GOOGLE_CLOUD_PROJECT) exactly like the key rungs gate on their env keys.
+//
+// Shape note: grounding chunks carry title + url but no per-source snippet.
+// The synthesized answer IS the evidence text Google grounded on these
+// sources, so it becomes each result's snippet: the fact-check consumer
+// (api/x402/fact-check.js) feeds snippet.slice(0, 900) to stance extraction
+// and falls back to snippet.slice(0, 200) for the excerpt, both of which want
+// claim-relevant prose, not a bare domain. Authority stays per-URL via
+// authorityScore(r.url) in the consumer; no per-rung weight exists here.
+async function searchVertexGrounded(query) {
+	if (!webSearchAvailable()) return null;
+
+	// groundedSearch enforces its own 20s abort (LLM synthesis regularly needs
+	// more than the flat-HTTP TIMEOUT_MS the other rungs use).
+	const { answer, sources } = await groundedSearch(query, { maxSources: 10 });
+	const snippet = String(answer || '').trim();
+	return sources.map((s) => ({
+		url: s.url,
+		title: s.title || s.domain || '',
+		snippet: snippet || s.domain || '',
+	}));
 }
 
 // ── Brave Search ──────────────────────────────────────────────────────────────
@@ -145,7 +176,18 @@ async function searchSerper(query) {
 // ranking over sentence-shaped queries and needs no API key or account, so it
 // sits ahead of the DDG fallback: strictly more capable, same zero-config cost.
 async function searchWikipedia(query) {
-	const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json&origin=*`;
+	// generator=search + prop=extracts fetches the ranked pages AND their intro
+	// text in ONE request. The old list=search call only returned the ~150-char
+	// search-match snippet (the bolded fragment around the keyword hit), which
+	// rarely contains the fact being checked — downstream stance extraction
+	// marked nearly every such source "neutral" and the whole chain collapsed to
+	// "mixed" (the 20% benchmark run of 2026-07-08). A plain-text intro extract
+	// actually states the page's core facts, which is what a stance judgment
+	// needs. Same endpoint, same zero-config cost.
+	const url =
+		'https://en.wikipedia.org/w/api.php?action=query&generator=search' +
+		`&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5` +
+		'&prop=extracts&exintro=1&explaintext=1&exlimit=max&format=json&origin=*';
 	const res = await withTimeout(
 		fetch(url, { headers: { accept: 'application/json', 'user-agent': 'three.ws-fact-checker/1.0 (+https://three.ws)' } }),
 		TIMEOUT_MS,
@@ -154,20 +196,14 @@ async function searchWikipedia(query) {
 		throw new Error(`Wikipedia search HTTP ${res.status}`);
 	}
 	const data = await res.json();
-	const results = data?.query?.search || [];
-	return results.map((r) => ({
-		url: `https://en.wikipedia.org/wiki/${encodeURIComponent(String(r.title || '').replace(/ /g, '_'))}`,
-		title: r.title || '',
-		// Strip the <span class="searchmatch"> highlight markup and decode the
-		// standard XML-safe entities MediaWiki escapes snippets with.
-		snippet: decodeXmlEntities(String(r.snippet || '').replace(/<[^>]+>/g, '')),
-	}));
-}
-
-function decodeXmlEntities(s) {
-	return s.replace(/&(amp|lt|gt|quot|#0?39);/g, (_, e) =>
-		({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#039': "'" })[e],
-	);
+	const pages = Object.values(data?.query?.pages || {});
+	// generator results are unordered; `index` carries the search ranking.
+	pages.sort((a, b) => (a.index ?? 99) - (b.index ?? 99));
+	return pages.map((p) => ({
+		url: `https://en.wikipedia.org/wiki/${encodeURIComponent(String(p.title || '').replace(/ /g, '_'))}`,
+		title: p.title || '',
+		snippet: String(p.extract || '').trim().slice(0, 1200),
+	})).filter((r) => r.snippet);
 }
 
 // ── DuckDuckGo instant answer (fallback) ──────────────────────────────────────
@@ -235,12 +271,14 @@ function deduplicate(results) {
  * @returns {Promise<Array<{url: string, title: string, snippet: string}>>}
  */
 export async function searchWeb(query) {
+	const hasVertex = webSearchAvailable();
 	const hasBrave = Boolean(process.env.BRAVE_API_KEY);
 	const hasTavily = Boolean(process.env.TAVILY_API_KEY);
 	const hasExa = Boolean(process.env.EXA_API_KEY);
 	const hasSerper = Boolean(process.env.SERPER_API_KEY);
 
 	const searchFns = [];
+	if (hasVertex) searchFns.push(searchVertexGrounded);
 	if (hasBrave) searchFns.push(searchBrave);
 	if (hasTavily) searchFns.push(searchTavily);
 	if (hasExa) searchFns.push(searchExa);

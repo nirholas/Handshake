@@ -19,7 +19,7 @@ import {
 	getSpendLimits, enforceSpendLimit, SpendLimitError, recordSpend, lamportsToUsd,
 	checkConcurrency, checkDailyBudgetLamports, checkSolHeadroom, checkPriceImpact,
 	checkDailyLoss, recordCustodyEvent,
-	SOL_FEE_HEADROOM_LAMPORTS,
+	ENTRY_HEADROOM_LAMPORTS,
 } from '../../api/_lib/agent-trade-guards.js';
 import { shouldGiveUpReconcile } from './exit-logic.js';
 import { buildAmmSellInstructions, quoteAmmBuy, buildAmmBuyInstructions } from './amm-exit.js';
@@ -27,17 +27,6 @@ import { getWalletBaseBalance, reconcileVanishedBag } from './reconcile.js';
 import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } from '../../api/_lib/trade-firewall.js';
 import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
 import { screenPush } from './screen-push.js';
-
-// SOL an entry must leave behind, on top of the buy itself, for the transaction to
-// survive: the shared fee headroom PLUS the rent-exempt minimum of the token ATA the
-// buy opens (2_039_280 lamports for an SPL token account) PLUS room for the priority
-// fee and an MEV tip. The shared 0.003 SOL floor alone is thinner than the ATA rent,
-// so a trade clamped to `balance - 0.003` could clear the guard and then die in the
-// pre-broadcast simulation (SIM_FAILED) or never land (EXEC_EXHAUSTED) — the residual
-// failure mix on the thin arms. Sniper-local on purpose: the discretionary trade path
-// spends from wallets that are not sized to the lamport.
-const ATA_RENT_LAMPORTS = 2_039_280n;
-const ENTRY_HEADROOM_LAMPORTS = SOL_FEE_HEADROOM_LAMPORTS + ATA_RENT_LAMPORTS + 1_000_000n;
 
 // Self-rated conviction for a snipe entry, 0..1. Lower price impact and a clean
 // firewall verdict raise it; a warned verdict and heavy impact lower it. This is

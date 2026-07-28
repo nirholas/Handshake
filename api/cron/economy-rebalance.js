@@ -19,25 +19,9 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey, loadSignerKeypair } from '../_lib/solana-signers.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
-import { planRebalance, executeSwap, REBALANCE, WSOL_MINT } from '../_lib/economy-rebalance.js';
+import { planRebalance, executeSwap, REBALANCE, WSOL_MINT, USDC_WALLETS } from '../_lib/economy-rebalance.js';
 import { USDC_MINT_BY_NETWORK } from '../_lib/vault-jupiter.js';
 import { logAudit } from '../_lib/audit.js';
-
-// Which engine wallets spend USDC and therefore want a USDC floor kept topped up
-// from their SOL. floorUsd is env-overridable per role.
-//
-// selfPayFee: this wallet ALSO pays its own SOL network fee on every self-pay
-// ring settle, so it has a second, independent need: SOL. Without it the
-// planner only ever saw the USDC side, and a payer that drifted under the
-// 0.02 SOL settle floor while holding plenty of USDC deadlocked the whole
-// ring (July 2026, twice): the facilitator rejected every settle while the
-// rebalancer reported "above_floor". The SOL leg only arms when the wallet is
-// genuinely below its registry minSol (true starvation, not routine drift),
-// and refills toward refillTo so one swap buys days of fee runway.
-const USDC_WALLETS = [
-	{ role: 'x402-ring-payer', floorEnv: 'ECONOMY_REBALANCE_RING_USDC_FLOOR', floorDflt: 10, selfPayFee: true },
-	{ role: 'a2a-payer', floorEnv: 'ECONOMY_REBALANCE_A2A_USDC_FLOOR', floorDflt: 5 },
-];
 
 function requireCron(req, res) {
 	const secret = process.env.CRON_SECRET || env.CRON_SECRET;

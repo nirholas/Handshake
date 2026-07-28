@@ -557,12 +557,13 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	const systemPrompt = buildSystemPrompt(
+	const sys = buildSystemPrompt(
 		body.context,
 		personaPrompt,
 		recalledMemories,
 		installedSkills,
 	);
+	const systemPrompt = sys.text;
 	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
 	history.push({ role: 'user', content: body.message });
 
@@ -621,7 +622,7 @@ export default wrap(async (req, res) => {
 					method: 'POST',
 					headers: reqHeaders,
 					body: JSON.stringify(
-						route.buildPayload({ systemPrompt, history, maxTokens, includeTools }),
+						route.buildPayload({ systemPrompt, systemParts: sys, history, maxTokens, includeTools }),
 					),
 					signal: ctrl.signal,
 				});
@@ -1275,11 +1276,20 @@ function makeRoute(name, cfg, apiKey, model) {
 			url: vertexMessagesUrl(model, { stream: true }),
 			style: 'anthropic',
 			resolveHeaders: () => vertexRequestHeaders(),
-			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) =>
+			buildPayload: ({ systemPrompt, systemParts, history, maxTokens, includeTools = true }) =>
 				toVertexBody({
 					model,
-					max_tokens: maxTokens,
-					system: systemPrompt,
+					// Same thinking-budget floor and cached-stable-prefix split as the
+					// first-party anthropic route below; Vertex serves the identical
+					// wire format, prompt caching included.
+					max_tokens: modelThinksByDefault(model) ? Math.max(maxTokens, HARD_MAX_TOKENS) : maxTokens,
+					system:
+						systemParts && systemParts.stable.length >= 4096
+							? [
+									{ type: 'text', text: systemParts.stable, cache_control: { type: 'ephemeral' } },
+									...(systemParts.volatile ? [{ type: 'text', text: systemParts.volatile }] : []),
+								]
+							: systemPrompt,
 					messages: history,
 					...(includeTools ? { tools: ACTION_TOOLS } : {}),
 					stream: true,
@@ -1318,13 +1328,24 @@ function makeRoute(name, cfg, apiKey, model) {
 				'anthropic-version': '2023-06-01',
 				'content-type': 'application/json',
 			},
-			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
+			buildPayload: ({ systemPrompt, systemParts, history, maxTokens, includeTools = true }) => ({
 				model,
-				// Claude 5 models think by default and max_tokens caps thinking +
-				// visible text together — floor the budget so a small chat cap
+				// Claude 5 models think by default and max_tokens caps thinking plus
+				// visible text together; floor the budget so a small chat cap
 				// can't be consumed entirely by thinking.
 				max_tokens: modelThinksByDefault(model) ? Math.max(maxTokens, HARD_MAX_TOKENS) : maxTokens,
-				system: systemPrompt,
+				// Prompt caching: the stable prefix (persona + skills + platform
+				// knowledge) gets a breakpoint; recalled memories and live viewer
+				// context ride after it so per-turn changes never invalidate the
+				// cache. Below ~4096 chars the marker is silently ignored upstream,
+				// so the split is always safe to send.
+				system:
+					systemParts && systemParts.stable.length >= 4096
+						? [
+								{ type: 'text', text: systemParts.stable, cache_control: { type: 'ephemeral' } },
+								...(systemParts.volatile ? [{ type: 'text', text: systemParts.volatile }] : []),
+							]
+						: systemPrompt,
 				messages: history,
 				...(includeTools ? { tools: ACTION_TOOLS } : {}),
 				stream: true,
@@ -1572,6 +1593,11 @@ async function recallForChat(agentId, message, isOwner) {
 		}));
 }
 
+// Returns { text, stable, volatile }. `stable` is byte-identical across every
+// turn of an agent's conversations (persona + skills + platform knowledge), so
+// the Anthropic route can put a prompt-cache breakpoint after it; `volatile`
+// (recalled memories + live viewer context) changes per message and stays
+// after the breakpoint. `text` is the joined form every other provider uses.
 function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = []) {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
@@ -1584,13 +1610,6 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], instal
 
 	const lines = [];
 	if (personaPrompt) lines.push(personaPrompt, '');
-	if (Array.isArray(recalled) && recalled.length) {
-		lines.push(
-			'What you remember (recalled for this conversation — speak from it naturally, never read it back verbatim or mention "memory IDs"):',
-			...recalled.map((m) => `- (${m.type}) ${m.snippet}`),
-			'',
-		);
-	}
 	const skillsBlock = skillsPromptBlock(installedSkills);
 	if (skillsBlock) lines.push(skillsBlock, '');
 	lines.push(
@@ -1611,12 +1630,21 @@ function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], instal
 		'When the user asks to change the viewer ("enable wireframe", "make the background dark blue", "turn on auto rotate", "load this model"), CALL the matching tool — do not just describe what would happen.',
 		'When asked about the loaded model, use the context below as ground truth. Do not invent stats.',
 		'Keep replies tight: 2–3 sentences. Plain text, no markdown headers, no emoji.',
-		'',
-		loaded,
-		validation,
-		settings,
 	);
-	return lines.join('\n');
+
+	const volatileLines = [];
+	if (Array.isArray(recalled) && recalled.length) {
+		volatileLines.push(
+			'What you remember (recalled for this conversation, speak from it naturally, never read it back verbatim or mention "memory IDs"):',
+			...recalled.map((m) => `- (${m.type}) ${m.snippet}`),
+			'',
+		);
+	}
+	volatileLines.push(loaded, validation, settings);
+
+	const stable = lines.join('\n');
+	const volatile = volatileLines.join('\n');
+	return { stable, volatile, text: `${stable}\n\n${volatile}` };
 }
 
 async function resolveAuth(req) {

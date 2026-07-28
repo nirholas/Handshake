@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>three.ws brand assets</title>
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<style>
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	body {
+		background: #5a5a62;
+		font-family: 'Space Grotesk', Inter, sans-serif;
+		display: flex; flex-direction: column; align-items: flex-start; gap: 32px; padding: 40px;
+	}
+
+	/* Every asset renders on a transparent ground: scripts/render-brand-assets.mjs
+	   screenshots each .asset with omitBackground, so the page background here is
+	   only a working surface to judge contrast against. Boxes are sized to the
+	   artwork, with no padding, so the exported PNG has no dead margin. */
+	.asset { display: inline-flex; align-items: center; }
+
+	.mark img { display: block; height: 512px; width: auto; }
+
+	.lockup { gap: 40px; }
+	.lockup img { display: block; height: 200px; width: auto; }
+	.lockup .word {
+		font-size: 150px; font-weight: 600; letter-spacing: -0.045em; line-height: 1;
+		padding-bottom: 12px; /* optical: the wordmark sits low against the cube */
+	}
+	.lockup.on-dark .word { color: #ffffff; }
+	.lockup.on-light .word { color: #0b0d0c; }
+
+	.stack { flex-direction: column; gap: 28px; }
+	.stack img { height: 300px; }
+	.stack .word { font-size: 104px; padding: 0; }
+</style>
+</head>
+<body>
+
+<!-- The mark on its own: the chrome cube, trimmed of transparent margin. -->
+<div class="asset mark" id="mark">
+	<img src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="three.ws" />
+</div>
+
+<!-- Horizontal lockup, light type, for dark grounds. -->
+<div class="asset lockup on-dark" id="lockup-dark">
+	<img src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="" />
+	<span class="word">three.ws</span>
+</div>
+
+<!-- Horizontal lockup, dark type, for light grounds. -->
+<div class="asset lockup on-light" id="lockup-light">
+	<img src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="" />
+	<span class="word">three.ws</span>
+</div>
+
+<!-- Stacked lockup, for square crops and avatars. -->
+<div class="asset lockup stack on-dark" id="stack-dark">
+	<img src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="" />
+	<span class="word">three.ws</span>
+</div>
+
+<div class="asset lockup stack on-light" id="stack-light">
+	<img src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="" />
+	<span class="word">three.ws</span>
+</div>
+
+</body>
+</html>

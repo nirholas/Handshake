@@ -30,6 +30,7 @@
 
 import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { config as dotenv } from 'dotenv';
 import JSON5 from 'json5';
 import {
@@ -788,7 +789,13 @@ async function main() {
 	console.log(`\ni18n-translate: ${n} key(s) translated across ${targets.length} locale(s).`);
 }
 
-main().catch((err) => {
-	console.error(err.message || err);
-	process.exit(1);
-});
+// Run only when invoked as a CLI. Importing this module for its pure helpers
+// (the markup tests import `configError` / `isFatalAuthFailure`) must not kick off
+// a translation run — it did, and its failure called process.exit(1) from inside
+// the test worker, so a fully green suite still reported a red exit code.
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+	main().catch((err) => {
+		console.error(err.message || err);
+		process.exit(1);
+	});
+}

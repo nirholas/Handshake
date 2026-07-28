@@ -15,6 +15,8 @@
  * Pure — no DB, no RPC, no clock. The caller supplies the facts.
  */
 
+import { MIN_OPERATIONAL_WALLET_SOL } from './agent-trade-guards.js';
+
 // A pump.fun launch is created ON the bonding curve at a fixed starting market
 // cap — around $2.1k at current SOL prices, and never more than a few thousand
 // dollars before its first buy. A `new_mint` trigger fires at exactly that
@@ -30,10 +32,12 @@ export const LAUNCH_MCAP_USD = 5_000;
 export const TYPICAL_LAUNCH_MCAP_USD = 2_500;
 const LAUNCH_TRIGGERS = new Set(['new_mint']);
 
-// Floor a wallet must hold to open anything: the firewall's round-trip probe
-// reserve (~0.006 SOL of ATA rent + fees) plus a minimum entry. Under this the
-// arm cannot even prove the coin is sellable, so it never broadcasts.
-export const MIN_WALLET_SOL = 0.008;
+// Floor a wallet must hold to open anything: entry overhead (ATA rent, fee and
+// tip headroom) plus the firewall's round-trip probe reserve plus a minimum
+// entry. Under this the arm cannot even prove the coin is sellable, so it never
+// broadcasts. Imported, not redefined — the reclaim that moves SOL out of these
+// wallets reads the same number, and the two disagreeing is what emptied them.
+export const MIN_WALLET_SOL = MIN_OPERATIONAL_WALLET_SOL;
 
 const num = (v) => (v == null || !Number.isFinite(Number(v)) ? null : Number(v));
 

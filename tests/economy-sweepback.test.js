@@ -15,6 +15,7 @@ import {
 	isPlatformOwnedAgent,
 	PLATFORM_AGENT_OWNER_EMAIL,
 } from '../api/_lib/economy-sweepback.js';
+import { MIN_OPERATIONAL_WALLET_SOL } from '../api/_lib/agent-trade-guards.js';
 
 // reclaimableSol: the emergency consolidation's sizing. The load-bearing property
 // is anti-oscillation: it must NEVER leave an engine below minSol, or the topup
@@ -230,6 +231,33 @@ test('agentReclaimFloorSol leaves a working trader its trade capital', () => {
 	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: 0 }) > 0);
 	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: NaN }) > 0);
 	assert.ok(agentReclaimFloorSol({}) > 0);
+});
+
+test('agentReclaimFloorSol keeps a small-size arm able to actually trade', () => {
+	// The state this closes: an enabled arm sized at 0.002 SOL/trade kept a floor of
+	// 0.004 SOL, which cannot pay the token ATA's rent, the fee/tip headroom AND the
+	// firewall's simulated round-trip — so every entry aborted at a safety check the
+	// wallet could no longer afford to run. Funded on every dashboard, dead in fact.
+	const tiny = agentReclaimFloorSol({ enabled: true, perTradeSol: 0.002 });
+	assert.ok(tiny >= MIN_OPERATIONAL_WALLET_SOL, `floor ${tiny} must cover one complete trade`);
+	// The working-capital multiple still applies on top for a larger arm.
+	assert.ok(agentReclaimFloorSol({ enabled: true, perTradeSol: 0.05 }) >= 0.1 + MIN_OPERATIONAL_WALLET_SOL);
+	// A disabled arm is still swept to the bare idle floor — this changes nothing there.
+	assert.ok(agentReclaimFloorSol({ enabled: false, perTradeSol: 0.002 }) < MIN_OPERATIONAL_WALLET_SOL);
+});
+
+test('planAgentReclaim leaves an enabled arm enough to place its next trade', () => {
+	const { plan } = planAgentReclaim([
+		{
+			agentId: 'arm', name: 'rules-classic', address: 'Arm111',
+			owner: 'three-ws@users.three.ws.local', sol: 0.05,
+			strategy: { enabled: true, perTradeSol: 0.002 },
+		},
+	]);
+	if (plan.length) {
+		const retained = 0.05 - plan[0].sol;
+		assert.ok(retained >= MIN_OPERATIONAL_WALLET_SOL, `retained ${retained} SOL must still fund a trade`);
+	}
 });
 
 test('planAgentReclaim never plans a customer wallet, whatever the balance', () => {

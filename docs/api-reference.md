@@ -3624,9 +3624,24 @@ Returns public platform configuration. No auth required. CORS open.
 
 ```json
 {
-	"walletConnectProjectId": "..."
+	"walletConnectProjectId": "...",
+	"privyAppId": "...",
+	"samlEnabled": false,
+	"samlLabel": "Single sign-on (SSO)",
+	"pushEnabled": false,
+	"vapidPublicKey": "",
+	"features": {
+		"avatarReconstruct": true,
+		"avatarReconstructMode": "platform",
+		"avatarByokProviders": [],
+		"avatarRigging": true,
+		"videoAvatar": false,
+		"liveBodyMocap": false
+	}
 }
 ```
+
+`features` reports which optional avatar pipelines this deployment has configured, so clients can gate their UI honestly (e.g. `avatarReconstructMode` is `"platform"` when the server holds provider credentials, `"byok"` when the user must supply a key).
 
 ---
 

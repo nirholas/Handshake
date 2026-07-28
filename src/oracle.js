@@ -594,7 +594,8 @@ function renderFeedEmpty(kind) {
 	$('#ctFeed').textContent = '';
 
 	if (kind === 'warming') {
-		grid.innerHTML = `<div class="state" style="grid-column:1/-1"><b>Oracle is warming up</b>The conviction engine ships with its backend — once the ingestion augmentor is live it scores every new pump.fun launch in real time. Check back shortly.</div>`;
+		grid.innerHTML = `<div class="state" style="grid-column:1/-1"><b>Oracle is warming up</b>The conviction engine ships with its backend — once the ingestion augmentor is live it scores every new pump.fun launch in real time. Check back shortly.<div style="margin-top:14px"><button class="btn" type="button" id="feedRetry">Retry now</button></div></div>`;
+		$('#feedRetry')?.addEventListener('click', () => loadFeed());
 		return;
 	}
 
