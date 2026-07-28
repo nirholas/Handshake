@@ -4,8 +4,47 @@ OpenAI supplied approved starter messaging and approved hashtags. Both variants
 below keep that messaging intact and add the concrete product line underneath, so
 the post says something a developer can act on.
 
-Attach the badge with every post:
-`https://three.ws/partners/openai/openai-select-partner@3x.png`
+Attach the announcement card with every post, not the bare badge:
+`https://three.ws/partners/openai/social-card-announcement.png`
+
+The product post in the thread uses the Studio card:
+`https://three.ws/partners/openai/social-card-studio.png`
+
+Both are 3200 × 1800 (16:9). See [`badge-usage.md`](badge-usage.md) for why the
+card is the right attachment and how to regenerate it.
+
+---
+
+## X / @trythreews single post (if you post one thing, post this)
+
+Attach: `social-card-announcement.png`
+
+> three.ws has been named an OpenAI Select Partner.
+>
+> As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
+> help organizations build, deploy, and scale AI solutions responsibly.
+>
+> What that sits on top of: assistants have been excellent at text and images for
+> years and have had nothing to say in three dimensions. We're the 3D layer. Our
+> free 3D Studio connector gives ChatGPT nine keyless tools that turn a sentence
+> into an interactive, textured model rendered inline, rig it, animate it, and
+> place it in your room in AR. No key, no account, no cost.
+>
+> https://three.ws/openai
+>
+> \#OpenAISelectPartner \#OpenAIPartnerNetwork
+
+643 characters, so it needs the extended post length. The 269-character cut, for a
+hard 280 limit, with the product line moved into a reply:
+
+> three.ws has been named an OpenAI Select Partner.
+>
+> As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
+> help organizations build, deploy, and scale AI solutions responsibly.
+>
+> https://three.ws/openai
+>
+> \#OpenAISelectPartner \#OpenAIPartnerNetwork
 
 ---
 
@@ -44,7 +83,7 @@ Attach the badge with every post:
 
 ## X / @trythreews thread
 
-**1/**
+**1/** (attach `social-card-announcement.png`)
 > three.ws has been named an OpenAI Select Partner.
 >
 > As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
@@ -59,7 +98,7 @@ Attach the badge with every post:
 > That's fine until you need to animate it, print it, drop it into a game, or put
 > it on your desk.
 
-**3/**
+**3/** (attach `social-card-studio.png`)
 > Our 3D Studio connector gives ChatGPT nine tools: text to 3D, avatars from a
 > prompt or a photo, auto-rigging, one-call rigged avatars, conversational
 > refinement, and a living body that lip-syncs replies.

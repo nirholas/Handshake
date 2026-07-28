@@ -8,6 +8,7 @@ OpenAI Partner Network, plus the rules that govern how the badge may be used.
 | [`press-release.md`](press-release.md) | Draft press release, written against OpenAI's partner template | **Needs OpenAI approval before publishing** (see below) |
 | [`social-copy.md`](social-copy.md) | Approved-messaging LinkedIn / X copy, ready to post | Ready |
 | [`badge-usage.md`](badge-usage.md) | Where the badge assets live and how they may be used | Ready |
+| [`cards/social-card.html`](cards/social-card.html) | Layout source for the two announcement graphics; renders with `npm run build:openai-cards` | Ready |
 | `openai-press-release-template.docx` | OpenAI's original template, unmodified, kept as the source of truth for the draft | Reference |
 
 ## Badge assets
@@ -22,6 +23,18 @@ announcement by URL:
 
 Both are the assets OpenAI supplied, unmodified. See
 [`badge-usage.md`](badge-usage.md) before using either one.
+
+## Announcement graphics
+
+Attach these to posts instead of the bare badge. Both are 3200 × 1800 (16:9).
+
+| Card | URL | Use it for |
+| --- | --- | --- |
+| Announcement | `https://three.ws/partners/openai/social-card-announcement.png` | The tier-status post on X and LinkedIn, the press release, link previews for `/openai` and the blog post |
+| 3D Studio | `https://three.ws/partners/openai/social-card-studio.png` | The product post in the X thread (no badge, so it stays clear of implying endorsement) |
+
+Edit [`cards/social-card.html`](cards/social-card.html), run
+`npm run build:openai-cards`, commit the regenerated PNGs.
 
 ## Where this is already live on the site
 

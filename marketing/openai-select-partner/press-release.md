@@ -67,6 +67,11 @@ tag. The free 3D generation lane requires no account, no API key, and no payment
 
 **Media contact:** partnerships@three.ws
 
+**Media assets:** announcement card
+https://three.ws/partners/openai/social-card-announcement.png · 3D Studio card
+https://three.ws/partners/openai/social-card-studio.png · OpenAI Select Partner
+badge https://three.ws/partners/openai/openai-select-partner.svg
+
 ---
 
 *three.ws is an independent member of the OpenAI Partner Network at the Select

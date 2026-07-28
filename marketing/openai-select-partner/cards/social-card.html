@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>OpenAI Select Partner social cards</title>
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<style>
+	:root {
+		--bg: #000000;
+		--panel: #141414;
+		--border: #222222;
+		--text: #e8e8f0;
+		--muted: #8b8b99;
+		--oai: #10a37f;
+		--mint: #6fd6b8;
+	}
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	body {
+		background: #0a0a0a;
+		font-family: Inter, -apple-system, system-ui, sans-serif;
+		display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 40px;
+	}
+
+	/* Every card renders at exactly 1600 × 900 (16:9, X's in-post ratio).
+	   scripts/render-openai-social-cards.mjs screenshots each .card at 2× → 3200 × 1800. */
+	.card {
+		position: relative;
+		width: 1600px; height: 900px;
+		background: var(--bg);
+		color: var(--text);
+		overflow: hidden;
+		display: flex; flex-direction: column;
+		padding: 76px 88px 64px;
+		isolation: isolate;
+	}
+
+	/* Ambient field: one OpenAI-green bloom, a cool counterweight, and a faint
+	   grid so the black doesn't read as an empty canvas in a dense X timeline. */
+	.card::before {
+		content: ''; position: absolute; inset: 0; z-index: -2;
+		background:
+			radial-gradient(1100px 620px at 88% 8%, rgba(16,163,127,.20), transparent 62%),
+			radial-gradient(900px 560px at 6% 96%, rgba(16,163,127,.09), transparent 60%),
+			radial-gradient(700px 420px at 50% 120%, rgba(120,160,255,.06), transparent 65%);
+	}
+	.card::after {
+		content: ''; position: absolute; inset: 0; z-index: -1;
+		background-image:
+			linear-gradient(to right, rgba(255,255,255,.045) 1px, transparent 1px),
+			linear-gradient(to bottom, rgba(255,255,255,.045) 1px, transparent 1px);
+		background-size: 80px 80px;
+		mask-image: radial-gradient(1200px 700px at 30% 40%, #000 20%, transparent 78%);
+		-webkit-mask-image: radial-gradient(1200px 700px at 30% 40%, #000 20%, transparent 78%);
+	}
+
+	/* ── Shared chrome ──────────────────────────────────────── */
+	.top { display: flex; align-items: center; justify-content: space-between; }
+	.wordmark {
+		display: inline-flex; align-items: center; gap: 14px;
+		font-family: 'Space Grotesk', Inter, sans-serif;
+		font-size: 30px; font-weight: 600; letter-spacing: -0.02em;
+	}
+	.wordmark .cube { width: 34px; height: 34px; display: block; }
+	.top .url {
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 19px; color: var(--muted); letter-spacing: -0.01em;
+	}
+
+	.body { flex: 1; display: flex; align-items: center; }
+
+	.eyebrow {
+		display: inline-flex; align-items: center; gap: 14px;
+		background: var(--panel); border: 1px solid var(--border); border-radius: 99px;
+		padding: 12px 26px 12px 20px; font-size: 20px; color: var(--muted);
+		margin-bottom: 36px;
+	}
+	.eyebrow .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--oai); box-shadow: 0 0 16px var(--oai); }
+	.eyebrow strong { color: var(--text); font-weight: 500; }
+
+	h1 { font-size: 78px; line-height: 1.02; letter-spacing: -0.035em; font-weight: 600; }
+	h1 .gradient {
+		background: linear-gradient(110deg, #ffffff 26%, #9fe8d4 88%);
+		-webkit-background-clip: text; background-clip: text; color: transparent;
+	}
+	.lede { font-size: 27px; line-height: 1.45; color: var(--muted); margin-top: 30px; }
+	.lede strong { color: var(--text); font-weight: 500; }
+
+	.foot {
+		border-top: 1px solid var(--border); padding-top: 26px;
+		display: flex; align-items: flex-end; justify-content: space-between; gap: 48px;
+	}
+	.disclaimer { font-size: 15px; line-height: 1.5; color: #6b6b78; max-width: 1020px; }
+
+	/* ── Card 1: the partner announcement ───────────────────── */
+	#card-announce .body { gap: 76px; }
+	#card-announce .copy { flex: 1; }
+
+	/* Badge rules: used exactly as supplied, on a white plate with clear space,
+	   never recolored, cropped, or locked up with another mark. */
+	.badge-plate {
+		flex: 0 0 auto;
+		background: #ffffff; border-radius: 30px; padding: 30px 34px;
+		box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 30px 90px rgba(16,163,127,.20);
+	}
+	.badge-plate img { display: block; width: 400px; height: auto; }
+
+	/* ── Card 2: what the partnership sits on top of ────────── */
+	#card-studio .body { flex-direction: column; align-items: flex-start; justify-content: center; }
+	/* One sweep across the whole line, so the tint lands on "ChatGPT" without
+	   splitting the word the way a gradient scoped to the span alone does. */
+	#card-studio h1 {
+		font-size: 82px;
+		background: linear-gradient(110deg, #ffffff 34%, #9fe8d4 96%);
+		-webkit-background-clip: text; background-clip: text; color: transparent;
+	}
+	.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 18px; margin-top: 44px; width: 100%; }
+	.tool {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 13px;
+		padding: 17px 20px;
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 21px; color: var(--mint); letter-spacing: -0.02em;
+	}
+	.claims { display: flex; gap: 14px; margin-top: 38px; }
+	.claim {
+		border: 1px solid rgba(16,163,127,.34); background: rgba(16,163,127,.10);
+		border-radius: 99px; padding: 11px 24px; font-size: 21px; font-weight: 500; color: #9fe8d4;
+	}
+	.connect {
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 22px; color: var(--text);
+	}
+	.connect span { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ═══ Card 1: announcement (badge card) ═════════════════════ -->
+<section class="card" id="card-announce">
+	<div class="top">
+		<div class="wordmark">
+			<svg class="cube" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+				<path d="M16 2.6 29 10v14L16 31.4 3 24V10L16 2.6Z" stroke="#10a37f" stroke-width="1.8" stroke-linejoin="round"/>
+				<path d="M3 10l13 7.4L29 10M16 17.4V31.4" stroke="#10a37f" stroke-width="1.8" stroke-linejoin="round" opacity=".55"/>
+			</svg>
+			three.ws
+		</div>
+		<div class="url">three.ws/openai</div>
+	</div>
+
+	<div class="body">
+		<div class="copy">
+			<div class="eyebrow">
+				<span class="dot"></span>
+				<strong>OpenAI Partner Network</strong>
+			</div>
+			<h1>three.ws is an<br /><span class="gradient">OpenAI Select Partner</span>.</h1>
+			<p class="lede">
+				3D, natively, inside ChatGPT. <strong>Nine keyless tools</strong> turn a sentence
+				into an interactive, riggable, AR-ready model.
+			</p>
+		</div>
+		<div class="badge-plate">
+			<img src="/partners/openai/openai-select-partner.svg" alt="OpenAI Partner Network Select Partner badge" />
+		</div>
+	</div>
+
+	<div class="foot">
+		<p class="disclaimer">
+			three.ws is an independent member of the OpenAI Partner Network at the Select tier. Not an OpenAI product
+			and not endorsed by OpenAI beyond the partner designation shown. OpenAI, ChatGPT, and the OpenAI Partner
+			Network badge are trademarks of OpenAI.
+		</p>
+	</div>
+</section>
+
+<!-- ═══ Card 2: the product underneath (thread card) ═════════ -->
+<section class="card" id="card-studio">
+	<div class="top">
+		<div class="wordmark">
+			<svg class="cube" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+				<path d="M16 2.6 29 10v14L16 31.4 3 24V10L16 2.6Z" stroke="#10a37f" stroke-width="1.8" stroke-linejoin="round"/>
+				<path d="M3 10l13 7.4L29 10M16 17.4V31.4" stroke="#10a37f" stroke-width="1.8" stroke-linejoin="round" opacity=".55"/>
+			</svg>
+			three.ws
+		</div>
+		<div class="url">3D Studio · MCP connector</div>
+	</div>
+
+	<div class="body">
+		<h1>3D, natively, inside ChatGPT.</h1>
+		<div class="tools">
+			<div class="tool">forge_free</div>
+			<div class="tool">text_to_avatar</div>
+			<div class="tool">mesh_forge</div>
+			<div class="tool">rig_mesh</div>
+			<div class="tool">forge_avatar</div>
+			<div class="tool">refine_model</div>
+			<div class="tool">create_agent_persona</div>
+			<div class="tool">get_agent_persona</div>
+			<div class="tool">persona_say</div>
+		</div>
+		<div class="claims">
+			<span class="claim">Free</span>
+			<span class="claim">Keyless</span>
+			<span class="claim">No account</span>
+			<span class="claim">Renders inline</span>
+			<span class="claim">One-tap AR</span>
+		</div>
+	</div>
+
+	<div class="foot">
+		<div class="connect"><span>connect →</span> https://three.ws/api/mcp-studio</div>
+		<p class="disclaimer" style="max-width:520px;text-align:right">
+			three.ws is an independent member of the OpenAI Partner Network. OpenAI and ChatGPT are trademarks of OpenAI.
+		</p>
+	</div>
+</section>
+
+</body>
+</html>

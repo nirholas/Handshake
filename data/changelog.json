@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-28",
+			"title": "The OpenAI Select Partner announcement now has a real graphic",
+			"summary": "Until now, sharing the OpenAI partner page or the announcement post anywhere produced a link preview that was just OpenAI's badge on its own, which said nothing about what three.ws actually does. There are now two purpose-built announcement graphics, both rendered from the site's own type and colours: one carries the partner badge exactly as OpenAI supplied it, on a white plate with the required independence line, and one lists the nine free tools the 3D Studio connector adds to ChatGPT. The partner page and the announcement blog post use the first one as their link preview, so a link posted to X, LinkedIn, Slack, or Discord now unfurls into something readable. Both graphics are public files anyone can reuse, and the layout lives in the repo so the copy can be updated and re-rendered.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/openai"
+		},
+		{
+			"date": "2026-07-28",
 			"title": "The agent economy now refills its own fuel tank instead of quietly running dry",
 			"summary": "The live activity feed on /pulse had gone almost silent, and the cause turned out to be a plumbing problem rather than a lack of money. The platform funds its agents by sending them SOL to trade and launch with, but that path only ever ran one way. Agents kept what they were given plus whatever their trades returned, and the small shared wallet that pays the network fee on every agent-to-agent payment had no way to get any of it back. It eventually fell a fraction of a cent below the minimum it needs to sign a transaction, and every paid request across the platform started failing, even though the wider fleet was holding plenty. The funding cycle is now a full loop: when the fee wallet runs short, the platform automatically pulls idle SOL back from its own agent wallets to cover the gap. Agents that are actively trading keep their trading capital, agents holding an open position are left alone entirely, and wallets belonging to real users are never touched. We also added an audit tool that reports where every lamport in the fleet is sitting and where it has been moving.",
 			"tags": [

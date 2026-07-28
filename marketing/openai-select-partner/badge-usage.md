@@ -11,7 +11,28 @@ are the rules that came with it, plus where the files live in this repo.
 | PNG @3x | `public/partners/openai/openai-select-partner@3x.png` | `https://three.ws/partners/openai/openai-select-partner@3x.png` | 1125 × 531 |
 
 Prefer the SVG anywhere it renders (web, decks that accept vector). Use the PNG
-for Open Graph images, social posts, and anything that needs a raster.
+wherever a raster of the bare badge is required.
+
+For social posts and link previews, post the announcement card below rather than
+the bare badge: the badge alone reads as OpenAI's mark, not as our announcement,
+and carries none of the required independence line.
+
+## The social cards
+
+Built from the badge, not a redraw of it. Source and renderer:
+
+| Card | Repo path | Public URL |
+| --- | --- | --- |
+| Announcement (carries the badge) | `public/partners/openai/social-card-announcement.png` | `https://three.ws/partners/openai/social-card-announcement.png` |
+| 3D Studio connector (no badge) | `public/partners/openai/social-card-studio.png` | `https://three.ws/partners/openai/social-card-studio.png` |
+
+Both are 3200 × 1800 (16:9, X's in-post ratio). The layout lives in
+[`cards/social-card.html`](cards/social-card.html); regenerate with
+`npm run build:openai-cards` after any copy change, and commit the PNGs.
+
+Only the announcement card carries the badge. The Studio card is a product claim,
+so it deliberately shows no badge, which keeps the product copy clear of anything
+that could read as an OpenAI endorsement.
 
 ## Approved uses
 
@@ -43,8 +64,9 @@ for Open Graph images, social posts, and anything that needs a raster.
 
 | Surface | File | How it appears |
 | --- | --- | --- |
-| `/openai` | `pages/openai/index.html` | Full badge on a white plate below the hero, plus the PNG as the page's Open Graph image |
-| `/blog/three-ws-openai-select-partner` | `blog/three-ws-openai-select-partner.html` | Full badge on a white plate under the headline, PNG as the Open Graph image |
+| `/openai` | `pages/openai/index.html` | Full badge on a white plate below the hero; announcement card as the Open Graph image |
+| `/blog/three-ws-openai-select-partner` | `blog/three-ws-openai-select-partner.html` | Full badge on a white plate under the headline; announcement card as the Open Graph image |
 | `/partners` | `pages/partners.html` | No badge. The card is text only, linking to `/openai` |
+| Announcement card | `marketing/openai-select-partner/cards/social-card.html` | Badge as supplied, on a white plate with clear space, alongside the independence line |
 
 If you add a new surface that uses the badge, add a row here.

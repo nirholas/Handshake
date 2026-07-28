@@ -382,6 +382,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "yo",
+			"name": "Yorùbá",
+			"dir": "ltr"
+		},
+		{
 			"code": "ig",
 			"name": "Igbo",
 			"dir": "ltr"
@@ -394,6 +399,16 @@
 		{
 			"code": "af",
 			"name": "Afrikaans",
+			"dir": "ltr"
+		},
+		{
+			"code": "so",
+			"name": "Soomaali",
+			"dir": "ltr"
+		},
+		{
+			"code": "rw",
+			"name": "Kinyarwanda",
 			"dir": "ltr"
 		},
 		{
