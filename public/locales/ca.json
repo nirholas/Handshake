@@ -7985,7 +7985,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge el teu propi model 3D a three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> forjat a three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged a three.ws",
 		"meta_description": "Un model 3D interactiu forjat a three.ws.",
 		"meta_title": "three.ws — model 3D incrustat",
 		"no_model_to_show": "No hi ha cap model per mostrar",

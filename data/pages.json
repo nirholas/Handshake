@@ -219,9 +219,10 @@
 				{
 					"path": "/skills",
 					"title": "Skills Marketplace",
-					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
+					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
 					"priority": 0.8,
 					"changefreq": "daily",
+					"indexable": false,
 					"added": "2026-05-27"
 				},
 				{
@@ -930,6 +931,15 @@
 					"description": "Every public agent embedded by IBM Granite on watsonx.ai into a navigable 3D constellation with natural-language semantic search.",
 					"priority": 0.6,
 					"changefreq": "weekly"
+				},
+				{
+					"path": "/symphony",
+					"title": "Agent Symphony",
+					"description": "The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.",
+					"priority": 0.6,
+					"changefreq": "always",
+					"added": "2026-07-28",
+					"showcase": true
 				}
 			]
 		},
@@ -1066,6 +1076,14 @@
 					"priority": 0.7,
 					"changefreq": "always",
 					"added": "2026-06-30"
+				},
+				{
+					"path": "/receipts",
+					"title": "Receipt Vault",
+					"description": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-28"
 				},
 				{
 					"path": "/viability",
@@ -2915,13 +2933,6 @@
 					"description": "What is new on three.ws: features, improvements, and releases, newest first.",
 					"priority": 0.7,
 					"changefreq": "daily"
-				},
-				{
-					"path": "/docs/agent-3d",
-					"title": "Docs: agent-3d Web Component",
-					"description": "Documentation for embedding a 3D agent with the agent-3d web component.",
-					"priority": 0.6,
-					"changefreq": "weekly"
 				},
 				{
 					"path": "/docs/ar",

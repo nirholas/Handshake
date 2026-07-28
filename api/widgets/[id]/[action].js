@@ -15,7 +15,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { captureException } from '../../_lib/sentry.js';
 import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
 import { decorate } from '../index.js';
-import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, PER_CALL_TIMEOUT_MS } from '../../_lib/chat-models.js';
+import { PROVIDER_MODEL_DEFAULTS, DEFAULT_PROVIDER_ORDER, MODEL_CATALOG, PER_CALL_TIMEOUT_MS, modelRejectsSampling, modelThinksByDefault } from '../../_lib/chat-models.js';
 import { redactPii } from '../../_lib/pii.js';
 import { moderateAnonInput, refusalReply } from '../../_lib/moderation.js';
 import { embeddingsConfigured, scoreRowsBySpace } from '../../_lib/embeddings.js';
@@ -68,7 +68,7 @@ const SAFE_SKILLS = new Set(['speak', 'wave', 'lookAt', 'playClip', 'remember'])
 const PROVIDERS = {
 	anthropic: {
 		envKey: 'ANTHROPIC_API_KEY',
-		defaultModel: 'claude-sonnet-4-6',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.anthropic,
 		url: 'https://api.anthropic.com/v1/messages',
 		style: 'anthropic',
 	},
@@ -509,11 +509,14 @@ async function callAnthropic({
 	// send the marker.
 	const payload = {
 		model: route.model,
-		max_tokens: maxTokens,
-		temperature,
+		// Claude 5 models think by default; max_tokens covers thinking + text,
+		// so floor the budget to the hard cap for those ids.
+		max_tokens: modelThinksByDefault(route.model) ? Math.max(maxTokens, HARD_MAX_TOKENS) : maxTokens,
 		system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
 		messages,
 	};
+	// Opus 4.7+ and the Claude 5 family reject sampling params with a 400.
+	if (!modelRejectsSampling(route.model)) payload.temperature = temperature;
 	if (tools.length) payload.tools = tools;
 
 	const upstream = await fetch(route.cfg.url, {

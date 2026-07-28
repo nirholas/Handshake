@@ -18200,7 +18200,7 @@
 		"meta_twitter_title": "Haid Fasnachu · three.ws"
 	},
 	"temporary": {
-		"ar": "<span class=\"dot\"></span> AR</span>",
+		"ar": "<span class=\"dot\"></span> <span data-label>AR</span>",
 		"c_camera": "<kbd>C</kbd> camera",
 		"camera_mode_c_title": "Modd camera (C)",
 		"change_avatar_title": "Newid avatar",

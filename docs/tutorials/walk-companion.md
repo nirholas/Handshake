@@ -37,7 +37,7 @@ Before you embed it, it helps to know what the live [/walk](/walk) page exposes 
 | Walk app | [/walk/app](/walk/app) | Drive your avatar with WASD or a touch joystick across six environments |
 | Live demos | embedded on [/walk](/walk) | Real (not video) iframes for `beach`, `night`, `grid`, and more |
 | One-tag embed | [/walk-embed](/walk-embed) | The chrome-less iframe you drop on any site |
-| Chrome extension | [/extension](/extension) | Your avatar walks over every page you visit, reading them aloud |
+| Chrome extension | presented on [/walk](/walk) | Your avatar walks over every page you visit, reading them aloud |
 | Distance leaderboard | [/walk-leaderboard](/walk-leaderboard) | The longest strolls on three.ws — daily, weekly, all-time |
 
 The six built-in environments are fixed and need no HDRI downloads: `studio`, `void`, `beach`, `sunset`, `night`, `grid`. You select one with the `env` query param.
@@ -265,7 +265,7 @@ User-generated avatars served by the GLB proxy (`/api/avatars/<id>/glb`) resolve
 
 ## Step 6: Walk the whole web — the Chrome extension
 
-The embed and SDK put the avatar on *your* site. The Chrome extension puts it on *every* site the visitor opens. Link to [/extension](/extension) from your page, or just point people there.
+The embed and SDK put the avatar on *your* site. The Chrome extension puts it on *every* site the visitor opens. Link to [/walk](/walk) from your page, or just point people there.
 
 What the extension does, per the product page:
 
@@ -333,7 +333,7 @@ You added a walking 3D avatar to your site three ways and learned what the [/wal
 - **One-tag embed** — paste the [/walk-embed](/walk-embed) iframe, pick the world and controls with query params (`env`, `controls`, `orbit`, `avatar`). No build step.
 - **postMessage contract** — drive the embed from the host page with `walk:goto` / `walk:say` / `walk:env` and listen for `walk:ready` / `walk:position`, on the versioned `three-walk` channel. Full reference at [/docs/walk-embed-api](/docs/walk-embed-api).
 - **`@three-ws/walk` SDK** — `createWalkCompanion().bootstrap()` mounts the real corner companion plus the full-page playground, side-effect-free until enabled, with a built-in avatar picker and a two-strategy roster that never T-poses.
-- **The product surfaces** — the [/extension](/extension) that walks the whole web, and the distance [/walk-leaderboard](/walk-leaderboard) you can read from `/api/walk/leaderboard`.
+- **The product surfaces** — the Chrome extension presented on [/walk](/walk) that walks the whole web, and the distance [/walk-leaderboard](/walk-leaderboard) you can read from `/api/walk/leaderboard`.
 
 The leverage is composability: the same engine renders the corner mascot, the full-page playground, the standalone embed, and the extension — so an avatar you build once walks everywhere.
 

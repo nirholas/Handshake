@@ -1,5 +1,7 @@
 # Robinhood Chain prompt pack — execution index
 
+> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+
 Run order matters: later waves consume earlier waves' output. Within a wave, prompts are
 independent and can run concurrently. Every agent reads `_shared.md` first, then its prompt.
 

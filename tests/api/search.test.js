@@ -1,5 +1,5 @@
 // Unit tests for GET /api/search — the cross-entity discovery endpoint
-// (prompts/user-value/05-discovery-search.md). Mocks the five source
+// (user-value 05-discovery-search work order, retired). Mocks the five source
 // functions in api/_lib/cross-search.js (each already unit-testable on its
 // own via the stores it wraps) and asserts the endpoint's own job: fan-out
 // wiring, type filtering, ranking/merge, and degrade-cleanly-without-a-db.

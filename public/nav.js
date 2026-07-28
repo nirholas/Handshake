@@ -309,11 +309,14 @@ function renderGroup(group) {
 				)
 				.join('')
 		: (group.items || []).map(renderMenuItem).join('');
+	// A stable, unique id per group so the trigger can reference its menu via
+	// aria-controls (label slug is unique within the nav data).
+	const popId = `nav-pop-${String(group.label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
 	return (
 		`<div class="nav-grp">` +
-		`<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">` +
+		`<button type="button" class="nav-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="${popId}">` +
 		`<span${i18nAttr(group.label)}>${escHtml(group.label)}</span>${badge}<span class="nav-caret" aria-hidden="true">▾</span></button>` +
-		`<div class="${popClass}" role="menu" aria-label="${escHtml(group.label)}">${note}${body}</div>` +
+		`<div class="${popClass}" id="${popId}" role="menu" aria-label="${escHtml(group.label)}">${note}${body}</div>` +
 		`</div>`
 	);
 }

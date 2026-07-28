@@ -21,6 +21,7 @@ import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { getSolBalance } from '../_lib/avatar-wallet.js';
 import { classifyAutonomy, describeTier } from '../_lib/sniper-autonomy.js';
+import { diagnoseStall } from '../_lib/sniper-stall.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days', all: null };
@@ -96,6 +97,7 @@ export default wrap(async (req, res) => {
 		select
 			s.id as strategy_id,
 			s.label, s.experiment_group, s.decision_mode, s.llm_model, s.llm_min_confidence,
+			s.llm_strict_model, s.kill_switch,
 			s.trigger, s.enabled,
 			s.per_trade_lamports, s.daily_budget_lamports, s.max_concurrent_positions,
 			s.min_market_cap_usd, s.max_market_cap_usd, s.require_socials,
@@ -217,6 +219,35 @@ export default wrap(async (req, res) => {
 		}
 	} else {
 		for (const x of experiments) x.balance_sol = null;
+	}
+
+	// Why an arm shows 0 trades. A strategy can be armed, funded and evaluating
+	// every launch while one of its own knobs makes an entry arithmetically
+	// impossible — and because a skipped evaluation writes no row, the board used
+	// to render that as an indistinguishable "0". `stall` names the condition.
+	// Strict-model arms need one extra fact: whether the model they insist on is
+	// actually answering, or whether the failover chain has been answering for it.
+	const modelAnswers = await sql`
+		select model,
+		       count(*)::int                                as verdicts,
+		       count(*) filter (where answered_by = model)::int as named_answers
+		from sniper_llm_verdicts
+		where network = ${network}
+		  and created_at > now() - interval '24 hours'
+		group by model
+	`.catch(() => []);
+	const answersByModel = new Map(modelAnswers.map((m) => [m.model, m]));
+	for (const x of experiments) {
+		const row = rows.find((r) => r.strategy_id === x.strategy_id);
+		const answers = answersByModel.get(x.llm_model) || null;
+		x.stall = diagnoseStall({
+			strategy: row,
+			closed: x.closed,
+			open: x.open,
+			balanceSol: x.balance_sol,
+			verdictCount: answers ? Number(answers.verdicts) || 0 : 0,
+			namedModelAnswers: answers ? Number(answers.named_answers) || 0 : 0,
+		});
 	}
 
 	// Judgment ledger: every LLM verdict (buys AND skips) scored against what the

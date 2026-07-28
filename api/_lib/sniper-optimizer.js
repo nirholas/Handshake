@@ -181,6 +181,15 @@ export function proposeAdjustments(stats, config, opts = {}) {
 		let target;
 		if (field === 'per_trade_lamports') {
 			target = to; // already computed absolute
+			// Never propose a bet the arm's OWN daily budget cannot fund. This
+			// optimizer owns per_trade_lamports while the evolution loop owns
+			// daily_budget_lamports, and neither used to read the other's knob — so
+			// a size could drift above the day's whole budget, after which
+			// `spent + size <= budget` failed on every evaluation and the arm went
+			// silently dead. The budget is the ceiling; a bet may equal it, never
+			// exceed it.
+			const dailyBudget = num(config.daily_budget_lamports);
+			if (dailyBudget != null && dailyBudget > 0 && target > dailyBudget) target = dailyBudget;
 		} else {
 			target = boundedToward(from, to, steps[field], b);
 		}

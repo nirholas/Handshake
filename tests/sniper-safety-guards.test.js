@@ -24,7 +24,7 @@ import { mayhemVerdict, mayhemGate } from '../workers/agent-sniper/mayhem-gate.j
 import { marketCapBandReason, scoreMint } from '../workers/agent-sniper/scorer.js';
 import { checkDailyLoss } from '../api/_lib/agent-trade-guards.js';
 import { effectiveDailyLossLimitLamports } from '../workers/agent-sniper/strategy-store.js';
-import { criticalFirewallReason, classifyRoundTripRevert } from '../api/_lib/trade-firewall.js';
+import { criticalFirewallReason, classifyRoundTripRevert, probeQuoteLamports } from '../api/_lib/trade-firewall.js';
 import { withinMasterDailyCap, masterDailyOutflowSol } from '../api/_lib/launcher-funding.js';
 
 describe('parseAgentIds (worker agent scoping)', () => {
@@ -125,9 +125,55 @@ describe('classifyRoundTripRevert (only a SELL-leg revert has the honeypot shape
 		const v = classifyRoundTripRevert({ InstructionError: [4, { Custom: 3012 }] }, [], 3);
 		expect(v).toMatchObject({ leg: 'sell', status: 'fail', reason: 'roundtrip_reverted' });
 	});
-	it('fails closed when the failing instruction cannot be attributed', () => {
-		expect(classifyRoundTripRevert('AccountNotFound', [], 3)).toMatchObject({ status: 'fail', reason: 'roundtrip_reverted' });
-		expect(classifyRoundTripRevert({ InsufficientFundsForRent: {} }, [], 3)).toMatchObject({ status: 'fail' });
+	// A funding failure often carries no InstructionError to read a leg off: a payer
+	// whose account does not exist, or cannot cover the fee/rent, fails the whole
+	// message. That is the poorest possible wallet, not the most dangerous possible
+	// coin — reading it as a trapped exit is what labelled 336 ordinary bonding-curve
+	// launches "honeypot" in a single afternoon.
+	it('reads an unattributable FUNDING failure as an underfunded buy, not a honeypot', () => {
+		expect(classifyRoundTripRevert('AccountNotFound', [], 3))
+			.toMatchObject({ leg: 'buy', status: 'warn', reason: 'buy_leg_underfunded' });
+		expect(classifyRoundTripRevert({ InsufficientFundsForRent: { account_index: 0 } }, [], 3))
+			.toMatchObject({ status: 'warn', reason: 'buy_leg_underfunded' });
+		expect(classifyRoundTripRevert('BlockhashNotFound', ['Transfer: insufficient lamports 1, need 2'], 3))
+			.toMatchObject({ status: 'warn', reason: 'buy_leg_underfunded' });
+	});
+	it('still fails closed when an unattributable failure is not funding-shaped', () => {
+		expect(classifyRoundTripRevert('BlockhashNotFound', [], 3)).toMatchObject({ status: 'fail', reason: 'roundtrip_reverted' });
+		expect(classifyRoundTripRevert({ Custom: 3012 }, ['Program log: transfer hook rejected'], 3))
+			.toMatchObject({ status: 'fail', reason: 'roundtrip_reverted' });
+	});
+});
+
+describe('probeQuoteLamports (a honeypot traps any size — probe what the wallet can fund)', () => {
+	const SOL = (n) => BigInt(Math.round(n * 1e9));
+	it('keeps the full entry size when the balance is unknown', () => {
+		expect(probeQuoteLamports(SOL(0.2), null)).toBe(SOL(0.2));
+	});
+	it('keeps the full entry size when the wallet can afford it', () => {
+		expect(probeQuoteLamports(SOL(0.2), SOL(2.13))).toBe(SOL(0.2));
+	});
+	// luna's exact production shape: 0.2 SOL configured, 0.0153 SOL in the wallet.
+	it('shrinks the probe to what a thin wallet can simulate', () => {
+		const probe = probeQuoteLamports(SOL(0.2), SOL(0.0153));
+		expect(probe).toBe(SOL(0.0153) - SOL(0.006));
+		expect(probe).toBeLessThan(SOL(0.2));
+	});
+	it('returns null when even a minimum probe is unaffordable', () => {
+		expect(probeQuoteLamports(SOL(0.2), SOL(0.006))).toBeNull();
+		expect(probeQuoteLamports(SOL(0.2), 0n)).toBeNull();
+	});
+	it('never probes larger than the real entry', () => {
+		expect(probeQuoteLamports(SOL(0.01), SOL(5))).toBe(SOL(0.01));
+	});
+});
+
+describe('probe_unaffordable is a critical (unproven-safety) reason', () => {
+	it('blocks a fail-closed caller rather than passing an unvetted coin', () => {
+		expect(criticalFirewallReason({ checks: [{ status: 'warn', reason: 'probe_unaffordable' }] })).toBe('probe_unaffordable');
+	});
+	it('does not treat an underfunded buy leg as critical — the coin was not the problem', () => {
+		expect(criticalFirewallReason({ checks: [{ status: 'warn', reason: 'buy_leg_underfunded' }] })).toBeNull();
 	});
 });
 

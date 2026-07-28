@@ -258,14 +258,18 @@ async function pollForSeal(bucket, object, { network, fetchImpl, pollIntervalMs,
  */
 export async function createObject(bucketName, objectName, bytes, opts = {}) {
 	const network = opts.network === 'mainnet' ? 'mainnet' : 'testnet';
-	const payload = bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes || []);
-	if (payload.length === 0) {
+	// Validate size BEFORE materializing a copy: Uint8Array.from() on a non-typed
+	// array-like walks it element by element, so converting an oversized input
+	// first would burn minutes of CPU (and a 200MB allocation) just to reject it.
+	const byteLength = bytes?.length ?? 0;
+	if (byteLength === 0) {
 		throw new GreenfieldWriteError('object bytes must not be empty', { code: 'bad_input' });
 	}
 	const maxBytes = opts.maxBytes || MAX_VAULT_OBJECT_BYTES;
-	if (payload.length > maxBytes) {
-		throw new GreenfieldWriteError(`object is ${payload.length} bytes, exceeds the ${maxBytes}-byte vault limit`, { code: 'too_large' });
+	if (byteLength > maxBytes) {
+		throw new GreenfieldWriteError(`object is ${byteLength} bytes, exceeds the ${maxBytes}-byte vault limit`, { code: 'too_large' });
 	}
+	const payload = bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes);
 
 	const { address, privateKey } = accountFromPrivateKey(opts.privateKey);
 	const client = resolveClient(network, opts);

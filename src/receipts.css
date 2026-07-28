@@ -1,0 +1,489 @@
+/* Receipt Vault: the buyer-side mirror of /x402-revenue. Self-contained
+   (rc- prefix); leans on the shared theme tokens so it tracks light/dark like
+   every other surface. Purple-tinted glass to distinguish "what you bought"
+   from the revenue page's green "what the platform earns". */
+
+.rc-shell {
+	--rc-accent: #8b7bf4;
+	--rc-accent-2: #3ab8e0;
+	--rc-grad: linear-gradient(135deg, var(--rc-accent) 0%, var(--rc-accent-2) 100%);
+	position: relative;
+	max-width: 960px;
+	margin: 0 auto;
+	padding: clamp(20px, 5vw, 56px) clamp(16px, 4vw, 32px) 96px;
+	font-family: var(--font-body, system-ui, sans-serif);
+	color: var(--ink, #d8d8d8);
+}
+
+.rc-glow {
+	position: absolute;
+	inset: -10% auto auto auto;
+	left: max(-20%, calc((100% - 100vw) / 2 + 12px));
+	right: max(-20%, calc((100% - 100vw) / 2 + 12px));
+	height: 380px;
+	mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+	-webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+	background:
+		radial-gradient(
+			60% 80% at 20% 0%,
+			color-mix(in srgb, var(--rc-accent) 18%, transparent),
+			transparent 70%
+		),
+		radial-gradient(
+			50% 70% at 85% 10%,
+			color-mix(in srgb, var(--rc-accent-2) 14%, transparent),
+			transparent 70%
+		);
+	filter: blur(20px);
+	pointer-events: none;
+	z-index: 0;
+	opacity: 0.8;
+}
+.rc-shell > *:not(.rc-glow) {
+	position: relative;
+	z-index: 1;
+}
+
+/* ── hero ─────────────────────────────────────────────────────────────────── */
+.rc-hero {
+	margin-bottom: var(--space-xl, 32px);
+}
+.rc-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+	font-size: 0.8rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 60%, transparent);
+	margin: 0 0 0.6em;
+}
+.rc-title {
+	font-family: var(--font-display, inherit);
+	font-size: clamp(1.9rem, 5vw, 3rem);
+	line-height: 1.05;
+	margin: 0 0 0.4em;
+}
+.rc-title em {
+	font-style: normal;
+	background: var(--rc-grad);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+.rc-sub {
+	max-width: 58ch;
+	margin: 0;
+	line-height: 1.6;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 78%, transparent);
+}
+.rc-sub a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+/* ── sign-in card ─────────────────────────────────────────────────────────── */
+.rc-signin {
+	margin-top: var(--space-xl, 32px);
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 16px);
+	background: color-mix(in srgb, var(--panel, #131318) 88%, transparent);
+	padding: clamp(20px, 4vw, 36px);
+	backdrop-filter: blur(8px);
+}
+.rc-signin h2 {
+	margin: 0 0 0.4em;
+	font-size: 1.15rem;
+}
+.rc-signin-copy {
+	margin: 0 0 1.4em;
+	max-width: 60ch;
+	line-height: 1.6;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 72%, transparent);
+}
+.rc-connect-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+.rc-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55em;
+	border-radius: 999px;
+	padding: 0.7em 1.3em;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid transparent;
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.15s ease,
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+.rc-btn:focus-visible {
+	outline: 2px solid var(--rc-accent);
+	outline-offset: 2px;
+}
+.rc-btn:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+.rc-btn-primary {
+	background: var(--rc-grad);
+	color: #0b0b10;
+}
+.rc-btn-primary:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 22px color-mix(in srgb, var(--rc-accent) 40%, transparent);
+}
+.rc-btn-secondary {
+	background: transparent;
+	color: var(--ink, #d8d8d8);
+	border-color: var(--line, rgba(255, 255, 255, 0.16));
+}
+.rc-btn-secondary:hover:not(:disabled) {
+	border-color: var(--rc-accent);
+	transform: translateY(-1px);
+}
+.rc-btn:active:not(:disabled) {
+	transform: translateY(0);
+}
+.rc-signin-error {
+	margin: 1em 0 0;
+	padding: 0.7em 1em;
+	border-radius: var(--radius-md, 10px);
+	background: color-mix(in srgb, #f0637a 12%, transparent);
+	border: 1px solid color-mix(in srgb, #f0637a 35%, transparent);
+	color: var(--ink, #d8d8d8);
+	font-size: 0.9rem;
+}
+.rc-signin-note {
+	margin: 1.4em 0 0;
+	font-size: 0.82rem;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 55%, transparent);
+	max-width: 62ch;
+	line-height: 1.55;
+}
+
+/* ── vault ────────────────────────────────────────────────────────────────── */
+.rc-vault-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-bottom: var(--space-md, 16px);
+}
+.rc-wallet {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6em;
+	font-size: 0.9rem;
+}
+.rc-wallet-net {
+	font-size: 0.72rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	padding: 0.25em 0.7em;
+	border-radius: 999px;
+	border: 1px solid color-mix(in srgb, var(--rc-accent) 45%, transparent);
+	color: var(--rc-accent);
+}
+.rc-wallet-addr {
+	font-family: var(--font-mono, ui-monospace, monospace);
+}
+.rc-vault-tools {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.rc-tool {
+	background: transparent;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
+	border-radius: 999px;
+	color: var(--ink, #d8d8d8);
+	font: inherit;
+	font-size: 0.85rem;
+	padding: 0.4em 1em;
+	cursor: pointer;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease,
+		transform 0.15s ease;
+}
+.rc-tool:hover {
+	border-color: var(--rc-accent);
+	transform: translateY(-1px);
+}
+.rc-tool:active {
+	transform: translateY(0);
+}
+.rc-tool:focus-visible {
+	outline: 2px solid var(--rc-accent);
+	outline-offset: 2px;
+}
+
+/* KPI strip */
+.rc-kpis {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 12px;
+	margin-bottom: var(--space-lg, 24px);
+}
+.rc-kpi {
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-md, 12px);
+	background: color-mix(in srgb, var(--panel, #131318) 88%, transparent);
+	padding: 14px 16px;
+}
+.rc-kpi-label {
+	display: block;
+	font-size: 0.72rem;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 55%, transparent);
+	margin-bottom: 0.35em;
+}
+.rc-kpi-val {
+	font-size: 1.25rem;
+	font-weight: 650;
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
+/* search */
+.rc-search-wrap {
+	margin-bottom: var(--space-md, 16px);
+}
+.rc-search {
+	width: 100%;
+	box-sizing: border-box;
+	background: color-mix(in srgb, var(--panel, #131318) 88%, transparent);
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-md, 10px);
+	color: inherit;
+	font: inherit;
+	font-size: 0.92rem;
+	padding: 0.65em 1em;
+	transition: border-color 0.15s ease;
+}
+.rc-search:focus {
+	outline: none;
+	border-color: var(--rc-accent);
+}
+.rc-search::placeholder {
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 40%, transparent);
+}
+
+/* rows */
+.rc-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.rc-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.07));
+	border-radius: var(--radius-md, 12px);
+	background: color-mix(in srgb, var(--panel, #131318) 82%, transparent);
+	padding: 12px 16px;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
+	animation: rc-enter 0.25s ease both;
+}
+@keyframes rc-enter {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.rc-row:hover {
+	border-color: color-mix(in srgb, var(--rc-accent) 40%, transparent);
+}
+.rc-row-main {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.rc-resource {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.9rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.rc-meta {
+	display: flex;
+	align-items: center;
+	gap: 0.9em;
+	font-size: 0.78rem;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 60%, transparent);
+	flex-wrap: wrap;
+}
+.rc-net {
+	padding: 0.1em 0.6em;
+	border-radius: 999px;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
+	font-size: 0.72rem;
+	letter-spacing: 0.04em;
+}
+.rc-net[data-net='Solana'] {
+	border-color: color-mix(in srgb, #14f195 45%, transparent);
+	color: #14f195;
+}
+.rc-net[data-net='Base'] {
+	border-color: color-mix(in srgb, #4b8bff 50%, transparent);
+	color: #6ea2ff;
+}
+.rc-tx {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	color: inherit;
+	text-decoration: none;
+}
+a.rc-tx:hover {
+	color: var(--rc-accent);
+	text-decoration: underline;
+}
+.rc-tx-none {
+	font-style: italic;
+	opacity: 0.7;
+}
+.rc-row-actions {
+	display: inline-flex;
+	gap: 6px;
+	flex-shrink: 0;
+}
+.rc-act {
+	background: transparent;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
+	border-radius: 8px;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 75%, transparent);
+	font: inherit;
+	font-size: 0.78rem;
+	padding: 0.3em 0.8em;
+	cursor: pointer;
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease;
+}
+.rc-act:hover {
+	border-color: var(--rc-accent);
+	color: var(--ink, #fff);
+}
+.rc-act:focus-visible {
+	outline: 2px solid var(--rc-accent);
+	outline-offset: 2px;
+}
+
+/* skeleton */
+.rc-skeleton {
+	height: 58px;
+	border-color: transparent;
+	background: linear-gradient(
+		90deg,
+		color-mix(in srgb, var(--panel, #131318) 85%, transparent) 25%,
+		color-mix(in srgb, var(--ink, #d8d8d8) 8%, transparent) 50%,
+		color-mix(in srgb, var(--panel, #131318) 85%, transparent) 75%
+	);
+	background-size: 200% 100%;
+	animation: rc-shimmer 1.2s linear infinite;
+}
+@keyframes rc-shimmer {
+	from {
+		background-position: 200% 0;
+	}
+	to {
+		background-position: -200% 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.rc-skeleton,
+	.rc-row {
+		animation: none;
+	}
+}
+
+/* empty + error states */
+.rc-empty,
+.rc-load-error {
+	border: 1px dashed var(--line, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-lg, 16px);
+	padding: clamp(24px, 5vw, 48px);
+	text-align: center;
+}
+.rc-empty h3,
+.rc-load-error h3 {
+	margin: 0 0 0.4em;
+	font-size: 1.05rem;
+}
+.rc-empty p,
+.rc-load-error p {
+	margin: 0 auto 0.8em;
+	max-width: 48ch;
+	line-height: 1.6;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 70%, transparent);
+}
+.rc-empty a {
+	color: var(--rc-accent);
+}
+
+/* fineprint + toast */
+.rc-fineprint {
+	margin-top: var(--space-xl, 32px);
+	font-size: 0.8rem;
+	line-height: 1.55;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 50%, transparent);
+	max-width: 70ch;
+}
+.rc-hint kbd {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.75rem;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.18));
+	border-bottom-width: 2px;
+	border-radius: 5px;
+	padding: 0.1em 0.45em;
+}
+.rc-toast {
+	position: fixed;
+	bottom: 28px;
+	left: 50%;
+	transform: translate(-50%, 8px);
+	background: color-mix(in srgb, var(--panel, #1a1a22) 94%, transparent);
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
+	border-radius: 999px;
+	padding: 0.55em 1.3em;
+	font-size: 0.88rem;
+	opacity: 0;
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+	pointer-events: none;
+	z-index: 50;
+}
+.rc-toast.show {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
+@media (max-width: 560px) {
+	.rc-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.rc-row-actions {
+		justify-content: flex-end;
+	}
+}

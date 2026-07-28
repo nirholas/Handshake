@@ -54,6 +54,22 @@ export function alertErrorSpike({ count, windowMs, lastError, network, mode }) {
 	);
 }
 
+/**
+ * A strict-model arm refused a verdict because the failover chain answered for
+ * its named model. One of these is noise (a single timeout); a sustained run of
+ * them means the arm is parked — it will never trade until the named model's
+ * route is restored. Signature is per model so a dead route pages hourly, not
+ * per launch, and two broken models are two distinct pages.
+ */
+export function alertStrictModelOffline({ model, answeredBy, agentId }) {
+	alert(
+		`strict-model arm parked — ${model || 'unknown model'} not answering`,
+		`A strict arm (${agentId || 'unknown agent'}) refused a buy because ${answeredBy || 'the failover chain'} answered in place of ${model || 'its named model'}. `
+		+ 'A strict arm never trades on a fallback verdict, so it stays parked until that route works. Check the provider key/credits for that model.',
+		`sniper:strict-model-offline:${model || 'unknown'}`,
+	);
+}
+
 /** A heartbeat write to Postgres failed repeatedly — the worker is flying blind. */
 export function alertHeartbeatStale({ network, mode }) {
 	alert(

@@ -23,7 +23,7 @@ import { llmComplete, LlmUnavailableError } from './llm.js';
 // synthesis quality — passed as the Anthropic model so that when the paid key
 // is live the chain uses it; the free providers (Groq/OpenRouter/NVIDIA) remain
 // the actual workhorses and the call still succeeds when the paid key is dead.
-export const REFLECTION_MODEL = 'claude-opus-4-7';
+export const REFLECTION_MODEL = 'claude-opus-5';
 
 // How many successful reflection passes an agent may run per rolling 24h. A pass
 // can produce 0..MAX_INSIGHTS dreams; this caps the LLM spend, not the dreams.
@@ -311,7 +311,10 @@ export async function runReflection({ agentId, userId = null, trigger = 'on-dema
 		completion = await llmComplete({
 			system: SYSTEM_PROMPT,
 			user: buildUserPrompt({ agent, memories, actions, rejected }),
-			maxTokens: 1600,
+			// Opus 5 thinks by default and max_tokens caps thinking + answer
+			// together; 4096 leaves room for both (free-lane fallbacks just get a
+			// roomier completion budget).
+			maxTokens: 4096,
 			anthropicModel: REFLECTION_MODEL,
 			timeoutMs: 45_000,
 			track: { userId, agentId, tool: 'reflection' },

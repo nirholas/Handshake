@@ -86,6 +86,20 @@ function modeBadge(x) {
 	return `<span class="xp-badge xp-badge-rules">rules</span>`;
 }
 
+// Why an arm shows no fills. A strategy can be armed, funded and evaluating every
+// launch while one of its own knobs makes an entry impossible — and a skipped
+// evaluation leaves no trace, so the board used to render that as a bare "0". A
+// blocking condition is loud; a merely quiet arm ("nothing has qualified yet") is
+// only shown when it has no record at all, so a working arm stays uncluttered.
+function stallLine(x) {
+	const s = x.stall;
+	if (!s) return '';
+	if (!s.blocking && x.closed > 0) return '';
+	const cls = s.blocking ? 'xp-stall xp-stall-blocking' : 'xp-stall';
+	const label = s.blocking ? 'not trading' : 'idle';
+	return `<div class="${cls}" title="${esc(s.message)}"><b>${esc(label)}:</b> ${esc(s.message)}</div>`;
+}
+
 // Earned autonomy: how much rope this arm's own record has bought it. Only shown
 // once an arm has moved off the default, so the board stays quiet by default and
 // a tier badge always means something happened.
@@ -209,7 +223,7 @@ function renderBoard(experiments) {
 					<div class="xp-agent"><a href="/a/${esc(x.agent_id)}">${esc(x.agent_name || 'agent')}</a> ${modeBadge(x)} · <a href="${esc(x.ledger_url)}" title="Full decision-by-decision reasoning ledger, tamper-evident and on-chain anchored">ledger →</a></div>
 					${walletLine(x)}
 				</td>
-				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · ${esc(exitLine(x))}</div></td>
+				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · ${esc(exitLine(x))}</div>${stallLine(x)}</td>
 				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}${bags}${paper}</td>
 				<td>${x.win_rate != null ? esc(String(x.win_rate)) + '%' : '·'}</td>
 				<td class="${pnlClass(x.realized_pnl_sol)}">${esc(sol(x.realized_pnl_sol))}</td>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-28T21:20:31.554Z",
+	"generated_at": "2026-07-28T21:38:45.072Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -258,10 +258,10 @@
 				{
 					"path": "/skills",
 					"title": "Skills Marketplace",
-					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
+					"description": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
 					"added": "2026-05-27",
 					"auth": null,
-					"indexable": true,
+					"indexable": false,
 					"tags": [],
 					"showcase": false
 				},
@@ -1138,6 +1138,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/symphony",
+					"title": "Agent Symphony",
+					"description": "The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.",
+					"added": "2026-07-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				}
 			]
 		},
@@ -1301,6 +1311,16 @@
 					"title": "Endpoint Revenue",
 					"description": "The live revenue layer — real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
 					"added": "2026-06-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/receipts",
+					"title": "Receipt Vault",
+					"description": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+					"added": "2026-07-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3691,16 +3711,6 @@
 					"path": "/changelog",
 					"title": "Changelog",
 					"description": "What is new on three.ws: features, improvements, and releases, newest first.",
-					"added": null,
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/docs/agent-3d",
-					"title": "Docs: agent-3d Web Component",
-					"description": "Documentation for embedding a 3D agent with the agent-3d web component.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

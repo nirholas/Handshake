@@ -1,5 +1,7 @@
 # quality-bar: the $100k GCP-credit quality campaign
 
+> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+
 Owner directive 2026-07-16: spend the Google Cloud credits liberally to make the platform's
 UX/UI excellent and 3D generations as real-looking as IRL people and objects. No new non-GCP
 paid APIs. Agents complete their prompt 100% and never stop to ask questions;

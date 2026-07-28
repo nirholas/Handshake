@@ -172,6 +172,14 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   `threews-ring-agent/<persona>` (persona agents), `threews-x402-wallet-monitor`
   and `threews-x402-thumbnail-regen`. Matching only the first two used to leak
   the rest into `investigate` on every sweep with the same root cause.
+- **NOT this class: `fee_runway_exhausted`.** A settle refused with
+  `fee_runway_exhausted:<spent>+<next>><budget>` is the **wallet fee governor**
+  pacing a platform wallet's daily fee burn to its funded runway — a designed
+  throttle, not an outage, and no action is required. Volume resumes at UTC
+  midnight or immediately when the wallet is topped up (the budget scales with
+  live balance). See docs/x402-ring-economy.md "The wallet fee governor". Only
+  `fee_wallet_below_floor` and `insufficient_sol_surplus` mean the wallets are
+  actually dry.
 
 ---
 

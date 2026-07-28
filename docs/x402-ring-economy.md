@@ -44,24 +44,72 @@ measured 6,300-7,800 self-pay cost) per call. Consequences:
 - Only at or below the floor does the tick skip with `runway_exhausted` (one
   throttled ops alert), the loud "fund the payer" signal.
 
-### Known limitation: the governor governs one tenant of a shared wallet
+### The sponsor governor: watching the wallet that actually starves
 
-`governedCalls()` throttles the **ring tick only**, but the ring payer is shared
-with roughly a dozen other paid pipelines (`health`, `volume`, `oracle`,
-`sniper`, `datapoint`, `3d`, `ring-agents`, …) that spend ungoverned. Measured
-2026-07-27: in one 20-minute window the ring tick was throttled to 2 paid calls
-while co-tenant pipelines completed ~200. A governor that throttles one tenant
-while others drain the same runway protects nothing under real scarcity — it
-just decides *which* pipeline gets starved. Two follow-ups, in order of value:
+`governedCalls()` watches the ring **payer's** SOL, but the outage of 2026-07-28
+came from a different wallet: the facilitator's sponsor fee wallet
+(`X402_FEE_PAYER_SOLANA`), which co-signs every sponsored settle at roughly
+5,000 lamports each. The tick had no view of it, so the first symptom was every
+settle dying with `fee_wallet_below_floor` and the ring stopping cold mid-tick.
 
-1. **Meter the wallet, not the pipeline.** Move the runway budget into a shared
-   accounting key (the same place `ringDailySpent()` lives) so every pipeline
-   draws from one governed allowance.
-2. **Watch the wallet that actually pays.** The governor reads the ring payer's
-   balance, but sponsor-mode settles are fee-paid by the sponsor/master
-   (confirmed on-chain: `accountKeys[0]` is the master on co-tenant payments, 2
-   signatures, 10,001 lamports). In mixed mode the governed balance and the
-   burned balance are different wallets.
+`sponsorGovernor()` (same module) gives the tick that view, with three regimes:
+
+- **Balance unreadable (RPC blip):** pass through untouched. The facilitator
+  fail-closes at settle time, so guessing zero here would turn a transient read
+  failure into a self-inflicted outage.
+- **Below the hard floor (`X402_SPONSOR_SOL_FLOOR_LAMPORTS`):** skip the whole
+  tick with reason `sponsor_fee_wallet_floor`. Every sponsored settle is
+  guaranteed to be refused; firing them is pure error noise.
+- **Above the floor:** taper the call rate so the sponsor's spendable SOL lasts
+  `X402_RING_SPONSOR_RUNWAY_DAYS` (default 1) at
+  `X402_RING_SPONSOR_FEE_PER_SETTLE_LAMPORTS` (default 6,000) per settle, with
+  the same heartbeat semantics as the payer governor. While tapering, the tick
+  logs `fee_wallet_runway_low` and raises one throttled ops alert — the
+  pre-starvation signal, hours before `fee_wallet_below_floor` would appear.
+  The treasury-topup reclaim (`reclaimIdleSol` / `reclaimIdleAgentSol`) usually
+  refills the sponsor within a cycle; the alert persisting is the cue to fund
+  the economy master.
+
+### The wallet fee governor: metering the wallet, not the pipeline
+
+`governedCalls()` throttles the **ring tick only**, but the fee-paying wallets
+are shared with roughly a dozen other paid pipelines (`health`, `volume`,
+`oracle`, `sniper`, `datapoint`, `3d`, `ring-agents`, …). Measured 2026-07-27:
+in one 20-minute window the ring tick was throttled to 2 paid calls while
+co-tenant pipelines completed ~200 through the same wallet. A governor that
+throttles one tenant while others drain the same runway protects nothing under
+real scarcity — it just decides *which* pipeline gets starved.
+
+The **wallet fee governor** closes that gap by governing at the one choke point
+every platform payment passes through: the facilitator's settle path. Pure
+decision logic in
+[wallet-fee-governor.js](../api/_lib/x402/wallet-fee-governor.js), I/O in
+[wallet-fee-meter.js](../api/_lib/x402/wallet-fee-meter.js), enforced via the
+`feeMeter` hook on `settleRingPayment()`:
+
+- **Per-wallet daily budget.** Each fee-paying wallet may burn
+  `spendable SOL / X402_WALLET_FEE_RUNWAY_DAYS` (default 3) of fees per UTC
+  day, never below the heartbeat floor
+  `X402_WALLET_FEE_MIN_BUDGET_LAMPORTS` (default 0.01 SOL/day ≈ ~2,000
+  self-pay settles). Spent-today is summed from
+  `x402_self_facilitator_log.fee_lamports` per `fee_payer` (the column records
+  the wallet that actually paid — payer in self-pay, sponsor in sponsor mode —
+  which also resolves the old "governed balance ≠ burned balance" mismatch).
+- **Every tenant draws from the same budget.** A settle over budget is refused
+  with `fee_runway_exhausted:<spent>+<next>><budget>` *before* co-sign or
+  broadcast, whatever pipeline initiated it. Funding is the throttle for the
+  whole wallet: top it up and every tenant speeds up together.
+- **Platform wallets only.** The meter governs only wallets in
+  `ringAllowedAddresses()`. An external organic buyer self-paying through this
+  facilitator spends its own SOL and is always admitted.
+- **Fails open, floor fails closed.** An unreadable ledger, allowlist, or a
+  thrown hook admits the settle — the `fee_wallet_below_floor` hard stop
+  remains the real protection; the meter is pacing. A refusal raises one
+  deduped ops alert per wallet (`wallet-fee-governor:<pubkey>`) labeling it a
+  **governed throttle, not an outage**.
+- **Kill switch:** `X402_WALLET_FEE_GOVERNOR_ENABLED=false`. Cache freshness:
+  `X402_WALLET_FEE_SPENT_CACHE_MS` (default 20s; bounds multi-instance
+  undercount to one window per instance).
 
 ## Burning the least SOL — two levers
 

@@ -105,3 +105,22 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 - **Building UI?** → [ui-juice](./ui-juice.md) is the shared game-feel library (count-ups, sparklines, ring gauges, live dots, the "it shipped" ripple) every surface animates with
 - **Teaching another AI to use three.ws?** → [The Agent Skills pack](./agent-skills.md) — portable `SKILL.md` folders that give any Claude surface (Claude Code, the Claude apps, the Agent SDK) three.ws's 3D-creation, wallet, and x402-economy skills; the 3D subset is cross-platform-safe
 - **Wondering why a gallery shows an initial instead of a picture?** → [Avatar thumbnails](./avatar-thumbnails.md) — where an avatar's preview image comes from, the one rule every code path obeys (never publish a thumbnail URL whose object doesn't exist), the two crons that keep coverage at 100%, and how to run the backfill
+
+---
+
+## Reference shelf
+
+Deeper references that don't fit a track above but answer real questions:
+
+- [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
+- [What an agent can do](./agent-abilities/ABILITIES.md): the full abilities dossier, generated from the source article
+- [Use cases and example workflows](./content/use-cases/README.md): five audience-specific walkthroughs tying shipped features to concrete outcomes
+- [UX Flow Atlas](./ux-flows/01-onboarding-creation.md): screen-by-screen traces of the platform's core flows, starting with onboarding and creation
+- [Demo routes](./demo-routes.md): the canonical map of every `/demo/*` and `/demos/*` route
+- [Agent trading spec](./specs/agent-trading.md): the proposed agent trading capability contract
+- [ERC-8004 validation attestation](./erc8004/validation-attestation.md): the attestation written when an agent registers on-chain
+- [zauth](./zauth/index.md): the vendored security infrastructure docs our agent auth builds on
+- [pump.fun program docs](./pumpfun-program/README.md): the vendored on-chain program reference behind the launch surfaces
+- [pump-fun-mcp at the edge](./pump-fun-mcp-edge.md): the Cloudflare Workers mirror of the pump.fun MCP endpoint
+- [Package extraction](./package-extraction.md): how reusable packages graduate out of the monorepo
+- [Agent task briefs](./agent-tasks/README.md): self-contained task prompts for AI agents working on the platform

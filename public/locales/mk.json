@@ -4726,7 +4726,7 @@
 		"walks_in_from_the_left_carrying_blocks": "Влегува од лево носејќи блокови. Ги поставува таму каде што припаѓа копчето. Ги реди. Тие се спојуваат во CTA."
 	},
 	"demos_agents_climb_title": {
-		"give_your_ai": "Дајте ѝ на вашата ВИ",
+		"give_your_ai": "<span class=\"word\"><span class=\"grip\">Оживејте</span><span class=\"grip\"></span><span class=\"grip\"></span><span class=\"grip\"></span></span> <span class=\"word\"><span class=\"grip\">го вашиот</span><span class=\"grip\"></span><span class=\"grip\"></span><span class=\"grip\"></span></span> <span class=\"word\"><em><span class=\"grip\">AI</span><span class=\"grip\"></span></em></span>",
 		"meta_title": "Искачете го насловот — three.ws",
 		"she_climbs_letter_to_letter_like_a": "Таа се качува буква по буква како алпинист. Секој врв на буква е точка за фаќање — таа застанува, скока, пак застанува."
 	},
@@ -4755,7 +4755,7 @@
 		"mediapipe_face_landmarker_reads_478_landmark": "MediaPipe Face Landmarker чита 478 обележја и 52 ARKit blendshapes секоја рамка, филтрирано со one-euro, калибрирано според вашата неутрална поза и директно запишано на ригуван хуманоиден аватар. Снимите изведба, репродуцирајте ја на кој било аватар.",
 		"mesh": "Мрежа",
 		"meta_title": "three.ws · Мокап на лице",
-		"mocap_in_the_browser": "Мокап, во&nbsp;прелистувачот</em>.",
+		"mocap_in_the_browser": "Mocap, во прелистувачот &nbsp;&nbsp;<em></em>.",
 		"morph_coverage": "Морф покриеност",
 		"pose": "Поза",
 		"record": "● Сними",
@@ -7985,7 +7985,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge ваш сопствен 3D модел на three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> искован на three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged на three.ws",
 		"meta_description": "Интерактивен 3D модел искован на three.ws.",
 		"meta_title": "three.ws — вграден 3D модел",
 		"no_model_to_show": "Нема модел за приказ",
@@ -8837,7 +8837,7 @@
 		"goalkeeper": "<span class=\"wyg-anim-chip-icon\">&#x1F9E4;</span>Голман",
 		"google_cloud": "<span class=\"ico\" style=\"--logo:url(/featured-logos/googlecloud.svg)\"></span><span class=\"lbl\">Google Cloud</span>",
 		"grab_a_limb_to_pose_it_drag": "Зграпчи екстремитет за да го позиционираш · влечи го подот за да орбитираш",
-		"guard_risk_checks": "<span class=\"snipe-node\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z\"></path></svg></span> <span class=\"snipe-stage-name\">Guard</span> проверки на ризик</span>",
+		"guard_risk_checks": "<span class=\"snipe-node\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z\"></path></svg></span> <span class=\"snipe-stage-name\">Guard</span> <span class=\"snipe-stage-sub\">проверки на ризик</span>",
 		"gymnastics": "<span class=\"wyg-anim-chip-icon\">&#x1F938;</span>Гимнастика",
 		"hackernoon": "<span class=\"ico\" style=\"--logo:url(/featured-logos/hackernoon.svg)\"></span><span class=\"lbl\">HackerNoon</span>",
 		"handler": "ракувач",

@@ -1,5 +1,7 @@
 # three.ws Continuous-Improvement & New-3D Roadmap (runnable prompts)
 
+> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+
 Each file here is a **self-contained prompt** you paste into a fresh Claude Code chat in this repo. Each one improves an existing surface or adds a new 3D / crypto / AI capability — **additively, without breaking the current architecture.**
 
 Read this file once; every prompt assumes it.

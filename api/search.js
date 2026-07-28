@@ -1,6 +1,6 @@
 // GET /api/search?q=<text>&type=<all|avatar|agent|model|world|coin>&limit=<n>
 // ---------------------------------------------------------------------------
-// The cross-entity discovery endpoint (prompts/user-value/05-discovery-search.md,
+// The cross-entity discovery endpoint (user-value 05-discovery-search work order, retired;
 // wave 05). Every creation type on three.ws — avatars, on-chain/Solana agents,
 // forged 3D models, saved worlds, and coins — had its own siloed browse
 // surface (/discover, /gallery, /marketplace, /creations, /launches) with no

@@ -109,23 +109,30 @@ describe('grindToCompletion stop signal', () => {
 		const t0 = performance.now();
 		const result = grindToCompletion(
 			{ prefix: 'zzzzzz', suffix: '', ignoreCase: false }, // near-impossible → never a natural hit
-			{ stopRequested: () => batches >= 2, onProgress: () => { batches += 1; } },
+			// Small batches: the contract is "stopRequested is polled BETWEEN
+			// batches", which two 1k-key batches prove exactly as well as two
+			// 25k-key ones. The default batch runs ~3s each on a contended CI
+			// host, so the wall-clock guard below flaked under full-suite load.
+			{ stopRequested: () => batches >= 2, onProgress: () => { batches += 1; }, batchSize: 1_000 },
 		);
 		expect(result.status).toBe('preempted');
 		expect(result.attempts).toBeGreaterThan(0);
 		// Wall-clock read under a fully-parallel suite: scheduler starvation can
-		// stretch two ~50ms batches into seconds. The contract is "preempts after
-		// ~2 batches, not minutes" — 15s guards that without contention flakes.
+		// stretch two small batches into seconds. The contract is "preempts after
+		// ~2 batches, not minutes"; 15s guards that without contention flakes.
 		expect(performance.now() - t0).toBeLessThan(15_000);
 	});
 
 	it('gives up with status "exhausted" at maxAttempts on an unreachable target', async () => {
 		const { grindToCompletion } = await import('../workers/vanity-grinder/wasm-grind.mjs');
+		// Small batches again: exhaustion-at-cap is a loop property, not a
+		// throughput property. 5 batches to a 5k cap prove it without ~10s of
+		// ed25519 CPU competing with the rest of the suite.
 		const result = grindToCompletion(
 			{ prefix: 'zzzzzz', suffix: '', ignoreCase: false },
-			{ stopRequested: () => false, maxAttempts: 50_000 },
+			{ stopRequested: () => false, maxAttempts: 5_000, batchSize: 1_000 },
 		);
 		expect(result.status).toBe('exhausted');
-		expect(result.attempts).toBeGreaterThanOrEqual(50_000);
+		expect(result.attempts).toBeGreaterThanOrEqual(5_000);
 	});
 });

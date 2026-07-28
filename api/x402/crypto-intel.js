@@ -9,14 +9,17 @@
 // demo endpoint for the /agent-exchange page where two 3D avatars trade
 // intel in a virtual world and the on-chain transaction is shown live.
 //
-// Body: { topic: "btc" | "sol" | "eth" | "pump" | ... (any CoinGecko id) }
+// Body: { topic: "btc" | "sol" | "eth" | "pump" | ... (any CoinGecko id),
+//         mint?: "<base58 SPL mint>" }
 // Response: { topic, headline, signal, price_usd?, change_24h?,
 //             rationale, confidence, ts }
 //
-// Data is live: CoinGecko public API first, Coinbase 24h stats as fallback
-// (both keyless). CoinGecko's shared-IP quota rate-limits Vercel egress often;
-// the fallback keeps paid calls answering with real data. No mock path — if
-// both sources fail the call 503s before settlement and the buyer isn't charged.
+// Data is live. Majors resolve via CoinGecko public API first, Coinbase 24h
+// stats as fallback (both keyless). An SPL `mint` (passed explicitly, or a
+// base58 topic) resolves through the multi-source on-chain market lib
+// (Birdeye, DexScreener, GeckoTerminal): the route the sniper's pump.fun
+// coins take, since CoinGecko never indexes them. No mock path: if every
+// source fails the call 503s before settlement and the buyer isn't charged.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { readBody } from '../_lib/http.js';
@@ -26,6 +29,9 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { detectPumpVolumeAnomaly } from '../_lib/x402/pump-volume-anomaly.js';
 import { detectPumpTrending } from '../_lib/x402/pump-trending-score.js';
+import { fetchTokenMarketData } from '../_lib/market/token-market.js';
+import { fetchPumpCoin } from '../_lib/pump-bonding.js';
+import { isGraduated } from '../_lib/pump-launch-feed.js';
 
 // Special topics resolved by a dedicated data engine rather than the CoinGecko
 // price path. `pump_volume_anomaly` scans the live pump.fun trade feed for a coin
@@ -52,6 +58,12 @@ const INPUT_SCHEMA = {
 			type: 'string',
 			description: 'Token ticker or CoinGecko id: btc, sol, eth, xrp, …',
 			default: 'sol',
+		},
+		mint: {
+			type: 'string',
+			description:
+				'Optional SPL mint address (base58). Resolves on-chain market data for ' +
+				'tokens CoinGecko does not index (pump.fun coins, fresh launches).',
 		},
 	},
 };
@@ -120,6 +132,54 @@ async function fetchLivePrice(coinId) {
 
 // Reverse of ALIASES so a CoinGecko id resolves back to its exchange ticker.
 const TICKER_BY_ID = Object.fromEntries(Object.entries(ALIASES).map(([t, id]) => [id, t]));
+
+// Base58 SPL mint shape (no 0, O, I, l). Distinguishes an on-chain mint from a
+// ticker/CoinGecko-id topic so each takes the right resolution route.
+const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+// On-chain market read for an SPL mint via the multi-source failover lib
+// (Birdeye, DexScreener, GeckoTerminal, then price-only rungs). The price-only
+// rungs carry no 24h change, and a signal without a real 24h move would be
+// fabricated. Return null there so the caller 503s instead of guessing.
+async function fetchMintMarket(mint) {
+	const d = await fetchTokenMarketData(mint);
+	if (!d || !(d.price_usd > 0) || d.price_change_24h == null) return null;
+	return { price_usd: d.price_usd, change_24h: d.price_change_24h };
+}
+
+// Every pump.fun bonding curve opens from the same protocol constants (30 SOL
+// of virtual reserves against 1.073e15 virtual tokens), which prices the fixed
+// 1B supply at exactly 30/1.073 SOL of market cap at launch. Measuring the
+// live SOL-denominated cap against that constant gives the coin's real price
+// move since launch with no external index needed.
+const PUMP_LAUNCH_MCAP_SOL = 30 / 1.073;
+
+// Pure mapping for the on-curve rung: a raw pump.fun coin object to
+// { price_usd, change_24h }, or null when the read would not be honest. Only
+// answers for coins younger than 24h, where change-since-launch IS the 24h
+// change; a graduated coin's market lives on the AMM and belongs to the
+// aggregator rung above. Exported for unit tests; no network.
+export function pumpCurveMarketFromCoin(c, now = Date.now()) {
+	if (!c || isGraduated(c)) return null;
+	const usdMcap = Number(c.usd_market_cap);
+	const solMcap = Number(c.market_cap);
+	const supplyAtomic = Number(c.total_supply);
+	const created = Number(c.created_timestamp);
+	if (!(usdMcap > 0) || !(solMcap > 0) || !(supplyAtomic > 0)) return null;
+	if (!(created > 0) || now - created > 24 * 3_600_000) return null;
+	const price = usdMcap / (supplyAtomic / 1e6); // pump.fun mints: 6-decimals SPL
+	const change = (solMcap / PUMP_LAUNCH_MCAP_SOL - 1) * 100;
+	return { price_usd: price, change_24h: change };
+}
+
+// On-curve pump.fun rung: aggregators rarely price a coin still on the bonding
+// curve (DexScreener lists the pair with a null price), but the pump.fun
+// frontend feed carries live curve state.
+async function fetchPumpCurveMarket(mint) {
+	const res = await fetchPumpCoin(mint);
+	if (res.kind !== 'ok') return null;
+	return pumpCurveMarketFromCoin(res.coin);
+}
 
 // Coinbase Exchange public 24h stats — keyless and reachable from US egress
 // (Binance 451-blocks US IPs, where Vercel functions run). The 24h change is
@@ -192,11 +252,23 @@ export default paidEndpoint({
 
 	async handler({ req }) {
 		let topic = 'sol';
+		let mint = null;
 		try {
 			const chunks = [await readBody(req, 1_000_000)];
 			const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+			if (body.mint && typeof body.mint === 'string' && MINT_RE.test(body.mint.trim())) {
+				mint = body.mint.trim();
+			}
 			if (body.topic && typeof body.topic === 'string') {
-				topic = body.topic.toLowerCase().trim().slice(0, 30);
+				const raw = body.topic.trim();
+				// A base58 topic IS the mint: route it on-chain and keep a short
+				// display form so headlines stay readable.
+				if (!mint && MINT_RE.test(raw)) {
+					mint = raw;
+					topic = `${raw.slice(0, 4)}…${raw.slice(-4)}`;
+				} else {
+					topic = raw.toLowerCase().slice(0, 30);
+				}
 			}
 		} catch { /* default topic */ }
 
@@ -217,7 +289,18 @@ export default paidEndpoint({
 
 		const coinId = ALIASES[topic] || topic;
 		let live = null;
-		try { live = await fetchLivePrice(coinId); } catch { /* try fallback source */ }
+		// On-chain mints first: the sniper's pump.fun coins never resolve on
+		// CoinGecko/Coinbase, but any mint with a live pool prices here, and a
+		// coin still on the bonding curve prices from pump.fun's own feed.
+		if (mint) {
+			try { live = await fetchMintMarket(mint); } catch { /* try curve rung */ }
+			if (!live) {
+				try { live = await fetchPumpCurveMarket(mint); } catch { /* try ticker sources */ }
+			}
+		}
+		if (!live || live.change_24h == null) {
+			try { live = await fetchLivePrice(coinId); } catch { /* try fallback source */ }
+		}
 		if (!live || live.change_24h == null) {
 			try { live = await fetchCoinbase24h(topic, coinId); } catch { /* refund below */ }
 		}

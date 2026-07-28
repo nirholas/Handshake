@@ -1,5 +1,7 @@
 # Fable Audit — Work-Order Pack (2026-07-11)
 
+> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+
 One `.md` per finding from the maximum-depth audit. Each file is a self-contained
 work order: context, the exact defect (file:line), the fix, verification, and a
 done checklist. Execute in the recommended order below.

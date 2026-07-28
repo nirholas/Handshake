@@ -397,10 +397,10 @@ For deeper smoke tests, point Playwright at the preview URL:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-          npm run test:smoke
+          npm run test:e2e
 ```
 
-Where `test:smoke` runs a small Playwright suite that loads an agent, sends a chat message, and asserts a response comes back. The platform's `tests/e2e/` directory has examples.
+Where `test:e2e` runs the Playwright suite (`playwright test`) against the preview URL. The platform's `tests/e2e/` directory has examples, such as a spec that loads an agent, sends a chat message, and asserts a response comes back.
 
 ---
 

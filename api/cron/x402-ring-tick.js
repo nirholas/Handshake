@@ -67,6 +67,7 @@ import {
 	planTick,
 	planBackpressure,
 	governedCalls,
+	sponsorGovernor,
 	tickBudget,
 	gateOnRingConfig,
 } from '../_lib/x402/ring-tick-plan.js';
@@ -326,13 +327,69 @@ export default wrapCron(async (req, res) => {
 		});
 	}
 
+	// ── Sponsor fee-wallet governor ────────────────────────────────────────────
+	// The payer governor above watches the ring payer's own SOL; the wallet that
+	// starves in practice is the facilitator's sponsor fee wallet
+	// (X402_FEE_PAYER_SOLANA), which co-signs every sponsored settle. Watch it
+	// directly: below the hard floor skip the tick (the facilitator would refuse
+	// every settle anyway), above it taper calls to the sponsor's runway and
+	// raise the pre-starvation alert while the rail is still moving — hours
+	// before fee_wallet_below_floor would appear. See sponsorGovernor() for the
+	// regime details, including why an unreadable balance passes through.
+	const sponsorAddress = env.X402_FEE_PAYER_SOLANA || null;
+	let effectiveCalls = gov.calls;
+	if (sponsorAddress && sponsorAddress !== payer.publicKey.toBase58()) {
+		let sponsorLamports = Number.NaN;
+		try { sponsorLamports = await conn.getBalance(new PublicKey(sponsorAddress)); } catch { sponsorLamports = Number.NaN; }
+		const sgov = sponsorGovernor({
+			configuredCalls: gov.calls,
+			sponsorLamports,
+			floorLamports: cfg.solFloorLamports,
+			feePerSettleLamports: cfg.sponsorFeePerSettleLamports,
+			runwayDays: cfg.sponsorRunwayDays,
+			minCalls: cfg.minCalls,
+		});
+		if (sgov.skip) {
+			await recordSkip(runId, origin, 'sponsor_fee_wallet_floor', {
+				sponsor: sponsorAddress,
+				sponsor_lamports: sponsorLamports,
+				floor_lamports: cfg.solFloorLamports,
+			});
+			await sendOpsAlert(
+				'x402 ring tick paused: sponsor_fee_wallet_floor',
+				`sponsor fee wallet ${sponsorAddress} holds ${sponsorLamports} lamports, below the ${cfg.solFloorLamports} settle floor; every sponsored settle would be refused. treasury-topup reclaim should refill it; if this persists past one cycle, fund the economy master.`,
+				{ signature: 'ring-tick:sponsor_fee_wallet_floor' },
+			);
+			log.warn('ring_tick_sponsor_floor', { sponsor: sponsorAddress, sponsor_lamports: sponsorLamports });
+			return json(res, 200, { ok: true, skipped: true, reason: 'sponsor_fee_wallet_floor', run_id: runId });
+		}
+		if (!sgov.known) {
+			log.warn('ring_tick_sponsor_balance_unavailable', { sponsor: sponsorAddress });
+		} else if (sgov.throttled) {
+			effectiveCalls = sgov.calls;
+			await sendOpsAlert(
+				'x402 fee wallet runway low',
+				`sponsor fee wallet ${sponsorAddress} holds ${sponsorLamports} lamports (floor ${cfg.solFloorLamports}); tapering the ring to ${sgov.calls}/${gov.calls} calls per minute so the runway lasts ${cfg.sponsorRunwayDays}d. Reclaim/topup should catch up on its own; fund the economy master if this alert persists.`,
+				{ signature: 'ring-tick:fee_wallet_runway_low' },
+			);
+			log.warn('fee_wallet_runway_low', {
+				sponsor: sponsorAddress,
+				sponsor_lamports: sponsorLamports,
+				floor_lamports: cfg.solFloorLamports,
+				configured_calls: gov.calls,
+				governed_calls: sgov.calls,
+				calls_per_day_budget: sgov.callsPerDayBudget,
+			});
+		}
+	}
+
 	// ── Plan this tick (cursor reserved AFTER the degrade decision so the
 	// reservation matches the cheap slots actually fired) ──────────────────────
-	const cheapNeeded = Math.max(0, gov.calls - (pbp.settleTick ? 1 : 0));
+	const cheapNeeded = Math.max(0, effectiveCalls - (pbp.settleTick ? 1 : 0));
 	const cheapStart = await reserveCheapCursor(redis, cheapNeeded);
 	const plan = planTick({
 		tickSeq,
-		calls: gov.calls,
+		calls: effectiveCalls,
 		// Force the post-degrade decision: 1 → every tick settles, 0 → none does.
 		settleEveryN: pbp.settleTick ? 1 : 0,
 		cheapCount: CHEAP_ENDPOINTS.length,

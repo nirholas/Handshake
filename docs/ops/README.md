@@ -1,0 +1,25 @@
+# Ops runbooks
+
+Operator-only documentation for running three.ws in production. This directory (like `docs/security/` and `docs/internal/`) is deliberately excluded from the public site build: the `copy-static-docs` plugin in `vite.config.js` and `scripts/combine-docs.mjs` both skip it, so nothing here ships to `dist/` or `docs/ALL.md`. Keep it that way: these files name the GCP project, service accounts, and env-var gates.
+
+Start with [gcp-production.md](gcp-production.md); it is the complete operational record. The rest are focused runbooks:
+
+| Runbook | What it covers |
+|---|---|
+| [gcp-production.md](gcp-production.md) | The production platform end to end: Cloud Run services, LB/DNS/TLS, env, deploy, rollback, recovery. |
+| [gcp-credits-plan.md](gcp-credits-plan.md) | Standing map of the ~$100k GCP credit spend: fleet, quota, pre-approved scaling, what to do next without asking. |
+| [gcp-credits.md](gcp-credits.md) | The Vertex AI and GCP footprint runbook backing the credits plan. |
+| [gcp-model-workers.md](gcp-model-workers.md) | Self-hosted GPU generation lanes on Cloud Run: workers, weights, deploys. |
+| [gcp-logs.md](gcp-logs.md) | Production log reading and automated triage tools for the Cloud Run fleet. |
+| [production-log-triage.md](production-log-triage.md) | Known error/warning signature map: what each recurring log signature means and the fix. |
+| [page-audit.md](page-audit.md) | `scripts/page-audit.mjs`: authed Chromium sweep of every public page, console-error gated. |
+| [db-retention.md](db-retention.md) | Keeping the Neon Postgres branch under its storage cap: what grows, what gets pruned. |
+| [redis.md](redis.md) | Upstash Redis quota, burn rate, and which limiters are distributed vs local. |
+| [runtime-flags.md](runtime-flags.md) | DB-backed feature flags that flip platform behavior without a redeploy. |
+| [x402-discovery-listings.md](x402-discovery-listings.md) | Getting paid endpoints listed and ranked on x402scan, the Bazaar, and other directories. |
+| [seo-keyword-plan.md](seo-keyword-plan.md) | Verified keyword landscape and content calendar (snapshot dated 2026-07-17). |
+| [wallet-key-migration.md](wallet-key-migration.md) | Incident record: stranded pool-agent wallets after the WALLET_ENCRYPTION_KEY migration. |
+| [forge-multiview-migration-handoff.md](forge-multiview-migration-handoff.md) | Historical hand-off for the forge multi-view migrations (June 2026); superseded by gcp-production.md. |
+| [examples-repo-export.md](examples-repo-export.md) | How the public `three-ws/examples` satellite repo is assembled and published from this monorepo. |
+
+Related, also private: the security review records in [../security/](../security/) ([SECURITY_AUDIT.md](../security/SECURITY_AUDIT.md), [SECURITY_REMEDIATION.md](../security/SECURITY_REMEDIATION.md), [review-2026-06-24.md](../security/review-2026-06-24.md)), all point-in-time records preserved as written.

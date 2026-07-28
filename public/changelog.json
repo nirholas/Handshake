@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-28T21:20:31.574Z",
+	"generated_at": "2026-07-28T21:38:45.256Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-28",
+			"type": "launch",
+			"title": "Agent Symphony",
+			"summary": "The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.",
+			"link": "/symphony",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "launch",
+			"title": "Receipt Vault",
+			"summary": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+			"link": "/receipts",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-28",
 			"type": "update",
@@ -31,6 +51,28 @@
 		{
 			"date": "2026-07-28",
 			"type": "update",
+			"title": "Site quality sweep: sharing, search visibility, and accessibility fixes",
+			"summary": "A full audit of the live site turned up a batch of quiet problems, now fixed. The Create pages were accidentally hidden from search engines by a leftover tag, so Google could not index the main way people start on three.ws; they are indexable again. Links to the Docs and Get Started pages now unfurl with a proper preview card when shared on X, Telegram, or Slack, and the AR Forge page got a complete share card too. For screen reader users: the Studio's preview-size buttons, the homepage minimap, and the AR QR code are now properly labeled, and footer sections are real headings you can navigate by. Legal pages got readable text contrast, copying the contract address now tells you if the copy was blocked instead of failing silently, and the homepage embed playground shows a helpful message with a way forward if a live avatar cannot load.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "The agent economy now paces its spending to its fuel level, wallet by wallet",
+			"summary": "The autonomous agent economy runs about a dozen paid pipelines that share a small set of platform wallets to pay Solana network fees. Until now each pipeline throttled only itself, so under scarcity they raced each other and could drain a shared wallet in hours, halting everything at once until someone topped it up. Every settlement now draws from a single daily fee budget per wallet, sized to that wallet's live balance: activity tapers smoothly as funds run low and speeds back up the moment the wallet is refueled, whichever pipeline is spending. External customers paying for three.ws services are never rate-limited by this; it governs only the platform's own wallets.",
+			"link": null,
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
 			"title": "The agent economy now refills its own fuel tank instead of quietly running dry",
 			"summary": "The live activity feed on /pulse had gone almost silent, and the cause turned out to be a plumbing problem rather than a lack of money. The platform funds its agents by sending them SOL to trade and launch with, but that path only ever ran one way. Agents kept what they were given plus whatever their trades returned, and the small shared wallet that pays the network fee on every agent-to-agent payment had no way to get any of it back. It eventually fell a fraction of a cent below the minimum it needs to sign a transaction, and every paid request across the platform started failing, even though the wider fleet was holding plenty. The funding cycle is now a full loop: when the fee wallet runs short, the platform automatically pulls idle SOL back from its own agent wallets to cover the gap. Agents that are actively trading keep their trading capital, agents holding an open position are left alone entirely, and wallets belonging to real users are never touched. We also added an audit tool that reports where every lamport in the fleet is sitting and where it has been moving.",
 			"link": "/pulse",
@@ -42,12 +84,33 @@
 		{
 			"date": "2026-07-28",
 			"type": "update",
+			"title": "The agent economy now warns and slows down before it runs out of fuel, instead of stopping cold",
+			"summary": "The autonomous agent economy pays a tiny Solana network fee from a shared platform wallet every time two agents settle a payment. Earlier today that wallet drifted a fraction of a cent below its safety floor and every settlement was refused at once until the self-refill caught up. The economy now watches that exact wallet continuously: as it approaches the floor, activity tapers gradually and an early warning fires hours in advance, and only genuinely reaching the floor pauses payments, which the automatic refill then fixes on its own. Holders watching the live pulse should see smooth slowdowns instead of sudden flatlines.",
+			"link": null,
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
 			"title": "The OpenAI Select Partner announcement now has a real graphic",
 			"summary": "Until now, sharing the OpenAI partner page or the announcement post anywhere produced a link preview that was just OpenAI's badge on its own, which said nothing about what three.ws actually does. There are now three purpose-built announcement graphics, all rendered from the site's own type and colours: two carry the partner badge exactly as OpenAI supplied it, on a white plate with the required independence line, and one lists the nine free tools the 3D Studio connector adds to ChatGPT. The partner page and the announcement blog post use the badge card as their link preview, so a link posted to X, LinkedIn, Slack, or Discord now unfurls into something readable. All three are public files anyone can reuse, and the layout lives in the repo so the copy can be updated and re-rendered.",
 			"link": "/openai",
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "The Receipt Vault: every x402 payment you ever made, retrievable forever",
+			"summary": "Every paid x402 call to three.ws has always issued a signed proof-of-purchase receipt, but until now there was no way to get yours back if you dropped the original response. The new Receipt Vault fixes that: connect a Solana or EVM wallet, sign one read-only message (no transaction, no fee), and see every receipt ever issued to that wallet. Each row shows the endpoint, network, and settlement transaction with an explorer link, and the full signed artifact downloads as JSON so anyone can verify it against the three.ws issuer key. Search, CSV export, and keyboard shortcuts included. It is the buyer-side mirror of the Endpoint Revenue page.",
+			"link": "/receipts",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -21054,7 +21117,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "Skills Marketplace",
-			"summary": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
+			"summary": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
 			"link": "/skills",
 			"tags": [
 				"launch"

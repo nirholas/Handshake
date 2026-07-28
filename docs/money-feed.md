@@ -97,6 +97,17 @@ curl 'https://three.ws/api/feed?limit=30'
 `limit` is clamped to 1–100; events are newest-first and each has a stable `id`
 and millisecond `ts`.
 
+## Consumers beyond the ticker
+
+The same bus powers surfaces that are not tickers at all:
+
+- **[/symphony](https://three.ws/symphony)** renders the stream as live
+  generative music: [`src/symphony-score.js`](../src/symphony-score.js) maps
+  each allow-listed type to a synth voice (payments pluck, `coin-buy` lands as
+  bass, `agent-guard` plays deliberate dissonance), pitches the note by amount
+  and hashes the actor to a stable motif. Adding a new `ALLOWED_TYPES` entry?
+  Give it a voice mapping there too, or it falls back to the bell voice.
+
 ## Related
 
 - [Circulation engine](circulation-engine.md) — the largest producer of activity.

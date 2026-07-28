@@ -2429,7 +2429,7 @@
 					listEl.innerHTML = users
 						.map((u) => {
 							const pfp = u.avatar_url
-								? `<img src="${attr(u.avatar_url)}" alt="" referrerpolicy="no-referrer">`
+								? `<img loading="lazy" decoding="async" src="${attr(u.avatar_url)}" alt="" referrerpolicy="no-referrer">`
 								: '◎';
 							const btn =
 								viewer && !u.is_self
@@ -2687,7 +2687,7 @@
 				const cards = avatars
 					.map((a) => {
 						const thumb = a.thumbnail_url
-							? `<img src="${attr(a.thumbnail_url)}" alt="${attr(a.name)}" style="width:100%;height:100%;object-fit:cover">`
+							? `<img loading="lazy" decoding="async" src="${attr(a.thumbnail_url)}" alt="${attr(a.name)}" style="width:100%;height:100%;object-fit:cover">`
 							: `<div class="up-card-thumb-placeholder">◎</div>`;
 						const tags = (a.tags || [])
 							.slice(0, 3)
@@ -2729,7 +2729,7 @@
 					.map((a) => {
 						const img = a.profile_image_url || a.avatar_url;
 						const thumb = img
-							? `<img src="${attr(img)}" alt="${attr(a.name)}">`
+							? `<img loading="lazy" decoding="async" src="${attr(img)}" alt="${attr(a.name)}">`
 							: `<span>◎</span>`;
 						const meta = [];
 						if (a.sns_domain)
@@ -2890,7 +2890,7 @@
 				const cards = coins
 					.map((c) => {
 						const thumb = c.image
-							? `<img src="${attr(c.image)}" alt="${attr(c.name)}" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer">`
+							? `<img loading="lazy" decoding="async" src="${attr(c.image)}" alt="${attr(c.name)}" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer">`
 							: `<div class="up-card-thumb-placeholder">◎</div>`;
 						const symbol = c.symbol
 							? `<span class="up-card-chain">$${esc(c.symbol.replace(/^\$/, ''))}</span>`
@@ -3021,7 +3021,7 @@
 				const cards = shop
 					.map((s) => {
 						const thumb = s.image
-							? `<img src="${attr(s.image)}" alt="${attr(s.name)}" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer">`
+							? `<img loading="lazy" decoding="async" src="${attr(s.image)}" alt="${attr(s.name)}" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer">`
 							: `<div class="up-card-thumb-placeholder">${glyphs[s.item_type] || '◎'}</div>`;
 						const priceLabel = `${fmtPrice(s.price)} ${esc(s.currency || '')}`.trim();
 						return `

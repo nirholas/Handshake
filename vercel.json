@@ -863,8 +863,16 @@
 			"dest": "/pulse.html"
 		},
 		{
+			"src": "/symphony/?",
+			"dest": "/symphony.html"
+		},
+		{
 			"src": "/x402-revenue/?",
 			"dest": "/x402-revenue.html"
+		},
+		{
+			"src": "/receipts/?",
+			"dest": "/receipts.html"
 		},
 		{
 			"src": "/deployments/?",
@@ -3955,6 +3963,13 @@
 		{
 			"src": "/docs/widgets",
 			"dest": "/docs-widgets.html"
+		},
+		{
+			"src": "/docs/agent-3d/?",
+			"status": 308,
+			"headers": {
+				"Location": "/docs/web-component"
+			}
 		},
 		{
 			"src": "/docs/walk",

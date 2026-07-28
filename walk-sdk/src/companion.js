@@ -35,12 +35,15 @@ import {
 	clamp,
 } from './internal/storage.js';
 import { loadWalkAvatar } from './internal/load-avatar.js';
+import { LookAtController } from './internal/runtime.js';
 import { createAvatarPicker } from './picker.js';
 import { resolveConfig, resolveAvatarEntry } from './config.js';
 
 const CANVAS_W = 200;
 const CANVAS_H = 280;
 const CURSOR_IDLE_MS = 450; // cursor still longer than this → stop walking
+const GAZE_IDLE_MS = 4000; // cursor still longer than this → gaze drifts back to the clip
+const GAZE_PX_PER_M = 260; // page pixels per scene metre when aiming the head at the cursor
 
 function isExcludedRoute(config) {
 	if (typeof window === 'undefined') return true;
@@ -100,9 +103,12 @@ class WalkCompanion {
 		this._picker = null;
 
 		this._cursorX = window.innerWidth * 0.5;
+		this._cursorY = window.innerHeight * 0.5;
 		this._cursorMovedAt = 0;
 		this._yaw = 0;
 		this._targetYaw = 0;
+		this._lookAt = null;
+		this._gazeTarget = new Vector3();
 		// Touch devices have no hovering cursor to follow, so the companion would
 		// sit frozen in idle. On a coarse pointer it wanders on its own instead —
 		// switched off the moment a real (fine) pointer moves it.
@@ -270,6 +276,17 @@ class WalkCompanion {
 		camera.position.set(0, height * 0.62, height * 2.25);
 		camera.lookAt(0, height * 0.52, 0);
 		this._height = height;
+
+		// Procedural cursor gaze (config-gated, humanoid rigs only): the head
+		// turns to follow the visitor's pointer on top of whatever clip plays.
+		// A rig with no mappable head reports enabled=false and stays null, so
+		// embedded props (robot, fox) keep their baked motion untouched. Rebuilt
+		// here on every load so an avatar swap re-resolves its own bones.
+		this._lookAt = null;
+		if (this.config.lookAt && !this._reduced) {
+			const lookAt = new LookAtController(model);
+			if (lookAt.enabled) this._lookAt = lookAt;
+		}
 	}
 
 	// ── Live avatar swap (from the picker) ────────────────────────────────────
@@ -340,6 +357,7 @@ class WalkCompanion {
 		}
 		this.controller = null;
 		this.model = null;
+		this._lookAt = null;
 		if (this.scene) {
 			this.scene.traverse((n) => {
 				if (n.isMesh) disposeMesh(n);
@@ -367,6 +385,7 @@ class WalkCompanion {
 		// touch-drag (pointerType 'touch') leaves the autonomous wander in charge.
 		if (e.pointerType && e.pointerType !== 'touch') this._autonomous = false;
 		this._cursorX = e.clientX;
+		this._cursorY = e.clientY;
 		this._cursorMovedAt = performance.now();
 	}
 
@@ -503,8 +522,34 @@ class WalkCompanion {
 		if (this.rig) this.rig.rotation.y = this._yaw;
 
 		this.controller?.update(dt);
+		this._updateGaze(now, dt);
 		this.renderer.render(this.scene, this.camera);
 		this._raf = requestAnimationFrame(this._tick);
+	}
+
+	// Head tracking: map the page cursor into a scene-space point in front of
+	// the avatar and let the IK layer chase it. Runs AFTER controller.update()
+	// (the mixer tick) per the procedural-layer contract. When the cursor has
+	// been still for a while, or there is no fine pointer at all, the target
+	// clears and the gaze fades back to the clip's own head motion.
+	_updateGaze(now, dt) {
+		if (!this._lookAt) return;
+		const cursorLive = !this._autonomous && now - this._cursorMovedAt < GAZE_IDLE_MS;
+		if (cursorLive && this.host) {
+			const rect = this.host.getBoundingClientRect();
+			const dx = this._cursorX - (rect.left + rect.width / 2);
+			const dy = this._cursorY - (rect.top + rect.height * 0.35);
+			const h = this._height || 1.6;
+			this._gazeTarget.set(
+				dx / GAZE_PX_PER_M,
+				h * 0.85 - dy / GAZE_PX_PER_M,
+				h * 2,
+			);
+			this._lookAt.setTarget(this._gazeTarget);
+		} else {
+			this._lookAt.setTarget(null);
+		}
+		this._lookAt.update(dt);
 	}
 }
 

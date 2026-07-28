@@ -135,6 +135,43 @@ export function vertexServesModel(modelId) {
 	return VERTEX_ANTHROPIC_MODELS.includes(modelId);
 }
 
+/**
+ * Anthropic models that reject sampling parameters (`temperature`, `top_p`,
+ * `top_k`) with a 400 — Opus 4.7 onward and the whole Claude 5 family.
+ * Transports must omit those fields when targeting these ids.
+ */
+const NO_SAMPLING_ANTHROPIC = new Set([
+	'claude-fable-5',
+	'claude-mythos-5',
+	'claude-opus-5',
+	'claude-sonnet-5',
+	'claude-opus-4-8',
+	'claude-opus-4-7',
+]);
+
+/** Whether a model rejects sampling parameters (temperature/top_p/top_k). */
+export function modelRejectsSampling(modelId) {
+	return NO_SAMPLING_ANTHROPIC.has(modelId);
+}
+
+/**
+ * Claude 5 family models run adaptive thinking by default, and `max_tokens`
+ * caps thinking + visible text together. Callers with small token budgets
+ * must raise the ceiling for these ids or risk an all-thinking, truncated
+ * reply.
+ */
+const THINKING_DEFAULT_ANTHROPIC = new Set([
+	'claude-fable-5',
+	'claude-mythos-5',
+	'claude-opus-5',
+	'claude-sonnet-5',
+]);
+
+/** Whether a model thinks by default (budget must cover thinking + text). */
+export function modelThinksByDefault(modelId) {
+	return THINKING_DEFAULT_ANTHROPIC.has(modelId);
+}
+
 /** Whether a model exposes a tool/function-calling endpoint. Unknown → false. */
 export function modelSupportsTools(modelId) {
 	return MODEL_CATALOG[modelId]?.tools === true;

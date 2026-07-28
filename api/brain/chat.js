@@ -76,15 +76,28 @@ const PROVIDERS = {
 		// no openrouterModel fallback route (shows unavailable without the host key).
 		native: () => (env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-fable-5') : null),
 	},
-	'claude-mythos-5': {
-		label: 'Claude Mythos 5',
+	// claude-mythos-5 is deliberately NOT in this menu: it is restricted-access
+	// (Project Glasswing orgs only), so with any normal host key the entry would
+	// render as selectable and then 404 at call time — a dead menu item. BYOK
+	// callers with access can still name it through api/chat.js (it stays in
+	// _lib/chat-models.js as an explicit-only gated model).
+	'claude-opus-5': {
+		label: 'Claude Opus 5',
 		network: 'Anthropic',
 		tier: 'flagship',
 		maxOutput: 16384,
-		description: 'Mythos-class flagship — same capabilities as Fable 5. Restricted-access; first-party Anthropic key only.',
-		// First-party Anthropic only — no OpenRouter mirror, so there is no
-		// openrouterModel fallback route (shows unavailable without the host key).
-		native: () => (env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-mythos-5') : null),
+		description: 'Current Opus. Deep reasoning, agentic and long-horizon work; thinks by default.',
+		native: () => (env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-opus-5') : null),
+		openrouterModel: 'anthropic/claude-opus-5',
+	},
+	'claude-sonnet-5': {
+		label: 'Claude Sonnet 5',
+		network: 'Anthropic',
+		tier: 'balanced',
+		maxOutput: 16384,
+		description: 'Near-Opus quality on coding and agentic work at Sonnet cost. Best for most tasks.',
+		native: () => (env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-sonnet-5') : null),
+		openrouterModel: 'anthropic/claude-sonnet-5',
 	},
 	'claude-opus-4-7': {
 		label: 'Claude Opus 4.7',

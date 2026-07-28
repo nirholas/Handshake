@@ -179,6 +179,31 @@ describe('proposeAdjustments', () => {
 		if (size) expect(size.to).toBeLessThanOrEqual(BOUNDS.per_trade_lamports.max);
 	});
 
+	// The silent-death bug: this optimizer owns per_trade_lamports while the
+	// evolution loop owns daily_budget_lamports, and neither read the other. A size
+	// above the arm's whole daily budget fails `spent + size <= budget` on every
+	// evaluation, even at zero spend — two live arms sat armed and unable to buy for
+	// a week that way.
+	it('never proposes a bet larger than the arm’s own daily budget', () => {
+		const r = proposeAdjustments(
+			stats({ closed: 20, wins: 16, winRate: 80, avgPnlPct: 25, exitReasons: { take_profit: 12, trailing_stop: 8 } }),
+			{ ...baseConfig, per_trade_lamports: 19_000_000, daily_budget_lamports: 20_000_000 },
+			{ tier: 'trusted' },
+		);
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		if (size) expect(size.to).toBeLessThanOrEqual(20_000_000);
+	});
+
+	it('leaves sizing alone when the budget comfortably covers it', () => {
+		const r = proposeAdjustments(
+			stats({ closed: 20, wins: 16, winRate: 80, avgPnlPct: 25, exitReasons: { take_profit: 12, trailing_stop: 8 } }),
+			baseConfig,
+			{ tier: 'trusted' },
+		);
+		const size = r.proposals.find((p) => p.field === 'per_trade_lamports');
+		if (size) expect(size.to).toBeGreaterThan(baseConfig.per_trade_lamports);
+	});
+
 	it('never emits a no-op proposal', () => {
 		const r = proposeAdjustments(
 			stats({ closed: 15, wins: 9, exitReasons: { trailing_stop: 8, timeout: 7 } }),

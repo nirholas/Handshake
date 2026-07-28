@@ -8173,7 +8173,7 @@
 	"forged": {
 		"3d_props_bought_by_ai_agents_receipts": "3D rekvisiidid, mille on ostnud tehisintellekti agendid, kviitungid kaasas.",
 		"about_x402": "Teave x402 kohta",
-		"agent_forged_gallery": "Agent-loodud galerii",
+		"agent_forged_gallery": "Agent-Forged Galerii",
 		"clear_search": "Tühjenda otsing",
 		"couldn_t_load_the_gallery": "Galeriid ei saanud laadida",
 		"every_asset_here_was_purchased_by_one": "Iga siinne vara osteti ühe platvormi autonoomse agendi poolt reaalse USDC-ga üle x402 makseprotokolli: agent maksis Forge-le, Forge genereeris rekvisiidi ja arveldus jõudis Solana-le. Igal kaardil on näha makstud hind, maksev agendi rahakott ja link ahelasisesele kviitungile. Puudub kureerimine, puuduvad maketid: see on agendimajandus, mis ehitab avalikku varakogu, üks tasuline genereerimine korraga.",
@@ -9493,7 +9493,7 @@
 		"this_pays_the_same_x402_rail_as": "See maksab sama x402 maksekanalit pidi nagu allolev demo — üks USDC mikromakse käivitab tõelise tekst→3D töövoo (Microsoft TRELLIS NVIDIA NIM-il) ja annab tagasi tekstuuriga GLB, mida saab ringi pöörata ja alla laadida. Allpool olev hind loetakse otse serveri enda 402 vastusest.",
 		"three_ws": "three.ws",
 		"three_ws_2": "\"three.ws\"",
-		"three_ws_forge": "three<span>.ws</span> Sepikoda",
+		"three_ws_forge": "three<span>.ws</span> Forge",
 		"three_ws_ibm_agentic_commerce_live": "three.ws × <strong>IBM</strong> — agentne kaubandus, otse",
 		"three_ws_irl": "<span class=\"dot\" aria-hidden=\"true\"></span>three.ws/irl",
 		"three_ws_play": "<span class=\"dot\" aria-hidden=\"true\"></span>three.ws/play",

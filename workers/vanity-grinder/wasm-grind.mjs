@@ -40,6 +40,9 @@ function ensureWasm() {
  * @param {() => boolean} [opts.stopRequested] - return true to abort (preemption).
  * @param {(attempts:number)=>void} [opts.onProgress] - called each batch.
  * @param {number} [opts.maxAttempts=Infinity] - give up after this many tries.
+ * @param {number} [opts.batchSize=BATCH_SIZE] - keypairs per WASM call. The default
+ *          suits batch containers; a smaller batch tightens the stop-poll latency
+ *          (and lets tests drive the loop without grinding tens of thousands of keys).
  * @returns {{ publicKey?:string, secretKey?:Uint8Array, attempts:number, durationMs:number, status:'found'|'preempted'|'exhausted' }}
  *          status 'exhausted' when maxAttempts is hit with no match (a leading char
  *          can be near-impossible in Base58, so an unbounded grind could hang a
@@ -50,7 +53,7 @@ export function grindToCompletion(target, opts = {}) {
 	const prefix = target.prefix || '';
 	const suffix = target.suffix || '';
 	const ignoreCase = !!target.ignoreCase;
-	const { stopRequested, onProgress, maxAttempts = Infinity } = opts;
+	const { stopRequested, onProgress, maxAttempts = Infinity, batchSize = BATCH_SIZE } = opts;
 
 	const seed = new Uint8Array(32);
 	const startedAt = performance.now();
@@ -61,8 +64,8 @@ export function grindToCompletion(target, opts = {}) {
 			return { attempts, durationMs: performance.now() - startedAt, status: 'preempted' };
 		}
 		crypto.getRandomValues(seed);
-		const hit = grind(prefix, suffix, ignoreCase, BATCH_SIZE, seed);
-		attempts += BATCH_SIZE;
+		const hit = grind(prefix, suffix, ignoreCase, batchSize, seed);
+		attempts += batchSize;
 		if (onProgress) onProgress(attempts);
 		if (hit) {
 			return {

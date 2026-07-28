@@ -1,5 +1,7 @@
 # Task 01 — Resolve the orphaned studio-viewer widget (P0)
 
+> **Resolved 2026-07-18** in commit `0b50834d7` ("Refactor apps-sdk studio viewer"): the orphaned viewer source and its build script were removed, exactly as this task specifies. Kept as the record of the finding; the file links below point at the now-deleted paths and are left as plain code references.
+
 Read [`00-START-HERE.md`](00-START-HERE.md) first for the shared rules and the map.
 
 ## The problem (verified, with evidence)
@@ -12,11 +14,12 @@ connected:
    (`COMPONENT_HTML`). It is served as the skybridge resource
    `ui://widget/three-studio-model.html` and is fully wired and tested.
 
-2. **A second, unrelated three.js viewer** lives in
-   [`apps-sdk/studio-viewer/src.js`](../../apps-sdk/studio-viewer/src.js) (619 lines,
-   full GLTFLoader + OrbitControls + RoomEnvironment). It is built by
-   [`scripts/build-apps-sdk-viewer.mjs`](../../scripts/build-apps-sdk-viewer.mjs)
+2. **A second, unrelated three.js viewer** lived in
+   `apps-sdk/studio-viewer/src.js` (619 lines,
+   full GLTFLoader + OrbitControls + RoomEnvironment). It was built by
+   `scripts/build-apps-sdk-viewer.mjs`
    into `public/apps-sdk/studio-viewer.bundle.js` and `.../studio-viewer.html`.
+   (Both files deleted in `0b50834d7`.)
 
 The second one is **orphaned**:
 

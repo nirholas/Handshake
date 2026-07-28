@@ -175,6 +175,29 @@ export class LlmUnavailableError extends Error {
 	}
 }
 
+// The Claude 5 family (Opus 5, Sonnet 5, Fable 5) thinks by default, so the
+// first content block is often a `thinking` block whose text is empty — pick
+// the first `text` block instead of blindly reading content[0].
+function anthropicText(r) {
+	const blocks = r.content;
+	if (!Array.isArray(blocks)) return '';
+	return blocks.find((b) => b?.type === 'text')?.text || '';
+}
+
+// System prompts at or above this size get a prompt-cache breakpoint. Agent
+// surfaces resend the same large system prompt every turn; cached reads bill
+// at ~0.1x input price. Below each model's cacheable minimum the marker is
+// silently ignored, so a low threshold is harmless — 4096 chars ≈ 1K tokens,
+// the minimum on the Sonnet/Opus 4.x tier.
+const SYSTEM_CACHE_MIN_CHARS = 4096;
+
+function anthropicSystemField(system) {
+	if (typeof system === 'string' && system.length >= SYSTEM_CACHE_MIN_CHARS) {
+		return [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
+	}
+	return system;
+}
+
 function anthropicProvider(key, model) {
 	const m = model || ANTHROPIC_MODEL;
 	return {
@@ -189,10 +212,10 @@ function anthropicProvider(key, model) {
 		buildBody: (system, user, maxTokens) => ({
 			model: m,
 			max_tokens: maxTokens,
-			system,
+			system: anthropicSystemField(system),
 			messages: [{ role: 'user', content: user }],
 		}),
-		extractText: (r) => r.content?.[0]?.text || '',
+		extractText: anthropicText,
 		extractUsage: (r) => ({ input: r.usage?.input_tokens ?? 0, output: r.usage?.output_tokens ?? 0 }),
 	};
 }
@@ -213,10 +236,10 @@ function vertexAnthropicProvider(model) {
 			toVertexBody({
 				model: m,
 				max_tokens: maxTokens,
-				system,
+				system: anthropicSystemField(system),
 				messages: [{ role: 'user', content: user }],
 			}),
-		extractText: (r) => r.content?.[0]?.text || '',
+		extractText: anthropicText,
 		extractUsage: (r) => ({ input: r.usage?.input_tokens ?? 0, output: r.usage?.output_tokens ?? 0 }),
 	};
 }

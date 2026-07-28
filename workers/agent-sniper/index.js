@@ -33,6 +33,7 @@ import {
 	alertErrorSpike,
 	alertBoot,
 	alertShutdown,
+	alertStrictModelOffline,
 } from './alerts.js';
 import { screenPush } from './screen-push.js';
 import { scoreAlpha } from './alpha-hunt.js';
@@ -184,6 +185,12 @@ async function main() {
 						const gate = llmVerdictGate(verdict, strat);
 						if (!gate.pass) {
 							log.info('llm judge pass', { agent: strat.agent_id, mint: data.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence, gate: gate.reason });
+							// A strict arm rejecting a fallback verdict is not a trading
+							// decision — it is a parked arm. Page (hourly, per model) so a
+							// dead model route can never quietly retire an experiment again.
+							if (gate.reason === 'fallback_model') {
+								alertStrictModelOffline({ model: strat.llm_model, answeredBy: verdict.answeredBy, agentId: strat.agent_id });
+							}
 							return;
 						}
 						log.info('llm judge buy', { agent: strat.agent_id, mint: data.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });

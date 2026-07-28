@@ -47,6 +47,7 @@ import {
 	ANON_PROVIDER_LIST,
 	MODEL_CATALOG,
 	isPaidModel,
+	modelThinksByDefault,
 	MAX_FALLBACK_ATTEMPTS,
 	TOTAL_BUDGET_MS,
 	PER_CALL_TIMEOUT_MS,
@@ -1172,7 +1173,7 @@ const FALLBACK_SIBLINGS = {
 	// model would re-hit the same throttle — keep a single slot and give the
 	// next fallback slot to a different provider.
 	nvidia: ['meta/llama-3.3-70b-instruct'],
-	anthropic: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
+	anthropic: ['claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
 	openai: ['gpt-5.4-nano'],
 	grok: ['grok-4.5', 'grok-4.1-fast'],
 };
@@ -1319,7 +1320,10 @@ function makeRoute(name, cfg, apiKey, model) {
 			},
 			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
 				model,
-				max_tokens: maxTokens,
+				// Claude 5 models think by default and max_tokens caps thinking +
+				// visible text together — floor the budget so a small chat cap
+				// can't be consumed entirely by thinking.
+				max_tokens: modelThinksByDefault(model) ? Math.max(maxTokens, HARD_MAX_TOKENS) : maxTokens,
 				system: systemPrompt,
 				messages: history,
 				...(includeTools ? { tools: ACTION_TOOLS } : {}),

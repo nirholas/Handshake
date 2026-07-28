@@ -608,8 +608,14 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 				replayed: true,
 			};
 		}
+		// web3.js appends the LAST simulation-log lines to the message, so the
+		// failure cause sits at the END. A head-only truncation kept only the
+		// ComputeBudget preamble and hid the failing instruction from every
+		// production log. Keep the head (error class) and the tail (cause).
 		const detail = m.replace(/\s+/g, ' ').trim();
-		return { success: false, reason: `broadcast_failed:${detail}`.slice(0, 300) };
+		const full = `broadcast_failed:${detail}`;
+		const reason = full.length <= 480 ? full : `${full.slice(0, 200)} … ${full.slice(-276)}`;
+		return { success: false, reason };
 	}
 
 	const conf = await confirmSignature(connection, signature);

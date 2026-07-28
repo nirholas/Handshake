@@ -97,9 +97,13 @@ describe('batch grinder: produced addresses match the pattern', () => {
 	}, 30_000);
 
 	it('gives up (exhausted) instead of hanging on an impossible cap', () => {
-		// Tiny cap → returns exhausted rather than looping forever.
-		const res = grindToCompletion({ prefix: 'zzzzz' }, { maxAttempts: 50_000 });
+		// Tiny cap → returns exhausted rather than looping forever. Small batches
+		// keep this a loop-contract test (multiple batches, then give up at the
+		// cap) instead of a 50k-key CPU burn: at ~3s per 25k-key batch on a
+		// contended CI host, the default batch size ran right into the 15s budget.
+		const res = grindToCompletion({ prefix: 'zzzzz' }, { maxAttempts: 2_000, batchSize: 1_000 });
 		expect(res.status).toBe('exhausted');
+		expect(res.attempts).toBeGreaterThanOrEqual(2_000);
 	}, 15_000);
 });
 

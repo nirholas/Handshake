@@ -204,7 +204,14 @@ export default wrap(async (req, res) => {
 	if (action === 'settle') {
 		// No eager sponsor-key load: self-pay settles need no sponsor at all, and
 		// sponsor-mode settles load the key lazily inside settleRingPayment.
-		const result = await settleRingPayment({ paymentPayload, requirement });
+		// The fee meter governs the fee-paying wallet's daily SOL burn across
+		// every pipeline that settles here (wallet-fee-meter.js).
+		const result = await settleRingPayment({
+			paymentPayload,
+			requirement,
+			feeMeter: facilitatorFeeMeter(),
+		});
+		if (result.success) recordSettledFee(result.feePayer, result.feeLamports);
 		await logOp({
 			action: 'settle',
 			network: requirement.network,
@@ -217,6 +224,7 @@ export default wrap(async (req, res) => {
 			ok: result.success,
 			reason: result.reason,
 			idempotencyKey: req.headers?.['idempotency-key'] || null,
+			feePayer: result.feePayer,
 		});
 		if (!result.success) {
 			// 200 + success:false → settlePayment throws a clean settle_failed without

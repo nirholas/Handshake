@@ -28,6 +28,17 @@ import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } fro
 import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
 import { screenPush } from './screen-push.js';
 
+// SOL an entry must leave behind, on top of the buy itself, for the transaction to
+// survive: the shared fee headroom PLUS the rent-exempt minimum of the token ATA the
+// buy opens (2_039_280 lamports for an SPL token account) PLUS room for the priority
+// fee and an MEV tip. The shared 0.003 SOL floor alone is thinner than the ATA rent,
+// so a trade clamped to `balance - 0.003` could clear the guard and then die in the
+// pre-broadcast simulation (SIM_FAILED) or never land (EXEC_EXHAUSTED) — the residual
+// failure mix on the thin arms. Sniper-local on purpose: the discretionary trade path
+// spends from wallets that are not sized to the lamport.
+const ATA_RENT_LAMPORTS = 2_039_280n;
+const ENTRY_HEADROOM_LAMPORTS = SOL_FEE_HEADROOM_LAMPORTS + ATA_RENT_LAMPORTS + 1_000_000n;
+
 // Self-rated conviction for a snipe entry, 0..1. Lower price impact and a clean
 // firewall verdict raise it; a warned verdict and heavy impact lower it. This is
 // the prediction the Reasoning Ledger later scores for calibration — does an
@@ -272,10 +283,25 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 		const concurrency = checkConcurrency(open, strat.max_concurrent_positions);
 		if (concurrency) return skip(tag, concurrency.reason);
 
-		// 3. daily budget cap
+		// 3. daily budget cap — shrink to the day's remainder rather than sitting out.
+		//    An arm whose configured size grew past its OWN daily budget (optimizer
+		//    drift moves the two knobs independently) could never clear `spent + size
+		//    <= budget` even on a fresh day with zero spend: permanently armed,
+		//    permanently unable to buy, and silent about it. Two arms sat dead this way
+		//    for a week. Shrinking honours the cap exactly — the day's total still
+		//    cannot exceed `daily_budget_lamports` — and only ever lowers risk, the
+		//    same shrink-don't-skip rule the wallet headroom below already applies.
 		const spent = await getDailySpend(strat.agent_id, cfg.network);
-		const budget = checkDailyBudgetLamports(spent, perTrade, BigInt(strat.daily_budget_lamports));
-		if (budget) return skip(tag, budget.reason);
+		const dailyBudget = BigInt(strat.daily_budget_lamports);
+		const budget = checkDailyBudgetLamports(spent, perTrade, dailyBudget);
+		if (budget) {
+			const remaining = dailyBudget - BigInt(spent);
+			if (remaining < cfg.minTradeLamports) return skip(tag, budget.reason);
+			log.info('trade size clamped to the day\'s remaining budget', {
+				...tag, configured: perTrade.toString(), clamped: remaining.toString(),
+			});
+			perTrade = remaining;
+		}
 
 		// 3c. realized-loss circuit breaker (portfolio layer). The per-trade caps
 		//     above (budget, headroom, impact) can't stop a fleet that bleeds one
@@ -326,7 +352,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			log.warn('wallet precheck failed', { ...tag, err: err?.message });
 			return skip(tag, 'wallet_precheck_failed');
 		}
-		const headroom = checkSolHeadroom(preBalance, perTrade, SOL_FEE_HEADROOM_LAMPORTS);
+		const headroom = checkSolHeadroom(preBalance, perTrade, ENTRY_HEADROOM_LAMPORTS);
 		if (headroom) {
 			// Learning > profit (owner directive): a wallet too poor for the
 			// strategy's configured size still trades, shrunk to whatever is left
@@ -334,7 +360,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			// cfg.minTradeLamports-sized buy wouldn't fit. Safe to shrink here: every
 			// check already passed above (budget, spend policy) is a ceiling a
 			// smaller trade only clears more easily, never less.
-			const dustCapable = preBalance - SOL_FEE_HEADROOM_LAMPORTS;
+			const dustCapable = preBalance - ENTRY_HEADROOM_LAMPORTS;
 			if (dustCapable < cfg.minTradeLamports) return skip(tag, headroom.reason);
 			perTrade = dustCapable;
 		}
@@ -397,6 +423,10 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 					quoteAmount: perTrade,
 					connection: ctx.connection,
 					priceImpactPct: Number(quote.priceImpactPct),
+					// The balance is already in hand from the step-4 precheck. Handing it to
+					// the firewall lets the round-trip probe shrink to a size this wallet can
+					// simulate, so a thin wallet reads as a thin wallet — not as a honeypot.
+					payerBalanceLamports: preBalance,
 				}).catch((err) => {
 					log.warn?.('firewall_check_failed', { ...tag, message: err?.message });
 					return null;

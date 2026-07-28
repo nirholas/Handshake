@@ -342,7 +342,9 @@ async function handleRead(req, res, id) {
 	let completion;
 	try {
 		completion = await llmComplete({
-			system, user, maxTokens: 700, anthropicModel: 'claude-sonnet-4-6', timeoutMs: 30_000,
+			// Sonnet 5 thinks by default and max_tokens caps thinking + answer
+			// together, so the budget carries headroom beyond the ~700-token read.
+			system, user, maxTokens: 2000, anthropicModel: 'claude-sonnet-5', timeoutMs: 30_000,
 			track: { userId: auth?.userId ?? null, agentId: id, tool: 'alpha_read' },
 		});
 	} catch (e) {

@@ -1,5 +1,5 @@
 // cross-search — the query layer behind GET /api/search (api/search.js), the
-// cross-entity discovery surface (prompts/user-value/05-discovery-search.md).
+// cross-entity discovery surface (user-value 05-discovery-search work order, retired; git history).
 //
 // three.ws's creation types live in genuinely heterogeneous stores: avatars +
 // on-chain/Solana agents in Postgres tables already served by api/explore.js,

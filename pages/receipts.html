@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot (no-flash); runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Receipt Vault · three.ws</title>
+		<meta
+			name="description"
+			content="Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one message, and get back your signed proof-of-purchase receipts: endpoint, network, settlement tx, and the full artifact as JSON or CSV."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/receipts" />
+		<meta property="og:title" content="Receipt Vault · three.ws" />
+		<meta
+			property="og:description"
+			content="Connect a wallet, sign one message, and retrieve every signed x402 receipt three.ws ever issued you: proof of purchase for every paid API call, exportable as JSON or CSV."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Receipt+Vault&amp;d=Every+x402+payment+you+ever+made+to+three.ws%2C+retrievable+forever.+Sign+one+message+and+get+back+your+signed+proof-of-purchase+receipts.&amp;p=%2Freceipts"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Receipt Vault · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Retrieve every signed x402 receipt three.ws ever issued to your wallet. Proof of purchase, exportable, explorer-verifiable."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Receipt+Vault&amp;d=Every+x402+payment+you+ever+made+to+three.ws%2C+retrievable+forever.+Sign+one+message+and+get+back+your+signed+proof-of-purchase+receipts.&amp;p=%2Freceipts"
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/ui-juice.css" />
+		<link rel="stylesheet" href="/src/receipts.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/receipts" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Receipt Vault",
+				"description": "Retrieve every signed x402 receipt three.ws ever issued to your wallet: proof of purchase for every paid API call, exportable as JSON or CSV.",
+				"url": "https://three.ws/receipts",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Receipt Vault · three.ws" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="rc-shell">
+			<div class="rc-glow" aria-hidden="true"></div>
+
+			<!-- hero -->
+			<section class="rc-hero">
+				<p class="rc-kicker">Proof of purchase, forever</p>
+				<h1 class="rc-title">Receipt <em>Vault</em></h1>
+				<p class="rc-sub">
+					Every paid x402 call you make to three.ws issues a signed receipt, and we
+					keep a durable copy. Lost the original payment-response header? Connect
+					your wallet, sign one read-only message, and pull back every receipt ever
+					issued to it. The mirror of <a href="/x402-revenue">Endpoint Revenue</a>:
+					that page shows what the platform earns; this one shows what
+					<strong>you</strong> bought.
+				</p>
+			</section>
+
+			<!-- signed-out state -->
+			<section class="rc-signin" id="rc-signin" aria-label="Connect a wallet">
+				<h2>Prove your wallet, get your receipts</h2>
+				<p class="rc-signin-copy">
+					Sign a plain-text message stating your address and a timestamp. The
+					signature authorizes a read of your own receipts and nothing else: no
+					transaction, no approval, no fee. It expires after 5 minutes.
+				</p>
+				<div class="rc-connect-row">
+					<button
+						type="button"
+						class="rc-btn rc-btn-primary"
+						id="rc-connect-solana"
+						data-label="Connect Solana wallet"
+					>
+						<span class="rc-btn-label">Connect Solana wallet</span>
+					</button>
+					<button
+						type="button"
+						class="rc-btn rc-btn-secondary"
+						id="rc-connect-evm"
+						data-label="Connect EVM wallet"
+					>
+						<span class="rc-btn-label">Connect EVM wallet</span>
+					</button>
+				</div>
+				<p class="rc-signin-error" id="rc-signin-error" role="alert" hidden></p>
+				<p class="rc-signin-note">
+					Works with Phantom, Backpack, and Solflare on Solana, and MetaMask or any
+					injected wallet on EVM chains. Receipts are signed by three.ws under the
+					x402 Offer &amp; Receipt extension, so third parties can verify them
+					without trusting us. Never made a paid call? Start at the
+					<a href="/x402">x402 endpoint catalog</a>.
+				</p>
+			</section>
+
+			<!-- signed-in vault -->
+			<section id="rc-vault" aria-label="Your receipts" hidden>
+				<div class="rc-vault-head">
+					<span class="rc-wallet">
+						<span class="rc-wallet-net" id="rc-wallet-net"></span>
+						<span class="rc-wallet-addr" id="rc-wallet-addr"></span>
+					</span>
+					<span class="rc-vault-tools">
+						<button type="button" class="rc-tool" id="rc-refresh" title="Re-fetch receipts">
+							Refresh
+						</button>
+						<button
+							type="button"
+							class="rc-tool"
+							id="rc-export"
+							title="Export the visible receipts as CSV"
+						>
+							Export CSV
+						</button>
+						<button type="button" class="rc-tool" id="rc-disconnect" title="Forget this session">
+							Disconnect
+						</button>
+					</span>
+				</div>
+
+				<div class="rc-kpis" aria-label="Summary">
+					<div class="rc-kpi">
+						<span class="rc-kpi-label">Receipts</span>
+						<span class="rc-kpi-val" id="rc-k-total">·</span>
+					</div>
+					<div class="rc-kpi">
+						<span class="rc-kpi-label">Endpoints used</span>
+						<span class="rc-kpi-val" id="rc-k-endpoints">·</span>
+					</div>
+					<div class="rc-kpi">
+						<span class="rc-kpi-label">Networks</span>
+						<span class="rc-kpi-val" id="rc-k-networks">·</span>
+					</div>
+					<div class="rc-kpi">
+						<span class="rc-kpi-label">Last purchase</span>
+						<span class="rc-kpi-val" id="rc-k-last">·</span>
+					</div>
+				</div>
+
+				<div class="rc-search-wrap">
+					<input
+						type="search"
+						class="rc-search"
+						id="rc-search"
+						placeholder="Filter by endpoint, network, or tx hash"
+						aria-label="Filter receipts"
+					/>
+				</div>
+
+				<div class="rc-list" id="rc-list" aria-live="polite"></div>
+
+				<div class="rc-empty" id="rc-empty" hidden>
+					<h3 id="rc-empty-title"></h3>
+					<p id="rc-empty-body"></p>
+				</div>
+
+				<div class="rc-load-error" id="rc-load-error" role="alert" hidden>
+					<h3>Could not load your receipts</h3>
+					<p id="rc-load-error-msg"></p>
+					<button type="button" class="rc-tool" id="rc-retry">Retry</button>
+				</div>
+
+				<p class="rc-fineprint rc-hint">
+					<kbd>/</kbd> search · <kbd>e</kbd> export CSV. Each receipt is a signed
+					artifact (JWS) from the x402 Offer &amp; Receipt extension; the JSON
+					download includes the signature so anyone can verify it against the
+					three.ws issuer key. Some receipts omit the on-chain tx hash by design
+					for privacy. The API behind this page is
+					<code>GET /api/x402/my-receipts</code>, documented in the
+					<a href="/docs/api-reference">API reference</a>.
+				</p>
+			</section>
+		</main>
+
+		<div class="rc-toast" id="rc-toast" role="status" aria-live="polite" hidden></div>
+
+		<script type="module" src="/src/receipts.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

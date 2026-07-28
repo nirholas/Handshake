@@ -1132,9 +1132,9 @@
 		}
 		.foot-col { display: flex; flex-direction: column; gap: 9px; }
 		.foot-col-h {
-			font-family: var(--font-mono); font-size: 10px;
+			font-family: var(--font-mono); font-size: 10px; font-weight: 400;
 			text-transform: uppercase; letter-spacing: 0.18em;
-			color: var(--text-3); margin-bottom: 6px;
+			color: var(--text-3); margin: 0 0 6px;
 		}
 		.foot-col a {
 			color: var(--text-3); font-size: 13px;
@@ -1860,6 +1860,15 @@
 			position: absolute; inset: 0; display: block;
 			width: 100%; height: 100%;
 		}
+		/* Shown only when no avatar GLB could be resolved (API + fallback pool
+		   both unreachable) — mirrors the other sections' designed error states. */
+		.pg-preview-msg {
+			position: absolute; inset: 0; display: flex; flex-direction: column;
+			align-items: center; justify-content: center; gap: 10px;
+			text-align: center; padding: 24px; color: var(--text-3); font-size: 13px;
+		}
+		.pg-preview-msg a { color: var(--text-2); text-decoration: underline; }
+		.pg-preview-msg a:hover, .pg-preview-msg a:focus-visible { color: var(--text); }
 
 		/* Animation bar */
 		.pg-anims {
@@ -4688,7 +4697,7 @@
 				<!-- Desktop: QR code -->
 				<div class="har-desktop-only">
 					<div class="har-qr-wrap" id="har-qr-wrap">
-						<canvas id="har-qr-canvas" width="104" height="104" style="border-radius:4px;display:block"></canvas>
+						<canvas id="har-qr-canvas" width="104" height="104" style="border-radius:4px;display:block" role="img" aria-label="QR code that opens this model in AR on your phone. The same link is available below as: Open this model in AR." data-i18n-attr="aria-label:home.har_qr_aria"></canvas>
 					</div>
 					<p class="har-qr-label" data-i18n-html="home.scan_with_your_phone_to_place_this">Scan with your phone to place<br>this model in your real space.</p>
 				</div>
@@ -5156,7 +5165,7 @@
 				<p class="bento-desc" data-i18n="home.walk_your_avatar_through_live_environments_m">Walk your avatar through live environments. Multiple visitors move together in real-time — CRDT-synced positions, joystick or keyboard control, and WebSocket presence.</p>
 				<div class="bento-interact">
 					<div class="walk-minimap-wrap">
-						<canvas class="walk-minimap" id="walk-minimap" tabindex="0"></canvas>
+						<canvas class="walk-minimap" id="walk-minimap" tabindex="0" role="application" aria-label="Walk minimap. Use W A S D or arrow keys to move your avatar." data-i18n-attr="aria-label:home.walk_minimap_aria"></canvas>
 						<div class="walk-minimap-hud">
 							<span class="walk-minimap-dot"></span>
 							<span id="walk-player-count" data-i18n="home.4_players_online">4 players online</span>
@@ -5844,7 +5853,7 @@
 	<div class="wrap-1280">
 		<nav class="foot-cols" aria-label="Footer">
 			<div class="foot-col">
-				<div class="foot-col-h">Product</div>
+				<h3 class="foot-col-h">Product</h3>
 				<a href="/create" data-i18n="home.build_an_agent">Build an agent</a>
 				<a href="/forge" data-i18n="home.text_to_3d">Text to 3D</a>
 				<a href="/image-to-3d" data-i18n="home.image_to_3d">Image to 3D</a>
@@ -5854,7 +5863,7 @@
 				<a href="/dashboard" data-i18n="home.console">Console</a>
 			</div>
 			<div class="foot-col">
-				<div class="foot-col-h">Explore</div>
+				<h3 class="foot-col-h">Explore</h3>
 				<a href="/agents" data-i18n="home.agents_index">Agents Index</a>
 				<a href="/reputation" data-i18n="home.reputation">Reputation</a>
 				<a href="/characters" data-i18n="home.characters">Characters</a>
@@ -5862,7 +5871,7 @@
 				<a href="/bazaar" data-i18n="home.marketplace_3">Marketplace</a>
 			</div>
 			<div class="foot-col">
-				<div class="foot-col-h">Developers</div>
+				<h3 class="foot-col-h">Developers</h3>
 				<a href="/docs" data-i18n="home.docs_2">Docs</a>
 				<a href="/avatar-sdk" data-i18n="home.avatar_sdk">Avatar SDK</a>
 				<a href="/dashboard/api" data-i18n="home.api">API</a>
@@ -5870,21 +5879,23 @@
 				<a href="/sitemap" data-i18n="home.sitemap">Sitemap</a>
 			</div>
 			<div class="foot-col">
-				<div class="foot-col-h">Integrations</div>
+				<h3 class="foot-col-h">Integrations</h3>
 				<a href="/galaxy" data-i18n="home.agent_galaxy">Agent Galaxy</a>
 				<a href="/x402" data-i18n="home.trust_layer">Trust Layer</a>
 				<a href="/aws" data-i18n="home.aws_marketplace">AWS Marketplace</a>
 			</div>
 			<div class="foot-col">
-				<div class="foot-col-h">Company</div>
+				<h3 class="foot-col-h">Company</h3>
 				<a href="/blog" data-i18n="home.blog">Blog</a>
 				<a href="/community" data-i18n="home.community_2">Community</a>
+				<a href="/support" data-i18n="home.support">Support</a>
+				<a href="/status" data-i18n="home.status">Status</a>
 				<a href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer" data-i18n="home.x_twitter">X / Twitter</a>
 				<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" data-i18n="home.github_2">GitHub</a>
 				<a href="mailto:support@three.ws" data-i18n="home.contact">Contact</a>
 			</div>
 			<div class="foot-col">
-				<div class="foot-col-h">Legal</div>
+				<h3 class="foot-col-h">Legal</h3>
 				<a href="/legal/privacy" data-i18n="home.privacy">Privacy</a>
 				<a href="/legal/tos" data-i18n="home.terms">Terms</a>
 			</div>
@@ -6462,8 +6473,21 @@
 			else liveAgent.removeAttribute(k);
 		}
 
+		function showPreviewMessage() {
+			if (preview.querySelector('.pg-preview-msg')) return;
+			var msg = document.createElement('div');
+			msg.className = 'pg-preview-msg';
+			msg.setAttribute('role', 'status');
+			msg.innerHTML = 'Couldn\'t load a live avatar right now.<br /><a href="/gallery">Browse the gallery</a> or pick another avatar below.';
+			preview.appendChild(msg);
+		}
+		function clearPreviewMessage() {
+			var msg = preview.querySelector('.pg-preview-msg');
+			if (msg) msg.remove();
+		}
 		function updatePreview() {
-			if (!state.glbUrl) return;
+			if (!state.glbUrl) { showPreviewMessage(); return; }
+			clearPreviewMessage();
 			// `kiosk` and `eager` are read once at boot (not observed attributes),
 			// so a change to either requires recreating the element. kiosk is tied
 			// to the chat toggle: with chat on we drop kiosk so the chat chrome
@@ -6520,7 +6544,7 @@
 				syncCode();
 				if (liveAgent) { liveAgent.remove(); liveAgent = null; }
 				updatePreview();
-			}).catch(function() {});
+			}).catch(function() { showPreviewMessage(); });
 		}
 
 		function renderAvatars(list) {
@@ -6782,7 +6806,10 @@
 				copyBtn.classList.add('copied');
 				copyBtn.textContent = 'Copied';
 				setTimeout(function() { copyBtn.classList.remove('copied'); copyBtn.textContent = 'Copy'; }, 1600);
-			}).catch(function() {});
+			}).catch(function() {
+				copyBtn.textContent = 'Copy blocked';
+				setTimeout(function() { copyBtn.textContent = 'Copy'; }, 1600);
+			});
 		});
 
 		animsEl.addEventListener('click', function(e) {
@@ -6803,7 +6830,7 @@
 			syncCode();
 			updatePreview();
 			loadAvatars();
-		}).catch(function() {});
+		}).catch(function() { showPreviewMessage(); });
 	})();
 
 	// ── Showcase 3D — live agent grid ──────────────────────────────
@@ -8211,11 +8238,15 @@
 			if (!btn || !addr) return;
 			var CA = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 			btn.addEventListener('click', function () {
-				navigator.clipboard.writeText(CA).then(function () {
-					var orig = addr.textContent;
-					addr.textContent = 'Copied!';
+				var orig = addr.textContent;
+				var flash = function (label) {
+					addr.textContent = label;
 					setTimeout(function () { addr.textContent = orig; }, 1500);
-				});
+				};
+				navigator.clipboard.writeText(CA).then(
+					function () { flash('Copied!'); },
+					function () { flash('Copy failed, select it instead'); }
+				);
 			});
 		})();
 	</script>

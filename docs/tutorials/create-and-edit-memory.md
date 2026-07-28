@@ -52,7 +52,7 @@ For the full data model (storage modes, the file format, IPFS persistence), see 
 
 The fastest way to add a custom memory.
 
-1. Open **[Library → Memory](/library)** in your dashboard.
+1. Open **[Library → Memory](/dashboard/library)** in your dashboard.
 2. Click **+ Add a note**.
 3. **Attach to agent** — pick which agent should remember this.
 4. **Type** — choose `user`, `feedback`, `project`, or `reference` (see the table above; default is `project`).
@@ -271,7 +271,7 @@ Strong:  type=feedback  salience=0.85  tags=[pricing,currency]
 
 After creating or editing, confirm the agent can actually retrieve it:
 
-- **Dashboard:** the note shows in [Library → Memory](/library) with its type, agent, and salience.
+- **Dashboard:** the note shows in [Library → Memory](/dashboard/library) with its type, agent, and salience.
 - **MCP / API:** `recall` (or `GET /api/agent-memory`) returns it, ranked. Run a query in the user's own words — if it doesn't surface in the top results, raise salience or add a matching tag.
 - **In conversation:** start a fresh session and prompt the situation the memory covers. The agent should act on it unprompted. If it doesn't, the memory is probably mistyped or too low-salience.
 
@@ -305,7 +305,7 @@ The test: *would the agent need this next week, and could it not just look it up
 
 You learned five ways to give an agent a custom memory and manage it:
 
-- **Dashboard** ([Library → Memory](/library)) — create and review, no code.
+- **Dashboard** ([Library → Memory](/dashboard/library)) — create and review, no code.
 - **The agent itself** — it remembers and forgets in conversation.
 - **MCP tools** (`remember` / `recall` / `forget`) — for MCP clients and agent-to-agent flows.
 - **REST API** (`POST` / `GET` / `DELETE /api/agent-memory`) — create, edit-by-id (re-indexes), read, delete.

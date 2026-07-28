@@ -13,13 +13,16 @@
 //   1. Selects the coins the sniper is actively watching (selectEnrichTargets):
 //      open positions first (a sentiment flip on a held coin is an exit signal),
 //      then recent watch-worthy Oracle coins, deduped by mint, capped per run.
-//   2. Pays POST /api/x402/crypto-intel { topic: <symbol> } for each via the
-//      shared payX402 client — real on-chain USDC from the seed wallet, never
-//      mocked. Crypto Intel resolves the topic against CoinGecko BY ID
-//      (simple/price?ids=…), so a coin with no resolvable listing makes the
-//      endpoint throw 503 BEFORE settlement: the wallet is never charged for a
-//      coin we have no real market read on, and nothing is written. That is the
-//      honesty guard — we only ever attach a signal a real market produced.
+//   2. Pays POST /api/x402/crypto-intel { topic: <symbol>, mint } for each via
+//      the shared payX402 client: real on-chain USDC from the seed wallet,
+//      never mocked. Crypto Intel prices the mint through the multi-source
+//      on-chain market lib (Birdeye, DexScreener, GeckoTerminal), falling
+//      back to CoinGecko/Coinbase by ticker, so pump.fun coins with a live
+//      pool resolve to real data instead of always 503ing. A coin with no
+//      resolvable market anywhere still makes the endpoint throw 503 BEFORE
+//      settlement: the wallet is never charged for a coin we have no real
+//      market read on, and nothing is written. That is the honesty guard; we
+//      only ever attach a signal a real market produced.
 //   3. Maps the signal (bullish / bearish / neutral) + confidence into a clamped
 //      threshold delta (deriveSentiment) and upserts it into sniper_coin_sentiment
 //      keyed by (mint, network). bearish raises the snipe bar, bullish lowers it.
@@ -283,9 +286,9 @@ export async function run(ctx = {}) {
 	let callErrors = 0;
 	let lastTxSig = null;
 
-	// Crypto Intel is keyed by ticker, so two watched mints sharing a symbol read
-	// the same market. Cache the response per topic within the run to avoid paying
-	// twice for the same ticker while still writing a sentiment row per mint.
+	// Responses are mint-specific (Crypto Intel prices the exact mint on-chain),
+	// so the same-run reuse cache is keyed by mint: two coins sharing a ticker
+	// must never read each other's market.
 	const topicCache = new Map();
 
 	for (let i = 0; i < targets.length; i++) {
@@ -300,14 +303,14 @@ export async function run(ctx = {}) {
 
 		const t0 = Date.now();
 
-		// Reuse a same-run response for a repeated ticker (no second payment).
-		let result = topicCache.get(topic);
+		// Reuse a same-run response for a repeated mint (no second payment).
+		let result = topicCache.get(mint);
 		if (!result) {
 			try {
 				result = await payX402({
 					url: endpointUrl,
 					method: 'POST',
-					body: { topic },
+					body: { topic, mint },
 					buyer, conn, blockhash, mintInfo,
 					remainingCap,
 					userAgent: 'threews-x402-sniper-intel/1.0',
@@ -321,7 +324,7 @@ export async function run(ctx = {}) {
 				});
 				continue;
 			}
-			topicCache.set(topic, result);
+			topicCache.set(mint, result);
 
 			if (result.paid) {
 				spentAtomic += result.amountAtomic;
@@ -357,9 +360,10 @@ export async function run(ctx = {}) {
 				}
 			}
 		} else {
-			// crypto-intel throws 503 (data_unavailable) when CoinGecko has no
-			// resolvable market for the ticker — an expected, un-charged outcome for
-			// the memecoins the sniper mostly watches. Never attach a wrong signal.
+			// crypto-intel throws 503 (data_unavailable) when no source (the
+			// on-chain market lib included) has a live market for the mint, e.g. a
+			// bonding-curve coin with no indexed pool yet. Un-charged, and never
+			// attach a wrong signal.
 			if (result.status === 503) noData += 1;
 			else callErrors += 1;
 		}

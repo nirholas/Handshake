@@ -64,9 +64,11 @@ const WARN_SCORE = 70; // at/under this → warn
 //   mint_authority_active  → dev can mint unlimited supply and dilute you to zero
 //   freeze_authority_active→ dev can freeze your token so you can never sell
 //   authority_read_failed  → couldn't read the mint's authorities at all
+//   probe_unaffordable     → the payer can't fund even a minimum probe: unproven
 //   mint_not_found         → the mint account isn't there to vet
 export const CRITICAL_FIREWALL_REASONS = Object.freeze(new Set([
 	'simulation_unavailable',
+	'probe_unaffordable',
 	'mint_authority_active',
 	'freeze_authority_active',
 	'authority_read_failed',
@@ -200,6 +202,35 @@ async function checkVenue(network, mintPk, cacheKey) {
 	}
 }
 
+// Simulation errors that mean "this payer is too poor to run the probe", in the
+// shapes the runtime produces both as a top-level `err` and inside program logs.
+const FUNDING_SHAPED_ERR = /insufficient (lamports|funds)|InsufficientFunds(ForFee|ForRent)?|AccountNotFound|account with insufficient funds/i;
+
+// ── round-trip probe sizing ───────────────────────────────────────────────────
+// A honeypot traps the exit at ANY size — sellability is a property of the coin,
+// not of how much you bought. So the probe only ever needs a quote the payer can
+// actually simulate. Sizing it at the full entry when the wallet cannot cover
+// that is what turned "this wallet is poor" into "this coin is a honeypot": one
+// underfunded arm produced 336 consecutive false honeypot verdicts on ordinary
+// bonding-curve launches. When the payer's balance is known, the probe shrinks to
+// fit it and the honeypot signal stays intact.
+const PROBE_RESERVE_LAMPORTS = 6_000_000n; // ~0.006 SOL: token ATA rent + fees, both legs
+const MIN_PROBE_LAMPORTS = 1_000_000n; // 0.001 SOL — under this the quote rounds to noise
+
+/**
+ * Largest round-trip probe `balanceLamports` can fund, or null when it can fund
+ * none. Never returns more than the real entry size. Pure — safe to unit-test.
+ * @param {bigint} quoteLamports the entry the caller intends to make
+ * @param {bigint|null} balanceLamports payer balance, or null when unknown
+ * @returns {bigint|null}
+ */
+export function probeQuoteLamports(quoteLamports, balanceLamports) {
+	if (balanceLamports == null) return quoteLamports;
+	const affordable = BigInt(balanceLamports) - PROBE_RESERVE_LAMPORTS;
+	if (affordable < MIN_PROBE_LAMPORTS) return null;
+	return affordable < quoteLamports ? affordable : quoteLamports;
+}
+
 /**
  * Classify a reverted round-trip simulation by WHICH leg failed. The honeypot
  * shape is "you can buy but you cannot sell": only a SELL-leg failure has it,
@@ -243,7 +274,7 @@ export function classifyRoundTripRevert(simErr, logs, buyIxCount) {
 // honeypot. BLOCK. Only runs pre-graduation (the bonding-curve buy/sell builders);
 // graduated coins are covered by the venue + authority checks (their AMM sell
 // builders need full swap state we don't assemble on the hot path).
-async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection }) {
+async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection, payerBalanceLamports = null }) {
 	if (!payer) {
 		return { res: result('round_trip', 'skip', 'no_payer_for_simulation', {}), simulated: false };
 	}
@@ -254,6 +285,21 @@ async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection 
 		return { res: result('round_trip', 'skip', 'invalid_payer', {}), simulated: false };
 	}
 
+	// Shrink the probe to what this payer can actually simulate (see
+	// `probeQuoteLamports`). A wallet that cannot fund even the minimum probe
+	// cannot fund a real buy either, so its sellability stays unproven — a
+	// critical reason, not a silent pass.
+	const probeAmount = probeQuoteLamports(quoteAmount, payerBalanceLamports);
+	if (probeAmount == null) {
+		return {
+			res: result('round_trip', 'warn', 'probe_unaffordable', {
+				payer_balance: String(payerBalanceLamports),
+				min_probe: MIN_PROBE_LAMPORTS.toString(),
+			}),
+			simulated: false,
+		};
+	}
+
 	let client;
 	try {
 		({ client } = await getPumpTradeClient({ network }));
@@ -262,7 +308,7 @@ async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection 
 	}
 
 	const BNmod = (await import('bn.js')).default;
-	const quoteBn = new BNmod(BigInt(quoteAmount).toString());
+	const quoteBn = new BNmod(probeAmount.toString());
 
 	// Build the buy. A graduated/zero-out/curve-not-found error here is not a
 	// honeypot signal — it means this simulation path doesn't apply, so skip
@@ -329,6 +375,7 @@ async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection 
 				err: verdict.err,
 				log_tail: logs.slice(-4),
 				units_consumed: unitsConsumed,
+				probe_lamports: probeAmount.toString(),
 			}),
 			simulated: true,
 		};
@@ -346,6 +393,8 @@ async function checkRoundTrip({ network, mintPk, payer, quoteAmount, connection 
 			expected_sol_back: expectedSolBack.toString(),
 			expected_base_tokens: baseOut.toString(),
 			units_consumed: unitsConsumed,
+			probe_lamports: probeAmount.toString(),
+			probe_shrunk: probeAmount < BigInt(quoteAmount),
 		}),
 		simulated: true,
 	};
@@ -474,6 +523,10 @@ function compose(checks, simulated) {
 				score -= PENALTY.sim_unavailable;
 				reasons.push('The round-trip simulation could not run (RPC unavailable) — safety could not be fully verified.');
 				break;
+			case 'probe_unaffordable':
+				score -= PENALTY.sim_unavailable;
+				reasons.push('This wallet cannot fund even a minimum simulated round-trip, so the exit went unproven — a balance condition, not a honeypot signal.');
+				break;
 			case 'buy_leg_underfunded':
 				score -= PENALTY.buy_leg_reverted;
 				reasons.push('The simulated buy leg could not be funded at this size, so the sell leg went unproven; this is a wallet-balance condition, not a honeypot signal.');
@@ -545,6 +598,9 @@ function compose(checks, simulated) {
  * @param {bigint|number|string} o.quoteAmount   lamports the buy would spend
  * @param {import('@solana/web3.js').Connection} [o.connection]  injected RPC (else resolved)
  * @param {number} [o.priceImpactPct]            pre-computed buy impact, if the caller has it
+ * @param {bigint|number|string|null} [o.payerBalanceLamports]  payer's SOL, when the caller
+ *   already read it — lets the round-trip probe shrink to a size this wallet can simulate
+ *   instead of misreading a poor wallet as a trapped coin
  * @returns {Promise<{ verdict:'allow'|'warn'|'block', score:number, checks:Array, simulated:boolean, reasons:string[] }>}
  */
 export async function assessTradeSafety({
@@ -555,6 +611,7 @@ export async function assessTradeSafety({
 	quoteAmount,
 	connection = null,
 	priceImpactPct = null,
+	payerBalanceLamports = null,
 } = {}) {
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 
@@ -583,6 +640,12 @@ export async function assessTradeSafety({
 	const lamports = (() => {
 		try { return BigInt(quoteAmount ?? 0n); } catch { return 0n; }
 	})();
+	// Unparseable balance is treated as "unknown", which keeps the full-size probe
+	// — never as zero, which would read every coin as unprovable.
+	const balance = (() => {
+		if (payerBalanceLamports == null) return null;
+		try { return BigInt(payerBalanceLamports); } catch { return null; }
+	})();
 
 	const conn = connection || getConnection({ network: net });
 	const cacheKey = `${mintPk.toBase58()}:${net}`;
@@ -593,7 +656,7 @@ export async function assessTradeSafety({
 		checkMintAuthority(conn, mintPk, cacheKey),
 		checkVenue(net, mintPk, cacheKey),
 		lamports > 0n
-			? checkRoundTrip({ network: net, mintPk, payer, quoteAmount: lamports, connection: conn })
+			? checkRoundTrip({ network: net, mintPk, payer, quoteAmount: lamports, connection: conn, payerBalanceLamports: balance })
 			: Promise.resolve({ res: result('round_trip', 'skip', 'no_quote_amount', {}), simulated: false }),
 		checkIntel(mintPk.toBase58(), net),
 		checkSybil(mintPk.toBase58(), net),

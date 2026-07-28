@@ -207,7 +207,8 @@ export function describeEvent(evt) {
 		case 'agora-vouched':
 			return { icon: '△', title: narrative || `a verifier vouched for ${actor}`, detail: '', href };
 		case 'agent-guard':
-			return { icon: '⚑', title: `${e.label || actor} refused a buy`, detail: e.reason || 'safety rule', href };
+			// `label` is a producer-written verb phrase, e.g. "skipped a pump.fun mayhem coin"
+			return { icon: '⚑', title: e.label ? `${actor} ${e.label}` : `${actor} refused a buy`, detail: e.reason || 'safety rule', href };
 		case 'agora-flagged':
 			return { icon: '⚑', title: narrative || `a proof by ${actor} was flagged`, detail: '', href };
 		case 'jackpot':

@@ -56,6 +56,13 @@ export function ringTickConfig(e = process.env) {
 		// ABOVE the hard SOL floor but below the balance the runway target wants.
 		// 0 restores the strict runway-only behavior. See governedCalls().
 		minCalls: Math.max(0, Math.floor(num(e.X402_RING_MIN_CALLS, 1))),
+		// Sponsor fee-wallet governor inputs. The facilitator's sponsor wallet
+		// (env X402_FEE_PAYER_SOLANA) co-signs every sponsored settle at ~5,000
+		// lamports each; feePerSettleLamports is the conservative estimate and
+		// sponsorRunwayDays is how long its spendable SOL must last at the
+		// governed rate. See sponsorGovernor().
+		sponsorFeePerSettleLamports: Math.max(1, Math.floor(num(e.X402_RING_SPONSOR_FEE_PER_SETTLE_LAMPORTS, 6_000))),
+		sponsorRunwayDays: Math.max(0.5, num(e.X402_RING_SPONSOR_RUNWAY_DAYS, 1)),
 		// USDC float (atomics) the ring tick must LEAVE UNSPENT for the
 		// artifact-producing pipelines (forge props, avatar rigs) that share the
 		// payer. Ring-settle recirculates money in a circle and produces nothing
@@ -108,6 +115,43 @@ export function governedCalls({
 		throttled: calls < configuredCalls,
 		heartbeat: calls > 0 && calls > callsPerMin,
 	};
+}
+
+// ── Sponsor fee-wallet governor ─────────────────────────────────────────────────
+// governedCalls() above watches the RING PAYER's SOL. The wallet that actually
+// starved in the 2026-07-28 outage is the facilitator's SPONSOR fee wallet
+// (env X402_FEE_PAYER_SOLANA), which co-signs every sponsored settle: the tick
+// had no view of it, so the first symptom was every settle dying with
+// fee_wallet_below_floor and the binary mid-tick floor stop. This governor
+// gives the tick that view, with three regimes:
+//   · balance unknown (RPC blip) → pass through untouched. The facilitator
+//     fail-closes at settle time, so guessing zero here would turn a transient
+//     read failure into a self-inflicted outage.
+//   · below the hard floor → skip the whole tick. Every sponsored settle is
+//     guaranteed to be refused; firing them is pure error noise.
+//   · above the floor → taper calls so the sponsor's spendable SOL lasts
+//     runwayDays (same runway math and heartbeat as the payer governor), and
+//     report `throttled` so the caller can raise the pre-starvation alert
+//     while the rail is still moving.
+// Pure: same inputs → same decision.
+export function sponsorGovernor({
+	configuredCalls, sponsorLamports, floorLamports, feePerSettleLamports, runwayDays, minCalls = 1,
+}) {
+	if (!Number.isFinite(sponsorLamports)) {
+		return { skip: false, calls: configuredCalls, throttled: false, known: false, callsPerDayBudget: null };
+	}
+	if (sponsorLamports < floorLamports) {
+		return { skip: true, calls: 0, throttled: true, known: true, callsPerDayBudget: 0 };
+	}
+	const g = governedCalls({
+		configuredCalls,
+		solLamports: sponsorLamports,
+		floorLamports,
+		feePerCallLamports: feePerSettleLamports,
+		runwayDays,
+		minCalls,
+	});
+	return { skip: false, calls: g.calls, throttled: g.throttled, known: true, callsPerDayBudget: g.callsPerDayBudget };
 }
 
 // ── Cadence: which endpoints does this tick pay? ────────────────────────────────

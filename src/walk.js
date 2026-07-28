@@ -44,6 +44,7 @@ import { getMeshoptDecoder } from './viewer/internal.js';
 import nipplejs from 'nipplejs';
 
 import { AnimationManager } from './animation-manager.js';
+import { FootPlantController } from './procedural/foot-plant.js';
 import { AccessoryManager } from './agent-accessories.js';
 import { WalkGestures, GESTURE_ORDER } from './walk-gestures.js';
 import { WalkVoiceChat } from './walk-voice-chat.js';
@@ -1485,6 +1486,18 @@ if (lookJoystickEl && wantsTouchControls) {
 // ── Avatar loading + animations ──────────────────────────────────────────
 const animationManager = new AnimationManager();
 let avatar = null;
+// Terrain-adaptive foot planting (src/procedural/foot-plant.js). Rebuilt on
+// every avatar (re)load so it resolves the new rig's leg bones; ticked in the
+// render loop right after the mixer. The ground closure reads the live
+// `terrain`/`arActive` bindings, so environment swaps and AR mode just work
+// (AR's flat floor yields zero deltas and the layer no-ops).
+let footPlant = null;
+function rebuildFootPlant() {
+	footPlant = avatar
+		? new FootPlantController(avatar, (x, z) => (arActive ? GROUND_Y : terrain.heightAt(x, z)))
+		: null;
+	if (footPlant && !footPlant.enabled) footPlant = null;
+}
 let avatarYaw = 0; // current facing (radians); we lerp this toward movement angle
 let avatarLean = 0; // current torso pitch (radians); lerps toward target lean
 let currentMotion = 'idle'; // 'idle' | 'walk' | 'run' — drives clip crossfades
@@ -1595,6 +1608,7 @@ async function loadAvatar() {
 	if (!isDraftPreview) applyLocalCosmetics(getPlayCosmetics());
 
 	animationManager.attach(avatar);
+	rebuildFootPlant();
 
 	setLoadingText('Preparing animations...');
 	const manifest = await fetch(ANIMATIONS_MANIFEST_URL, { cache: 'force-cache' }).then((r) => {
@@ -1679,6 +1693,7 @@ async function applyAvatarSwap(url, id) {
 	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
 	if (cameraMode === 'firstperson') avatar.visible = false;
 	animationManager.attach(avatar);
+	rebuildFootPlant();
 	animationManager.crossfadeTo(motionToClipName(currentMotion), 0);
 	resolvedAvatarUrl = url;
 	setSelectedAvatar(id, url);
@@ -2534,6 +2549,10 @@ function tick(frameNow) {
 
 	// 3. Tick the animation mixer.
 	animationManager.update(dt);
+	// 3a. Terrain-adaptive foot planting: after the mixer poses the legs, drop
+	// the pelvis and IK each foot onto its own patch of the rolling ground so
+	// slopes stop making one foot float and the other clip through.
+	footPlant?.update(dt);
 	localCosmetics?.tick(dt);
 
 	// 3b. Paint the path trail behind the avatar. Suppressed in AR (no rendered

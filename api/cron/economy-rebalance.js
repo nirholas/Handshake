@@ -92,7 +92,11 @@ export default wrapCron(async (req, res) => {
 		if (!pubkey) continue;
 		const { sol, usdc } = await readWallet(connection, pubkey);
 		const floorUsd = Number(process.env[cfg.floorEnv]) || cfg.floorDflt;
-		wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'usdc', floorUsd });
+		// A self-pay wallet's fee-SOL refill target doubles as the untouchable
+		// reserve on its sol->usdc leg (see planRebalance), so the USDC floor can
+		// never be fed by clawing back the fee runway the SOL leg just bought.
+		const targetSol = cfg.selfPayFee ? (spec.refillTo ?? (spec.minSol ?? 0) * 3) : 0;
+		wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'usdc', floorUsd, solFloor: targetSol });
 
 		// Self-pay fee wallets get a second row for their SOL need. Same name on
 		// purpose: the executor resolves the signing key by name, and both legs
@@ -100,7 +104,6 @@ export default wrapCron(async (req, res) => {
 		// so routine drift never triggers it, and targeting refillTo (not minSol)
 		// so the swap buys real runway instead of landing exactly on the floor.
 		if (cfg.selfPayFee && sol < (spec.minSol ?? 0)) {
-			const targetSol = spec.refillTo ?? (spec.minSol ?? 0) * 3;
 			wallets.push({ name: cfg.role, pubkey, sol, usdc, wants: 'sol', floorUsd: targetSol * solPriceUsd });
 		}
 	}

@@ -160,8 +160,9 @@ Every payment, sale, remix, follow, quest, and royalty notification on three.ws 
 ### Skills Marketplace
 
 URL: https://three.ws/skills
+Indexable: no (excluded from sitemap)
 
-Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.
+Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.
 
 ### Community
 
@@ -692,6 +693,12 @@ URL: https://three.ws/galaxy
 
 Every public agent embedded by IBM Granite on watsonx.ai into a navigable 3D constellation with natural-language semantic search.
 
+### Agent Symphony
+
+URL: https://three.ws/symphony
+
+The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.
+
 ## Crypto
 
 On-chain features: pay-per-call, token launches, vanity wallets.
@@ -791,6 +798,12 @@ The Money Pulse — a real-time, platform-wide feed of three.ws agent wallet act
 URL: https://three.ws/x402-revenue
 
 The live revenue layer — real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.
+
+### Receipt Vault
+
+URL: https://three.ws/receipts
+
+Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.
 
 ### Viability
 
@@ -2247,12 +2260,6 @@ Product launches, integrations, and announcements from three.ws.
 URL: https://three.ws/changelog
 
 What is new on three.ws: features, improvements, and releases, newest first.
-
-### Docs: agent-3d Web Component
-
-URL: https://three.ws/docs/agent-3d
-
-Documentation for embedding a 3D agent with the agent-3d web component.
 
 ### Docs: AR Viewing
 

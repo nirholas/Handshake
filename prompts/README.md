@@ -23,14 +23,14 @@ Internal work-order packs for Claude agents. Each subdirectory is a campaign: a 
 | [robinhood-chain/](robinhood-chain/) | Robinhood Chain pack, organized in waves where later waves consume earlier output. |
 | [store-submissions/](store-submissions/) | Prompts for listing three.ws MCP tools across Claude and OpenAI marketplaces and MCP registries. `_generated/` holds submission evidence. |
 | [user-value/](user-value/) | User-facing platform features: creator profiles, activity feed, social graph, notifications, discovery search, leaderboard, onboarding. |
-| [x402-catalog/](x402-catalog/) | x402 catalog rebuild work orders with a shared mandate and context file. |
-| [x402-overhaul/](x402-overhaul/) | Rebuild of the paid x402 endpoint offering; fully independent work orders. |
+
+Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md).
 
 ## Runtime consumption
 
 The server does not read this directory. Two kinds of code references exist:
 
-1. Comments across `api/` and `scripts/` cite prompt files as the design source for a feature (for example `api/_lib/cross-search.js` cites `prompts/user-value/05-discovery-search.md`). Moving or deleting a prompt file breaks those trails, and the robinhood-chain pack was once wiped by cleanup and had to be restored. Do not delete prompt files; only the owner removes them.
+1. Comments across `api/` and `scripts/` may cite prompt files as the design source for a feature. Before retiring a prompt file, grep for inbound references and rewrite them to name the campaign + work order instead of the path (the robinhood-chain pack was once wiped by cleanup without this step and had to be restored). Retirement policy (owner directive 2026-07-28): a work order is deleted only after its deliverables are verified shipped in the codebase; partial or blocked work orders stay.
 2. A few evidence scripts write output here: `scripts/tokenize-3d-devnet-e2e.mjs`, `scripts/embodiment-evidence.mjs`, and `scripts/persona-identity-evidence.mjs` write into `store-submissions/_generated/`, and `scripts/export-examples.mjs` reads from `roadmap/_generated/`.
 
 ## Adding a file

@@ -131,11 +131,15 @@
 			var btn = document.getElementById('footer-ca-copy');
 			if (!btn) return;
 			btn.addEventListener('click', function () {
-				navigator.clipboard.writeText(btn.dataset.ca).then(function () {
-					var orig = btn.textContent;
-					btn.textContent = 'Copied!';
+				var orig = btn.textContent;
+				var flash = function (label) {
+					btn.textContent = label;
 					setTimeout(function () { btn.textContent = orig; }, 1500);
-				});
+				};
+				navigator.clipboard.writeText(btn.dataset.ca).then(
+					function () { flash('Copied!'); },
+					function () { flash('Copy failed, select it instead'); }
+				);
 			});
 		})();
 	</script>

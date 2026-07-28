@@ -35,10 +35,13 @@ const SCALE = Number(args.scale) || 2;
 const OUT_DIR = args.out ? resolve(String(args.out)) : join(PUBLIC, 'partners', 'openai');
 const CARD_PAGE = '/marketing/openai-select-partner/cards/social-card.html';
 
+// palette: false keeps a card in truecolor. The white lockup card is a smooth
+// chrome gradient on flat white, where a 256-colour palette bands visibly.
 const CARDS = [
 	{ id: 'card-announce', file: 'social-card-announcement.png' },
 	{ id: 'card-announce-short', file: 'social-card-openai-partner.png' },
 	{ id: 'card-studio', file: 'social-card-studio.png' },
+	{ id: 'card-logos', file: 'three-ws-openai-lockup.png', palette: false },
 ];
 
 const MIME = {
@@ -94,7 +97,10 @@ for (const card of CARDS) {
 	// A dithered 256-color palette is visually identical on these dark cards and
 	// keeps the OG images light enough for social crawlers.
 	const raw = await el.screenshot();
-	await sharp(raw).png({ palette: true, quality: 90, dither: 1.0 }).toFile(out);
+	const png = card.palette === false
+		? sharp(raw).png({ compressionLevel: 9 })
+		: sharp(raw).png({ palette: true, quality: 90, dither: 1.0 });
+	await png.toFile(out);
 	const kb = Math.round(statSync(out).size / 1024);
 	console.log(`${card.file}  ${1600 * SCALE}×${900 * SCALE}  ${kb} KB  →  ${out}`);
 }

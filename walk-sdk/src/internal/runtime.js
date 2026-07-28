@@ -15,3 +15,4 @@
 // of vendoring; this file is the only seam that reaches back into the monorepo.
 
 export { AnimationManager } from '../../../src/animation-manager.js';
+export { LookAtController } from '../../../src/procedural/look-at.js';

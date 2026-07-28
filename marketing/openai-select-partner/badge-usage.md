@@ -26,6 +26,35 @@ Built from the badge, not a redraw of it. Source and renderer:
 | Announcement (carries the badge) | "three.ws is an OpenAI Select Partner." | `public/partners/openai/social-card-announcement.png` | `https://three.ws/partners/openai/social-card-announcement.png` |
 | Announcement, short phrasing (carries the badge) | "three.ws is an OpenAI Partner." | `public/partners/openai/social-card-openai-partner.png` | `https://three.ws/partners/openai/social-card-openai-partner.png` |
 | 3D Studio connector (no badge) | "3D, natively, inside ChatGPT." | `public/partners/openai/social-card-studio.png` | `https://three.ws/partners/openai/social-card-studio.png` |
+| Two-mark lockup on white (no badge, no copy) | none | `public/partners/openai/three-ws-openai-lockup.png` | `https://three.ws/partners/openai/three-ws-openai-lockup.png` |
+
+## The two-mark lockup uses OpenAI's logomark, not the badge
+
+`three-ws-openai-lockup.png` is the three.ws mark and the OpenAI mark side by side
+on white, with a hairline between them and nothing else. It is the asset to reach
+for when a post or slide needs to read "these two companies work together" at a
+glance and there is no room for copy.
+
+Two things to know before using it:
+
+1. **It is not the partner badge.** The badge is the asset OpenAI supplied and the
+   only one their partner guidance explicitly grants for the uses listed above.
+   The lockup uses OpenAI's logomark, which their brand guidelines govern
+   separately, and a co-branded lockup is the kind of use those guidelines
+   normally expect a partner to clear first. Owner's call, made 2026-07-28. If
+   the goal is a compliant announcement graphic, use `social-card-announcement.png`.
+2. **The OpenAI mark in it is not a redraw.** `openai-logomark.svg` is the
+   logomark path lifted verbatim from the badge artwork OpenAI supplied, given a
+   tight viewBox and `currentColor`. The curves are theirs. Do not recolour it
+   away from black on light, do not add effects, and do not merge it with the
+   three.ws cube into a single glyph.
+
+The three.ws side is `marketing/openai-select-partner/cards/three-ws-mark.png`,
+the shipped app-icon cube (`public/pwa-512x512.png`) trimmed of its transparent
+margin so the two marks can be spaced from their artwork rather than their
+bounding boxes.
+
+## Why two announcement wordings exist
 
 The short-phrasing card exists because the owner chose "OpenAI Partner" for the X
 post on 2026-07-28. It is the X card only. Every long-lived surface (`/openai`,

@@ -4,7 +4,7 @@
 //   node scripts/combine-docs.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
-import { relative, sep } from 'node:path';
+import { dirname, relative, resolve, sep } from 'node:path';
 
 const ROOT = process.cwd();
 const DOCS_DIR = 'docs';
@@ -69,10 +69,48 @@ ${tocLines.join('\n')}
 ---
 `;
 
+// Source files link relative to their own directory (../wallet/01-balance.md is
+// valid from docs/agent-abilities/), but ALL.md lives at docs/ALL.md, so raw
+// concatenation breaks every such link. Rebase each relative link: to the
+// section anchor when the target is another combined doc, otherwise to a path
+// relative to docs/. Fenced code blocks are left untouched.
+const anchorByAbsPath = new Map(sections.map((s) => [resolve(ROOT, s.path), `#${s.anchor}`]));
+const docsAbs = resolve(ROOT, DOCS_DIR);
+
+const rewriteLinks = (body, sourcePath) => {
+  const srcDir = resolve(ROOT, dirname(sourcePath));
+  let inFence = false;
+  return body
+    .split('\n')
+    .map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) {
+        inFence = !inFence;
+        return line;
+      }
+      if (inFence) return line;
+      return line.replace(/(\]\()([^)\s]+)(\))/g, (whole, open, target, close) => {
+        if (/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(target)) return whole;
+        const [filePart, fragment] = target.split('#');
+        let decoded;
+        try {
+          decoded = decodeURIComponent(filePart);
+        } catch {
+          return whole;
+        }
+        const abs = resolve(srcDir, decoded);
+        const anchor = anchorByAbsPath.get(abs);
+        if (anchor && !fragment) return `${open}${anchor}${close}`;
+        const rebased = relative(docsAbs, abs).split(sep).join('/');
+        return `${open}${rebased}${fragment ? `#${fragment}` : ''}${close}`;
+      });
+    })
+    .join('\n');
+};
+
 const bodyOut = sections
   .map(
     (s) =>
-      `<a id="${s.anchor}"></a>\n\n> **Source:** \`${s.path}\` · [↑ table of contents](#table-of-contents)\n\n${s.body}`,
+      `<a id="${s.anchor}"></a>\n\n> **Source:** \`${s.path}\` · [↑ table of contents](#table-of-contents)\n\n${rewriteLinks(s.body, s.path)}`,
   )
   .join('\n\n---\n\n');
 

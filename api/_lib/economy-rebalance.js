@@ -70,7 +70,7 @@ export const REBALANCE = {
  *
  * @param {object} p
  * @param {number} p.solPriceUsd                 live SOL/USD price
- * @param {Array<{name:string,pubkey:string,sol:number,usdc:number,wants:'usdc'|'sol',floorUsd:number}>} p.wallets
+ * @param {Array<{name:string,pubkey:string,sol:number,usdc:number,wants:'usdc'|'sol',floorUsd:number,solFloor?:number}>} p.wallets
  * @param {object} [p.bounds]                     REBALANCE snapshot (injectable for tests)
  * @returns {{ plan:Array<{name:string,pubkey:string,dir:'sol->usdc'|'usdc->sol',inUsd:number,reason:string}>,
  *             skipped:Array<{name:string,reason:string}> }}
@@ -122,8 +122,20 @@ export function planRebalance({ solPriceUsd, wallets, bounds }) {
 			continue;
 		}
 		if (w.wants === 'usdc') {
-			// Convert SOL → USDC, but keep the SOL reserve untouched.
-			const swappableSolUsd = Math.max(0, (w.sol - B.solReserve) * solPriceUsd);
+			// Convert SOL → USDC, but keep the SOL reserve untouched. A self-pay
+			// wallet's own fee-SOL refill target (w.solFloor) is part of that
+			// reserve: feeding the USDC floor from SOL below the target just re-arms
+			// the usdc->sol leg on the next run, and the two legs ping-pong swap
+			// fees and slippage forever (observed 2026-07-28: ~134 reversing swaps,
+			// ~$900 churned in 2.5 h, once the ring payer's total balance dropped
+			// under the sum of its two floors). With the target held back,
+			// sol->usdc can only fire while SOL sits ABOVE the target and
+			// usdc->sol only while it sits BELOW minSol, so a reversal pair is
+			// structurally impossible. Deliberately asymmetric: the usdc->sol leg
+			// may still draw USDC down to the USDC reserve, because fee SOL is
+			// what keeps settles alive at all.
+			const keepSol = Math.max(B.solReserve, w.solFloor || 0);
+			const swappableSolUsd = Math.max(0, (w.sol - keepSol) * solPriceUsd);
 			const inUsd = Math.min(shortfallUsd, swappableSolUsd, B.perSwapUsd, runRemainingUsd);
 			if (inUsd < B.dustUsd) {
 				skipped.push({ name: w.name, reason: 'insufficient_sol_surplus' });

@@ -164,6 +164,23 @@
 		font-size: 22px; color: var(--text);
 	}
 	.connect span { color: var(--muted); }
+
+	/* ── Card 3: the plain two-mark lockup, on white ─────────
+	   No copy, no badge, no ambient field. Just the three.ws mark and the
+	   OpenAI mark, each at its own optical weight, separated by a hairline.
+	   .light opts out of the shared grain / bloom / grid layers entirely. */
+	.card.light { background: #ffffff; padding: 0; align-items: center; justify-content: center; }
+	.card.light::before, .card.light::after { content: none; }
+
+	/* Gaps are measured from the artwork, not the file: three-ws-mark.png is the
+	   app-icon cube trimmed of its transparent margin, so both marks sit the same
+	   distance from the hairline and the pair centres on the card. Heights are
+	   optically matched rather than equal: the cube is an airy wireframe, the
+	   OpenAI mark a dense solid, so the solid runs shorter. */
+	.lockup { display: flex; align-items: center; gap: 96px; }
+	.lockup .mark-three { display: block; height: 300px; width: auto; }
+	.lockup .rule { width: 1px; height: 176px; background: #d7d7de; }
+	.lockup .mark-oai { display: block; height: 232px; width: 232px; color: #000000; }
 </style>
 </head>
 <body>
@@ -314,6 +331,20 @@
 		<p class="disclaimer" style="max-width:520px;text-align:right">
 			three.ws is an independent member of the OpenAI Partner Network. OpenAI and ChatGPT are trademarks of OpenAI.
 		</p>
+	</div>
+</section>
+
+<!-- ═══ Card 3: the two marks, white ═════════════════════════
+     The three.ws mark is the shipped brand asset (/pwa-512x512.png, the same
+     chrome cube as the app icon). The OpenAI mark is their logomark lifted
+     unaltered from the badge artwork they supplied, so the curves are theirs,
+     not a redraw. Nothing here is recoloured, outlined, or merged into a single
+     glyph: two marks, a hairline between them, white space around both. -->
+<section class="card light" id="card-logos">
+	<div class="lockup">
+		<img class="mark-three" src="/marketing/openai-select-partner/cards/three-ws-mark.png" alt="three.ws" />
+		<span class="rule" aria-hidden="true"></span>
+		<img class="mark-oai" src="/partners/openai/openai-logomark.svg" alt="OpenAI" />
 	</div>
 </section>
 

@@ -265,7 +265,7 @@ Either way, the USDC lands in the wallet your `nich.threews.sol` points at — t
 - `nich.threews.sol` **resolves in Brave** to your showcase at `/u/nich` — no extension.
 - A **pay-by-name handle** — anyone can `POST /api/x402/pay-by-name` with `nich.threews.sol` to send you USDC, or preview the target wallet with the matching GET.
 - **On-chain ownership** in your wallet — three.ws set the URL record and transferred custody; it doesn't hold the name.
-- A **verified profile** at [/u/nich](/u/).
+- A **verified profile** at [/u/nich](/u/nich).
 
 ---
 

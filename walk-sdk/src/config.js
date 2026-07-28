@@ -33,6 +33,10 @@ export function resolveConfig(opts = {}) {
 		manifestUrl: opts.manifestUrl || '/animations/manifest.json',
 		excludedRoutes: opts.excludedRoutes || DEFAULT_EXCLUDED_PREFIXES,
 		enablePicker: opts.enablePicker !== false,
+		// Procedural head tracking: the companion's chest/neck/head follow the
+		// visitor's cursor through runtime IK (src/procedural/look-at.js). On by
+		// default; pass lookAt: false to keep the pre-0.4 fixed gaze.
+		lookAt: opts.lookAt !== false,
 		greeting: typeof opts.greeting === 'function' ? opts.greeting : null,
 		docsUrl: opts.docsUrl || null,
 		keys: {

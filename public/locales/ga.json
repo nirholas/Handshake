@@ -1928,7 +1928,7 @@
 		"cz_avatar": "Avatar CZ",
 		"dark_090909": "Dorcha (#090909)",
 		"default_avatar": "Avatar réamhshocraithe",
-		"drop_in_web_component_react_bindings_iframe": "Comhpháirt gréasáin <strong>titim isteach</strong>, ceangail React, cruthaitheoir iframe, agus uaslódáil scamall — SDK avatar oscailte iomlán <strong>, féin-óstáilte, gan glasáil díoltóra.",
+		"drop_in_web_component_react_bindings_iframe": "Comhpháirt gréasáin <strong>in-ionchlannaithe</strong>, ceangailtí React, cruthaitheoir iframe, agus uaslódáil scamall — SDK avatar <strong>oscailte iomlán</strong>, féin-óstáilte, gan aon ghlasáil díoltóra.",
 		"drop_or_the_lightweight_into_any_html": "Cuir <code>&lt;agent-3d&gt;</code> nó an <code>breathnóir éadrom &lt;three-ws-viewer&gt;</code> isteach in aon leathanach HTML nó creat. Féin-chláraíonn sé ar allmhairiú.",
 		"element": "eilimint",
 		"element_2": "eilimint",
@@ -7984,7 +7984,7 @@
 		"your_creations": "Do chuid cruthuithe"
 	},
 	"forge_embed": {
-		"forge_your_own_3d_model_on_t_arialabel": "Cruthaigh do mhúnla 3D féin ar three.ws",
+		"forge_your_own_3d_model_on_t_arialabel": "Forge do mhúnla 3D féin ar three.ws",
 		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged ar three.ws",
 		"meta_description": "Múnla 3D idirghníomhach cruthaithe ar three.ws.",
 		"meta_title": "three.ws — múnla 3D leabaithe",
@@ -12168,7 +12168,7 @@
 		"news_announcements": "Nuacht & Fógraí",
 		"originally_shared_on_x": "<em>Roinnte ar dtús ar <a href=\"https://x.com/trythreews/status/2050049239301165535\" rel=\"noopener\">X</a>.</em>",
 		"three_ws_home_news_rss_x_github": "&copy; three.ws &middot; <a href=\"/\">Baile</a> &middot; <a href=\"/news\">Nuacht</a> &middot; <a href=\"/rss/announcements.xml\">RSS</a> &middot; <a href=\"https://x.com/trythreews\" rel=\"noopener\">X</a> &middot; <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">GitHub</a>",
-		"three_ws_pumpfun_announces_live_graduation_a": "three.ws/fógraíonn pumpfun → Foláirimh chéime beo → Éilimh GitHub → Ceannach/díol míolta móra → Leagan amach inoiriúnaithe",
+		"three_ws_pumpfun_announces_live_graduation_a": "Fógraíonn three.ws/pumpfun <br> → Foláirimh ghrádaithe beo <br> → Éilimh GitHub <br> → Ceannach/díol Míolta Móra <br> → Leagan amach inoiriúnaithe",
 		"trythreews": "@trythreews",
 		"turn_sound_on_your_agent_now_calls": "Cas an fhuaim air. Glaonn d'oibreán gach gluaiseacht amach os ard anois.",
 		"visit_three_ws": "Tabhair cuairt ar three.ws →"

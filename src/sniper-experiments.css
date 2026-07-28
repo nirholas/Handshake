@@ -144,6 +144,35 @@
 	cursor: help;
 }
 
+/* Why an arm is not trading. Blocking conditions (a knob that makes an entry
+ * impossible) read as a warning; a merely idle arm stays muted so the board does
+ * not cry wolf over an arm that is simply waiting for a qualifying launch. */
+.xp-stall {
+	margin-top: 5px;
+	padding: 5px 8px;
+	border-radius: var(--cv-radius-sm);
+	border: 1px solid var(--cv-border);
+	background: var(--cv-surface-2);
+	font-size: 0.6875rem;
+	line-height: 1.45;
+	color: var(--cv-text-3);
+	cursor: help;
+}
+
+.xp-stall b {
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-weight: 700;
+}
+
+.xp-stall-blocking {
+	border-color: color-mix(in srgb, var(--cv-red) 45%, transparent);
+	background: var(--cv-red-soft);
+	color: var(--cv-text-2);
+}
+
+.xp-stall-blocking b { color: var(--cv-red); }
+
 /* The record cell stacks up to four lines (W/L, open, moon bags, paper). Give it
  * a floor so none of them overflow into the conditions column beside it. */
 .xp-table td:nth-child(3) { min-width: 130px; }

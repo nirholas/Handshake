@@ -24,6 +24,7 @@ import {
 	defaultEmbedPolicy,
 } from '../_lib/embed-policy.js';
 import { getAvatar } from '../_lib/avatars.js';
+import { modelRejectsSampling, modelThinksByDefault } from '../_lib/chat-models.js';
 import {
 	vertexClaudeEnabled,
 	vertexMessagesUrl,
@@ -109,6 +110,38 @@ const MODELS = {
 	'grok-4.3': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
 	'grok-4.1-fast': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
 };
+
+// Request-shape guards for the current Anthropic generation. Opus 4.7+ and the
+// Claude 5 family reject sampling parameters with a 400, and Fable/Mythos 5
+// reject any explicit `thinking` config that is not adaptive (thinking is
+// always on there). Embedded callers ship whatever their SDK defaults to, so
+// the transport strips or upgrades the fields the target model would refuse
+// instead of surfacing an avoidable upstream 400 to the embed.
+const ALWAYS_THINKING_MODELS = new Set(['claude-fable-5', 'claude-mythos-5']);
+
+export function sanitizeAnthropicBody(body, modelId) {
+	const out = { ...body };
+	const noSampling = modelRejectsSampling(modelId);
+	if (noSampling) delete out.temperature;
+	// Thinking-by-default models spend max_tokens on thinking + text together;
+	// floor small caller budgets so the visible reply isn't squeezed out.
+	if (modelThinksByDefault(modelId) && (out.max_tokens ?? 0) < 4096) {
+		out.max_tokens = 4096;
+	}
+	const t = out.thinking;
+	if (t && typeof t === 'object') {
+		if (ALWAYS_THINKING_MODELS.has(modelId)) {
+			// Fable/Mythos: adaptive (with optional display) is the only accepted
+			// config; anything else (disabled, budget_tokens) must be omitted.
+			if (t.type !== 'adaptive') delete out.thinking;
+		} else if (noSampling && (t.type === 'enabled' || t.budget_tokens != null)) {
+			// Opus 4.7+/Claude 5: the budget_tokens form is removed; adaptive is
+			// the equivalent on-mode.
+			out.thinking = { type: 'adaptive' };
+		}
+	}
+	return out;
+}
 
 const UPSTREAM_URL = {
 	anthropic: 'https://api.anthropic.com/v1/messages',
@@ -459,7 +492,7 @@ export default wrap(async (req, res) => {
 					build: async () => ({
 						url: vertexMessagesUrl(usedModel, { stream: isStreaming }),
 						headers: await vertexRequestHeaders(),
-						body: JSON.stringify(toVertexBody({ ...body, model: usedModel })),
+						body: JSON.stringify(toVertexBody(sanitizeAnthropicBody({ ...body, model: usedModel }, usedModel))),
 					}),
 				});
 			}
@@ -474,7 +507,7 @@ export default wrap(async (req, res) => {
 							'anthropic-version': '2023-06-01',
 							'x-api-key': apiKey,
 						},
-						body: JSON.stringify({ ...body, model: usedModel }),
+						body: JSON.stringify(sanitizeAnthropicBody({ ...body, model: usedModel }, usedModel)),
 					}),
 				});
 			}

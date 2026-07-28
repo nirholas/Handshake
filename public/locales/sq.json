@@ -9185,7 +9185,7 @@
 		"to_import_your_on_chain_agents_you": "Për të importuar agjentët tuaj në zinxhir, duhet të <strong>lidhni një portofol</strong> fillimisht."
 	},
 	"ibm_hello": {
-		"01forge": "<span class=\"n\">01</span>Krijim",
+		"01forge": "Mirësevini në <span class=\"n\">01</span>Forge",
 		"02avatars": "<span class=\"n\">02</span>Avatarë",
 		"03pose": "<span class=\"n\">03</span>Pozë",
 		"04galaxy": "<span class=\"n\">04</span>Galaktikë",
@@ -19205,7 +19205,7 @@
 		"download_glb": "Shkarko GLB",
 		"download_the_glb_file_arialabel": "Shkarko skedarin GLB",
 		"embed_it_anywhere_copy_an_iframe_snippet": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">&lt;/&gt;</span>Ngulite kudo</span> <span class=\"d\" id=\"embed-d\">Kopjo një fragment iframe që shfaq këtë shikues të saktë në faqen tënde.</span>",
-		"forge_another_describe_anything_and_get_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">✦</span>Farkëto një tjetër</span> <span class=\"d\">Përshkruaj çdo gjë dhe merr një model të ri 3D, falas.</span>",
+		"forge_another_describe_anything_and_get_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">✦</span>Forge një tjetër</span> <span class=\"d\">Përshkruaj çfarëdo dhe merr një model të ri 3D, falas.</span>",
 		"launch_it_as_a_coin_open_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">◉</span>Lançoje si monedhë</span> <span class=\"d\" id=\"coin-d\">Hap një lançim pump.fun me këtë model si imazh tokeni.</span>",
 		"make_your_own": "Krijo tënden →",
 		"meta_description": "Shiko dhe shkarko një model interaktiv 3D (GLB) të gjeneruar me three.ws.",
