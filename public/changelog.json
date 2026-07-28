@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-28T21:41:28.366Z",
+	"generated_at": "2026-07-28T21:42:10.224Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "Documentation overhaul: every directory now explains itself",
+			"summary": "A full documentation pass across the repository. Previously undocumented areas now ship real READMEs: the five server-side platform agents (endpoint shopper, fact checker, tutor, unstoppable, x402 buildout), the site data files, the static page system, the blog pipeline, and the npm package index. A docs-wide link audit fixed every broken link, including roughly 317 in the combined docs file, whose generator now rebases links correctly. Orphaned reference docs (design tokens, use cases, the UX flow atlas, specs) are now reachable from the Start Here page.",
+			"link": "/docs/start-here",
+			"tags": [
+				"docs"
 			]
 		},
 		{
