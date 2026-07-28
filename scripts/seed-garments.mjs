@@ -102,6 +102,7 @@ async function runOne(item, index) {
 	try {
 		console.log(`▶ ${label}`);
 		const jobId = await submit(item);
+		console.log(`  job ${jobId}`);
 		const job = await waitForJob(jobId);
 		if (job.status === 'done') {
 			console.log(`✔ ${label} → ${job.garment_id} (coverage ${job.coverage ?? '?'})`);

@@ -74,7 +74,7 @@ PASSWORD_ROUNDS=11
 ```env
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 # Optional overrides
-CHAT_MODEL=claude-sonnet-4-6
+CHAT_MODEL=claude-sonnet-5
 CHAT_MAX_TOKENS=1024
 ```
 

@@ -38,9 +38,21 @@ const ALCHEMY_SUBDOMAIN = {
 	43113: 'avax-fuji',
 };
 
+// Per-chain Alchemy key overrides — operators provision separate keys per app
+// (ALCHEMY_ETH_KEY, ALCHEMY_BASE_KEY, …); the shared ALCHEMY_API_KEY remains
+// the fallback for every chain.
+const ALCHEMY_CHAIN_KEY = {
+	1: 'ALCHEMY_ETH_KEY',
+	10: 'ALCHEMY_OPT_KEY',
+	137: 'ALCHEMY_POLYGON_KEY',
+	8453: 'ALCHEMY_BASE_KEY',
+	42161: 'ALCHEMY_ARB_KEY',
+};
+
 function alchemyUrl(chainId) {
 	const sub = ALCHEMY_SUBDOMAIN[chainId];
-	const key = process.env.ALCHEMY_API_KEY;
+	const chainKeyName = ALCHEMY_CHAIN_KEY[chainId];
+	const key = (chainKeyName && process.env[chainKeyName]) || process.env.ALCHEMY_API_KEY;
 	return sub && key ? `https://${sub}.g.alchemy.com/v2/${key}` : null;
 }
 
@@ -83,7 +95,7 @@ export function evmTransport(chainId, { retryCount = 1, timeout, primaryUrl = nu
  * tried in priority order. Returns a single-provider JsonRpcProvider when only
  * one endpoint exists (FallbackProvider requires ≥2 and quorum ≤ count).
  */
-export async function evmFallbackProvider(chainId, { primaryUrl = null } = {}) {
+export async function evmFallbackProvider(chainId, { primaryUrl = null, stallTimeout = 2000 } = {}) {
 	const { JsonRpcProvider, FallbackProvider, Network } = await import('ethers');
 	const urls = evmRpcEndpoints(chainId, primaryUrl);
 	if (urls.length === 0) throw new Error(`no RPC endpoint for chain ${chainId}`);
@@ -95,7 +107,7 @@ export async function evmFallbackProvider(chainId, { primaryUrl = null } = {}) {
 		provider: mk(u),
 		priority: i + 1, // lower = tried first
 		weight: 1,
-		stallTimeout: 2000,
+		stallTimeout,
 	}));
 	return new FallbackProvider(configs, network, { quorum: 1 });
 }

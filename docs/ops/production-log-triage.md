@@ -146,17 +146,36 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
 ```
 
 - **Source:** the platform's own agent economy (ring, seeders, autonomous
-  buyers) paying its own endpoints while the economy wallets are out of SOL
-  for transaction fees.
-- **Symptom map:** `502` = fee wallet below its SOL floor; `503` = the payer's
-  self-pay refused; `402` from a ring agent = its buyer wallet is out of USDC.
+  buyers) paying its own endpoints while something in the settle path fails.
+- **Three distinct causes look identical in the HTTP logs (2026-07-28: all
+  three fired in one window). Diagnose from app logs before acting:**
+  1. `npm run logs -- -s three-ws-api --app --grep "fee_wallet_below_floor" --since 1h`
+     hits = the sponsor fee wallet drifted under
+     `X402_SPONSOR_SOL_FLOOR_LAMPORTS`. Self-heal territory: run
+     `POST /api/cron/treasury-topup`; its `reclaimIdleAgentSol` leg refunds the
+     fee wallet from idle agent SOL (commit `d6a7bf2a4`). No owner money needed
+     unless every reclaim source reports `at_or_below_floor`.
+  2. `--grep "data_unavailable"` hits = paid endpoints refunding honestly (no
+     charge) because no market source could answer. Since 2026-07-28
+     crypto-intel prices bonding-curve pump.fun mints from the pump.fun feed
+     (the sniper-intel pipeline passes `mint`), so a recurrence at volume means
+     a data-source outage, not wallets.
+  3. `--grep "broadcast_failed"` hits = a settle transaction failed simulation;
+     the reason now keeps the simulation-log tail (the actual cause).
+     `insufficient funds` on the token transfer = the ring payer's USDC float
+     dipped below per-tick volume; `POST /api/cron/economy-rebalance` restores
+     it (expect `results[].status: "swapped"`).
+- **Symptom map:** `502` = fee wallet below its SOL floor or settle broadcast
+  failed; `503` = the payer's self-pay refused or a data_unavailable refund;
+  `402` from a ring agent = its buyer wallet is out of USDC.
 - **Not a code bug.** The economy-rebalance keypair crash (assigned
   `loadSignerKeypair`'s wrapper to `keypair`, read `.publicKey` of undefined)
   is fixed and live in commit `bb02839f9`. When
   `POST /api/cron/economy-rebalance` (Bearer `CRON_SECRET`) answers
   `skipped: insufficient_sol_surplus`, the wallets genuinely hold nothing to
   swap; at the 94-calls/min ring shape the burn is ~1-1.4 SOL/day.
-- **Resolve (owner, money):** send SOL (or USDC) to the economy master
+- **Resolve (owner, money — only after all three greps above are exhausted):**
+  send SOL (or USDC) to the economy master
   `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`. The treasury-topup cron
   distributes to the engines within minutes and economy-rebalance restores the
   payer's USDC float. Recovery is visible as: rebalance returns

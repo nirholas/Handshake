@@ -7985,7 +7985,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge сваю ўласную 3D-мадэль на three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> выкавана на three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged на three.ws",
 		"meta_description": "Інтэрактыўная 3D-мадэль, выкаваная на three.ws.",
 		"meta_title": "three.ws — убудаваная 3D-мадэль",
 		"no_model_to_show": "Няма мадэлі для паказу",

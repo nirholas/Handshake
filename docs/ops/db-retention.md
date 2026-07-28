@@ -81,7 +81,7 @@ fires one deduped `db:retention-pressure` alert.
 | --- | --- | --- |
 | `PUMP_INTEL_RETENTION_DAYS` | `14` | Normal firehose window (days). Clamped `[2, 365]`. Raise after a Neon plan upgrade. |
 | `PUMP_INTEL_MIN_RETENTION_DAYS` | `3` | Floor the valve tightens to under pressure. Clamped `[1, retention]`. |
-| `DB_RETENTION_HIGH_WATER_MB` | `470` | Engage the valve at/above this size. Clamped `[128, 100000]`. |
+| `DB_RETENTION_HIGH_WATER_MB` | `470` | Engage the valve at/above this size. Clamped `[128, 100000]`. **Must sit well below the actual branch cap**, or the valve only engages after writes are already failing: with the production 3072 MB cap this is set to `2700` on the Cloud Run service (2026-07-28, after a day the two were equal and every write-heavy cron sat skipped at the cap the valve was supposed to prevent). |
 | `DB_COMPACT_ENABLED` | `1` | Set `0` to disable the `VACUUM FULL` compaction step entirely. |
 | `DB_COMPACT_MIN_FREE_MB` | `25` | Only rewrite a table holding at least this much reclaimable space (and at least 30% of its file). |
 | `DB_COMPACT_MAX_TABLES` | `3` | Most tables one tick may rewrite. |

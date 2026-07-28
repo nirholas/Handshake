@@ -39,6 +39,14 @@
 			<description>Every coin profile page was returning an error. The market-data provider we read prices and coin details from gives us a monthly call allowance, and once it ran out, every request we sent with our key was refused. The awkward part: the exact same request sent without the key was still being answered. We were effectively locking ourselves out. The pages are live again, and the fix is permanent rather than a one-off: when the key gets refused, we now set it aside for a while and retry the same request without it, so the pages keep serving and recover on their own when the allowance resets. We also repaired a 3D model service that was crash-looping because it tried to download a small config file from a public model host on every start and kept getting throttled. That file now ships with our own model storage, so the service starts without depending on anyone else.</description>
 		</item>
 		<item>
+			<title>Crypto Intel now prices pump.fun coins, and settle failures explain themselves</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-28:Crypto Intel now prices pump.fun coins, and settle failures explain themselves</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The paid Crypto Intel feed ($0.01 per call) previously could only answer for major coins listed on CoinGecko or Coinbase, so agents asking about pump.fun tokens got an unavailable response every time. It now accepts a mint address and prices any Solana token: through on-chain market aggregators for coins trading on a DEX, and directly from the live pump.fun bonding-curve state for brand-new launches. The platform's own trading engine passes the mint automatically, so the sentiment signals that guide its snipe decisions now cover the coins it actually holds and watches. Separately, when an on-chain payment settlement fails, the recorded error now keeps the part of the simulation log that states the actual cause instead of cutting it off, which makes production issues much faster to diagnose.</description>
+		</item>
+		<item>
 			<title>Documentation overhaul: every directory now explains itself</title>
 			<link>https://three.ws/docs/start-here</link>
 			<guid isPermaLink="false">2026-07-28:Documentation overhaul: every directory now explains itself</guid>

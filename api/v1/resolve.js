@@ -26,15 +26,23 @@ import { limits } from '../_lib/rate-limit.js';
 import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
 import { resolveSnsName, reverseLookupAddress } from '../../src/solana/sns.js';
 import { evmFallbackProvider } from '../_lib/evm/rpc.js';
+import { env } from '../_lib/env.js';
 
 const ENS_RE = /^(?:[a-z0-9-]+\.)*[a-z0-9-]+\.eth$/i;
 const SOL_NAME_RE = /^[a-z0-9-]{1,63}\.sol$/i;
 const HIT_CACHE_CONTROL = 'public, max-age=300, s-maxage=300, stale-while-revalidate=60';
-const ENS_TIMEOUT_MS = 5000;
+// ENS resolution is 2+ sequential eth_calls (resolver lookup, then resolve),
+// each independently failing over across the endpoint list. 5s starved the
+// chain when the lead endpoint rate-limited; 8s with a 1.2s stall lets three
+// endpoints get a real shot per call. Hits are edge-cached, so the budget only
+// costs on misses.
+const ENS_TIMEOUT_MS = 8000;
 
-// Ethereum mainnet (chainId 1) — ENS is a mainnet-only registry.
+// Ethereum mainnet (chainId 1) — ENS is a mainnet-only registry. Pin the
+// operator's mainnet RPC first (same as api/agents/ens/[name].js) so prod
+// never leads with a rate-limited public endpoint.
 async function ensProvider() {
-	return evmFallbackProvider(1);
+	return evmFallbackProvider(1, { primaryUrl: env.MAINNET_RPC_URL, stallTimeout: 1200 });
 }
 
 async function withEnsTimeout(promise, label) {

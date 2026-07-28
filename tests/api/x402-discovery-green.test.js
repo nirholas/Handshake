@@ -11,8 +11,12 @@
 // ship and quietly drop us from the indexes.
 
 import { describe, it, expect, beforeAll } from 'vitest';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+
+const execFileAsync = promisify(execFile);
 
 const NETWORK_BASE = 'eip155:8453';
 const SOLANA_PREFIX = 'solana:';
@@ -95,27 +99,30 @@ function checkResource(r) {
 	return { label: label(r), errors, warnings };
 }
 
-async function renderDiscovery() {
-	Object.assign(process.env, {
-		APP_ORIGIN: 'https://three.ws',
-		X402_PAY_TO_BASE: '0x0000000000000000000000000000000000000001',
-		X402_PAY_TO_SOLANA: 'So11111111111111111111111111111111111111112',
-		X402_ASSET_ADDRESS_BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-		X402_ASSET_MINT_SOLANA: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-		X402_ASSET_ADDRESS_ARBITRUM: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-		X402_MAX_AMOUNT_REQUIRED: '1000',
-		X402_FEE_PAYER_SOLANA: 'So11111111111111111111111111111111111111112',
-	});
-	const mod = await import('../../api/wk.js');
+// Rendered in a CHILD node process, loading api/wk.js natively — exactly how
+// production (server/index.mjs) loads it. Importing it in-process here would
+// pull its multi-thousand-module graph through vitest's transform pipeline:
+// ~55s in isolation and past the 120s hook budget under full-suite contention,
+// so the file flaked on load, never on content. The native import is ~6s.
+const RENDER_ENV = {
+	APP_ORIGIN: 'https://three.ws',
+	X402_PAY_TO_BASE: '0x0000000000000000000000000000000000000001',
+	X402_PAY_TO_SOLANA: 'So11111111111111111111111111111111111111112',
+	X402_ASSET_ADDRESS_BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+	X402_ASSET_MINT_SOLANA: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+	X402_ASSET_ADDRESS_ARBITRUM: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+	X402_MAX_AMOUNT_REQUIRED: '1000',
+	X402_FEE_PAYER_SOLANA: 'So11111111111111111111111111111111111111112',
+};
+
+const WK_URL = new URL('../../api/wk.js', import.meta.url).href;
+const RENDER_SCRIPT = `
+	const mod = await import(${JSON.stringify(WK_URL)});
 	const res = {
 		statusCode: 0,
 		headers: {},
-		setHeader(k, v) {
-			this.headers[k.toLowerCase()] = v;
-		},
-		end(body) {
-			this.body = body;
-		},
+		setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+		end(body) { this.body = body; },
 	};
 	const req = {
 		method: 'GET',
@@ -124,7 +131,22 @@ async function renderDiscovery() {
 		headers: {},
 	};
 	await mod.default(req, res);
-	return JSON.parse(res.body);
+	process.stdout.write(res.body);
+`;
+
+let renderPromise;
+function renderDiscovery() {
+	// One render serves every test — the catalog is a pure function of the env
+	// above, so re-rendering only re-pays the child's cold import.
+	renderPromise ??= (async () => {
+		const { stdout } = await execFileAsync(
+			process.execPath,
+			['--input-type=module', '-e', RENDER_SCRIPT],
+			{ env: { ...process.env, ...RENDER_ENV }, maxBuffer: 64 * 1024 * 1024 },
+		);
+		return JSON.parse(stdout);
+	})();
+	return renderPromise;
 }
 
 describe('x402 discovery catalog is fully green', () => {

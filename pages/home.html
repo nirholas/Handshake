@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<script>/* home tier boot: no-flash progressive disclosure. Visitors who have not opted into the full page get the lite tier (advanced sections collapsed behind #advanced-gate). Runtime toggle lives next to that gate. */(function(){var lite=true;try{lite=localStorage.getItem('tws-home:tier')!=='full';}catch(e){}if(lite)document.documentElement.classList.add('home-lite');})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title data-i18n="home.meta_title">three.ws — The 3D Agent Layer of the Internet</title>

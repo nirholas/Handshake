@@ -16,12 +16,37 @@ npm run gpu -- --request 16 --region us-west1 --apply    # file/raise that regio
 
 It ranks by time-to-effect, and deliberately puts **using a grant we already hold above asking Google for more** — a port lands in minutes, a quota raise has been pending since 2026-07-16. `--port` automates the no-rebuild pattern documented under us-east4 below (export, retarget the location label, drop the read-only URLs annotation and the pinned revision name, replace, mirror the invoker IAM). Mutating modes are dry run unless `--apply`. Pure logic is covered by [tests/gpu-capacity.test.js](../../tests/gpu-capacity.test.js).
 
-Two things the tool surfaces that are easy to miss by hand:
+Things the tool surfaces that are easy to miss by hand:
 
+- **The accelerator is in `spec.template.spec.nodeSelector['run.googleapis.com/accelerator']`, not in the template annotations.** There is no annotation of that name, so reading there silently defaults every service to L4. That mistake charged the RTX PRO 6000 service to the L4 pool and made us-central1 read "3/3 pinned, 0 free" when it actually had a spare L4. Pinned by `bucketUsage` in [tests/gpu-capacity.test.js](../../tests/gpu-capacity.test.js).
 - **Zonal redundancy is a separate quota bucket.** `NvidiaL4GpuAllocPerProjectRegion` and `NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion` are different grants. A region can read "full" against one and still have capacity under the other.
-- **Every region is its own grant.** Filing a preference in a region we do not use yet costs nothing and is reviewed asynchronously, so file early rather than when a lane is already starving.
+- **Every region is its own grant**, and unused regions are the cheapest capacity there is (see the 2026-07-28 result below).
 
 Exit code is 1 when there is an action worth taking (idle grant, or a starved service), 0 when there is not, 3 when gcloud auth has lapsed.
+
+### 2026-07-28: the grant went 6 → 22 L4s, and the blocker was a CLI flag
+
+Two `gcloud` shapes were silently costing us capacity, both discovered by running the tool for real:
+
+1. **`gcloud alpha quotas preferences create` rejects any INCREASE without `--email`**, with `Contact email must be set in order to increase quota value`. `npm run gpu -- --request` now defaults it to the active gcloud account.
+2. **`update` takes the preference id POSITIONALLY**; only `create` uses `--preference-id`. Passing the flag to `update` fails with `unrecognized arguments`, which reads like a quota rejection but is pure CLI shape.
+
+With those fixed, filing in unused regions returned grants **immediately, not asynchronously**:
+
+| Region | Before | After | State |
+|---|---|---|---|
+| us-central1 | 3 | 3 | raise to 16 still reconciling (filed 2026-07-16) |
+| us-east4 | 3 | 3 | raise to 8 now reconciling |
+| europe-west4 | none | **8** | granted instantly |
+| asia-southeast1 | none | **8** | granted instantly |
+| us-west1 | none | 0 | requested 8, granted 0 (no capacity for us there) |
+
+**The lesson: file in a new region before escalating an existing one.** The us-central1 raise has been under human review for twelve days; europe-west4 and asia-southeast1 handed over 8 each in seconds.
+
+Two caveats on spending the new EU/APAC grant:
+
+- **`gs://three-ws-model-weights` is a us-central1 REGIONAL bucket.** A worker in europe-west4 or asia-southeast1 gcsfuse-mounts it cross-continent, so weight loading is slow and egress is charged. Before pinning a lane there, either dual-region the bucket or accept the cold-start cost. us-east4 is already proven against this bucket (hunyuan3d and trellis run there today).
+- **RTX PRO 6000 is still enforced at 1 instance** despite `grantedValue: 1000`, re-tested 2026-07-28: `--max-instances=4` fails with `requested: 4 allowed: 1`. Treat the preference number as aspirational, exactly as the 2026-07-17 note said.
 
 ## The one constraint that matters: L4 GPU quota
 
@@ -35,7 +60,7 @@ Six GPU services share those 3 GPUs:
 | model-hunyuan3d | high-fidelity reconstruction + multi-view fusion (min 0 since 2026-07-26: zero jobs in 3 days while its warm L4 starved model-text2motion; see below) | 0 | 2 |
 | model-rig | auto-rigging lane (workers/rig; ~10 jobs/day) | 1 | 2 |
 | model-text2motion | text-to-motion clips for the animation library | 0 | 2 |
-| model-triposr | fast image-to-3D fallback | 0 | 2 |
+| model-triposr | fast image-to-3D fallback (us-central1 copy stays min 0; the WARM copy runs in us-east4 since 2026-07-28) | 0 | 2 |
 | model-triposg | image-to-3D | 0 | 2 |
 | ~~unirig~~ | retired (superseded by `workers/rig`) — **holds no GPU**, minScale 0 | 0 | — |
 | ~~avatar-reconstruction~~ | photo-to-avatar — **moved to CPU-only 2026-07-25, holds no GPU** (see below) | 1 | 6 |

@@ -3,11 +3,11 @@ import { describe, it, expect } from 'vitest';
 import { ringTickConfig, sponsorGovernor } from '../api/_lib/x402/ring-tick-plan.js';
 
 // The sponsor governor is the ring tick's view of the facilitator's fee wallet
-// (X402_FEE_PAYER_SOLANA) — the wallet that actually starved in the 2026-07-28
+// (X402_FEE_PAYER_SOLANA): the wallet that actually starved in the 2026-07-28
 // outage. Three regimes: unreadable balance passes through (the facilitator
 // fail-closes at settle time), below the hard floor skips the tick, above it
 // the payer-governor runway math tapers the call rate.
-describe('sponsorGovernor — regimes', () => {
+describe('sponsorGovernor: regimes', () => {
 	const BASE = {
 		configuredCalls: 6,
 		floorLamports: 4_000_000,
@@ -38,7 +38,7 @@ describe('sponsorGovernor — regimes', () => {
 	});
 
 	it('tapers below the full rate as spendable SOL shrinks', () => {
-		// ~0.03 SOL spendable: 30M/6000/1d = 5,000 calls/day ≈ 3/min — half rate.
+		// ~0.03 SOL spendable: 30M/6000/1d = 5,000 calls/day ≈ 3/min: half rate.
 		const g = sponsorGovernor({ ...BASE, sponsorLamports: 34_000_000 });
 		expect(g.skip).toBe(false);
 		expect(g.throttled).toBe(true);
@@ -47,7 +47,7 @@ describe('sponsorGovernor — regimes', () => {
 	});
 
 	it('keeps the heartbeat above the floor even when runway math says zero', () => {
-		// 10k lamports spendable is under two settles' worth — runway budget rounds
+		// 10k lamports spendable is under two settles' worth: runway budget rounds
 		// to 0/min, but the hard floor is the real stop, so the heartbeat holds.
 		const g = sponsorGovernor({ ...BASE, sponsorLamports: 4_010_000 });
 		expect(g.skip).toBe(false);
@@ -61,7 +61,7 @@ describe('sponsorGovernor — regimes', () => {
 	});
 });
 
-describe('ringTickConfig — sponsor knobs', () => {
+describe('ringTickConfig: sponsor knobs', () => {
 	it('defaults the sponsor fee estimate and runway, clamped sane', () => {
 		const cfg = ringTickConfig({});
 		expect(cfg.sponsorFeePerSettleLamports).toBe(6_000);

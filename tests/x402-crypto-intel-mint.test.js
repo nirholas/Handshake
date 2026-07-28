@@ -9,7 +9,7 @@ const LAUNCH_MCAP_SOL = 30 / 1.073;
 const NOW = 1_785_300_000_000;
 
 const freshCoin = (over = {}) => ({
-	mint: '4yBmgdh9hX3MsYsg35dVFwo8xmSbcEtSDHuGhCYApump',
+	mint: 'THREEsyntheticCurveCoin111111111111111pump',
 	usd_market_cap: 2069.72,
 	market_cap: LAUNCH_MCAP_SOL,
 	total_supply: 1_000_000_000_000_000,

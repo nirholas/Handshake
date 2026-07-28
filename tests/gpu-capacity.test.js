@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { retargetExport, recommend } from '../scripts/gpu-capacity.mjs';
+import { retargetExport, recommend, bucketUsage } from '../scripts/gpu-capacity.mjs';
 
 // A trimmed `gcloud run services describe --format=export` body, same shape as
 // the real one for a GPU worker.
@@ -153,5 +153,51 @@ describe('recommend', () => {
 			regions: [region({ granted: 3, pinned: 3, headroom: 0, ceiling: 3, quotas: [l4Quota()], services: [{ name: 'model-trellis', min: 3 }] })],
 		});
 		expect(recs).toEqual([]);
+	});
+});
+
+const L4 = 'NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion';
+const RTX = 'NvidiaRtxPro6000GpuAllocNoZonalRedundancyPerProjectRegion';
+
+describe('bucketUsage', () => {
+	// The bug this pins: model-hunyuan3d-21-rtx runs on an RTX PRO 6000, but its
+	// accelerator lives in nodeSelector, not annotations. Reading the wrong place
+	// defaulted it to L4 and charged it to the shared pool, so us-central1 read
+	// "3/3 pinned, 0 free" while it actually had a spare L4.
+	it('charges each service to its own accelerator pool', () => {
+		const buckets = bucketUsage(
+			[
+				{ name: 'model-rig', quotaId: L4, pinned: 1, ceiling: 2 },
+				{ name: 'model-trellis', quotaId: L4, pinned: 1, ceiling: 3 },
+				{ name: 'model-hunyuan3d-21-rtx', quotaId: RTX, pinned: 1, ceiling: 1 },
+			],
+			[
+				{ quotaId: L4, granted: 3 },
+				{ quotaId: RTX, granted: 1000 },
+			],
+		);
+		const l4 = buckets.find((b) => b.quotaId === L4);
+		expect(l4.pinned).toBe(2);
+		expect(l4.headroom).toBe(1);
+		const rtx = buckets.find((b) => b.quotaId === RTX);
+		expect(rtx.pinned).toBe(1);
+		expect(rtx.headroom).toBe(999);
+	});
+
+	it('surfaces a filed grant with nothing running in it — that is the free capacity', () => {
+		const buckets = bucketUsage([], [{ quotaId: L4, granted: 8 }]);
+		expect(buckets).toHaveLength(1);
+		expect(buckets[0]).toMatchObject({ pinned: 0, granted: 8, headroom: 8 });
+	});
+
+	it('reports headroom as null when no grant has been filed for a pool in use', () => {
+		const buckets = bucketUsage([{ name: 'x', quotaId: L4, pinned: 1, ceiling: 1 }], []);
+		expect(buckets[0].granted).toBeNull();
+		expect(buckets[0].headroom).toBeNull();
+	});
+
+	it('ignores a service on an accelerator with no known quota bucket', () => {
+		const buckets = bucketUsage([{ name: 'x', quotaId: null, pinned: 1, ceiling: 1 }], []);
+		expect(buckets).toEqual([]);
 	});
 });

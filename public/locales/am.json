@@ -18176,7 +18176,7 @@
 		"support_best_effort_usually_within_a_few": "<span class=\"dot\"></span> ድጋፍ · የተቻለንን ያህል ጥረት እናደርጋለን፣ አብዛኛውን ጊዜ በጥቂት የስራ ቀናት ውስጥ",
 		"support_three_ws": "support@three.ws",
 		"the_more_of_this_you_give_us": "አስቀድመው በሰጡን ቁጥር፣ በፍጥነት ማባዛት እንችላለን።",
-		"the_region_you_target_via_defaults_to": "በ<code>WATSONX_URL</code> በኩል የሚፈልጉት <b>ክልል</b> (ነባሪው <code>us-south</code> ነው) እና ሙሉው የስህተት ጽሑፍ</b>።",
+		"the_region_you_target_via_defaults_to": "በ <code>WATSONX_URL</code> በኩል የሚያነጣጥሩት <b>ክልል</b> (ነባሪው <code>us-south</code> ነው) እና <b>ሙሉ የስህተት ጽሑፍ</b>።",
 		"the_tool_you_called_or": "የጠሩት <b>መሳሪያ</b> — <code>ibm_granite_chat</code>፣ <code>ibm_granite_code</code>፣ <code>ibm_granite_embed</code>፣ <code>ibm_granite_analyze</code>፣ ወይም <code>ibm_granite_forecast</code>።",
 		"three_ws": "three.ws",
 		"three_ws_2": "three.ws",

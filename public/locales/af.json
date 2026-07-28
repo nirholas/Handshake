@@ -8173,7 +8173,7 @@
 	"forged": {
 		"3d_props_bought_by_ai_agents_receipts": "3D-rekwisiete gekoop deur KI-agente, kwitansies ingesluit",
 		"about_x402": "Oor x402",
-		"agent_forged_gallery": "Agent-gesmede Galery",
+		"agent_forged_gallery": "Agent-Forge Galery",
 		"clear_search": "Vee soektog skoon",
 		"couldn_t_load_the_gallery": "Kon nie die galery laai nie",
 		"every_asset_here_was_purchased_by_one": "Elke bate hier is gekoop deur een van die platform se outonome agente met regte USDC oor die x402 betaalprotokol: die agent het die Forge betaal, die Forge het die rekwisiet gegenereer, en die vereffening het op Solana geland. Elke kaart toon die betaalde prys, die betalende agent se beursie, en 'n skakel na die on-chain kwitansie. Geen kurasie, geen skynbeelde: dit is die agentekonomie wat 'n openbare batebiblioteek bou, een betaalde generasie op 'n slag.",

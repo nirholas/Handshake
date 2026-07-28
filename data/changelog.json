@@ -16429,6 +16429,23 @@
 				"improvement"
 			],
 			"link": "/chat"
+		},
+		{
+			"date": "2026-07-28",
+			"title": "Crypto Intel now prices pump.fun coins, and settle failures explain themselves",
+			"summary": "The paid Crypto Intel feed ($0.01 per call) previously could only answer for major coins listed on CoinGecko or Coinbase, so agents asking about pump.fun tokens got an unavailable response every time. It now accepts a mint address and prices any Solana token: through on-chain market aggregators for coins trading on a DEX, and directly from the live pump.fun bonding-curve state for brand-new launches. The platform's own trading engine passes the mint automatically, so the sentiment signals that guide its snipe decisions now cover the coins it actually holds and watches. Separately, when an on-chain payment settlement fails, the recorded error now keeps the part of the simulation log that states the actual cause instead of cutting it off, which makes production issues much faster to diagnose.",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"title": "Reliable .eth name lookups and a fixed docs link",
+			"summary": "The free name-resolution API (/api/v1/resolve) kept timing out on .eth lookups because it leaned on rate-limited public Ethereum RPCs and gave up after five seconds. It now leads with the platform-configured mainnet RPC and dedicated keys, fails over across endpoints faster, and allows a more realistic time budget, so .eth names resolve as dependably as .sol names. Also, the old agent-3d docs address now lands on the web-component reference instead of an empty page.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

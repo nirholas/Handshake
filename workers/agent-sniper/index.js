@@ -276,6 +276,9 @@ async function main() {
 							const gate = llmVerdictGate(verdict, strat);
 							if (!gate.pass) {
 								log.info('llm judge pass', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence, gate: gate.reason });
+								if (gate.reason === 'fallback_model') {
+									alertStrictModelOffline({ model: strat.llm_model, answeredBy: verdict.answeredBy, agentId: strat.agent_id });
+								}
 								return;
 							}
 							log.info('llm judge buy', { agent: strat.agent_id, mint: rec.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });

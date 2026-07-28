@@ -1632,11 +1632,21 @@ export const env = {
 	},
 
 	getRpcUrl(chainId) {
-		return (
-			opt(`RPC_URL_${chainId}`) ||
-			(chainId === 84532 ? opt('BASE_SEPOLIA_RPC_URL') : null) ||
-			(chainId === 11155111 ? opt('SEPOLIA_RPC_URL') : null) ||
-			null
-		);
+		// Name-based aliases exist because operators set RPC_URL_ETHEREUM et al.
+		// long before the id-based convention landed; honoring both keeps every
+		// already-deployed env var live instead of silently dead.
+		const alias = {
+			1: ['RPC_URL_ETHEREUM', 'MAINNET_RPC_URL'],
+			10: ['RPC_URL_OPTIMISM'],
+			56: ['RPC_URL_BSC'],
+			137: ['RPC_URL_POLYGON'],
+			8453: ['RPC_URL_BASE'],
+			42161: ['RPC_URL_ARBITRUM'],
+			84532: ['BASE_SEPOLIA_RPC_URL'],
+			11155111: ['SEPOLIA_RPC_URL'],
+		}[chainId];
+		let url = opt(`RPC_URL_${chainId}`);
+		for (const name of alias || []) url = url || opt(name);
+		return url || null;
 	},
 };

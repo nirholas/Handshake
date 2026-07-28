@@ -562,7 +562,7 @@ Server-Sent Events stream from a unified multi-provider LLM gateway. Used by the
 
 ```json
 {
-	"provider": "claude-sonnet-4-6",
+	"provider": "claude-sonnet-5",
 	"messages": [{ "role": "user", "content": "Hello" }],
 	"system": "You are a friendly product guide.",
 	"maxTokens": 1024
@@ -573,6 +573,8 @@ Server-Sent Events stream from a unified multi-provider LLM gateway. Used by the
 
 | Provider            | Network          | Tier     |
 | ------------------- | ---------------- | -------- |
+| `claude-opus-5`     | Anthropic        | flagship |
+| `claude-sonnet-5`   | Anthropic        | balanced |
 | `claude-opus-4-7`   | Anthropic        | flagship |
 | `claude-sonnet-4-6` | Anthropic        | balanced |
 | `claude-haiku-4-5`  | Anthropic        | fast     |

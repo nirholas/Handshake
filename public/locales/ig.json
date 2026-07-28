@@ -7985,7 +7985,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge ihe nlereanya 3D nke gị na three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> rụpụtara na three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged na three.ws",
 		"meta_description": "Ihe nlereanya 3D na-emekọrịta ihe rụpụtara na three.ws.",
 		"meta_title": "three.ws — ihe nlereanya 3D agbakwunyere",
 		"no_model_to_show": "Enweghị ihe nlereanya igosi",
@@ -8837,7 +8837,7 @@
 		"goalkeeper": "<span class=\"wyg-anim-chip-icon\">&#x1F9E4;</span>Onye nche goolu",
 		"google_cloud": "<span class=\"ico\" style=\"--logo:url(/featured-logos/googlecloud.svg)\"></span><span class=\"lbl\">Google Cloud</span>",
 		"grab_a_limb_to_pose_it_drag": "Jide akụkụ ahụ ka ị mee ya pose · dọkpụrụ ala ka ọ gbaa gburugburu",
-		"guard_risk_checks": "<span class=\"snipe-node\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z\"></path></svg></span> <span class=\"snipe-stage-name\">Guard</span> nyocha ihe egwu</span>",
+		"guard_risk_checks": "<span class=\"snipe-node\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z\"></path></svg></span> <span class=\"snipe-stage-name\">Guard</span> <span class=\"snipe-stage-sub\">nyocha ihe egwu</span>",
 		"gymnastics": "<span class=\"wyg-anim-chip-icon\">&#x1F938;</span>Mgbatị ahụ",
 		"hackernoon": "<span class=\"ico\" style=\"--logo:url(/featured-logos/hackernoon.svg)\"></span><span class=\"lbl\">HackerNoon</span>",
 		"handler": "handler",

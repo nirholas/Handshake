@@ -25,9 +25,20 @@ beforeAll(async () => {
 			X402_ASSET_ADDRESS_BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
 			X402_ADVERTISE_BASE: 'true',
 		},
+		timeoutMs: 60_000,
 	});
 	BASE = server.base;
-}, 30000);
+	// Warm the paid-route stacks. healthz readiness says nothing about the x402
+	// handler graph: the child imports it lazily on the first paid-route hit, and
+	// under full-suite load that cold import runs tens of seconds, which blew the
+	// first test's 15s budget. Charging the warm-up to the hook budget keeps each
+	// test measuring the challenge contract, not the import graph. The responses
+	// are deliberately ignored; the tests below re-assert them against warm code.
+	await Promise.all([
+		fetch(`${BASE}/api/x402/tutor`).catch(() => {}),
+		fetch(`${BASE}/api/v1/x/openai/chat`).catch(() => {}),
+	]);
+}, 120_000);
 
 afterAll(() => {
 	server?.close();

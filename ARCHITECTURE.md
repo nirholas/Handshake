@@ -1440,7 +1440,7 @@ flowchart TD
 
 | Tier | Models |
 |------|--------|
-| Anthropic | claude-fable-5, claude-mythos-5 (restricted, moderation-gated, never auto-selected), claude-opus-4-7, claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (native `claude-haiku-4-5-20251001`) |
+| Anthropic | claude-fable-5, claude-mythos-5 (restricted, moderation-gated, never auto-selected), claude-opus-5, claude-sonnet-5, claude-opus-4-8, claude-opus-4-7, claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (native `claude-haiku-4-5-20251001`) |
 | OpenAI | gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna, gpt-5.5, gpt-5.5-pro, gpt-5.4 (+ pro/mini/nano), gpt-5.3-codex, o3, o3-pro (legacy gpt-4o/gpt-4o-mini/o3-mini ids alias forward) |
 | NVIDIA NIM | `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nvidia-nemotron-nano-9b-v2`, `deepseek-ai/deepseek-v4-pro`, `moonshotai/kimi-k2.6`, `meta/llama-4-maverick-17b-128e-instruct`, `minimaxai/minimax-m2.7` |
 | IBM watsonx | `ibm-granite` (Granite 3.8B Instruct) |
@@ -2195,7 +2195,7 @@ sequenceDiagram
 
 | Service | Models / Usage |
 |---------|---------------|
-| Anthropic | claude-fable-5, claude-mythos-5, claude-opus-4-7, claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (chat, brain, reflect) |
+| Anthropic | claude-fable-5, claude-mythos-5, claude-opus-5, claude-sonnet-5, claude-opus-4-8, claude-opus-4-7, claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (chat, brain, reflect) |
 | OpenAI | GPT-5.6 family (sol/terra/luna), GPT-5.5 + GPT-5.4 tiers, gpt-5.3-codex, o3/o3-pro, text-embedding-3-small, TTS |
 | NVIDIA NIM | Nemotron-super-120b, DeepSeek-v4-pro, Kimi-k2.6, Llama-4-Maverick, MiniMax-M2.7, nv-embedqa-e5-v5 |
 | NVIDIA NIM Vision | Nemotron-nano-12B-v2-VL, Llama-3.2-11B-vision |
