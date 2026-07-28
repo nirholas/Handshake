@@ -2,6 +2,27 @@
 
 Owner directive (2026-07-16): spend the Google Cloud credits freely on quality, reliability, and UX. Do not onboard new external APIs. This doc is the standing map of where credits buy real product improvement, what has been done, and what any agent should do next without asking. Project: `aerial-vehicle-466722-p5`, region `us-central1`, billing runs on the credit grant.
 
+## Audit and expand capacity with one command: `npm run gpu`
+
+The audit below used to be manual, and it was re-derived by hand twice (2026-07-25, 2026-07-26) before landing the same conclusion each time: **the shortage is usually distribution, not supply.** One region gets pinned to zero headroom while another region's grant sits untouched, and the min-0 services in the pinned region 503 every cold start. [scripts/gpu-capacity.mjs](../../scripts/gpu-capacity.mjs) makes that a command:
+
+```sh
+npm run gpu                                              # every GPU region: grant, holders, headroom, ranked actions
+npm run gpu -- --json                                    # machine-readable
+npm run gpu -- --port model-triposr --to us-east4        # dry-run the cross-region move
+npm run gpu -- --port model-triposr --to us-east4 --apply
+npm run gpu -- --request 16 --region us-west1 --apply    # file/raise that region's L4 grant
+```
+
+It ranks by time-to-effect, and deliberately puts **using a grant we already hold above asking Google for more** — a port lands in minutes, a quota raise has been pending since 2026-07-16. `--port` automates the no-rebuild pattern documented under us-east4 below (export, retarget the location label, drop the read-only URLs annotation and the pinned revision name, replace, mirror the invoker IAM). Mutating modes are dry run unless `--apply`. Pure logic is covered by [tests/gpu-capacity.test.js](../../tests/gpu-capacity.test.js).
+
+Two things the tool surfaces that are easy to miss by hand:
+
+- **Zonal redundancy is a separate quota bucket.** `NvidiaL4GpuAllocPerProjectRegion` and `NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion` are different grants. A region can read "full" against one and still have capacity under the other.
+- **Every region is its own grant.** Filing a preference in a region we do not use yet costs nothing and is reviewed asynchronously, so file early rather than when a lane is already starving.
+
+Exit code is 1 when there is an action worth taking (idle grant, or a starved service), 0 when there is not, 3 when gcloud auth has lapsed.
+
 ## The one constraint that matters: L4 GPU quota
 
 Every 3D generation engine runs on Cloud Run NVIDIA L4s, and all six GPU services draw from ONE quota: `NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion`, currently **granted 3** for us-central1.

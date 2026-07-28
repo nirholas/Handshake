@@ -154,6 +154,7 @@
 		"audit:web:login": "node scripts/page-audit.mjs --login",
 		"logs": "node scripts/gcp-logs.mjs",
 		"logs:tail": "node scripts/gcp-logs.mjs --follow",
+		"gpu": "node scripts/gpu-capacity.mjs",
 		"logs:errors": "node scripts/gcp-logs.mjs --all --errors --since 6h",
 		"triage:gcp": "node scripts/gcp-triage.mjs",
 		"snapshot": "node scripts/page-snapshot.mjs",

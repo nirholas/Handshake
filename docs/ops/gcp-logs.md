@@ -1,12 +1,13 @@
 # Production logs and automated triage on GCP
 
-The `vercel logs` workflow, rebuilt for the Cloud Run fleet. Two tools, both
-in `scripts/`, both needing only the already-authenticated gcloud CLI:
+The `vercel logs` workflow, rebuilt for the Cloud Run fleet. Three tools, all
+in `scripts/`, all needing only the already-authenticated gcloud CLI:
 
 | Tool | Job |
 |---|---|
 | `npm run logs` ([scripts/gcp-logs.mjs](../../scripts/gcp-logs.mjs)) | Read or live-tail logs from any Cloud Run service, vercel-logs style. |
 | `npm run triage:gcp` ([scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs)) | Automated monitor: healthz + fleet-wide log sweep + known-signature classification into an action plan. |
+| `npm run gpu` ([scripts/gpu-capacity.mjs](../../scripts/gpu-capacity.mjs)) | GPU capacity across every region: grant, holders, headroom, plus cross-region ports and quota requests. Answers the `gpu-quota-starved` finding. |
 
 Agents: the monitor-and-fix loop that sits on top of these is the
 `/gcp-triage` skill ([.agents/skills/gcp-triage/SKILL.md](../../.agents/skills/gcp-triage/SKILL.md)).
@@ -89,3 +90,5 @@ findings (so `npm run triage:gcp || <alert>` works in any loop).
   (LB/DNS/TLS/env/rollback).
 - [page-audit.md](page-audit.md): the browser-side console sweep
   (`npm run audit:web`), complementary to server logs.
+- [gcp-credits-plan.md](gcp-credits-plan.md): the GPU fleet map, quota state,
+  and what `npm run gpu` automates.
