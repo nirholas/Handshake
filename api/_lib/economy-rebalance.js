@@ -98,7 +98,21 @@ export function planRebalance({ solPriceUsd, wallets, bounds }) {
 		})
 		.sort((a, b) => b.shortfallUsd - a.shortfallUsd);
 
+	// A self-pay wallet below BOTH floors submits two rows for the same pubkey
+	// wanting opposite assets. Planning both would execute opposing swaps in one
+	// run: two fees plus double slippage to mostly undo each other (observed
+	// 2026-07-28 on the ring payer: usdc->sol $6.95 then sol->usdc $2.04, netting
+	// the wallet AWAY from its USDC floor). The neediest leg wins the run; the
+	// opposing leg waits for the next run against fresh balances.
+	const plannedDir = new Map();
+
 	for (const { w, shortfallUsd } of rows) {
+		const wantDir = w.wants === 'usdc' ? 'sol->usdc' : 'usdc->sol';
+		const prior = plannedDir.get(w.pubkey);
+		if (prior && prior !== wantDir) {
+			skipped.push({ name: w.name, reason: 'opposing_leg_same_run' });
+			continue;
+		}
 		if (runRemainingUsd <= 0) {
 			skipped.push({ name: w.name, reason: 'run_cap_reached' });
 			continue;
@@ -122,6 +136,7 @@ export function planRebalance({ solPriceUsd, wallets, bounds }) {
 				inUsd: round(inUsd),
 				reason: `usdc ${w.usdc.toFixed(2)} < floor ${w.floorUsd}`,
 			});
+			plannedDir.set(w.pubkey, 'sol->usdc');
 			runRemainingUsd = round(runRemainingUsd - inUsd);
 		} else {
 			// Convert USDC → SOL, keeping the USDC reserve untouched.
@@ -138,6 +153,7 @@ export function planRebalance({ solPriceUsd, wallets, bounds }) {
 				inUsd: round(inUsd),
 				reason: `sol ${(w.sol * solPriceUsd).toFixed(2)}USD < floor ${w.floorUsd}`,
 			});
+			plannedDir.set(w.pubkey, 'usdc->sol');
 			runRemainingUsd = round(runRemainingUsd - inUsd);
 		}
 	}

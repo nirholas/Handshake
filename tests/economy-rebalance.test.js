@@ -69,6 +69,39 @@ describe('planRebalance', () => {
 		expect(plan[0].inUsd).toBe(3); // per-swap cap
 	});
 
+	it('never plans opposing swaps on the same wallet in one run', () => {
+		// The 2026-07-28 churn: the ring payer sat below BOTH floors, so the cron
+		// submitted a wants:'usdc' row and a wants:'sol' row for the same pubkey.
+		// The planner executed both directions back to back, paying two swap fees
+		// to mostly undo itself and ending FURTHER from the USDC floor. The
+		// neediest leg must win the run; the opposing leg is deferred.
+		const { plan, skipped } = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [
+				{ name: 'ring', pubkey: 'R', sol: 0.05, usdc: 9.9, wants: 'usdc', floorUsd: 12 },
+				{ name: 'ring', pubkey: 'R', sol: 0.05, usdc: 9.9, wants: 'sol', floorUsd: 15 },
+			],
+		});
+		expect(plan).toHaveLength(1);
+		expect(plan[0].dir).toBe('usdc->sol'); // SOL shortfall ($7.50) beats USDC ($2.10)
+		expect(skipped).toContainEqual({ name: 'ring', reason: 'opposing_leg_same_run' });
+	});
+
+	it('still serves same-direction rows on one wallet without deferral', () => {
+		// Two rows, same pubkey, both wanting USDC: no opposition, both plan.
+		const { plan, skipped } = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [
+				{ name: 'ring', pubkey: 'R', sol: 1, usdc: 0, wants: 'usdc', floorUsd: 10 },
+				{ name: 'ring', pubkey: 'R', sol: 1, usdc: 0, wants: 'usdc', floorUsd: 4 },
+			],
+		});
+		expect(plan).toHaveLength(2);
+		expect(skipped.find((s) => s.reason === 'opposing_leg_same_run')).toBeUndefined();
+	});
+
 	it('aborts everything if the SOL price is unavailable', () => {
 		const { plan, skipped } = planRebalance({
 			solPriceUsd: 0,
