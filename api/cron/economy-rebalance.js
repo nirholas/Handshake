@@ -166,4 +166,10 @@ export default wrapCron(async (req, res) => {
 	}
 
 	return json(res, 200, { ok: true, armed: true, mode: 'live', solPriceUsd, plan, results, skipped });
-}, { requireWriteCapacity: true });
+	// Deliberately NOT gated on requireWriteCapacity: this cron is what refills
+	// the x402 fee wallet, and skipping it while the DB sits at its storage
+	// high-water mark starves every settle (2026-07-28: the pressure latch
+	// preceded a fee_wallet_below_floor outage). Its own writes are a handful of
+	// best-effort audit rows; a genuine capacity error still degrades gracefully
+	// inside wrapCron.
+});

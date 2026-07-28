@@ -23,6 +23,14 @@
 			<description>Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.</description>
 		</item>
 		<item>
+			<title>Claude 5 models land across chat, agent brains, and widgets</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-07-28:Claude 5 models land across chat, agent brains, and widgets</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Claude Sonnet 5 and Claude Opus 5 are now available everywhere agents talk: the chat app, agent brains, embedded widgets, agent talk, the co-pilot narrator, and nightly reflection all route to the new generation, with Sonnet 5 as the platform's Anthropic default. Under the hood the Claude transport got smarter too: large system prompts are prompt-cached (about 90% cheaper on repeat turns), and requests are automatically shaped for the new models so older settings can never cause a failed reply.</description>
+		</item>
+		<item>
 			<title>Coin pages are back, and they can no longer be taken down by an expired market-data key</title>
 			<link>https://three.ws/coins</link>
 			<guid isPermaLink="false">2026-07-28:Coin pages are back, and they can no longer be taken down by an expired market-data key</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A full documentation pass across the repository. Previously undocumented areas now ship real READMEs: the five server-side platform agents (endpoint shopper, fact checker, tutor, unstoppable, x402 buildout), the site data files, the static page system, the blog pipeline, and the npm package index. A docs-wide link audit fixed every broken link, including roughly 317 in the combined docs file, whose generator now rebases links correctly. Orphaned reference docs (design tokens, use cases, the UX flow atlas, specs) are now reachable from the Start Here page.</description>
+		</item>
+		<item>
+			<title>Fixed a wallet-balancing loop that was quietly burning swap fees</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-28:Fixed a wallet-balancing loop that was quietly burning swap fees</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The platform wallet that pays for agent-to-agent settlements holds both USDC (to pay other agents) and a little SOL (to pay Solana network fees). An automatic balancer kept each side topped up, but when the wallet was too small to satisfy both targets at once, the two rules fought: one swapped USDC into SOL, the next run swapped it straight back, over a hundred reversing swaps in an afternoon, each one paying exchange fees for nothing. The balancer now treats the SOL fee reserve as untouchable when topping up USDC, so the tug-of-war is structurally impossible, and the balancer itself keeps running even during database-storage pressure, since skipping it is what let the fee wallet run dry earlier today.</description>
 		</item>
 		<item>
 			<title>More avatar rigs animate out of the box, including research-generated characters</title>

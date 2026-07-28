@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-28T21:42:10.224Z",
+	"generated_at": "2026-07-28T21:43:41.371Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,6 +29,17 @@
 		{
 			"date": "2026-07-28",
 			"type": "update",
+			"title": "Claude 5 models land across chat, agent brains, and widgets",
+			"summary": "Claude Sonnet 5 and Claude Opus 5 are now available everywhere agents talk: the chat app, agent brains, embedded widgets, agent talk, the co-pilot narrator, and nightly reflection all route to the new generation, with Sonnet 5 as the platform's Anthropic default. Under the hood the Claude transport got smarter too: large system prompts are prompt-cached (about 90% cheaper on repeat turns), and requests are automatically shaped for the new models so older settings can never cause a failed reply.",
+			"link": "/chat",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
 			"title": "Coin pages are back, and they can no longer be taken down by an expired market-data key",
 			"summary": "Every coin profile page was returning an error. The market-data provider we read prices and coin details from gives us a monthly call allowance, and once it ran out, every request we sent with our key was refused. The awkward part: the exact same request sent without the key was still being answered. We were effectively locking ourselves out. The pages are live again, and the fix is permanent rather than a one-off: when the key gets refused, we now set it aside for a while and retry the same request without it, so the pages keep serving and recover on their own when the allowance resets. We also repaired a 3D model service that was crash-looping because it tried to download a small config file from a public model host on every start and kept getting throttled. That file now ships with our own model storage, so the service starts without depending on anyone else.",
 			"link": "/coins",
@@ -45,6 +56,17 @@
 			"link": "/docs/start-here",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "Fixed a wallet-balancing loop that was quietly burning swap fees",
+			"summary": "The platform wallet that pays for agent-to-agent settlements holds both USDC (to pay other agents) and a little SOL (to pay Solana network fees). An automatic balancer kept each side topped up, but when the wallet was too small to satisfy both targets at once, the two rules fought: one swapped USDC into SOL, the next run swapped it straight back, over a hundred reversing swaps in an afternoon, each one paying exchange fees for nothing. The balancer now treats the SOL fee reserve as untouchable when topping up USDC, so the tug-of-war is structurally impossible, and the balancer itself keeps running even during database-storage pressure, since skipping it is what let the fee wallet run dry earlier today.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

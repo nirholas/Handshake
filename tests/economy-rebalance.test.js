@@ -102,6 +102,47 @@ describe('planRebalance', () => {
 		expect(skipped.find((s) => s.reason === 'opposing_leg_same_run')).toBeUndefined();
 	});
 
+	it('never dips into a self-pay wallet fee-SOL target to feed the USDC floor', () => {
+		// 0.08 SOL against a 0.09 SOL target: everything the wallet holds is fee
+		// runway, so the sol->usdc leg must stand down despite a real USDC
+		// shortfall instead of stripping the SOL the usdc->sol leg would then
+		// re-buy next run.
+		const { plan, skipped } = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [{ name: 'ring', pubkey: 'R', sol: 0.08, usdc: 3, wants: 'usdc', floorUsd: 10, solFloor: 0.09 }],
+		});
+		expect(plan).toHaveLength(0);
+		expect(skipped[0].reason).toBe('insufficient_sol_surplus');
+	});
+
+	it('cannot oscillate across runs: refilled fee SOL is never clawed back', () => {
+		// The 2026-07-28 burn after the same-run guard landed: run N refills fee
+		// SOL from USDC, run N+1 sees USDC under its floor and reverses the swap,
+		// forever (~134 reversing swaps, ~$900 churned in 2.5 h). Run 1: SOL below
+		// its floor with USDC available, only the SOL leg plans.
+		const run1 = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [
+				{ name: 'ring', pubkey: 'R', sol: 0.01, usdc: 12, wants: 'usdc', floorUsd: 10, solFloor: 0.09 },
+				{ name: 'ring', pubkey: 'R', sol: 0.01, usdc: 12, wants: 'sol', floorUsd: 0.09 * SOL },
+			],
+		});
+		expect(run1.plan).toHaveLength(1);
+		expect(run1.plan[0].dir).toBe('usdc->sol');
+		// Run 2 against the post-swap balances: SOL sits at its target, USDC has
+		// dropped under its floor. The USDC leg has no surplus above the fee
+		// target, so nothing reverses and the wallet holds steady.
+		const run2 = planRebalance({
+			solPriceUsd: SOL,
+			bounds,
+			wallets: [{ name: 'ring', pubkey: 'R', sol: 0.09, usdc: 9, wants: 'usdc', floorUsd: 10, solFloor: 0.09 }],
+		});
+		expect(run2.plan).toHaveLength(0);
+		expect(run2.skipped[0].reason).toBe('insufficient_sol_surplus');
+	});
+
 	it('aborts everything if the SOL price is unavailable', () => {
 		const { plan, skipped } = planRebalance({
 			solPriceUsd: 0,
