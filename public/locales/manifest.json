@@ -362,8 +362,38 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "eu",
+			"name": "Euskara",
+			"dir": "ltr"
+		},
+		{
+			"code": "be",
+			"name": "Беларуская",
+			"dir": "ltr"
+		},
+		{
+			"code": "am",
+			"name": "አማርኛ",
+			"dir": "ltr"
+		},
+		{
 			"code": "ha",
 			"name": "Hausa",
+			"dir": "ltr"
+		},
+		{
+			"code": "ig",
+			"name": "Igbo",
+			"dir": "ltr"
+		},
+		{
+			"code": "zu",
+			"name": "isiZulu",
+			"dir": "ltr"
+		},
+		{
+			"code": "af",
+			"name": "Afrikaans",
 			"dir": "ltr"
 		},
 		{
