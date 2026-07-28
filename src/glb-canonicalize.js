@@ -14,6 +14,7 @@
 //   • Daz / Genesis:   `hip`, `abdomen`, `lShldr`, `lForeArm`, `lThigh`, `lShin`, `lCollar`
 //   • MakeHuman:       `upperarm.L`, `shin.L`, `clavicle.L` (shared with Unreal/Blender stems)
 //   • Simple rigs:     `shoulderL`, `elbowL`, `wristL`, `hipL`, `kneeL`, `ankleL`, `chest`
+//   • SMPL / SMPL-X:   `left_hip`, `left_knee`, `left_ankle`, `left_elbow`, `left_wrist` (side-word joints)
 //   • snake_case:      `left_arm`, `Left_Arm`
 //   • kebab-case:      `left-arm`
 //   • lowercase:       `leftarm`, `lefthand`
@@ -153,6 +154,19 @@ const EXTRA_ALIASES = (() => {
 		// canonical short bone name behind a bare `L_`/`R_` side token: `L_Arm`,
 		// `L_Leg`, `L_UpLeg`, `L_Shoulder`. The right twin is derived by the l→r rule.
 		['lArm', 'LeftArm'], ['lShoulder', 'LeftShoulder'], ['lLeg', 'LeftLeg'], ['lUpLeg', 'LeftUpLeg'],
+		// SMPL / SMPL-X and other research-pipeline skeletons (text-to-avatar
+		// generators, mocap tooling) spell every limb joint as a side word plus the
+		// anatomical joint: `left_hip`, `left_knee`, `left_ankle`, `left_elbow`,
+		// `left_wrist`, `left_collar`. The same spellings appear in hand-built
+		// `leftKnee`-style rigs. Without these the whole lower body drops and a
+		// SMPL-derived avatar glides around on frozen legs.
+		['leftHip', 'LeftUpLeg'], ['leftThigh', 'LeftUpLeg'],
+		['leftKnee', 'LeftLeg'], ['leftShin', 'LeftLeg'], ['leftCalf', 'LeftLeg'],
+		['leftAnkle', 'LeftFoot'],
+		['leftElbow', 'LeftForeArm'],
+		['leftWrist', 'LeftHand'],
+		['leftCollar', 'LeftShoulder'], ['leftClavicle', 'LeftShoulder'],
+		['leftToe', 'LeftToeBase'],
 	];
 	for (const [lv, lc] of SIDED) {
 		put(lv, lc);
@@ -290,10 +304,47 @@ export function canonicalizeJointNodes(json) {
 		}
 	}
 
-	// Pass 2: apply.
+	// Pass 1.6: the mirror-image collision. SMPL-style rigs name the clavicle
+	// `left_collar` and the upper arm `left_shoulder`; both normalise onto
+	// `LeftShoulder`, leaving `LeftArm` vacant and the arm clip unbound. When a
+	// Shoulder target is contested between a collar/clavicle-spelled joint and a
+	// shoulder-spelled one, and Arm is free, the shoulder-spelled joint is the
+	// upper arm — promote it to the Arm bone.
+	for (const side of ['Left', 'Right']) {
+		const arm = `${side}Arm`;
+		const shoulder = `${side}Shoulder`;
+		if ((targetCount.get(shoulder) || 0) < 2 || (targetCount.get(arm) || 0) > 0) continue;
+		const contenders = plan.filter((p) => p.canonical === shoulder);
+		if (!contenders.some((p) => /clavicle|collar/i.test(p.raw))) continue;
+		for (const p of contenders) {
+			if (/shoulder/i.test(p.raw) && !/clavicle|collar/i.test(p.raw)) {
+				p.canonical = arm;
+				targetCount.set(shoulder, targetCount.get(shoulder) - 1);
+				targetCount.set(arm, 1);
+				break;
+			}
+		}
+	}
+
+	// Pass 2: apply. A canonical name is assigned at most once — when two joints
+	// still resolve to the same target after collision resolution (SMPL's
+	// ankle+foot chain, CC's NeckTwist01/02), or the target spelling already
+	// belongs to a joint that isn't being renamed, later renames are skipped.
+	// Duplicate node names make the animation bind ambiguous (getObjectByName
+	// picks an arbitrary twin), which is strictly worse than leaving the extra
+	// joint unmapped. glTF joints are listed parent-first, so first-wins keeps
+	// the parent joint (the one that actually articulates the limb).
+	const planned = new Set(plan.map((p) => p.node));
+	const taken = new Set();
+	for (const idx of jointIndices) {
+		const node = json.nodes[idx];
+		if (node && typeof node.name === 'string' && !planned.has(node)) taken.add(node.name);
+	}
 	let renamed = 0;
 	const samples = [];
 	for (const p of plan) {
+		if (taken.has(p.canonical)) continue;
+		taken.add(p.canonical);
 		if (samples.length < 5) samples.push({ from: p.raw, to: p.canonical });
 		p.node.name = p.canonical;
 		renamed++;

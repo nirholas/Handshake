@@ -44,6 +44,9 @@
 export const MODEL_CATALOG = {
 	// ── Anthropic (paid; host or BYOK key) — most reliable when keyed ──────────
 	'claude-fable-5':             { provider: 'anthropic', tools: true },
+	'claude-opus-5':              { provider: 'anthropic', tools: true },
+	'claude-sonnet-5':            { provider: 'anthropic', tools: true },
+	'claude-opus-4-8':            { provider: 'anthropic', tools: true },
 	// Mythos 5 shares Fable 5's underlying capabilities but is a restricted-access
 	// model — it is never auto-selected into a fallback chain, only used when a
 	// caller names it explicitly (modeled with the same `moderationGated` gate).
@@ -119,6 +122,9 @@ export const MODEL_CATALOG = {
  * The dated Haiku id maps to Vertex's `@` form via toVertexModelId() at call time.
  */
 export const VERTEX_ANTHROPIC_MODELS = [
+	'claude-opus-5',
+	'claude-sonnet-5',
+	'claude-opus-4-8',
 	'claude-opus-4-7',
 	'claude-sonnet-4-6',
 	'claude-haiku-4-5-20251001',
@@ -177,7 +183,7 @@ export const DEFAULT_FREE_MODEL = 'openai/gpt-oss-20b:free';
 
 /** Default per-provider model when the caller doesn't name one. */
 export const PROVIDER_MODEL_DEFAULTS = {
-	anthropic: 'claude-sonnet-4-6',
+	anthropic: 'claude-sonnet-5',
 	openrouter: DEFAULT_FREE_MODEL,
 	groq: 'llama-3.3-70b-versatile',
 	nvidia: 'meta/llama-3.3-70b-instruct',

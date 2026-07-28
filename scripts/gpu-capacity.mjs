@@ -50,6 +50,22 @@ const GPU_QUOTA_LABEL = {
 	NvidiaRtxPro6000GpuAllocPerProjectRegion: 'RTX PRO 6000 (zonal-redundant)',
 };
 
+// An accelerator draws from a DIFFERENT grant per redundancy mode, so a service
+// must be counted against the exact bucket it consumes. Getting this wrong is
+// not cosmetic: charging an RTX instance to the L4 pool made us-central1 read
+// "3/3 pinned, 0 free" when it actually had a spare L4.
+const QUOTA_ID = {
+	'nvidia-l4': { noRedundancy: 'NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion', redundant: 'NvidiaL4GpuAllocPerProjectRegion' },
+	'nvidia-rtx-pro-6000': { noRedundancy: 'NvidiaRtxPro6000GpuAllocNoZonalRedundancyPerProjectRegion', redundant: 'NvidiaRtxPro6000GpuAllocPerProjectRegion' },
+};
+
+/** The quota bucket a service consumes, from its accelerator + redundancy mode. */
+function quotaIdFor(gpuType, zonalRedundancyDisabled) {
+	const pair = QUOTA_ID[gpuType];
+	if (!pair) return null;
+	return zonalRedundancyDisabled ? pair.noRedundancy : pair.redundant;
+}
+
 const C = {
 	dim: (s) => `\x1b[2m${s}\x1b[0m`,
 	bold: (s) => `\x1b[1m${s}\x1b[0m`,
@@ -80,6 +96,7 @@ function parseArgs(argv) {
 			case '--request': opts.request = Number(next()); break;
 			case '--region': opts.region = next(); break;
 			case '--apply': opts.apply = true; break;
+			case '--email': opts.email = next(); break;
 			case '--project': opts.project = next(); break;
 			case '-h': case '--help': opts.help = true; break;
 			default:
@@ -130,10 +147,16 @@ function gpuServices(region, project) {
 		const container = svc.spec?.template?.spec?.containers?.[0];
 		const gpu = Number(container?.resources?.limits?.['nvidia.com/gpu'] || 0);
 		if (!gpu) continue;
+		// The accelerator lives in the revision's nodeSelector, NOT in its
+		// annotations — the annotation of that name does not exist, so reading
+		// there silently defaulted every service to L4.
+		const gpuType = svc.spec?.template?.spec?.nodeSelector?.['run.googleapis.com/accelerator'] || 'nvidia-l4';
+		const noRedundancy = annot(svc.spec?.template, 'run.googleapis.com/gpu-zonal-redundancy-disabled') === 'true';
 		out.push({
 			name: svc.metadata?.name,
 			gpu,
-			gpuType: annot(svc.spec?.template, 'run.googleapis.com/accelerator') || 'nvidia-l4',
+			gpuType,
+			quotaId: quotaIdFor(gpuType, noRedundancy),
 			min: scale(svc, 'min'),
 			max: scale(svc, 'max'),
 			// Pinned GPUs are what actually consume the grant around the clock;
@@ -172,26 +195,69 @@ function quotaGrants(project) {
 	return byRegion;
 }
 
+/** The signed-in gcloud account, used as the quota contact address. */
+function activeAccount() {
+	const r = gcloud(['config', 'get-value', 'account']);
+	const v = (r.stdout || '').trim();
+	return r.ok && v && v !== '(unset)' ? v : null;
+}
+
 const daysSince = (iso) => (iso ? Math.floor((Date.now() - Date.parse(iso)) / 86_400_000) : null);
+
+const L4_BUCKET = 'NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion';
+
+/** Per-quota-bucket usage, so an RTX instance never charges the L4 pool. */
+export function bucketUsage(services, quotas) {
+	const buckets = new Map();
+	const touch = (quotaId) => {
+		if (!buckets.has(quotaId)) {
+			const q = quotas.find((x) => x.quotaId === quotaId);
+			buckets.set(quotaId, {
+				quotaId,
+				label: GPU_QUOTA_LABEL[quotaId] || quotaId,
+				granted: q ? q.granted : null,
+				pinned: 0,
+				ceiling: 0,
+				services: [],
+			});
+		}
+		return buckets.get(quotaId);
+	};
+	// Every filed grant is a bucket even with nothing running in it — an unused
+	// grant is exactly the capacity this tool exists to surface.
+	for (const q of quotas) touch(q.quotaId);
+	for (const s of services) {
+		if (!s.quotaId) continue;
+		const b = touch(s.quotaId);
+		b.pinned += s.pinned;
+		b.ceiling += s.ceiling;
+		b.services.push(s);
+	}
+	for (const b of buckets.values()) b.headroom = b.granted == null ? null : b.granted - b.pinned;
+	return [...buckets.values()].sort((a, b) => a.label.localeCompare(b.label));
+}
 
 function audit(opts) {
 	const grants = quotaGrants(opts.project);
 	const regions = opts.regions.map((region) => {
 		const services = gpuServices(region, opts.project);
 		const quotas = grants.get(region) || [];
-		// L4 is the pool every engine shares; report headroom against it.
-		const l4 = quotas.find((q) => q.quotaId === 'NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion');
-		const pinned = services.reduce((n, s) => n + s.pinned, 0);
-		const ceiling = services.reduce((n, s) => n + s.ceiling, 0);
+		const buckets = bucketUsage(services, quotas);
+		// The L4 no-redundancy pool is what every 3D engine shares; it is the
+		// headroom number that drives the recommendations.
+		const l4 = buckets.find((b) => b.quotaId === L4_BUCKET);
 		return {
 			region,
 			quotas,
 			services,
-			pinned,
-			ceiling,
+			buckets,
+			pinned: l4 ? l4.pinned : 0,
+			ceiling: l4 ? l4.ceiling : 0,
 			granted: l4 ? l4.granted : null,
-			headroom: l4 ? l4.granted - pinned : null,
-			starved: services.filter((s) => s.min === 0),
+			headroom: l4 ? l4.headroom : null,
+			// Only L4 lanes compete for the shared pool; an RTX lane is not starved
+			// by it, so it must not be reported as such.
+			starved: services.filter((s) => s.min === 0 && s.quotaId === L4_BUCKET),
 		};
 	});
 	return { project: opts.project, checkedAt: new Date().toISOString(), regions };
@@ -276,15 +342,21 @@ function printAudit(report) {
 			: r.headroom > 0
 				? C.green(`${r.pinned}/${r.granted} pinned · ${r.headroom} free`)
 				: C.red(`${r.pinned}/${r.granted} pinned · 0 free`);
-		console.log(`${C.bold(r.region.padEnd(18))} ${head}   ${C.dim(`burst ceiling ${r.ceiling}`)}`);
-		for (const q of r.quotas) {
-			const state = q.reconciling ? C.yellow(`→ ${q.preferred} pending (${daysSince(q.updated)}d)`) : C.dim('settled');
-			console.log(`  ${C.dim('quota')} ${q.label.padEnd(26)} granted ${String(q.granted).padStart(4)}  ${state}`);
-		}
-		for (const s of r.services) {
-			const warm = s.min > 0 ? C.cyan(`warm ${s.min}`) : C.dim('scale-to-zero');
-			const health = s.ready ? '' : C.red(' NOT READY');
-			console.log(`  ${s.name.padEnd(26)} ${warm.padEnd(22)} ${C.dim(`max ${s.max} · ${s.gpuType}`)}${health}`);
+		console.log(`${C.bold(r.region.padEnd(18))} ${head}   ${C.dim(`L4 burst ceiling ${r.ceiling}`)}`);
+		for (const b of r.buckets) {
+			const q = r.quotas.find((x) => x.quotaId === b.quotaId);
+			const state = q?.reconciling ? C.yellow(`→ ${q.preferred} pending (${daysSince(q.updated)}d)`) : C.dim('settled');
+			const use = b.granted == null
+				? C.dim('no grant filed')
+				: b.headroom > 0
+					? C.green(`${b.pinned}/${b.granted} pinned`)
+					: C.red(`${b.pinned}/${b.granted} pinned`);
+			console.log(`  ${C.dim('pool')} ${b.label.padEnd(26)} ${use.padEnd(24)} ${state}`);
+			for (const s of b.services) {
+				const warm = s.min > 0 ? C.cyan(`warm ${s.min}`) : C.dim('scale-to-zero');
+				const health = s.ready ? '' : C.red(' NOT READY');
+				console.log(`    ${s.name.padEnd(26)} ${warm.padEnd(22)} ${C.dim(`max ${s.max}`)}${health}`);
+			}
 		}
 		console.log('');
 	}
@@ -408,19 +480,29 @@ function requestQuota(opts) {
 	const quotaId = 'NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion';
 	const existing = (quotaGrants(project).get(region) || []).find((q) => q.quotaId === quotaId);
 	const prefName = existing?.name || `l4-no-zonal-${region}-${value}`;
+	// Any INCREASE is rejected without a contact address Google can reach for
+	// follow-up questions. Default to the active gcloud account rather than
+	// making the caller remember the flag.
+	const email = opts.email || activeAccount();
+	// `update` takes the preference id POSITIONALLY; only `create` uses the
+	// --preference-id flag. Passing the flag to update fails with "unrecognized
+	// arguments", which reads like a quota rejection but is pure CLI shape.
 	const args = [
 		'alpha', 'quotas', 'preferences', existing ? 'update' : 'create',
+		...(existing ? [prefName] : ['--preference-id', prefName]),
 		'--project', project,
 		'--service', 'run.googleapis.com',
 		'--quota-id', quotaId,
 		'--preferred-value', String(value),
 		'--dimensions', `region=${region}`,
-		...(existing ? ['--preference-id', prefName, '--allow-missing'] : ['--preference-id', prefName]),
+		...(email ? ['--email', email] : []),
+		...(existing ? ['--allow-missing'] : []),
 	];
 
 	console.log(`\n${C.bold(`L4 quota request · ${region}`)}\n`);
 	console.log(`  current grant: ${existing ? existing.granted : C.dim('none filed')}`);
 	console.log(`  requesting:    ${value}`);
+	console.log(`  contact:       ${email || C.red('none — Google rejects an increase without one (--email)')}`);
 	console.log(`  ${C.cyan(`gcloud ${args.join(' ')}`)}\n`);
 	if (!apply) {
 		console.log(C.yellow('DRY RUN — re-run with --apply to file it.\n'));

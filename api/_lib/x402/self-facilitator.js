@@ -454,9 +454,16 @@ async function confirmSignature(conn, signature, timeoutMs = 30_000) {
 
 // Settle a validated ring payment: co-sign with the sponsor, broadcast over our
 // RPC, confirm. Returns the x402-wire settle shape { success, transaction,
-// network, payer } plus feeLamports for the burn meter. Never throws for a
-// rejected payment — a refusal is a clean { success:false, reason }.
-export async function settleRingPayment({ paymentPayload, requirement, conn, feePayer }) {
+// network, payer } plus feeLamports for the burn meter and feePayer/selfPay for
+// per-wallet fee attribution. Never throws for a rejected payment — a refusal
+// is a clean { success:false, reason }.
+//
+// `feeMeter` is the optional wallet fee governor hook (wallet-fee-meter.js):
+// called after the hard SOL floor passes, with the wallet that will actually
+// pay this transaction's fee. A { ok:false } verdict refuses the settle before
+// any co-sign/broadcast; a hook error fails OPEN — the floor is the hard
+// protection, the meter is pacing.
+export async function settleRingPayment({ paymentPayload, requirement, conn, feePayer, feeMeter }) {
 	const network = requirement.network;
 	const connection = conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
 
@@ -496,7 +503,34 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 			success: false,
 			reason: `fee_wallet_below_floor:${solLamports}<${SPONSOR_SOL_FLOOR_LAMPORTS}`,
 			sponsorSolLamports: solLamports,
+			feePayer: decoded.feePayer,
+			selfPay,
 		};
+	}
+
+	// Wallet fee governor: admit this settle only if the fee-paying wallet still
+	// has daily fee budget. Governs every tenant of a shared wallet at the one
+	// choke point they all pass through, instead of throttling one pipeline while
+	// the others drain the same runway.
+	if (feeMeter) {
+		let meterVerdict = null;
+		try {
+			meterVerdict = await feeMeter({
+				feeWalletB58: decoded.feePayer,
+				solLamports,
+				estFeeLamports,
+				selfPay,
+			});
+		} catch { /* meter fault → fail open; the SOL floor above is the hard stop */ }
+		if (meterVerdict && meterVerdict.ok === false) {
+			return {
+				success: false,
+				reason: meterVerdict.reason || 'fee_runway_exhausted',
+				sponsorSolLamports: solLamports,
+				feePayer: decoded.feePayer,
+				selfPay,
+			};
+		}
 	}
 
 	// Sponsor mode co-signs the fee payer (buyer already signed); a self-pay tx is
@@ -534,6 +568,8 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 					network,
 					payer,
 					feeLamports: estFeeLamports,
+					feePayer: decoded.feePayer,
+					selfPay,
 					replayed: true,
 				};
 			}
@@ -567,6 +603,8 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 				network,
 				payer,
 				feeLamports: estFeeLamports,
+				feePayer: decoded.feePayer,
+				selfPay,
 				replayed: true,
 			};
 		}
@@ -593,7 +631,15 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 		}
 	} catch { /* estimate stands */ }
 
-	return { success: true, transaction: signature, network, payer, feeLamports };
+	return {
+		success: true,
+		transaction: signature,
+		network,
+		payer,
+		feeLamports,
+		feePayer: decoded.feePayer,
+		selfPay,
+	};
 }
 
 // Prove a shape-valid payment can ACTUALLY settle before /verify returns valid.

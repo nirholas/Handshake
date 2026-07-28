@@ -16,6 +16,9 @@ import { isPaidModel } from './chat-models.js';
 const PRICE_PER_MTOK = {
 	'claude-fable-5': [10, 50],
 	'claude-mythos-5': [10, 50],
+	'claude-opus-5': [5, 25],
+	// Sonnet 5 list price (intro $2/$10 runs through 2026-08-31; we meter at sticker).
+	'claude-sonnet-5': [3, 15],
 	'claude-opus-4-8': [5, 25],
 	'claude-opus-4-7': [5, 25],
 	'claude-opus-4-6': [5, 25],

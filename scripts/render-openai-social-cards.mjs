@@ -21,6 +21,7 @@ import { createReadStream, existsSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -36,6 +37,7 @@ const CARD_PAGE = '/marketing/openai-select-partner/cards/social-card.html';
 
 const CARDS = [
 	{ id: 'card-announce', file: 'social-card-announcement.png' },
+	{ id: 'card-announce-short', file: 'social-card-openai-partner.png' },
 	{ id: 'card-studio', file: 'social-card-studio.png' },
 ];
 
@@ -88,8 +90,13 @@ for (const card of CARDS) {
 		throw new Error(`${card.id}: expected a 1600×900 card, measured ${box && `${box.width}×${box.height}`}`);
 	}
 	const out = join(OUT_DIR, card.file);
-	await el.screenshot({ path: out });
-	console.log(`${card.file}  ${1600 * SCALE}×${900 * SCALE}  →  ${out}`);
+	// The film-grain layer makes raw truecolor PNGs incompressible (~3 MB each).
+	// A dithered 256-color palette is visually identical on these dark cards and
+	// keeps the OG images light enough for social crawlers.
+	const raw = await el.screenshot();
+	await sharp(raw).png({ palette: true, quality: 90, dither: 1.0 }).toFile(out);
+	const kb = Math.round(statSync(out).size / 1024);
+	console.log(`${card.file}  ${1600 * SCALE}×${900 * SCALE}  ${kb} KB  →  ${out}`);
 }
 
 await browser.close();

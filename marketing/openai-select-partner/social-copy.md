@@ -4,8 +4,13 @@ OpenAI supplied approved starter messaging and approved hashtags. Both variants
 below keep that messaging intact and add the concrete product line underneath, so
 the post says something a developer can act on.
 
-Attach the announcement card with every post, not the bare badge:
-`https://three.ws/partners/openai/social-card-announcement.png`
+Attach an announcement card with every post, not the bare badge. Match the card
+to the wording of the post:
+
+| Post says | Card |
+| --- | --- |
+| "OpenAI Partner" (X) | `https://three.ws/partners/openai/social-card-openai-partner.png` |
+| "OpenAI Select Partner" (LinkedIn, everywhere else) | `https://three.ws/partners/openai/social-card-announcement.png` |
 
 The product post in the thread uses the Studio card:
 `https://three.ws/partners/openai/social-card-studio.png`
@@ -17,9 +22,9 @@ card is the right attachment and how to regenerate it.
 
 ## X / @trythreews single post (if you post one thing, post this)
 
-Attach: `social-card-announcement.png`
+Attach: `social-card-openai-partner.png`
 
-> three.ws has been named an OpenAI Select Partner.
+> three.ws has been named an OpenAI Partner.
 >
 > As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
 > help organizations build, deploy, and scale AI solutions responsibly.
@@ -34,10 +39,10 @@ Attach: `social-card-announcement.png`
 >
 > \#OpenAISelectPartner \#OpenAIPartnerNetwork
 
-643 characters, so it needs the extended post length. The 269-character cut, for a
+636 characters, so it needs the extended post length. The 262-character cut, for a
 hard 280 limit, with the product line moved into a reply:
 
-> three.ws has been named an OpenAI Select Partner.
+> three.ws has been named an OpenAI Partner.
 >
 > As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
 > help organizations build, deploy, and scale AI solutions responsibly.
@@ -45,6 +50,15 @@ hard 280 limit, with the product line moved into a reply:
 > https://three.ws/openai
 >
 > \#OpenAISelectPartner \#OpenAIPartnerNetwork
+
+**Why the headline says "OpenAI Partner" here.** Owner's wording for X, decided
+2026-07-28. OpenAI's tier-status email and their badge guidance both ask for the
+full phrase **"OpenAI Select Partner"** in copy, and the approved hashtag carries
+it either way. Everywhere three.ws controls the surface long-term (the `/openai`
+page, the blog post, the press release, LinkedIn) keeps the full phrase, and so
+does `social-card-announcement.png`. Only the X post and its card use the short
+form. Never shorten it further than "OpenAI Partner", and never imply a tier
+above Select.
 
 ---
 
@@ -83,8 +97,8 @@ hard 280 limit, with the product line moved into a reply:
 
 ## X / @trythreews thread
 
-**1/** (attach `social-card-announcement.png`)
-> three.ws has been named an OpenAI Select Partner.
+**1/** (attach `social-card-openai-partner.png`)
+> three.ws has been named an OpenAI Partner.
 >
 > As part of the OpenAI Partner Network, we're continuing our work with OpenAI to
 > help organizations build, deploy, and scale AI solutions responsibly.

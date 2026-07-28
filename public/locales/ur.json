@@ -19730,7 +19730,7 @@
 		"scan_with_phantom_or_any_solana_wallet": "فینٹم یا کسی بھی Solana والٹ سے اسکین کریں، یا اپنے والٹ والے ڈیوائس پر لنک کھولیں۔",
 		"sol": "SOL",
 		"threads_multi_tweet_posts": "تھریڈز (ملٹی ٹویٹ پوسٹس)",
-		"three": "تین <span id=\"three-off\"></span>",
+		"three": "$THREE <span id=\"three-off\"></span>",
 		"three_ws": "واپس three.ws",
 		"upgrade_pay_in_usdc_sol_or_three": "اپ گریڈ کریں — USDC، SOL، یا $THREE میں ادائیگی کریں۔",
 		"usdc": "USDC",

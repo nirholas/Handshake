@@ -7,7 +7,7 @@
 // and a rough USD valuation, so the agent doesn't have to juggle an RPC + a
 // price API + a metadata source itself.
 //
-// Free-endpoint pattern (see prompts/x402-overhaul/00-CONTEXT.md): plain handler,
+// Free-endpoint pattern (x402-overhaul campaign convention): plain handler,
 // `cors`/`wrap`/`error` from _lib/http.js, rate-limited by IP via _lib/rate-limit.js.
 // No key, no account. The Solana path returns REAL balances even without a Helius
 // key — it falls back to the public RPC `getTokenAccountsByOwner` walk and prices

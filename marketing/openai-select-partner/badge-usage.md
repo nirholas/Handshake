@@ -21,10 +21,17 @@ and carries none of the required independence line.
 
 Built from the badge, not a redraw of it. Source and renderer:
 
-| Card | Repo path | Public URL |
-| --- | --- | --- |
-| Announcement (carries the badge) | `public/partners/openai/social-card-announcement.png` | `https://three.ws/partners/openai/social-card-announcement.png` |
-| 3D Studio connector (no badge) | `public/partners/openai/social-card-studio.png` | `https://three.ws/partners/openai/social-card-studio.png` |
+| Card | Headline | Repo path | Public URL |
+| --- | --- | --- | --- |
+| Announcement (carries the badge) | "three.ws is an OpenAI Select Partner." | `public/partners/openai/social-card-announcement.png` | `https://three.ws/partners/openai/social-card-announcement.png` |
+| Announcement, short phrasing (carries the badge) | "three.ws is an OpenAI Partner." | `public/partners/openai/social-card-openai-partner.png` | `https://three.ws/partners/openai/social-card-openai-partner.png` |
+| 3D Studio connector (no badge) | "3D, natively, inside ChatGPT." | `public/partners/openai/social-card-studio.png` | `https://three.ws/partners/openai/social-card-studio.png` |
+
+The short-phrasing card exists because the owner chose "OpenAI Partner" for the X
+post on 2026-07-28. It is the X card only. Every long-lived surface (`/openai`,
+the blog post, the press release, LinkedIn, link previews) uses the full-phrase
+card, which is what OpenAI's guidance asks for. The badge inside both cards is
+untouched and reads "OpenAI Select Partner" either way.
 
 Both are 3200 × 1800 (16:9, X's in-post ratio). The layout lives in
 [`cards/social-card.html`](cards/social-card.html); regenerate with

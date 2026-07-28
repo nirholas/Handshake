@@ -3115,7 +3115,7 @@
 		"not_retried_surfaces_immediately_so_you_can": "വീണ്ടും ശ്രമിച്ചില്ല; ഉടനടി ദൃശ്യമാകും, അതിനാൽ നിങ്ങൾക്ക് പ്രോംപ്റ്റ് ശരിയാക്കാം",
 		"notes": "കുറിപ്പുകൾ",
 		"nothing": "ഒന്നുമില്ല",
-		"now_we_hand_the_wheel_to_the": "ഇപ്പോൾ നമ്മൾ മോഡലിന് നിയന്ത്രണം കൈമാറുന്നു. നമ്മൾ <code>generate_3d_model</code> ഒരു ഫംഗ്ഷൻ ടൂളായി വിവരിക്കുന്നു, മോഡലിന് ഒരു സംക്ഷിപ്ത വിവരണം നൽകുന്നു, കൂടാതെ ഏത് പ്രോപ്പുകളാണ് ഒരു യോജിച്ച സെറ്റ് ഉണ്ടാക്കുന്നതെന്ന് തീരുമാനിക്കാനും ഓരോന്നിനും ടൂൾ വിളിക്കാനും അതിനെ അനുവദിക്കുന്നു. നമ്മൾ കൈകൊണ്ട് ചെയ്ത പ്രോംപ്റ്റ്-എഴുത്ത് മോഡലിന്റെ ജോലിയായി മാറുന്നു.",
+		"now_we_hand_the_wheel_to_the": "ഇപ്പോൾ നിയന്ത്രണം മോഡലിന് കൈമാറുന്നു. <code>generate_3d_model</code> എന്നതിനെ ഒരു ഫംഗ്ഷൻ ടൂളായി ഞങ്ങൾ നിർവചിക്കുന്നു. മോഡലിന് ഒരു ബ്രീഫ് നൽകി, യോജിച്ച ഒരു സെറ്റ് ഉണ്ടാക്കാൻ <em>ഏത്</em> പ്രോപ്‌സാണ് വേണ്ടതെന്ന് തീരുമാനിക്കാനും ഓരോന്നിനും ടൂളിനെ വിളിക്കാനും അതിനെ അനുവദിക്കുന്നു. ഞങ്ങൾ നേരിട്ട് ചെയ്ത പ്രോംപ്റ്റ്-എഴുത്ത് ഇപ്പോൾ മോഡലിന്റെ ചുമതലയാകുന്നു.",
 		"observation_porthole_hatch_openar": "<span class=\"name\">നിരീക്ഷണ പോർട്ട്ഹോൾ ഹാച്ച്</span> <span class=\"links\"><a href=\"https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb\" rel=\"noopener\" target=\"_blank\">ഓപ്പൺ</a><a href=\"https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Ffff3d74e-1385-4e14-9e56-9eeab4f35a34.glb&amp;title=Wall-mounted%20circular%20observation%20porthole%20hatch%2C%2060%20cm%20diameter.%20Thick%20triple-l\" rel=\"noopener\" target=\"_blank\">എആർ</a></span>",
 		"on_submit": "സമർപ്പിക്കുമ്പോൾ <code>502</code> / <code>503</code> / <code>504</code>",
 		"on_submit_or_poll": "സമർപ്പിക്കുമ്പോഴോ പോൾ ചെയ്യുമ്പോഴോ <code>429</code>",

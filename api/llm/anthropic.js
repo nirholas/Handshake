@@ -54,6 +54,9 @@ const MODELS = {
 	// Anthropic (paid — host's key)
 	'claude-fable-5': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
 	'claude-mythos-5': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
+	'claude-opus-5': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
+	'claude-sonnet-5': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
+	'claude-opus-4-8': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
 	'claude-opus-4-7': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
 	'claude-opus-4-6': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },
 	'claude-sonnet-4-6': { kind: 'anthropic', envKey: 'ANTHROPIC_API_KEY' },

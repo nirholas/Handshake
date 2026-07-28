@@ -222,7 +222,16 @@ export function classifyRoundTripRevert(simErr, logs, buyIxCount) {
 		const underfunded = (logs || []).some((l) => /insufficient lamports/i.test(String(l)));
 		return { leg: 'buy', status: 'warn', reason: underfunded ? 'buy_leg_underfunded' : 'buy_leg_reverted', err };
 	}
-	// Sell leg, or an unattributable failure: keep the fail-closed reading.
+	// A funding failure is not always attributable to an instruction index: a payer
+	// whose account does not exist, or cannot cover the fee, fails the whole message
+	// (`AccountNotFound`, `InsufficientFundsForFee`, `InsufficientFundsForRent`) with
+	// no `InstructionError` to read a leg off. That is the poorest possible wallet,
+	// not the most dangerous possible coin, and reading it as a trapped exit is what
+	// labelled a fleet's worth of ordinary bonding-curve launches "honeypot".
+	if (FUNDING_SHAPED_ERR.test(err) || (logs || []).some((l) => FUNDING_SHAPED_ERR.test(String(l)))) {
+		return { leg: 'buy', status: 'warn', reason: 'buy_leg_underfunded', err };
+	}
+	// Sell leg, or a genuinely unattributable failure: keep the fail-closed reading.
 	return { leg: 'sell', status: 'fail', reason: 'roundtrip_reverted', err };
 }
 

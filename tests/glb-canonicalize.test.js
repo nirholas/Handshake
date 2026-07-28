@@ -385,6 +385,60 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	// SMPL / SMPL-X research-pipeline skeletons (text-to-avatar generators, mocap
+	// tooling) spell every limb joint as a side word + anatomical joint. The same
+	// spellings show up in hand-built `leftKnee`-style rigs.
+	it.each([
+		['left_hip',      'LeftUpLeg'],
+		['right_hip',     'RightUpLeg'],
+		['left_knee',     'LeftLeg'],
+		['right_knee',    'RightLeg'],
+		['left_ankle',    'LeftFoot'],
+		['right_ankle',   'RightFoot'],
+		['left_elbow',    'LeftForeArm'],
+		['right_elbow',   'RightForeArm'],
+		['left_wrist',    'LeftHand'],
+		['right_wrist',   'RightHand'],
+		['left_collar',   'LeftShoulder'],
+		['right_collar',  'RightShoulder'],
+		['left_clavicle', 'LeftShoulder'],
+		['left_thigh',    'LeftUpLeg'],
+		['left_toe',      'LeftToeBase'],
+		['leftKnee',      'LeftLeg'],
+		['rightAnkle',    'RightFoot'],
+	])('maps SMPL / spelled-out side-word bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Alias-table entries that predate this block but had no coverage: the
+	// centre-torso chest/abdomen/neck spellings, the CC neck twist, and the
+	// remaining Daz / simple-rig side variants (including derived right twins).
+	it.each([
+		['lowerChest',   'Spine1'],
+		['chestLower',   'Spine1'],
+		['chestUpper',   'Spine2'],
+		['abdomenLower', 'Spine'],
+		['abdomenUpper', 'Spine1'],
+		['lowerNeck',    'Neck'],
+		['upperNeck',    'Neck'],
+		['neckLower',    'Neck'],
+		['neckUpper',    'Neck'],
+		['NeckTwist02',  'Neck'],
+		['lHand',        'LeftHand'],
+		['rHand',        'RightHand'],
+		['lFoot',        'LeftFoot'],
+		['rFoot',        'RightFoot'],
+		['lToe',         'LeftToeBase'],
+		['collarR',      'RightShoulder'],
+		['lClavicle',    'LeftShoulder'],
+		['rCalf',        'RightLeg'],
+		['J_Bip_L_Toes',    'LeftToeBase'],
+		['J_Bip_L_Middle2', 'LeftHandMiddle2'],
+		['J_Bip_R_Ring1',   'RightHandRing1'],
+	])('maps remaining alias-table variants: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
 	// Rigify / Blender anatomical arm chain: side is a `.L`/`.R` suffix and the
 	// forearm is spelled `forearm` (not `lowerarm`/`elbow`). The suffix normalises
 	// to `forearml`, which the side-prefix spellings never reach — so before the
@@ -465,6 +519,81 @@ describe('canonicalizeJointNodes (in-place rewrite)', () => {
 		const names = json.nodes.map((n) => n.name);
 		expect(names).toContain('LeftArm');
 		expect(names).not.toContain('LeftShoulder');
+	});
+
+	it('splits an SMPL collar/shoulder collision (collar → Shoulder, shoulder → Arm)', () => {
+		// SMPL names the clavicle `left_collar` and the upper arm `left_shoulder`;
+		// both normalise onto LeftShoulder, which would leave LeftArm vacant and
+		// the arm clip unbound. The resolver promotes the shoulder-spelled joint
+		// (the upper arm) to Arm.
+		const json = {
+			nodes: [
+				{ name: 'pelvis' },
+				{ name: 'left_collar' }, { name: 'left_shoulder' }, { name: 'left_elbow' }, { name: 'left_wrist' },
+				{ name: 'right_collar' }, { name: 'right_shoulder' }, { name: 'right_elbow' }, { name: 'right_wrist' },
+			],
+			skins: [{ joints: [0, 1, 2, 3, 4, 5, 6, 7, 8] }],
+		};
+		canonicalizeJointNodes(json);
+		expect(json.nodes[1].name).toBe('LeftShoulder');
+		expect(json.nodes[2].name).toBe('LeftArm');
+		expect(json.nodes[3].name).toBe('LeftForeArm');
+		expect(json.nodes[4].name).toBe('LeftHand');
+		expect(json.nodes[6].name).toBe('RightArm');
+	});
+
+	it('does NOT promote shoulder to Arm when there is no collar collision', () => {
+		// A rig whose only arm-root joint is `left_shoulder` must keep it on
+		// LeftShoulder — nothing contests the name.
+		const json = {
+			nodes: [{ name: 'pelvis' }, { name: 'left_shoulder' }, { name: 'left_elbow' }],
+			skins: [{ joints: [0, 1, 2] }],
+		};
+		canonicalizeJointNodes(json);
+		expect(json.nodes[1].name).toBe('LeftShoulder');
+	});
+
+	it('never assigns the same canonical name to two joints (SMPL ankle + foot chain)', () => {
+		// `left_ankle` (the articulating joint) and `left_foot` (its child) both
+		// resolve to LeftFoot. Parent-first order means the ankle takes the name;
+		// the child keeps its original name instead of creating an ambiguous twin.
+		const json = {
+			nodes: [
+				{ name: 'pelvis', children: [1] },
+				{ name: 'left_hip', children: [2] },
+				{ name: 'left_knee', children: [3] },
+				{ name: 'left_ankle', children: [4] },
+				{ name: 'left_foot' },
+			],
+			skins: [{ joints: [0, 1, 2, 3, 4] }],
+		};
+		canonicalizeJointNodes(json);
+		expect(json.nodes[3].name).toBe('LeftFoot');
+		expect(json.nodes[4].name).toBe('left_foot');
+		const names = json.nodes.map((n) => n.name);
+		expect(names.filter((n) => n === 'LeftFoot')).toHaveLength(1);
+		expect(names).toContain('Hips');
+		expect(names).toContain('LeftUpLeg');
+		expect(names).toContain('LeftLeg');
+	});
+
+	it('skips a rename whose target already exists on a joint that is not renamed', () => {
+		// A rig with a literal canonical `Neck` plus a CC neck twist that would
+		// also map to Neck: the existing bone keeps the name, the twist is left
+		// untouched rather than duplicated.
+		const json = {
+			nodes: [
+				{ name: 'CC_Base_Hip' },
+				{ name: 'Neck' },
+				{ name: 'CC_Base_NeckTwist02' },
+			],
+			skins: [{ joints: [0, 1, 2] }],
+		};
+		const { renamed } = canonicalizeJointNodes(json);
+		expect(renamed).toBe(1);
+		expect(json.nodes[0].name).toBe('Hips');
+		expect(json.nodes[1].name).toBe('Neck');
+		expect(json.nodes[2].name).toBe('CC_Base_NeckTwist02');
 	});
 
 	it('returns 0 when the rig is already canonical', () => {
@@ -773,6 +902,46 @@ describe('real-fixture: michelle.glb (Mixamo rig normalization)', () => {
 		const nonCanon = [...joints].map((j) => afterJson.nodes[j].name)
 			.filter((n) => canonicalizeBoneName(n) !== n && canonicalizeBoneName(n) !== null);
 		expect(nonCanon).toHaveLength(0);
+	});
+});
+
+describe('SMPL / SMPL-X skeleton (research text-to-avatar output)', () => {
+	// The 24-joint SMPL body skeleton, in its standard parent-first order. This
+	// is what research generators (TADA, HumanGaussian, mocap exporters) emit,
+	// so it hits the avatar upload path with no vendor prefix to strip.
+	const SMPL_JOINTS = [
+		'pelvis',
+		'left_hip', 'right_hip', 'spine1',
+		'left_knee', 'right_knee', 'spine2',
+		'left_ankle', 'right_ankle', 'spine3',
+		'left_foot', 'right_foot',
+		'neck', 'left_collar', 'right_collar', 'head',
+		'left_shoulder', 'right_shoulder',
+		'left_elbow', 'right_elbow',
+		'left_wrist', 'right_wrist',
+		'left_hand', 'right_hand',
+	];
+
+	it('maps the full body chain, legs and arms included, with no duplicate names', () => {
+		const json = {
+			nodes: SMPL_JOINTS.map((name) => ({ name })),
+			skins: [{ joints: SMPL_JOINTS.map((_, i) => i) }],
+		};
+		canonicalizeJointNodes(json);
+		const names = json.nodes.map((n) => n.name);
+		for (const bone of [
+			'Hips', 'Neck', 'Head',
+			'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand',
+			'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand',
+			'LeftUpLeg', 'LeftLeg', 'LeftFoot',
+			'RightUpLeg', 'RightLeg', 'RightFoot',
+		]) {
+			expect(names, bone).toContain(bone);
+		}
+		// The wrist (articulating joint) takes the Hand name; its child keeps its
+		// original name — no canonical name is ever assigned twice.
+		const canon = names.filter((n) => CANONICAL_BONES.includes(n));
+		expect(new Set(canon).size).toBe(canon.length);
 	});
 });
 

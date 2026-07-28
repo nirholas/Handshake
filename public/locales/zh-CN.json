@@ -2230,7 +2230,7 @@
 	},
 	"bnb_latency": {
 		"a_chain_s_rpc_going_quiet_shows": "某条链的RPC静默时，仅该赛道显示“正在重连”；其他赛道比赛照常进行。四条赛道同时宕机则显示设计好的错误并带重试选项，绝非空白页面。",
-		"bnb_chain_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span><a href=\"/bnb\">BNB Chain × [[4]][[3]]",
+		"bnb_chain_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span><a href=\"/bnb\">BNB Chain × three.ws</a>",
 		"each_card_samples_real_blocks_or_slots": "每张卡片均从公共RPC采样真实区块（或Solana的槽位），并报告测量的平均间隔 — 迷你图显示最近24次实时读数，最高条即最快测量结果。",
 		"every_chain_s_public_rpc_is_unreachable": "目前所有链的公共RPC均无法访问 — 这是真实的服务中断，而非Bug。请重试，或稍后查看。",
 		"every_number_comes_from_which_samples_real": "所有数据均来自<code>/api/bnb/latency</code>，该接口在每次轮询时，从公共RPC采样真实区块（BNB通过<code>probeBlockTime</code>，与支持<a href=\"/bnb\">/bnb hub</a>证明条的功能相同）— 绝无预计算或硬编码。",
@@ -2977,7 +2977,7 @@
 		"meta_twitter_description": "3D IBM Granite 嵌入空间中的实时 Solana 代币。点击星体可查看 Granite 分析。",
 		"meta_twitter_title": "watsonx 星群 · three.ws × IBM",
 		"starting": "正在启动…",
-		"three_ws_ibm_watsonx": "<span class=\"dot\"></span><strong>[[4]][[3]] × IBM watsonx",
+		"three_ws_ibm_watsonx": "<span class=\"dot\"></span><strong>three.ws</strong> × IBM watsonx",
 		"watsonx_constellation": "watsonx <span class=\"g\">星群</span>"
 	},
 	"converter": {

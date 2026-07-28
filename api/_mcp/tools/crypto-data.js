@@ -3,7 +3,7 @@
 // grows automatically as provider prompts land — no hand-enumerated endpoint
 // list to keep in sync.
 //
-// Design (owner-approved, prompts/x402-catalog/10-crypto-api-mcp-tools.md):
+// Design (owner-approved, x402-catalog campaign work order 10):
 // one generic tool + one curated convenience tool, not one tool per endpoint
 // (a 30-tool flood degrades agent tool selection).
 //

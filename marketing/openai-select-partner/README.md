@@ -30,7 +30,8 @@ Attach these to posts instead of the bare badge. Both are 3200 × 1800 (16:9).
 
 | Card | URL | Use it for |
 | --- | --- | --- |
-| Announcement | `https://three.ws/partners/openai/social-card-announcement.png` | The tier-status post on X and LinkedIn, the press release, link previews for `/openai` and the blog post |
+| Announcement | `https://three.ws/partners/openai/social-card-announcement.png` | LinkedIn, the press release, link previews for `/openai` and the blog post. Headline uses the full phrase "OpenAI Select Partner" |
+| Announcement, short phrasing | `https://three.ws/partners/openai/social-card-openai-partner.png` | The X post, whose copy says "OpenAI Partner" (owner's wording, 2026-07-28) |
 | 3D Studio | `https://three.ws/partners/openai/social-card-studio.png` | The product post in the X thread (no badge, so it stays clear of implying endorsement) |
 
 Edit [`cards/social-card.html`](cards/social-card.html), run

@@ -34,14 +34,16 @@
 		isolation: isolate;
 	}
 
-	/* Ambient field: one OpenAI-green bloom, a cool counterweight, and a faint
-	   grid so the black doesn't read as an empty canvas in a dense X timeline. */
+	/* Ambient field: one OpenAI-green bloom, a cool counterweight, a faint
+	   grid so the black doesn't read as an empty canvas in a dense X timeline,
+	   and film grain so the long gradient falloffs don't band after compression. */
 	.card::before {
 		content: ''; position: absolute; inset: 0; z-index: -2;
 		background:
-			radial-gradient(1100px 620px at 88% 8%, rgba(16,163,127,.20), transparent 62%),
-			radial-gradient(900px 560px at 6% 96%, rgba(16,163,127,.09), transparent 60%),
-			radial-gradient(700px 420px at 50% 120%, rgba(120,160,255,.06), transparent 65%);
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+			radial-gradient(1100px 620px at 88% 8%, rgba(16,163,127,.26), transparent 62%),
+			radial-gradient(900px 560px at 6% 96%, rgba(16,163,127,.10), transparent 60%),
+			radial-gradient(700px 420px at 50% 120%, rgba(120,160,255,.07), transparent 65%);
 	}
 	.card::after {
 		content: ''; position: absolute; inset: 0; z-index: -1;
@@ -52,6 +54,14 @@
 		mask-image: radial-gradient(1200px 700px at 30% 40%, #000 20%, transparent 78%);
 		-webkit-mask-image: radial-gradient(1200px 700px at 30% 40%, #000 20%, transparent 78%);
 	}
+
+	/* A large, ghosted copy of the wordmark cube anchors each card's empty
+	   corner. Strokes stay hairline at any size via non-scaling-stroke. */
+	.motif { position: absolute; z-index: -1; pointer-events: none; }
+	#card-announce .motif, #card-announce-short .motif {
+		width: 480px; height: 480px; left: -130px; bottom: -150px;
+	}
+	#card-studio .motif { width: 480px; height: 480px; right: -140px; bottom: -150px; }
 
 	/* ── Shared chrome ──────────────────────────────────────── */
 	.top { display: flex; align-items: center; justify-content: space-between; }
@@ -85,6 +95,20 @@
 	.lede { font-size: 27px; line-height: 1.45; color: var(--muted); margin-top: 30px; }
 	.lede strong { color: var(--text); font-weight: 500; }
 
+	/* The product story as a pipeline: the approved copy's "turn a sentence into
+	   a model, rig it, animate it, place it in AR" rendered as stages. */
+	.pipeline {
+		display: inline-flex; align-items: center; gap: 16px; margin-top: 48px;
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 20px; letter-spacing: -0.01em; color: var(--text); white-space: nowrap;
+	}
+	.pipeline .step {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 11px;
+		padding: 11px 18px;
+	}
+	.pipeline .step.ar { border-color: rgba(16,163,127,.34); background: rgba(16,163,127,.10); color: #9fe8d4; }
+	.pipeline .arr { color: var(--oai); }
+
 	.foot {
 		border-top: 1px solid var(--border); padding-top: 26px;
 		display: flex; align-items: flex-end; justify-content: space-between; gap: 48px;
@@ -100,7 +124,7 @@
 	.badge-plate {
 		flex: 0 0 auto;
 		background: #ffffff; border-radius: 30px; padding: 30px 34px;
-		box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 30px 90px rgba(16,163,127,.20);
+		box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 34px 110px rgba(16,163,127,.28);
 	}
 	.badge-plate img { display: block; width: 400px; height: auto; }
 
@@ -115,12 +139,22 @@
 	}
 	.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 18px; margin-top: 44px; width: 100%; }
 	.tool {
+		display: flex; align-items: baseline;
 		background: var(--panel); border: 1px solid var(--border); border-radius: 13px;
 		padding: 17px 20px;
 		font-family: 'JetBrains Mono', ui-monospace, monospace;
 		font-size: 21px; color: var(--mint); letter-spacing: -0.02em;
 	}
+	.tool .n { color: #55555f; font-size: 17px; margin-right: 16px; }
 	.claims { display: flex; gap: 14px; margin-top: 38px; }
+	.demo {
+		display: flex; align-items: center; gap: 18px; margin-top: 42px;
+		font-family: 'JetBrains Mono', ui-monospace, monospace;
+		font-size: 21px; letter-spacing: -0.01em;
+	}
+	.demo .q { color: var(--text); }
+	.demo .arr { color: var(--oai); }
+	.demo .r { color: var(--muted); }
 	.claim {
 		border: 1px solid rgba(16,163,127,.34); background: rgba(16,163,127,.10);
 		border-radius: 99px; padding: 11px 24px; font-size: 21px; font-weight: 500; color: #9fe8d4;
@@ -136,6 +170,10 @@
 
 <!-- ═══ Card 1: announcement (badge card) ═════════════════════ -->
 <section class="card" id="card-announce">
+	<svg class="motif" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+		<path d="M16 2.6 29 10v14L16 31.4 3 24V10L16 2.6Z" stroke="rgba(16,163,127,.15)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+		<path d="M3 10l13 7.4L29 10M16 17.4V31.4" stroke="rgba(16,163,127,.15)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity=".55"/>
+	</svg>
 	<div class="top">
 		<div class="wordmark">
 			<svg class="cube" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -158,6 +196,60 @@
 				3D, natively, inside ChatGPT. <strong>Nine keyless tools</strong> turn a sentence
 				into an interactive, riggable, AR-ready model.
 			</p>
+			<div class="pipeline">
+				<span class="step">prompt</span><span class="arr">→</span><span class="step">textured model</span><span class="arr">→</span><span class="step">rig</span><span class="arr">→</span><span class="step">animate</span><span class="arr">→</span><span class="step ar">AR</span>
+			</div>
+		</div>
+		<div class="badge-plate">
+			<img src="/partners/openai/openai-select-partner.svg" alt="OpenAI Partner Network Select Partner badge" />
+		</div>
+	</div>
+
+	<div class="foot">
+		<p class="disclaimer">
+			three.ws is an independent member of the OpenAI Partner Network at the Select tier. Not an OpenAI product
+			and not endorsed by OpenAI beyond the partner designation shown. OpenAI, ChatGPT, and the OpenAI Partner
+			Network badge are trademarks of OpenAI.
+		</p>
+	</div>
+</section>
+
+<!-- ═══ Card 1b: announcement, short phrasing ════════════════
+     Identical to Card 1 except the headline reads "OpenAI Partner". Owner's
+     wording for the X post. OpenAI's own guidance asks for the full "OpenAI
+     Select Partner" in copy, which is why Card 1 still exists and remains the
+     link-preview image for /openai and the blog post. The badge is untouched in
+     both: it reads "OpenAI Select Partner" because that is the supplied asset. -->
+<section class="card" id="card-announce-short">
+	<svg class="motif" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+		<path d="M16 2.6 29 10v14L16 31.4 3 24V10L16 2.6Z" stroke="rgba(16,163,127,.15)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+		<path d="M3 10l13 7.4L29 10M16 17.4V31.4" stroke="rgba(16,163,127,.15)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity=".55"/>
+	</svg>
+	<div class="top">
+		<div class="wordmark">
+			<svg class="cube" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+				<path d="M16 2.6 29 10v14L16 31.4 3 24V10L16 2.6Z" stroke="#10a37f" stroke-width="1.8" stroke-linejoin="round"/>
+				<path d="M3 10l13 7.4L29 10M16 17.4V31.4" stroke="#10a37f" stroke-width="1.8" stroke-linejoin="round" opacity=".55"/>
+			</svg>
+			three.ws
+		</div>
+		<div class="url">three.ws/openai</div>
+	</div>
+
+	<div class="body">
+		<div class="copy">
+			<div class="eyebrow">
+				<span class="dot"></span>
+				<strong>OpenAI Partner Network</strong>
+			</div>
+			<h1>three.ws is an<br /><span class="gradient">OpenAI Partner</span>.</h1>
+			<p class="lede">
+				3D, natively, inside ChatGPT. <strong>Nine keyless tools</strong> turn a sentence
+				into an interactive, riggable, AR-ready model.
+			</p>
+			<div class="pipeline">
+				<span class="step">prompt</span><span class="arr">→</span><span class="step">textured model</span><span class="arr">→</span><span class="step">rig</span><span class="arr">→</span><span class="step">animate</span><span class="arr">→</span><span class="step ar">AR</span>
+			</div>
 		</div>
 		<div class="badge-plate">
 			<img src="/partners/openai/openai-select-partner.svg" alt="OpenAI Partner Network Select Partner badge" />
@@ -175,6 +267,10 @@
 
 <!-- ═══ Card 2: the product underneath (thread card) ═════════ -->
 <section class="card" id="card-studio">
+	<svg class="motif" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+		<path d="M16 2.6 29 10v14L16 31.4 3 24V10L16 2.6Z" stroke="rgba(16,163,127,.15)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+		<path d="M3 10l13 7.4L29 10M16 17.4V31.4" stroke="rgba(16,163,127,.15)" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity=".55"/>
+	</svg>
 	<div class="top">
 		<div class="wordmark">
 			<svg class="cube" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -189,15 +285,15 @@
 	<div class="body">
 		<h1>3D, natively, inside ChatGPT.</h1>
 		<div class="tools">
-			<div class="tool">forge_free</div>
-			<div class="tool">text_to_avatar</div>
-			<div class="tool">mesh_forge</div>
-			<div class="tool">rig_mesh</div>
-			<div class="tool">forge_avatar</div>
-			<div class="tool">refine_model</div>
-			<div class="tool">create_agent_persona</div>
-			<div class="tool">get_agent_persona</div>
-			<div class="tool">persona_say</div>
+			<div class="tool"><span class="n">01</span>forge_free</div>
+			<div class="tool"><span class="n">02</span>text_to_avatar</div>
+			<div class="tool"><span class="n">03</span>mesh_forge</div>
+			<div class="tool"><span class="n">04</span>rig_mesh</div>
+			<div class="tool"><span class="n">05</span>forge_avatar</div>
+			<div class="tool"><span class="n">06</span>refine_model</div>
+			<div class="tool"><span class="n">07</span>create_agent_persona</div>
+			<div class="tool"><span class="n">08</span>get_agent_persona</div>
+			<div class="tool"><span class="n">09</span>persona_say</div>
 		</div>
 		<div class="claims">
 			<span class="claim">Free</span>
@@ -205,6 +301,11 @@
 			<span class="claim">No account</span>
 			<span class="claim">Renders inline</span>
 			<span class="claim">One-tap AR</span>
+		</div>
+		<div class="demo">
+			<span class="q">"a bronze mech with glowing joints"</span>
+			<span class="arr">→</span>
+			<span class="r">interactive 3D model, in the conversation</span>
 		</div>
 	</div>
 

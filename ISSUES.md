@@ -40,3 +40,24 @@ this repo:
    devnet RPC 429 "max usage reached"; balances and solana-rpc fail over to
    public RPC with the designed 10min/360min cooldowns). Action: bump the
    Helius plan if the 429s persist at this volume.
+
+Carried forward from the retired `prompts/x402-catalog/` tracker (campaign
+closed 2026-07-28; full history in git):
+
+4. **No web-search key in prod** (owner action). `BRAVE_API_KEY` /
+   `TAVILY_API_KEY` / `EXA_API_KEY` / `SERPER_API_KEY` are all absent on
+   `three-ws-api`, degrading the paid $0.10 fact-check product. Action: set
+   one of the four keys on the Cloud Run service.
+5. **Fact-check accuracy is 20% (8/40) on the published benchmark** (code).
+   `computeVerdict`'s support/contradict threshold and the query-generation
+   prompt need a rework; flagged as the next work order when the x402-catalog
+   campaign closed but never opened. Benchmark:
+   `data/_generated/fact-check-benchmark.json`.
+6. **ASR/media backstops unconfigured** (owner action).
+   `NVIDIA_ASR_FUNCTION_ID` unset in prod (`/api/v1/ai/asr` returns 503
+   `not_configured`); the Replicate account is out of credit; Upstash Redis is
+   absent on `three-ws-api`.
+7. **ENS resolution is live-broken** (code, found 2026-07-28).
+   `GET /api/v1/resolve?name=vitalik.eth` returns 503 `ens_unavailable` while
+   the `.sol` lane works. Root-cause the ENS provider path in
+   `api/v1/resolve.js`.

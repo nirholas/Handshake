@@ -30,6 +30,7 @@ import {
 	verifyRingPayment,
 	settleRingPayment,
 } from '../_lib/x402/self-facilitator.js';
+import { facilitatorFeeMeter, recordSettledFee } from '../_lib/x402/wallet-fee-meter.js';
 import { listDiscoveryResources } from '../_lib/x402/discovery-resources.js';
 
 function actionFrom(req) {
@@ -53,12 +54,12 @@ function logOp(row) {
 	return sql`
 		INSERT INTO x402_self_facilitator_log
 			(action, network, payer, pay_to, mint, amount_atomic, tx_sig,
-			 fee_lamports, ok, reject_reason, idempotency_key)
+			 fee_lamports, ok, reject_reason, idempotency_key, fee_payer)
 		VALUES
 			(${row.action}, ${row.network || null}, ${row.payer || null},
 			 ${row.payTo || null}, ${row.mint || null}, ${row.amountAtomic ?? null},
 			 ${row.txSig || null}, ${row.feeLamports ?? null}, ${row.ok},
-			 ${row.reason || null}, ${row.idempotencyKey || null})
+			 ${row.reason || null}, ${row.idempotencyKey || null}, ${row.feePayer || null})
 	`.catch((err) => console.error('[self-facilitator] log failed', err?.message || err));
 }
 
