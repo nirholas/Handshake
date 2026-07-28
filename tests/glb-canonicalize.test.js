@@ -464,6 +464,144 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName('mixamorig:LeftToe_End_059')).toBeNull();
 		expect(canonicalizeBoneName('Tail_01')).toBeNull();
 	});
+
+	// Daz/Genesis chains that had no direct coverage: the Genesis 3+ forearm
+	// Bend joint, the lShin/lCalf lower-leg spellings, and the derived right
+	// twins of the Shldr/Thigh/Bend family. A miss on any of these drops the
+	// joint and a Daz export animates with a rigid elbow or frozen legs.
+	it.each([
+		['lForearmBend', 'LeftForeArm'],
+		['rForearmBend', 'RightForeArm'],
+		['lShin',        'LeftLeg'],
+		['lCalf',        'LeftLeg'],
+		['rShldr',       'RightArm'],
+		['rShldrBend',   'RightArm'],
+		['rThigh',       'RightUpLeg'],
+		['rThighBend',   'RightUpLeg'],
+		['lUpperArm',    'LeftArm'],
+		['rUpperArm',    'RightArm'],
+		['lLowerArm',    'LeftForeArm'],
+		['rLowerLeg',    'RightLeg'],
+	])('maps remaining Daz/Genesis chain bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Reallusion CC3/CC4 neck twists WITHOUT the CC_Base_ prefix (some export
+	// paths ship the bare joint names); either twist drives the head chain.
+	it.each([
+		['neckTwist01',   'Neck'],
+		['neckTwist02',   'Neck'],
+		['neck_twist_01', 'Neck'], // separator variant collapses to the same key
+	])('maps bare Reallusion neck twists: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Generic Meshy/Tripo side-prefix twins derived by the l→r rule, plus the
+	// separator/case variants the normaliser must collapse onto the same keys.
+	it.each([
+		['R_UpLeg',    'RightUpLeg'],
+		['R_Shoulder', 'RightShoulder'],
+		['r_arm',      'RightArm'],
+		['R_Leg',      'RightLeg'],
+	])('maps derived R_ side-prefix twins: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// MakeHuman / VRM 1.0 centre-torso spellings in separator form (the
+	// camelCase forms are asserted in the VRM 1.0 and alias-variant tables
+	// above; these pin that snake_case reaches the same keys).
+	it.each([
+		['upper_chest', 'Spine2'],
+		['chest_lower', 'Spine1'],
+		['lower_neck',  'Neck'],
+	])('maps separator variants of centre-torso bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// The SIDED right-twin derivation has four branches. Each is pinned with
+	// spellings only that branch can produce, so a regression in one regex
+	// cannot hide behind another.
+	// Branch 1: a leading "left" word swaps to "right" (leftUpperArm → rightUpperArm).
+	it.each([
+		['rightUpperArm',  'RightArm'],
+		['rightUpperLeg',  'RightUpLeg'],
+		['rightToes',      'RightToeBase'],
+		['rightHip',       'RightUpLeg'],
+		['rightThigh',     'RightUpLeg'],
+		['rightShin',      'RightLeg'],
+		['rightCalf',      'RightLeg'],
+		['rightWrist',     'RightHand'],
+		['rightClavicle',  'RightShoulder'],
+		['rightCollar',    'RightShoulder'],
+	])('derives right twins from the left- word branch: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Branch 2: a leading lowercase "l" before an uppercase letter becomes "r"
+	// (lShldr → rShldr, lToeBase → rToeBase).
+	it.each([
+		['rLowerArm', 'RightForeArm'],
+		['rUpperLeg', 'RightUpLeg'],
+		['rToeBase',  'RightToeBase'],
+		['rClavicle', 'RightShoulder'],
+		['rCollar',   'RightShoulder'],
+	])('derives right twins from the l-prefix branch: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Branch 3: a trailing "L" becomes "R" (shoulderL → shoulderR).
+	it.each([
+		['shoulderR', 'RightArm'],
+		['forearmR',  'RightForeArm'],
+		['upperArmR', 'RightArm'],
+		['wristR',    'RightHand'],
+		['ankleR',    'RightFoot'],
+		['shinR',     'RightLeg'],
+		['toeR',      'RightToeBase'],
+		['hipR',      'RightUpLeg'],
+	])('derives right twins from the trailing-L branch: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Branch 4 (identity fallthrough): a SIDED entry with no recognisable side
+	// token derives rv === lv, and the first-spelling-wins put() means the
+	// derived Right canonical can never overwrite the left entry. The observable
+	// invariant: no left-side spelling ever resolves to a Right bone, and no
+	// derived right-side spelling ever resolves to a Left bone.
+	it('side derivation never crosses sides', () => {
+		const leftSpellings = [
+			'leftUpperArm', 'lUpperArm', 'shoulderL', 'lShldr', 'lShldrBend',
+			'leftLowerArm', 'elbowL', 'lForeArm', 'lForearmBend', 'forearmL',
+			'upperArmL', 'wristL', 'lHand', 'lCollar', 'collarL', 'lClavicle',
+			'leftUpperLeg', 'hipL', 'lThigh', 'lThighBend',
+			'leftLowerLeg', 'kneeL', 'shinL', 'lShin', 'lCalf',
+			'ankleL', 'lFoot', 'leftToes', 'toeL', 'lToe', 'lToeBase',
+			'lArm', 'lShoulder', 'lLeg', 'lUpLeg',
+			'leftHip', 'leftKnee', 'leftAnkle', 'leftElbow', 'leftWrist',
+			'leftCollar', 'leftClavicle', 'leftToe',
+		];
+		const rightSpellings = [
+			'rightUpperArm', 'rUpperArm', 'shoulderR', 'rShldr', 'rShldrBend',
+			'rightLowerArm', 'elbowR', 'rForeArm', 'rForearmBend', 'forearmR',
+			'upperArmR', 'wristR', 'rHand', 'rCollar', 'collarR', 'rClavicle',
+			'rightUpperLeg', 'hipR', 'rThigh', 'rThighBend',
+			'rightLowerLeg', 'kneeR', 'shinR', 'rShin', 'rCalf',
+			'ankleR', 'rFoot', 'rightToes', 'toeR', 'rToe', 'rToeBase',
+			'rArm', 'rShoulder', 'rLeg', 'rUpLeg',
+			'rightHip', 'rightKnee', 'rightAnkle', 'rightElbow', 'rightWrist',
+			'rightCollar', 'rightClavicle', 'rightToe',
+		];
+		for (const name of leftSpellings) {
+			const canonical = canonicalizeBoneName(name);
+			expect(canonical, name).not.toBeNull();
+			expect(canonical.startsWith('Right'), `${name} must not map to a Right bone`).toBe(false);
+		}
+		for (const name of rightSpellings) {
+			const canonical = canonicalizeBoneName(name);
+			expect(canonical, name).not.toBeNull();
+			expect(canonical.startsWith('Left'), `${name} must not map to a Left bone`).toBe(false);
+		}
+	});
 });
 
 describe('canonicalizeJointNodes (in-place rewrite)', () => {

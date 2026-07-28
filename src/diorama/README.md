@@ -102,7 +102,7 @@ settles.
 import { createDioramaRenderer } from './renderer.js';
 import { composeWorld } from './compose.js';
 
-const renderer = createDioramaRenderer(document.querySelector('#stage'), {});
+const renderer = createDioramaRenderer(document.querySelector('#diorama-stage'), {});
 
 const diorama = await composeWorld('a cozy autumn campsite by a lake at dusk', {
   // Called once the plan returns, before any mesh exists: the island, sky,

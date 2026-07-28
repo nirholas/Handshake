@@ -38,7 +38,7 @@ const HIT_CACHE_CONTROL = 'public, max-age=300, s-maxage=300, stale-while-revali
 // costs on misses.
 const ENS_TIMEOUT_MS = 8000;
 
-// Ethereum mainnet (chainId 1) — ENS is a mainnet-only registry. Pin the
+// Ethereum mainnet (chainId 1); ENS is a mainnet-only registry. Pin the
 // operator's mainnet RPC first (same as api/agents/ens/[name].js) so prod
 // never leads with a rate-limited public endpoint.
 async function ensProvider() {

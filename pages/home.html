@@ -589,6 +589,105 @@
 		}
 		.door-screenshot img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+		/* ── START PATH (lite entry: three steps under the hero) ─── */
+		.start-path { border-top: 1px solid var(--hairline); padding: 44px 0 48px; }
+		.start-path-head {
+			display: flex; align-items: baseline; justify-content: space-between;
+			gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+		}
+		.start-path-eyebrow {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin: 0;
+		}
+		.start-path-note { font-size: 13px; color: var(--text-3); margin: 0; }
+		.start-path-note a { color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+		.start-path-note a:hover, .start-path-note a:focus-visible { color: var(--text); }
+		.start-steps {
+			display: grid; grid-template-columns: repeat(3, 1fr);
+			gap: 1px; background: var(--hairline);
+			border: 1px solid var(--hairline); border-radius: 14px; overflow: hidden;
+		}
+		@media (max-width: 980px) { .start-steps { grid-template-columns: 1fr; } }
+		.start-step {
+			background: var(--surface-0); padding: 24px 26px 22px;
+			display: flex; flex-direction: column; gap: 9px;
+			transition: background 0.15s;
+		}
+		.start-step:hover { background: var(--surface-1); }
+		.start-step:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; background: var(--surface-1); }
+		.start-step-num {
+			font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.18em;
+			color: var(--text-3); display: flex; justify-content: space-between; align-items: baseline;
+		}
+		.start-step-num .time { letter-spacing: 0.06em; text-transform: none; }
+		.start-step h3 {
+			font-family: var(--font-display); font-size: 21px; font-weight: 600;
+			letter-spacing: -0.02em; line-height: 1.15; margin: 0;
+			display: flex; align-items: center; gap: 10px;
+		}
+		.start-step h3 .arrow { color: var(--text-3); transition: transform 0.18s, color 0.18s; }
+		.start-step:hover h3 .arrow { transform: translateX(4px); color: var(--text); }
+		.start-step p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
+
+		/* ── ADVANCED TIER (progressive disclosure) ────────────────
+		   html.home-lite is applied pre-paint from localStorage; the gate
+		   section (#advanced-gate) toggles it and persists the choice. */
+		html.home-lite [data-tier="advanced"] { display: none; }
+		.adv-gate { border-top: 1px solid var(--hairline); padding: 64px 0; }
+		.adv-gate-card {
+			border: 1px solid var(--hairline-strong); border-radius: 14px;
+			background: var(--surface-0); padding: 36px 38px;
+			display: flex; flex-wrap: wrap; align-items: center;
+			justify-content: space-between; gap: 28px;
+			transition: padding 0.2s;
+		}
+		@media (max-width: 720px) { .adv-gate-card { padding: 26px 24px; } }
+		.adv-gate-text { max-width: 680px; }
+		.adv-gate-eyebrow {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin: 0 0 12px;
+		}
+		.adv-gate-h {
+			font-family: var(--font-display); font-size: clamp(22px, 2.6vw, 30px);
+			line-height: 1.08; letter-spacing: -0.025em; font-weight: 600; margin: 0 0 12px;
+		}
+		.adv-gate-h em { font-style: normal; color: var(--text-3); font-weight: 500; }
+		.adv-gate-desc { margin: 0 0 18px; font-size: 14.5px; line-height: 1.55; color: var(--text-2); max-width: 560px; }
+		.adv-gate-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+		.adv-topic {
+			font-family: var(--font-mono); font-size: 12px; color: var(--text-2);
+			padding: 6px 12px; border: 1px solid var(--hairline-strong); border-radius: 999px;
+			background: transparent; transition: color 0.15s, border-color 0.15s, background 0.15s;
+		}
+		.adv-topic:hover, .adv-topic:focus-visible { color: var(--text); border-color: var(--text); background: var(--surface-1); }
+		.adv-toggle {
+			flex-shrink: 0; cursor: pointer;
+			background: var(--text); color: var(--bg); border: 1px solid var(--text);
+			padding: 13px 22px; border-radius: 9px; font-size: 14px; font-weight: 600;
+			display: inline-flex; align-items: center; gap: 10px;
+			transition: opacity 0.15s, transform 0.15s;
+		}
+		.adv-toggle:hover { opacity: 0.88; }
+		.adv-toggle:active { transform: translateY(1px); }
+		.adv-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+		.adv-toggle .adv-toggle-hide { display: none; }
+		/* Expanded state: the gate compacts into a slim divider with a collapse control. */
+		html:not(.home-lite) .adv-gate { padding: 36px 0; }
+		html:not(.home-lite) .adv-gate-card { padding: 20px 24px; }
+		html:not(.home-lite) .adv-gate-h,
+		html:not(.home-lite) .adv-gate-desc,
+		html:not(.home-lite) .adv-gate-topics { display: none; }
+		html:not(.home-lite) .adv-gate-eyebrow { margin: 0; }
+		html:not(.home-lite) .adv-toggle {
+			background: transparent; color: var(--text); border-color: var(--hairline-strong);
+			font-weight: 500; padding: 9px 16px; font-size: 13px;
+		}
+		html:not(.home-lite) .adv-toggle:hover { border-color: var(--text); opacity: 1; }
+		html:not(.home-lite) .adv-toggle .adv-toggle-show { display: none; }
+		html:not(.home-lite) .adv-toggle .adv-toggle-hide { display: inline; }
+
 		/* ── BENTO GRID ──────────────────────────────────────────── */
 		.bento {
 			display: grid;
@@ -2750,6 +2849,35 @@
 	</div>
 </section>
 
+<!-- ── START PATH ─ the lite entry. First-time visitors get three named
+     steps (avatar → agent → publish) before any feature depth; the deep
+     platform sits behind #advanced-gate further down. -->
+<section class="start-path" aria-label="Start here: three steps">
+	<div class="wrap-1280">
+		<div class="start-path-head">
+			<p class="start-path-eyebrow" data-i18n="home.lite_start_here">Start here &middot; three steps, about five minutes</p>
+			<p class="start-path-note" data-i18n-html="home.lite_power_note">Power user? <a href="#advanced-gate">Skip to the advanced platform &darr;</a></p>
+		</div>
+		<div class="start-steps">
+			<a class="start-step" href="/create/prompt" data-cta="lite_create_avatar" data-cta-loc="start_path">
+				<span class="start-step-num"><span>01</span><span class="time" data-i18n="home.lite_time_1_min">~1 min</span></span>
+				<h3><span data-i18n="home.lite_create_avatar">Create a 3D avatar</span><span class="arrow" aria-hidden="true">&rarr;</span></h3>
+				<p data-i18n="home.lite_create_avatar_desc">Describe a character, or start from a selfie. You get a rigged, animated avatar you own.</p>
+			</a>
+			<a class="start-step" href="/create-agent" data-cta="lite_build_agent" data-cta-loc="start_path">
+				<span class="start-step-num"><span>02</span><span class="time" data-i18n="home.lite_time_3_min">~3 min</span></span>
+				<h3><span data-i18n="home.lite_build_agent">Build an AI agent</span><span class="arrow" aria-hidden="true">&rarr;</span></h3>
+				<p data-i18n="home.lite_build_agent_desc">Give your avatar a personality, a voice, and skills in the guided wizard.</p>
+			</a>
+			<a class="start-step" href="#embed" data-cta="lite_publish" data-cta-loc="start_path">
+				<span class="start-step-num"><span>03</span><span class="time" data-i18n="home.lite_time_1_min_more">~1 min</span></span>
+				<h3><span data-i18n="home.lite_publish">Publish anywhere</span><span class="arrow" aria-hidden="true">&rarr;</span></h3>
+				<p data-i18n="home.lite_publish_desc">Two lines of HTML put your agent on any site. Try the live embed below.</p>
+			</a>
+		</div>
+	</div>
+</section>
+
 <section class="block" id="home-forge">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
@@ -3189,6 +3317,70 @@
 	</div>
 </section>
 
+<!-- ── ADVANCED PLATFORM GATE ─ progressive disclosure. Sections tagged
+     data-tier="advanced" collapse behind this band for the lite tier
+     (html.home-lite, applied pre-paint in <head> from localStorage
+     'tws-home:tier'). Expanding persists; deep links into a gated section
+     auto-expand for that visit without persisting. -->
+<section class="adv-gate" id="advanced-gate" aria-label="Advanced platform">
+	<div class="wrap-1280">
+		<div class="adv-gate-card">
+			<div class="adv-gate-text">
+				<p class="adv-gate-eyebrow" data-i18n="home.lite_adv_eyebrow">For power users</p>
+				<h2 class="adv-gate-h" data-i18n-html="home.lite_adv_h">The full platform, <em>when you want it.</em></h2>
+				<p class="adv-gate-desc" data-i18n="home.lite_adv_desc">Everything above takes you from a prompt to a published agent. The deep end is one click away:</p>
+				<div class="adv-gate-topics">
+					<a class="adv-topic" href="#home-sniper" data-i18n="home.lite_topic_trading">Autonomous trading</a>
+					<a class="adv-topic" href="#home-capabilities" data-i18n="home.lite_topic_capabilities">Full capability grid</a>
+					<a class="adv-topic" href="#home-token-economy" data-i18n="home.lite_topic_token">Token economy</a>
+					<a class="adv-topic" href="#home-live-economy" data-i18n="home.lite_topic_live_economy">Live agent economy</a>
+					<a class="adv-topic" href="#home-oracle" data-i18n="home.lite_topic_oracle">Oracle scoring</a>
+					<a class="adv-topic" href="#home-x402" data-i18n="home.lite_topic_x402">Pay-per-call payments</a>
+					<a class="adv-topic" href="#home-dev-platform" data-i18n="home.lite_topic_dev">API, SDK &amp; MCP</a>
+					<a class="adv-topic" href="#home-stack" data-i18n="home.lite_topic_stack">The stack</a>
+				</div>
+			</div>
+			<button type="button" class="adv-toggle" id="adv-toggle" data-cta="advanced_toggle" data-cta-loc="advanced_gate"
+				aria-controls="home-sniper home-capabilities home-token-economy home-live-economy home-oracle home-x402 home-dev-platform home-stack">
+				<span class="adv-toggle-show" data-i18n="home.lite_show_advanced">Show the advanced platform</span>
+				<span class="adv-toggle-hide" data-i18n="home.lite_hide_advanced">Hide advanced sections</span>
+			</button>
+		</div>
+	</div>
+</section>
+<script>
+// Advanced-tier runtime: toggle + persistence + deep-link auto-expand.
+// The boot script in <head> already applied html.home-lite before paint.
+(function () {
+	var KEY = 'tws-home:tier';
+	var root = document.documentElement;
+	var btn = document.getElementById('adv-toggle');
+	function isLite() { return root.classList.contains('home-lite'); }
+	function setLite(lite, persist) {
+		root.classList.toggle('home-lite', lite);
+		if (btn) btn.setAttribute('aria-expanded', String(!lite));
+		if (persist) { try { localStorage.setItem(KEY, lite ? 'lite' : 'full'); } catch (e) {} }
+	}
+	if (btn) {
+		btn.setAttribute('aria-expanded', String(!isLite()));
+		btn.addEventListener('click', function () { setLite(!isLite(), true); });
+	}
+	// A hash pointing inside a gated section (nav links, shared URLs, the
+	// topic chips above) expands the tier for this visit and scrolls there.
+	function revealForHash() {
+		var hash = location.hash;
+		if (!hash || hash.length < 2 || !isLite()) return;
+		var el = null;
+		try { el = document.getElementById(decodeURIComponent(hash.slice(1))); } catch (e) { return; }
+		if (!el || !el.closest('[data-tier="advanced"]')) return;
+		setLite(false, false);
+		requestAnimationFrame(function () { el.scrollIntoView({ block: 'start' }); });
+	}
+	revealForHash();
+	window.addEventListener('hashchange', revealForHash);
+})();
+</script>
+
 <!-- ── AUTONOMOUS SNIPING & TRADING ─────────────────────────────── -->
 <style>
 	#home-sniper .snipe-lede-pill {
@@ -3390,7 +3582,7 @@
 		#home-sniper .snipe-kpi-val.loading { animation: none; }
 	}
 </style>
-<section class="block" id="home-sniper">
+<section class="block" id="home-sniper" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
 			<p class="block-eyebrow" data-i18n-html="home.03autonomous_trading"><span class="num">03</span>Autonomous trading</p>
@@ -5046,7 +5238,7 @@
 </script>
 
 <!-- ── FEATURE BENTO ─────────────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-capabilities" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
 			<p class="block-eyebrow" data-i18n-html="home.03capabilities"><span class="num">03</span>Capabilities</p>
@@ -5341,7 +5533,7 @@
 </section>
 
 <!-- ── PUMP.FUN INTEGRATION ───────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-token-economy" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
 			<p class="block-eyebrow" data-i18n-html="home.04token_economy"><span class="num">04</span>Token economy</p>
@@ -5390,7 +5582,7 @@
 </section>
 
 <!-- ── LIVE ECONOMY ──────────────────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-live-economy" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
 			<p class="block-eyebrow" data-i18n-html="home.05live_economy"><span class="num">05</span>Live economy</p>
@@ -5406,7 +5598,7 @@
 </section>
 
 <!-- ── ORACLE CONVICTION ─────────────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-oracle" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="feat-split reveal">
 			<div class="feat-text">
@@ -5441,7 +5633,7 @@
 </section>
 
 <!-- ── PAY-PER-CALL EARN ──────────────────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-x402" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="feat-split rev reveal">
 			<div class="feat-text">
@@ -5555,7 +5747,7 @@
 </section>
 
 <!-- ── DEVELOPER PLATFORM ─────────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-dev-platform" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
 			<p class="block-eyebrow" data-i18n-html="home.06developer_platform"><span class="num">06</span>Developer platform</p>
@@ -5736,7 +5928,7 @@
 </section>
 
 <!-- ── 3D STACK ────────────────────────────────────────────────────── -->
-<section class="block">
+<section class="block" id="home-stack" data-tier="advanced">
 	<div class="wrap-1280">
 		<div class="block-head reveal">
 			<p class="block-eyebrow" data-i18n-html="home.08the_stack"><span class="num">08</span>The stack</p>

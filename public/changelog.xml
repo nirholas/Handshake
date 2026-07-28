@@ -71,6 +71,14 @@
 			<description>Avatars rigged with SMPL-style skeletons (the convention most research text-to-3D and mocap tools export, with bones named like left_hip, left_knee, left_elbow) previously uploaded fine but froze in a T-pose or slid around on stiff legs, because their bone names were not recognized. The bone matcher now understands these skeletons, correctly tells a collarbone apart from an upper arm when both share a name, and never gives two bones the same name (which could make animations grab the wrong joint). Full body animation, legs and arms included, now works for these characters the moment they are uploaded.</description>
 		</item>
 		<item>
+			<title>Reliable .eth name lookups and a fixed docs link</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-28:Reliable .eth name lookups and a fixed docs link</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The free name-resolution API (/api/v1/resolve) kept timing out on .eth lookups because it leaned on rate-limited public Ethereum RPCs and gave up after five seconds. It now leads with the platform-configured mainnet RPC and dedicated keys, fails over across endpoints faster, and allows a more realistic time budget, so .eth names resolve as dependably as .sol names. Also, the old agent-3d docs address now lands on the web-component reference instead of an empty page.</description>
+		</item>
+		<item>
 			<title>Site quality sweep: sharing, search visibility, and accessibility fixes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-28:Site quality sweep: sharing, search visibility, and accessibility fixes</guid>

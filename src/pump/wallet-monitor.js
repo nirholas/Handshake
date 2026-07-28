@@ -7,6 +7,8 @@
 //
 // Auto-reconnects with exponential backoff on disconnect.
 
+import { log } from '../shared/log.js';
+
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const PUMP_AMM_PROGRAM = 'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA';
 
@@ -130,7 +132,15 @@ export class WalletMonitor extends EventTarget {
 			this.dispatchEvent(evt);
 		};
 
-		ws.onerror = () => {};
+		ws.onerror = () => {
+			// The paired onclose handler owns reconnection/rotation; this is
+			// diagnostics only, so a dead endpoint is visible instead of silent.
+			log.warn(
+				'[wallet-monitor] websocket error on',
+				this._wsUrls[this._urlIdx % this._wsUrls.length],
+				subscribed ? '(subscribed; will back off and reconnect)' : '(unsubscribed; rotating endpoint)',
+			);
+		};
 
 		ws.onclose = () => {
 			this._ws = null;

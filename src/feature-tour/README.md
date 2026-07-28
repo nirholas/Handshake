@@ -82,7 +82,7 @@ window.__featureTour = tour;
 tour.bootstrap();
 ```
 
-To see it run locally: `npm run dev`, then open `http://localhost:3000/?tour=start&track=quick` (the dev server serves `/feature-tour.js` from this directory and the boot plugin injects it because of the `?tour=start` param).
+To see it run locally: `npm run dev`, then open `http://localhost:3000/?tour=start&track=quick` (the dev server rewrites `/feature-tour.js` to the entry file [../feature-tour.js](../feature-tour.js) and the boot plugin injects it because of the `?tour=start` param).
 
 ## Tests
 

@@ -19633,7 +19633,7 @@
 		"paid_calls": "guhamagara byishyuwe",
 		"pause_resume_live_feed_p_title": "Hagarika / komeza ikigega cy'amakuru (p)",
 		"pause_the_live_feed_arialabel": "Hagarika ikigega cy'amakuru",
-		"real_usdc_flowing_into_three_ws_s": "USDC nyayo yinjira mu x402 endpoints zishyurwa za three.ws — ako kanya buri kwishyura bigeze kuri blockchain. Indorerwamo ya <a href=\"/pulse\">Money Pulse</a>: iyo soko yerekana ibyo abakozi <em>bakoresha</em>; iyi yerekana ibyo urubuga <em>rwinjiza</em>. Buri murongo ni ukuri kandi ushobora kugenzurwa na explorer.",
+		"real_usdc_flowing_into_three_ws_s": "USDC nyayo yinjira <strong>muri</strong> x402 za three.ws zishyurwa — ako kanya buri kwishyurana kigera kuri chain. Indorerwamo ya <a href=\"/pulse\">Money Pulse</a>: iyo feed yerekana ibyo agents <em>bakoresha</em>; iyi yo yerekana ibyo platform <em>yinjiza</em>. Buri murongo ni ukuri kandi ushobora kugenzurwa na explorer.",
 		"run_rate_hr": "igipimo cy'imikorere · /isaha",
 		"search_p_pause_s_sound_e_export": "<kbd>/</kbd> shakisha · <kbd>p</kbd> hagarika · <kbd>s</kbd> ijwi · <kbd>e</kbd> kohereza · <kbd>1–4</kbd> idirishya",
 		"settled_usdc": "USDC yishyurwe",

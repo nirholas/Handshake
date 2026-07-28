@@ -38,9 +38,9 @@ const ALCHEMY_SUBDOMAIN = {
 	43113: 'avax-fuji',
 };
 
-// Per-chain Alchemy key overrides — operators provision separate keys per app
-// (ALCHEMY_ETH_KEY, ALCHEMY_BASE_KEY, …); the shared ALCHEMY_API_KEY remains
-// the fallback for every chain.
+// Per-chain Alchemy key overrides: operators provision separate keys per app
+// (ALCHEMY_ETH_KEY, ALCHEMY_BASE_KEY, etc.); the shared ALCHEMY_API_KEY
+// remains the fallback for every chain.
 const ALCHEMY_CHAIN_KEY = {
 	1: 'ALCHEMY_ETH_KEY',
 	10: 'ALCHEMY_OPT_KEY',

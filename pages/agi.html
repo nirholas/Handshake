@@ -52,7 +52,24 @@
 		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
 		<main class="agi-shell" id="agi-root" aria-labelledby="agi-title">
-			<!-- hydrated by /src/agi.js -->
+			<!-- Static fallback for crawlers, slow connections, and JS-off visitors.
+			     /src/agi.js hydrates by replacing this root's innerHTML wholesale,
+			     so everything below is swapped out the moment the app boots. -->
+			<section class="agi-hero">
+				<div class="agi-hero-copy">
+					<span class="agi-domain-tag"><i class="agi-dot"></i> memecoin trading · pump.fun</span>
+					<h1 class="agi-title" id="agi-title">The first AGI.<br /><span class="agi-em">Narrow by design.</span></h1>
+					<p class="agi-lede">A single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana), and deliberately nothing else. Watch it think, trade, and be held to a chain-proven track record in real time.</p>
+					<noscript>
+						<p class="agi-thesis">The live stream of its decisions, its embodied 3D avatar, and its reconciled track record need JavaScript. Enable JavaScript and reload to watch it work.</p>
+						<div class="agi-hero-actions">
+							<a class="agi-btn agi-btn-primary" href="/">three.ws home</a>
+							<a class="agi-btn" href="/ledger">Browse the proof ledger</a>
+							<a class="agi-btn" href="/docs">Read the docs</a>
+						</div>
+					</noscript>
+				</div>
+			</section>
 		</main>
 
 		<script type="module" src="/src/agi.js"></script>
