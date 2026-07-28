@@ -19,7 +19,7 @@
 
 import { esc, timeAgo } from './shared/pulse-format.js';
 import { createLogger } from './shared/log.js';
-import { CATEGORIES, eventToNote, describeEvent, ROOT_HZ } from './symphony-score.js';
+import { CATEGORIES, eventToNote, describeEvent, createBurstGate, ROOT_HZ } from './symphony-score.js';
 
 const log = createLogger('symphony');
 
@@ -46,6 +46,8 @@ const state = {
 };
 
 function clamp01(n) { return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.7; }
+
+const burstGate = createBurstGate(1500);
 
 function loadJson(key, fallback) {
 	try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -432,8 +434,14 @@ function acceptEvent(evt, { silent = false } = {}) {
 
 	const note = eventToNote(evt);
 	if (!silent && state.playing) {
-		if (playNote(note)) state.notesPlayed++;
-		vizSpawn(note);
+		// Floods (e.g. a sniper sweep emitting dozens of identical guard events)
+		// collapse into one accented note per actor instead of a machine-gun.
+		const { play, accent } = burstGate.admit(evt, Date.now());
+		if (play) {
+			note.gain = Math.min(1, note.gain + accent);
+			if (playNote(note)) state.notesPlayed++;
+			vizSpawn(note);
+		}
 	}
 	renderLedger();
 	renderStats();

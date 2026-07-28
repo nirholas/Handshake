@@ -147,6 +147,44 @@ export function eventToNote(evt) {
 	};
 }
 
+/**
+ * Burst gate: the live feed arrives in floods (a sniper sweep can emit dozens
+ * of identical `agent-guard` events in seconds), and a note per event would
+ * machine-gun the same sound. The gate admits one note per (type, actor) key
+ * per `minGapMs`, counting what it suppressed; the caller plays the next
+ * admitted note slightly accented so a flood still reads as "a lot happened",
+ * musically instead of literally.
+ *
+ * Pure and clock-injected: callers pass `now` (epoch ms) explicitly.
+ */
+export function createBurstGate(minGapMs = 1500) {
+	const last = new Map(); // key -> { ts, suppressed }
+	const MAX_KEYS = 200;
+	return {
+		/**
+		 * @returns {{ play: boolean, accent: number }} accent is 0..0.3, sized
+		 * by how many notes this key swallowed since it last played.
+		 */
+		admit(evt, now) {
+			const key = `${evt && evt.type}|${evt && evt.actor}`;
+			const entry = last.get(key);
+			if (entry && now - entry.ts < minGapMs) {
+				entry.suppressed++;
+				return { play: false, accent: 0 };
+			}
+			const accent = entry ? Math.min(0.3, entry.suppressed * 0.05) : 0;
+			last.set(key, { ts: now, suppressed: 0 });
+			if (last.size > MAX_KEYS) {
+				for (const [k, v] of last) {
+					if (now - v.ts > minGapMs * 4) last.delete(k);
+					if (last.size <= MAX_KEYS / 2) break;
+				}
+			}
+			return { play: true, accent };
+		},
+	};
+}
+
 function shortMint(mint) {
 	const s = String(mint || '');
 	return s.length > 10 ? `${s.slice(0, 4)}..${s.slice(-4)}` : s;

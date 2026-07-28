@@ -11,6 +11,7 @@ import {
 	intensityOf,
 	eventToNote,
 	describeEvent,
+	createBurstGate,
 } from '../src/symphony-score.js';
 
 describe('symphony-score: scale', () => {
@@ -159,5 +160,40 @@ describe('symphony-score: describeEvent', () => {
 		const row = describeEvent({ type: 'mystery-event', actor: 'Q' });
 		expect(row.title.length).toBeGreaterThan(0);
 		expect(row.icon.length).toBeGreaterThan(0);
+	});
+});
+
+describe('symphony-score: burst gate', () => {
+	const guard = (actor = 'luna') => ({ type: 'agent-guard', actor });
+
+	it('admits the first event and suppresses the flood behind it', () => {
+		const gate = createBurstGate(1500);
+		expect(gate.admit(guard(), 1000).play).toBe(true);
+		expect(gate.admit(guard(), 1200).play).toBe(false);
+		expect(gate.admit(guard(), 2400).play).toBe(false);
+	});
+
+	it('re-admits after the gap with an accent sized by what it swallowed', () => {
+		const gate = createBurstGate(1500);
+		gate.admit(guard(), 1000);
+		for (let t = 1100; t < 2500; t += 100) gate.admit(guard(), t);
+		const next = gate.admit(guard(), 3000);
+		expect(next.play).toBe(true);
+		expect(next.accent).toBeGreaterThan(0);
+		expect(next.accent).toBeLessThanOrEqual(0.3);
+	});
+
+	it('gates per (type, actor): different actors play independently', () => {
+		const gate = createBurstGate(1500);
+		expect(gate.admit(guard('luna'), 1000).play).toBe(true);
+		expect(gate.admit(guard('nova'), 1001).play).toBe(true);
+		expect(gate.admit({ type: 'payment', actor: 'luna' }, 1002).play).toBe(true);
+	});
+
+	it('never accents an unsuppressed key', () => {
+		const gate = createBurstGate(1500);
+		gate.admit(guard(), 1000);
+		const next = gate.admit(guard(), 5000);
+		expect(next).toEqual({ play: true, accent: 0 });
 	});
 });
