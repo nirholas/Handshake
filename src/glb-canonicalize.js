@@ -25,6 +25,17 @@
 // fall through unchanged — there's no safe automatic mapping for those, and
 // callers fall back to a known-good rig rather than render a bind-pose T-pose.
 //
+// Constraint-driven CONTROL RIGS also fall through on purpose. Blender rigs of
+// the Auto-Rig-Pro / "cwf_ + def_ + tracker" family export a deform layer whose
+// bones are LEAVES hanging off tracker nodes, not a chain: `def_arm_1.R` is not
+// a child of `def_arm_0.R`, it hangs off `c_arm_1_tracker.R`. In Blender those
+// trackers carry Copy-Rotation/Damped-Track constraints; glTF has no constraint
+// system, so they export as inert nodes. Rotating a mapped `def_` bone would move
+// its own skin while the next segment stayed put — the arm comes apart. Mapping
+// that layer is strictly worse than the default-rig fallback, so we do not.
+// Verified against real stored avatars; see scripts/audit-rig-coverage.mjs.
+// The remedy for these uploads is re-rigging (workers/rig), not name mapping.
+//
 // This module is pure JS — works in Node (vitest) and in the browser. It
 // rewrites the GLB JSON chunk in-place and repacks the binary container so
 // the result is a valid GLB that swaps in 1:1 at the same R2 storage key.
@@ -141,6 +152,21 @@ const EXTRA_ALIASES = (() => {
 		// Second Life / OpenSim centre chain (`m`-prefixed body bones).
 		['mPelvis', 'Hips'], ['mTorso', 'Spine'], ['mChest', 'Spine1'],
 		['mNeck', 'Neck'], ['mHead', 'Head'],
+		// Advanced Skeleton (Maya) tags centre bones with an `_M` side token:
+		// `Root_M`, `Spine1_M`, `Spine2_M`, `Chest_M`, `Neck_M`, `Head_M`. Its LIMBS
+		// use `_L`/`_R` and already resolve through the sided table, which is why
+		// these rigs arrived with working arms and legs but no Hips — and no Hips
+		// means the retargeter has no root to anchor to, so nothing animated at all.
+		// AS numbers its spine from 1 at the base, one deeper than the canonical
+		// chain, hence the shift (`Spine1_M` → Spine, `Spine2_M` → Spine1).
+		['root_M', 'Hips'], ['hip_M', 'Hips'], ['pelvis_M', 'Hips'],
+		['spine1_M', 'Spine'], ['spine2_M', 'Spine1'], ['spine3_M', 'Spine2'],
+		['chest_M', 'Spine2'], ['neck_M', 'Neck'], ['head_M', 'Head'],
+		// A zero-indexed spine base (`j_spine_0`, `spine_00`) is the first spine
+		// joint; the `_1`/`_2` links already resolve as Spine1/Spine2.
+		['spine0', 'Spine'],
+		// UniGLTF/VRM-converter root joint.
+		['hipMaster', 'Hips'],
 	]) put(v, c);
 
 	// Side-paired limb bones, given as the LEFT spelling + its canonical; the
@@ -196,6 +222,12 @@ const EXTRA_ALIASES = (() => {
 		['upperLegL', 'LeftUpLeg'], ['lowerLegL', 'LeftLeg'], ['lowerArmL', 'LeftForeArm'],
 		// The scapula is the clavicle in Advanced Skeleton / Daz-derived rigs.
 		['scapulaL', 'LeftShoulder'],
+		// Bare side-PREFIX anatomical joints (`j_L_hip`, `L_knee`, `R_ankle`). The
+		// suffix twins (`hipL`, `kneeL`, `ankleL`) exist above but never reach the
+		// prefix spelling. Same audit finding as the `j_` strip: Sketchfab-exported
+		// rigs using this convention mapped zero bones.
+		['lHip', 'LeftUpLeg'], ['lKnee', 'LeftLeg'], ['lAnkle', 'LeftFoot'],
+		['lElbow', 'LeftForeArm'], ['lWrist', 'LeftHand'], ['lToes', 'LeftToeBase'],
 	];
 	// Side-suffix finger chains, both conventions found in real uploaded avatars by
 	// scripts/audit-rig-coverage.mjs:
@@ -282,6 +314,17 @@ function _lookupBone(name) {
 	// tables below. Without this an entire CC export maps zero bones and lands in
 	// a bind-pose T-pose.
 	s = s.replace(/^CC_Base_/i, '');
+	// Sketchfab / Maya joint exports prefix every joint `j_` (`j_pelvis`, `j_L_hip`,
+	// `j_spine_0`). Stripping it leaves stems the canonical + sided tables resolve.
+	// The negative lookahead protects VRM/VRoid, whose `J_Bip_*` / `J_Sec_*` names
+	// are matched WHOLE by the alias table — stripping `J_` there would corrupt the
+	// key and drop an entire VRoid rig. Found by scripts/audit-rig-coverage.mjs:
+	// these rigs previously mapped ZERO bones and shipped a bind-pose T-pose.
+	s = s.replace(/^j_(?!bip|sec|adj)/i, '');
+	// UniGLTF / VRM-converter exports number every node and may flag it with `!`:
+	// `5.joint_HipMaster`, `10.!joint_LeftToe`, `95.!Root`. Strip the index, the
+	// flag, and the `joint_` noun so the residual bone name resolves.
+	s = s.replace(/^\d+\./, '').replace(/^!/, '').replace(/^joint[_:]/i, '');
 	// 3ds Max Biped names joints `Bip01 Pelvis`, `Bip001 L UpperArm`, … with a
 	// space- or underscore-separated `Bip<NN>` prefix (the digits identify the
 	// character). Strip it so `Pelvis`/`Spine`/`L UpperArm`/`L Thigh`/`L Calf`

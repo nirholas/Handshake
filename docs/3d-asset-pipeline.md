@@ -162,13 +162,67 @@ The build pipeline produces GLB + JSON; the browser stitches them back together.
 | Stage | Module | What it does |
 |---|---|---|
 | Load a GLB | [src/viewer.js](../src/viewer.js) | `GLTFLoader` (with DRACO/KTX2 support) loads the model, frames the camera, builds raycasting BVH, emits the scene to the animation panel. |
-| Normalize an uploaded rig | [src/glb-canonicalize.js](../src/glb-canonicalize.js) | Rewrites bone names in the GLB JSON chunk to canonical form (handles Mixamo `mixamorig:`, Blender `Armature_`, Rigify `DEF-`/`ORG-`, Unreal `upperarm_l`, snake/kebab case), folds the Mixamo +90°X armature rotation into children, repacks the GLB. |
+| Normalize an uploaded rig | [src/glb-canonicalize.js](../src/glb-canonicalize.js) | Rewrites bone names in the GLB JSON chunk to canonical form (see [the supported conventions](#supported-rig-conventions) below), folds the Mixamo +90°X armature rotation into children, repacks the GLB. |
 | Load a clip | [src/animation-manager.js](../src/animation-manager.js) | Fetches clip JSON, `AnimationClip.parse`, drives playback through a `THREE.AnimationMixer` with crossfades (0.35s default), one-shot + settle, and a "fallen pose" safety guard. |
 | Retarget a clip to the loaded rig | [src/animation-retarget.js](../src/animation-retarget.js) | Renames canonical tracks to the rig's actual bone names, applies per-bone bind-pose correction (`C = targetRest · sourceRest⁻¹`), rescales hip translation by height ratio, drops the clip if coverage < 50%. |
 | The pose/animation studio | `/pose` ([src/animation-library.js](../src/animation-library.js)) | Gallery of preset clips, live preview on the loaded rig, text-to-motion generation, and **export animated GLB**. |
 | Export an animated GLB | `GLTFExporter` | Bakes a retargeted clip onto the current rig and downloads `<rig>-<clip>.glb` — closing the loop back to a self-contained GLB. |
 
 Validation gates worth knowing: a rig needs **≥8 canonical bones** to be playable, a retarget must map **≥50%** of a clip's tracks to land, and a hips tilt past **45°** off vertical rejects the retarget and falls back to the bind pose (catches genuinely broken rigs without tripping on dance poses).
+
+---
+
+## Supported rig conventions
+
+There is **no rig allowlist**. [src/glb-canonicalize.js](../src/glb-canonicalize.js) maps bone names from every convention below onto the canonical set, so any humanoid GLB using one of them drives the whole clip library — idle, walk, legs included — the moment it is uploaded.
+
+| Family | Example bone names |
+|---|---|
+| Mixamo | `mixamorig:LeftArm`, `mixamorig1:Spine`, `mixamorigHead` |
+| Blender / Armature | `Armature_Hips`, `Armature/LeftLeg` |
+| Rigify | `DEF-forearm.L`, `ORG-Hips`, `MCH-RightLeg` |
+| MakeHuman / Blender `.L`/`.R` | `upperarm.L`, `UpperLeg.R`, `shin.L`, `Index2.L` |
+| Unreal mannequin | `pelvis`, `clavicle_l`, `upperarm_l`, `thigh_l`, `calf_l`, `ball_l` |
+| VRM 0.x / VRoid | `J_Bip_C_Hips`, `J_Bip_L_UpperArm`, `J_Bip_L_Little1` |
+| VRM 1.0 | `leftUpperArm`, `rightLowerLeg`, `upperChest`, `leftToes` |
+| UniGLTF / VRM converter | `5.joint_HipMaster`, `10.!joint_LeftToe` |
+| Daz3D / Genesis | `hip`, `abdomen`, `lShldr`, `lThigh`, `lShin`, `lCollar` |
+| Reallusion CC3 / CC4 | `CC_Base_Hip`, `CC_Base_L_Upperarm`, `CC_Base_NeckTwist01` |
+| 3ds Max Biped | `Bip01 Pelvis`, `Bip001 L UpperArm`, `Bip01 L Calf` |
+| CharacterStudio | `CH_Hips`, `CH_LeftUpLeg` |
+| Autodesk HumanIK / Maya / MotionBuilder | `Character1:Hips`, `subject:LeftArm`, `char:ns:Hips` |
+| Advanced Skeleton (Maya) | `Root_M`, `Spine1_M`, `Chest_M`, `Scapula_R`, `IndexFinger1_R` |
+| Sketchfab / Maya `j_` exports | `j_pelvis`, `j_L_hip`, `j_L_knee`, `j_spine_0` |
+| SMPL / SMPL-X (research, mocap) | `left_hip`, `left_knee`, `left_ankle`, `left_elbow`, `left_collar` |
+| Roblox R15 / R6 | `LowerTorso`, `UpperTorso`, `LeftUpperArm`, `Left Arm` |
+| Second Life / OpenSim | `mPelvis`, `mChest`, `mCollarLeft`, `mShoulderLeft`, `mKneeRight` |
+| Simple / generic rigs | `shoulderL`, `elbowL`, `wristL`, `hipL`, `kneeL`, `ankleL`, `chest` |
+| snake / kebab / lowercase | `left_arm`, `Left-Arm`, `leftarm` |
+
+Vendor prefixes (`mixamorig:`, `CC_Base_`, `Bip01 `, `j_`, Maya namespaces) and exporter de-dup suffixes (`_01`, `.001`) are stripped automatically and compose with everything above, so `CH_LeftLeg_03` and `DEF-upper_arm.L` both resolve.
+
+**What deliberately does *not* map**, because mapping it would be worse than falling back:
+
+- **Non-humanoid skeletons** (quadrupeds, prop rigs) — no safe correspondence exists.
+- **End effectors and leaf tips** (`HeadTop_End`, `LeftToe_End`, `LeftHandIndex4`) — the clip library drives no such bone.
+- **Metacarpals** (`Palm1.L`) — the canonical set has no metacarpal.
+- **Constraint-driven control rigs** (Auto-Rig-Pro / `cwf_` + `def_` + tracker families). Their deform bones are *leaves* hanging off tracker nodes — `def_arm_1.R` is not a child of `def_arm_0.R` — and glTF has no constraint system, so the Copy-Rotation/Damped-Track constraints that made the rig work in Blender are dropped at export. Rotating a mapped `def_` bone would move its own skin while the next segment stayed put, tearing the limb apart. These fall back to the default rig; the remedy is re-rigging through [workers/rig](../workers/rig), not name mapping.
+
+### Measuring coverage against real avatars
+
+Anticipating a convention is not the same as knowing it works. [scripts/audit-rig-coverage.mjs](../scripts/audit-rig-coverage.mjs) measures the canonicalizer against avatars actually stored in production and reports which rigs animate, which fall back, and — the actionable part — which unmapped bone names appear most often. Every name in that list is a candidate alias.
+
+It never downloads a whole GLB: the glTF JSON chunk always starts at byte 20, so an HTTP Range request for the first 256 KB yields the complete node and skin graph. A 40 MB avatar costs the same as a 2 MB one, which makes sweeping thousands of models practical.
+
+```bash
+node scripts/audit-rig-coverage.mjs                  # 300 newest avatars
+node scripts/audit-rig-coverage.mjs --source upload  # one ingest lane
+node scripts/audit-rig-coverage.mjs --failing        # dump every rig that does NOT animate,
+                                                     # with the joint names it shipped
+node scripts/audit-rig-coverage.mjs --limit 2000 --json report.json
+```
+
+Needs `DATABASE_URL` and `S3_PUBLIC_DOMAIN` (both in `.env`). Output reports the share of skinned rigs that animate, the share with a complete leg chain, a per-ingest-lane breakdown, and the top unmapped joint names with a sample avatar for each. The Advanced Skeleton, Sketchfab `j_`, side-suffix leg, and Blender finger-chain mappings above were all found this way rather than guessed.
 
 ---
 

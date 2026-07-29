@@ -482,6 +482,127 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	// Side-SUFFIX leg spellings. The arm twins (`forearm.L`, `upper_arm.L`) were
+	// covered by the Rigify fix; the LEG twins were not, and no side-PREFIX entry
+	// reaches `upperlegl`. Found in production by scripts/audit-rig-coverage.mjs:
+	// a Blender-exported rig lost both leg joints per side and glided on frozen legs.
+	it.each([
+		['UpperLeg.L',  'LeftUpLeg'],
+		['UpperLeg.R',  'RightUpLeg'],
+		['LowerLeg.L',  'LeftLeg'],
+		['LowerLeg.R',  'RightLeg'],
+		['upper_leg.L', 'LeftUpLeg'],
+		['lower_leg.R', 'RightLeg'],
+		['LowerArm.L',  'LeftForeArm'],
+		['Scapula_R',   'RightShoulder'],
+		['Scapula_L',   'LeftShoulder'],
+	])('maps side-suffix leg/arm spellings: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Side-suffix finger chains, both conventions seen in real uploaded avatars.
+	// The un-numbered spelling is the first phalanx; metacarpals (`Palm1.L`) stay
+	// unmapped because the canonical set has no metacarpal to drive.
+	it.each([
+		['Index.L',           'LeftHandIndex1'],
+		['Index2.L',          'LeftHandIndex2'],
+		['Middle1.L',         'LeftHandMiddle1'],
+		['Middle2.R',         'RightHandMiddle2'],
+		['Thumb.L',           'LeftHandThumb1'],
+		['Thumb2.L',          'LeftHandThumb2'],
+		['Ring1.R',           'RightHandRing1'],
+		['Pinky3.L',          'LeftHandPinky3'],
+		['Little1.L',         'LeftHandPinky1'],
+		['IndexFinger1_R',    'RightHandIndex1'],
+		['MiddleFinger2_L',   'LeftHandMiddle2'],
+		['ThumbFinger3_R',    'RightHandThumb3'],
+		['RingFinger1_R',     'RightHandRing1'],
+		['LittleFinger2_L',   'LeftHandPinky2'],
+		['IndexFinger1_R_018', 'RightHandIndex1'], // + glTF de-dup suffix
+	])('maps side-suffix finger chains: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Advanced Skeleton (Maya) tags centre bones `_M` and limbs `_L`/`_R`. The limbs
+	// already resolved through the sided table, so these rigs arrived with working
+	// arms and legs but NO Hips — and with no root to anchor, nothing animated.
+	it.each([
+		['Root_M',      'Hips'],
+		['Root_M_03',   'Hips'],       // + glTF de-dup suffix
+		['Spine1_M_04', 'Spine'],      // AS numbers its spine one deeper than canonical
+		['Spine2_M_05', 'Spine1'],
+		['Spine3_M',    'Spine2'],
+		['Neck_M',      'Neck'],
+		['Head_M',      'Head'],
+		['Hip_M',       'Hips'],
+	])('maps Advanced Skeleton centre bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Sketchfab / Maya `j_`-prefixed joint exports. These previously mapped ZERO
+	// bones and shipped a bind-pose T-pose.
+	it.each([
+		['j_pelvis_05',  'Hips'],
+		['j_hips_00',    'Hips'],
+		['j_L_hip_06',   'LeftUpLeg'],
+		['j_L_knee_07',  'LeftLeg'],
+		['j_L_ankle_08', 'LeftFoot'],
+		['j_L_toe_010',  'LeftToeBase'],
+		['j_R_hip_011',  'RightUpLeg'],
+		['j_R_knee_012', 'RightLeg'],
+		['j_spine_0_016', 'Spine'],
+		['j_spine_1_017', 'Spine1'],
+		['j_spine_2_018', 'Spine2'],
+	])('maps Sketchfab j_-prefixed bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// The `j_` strip must never touch VRM/VRoid, whose `J_Bip_*` names are matched
+	// WHOLE by the alias table — stripping `J_` there corrupts the key and drops the
+	// entire rig. This guards the negative lookahead.
+	it('does not let the j_ strip corrupt VRM J_Bip_ names', () => {
+		expect(canonicalizeBoneName('J_Bip_L_UpperArm')).toBe('LeftArm');
+		expect(canonicalizeBoneName('J_Bip_C_Hips')).toBe('Hips');
+		expect(canonicalizeBoneName('J_Bip_R_LowerLeg')).toBe('RightLeg');
+		expect(canonicalizeBoneName('J_Sec_Hair1_01')).toBeNull();
+	});
+
+	// UniGLTF / VRM-converter numbers every node and may flag it with `!`.
+	it.each([
+		['5.joint_HipMaster', 'Hips'],
+		['7.joint_LeftHip',   'LeftUpLeg'],
+		['8.joint_LeftKnee',  'LeftLeg'],
+		['9.joint_LeftFoot',  'LeftFoot'],
+		['10.!joint_LeftToe', 'LeftToeBase'],
+	])('maps UniGLTF numbered joint names: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	// Constraint-driven Blender control rigs (Auto-Rig-Pro / "cwf_ + def_ +
+	// tracker") MUST stay unmapped. Their deform bones are leaves hanging off
+	// tracker nodes — `def_arm_1.R` is not a child of `def_arm_0.R` — and glTF
+	// drops the constraints that made that work. Rotating a mapped def_ bone would
+	// move its own skin while the next segment stayed put, tearing the arm apart.
+	// The default-rig fallback is the correct outcome; re-rigging is the remedy.
+	it('leaves constraint-driven control-rig bones unmapped (mesh-tearing guard)', () => {
+		for (const name of [
+			'def_arm_0.R', 'def_arm_1.R', 'def_leg_0.L', 'def_leg_1.L',
+			'def_foot_0.L', 'def_toe_0.L', 'def_hand_0.R', 'def_shoulder_0.R',
+			'cwf_leg_0.L', 'cwf_arm_1.R', 'fk_leg_0.L', 'c_arm_0_tracker.R',
+			'cwh_leg_softik_0.L', 'cwf_arm_1_emulator.R',
+		]) {
+			expect(canonicalizeBoneName(name), name).toBeNull();
+		}
+	});
+
+	it('leaves metacarpals and rig scaffolding unmapped', () => {
+		// Real unmapped names from the production audit that must STAY unmapped —
+		// mapping them would bind a clip track to the wrong joint.
+		for (const name of ['Palm1.L', 'Palm2.R', '_rootJoint', 'Bone', 'Body', 'Weapon_R', 'Hat_M']) {
+			expect(canonicalizeBoneName(name), name).toBeNull();
+		}
+	});
+
 	// Rigify / Blender anatomical arm chain: side is a `.L`/`.R` suffix and the
 	// forearm is spelled `forearm` (not `lowerarm`/`elbow`). The suffix normalises
 	// to `forearml`, which the side-prefix spellings never reach — so before the

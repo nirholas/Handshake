@@ -19,6 +19,7 @@
  *   node scripts/audit-rig-coverage.mjs                    # 300 avatars, newest first
  *   node scripts/audit-rig-coverage.mjs --limit 2000       # bigger sweep
  *   node scripts/audit-rig-coverage.mjs --source upload    # one ingest lane
+ *   node scripts/audit-rig-coverage.mjs --failing          # dump rigs that do NOT animate
  *   node scripts/audit-rig-coverage.mjs --json out.json    # machine-readable report
  *
  * Requires DATABASE_URL and S3_PUBLIC_DOMAIN (both in .env).
@@ -44,12 +45,13 @@ const CONCURRENCY = 12;
 const FETCH_TIMEOUT_MS = 20000;
 
 function parseArgs(argv) {
-	const out = { limit: 300, source: null, json: null };
+	const out = { limit: 300, source: null, json: null, failing: false };
 	for (let i = 2; i < argv.length; i++) {
 		const a = argv[i];
 		if (a === '--limit') out.limit = Number(argv[++i]);
 		else if (a === '--source') out.source = argv[++i];
 		else if (a === '--json') out.json = argv[++i];
+		else if (a === '--failing') out.failing = true;
 		else if (a === '--help' || a === '-h') out.help = true;
 	}
 	return out;
@@ -275,6 +277,23 @@ async function main() {
 		.slice(0, 15);
 	console.log('\n── canonical bones most often absent from production rigs ─');
 	console.table(topMissing.map(([bone, n]) => ({ bone, missingIn: n, of: skinned.length })));
+
+	// Every rig that still falls back to the default rig, with the joint names it
+	// actually shipped — the raw material for the next round of alias work.
+	if (args.failing) {
+		const failing = skinned.filter((r) => !r.score.animates);
+		console.log(`\n── rigs that do NOT animate (${failing.length}) ──────────────────────`);
+		for (const r of failing) {
+			const s = r.score;
+			console.log(
+				`\n${r.row.slug || r.row.id}  [${r.row.source}]  ` +
+				`${s.joints} joints, ${s.mapped} mapped, core ${s.core}/${CORE_BONES.length}` +
+				(s.generator ? `  — ${s.generator}` : ''),
+			);
+			console.log(`  mapped:   ${s.canonical.sort().join(', ') || '(none)'}`);
+			console.log(`  unmapped: ${s.unmapped.slice(0, 24).join(', ')}${s.unmapped.length > 24 ? ` … +${s.unmapped.length - 24}` : ''}`);
+		}
+	}
 
 	if (errored.length) {
 		const byErr = new Map();
