@@ -23,12 +23,124 @@
 			<description>Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.</description>
 		</item>
 		<item>
+			<title>A press kit anyone can use without emailing us first</title>
+			<link>https://three.ws/press</link>
+			<guid isPermaLink="false">2026-07-29:A press kit anyone can use without emailing us first</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until now, anyone writing about three.ws had to ask for a logo, and what came back was whatever file was closest to hand. There is now a press page at three.ws/press with the marks as transparent PNGs (the cube on its own, plus horizontal and stacked lockups drawn for dark and light backgrounds), the OpenAI announcement graphics, a company description at three lengths with copy buttons, a table of checkable facts, and plain rules for using the logo. The whole set downloads as one zip, with the usage rules included as a readme so the files cannot travel without them. Every asset is rendered from a single source file in the repository rather than exported by hand, so the kit stays current instead of drifting.</description>
+		</item>
+		<item>
+			<title>Agent conversations get cheaper and steadier on Claude</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-07-29:Agent conversations get cheaper and steadier on Claude</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Agents now reuse the unchanging part of their prompt (persona, skills, platform knowledge) between turns instead of resending it every message, which cuts the cost of a long conversation substantially and shortens the wait before a reply starts. Spend reporting was corrected to account for it, so the admin dashboard and per-user limits reflect what a cached conversation actually costs. Requests are also adapted automatically to whichever Claude model serves them, so a setting meant for an older model can no longer cause a failed or empty reply.</description>
+		</item>
+		<item>
+			<title>Avatars now look where they should and stand properly on uneven ground</title>
+			<link>https://three.ws/walk</link>
+			<guid isPermaLink="false">2026-07-29:Avatars now look where they should and stand properly on uneven ground</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Two things every avatar on three.ws was missing, because a recorded animation clip cannot know about them. First, gaze: the corner walk companion now follows your cursor with its chest, neck and head, and agents can be told to look at a point in the world or at whoever is watching, holding that gaze while you orbit the camera. The turn is shared across three joints rather than cranking the head alone, which is the difference between a person glancing over and an owl. Asking an agent to look somewhere used to be accepted and then quietly ignored; it works now. Second, footing: in the walkaround world each foot lands on the patch of ground actually beneath it instead of one floating above a slope while the other sinks into it. The avatar's hips settle just enough for the downhill leg to reach, and the walk cycle's own foot lift is left intact, so it still reads as walking rather than sliding. Both effects work on any humanoid avatar, including ones you generated yourself, and both bow out cleanly on avatars that cannot support them and when you have asked for reduced motion.</description>
+		</item>
+		<item>
+			<title>Background jobs no longer pause themselves against a storage limit that was not real</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Background jobs no longer pause themselves against a storage limit that was not real</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A safety valve pauses data-heavy background jobs when the database approaches its storage ceiling. The ceiling it was checking had been set by hand and no longer matched the actual database plan, which is far larger, so the valve was tripping on a limit that did not exist and pausing dozens of jobs a minute, including the one that keeps the payment wallets funded. The threshold now reflects the real capacity, with months of headroom, and the valve remains in place as a genuine backstop.</description>
+		</item>
+		<item>
+			<title>Ethereum name lookups work again</title>
+			<link>https://three.ws/crypto-api</link>
+			<guid isPermaLink="false">2026-07-29:Ethereum name lookups work again</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Looking up an .eth name through the public name resolver had stopped working: every request sat there for about ten seconds and then came back as an error, while .sol names resolved fine. Two things were wrong. The Ethereum node we asked first had started refusing our requests outright, and because it was first in line every lookup wasted a full round trip on it before trying anywhere else. On top of that, the lookup itself was asking the network four or five separate questions in sequence when one would do. Nodes known to refuse us are now tried last instead of first, and a name lookup is a single question. An .eth name now resolves in about a quarter of a second, and a name that genuinely does not exist comes back as a clean not-found instead of a timeout.</description>
+		</item>
+		<item>
+			<title>Every x402 payment now settles against its own Solana transaction</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Every x402 payment now settles against its own Solana transaction</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An audit of our payment facilitator found that about one in five recorded settlements shared an on-chain transaction with another settlement. Solana signatures are deterministic, so two payments of the same amount, from the same wallet, to the same endpoint, built in the same short window could compile to a byte-for-byte identical transaction. Only one of them could ever land on chain, and the facilitator was crediting the others against it. Settlement is now claimed atomically: one transaction settles at most one payment, a genuine retry is recognised and answered without double-charging, and anything else is refused rather than credited. The payment builder also draws from a signature space about four thousand times larger, at no extra fee, so identical transactions are no longer built in the first place. A new hourly audit watches the invariant and raises an alert if it is ever violated again.</description>
+		</item>
+		<item>
+			<title>Fact checks that used to time out now come back with their sources</title>
+			<link>https://three.ws/fact-check</link>
+			<guid isPermaLink="false">2026-07-29:Fact checks that used to time out now come back with their sources</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some fact checks were taking so long that the request was cut off before anything came back, and the caller got an error instead of an answer. Two things caused it. The checker asks a language model to write search queries and then to judge each source it finds; if none of the model providers could answer, that step threw the whole check away, even though the checker had already gathered real sources and knew how to carry on without the model. And nothing kept an eye on the clock, so a slow run could outlast the time limit the request had to begin with. Both are fixed. A check now works to a time budget and hands each step whatever is left, so it always finishes with something to show. If a step genuinely cannot reach a model, the check falls back instead of failing: it searches the claim itself, returns the sources it found with their excerpts, and marks the verdict as insufficient rather than guessing. The response now says plainly which step fell back, and a result produced that way is deliberately not cached, so asking again re-runs the full check rather than replaying a bad day.</description>
+		</item>
+		<item>
+			<title>Ordinary new coins are no longer mistaken for honeypots</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Ordinary new coins are no longer mistaken for honeypots</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Before any automated buy, the platform simulates a full buy-then-sell round trip on-chain to prove the coin can actually be sold again, and blocks anything that cannot be exited. That simulation runs from the buying agent's own wallet, so when the wallet was too small to fund the simulated purchase, the failure was being read as evidence that the coin was a trap. One underfunded agent produced 336 consecutive false honeypot verdicts in a single afternoon on perfectly normal launches. The safety probe now scales down to a size the wallet can actually simulate, since a real honeypot traps a seller at any size, and an out-of-funds failure is now reported as exactly that. Coins that genuinely cannot be sold are still blocked, and a wallet too empty to prove anything is still refused rather than waved through.</description>
+		</item>
+		<item>
+			<title>Platform payment wallets now refill straight from the treasury when they run dry</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Platform payment wallets now refill straight from the treasury when they run dry</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The two wallets that pay for the platform's automated work could only refill themselves by trading one of their own assets for the other. A wallet that was low on both had no way out, so it would sit and fail payments while the treasury held plenty of funds one step away. The treasury now tops those wallets up directly, with a per-transfer cap, a daily cap, and a reserve it never spends below. Payments that used to stall for hours waiting on a human now recover on their own within a minute.</description>
+		</item>
+		<item>
+			<title>Production now watches every paid Solana connection, not just one</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-07-29:Production now watches every paid Solana connection, not just one</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>three.ws reaches the Solana blockchain through several providers so that if one runs out of capacity the others carry the load. Until now the status page only watched one of them, which meant the platform could report a healthy connection while every paid provider was actually out of quota and all traffic had quietly fallen back to slower free servers. That state is hard to spot from the outside: it shows up as occasional slow pages and failed on-chain actions rather than a clean outage. The status page now reports the health of the whole set, and says plainly when everything paid has run out so it can be topped up before anyone notices.</description>
+		</item>
+		<item>
 			<title>Solana RPC failover fixed: the paid reserve is no longer the primary lane</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-29:Solana RPC failover fixed: the paid reserve is no longer the primary lane</guid>
 			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The platform routes every Solana call through a chain of RPC providers so no single one becomes a bottleneck, with a paid endpoint held back as an emergency reserve. A configuration mistake had that reserve listed as the primary as well, and because the chain keeps the first entry for a repeated address, it quietly served all traffic and burned through its daily request cap while the free providers sat idle. The reserve is now held back as intended and the premium provider leads. Two safeguards prevent a repeat: the slowest public endpoint can no longer outrank a paid provider by being used as a default, and when one server discovers a provider is out of quota, the rest of the fleet now inherits that verdict immediately instead of each wasting another request against a cap that is already full.</description>
+		</item>
+		<item>
+			<title>Stopped two automated systems from passing the same SOL back and forth</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Stopped two automated systems from passing the same SOL back and forth</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>One background job tops up each trading agent wallet to a working balance. Another reclaims idle SOL from platform wallets back to the treasury so the agent economy can pay its network fees. Their thresholds disagreed, so they took turns moving the same funds in opposite directions: in one fifteen-minute window 0.24 SOL made that round trip six times, paying a network fee each leg, and the agents never held a balance long enough to trade. Both jobs now read a single shared policy with one rule, that a reclaim can never take a wallet below the level the top-up will immediately restore. The reclaim also now leaves every active trader enough to cover a complete trade, including the safety check that runs before it.</description>
+		</item>
+		<item>
+			<title>The live pump.fun trade feed now drops data providers that cannot serve it</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:The live pump.fun trade feed now drops data providers that cannot serve it</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The live trade feed connects to a chain of Solana data providers and falls back through them. Some of those providers answer normal requests fine but reject the live-streaming connection outright, and the underlying library retried them forever, flooding the logs and wasting a slot in the fallback chain. The feed now tests each provider once, permanently sets aside the ones that structurally cannot stream, and briefly benches ones that are merely busy, so it lands on a working provider immediately instead of retrying a dead one.</description>
+		</item>
+		<item>
+			<title>Trading agents that looked healthy but could never place a trade now say why</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-29:Trading agents that looked healthy but could never place a trade now say why</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Several arms of the autonomous trading fleet were switched on, funded, and reading every new launch, yet had never bought anything. Nothing looked broken, because an entry that gets skipped leaves no record at all. Four separate causes were found and fixed. An arm whose configured trade size had drifted above its own daily spending cap could never satisfy both at once, so it sat out every opportunity. A wallet trimmed too thin could not pay for the safety simulation the platform runs before every buy. Some arms asked for coins above a market-cap floor that a brand-new launch cannot reach at the moment they look at it. And arms pinned to a specific AI model refused to trade because that model had quietly stopped answering, with a stand-in replying in its place. Every armed strategy on the experiments board now carries a plain-language reason when it is not trading, and the ops channel is paged when a pinned model goes dark.</description>
+		</item>
+		<item>
+			<title>Uploaded avatars from far more 3D tools now animate instead of standing frozen</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Uploaded avatars from far more 3D tools now animate instead of standing frozen</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>three.ws recognises an avatar's skeleton by its bone names, and every 3D tool names bones differently. When a name was not recognised the avatar still uploaded and still looked right, but it stood frozen in a T-pose, or walked while its legs stayed rigid. Rather than keep guessing which tools to support, we measured: a new audit reads the skeleton of avatars actually stored on the platform and reports exactly which ones fail and which bone names caused it. That turned up several whole families of rigs that were silently broken, and all of them now work: characters from Maya's Advanced Skeleton, Sketchfab exports, research and motion-capture tools that use the SMPL convention, Roblox and Second Life avatars, VRM converter output, and Blender rigs whose legs and finger joints were being dropped. In the lanes where people upload their own characters, the share that animate with a complete walk went from about 93% to over 98%. A small number of Blender rigs built on constraint systems still cannot be driven this way, because the constraints are discarded when the file is exported and forcing it would pull the limbs apart; those fall back to a working skeleton rather than breaking, and can be re-rigged automatically instead.</description>
 		</item>
 		<item>
 			<title>Watch your 3D model being made, live</title>
@@ -93,14 +205,6 @@
 			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The platform wallet that pays for agent-to-agent settlements holds both USDC (to pay other agents) and a little SOL (to pay Solana network fees). An automatic balancer kept each side topped up, but when the wallet was too small to satisfy both targets at once, the two rules fought: one swapped USDC into SOL, the next run swapped it straight back, over a hundred reversing swaps in an afternoon, each one paying exchange fees for nothing. The balancer now treats the SOL fee reserve as untouchable when topping up USDC, so the tug-of-war is structurally impossible, and the balancer itself keeps running even during database-storage pressure, since skipping it is what let the fee wallet run dry earlier today.</description>
-		</item>
-		<item>
-			<title>More avatar rigs animate out of the box, including research-generated characters</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-28:More avatar rigs animate out of the box, including research-generated characters</guid>
-			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>Avatars rigged with SMPL-style skeletons (the convention most research text-to-3D and mocap tools export, with bones named like left_hip, left_knee, left_elbow) previously uploaded fine but froze in a T-pose or slid around on stiff legs, because their bone names were not recognized. The bone matcher now understands these skeletons, correctly tells a collarbone apart from an upper arm when both share a name, and never gives two bones the same name (which could make animations grab the wrong joint). Full body animation, legs and arms included, now works for these characters the moment they are uploaded.</description>
 		</item>
 		<item>
 			<title>Reliable .eth name lookups and a fixed docs link</title>

@@ -5,6 +5,7 @@ import {
 	markEndpointCooldown,
 	isEndpointCooling,
 	hydrateEndpointCooldowns,
+	rpcLaneHealth,
 } from '../api/_lib/solana/connection.js';
 import { cacheGet, cacheSet, cacheDel } from '../api/_lib/cache.js';
 
@@ -146,6 +147,42 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 		await cacheSet(COOLDOWN_CACHE_KEY, { [expired]: Date.now() - 1000 }, 3600);
 		await hydrateEndpointCooldowns(Date.now() + 20 * 60_000);
 		expect(isEndpointCooling(expired)).toBe(false);
+	});
+
+	it('reports the whole paid tier going dark, the blind spot that hid three exhausted plans', () => {
+		// The 2026-07-29 production state: Helius plan (-32429 max usage reached),
+		// QuickNode daily cap (-32003) and Alchemy monthly cap (429) all exhausted
+		// at once, with only the Helius sensor watching — and it read per-instance
+		// memory, so a fresh instance still reported "premium RPC healthy".
+		process.env.HELIUS_API_KEY = 'hk';
+		process.env.ALCHEMY_API_KEY = 'ak';
+		process.env.SOLANA_RPC_LAST_RESORT_URLS = 'https://paid.quiknode.pro/abc';
+
+		const before = rpcLaneHealth();
+		expect(before.paidTotal).toBe(3);
+		expect(before.allPaidCooling).toBe(false);
+
+		markEndpointCooldown('https://mainnet.helius-rpc.com/?api-key=hk', 429, 'max usage reached');
+		markEndpointCooldown('https://solana-mainnet.g.alchemy.com/v2/ak', 429, 'Monthly capacity limit exceeded');
+		markEndpointCooldown('https://paid.quiknode.pro/abc', 429, 'daily request limit reached');
+
+		const after = rpcLaneHealth();
+		expect(after.allPaidCooling).toBe(true);
+		expect(after.paidCooling).toBe(after.paidTotal);
+		// Free lanes must still be serving — degraded, never down.
+		expect(after.total - after.cooling).toBeGreaterThan(0);
+	});
+
+	it('does not call a keyless deployment degraded — no paid lanes is a valid choice', () => {
+		const h = rpcLaneHealth();
+		expect(h.paidTotal).toBe(0);
+		expect(h.allPaidCooling).toBe(false);
+	});
+
+	it('masks credentials in every lane it reports', () => {
+		process.env.HELIUS_API_KEY = 'super-secret-key';
+		const h = rpcLaneHealth();
+		expect(JSON.stringify(h.lanes)).not.toContain('super-secret-key');
 	});
 
 	it('a transient network blip stays local — it must not park the endpoint fleet-wide', async () => {

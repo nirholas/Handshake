@@ -371,7 +371,37 @@ HTTP 503 GET /health   (model-* service)   textPayload: The request failed becau
 
 - **Source:** [api/_lib/http.js](../../api/_lib/http.js) `wrapCron({ requireWriteCapacity: true })`, via `isStoragePressured()` in [api/_lib/db.js](../../api/_lib/db.js). Emitted by the write-heavy crons that opt into the preflight: `launcher-tick`, `coin-intel-observe`, `smart-money-rollup`, `recompute-reputation`, `intel-learn`.
 - **What it means:** the Neon branch is over its high-water mark (`DB_RETENTION_HIGH_WATER_MB`, default 470). Rather than run a full write-tick that would fail per-row with SQLSTATE 53100 and flood the logs, each write-heavy cron **preflight-skips** with a single warn and a healthy heartbeat (uptime reads it as up, not stalled). [api/cron/db-retention.js](../../api/cron/db-retention.js) runs every 15 min, tightens its retention window to the floor under pressure, DELETEs + VACUUMs, and the next tick resumes once size drops back under the mark. In the 2026-07-05 export db-retention was scheduled and returning `200` (~3.5 s/run) the whole window — the valve is working; the branch is simply sitting above the mark because the live data footprint exceeds it and Neon's storage GC is not instant.
-- **Resolve (owner, capacity):** the write crons stay skipped only while `pg_database_size > high-water`. Pick one: (a) raise the **Neon compute/storage plan** so the branch has headroom above the real footprint; (b) if the branch's actual cap is higher than 470 MB, raise `DB_RETENTION_HIGH_WATER_MB` to match the plan so the write crons stop skipping needlessly; (c) tighten `PUMP_INTEL_RETENTION_DAYS` / `PUMP_INTEL_MIN_RETENTION_DAYS` to shed the firehose faster. None is a code change — the gate and the valve are already correct and covered by [tests/cron-storage-backoff.test.js](../../tests/cron-storage-backoff.test.js).
+- **Check the mark against the REAL cap first (2026-07-29).** The high-water mark is a config value, not a measurement, and it has been set to a phantom cap before. Confirm both numbers before touching anything else:
+
+  ```sh
+  psql "$DATABASE_URL" -c 'SHOW neon.max_cluster_size'                                    # the real ceiling
+  psql "$DATABASE_URL" -c 'SELECT pg_size_pretty(pg_database_size(current_database()))'    # the live footprint
+  npm run logs -- --all --grep "project size limit" --since 7d                             # real 53100s, if any
+  ```
+
+  If `max_cluster_size` is far above the mark and there are no `project size limit` errors, the skips are **self-inflicted** and the fix is to raise the mark (config-only, pre-approved). On 2026-07-29 that read 16TB against a ~2.5 GB footprint while the mark sat at 3072, so the mark was raised to `8192`. See [db-retention.md](db-retention.md#sizing-the-high-water-mark-read-before-changing-it) for the sizing rule.
+- **This gate has starved the money path.** On 2026-07-28 at 18:42 the branch crossed a mark set equal to the assumed cap, and 56 crons skipped in one minute — including `economy-rebalance`, which refills the x402 fee wallet. The fee wallet then starved and every settle returned `fee_wallet_below_floor` for four hours. `economy-rebalance` is deliberately **not** gated any more; do not re-add `requireWriteCapacity` to a cron on the funding path.
+- **Resolve (capacity):** the write crons stay skipped only while `pg_database_size > high-water`. In order: (a) raise `DB_RETENTION_HIGH_WATER_MB` if the real cap has headroom (the usual answer, see above); (b) raise the **Neon compute/storage plan** if it genuinely does not; (c) tighten `PUMP_INTEL_RETENTION_DAYS` / `PUMP_INTEL_MIN_RETENTION_DAYS` to shed the firehose faster. None is a code change — the gate and the valve are covered by [tests/cron-storage-backoff.test.js](../../tests/cron-storage-backoff.test.js).
+
+---
+
+## 🟢 `ws error: Unexpected server response: 301`
+
+```
+ws error: Unexpected server response: 301
+```
+
+- **Source:** `@solana/web3.js`'s internal `rpc-websockets` client, under the pump.fun trade firehose ([api/_lib/pump-onchain-trades.js](../../api/_lib/pump-onchain-trades.js)).
+- **What it means:** an RPC lane in the shared chain serves JSON-RPC happily over **HTTP** but refuses the **WebSocket** upgrade. rpc-websockets treats every failure as transient and reconnects in a tight background loop for the life of a warm instance, so one bad lane produces ~100 identical lines an hour (measured 2026-07-29: `solana.leorpc.com` → 301, `solana-mainnet.gateway.tatum.io` → 402).
+- **Already fixed — this should be self-healing now.** Each lane's socket is probed once before use, and a structural refusal (301/302/307/308, 401/402/403/404/405/410/501) benches that lane for the process while a transient one (429, 5xx, reset) benches it for 5 minutes. The bench policy is a pure function (`classifyWsFailure`) covered by [tests/pump-onchain-ws-lanes.test.js](../../tests/pump-onchain-ws-lanes.test.js). Expect at most one `ws lane benched (structural): <host>` line per lane per process instead of the storm.
+- **If the storm returns:** a lane is failing in a way the classifier reads as transient when it is really permanent. Probe it directly and add its status to the structural list:
+
+  ```sh
+  curl -s -o /dev/null -w '%{http_code}\n' -m 8 \
+    -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
+    -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
+    https://<rpc-host>
+  ```
 
 ---
 
@@ -418,6 +448,48 @@ HTTP 503 GET /health   (model-* service)   textPayload: The request failed becau
   a few minutes and serves from the **public Solana RPC** in the meantime.
 - **Resolve:** 🟢 nothing required — the public-RPC fallback is working. 🟡 raise
   the Helius quota to avoid the degraded window.
+- **But do not read this line as "only Helius is affected."** It watches one
+  provider; see the `rpc_lanes` section below for the whole-tier view.
+
+---
+
+## 🔴 Every paid Solana RPC lane exhausted at once (`rpc_lanes` degraded)
+
+```
+/api/healthz → subsystems.rpc_lanes: degraded
+  "all 3 paid lanes exhausted; serving from 6 free lanes"
+```
+
+- **Source:** `checkRpcLanes()` in
+  [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js),
+  reading `rpcLaneHealth()` from
+  [api/_lib/solana/connection.js](../../api/_lib/solana/connection.js).
+- **What it means:** every endpoint the platform PAYS for is parked in quota
+  cooldown simultaneously, so all Solana traffic is running on free public
+  nodes. The platform stays UP (that is the failover chain working), but free
+  nodes are aggressively throttled, and the symptom set is diffuse and easy to
+  misdiagnose: intermittent 502/503/504 on on-chain routes, `broadcast_failed`
+  settles, slow balance reads, sniper and pump routes timing out.
+- **Why this sensor exists.** On 2026-07-29 the Helius plan
+  (`-32429 max usage reached`), QuickNode's daily cap (`-32003 daily request
+  limit reached`) and Alchemy's monthly cap (`429 Monthly capacity limit
+  exceeded`) were ALL exhausted at the same time, and nothing surfaced it: the
+  only RPC sensor watched Helius, through per-instance memory, so a freshly
+  started instance reported `premium RPC healthy` while every premium lane was
+  returning errors. Verify any lane by hand with a single call:
+  ```sh
+  curl -s "<endpoint>" -X POST -H 'Content-Type: application/json' \
+    -d '{"jsonrpc":"2.0","id":1,"method":"getBalance","params":["WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"]}'
+  ```
+- **Resolve (owner, money):** top up or upgrade the exhausted plans (Helius,
+  QuickNode, Alchemy). Nothing else clears a quota; the cooldowns simply expire
+  and re-trip while traffic exceeds the free tiers.
+- **Do NOT "fix" it by promoting the reserve.** `SOLANA_RPC_LAST_RESORT_URLS`
+  exists to keep a metered endpoint in reserve; naming that same URL in
+  `SOLANA_RPC_URL` or `QUICKNODE_RPC_URL` makes it the primary (the chain
+  dedupes to the first occurrence) and burns the reserve first. That exact
+  misconfiguration was live until 2026-07-29. See
+  [docs/solana.md](../solana.md) for the full priority contract.
 
 ---
 

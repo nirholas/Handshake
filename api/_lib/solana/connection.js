@@ -444,6 +444,63 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 	]).filter(isHttpUrl);
 }
 
+/**
+ * The keyed / metered mainnet lanes — every endpoint we PAY for, in the same
+ * forms solanaRpcEndpoints() builds them. Free keyless nodes are excluded.
+ * Used by the lane-health sensor to answer "are we still on paid capacity, or
+ * has the whole premium tier gone dark and left us on free public nodes?"
+ */
+function paidMainnetEndpoints() {
+	const key = process.env.HELIUS_API_KEY;
+	const alch = process.env.ALCHEMY_API_KEY;
+	return dedupe([
+		normalizeRpcUrl(process.env.SOLANA_RPC_URL),
+		normalizeRpcUrl(process.env.QUICKNODE_RPC_URL),
+		key && `https://mainnet.helius-rpc.com/?api-key=${key}`,
+		alch && `https://solana-mainnet.g.alchemy.com/v2/${alch}`,
+		...lastResortUrls(),
+	]).filter(isHttpUrl);
+}
+
+/**
+ * Health of the Solana RPC lanes as this instance (plus whatever the fleet has
+ * published) currently understands them. Reports which endpoints are parked in
+ * cooldown and, critically, whether ANY paid lane is still serving.
+ *
+ * The blind spot this closes: before 2026-07-29 the only RPC sensor watched
+ * Helius, and it read per-instance memory — so a fresh instance reported
+ * "premium RPC healthy" while the plan was hard-exhausted, and QuickNode's daily
+ * cap and Alchemy's monthly cap had no sensor at all. All three were exhausted
+ * simultaneously and nothing surfaced it. Because the cooldown map is now
+ * fleet-wide, this reads the whole tier honestly.
+ *
+ * @returns {{ total, cooling, paidTotal, paidCooling, allPaidCooling, lanes }}
+ */
+export function rpcLaneHealth(now = Date.now()) {
+	const paid = new Set(paidMainnetEndpoints());
+	const lanes = solanaRpcEndpoints('mainnet').map((url) => {
+		const until = _endpointCooldown.get(url) || 0;
+		return {
+			url: maskUrl(url),
+			paid: paid.has(url),
+			cooling: until > now,
+			cooldownRemainingMs: until > now ? until - now : 0,
+		};
+	});
+	const paidLanes = lanes.filter((l) => l.paid);
+	const paidCooling = paidLanes.filter((l) => l.cooling).length;
+	return {
+		total: lanes.length,
+		cooling: lanes.filter((l) => l.cooling).length,
+		paidTotal: paidLanes.length,
+		paidCooling,
+		// Only meaningful when paid lanes are configured at all; a keyless
+		// deployment is a valid choice, not a degradation.
+		allPaidCooling: paidLanes.length > 0 && paidCooling === paidLanes.length,
+		lanes,
+	};
+}
+
 function maskUrl(url) {
 	try {
 		const u = new URL(url);

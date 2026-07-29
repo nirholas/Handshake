@@ -32,6 +32,7 @@
 
 import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
+import { rpcLaneHealth } from '../solana/connection.js';
 import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
@@ -183,6 +184,47 @@ function checkHelius() {
 			};
 		}
 		return { ...base, status: 'ok', detail: 'premium RPC healthy', metrics: { quotaTripsSinceStart: h.quotaTripsSinceStart } };
+	} catch (err) {
+		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
+	}
+}
+
+// Every PAID Solana lane at once, not just Helius. On 2026-07-29 the Helius
+// plan, QuickNode's daily cap and Alchemy's monthly cap were all exhausted
+// simultaneously and nothing surfaced it: the only RPC sensor watched Helius
+// through per-instance memory, so a fresh instance cheerfully reported "premium
+// RPC healthy" while every premium lane was returning -32429 / -32003 / 429.
+// Falling through to free public nodes keeps the platform up but throttled, and
+// that is precisely the state an operator must be told about, because clearing
+// it costs money and only the owner can spend it.
+function checkRpcLanes() {
+	const base = { name: 'rpc_lanes', label: 'Solana RPC lanes' };
+	try {
+		const h = rpcLaneHealth();
+		const metrics = {
+			paidTotal: h.paidTotal,
+			paidCooling: h.paidCooling,
+			total: h.total,
+			cooling: h.cooling,
+		};
+		if (h.paidTotal === 0) {
+			return { ...base, status: 'ok', detail: `${h.total} keyless lanes (no paid RPC configured)`, metrics };
+		}
+		if (h.allPaidCooling) {
+			return {
+				...base,
+				status: 'degraded',
+				detail: `all ${h.paidTotal} paid lanes exhausted; serving from ${h.total - h.cooling} free lanes`,
+				metrics,
+				hint: 'Every paid Solana RPC plan is over quota at once. Calls still succeed on free public nodes but are throttled, which shows up as intermittent 5xx and slow settles. Owner action: top up or upgrade the RPC plans.',
+			};
+		}
+		return {
+			...base,
+			status: 'ok',
+			detail: `${h.paidTotal - h.paidCooling}/${h.paidTotal} paid lanes serving`,
+			metrics,
+		};
 	} catch (err) {
 		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
 	}
@@ -342,6 +384,8 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		Promise.resolve(checkCache()),
 		Promise.resolve(checkRateLimiter()),
 		Promise.resolve(checkHelius()),
+		// Whole paid RPC tier, not just Helius (see checkRpcLanes).
+		Promise.resolve(checkRpcLanes()),
 		Promise.resolve(checkRing()),
 		// Settle SUCCESS RATE, not just "armed" — reads x402_autonomous_log. Needs
 		// the DB, so it shares the probeDb gate; skipped-DB callers get `unknown`.
