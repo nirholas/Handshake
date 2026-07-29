@@ -87,6 +87,14 @@
 			<description>The price chart, profile and exchange listings on a coin page all came from one provider, so whenever it throttled our requests the whole page went down at once, for hours. Each of those now has a live backup: charts fall back to exchange candles for the majors and an on-chain price oracle for every other coin, while the profile and market listings fall back to a second data provider. When a backup is answering, the page says so at the bottom instead of quietly leaving numbers blank, and columns the backup cannot fill are hidden rather than shown as a row of dashes. Two small honesty fixes came with it: a follower count of zero now means &quot;not tracked&quot; and is left out rather than stated as zero, and a price change the backup does not actually compute is no longer drawn as a flat 0.00%.</description>
 		</item>
 		<item>
+			<title>Command palette search now tolerates typos and ranks results properly</title>
+			<link>https://three.ws/dashboard</link>
+			<guid isPermaLink="false">2026-07-29:Command palette search now tolerates typos and ranks results properly</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The dashboard palette finds what you meant when you mistype (searching 'markteplace' now finds Marketplace) and orders results by how well they actually match, instead of lumping every loose match together at the same rank. Matched letters are highlighted at their real positions.</description>
+		</item>
+		<item>
 			<title>Concierge demo and the 3D home demo both work again</title>
 			<link>https://three.ws/concierge</link>
 			<guid isPermaLink="false">2026-07-29:Concierge demo and the 3D home demo both work again</guid>
@@ -111,6 +119,14 @@
 			<description>An audit of our payment facilitator found that about one in five recorded settlements shared an on-chain transaction with another settlement. Solana signatures are deterministic, so two payments of the same amount, from the same wallet, to the same endpoint, built in the same short window could compile to a byte-for-byte identical transaction. Only one of them could ever land on chain, and the facilitator was crediting the others against it. Settlement is now claimed atomically: one transaction settles at most one payment, a genuine retry is recognised and answered without double-charging, and anything else is refused rather than credited. The payment builder also draws from a signature space about four thousand times larger, at no extra fee, so identical transactions are no longer built in the first place. A new hourly audit watches the invariant and raises an alert if it is ever violated again.</description>
 		</item>
 		<item>
+			<title>Exported chat transcripts can no longer carry spreadsheet formulas</title>
+			<link>https://three.ws/widgets</link>
+			<guid isPermaLink="false">2026-07-29:Exported chat transcripts can no longer carry spreadsheet formulas</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>When a widget owner exports their chat transcripts as a CSV, a visitor message that began with a character like = or @ could be treated as a live formula by Excel or Google Sheets when the file was opened. Exported text is now always neutralized so it opens as plain text. The audit-log export already did this; both exports now share one implementation so they cannot drift apart again.</description>
+		</item>
+		<item>
 			<title>Fact checks that used to time out now come back with their sources</title>
 			<link>https://three.ws/fact-check</link>
 			<guid isPermaLink="false">2026-07-29:Fact checks that used to time out now come back with their sources</guid>
@@ -119,12 +135,28 @@
 			<description>Some fact checks were taking so long that the request was cut off before anything came back, and the caller got an error instead of an answer. Two things caused it. The checker asks a language model to write search queries and then to judge each source it finds; if none of the model providers could answer, that step threw the whole check away, even though the checker had already gathered real sources and knew how to carry on without the model. And nothing kept an eye on the clock, so a slow run could outlast the time limit the request had to begin with. Both are fixed. A check now works to a time budget and hands each step whatever is left, so it always finishes with something to show. If a step genuinely cannot reach a model, the check falls back instead of failing: it searches the claim itself, returns the sources it found with their excerpts, and marks the verdict as insufficient rather than guessing. The response now says plainly which step fell back, and a result produced that way is deliberately not cached, so asking again re-runs the full check rather than replaying a bad day.</description>
 		</item>
 		<item>
+			<title>Hardened how agent and model text is displayed across the site</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Hardened how agent and model text is displayed across the site</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Everywhere the site shows text written by an AI model or another person (agent chat replies, bounty briefs, the on-page concierge widget, saved memories, skill manifests), that text is now rendered through a single hardened pipeline that strips anything dangerous before it reaches the page. It also renders more of what you actually write: tables, nested lists, and strikethrough now display properly instead of appearing as raw symbols. Previously eight different parts of the site each interpreted this text their own way, with no shared safety net.</description>
+		</item>
+		<item>
 			<title>Notification mute switches actually work now</title>
 			<link>https://three.ws/dashboard/settings</link>
 			<guid isPermaLink="false">2026-07-29:Notification mute switches actually work now</guid>
 			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.</description>
+		</item>
+		<item>
+			<title>Notifications stack instead of replacing each other</title>
+			<link>https://three.ws/dashboard</link>
+			<guid isPermaLink="false">2026-07-29:Notifications stack instead of replacing each other</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Confirmation messages across the dashboard now queue up and stay readable when several happen at once, can be dismissed with a click, and are announced to screen readers. Before this, a second message would silently overwrite the first.</description>
 		</item>
 		<item>
 			<title>On-chain agent pages now load their registration details reliably</title>
@@ -181,6 +213,14 @@
 			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The platform routes every Solana call through a chain of RPC providers so no single one becomes a bottleneck, with a paid endpoint held back as an emergency reserve. A configuration mistake had that reserve listed as the primary as well, and because the chain keeps the first entry for a repeated address, it quietly served all traffic and burned through its daily request cap while the free providers sat idle. The reserve is now held back as intended and the premium provider leads. Two safeguards prevent a repeat: the slowest public endpoint can no longer outrank a paid provider by being used as a default, and when one server discovers a provider is out of quota, the rest of the fleet now inherits that verdict immediately instead of each wasting another request against a cap that is already full.</description>
+		</item>
+		<item>
+			<title>Steadier market data during upstream rate limits and outages</title>
+			<link>https://three.ws/markets</link>
+			<guid isPermaLink="false">2026-07-29:Steadier market data during upstream rate limits and outages</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Market, coin, and price lookups now retry with randomized spacing rather than every request retrying in lockstep, which is what turned a brief upstream hiccup into a stampede. The in-memory caches behind those pages also keep the entries that are actually being used, instead of discarding the oldest one regardless of demand, so busy pages stay fast during a slowdown.</description>
 		</item>
 		<item>
 			<title>Stopped two automated systems from passing the same SOL back and forth</title>

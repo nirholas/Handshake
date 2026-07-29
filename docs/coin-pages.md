@@ -119,14 +119,22 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
 - **Coin profile** (`/api/coin/detail`) — CoinGecko `/coins/{id}` → CoinPaprika
   ([`api/_lib/coin-fallbacks.js`](../api/_lib/coin-fallbacks.js)). CoinPaprika
   uses its own `<symbol>-<name-slug>` ids, so the module resolves the CoinGecko
-  id against `/v1/search` and caches the mapping for a week. The match is
-  deliberately strict — only an exact id-slug or name-slug hit counts — because
-  answering with a *different* coin's market cap is worse than answering with an
-  error. Fields this source doesn't carry (FDV, 24h high/low, developer stats,
-  per-chain contract addresses) come back `null` and the page hides those
-  sections. Circulating supply isn't published either, but market cap ÷ price
-  recovers it exactly. The lookup by Solana mint (`?contract=`) has no fallback:
-  CoinPaprika is addressed by coin id, not by mint.
+  id in two stages and caches the result for a week. First an exact id-slug or
+  name-slug match (`solana` → `sol-solana`), which covers a little over half the
+  top 50. The rest miss because the two catalogues list the same asset under
+  different names — one by ticker, the other by product name, or one with a
+  disambiguating suffix. For those, identity is **proven, not guessed**:
+  DefiLlama supplies the authoritative
+  symbol and price for the requested CoinGecko id, and a same-symbol candidate is
+  accepted only when its own price agrees within 2%. Two different coins sharing
+  a ticker and a price to within 2% is vanishingly unlikely, so agreement is
+  evidence; a name heuristic would only be a hunch, and serving a *different*
+  coin's market cap is worse than serving an error. Fields this source doesn't
+  carry (FDV, 24h high/low, developer stats, per-chain contract addresses) come
+  back `null` and the page hides those sections. Circulating supply isn't
+  published either, but market cap ÷ price recovers it exactly. The lookup by
+  Solana mint (`?contract=`) has no fallback: CoinPaprika is addressed by coin
+  id, not by mint.
 - **Exchange listings** (`/api/coin/tickers`) — CoinGecko `/coins/{id}/tickers`
   → CoinPaprika `/coins/{id}/markets`. Derivatives venues are filtered out (the
   CoinGecko endpoint it stands in for is spot-only, and perps would otherwise
@@ -162,6 +170,28 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
 Every fallback is free and keyless (Binance, Bybit and OKX are excluded — they
 geo-block US datacenter IPs, so from Cloud Run they would be permanently dead
 rungs).
+
+### Budgeting the CoinPaprika rungs
+
+**CoinPaprika's free tier allows 60 requests per hour** (25k/month) and returns
+`402 payment_required` with a one-hour block once that is spent. A fallback is
+hot exactly when CoinGecko is throttling, which is the worst possible moment to
+burn the only other profile source — so the per-coin rungs are budgeted rather
+than called per request:
+
+- **Normalized payloads are cached in the shared cache for 120s.** One round-trip
+  serves the whole fleet for the window, so 500 visitors to `/coin/solana` during
+  an outage cost one request, not 500. This is what makes the budget survivable.
+- **Concurrent misses single-flight.** A cold cache under load resolves to one
+  upstream call, not one per in-flight request.
+- **The id mapping is cached for a week**, so a coin costs its resolution once.
+- **Paging is served from the cached response** — CoinPaprika returns every market
+  in one payload, so "Load more exchanges" spends nothing.
+- **A 402/429 benches the source for an hour.** A spent budget then costs zero
+  further requests instead of one wasted round-trip per request until it resets.
+
+DefiLlama carries no comparable limit and is addressed by CoinGecko id, which is
+why it — not CoinPaprika — takes the high-volume chart job.
 
 ## The market tools
 

@@ -66,14 +66,24 @@ function tracked(patterns) {
 const IMPORT_RE =
 	/(?:^|\n)\s*(?:import|export)[^'"\n]*?from\s*['"]([^'"]+)['"]|(?:^|[^.\w])import\(\s*['"]([^'"]+)['"]\s*\)/g;
 
-/** Every specifier `file` imports, as raw strings. */
+/**
+ * Every specifier `file` imports, tagged static vs dynamic.
+ *
+ * The distinction is the whole point for built-ins. A STATIC
+ * `import { promisify } from 'node:util'` is what breaks the build: rollup
+ * swaps the module for __vite-browser-external and then rejects the named
+ * export. A DYNAMIC `await import('node:util')` is the sanctioned escape hatch
+ * — it stays an external dynamic import with no module-level named bindings to
+ * check, and it only evaluates on the server path that actually calls it. So
+ * dynamic built-in imports are deliberately NOT leaks.
+ */
 function specifiersOf(file) {
 	let src;
 	try { src = readFileSync(file, 'utf8'); } catch { return []; }
 	const out = [];
 	for (const m of src.matchAll(IMPORT_RE)) {
-		const spec = m[1] || m[2];
-		if (spec) out.push(spec);
+		if (m[1]) out.push({ spec: m[1], dynamic: false });
+		else if (m[2]) out.push({ spec: m[2], dynamic: true });
 	}
 	return out;
 }
@@ -139,10 +149,10 @@ function chainTo(file) {
 
 while (queue.length) {
 	const file = queue.shift();
-	for (const spec of specifiersOf(file)) {
+	for (const { spec, dynamic } of specifiersOf(file)) {
 		const builtin = builtinName(spec);
 		if (builtin) {
-			if (!POLYFILLED.has(builtin)) leaks.push({ file, spec, chain: chainTo(file) });
+			if (!dynamic && !POLYFILLED.has(builtin)) leaks.push({ file, spec, chain: chainTo(file) });
 			continue;
 		}
 		if (!spec.startsWith('.')) continue; // bare package — the bundler's problem, not ours

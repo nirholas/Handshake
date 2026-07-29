@@ -17,10 +17,26 @@
 //
 // DefiLlama is the reason the chart fallback is universal rather than
 // majors-only: its coins oracle is addressed as `coingecko:<id>`, so no id
-// mapping is needed and every coin CoinGecko charts, DefiLlama charts too.
+// mapping is needed and every coin CoinGecko charts, DefiLlama charts too. It
+// also carries no meaningful rate limit, which is why it — not CoinPaprika —
+// takes the high-volume job.
+//
 // CoinPaprika uses its own `<symbol>-<name-slug>` ids, so this module resolves
-// and caches that mapping — strictly, because serving the WRONG coin's profile
-// is worse than serving an error.
+// and caches that mapping. Resolution is deliberately conservative: an exact
+// slug/name match, or else a match proven by agreement between DefiLlama's
+// price for the requested CoinGecko id and the candidate's own price. Nothing
+// unproven is ever served, because answering with a different coin's market cap
+// is worse than answering with an error.
+//
+// **CoinPaprika's free tier allows sixty requests per HOUR** (25k/month), and
+// blocks for an hour past that. Every design choice here follows from it:
+//   1. Normalized payloads are cached in the SHARED cache, so during an outage
+//      the fleet spends one round-trip per coin per cache window, not one per
+//      request. This is what makes the budget survivable at all.
+//   2. Concurrent misses single-flight into one upstream call.
+//   3. The id mapping is cached for a week: a coin costs its resolution once.
+//   4. A budget rejection benches the source process-wide (api/_lib/coinpaprika.js),
+//      so a spent hour costs zero further requests here or in any sibling caller.
 //
 // Every function here returns the exact shape its CoinGecko-backed caller
 // already emits, so the page renders identically no matter which source
@@ -29,8 +45,11 @@
 
 import { fetchFirst, fetchFirstOrNull } from '../../src/shared/failover-fetch.js';
 import { cacheGet, cacheSet } from './cache.js';
+// The budget guard is process-wide and shared with the other CoinPaprika
+// callers (global stats, the paid market-heatmap endpoint) — see that module's
+// header for why the sixty-per-hour ceiling has to be tracked in one place.
+import { PAPRIKA_BASE, paprikaGet } from './coinpaprika.js';
 
-const PAPRIKA_BASE = 'https://api.coinpaprika.com/v1';
 const LLAMA_COINS_BASE = 'https://coins.llama.fi';
 
 const num = (v) => {
@@ -100,6 +119,84 @@ export function pickPaprikaId(raw, cgId) {
 	return str(matches[0].id);
 }
 
+// ── Stage 2: symbol + price-verified resolution ──────────────────────────────
+// The slug match above resolves a bit over half the top coins. The rest fail
+// because the two catalogues simply name the same asset differently: one lists
+// it under its ticker, the other under a product name, or one carries a
+// disambiguating suffix the other doesn't. Roughly 44% of the top 50 miss on
+// slug alone. No amount of string cleverness bridges that safely, and guessing
+// is exactly what must not happen here.
+//
+// So identity is VERIFIED instead of guessed. DefiLlama's oracle is addressed by
+// CoinGecko id, so it hands back the authoritative symbol and live USD price for
+// the id we were asked about. Candidates are then drawn from CoinPaprika by that
+// symbol and accepted only when their price agrees with DefiLlama's within a
+// tight band. Two different coins that share a ticker having prices within 2% of
+// each other is vanishingly unlikely, so agreement is strong evidence of
+// identity — and unlike a name heuristic, it is evidence rather than a hunch.
+// Each probe costs one request from an hourly budget of sixty, so only the two
+// best-ranked candidates are ever checked. A coin with real market share is
+// essentially always among them, and the mapping is then cached for a week, so
+// the spend is once per coin rather than once per request.
+const PRICE_MATCH_TOLERANCE = 0.02;
+const MAX_VERIFY_CANDIDATES = 2;
+
+/** Do two prices agree closely enough to be the same asset? */
+export function pricesAgree(a, b, tolerance = PRICE_MATCH_TOLERANCE) {
+	if (!(a > 0) || !(b > 0)) return false;
+	return Math.abs(a - b) / Math.max(a, b) <= tolerance;
+}
+
+/** Authoritative symbol + USD price for a CoinGecko id, from DefiLlama. */
+async function llamaIdentity(cgId) {
+	const raw = await fetchFirstOrNull(
+		[
+			{
+				name: 'llama-identity',
+				url: `${LLAMA_COINS_BASE}/prices/current/coingecko:${encodeURIComponent(cgId)}`,
+				parse: async (r) => (await r.json())?.coins?.[`coingecko:${cgId}`] ?? null,
+			},
+		],
+		{ timeoutMs: 6000, label: `llama-id:${cgId}` },
+	);
+	const symbol = str(raw?.symbol)?.toUpperCase();
+	const price = pos(raw?.price);
+	return symbol && price ? { symbol, price } : null;
+}
+
+/**
+ * CoinPaprika candidates for a ticker symbol, best-ranked first. Exported so
+ * the ranking rule is testable without network access.
+ * @param {{currencies?: object[]}} raw  /v1/search payload
+ * @param {string} symbol                upper-case ticker
+ */
+export function symbolCandidates(raw, symbol) {
+	const rank = (c) => (num(c.rank) && num(c.rank) > 0 ? num(c.rank) : Number.MAX_SAFE_INTEGER);
+	return (raw?.currencies || [])
+		.filter((c) => str(c?.symbol)?.toUpperCase() === symbol && c?.is_active !== false && str(c?.id))
+		.sort((a, b) => rank(a) - rank(b))
+		.slice(0, MAX_VERIFY_CANDIDATES)
+		.map((c) => c.id);
+}
+
+/**
+ * Resolve by symbol, then prove the match on price. Returns a CoinPaprika id
+ * only when a candidate's live price agrees with DefiLlama's for the requested
+ * CoinGecko id; otherwise null, because an unproven match must not be served.
+ */
+async function resolveByPrice(cgId) {
+	const identity = await llamaIdentity(cgId);
+	if (!identity) return null;
+	const search = await paprikaGet(
+		`${PAPRIKA_BASE}/search/?q=${encodeURIComponent(identity.symbol)}&c=currencies&limit=20`,
+	);
+	for (const pid of symbolCandidates(search, identity.symbol)) {
+		const ticker = await paprikaGet(`${PAPRIKA_BASE}/tickers/${pid}?quotes=USD`);
+		if (pricesAgree(num(ticker?.quotes?.USD?.price), identity.price)) return pid;
+	}
+	return null;
+}
+
 // The mapping is immutable in practice (a coin's ids don't change), so cache it
 // hard: in-memory for the instance and in the shared cache for the fleet. A
 // negative result is cached too, briefly — a coin CoinPaprika doesn't list
@@ -127,20 +224,12 @@ export async function resolvePaprikaId(cgId) {
 		_idMemo.set(id, resolved);
 		return resolved;
 	}
-	const raw = await fetchFirstOrNull(
-		[
-			{
-				name: 'coinpaprika-search',
-				url: `${PAPRIKA_BASE}/search/?q=${encodeURIComponent(id)}&c=currencies&limit=20`,
-				parse: async (r) => (await r.json()) ?? null,
-			},
-		],
-		{ timeoutMs: 6000, label: `paprika-id:${id}` },
-	);
+	const raw = await paprikaGet(`${PAPRIKA_BASE}/search/?q=${encodeURIComponent(id)}&c=currencies&limit=20`);
 	// Unreachable upstream: don't poison the cache with a negative that would
 	// outlive the outage. Only a real answer (hit or genuine miss) is stored.
 	if (!raw) return null;
-	const pid = pickPaprikaId(raw, id);
+	// Stage 1 (free, no extra calls) then stage 2 (verified against price).
+	const pid = pickPaprikaId(raw, id) || (await resolveByPrice(id));
 	_idMemo.set(id, pid);
 	if (_idMemo.size > 2000) _idMemo.clear();
 	cacheSet(idKey(id), pid || '', pid ? ID_TTL_S : ID_MISS_TTL_S).catch(() => {});
@@ -150,6 +239,43 @@ export async function resolvePaprikaId(cgId) {
 /** Test-only hook: drop the in-memory id memo. */
 export function resetPaprikaIdMemo() {
 	_idMemo.clear();
+}
+
+// ── Payload cache ────────────────────────────────────────────────────────────
+// The single most important defence of the hourly budget. A CoinGecko outage
+// does not reduce traffic — every visitor to /coin/solana still arrives, and
+// without this each one would spend CoinPaprika requests until the hour's sixty
+// were gone, at which point the fallback is as dead as the thing it backs up.
+//
+// Caching the NORMALIZED payload (rather than the raw upstream bodies) means one
+// round-trip serves the whole fleet for the window, and the stored value is
+// exactly what the endpoint returns. The window is short because this is live
+// market data; it only has to be long enough to collapse a burst.
+//
+// Single-flight on top: N concurrent misses for the same coin — the shape of a
+// cold cache under load — await one upstream call instead of racing to spend N
+// requests on the same answer.
+const PAYLOAD_TTL_S = 120;
+const _inflight = new Map();
+
+async function cachedPayload(key, compute) {
+	const cached = await cacheGet(key).catch(() => null);
+	if (cached != null) return cached;
+	const pending = _inflight.get(key);
+	if (pending) return pending;
+	const p = (async () => {
+		try {
+			const value = await compute();
+			// A null is "couldn't answer", which must stay retryable: caching it
+			// would extend a transient miss across the whole window.
+			if (value != null) cacheSet(key, value, PAYLOAD_TTL_S).catch(() => {});
+			return value;
+		} finally {
+			_inflight.delete(key);
+		}
+	})();
+	_inflight.set(key, p);
+	return p;
 }
 
 // ── Coin profile ─────────────────────────────────────────────────────────────
@@ -288,19 +414,17 @@ export function normalizePaprikaDetail(coin, ticker, cgId) {
  * @returns {Promise<object|null>}
  */
 export async function fetchFallbackCoinDetail(cgId) {
-	const pid = await resolvePaprikaId(cgId);
-	if (!pid) return null;
-	const [coin, ticker] = await Promise.all([
-		fetchFirstOrNull([{ name: 'coinpaprika-coin', url: `${PAPRIKA_BASE}/coins/${pid}` }], {
-			timeoutMs: 8000,
-			label: `paprika-coin:${pid}`,
-		}),
-		fetchFirstOrNull([{ name: 'coinpaprika-ticker', url: `${PAPRIKA_BASE}/tickers/${pid}?quotes=USD` }], {
-			timeoutMs: 8000,
-			label: `paprika-ticker:${pid}`,
-		}),
-	]);
-	return normalizePaprikaDetail(coin, ticker, cgId);
+	return cachedPayload(`gecko-fallback:detail:${cgId}`, async () => {
+		const pid = await resolvePaprikaId(cgId);
+		if (!pid) return null;
+		// The coin profile is near-static and the ticker is the live half; both are
+		// needed for one answer, so they go out together rather than in series.
+		const [coin, ticker] = await Promise.all([
+			paprikaGet(`${PAPRIKA_BASE}/coins/${pid}`),
+			paprikaGet(`${PAPRIKA_BASE}/tickers/${pid}?quotes=USD`),
+		]);
+		return normalizePaprikaDetail(coin, ticker, cgId);
+	});
 }
 
 // ── Exchange listings ────────────────────────────────────────────────────────
@@ -354,30 +478,23 @@ export function normalizePaprikaMarket(m) {
  * @returns {Promise<object[]|null>} null when unavailable
  */
 export async function fetchFallbackTickers(cgId, { page = 1, perPage = 100 } = {}) {
-	const pid = await resolvePaprikaId(cgId);
-	if (!pid) return null;
-	const raw = await fetchFirstOrNull(
-		[
-			{
-				name: 'coinpaprika-markets',
-				url: `${PAPRIKA_BASE}/coins/${pid}/markets?quotes=USD`,
-				parse: async (r) => {
-					const body = await r.json();
-					return Array.isArray(body) && body.length ? body : null;
-				},
-			},
-		],
-		{ timeoutMs: 10_000, label: `paprika-markets:${pid}` },
-	);
-	if (!raw) return null;
-	const rows = raw
-		// CoinGecko's /tickers is a SPOT feed; CoinPaprika mixes perpetual and
-		// futures venues into the same response (they out-volume spot and would
-		// otherwise head the table). Keep the comparison honest.
-		.filter((m) => String(m?.category || 'Spot').toLowerCase() === 'spot')
-		.map(normalizePaprikaMarket)
-		.filter((t) => t.exchange.name && t.price_usd != null)
-		.sort((a, b) => (b.volume_usd ?? 0) - (a.volume_usd ?? 0));
+	// One upstream response holds every market, so the cache is keyed on the coin
+	// and paged in memory: browsing to page 2 costs no additional request.
+	const rows = await cachedPayload(`gecko-fallback:markets:${cgId}`, async () => {
+		const pid = await resolvePaprikaId(cgId);
+		if (!pid) return null;
+		const raw = await paprikaGet(`${PAPRIKA_BASE}/coins/${pid}/markets?quotes=USD`, 10_000);
+		if (!Array.isArray(raw) || !raw.length) return null;
+		return raw
+			// CoinGecko's /tickers is a SPOT feed; CoinPaprika mixes perpetual and
+			// futures venues into the same response (they out-volume spot and would
+			// otherwise head the table). Keep the comparison honest.
+			.filter((m) => String(m?.category || 'Spot').toLowerCase() === 'spot')
+			.map(normalizePaprikaMarket)
+			.filter((t) => t.exchange.name && t.price_usd != null)
+			.sort((a, b) => (b.volume_usd ?? 0) - (a.volume_usd ?? 0));
+	});
+	if (!rows) return null;
 	const start = (Math.max(1, page) - 1) * perPage;
 	return rows.slice(start, start + perPage);
 }

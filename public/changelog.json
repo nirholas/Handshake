@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T06:15:54.723Z",
+	"generated_at": "2026-07-29T06:18:36.500Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -117,6 +117,16 @@
 		{
 			"date": "2026-07-29",
 			"type": "update",
+			"title": "Command palette search now tolerates typos and ranks results properly",
+			"summary": "The dashboard palette finds what you meant when you mistype (searching 'markteplace' now finds Marketplace) and orders results by how well they actually match, instead of lumping every loose match together at the same rank. Matched letters are highlighted at their real positions.",
+			"link": "/dashboard",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
 			"title": "Concierge demo and the 3D home demo both work again",
 			"summary": "The live widget on the Concierge page failed to start because the page ran its setup before the widget code had finished loading, leaving visitors with a dead demo on the page that sells it. The /demos/3d-home animated avatar demo never rendered its character either: the model uses compressed geometry and the page was loading it without the matching decoder. Both now load, animate, and respond as intended.",
 			"link": "/concierge",
@@ -149,6 +159,17 @@
 		{
 			"date": "2026-07-29",
 			"type": "update",
+			"title": "Exported chat transcripts can no longer carry spreadsheet formulas",
+			"summary": "When a widget owner exports their chat transcripts as a CSV, a visitor message that began with a character like = or @ could be treated as a live formula by Excel or Google Sheets when the file was opened. Exported text is now always neutralized so it opens as plain text. The audit-log export already did this; both exports now share one implementation so they cannot drift apart again.",
+			"link": "/widgets",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
 			"title": "Fact checks that used to time out now come back with their sources",
 			"summary": "Some fact checks were taking so long that the request was cut off before anything came back, and the caller got an error instead of an answer. Two things caused it. The checker asks a language model to write search queries and then to judge each source it finds; if none of the model providers could answer, that step threw the whole check away, even though the checker had already gathered real sources and knew how to carry on without the model. And nothing kept an eye on the clock, so a slow run could outlast the time limit the request had to begin with. Both are fixed. A check now works to a time budget and hands each step whatever is left, so it always finishes with something to show. If a step genuinely cannot reach a model, the check falls back instead of failing: it searches the claim itself, returns the sources it found with their excerpts, and marks the verdict as insufficient rather than guessing. The response now says plainly which step fell back, and a result produced that way is deliberately not cached, so asking again re-runs the full check rather than replaying a bad day.",
 			"link": "/fact-check",
@@ -160,11 +181,32 @@
 		{
 			"date": "2026-07-29",
 			"type": "update",
+			"title": "Hardened how agent and model text is displayed across the site",
+			"summary": "Everywhere the site shows text written by an AI model or another person (agent chat replies, bounty briefs, the on-page concierge widget, saved memories, skill manifests), that text is now rendered through a single hardened pipeline that strips anything dangerous before it reaches the page. It also renders more of what you actually write: tables, nested lists, and strikethrough now display properly instead of appearing as raw symbols. Previously eight different parts of the site each interpreted this text their own way, with no shared safety net.",
+			"link": null,
+			"tags": [
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
 			"title": "Notification mute switches actually work now",
 			"summary": "The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.",
 			"link": "/dashboard/settings",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Notifications stack instead of replacing each other",
+			"summary": "Confirmation messages across the dashboard now queue up and stay readable when several happen at once, can be dismissed with a click, and are announced to screen readers. Before this, a second message would silently overwrite the first.",
+			"link": "/dashboard",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -240,6 +282,17 @@
 			"tags": [
 				"infra",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Steadier market data during upstream rate limits and outages",
+			"summary": "Market, coin, and price lookups now retry with randomized spacing rather than every request retrying in lockstep, which is what turned a brief upstream hiccup into a stampede. The in-memory caches behind those pages also keep the entries that are actually being used, instead of discarding the oldest one regardless of demand, so busy pages stay fast during a slowdown.",
+			"link": "/markets",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

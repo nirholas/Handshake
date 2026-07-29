@@ -22,6 +22,8 @@ import {
 	slugify,
 	paprikaEntryMatches,
 	pickPaprikaId,
+	pricesAgree,
+	symbolCandidates,
 	resolvePaprikaId,
 	resetPaprikaIdMemo,
 	normalizePaprikaDetail,
@@ -29,7 +31,9 @@ import {
 	normalizeLlamaChart,
 	fetchLlamaChart,
 	fetchFallbackTickers,
+	fetchFallbackCoinDetail,
 } from '../api/_lib/coin-fallbacks.js';
+import { isPaprikaBenched, resetPaprikaHealth } from '../api/_lib/coinpaprika.js';
 
 const jsonResponse = (body, status = 200) =>
 	new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -143,8 +147,90 @@ describe('CoinGecko id → CoinPaprika id', () => {
 	});
 });
 
+describe('price-verified resolution (stage 2)', () => {
+	it('accepts prices within the tolerance and rejects anything wider', () => {
+		expect(pricesAgree(100, 101)).toBe(true); // 1% apart — same asset
+		expect(pricesAgree(100, 103)).toBe(false); // 3% apart — not proven
+		expect(pricesAgree(0.14591, 0.14602)).toBe(true);
+		expect(pricesAgree(0, 100)).toBe(false);
+		expect(pricesAgree(100, null)).toBe(false);
+		expect(pricesAgree(-5, -5)).toBe(false);
+	});
+
+	// A ticker is not unique: several listings share one symbol, which is exactly
+	// why a shortlist has to be ranked and then price-verified rather than
+	// trusted. Synthetic ids keep the ranking rule the subject of the test.
+	it('shortlists only same-symbol active coins, best rank first', () => {
+		const raw = {
+			currencies: [
+				{ id: 'tkr-leading-listing', symbol: 'TKR', rank: 60, is_active: true },
+				{ id: 'tkr-delisted', symbol: 'TKR', rank: 4000, is_active: false },
+				{ id: 'oth-other-listing', symbol: 'OTH', rank: 2, is_active: true },
+				{ id: 'tkr-second-listing', symbol: 'TKR', rank: 900, is_active: true },
+				{ id: 'tkr-third-listing', symbol: 'TKR', rank: 3000, is_active: true },
+			],
+		};
+		// Capped at two probes — each one spends from the hourly budget.
+		expect(symbolCandidates(raw, 'TKR')).toEqual(['tkr-leading-listing', 'tkr-second-listing']);
+	});
+
+	it('shortlists nothing when no candidate shares the symbol', () => {
+		expect(symbolCandidates({ currencies: [{ id: 'aaa-alpha', symbol: 'AAA' }] }, 'TKR')).toEqual([]);
+		expect(symbolCandidates({}, 'TKR')).toEqual([]);
+	});
+});
+
+describe('CoinPaprika budget guard', () => {
+	beforeEach(() => {
+		resetPaprikaHealth();
+		resetPaprikaIdMemo();
+	});
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		resetPaprikaHealth();
+	});
+
+	// The free tier allows 60 requests/hour and then blocks for an hour. Paying a
+	// round-trip per request to be told that is exactly the waste to avoid.
+	const budgetSpent = () =>
+		new Response(
+			JSON.stringify({ type: 'payment_required', error: 'request limits were reached' }),
+			{ status: 402, headers: { 'content-type': 'application/json' } },
+		);
+
+	it('benches the source on a 402 so later calls skip it entirely', async () => {
+		const fetchMock = vi.fn(async () => budgetSpent());
+		vi.stubGlobal('fetch', fetchMock);
+		expect(await resolvePaprikaId('solana')).toBeNull();
+		expect(isPaprikaBenched()).toBe(true);
+		const afterBench = fetchMock.mock.calls.length;
+		await resolvePaprikaId('bitcoin');
+		await fetchFallbackTickers('ethereum');
+		// Not one further request is spent while blocked.
+		expect(fetchMock.mock.calls.length).toBe(afterBench);
+	});
+
+	it('detects the budget reply even when it arrives with a 200', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () =>
+			jsonResponse({ type: 'payment_required', error: 'request limits were reached' }),
+		));
+		await resolvePaprikaId('solana');
+		expect(isPaprikaBenched()).toBe(true);
+	});
+
+	it('answers null rather than throwing when the source is unreachable', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('ECONNRESET'); }));
+		await expect(fetchFallbackCoinDetail('solana')).resolves.toBeNull();
+		await expect(fetchFallbackTickers('solana')).resolves.toBeNull();
+		expect(isPaprikaBenched()).toBe(false); // a network blip is not a spent budget
+	});
+});
+
 describe('resolvePaprikaId', () => {
-	beforeEach(() => resetPaprikaIdMemo());
+	beforeEach(() => {
+		resetPaprikaIdMemo();
+		resetPaprikaHealth();
+	});
 	afterEach(() => vi.unstubAllGlobals());
 
 	it('resolves once and memoizes, so an outage does not re-search per request', async () => {
@@ -288,39 +374,68 @@ describe('normalizePaprikaMarket', () => {
 });
 
 describe('fetchFallbackTickers', () => {
-	beforeEach(() => resetPaprikaIdMemo());
+	beforeEach(() => {
+		resetPaprikaIdMemo();
+		resetPaprikaHealth();
+	});
 	afterEach(() => vi.unstubAllGlobals());
 
-	const stub = (markets) =>
+	// Normalized payloads are cached per coin, so every case uses its own id —
+	// sharing one would have a later test read an earlier test's cached answer.
+	const stub = (cgId, markets) =>
 		vi.stubGlobal('fetch', vi.fn(async (url) => {
 			const u = String(url);
-			if (u.includes('/search/')) return jsonResponse({ currencies: [{ id: 'sol-solana', name: 'Solana', rank: 7 }] });
+			if (u.includes('/search/')) return jsonResponse({ currencies: [{ id: `sym-${cgId}`, name: cgId, rank: 7 }] });
 			if (u.includes('/markets')) return jsonResponse(markets);
 			throw new Error(`unexpected ${u}`);
 		}));
 
 	it('keeps spot markets only and orders them by 24h volume', async () => {
-		stub([
+		stub('spot-order-coin', [
 			{ ...PAPRIKA_MARKET, exchange_name: 'Small Spot', quotes: { USD: { price: 73, volume_24h: 10 } } },
 			{ ...PAPRIKA_MARKET, exchange_name: 'Perp Venue', category: 'Derivatives', quotes: { USD: { price: 73, volume_24h: 9_000_000 } } },
 			{ ...PAPRIKA_MARKET, exchange_name: 'Big Spot', quotes: { USD: { price: 73, volume_24h: 500 } } },
 		]);
-		const rows = await fetchFallbackTickers('solana');
+		const rows = await fetchFallbackTickers('spot-order-coin');
 		expect(rows.map((r) => r.exchange.name)).toEqual(['Big Spot', 'Small Spot']);
 	});
 
 	it('paginates in 100-row pages like the endpoint it stands in for', async () => {
 		stub(
+			'paging-coin',
 			Array.from({ length: 250 }, (_, i) => ({
 				...PAPRIKA_MARKET,
 				exchange_name: `Venue ${i}`,
 				quotes: { USD: { price: 73, volume_24h: 1000 - i } },
 			})),
 		);
-		expect(await fetchFallbackTickers('solana', { page: 1 })).toHaveLength(100);
-		const page3 = await fetchFallbackTickers('solana', { page: 3 });
+		expect(await fetchFallbackTickers('paging-coin', { page: 1 })).toHaveLength(100);
+		const page3 = await fetchFallbackTickers('paging-coin', { page: 3 });
 		expect(page3).toHaveLength(50);
 		expect(page3[0].exchange.name).toBe('Venue 200');
+	});
+
+	it('serves later pages from cache — paging must not spend more budget', async () => {
+		stub(
+			'budget-paging-coin',
+			Array.from({ length: 250 }, (_, i) => ({
+				...PAPRIKA_MARKET,
+				exchange_name: `Venue ${i}`,
+				quotes: { USD: { price: 73, volume_24h: 1000 - i } },
+			})),
+		);
+		await fetchFallbackTickers('budget-paging-coin', { page: 1 });
+		const spent = globalThis.fetch.mock.calls.length;
+		await fetchFallbackTickers('budget-paging-coin', { page: 2 });
+		await fetchFallbackTickers('budget-paging-coin', { page: 3 });
+		expect(globalThis.fetch.mock.calls.length).toBe(spent);
+	});
+
+	it('collapses a concurrent burst into a single upstream fetch', async () => {
+		stub('burst-coin', [PAPRIKA_MARKET]);
+		await Promise.all(Array.from({ length: 8 }, () => fetchFallbackTickers('burst-coin')));
+		// search + markets, once — not eight times.
+		expect(globalThis.fetch.mock.calls.length).toBe(2);
 	});
 
 	it('returns null when CoinPaprika does not list the coin', async () => {
