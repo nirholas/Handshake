@@ -133,6 +133,11 @@ external URLs, generated aggregates, and the internal work-order packs under
 `prompts/` and `tasks/` are excluded by design; pass an explicit path to audit
 one of those anyway. Add `--advisory` to report without a non-zero exit.
 
+It also runs inside `npm run gate` alongside the other audits, and the tree is
+currently clean, so anything it reports is something your change introduced. It
+is deliberately kept off the deploy path so documentation rot can never block an
+urgent production fix.
+
 ### Manual Testing Checklist
 
 Before submitting a PR, verify:

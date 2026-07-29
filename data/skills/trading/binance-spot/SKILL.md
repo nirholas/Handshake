@@ -323,5 +323,3 @@ All trading endpoints require HMAC SHA256 signature:
 2. Sign query string with secretKey using HMAC SHA256, RSA, or Ed25519 (depending on account config)
 3. Append signature to query string
 4. Include `X-MBX-APIKEY` header
-
-See [`references/authentication.md`](./references/authentication.md) for implementation details.

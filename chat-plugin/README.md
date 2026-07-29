@@ -107,7 +107,10 @@ Bridge envelope:
 }
 ```
 
-Full spec: [`01-embed-bridges.md`](../prompts/final-integration/01-embed-bridges.md).
+The envelope above plus the op table below are the full spec for this bridge.
+Not to be confused with [`specs/EMBED_HOST_PROTOCOL.md`](../specs/EMBED_HOST_PROTOCOL.md),
+the separate versioned postMessage bus between a host page and an embedded
+three.ws iframe, which uses a different `v`/`type`/`payload` envelope.
 
 ---
 

@@ -132,7 +132,7 @@ ROBINHOOD_CHAIN_PRIVATE_KEY=0x...
 | `execute_swap` | **Guarded.** Preview → `confirm: true` → broadcast. Spend-capped. |
 | `transfer_usdg` | **Guarded.** Preview → `confirm: true` → broadcast. Spend-capped. |
 
-See [**Safety model**](docs/safety.html) for the full guard design. Summary:
+See [**Safety model**](docs/index.html#safety) for the full guard design. Summary:
 
 1. **Kill switch** — the server process itself refuses to start without `HOOD_MCP_ENABLE_TRADING=1`.
 2. **Eligibility gate** — buying a tokenized Stock Token requires `HOOD_MCP_ACKNOWLEDGE_ELIGIBILITY=1`

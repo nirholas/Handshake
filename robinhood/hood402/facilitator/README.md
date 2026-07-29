@@ -121,6 +121,6 @@ the version actually published to the registry — `npm pack` succeeds either wa
 
 ## License
 
-All rights reserved. See [LICENSE](./LICENSE).
+All rights reserved. See [LICENSE](../LICENSE).
 
 Built by [nirholas](https://x.com/nichxbt) · [three.ws](https://three.ws)
