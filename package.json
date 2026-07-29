@@ -230,6 +230,7 @@
 		"check:dist": "node scripts/check-dist.mjs",
 		"check:pages": "node scripts/check-pages.mjs",
 		"check:claude": "node scripts/check-claude-md.mjs",
+		"check:rules": "node scripts/check-rules.mjs",
 		"smoke:prod": "node scripts/check-pages.mjs --base https://three.ws",
 		"deploy": "npm run build:all && npm run check:dist && vercel --local-config vercel.json --prod",
 		"build:info": "node scripts/write-build-info.mjs",

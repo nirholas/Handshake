@@ -19,6 +19,12 @@ Audit every changed file for:
 7. **Repo hygiene.** Throwaway scripts, logs, or screenshots in the repo root; unused imports; dead code left behind; scratch files that should be gitignored or deleted.
 8. **Typography.** The em-dash and en-dash are banned everywhere in this repo, including code comments, docs, UI copy, and commit messages. Flag any in the diff.
 
-Verification you can run cheaply, and should: `npm run check:claude` (CLAUDE.md itself has not drifted), and `git diff` on the changed paths. If the change touched a page, note whether `npm run check:pages` would still pass.
+Verification you can run cheaply, and should. Run these before reading anything by hand; they turn categories 1, 2, 7, and 8 into a mechanical answer:
+
+- `npm run check:rules -- --paths <changed files>` catches em-dashes, TODOs, not-implemented throws, commented-out code, and sample-data arrays in the added lines. Always scope with `--paths`: concurrent agents share this worktree, so an unscoped run reports their in-flight work as if it were this change.
+- `npm run check:claude` confirms CLAUDE.md and the agent definitions have not drifted from the repo.
+- `git diff` on the changed paths, for everything a regex cannot judge.
+
+If the change touched a page, note whether `npm run check:pages` would still pass.
 
 Output a numbered list of violations. For each: `file:line`, the rule broken, and what the fix needs to accomplish (one sentence). If the audit is clean, reply `PASS` followed by one line per category confirming what you checked. Be strict; a borderline case is a violation. But do not invent violations to look thorough: a clean diff is a valid result.
