@@ -3778,7 +3778,30 @@
 		},
 		{
 			"src": "/agent/new/?",
-			"dest": "/agent-edit.html"
+			"has": [
+				{
+					"type": "query",
+					"key": "avatar_id"
+				}
+			],
+			"dest": "/create-agent.html"
+		},
+		{
+			"src": "/agent/new/?",
+			"has": [
+				{
+					"type": "query",
+					"key": "avatar_glb"
+				}
+			],
+			"dest": "/create-agent.html"
+		},
+		{
+			"src": "/agent/new/?",
+			"status": 301,
+			"headers": {
+				"Location": "/create-agent"
+			}
 		},
 		{
 			"src": "/agent/([^/]+)/share/?",
@@ -3805,12 +3828,21 @@
 			"dest": "/avatar-edit.html?id=$1"
 		},
 		{
-			"src": "/avatar-edit",
+			"src": "/avatar-edit/?",
+			"has": [
+				{
+					"type": "query",
+					"key": "id"
+				}
+			],
 			"dest": "/avatar-edit.html"
 		},
 		{
-			"src": "/avatar-edit/",
-			"dest": "/avatar-edit.html"
+			"src": "/avatar-edit/?",
+			"status": 301,
+			"headers": {
+				"Location": "/avatars"
+			}
 		},
 		{
 			"src": "/agent/([^/]+)/embed",
@@ -4722,12 +4754,11 @@
 			"dest": "/genesis.html"
 		},
 		{
-			"src": "/scan",
-			"dest": "/scan.html"
-		},
-		{
-			"src": "/scan/",
-			"dest": "/scan.html"
+			"src": "/scan/?",
+			"status": 301,
+			"headers": {
+				"Location": "/create/selfie"
+			}
 		},
 		{
 			"src": "/dad",

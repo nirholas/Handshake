@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T05:34:35.007Z",
+	"generated_at": "2026-07-29T05:37:48.122Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -188,6 +188,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "The fact checker stops timing out, and reads its sources properly",
+			"summary": "Paid fact checks had started failing outright with a server error instead of returning a verdict. The cause was in how we try our AI providers: when the first provider accepted a request and then went quiet, we kept waiting on it (and on two more sign-ins to the same provider) until the whole time budget for the check was gone, so the providers that were healthy and ready to answer were never reached. We now stop re-trying a provider that has already gone quiet, and no single provider can eat more than a third of the remaining time while others are still waiting. Checks that used to die at 46 seconds now come back with a real, sourced answer. Alongside that, the checker reads evidence far better: its free Wikipedia source now returns the article's actual opening text instead of a 150-character fragment around a keyword, all three search angles are represented in the sources we examine rather than just the first, and a verdict is now decided by the sources that genuinely address the claim, so evidence that never mentions the claim returns an honest \"not enough evidence\" instead of a misleading \"mixed\". The published accuracy figure on the fact-check page has been cleared until a clean measurement can be taken, because the last one was recorded during the outage above and measured that outage rather than the product.",
+			"link": "/fact-check",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
