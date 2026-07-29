@@ -142,42 +142,40 @@ export async function runAttestationEpoch({ anchor = true } = {}) {
 	const leaves = [];
 	let totalLamports = 0n;
 	let rpcFailures = 0;
-	for (let i = 0; i < wallets.length; i += BALANCE_READ_CONCURRENCY) {
-		if (Date.now() >= deadline) {
-			// Out of snapshot time — skip the remaining wallets this epoch (same
-			// contract as an RPC failure: never attest a balance we didn't read).
-			rpcFailures += wallets.length - i;
-			break;
-		}
-		const batch = wallets.slice(i, i + BALANCE_READ_CONCURRENCY);
-		const results = await Promise.all(batch.map(async (w) => {
-			const lamports = await readLamports(conn, w.address);
-			// An RPC failure must not silently attest a wrong (zero) balance. Skip
-			// the wallet this epoch rather than committing an unverifiable leaf; it
-			// is included again next epoch once RPC recovers.
-			if (lamports == null) return null;
-			const balanceLamports = String(lamports);
-			const ledgerHead = await ledgerHeadFor(w.agentId, SNAPSHOT_NETWORK);
-			const leafHash = await computeLeafHash({
-				agentId: w.agentId,
-				address: w.address,
-				balanceLamports,
-				ledgerHead,
-				epoch: epochNum,
-			});
-			return {
-				agentId: w.agentId,
-				address: w.address,
-				balanceLamports,
-				ledgerHead,
-				leafHash,
-			};
-		}));
-		for (const leaf of results) {
-			if (leaf == null) { rpcFailures++; continue; }
-			leaves.push(leaf);
-			totalLamports += BigInt(leaf.balanceLamports);
-		}
+	// A bounded pool rather than fixed batches: with batching, one slow RPC read
+	// held its whole batch's slots idle until it drained. `mapPool` keeps every
+	// slot busy and still returns results in wallet order, so the tree stays
+	// deterministic.
+	const results = await mapPool(wallets, BALANCE_READ_CONCURRENCY, async (w) => {
+		// Out of snapshot time — skip the remaining wallets this epoch (same
+		// contract as an RPC failure: never attest a balance we didn't read).
+		if (Date.now() >= deadline) return null;
+		const lamports = await readLamports(conn, w.address);
+		// An RPC failure must not silently attest a wrong (zero) balance. Skip
+		// the wallet this epoch rather than committing an unverifiable leaf; it
+		// is included again next epoch once RPC recovers.
+		if (lamports == null) return null;
+		const balanceLamports = String(lamports);
+		const ledgerHead = await ledgerHeadFor(w.agentId, SNAPSHOT_NETWORK);
+		const leafHash = await computeLeafHash({
+			agentId: w.agentId,
+			address: w.address,
+			balanceLamports,
+			ledgerHead,
+			epoch: epochNum,
+		});
+		return {
+			agentId: w.agentId,
+			address: w.address,
+			balanceLamports,
+			ledgerHead,
+			leafHash,
+		};
+	});
+	for (const leaf of results) {
+		if (leaf == null) { rpcFailures++; continue; }
+		leaves.push(leaf);
+		totalLamports += BigInt(leaf.balanceLamports);
 	}
 
 	const tree = await buildMerkleTree(leaves.map((l) => l.leafHash));

@@ -149,12 +149,14 @@ export const realDeps = {
 	// and absent evidence is simply not counted.
 	async resolveEns(name) {
 		try {
+			const { ensResolveAddress } = await import('../evm/ens.js');
 			return normEvm(await ensResolveAddress(name, { timeoutMs: 5000 }));
 		} catch { return null; }
 	},
 	// ENS reverse resolution (address → primary name) — extra corroborating evidence.
 	async reverseEns(address) {
 		try {
+			const { ensLookupName } = await import('../evm/ens.js');
 			return (await ensLookupName(address, { timeoutMs: 5000 })) || null;
 		} catch { return null; }
 	},
