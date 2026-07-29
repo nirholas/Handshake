@@ -155,6 +155,8 @@ def generate_reference_image(prompt: str, slot: str) -> tuple[bytes, str]:
             if attempt:
                 log.info("reference image took %d attempt(s) (prior: %s)", attempt + 1, last_reason)
             return image, f"vertex-ai/{VERTEX_MODEL}"
+        if attempt + 1 >= _IMAGE_ATTEMPTS:
+            break  # budget spent; fall through to the raise below
         log.warning("Vertex returned no image data (finishReason: %s); re-rolling "
                     "attempt %d/%d", last_reason, attempt + 2, _IMAGE_ATTEMPTS)
         time.sleep(1.5 * (attempt + 1))

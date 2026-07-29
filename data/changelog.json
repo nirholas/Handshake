@@ -3,6 +3,35 @@
 	"entries": [
 		{
 			"date": "2026-07-29",
+			"title": "Notification mute switches actually work now",
+			"summary": "The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/dashboard/settings"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Restyled models read properly in the feed",
+			"summary": "When someone restyled a model, the activity feed just said they \"shared something\" with a generic icon. Restyles now say so, with their own icon, and a colorway variant is labelled as one instead of being lumped in with a hand-directed restyle.",
+			"tags": [
+				"fix"
+			],
+			"link": "/feed"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "The fact checker stops timing out, and reads its sources properly",
+			"summary": "Paid fact checks had started failing outright with a server error instead of returning a verdict. The cause was in how we try our AI providers: when the first provider accepted a request and then went quiet, we kept waiting on it (and on two more sign-ins to the same provider) until the whole time budget for the check was gone, so the providers that were healthy and ready to answer were never reached. We now stop re-trying a provider that has already gone quiet, and no single provider can eat more than a third of the remaining time while others are still waiting. Checks that used to die at 46 seconds now come back with a real, sourced answer. Alongside that, the checker reads evidence far better: its free Wikipedia source now returns the article's actual opening text instead of a 150-character fragment around a keyword, all three search angles are represented in the sources we examine rather than just the first, and a verdict is now decided by the sources that genuinely address the claim, so evidence that never mentions the claim returns an honest \"not enough evidence\" instead of a misleading \"mixed\". The published accuracy figure on the fact-check page has been cleared until a clean measurement can be taken, because the last one was recorded during the outage above and measured that outage rather than the product.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/fact-check"
+		},
+		{
+			"date": "2026-07-29",
 			"title": "A calmer first visit: the site now starts simple and opens up when you ask",
 			"summary": "three.ws does a lot, and a first-time visitor met all of it at once: around a hundred destinations across the menus and a homepage that ran from making a 3D model straight through to autonomous trading and payment protocols. The product's actual promise was competing with everything else for attention. Arriving now, you get the short version: three steps under the hero (create a 3D avatar, build an AI agent, publish it anywhere), each with an honest time estimate, and menus holding the twenty-odd destinations that serve that journey. Everything else is one click away behind a clearly labelled control that tells you how much it is holding back, and once you open it, it stays open on every page and every visit. Nothing was removed or hidden from anyone who wants it: a link shared straight into an advanced section still takes you exactly there, and power users can skip to the full platform from a link in the first screen.",
 			"tags": [

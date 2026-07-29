@@ -24,11 +24,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 Object.assign(process.env, {
 	APP_ORIGIN: 'https://three.ws',
 	JWT_SECRET: 'test-jwt-secret-at-least-32-characters-long',
-	// Two redispatchable platform lanes configured, so a failed job has
-	// somewhere to go and the hop chain has room to accumulate.
+	// Three redispatchable lanes configured (two self-hosted GCP workers plus
+	// the paid Replicate lane), so the chain has room to hop more than once and
+	// the hop cap, not a lane shortage, is what ends it.
 	MODEL_TRELLIS_URL: 'https://model-trellis.example.run.app',
 	GCP_HUNYUAN3D_URL: 'https://hunyuan3d.example.run.app',
 	GCP_RECONSTRUCTION_KEY: 'test-gcp-key',
+	REPLICATE_API_TOKEN: 'test-replicate-token',
 });
 
 // The lane that owns the job reports a hard failure on every poll. Each submit
@@ -43,30 +45,39 @@ vi.mock('../../api/_providers/gcp.js', () => ({
 }));
 vi.mock('../../api/_providers/replicate.js', () => ({
 	createRegenProvider: () => ({
-		submit: vi.fn(async () => ({ extJobId: 'r8-pred' })),
+		submit: vi.fn(async () => ({ extJobId: `r8-pred-${++submitSeq}` })),
 		status: vi.fn(async () => ({ status: 'failed', error: 'prediction failed' })),
 	}),
 }));
 
-// Store: the creation row carries the inputs a redispatch reconstructs from.
-const createCreation = vi.fn(async () => 'creation-2');
+// Store: creation rows keyed by upstream job id, the way the real table is.
+// This is what makes hop accumulation observable: each redispatch writes a row
+// for its successor naming the NEW lane, so the next poll reads that lane as
+// the one that just failed. A fixture that always reported the original lane
+// would hide a failover chain re-picking a dead lane forever.
+const ORIGINAL_TASK = 'gcp-original-task';
+const BASE_ROW = {
+	tier: 'standard',
+	path: 'image',
+	prompt: 'a knight',
+	preview_image_url: 'https://cdn.example/ref.png',
+	views_requested: 1,
+	views_used: 1,
+	multiview: false,
+};
+const rows = new Map();
+const createCreation = vi.fn(async (args) => {
+	rows.set(args.replicateJobId, { ...BASE_ROW, backend: args.backend });
+	return `creation-${rows.size}`;
+});
 const markFailed = vi.fn(async () => {});
 vi.mock('../../api/_lib/forge-store.js', () => ({
 	hashClient: (v) => `client:${v || 'anon'}`,
 	hashIp: (v) => `ip:${v}`,
 	createCreation: (...a) => createCreation(...a),
-	materializeCreation: vi.fn(async ({ glbUrl }) => ({ id: 'creation-2', glbUrl })),
+	materializeCreation: vi.fn(async ({ glbUrl }) => ({ id: 'creation-x', glbUrl })),
 	markFailed: (...a) => markFailed(...a),
-	findByJob: vi.fn(async () => ({
-		backend: 'trellis_selfhost',
-		tier: 'standard',
-		path: 'image',
-		prompt: 'a knight',
-		preview_image_url: 'https://cdn.example/ref.png',
-		views_requested: 1,
-		views_used: 1,
-		multiview: false,
-	})),
+	findByJob: vi.fn(async ({ replicateJobId }) => rows.get(replicateJobId) ?? null),
 }));
 
 // Lane health is up for everything: lane SELECTION is not what this file tests.
@@ -136,11 +147,15 @@ async function poll(jobId) {
 	return res;
 }
 
-const JOB = encodeJobToken({ provider: 'gcp', taskId: 'gcp-original-task' });
+const JOB = encodeJobToken({ provider: 'gcp', taskId: ORIGINAL_TASK });
 
 beforeEach(() => {
 	chain.clear();
 	bindOrder.length = 0;
+	rows.clear();
+	// The original job's own row: submitted on the self-hosted TRELLIS lane.
+	rows.set(ORIGINAL_TASK, { ...BASE_ROW, backend: 'trellis_selfhost' });
+	submitSeq = 0;
 	createCreation.mockClear();
 	markFailed.mockClear();
 });

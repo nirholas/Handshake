@@ -13,6 +13,7 @@ and without the re-roll a single such response permanently loses a queued job.
 from __future__ import annotations
 
 import base64
+import os
 import sys
 import types
 

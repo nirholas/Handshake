@@ -48,6 +48,15 @@ pure glTF work in between:
    landscape). The photo is posed to match the reference body: worn shape,
    A-pose, front view, plain background. Reference quality drives mesh
    quality; the resolution is held at 2K.
+
+   The model sometimes answers `200` carrying no image at all (a safety or
+   recitation filter, or an empty candidate under load). That is not a
+   transport failure, so the HTTP retry has nothing to retry, and a single such
+   response used to kill a job that was already queued. Generation is
+   stochastic, so the stage now re-rolls the same prompt up to
+   `VERTEX_IMAGE_ATTEMPTS` times (default 3) and only fails once the budget is
+   spent, reporting the last `finishReason`. Pinned by
+   `test_reference_image.py`, which runs as a Docker build gate.
 2. **Mesh** (`pipeline.generate_mesh`): the image goes through the deployed
    image→3D failover chain, first healthy rung wins:
    `model-hunyuan3d-21-rtx` (warm primary, full PBR: albedo +
@@ -233,6 +242,7 @@ suite runs inside `docker build`, so a regression cannot ship.
 | `VERTEX_IMAGEN_MODEL` | `gemini-2.5-flash-image` | Vertex image model |
 | `VERTEX_IMAGEN_LOCATION` | `global` | Vertex location for the image model |
 | `VERTEX_IMAGE_SIZE` | `2K` | reference image resolution |
+| `VERTEX_IMAGE_ATTEMPTS` | `3` | re-rolls when the image model answers 200 with no image |
 | `GARMENT_YAW_DEG` | `0` | yaw applied to generator output before placement |
 | `MESH_TIMEOUT_S` / `RIG_TIMEOUT_S` | `1200` / `600` | per-stage poll ceilings |
 | `MAX_CONCURRENT` | `2` | parallel jobs per instance |

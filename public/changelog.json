@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T05:37:48.122Z",
+	"generated_at": "2026-07-29T05:41:19.675Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -128,6 +128,17 @@
 		{
 			"date": "2026-07-29",
 			"type": "update",
+			"title": "Notification mute switches actually work now",
+			"summary": "The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
 			"title": "Ordinary new coins are no longer mistaken for honeypots",
 			"summary": "Before any automated buy, the platform simulates a full buy-then-sell round trip on-chain to prove the coin can actually be sold again, and blocks anything that cannot be exited. That simulation runs from the buying agent's own wallet, so when the wallet was too small to fund the simulated purchase, the failure was being read as evidence that the coin was a trap. One underfunded agent produced 336 consecutive false honeypot verdicts in a single afternoon on perfectly normal launches. The safety probe now scales down to a size the wallet can actually simulate, since a real honeypot traps a seller at any size, and an out-of-funds failure is now reported as exactly that. Coins that genuinely cannot be sold are still blocked, and a wallet too empty to prove anything is still refused rather than waved through.",
 			"link": null,
@@ -166,6 +177,16 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Restyled models read properly in the feed",
+			"summary": "When someone restyled a model, the activity feed just said they \"shared something\" with a generic icon. Restyles now say so, with their own icon, and a colorway variant is labelled as one instead of being lumped in with a hand-directed restyle.",
+			"link": "/feed",
+			"tags": [
+				"fix"
 			]
 		},
 		{

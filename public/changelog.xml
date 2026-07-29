@@ -95,6 +95,14 @@
 			<description>Some fact checks were taking so long that the request was cut off before anything came back, and the caller got an error instead of an answer. Two things caused it. The checker asks a language model to write search queries and then to judge each source it finds; if none of the model providers could answer, that step threw the whole check away, even though the checker had already gathered real sources and knew how to carry on without the model. And nothing kept an eye on the clock, so a slow run could outlast the time limit the request had to begin with. Both are fixed. A check now works to a time budget and hands each step whatever is left, so it always finishes with something to show. If a step genuinely cannot reach a model, the check falls back instead of failing: it searches the claim itself, returns the sources it found with their excerpts, and marks the verdict as insufficient rather than guessing. The response now says plainly which step fell back, and a result produced that way is deliberately not cached, so asking again re-runs the full check rather than replaying a bad day.</description>
 		</item>
 		<item>
+			<title>Notification mute switches actually work now</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-07-29:Notification mute switches actually work now</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.</description>
+		</item>
+		<item>
 			<title>Ordinary new coins are no longer mistaken for honeypots</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-29:Ordinary new coins are no longer mistaken for honeypots</guid>
@@ -127,6 +135,14 @@
 			<description>three.ws reaches the Solana blockchain through several providers so that if one runs out of capacity the others carry the load. Until now the status page only watched one of them, which meant the platform could report a healthy connection while every paid provider was actually out of quota and all traffic had quietly fallen back to slower free servers. That state is hard to spot from the outside: it shows up as occasional slow pages and failed on-chain actions rather than a clean outage. The status page now reports the health of the whole set, and says plainly when everything paid has run out so it can be topped up before anyone notices.</description>
 		</item>
 		<item>
+			<title>Restyled models read properly in the feed</title>
+			<link>https://three.ws/feed</link>
+			<guid isPermaLink="false">2026-07-29:Restyled models read properly in the feed</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When someone restyled a model, the activity feed just said they &quot;shared something&quot; with a generic icon. Restyles now say so, with their own icon, and a colorway variant is labelled as one instead of being lumped in with a hand-directed restyle.</description>
+		</item>
+		<item>
 			<title>Solana RPC failover fixed: the paid reserve is no longer the primary lane</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-29:Solana RPC failover fixed: the paid reserve is no longer the primary lane</guid>
@@ -141,6 +157,14 @@
 			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>One background job tops up each trading agent wallet to a working balance. Another reclaims idle SOL from platform wallets back to the treasury so the agent economy can pay its network fees. Their thresholds disagreed, so they took turns moving the same funds in opposite directions: in one fifteen-minute window 0.24 SOL made that round trip six times, paying a network fee each leg, and the agents never held a balance long enough to trade. Both jobs now read a single shared policy with one rule, that a reclaim can never take a wallet below the level the top-up will immediately restore. The reclaim also now leaves every active trader enough to cover a complete trade, including the safety check that runs before it.</description>
+		</item>
+		<item>
+			<title>The fact checker stops timing out, and reads its sources properly</title>
+			<link>https://three.ws/fact-check</link>
+			<guid isPermaLink="false">2026-07-29:The fact checker stops timing out, and reads its sources properly</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Paid fact checks had started failing outright with a server error instead of returning a verdict. The cause was in how we try our AI providers: when the first provider accepted a request and then went quiet, we kept waiting on it (and on two more sign-ins to the same provider) until the whole time budget for the check was gone, so the providers that were healthy and ready to answer were never reached. We now stop re-trying a provider that has already gone quiet, and no single provider can eat more than a third of the remaining time while others are still waiting. Checks that used to die at 46 seconds now come back with a real, sourced answer. Alongside that, the checker reads evidence far better: its free Wikipedia source now returns the article's actual opening text instead of a 150-character fragment around a keyword, all three search angles are represented in the sources we examine rather than just the first, and a verdict is now decided by the sources that genuinely address the claim, so evidence that never mentions the claim returns an honest &quot;not enough evidence&quot; instead of a misleading &quot;mixed&quot;. The published accuracy figure on the fact-check page has been cleared until a clean measurement can be taken, because the last one was recorded during the outage above and measured that outage rather than the product.</description>
 		</item>
 		<item>
 			<title>The live pump.fun trade feed now drops data providers that cannot serve it</title>

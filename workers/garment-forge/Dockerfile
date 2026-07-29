@@ -19,6 +19,7 @@ COPY job_queue.py       /app/job_queue.py
 COPY main.py            /app/main.py
 COPY test_garment_glb.py /app/test_garment_glb.py
 COPY test_job_queue.py  /app/test_job_queue.py
+COPY test_reference_image.py /app/test_reference_image.py
 
 # The canonical reference body (public/avatars/parametric-base.glb), staged
 # into assets/ by cloudbuild.yaml so the repo does not carry a second copy.
@@ -32,6 +33,11 @@ RUN python /app/test_garment_glb.py
 # happens to one whose instance was reclaimed) must pass its unit suite. A
 # regression here silently drops submitted work.
 RUN python /app/test_job_queue.py
+
+# Build-time guard: the reference-image stage must re-roll a model response that
+# returned 200 with no image rather than failing the job outright. Losing that
+# re-roll throws away queued work on a single stochastic refusal.
+RUN python /app/test_reference_image.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
