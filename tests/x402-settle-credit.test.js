@@ -35,10 +35,14 @@ function makeSql({ failOn = null } = {}) {
 		// INSERT. Positional order matches the statements in settle-credit.js.
 		calls.inserts += 1;
 		const [network, payer, payTo, mint, amountAtomic, txSig, feeLamports, okOrReason, keyOrNull, feePayer] = values;
-		const isCredit = /ok[\s\S]*true|,\s*true\s*,/i.test(text) || okOrReason === null;
-		// The credit INSERT hardcodes `true` for ok and binds reject_reason as null;
-		// the outcome INSERT hardcodes `false` and binds a reason string.
-		const credited = /\btrue\b/.test(text);
+		// Only the CLAIM races for the signature, and it is the only statement
+		// carrying `ON CONFLICT DO NOTHING` — the audit write always lands.
+		// Discriminating on a bare /\btrue\b/ instead silently broke when
+		// `credit_gated` added a trailing `true` literal to BOTH statements: every
+		// refusal row was then treated as a losing claim and dropped, so the
+		// "refusal is still audited" assertion failed against correct production
+		// code.
+		const credited = /ON CONFLICT/i.test(text);
 		const row = {
 			id: rows.length + 1,
 			action: 'settle',
