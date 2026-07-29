@@ -19,7 +19,7 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey, loadSignerKeypair } from '../_lib/solana-signers.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
-import { planRebalance, executeSwap, REBALANCE, WSOL_MINT, USDC_WALLETS } from '../_lib/economy-rebalance.js';
+import { planRebalance, executeSwap, REBALANCE, USDC_WALLETS } from '../_lib/economy-rebalance.js';
 import { USDC_MINT_BY_NETWORK } from '../_lib/vault-jupiter.js';
 import { logAudit } from '../_lib/audit.js';
 
