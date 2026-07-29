@@ -107,6 +107,11 @@ The same bus powers surfaces that are not tickers at all:
   bass, `agent-guard` plays deliberate dissonance), pitches the note by amount
   and hashes the actor to a stable motif. Adding a new `ALLOWED_TYPES` entry?
   Give it a voice mapping there too, or it falls back to the bell voice.
+  Solo mode narrows the same stream to one participant client-side:
+  `/symphony?agent=<agentId>` (exact) or `/symphony?actor=<label>`
+  (case-insensitive), which is what the "Listen →" link on an agent profile
+  opens. No new endpoint: the filter runs over the events the bus already
+  serves.
 
 ## Related
 

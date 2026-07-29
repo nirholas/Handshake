@@ -1337,6 +1337,12 @@ function render(agent) {
 		if (pulseCard && pulseFeed && wMeta.solana_address) {
 			pulseCard.hidden = false;
 			pulseFeed.replaceChildren();
+			// Same activity, as sound: /symphony soloed to this agent.
+			const listen = $('ad-pulse-listen');
+			if (listen) {
+				listen.href = `/symphony?agent=${encodeURIComponent(agent.id)}`;
+				listen.title = `Hear ${agent.name || 'this agent'} working, live`;
+			}
 			_pulseHandle = mountMoneyPulse({
 				mount: pulseFeed,
 				variant: 'agent',

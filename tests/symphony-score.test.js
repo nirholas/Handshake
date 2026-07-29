@@ -12,6 +12,10 @@ import {
 	eventToNote,
 	describeEvent,
 	createBurstGate,
+	matchesFilter,
+	parseFilter,
+	filterLabel,
+	normalizeActor,
 } from '../src/symphony-score.js';
 
 describe('symphony-score: scale', () => {
@@ -195,5 +199,73 @@ describe('symphony-score: burst gate', () => {
 		gate.admit(guard(), 1000);
 		const next = gate.admit(guard(), 5000);
 		expect(next).toEqual({ play: true, accent: 0 });
+	});
+});
+
+describe('symphony-score: solo filter', () => {
+	it('matches everything when the filter is empty', () => {
+		for (const f of [null, undefined, {}, { actor: '' }]) {
+			expect(matchesFilter({ type: 'payment', actor: 'NOVA' }, f)).toBe(true);
+		}
+	});
+
+	it('matches an actor case- and whitespace-insensitively', () => {
+		const f = { actor: 'My First Agent' };
+		expect(matchesFilter({ actor: 'my first agent' }, f)).toBe(true);
+		expect(matchesFilter({ actor: '  My   First Agent ' }, f)).toBe(true);
+		expect(matchesFilter({ actor: 'Luna' }, f)).toBe(false);
+	});
+
+	it('matches an agentId exactly and ignores the actor label', () => {
+		const f = { agentId: 'a-1' };
+		expect(matchesFilter({ agentId: 'a-1', actor: 'Luna' }, f)).toBe(true);
+		expect(matchesFilter({ agentId: 'a-1', actor: 'luna' }, f)).toBe(true);
+		expect(matchesFilter({ agentId: 'a-2', actor: 'Luna' }, f)).toBe(false);
+		expect(matchesFilter({ actor: 'Luna' }, f)).toBe(false); // no agentId on the event
+	});
+
+	it('never matches a missing event', () => {
+		expect(matchesFilter(null, { actor: 'Luna' })).toBe(false);
+	});
+
+	it('normalizes actor labels predictably', () => {
+		expect(normalizeActor('  My   First Agent ')).toBe('my first agent');
+		expect(normalizeActor(null)).toBe('');
+	});
+});
+
+describe('symphony-score: parseFilter', () => {
+	it('reads ?agent and ?actor, preferring agent', () => {
+		expect(parseFilter('?agent=a-1')).toEqual({ agentId: 'a-1' });
+		expect(parseFilter('?actor=Luna')).toEqual({ actor: 'Luna' });
+		expect(parseFilter('?agent=a-1&actor=Luna')).toEqual({ agentId: 'a-1' });
+	});
+
+	it('decodes and trims, and bounds the length', () => {
+		expect(parseFilter('?actor=My%20First%20Agent')).toEqual({ actor: 'My First Agent' });
+		expect(parseFilter(`?actor=${'x'.repeat(200)}`).actor).toHaveLength(64);
+	});
+
+	it('returns an empty filter for junk, blanks, or nothing', () => {
+		expect(parseFilter('')).toEqual({});
+		expect(parseFilter('?actor=')).toEqual({});
+		expect(parseFilter('?other=1')).toEqual({});
+		expect(parseFilter(null)).toEqual({});
+	});
+});
+
+describe('symphony-score: filterLabel', () => {
+	it('is empty when nothing is soloed', () => {
+		expect(filterLabel({})).toBe('');
+	});
+
+	it('uses the actor verbatim', () => {
+		expect(filterLabel({ actor: 'Luna' })).toBe('Luna');
+	});
+
+	it('resolves an agentId to a display name from the events it has seen', () => {
+		const events = [{ agentId: 'a-1', actor: 'Luna' }];
+		expect(filterLabel({ agentId: 'a-1' }, events)).toBe('Luna');
+		expect(filterLabel({ agentId: 'a-9' }, events)).toBe('a-9'); // no event yet
 	});
 });
