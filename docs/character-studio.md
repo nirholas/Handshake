@@ -199,8 +199,36 @@ purchase or equip:
   echoes the authoritative profile back so the wardrobe, your local avatar, and every peer who
   can see you all agree on your look — durable across logout and world switches.
 
+### The public ledger: `/fits`
+
+Every premium purchase settles USDC and splits revenue with the creator of the coin world the
+fit belongs to, all of it recorded in the settled-sale ledger
+(`api/_lib/cosmetics-economy.js`). That ledger has a public page at
+[`/fits`](https://three.ws/fits) (`pages/fits.html` + `src/fits.js`, pure helpers in
+`src/fits-lib.js`), so the economy is readable without entering a world:
+
+| Section | Source | What it shows |
+|---|---|---|
+| Rarest fits | `GET /api/cosmetics/leaderboard` | Premium cosmetics ranked by how few wallets own them, rarity breaking ties. Each card deep-links to `/play?coin=<mint>`. |
+| Top collectors | same call | Rarity-weighted flex score per account. Guest sessions are labelled as guests with a short tail so several stay distinguishable. |
+| Top creators | same call | Real settled USDC earned, with a one-click breakdown per creator. |
+| Latest sales | same call | Every settled sale, newest first. |
+| Creator earnings lookup | `GET /api/cosmetics/earnings?creator=<wallet>` | Lifetime and 30-day totals, paid vs pending, and the split per cosmetic and per coin world for any wallet. No account required. |
+
+Two rules the page holds to, both covered by `tests/fits-lib.test.js`:
+
+- **Headline numbers are derived from the rows underneath them**, never fetched separately, so
+  a KPI can never disagree with the list it summarizes. The volume tile is labelled as the
+  sales window the API returned, not as an all-time total.
+- **Sub-cent sales keep their precision.** Cosmetic prices run below a cent; collapsing them to
+  `$0.00` would misreport what a creator is owed.
+
+Coin mints on this page are runtime ledger values. Nothing hardcodes a mint.
+
 Both panels are also reachable from the HUD (Shop / **My Fits** buttons,
-`coincommunities-ui.js`), and now from two physical storefronts in the world itself:
+`coincommunities-ui.js`), from the in-world flex panel (`src/game/cosmetics-flex.js`, which
+links out to `/fits` for the full ledger), and from two physical storefronts in the world
+itself:
 
 ### The boutique — walking storefronts, not just a menu
 
