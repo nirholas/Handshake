@@ -16822,6 +16822,16 @@
 			"tags": [
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Pricing is readable in light mode, and a stray link no longer sits above eleven pages",
+			"summary": "In light mode the Pricing page was unusable: the headline, the plan comparison and most of the page were white text on a white background, so the page that explains what things cost was effectively blank. Its colours are now theme-aware, so it reads correctly in both light and dark, and dark mode is unchanged. Separately, the \"Skip to main content\" shortcut, which should stay hidden until a keyboard user tabs to it, was missing its styling on eleven pages including Pricing, Billing, Payments and the Crypto API docs, so it showed up as stray text above the header. It now stays hidden until focused, exactly as it does on the rest of the site.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pricing"
 		}
 	]
 }
