@@ -174,7 +174,7 @@ export class CommunityNet {
 			// join has already been emitted. `/play` uses it to retire the build it
 			// restored locally from the durable world store (P3.1), because from this
 			// point the room's own copies are in the scene and ours are duplicates.
-			synced: new Set(),      // () — first full state patch applied
+			synced: new Set(),      // () : first full state patch applied
 			reaction: new Set(),    // ({id, emoji}) — a player sent a floating reaction
 			tag: new Set(),         // ({event, itId, leaderboard}) — tag mini-game state (R08)
 			floorBeat: new Set(),   // ({clip}) — disco-pad beat tick (R06): pulses the floor + aligns standing dancers

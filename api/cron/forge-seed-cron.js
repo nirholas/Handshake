@@ -7,21 +7,42 @@
 // never waits for a generation to finish, keeping execution well under 60 s:
 //
 //   1. Poll — check any pending seed jobs from prior minute(s). For each that
-//      finished: copy the GLB into the avatars table (visibility=public) so the
-//      creator has a real profile asset, then mark the job done.
+//      finished: run the catalog quality gate, then copy the GLB into the
+//      avatars table (visibility=public) so the creator has a real profile
+//      asset, and mark the job done. Failures are quarantined, not published.
 //
-//   2. Start — pick the next unused prompt from the 200+ library, claim an OG
+//   2. Start — pick the next unused prompt(s) from the 200+ library, claim an OG
 //      username for a new user, submit a draft-tier forge job under that user's
 //      client id, record the job so the next tick can poll it.
 //
 // Free NVIDIA NIM lane (draft, ~22 s) is always used — zero vendor spend.
-// MAX_CONCURRENT_PENDING caps in-flight jobs so a slow lane never builds debt.
+// maxPending() caps in-flight jobs so a slow lane never builds debt.
+//
+// ── Env knobs (every one defaults to the historical behaviour) ───────────────
+//   SEED_CRON_BATCH        jobs to start per tick (default 1). Paced two at a
+//                          time: submitting a whole batch at once is how the
+//                          garment-forge runs used to silently drop jobs.
+//   SEED_CRON_MAX_PENDING  in-flight ceiling (default 3 × batch).
+//   SEED_CRON_VISION       '1' enables the render + Vertex judge stage of the
+//                          quality gate inside the cron. Off by default: the
+//                          function has a hard 70 s wall (vercel.json) and a
+//                          history of 504s when a phase overruns, while a render
+//                          plus two judge calls costs 10-20 s. The mesh stage of
+//                          the gate always runs — it is deterministic, local, and
+//                          costs only the GLB fetch. The bulk runner
+//                          (scripts/gcp/seed-avatars.mjs) always runs both.
+//   SEED_CRON_VISION_MS    budget for the vision stage (default 20 000 ms).
+//   SEED_CRON_RIG          '1' routes accepted avatars through the auto-rigger
+//                          before publishing, so catalog entries arrive
+//                          animation-ready instead of frozen in bind pose.
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
-import { SEED_PROMPTS, OG_USERNAMES } from '../_lib/seed-prompts.js';
+import { SEED_PROMPTS, OG_USERNAMES, composeSeedPrompt } from '../_lib/seed-prompts.js';
+import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';
+import { getObjectBuffer } from '../_lib/r2.js';
 import { circuitState, circuitRecordFailure, circuitRecordSuccess } from '../_lib/forge-scale.js';
 import { randomUUID } from 'node:crypto';
 
@@ -40,8 +61,35 @@ const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 // with wide margin while keeping the whole tick comfortably under the ceiling; a
 // genuinely degraded lane simply rolls back and retries next minute.
 const FETCH_TIMEOUT_MS = 35_000;
-const MAX_CONCURRENT_PENDING = 3;
 const MIN_JOB_AGE_SECONDS = 20;
+
+// Env knobs. Read per call (never at module load) so a Cloud Run env update
+// takes effect on the next tick without a redeploy, and so tests can set them.
+function intEnv(name, fallback, { min = 1, max = 50 } = {}) {
+	const raw = process.env[name];
+	const n = raw == null || raw === '' ? NaN : Number(raw);
+	if (!Number.isFinite(n)) return fallback;
+	return Math.max(min, Math.min(max, Math.floor(n)));
+}
+function boolEnv(name) {
+	const raw = String(process.env[name] ?? '').trim().toLowerCase();
+	return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+// Jobs started per tick. 1 is the historical behaviour, so an unset env is a
+// no-op. Capped at 12: beyond that a single tick's DB tail stops fitting in the
+// 70 s wall even with the submits paced.
+export const seedBatchSize = () => intEnv('SEED_CRON_BATCH', 1, { min: 1, max: 12 });
+// In-flight ceiling. Scales with the batch so a bigger batch isn't instantly
+// throttled by a ceiling tuned for a batch of one.
+export const maxPending = () => intEnv('SEED_CRON_MAX_PENDING', seedBatchSize() * 3, { min: 1, max: 200 });
+// Two at a time: a whole batch fired at once is how bulk generation runs lose
+// jobs (garment-forge incident) — the lane accepts the submits and drops work.
+const SUBMIT_CONCURRENCY = 2;
+
+const visionGateEnabled = () => boolEnv('SEED_CRON_VISION');
+const visionGateBudgetMs = () => intEnv('SEED_CRON_VISION_MS', 20_000, { min: 5_000, max: 45_000 });
+const rigStageEnabled = () => boolEnv('SEED_CRON_RIG');
 
 // Circuit breaker — state is shared across instances via Redis (forge-scale.js) so
 // every cron lambda sees the same open/closed decision; without that, each instance
@@ -95,8 +143,28 @@ async function fetchJson(url, options = {}) {
 // synthetic user. Reads the stored GLB straight from forge_creations and is
 // idempotent (`on conflict do nothing`) so a re-poll never double-inserts.
 // Bypasses plan quota — this is platform-seeded content, not a user upload.
-async function insertSeedAvatar({ userId, prompt, modelCategory, creationId }) {
+//
+// `creationId` is the row the mesh comes from — after the optional rig stage
+// that is the rig creation, whose preview_key is null, so `previewCreationId`
+// keeps pointing at the original generation's rendered preview.
+async function insertSeedAvatar({
+	userId,
+	prompt,
+	modelCategory,
+	creationId,
+	previewCreationId = null,
+	gate = null,
+	rigged = false,
+}) {
 	if (!creationId) return;
+	const previewId = previewCreationId || creationId;
+	const meta = {
+		forge_creation_id: creationId,
+		prompt,
+		seed: true,
+		rigged,
+		...(gate ? { quality_gate: gate } : {}),
+	};
 	await sql`
 		insert into avatars
 			(owner_id, slug, name, description, storage_key, size_bytes,
@@ -111,14 +179,15 @@ async function insertSeedAvatar({ userId, prompt, modelCategory, creationId }) {
 			coalesce(fc.size_bytes, 0),
 			'model/gltf-binary',
 			'forge',
-			${JSON.stringify({ forge_creation_id: creationId, prompt, seed: true })}::jsonb,
+			${JSON.stringify(meta)}::jsonb,
 			-- The creation's preview image is already in the bucket with a correct
 			-- Content-Type (it is what /forge's own gallery renders). Adopt it as the
 			-- avatar's thumbnail for free, rather than leaving thumbnail_key NULL and
 			-- making the backfill cron pay chromium to re-render the same model.
 			-- Relative keys only: an absolute URL in thumbnail_key resolves against an
 			-- origin where no object lives (see api/_lib/avatar-thumbs.js).
-			case when fc.preview_key !~ '^https?://' then fc.preview_key end,
+			(select case when p.preview_key !~ '^https?://' then p.preview_key end
+			   from forge_creations p where p.id = ${previewId}),
 			'public',
 			array[${modelCategory}]::text[],
 			${modelCategory},
@@ -129,6 +198,61 @@ async function insertSeedAvatar({ userId, prompt, modelCategory, creationId }) {
 		  and fc.status = 'done'
 		on conflict do nothing
 	`;
+}
+
+// ── Quality gate ──────────────────────────────────────────────────────────────
+
+// Pull the finished mesh bytes. Prefer the bucket key (no egress, no redirect
+// chain); fall back to the public URL for lanes that hand back an absolute URL.
+async function loadGlbBytes({ creationId, glbUrl }) {
+	if (creationId) {
+		const [row] = await sql`select glb_key from forge_creations where id = ${creationId} limit 1`;
+		const key = row?.glb_key;
+		if (key && !/^https?:\/\//i.test(key)) {
+			return { buf: await getObjectBuffer(key), key };
+		}
+		if (key) return { buf: Buffer.from(await (await fetch(key)).arrayBuffer()), key: null };
+	}
+	if (!glbUrl) throw new Error('no glb key or url to gate');
+	const res = await fetch(glbUrl, { signal: AbortSignal.timeout(30_000) });
+	if (!res.ok) throw new Error(`glb fetch ${res.status}`);
+	return { buf: Buffer.from(await res.arrayBuffer()), key: null };
+}
+
+// Run the catalog gate on a finished generation. Returns the verdict plus the
+// storage key, so a reject can be quarantined without re-reading the row.
+async function gateCreation({ creationId, glbUrl, prompt, category, allowVision }) {
+	const { buf, key } = await loadGlbBytes({ creationId, glbUrl });
+	const transport = allowVision && visionGateEnabled() ? withDeadline(inProcessTransport(), visionGateBudgetMs()) : null;
+	const verdict = await evaluateSeedAsset({
+		glbBuffer: buf,
+		glbUrl: glbUrl || null,
+		prompt,
+		category,
+		transport,
+	});
+	return { verdict, glbKey: key };
+}
+
+// Wrap a transport so the whole vision stage shares one wall-clock budget. The
+// cron's 70 s ceiling is hard; overrunning it costs a 504 and a lost tick, which
+// is strictly worse than publishing on the mesh verdict alone.
+function withDeadline(transport, budgetMs) {
+	const deadline = Date.now() + budgetMs;
+	const guard = async (fn, args) => {
+		const left = deadline - Date.now();
+		if (left <= 0) throw new Error('vision gate budget exhausted');
+		return Promise.race([
+			fn(args),
+			new Promise((_, reject) => setTimeout(() => reject(new Error('vision gate budget exhausted')), left).unref?.()),
+		]);
+	};
+	return {
+		name: `${transport.name}+deadline`,
+		render: (a) => guard(transport.render, a),
+		judgeRealism: (a) => guard(transport.judgeRealism, a),
+		judgeRigReadiness: (a) => guard(transport.judgeRigReadiness, a),
+	};
 }
 
 // ── Phase 1: poll pending jobs ────────────────────────────────────────────────

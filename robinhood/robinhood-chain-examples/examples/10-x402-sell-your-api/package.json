@@ -1,0 +1,19 @@
+{
+  "name": "rh-example-10-x402-sell-your-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Put a USDG paywall in front of a Robinhood Chain data endpoint with hood402 middleware.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "hood402": "^0.1.1",
+    "hoodchain": "^0.1.1",
+    "viem": "^2.55.0"
+  }
+}

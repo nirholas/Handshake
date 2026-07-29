@@ -1,31 +1,165 @@
 [
   {
     "name": "dev",
-    "url": "http://localhost:3004/irl",
+    "url": "http://localhost:3000/irl",
     "loaded": true,
-    "avatarRendered": false,
+    "avatarRendered": true,
     "consoleErrors": [
-      "WebSocket connection to 'wss://solid-parakeet-96wp6jwgq7xcxv75-3000.app.github.dev/?token=M0RPhrYv9bOv' failed: Error during WebSocket handshake: Unexpected response code: 404",
-      "[vite] failed to connect to websocket (Error: WebSocket closed without opened.). ",
-      "Failed to load resource: net::ERR_SOCKET_NOT_CONNECTED",
-      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-      "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-      "[irl] avatar load failed: TypeError: Failed to fetch\n    at FileLoader.load (http://localhost:3004/node_modules/.vite/deps/chunk-KWF34OUE.js?v=de7f2fa6:23342:5)\n    at GLTFLoader.load (http://localhost:3004/node_modules/.vite/deps/chunk-ZDH5U5RJ.js?v=de7f2fa6:194:12)\n    at http://localhost:3004/node_modules/.vite/deps/chunk-KWF34OUE.js?v=de7f2fa6:23203:13\n    at new Promise (<anonymous>)\n    at GLTFLoader.loadAsync (http://localhost:3004/node_modules/.vite/deps/chunk-KWF34OUE.js?v=de7f2fa6:23202:12)\n    at loadAvatar (http://localhost:3004/src/irl.js:1148:40)\n    at bootAvatar (http://localhost:3004/src/irl.js:7899:9)\n    at http://localhost:3004/src/irl.js:7915:1",
-      "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+      "WebSocket connection to 'wss://solid-parakeet-96wp6jwgq7xcxv75-3000.app.github.dev/?token=KcpuDrC3UkZo' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "[vite] failed to connect to websocket (Error: WebSocket closed without opened.). "
     ],
     "pageErrors": [
       "WebSocket closed without opened."
     ],
     "screenshots": [
-      "/workspaces/three.ws/prompts/quality-bar/_generated/10/irl-avatar.png"
+      "/workspaces/three.ws/prompts/quality-bar/_generated/10/irl-avatar.png",
+      "/workspaces/three.ws/prompts/quality-bar/_generated/10/irl-avatar-ar.png",
+      "/workspaces/three.ws/prompts/quality-bar/_generated/10/irl-avatar-realism-applied.png"
     ],
     "readback": {
-      "scenes": 2,
-      "meshes": 17,
-      "skinnedMeshes": 0,
-      "classified": [],
+      "scenes": 1,
+      "meshes": 19,
+      "skinnedMeshes": 10,
+      "classified": [
+        {
+          "mesh": "EyeLeft",
+          "class": "eye",
+          "material": {
+            "name": "Wolf3D_Eye",
+            "type": "MeshStandardMaterial",
+            "isMeshPhysicalMaterial": false,
+            "isMeshStandardMaterial": true,
+            "roughness": 1,
+            "metalness": 0,
+            "sheen": null,
+            "sheenColor": null,
+            "sheenRoughness": null,
+            "clearcoat": null,
+            "clearcoatRoughness": null,
+            "ior": null,
+            "specularIntensity": null,
+            "envMapIntensity": 0.85,
+            "side": 0,
+            "alphaTest": 0,
+            "color": "#ffffff"
+          }
+        },
+        {
+          "mesh": "EyeRight",
+          "class": "eye",
+          "material": {
+            "name": "Wolf3D_Eye",
+            "type": "MeshStandardMaterial",
+            "isMeshPhysicalMaterial": false,
+            "isMeshStandardMaterial": true,
+            "roughness": 1,
+            "metalness": 0,
+            "sheen": null,
+            "sheenColor": null,
+            "sheenRoughness": null,
+            "clearcoat": null,
+            "clearcoatRoughness": null,
+            "ior": null,
+            "specularIntensity": null,
+            "envMapIntensity": 0.85,
+            "side": 0,
+            "alphaTest": 0,
+            "color": "#ffffff"
+          }
+        },
+        {
+          "mesh": "Wolf3D_Head",
+          "class": "skin",
+          "material": {
+            "name": "Wolf3D_Skin",
+            "type": "MeshStandardMaterial",
+            "isMeshPhysicalMaterial": false,
+            "isMeshStandardMaterial": true,
+            "roughness": 0.699999988079071,
+            "metalness": 0,
+            "sheen": null,
+            "sheenColor": null,
+            "sheenRoughness": null,
+            "clearcoat": null,
+            "clearcoatRoughness": null,
+            "ior": null,
+            "specularIntensity": null,
+            "envMapIntensity": 0.85,
+            "side": 0,
+            "alphaTest": 0,
+            "color": "#ffffff"
+          }
+        },
+        {
+          "mesh": "Wolf3D_Teeth",
+          "class": "teeth",
+          "material": {
+            "name": "Wolf3D_Teeth",
+            "type": "MeshStandardMaterial",
+            "isMeshPhysicalMaterial": false,
+            "isMeshStandardMaterial": true,
+            "roughness": 1,
+            "metalness": 0,
+            "sheen": null,
+            "sheenColor": null,
+            "sheenRoughness": null,
+            "clearcoat": null,
+            "clearcoatRoughness": null,
+            "ior": null,
+            "specularIntensity": null,
+            "envMapIntensity": 0.85,
+            "side": 2,
+            "alphaTest": 0,
+            "color": "#ffffff"
+          }
+        },
+        {
+          "mesh": "Wolf3D_Hair",
+          "class": "hair",
+          "material": {
+            "name": "Wolf3D_Hair",
+            "type": "MeshStandardMaterial",
+            "isMeshPhysicalMaterial": false,
+            "isMeshStandardMaterial": true,
+            "roughness": 0.800000011920929,
+            "metalness": 0,
+            "sheen": null,
+            "sheenColor": null,
+            "sheenRoughness": null,
+            "clearcoat": null,
+            "clearcoatRoughness": null,
+            "ior": null,
+            "specularIntensity": null,
+            "envMapIntensity": 0.85,
+            "side": 2,
+            "alphaTest": 0,
+            "color": "#181818"
+          }
+        },
+        {
+          "mesh": "Wolf3D_Body",
+          "class": "skin",
+          "material": {
+            "name": "Wolf3D_Body",
+            "type": "MeshStandardMaterial",
+            "isMeshPhysicalMaterial": false,
+            "isMeshStandardMaterial": true,
+            "roughness": 0.858578622341156,
+            "metalness": 0,
+            "sheen": null,
+            "sheenColor": null,
+            "sheenRoughness": null,
+            "clearcoat": null,
+            "clearcoatRoughness": null,
+            "ior": null,
+            "specularIntensity": null,
+            "envMapIntensity": 0.85,
+            "side": 2,
+            "alphaTest": 0,
+            "color": "#e69b7c"
+          }
+        }
+      ],
       "sample": [
         {
           "name": "",
@@ -53,42 +187,52 @@
           "visible": true
         },
         {
-          "name": "",
+          "name": "EyeLeft",
+          "class": "eye",
+          "visible": true
+        },
+        {
+          "name": "EyeRight",
+          "class": "eye",
+          "visible": true
+        },
+        {
+          "name": "Wolf3D_Head",
+          "class": "skin",
+          "visible": true
+        },
+        {
+          "name": "Wolf3D_Teeth",
+          "class": "teeth",
+          "visible": true
+        },
+        {
+          "name": "Wolf3D_Hair",
+          "class": "hair",
+          "visible": true
+        },
+        {
+          "name": "Wolf3D_Glasses",
           "class": null,
           "visible": true
         },
         {
-          "name": "",
+          "name": "Wolf3D_Body",
+          "class": "skin",
+          "visible": true
+        },
+        {
+          "name": "Wolf3D_Outfit_Bottom",
           "class": null,
           "visible": true
         },
         {
-          "name": "",
+          "name": "Wolf3D_Outfit_Footwear",
           "class": null,
           "visible": true
         },
         {
-          "name": "",
-          "class": null,
-          "visible": true
-        },
-        {
-          "name": "",
-          "class": null,
-          "visible": true
-        },
-        {
-          "name": "",
-          "class": null,
-          "visible": true
-        },
-        {
-          "name": "",
-          "class": null,
-          "visible": true
-        },
-        {
-          "name": "",
+          "name": "Wolf3D_Outfit_Top",
           "class": null,
           "visible": true
         },
@@ -115,28 +259,289 @@
       ]
     },
     "summary": {
-      "classifiedCount": 0,
+      "classifiedCount": 6,
       "physicalCount": 0,
-      "skinCount": 0,
-      "eyeCount": 0,
+      "skinCount": 2,
+      "eyeCount": 2,
       "skinMarked": false,
       "eyeMarked": false,
       "realismActive": false
     },
-    "afterModule": null,
-    "afterSummary": null,
-    "cameraAr": null,
+    "afterModule": {
+      "looksLikeAvatarMesh": true,
+      "counts": {
+        "skin": 2,
+        "eye": 2,
+        "hair": 1,
+        "teeth": 1
+      },
+      "readback": {
+        "scenes": 1,
+        "meshes": 19,
+        "skinnedMeshes": 10,
+        "classified": [
+          {
+            "mesh": "EyeLeft",
+            "class": "eye",
+            "material": {
+              "name": "Wolf3D_Eye",
+              "type": "MeshPhysicalMaterial",
+              "isMeshPhysicalMaterial": true,
+              "isMeshStandardMaterial": true,
+              "roughness": 0.08,
+              "metalness": 0,
+              "sheen": 0,
+              "sheenColor": "#000000",
+              "sheenRoughness": 1,
+              "clearcoat": 1,
+              "clearcoatRoughness": 0.03,
+              "ior": 1.376,
+              "specularIntensity": 1,
+              "envMapIntensity": 1.1,
+              "side": 0,
+              "alphaTest": 0,
+              "color": "#ffffff"
+            }
+          },
+          {
+            "mesh": "EyeRight",
+            "class": "eye",
+            "material": {
+              "name": "Wolf3D_Eye",
+              "type": "MeshPhysicalMaterial",
+              "isMeshPhysicalMaterial": true,
+              "isMeshStandardMaterial": true,
+              "roughness": 0.08,
+              "metalness": 0,
+              "sheen": 0,
+              "sheenColor": "#000000",
+              "sheenRoughness": 1,
+              "clearcoat": 1,
+              "clearcoatRoughness": 0.03,
+              "ior": 1.376,
+              "specularIntensity": 1,
+              "envMapIntensity": 1.1,
+              "side": 0,
+              "alphaTest": 0,
+              "color": "#ffffff"
+            }
+          },
+          {
+            "mesh": "Wolf3D_Head",
+            "class": "skin",
+            "material": {
+              "name": "Wolf3D_Skin",
+              "type": "MeshPhysicalMaterial",
+              "isMeshPhysicalMaterial": true,
+              "isMeshStandardMaterial": true,
+              "roughness": 0.6,
+              "metalness": 0,
+              "sheen": 0.35,
+              "sheenColor": "#ffe0c2",
+              "sheenRoughness": 0.6,
+              "clearcoat": 0,
+              "clearcoatRoughness": 0,
+              "ior": 1.5,
+              "specularIntensity": 0.6,
+              "envMapIntensity": 0.7,
+              "side": 0,
+              "alphaTest": 0,
+              "color": "#ffffff"
+            }
+          },
+          {
+            "mesh": "Wolf3D_Teeth",
+            "class": "teeth",
+            "material": {
+              "name": "Wolf3D_Teeth",
+              "type": "MeshPhysicalMaterial",
+              "isMeshPhysicalMaterial": true,
+              "isMeshStandardMaterial": true,
+              "roughness": 0.25,
+              "metalness": 0,
+              "sheen": 0,
+              "sheenColor": "#000000",
+              "sheenRoughness": 1,
+              "clearcoat": 0.4,
+              "clearcoatRoughness": 0.15,
+              "ior": 1.5,
+              "specularIntensity": 1,
+              "envMapIntensity": 0.85,
+              "side": 2,
+              "alphaTest": 0,
+              "color": "#ffffff"
+            }
+          },
+          {
+            "mesh": "Wolf3D_Hair",
+            "class": "hair",
+            "material": {
+              "name": "Wolf3D_Hair",
+              "type": "MeshPhysicalMaterial",
+              "isMeshPhysicalMaterial": true,
+              "isMeshStandardMaterial": true,
+              "roughness": 0.55,
+              "metalness": 0,
+              "sheen": 0.5,
+              "sheenColor": "#181818",
+              "sheenRoughness": 0.4,
+              "clearcoat": 0,
+              "clearcoatRoughness": 0,
+              "ior": 1.5,
+              "specularIntensity": 1,
+              "envMapIntensity": 0.85,
+              "side": 2,
+              "alphaTest": 0,
+              "color": "#181818"
+            }
+          },
+          {
+            "mesh": "Wolf3D_Body",
+            "class": "skin",
+            "material": {
+              "name": "Wolf3D_Body",
+              "type": "MeshPhysicalMaterial",
+              "isMeshPhysicalMaterial": true,
+              "isMeshStandardMaterial": true,
+              "roughness": 0.6,
+              "metalness": 0,
+              "sheen": 0.35,
+              "sheenColor": "#e6885d",
+              "sheenRoughness": 0.6,
+              "clearcoat": 0,
+              "clearcoatRoughness": 0,
+              "ior": 1.5,
+              "specularIntensity": 0.6,
+              "envMapIntensity": 0.7,
+              "side": 2,
+              "alphaTest": 0,
+              "color": "#e69b7c"
+            }
+          }
+        ],
+        "sample": [
+          {
+            "name": "",
+            "class": null,
+            "visible": false
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "EyeLeft",
+            "class": "eye",
+            "visible": true
+          },
+          {
+            "name": "EyeRight",
+            "class": "eye",
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Head",
+            "class": "skin",
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Teeth",
+            "class": "teeth",
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Hair",
+            "class": "hair",
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Glasses",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Body",
+            "class": "skin",
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Outfit_Bottom",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Outfit_Footwear",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "Wolf3D_Outfit_Top",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          },
+          {
+            "name": "",
+            "class": null,
+            "visible": true
+          }
+        ]
+      }
+    },
+    "afterSummary": {
+      "classifiedCount": 6,
+      "physicalCount": 6,
+      "skinCount": 2,
+      "eyeCount": 2,
+      "skinMarked": true,
+      "eyeMarked": true,
+      "realismActive": true
+    },
+    "cameraAr": {
+      "bodyIsAr": true,
+      "videoReady": {
+        "readyState": 4,
+        "w": 640,
+        "h": 480,
+        "hasStream": true
+      }
+    },
     "onboarding": [
-      "Enable Camera",
       "Enable Camera",
       "Enable Location",
       "Continue without",
       "Start exploring"
     ],
-    "notes": [
-      "no SkinnedMesh observed in any captured scene within 60s",
-      "camera AR click failed: page.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator('#irl-camera-btn')\n    - locator resolved to <button type=\"button\" id=\"irl-camera-btn\" aria-pressed=\"false\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"irl-overlay\" aria-modal=\"true\" role=\"alertdialog\" aria-label=\"IRL status\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"irl-overlay\" aria-modal=\"true\" role=\"alertdialog\" aria-label=\"IRL status\">…</div> intercepts pointer events\n  - retrying click action\n    - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n",
-      "fatal: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://localhost:3004/src/shared/avatar-material-realism.js"
-    ]
+    "notes": []
   }
 ]

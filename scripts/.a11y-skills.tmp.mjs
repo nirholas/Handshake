@@ -1,0 +1,12 @@
+import { chromium } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+const b = await chromium.launch();
+const p = await (await b.newContext()).newPage();
+await p.goto('http://localhost:3000/skills', { waitUntil: 'domcontentloaded' });
+await p.waitForTimeout(4000);
+const cards = await p.locator('.market-skill-card').count();
+console.log('skill cards rendered:', cards);
+const { violations } = await new AxeBuilder({ page: p }).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
+console.log('violations:', violations.map(v=>v.id).join(', ') || 'none');
+for (const v of violations) for (const n of v.nodes.slice(0,3)) console.log(' -', v.id, n.target.join(' '), '\n   ', (n.failureSummary||'').replace(/\n/g,' ').slice(0,300));
+await b.close();

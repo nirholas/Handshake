@@ -102,6 +102,7 @@ Each run file (`runs/run-<timestamp>.json`) has:
       "promptId": "qb01", "subjectClass": "people-portrait",
       "lane": "trellis_selfhost", "tier": "standard",
       "status": "ok", "glbUrl": "...", "creationId": "...",
+      "effectiveLane": "trellis_selfhost", "cached": false,
       "views": [
         { "view": "front", "scores": [ { "photorealism": 7, "geometryIntegrity": 6, "textureFidelity": 7, "promptAdherence": 8, "critique": "...", "modelVersion": "gemini-2.5-pro-..." }, { /* 2nd scoring */ } ], "avg": { "photorealism": 7, "...": "...", "mean": 6.8 } },
         { "view": "three-quarter", "...": "..." },
@@ -112,6 +113,15 @@ Each run file (`runs/run-<timestamp>.json`) has:
   ]
 }
 ```
+
+`lane` is the lane the sweep ASKED for; `effectiveLane` is the lane that
+actually produced the GLB, as reported by `/api/forge`. They differ whenever the
+router failed over (a cooling NVIDIA NIM gateway reroutes to the reconstruct
+lane, an exhausted HF Space hands off to a self-host worker), so always read
+per-lane means off `effectiveLane` — a run where every `nvidia` row carries
+`effectiveLane: "huggingface"` measured Hugging Face twice, not NVIDIA once.
+`cached` marks a result `/api/forge` served from its own result cache rather
+than re-running the GPU pipeline (the same real generation, no double spend).
 
 `meanScore` on a result averages that combo's per-view means (each view's mean
 already averages its two independent judge scorings). A `lane_failed` result

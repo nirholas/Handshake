@@ -899,11 +899,11 @@ export function createWalkNpcs(opts) {
 			out.push({
 				name: n.name,
 				dist: +dist.toFixed(2),
+				// null when this rig exposes no head chain, so a caller can tell
+				// "not tracking" apart from "tracking but side-on".
 				alignment: alignment == null ? null : +alignment.toFixed(3),
-				ready: n._ready,
-				hasBody: !!n._body,
-				hasGaze: !!n._gaze,
-				headBone: head ? head.name : null,
+				tracking: !!head && dist <= GAZE_RANGE,
+				headYaw: head ? +head.rotation.y.toFixed(4) : null,
 			});
 		}
 		return out;

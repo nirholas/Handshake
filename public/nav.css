@@ -203,6 +203,30 @@
 	background: rgba(15, 18, 28, 0.08);
 }
 
+/* The three floating nav surfaces (dropdown, notifications popover, mobile
+   drawer) were authored as opaque near-black panels, but the text inside them
+   is token-driven and flips to dark ink under [data-theme='light'] — so in
+   light mode every menu on every page rendered dark ink on a dark panel. The
+   panels flip with the ink; their shadows stay dark, which is correct on a
+   light canvas too. */
+:root[data-theme='light'] .nav-pop {
+	background: rgba(255, 255, 255, 0.98);
+	box-shadow: 0 10px 40px rgba(15, 18, 28, 0.14), 0 2px 8px rgba(15, 18, 28, 0.08);
+}
+:root[data-theme='light'] .notif-panel {
+	background: #ffffff;
+	border-color: var(--stroke-strong, rgba(15, 18, 28, 0.16));
+	box-shadow: 0 8px 40px rgba(15, 18, 28, 0.18), 0 2px 8px rgba(15, 18, 28, 0.1);
+}
+:root[data-theme='light'] .nav-drawer {
+	background: rgba(255, 255, 255, 0.97);
+}
+/* Scrollbar thumb + any white-tint separators inside the popovers need the same
+   inversion, or they vanish against the now-light panel. */
+:root[data-theme='light'] .nav-pop::-webkit-scrollbar-thumb {
+	background: rgba(15, 18, 28, 0.18);
+}
+
 /* ── Notifications popover panel ─────────────────────────────── */
 .notif-panel {
 	position: fixed; z-index: 9999;

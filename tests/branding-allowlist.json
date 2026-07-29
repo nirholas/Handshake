@@ -428,5 +428,10 @@
 		"pattern": "| CharacterStudio | `CH_Hips`",
 		"file": "docs/3d-asset-pipeline.md",
 		"reason": "Third-party skeleton naming convention, not our avatar builder. This row of the bone-name mapping table names 3ds Max Character Studio (bones prefixed CH_), sitting alongside VRM, Daz3D, Reallusion CC3, and Autodesk HumanIK. Renaming it would misidentify the rig format the canonicalizer detects."
+	},
+	{
+		"pattern": "Avaturn, Unreal, VRoid, VRM 1.0, Daz, MakeHuman, Rigify",
+		"file": "docs/avatar-pipeline.md",
+		"reason": "Enumerates the third-party skeleton NAMING CONVENTIONS the retargeter maps bone names from (the same list CLAUDE.md documents). These are rig format identifiers in developer documentation, not a vendor three.ws builds on or presents to users."
 	}
 ]

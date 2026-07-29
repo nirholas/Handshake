@@ -3373,7 +3373,7 @@
 						     driven by a real /api/forge signal (see src/forge-timeline.js);
 						     the lane decides which stages exist, so a text→3D engine with no
 						     reference-image step simply never shows one. -->
-						<ol class="gen-stages" id="gen-stages" aria-live="polite"></ol>
+						<ol class="gen-stages" id="gen-stages" role="list" aria-live="polite"></ol>
 						<!-- Cold-start honesty: shown only when the API reports cold_start
 						     for the chosen self-hosted GPU lane, and dismissed by the first
 						     real "running" poll, never by a timer. -->

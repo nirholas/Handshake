@@ -54,6 +54,52 @@ realism campaign.
 - AR screenshots included; no regression in the humanoid-gate degrade paths (kill-test one
   rig failure and confirm the mesh still ships with a working fallback).
 
+## Verification status (2026-07-29)
+
+Evidence lives in `prompts/quality-bar/_generated/10/`. Only what is listed as PROVEN below
+has measured evidence behind it; everything else is still open.
+
+### Task 5, animation dignity: PROVEN
+
+- Tool: `scripts/animation-dignity-sweep.mjs` (run it with `--verbose` for per-limb numbers,
+  `--json` for machine-readable output). It builds ten minimal skinned GLBs, one per bone-naming
+  convention, drives the real `idle` and `walk` clips onto each, and MEASURES the outcome rather
+  than checking that nothing threw: retarget coverage, per-limb rotation swing in degrees, and
+  end-effector world travel in hip-heights for both hands and both feet, composed off real
+  three.js world matrices. Every rig runs down both production paths (ingest-canonicalized and
+  raw-runtime).
+- Result: **10/10 conventions animate both arms and both legs on both lanes.** Committed evidence:
+  `_generated/10/animation-dignity-sweep.txt` (verbose report) and `.json` (full per-limb data).
+  Conventions covered: Mixamo, Avaturn/RPM, Unreal mannequin, VRM 0.x/VRoid, VRM 1.0,
+  Daz/Genesis 8, MakeHuman, Blender Rigify, a simple `shoulderL` hobby rig, and a novel
+  anatomical-Latin scan rig the canonicalizer had never seen.
+- **Five of the ten were broken before this run, and nothing in the suite noticed.** 30 of the 53
+  tracks in every clip address a finger joint, so a rig whose hands do not name-map scores about
+  40% coverage, falls under `MIN_COVERAGE` in `src/animation-retarget.js`, and gets NO action
+  built at all: the avatar stands frozen in its bind pose, arms and legs included. Measured
+  before/after coverage: Unreal 39.6% to 96%, VRM 1.0 43.4% to 100%, Daz 43.4% to 100%,
+  MakeHuman 41.5% to 98%, Rigify 41.5% to 98%. The novel anatomical rig went from 7.5% (3 of 52
+  joints mapped, nothing moved at all) to 100%.
+- Fixes landed at the mapping layer only, in `src/glb-canonicalize.js`: Unreal finger chain
+  (`index_01_l`), VRM 1.0 phalanx naming (`leftIndexProximal`, `leftThumbMetacarpal`), Daz
+  numbered fingers (`lIndex1`, `lMid1`), Rigify fingers (`f_index.01.L`, `thumb.01.L`),
+  MakeHuman digit numbering (`finger2-1.L`), and the whole anatomical-Latin skeleton
+  (`lumbar`, `thoracic`, `cervical`, `cranium`, `humerus.L`, `ulna.L`, `femur.L`, `tibia.L`,
+  `talus.L`, `metatarsus.L`, `index_proximal.L`). No rig allowlist was added.
+- Regression cover: `tests/glb-canonicalize.test.js` gained per-convention finger cases plus an
+  anatomical-skeleton block; `tests/animation-retarget.test.js` gained a coverage-floor suite that
+  asserts six conventions clear the PRODUCTION `MIN_COVERAGE` default against the real clips and
+  map all 30 finger joints.
+- One open defect, reported not papered over: on the runtime-only lane a Rigify rig binds the
+  `LeftArm`/`RightArm` clip track to `shoulder.L`/`shoulder.R` (the clavicle) because
+  `shoulder.L` and `upper_arm.L` normalize onto the same canonical name and no name-only table can
+  separate them (the simple hobby rig spells its upper arm `shoulderL` too). The arm still
+  animates, but it swings from the shoulder blade. The ingest canonicalizer resolves this
+  structurally (`canonicalizeJointNodes` pass 1.5), and every avatar three.ws stores is
+  canonicalized at ingest, so production is correct; only a third-party GLB loaded straight into
+  the viewer is affected. Remedy: port pass 1.5/1.6 into `canonicalNodeMapFromObject` in
+  `src/animation-retarget.js`. The sweep prints this as a warning with the remedy attached.
+
 ## Anticipated blockers, pre-answered
 
 - Hunyuan3D not Ready yet: run the full audit and material/rig/AR work on the TRELLIS lane

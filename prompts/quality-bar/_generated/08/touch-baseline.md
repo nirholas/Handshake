@@ -6,22 +6,22 @@ measured bounding box, not a source grep.
 
 - Minimum target size checked: 44x44 CSS px
 - Inline text links are exempt (WCAG 2.5.8) and counted separately
-- Measured: 2026-07-29T06:04:43.521Z
+- Measured: 2026-07-29T06:15:54.829Z
 
 | path | undersized targets | interactive checked | inline-exempt | canvases touch-action:auto / visible | viewport-fit=cover | bottom bars w/o safe-area / total | overflow-x |
 |---|---|---|---|---|---|---|---|
-| `/marketplace` | 1171 | 1502 | 0 | 1/1 | NO | 1/1 | 0 px |
-| `/launches` | 232 | 299 | 0 | 2/2 | NO | 3/3 | 0 px |
-| `/docs/start-here` | 176 | 289 | 47 | 0/0 | NO | 1/1 | 0 px |
-| `/` | 172 | 314 | 5 | 5/6 | NO | 1/1 | 0 px |
-| `/markets` | 120 | 196 | 0 | 2/2 | NO | 1/1 | 165 px |
-| `/forge` | 49 | 135 | 1 | 2/2 | NO | 1/1 | 0 px |
-| `/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump` | 41 | 86 | 0 | 2/2 | NO | 2/2 | 0 px |
-| `/play` | 37 | 46 | 0 | 0/1 | yes | 3/3 | 0 px |
-| `/changelog` | 18 | 2245 | 4 | 1/1 | NO | 1/1 | 2 px |
-| `/dashboard` | 14 | 37 | 3 | 1/1 | yes | 1/1 | 0 px |
-| `/irl` | 12 | 59 | 0 | 0/1 | yes | 14/14 | 0 px |
-| `/walk` | 9 | 60 | 0 | 1/1 | yes | 0/0 | 0 px |
+| `/marketplace` | 1171 | 1502 | 0 | 1/1 | NO | 0/0 | 0 px |
+| `/launches` | 237 | 304 | 0 | 3/3 | NO | 1/1 | 0 px |
+| `/docs/start-here` | 176 | 289 | 47 | 0/0 | NO | 0/0 | 0 px |
+| `/` | 167 | 312 | 5 | 4/5 | NO | 0/0 | 0 px |
+| `/markets` | 120 | 196 | 0 | 2/2 | NO | 0/0 | 165 px |
+| `/forge` | 45 | 131 | 1 | 1/1 | NO | 0/0 | 0 px |
+| `/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump` | 37 | 81 | 0 | 1/1 | NO | 1/1 | 0 px |
+| `/play` | 37 | 46 | 0 | 0/1 | yes | 0/0 | 0 px |
+| `/changelog` | 18 | 2245 | 4 | 1/1 | NO | 0/0 | 2 px |
+| `/dashboard` | 14 | 37 | 3 | 1/1 | yes | 0/0 | 0 px |
+| `/irl` | 12 | 59 | 0 | 0/1 | yes | 6/6 | 0 px |
+| `/walk` | 11 | 62 | 0 | 1/1 | yes | 0/0 | 0 px |
 | `/ar` | 6 | 14 | 6 | 0/0 | yes | 0/0 | 0 px |
 | `/news` | 5 | 117 | 5 | 0/0 | NO | 0/0 | 127 px |
 
@@ -44,8 +44,6 @@ measured bounding box, not a source grep.
   - 4x `button.tag-pill 55x18`
 - visible canvases:
   - `canvas#footer-bot-canvas` 90x90 touch-action=auto (parent auto)
-- bottom-anchored bars:
-  - `header.market-topbar` h=412 padding-bottom=9.888px safe-area-rule=false
 
 ### `/launches`
 
@@ -57,18 +55,20 @@ measured bounding box, not a source grep.
   - 23x `a.lx-action 103x29`
   - 23x `a.lx-action 80x29`
   - 23x `a.lx-action 86x29`
-  - 14x `a.mp-tick.mp-k-pay 201x20`
-  - 14x `a.mp-tick.mp-k-pay 226x20`
-  - 12x `a.mp-tick.mp-k-pay 242x20`
+  - 16x `a.mp-tick.mp-k-pay 201x20`
+  - 16x `a.mp-tick.mp-k-pay 226x20`
+  - 8x `a.mp-tick.mp-k-pay 242x20`
   - 1x `a.nav-skip 157x36`
   - 1x `a.lx-btn.lx-btn-primary 146x39`
 - visible canvases:
   - `canvas#lx-field` 393x727 touch-action=auto (parent auto)
   - `canvas#footer-bot-canvas` 90x90 touch-action=auto (parent auto)
+  - `canvas.walk-companion-canvas` 148x208 touch-action=auto (parent auto)
 - bottom-anchored bars:
-  - `canvas#lx-field` h=727 padding-bottom=0px safe-area-rule=false
-  - `div.lx-aurora` h=1079 padding-bottom=0px safe-area-rule=false
   - `section.lx-toolbar` h=159 padding-bottom=6.112px safe-area-rule=false
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 165 px):
+  - `canvas#lx-field` touch-action=auto -> page scrolled 165 px (headroom 10990 px)
+  - `canvas.walk-companion-canvas` touch-action=auto -> page scrolled 165 px (headroom 10825 px)
 
 ### `/docs/start-here`
 
@@ -85,8 +85,6 @@ measured bounding box, not a source grep.
   - 1x `button#pagetools-caret.docs-pagetools-caret 35x35`
   - 1x `a 146x21`
   - 1x `a 164x21`
-- bottom-anchored bars:
-  - `aside#sidebar.docs-sidebar` h=675 padding-bottom=67.776px safe-area-rule=false
 
 ### `/`
 
@@ -109,14 +107,16 @@ measured bounding box, not a source grep.
   - `canvas#walk-minimap.walk-minimap` 285x140 touch-action=auto (parent auto)
   - `canvas.walk-preview-canvas` 351x197 touch-action=auto (parent auto)
   - `canvas#drop-canvas` 393x627 touch-action=auto (parent auto)
-  - `canvas.walk-companion-canvas` 148x208 touch-action=auto (parent auto)
-- bottom-anchored bars:
-  - `div.walk-c2w-fx` h=727 padding-bottom=0px safe-area-rule=false
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 165 px):
+  - `canvas` touch-action=none -> page scrolled 0 px (headroom 28532 px) **swallowed the swipe**
+  - `canvas#walk-minimap.walk-minimap` touch-action=auto -> page scrolled 165 px (headroom 14988 px)
+  - `canvas.walk-preview-canvas` touch-action=auto -> page scrolled 165 px (headroom 6617 px)
+  - `canvas#drop-canvas` touch-action=auto -> page scrolled 165 px (headroom 1574 px)
 
 ### `/markets`
 
 - undersized targets:
-  - 100x `a 202x22`
+  - 100x `a 225x24`
   - 5x `button.nw-star 21x19`
   - 1x `a.nav-skip 157x36`
   - 1x `a.mkt-more 139x22`
@@ -131,9 +131,9 @@ measured bounding box, not a source grep.
 - visible canvases:
   - `canvas#footer-bot-canvas` 90x90 touch-action=auto (parent auto)
   - `canvas.walk-companion-canvas` 148x208 touch-action=auto (parent auto)
-- bottom-anchored bars:
-  - `div.walk-c2w-fx` h=1033 padding-bottom=0px safe-area-rule=false
-- horizontal overflow: 165 px beyond 558 px viewport
+- horizontal overflow: 165 px beyond 558 px viewport (html overflow-x: visible, actually scrolls sideways: false)
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 0 px):
+  - `canvas.walk-companion-canvas` touch-action=auto -> page scrolled 165 px (headroom 13503 px)
 
 ### `/forge`
 
@@ -152,9 +152,6 @@ measured bounding box, not a source grep.
   - 1x `button#roll-forge.btn.forge-roll 155x41`
 - visible canvases:
   - `canvas#footer-bot-canvas` 90x90 touch-action=auto (parent auto)
-  - `canvas.walk-companion-canvas` 148x208 touch-action=auto (parent auto)
-- bottom-anchored bars:
-  - `div.walk-c2w-fx` h=727 padding-bottom=0px safe-area-rule=false
 
 ### `/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`
 
@@ -173,10 +170,8 @@ measured bounding box, not a source grep.
   - 1x `button.cv-range-btn 87x27`
 - visible canvases:
   - `canvas#footer-bot-canvas` 90x90 touch-action=auto (parent auto)
-  - `canvas.walk-companion-canvas` 148x208 touch-action=auto (parent auto)
 - bottom-anchored bars:
   - `th.left` h=47 padding-bottom=12px safe-area-rule=false
-  - `div.walk-c2w-fx` h=727 padding-bottom=0px safe-area-rule=false
 
 ### `/play`
 
@@ -195,10 +190,8 @@ measured bounding box, not a source grep.
   - 1x `a 54x16`
 - visible canvases:
   - `canvas#kx-canvas` 393x727 touch-action=none (parent auto)
-- bottom-anchored bars:
-  - `canvas#kx-canvas` h=727 padding-bottom=0px safe-area-rule=false
-  - `div#cc-lobby` h=727 padding-bottom=0px safe-area-rule=false
-  - `div#pi-overlay.pi-show` h=727 padding-bottom=20px safe-area-rule=false
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 0 px):
+  - `canvas#kx-canvas` touch-action=none -> page scrolled 0 px (headroom 0 px)
 
 ### `/changelog`
 
@@ -217,9 +210,9 @@ measured bounding box, not a source grep.
   - 1x `a 83x15`
 - visible canvases:
   - `canvas.walk-companion-canvas` 148x208 touch-action=auto (parent auto)
-- bottom-anchored bars:
-  - `div.walk-c2w-fx` h=731 padding-bottom=0px safe-area-rule=false
-- horizontal overflow: 2 px beyond 395 px viewport
+- horizontal overflow: 2 px beyond 395 px viewport (html overflow-x: visible, actually scrolls sideways: false)
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 161 px):
+  - `canvas.walk-companion-canvas` touch-action=auto -> page scrolled 165 px (headroom 763510 px)
 
 ### `/dashboard`
 
@@ -238,8 +231,8 @@ measured bounding box, not a source grep.
   - 1x `a 79x19`
 - visible canvases:
   - `canvas#avatar-canvas` 393x727 touch-action=auto (parent auto)
-- bottom-anchored bars:
-  - `canvas#avatar-canvas` h=727 padding-bottom=0px safe-area-rule=false
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 165 px):
+  - `canvas#avatar-canvas` touch-action=auto -> page scrolled 165 px (headroom 1452 px)
 
 ### `/irl`
 
@@ -259,20 +252,14 @@ measured bounding box, not a source grep.
 - visible canvases:
   - `canvas#irl-canvas` 393x727 touch-action=none (parent none)
 - bottom-anchored bars:
-  - `div.irl-bg` h=727 padding-bottom=0px safe-area-rule=false
-  - `canvas#irl-canvas` h=727 padding-bottom=0px safe-area-rule=false
-  - `div#irl-more-sheet` h=375 padding-bottom=28px safe-area-rule=false
   - `footer.irl-bottom` h=238 padding-bottom=14px safe-area-rule=false
   - `div#irl-caption-panel` h=288 padding-bottom=36px safe-area-rule=false
-  - `div#irl-consent-sheet` h=443 padding-bottom=32px safe-area-rule=false
   - `div#irl-error-sheet` h=207 padding-bottom=36px safe-area-rule=false
   - `div#irl-mypins-sheet` h=200 padding-bottom=36px safe-area-rule=false
-  - `div#irl-sheet` h=308 padding-bottom=36px safe-area-rule=false
-  - `div#irl-report-sheet` h=485 padding-bottom=36px safe-area-rule=false
   - `div#irl-agents-sheet` h=200 padding-bottom=36px safe-area-rule=false
   - `div#irl-calibrate-panel` h=230 padding-bottom=18px safe-area-rule=false
-  - `div#irl-onboard.irl-onboard.is-open` h=727 padding-bottom=24px safe-area-rule=false
-  - `section.irl-drops-panel` h=390 padding-bottom=16px safe-area-rule=false
+- vertical swipe test (px the document scrolled; control swipe off-canvas moved 0 px):
+  - `canvas#irl-canvas` touch-action=none -> page scrolled 0 px (headroom 0 px)
 
 ### `/walk`
 
@@ -286,6 +273,8 @@ measured bounding box, not a source grep.
   - 1x `a.h-footer-nvidia 24x44`
   - 1x `a 83x20`
   - 1x `a 80x20`
+  - 1x `button.tws-disc-x 25x25`
+  - 1x `a.tws-disc-cta.tws-disc-cta--primary 59x36`
 - visible canvases:
   - `canvas#footer-bot-canvas` 90x90 touch-action=auto (parent auto)
 
@@ -307,5 +296,5 @@ measured bounding box, not a source grep.
   - 1x `a 58x26`
   - 1x `a 82x26`
   - 1x `a.subscribe 165x42`
-- horizontal overflow: 127 px beyond 520 px viewport
+- horizontal overflow: 127 px beyond 520 px viewport (html overflow-x: visible, actually scrolls sideways: false)
 

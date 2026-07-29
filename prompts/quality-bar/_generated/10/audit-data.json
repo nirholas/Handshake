@@ -1,6 +1,6 @@
 {
 	"startedAt": "2026-07-29T06:10:51.858Z",
-	"finishedAt": "2026-07-29T06:15:16.398Z",
+	"finishedAt": "2026-07-29T07:13:04.547Z",
 	"baseUrl": "https://three.ws",
 	"cases": {
 		"a": {
@@ -128,9 +128,119 @@
 				"after": {
 					"id": "after",
 					"tierRequested": "high",
-					"views": {},
-					"error": "forge submit 402: three_hold_required",
-					"generationMs": 165
+					"views": {
+						"front": {
+							"file": "a-after-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is a simple geometric block and completely fails to generate the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model is a catastrophic failure, rendering as a simple geometric block instead of the requested human figure.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "a-after-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 2,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple geometric plane and bears no resemblance whatsoever to the requested professional sprinter.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model is a simple, untextured geometric plane and bears no resemblance to the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1.5,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1.125
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "a-after-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model has completely failed to generate, resulting in an impossibly thin vertical line instead of the requested human figure.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model has completely failed to generate, resulting in an extremely thin, untextured vertical plane instead of the requested person.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "a-after-hands.png",
+							"renderError": null
+						}
+					},
+					"error": null,
+					"generationMs": 222629,
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/78879ceb-3010-4cca-9cee-ecc1b8580e83.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/4f92033c-8e30-4689-9f72-2c55099791d1.png",
+					"creationId": "78879ceb-3010-4cca-9cee-ecc1b8580e83",
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/c4487557-cf3e-4cda-8d59-546c9d4926b0.glb",
+					"rigMs": 30111,
+					"meanScore": 1.0416666666666667,
+					"dimMeans": {
+						"photorealism": 1,
+						"geometryIntegrity": 1.1666666666666667,
+						"textureFidelity": 1,
+						"promptAdherence": 1,
+						"mean": 1.0416666666666667
+					}
 				}
 			},
 			"directed": "Full-body humanoid, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart for optimal rigging, hands open, fingers separated; female, late twenties, lean muscular athletic build, toned proportions, determined",
@@ -143,8 +253,1167 @@
 			"prompt": "A synthetic persona, not a real person: a grandmother in her seventies, soft build, silver hair pinned in a bun, reading glasses, wearing a knitted cardigan over a floral blouse and a long skirt with flat shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
 			"subjectClass": "person",
 			"stylized": false,
-			"variants": {},
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "b-before-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The hands are geometrically malformed into indistinct blobs with fused fingers, and the face is a low-resolution, melted mass with no clear features.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The hands are geometrically malformed into indistinct blobs with fused fingers, and the face is a low-resolution, melted mass with no clear features.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 3,
+								"textureFidelity": 2,
+								"promptAdherence": 3,
+								"mean": 2.5
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "b-before-three-quarter.png",
+							"renderError": null,
+							"judgeError": "judge call 429: [{\"error\":{\"code\":429,\"message\":\"Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.\",\"status\":\"RESOURCE_EXHAUSTED\"}}]"
+						},
+						"side": {
+							"file": "b-before-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 3,
+									"geometryIntegrity": 6,
+									"textureFidelity": 3,
+									"promptAdherence": 2,
+									"critique": "Prompt adherence is extremely low, as the model has short hair instead of a bun and is wearing a pullover and pants instead of the requested cardigan, blouse, and skirt.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 4,
+									"geometryIntegrity": 6,
+									"textureFidelity": 3,
+									"promptAdherence": 2,
+									"critique": "The model's clothing is entirely incorrect, showing a plain sweater and pants instead of the requested knitted cardigan over a floral blouse and a long skirt.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 3.5,
+								"geometryIntegrity": 6,
+								"textureFidelity": 3,
+								"promptAdherence": 2,
+								"mean": 3.625
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "b-before-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/615a2d37-f0df-4f5d-88a6-83633e54ebef.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/44bc0091-fbd5-430e-9a9a-e39de46b786b.png",
+					"creationId": "615a2d37-f0df-4f5d-88a6-83633e54ebef",
+					"generationMs": 549662,
+					"error": null,
+					"meanScore": 3.0625,
+					"dimMeans": {
+						"photorealism": 2.75,
+						"geometryIntegrity": 4.5,
+						"textureFidelity": 2.5,
+						"promptAdherence": 2.5,
+						"mean": 3.0625
+					}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"file": "b-after-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 10,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The asset is a simple blue rectangle and shows absolutely none of the requested subject matter from the brief.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is a simple blue rectangle and shows a complete failure to generate the requested subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 5.5,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 2.125
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "b-after-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 10,
+									"textureFidelity": 3,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple blue plane and completely fails to depict the requested grandmother character.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 9,
+									"textureFidelity": 2,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple blue plane and bears no resemblance whatsoever to the requested grandmother character.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 9.5,
+								"textureFidelity": 2.5,
+								"promptAdherence": 1,
+								"mean": 3.75
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "b-after-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model's geometry has completely collapsed into a single vertical line, failing to represent any aspect of the prompt.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generation completely failed, producing only a single thin vertical line instead of the requested human figure.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "b-after-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ea108307-3e7f-4669-95be-3c6ad10d8948.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/44bc0091-fbd5-430e-9a9a-e39de46b786b.png",
+					"creationId": "ea108307-3e7f-4669-95be-3c6ad10d8948",
+					"generationMs": 114883,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/7cfc7035-97fe-4f7d-b7af-5e57bf3dea9b.glb",
+					"rigMs": 20103,
+					"meanScore": 2.2916666666666665,
+					"dimMeans": {
+						"photorealism": 1.3333333333333333,
+						"geometryIntegrity": 5.333333333333333,
+						"textureFidelity": 1.5,
+						"promptAdherence": 1,
+						"mean": 2.2916666666666665
+					}
+				}
+			},
 			"directed": "A single full-body humanoid, a grandmother in her seventies with a soft build, standing in a neutral A/T-adjacent pose with arms slightly away from the body and legs slightly apart. She has silver hair rendered as many",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		},
+		"c": {
+			"id": "c",
+			"label": "Stylized kid (child-safe)",
+			"prompt": "A clearly stylized cartoon toy character of a child: chunky vinyl-figure proportions, oversized round head, simple mitten-like hands, matte toy-plastic finish with visible seam lines, painted-on facial features, wearing dungarees and a striped shirt, standing upright with arms slightly away from the body. Deliberately non-photoreal: a collectible vinyl figure, never a photographic human child.",
+			"subjectClass": "person",
+			"stylized": true,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "c-before-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 7,
+									"geometryIntegrity": 10,
+									"textureFidelity": 9,
+									"promptAdherence": 3,
+									"critique": "The asset deviates significantly from the prompt, rendering realistic fabric textures and incorrect clothing instead of the specified matte vinyl toy in dungarees with seam lines.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 6,
+									"geometryIntegrity": 10,
+									"textureFidelity": 9,
+									"promptAdherence": 3,
+									"critique": "The model fails to adhere to the prompt's core concept of a 'vinyl figure' by rendering mixed-media textures like knit fabric and corduroy instead of a uniform matte plastic finish.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 6.5,
+								"geometryIntegrity": 10,
+								"textureFidelity": 9,
+								"promptAdherence": 3,
+								"mean": 7.125
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "c-before-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 8,
+									"geometryIntegrity": 9,
+									"textureFidelity": 9,
+									"promptAdherence": 3,
+									"critique": "The model deviates significantly from the brief by rendering detailed fingers, a knit sweater, and corduroy pants instead of the requested mitten hands, striped shirt, and dungarees.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 8,
+									"geometryIntegrity": 9,
+									"textureFidelity": 9,
+									"promptAdherence": 3,
+									"critique": "The model deviates significantly from the brief by rendering detailed fingers, a knit sweater, and corduroy pants instead of the requested mitten hands, striped shirt, and dungarees.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 8,
+								"geometryIntegrity": 9,
+								"textureFidelity": 9,
+								"promptAdherence": 3,
+								"mean": 7.25
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "c-before-side.png",
+							"renderError": null,
+							"judgeError": "judge call 429: [{\"error\":{\"code\":429,\"message\":\"Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.\",\"status\":\"RESOURCE_EXHAUSTED\"}}]"
+						},
+						"hands": {
+							"file": "c-before-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/51712f0f-cf50-4c9b-b6b6-61a957852361.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/41530832-a72c-4721-9cc8-77c0dfbb2532.png",
+					"creationId": "51712f0f-cf50-4c9b-b6b6-61a957852361",
+					"generationMs": 799676,
+					"error": null,
+					"meanScore": 7.1875,
+					"dimMeans": {
+						"photorealism": 7.25,
+						"geometryIntegrity": 9.5,
+						"textureFidelity": 9,
+						"promptAdherence": 3,
+						"mean": 7.1875
+					}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"file": "c-after-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 8,
+									"geometryIntegrity": 10,
+									"textureFidelity": 7,
+									"promptAdherence": 4,
+									"critique": "The model fails to adhere to the prompt's specific clothing requirements, rendering a knit sweater and corduroy shorts instead of the requested dungarees and striped shirt with a matte toy-plastic finish.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 8,
+									"geometryIntegrity": 10,
+									"textureFidelity": 9,
+									"promptAdherence": 4,
+									"critique": "The model fails to adhere to the prompt's specific clothing (dungarees, striped shirt) and material (matte plastic, seam lines) requirements, instead rendering a character with a knit sweater and glossy boots.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 8,
+								"geometryIntegrity": 10,
+								"textureFidelity": 8,
+								"promptAdherence": 4,
+								"mean": 7.5
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "c-after-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 9,
+									"geometryIntegrity": 10,
+									"textureFidelity": 10,
+									"promptAdherence": 4,
+									"critique": "The model fails to adhere to the prompt's specific clothing requirements, rendering a sweater and pants instead of the requested dungarees and striped shirt.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 9,
+									"geometryIntegrity": 10,
+									"textureFidelity": 10,
+									"promptAdherence": 4,
+									"critique": "The model fails to adhere to the prompt's specific clothing requirements, depicting a plain sweater and trousers instead of the requested dungarees and striped shirt.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 9,
+								"geometryIntegrity": 10,
+								"textureFidelity": 10,
+								"promptAdherence": 4,
+								"mean": 8.25
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "c-after-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 6,
+									"geometryIntegrity": 5,
+									"textureFidelity": 6,
+									"promptAdherence": 4,
+									"critique": "The head's surface appears as unsmoothed, faceted geometry rather than the requested smooth, matte toy-plastic finish, and the clothing and hand style deviate from the brief.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 6,
+									"geometryIntegrity": 5,
+									"textureFidelity": 6,
+									"promptAdherence": 4,
+									"critique": "The head's surface appears as unsmoothed, faceted geometry rather than the requested smooth, matte toy-plastic finish, and the clothing and hand style deviate from the brief.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 6,
+								"geometryIntegrity": 5,
+								"textureFidelity": 6,
+								"promptAdherence": 4,
+								"mean": 5.25
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "c-after-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/2fc90365-0b6f-4656-ad2f-af4833d38f90.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/41530832-a72c-4721-9cc8-77c0dfbb2532.png",
+					"creationId": "2fc90365-0b6f-4656-ad2f-af4833d38f90",
+					"generationMs": 238066,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/4e145927-aafe-4b14-a052-720f385bd95f.glb",
+					"rigMs": 19665,
+					"meanScore": 7,
+					"dimMeans": {
+						"photorealism": 7.666666666666667,
+						"geometryIntegrity": 8.333333333333334,
+						"textureFidelity": 8,
+						"promptAdherence": 4,
+						"mean": 7
+					}
+				}
+			},
+			"directed": "A single full-body humanoid, standing in a neutral A-pose, arms slightly away from the body and legs slightly apart so limbs are readable and separable for rigging, with chunky vinyl-figure proportions, an oversized round head featuring",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		},
+		"d": {
+			"id": "d",
+			"label": "Businessperson",
+			"prompt": "A synthetic persona, not a real person: a businessman in his forties, average build, short dark hair, clean-shaven, wearing a navy two-piece wool suit over a white shirt with an open collar and polished black leather shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "d-before-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The model fails on multiple prompt points, depicting a man with a mustache in a gray suit and tie, and is also missing its lower body.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 3,
+									"geometryIntegrity": 4,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The model fails to adhere to the prompt, featuring a grey suit instead of navy, a closed collar with a tie instead of an open collar, and a mustache instead of being clean-shaven.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2.5,
+								"geometryIntegrity": 3.5,
+								"textureFidelity": 2,
+								"promptAdherence": 3,
+								"mean": 2.75
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "d-before-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The model fails on multiple fronts, with extremely low-resolution painterly textures, incomplete geometry where the legs are truncated, and a direct contradiction of the prompt by including facial hair and a tie.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The model fails on multiple fronts, with extremely low-resolution painterly textures, incomplete geometry where the legs are truncated, and a direct contradiction of the prompt by including facial hair and a tie.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 3,
+								"textureFidelity": 2,
+								"promptAdherence": 3,
+								"mean": 2.5
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "d-before-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 3,
+									"geometryIntegrity": 6,
+									"textureFidelity": 2,
+									"promptAdherence": 5,
+									"critique": "The model fails to adhere to the prompt by depicting a man with a goatee instead of being clean-shaven, and its overall quality is low due to blurry textures and plastic-like materials.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 4,
+									"geometryIntegrity": 6,
+									"textureFidelity": 4,
+									"promptAdherence": 6,
+									"critique": "The hair is rendered as a solid, painted cap with no visible strands, and the suit color is grey instead of the requested navy.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 3.5,
+								"geometryIntegrity": 6,
+								"textureFidelity": 3,
+								"promptAdherence": 5.5,
+								"mean": 4.5
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "d-before-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/383a030a-df1a-47f0-8b12-5206c1d39255.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/74a6114e-6016-41f3-b558-b61403eb9070.png",
+					"creationId": "383a030a-df1a-47f0-8b12-5206c1d39255",
+					"generationMs": 934095,
+					"error": null,
+					"meanScore": 3.25,
+					"dimMeans": {
+						"photorealism": 2.6666666666666665,
+						"geometryIntegrity": 4.166666666666667,
+						"textureFidelity": 2.3333333333333335,
+						"promptAdherence": 3.8333333333333335,
+						"mean": 3.2500000000000004
+					}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"file": "d-after-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is a simple blue rectangle and completely fails to generate the requested subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is a simple blue rectangle and completely fails to depict the requested person subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "d-after-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model generated a simple geometric primitive instead of the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model failed to generate the subject, producing only a simple geometric plane with flat color.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "d-after-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model failed to generate the requested human subject, producing only a single vertical line.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model completely failed to generate the subject, producing only a thin vertical line on a dark background.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "d-after-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/8fc93151-034d-40fa-8ee7-637cc17eaf47.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/74a6114e-6016-41f3-b558-b61403eb9070.png",
+					"creationId": "8fc93151-034d-40fa-8ee7-637cc17eaf47",
+					"generationMs": 110250,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/55abed12-2a53-4a2d-b559-80530d7d9426.glb",
+					"rigMs": 17480,
+					"meanScore": 1,
+					"dimMeans": {
+						"photorealism": 1,
+						"geometryIntegrity": 1,
+						"textureFidelity": 1,
+						"promptAdherence": 1,
+						"mean": 1
+					}
+				}
+			},
+			"directed": "A single full-body humanoid, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart, hands open with fingers separated; a synthetic male persona in his forties, average build,",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		},
+		"e": {
+			"id": "e",
+			"label": "Construction worker in workwear",
+			"prompt": "A synthetic persona, not a real person: a construction worker in his fifties, stocky build, weathered face, wearing a yellow high-visibility vest with reflective bands over a grey long-sleeve shirt, heavy canvas work trousers, a white hard hat and scuffed steel-toe boots, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "e-before-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 4,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The asset suffers from extremely low-resolution textures and blob-like hands with no finger definition, giving it the appearance of a dated video game character.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 4,
+									"critique": "The model suffers from extremely low-resolution textures and malformed geometry, particularly in the hands which are rendered as indistinct blobs.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 3.5,
+								"textureFidelity": 2,
+								"promptAdherence": 3.5,
+								"mean": 2.75
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "e-before-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 4,
+									"critique": "The reflective bands on the vest are baked into the texture as flat grey stripes with painted highlights, completely failing to represent a reflective material.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 4,
+									"critique": "The reflective bands on the vest are baked into the texture as flat grey stripes with painted highlights, completely failing to represent a reflective material.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 3,
+								"textureFidelity": 2,
+								"promptAdherence": 4,
+								"mean": 2.75
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "e-before-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 5,
+									"textureFidelity": 2,
+									"promptAdherence": 4,
+									"critique": "The model fails to match the brief, depicting a blue shirt and orange hard hat instead of the requested grey shirt and white hard hat.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 3,
+									"geometryIntegrity": 7,
+									"textureFidelity": 3,
+									"promptAdherence": 5,
+									"critique": "The textures are extremely low-resolution and blurry, the hard hat is orange instead of white, the shirt is blue instead of grey, and the reflective bands are baked-in flat stripes.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2.5,
+								"geometryIntegrity": 6,
+								"textureFidelity": 2.5,
+								"promptAdherence": 4.5,
+								"mean": 3.875
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "e-before-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/92ff5290-88f5-4984-a87a-7389bb3aaecf.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/9f7f3417-2be7-4c3f-899a-1012d054ab7c.png",
+					"creationId": "92ff5290-88f5-4984-a87a-7389bb3aaecf",
+					"generationMs": 722933,
+					"error": null,
+					"meanScore": 3.125,
+					"dimMeans": {
+						"photorealism": 2.1666666666666665,
+						"geometryIntegrity": 4.166666666666667,
+						"textureFidelity": 2.1666666666666665,
+						"promptAdherence": 4,
+						"mean": 3.125
+					}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"file": "e-after-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is an abstract, painterly image that completely fails to depict the requested human subject or any of its specified attributes.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is an abstract, painterly image that completely fails to depict the requested human subject or any of its specified attributes.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "e-after-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is a flat plane with an abstract, painterly texture that has no relation to the requested construction worker subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a flat plane with an abstract, painterly texture, completely failing to produce the requested 3D model of a person.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "e-after-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is an unidentifiable, paper-thin vertical sliver, indicating a catastrophic failure in geometry generation.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The render shows only a paper-thin vertical sliver of the model, making it impossible to evaluate any aspect of its form, texture, or realism.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "e-after-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/c5722106-fbee-4440-af51-e05704973fd9.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/9f7f3417-2be7-4c3f-899a-1012d054ab7c.png",
+					"creationId": "c5722106-fbee-4440-af51-e05704973fd9",
+					"generationMs": 208904,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/0053fced-ffac-4b9f-a28b-274781e38682.glb",
+					"rigMs": 21737,
+					"meanScore": 1,
+					"dimMeans": {
+						"photorealism": 1,
+						"geometryIntegrity": 1,
+						"textureFidelity": 1,
+						"promptAdherence": 1,
+						"mean": 1
+					}
+				}
+			},
+			"directed": "Full-body 3D model of a single, stocky male construction worker in his fifties with a weathered face, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart, hands open with fingers",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		},
+		"f": {
+			"id": "f",
+			"label": "Dancer mid-pose",
+			"prompt": "A synthetic persona, not a real person: a contemporary dancer in her thirties, tall athletic build, hair tied back, wearing a fitted dark leotard and a loose wrap skirt with bare feet, standing tall in a poised neutral stance with one arm raised slightly to the side and both hands open, fingers separated and clearly visible.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "f-before-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 2,
+									"textureFidelity": 3,
+									"promptAdherence": 3,
+									"critique": "The model's extremely low-polygon geometry results in blob-like hands and feet that are fused into a single indistinct base.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 4,
+									"textureFidelity": 2,
+									"promptAdherence": 4,
+									"critique": "The model lacks the requested wrap skirt and arm pose, and its extremely low-polygon geometry gives it a blocky, faceted appearance.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 3,
+								"textureFidelity": 2.5,
+								"promptAdherence": 3.5,
+								"mean": 2.75
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "f-before-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 2,
+									"critique": "The model fails on multiple core requirements, completely omitting the requested wrap skirt and specified arm pose, while the feet are rendered as fused, indistinct blobs.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 2,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The asset exhibits critical failures in geometry, with fused hands and feet and a very low polygon count, while also failing to match the prompt's specified clothing and pose.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2,
+								"geometryIntegrity": 2.5,
+								"textureFidelity": 2,
+								"promptAdherence": 2.5,
+								"mean": 2.25
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "f-before-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 3,
+									"geometryIntegrity": 4,
+									"textureFidelity": 3,
+									"promptAdherence": 4,
+									"critique": "The feet are severely malformed, appearing as low-poly, fused blobs with no definition in the toes or arch, and the model is missing the requested wrap skirt and arm pose.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 3,
+									"textureFidelity": 2,
+									"promptAdherence": 3,
+									"critique": "The feet are geometrically malformed, with the toes fused into a single indistinct mass, and the model is missing the requested wrap skirt and arm pose.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 2.5,
+								"geometryIntegrity": 3.5,
+								"textureFidelity": 2.5,
+								"promptAdherence": 3.5,
+								"mean": 3
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "f-before-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/aaad3ab1-0c03-4d62-a165-bbb87dba0942.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/060e8825-793c-4d1a-aa54-8a7174f29b54.png",
+					"creationId": "aaad3ab1-0c03-4d62-a165-bbb87dba0942",
+					"generationMs": 711319,
+					"error": null,
+					"meanScore": 2.6666666666666665,
+					"dimMeans": {
+						"photorealism": 2.1666666666666665,
+						"geometryIntegrity": 3,
+						"textureFidelity": 2.3333333333333335,
+						"promptAdherence": 3.1666666666666665,
+						"mean": 2.6666666666666665
+					}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"file": "f-after-front.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model completely failed to generate the requested subject, instead producing a simple, untextured geometric block.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple geometric primitive and bears no resemblance whatsoever to the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"three-quarter": {
+							"file": "f-after-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 2,
+									"geometryIntegrity": 10,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple geometric shape and bears no resemblance whatsoever to the requested contemporary dancer.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple geometric shape and bears no resemblance to the requested contemporary dancer.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1.5,
+								"geometryIntegrity": 5.5,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 2.25
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "f-after-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a single, thin vertical line and bears no resemblance to the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple vertical line and bears no resemblance to the requested human figure.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "f-after-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/805697a2-5c24-4d88-941a-4d87b656f55a.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/060e8825-793c-4d1a-aa54-8a7174f29b54.png",
+					"creationId": "805697a2-5c24-4d88-941a-4d87b656f55a",
+					"generationMs": 191409,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/b71da778-632b-47ce-b8b1-0a612d08b6dd.glb",
+					"rigMs": 20138,
+					"meanScore": 1.4166666666666667,
+					"dimMeans": {
+						"photorealism": 1.1666666666666667,
+						"geometryIntegrity": 2.5,
+						"textureFidelity": 1,
+						"promptAdherence": 1,
+						"mean": 1.4166666666666667
+					}
+				}
+			},
+			"directed": "A single full-body humanoid, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart for optimal rigging. A tall, athletic female contemporary dancer in her thirties, with an elegant, serene expression. Her",
 			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
 			"directorError": null
 		}

@@ -1,0 +1,19 @@
+{
+  "name": "rh-example-09-x402-paid-api-call",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pay a metered Robinhood Chain API endpoint in USDG over x402 with the hood402 client.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "hood402": "^0.1.1",
+    "hoodchain": "^0.1.1",
+    "viem": "^2.55.0"
+  }
+}

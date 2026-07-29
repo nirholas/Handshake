@@ -68,6 +68,10 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			hasReference: false,
 			referenceUrl: null,
 			directedPrompt: null,
+			// Did the response carry a `directed_prompt` KEY at all? Absent (an older
+			// deployment) is not the same claim as present-and-null (the director
+			// genuinely left the prompt alone), and the label must not conflate them.
+			directedReported: false,
 			directorRan: false, // the submit response came back, so the pass is over
 			submitted: false,
 			resumed: false,
@@ -84,10 +88,11 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 	// ── Stage model ──────────────────────────────────────────────────────────
 	function stages() {
 		const out = [];
-		const meshRunning = f.status === 'running';
-		const meshQueued = f.status === 'queued';
 		const meshStarted = f.submitted || f.resumed;
 		const terminal = f.status === 'done' || f.status === 'finalizing';
+		// A failed job stops spinning: the row keeps its label and detail but drops
+		// back to the idle marker, so nothing on screen still implies live work.
+		const meshState = terminal ? 'done' : f.status === 'failed' ? 'pending' : meshStarted ? 'active' : 'pending';
 
 		if (f.mode === 'sketch') {
 			out.push({
@@ -113,16 +118,8 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			// then a text-to-image model paints the view the mesh is built from.
 			out.push({
 				id: 'direct',
-				label: f.directorRan
-					? f.directedPrompt
-						? 'Prompt art-directed'
-						: 'Prompt used as you wrote it'
-					: 'Art-directing your prompt',
-				detail: f.directorRan
-					? f.directedPrompt
-						? 'Expanded with materials, lighting and composition cues. See it with your model'
-						: 'The director left it unchanged, so the model saw your exact words'
-					: 'Rewriting it into a single-subject brief with material and lighting cues',
+				label: directLabel(),
+				detail: directDetail(),
 				state: f.directorRan ? 'done' : 'active',
 			});
 			out.push({
@@ -148,7 +145,7 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			id: 'mesh',
 			label: meshLabel(),
 			detail: meshDetail(),
-			state: terminal ? 'done' : meshStarted && (meshQueued || meshRunning) ? 'active' : meshStarted ? 'active' : 'pending',
+			state: meshState,
 		});
 
 		out.push({
@@ -164,6 +161,22 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		});
 
 		return out.sort((a, b) => STAGE_ORDER.indexOf(a.id) - STAGE_ORDER.indexOf(b.id));
+	}
+
+	function directLabel() {
+		if (!f.directorRan) return 'Art-directing your prompt';
+		if (f.directedPrompt) return 'Prompt art-directed';
+		// The lane reported no rewrite. Only claim the prompt went through
+		// untouched when the response actually said so.
+		return f.directedReported ? 'Prompt used as you wrote it' : 'Prompt handed to the painter';
+	}
+
+	function directDetail() {
+		if (!f.directorRan) return 'Rewriting it into a single-subject brief with material and lighting cues';
+		if (f.directedPrompt) return 'Expanded with materials, lighting and composition cues. See it with your model';
+		return f.directedReported
+			? 'The director left it unchanged, so the model saw your exact words'
+			: 'This lane does not report the director’s rewrite back';
 	}
 
 	function meshLabel() {
@@ -390,6 +403,7 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			f.submitted = true;
 			f.directorRan = true;
 			if (job?.backend) f.backend = job.backend;
+			f.directedReported = Boolean(job) && Object.prototype.hasOwnProperty.call(job, 'directed_prompt');
 			if (typeof job?.directed_prompt === 'string' && job.directed_prompt.trim()) {
 				f.directedPrompt = job.directed_prompt.trim();
 			}

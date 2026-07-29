@@ -117,10 +117,7 @@ function avatarItems(query) {
 	if (!query || query.length <= 2) return [];
 	if (!avatarCache) return [];
 	const named = avatarCache.map((a) => ({ avatar: a, name: a.name || a.slug || a.id }));
-	return rank(query, named, (n) => String(n.name ?? ''), { limit: 5 }).map(({ item }) => ({
-		avatar: item.avatar,
-		name: item.name,
-	})).map(({ avatar, name }) => ({
+	return rank(query, named, (n) => String(n.name ?? ''), { limit: 5 }).map(({ item: { avatar, name } }) => ({
 		id: `avatar-${avatar.id}`,
 		label: name,
 		sublabel: 'Open avatar',

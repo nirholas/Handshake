@@ -235,12 +235,33 @@ async function runTarget({ name, url, canImportModule, browser }) {
 
 		// First-run discovery explainer sits on the same z-stack. Take its primary
 		// "Start exploring" action, exactly as a first-time user would.
-		const dxStart = page.locator('#irl-discovery-explainer [data-dx-start]');
-		if (await dxStart.count()) {
-			await dxStart.click({ timeout: 8000 }).catch((e) => result.notes.push(`discovery explainer dismiss failed: ${e?.message || e}`));
-			result.onboarding.push('Start exploring');
-			await page.waitForTimeout(1000);
+		//
+		// Dispatched on the button element itself rather than at screen coordinates:
+		// the panel animates in continuously, so a coordinate click lands wherever
+		// the box happens to be that frame and can fall through to the canvas
+		// (which is a tap target of its own: it toggles immersive mode).
+		for (let i = 0; i < 6; i++) {
+			const done = await page.evaluate(() => {
+				const modal = document.getElementById('irl-discovery-explainer');
+				if (!modal || !modal.classList.contains('is-open')) return true;
+				const btn = modal.querySelector('[data-dx-start]');
+				if (!btn) return true;
+				btn.click();
+				return false;
+			});
+			if (i === 0 && !done) result.onboarding.push('Start exploring');
+			if (done) break;
+			await page.waitForTimeout(700);
 		}
+
+		// A stray tap on the scene toggles immersive mode (chrome slides away). If
+		// anything above landed there, restore the chrome so the dock is on screen.
+		await page.evaluate(() => {
+			if (document.body.classList.contains('irl-immersive')) {
+				document.querySelector('.irl-immersive-toggle')?.click();
+			}
+		});
+		await page.waitForTimeout(800);
 
 		// Let the idle clip settle so the screenshot is a natural pose, not bind pose.
 		await page.waitForTimeout(2500);
@@ -257,8 +278,10 @@ async function runTarget({ name, url, canImportModule, browser }) {
 		// so the real "Start camera" path can be exercised end to end.
 		try {
 			const alreadyAr = await page.evaluate(() => document.body.classList.contains('is-ar'));
-			if (!alreadyAr) await page.click('#irl-camera-btn', { timeout: 10_000 });
-			await page.waitForTimeout(3000);
+			if (!alreadyAr) {
+				await page.evaluate(() => document.getElementById('irl-camera-btn')?.click());
+			}
+			await page.waitForTimeout(4000);
 			const arOn = await page.evaluate(() => ({
 				bodyIsAr: document.body.classList.contains('is-ar'),
 				videoReady: (() => {
