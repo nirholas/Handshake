@@ -8,7 +8,7 @@
 // session discovering the drift. This check makes that drift a red build
 // instead of a wasted session.
 //
-// Three assertions:
+// Assertions:
 //   1. Every `npm run <script>` and backticked script-name (build:gcp,
 //      check:dist, ...) referenced in CLAUDE.md exists in package.json.
 //   2. Every concrete repo path referenced in CLAUDE.md exists on disk.
@@ -17,6 +17,12 @@
 //      try to open and not find.
 //   3. CLAUDE.md honors its own typography rule: no em/en-dashes outside the
 //      Tone paragraph that names the banned characters.
+//   4. The load-bearing factual claims still hold. These are the ones that
+//      have actually drifted before and cost a session each: the cron count,
+//      the build:gcp chain order, the db:migrate safety semantics, the
+//      README-coverage standard, and the retired X changelog lane. Each is
+//      re-derived from the source of truth on every run, so the doc cannot
+//      quietly go stale again.
 //
 // Run: node scripts/check-claude-md.mjs   (wired as `npm run check:claude`)
 

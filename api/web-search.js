@@ -13,16 +13,13 @@
 // endpoint degrades to { enabled: false } rather than a 500 — same designed
 // "warming up" state as /api/search without a database.
 
-import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
+import { cors, json, error, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { groundedSearch, webSearchAvailable } from './_lib/web-search.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
-
-	const rl = await limits.publicIp(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://x');
 	// Same control-character guard as /api/search: this string is forwarded to
@@ -35,8 +32,20 @@ export default wrap(async (req, res) => {
 	const rawSources = parseInt(url.searchParams.get('sources') || '8', 10);
 	const maxSources = Number.isFinite(rawSources) ? Math.min(Math.max(rawSources, 1), 20) : 8;
 
+	// Availability and input are checked BEFORE the quota is spent: a deployment
+	// with no GCP project, or a caller who forgot ?q=, must not burn a slot on a
+	// request that could never reach upstream.
 	if (!webSearchAvailable()) return json(res, 200, { enabled: false, q, sources: [] });
-	if (!q) return json(res, 400, { error: 'q required' });
+	if (!q) return error(res, 400, 'missing_query', 'q is required');
+
+	// A DEDICATED bucket, not the generic 240/min publicIp one: every miss here
+	// is a billed Vertex Gemini call plus a Google Search round-trip, so the
+	// shared bucket would let a scraper turn platform credits into a free SERP
+	// API. 20 per 10 minutes covers a person refining a query and prices bulk
+	// extraction out; `critical` fails closed on a Redis outage rather than
+	// uncapping paid inference.
+	const rl = await limits.webSearchIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	let result;
 	try {

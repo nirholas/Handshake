@@ -13,6 +13,12 @@
 // placeholders are the designed fallback; a guessed URL defeats them.
 //
 // These are filesystem assertions on the page source, so they run without a browser.
+//
+// "The homepage" is no longer one file: its render-blocking CSS and its two big
+// script blocks were extracted into cacheable assets (public/home.css,
+// src/home-live-agents.js, src/home-bento.js) so the browser can cache them
+// across navigations. The guard has to cover the whole surface, so it reads the
+// markup and every asset the markup loads as one concatenated source.
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -21,10 +27,29 @@ import { resolve } from 'node:path';
 const root = resolve(__dirname, '..');
 const read = (p) => readFileSync(resolve(root, p), 'utf8');
 
+// Every file that makes up the homepage surface. Adding a new extracted asset
+// to pages/home.html means adding it here too, or this guard stops covering it.
+const HOME_SOURCES = [
+	'pages/home.html',
+	'public/home.css',
+	'src/home-live-agents.js',
+	'src/home-bento.js',
+];
+
 describe('homepage thumbnails — no fabricated R2 URLs (ORB regression)', () => {
 	let home;
 	beforeAll(() => {
-		home = read('pages/home.html');
+		home = HOME_SOURCES.map(read).join('\n');
+	});
+
+	it('loads every extracted homepage asset it guards', () => {
+		// If an asset is renamed and this list is not updated, the concatenated
+		// source silently loses coverage and every assertion below passes vacuously.
+		const markup = read('pages/home.html');
+		for (const src of HOME_SOURCES.slice(1)) {
+			const href = '/' + src.replace(/^public\//, '');
+			expect(markup).toContain(href);
+		}
 	});
 
 	it('never hardcodes an r2.dev thumb/ CDN base', () => {

@@ -1005,10 +1005,20 @@ export function paidEndpoint(spec) {
 					);
 					if (receiptBuilt) {
 						responseExtensions = receiptBuilt.extensionFragment;
+						// Store the SAME settlement context the receipt was issued
+						// against: `settled` alone can be missing the payer (some
+						// facilitators omit it), and a payer-less row is dropped by
+						// the storage layer, silently losing a receipt the buyer
+						// already holds. Amount/asset come from the verified
+						// requirement so the buyer can see what each call cost.
 						recordReceipt({
 							resourceUrl,
 							signedReceipt: receiptBuilt.signedReceipt,
-							settled,
+							settled: receiptSettled,
+							payment: {
+								amountAtomics: verified.requirement?.amount || null,
+								asset: verified.requirement?.asset || null,
+							},
 						});
 					}
 				} catch (err) {

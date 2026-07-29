@@ -1392,6 +1392,15 @@ export const limits = {
 	// fails closed to the 402 challenge rather than uncapping the scan path.
 	newsArchiveFreeIp: (ip) =>
 		getLimiter('news:archive:free:ip', { limit: 60, window: '1 d', critical: true }).limit(ip),
+	// Grounded web search (api/web-search.js). Every call is a Vertex Gemini
+	// generateContent with the google_search tool: real GCP-credit spend plus a
+	// Google Search round-trip, so it must NOT sit in the generic publicIp
+	// bucket where a scraper could turn our credits into a free SERP API. 20/10m
+	// covers interactive use (a person refining a query) and prices bulk
+	// extraction out. Critical so a Redis outage fails closed rather than
+	// uncapping paid inference.
+	webSearchIp: (ip) =>
+		getLimiter('web-search:ip', { limit: 20, window: '10 m', critical: true }).limit(ip),
 	// Premium-pass purchase lane (api/premium/*). Quote builds a Solana tx (an
 	// RPC blockhash round-trip + a DB row) and subscribe replays an RPC
 	// getParsedTransaction per attempt — both cheap, but neither should be

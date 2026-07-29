@@ -24,6 +24,7 @@ import { log } from './log.js';
 import { screenPush } from './screen-push.js';
 import { cachedStrategies, getRealizedNetLamports, effectiveDailyLossLimitLamports } from './strategy-store.js';
 import { checkDailyLoss } from '../../api/_lib/agent-trade-guards.js';
+import { autoFundMinSol, autoFundTargetSol } from '../../api/_lib/agent-funding-policy.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -37,8 +38,11 @@ function num(name, def) {
 // Floor + target + caps (SOL). Conservative defaults: keep ~0.05 SOL of dry
 // powder per agent, refill when it falls under 0.02, never move more than 0.1 in
 // one top-up or 1.0 total per UTC day across all agents.
-const MIN_SOL = Math.max(0, num('SNIPER_AUTO_FUND_MIN_SOL', 0.02));
-const TARGET_SOL = Math.max(MIN_SOL, num('SNIPER_AUTO_FUND_TARGET_SOL', 0.05));
+// Shared with the economy's idle-capital reclaim (api/_lib/agent-funding-policy.js).
+// Defining these here again is what let a reclaim floor drift under this target and
+// set the two crons ping-ponging the same SOL; the numbers now have one home.
+const MIN_SOL = autoFundMinSol();
+const TARGET_SOL = autoFundTargetSol();
 const PER_TX_CAP_SOL = Math.max(0, num('SNIPER_AUTO_FUND_PER_TX_SOL', 0.1));
 const DAILY_CAP_SOL = Math.max(0, num('SNIPER_AUTO_FUND_DAILY_SOL', 1.0));
 // Per-agent daily refill ceiling — the guard the incident lacked. The fleet cap

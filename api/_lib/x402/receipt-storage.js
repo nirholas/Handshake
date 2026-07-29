@@ -26,12 +26,21 @@ function normalisePayer(payer) {
 /**
  * Persist a signed receipt. Returns nothing — caller does not await.
  *
+ * The signed artifact is stored verbatim, but the row also records settlement
+ * facts the artifact deliberately omits: the transaction hash (dropped from the
+ * payload when the endpoint declares includeTxHash=false per spec §5.2) and the
+ * amount/asset (never part of a receipt payload at all). Those are our own
+ * audit trail, so the wire format and its privacy properties are unchanged;
+ * /api/x402/my-receipts only ever returns them to the wallet that signed for
+ * its own receipts.
+ *
  * @param {object} args
  * @param {string} args.resourceUrl
  * @param {object} args.signedReceipt
  * @param {{ payer?: string, network?: string, transaction?: string }} args.settled
+ * @param {{ amountAtomics?: string|number|null, asset?: string|null }} [args.payment]
  */
-export function recordReceipt({ resourceUrl, signedReceipt, settled }) {
+export function recordReceipt({ resourceUrl, signedReceipt, settled, payment }) {
 	if (!signedReceipt) return;
 	const payer = normalisePayer(settled?.payer);
 	if (!payer) return;
@@ -46,13 +55,19 @@ export function recordReceipt({ resourceUrl, signedReceipt, settled }) {
 		return;
 	}
 	const network = payload.network || settled?.network || null;
-	const transaction = payload.transaction || null;
+	// The payload's transaction is absent whenever includeTxHash is false; the
+	// settle response still carries it, and the buyer is entitled to their own.
+	const transaction = payload.transaction || settled?.transaction || null;
+	const amountAtomics =
+		payment?.amountAtomics == null ? null : String(payment.amountAtomics);
+	const asset = payment?.asset || null;
 	sql`
 		insert into x402_receipts
-			(payer, network, resource_url, format, receipt, transaction)
+			(payer, network, resource_url, format, receipt, transaction, amount_atomics, asset)
 		values
 			(${payer}, ${network}, ${resourceUrl}, ${format},
-			 ${JSON.stringify(signedReceipt)}::jsonb, ${transaction})
+			 ${JSON.stringify(signedReceipt)}::jsonb, ${transaction},
+			 ${amountAtomics}, ${asset})
 	`.catch((err) => {
 		console.error('[x402-receipt-log] insert failed:', err?.message || err);
 	});
@@ -76,7 +91,8 @@ export async function listReceiptsForPayer({ payer, sinceUnix, limit }) {
 			? new Date(Number(sinceUnix) * 1000)
 			: new Date(0);
 	const rows = await sql`
-		select id, payer, network, resource_url, format, receipt, transaction, issued_at
+		select id, payer, network, resource_url, format, receipt, transaction,
+		       amount_atomics, asset, issued_at
 		from x402_receipts
 		where payer = ${normPayer}
 		  and issued_at >= ${sinceDate.toISOString()}
@@ -91,6 +107,8 @@ export async function listReceiptsForPayer({ payer, sinceUnix, limit }) {
 		format: r.format,
 		receipt: r.receipt,
 		transaction: r.transaction,
+		amountAtomics: r.amount_atomics ?? null,
+		asset: r.asset ?? null,
 		issuedAt: r.issued_at instanceof Date ? r.issued_at.toISOString() : r.issued_at,
 	}));
 }

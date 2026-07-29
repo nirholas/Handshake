@@ -30,6 +30,7 @@ import { ECONOMY_MASTER_ADDRESS } from './economy-master.js';
 import { sendSol, LAMPORTS_PER_SOL } from './avatar-wallet.js';
 import { submitProtected } from './execution-engine.js';
 import { MIN_OPERATIONAL_WALLET_SOL } from './agent-trade-guards.js';
+import { antiOscillationFloorSol } from './agent-funding-policy.js';
 
 // Same float the treasury-topup cron refills to — sweep only above it.
 const DEFAULT_REFILL_MULTIPLE = 3;
@@ -459,7 +460,15 @@ const AGENT_RECLAIM_MAX_WALLETS = num('AGENT_RECLAIM_MAX_WALLETS', 40);
  * @returns {number} floor in SOL
  */
 export function agentReclaimFloorSol(strategy = {}) {
-	if (!strategy.enabled) return AGENT_IDLE_FLOOR_SOL;
+	// Anti-oscillation, and it outranks everything else here: a wallet the sniper
+	// auto-funder refills to a target must never be swept below that target, or the
+	// two crons chase the same SOL forever. Measured before this guard existed: 0.24
+	// SOL round-tripped six times between the funding master and two arms inside 15
+	// minutes, paying fees each leg, until the funding master ran dry. Applies even
+	// to a DISABLED strategy — the funder's opt-in flag, not `enabled`, is what
+	// decides whether a refill is coming.
+	const antiOscillation = antiOscillationFloorSol({ autoFundEnabled: strategy.autoFundEnabled });
+	if (!strategy.enabled) return round(Math.max(AGENT_IDLE_FLOOR_SOL, antiOscillation));
 	const perTrade = Number(strategy.perTradeSol);
 	// An ENABLED arm always keeps at least what one complete trade costs. Sizing the
 	// floor on `per_trade × 2` alone ignored everything a buy needs BESIDES the buy
@@ -471,7 +480,7 @@ export function agentReclaimFloorSol(strategy = {}) {
 	const working = Number.isFinite(perTrade) && perTrade > 0
 		? perTrade * AGENT_ACTIVE_TRADE_MULTIPLE + MIN_OPERATIONAL_WALLET_SOL
 		: MIN_OPERATIONAL_WALLET_SOL;
-	return round(Math.max(AGENT_IDLE_FLOOR_SOL, working));
+	return round(Math.max(AGENT_IDLE_FLOOR_SOL, working, antiOscillation));
 }
 
 /**
@@ -565,6 +574,9 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 		       LOWER(u.email)                              AS owner,
 		       s.enabled                                   AS strategy_enabled,
 		       s.per_trade_lamports                        AS per_trade_lamports,
+		       -- The funder's opt-in flag, not `enabled`: it decides whether a refill
+		       -- is coming, and therefore whether sweeping this wallet would oscillate.
+		       s.auto_fund_enabled                         AS auto_fund_enabled,
 		       (SELECT COUNT(*) FROM agent_sniper_positions p
 		         WHERE p.agent_id = a.id AND p.status IN ('open', 'closing'))::int AS open_positions
 		FROM agent_identities a
