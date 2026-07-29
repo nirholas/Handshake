@@ -119,6 +119,47 @@ input[type="range"].sy-volume { accent-color: var(--sym-money); width: 120px; }
 .sy-voice[aria-pressed="true"] { color: var(--ink); border-color: var(--c); }
 .sy-voice[aria-pressed="false"] { opacity: 0.42; text-decoration: line-through; }
 
+/* ── Solo bar ── */
+.sy-solo-bar {
+	display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px;
+	margin: 0 0 14px; padding: 10px 16px;
+	border: 1px solid var(--sym-money); border-radius: 12px;
+	background: rgba(67, 217, 163, 0.07);
+	color: var(--ink); font-size: 13.5px;
+}
+.sy-solo-bar[hidden] { display: none; }
+.sy-solo-bar strong { color: var(--sym-money); }
+.sy-solo-dot {
+	width: 7px; height: 7px; border-radius: 50%; background: var(--sym-money);
+	animation: sy-pulse 2.4s ease-in-out infinite;
+}
+.sy-solo-clear {
+	padding: 5px 12px; border-radius: 999px;
+	background: transparent; color: var(--ink-dim);
+	border: 1px solid var(--stroke-strong); font-size: 12.5px; cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+.sy-solo-clear:hover { color: var(--ink-bright); border-color: var(--ink-bright); }
+.sy-solo-clear:focus-visible { outline: 2px solid var(--sym-money); outline-offset: 2px; }
+
+/* Per-row solo control: quiet until the row is hovered or it has focus, so the
+   ledger stays readable but the affordance is always reachable by keyboard. */
+.sy-solo {
+	flex: none; padding: 3px 10px; border-radius: 999px;
+	background: transparent; color: var(--ink-dim);
+	border: 1px solid var(--stroke); font-size: 11px; letter-spacing: 0.06em;
+	text-transform: uppercase; cursor: pointer;
+	opacity: 0; transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.sy-row:hover .sy-solo, .sy-solo:focus-visible { opacity: 1; }
+.sy-solo:hover { color: var(--sym-money); border-color: var(--sym-money); }
+.sy-solo:focus-visible { outline: 2px solid var(--sym-money); outline-offset: 2px; }
+/* Already soloing: the per-row buttons would be a no-op for the one actor left. */
+body.sy-soloing .sy-solo { display: none; }
+@media (hover: none) {
+	.sy-solo { opacity: 1; }
+}
+
 /* ── Stage ── */
 .sy-stage {
 	position: relative; height: clamp(260px, 44vh, 460px);
@@ -160,12 +201,17 @@ input[type="range"].sy-volume { accent-color: var(--sym-money); width: 120px; }
 .sy-row {
 	display: flex; align-items: center; gap: 12px;
 	padding: 10px 8px; border-bottom: 1px solid var(--stroke);
-	color: inherit; text-decoration: none;
+	color: inherit;
 	animation: sy-enter 0.35s ease;
 	transition: background 0.15s ease;
 }
-a.sy-row:hover { background: var(--surface-2); }
-a.sy-row:focus-visible { outline: 2px solid var(--sym-money); outline-offset: -2px; }
+.sy-row:hover { background: var(--surface-2); }
+.sy-row-link {
+	flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+	color: inherit; text-decoration: none;
+}
+a.sy-row-link:hover .sy-row-title { color: var(--ink-bright); text-decoration: underline; }
+a.sy-row-link:focus-visible { outline: 2px solid var(--sym-money); outline-offset: 2px; border-radius: 4px; }
 @keyframes sy-enter {
 	from { opacity: 0; transform: translateY(-4px); }
 	to { opacity: 1; transform: none; }
@@ -176,7 +222,6 @@ a.sy-row:focus-visible { outline: 2px solid var(--sym-money); outline-offset: -2
 	font-size: 12px; color: var(--c);
 	border: 1px solid var(--c); background: var(--surface-1);
 }
-.sy-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .sy-row-title { font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sy-row-detail { font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 .sy-row-time { flex: none; font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }

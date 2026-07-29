@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-07-29
 
 - **Generation Watch** (`/watch`) — Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.
+- **Press kit** (`/press`) — Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.
 - **Watch your 3D model being made, live** — Free text-to-3D generations now come with a live progress page. When a generation is still running, the API (and the three.ws 3D Studio GPT in ChatGPT) hands you a three.ws/watch link showing a real countdown, the painted concept art the generator sculpts from, and an automatic jump into the interactive 3D viewer with download and AR links the moment your model is ready. No more staring at a chat window wondering how long is left. (`/watch`) `[feature]`
 
 ## 2026-07-28

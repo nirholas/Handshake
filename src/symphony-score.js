@@ -148,6 +148,52 @@ export function eventToNote(evt) {
 }
 
 /**
+ * Solo mode: narrow the whole stream to one participant, so an owner can leave
+ * the tab open and hear their own agent working instead of the whole platform.
+ *
+ * A filter is `{ agentId?, actor? }`. `agentId` is exact (it is an opaque id);
+ * `actor` is a display label, matched case- and whitespace-insensitively
+ * because the same agent is published as "Luna" and "luna" by different
+ * producers. An empty filter matches everything.
+ */
+export function normalizeActor(name) {
+	return String(name == null ? '' : name).trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+export function matchesFilter(evt, filter) {
+	if (!filter || (!filter.agentId && !filter.actor)) return true;
+	if (!evt) return false;
+	if (filter.agentId) return String(evt.agentId || '') === String(filter.agentId);
+	return normalizeActor(evt.actor) === normalizeActor(filter.actor);
+}
+
+/**
+ * Read a solo filter off a URL query string: `?agent=<id>` or `?actor=<name>`.
+ * Returns `{}` when neither is present or usable.
+ */
+export function parseFilter(search) {
+	let params;
+	try {
+		params = new URLSearchParams(String(search || '').replace(/^\?/, ''));
+	} catch {
+		return {};
+	}
+	const agentId = (params.get('agent') || '').trim().slice(0, 64);
+	const actor = (params.get('actor') || '').trim().slice(0, 64);
+	if (agentId) return { agentId };
+	if (actor) return { actor };
+	return {};
+}
+
+/** The human label for a filter, for the chip and the page heading. */
+export function filterLabel(filter, events = []) {
+	if (!filter || (!filter.agentId && !filter.actor)) return '';
+	if (filter.actor) return filter.actor;
+	const hit = events.find((e) => e && String(e.agentId || '') === String(filter.agentId));
+	return (hit && hit.actor) || filter.agentId;
+}
+
+/**
  * Burst gate: the live feed arrives in floods (a sniper sweep can emit dozens
  * of identical `agent-guard` events in seconds), and a note per event would
  * machine-gun the same sound. The gate admits one note per (type, actor) key

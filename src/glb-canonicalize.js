@@ -187,7 +187,35 @@ const EXTRA_ALIASES = (() => {
 		['mElbowLeft', 'LeftForeArm'], ['mWristLeft', 'LeftHand'],
 		['mHipLeft', 'LeftUpLeg'], ['mKneeLeft', 'LeftLeg'],
 		['mAnkleLeft', 'LeftFoot'], ['mFootLeft', 'LeftToeBase'], ['mToeLeft', 'LeftToeBase'],
+		// Side-SUFFIX leg spellings (`UpperLeg.L`, `LowerLeg.R`, `LowerArm.L`). The
+		// arm twins were added with the Rigify forearm fix, but the LEG twins were
+		// not, and the side-PREFIX entries above (`leftUpperLeg`, `lUpperLeg`) never
+		// reach `upperlegl`. Found by scripts/audit-rig-coverage.mjs against real
+		// stored avatars: a Blender-exported rig using this convention lost BOTH leg
+		// joints on each side and animated gliding on frozen legs.
+		['upperLegL', 'LeftUpLeg'], ['lowerLegL', 'LeftLeg'], ['lowerArmL', 'LeftForeArm'],
+		// The scapula is the clavicle in Advanced Skeleton / Daz-derived rigs.
+		['scapulaL', 'LeftShoulder'],
 	];
+	// Side-suffix finger chains, both conventions found in real uploaded avatars by
+	// scripts/audit-rig-coverage.mjs:
+	//   • Blender / MakeHuman:    `Index.L`, `Index2.L`, `Middle1.L`, `Thumb.L`, `Ring2.R`
+	//   • Advanced Skeleton/Maya: `IndexFinger1_R`, `MiddleFinger2_L`, `ThumbFinger3_R`
+	// The un-numbered spelling (`Thumb.L`, `Index.L`) is the FIRST phalanx — those
+	// rigs number only the joints after it. Metacarpals (`Palm1.L`) are deliberately
+	// skipped: the canonical set has no metacarpal, so there is nothing to drive.
+	for (const [vf, cf] of [
+		['Thumb', 'Thumb'], ['Index', 'Index'], ['Middle', 'Middle'],
+		['Ring', 'Ring'], ['Pinky', 'Pinky'], ['Little', 'Pinky'],
+	]) {
+		for (let n = 1; n <= 3; n++) {
+			SIDED.push([`${vf}${n}L`, `LeftHand${cf}${n}`]);
+			SIDED.push([`${vf}Finger${n}L`, `LeftHand${cf}${n}`]);
+		}
+		SIDED.push([`${vf}L`, `LeftHand${cf}1`]);
+		SIDED.push([`${vf}FingerL`, `LeftHand${cf}1`]);
+	}
+
 	for (const [lv, lc] of SIDED) {
 		put(lv, lc);
 		const rc = lc.replace(/^Left/, 'Right');

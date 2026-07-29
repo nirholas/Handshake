@@ -8,25 +8,58 @@
 import { llmComplete } from '../../../api/_lib/llm.js';
 
 const TIMEOUT_MS = 30_000;
+// Below this there is not enough budget left for even one provider attempt
+// (llm.js caps a single attempt at 12s and abandons the chain with <500ms
+// remaining), so spending the caller's remaining time on a doomed request is
+// strictly worse than degrading immediately.
+const MIN_VIABLE_MS = 3_000;
 
-async function callLlm(prompt, maxTokens = 1024) {
-	// No anthropicKey here: passing the SERVER's ANTHROPIC_API_KEY would be
-	// treated as caller BYOK and jump a paid (and routinely dead) key to the
-	// FRONT of the chain, ahead of the free providers. llm.js already appends
-	// the server Anthropic key as a tail backstop on its own.
-	const { text, usage } = await llmComplete({
-		user: prompt,
-		maxTokens,
-		timeoutMs: TIMEOUT_MS,
-	});
-	return { text, inputTokens: usage?.input || 0, outputTokens: usage?.output || 0 };
+/**
+ * One LLM turn, bounded by whatever wall-clock budget the caller still has.
+ *
+ * Returns `{ text, inputTokens, outputTokens }` on success and
+ * `{ text: null, failure: <reason> }` when no provider could answer in budget.
+ * It never throws: every caller here has a designed non-LLM fallback, and a
+ * thrown provider error would jump over it and fail the whole fact check (the
+ * exact defect this shape exists to prevent — a chain-exhaustion 502 on a
+ * request that could have returned real sources).
+ *
+ * @param {string} prompt
+ * @param {number} maxTokens
+ * @param {number} [budgetMs] wall-clock allowance; defaults to the 30s cap.
+ */
+async function callLlm(prompt, maxTokens = 1024, budgetMs = TIMEOUT_MS) {
+	const timeoutMs = Math.min(TIMEOUT_MS, Math.max(0, budgetMs));
+	if (timeoutMs < MIN_VIABLE_MS) {
+		return { text: null, failure: `no budget for an llm turn (${Math.round(timeoutMs)}ms left)` };
+	}
+	try {
+		// No anthropicKey here: passing the SERVER's ANTHROPIC_API_KEY would be
+		// treated as caller BYOK and jump a paid (and routinely dead) key to the
+		// FRONT of the chain, ahead of the free providers. llm.js already appends
+		// the server Anthropic key as a tail backstop on its own.
+		const { text, usage } = await llmComplete({
+			user: prompt,
+			maxTokens,
+			timeoutMs,
+		});
+		return { text, inputTokens: usage?.input || 0, outputTokens: usage?.output || 0 };
+	} catch (err) {
+		return { text: null, failure: err?.message || String(err) };
+	}
 }
 
 /**
  * Generate 3 search queries for the given claim.
- * Returns { queries: string[], tokens: number }
+ *
+ * @param {string} claim
+ * @param {{budgetMs?: number}} [opts]
+ * @returns {Promise<{queries: string[], tokens: number, degraded?: string}>}
+ *   `degraded` is set when no provider answered and the claim text itself is
+ *   being used as the query. Search on the raw claim is a genuinely useful
+ *   query, so this path still produces a real, sourced fact check.
  */
-export async function generateSearchQueries(claim) {
+export async function generateSearchQueries(claim, opts = {}) {
 	const prompt = `You are a fact-checking assistant. Given the following claim, generate exactly 3 distinct web search queries to find authoritative sources that would verify or refute it.
 
 Claim: "${claim}"
@@ -39,7 +72,12 @@ Rules:
 
 Example output: ["query one", "query two", "query three"]`;
 
-	const { text, inputTokens, outputTokens } = await callLlm(prompt, 256);
+	const { text, inputTokens, outputTokens, failure } = await callLlm(prompt, 256, opts.budgetMs);
+	if (failure) {
+		// No provider answered. The claim itself is a legitimate search query, so
+		// the pipeline continues on real evidence instead of failing the request.
+		return { queries: [claim], tokens: 0, degraded: `query generation unavailable: ${failure}` };
+	}
 
 	let queries;
 	try {
@@ -73,9 +111,14 @@ Example output: ["query one", "query two", "query three"]`;
  *
  * @param {string} claim
  * @param {Array<{url: string, title: string, snippet: string}>} results  Top 5 results.
- * @returns {Promise<{analyses: Array<{excerpt: string, stance: string}>, tokens: number}>}
+ * @param {{budgetMs?: number}} [opts]
+ * @returns {Promise<{analyses: Array<{excerpt: string, stance: string}>, tokens: number, degraded?: string}>}
+ *   `degraded` is set when no provider answered. Every stance falls back to
+ *   "neutral", which computeVerdict reads as `insufficient` — an honest "we
+ *   could not judge these sources", returned alongside the real sources and
+ *   their snippets rather than as an error.
  */
-export async function analyzeResults(claim, results) {
+export async function analyzeResults(claim, results, opts = {}) {
 	const numbered = results
 		.map(
 			(r, i) =>
@@ -105,7 +148,14 @@ No markdown, no explanation, just the JSON array.
 
 Example (for 2 results): [{"excerpt":"The tower stands at 330m","stance":"supports"},{"excerpt":"Some unrelated content","stance":"neutral"}]`;
 
-	const { text, inputTokens, outputTokens } = await callLlm(prompt, 1024);
+	const { text, inputTokens, outputTokens, failure } = await callLlm(prompt, 1024, opts.budgetMs);
+	if (failure) {
+		return {
+			analyses: results.map(() => ({ excerpt: '', stance: 'neutral' })),
+			tokens: 0,
+			degraded: `stance extraction unavailable: ${failure}`,
+		};
+	}
 
 	let analyses;
 	try {

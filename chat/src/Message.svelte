@@ -38,6 +38,7 @@
 	import { detectEmotion } from './sentiment.js';
 	import Toolcall from './Toolcall.svelte';
 	import ToolcallButton from './ToolcallButton.svelte';
+	import ModelViewer3D from './ModelViewer3D.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -170,6 +171,45 @@
 	export let chose;
 	export let activeToolcall;
 	export let textareaEls;
+
+	// Tool responses carrying a 3D model envelope, rendered inline in the thread
+	// (in addition to the clickable pill that opens the full tool view).
+	function model3dResponses(msg) {
+		if (!msg.toolcalls?.length) return [];
+		const out = [];
+		for (const toolcall of msg.toolcalls) {
+			const resp = convo.messages.find((m) => m.toolcallId === toolcall.id);
+			const c = resp?.content;
+			if (c?.contentType === 'application/model-3d' && c.content) out.push({ toolcall, resp });
+		}
+		return out;
+	}
+
+	// Once a pending generation resolves, persist the GLB URL into the stored
+	// tool message so reloading the conversation renders the model directly
+	// instead of re-polling the job.
+	function persistResolvedModel(resp, glbUrl) {
+		resp.content.content.glb = glbUrl;
+		resp.content.content.job = null;
+		saveMessage(resp);
+	}
+
+	const GLB_URL_RE = /https?:\/\/[^\s"'<>()[\]]+\.glb(?:\?[^\s"'<>()[\]]*)?/gi;
+
+	// GLB links written straight into a message get an inline viewer too, unless
+	// the same model already renders from a tool card in this conversation.
+	function messageGlbUrls(msg) {
+		if (msg.role !== 'assistant' && msg.role !== 'user') return [];
+		if (typeof msg.content !== 'string' || !msg.content.toLowerCase().includes('.glb')) return [];
+		const found = [...new Set(msg.content.match(GLB_URL_RE) || [])];
+		if (!found.length) return [];
+		const rendered = new Set();
+		for (const m of convo.messages) {
+			const c = m.role === 'tool' ? m.content : null;
+			if (c?.contentType === 'application/model-3d' && c.content?.glb) rendered.add(c.content.glb);
+		}
+		return found.filter((u) => !rendered.has(u)).slice(0, 2);
+	}
 
 	function initials(name) {
 		return name?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
@@ -436,6 +476,12 @@
 												/>
 											{/each}
 										</div>
+										{#each model3dResponses(message).filter((p) => toolcallsOnLine.includes(p.toolcall)) as pair (pair.toolcall.id)}
+											<ModelViewer3D
+												content={pair.resp.content.content}
+												on:resolved={(e) => persistResolvedModel(pair.resp, e.detail.glb_url)}
+											/>
+										{/each}
 									{/if}
 								{/each}
 							{/if}
@@ -510,6 +556,10 @@
 
 					<MessageContent {message} />
 
+					{#each messageGlbUrls(message) as glbSrc (glbSrc)}
+						<ModelViewer3D content={{ glb: glbSrc }} height={300} />
+					{/each}
+
 					{#if !$config.explicitToolView && message.toolcalls?.length > 0}
 						<div class="-mb-1 flex flex-wrap gap-3 [&:first-child]:mt-1">
 							{#each message.toolcalls as toolcall, ti}
@@ -524,6 +574,12 @@
 								/>
 							{/each}
 						</div>
+						{#each model3dResponses(message) as pair (pair.toolcall.id)}
+							<ModelViewer3D
+								content={pair.resp.content.content}
+								on:resolved={(e) => persistResolvedModel(pair.resp, e.detail.glb_url)}
+							/>
+						{/each}
 					{/if}
 
 					<!-- OAI toolcalls will always be at the end -->

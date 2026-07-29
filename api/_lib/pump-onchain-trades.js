@@ -37,13 +37,135 @@ const REBUILD_DELAY_MS = 2_000;
 // list (comma-separated http(s) urls) ahead of everything when set.
 const KEYED_LANE_RE = /quiknode\.pro|api-key=|alchemy\.com|rpc\.ankr\.com|drpc\.org|api\.tatum\.io/i;
 
+// ── WebSocket lane health ─────────────────────────────────────────────────────
+// Serving JSON-RPC over HTTP does NOT imply serving it over a WebSocket, and the
+// two failure modes need opposite handling. Some lanes in the shared RPC chain
+// answer the ws upgrade with a redirect or a flat refusal — measured 2026-07-29:
+// solana.leorpc.com → 301, solana-mainnet.gateway.tatum.io → 405 — while their
+// HTTP side is perfectly healthy. web3.js hands the socket to rpc-websockets,
+// which treats ANY failure as transient and reconnects in a tight background
+// loop for the life of a warm instance: 100 `ws error: Unexpected server
+// response: 301` lines an hour, a firehose lane wasted on a host that can never
+// serve it, and recovery delayed until the stall watchdog fires.
+//
+// So each lane's socket is probed once before it is used. A structural refusal
+// (redirect / auth / not-found / method-not-allowed) benches the lane for the
+// process; a transient one (throttle, gateway error, reset) benches it briefly
+// and it comes back. Probing costs one short-lived socket per lane per process.
+const WS_PROBE_TIMEOUT_MS = 4_000;
+const WS_TRANSIENT_BENCH_MS = 5 * 60_000;
+
+/** @type {Map<string, {kind:'structural'|'transient', until:number, detail:string}>} */
+const _wsBench = new Map();
+
+/**
+ * Classify a ws upgrade failure from the `ws` library's error message. PURE, so
+ * the bench policy is unit-testable without a socket.
+ *
+ * @param {string} message
+ * @returns {'structural'|'transient'}
+ */
+export function classifyWsFailure(message) {
+	const m = String(message || '');
+	const status = Number(m.match(/Unexpected server response:\s*(\d{3})/)?.[1] || 0);
+	// A redirect, an auth refusal, or "this host does not do websockets here"
+	// will answer identically forever — retrying is pure waste.
+	if (status && [301, 302, 307, 308, 401, 403, 404, 405, 410, 501].includes(status)) return 'structural';
+	// Anything else (429 throttle, 5xx, reset, timeout, TLS blip) can recover.
+	return 'transient';
+}
+
+/** True when `url`'s socket is currently benched. Expired transient benches clear. */
+function wsBenched(url) {
+	const b = _wsBench.get(url);
+	if (!b) return false;
+	if (b.kind === 'transient' && Date.now() >= b.until) {
+		_wsBench.delete(url);
+		return false;
+	}
+	return true;
+}
+
+function benchWs(url, message) {
+	const kind = classifyWsFailure(message);
+	const prior = _wsBench.get(url);
+	_wsBench.set(url, {
+		kind,
+		until: kind === 'structural' ? Infinity : Date.now() + WS_TRANSIENT_BENCH_MS,
+		detail: String(message || '').slice(0, 160),
+	});
+	// One line per lane per verdict — never the per-reconnect storm this replaces.
+	if (!prior || prior.kind !== kind) {
+		console.warn(`[pump-onchain-trades] ws lane benched (${kind}): ${hostOf(url)} — ${String(message || '').slice(0, 120)}`);
+	}
+}
+
+function hostOf(url) {
+	try { return new URL(url).host; } catch { return String(url); }
+}
+
+/**
+ * Open the socket once to see whether this lane can serve a subscription at all.
+ * Resolves { ok: true } on a live socket, { ok: false, message } otherwise.
+ * Never throws.
+ *
+ * @param {string} wsUrl
+ */
+async function probeWs(wsUrl) {
+	let WebSocketImpl;
+	try {
+		({ default: WebSocketImpl } = await import('ws'));
+	} catch {
+		return { ok: true }; // no probe available ⇒ do not block the lane
+	}
+	return new Promise((resolve) => {
+		let socket;
+		let settled = false;
+		const done = (result) => {
+			if (settled) return;
+			settled = true;
+			clearTimeout(timer);
+			try { socket?.terminate?.(); } catch { /* already closed */ }
+			resolve(result);
+		};
+		const timer = setTimeout(() => done({ ok: false, message: 'probe timeout' }), WS_PROBE_TIMEOUT_MS);
+		if (timer.unref) timer.unref();
+		try {
+			socket = new WebSocketImpl(wsUrl, { handshakeTimeout: WS_PROBE_TIMEOUT_MS });
+		} catch (err) {
+			return done({ ok: false, message: err?.message || 'probe construct failed' });
+		}
+		socket.on('open', () => done({ ok: true }));
+		socket.on('error', (err) => done({ ok: false, message: err?.message || 'probe error' }));
+		socket.on('unexpected-response', (_req, res) => done({ ok: false, message: `Unexpected server response: ${res.statusCode}` }));
+	});
+}
+
 function firehoseEndpoints(network) {
 	const pinned = String(process.env.PUMP_ONCHAIN_WS_URLS || '')
 		.split(',').map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s));
 	const chain = solanaRpcEndpoints(network);
 	const free = chain.filter((u) => !KEYED_LANE_RE.test(u));
 	const keyed = chain.filter((u) => KEYED_LANE_RE.test(u));
-	return [...new Set([...pinned, ...free, ...keyed])];
+	const all = [...new Set([...pinned, ...free, ...keyed])];
+	const live = all.filter((u) => !wsBenched(u));
+	// Never strand the firehose: if every lane is benched, drop the transient
+	// benches and retry them rather than going dark. Structural benches stand —
+	// a host that redirects the upgrade cannot serve the stream at any point.
+	if (live.length) return live;
+	for (const [url, b] of _wsBench) if (b.kind === 'transient') _wsBench.delete(url);
+	const revived = all.filter((u) => !wsBenched(u));
+	return revived.length ? revived : all;
+}
+
+/** Read-only view of benched sockets, for the ops/health surface. */
+export function wsLaneHealth() {
+	return [..._wsBench.entries()].map(([url, b]) => ({
+		host: hostOf(url),
+		kind: b.kind,
+		detail: b.detail,
+		until: b.until === Infinity ? null : new Date(b.until).toISOString(),
+	}));
 }
 
 // Per-network singleton state.
@@ -99,14 +221,29 @@ async function buildConnection(state) {
 	const { web3 } = await loadDeps();
 	const endpoints = firehoseEndpoints(state.network);
 	if (!endpoints.length) throw new Error('no solana rpc endpoints configured');
-	const url = endpoints[state.endpointIdx % endpoints.length];
-	state.endpointIdx = (state.endpointIdx + 1) % endpoints.length;
-	state.endpointUrl = url;
-	return new web3.Connection(url, {
-		commitment: 'confirmed',
-		wsEndpoint: resolveWsEndpoint(url, state.network),
-		disableRetryOnRateLimit: true,
-	});
+
+	// Walk the chain until a lane's socket actually opens. Probing here (rather
+	// than discovering it through rpc-websockets' endless reconnect) means a
+	// structurally ws-hostile lane costs one short-lived socket, once, instead of
+	// a permanent error storm — and the rotation happens now, not after the stall
+	// watchdog's 20s.
+	for (let attempt = 0; attempt < endpoints.length; attempt++) {
+		const url = endpoints[state.endpointIdx % endpoints.length];
+		state.endpointIdx = (state.endpointIdx + 1) % endpoints.length;
+		const wsUrl = resolveWsEndpoint(url, state.network);
+		const probe = await probeWs(wsUrl);
+		if (!probe.ok) {
+			benchWs(url, probe.message);
+			continue;
+		}
+		state.endpointUrl = url;
+		return new web3.Connection(url, {
+			commitment: 'confirmed',
+			wsEndpoint: wsUrl,
+			disableRetryOnRateLimit: true,
+		});
+	}
+	throw new Error(`no solana ws lane accepted a subscription (${endpoints.length} tried)`);
 }
 
 async function startSubscription(state) {
@@ -169,7 +306,12 @@ async function startSubscription(state) {
 		if (state.stopped) return;
 		const limit = state.everReceived ? STALL_MS : FIRST_EVENT_MS;
 		if (Date.now() - state.lastEventAt > limit) {
-			console.warn(`[pump-onchain-trades] no trades for ${limit}ms on ${state.endpointUrl ? new URL(state.endpointUrl).host : '?'} — rotating endpoint`);
+			console.warn(`[pump-onchain-trades] no trades for ${limit}ms on ${hostOf(state.endpointUrl)} — rotating endpoint`);
+			// A lane whose socket opened but delivered nothing is silently broken
+			// (accepted the subscription, never pushed). Bench it briefly so the
+			// rotation does not land straight back on it; the transient bench
+			// expires on its own and structural lanes were already filtered out.
+			if (!state.everReceived && state.endpointUrl) benchWs(state.endpointUrl, 'subscription delivered no events');
 			teardownConnection(state);
 			scheduleRebuild(state, 0);
 		}

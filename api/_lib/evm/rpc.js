@@ -56,11 +56,42 @@ function alchemyUrl(chainId) {
 	return sub && key ? `https://${sub}.g.alchemy.com/v2/${key}` : null;
 }
 
+// Hosts that answer a server-side keyless POST with a guaranteed failure, so
+// leading with one burns a full round trip per call before failover:
+//   - eth.llamarpc.com     Cloudflare bot-wall, 403 on datacenter POSTs
+//   - cloudflare-eth.com   endpoint sunset, -32046
+//   - rpc.ankr.com/<chain> HTTP 200 carrying {"error":"Unauthorized: You must
+//                          authenticate your request with an API key"}, which
+//                          costs a parse before it counts as a failure
+// They stay in the list (an operator who set one deliberately still gets it as
+// a last resort, and a keyed Ankr URL carries its key in the path so it is not
+// matched here) but sort last. Probed live from this datacenter 2026-07-29;
+// re-probe with scripts/probe-evm-rpc.mjs before editing.
+const DEMOTED_KEYLESS_HOSTS = [
+	'eth.llamarpc.com',
+	'cloudflare-eth.com',
+];
+
+function isDemotedEndpoint(url) {
+	let host;
+	try {
+		const parsed = new URL(url);
+		host = parsed.hostname;
+		// Keyless Ankr only: a provisioned key rides in the path (/eth/<key>).
+		if (host === 'rpc.ankr.com' && parsed.pathname.split('/').filter(Boolean).length < 2) return true;
+	} catch {
+		return false;
+	}
+	return DEMOTED_KEYLESS_HOSTS.includes(host);
+}
+
 /**
  * Priority-ordered, de-duplicated RPC URL list for a chain. `primaryUrl` (a url a
  * call site already resolved, e.g. a per-row `meta.rpc` or MAINNET_RPC_URL) is
  * pinned first so its choice is honored, with the keyed/public endpoints as
- * fallbacks behind it.
+ * fallbacks behind it. Endpoints known to hard-fail keyless server-side POSTs
+ * sort last regardless of where they entered, so a stale operator override
+ * cannot starve a multi-call flow (ENS resolution) of its timeout budget.
  */
 export function evmRpcEndpoints(chainId, primaryUrl = null) {
 	const chain = CHAIN_BY_ID[chainId];
@@ -70,7 +101,10 @@ export function evmRpcEndpoints(chainId, primaryUrl = null) {
 		alchemyUrl(chainId),
 		...((chain && chain.rpcUrls) || []),
 	];
-	return urls.filter((u, i, a) => u && a.indexOf(u) === i);
+	const unique = urls.filter((u, i, a) => u && a.indexOf(u) === i);
+	const healthy = unique.filter((u) => !isDemotedEndpoint(u));
+	const demoted = unique.filter((u) => isDemotedEndpoint(u));
+	return [...healthy, ...demoted];
 }
 
 /**

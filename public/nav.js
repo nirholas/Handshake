@@ -9,6 +9,52 @@
 // (pages/home.html) consumes this same loader, so every page reads as the
 // same site by construction.
 
+// ── Progressive disclosure: the site-wide Simple ⇄ Everything tier ─────────
+// New visitors get a "lite" nav: the ~20 destinations that carry the core
+// journey (make an avatar → build an agent → publish it). The other ~80
+// power-user surfaces (trading, token launches, intel, payments, capture) are
+// tagged `tier: 'advanced'` in nav-data.js and hidden by CSS until the visitor
+// asks for them. One preference, one key, shared with the homepage's advanced
+// sections: flipping it anywhere flips it everywhere.
+//
+// The switch is a class on <html>, never a re-render: the dropdown/drawer
+// wiring binds document-level listeners once, so re-rendering the menus would
+// strand them on detached nodes.
+var TIER_KEY = 'tws:tier'; // 'lite' | 'full'
+function tierIsLite() {
+	try {
+		return localStorage.getItem(TIER_KEY) !== 'full';
+	} catch (_) {
+		return true;
+	}
+}
+function applyTier(lite, persist) {
+	document.documentElement.classList.toggle('tws-lite', lite);
+	if (persist) {
+		try {
+			localStorage.setItem(TIER_KEY, lite ? 'lite' : 'full');
+		} catch (_) {
+			/* private mode — the tier still applies for this page view */
+		}
+	}
+	document.querySelectorAll('.nav-tier-toggle').forEach(function (btn) {
+		btn.setAttribute('aria-expanded', String(!lite));
+	});
+	window.dispatchEvent(new CustomEvent('tws:tier-change', { detail: { lite: lite } }));
+}
+// Applied before the nav (and any tier-tagged page content) is rendered, so
+// advanced surfaces never flash in and out on load.
+applyTier(tierIsLite(), false);
+window.twsTier = {
+	isLite: tierIsLite,
+	set: function (lite) {
+		applyTier(!!lite, true);
+	},
+	toggle: function () {
+		applyTier(!tierIsLite(), true);
+	},
+};
+
 // Load the site-wide glossary tooltip system (public/glossary.js) on every
 // page. Self-mounting + idempotent; honours <html data-glossary="off">.
 function loadGlossary() {
@@ -241,6 +287,30 @@ function initNav(root) {
 	initWalkToggle(root);
 	initAuthHint(root);
 	initActivePage(root);
+	initTierToggles(root);
+}
+
+// Simple ⇄ Everything switches, wired by delegation so the handler survives any
+// later re-render of the menus. The visual state is pure CSS off <html>, so a
+// click only has to flip the preference.
+function initTierToggles(root) {
+	root.addEventListener('click', (e) => {
+		const t = e.target;
+		const el = t && t.nodeType === 1 ? t : (t && t.parentElement) || null;
+		const btn = el && el.closest('.nav-tier-toggle');
+		if (!btn) return;
+		e.preventDefault();
+		e.stopPropagation();
+		applyTier(!tierIsLite(), true);
+	});
+	// Sync the freshly-rendered controls with the tier already applied at boot,
+	// and keep them honest when another surface flips the preference.
+	applyTier(tierIsLite(), false);
+	window.addEventListener('tws:tier-change', (e) => {
+		root.querySelectorAll('.nav-tier-toggle').forEach((btn) => {
+			btn.setAttribute('aria-expanded', String(!e.detail.lite));
+		});
+	});
 }
 
 // ── Menu rendering ──────────────────────────────────────────────────────────
@@ -271,13 +341,32 @@ function attrString(attrs) {
 		.join('');
 }
 
+// `data-tier="advanced"` marks a node the lite tier hides. Emitted on menu
+// items, columns, groups and drawer rows alike; one CSS rule hides them all.
+function tierAttr(node) {
+	return node && node.tier === 'advanced' ? ' data-tier="advanced"' : '';
+}
+
+// How many destinations inside a group the lite tier hides — the number the
+// "show everything" affordance promises.
+function advancedCount(group) {
+	const cols = group.columns || [{ items: group.items || [] }];
+	let n = 0;
+	cols.forEach((col) => {
+		(col.items || []).forEach((item) => {
+			if (group.tier === 'advanced' || col.tier === 'advanced' || item.tier === 'advanced') n += 1;
+		});
+	});
+	return n;
+}
+
 function renderMenuItem(item) {
 	const tone = item.badgeTone === 'live' ? ' nav-pill-live' : '';
 	const badge = item.badge
 		? ` <span class="nav-pill-sm${tone}"${i18nAttr(item.badge)}>${escHtml(item.badge)}</span>`
 		: '';
 	return (
-		`<a class="nav-mi" href="${escHtml(item.href)}" role="menuitem"${attrString(item.attrs)}>` +
+		`<a class="nav-mi" href="${escHtml(item.href)}" role="menuitem"${tierAttr(item)}${attrString(item.attrs)}>` +
 		`<span class="nav-mi-t"><span${i18nAttr(item.title)}>${escHtml(item.title)}</span>${badge}</span>` +
 		`<span class="nav-mi-d"${i18nAttr(item.desc)}>${escHtml(item.desc)}</span></a>`
 	);
@@ -290,7 +379,14 @@ function renderGroup(group) {
 	let popClass = 'nav-pop';
 	if (group.layout === 'mega') {
 		popClass += ' mega';
-		if (group.columns) popClass += ` cols-${group.columns.length}`;
+		if (group.columns) {
+			popClass += ` cols-${group.columns.length}`;
+			// The grid track count is fixed in CSS, so a hidden column would
+			// otherwise leave an empty track. Ship the lite column count too and
+			// let the lite stylesheet re-lay the grid to fit what remains.
+			const liteCols = group.columns.filter((col) => col.tier !== 'advanced').length;
+			if (liteCols && liteCols !== group.columns.length) popClass += ` lite-cols-${liteCols}`;
+		}
 		if (group.align === 'right') popClass += ' anchor-right';
 	} else if (group.layout === 'wide') {
 		popClass += ' wide';
@@ -302,21 +398,32 @@ function renderGroup(group) {
 		? group.columns
 				.map(
 					(col) =>
-						`<div class="nav-col" role="group" aria-label="${escHtml(col.label)}">` +
+						`<div class="nav-col" role="group" aria-label="${escHtml(col.label)}"${tierAttr(col)}>` +
 						`<div class="nav-col-h"${i18nAttr(col.label)}>${escHtml(col.label)}</div>` +
 						col.items.map(renderMenuItem).join('') +
 						`</div>`,
 				)
 				.join('')
 		: (group.items || []).map(renderMenuItem).join('');
+	// Progressive-disclosure footer: only for groups that actually hide
+	// something, so a fully-lite menu never grows a dead control. A wholly
+	// advanced group is skipped — its footer could only ever be a "back to
+	// simple" that deletes the very menu the visitor is reading.
+	const hidden = group.tier === 'advanced' ? 0 : advancedCount(group);
+	const tierFoot = hidden
+		? `<button type="button" class="nav-tier-toggle" aria-expanded="false">` +
+			`<span class="nav-tier-more"><span${i18nAttr('Show everything')}>Show everything</span>` +
+			` <span class="nav-tier-n">+${hidden}</span></span>` +
+			`<span class="nav-tier-less"${i18nAttr('Show the simple menu')}>Show the simple menu</span></button>`
+		: '';
 	// A stable, unique id per group so the trigger can reference its menu via
 	// aria-controls (label slug is unique within the nav data).
 	const popId = `nav-pop-${String(group.label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
 	return (
-		`<div class="nav-grp">` +
+		`<div class="nav-grp"${tierAttr(group)}>` +
 		`<button type="button" class="nav-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="${popId}">` +
 		`<span${i18nAttr(group.label)}>${escHtml(group.label)}</span>${badge}<span class="nav-caret" aria-hidden="true">▾</span></button>` +
-		`<div class="${popClass}" id="${popId}" role="menu" aria-label="${escHtml(group.label)}">${note}${body}</div>` +
+		`<div class="${popClass}" id="${popId}" role="menu" aria-label="${escHtml(group.label)}">${note}${body}${tierFoot}</div>` +
 		`</div>`
 	);
 }
@@ -335,8 +442,9 @@ function renderTopLink(link) {
 	return `<a href="${escHtml(link.href)}"><span${i18nAttr(link.label)}>${escHtml(link.label)}</span>${badge}</a>`;
 }
 
-function renderDrawerLink(item) {
-	return `<a href="${escHtml(item.href)}"${attrString(item.attrs)}${i18nAttr(item.title)}>${escHtml(item.title)}</a>`;
+function renderDrawerLink(item, inherited) {
+	const tier = inherited || tierAttr(item);
+	return `<a href="${escHtml(item.href)}"${tier}${attrString(item.attrs)}${i18nAttr(item.title)}>${escHtml(item.title)}</a>`;
 }
 
 function renderDrawer(navData) {
@@ -359,17 +467,31 @@ function renderDrawer(navData) {
 			`<span${i18nAttr(link.label)}>${escHtml(link.label)}</span>` +
 			`<span class="dr-hot-arrow" aria-hidden="true">→</span></a>`;
 	});
+	let drawerHidden = 0;
 	navData.NAV_GROUPS.forEach((group) => {
+		const groupTier = tierAttr(group);
+		drawerHidden += advancedCount(group);
 		if (group.columns) {
 			group.columns.forEach((col) => {
-				html += `<div class="dr-h"><span${i18nAttr(group.label)}>${escHtml(group.label)}</span> · <span${i18nAttr(col.label)}>${escHtml(col.label)}</span></div>`;
-				html += col.items.map(renderDrawerLink).join('');
+				// A column inherits its group's tier; an item inherits either.
+				const colTier = groupTier || tierAttr(col);
+				html += `<div class="dr-h"${colTier}><span${i18nAttr(group.label)}>${escHtml(group.label)}</span> · <span${i18nAttr(col.label)}>${escHtml(col.label)}</span></div>`;
+				html += col.items.map((item) => renderDrawerLink(item, colTier)).join('');
 			});
 		} else {
-			html += `<div class="dr-h"${i18nAttr(group.label)}>${escHtml(group.label)}</div>`;
-			html += (group.items || []).map(renderDrawerLink).join('');
+			html += `<div class="dr-h"${groupTier}${i18nAttr(group.label)}>${escHtml(group.label)}</div>`;
+			html += (group.items || []).map((item) => renderDrawerLink(item, groupTier)).join('');
 		}
 	});
+	// The drawer is one flat list, so its tier control sits once at the end of
+	// the menu rather than per-group.
+	if (drawerHidden) {
+		html +=
+			`<button type="button" class="dr-tier nav-tier-toggle" aria-expanded="false">` +
+			`<span class="nav-tier-more"><span${i18nAttr('Show everything')}>Show everything</span>` +
+			` <span class="nav-tier-n">+${drawerHidden}</span></span>` +
+			`<span class="nav-tier-less"${i18nAttr('Show the simple menu')}>Show the simple menu</span></button>`;
+	}
 	html += `<div class="dr-h"${i18nAttr('Legal')}>Legal</div>`;
 	html += navData.DRAWER_LEGAL.map(renderDrawerLink).join('');
 	html += `<div class="dr-h"${i18nAttr('More')}>More</div>`;

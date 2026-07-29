@@ -242,6 +242,12 @@ URL: https://three.ws/openai
 
 three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.
 
+### Press kit
+
+URL: https://three.ws/press
+
+Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.
+
 ### Pricing
 
 URL: https://three.ws/pricing

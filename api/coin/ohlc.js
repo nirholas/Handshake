@@ -7,14 +7,17 @@
 //
 // When CoinGecko fails (its keyless tier 429s under load), the headline assets
 // fall back to exchange candles (Kraken OHLC, then Coinbase Exchange) via
-// fetchExchangeChart, so the BTC/ETH/SOL charts stay live through a CoinGecko
-// outage. A 404 (unknown coin) never falls back: that is an answer, not an
-// outage.
+// fetchExchangeChart — real trade prints, so they lead. Every other coin falls
+// back to DefiLlama's oracle (fetchLlamaChart), which is addressed by the same
+// CoinGecko id and therefore needs no mapping: the long tail keeps its chart
+// through a CoinGecko outage instead of blanking. A 404 (unknown coin) never
+// falls back: that is an answer, not an outage.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId } from '../_lib/coingecko.js';
 import { fetchExchangeChart } from '../_lib/market-fallbacks.js';
+import { fetchLlamaChart } from '../_lib/coin-fallbacks.js';
 
 export const VALID_DAYS = new Set([1, 7, 30, 90, 365]);
 
@@ -30,14 +33,16 @@ export async function buildPriceChart(id, days) {
 		});
 	} catch (err) {
 		if (err?.status === 404) throw err;
-		const backup = await fetchExchangeChart(id, days);
-		if (backup) return { data: backup, days };
+		const exchange = await fetchExchangeChart(id, days);
+		if (exchange) return { data: exchange, days, source: 'exchange' };
+		const oracle = await fetchLlamaChart(id, days);
+		if (oracle) return { data: oracle, days, source: 'defillama' };
 		throw err;
 	}
 	const data = (raw?.prices || [])
 		.filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
 		.map(([t, v]) => [Math.round(t), v]);
-	return { data, days };
+	return { data, days, source: 'coingecko' };
 }
 
 export default wrap(async (req, res) => {
@@ -58,18 +63,15 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const { data } = await buildPriceChart(id, days);
+		const { data, source } = await buildPriceChart(id, days);
+		const cacheHeaders = {
+			'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
+		};
 		// An empty series is an answer (dead or unlisted market), not an outage:
 		// 200 keeps it CDN-cacheable and out of the 5xx monitors; the chart UI
 		// renders its designed no-data state for anything shorter than 2 points.
-		if (!data.length) {
-			return json(res, 200, { data: [], days }, {
-				'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
-			});
-		}
-		return json(res, 200, { data, days }, {
-			'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
-		});
+		if (!data.length) return json(res, 200, { data: [], days, source }, cacheHeaders);
+		return json(res, 200, { data, days, source }, cacheHeaders);
 	} catch (err) {
 		if (err?.status === 404) return error(res, 404, 'not_found', `no coin with id "${id}"`);
 		return error(res, 502, 'upstream_error', 'chart data is unavailable right now — retry shortly');

@@ -3,6 +3,7 @@
 	import { fade, slide } from 'svelte/transition';
 	import JsonView from './svelte-json-view/JsonView.svelte';
 	import Icon from './Icon.svelte';
+	import ModelViewer3D from './ModelViewer3D.svelte';
 	import Choice from './Choice.svelte';
 	import { feCheck, feChevronDown, feLoader, feX } from './feather.js';
 
@@ -49,6 +50,8 @@
 				displayType = 'markdown';
 			} else if (contentType === 'application/tx-result') {
 				displayType = 'tx_result';
+			} else if (contentType === 'application/model-3d') {
+				displayType = 'model3d';
 			}
 			// ...
 		}
@@ -182,7 +185,11 @@
 				<div class="flex flex-col rounded-b-lg border border-t-0 border-slate-200 px-6 py-5">
 					<Choice bind:chose {choiceHandler} {question} {choices} />
 				</div>
-			{:else if toolresponse && displayType === 'tx_result'}
+			{:else if toolresponse && displayType === 'model3d'}
+			<div class="flex flex-col rounded-b-lg border border-t-0 border-slate-200 p-2">
+				<ModelViewer3D content={displayedContent} height={420} />
+			</div>
+		{:else if toolresponse && displayType === 'tx_result'}
 				<div class="flex flex-col gap-3 rounded-b-lg border border-t-0 border-slate-200 px-5 py-4">
 					<!-- Status badge + amount -->
 					<div class="flex flex-wrap items-center gap-2">

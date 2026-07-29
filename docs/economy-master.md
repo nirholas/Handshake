@@ -145,16 +145,46 @@ Three more guards bound what it takes:
 
 - **Working capital is protected.** An agent with an *enabled* sniper strategy
   keeps `AGENT_RECLAIM_TRADE_MULTIPLE` (default 2) times its own configured
-  per-trade size, so reclaim can never starve an agent that is actively trading.
+  per-trade size **plus `MIN_OPERATIONAL_WALLET_SOL`** — everything one entry
+  costs besides the buy itself: the token ATA's rent, fee and tip headroom, and
+  the round-trip the rug/honeypot firewall simulates from that same wallet. The
+  multiple alone was not enough: an arm sized at 0.002 SOL/trade kept a 0.004 SOL
+  floor, which cannot pay for a simulation, so every entry aborted at the safety
+  check and the arm looked funded on every dashboard while being unable to trade.
   An agent with no enabled strategy keeps only `AGENT_RECLAIM_IDLE_FLOOR_SOL`
   (default 0.005) of transaction-fee headroom.
 - **Committed capital is untouchable.** Any agent holding an `open` or `closing`
   sniper position is skipped outright (`capital_committed`).
 - **Bounded and non-oscillating.** At most `AGENT_RECLAIM_MAX_WALLETS` (default
   40) wallets per run, biggest balances first, and each sweep is sized by the same
-  `reclaimableSol()` invariant the engine reclaim uses — the agent is always left
-  at floor *plus* a buffer, so a topup can never immediately re-fund a wallet
-  reclaim just emptied.
+  `reclaimableSol()` invariant the engine reclaim uses.
+
+### The anti-oscillation invariant (learned the expensive way)
+
+The bullet above used to claim reclaim could not fight a topup. That was true of
+the **engine** topup, which reads the same float this module sweeps to. It was
+not true of the **sniper auto-funder**
+([`workers/agent-sniper/auto-funder.js`](../workers/agent-sniper/auto-funder.js)),
+a different cron in a different Cloud Run service that refills opted-in agent
+wallets to `SNIPER_AUTO_FUND_TARGET_SOL` (0.05). Its target sat *above* the
+reclaim floor, and neither side read the other's number.
+
+The result was a pure oscillation, visible on-chain on 2026-07-28 between 19:08
+and 19:27: the funder pushed 0.24 SOL into two arms across six top-ups, the
+reclaim swept each one back to the economy master minutes later, and the arms
+never held a balance long enough to place a trade. It stopped only when the
+funding master ran dry at 0.0157 SOL.
+
+Both sides now read one module,
+[`api/_lib/agent-funding-policy.js`](../api/_lib/agent-funding-policy.js), which
+states the rule:
+
+> **A reclaim floor must never sit below the funding target of the same wallet.**
+
+`antiOscillationFloorSol()` returns that target for any wallet the funder manages
+(`auto_fund_enabled = true`), and `agentReclaimFloorSol()` takes it as a hard
+minimum — including for a *disabled* strategy, because the funder's opt-in flag,
+not `enabled`, is what decides whether a refill is coming.
 
 Sweeps below `ECONOMY_SWEEPBACK_MIN_SOL` (0.01 SOL) are skipped as dust.
 

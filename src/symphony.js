@@ -19,7 +19,16 @@
 
 import { esc, timeAgo } from './shared/pulse-format.js';
 import { createLogger } from './shared/log.js';
-import { CATEGORIES, eventToNote, describeEvent, createBurstGate, ROOT_HZ } from './symphony-score.js';
+import {
+	CATEGORIES,
+	eventToNote,
+	describeEvent,
+	createBurstGate,
+	matchesFilter,
+	parseFilter,
+	filterLabel,
+	ROOT_HZ,
+} from './symphony-score.js';
 
 const log = createLogger('symphony');
 
@@ -43,6 +52,7 @@ const state = {
 	source: null, // EventSource
 	pollTimer: null,
 	status: 'connecting',
+	filter: {}, // solo mode: {} = the whole platform, else { agentId } | { actor }
 };
 
 function clamp01(n) { return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.7; }
@@ -384,26 +394,47 @@ function vizSetRunning(run) {
 function ledgerRowHTML(evt) {
 	const d = describeEvent(evt);
 	const note = eventToNote(evt);
-	const inner = `
+	const body = `
+		<span class="sy-row-title">${esc(d.title)}</span>
+		${d.detail ? `<span class="sy-row-detail">${esc(String(d.detail))}</span>` : ''}`;
+	// The main content is one link; "solo" is a sibling button, never nested
+	// inside it (interactive-in-interactive is invalid and untabbable).
+	const main = d.href
+		? `<a class="sy-row-link" href="${esc(d.href)}" ${d.href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${body}</a>`
+		: `<span class="sy-row-link">${body}</span>`;
+	const actor = evt.actor ? esc(String(evt.actor)) : '';
+	const solo = actor
+		? `<button type="button" class="sy-solo" data-actor="${actor}"${evt.agentId ? ` data-agent-id="${esc(String(evt.agentId))}"` : ''} title="Listen to ${actor} alone" aria-label="Listen to ${actor} alone">solo</button>`
+		: '';
+	return `<div class="sy-row">
 		<span class="sy-dot" style="--c:var(--sym-${note.category})" aria-hidden="true">${esc(d.icon)}</span>
-		<span class="sy-row-main">
-			<span class="sy-row-title">${esc(d.title)}</span>
-			${d.detail ? `<span class="sy-row-detail">${esc(String(d.detail))}</span>` : ''}
-		</span>
-		<time class="sy-row-time" datetime="${new Date(evt.ts || Date.now()).toISOString()}">${esc(timeAgo(evt.ts))}</time>`;
-	return d.href
-		? `<a class="sy-row" href="${esc(d.href)}" ${d.href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${inner}</a>`
-		: `<div class="sy-row">${inner}</div>`;
+		${main}
+		${solo}
+		<time class="sy-row-time" datetime="${new Date(evt.ts || Date.now()).toISOString()}">${esc(timeAgo(evt.ts))}</time>
+	</div>`;
 }
 
-const EMPTY_LEDGER_HTML = `
-	<div class="sy-empty">
-		<p><strong>The economy is quiet right now.</strong></p>
-		<p>The moment an agent pays, trades, launches or levels up anywhere on
-		three.ws, you will hear it here. Meanwhile the drone you hear is the
-		platform's idle heartbeat.</p>
-		<p><a href="/pulse">Watch the Money Pulse</a> or <a href="/economy">see the economy dashboard</a>.</p>
-	</div>`;
+function emptyLedgerHTML() {
+	const label = filterLabel(state.filter, state.events);
+	if (label) {
+		return `
+			<div class="sy-empty">
+				<p><strong>${esc(label)} has not done anything yet.</strong></p>
+				<p>You are listening to one participant. The next time this agent pays,
+				trades, launches or gets refused by a safety rule, it plays here and
+				nothing else does.</p>
+				<p><a href="/symphony">Hear the whole economy</a> instead.</p>
+			</div>`;
+	}
+	return `
+		<div class="sy-empty">
+			<p><strong>The economy is quiet right now.</strong></p>
+			<p>The moment an agent pays, trades, launches or levels up anywhere on
+			three.ws, you will hear it here. Meanwhile the drone you hear is the
+			platform's idle heartbeat.</p>
+			<p><a href="/pulse">Watch the Money Pulse</a> or <a href="/economy">see the economy dashboard</a>.</p>
+		</div>`;
+}
 
 // Full rebuild. Only for first paint and for the empty state: a live feed that
 // re-rendered every row per event would restart all 60 enter animations and,
@@ -412,7 +443,7 @@ const EMPTY_LEDGER_HTML = `
 function renderLedger() {
 	const el = $('sy-ledger');
 	if (!el) return;
-	el.innerHTML = state.events.length ? state.events.map(ledgerRowHTML).join('') : EMPTY_LEDGER_HTML;
+	el.innerHTML = state.events.length ? state.events.map(ledgerRowHTML).join('') : emptyLedgerHTML();
 }
 
 // One newly-arrived event: insert a single node at the head and evict the tail.
@@ -456,10 +487,59 @@ function renderStats() {
 	}
 }
 
+/* ── Solo mode ─────────────────────────────────────────────────────────── */
+
+function renderSoloChip() {
+	const bar = $('sy-solo-bar');
+	const label = $('sy-solo-label');
+	if (!bar || !label) return;
+	const name = filterLabel(state.filter, state.events);
+	bar.hidden = !name;
+	if (name) label.textContent = name;
+	document.body.classList.toggle('sy-soloing', Boolean(name));
+}
+
+/**
+ * Switch the whole page to one participant (or back to everything) without a
+ * reload: reset the accumulated stream, re-fetch under the new filter, and
+ * keep the URL shareable so the state survives a copy-paste.
+ */
+async function setFilter(filter, { push = true } = {}) {
+	state.filter = filter || {};
+	state.seen = new Set();
+	state.events = [];
+	state.lastEventTs = 0;
+	if (push && typeof history !== 'undefined' && history.replaceState) {
+		const qs = state.filter.agentId ? `?agent=${encodeURIComponent(state.filter.agentId)}`
+			: state.filter.actor ? `?actor=${encodeURIComponent(state.filter.actor)}`
+			: '';
+		history.replaceState(null, '', `${location.pathname}${qs}`);
+	}
+	renderSoloChip();
+	renderLedger();
+	renderStats();
+	await fetchFirstPaint();
+	renderSoloChip(); // an agentId filter resolves its display name from the events
+}
+
+function wireSolo() {
+	$('sy-ledger')?.addEventListener('click', (e) => {
+		const btn = e.target.closest('.sy-solo');
+		if (!btn) return;
+		e.preventDefault();
+		const agentId = btn.dataset.agentId;
+		setFilter(agentId ? { agentId } : { actor: btn.dataset.actor });
+	});
+	$('sy-solo-clear')?.addEventListener('click', () => setFilter({}));
+}
+
 /* ── Event plumbing ────────────────────────────────────────────────────── */
 
 function acceptEvent(evt, { silent = false } = {}) {
 	if (!evt || !evt.id || state.seen.has(evt.id)) return;
+	// Solo mode drops other participants before anything else: they must not
+	// consume the seen-set, the ledger, or a note.
+	if (!matchesFilter(evt, state.filter)) return;
 	state.seen.add(evt.id);
 	if (state.seen.size > SEEN_MAX) {
 		state.seen = new Set(state.events.map((e) => e.id));
@@ -682,11 +762,15 @@ function wireControls() {
 /* ── Boot ──────────────────────────────────────────────────────────────── */
 
 async function main() {
+	state.filter = parseFilter(location.search);
 	vizInit();
 	wireControls();
 	wireLegend();
+	wireSolo();
+	renderSoloChip();
 	renderStats();
 	await fetchFirstPaint();
+	renderSoloChip(); // resolve an ?agent=<id> deep link to its display name
 	connectStream();
 }
 

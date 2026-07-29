@@ -31,6 +31,7 @@ import {
 	settleRingPayment,
 } from '../_lib/x402/self-facilitator.js';
 import { facilitatorFeeMeter, recordSettledFee } from '../_lib/x402/wallet-fee-meter.js';
+import { claimSettleCredit } from '../_lib/x402/settle-credit.js';
 import { listDiscoveryResources } from '../_lib/x402/discovery-resources.js';
 
 function actionFrom(req) {
@@ -211,26 +212,62 @@ export default wrap(async (req, res) => {
 			requirement,
 			feeMeter: facilitatorFeeMeter(),
 		});
-		if (result.success) recordSettledFee(result.feePayer, result.feeLamports);
-		await logOp({
-			action: 'settle',
-			network: requirement.network,
-			payer: result.payer,
-			payTo: requirement.payTo,
-			mint: requirement.asset,
-			amountAtomic: Number(requirement.amount) || null,
-			txSig: result.transaction,
-			feeLamports: result.feeLamports,
-			ok: result.success,
-			reason: result.reason,
-			idempotencyKey: req.headers?.['idempotency-key'] || null,
-			feePayer: result.feePayer,
-		});
+
+		const idempotencyKey = req.headers?.['idempotency-key'] || null;
+
 		if (!result.success) {
+			await logOp({
+				action: 'settle',
+				network: requirement.network,
+				payer: result.payer,
+				payTo: requirement.payTo,
+				mint: requirement.asset,
+				amountAtomic: Number(requirement.amount) || null,
+				txSig: result.transaction,
+				feeLamports: result.feeLamports,
+				ok: false,
+				reason: result.reason,
+				idempotencyKey,
+				feePayer: result.feePayer,
+			});
 			// 200 + success:false → settlePayment throws a clean settle_failed without
 			// the transient-5xx retry path.
 			return json(res, 200, { success: false, errorReason: result.reason });
 		}
+
+		// A broadcast success is NOT yet a settled payment. settleRingPayment's
+		// already-processed recovery cannot distinguish a retry of THIS payment from
+		// a different payment whose transaction compiled to the same signature, so
+		// the credit is claimed here, atomically, one payment per signature. The
+		// claim writes its own audit row (ok=true on grant, ok=false with the refusal
+		// reason otherwise), which is why logOp is not called on this path.
+		const credit = await claimSettleCredit({
+			sql,
+			row: {
+				network: requirement.network,
+				payer: result.payer,
+				payTo: requirement.payTo,
+				mint: requirement.asset,
+				amountAtomic: Number(requirement.amount) || null,
+				txSig: result.transaction,
+				feeLamports: result.feeLamports,
+				idempotencyKey,
+				feePayer: result.feePayer,
+			},
+		});
+
+		if (!credit.granted && !credit.idempotentReplay) {
+			// Someone else's payment owns this signature (or the DB is unavailable and
+			// we cannot prove otherwise). Refusing is what stops a service being
+			// delivered against a transfer that settled a different payment.
+			return json(res, 200, { success: false, errorReason: credit.reason });
+		}
+
+		// Meter the SOL burn once per actual settlement. An idempotent replay already
+		// had its fee counted when the credit was first granted; counting it again
+		// would drain the wallet's daily runway on retries alone.
+		if (credit.granted) recordSettledFee(result.feePayer, result.feeLamports);
+
 		return json(res, 200, {
 			success: true,
 			transaction: result.transaction,

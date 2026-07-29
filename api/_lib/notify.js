@@ -3,19 +3,24 @@
  *
  * insertNotification() is the single choke point every notification flows
  * through (sales, purchases, IRL, pump alerts, withdrawals…). It:
- *   1. inserts the in-app row (the bell inbox) — the durable record,
- *   2. records a `sent` funnel event for in_app,
- *   3. fans out to Web Push for the categories the user left enabled,
- *   4. records a `sent` event per push delivery.
+ *   1. resolves the recipient's preference matrix,
+ *   2. inserts the in-app row (the bell inbox) when the category's `in_app`
+ *      channel is on — the durable record,
+ *   3. records a `sent` funnel event for in_app,
+ *   4. fans out to Web Push for the categories the user left enabled,
+ *   5. records a `sent` event per push delivery.
  *
  * Every channel is gated by the user's preference center (api/_lib/notify-prefs)
- * so there is no notification a user can't turn off. Failures are logged, never
+ * so there is no notification a user can't turn off — including the bell itself:
+ * a category with `in_app: false` writes no `user_notifications` row at all, so
+ * the inbox and the unread count both stay silent for it while any other channel
+ * the user left on (push/email/telegram) still fires. Failures are logged, never
  * thrown — callers must not depend on this for correctness and need not await.
  *
  * @param {string} userId
  * @param {string} type      e.g. 'skill_purchased' (see notify-prefs TYPE_CATEGORY)
  * @param {object} payload
- * @returns {Promise<{ id: string|null }>}
+ * @returns {Promise<{ id: string|null, in_app?: boolean }>}
  */
 import { sql } from './db.js';
 import { resolvePrefs, channelEnabled, pushPayloadFor, categoryForType } from './notify-prefs.js';
@@ -29,26 +34,38 @@ export function insertNotification(userId, type, payload = {}) {
 }
 
 async function deliver(userId, type, payload) {
-	// 1 — durable in-app row.
+	// 1 — the preference matrix gates every channel, the bell included.
+	// resolvePrefs already falls back to defaults on a DB error, so a lookup
+	// problem degrades to "deliver on the default channels", never to silence.
+	const prefs = await resolvePrefs(userId);
+	const wantsInApp = channelEnabled(prefs, type, 'in_app');
+
+	// 2 — durable in-app row, only when the user left the bell on for this
+	// category. Muting in_app must leave no row behind: the inbox list and the
+	// unread count are both derived from user_notifications, so skipping the
+	// insert is what keeps the two consistent.
 	let id = null;
-	try {
-		const [row] = await sql`
-			insert into user_notifications (user_id, type, payload)
-			values (${userId}, ${type}, ${JSON.stringify(payload)}::jsonb)
-			returning id
-		`;
-		id = row?.id ?? null;
-	} catch (err) {
-		console.error('[notify] insert failed:', err.message);
-		return { id: null };
+	if (wantsInApp) {
+		try {
+			const [row] = await sql`
+				insert into user_notifications (user_id, type, payload)
+				values (${userId}, ${type}, ${JSON.stringify(payload)}::jsonb)
+				returning id
+			`;
+			id = row?.id ?? null;
+		} catch (err) {
+			console.error('[notify] insert failed:', err.message);
+			return { id: null, in_app: false };
+		}
+
+		// 3 — record the in-app send.
+		recordEvent(id, userId, 'in_app', 'sent');
 	}
 
-	// 2 — record the in-app send (the bell is always delivered).
-	recordEvent(id, userId, 'in_app', 'sent');
-
-	// 3 + 4 — push fan-out, gated by preferences.
+	// 4 + 5 — push fan-out, gated the same way. A muted bell never suppresses
+	// push: the notification id is simply null on the payload, which the service
+	// worker already tolerates (it only attributes funnel events when present).
 	try {
-		const prefs = await resolvePrefs(userId);
 		if (channelEnabled(prefs, type, 'push')) {
 			const delivered = await sendPushToUser(userId, pushPayloadFor(type, payload, id));
 			if (delivered > 0) recordEvent(id, userId, 'push', 'sent', { count: delivered });
@@ -57,7 +74,7 @@ async function deliver(userId, type, payload) {
 		console.error('[notify] push fan-out failed:', err.message);
 	}
 
-	return { id };
+	return { id, in_app: wantsInApp };
 }
 
 /**

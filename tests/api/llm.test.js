@@ -325,7 +325,11 @@ describe('llmComplete — BYOK Anthropic leads when supplied', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u', anthropicKey: 'sk-byok' });
 		expect(out.provider).toBe('anthropic');
 		expect(out.text).toBe('claude says hi');
-		expect(out.usage).toEqual({ input: 33, output: 44 });
+		// Anthropic usage also carries the prompt-cache counters (0 when the
+		// response reports no caching), because `input_tokens` is only the
+		// UNCACHED remainder once a cache breakpoint is in play — see
+		// tests/anthropic-prompt-cache-pricing.test.js.
+		expect(out.usage).toEqual({ input: 33, output: 44, cacheWrite: 0, cacheRead: 0 });
 		expect(calls[0].headers['x-api-key']).toBe('sk-byok');
 		// Anthropic body: top-level system + user-only messages.
 		expect(calls[0].body.system).toBe('s');

@@ -26,6 +26,8 @@ Defaults and resolution live in [`../_lib/notify-prefs.js`](../_lib/notify-prefs
 - `CHANNELS`: `in_app` (the bell inbox, on by default for every category), `push` (Web Push, on by default but only reaches users who subscribed a device), `email` (defaults on only for money and security categories), `telegram` (opt-in, needs a linked chat id).
 - `resolvePrefs(userId)` overlays the user's stored sparse prefs (table `notification_preferences`) onto the defaults, so a user who has never saved gets a sensible matrix and new categories appear automatically. `channelEnabled(prefs, type, channel)` is the single delivery gate the send path consults.
 
+Muting `in_app` for a category really does silence the bell for it: [`../_lib/notify.js`](../_lib/notify.js) checks `channelEnabled(prefs, type, 'in_app')` *before* inserting into `user_notifications`, so a muted category writes no row, contributes nothing to `unread_count`, and never appears in `GET /api/notifications`. The other channels are independent: a user who mutes the bell for `social` but leaves push on still gets the OS notification (its payload simply carries a null `notificationId`). Turning `in_app` back on affects new notifications only; nothing is backfilled.
+
 ## Consumers
 
 - Bell dropdown client: [`src/notifications.js`](../../src/notifications.js) (poll, unread badge, per-item read/dismiss, `track` beacon).

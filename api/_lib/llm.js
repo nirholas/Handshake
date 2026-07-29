@@ -198,6 +198,23 @@ function anthropicSystemField(system) {
 	return system;
 }
 
+/**
+ * Total prompt tokens for one completion, from an `llmComplete().usage`.
+ *
+ * Anthropic splits a cached prompt across three counters: `input` holds only
+ * the UNCACHED remainder, with the rest on `cacheWrite`/`cacheRead`. Reading
+ * `usage.input` alone therefore understates a cached prompt by most of its
+ * size — silently, and in the flattering direction. Every caller reporting
+ * "how many input tokens did that use" must go through this.
+ *
+ * Providers with no cache concept report 0 for both, so this is exact for
+ * every lane, not just Anthropic.
+ */
+export function promptTokens(usage) {
+	if (!usage) return 0;
+	return (usage.input ?? 0) + (usage.cacheWrite ?? 0) + (usage.cacheRead ?? 0);
+}
+
 // Anthropic reports `input_tokens` as the UNCACHED remainder once caching is in
 // play, with cache hits/writes on their own counters. Surfacing all three keeps
 // spend metering honest (see recordLlmSpend / costMicroUsd).

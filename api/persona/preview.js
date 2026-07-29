@@ -7,7 +7,7 @@
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { limits } from '../_lib/rate-limit.js';
-import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
+import { llmComplete, LlmUnavailableError, promptTokens } from '../_lib/llm.js';
 
 const MAX_MSG_CHARS = 1500;
 
@@ -94,8 +94,8 @@ const handler = wrap(async (req, res) => {
 	return json(res, 200, {
 		reply: completion.text,
 		model: completion.model,
-		tokens_used: usage.input + usage.output,
-		tokens_in: usage.input,
+		tokens_used: promptTokens(usage) + usage.output,
+		tokens_in: promptTokens(usage),
 		tokens_out: usage.output,
 		latency_ms: Date.now() - t0,
 	});

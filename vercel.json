@@ -343,6 +343,14 @@
 			"dest": "/openai/index.html"
 		},
 		{
+			"src": "/press",
+			"dest": "/press/index.html"
+		},
+		{
+			"src": "/press/",
+			"dest": "/press/index.html"
+		},
+		{
 			"src": "/billing/keys",
 			"dest": "/billing/keys.html"
 		},

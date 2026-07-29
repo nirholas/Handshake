@@ -330,6 +330,14 @@
 					"added": "2026-07-25"
 				},
 				{
+					"path": "/press",
+					"title": "Press kit",
+					"description": "Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-29"
+				},
+				{
 					"path": "/pricing",
 					"title": "Pricing",
 					"description": "Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.",

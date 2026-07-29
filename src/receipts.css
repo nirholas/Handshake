@@ -254,6 +254,37 @@
 	font-variant-numeric: tabular-nums;
 	overflow-wrap: anywhere;
 }
+.rc-kpi-sub {
+	display: block;
+	margin-top: 0.25em;
+	font-size: 0.72rem;
+	color: color-mix(in srgb, var(--ink, #d8d8d8) 45%, transparent);
+}
+/* The spend tile is the answer to the buyer's first question, so it leads. */
+.rc-kpi-hero {
+	border-color: color-mix(in srgb, var(--rc-accent) 35%, transparent);
+	background:
+		linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--rc-accent) 10%, transparent),
+			transparent 60%
+		),
+		color-mix(in srgb, var(--panel, #131318) 88%, transparent);
+}
+.rc-kpi-hero .rc-kpi-val {
+	font-size: 1.6rem;
+	background: var(--rc-grad);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+/* per-row settled amount */
+.rc-amount {
+	font-variant-numeric: tabular-nums;
+	font-weight: 620;
+	color: color-mix(in srgb, var(--rc-accent) 85%, var(--ink, #fff));
+}
 
 /* search */
 .rc-search-wrap {

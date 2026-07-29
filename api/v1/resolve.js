@@ -1,9 +1,16 @@
 // GET /api/v1/resolve — free, keyless name resolution across ENS + SNS.
 //
 // Wraps the platform's existing resolvers instead of reimplementing them:
-//   - .eth (ENS)  → ethers `resolveName` / `lookupAddress` via the shared EVM
-//     failover provider (api/_lib/evm/rpc.js `evmFallbackProvider`) — the same
-//     RPC chain api/agents/ens/[name].js already resolves ENS names through.
+//   - .eth (ENS)  → viem `getEnsAddress` / `getEnsName` against the ENS
+//     Universal Resolver, over the shared EVM failover transport
+//     (api/_lib/evm/rpc.js `evmTransport`). One `eth_call` per direction.
+//     ethers' `resolveName` was the original path and is why this endpoint
+//     503'd in production: it walks registry → resolver → supportsInterface →
+//     addr as separate sequential round trips, so on the keyless public
+//     endpoints (no Alchemy key on the service) 3-5 failover cycles blew the
+//     8s budget every time. Measured 2026-07-29: 9.7-12.4s and a 503 before,
+//     single-call after. The Universal Resolver also gets wildcard/CCIP
+//     resolution right, which the hand-rolled walk did not.
 //   - .sol (SNS)  → `resolveSnsName` / `reverseLookupAddress` from
 //     src/solana/sns.js — the exact module api/sns.js and api/sns-subdomain.js
 //     already share. No Bonfida call is reimplemented here.
@@ -25,8 +32,11 @@ import { rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
 import { resolveSnsName, reverseLookupAddress } from '../../src/solana/sns.js';
-import { evmFallbackProvider } from '../_lib/evm/rpc.js';
+import { evmTransport } from '../_lib/evm/rpc.js';
 import { env } from '../_lib/env.js';
+import { createPublicClient } from 'viem';
+import { mainnet } from 'viem/chains';
+import { normalize } from 'viem/ens';
 
 const ENS_RE = /^(?:[a-z0-9-]+\.)*[a-z0-9-]+\.eth$/i;
 const SOL_NAME_RE = /^[a-z0-9-]{1,63}\.sol$/i;

@@ -14,8 +14,10 @@ import {
 	agentReclaimFloorSol,
 	isPlatformOwnedAgent,
 	PLATFORM_AGENT_OWNER_EMAIL,
+	agentCandidateFromRow,
 } from '../api/_lib/economy-sweepback.js';
 import { MIN_OPERATIONAL_WALLET_SOL } from '../api/_lib/agent-trade-guards.js';
+import { autoFundTargetSol } from '../api/_lib/agent-funding-policy.js';
 
 // reclaimableSol: the emergency consolidation's sizing. The load-bearing property
 // is anti-oscillation: it must NEVER leave an engine below minSol, or the topup
@@ -246,6 +248,20 @@ test('agentReclaimFloorSol keeps a small-size arm able to actually trade', () =>
 	assert.ok(agentReclaimFloorSol({ enabled: false, perTradeSol: 0.002 }) < MIN_OPERATIONAL_WALLET_SOL);
 });
 
+test('agentReclaimFloorSol never sweeps an auto-funded wallet below its refill target', () => {
+	// The oscillation this closes, measured on mainnet: the funder refilled an arm to
+	// its target, the reclaim swept it back minutes later, repeat — 0.24 SOL round
+	// -tripped six times in 15 minutes across two arms, and the arms never held a
+	// balance long enough to trade. A reclaim floor under the funding target is a
+	// perpetual-motion fee burner.
+	const target = autoFundTargetSol();
+	assert.ok(agentReclaimFloorSol({ enabled: true, autoFundEnabled: true, perTradeSol: 0.002 }) >= target);
+	// It holds for a switched-off arm too: `enabled` is not what triggers a refill.
+	assert.ok(agentReclaimFloorSol({ enabled: false, autoFundEnabled: true, perTradeSol: 0.002 }) >= target);
+	// An agent the funder does not manage can still be swept to the bare idle floor.
+	assert.ok(agentReclaimFloorSol({ enabled: false, autoFundEnabled: false, perTradeSol: 0.002 }) < target);
+});
+
 test('planAgentReclaim leaves an enabled arm enough to place its next trade', () => {
 	const { plan } = planAgentReclaim([
 		{
@@ -309,4 +325,61 @@ test('planAgentReclaim honours the dust guard and the per-run wallet cap', () =>
 	assert.equal(capped.plan.length, 3);
 	assert.equal(capped.skipped.filter((s) => s.reason === 'run_cap_reached').length, 7);
 	assert.ok(capped.totalSol > 0);
+});
+
+// The row -> candidate mapping. This is the seam the pure-function tests above
+// cannot see: every guard they assert reads a field that agentCandidateFromRow
+// must actually carry off the SQL row. When `auto_fund_enabled` was missing from
+// that mapping the anti-oscillation floor silently read `undefined` and collapsed
+// to 0 in production while this suite stayed green, so the mapping itself is
+// pinned here, field by field.
+test('agentCandidateFromRow carries every guard-bearing field off the SQL row', () => {
+	const row = {
+		agent_id: 'ag_1',
+		name: 'Atlas #22',
+		address: 'A1',
+		owner: BOT,
+		secret: 'enc',
+		open_positions: 2,
+		strategy_enabled: true,
+		auto_fund_enabled: true,
+		per_trade_lamports: 2_000_000,
+	};
+	const c = agentCandidateFromRow(row, 0.5);
+
+	assert.equal(c.agentId, 'ag_1');
+	assert.equal(c.address, 'A1');
+	assert.equal(c.owner, BOT);
+	assert.equal(c.secret, 'enc');
+	assert.equal(c.sol, 0.5);
+	// Ownership, committed capital, and both floor inputs must survive the mapping:
+	// planAgentReclaim and agentReclaimFloorSol read exactly these.
+	assert.equal(c.openPositions, 2);
+	assert.equal(c.strategy.enabled, true);
+	assert.equal(c.strategy.autoFundEnabled, true);
+	assert.equal(c.strategy.perTradeSol, 0.002);
+
+	// The regression proper: an auto-funded agent's floor must reach the funder's
+	// target through the mapping, not just when a test hand-builds the strategy.
+	assert.ok(agentReclaimFloorSol(c.strategy) >= autoFundTargetSol());
+});
+
+test('agentCandidateFromRow defaults a bare row without inventing consent', () => {
+	// No strategy row at all (the LEFT JOIN missed): every flag must read false, and
+	// `undefined` must never reach the anti-oscillation floor as a truthy value.
+	const c = agentCandidateFromRow(
+		{ agent_id: 'ag_2', name: null, address: 'A2', owner: BOT, secret: 'enc' },
+		0.1,
+	);
+	assert.equal(c.name, 'Agent');
+	assert.equal(c.openPositions, 0);
+	assert.equal(c.strategy.enabled, false);
+	assert.equal(c.strategy.autoFundEnabled, false);
+	assert.equal(c.strategy.perTradeSol, 0);
+
+	// Postgres can hand back `false`/null for the flag; neither is consent.
+	const off = agentCandidateFromRow({ agent_id: 'a', address: 'A', owner: BOT, secret: 's', auto_fund_enabled: false }, 1);
+	assert.equal(off.strategy.autoFundEnabled, false);
+	const nul = agentCandidateFromRow({ agent_id: 'a', address: 'A', owner: BOT, secret: 's', auto_fund_enabled: null }, 1);
+	assert.equal(nul.strategy.autoFundEnabled, false);
 });

@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
-import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
+import { llmComplete, LlmUnavailableError, promptTokens } from '../_lib/llm.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
 const bodySchema = z
@@ -154,7 +154,8 @@ export default wrap(async (req, res) => {
 	if (!memorySeed)
 		return error(res, 502, 'empty_synthesis', 'model returned no text content');
 
-	const tokensUsed = result.usage.input + result.usage.output;
+	const inputTokens = promptTokens(result.usage);
+	const tokensUsed = inputTokens + result.usage.output;
 
 	return json(res, 200, {
 		ok: true,
@@ -162,7 +163,7 @@ export default wrap(async (req, res) => {
 		sources_used: sourcesUsed,
 		tokens_used: tokensUsed,
 		usage: {
-			input_tokens: result.usage.input,
+			input_tokens: inputTokens,
 			output_tokens: result.usage.output,
 		},
 		model: result.model,

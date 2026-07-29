@@ -27,8 +27,28 @@ import {
 	vertexServesModel,
 } from '../api/_lib/chat-models.js';
 import { sanitizeAnthropicBody } from '../api/llm/anthropic.js';
+import { promptTokens } from '../api/_lib/llm.js';
 
 const M = 1_000_000;
+
+describe('promptTokens — true prompt size across the cache counters', () => {
+	it('sums the uncached remainder with both cache counters', () => {
+		expect(promptTokens({ input: 120, cacheWrite: 0, cacheRead: 9_000, output: 50 })).toBe(9_120);
+	});
+
+	it('matches usage.input when nothing was cached', () => {
+		expect(promptTokens({ input: 1234, cacheWrite: 0, cacheRead: 0 })).toBe(1234);
+	});
+
+	it('tolerates providers that report no cache fields at all', () => {
+		expect(promptTokens({ input: 77, output: 9 })).toBe(77);
+	});
+
+	it('is defensive about a missing usage object', () => {
+		expect(promptTokens(undefined)).toBe(0);
+		expect(promptTokens(null)).toBe(0);
+	});
+});
 
 describe('costMicroUsd — prompt-cache accounting', () => {
 	it('prices a cache write at 1.25x the model input rate', () => {

@@ -17,7 +17,7 @@
 			property="og:description"
 			content="The agent economy, played live as music. Every real platform event becomes a synthesized note: payments pluck, whale buys land as bass, new agents chime. Record a clip and share it."
 		/>
-		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Symphony&amp;d=The+agent+economy%2C+played+live+as+music.+Every+real+payment%2C+trade%2C+launch+and+level-up+on+three.ws+becomes+a+synthesized+note+in+real+time.&amp;p=%2Fsymphony" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Agent+Symphony&amp;d=The+agent+economy%2C+played+live+as+generative+music.+Every+real+payment%2C+trade%2C+launch+and+level-up+on+three.ws+becomes+a+synthesized+note+in+real+time%3B+record&amp;p=%2Fsymphony" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
@@ -27,7 +27,7 @@
 			name="twitter:description"
 			content="The agent economy, played live as music. Every real platform event becomes a synthesized note in real time."
 		/>
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Symphony&amp;d=The+agent+economy%2C+played+live+as+music.+Every+real+payment%2C+trade%2C+launch+and+level-up+on+three.ws+becomes+a+synthesized+note+in+real+time.&amp;p=%2Fsymphony" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Agent+Symphony&amp;d=The+agent+economy%2C+played+live+as+generative+music.+Every+real+payment%2C+trade%2C+launch+and+level-up+on+three.ws+becomes+a+synthesized+note+in+real+time%3B+record&amp;p=%2Fsymphony" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -81,6 +81,12 @@
 				<li><button type="button" class="sy-voice" data-voice="alarm" style="--c:var(--sym-alarm)" aria-pressed="true">Guard refusals · dissonance</button></li>
 				<li><button type="button" class="sy-voice" data-voice="jackpot" style="--c:var(--sym-jackpot)" aria-pressed="true">Jackpots · glissando</button></li>
 			</ul>
+
+			<div class="sy-solo-bar" id="sy-solo-bar" hidden>
+				<span class="sy-solo-dot" aria-hidden="true"></span>
+				<span>Soloing <strong id="sy-solo-label"></strong>. Everything else is muted.</span>
+				<button type="button" class="sy-solo-clear" id="sy-solo-clear">Hear everything</button>
+			</div>
 
 			<section class="sy-stage" aria-label="Live visualization of the notes being played">
 				<canvas id="sym-canvas"></canvas>

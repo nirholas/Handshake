@@ -681,3 +681,57 @@
 		animation: none !important;
 	}
 }
+
+/* ── Progressive disclosure: the Simple ⇄ Everything tier ──────────────────
+   New visitors get the ~20 destinations that carry the core journey; the
+   ~80 power-user surfaces are tagged `tier: 'advanced'` in nav-data.js and
+   hidden until asked for. `html.tws-lite` is applied by nav.js before the
+   menus render (and pre-paint in <head> on the homepage), so nothing
+   flashes. See public/nav.js → applyTier. */
+html.tws-lite .nav [data-tier="advanced"],
+html.tws-lite .nav-drawer [data-tier="advanced"] { display: none; }
+
+/* A hidden column would otherwise leave an empty grid track: re-lay the mega
+   popover to the number of columns the lite tier actually shows. */
+html.tws-lite .nav-pop.mega.lite-cols-1 { grid-template-columns: 1fr; min-width: 288px; }
+html.tws-lite .nav-pop.mega.lite-cols-2 { grid-template-columns: repeat(2, 1fr); min-width: 460px; }
+html.tws-lite .nav-pop.mega.lite-cols-3 { grid-template-columns: repeat(3, 1fr); min-width: 632px; }
+
+/* The in-menu switch. Spans every column as a footer row under the items. */
+.nav-tier-toggle {
+	grid-column: 1 / -1;
+	display: flex; align-items: center; justify-content: center; gap: 8px;
+	width: 100%; margin-top: 4px; padding: 10px 12px;
+	border: 0; border-top: 1px solid var(--nv-hairline); border-radius: 0 0 9px 9px;
+	background: transparent; cursor: pointer;
+	font: inherit; font-size: var(--text-xs); font-weight: 500;
+	color: var(--nv-text-3); text-align: center;
+	transition: background 0.12s, color 0.12s;
+}
+.nav-tier-toggle:hover { background: var(--nv-surface-2); color: var(--nv-text); }
+.nav-tier-toggle:focus-visible { outline: 2px solid var(--nv-text); outline-offset: -2px; color: var(--nv-text); }
+.nav-tier-n {
+	font-family: var(--nv-font-mono); font-size: var(--text-2xs);
+	padding: 2px 7px; border-radius: 999px;
+	background: var(--nv-surface-2); color: var(--nv-text-2);
+}
+.nav-tier-toggle:hover .nav-tier-n { background: var(--nv-surface-1); color: var(--nv-text); }
+/* Only one of the two labels is ever live — whichever the current tier needs. */
+.nav-tier-toggle .nav-tier-less { display: none; }
+html:not(.tws-lite) .nav-tier-toggle .nav-tier-more { display: none; }
+html:not(.tws-lite) .nav-tier-toggle .nav-tier-less { display: inline; }
+
+/* Drawer counterpart: one control at the end of the flat mobile list. */
+.nav-drawer button.dr-tier {
+	display: flex; align-items: center; justify-content: center; gap: 8px;
+	width: calc(100% - 24px); min-height: 44px;
+	margin: 10px 12px 4px; padding: 12px 14px;
+	border: 1px solid var(--nv-hairline); border-radius: 12px;
+	background: transparent; color: var(--nv-text-2);
+	font: inherit; font-size: var(--text-base); font-weight: 500; cursor: pointer;
+	transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.nav-drawer button.dr-tier:hover,
+.nav-drawer button.dr-tier:active {
+	border-color: var(--nv-hairline-strong); background: var(--nv-surface-1); color: var(--nv-text);
+}

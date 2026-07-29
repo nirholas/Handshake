@@ -15,6 +15,14 @@
 			<description>Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.</description>
 		</item>
 		<item>
+			<title>Press kit</title>
+			<link>https://three.ws/press</link>
+			<guid isPermaLink="false">2026-07-29:Press kit</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.</description>
+		</item>
+		<item>
 			<title>Watch your 3D model being made, live</title>
 			<link>https://three.ws/watch</link>
 			<guid isPermaLink="false">2026-07-29:Watch your 3D model being made, live</guid>

@@ -29,8 +29,18 @@ function withTimeout(promise, ms) {
 // sources, so it becomes each result's snippet: the fact-check consumer
 // (api/x402/fact-check.js) feeds snippet.slice(0, 900) to stance extraction
 // and falls back to snippet.slice(0, 200) for the excerpt, both of which want
-// claim-relevant prose, not a bare domain. Authority stays per-URL via
-// authorityScore(r.url) in the consumer; no per-rung weight exists here.
+// claim-relevant prose, not a bare domain.
+//
+// AUTHORITY TRAP (verified against a live response 2026-07-29): a grounding
+// chunk's `uri` is NOT the publisher URL — it is an opaque
+// vertexaisearch.cloud.google.com/grounding-api-redirect/... link that Google
+// requires for attribution. Scoring that URL means authorityScore() parses the
+// hostname `vertexaisearch.cloud.google.com` for EVERY result, so a .gov, a
+// Wikipedia page and an anonymous blog all collapse to the same unknown-domain
+// default and domain authority silently stops working. The chunk carries the
+// real publisher host separately as `domain`, so each result also exposes
+// `domain` and the consumer scores that (api/x402/fact-check.js). `url` stays
+// the redirect because it is the only link Google guarantees resolves.
 async function searchVertexGrounded(query) {
 	if (!webSearchAvailable()) return null;
 
@@ -40,6 +50,7 @@ async function searchVertexGrounded(query) {
 	const snippet = String(answer || '').trim();
 	return sources.map((s) => ({
 		url: s.url,
+		domain: s.domain || '',
 		title: s.title || s.domain || '',
 		snippet: snippet || s.domain || '',
 	}));
@@ -362,10 +373,28 @@ export async function searchWeb(query) {
  * only surfaces confirmations.
  *
  * @param {string[]} queries  Up to 3 queries.
+ * @param {{budgetMs?: number}} [opts] Wall-clock allowance for the whole sweep.
+ *   A query that has not answered by then contributes nothing rather than
+ *   holding the caller open. Each rung below has its own per-request timeout,
+ *   but a full fallback walk (grounded search → Wikipedia → DuckDuckGo) can
+ *   still outlast an edge timeout, and partial evidence beats a request the
+ *   edge kills carrying none. Omit for no deadline.
  * @returns {Promise<Array<{url: string, title: string, snippet: string}>>}
  */
-export async function searchAll(queries) {
-	const settled = await Promise.allSettled(queries.map((q) => searchWeb(q)));
+export async function searchAll(queries, opts = {}) {
+	const budgetMs = Number(opts.budgetMs) || 0;
+	const bounded = (promise) => {
+		if (budgetMs <= 0) return promise;
+		let timer;
+		return Promise.race([
+			promise.finally(() => clearTimeout(timer)),
+			new Promise((resolve) => {
+				timer = setTimeout(() => resolve([]), budgetMs);
+				timer.unref?.();
+			}),
+		]);
+	};
+	const settled = await Promise.allSettled(queries.map((q) => bounded(searchWeb(q))));
 	const lists = settled
 		.filter((o) => o.status === 'fulfilled' && Array.isArray(o.value))
 		.map((o) => o.value);

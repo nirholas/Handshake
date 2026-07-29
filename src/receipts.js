@@ -22,6 +22,8 @@ import {
 	resourceDisplay,
 	receiptsToCsv,
 	summarizeReceipts,
+	formatReceiptAmount,
+	totalSpend,
 } from './receipts-lib.js';
 import { timeAgo } from './shared/pulse-format.js';
 
@@ -247,10 +249,17 @@ function filteredRows() {
 
 function renderVault() {
 	const stats = summarizeReceipts(state.rows);
+	const spend = totalSpend(state.rows);
 	$('rc-k-total').textContent = String(stats.total);
 	$('rc-k-endpoints').textContent = String(stats.endpoints);
 	$('rc-k-networks').textContent = stats.networks.length ? stats.networks.join(' · ') : '·';
 	$('rc-k-last').textContent = stats.lastAt ? timeAgo(stats.lastAt) : '·';
+	// Receipts issued before settlement capture landed carry no amount; say so
+	// rather than quietly under-reporting the total.
+	$('rc-k-spend').textContent = spend.priced ? spend.label : '·';
+	$('rc-k-spend-note').textContent = spend.unpriced
+		? `${spend.priced} of ${stats.total} priced`
+		: 'USDC settled';
 	$('rc-load-error').hidden = true;
 
 	const rows = filteredRows();
@@ -285,11 +294,16 @@ function renderVault() {
 			const when = r.issuedAt
 				? `<time datetime="${esc(r.issuedAt)}" title="${esc(new Date(r.issuedAt).toLocaleString())}">${esc(timeAgo(r.issuedAt))}</time>`
 				: '·';
+			const amount = formatReceiptAmount(r.amountAtomics, r.asset);
+			const amountCell = amount
+				? `<span class="rc-amount" title="${esc(r.amountAtomics)} atomic units">${esc(amount.label)}</span>`
+				: '';
 			return `
 			<div class="rc-row" data-idx="${i}">
 				<div class="rc-row-main">
 					<span class="rc-resource" title="${esc(r.resourceUrl)}">${esc(resourceDisplay(r.resourceUrl))}</span>
 					<span class="rc-meta">
+						${amountCell}
 						<span class="rc-net" data-net="${esc(networkLabel(r.network))}">${esc(networkLabel(r.network))}</span>
 						${when}
 						${txCell}

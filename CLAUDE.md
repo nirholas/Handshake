@@ -184,6 +184,14 @@ Fix every issue found. Then report complete.
 - Use TodoWrite for any task with 3+ steps. Mark items complete in real time.
 - Communication: short. State what you did, what's next. No trailing recaps.
 
+## Keeping this file true
+
+This file is the operating brain for every agent here, and agents execute what it says verbatim. A stale line in it does not read as stale, it reads as an instruction, and the cost is a wasted session per drift. Treat it as load-bearing code:
+
+- **`npm run check:claude` guards it** (`scripts/check-claude-md.mjs`, wired into `npm run gate`). It re-derives the checkable claims from their source of truth on every run: every npm script and repo path named here must exist, the cron count must match `vercel.json`, the deploy runbook must list the real `build:gcp` chain in the real order, the `db:migrate` warning must match what the script actually does, the README-coverage standard must hold, and the em-dash ban must be honored by this file itself. Run it after editing this file.
+- **If you change a load-bearing script, update this file in the same change.** Renaming a script, reordering `build:gcp`, adding a cron, or flipping a default is a documentation change too. The guard will catch most of it; do not make it do your job.
+- **Never add a claim here you have not verified.** Numbers, dates, and "X is automatic" statements are the ones that rot. If a claim cannot be checked mechanically, prefer wording that stays true (name the source of truth instead of quoting a number from it).
+
 ---
 
 ## Changelog: every user-visible change gets an entry
@@ -270,7 +278,7 @@ The whole build + submit + purge in one command: `npm run deploy:gcp:full`.
 - Frontend: vanilla JS modules + Vite (`npm run dev`, port 3000).
 - 3D: Three.js with glTF/GLB.
 - Backend touchpoints: serverless-style handlers in `api/`, workers in `workers/`.
-- **Production runs on Google Cloud Run, NOT Vercel** (migrated 2026-07-07 after Vercel disabled the deployment). One container ([server/index.mjs](server/index.mjs)) serves the static frontend, the vercel.json route table, and all `api/**` handlers; the crons (100 as of 2026-07-29, see vercel.json) run on Cloud Scheduler. `vercel.json` is a LIVE config file: `server/index.mjs` reads its `routes` array on boot (split at the `{handle:"filesystem"}` marker into pre- and post-filesystem phases), and `scripts/create-gcp-scheduler.mjs` reads its `crons` array to sync Cloud Scheduler jobs. The server itself never reads `crons`. Never delete `vercel.json` as a leftover. GCP builds/deploys must pin the `three-ws-build@` (build) and `three-ws@` (runtime) service accounts; the project's default compute SA was deleted. Deploys: see the "Deploy runbook" section above.
+- **Production runs on Google Cloud Run, NOT Vercel** (migrated 2026-07-07 after Vercel disabled the deployment). One container ([server/index.mjs](server/index.mjs)) serves the static frontend, the vercel.json route table, and all `api/**` handlers; the crons (101 as of 2026-07-29, see vercel.json) run on Cloud Scheduler. `vercel.json` is a LIVE config file: `server/index.mjs` reads its `routes` array on boot (split at the `{handle:"filesystem"}` marker into pre- and post-filesystem phases), and `scripts/create-gcp-scheduler.mjs` reads its `crons` array to sync Cloud Scheduler jobs. The server itself never reads `crons`. Never delete `vercel.json` as a leftover. GCP builds/deploys must pin the `three-ws-build@` (build) and `three-ws@` (runtime) service accounts; the project's default compute SA was deleted. Deploys: see the "Deploy runbook" section above.
 - **Env-var trap:** `vercel env pull` returns EMPTY for secret-type vars. Never trust a Vercel env export as complete. Production env lives on the Cloud Run service (`gcloud run services describe/update three-ws-api --region us-central1`).
 - Solana/agent SDKs in `sdk/`, `solana-agent-sdk/`, `agent-payments-sdk/`.
 - Real APIs in use: Pump.fun feed, Solana RPC, OpenAI/Anthropic via worker proxies. Never mock these.

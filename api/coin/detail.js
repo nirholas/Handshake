@@ -7,10 +7,16 @@
 // multi-hundred-KB upstream payload to exactly what the page renders, and
 // sanitizes the description to plain text server-side so the client never
 // touches upstream HTML. Cached in-memory 60s + CDN s-maxage.
+//
+// When CoinGecko is throttled (its keyless tier rate-limits per egress IP, and
+// Cloud Run's is shared), the profile falls back to CoinPaprika via
+// api/_lib/coin-fallbacks.js so the page stays alive instead of 502ing. A 404
+// (unknown coin) never falls back: that is an answer, not an outage.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId, htmlToText } from '../_lib/coingecko.js';
+import { fetchFallbackCoinDetail } from '../_lib/coin-fallbacks.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -125,14 +131,29 @@ function shape(c) {
 // Exported for the paid Market Data API (api/_lib/market-data/) — the x402
 // market-coin endpoint sells the same rich coin profile this page renders.
 // Callers must validate id/contract first; upstream errors carry err.status.
+//
+// `source` names which upstream answered so the page can label degraded data;
+// it is always 'coingecko' on the happy path.
 export async function buildCoinDetail({ id, contract }) {
-	const raw = contract
-		? await geckoFetch(`/coins/solana/contract/${contract}`, { ttlMs: 60_000 })
-		: await geckoFetch(
-				`/coins/${id}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=false`,
-				{ ttlMs: 60_000 },
-			);
-	return { coin: shape(raw) };
+	try {
+		const raw = contract
+			? await geckoFetch(`/coins/solana/contract/${contract}`, { ttlMs: 60_000 })
+			: await geckoFetch(
+					`/coins/${id}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=false`,
+					{ ttlMs: 60_000 },
+				);
+		return { coin: shape(raw), source: 'coingecko' };
+	} catch (err) {
+		// A 404 is a real answer about a real coin id; never paper over it. The
+		// contract lookup has no fallback either — CoinPaprika is addressed by
+		// coin id, not by Solana mint, and the platform's own mint intel
+		// (api/_lib/market/token-market.js) already fronts that path elsewhere.
+		if (err?.status === 404 || contract) throw err;
+		const coin = await fetchFallbackCoinDetail(id);
+		if (!coin) throw err;
+		console.warn(`[coin/detail] ${id}: coingecko failed (${err?.status || err?.name}); served from coinpaprika`);
+		return { coin, source: 'coinpaprika' };
+	}
 }
 
 export { MINT_RE };
@@ -155,7 +176,8 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		return json(res, 200, await buildCoinDetail({ id, contract }), {
+		const { coin, source } = await buildCoinDetail({ id, contract });
+		return json(res, 200, { coin, source }, {
 			'cache-control': 'public, max-age=60, s-maxage=180, stale-while-revalidate=900',
 		});
 	} catch (err) {

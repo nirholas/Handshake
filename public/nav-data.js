@@ -51,6 +51,7 @@ export const NAV_GROUPS = [
 					{
 						title: 'Agent Studio',
 						href: '/agent-studio',
+						tier: 'advanced',
 						desc: 'Author brain, memory, body, money & skills with a live avatar',
 					},
 				],
@@ -92,11 +93,13 @@ export const NAV_GROUPS = [
 					{
 						title: 'Animation Studio',
 						href: '/pose',
+						tier: 'advanced',
 						desc: 'Pose with IK, keyframe a timeline → animated GLB you can sell',
 					},
 					{
 						title: 'Agent Identity Studio',
 						href: '/agent-identities',
+						tier: 'advanced',
 						badge: 'Live',
 						badgeTone: 'live',
 						desc: 'Brand brief → rigged avatar + studio renders for your AI agent',
@@ -104,6 +107,7 @@ export const NAV_GROUPS = [
 					{
 						title: 'Sign Language',
 						href: '/sign-language',
+						tier: 'advanced',
 						badge: 'New',
 						badgeTone: 'live',
 						desc: 'Avatars that sign in ASL — fingerspell anything, signed chat replies, webcam sign input',
@@ -112,6 +116,7 @@ export const NAV_GROUPS = [
 			},
 			{
 				label: 'Capture & advanced',
+				tier: 'advanced',
 				items: [
 					{
 						title: 'Splat Viewer',
@@ -167,21 +172,25 @@ export const NAV_GROUPS = [
 					{
 						title: 'Labs',
 						href: '/labs',
+						tier: 'advanced',
 						desc: 'Hidden gems — experimental, advanced surfaces most people never find',
 					},
 					{
 						title: 'BNB Chain',
 						href: '/bnb',
+						tier: 'advanced',
 						desc: 'Gasless agent onboarding, an on-chain vault, and a real-time on-chain world — live 0.45s block proof',
 					},
 					{
 						title: 'Vault',
 						href: '/vault',
+						tier: 'advanced',
 						desc: 'Buy encrypted 3D models gated by a real on-chain BNB Chain purchase — unlock and view in 3D',
 					},
 					{
 						title: 'All pages',
 						href: '/sitemap',
+						tier: 'advanced',
 						desc: 'The full directory — every page on three.ws, filterable',
 					},
 				],
@@ -205,22 +214,25 @@ export const NAV_GROUPS = [
 					},
 					{ title: 'Avatar Gallery', href: '/gallery', desc: 'Every public 3D avatar' },
 					{ title: 'Character Library', href: '/character-library', desc: '106 rigged characters, ready to animate' },
-				{ title: 'Object Library', href: '/objects', desc: 'Free CC0 3D props, ready to use' },
-					{ title: 'Animation Gallery', href: '/animations', desc: 'Community animations for avatars' },
+				{ title: 'Object Library', href: '/objects', tier: 'advanced', desc: 'Free CC0 3D props, ready to use' },
+					{ title: 'Animation Gallery', href: '/animations', tier: 'advanced', desc: 'Community animations for avatars' },
 					{
 						title: 'Worlds',
 						href: '/play',
+						tier: 'advanced',
 						desc: 'Every coin is a 3D world — drop in & hang out',
 					},
 					{
 						title: 'Coin Clash',
 						href: '/clash',
+						tier: 'advanced',
 						desc: 'Token-gated community warfare — hold a coin, enlist, and battle other armies live',
 					},
 				],
 			},
 			{
 				label: 'Money & social',
+				tier: 'advanced',
 				items: [
 					{
 						title: '$THREE Token',
@@ -278,6 +290,7 @@ export const NAV_GROUPS = [
 	{
 		label: 'Launch',
 		layout: 'mega',
+		tier: 'advanced',
 		columns: [
 			{
 				label: 'Launch',
@@ -587,6 +600,7 @@ export const NAV_GROUPS = [
 			},
 			{
 				label: 'Payments',
+				tier: 'advanced',
 				items: [
 					{ title: 'Pay', href: '/pay', desc: 'Agent payments — x402 + USDC' },
 					{ title: 'Payment Sessions', href: '/payments', desc: 'Governed agent spend budgets — no private key needed' },
@@ -599,11 +613,13 @@ export const NAV_GROUPS = [
 					{
 						title: 'Crypto Data API',
 						href: '/crypto',
+						tier: 'advanced',
 						desc: 'Free, keyless crypto data for agents — snapshots, rug checks, launches, whales',
 					},
 					{
 						title: '3D API',
 						href: '/3d',
+						tier: 'advanced',
 						desc: 'Free, keyless text→3D + glTF/GLB inspection for agents — with a paid pro ladder',
 					},
 					{

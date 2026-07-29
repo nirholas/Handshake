@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T04:55:00.379Z",
+	"generated_at": "2026-07-29T04:58:11.220Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -390,6 +390,16 @@
 					"title": "three.ws is an OpenAI Select Partner",
 					"description": "three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.",
 					"added": "2026-07-25",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/press",
+					"title": "Press kit",
+					"description": "Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.",
+					"added": "2026-07-29",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

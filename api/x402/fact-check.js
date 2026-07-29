@@ -35,6 +35,23 @@ import { imageEvidence } from '../../agents/fact-checker/src/image-evidence.js';
 const ROUTE = '/api/x402/fact-check';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
 const MAX_BODY_BYTES = 32 * 1024; // claims are short text; 32KB is generous headroom
+// Wall-clock budget for one live check. The edge cuts a request off at 60s, and
+// an unbudgeted pipeline could exceed that on its own (two 30s LLM chains plus
+// a 20s grounded search), which is what turned slow checks into 502s carrying
+// nothing at all. 45s leaves the response, x402 settlement, and the cache write
+// comfortably inside the edge window while still allowing a slow-but-real check
+// to finish. Env-tunable for operators fronting the API with a different edge.
+const PIPELINE_BUDGET_MS = Math.max(
+	10_000,
+	Number(process.env.FACT_CHECK_BUDGET_MS) || 45_000,
+);
+// Stage caps carved out of that budget, sized from measured stage cost (query
+// generation ~8s, grounded search sub-second to ~20s worst case). Each stage
+// actually gets min(cap, time still left), so an early overrun steals from the
+// stages behind it rather than from the edge's patience.
+const QUERY_STAGE_CAP_MS = 12_000;
+const SEARCH_STAGE_CAP_MS = 20_000;
+const IMAGE_STAGE_CAP_MS = 20_000;
 // Kept in one place and re-exported so the /fact-check page and 402-quote copy
 // can render the real cap instead of a hardcoded, driftable number. Must match
 // limits.factCheckFreeIp's `limit` in api/_lib/rate-limit.js.
@@ -161,25 +178,69 @@ function computeVerdict(sources) {
 
 // ── Core fact-check pipeline ───────────────────────────────────────────────────
 
+/**
+ * Resolve `promise`, or `fallback` if it has not settled within `ms`.
+ * Used for optional stages whose absence degrades the check instead of failing
+ * it, so a stalled helper can never spend the whole request's budget.
+ *
+ * @template T
+ * @param {Promise<T>} promise
+ * @param {number} ms  Non-positive means "no budget left" — take the fallback now.
+ * @param {T} fallback
+ * @returns {Promise<T>}
+ */
+function withDeadline(promise, ms, fallback) {
+	if (!(ms > 0)) return Promise.resolve(fallback);
+	let timer;
+	return Promise.race([
+		promise.finally(() => clearTimeout(timer)),
+		new Promise((resolve) => {
+			timer = setTimeout(() => resolve(fallback), ms);
+			timer.unref?.();
+		}),
+	]);
+}
+
 async function runFactCheck(claim, strictness, imageUrl = null) {
 	let totalTokens = 0;
 	let searchCalls = 0;
+	// Degradations collected as the pipeline runs. Anything in here means the
+	// verdict rests on less than the full chain, which both the response and the
+	// caching decision below have to respect.
+	const degradations = [];
+
+	// Every stage is bounded by what is left of the shared budget, so a slow
+	// stage costs the stages behind it rather than the whole request. Without
+	// this the pipeline could outlive the edge's 60s cut-off and return a 502
+	// carrying nothing, discarding evidence it had already gathered.
+	const deadline = Date.now() + PIPELINE_BUDGET_MS;
+	const remainingMs = () => deadline - Date.now();
+	const stageBudget = (cap) => Math.max(0, Math.min(cap, remainingMs()));
 
 	// 0. Image evidence (Consumer 2 of the shared vision helper) runs in parallel
 	//    with the web pipeline — a free NIM vision lane describes/transcribes the
 	//    attached image and judges its stance. Fail-open: null when no image is
 	//    attached or vision is unavailable, so the check never depends on it.
 	const imageEvidencePromise = imageUrl
-		? imageEvidence(claim, imageUrl).catch(() => null)
+		? withDeadline(
+				imageEvidence(claim, imageUrl).catch(() => null),
+				stageBudget(IMAGE_STAGE_CAP_MS),
+				null,
+			)
 		: Promise.resolve(null);
 
 	// 1. Generate 3 search queries.
-	const { queries, tokens: queryTokens } = await generateSearchQueries(claim);
+	const {
+		queries,
+		tokens: queryTokens,
+		degraded: queryDegraded,
+	} = await generateSearchQueries(claim, { budgetMs: stageBudget(QUERY_STAGE_CAP_MS) });
 	totalTokens += queryTokens;
+	if (queryDegraded) degradations.push(queryDegraded);
 
 	// 2. Run searches in parallel across all queries (multi-source internally).
 	searchCalls = queries.length;
-	const rawResults = await searchAll(queries);
+	const rawResults = await searchAll(queries, { budgetMs: stageBudget(SEARCH_STAGE_CAP_MS) });
 
 	// 3. Take top 5 unique results.
 	const top5 = rawResults.slice(0, 5);
@@ -195,16 +256,31 @@ async function runFactCheck(claim, strictness, imageUrl = null) {
 		throw err;
 	}
 
-	// 4. LLM stance extraction for top 5.
-	const { analyses, tokens: analysisTokens } =
-		top5.length > 0 ? await analyzeResults(claim, top5) : { analyses: [], tokens: 0 };
+	// 4. LLM stance extraction for top 5. Whatever is left of the budget goes
+	//    here; if the earlier stages consumed it, analyzeResults degrades to
+	//    neutral stances rather than starting a turn it cannot finish.
+	const {
+		analyses,
+		tokens: analysisTokens,
+		degraded: analysisDegraded,
+	} = top5.length > 0
+		? await analyzeResults(claim, top5, { budgetMs: remainingMs() })
+		: { analyses: [], tokens: 0 };
 	totalTokens += analysisTokens;
+	if (analysisDegraded) degradations.push(analysisDegraded);
 
 	// 5. Build source objects with authority scores. The image evidence is folded
 	//    in as one additional weighted source so it flows through the same
 	//    strictness adjustment and weighted verdict as web sources.
 	const sources = top5.map((r, i) => {
-		const authority = authorityScore(r.url);
+		// Score the PUBLISHER host, not the link. Vertex-grounded results arrive
+		// with `url` set to an opaque vertexaisearch.cloud.google.com redirect
+		// (Google's required attribution wrapper) and the real host carried
+		// separately as `domain`; scoring the redirect would give every grounded
+		// source the same unknown-domain default and silently disable authority
+		// weighting. Every other rung returns a publisher URL and no `domain`,
+		// so it falls through to the URL path unchanged.
+		const authority = authorityScore(r.domain ? `https://${r.domain}` : r.url);
 		const analysis = analyses[i] || { excerpt: '', stance: 'neutral' };
 		return {
 			url: r.url,

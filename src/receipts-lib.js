@@ -124,6 +124,61 @@ export function resourceDisplay(resourceUrl) {
 	}
 }
 
+// Every x402 asset we settle in is a 6-decimal stablecoin (USDC on Solana and
+// on each EVM chain). Anything else stays unformatted rather than being
+// rendered at the wrong scale.
+const SIX_DECIMAL_ASSETS = new Set([
+	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC, Solana mainnet
+	'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC, Base
+	'0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', // USDC, BNB Chain
+	'0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC, Ethereum
+]);
+
+/**
+ * Human amount for a settled receipt, or null when we can't render it safely.
+ * @param {string|number|null|undefined} amountAtomics
+ * @param {string|null|undefined} asset
+ * @returns {{ value: number, label: string }|null}
+ */
+export function formatReceiptAmount(amountAtomics, asset) {
+	if (amountAtomics == null || amountAtomics === '') return null;
+	const atomic = Number(amountAtomics);
+	if (!Number.isFinite(atomic)) return null;
+	const key = String(asset || '').toLowerCase();
+	const known = SIX_DECIMAL_ASSETS.has(String(asset || '')) || SIX_DECIMAL_ASSETS.has(key);
+	if (!known) return null;
+	const value = atomic / 1e6;
+	// Sub-cent micropayments are the norm on this rail, so show enough
+	// precision that a $0.001 call doesn't render as $0.00.
+	const label =
+		value > 0 && value < 0.01
+			? `$${value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')}`
+			: `$${value.toFixed(2)}`;
+	return { value, label };
+}
+
+/**
+ * Total spend across rows whose amount we can render, plus how many rows had
+ * no recorded amount (receipts issued before settlement capture landed).
+ * @param {Array<{amountAtomics?: string|null, asset?: string|null}>} rows
+ */
+export function totalSpend(rows) {
+	let total = 0;
+	let priced = 0;
+	let unpriced = 0;
+	for (const r of rows || []) {
+		const amt = formatReceiptAmount(r.amountAtomics, r.asset);
+		if (amt) {
+			total += amt.value;
+			priced++;
+		} else {
+			unpriced++;
+		}
+	}
+	const label = total > 0 && total < 0.01 ? `$${total.toFixed(4)}` : `$${total.toFixed(2)}`;
+	return { total, label, priced, unpriced };
+}
+
 function csvCell(value) {
 	const s = value == null ? '' : String(value);
 	return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -140,9 +195,20 @@ function csvCell(value) {
  * @returns {string}
  */
 export function receiptsToCsv(rows) {
-	const header = 'id,issued_at,network,resource_url,transaction,format,payer';
+	const header =
+		'id,issued_at,network,resource_url,amount_atomics,asset,transaction,format,payer';
 	const lines = (rows || []).map((r) =>
-		[r.id, r.issuedAt, r.network, r.resourceUrl, r.transaction, r.format, r.payer]
+		[
+			r.id,
+			r.issuedAt,
+			r.network,
+			r.resourceUrl,
+			r.amountAtomics,
+			r.asset,
+			r.transaction,
+			r.format,
+			r.payer,
+		]
 			.map(csvCell)
 			.join(','),
 	);

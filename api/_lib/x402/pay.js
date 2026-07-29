@@ -10,6 +10,7 @@
 // loadSeedKeypair() throws and callers degrade gracefully.
 
 import { readFileSync } from 'node:fs';
+import { randomInt } from 'node:crypto';
 import bs58 from 'bs58';
 import {
 	Connection, PublicKey, Keypair, TransactionMessage, VersionedTransaction,
@@ -72,20 +73,53 @@ export function ringPriorityMicrolamports(nonce = 0) {
 	return 5 + (Number(nonce) % 997);
 }
 
-// Per-process nonce for payX402 callers that do not manage batch positions
-// themselves. Two same-amount payments to the same payTo, signed against one
-// shared tick blockhash with the same priority fee, compile to byte-identical
-// transactions with the SAME signature: the first broadcast lands, every later
-// one dies at settle preflight as already-processed (the RPC surfaces it as a
-// bare "Transaction simulation failed", seen as the settle_failed 502 wave).
-// A distinct default nonce per payment makes each fee signature unique within
-// a blockhash window. Starts at 499 so it stays clear of the small explicit
-// 0..N indices batch pipelines pass; wraps inside the same 997-slot cycle the
-// fee-floor tests already prove stays under the fee ceiling.
-let _autoNonce = 499;
+// Compute-unit-limit jitter slots. Varying the CU LIMIT changes the compiled
+// message bytes — and therefore the signature — while costing nothing: the
+// priority fee is price × limit / 1e6, so at the baseline 5 µlamports even the
+// top of this range is 0.32 lamports, which floors to zero. Unused compute
+// units are not billed, so a slightly-high limit is free. This is what buys
+// three orders of magnitude more distinct signatures than perturbing the price
+// alone (which costs a lamport per step once it crosses 1e6/cuLimit).
+export const RING_CU_JITTER_SLOTS = 4096;
+
+// Map a nonce to the (priority price, compute limit) pair that makes this
+// payment's transaction byte-unique.
+//
+// Signature collisions are the mechanism behind the duplicate-settle defect
+// measured on mainnet 2026-07-28: Ed25519 signatures are deterministic, so two
+// ring payments with the same payer/payTo/mint/amount, built against one shared
+// tick blockhash with the same fee config, compile to THE SAME transaction and
+// therefore the same signature. Only one can land; the rest were being credited
+// off it (12,674 of 59,271 settles, 21.4%).
+//
+// Self-pay has 5,000 lamports of headroom under the ceiling, so the full 997
+// price slots are available: 997 × 4096 ≈ 4.08M distinct fee configs.
+// Sponsor mode sits EXACTLY at the 10,000-lamport ceiling at baseline, so it may
+// only use price slots whose priority still floors to zero lamports — with the
+// jitter range topping out at 64,095 CU that means price ≤ 15, i.e. 11 slots
+// (5..15) — still 11 × 4096 ≈ 45k configs, all at zero extra fee.
+export function ringFeeConfig(nonce = 0, { selfPay = true } = {}) {
+	const n = Math.abs(Number(nonce) || 0);
+	const priceSlots = selfPay ? 997 : 11;
+	const microLamports = 5 + (n % priceSlots);
+	const cuLimit = RING_CU_LIMIT + (Math.floor(n / priceSlots) % RING_CU_JITTER_SLOTS);
+	return { microLamports, cuLimit };
+}
+
+// Default nonce for payX402 callers that do not manage batch positions.
+//
+// This was a per-PROCESS sequential counter, which is precisely why the fix was
+// needed: every Cloud Run instance started it at the same value and walked the
+// same short cycle, so two instances paying the same endpoint the same amount in
+// one blockhash window produced identical transactions. Drawing from a large
+// space with a CSPRNG removes the cross-instance correlation entirely — there is
+// no shared state to synchronise. Collisions are now a birthday problem over
+// millions of slots rather than a certainty, and the facilitator's credit gate
+// (settle-credit.js) makes any residual collision a clean refusal instead of a
+// double credit.
+export const RING_NONCE_SPACE = 997 * RING_CU_JITTER_SLOTS;
 export function nextAutoNonce() {
-	_autoNonce = (_autoNonce + 1) % 997;
-	return _autoNonce;
+	return randomInt(0, RING_NONCE_SPACE);
 }
 
 // Self-pay is the OPERATIVE DEFAULT for ring-internal payments: the buyer pays
@@ -210,16 +244,16 @@ export function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAta
 		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
 
-	// `nonce` perturbs the priority fee so a batch pipeline firing several
-	// identical-amount payments (same payer/payTo/mint) against the one shared
-	// blockhash produces a DISTINCT signature per call. Two byte-identical
-	// transfers compile to the same message → same signature → the second is
-	// rejected as already-processed. Callers that don't manage batch positions
-	// get a distinct per-process nonce from payX402 (nextAutoNonce), so cross-
-	// pipeline same-amount payments inside one blockhash window never collide.
+	// `nonce` selects the (priority price, compute limit) pair that makes this
+	// transaction byte-unique, so a batch pipeline firing several identical-amount
+	// payments (same payer/payTo/mint) against one shared blockhash produces a
+	// DISTINCT signature per call. Two byte-identical transfers compile to the same
+	// message → same signature → only one can ever land, and the others used to be
+	// credited off it. See ringFeeConfig for the sizing of the two dimensions.
+	const { microLamports, cuLimit } = ringFeeConfig(nonce, { selfPay });
 	const ixs = [
-		ComputeBudgetProgram.setComputeUnitLimit({ units: RING_CU_LIMIT }),
-		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: ringPriorityMicrolamports(nonce) }),
+		ComputeBudgetProgram.setComputeUnitLimit({ units: cuLimit }),
+		ComputeBudgetProgram.setComputeUnitPrice({ microLamports }),
 	];
 	if (!receiverAtaExists) {
 		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
@@ -287,15 +321,10 @@ export async function payX402({
 	// treated as an abort (fail-closed), never a crash.
 	onAccept = null,
 }) {
-	if (nonce == null) {
-		nonce = nextAutoNonce();
-		// Sponsor mode pays 2 signatures = 10,000 lamports base, exactly the
-		// default fee ceiling, so only priority perturbations that floor to zero
-		// extra lamports fit under the guard below: (5 + n) µlamports × 60k CU
-		// stays below 1 lamport only for n ≤ 11. Twelve distinct fee slots still
-		// keep a tick's same-amount payments from compiling to one signature.
-		if (!selfPay) nonce %= 12;
-	}
+	// ringFeeConfig applies the sponsor-mode price constraint itself (sponsor sits
+	// exactly at the fee ceiling, so only zero-lamport priority slots are legal),
+	// which leaves the full compute-limit jitter available in both modes.
+	if (nonce == null) nonce = nextAutoNonce();
 	const reqInit = {
 		method,
 		headers: { 'content-type': 'application/json', 'user-agent': userAgent },
@@ -353,10 +382,11 @@ export async function payX402({
 	// X402_RING_MAX_FEE_PER_TX_LAMPORTS. A structured skip, not a throw: the
 	// caller records it like any other guard rejection. This is the runtime
 	// twin of the fee-floor regression tests over expectedFeeLamports().
+	const feeConfig = ringFeeConfig(nonce, { selfPay });
 	const worstCaseFeeLamports = expectedFeeLamports({
 		selfPay,
-		priorityMicrolamports: ringPriorityMicrolamports(nonce),
-		cuLimit: RING_CU_LIMIT,
+		priorityMicrolamports: feeConfig.microLamports,
+		cuLimit: feeConfig.cuLimit,
 	});
 	const maxFeeLamports = ringMaxFeePerTxLamports();
 	if (worstCaseFeeLamports > maxFeeLamports) {

@@ -532,8 +532,48 @@ export function planAgentReclaim(candidates, opts = {}) {
 }
 
 /**
- * True only for the platform's own agent-owner accounts. Anything else — a real
- * signup, a wallet-auth account, an unknown value — is a customer and is out.
+ * Shape one `reclaimIdleAgentSol` SQL row into the candidate `planAgentReclaim`
+ * consumes. Pure, and exported for the same reason the planner is: every safety
+ * guard downstream reads a field that is set HERE, so a field this mapping fails
+ * to carry silently disables the guard that depends on it.
+ *
+ * That is not hypothetical. `strategy.autoFundEnabled` was missing here while
+ * `agentReclaimFloorSol()` already derived the anti-oscillation floor from it, so
+ * the floor read `undefined`, collapsed to 0, and the funder/reclaim ping-pong
+ * the guard exists to prevent ran in production against a green unit suite. The
+ * pure-function tests could not catch it because they built candidates by hand.
+ * Keep every guard-bearing field asserted in tests/economy-sweepback.test.js.
+ *
+ * @param {{agent_id:string, name?:string|null, address:string, owner:string, secret:string,
+ *          open_positions?:number, strategy_enabled?:boolean|null,
+ *          auto_fund_enabled?:boolean|null, per_trade_lamports?:number|string|null}} row
+ * @param {number} sol on-chain balance already read for this row
+ * @returns {{agentId:string,name:string,address:string,owner:string,secret:string,sol:number,
+ *           openPositions:number,strategy:{enabled:boolean,autoFundEnabled:boolean,perTradeSol:number}}}
+ */
+export function agentCandidateFromRow(row, sol) {
+	return {
+		agentId: row.agent_id,
+		name: row.name || 'Agent',
+		address: row.address,
+		owner: row.owner,
+		secret: row.secret,
+		sol,
+		openPositions: Number(row.open_positions) || 0,
+		strategy: {
+			enabled: Boolean(row.strategy_enabled),
+			// The funder's opt-in flag, NOT `enabled` — a disabled strategy still gets
+			// refilled, so it still oscillates if swept below the funding target.
+			autoFundEnabled: row.auto_fund_enabled === true,
+			perTradeSol:
+				row.per_trade_lamports != null ? Number(row.per_trade_lamports) / LAMPORTS_PER_SOL : 0,
+		},
+	};
+}
+
+/**
+ * True only for the platform's own agent-owner accounts. Anything else (a real
+ * signup, a wallet-auth account, an unknown value) is a customer and is out.
  * @param {string|null|undefined} ownerEmail
  */
 export function isPlatformOwnedAgent(ownerEmail) {
@@ -574,8 +614,8 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 		       LOWER(u.email)                              AS owner,
 		       s.enabled                                   AS strategy_enabled,
 		       s.per_trade_lamports                        AS per_trade_lamports,
-		       -- The funder's opt-in flag, not `enabled`: it decides whether a refill
-		       -- is coming, and therefore whether sweeping this wallet would oscillate.
+		       -- The funder's opt-in flag, not the enabled flag: it decides whether a
+		       -- refill is coming, so it decides whether sweeping here would oscillate.
 		       s.auto_fund_enabled                         AS auto_fund_enabled,
 		       (SELECT COUNT(*) FROM agent_sniper_positions p
 		         WHERE p.agent_id = a.id AND p.status IN ('open', 'closing'))::int AS open_positions
@@ -598,19 +638,7 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 			readErrors.push({ name: r.name, address: r.address, reason: `rpc_error: ${e?.message}` });
 			continue;
 		}
-		candidates.push({
-			agentId: r.agent_id,
-			name: r.name || 'Agent',
-			address: r.address,
-			owner: r.owner,
-			secret: r.secret,
-			sol,
-			openPositions: r.open_positions,
-			strategy: {
-				enabled: Boolean(r.strategy_enabled),
-				perTradeSol: r.per_trade_lamports != null ? Number(r.per_trade_lamports) / LAMPORTS_PER_SOL : 0,
-			},
-		});
+		candidates.push(agentCandidateFromRow(r, sol));
 	}
 	// Biggest balances first: the run cap should spend its budget where the SOL is.
 	candidates.sort((a, b) => b.sol - a.sol);

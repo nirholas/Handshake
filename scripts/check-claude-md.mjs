@@ -74,6 +74,91 @@ md.split('\n').forEach((line, i) => {
 	}
 });
 
+// 4. Load-bearing factual claims, each re-derived from its source of truth.
+
+// 4a. Cron count. CLAUDE.md quotes a number with an "as of" date; the array in
+// vercel.json is authoritative and grew from 89 to 100 unnoticed.
+const cronClaim = md.match(/the crons \((\d+) as of ([\d-]+)/);
+if (!cronClaim) {
+	failures.push('the cron-count sentence ("the crons (N as of DATE, see vercel.json)") is gone from CLAUDE.md');
+} else {
+	const actual = JSON.parse(readFileSync(path.join(root, 'vercel.json'), 'utf8')).crons.length;
+	if (Number(cronClaim[1]) !== actual) {
+		failures.push(
+			`CLAUDE.md says ${cronClaim[1]} crons (as of ${cronClaim[2]}) but vercel.json declares ${actual}. ` +
+				`Update the number and the date.`,
+		);
+	}
+}
+
+// 4b. build:gcp chain. The deploy runbook prints the chain step by step; an
+// agent reordering it produces a dist/ missing either the pages or the lib.
+const chain = (scripts['build:gcp'] || '').match(/npm run ([a-z0-9:._-]+)/g)?.map((s) => s.replace('npm run ', '')) ?? [];
+if (chain.length === 0) {
+	failures.push('build:gcp no longer looks like an `npm run` chain; the deploy runbook in CLAUDE.md cannot be verified');
+} else {
+	const runbookOrder = chain.filter((step) => md.includes(`\`${step}\``));
+	const positions = runbookOrder.map((step) => md.indexOf(`\`${step}\``));
+	const documentedInOrder = positions.every((p, i) => i === 0 || p > positions[i - 1]);
+	if (!documentedInOrder) {
+		failures.push(
+			`the deploy runbook lists build:gcp steps out of order. Real chain: ${chain.join(' -> ')}`,
+		);
+	}
+	const undocumented = chain.filter((step) => !md.includes(`\`${step}\``));
+	if (undocumented.length) {
+		failures.push(
+			`build:gcp runs ${undocumented.join(', ')} but the CLAUDE.md deploy runbook never mentions ${undocumented.length > 1 ? 'them' : 'it'}. ` +
+				`Real chain: ${chain.join(' -> ')}`,
+		);
+	}
+}
+
+// 4c. db:migrate safety. The npm wrapper hardcodes --apply, so the bare
+// command writes to production Neon. CLAUDE.md once called it a dry run.
+const migrateApplies = /--apply/.test(scripts['db:migrate'] || '');
+const docSaysApplies = /`npm run db:migrate` APPLIES immediately/.test(md);
+if (migrateApplies !== docSaysApplies) {
+	failures.push(
+		migrateApplies
+			? 'db:migrate hardcodes --apply but CLAUDE.md no longer warns that it APPLIES immediately'
+			: 'db:migrate no longer passes --apply, so the CLAUDE.md warning that it APPLIES immediately is now wrong',
+	);
+}
+
+// 4d. README coverage. CLAUDE.md holds packages/workers/services at 100%.
+const { readdirSync } = await import('node:fs');
+const coverageGaps = [];
+for (const base of ['packages', 'workers', 'services']) {
+	const dir = path.join(root, base);
+	if (!existsSync(dir)) continue;
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		if (!entry.isDirectory()) continue;
+		if (!existsSync(path.join(dir, entry.name, 'README.md'))) coverageGaps.push(`${base}/${entry.name}`);
+	}
+}
+if (coverageGaps.length && /Coverage under `packages\/`, `workers\/`, and `services\/` is currently 100%/.test(md)) {
+	failures.push(
+		`CLAUDE.md claims 100% README coverage but ${coverageGaps.length} dir(s) have none: ${coverageGaps.join(', ')}. ` +
+			`Write the README (preferred) or correct the claim.`,
+	);
+}
+
+// 4e. The retired X changelog lane. If the cron ever calls it again, the
+// "retired" wording in CLAUDE.md becomes a lie in the other direction.
+const cronHandler = path.join(root, 'api/cron/changelog-push.js');
+if (existsSync(cronHandler)) {
+	const handler = readFileSync(cronHandler, 'utf8');
+	const callsX = /\bpushXLane\s*\(/.test(handler);
+	const docSaysRetired = /X\.com delivery is retired/.test(md);
+	if (callsX && docSaysRetired) {
+		failures.push('changelog-push now calls pushXLane again, but CLAUDE.md still says X.com delivery is retired');
+	}
+	if (!callsX && !docSaysRetired) {
+		failures.push('changelog-push does not call pushXLane, but CLAUDE.md no longer records that X.com delivery is retired');
+	}
+}
+
 if (failures.length) {
 	console.error(`[check-claude] ${failures.length} drift issue(s) between CLAUDE.md and the repo:`);
 	for (const f of failures) console.error(`[check-claude]   ${f}`);

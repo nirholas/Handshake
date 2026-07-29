@@ -6,10 +6,16 @@
 // truncates contract-address pair symbols (DEX listings report raw 0x/base58
 // addresses as symbols) so every pair stays legible. Cached in-memory 120s +
 // CDN s-maxage.
+//
+// CoinGecko's keyless tier rate-limits per egress IP and Cloud Run's is shared,
+// so the Markets table falls back to CoinPaprika's per-coin markets feed
+// (api/_lib/coin-fallbacks.js) rather than 502ing the whole section. A 404 is
+// an answer about a real coin id and never falls back.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId } from '../_lib/coingecko.js';
+import { fetchFallbackTickers } from '../_lib/coin-fallbacks.js';
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -69,18 +75,25 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_page', 'page must be an integer between 1 and 10');
 	}
 
+	const cacheHeaders = {
+		'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
+	};
+
 	try {
 		const raw = await geckoFetch(
 			`/coins/${id}/tickers?page=${page}&order=converted_volume_desc&depth=true&include_exchange_logo=true`,
 			{ ttlMs: 120_000, timeoutMs: 10_000 },
 		);
 		const tickers = (raw?.tickers || []).map(shapeTicker);
-		return json(res, 200, { tickers, page, count: tickers.length }, {
-			'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
-		});
+		return json(res, 200, { tickers, page, count: tickers.length, source: 'coingecko' }, cacheHeaders);
 	} catch (err) {
 		if (err?.status === 404)
 			return error(res, 404, 'not_found', `no coin found for "${id}"`);
+		const tickers = await fetchFallbackTickers(id, { page });
+		if (tickers) {
+			console.warn(`[coin/tickers] ${id}: coingecko failed (${err?.status || err?.name}); served from coinpaprika`);
+			return json(res, 200, { tickers, page, count: tickers.length, source: 'coinpaprika' }, cacheHeaders);
+		}
 		return error(res, 502, 'upstream_error', 'exchange listings are unavailable right now — retry shortly');
 	}
 });

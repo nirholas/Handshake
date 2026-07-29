@@ -727,6 +727,7 @@ const appConfig = {
 				'aws-marketplace-welcome': resolve(__dirname, 'pages/aws-marketplace/welcome.html'),
 				aws: resolve(__dirname, 'pages/aws/index.html'),
 				openai: resolve(__dirname, 'pages/openai/index.html'),
+				press: resolve(__dirname, 'pages/press/index.html'),
 				'agent-trade': resolve(__dirname, 'pages/agent-trade.html'),
 				'autopilot-activity': resolve(__dirname, 'pages/autopilot-activity.html'),
 support: resolve(__dirname, 'pages/support.html'),
