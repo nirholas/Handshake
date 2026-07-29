@@ -42,7 +42,7 @@ outage through the mirrored OpenRouter id. If the mirror fails too, a free-tier
 safety net answers before any error is surfaced: Groq Llama 3.3, then the OpenRouter
 `:free` route across every configured key, then NVIDIA NIM. A route only errors once
 no free provider can answer, and each handoff emits an `event: fallback` frame. The
-roster spans Anthropic (Claude Fable 5, Mythos 5, Opus 4.7, Sonnet 4.6, Haiku 4.5),
+roster spans Anthropic (Claude Fable 5, Opus 5, Sonnet 5, Opus 4.7, Sonnet 4.6, Haiku 4.5),
 OpenAI (GPT-OSS 120B, the GPT-5.x family, o3 family), xAI (Grok 4.x), Groq (Llama
 3.3 70B), DashScope (Qwen Plus), ModelScope (Qwen3-Coder 480B), DeepSeek R1, IBM
 Granite on watsonx.ai, and a free NVIDIA NIM lineup (Nemotron 3 Super 120B,

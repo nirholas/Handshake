@@ -3598,6 +3598,72 @@ wire format); pay in USDC and the identical upstream call runs.
 
 ---
 
+## Web Search API
+
+```
+GET /api/web-search?q=<query>&sources=<n>
+```
+
+Open-web search with cited sources. This is distinct from [`/api/search`](#search-api),
+which federates three.ws's own entities (avatars, agents, models, worlds, coins)
+and never leaves the platform. This endpoint answers questions about the live
+web and returns the sources the answer is grounded in.
+
+Backed by Gemini on Vertex AI with Google Search grounding, authenticated with
+the platform's GCP service account. No API key, no signup, and no per-seat
+quota: it rides the same credits-funded surface as the chat reliability anchor.
+
+No auth required. Rate limited to 20 requests per 10 minutes per IP (each call
+is a billed inference request, so it does not share the generic public bucket).
+
+**Parameters**
+
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `q` | string | — | Required. The search query. Truncated to 400 characters. |
+| `sources` | integer | `8` | Maximum grounding sources to return, clamped to 1–20. |
+
+**Response**
+
+```json
+{
+  "enabled": true,
+  "q": "Who founded Solana and in what year?",
+  "answer": "Solana was founded by Anatoly Yakovenko in 2017. Raj Gokal and Greg Fitzgerald later joined as co-founders...",
+  "sources": [
+    {
+      "title": "wikipedia.org",
+      "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQ...",
+      "domain": "wikipedia.org"
+    }
+  ],
+  "queries": ["who founded Solana", "when was Solana founded"]
+}
+```
+
+`queries` are the searches Google actually ran for your question, so you can see
+how it was interpreted rather than guessing from the results.
+
+**Source URLs are attribution redirects.** Each `url` points at
+`vertexaisearch.cloud.google.com/grounding-api-redirect/...` rather than the
+publisher, which is how Google's grounding attribution works; the link resolves
+to the real page. Use `domain` when you need the publishing host itself (for
+display, filtering, or authority weighting) — parsing the hostname out of `url`
+returns `vertexaisearch.cloud.google.com` for every result.
+
+**Degraded and error states**
+
+- `200 { "enabled": false, "q": "...", "sources": [] }` — the deployment has no
+  GCP project configured (local dev without credentials). A designed "not
+  available here" state, not an error.
+- `400 missing_query` — `q` was absent or empty.
+- `502` — the upstream grounded call failed (auth, quota, safety block, or
+  timeout). Retryable.
+
+Results are edge-cached for 60 seconds (`stale-while-revalidate` 300).
+
+---
+
 ## Animations Library API
 
 ```
