@@ -166,8 +166,8 @@ the **engine** topup, which reads the same float this module sweeps to. It was
 not true of the **sniper auto-funder**
 ([`workers/agent-sniper/auto-funder.js`](../workers/agent-sniper/auto-funder.js)),
 a different cron in a different Cloud Run service that refills opted-in agent
-wallets to `SNIPER_AUTO_FUND_TARGET_SOL` (0.05). Its target sat *above* the
-reclaim floor, and neither side read the other's number.
+wallets. Its target sat *above* the reclaim floor, and neither side read the
+other's number.
 
 The result was a pure oscillation, visible on-chain on 2026-07-28 between 19:08
 and 19:27: the funder pushed 0.24 SOL into two arms across six top-ups, the
@@ -183,8 +183,23 @@ states the rule:
 
 `antiOscillationFloorSol()` returns that target for any wallet the funder manages
 (`auto_fund_enabled = true`), and `agentReclaimFloorSol()` takes it as a hard
-minimum — including for a *disabled* strategy, because the funder's opt-in flag,
+minimum, including for a *disabled* strategy, because the funder's opt-in flag,
 not `enabled`, is what decides whether a refill is coming.
+
+Both funding levels are **per-arm**, not flat, and come from the same module:
+
+| Level | Value | Why |
+| --- | --- | --- |
+| `fundTriggerSol(agent)` | `max(SNIPER_AUTO_FUND_MIN_SOL, MIN_OPERATIONAL_WALLET_SOL + per-trade size)` | The old flat 0.02 trigger called an arm sized at 0.13 SOL/trade "healthy" while it sat on 0.035 SOL and could not place a single trade. |
+| `fundTargetSol(agent)` | trigger + the same hysteresis band the flat pair had (default 0.03 SOL) | A bigger arm is refilled to a level it can trade from, without being refilled any *more often*. |
+
+To see the fleet's real position — per-arm balance, what each one needs to place
+its next trade, the deficit, and why any arm is not trading:
+
+```bash
+node scripts/sniper-fleet-restore.mjs            # report only, nothing moves
+node scripts/sniper-fleet-restore.mjs --apply --yes   # top up the fundable arms
+```
 
 Sweeps below `ECONOMY_SWEEPBACK_MIN_SOL` (0.01 SOL) are skipped as dust.
 
@@ -273,6 +288,74 @@ is exposed on [`/api/admin/circulation-health`](../api/admin/circulation-health.
 alongside the circulation rails. The table is defined by migration
 `20260717230000_economy_fuel_swaps.sql` (and created lazily as a safety net).
 
+**Step 3: top the USDC engines up directly.** Steps 1 and 2 keep **SOL** flowing,
+but the two payers that do the platform's paid work — `x402-ring-payer` and
+`a2a-payer` — *spend USDC*, and their only refill path was the rebalancer
+swapping their **own** SOL for USDC on Jupiter. That path has a hole: a payer
+holding neither spare SOL nor USDC cannot refill itself at all, however much
+revenue the master is sitting on. On 2026-07-28 the ring payer ran at ~3 USDC
+against a $10 floor and the a2a payer at 0.00, failing every `$10` ring-settle
+leg with an SPL insufficient-funds error, while the master idled on 48 USDC one
+hop away.
+
+[`topUpUsdcEngines`](../api/_lib/economy-usdc-topup.js) closes it with a direct
+master → payer USDC transfer: no swap, no slippage, one signature. Same guard
+shape as the rest of the funding root:
+
+- **Allowlisted.** Recipients come from `USDC_WALLETS` in
+  [`api/_lib/economy-rebalance.js`](../api/_lib/economy-rebalance.js) — the same
+  list the rebalancer's swap legs use, so the two refill paths can never disagree
+  on who qualifies or at what floor. A role whose secret aliases to the master is
+  skipped (it *is* the master).
+- **Hysteresis, so it can't trickle.** A transfer arms only while a wallet is
+  **below its floor**, and lifts it to `floor × ECONOMY_USDC_TOPUP_REFILL_MULTIPLE`
+  (default 1.5×). A wallet between floor and target is left alone.
+- **Triple-bounded.** Per transfer (`ECONOMY_USDC_TOPUP_PER_TRANSFER_USD`,
+  default $15), per UTC day (`ECONOMY_USDC_TOPUP_DAILY_USD`, default $40), and a
+  master keep-floor (`ECONOMY_USDC_TOPUP_MASTER_KEEP`, default $10) that leaves
+  step 2 its own fuel. A cooldown (`ECONOMY_USDC_TOPUP_COOLDOWN_S`) bounds
+  overlapping ticks.
+- **Booked.** Every transfer lands in `economy_usdc_topups` (which drives the
+  daily cap), mirrors to `audit_log` as `economy_usdc_topup`, and fires an ops
+  alert.
+- **Non-oscillating with sweepback.** Both recipients carry `holdsTokens` in the
+  signer registry, so the token sweep treats their USDC as working capital
+  instead of clawing each refill straight back on the next excess-mode run.
+
+Preview exactly what the next tick would move, without signing anything:
+
+```sh
+node scripts/dry-usdc-topup.mjs
+```
+
+Set `ECONOMY_USDC_TOPUP_ENABLED=0` to disable. The sizing math is a pure function
+(`planUsdcTopups`) covered by
+[`tests/economy-usdc-topup.test.js`](../tests/economy-usdc-topup.test.js).
+
+### Why the rebalancer alone was not enough
+
+The rebalancer keeps each payer stocked in the asset it spends by swapping its
+*own* holdings. When a self-pay wallet's total balance cannot satisfy **both** its
+USDC floor and its fee-SOL target, its two legs fight: one run buys fee SOL with
+USDC, the next sells that SOL back for USDC, forever. That ran 134 reversing
+swaps and churned ~$900 of notional in 2.5 hours on 2026-07-28, paying two swap
+fees and double slippage per round trip to end where it started.
+
+Two invariants close it permanently, both in `planRebalance`:
+
+1. **No opposing legs in one run** — the neediest leg wins; the other defers to
+   the next run against fresh balances.
+2. **The fee-SOL target is untouchable reserve on the `sol->usdc` leg.** Feeding
+   the USDC floor out of SOL the wallet needs for fees just re-arms the opposite
+   leg, so the target is held back and the two legs' arming conditions become
+   mutually exclusive *across* runs, not just within one. The asymmetry is
+   deliberate: `usdc->sol` may still draw USDC down to its reserve, because fee
+   SOL is what keeps settles alive at all.
+
+Step 3 is what makes those invariants affordable: a payer that is genuinely short
+of both assets is now refilled from the root instead of being asked to
+manufacture one asset out of the other.
+
 ## Lowest fees
 
 Every transfer routes through `submitProtected` with `tipMode: 'off'` — **no Jito
@@ -295,6 +378,12 @@ congestion, clamped to a hard ceiling.
 | `ECONOMY_FUEL_MIN_GAP_SOL` / `_TARGET_SOL` | no | Only refuel when the SOL gap is at least this (default 0.1); buy toward this spendable-SOL buffer (default 1.0). |
 | `ECONOMY_FUEL_MAX_IMPACT_PCT` / `_SLIPPAGE_BPS` | no | Reject a route above this price impact (default 3%); swap slippage (default 100 bps). |
 | `ECONOMY_FUEL_COOLDOWN_S` | no | Minimum seconds between fuel swaps (default 90), a belt against a double-swap when two topup ticks overlap. |
+| `ECONOMY_USDC_TOPUP_ENABLED` | no | `0` disables the direct master→payer USDC refill (default on). |
+| `ECONOMY_USDC_TOPUP_PER_TRANSFER_USD` / `_DAILY_USD` | no | USDC topup caps: max per transfer (default 15) and per UTC day (default 40). |
+| `ECONOMY_USDC_TOPUP_MASTER_KEEP` | no | USDC the topup never spends the master below, so the SOL refuel keeps its own fuel. Default 10. |
+| `ECONOMY_USDC_TOPUP_REFILL_MULTIPLE` | no | Lift a below-floor payer to `floor ×` this (default 1.5), so a refill buys runway instead of landing on the floor. |
+| `ECONOMY_USDC_TOPUP_COOLDOWN_S` | no | Minimum seconds between money-moving topup runs (default 90). |
+| `ECONOMY_REBALANCE_SOL_RESERVE` | no | SOL the rebalancer never swaps away from any wallet (default 0.03). Raise above a self-pay wallet's fee target as a live mitigation if the two legs ever churn. |
 | `CRON_SECRET` | yes | Bearer auth for the `treasury-topup` cron (shared with every other cron; Cloud Scheduler sends it). |
 | `SOLANA_RPC_URL` | no | Mainnet RPC (defaults to `api.mainnet-beta`). |
 
@@ -307,6 +396,9 @@ node scripts/check-relayer-balances.mjs
 # Exercise the sweep against prod (real cron; safe — only funds registry wallets
 # below floor, bounded by the reserve/per-run caps). Returns the plan as JSON:
 curl -s -H "Authorization: Bearer $CRON_SECRET" https://three.ws/api/cron/treasury-topup | jq
+
+# Preview the USDC leg alone (reads live balances, signs nothing):
+node scripts/dry-usdc-topup.mjs
 ```
 
 The JSON response reports `configured`, `master_sol`, `funded`, `failed`,

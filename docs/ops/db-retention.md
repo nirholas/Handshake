@@ -81,10 +81,44 @@ fires one deduped `db:retention-pressure` alert.
 | --- | --- | --- |
 | `PUMP_INTEL_RETENTION_DAYS` | `14` | Normal firehose window (days). Clamped `[2, 365]`. Raise after a Neon plan upgrade. |
 | `PUMP_INTEL_MIN_RETENTION_DAYS` | `3` | Floor the valve tightens to under pressure. Clamped `[1, retention]`. |
-| `DB_RETENTION_HIGH_WATER_MB` | `470` | Engage the valve at/above this size. Clamped `[128, 100000]`. **Must sit well below the actual branch cap**, or the valve only engages after writes are already failing: with the production 3072 MB cap this is set to `2700` on the Cloud Run service (2026-07-28, after a day the two were equal and every write-heavy cron sat skipped at the cap the valve was supposed to prevent). |
+| `DB_RETENTION_HIGH_WATER_MB` | `470` | Engage the valve at/above this size. Clamped `[128, 100000]`. Production runs `8192` (see the sizing note below). |
 | `DB_COMPACT_ENABLED` | `1` | Set `0` to disable the `VACUUM FULL` compaction step entirely. |
 | `DB_COMPACT_MIN_FREE_MB` | `25` | Only rewrite a table holding at least this much reclaimable space (and at least 30% of its file). |
 | `DB_COMPACT_MAX_TABLES` | `3` | Most tables one tick may rewrite. |
+
+### Sizing the high-water mark (read before changing it)
+
+The mark must sit **above the live data footprint and below the real branch
+cap**. Both halves matter, and getting either wrong is a production incident:
+
+- **Too low** and the branch sits permanently over the mark. Every cron built
+  with `requireWriteCapacity` preflight-skips forever, the valve pins retention
+  at its floor, and the platform quietly stops ingesting while looking healthy.
+  This is the failure mode that mattered on 2026-07-28: the mark was set equal
+  to the assumed 3072 MB cap while the live footprint was ~2.7 GB, so at 18:42
+  a single tick over the line skipped 56 crons in one minute — including
+  `economy-rebalance`, the cron that refills the x402 fee wallet. The fee wallet
+  starved and every settle returned `fee_wallet_below_floor` for the next four
+  hours. `economy-rebalance` is no longer gated for exactly this reason.
+- **Too high** and the valve never engages before the branch hits its real cap,
+  where writes fail with SQLSTATE 53100 and only `DELETE` still works.
+
+Confirm the real cap before sizing, rather than assuming the tier you signed up
+on:
+
+```sh
+psql "$DATABASE_URL" -c 'SHOW neon.max_cluster_size'
+psql "$DATABASE_URL" -c 'SELECT pg_size_pretty(pg_database_size(current_database()))'
+```
+
+As of 2026-07-29 that reads `16TB` against a ~2.5 GB footprint, so the mark is
+`8192` on the Cloud Run service: months of headroom at the firehose's ~60 MB/day
+while still leaving the valve as a genuine runaway backstop.
+
+```sh
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --update-env-vars DB_RETENTION_HIGH_WATER_MB=8192
+```
 
 ## Upgrade trigger
 

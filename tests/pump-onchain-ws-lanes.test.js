@@ -23,6 +23,13 @@ describe('classifyWsFailure', () => {
 		}
 	});
 
+	it('treats an out-of-credit 402 as structural, not a throttle', () => {
+		// Measured on solana-mainnet.gateway.tatum.io: the ws upgrade returns 402
+		// because the account has no credits left. Backing off does not restore
+		// credit, so it must not be retried on the transient cadence.
+		expect(classifyWsFailure('Unexpected server response: 402')).toBe('structural');
+	});
+
 	it('treats a throttle as transient so the lane comes back', () => {
 		// 429 is the documented QuickNode/Helius ws behaviour under load — the lane
 		// is fine, it is just busy, so benching it forever would burn a good lane.

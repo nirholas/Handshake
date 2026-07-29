@@ -68,9 +68,13 @@ const _wsBench = new Map();
 export function classifyWsFailure(message) {
 	const m = String(message || '');
 	const status = Number(m.match(/Unexpected server response:\s*(\d{3})/)?.[1] || 0);
-	// A redirect, an auth refusal, or "this host does not do websockets here"
-	// will answer identically forever — retrying is pure waste.
-	if (status && [301, 302, 307, 308, 401, 403, 404, 405, 410, 501].includes(status)) return 'structural';
+	// A redirect, an entitlement refusal, or "this host does not do websockets
+	// here" answers identically for as long as the process lives — retrying is
+	// pure waste. 402 sits here rather than with the throttles: it means the
+	// account is out of credit, which no amount of backoff fixes (measured
+	// 2026-07-29 on solana-mainnet.gateway.tatum.io). Restoring credit clears the
+	// bench on the next process start.
+	if (status && [301, 302, 307, 308, 401, 402, 403, 404, 405, 410, 501].includes(status)) return 'structural';
 	// Anything else (429 throttle, 5xx, reset, timeout, TLS blip) can recover.
 	return 'transient';
 }
