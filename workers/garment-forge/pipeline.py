@@ -123,9 +123,16 @@ def generate_reference_image(prompt: str, slot: str) -> tuple[bytes, str]:
     headers = {"authorization": f"Bearer {_access_token()}",
                "content-type": "application/json"}
 
-    def _attempt() -> tuple[bytes | None, str | None]:
-        """One generation call. Returns (image_bytes, None) on success, or
-        (None, finish_reason) when the model answered 200 with no image."""
+    def _attempt() -> tuple[bytes | None, str | None, bool]:
+        """One generation call.
+
+        Returns `(image_bytes, None, False)` on success, or
+        `(None, reason, prompt_blocked)` when the model answered 200 with no
+        image. `prompt_blocked` separates the two very different no-image
+        cases: a REFUSED PROMPT (deterministic — the safety classifier rejects
+        this wording every time) from an EMPTY DRAW (stochastic — the same
+        prompt usually succeeds on the next roll).
+        """
         with httpx.Client(timeout=120) as client:
             res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
             if res.status_code == 400:
@@ -134,27 +141,45 @@ def generate_reference_image(prompt: str, slot: str) -> tuple[bytes, str]:
                 res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
             res.raise_for_status()
             data = res.json()
+        # A blocked PROMPT produces no candidates at all, so the reason lives in
+        # promptFeedback, not in candidates[0].finishReason. Reading only the
+        # latter reported every such block as a bare "no image data" with no
+        # reason attached, which is what made the 2026-07-29 batch failures
+        # look transient when they were not.
+        feedback = data.get("promptFeedback") or {}
+        block = feedback.get("blockReason")
+        if block:
+            detail = feedback.get("blockReasonMessage") or ""
+            return None, f"prompt blocked: {block}{f' ({detail})' if detail else ''}", True
         candidate = (data.get("candidates") or [{}])[0]
         parts = candidate.get("content", {}).get("parts", [])
         img_part = next((p for p in parts if p.get("inlineData", {}).get("data")), None)
         if not img_part:
-            return None, candidate.get("finishReason") or "no finishReason"
-        return base64.b64decode(img_part["inlineData"]["data"]), None
+            return None, candidate.get("finishReason") or "no finishReason", False
+        return base64.b64decode(img_part["inlineData"]["data"]), None, False
 
     # A 200 carrying no image is a DIFFERENT failure from the transport errors
     # _post_with_retry covers: the request succeeded and the model simply
-    # declined to draw this time (a safety/recitation filter, or an empty
-    # candidate under load). Image generation is stochastic, so re-rolling the
-    # same prompt usually succeeds — and without a re-roll one such response
+    # declined to draw. Image generation is stochastic, so re-rolling the same
+    # prompt usually succeeds — and without a re-roll one such response
     # permanently loses a job that has already been queued, paid for in GPU
     # time downstream, and counted against the batch.
     last_reason = None
     for attempt in range(_IMAGE_ATTEMPTS):
-        image, last_reason = _attempt()
+        image, last_reason, prompt_blocked = _attempt()
         if image is not None:
             if attempt:
                 log.info("reference image took %d attempt(s) (prior: %s)", attempt + 1, last_reason)
             return image, f"vertex-ai/{VERTEX_MODEL}"
+        if prompt_blocked:
+            # Deterministic: the classifier rejects this wording, so every
+            # further roll costs a call and ~10s to be refused identically.
+            # Fail immediately with wording the caller can act on.
+            raise RuntimeError(
+                f"reference image refused for slot '{slot}': {last_reason}. "
+                "The safety classifier rejects this prompt wording; rephrase the "
+                "garment description and resubmit."
+            )
         if attempt + 1 >= _IMAGE_ATTEMPTS:
             break  # budget spent; fall through to the raise below
         log.warning("Vertex returned no image data (finishReason: %s); re-rolling "

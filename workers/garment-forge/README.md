@@ -49,14 +49,29 @@ pure glTF work in between:
    A-pose, front view, plain background. Reference quality drives mesh
    quality; the resolution is held at 2K.
 
-   The model sometimes answers `200` carrying no image at all (a safety or
-   recitation filter, or an empty candidate under load). That is not a
-   transport failure, so the HTTP retry has nothing to retry, and a single such
-   response used to kill a job that was already queued. Generation is
-   stochastic, so the stage now re-rolls the same prompt up to
-   `VERTEX_IMAGE_ATTEMPTS` times (default 3) and only fails once the budget is
-   spent, reporting the last `finishReason`. Pinned by
-   `test_reference_image.py`, which runs as a Docker build gate.
+   The model can answer `200` carrying no image at all. That is not a transport
+   failure, so the HTTP retry has nothing to retry, and it used to kill a queued
+   job outright. There are two distinct causes and the stage now tells them
+   apart:
+
+   - **Empty draw** (stochastic): candidates came back without image bytes.
+     The same prompt usually succeeds on the next roll, so the stage re-rolls
+     up to `VERTEX_IMAGE_ATTEMPTS` times (default 3) before failing with the
+     last `finishReason`.
+   - **Refused prompt** (deterministic): the safety classifier rejected the
+     wording, so Vertex returns **no candidates at all** and puts the reason in
+     `promptFeedback.blockReason` — nowhere near `candidates[].finishReason`.
+     Re-rolling is pointless (measured: refused 3 of 3), so the job fails
+     immediately with the block reason, the slot, and an instruction to
+     rephrase. Reading only `finishReason` is what made these look like
+     transient failures on 2026-07-29; the message was a bare "no image data"
+     with no reason attached.
+
+   Prompt wording matters more than it looks: "tan suede desert boots with
+   crepe soles" is refused every time while "black leather ankle boots with a
+   low block heel" renders fine. If a garment will not generate, rephrase
+   before investigating anything else. Pinned by `test_reference_image.py`,
+   which runs as a Docker build gate.
 2. **Mesh** (`pipeline.generate_mesh`): the image goes through the deployed
    image→3D failover chain, first healthy rung wins:
    `model-hunyuan3d-21-rtx` (warm primary, full PBR: albedo +

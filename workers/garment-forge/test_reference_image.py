@@ -120,6 +120,16 @@ def empty_payload(reason: str | None = "IMAGE_SAFETY"):
     return {"candidates": [candidate]}
 
 
+def blocked_payload(reason: str = "SAFETY", message: str | None = "The prompt is blocked due to safety"):
+    """A refused PROMPT: Vertex returns no candidates at all and puts the reason
+    in promptFeedback. Observed live for "tan suede desert boots with crepe
+    soles", which was refused identically on 3 of 3 probes."""
+    feedback: dict = {"blockReason": reason}
+    if message is not None:
+        feedback["blockReasonMessage"] = message
+    return {"promptFeedback": feedback, "usageMetadata": {"promptTokenCount": 69}}
+
+
 def run(responses: list[dict], attempts: int = 3):
     """Drive generate_reference_image against a scripted response sequence.
     Returns (result_or_exception, number_of_calls_made)."""
@@ -185,5 +195,27 @@ check("a missing finishReason degrades to a readable message",
 # The budget is configurable and honoured.
 result, n = run([empty_payload()], attempts=1)
 check("attempts=1 disables the re-roll", isinstance(result, RuntimeError) and n == 1)
+
+# A REFUSED PROMPT is deterministic, so re-rolling it only burns calls and time.
+result, n = run([blocked_payload()])
+check("a blocked prompt fails immediately, without re-rolling", n == 1)
+check("a blocked prompt still raises", isinstance(result, RuntimeError))
+check("the error names the block reason", "SAFETY" in str(result))
+check("the error carries the upstream message",
+      "blocked due to safety" in str(result))
+check("the error names the slot so the caller knows what to rephrase",
+      "outerwear" in str(result))
+check("the error tells the caller what to do", "rephrase" in str(result).lower())
+
+# promptFeedback without a message must not crash the error path.
+result, n = run([blocked_payload("PROHIBITED_CONTENT", None)])
+check("a block with no message is still readable",
+      isinstance(result, RuntimeError) and "PROHIBITED_CONTENT" in str(result) and n == 1)
+
+# A prompt block found on a LATER roll must also stop the loop there.
+result, n = run([empty_payload(), blocked_payload()])
+check("a block discovered mid-retry stops immediately", n == 2)
+check("that block reports as a block, not as budget exhaustion",
+      isinstance(result, RuntimeError) and "SAFETY" in str(result))
 
 print(f"\nall {PASS} checks passed")
