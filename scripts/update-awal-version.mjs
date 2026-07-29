@@ -11,7 +11,7 @@
  *
  * A partial bump is therefore worse than no bump: the prose tells the agent to
  * run `awal@2.11.0` while the allowlist only permits `awal@2.10.0`, so every
- * money-moving command is denied at the permission gate — or, if only the
+ * money-moving command is denied at the permission gate, or, if only the
  * allowlist moves, stale code keeps running. The pin has to change everywhere
  * in one operation, which is what this script does.
  *
@@ -26,7 +26,7 @@
  * changes and writes nothing.
  *
  * Scope: `.agents/skills/` and `data/skills/` (Markdown + JSON). data/skills/
- * includes seed.json, whose `content` fields mirror the SKILL.md bodies — a
+ * includes seed.json, whose `content` fields mirror the SKILL.md bodies, and a
  * plain text substitution keeps both sides in step because the pin string is
  * identical in each.
  */
@@ -42,7 +42,7 @@ const EXTENSIONS = new Set(['.md', '.markdown', '.json']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build']);
 
 // Matches an exact npm pin: `awal@1.2.3` or `awal@1.2.3-beta.1`. Range specs
-// (`awal@^2`) are intentionally NOT matched — the pin is deliberate here (an
+// (`awal@^2`) are intentionally NOT matched: the pin is deliberate here (an
 // allowlist entry must be literal to be enforceable), so this script moves one
 // exact pin to another rather than loosening it.
 const PIN_RE = /awal@(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)/g;
@@ -117,7 +117,7 @@ function printPins(hits) {
 	console.log(`Files carrying a pin: ${hits.length}`);
 	for (const hit of hits) {
 		const detail = [...hit.versions].map(([v, c]) => `${v}×${c}`).join(', ');
-		console.log(`  ${relative(hit.file)} — ${detail}`);
+		console.log(`  ${relative(hit.file)}: ${detail}`);
 	}
 }
 
@@ -149,7 +149,7 @@ async function main() {
 	if (args.list || !args.version) {
 		printPins(hits);
 		if (!args.version && !args.list) {
-			console.log('\nNothing rewritten — pass --version <x.y.z> to change the pin.');
+			console.log('\nNothing rewritten. Pass --version <x.y.z> to change the pin.');
 			process.exitCode = 2;
 		}
 		return;
@@ -192,12 +192,12 @@ async function main() {
 	console.log(`  ${verb}: ${changedOccurrences} occurrence(s) in ${changedFiles} file(s)`);
 	console.log(`  already at ${target}: ${unchangedOccurrences} occurrence(s)`);
 	for (const entry of perFile) {
-		console.log(`    ${relative(entry.file)} — ${entry.replaced}`);
+		console.log(`    ${relative(entry.file)}: ${entry.replaced}`);
 	}
 	if (changedOccurrences === 0) console.log('  no changes needed');
 	else if (!args.dryRun) {
 		console.log(
-			'\nNext: re-read the allowed-tools lines in the touched SKILL.md files — the pin\n' +
+			'\nNext: re-read the allowed-tools lines in the touched SKILL.md files. The pin\n' +
 				'appears in permission strings as well as in prose, and both moved together.',
 		);
 	}

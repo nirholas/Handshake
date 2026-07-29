@@ -43,6 +43,17 @@ const pos = (v) => {
 	return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+// CoinPaprika's free tier does not compute the 30d and 1y windows: it returns a
+// hard 0 for both on every coin (verified across BTC, ETH, SOL, DOGE and UNI on
+// 2026-07-29), which is a "not available" sentinel, not a flat market. Rendering
+// it as "+0.00% (30d)" would invent a reading, so absence is reported instead.
+// Only the windows with this documented sentinel go through here; a genuine 0 on
+// the 1h/24h/7d windows is a real number and passes through untouched.
+const nonZero = (v) => {
+	const n = num(v);
+	return n === 0 ? null : n;
+};
+
 // ── CoinGecko id → CoinPaprika id ────────────────────────────────────────────
 // CoinPaprika ids are `<symbol>-<name-slug>`: bitcoin → btc-bitcoin, solana →
 // sol-solana. The slug half is CoinGecko's id for the overwhelming majority of
@@ -234,10 +245,10 @@ export function normalizePaprikaDetail(coin, ticker, cgId) {
 				h24: num(q.percent_change_24h),
 				d7: num(q.percent_change_7d),
 				d14: null,
-				d30: num(q.percent_change_30d),
+				d30: nonZero(q.percent_change_30d),
 				d60: null,
 				d200: null,
-				y1: num(q.percent_change_1y),
+				y1: nonZero(q.percent_change_1y),
 			},
 			mcap_change_24h_pct: num(q.market_cap_change_24h),
 			// CoinPaprika's ticker has no circulating-supply field, but market cap

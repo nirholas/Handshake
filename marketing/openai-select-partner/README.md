@@ -38,6 +38,15 @@ Attach these to posts instead of the bare badge. Both are 3200 × 1800 (16:9).
 Edit [`cards/social-card.html`](cards/social-card.html), run
 `npm run build:openai-cards`, commit the regenerated PNGs.
 
+## Public press kit
+
+Everything in this pack that is safe to hand a journalist is published at
+[`/press`](https://three.ws/press) ([`pages/press/index.html`](../../pages/press/index.html)):
+the announcement graphics, the three.ws marks, boilerplate, and fast facts, plus
+a one-click ZIP. Update the graphics here, run `npm run build:openai-cards`, and
+`/press` serves the new files with no further work. The brand marks on that page
+come from [`marketing/brand/`](../brand/README.md).
+
 ## Where this is already live on the site
 
 | Surface | Path |

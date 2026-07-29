@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * .gcloudignore smoke test — what would `gcloud builds submit` actually upload?
+ * .gcloudignore smoke test: what would `gcloud builds submit` actually upload?
  *
  * Why this exists
  * ---------------
  * `.gcloudignore` is an allowlist: it excludes everything at the repo root
  * (`/*`) and re-includes named paths. That shape has failed in production twice
  * in ways the build itself could not catch, because a MISSING re-include is not
- * a build error — it is a runtime `ERR_MODULE_NOT_FOUND` in every deployed
+ * a build error. It is a runtime `ERR_MODULE_NOT_FOUND` in every deployed
  * revision:
  *
  *   · `agents/` was never re-included, so `api/x402/fact-check.js` and
@@ -27,8 +27,8 @@
  * directory is pruned and its children cannot be re-included), then asserts
  * both directions:
  *
- *   FORBIDDEN — no secret-shaped file may appear in the upload set.
- *   REQUIRED  — the inputs the images copy must appear in the upload set.
+ *   FORBIDDEN: no secret-shaped file may appear in the upload set.
+ *   REQUIRED:  the inputs the images copy must appear in the upload set.
  *
  * Dependency-free by design: it runs anywhere gcloud does, including a clean
  * deploy worktree with no node_modules.
@@ -41,7 +41,7 @@
  *
  * `--ignore-file` resolves a candidate ruleset against this same tree, so a
  * change to `.gcloudignore` can be proved safe before it is committed. The
- * upload root is always the repo root — the question is only ever "what would
+ * upload root is always the repo root. The question is only ever "what would
  * these rules ship?".
  */
 
@@ -61,8 +61,8 @@ const IGNORE_FILE = path.join(REPO_ROOT, '.gcloudignore');
 // `.key` hold private keys AND public certificates, and vendored dependencies
 // ship CA bundles (pip's certifi, for one). Name alone would make this check
 // cry wolf on a public trust store, and a check that cries wolf is a check
-// people stop reading. So those two are confirmed against their BYTES — a PEM
-// private-key header, or a non-PEM `.key` we cannot prove is public — before
+// people stop reading. So those two are confirmed against their BYTES: a PEM
+// private-key header, or a non-PEM `.key` we cannot prove is public, before
 // they fail the run. Everything else fails on the name, because there is no
 // benign `.env` or ring-secrets file.
 const FORBIDDEN = [
@@ -93,18 +93,18 @@ function sniffKeyMaterial(absPath) {
 	try {
 		head = readFileSync(absPath).subarray(0, 65536).toString('utf8');
 	} catch {
-		return { secret: true, note: 'unreadable — treated as secret' };
+		return { secret: true, note: 'unreadable, treated as secret' };
 	}
 	if (PRIVATE_KEY_MARKER.test(head)) return { secret: true, note: 'contains a PEM private key' };
 	if (PUBLIC_ARMOUR_MARKER.test(head)) {
 		return { secret: false, note: 'public certificate material only' };
 	}
-	return { secret: true, note: 'no public-certificate armour — treated as secret' };
+	return { secret: true, note: 'no public-certificate armour, treated as secret' };
 }
 
 // Inputs the Dockerfiles copy / the server reads at runtime. A directory entry
 // passes when at least one file under it survives the ignore file. An entry
-// that does not exist in this tree is reported and skipped, never failed — the
+// that does not exist in this tree is reported and skipped, never failed. The
 // check is about the ignore rules, not about which optional packs are present.
 const REQUIRED = [
 	{ path: 'server', kind: 'dir', why: 'server/index.mjs is the Cloud Run entrypoint' },
@@ -134,7 +134,7 @@ function globToRegExpSource(glob) {
 		const ch = glob[i];
 		if (ch === '*') {
 			if (glob[i + 1] === '*') {
-				// `**` — crosses separators. `/**/` collapses to "zero or more dirs".
+				// `**` crosses separators. `/**/` collapses to "zero or more dirs".
 				i++;
 				if (glob[i + 1] === '/') {
 					i++;
@@ -367,7 +367,7 @@ function main() {
 		console.error(
 			'\n  Fix: exclude the path in .gcloudignore (a later pattern wins), or move the\n' +
 				'  file out of the re-included directory. Never rely on the Dockerfile to skip\n' +
-				'  it — the upload happens before any build step runs.',
+				'  it. The upload happens before any build step runs.',
 		);
 	} else {
 		console.log('  secrets:    none of the forbidden patterns would be uploaded');
@@ -375,7 +375,7 @@ function main() {
 
 	if (cleared.length && listMode) {
 		console.log(`  key-shaped but public (${cleared.length}):`);
-		for (const hit of cleared) console.log(`    ${hit.file} — ${hit.note}`);
+		for (const hit of cleared) console.log(`    ${hit.file}: ${hit.note}`);
 	} else if (cleared.length) {
 		console.log(
 			`  cleared:    ${cleared.length} key-shaped file(s) verified public (--list to see them)`,
@@ -385,10 +385,10 @@ function main() {
 	if (failures.length) {
 		failed = true;
 		console.error(`\nFAIL: ${failures.length} required input(s) would be EXCLUDED:`);
-		for (const req of failures) console.error(`  ${req.path}  — ${req.why}`);
+		for (const req of failures) console.error(`  ${req.path}:  ${req.why}`);
 		console.error(
 			'\n  Fix: add a `!/<path>/` re-include to .gcloudignore. A missing re-include is\n' +
-				'  not a build error — it surfaces as ERR_MODULE_NOT_FOUND in production.',
+				'  not a build error. It surfaces as ERR_MODULE_NOT_FOUND in production.',
 		);
 	} else {
 		console.log('  required:   every required build input survives the ignore rules');
@@ -398,7 +398,7 @@ function main() {
 		process.exitCode = 1;
 		return;
 	}
-	console.log('\nOK — the build context is complete and carries no secrets.');
+	console.log('\nOK: the build context is complete and carries no secrets.');
 }
 
 main();

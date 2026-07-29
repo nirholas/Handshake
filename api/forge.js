@@ -1839,6 +1839,12 @@ async function startJob(req, res) {
 		let referenceImageUrl;
 		let textToImageModel;
 		let views;
+		// The prompt the art director actually handed to the reference painter, when
+		// it differs from what the user typed. Surfaced on the response as
+		// `directed_prompt` so /forge can show "what we actually asked the model"
+		// instead of leaving the rewrite invisible. Null means the raw prompt was
+		// used verbatim (director off, no rewrite, or the pass failed soft).
+		let directedPrompt = null;
 		if (isImageMode) {
 			views = imageUrls;
 			referenceImageUrl = imageUrls[0];
@@ -1854,14 +1860,14 @@ async function startJob(req, res) {
 			// the free-first LLM chain, so it costs no GCP/vendor spend. This is the
 			// single biggest lever on "does this look like a real photograph"
 			// available before the reference image is even generated.
-			let directedPrompt = prompt;
+			let promptForReference = prompt;
 			if (body?.director !== false) {
 				// Known brand marks resolve deterministically before the LLM gets a
 				// say: no model reliably knows a niche mark's geometry, and the
 				// lexicon spec is already a tight single-subject description.
 				const knownMark = resolveLogoPrompt(prompt);
 				if (knownMark) {
-					directedPrompt = knownMark.prompt;
+					promptForReference = knownMark.prompt;
 				} else {
 					// Subject-classified briefing (person/animal/vehicle/food/architecture/
 					// object) so the director reaches for the material/construction cues
@@ -1869,16 +1875,19 @@ async function startJob(req, res) {
 					const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt).catch(
 						() => null,
 					);
-					if (directed) directedPrompt = directed;
+					if (directed) promptForReference = directed;
 				}
 			}
+			// Report the rewrite only when it actually changed the brief — an
+			// unchanged value means the model saw exactly what the user typed.
+			if (promptForReference && promptForReference !== prompt) directedPrompt = promptForReference;
 			// Seed the reconstruction reference from the dedicated Vertex-Gemini
 			// photoreal module when it is live, so a text prompt reconstructs from the
 			// most photoreal single view we can synthesize. Fail-open: an absent module
 			// or a Vertex outage transparently falls back to the standing text→image
 			// provider (FLUX/Imagen/NIM), so this path runs identically either way.
 			const synthesized = await seedReferenceImage({
-				prompt: directedPrompt,
+				prompt: promptForReference,
 				aspect,
 				skipNim: nimGatewayDegraded,
 				seed: opts.seed ?? undefined,

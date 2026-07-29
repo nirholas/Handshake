@@ -228,6 +228,11 @@ export class WorldObject extends Schema {
 		this.vz = 0;
 		this.kind = '';     // category: '' / 'prop' persist; 'ball'/'fx' are transient
 		this.ts = 0;        // last authoritative update (epoch ms)
+		// P3.3: a player-uploaded model this prop renders instead of a catalog
+		// primitive. Empty for every built-in prop. Validated server-side against
+		// the storage allow-list (build-limits.normalizePropAssetUrl) before it is
+		// ever published to the other clients in the world.
+		this.url = '';
 	}
 }
 defineTypes(WorldObject, {
@@ -244,6 +249,7 @@ defineTypes(WorldObject, {
 	vz: 'float32',
 	kind: 'string',
 	ts: 'float64',
+	url: 'string',
 });
 
 export class WalkState extends Schema {

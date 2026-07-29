@@ -85,10 +85,17 @@ The detail endpoint ([`api/coin/detail.js`](../api/coin/detail.js)) requests
 CoinGecko's community and developer blocks and slims the multi-hundred-KB
 payload to exactly these fields; all-zero developer/community blocks (coins
 with no tracked repo or socials) collapse to `null` so the page hides the
-whole section rather than render a wall of zeros.
+whole section rather than render a wall of zeros. A single follower count of
+exactly 0 is treated the same way: it means the channel isn't tracked, not that
+it's empty (Solana's subreddit has ~170k members and still reports 0), so the
+stat is omitted rather than stated falsely. Developer counters keep their
+zeros — "0 commits in 4 weeks" is a real reading about a real repo.
 
 Unknown ids, upstream outages, loading, and empty news/markets all have
-designed states — the page never renders a blank void.
+designed states — the page never renders a blank void. When a datapoint is
+answered by a backup provider, the page footer names it ("Served from
+CoinPaprika") so a missing field reads as *degraded right now* rather than
+*this coin has no FDV*.
 
 ## Data sources & failover
 
@@ -109,10 +116,29 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   `/exchanges` fail over CoinGecko → DefiLlama (keyed by the same CoinGecko id),
   then to live exchange tickers (Kraken → Coinbase → Bitfinex) for the mapped
   majors (BTC, ETH, SOL).
+- **Coin profile** (`/api/coin/detail`) — CoinGecko `/coins/{id}` → CoinPaprika
+  ([`api/_lib/coin-fallbacks.js`](../api/_lib/coin-fallbacks.js)). CoinPaprika
+  uses its own `<symbol>-<name-slug>` ids, so the module resolves the CoinGecko
+  id against `/v1/search` and caches the mapping for a week. The match is
+  deliberately strict — only an exact id-slug or name-slug hit counts — because
+  answering with a *different* coin's market cap is worse than answering with an
+  error. Fields this source doesn't carry (FDV, 24h high/low, developer stats,
+  per-chain contract addresses) come back `null` and the page hides those
+  sections. Circulating supply isn't published either, but market cap ÷ price
+  recovers it exactly. The lookup by Solana mint (`?contract=`) has no fallback:
+  CoinPaprika is addressed by coin id, not by mint.
+- **Exchange listings** (`/api/coin/tickers`) — CoinGecko `/coins/{id}/tickers`
+  → CoinPaprika `/coins/{id}/markets`. Derivatives venues are filtered out (the
+  CoinGecko endpoint it stands in for is spot-only, and perps would otherwise
+  head the table by volume). Spread and ±2% order-book depth don't exist in this
+  feed, so the client drops those three columns rather than render a wall of
+  em-dashes.
 - **Price chart** (`/api/coin/ohlc`) — CoinGecko `market_chart`, backed up for
-  BTC/ETH/SOL by exchange candles (Kraken OHLC → Coinbase Exchange), so the
-  headline charts stay live through a CoinGecko outage. Long-tail coins remain
-  CoinGecko-only. A 404 (unknown coin) never falls back: that is an answer.
+  BTC/ETH/SOL by exchange candles (Kraken OHLC → Coinbase Exchange) — real trade
+  prints, so they lead — and for **every other coin** by DefiLlama's coins
+  oracle, which is addressed as `coingecko:<id>` and therefore needs no id
+  mapping at all. The long tail keeps its chart through a CoinGecko outage
+  instead of blanking. A 404 (unknown coin) never falls back: that is an answer.
 - **Derivatives table** (`/api/coin/derivatives`) — CoinGecko's cross-venue perp
   feed, falling back to Hyperliquid's keyless info API
   ([`api/_lib/hyperliquid.js`](../api/_lib/hyperliquid.js)): one venue instead of

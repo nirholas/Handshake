@@ -50,10 +50,26 @@ export const CATEGORIES = [
 		key: 'account',
 		label: 'Account & security',
 		description: 'Withdrawals, payment issues, and security-sensitive events.',
+		// The bell row for these is written even when the user mutes in_app: it
+		// is the durable record of what happened to their account, and this
+		// category is also the fallback for any type not yet in TYPE_CATEGORY,
+		// so a mute here would silently hide future security events. Push,
+		// email and telegram stay fully mutable, which is what "quiet" means.
+		lockedChannels: ['in_app'],
 	},
 ];
 
 export const CHANNELS = ['in_app', 'push', 'email', 'telegram'];
+
+/**
+ * Channels that always deliver for a category, regardless of preferences.
+ * Single source of truth for the write path (api/_lib/notify.js), the
+ * preferences API, and the settings UI, so none of them can drift into
+ * showing a toggle that does nothing.
+ */
+export function lockedChannelsFor(categoryKey) {
+	return CATEGORIES.find((c) => c.key === categoryKey)?.lockedChannels || [];
+}
 
 const CATEGORY_KEYS = new Set(CATEGORIES.map((c) => c.key));
 

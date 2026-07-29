@@ -2297,13 +2297,8 @@ function tick(frameNow) {
 	// Frame governor (shared with /play and /club): rAF fires at the panel's
 	// refresh rate, so a 144Hz laptop rendered 2.4x the frames of a 60Hz one for
 	// pure heat. Cap real work at 60fps, drop to 30 when the window loses focus,
-<<<<<<< Updated upstream
 	// and hold 30 under the user's power-saver preference. Skipped frames fold
 	// into the next dt, which every system below is already driven by.
-=======
-	// and hold 30 under the user's power-saver preference. Skipped frames simply
-	// fold into the next dt, which every system below is already driven by.
->>>>>>> Stashed changes
 	const fpsCap = powerSaver ? FPS_SAVER : focusState.focused ? FPS_ACTIVE : FPS_IDLE;
 	if (!frameGovernor.shouldRun(frameNow ?? performance.now(), fpsCap)) return;
 

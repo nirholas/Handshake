@@ -1,20 +1,20 @@
 // api/_lib/x402/spent-payments.js
 //
-// Durable spent-payment record — the replay guard that outlives the cache TTL.
+// Durable spent-payment record: the replay guard that outlives the cache TTL.
 //
 // paidEndpoint()'s always-on replay key (`proof:<paymentHash>`) lives in the
 // idempotency cache and expires with X402_PAYMENT_IDENTIFIER_TTL. After that,
 // a captured X-PAYMENT header can re-enter the handler and re-run its side
 // effects (the good is delivered a second time). The money leg is already
-// covered — settle-credit.js refuses a second credit for one signature — but
+// covered (settle-credit.js refuses a second credit for one signature), but
 // DELIVERY is not, because the wrapper delivers before it settles on the
 // default path.
 //
 // This module closes that leg with a Postgres row per honoured proof:
 //
-//   · isPaymentSpent()   — one indexed lookup, run BEFORE the handler so a
+//   · isPaymentSpent():   one indexed lookup, run BEFORE the handler so a
 //                          replay never reaches the side effects.
-//   · claimSpentPayment() — the atomic claim, run once settlement and receipt
+//   · claimSpentPayment(): the atomic claim, run once settlement and receipt
 //                          work succeeded: `INSERT … ON CONFLICT DO NOTHING
 //                          RETURNING` on the primary key. Zero rows back means
 //                          another request already honoured this proof, i.e.
@@ -22,7 +22,7 @@
 //
 // The claim runs LAST in the settle path on purpose. A payment that settled
 // but then failed a downstream step (SIWX grant write, receipt sign) leaves no
-// spent row, so the payer's retry with the same header still works — the row is
+// spent row, so the payer's retry with the same header still works. The row is
 // written only for a payment that was actually honoured end to end.
 //
 // Failure policy: FAIL OPEN, deliberately. The in-cache guard, the payment
@@ -37,7 +37,7 @@
 
 import { sql } from '../db.js';
 
-/** Postgres `undefined_table` — the migration has not been applied here yet. */
+/** Postgres `undefined_table`: the migration has not been applied here yet. */
 const UNDEFINED_TABLE = '42P01';
 
 function classifyUnavailable(err) {

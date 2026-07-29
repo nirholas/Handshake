@@ -1402,13 +1402,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		render();
 	}
 
-<<<<<<< Updated upstream
 	// Called after confirmed on-chain (normal path or escape-hatch path)
-=======
-	// Called after confirmed on-chain (normal path or escape-hatch path).
-	// `lane` is threaded through the timeout escape hatch so a resumed confirm
-	// still lands on the endpoint that issued the prep.
->>>>>>> Stashed changes
 	async function finalizeConfirm(prepId, sig, lane = s.lane) {
 		const confirmUrl = lane === 'native'
 			? '/api/native-launch/launch-confirm'
@@ -1795,13 +1789,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		// The native lane has no server-signed path, so its signer is always the
 		// connected wallet and the wallet-source toggle is withheld.
-<<<<<<< Updated upstream
 		const sourceToggleHtml = isNative ? '' : `<div class="lp-src" role="radiogroup" aria-label="Launch wallet">
-=======
-		const sourceToggleHtml = isNative
-			? ''
-			: `<div class="lp-src" role="radiogroup" aria-label="Launch wallet">
->>>>>>> Stashed changes
 			<button type="button" role="radio" aria-checked="${s.walletSource === 'connected'}" data-src="connected" class="${s.walletSource === 'connected' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				Connected wallet<span class="lp-src-sub">Phantom / Backpack</span>
 			</button>

@@ -210,6 +210,26 @@ describe('normalizePaprikaDetail', () => {
 		expect(out.platforms).toEqual({});
 	});
 
+	it('reads the free tier\'s hard-zero 30d/1y windows as absent, not as a flat market', () => {
+		const ticker = {
+			...PAPRIKA_TICKER,
+			quotes: { USD: { ...PAPRIKA_TICKER.quotes.USD, percent_change_30d: 0, percent_change_1y: 0 } },
+		};
+		const out = normalizePaprikaDetail(PAPRIKA_COIN, ticker, 'solana');
+		expect(out.market.change_pct.d30).toBeNull();
+		expect(out.market.change_pct.y1).toBeNull();
+	});
+
+	it('still reports a genuine 0 on the windows the tier does compute', () => {
+		const ticker = {
+			...PAPRIKA_TICKER,
+			quotes: { USD: { ...PAPRIKA_TICKER.quotes.USD, percent_change_24h: 0, percent_change_7d: 0 } },
+		};
+		const out = normalizePaprikaDetail(PAPRIKA_COIN, ticker, 'solana');
+		expect(out.market.change_pct.h24).toBe(0);
+		expect(out.market.change_pct.d7).toBe(0);
+	});
+
 	it('extracts social handles and community stats from links_extended', () => {
 		const out = normalizePaprikaDetail(PAPRIKA_COIN, PAPRIKA_TICKER, 'solana');
 		expect(out.links.twitter).toBe('solana');

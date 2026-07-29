@@ -32,6 +32,10 @@ log = logging.getLogger("garment-forge.pipeline")
 VERTEX_MODEL = os.environ.get("VERTEX_IMAGEN_MODEL", "gemini-2.5-flash-image")
 VERTEX_LOCATION = os.environ.get("VERTEX_IMAGEN_LOCATION", "global")
 VERTEX_IMAGE_SIZE = os.environ.get("VERTEX_IMAGE_SIZE", "2K").upper()
+# How many times to ask the image model for a reference photo before giving up.
+# Counts only the "answered 200, drew nothing" case; transport failures are
+# already retried inside _post_with_retry.
+_IMAGE_ATTEMPTS = max(1, int(os.environ.get("VERTEX_IMAGE_ATTEMPTS", "3")))
 
 MESH_POLL_S = float(os.environ.get("MESH_POLL_S", "5"))
 MESH_TIMEOUT_S = float(os.environ.get("MESH_TIMEOUT_S", "1200"))
@@ -118,22 +122,44 @@ def generate_reference_image(prompt: str, slot: str) -> tuple[bytes, str]:
     }
     headers = {"authorization": f"Bearer {_access_token()}",
                "content-type": "application/json"}
-    with httpx.Client(timeout=120) as client:
-        res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
-        if res.status_code == 400:
-            # Older image models reject the imageSize knob; retry without it.
-            del body["generationConfig"]["imageConfig"]["imageSize"]
-            res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
-        res.raise_for_status()
-        data = res.json()
 
-    parts = (data.get("candidates") or [{}])[0].get("content", {}).get("parts", [])
-    img_part = next((p for p in parts if p.get("inlineData", {}).get("data")), None)
-    if not img_part:
-        reason = (data.get("candidates") or [{}])[0].get("finishReason")
-        raise RuntimeError(f"Vertex returned no image data"
-                           f"{f' (finishReason: {reason})' if reason else ''}")
-    return base64.b64decode(img_part["inlineData"]["data"]), f"vertex-ai/{VERTEX_MODEL}"
+    def _attempt() -> tuple[bytes | None, str | None]:
+        """One generation call. Returns (image_bytes, None) on success, or
+        (None, finish_reason) when the model answered 200 with no image."""
+        with httpx.Client(timeout=120) as client:
+            res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
+            if res.status_code == 400:
+                # Older image models reject the imageSize knob; retry without it.
+                del body["generationConfig"]["imageConfig"]["imageSize"]
+                res = _post_with_retry(client, endpoint, json_body=body, headers=headers)
+            res.raise_for_status()
+            data = res.json()
+        candidate = (data.get("candidates") or [{}])[0]
+        parts = candidate.get("content", {}).get("parts", [])
+        img_part = next((p for p in parts if p.get("inlineData", {}).get("data")), None)
+        if not img_part:
+            return None, candidate.get("finishReason") or "no finishReason"
+        return base64.b64decode(img_part["inlineData"]["data"]), None
+
+    # A 200 carrying no image is a DIFFERENT failure from the transport errors
+    # _post_with_retry covers: the request succeeded and the model simply
+    # declined to draw this time (a safety/recitation filter, or an empty
+    # candidate under load). Image generation is stochastic, so re-rolling the
+    # same prompt usually succeeds — and without a re-roll one such response
+    # permanently loses a job that has already been queued, paid for in GPU
+    # time downstream, and counted against the batch.
+    last_reason = None
+    for attempt in range(_IMAGE_ATTEMPTS):
+        image, last_reason = _attempt()
+        if image is not None:
+            if attempt:
+                log.info("reference image took %d attempt(s) (prior: %s)", attempt + 1, last_reason)
+            return image, f"vertex-ai/{VERTEX_MODEL}"
+        log.warning("Vertex returned no image data (finishReason: %s); re-rolling "
+                    "attempt %d/%d", last_reason, attempt + 2, _IMAGE_ATTEMPTS)
+        time.sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"Vertex returned no image data after {_IMAGE_ATTEMPTS} attempts "
+                       f"(last finishReason: {last_reason})")
 
 
 def _mesh_backend_label(url: str) -> str:

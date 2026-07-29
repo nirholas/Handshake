@@ -24,6 +24,10 @@ import {
 	vehicleMaxStepM, vehicleMaxSpeedMps,
 } from '../vehicles.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
+import {
+	MAX_WORLD_OBJECTS, MAX_OBJECTS_PER_PLAYER, OBJ_SCALE_MIN, OBJ_SCALE_MAX,
+	BUILD_CLEAR_RADIUS_MAX, buildClearRadius, normalizePropAssetUrl,
+} from '../build-limits.js';
 import { blockStore } from '../block-store.js';
 import { worldPersistence } from '../persistence.js';
 import { verifyHolderPass } from '../holder-pass.js';
@@ -112,13 +116,11 @@ const MAX_BLOCKS = 6000;
 // still cap it so a scripted client can't flood the room.
 const EDITS_PER_SEC_LIMIT = 20;
 // Generic world objects (R01): the shared channel for balls, props and pickups.
-// Caps keep the synced state and the persisted per-coin doc (R17) bounded, and
-// the rate limit mirrors the edit limiter so a scripted client can't flood spawns.
-const MAX_WORLD_OBJECTS = 200;        // total objects one room may hold
-const MAX_OBJECTS_PER_PLAYER = 30;    // how many one owner may have at once
+// The caps and scale bounds live in ../build-limits.js so the client enforces the
+// identical numbers while building solo against the durable world store (P3.1);
+// the rate limit is server-only and mirrors the edit limiter so a scripted client
+// can't flood spawns.
 const OBJ_OPS_PER_SEC_LIMIT = 30;     // per-client spawn/update/remove rate
-const OBJ_SCALE_MIN = 0.1;
-const OBJ_SCALE_MAX = 10;
 const OBJ_STR_MAX = 48;               // clamp length of id/type/kind strings
 const OBJ_Y_MIN = -5;
 const OBJ_Y_MAX = 240;
@@ -193,10 +195,11 @@ const PROTECTED_POINTS_M = [{ x: 0, z: 0 }, { x: 0, z: -12 }];
 const PROTECTED_RADIUS_M = PROTECTED_RADIUS_CELLS * BLOCK_SIZE_M;
 const PROP_TILE_M = BLOCK_SIZE_M;     // density tile size for props, in metres
 const PER_TILE_PROP_CAP = 4;          // durable props allowed on one tile
-// Creator moderation: a clear-area sweep is bounded to this radius (cells) so even
-// the creator's broad-brush tool can't nuke a whole world in one malformed call;
-// 'all' is the explicit full-clear path.
-const CLEAR_AREA_MAX_RADIUS = 12;
+// Creator moderation: a clear-area sweep is bounded so even the creator's
+// broad-brush tool can't nuke a whole world in one malformed call; 'all' is the
+// explicit full-clear path. The reach a caller has EARNED is tiered
+// (build-limits.buildClearRadius: visitor / holder-world / coin creator);
+// BUILD_CLEAR_RADIUS_MAX is the absolute ceiling applied on top of it.
 // The three.ws API the multiplayer server reads the coin's on-chain creator from,
 // so "is this player the coin's creator" is proven server-side, not claimed by a
 // client. Mirrors persistence.js's WORLD_API_BASE.
@@ -2433,6 +2436,15 @@ export class WalkRoom extends Room {
 		// Ownership is assigned here; a client can never claim the 'server' sentinel.
 		obj.ownerId = owner;
 		obj.kind = typeof payload.kind === 'string' ? payload.kind.slice(0, OBJ_STR_MAX) : '';
+		// P3.3: a player-uploaded model. This is the one client string every OTHER
+		// client will fetch, so it is validated against the storage allow-list here
+		// and refused outright otherwise — never silently dropped, or the uploader
+		// would watch their prop appear as a grey box for reasons no one explained.
+		if (payload.url != null && payload.url !== '') {
+			const url = normalizePropAssetUrl(payload.url);
+			if (!url) { client.send('obj:reject', { reason: 'asset_url' }); return; }
+			obj.url = url;
+		}
 		obj.scale = objClamp(objNum(payload.scale, 1), OBJ_SCALE_MIN, OBJ_SCALE_MAX);
 		obj.yaw = objNum(payload.yaw, 0);
 		this._clampObjPos(obj, payload);
@@ -2526,7 +2538,7 @@ export class WalkRoom extends Room {
 		const out = [];
 		for (const [id, o] of this.state.objects) {
 			if (!this._objectIsPersistent(o)) continue;
-			out.push({
+			const rec = {
 				id,
 				type: o.type,
 				kind: o.kind,
@@ -2534,7 +2546,11 @@ export class WalkRoom extends Room {
 				x: round3(o.x), y: round3(o.y), z: round3(o.z),
 				yaw: round3(o.yaw),
 				scale: round3(o.scale),
-			});
+			};
+			// Only uploaded props carry a url; omitting it for the catalog props keeps
+			// the doc compact (the common case is a one-word `type`).
+			if (o.url) rec.url = o.url;
+			out.push(rec);
 			if (out.length >= MAX_WORLD_OBJECTS) break;
 		}
 		return out;
@@ -2566,6 +2582,10 @@ export class WalkRoom extends Room {
 			obj.z = objNum(o.z, 0);
 			obj.yaw = objNum(o.yaw, 0);
 			obj.scale = objClamp(objNum(o.scale, 1), OBJ_SCALE_MIN, OBJ_SCALE_MAX);
+			// Re-validate the stored asset url on the way back in: the allow-list can
+			// tighten between the save and the restore, and a doc written by the
+			// browser build path (P3.1) is user input like any other.
+			obj.url = normalizePropAssetUrl(o.url) || '';
 			obj.ts = Date.now();
 			this.state.objects.set(obj.id, obj);
 			n++;
@@ -2590,7 +2610,10 @@ export class WalkRoom extends Room {
 		if (!all) {
 			cx = Number(payload.x); cz = Number(payload.z); r = Number(payload.r);
 			if (!Number.isFinite(cx) || !Number.isFinite(cz) || !Number.isFinite(r)) return;
-			r = Math.max(1, Math.min(CLEAR_AREA_MAX_RADIUS, Math.round(r)));
+			// Clamp to the tier this caller earned (P3.2), then to the absolute
+			// ceiling — a client asking for more gets the honest maximum, never more.
+			const earned = Math.min(this._clearRadiusFor(client), BUILD_CLEAR_RADIUS_MAX);
+			r = Math.max(1, Math.min(earned, Math.round(r)));
 		}
 
 		let cleared = 0;
@@ -2716,11 +2739,28 @@ export class WalkRoom extends Room {
 	// moderation control — no silent limits. Sent on join and after their tally moves.
 	_sendBuildPerms(client) {
 		const owner = this._ownerKey(client.sessionId);
+		const creator = this._isCreator(client);
 		client.send('build-perms', {
-			creator: this._isCreator(client),
+			creator,
 			cap: PER_PLAYER_BLOCK_CAP,
 			used: this.blockCounts.get(owner) || 0,
-			clearMaxRadius: CLEAR_AREA_MAX_RADIUS,
+			// P3.2: the radius this caller has actually earned, not a flat constant.
+			// The client renders this number in the confirm prompt, and
+			// _handleBuildClear clamps to the same call — one source of truth, so the
+			// HUD can never promise reach the server would refuse.
+			clearMaxRadius: this._clearRadiusFor(client),
+			holderWorld: this.state.tier === 'holders',
+		});
+	}
+
+	// The clear-area reach (in build-grid cells) this client has earned: the coin's
+	// verified creator gets the widest sweep, a player inside the coin's gated
+	// Holders world gets the middle tier (they passed a signed holder pass at join),
+	// everyone else gets the base radius. Server-proven inputs only.
+	_clearRadiusFor(client) {
+		return buildClearRadius({
+			creator: this._isCreator(client),
+			holder: this.state.tier === 'holders',
 		});
 	}
 

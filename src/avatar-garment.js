@@ -60,7 +60,6 @@ export {
 };
 
 /**
-<<<<<<< Updated upstream
  * Reject a garment whose bounding box is implausibly large next to the body it
  * is being worn on. Returns a reason string, or null when the piece is sane.
  *
@@ -70,17 +69,6 @@ export {
  * publish time, but the catalog is public and long-lived, so the wearer checks
  * too. Scale-invariant by construction: garment and avatar are measured in the
  * same scene, so centimetre-unit and metre-unit avatars behave identically.
-=======
- * Reject a garment whose bounding box is implausibly large next to the body
- * it is being worn on. Returns a reason string, or null when the piece is a
- * sane size.
- *
- * Bind coverage proves a garment DEFORMS correctly; it says nothing about
- * whether it is the right SIZE. A malformed mesh can be perfectly skinned and
- * still be a 1.4 m curtain (see MAX_GARMENT_EXTENT_RATIO). Scale-invariant by
- * construction: both extents are measured on the same loaded scene, so a
- * centimetre-unit avatar and a metre-unit avatar behave identically.
->>>>>>> Stashed changes
  */
 export function extentRejection(garmentRoot, avatarRoot, ratio = MAX_GARMENT_EXTENT_RATIO) {
 	const size = new Vector3();
@@ -91,12 +79,7 @@ export function extentRejection(garmentRoot, avatarRoot, ratio = MAX_GARMENT_EXT
 	const avatarHeight = size.y;
 	if (!(avatarHeight > 0)) return null;
 	garment.getSize(size);
-<<<<<<< Updated upstream
 	for (const [axis, extent] of [['width', size.x], ['height', size.y], ['depth', size.z]]) {
-=======
-	const axes = [['width', size.x], ['height', size.y], ['depth', size.z]];
-	for (const [axis, extent] of axes) {
->>>>>>> Stashed changes
 		if (extent > avatarHeight * ratio) {
 			return `garment ${axis} is ${(extent / avatarHeight).toFixed(2)}x the avatar's height ` +
 				`(max ${ratio}x): the mesh is malformed, not just oversized`;

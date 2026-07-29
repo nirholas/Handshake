@@ -72,6 +72,11 @@ closed 2026-07-28; full history in git):
    as production runs): 269ms forward, 234ms reverse, and a miss now returns a
    404 instead of timing out. Cover: `tests/evm-rpc-endpoint-order.test.js`,
    ops probe: `node --env-file=.env scripts/probe-evm-rpc.mjs --chain 1 --ens`.
+   The same broken walk was in three more call sites, all now routed through
+   the shared `api/_lib/evm/ens.js` helper: `/api/agents/ens/:name` (3s budget,
+   so it timed out on every name), the x402 identity-claim verifier (5s, which
+   silently downgraded every ENS claim to "no evidence"), and `/api/v1/resolve`.
+   All verified resolving keyless end to end.
    Verify after the next deploy, then drop this item. Separately, the operator
    should repoint or unset `RPC_URL_ETHEREUM` on the Cloud Run service, since
    it is dead weight even demoted.

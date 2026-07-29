@@ -136,7 +136,7 @@ async function persist(sql, log, row) {
 // from the canonical 60s-cached spot module, ETH from the coin-price failover
 // chain. Both legs are fetched in parallel and both degrade to null on failure,
 // so a dead price source blanks the USD columns rather than crashing the
-// comparison — the gas units and raw fees are still recorded either way.
+// comparison. The gas units and raw fees are still recorded either way.
 async function fetchNativePrices() {
 	const [{ solPriceUsd }, { fetchCoinPriceUsdOrNull }] = await Promise.all([
 		import('../../sol-price.js'),

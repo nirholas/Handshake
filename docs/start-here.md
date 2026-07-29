@@ -114,6 +114,7 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 Deeper references that don't fit a track above but answer real questions:
 
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
+- [The onboarding tier](./onboarding-tier.md): why a first-time visitor sees ~20 nav destinations instead of ~100, how the Simple ⇄ Everything switch works, and which tier a new page belongs in
 - [What an agent can do](./agent-abilities/ABILITIES.md): the full abilities dossier, generated from the source article
 - [Use cases and example workflows](./content/use-cases/README.md): five audience-specific walkthroughs tying shipped features to concrete outcomes
 - [UX Flow Atlas](./ux-flows/01-onboarding-creation.md): screen-by-screen traces of the platform's core flows, starting with onboarding and creation

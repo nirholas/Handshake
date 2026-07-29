@@ -190,14 +190,16 @@ Each successful settlement also issues the buyer a durable, signed receipt
 
 ```sql
 CREATE TABLE x402_receipts (
-  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  payer        text        NOT NULL,   -- buyer wallet
-  network      text        NOT NULL,
-  resource_url text        NOT NULL,   -- what they paid for
-  format       text        NOT NULL,
-  receipt      jsonb       NOT NULL,   -- the signed receipt artifact
-  transaction  text,                   -- settlement tx
-  issued_at    timestamptz NOT NULL DEFAULT now()
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  payer          text        NOT NULL,   -- buyer wallet
+  network        text        NOT NULL,
+  resource_url   text        NOT NULL,   -- what they paid for
+  format         text        NOT NULL,
+  receipt        jsonb       NOT NULL,   -- the signed receipt artifact
+  transaction    text,                   -- settlement tx
+  amount_atomics text,                   -- what it cost (atomic units)
+  asset          text,                   -- the settlement asset (USDC mint/contract)
+  issued_at      timestamptz NOT NULL DEFAULT now()
 );
 ```
 
@@ -205,6 +207,70 @@ A buyer reads **their own** receipts at
 [`/api/x402/my-receipts`](x402-endpoints.md) — that endpoint is free but gated by
 a wallet signature (SIWX), so a buyer proves ownership of the `payer` address
 rather than paying again.
+
+### The signed artifact vs. our row
+
+These are two different things and the difference matters:
+
+- **The signed artifact** (`receipt` column) follows the x402 Offer & Receipt
+  spec §5.1. It carries no amount at all, and it omits `transaction` entirely
+  whenever the endpoint declares `includeTxHash: false`, the spec §5.2 privacy
+  default. That is what goes out on the wire, and it is what a third party
+  verifies against our issuer key.
+- **The row** is our own audit trail. It records the settlement tx and the
+  amount/asset we already had in hand at issue time, even when the artifact
+  omits them. The wire format and its privacy properties are unchanged; these
+  columns are only ever returned to the wallet that signed for its own
+  receipts.
+
+Receipts written before 2026-07-28 have `amount_atomics` and `asset` null. The
+Receipt Vault reports that honestly ("2 of 3 priced") rather than
+under-reporting a total.
+
+### Verifying a receipt
+
+The issuer signs with an Ed25519 JWK (`OFFER_RECEIPT_FORMAT=jws`); the `kid` is
+`did:web:three.ws#key-1`, and the public key is published at
+[`https://three.ws/.well-known/did.json`](https://three.ws/.well-known/did.json)
+(served by [`api/x402/did.js`](../api/x402/did.js)). Anyone holding a receipt
+can resolve that DID document and verify the signature without trusting us.
+When neither `OFFER_RECEIPT_JWK` (jws) nor
+`OFFER_RECEIPT_SIGNING_PRIVATE_KEY` (eip712) is set, no receipts are issued or
+stored at all: the x402 wire format stays valid, the extension is purely
+additive.
+
+### The buyer's view: `/receipts`
+
+[`/receipts`](https://three.ws/receipts) is the Receipt Vault: the buyer-facing
+UI over `/api/x402/my-receipts`. Connect a Solana or EVM wallet, sign one
+read-only message, and every receipt ever issued to that wallet is listed with
+its endpoint, amount, network, and settlement tx (explorer-linked), plus a
+per-receipt JSON download of the full signed artifact and a CSV export.
+
+The signing message is a fixed four-line string and must stay byte-identical on
+both sides. [`src/receipts-lib.js`](../src/receipts-lib.js)
+`buildReceiptsMessage()` and [`api/x402/my-receipts.js`](../api/x402/my-receipts.js)
+`buildExpectedMessage()`:
+
+```
+three.ws x402 receipts read
+Network: solana
+Address: <base58 pubkey, verbatim>
+Issued At: <ISO timestamp>
+```
+
+EVM addresses are lower-cased in the message (matching how the storage layer
+normalizes them); Solana base58 is case-sensitive and stays verbatim. The
+signature is valid for 5 minutes server-side. Fetch it yourself:
+
+```bash
+# after signing the message above with the payer wallet
+curl -s "https://three.ws/api/x402/my-receipts?\
+address=$ADDRESS&signature=$SIGNATURE&issuedAt=$ISSUED_AT&network=solana&limit=50"
+```
+
+`/receipts` is the buyer-side mirror of `/x402-revenue`: that page is what the
+platform earns, this one is what a given wallet spent.
 
 ### Anti-replay — `bsc_consumed_tx`
 

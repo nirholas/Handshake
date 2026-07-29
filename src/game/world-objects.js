@@ -215,24 +215,40 @@ const _glbCache = new Map(); // url → { template, waiters:[] }
 function loadTemplate(url) {
 	let rec = _glbCache.get(url);
 	if (rec) return rec;
-	rec = { template: null, waiters: [] };
+	rec = { template: null, failed: false, waiters: [], failures: [] };
 	_glbCache.set(url, rec);
 	_meshoptReady.then(() => _gltf.load(url, (gltf) => {
 		const root = gltf.scene;
 		root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 		rec.template = root;
+		rec.failures.length = 0;
 		for (const w of rec.waiters.splice(0)) { try { w(root); } catch (e) { log.warn('[world-objects] glb waiter threw', e); } }
-	}, undefined, (err) => log.warn('[world-objects] GLB load failed', url, err?.message || err)));
+	}, undefined, (err) => {
+		// A dead model url (deleted upload, storage hiccup) must not leave holders
+		// permanently empty — every waiter falls back to the neutral box so the
+		// object still reads as a real, deletable thing in the world.
+		log.warn('[world-objects] GLB load failed', url, err?.message || err);
+		rec.failed = true;
+		rec.waiters.length = 0;
+		for (const f of rec.failures.splice(0)) { try { f(); } catch { /* holder gone */ } }
+	}));
 	return rec;
 }
 
 // Fit a node so it stands `fitH` metres tall with its base on y=0 and centred in
 // xz — GLB authoring varies wildly, so normalise every prop to a predictable size.
+// `fitH = null` keeps the model's authored height (clamped into a sane range) and
+// only re-seats it on the ground: used for player uploads (P3.3), where "as the
+// artist built it" is the right answer and every client derives the same number
+// from the same file, so no extra field has to travel over the wire.
 function fitNode(node, fitH) {
 	const box = new Box3().setFromObject(node);
 	if (!box.isEmpty()) {
 		const size = box.getSize(new Vector3());
-		const s = size.y > 1e-4 ? fitH / size.y : 1;
+		const target = fitH == null
+			? Math.min(UPLOAD_FIT_MAX_M, Math.max(UPLOAD_FIT_MIN_M, size.y))
+			: fitH;
+		const s = size.y > 1e-4 ? target / size.y : 1;
 		node.scale.setScalar(s);
 		const box2 = new Box3().setFromObject(node);
 		const c = box2.getCenter(new Vector3());
@@ -246,21 +262,43 @@ function fitNode(node, fitH) {
 // Instance a GLB prop into `holder`. Shares the template's geometry/materials via
 // clone(true), so the meshes are tagged shared (never disposed — they belong to
 // the cached template). If the template is still loading, attaches when it lands.
+// A load failure swaps in the neutral box so the object is never an invisible
+// hole in the world (a placement everyone else can see but you can't).
 function instanceGLB(def, holder) {
 	const place = (tpl) => {
 		const inst = tpl.clone(true);
-		fitNode(inst, def.fitH || 1.5);
+		fitNode(inst, def.fitH === null ? null : (def.fitH || 1.5));
 		inst.traverse((o) => { o.userData.shared = true; });
 		holder.add(inst);
 	};
 	const rec = loadTemplate(def.glb);
 	if (rec.template) place(rec.template);
-	else rec.waiters.push(place);
+	else if (rec.failed) holder.add(neutralBox());
+	else { rec.waiters.push(place); rec.failures.push(() => holder.add(neutralBox())); }
 }
 
-// Build the scene node for a prop `type` (the catalog id). Procedural props are
-// synchronous; GLB props attach a placeholder-free holder that populates on load.
-function buildProp(type) {
+// ── uploaded props (P3.3) ────────────────────────────────────────────────────
+// A player-uploaded model rides on the object's own `url` field (validated
+// server-side against the storage allow-list), so it needs no catalog entry and
+// no id namespace: any client that receives the object can render it. Heights are
+// clamped so a mis-scaled export can't become a skybox-filling wall.
+export const UPLOAD_PROP_TYPE = 'upload';
+const UPLOAD_FIT_MIN_M = 0.25;
+const UPLOAD_FIT_MAX_M = 8;
+
+function uploadDef(url) {
+	return { id: UPLOAD_PROP_TYPE, name: 'Uploaded model', icon: '📤', glb: url, fitH: null, foot: 0.6 };
+}
+
+// Build the scene node for a prop. `url` (when present) is a player-uploaded
+// model and wins over the catalog. Procedural props are synchronous; GLB props
+// attach a placeholder-free holder that populates on load.
+function buildProp(type, url) {
+	if (url) {
+		const holder = new Group();
+		instanceGLB(uploadDef(url), holder);
+		return holder;
+	}
 	const def = propDef(type);
 	if (def && (def.build || def.glb)) {
 		if (def.build) return def.build();
@@ -284,7 +322,7 @@ function buildProp(type) {
 // Register the build-prop factory for the durable kinds R18 places. Both 'block'
 // and 'prop' persist server-side (R17); the factory reads obj.type to pick the
 // catalog entry, so one factory covers the whole palette.
-function buildPropFactory(obj) { return buildProp(obj.type); }
+function buildPropFactory(obj) { return buildProp(obj.type, obj.url); }
 KIND_FACTORIES.set('block', buildPropFactory);
 KIND_FACTORIES.set('prop', buildPropFactory);
 
@@ -359,8 +397,15 @@ export class WorldObjects {
 
 	_factory(kind) { return KIND_FACTORIES.get(kind) || neutralBox; }
 
-	_add(obj, id) {
-		if (this.entries.has(id)) { this._change(obj, id); return; }
+	_add(obj, id, { local = false } = {}) {
+		const existing = this.entries.get(id);
+		if (existing) {
+			// The authoritative room re-sending an object we restored locally (P3.1):
+			// rebuild from the server's copy so ownership, type and url are the
+			// server's truth, not our optimistic guess.
+			if (existing.local && !local) this._remove(id);
+			else { this._change(obj, id); return; }
+		}
 		const holder = new Group();
 		holder.name = `wo:${id}`;
 		let node;
@@ -378,8 +423,12 @@ export class WorldObjects {
 		this.entries.set(id, {
 			node: holder,
 			tx: obj.x, ty: obj.y, tz: obj.z, tyaw: obj.yaw || 0, tscale: scale,
-			ownerId: obj.ownerId, kind: obj.kind, type: obj.type, mine,
+			ownerId: obj.ownerId, kind: obj.kind, type: obj.type, url: obj.url || '',
+			mine, local,
 		});
+		// A local entry has no server interpolating it — snap it to its final pose
+		// so a restored build renders in place instead of sliding in from the origin.
+		if (local) { holder.position.set(obj.x, obj.y, obj.z); holder.rotation.y = obj.yaw || 0; }
 	}
 
 	_change(obj, id) {
@@ -416,6 +465,60 @@ export class WorldObjects {
 			const s = n.scale.x + (e.tscale - n.scale.x) * REMOTE_LERP;
 			n.scale.setScalar(s);
 		}
+	}
+
+	// ── locally-owned entries (P3.1) ─────────────────────────────────────────
+	// Objects restored from — or built into — the durable world store while this
+	// client has no authoritative room. They render exactly like server objects but
+	// are driven entirely from here, and are superseded the instant the room's own
+	// copy of the same id arrives (see _add). This is what lets a player walk into a
+	// coin world and see its persisted build before (or without) a live connection.
+
+	/**
+	 * Add an object this client owns locally.
+	 * @param {{id:string,type?:string,kind?:string,ownerId?:string,x:number,y:number,z:number,yaw?:number,scale?:number,url?:string}} obj
+	 * @param {object} [opts]
+	 * @param {boolean} [opts.mine] can this client delete it? (defaults to the isMine probe)
+	 */
+	addLocal(obj, { mine } = {}) {
+		if (!obj || typeof obj.id !== 'string' || !obj.id) return null;
+		const shaped = { kind: 'prop', yaw: 0, scale: 1, ownerId: '', type: '', url: '', ...obj };
+		this._add(shaped, shaped.id, { local: true });
+		const entry = this.entries.get(shaped.id);
+		if (entry && mine !== undefined) entry.mine = !!mine;
+		return entry || null;
+	}
+
+	/** Is this id a locally-driven entry (rather than the server's)? */
+	isLocal(id) { return !!this.entries.get(id)?.local; }
+
+	/** The local entries as plain records — what the world-doc producer persists. */
+	localObjects(out = []) {
+		out.length = 0;
+		for (const [id, e] of this.entries) {
+			if (!e.local) continue;
+			const rec = {
+				id, type: e.type || '', kind: e.kind || 'prop', ownerId: e.ownerId || '',
+				x: e.tx, y: e.ty, z: e.tz, yaw: e.tyaw, scale: e.tscale,
+			};
+			if (e.url) rec.url = e.url;
+			out.push(rec);
+		}
+		return out;
+	}
+
+	localCount() { let n = 0; for (const e of this.entries.values()) if (e.local) n++; return n; }
+
+	/**
+	 * Drop every locally-driven entry. Called the moment the authoritative room has
+	 * finished its first state sync: the server restored the same doc, so its copies
+	 * are already in the scene and ours would be duplicates.
+	 * @returns {number} how many were dropped
+	 */
+	dropLocal() {
+		let n = 0;
+		for (const [id, e] of [...this.entries]) { if (e.local) { this._remove(id); n++; } }
+		return n;
 	}
 
 	// Scene nodes of objects THIS client owns — the only ones delete-own may target
@@ -457,17 +560,23 @@ export class PropGhost {
 		this.group.visible = false;
 		scene.add(this.group);
 		this._type = null;
+		this._url = '';
 		this._valid = true;
 		this._fill = new MeshBasicMaterial({ color: GHOST_GOOD, transparent: true, opacity: 0.34, depthWrite: false });
 		this._lineMat = new LineBasicMaterial({ color: GHOST_GOOD, transparent: true, opacity: 0.95 });
 	}
 
-	setType(type) {
-		if (type === this._type) return;
+	/**
+	 * @param {string|null} type catalog id, gallery id, or UPLOAD_PROP_TYPE
+	 * @param {string} [url]     player-uploaded model url (P3.3) — ghosts as a footprint
+	 */
+	setType(type, url = '') {
+		if (type === this._type && url === this._url) return;
 		this._type = type;
+		this._url = url;
 		this._clearChildren();
 		if (!type) { this.hide(); return; }
-		const def = propDef(type);
+		const def = url ? { foot: 0.6, fitH: 1.5 } : propDef(type);
 		if (def && def.build) {
 			// Full-fidelity translucent clone of the procedural prop.
 			const node = def.build();

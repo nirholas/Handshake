@@ -127,7 +127,7 @@ export async function solPriceUsd(now = Date.now()) {
 /**
  * The cached price plus the metadata a surface needs to render it honestly:
  * how old it is, whether the last refresh failed (`stale`), and the 24h change
- * when a provider supplied one. Call `solPriceUsd()` first — this is a pure
+ * when a provider supplied one. Call `solPriceUsd()` first: this is a pure
  * read of the cache, it never fetches.
  *
  * `stale` is true only when a good price is being served past its refresh
@@ -158,7 +158,7 @@ const CHANGE_PROVIDERS = [
 		},
 	},
 	{
-		// DefiLlama's percentage oracle — same 24h window, computed from its own
+		// DefiLlama's percentage oracle. Same 24h window, computed from its own
 		// price history, so a CoinGecko rate-limit doesn't blank the delta.
 		name: 'llama-change',
 		url: `https://coins.llama.fi/percentage/solana:${WSOL}?period=24h`,

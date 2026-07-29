@@ -397,3 +397,43 @@ describe('llmComplete — Anthropic request shape and cached-turn accounting', (
 		expect(cached).toBeLessThan(uncached);
 	});
 });
+
+// ── /brain output-token budget ───────────────────────────────────────────────
+//
+// The /brain proxy floored every request at 64 output tokens. That is safe for
+// a model whose whole budget becomes visible text, and wrong for one that
+// thinks by default: `max_tokens` covers reasoning AND the reply, so a small
+// budget is consumed entirely by reasoning and the caller gets an empty stream
+// with no error. See resolveMaxTokens in api/brain/chat.js.
+
+describe('resolveMaxTokens — /brain budget floor', () => {
+	it('floors a tiny budget on thinking-by-default models', async () => {
+		const { resolveMaxTokens } = await import('../api/brain/chat.js');
+		expect(resolveMaxTokens(100, 'claude-opus-5', 16_384)).toBe(4096);
+		expect(resolveMaxTokens(100, 'claude-sonnet-5', 16_384)).toBe(4096);
+		expect(resolveMaxTokens(100, 'claude-fable-5', 16_384)).toBe(4096);
+	});
+
+	it('leaves budgets untouched on models that answer directly', async () => {
+		const { resolveMaxTokens } = await import('../api/brain/chat.js');
+		// Raising these would silently increase spend on the cheap/free lanes.
+		expect(resolveMaxTokens(100, 'claude-haiku-4-5', 8192)).toBe(100);
+		expect(resolveMaxTokens(100, 'gpt-oss-120b', 8192)).toBe(100);
+	});
+
+	it('keeps the 4096 default when the caller names no budget', async () => {
+		const { resolveMaxTokens } = await import('../api/brain/chat.js');
+		expect(resolveMaxTokens(undefined, 'gpt-oss-120b', 8192)).toBe(4096);
+		expect(resolveMaxTokens(0, 'gpt-oss-120b', 8192)).toBe(4096);
+	});
+
+	it('never exceeds the model output ceiling, floor included', async () => {
+		const { resolveMaxTokens } = await import('../api/brain/chat.js');
+		expect(resolveMaxTokens(100, 'claude-fable-5', 2048)).toBe(2048);
+	});
+
+	it('never lowers a generous caller request', async () => {
+		const { resolveMaxTokens } = await import('../api/brain/chat.js');
+		expect(resolveMaxTokens(16_000, 'claude-opus-5', 16_384)).toBe(16_000);
+	});
+});

@@ -135,11 +135,7 @@ export class WalkNet {
 	_emit(event, ...args) {
 		// A missing bucket must never throw: _emit runs inside colyseus message
 		// callbacks, so an unknown event would escape into the socket's dispatch
-<<<<<<< Updated upstream
 		// loop and surface as an uncaught TypeError on every room message.
-=======
-		// loop and break message handling for the whole room.
->>>>>>> Stashed changes
 		const bucket = this._handlers[event];
 		if (!bucket) return;
 		for (const fn of bucket) {

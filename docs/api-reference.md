@@ -1747,6 +1747,13 @@ Public, CORS-open, no auth, no cost. Rate limited to **30 requests/min per
 IP**; successful responses are edge-cached for 5 minutes. Pass exactly one of
 `name` or `address`.
 
+`.eth` names resolve through the ENS Universal Resolver (one `eth_call` per
+direction, typically under 300ms), which also handles wildcard and CCIP-read
+resolution. A name that does not exist is a `404 not_found`; a `503
+ens_unavailable` means every Ethereum RPC endpoint failed and the lookup is
+worth retrying. The two are never conflated, so a client can cache a 404 and
+retry a 503.
+
 | Query param | Type   | Description                                                                                                                                |
 | ----------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`      | string | A name ending in `.eth` (ENS) or `.sol` (SNS). Required unless `address` is passed.                                                        |

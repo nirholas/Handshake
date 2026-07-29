@@ -11,9 +11,12 @@
 // (camelCase, single `chain`, `slug`-addressable protocol lookup) rather than
 // a page's bespoke normalization — it does not replace either.
 //
-// Caching: a per-instance in-memory Map, burst-shield only (serverless
-// instances are ephemeral). Fetches retry with exponential backoff on 429/5xx,
-// max 2 retries, mirroring the reference's fetchWithRetry.
+// Caching: a per-instance LRU with per-entry TTL, burst-shield only (serverless
+// instances are ephemeral). Fetches retry with jittered exponential backoff on
+// 429/5xx, max 2 retries, mirroring the reference's fetchWithRetry.
+
+import { createCache } from './mem-cache.js';
+import { withRetry } from './resilience.js';
 
 /**
  * @typedef {Object} Protocol
@@ -97,22 +100,17 @@ export const CACHE_TTL = {
 	dexVolumes: 600_000, // 10 min
 };
 
-const _cache = new Map(); // key -> { data, expires }
-const MAX_ENTRIES = 512;
+// True LRU with per-entry TTL. The previous Map evicted the oldest INSERTED
+// key at the cap, so a continuously-hot series could be dropped while colder
+// keys inserted after it survived.
+const _cache = createCache({ max: 512 });
 
 function getCached(key) {
-	const entry = _cache.get(key);
-	if (!entry) return undefined;
-	if (Date.now() > entry.expires) {
-		_cache.delete(key);
-		return undefined;
-	}
-	return entry.data;
+	return _cache.get(key);
 }
 
 function setCache(key, data, ttlMs) {
-	_cache.set(key, { data, expires: Date.now() + ttlMs });
-	if (_cache.size > MAX_ENTRIES) _cache.delete(_cache.keys().next().value);
+	_cache.set(key, data, { ttl: ttlMs });
 }
 
 /** Drop every cached entry. Exposed for tests; not used in product code. */
@@ -121,56 +119,56 @@ export function clearMarketDataCache() {
 }
 
 // ---------------------------------------------------------------------------
-// Fetch with retry + exponential backoff on 429/5xx (max 2 retries).
+// Fetch with retry + jittered exponential backoff on 429/5xx.
 // ---------------------------------------------------------------------------
 
-function sleep(ms) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * A response error is retryable only on 429/5xx. Anything thrown by `fetch`
+ * itself (network reset, DNS failure, abort on timeout) carries no status and
+ * is always worth another attempt.
+ */
+function shouldRetryFetch(err) {
+	const status = err?.status;
+	if (typeof status !== 'number') return true;
+	return status === 429 || status >= 500;
 }
 
 /**
- * GET a URL as JSON, retrying up to `maxRetries` times with exponential
- * backoff on HTTP 429 or 5xx responses (and on network errors). Throws on a
- * non-retryable error status (4xx other than 429) or once retries are spent.
+ * GET a URL as JSON, retrying up to `maxRetries` times with jittered
+ * exponential backoff on HTTP 429 or 5xx responses (and on network errors).
+ * Throws on a non-retryable error status (4xx other than 429) or once retries
+ * are spent.
+ *
+ * The backoff is decorrelated-jittered (via the shared `withRetry` helper), so
+ * a fleet-wide upstream blip no longer re-synchronizes every caller into the
+ * same retry wave the way the previous fixed `2 ** attempt` schedule did.
+ *
  * @param {string} url
  * @param {{ maxRetries?: number, timeoutMs?: number }} [options]
  */
-export async function fetchWithRetry(url, options = {}) {
+export function fetchWithRetry(url, options = {}) {
 	const { maxRetries = 2, timeoutMs = 10_000 } = options;
 
-	for (let attempt = 0; attempt <= maxRetries; attempt++) {
-		let res;
-		try {
-			res = await fetch(url, {
+	return withRetry(
+		async () => {
+			const res = await fetch(url, {
 				headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
 				signal: AbortSignal.timeout(timeoutMs),
 			});
-		} catch (err) {
-			if (attempt === maxRetries) throw err;
-			await sleep(Math.min(1000 * 2 ** attempt, 10_000));
-			continue;
-		}
-
-		if (res.status === 429 || res.status >= 500) {
-			if (attempt === maxRetries) {
+			if (!res.ok) {
 				const err = new Error(`HTTP ${res.status} for ${url}`);
 				err.status = res.status;
 				throw err;
 			}
-			await sleep(Math.min(2000 * 2 ** attempt, 30_000));
-			continue;
-		}
-
-		if (!res.ok) {
-			const err = new Error(`HTTP ${res.status} for ${url}`);
-			err.status = res.status;
-			throw err;
-		}
-
-		return res.json();
-	}
-
-	throw new Error('fetchWithRetry: unreachable');
+			return res.json();
+		},
+		{
+			attempts: maxRetries + 1,
+			initialDelayMs: 1_000,
+			maxDelayMs: 30_000,
+			shouldRetry: shouldRetryFetch,
+		},
+	);
 }
 
 // ---------------------------------------------------------------------------

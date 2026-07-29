@@ -4,8 +4,8 @@
  * insertNotification() is the single choke point every notification flows
  * through (sales, purchases, IRL, pump alerts, withdrawals…). It:
  *   1. resolves the recipient's preference matrix,
- *   2. inserts the in-app row (the bell inbox) when the category's `in_app`
- *      channel is on. The durable record,
+ *   2. inserts the durable in-app row (the bell inbox) when the category's
+ *      `in_app` channel is on,
  *   3. records a `sent` funnel event for in_app,
  *   4. fans out to Web Push for the categories the user left enabled,
  *   5. records a `sent` event per push delivery.
@@ -26,6 +26,16 @@ import { sql } from './db.js';
 import { resolvePrefs, channelEnabled, pushPayloadFor, categoryForType } from './notify-prefs.js';
 import { sendPushToUser } from './web-push.js';
 
+// Categories whose in-app row is written no matter what the user muted. The
+// bell is the durable record of what happened to an account, not an
+// interruption: muting should quiet push, email and telegram, never erase the
+// user's own audit trail. 'account' is "Account & security" and carries
+// security_alert, wallet_anomaly_frozen, withdrawal_failed and the payment
+// mismatches, and it is also the fallback for any type not yet in
+// TYPE_CATEGORY, so honoring a mute here would silently hide future
+// security-relevant events too. The interruptive channels stay fully mutable.
+const IN_APP_ALWAYS = new Set(['account']);
+
 export function insertNotification(userId, type, payload = {}) {
 	return deliver(userId, type, payload).catch((err) => {
 		console.error('[notify] delivery failed:', err.message);
@@ -38,7 +48,8 @@ async function deliver(userId, type, payload) {
 	// resolvePrefs already falls back to defaults on a DB error, so a lookup
 	// problem degrades to "deliver on the default channels", never to silence.
 	const prefs = await resolvePrefs(userId);
-	const wantsInApp = channelEnabled(prefs, type, 'in_app');
+	const wantsInApp =
+		IN_APP_ALWAYS.has(categoryForType(type)) || channelEnabled(prefs, type, 'in_app');
 
 	// 2: durable in-app row, only when the user left the bell on for this
 	// category. Muting in_app must leave no row behind: the inbox list and the

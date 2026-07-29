@@ -9,9 +9,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Controllable sql template tag: each call returns a promise we resolve by hand,
 // so the test can prove the handler is still pending until the write settles.
+//
+// Rows are shaped per statement rather than always []. The settle success path
+// no longer writes one audit row and returns — it claims the settle credit
+// (api/_lib/x402/settle-credit.js), which reads any prior credit for the
+// signature and then INSERTs the claim. A blanket [] made that INSERT look like
+// a lost race, sending the handler down the re-read/classify branch and into
+// SQL calls this test never resolved, so it hung to the 120s vitest timeout.
+// SELECT → [] (no prior credit for this signature); INSERT → one row (the claim
+// is ours). That is the real granted-credit path, which is what the assertion
+// below is about.
 let pendingResolvers = [];
+function rowsFor(query) {
+	return /INSERT/i.test(query) ? [{ id: 1 }] : [];
+}
 vi.mock('../../api/_lib/db.js', () => ({
-	sql: () => new Promise((resolve) => { pendingResolvers.push(() => resolve([])); }),
+	sql: (strings) => {
+		const query = Array.isArray(strings) ? strings.join(' ') : String(strings ?? '');
+		return new Promise((resolve) => { pendingResolvers.push(() => resolve(rowsFor(query))); });
+	},
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 }));
@@ -70,13 +86,22 @@ describe('self-facilitator log durability', () => {
 		const res = makeRes();
 		const done = handler(makeReq({ action: 'settle', body: REQ_BODY }), res);
 
-		// settle awaits settleRingPayment (a resolved async) then awaits logOp.
-		// Drain a few microtasks to reach the log await, then assert still pending.
+		// settle awaits settleRingPayment (a resolved async) then awaits the settle
+		// -credit claim. Drain a few microtasks to reach the first DB await, then
+		// assert the response is still unsent while that write is in flight.
 		for (let i = 0; i < 6; i++) await Promise.resolve();
 		expect(res.ended).toBe(false);
 		expect(pendingResolvers.length).toBe(1);
 
-		pendingResolvers.forEach((r) => r());
+		// The claim is a SEQUENCE of statements (prior-credit read, then the
+		// INSERT), each only issued once the previous resolves, so draining once is
+		// not enough. Release writes as they appear until the handler finishes.
+		// Bounded so a genuine hang still fails fast instead of spinning.
+		for (let i = 0; i < 20 && !res.ended; i++) {
+			pendingResolvers.splice(0).forEach((r) => r());
+			await Promise.resolve();
+			await Promise.resolve();
+		}
 		await done;
 		expect(res.ended).toBe(true);
 		expect(JSON.parse(res._body).success).toBe(true);

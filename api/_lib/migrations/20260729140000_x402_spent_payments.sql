@@ -13,18 +13,18 @@
 -- This table is the leg the cache cannot cover: one row per payment proof that
 -- has already been honoured, keyed on the proof hash so the check is a single
 -- indexed lookup and the claim is a single atomic
--- `INSERT … ON CONFLICT DO NOTHING RETURNING` — the same race-proof arbiter
+-- `INSERT … ON CONFLICT DO NOTHING RETURNING`, the same race-proof arbiter
 -- shape used by settle-credit.js. A conflict means "this exact signed proof
 -- already bought this good", i.e. a replay, and the response is refused.
 --
 -- Columns are deliberately minimal: the proof hash is the identity, `endpoint`
 -- and `amount_atomics` exist so an operator reading the table can tell WHAT was
 -- bought and for how much without joining the audit ledger, and `created_at`
--- drives retention. No payer address, header, or payload is stored — the hash
+-- drives retention. No payer address, header, or payload is stored. The hash
 -- is one-way, so this table cannot be mined for payment material.
 --
 -- Retention: api/cron/db-retention.js prunes rows past 90 days on a FIXED
--- window (it is deliberately exempt from the storage-pressure valve — shrinking
+-- window (it is deliberately exempt from the storage-pressure valve, because shrinking
 -- this window is exactly what re-opens the replay hole it closes).
 
 CREATE TABLE IF NOT EXISTS x402_spent_payments (

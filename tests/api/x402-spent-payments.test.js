@@ -9,8 +9,8 @@
 // so both the lookup and the atomic claim are exercised as written.
 //
 // Cache expiry is simulated by resetting the in-memory idempotency store
-// between the two requests — exactly the state a payer's client sees once the
-// TTL has lapsed.
+// between the two requests, which is exactly the state a payer's client sees
+// once the TTL has lapsed.
 
 import { Readable } from 'node:stream';
 
@@ -214,7 +214,7 @@ describe('paidEndpoint() durable spent-payment guard', () => {
 		expect(first.statusCode).toBe(200);
 		expect(ran).toBe(1);
 
-		// The cache TTL lapses — the only thing that used to stand between a
+		// The cache TTL lapses. That was the only thing that used to stand between a
 		// captured header and a second run of the handler's side effects.
 		cacheMod._resetMemoryStore();
 		settlePayment.mockClear();
@@ -269,7 +269,7 @@ describe('paidEndpoint() durable spent-payment guard', () => {
 	});
 
 	it('the claim is atomic: a request that loses the insert race is refused, not delivered', async () => {
-		// Simulate the race directly — another request claims the proof while this
+		// Simulate the race directly: another request claims the proof while this
 		// one is inside the handler, so only the losing claim is left to arbitrate.
 		let ran = 0;
 		const res = await callPaid(async () => {

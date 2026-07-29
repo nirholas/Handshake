@@ -29,6 +29,12 @@ import { LRUCache } from 'lru-cache';
 export function createCache({ max = 512, ttlMs, updateAgeOnGet = false } = {}) {
 	return new LRUCache({
 		max: Math.max(1, max),
+		// `Date` rather than lru-cache's default `performance`, for parity with
+		// the `Date.now()` expiry the hand-rolled Maps used, and because caches
+		// are constructed at module load — a monotonic clock captured then
+		// cannot be advanced by a test's fake timers, making TTL behaviour
+		// untestable. TTLs here are minutes long, so clock drift is immaterial.
+		perf: Date,
 		...(ttlMs ? { ttl: ttlMs, updateAgeOnGet } : {}),
 	});
 }

@@ -385,6 +385,11 @@
 		"reason": "Required MIT upstream attribution — link to the upstream CharacterStudio asset-authoring docs (m3-org.github.io/characterstudio-docs); preserved so contributors can find the original vertex/UV conventions."
 	},
 	{
+		"pattern": "CharacterStudio",
+		"file": "docs/3d-asset-pipeline.md",
+		"reason": "Names the 3ds Max 'character studio' rig convention in the skeleton bone-naming table (CH_Hips, CH_LeftUpLeg) so a contributor can identify that export. A third-party DCC tool's naming scheme, not a product name."
+	},
+	{
 		"pattern": "Mixamo, Avaturn, Unreal",
 		"file": "docs/avatar-pipeline.md",
 		"reason": "Factual list of third-party rig-name conventions glb-canonicalize.js recognizes (Mixamo, Avaturn, Unreal, VRM, Daz, MakeHuman, ...) — interoperability documentation, not brand promotion."
@@ -418,5 +423,10 @@
 		"pattern": "three.ws, R2, Ready Player Me)",
 		"file": "docs/assistant-widget.md",
 		"reason": "Documents the widget's external-GLB host allowlist, which genuinely includes models.readyplayer.me (see multiplayer/src/avatar-url.js): a factual capability listing, not user-facing promotion."
+	},
+	{
+		"pattern": "| CharacterStudio | `CH_Hips`",
+		"file": "docs/3d-asset-pipeline.md",
+		"reason": "Third-party skeleton naming convention, not our avatar builder. This row of the bone-name mapping table names 3ds Max Character Studio (bones prefixed CH_), sitting alongside VRM, Daz3D, Reallusion CC3, and Autodesk HumanIK. Renaming it would misidentify the rig format the canonicalizer detects."
 	}
 ]

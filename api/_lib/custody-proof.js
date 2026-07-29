@@ -20,6 +20,7 @@ import {
 import { sendAndConfirm } from './solana/confirm.js';
 
 import { sql } from './db.js';
+import { mapPool } from './pool.js';
 import { solanaConnection } from './solana/connection.js';
 import { RPC } from './solana-attestations.js';
 import { loadAttesterKeypair } from './attest-event.js';

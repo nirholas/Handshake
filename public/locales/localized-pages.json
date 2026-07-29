@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 346,
+	"count": 347,
 	"paths": [
 		"/",
 		"/3d",
@@ -314,6 +314,7 @@
 		"/studio",
 		"/support",
 		"/swarms",
+		"/symphony",
 		"/temporary",
 		"/terminal",
 		"/theater",

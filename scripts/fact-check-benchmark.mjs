@@ -118,6 +118,28 @@ export function validateFixture(fixture) {
 	return claims;
 }
 
+// A run whose claims mostly ERRORED measures upstream availability, not accuracy:
+// every unreachable claim scores as incorrect, so the headline number reads as
+// "the product is wrong" when the truth is "the chain was down". Publishing that
+// to /fact-check states a false accuracy figure for a paid product — a run went
+// out at 7.5% with 30 of 40 claims errored while the LLM chain was exhausted.
+// Refuse to write it; the page's designed "not yet run" state is honest, a bad
+// number is not.
+const MAX_ERROR_RATE = 0.1;
+
+function refuseIfDegraded(score) {
+	const errorRate = score.total > 0 ? score.errors / score.total : 1;
+	if (errorRate <= MAX_ERROR_RATE) return;
+	console.error(
+		`\nRefusing to publish: ${score.errors}/${score.total} claims could not be checked ` +
+			`(${Math.round(errorRate * 100)}% > ${Math.round(MAX_ERROR_RATE * 100)}% ceiling).\n` +
+			'This run measured provider availability, not verdict accuracy. Fix the chain ' +
+			'(the "[llm] chain exhausted" warn line names every rung that failed) and re-run.\n' +
+			'Nothing was written — the accuracy page keeps rendering its honest state.',
+	);
+	process.exit(1);
+}
+
 // ── Live chain call ──────────────────────────────────────────────────────────
 
 async function checkOne(endpoint, bypassToken, claim) {
@@ -192,6 +214,7 @@ async function main() {
 	}
 
 	const score = scoreResults(results);
+	refuseIfDegraded(score);
 	const report = {
 		generated_at: new Date().toISOString(),
 		endpoint,
@@ -247,6 +270,7 @@ async function mainInProcess(claims, fixture) {
 	}
 
 	const score = scoreResults(results);
+	refuseIfDegraded(score);
 	const report = {
 		generated_at: new Date().toISOString(),
 		endpoint,

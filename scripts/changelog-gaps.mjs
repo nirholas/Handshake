@@ -60,7 +60,21 @@ const CHORE_KEYWORD = /\b(lockfile|package-lock|pnpm-lock|node_modules|gitignore
 
 // Paths that, if a commit touches ONLY these, make it internal regardless of
 // its subject. A commit that also touches product code is kept.
-const INTERNAL_ONLY_PATH = /^(tests?\/|\.github\/|scripts\/|\.husky\/|.*\.lock$|.*\.test\.[jt]s$|.*\.spec\.[jt]s$)/;
+const INTERNAL_ONLY_PATH =
+	/^(tests?\/|\.github\/|scripts\/|\.husky\/|\.claude\/|\.agents\/|prompts\/|data\/_generated\/|CHANGELOG\.md$|CLAUDE\.md$|ISSUES\.md$|data\/changelog\.json$|public\/changelog\.(json|xml)$|.*\.lock$|.*\.test\.[jt]s$|.*\.spec\.[jt]s$)/;
+
+// Plumbing: real shipped work that a $THREE holder still never perceives —
+// container builds, GPU-worker image pins, generated translation bundles,
+// prose-only doc edits. It is NOT a chore (it changed production), so silently
+// dropping it would hide work; but counting it in the headline GAPS number is
+// what trained everyone to ignore this audit. A commit whose files are ALL
+// plumbing gets reported under its own heading instead, outside the count.
+const PLUMBING_PATH =
+	/^(workers\/|crates\/|server\/|deploy\/|marketing\/|specs\/|docs\/|blog\/|public\/locales\/|locales\/|\.env\.example$|STRUCTURE\.md$|ARCHITECTURE\.md$|README\.md$|.*\/README\.md$|.*\/Dockerfile$|.*cloudbuild.*\.ya?ml$|.*\.md$)/;
+
+// …unless the subject says the plumbing IS the product: a brand-new worker
+// lane or backend is a capability holders can use, however deep it sits.
+const PLUMBING_ESCAPE = /\b(lane|backend|worker)\b.*\b(new|add|introduc)|^(feat|feature)\b.*\b(lane|worker)\b/i;
 
 // --- keyword extraction -----------------------------------------------------
 
@@ -134,6 +148,7 @@ const commits = raw ? raw.split('\n').map((l) => {
 }) : [];
 
 const gaps = [];
+const plumbing = [];
 let choreCount = 0;
 let coveredCount = 0;
 
@@ -156,33 +171,57 @@ for (const c of commits) {
 		coveredCount++;
 		continue;
 	}
-	gaps.push({ date: c.date, tag: tagFor(c.subject), subject: c.subject, hash: c.hash.slice(0, 9) });
+	const row = { date: c.date, tag: tagFor(c.subject), subject: c.subject, hash: c.hash.slice(0, 9) };
+	const allPlumbing =
+		files.length > 0 &&
+		files.every((f) => PLUMBING_PATH.test(f) || INTERNAL_ONLY_PATH.test(f)) &&
+		!PLUMBING_ESCAPE.test(c.subject);
+	(allPlumbing ? plumbing : gaps).push(row);
 }
 
 // --- report -----------------------------------------------------------------
 
 if (asJson) {
-	console.log(JSON.stringify({ since, scanned: commits.length, chore: choreCount, covered: coveredCount, gaps }, null, 2));
+	console.log(
+		JSON.stringify(
+			{ since, scanned: commits.length, chore: choreCount, covered: coveredCount, gaps, plumbing },
+			null,
+			2,
+		),
+	);
 	process.exit(0);
 }
 
-const byDate = {};
-for (const g of gaps) (byDate[g.date] ||= []).push(g);
+function printByDate(rows) {
+	const byDate = {};
+	for (const g of rows) (byDate[g.date] ||= []).push(g);
+	for (const date of Object.keys(byDate).sort().reverse()) {
+		console.log(`${date}`);
+		for (const g of byDate[date]) {
+			console.log(`  [${g.tag.padEnd(11)}] ${g.subject}  (${g.hash})`);
+		}
+		console.log('');
+	}
+}
 
 console.log(`\nChangelog gap audit — commits since ${since}`);
-console.log(`  scanned ${commits.length}  ·  internal/chore ${choreCount}  ·  covered ${coveredCount}  ·  GAPS ${gaps.length}\n`);
+console.log(
+	`  scanned ${commits.length}  ·  internal/chore ${choreCount}  ·  covered ${coveredCount}  ·  GAPS ${gaps.length}  ·  plumbing ${plumbing.length}\n`,
+);
 
-for (const date of Object.keys(byDate).sort().reverse()) {
-	console.log(`${date}`);
-	for (const g of byDate[date]) {
-		console.log(`  [${g.tag.padEnd(11)}] ${g.subject}  (${g.hash})`);
-	}
-	console.log('');
-}
+printByDate(gaps);
 
 if (gaps.length === 0) {
 	console.log('No gaps — every user-visible commit in the window has a matching entry.\n');
 } else {
 	console.log(`${gaps.length} shipped change(s) look user-visible but have no changelog entry.`);
 	console.log('Write them into data/changelog.json (holder-readable title + summary), then `npm run build:pages`.\n');
+}
+
+// Never truncate silently: plumbing is listed in full, just outside the count,
+// so a judgement call ("this one IS worth an entry") stays available.
+if (plumbing.length) {
+	console.log(`--- plumbing (${plumbing.length}) — shipped, but nothing a holder perceives; no entry expected ---\n`);
+	printByDate(plumbing);
+	console.log('Promote any of these to an entry if you decide a holder would notice it.\n');
 }

@@ -31,6 +31,17 @@ function nullIfEmpty(obj) {
 	return Object.values(obj).some((v) => v != null && v !== 0) ? obj : null;
 }
 
+// A follower count of exactly 0 means CoinGecko isn't tracking that channel,
+// not that the channel is empty: Solana's subreddit has ~170k members and still
+// comes back as reddit_subscribers 0. Rendering "Reddit Subscribers: 0" states
+// something false, so an untracked channel is reported as absent and the page
+// omits the stat. Developer counters keep their zeros — "0 commits in 4 weeks"
+// is a real, useful reading about a real repo.
+function trackedCount(v) {
+	const n = num(v);
+	return n === 0 ? null : n;
+}
+
 function shape(c) {
 	const md = c.market_data || {};
 	const dev = c.developer_data || {};
@@ -120,9 +131,9 @@ function shape(c) {
 			commits_4w: num(dev.commit_count_4_weeks),
 		}),
 		community: nullIfEmpty({
-			twitter_followers: num(com.twitter_followers),
-			reddit_subscribers: num(com.reddit_subscribers),
-			telegram_users: num(com.telegram_channel_user_count),
+			twitter_followers: trackedCount(com.twitter_followers),
+			reddit_subscribers: trackedCount(com.reddit_subscribers),
+			telegram_users: trackedCount(com.telegram_channel_user_count),
 		}),
 		last_updated: str(c.last_updated),
 	};

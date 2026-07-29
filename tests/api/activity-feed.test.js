@@ -1,4 +1,4 @@
-// Unit tests for the merge/render logic of GET /api/users/me/feed —
+// Unit tests for the merge/render logic of GET /api/users/me/feed, covering
 // both the scope=all (platform-wide, no-auth) path and the scope=following
 // (personal, auth-required) path added by prompts/user-value/02-activity-feed.md,
 // across every event kind the endpoint emits: avatar, agent, coin, model,

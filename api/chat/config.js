@@ -24,10 +24,7 @@ const DEFAULTS = {
 	name: 'three.ws chat',
 	logo_url: null,
 	accent_color: '#6366f1',
-<<<<<<< Updated upstream
 	tagline: 'Chat with any AI model',
-=======
->>>>>>> Stashed changes
 	// Resolved from the live free-model list at request time — see
 	// withLiveDefaultModel(). A hardcoded id here is exactly what broke chat:
 	// OpenRouter retired the configured default and every visitor's first

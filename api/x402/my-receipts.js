@@ -20,6 +20,7 @@ import { mainnet } from 'viem/chains';
 import { evmTransport } from '../_lib/evm/rpc.js';
 
 import { cors, error, json, method, rateLimited } from '../_lib/http.js';
+import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { listReceiptsForPayer } from '../_lib/x402/receipt-storage.js';
 import { verifySiwsSignature } from '../_lib/siws.js';
@@ -51,6 +52,26 @@ function withinFreshnessWindow(issuedAt) {
 	if (!Number.isFinite(ts)) return false;
 	const ageSec = (Date.now() - ts) / 1000;
 	return ageSec >= 0 && ageSec <= MAX_AGE_SECONDS;
+}
+
+// Decimals for the settlement assets THIS deployment actually pays in, read
+// from the same env config that builds the 402 accepts — so a client never has
+// to keep its own copy of our asset addresses (which would silently drift the
+// day an asset is repointed). Every configured asset is 6-decimal USDC; an
+// asset we don't recognise returns null and the client renders the raw atomic
+// amount rather than guessing a scale.
+function assetDecimals(asset) {
+	if (!asset) return null;
+	const want = String(asset).toLowerCase();
+	const configured = [
+		env.X402_ASSET_MINT_SOLANA,
+		env.X402_ASSET_ADDRESS_BASE,
+		env.X402_ASSET_ADDRESS_BSC,
+	];
+	for (const known of configured) {
+		if (known && String(known).toLowerCase() === want) return 6;
+	}
+	return null;
 }
 
 function detectNetwork(address, declared) {
@@ -146,6 +167,6 @@ export default async function handler(req, res) {
 		network,
 		address: payerKey,
 		count: rows.length,
-		receipts: rows,
+		receipts: rows.map((r) => ({ ...r, assetDecimals: assetDecimals(r.asset) })),
 	});
 }

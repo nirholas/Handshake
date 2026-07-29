@@ -19,7 +19,7 @@ import { cors, method, readJson, error, wrap, rateLimited } from '../_lib/http.j
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { watsonxConfig, watsonxChatRequest } from '../_lib/watsonx.js';
-import { DEFAULT_FREE_MODEL } from '../_lib/chat-models.js';
+import { DEFAULT_FREE_MODEL, modelThinksByDefault } from '../_lib/chat-models.js';
 import { createReasoningStripper } from '../_lib/strip-reasoning.js';
 import {
 	vertexClaudeEnabled,
@@ -999,10 +999,29 @@ export default wrap(async function handler(req, res) {
 	}
 
 	const system = typeof body.system === 'string' ? body.system.slice(0, 8000) : undefined;
-	const maxTokens = Math.min(Math.max(Number(body.maxTokens) || 4096, 64), plan.spec.maxOutput);
+	const maxTokens = resolveMaxTokens(body.maxTokens, providerKey, plan.spec.maxOutput);
 
 	await streamBrain(res, { plan, providerKey, messages, system, maxTokens });
 });
+
+/**
+ * Output-token budget for one /brain turn, clamped to what the model can serve.
+ *
+ * The historical 64-token floor assumes the whole budget becomes visible text.
+ * That is false for a thinking-by-default model, where `max_tokens` covers
+ * reasoning AND the reply — a caller asking for 100 tokens there gets a turn
+ * spent entirely on reasoning that streams back nothing, with no error to
+ * explain it. Those models get a floor with room for both. The model's own
+ * `maxOutput` still caps the result, and a generous request is never lowered.
+ *
+ * (For the Claude entries the provider key IS the model id — see PROVIDERS.)
+ * Exported for tests.
+ */
+export function resolveMaxTokens(requestedMaxTokens, providerKey, specMaxOutput) {
+	const requested = Math.max(Number(requestedMaxTokens) || 4096, 64);
+	const floor = modelThinksByDefault(providerKey) ? 4096 : 64;
+	return Math.min(Math.max(requested, floor), specMaxOutput);
+}
 
 // OpenRouter (and some OpenAI-compatible backends) reject a request whose
 // max_tokens exceeds the caller's remaining credit, naming the affordable

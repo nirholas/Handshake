@@ -264,7 +264,7 @@ export function findMissingDistAssets() {
 		'three/draco/gltf/draco_decoder.wasm',
 		'three/basis/basis_transcoder.wasm',
 		// Scene Studio's <script src="/three/draco/draco_encoder.js"> (pages/scene.html)
-		// — it shares the single decoder copy rather than carrying its own.
+		// It shares the single decoder copy rather than carrying its own.
 		'three/draco/draco_encoder.js',
 		'scene-studio/basis/basis_transcoder.wasm',
 	];

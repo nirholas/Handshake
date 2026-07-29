@@ -267,6 +267,11 @@ export const NAV_GROUPS = [
 						desc: 'Live, platform-wide feed of real agent wallet activity — tips, launches, trades & payments',
 					},
 					{
+						title: 'Receipt Vault',
+						href: '/receipts',
+						desc: 'Every x402 payment you made, retrievable forever: sign one message and get back your signed proof-of-purchase receipts',
+					},
+					{
 						title: 'Agent Symphony',
 						href: '/symphony',
 						badge: 'Live',

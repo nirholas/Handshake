@@ -99,13 +99,8 @@ describe('walk day/night cycle', () => {
 
 	it('lingers on a warm dusk instead of flipping day to night', () => {
 		// The sky crossfade runs on a wider curve than the light levels, so the
-<<<<<<< Updated upstream
 		// stretch either side of sunset is visibly graduated rather than a
 		// switch. Sample across dusk and require several distinct skies.
-=======
-		// hour either side of sunset is visibly graduated rather than a switch.
-		// Sample across dusk and require several distinct skies.
->>>>>>> Stashed changes
 		rig.cycle.setEnvironment(OUTDOOR);
 		const skies = new Set();
 		for (let p = 0.68; p <= 0.86; p += 0.01) {
