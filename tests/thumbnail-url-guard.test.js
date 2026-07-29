@@ -120,6 +120,15 @@ describe('write paths confirm the object exists before persisting a key', () => 
 	});
 
 	it('forge-seed adopts only a relative preview_key', () => {
-		expect(read('api/cron/forge-seed-cron.js')).toMatch(/case when fc\.preview_key !~ '\^https\?:\/\/' then fc\.preview_key end/);
+		const src = read('api/cron/forge-seed-cron.js');
+		// Alias-agnostic on purpose: the preview row moved behind a subselect when
+		// the rig stage landed (the rig creation has no preview of its own), and it
+		// may move again. What must never move is the `!~ '^https?://'` filter.
+		// An absolute URL in thumbnail_key resolves against an origin where no
+		// object lives (api/_lib/avatar-thumbs.js).
+		expect(src).toMatch(/case when \w+\.preview_key !~ '\^https\?:\/\/' then \w+\.preview_key end/);
+		// And nothing adopts the column raw, which is the regression this guards.
+		expect(src).not.toMatch(/then\s+\w+\.preview_key\s+end.*\|\|/);
+		expect(src).not.toMatch(/thumbnail_key\s*=\s*\$\{?\w*preview/i);
 	});
 });

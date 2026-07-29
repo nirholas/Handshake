@@ -70,10 +70,25 @@ describe('forge timeline stages', () => {
 		expect(stateOf('reference')).toBe('done');
 	});
 
-	it('says the prompt was used verbatim when no rewrite comes back', () => {
+	it('says the prompt was used verbatim when the director reports no rewrite', () => {
 		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
-		timeline.applySubmit({ status: 'queued', preview_image_url: 'https://cdn.example/ref.png' });
+		// The KEY is present and null: the director ran and chose to leave the
+		// prompt alone, which is a claim we can make about the user's words.
+		timeline.applySubmit({
+			status: 'queued',
+			directed_prompt: null,
+			preview_image_url: 'https://cdn.example/ref.png',
+		});
 		expect(labelOf('direct')).toBe('Prompt used as you wrote it');
+	});
+
+	it('claims nothing about the wording when the lane omits directed_prompt', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		// No `directed_prompt` key at all (an older deployment). Silence is not a
+		// report that the prompt survived unchanged, so the label must not say so.
+		timeline.applySubmit({ status: 'queued', preview_image_url: 'https://cdn.example/ref.png' });
+		expect(labelOf('direct')).toBe('Prompt handed to the painter');
+		expect(stateOf('direct')).toBe('done');
 	});
 
 	it('reveals a reference view that only arrives on a later poll', () => {

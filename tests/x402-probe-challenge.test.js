@@ -34,10 +34,22 @@ beforeAll(async () => {
 	// first test's 15s budget. Charging the warm-up to the hook budget keeps each
 	// test measuring the challenge contract, not the import graph. The responses
 	// are deliberately ignored; the tests below re-assert them against warm code.
-	await Promise.all([
-		fetch(`${BASE}/api/x402/tutor`).catch(() => {}),
-		fetch(`${BASE}/api/v1/x/openai/chat`).catch(() => {}),
-	]);
+	// Every distinct handler below, not just the first two: each /api/x402/<name>
+	// is its own module with its own lazy import graph, so warming `tutor` alone
+	// left `cosmetic-purchase` and friends to pay their cold import inside a 15s
+	// test budget and time out under full-suite load. The hook has 120s for this.
+	await Promise.all(
+		[
+			'/api/x402/tutor',
+			'/api/x402/asset-download',
+			'/api/x402/skill-call',
+			'/api/x402/cosmetic-purchase',
+			'/api/x402/animation-download',
+			'/api/x402/fact-check',
+			'/api/v1/x/openai/chat',
+			'/api/v1/x/coingecko/price',
+		].map((route) => fetch(`${BASE}${route}`).catch(() => {})),
+	);
 }, 120_000);
 
 afterAll(() => {
