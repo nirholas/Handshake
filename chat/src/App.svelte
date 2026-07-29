@@ -1659,6 +1659,34 @@
 			console.warn('[forge-avatar] bootstrap failed:', err);
 		}
 
+		// Refresh installed curated packs in place when their tool definitions
+		// have changed. The bootstraps above persist the tool BODY into the
+		// toolSchema store, so users who installed an older pack (e.g. the
+		// iframe-based 3D viewer) would keep executing the stale body forever
+		// without this. Matching by group name updates only packs the user
+		// still has installed; removal stays honored.
+		try {
+			let packsChanged = false;
+			const refreshed = $toolSchema.map((group) => {
+				const pack = curatedToolPacks.find((p) => p.name === group.name);
+				if (!pack) return group;
+				const same =
+					group.schema?.length === pack.schema.length &&
+					group.schema.every(
+						(t, ti) =>
+							t.clientDefinition?.id === pack.schema[ti].clientDefinition?.id &&
+							t.clientDefinition?.body === pack.schema[ti].clientDefinition?.body &&
+							t.function?.description === pack.schema[ti].function?.description
+					);
+				if (same) return group;
+				packsChanged = true;
+				return { ...group, schema: pack.schema };
+			});
+			if (packsChanged) $toolSchema = refreshed;
+		} catch (err) {
+			console.warn('[tool-packs] refresh failed:', err);
+		}
+
 		// When the user installs a Local skill from the Skills modal, auto-enable
 		// the new tools in the current conversation so the LLM can call them on
 		// the next turn â same UX as the x402-pay bootstrap above, but

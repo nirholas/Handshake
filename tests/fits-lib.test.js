@@ -95,8 +95,20 @@ describe('rankFits', () => {
 
 describe('displayAccount / shortWallet', () => {
 	it('labels guest session handles rather than truncating them into noise', () => {
-		expect(displayAccount('g_threews_live_demo')).toBe('Guest');
-		expect(displayAccount('guest-t6q8ci22bj')).toBe('Guest');
+		expect(displayAccount('g_threews_live_demo')).toBe('Guest demo');
+		expect(displayAccount('guest-t6q8ci22bj')).toBe('Guest 22bj');
+	});
+
+	it('keeps several guests distinguishable from one another', () => {
+		const a = displayAccount('g_alpha_one');
+		const b = displayAccount('g_beta_two');
+		expect(a).not.toBe(b);
+		expect(a.startsWith('Guest ')).toBe(true);
+	});
+
+	it('falls back to a bare label when a guest handle has no usable tail', () => {
+		expect(displayAccount('g_')).toBe('Guest');
+		expect(displayAccount('guest-___')).toBe('Guest');
 	});
 
 	it('truncates real wallets', () => {

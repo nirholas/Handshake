@@ -33,6 +33,10 @@ node scripts/quality-bench.mjs
 # One lane, one tier, a couple of prompts (fast iteration)
 node scripts/quality-bench.mjs --lane=trellis_selfhost --tier=standard --prompts=qb01,qb09
 
+# Four lanes at once (tasks are ordered so simultaneous work lands on
+# different backends, not four jobs queued behind one GPU worker)
+node scripts/quality-bench.mjs --lane=nvidia,huggingface,hunyuan3d,trellis_selfhost --concurrency=4
+
 # Against a non-production deployment
 node scripts/quality-bench.mjs --base-url=https://staging.three.ws
 
@@ -47,11 +51,24 @@ node scripts/quality-bench.mjs --resume=run-2026-07-23T12-00-00-000Z.json
 Flags: `--lane=<id|id,id|all>` (default `all` = every lane `/api/forge?catalog`
 reports as `configured`), `--tier=<draft|standard|high|all>` (default
 `standard,high`), `--prompts=<id,id,...|all>` (default `all`), `--base-url`
-(default `https://three.ws`), `--resume=<run file>`, `--dry-run`.
+(default `https://three.ws`), `--resume=<run file>`, `--concurrency=<n>`
+(default `1`), `--dry-run`.
+
+`--concurrency` matters because a full sweep is long: one `(prompt, lane, tier)`
+combo costs a generation plus 3 renders plus 6 judge calls, so 23 prompts x 4
+lanes x 2 tiers is many hours serially. The runner keeps a single run file and
+serialises its writes, so resumability is unchanged at any concurrency. Keep it
+at or below the number of lanes being swept — beyond that, extra workers just
+queue behind the same GPU backend.
 
 **Credentials.** Forge generation needs nothing locally — the script calls the
 live `/api/forge` HTTP path on `--base-url`, which runs against that
-deployment's own configured lanes and credentials. Scoring needs
+deployment's own configured lanes and credentials. The High tier is the one
+exception: `forge.high` is $THREE hold-or-pay gated, so an anonymous submit gets
+a 402 and every high-tier combo would record as a lane failure. Set
+`CRON_SECRET` (or `QUALITY_BENCH_FORGE_SEED`) to the target deployment's value
+and the bench submits as an internal seed request, which the gate exempts.
+Scoring needs
 `GOOGLE_CLOUD_PROJECT` set and GCP credentials resolvable the same way every
 other Vertex Gemini caller in this repo resolves them (`GCP_SERVICE_ACCOUNT_JSON`
 env var, or the ambient Cloud Run/GCE metadata server) — see

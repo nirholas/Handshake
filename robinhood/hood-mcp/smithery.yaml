@@ -1,0 +1,40 @@
+# Smithery deployment config for hood-mcp
+# https://smithery.ai/docs/config#smitheryyaml
+#
+# This config installs the READ-ONLY data server (bin `hood-mcp`): Stock Token
+# quotes with the Chainlink-vs-DEX premium, multiplier-correct portfolios,
+# memecoin launches, chain stats, and token search on Robinhood Chain (4663).
+# It is zero-config: every field below is optional and the server runs against
+# the public RPC with no key.
+#
+# The trading server (bin `hood-mcp-trading`) is deliberately NOT exposed here.
+# It signs transactions with a private key and is installed by hand only, per
+# the safety model: https://nirholas.github.io/hood-mcp/safety.html
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      HOOD_MCP_NETWORK:
+        type: string
+        title: Network
+        enum:
+          - mainnet
+          - testnet
+        default: mainnet
+        description: Which Robinhood Chain network to read. "mainnet" is chain 4663, "testnet" is chain 46630.
+      ALCHEMY_KEY:
+        type: string
+        title: Alchemy API key
+        description: Optional. Routes RPC through Alchemy instead of the public endpoint - faster, private, and no rate limiting on the heavy portfolio and launch scans.
+    required: []
+  commandFunction: |
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'hood-mcp'],
+      env: Object.assign(
+        {},
+        config.HOOD_MCP_NETWORK ? { HOOD_MCP_NETWORK: config.HOOD_MCP_NETWORK } : {},
+        config.ALCHEMY_KEY ? { ALCHEMY_KEY: config.ALCHEMY_KEY } : {}
+      )
+    })

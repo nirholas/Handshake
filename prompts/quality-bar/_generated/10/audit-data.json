@@ -1,6 +1,6 @@
 {
 	"startedAt": "2026-07-29T06:10:51.858Z",
-	"finishedAt": null,
+	"finishedAt": "2026-07-29T06:15:16.398Z",
 	"baseUrl": "https://three.ws",
 	"cases": {
 		"a": {
@@ -16,10 +16,96 @@
 					"views": {
 						"front": {
 							"file": "a-before-front.png",
-							"renderError": null
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is a simple geometric block and bears no resemblance whatsoever to the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The output is an abstract geometric shape with a blurry texture, bearing no resemblance to the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
 						},
 						"three-quarter": {
 							"file": "a-before-three-quarter.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a simple, flat plane and bears no resemblance to the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The generated asset is a collection of flat, low-polygon planes and completely fails to represent the requested human subject.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"side": {
+							"file": "a-before-side.png",
+							"renderError": null,
+							"scores": [
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model's geometry has catastrophically collapsed into a nearly two-dimensional plane, rendering it completely unrecognizable.",
+									"modelVersion": "google/gemini-2.5-pro"
+								},
+								{
+									"photorealism": 1,
+									"geometryIntegrity": 1,
+									"textureFidelity": 1,
+									"promptAdherence": 1,
+									"critique": "The model's geometry has completely collapsed into a paper-thin, two-dimensional plane, making it impossible to evaluate any features.",
+									"modelVersion": "google/gemini-2.5-pro"
+								}
+							],
+							"avg": {
+								"photorealism": 1,
+								"geometryIntegrity": 1,
+								"textureFidelity": 1,
+								"promptAdherence": 1,
+								"mean": 1
+							},
+							"judgeError": null
+						},
+						"hands": {
+							"file": "a-before-hands.png",
 							"renderError": null
 						}
 					},
@@ -29,7 +115,22 @@
 					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/4f92033c-8e30-4689-9f72-2c55099791d1.png",
 					"creationId": "47e396f1-4c6b-4b4d-9c23-b39931252744",
 					"generationMs": 80287,
-					"error": null
+					"error": null,
+					"meanScore": 1,
+					"dimMeans": {
+						"photorealism": 1,
+						"geometryIntegrity": 1,
+						"textureFidelity": 1,
+						"promptAdherence": 1,
+						"mean": 1
+					}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {},
+					"error": "forge submit 402: three_hold_required",
+					"generationMs": 165
 				}
 			},
 			"directed": "Full-body humanoid, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart for optimal rigging, hands open, fingers separated; female, late twenties, lean muscular athletic build, toned proportions, determined",

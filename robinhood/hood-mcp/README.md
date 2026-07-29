@@ -10,11 +10,23 @@ Docs: **https://nirholas.github.io/hood-mcp/**
 
 ## Website
 
-The docs site (`docs/`) is a single self-contained `index.html` (inline CSS + JS, zero external
-requests, works from `file://`). Its centerpiece is an **analog tuning instrument**: a dual-needle
-gauge that reads the gap between a Stock Token's Chainlink oracle price and its live DEX price.
-Turn the dial to sweep across tickers and the needles swing to the new spread, the number your
-agent trades against. Deploy the folder anywhere static:
+The docs site (`docs/`) is four static pages with no client-side JS and no external requests; it
+works by opening `docs/index.html` from `file://`. The landing page is a **real captured MCP
+session**: a genuine `@modelcontextprotocol/sdk` client spawns the built data server over stdio,
+initializes, lists the tools, and calls four of them against live chain 4663. Every frame shown is
+recorded off the wire, and the headline numbers (AAPL oracle price, DEX price, the premium) are
+whatever the chain returned at capture time.
+
+Regenerate the whole site, including a fresh capture against the chain as it is right now:
+
+```bash
+npm run build && npm run docs
+```
+
+That chains `docs:tools` (tool reference from the live schemas), `docs:session`
+(`scripts/capture-session.mjs` → `docs/session.json`), and `docs:site`
+(`scripts/build-docs.mjs` → `docs/index.html`). The page fails to build rather than render invented
+numbers if the transcript is missing. Deploy the folder anywhere static:
 
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare_Pages-101418?style=flat-square)](https://dash.cloudflare.com/?to=/:account/pages/new)
 [![Deploy to Netlify](https://img.shields.io/badge/Deploy-Netlify-101418?style=flat-square)](https://app.netlify.com/start)
@@ -132,7 +144,7 @@ ROBINHOOD_CHAIN_PRIVATE_KEY=0x...
 | `execute_swap` | **Guarded.** Preview → `confirm: true` → broadcast. Spend-capped. |
 | `transfer_usdg` | **Guarded.** Preview → `confirm: true` → broadcast. Spend-capped. |
 
-See [**Safety model**](docs/index.html#safety) for the full guard design. Summary:
+See [**Safety model**](docs/safety.html) for the full guard design. Summary:
 
 1. **Kill switch** — the server process itself refuses to start without `HOOD_MCP_ENABLE_TRADING=1`.
 2. **Eligibility gate** — buying a tokenized Stock Token requires `HOOD_MCP_ACKNOWLEDGE_ELIGIBILITY=1`
@@ -191,10 +203,13 @@ the owner should take:
   [official schema](https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json).
   Submit with the [`mcp-publisher`](https://github.com/modelcontextprotocol/registry) CLI once
   `hood-mcp` is live on npm.
-- **Smithery** — their current flow publishes a *running* server URL or an `.mcpb` bundle
-  (`smithery mcp publish <url> -n <org/server>`), not a static config file. Deploy the HTTP
-  transport (`hood-mcp --http`) somewhere public, then run
-  `smithery mcp publish https://your-deployment/mcp -n nirholas/hood-mcp`.
+- **Smithery** — [`smithery.yaml`](./smithery.yaml) in the repo root declares the stdio
+  `startCommand`, so Smithery can install the data server straight from npm
+  (`npx -y hood-mcp`) with `HOOD_MCP_NETWORK` and `ALCHEMY_KEY` exposed as optional settings.
+  The trading server is deliberately not declared there: it signs transactions and is a
+  hand-install only. Connect the GitHub repo at [smithery.ai/new](https://smithery.ai/new), or
+  publish a hosted deployment instead by running the HTTP transport (`hood-mcp --http`) somewhere
+  public and calling `smithery mcp publish https://your-deployment/mcp -n nirholas/hood-mcp`.
 
 ## License
 

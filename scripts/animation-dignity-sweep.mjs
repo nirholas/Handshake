@@ -426,24 +426,39 @@ function loadClip(name) {
 const _qa = new Quaternion();
 const _qb = new Quaternion();
 
-/** Max angle (degrees) between any two keyframes of a quaternion track. */
+/**
+ * How far a bone actually swings over the clip: the angular diameter of its
+ * keyframed rotations, in degrees.
+ *
+ * Computed with the standard two-pass diameter walk rather than all-pairs (a 15s
+ * idle carries ~950 keys per bone, times 52 bones, times 10 rigs, times 2 lanes).
+ * Pass 1 finds the key farthest from the first; pass 2 measures every key against
+ * that one. The result is a lower bound on the true diameter and exact whenever
+ * the extremes are mutually farthest, which they are for the cyclic limb motion
+ * these clips carry. A lower bound is the safe direction for a floor check: it
+ * can never report motion that is not there.
+ */
 function trackSwingDeg(track) {
 	const v = track.values;
 	const n = v.length / 4;
-	let max = 0;
-	for (let i = 0; i < n; i++) {
-		_qa.set(v[i * 4], v[i * 4 + 1], v[i * 4 + 2], v[i * 4 + 3]);
-		for (let j = i + 1; j < n; j++) {
-			_qb.set(v[j * 4], v[j * 4 + 1], v[j * 4 + 2], v[j * 4 + 3]);
-			const a = _qa.angleTo(_qb);
-			if (a > max) max = a;
+	if (n < 2) return 0;
+	const at = (q, i) => q.set(v[i * 4], v[i * 4 + 1], v[i * 4 + 2], v[i * 4 + 3]);
+
+	at(_qa, 0);
+	let anchor = 0;
+	let best = 0;
+	for (let i = 1; i < n; i++) {
+		const a = at(_qb, i).angleTo(_qa);
+		if (a > best) {
+			best = a;
+			anchor = i;
 		}
-		// A dense clip has hundreds of keys; the extremes of a cyclic motion are
-		// always reachable from the first key, so cap the inner sweep once the
-		// outer loop has walked a full cycle. Keeps the sweep O(n) in practice
-		// without weakening the measurement (the max over all pairs of a cycle is
-		// found within one period of the first key).
-		if (i > 0 && max > 0) break;
+	}
+	at(_qa, anchor);
+	let max = best;
+	for (let i = 0; i < n; i++) {
+		const a = at(_qb, i).angleTo(_qa);
+		if (a > max) max = a;
 	}
 	return (max * 180) / Math.PI;
 }

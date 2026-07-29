@@ -56,12 +56,18 @@ export function shortWallet(addr) {
 /**
  * Collector accounts are a mix of real wallets and guest session handles
  * (`g_*` / `guest-*`). A guest handle is not an address, so truncating it in
- * the middle produces noise; label it plainly instead.
+ * the middle produces noise. Label it as a guest, but keep a short tail so a
+ * board of several guests stays readable as several distinct people rather
+ * than five identical rows.
  * @param {string} account
  */
 export function displayAccount(account) {
 	const s = String(account || '');
-	if (/^(g_|guest-)/.test(s)) return 'Guest';
+	const guest = /^(g_|guest-)(.*)$/.exec(s);
+	if (guest) {
+		const tail = guest[2].replace(/[^a-z0-9]/gi, '').slice(-4);
+		return tail ? `Guest ${tail}` : 'Guest';
+	}
 	return shortWallet(s);
 }
 

@@ -271,12 +271,9 @@ function auditDom(minTarget) {
 async function probeScrollGestures(page, cdp, canvases) {
 	const results = [];
 	const vh = await page.evaluate(() => window.innerHeight);
-	const swipe = async (x, y) => {
-		await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-		await page.waitForTimeout(400);
+	const send = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
+	const swipeUp = async (x, y) => {
 		const before = await page.evaluate(() => window.scrollY);
-		const send = (type, points) =>
-			cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
 		await send('touchStart', [{ x, y }]);
 		for (let i = 1; i <= 6; i++) {
 			await send('touchMove', [{ x, y: y - i * 30 }]);
@@ -288,34 +285,53 @@ async function probeScrollGestures(page, cdp, canvases) {
 		return Math.round(after - before);
 	};
 
-	// Control: swipe near the left edge, below the fold start, avoiding canvases.
+	// Control: from the top of the document, swipe over ordinary page content at
+	// the left edge. Establishes that this document scrolls by touch at all.
 	let control = 0;
 	try {
-		control = await swipe(8, Math.round(vh * 0.7));
+		await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+		await page.waitForTimeout(400);
+		control = await swipeUp(6, Math.round(vh * 0.7));
 	} catch {
 		control = 0;
 	}
 
+	const findCanvas = (sel) => {
+		const el = Array.from(document.querySelectorAll('canvas')).find((n) => {
+			const id = n.id ? `#${n.id}` : '';
+			const cls =
+				typeof n.className === 'string' && n.className.trim()
+					? `.${n.className.trim().split(/\s+/).slice(0, 3).join('.')}`
+					: '';
+			return `canvas${id}${cls}` === sel;
+		});
+		if (!el) return null;
+		el.scrollIntoView({ block: 'center', behavior: 'instant' });
+		const r = el.getBoundingClientRect();
+		return {
+			x: Math.round(r.x + r.width / 2),
+			y: Math.round(Math.min(Math.max(r.y + r.height / 2, 40), window.innerHeight - 40)),
+			scrollY: Math.round(window.scrollY),
+			headroom: Math.round(document.documentElement.scrollHeight - window.innerHeight - window.scrollY),
+		};
+	};
+
 	for (const c of canvases) {
 		if (!c.visible || c.w < 100 || c.h < 100) continue;
 		try {
-			const box = await page.evaluate((sel) => {
-				const el = Array.from(document.querySelectorAll('canvas')).find((n) => {
-					const id = n.id ? `#${n.id}` : '';
-					const cls =
-						typeof n.className === 'string' && n.className.trim()
-							? `.${n.className.trim().split(/\s+/).slice(0, 3).join('.')}`
-							: '';
-					return `canvas${id}${cls}` === sel;
-				});
-				if (!el) return null;
-				window.scrollTo({ top: 0, behavior: 'instant' });
-				const r = el.getBoundingClientRect();
-				return { x: r.x + r.width / 2, y: r.y + r.height / 2, top: r.top };
-			}, c.sel);
-			if (!box || box.y < 0 || box.y > vh) continue;
-			const moved = await swipe(Math.round(box.x), Math.round(box.y));
-			results.push({ sel: c.sel, touchAction: c.touchAction, scrolled: moved, control });
+			const box = await page.evaluate(findCanvas, c.sel);
+			if (!box) continue;
+			await page.waitForTimeout(400);
+			const moved = await swipeUp(box.x, box.y);
+			results.push({
+				sel: c.sel,
+				touchAction: c.touchAction,
+				scrolled: moved,
+				headroom: box.headroom,
+				// Only a canvas with real scroll headroom under it that refuses to
+				// move the page is actually fighting page scroll.
+				swallowed: box.headroom > 200 && Math.abs(moved) < 5,
+			});
 		} catch {
 			/* canvas vanished between audit and probe */
 		}
@@ -405,8 +421,8 @@ ${lines.length ? `- undersized targets:\n${lines.join('\n')}\n` : '- undersized 
 								? r.gesture.canvases
 										.map(
 											(g) =>
-												`  - \`${g.sel}\` touch-action=${g.touchAction} -> page scrolled ${g.scrolled} px${
-													g.control > 20 && Math.abs(g.scrolled) < 5 ? ' **swallowed the swipe**' : ''
+												`  - \`${g.sel}\` touch-action=${g.touchAction} -> page scrolled ${g.scrolled} px (headroom ${g.headroom} px)${
+													g.swallowed ? ' **swallowed the swipe**' : ''
 												}`,
 										)
 										.join('\n')

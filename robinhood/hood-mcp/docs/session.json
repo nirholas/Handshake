@@ -1,0 +1,1741 @@
+{
+  "capturedAt": "2026-07-29T05:55:03.922Z",
+  "sessions": [
+    {
+      "network": "mainnet",
+      "capturedAt": "2026-07-29T05:54:55.861Z",
+      "totalMs": 11225,
+      "serverInfo": {
+        "name": "hood-mcp",
+        "version": "0.1.0"
+      },
+      "instructions": "Read-only market data for Robinhood Chain (chain ID 4663), the permissionless\nArbitrum Orbit L2 with tokenized-equity \"Stock Tokens\", the USDG stablecoin, and the NOXA / The\nOdyssey memecoin launchpads. Use get_stock_quote for a ticker's oracle+DEX price and premium,\nget_portfolio for a wallet's holdings, list_trending_coins / get_coin for memecoins,\nget_recent_launches / watch_launches for launchpad activity, and get_chain_stats for the chain.\nAll data is public and read-only. To place trades, use the separate hood-mcp-trading server.",
+      "tools": [
+        {
+          "name": "get_chain_stats",
+          "title": "Robinhood Chain stats",
+          "description": "Live Robinhood Chain overview: latest block, gas price, TVL, and network totals (blocks, addresses, transactions, block time). No inputs.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "list_stock_tokens",
+          "title": "List Stock Tokens",
+          "description": "The registry of tokenized-equity Stock Tokens on Robinhood Chain (ticker, name, contract, Chainlink feed). Set pricedOnly to return only tokens with a live feed.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "pricedOnly": {
+                "type": "boolean",
+                "description": "Only tokens with a Chainlink price feed."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 200,
+                "description": "Max entries (default all)."
+              },
+              "offset": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Skip this many (pagination)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_stock_quote",
+          "title": "Get Stock Token quote",
+          "description": "Price a Stock Token by ticker: the Chainlink oracle price, the on-chain Uniswap DEX mid price, the premium/discount between them, and the ERC-8056 multiplier (so you also get the underlying share price).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Ticker, e.g. \"AAPL\" or \"TSLA\" (case-insensitive)."
+              },
+              "maxAgeSeconds": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "description": "Reject the Chainlink answer if older than this (default 3 days; 24/5 feeds)."
+              }
+            },
+            "required": [
+              "symbol"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_portfolio",
+          "title": "Get Stock Token portfolio",
+          "description": "Multiplier-correct Stock Token portfolio for any address: per-position token balance, ERC-8056 share-equivalent, USD value, plus the USDG cash balance. Read-only.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Wallet address (0x…40 hex) to value."
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_coin",
+          "title": "Get token / memecoin detail",
+          "description": "Detail for any Robinhood Chain token by contract address: price, 24h volume, liquidity, FDV, holder count, and whether it is a registered Stock Token.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Token contract address (0x…40 hex)."
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "list_trending_coins",
+          "title": "List trending coins",
+          "description": "The trending pools on Robinhood Chain right now (memecoins and stocks) with price, 24h volume, price change, and liquidity — the pulse of the chain.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 30,
+                "description": "How many (default 10, max 30)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_recent_launches",
+          "title": "Recent launchpad launches",
+          "description": "Recently launched tokens on Robinhood Chain launchpads (NOXA and The Odyssey), newest first, scanned from on-chain logs.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "lookbackBlocks": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 500000,
+                "description": "Blocks to scan back (~30k ≈ 1h; default 30000)."
+              },
+              "launchpad": {
+                "type": "string",
+                "enum": [
+                  "noxa",
+                  "odyssey"
+                ],
+                "description": "Restrict to one launchpad."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 100,
+                "description": "Max launches to return (default 25)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "watch_launches",
+          "title": "Watch for live launches",
+          "description": "Watch NOXA + The Odyssey live for new token launches, blocking up to waitSeconds (or until limit launches are seen), then returns what appeared. Falls back to the most recent launch if none fire in the window.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "waitSeconds": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 120,
+                "description": "How long to watch (default 20, max 120)."
+              },
+              "launchpad": {
+                "type": "string",
+                "enum": [
+                  "noxa",
+                  "odyssey"
+                ],
+                "description": "Restrict to one launchpad."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 50,
+                "description": "Stop early after this many (default 20)."
+              },
+              "includeRecentIfEmpty": {
+                "type": "boolean",
+                "description": "If nothing launches in the window, return the latest recent launch (default true)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "search_token",
+          "title": "Search tokens",
+          "description": "Find tokens on Robinhood Chain by ticker, name, or contract address — searches the Stock Token registry and the Blockscout index together.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Ticker, name fragment, or 0x address."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 50,
+                "description": "Max results (default 20)."
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "name": "get_chain_stats",
+          "arguments": {},
+          "ms": 799,
+          "isError": false,
+          "text": "{\n  \"network\": \"mainnet\",\n  \"chainId\": 4663,\n  \"latestBlock\": \"22218404\",\n  \"gasPriceWei\": \"25952000\",\n  \"gasPriceGwei\": 0.026,\n  \"tvlUsd\": 338136167.5648021,\n  \"blockscout\": {\n    \"averageBlockTimeMs\": 101,\n    \"totalBlocks\": \"22217047\",\n    \"totalAddresses\": \"4797848\",\n    \"totalTransactions\": \"187224382\",\n    \"transactionsToday\": \"9205189\",\n    \"gasPrices\": {\n      \"slow\": 0.03,\n      \"average\": 0.08,\n      \"fast\": 0.15\n    },\n    \"ethPriceUsd\": 1910.1\n  },\n  \"sources\": [\n    \"robinhood-chain-rpc\",\n    \"defillama\",\n    \"blockscout\"\n  ],\n  \"asOf\": \"2026-07-29T05:54:53.465Z\"\n}",
+          "parsed": {
+            "network": "mainnet",
+            "chainId": 4663,
+            "latestBlock": "22218404",
+            "gasPriceWei": "25952000",
+            "gasPriceGwei": 0.026,
+            "tvlUsd": 338136167.5648021,
+            "blockscout": {
+              "averageBlockTimeMs": 101,
+              "totalBlocks": "22217047",
+              "totalAddresses": "4797848",
+              "totalTransactions": "187224382",
+              "transactionsToday": "9205189",
+              "gasPrices": {
+                "slow": 0.03,
+                "average": 0.08,
+                "fast": 0.15
+              },
+              "ethPriceUsd": 1910.1
+            },
+            "sources": [
+              "robinhood-chain-rpc",
+              "defillama",
+              "blockscout"
+            ],
+            "asOf": "2026-07-29T05:54:53.465Z"
+          }
+        },
+        {
+          "name": "get_stock_quote",
+          "arguments": {
+            "symbol": "AAPL"
+          },
+          "ms": 838,
+          "isError": false,
+          "text": "{\n  \"symbol\": \"AAPL\",\n  \"name\": \"Apple • Robinhood Token\",\n  \"address\": \"0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9\",\n  \"network\": \"mainnet\",\n  \"chainlink\": {\n    \"priceUsd\": 341.26,\n    \"feed\": \"0x6B22A786bAa607d76728168703a39Ea9C99f2cD0\",\n    \"roundId\": \"18446744073709551925\",\n    \"updatedAt\": 1785302684,\n    \"ageSeconds\": 1809\n  },\n  \"chainlinkError\": null,\n  \"dexPriceUsd\": 340.399395,\n  \"dexError\": null,\n  \"premiumPct\": -0.2522,\n  \"premiumNote\": \"positive = DEX trades above oracle\",\n  \"uiMultiplier\": \"1000000000000000000\",\n  \"underlyingSharePriceUsd\": 341.26,\n  \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9\",\n  \"sources\": [\n    \"chainlink\",\n    \"uniswap-v3\",\n    \"robinhood-chain-rpc\"\n  ],\n  \"asOf\": \"2026-07-29T05:54:54.324Z\",\n  \"disclosure\": \"Stock Tokens are tokenized debt securities (Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. This tool is read-only data.\"\n}",
+          "parsed": {
+            "symbol": "AAPL",
+            "name": "Apple • Robinhood Token",
+            "address": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+            "network": "mainnet",
+            "chainlink": {
+              "priceUsd": 341.26,
+              "feed": "0x6B22A786bAa607d76728168703a39Ea9C99f2cD0",
+              "roundId": "18446744073709551925",
+              "updatedAt": 1785302684,
+              "ageSeconds": 1809
+            },
+            "chainlinkError": null,
+            "dexPriceUsd": 340.399395,
+            "dexError": null,
+            "premiumPct": -0.2522,
+            "premiumNote": "positive = DEX trades above oracle",
+            "uiMultiplier": "1000000000000000000",
+            "underlyingSharePriceUsd": 341.26,
+            "explorer": "https://robinhoodchain.blockscout.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+            "sources": [
+              "chainlink",
+              "uniswap-v3",
+              "robinhood-chain-rpc"
+            ],
+            "asOf": "2026-07-29T05:54:54.324Z",
+            "disclosure": "Stock Tokens are tokenized debt securities (Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. This tool is read-only data."
+          }
+        },
+        {
+          "name": "list_trending_coins",
+          "arguments": {
+            "limit": 5
+          },
+          "ms": 301,
+          "isError": false,
+          "text": "{\n  \"network\": \"mainnet\",\n  \"count\": 5,\n  \"coins\": [\n    {\n      \"poolName\": \"ASTEROID / WETH\",\n      \"poolAddress\": \"0x5d0808de5c01fef74b1c81ecb4f1baa3974f28f1\",\n      \"baseTokenAddress\": \"0x38aaf33082b20aff2e33433138de920f131b7777\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.000546565206650149,\n      \"priceChange24hPct\": 142.964,\n      \"volume24hUsd\": 1063951.86724201,\n      \"liquidityUsd\": 80518.5464,\n      \"fdvUsd\": 546565.2067,\n      \"buys24h\": 3621,\n      \"sells24h\": 2754,\n      \"createdAt\": \"2026-07-21T09:49:58Z\"\n    },\n    {\n      \"poolName\": \"FROGE / WETH 1%\",\n      \"poolAddress\": \"0x8236b1bc2e58411bd7be1fe62b512a2f47f7b8f6\",\n      \"baseTokenAddress\": \"0x530237d8347e0dc4137d5f04ab7a952ff71df20d\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.0000035167325314918,\n      \"priceChange24hPct\": 28.723,\n      \"volume24hUsd\": 55744.8178726283,\n      \"liquidityUsd\": 3545.8034,\n      \"fdvUsd\": 3516.732531,\n      \"buys24h\": 1612,\n      \"sells24h\": 1015,\n      \"createdAt\": \"2026-07-28T17:33:37Z\"\n    },\n    {\n      \"poolName\": \"PLTS / WETH\",\n      \"poolAddress\": \"0xdbbe5af0e5563fa3a67c7fac601a57dce6e450ff\",\n      \"baseTokenAddress\": \"0xbcca8c2dd0ffb6ca5210dba327e027756c047777\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 1.94102655402234e-9,\n      \"priceChange24hPct\": -99.901,\n      \"volume24hUsd\": 15902225.2135792,\n      \"liquidityUsd\": 0.191,\n      \"fdvUsd\": 1.941026554,\n      \"buys24h\": 6872,\n      \"sells24h\": 1056,\n      \"createdAt\": \"2026-07-28T17:24:09Z\"\n    },\n    {\n      \"poolName\": \"PIPEDOG / WETH 1%\",\n      \"poolAddress\": \"0xb7f10f74b39291b9290b779978e19a7637c742d6\",\n      \"baseTokenAddress\": \"0x5cb6f181081301b44905f3ae15419112ecabd8a6\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.00330896516329277,\n      \"priceChange24hPct\": 7793.242,\n      \"volume24hUsd\": 60274246.5498963,\n      \"liquidityUsd\": 10090826.0318,\n      \"fdvUsd\": 40234140.4877809,\n      \"buys24h\": 27262,\n      \"sells24h\": 17355,\n      \"createdAt\": \"2026-07-28T20:31:52Z\"\n    },\n    {\n      \"poolName\": \"CASHCAT / WETH 1%\",\n      \"poolAddress\": \"0xa70fc67c9f69da90b63a0e4c05d229954574e313\",\n      \"baseTokenAddress\": \"0x020bfc650a365f8bb26819deaabf3e21291018b4\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.040571997442232,\n      \"priceChange24hPct\": 0.57,\n      \"volume24hUsd\": 7870242.51179214,\n      \"liquidityUsd\": 2923977.0396,\n      \"fdvUsd\": 40156036.1427855,\n      \"buys24h\": 5203,\n      \"sells24h\": 4125,\n      \"createdAt\": \"2026-06-29T07:00:49Z\"\n    }\n  ],\n  \"source\": \"geckoterminal\",\n  \"asOf\": \"2026-07-29T05:54:54.633Z\"\n}",
+          "parsed": {
+            "network": "mainnet",
+            "count": 5,
+            "coins": [
+              {
+                "poolName": "ASTEROID / WETH",
+                "poolAddress": "0x5d0808de5c01fef74b1c81ecb4f1baa3974f28f1",
+                "baseTokenAddress": "0x38aaf33082b20aff2e33433138de920f131b7777",
+                "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                "priceUsd": 0.000546565206650149,
+                "priceChange24hPct": 142.964,
+                "volume24hUsd": 1063951.86724201,
+                "liquidityUsd": 80518.5464,
+                "fdvUsd": 546565.2067,
+                "buys24h": 3621,
+                "sells24h": 2754,
+                "createdAt": "2026-07-21T09:49:58Z"
+              },
+              {
+                "poolName": "FROGE / WETH 1%",
+                "poolAddress": "0x8236b1bc2e58411bd7be1fe62b512a2f47f7b8f6",
+                "baseTokenAddress": "0x530237d8347e0dc4137d5f04ab7a952ff71df20d",
+                "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                "priceUsd": 0.0000035167325314918,
+                "priceChange24hPct": 28.723,
+                "volume24hUsd": 55744.8178726283,
+                "liquidityUsd": 3545.8034,
+                "fdvUsd": 3516.732531,
+                "buys24h": 1612,
+                "sells24h": 1015,
+                "createdAt": "2026-07-28T17:33:37Z"
+              },
+              {
+                "poolName": "PLTS / WETH",
+                "poolAddress": "0xdbbe5af0e5563fa3a67c7fac601a57dce6e450ff",
+                "baseTokenAddress": "0xbcca8c2dd0ffb6ca5210dba327e027756c047777",
+                "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                "priceUsd": 1.94102655402234e-9,
+                "priceChange24hPct": -99.901,
+                "volume24hUsd": 15902225.2135792,
+                "liquidityUsd": 0.191,
+                "fdvUsd": 1.941026554,
+                "buys24h": 6872,
+                "sells24h": 1056,
+                "createdAt": "2026-07-28T17:24:09Z"
+              },
+              {
+                "poolName": "PIPEDOG / WETH 1%",
+                "poolAddress": "0xb7f10f74b39291b9290b779978e19a7637c742d6",
+                "baseTokenAddress": "0x5cb6f181081301b44905f3ae15419112ecabd8a6",
+                "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                "priceUsd": 0.00330896516329277,
+                "priceChange24hPct": 7793.242,
+                "volume24hUsd": 60274246.5498963,
+                "liquidityUsd": 10090826.0318,
+                "fdvUsd": 40234140.4877809,
+                "buys24h": 27262,
+                "sells24h": 17355,
+                "createdAt": "2026-07-28T20:31:52Z"
+              },
+              {
+                "poolName": "CASHCAT / WETH 1%",
+                "poolAddress": "0xa70fc67c9f69da90b63a0e4c05d229954574e313",
+                "baseTokenAddress": "0x020bfc650a365f8bb26819deaabf3e21291018b4",
+                "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                "priceUsd": 0.040571997442232,
+                "priceChange24hPct": 0.57,
+                "volume24hUsd": 7870242.51179214,
+                "liquidityUsd": 2923977.0396,
+                "fdvUsd": 40156036.1427855,
+                "buys24h": 5203,
+                "sells24h": 4125,
+                "createdAt": "2026-06-29T07:00:49Z"
+              }
+            ],
+            "source": "geckoterminal",
+            "asOf": "2026-07-29T05:54:54.633Z"
+          }
+        },
+        {
+          "name": "search_token",
+          "arguments": {
+            "query": "NVDA",
+            "limit": 3
+          },
+          "ms": 760,
+          "isError": false,
+          "text": "{\n  \"network\": \"mainnet\",\n  \"query\": \"NVDA\",\n  \"count\": 3,\n  \"results\": [\n    {\n      \"address\": \"0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC\",\n      \"symbol\": \"NVDA\",\n      \"name\": \"NVIDIA • Robinhood Token\",\n      \"type\": \"stock-token\",\n      \"isStockToken\": true,\n      \"verified\": true,\n      \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC\"\n    },\n    {\n      \"address\": \"0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3\",\n      \"symbol\": \"NVDA\",\n      \"name\": \"NVDA\",\n      \"type\": \"token\",\n      \"isStockToken\": false,\n      \"verified\": false,\n      \"marketCapUsd\": null,\n      \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3\"\n    },\n    {\n      \"address\": \"0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09\",\n      \"symbol\": \"NVDACAT\",\n      \"name\": \"NVIDIA CAT\",\n      \"type\": \"token\",\n      \"isStockToken\": false,\n      \"verified\": true,\n      \"marketCapUsd\": null,\n      \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09\"\n    }\n  ],\n  \"sources\": [\n    \"hoodchain-registry\",\n    \"blockscout\"\n  ],\n  \"asOf\": \"2026-07-29T05:54:55.395Z\"\n}",
+          "parsed": {
+            "network": "mainnet",
+            "query": "NVDA",
+            "count": 3,
+            "results": [
+              {
+                "address": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+                "symbol": "NVDA",
+                "name": "NVIDIA • Robinhood Token",
+                "type": "stock-token",
+                "isStockToken": true,
+                "verified": true,
+                "explorer": "https://robinhoodchain.blockscout.com/address/0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC"
+              },
+              {
+                "address": "0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3",
+                "symbol": "NVDA",
+                "name": "NVDA",
+                "type": "token",
+                "isStockToken": false,
+                "verified": false,
+                "marketCapUsd": null,
+                "explorer": "https://robinhoodchain.blockscout.com/address/0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3"
+              },
+              {
+                "address": "0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09",
+                "symbol": "NVDACAT",
+                "name": "NVIDIA CAT",
+                "type": "token",
+                "isStockToken": false,
+                "verified": true,
+                "marketCapUsd": null,
+                "explorer": "https://robinhoodchain.blockscout.com/address/0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09"
+              }
+            ],
+            "sources": [
+              "hoodchain-registry",
+              "blockscout"
+            ],
+            "asOf": "2026-07-29T05:54:55.395Z"
+          }
+        }
+      ],
+      "frames": [
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:44.703Z",
+          "message": {
+            "method": "initialize",
+            "params": {
+              "protocolVersion": "2025-11-25",
+              "capabilities": {},
+              "clientInfo": {
+                "name": "hood-mcp-session-capture",
+                "version": "1.0.0"
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:54:52.611Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 0,
+            "result": {
+              "protocolVersion": "2025-11-25",
+              "capabilities": {
+                "tools": {
+                  "listChanged": true
+                }
+              },
+              "serverInfo": {
+                "name": "hood-mcp",
+                "version": "0.1.0"
+              },
+              "instructions": "Read-only market data for Robinhood Chain (chain ID 4663), the permissionless\nArbitrum Orbit L2 with tokenized-equity \"Stock Tokens\", the USDG stablecoin, and the NOXA / The\nOdyssey memecoin launchpads. Use get_stock_quote for a ticker's oracle+DEX price and premium,\nget_portfolio for a wallet's holdings, list_trending_coins / get_coin for memecoins,\nget_recent_launches / watch_launches for launchpad activity, and get_chain_stats for the chain.\nAll data is public and read-only. To place trades, use the separate hood-mcp-trading server."
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:52.626Z",
+          "message": {
+            "method": "notifications/initialized",
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:52.626Z",
+          "message": {
+            "method": "tools/list",
+            "jsonrpc": "2.0",
+            "id": 1
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:54:52.681Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+              "tools": [
+                {
+                  "name": "get_chain_stats",
+                  "title": "Robinhood Chain stats",
+                  "description": "Live Robinhood Chain overview: latest block, gas price, TVL, and network totals (blocks, addresses, transactions, block time). No inputs.",
+                  "inputSchema": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "list_stock_tokens",
+                  "title": "List Stock Tokens",
+                  "description": "The registry of tokenized-equity Stock Tokens on Robinhood Chain (ticker, name, contract, Chainlink feed). Set pricedOnly to return only tokens with a live feed.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "pricedOnly": {
+                        "type": "boolean",
+                        "description": "Only tokens with a Chainlink price feed."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 200,
+                        "description": "Max entries (default all)."
+                      },
+                      "offset": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Skip this many (pagination)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": false
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_stock_quote",
+                  "title": "Get Stock Token quote",
+                  "description": "Price a Stock Token by ticker: the Chainlink oracle price, the on-chain Uniswap DEX mid price, the premium/discount between them, and the ERC-8056 multiplier (so you also get the underlying share price).",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "symbol": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Ticker, e.g. \"AAPL\" or \"TSLA\" (case-insensitive)."
+                      },
+                      "maxAgeSeconds": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "description": "Reject the Chainlink answer if older than this (default 3 days; 24/5 feeds)."
+                      }
+                    },
+                    "required": [
+                      "symbol"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_portfolio",
+                  "title": "Get Stock Token portfolio",
+                  "description": "Multiplier-correct Stock Token portfolio for any address: per-position token balance, ERC-8056 share-equivalent, USD value, plus the USDG cash balance. Read-only.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string",
+                        "description": "Wallet address (0x…40 hex) to value."
+                      }
+                    },
+                    "required": [
+                      "address"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_coin",
+                  "title": "Get token / memecoin detail",
+                  "description": "Detail for any Robinhood Chain token by contract address: price, 24h volume, liquidity, FDV, holder count, and whether it is a registered Stock Token.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string",
+                        "description": "Token contract address (0x…40 hex)."
+                      }
+                    },
+                    "required": [
+                      "address"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "list_trending_coins",
+                  "title": "List trending coins",
+                  "description": "The trending pools on Robinhood Chain right now (memecoins and stocks) with price, 24h volume, price change, and liquidity — the pulse of the chain.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 30,
+                        "description": "How many (default 10, max 30)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_recent_launches",
+                  "title": "Recent launchpad launches",
+                  "description": "Recently launched tokens on Robinhood Chain launchpads (NOXA and The Odyssey), newest first, scanned from on-chain logs.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "lookbackBlocks": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 500000,
+                        "description": "Blocks to scan back (~30k ≈ 1h; default 30000)."
+                      },
+                      "launchpad": {
+                        "type": "string",
+                        "enum": [
+                          "noxa",
+                          "odyssey"
+                        ],
+                        "description": "Restrict to one launchpad."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 100,
+                        "description": "Max launches to return (default 25)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "watch_launches",
+                  "title": "Watch for live launches",
+                  "description": "Watch NOXA + The Odyssey live for new token launches, blocking up to waitSeconds (or until limit launches are seen), then returns what appeared. Falls back to the most recent launch if none fire in the window.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "waitSeconds": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 120,
+                        "description": "How long to watch (default 20, max 120)."
+                      },
+                      "launchpad": {
+                        "type": "string",
+                        "enum": [
+                          "noxa",
+                          "odyssey"
+                        ],
+                        "description": "Restrict to one launchpad."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 50,
+                        "description": "Stop early after this many (default 20)."
+                      },
+                      "includeRecentIfEmpty": {
+                        "type": "boolean",
+                        "description": "If nothing launches in the window, return the latest recent launch (default true)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "search_token",
+                  "title": "Search tokens",
+                  "description": "Find tokens on Robinhood Chain by ticker, name, or contract address — searches the Stock Token registry and the Blockscout index together.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Ticker, name fragment, or 0x address."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 50,
+                        "description": "Max results (default 20)."
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:52.703Z",
+          "message": {
+            "method": "tools/call",
+            "params": {
+              "name": "get_chain_stats",
+              "arguments": {}
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:54:53.500Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"network\": \"mainnet\",\n  \"chainId\": 4663,\n  \"latestBlock\": \"22218404\",\n  \"gasPriceWei\": \"25952000\",\n  \"gasPriceGwei\": 0.026,\n  \"tvlUsd\": 338136167.5648021,\n  \"blockscout\": {\n    \"averageBlockTimeMs\": 101,\n    \"totalBlocks\": \"22217047\",\n    \"totalAddresses\": \"4797848\",\n    \"totalTransactions\": \"187224382\",\n    \"transactionsToday\": \"9205189\",\n    \"gasPrices\": {\n      \"slow\": 0.03,\n      \"average\": 0.08,\n      \"fast\": 0.15\n    },\n    \"ethPriceUsd\": 1910.1\n  },\n  \"sources\": [\n    \"robinhood-chain-rpc\",\n    \"defillama\",\n    \"blockscout\"\n  ],\n  \"asOf\": \"2026-07-29T05:54:53.465Z\"\n}"
+                }
+              ],
+              "structuredContent": {
+                "network": "mainnet",
+                "chainId": 4663,
+                "latestBlock": "22218404",
+                "gasPriceWei": "25952000",
+                "gasPriceGwei": 0.026,
+                "tvlUsd": 338136167.5648021,
+                "blockscout": {
+                  "averageBlockTimeMs": 101,
+                  "totalBlocks": "22217047",
+                  "totalAddresses": "4797848",
+                  "totalTransactions": "187224382",
+                  "transactionsToday": "9205189",
+                  "gasPrices": {
+                    "slow": 0.03,
+                    "average": 0.08,
+                    "fast": 0.15
+                  },
+                  "ethPriceUsd": 1910.1
+                },
+                "sources": [
+                  "robinhood-chain-rpc",
+                  "defillama",
+                  "blockscout"
+                ],
+                "asOf": "2026-07-29T05:54:53.465Z"
+              }
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:53.501Z",
+          "message": {
+            "method": "tools/call",
+            "params": {
+              "name": "get_stock_quote",
+              "arguments": {
+                "symbol": "AAPL"
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 3
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:54:54.339Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"symbol\": \"AAPL\",\n  \"name\": \"Apple • Robinhood Token\",\n  \"address\": \"0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9\",\n  \"network\": \"mainnet\",\n  \"chainlink\": {\n    \"priceUsd\": 341.26,\n    \"feed\": \"0x6B22A786bAa607d76728168703a39Ea9C99f2cD0\",\n    \"roundId\": \"18446744073709551925\",\n    \"updatedAt\": 1785302684,\n    \"ageSeconds\": 1809\n  },\n  \"chainlinkError\": null,\n  \"dexPriceUsd\": 340.399395,\n  \"dexError\": null,\n  \"premiumPct\": -0.2522,\n  \"premiumNote\": \"positive = DEX trades above oracle\",\n  \"uiMultiplier\": \"1000000000000000000\",\n  \"underlyingSharePriceUsd\": 341.26,\n  \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9\",\n  \"sources\": [\n    \"chainlink\",\n    \"uniswap-v3\",\n    \"robinhood-chain-rpc\"\n  ],\n  \"asOf\": \"2026-07-29T05:54:54.324Z\",\n  \"disclosure\": \"Stock Tokens are tokenized debt securities (Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. This tool is read-only data.\"\n}"
+                }
+              ],
+              "structuredContent": {
+                "symbol": "AAPL",
+                "name": "Apple • Robinhood Token",
+                "address": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+                "network": "mainnet",
+                "chainlink": {
+                  "priceUsd": 341.26,
+                  "feed": "0x6B22A786bAa607d76728168703a39Ea9C99f2cD0",
+                  "roundId": "18446744073709551925",
+                  "updatedAt": 1785302684,
+                  "ageSeconds": 1809
+                },
+                "chainlinkError": null,
+                "dexPriceUsd": 340.399395,
+                "dexError": null,
+                "premiumPct": -0.2522,
+                "premiumNote": "positive = DEX trades above oracle",
+                "uiMultiplier": "1000000000000000000",
+                "underlyingSharePriceUsd": 341.26,
+                "explorer": "https://robinhoodchain.blockscout.com/address/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+                "sources": [
+                  "chainlink",
+                  "uniswap-v3",
+                  "robinhood-chain-rpc"
+                ],
+                "asOf": "2026-07-29T05:54:54.324Z",
+                "disclosure": "Stock Tokens are tokenized debt securities (Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. This tool is read-only data."
+              }
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:54.339Z",
+          "message": {
+            "method": "tools/call",
+            "params": {
+              "name": "list_trending_coins",
+              "arguments": {
+                "limit": 5
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 4
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:54:54.635Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"network\": \"mainnet\",\n  \"count\": 5,\n  \"coins\": [\n    {\n      \"poolName\": \"ASTEROID / WETH\",\n      \"poolAddress\": \"0x5d0808de5c01fef74b1c81ecb4f1baa3974f28f1\",\n      \"baseTokenAddress\": \"0x38aaf33082b20aff2e33433138de920f131b7777\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.000546565206650149,\n      \"priceChange24hPct\": 142.964,\n      \"volume24hUsd\": 1063951.86724201,\n      \"liquidityUsd\": 80518.5464,\n      \"fdvUsd\": 546565.2067,\n      \"buys24h\": 3621,\n      \"sells24h\": 2754,\n      \"createdAt\": \"2026-07-21T09:49:58Z\"\n    },\n    {\n      \"poolName\": \"FROGE / WETH 1%\",\n      \"poolAddress\": \"0x8236b1bc2e58411bd7be1fe62b512a2f47f7b8f6\",\n      \"baseTokenAddress\": \"0x530237d8347e0dc4137d5f04ab7a952ff71df20d\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.0000035167325314918,\n      \"priceChange24hPct\": 28.723,\n      \"volume24hUsd\": 55744.8178726283,\n      \"liquidityUsd\": 3545.8034,\n      \"fdvUsd\": 3516.732531,\n      \"buys24h\": 1612,\n      \"sells24h\": 1015,\n      \"createdAt\": \"2026-07-28T17:33:37Z\"\n    },\n    {\n      \"poolName\": \"PLTS / WETH\",\n      \"poolAddress\": \"0xdbbe5af0e5563fa3a67c7fac601a57dce6e450ff\",\n      \"baseTokenAddress\": \"0xbcca8c2dd0ffb6ca5210dba327e027756c047777\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 1.94102655402234e-9,\n      \"priceChange24hPct\": -99.901,\n      \"volume24hUsd\": 15902225.2135792,\n      \"liquidityUsd\": 0.191,\n      \"fdvUsd\": 1.941026554,\n      \"buys24h\": 6872,\n      \"sells24h\": 1056,\n      \"createdAt\": \"2026-07-28T17:24:09Z\"\n    },\n    {\n      \"poolName\": \"PIPEDOG / WETH 1%\",\n      \"poolAddress\": \"0xb7f10f74b39291b9290b779978e19a7637c742d6\",\n      \"baseTokenAddress\": \"0x5cb6f181081301b44905f3ae15419112ecabd8a6\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.00330896516329277,\n      \"priceChange24hPct\": 7793.242,\n      \"volume24hUsd\": 60274246.5498963,\n      \"liquidityUsd\": 10090826.0318,\n      \"fdvUsd\": 40234140.4877809,\n      \"buys24h\": 27262,\n      \"sells24h\": 17355,\n      \"createdAt\": \"2026-07-28T20:31:52Z\"\n    },\n    {\n      \"poolName\": \"CASHCAT / WETH 1%\",\n      \"poolAddress\": \"0xa70fc67c9f69da90b63a0e4c05d229954574e313\",\n      \"baseTokenAddress\": \"0x020bfc650a365f8bb26819deaabf3e21291018b4\",\n      \"quoteTokenAddress\": \"0x0bd7d308f8e1639fab988df18a8011f41eacad73\",\n      \"priceUsd\": 0.040571997442232,\n      \"priceChange24hPct\": 0.57,\n      \"volume24hUsd\": 7870242.51179214,\n      \"liquidityUsd\": 2923977.0396,\n      \"fdvUsd\": 40156036.1427855,\n      \"buys24h\": 5203,\n      \"sells24h\": 4125,\n      \"createdAt\": \"2026-06-29T07:00:49Z\"\n    }\n  ],\n  \"source\": \"geckoterminal\",\n  \"asOf\": \"2026-07-29T05:54:54.633Z\"\n}"
+                }
+              ],
+              "structuredContent": {
+                "network": "mainnet",
+                "count": 5,
+                "coins": [
+                  {
+                    "poolName": "ASTEROID / WETH",
+                    "poolAddress": "0x5d0808de5c01fef74b1c81ecb4f1baa3974f28f1",
+                    "baseTokenAddress": "0x38aaf33082b20aff2e33433138de920f131b7777",
+                    "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                    "priceUsd": 0.000546565206650149,
+                    "priceChange24hPct": 142.964,
+                    "volume24hUsd": 1063951.86724201,
+                    "liquidityUsd": 80518.5464,
+                    "fdvUsd": 546565.2067,
+                    "buys24h": 3621,
+                    "sells24h": 2754,
+                    "createdAt": "2026-07-21T09:49:58Z"
+                  },
+                  {
+                    "poolName": "FROGE / WETH 1%",
+                    "poolAddress": "0x8236b1bc2e58411bd7be1fe62b512a2f47f7b8f6",
+                    "baseTokenAddress": "0x530237d8347e0dc4137d5f04ab7a952ff71df20d",
+                    "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                    "priceUsd": 0.0000035167325314918,
+                    "priceChange24hPct": 28.723,
+                    "volume24hUsd": 55744.8178726283,
+                    "liquidityUsd": 3545.8034,
+                    "fdvUsd": 3516.732531,
+                    "buys24h": 1612,
+                    "sells24h": 1015,
+                    "createdAt": "2026-07-28T17:33:37Z"
+                  },
+                  {
+                    "poolName": "PLTS / WETH",
+                    "poolAddress": "0xdbbe5af0e5563fa3a67c7fac601a57dce6e450ff",
+                    "baseTokenAddress": "0xbcca8c2dd0ffb6ca5210dba327e027756c047777",
+                    "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                    "priceUsd": 1.94102655402234e-9,
+                    "priceChange24hPct": -99.901,
+                    "volume24hUsd": 15902225.2135792,
+                    "liquidityUsd": 0.191,
+                    "fdvUsd": 1.941026554,
+                    "buys24h": 6872,
+                    "sells24h": 1056,
+                    "createdAt": "2026-07-28T17:24:09Z"
+                  },
+                  {
+                    "poolName": "PIPEDOG / WETH 1%",
+                    "poolAddress": "0xb7f10f74b39291b9290b779978e19a7637c742d6",
+                    "baseTokenAddress": "0x5cb6f181081301b44905f3ae15419112ecabd8a6",
+                    "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                    "priceUsd": 0.00330896516329277,
+                    "priceChange24hPct": 7793.242,
+                    "volume24hUsd": 60274246.5498963,
+                    "liquidityUsd": 10090826.0318,
+                    "fdvUsd": 40234140.4877809,
+                    "buys24h": 27262,
+                    "sells24h": 17355,
+                    "createdAt": "2026-07-28T20:31:52Z"
+                  },
+                  {
+                    "poolName": "CASHCAT / WETH 1%",
+                    "poolAddress": "0xa70fc67c9f69da90b63a0e4c05d229954574e313",
+                    "baseTokenAddress": "0x020bfc650a365f8bb26819deaabf3e21291018b4",
+                    "quoteTokenAddress": "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
+                    "priceUsd": 0.040571997442232,
+                    "priceChange24hPct": 0.57,
+                    "volume24hUsd": 7870242.51179214,
+                    "liquidityUsd": 2923977.0396,
+                    "fdvUsd": 40156036.1427855,
+                    "buys24h": 5203,
+                    "sells24h": 4125,
+                    "createdAt": "2026-06-29T07:00:49Z"
+                  }
+                ],
+                "source": "geckoterminal",
+                "asOf": "2026-07-29T05:54:54.633Z"
+              }
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:54.642Z",
+          "message": {
+            "method": "tools/call",
+            "params": {
+              "name": "search_token",
+              "arguments": {
+                "query": "NVDA",
+                "limit": 3
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 5
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:54:55.402Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"network\": \"mainnet\",\n  \"query\": \"NVDA\",\n  \"count\": 3,\n  \"results\": [\n    {\n      \"address\": \"0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC\",\n      \"symbol\": \"NVDA\",\n      \"name\": \"NVIDIA • Robinhood Token\",\n      \"type\": \"stock-token\",\n      \"isStockToken\": true,\n      \"verified\": true,\n      \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC\"\n    },\n    {\n      \"address\": \"0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3\",\n      \"symbol\": \"NVDA\",\n      \"name\": \"NVDA\",\n      \"type\": \"token\",\n      \"isStockToken\": false,\n      \"verified\": false,\n      \"marketCapUsd\": null,\n      \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3\"\n    },\n    {\n      \"address\": \"0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09\",\n      \"symbol\": \"NVDACAT\",\n      \"name\": \"NVIDIA CAT\",\n      \"type\": \"token\",\n      \"isStockToken\": false,\n      \"verified\": true,\n      \"marketCapUsd\": null,\n      \"explorer\": \"https://robinhoodchain.blockscout.com/address/0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09\"\n    }\n  ],\n  \"sources\": [\n    \"hoodchain-registry\",\n    \"blockscout\"\n  ],\n  \"asOf\": \"2026-07-29T05:54:55.395Z\"\n}"
+                }
+              ],
+              "structuredContent": {
+                "network": "mainnet",
+                "query": "NVDA",
+                "count": 3,
+                "results": [
+                  {
+                    "address": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+                    "symbol": "NVDA",
+                    "name": "NVIDIA • Robinhood Token",
+                    "type": "stock-token",
+                    "isStockToken": true,
+                    "verified": true,
+                    "explorer": "https://robinhoodchain.blockscout.com/address/0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC"
+                  },
+                  {
+                    "address": "0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3",
+                    "symbol": "NVDA",
+                    "name": "NVDA",
+                    "type": "token",
+                    "isStockToken": false,
+                    "verified": false,
+                    "marketCapUsd": null,
+                    "explorer": "https://robinhoodchain.blockscout.com/address/0xDeCF74e4AA6fF30b1612e65665AAF650BEdecbA3"
+                  },
+                  {
+                    "address": "0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09",
+                    "symbol": "NVDACAT",
+                    "name": "NVIDIA CAT",
+                    "type": "token",
+                    "isStockToken": false,
+                    "verified": true,
+                    "marketCapUsd": null,
+                    "explorer": "https://robinhoodchain.blockscout.com/address/0xf94217F3bf7804e6cd080aEbB40271aCbc0D6a09"
+                  }
+                ],
+                "sources": [
+                  "hoodchain-registry",
+                  "blockscout"
+                ],
+                "asOf": "2026-07-29T05:54:55.395Z"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "network": "testnet",
+      "capturedAt": "2026-07-29T05:55:03.922Z",
+      "totalMs": 8024,
+      "serverInfo": {
+        "name": "hood-mcp",
+        "version": "0.1.0"
+      },
+      "instructions": "Read-only market data for Robinhood Chain (chain ID 4663), the permissionless\nArbitrum Orbit L2 with tokenized-equity \"Stock Tokens\", the USDG stablecoin, and the NOXA / The\nOdyssey memecoin launchpads. Use get_stock_quote for a ticker's oracle+DEX price and premium,\nget_portfolio for a wallet's holdings, list_trending_coins / get_coin for memecoins,\nget_recent_launches / watch_launches for launchpad activity, and get_chain_stats for the chain.\nAll data is public and read-only. To place trades, use the separate hood-mcp-trading server.",
+      "tools": [
+        {
+          "name": "get_chain_stats",
+          "title": "Robinhood Chain stats",
+          "description": "Live Robinhood Chain overview: latest block, gas price, TVL, and network totals (blocks, addresses, transactions, block time). No inputs.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "list_stock_tokens",
+          "title": "List Stock Tokens",
+          "description": "The registry of tokenized-equity Stock Tokens on Robinhood Chain (ticker, name, contract, Chainlink feed). Set pricedOnly to return only tokens with a live feed.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "pricedOnly": {
+                "type": "boolean",
+                "description": "Only tokens with a Chainlink price feed."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 200,
+                "description": "Max entries (default all)."
+              },
+              "offset": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Skip this many (pagination)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_stock_quote",
+          "title": "Get Stock Token quote",
+          "description": "Price a Stock Token by ticker: the Chainlink oracle price, the on-chain Uniswap DEX mid price, the premium/discount between them, and the ERC-8056 multiplier (so you also get the underlying share price).",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Ticker, e.g. \"AAPL\" or \"TSLA\" (case-insensitive)."
+              },
+              "maxAgeSeconds": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "description": "Reject the Chainlink answer if older than this (default 3 days; 24/5 feeds)."
+              }
+            },
+            "required": [
+              "symbol"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_portfolio",
+          "title": "Get Stock Token portfolio",
+          "description": "Multiplier-correct Stock Token portfolio for any address: per-position token balance, ERC-8056 share-equivalent, USD value, plus the USDG cash balance. Read-only.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Wallet address (0x…40 hex) to value."
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_coin",
+          "title": "Get token / memecoin detail",
+          "description": "Detail for any Robinhood Chain token by contract address: price, 24h volume, liquidity, FDV, holder count, and whether it is a registered Stock Token.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Token contract address (0x…40 hex)."
+              }
+            },
+            "required": [
+              "address"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "list_trending_coins",
+          "title": "List trending coins",
+          "description": "The trending pools on Robinhood Chain right now (memecoins and stocks) with price, 24h volume, price change, and liquidity — the pulse of the chain.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 30,
+                "description": "How many (default 10, max 30)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "get_recent_launches",
+          "title": "Recent launchpad launches",
+          "description": "Recently launched tokens on Robinhood Chain launchpads (NOXA and The Odyssey), newest first, scanned from on-chain logs.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "lookbackBlocks": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 500000,
+                "description": "Blocks to scan back (~30k ≈ 1h; default 30000)."
+              },
+              "launchpad": {
+                "type": "string",
+                "enum": [
+                  "noxa",
+                  "odyssey"
+                ],
+                "description": "Restrict to one launchpad."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 100,
+                "description": "Max launches to return (default 25)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "watch_launches",
+          "title": "Watch for live launches",
+          "description": "Watch NOXA + The Odyssey live for new token launches, blocking up to waitSeconds (or until limit launches are seen), then returns what appeared. Falls back to the most recent launch if none fire in the window.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "waitSeconds": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 120,
+                "description": "How long to watch (default 20, max 120)."
+              },
+              "launchpad": {
+                "type": "string",
+                "enum": [
+                  "noxa",
+                  "odyssey"
+                ],
+                "description": "Restrict to one launchpad."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 50,
+                "description": "Stop early after this many (default 20)."
+              },
+              "includeRecentIfEmpty": {
+                "type": "boolean",
+                "description": "If nothing launches in the window, return the latest recent launch (default true)."
+              }
+            },
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        },
+        {
+          "name": "search_token",
+          "title": "Search tokens",
+          "description": "Find tokens on Robinhood Chain by ticker, name, or contract address — searches the Stock Token registry and the Blockscout index together.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Ticker, name fragment, or 0x address."
+              },
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 50,
+                "description": "Max results (default 20)."
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "additionalProperties": false,
+            "$schema": "http://json-schema.org/draft-07/schema#"
+          }
+        }
+      ],
+      "calls": [
+        {
+          "name": "get_chain_stats",
+          "arguments": {},
+          "ms": 429,
+          "isError": false,
+          "text": "{\n  \"network\": \"testnet\",\n  \"chainId\": 46630,\n  \"latestBlock\": \"94828462\",\n  \"gasPriceWei\": \"10000000\",\n  \"gasPriceGwei\": 0.01,\n  \"tvlUsd\": 338136167.5648021,\n  \"blockscout\": {\n    \"averageBlockTimeMs\": 293,\n    \"totalBlocks\": \"94823272\",\n    \"totalAddresses\": \"20191230\",\n    \"totalTransactions\": \"216329432\",\n    \"transactionsToday\": \"1351781\",\n    \"gasPrices\": {\n      \"slow\": 0.13,\n      \"average\": 0.15,\n      \"fast\": 0.15\n    },\n    \"ethPriceUsd\": null\n  },\n  \"sources\": [\n    \"robinhood-chain-rpc\",\n    \"defillama\",\n    \"blockscout\"\n  ],\n  \"asOf\": \"2026-07-29T05:55:03.789Z\"\n}",
+          "parsed": {
+            "network": "testnet",
+            "chainId": 46630,
+            "latestBlock": "94828462",
+            "gasPriceWei": "10000000",
+            "gasPriceGwei": 0.01,
+            "tvlUsd": 338136167.5648021,
+            "blockscout": {
+              "averageBlockTimeMs": 293,
+              "totalBlocks": "94823272",
+              "totalAddresses": "20191230",
+              "totalTransactions": "216329432",
+              "transactionsToday": "1351781",
+              "gasPrices": {
+                "slow": 0.13,
+                "average": 0.15,
+                "fast": 0.15
+              },
+              "ethPriceUsd": null
+            },
+            "sources": [
+              "robinhood-chain-rpc",
+              "defillama",
+              "blockscout"
+            ],
+            "asOf": "2026-07-29T05:55:03.789Z"
+          }
+        }
+      ],
+      "frames": [
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:54:55.931Z",
+          "message": {
+            "method": "initialize",
+            "params": {
+              "protocolVersion": "2025-11-25",
+              "capabilities": {},
+              "clientInfo": {
+                "name": "hood-mcp-session-capture",
+                "version": "1.0.0"
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:55:03.352Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 0,
+            "result": {
+              "protocolVersion": "2025-11-25",
+              "capabilities": {
+                "tools": {
+                  "listChanged": true
+                }
+              },
+              "serverInfo": {
+                "name": "hood-mcp",
+                "version": "0.1.0"
+              },
+              "instructions": "Read-only market data for Robinhood Chain (chain ID 4663), the permissionless\nArbitrum Orbit L2 with tokenized-equity \"Stock Tokens\", the USDG stablecoin, and the NOXA / The\nOdyssey memecoin launchpads. Use get_stock_quote for a ticker's oracle+DEX price and premium,\nget_portfolio for a wallet's holdings, list_trending_coins / get_coin for memecoins,\nget_recent_launches / watch_launches for launchpad activity, and get_chain_stats for the chain.\nAll data is public and read-only. To place trades, use the separate hood-mcp-trading server."
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:55:03.352Z",
+          "message": {
+            "method": "notifications/initialized",
+            "jsonrpc": "2.0"
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:55:03.352Z",
+          "message": {
+            "method": "tools/list",
+            "jsonrpc": "2.0",
+            "id": 1
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:55:03.364Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+              "tools": [
+                {
+                  "name": "get_chain_stats",
+                  "title": "Robinhood Chain stats",
+                  "description": "Live Robinhood Chain overview: latest block, gas price, TVL, and network totals (blocks, addresses, transactions, block time). No inputs.",
+                  "inputSchema": {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "list_stock_tokens",
+                  "title": "List Stock Tokens",
+                  "description": "The registry of tokenized-equity Stock Tokens on Robinhood Chain (ticker, name, contract, Chainlink feed). Set pricedOnly to return only tokens with a live feed.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "pricedOnly": {
+                        "type": "boolean",
+                        "description": "Only tokens with a Chainlink price feed."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 200,
+                        "description": "Max entries (default all)."
+                      },
+                      "offset": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Skip this many (pagination)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": false
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_stock_quote",
+                  "title": "Get Stock Token quote",
+                  "description": "Price a Stock Token by ticker: the Chainlink oracle price, the on-chain Uniswap DEX mid price, the premium/discount between them, and the ERC-8056 multiplier (so you also get the underlying share price).",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "symbol": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Ticker, e.g. \"AAPL\" or \"TSLA\" (case-insensitive)."
+                      },
+                      "maxAgeSeconds": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "description": "Reject the Chainlink answer if older than this (default 3 days; 24/5 feeds)."
+                      }
+                    },
+                    "required": [
+                      "symbol"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_portfolio",
+                  "title": "Get Stock Token portfolio",
+                  "description": "Multiplier-correct Stock Token portfolio for any address: per-position token balance, ERC-8056 share-equivalent, USD value, plus the USDG cash balance. Read-only.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string",
+                        "description": "Wallet address (0x…40 hex) to value."
+                      }
+                    },
+                    "required": [
+                      "address"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_coin",
+                  "title": "Get token / memecoin detail",
+                  "description": "Detail for any Robinhood Chain token by contract address: price, 24h volume, liquidity, FDV, holder count, and whether it is a registered Stock Token.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string",
+                        "description": "Token contract address (0x…40 hex)."
+                      }
+                    },
+                    "required": [
+                      "address"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "list_trending_coins",
+                  "title": "List trending coins",
+                  "description": "The trending pools on Robinhood Chain right now (memecoins and stocks) with price, 24h volume, price change, and liquidity — the pulse of the chain.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 30,
+                        "description": "How many (default 10, max 30)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "get_recent_launches",
+                  "title": "Recent launchpad launches",
+                  "description": "Recently launched tokens on Robinhood Chain launchpads (NOXA and The Odyssey), newest first, scanned from on-chain logs.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "lookbackBlocks": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 500000,
+                        "description": "Blocks to scan back (~30k ≈ 1h; default 30000)."
+                      },
+                      "launchpad": {
+                        "type": "string",
+                        "enum": [
+                          "noxa",
+                          "odyssey"
+                        ],
+                        "description": "Restrict to one launchpad."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 100,
+                        "description": "Max launches to return (default 25)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "watch_launches",
+                  "title": "Watch for live launches",
+                  "description": "Watch NOXA + The Odyssey live for new token launches, blocking up to waitSeconds (or until limit launches are seen), then returns what appeared. Falls back to the most recent launch if none fire in the window.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "waitSeconds": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 120,
+                        "description": "How long to watch (default 20, max 120)."
+                      },
+                      "launchpad": {
+                        "type": "string",
+                        "enum": [
+                          "noxa",
+                          "odyssey"
+                        ],
+                        "description": "Restrict to one launchpad."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 50,
+                        "description": "Stop early after this many (default 20)."
+                      },
+                      "includeRecentIfEmpty": {
+                        "type": "boolean",
+                        "description": "If nothing launches in the window, return the latest recent launch (default true)."
+                      }
+                    },
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                },
+                {
+                  "name": "search_token",
+                  "title": "Search tokens",
+                  "description": "Find tokens on Robinhood Chain by ticker, name, or contract address — searches the Stock Token registry and the Blockscout index together.",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Ticker, name fragment, or 0x address."
+                      },
+                      "limit": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 50,
+                        "description": "Max results (default 20)."
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "additionalProperties": false,
+                    "$schema": "http://json-schema.org/draft-07/schema#"
+                  },
+                  "annotations": {
+                    "readOnlyHint": true,
+                    "openWorldHint": true
+                  },
+                  "execution": {
+                    "taskSupport": "forbidden"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "dir": "out",
+          "at": "2026-07-29T05:55:03.365Z",
+          "message": {
+            "method": "tools/call",
+            "params": {
+              "name": "get_chain_stats",
+              "arguments": {}
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          }
+        },
+        {
+          "dir": "in",
+          "at": "2026-07-29T05:55:03.794Z",
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": {
+              "content": [
+                {
+                  "type": "text",
+                  "text": "{\n  \"network\": \"testnet\",\n  \"chainId\": 46630,\n  \"latestBlock\": \"94828462\",\n  \"gasPriceWei\": \"10000000\",\n  \"gasPriceGwei\": 0.01,\n  \"tvlUsd\": 338136167.5648021,\n  \"blockscout\": {\n    \"averageBlockTimeMs\": 293,\n    \"totalBlocks\": \"94823272\",\n    \"totalAddresses\": \"20191230\",\n    \"totalTransactions\": \"216329432\",\n    \"transactionsToday\": \"1351781\",\n    \"gasPrices\": {\n      \"slow\": 0.13,\n      \"average\": 0.15,\n      \"fast\": 0.15\n    },\n    \"ethPriceUsd\": null\n  },\n  \"sources\": [\n    \"robinhood-chain-rpc\",\n    \"defillama\",\n    \"blockscout\"\n  ],\n  \"asOf\": \"2026-07-29T05:55:03.789Z\"\n}"
+                }
+              ],
+              "structuredContent": {
+                "network": "testnet",
+                "chainId": 46630,
+                "latestBlock": "94828462",
+                "gasPriceWei": "10000000",
+                "gasPriceGwei": 0.01,
+                "tvlUsd": 338136167.5648021,
+                "blockscout": {
+                  "averageBlockTimeMs": 293,
+                  "totalBlocks": "94823272",
+                  "totalAddresses": "20191230",
+                  "totalTransactions": "216329432",
+                  "transactionsToday": "1351781",
+                  "gasPrices": {
+                    "slow": 0.13,
+                    "average": 0.15,
+                    "fast": 0.15
+                  },
+                  "ethPriceUsd": null
+                },
+                "sources": [
+                  "robinhood-chain-rpc",
+                  "defillama",
+                  "blockscout"
+                ],
+                "asOf": "2026-07-29T05:55:03.789Z"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
