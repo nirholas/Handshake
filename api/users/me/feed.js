@@ -15,10 +15,19 @@
 //                                  item's created_at back for infinite scroll)
 //
 // Every item: { kind, id, created_at, actor{username,display_name,avatar_url},
-//               title, subtitle?, href, image?, external?, isRemix? } and, for
-// kind:'follow' only, a `target` shaped like `actor`. `actor.username` is null
-// for an anonymous creation (forge_creations/dioramas made while signed out) —
-// the client renders those without a profile link rather than inventing one.
+//               title, subtitle?, href, image?, external?, isRemix?, isVariant? }
+// and, for kind:'follow' only, a `target` shaped like `actor`. `isRemix` is
+// kind:'model' only (a forge derived from another creation), `isVariant` is
+// kind:'restyle' only (a seeded colorway fan-out rather than an instructed
+// restyle); both exist so a client picks its verb from a flag, not from prose.
+// `actor.username` is null for an anonymous creation (forge_creations, dioramas,
+// or material_restyles made while signed out). The client renders those without
+// a profile link rather than inventing one.
+//
+// Kinds emitted: avatar | agent | coin | model | world | restyle | follow. All
+// seven honour the `before` cursor and the scope filter; the restyle and follow
+// queries are additionally fail-soft (`.catch(() => [])`) so a deployment whose
+// material_restyles / user_follows migration has not landed still serves a feed.
 
 import { sql } from '../../_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
@@ -370,6 +379,10 @@ function mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, res
 			actor: actorFrom(r),
 			title: r.prompt || (r.action === 'variants' ? 'Colorway variant' : 'Restyled model'),
 			subtitle: r.category || null,
+			// Mirrors `isRemix` on kind:'model': the one bit of render metadata a
+			// client needs to pick the verb ("made a colorway variant" vs
+			// "restyled a model") without string-matching the subtitle.
+			isVariant: r.action === 'variants',
 			href: `${SITE}/viewer?src=${encodeURIComponent(r.glb_url)}`,
 			// result_url is a GLB, not a raster image — render the kind glyph
 			// instead of a guaranteed-broken <img>.

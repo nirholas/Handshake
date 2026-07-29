@@ -1,6 +1,6 @@
 // ── brain.js — Persona builder + multi-model playground ─────────────────────
 
-import { sanitizeUrl } from './shared/sanitize-url.js';
+import { renderMarkdown } from './shared/markdown.js';
 import { apiFetch } from './api.js';
 
 // ── Provider registry ────────────────────────────────────────────────────────
@@ -198,52 +198,21 @@ function showNotice(msg) {
 }
 
 // ── Markdown renderer ────────────────────────────────────────────────────────
-function inlineMd(s) {
-	s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-	s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-	s = s.replace(/`([^`\n]+)`/g, '<code class="md-ic">$1</code>');
-	s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text, url) => `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">${text}</a>`);
-	return s;
-}
+// Model output goes through the shared sanitized pipeline (marked + DOMPurify).
+// The class map keeps this page's existing md-* stylesheet contract.
+const MD_CLASSES = {
+	pre: 'md-code',
+	'code:not(pre code)': 'md-ic',
+	h1: 'md-h1',
+	h2: 'md-h2',
+	h3: 'md-h3',
+	ul: 'md-ul',
+	ol: 'md-ol',
+	p: 'md-p',
+};
 
 function renderMd(text) {
-	if (!text) return '';
-	const lines = text.split('\n');
-	const out = [];
-	let i = 0;
-	while (i < lines.length) {
-		const line = lines[i];
-		if (line.startsWith('```')) {
-			const codeLines = [];
-			i++;
-			while (i < lines.length && !lines[i].startsWith('```')) { codeLines.push(escHtml(lines[i])); i++; }
-			i++;
-			out.push(`<pre class="md-code"><code>${codeLines.join('\n')}</code></pre>`);
-			continue;
-		}
-		const hm = line.match(/^(#{1,3})\s+(.+)/);
-		if (hm) { out.push(`<h${hm[1].length} class="md-h${hm[1].length}">${inlineMd(escHtml(hm[2]))}</h${hm[1].length}>`); i++; continue; }
-		if (/^[-*+]\s/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^[-*+]\s/.test(lines[i])) { items.push(`<li>${inlineMd(escHtml(lines[i].replace(/^[-*+]\s/, '')))}</li>`); i++; }
-			out.push(`<ul class="md-ul">${items.join('')}</ul>`);
-			continue;
-		}
-		if (/^\d+\.\s/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^\d+\.\s/.test(lines[i])) { items.push(`<li>${inlineMd(escHtml(lines[i].replace(/^\d+\.\s/, '')))}</li>`); i++; }
-			out.push(`<ol class="md-ol">${items.join('')}</ol>`);
-			continue;
-		}
-		if (!line.trim()) { i++; continue; }
-		const pLines = [];
-		while (i < lines.length && lines[i].trim() && !lines[i].startsWith('#') && !lines[i].startsWith('```') && !/^[-*+]\s/.test(lines[i]) && !/^\d+\.\s/.test(lines[i])) {
-			pLines.push(inlineMd(escHtml(lines[i])));
-			i++;
-		}
-		if (pLines.length) out.push(`<p class="md-p">${pLines.join('<br>')}</p>`);
-	}
-	return out.join('');
+	return renderMarkdown(text, { classes: MD_CLASSES });
 }
 
 // ── Session helpers ──────────────────────────────────────────────────────────

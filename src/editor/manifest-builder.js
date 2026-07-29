@@ -3,6 +3,7 @@
 // Feature-flagged behind ?editor=v2 — do not remove register-ui.js until this ships.
 
 import { z } from 'zod';
+import { renderMarkdown } from '../shared/markdown.js';
 import '../element.js';
 import { PersonaInterview } from './persona-interview.js';
 
@@ -1227,7 +1228,7 @@ export function mountManifestBuilder(rootEl, options = {}) {
 
 	function refreshMdPreview() {
 		const el = $('#md-preview');
-		if (el) el.innerHTML = renderMarkdown(state.instructions || '');
+		if (el) el.innerHTML = renderManifestMarkdown(state.instructions || '');
 	}
 
 	function showFieldError(id, msg) {
@@ -1581,56 +1582,15 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	}
 }
 
-// ─── Markdown renderer (no deps) ─────────────────────────────────────────────
+// ─── Markdown preview ────────────────────────────────────────────────────────
+// Skill manifests are Markdown with YAML frontmatter. The frontmatter is shown
+// separately, so strip it before rendering the body through the shared
+// sanitized pipeline (marked + DOMPurify). The previous local renderer had no
+// list or link support and turned blank lines into stray <br>.
 
-function renderMarkdown(src) {
+function renderManifestMarkdown(src) {
 	if (!src) return '';
-	// Strip frontmatter
-	const fmStripped = src.replace(/^---[\s\S]*?---\n?/, '');
-	const lines = fmStripped.split('\n');
-	let html = '';
-	let inPre = false;
-	for (let i = 0; i < lines.length; i++) {
-		let l = lines[i];
-		if (l.startsWith('```')) {
-			inPre = !inPre;
-			html += inPre ? '<pre>' : '</pre>';
-			continue;
-		}
-		if (inPre) {
-			html += esc(l) + '\n';
-			continue;
-		}
-		if (/^### /.test(l)) {
-			html += `<h3>${inlineHtml(l.slice(4))}</h3>`;
-			continue;
-		}
-		if (/^## /.test(l)) {
-			html += `<h2>${inlineHtml(l.slice(3))}</h2>`;
-			continue;
-		}
-		if (/^# /.test(l)) {
-			html += `<h1>${inlineHtml(l.slice(2))}</h1>`;
-			continue;
-		}
-		if (/^> /.test(l)) {
-			html += `<blockquote>${inlineHtml(l.slice(2))}</blockquote>`;
-			continue;
-		}
-		if (l.trim() === '') {
-			html += '<br>';
-			continue;
-		}
-		html += `<p>${inlineHtml(l)}</p>`;
-	}
-	return html;
-}
-
-function inlineHtml(s) {
-	return esc(s)
-		.replace(/`([^`]+)`/g, '<code>$1</code>')
-		.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-		.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+	return renderMarkdown(String(src).replace(/^---[\s\S]*?---\n?/, ''));
 }
 
 // ─── Minimal store-only ZIP encoder ──────────────────────────────────────────

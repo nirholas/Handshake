@@ -63,8 +63,9 @@ const PROVIDERS = {
 		tier: 'balanced',
 		maxOutput: 8192,
 		description: 'Open-weight 120B from OpenAI. Fast, capable, free tier. Platform default.',
-		// OpenRouter-only — no first-party key for the free tier.
-		openrouterModel: 'openai/gpt-oss-120b:free',
+		// OpenRouter-only — no first-party key for the free tier. The 120B free
+		// endpoint was retired upstream; 20B is the surviving GPT-OSS free route.
+		openrouterModel: 'openai/gpt-oss-20b:free',
 	},
 	'claude-fable-5': {
 		label: 'Claude Fable 5',

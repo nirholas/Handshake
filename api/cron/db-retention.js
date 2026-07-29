@@ -119,11 +119,18 @@ const COMPACT_MAX_TABLES = 3; // per tick; the cron re-runs on its schedule
 //   - sniper_coin_sentiment / token_intel_risk: keyed (mint, network) so they
 //     grow with the mint universe; their gates treat stale rows as absent, so
 //     rows past the firehose window are dead weight.
+//   - x402_spent_payments: one small row per honoured x402 payment proof, the
+//     durable replay guard behind api/_lib/x402/spent-payments.js. Its window is
+//     `spent` — FIXED at 90 days and deliberately exempt from the storage-
+//     pressure valve, because shortening it is exactly what re-opens the replay
+//     hole the table exists to close. The rows are tiny (a hash, a route, an
+//     amount), so it cannot be the reason the branch is under pressure.
 const TIME_SERIES_TABLES = [
 	{ table: 'pump_launch_snapshots', tsColumn: 'ts', windowKind: 'firehose' },
 	{ table: 'x402_autonomous_log', tsColumn: 'ts', windowKind: 'audit' },
 	{ table: 'sniper_coin_sentiment', tsColumn: 'checked_at', windowKind: 'firehose' },
 	{ table: 'token_intel_risk', tsColumn: 'checked_at', windowKind: 'firehose' },
+	{ table: 'x402_spent_payments', tsColumn: 'created_at', windowKind: 'spent' },
 ];
 
 // ── Autopilot run logs ────────────────────────────────────────────────────────
@@ -517,6 +524,11 @@ export default wrapCron(async (req, res) => {
 	// tightening to a 30-day floor while the branch is over the high-water mark.
 	const auditDays = clampInt(process.env.X402_AUDIT_RETENTION_DAYS, 7, 3650, 90);
 	const auditMinDays = clampInt(process.env.X402_AUDIT_MIN_RETENTION_DAYS, 1, auditDays, 30);
+	// Spent-payment proofs: 90 days, FIXED. No pressure-tightened floor — a
+	// shorter window is a shorter replay-protection window, and the rows are too
+	// small to matter for storage. The 30-day lower bound stops a typo'd env var
+	// from silently shrinking the guard to hours.
+	const spentDays = clampInt(process.env.X402_SPENT_RETENTION_DAYS, 30, 3650, 90);
 
 	const sizeBeforeMb = await dbSizeMb();
 	const underPressure = sizeBeforeMb >= highWaterMb;
@@ -528,7 +540,11 @@ export default wrapCron(async (req, res) => {
 
 	const firehose = await pruneFirehose(cutoffDays);
 	const orphans = await pruneOrphanedSatellites(firehose.liveSatellites);
-	const series = await pruneTimeSeries({ firehose: cutoffDays, audit: auditCutoffDays });
+	const series = await pruneTimeSeries({
+		firehose: cutoffDays,
+		audit: auditCutoffDays,
+		spent: spentDays,
+	});
 	const runLogs = await pruneRunLogs(cutoffDays);
 	const audit = await pruneAuditLog(auditCutoffDays);
 	const regen = await pruneRegenJobs();
@@ -588,6 +604,7 @@ export default wrapCron(async (req, res) => {
 		cutoff_days: cutoffDays,
 		audit_retention_days: auditDays,
 		audit_cutoff_days: auditCutoffDays,
+		spent_retention_days: spentDays,
 		firehose: { mints: firehose.mints, perTable: firehose.perTable },
 		orphans,
 		series,

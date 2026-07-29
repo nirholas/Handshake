@@ -22,10 +22,15 @@
 //     `signature_already_settled`. The service must not be delivered again.
 //
 // Concurrency: the SELECT pre-check is advisory; the race-proof arbiter is the
-// partial unique index on (tx_sig) WHERE action='settle' AND ok (migration
-// 20260729000000) plus INSERT … ON CONFLICT DO NOTHING RETURNING id. Whichever
-// request's INSERT returns a row owns the credit; the loser re-reads the winner
-// and classifies itself as idempotent replay or refusal.
+// partial unique index on (tx_sig) WHERE action='settle' AND ok AND credit_gated
+// (migration 20260729000000) plus INSERT … ON CONFLICT DO NOTHING RETURNING id.
+// Whichever request's INSERT returns a row owns the credit; the loser re-reads
+// the winner and classifies itself as idempotent replay or refusal.
+//
+// Every row this module writes carries credit_gated = true. That marker — not a
+// timestamp — is what scopes the uniqueness constraint, so the pre-fix history
+// (which contains real duplicates, published and analysed) is excluded by
+// construction and the constraint begins exactly when this code starts serving.
 //
 // DB unavailability fails CLOSED (`settle_credit_unavailable`). A refused
 // settle is retryable: once the DB is back, the retry broadcasts, hits
@@ -39,20 +44,22 @@ function logOutcome(sql, row, reason) {
 	return sql`
 		INSERT INTO x402_self_facilitator_log
 			(action, network, payer, pay_to, mint, amount_atomic, tx_sig,
-			 fee_lamports, ok, reject_reason, idempotency_key, fee_payer)
+			 fee_lamports, ok, reject_reason, idempotency_key, fee_payer, credit_gated)
 		VALUES
 			('settle', ${row.network || null}, ${row.payer || null},
 			 ${row.payTo || null}, ${row.mint || null}, ${row.amountAtomic ?? null},
 			 ${row.txSig}, ${row.feeLamports ?? null}, false,
-			 ${reason}, ${row.idempotencyKey || null}, ${row.feePayer || null})
+			 ${reason}, ${row.idempotencyKey || null}, ${row.feePayer || null}, true)
 	`.catch((err) => console.error('[settle-credit] outcome log failed', err?.message || err));
 }
 
+// Only GATED rows can own a signature. Pre-fix history carries credit_gated=false
+// and must not make a fresh, legitimate payment look like a duplicate.
 async function priorCredit(sql, txSig) {
 	const rows = await sql`
 		SELECT id, idempotency_key
 		FROM x402_self_facilitator_log
-		WHERE action = 'settle' AND ok = true AND tx_sig = ${txSig}
+		WHERE action = 'settle' AND ok = true AND credit_gated = true AND tx_sig = ${txSig}
 		LIMIT 1
 	`;
 	return rows?.[0] || null;
@@ -100,12 +107,12 @@ export async function claimSettleCredit({ sql, row }) {
 		const ins = await sql`
 			INSERT INTO x402_self_facilitator_log
 				(action, network, payer, pay_to, mint, amount_atomic, tx_sig,
-				 fee_lamports, ok, reject_reason, idempotency_key, fee_payer)
+				 fee_lamports, ok, reject_reason, idempotency_key, fee_payer, credit_gated)
 			VALUES
 				('settle', ${row.network || null}, ${row.payer || null},
 				 ${row.payTo || null}, ${row.mint || null}, ${row.amountAtomic ?? null},
 				 ${row.txSig}, ${row.feeLamports ?? null}, true,
-				 ${null}, ${row.idempotencyKey || null}, ${row.feePayer || null})
+				 ${null}, ${row.idempotencyKey || null}, ${row.feePayer || null}, true)
 			ON CONFLICT DO NOTHING
 			RETURNING id
 		`;

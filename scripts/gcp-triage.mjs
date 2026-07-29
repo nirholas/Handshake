@@ -181,6 +181,12 @@ const KNOWN_HTTP_SIGNATURES = [
 		class: 'owner',
 		action: `/api/community/worlds returns its designed 503 cc_unconfigured: CC_API_KEY exists nowhere (Cloud Run env, .env, Secret Manager — swept 2026-07-26). The coin-worlds lobby stays empty until the owner provisions a CoinCommunities API key (api.coin-communities.xyz), then: gcloud run services update three-ws-api --region us-central1 --update-env-vars CC_API_KEY=<key>. Harmless noise until then. ${RUNBOOK} §cc-unconfigured.`,
 	},
+	{
+		id: 'watsonx-unconfigured-503',
+		test: (g) => g.status === 503 && (g.path === '/api/galaxy' || g.path.startsWith('/api/galaxy/')),
+		class: 'owner',
+		action: `/api/galaxy returns its designed 503 watsonx_unavailable: the Agent Galaxy positions stars with IBM Granite embeddings on watsonx.ai, and WATSONX_API_KEY / WATSONX_PROJECT_ID exist nowhere (Cloud Run env, .env, Secret Manager — swept 2026-07-29). The /galaxy page already renders a designed "IBM Granite isn't connected" state, so there is no broken user path and nothing to fix in code. Owner provisions watsonx credentials at cloud.ibm.com, then: gcloud run services update three-ws-api --region us-central1 --update-env-vars WATSONX_API_KEY=<key>,WATSONX_PROJECT_ID=<id>. Harmless noise until then. ${RUNBOOK} §watsonx-unconfigured.`,
+	},
 ];
 
 function parseArgs(argv) {

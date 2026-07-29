@@ -172,6 +172,58 @@ export function modelThinksByDefault(modelId) {
 	return THINKING_DEFAULT_ANTHROPIC.has(modelId);
 }
 
+/**
+ * Minimum cacheable prefix per model, in TOKENS. Anthropic silently declines to
+ * cache a prefix shorter than this — no error, `cache_creation_input_tokens`
+ * just stays 0 — so a breakpoint below the threshold is dead weight, and a
+ * threshold set too high forfeits caching that was available.
+ *
+ * The values are NOT monotonic across generations, which is the trap: Opus 5
+ * caches from 512 tokens while Haiku 4.5 needs 4096, eight times more. A single
+ * hardcoded threshold is therefore wrong for most of the catalog.
+ */
+const PROMPT_CACHE_MIN_TOKENS = {
+	'claude-opus-5': 512,
+	'claude-fable-5': 512,
+	'claude-mythos-5': 512,
+	'claude-opus-4-8': 1024,
+	'claude-sonnet-5': 1024,
+	'claude-sonnet-4-6': 1024,
+	'claude-sonnet-4-5': 1024,
+	'claude-opus-4-7': 2048,
+	'claude-opus-4-6': 4096,
+	'claude-opus-4-5': 4096,
+	'claude-haiku-4-5': 4096,
+};
+
+// Characters per token, used to turn the token minimums above into a length we
+// can measure on a raw string without tokenizing it.
+//
+// The two error directions are NOT symmetric, so this leans low on purpose. A
+// breakpoint on a too-short prefix is a silent no-op — Anthropic declines to
+// cache it and bills nothing extra — whereas a threshold set too high skips a
+// breakpoint that would have worked, forfeiting real savings on every turn of
+// that conversation. So the cheap mistake is sending a marker that does
+// nothing, and 3.5 (denser than typical English prose, which runs ~4) biases
+// toward that side.
+const CHARS_PER_TOKEN = 3.5;
+
+/**
+ * Minimum system-prompt length in CHARACTERS before a `cache_control`
+ * breakpoint can actually take effect on this model. Callers compare their
+ * prefix length against this to decide whether to split the system prompt.
+ * Unknown/non-Anthropic ids get the most conservative threshold in the table.
+ */
+export function promptCacheMinChars(modelId) {
+	let best = null;
+	for (const key of Object.keys(PROMPT_CACHE_MIN_TOKENS)) {
+		// Longest-prefix match so the dated Haiku alias resolves to its family.
+		if (modelId && modelId.startsWith(key) && (!best || key.length > best.length)) best = key;
+	}
+	const tokens = best ? PROMPT_CACHE_MIN_TOKENS[best] : 4096;
+	return Math.round(tokens * CHARS_PER_TOKEN);
+}
+
 /** Whether a model exposes a tool/function-calling endpoint. Unknown → false. */
 export function modelSupportsTools(modelId) {
 	return MODEL_CATALOG[modelId]?.tools === true;

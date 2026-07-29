@@ -28,10 +28,16 @@ import { resolveMorphTargets, MORPH_ALIASES, ARKIT_VISEMES } from './runtime/ark
 import { AnimationStateMachine } from './animation-state-machine.js';
 // BEGIN:IDLE_LOOP_IMPORT
 import { IdleAnimation } from './idle-animation.js';
+import { LookAtController } from './procedural/look-at.js';
 import { log } from './shared/log.js';
 // END:IDLE_LOOP_IMPORT
 
 const DEG2RAD = Math.PI / 180;
+
+// Scratch for resolving the live camera position when the gaze target is the
+// viewer rather than a fixed world point. Reused so the per-frame look-at path
+// allocates nothing.
+const _lookScratch = new Vector3();
 
 // Sustained-mood → gesture-slot bias thresholds (Living Agents · Task 07
 // extension). Read against the *applied* (lerped) mood, not the raw target, so
@@ -171,7 +177,10 @@ export class AgentAvatar {
 		};
 
 		// Head look-at state
-		this._lookTarget = null; // Vector3 | null
+		this._lookTarget = null; // Vector3 | null — consumed by _applyLookTarget()
+		this._lookAtCamera = false; // when true, the gaze tracks the live camera each frame
+		this._lookIk = null; // LookAtController for the current avatar, or null if the rig has no head
+		this._lookIkFor = null; // the content root _lookIk was built for (rebuild on swap)
 		this._currentTilt = 0; // radians
 		this._targetTilt = 0; // radians
 		this._currentLean = 0; // slight forward lean
@@ -513,8 +522,15 @@ export class AgentAvatar {
 		}
 	}
 
-	/** Set a world-space point for the avatar to look toward */
+	/**
+	 * Set a world-space point for the avatar to look toward. The chest, neck, and
+	 * head turn toward it with procedural IK (see `_applyLookTarget`), clamped and
+	 * damped so the gaze reads as a person turning rather than a bone snapping.
+	 * Pass null to release the gaze back to the base animation.
+	 * @param {import('three').Vector3|null} worldPos
+	 */
 	setLookTarget(worldPos) {
+		this._lookAtCamera = false;
 		this._lookTarget = worldPos ? worldPos.clone() : null;
 	}
 
@@ -676,6 +692,7 @@ export class AgentAvatar {
 
 	_onLookAt(action) {
 		const target = action.payload?.target;
+		this._lookAtCamera = false;
 		if (target === 'model' && this.viewer?.content) {
 			// Look at the bounding box center of the loaded model
 			const box = new Box3();
@@ -683,7 +700,10 @@ export class AgentAvatar {
 			box.setFromObject(this.viewer.content).getCenter(center);
 			this._lookTarget = center;
 		} else if (target === 'user' || target === 'camera') {
-			this._lookTarget = null; // look at camera
+			// Meet the viewer's eyes: _applyLookTarget resolves the live camera
+			// position each frame, so the gaze holds while the user orbits.
+			this._lookAtCamera = true;
+			this._lookTarget = null;
 		} else if (target === 'down') {
 			// Bias gaze downward — paired with concern emote for somber moments.
 			this._keystrokePitch = -0.35;
@@ -955,7 +975,39 @@ export class AgentAvatar {
 		this._currentLean = _lerp(this._currentLean, this._targetLean, dt * 2.0);
 
 		this._applyHeadTransform();
+		this._applyLookTarget(dt);
 		this._trackBodyToCamera(dt);
+	}
+
+	/**
+	 * Aim the chest/neck/head chain at `_lookTarget` with procedural IK
+	 * (src/procedural/look-at.js), layered on top of the pose _applyHeadTransform
+	 * just set. This is what makes `setLookTarget()` and the LOOK_AT protocol
+	 * action's `target: 'model'` branch actually move the avatar — before this,
+	 * the target was stored and never read.
+	 *
+	 * Distributing the turn across three joints is why this is IK and not another
+	 * head-bone Euler write: a 50-degree turn on the head bone alone reads as an
+	 * owl; split 15/30/55 across chest, neck, and head it reads as a person. A rig
+	 * with no mappable head reports enabled=false and this is a no-op.
+	 */
+	_applyLookTarget(dt) {
+		const content = this.viewer?.content;
+		if (!content) return;
+		// Rebuild on avatar swap — the controller caches resolved bones.
+		if (this._lookIkFor !== content) {
+			this._lookIkFor = content;
+			const ik = new LookAtController(content);
+			this._lookIk = ik.enabled ? ik : null;
+		}
+		if (!this._lookIk) return;
+		let target = this._lookTarget;
+		const cam = this.viewer?.activeCamera;
+		if (!target && this._lookAtCamera && cam) {
+			target = cam.getWorldPosition(_lookScratch);
+		}
+		this._lookIk.setTarget(target);
+		this._lookIk.update(dt);
 	}
 
 	// ── Morph Target Helpers ─────────────────────────────────────────────────

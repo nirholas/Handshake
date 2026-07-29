@@ -10,14 +10,15 @@
 //
 // Shapes:
 //   group: { label, badge?, note?, layout?: 'wide' | 'mega', align?: 'right',
-//            items?: item[], columns?: { label, items: item[] }[] }
+//            tier?: 'advanced',
+//            items?: item[], columns?: { label, tier?: 'advanced', items: item[] }[] }
 //     - default layout: single-column dropdown of `items`
 //     - 'wide': two-column dropdown of `items`
 //     - 'mega': multi-column dropdown of named `columns` (column count is read
 //       from columns.length; the popover sizes itself to fit)
 //     - align: 'right' anchors the popover to the trigger's right edge so the
 //       rightmost groups don't overflow the viewport. Left-anchored by default.
-//   item:  { title, href, desc, badge?, badgeTone?, attrs? }
+//   item:  { title, href, desc, badge?, badgeTone?, attrs?, tier? }
 //     - badgeTone: 'live' tints the badge green with a pulse dot (running now)
 //     - attrs: extra HTML attributes, e.g. { 'data-glossary-open': '' }
 //   top-level link: { label, href, highlight? }
@@ -29,6 +30,20 @@
 // Terminal & trade / Intelligence / Compete & earn). The only badge that
 // survives is the green "Live" status (data/feature is running right now);
 // "New" was on nearly every item, so it signalled nothing and was removed.
+//
+// Progressive disclosure: `tier: 'advanced'` on a group, a column or a single
+// item keeps it out of a first-time visitor's menu. What remains is the core
+// journey — make an avatar, build an agent, publish it — around 20 links
+// instead of 100. Every menu that hides something offers "Show everything",
+// which flips one site-wide preference (`tws:tier`) that also expands the
+// homepage's advanced sections. Nothing is removed, only deferred.
+//
+// Tag something advanced when a newcomer would have to already know what it is
+// to want it (trading terminals, payment protocols, on-chain intel, capture
+// rigs). Leave it in the lite tier when it serves creating, publishing or
+// browsing. `tests/onboarding-tier.test.js` pins both halves of that line, so
+// a retag that swallows the core journey fails the suite. Full write-up:
+// docs/onboarding-tier.md.
 
 export const NAV_GROUPS = [
 	{

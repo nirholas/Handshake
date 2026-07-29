@@ -35,6 +35,27 @@ export const VALIDATION_REGISTRY_ABI = [
 /**
  * Chains where the ERC-8004 Identity Registry is deployed. Ordered so the most
  * active chains are crawled first when the cron has a time budget.
+ *
+ * `rpcUrls` is the KEYLESS tail of the failover chain built in
+ * api/_lib/evm/rpc.js (`evmRpcEndpoints`): an explicit RPC_URL_<chainId>
+ * override and Alchemy are tried first, and these back them up. Because they
+ * are the fallback of last resort, a dead entry here is not harmless — it is
+ * tried on every call that got that far, and a host that accepts the connection
+ * then stalls burns the caller's whole timeout budget.
+ *
+ * **Ankr's keyless public RPCs are gone.** Probed live 2026-07-29: every
+ * `rpc.ankr.com/*` endpoint we listed now answers `-32000 Unauthorized: You
+ * must authenticate` (or a malformed error body) for both `eth_blockNumber` and
+ * `eth_call`-class reads. All 14 dead entries were removed; where that would
+ * have left a chain with a single rung, a live-probed dRPC/publicnode endpoint
+ * replaced it, because no external dependency may be a single point of failure.
+ * `rpc.ankr.com/celo` still answers and is kept — verify before re-adding any
+ * other Ankr host.
+ *
+ * When adding an endpoint here, probe it with a HEAVY method (`eth_call` or
+ * `eth_getBalance`), not just `eth_blockNumber`. Several free tiers serve the
+ * cheap call and time out on the real one; eth.drpc.org does exactly that, which
+ * is why it is no longer first for mainnet.
  */
 export const CHAINS = [
 	{
@@ -47,7 +68,6 @@ export const CHAINS = [
 			'https://mainnet.base.org',
 			'https://base.drpc.org',
 			'https://1rpc.io/base',
-			'https://rpc.ankr.com/base',
 			'https://base-rpc.publicnode.com',
 		],
 	},
@@ -61,7 +81,6 @@ export const CHAINS = [
 			'https://arb1.arbitrum.io/rpc',
 			'https://arbitrum.drpc.org',
 			'https://1rpc.io/arb',
-			'https://rpc.ankr.com/arbitrum',
 			'https://arbitrum-rpc.publicnode.com',
 		],
 	},
@@ -75,7 +94,6 @@ export const CHAINS = [
 			'https://bsc-dataseed1.binance.org',
 			'https://bsc-dataseed2.binance.org',
 			'https://bsc.drpc.org',
-			'https://rpc.ankr.com/bsc',
 			'https://bsc-rpc.publicnode.com',
 		],
 	},
@@ -87,16 +105,19 @@ export const CHAINS = [
 		explorer: 'https://etherscan.io',
 		// Mainnet public RPCs are the most restrictive/latent on eth_getLogs; use a
 		// smaller scan window than the global default so a single call stays fast.
-		// Keyless set probed live for eth_getLogs from a datacenter IP. Dropped:
-		// eth.llamarpc.com (Cloudflare bot-wall 403s server-side POSTs) and
-		// cloudflare-eth.com (endpoint sunset, -32046). publicnode 403s from Vercel
-		// IPs so it sits last as best-effort; dRPC/1rpc lead as they answer keyless.
+		// Keyless set probed live from a datacenter IP. Dropped: eth.llamarpc.com
+		// (Cloudflare bot-wall 403s server-side POSTs), cloudflare-eth.com
+		// (endpoint sunset, -32046) and rpc.ankr.com/eth (see the Ankr note on CHAINS above).
+		// Re-probed 2026-07-29 across BOTH eth_blockNumber and an eth_call-class
+		// read: eth.drpc.org answers the cheap call but returns "Request timeout on
+		// the free plan" (-32030) on the heavier one, so it is no longer first — it
+		// was, and it cost every ENS resolve most of its budget. publicnode 403'd
+		// from the old Vercel IPs so it stays last as best-effort.
 		blockChunk: 500,
 		rpcUrls: [
-			'https://eth.drpc.org',
 			'https://1rpc.io/eth',
 			'https://rpc.mevblocker.io',
-			'https://rpc.ankr.com/eth',
+			'https://eth.drpc.org',
 			'https://ethereum-rpc.publicnode.com',
 		],
 	},
@@ -110,7 +131,6 @@ export const CHAINS = [
 			'https://mainnet.optimism.io',
 			'https://optimism.drpc.org',
 			'https://1rpc.io/op',
-			'https://rpc.ankr.com/optimism',
 			'https://optimism-rpc.publicnode.com',
 		],
 	},
@@ -126,7 +146,6 @@ export const CHAINS = [
 			'https://polygon-rpc.com',
 			'https://polygon.drpc.org',
 			'https://1rpc.io/matic',
-			'https://rpc.ankr.com/polygon',
 			'https://polygon-bor-rpc.publicnode.com',
 		],
 	},
@@ -136,7 +155,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://snowtrace.io',
-		rpcUrls: ['https://api.avax.network/ext/bc/C/rpc', 'https://rpc.ankr.com/avalanche'],
+		rpcUrls: ['https://api.avax.network/ext/bc/C/rpc', 'https://avalanche.drpc.org', 'https://avalanche-c-chain-rpc.publicnode.com'],
 	},
 	{
 		id: 100,
@@ -144,7 +163,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://gnosisscan.io',
-		rpcUrls: ['https://rpc.gnosischain.com', 'https://rpc.ankr.com/gnosis'],
+		rpcUrls: ['https://rpc.gnosischain.com', 'https://gnosis.drpc.org', 'https://gnosis-rpc.publicnode.com'],
 	},
 	{
 		id: 250,
@@ -152,7 +171,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://ftmscan.com',
-		rpcUrls: ['https://rpc.ankr.com/fantom', 'https://rpcapi.fantom.network'],
+		rpcUrls: ['https://rpcapi.fantom.network', 'https://fantom.drpc.org'],
 	},
 	{
 		id: 42220,
@@ -176,7 +195,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://scrollscan.com',
-		rpcUrls: ['https://rpc.scroll.io', 'https://rpc.ankr.com/scroll'],
+		rpcUrls: ['https://rpc.scroll.io', 'https://scroll.drpc.org', 'https://scroll-rpc.publicnode.com'],
 	},
 	{
 		id: 5000,
@@ -200,7 +219,7 @@ export const CHAINS = [
 		testnet: false,
 		registry: IDENTITY_REGISTRY_MAINNET,
 		explorer: 'https://moonbeam.moonscan.io',
-		rpcUrls: ['https://rpc.api.moonbeam.network', 'https://rpc.ankr.com/moonbeam'],
+		rpcUrls: ['https://rpc.api.moonbeam.network', 'https://moonbeam.drpc.org', 'https://moonbeam-rpc.publicnode.com'],
 	},
 	{
 		id: 97,
@@ -220,7 +239,6 @@ export const CHAINS = [
 			'https://sepolia.base.org',
 			'https://base-sepolia.drpc.org',
 			'https://base-sepolia.gateway.tenderly.co',
-			'https://rpc.ankr.com/base_sepolia',
 			'https://base-sepolia-rpc.publicnode.com',
 		],
 	},
@@ -252,7 +270,6 @@ export const CHAINS = [
 			'https://1rpc.io/sepolia',
 			'https://rpc.sepolia.ethpandaops.io',
 			'https://sepolia.gateway.tenderly.co',
-			'https://rpc.ankr.com/eth_sepolia',
 			'https://ethereum-sepolia-rpc.publicnode.com',
 		],
 	},
@@ -283,7 +300,7 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://testnet.snowtrace.io',
-		rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc', 'https://rpc.ankr.com/avalanche_fuji'],
+		rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc', 'https://avalanche-fuji-c-chain-rpc.publicnode.com', 'https://avalanche-fuji.drpc.org'],
 	},
 ];
 

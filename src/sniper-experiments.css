@@ -165,6 +165,17 @@
 	font-weight: 700;
 }
 
+/* Secondary conditions: the arm is broken in more than one way. Muted, because
+ * the headline is what stops it trading today. */
+.xp-stall-also {
+	margin: 4px 0 0;
+	padding-left: 14px;
+	list-style: disc;
+	color: var(--cv-text-3);
+}
+
+.xp-stall-also li { margin-top: 2px; }
+
 .xp-stall-blocking {
 	border-color: color-mix(in srgb, var(--cv-red) 45%, transparent);
 	background: var(--cv-red-soft);

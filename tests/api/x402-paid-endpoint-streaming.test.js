@@ -128,6 +128,13 @@ const ORIG_ENV = { ...process.env };
 
 beforeAll(async () => {
 	process.env.X402_ALLOW_MEMORY_FALLBACK = '1';
+	// Keep the suite hermetic: the durable spent-payment guard
+	// (api/_lib/x402/spent-payments.js) reads and writes Postgres, and every case
+	// below replays the SAME X-PAYMENT proof. With a real DATABASE_URL exported in
+	// the shell these tests would both write junk rows and start 409-ing on the
+	// second case. No DATABASE_URL → the guard takes its documented fail-open
+	// path, which is exactly the behaviour this suite is asserting around.
+	delete process.env.DATABASE_URL;
 	paidEndpoint = (await import('../../api/_lib/x402-paid-endpoint.js')).paidEndpoint;
 	cacheMod = await import('../../api/_lib/x402/idempotency-cache.js');
 });

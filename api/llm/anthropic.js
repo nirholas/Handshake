@@ -24,7 +24,7 @@ import {
 	defaultEmbedPolicy,
 } from '../_lib/embed-policy.js';
 import { getAvatar } from '../_lib/avatars.js';
-import { modelRejectsSampling, modelThinksByDefault } from '../_lib/chat-models.js';
+import { modelRejectsSampling, modelThinksByDefault, promptCacheMinChars } from '../_lib/chat-models.js';
 import {
 	vertexClaudeEnabled,
 	vertexMessagesUrl,
@@ -129,10 +129,10 @@ export function sanitizeAnthropicBody(body, modelId) {
 		out.max_tokens = 4096;
 	}
 	// Embed system prompts are stable per agent and resent every turn; a cache
-	// breakpoint on a large one bills repeat turns at ~0.1x input price. Below
-	// each model's cacheable minimum the marker is silently ignored, so this is
-	// always safe to send. Callers already sending block arrays are left alone.
-	if (typeof out.system === 'string' && out.system.length >= 4096) {
+	// breakpoint on a large one bills repeat turns at ~0.1x input price. The
+	// qualifying length is per-model (promptCacheMinChars) — below it the marker
+	// is inert. Callers already sending block arrays are left alone.
+	if (typeof out.system === 'string' && out.system.length >= promptCacheMinChars(modelId)) {
 		out.system = [{ type: 'text', text: out.system, cache_control: { type: 'ephemeral' } }];
 	}
 	const t = out.thinking;

@@ -197,16 +197,22 @@
 	const GLB_URL_RE = /https?:\/\/[^\s"'<>()[\]]+\.glb(?:\?[^\s"'<>()[\]]*)?/gi;
 
 	// GLB links written straight into a message get an inline viewer too, unless
-	// the same model already renders from a tool card in this conversation.
-	function messageGlbUrls(msg) {
+	// the same model already renders from a tool card, or an earlier message in
+	// the thread already mentioned it (e.g. the assistant echoing a link the
+	// user just pasted).
+	function messageGlbUrls(msg, msgIndex) {
 		if (msg.role !== 'assistant' && msg.role !== 'user') return [];
 		if (typeof msg.content !== 'string' || !msg.content.toLowerCase().includes('.glb')) return [];
 		const found = [...new Set(msg.content.match(GLB_URL_RE) || [])];
 		if (!found.length) return [];
 		const rendered = new Set();
-		for (const m of convo.messages) {
+		for (let mi = 0; mi < convo.messages.length; mi++) {
+			const m = convo.messages[mi];
 			const c = m.role === 'tool' ? m.content : null;
 			if (c?.contentType === 'application/model-3d' && c.content?.glb) rendered.add(c.content.glb);
+			if (mi < msgIndex && typeof m.content === 'string') {
+				for (const u of m.content.match(GLB_URL_RE) || []) rendered.add(u);
+			}
 		}
 		return found.filter((u) => !rendered.has(u)).slice(0, 2);
 	}
@@ -556,7 +562,7 @@
 
 					<MessageContent {message} />
 
-					{#each messageGlbUrls(message) as glbSrc (glbSrc)}
+					{#each messageGlbUrls(message, i) as glbSrc (glbSrc)}
 						<ModelViewer3D content={{ glb: glbSrc }} height={300} />
 					{/each}
 

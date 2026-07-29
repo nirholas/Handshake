@@ -31,7 +31,13 @@ export async function loadInstalledSkills(userId) {
 		WHERE si.user_id = ${userId}
 			AND ms.is_public = true
 			AND ms.content IS NOT NULL AND ms.content <> ''
-		ORDER BY si.installed_at DESC
+		-- slug is the tie-break, and it is load-bearing: this block is part of
+		-- the cached system-prompt prefix (api/chat.js), and prompt caching is a
+		-- byte-exact prefix match. Two skills installed in the same transaction
+		-- share an installed_at, and an unordered tie would reshuffle the block
+		-- between turns — silently missing the cache on every request with no
+		-- error to show for it.
+		ORDER BY si.installed_at DESC, ms.slug ASC
 		LIMIT ${MAX_SKILLS}
 	`;
 	return rows.map((r) => ({ slug: r.slug, name: r.name, content: r.content }));

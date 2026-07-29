@@ -148,6 +148,53 @@ channel when any answer exceeds that loop's cadence-derived limit. A loop with
 no rows at all is the worst finding, not an exemption. Policy is pure and
 tested: [api/_lib/sniper-loops-health.js](../api/_lib/sniper-loops-health.js).
 
+## Why an arm shows zero trades (the silent-death class)
+
+A sniper arm can be enabled, funded, and evaluating every launch that crosses the
+feed while one of its own knobs makes an entry arithmetically impossible. That
+failure is silent by construction: a skipped evaluation writes no position row,
+so the board shows `0` with no reason and an arm can sit dead for a week without
+anything looking broken. Four arms did exactly that before this was measured.
+
+Every armed strategy on [`/sniper/experiments`](https://three.ws/sniper/experiments)
+now carries a `stall` field naming the condition. The diagnosis is a fact about
+the configuration, not a guess: each code is a rule the executor really enforces,
+evaluated against the same numbers. Policy is pure and tested:
+[api/_lib/sniper-stall.js](../api/_lib/sniper-stall.js).
+
+| Code | What it means | Fix |
+| --- | --- | --- |
+| `wallet_dry` | Balance is under `MIN_OPERATIONAL_WALLET_SOL` (0.012), so the arm cannot even pay for the firewall's simulated round-trip, let alone the buy. | Fund the wallet. |
+| `mcap_band_unreachable` | The arm uses a create-event trigger (`new_mint`) with a market-cap floor above what a launch is worth at creation. Sampled live: 40 of 40 fresh pump.fun mints priced $0.1k–$5.8k, median $2.1k, so a $10k floor can never clear. | Move to `intel_confirmed` / `oracle_crossing`, which score a coin *after* it has traded into the band, or lower the floor. |
+| `mcap_band_tight` | Floor is above the typical launch price but under $5k: reachable, but only for the small minority of launches that open unusually high. Non-blocking. | Widen the band or accept the low fill rate. |
+| `strict_model_offline` | A `llm_strict_model` arm whose named model answered none of its recent verdicts: the failover chain answered for it, and a strict arm refuses to trade on a fallback's judgment. | Restore that model's route (provider key/credits). The worker also pages the ops channel hourly per model. |
+| `size_over_budget` | Configured per-trade size exceeds the arm's whole daily budget. Non-blocking since entries now clamp down to the day's remainder. | Let the optimizer converge, or set the two knobs consistently. |
+| `kill_switch` / `disabled` | Switched off. | Re-arm. |
+| `no_qualifying_launch` | Config is reachable; nothing has met the entry conditions in the window. Non-blocking. | Nothing to fix. |
+
+Two arithmetic deadlocks that produced those codes are now impossible:
+
+**Size can no longer exceed budget.** `checkDailyBudgetLamports` blocks when
+`spent + size > budget`, so an arm whose configured size drifted above its own
+daily budget failed that test on every evaluation, even at zero spend on a fresh
+day. The optimizer owns `per_trade_lamports` and the evolution loop owns
+`daily_budget_lamports`, and neither read the other. Two fixes: the optimizer
+never proposes a size above the arm's own daily budget, and the executor clamps an
+oversized entry down to the day's remainder instead of sitting out (the cap still
+holds exactly, and a smaller trade only lowers risk).
+
+**A thin wallet no longer reads as a honeypot.** The firewall proves sellability
+by simulating a real buy→sell round-trip *from the agent's own wallet*. When the
+wallet could not fund that simulation, the revert was read as "you cannot sell" —
+a fatal honeypot verdict on an ordinary bonding-curve launch, where the sell path
+*is* the curve program and a trap is structurally impossible. One underfunded arm
+produced **336 consecutive false honeypot verdicts in 2.5 hours**. The probe now
+shrinks to a size the payer can actually simulate (sellability is a property of
+the coin, not of trade size), and a funding-shaped revert with no attributable
+instruction is classified as an underfunded buy leg rather than a trapped exit. A
+wallet that cannot fund even a minimum probe returns `probe_unaffordable`, which
+is still fail-closed: unproven is never treated as safe.
+
 ### No-Mayhem enforcement (`workers/agent-sniper/mayhem-gate.js`)
 
 `isMayhemMode` lives on the pump.fun bonding curve, not the new-mint firehose, so

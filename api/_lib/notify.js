@@ -5,13 +5,13 @@
  * through (sales, purchases, IRL, pump alerts, withdrawals…). It:
  *   1. resolves the recipient's preference matrix,
  *   2. inserts the in-app row (the bell inbox) when the category's `in_app`
- *      channel is on — the durable record,
+ *      channel is on. The durable record,
  *   3. records a `sent` funnel event for in_app,
  *   4. fans out to Web Push for the categories the user left enabled,
  *   5. records a `sent` event per push delivery.
  *
  * Every channel is gated by the user's preference center (api/_lib/notify-prefs)
- * so there is no notification a user can't turn off — including the bell itself:
+ * so there is no notification a user can't turn off, including the bell itself:
  * a category with `in_app: false` writes no `user_notifications` row at all, so
  * the inbox and the unread count both stay silent for it while any other channel
  * the user left on (push/email/telegram) still fires. Failures are logged, never
@@ -34,13 +34,13 @@ export function insertNotification(userId, type, payload = {}) {
 }
 
 async function deliver(userId, type, payload) {
-	// 1 — the preference matrix gates every channel, the bell included.
+	// 1: the preference matrix gates every channel, the bell included.
 	// resolvePrefs already falls back to defaults on a DB error, so a lookup
 	// problem degrades to "deliver on the default channels", never to silence.
 	const prefs = await resolvePrefs(userId);
 	const wantsInApp = channelEnabled(prefs, type, 'in_app');
 
-	// 2 — durable in-app row, only when the user left the bell on for this
+	// 2: durable in-app row, only when the user left the bell on for this
 	// category. Muting in_app must leave no row behind: the inbox list and the
 	// unread count are both derived from user_notifications, so skipping the
 	// insert is what keeps the two consistent.
@@ -58,11 +58,11 @@ async function deliver(userId, type, payload) {
 			return { id: null, in_app: false };
 		}
 
-		// 3 — record the in-app send.
+		// 3: record the in-app send.
 		recordEvent(id, userId, 'in_app', 'sent');
 	}
 
-	// 4 + 5 — push fan-out, gated the same way. A muted bell never suppresses
+	// 4 + 5: push fan-out, gated the same way. A muted bell never suppresses
 	// push: the notification id is simply null on the payload, which the service
 	// worker already tolerates (it only attributes funnel events when present).
 	try {

@@ -25,6 +25,7 @@ import {
 import { r2, publicUrl } from '../_lib/r2.js';
 import { env } from '../_lib/env.js';
 import { attestValidation, AttestError } from '../_lib/validation-attest.js';
+import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
@@ -40,6 +41,8 @@ export default wrap(async (req, res) => {
 			return handleValidate(req, res);
 		case 'validation':
 			return handleValidationRead(req, res);
+		case 'metadata':
+			return handleMetadataProxy(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown erc8004 action');
 	}
@@ -369,6 +372,86 @@ async function handleValidationRead(req, res) {
 	const validation = await resolveLatestValidation({ chainId, agentId });
 	res.setHeader('cache-control', 'public, max-age=30, s-maxage=60');
 	return json(res, 200, { validation });
+}
+
+// ── metadata (registration-JSON proxy) ─────────────────────────────────────
+//
+// GET /api/erc8004/metadata?uri=<registration uri>
+//
+// An ERC-8004 agent's registration JSON lives wherever its registrant put it,
+// and most of those hosts send no Access-Control-Allow-Origin. The browser
+// therefore cannot read them: the agent page fetched the URI directly, the
+// request was blocked by CORS, and the page rendered "Could not fetch
+// registration JSON: Failed to fetch" for every such agent. The server has no
+// same-origin policy, so this rung fetches it instead and hands the JSON back
+// under our own origin. src/erc8004/queries.js#fetchAgentMetadata tries the
+// direct fetch first (fast, no hop) and falls back here only when it fails, so
+// a CORS-friendly host still costs nothing.
+//
+// The URI is attacker-influenced (it comes off-chain from whoever registered
+// the agent), which makes this a classic SSRF sink: it MUST go through the
+// pinned guard, which validates DNS, connects to the exact validated IP, and
+// re-validates every redirect hop. maxBytes caps the stream so a hostile host
+// cannot OOM the instance.
+const METADATA_MAX_BYTES = 2 * 1024 * 1024;
+const METADATA_TIMEOUT_MS = 10_000;
+
+async function handleMetadataProxy(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.pumpMetaIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const raw = String(req.query?.uri ?? '').trim();
+	if (!raw) return error(res, 400, 'bad_request', 'uri is required');
+
+	// Resolve the decentralized-storage schemes to their public gateways, the
+	// same mapping the client applies before it ever reaches this endpoint.
+	let url = raw;
+	if (raw.startsWith('ipfs://')) url = 'https://ipfs.io/ipfs/' + raw.slice(7);
+	else if (raw.startsWith('ar://')) url = 'https://arweave.net/' + raw.slice(5);
+
+	if (!/^https?:\/\//i.test(url)) {
+		return error(res, 400, 'bad_request', 'uri must be http(s), ipfs:// or ar://');
+	}
+
+	let upstream;
+	try {
+		upstream = await fetchSafePublicUrlPinned(
+			url,
+			{
+				headers: { accept: 'application/json,text/plain;q=0.9,*/*;q=0.8' },
+				signal: AbortSignal.timeout(METADATA_TIMEOUT_MS),
+			},
+			{ maxBytes: METADATA_MAX_BYTES },
+		);
+	} catch (err) {
+		if (err instanceof SsrfBlockedError) {
+			return error(res, 400, 'blocked_uri', 'that registration URI is not publicly fetchable');
+		}
+		if (err instanceof MaxBytesExceededError) {
+			return error(res, 413, 'too_large', 'registration JSON exceeds 2 MB');
+		}
+		return error(res, 502, 'upstream_unreachable', `registration host did not answer: ${err.message}`);
+	}
+
+	if (!upstream.ok) {
+		return error(res, 502, 'upstream_error', `registration host returned HTTP ${upstream.status}`);
+	}
+
+	// Parse here rather than streaming bytes through: the caller wants JSON, and
+	// a host serving HTML (a 200 error page) should read as a clear failure
+	// instead of blowing up in the browser's .json().
+	let data;
+	try {
+		data = JSON.parse(await upstream.text());
+	} catch {
+		return error(res, 502, 'invalid_json', 'registration URI did not return valid JSON');
+	}
+
+	res.setHeader('cache-control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=60');
+	return json(res, 200, { data, resolvedUrl: url });
 }
 
 // ── pin ────────────────────────────────────────────────────────────────────

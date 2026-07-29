@@ -146,6 +146,7 @@ User‑generated avatars served by a GLB proxy (`/api/avatars/<id>/glb`) work vi
 | `manifestUrl`     | `'/animations/manifest.json'`| shared animation manifest                                |
 | `excludedRoutes`  | full‑screen 3D routes        | path prefixes where the companion never mounts           |
 | `enablePicker`    | `true`                       | show the avatar picker button                            |
+| `lookAt`          | `true`                       | companion's chest/neck/head follow the visitor's cursor  |
 | `greeting`        | built‑in                     | `(path) => string \| null` to customise the page greeting |
 | `docsUrl`         | `null`                       | optional "make your own" link in the picker footer       |
 | `storagePrefix`   | `'walk'`                     | localStorage/sessionStorage key prefix                   |

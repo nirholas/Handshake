@@ -44,7 +44,7 @@ import {
 	vertexRequestHeaders,
 	toVertexBody,
 } from './vertex-claude.js';
-import { DEFAULT_FREE_MODEL } from './chat-models.js';
+import { DEFAULT_FREE_MODEL, promptCacheMinChars } from './chat-models.js';
 
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 // Second Groq rung on a different model: Groq free-tier quotas are PER MODEL,
@@ -184,15 +184,13 @@ function anthropicText(r) {
 	return blocks.find((b) => b?.type === 'text')?.text || '';
 }
 
-// System prompts at or above this size get a prompt-cache breakpoint. Agent
-// surfaces resend the same large system prompt every turn; cached reads bill
-// at ~0.1x input price. Below each model's cacheable minimum the marker is
-// silently ignored, so a low threshold is harmless — 4096 chars ≈ 1K tokens,
-// the minimum on the Sonnet/Opus 4.x tier.
-const SYSTEM_CACHE_MIN_CHARS = 4096;
-
-function anthropicSystemField(system) {
-	if (typeof system === 'string' && system.length >= SYSTEM_CACHE_MIN_CHARS) {
+// Agent surfaces resend the same large system prompt every turn, and a cached
+// read bills at ~0.1x input price — so a system prompt long enough to qualify
+// gets a cache breakpoint. The qualifying length is per-model and varies 8x
+// across the catalog (see promptCacheMinChars), so it is looked up rather than
+// hardcoded: too low wastes a marker, too high forfeits real savings.
+function anthropicSystemField(system, modelId) {
+	if (typeof system === 'string' && system.length >= promptCacheMinChars(modelId)) {
 		return [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
 	}
 	return system;
@@ -241,7 +239,7 @@ function anthropicProvider(key, model) {
 		buildBody: (system, user, maxTokens) => ({
 			model: m,
 			max_tokens: maxTokens,
-			system: anthropicSystemField(system),
+			system: anthropicSystemField(system, m),
 			messages: [{ role: 'user', content: user }],
 		}),
 		extractText: anthropicText,
@@ -265,7 +263,7 @@ function vertexAnthropicProvider(model) {
 			toVertexBody({
 				model: m,
 				max_tokens: maxTokens,
-				system: anthropicSystemField(system),
+				system: anthropicSystemField(system, m),
 				messages: [{ role: 'user', content: user }],
 			}),
 		extractText: anthropicText,
@@ -571,6 +569,9 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// (429/402 in <1s); the cap only bites a genuine stall. Env-tunable; floored so
 	// a fat-fingered value can't strangle a legitimately-slow completion.
 	const perProviderMs = Math.max(4_000, Number(process.env.LLM_PER_PROVIDER_TIMEOUT_MS) || 12_000);
+	// Floor for the fair-share cap below: below this even a healthy lane cannot
+	// finish, so slicing thinner would just fail every rung instead of some.
+	const MIN_ATTEMPT_MS = 4_000;
 	const deadline = Date.now() + timeoutMs;
 	let lastErr;
 	// A 200 with no usable text (content filter, malformed shape, a lane that
@@ -580,13 +581,56 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// the caller asked for a completion and got a valid-if-empty one. Hold the
 	// first such result as the last-resort return value.
 	let lastEmpty = null;
+	// One record per provider the chain actually touched: { provider, ms, error }
+	// (plus `skipped` for rungs the budget never reached). Without this an
+	// exhausted chain only ever reported `lastErr` — the LAST provider's message —
+	// so a chain that died because a slow lead rung ate the whole budget was
+	// indistinguishable from one that died on the tail rung's own fault. That is
+	// how a starved chain got filed as an OpenAI billing problem: OpenAI sits last
+	// and its 429 was the only error anyone ever saw. Attached to the thrown error
+	// as `.attempts` and summarised in one warn line below.
+	const attempts = [];
+	// Hosts that stalled (hit the attempt cap mid-request or mid-body-read) this
+	// call. Several rungs can share one upstream — the chain holds three
+	// OpenRouter entries, one per configured key — and a stall is a property of
+	// the HOST, not of the key: when openrouter.ai accepts the POST, returns 200
+	// headers and then never finishes the body, every key behind it does the same.
+	// Retrying the siblings burned the 12s cap once per key and spent the whole
+	// 30s chain budget before the healthy free lanes were ever reached, which is
+	// what made the paid fact-check 502 (observed live 2026-07-29:
+	// openrouter x3 = 36s of a 30s budget, then every remaining rung reported
+	// budget_exhausted). Skip the siblings instead — cheap, and the next distinct
+	// host still gets its full shot. HTTP failures (402/429) are key-scoped and
+	// deliberately do NOT mark the host: another key on the same host may be fine.
+	const stalledHosts = new Set();
+	const hostOf = (url) => { try { return new URL(url).host; } catch { return url; } };
+	const isStall = (e) => e?.name === 'TimeoutError' || e?.name === 'AbortError' || /abort|timed? ?out/i.test(e?.message || '');
 	for (const p of chain) {
 		const remaining = deadline - Date.now();
 		// Out of overall budget — stop rather than start an attempt we can't finish.
-		if (remaining <= 500) break;
+		if (remaining <= 500) {
+			attempts.push({ provider: p.name, skipped: 'budget_exhausted' });
+			continue;
+		}
+		if (stalledHosts.has(hostOf(p.url))) {
+			attempts.push({ provider: p.name, skipped: 'host_stalled' });
+			continue;
+		}
 		// A provider may declare its own tighter cap (e.g. a known-slow queue lane).
 		const providerCap = p.timeoutMs ? Math.min(perProviderMs, p.timeoutMs) : perProviderMs;
-		const attemptMs = Math.min(providerCap, remaining);
+		// Never hand ONE rung the whole remaining budget while other rungs — and
+		// in particular the Vertex credits anchor, which sits behind the free
+		// tiers — still wait behind it. A caller working to a tight stage budget
+		// (the fact-check pipeline carves ~15s for stance extraction) otherwise
+		// spends all of it on the first slow free lane and never reaches the rung
+		// that would have answered. Reserve two thirds for whatever follows while
+		// more than one rung remains; the LAST rung is free to use everything
+		// left, so a genuinely slow single-provider completion is never strangled.
+		const rungsLeft = chain.length - chain.indexOf(p);
+		const fairShare = rungsLeft > 1 ? Math.max(MIN_ATTEMPT_MS, remaining / 3) : remaining;
+		// Integer milliseconds: AbortSignal.timeout rejects a fractional delay with
+		// ERR_OUT_OF_RANGE, and `remaining / 3` is fractional most of the time.
+		const attemptMs = Math.floor(Math.min(providerCap, remaining, fairShare));
 		const startedAt = Date.now();
 		let upstream;
 		try {
@@ -602,11 +646,14 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			});
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} unreachable: ${e.message}`), { status: 502, code: 'upstream_unreachable' });
+			if (isStall(e)) stalledHosts.add(hostOf(p.url));
+			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `unreachable: ${e.message}` });
 			continue;
 		}
 		if (!upstream.ok) {
 			const body = await upstream.text().catch(() => '');
 			lastErr = Object.assign(new Error(`${p.name} ${upstream.status}: ${body.slice(0, 200)}`), { status: 502, code: 'upstream_error' });
+			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `http ${upstream.status}` });
 			continue;
 		}
 		// Parse the body defensively: a provider can return HTTP 200 with a
@@ -619,6 +666,8 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			data = await upstream.json();
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} returned an unparseable 200 body: ${e.message}`), { status: 502, code: 'upstream_bad_body' });
+			if (isStall(e)) stalledHosts.add(hostOf(p.url));
+			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `unparseable 200 body: ${e.message}` });
 			continue;
 		}
 		const usage = p.extractUsage(data);
@@ -628,6 +677,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			// last-resort return value if nothing better comes along.
 			if (!lastEmpty) lastEmpty = { text: '', provider: p.name, model: p.model, usage, raw: data };
 			lastErr = Object.assign(new Error(`${p.name} returned an empty completion`), { status: 502, code: 'empty_completion' });
+			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'empty completion' });
 			continue;
 		}
 		recordLlmSpend(p, usage, Date.now() - startedAt, track);
@@ -645,7 +695,10 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		recordLlmSpend({ name: lastEmpty.provider, model: lastEmpty.model }, lastEmpty.usage, 0, track);
 		return lastEmpty;
 	}
-	throw lastErr || new LlmUnavailableError();
+	if (attempts.length) {
+		console.warn('[llm] chain exhausted: ' + attempts.map((a) => a.skipped ? `${a.provider}=${a.skipped}` : `${a.provider}=${a.error} (${a.ms}ms)`).join(' | '));
+	}
+	throw Object.assign(lastErr || new LlmUnavailableError(), { attempts });
 }
 
 // Fire-and-forget spend ledger write for one completion. Attribution comes from

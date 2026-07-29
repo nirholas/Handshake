@@ -987,6 +987,22 @@ html.cv-page,
 	font-size: 0.75rem;
 	margin-top: 1rem;
 }
+/* Named only when the page is served by a backup provider, so it should read as
+   a quiet status note rather than an error. */
+.cv-src-note {
+	cursor: help;
+}
+.cv-src-note a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-style: dotted;
+	text-underline-offset: 2px;
+	transition: color 0.15s ease;
+}
+.cv-src-note a:hover,
+.cv-src-note a:focus-visible {
+	color: var(--cv-text-1);
+}
 
 /* Categories row on the detail page. */
 .cv-cats {

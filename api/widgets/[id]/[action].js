@@ -11,6 +11,7 @@ import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
+import { csvCell } from '../../_lib/csv.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { captureException } from '../../_lib/sentry.js';
 import { isDemoWidgetId, getDemoWidget } from '../_demo-fixtures.js';
@@ -1423,12 +1424,6 @@ async function exportTranscriptsCsv(widgetId) {
 		);
 	}
 	return lines.join('\n') + '\n';
-}
-
-function csvCell(v) {
-	const s = v == null ? '' : String(v);
-	if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-	return s;
 }
 
 function toIsoString(d) {

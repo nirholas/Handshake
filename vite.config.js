@@ -1304,6 +1304,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/aws/': resolve(root, 'pages/aws/index.html'),
 					'/openai': resolve(root, 'pages/openai/index.html'),
 					'/openai/': resolve(root, 'pages/openai/index.html'),
+					'/press': resolve(root, 'pages/press/index.html'),
+					'/press/': resolve(root, 'pages/press/index.html'),
 '/support': resolve(root, 'pages/support.html'),
 					'/support/': resolve(root, 'pages/support.html'),
 					// Top-level galaxy/constellation are routed in vercel.json (prod) and

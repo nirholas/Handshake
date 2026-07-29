@@ -10,31 +10,32 @@
 -- colliding fee nonce) let the facilitator's already-processed recovery branch
 -- credit later payments off the first one's broadcast.
 --
--- This index is the race-proof arbiter behind settle-credit.js: the credit
--- INSERT runs ON CONFLICT DO NOTHING against it, so of any set of concurrent
--- settles sharing a signature exactly one is credited.
+-- Scoping the constraint: by MARKER, not by TIME.
 --
--- The predicate is time-fenced to the fix's deploy window: history before the
--- cutoff keeps its duplicates (they are real, documented, and analyzed by
--- scripts/x402-milestone-stats.mjs — rewriting them would falsify the audit
--- trail). Any duplicate credited AFTER the cutoff but BEFORE this migration
--- runs is demoted below, keeping the earliest row per signature, so index
--- creation cannot fail regardless of when the migration is applied.
+-- The obvious approach — fence the index to "rows after the fix ships" — is
+-- wrong, because the migration cannot know when the deploy actually lands. A
+-- timestamp guessed at authoring time either demotes legitimate pre-fix rows
+-- (rewriting a published audit trail: the 59,307 figure is public) or leaves a
+-- gap. Instead the credit gate stamps every row it arbitrates with
+-- credit_gated = true, and the unique index covers only those rows. History is
+-- untouched by construction, the constraint takes effect exactly when the new
+-- code starts serving, and applying this migration early or late is harmless.
 
-WITH ranked AS (
-	SELECT id,
-	       ROW_NUMBER() OVER (PARTITION BY tx_sig ORDER BY ts ASC, id ASC) AS rn
-	FROM x402_self_facilitator_log
-	WHERE action = 'settle' AND ok = true AND tx_sig IS NOT NULL
-	  AND ts >= '2026-07-29 00:00:00+00'
-)
-UPDATE x402_self_facilitator_log l
-SET ok = false,
-    reject_reason = 'signature_already_settled:migration_backfill'
-FROM ranked r
-WHERE l.id = r.id AND r.rn > 1;
+ALTER TABLE x402_self_facilitator_log
+	ADD COLUMN IF NOT EXISTS credit_gated boolean NOT NULL DEFAULT false;
 
+COMMENT ON COLUMN x402_self_facilitator_log.credit_gated IS
+	'True when this row was arbitrated by settle-credit.js (one credit per tx_sig). '
+	'Rows predating that gate are false and are excluded from the uniqueness constraint.';
+
+-- The race-proof arbiter behind settle-credit.js: the credit INSERT runs
+-- ON CONFLICT DO NOTHING against this index, so of any set of concurrent settles
+-- sharing a signature exactly one is credited.
 CREATE UNIQUE INDEX IF NOT EXISTS x402_self_fac_settle_sig_unique
 	ON x402_self_facilitator_log (tx_sig)
-	WHERE action = 'settle' AND ok = true AND tx_sig IS NOT NULL
-	  AND ts >= '2026-07-29 00:00:00+00';
+	WHERE action = 'settle' AND ok = true AND credit_gated = true AND tx_sig IS NOT NULL;
+
+-- The audit pipeline's hot query: duplicates among gated rows.
+CREATE INDEX IF NOT EXISTS x402_self_fac_settle_gated_sig
+	ON x402_self_facilitator_log (tx_sig)
+	WHERE action = 'settle' AND credit_gated = true;

@@ -869,7 +869,10 @@ function renderDevCom(coin) {
 
 // ── Markets (exchange listings) ──────────────────────────────────────────────
 
-const marketsState = { page: 0, rows: [], loading: false, done: false, error: false };
+// `depth` tracks whether the answering source publishes order-book depth and
+// spread. Only CoinGecko does; when the API fails over to CoinPaprika those
+// three columns would be a wall of em-dashes, so the table drops them instead.
+const marketsState = { page: 0, rows: [], loading: false, done: false, error: false, depth: true };
 
 function trustCell(trust) {
 	if (!trust) return '<span class="cv-trust">—</span>';
@@ -877,7 +880,7 @@ function trustCell(trust) {
 	return `<span class="cv-trust"><span class="dot ${trust}" aria-hidden="true"></span>${esc(label)}</span>`;
 }
 
-function tickerRow(t) {
+function tickerRow(t, depth = true) {
 	const ex = t.exchange || {};
 	const exCell = ex.id
 		? `<a class="cv-mkt-x" href="/exchange/${encodeURIComponent(ex.id)}">${ex.logo ? `<img src="${esc(ex.logo)}" alt="" loading="lazy" />` : ''}<span class="nm">${esc(ex.name || ex.id)}</span></a>`
@@ -890,9 +893,13 @@ function tickerRow(t) {
 			<td class="left">${exCell}</td>
 			<td class="left">${pairCell}</td>
 			<td class="cv-mono">${esc(formatPrice(t.price_usd))}</td>
-			<td class="cv-mono">${t.spread_pct != null ? `${t.spread_pct.toFixed(2)}%` : '—'}</td>
+			${
+				depth
+					? `<td class="cv-mono">${t.spread_pct != null ? `${t.spread_pct.toFixed(2)}%` : '—'}</td>
 			<td class="cv-mono">${esc(formatUsd(t.depth_up_usd))}</td>
-			<td class="cv-mono">${esc(formatUsd(t.depth_down_usd))}</td>
+			<td class="cv-mono">${esc(formatUsd(t.depth_down_usd))}</td>`
+					: ''
+			}
 			<td class="cv-mono">${esc(formatUsd(t.volume_usd))}</td>
 			<td>${trustCell(t.trust)}</td>
 		</tr>`;
@@ -900,7 +907,7 @@ function tickerRow(t) {
 
 function renderMarkets(coin) {
 	const el = $('cv-markets');
-	const { rows, loading, error, done } = marketsState;
+	const { rows, loading, error, done, depth } = marketsState;
 	if (!rows.length && loading) {
 		el.innerHTML = `
 			<h2 class="cv-h2">Markets</h2>
@@ -937,14 +944,18 @@ function renderMarkets(coin) {
 						<th scope="col" class="left">Exchange</th>
 						<th scope="col" class="left">Pair</th>
 						<th scope="col">Price</th>
-						<th scope="col">Spread</th>
+						${
+							depth
+								? `<th scope="col">Spread</th>
 						<th scope="col">+2% Depth</th>
-						<th scope="col">−2% Depth</th>
+						<th scope="col">−2% Depth</th>`
+								: ''
+						}
 						<th scope="col">24h Volume</th>
 						<th scope="col">Trust</th>
 					</tr>
 				</thead>
-				<tbody>${rows.map(tickerRow).join('')}</tbody>
+				<tbody>${rows.map((t) => tickerRow(t, depth)).join('')}</tbody>
 			</table>
 		</div>
 		${done ? '' : `<button type="button" class="cv-load-more" id="cv-mkt-more"${loading ? ' disabled' : ''}>${loading ? 'Loading…' : 'Load more exchanges'}</button>`}`;
@@ -957,10 +968,14 @@ async function loadMarkets(coin) {
 	renderMarkets(coin);
 	try {
 		const next = marketsState.page + 1;
-		const { tickers, count } = await getJson(
+		const { tickers, count, source } = await getJson(
 			`/api/coin/tickers?id=${encodeURIComponent(coin.id)}&page=${next}`,
 		);
 		marketsState.page = next;
+		// Only the primary source carries spread/depth. Once any page arrives
+		// without it, keep the columns hidden for the whole table so the rows
+		// stay aligned with the header.
+		if (source && source !== 'coingecko') marketsState.depth = false;
 		marketsState.rows.push(...(tickers || []));
 		// A short page (CoinGecko caps at 100/page) or the 10-page ceiling ends it.
 		if (!count || count < 100 || next >= 10) marketsState.done = true;
@@ -1009,6 +1024,34 @@ function renderError() {
 	$('cv-stats').innerHTML = '';
 }
 
+// ── Data provenance ─────────────────────────────────────────────────────────
+// The API fails over to backup providers when its primary is rate-limited (see
+// api/_lib/coin-fallbacks.js), and a backup can't supply every field — FDV,
+// order-book depth and developer stats are absent from CoinPaprika. Saying so
+// is the difference between "this page is degraded right now" and "this coin
+// has no FDV", so the footer names the source whenever it isn't the primary.
+
+const SOURCE_LABELS = {
+	coinpaprika: { name: 'CoinPaprika', url: 'https://coinpaprika.com' },
+	defillama: { name: 'DefiLlama', url: 'https://defillama.com' },
+};
+
+function renderProvenance(coin, source) {
+	const el = $('cv-updated');
+	const parts = [];
+	if (coin.last_updated) parts.push(`Last updated: ${esc(new Date(coin.last_updated).toLocaleString())}`);
+	const backup = SOURCE_LABELS[source];
+	if (backup) {
+		parts.push(
+			`<span class="cv-src-note" title="The primary market data provider is rate-limited; some fields are unavailable from this source.">` +
+				`Served from <a href="${backup.url}" target="_blank" rel="noopener">${backup.name}</a></span>`,
+		);
+	}
+	if (!parts.length) return;
+	el.hidden = false;
+	el.innerHTML = parts.join(' · ');
+}
+
 // ── SEO / document metadata ─────────────────────────────────────────────────
 
 function updateMeta(coin) {
@@ -1043,9 +1086,10 @@ async function main() {
 	renderSkeletons();
 
 	let coin;
+	let source;
 	try {
 		const param = MINT_RE.test(id) ? `contract=${encodeURIComponent(id)}` : `id=${encodeURIComponent(id)}`;
-		({ coin } = await getJson(`/api/coin/detail?${param}`));
+		({ coin, source } = await getJson(`/api/coin/detail?${param}`));
 	} catch (err) {
 		main_.removeAttribute('aria-busy');
 		if (err.status === 404 || err.status === 400) renderNotFound(id);
@@ -1064,11 +1108,7 @@ async function main() {
 	renderDevCom(coin);
 	renderAbout(coin);
 	renderLinks(coin);
-	if (coin.last_updated) {
-		const upd = $('cv-updated');
-		upd.hidden = false;
-		upd.textContent = `Last updated: ${new Date(coin.last_updated).toLocaleString()}`;
-	}
+	renderProvenance(coin, source);
 	// Chart, markets, and news stream in independently of the core profile.
 	// A remembered non-CoinGecko source mounts its terminal directly and defers
 	// the native OHLC fetch until the user switches back to the CoinGecko chart.

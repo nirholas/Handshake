@@ -1,9 +1,9 @@
 // GET /api/v1/resolve — free ENS + SNS name resolution.
 //
 // The endpoint wraps two existing platform resolvers rather than
-// reimplementing them: the shared EVM failover provider (api/_lib/evm/rpc.js
-// `evmFallbackProvider`, the same one api/agents/ens/[name].js already uses
-// for ENS) and src/solana/sns.js's `resolveSnsName` / `reverseLookupAddress`
+// reimplementing them: viem's ENS Universal Resolver over the shared EVM
+// failover transport (api/_lib/evm/rpc.js `evmTransport`) and
+// src/solana/sns.js's `resolveSnsName` / `reverseLookupAddress`
 // (the exact module api/sns.js and api/sns-subdomain.js already share for
 // SNS). These tests mock those two modules at the boundary and exercise the
 // real handler: forward .eth / .sol resolution, reverse address lookups in
@@ -37,14 +37,20 @@ vi.mock('../../src/solana/sns.js', () => ({
 	reverseLookupAddress: (addr) => snsReverse(addr),
 }));
 
-// EVM provider stub — mirrors evmFallbackProvider's ethers Provider surface
-// (resolveName / lookupAddress), the same shape api/agents/ens/[name].js relies on.
+// ENS stub. The handler resolves through viem's Universal Resolver client
+// (one eth_call per direction) built on the shared failover transport, so the
+// boundary to stub is viem's public client rather than an ethers provider.
+// `evmTransport` is still mocked so no test ever opens a real RPC socket.
 let ensForward = async () => null;
 let ensReverse = async () => null;
 vi.mock('../../api/_lib/evm/rpc.js', () => ({
-	evmFallbackProvider: async () => ({
-		resolveName: (name) => ensForward(name),
-		lookupAddress: (addr) => ensReverse(addr),
+	evmTransport: () => 'stub-transport',
+}));
+vi.mock('viem', async (importOriginal) => ({
+	...(await importOriginal()),
+	createPublicClient: () => ({
+		getEnsAddress: ({ name }) => ensForward(name),
+		getEnsName: ({ address }) => ensReverse(address),
 	}),
 }));
 

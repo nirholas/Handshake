@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
-	<script>/* home tier boot: no-flash progressive disclosure. Visitors who have not opted into the full page get the lite tier (advanced sections collapsed behind #advanced-gate). Runtime toggle lives next to that gate. */(function(){var lite=true;try{lite=localStorage.getItem('tws-home:tier')!=='full';}catch(e){}if(lite)document.documentElement.classList.add('home-lite');})();</script>
+	<script>/* Tier boot: no-flash progressive disclosure. New visitors get the lite tier — the core journey only, with advanced sections collapsed behind #advanced-gate and the deep nav menus hidden. One site-wide preference, shared with the nav (public/nav.js → applyTier). */(function(){var lite=true;try{lite=localStorage.getItem('tws:tier')!=='full';}catch(e){}if(lite)document.documentElement.classList.add('tws-lite');})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title data-i18n="home.meta_title">three.ws — The 3D Agent Layer of the Internet</title>
@@ -635,21 +635,33 @@
 </section>
 <script>
 // Advanced-tier runtime: toggle + persistence + deep-link auto-expand.
-// The boot script in <head> already applied html.home-lite before paint.
+// The boot script in <head> already applied html.tws-lite before paint.
+//
+// The tier is one site-wide preference shared with the nav (public/nav.js owns
+// `window.twsTier` and the `tws:tier-change` event). This page defers to it
+// when the nav has loaded, and falls back to writing the same key itself so the
+// gate still works on its own — the nav is fetched asynchronously and a fast
+// click must never be swallowed.
 (function () {
-	var KEY = 'tws-home:tier';
+	var KEY = 'tws:tier';
 	var root = document.documentElement;
 	var btn = document.getElementById('adv-toggle');
-	function isLite() { return root.classList.contains('home-lite'); }
+	function isLite() { return root.classList.contains('tws-lite'); }
 	function setLite(lite, persist) {
-		root.classList.toggle('home-lite', lite);
-		if (btn) btn.setAttribute('aria-expanded', String(!lite));
+		if (persist && window.twsTier) { window.twsTier.set(lite); return; }
+		root.classList.toggle('tws-lite', lite);
+		syncBtn();
 		if (persist) { try { localStorage.setItem(KEY, lite ? 'lite' : 'full'); } catch (e) {} }
 	}
+	function syncBtn() {
+		if (btn) btn.setAttribute('aria-expanded', String(!isLite()));
+	}
 	if (btn) {
-		btn.setAttribute('aria-expanded', String(!isLite()));
+		syncBtn();
 		btn.addEventListener('click', function () { setLite(!isLite(), true); });
 	}
+	// Flipping the tier from a nav menu must move this gate with it.
+	window.addEventListener('tws:tier-change', syncBtn);
 	// A hash pointing inside a gated section (nav links, shared URLs, the
 	// topic chips above) expands the tier for this visit and scrolls there.
 	function revealForHash() {

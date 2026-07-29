@@ -431,11 +431,29 @@ concierge.ask('What does the Pro plan cost?');</code></pre>
 			section hands out (/concierge/concierge.global.js, mirrored from the
 			SDK build), so this page proves the real embed rather than a bundled
 			copy of the source. It is loaded WITHOUT data-concierge so the auto-init
-			stays off; the module script below configures it once the global API is
-			ready (module scripts execute in DOM order).
+			stays off.
+
+			The bundle is injected and AWAITED here rather than sat next to this
+			module as its own <script src> tag. Document order is not a guarantee
+			across the two: Vite extracts an inline module into a built chunk and
+			emits it in <head>, above a public-asset script tag left in <body>, so
+			the sibling-tag version ran this config BEFORE the bundle had defined
+			window.ThreeWsConcierge and the demo died on arrival with a destructure
+			error. A module script's load event fires after evaluation, so awaiting
+			it is ordering that holds in dev and in the built page alike. (A static
+			`import` would express the same dependency, but Vite forbids importing
+			files out of the public directory.)
 		-->
-		<script type="module" src="/concierge/concierge.global.js"></script>
 		<script type="module">
+			await new Promise((resolve, reject) => {
+				const s = document.createElement('script');
+				s.type = 'module';
+				s.src = '/concierge/concierge.global.js';
+				s.onload = resolve;
+				s.onerror = () => reject(new Error('concierge.global.js failed to load'));
+				document.head.appendChild(s);
+			});
+
 			// The demo eats its own dog food: the widget answers questions about
 			// Concierge itself, grounded in this page + the curated facts below.
 			const { Concierge } = window.ThreeWsConcierge;

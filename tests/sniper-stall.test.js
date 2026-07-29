@@ -93,6 +93,29 @@ describe('diagnoseStall', () => {
 		expect(d).toMatchObject({ code: 'size_over_budget', blocking: false });
 	});
 
+	// An arm is often broken in more than one way; reporting only the first means
+	// the next one surfaces a day later, after someone fixed the first and waited.
+	it('reports every condition, ranking a blocking one first', () => {
+		const strategy = {
+			...healthy,
+			min_market_cap_usd: 10_000,
+			per_trade_lamports: SOL(0.13),
+			daily_budget_lamports: SOL(0.09),
+		};
+		const d = diagnoseStall({ strategy, closed: 0, balanceSol: 0.001 });
+		expect(d).toMatchObject({ code: 'wallet_dry', blocking: true });
+		const codes = d.also.map((x) => x.code);
+		expect(codes).toContain('mcap_band_unreachable');
+		expect(codes).toContain('size_over_budget');
+		// Advisory conditions never outrank a blocking one.
+		expect(d.also.every((x) => x.blocking === false || x.code === 'mcap_band_unreachable')).toBe(true);
+	});
+
+	it('leaves `also` empty when only one thing is wrong', () => {
+		const d = diagnoseStall({ strategy: healthy, closed: 0, open: 0, balanceSol: 0.05 });
+		expect(d.also).toEqual([]);
+	});
+
 	it('explains an arm with a reachable config and no fills yet', () => {
 		expect(diagnoseStall({ strategy: healthy, closed: 0, open: 0, balanceSol: 0.05 }))
 			.toMatchObject({ code: 'no_qualifying_launch', blocking: false });

@@ -102,11 +102,24 @@ describe('distinct-signature guard — same-amount payments must never collide',
 	});
 
 	it('nextAutoNonce never repeats within a blockhash-sized window and stays in the fee-tested range', () => {
+		// The nonce space widened from a 997-slot per-process cycle to ~4.08M slots
+		// drawn with a CSPRNG (2026-07-29). The old sequential counter started at the
+		// same value on every Cloud Run instance, so two instances paying the same
+		// endpoint the same amount in one blockhash window built IDENTICAL
+		// transactions — the mechanism behind the duplicate-settle defect. What must
+		// still hold is the pair of properties this test has always guarded: no
+		// repeats inside a window, and every drawn nonce maps to a fee-safe config.
 		const seen = new Set();
+		const ceiling = ringMaxFeePerTxLamports();
 		for (let i = 0; i < 200; i++) {
 			const n = pay.nextAutoNonce();
 			expect(n).toBeGreaterThanOrEqual(0);
-			expect(n).toBeLessThan(997);
+			expect(n).toBeLessThan(pay.RING_NONCE_SPACE);
+			for (const selfPay of [true, false]) {
+				const { microLamports, cuLimit } = pay.ringFeeConfig(n, { selfPay });
+				expect(expectedFeeLamports({ selfPay, priorityMicrolamports: microLamports, cuLimit }))
+					.toBeLessThanOrEqual(ceiling);
+			}
 			seen.add(n);
 		}
 		expect(seen.size).toBe(200);

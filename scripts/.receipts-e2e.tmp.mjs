@@ -64,9 +64,9 @@ await page.route('**/api/x402/my-receipts*', (route) =>
 			address,
 			count: 3,
 			receipts: [
-				{ id: 1, payer: address, network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', resourceUrl: 'https://three.ws/api/x402/d/token-snapshot', format: 'jws', transaction: '5xTr4nsAcT10nS1gNaTuReF0rTeSt1nGpUrP0SeS0nLy1234567890abcd', receipt: { format: 'jws', signature: 'abc' }, issuedAt: new Date(Date.now() - 3600e3).toISOString() },
-				{ id: 2, payer: address, network: 'eip155:8453', resourceUrl: 'https://three.ws/api/x402/d/whale-activity', format: 'jws', transaction: '0xdeadbeef1234567890abcdef', receipt: { format: 'jws', signature: 'def' }, issuedAt: new Date(Date.now() - 7200e3).toISOString() },
-				{ id: 3, payer: address, network: 'solana', resourceUrl: 'https://three.ws/api/x402/d/holder-concentration', format: 'jws', transaction: null, receipt: { format: 'jws', signature: 'ghi' }, issuedAt: new Date(Date.now() - 86400e3).toISOString() },
+				{ id: 1, payer: address, network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', resourceUrl: 'https://three.ws/api/x402/d/token-snapshot', format: 'jws', amountAtomics: '10000', asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', transaction: '5xTr4nsAcT10nS1gNaTuReF0rTeSt1nGpUrP0SeS0nLy1234567890abcd', receipt: { format: 'jws', signature: 'abc' }, issuedAt: new Date(Date.now() - 3600e3).toISOString() },
+				{ id: 2, payer: address, network: 'eip155:8453', resourceUrl: 'https://three.ws/api/x402/d/whale-activity', format: 'jws', amountAtomics: '1000', asset: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', transaction: '0xdeadbeef1234567890abcdef', receipt: { format: 'jws', signature: 'def' }, issuedAt: new Date(Date.now() - 7200e3).toISOString() },
+				{ id: 3, payer: address, network: 'solana', resourceUrl: 'https://three.ws/api/x402/d/holder-concentration', format: 'jws', amountAtomics: null, asset: null, transaction: null, receipt: { format: 'jws', signature: 'ghi' }, issuedAt: new Date(Date.now() - 86400e3).toISOString() },
 			],
 		}),
 	}),
@@ -77,6 +77,8 @@ console.log('rows rendered:', await page.locator('.rc-row').count());
 console.log('KPIs:', await page.locator('#rc-k-total').textContent(), 'receipts /', await page.locator('#rc-k-endpoints').textContent(), 'endpoints /', await page.locator('#rc-k-networks').textContent());
 const links = await page.locator('a.rc-tx').evaluateAll((els) => els.map((e) => e.href));
 console.log('explorer links:', links);
+console.log('SPEND tile:', (await page.locator('#rc-k-spend').textContent()).trim(), '|', (await page.locator('#rc-k-spend-note').textContent()).trim());
+console.log('row amounts:', await page.locator('.rc-amount').allTextContents());
 console.log('private tx cell:', await page.locator('.rc-tx-none').count());
 await page.screenshot({ path: `${OUT}/rc-3-populated.png` });
 

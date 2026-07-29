@@ -58,12 +58,29 @@ export default wrap(async (req, res) => {
 		}
 		// CoinGecko primary → CoinLore fallback (see api/_lib/market-fallbacks.js).
 		// A CoinGecko rate-limit no longer blanks the /coins table; CoinLore backs
-		// it up (top-N only — category scoping and 7d sparklines are CoinGecko-only
-		// and degrade gracefully).
-		const { rows } = await fetchMarketsTable({ page, perPage, category });
-		return json(res, 200, { coins: rows, page, per_page: perPage, category: category || null }, {
-			'cache-control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
-		});
+		// it up (top-N only, and 7d sparklines are CoinGecko-only, degrading
+		// gracefully). Category scoping has no second live source, so it falls back
+		// to the last-known-good rows for that category and reports `stale` so the
+		// page can say so rather than showing an empty table.
+		const { rows, stale, asOf } = await fetchMarketsTable({ page, perPage, category });
+		return json(
+			res,
+			200,
+			{
+				coins: rows,
+				page,
+				per_page: perPage,
+				category: category || null,
+				...(stale ? { stale: true, as_of: asOf ? new Date(asOf).toISOString() : null } : {}),
+			},
+			{
+				// Stale rows are served briefly and revalidated hard: the moment the
+				// upstream recovers, the next request replaces them with live data.
+				'cache-control': stale
+					? 'public, max-age=15, s-maxage=30, stale-while-revalidate=60'
+					: 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
+			},
+		);
 	} catch {
 		return error(res, 502, 'upstream_error', 'market data is unavailable right now — retry shortly');
 	}

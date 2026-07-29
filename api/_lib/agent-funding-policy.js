@@ -23,6 +23,8 @@
  * different subsystems.
  */
 
+import { MIN_OPERATIONAL_WALLET_SOL } from './agent-trade-guards.js';
+
 function num(name, def) {
 	const raw = process.env[name];
 	if (raw == null || raw === '') return def;
@@ -48,6 +50,40 @@ export function autoFundTargetSol() {
 }
 
 /**
+ * Balance at which THIS agent can no longer place its next trade: everything one
+ * entry costs besides the buy itself (`MIN_OPERATIONAL_WALLET_SOL` — ATA rent,
+ * fee and tip headroom, and the firewall's simulated round-trip) plus the arm's
+ * own configured size. Never below the flat `SNIPER_AUTO_FUND_MIN_SOL`.
+ *
+ * A flat trigger was wrong in one direction only, and quietly: an arm sized at
+ * 0.13 SOL/trade sitting on 0.035 SOL is above the flat 0.02 floor, so the funder
+ * called it healthy and moved on, while every entry it attempted got clamped down
+ * to whatever was left. Size-aware, it gets refilled to a size it can actually
+ * trade. Pure.
+ *
+ * @param {{perTradeSol?: number}} agent
+ */
+export function fundTriggerSol(agent = {}) {
+	const perTrade = Number(agent.perTradeSol);
+	const sized = Number.isFinite(perTrade) && perTrade > 0
+		? MIN_OPERATIONAL_WALLET_SOL + perTrade
+		: 0;
+	return Math.max(autoFundMinSol(), sized);
+}
+
+/**
+ * Balance this agent is refilled TO. Keeps the same hysteresis band above the
+ * trigger that the flat pair had (default 0.03 SOL), so a bigger arm does not get
+ * refilled more often — just to a level it can trade from. Pure.
+ *
+ * @param {{perTradeSol?: number}} agent
+ */
+export function fundTargetSol(agent = {}) {
+	const band = Math.max(0, autoFundTargetSol() - autoFundMinSol());
+	return round(fundTriggerSol(agent) + band);
+}
+
+/**
  * The anti-oscillation floor for one agent wallet: the smallest balance a
  * reclaim may leave behind without handing the funder a reason to refill.
  *
@@ -55,9 +91,13 @@ export function autoFundTargetSol() {
  * opted into auto-funding (`auto_fund_enabled = false`) is nobody's refill
  * target, so sweeping it lower cannot oscillate. Pure.
  *
- * @param {{autoFundEnabled?: boolean}} agent
+ * @param {{autoFundEnabled?: boolean, perTradeSol?: number}} agent
  * @returns {number} SOL that must remain, 0 when the funder would not refill it
  */
 export function antiOscillationFloorSol(agent = {}) {
-	return agent.autoFundEnabled === true ? autoFundTargetSol() : 0;
+	return agent.autoFundEnabled === true ? fundTargetSol(agent) : 0;
+}
+
+function round(n) {
+	return Math.round(n * 1e9) / 1e9;
 }

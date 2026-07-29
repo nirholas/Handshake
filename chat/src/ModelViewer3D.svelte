@@ -147,29 +147,44 @@
 		tick();
 	}
 
+	function loadGlb(url) {
+		return new Promise((resolve, reject) => {
+			new GLTFLoader().load(
+				url,
+				resolve,
+				(ev) => {
+					if (ev.total > 0) loadPct = Math.round((ev.loaded / ev.total) * 100);
+				},
+				reject,
+			);
+		});
+	}
+
 	async function loadModel(url) {
 		state = 'loading';
 		loadPct = 0;
+		let gltf;
 		try {
-			const gltf = await new Promise((resolve, reject) => {
-				new GLTFLoader().load(
-					url,
-					resolve,
-					(ev) => {
-						if (ev.total > 0) loadPct = Math.round((ev.loaded / ev.total) * 100);
-					},
-					reject,
-				);
-			});
-			if (destroyed) return;
-			// State first: animate() only runs while state === 'ready'.
-			state = 'ready';
-			setupScene(gltf);
+			gltf = await loadGlb(url);
 		} catch {
-			if (destroyed) return;
-			state = 'error';
-			errorMessage = 'Could not load the 3D model file.';
+			// Direct fetch failed (usually a host without CORS headers). Retry
+			// through the same-origin GLB proxy, which serves any public model
+			// with open CORS via the SSRF-hardened fetcher.
+			try {
+				if (destroyed) return;
+				loadPct = 0;
+				gltf = await loadGlb('/api/glb?src=' + encodeURIComponent(url));
+			} catch {
+				if (destroyed) return;
+				state = 'error';
+				errorMessage = 'Could not load the 3D model file.';
+				return;
+			}
 		}
+		if (destroyed) return;
+		// State first: animate() only runs while state === 'ready'.
+		state = 'ready';
+		setupScene(gltf);
 	}
 
 	function setupScene(gltf) {
@@ -304,13 +319,14 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 <div
 	bind:this={container}
 	class="relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
 	style="min-height: {height}px"
+	data-mv3d={state}
 	tabindex="0"
-	role="img"
+	role="group"
 	aria-label={prompt ? '3D model: ' + prompt : '3D model viewer'}
 	on:keydown={onKeydown}
 >

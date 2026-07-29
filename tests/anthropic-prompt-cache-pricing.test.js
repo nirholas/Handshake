@@ -17,13 +17,14 @@
 //
 // See api/_lib/llm-pricing.js, api/_lib/chat-models.js, api/llm/anthropic.js.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { costMicroUsd } from '../api/_lib/llm-pricing.js';
 import {
 	modelRejectsSampling,
 	modelThinksByDefault,
 	MODEL_CATALOG,
 	PROVIDER_MODEL_DEFAULTS,
+	promptCacheMinChars,
 	vertexServesModel,
 } from '../api/_lib/chat-models.js';
 import { sanitizeAnthropicBody } from '../api/llm/anthropic.js';
@@ -155,6 +156,43 @@ describe('Claude 5 catalog wiring', () => {
 	});
 });
 
+describe('promptCacheMinChars — per-model cacheable minimum', () => {
+	it('uses the low 512-token minimum for Opus 5 / Fable / Mythos', () => {
+		// These cache from half the prefix Sonnet 5 needs. A flat threshold set
+		// for Sonnet would silently forfeit those savings.
+		expect(promptCacheMinChars('claude-opus-5')).toBe(1792);
+		expect(promptCacheMinChars('claude-fable-5')).toBe(1792);
+	});
+
+	it('uses the 1024-token minimum for the Sonnet 5 / Opus 4.8 tier', () => {
+		expect(promptCacheMinChars('claude-sonnet-5')).toBe(3584);
+		expect(promptCacheMinChars('claude-opus-4-8')).toBe(3584);
+	});
+
+	it('is NOT monotonic across generations — Haiku 4.5 needs 8x Opus 5', () => {
+		// The trap this table exists to encode: a newer model can have a much
+		// LOWER minimum than an older one, so "newer means cheaper to cache" is
+		// a wrong assumption to hardcode.
+		expect(promptCacheMinChars('claude-haiku-4-5')).toBe(14_336);
+		expect(promptCacheMinChars('claude-haiku-4-5')).toBeGreaterThan(
+			promptCacheMinChars('claude-opus-5'),
+		);
+	});
+
+	it('resolves the dated Haiku alias to its family threshold', () => {
+		expect(promptCacheMinChars('claude-haiku-4-5-20251001')).toBe(
+			promptCacheMinChars('claude-haiku-4-5'),
+		);
+	});
+
+	it('falls back to the most conservative threshold for unknown models', () => {
+		// An unknown id must not get a marker that would bill a wasted cache
+		// write, so it gets the strictest requirement in the table.
+		expect(promptCacheMinChars('some-future-model')).toBe(14_336);
+		expect(promptCacheMinChars(undefined)).toBe(14_336);
+	});
+});
+
 describe('sanitizeAnthropicBody — embed proxy request-shape guard', () => {
 	it('strips temperature for models that 400 on it', () => {
 		const out = sanitizeAnthropicBody({ temperature: 0.7, max_tokens: 8000 }, 'claude-opus-5');
@@ -225,5 +263,137 @@ describe('sanitizeAnthropicBody — embed proxy request-shape guard', () => {
 		expect(body.temperature).toBe(0.7);
 		expect(body.max_tokens).toBe(300);
 		expect(body.thinking).toEqual({ type: 'enabled', budget_tokens: 100 });
+	});
+});
+
+// ── Integration: the assembled request and the spend ledger must agree ────────
+//
+// The unit tests above cover each helper in isolation. This block drives the
+// real llmComplete() against a stubbed upstream and asserts on the body that
+// actually goes over the wire plus the cost derived from a CACHED response —
+// the seam where the under-reporting bug lived.
+
+describe('llmComplete — Anthropic request shape and cached-turn accounting', () => {
+	const ANTHROPIC_KEYS = [
+		'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'NVIDIA_API_KEY', 'CEREBRAS_API_KEY',
+		'GEMINI_API_KEY', 'OPENAI_API_KEY', 'GROK_API_KEY', 'GOOGLE_CLOUD_PROJECT',
+		'VERTEX_CLAUDE_ENABLED', 'DATABASE_URL',
+	];
+	const saved = {};
+	let llm;
+	let captured;
+
+	beforeEach(async () => {
+		for (const k of ANTHROPIC_KEYS) {
+			saved[k] = process.env[k];
+			delete process.env[k];
+		}
+		process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
+		captured = [];
+		vi.stubGlobal('fetch', async (url, opts = {}) => {
+			const u = String(url);
+			captured.push({ url: u, body: opts.body ? JSON.parse(opts.body) : null });
+			if (!u.includes('api.anthropic.com')) return new Response('nope', { status: 500 });
+			return new Response(
+				JSON.stringify({
+					// A thinking-model response: the leading block carries no text.
+					content: [
+						{ type: 'thinking', thinking: '' },
+						{ type: 'text', text: 'the real answer' },
+					],
+					// A CACHE HIT: input_tokens is the uncached remainder only.
+					usage: {
+						input_tokens: 40,
+						output_tokens: 100,
+						cache_creation_input_tokens: 0,
+						cache_read_input_tokens: 20_000,
+					},
+				}),
+				{ status: 200, headers: { 'content-type': 'application/json' } },
+			);
+		});
+		vi.resetModules();
+		llm = await import('../api/_lib/llm.js');
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+		delete process.env.ANTHROPIC_API_KEY;
+		for (const k of ANTHROPIC_KEYS) {
+			if (saved[k] === undefined) delete process.env[k];
+			else process.env[k] = saved[k];
+		}
+	});
+
+	const run = () =>
+		llm.llmComplete({
+			system: 'PERSONA AND PLATFORM KNOWLEDGE. '.repeat(200), // ~6.4k chars
+			user: 'hello',
+			maxTokens: 2000,
+			anthropicKey: 'sk-byok',
+			anthropicModel: 'claude-sonnet-5',
+		});
+
+	it('sends a cache breakpoint on a qualifying system prompt', async () => {
+		await run();
+		const req = captured.find((c) => c.url.includes('api.anthropic.com'));
+		expect(Array.isArray(req.body.system)).toBe(true);
+		expect(req.body.system[0].cache_control).toEqual({ type: 'ephemeral' });
+	});
+
+	it('omits temperature for a model that rejects sampling params', async () => {
+		await run();
+		const req = captured.find((c) => c.url.includes('api.anthropic.com'));
+		expect(req.body.temperature).toBeUndefined();
+		expect(req.body.model).toBe('claude-sonnet-5');
+	});
+
+	it('reads the answer past an empty leading thinking block', async () => {
+		// content[0].text would be undefined here — the reply would silently
+		// come back blank on every thinking-model turn.
+		const out = await run();
+		expect(out.text).toBe('the real answer');
+	});
+
+	it('surfaces cache counters so a cached turn is not under-billed', async () => {
+		const out = await run();
+		expect(out.usage.cacheRead).toBe(20_000);
+		expect(llm.promptTokens(out.usage)).toBe(20_040);
+
+		const priced = costMicroUsd({
+			provider: 'anthropic',
+			model: 'claude-sonnet-5',
+			input: out.usage.input,
+			output: out.usage.output,
+			cacheWrite: out.usage.cacheWrite,
+			cacheRead: out.usage.cacheRead,
+		});
+		// 40*$3 + 100*$15 + 20000*$3*0.1 per MTok, in micro-USD.
+		expect(priced).toBe(7_620);
+
+		// Pricing that ignored the cache counters would report ~4.7x too little —
+		// the regression this whole file exists to prevent.
+		const ignoringCache = costMicroUsd({
+			provider: 'anthropic',
+			model: 'claude-sonnet-5',
+			input: out.usage.input,
+			output: out.usage.output,
+		});
+		expect(ignoringCache).toBeLessThan(priced);
+	});
+
+	it('still makes the cached turn far cheaper than an uncached one', async () => {
+		const out = await run();
+		const cached = costMicroUsd({
+			provider: 'anthropic', model: 'claude-sonnet-5',
+			input: out.usage.input, output: out.usage.output,
+			cacheWrite: out.usage.cacheWrite, cacheRead: out.usage.cacheRead,
+		});
+		const uncached = costMicroUsd({
+			provider: 'anthropic', model: 'claude-sonnet-5',
+			input: llm.promptTokens(out.usage), output: out.usage.output,
+		});
+		expect(cached).toBeLessThan(uncached);
 	});
 });

@@ -193,6 +193,7 @@
 		<script type="module">
 			import * as THREE from 'three';
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { getDecoders } from '/src/viewer/internal.js';
 			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
 
 			const canvas    = document.getElementById('avatar-canvas');
@@ -695,7 +696,20 @@
 			// ── Load avatar + animations ──────────────────────────────────────
 			// Realistic Avaturn-rigged humanoid; clips in /public/animations/clips
 			// are retargeted to this rig (see public/animations/registry.json).
-			new GLTFLoader().load('/avatars/default.glb', gltf => {
+			// default.glb declares EXT_meshopt_compression + KHR_mesh_quantization in
+			// extensionsRequired, so a bare GLTFLoader throws "setMeshoptDecoder must be
+			// called before loading compressed files" and the avatar never appears. Wire
+			// the shared decoder set first, same as /demos/audio2face.html.
+			const avatarLoader = new GLTFLoader();
+			getDecoders().then(({ dracoLoader, ktx2Loader, meshoptDecoder }) => {
+				avatarLoader.setDRACOLoader(dracoLoader)
+					.setKTX2Loader(ktx2Loader.detectSupport(renderer))
+					.setMeshoptDecoder(meshoptDecoder);
+				loadAvatar();
+			});
+
+			function loadAvatar() {
+			avatarLoader.load('/avatars/default.glb', gltf => {
 				avatar = gltf.scene;
 				avatar.traverse(n => {
 					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name))
@@ -775,6 +789,7 @@
 					startSit();
 				});
 			});
+			}
 
 			// ── Proximity shadow: ground the avatar by sharpening the text shadow
 			// on #sit-line as he descends onto it. We project the avatar's world

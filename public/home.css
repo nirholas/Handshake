@@ -582,9 +582,9 @@
 		.start-step p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
 
 		/* ── ADVANCED TIER (progressive disclosure) ────────────────
-		   html.home-lite is applied pre-paint from localStorage; the gate
+		   html.tws-lite is applied pre-paint from localStorage; the gate
 		   section (#advanced-gate) toggles it and persists the choice. */
-		html.home-lite [data-tier="advanced"] { display: none; }
+		html.tws-lite [data-tier="advanced"] { display: none; }
 		.adv-gate { border-top: 1px solid var(--hairline); padding: 64px 0; }
 		.adv-gate-card {
 			border: 1px solid var(--hairline-strong); border-radius: 14px;
@@ -625,19 +625,19 @@
 		.adv-toggle:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
 		.adv-toggle .adv-toggle-hide { display: none; }
 		/* Expanded state: the gate compacts into a slim divider with a collapse control. */
-		html:not(.home-lite) .adv-gate { padding: 36px 0; }
-		html:not(.home-lite) .adv-gate-card { padding: 20px 24px; }
-		html:not(.home-lite) .adv-gate-h,
-		html:not(.home-lite) .adv-gate-desc,
-		html:not(.home-lite) .adv-gate-topics { display: none; }
-		html:not(.home-lite) .adv-gate-eyebrow { margin: 0; }
-		html:not(.home-lite) .adv-toggle {
+		html:not(.tws-lite) .adv-gate { padding: 36px 0; }
+		html:not(.tws-lite) .adv-gate-card { padding: 20px 24px; }
+		html:not(.tws-lite) .adv-gate-h,
+		html:not(.tws-lite) .adv-gate-desc,
+		html:not(.tws-lite) .adv-gate-topics { display: none; }
+		html:not(.tws-lite) .adv-gate-eyebrow { margin: 0; }
+		html:not(.tws-lite) .adv-toggle {
 			background: transparent; color: var(--text); border-color: var(--hairline-strong);
 			font-weight: 500; padding: 9px 16px; font-size: 13px;
 		}
-		html:not(.home-lite) .adv-toggle:hover { border-color: var(--text); opacity: 1; }
-		html:not(.home-lite) .adv-toggle .adv-toggle-show { display: none; }
-		html:not(.home-lite) .adv-toggle .adv-toggle-hide { display: inline; }
+		html:not(.tws-lite) .adv-toggle:hover { border-color: var(--text); opacity: 1; }
+		html:not(.tws-lite) .adv-toggle .adv-toggle-show { display: none; }
+		html:not(.tws-lite) .adv-toggle .adv-toggle-hide { display: inline; }
 
 		/* ── BENTO GRID ──────────────────────────────────────────── */
 		.bento {

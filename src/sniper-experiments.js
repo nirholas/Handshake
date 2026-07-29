@@ -97,7 +97,13 @@ function stallLine(x) {
 	if (!s.blocking && x.closed > 0) return '';
 	const cls = s.blocking ? 'xp-stall xp-stall-blocking' : 'xp-stall';
 	const label = s.blocking ? 'not trading' : 'idle';
-	return `<div class="${cls}" title="${esc(s.message)}"><b>${esc(label)}:</b> ${esc(s.message)}</div>`;
+	// An arm is often broken in more than one way. The rest are listed under the
+	// headline so fixing the first does not just reveal the second a day later.
+	const also = Array.isArray(s.also) && s.also.length
+		? `<ul class="xp-stall-also">${s.also.map((x) => `<li>${esc(x.message)}</li>`).join('')}</ul>`
+		: '';
+	const tip = [s.message, ...(s.also || []).map((x) => x.message)].join('\n\n');
+	return `<div class="${cls}" title="${esc(tip)}"><b>${esc(label)}:</b> ${esc(s.message)}${also}</div>`;
 }
 
 // Earned autonomy: how much rope this arm's own record has bought it. Only shown

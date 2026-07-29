@@ -293,7 +293,7 @@ function Loader( editor ) {
 					const { DRACOLoader } = await import( 'three/addons/loaders/DRACOLoader.js' );
 
 					const loader = new DRACOLoader();
-					loader.setDecoderPath( '/scene-studio/draco/' );
+					loader.setDecoderPath( '/three/draco/' );
 					loader.parse( contents, function ( geometry ) {
 
 						let object;
@@ -1112,7 +1112,7 @@ function Loader( editor ) {
 		const { MeshoptDecoder } = await import( 'three/addons/libs/meshopt_decoder.module.js' );
 
 		const dracoLoader = new DRACOLoader();
-		dracoLoader.setDecoderPath( '/scene-studio/draco/gltf/' );
+		dracoLoader.setDecoderPath( '/three/draco/gltf/' );
 
 		const ktx2Loader = new KTX2Loader( manager );
 		ktx2Loader.setTranscoderPath( '/scene-studio/basis/' );

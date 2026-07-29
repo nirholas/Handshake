@@ -48,6 +48,7 @@ import {
 	MODEL_CATALOG,
 	isPaidModel,
 	modelThinksByDefault,
+	promptCacheMinChars,
 	MAX_FALLBACK_ATTEMPTS,
 	TOTAL_BUDGET_MS,
 	PER_CALL_TIMEOUT_MS,
@@ -1294,7 +1295,7 @@ function makeRoute(name, cfg, apiKey, model) {
 					// wire format, prompt caching included.
 					max_tokens: modelThinksByDefault(model) ? Math.max(maxTokens, HARD_MAX_TOKENS) : maxTokens,
 					system:
-						systemParts && systemParts.stable.length >= 4096
+						systemParts && systemParts.stable.length >= promptCacheMinChars(model)
 							? [
 									{ type: 'text', text: systemParts.stable, cache_control: { type: 'ephemeral' } },
 									...(systemParts.volatile ? [{ type: 'text', text: systemParts.volatile }] : []),
@@ -1346,11 +1347,14 @@ function makeRoute(name, cfg, apiKey, model) {
 				max_tokens: modelThinksByDefault(model) ? Math.max(maxTokens, HARD_MAX_TOKENS) : maxTokens,
 				// Prompt caching: the stable prefix (persona + skills + platform
 				// knowledge) gets a breakpoint; recalled memories and live viewer
-				// context ride after it so per-turn changes never invalidate the
-				// cache. Below ~4096 chars the marker is silently ignored upstream,
-				// so the split is always safe to send.
+				// context ride AFTER it, so a per-turn change there cannot
+				// invalidate the cached prefix. This is why the memory block moved
+				// below the platform knowledge — caching is a byte-exact prefix
+				// match, and anything volatile ahead of the breakpoint defeats it.
+				// The qualifying length is per-model; below it we send the plain
+				// string rather than a marker that could never take effect.
 				system:
-					systemParts && systemParts.stable.length >= 4096
+					systemParts && systemParts.stable.length >= promptCacheMinChars(model)
 						? [
 								{ type: 'text', text: systemParts.stable, cache_control: { type: 'ephemeral' } },
 								...(systemParts.volatile ? [{ type: 'text', text: systemParts.volatile }] : []),

@@ -141,19 +141,21 @@ function withTimeout(promise, ms, label) {
 export const realDeps = {
 	// ENS forward resolution (name → address). Mainnet only — ENS canonical
 	// registry lives on chain 1.
+	// Both directions go through the shared Universal Resolver helper (one
+	// eth_call each). The previous ethers walk cost 9.7-12.4s on the keyless
+	// public endpoints, so this 5s budget expired on every ENS claim in
+	// production and silently downgraded to "no ENS evidence". A miss and a
+	// failure are both null here on purpose: this is corroborating evidence,
+	// and absent evidence is simply not counted.
 	async resolveEns(name) {
 		try {
-			const provider = await realEvmProvider(1);
-			const addr = await withTimeout(provider.resolveName(name), 5000, 'ens_resolve');
-			return normEvm(addr);
+			return normEvm(await ensResolveAddress(name, { timeoutMs: 5000 }));
 		} catch { return null; }
 	},
 	// ENS reverse resolution (address → primary name) — extra corroborating evidence.
 	async reverseEns(address) {
 		try {
-			const provider = await realEvmProvider(1);
-			const name = await withTimeout(provider.lookupAddress(address), 5000, 'ens_reverse');
-			return name || null;
+			return (await ensLookupName(address, { timeoutMs: 5000 })) || null;
 		} catch { return null; }
 	},
 	async resolveSns(name) {

@@ -1,16 +1,10 @@
 // GET /api/v1/resolve — free, keyless name resolution across ENS + SNS.
 //
 // Wraps the platform's existing resolvers instead of reimplementing them:
-//   - .eth (ENS)  → viem `getEnsAddress` / `getEnsName` against the ENS
-//     Universal Resolver, over the shared EVM failover transport
-//     (api/_lib/evm/rpc.js `evmTransport`). One `eth_call` per direction.
-//     ethers' `resolveName` was the original path and is why this endpoint
-//     503'd in production: it walks registry → resolver → supportsInterface →
-//     addr as separate sequential round trips, so on the keyless public
-//     endpoints (no Alchemy key on the service) 3-5 failover cycles blew the
-//     8s budget every time. Measured 2026-07-29: 9.7-12.4s and a 503 before,
-//     single-call after. The Universal Resolver also gets wildcard/CCIP
-//     resolution right, which the hand-rolled walk did not.
+//   - .eth (ENS)  → `ensResolveAddress` / `ensLookupName` from
+//     api/_lib/evm/ens.js, the platform's shared Universal Resolver helper
+//     (one eth_call per direction). That module's header records why the
+//     previous ethers `resolveName` walk made this endpoint 503 in production.
 //   - .sol (SNS)  → `resolveSnsName` / `reverseLookupAddress` from
 //     src/solana/sns.js — the exact module api/sns.js and api/sns-subdomain.js
 //     already share. No Bonfida call is reimplemented here.
@@ -32,35 +26,14 @@ import { rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
 import { resolveSnsName, reverseLookupAddress } from '../../src/solana/sns.js';
-import { evmTransport } from '../_lib/evm/rpc.js';
-import { env } from '../_lib/env.js';
-import { createPublicClient } from 'viem';
-import { mainnet } from 'viem/chains';
-import { normalize } from 'viem/ens';
+import { ensResolveAddress, ensLookupName } from '../_lib/evm/ens.js';
 
 const ENS_RE = /^(?:[a-z0-9-]+\.)*[a-z0-9-]+\.eth$/i;
 const SOL_NAME_RE = /^[a-z0-9-]{1,63}\.sol$/i;
 const HIT_CACHE_CONTROL = 'public, max-age=300, s-maxage=300, stale-while-revalidate=60';
-// ENS resolution is 2+ sequential eth_calls (resolver lookup, then resolve),
-// each independently failing over across the endpoint list. 5s starved the
-// chain when the lead endpoint rate-limited; 8s with a 1.2s stall lets three
-// endpoints get a real shot per call. Hits are edge-cached, so the budget only
-// costs on misses.
+// The shared helper owns the budget (8s overall, 2.5s per endpoint) and the
+// miss-vs-failure distinction this endpoint needs for 404 vs 503.
 const ENS_TIMEOUT_MS = 8000;
-
-// Ethereum mainnet (chainId 1); ENS is a mainnet-only registry. Pin the
-// operator's mainnet RPC first (same as api/agents/ens/[name].js) so prod
-// never leads with a rate-limited public endpoint.
-async function ensProvider() {
-	return evmFallbackProvider(1, { primaryUrl: env.MAINNET_RPC_URL, stallTimeout: 1200 });
-}
-
-async function withEnsTimeout(promise, label) {
-	const timeout = new Promise((_, reject) =>
-		setTimeout(() => reject(new Error(`${label}_timeout`)), ENS_TIMEOUT_MS),
-	);
-	return Promise.race([promise, timeout]);
-}
 
 async function resolveForward(rawName, res) {
 	const name = rawName.toLowerCase();
@@ -68,8 +41,7 @@ async function resolveForward(rawName, res) {
 	if (ENS_RE.test(name)) {
 		let address;
 		try {
-			const provider = await ensProvider();
-			address = await withEnsTimeout(provider.resolveName(name), 'ens');
+			address = await ensResolveAddress(name, { timeoutMs: ENS_TIMEOUT_MS });
 		} catch (err) {
 			fail(
 				503,
@@ -118,8 +90,7 @@ async function resolveReverse(rawAddress, chainHint, res) {
 	if (isEvm) {
 		let name;
 		try {
-			const provider = await ensProvider();
-			name = await withEnsTimeout(provider.lookupAddress(rawAddress), 'ens_reverse');
+			name = await ensLookupName(rawAddress, { timeoutMs: ENS_TIMEOUT_MS });
 		} catch (err) {
 			fail(
 				503,

@@ -28,7 +28,7 @@ function getGltfLoader(editor) {
 		import('three/addons/libs/meshopt_decoder.module.js'),
 	]).then(([{ GLTFLoader }, { DRACOLoader }, { KTX2Loader }, { MeshoptDecoder }]) => {
 		const dracoLoader = new DRACOLoader();
-		dracoLoader.setDecoderPath('/scene-studio/draco/gltf/');
+		dracoLoader.setDecoderPath('/three/draco/gltf/');
 		const ktx2Loader = new KTX2Loader();
 		ktx2Loader.setTranscoderPath('/scene-studio/basis/');
 		editor.signals.rendererDetectKTX2Support.dispatch(ktx2Loader);

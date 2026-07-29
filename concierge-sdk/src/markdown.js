@@ -1,114 +1,79 @@
 /**
- * Markdown-lite renderer: @three-ws/concierge
- * ============================================
+ * Markdown renderer: @three-ws/concierge
+ * ======================================
  *
- * Answers stream back as plain text with light markdown (bold, code, links,
- * lists). This renders that subset to safe HTML: every piece of source text is
- * escaped BEFORE markup is applied, links are restricted to http(s)/mailto and
- * always open in a new tab with rel hardening. No innerHTML of raw model
- * output, ever.
+ * Answers stream back from the model as Markdown and land in the panel via
+ * innerHTML, on a customer's own page. That makes this the most
+ * safety-critical module in the SDK, so it does not hand-roll parsing: it
+ * renders with `marked` (CommonMark + GFM) and then hardens the result with
+ * DOMPurify under an allowlist that permits only text-level markup. Media,
+ * forms, styles, and event handlers cannot survive the pass, and link hrefs
+ * are restricted to http(s)/mailto plus same-site relative paths.
  */
+
+import { Marked } from 'marked';
+import createDOMPurify from 'dompurify';
+
+const marked = new Marked({ gfm: true, breaks: true, async: false });
 
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
+/** HTML-escape a string for interpolation into a template. */
 export function escapeHtml(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ESC[c]);
 }
 
-function safeHref(url) {
-	const u = String(url || '').trim();
-	if (/^(https?:\/\/|mailto:|\/)/i.test(u)) return u;
-	return null;
-}
+const SANITIZE_CFG = {
+	ALLOWED_TAGS: [
+		'p', 'br', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+		'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
+		'strong', 'em', 'del', 'a', 'span',
+		'table', 'thead', 'tbody', 'tr', 'th', 'td',
+	],
+	ALLOWED_ATTR: ['href', 'class', 'start', 'align', 'target', 'rel'],
+};
 
-function inline(md) {
-	let out = escapeHtml(md);
-	// `code`
-	out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
-	// **bold** then *italic*
-	out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-	out = out.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
-	// [label](url), href is validated; the label is already escaped
-	out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, label, url) => {
-		const href = safeHref(url);
-		return href
-			? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
-			: label;
+const SAFE_HREF = /^(?:https?:|mailto:)/i;
+
+// Built on first use so the module can be imported in a non-DOM context
+// (bundler analysis, unit tests) without touching `window` at load time.
+let purify = null;
+function getPurify() {
+	if (purify) return purify;
+	purify = createDOMPurify(window);
+	purify.addHook('afterSanitizeAttributes', (node) => {
+		if (node.tagName !== 'A') return;
+		const href = node.getAttribute('href') || '';
+		const ok = SAFE_HREF.test(href) || href.startsWith('/') || href.startsWith('#');
+		if (!ok) node.removeAttribute('href');
+		node.setAttribute('target', '_blank');
+		node.setAttribute('rel', 'noopener noreferrer');
 	});
-	return out;
+	return purify;
 }
 
 /**
- * Render markdown-lite `text` to an HTML string (paragraphs, bullet/numbered
- * lists, fenced code blocks, inline marks). Safe against HTML injection.
+ * Render `text` as Markdown to sanitized HTML. Safe to assign via innerHTML.
  */
 export function renderMarkdown(text) {
-	const src = String(text ?? '').replace(/\r\n/g, '\n');
-	const blocks = [];
-	const lines = src.split('\n');
-	let i = 0;
-
-	while (i < lines.length) {
-		const line = lines[i];
-
-		if (/^```/.test(line)) {
-			const buf = [];
-			i++;
-			while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]);
-			i++; // closing fence (or EOF)
-			blocks.push(`<pre><code>${escapeHtml(buf.join('\n'))}</code></pre>`);
-			continue;
-		}
-
-		if (/^\s*[-*]\s+/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
-				items.push(`<li>${inline(lines[i].replace(/^\s*[-*]\s+/, ''))}</li>`);
-				i++;
-			}
-			blocks.push(`<ul>${items.join('')}</ul>`);
-			continue;
-		}
-
-		if (/^\s*\d+[.)]\s+/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) {
-				items.push(`<li>${inline(lines[i].replace(/^\s*\d+[.)]\s+/, ''))}</li>`);
-				i++;
-			}
-			blocks.push(`<ol>${items.join('')}</ol>`);
-			continue;
-		}
-
-		if (!line.trim()) {
-			i++;
-			continue;
-		}
-
-		// Paragraph: consume until a blank line or a structural line.
-		const buf = [];
-		while (i < lines.length && lines[i].trim() && !/^```|^\s*[-*]\s+|^\s*\d+[.)]\s+/.test(lines[i])) {
-			buf.push(lines[i++]);
-		}
-		blocks.push(`<p>${inline(buf.join(' '))}</p>`);
-	}
-
-	return blocks.join('');
+	if (text == null || text === '') return '';
+	return getPurify().sanitize(marked.parse(String(text)), SANITIZE_CFG);
 }
 
 /**
- * Strip markdown for the voice channel, what the narrator speaks should be
+ * Strip markdown for the voice channel: what the narrator speaks should be
  * the words, not the syntax.
  */
 export function stripMarkdown(text) {
 	return String(text ?? '')
 		.replace(/```[\s\S]*?```/g, ' code sample. ')
 		.replace(/`([^`]+)`/g, '$1')
-		.replace(/\*\*([^*]+)\*\*/g, '$1')
-		.replace(/\*([^*\n]+)\*/g, '$1')
-		.replace(/\[([^\]]+)\]\([^)\s]+\)/g, '$1')
-		.replace(/^[\s]*[-*]\s+/gm, '')
-		.replace(/^[\s]*\d+[.)]\s+/gm, '')
+		.replace(/!?\[([^\]]*)\]\([^)\s]*\)/g, '$1')
+		.replace(/^#{1,6}\s+/gm, '')
+		.replace(/^\s*>\s?/gm, '')
+		.replace(/^\s*[-*+]\s+/gm, '')
+		.replace(/^\s*\d+[.)]\s+/gm, '')
+		.replace(/(\*\*|__|[*_~])/g, '')
 		.replace(/\s+/g, ' ')
 		.trim();
 }

@@ -6,6 +6,10 @@
 // something no retry can fix. These tests pin the contract: empty series → 200
 // with normal cache headers, a genuinely unknown coin → 404, a real upstream
 // outage → 502.
+//
+// They also pin the fallback ORDER. Exchange candles are real trade prints and
+// lead; DefiLlama's oracle backs the long tail that has no exchange pair; only
+// when both miss is it a genuine outage.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -25,6 +29,11 @@ vi.mock('../../api/_lib/coingecko.js', () => ({
 const fetchExchangeChart = vi.fn();
 vi.mock('../../api/_lib/market-fallbacks.js', () => ({
 	fetchExchangeChart: (...args) => fetchExchangeChart(...args),
+}));
+
+const fetchLlamaChart = vi.fn();
+vi.mock('../../api/_lib/coin-fallbacks.js', () => ({
+	fetchLlamaChart: (...args) => fetchLlamaChart(...args),
 }));
 
 const ohlc = (await import('../../api/coin/ohlc.js')).default;
@@ -49,6 +58,7 @@ describe('/api/coin/ohlc empty-series contract', () => {
 	beforeEach(() => {
 		geckoFetch.mockReset();
 		fetchExchangeChart.mockReset();
+		fetchLlamaChart.mockReset();
 	});
 
 	it('answers 200 with an empty series when the coin has no price history', async () => {
@@ -84,8 +94,39 @@ describe('/api/coin/ohlc empty-series contract', () => {
 	it('still 502s a genuine upstream outage with no fallback', async () => {
 		geckoFetch.mockRejectedValue(new Error('gateway timeout'));
 		fetchExchangeChart.mockResolvedValue(null);
+		fetchLlamaChart.mockResolvedValue(null);
 		const { res, body } = await call('id=bitcoin&days=30');
 		expect(res.statusCode).toBe(502);
 		expect(body.error).toBe('upstream_error');
+	});
+
+	it('prefers exchange candles over the oracle when both can answer', async () => {
+		geckoFetch.mockRejectedValue(new Error('429 rate limited'));
+		fetchExchangeChart.mockResolvedValue([[1, 10], [2, 11]]);
+		fetchLlamaChart.mockResolvedValue([[1, 99], [2, 98]]);
+		const { res, body } = await call('id=bitcoin&days=30');
+		expect(res.statusCode).toBe(200);
+		expect(body.source).toBe('exchange');
+		expect(body.data).toEqual([[1, 10], [2, 11]]);
+		expect(fetchLlamaChart).not.toHaveBeenCalled();
+	});
+
+	it('keeps a long-tail coin charted through a CoinGecko outage', async () => {
+		// No exchange pair exists for it, which is exactly the case the oracle
+		// rung was added for: before it, this coin's chart simply blanked.
+		geckoFetch.mockRejectedValue(new Error('429 rate limited'));
+		fetchExchangeChart.mockResolvedValue(null);
+		fetchLlamaChart.mockResolvedValue([[1, 0.5], [2, 0.51]]);
+		const { res, body } = await call('id=dogwifcoin&days=30');
+		expect(res.statusCode).toBe(200);
+		expect(body.source).toBe('defillama');
+		expect(body.data).toEqual([[1, 0.5], [2, 0.51]]);
+	});
+
+	it('names the primary source on the happy path', async () => {
+		geckoFetch.mockResolvedValue({ prices: [[1_700_000_000_000, 42.5], [1_700_003_600_000, 43]] });
+		const { body } = await call('id=bitcoin&days=30');
+		expect(body.source).toBe('coingecko');
+		expect(fetchExchangeChart).not.toHaveBeenCalled();
 	});
 });

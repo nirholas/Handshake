@@ -455,8 +455,9 @@ async function readEvmWallet(chainId, address) {
 	return { txCount: Number(nonce), native, holdingsUsd: price != null ? native * price : null };
 }
 
-// Native-asset USD price by chain, keyless via CoinGecko simple price. Best-effort
-// — a miss just leaves holdings unpriced (dimension unavailable), never an error.
+// Native-asset USD price by chain, keyless, through the shared coin-price
+// failover (CoinGecko → DefiLlama → exchange tickers). Best-effort: a miss just
+// leaves holdings unpriced (dimension unavailable), never an error.
 const CG_NATIVE_ID = {
 	1: 'ethereum', 8453: 'ethereum', 42161: 'ethereum', 10: 'ethereum', 59144: 'ethereum',
 	534352: 'ethereum', 324: 'ethereum', 5000: 'mantle', 56: 'binancecoin', 137: 'matic-network',
@@ -465,17 +466,8 @@ const CG_NATIVE_ID = {
 async function evmNativePriceUsd(chainId) {
 	const cgId = CG_NATIVE_ID[chainId];
 	if (!cgId) return null;
-	try {
-		const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd`, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(5000),
-		});
-		if (!r.ok) return null;
-		const data = await r.json();
-		return Number(data?.[cgId]?.usd) || null;
-	} catch {
-		return null;
-	}
+	const { fetchCoinPriceUsdOrNull } = await import('../market-fallbacks.js');
+	return await fetchCoinPriceUsdOrNull(cgId);
 }
 
 async function scoreEvmWallet(det, ts) {

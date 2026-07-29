@@ -75,9 +75,6 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 // overridable so a measured value can replace the constant without a deploy.
 const BASE_USDC_SETTLE_GAS = Number(process.env.X402_BASE_USDC_SETTLE_GAS || 75_000);
 
-const COINGECKO_PRICE_URL =
-	'https://api.coingecko.com/api/v3/simple/price?ids=solana,ethereum&vs_currencies=usd';
-
 let _schemaReady = false;
 async function ensureSchema(sql) {
 	if (_schemaReady) return;
@@ -135,23 +132,24 @@ async function persist(sql, log, row) {
 	}
 }
 
-// Live SOL + ETH USD prices in one CoinGecko call (the platform's established
-// price source). Returns nulls on failure so cost USD figures degrade to null
-// rather than crashing the comparison — the gas units/fees are still recorded.
+// Live SOL + ETH USD prices through the platform's shared price helpers: SOL
+// from the canonical 60s-cached spot module, ETH from the coin-price failover
+// chain. Both legs are fetched in parallel and both degrade to null on failure,
+// so a dead price source blanks the USD columns rather than crashing the
+// comparison — the gas units and raw fees are still recorded either way.
 async function fetchNativePrices() {
-	try {
-		const r = await fetchWithTimeout(COINGECKO_PRICE_URL, {
-			headers: { accept: 'application/json' },
-		}, 5000);
-		const sol = Number(r?.body?.solana?.usd);
-		const eth = Number(r?.body?.ethereum?.usd);
-		return {
-			sol: Number.isFinite(sol) && sol > 0 ? sol : null,
-			eth: Number.isFinite(eth) && eth > 0 ? eth : null,
-		};
-	} catch {
-		return { sol: null, eth: null };
-	}
+	const [{ solPriceUsd }, { fetchCoinPriceUsdOrNull }] = await Promise.all([
+		import('../../sol-price.js'),
+		import('../../market-fallbacks.js'),
+	]);
+	const [sol, eth] = await Promise.all([
+		solPriceUsd().catch(() => 0),
+		fetchCoinPriceUsdOrNull('ethereum'),
+	]);
+	return {
+		sol: sol > 0 ? sol : null,
+		eth: Number.isFinite(eth) && eth > 0 ? eth : null,
+	};
 }
 
 // Read the actual on-chain fee (lamports) the settled Solana transfer paid.

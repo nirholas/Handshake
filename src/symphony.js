@@ -342,7 +342,17 @@ function vizSpawn(note) {
 function vizFrame(now) {
 	const c = viz.ctx2d;
 	const w = viz.canvas.clientWidth, h = viz.canvas.clientHeight;
+	// Paint the stage backdrop into the canvas rather than leaving it
+	// transparent over the CSS gradient: visually identical, and it means a
+	// captured recording carries the picture instead of an alpha hole.
 	c.clearRect(0, 0, w, h);
+	c.fillStyle = '#000';
+	c.fillRect(0, 0, w, h);
+	const glow = c.createRadialGradient(w / 2, h * 0.9, 0, w / 2, h * 0.9, Math.max(w, h) * 0.75);
+	glow.addColorStop(0, 'rgba(67, 217, 163, 0.07)');
+	glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+	c.fillStyle = glow;
+	c.fillRect(0, 0, w, h);
 
 	// Baseline: a faint horizon the notes float away from.
 	c.strokeStyle = viz.colors.ink;
@@ -633,16 +643,46 @@ async function fetchFirstPaintDiff() {
 
 /* ── Recorder ──────────────────────────────────────────────────────────── */
 
+// The clip people actually share is the one with picture: capture the canvas
+// alongside the master bus so a recording is a postable video, not a bare .webm
+// of audio. Falls back to audio-only wherever captureStream or the muxer is
+// unavailable, so the button never breaks.
+function buildRecordStream() {
+	const audioTracks = audio.recordDest.stream.getAudioTracks();
+	const canvas = viz.canvas;
+	if (!canvas || typeof canvas.captureStream !== 'function') return { stream: audio.recordDest.stream, video: false };
+	try {
+		const videoStream = canvas.captureStream(30);
+		const tracks = [...videoStream.getVideoTracks(), ...audioTracks];
+		if (!tracks.length) return { stream: audio.recordDest.stream, video: false };
+		return { stream: new MediaStream(tracks), video: videoStream.getVideoTracks().length > 0 };
+	} catch {
+		return { stream: audio.recordDest.stream, video: false };
+	}
+}
+
+function pickMimeType(wantsVideo) {
+	const candidates = wantsVideo
+		? ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+		: ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+	for (const type of candidates) {
+		if (typeof MediaRecorder.isTypeSupported !== 'function' || MediaRecorder.isTypeSupported(type)) return type;
+	}
+	return '';
+}
+
 function toggleRecord() {
 	const btn = $('sy-record');
 	if (!btn || !audio.recordDest) return;
 	if (audio.recorder) { stopRecord(); return; }
 	try {
-		const rec = new MediaRecorder(audio.recordDest.stream);
+		const { stream, video } = buildRecordStream();
+		const mimeType = pickMimeType(video);
+		const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
 		audio.recordChunks = [];
 		rec.ondataavailable = (e) => { if (e.data && e.data.size) audio.recordChunks.push(e.data); };
 		rec.onstop = () => {
-			const blob = new Blob(audio.recordChunks, { type: rec.mimeType || 'audio/webm' });
+			const blob = new Blob(audio.recordChunks, { type: rec.mimeType || (video ? 'video/webm' : 'audio/webm') });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			const ext = /ogg/.test(blob.type) ? 'ogg' : 'webm';
@@ -669,7 +709,7 @@ function stopRecord() {
 		try { audio.recorder.stop(); } catch { /* already stopped */ }
 		audio.recorder = null;
 	}
-	if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Record a clip'; }
+	if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Record a video clip'; }
 }
 
 /* ── Controls ──────────────────────────────────────────────────────────── */

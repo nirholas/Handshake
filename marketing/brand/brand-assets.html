@@ -6,8 +6,13 @@
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
 	* { box-sizing: border-box; margin: 0; padding: 0; }
+	/* No background anywhere in the ancestor chain. An element screenshot
+	   composites whatever paints behind the element, and a body background
+	   propagates to the page canvas, so any colour set here would be baked into
+	   every "transparent" export. Judge the exports on /press, which stages each
+	   one on the ground it was drawn for. */
+	html, body { background: transparent; }
 	body {
-		background: #5a5a62;
 		font-family: 'Space Grotesk', Inter, sans-serif;
 		display: flex; flex-direction: column; align-items: flex-start; gap: 32px; padding: 40px;
 	}

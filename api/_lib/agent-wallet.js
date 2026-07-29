@@ -155,14 +155,16 @@ let _ethUsdPrice = null;
 let _ethUsdPriceAt = 0;
 const ETH_USD_CACHE_MS = 5 * 60_000;
 
+// ETH/USD for the affordability checks below. The read goes through the shared
+// coin-price failover (CoinGecko → DefiLlama → Kraken/Coinbase/Bitfinex) rather
+// than a bare CoinGecko fetch, so a keyless-tier 429 no longer turns "can this
+// agent afford the call?" into a hard error. Still throws when every source is
+// down: the callers divide by this price, and a guessed rate would silently
+// mis-size a spend.
 async function fetchEthUsdPrice() {
 	if (_ethUsdPrice && Date.now() - _ethUsdPriceAt < ETH_USD_CACHE_MS) return _ethUsdPrice;
-	const r = await fetch(
-		'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
-	);
-	if (!r.ok) throw new Error('coingecko ETH/USD fetch failed');
-	const { ethereum } = await r.json();
-	_ethUsdPrice = ethereum.usd;
+	const { fetchCoinPriceUsd } = await import('./market-fallbacks.js');
+	_ethUsdPrice = await fetchCoinPriceUsd('ethereum');
 	_ethUsdPriceAt = Date.now();
 	return _ethUsdPrice;
 }

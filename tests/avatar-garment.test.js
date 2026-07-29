@@ -36,6 +36,7 @@ import {
 	buildBoneRemap,
 	clampOccludes,
 	cullSkinByBones,
+	extentRejection,
 	detachSlot,
 	extentRejection,
 	findAvatarSkeleton,
@@ -386,8 +387,13 @@ describe('clampOccludes', () => {
 });
 
 describe('extentRejection', () => {
+<<<<<<< Updated upstream
 	// Measured against the avatar being worn, so the verdict is scale
 	// invariant: identical in metres or centimetres.
+=======
+	// A garment is measured against the avatar it is being worn on, so the
+	// check is scale-invariant: same verdict in metres or centimetres.
+>>>>>>> Stashed changes
 	function bodyRoot(height = 1.667) {
 		const root = new Group();
 		const geo = new BufferGeometry();
@@ -406,7 +412,11 @@ describe('extentRejection', () => {
 	}
 
 	it('accepts a normally proportioned garment', () => {
+<<<<<<< Updated upstream
 		// A full-length coat on a 1.667m body.
+=======
+		// A full-length coat: 0.5m wide, 0.9m tall, 0.35m deep on a 1.667m body.
+>>>>>>> Stashed changes
 		expect(extentRejection(boxRoot(0.5, 0.9, 0.35), bodyRoot())).toBeNull();
 	});
 
@@ -421,18 +431,28 @@ describe('extentRejection', () => {
 		expect(extentRejection(boxRoot(50, 90, 35), bodyRoot(166.7))).toBeNull();
 	});
 
+<<<<<<< Updated upstream
 	it('abstains when the avatar has no measurable height', () => {
+=======
+	it('accepts anything when the avatar has no measurable height', () => {
+>>>>>>> Stashed changes
 		expect(extentRejection(boxRoot(9, 9, 9), new Group())).toBeNull();
 	});
 
 	it('refuses to attach an oversized garment through attachGarment', () => {
 		const avatar = buildRig();
 		const root = new Group();
+<<<<<<< Updated upstream
 		root.add(buildSkinnedMesh(avatar.skeleton, [
 			{ pos: new Vector3(0, 0, 0), bone: 0 },
 			{ pos: new Vector3(0, 1.667, 0), bone: 2 },
 		]));
 		root.updateMatrixWorld(true);
+=======
+		root.add(buildSkinnedMesh(avatar.skeleton, Array.from({ length: 10 }, () => (
+			{ pos: new Vector3(0, 1.6, 0), bone: 1 }
+		))));
+>>>>>>> Stashed changes
 		const res = attachGarment(root, boxRoot(0.3, 0.9, 1.5), { slot: 'hair' });
 		expect(res.ok).toBe(false);
 		expect(res.reason).toMatch(/malformed/);

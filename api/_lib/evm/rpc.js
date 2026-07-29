@@ -72,7 +72,12 @@ const DEMOTED_KEYLESS_HOSTS = [
 	'cloudflare-eth.com',
 ];
 
-function isDemotedEndpoint(url) {
+/**
+ * True when an endpoint is on the known-hard-fail keyless list, so callers and
+ * ops checks (scripts/probe-evm-rpc.mjs) can tell a by-design last-resort entry
+ * apart from a healthy endpoint that just regressed.
+ */
+export function isDemotedEndpoint(url) {
 	let host;
 	try {
 		const parsed = new URL(url);

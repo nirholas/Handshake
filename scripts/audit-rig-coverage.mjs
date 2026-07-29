@@ -40,7 +40,15 @@ const CORE_BONES = [
 // gliding across the floor with frozen legs, the most-reported rig complaint.
 const LEG_BONES = ['LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
 
-const RANGE_BYTES = 262144; // 256 KB — comfortably past any real glTF JSON chunk
+// First-pass slice. Covers the overwhelming majority of avatars outright; the
+// rest declare their real chunk length in the header and get a second, exact
+// request (see fetchGltfJson). Guessing high on the first pass would waste
+// bandwidth on every small model to save a round trip on a few large ones.
+const RANGE_BYTES = 262144; // 256 KB
+// Hard ceiling for the second pass. Real glTF JSON chunks top out in the low
+// megabytes (thousands of nodes plus embedded animation metadata); anything
+// past this is treated as unreadable rather than pulled into memory.
+const MAX_JSON_BYTES = 16 * 1024 * 1024;
 const CONCURRENCY = 12;
 const FETCH_TIMEOUT_MS = 20000;
 
@@ -73,22 +81,38 @@ function readEnv(name) {
 }
 
 /**
- * Pull the glTF JSON chunk out of the first bytes of a GLB. Returns null when
- * the slice isn't a GLB or the JSON chunk runs past what we fetched (rare —
- * only for models with enormous embedded metadata).
+ * How many bytes are needed to hold a GLB's complete JSON chunk, read from the
+ * header. Returns null when the slice isn't a GLB v2 with a JSON chunk 0.
+ *
+ * Split out from the parser so a short first read can be turned into an exact
+ * second request instead of being written off as an error — a heavily-authored
+ * rig can declare a multi-megabyte JSON chunk, and dropping those would bias the
+ * audit away from precisely the most complex skeletons it exists to measure.
+ *
+ * @param {ArrayBuffer} head
+ * @returns {number|null} total bytes required from offset 0
+ */
+export function glbJsonChunkEnd(head) {
+	if (!head || head.byteLength < 20) return null;
+	const view = new DataView(head);
+	if (view.getUint32(0, true) !== 0x46546c67) return null; // 'glTF'
+	if (view.getUint32(4, true) !== 2) return null;
+	if (view.getUint32(16, true) !== 0x4e4f534a) return null; // 'JSON'
+	return 20 + view.getUint32(12, true);
+}
+
+/**
+ * Pull the glTF JSON chunk out of the leading bytes of a GLB. Returns null when
+ * the slice isn't a GLB or doesn't yet contain the whole chunk — callers detect
+ * the latter with {@link glbJsonChunkEnd} and re-request.
  *
  * @param {ArrayBuffer} head
  * @returns {object|null}
  */
 export function parseGlbJsonChunk(head) {
-	if (!head || head.byteLength < 20) return null;
-	const view = new DataView(head);
-	if (view.getUint32(0, true) !== 0x46546c67) return null; // 'glTF'
-	if (view.getUint32(4, true) !== 2) return null;
-	const chunkLen = view.getUint32(12, true);
-	if (view.getUint32(16, true) !== 0x4e4f534a) return null; // 'JSON'
-	if (20 + chunkLen > head.byteLength) return null; // JSON chunk beyond our slice
-	const bytes = new Uint8Array(head, 20, chunkLen);
+	const end = glbJsonChunkEnd(head);
+	if (end == null || end > head.byteLength) return null;
+	const bytes = new Uint8Array(head, 20, end - 20);
 	try {
 		return JSON.parse(new TextDecoder().decode(bytes));
 	} catch {
@@ -141,15 +165,34 @@ export function scoreRig(json) {
 	};
 }
 
-async function fetchHead(url) {
+async function fetchRange(url, endInclusive) {
 	const res = await fetch(url, {
-		headers: { range: `bytes=0-${RANGE_BYTES - 1}` },
+		headers: { range: `bytes=0-${endInclusive}` },
 		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
 	if (!res.ok && res.status !== 206) {
 		throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
 	}
 	return res.arrayBuffer();
+}
+
+/**
+ * Fetch just enough of a GLB to read its glTF JSON chunk. One request for the
+ * common case, a second exact-length request when the header says the chunk is
+ * bigger than the first slice.
+ *
+ * @param {string} url
+ * @returns {Promise<object|null>} parsed glTF JSON, or null if not a readable GLB
+ */
+async function fetchGltfJson(url) {
+	const head = await fetchRange(url, RANGE_BYTES - 1);
+	const end = glbJsonChunkEnd(head);
+	if (end == null) return null; // not a GLB v2 at all
+	if (end <= head.byteLength) return parseGlbJsonChunk(head);
+	if (end > MAX_JSON_BYTES) {
+		throw Object.assign(new Error(`json-chunk-too-large-${end}`), { status: 0 });
+	}
+	return parseGlbJsonChunk(await fetchRange(url, end - 1));
 }
 
 // Run `worker` over `items` with a fixed number of in-flight requests.
@@ -204,9 +247,11 @@ async function main() {
 			? key
 			: `${cdn}/${key.split('/').map(encodeURIComponent).join('/')}`;
 		try {
-			const head = await fetchHead(url);
-			const json = parseGlbJsonChunk(head);
-			if (!json) return { row, error: 'unparseable-head' };
+			const json = await fetchGltfJson(url);
+			// A stored object that is not a readable GLB at all — a wrong-format
+			// upload or a corrupted write. Reported separately from HTTP failures so
+			// data-integrity problems don't hide inside a generic error bucket.
+			if (!json) return { row, error: 'not-a-glb' };
 			return { row, score: scoreRig(json) };
 		} catch (err) {
 			return { row, error: err?.status ? `http-${err.status}` : (err?.message || 'fetch-failed') };

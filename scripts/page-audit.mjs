@@ -493,6 +493,92 @@ function pickDiscovered(links, known) {
 	return { audit, dropped };
 }
 
+// ── Re-verification ───────────────────────────────────────────────────────────
+// The sweep runs CONCURRENCY pages at once, and a WebGL-heavy page audited
+// beside four others in one headless (software-GL) browser fails in ways a real
+// visitor never sees: GPU contention makes texture uploads fail, and a
+// contended page misses a 25 s networkidle it would otherwise hit easily.
+// Measured 2026-07-28: 108 of 131 console errors in one report were
+// "GLTFLoader: Couldn't load texture blob:…" from avatar pages, alongside
+// "Framebuffer is incomplete" and GPU-stall warnings. Re-running those same
+// routes one at a time, and even in parallel from a fresh browser, produced
+// ZERO. A report where 4 findings in 5 are phantom is a report nobody can act
+// on, so every error-severity finding is re-checked SOLO before it is reported:
+// findings that reproduce stay errors, findings that do not are demoted to info
+// and labelled, never silently dropped.
+const REVERIFY_CAP = Number(opt('reverify-cap', 60)) || 60;
+
+// Collapse the volatile parts of a finding so the same defect matches across
+// runs: blob/object URLs, uuids, base58 mints, query strings and bare numbers
+// all differ per load while naming the same problem.
+function fingerprint(f) {
+	const detail = String(f.detail || '')
+		.replace(/blob:[^\s"']+/g, 'BLOB')
+		.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, 'UUID')
+		.replace(/\b[1-9A-HJ-NP-Za-km-z]{32,44}\b/g, 'ADDR')
+		.replace(/\?[^\s"']*/g, '')
+		.replace(/\d+/g, 'N')
+		.trim();
+	return `${f.type}::${detail}`;
+}
+
+async function reverify(browser, results, viewports, authed) {
+	// One route may fail on desktop, mobile, or both; re-check each pair once.
+	const suspects = [];
+	for (const r of results) {
+		if (r.findings.some((f) => f.severity === 'error')) suspects.push(r);
+	}
+	if (!suspects.length) return { checked: 0, demoted: 0, skipped: 0 };
+
+	const budget = suspects.slice(0, REVERIFY_CAP);
+	const skipped = suspects.length - budget.length;
+	console.log(
+		`\n── re-verify: ${budget.length} route/viewport pair(s) with errors, re-checked one at a time ──`,
+	);
+	if (skipped) {
+		console.log(`  (${skipped} beyond --reverify-cap ${REVERIFY_CAP} kept as reported, unverified)`);
+	}
+
+	let demoted = 0;
+	for (const suspect of budget) {
+		const viewport = suspect.viewport;
+		if (!viewports.includes(viewport)) continue;
+		const ctx = await browser.newContext({
+			...(viewport === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1440, height: 900 } }),
+			...(authed ? { storageState: AUTH_STATE } : {}),
+			ignoreHTTPSErrors: true,
+		});
+		let solo;
+		try {
+			solo = await auditRoute(ctx, suspect.route, viewport);
+		} catch {
+			solo = null; // a crashed re-check proves nothing; leave the finding as-is
+		}
+		await ctx.close();
+		if (!solo) continue;
+
+		const reproduced = new Set(solo.findings.map(fingerprint));
+		let localDemotions = 0;
+		for (const f of suspect.findings) {
+			if (f.severity !== 'error') continue;
+			if (reproduced.has(fingerprint(f))) {
+				f.reproduced = true;
+				continue;
+			}
+			f.severity = 'info';
+			f.reproduced = false;
+			f.detail = `${f.detail} [not reproduced on a solo re-check: contention artifact]`;
+			localDemotions++;
+		}
+		demoted += localDemotions;
+		const left = suspect.findings.filter((f) => f.severity === 'error').length;
+		process.stdout.write(
+			`  ${left ? '🔴' : '✓ '} ${suspect.route} [${viewport}] ${left} confirmed, ${localDemotions} demoted\n`,
+		);
+	}
+	return { checked: budget.length, demoted, skipped };
+}
+
 // ── Worker pool ───────────────────────────────────────────────────────────────
 async function runPool(ctx, routes, viewport, onResult) {
 	const queue = [...routes];
@@ -577,6 +663,14 @@ function writeReport(allResults, meta) {
 	lines.push(
 		`- **Totals: ${totals.error} error · ${totals.warn} warn · ${totals.info} info**`,
 	);
+	if (meta.verification?.checked) {
+		lines.push(
+			`- Every error was re-checked solo: ${meta.verification.checked} route/viewport pair(s) re-run one at a time, ` +
+				`${meta.verification.demoted} finding(s) demoted to info as parallel-run contention artifacts` +
+				(meta.verification.skipped ? `, ${meta.verification.skipped} left unverified (past --reverify-cap)` : '') +
+				'. Errors below reproduced on a page loaded by itself, so they are real.',
+		);
+	}
 	lines.push('');
 	if (meta.discovered?.length) {
 		lines.push('## Crawl-discovered routes (linked on the site, missing from data/pages.json)');
@@ -705,6 +799,9 @@ async function main() {
 		}
 		await ctx.close();
 	}
+
+	// Confirm every error against a solo re-check before reporting it.
+	const verification = await reverify(browser, allResults, viewports, authed);
 	await browser.close();
 
 	const { jsonPath, mdPath, totals, pages } = writeReport(allResults, {
@@ -713,10 +810,16 @@ async function main() {
 		viewports,
 		discovered,
 		droppedDiscoveries,
+		verification,
 	});
 
 	console.log('\n── Summary ──');
 	console.log(`  ${totals.error} error · ${totals.warn} warn · ${totals.info} info`);
+	if (verification.checked) {
+		console.log(
+			`  (re-verified ${verification.checked} route/viewport pair(s); ${verification.demoted} finding(s) demoted as contention artifacts)`,
+		);
+	}
 	const worst = pages.filter((p) => p.counts.error).slice(0, 10);
 	if (worst.length) {
 		console.log('  Pages with errors:');

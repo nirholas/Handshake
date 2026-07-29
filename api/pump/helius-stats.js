@@ -13,32 +13,13 @@
 
 import { cors, json, method, wrap } from '../_lib/http.js';
 import { recentBuffered } from '../_lib/pumpfun-ws-feed.js';
+// SOL spot comes from the canonical shared module (same 60s cache, but seven
+// failover sources instead of a lone CoinGecko fetch, so a keyless-tier 429 no
+// longer blanks the panel). solPriceInfo() exposes the cache age and the 24h
+// change this endpoint reports, without a second network read.
+import { solPriceUsd, solPriceInfo, solChange24hPct } from '../_lib/sol-price.js';
 
-let _solCache = { price: 0, at: 0 };
 let _heliusCache = { value: null, at: 0 };
-
-async function getSolPrice() {
-	if (Date.now() - _solCache.at < 60_000 && _solCache.price > 0) return _solCache.price;
-	try {
-		const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true', { signal: AbortSignal.timeout(6000) });
-		const d = await r.json();
-		const p = d?.solana?.usd;
-		const c = d?.solana?.usd_24h_change;
-		if (p > 0) _solCache = { price: p, change_24h: c, at: Date.now() };
-	} catch (err) {
-		// Log instead of swallowing: a failed refresh returns the last good price (or
-		// 0 → null at the boundary), and the handler flags staleness so the page can
-		// tell "couldn't refresh" apart from a genuine $0.
-		console.warn('[helius-stats] SOL price refresh failed:', err?.message || err);
-	}
-	return _solCache.price || 0;
-}
-
-// True when the served price predates the 60s refresh window — i.e. the last
-// refresh failed and we're falling back to a cached value.
-function solPriceIsStale() {
-	return _solCache.price > 0 && Date.now() - _solCache.at > 60_000;
-}
 
 async function getHeliusInfo() {
 	const apiKey = process.env.HELIUS_API_KEY || '';
@@ -78,7 +59,12 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const [solPrice, helius] = await Promise.all([getSolPrice(), getHeliusInfo()]);
+	const [solPrice, change24h, helius] = await Promise.all([
+		solPriceUsd(),
+		solChange24hPct(),
+		getHeliusInfo(),
+	]);
+	const priceInfo = solPriceInfo();
 
 	const mints = recentBuffered({ kind: 'mint', limit: 25 });
 	const grads = recentBuffered({ kind: 'graduation', limit: 25 });
@@ -94,8 +80,8 @@ export default wrap(async (req, res) => {
 
 	return json(res, 200, {
 		sol_price: solPrice || null,
-		sol_price_stale: solPriceIsStale(),
-		sol_change_24h: _solCache.change_24h ?? null,
+		sol_price_stale: priceInfo.stale,
+		sol_change_24h: change24h,
 		helius,
 		feed: {
 			mints_per_min: window60(mints, 'created_at'),

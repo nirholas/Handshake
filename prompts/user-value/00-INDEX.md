@@ -15,11 +15,11 @@ concurrently.
 | [01-creator-profile.md](01-creator-profile.md) | Human creator profile/portfolio | `pages/profile.html`, `pages/handle.html`, new `api/creations.js` |
 
 ## Wave 2 — activity layer (after wave 1; all concurrent)
-| Prompt | Feature | Touches |
-|---|---|---|
-| [02-activity-feed.md](02-activity-feed.md) | Real activity feed | `pages/feed.html`, `pages/community.html`, `api/remix-feed.js` |
-| [03-social-graph.md](03-social-graph.md) | Site-wide follow graph | `src/friends.js`, `src/social/`, new follow API |
-| [04-notifications.md](04-notifications.md) | Notification center | new `pages/notifications.html`, new notify API |
+| Prompt | Feature | Touches | Status |
+|---|---|---|---|
+| [02-activity-feed.md](02-activity-feed.md) | Real activity feed | `pages/feed.html`, `pages/community.html`, `api/remix-feed.js` | Shipped 2026-07-29. `/api/users/me/feed` emits all seven kinds (avatar, agent, coin, model, world, restyle, follow) in both scopes, cursor-paginated; restyle items carry `isVariant` so `/feed` and `/community` render a real verb and glyph for them instead of the generic fallback. Covered by `tests/api/activity-feed.test.js` (both scopes, cursor, missing-table degradation). |
+| [03-social-graph.md](03-social-graph.md) | Site-wide follow graph | `src/friends.js`, `src/social/`, new follow API | Shipped. Covered by `tests/api/users-follow.test.js`. |
+| [04-notifications.md](04-notifications.md) | Notification center | new `pages/notifications.html`, new notify API | Shipped 2026-07-29. Task 6 (preferences) is now enforced, not just stored: `api/_lib/notify.js` gates the `user_notifications` insert on `channelEnabled(prefs, type, 'in_app')`, so a muted category writes no bell row and adds nothing to the unread count while push/email/telegram stay independent. Covered by `tests/api/notify-in-app-gate.test.js` (write path) and `tests/api/notifications-center.test.js` (read path + read-all). |
 
 ## Wave 3 — surfacing (after wave 2; all concurrent)
 | Prompt | Feature | Touches |

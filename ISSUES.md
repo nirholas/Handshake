@@ -57,7 +57,21 @@ closed 2026-07-28; full history in git):
    `NVIDIA_ASR_FUNCTION_ID` unset in prod (`/api/v1/ai/asr` returns 503
    `not_configured`); the Replicate account is out of credit; Upstash Redis is
    absent on `three-ws-api`.
-7. **ENS resolution is live-broken** (code, found 2026-07-28).
-   `GET /api/v1/resolve?name=vitalik.eth` returns 503 `ens_unavailable` while
-   the `.sol` lane works. Root-cause the ENS provider path in
-   `api/v1/resolve.js`.
+7. **ENS resolution was live-broken; fixed in-repo 2026-07-29, awaiting
+   deploy.** `GET /api/v1/resolve?name=vitalik.eth` returned 503
+   `ens_unavailable` (measured 9.7s and 12.4s against the 8s budget) while the
+   `.sol` lane worked. Two root causes, both fixed: `RPC_URL_ETHEREUM` pointed
+   at `eth.llamarpc.com`, which Cloudflare bot-walls with a 403 on datacenter
+   POSTs, and an operator override is pinned first, so every call burned a
+   guaranteed failure before failing over; and the handler used ethers
+   `resolveName`, which walks registry, resolver, supportsInterface and addr as
+   separate sequential round trips, multiplying that cost 3-5x. Now:
+   `api/_lib/evm/rpc.js` sorts known-hard-fail keyless hosts last (kept, never
+   dropped), and `api/v1/resolve.js` resolves through viem's ENS Universal
+   Resolver in one `eth_call` per direction. Measured keyless (no Alchemy key,
+   as production runs): 269ms forward, 234ms reverse, and a miss now returns a
+   404 instead of timing out. Cover: `tests/evm-rpc-endpoint-order.test.js`,
+   ops probe: `node --env-file=.env scripts/probe-evm-rpc.mjs --chain 1 --ens`.
+   Verify after the next deploy, then drop this item. Separately, the operator
+   should repoint or unset `RPC_URL_ETHEREUM` on the Cloud Run service, since
+   it is dead weight even demoted.

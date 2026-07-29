@@ -263,7 +263,10 @@ export function findMissingDistAssets() {
 		'three/draco/draco_decoder.wasm',
 		'three/draco/gltf/draco_decoder.wasm',
 		'three/basis/basis_transcoder.wasm',
-		'scene-studio/draco/draco_encoder.js',
+		// Scene Studio's <script src="/three/draco/draco_encoder.js"> (pages/scene.html)
+		// — it shares the single decoder copy rather than carrying its own.
+		'three/draco/draco_encoder.js',
+		'scene-studio/basis/basis_transcoder.wasm',
 	];
 	return { skipped: false, missing: required.filter((p) => !existsSync(resolve(dist, p))) };
 }

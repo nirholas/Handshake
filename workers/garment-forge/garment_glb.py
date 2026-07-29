@@ -142,53 +142,6 @@ SLOT_BOXES = {
 # placed shoe pair onto the actual stance. Measured with the box numbers above.
 FOOT_CENTERS_X = (-0.222, 0.222)
 
-# ── Proportion envelope: the publish gate for a malformed mesh ──────────────
-# Maximum plausible extent (w, h, d) in reference-body meters for a finished
-# garment in each slot. Placement scales along ONE axis (or contains, for
-# headwear), which sizes a well-formed mesh correctly but cannot save a
-# badly-proportioned one: a generated "long straight hair" arrived as a 1.43 m
-# DEEP curtain on a 1.667 m body, poking 36 cm above the skull, and published
-# because every other gate (bind coverage, manifest rules) passed. Scaling it
-# down would have made a tiny clump; the mesh itself is wrong, so the job must
-# fail and be regenerated rather than pollute the catalog.
-#
-# Set from measurement, not taste: `node scripts/measure-garment-extents.mjs`
-# prints per-slot maxima over the live catalog. Baseline 2026-07-27 (31 sane
-# pieces) sits comfortably inside every value below, and the one malformed
-# piece exceeds its slot on two axes at once. Re-run that script and widen a
-# value here if a legitimately-shaped garment is ever refused.
-SLOT_ENVELOPE = {
-    "top":       (0.90, 0.80, 0.45),   # observed max 0.59, 0.56, 0.27
-    "outerwear": (1.00, 1.10, 0.55),   # observed max 0.74, 0.80, 0.37
-    "bottom":    (0.75, 1.15, 0.55),   # observed max 0.52, 0.90, 0.36
-    "footwear":  (0.75, 0.35, 0.45),   # observed max 0.53, 0.10, 0.30
-    "hair":      (0.45, 0.75, 0.45),   # sane max 0.30, 0.32, 0.30; hair may hang to the hips
-    "headwear":  (0.45, 0.40, 0.45),   # observed max 0.29, 0.22, 0.30
-    "glasses":   (0.28, 0.20, 0.42),   # observed max 0.18, 0.06, 0.33 (long temples)
-    "accessory": (0.55, 0.75, 0.55),   # observed max 0.35, 0.55, 0.35
-}
-_AXIS_NAMES = ("width", "height", "depth")
-
-
-def proportion_failures(glb_bytes: bytes, slot: str) -> list[str]:
-    """Reasons this finished garment is too big to be what it claims to be.
-
-    Empty list = plausible. Any entry = a malformed mesh that must not be
-    published (see SLOT_ENVELOPE). Measured on the extracted garment, so it
-    reflects exactly what a wearer would load."""
-    envelope = SLOT_ENVELOPE.get(slot)
-    if envelope is None:
-        return [f"unknown slot '{slot}'"]
-    lo, hi = _bounds(_scene_meshes(glb_bytes))
-    extent = hi - lo
-    failures = []
-    for axis, limit in enumerate(envelope):
-        if extent[axis] > limit:
-            failures.append(
-                f"{_AXIS_NAMES[axis]} {extent[axis]:.2f}m exceeds the {slot} "
-                f"envelope of {limit:.2f}m (malformed mesh; regenerate)")
-    return failures
-
 GARMENT_PREFIX = "garment"
 REFBODY_PREFIX = "refbody"
 

@@ -385,12 +385,16 @@
 		return esc(text).replace(re, '<mark>$1</mark>');
 	}
 
+	// Escapes the full special five. The apostrophe matters: results are
+	// interpolated into attribute values, and a single-quoted attribute is
+	// escapable with a bare ' if it is left unescaped.
 	function esc(s) {
 		return String(s || '')
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;');
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	function matches(text, q) {

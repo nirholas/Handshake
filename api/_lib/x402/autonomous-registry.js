@@ -59,6 +59,7 @@ import { classifyLeaderboard, insertLeaderboardSnapshot } from './agent-leaderbo
 import { run as cosmeticPricingAudit } from './pipelines/cosmetic-pricing-audit.js';
 import { run as builderCodeAttribution } from './pipelines/builder-code-attribution.js';
 import { run as paymentProofIdempotencyAudit } from './pipelines/payment-proof-idempotency-audit.js';
+import { settleSignatureAudit } from './pipelines/settle-signature-audit.js';
 import { run as apiKeyBypassAudit } from './pipelines/api-key-bypass-audit.js';
 import { run as modelMetadataEnrichment } from './pipelines/model-metadata-enrichment.js';
 import { run as forgeContentGeneration } from './pipelines/forge-content.js';
@@ -498,6 +499,28 @@ const SELF_ENDPOINTS = [
 		pipeline: 'security',
 		enabled: true,
 		run: paymentProofIdempotencyAudit,
+		extractSignal: null,
+	},
+
+	// ── Settle Signature Audit (settlement integrity) ─────────────────────────
+	// Free DB reconciliation, no payment. Guards the invariant "one on-chain
+	// signature settles at most one payment" — the defect found 2026-07-28, where
+	// 21.4% of credited settles shared a tx_sig because deterministic signatures on
+	// byte-identical ring payments let the already-processed recovery branch credit
+	// later payments off an earlier broadcast. settle-credit.js now claims each
+	// credit atomically and pay.js widened the fee-nonce space; this proves both are
+	// holding rather than assuming it. Hourly — cheap (two indexed aggregates) and
+	// a settlement-integrity regression should not sit undetected for a day.
+	{
+		id: 'settle-signature-audit',
+		name: 'Settle Signature Audit',
+		path: '/api/x402-facilitator/settle',
+		method: 'GET',
+		cooldown_s: 3600,
+		priority: 88,
+		pipeline: 'security',
+		enabled: true,
+		run: settleSignatureAudit,
 		extractSignal: null,
 	},
 

@@ -22,6 +22,7 @@
 
 import { env } from '../env.js';
 import { sql } from '../db.js';
+import { mapPoolSettled } from '../pool.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // A wallet with at most this many lifetime transactions is "fresh" — a brand-new
@@ -149,19 +150,12 @@ export async function resolveFunder(address, { endpoint }) {
 	};
 }
 
-// Bounded-concurrency map — keeps RPC pressure (and 429s) in check.
-async function mapPool(items, concurrency, fn) {
-	const out = new Array(items.length);
-	let next = 0;
-	const worker = async () => {
-		while (next < items.length) {
-			const i = next++;
-			try { out[i] = await fn(items[i], i); }
-			catch (err) { out[i] = { error: err?.message || 'failed' }; }
-		}
-	};
-	await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
-	return out;
+// Bounded-concurrency map — keeps RPC pressure (and 429s) in check. A failing
+// wallet yields an `{ error }` entry so one bad read never aborts the enrich.
+function mapPool(items, concurrency, fn) {
+	return mapPoolSettled(items, concurrency, fn).then((rows) =>
+		rows.map((r) => (r.ok ? r.value : { error: r.error?.message || 'failed' })),
+	);
 }
 
 /**

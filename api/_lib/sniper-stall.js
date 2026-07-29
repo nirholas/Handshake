@@ -49,67 +49,53 @@ const num = (v) => (v == null || !Number.isFinite(Number(v)) ? null : Number(v))
  * @param {number|null} [o.balanceSol]   live wallet SOL, or null when unread
  * @param {number} [o.verdictCount]      LLM verdicts requested for this arm's model
  * @param {number} [o.namedModelAnswers] of those, how many the NAMED model answered
- * @returns {{ code:string, blocking:boolean, message:string }|null}
+ * @returns {{ code:string, blocking:boolean, message:string, also:Array<{code:string,blocking:boolean,message:string}> }|null}
+ *   The most severe condition found, with every other condition in `also`. An arm
+ *   is often broken in more than one way at once (a dry wallet AND an unreachable
+ *   band); reporting only the first means the second surfaces a day later, after
+ *   someone fixed the first and waited.
  */
 export function diagnoseStall({ strategy, closed = 0, open = 0, balanceSol = null, verdictCount = 0, namedModelAnswers = 0 } = {}) {
 	const s = strategy || {};
-	if (s.enabled !== true) {
-		return { code: 'disabled', blocking: true, message: 'This arm is switched off — it evaluates nothing.' };
-	}
-	if (s.kill_switch === true) {
-		return { code: 'kill_switch', blocking: true, message: 'The per-strategy kill switch is engaged, so no entry can broadcast.' };
-	}
+	const found = [];
+	const add = (code, blocking, message) => { found.push({ code, blocking, message }); };
+	if (s.enabled !== true) add('disabled', true, 'This arm is switched off, so it evaluates nothing.');
+	if (s.kill_switch === true) add('kill_switch', true, 'The per-strategy kill switch is engaged, so no entry can broadcast.');
 
 	if (balanceSol != null && balanceSol < MIN_WALLET_SOL) {
-		return {
-			code: 'wallet_dry',
-			blocking: true,
-			message: `Wallet holds ${balanceSol.toFixed(4)} SOL — under the ~${MIN_WALLET_SOL} SOL needed to fund the safety simulation and a minimum entry, so no buy can be attempted.`,
-		};
+		add('wallet_dry', true,
+			`Wallet holds ${balanceSol.toFixed(4)} SOL, under the ~${MIN_WALLET_SOL} SOL needed to fund the safety simulation and a minimum entry, so no buy can be attempted.`);
 	}
 
 	const minMcap = num(s.min_market_cap_usd);
 	if (LAUNCH_TRIGGERS.has(s.trigger || 'new_mint') && minMcap != null && minMcap > LAUNCH_MCAP_USD) {
-		return {
-			code: 'mcap_band_unreachable',
-			blocking: true,
-			message: `The ${s.trigger || 'new_mint'} trigger fires at creation, when a launch is worth about $2k — this arm's $${Math.round(minMcap).toLocaleString('en-US')} floor can never be cleared at that moment. An intel_confirmed or oracle_crossing trigger scores a coin after it has traded into the band.`,
-		};
-	}
-
-	if (LAUNCH_TRIGGERS.has(s.trigger || 'new_mint') && minMcap != null && minMcap > TYPICAL_LAUNCH_MCAP_USD && closed === 0) {
-		return {
-			code: 'mcap_band_tight',
-			blocking: false,
-			message: `A launch is worth about $2k at the moment ${s.trigger || 'new_mint'} fires, so this arm's $${Math.round(minMcap).toLocaleString('en-US')} floor only clears the small minority of launches that open unusually high.`,
-		};
+		add('mcap_band_unreachable', true,
+			`The ${s.trigger || 'new_mint'} trigger fires at creation, when a launch is worth about $2k, so this arm's $${Math.round(minMcap).toLocaleString('en-US')} floor can never be cleared at that moment. An intel_confirmed or oracle_crossing trigger scores a coin after it has traded into the band.`);
+	} else if (LAUNCH_TRIGGERS.has(s.trigger || 'new_mint') && minMcap != null && minMcap > TYPICAL_LAUNCH_MCAP_USD && closed === 0) {
+		add('mcap_band_tight', false,
+			`A launch is worth about $2k at the moment ${s.trigger || 'new_mint'} fires, so this arm's $${Math.round(minMcap).toLocaleString('en-US')} floor only clears the small minority of launches that open unusually high.`);
 	}
 
 	if ((s.decision_mode || 'rules') === 'llm' && s.llm_strict_model === true && verdictCount > 0 && namedModelAnswers === 0) {
-		return {
-			code: 'strict_model_offline',
-			blocking: true,
-			message: `Strict-model arm: every one of its last ${verdictCount} verdicts came from the failover chain rather than ${s.llm_model || 'the named model'}, and a strict arm refuses to trade on a fallback's judgment. Restore the named model's route to resume.`,
-		};
+		add('strict_model_offline', true,
+			`Strict-model arm: every one of its last ${verdictCount} verdicts came from the failover chain rather than ${s.llm_model || 'the named model'}, and a strict arm refuses to trade on a fallback's judgment. Restore the named model's route to resume.`);
 	}
 
 	const perTrade = num(s.per_trade_lamports);
 	const dailyBudget = num(s.daily_budget_lamports);
 	if (perTrade != null && dailyBudget != null && dailyBudget > 0 && perTrade > dailyBudget) {
-		return {
-			code: 'size_over_budget',
-			blocking: false,
-			message: `Configured size (${(perTrade / 1e9).toFixed(4)} SOL) is larger than the whole daily budget (${(dailyBudget / 1e9).toFixed(4)} SOL); entries are clamped down to the day's remainder.`,
-		};
+		add('size_over_budget', false,
+			`Configured size (${(perTrade / 1e9).toFixed(4)} SOL) is larger than the whole daily budget (${(dailyBudget / 1e9).toFixed(4)} SOL), so entries are clamped down to the day's remainder.`);
 	}
 
-	if (closed === 0 && open === 0) {
-		return {
-			code: 'no_qualifying_launch',
-			blocking: false,
-			message: 'Config is reachable — nothing has met this arm\'s entry conditions in the window yet.',
-		};
+	if (!found.length && closed === 0 && open === 0) {
+		add('no_qualifying_launch', false, 'Config is reachable; nothing has met this arm\'s entry conditions in the window yet.');
 	}
 
-	return null;
+	if (!found.length) return null;
+	// Blocking conditions outrank advisory ones; within a rank the first found wins,
+	// and the checks above are ordered by how directly each one stops a trade.
+	const ranked = [...found].sort((a, b) => Number(b.blocking) - Number(a.blocking));
+	const [primary, ...rest] = ranked;
+	return { ...primary, also: rest };
 }

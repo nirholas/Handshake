@@ -2933,7 +2933,7 @@ class Agent3DElement extends HTMLElement {
 	_headBob(intensity = 1) {
 		const sc = this._scene;
 		if (!sc) return;
-		const bone = sc._findBone(['Head', 'head', 'mixamorigHead']);
+		const bone = sc.getCanonicalBone('Head');
 		if (!bone) return;
 		const start = performance.now();
 		const origX = bone.rotation.x;

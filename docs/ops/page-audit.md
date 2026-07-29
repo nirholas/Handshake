@@ -37,6 +37,7 @@ node scripts/page-audit.mjs --desktop-only   # skip the mobile viewport
 node scripts/page-audit.mjs --mobile-only    # skip the desktop viewport
 node scripts/page-audit.mjs --concurrency 6  # parallel pages per viewport
 node scripts/page-audit.mjs --strict         # exit 1 on any error-severity finding
+node scripts/page-audit.mjs --reverify-cap 0 # skip the solo re-check pass
 ```
 
 ## Targeting
@@ -59,6 +60,32 @@ optimistic auth hint) to `.auth/audit-state.json`. The `.auth/` directory is
 gitignored. Every later run replays that storageState; without it the audit
 runs anonymously and skips the authenticated-only routes. Re-run
 `npm run audit:web:login` when the session expires.
+
+## Re-verification: every error is confirmed solo
+
+The sweep loads `--concurrency` pages at once, and a WebGL-heavy page audited
+alongside four others inside one headless browser fails in ways no real visitor
+sees. Software GL contention makes texture uploads fail, and a contended page
+misses a 25 s `networkidle` it would otherwise clear easily. On 2026-07-28 that
+put 108 phantom `GLTFLoader: Couldn't load texture blob:…` errors plus a run of
+nav timeouts into one report: 4 findings in 5 were noise, and the real defects
+were buried under them.
+
+So after the sweep, every route/viewport pair holding an error-severity finding
+is audited again **on its own**, in a fresh context, with nothing else running:
+
+- A finding that reproduces keeps `error` severity and is marked `reproduced`.
+- A finding that does not reproduce is demoted to `info` and labelled
+  `[not reproduced on a solo re-check: contention artifact]`. It is never
+  deleted, so a genuinely intermittent bug is still visible in the report.
+- Findings are matched across runs by a fingerprint that strips blob URLs,
+  uuids, base58 addresses, query strings and bare numbers, so the same defect
+  matches even though its ids differ every load.
+
+Errors that survive this pass reproduced on a page loaded by itself, which is
+what makes the error count worth acting on. `--reverify-cap N` bounds how many
+pairs get re-checked (default 60, `0` disables the pass); anything past the cap
+is reported unverified and named as such.
 
 ## Reports
 

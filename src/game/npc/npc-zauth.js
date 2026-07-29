@@ -19,6 +19,7 @@
 
 import { ensureX402 } from '../../shared/x402-loader.js';
 import { log } from '../../shared/log.js';
+import { renderMarkdown } from '../../shared/markdown.js';
 
 const ENDPOINT = '/api/zauth-reposcan';
 const DEFAULT_REPO = 'nirholas/three.ws';
@@ -102,55 +103,14 @@ function injectStyles() {
 	document.head.appendChild(s);
 }
 
-// ── safe markdown rendering (zauth returns analysisMarkdown) ──────────────────
-// Built with DOM nodes only — upstream text never reaches innerHTML.
-const INLINE_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`/g;
-
-function inlineNodes(text) {
-	const out = [];
-	let last = 0;
-	for (const m of text.matchAll(INLINE_RE)) {
-		if (m.index > last) out.push(document.createTextNode(text.slice(last, m.index)));
-		if (m[2]) out.push(el('a', { href: m[2], target: '_blank', rel: 'noopener noreferrer', text: m[1] }));
-		else if (m[3]) out.push(el('strong', { text: m[3] }));
-		else out.push(el('code', { text: m[4] }));
-		last = m.index + m[0].length;
-	}
-	if (last < text.length) out.push(document.createTextNode(text.slice(last)));
-	return out;
-}
-
-function renderMarkdown(md) {
+// ── markdown rendering (zauth returns analysisMarkdown) ──────────────────────
+// Third-party analysis text, rendered through the shared sanitized pipeline
+// (marked + DOMPurify). Headings shift down two levels so the panel's own
+// heading stays dominant. The previous local renderer built DOM nodes by hand
+// and supported neither code blocks, italics, nor ordered lists.
+function renderZauthMarkdown(md) {
 	const root = el('div', { class: 'zauth-md' });
-	let list = null;
-	let para = [];
-	const flushPara = () => {
-		if (para.length) {
-			root.appendChild(el('p', {}, inlineNodes(para.join(' '))));
-			para = [];
-		}
-	};
-	const flushList = () => { list = null; };
-	for (const raw of String(md || '').split('\n')) {
-		const line = raw.trim();
-		if (!line) { flushPara(); flushList(); continue; }
-		const h = line.match(/^(#{1,4})\s+(.*)$/);
-		if (h) {
-			flushPara(); flushList();
-			root.appendChild(el(h[1].length <= 2 ? 'h3' : 'h4', {}, inlineNodes(h[2])));
-			continue;
-		}
-		const li = line.match(/^[-*]\s+(.*)$/) || line.match(/^\d+\.\s+(.*)$/);
-		if (li) {
-			flushPara();
-			if (!list) { list = el('ul'); root.appendChild(list); }
-			list.appendChild(el('li', {}, inlineNodes(li[1])));
-			continue;
-		}
-		flushList();
-		para.push(line);
-	}
-	flushPara();
+	root.innerHTML = renderMarkdown(md, { demoteHeadings: 2 });
 	return root;
 }
 
@@ -454,7 +414,7 @@ export function openZauthScanner(npc, { ui } = {}) {
 				el('p', { class: 'zauth-verdict-d', text: `${tone.label} — zauth trust score ${Math.round(scan.score)}/100, settled and scanned via x402.` }),
 			]),
 		]));
-		body.appendChild(renderMarkdown(scan.markdown));
+		body.appendChild(renderZauthMarkdown(scan.markdown));
 		body.appendChild(el('button', {
 			class: 'zauth-go zauth-again',
 			type: 'button',

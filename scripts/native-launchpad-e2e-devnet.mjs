@@ -31,7 +31,7 @@ async function sendAndPoll(raw) {
 console.log('wallet:', wallet.publicKey.toBase58());
 console.log('mint:  ', mintKp.publicKey.toBase58());
 
-// 1 — build the unsigned create-pool tx exactly like /api/launchpad/launch-prep
+// 1 — build the unsigned create-pool tx exactly like /api/native-launch/launch-prep
 const built = await buildCreatePoolTx({
 	network: 'devnet',
 	payer: wallet.publicKey.toBase58(),

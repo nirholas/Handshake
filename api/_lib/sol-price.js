@@ -17,6 +17,9 @@
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
 
 const TTL_MS = 60_000;
+// A 24h delta moves slowly; refreshing it every 60s alongside the spot price
+// would spend requests (and CoinGecko rate-limit budget) for no visible gain.
+const CHANGE_TTL_MS = 5 * 60_000;
 const WSOL = 'So11111111111111111111111111111111111111112';
 
 const asPrice = (v) => {
@@ -24,11 +27,33 @@ const asPrice = (v) => {
 	return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+// Last 24h percentage change. Captured for free whenever CoinGecko is the
+// source that answers the price call (it is the only price provider that
+// returns the change alongside the spot, and it is tried first); when a
+// fallback provider answers, solChange24hPct() refreshes it on its own two-
+// source chain. Either way the previous value is kept rather than blanked, the
+// same "last good wins" rule the price itself follows.
+let _change24h = null;
+let _changeAt = 0;
+
+const setChange = (v, now = Date.now()) => {
+	const n = Number(v);
+	if (!Number.isFinite(n)) return null;
+	_change24h = n;
+	_changeAt = now;
+	return n;
+};
+
 const PROVIDERS = [
 	{
 		name: 'coingecko',
-		url: 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
-		parse: async (r) => asPrice((await r.json())?.solana?.usd),
+		url: 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
+		parse: async (r) => {
+			const d = await r.json();
+			const price = asPrice(d?.solana?.usd);
+			if (price != null) setChange(d?.solana?.usd_24h_change);
+			return price;
+		},
 	},
 	{
 		name: 'jupiter',
@@ -97,4 +122,67 @@ export async function solPriceUsd(now = Date.now()) {
 		/* keep last good value; 0 until first success */
 	}
 	return _price || 0;
+}
+
+/**
+ * The cached price plus the metadata a surface needs to render it honestly:
+ * how old it is, whether the last refresh failed (`stale`), and the 24h change
+ * when a provider supplied one. Call `solPriceUsd()` first — this is a pure
+ * read of the cache, it never fetches.
+ *
+ * `stale` is true only when a good price is being served past its refresh
+ * window, i.e. the refresh failed and the last known value is standing in. A
+ * never-resolved price is `{ price: 0, stale: false }` so a page can tell
+ * "couldn't refresh" apart from "no price yet".
+ *
+ * @param {number} [now]
+ * @returns {{ price: number, at: number, stale: boolean, change24h: number | null }}
+ */
+export function solPriceInfo(now = Date.now()) {
+	const price = _price || 0;
+	return {
+		price,
+		at: _at,
+		stale: price > 0 && now - _at > TTL_MS,
+		change24h: _change24h,
+	};
+}
+
+const CHANGE_PROVIDERS = [
+	{
+		name: 'coingecko-change',
+		url: 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
+		parse: async (r) => {
+			const c = Number((await r.json())?.solana?.usd_24h_change);
+			return Number.isFinite(c) ? c : null;
+		},
+	},
+	{
+		// DefiLlama's percentage oracle — same 24h window, computed from its own
+		// price history, so a CoinGecko rate-limit doesn't blank the delta.
+		name: 'llama-change',
+		url: `https://coins.llama.fi/percentage/solana:${WSOL}?period=24h`,
+		parse: async (r) => {
+			const c = Number((await r.json())?.coins?.[`solana:${WSOL}`]);
+			return Number.isFinite(c) ? c : null;
+		},
+	},
+];
+
+/**
+ * SOL's 24h percentage change, cached for 5 minutes (a delta over a 24h window
+ * does not need 60s resolution). Free when `solPriceUsd()` already got it from
+ * CoinGecko; otherwise one request across CoinGecko → DefiLlama. Returns the
+ * last good value when both are down, or null before the first success.
+ * @param {number} [now]
+ * @returns {Promise<number | null>}
+ */
+export async function solChange24hPct(now = Date.now()) {
+	if (_change24h != null && now - _changeAt < CHANGE_TTL_MS) return _change24h;
+	try {
+		const { value } = await fetchFirst(CHANGE_PROVIDERS, { timeoutMs: 3000, label: 'sol-change-24h' });
+		return setChange(value, now);
+	} catch {
+		return _change24h;
+	}
 }

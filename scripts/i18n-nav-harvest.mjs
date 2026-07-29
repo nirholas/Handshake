@@ -73,6 +73,9 @@ const NAV_JS_STRINGS = [
 	'Console →',
 	'Guardian console',
 	'Dashboard',
+	// Progressive-disclosure tier controls (renderGroup + renderDrawer).
+	'Show everything',
+	'Show the simple menu',
 ];
 
 // Inline literals rendered by getting-started.js.

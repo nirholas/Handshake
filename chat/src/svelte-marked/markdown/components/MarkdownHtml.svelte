@@ -8,8 +8,6 @@
 	export const options: MarkdownOptions = undefined;
 	export const renderers: Renderers = undefined;
 	export let message;
-	
-	$: console.log(`token:`, token);
 
 	$: xml = parseXML(token.text);
 </script>

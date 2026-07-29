@@ -70,6 +70,7 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 
 - **Just exploring?** → Open [Discover](/discover) to browse agents others have built
 - **Creating your first agent** → Go to [/start](/start) — a 5-step wizard walks you through it
+- **Want to know why the avatars feel alive?** → [Procedural animation](./procedural-animation.md) — the runtime IK layers that run on top of the recorded clips: gaze that follows your cursor or meets your eyes, and feet that land on uneven ground instead of floating over it
 - **Want your avatar to sign in ASL?** → [Sign language](./sign-language.md) — fingerspell any word in the Animation Studio, share it as a link (`/pose?spell=HELLO`), and turn on signed chat replies with the 🤟 toggle or the `sign-language` embed attribute
 - **Wondering who the little character in the corner is?** → [The agent shell](./agent-shell.md) — every visitor gets a named agent in the first five seconds (claim it to make it real), the ⌘K palette runs real commands (`forge …`, `digest`, `price btc`, `ask …`), and shell pages navigate without ever unloading your agent
 - **Want to drive your agent's computer yourself?** → [Take the wheel](./agent-screen-control.md), every agent has a live screen you can watch on [/agent-screen](https://three.ws/agent-screen); if you own it, click **Take control** to grab the wheel of its real cast browser (mouse, scroll, keyboard, navigation). The agent stands aside while you drive, and the browser holds no wallet, so control can never move funds

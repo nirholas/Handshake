@@ -22,6 +22,7 @@
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
 import { COINGECKO_BASE, geckoHeaders } from './coingecko.js';
 import { downsample } from '../../src/shared/coin-format.js';
+import { cacheGet, cacheSet } from './cache.js';
 
 const num = (v) => {
 	const n = Number(v);
@@ -290,6 +291,12 @@ function normalizeLoreRow(c) {
  * @returns {Promise<{ rows: object[], source: string }>}
  * @throws when every eligible source is down.
  */
+// How long a category table stays replayable after its last successful fetch.
+// Category membership moves slowly (a coin joins "layer-1" rarely), so a day of
+// coverage spans any realistic CoinGecko rate-limit window while still expiring
+// on its own if a category is genuinely retired.
+const LKG_TTL_SECONDS = 86_400;
+
 export async function fetchMarketsTable({ page, perPage, category }) {
 	const providers = [
 		{
@@ -321,8 +328,28 @@ export async function fetchMarketsTable({ page, perPage, category }) {
 			},
 		});
 	}
-	const { value, source } = await fetchFirst(providers, { timeoutMs: 10_000, label: 'markets-table' });
-	return { rows: value, source };
+
+	// Category scoping has no second live provider: CoinGecko is the only free
+	// source with a category taxonomy (CoinLore and CoinPaprika expose none), so
+	// a rate-limited key used to 502 every /category/:id page while the
+	// unscoped table stayed up on its CoinLore rung. Last-known-good is that
+	// missing rung: real rows this same endpoint fetched earlier, replayed with
+	// an explicit staleness marker so the page can label them, instead of a
+	// blank error state. Nothing is synthesized; a cold cache still fails.
+	const lkgKey = category ? `coin:markets:lkg:${category}:p${page}:pp${perPage}` : null;
+	try {
+		const { value, source } = await fetchFirst(providers, { timeoutMs: 10_000, label: 'markets-table' });
+		if (lkgKey && Array.isArray(value) && value.length) {
+			// Best-effort write: a cache outage must never fail a healthy read.
+			cacheSet(lkgKey, { rows: value, at: Date.now() }, LKG_TTL_SECONDS).catch(() => {});
+		}
+		return { rows: value, source };
+	} catch (err) {
+		if (!lkgKey) throw err;
+		const cached = await cacheGet(lkgKey).catch(() => null);
+		if (!Array.isArray(cached?.rows) || !cached.rows.length) throw err;
+		return { rows: cached.rows, source: 'last-known-good', stale: true, asOf: cached.at ?? null };
+	}
 }
 
 // ── Price-series (chart) failover ────────────────────────────────────────────

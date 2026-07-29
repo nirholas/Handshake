@@ -2,11 +2,10 @@
 // Resolves an ENS name → address, then looks up agents registered to that address.
 // Public, rate-limited 60/min per IP. ENS → address cached 5 min in-memory.
 
-import { evmFallbackProvider } from '../../_lib/evm/rpc.js';
+import { ensResolveAddress } from '../../_lib/evm/ens.js';
 import { sql } from '../../_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { env } from '../../_lib/env.js';
 
 // Validates "foo.eth", "sub.foo.eth", etc. — each label [a-z0-9-]+, must end with .eth
 const ENS_RE = /^(?:[a-z0-9-]+\.)+eth$/;
@@ -29,13 +28,11 @@ function setCached(name, address) {
 	ensCache.set(name, { address, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+// 3s used to be too tight to be reachable: the old ethers resolveName walk cost
+// 9.7-12.4s on the keyless endpoints, so this lookup timed out on every name.
+// One Universal Resolver eth_call lands in ~270ms, so the budget is now real.
 async function resolveEns(name) {
-	const provider = await evmFallbackProvider(1, { primaryUrl: env.MAINNET_RPC_URL });
-
-	const timeout = new Promise((_, reject) =>
-		setTimeout(() => reject(new Error('ens-timeout')), 3000),
-	);
-	return Promise.race([provider.resolveName(name), timeout]);
+	return ensResolveAddress(name, { timeoutMs: 3000 });
 }
 
 async function agentsByAddress(address) {

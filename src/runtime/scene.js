@@ -8,6 +8,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { resolveURI } from '../ipfs.js';
 import { resolveSlot } from './animation-slots.js';
+import { LookAtController } from '../procedural/look-at.js';
+import { canonicalNodeMapFromObject } from '../animation-retarget.js';
 import { log } from '../shared/log.js';
 
 const EXPRESSION_MAP = {
@@ -33,6 +35,17 @@ export class SceneController {
 		this._groupMixer = null;
 		this._groupClips = null;
 		this._mixerHook = null;
+		// Gaze state (see lookAt / _ensureGazeIk): the standing target, the IK
+		// layer that applies it, the content root that layer was built for, and
+		// the per-frame hook that re-applies it after the mixer.
+		this._gazeTarget = null;
+		this._gazeIk = null;
+		this._gazeIkFor = null;
+		this._gazeHook = null;
+		this._gazeScratch = new Vector3();
+		// Canonical bone lookup cache (see getCanonicalBone), rebuilt on swap.
+		this._boneMap = null;
+		this._boneMapFor = null;
 	}
 
 	// Expose the underlying Three.js handles skills may need
@@ -68,6 +81,11 @@ export class SceneController {
 	}
 
 	dispose() {
+		if (this._gazeHook) this._removeHook(this._gazeHook);
+		this._gazeHook = null;
+		this._gazeIk = null;
+		this._gazeIkFor = null;
+		this._gazeTarget = null;
 		if (this._mixerHook) this._removeHook(this._mixerHook);
 		if (this._groupMixer) {
 			try {
@@ -205,21 +223,71 @@ export class SceneController {
 
 	// --- Gaze ---
 
+	/**
+	 * Aim the avatar's gaze at a world point, a named target ('camera', 'user',
+	 * 'center'), or null to release it.
+	 *
+	 * The gaze is a standing state, not a one-off pose write: a per-frame hook
+	 * re-applies it after the mixer, so it survives on an avatar that is playing
+	 * a clip. Turning is spread across the chest, neck, and head and clamped, so
+	 * a target off to the side reads as a person glancing over rather than a head
+	 * spinning on its axis. Rigs with no mappable head fall back to rotating the
+	 * whole model on its Y axis, which is the best a headless rig can do.
+	 *
+	 * @param {import('three').Vector3|'camera'|'user'|'center'|null} target
+	 */
 	lookAt(target) {
-		const t = this._resolveTarget(target);
-		if (!t) {
-			if (target != null) log.warn(`[SceneController] unknown lookAt target: "${target}"`);
+		if (target == null) {
+			this._gazeTarget = null;
+			this._gazeIk?.setTarget(null);
+			this.viewer.invalidate();
 			return;
 		}
-		if (!this.viewer.content) return;
-		// Simple head-bone gaze if rig has Head, otherwise root rotation.
-		const head = this._findBone(['Head', 'head', 'mixamorigHead']);
-		if (head) {
-			head.lookAt(t);
-		} else {
-			this.viewer.content.lookAt(t.x, this.viewer.content.position.y, t.z);
+		const t = this._resolveTarget(target);
+		if (!t) {
+			log.warn(`[SceneController] unknown lookAt target: "${target}"`);
+			return;
+		}
+		if (!this.content) return;
+
+		// 'camera' and 'user' move as the viewer moves, so remember the request
+		// and re-resolve it every frame instead of freezing today's position.
+		this._gazeTarget = typeof target === 'string' ? target : t.clone();
+
+		if (!this._ensureGazeIk()) {
+			// Headless rig (a prop, a non-humanoid): yaw the whole model instead.
+			this.content.lookAt(t.x, this.content.position.y, t.z);
 		}
 		this.viewer.invalidate();
+	}
+
+	/**
+	 * @private Build (or rebuild, after a model swap) the gaze IK layer and its
+	 * per-frame hook. Returns false when the loaded rig exposes no head chain,
+	 * which tells lookAt() to fall back to whole-model rotation.
+	 */
+	_ensureGazeIk() {
+		const content = this.content;
+		if (!content) return false;
+		if (this._gazeIkFor !== content) {
+			this._gazeIkFor = content;
+			const ik = new LookAtController(content);
+			this._gazeIk = ik.enabled ? ik : null;
+		}
+		if (!this._gazeIk) return false;
+		if (!this._gazeHook) {
+			// Runs in _afterAnimateHooks, i.e. after the mixer has posed the
+			// skeleton — the order every procedural layer requires.
+			this._gazeHook = (dt) => {
+				if (!this._gazeIk) return;
+				const t = this._gazeTarget;
+				this._gazeIk.setTarget(t ? this._resolveTargetInto(t, this._gazeScratch) : null);
+				this._gazeIk.update(dt);
+				this.viewer.invalidate();
+			};
+			this._addHook(this._gazeHook);
+		}
+		return true;
 	}
 
 	_resolveTarget(target) {
@@ -236,22 +304,45 @@ export class SceneController {
 		return null;
 	}
 
-	_findBone(names) {
-		if (!this.viewer.content) return null;
-		// Rebuild cache when content changes
-		if (!this._boneCache || this._boneCacheContent !== this.viewer.content) {
-			this._boneCache = new Map();
-			this._boneCacheContent = this.viewer.content;
+	/**
+	 * @private Same resolution as {@link _resolveTarget} but writing into a
+	 * caller-owned vector, so the per-frame gaze hook allocates nothing. A
+	 * Vector3 target is returned as-is (nothing to resolve).
+	 * @param {import('three').Vector3|string} target
+	 * @param {import('three').Vector3} out
+	 * @returns {import('three').Vector3|null}
+	 */
+	_resolveTargetInto(target, out) {
+		if (target instanceof Vector3) return target;
+		if (target === 'camera') return out.copy(this.viewer.activeCamera.position);
+		if (target === 'center') return out.set(0, 1, 0);
+		if (target === 'user') {
+			if (this.viewer.renderer?.xr?.isPresenting) {
+				return out.copy(this.viewer.renderer.xr.getCamera().position);
+			}
+			return out.copy(this._userTarget);
 		}
-		const key = names.join(',');
-		if (this._boneCache.has(key)) return this._boneCache.get(key);
-		let found = null;
-		this.viewer.content.traverse((n) => {
-			if (found) return;
-			if (n.isBone && names.includes(n.name)) found = n;
-		});
-		this._boneCache.set(key, found);
-		return found;
+		return null;
+	}
+
+	/**
+	 * Resolve a canonical bone ('Head', 'Neck', 'Hips', 'LeftFoot', …) on the
+	 * loaded rig, or null when this rig has no equivalent. Goes through the
+	 * shared canonicalizer, so it resolves Mixamo, VRM, Avaturn, Daz, Character
+	 * Creator, and Blender naming alike — never a hardcoded list of spellings.
+	 * The map is cached per loaded model and rebuilt on swap.
+	 * @param {string} canonical
+	 * @returns {import('three').Object3D|null}
+	 */
+	getCanonicalBone(canonical) {
+		const content = this.content;
+		if (!content) return null;
+		if (this._boneMapFor !== content) {
+			this._boneMapFor = content;
+			this._boneMap = canonicalNodeMapFromObject(content);
+		}
+		const name = this._boneMap.get(canonical);
+		return name ? content.getObjectByName(name) : null;
 	}
 
 	// --- Expression (morph targets) ---

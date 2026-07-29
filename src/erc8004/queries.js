@@ -195,8 +195,15 @@ export { findAvatar3D } from './avatar-meta.js';
 /**
  * Resolve any IPFS/Arweave/data/https URI to a fetchable URL and parse JSON.
  *
+ * An agent's registration JSON lives wherever its registrant put it, and most
+ * of those hosts send no Access-Control-Allow-Origin, so the direct browser
+ * fetch below is blocked by CORS for a large share of real agents. When that
+ * happens we retry through /api/erc8004/metadata, which fetches server-side
+ * (no same-origin policy) behind the SSRF guard. The direct attempt stays
+ * first so a CORS-friendly host never pays for the extra hop.
+ *
  * @param {string} uri
- * @returns {Promise<{ ok: boolean, data?: any, error?: string, resolvedUrl?: string }>}
+ * @returns {Promise<{ ok: boolean, data?: any, error?: string, resolvedUrl?: string, viaProxy?: boolean }>}
  */
 export async function fetchAgentMetadata(uri) {
 	if (!uri) return { ok: false, error: 'empty uri' };
@@ -217,12 +224,33 @@ export async function fetchAgentMetadata(uri) {
 	if (uri.startsWith('ipfs://')) url = 'https://ipfs.io/ipfs/' + uri.slice(7);
 	else if (uri.startsWith('ar://')) url = 'https://arweave.net/' + uri.slice(5);
 
+	let directError;
 	try {
 		const res = await fetch(url);
-		if (!res.ok) return { ok: false, error: `HTTP ${res.status}`, resolvedUrl: url };
-		const data = await res.json();
-		return { ok: true, data, resolvedUrl: url };
+		if (res.ok) return { ok: true, data: await res.json(), resolvedUrl: url };
+		directError = `HTTP ${res.status}`;
 	} catch (err) {
-		return { ok: false, error: err.message, resolvedUrl: url };
+		// A CORS block surfaces here as an opaque TypeError with no status.
+		directError = err.message;
+	}
+
+	return fetchAgentMetadataViaProxy(uri, url, directError);
+}
+
+async function fetchAgentMetadataViaProxy(uri, url, directError) {
+	try {
+		const res = await fetch(`/api/erc8004/metadata?uri=${encodeURIComponent(uri)}`);
+		const body = await res.json().catch(() => null);
+		if (!res.ok) {
+			return {
+				ok: false,
+				error: body?.error_description || body?.error || directError,
+				resolvedUrl: url,
+			};
+		}
+		return { ok: true, data: body.data, resolvedUrl: body.resolvedUrl || url, viaProxy: true };
+	} catch {
+		// Both rungs failed; report the original failure, which is the useful one.
+		return { ok: false, error: directError, resolvedUrl: url };
 	}
 }

@@ -111,7 +111,7 @@ export function feeWallet() {
 	return env.NATIVE_LAUNCH_FEE_WALLET || null;
 }
 
-// Public, cacheable description of the lane — served by /api/launchpad/config
+// Public, cacheable description of the lane — served by /api/native-launch/config
 // and rendered by the launch UI so the fee story on the page can never drift
 // from the config that actually launched the coin.
 export function laneInfo(network = 'mainnet') {

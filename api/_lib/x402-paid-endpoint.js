@@ -71,6 +71,7 @@ import { normalizeAddress } from './siwx-storage.js';
 import { buildOffersExtension, buildReceiptExtension } from './x402/offer-receipt-server.js';
 import { signReceipt } from './x402-offer-receipt.js';
 import { recordReceipt } from './x402/receipt-storage.js';
+import { claimSpentPayment, isPaymentSpent, writeReplayed } from './x402/spent-payments.js';
 import {
 	authenticateAuthHintsRequest,
 	declareAuthHintsExtension,
@@ -887,6 +888,40 @@ export function paidEndpoint(spec) {
 			}
 		}
 
+		// Durable replay guard — the leg the cache above cannot cover. Cache
+		// entries expire with pidTtlSeconds; a captured X-PAYMENT header replayed
+		// after that expiry misses the cache entirely and re-enters the handler,
+		// re-running its side effects and re-delivering the paid good. (The MONEY
+		// leg is already safe: settle-credit.js refuses a second credit per
+		// signature. Delivery is not, because the default path delivers before it
+		// settles.) One indexed lookup here, BEFORE verify and before the handler,
+		// keeps a replay away from the side effects; the atomic claim that closes
+		// the concurrent-race window runs at the end of settlement below. Fails
+		// OPEN on a DB outage — see api/_lib/x402/spent-payments.js for why this
+		// control's failure policy is the inverse of settle-credit's.
+		if (paymentHash) {
+			const spent = await isPaymentSpent(paymentHash);
+			if (spent.spent) {
+				logPaymentEvent({
+					eventType: 'payment_replay_rejected',
+					route,
+					resourceUrl,
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { stage: 'pre_handler' },
+				});
+				recordPaymentMetric({
+					kind: 'x402',
+					status: 'failed',
+					latencyMs: Date.now() - requestStartTime,
+					reason: 'payment_replayed',
+				});
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				return writeReplayed(res, { route });
+			}
+		}
+
 		let verified;
 		try {
 			verified = await verifyPayment({ paymentHeader, requirements, builderCode });
@@ -1049,6 +1084,49 @@ export function paidEndpoint(spec) {
 				}
 			} catch (err) {
 				console.error('x402_receipt_sign_failed', err);
+			}
+
+			// Durable spent-payment claim. Runs LAST, once settlement and every
+			// downstream step above succeeded, so a payment that settled but then
+			// failed (SIWX grant write, receipt sign) leaves no spent row and the
+			// payer's retry with the same header still works. Atomic on the primary
+			// key: of any set of concurrent requests carrying one X-PAYMENT header
+			// exactly one claim wins, which closes the race the pre-handler lookup
+			// alone cannot. A losing claim is a replay that got past the lookup —
+			// refuse the response rather than deliver the good twice. Fails OPEN on
+			// a DB outage (the cache guard and settle-credit still apply).
+			const claim = await claimSpentPayment({
+				paymentHash,
+				endpoint: route,
+				amountAtomics: verified.requirement?.amount ?? null,
+			});
+			if (claim.replay) {
+				logPaymentEvent({
+					eventType: 'payment_replay_rejected',
+					route,
+					resourceUrl,
+					payer: settled.payer || verified.payer || null,
+					network: settled.network || verified.requirement?.network || null,
+					amountAtomics: verified.requirement?.amount || null,
+					asset: verified.requirement?.asset || null,
+					txHash: settled.transaction || null,
+					settlementStatus: 'failed',
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { stage: 'post_settle' },
+				});
+				recordPaymentMetric({
+					kind: 'x402',
+					status: 'failed',
+					network: verified.requirement?.network,
+					amountUsd: atomicsToUsd(verified.requirement?.amount),
+					latencyMs: Date.now() - requestStartTime,
+					reason: 'payment_replayed',
+				});
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				writeReplayed(res, { route });
+				return null;
 			}
 
 			const paymentResponseHeader = encodePaymentResponseHeader(settled, responseExtensions);

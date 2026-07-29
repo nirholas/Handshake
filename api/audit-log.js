@@ -17,6 +17,8 @@ import { sql } from './_lib/db.js';
 import { getSessionUser } from './_lib/auth.js';
 import { cors, error, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits } from './_lib/rate-limit.js';
+// `meta` is a JSON column, so cells are JSON-encoded rather than stringified.
+import { csvCellJson as csvEscape } from './_lib/csv.js';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -41,16 +43,6 @@ function decodeCursor(cursor) {
 	} catch {
 		return null;
 	}
-}
-
-function csvEscape(value) {
-	if (value === null || value === undefined) return '';
-	let s = typeof value === 'string' ? value : JSON.stringify(value);
-	// Neutralize spreadsheet formula injection: Excel/Sheets execute cells that
-	// start with = + - @ — prefix with a quote so they render as text.
-	if (/^[=+\-@]/.test(s)) s = `'${s}`;
-	if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-	return s;
 }
 
 export default wrap(async (req, res) => {

@@ -240,9 +240,15 @@ export function normalizePaprikaDetail(coin, ticker, cgId) {
 				y1: num(q.percent_change_1y),
 			},
 			mcap_change_24h_pct: num(q.market_cap_change_24h),
-			circulating: num(ticker.circulating_supply),
-			total: num(ticker.total_supply),
-			max: num(ticker.max_supply),
+			// CoinPaprika's ticker has no circulating-supply field, but market cap
+			// IS price × circulating supply, so the quotient recovers it exactly
+			// from the two numbers it does publish — not an estimate.
+			circulating: mcap != null && price > 0 ? mcap / price : null,
+			// 0 means "no cap" upstream (SOL reports max_supply 0), not a supply of
+			// zero — collapse it so the page's supply bar hides instead of
+			// rendering a 0 ceiling.
+			total: pos(ticker.total_supply),
+			max: pos(ticker.max_supply),
 			ath: num(q.ath_price),
 			ath_date: str(q.ath_date),
 			ath_change_pct: num(q.percent_from_price_ath),
@@ -354,6 +360,10 @@ export async function fetchFallbackTickers(cgId, { page = 1, perPage = 100 } = {
 	);
 	if (!raw) return null;
 	const rows = raw
+		// CoinGecko's /tickers is a SPOT feed; CoinPaprika mixes perpetual and
+		// futures venues into the same response (they out-volume spot and would
+		// otherwise head the table). Keep the comparison honest.
+		.filter((m) => String(m?.category || 'Spot').toLowerCase() === 'spot')
 		.map(normalizePaprikaMarket)
 		.filter((t) => t.exchange.name && t.price_usd != null)
 		.sort((a, b) => (b.volume_usd ?? 0) - (a.volume_usd ?? 0));

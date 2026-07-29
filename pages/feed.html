@@ -354,8 +354,9 @@
 				coin: 'launched a coin',
 				model: 'forged a 3D model',
 				world: 'built a world',
+				restyle: 'restyled a model',
 			};
-			const GLYPH = { avatar: '◎', agent: '🤖', coin: '◉', model: '✦', world: '🌐', follow: '⇢' };
+			const GLYPH = { avatar: '◎', agent: '🤖', coin: '◉', model: '✦', world: '🌐', restyle: '🎨', follow: '⇢' };
 			const SCOPE_KEY = 'twx_feed_scope';
 
 			let scope = localStorage.getItem(SCOPE_KEY) === 'following' ? 'following' : 'all';
@@ -422,7 +423,11 @@
 					? `<img src="${attr(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
 					: GLYPH[it.kind] || '◎';
 				const external = it.external ? ' target="_blank" rel="noopener"' : '';
-				const verb = it.kind === 'model' && it.isRemix ? 'remixed a 3D model' : VERB[it.kind] || 'shared something';
+				const verb = it.kind === 'model' && it.isRemix
+					? 'remixed a 3D model'
+					: it.kind === 'restyle' && it.isVariant
+						? 'made a colorway variant'
+						: VERB[it.kind] || 'shared something';
 				return `
 					<article class="feed-item">
 						${avatarEl(a)}

@@ -3,10 +3,16 @@
 // A live sniper's wallet drains as it buys. Without a top-up it silently goes
 // broke and every subsequent snipe fails its balance check — a green heartbeat
 // hiding a dead bot. This loop keeps each armed agent's OWN Solana wallet above
-// a floor: when an agent's balance drops below SNIPER_AUTO_FUND_MIN_SOL it tops
-// it back up to SNIPER_AUTO_FUND_TARGET_SOL from the launcher master wallet,
+// a level it can actually trade from: when an agent's balance drops below its
+// trigger it is topped back up to its target from the launcher master wallet,
 // reusing the same guarded transfer (caps + master-balance buffer + protected
 // submit) the autonomous launcher uses.
+//
+// Both levels are PER-ARM and come from api/_lib/agent-funding-policy.js, which
+// the economy's idle-capital reclaim reads too. Two reasons they are not flat:
+// an arm sized at 0.13 SOL/trade sitting on 0.035 SOL cleared the old flat 0.02
+// floor while being unable to place a single trade, and a reclaim floor that sat
+// under this target had the two crons passing the same SOL back and forth.
 //
 // Guardrails (no env weakens them past the master's own balance buffer):
 //   - per-transfer cap   (SNIPER_AUTO_FUND_PER_TX_SOL)
@@ -24,7 +30,7 @@ import { log } from './log.js';
 import { screenPush } from './screen-push.js';
 import { cachedStrategies, getRealizedNetLamports, effectiveDailyLossLimitLamports } from './strategy-store.js';
 import { checkDailyLoss } from '../../api/_lib/agent-trade-guards.js';
-import { autoFundMinSol, autoFundTargetSol } from '../../api/_lib/agent-funding-policy.js';
+import { autoFundMinSol, autoFundTargetSol, fundTriggerSol, fundTargetSol } from '../../api/_lib/agent-funding-policy.js';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -81,6 +87,29 @@ export function optedInAgentIds(strategies, network) {
 /** Unique agent ids that have opted into auto-funding for this network. */
 function activeAgentIds(network) {
 	return optedInAgentIds(cachedStrategies(), network);
+}
+
+/**
+ * Largest configured trade size among an agent's opted-in strategies, in SOL.
+ * The funding levels are sized off this: a wallet that cannot cover the arm's own
+ * per-trade size plus the entry's fixed overhead is not "healthy", however far it
+ * sits above a flat floor.
+ *
+ * Pure over its `strategies` arg so it can be unit-tested without the cache.
+ *
+ * @param {Array<{agent_id?:string, network?:string, auto_fund_enabled?:boolean, per_trade_lamports?:any}>} strategies
+ * @param {string} agentId
+ * @param {string} network
+ * @returns {number} SOL, 0 when unknown
+ */
+export function agentPerTradeSol(strategies, agentId, network) {
+	let max = 0;
+	for (const s of strategies || []) {
+		if (s.agent_id !== agentId || s.network !== network || s.auto_fund_enabled !== true) continue;
+		const sol = Number(s.per_trade_lamports) / 1e9;
+		if (Number.isFinite(sol) && sol > max) max = sol;
+	}
+	return max;
 }
 
 /** SOL actually moved (live) since the start of the UTC day — the daily-cap base. */
@@ -169,7 +198,15 @@ async function tick(cfg) {
 			continue;
 		}
 
-		if (balanceSol >= MIN_SOL) continue; // healthy — nothing to do
+		// "Healthy" is per-arm, not a flat number: a wallet that cannot cover this
+		// arm's own trade size plus the entry's fixed overhead is not healthy, however
+		// far above the flat floor it sits. The reclaim reads the same two functions,
+		// so the level this refills TO is exactly the level that reclaim will not go
+		// below — the pair cannot oscillate by construction.
+		const perTradeSol = agentPerTradeSol(cachedStrategies(), agentId, cfg.network);
+		const triggerSol = fundTriggerSol({ perTradeSol });
+		const targetSol = fundTargetSol({ perTradeSol });
+		if (balanceSol >= triggerSol) continue; // healthy — nothing to do
 
 		// LOSS GATE — stop refilling a wallet that has bled past its daily loss cap.
 		// This is the fix for the rug-buy + auto-refill loop: a wallet that only
@@ -201,14 +238,14 @@ async function tick(cfg) {
 		}
 
 		// Top up to the target, bounded by the per-transfer, per-agent, and fleet caps.
-		let topUp = TARGET_SOL - balanceSol;
+		let topUp = targetSol - balanceSol;
 		if (PER_TX_CAP_SOL > 0) topUp = Math.min(topUp, PER_TX_CAP_SOL);
 		if (PER_AGENT_DAILY_CAP_SOL > 0) topUp = Math.min(topUp, agentRemaining);
 		if (DAILY_CAP_SOL > 0) topUp = Math.min(topUp, dailyRemaining);
 		topUp = Math.round(topUp * 1e9) / 1e9; // lamport precision
 		if (topUp <= 0) continue;
 
-		log.info('auto-fund low wallet', { agentId, wallet: address, balance_sol: balanceSol, min_sol: MIN_SOL, top_up_sol: topUp });
+		log.info('auto-fund low wallet', { agentId, wallet: address, balance_sol: balanceSol, trigger_sol: triggerSol, target_sol: targetSol, per_trade_sol: perTradeSol, top_up_sol: topUp });
 		screenPush(`Topping up sniper wallet ${address.slice(0, 4)}… +${topUp.toFixed(3)} SOL`, 'activity');
 
 		if (cfg.mode !== 'live') {

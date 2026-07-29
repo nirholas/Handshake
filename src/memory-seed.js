@@ -11,6 +11,8 @@
  */
 
 import { apiFetch } from './api.js';
+import { renderMarkdown } from './shared/markdown.js';
+import { timeAgo } from './shared/coin-format.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
 	({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,31 +22,12 @@ function uuid() {
 		: Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function relTime(ts) {
-	const d = Date.now() - ts;
-	if (d < 60000) return 'just now';
-	if (d < 3600000) return Math.floor(d / 60000) + 'm ago';
-	if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
-	return Math.floor(d / 86400000) + 'd ago';
-}
 
+// Synthesized identity text is model output: render it through the shared
+// sanitized pipeline (marked + DOMPurify) rather than a local regex pass.
+// Headings shift down one level so a `#` sits under the panel's own heading.
 function renderMdBasic(md) {
-	if (!md) return '';
-	return md.split('\n').map(line => {
-		const h = line.match(/^(#{1,3})\s+(.+)/);
-		if (h) return `<h${h[1].length + 1}>${inl(h[2])}</h${h[1].length + 1}>`;
-		const li = line.match(/^[-*]\s+(.+)/);
-		if (li) return `<li>${inl(li[1])}</li>`;
-		if (!line.trim()) return '';
-		return `<p>${inl(line)}</p>`;
-	}).join('\n');
-}
-
-function inl(s) {
-	return esc(s)
-		.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-		.replace(/\*([^*]+)\*/g, '<em>$1</em>')
-		.replace(/`([^`]+)`/g, '<code>$1</code>');
+	return renderMarkdown(md, { demoteHeadings: 1 });
 }
 
 // ── Connector fetching ───────────────────────────────────────────────────────
@@ -450,7 +433,7 @@ export function mountMemoryBrowser(host, opts = {}) {
 				<div class="mmb-content">${esc(m.content)}</div>
 				<div class="mmb-foot">
 					${(m.tags || []).map(t => `<span class="mmb-tag">${esc(t)}</span>`).join('')}
-					<span class="mmb-date">${relTime(m.createdAt || m.created_at || Date.now())}</span>
+					<span class="mmb-date">${timeAgo(m.createdAt || m.created_at || Date.now())}</span>
 					<button class="mmb-del" data-del="${esc(m.id)}">Del</button>
 				</div>
 			</div>

@@ -4,6 +4,7 @@
 
 import { get, put, esc } from '../../api.js';
 import { emptyStateHTML, errorStateHTML, attachRetry, ensureStateKitStyles } from '../../../shared/state-kit.js';
+import { renderMarkdown } from '../../../shared/markdown.js';
 ensureStateKitStyles();
 
 // ── Model registry ─────────────────────────────────────────────────────────────
@@ -135,42 +136,18 @@ async function streamBrain(providerKey, messages, system, { onChunk, onDone, onE
 
 // ── Markdown (lightweight renderer) ─────────────────────────────────────────
 
-function escH(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function inlineMd(s) {
-	s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-	s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-	s = s.replace(/`([^`\n]+)`/g, '<code class="bmd-ic">$1</code>');
-	return s;
-}
+// Model output goes through the shared sanitized pipeline (marked + DOMPurify).
+// The class map keeps this page's existing bmd-* stylesheet contract.
+const MD_CLASSES = {
+	pre: 'bmd-pre',
+	'code:not(pre code)': 'bmd-ic',
+	'h1, h2, h3, h4, h5, h6': 'bmd-h',
+	ul: 'bmd-ul',
+	p: 'bmd-p',
+};
+
 function renderMd(text) {
-	if (!text) return '';
-	const lines = text.split('\n'), out = [];
-	let i = 0;
-	while (i < lines.length) {
-		const line = lines[i];
-		if (line.startsWith('```')) {
-			const codeLines = []; i++;
-			while (i < lines.length && !lines[i].startsWith('```')) { codeLines.push(escH(lines[i])); i++; }
-			i++;
-			out.push(`<pre class="bmd-pre"><code>${codeLines.join('\n')}</code></pre>`);
-			continue;
-		}
-		const hm = line.match(/^(#{1,3})\s+(.+)/);
-		if (hm) { out.push(`<h${hm[1].length} class="bmd-h">${inlineMd(escH(hm[2]))}</h${hm[1].length}>`); i++; continue; }
-		if (/^[-*+]\s/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^[-*+]\s/.test(lines[i])) { items.push(`<li>${inlineMd(escH(lines[i].replace(/^[-*+]\s/,'')))}</li>`); i++; }
-			out.push(`<ul class="bmd-ul">${items.join('')}</ul>`);
-			continue;
-		}
-		if (!line.trim()) { i++; continue; }
-		const pLines = [];
-		while (i < lines.length && lines[i].trim() && !lines[i].startsWith('#') && !lines[i].startsWith('```') && !/^[-*+]\s/.test(lines[i])) {
-			pLines.push(inlineMd(escH(lines[i]))); i++;
-		}
-		if (pLines.length) out.push(`<p class="bmd-p">${pLines.join('<br>')}</p>`);
-	}
-	return out.join('');
+	return renderMarkdown(text, { classes: MD_CLASSES });
 }
 
 // ── Main renderer ─────────────────────────────────────────────────────────────

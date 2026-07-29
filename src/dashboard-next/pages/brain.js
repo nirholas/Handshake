@@ -7,7 +7,7 @@
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, put, esc, ApiError } from '../api.js';
-import { sanitizeUrl } from '../../shared/sanitize-url.js';
+import { renderMarkdown } from '../../shared/markdown.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 
 // ── Provider registry ────────────────────────────────────────────────────
@@ -98,57 +98,19 @@ function toast(msg) {
 
 // ── Markdown ─────────────────────────────────────────────────────────────
 
-function inlineMd(s) {
-	s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-	s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-	s = s.replace(/`([^`\n]+)`/g, '<code class="brn-ic">$1</code>');
-	// sanitizeUrl() only gates the URL *scheme* (blocks javascript:/data:/vbscript:)
-	// — it returns the matched URL verbatim, so it must still be HTML-escaped
-	// before landing inside the href="" attribute, or a quote in the URL body
-	// (e.g. `[x](https://a/" onmouseover="...)`) breaks out and injects an
-	// arbitrary attribute/handler.
-	s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text, url) => `<a href="${esc(sanitizeUrl(url))}" target="_blank" rel="noopener">${text}</a>`);
-	return s;
-}
+// Model output goes through the shared sanitized pipeline (marked + DOMPurify).
+// The class map keeps this page's existing brn-* stylesheet contract.
+const MD_CLASSES = {
+	pre: 'brn-pre',
+	'code:not(pre code)': 'brn-ic',
+	'h1, h2, h3, h4, h5, h6': 'brn-md-h',
+	ul: 'brn-md-ul',
+	ol: 'brn-md-ol',
+	p: 'brn-md-p',
+};
 
 function renderMd(text) {
-	if (!text) return '';
-	const lines = text.split('\n');
-	const out = [];
-	let i = 0;
-	while (i < lines.length) {
-		const line = lines[i];
-		if (line.startsWith('```')) {
-			const code = [];
-			i++;
-			while (i < lines.length && !lines[i].startsWith('```')) { code.push(esc(lines[i])); i++; }
-			i++;
-			out.push(`<pre class="brn-pre"><code>${code.join('\n')}</code></pre>`);
-			continue;
-		}
-		const hm = line.match(/^(#{1,3})\s+(.+)/);
-		if (hm) { out.push(`<h${hm[1].length} class="brn-md-h">${inlineMd(esc(hm[2]))}</h${hm[1].length}>`); i++; continue; }
-		if (/^[-*+]\s/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^[-*+]\s/.test(lines[i])) { items.push(`<li>${inlineMd(esc(lines[i].replace(/^[-*+]\s/, '')))}</li>`); i++; }
-			out.push(`<ul class="brn-md-ul">${items.join('')}</ul>`);
-			continue;
-		}
-		if (/^\d+\.\s/.test(line)) {
-			const items = [];
-			while (i < lines.length && /^\d+\.\s/.test(lines[i])) { items.push(`<li>${inlineMd(esc(lines[i].replace(/^\d+\.\s/, '')))}</li>`); i++; }
-			out.push(`<ol class="brn-md-ol">${items.join('')}</ol>`);
-			continue;
-		}
-		if (!line.trim()) { i++; continue; }
-		const pLines = [];
-		while (i < lines.length && lines[i].trim() && !lines[i].startsWith('#') && !lines[i].startsWith('```') && !/^[-*+]\s/.test(lines[i]) && !/^\d+\.\s/.test(lines[i])) {
-			pLines.push(inlineMd(esc(lines[i])));
-			i++;
-		}
-		if (pLines.length) out.push(`<p class="brn-md-p">${pLines.join('<br>')}</p>`);
-	}
-	return out.join('');
+	return renderMarkdown(text, { classes: MD_CLASSES });
 }
 
 // ── Persistence ──────────────────────────────────────────────────────────

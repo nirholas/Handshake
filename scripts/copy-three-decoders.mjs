@@ -34,23 +34,31 @@ if (!existsSync(src)) {
 // Keep the upstream layout (decoder + decoder/gltf) — DRACOLoader resolves
 // the gltf-flavoured decoder relative to setDecoderPath().
 //
-// Two destinations, both gitignored and regenerated here so the ~3.3 MB of
-// binaries lives in the tree exactly once (in node_modules):
-//   • /public/three/draco       — the main app (viewer, /club, forge-export)
-//   • /public/scene-studio/draco — the Scene Studio subapp, whose loaders
-//     (src/scene-studio/*, pages/scene.html) hardcode the /scene-studio/draco/
-//     path. Serving them the same upstream binaries keeps the two in lockstep.
+// ONE destination. /public/three/draco serves every consumer: the main app
+// (viewer, /club, forge-export) and the Scene Studio subapp, whose loaders
+// (src/scene-studio/loader.js, src/scene-studio/vendor/js/Loader.js,
+// pages/scene.html) point their setDecoderPath() at /three/draco/ too. Scene
+// Studio used to get a byte-identical second copy at /public/scene-studio/draco
+// — same source, same script, 3.3 MB of duplicate binaries in every deployed
+// image for no benefit. Same-origin absolute paths make the shared copy work
+// everywhere, so the duplicate is gone; the stale directory is removed below so
+// an existing checkout doesn't keep serving an orphan.
 const dracoSrc = join(src, 'draco');
-const dracoDests = [join(out, 'draco'), join(repo, 'public/scene-studio/draco')];
+const dracoOut = join(out, 'draco');
 if (existsSync(dracoSrc)) {
-	for (const dracoOut of dracoDests) {
-		mkdirSync(dirname(dracoOut), { recursive: true });
-		rmDir(dracoOut);
-		cpSync(dracoSrc, dracoOut, { recursive: true });
-		console.log(`[copy-three-decoders] draco/ → ${dracoOut.replace(repo + '/', '')}`);
-	}
+	mkdirSync(dirname(dracoOut), { recursive: true });
+	rmDir(dracoOut);
+	cpSync(dracoSrc, dracoOut, { recursive: true });
+	console.log(`[copy-three-decoders] draco/ → ${dracoOut.replace(repo + '/', '')}`);
 } else {
 	console.warn(`[copy-three-decoders] ${dracoSrc} not found`);
+}
+
+// Retired duplicate — drop it from checkouts that still carry it.
+const legacyDraco = join(repo, 'public/scene-studio/draco');
+if (existsSync(legacyDraco)) {
+	rmDir(legacyDraco);
+	console.log('[copy-three-decoders] removed stale public/scene-studio/draco (now served from /three/draco)');
 }
 
 // Copy basis/ (basis_transcoder.js + .wasm for KTX2).

@@ -1,9 +1,12 @@
-// three.ws native launchpad dispatcher — the self-hosted launch lane on
+// three.ws native launch lane dispatcher — the self-hosted coin launchpad on
 // Meteora's Dynamic Bonding Curve (DBC), alongside the pump.fun lane in
 // api/pump/[action].js. Same custody model: the server builds unsigned
 // transactions, the user's wallet (plus the mint keypair) signs client-side,
 // and a confirm step verifies the landed transaction on-chain before
 // recording the launch.
+//
+// Namespaced /api/native-launch/* (NOT /api/launchpad/*, which is the
+// unrelated Launchpad Studio page builder).
 //
 // Action map:
 //   config          -> handleConfig        (public: lane economics + config key)
@@ -255,8 +258,8 @@ async function handleLaunchPrep(req, res) {
 		network: body.network,
 		expires_at: expiresAt.toISOString(),
 		instructions: mintKeypair
-			? 'Decode tx_base64 as VersionedTransaction. Sign with the mint keypair (mint_secret_key_b64) AND the user wallet, submit, then POST /api/launchpad/launch-confirm with the tx_signature.'
-			: 'Decode tx_base64 as VersionedTransaction. Sign with your locally-held vanity mint keypair AND the user wallet, submit, then POST /api/launchpad/launch-confirm with the tx_signature.',
+			? 'Decode tx_base64 as VersionedTransaction. Sign with the mint keypair (mint_secret_key_b64) AND the user wallet, submit, then POST /api/native-launch/launch-confirm with the tx_signature.'
+			: 'Decode tx_base64 as VersionedTransaction. Sign with your locally-held vanity mint keypair AND the user wallet, submit, then POST /api/native-launch/launch-confirm with the tx_signature.',
 	});
 }
 

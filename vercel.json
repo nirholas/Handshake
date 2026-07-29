@@ -4264,6 +4264,10 @@
 			"dest": "/api/erc8004/[action]?action=validation"
 		},
 		{
+			"src": "/api/erc8004/metadata",
+			"dest": "/api/erc8004/[action]?action=metadata"
+		},
+		{
 			"src": "/api/subscriptions/plans(/.*)?",
 			"dest": "/api/subscriptions/plans.js"
 		},
