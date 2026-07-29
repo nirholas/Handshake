@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseGlbJsonChunk, scoreRig } from '../scripts/audit-rig-coverage.mjs';
+import { parseGlbJsonChunk, glbJsonChunkEnd, scoreRig } from '../scripts/audit-rig-coverage.mjs';
 
 const GLB_MAGIC = 0x46546c67;
 const CHUNK_TYPE_JSON = 0x4e4f534a;
@@ -70,8 +70,35 @@ describe('parseGlbJsonChunk', () => {
 	it('refuses a JSON chunk that runs past the fetched slice', () => {
 		// The whole point of the Range request is that we may not have the full
 		// chunk. Reporting a truncated skeleton would understate rig coverage, so
-		// a short read must be null (counted as an error) rather than parsed.
+		// a short read must be null rather than parsed.
 		expect(parseGlbJsonChunk(buildHead(rigJson(FULL_RIG), { truncate: 40 }))).toBeNull();
+	});
+});
+
+describe('glbJsonChunkEnd', () => {
+	it('reports the exact byte count needed for the JSON chunk', () => {
+		const head = buildHead(rigJson(FULL_RIG));
+		const end = glbJsonChunkEnd(head);
+		expect(end).toBe(head.byteLength);
+		expect(parseGlbJsonChunk(head.slice(0, end))).not.toBeNull();
+	});
+
+	it('still reports the needed length from a SHORT read, so it can be re-requested', () => {
+		// This is the whole point: a heavily-authored rig can declare a
+		// multi-megabyte JSON chunk. Treating that short read as a dead error
+		// silently drops the most complex skeletons from the audit — exactly the
+		// ones it exists to measure. The header alone must yield the real length.
+		const full = buildHead(rigJson(FULL_RIG));
+		const truncated = full.slice(0, 128);
+		expect(parseGlbJsonChunk(truncated)).toBeNull();
+		expect(glbJsonChunkEnd(truncated)).toBe(full.byteLength);
+	});
+
+	it('returns null for anything that is not a GLB v2 JSON chunk', () => {
+		expect(glbJsonChunkEnd(null)).toBeNull();
+		expect(glbJsonChunkEnd(new ArrayBuffer(8))).toBeNull();
+		expect(glbJsonChunkEnd(buildHead(rigJson(['Hips']), { magic: 0xdeadbeef }))).toBeNull();
+		expect(glbJsonChunkEnd(buildHead(rigJson(['Hips']), { version: 1 }))).toBeNull();
 	});
 });
 
