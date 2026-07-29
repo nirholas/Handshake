@@ -609,6 +609,20 @@ POST /api/llm/anthropic?agent=<agent_id>
 
 Older single-provider proxy. Request/response shape matches the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages) exactly. New integrations should use `/api/brain/chat` instead — it supports more providers and emits richer events.
 
+**Request normalisation.** Model generations disagree about which request fields they accept, and sending the wrong one returns a hard `400` from the upstream. Rather than surface that to an embed, the proxy adapts the body to the model it is about to call:
+
+| Field you send | What happens |
+|---|---|
+| `temperature` | Dropped for Opus 4.7 and the Claude 5 family, which reject sampling parameters. Passed through unchanged for every other model. |
+| `thinking: {type:"enabled", budget_tokens:N}` | Rewritten to `{type:"adaptive"}` — the token-budget form was removed in the current generation. |
+| `thinking: {type:"disabled"}` | Dropped for Fable/Mythos 5, where thinking is always on and an explicit config is rejected. |
+| `max_tokens` below 4096 | Raised to 4096 on models that think by default. Their `max_tokens` covers reasoning *and* visible text, so a tight cap can be spent entirely on reasoning and return an empty reply. A budget already above the floor is never lowered. |
+| `system` (long, plain string) | Given a prompt-cache breakpoint, so repeat turns re-read the prefix at roughly a tenth of the input price. The length required to qualify differs per model; below it the prompt is sent unchanged. Pass `system` as a block array yourself to control placement, and the proxy leaves it alone. |
+
+Your original body is never mutated, and none of this changes the response shape.
+
+**Usage accounting.** When a response is served from the prompt cache, Anthropic reports `usage.input_tokens` as the *uncached remainder only*, with the rest split across `cache_read_input_tokens` and `cache_creation_input_tokens`. The `input_tokens` figure recorded against your agent's monthly budget is the sum of all three, so a cached turn still counts the full prompt it sent.
+
 ---
 
 ## TTS API
@@ -1563,6 +1577,28 @@ exhausted, or immediately if the request carries an `X-PAYMENT` header. Marked
 `free_remaining_today` is present only on `lane: "free"` responses. A repeated
 identical `{ claim, strictness, imageUrl }` within 7 days replays the cached
 verdict on either lane (adds `cachedAt`) rather than re-running the chain.
+
+**`degraded` — when the check ran on less than the full chain.** Every live
+check has a wall-clock budget (45s by default, `FACT_CHECK_BUDGET_MS`) and each
+stage gets what is left of it. If query generation or stance extraction cannot
+reach a language-model provider inside that budget, the stage falls back rather
+than failing the request: query generation searches the claim text itself, and
+stance extraction marks every source `neutral`, which scores as `insufficient`.
+You still get the real sources and their excerpts. When that happens the
+response carries a `degraded` array naming each stage that fell back:
+
+```json
+{
+	"verdict": "insufficient",
+	"confidence": 0.3,
+	"sources": [ "…real sources, real excerpts…" ],
+	"degraded": ["stance extraction unavailable: all providers exhausted"]
+}
+```
+
+Treat `degraded` as "re-run this later", not as a judgement about the claim: a
+degraded result is deliberately **not** written to the 7-day cache, so the next
+request re-runs the full chain. Absence of the field means the full chain ran.
 
 **Example**
 

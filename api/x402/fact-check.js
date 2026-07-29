@@ -339,6 +339,11 @@ async function runFactCheck(claim, strictness, imageUrl = null) {
 			.digest('hex');
 
 	const result = { verdict, confidence, claim, strictness, sources, costBreakdown, attestation };
+	// A degraded check still returns real sources, but it did not get the full
+	// chain — say so on the response rather than letting an `insufficient`
+	// verdict read as "we checked and the evidence was thin". checkClaim() also
+	// reads this to keep the result out of the 7-day cache.
+	if (degradations.length) result.degraded = degradations;
 	// Surface the image analysis separately so a caller sees what the vision lane
 	// read from the attachment (description, transcribed text, stance) without
 	// digging it out of the weighted source list.
@@ -365,7 +370,12 @@ async function checkClaim(claim, strictness, imageUrl) {
 		return { ...cached, cachedAt: cached.cachedAt || new Date().toISOString() };
 	}
 	const result = await runFactCheck(claim, strictness, imageUrl);
-	await redisSet(key, result, CACHE_TTL_SECONDS);
+	// Never cache a degraded check. It is a snapshot of a provider outage, not of
+	// the claim: caching it would pin an `insufficient` verdict on a perfectly
+	// checkable claim for seven days and serve that to every later caller,
+	// including the paid lane. Skipping the write costs one re-run and keeps the
+	// cache holding only full-chain answers.
+	if (!result.degraded) await redisSet(key, result, CACHE_TTL_SECONDS);
 	return result;
 }
 
