@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T05:15:33.946Z",
+	"generated_at": "2026-07-29T05:19:39.720Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -112,6 +112,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Payments that had already gone through no longer come back as failures",
+			"summary": "When an agent pays three.ws for an API call, the payment is sent to Solana and then confirmed. If the node that answered replied in a shape our software could not read, the platform gave up and called the payment failed, even though in many cases it had already settled on-chain. The caller got an error for something they had genuinely paid for. The platform now asks the chain directly before declaring any payment failed, and skips that check only in the one case that proves the payment never reached the network at all. Separately, the most common payment failure used to reach our logs carrying no reason whatsoever, which made it impossible to diagnose or fix; the underlying cause is now recorded alongside it.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

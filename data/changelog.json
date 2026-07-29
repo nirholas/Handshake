@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-29",
+			"title": "Payments that had already gone through no longer come back as failures",
+			"summary": "When an agent pays three.ws for an API call, the payment is sent to Solana and then confirmed. If the node that answered replied in a shape our software could not read, the platform gave up and called the payment failed, even though in many cases it had already settled on-chain. The caller got an error for something they had genuinely paid for. The platform now asks the chain directly before declaring any payment failed, and skips that check only in the one case that proves the payment never reached the network at all. Separately, the most common payment failure used to reach our logs carrying no reason whatsoever, which made it impossible to diagnose or fix; the underlying cause is now recorded alongside it.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-29",
 			"title": "Uploaded avatars from far more 3D tools now animate instead of standing frozen",
 			"summary": "three.ws recognises an avatar's skeleton by its bone names, and every 3D tool names bones differently. When a name was not recognised the avatar still uploaded and still looked right, but it stood frozen in a T-pose, or walked while its legs stayed rigid. Rather than keep guessing which tools to support, we measured: a new audit reads the skeleton of avatars actually stored on the platform and reports exactly which ones fail and which bone names caused it. That turned up several whole families of rigs that were silently broken, and all of them now work: characters from Maya's Advanced Skeleton, Sketchfab exports, research and motion-capture tools that use the SMPL convention, Roblox and Second Life avatars, VRM converter output, and Blender rigs whose legs and finger joints were being dropped. In the lanes where people upload their own characters, the share that animate with a complete walk went from about 93% to over 98%. A small number of Blender rigs built on constraint systems still cannot be driven this way, because the constraints are discarded when the file is exported and forcing it would pull the limbs apart; those fall back to a working skeleton rather than breaking, and can be re-rigged automatically instead.",
 			"tags": [

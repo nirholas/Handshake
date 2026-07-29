@@ -87,6 +87,14 @@
 			<description>Before any automated buy, the platform simulates a full buy-then-sell round trip on-chain to prove the coin can actually be sold again, and blocks anything that cannot be exited. That simulation runs from the buying agent's own wallet, so when the wallet was too small to fund the simulated purchase, the failure was being read as evidence that the coin was a trap. One underfunded agent produced 336 consecutive false honeypot verdicts in a single afternoon on perfectly normal launches. The safety probe now scales down to a size the wallet can actually simulate, since a real honeypot traps a seller at any size, and an out-of-funds failure is now reported as exactly that. Coins that genuinely cannot be sold are still blocked, and a wallet too empty to prove anything is still refused rather than waved through.</description>
 		</item>
 		<item>
+			<title>Payments that had already gone through no longer come back as failures</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-29:Payments that had already gone through no longer come back as failures</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When an agent pays three.ws for an API call, the payment is sent to Solana and then confirmed. If the node that answered replied in a shape our software could not read, the platform gave up and called the payment failed, even though in many cases it had already settled on-chain. The caller got an error for something they had genuinely paid for. The platform now asks the chain directly before declaring any payment failed, and skips that check only in the one case that proves the payment never reached the network at all. Separately, the most common payment failure used to reach our logs carrying no reason whatsoever, which made it impossible to diagnose or fix; the underlying cause is now recorded alongside it.</description>
+		</item>
+		<item>
 			<title>Platform payment wallets now refill straight from the treasury when they run dry</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-29:Platform payment wallets now refill straight from the treasury when they run dry</guid>
