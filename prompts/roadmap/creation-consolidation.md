@@ -1,6 +1,6 @@
 # Creation Surface Consolidation — Audit & Plan
 
-**Status:** Phase 1 (additive hub) shipped 2026-07-08. Phase 2 executed 2026-07-16 for everything that survived re-verification against the live tree; several table rows turned out stale or unsafe (see the 07-16 note). Phase 3 (§3.3 pipeline handoffs) executed 2026-07-16 (see the Phase 3 note).
+**Status:** Phase 1 (additive hub) shipped 2026-07-08. Phase 2 executed 2026-07-16 for everything that survived re-verification against the live tree; several table rows turned out stale or unsafe (see the 07-16 note). Phase 3 (§3.3 pipeline handoffs) executed 2026-07-16 (see the Phase 3 note). Phase 2 closed out 2026-07-29: the `/agent/new` and `/scan` 301s and the standalone `/avatar-edit` retirement shipped; the `/embed` -> `/studio` and `/avatar-edit` -> Avatar Studio redirects are recorded as deliberate no-ships with their blockers (see the 07-29 note).
 **Audited:** 2026-06-12
 
 ---
@@ -65,6 +65,109 @@ Phase 3 wires the completion-state handoffs from §3.3 that were still missing, 
 - **Row 5 (avatar detail -> edit):** `avatar-page.js` already offers an owner "Edit avatar" button to `/create/studio?edit=ID` (Avatar Studio's edit mode), plus Voice Lab and "Open in Studio" CTAs.
 
 **Still open:** the same route-level items listed in the Phase 2 note (the `/agent/new` 301, the C1 single-URL merge, `/avatar-edit` retirement, and the `/embed` -> `/studio` merge) all remain owner/parity-gated and were not touched.
+
+## Progress note: 2026-07-29 (Phase 2 close-out pass)
+
+Picks up the four items the 07-16 pass left open. Three of the four shipped; the fourth is
+recorded below as a deliberate no-ship with the reason and the remaining work, because the
+redirect it calls for would have removed working functionality.
+
+The redirect mechanics matter here, so they are written down once: `server/index.mjs` matches
+`vercel.json` `routes` against the **pathname only** and emits `Location` verbatim, so a
+status-only route **drops the query string**. Any retired route that carries meaningful params
+therefore uses a `has`-gated rewrite for the param-carrying form and the 301 only for the bare
+form. That pattern is used twice below.
+
+**Executed:**
+
+- **C2 — `/agent/new` -> `/create-agent` (301), shipped.** The 07-16 blocker was real: `/agent/new`
+  serves `pages/agent-edit.html`, which POSTs a draft agent on page load, and it was the target of
+  the avatar handoff (`?avatar_id=&avatar_glb=&avatar_name=`). Both are now resolved.
+  `src/create-agent.js` gained `applyAvatarHandoff()`: it reads those three params, seeds
+  `state.model` in `library` mode (or `starter` mode when only a GLB URL arrives, which imports the
+  model at ship time), opens the matching pane, prefills the name as `"<avatar> Agent"`, and
+  `history.replaceState`s the URL back to `/create-agent`. Note this is strictly more than
+  `/agent/new` ever did: `agent-edit.js` read `avatar_glb` but never used it. The two producers now
+  link the canonical wizard directly (`startAgentFromAvatar()` in `src/marketplace.js`, the
+  "Turn this into an agent" button in `pages/create-selfie.html`). `vercel.json` keeps
+  `/agent/new` alive for old links: two `has`-gated rewrites (`avatar_id`, `avatar_glb`) serve
+  `create-agent.html` with the params intact, and the bare path 301s. `/agent/:id/edit` is
+  untouched: `agent-edit.html` is still the editor for an existing agent, it is only the
+  create-a-blank-agent entry that is retired. `data/pages.json` entry removed.
+
+- **C1 — `/scan` merged into `/create/selfie` (301), shipped.** Re-inspection overturned the 07-16
+  "two distinct input methods" reading. `pages/scan.html` had already been reduced to a stub that
+  `location.replace()`d to `/create/selfie` on load, and `/create/selfie` owns *both* inputs: the
+  "Use camera" button opens the live camera, "Upload" takes a file. So there was no capability left
+  to port and no second implementation to choose between: §5.1's open decision resolves to
+  `/create/selfie` by what the code already does. `/scan` now 301s server-side (no more
+  render-then-bounce), `pages/scan.html` and its Vite entry are deleted, and the entry is gone from
+  `data/pages.json`. Inbound links repointed: `pages/features/scan.html` (both CTAs),
+  `pages/what-is.html`, and the `/studio` empty state. The now-circular "Prefer to use your camera
+  live? The 3D Scanner…" cross-link on `/create/selfie` is replaced by copy pointing at the
+  page's own camera button (under a new i18n key, so stale translations fall back to English
+  instead of rendering a self-link). `/features/scan` stays as the marketing page.
+
+- **C4 — the standalone `/avatar-edit` landing retired, shipped (partial).** §2 C4 asks for two
+  things: kill the standalone URL, and make Avatar Studio the editor. The first shipped: the bare
+  `/avatar-edit` path (which rendered an error, since it has no avatar to edit) now 301s to
+  `/avatars`, while a `has`-gated rewrite keeps the legacy `?id=` form rendering, and
+  `src/avatar-edit.js` rewrites that URL in place to the canonical `/avatars/:id/edit` with
+  `replaceState` (no reload, so the `?equip-*` gallery handoff survives). The last producer of the
+  query form, `src/a-me.js`, now links the canonical path; every other caller already did.
+  The second half did **not** ship, deliberately: see below.
+
+- **C6 — `/embed` parity work in `/studio`, shipped; the 301 did not.** Four options the
+  `/walk-embed` runtime has always honoured were unreachable from Widget Studio, so any
+  Studio-built avatar snippet silently shipped the defaults. `public/studio/studio.js` now exposes
+  them on the `walking-avatar` type: **ground** disc/shadow (`?ground=false`), visitor
+  **gesture** buttons (`?gestures=true`), the attribution **badge** (`?badge=false`), and a
+  **responsive** snippet that emits an `aspect-ratio` wrapper instead of fixed pixels. Defaults
+  mirror `src/walk-embed.js`, and only non-default values are written into the URL. The two
+  surfaces now cross-link and each states what it is for.
+
+**Deliberately NOT shipped, with the reason:**
+
+- **The `/embed` -> `/studio` 301.** After the parity work above, `/studio` still cannot do
+  `/embed`'s job, and the gaps are structural rather than missing checkboxes:
+  1. **No-account snippet generation.** `/embed` is fully client-side: configure, copy, leave.
+     `/studio` must persist a widget row before `openEmbedModal` can emit anything, so the redirect
+     would put a sign-in wall in front of a flow that has none today.
+  2. **Chat mode.** `/embed`'s `chat` mode emits `<iframe src="/a/<agentId>?embed=1">`. Studio's
+     `talking-agent` is a different runtime (`/widget#widget=<id>&kiosk=true`) and cannot produce
+     that URL. `src/dashboard-next/pages/agents.js` links `/embed?avatar=…&mode=chat` today.
+  3. **Deep-linkable config.** `/embed` reflects every control into `location.search` and rehydrates
+     from it, so a configured editor URL is itself a shareable artifact. `/studio` reads only
+     `edit`/`template`/`type`/`model`/`avatar`. A query-dropping 301 (see the mechanics note above)
+     would break every saved `/embed?…` URL, and a `has`-gated rewrite cannot translate the params
+     because Studio does not read them.
+  4. **Raw GLB/VRM URL as the avatar**, and the **platform paste instructions**
+     (HTML / React / WordPress / Webflow / Shopify), have no Studio equivalent.
+  Also mechanical: `walk-sdk/src/config.js` suppresses the corner companion on paths prefixed
+  `/embed`; moving the editor under `/studio` needs that list updated in the same change.
+  The honest state is that these are two products sharing a category, not a duplicate: a fast
+  stateless snippet maker and a saved, brandable widget builder. Closing 1-3 means building a
+  guest mode, a chat widget type, and a config-URL layer inside `/studio` (a project, not a
+  redirect). Until then the two are cross-linked and the 301 stays unshipped.
+
+- **`/avatar-edit` -> Avatar Studio edit mode.** The redirect in the §4 table is still unsafe, and
+  the 07-16 note understated why: Avatar Studio's edit mode is not merely missing features, it
+  **loses data**. `collapseAppearance`/`hydrateAppearance` in `src/avatar-studio-utils.js` know only
+  `accessories/morphs/colors/hidden`, so opening a garment-wearing avatar in
+  `/create/studio?edit=ID` and saving drops `appearance.garments` and `appearance.outfit`; and its
+  save is a client-side `GLTFExporter` re-export of `base_model_url` that overwrites the canonical
+  GLB, where `avatar-edit` PATCHes appearance only and lets the server bake rebuild the dressed
+  model. On top of that, Studio has no wardrobe/closet (8 garment slots with occlusion masking), no
+  auto-rig tab, no walk preview or "Play as this" handoff, no `?equip-*` support, and its
+  recolour/hide targets are hardcoded Wolf3D material names where `src/avatar-wardrobe.js` resolves
+  layers on arbitrary GLBs. Redirecting now would silently undress people's avatars. **Prerequisite
+  for the merge:** appearance round-trip fidelity (garments + outfit) and non-destructive save in
+  `src/avatar-studio.js` first; then the wardrobe/closet, rig, and walk panels; then the redirect.
+
+**Phase 2 status after this pass:** steps 4 (C2), 5 (C1), 6 (C3), 8 (C5) and 10 are complete.
+Step 7 (C4) is half complete: the standalone route is retired, the editor merge is blocked on the
+data-loss prerequisites above. Step 9 (C6) has its parity work done and its redirect deliberately
+unshipped. The remaining `/start` question in §5.2 was not in scope for this pass.
 
 ---
 

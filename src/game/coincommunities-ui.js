@@ -174,12 +174,12 @@ export class CommunityUI {
 		// Bring-your-own avatar: drop a .glb on the bar or pick one. It's validated,
 		// uploaded to storage, then broadcast by its public URL so peers see it too.
 		this.uploadFile = el('input', {
-			type: 'file', accept: '.glb,model/gltf-binary', class: 'cc-upload-file',
+			type: 'file', accept: '.glb,.vrm,model/gltf-binary', class: 'cc-upload-file',
 			onchange: (e) => { const f = e.target.files?.[0]; if (f) this._handleGlbFile(f); e.target.value = ''; },
 		});
-		this.uploadBtn = el('label', { class: 'cc-upload-btn', title: 'Upload a .glb avatar from your device' }, [
+		this.uploadBtn = el('label', { class: 'cc-upload-btn', title: 'Upload a .glb or .vrm avatar from your device' }, [
 			el('span', { class: 'cc-upload-ico', text: '⬆' }),
-			el('span', { class: 'cc-upload-text', text: 'Upload .glb' }),
+			el('span', { class: 'cc-upload-text', text: 'Upload model' }),
 			this.uploadFile,
 		]);
 
@@ -235,12 +235,12 @@ export class CommunityUI {
 						el('label', { class: 'cc-name-label', for: 'cc-name-input', text: 'Your name' }),
 						this.nameInput,
 					]),
-					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Create your own, pick a preset, browse the gallery, paste a URL, or drop your own .glb</small>' }),
+					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Create your own, pick a preset, browse the gallery, paste a URL, or drop your own .glb / .vrm</small>' }),
 					this.createBtn,
 					this.presetRow,
 					el('div', { class: 'cc-avatar-custom' }, [this.customInput, this.galleryBtn, this.uploadBtn]),
 						this.uploadStatus,
-						el('div', { class: 'cc-avatar-dropmsg', text: 'Drop .glb to use as your avatar' }),
+						el('div', { class: 'cc-avatar-dropmsg', text: 'Drop a .glb or .vrm to use as your avatar' }),
 				]),
 				el('p', { class: 'cc-section-title', text: 'Live communities' }),
 				this.grid,
@@ -438,7 +438,7 @@ export class CommunityUI {
 			stop(e);
 			bar.classList.remove('cc-drag');
 			const files = [...(e.dataTransfer?.files || [])];
-			const glb = files.find((f) => f.name.toLowerCase().endsWith('.glb')) || files[0];
+			const glb = files.find((f) => /\.(glb|vrm)$/i.test(f.name)) || files[0];
 			if (glb) this._handleGlbFile(glb);
 		});
 	}
@@ -539,7 +539,7 @@ export class CommunityUI {
 
 		const cards = el('div', { class: 'cc-create-methods' }, [
 			card('✦', 'Design your avatar', 'Build a 3D character from scratch or from a selfie, then drop straight into the world. No sign-in needed.', 'Recommended', () => this._launchEditor()),
-			card('⬆', 'Upload a .glb', 'Already have a model from Blender, Mixamo, VRoid, or any avatar tool? Bring it in.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
+			card('⬆', 'Upload a model', 'Already have a .glb or .vrm from Blender, Mixamo, VRoid, or any avatar tool? Bring it in.', '', () => { this._closeCreate(); this.uploadFile.click(); }),
 			card('✨', 'Advanced studio', 'Sculpt face & body, layer outfits and accessories, and save it to your three.ws account.', 'Opens in a new tab', () => { window.open('/create/studio', '_blank', 'noopener'); this._closeCreate(); }),
 		]);
 
@@ -1677,9 +1677,25 @@ export class CommunityUI {
 			onclick: () => this.h.onRotateProp?.(),
 		}, [el('span', { 'aria-hidden': 'true', text: '⟳' })]);
 
+		// P3.3 — bring your own prop. Same drop-a-model gesture as the lobby's avatar
+		// upload, pointed at the build palette: validated here, uploaded to storage,
+		// then armed as the active prop so the very next click places it.
+		this.propUploadFile = el('input', {
+			type: 'file', accept: '.glb,.vrm,model/gltf-binary', class: 'cc-upload-file',
+			onchange: (e) => { const f = e.target.files?.[0]; if (f) this.h.onUploadProp?.(f); e.target.value = ''; },
+		});
+		this.propUploadBtn = el('label', {
+			class: 'cc-prop-upload', title: 'Upload your own .glb or .vrm model to place in this world',
+		}, [
+			el('span', { 'aria-hidden': 'true', text: '⬆' }),
+			el('span', { class: 'cc-prop-upload-text', text: 'Upload' }),
+			this.propUploadFile,
+		]);
+
 		const head = el('div', { class: 'cc-prop-head' }, [
 			el('span', { class: 'cc-prop-title', text: 'Props' }),
 			this.propSearch,
+			this.propUploadBtn,
 			this.propRotateBtn,
 		]);
 
@@ -1805,6 +1821,37 @@ export class CommunityUI {
 		btn.classList.add('cc-prop-gallery');
 		this.propRow.insertBefore(btn, this._galleryMore);
 		this._galleryDivider.hidden = false;
+	}
+
+	// ---- player-uploaded props (P3.3) ---------------------------------------------
+	/**
+	 * Add an uploaded model to the palette as a first-class prop button and select
+	 * it, so the next click in the world places it. Idempotent per model id — a
+	 * re-upload of the same file re-selects the existing button instead of stacking
+	 * duplicates.
+	 * @param {{id:string,name?:string,thumbnail?:string}} def
+	 */
+	addUploadedProp(def) {
+		if (!def?.id) return;
+		if (!this._propBtns.has(def.id)) {
+			const btn = this._propButton({ id: def.id, name: def.name || 'Your model', icon: '📤', thumbnail: def.thumbnail });
+			btn.classList.add('cc-prop-upload-item');
+			// Uploads sit with the hand-authored props, ahead of the gallery rule, so
+			// the thing you just added is where you expect it: at the end of "yours".
+			this.propRow.insertBefore(btn, this._galleryDivider);
+		}
+		this.setPropSelected(def.id);
+	}
+
+	/**
+	 * One-line status for the prop upload (validating / progress / error), rendered
+	 * in the same strip as the gallery status so the palette has one message area.
+	 * @param {string} msg
+	 * @param {boolean} [isError]
+	 */
+	setPropUploadStatus(msg, isError = false) {
+		this._setGalleryStatus(msg, false);
+		this._galleryStatus?.classList.toggle('cc-err', !!isError);
 	}
 
 	// Render a one-line gallery status (loading / empty / error). The error variant is

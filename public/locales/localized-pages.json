@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 347,
+	"count": 346,
 	"paths": [
 		"/",
 		"/3d",
@@ -292,7 +292,6 @@
 		"/register",
 		"/reputation",
 		"/restyle",
-		"/scan",
 		"/scene",
 		"/screener",
 		"/search",

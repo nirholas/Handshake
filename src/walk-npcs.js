@@ -21,11 +21,12 @@
 // GLB, mixer, material, and DOM node an NPC creates is released on despawn so
 // swapping worlds never leaks geometry or audio.
 
-import { Box3, Group, Vector3 } from 'three';
+import { Box3, Group, Quaternion, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { AnimationManager } from './animation-manager.js';
+import { LookAtController } from './procedural/look-at.js';
 import { log } from './shared/log.js';
 
 // ── Clip names (must exist in /animations/clips + the manifest) ────────────
@@ -42,6 +43,16 @@ const NPC_TURN_LERP = 0.14; // facing smoothing toward heading
 const GREET_RANGE = 4.0; // m — player enters → greeter waves + speaks
 const GREET_RELEASE = 6.0; // m — hysteresis so the greeting doesn't retrigger on the edge
 const GREET_COOLDOWN = 9.0; // s — minimum gap between a greeter's greetings
+
+// m — an NPC turns its head toward the player inside this radius. Deliberately
+// wider than GREET_RANGE: noticing someone is what a person does long before
+// they greet them, and it is the cheapest signal that the world is inhabited
+// rather than populated by props on rails. The gaze layer clamps and fades
+// itself, so a player behind an NPC releases the head rather than pinning it.
+const GAZE_RANGE = 14.0;
+// m — approximate eye height above the player rig's feet, so NPCs meet the
+// player's gaze instead of staring at their shoes.
+const PLAYER_EYE_HEIGHT = 1.5;
 const WANDER_PAUSE = [1.8, 4.5]; // s — idle dwell range between wander legs
 const WANDER_RADIUS = 8.5; // m — keep wander waypoints inside the walkable disc
 const ARRIVE_DIST = 0.55; // m — "reached the waypoint" threshold
@@ -136,6 +147,8 @@ class NPC {
 		deps.scene.add(this.rig);
 
 		this._body = null; // cloned skinned scene
+		this._gaze = null; // LookAtController, or null when the rig has no head chain
+		this._gazeTarget = new Vector3(); // scratch for the player's eye position
 		this._anim = new AnimationManager();
 		this._ready = false;
 		this._disposed = false;
@@ -204,6 +217,13 @@ class NPC {
 		this._anim.setAnimationDefs(this.deps.animationDefs);
 		this._supportsClips = this._anim.supportsCanonicalClips();
 
+		// Head tracking (src/procedural/look-at.js): NPCs notice the player and
+		// follow them with their eyes, on top of whatever clip is playing — so a
+		// wanderer can glance over without breaking stride. Null on a rig with no
+		// mappable head, which makes the per-frame call below a no-op.
+		const gaze = new LookAtController(body);
+		this._gaze = gaze.enabled ? gaze : null;
+
 		try {
 			await this._anim.loadAll();
 			if (this._disposed) return;
@@ -218,6 +238,26 @@ class NPC {
 		else this._enterStation();
 
 		this._ready = true;
+	}
+
+	/**
+	 * Track the player with the head/neck/chest chain while they are close
+	 * enough to notice. Runs after `_anim.update()` (the mixer tick) as every
+	 * procedural layer must, so the gaze layers over the current clip instead of
+	 * being overwritten by it.
+	 * @param {number} dt seconds
+	 * @param {Vector3} playerPos player rig position (at their feet)
+	 * @param {number} dist metres from this NPC to the player
+	 */
+	_updateGaze(dt, playerPos, dist) {
+		if (!this._gaze) return;
+		if (dist <= GAZE_RANGE) {
+			this._gazeTarget.set(playerPos.x, playerPos.y + PLAYER_EYE_HEIGHT, playerPos.z);
+			this._gaze.setTarget(this._gazeTarget);
+		} else {
+			this._gaze.setTarget(null);
+		}
+		this._gaze.update(dt);
 	}
 
 	// ── State entries ────────────────────────────────────────────────────────
@@ -291,6 +331,7 @@ class NPC {
 
 		const playerPos = ctx.playerPos;
 		const distToPlayer = this.rig.position.distanceTo(playerPos);
+		this._updateGaze(dt, playerPos, distToPlayer);
 
 		switch (this.type) {
 			case 'greeter':
@@ -666,6 +707,9 @@ class NPC {
 		} catch (e) {
 			log.warn('[walk-npcs] anim dispose failed:', e);
 		}
+		// Drop the gaze layer before the body: it holds bone references into the
+		// scene graph we are about to dispose.
+		this._gaze = null;
 		if (this._body) {
 			disposeObject3D(this._body);
 			this.rig.remove(this._body);
@@ -827,5 +871,45 @@ export function createWalkNpcs(opts) {
 		return out;
 	}
 
-	return { spawn, despawn, update, setEnabled, isEnabled, setTtsEnabled, count, positions };
+	/**
+	 * How well each NPC's head is aimed at a world point, for instrumentation.
+	 * `alignment` is the cosine between the head's world forward and the
+	 * direction to `target`: 1 is dead-on, 0 is side-on. Allocates, so this is
+	 * for probes and tests, never the render loop.
+	 * @param {Vector3} target world point to measure against (normally the player)
+	 * @returns {Array<{name: string, dist: number, alignment: number|null}>}
+	 */
+	function gazeReport(target) {
+		const fwd = new Vector3();
+		const toTarget = new Vector3();
+		const q = new Quaternion();
+		const out = [];
+		for (const n of npcs) {
+			if (n._disposed) continue;
+			const dist = n.rig.position.distanceTo(target);
+			const head = n._gaze ? n._gaze.headBone : null;
+			let alignment = null;
+			if (head) {
+				head.updateWorldMatrix(true, false);
+				head.getWorldQuaternion(q);
+				fwd.set(0, 0, 1).applyQuaternion(q).normalize();
+				toTarget.copy(target).sub(head.getWorldPosition(new Vector3())).normalize();
+				alignment = fwd.dot(toTarget);
+			}
+			out.push({ name: n.name, dist: +dist.toFixed(2), alignment: alignment == null ? null : +alignment.toFixed(3) });
+		}
+		return out;
+	}
+
+	return {
+		spawn,
+		despawn,
+		update,
+		setEnabled,
+		isEnabled,
+		setTtsEnabled,
+		count,
+		positions,
+		gazeReport,
+	};
 }

@@ -4733,6 +4733,11 @@ if (import.meta.env?.DEV) {
 			feet,
 		};
 	};
+
+	// NPC head tracking: how squarely each NPC is looking at the player.
+	// alignment 1 = dead-on, 0 = side-on, null = rig has no head chain.
+	window.__walkNpcGaze = () =>
+		walkNpcs ? walkNpcs.gazeReport(avatarRig.position) : { active: false };
 }
 
 // ── Avatar picker ────────────────────────────────────────────────────────

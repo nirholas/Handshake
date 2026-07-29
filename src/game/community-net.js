@@ -461,7 +461,12 @@ export class CommunityNet {
 			// The first decoded state snapshot: everything the room already held
 			// (blocks, objects, vehicles) has now been emitted through the callbacks
 			// registered above. Registered AFTER them so their handlers run first.
-			this.room.onStateChange.once(() => { if (!this._destroyed && gen === this._connectGen) this._emit('synced'); });
+			// Guarded like every other optional room surface here: an older server
+			// build (or a stubbed room in a test harness) may not expose the signal,
+			// and a missing sync notification must never take the whole join down.
+			this.room.onStateChange?.once?.(() => {
+				if (!this._destroyed && gen === this._connectGen) this._emit('synced');
+			});
 
 			this.room.onLeave((code, reason) => {
 				this._setStatus('offline');

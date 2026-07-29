@@ -6,12 +6,14 @@
 // normalized snapshot.
 //
 // Dual live sources with automatic failover: CoinGecko /coins/markets first
-// (richest fields), CoinPaprika /tickers second (keyless, generous quota) —
-// so one upstream rate-limit never breaks a paid call. Cached 60 s in-memory.
-// No mock path — if both sources fail the handler throws BEFORE settlement
-// so the buyer is never charged.
+// (richest fields), CoinPaprika /tickers second (keyless, but only sixty
+// requests an HOUR shared across every caller on this deployment — see
+// api/_lib/coinpaprika.js) — so one upstream rate-limit never breaks a paid
+// call. Cached 60 s in-memory. No mock path — if both sources fail the handler
+// throws BEFORE settlement so the buyer is never charged.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
+import { PAPRIKA_BASE, isPaprikaBenched, notePaprikaStatus } from '../_lib/coinpaprika.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
@@ -52,11 +54,17 @@ async function fetchCoinGecko() {
 	}));
 }
 
+// CoinPaprika's free tier is sixty requests an HOUR across every surface that
+// uses it (see api/_lib/coinpaprika.js), so this paid endpoint routes through
+// the shared budget guard: when a sibling caller has already been blocked,
+// this one fails immediately instead of spending 8s discovering the same thing.
 async function fetchCoinPaprika() {
-	const r = await fetch('https://api.coinpaprika.com/v1/tickers?quotes=USD', {
+	if (isPaprikaBenched()) throw new Error('coinpaprika budget spent');
+	const r = await fetch(`${PAPRIKA_BASE}/tickers?quotes=USD`, {
 		headers: { accept: 'application/json' },
 		signal: AbortSignal.timeout(8000),
 	});
+	notePaprikaStatus(r.status);
 	if (!r.ok) throw new Error(`coinpaprika ${r.status}`);
 	const raw = await r.json();
 	if (!Array.isArray(raw) || !raw.length) throw new Error('coinpaprika empty');

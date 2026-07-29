@@ -768,6 +768,179 @@ describe('canonicalizeBoneName', () => {
 	});
 });
 
+// ---------------------------------------------------------------------------
+// Finger conventions, and why they are load-bearing.
+//
+// 30 of the 53 tracks in every clip in public/animations/clips address finger
+// bones. A rig whose hands do not name-map therefore scores about 40% retarget
+// coverage, which is UNDER the MIN_COVERAGE gate in src/animation-retarget.js —
+// so production builds no action for it at all and the avatar stands frozen in
+// its bind pose, arms and legs included. That is how an Unreal mannequin, a VRM
+// 1.0 avatar, a Genesis figure, a MakeHuman export and a Rigify character were
+// all failing before these aliases landed, each measured doing exactly that by
+// scripts/animation-dignity-sweep.mjs. Every case below is a real export
+// spelling from that convention's own tooling.
+// ---------------------------------------------------------------------------
+describe('finger chains across rig conventions', () => {
+	it.each([
+		// Unreal mannequin: zero-padded joint index, side last.
+		['index_01_l', 'LeftHandIndex1'],
+		['index_03_r', 'RightHandIndex3'],
+		['middle_02_l', 'LeftHandMiddle2'],
+		['ring_01_r', 'RightHandRing1'],
+		['pinky_03_l', 'LeftHandPinky3'],
+		['thumb_01_r', 'RightHandThumb1'],
+	])('Unreal mannequin: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		// VRM 1.0 names the phalanges instead of numbering them, side first, and
+		// starts the thumb at its metacarpal. "Little" is the pinky.
+		['leftIndexProximal', 'LeftHandIndex1'],
+		['leftIndexIntermediate', 'LeftHandIndex2'],
+		['leftIndexDistal', 'LeftHandIndex3'],
+		['rightMiddleProximal', 'RightHandMiddle1'],
+		['leftLittleDistal', 'LeftHandPinky3'],
+		['rightRingIntermediate', 'RightHandRing2'],
+		['leftThumbMetacarpal', 'LeftHandThumb1'],
+		['leftThumbProximal', 'LeftHandThumb2'],
+		['rightThumbDistal', 'RightHandThumb3'],
+	])('VRM 1.0: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		// Daz / Genesis numbers each digit behind a bare side letter, and
+		// abbreviates the middle finger to `Mid`.
+		['lIndex1', 'LeftHandIndex1'],
+		['rIndex3', 'RightHandIndex3'],
+		['lMid2', 'LeftHandMiddle2'],
+		['rMid1', 'RightHandMiddle1'],
+		['lRing3', 'LeftHandRing3'],
+		['rPinky1', 'RightHandPinky1'],
+		['lThumb2', 'LeftHandThumb2'],
+	])('Daz / Genesis: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		// Blender Rigify prefixes the four fingers `f_` and leaves the thumb bare.
+		['f_index.01.L', 'LeftHandIndex1'],
+		['f_index.03.R', 'RightHandIndex3'],
+		['f_middle.02.L', 'LeftHandMiddle2'],
+		['f_ring.01.R', 'RightHandRing1'],
+		['f_pinky.03.L', 'LeftHandPinky3'],
+		['thumb.01.L', 'LeftHandThumb1'],
+		['thumb.03.R', 'RightHandThumb3'],
+		// Rigify's deform layer carries the same names behind a DEF- prefix.
+		['DEF-f_index.01.L', 'LeftHandIndex1'],
+	])('Blender Rigify: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		// MakeHuman numbers the digits 1..5 starting at the thumb.
+		['finger1-1.L', 'LeftHandThumb1'],
+		['finger1-3.R', 'RightHandThumb3'],
+		['finger2-1.L', 'LeftHandIndex1'],
+		['finger3-2.R', 'RightHandMiddle2'],
+		['finger4-3.L', 'LeftHandRing3'],
+		['finger5-1.R', 'RightHandPinky1'],
+	])('MakeHuman: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		// Anatomy-kit / scan rigs name the phalanges with the side as a suffix.
+		['index_proximal.L', 'LeftHandIndex1'],
+		['index_distal.R', 'RightHandIndex3'],
+		['middle_intermediate.L', 'LeftHandMiddle2'],
+		['little_proximal.R', 'RightHandPinky1'],
+		['thumb_metacarpal.L', 'LeftHandThumb1'],
+	])('anatomical phalanx naming: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it('a full Unreal mannequin hand maps all 15 joints per side', () => {
+		const mapped = new Set();
+		for (const side of ['l', 'r']) {
+			for (const finger of ['thumb', 'index', 'middle', 'ring', 'pinky']) {
+				for (let n = 1; n <= 3; n++) {
+					const canonical = canonicalizeBoneName(`${finger}_0${n}_${side}`);
+					expect(canonical, `${finger}_0${n}_${side}`).not.toBeNull();
+					mapped.add(canonical);
+				}
+			}
+		}
+		// 30 distinct canonical finger bones — no two spellings collapsed onto one,
+		// which would leave a joint undriven while coverage still looked healthy.
+		expect(mapped.size).toBe(30);
+	});
+
+	it('metacarpal scaffolding that has no canonical home stays unmapped', () => {
+		// The canonical set has no palm/metacarpal bone for the four fingers, so
+		// these must keep falling through rather than stealing a phalanx track.
+		// (The THUMB metacarpal is the exception: it IS the canonical Thumb1.)
+		for (const name of ['Palm1.L', 'lCarpal1', 'index_metacarpal.L', 'leftIndexMetacarpal']) {
+			expect(canonicalizeBoneName(name), name).toBeNull();
+		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Anatomical-Latin rigs: the convention the canonicalizer had never seen. Scan
+// pipelines and anatomy kits name every joint for the bone itself. Before these
+// aliases the whole skeleton mapped 3 of 52 joints (pelvis, scapula.L/R) and
+// animated nothing at all.
+// ---------------------------------------------------------------------------
+describe('anatomical-Latin skeleton', () => {
+	it.each([
+		['lumbar', 'Spine'],
+		['thoracic', 'Spine1'],
+		['sternum', 'Spine2'],
+		['cervical', 'Neck'],
+		['cranium', 'Head'],
+		['skull', 'Head'],
+	])('centre chain: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		['humerus.L', 'LeftArm'],
+		['humerus.R', 'RightArm'],
+		['l_humerus', 'LeftArm'],
+		['ulna.L', 'LeftForeArm'],
+		['radius.R', 'RightForeArm'],
+		['carpus.L', 'LeftHand'],
+		['femur.R', 'RightUpLeg'],
+		['l_femur', 'LeftUpLeg'],
+		['tibia.L', 'LeftLeg'],
+		['fibula.R', 'RightLeg'],
+		['talus.L', 'LeftFoot'],
+		['tarsus.R', 'RightFoot'],
+		['calcaneus.L', 'LeftFoot'],
+		['metatarsus.R', 'RightToeBase'],
+	])('limbs, both side spellings: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it('never crosses sides', () => {
+		const left = [
+			'humerus.L', 'ulna.L', 'radius.L', 'carpus.L', 'femur.L', 'tibia.L',
+			'fibula.L', 'talus.L', 'tarsus.L', 'calcaneus.L', 'metatarsus.L',
+			'l_humerus', 'l_femur', 'index_proximal.L', 'thumb_metacarpal.L',
+		];
+		const right = left.map((n) => (n.endsWith('.L') ? n.replace(/\.L$/, '.R') : n.replace(/^l_/, 'r_')));
+		for (const name of left) {
+			expect(canonicalizeBoneName(name)?.startsWith('Right'), name).toBe(false);
+		}
+		for (const name of right) {
+			expect(canonicalizeBoneName(name)?.startsWith('Left'), name).toBe(false);
+		}
+	});
+});
+
 describe('canonicalizeJointNodes (in-place rewrite)', () => {
 	it('only touches nodes referenced by skins[].joints', () => {
 		const json = {

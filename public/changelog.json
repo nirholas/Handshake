@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T05:41:19.675Z",
+	"generated_at": "2026-07-29T06:12:36.507Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -95,6 +95,38 @@
 		{
 			"date": "2026-07-29",
 			"type": "update",
+			"title": "Chat now forges and displays 3D models right in the conversation",
+			"summary": "Ask the chat at three.ws/chat for a 3D model and it generates one with the free Forge lane, streams live progress in place, and then renders the finished model as an interactive viewer inside the thread: orbit and zoom it, play its animations, toggle the skeleton on rigged avatars, download the GLB, or open it in AR. Pasting a link to any .glb file now shows the model the same way, even when the file's host would normally block the browser from reading it. Previously 3D results only appeared inside a boxed-in web page you had to click into.",
+			"link": "/chat",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Coin pages stay up when the market data provider rate-limits us",
+			"summary": "The price chart, profile and exchange listings on a coin page all came from one provider, so whenever it throttled our requests the whole page went down at once, for hours. Each of those now has a live backup: charts fall back to exchange candles for the majors and an on-chain price oracle for every other coin, while the profile and market listings fall back to a second data provider. When a backup is answering, the page says so at the bottom instead of quietly leaving numbers blank, and columns the backup cannot fill are hidden rather than shown as a row of dashes. Two small honesty fixes came with it: a follower count of zero now means \"not tracked\" and is left out rather than stated as zero, and a price change the backup does not actually compute is no longer drawn as a flat 0.00%.",
+			"link": "/coins",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Concierge demo and the 3D home demo both work again",
+			"summary": "The live widget on the Concierge page failed to start because the page ran its setup before the widget code had finished loading, leaving visitors with a dead demo on the page that sells it. The /demos/3d-home animated avatar demo never rendered its character either: the model uses compressed geometry and the page was loading it without the matching decoder. Both now load, animate, and respond as intended.",
+			"link": "/concierge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
 			"title": "Ethereum name lookups work again",
 			"summary": "Looking up an .eth name through the public name resolver had stopped working: every request sat there for about ten seconds and then came back as an error, while .sol names resolved fine. Two things were wrong. The Ethereum node we asked first had started refusing our requests outright, and because it was first in line every lookup wasted a full round trip on it before trying anywhere else. On top of that, the lookup itself was asking the network four or five separate questions in sequence when one would do. Nodes known to refuse us are now tried last instead of first, and a name lookup is a single question. An .eth name now resolves in about a quarter of a second, and a name that genuinely does not exist comes back as a clean not-found instead of a timeout.",
 			"link": "/crypto-api",
@@ -134,6 +166,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "On-chain agent pages now load their registration details reliably",
+			"summary": "ERC-8004 agent pages read each agent's registration document from wherever its owner published it. Most of those hosts do not permit direct browser access, so a large share of agents showed \"Could not fetch registration JSON\" instead of their name, description, avatar, and skills. Pages now fall back to fetching that document through three.ws, so those agents render in full. The fallback validates every address it connects to and caps the download, so a hostile registration link cannot reach anything private.",
+			"link": "/docs/erc8004",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -214,6 +256,17 @@
 		{
 			"date": "2026-07-29",
 			"type": "update",
+			"title": "The agent directory is now readable without JavaScript, and the homepage loads lighter",
+			"summary": "Two things that made the site slower and harder to find. The Discover directory indexes over 150,000 agents but built its entire page in the browser, so search engines, link previews, and anyone on a slow or JavaScript-less connection saw an empty page. The server now sends the first page of agents and the live directory totals with the page itself, exactly matching what the browser then loads. Separately, the homepage was carrying a large duplicate copy of its own styling inline, plus two big scripts that blocked the page from drawing while they parsed. Those moved into files the browser caches once and reuses on every later visit, cutting the homepage document roughly in half.",
+			"link": "/discover",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
 			"title": "The fact checker stops timing out, and reads its sources properly",
 			"summary": "Paid fact checks had started failing outright with a server error instead of returning a verdict. The cause was in how we try our AI providers: when the first provider accepted a request and then went quiet, we kept waiting on it (and on two more sign-ins to the same provider) until the whole time budget for the check was gone, so the providers that were healthy and ready to answer were never reached. We now stop re-trying a provider that has already gone quiet, and no single provider can eat more than a third of the remaining time while others are still waiting. Checks that used to die at 46 seconds now come back with a real, sourced answer. Alongside that, the checker reads evidence far better: its free Wikipedia source now returns the article's actual opening text instead of a 150-character fragment around a keyword, all three search angles are represented in the sources we examine rather than just the first, and a verdict is now decided by the sources that genuinely address the claim, so evidence that never mentions the claim returns an honest \"not enough evidence\" instead of a misleading \"mixed\". The published accuracy figure on the fact-check page has been cleared until a clean measurement can be taken, because the last one was recorded during the outage above and measured that outage rather than the product.",
 			"link": "/fact-check",
@@ -231,6 +284,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "The news rail on a coin page no longer hides stories it already has",
+			"summary": "The related-news strip on a coin page decided whether to show anything by asking how many news publishers had just been refreshed, rather than whether it actually had articles in hand. Since the news system also serves recent copies it fetched a little earlier, the rail could be holding eight real stories and still show an error instead. It now shows what it has, and reports a problem only when it genuinely has nothing.",
+			"link": "/coins",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -289,6 +352,16 @@
 		{
 			"date": "2026-07-28",
 			"type": "launch",
+			"title": "Fits: the cosmetics economy",
+			"summary": "The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.",
+			"link": "/fits",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "launch",
 			"title": "Receipt Vault",
 			"summary": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
 			"link": "/receipts",
@@ -316,6 +389,26 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "Coin pages stay up when the market-data quota runs out",
+			"summary": "Our market-data provider caps the free tier at 10,000 calls a month. Once that ran out, every request carrying our key was refused for the rest of the billing period, while the very same request without a key was still being answered normally. Coin details, tickers, and exchange data returned errors for hours on 28 July because of it. An exhausted key is now benched for fifteen minutes and the request is immediately retried without it, so pages keep serving. The key comes back into use on its own when the quota resets, with no redeploy and nobody paged.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"type": "update",
+			"title": "Consistent formatted text and notifications across the site",
+			"summary": "Formatted text (agent descriptions, chat replies, docs excerpts) was being rendered by a handful of separate implementations that had drifted apart, and each page that needed a confirmation message carried its own copied-in version. Both now come from one shared implementation: text is parsed and sanitised the same way everywhere, so the same content renders identically on every surface, and notifications queue and dismiss consistently instead of stacking or vanishing depending on which page you were on.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -503,6 +596,16 @@
 		{
 			"date": "2026-07-27",
 			"type": "update",
+			"title": "Five more languages: Hausa, Armenian, Georgian, Pashto and Sinhala",
+			"summary": "three.ws now ships in 60 languages. The five new locales cover the full site, not a landing page: navigation, the studio, the wardrobe, forged galleries, notifications, and the cookbook. Translations across the existing 55 languages were refreshed at the same time, so pages that gained copy recently are no longer part-English in a translated locale.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
 			"title": "Garment generation no longer loses jobs when it scales down",
 			"summary": "Requesting a batch of garments could silently drop most of them: the queue lived in one server's memory, so anything waiting disappeared when that server was recycled. Jobs are now durable and picked up by whichever server is free, with automatic retries, so a queued piece finishes even if the machine that took the request goes away.",
 			"link": null,
@@ -530,6 +633,26 @@
 			"link": null,
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Interrupted garment generations now recover on their own",
+			"summary": "When the garment worker scaled down mid-job, the job it was holding became an orphan: the machinery to re-drive it existed but nothing ever triggered it, so the job sat until a watchdog eventually marked it failed. A scheduled sweep now re-drives orphaned jobs every ten minutes, so a generation interrupted by a scale-down finishes instead of dying quietly.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Loading grids and the live terminal now pass the accessibility floor",
+			"summary": "Two things a screen reader or a low-vision visitor hit directly. The loading placeholders on the animation and character libraries announced themselves with a label that assistive technology is required to ignore, so the \"loading\" state was silent; they are now proper status regions that get read aloud. And on the live terminal, each arriving row faded in from fully transparent, which meant text on screen sat below the readable-contrast floor for a quarter second at a time on a feed that never stops. Rows now slide in at full contrast instead of fading.",
+			"link": null,
+			"tags": [
 				"fix"
 			]
 		},
@@ -648,6 +771,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"type": "update",
+			"title": "Wallet tools work again on older Android browsers",
+			"summary": "A compatibility shim for older Android WebViews was reaching the main app but not the four background workers the site runs off the main thread. The vanity-address grinder calls the exact feature that shim exists to provide, so on Chrome 92 and earlier it failed on launch while the rest of the page looked fine. The shim now ships into the background workers too.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -983,6 +1116,16 @@
 			"link": "/avatar-edit",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-25",
+			"type": "update",
+			"title": "Fingerspelled signing reads as one continuous hand, not a slideshow",
+			"summary": "The signing avatar built each letter from its own one-off pose code, so handshapes drifted between letters and a spelled word looked like a sequence of unrelated snapshots. Handshapes now come from a single shared library that both fingerspelling and full lexical signs draw on, so the same letter looks the same everywhere and the transitions between them are continuous. Wrists, thumbs, and finger curls were re-checked against reference photography across the whole alphabet.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -21326,16 +21469,6 @@
 		{
 			"date": "2026-05-29",
 			"type": "launch",
-			"title": "3D Scanner — Scan Yourself into 3D",
-			"summary": "Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.",
-			"link": "/scan",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-05-29",
-			"type": "launch",
 			"title": "Forever — etch a message into Bitcoin",
 			"summary": "Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.",
 			"link": "/forever",
@@ -21632,16 +21765,6 @@
 			"title": "Import an avatar URL",
 			"summary": "Import any GLB or glTF avatar into three.ws and give it an agent brain.",
 			"link": "/import/rpm",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-05-25",
-			"type": "launch",
-			"title": "New Agent",
-			"summary": "Create a new agent from scratch — avatar, brain, skills, and on-chain identity.",
-			"link": "/agent/new",
 			"tags": [
 				"launch"
 			]

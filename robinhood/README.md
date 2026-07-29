@@ -25,7 +25,7 @@ own README with install and usage.
 | [hood-status](hood-status/) | Status page for the chain |
 | [hood-tokenlist](hood-tokenlist/) | Canonical token list |
 | [hood-alerts](hood-alerts/) | Alerting |
-| [robinhood-mcp](robinhood-mcp/) / [hood-mcp](hood-mcp/) | MCP servers exposing chain data + actions to agents |
+| [hood-mcp](hood-mcp/) | MCP servers exposing chain data + actions to agents |
 
 ## Payments + agents
 

@@ -13,6 +13,7 @@
 // entirely into the curve/pool (FDV == market cap post-graduation).
 
 import { rpcFallbackFromEnv, getBondingCurveState, getTokenPrice, getGraduationProgress } from './solana/index.js';
+import { createCache } from './mem-cache.js';
 
 // Mints that can never carry a pump.fun bonding curve. These are coin-agnostic
 // payment-rail / native tokens, listed only so we can *exclude* them from curve
@@ -43,12 +44,15 @@ export function isPlausibleMint(s) {
 // to slightly-old real data instead of an unhandled 500. Same serve-stale tier
 // as api/pump/price-history: never fabricated, only ever a body a healthy read
 // really produced.
-const _lastGood = new Map(); // `${network}:${mint}` → { body, at }
+// Bounded by true LRU: trimming with `delete(keys().next().value)` evicted the
+// oldest INSERTED mint, so the most-requested curve could lose its stale copy
+// while colder mints kept theirs. Staleness stays an explicit field because the
+// entry must remain readable to serve degraded data.
+const _lastGood = createCache({ max: 256 }); // `${network}:${mint}` → { body, at }
 const STALE_MAX_MS = 10 * 60_000;
 
 function rememberGood(network, mint, body) {
 	_lastGood.set(`${network}:${mint}`, { body, at: Date.now() });
-	if (_lastGood.size > 256) _lastGood.delete(_lastGood.keys().next().value);
 }
 
 function recallGood(network, mint) {

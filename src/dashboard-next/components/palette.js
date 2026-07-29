@@ -7,6 +7,7 @@
 
 import { NAV, ICONS, currentRoute } from '../nav.js';
 import { esc, get, post, relTime, getMe } from '../api.js';
+import { rank } from '../../shared/fuzzy.js';
 
 const RECENT_KEY = 'dn:recent';
 const RECENT_LIMIT = 6;
@@ -80,26 +81,13 @@ function recordRecent() {
 	saveRecent(next);
 }
 
-// ── Fuzzy scorer ──────────────────────────────────────────────────────────────
+// ── Fuzzy matching ────────────────────────────────────────────────────────────
+// Ranking lives in src/shared/fuzzy.js (uFuzzy). The label, group, and tags are
+// joined into one haystack so a match on any of them counts, and so uFuzzy can
+// rank across all three rather than taking the best of three flat tiers.
 
-function score(query, text) {
-	const q = String(query || '').toLowerCase();
-	const t = String(text || '').toLowerCase();
-	if (!q) return 1;
-	if (t === q) return 3;
-	if (t.startsWith(q)) return 2;
-	if (t.includes(q)) return 1;
-	let qi = 0;
-	for (const c of t) { if (c === q[qi]) qi++; }
-	return qi === q.length ? 0.5 : 0;
-}
-
-function scoreItem(query, item) {
-	const haystacks = [item.label, item.group, ...(item.tags || [])].filter(Boolean);
-	let best = 0;
-	for (const h of haystacks) { const s = score(query, h); if (s > best) best = s; }
-	return best;
-}
+const itemHaystack = (item) =>
+	[item.label, item.group, ...(item.tags || [])].filter(Boolean).join(' ');
 
 // ── Avatar search ─────────────────────────────────────────────────────────────
 
@@ -128,14 +116,11 @@ async function ensureAvatarFetch() {
 function avatarItems(query) {
 	if (!query || query.length <= 2) return [];
 	if (!avatarCache) return [];
-	const matches = [];
-	for (const a of avatarCache) {
-		const name = a.name || a.slug || a.id;
-		const s = score(query, name);
-		if (s > 0) matches.push({ score: s, avatar: a, name });
-	}
-	matches.sort((a, b) => b.score - a.score);
-	return matches.slice(0, 5).map(({ avatar, name }) => ({
+	const named = avatarCache.map((a) => ({ avatar: a, name: a.name || a.slug || a.id }));
+	return rank(query, named, (n) => String(n.name ?? ''), { limit: 5 }).map(({ item }) => ({
+		avatar: item.avatar,
+		name: item.name,
+	})).map(({ avatar, name }) => ({
 		id: `avatar-${avatar.id}`,
 		label: name,
 		sublabel: 'Open avatar',
@@ -408,18 +393,19 @@ function render(query) {
 			activeItems.push(...items);
 		}
 	} else {
-		const scored = [];
-		for (const it of [...actions, ...nav, ...docs]) {
-			const s = scoreItem(q, it);
-			if (s > 0) scored.push({ s, it });
-		}
-		for (const it of avatars) scored.push({ s: 2, it });
-		scored.sort((a, b) => {
+		// uFuzzy returns the matches already ordered by relevance; `rankKind`
+		// still groups by kind first, so relevance breaks ties inside a kind.
+		const ranked = rank(q, [...actions, ...nav, ...docs], itemHaystack)
+			.map(({ item }, i) => ({ it: item, r: i }));
+		// Avatars are matched separately (against their names only) and are
+		// appended in their own relevance order.
+		avatars.forEach((it, i) => ranked.push({ it, r: ranked.length + i }));
+		ranked.sort((a, b) => {
 			const kr = rankKind(a.it.kind) - rankKind(b.it.kind);
 			if (kr !== 0) return kr;
-			return b.s - a.s;
+			return a.r - b.r;
 		});
-		const flat = scored.map((x) => x.it);
+		const flat = ranked.map((x) => x.it);
 		if (flat.length) {
 			html += renderSection(`Results (${flat.length})`, flat, 0);
 			activeItems.push(...flat);

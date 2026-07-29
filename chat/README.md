@@ -29,6 +29,21 @@
 
 - Completely private and transparent. All your conversation history and keys are stored entirely locally, and kept only in your browser, on your device.
 
+## 3D in chat: forge models and view them inline
+
+The chat generates and displays real 3D models directly in the conversation. Three pieces work together:
+
+**Forge tools (on by default).** Two client tools are bootstrapped into every fresh conversation:
+
+- `ForgeTextTo3D` runs the free three.ws Forge lane (`POST /api/forge { prompt }`). It returns immediately; the model appears in the thread in roughly 30 to 90 seconds. Ask for "a 3D model of a brass steampunk owl" and the assistant calls it on its own.
+- `ForgeAvatar` runs the full text to mesh to auto-rig to avatar-library pipeline (`/api/forge`, `/api/forge?action=rig`, `/api/avatars/from-forge`). Saving to the library requires being signed in; without a session it still returns the rigged model.
+
+Both tools return an `application/model-3d` envelope instead of raw HTML: `{ contentType: 'application/model-3d', content: { glb, job, prompt, preview, eta, rigged, saved_url, status_note, error }, summary }`. The `summary` string is what the LLM reads; the compact `content` object is what renders, so tool results stay cheap in tokens.
+
+**The inline viewer (`src/ModelViewer3D.svelte`).** Any `application/model-3d` tool result renders directly in the message thread (and in the tool split view) as an interactive Three.js viewer: orbit and zoom with damping plus auto-rotate until first interaction, PBR environment lighting, animation playback when the GLB has clips, a skeleton toggle for rigged models (press S), and Download GLB / Viewer / View in AR / Recenter controls. While a forge job is pending it polls `GET /api/forge?job=` and shows the concept preview with a progress bar, then swaps in the model; once resolved, the GLB URL is persisted into the stored message so reloading the conversation renders instantly instead of re-polling. Viewers initialize lazily near the viewport, pause rendering offscreen, dispose all GPU resources on unmount, and recover from WebGL context loss with a reload card.
+
+**GLB links auto-render.** Paste a `.glb` URL into a message (or have the assistant produce one) and a viewer appears under it. Cross-origin models whose host lacks CORS headers are fetched through the same-origin `/api/glb?src=` proxy automatically. Links already rendered by a tool card or an earlier message are not duplicated.
+
 ## How to install?
 
 If you don't want to use tools, you don't need to install anything. A hosted instance is available at: https://three.ws/chat

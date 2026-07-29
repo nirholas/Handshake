@@ -13,6 +13,7 @@
 // analogue of the RPC failover layer.
 
 import { cacheGet, cacheGetFresh, cacheSet, cacheDel, acquireLock, releaseLock } from '../cache.js';
+import { createCache } from '../mem-cache.js';
 
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
 const DEXSCREENER_BASE = 'https://api.dexscreener.com/latest/dex/tokens';
@@ -58,7 +59,11 @@ const LOCK_WAIT_TRIES = 4;
 const LOCK_WAIT_STEP_MS = 250;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const _cache = new Map(); // mint → { value, expires, fetchedAt }
+// True LRU bounding: the previous Map was trimmed with
+// `delete(keys().next().value)`, evicting the oldest INSERTED mint rather than
+// the least recently used one — so a mint under constant polling could be
+// dropped while colder mints cached after it survived.
+const _cache = createCache({ max: 256 }); // mint → { value, expires, fetchedAt }
 const _warnedAt = new Map();
 const WARN_COOLDOWN_MS = 60_000;
 
@@ -263,7 +268,6 @@ const SOURCES = [fromBirdeye, fromDexScreener, fromGeckoTerminal, fromLlamaCoins
 // paths so they all keep L1 coherent the same way.
 function storeL1(mint, value, now, ttlMs) {
 	_cache.set(mint, { value, expires: now + ttlMs, fetchedAt: now });
-	if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
 	return value;
 }
 

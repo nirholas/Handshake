@@ -16,6 +16,7 @@ import { fetchTokenConfig, fetchTokenPrice } from '../../token-pay.js';
 import { fetchAllowanceStatus, grantAllowance, revokeAllowance } from '../../three-allowance.js';
 import { createThreeTokenData } from '../../pump/three-token-data.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { toast } from '../../shared/toast.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 // THREE_MINT is fetched live from /api/token/config below. This fallback is
@@ -53,30 +54,6 @@ function pctColor(n) {
 	return +n >= 0 ? 'var(--nxt-success)' : 'var(--nxt-danger)';
 }
 
-function toast(msg) {
-	let el = document.getElementById('dn-toast');
-	if (!el) {
-		el = document.createElement('div');
-		el.id = 'dn-toast';
-		el.style.cssText = `position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
-			background:rgba(20,21,28,0.95);border:1px solid var(--nxt-stroke-strong);
-			color:var(--nxt-ink);padding:9px 16px;border-radius:999px;font-size:13px;
-			z-index:9999;opacity:0;transition:opacity .18s,transform .18s;
-			backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-			box-shadow:0 8px 24px rgba(0,0,0,0.4);pointer-events:none;`;
-		document.body.appendChild(el);
-	}
-	el.textContent = msg;
-	requestAnimationFrame(() => {
-		el.style.opacity = '1';
-		el.style.transform = 'translateX(-50%) translateY(0)';
-	});
-	clearTimeout(el._t);
-	el._t = setTimeout(() => {
-		el.style.opacity = '0';
-		el.style.transform = 'translateX(-50%) translateY(20px)';
-	}, 1800);
-}
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 

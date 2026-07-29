@@ -21,12 +21,34 @@
 //   (resolved through _lib/env.js, which also accepts the Vercel-marketplace
 //   names three_KV_REST_API_URL/TOKEN and KV_REST_API_URL/TOKEN)
 
-import { gzip, gunzip } from 'node:zlib';
-import { promisify } from 'node:util';
 import { env } from './env.js';
 
-const gzipAsync = promisify(gzip);
-const gunzipAsync = promisify(gunzip);
+// node:zlib / node:util are loaded LAZILY, not at module scope. This module is
+// server-only in intent, but it is reachable from the BROWSER bundle: the
+// isomorphic SNS resolver imports the shared Solana connection, which imports
+// this cache —
+//   pages/app.html → src/app.js → src/agent-skills-scene.js → src/agent-skills.js
+//   → src/agent-skills-pumpfun.js → src/solana/sns.js
+//   → api/_lib/solana/connection.js → api/_lib/cache.js
+// Vite externalizes `node:*` for the browser, so a STATIC `import { promisify }
+// from 'node:util'` resolves to a named export of `__vite-browser-external`
+// that does not exist, and the whole frontend build dies with
+// `"promisify" is not exported by "__vite-browser-external"`. That failure is
+// silent until deploy time, because the browser never reaches the gzip codec at
+// runtime — only the bundler does, at parse time.
+//
+// Deferring the import to first use keeps the module graph browser-safe while
+// leaving the server path unchanged (one dynamic import, memoized below).
+let _zlibPromise = null;
+function loadZlib() {
+	if (!_zlibPromise) {
+		_zlibPromise = Promise.all([import('node:zlib'), import('node:util')]).then(([zlib, util]) => ({
+			gzipAsync: util.promisify(zlib.gzip),
+			gunzipAsync: util.promisify(zlib.gunzip),
+		}));
+	}
+	return _zlibPromise;
+}
 
 const memCache = new Map();
 const MEM_DEFAULT_TTL_MS = 60_000;
@@ -273,12 +295,14 @@ const COMPRESS_MIN_BYTES = 1024;
 
 async function encodeForWire(payload) {
 	if (payload.length < COMPRESS_MIN_BYTES) return payload;
+	const { gzipAsync } = await loadZlib();
 	const encoded = GZIP_PREFIX + (await gzipAsync(payload)).toString('base64');
 	return encoded.length < payload.length ? encoded : payload;
 }
 
 async function decodeFromWire(raw) {
 	if (typeof raw === 'string' && raw.startsWith(GZIP_PREFIX)) {
+		const { gunzipAsync } = await loadZlib();
 		const buf = Buffer.from(raw.slice(GZIP_PREFIX.length), 'base64');
 		return JSON.parse((await gunzipAsync(buf)).toString('utf8'));
 	}

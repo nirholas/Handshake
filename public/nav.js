@@ -20,13 +20,27 @@
 // The switch is a class on <html>, never a re-render: the dropdown/drawer
 // wiring binds document-level listeners once, so re-rendering the menus would
 // strand them on detached nodes.
+//
+// That class is the live truth; the storage key is only its seed. The two can
+// legitimately disagree — following a link into a gated section reveals the
+// advanced tier for that visit WITHOUT persisting it, and the nav renders after
+// an async fetch, so re-seeding from storage at that point would yank the
+// revealed section back out from under the visitor. Read the class, not the key.
 var TIER_KEY = 'tws:tier'; // 'lite' | 'full'
-function tierIsLite() {
+function storedIsLite() {
 	try {
 		return localStorage.getItem(TIER_KEY) !== 'full';
 	} catch (_) {
-		return true;
+		return true; // no storage (private mode) → the simple experience
 	}
+}
+function tierIsLite() {
+	return document.documentElement.classList.contains('tws-lite');
+}
+function syncTierControls(lite) {
+	document.querySelectorAll('.nav-tier-toggle').forEach(function (btn) {
+		btn.setAttribute('aria-expanded', String(!lite));
+	});
 }
 function applyTier(lite, persist) {
 	document.documentElement.classList.toggle('tws-lite', lite);
@@ -37,14 +51,13 @@ function applyTier(lite, persist) {
 			/* private mode — the tier still applies for this page view */
 		}
 	}
-	document.querySelectorAll('.nav-tier-toggle').forEach(function (btn) {
-		btn.setAttribute('aria-expanded', String(!lite));
-	});
+	syncTierControls(lite);
 	window.dispatchEvent(new CustomEvent('tws:tier-change', { detail: { lite: lite } }));
 }
-// Applied before the nav (and any tier-tagged page content) is rendered, so
-// advanced surfaces never flash in and out on load.
-applyTier(tierIsLite(), false);
+// Seeded before the nav (and any tier-tagged page content) is rendered, so
+// advanced surfaces never flash in and out on load. The homepage's inline
+// <head> script seeds the same class even earlier, from the same key.
+applyTier(storedIsLite(), false);
 window.twsTier = {
 	isLite: tierIsLite,
 	set: function (lite) {
@@ -303,14 +316,11 @@ function initTierToggles(root) {
 		e.stopPropagation();
 		applyTier(!tierIsLite(), true);
 	});
-	// Sync the freshly-rendered controls with the tier already applied at boot,
-	// and keep them honest when another surface flips the preference.
-	applyTier(tierIsLite(), false);
-	window.addEventListener('tws:tier-change', (e) => {
-		root.querySelectorAll('.nav-tier-toggle').forEach((btn) => {
-			btn.setAttribute('aria-expanded', String(!e.detail.lite));
-		});
-	});
+	// Sync the freshly-rendered controls with the tier that is already live.
+	// Deliberately reads the class, not storage: a deep link into a gated
+	// section reveals the advanced tier without persisting it, and this runs
+	// after that reveal (the nav is fetched asynchronously).
+	syncTierControls(tierIsLite());
 }
 
 // ── Menu rendering ──────────────────────────────────────────────────────────
@@ -366,7 +376,7 @@ function renderMenuItem(item) {
 		? ` <span class="nav-pill-sm${tone}"${i18nAttr(item.badge)}>${escHtml(item.badge)}</span>`
 		: '';
 	return (
-		`<a class="nav-mi" href="${escHtml(item.href)}" role="menuitem"${tierAttr(item)}${attrString(item.attrs)}>` +
+		`<a class="nav-mi" href="${escHtml(item.href)}"${tierAttr(item)}${attrString(item.attrs)}>` +
 		`<span class="nav-mi-t"><span${i18nAttr(item.title)}>${escHtml(item.title)}</span>${badge}</span>` +
 		`<span class="nav-mi-d"${i18nAttr(item.desc)}>${escHtml(item.desc)}</span></a>`
 	);
@@ -416,14 +426,22 @@ function renderGroup(group) {
 			` <span class="nav-tier-n">+${hidden}</span></span>` +
 			`<span class="nav-tier-less"${i18nAttr('Show the simple menu')}>Show the simple menu</span></button>`
 		: '';
-	// A stable, unique id per group so the trigger can reference its menu via
+	// A stable, unique id per group so the trigger can reference its panel via
 	// aria-controls (label slug is unique within the nav data).
 	const popId = `nav-pop-${String(group.label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+	// Disclosure navigation, NOT an ARIA menu. `role="menu"` requires every child
+	// to be a menuitem or a group of them, and these panels legitimately hold a
+	// descriptive note, column headings, and a "Show everything" button — so the
+	// menu role failed aria-required-children on all 13 top pages that render the
+	// nav. Site navigation is the disclosure pattern's exact use case: a button
+	// carrying aria-expanded/aria-controls over a panel of ordinary links. The
+	// arrow-key handling below is bound to the anchors themselves, not to the
+	// roles, so keyboard behaviour is unchanged by dropping them.
 	return (
 		`<div class="nav-grp"${tierAttr(group)}>` +
-		`<button type="button" class="nav-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="${popId}">` +
+		`<button type="button" class="nav-trigger" aria-expanded="false" aria-controls="${popId}">` +
 		`<span${i18nAttr(group.label)}>${escHtml(group.label)}</span>${badge}<span class="nav-caret" aria-hidden="true">▾</span></button>` +
-		`<div class="${popClass}" id="${popId}" role="menu" aria-label="${escHtml(group.label)}">${note}${body}${tierFoot}</div>` +
+		`<div class="${popClass}" id="${popId}" role="group" aria-label="${escHtml(group.label)}">${note}${body}${tierFoot}</div>` +
 		`</div>`
 	);
 }
@@ -572,9 +590,11 @@ function initDropdowns(root) {
 			}
 		});
 
-		// WAI-ARIA menu-button pattern: ArrowDown/ArrowUp on the trigger open the
-		// menu and land focus on the first / last item, so a keyboard user can dive
-		// straight into the dropdown without first activating then re-reaching it.
+		// ArrowDown/ArrowUp on the trigger open the panel and land focus on the
+		// first / last link, so a keyboard user can dive straight into the dropdown
+		// without first activating it and then re-reaching it. Optional in the
+		// disclosure pattern, and worth keeping: it is what makes a 20-link mega
+		// menu navigable without twenty Tab presses.
 		trigger.addEventListener('keydown', (e) => {
 			if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
 			const items = Array.prototype.slice.call(

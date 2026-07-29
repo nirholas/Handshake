@@ -12,6 +12,8 @@
 // it hourly from the live feed. Never hardcode the end date — read
 // meta/stats.json (last_article_date), which the appender keeps current.
 
+import { createCache } from './mem-cache.js';
+
 const GCS_BASE = 'https://storage.googleapis.com/three-ws-news-archive';
 const GCS_LIST =
 	'https://storage.googleapis.com/storage/v1/b/three-ws-news-archive/o?prefix=articles/&fields=items(name)&maxResults=500';
@@ -23,9 +25,11 @@ const META_TTL_MS = 3600_000;
 // and their fresh permalinks 404 until restart. Older months are immutable.
 const MUTABLE_MONTH_TTL_MS = 10 * 60_000;
 
-// month "YYYY-MM" → { records, expiresAt } (newest month files are ~2–11 MB
-// raw; compact form keeps only serving fields). LRU by Map insertion order.
-const monthCache = new Map();
+// month "YYYY-MM" → { records, expiresAt } (newest month files are ~2-11 MB
+// raw; compact form keeps only serving fields). True LRU: the previous trim
+// evicted by Map INSERTION order, so with only 5 slots the month being actively
+// paged could be discarded while months touched once survived.
+const monthCache = createCache({ max: MONTH_CACHE_MAX });
 // small metadata caches: { value, expiresAt }
 let statsCache = null;
 let monthsCache = null;
@@ -129,8 +133,5 @@ export async function loadMonth(month) {
 		records,
 		expiresAt: isMutableMonth(month) ? Date.now() + MUTABLE_MONTH_TTL_MS : Infinity,
 	});
-	while (monthCache.size > MONTH_CACHE_MAX) {
-		monthCache.delete(monthCache.keys().next().value);
-	}
 	return records;
 }

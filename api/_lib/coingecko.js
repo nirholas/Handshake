@@ -8,6 +8,7 @@
 // the upstream from concurrent cold-instance misses.
 
 import { cacheGet, cacheSet } from './cache.js';
+import { createCache } from './mem-cache.js';
 
 export const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
@@ -16,8 +17,13 @@ export const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 // instead of cascading into a user-facing 502. CoinGecko's free/demo tiers cap
 // at ~30 req/min; broad coin-page crawling saturates that, and without a stale
 // buffer every /coin/:id detail call would 502 during the storm.
-const _cache = new Map();
-const MAX_ENTRIES = 512;
+// Bounded by true LRU rather than a Map trimmed with
+// `delete(keys().next().value)`, which dropped the OLDEST INSERTED entry — so a
+// continuously-hot coin page could be evicted while colder entries inserted
+// after it survived. Freshness is NOT the LRU's `ttl`: entries must stay
+// readable past `expiresAt` for the stale buffer below to work, so expiry stays
+// an explicit field on the value.
+const _cache = createCache({ max: 512 });
 // How long past freshness a cached value may still be served on an upstream
 // fault. Coin metadata (description, dev/community stats, market cap) tolerates
 // minutes of staleness far better than an outage.
@@ -157,7 +163,6 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 	}
 	const value = await resp.json();
 	_cache.set(path, { value, expiresAt: now + ttlMs, staleUntil: now + ttlMs + STALE_MS });
-	if (_cache.size > MAX_ENTRIES) _cache.delete(_cache.keys().next().value);
 	// Fire-and-forget durable mirror, never let a cache fault fail a live fetch.
 	Promise.resolve(cacheSet(durableKey(path), value, DURABLE_STALE_S)).catch(() => {});
 	return value;

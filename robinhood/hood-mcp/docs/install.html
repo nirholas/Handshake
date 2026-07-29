@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Install — hood-mcp</title>
+<meta name="description" content="Install hood-mcp in Claude Code, Claude Desktop, Cursor, Smithery, or any stdio MCP client. Zero config: no key, no wallet, public RPC by default." />
+<link rel="canonical" href="https://nirholas.github.io/hood-mcp/install.html" />
+<meta name="theme-color" content="#0a0d10" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a0d10'/><path d='M7 22V10m0 6h8m0-6v12' fill='none' stroke='%2300c805' stroke-width='2.6' stroke-linecap='round'/><circle cx='24' cy='12' r='2.6' fill='%2335e0c0'/></svg>" />
+<link rel="stylesheet" href="site.css" />
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="tick">hood</span>-mcp</div>
+    <div class="links">
+      <a href="index.html">Session</a>
+      <a href="install.html" aria-current="page">Install</a>
+      <a href="tools.html">Tools</a>
+      <a href="safety.html">Safety model</a>
+      <a href="https://github.com/nirholas/hood-mcp">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section style="border-top:none; padding-top:56px;">
+    <p class="eyebrow">Install matrix</p>
+    <h1>One line, no key.</h1>
+    <p class="section-lede">
+      The data server runs against the public Robinhood Chain RPC with no account, no API key, and
+      no wallet. Every snippet below is the exact config used to produce
+      <a href="index.html">the session transcript</a>. Node 20 or newer.
+    </p>
+  </section>
+
+  <section id="claude-code">
+    <h2>Claude Code</h2>
+    <pre><code>claude mcp add hood-mcp -- npx -y hood-mcp</code></pre>
+    <p class="section-lede">
+      Then ask it something the chain can answer, for example <em>"what is AAPL trading at on-chain
+      and what is the premium?"</em>. Remove it again with <code>claude mcp remove hood-mcp</code>.
+    </p>
+  </section>
+
+  <section id="claude-desktop">
+    <h2>Claude Desktop</h2>
+    <p class="section-lede">Add to <code>claude_desktop_config.json</code> and restart the app.</p>
+<pre><code>{
+  "mcpServers": {
+    "hood-mcp": {
+      "command": "npx",
+      "args": ["-y", "hood-mcp"]
+    }
+  }
+}</code></pre>
+  </section>
+
+  <section id="cursor">
+    <h2>Cursor</h2>
+    <p class="section-lede">Add to <code>.cursor/mcp.json</code> in the project, or the global config.</p>
+<pre><code>{
+  "mcpServers": {
+    "hood-mcp": {
+      "command": "npx",
+      "args": ["-y", "hood-mcp"]
+    }
+  }
+}</code></pre>
+  </section>
+
+  <section id="smithery">
+    <h2>Smithery</h2>
+    <p class="section-lede">
+      <code>smithery.yaml</code> ships in the repo root and declares the stdio start command plus the
+      two optional settings below. Smithery installs the read-only data server only; the trading
+      server is deliberately not exposed there.
+    </p>
+<pre><code>startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      HOOD_MCP_NETWORK: { type: string, enum: [mainnet, testnet], default: mainnet }
+      ALCHEMY_KEY:      { type: string }
+    required: []</code></pre>
+  </section>
+
+  <section id="stdio">
+    <h2>Any stdio MCP client</h2>
+    <pre><code>npx -y hood-mcp</code></pre>
+    <p class="section-lede">
+      Speak JSON-RPC on stdin/stdout. The <a href="index.html#transcript">transcript</a> shows the
+      exact frames a client sends and receives, starting with <code>initialize</code>.
+    </p>
+  </section>
+
+  <section id="http">
+    <h2>Streamable HTTP</h2>
+    <p class="section-lede">
+      For browser-based or remote clients, run the same server over HTTP. It serves
+      <code>POST /mcp</code> and <code>GET /health</code>, stateless (a fresh server per request),
+      with CORS open and the <code>Mcp-Session-Id</code> header exposed.
+    </p>
+<pre><code>npx -y hood-mcp --http            # or HOOD_MCP_TRANSPORT=http
+curl -s http://localhost:8730/health
+{"ok":true,"server":"hood-mcp","version":"0.1.0","network":"mainnet"}</code></pre>
+  </section>
+
+  <section id="env">
+    <h2>Environment</h2>
+    <p class="section-lede">
+      Nothing here is required for the data server. The trading server's variables are documented on
+      the <a href="safety.html">safety model</a> page.
+    </p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Variable</th><th>Default</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>HOOD_MCP_NETWORK</code></td><td><code>mainnet</code></td><td>Target network: <code>mainnet</code> (chain 4663) or <code>testnet</code> (chain 46630).</td></tr>
+        <tr><td><code>ALCHEMY_KEY</code></td><td>unset</td><td>Route RPC through Alchemy instead of the public endpoint. Faster and unthrottled on the heavy portfolio and launch scans.</td></tr>
+        <tr><td><code>HOOD_MCP_TRANSPORT</code></td><td><code>stdio</code></td><td>Set to <code>http</code> to serve Streamable HTTP instead of stdio.</td></tr>
+        <tr><td><code>HOOD_MCP_PORT</code></td><td><code>8730</code></td><td>Port for the HTTP transport.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="local">
+    <h2>Run from a checkout</h2>
+<pre><code>git clone https://github.com/nirholas/hood-mcp
+cd hood-mcp
+npm install
+npm run build
+node dist/data-server.js            # stdio
+npm run docs                        # recapture the session + rebuild this site</code></pre>
+    <p class="section-lede">
+      Point a client at the local build with an absolute path instead of <code>npx</code>:
+      <code>{"command": "node", "args": ["/abs/path/hood-mcp/dist/data-server.js"]}</code>.
+    </p>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+  <a href="https://three.ws">three.ws</a> ·
+  <a href="https://www.npmjs.com/package/hood-mcp">npm</a>
+</footer>
+
+</body>
+</html>

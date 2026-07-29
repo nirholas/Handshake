@@ -78,11 +78,13 @@ function parseArgs(argv) {
 		json: null,
 		md: null,
 		label: '',
+		gesture: true,
 	};
 	for (let i = 2; i < argv.length; i++) {
 		const a = argv[i];
 		const next = () => argv[++i];
-		if (a === '--base') out.base = next().replace(/\/+$/, '');
+		if (a === '--no-gesture') out.gesture = false;
+		else if (a === '--base') out.base = next().replace(/\/+$/, '');
 		else if (a === '--pages') out.pages = next();
 		else if (a === '--device') out.device = next();
 		else if (a === '--settle') out.settle = Math.max(0, Number(next()) || 0);
@@ -209,7 +211,16 @@ function auditDom(minTarget) {
 		const box = el.getBoundingClientRect();
 		if (!isVisible(el, cs, box)) continue;
 		const distanceFromBottom = window.innerHeight - box.bottom;
-		if (distanceFromBottom > 4 || box.height < 24 || box.width < window.innerWidth * 0.5) continue;
+		// A real bottom bar hugs the bottom edge, spans most of the width, and is
+		// short. The height ceiling is what keeps full-screen fixed overlays and
+		// backdrop layers (which also end at the bottom edge) out of the list.
+		if (
+			distanceFromBottom > 4 ||
+			box.height < 24 ||
+			box.height > window.innerHeight * 0.4 ||
+			box.width < window.innerWidth * 0.5
+		)
+			continue;
 		bottomBars.push({
 			sel: describe(el),
 			h: Math.round(box.height),
@@ -219,9 +230,24 @@ function auditDom(minTarget) {
 		});
 	}
 
+	// Horizontal overflow. `scrollWidth > clientWidth` alone over-reports: the
+	// site-wide `overflow-x: clip` guard in mobile.css leaves scrollWidth wide
+	// while making the page genuinely unscrollable sideways. So also try to
+	// scroll and see whether it takes.
 	const doc = document.documentElement;
+	const overflowPx = Math.max(0, doc.scrollWidth - doc.clientWidth);
+	let canScrollX = false;
+	if (overflowPx > 0) {
+		const before = window.scrollX;
+		window.scrollTo({ left: 40, top: window.scrollY, behavior: 'instant' });
+		canScrollX = window.scrollX > before;
+		window.scrollTo({ left: before, top: window.scrollY, behavior: 'instant' });
+	}
+
 	return {
 		title: document.title,
+		overflowXStyle: getComputedStyle(doc).overflowX,
+		canScrollX,
 		checked,
 		inlineExempt,
 		smallTargets,
@@ -230,9 +256,71 @@ function auditDom(minTarget) {
 		viewportFitCover: /viewport-fit\s*=\s*cover/.test(viewportMeta),
 		safeAreaRuleCount: safeAreaRules.length,
 		bottomBars,
-		overflowX: Math.max(0, doc.scrollWidth - doc.clientWidth),
+		overflowX: overflowPx,
 		innerWidth: window.innerWidth,
 	};
+}
+
+/**
+ * Real gesture probe. `touch-action: auto` on a canvas is only a defect if the
+ * viewer actually swallows the swipe, so instead of trusting the computed style
+ * we dispatch a genuine vertical touch drag through CDP and measure how far the
+ * document scrolled. A control swipe over ordinary page content in the same
+ * session gives the "this page can scroll at all" reference.
+ */
+async function probeScrollGestures(page, cdp, canvases) {
+	const results = [];
+	const vh = await page.evaluate(() => window.innerHeight);
+	const swipe = async (x, y) => {
+		await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+		await page.waitForTimeout(400);
+		const before = await page.evaluate(() => window.scrollY);
+		const send = (type, points) =>
+			cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
+		await send('touchStart', [{ x, y }]);
+		for (let i = 1; i <= 6; i++) {
+			await send('touchMove', [{ x, y: y - i * 30 }]);
+			await page.waitForTimeout(30);
+		}
+		await send('touchEnd', []);
+		await page.waitForTimeout(700);
+		const after = await page.evaluate(() => window.scrollY);
+		return Math.round(after - before);
+	};
+
+	// Control: swipe near the left edge, below the fold start, avoiding canvases.
+	let control = 0;
+	try {
+		control = await swipe(8, Math.round(vh * 0.7));
+	} catch {
+		control = 0;
+	}
+
+	for (const c of canvases) {
+		if (!c.visible || c.w < 100 || c.h < 100) continue;
+		try {
+			const box = await page.evaluate((sel) => {
+				const el = Array.from(document.querySelectorAll('canvas')).find((n) => {
+					const id = n.id ? `#${n.id}` : '';
+					const cls =
+						typeof n.className === 'string' && n.className.trim()
+							? `.${n.className.trim().split(/\s+/).slice(0, 3).join('.')}`
+							: '';
+					return `canvas${id}${cls}` === sel;
+				});
+				if (!el) return null;
+				window.scrollTo({ top: 0, behavior: 'instant' });
+				const r = el.getBoundingClientRect();
+				return { x: r.x + r.width / 2, y: r.y + r.height / 2, top: r.top };
+			}, c.sel);
+			if (!box || box.y < 0 || box.y > vh) continue;
+			const moved = await swipe(Math.round(box.x), Math.round(box.y));
+			results.push({ sel: c.sel, touchAction: c.touchAction, scrolled: moved, control });
+		} catch {
+			/* canvas vanished between audit and probe */
+		}
+	}
+	return { control, canvases: results };
 }
 
 async function auditPage(browser, deviceDescriptor, url, opts) {
@@ -249,6 +337,7 @@ async function auditPage(browser, deviceDescriptor, url, opts) {
 		error = String(err.message).split('\n')[0].slice(0, 200);
 	}
 	let dom = null;
+	let gesture = null;
 	if (!error) {
 		try {
 			dom = await page.evaluate(auditDom, MIN_TARGET);
@@ -256,8 +345,16 @@ async function auditPage(browser, deviceDescriptor, url, opts) {
 			error = `audit failed: ${String(err.message).slice(0, 160)}`;
 		}
 	}
+	if (dom && opts.gesture && (dom.canvases || []).some((c) => c.visible && c.w >= 100 && c.h >= 100)) {
+		try {
+			const cdp = await context.newCDPSession(page);
+			gesture = await probeScrollGestures(page, cdp, dom.canvases);
+		} catch (err) {
+			gesture = { error: String(err.message).slice(0, 160) };
+		}
+	}
 	await context.close().catch(() => {});
-	return { url, status, error, ...(dom || {}) };
+	return { url, status, error, gesture, ...(dom || {}) };
 }
 
 function renderMarkdown(report) {
@@ -298,7 +395,24 @@ function renderMarkdown(report) {
 ${lines.length ? `- undersized targets:\n${lines.join('\n')}\n` : '- undersized targets: none\n'}${
 				cans.length ? `- visible canvases:\n${cans.join('\n')}\n` : ''
 			}${bars.length ? `- bottom-anchored bars:\n${bars.join('\n')}\n` : ''}${
-				r.overflowX > 0 ? `- horizontal overflow: ${r.overflowX} px beyond ${r.innerWidth} px viewport\n` : ''
+				r.overflowX > 0
+					? `- horizontal overflow: ${r.overflowX} px beyond ${r.innerWidth} px viewport (html overflow-x: ${r.overflowXStyle}, actually scrolls sideways: ${r.canScrollX})\n`
+					: ''
+			}${
+				r.gesture && !r.gesture.error
+					? `- vertical swipe test (px the document scrolled; control swipe off-canvas moved ${r.gesture.control} px):\n${
+							r.gesture.canvases.length
+								? r.gesture.canvases
+										.map(
+											(g) =>
+												`  - \`${g.sel}\` touch-action=${g.touchAction} -> page scrolled ${g.scrolled} px${
+													g.control > 20 && Math.abs(g.scrolled) < 5 ? ' **swallowed the swipe**' : ''
+												}`,
+										)
+										.join('\n')
+								: '  - no canvas large enough to probe'
+						}\n`
+					: ''
 			}`;
 		});
 

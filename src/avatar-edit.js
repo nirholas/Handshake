@@ -51,6 +51,23 @@ const equipKind = ['glasses', 'earrings'].includes(editParams.get('equip-kind') 
 	? editParams.get('equip-kind')
 	: 'hat';
 
+// The standalone /avatar-edit landing is retired (creation-consolidation C4):
+// the customizer is an in-flow step of an avatar, not a destination. The bare
+// path 301s to /avatars in vercel.json; the legacy ?id= form still renders here
+// so old links and bookmarks keep working, and gets rewritten to the canonical
+// /avatars/:id/edit URL in place — replaceState, not a navigation, so nothing
+// reloads and the equip handoff params survive.
+if (fromQuery && !fromPath && typeof history.replaceState === 'function') {
+	const rest = new URLSearchParams(editParams);
+	rest.delete('id');
+	const qs = rest.toString();
+	history.replaceState(
+		{},
+		'',
+		`/avatars/${encodeURIComponent(fromQuery)}/edit${qs ? `?${qs}` : ''}`,
+	);
+}
+
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
 	String(s ?? '').replace(

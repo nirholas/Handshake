@@ -9,7 +9,7 @@ import { getMeshoptDecoder } from '../viewer/internal.js';
 import { resolveURI } from '../ipfs.js';
 import { resolveSlot } from './animation-slots.js';
 import { LookAtController } from '../procedural/look-at.js';
-import { canonicalNodeMapFromObject } from '../animation-retarget.js';
+import { canonicalBoneNodes } from '../procedural/canonical-bones.js';
 import { log } from '../shared/log.js';
 
 const EXPRESSION_MAP = {
@@ -339,10 +339,9 @@ export class SceneController {
 		if (!content) return null;
 		if (this._boneMapFor !== content) {
 			this._boneMapFor = content;
-			this._boneMap = canonicalNodeMapFromObject(content);
+			this._boneMap = canonicalBoneNodes(content);
 		}
-		const name = this._boneMap.get(canonical);
-		return name ? content.getObjectByName(name) : null;
+		return this._boneMap.get(canonical) || null;
 	}
 
 	// --- Expression (morph targets) ---

@@ -71,6 +71,30 @@
 			<description>Every coin category page (layer-1, AI tokens, meme tokens and the rest) is built from one upstream market data provider, because it is the only free source that knows which coins belong to which sector. Whenever that provider throttled us, those pages returned an error and showed nothing at all, while the main coins table stayed up because it has a second source to fall back on. Category pages now fall back to the most recent real data they successfully loaded, clearly marked as of when it was fetched, and switch back to live figures the moment the provider recovers. Nothing is invented: a category we have never loaded still reports the outage honestly rather than showing a made-up table.</description>
 		</item>
 		<item>
+			<title>Chat now forges and displays 3D models right in the conversation</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-07-29:Chat now forges and displays 3D models right in the conversation</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Ask the chat at three.ws/chat for a 3D model and it generates one with the free Forge lane, streams live progress in place, and then renders the finished model as an interactive viewer inside the thread: orbit and zoom it, play its animations, toggle the skeleton on rigged avatars, download the GLB, or open it in AR. Pasting a link to any .glb file now shows the model the same way, even when the file's host would normally block the browser from reading it. Previously 3D results only appeared inside a boxed-in web page you had to click into.</description>
+		</item>
+		<item>
+			<title>Coin pages stay up when the market data provider rate-limits us</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-07-29:Coin pages stay up when the market data provider rate-limits us</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The price chart, profile and exchange listings on a coin page all came from one provider, so whenever it throttled our requests the whole page went down at once, for hours. Each of those now has a live backup: charts fall back to exchange candles for the majors and an on-chain price oracle for every other coin, while the profile and market listings fall back to a second data provider. When a backup is answering, the page says so at the bottom instead of quietly leaving numbers blank, and columns the backup cannot fill are hidden rather than shown as a row of dashes. Two small honesty fixes came with it: a follower count of zero now means &quot;not tracked&quot; and is left out rather than stated as zero, and a price change the backup does not actually compute is no longer drawn as a flat 0.00%.</description>
+		</item>
+		<item>
+			<title>Concierge demo and the 3D home demo both work again</title>
+			<link>https://three.ws/concierge</link>
+			<guid isPermaLink="false">2026-07-29:Concierge demo and the 3D home demo both work again</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The live widget on the Concierge page failed to start because the page ran its setup before the widget code had finished loading, leaving visitors with a dead demo on the page that sells it. The /demos/3d-home animated avatar demo never rendered its character either: the model uses compressed geometry and the page was loading it without the matching decoder. Both now load, animate, and respond as intended.</description>
+		</item>
+		<item>
 			<title>Ethereum name lookups work again</title>
 			<link>https://three.ws/crypto-api</link>
 			<guid isPermaLink="false">2026-07-29:Ethereum name lookups work again</guid>
@@ -101,6 +125,14 @@
 			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.</description>
+		</item>
+		<item>
+			<title>On-chain agent pages now load their registration details reliably</title>
+			<link>https://three.ws/docs/erc8004</link>
+			<guid isPermaLink="false">2026-07-29:On-chain agent pages now load their registration details reliably</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>ERC-8004 agent pages read each agent's registration document from wherever its owner published it. Most of those hosts do not permit direct browser access, so a large share of agents showed &quot;Could not fetch registration JSON&quot; instead of their name, description, avatar, and skills. Pages now fall back to fetching that document through three.ws, so those agents render in full. The fallback validates every address it connects to and caps the download, so a hostile registration link cannot reach anything private.</description>
 		</item>
 		<item>
 			<title>Ordinary new coins are no longer mistaken for honeypots</title>
@@ -159,6 +191,14 @@
 			<description>One background job tops up each trading agent wallet to a working balance. Another reclaims idle SOL from platform wallets back to the treasury so the agent economy can pay its network fees. Their thresholds disagreed, so they took turns moving the same funds in opposite directions: in one fifteen-minute window 0.24 SOL made that round trip six times, paying a network fee each leg, and the agents never held a balance long enough to trade. Both jobs now read a single shared policy with one rule, that a reclaim can never take a wallet below the level the top-up will immediately restore. The reclaim also now leaves every active trader enough to cover a complete trade, including the safety check that runs before it.</description>
 		</item>
 		<item>
+			<title>The agent directory is now readable without JavaScript, and the homepage loads lighter</title>
+			<link>https://three.ws/discover</link>
+			<guid isPermaLink="false">2026-07-29:The agent directory is now readable without JavaScript, and the homepage loads lighter</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Two things that made the site slower and harder to find. The Discover directory indexes over 150,000 agents but built its entire page in the browser, so search engines, link previews, and anyone on a slow or JavaScript-less connection saw an empty page. The server now sends the first page of agents and the live directory totals with the page itself, exactly matching what the browser then loads. Separately, the homepage was carrying a large duplicate copy of its own styling inline, plus two big scripts that blocked the page from drawing while they parsed. Those moved into files the browser caches once and reuses on every later visit, cutting the homepage document roughly in half.</description>
+		</item>
+		<item>
 			<title>The fact checker stops timing out, and reads its sources properly</title>
 			<link>https://three.ws/fact-check</link>
 			<guid isPermaLink="false">2026-07-29:The fact checker stops timing out, and reads its sources properly</guid>
@@ -173,6 +213,14 @@
 			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The live trade feed connects to a chain of Solana data providers and falls back through them. Some of those providers answer normal requests fine but reject the live-streaming connection outright, and the underlying library retried them forever, flooding the logs and wasting a slot in the fallback chain. The feed now tests each provider once, permanently sets aside the ones that structurally cannot stream, and briefly benches ones that are merely busy, so it lands on a working provider immediately instead of retrying a dead one.</description>
+		</item>
+		<item>
+			<title>The news rail on a coin page no longer hides stories it already has</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-07-29:The news rail on a coin page no longer hides stories it already has</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The related-news strip on a coin page decided whether to show anything by asking how many news publishers had just been refreshed, rather than whether it actually had articles in hand. Since the news system also serves recent copies it fetched a little earlier, the rail could be holding eight real stories and still show an error instead. It now shows what it has, and reports a problem only when it genuinely has nothing.</description>
 		</item>
 		<item>
 			<title>three.ws can search the live web now, with sources you can check</title>
@@ -215,6 +263,14 @@
 			<description>The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.</description>
 		</item>
 		<item>
+			<title>Fits: the cosmetics economy</title>
+			<link>https://three.ws/fits</link>
+			<guid isPermaLink="false">2026-07-28:Fits: the cosmetics economy</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.</description>
+		</item>
+		<item>
 			<title>Receipt Vault</title>
 			<link>https://three.ws/receipts</link>
 			<guid isPermaLink="false">2026-07-28:Receipt Vault</guid>
@@ -237,6 +293,22 @@
 			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every coin profile page was returning an error. The market-data provider we read prices and coin details from gives us a monthly call allowance, and once it ran out, every request we sent with our key was refused. The awkward part: the exact same request sent without the key was still being answered. We were effectively locking ourselves out. The pages are live again, and the fix is permanent rather than a one-off: when the key gets refused, we now set it aside for a while and retry the same request without it, so the pages keep serving and recover on their own when the allowance resets. We also repaired a 3D model service that was crash-looping because it tried to download a small config file from a public model host on every start and kept getting throttled. That file now ships with our own model storage, so the service starts without depending on anyone else.</description>
+		</item>
+		<item>
+			<title>Coin pages stay up when the market-data quota runs out</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-28:Coin pages stay up when the market-data quota runs out</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our market-data provider caps the free tier at 10,000 calls a month. Once that ran out, every request carrying our key was refused for the rest of the billing period, while the very same request without a key was still being answered normally. Coin details, tickers, and exchange data returned errors for hours on 28 July because of it. An exhausted key is now benched for fifteen minutes and the request is immediately retried without it, so pages keep serving. The key comes back into use on its own when the quota resets, with no redeploy and nobody paged.</description>
+		</item>
+		<item>
+			<title>Consistent formatted text and notifications across the site</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-28:Consistent formatted text and notifications across the site</guid>
+			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Formatted text (agent descriptions, chat replies, docs excerpts) was being rendered by a handful of separate implementations that had drifted apart, and each page that needed a confirmation message carried its own copied-in version. Both now come from one shared implementation: text is parsed and sanitised the same way everywhere, so the same content renders identically on every surface, and notifications queue and dismiss consistently instead of stacking or vanishing depending on which page you were on.</description>
 		</item>
 		<item>
 			<title>Crypto Intel now prices pump.fun coins, and settle failures explain themselves</title>
@@ -375,6 +447,14 @@
 			<description>For a long time our developer documentation, API response examples, and the skill file that AI agents read to embed a 3D avatar all pointed model and image URLs at an address that does not exist: there was never a DNS record behind it. Copy one of those examples and you got a connection failure, and an agent following the embed instructions produced a body URL that could never load. It appeared 181 times across 55 files, including every code sample in the 3D and MCP API references. All of them now point at the asset CDN we actually run, which serves the same files from three.ws itself, allows any site to load them, and caches at the edge for a month. The Spatial MCP reference page moved onto it too, which fixes something subtle: it had been loading its example model from a storage origin that is rate-limited and only answers requests from our own domain, so anyone copying that example to prove the standard is portable was blocked by the very page meant to demonstrate portability. A new check refuses to let a dead asset address into the codebase again, and it also pins the route the working URLs depend on, so the two cannot drift apart.</description>
 		</item>
 		<item>
+			<title>Five more languages: Hausa, Armenian, Georgian, Pashto and Sinhala</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Five more languages: Hausa, Armenian, Georgian, Pashto and Sinhala</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws now ships in 60 languages. The five new locales cover the full site, not a landing page: navigation, the studio, the wardrobe, forged galleries, notifications, and the cookbook. Translations across the existing 55 languages were refreshed at the same time, so pages that gained copy recently are no longer part-English in a translated locale.</description>
+		</item>
+		<item>
 			<title>Garment generation no longer loses jobs when it scales down</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-27:Garment generation no longer loses jobs when it scales down</guid>
@@ -397,6 +477,22 @@
 			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Generated caps could come out with brims jutting past the face, and sneakers could hover away from the feet, because the forge sized those pieces by width alone: a deep-brimmed cap or a photographed pair of shoes standing close together gave the sizing step no useful signal. Caps are now scaled to fit the head on every dimension, and shoes are sized by foot length and placed onto each foot individually. Measured on a walking avatar, the worst-case gap between shoe and foot dropped from 34cm to 3cm, and cap overhang from 21cm to 8cm. Every piece in the catalog is now checked automatically: it must load, match its published fingerprint, and bind correctly onto four different avatar skeletons before it counts as good, with the pieces that failed the new bar replaced. A daily check also watches the live catalog for anything that breaks after the fact.</description>
+		</item>
+		<item>
+			<title>Interrupted garment generations now recover on their own</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Interrupted garment generations now recover on their own</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the garment worker scaled down mid-job, the job it was holding became an orphan: the machinery to re-drive it existed but nothing ever triggered it, so the job sat until a watchdog eventually marked it failed. A scheduled sweep now re-drives orphaned jobs every ten minutes, so a generation interrupted by a scale-down finishes instead of dying quietly.</description>
+		</item>
+		<item>
+			<title>Loading grids and the live terminal now pass the accessibility floor</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Loading grids and the live terminal now pass the accessibility floor</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two things a screen reader or a low-vision visitor hit directly. The loading placeholders on the animation and character libraries announced themselves with a label that assistive technology is required to ignore, so the &quot;loading&quot; state was silent; they are now proper status regions that get read aloud. And on the live terminal, each arriving row faded in from fully transparent, which meant text on screen sat below the readable-contrast floor for a quarter second at a time on a feed that never stops. Rows now slide in at full contrast instead of fading.</description>
 		</item>
 		<item>
 			<title>Pages that stayed English no matter which language you picked now translate</title>
@@ -485,6 +581,14 @@
 			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A stretch of the site's translated copy was never actually translated. When the translation service was unreachable, the pipeline wrote the English text into each language file as a placeholder, and because the text was technically present, every later run skipped it. Punjabi was the worst case: the language was offered in the picker but read as English from top to bottom. Punjabi is now fully translated, and the same repair is running across the other languages, covering tens of thousands of phrases that had been sitting in English. There is also a new maintenance command that finds this class of gap, so a language can no longer look complete while reading in English.</description>
+		</item>
+		<item>
+			<title>Wallet tools work again on older Android browsers</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-27:Wallet tools work again on older Android browsers</guid>
+			<pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A compatibility shim for older Android WebViews was reaching the main app but not the four background workers the site runs off the main thread. The vanity-address grinder calls the exact feature that shim exists to provide, so on Chrome 92 and earlier it failed on launch while the rest of the page looked fine. The shim now ships into the background workers too.</description>
 		</item>
 		<item>
 			<title>Wardrobe</title>
@@ -741,6 +845,14 @@
 			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Until now the wardrobe could only recolour or hide the clothes an avatar was generated with. It can now put NEW clothes on: the avatar editor's Wardrobe tab gained a Closet with racks of catalog pieces (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories). Click a piece and it binds to your avatar's skeleton and moves with every animation, whatever generator the avatar came from: forge characters, selfie reconstructions and uploaded models all work, because garments are fitted to the skeleton at wear-time instead of being authored for one specific body. The body is masked under whatever you wear so skin never pokes through the cloth, a piece that cannot fit a particular skeleton politely refuses instead of deforming into spaghetti, and every download is integrity-checked against the catalog before it touches your avatar. Saved outfits persist: the downloadable and embedded versions of your avatar come out dressed too.</description>
+		</item>
+		<item>
+			<title>Fingerspelled signing reads as one continuous hand, not a slideshow</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-25:Fingerspelled signing reads as one continuous hand, not a slideshow</guid>
+			<pubDate>Sat, 25 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The signing avatar built each letter from its own one-off pose code, so handshapes drifted between letters and a spelled word looked like a sequence of unrelated snapshots. Handshapes now come from a single shared library that both fingerspelling and full lexical signs draw on, so the same letter looks the same everywhere and the transitions between them are continuous. Wrists, thumbs, and finger curls were re-checked against reference photography across the whole alphabet.</description>
 		</item>
 		<item>
 			<title>Fixed: saving your avatar's look from the editor</title>
@@ -16375,14 +16487,6 @@
 			<description>The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.</description>
 		</item>
 		<item>
-			<title>3D Scanner — Scan Yourself into 3D</title>
-			<link>https://three.ws/scan</link>
-			<guid isPermaLink="false">2026-05-29:3D Scanner — Scan Yourself into 3D</guid>
-			<pubDate>Fri, 29 May 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.</description>
-		</item>
-		<item>
 			<title>Forever — etch a message into Bitcoin</title>
 			<link>https://three.ws/forever</link>
 			<guid isPermaLink="false">2026-05-29:Forever — etch a message into Bitcoin</guid>
@@ -16621,14 +16725,6 @@
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Import any GLB or glTF avatar into three.ws and give it an agent brain.</description>
-		</item>
-		<item>
-			<title>New Agent</title>
-			<link>https://three.ws/agent/new</link>
-			<guid isPermaLink="false">2026-05-25:New Agent</guid>
-			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Create a new agent from scratch — avatar, brain, skills, and on-chain identity.</description>
 		</item>
 		<item>
 			<title>Playground</title>

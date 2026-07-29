@@ -121,7 +121,9 @@ Bone lengths are preserved exactly; the solve only ever rotates.
 |---|---|---|
 | Corner walk companion | Look-at (cursor gaze) | [`walk-sdk/src/companion.js`](../walk-sdk/src/companion.js) `_updateGaze()` |
 | The walkaround world (`/walk`) | Foot planting on terrain | [`src/walk.js`](../src/walk.js) `rebuildFootPlant()` |
+| `/walk` NPCs | Look-at (they watch the player) | [`src/walk-npcs.js`](../src/walk-npcs.js) `_updateGaze()` |
 | Agent avatars (`AgentAvatar`) | Look-at (`setLookTarget`, `LOOK_AT`) | [`src/agent-avatar.js`](../src/agent-avatar.js) `_applyLookTarget()` |
+| `<agent-3d>` web component | Look-at (`lookAt()` public API) | [`src/runtime/scene.js`](../src/runtime/scene.js) `lookAt()` |
 
 ### The companion's cursor gaze
 
@@ -137,6 +139,20 @@ agentAvatar.setLookTarget(null);                   // release
 ```
 
 `LOOK_AT` with `target: 'user'` (or `'camera'`) tracks the **live** camera position each frame, so the gaze holds while the viewer orbits. An explicit `setLookTarget()` always overrides camera tracking.
+
+### The `<agent-3d>` component
+
+`lookAt()` on the web component (and on `SceneController`) takes a `Vector3` or one of `'camera'`, `'user'`, `'center'`, or `null` to release:
+
+```js
+document.querySelector('agent-3d').lookAt('user');
+```
+
+The gaze is a **standing state**, not a one-off pose write: it re-applies after the mixer every frame, so it survives on an avatar that is playing a clip. The named targets re-resolve each frame, so `lookAt('camera')` keeps holding the viewer's eyes while they orbit. A rig with no head chain falls back to yawing the whole model, which is the best a headless rig can do.
+
+### `/walk` NPCs
+
+Every NPC watches the player within 14 m — wider than the 4 m greeting range, because noticing someone happens long before greeting them. A wanderer can glance over without breaking stride, since the gaze is an overlay on the walk cycle rather than a replacement for it. Past the clamp the layer releases rather than pinning the head, so an NPC the player has walked behind simply returns to its clip.
 
 ---
 

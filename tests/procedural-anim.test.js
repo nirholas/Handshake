@@ -9,10 +9,20 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Bone, Group, Quaternion, Vector3 } from 'three';
+import {
+	Bone,
+	BufferGeometry,
+	Float32BufferAttribute,
+	Group,
+	Quaternion,
+	Skeleton,
+	SkinnedMesh,
+	Vector3,
+} from 'three';
 import { solveTwoBoneIK } from '../src/procedural/two-bone-ik.js';
 import { LookAtController } from '../src/procedural/look-at.js';
 import { FootPlantController } from '../src/procedural/foot-plant.js';
+import { canonicalBoneNodes } from '../src/procedural/canonical-bones.js';
 
 // A hip->knee->ankle chain hanging straight down from a root group at hip
 // height, knee pre-bent slightly forward (+Z) like every real locomotion pose,
@@ -91,6 +101,93 @@ function headForwardModelSpace(model) {
 function settle(controller, frames = 120) {
 	for (let i = 0; i < frames; i++) controller.update(1 / 60);
 }
+
+// A rig whose bones are reachable ONLY through `skeleton.bones` — the armature
+// is not parented under the model root. GLBs that export the armature beside
+// the mesh, and SkeletonUtils clones, both produce this shape, and it is what
+// every NPC in the walkaround world turned out to look like.
+function makeDetachedArmatureRig() {
+	const root = new Group();
+	const bone = (name) => Object.assign(new Bone(), { name });
+	const hips = bone('Hips');
+	const spine = bone('Spine');
+	const spine2 = bone('Spine2');
+	const neck = bone('Neck');
+	const head = bone('Head');
+	spine.position.y = 0.1;
+	spine2.position.y = 0.2;
+	neck.position.y = 0.15;
+	head.position.y = 0.1;
+	hips.add(spine);
+	spine.add(spine2);
+	spine2.add(neck);
+	neck.add(head);
+
+	const bones = [hips, spine, spine2, neck, head];
+	for (const side of ['Left', 'Right']) {
+		const up = bone(`${side}UpLeg`);
+		const leg = bone(`${side}Leg`);
+		const foot = bone(`${side}Foot`);
+		up.position.set(side === 'Left' ? 0.1 : -0.1, -0.05, 0);
+		leg.position.set(0, -0.45, 0.02);
+		foot.position.set(0, -0.45, 0.02);
+		hips.add(up);
+		up.add(leg);
+		leg.add(foot);
+		bones.push(up, leg, foot);
+	}
+	hips.position.y = 0.95;
+
+	const geo = new BufferGeometry();
+	geo.setAttribute('position', new Float32BufferAttribute([0, 0, 0], 3));
+	geo.setAttribute('skinIndex', new Float32BufferAttribute([0, 0, 0, 0], 4));
+	geo.setAttribute('skinWeight', new Float32BufferAttribute([1, 0, 0, 0], 4));
+	const mesh = new SkinnedMesh(geo);
+	mesh.bind(new Skeleton(bones));
+	root.add(mesh); // the MESH is under root; the bone tree is not
+	root.updateWorldMatrix(true, true);
+	return root;
+}
+
+describe('canonical bone resolution', () => {
+	// Regression: the layers used to resolve canonical names to bone *names* and
+	// then call model.getObjectByName(), which only searches descendants of the
+	// root. Every rig with a detached armature therefore reported enabled=false
+	// and silently did nothing — the failure mode that shipped gaze to the walk
+	// world's NPCs with no effect.
+	it('finds bones reachable only through skeleton.bones', () => {
+		const nodes = canonicalBoneNodes(makeDetachedArmatureRig());
+		expect(nodes.get('Head')?.name).toBe('Head');
+		expect(nodes.get('LeftFoot')?.name).toBe('LeftFoot');
+	});
+
+	it('getObjectByName cannot find them, which is why node resolution exists', () => {
+		expect(makeDetachedArmatureRig().getObjectByName('Head')).toBeUndefined();
+	});
+
+	it('LookAtController is enabled on a detached-armature rig', () => {
+		const ctl = new LookAtController(makeDetachedArmatureRig());
+		expect(ctl.enabled).toBe(true);
+		expect(ctl.headBone?.name).toBe('Head');
+	});
+
+	it('FootPlantController is enabled on a detached-armature rig', () => {
+		expect(new FootPlantController(makeDetachedArmatureRig(), () => 0).enabled).toBe(true);
+	});
+
+	it('and the gaze actually turns that rig', () => {
+		const root = makeDetachedArmatureRig();
+		const ctl = new LookAtController(root);
+		ctl.setTarget(new Vector3(2, 1.5, 2));
+		settle(ctl);
+		const head = ctl.headBone;
+		head.updateWorldMatrix(true, false);
+		const q = new Quaternion();
+		head.getWorldQuaternion(q);
+		const fwd = new Vector3(0, 0, 1).applyQuaternion(q);
+		expect(fwd.x).toBeGreaterThan(0.25);
+	});
+});
 
 describe('solveTwoBoneIK', () => {
 	it('places the tip on a reachable target', () => {

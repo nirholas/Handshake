@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot (no-flash); runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Fits: the cosmetics economy · three.ws</title>
+		<meta
+			name="description"
+			content="The live cosmetics economy: the scarcest premium fits ranked by on-chain ownership, the top collectors wearing them, the creators actually getting paid in USDC, and every settled sale as it lands. Look up any creator wallet's earnings, free and without an account."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/fits" />
+		<meta property="og:title" content="Fits: the cosmetics economy · three.ws" />
+		<meta
+			property="og:description"
+			content="Rarest fits, top collectors, creator earnings in real USDC, and a live feed of every settled cosmetic sale. Every number read from the settled-sale ledger."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Fits&amp;d=The+live+cosmetics+economy%3A+rarest+fits%2C+top+collectors%2C+and+the+creators+actually+getting+paid+in+USDC.&amp;p=%2Ffits"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Fits: the cosmetics economy · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Rarest fits, top collectors, and real settled USDC creator earnings, live from the cosmetics ledger."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Fits&amp;d=The+live+cosmetics+economy%3A+rarest+fits%2C+top+collectors%2C+and+the+creators+actually+getting+paid+in+USDC.&amp;p=%2Ffits"
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/ui-juice.css" />
+		<link rel="stylesheet" href="/src/fits.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/fits" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Fits: the cosmetics economy",
+				"description": "The live cosmetics economy on three.ws: rarest premium fits, top collectors, real settled USDC creator earnings, and every cosmetic sale as it settles.",
+				"url": "https://three.ws/fits",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Fits: the cosmetics economy on three.ws" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="ft-shell">
+			<div class="ft-glow" aria-hidden="true"></div>
+
+			<section class="ft-hero">
+				<div>
+					<p class="ft-kicker">
+						<span class="ft-live-dot" aria-hidden="true"></span> Live cosmetics ledger
+					</p>
+					<h1 class="ft-title">The <em>Fits</em> economy</h1>
+					<p class="ft-sub">
+						Premium cosmetics are bought with real USDC, and every sale splits revenue
+						with the creator of the coin world the fit belongs to. This is that ledger:
+						the scarcest fits, the collectors wearing them, the creators actually
+						getting paid, and every sale as it settles. Wear them in
+						<a href="/play">Play</a>; forge your own in the
+						<a href="/wardrobe">Wardrobe</a>.
+					</p>
+				</div>
+				<span class="ft-updated" id="ft-updated" aria-live="polite"></span>
+			</section>
+
+			<div class="ft-kpis" aria-label="Cosmetics economy summary">
+				<div class="ft-kpi ft-kpi--hero">
+					<span class="ft-kpi-label">Recent sales volume</span>
+					<span class="ft-kpi-val" id="ft-k-gross">·</span>
+					<span class="ft-kpi-sub" id="ft-k-gross-note"></span>
+				</div>
+				<div class="ft-kpi">
+					<span class="ft-kpi-label">Creators paid</span>
+					<span class="ft-kpi-val" id="ft-k-creators">·</span>
+					<span class="ft-kpi-sub" id="ft-k-creators-note"></span>
+				</div>
+				<div class="ft-kpi">
+					<span class="ft-kpi-label">Collectors</span>
+					<span class="ft-kpi-val" id="ft-k-collectors">·</span>
+					<span class="ft-kpi-sub">ranked by flex score</span>
+				</div>
+				<div class="ft-kpi">
+					<span class="ft-kpi-label">Fits tracked</span>
+					<span class="ft-kpi-val" id="ft-k-fits">·</span>
+					<span class="ft-kpi-sub" id="ft-k-fits-note"></span>
+				</div>
+			</div>
+
+			<div class="ft-error" id="ft-board-error" role="alert" hidden>
+				<h2>Could not load the cosmetics ledger</h2>
+				<p id="ft-board-error-msg"></p>
+				<button type="button" class="ft-mini" id="ft-retry">Retry</button>
+			</div>
+
+			<div class="ft-empty" id="ft-empty" hidden>
+				<h2>The cosmetics economy is quiet right now</h2>
+				<p>
+					No premium fits have sold yet. Buy one in <a href="/play">Play</a> and you top
+					the rarity board while the coin world's creator earns their cut, or forge an
+					original piece in the <a href="/wardrobe">Wardrobe</a>.
+				</p>
+			</div>
+
+			<section class="ft-section" aria-labelledby="ft-fits-h">
+				<div class="ft-section-h">
+					<h2 id="ft-fits-h">Rarest fits</h2>
+					<span class="ft-section-note">Ranked by how few wallets own them</span>
+				</div>
+				<div class="ft-fits" id="ft-fits"></div>
+			</section>
+
+			<div class="ft-cols">
+				<section class="ft-section" aria-labelledby="ft-collectors-h">
+					<div class="ft-section-h">
+						<h2 id="ft-collectors-h">Top collectors</h2>
+						<span class="ft-section-note">Rarity-weighted</span>
+					</div>
+					<ul class="ft-list" id="ft-collectors"></ul>
+				</section>
+
+				<section class="ft-section" aria-labelledby="ft-creators-h">
+					<div class="ft-section-h">
+						<h2 id="ft-creators-h">Top creators</h2>
+						<span class="ft-section-note">Settled USDC</span>
+					</div>
+					<ul class="ft-list" id="ft-creators"></ul>
+				</section>
+			</div>
+
+			<section class="ft-section" aria-labelledby="ft-recent-h">
+				<div class="ft-section-h">
+					<h2 id="ft-recent-h">Latest sales</h2>
+					<span class="ft-section-note">Every row is a settled payment</span>
+				</div>
+				<ul class="ft-list" id="ft-recent"></ul>
+			</section>
+
+			<section class="ft-lookup" aria-labelledby="ft-lookup-h">
+				<h2 id="ft-lookup-h">Creator earnings lookup</h2>
+				<p>
+					Paste any Solana creator wallet to see its settled cosmetic earnings: lifetime
+					and 30-day totals, paid versus pending, and the breakdown by cosmetic and coin
+					world. Public data, no account needed.
+				</p>
+				<form class="ft-lookup-form" id="ft-lookup-form">
+					<input
+						class="ft-input"
+						id="ft-lookup-input"
+						type="text"
+						inputmode="text"
+						autocomplete="off"
+						spellcheck="false"
+						placeholder="Creator wallet address"
+						aria-label="Creator wallet address"
+					/>
+					<button class="ft-btn" type="submit">Look up earnings</button>
+				</form>
+
+				<div class="ft-earnings" id="ft-earnings" hidden>
+					<div class="ft-error" id="ft-earnings-error" role="alert" hidden>
+						<h2>Lookup failed</h2>
+						<p id="ft-earnings-error-msg"></p>
+					</div>
+					<div id="ft-earnings-out"></div>
+				</div>
+			</section>
+
+			<p class="ft-fineprint">
+				Every figure here is read from the settled-sale ledger, never estimated: a row
+				exists only after its USDC payment settled. "Recent sales volume" sums the sales
+				window this board returns, not all time. Creator payouts route to the wallet
+				resolved from the coin's launch records, so a split configuration can never
+				redirect another coin's revenue. See the
+				<a href="/x402-revenue">endpoint revenue</a> and
+				<a href="/receipts">receipt vault</a> for the other sides of the platform ledger.
+			</p>
+		</main>
+
+		<script type="module" src="/src/fits.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

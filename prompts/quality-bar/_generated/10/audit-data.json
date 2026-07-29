@@ -1,0 +1,55 @@
+{
+	"startedAt": "2026-07-29T06:10:51.858Z",
+	"finishedAt": null,
+	"baseUrl": "https://three.ws",
+	"cases": {
+		"a": {
+			"id": "a",
+			"label": "Athlete",
+			"prompt": "A synthetic persona, not a real person: a professional sprinter in her late twenties, lean muscular build, short natural curls, wearing a fitted team tracksuit and running shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "a-before-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"file": "a-before-three-quarter.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/47e396f1-4c6b-4b4d-9c23-b39931252744.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/4f92033c-8e30-4689-9f72-2c55099791d1.png",
+					"creationId": "47e396f1-4c6b-4b4d-9c23-b39931252744",
+					"generationMs": 80287,
+					"error": null
+				}
+			},
+			"directed": "Full-body humanoid, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart for optimal rigging, hands open, fingers separated; female, late twenties, lean muscular athletic build, toned proportions, determined",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
+		}
+	},
+	"variants": [
+		{
+			"id": "before",
+			"tier": "standard"
+		},
+		{
+			"id": "after",
+			"tier": "high"
+		}
+	],
+	"judge": {
+		"model": "google/gemini-2.5-pro",
+		"maxTokens": 4096,
+		"callsPerView": 2
+	}
+}

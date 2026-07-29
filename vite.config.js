@@ -416,7 +416,6 @@ const appConfig = {
 				'create-selfie': resolve(__dirname, 'pages/create-selfie.html'),
 				'create-prompt': resolve(__dirname, 'pages/create-prompt.html'),
 				genesis: resolve(__dirname, 'pages/genesis.html'),
-				scan: resolve(__dirname, 'pages/scan.html'),
 				worlds: resolve(__dirname, 'pages/worlds.html'),
 				'avatar-studio': resolve(__dirname, 'pages/avatar-studio.html'),
 				'create-review': resolve(__dirname, 'pages/create-review.html'),
@@ -455,6 +454,7 @@ const appConfig = {
 				diorama: resolve(__dirname, 'pages/diorama.html'),
 				'x402-revenue': resolve(__dirname, 'pages/x402-revenue.html'),
 				receipts: resolve(__dirname, 'pages/receipts.html'),
+				fits: resolve(__dirname, 'pages/fits.html'),
 				viability: resolve(__dirname, 'pages/viability.html'),
 				deployments: resolve(__dirname, 'pages/deployments.html'),
 				'admin-launcher': resolve(__dirname, 'pages/admin/launcher.html'),
@@ -984,8 +984,6 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/embed/walk/': resolve(root, 'pages/embed-walk.html'),
 					'/paywall': resolve(root, 'public/paywall.html'),
 					'/paywall/': resolve(root, 'public/paywall.html'),
-					'/scan': resolve(root, 'pages/scan.html'),
-					'/scan/': resolve(root, 'pages/scan.html'),
 					'/image-to-3d': resolve(root, 'pages/forge.html'),
 					'/image-to-3d/': resolve(root, 'pages/forge.html'),
 					'/forge-max': resolve(root, 'pages/forge.html'),
@@ -1079,6 +1077,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/x402-revenue/': resolve(root, 'pages/x402-revenue.html'),
 					'/receipts': resolve(root, 'pages/receipts.html'),
 					'/receipts/': resolve(root, 'pages/receipts.html'),
+					'/fits': resolve(root, 'pages/fits.html'),
+					'/fits/': resolve(root, 'pages/fits.html'),
 					'/viability': resolve(root, 'pages/viability.html'),
 					'/viability/': resolve(root, 'pages/viability.html'),
 					'/deployments': resolve(root, 'pages/deployments.html'),
@@ -1382,7 +1382,6 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/tracker/': resolve(root, 'pages/tracker.html'),
 					'/features': resolve(root, 'pages/features.html'),
 					'/features/': resolve(root, 'pages/features.html'),
-					'/agent/new': resolve(root, 'pages/agent-edit.html'),
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 					'/bazaar': resolve(root, 'public/bazaar.html'),
@@ -1434,6 +1433,7 @@ support: resolve(__dirname, 'pages/support.html'),
 					)
 						return next();
 					const path = url.split('?')[0];
+					let filePath;
 					// /api/* is handled by the http proxy in server.proxy above —
 					// the middleware must not intercept those requests.
 					if (dirRoutes.has(path)) {
@@ -1466,6 +1466,36 @@ support: resolve(__dirname, 'pages/support.html'),
 					if (path === '/widget-studio' || path === '/widget-studio/') {
 						res.statusCode = 301;
 						res.setHeader('Location', '/studio');
+						return res.end();
+					}
+					// Creation-surface consolidation (prompts/roadmap/creation-consolidation.md
+					// Phase 2). Each of these mirrors a vercel.json rule so dev matches prod.
+					//
+					// C1: /scan merged into /create/selfie — the selfie flow owns both the
+					// live-camera and the upload input, so the scanner URL is retired.
+					if (path === '/scan' || path === '/scan/') {
+						res.statusCode = 301;
+						res.setHeader('Location', '/create/selfie');
+						return res.end();
+					}
+					// C2: /agent/new → /create-agent. A request carrying the avatar handoff
+					// params is REWRITTEN (not redirected) so the wizard still receives
+					// them; src/create-agent.js consumes them and canonicalises the URL.
+					if (path === '/agent/new' || path === '/agent/new/') {
+						const q = url.slice(path.length);
+						if (/[?&]avatar_(id|glb)=/.test(q)) {
+							filePath = resolve(root, 'pages/create-agent.html');
+						} else {
+							res.statusCode = 301;
+							res.setHeader('Location', '/create-agent');
+							return res.end();
+						}
+					}
+					// C4: the standalone /avatar-edit landing is retired — the editor is
+					// only reachable in-flow at /avatars/:id/edit (or the legacy ?id= form).
+					if ((path === '/avatar-edit' || path === '/avatar-edit/') && !/[?&]id=/.test(url)) {
+						res.statusCode = 301;
+						res.setHeader('Location', '/dashboard/avatars');
 						return res.end();
 					}
 					// Bare /agent 301s to the agents directory in prod (vercel.json);
@@ -1517,7 +1547,7 @@ support: resolve(__dirname, 'pages/support.html'),
 						res.setHeader('Location', dest);
 						return res.end();
 					}
-					let filePath = fileMap[path];
+					if (!filePath) filePath = fileMap[path];
 					// /blog/<slug>  → resolves to blog/<slug>.html on disk
 					if (!filePath && /^\/blog\/[a-z0-9-]+\/?$/.test(path)) {
 						const slug = path.replace(/^\/blog\//, '').replace(/\/$/, '');

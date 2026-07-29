@@ -618,6 +618,146 @@ describe('world-delta correctness — limb retarget preserves world motion', () 
 	});
 });
 
+// ---------------------------------------------------------------------------
+// The dignity floor: a rig from any supported naming convention must clear
+// MIN_COVERAGE against the REAL shipped clips, with both arms and both legs
+// bound. This is the invariant scripts/animation-dignity-sweep.mjs measures in
+// full (it also checks that the bones actually rotate and that the hands and
+// feet travel through world space); the case below is the cheap CI half of it.
+//
+// Why coverage is the sharp edge: 30 of a clip's 53 tracks address finger bones.
+// A convention whose hands don't name-map scores about 40%, falls under the gate,
+// and `retargetClip` returns a NULL clip — production then builds no action at
+// all and the avatar stands frozen in its bind pose. Every convention here was
+// measured doing exactly that before the finger aliases landed in
+// src/glb-canonicalize.js, and nothing in the suite noticed, because every other
+// test either passes `minCoverage: 0` or uses a synthetic 5-bone rig.
+// ---------------------------------------------------------------------------
+describe('rig-convention coverage floor (real clips)', () => {
+	const REPO2 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+	const realClip = (name) => {
+		const clip = AnimationClip.parse(
+			JSON.parse(fs.readFileSync(path.join(REPO2, 'public/animations/clips', `${name}.json`), 'utf8')),
+		);
+		clip.name = name;
+		return clip;
+	};
+
+	const FINGER_STEMS = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
+
+	// Each entry spells the same humanoid skeleton the way that tool exports it.
+	// `body` is given left-side-first; right twins are derived by the swap fn.
+	const CONVENTIONS = {
+		'Unreal mannequin': {
+			centre: ['pelvis', 'spine_01', 'spine_02', 'spine_03', 'neck_01', 'head'],
+			limb: (s) => [
+				`clavicle_${s}`, `upperarm_${s}`, `lowerarm_${s}`, `hand_${s}`,
+				`thigh_${s}`, `calf_${s}`, `foot_${s}`, `ball_${s}`,
+			],
+			finger: (s, f, n) => `${f.toLowerCase()}_0${n}_${s}`,
+			sides: ['l', 'r'],
+		},
+		'VRM 1.0': {
+			centre: ['hips', 'spine', 'chest', 'upperChest', 'neck', 'head'],
+			limb: (s) => [
+				`${s}Shoulder`, `${s}UpperArm`, `${s}LowerArm`, `${s}Hand`,
+				`${s}UpperLeg`, `${s}LowerLeg`, `${s}Foot`, `${s}Toes`,
+			],
+			finger: (s, f, n) => {
+				const vf = f === 'Pinky' ? 'Little' : f;
+				const phalanx =
+					f === 'Thumb'
+						? ['Metacarpal', 'Proximal', 'Distal'][n - 1]
+						: ['Proximal', 'Intermediate', 'Distal'][n - 1];
+				return `${s}${vf}${phalanx}`;
+			},
+			sides: ['left', 'right'],
+		},
+		'Daz / Genesis 8': {
+			centre: ['hip', 'abdomenLower', 'abdomenUpper', 'chestUpper', 'neckLower', 'head'],
+			limb: (s) => [
+				`${s}Collar`, `${s}ShldrBend`, `${s}ForearmBend`, `${s}Hand`,
+				`${s}ThighBend`, `${s}Shin`, `${s}Foot`, `${s}Toe`,
+			],
+			finger: (s, f, n) => `${s}${f === 'Middle' ? 'Mid' : f}${n}`,
+			sides: ['l', 'r'],
+		},
+		MakeHuman: {
+			centre: ['pelvis', 'spine', 'chest', 'neck', 'head'],
+			limb: (s) => [
+				`clavicle.${s}`, `upperarm.${s}`, `forearm.${s}`, `hand.${s}`,
+				`thigh.${s}`, `shin.${s}`, `foot.${s}`, `toe.${s}`,
+			],
+			finger: (s, f, n) => `finger${FINGER_STEMS.indexOf(f) + 1}-${n}.${s}`,
+			sides: ['L', 'R'],
+		},
+		'Blender Rigify': {
+			centre: ['hips', 'spine', 'chest', 'neck', 'head'],
+			limb: (s) => [
+				`shoulder.${s}`, `upper_arm.${s}`, `forearm.${s}`, `hand.${s}`,
+				`thigh.${s}`, `shin.${s}`, `foot.${s}`, `toe.${s}`,
+			],
+			finger: (s, f, n) =>
+				f === 'Thumb' ? `thumb.0${n}.${s}` : `f_${f.toLowerCase()}.0${n}.${s}`,
+			sides: ['L', 'R'],
+		},
+		'anatomical Latin': {
+			centre: ['pelvis', 'lumbar', 'thoracic', 'sternum', 'cervical', 'cranium'],
+			limb: (s) => [
+				`scapula.${s}`, `humerus.${s}`, `ulna.${s}`, `carpus.${s}`,
+				`femur.${s}`, `tibia.${s}`, `talus.${s}`, `metatarsus.${s}`,
+			],
+			finger: (s, f, n) => {
+				const af = f === 'Pinky' ? 'little' : f.toLowerCase();
+				const phalanx =
+					f === 'Thumb'
+						? ['metacarpal', 'proximal', 'distal'][n - 1]
+						: ['proximal', 'intermediate', 'distal'][n - 1];
+				return `${af}_${phalanx}.${s}`;
+			},
+			sides: ['L', 'R'],
+		},
+	};
+
+	function boneNames(spec) {
+		const names = [...spec.centre];
+		for (const side of spec.sides) {
+			names.push(...spec.limb(side));
+			for (const f of FINGER_STEMS) {
+				for (let n = 1; n <= 3; n++) names.push(spec.finger(side, f, n));
+			}
+		}
+		return names;
+	}
+
+	describe.each(Object.entries(CONVENTIONS))('%s', (label, spec) => {
+		const rig = makeRig(boneNames(spec));
+		const map = canonicalNodeMapFromObject(rig);
+
+		it.each(['idle', 'walk'])('clears the MIN_COVERAGE gate on %s', (clipName) => {
+			// Default minCoverage on purpose: this asserts what PRODUCTION does, not
+			// what a permissive test harness would allow.
+			const r = retargetClipToObject(realClip(clipName), rig);
+			expect(r.clip, `${label} produced no clip on ${clipName}`).not.toBeNull();
+			expect(r.coverage).toBeGreaterThanOrEqual(MIN_COVERAGE);
+		});
+
+		it('binds both arms and both legs', () => {
+			for (const bone of [
+				'LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm',
+				'LeftUpLeg', 'LeftLeg', 'RightUpLeg', 'RightLeg',
+			]) {
+				expect(map.get(bone), `${label} lost ${bone}`).toBeTruthy();
+			}
+		});
+
+		it('maps all 30 finger joints', () => {
+			const fingers = [...map.keys()].filter((k) => /Hand(Thumb|Index|Middle|Ring|Pinky)[123]$/.test(k));
+			expect(fingers.length, `${label} mapped only ${fingers.length} finger joints`).toBe(30);
+		});
+	});
+});
+
 describe('face (morph target) lanes', () => {
 	/** A rig with two meshes that share some blendshapes and differ on others. */
 	function faceRig() {

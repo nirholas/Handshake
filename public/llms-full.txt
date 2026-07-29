@@ -533,12 +533,6 @@ URL: https://three.ws/features/deploy
 
 Register your AI agent on Solana via ERC-8004 and Metaplex Core. Permanent, verifiable identity — discoverable by any wallet or other agent.
 
-### New Agent
-
-URL: https://three.ws/agent/new
-
-Create a new agent from scratch — avatar, brain, skills, and on-chain identity.
-
 ### Selfie to Avatar
 
 URL: https://three.ws/create/selfie
@@ -562,12 +556,6 @@ Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal 
 URL: https://three.ws/voice
 
 Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.
-
-### 3D Scanner — Scan Yourself into 3D
-
-URL: https://three.ws/scan
-
-Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.
 
 ### Make Dad a 3D Avatar
 
@@ -810,6 +798,12 @@ The Money Pulse — a real-time, platform-wide feed of three.ws agent wallet act
 URL: https://three.ws/x402-revenue
 
 The live revenue layer — real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.
+
+### Fits: the cosmetics economy
+
+URL: https://three.ws/fits
+
+The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.
 
 ### Receipt Vault
 

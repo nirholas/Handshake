@@ -11,7 +11,7 @@
 // Usage:
 //   node scripts/quality-bench.mjs [--lane=<id|id,id|all>] [--tier=<draft|standard|high|all>]
 //     [--prompts=qb01,qb02,...] [--base-url=https://three.ws] [--resume=<run-file>]
-//     [--dry-run]
+//     [--concurrency=<n>] [--dry-run]
 //   node scripts/quality-bench.mjs --compare=latest,previous
 //
 // Requires GOOGLE_CLOUD_PROJECT + GCP credentials (GCP_SERVICE_ACCOUNT_JSON, or the
@@ -39,7 +39,7 @@ const RUNS_DIR = path.join(BENCH_DIR, 'runs');
 const PROMPTS_FILE = path.join(BENCH_DIR, 'prompts.json');
 
 function parseArgs(argv) {
-	const args = { lane: 'all', tier: 'standard,high', prompts: 'all', baseUrl: 'https://three.ws', dryRun: false };
+	const args = { lane: 'all', tier: 'standard,high', prompts: 'all', baseUrl: 'https://three.ws', concurrency: 1, dryRun: false };
 	for (const raw of argv) {
 		const [k, ...rest] = raw.replace(/^--/, '').split('=');
 		const v = rest.join('=');
@@ -49,6 +49,7 @@ function parseArgs(argv) {
 		else if (k === 'base-url') args.baseUrl = v;
 		else if (k === 'resume') args.resume = v;
 		else if (k === 'compare') args.compare = v;
+		else if (k === 'concurrency') args.concurrency = Math.max(1, Number(v) || 1);
 		else if (k === 'dry-run') args.dryRun = true;
 	}
 	return args;
@@ -99,6 +100,37 @@ async function saveRun(runPath, run) {
 	await writeFile(runPath, JSON.stringify(run, null, '\t') + '\n', 'utf8');
 }
 
+// Serialised writes: with --concurrency>1 several combos finish at once and each
+// wants to persist the whole run file. Chaining keeps them from interleaving two
+// full-file writes on the same fd path (a half-written run file would break the
+// resume that the durability guarantee depends on).
+let saveChain = Promise.resolve();
+function queueSave(runPath, run) {
+	saveChain = saveChain.then(
+		() => saveRun(runPath, run),
+		() => saveRun(runPath, run),
+	);
+	return saveChain;
+}
+
+// Fixed-size worker pool over a pre-built task list. Tasks are consumed in order,
+// so the lane-interleaved ordering below spreads simultaneous work across lanes
+// instead of hammering one GPU worker.
+async function runPool(tasks, concurrency, worker) {
+	let next = 0;
+	const size = Math.max(1, Math.min(concurrency, tasks.length));
+	await Promise.all(
+		Array.from({ length: size }, async () => {
+			for (;;) {
+				const i = next;
+				next += 1;
+				if (i >= tasks.length) return;
+				await worker(tasks[i], i);
+			}
+		}),
+	);
+}
+
 async function runBench(args) {
 	const prompts = await loadPrompts();
 	const wantedPromptIds = args.prompts === 'all' ? null : new Set(args.prompts.split(',').map((s) => s.trim()));
@@ -111,7 +143,7 @@ async function runBench(args) {
 		throw new Error('no live image-capable forge lanes matched --lane on this deployment (check /api/forge?catalog)');
 	}
 
-	console.log(`quality-bench: ${selectedPrompts.length} prompts x ${lanes.length} lanes (${lanes.map((l) => l.id).join(', ')}) x ${tiers.length} tiers (${tiers.join(', ')}) against ${args.baseUrl}`);
+	console.log(`quality-bench: ${selectedPrompts.length} prompts x ${lanes.length} lanes (${lanes.map((l) => l.id).join(', ')}) x ${tiers.length} tiers (${tiers.join(', ')}) against ${args.baseUrl}, concurrency ${args.concurrency}`);
 
 	let runPath;
 	let run;
@@ -134,30 +166,37 @@ async function runBench(args) {
 	}
 	const done = new Set(run.results.map(resultKey));
 
-	if (args.dryRun) {
-		let planned = 0;
-		for (const p of selectedPrompts) for (const lane of lanes) for (const tier of tiers) {
-			if (!done.has(`${p.id}::${lane.id}::${tier}`)) planned += 1;
-		}
-		console.log(`dry-run: ${planned} (prompt, lane, tier) combos would run; ${done.size} already recorded in ${runPath}`);
-		return;
-	}
-
+	// Ordered prompt → tier → lane so that consecutive tasks land on different
+	// lanes: a pool of N workers then spreads across N GPU backends rather than
+	// queueing N jobs behind one.
+	const tasks = [];
 	for (const p of selectedPrompts) {
-		for (const lane of lanes) {
-			for (const tier of tiers) {
-				const key = `${p.id}::${lane.id}::${tier}`;
-				if (done.has(key)) continue;
-				console.log(`-> ${p.id} [${p.subjectClass}] lane=${lane.id} tier=${tier}`);
-				const result = await runOne(args.baseUrl, p, lane.id, tier);
-				run.results.push(result);
-				await saveRun(runPath, run);
+		for (const tier of tiers) {
+			for (const lane of lanes) {
+				if (!done.has(`${p.id}::${lane.id}::${tier}`)) tasks.push({ prompt: p, lane, tier });
 			}
 		}
 	}
 
+	if (args.dryRun) {
+		console.log(`dry-run: ${tasks.length} (prompt, lane, tier) combos would run; ${done.size} already recorded in ${runPath}`);
+		return;
+	}
+
+	let completed = 0;
+	await runPool(tasks, args.concurrency, async ({ prompt: p, lane, tier }) => {
+		console.log(`-> ${p.id} [${p.subjectClass}] lane=${lane.id} tier=${tier}`);
+		const result = await runOne(args.baseUrl, p, lane.id, tier);
+		run.results.push(result);
+		completed += 1;
+		await queueSave(runPath, run);
+		console.log(
+			`<- ${p.id} lane=${lane.id} tier=${tier} status=${result.status} mean=${result.meanScore == null ? 'null' : result.meanScore.toFixed(2)} (${completed}/${tasks.length})`,
+		);
+	});
+
 	run.finishedAt = new Date().toISOString();
-	await saveRun(runPath, run);
+	await queueSave(runPath, run);
 	console.log(`quality-bench: run complete -> ${runPath}`);
 	printSummary(run);
 }

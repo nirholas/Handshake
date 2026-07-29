@@ -22,7 +22,13 @@ export default wrap(async (req, res) => {
 	const limit = Math.min(Math.max(1, parseInt(params.get('limit') || '8', 10) || 8), 20);
 
 	const result = await searchNews(q, limit);
-	if (!result.sources_ok) {
+	// `sources_ok` counts publishers whose LAST refresh succeeded, which is not
+	// the same question as "do we have anything to show". The aggregator also
+	// serves recent-but-not-just-refreshed copies, so a rail holding eight real
+	// articles could still report zero ok sources and 502 — discarding the
+	// articles it was holding. Gate on the articles themselves; only a genuinely
+	// empty-handed fan-out (no articles AND nothing refreshed) is an outage.
+	if (!result.articles.length && !result.sources_ok) {
 		return error(res, 502, 'upstream_error', 'related news is unavailable right now');
 	}
 

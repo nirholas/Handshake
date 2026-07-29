@@ -6,12 +6,17 @@
 // Never fabricates candles: any upstream failure throws with the real status so
 // the caller surfaces the true cause.
 
+import { createCache } from '../mem-cache.js';
+
 const BASE = 'https://api.geckoterminal.com/api/v2';
 const UA = 'three.ws-granite-oracle/1.0';
 
 // Small in-memory cache — GeckoTerminal's free tier is ~30 req/min and candle
 // data only changes once per bar, so a short TTL keeps us well under the cap.
-const cache = new Map(); // url → { value, expiresAt }
+// True LRU bounding: the previous Map was trimmed with
+// `delete(keys().next().value)`, evicting the oldest INSERTED url rather than
+// the least recently used one.
+const cache = createCache({ max: 256 }); // url → { value, expiresAt }
 const TTL_MS = 20_000;
 
 // Bounded exponential backoff with jitter for transient upstream throttling.
@@ -78,7 +83,6 @@ async function gecko(path) {
 		throw Object.assign(new Error('GeckoTerminal returned non-JSON'), { status: 502 });
 	}
 	cache.set(url, { value: json, expiresAt: now + TTL_MS });
-	if (cache.size > 256) cache.delete(cache.keys().next().value);
 	return json;
 }
 

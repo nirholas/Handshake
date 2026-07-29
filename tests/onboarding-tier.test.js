@@ -178,6 +178,18 @@ describe('homepage lite path', () => {
 		expect(gated).not.toContain('embed');
 	});
 
+	it('keeps the first screen to the two promises a newcomer can act on', () => {
+		// The hero's third bullet names a payment protocol before the visitor has
+		// made anything; Create and Embed are the journey and always show.
+		const bullets = [...homeHtml.matchAll(/<li([^>]*)data-i18n-html="home\.bullet_(\w+)"/g)].map(
+			(m) => ({ key: m[2], advanced: m[1].includes('data-tier="advanced"') }),
+		);
+		expect(bullets.map((b) => b.key)).toEqual(['create', 'embed', 'earn']);
+		expect(bullets.find((b) => b.key === 'create').advanced).toBe(false);
+		expect(bullets.find((b) => b.key === 'embed').advanced).toBe(false);
+		expect(bullets.find((b) => b.key === 'earn').advanced).toBe(true);
+	});
+
 	it('reveals a gated section when the URL points into it', () => {
 		// A shared link to #home-x402 must not land on a blank page.
 		expect(homeHtml).toContain("el.closest('[data-tier=\"advanced\"]')");

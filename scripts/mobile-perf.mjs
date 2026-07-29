@@ -144,6 +144,8 @@ function parseArgs(argv) {
 		md: null,
 		label: '',
 		headful: false,
+		scroll: false,
+		scrollDwell: 2500,
 	};
 	for (let i = 2; i < argv.length; i++) {
 		const a = argv[i];
@@ -161,6 +163,8 @@ function parseArgs(argv) {
 		else if (a === '--md') out.md = next();
 		else if (a === '--label') out.label = next();
 		else if (a === '--headful') out.headful = true;
+		else if (a === '--scroll') out.scroll = true;
+		else if (a === '--scroll-dwell') out.scrollDwell = Math.max(200, Number(next()) || 200);
 		else if (a === '--help' || a === '-h') {
 			printHelp();
 			process.exit(0);
@@ -185,6 +189,9 @@ ${C.b('mobile-perf')} - Playwright-measured mobile field metrics (NOT Lighthouse
   --json <file>       write raw results JSON
   --md <file>         write a readable Markdown table
   --label <text>      free-text label stored in the JSON (e.g. "baseline")
+  --scroll            after metrics are read, scroll the page and sample the
+                      WebGL live/visible context ceiling (grid pages)
+  --scroll-dwell <ms> settle per scroll step (default 2500)
   --headful           run with a visible browser
 `);
 }
@@ -324,6 +331,34 @@ function readProbe() {
 	};
 }
 
+// Light-weight live-context sampler used during the optional scroll pass.
+function sampleGl() {
+	const S = window.__mobilePerf || {};
+	let live = 0;
+	let visible = 0;
+	for (const rec of S._gl || []) {
+		let lost = true;
+		try {
+			lost = rec.ctx.isContextLost();
+		} catch {
+			lost = true;
+		}
+		if (!rec.canvas.isConnected || lost) continue;
+		live++;
+		const cs = getComputedStyle(rec.canvas);
+		const box = rec.canvas.getBoundingClientRect();
+		if (
+			cs.display !== 'none' &&
+			cs.visibility !== 'hidden' &&
+			Number(cs.opacity) > 0.01 &&
+			box.width > 8 &&
+			box.height > 8
+		)
+			visible++;
+	}
+	return { created: S.webglCreated || 0, live, visible, lost: S.webglLost || 0, y: Math.round(window.scrollY) };
+}
+
 // ── One measurement run ──────────────────────────────────────────────────────
 async function measureOnce(browser, deviceDescriptor, url, opts) {
 	const context = await browser.newContext({
@@ -404,6 +439,32 @@ async function measureOnce(browser, deviceDescriptor, url, opts) {
 		error = error || `probe failed: ${String(err.message).slice(0, 160)}`;
 	}
 
+	// Optional scroll pass. Grid pages only boot their lower viewers once those
+	// rows intersect the viewport, so the WebGL context ceiling is invisible
+	// without scrolling. This runs AFTER the metrics read so it can never
+	// inflate CLS or LCP in the reported numbers.
+	let scroll = null;
+	if (opts.scroll && !error) {
+		try {
+			scroll = { steps: 0, glCreatedMax: 0, glLiveMax: 0, glVisibleMax: 0, samples: [] };
+			const height = await page.evaluate(() => document.documentElement.scrollHeight);
+			const vh = await page.evaluate(() => window.innerHeight);
+			const steps = Math.min(30, Math.max(1, Math.ceil(height / vh)));
+			for (let i = 1; i <= steps; i++) {
+				await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), i * vh);
+				await page.waitForTimeout(opts.scrollDwell);
+				const s = await page.evaluate(sampleGl);
+				scroll.steps = i;
+				scroll.samples.push(s);
+				scroll.glCreatedMax = Math.max(scroll.glCreatedMax, s.created);
+				scroll.glLiveMax = Math.max(scroll.glLiveMax, s.live);
+				scroll.glVisibleMax = Math.max(scroll.glVisibleMax, s.visible);
+			}
+		} catch (err) {
+			scroll = { error: String(err.message).slice(0, 160) };
+		}
+	}
+
 	const wallMs = Date.now() - t0;
 	bytes.resources.sort((a, b) => b.bytes - a.bytes);
 	await context.close().catch(() => {});
@@ -413,6 +474,7 @@ async function measureOnce(browser, deviceDescriptor, url, opts) {
 		status,
 		error,
 		loadFired,
+		scroll,
 		wallMs,
 		transferBytes: bytes.total,
 		bytesByType: bytes.byType,
@@ -460,6 +522,13 @@ function summarise(label, path, runs) {
 	const last = source[source.length - 1] || runs[runs.length - 1] || {};
 	summary.status = last.status ?? 0;
 	summary.loadFired = source.every((r) => r.loadFired !== false);
+	const scrolls = source.map((r) => r.scroll).filter((s) => s && !s.error);
+	if (scrolls.length) {
+		summary.scrollGlCreatedMax = Math.max(...scrolls.map((s) => s.glCreatedMax));
+		summary.scrollGlLiveMax = Math.max(...scrolls.map((s) => s.glLiveMax));
+		summary.scrollGlVisibleMax = Math.max(...scrolls.map((s) => s.glVisibleMax));
+		summary.scrollSteps = Math.max(...scrolls.map((s) => s.steps));
+	}
 	summary.lcpDetail = last.lcpDetail || '';
 	summary.clsSources = last.clsSources || [];
 	summary.bytesByType = last.bytesByType || {};
@@ -546,7 +615,11 @@ ${sorted
 - transfer ${kb(r.transferBytes)} across ${ms(r.requestCount)} requests${types ? ` - ${types}` : ''}
 - window \`load\` fired within the wait window: ${r.loadFired ? 'yes' : 'NO (long-lived requests still open)'}
 - DOM nodes ${ms(r.domNodes)}, img elements ${ms(r.images)}
-- WebGL contexts: created ${r.webglCreated ?? '-'}, live ${r.webglLive ?? '-'}, visible ${r.webglVisible ?? '-'}, lost ${r.webglLost ?? '-'}
+- WebGL contexts: created ${r.webglCreated ?? '-'}, live ${r.webglLive ?? '-'}, visible ${r.webglVisible ?? '-'}, lost ${r.webglLost ?? '-'}${
+			r.scrollGlLiveMax === undefined
+				? ''
+				: `\n- WebGL ceiling while scrolling (${r.scrollSteps} steps): created ${r.scrollGlCreatedMax}, live max ${r.scrollGlLiveMax}, visible max ${r.scrollGlVisibleMax}`
+		}
 ${gl ? `${gl}\n` : ''}${top ? `- heaviest resources:\n${top}\n` : ''}${shifts ? `- layout shifts:\n${shifts}\n` : ''}${
 			r.errors?.length ? `- run errors: ${r.errors.join('; ')}\n` : ''
 		}${r.consoleErrors?.length ? `- console errors: ${r.consoleErrors.length} (first: \`${r.consoleErrors[0]}\`)\n` : ''}`;
@@ -614,7 +687,12 @@ async function main() {
 			const s = summarise(entry.label, entry.path, runs);
 			results.push(s);
 			const tag = s.okRuns
-				? C.d(` LCP ${s.lcp}ms  CLS ${s.cls}  TBT* ${s.tbtProxy}ms  ${kb(s.transferBytes)}  GL ${s.webglCreated}/${s.webglLive}/${s.webglVisible}`)
+				? C.d(
+						` LCP ${s.lcp}ms  CLS ${s.cls}  TBT* ${s.tbtProxy}ms  ${kb(s.transferBytes)}  GL ${s.webglCreated}/${s.webglLive}/${s.webglVisible}` +
+							(s.scrollGlLiveMax === undefined
+								? ''
+								: `  scrollGL ${s.scrollGlCreatedMax}/${s.scrollGlLiveMax}/${s.scrollGlVisibleMax}`),
+					)
 				: C.r(` FAILED: ${s.errors[0] || 'unknown'}`);
 			console.log(tag);
 		}

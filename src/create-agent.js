@@ -308,6 +308,10 @@ async function boot() {
 		showStep(0);
 	}
 
+	// An avatar handoff always wins over a restored draft: the visitor just
+	// finished building that body and asked to turn it into an agent.
+	applyAvatarHandoff();
+
 	// Autosave the in-progress build: one delegated listener covers every text,
 	// select, and checkbox field; button-driven changes (model, voice, step nav)
 	// are caught by showStep and the unload flush below.
@@ -318,6 +322,63 @@ async function boot() {
 	});
 
 	applyAuthAffordances();
+}
+
+// "Turn this into an agent" handoff. Every avatar surface that finishes with a
+// body (marketplace avatar cards, /create/selfie, the gallery) sends the visitor
+// here with ?avatar_id=&avatar_glb=&avatar_name=. This used to land on
+// /agent/new, which minted a blank draft agent on page load; that route now 301s
+// (or, when it carries these params, rewrites) to the canonical wizard, so the
+// handoff has to be honoured here or the pre-selected body is silently lost.
+//
+// The params seed step 2's "library" mode directly — validateStep(1) only needs
+// state.model.avatarId, so the selection is valid before /api/avatars has even
+// answered, and renderLibrary() re-applies the highlight once it does.
+function applyAvatarHandoff() {
+	const params = new URLSearchParams(location.search);
+	const avatarId = (params.get('avatar_id') || '').trim();
+	const avatarGlb = (params.get('avatar_glb') || '').trim();
+	const avatarName = (params.get('avatar_name') || '').trim();
+	if (!avatarId && !avatarGlb) return;
+
+	state.model = {
+		mode: avatarId ? 'library' : 'starter',
+		starterId: '',
+		starterUrl: avatarId ? '' : avatarGlb,
+		file: null,
+		fileName: '',
+		skipAck: false,
+		avatarId,
+		avatarUrl: avatarGlb,
+		avatarName: avatarName || 'Untitled',
+		_blobUrl: '',
+	};
+
+	// Open the pane that owns the seeded selection so the choice is visible
+	// rather than implied. The library tab's own handler kicks off the fetch.
+	const pane = avatarId ? 'library' : 'starter';
+	document.querySelector(`.model-tab[data-pane="${pane}"]`)?.click();
+	syncModelPreview();
+
+	const nameEl = $('f-name');
+	if (avatarName && nameEl && !nameEl.value.trim()) {
+		const suggested = `${avatarName} Agent`.slice(0, 60);
+		nameEl.value = suggested;
+		state.name = suggested;
+		$('name-count').textContent = `${suggested.length} / 60`;
+	}
+	setMsg(
+		avatarName
+			? `${avatarName} is attached as the 3D body — name it and keep going.`
+			: 'Your avatar is attached as the 3D body — name it and keep going.',
+		'ok',
+	);
+
+	// Canonicalise the URL: the handoff params have been consumed into state, and
+	// a rewritten /agent/new?… request still shows the retired path in the bar.
+	if (typeof history.replaceState === 'function') {
+		history.replaceState({}, '', '/create-agent');
+	}
 }
 
 // The corner companion mints an ephemeral agent for signed-out visitors

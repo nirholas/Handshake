@@ -21,6 +21,7 @@
 
 import { fetchFirst } from '../../src/shared/failover-fetch.js';
 import { COINGECKO_BASE, geckoHeaders } from './coingecko.js';
+import { PAPRIKA_BASE, paprikaGet } from './coinpaprika.js';
 import { downsample } from '../../src/shared/coin-format.js';
 import { cacheGet, cacheSet } from './cache.js';
 
@@ -209,19 +210,32 @@ export function normalizeLoreGlobal(raw) {
  * @throws when every free source is down.
  */
 export async function fetchGlobalMarket() {
+	try {
+		const { value } = await fetchFirst(
+			[
+				{
+					name: 'coingecko',
+					url: `${COINGECKO_BASE}/global`,
+					init: { headers: geckoHeaders() },
+					parse: async (r) => normalizeGeckoGlobal(await r.json()),
+				},
+			],
+			{ timeoutMs: 6000, label: 'global-market' },
+		);
+		return value;
+	} catch {
+		/* fall through to the free backups below */
+	}
+	// CoinPaprika sits on its own client rather than in the provider list above,
+	// because its free tier allows sixty requests an HOUR across every caller on
+	// this deployment and answers a spent budget with a 402 — a status the shared
+	// failover primitive would discard as just another failure. paprikaGet
+	// recognises it, benches the source process-wide, and returns null so this
+	// rung is skipped outright until the block lifts. See api/_lib/coinpaprika.js.
+	const paprika = normalizePaprikaGlobal(await paprikaGet(`${PAPRIKA_BASE}/global`, 6000));
+	if (paprika) return paprika;
 	const { value } = await fetchFirst(
 		[
-			{
-				name: 'coingecko',
-				url: `${COINGECKO_BASE}/global`,
-				init: { headers: geckoHeaders() },
-				parse: async (r) => normalizeGeckoGlobal(await r.json()),
-			},
-			{
-				name: 'coinpaprika',
-				url: 'https://api.coinpaprika.com/v1/global',
-				parse: async (r) => normalizePaprikaGlobal(await r.json()),
-			},
 			{
 				name: 'coinlore',
 				url: 'https://api.coinlore.com/api/global/',

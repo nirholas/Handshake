@@ -5,6 +5,7 @@
 // each frame AFTER mixer.update(), and it composes with whatever clip is
 // playing without accumulating. Docs: docs/procedural-animation.md.
 
+export { canonicalBoneNodes, firstCanonical } from './canonical-bones.js';
 export { solveTwoBoneIK } from './two-bone-ik.js';
 export { LookAtController } from './look-at.js';
 export { FootPlantController } from './foot-plant.js';

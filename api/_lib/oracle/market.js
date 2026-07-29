@@ -25,6 +25,7 @@
 // coin page poll almost never fans out to six upstreams.
 
 import { cacheGet, cacheSet } from '../cache.js';
+import { createCache } from '../mem-cache.js';
 import { bondingProgressPct } from '../pump-bonding.js';
 
 const DEXSCREENER = 'https://api.dexscreener.com/latest/dex/tokens';
@@ -37,7 +38,10 @@ const COINGECKO = 'https://api.coingecko.com/api/v3';
 const FETCH_TIMEOUT_MS = 6000;
 const WSOL = 'So11111111111111111111111111111111111111112';
 
-const L1 = new Map(); // key -> { value, expires }
+// True LRU bounding: the previous Map was trimmed with
+// `delete(keys().next().value)`, evicting the oldest INSERTED key rather than
+// the least recently used one.
+const L1 = createCache({ max: 256 }); // key -> { value, expires }
 const L1_TTL_MS = 20_000;
 const L2_TTL_S = 45;
 
@@ -455,7 +459,6 @@ export async function fetchCoinMarket(mint, network = 'mainnet', { fresh = false
 	// hollow all-null result that a transient outage produced.
 	if (merged.price?.usd != null) {
 		L1.set(mint, { value: merged, expires: now + L1_TTL_MS });
-		if (L1.size > 256) L1.delete(L1.keys().next().value);
 		cacheSet(key, merged, L2_TTL_S).catch(() => {});
 	}
 	return merged;

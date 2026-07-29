@@ -67,3 +67,47 @@ Idempotent: re-running with the same policy is a no-op.
 
 Run this any time you see `No 'Access-Control-Allow-Origin' header` errors
 on assets served from `*.r2.dev` or your custom R2 domain.
+
+### `mobile-perf.mjs`: mobile field metrics under CPU + network throttling
+
+```sh
+npm run perf:mobile                                    # top-15 preset vs production
+npm run perf:mobile -- --pages /,/forge --runs 3
+npm run perf:mobile -- --base http://localhost:3000 --net fast4g --cpu 2
+npm run perf:mobile -- --json out.json --md out.md --label baseline
+```
+
+Drives each page in a real Playwright mobile context (default Pixel 5,
+Chromium) with CDP throttling applied: `Emulation.setCPUThrottlingRate` (4x by
+default) and `Network.emulateNetworkConditions` (default `slow4g`, the same
+1.6 Mbps / 750 Kbps / 150 ms profile Lighthouse uses for its mobile preset).
+It reads LCP, CLS, FCP, long-task blocking time, DOMContentLoaded, load, real
+over-the-wire transfer bytes (CDP `Network.loadingFinished.encodedDataLength`),
+request count, DOM size, and WebGL contexts created / still live / visible.
+
+**These are Playwright-measured field-style metrics, not Lighthouse scores.**
+Lighthouse is not a dependency of this repo. `TBT*` in the output is a long-task
+blocking-time proxy, `sum(max(0, longtask.duration - 50))`, not Lighthouse's
+simulated Total Blocking Time, and there is deliberately no blended
+"performance score". Report the individual metrics, never a score.
+
+Reports the median of `--runs` runs per page. Every run gets a fresh browser
+context with service workers blocked, so transfer bytes are always cold-cache.
+
+### `mobile-touch-audit.mjs`: touch targets, gesture conflicts, safe areas
+
+```sh
+npm run audit:mobile-touch
+npm run audit:mobile-touch -- --pages /marketplace --json out.json --md out.md
+```
+
+Loads each page in a Pixel 5 context and inspects the live computed DOM for the
+four mobile ergonomics defects that matter: interactive elements whose rendered
+box is under 44x44 CSS px (inline text links are exempt per WCAG 2.5.8 and
+counted separately), visible canvases left at `touch-action: auto` where orbit
+gestures fight page scroll, bottom-anchored fixed bars with no CSS rule
+mentioning `safe-area-inset` plus whether the viewport meta opts into
+`viewport-fit=cover`, and horizontal overflow at the mobile viewport width.
+
+Every finding is a measured bounding box or a resolved computed style, never a
+source grep, so the output can be quoted directly as evidence.

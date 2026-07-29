@@ -51,8 +51,14 @@ function disposeScene(scene) {
 // on rejection; resolves to { bytes, height } on success.
 export async function validateGlb(file) {
 	if (!file) throw new Error('No file selected.');
-	if (!file.name.toLowerCase().endsWith('.glb')) {
-		throw new Error('Only .glb files work — they bundle meshes and textures into one file. Export your model as GLB (not .gltf or .fbx).');
+	// .vrm is accepted alongside .glb: a VRM file IS a glTF binary, it parses with
+	// the same loader here, and src/game/vrm-loader.js fixes the VRM-specific
+	// facing/culling on the way into the scene (P3.4). Its skeleton is already
+	// covered by glb-canonicalize's VRM/VRoid bone map, so the shared idle/walk
+	// clips retarget onto it like any other humanoid.
+	const name = (file.name || '').toLowerCase();
+	if (!name.endsWith('.glb') && !name.endsWith('.vrm')) {
+		throw new Error('Only .glb and .vrm files work: they bundle meshes and textures into one file. Export your model as GLB or VRM (not .gltf or .fbx).');
 	}
 	if (file.size < 64) throw new Error('That file is empty.');
 	if (file.size > MAX_GLB_BYTES) {

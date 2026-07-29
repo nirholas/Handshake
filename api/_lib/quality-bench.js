@@ -14,7 +14,13 @@ import { vertexGeminiAvailable, vertexGeminiChatUrl, vertexGeminiHeaders } from 
 // used the same rung unless this constant itself changed via a reviewed commit.
 export const JUDGE_MODEL = 'google/gemini-2.5-pro';
 export const JUDGE_PROMPT_VERSION = 1;
-const JUDGE_MAX_TOKENS = 700;
+// Gemini 2.5 Pro always spends thinking tokens, and on Vertex's OpenAI-compatible
+// surface those count against `max_tokens`. Measured on this judge prompt: ~1000-1300
+// reasoning tokens before a ~60-token JSON verdict, so the original 700 budget cut
+// every reply off mid-string (finish_reason "length" → "Unterminated string in JSON")
+// and lost most views. 3000 clears the observed ceiling with headroom; the verdict
+// itself stays tiny, so this costs nothing extra on a reply that finishes early.
+const JUDGE_MAX_TOKENS = 3000;
 
 // Front, three-quarter, side — matches the studio-product framing render-clip.js
 // already uses for avatar thumbnails (phi=78deg, just above eye level).
@@ -110,12 +116,24 @@ export async function loadCatalog(baseUrl) {
 	return res.json();
 }
 
+// The bench is an internal sweep of our own deployment, so it submits as an
+// internal seed request when the deployment's CRON_SECRET is available locally
+// (api/forge.js: isInternalSeedRequest). Without it the High tier is unreachable —
+// forge.high is $THREE hold-or-pay gated and an anonymous submit gets a 402
+// three_hold_required, which would record every high-tier combo as a lane failure
+// and make the "standard vs high" comparison meaningless. Absent the secret the
+// bench still runs; only the ungated tiers produce scores.
+export function forgeSeedHeaders() {
+	const secret = (process.env.QUALITY_BENCH_FORGE_SEED || process.env.CRON_SECRET || '').trim();
+	return secret ? { 'x-forge-seed': secret } : {};
+}
+
 export async function submitForge(baseUrl, { prompt, mode, referenceImageUrl, tier, backend }) {
 	const body = { prompt, tier, backend };
 	if (mode === 'image' && referenceImageUrl) body.image_urls = [referenceImageUrl];
 	const res = await fetch(`${baseUrl}/api/forge`, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', ...forgeSeedHeaders() },
 		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));

@@ -16,6 +16,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { AnimationManager } from '../animation-manager.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { GUEST_SENTINEL, resolveGuestAvatar } from './play-handoff.js';
+import { installVrmPlugin, prepareVrmModel } from './vrm-loader.js';
 import { log } from '../shared/log.js';
 
 export const AVATAR_DEFAULT = '/avatars/default.glb';
@@ -133,8 +134,15 @@ function headAnchorHeight(box) {
 export async function buildAvatar(rig, url, anim, opts = {}) {
 	try {
 		await meshoptReady; // ensure meshopt-compressed GLBs (incl. the default) parse
+		// P3.4: pick up the reference VRM parser if boot installed one. Free no-op
+		// otherwise, and idempotent, so it can sit on the hot path.
+		installVrmPlugin(_gltf);
 		const gltf = await _gltf.loadAsync(url);
 		const model = gltf.scene;
+		// A .vrm is a glTF binary, so it has already parsed by here; this fixes the
+		// VRM-specific facing/culling/material issues a plain glTF load leaves
+		// behind. No-op for every non-VRM avatar. See src/game/vrm-loader.js.
+		prepareVrmModel(gltf);
 		model.traverse((n) => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
 		const box = new Box3().setFromObject(model);
 		model.position.y -= box.min.y;

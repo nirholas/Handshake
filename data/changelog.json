@@ -3,6 +3,35 @@
 	"entries": [
 		{
 			"date": "2026-07-29",
+			"title": "Chat now forges and displays 3D models right in the conversation",
+			"summary": "Ask the chat at three.ws/chat for a 3D model and it generates one with the free Forge lane, streams live progress in place, and then renders the finished model as an interactive viewer inside the thread: orbit and zoom it, play its animations, toggle the skeleton on rigged avatars, download the GLB, or open it in AR. Pasting a link to any .glb file now shows the model the same way, even when the file's host would normally block the browser from reading it. Previously 3D results only appeared inside a boxed-in web page you had to click into.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Coin pages stay up when the market data provider rate-limits us",
+			"summary": "The price chart, profile and exchange listings on a coin page all came from one provider, so whenever it throttled our requests the whole page went down at once, for hours. Each of those now has a live backup: charts fall back to exchange candles for the majors and an on-chain price oracle for every other coin, while the profile and market listings fall back to a second data provider. When a backup is answering, the page says so at the bottom instead of quietly leaving numbers blank, and columns the backup cannot fill are hidden rather than shown as a row of dashes. Two small honesty fixes came with it: a follower count of zero now means \"not tracked\" and is left out rather than stated as zero, and a price change the backup does not actually compute is no longer drawn as a flat 0.00%.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/coins"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "The news rail on a coin page no longer hides stories it already has",
+			"summary": "The related-news strip on a coin page decided whether to show anything by asking how many news publishers had just been refreshed, rather than whether it actually had articles in hand. Since the news system also serves recent copies it fetched a little earlier, the rail could be holding eight real stories and still show an error instead. It now shows what it has, and reports a problem only when it genuinely has nothing.",
+			"tags": [
+				"fix"
+			],
+			"link": "/coins"
+		},
+		{
+			"date": "2026-07-29",
 			"title": "Notification mute switches actually work now",
 			"summary": "The per-category switches in settings let you turn the bell off for a kind of notification, but the bell ignored them and filled up anyway. They work now. One deliberate exception: account and security notices (withdrawals, payment problems, security alerts) always stay in your bell, because that is your record of what happened to your account and losing it silently would be worse than a little noise. You can still turn off their push, email and Telegram. Those always-on switches now show as locked in settings instead of pretending to be adjustable.",
 			"tags": [
@@ -16690,6 +16719,62 @@
 				"infra"
 			],
 			"link": "/discover"
+		},
+		{
+			"date": "2026-07-25",
+			"title": "Fingerspelled signing reads as one continuous hand, not a slideshow",
+			"summary": "The signing avatar built each letter from its own one-off pose code, so handshapes drifted between letters and a spelled word looked like a sequence of unrelated snapshots. Handshapes now come from a single shared library that both fingerspelling and full lexical signs draw on, so the same letter looks the same everywhere and the transitions between them are continuous. Wrists, thumbs, and finger curls were re-checked against reference photography across the whole alphabet.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Five more languages: Hausa, Armenian, Georgian, Pashto and Sinhala",
+			"summary": "three.ws now ships in 60 languages. The five new locales cover the full site, not a landing page: navigation, the studio, the wardrobe, forged galleries, notifications, and the cookbook. Translations across the existing 55 languages were refreshed at the same time, so pages that gained copy recently are no longer part-English in a translated locale.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Loading grids and the live terminal now pass the accessibility floor",
+			"summary": "Two things a screen reader or a low-vision visitor hit directly. The loading placeholders on the animation and character libraries announced themselves with a label that assistive technology is required to ignore, so the \"loading\" state was silent; they are now proper status regions that get read aloud. And on the live terminal, each arriving row faded in from fully transparent, which meant text on screen sat below the readable-contrast floor for a quarter second at a time on a feed that never stops. Rows now slide in at full contrast instead of fading.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Wallet tools work again on older Android browsers",
+			"summary": "A compatibility shim for older Android WebViews was reaching the main app but not the four background workers the site runs off the main thread. The vanity-address grinder calls the exact feature that shim exists to provide, so on Chrome 92 and earlier it failed on launch while the rest of the page looked fine. The shim now ships into the background workers too.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-27",
+			"title": "Interrupted garment generations now recover on their own",
+			"summary": "When the garment worker scaled down mid-job, the job it was holding became an orphan: the machinery to re-drive it existed but nothing ever triggered it, so the job sat until a watchdog eventually marked it failed. A scheduled sweep now re-drives orphaned jobs every ten minutes, so a generation interrupted by a scale-down finishes instead of dying quietly.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"title": "Coin pages stay up when the market-data quota runs out",
+			"summary": "Our market-data provider caps the free tier at 10,000 calls a month. Once that ran out, every request carrying our key was refused for the rest of the billing period, while the very same request without a key was still being answered normally. Coin details, tickers, and exchange data returned errors for hours on 28 July because of it. An exhausted key is now benched for fifteen minutes and the request is immediately retried without it, so pages keep serving. The key comes back into use on its own when the quota resets, with no redeploy and nobody paged.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-28",
+			"title": "Consistent formatted text and notifications across the site",
+			"summary": "Formatted text (agent descriptions, chat replies, docs excerpts) was being rendered by a handful of separate implementations that had drifted apart, and each page that needed a confirmation message carried its own copied-in version. Both now come from one shared implementation: text is parsed and sanitised the same way everywhere, so the same content renders identically on every surface, and notifications queue and dismiss consistently instead of stacking or vanishing depending on which page you were on.",
+			"tags": [
+				"improvement"
+			]
 		}
 	]
 }

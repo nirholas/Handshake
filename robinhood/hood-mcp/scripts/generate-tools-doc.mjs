@@ -78,17 +78,25 @@ async function main() {
   const ledger = new SpendLedger(config)
   const tradingTools = await listTools((s) => registerTradingTools(s, hoodTrading, config, ledger))
 
-  const html = `<title>Tools — hood-mcp</title>
-<meta name="description" content="Full tool reference for hood-mcp, generated from the servers' live registered schemas." />
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>" />
+<title>Tools — hood-mcp</title>
+<meta name="description" content="Full tool reference for hood-mcp, generated from the servers' live registered schemas." />
+<link rel="canonical" href="https://nirholas.github.io/hood-mcp/tools.html" />
+<meta name="theme-color" content="#0a0d10" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a0d10'/><path d='M7 22V10m0 6h8m0-6v12' fill='none' stroke='%2300c805' stroke-width='2.6' stroke-linecap='round'/><circle cx='24' cy='12' r='2.6' fill='%2335e0c0'/></svg>" />
 <link rel="stylesheet" href="site.css" />
+</head>
+<body>
 
 <nav class="top">
   <div class="wrap">
     <div class="brand"><span class="tick">hood</span>-mcp</div>
     <div class="links">
-      <a href="index.html">Overview</a>
+      <a href="index.html">Session</a>
       <a href="install.html">Install</a>
       <a href="tools.html" aria-current="page">Tools</a>
       <a href="safety.html">Safety model</a>
@@ -118,11 +126,16 @@ async function main() {
     ${tradingTools.map((t) => toolCard(t, 'trading')).join('\n')}
   </section>
 
-  <footer>
-    Apache License 2.0 © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
-    <a href="https://three.ws">three.ws</a>
-  </footer>
 </main>
+
+<footer class="wrap">
+  © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+  <a href="https://three.ws">three.ws</a> ·
+  <a href="https://www.npmjs.com/package/hood-mcp">npm</a>
+</footer>
+
+</body>
+</html>
 `
   writeFileSync(path.join(DOCS_DIR, 'tools.html'), html)
   console.log(`Wrote docs/tools.html — ${dataTools.length} data tools, ${tradingTools.length} trading tools`)

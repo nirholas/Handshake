@@ -2227,7 +2227,7 @@ async function startAgentFromAvatar() {
 	const params = new URLSearchParams({ avatar_id: activeAvatar.avatarId || '' });
 	if (activeAvatar.name) params.set('avatar_name', activeAvatar.name);
 	if (activeAvatar.glbUrl) params.set('avatar_glb', activeAvatar.glbUrl);
-	location.href = `/agent/new?${params.toString()}`;
+	location.href = `/create-agent?${params.toString()}`;
 }
 
 // ── Skills marketplace tab ───────────────────────────────────────────────

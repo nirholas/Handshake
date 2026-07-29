@@ -1593,6 +1593,25 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-prop-rotate:active { transform: translateY(1px) rotate(90deg); }
 .cc-prop-rotate:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
 .cc-prop-rotate:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Bring-your-own prop (P3.3): a <label> wrapping a hidden file input, styled to
+   sit beside the rotate control as a peer of it. */
+.cc-prop-upload {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 30px; padding: 0 10px; border-radius: var(--cc-radius-sm);
+    border: 1px solid var(--cc-edge); background: var(--cc-panel); color: var(--cc-text);
+    font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+.cc-prop-upload:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
+.cc-prop-upload:active { transform: translateY(1px); }
+.cc-prop-upload:focus-within { outline: 2px solid #66ff8c; outline-offset: 2px; }
+.cc-prop-upload input[type="file"] {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+@media (max-width: 520px) { .cc-prop-upload-text { display: none; } }
+.cc-prop-upload-item { border-color: rgba(102, 255, 140, 0.45); }
 .cc-prop-row {
     display: flex; align-items: stretch; gap: 6px; padding: 7px;
     background: var(--cc-panel); border: 1px solid var(--cc-edge);

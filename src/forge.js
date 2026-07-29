@@ -15,6 +15,7 @@ import { renderLock, lockStateFromAccess } from './three-lock.js';
 import { payForHighGeneration } from './forge-pay.js';
 import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
+import { createForgeTimeline } from './forge-timeline.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -76,11 +77,10 @@ const els = {
 	genNote: document.getElementById('gen-note'),
 	genProgress: document.getElementById('gen-progress'),
 	genProgressFill: document.getElementById('gen-progress-fill'),
-	steps: {
-		image: document.getElementById('step-image'),
-		mesh: document.getElementById('step-mesh'),
-		finish: document.getElementById('step-finish'),
-	},
+	// Named stage timeline + the cold-start warming card. Both are rendered by
+	// src/forge-timeline.js from real /api/forge signals only.
+	genStages: document.getElementById('gen-stages'),
+	genWarming: document.getElementById('gen-warming'),
 	cancel: document.getElementById('cancel'),
 	viewer: document.getElementById('viewer'),
 	viewerShell: document.getElementById('viewer-shell'),
@@ -338,21 +338,22 @@ function showState(name) {
 	if (name !== 'result' && cinemaOn) setCinema(false);
 }
 
-function setStep(step, state) {
-	if (els.steps[step]) els.steps[step].dataset.state = state;
-	// The scanline sweep runs exactly while the mesh step is live.
-	if (step === 'mesh') els.genPreview.classList.toggle('is-reconstructing', state === 'active');
-}
-
-function setStepLabel(step, text) {
-	const node = els.steps[step]?.querySelector('span:last-child');
-	if (node) node.textContent = text;
-}
-
 // Human label for a backend id, from the short-label map or the live catalog.
 function engineLabel(id) {
+	if (!id) return 'the engine';
 	return ENGINE_LABELS[id] || catalog?.backends?.find((b) => b.id === id)?.label || id;
 }
+
+// The generation stage timeline. It owns the reference preview, the named
+// stages, and the cold-start warming card inside #state-generating; every
+// transition it renders comes from a real /api/forge response (see the module
+// header for the signal→stage map).
+const timeline = createForgeTimeline({
+	list: els.genStages,
+	preview: els.genPreview,
+	warming: els.genWarming,
+	engineLabel,
+});
 
 // Lane-switch notice in the generating panel: makes a mid-flight engine
 // failover (server poll-time redispatch, or the client's own automatic retry
@@ -373,11 +374,21 @@ let pendingLaneNote = '';
 // estimate exists — the meter then runs indeterminate rather than inventing a
 // duration.
 function currentEtaSeconds() {
+	// Once the job is accepted the server's own estimate wins: it names the lane
+	// that actually ran and widens for a cold worker, which the catalog matrix
+	// (always warm, always the requested lane) cannot know.
+	const served = timeline.etaSeconds();
+	if (Number(served) > 0) return Number(served);
+	return warmEtaFor(selectedEngine.backend, selectedEngine.path, selectedTier);
+}
+
+// The catalog's warm estimate for a lane. Also the baseline the cold-start
+// budget is measured against: (server ETA for a cold job) - (this) is the real
+// boot allowance the warming card counts down.
+function warmEtaFor(backendId, path, tierId) {
 	if (!catalog) return null;
-	const backend = catalog.backends?.find((b) => b.id === selectedEngine.backend);
-	const est = (backend?.estimates?.[selectedEngine.path] || []).find(
-		(e) => e.tier === selectedTier,
-	);
+	const backend = catalog.backends?.find((b) => b.id === backendId);
+	const est = (backend?.estimates?.[path] || []).find((e) => e.tier === tierId);
 	return Number(est?.eta_seconds) > 0 ? Number(est.eta_seconds) : null;
 }
 
@@ -403,16 +414,21 @@ function startElapsed(offsetMs = 0) {
 	// stays honest about how long the generation has really been running.
 	const started = performance.now() - Math.max(0, offsetMs);
 	stopElapsed();
-	const typical = currentEtaSeconds();
 	// Reset the meter to a clean running state for this job.
 	if (els.genProgress) {
 		els.genProgress.dataset.done = 'false';
 		els.genProgress.dataset.over = 'false';
-		els.genProgress.dataset.indeterminate = typical ? 'false' : 'true';
+		els.genProgress.dataset.indeterminate = currentEtaSeconds() ? 'false' : 'true';
 	}
 	setProgress(0);
 	const tick = () => {
 		const s = Math.floor((performance.now() - started) / 1000);
+		// Re-read every tick: the accepted job replaces the catalog guess with the
+		// server's real ETA for the lane that actually ran (cold start included).
+		const typical = currentEtaSeconds();
+		if (els.genProgress) els.genProgress.dataset.indeterminate = typical ? 'false' : 'true';
+		// The timeline's warming card counts real seconds against that same ETA.
+		timeline.tick(s);
 		if (typical) {
 			const over = s > typical;
 			setProgress(honestFill(s, typical) * 100);
@@ -1547,7 +1563,6 @@ async function pollUntilDone(jobId) {
 	// through "queued" for a beat even when a GPU is free.
 	let queuedPolls = 0;
 	let inQueue = false;
-	let preQueueMeshLabel = null;
 	while (!pollAbort && performance.now() < deadline) {
 		await sleep(POLL_INTERVAL_MS);
 		if (pollAbort) return null;
@@ -1563,6 +1578,10 @@ async function pollUntilDone(jobId) {
 			e.kind = 'unconfigured';
 			throw e;
 		}
+		// One place folds the poll into the stage timeline: queued vs running, the
+		// lane a poll-time failover moved to, and a reference view that only
+		// becomes visible now (coalesced job, resumed session, failover successor).
+		timeline.applyPoll(data);
 		if (data.status === 'done' && data.glb_url) return data;
 		if (data.status === 'failed') {
 			// The server names the configured lanes that can still serve a fresh
@@ -1576,26 +1595,23 @@ async function pollUntilDone(jobId) {
 			throw e;
 		}
 		if (data.status === 'queued') {
-			setStep('mesh', 'active');
 			// Time spent in line must not consume the run budget: a queued job is
 			// alive and will get the full window once a GPU picks it up.
 			deadline = performance.now() + MAX_POLL_MS;
 			queuedPolls += 1;
-			if (!inQueue && queuedPolls >= 3) {
+			// A cold worker has its own designed state in the timeline; the queue
+			// notice is for a warm lane that is simply busy, so it never doubles up.
+			if (!inQueue && queuedPolls >= 3 && !timeline.isCold()) {
 				inQueue = true;
-				preQueueMeshLabel = els.steps.mesh?.querySelector('span:last-child')?.textContent || null;
-				setStepLabel('mesh', 'In line for a GPU');
 				setLaneNote(
 					'The engine is finishing earlier jobs. Yours is queued and will run at full quality, nothing is downgraded.',
 				);
 			}
 		}
 		if (data.status === 'running') {
-			setStep('mesh', 'active');
 			queuedPolls = 0;
 			if (inQueue) {
 				inQueue = false;
-				if (preQueueMeshLabel) setStepLabel('mesh', preQueueMeshLabel);
 				setLaneNote('');
 			}
 			// Poll-time failover: the server moved this job onto a backup lane and
@@ -1605,7 +1621,6 @@ async function pollUntilDone(jobId) {
 				setLaneNote(
 					`${engineLabel(data.failover_from)} hit a snag. Continuing on ${engineLabel(data.backend)}, no action needed.`,
 				);
-				setStepLabel('mesh', `Reconstructing on ${engineLabel(data.backend)}`);
 			}
 		}
 	}
@@ -1840,6 +1855,13 @@ function updateRefineButton() {
 
 function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	stopElapsed();
+	// Every entry into the result state starts with no directed-prompt reveal:
+	// only a fresh generation whose response carried one re-opens it (run()
+	// dispatches it right after this). A gallery card or a share link has no
+	// recorded rewrite, so it must not inherit the previous model's.
+	document.dispatchEvent(
+		new CustomEvent('forge:directed-prompt', { detail: { prompt: '', directedPrompt: null } }),
+	);
 	resetVerdict();
 	resetCategoryPicker();
 	if (els.categoryPicker) els.categoryPicker.hidden = false;
@@ -2093,6 +2115,9 @@ async function openSharedCreation(shareId) {
 
 function showError(message, { allowOverride = false, title = 'Generation failed' } = {}) {
 	stopElapsed();
+	// Freeze the timeline where it really got to and drop the warming card: the
+	// job is over, so nothing may keep implying work is still happening.
+	timeline.fail();
 	stopRateLimitCountdown();
 	if (els.errorTitle) els.errorTitle.textContent = title;
 	els.errorMessage.textContent = message;
@@ -2164,6 +2189,7 @@ function stopRateLimitCountdown() {
 
 function showRateLimited({ retryAfter = 10, unavailable = false, busy = false }) {
 	stopElapsed();
+	timeline.fail();
 	stopRateLimitCountdown();
 	if (els.generateAnyway) els.generateAnyway.classList.add('is-hidden');
 
@@ -2225,53 +2251,19 @@ async function run(cfg) {
 	const isImage = Array.isArray(cfg.imageUrls) && cfg.imageUrls.length > 0;
 	const isGeometry = selectedEngine.path === 'geometry';
 	const isSketch = selectedEngine.path === 'sketch';
-	const meshLabel = `Generating ${selectedTier} mesh`;
 
-	// Reset the generating panel to its real starting state for this run.
-	if (isSketch) {
-		// The drawing IS the reference — no synthesis step, straight to geometry.
-		setStepLabel('image', 'Sketch uploaded');
-		setStepLabel('mesh', `Generating ${selectedTier} geometry from the sketch`);
-		setStep('image', 'done');
-		setStep('mesh', 'active');
-		const preview = sketch.objectUrl || sketch.url;
-		els.genPreview.innerHTML = preview ? '' : '<div class="shimmer" aria-hidden="true"></div>';
-		if (preview) {
-			const img = new Image();
-			img.alt = 'Your sketch';
-			img.src = preview;
-			els.genPreview.appendChild(img);
-		}
-	} else if (isImage) {
-		const n = cfg.imageUrls.length;
-		setStepLabel('image', `Conditioning on ${n} ${n === 1 ? 'view' : 'views'}`);
-		setStepLabel('mesh', isGeometry ? meshLabel : 'Reconstructing textured mesh');
-		setStep('image', 'done');
-		setStep('mesh', 'active');
-		const preview = firstPreviewUrl();
-		els.genPreview.innerHTML = preview ? '' : '<div class="shimmer" aria-hidden="true"></div>';
-		if (preview) {
-			const img = new Image();
-			img.alt = 'Reference view';
-			img.src = preview;
-			els.genPreview.appendChild(img);
-		}
-	} else if (isGeometry) {
-		// Geometry-first: no reference image is painted — the model emits geometry
-		// straight from the prompt, so the first step is already complete.
-		setStepLabel('image', 'Geometry-first — no reference image');
-		setStepLabel('mesh', meshLabel);
-		setStep('image', 'done');
-		setStep('mesh', 'active');
-		els.genPreview.innerHTML = '<div class="shimmer" aria-hidden="true"></div>';
-	} else {
-		setStepLabel('image', 'Painting photoreal reference image');
-		setStepLabel('mesh', 'Reconstructing textured mesh');
-		els.genPreview.innerHTML = '<div class="shimmer" aria-hidden="true"></div>';
-		setStep('image', 'active');
-		setStep('mesh', 'pending');
-	}
-	setStep('finish', 'pending');
+	// Open the timeline on what we genuinely know before the request goes out:
+	// which input the run starts from, which lane was picked, and whether that
+	// lane paints a reference view at all. Geometry-first engines and the free
+	// NVIDIA NIM lane emit the mesh straight from the prompt, so they never get a
+	// reference stage. Everything after this comes from the server's answers.
+	timeline.begin({
+		mode: isSketch ? 'sketch' : isImage ? 'image' : 'text',
+		backend: selectedEngine.backend,
+		viewCount: isImage ? cfg.imageUrls.length : 0,
+		localPreviewUrl: isSketch ? sketch.objectUrl || sketch.url : isImage ? firstPreviewUrl() : null,
+		usesReference: !isGeometry && selectedEngine.backend !== 'nvidia',
+	});
 	// A fresh panel starts with no lane notice, unless an automatic engine hop
 	// queued one for this very re-run.
 	setLaneNote(pendingLaneNote);
@@ -2285,21 +2277,14 @@ async function run(cfg) {
 		const job = await startJob(cfg);
 		if (job.creation_id) currentCreationId = job.creation_id;
 
-		// Text→3D: the reference image resolved before the POST returned — show it.
-		if (!isImage && job.preview_image_url) {
-			setStep('image', 'done');
-			setStep('mesh', 'active');
-			const img = new Image();
-			img.alt = 'Reference image';
-			img.src = job.preview_image_url;
-			img.onload = () => {
-				els.genPreview.innerHTML = '';
-				els.genPreview.appendChild(img);
-			};
-			img.onerror = () => {
-				els.genPreview.innerHTML = '';
-			};
-		}
+		// Fold every real signal the submit response carries into the timeline: the
+		// lane that actually ran, the art-directed prompt, the reference view (shown
+		// the moment it exists), the honest ETA, and the cold-start flag. The warm
+		// baseline is the catalog estimate for that same lane, so the warming card
+		// counts down a real difference rather than an invented number.
+		timeline.applySubmit(job, {
+			warmEtaSeconds: warmEtaFor(job.backend || selectedEngine.backend, job.path || selectedEngine.path, job.tier || selectedTier),
+		});
 
 		// The free draft lane (NVIDIA NIM) completes synchronously — the POST
 		// itself returns the finished model with a null job_id. Polling that
@@ -2316,8 +2301,9 @@ async function run(cfg) {
 		if (lastJob) delete lastJob.payment;
 
 		if (done.creation_id) currentCreationId = done.creation_id;
-		setStep('mesh', 'done');
-		setStep('finish', 'done');
+		// The mesh is delivered; the remaining work (durable copy already done
+		// server-side, viewer load here) is the finalizing stage.
+		timeline.finalizing();
 		markProgressDone();
 		// Prefer the poll's recorded meta; fall back to the submit response.
 		showResult(
@@ -2333,6 +2319,19 @@ async function run(cfg) {
 				quality_gate: done.quality_gate ?? job.quality_gate,
 			},
 			{ autoSaved: !!done.creation_id },
+		);
+		timeline.complete();
+		// What the model was actually asked for. Only the reference-image lanes run
+		// the art director, so `directed_prompt` is absent on every other lane and
+		// the reveal stays hidden rather than showing a reconstructed guess.
+		document.dispatchEvent(
+			new CustomEvent('forge:directed-prompt', {
+				detail: {
+					prompt: cfg.prompt || '',
+					directedPrompt: done.directed_prompt ?? job.directed_prompt ?? null,
+					model: done.text_to_image_model ?? job.text_to_image_model ?? null,
+				},
+			}),
 		);
 		loadGallery();
 		// Geometry-first and sketch lanes have no reference image — render the
@@ -2357,6 +2356,10 @@ async function run(cfg) {
 		// dead either way. The server-side finalizer still completes the row
 		// into the gallery if the lane actually finished after our timeout.
 		clearInflight();
+		// This job is over on every branch below (a designed error state, a gate,
+		// or an automatic lane hop that starts a fresh timeline of its own), so the
+		// stage list stops here rather than sitting on a spinning row.
+		timeline.fail();
 		if (err.kind === 'unconfigured') {
 			stopElapsed();
 			showState('unconfigured');
@@ -2473,21 +2476,16 @@ async function resumeInflight() {
 	pollAbort = false;
 	currentCreationId = inflight.creationId || null;
 	setBusy(true);
-	setStepLabel('image', 'Reference ready');
-	setStep('image', 'done');
-	setStepLabel('mesh', 'Reconstructing textured mesh');
-	setStep('mesh', 'active');
-	setStep('finish', 'pending');
-	els.genPreview.innerHTML = '<div class="shimmer" aria-hidden="true"></div>';
-	if (inflight.previewImageUrl) {
-		const img = new Image();
-		img.alt = 'Reference image';
-		img.src = inflight.previewImageUrl;
-		img.onload = () => {
-			els.genPreview.innerHTML = '';
-			els.genPreview.appendChild(img);
-		};
-	}
+	// Restore the timeline in its mesh phase: the earlier stages provably
+	// finished (the job exists, and the reference view was recorded with it), and
+	// the next real poll refines the rest. A resumed job whose reference view was
+	// never captured locally still gets it: the poll response carries it.
+	timeline.resume({
+		mode: inflight.path === 'sketch' ? 'sketch' : 'text',
+		backend: inflight.backend,
+		referenceUrl: inflight.previewImageUrl || null,
+		elapsedS: Math.max(0, Math.round((Date.now() - inflight.startedAt) / 1000)),
+	});
 	setLaneNote('Welcome back. This generation kept running while you were away.');
 	startElapsed(Date.now() - inflight.startedAt);
 	showState('generating');
@@ -2497,9 +2495,11 @@ async function resumeInflight() {
 		if (pollAbort || !done) return true;
 		clearInflight();
 		if (done.creation_id) currentCreationId = done.creation_id;
-		setStep('mesh', 'done');
-		setStep('finish', 'done');
+		timeline.finalizing();
 		markProgressDone();
+		// No directed-prompt reveal on a resumed job: the submit response is long
+		// gone and the rewrite is not persisted with the creation, so showResult's
+		// own reset leaves the panel hidden rather than showing a stale prompt.
 		showResult(
 			done.glb_url,
 			inflight.label || 'Forged model',
@@ -2514,6 +2514,7 @@ async function resumeInflight() {
 			},
 			{ autoSaved: !!done.creation_id },
 		);
+		timeline.complete();
 		loadGallery();
 		if (!done.preview_image_url && !inflight.previewImageUrl) {
 			capturePoster(currentCreationId);
@@ -2813,6 +2814,8 @@ els.cancel.addEventListener('click', () => {
 	pollAbort = true;
 	clearInflight();
 	stopElapsed();
+	// The user ended the job: the stage list stops claiming anything is running.
+	timeline.fail();
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
 	showState('empty');

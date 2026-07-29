@@ -14,7 +14,7 @@
 // missing a full hip-knee-ankle chain reports enabled=false and no-ops.
 
 import { Quaternion, Vector3 } from 'three';
-import { canonicalNodeMapFromObject } from '../animation-retarget.js';
+import { canonicalBoneNodes } from './canonical-bones.js';
 import { solveTwoBoneIK } from './two-bone-ik.js';
 import { PositionBaseline, QuaternionBaseline } from './pose-baseline.js';
 
@@ -40,7 +40,8 @@ export class FootPlantController {
 	 * @param {(x: number, z: number) => number} getGroundY world-space terrain
 	 *   height sampler (same shape as the walk world's terrain.heightAt)
 	 * @param {object} [opts]
-	 * @param {Map<string,string>} [opts.canonicalToNode] reuse an existing canonical bone map
+	 * @param {Map<string,import('three').Object3D>} [opts.canonicalNodes] reuse an
+	 *   already-built canonical bone→node map instead of re-traversing the model
 	 * @param {number} [opts.maxDrop] max pelvis drop in world metres (default 0.35)
 	 * @param {number} [opts.maxLift] max per-foot raise in world metres (default 0.6)
 	 * @param {number} [opts.damping] offset smoothing rate, 1/s (default 12)
@@ -60,11 +61,10 @@ export class FootPlantController {
 		this._legs = [];
 
 		if (model && this.getGroundY) {
-			const map = opts.canonicalToNode || canonicalNodeMapFromObject(model);
-			const resolve = (canonical) => {
-				const name = map.get(canonical);
-				return name ? model.getObjectByName(name) : null;
-			};
+			// Node-based resolution (see canonical-bones.js): name lookup misses
+			// any rig whose armature is not parented under the model root.
+			const nodes = opts.canonicalNodes || canonicalBoneNodes(model);
+			const resolve = (canonical) => nodes.get(canonical) || null;
 			this.hips = resolve('Hips');
 			for (const leg of LEGS) {
 				const up = resolve(leg.up);

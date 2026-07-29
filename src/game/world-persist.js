@@ -110,6 +110,22 @@ export class WorldBuildStore {
 		this._timer = null;
 		this._inFlight = null;
 		this._disposed = false;
+		// Armed = this client is the writer. Disarmed the moment an authoritative
+		// room takes over (it writes the same doc with a service token), so the two
+		// never race each other over one document.
+		this._armed = true;
+	}
+
+	get armed() { return this._armed; }
+
+	/**
+	 * Hand the pen over, or take it back. Disarming drops any pending debounce
+	 * without writing: the room that just took authority has the same objects and
+	 * will persist them itself.
+	 */
+	setArmed(on) {
+		this._armed = !!on;
+		if (!this._armed && this._timer) { clearTimeout(this._timer); this._timer = null; }
 	}
 
 	/** Has a real round-trip proven this client can write? Drives the HUD badge. */
@@ -151,7 +167,7 @@ export class WorldBuildStore {
 		if (typeof produce !== 'function') {
 			throw new TypeError('WorldBuildStore.queueSave(produce): produce must be a function returning the doc');
 		}
-		if (this._disposed || this.denied) return;
+		if (this._disposed || this.denied || !this._armed) return;
 		this._produce = produce;
 		if (this._timer) return;
 		this._timer = setTimeout(() => { this._timer = null; this.flush().catch(() => {}); }, this._debounceMs);
@@ -167,7 +183,7 @@ export class WorldBuildStore {
 	 */
 	async flush() {
 		if (this._timer) { clearTimeout(this._timer); this._timer = null; }
-		if (this._disposed || this.denied || !this._produce) return 'idle';
+		if (this._disposed || this.denied || !this._armed || !this._produce) return 'idle';
 		if (this._inFlight) return this._inFlight;
 		this._inFlight = this._flushOnce().finally(() => { this._inFlight = null; });
 		return this._inFlight;

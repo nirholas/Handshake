@@ -57,3 +57,11 @@
 # Re-exclude heavy/derived paths even inside the re-included directories.
 **/node_modules/
 .git/
+# Python virtualenvs and caches inside the GPU workers. These are gitignored, so
+# a clean `git worktree` deploy (the runbook path) never sees them, but a submit
+# straight from a working directory would upload thousands of files: one
+# workers/avatar-reconstruction/.venv-eval alone accounts for most of the ~10.5k
+# files workers/ contributes. Verify with `npm run check:gcloudignore`.
+**/.venv*/
+**/__pycache__/
+**/*.pyc

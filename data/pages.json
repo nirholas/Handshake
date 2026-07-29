@@ -716,14 +716,6 @@
 					"added": "2026-06-05"
 				},
 				{
-					"path": "/agent/new",
-					"title": "New Agent",
-					"description": "Create a new agent from scratch — avatar, brain, skills, and on-chain identity.",
-					"priority": 0.7,
-					"changefreq": "monthly",
-					"added": "2026-05-25"
-				},
-				{
 					"path": "/create/selfie",
 					"title": "Selfie to Avatar",
 					"description": "One selfie. About a minute. A rigged 3D avatar that works everywhere.",
@@ -755,14 +747,6 @@
 					"changefreq": "weekly",
 					"added": "2026-06-05",
 					"showcase": true
-				},
-				{
-					"path": "/scan",
-					"title": "3D Scanner — Scan Yourself into 3D",
-					"description": "Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.",
-					"priority": 0.7,
-					"changefreq": "monthly",
-					"added": "2026-05-29"
 				},
 				{
 					"path": "/dad",
@@ -1092,6 +1076,14 @@
 					"priority": 0.7,
 					"changefreq": "always",
 					"added": "2026-06-30"
+				},
+				{
+					"path": "/fits",
+					"title": "Fits: the cosmetics economy",
+					"description": "The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.",
+					"priority": 0.6,
+					"changefreq": "hourly",
+					"added": "2026-07-28"
 				},
 				{
 					"path": "/receipts",

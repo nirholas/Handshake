@@ -13,7 +13,7 @@
 // simply reports enabled=false and update() is a no-op.
 
 import { Euler, Quaternion, Vector3 } from 'three';
-import { canonicalNodeMapFromObject } from '../animation-retarget.js';
+import { canonicalBoneNodes, firstCanonical } from './canonical-bones.js';
 import { QuaternionBaseline } from './pose-baseline.js';
 
 const DEG = Math.PI / 180;
@@ -47,8 +47,8 @@ export class LookAtController {
 	/**
 	 * @param {import('three').Object3D} model a loaded avatar (any humanoid rig)
 	 * @param {object} [opts]
-	 * @param {Map<string,string>} [opts.canonicalToNode] reuse an existing
-	 *   canonical bone map (e.g. AnimationManager's) instead of re-traversing
+	 * @param {Map<string,import('three').Object3D>} [opts.canonicalNodes] reuse an
+	 *   already-built canonical bone→node map instead of re-traversing the model
 	 * @param {number} [opts.maxYaw] horizontal clamp, radians (default 65deg)
 	 * @param {number} [opts.maxPitchUp] upward clamp, radians (default 30deg)
 	 * @param {number} [opts.maxPitchDown] downward clamp, radians (default 35deg)
@@ -73,31 +73,40 @@ export class LookAtController {
 		/** @type {Array<{node: import('three').Object3D, share: number}>} */
 		this._joints = [];
 		if (model) {
-			const map = opts.canonicalToNode || canonicalNodeMapFromObject(model);
-			let total = 0;
-			for (const { canonical, share } of CHAIN) {
-				for (const name of canonical) {
-					const nodeName = map.get(name);
-					const node = nodeName ? model.getObjectByName(nodeName) : null;
+			// Resolve to nodes, not names: a rig whose armature is not parented
+			// under the model root is invisible to getObjectByName even though the
+			// canonical map finds it via skeleton.bones. See canonical-bones.js.
+			const nodes = opts.canonicalNodes || canonicalBoneNodes(model);
+			const head = nodes.get('Head');
+			// A chain without a head cannot "look"; stay disabled rather than
+			// nodding a torso at the target.
+			if (head) {
+				let total = 0;
+				for (const { canonical, share } of CHAIN) {
+					const node = firstCanonical(nodes, canonical);
 					if (node) {
 						this._joints.push({ node, share, baseline: new QuaternionBaseline() });
 						total += share;
-						break;
 					}
 				}
+				for (const j of this._joints) j.share /= total || 1;
 			}
-			// A chain without a head cannot "look"; disable rather than nod a torso.
-			if (!this._joints.some((j) => j.node.name === map.get('Head'))) {
-				this._joints = [];
-				total = 0;
-			}
-			for (const j of this._joints) j.share /= total || 1;
 		}
 	}
 
 	/** @returns {boolean} whether this rig exposes a usable look chain */
 	get enabled() {
 		return this._joints.length > 0;
+	}
+
+	/**
+	 * The head bone this chain terminates at, or null on an unusable rig. Exposed
+	 * so callers can measure where the gaze actually ended up without re-deriving
+	 * the rig's bone naming.
+	 * @returns {import('three').Object3D|null}
+	 */
+	get headBone() {
+		return this._joints.length ? this._joints[this._joints.length - 1].node : null;
 	}
 
 	/**

@@ -43,7 +43,16 @@ import {
 	VoxelWorld, createBuildHud, parseKey, keyOf, MAX_BLOCKS, BLOCK,
 	COMPOSITE_PIECES, compositeCells,
 } from './build-voxels.js';
-import { WorldObjects, PropGhost, propDef } from './world-objects.js';
+import { WorldObjects, PropGhost, propDef, registerUploadedProp } from './world-objects.js';
+// P3.1 — durable per-world build persistence (Postgres index + R2 blob), the same
+// store the authoritative room writes through. See src/game/world-persist.js for
+// which side is the writer when.
+import { WorldBuildStore, worldIdForCoin, docObjects } from './world-persist.js';
+import {
+	MAX_WORLD_OBJECTS, MAX_OBJECTS_PER_PLAYER, OBJ_SCALE_MIN, OBJ_SCALE_MAX,
+	buildClearRadius,
+} from '../../multiplayer/src/build-limits.js';
+import { validatePropModel, uploadPropModel } from './avatar-upload.js';
 import { proxiedImageURL } from '../ipfs.js';
 import {
 	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatarUrl, buildAvatar, playEmoteClip,
@@ -504,6 +513,8 @@ export class CoinCommunities {
 			// Build props (R18): arm/disarm a placeable prop and rotate the armed one.
 			onPickProp: (id) => this._pickProp(id),
 			onRotateProp: () => this._rotateProp(),
+			// P3.3: bring your own prop — validate, upload, arm it for placement.
+			onUploadProp: (file) => this._uploadProp(file),
 			onShareBuild: () => this._shareBuild(),
 			onOpenFeatured: () => this._openFeatured(),
 			onPublishBuild: (meta) => this._publishBuild(meta),
@@ -535,7 +546,7 @@ export class CoinCommunities {
 		// Build permissions (R19) — refreshed from the server's build-perms snapshot:
 		// the player's per-world block cap + usage, and whether they're the coin creator
 		// (which unlocks the clear-area moderation tool). Solo builds carry no cap.
-		this._buildPerms = { creator: false, cap: 0, used: 0, clearMaxRadius: 12 };
+		this._buildPerms = this._defaultBuildPerms();
 		this.buildHud.root.hidden = true;
 		this.buildHud.setEnabled(false);
 
@@ -1188,6 +1199,15 @@ export class CoinCommunities {
 		this.propGhost = new PropGhost(this.scene);
 		this.net.on('objectReject', ({ reason }) => this._onObjectReject(reason));
 
+		// P3.1 — the durable world store. Read it immediately (so the community's
+		// persisted build is standing here before the room even answers), and keep it
+		// as this client's writer for as long as the room is NOT the authority.
+		this._openWorldStore(coin, tier);
+		// The room's first full state snapshot has landed: it restored the same doc
+		// we did, so our local copies are duplicates. Retire them, and hand any props
+		// built while offline to the room so they become part of the shared world.
+		this.net.on('synced', () => this._onRoomSynced());
+
 		if (isGuest) uploadPendingGuestAvatar((publicUrl) => this.net?.setAvatar(publicUrl));
 		this.net.on('status', ({ status }) => {
 			this.ui.setStatus(status);
@@ -1209,10 +1229,19 @@ export class CoinCommunities {
 			// has been given up. The connecting window is the only time it's off, so
 			// the toggle never becomes a dead, silent button.
 			this.buildHud.setEnabled(this._buildableConnection(), 'Connecting to the world…');
-			// Durability badge: online reflects the server's persistent flag; solo
-			// single-player isn't saved at all, so hide it (null) to avoid a false
-			// promise. Re-sync the budget meter against whatever layer is now live.
-			this.buildHud.setPersistent(status === 'online' ? this.net?.persistent : (status === 'offline' || status === 'unavailable' ? false : null));
+			// The room has stopped being the authority: take the pen back so a solo
+			// session keeps building into the same durable document (P3.1).
+			if (status !== 'online' && status !== 'connecting') this._armLocalWorldWriter();
+			// Durability badge: online reflects the server's persistent flag. Offline,
+			// props ARE durable now (they go straight to the world store), so the badge
+			// reflects whether this client may actually write it — never a false promise.
+			this.buildHud.setPersistent(
+				status === 'online'
+					? this.net?.persistent
+					: (status === 'offline' || status === 'unavailable' || status === 'failed'
+						? !!this._worldStore?.writable
+						: null),
+			);
 			this._syncBudget();
 			// A reconnect reissues every sessionId, stranding the voice mesh — refresh
 			// our id, drop the stale peers, and re-announce so it re-forms.
@@ -1701,6 +1730,9 @@ export class CoinCommunities {
 		this._danceFloorPos = null; this._onFloor = false; this._wantsDance = false;
 		this.ui.setOnFloor(false);
 		if (this._reactor) { this._reactor.dispose(); this._reactor = null; }
+		// Land any debounced world-store write before the objects it describes are
+		// disposed (P3.1) — leaving a world must not lose the last placement.
+		this._closeWorldStore();
 		if (this.voxels) { this.voxels.dispose(); this.voxels = null; }
 		if (this.worldObjects) { this.worldObjects.dispose(); this.worldObjects = null; }
 		if (this.propGhost) { this.propGhost.dispose(); this.propGhost = null; }
@@ -2964,6 +2996,39 @@ export class CoinCommunities {
 		this._refreshGhost();
 	}
 
+	// P3.3 — bring your own prop. Validate the model locally (size, geometry,
+	// triangle budget, real-world scale), upload it through the same presigned-PUT
+	// storage path avatars use, register it in the palette, and arm it so the next
+	// click drops it into the world. Every failure state is reported in the palette's
+	// own status line with a reason the uploader can act on.
+	async _uploadProp(file) {
+		if (this._propUploading) return;
+		this._propUploading = true;
+		this.ui.setPropUploadStatus('Checking your model…');
+		try {
+			const info = await validatePropModel(file);
+			this.ui.setPropUploadStatus('Uploading… 0%');
+			const url = await uploadPropModel(file, (p) => {
+				this.ui.setPropUploadStatus(`Uploading… ${Math.round(p * 100)}%`);
+			});
+			const name = (file.name || 'Your model').replace(/\.(glb|vrm)$/i, '').slice(0, 24);
+			const def = registerUploadedProp(url, { name });
+			this.ui.addUploadedProp({ id: def.id, name: def.name });
+			this._pickProp(def.id);
+			this.ui.setPropUploadStatus('');
+			this.ui.toast(
+				`${name} is ready${info.vrm ? ' (VRM)' : ''} — click in the world to place it.`,
+				'info',
+			);
+		} catch (err) {
+			const message = err?.message || 'That model could not be uploaded.';
+			this.ui.setPropUploadStatus(message, true);
+			this.ui.toast(message, 'warn');
+		} finally {
+			this._propUploading = false;
+		}
+	}
+
 	// Rotate the armed prop a quarter-turn and re-preview it in place.
 	_rotateProp() {
 		if (!this.buildProp) return;
@@ -2999,18 +3064,64 @@ export class CoinCommunities {
 		const target = this._propTarget(clientX, clientY);
 		if (!target) return;
 		if (!target.valid) { this._updatePropGhost(clientX, clientY); return; }
-		const online = this.net?.status === 'online';
-		if (!online) {
-			// Solo: there's no shared object channel to place into, so be honest rather
-			// than faking a local-only prop that no one else will ever see.
-			this.ui.toast('Props need a live connection — reconnect to place them.', 'warn');
+		const yaw = this.buildPropRot * (Math.PI / 2);
+		const url = propDef(this.buildProp)?.upload ? propDef(this.buildProp).glb : '';
+		if (this._roomIsAuthority()) {
+			this.net.spawnObject('block', {
+				type: this.buildProp, x: target.x, y: target.y, z: target.z,
+				yaw, scale: this.buildPropScale, url: url || undefined,
+			});
+		} else if (!this._placeLocalProp(target, yaw, url)) {
 			return;
 		}
-		const yaw = this.buildPropRot * (Math.PI / 2);
-		this.net.spawnObject('block', { type: this.buildProp, x: target.x, y: target.y, z: target.z, yaw, scale: this.buildPropScale });
 		// A short haptic tick confirms the place on touch devices.
 		if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(12);
 		this._updatePropGhost(clientX, clientY);
+	}
+
+	// Place a prop with no authoritative room in the picture (P3.1). It is a real
+	// object in the scene AND a real row in the durable world document — not a
+	// local-only decoration that quietly disappears — so the same caps the server
+	// enforces are enforced here before anything is written.
+	_placeLocalProp(target, yaw, url) {
+		const store = this._worldStore;
+		if (!store) { this.ui.toast('This world’s build store is still loading — try again in a moment.', 'warn'); return false; }
+		if (!store.writable) {
+			this.ui.toast('Your build here can’t be saved yet, so props are off. Sign in and rejoin to build offline.', 'warn');
+			return false;
+		}
+		const objs = this.worldObjects;
+		if (!objs) return false;
+		if (objs.localCount() >= MAX_WORLD_OBJECTS) {
+			this.ui.toast('This world is full of props — remove some to place more.', 'warn');
+			return false;
+		}
+		if (this._offlineBuilt.size >= MAX_OBJECTS_PER_PLAYER) {
+			this.ui.toast('You’ve hit your prop limit for this world — remove some to place more.', 'warn');
+			return false;
+		}
+		const rec = {
+			id: `loc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+			type: this.buildProp,
+			kind: 'block',
+			ownerId: this._buildOwnerKey(),
+			x: target.x, y: target.y, z: target.z,
+			yaw,
+			scale: Math.min(OBJ_SCALE_MAX, Math.max(OBJ_SCALE_MIN, this.buildPropScale)),
+			url: url || '',
+		};
+		objs.addLocal(rec, { mine: true });
+		this._offlineBuilt.set(rec.id, rec);
+		this._persistLocalBuild();
+		this._syncBudget();
+		return true;
+	}
+
+	// The id an offline placement is owned by. Matches WalkRoom._ownerKey's
+	// preference order (verified wallet → persisted economy id) so a prop built
+	// offline is still recognisably yours once the room restores the doc.
+	_buildOwnerKey() {
+		return this.account || this.net?.pid || '';
 	}
 
 	// Delete the nearest prop under the pointer that this client owns. Raycasts only
@@ -3022,7 +3133,18 @@ export class CoinCommunities {
 		const hits = this._pointerRay(clientX, clientY).intersectObjects(owned, true);
 		const id = hits.length ? this.worldObjects.idForHit(hits[0].object) : null;
 		if (!id) return;
-		this.net?.removeObject(id);
+		if (this.worldObjects.isLocal(id)) {
+			// A locally-driven prop (restored from the world doc, or built offline):
+			// remove it here and record the deletion so the next save doesn't just
+			// resurrect it from the doc we loaded.
+			this.worldObjects.removeLocal(id);
+			this._offlineBuilt?.delete(id);
+			this._removedPersisted?.add(id);
+			this._persistLocalBuild();
+			this._syncBudget();
+		} else {
+			this.net?.removeObject(id);
+		}
 		if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
 	}
 
@@ -3034,9 +3156,13 @@ export class CoinCommunities {
 		if (this.buildHud.mode === 'remove') { this.propGhost.hide(); return; }
 		const target = this._propTarget(clientX, clientY);
 		if (!target) { this.propGhost.hide(); return; }
-		this.propGhost.setType(this.buildProp);
+		const def = propDef(this.buildProp);
+		this.propGhost.setType(this.buildProp, def?.upload ? def.glb : '');
 		this.propGhost.setPose(target.x, target.y, target.z, this.buildPropRot * (Math.PI / 2), this.buildPropScale);
-		this.propGhost.setValid(target.valid && this.net?.status === 'online');
+		// Placement is valid online (the room takes it) or offline once the durable
+		// world store is open and writable (P3.1) — the ghost tells the truth about
+		// which of those is actually available right now.
+		this.propGhost.setValid(target.valid && (this._roomIsAuthority() || !!this._worldStore?.writable));
 		this.propGhost.show();
 	}
 
@@ -3050,8 +3176,152 @@ export class CoinCommunities {
 		const msg = {
 			world_full: 'This world is full of props — remove some to place more.',
 			player_full: 'You’ve hit your prop limit for this world — remove some to place more.',
+			asset_url: 'That model isn’t hosted where this world can load it. Re-upload it and try again.',
 		}[reason] || 'That prop couldn’t be placed.';
 		this.ui.toast(msg, 'warn');
+	}
+
+	// ---------------------------------------------------------------- durable world build (P3.1)
+	// Two writers, never at once:
+	//   • a live `walk_world` room is authoritative and persists the build itself
+	//     (multiplayer/src/persistence.js), so this client only READS;
+	//   • with no room, this client is the writer: it renders the persisted build
+	//     locally and saves its own placements back through the same API.
+	// `WorldBuildStore.setArmed()` is the handover, and `worldIdForCoin()` produces
+	// byte-identical keys to WalkRoom's `worldKey`, so both writers touch one doc.
+
+	/** Is the authoritative room currently the writer? */
+	_roomIsAuthority() { return this.net?.status === 'online'; }
+
+	// Open (and immediately read) this coin's durable build document.
+	_openWorldStore(coin, tier) {
+		this._closeWorldStore();
+		this._roomSynced = false;
+		this._offlineBuilt = new Map(); // id → record, props placed with no room
+		this._removedPersisted = new Set(); // ids deleted locally out of the saved doc
+		const worldId = worldIdForCoin(coin?.mint || '', tier === 'holders' ? 'holders' : '');
+		const store = new WorldBuildStore({
+			worldId,
+			onDenied: (info) => this._onWorldSaveDenied(info),
+			onError: (info) => this._onWorldSaveError(info),
+			onSaved: () => { if (!this._roomIsAuthority()) this.buildHud.setPersistent(true); },
+		});
+		this._worldStore = store;
+		// A closed tab must not eat the last few placements: the debounce window is
+		// seconds long, so flush on the way out. `pagehide` fires for closes, reloads
+		// and bfcache evictions alike, which `beforeunload` does not.
+		this._worldStoreUnload = () => { if (store.pending) store.flush().catch(() => {}); };
+		addEventListener('pagehide', this._worldStoreUnload);
+		const epoch = this._enterEpoch;
+		store.load().then(({ doc, error }) => {
+			// The player may have left (or hopped coins) while the read was in flight.
+			if (this._worldStore !== store || epoch !== this._enterEpoch) return;
+			if (error) {
+				log.warn('[coincommunities] world build load failed:', error);
+				return;
+			}
+			this._restorePersistedBuild(doc);
+		});
+	}
+
+	// Render a loaded doc's props locally. Skipped once the room has synced: from
+	// that point the room's own restore of the SAME doc is already in the scene.
+	_restorePersistedBuild(doc) {
+		if (this._roomSynced || !this.worldObjects) return;
+		const objects = docObjects(doc);
+		if (!objects.length) return;
+		let n = 0;
+		for (const o of objects) {
+			if (n >= MAX_WORLD_OBJECTS) break;
+			this.worldObjects.addLocal(o, { mine: !!this.net?.ownsObject(o) });
+			n++;
+		}
+		this._syncBudget();
+		log.info('[coincommunities] restored', n, 'persisted props from the world store');
+	}
+
+	// The room finished its first state sync. It restored the same document, so our
+	// local copies are duplicates — drop them — and anything we built while offline
+	// is handed to the room as real spawn intents so it joins the shared world (and
+	// gets persisted by the authority) instead of stranding in a local doc.
+	_onRoomSynced() {
+		this._roomSynced = true;
+		this._worldStore?.setArmed(false);
+		const handoff = [...(this._offlineBuilt?.values() || [])];
+		this.worldObjects?.dropLocal();
+		this._offlineBuilt?.clear();
+		this._removedPersisted?.clear();
+		for (const rec of handoff.slice(0, MAX_OBJECTS_PER_PLAYER)) {
+			this.net?.spawnObject(rec.kind || 'prop', {
+				type: rec.type, x: rec.x, y: rec.y, z: rec.z,
+				yaw: rec.yaw, scale: rec.scale, url: rec.url || undefined,
+			});
+		}
+		if (handoff.length) {
+			this.ui.toast(`Shared ${handoff.length} prop${handoff.length === 1 ? '' : 's'} you built offline with everyone here.`, 'info');
+		}
+		this._syncBudget();
+	}
+
+	// Hand the pen back to this client after the room drops, so a solo session can
+	// keep building into the same durable document.
+	_armLocalWorldWriter() {
+		if (!this._worldStore) return;
+		this._roomSynced = false;
+		this._worldStore.setArmed(true);
+	}
+
+	// Arm a debounced durable save of the local build. The producer runs at flush
+	// time against the FRESHEST doc the store has (re-run after a 409), so a
+	// concurrent writer's props are merged rather than overwritten.
+	_persistLocalBuild() {
+		const store = this._worldStore;
+		if (!store || this._roomIsAuthority()) return;
+		store.queueSave((base) => {
+			const mine = new Map();
+			for (const rec of this.worldObjects?.localObjects() || []) mine.set(rec.id, rec);
+			const kept = docObjects(base)
+				.filter((o) => !this._removedPersisted.has(o.id) && !mine.has(o.id));
+			const objects = [...kept, ...mine.values()].slice(0, MAX_WORLD_OBJECTS);
+			return { ...(base && typeof base === 'object' ? base : {}), objects };
+		});
+	}
+
+	// The store refused this client's identity. Terminal for the session, so say so
+	// once, plainly, and stop claiming the build is saved.
+	_onWorldSaveDenied({ reason }) {
+		this.buildHud.setPersistent(false);
+		this.ui.toast(reason === 'signin'
+			? 'Sign in to save what you build here — until then it only exists in this tab.'
+			: 'This world belongs to someone else, so your offline build can’t be saved to it.', 'warn');
+	}
+
+	_onWorldSaveError({ reason }) {
+		this.buildHud.setPersistent(false);
+		if (reason === 'too_large') {
+			this.ui.toast('This world has hit its saved-build size limit — remove some props to save more.', 'warn');
+			return;
+		}
+		// Network/server blips are transient: the next placement re-arms the save, so
+		// don't shout. The unsaved badge already carries the state.
+		log.warn('[coincommunities] world save failed:', reason);
+	}
+
+	// Flush anything pending and tear the store down (leaving a world / a coin hop).
+	_closeWorldStore() {
+		const store = this._worldStore;
+		this._worldStore = null;
+		this._roomSynced = false;
+		this._offlineBuilt = null;
+		this._removedPersisted = null;
+		if (this._worldStoreUnload) {
+			removeEventListener('pagehide', this._worldStoreUnload);
+			this._worldStoreUnload = null;
+		}
+		if (!store) return;
+		// Fire-and-forget: the flush is a real network write, but leaving must not
+		// wait on it. dispose() after it settles so a late timer can't resurrect.
+		store.flush().catch(() => {}).finally(() => store.dispose());
 	}
 
 	// Arm a hold-to-break timer for the current press. If the player keeps the
@@ -3176,7 +3446,12 @@ export class CoinCommunities {
 			creator: !!p.creator,
 			cap: Number(p.cap) || 0,
 			used: Number(p.used) || 0,
-			clearMaxRadius: Number(p.clearMaxRadius) || 12,
+			// P3.2: the server sends the radius this player earned (visitor / holder
+			// world / coin creator). Falling back to the same tier function keeps an
+			// older server's omitted field honest instead of guessing a flat number.
+			clearMaxRadius: Number(p.clearMaxRadius) || buildClearRadius({
+				creator: !!p.creator, holder: this.coin?.tier === 'holders',
+			}),
 		};
 		this.buildHud.setCreator(this._buildPerms.creator);
 		this.buildHud.setUsage(this._buildPerms.used, this._buildPerms.cap);
@@ -3184,11 +3459,24 @@ export class CoinCommunities {
 		this.ui.setWorldCreator(this._buildPerms.creator);
 	}
 
+	// The permission snapshot before the server has spoken. The clear radius comes
+	// from the SAME tier function the room enforces (P3.2), seeded with what this
+	// client can honestly claim on its own: no proven creator standing, but it does
+	// know which tier of world it asked to enter.
+	_defaultBuildPerms() {
+		return {
+			creator: false,
+			cap: 0,
+			used: 0,
+			clearMaxRadius: buildClearRadius({ creator: false, holder: this.coin?.tier === 'holders' }),
+		};
+	}
+
 	// Clear the per-player meter + creator tool — on leave and on every (re)connect,
 	// before fresh perms arrive, so a solo build or a different world never inherits
 	// the last one's allowance or moderation control.
 	_resetBuildPerms() {
-		this._buildPerms = { creator: false, cap: 0, used: 0, clearMaxRadius: 12 };
+		this._buildPerms = this._defaultBuildPerms();
 		this.buildHud.setCreator(false);
 		this.buildHud.setUsage(0, 0);
 		this.ui.setWorldCreator(false);
@@ -3243,7 +3531,7 @@ export class CoinCommunities {
 			this.net.sendClearAll();
 			return;
 		}
-		const r = this._buildPerms.clearMaxRadius || 12;
+		const r = this._buildPerms.clearMaxRadius || buildClearRadius({ creator: true, holder: this.coin?.tier === 'holders' });
 		if (typeof confirm === 'function' && !confirm(`Clear all blocks within ${r} cells of where you stand?`)) return;
 		const gx = Math.round(this.localPos.x / BLOCK);
 		const gz = Math.round(this.localPos.z / BLOCK);

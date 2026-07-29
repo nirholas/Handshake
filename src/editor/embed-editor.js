@@ -112,9 +112,21 @@ function mountEmbedEditor(root, opts = {}) {
 	// ── Left: controls panel ───────────────────────────────────────────────
 	const panel = el('div', { className: 'ee-panel' });
 
+	// The two embed builders are one product with two jobs: this editor makes a
+	// snippet in seconds with no account, Widget Studio saves reusable widgets
+	// with brand settings and analytics. Each says so and points at the other.
+	const studioLink = el('a', { className: 'ee-crosslink', href: '/studio' });
+	studioLink.textContent = 'Widget Studio →';
+	const crossline = el('p', { className: 'ee-subtitle ee-crossline' });
+	crossline.append(
+		document.createTextNode('Want a saved, brandable widget you can update later? '),
+		studioLink,
+	);
+
 	panel.append(
 		el('h1', { className: 'ee-title', textContent: 'Embed editor' }),
-		el('p', { className: 'ee-subtitle', textContent: 'Drop a live 3D avatar onto any site. Configure, preview, copy.' }),
+		el('p', { className: 'ee-subtitle', textContent: 'Drop a live 3D avatar onto any site. Configure, preview, copy. No account needed.' }),
+		crossline,
 	);
 
 	// Mode toggle
@@ -692,6 +704,10 @@ function injectStyles() {
 		.ee-panel { padding:24px; border-right:1px solid #1c2026; overflow-y:auto; background:#0d0f12; }
 		.ee-title { font-size:18px; margin:0 0 4px; font-weight:700; }
 		.ee-subtitle { font-size:13px; color:#71717a; margin:0 0 22px; line-height:1.5; }
+		.ee-crossline { margin:-14px 0 22px; }
+		.ee-crosslink { color:#a1a1aa; text-decoration:none; border-bottom:1px solid #3a3f47; transition:color .15s ease, border-color .15s ease; }
+		.ee-crosslink:hover, .ee-crosslink:focus-visible { color:#fff; border-color:#fff; }
+		.ee-crosslink:focus-visible { outline:2px solid #6366f1; outline-offset:3px; border-radius:2px; }
 		.ee-field { display:block; margin-bottom:16px; }
 		.ee-label { display:block; font-size:12px; color:#a1a1aa; margin-bottom:7px; font-weight:600; }
 		.ee-hint { font-size:12px; color:#71717a; margin:-8px 0 16px; min-height:16px; line-height:1.4; }

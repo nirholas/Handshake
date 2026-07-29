@@ -100,6 +100,24 @@ const UNREAL_ALIASES = new Map(Object.entries({
 	thighr: 'RightUpLeg', calfr: 'RightLeg', footr: 'RightFoot', ballr: 'RightToeBase',
 }));
 
+// Unreal's finger chain: `index_01_l`, `middle_02_r`, `thumb_03_l`, `pinky_01_l`,
+// `ring_02_l`. The zero-padded joint index is what keeps these out of the
+// side-suffix finger table below (`Index1L` normalises to `index1l`, never
+// `index01l`), so an otherwise-mapped mannequin arrived with 30 of its 52 joints
+// unmapped. That is not a cosmetic loss: 30 of the clip library's 53 tracks are
+// finger tracks, so a fingerless mannequin scored 40% coverage and fell under the
+// MIN_COVERAGE gate in animation-retarget.js — the rig built no action at all and
+// stood in its bind pose. Found by scripts/animation-dignity-sweep.mjs.
+for (const [uf, cf] of [
+	['thumb', 'Thumb'], ['index', 'Index'], ['middle', 'Middle'],
+	['ring', 'Ring'], ['pinky', 'Pinky'],
+]) {
+	for (let n = 1; n <= 3; n++) {
+		UNREAL_ALIASES.set(`${uf}0${n}l`, `LeftHand${cf}${n}`);
+		UNREAL_ALIASES.set(`${uf}0${n}r`, `RightHand${cf}${n}`);
+	}
+}
+
 // Extended humanoid alias map: VRM/VRoid, VRM 1.0, Daz/Genesis, MakeHuman, and
 // simple/generic rigs. Keyed by the same separator-stripped, lowercased form
 // `_lookupBone` produces (e.g. `J_Bip_L_UpperArm` → `jbiplupperarm`,
@@ -167,6 +185,14 @@ const EXTRA_ALIASES = (() => {
 		['spine0', 'Spine'],
 		// UniGLTF/VRM-converter root joint.
 		['hipMaster', 'Hips'],
+		// Anatomical-Latin rigs. Scan pipelines, medical/anatomy kits, and the
+		// ZBrush/Blender anatomy libraries name every joint for the bone itself
+		// rather than for its role: `pelvis` (already mapped via the Unreal table),
+		// `lumbar`, `thoracic`, `sternum`, `cervical`, `cranium`, with `humerus.L`,
+		// `femur.L` and friends on the limbs below. The whole convention previously
+		// mapped 3 of 52 joints and animated nothing at all.
+		['lumbar', 'Spine'], ['thoracic', 'Spine1'], ['sternum', 'Spine2'],
+		['cervical', 'Neck'], ['cranium', 'Head'], ['skull', 'Head'],
 	]) put(v, c);
 
 	// Side-paired limb bones, given as the LEFT spelling + its canonical; the
@@ -228,7 +254,65 @@ const EXTRA_ALIASES = (() => {
 		// rigs using this convention mapped zero bones.
 		['lHip', 'LeftUpLeg'], ['lKnee', 'LeftLeg'], ['lAnkle', 'LeftFoot'],
 		['lElbow', 'LeftForeArm'], ['lWrist', 'LeftHand'], ['lToes', 'LeftToeBase'],
+		// Anatomical-Latin limbs, in both the side-SUFFIX (`humerus.L`) and
+		// side-PREFIX (`l_humerus`) spellings these rigs ship in. The clavicle
+		// (`scapula`) is already covered above. Radius and ulna are both forearm
+		// joints and fibula is a lower-leg joint: whichever the rig actually skins
+		// to is the one the retargeter binds (first-bone-wins), and either drives
+		// the same limb segment.
+		['humerusL', 'LeftArm'], ['lHumerus', 'LeftArm'],
+		['ulnaL', 'LeftForeArm'], ['lUlna', 'LeftForeArm'],
+		['radiusL', 'LeftForeArm'], ['lRadius', 'LeftForeArm'],
+		['carpusL', 'LeftHand'], ['lCarpus', 'LeftHand'],
+		['femurL', 'LeftUpLeg'], ['lFemur', 'LeftUpLeg'],
+		['tibiaL', 'LeftLeg'], ['lTibia', 'LeftLeg'],
+		['fibulaL', 'LeftLeg'], ['lFibula', 'LeftLeg'],
+		['talusL', 'LeftFoot'], ['lTalus', 'LeftFoot'],
+		['tarsusL', 'LeftFoot'], ['lTarsus', 'LeftFoot'],
+		['calcaneusL', 'LeftFoot'], ['lCalcaneus', 'LeftFoot'],
+		['metatarsusL', 'LeftToeBase'], ['lMetatarsus', 'LeftToeBase'],
 	];
+
+	// Finger conventions the side-suffix `Index1L` family below does not reach.
+	// Fingers are 30 of the clip library's 53 tracks, so a rig whose hands don't
+	// name-map scores ~40% coverage and falls under animation-retarget.js's
+	// MIN_COVERAGE gate: production then builds NO action for it and the avatar
+	// stands in its bind pose. Every convention here was measured doing exactly
+	// that by scripts/animation-dignity-sweep.mjs before these entries landed.
+	for (const [vf, cf] of [
+		['Thumb', 'Thumb'], ['Index', 'Index'], ['Middle', 'Middle'],
+		['Ring', 'Ring'], ['Pinky', 'Pinky'], ['Little', 'Pinky'],
+	]) {
+		const lf = vf.toLowerCase();
+		for (let n = 1; n <= 3; n++) {
+			// Daz / Genesis side-PREFIX numbering: `lIndex1`, `rPinky3`. (Genesis
+			// abbreviates the middle finger to `lMid1`, handled just below.)
+			SIDED.push([`l${vf}${n}`, `LeftHand${cf}${n}`]);
+			// Blender Rigify: `f_index.01.L`, `f_pinky.03.R`, and the thumb's own
+			// `thumb.01.L` spelling (Rigify drops the `f_` there).
+			SIDED.push([`f_${lf}.0${n}.L`, `LeftHand${cf}${n}`]);
+			SIDED.push([`${lf}.0${n}.L`, `LeftHand${cf}${n}`]);
+			// MakeHuman numbers the digits 1..5 from the thumb: `finger1-2.L` is the
+			// thumb's middle phalanx, `finger5-1.R` the right pinky's first.
+			const digit = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'].indexOf(cf) + 1;
+			if (digit > 0) SIDED.push([`finger${digit}-${n}.L`, `LeftHand${cf}${n}`]);
+		}
+		// VRM 1.0 and anatomical rigs name the phalanges instead of numbering them:
+		// proximal / intermediate / distal, with the thumb starting at its
+		// metacarpal (which is the canonical set's `Thumb1`). VRM 1.0 puts the side
+		// first (`leftIndexProximal`); anatomy-kit rigs put it last
+		// (`index_proximal.L`). Both spellings are listed so either resolves.
+		const phalanges =
+			cf === 'Thumb'
+				? ['Metacarpal', 'Proximal', 'Distal']
+				: ['Proximal', 'Intermediate', 'Distal'];
+		phalanges.forEach((phalanx, i) => {
+			SIDED.push([`left${vf}${phalanx}`, `LeftHand${cf}${i + 1}`]);
+			SIDED.push([`${lf}_${phalanx.toLowerCase()}.L`, `LeftHand${cf}${i + 1}`]);
+		});
+	}
+	// Genesis abbreviates only the middle finger.
+	for (let n = 1; n <= 3; n++) SIDED.push([`lMid${n}`, `LeftHandMiddle${n}`]);
 	// Side-suffix finger chains, both conventions found in real uploaded avatars by
 	// scripts/audit-rig-coverage.mjs:
 	//   • Blender / MakeHuman:    `Index.L`, `Index2.L`, `Middle1.L`, `Thumb.L`, `Ring2.R`

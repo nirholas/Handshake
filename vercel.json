@@ -883,6 +883,10 @@
 			"dest": "/receipts.html"
 		},
 		{
+			"src": "/fits/?",
+			"dest": "/fits.html"
+		},
+		{
 			"src": "/deployments/?",
 			"dest": "/deployments.html"
 		},
@@ -3841,7 +3845,7 @@
 			"src": "/avatar-edit/?",
 			"status": 301,
 			"headers": {
-				"Location": "/avatars"
+				"Location": "/dashboard/avatars"
 			}
 		},
 		{

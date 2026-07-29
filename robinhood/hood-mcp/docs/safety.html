@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Safety model — hood-mcp</title>
+<meta name="description" content="How hood-mcp's trading server is guarded: a kill switch that stops the process from starting, USD spend caps per call and per session, a simulate-then-confirm round trip, and the Stock Token eligibility gate." />
+<link rel="canonical" href="https://nirholas.github.io/hood-mcp/safety.html" />
+<meta name="theme-color" content="#0a0d10" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a0d10'/><path d='M7 22V10m0 6h8m0-6v12' fill='none' stroke='%2300c805' stroke-width='2.6' stroke-linecap='round'/><circle cx='24' cy='12' r='2.6' fill='%2335e0c0'/></svg>" />
+<link rel="stylesheet" href="site.css" />
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="tick">hood</span>-mcp</div>
+    <div class="links">
+      <a href="index.html">Session</a>
+      <a href="install.html">Install</a>
+      <a href="tools.html">Tools</a>
+      <a href="safety.html" aria-current="page">Safety model</a>
+      <a href="https://github.com/nirholas/hood-mcp">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section style="border-top:none; padding-top:56px;">
+    <p class="eyebrow">Safety model</p>
+    <h1>Four gates before anything is signed.</h1>
+    <p class="section-lede">
+      The data server holds no key and can only read. Everything on this page is about the second
+      binary, <code>hood-mcp-trading</code>, which does hold a key. A language model choosing tool
+      calls is not a trust boundary, so the guards are in the server, ahead of the signer, and each
+      one is independent of the others.
+    </p>
+    <p class="note">
+      <strong>Two servers, never one.</strong> The trading tools are not registered on the data
+      server and cannot be reached from it. Installing <code>hood-mcp</code> from Smithery, Claude
+      Code, or npm gives a client no path to a transaction.
+    </p>
+  </section>
+
+  <section id="kill-switch">
+    <h2>1. Kill switch</h2>
+    <p class="section-lede">
+      The trading process refuses to start unless <code>HOOD_MCP_ENABLE_TRADING</code> is exactly
+      <code>1</code> and <code>ROBINHOOD_CHAIN_PRIVATE_KEY</code> is a well-formed 32-byte hex key.
+      There is no in-band way for a model to flip it: the check runs at boot, before any transport
+      is connected.
+    </p>
+<pre><code>HOOD_MCP_ENABLE_TRADING=1
+ROBINHOOD_CHAIN_PRIVATE_KEY=0x...   # env only, never in a config file you commit</code></pre>
+    <p class="section-lede">
+      Stopping the process is the whole revocation story: kill it and the key is out of reach.
+    </p>
+  </section>
+
+  <section id="spend-caps">
+    <h2>2. Hard spend caps, in USD</h2>
+    <p class="section-lede">
+      Every mutating call is priced in USD before it is signed and checked against two independent
+      caps. Exceeding either one is a refusal, not a warning, and the ledger is charged only after a
+      broadcast succeeds.
+    </p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Variable</th><th>Default</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td><code>HOOD_MCP_MAX_SPEND_USDG</code></td><td><code>25</code></td><td>One call. A single <code>execute_swap</code> or <code>transfer_usdg</code> above this is rejected outright.</td></tr>
+        <tr><td><code>HOOD_MCP_MAX_SESSION_USDG</code></td><td><code>100</code></td><td>Cumulative for the process lifetime, held in memory. Restarting resets it, which is deliberate: a restart is a human action.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="section-lede">
+      Valuation uses the same live pricing path the data tools use, so a cap of 25 means 25 dollars
+      of token, not 25 units of whatever the model happened to name.
+    </p>
+  </section>
+
+  <section id="confirm-gate">
+    <h2>3. Simulate, then confirm</h2>
+    <p class="section-lede">
+      The first call to a mutating tool never signs. It returns a simulation: the resolved token
+      addresses, the exact amount in and minimum out, the recipient, the USD value, and the caps it
+      was checked against. Only a second call carrying <code>confirm: true</code> with identical
+      arguments broadcasts.
+    </p>
+<pre><code>execute_swap({ tokenIn: "USDG", tokenOut: "WETH", amountIn: "10" })
+  -> { simulation: { amountOutMinimum, usdValue, spendRemaining, ... }, confirmRequired: true }
+
+execute_swap({ tokenIn: "USDG", tokenOut: "WETH", amountIn: "10", confirm: true })
+  -> { txHash, blockNumber, status, explorer }</code></pre>
+    <p class="section-lede">
+      This gives the human in the loop a rendered recipient and amount to read before anything
+      moves, which is the only review step that reliably catches a mis-routed tool call.
+    </p>
+  </section>
+
+  <section id="eligibility">
+    <h2>4. Stock Token eligibility gate</h2>
+    <p class="section-lede">
+      Stock Tokens are tokenized debt securities issued by Robinhood Assets (Jersey) Ltd. They may
+      not be offered, sold, or delivered to US persons, with further limits for Canada, the UK, and
+      Switzerland. The restriction is legal and front-end enforced, not enforced by the contracts, so
+      this server enforces it itself.
+    </p>
+    <ul class="plain">
+      <li><strong>Reading is never gated.</strong> Quotes, portfolios, premiums, and search work for everyone. That is data, not an offer.</li>
+      <li><strong>Acquiring is gated.</strong> Any swap whose <em>output</em> is a Stock Token throws unless <code>HOOD_MCP_ACKNOWLEDGE_ELIGIBILITY=1</code> is set, which is the operator affirming they are eligible.</li>
+      <li><strong>Selling is never gated.</strong> Exiting a position you already hold is always allowed.</li>
+      <li><strong>Memecoins are unrestricted.</strong> NOXA and The Odyssey tokens are not securities and carry no gate.</li>
+    </ul>
+    <p class="note">
+      This is a config-level affirmation, not a geo-IP check. Setting the variable does not make you
+      eligible; it records that you say you are.
+    </p>
+  </section>
+
+  <section id="keys">
+    <h2>Key handling</h2>
+    <ul class="plain">
+      <li>The key is read from the environment once, at boot, and turned into a viem account. It is never logged, never returned by a tool, and never written to disk by this package.</li>
+      <li>Tool results carry addresses and transaction hashes, never key material.</li>
+      <li><code>.env*</code> is gitignored in this repo. Client configs that inline a key (Claude Desktop, Cursor) live outside version control by design; prefer exporting the variable in the shell that launches the client.</li>
+      <li>Use a dedicated wallet holding only what you are willing to have an agent spend. The caps above bound the loss per session; the wallet balance bounds it absolutely.</li>
+    </ul>
+  </section>
+
+  <section id="tests">
+    <h2>What is actually tested</h2>
+    <p class="section-lede">
+      The guards are covered by <code>tests/trading-guards.test.ts</code> (spend caps, the confirm
+      round trip, the eligibility gate, the kill switch) and the tool schemas by
+      <code>tests/schema.test.ts</code>. Live data tools run against real mainnet in
+      <code>npm run test:live</code>, and <code>npm run test:swap</code> performs a real testnet swap
+      through <code>execute_swap</code> when a funded key is present.
+    </p>
+    <pre><code>npm test           # schema + guard tests
+npm run test:live  # every data tool against live chain 4663
+npm run test:swap  # real testnet 46630 swap, requires a funded key</code></pre>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+  <a href="https://three.ws">three.ws</a> ·
+  <a href="https://www.npmjs.com/package/hood-mcp">npm</a>
+</footer>
+
+</body>
+</html>

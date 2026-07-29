@@ -69,7 +69,9 @@ export const PROP_CATALOG = [
 	{ id: 'pole', name: 'Pole', icon: '🎚️', foot: 0.35, glb: '/club/props/pole.glb', fitH: 3.0 },
 ];
 const PROP_BY_ID = new Map(PROP_CATALOG.map((p) => [p.id, p]));
-export function propDef(type) { return PROP_BY_ID.get(type) || GALLERY_PROPS.get(type) || null; }
+export function propDef(type) {
+	return PROP_BY_ID.get(type) || GALLERY_PROPS.get(type) || UPLOAD_PROPS.get(type) || null;
+}
 export const DEFAULT_PROP = PROP_CATALOG[0].id;
 
 // ── gallery props ────────────────────────────────────────────────────────────
@@ -282,12 +284,46 @@ function instanceGLB(def, holder) {
 // server-side against the storage allow-list), so it needs no catalog entry and
 // no id namespace: any client that receives the object can render it. Heights are
 // clamped so a mis-scaled export can't become a skybox-filling wall.
-export const UPLOAD_PROP_TYPE = 'upload';
+export const UPLOAD_PROP_PREFIX = 'u:';
 const UPLOAD_FIT_MIN_M = 0.25;
 const UPLOAD_FIT_MAX_M = 8;
+const UPLOAD_PROPS = new Map(); // 'u:<hash>' → def
 
 function uploadDef(url) {
-	return { id: UPLOAD_PROP_TYPE, name: 'Uploaded model', icon: '📤', glb: url, fitH: null, foot: 0.6 };
+	return { id: UPLOAD_PROP_PREFIX, name: 'Uploaded model', icon: '📤', glb: url, fitH: null, foot: 0.6 };
+}
+
+export function isUploadType(type) {
+	return typeof type === 'string' && type.startsWith(UPLOAD_PROP_PREFIX);
+}
+
+// FNV-1a over the model url: a short, stable, collision-resistant-enough id so the
+// same upload always maps to the same palette entry (and the same `type` on the
+// wire) no matter how often it is re-registered. 10 chars, well inside the
+// server's 48-char type budget.
+function uploadIdFor(url) {
+	let h = 0x811c9dc5;
+	for (let i = 0; i < url.length; i++) {
+		h ^= url.charCodeAt(i);
+		h = Math.imul(h, 0x01000193) >>> 0;
+	}
+	return UPLOAD_PROP_PREFIX + h.toString(36).padStart(7, '0');
+}
+
+/**
+ * Register a player-uploaded model as a placeable prop (P3.3). Idempotent — the
+ * same url always yields the same def, so re-uploading or restoring a build never
+ * duplicates a palette entry. The model's url travels with each placed object, so
+ * every other client renders it without needing this registry.
+ * @returns {{id:string,name:string,icon:string,glb:string,fitH:null,foot:number,upload:true}}
+ */
+export function registerUploadedProp(url, { name = 'Your model' } = {}) {
+	const id = uploadIdFor(String(url || ''));
+	let def = UPLOAD_PROPS.get(id);
+	if (def) { def.glb = url; return def; }
+	def = { id, name, icon: '📤', glb: url, fitH: null, foot: 0.6, upload: true };
+	UPLOAD_PROPS.set(id, def);
+	return def;
 }
 
 // Build the scene node for a prop. `url` (when present) is a player-uploaded
@@ -491,6 +527,13 @@ export class WorldObjects {
 
 	/** Is this id a locally-driven entry (rather than the server's)? */
 	isLocal(id) { return !!this.entries.get(id)?.local; }
+
+	/** Remove a locally-driven entry. No-op for a server-owned object. */
+	removeLocal(id) {
+		if (!this.entries.get(id)?.local) return false;
+		this._remove(id);
+		return true;
+	}
 
 	/** The local entries as plain records — what the world-doc producer persists. */
 	localObjects(out = []) {

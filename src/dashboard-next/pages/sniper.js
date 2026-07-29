@@ -17,6 +17,7 @@ import { requireUser, get, post, esc, relTime } from '../api.js';
 import { StudioAdapter } from '../studio-adapter.js';
 import { mountMoneyStudio } from '../../studio/money/money-studio.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
+import { toast } from '../../shared/toast.js';
 
 const SOL = 1_000_000_000n;
 const lamportsToSol = (l) => Number(BigInt(l || '0')) / 1e9;
@@ -1535,21 +1536,4 @@ function scheduleReconnect() {
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 
-function toast(msg) {
-	let el = document.getElementById('sn-toast');
-	if (!el) {
-		el = document.createElement('div');
-		el.id = 'sn-toast';
-		el.style.cssText = `position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
-			background:rgba(20,21,28,0.95);border:1px solid var(--nxt-stroke-strong);
-			color:var(--nxt-ink);padding:9px 18px;border-radius:999px;font-size:13px;
-			z-index:9999;opacity:0;transition:opacity .18s,transform .18s;
-			backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-			box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;`;
-		document.body.appendChild(el);
-	}
-	el.textContent = msg;
-	requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)'; });
-	clearTimeout(el._t);
-	el._t = setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(20px)'; }, 2500);
-}
+

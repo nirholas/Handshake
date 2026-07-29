@@ -1414,11 +1414,11 @@
 					Front-facing, good light, plain background. We downscale and upload locally —
 					your photo never sits on disk.
 				</p>
-				<p class="alt-path" data-i18n-html="create_selfie.prefer_to_use_your_camera_live_the">
-					Prefer to use your camera live? The
-					<a href="/scan">3D Scanner</a> reconstructs you in real time from a quick scan.
-					Photographing an object instead of yourself?
-					<a href="/image-to-3d">Image to 3D</a> turns any photo into a textured model.
+				<p class="alt-path" data-i18n-html="create_selfie.prefer_your_camera_live_use_camera_below">
+					Prefer to scan yourself live? Use camera below opens your webcam and
+					reconstructs you from the shot you take. Photographing an object instead of
+					yourself? <a href="/image-to-3d">Image to 3D</a> turns any photo into a
+					textured model.
 				</p>
 
 				<div class="hero-slot-wrap">
@@ -2449,7 +2449,7 @@
 				const params = new URLSearchParams({ avatar_id: _avatarId });
 				if (name) params.set('avatar_name', name);
 				if (_modelUrl) params.set('avatar_glb', _modelUrl);
-				window.location.assign(`/agent/new?${params.toString()}`);
+				window.location.assign(`/create-agent?${params.toString()}`);
 			});
 
 			document.getElementById('done-editor-btn')?.addEventListener('click', () => {

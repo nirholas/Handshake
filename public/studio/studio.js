@@ -177,6 +177,13 @@ const TYPE_DEFAULTS = {
 		height: 420,
 		position: 'inline',
 		enableNarration: false,
+		// Runtime toggles the /walk-embed page has always honoured but Studio
+		// could not reach (creation-consolidation C6 parity with /embed).
+		// Defaults mirror src/walk-embed.js: ground and badge on, gestures off.
+		ground: true,
+		gestures: false,
+		badge: true,
+		responsive: false,
 	},
 };
 
@@ -481,7 +488,7 @@ async function cloneTemplate(id) {
 function renderAvatarList() {
 	const list = $('#avatar-list');
 	if (!state.avatars.length) {
-		list.innerHTML = `<div class="empty">No avatars yet. <a href="/scan">Scan yourself to 3D →</a> <span class="empty-sep">or</span> <a href="/create/selfie">AI selfie →</a></div>`;
+		list.innerHTML = `<div class="empty">No avatars yet. <a href="/create/selfie">Make one from a selfie →</a> <span class="empty-sep">or</span> <a href="/create">browse every way to build one →</a></div>`;
 		return;
 	}
 	list.innerHTML = '';
@@ -810,6 +817,31 @@ function mountWalkingAvatarExtras(wrap) {
 		]),
 	);
 
+	// Scene + chrome toggles. The /walk-embed runtime has always read these
+	// (src/walk-embed.js: ?ground, ?gestures, ?badge); until now only the /embed
+	// editor could set them, so a Studio-built snippet silently shipped the
+	// defaults. Responsive swaps the fixed width/height for a fluid wrapper.
+	wrap.appendChild(
+		boolField('ground', 'Ground disc and contact shadow', state.config.ground !== false),
+	);
+	wrap.appendChild(
+		boolField(
+			'gestures',
+			'Visitor gesture buttons — wave and jump',
+			state.config.gestures === true,
+		),
+	);
+	wrap.appendChild(
+		boolField('badge', 'three.ws attribution badge', state.config.badge !== false),
+	);
+	wrap.appendChild(
+		boolField(
+			'responsive',
+			'Responsive — fill the container width instead of fixed pixels',
+			state.config.responsive === true,
+		),
+	);
+
 	wrap.appendChild(
 		boolField(
 			'enableNarration',
@@ -822,6 +854,18 @@ function mountWalkingAvatarExtras(wrap) {
 	narrNote.textContent =
 		'When on, the script-tag (JS SDK) embed reads each page section the visitor scrolls to via the avatar — using the narrator from the walk SDK. Plain iframe embeds stay silent.';
 	wrap.appendChild(narrNote);
+
+	// The sibling surface. Studio saves a reusable, brandable widget (needs an
+	// account); the embed editor emits a throwaway snippet instantly and can
+	// point at a raw GLB URL or an agent chat embed, which Studio cannot.
+	const altNote = document.createElement('p');
+	altNote.className = 'note';
+	altNote.append(document.createTextNode('Just need a snippet right now, with no account and no saved widget? '));
+	const altLink = document.createElement('a');
+	altLink.href = '/embed';
+	altLink.textContent = 'Open the embed editor →';
+	altNote.appendChild(altLink);
+	wrap.appendChild(altNote);
 }
 
 function mountTalkingAgentExtras(wrap) {
@@ -1657,6 +1701,11 @@ function walkEmbedQuery(avatarParam) {
 	if (c.bg) p.set('bg', c.bg);
 	if (typeof c.walkSpeed === 'number') p.set('speed', String(c.walkSpeed));
 	if (c.enableNarration) p.set('narration', '1');
+	// Only emit the non-default values — the runtime's own defaults (ground on,
+	// badge on, gestures off) keep the snippet short for the common case.
+	if (c.ground === false) p.set('ground', 'false');
+	if (c.gestures === true) p.set('gestures', 'true');
+	if (c.badge === false) p.set('badge', 'false');
 	return p;
 }
 
@@ -1926,7 +1975,14 @@ function _refreshWalkSnippet() {
 	const pos = state.config.position || 'inline';
 	const base = 'border:0;border-radius:12px;max-width:100%;background:transparent';
 	let snippet;
-	if (pos === 'inline' || !WALK_CORNER_CSS[pos]) {
+	if (state.config.responsive === true && (pos === 'inline' || !WALK_CORNER_CSS[pos])) {
+		// Fluid: the wrapper holds the aspect ratio the W/H fields describe, so the
+		// embed tracks the column it lands in instead of overflowing narrow layouts.
+		snippet =
+			`<div style="width:100%;max-width:${w}px;aspect-ratio:${w}/${h}">` +
+			`<iframe src="${_currentEmbedUrl}" style="width:100%;height:100%;${base}" allow="autoplay" loading="lazy"></iframe>` +
+			`</div>`;
+	} else if (pos === 'inline' || !WALK_CORNER_CSS[pos]) {
 		snippet = `<iframe src="${_currentEmbedUrl}" width="${w}" height="${h}" style="${base}" allow="autoplay" loading="lazy"></iframe>`;
 	} else {
 		snippet = `<iframe src="${_currentEmbedUrl}" width="${w}" height="${h}" style="position:fixed;${WALK_CORNER_CSS[pos]};z-index:2147483000;${base}" allow="autoplay" loading="lazy"></iframe>`;

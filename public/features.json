@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-29T05:37:48.107Z",
+	"generated_at": "2026-07-29T06:12:36.355Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -873,16 +873,6 @@
 					"showcase": false
 				},
 				{
-					"path": "/agent/new",
-					"title": "New Agent",
-					"description": "Create a new agent from scratch — avatar, brain, skills, and on-chain identity.",
-					"added": "2026-05-25",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
 					"path": "/create/selfie",
 					"title": "Selfie to Avatar",
 					"description": "One selfie. About a minute. A rigged 3D avatar that works everywhere.",
@@ -921,16 +911,6 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
-				},
-				{
-					"path": "/scan",
-					"title": "3D Scanner — Scan Yourself into 3D",
-					"description": "Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.",
-					"added": "2026-05-29",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
 				},
 				{
 					"path": "/dad",
@@ -1331,6 +1311,16 @@
 					"title": "Endpoint Revenue",
 					"description": "The live revenue layer — real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
 					"added": "2026-06-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/fits",
+					"title": "Fits: the cosmetics economy",
+					"description": "The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.",
+					"added": "2026-07-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

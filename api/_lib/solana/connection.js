@@ -28,7 +28,25 @@
 
 import { Connection } from '@solana/web3.js';
 
-import { cacheGet, cacheSet } from '../cache.js';
+// NOTE: the shared cache is deliberately NOT imported at module scope. This
+// module is shared with the BROWSER bundle (public/agent/index.html →
+// src/agent-skills.js → src/agent-skills-pumpfun.js → src/solana/sns.js →
+// here), and api/_lib/cache.js statically imports node:zlib and node:util. A
+// top-level import therefore broke `npm run build` outright — rollup resolves
+// the Node built-ins to __vite-browser-external and fails on
+// `"promisify" is not exported`. Loading it lazily behind isServer() also fixes
+// the architectural half: the browser holds no Upstash credentials and must
+// never reach L2, so in a browser the breaker is correctly local-only.
+let _cachePromise = null;
+function isServer() {
+	return typeof window === 'undefined';
+}
+/** Resolve { cacheGet, cacheSet }, or null in a browser. Cached after first call. */
+function sharedCache() {
+	if (!isServer()) return null;
+	if (!_cachePromise) _cachePromise = import('../cache.js').catch(() => null);
+	return _cachePromise;
+}
 
 function deriveWsUrl(httpUrl) {
 	return String(httpUrl)
@@ -211,7 +229,9 @@ let _cooldownHydrateInFlight = null;
 // cache miss or error leaves the local map as-is and the request proceeds.
 async function readSharedCooldowns() {
 	try {
-		const shared = await cacheGet(COOLDOWN_CACHE_KEY);
+		const cache = await sharedCache();
+		if (!cache) return; // browser: the local breaker is the whole breaker
+		const shared = await cache.cacheGet(COOLDOWN_CACHE_KEY);
 		if (!shared || typeof shared !== 'object') return;
 		const now = Date.now();
 		for (const [url, until] of Object.entries(shared)) {
@@ -252,7 +272,11 @@ function publishCooldowns(now) {
 		}
 	}
 	if (maxRemainingMs <= 0) return;
-	cacheSet(COOLDOWN_CACHE_KEY, active, Math.ceil(maxRemainingMs / 1000)).catch(() => {});
+	const pending = sharedCache();
+	if (!pending) return; // browser: nothing to publish to
+	pending
+		.then((cache) => cache?.cacheSet(COOLDOWN_CACHE_KEY, active, Math.ceil(maxRemainingMs / 1000)))
+		.catch(() => {});
 }
 
 function cooldownMsFor(status, bodyText) {

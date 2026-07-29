@@ -1,5 +1,40 @@
 /* ── Pricing page ─────────────────────────────────────────────────────────── */
 
+/* Theme channels.
+   This page was authored dark-only: every ink, surface tint and hairline was a
+   literal white, so under [data-theme='light'] the page canvas flipped to white
+   (via /tokens.css) while the text stayed white and the hero became invisible.
+   Rather than fork ~160 declarations, the white channel is a variable: each
+   rule keeps its own alpha (which is what carries the emphasis hierarchy) and
+   only the channel flips. Dark resolves to the exact values authored here, so
+   the primary theme is unchanged by construction.
+   --pr-fg  ink + surface tint channel   (white on dark, --ink #1d212b on light)
+   --pr-bg  the colour that sits ON a solid --pr-fg fill (inverted CTAs) */
+:root {
+	--pr-fg: 255, 255, 255;
+	--pr-bg: 0, 0, 0;
+	--pr-panel: #0d0d0f;
+	--pr-panel-ink: #eee;
+	/* Card surface ramp (base → raised → highest). */
+	--pr-card: var(--pr-card);
+	--pr-card-2: var(--pr-card-2);
+	--pr-card-3: var(--pr-card-3);
+	--pr-card-4: var(--pr-card-4);
+	--pr-card-5: var(--pr-card-5);
+}
+:root[data-theme='light'] {
+	--pr-fg: 29, 33, 43;
+	--pr-bg: 255, 255, 255;
+	--pr-panel: #ffffff;
+	--pr-panel-ink: #1d212b;
+	--pr-card: #ffffff;
+	--pr-card-2: #f7f8fa;
+	--pr-card-3: #f3f4f6;
+	--pr-card-4: #f5f6f8;
+	--pr-card-5: #f3f4f6;
+}
+
+
 .pricing-hero {
 	max-width: 1200px;
 	margin: 0 auto;
@@ -16,7 +51,7 @@
 	font-weight: 600;
 	letter-spacing: 0.17em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.55);
+	color: rgba(var(--pr-fg), 0.55);
 	margin-bottom: 18px;
 }
 
@@ -24,8 +59,8 @@
 	width: 7px;
 	height: 7px;
 	border-radius: 50%;
-	background: #fff;
-	box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+	background: rgb(var(--pr-fg));
+	box-shadow: 0 0 10px rgba(var(--pr-fg), 0.6);
 }
 
 .pricing-hero h1 {
@@ -35,16 +70,16 @@
 	letter-spacing: -0.035em;
 	line-height: 1.05;
 	margin: 0 0 18px;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 }
 
 .pricing-hero h1 em {
 	font-style: normal;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 }
 
 .pricing-hero .lead {
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-size: 17px;
 	max-width: 58ch;
 	margin: 0 auto 44px;
@@ -60,7 +95,7 @@
 	margin-bottom: 52px;
 	font-size: 14px;
 	font-weight: 500;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 }
 
 .billing-toggle span {
@@ -69,7 +104,7 @@
 }
 
 .billing-toggle span.is-active {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 }
 
 .billing-toggle .toggle-track {
@@ -77,14 +112,14 @@
 	width: 46px;
 	height: 24px;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.1);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(var(--pr-fg), 0.1);
+	border: 1px solid rgba(var(--pr-fg), 0.12);
 	cursor: pointer;
 	transition: background 0.2s, border-color 0.2s;
 }
 
 .billing-toggle .toggle-track:hover {
-	border-color: rgba(255, 255, 255, 0.25);
+	border-color: rgba(var(--pr-fg), 0.25);
 }
 
 .billing-toggle .toggle-thumb {
@@ -94,7 +129,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: #fff;
+	background: rgb(var(--pr-fg));
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 	transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
@@ -104,7 +139,7 @@
 }
 
 .billing-toggle.annual .toggle-track {
-	background: rgba(255, 255, 255, 0.15);
+	background: rgba(var(--pr-fg), 0.15);
 }
 
 .billing-save {
@@ -128,14 +163,14 @@
 	max-width: 1100px;
 	margin: 0 auto;
 	padding: 0 24px;
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.06);
+	background: rgba(var(--pr-fg), 0.06);
+	border: 1px solid rgba(var(--pr-fg), 0.06);
 	border-radius: 18px;
 	overflow: hidden;
 }
 
 .pricing-tier-card {
-	background: rgba(10, 10, 10, 0.95);
+	background: var(--pr-card);
 	padding: 44px 36px;
 	display: flex;
 	flex-direction: column;
@@ -144,12 +179,12 @@
 }
 
 .pricing-tier-card:hover {
-	background: rgba(18, 18, 18, 0.95);
+	background: var(--pr-card-2);
 }
 
 .pricing-tier-card.featured {
-	background: rgba(18, 18, 18, 0.98);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+	background: var(--pr-card-3);
+	box-shadow: inset 0 0 0 1px rgba(var(--pr-fg), 0.15);
 }
 
 .pricing-tier-card.featured:hover {
@@ -164,8 +199,8 @@
 	font-size: 10px;
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	background: #fff;
-	color: #000;
+	background: rgb(var(--pr-fg));
+	color: rgb(var(--pr-bg));
 	padding: 4px 10px;
 	border-radius: 999px;
 	font-weight: 700;
@@ -176,7 +211,7 @@
 	font-size: 11px;
 	letter-spacing: 0.18em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	margin-bottom: 14px;
 	font-weight: 600;
 }
@@ -186,7 +221,7 @@
 	font-size: 48px;
 	font-weight: 700;
 	letter-spacing: -0.03em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	line-height: 1;
 	margin-bottom: 6px;
 }
@@ -194,13 +229,13 @@
 .pricing-amount sub {
 	font-size: 16px;
 	font-weight: 400;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	letter-spacing: 0;
 }
 
 .pricing-cycle-info {
 	font-size: 13px;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	margin-bottom: 32px;
 	min-height: 20px;
 }
@@ -220,7 +255,7 @@
 	align-items: flex-start;
 	gap: 10px;
 	font-size: 14px;
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(var(--pr-fg), 0.7);
 	line-height: 1.45;
 }
 
@@ -230,12 +265,12 @@
 	height: 6px;
 	margin-top: 7px;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.35);
+	background: rgba(var(--pr-fg), 0.35);
 }
 
 .pricing-tier-card.featured .pricing-features li::before {
-	background: #fff;
-	box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+	background: rgb(var(--pr-fg));
+	box-shadow: 0 0 6px rgba(var(--pr-fg), 0.4);
 }
 
 .pricing-cta {
@@ -250,33 +285,33 @@
 	font-weight: 600;
 	text-decoration: none;
 	cursor: pointer;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	background: rgba(255, 255, 255, 0.04);
-	color: #fff;
+	border: 1px solid rgba(var(--pr-fg), 0.1);
+	background: rgba(var(--pr-fg), 0.04);
+	color: rgb(var(--pr-fg));
 	transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .pricing-cta:hover {
-	background: rgba(255, 255, 255, 0.08);
-	border-color: rgba(255, 255, 255, 0.2);
+	background: rgba(var(--pr-fg), 0.08);
+	border-color: rgba(var(--pr-fg), 0.2);
 	transform: translateY(-1px);
 }
 
 .pricing-cta.primary {
-	background: #fff;
-	color: #000;
+	background: rgb(var(--pr-fg));
+	color: rgb(var(--pr-bg));
 	border-color: transparent;
 	box-shadow:
-		0 1px 0 rgba(255, 255, 255, 0.3) inset,
-		0 6px 20px -8px rgba(255, 255, 255, 0.15);
+		0 1px 0 rgba(var(--pr-fg), 0.3) inset,
+		0 6px 20px -8px rgba(var(--pr-fg), 0.15);
 }
 
 .pricing-cta.primary:hover {
 	background: #f0f0f0;
 	transform: translateY(-1px);
 	box-shadow:
-		0 1px 0 rgba(255, 255, 255, 0.4) inset,
-		0 10px 28px -8px rgba(255, 255, 255, 0.2);
+		0 1px 0 rgba(var(--pr-fg), 0.4) inset,
+		0 10px 28px -8px rgba(var(--pr-fg), 0.2);
 }
 
 /* ── 3D Avatar overlay ─────────────────────────────────────────────────── */
@@ -303,7 +338,7 @@
 	font-size: clamp(26px, 3.5vw, 38px);
 	font-weight: 700;
 	letter-spacing: -0.025em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	text-align: center;
 	margin: 0 0 48px;
 }
@@ -320,40 +355,40 @@
 	font-family: var(--font-display, 'Space Grotesk', 'Inter', sans-serif);
 	font-size: 14px;
 	font-weight: 600;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	border-bottom: 1px solid rgba(var(--pr-fg), 0.08);
 }
 
 .comparison-table thead th:first-child {
 	text-align: left;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-weight: 500;
 	text-transform: none;
 	letter-spacing: 0;
 }
 
 .comparison-table thead th.featured-col {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 }
 
 .comparison-table tbody td {
 	padding: 14px 20px;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-	color: rgba(255, 255, 255, 0.55);
+	border-bottom: 1px solid rgba(var(--pr-fg), 0.04);
+	color: rgba(var(--pr-fg), 0.55);
 	text-align: center;
 	vertical-align: middle;
 }
 
 .comparison-table tbody td:first-child {
 	text-align: left;
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(var(--pr-fg), 0.7);
 	font-weight: 500;
 }
 
 .comparison-table tbody tr:hover td {
-	background: rgba(255, 255, 255, 0.02);
+	background: rgba(var(--pr-fg), 0.02);
 }
 
 .comparison-table .section-row td {
@@ -363,8 +398,8 @@
 	font-weight: 600;
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.6);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	color: rgba(var(--pr-fg), 0.6);
+	border-bottom: 1px solid rgba(var(--pr-fg), 0.08);
 }
 
 .comparison-table .check {
@@ -372,7 +407,7 @@
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.06);
+	background: rgba(var(--pr-fg), 0.06);
 	position: relative;
 }
 
@@ -383,26 +418,26 @@
 	left: 6px;
 	width: 5px;
 	height: 8px;
-	border: solid rgba(255, 255, 255, 0.5);
+	border: solid rgba(var(--pr-fg), 0.5);
 	border-width: 0 1.5px 1.5px 0;
 	transform: rotate(45deg);
 }
 
 .comparison-table .check.yes::after {
-	border-color: #fff;
+	border-color: rgb(var(--pr-fg));
 }
 
 .comparison-table .check.yes {
-	background: rgba(255, 255, 255, 0.12);
+	background: rgba(var(--pr-fg), 0.12);
 }
 
 .comparison-table .val {
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-weight: 500;
 }
 
 .comparison-table td.featured-col {
-	background: rgba(255, 255, 255, 0.02);
+	background: rgba(var(--pr-fg), 0.02);
 }
 
 /* ── FAQ ───────────────────────────────────────────────────────────────── */
@@ -418,24 +453,24 @@
 	font-size: clamp(26px, 3.5vw, 38px);
 	font-weight: 700;
 	letter-spacing: -0.025em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	text-align: center;
 	margin: 0 0 48px;
 }
 
 .pricing-faq details {
 	padding: 18px 0;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	border-bottom: 1px solid rgba(var(--pr-fg), 0.06);
 }
 
 .pricing-faq details:first-of-type {
-	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	border-top: 1px solid rgba(var(--pr-fg), 0.06);
 }
 
 .pricing-faq summary {
 	cursor: pointer;
 	font-weight: 500;
-	color: rgba(255, 255, 255, 0.85);
+	color: rgba(var(--pr-fg), 0.85);
 	font-size: 15px;
 	list-style: none;
 	display: flex;
@@ -450,7 +485,7 @@
 }
 
 .pricing-faq summary:hover {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 }
 
 .pricing-faq summary::after {
@@ -462,8 +497,8 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.06);
-	color: rgba(255, 255, 255, 0.6);
+	background: rgba(var(--pr-fg), 0.06);
+	color: rgba(var(--pr-fg), 0.6);
 	font-size: 16px;
 	font-weight: 400;
 	transition: background 0.15s, transform 0.2s;
@@ -472,11 +507,11 @@
 .pricing-faq details[open] summary::after {
 	content: '\2212';
 	transform: rotate(180deg);
-	background: rgba(255, 255, 255, 0.1);
+	background: rgba(var(--pr-fg), 0.1);
 }
 
 .pricing-faq details p {
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	margin: 14px 0 0;
 	line-height: 1.65;
 	font-size: 14.5px;
@@ -494,9 +529,9 @@
 
 .pricing-bottom-cta .cta-card {
 	padding: 64px 48px;
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(var(--pr-fg), 0.08);
 	border-radius: 18px;
-	background: rgba(255, 255, 255, 0.02);
+	background: rgba(var(--pr-fg), 0.02);
 }
 
 .pricing-bottom-cta .cta-card h2 {
@@ -504,13 +539,13 @@
 	font-size: clamp(24px, 3vw, 36px);
 	font-weight: 700;
 	letter-spacing: -0.025em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	margin: 0 0 14px;
 	line-height: 1.15;
 }
 
 .pricing-bottom-cta .cta-card p {
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-size: 16px;
 	margin: 0 0 32px;
 }
@@ -530,15 +565,15 @@
 	gap: 16px;
 	padding: 14px 20px;
 	margin: 16px 0;
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(var(--pr-fg), 0.08);
 	border-radius: 12px;
-	background: rgba(255, 255, 255, 0.02);
+	background: rgba(var(--pr-fg), 0.02);
 	transition: background 0.15s, border-color 0.15s;
 }
 
 .upgrade-banner:hover {
-	background: rgba(255, 255, 255, 0.04);
-	border-color: rgba(255, 255, 255, 0.12);
+	background: rgba(var(--pr-fg), 0.04);
+	border-color: rgba(var(--pr-fg), 0.12);
 }
 
 .upgrade-banner-icon {
@@ -546,7 +581,7 @@
 	width: 36px;
 	height: 36px;
 	border-radius: 10px;
-	background: rgba(255, 255, 255, 0.06);
+	background: rgba(var(--pr-fg), 0.06);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -555,7 +590,7 @@
 .upgrade-banner-icon svg {
 	width: 18px;
 	height: 18px;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 }
 
 .upgrade-banner-text {
@@ -566,13 +601,13 @@
 .upgrade-banner-title {
 	font-size: 13px;
 	font-weight: 600;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	margin-bottom: 2px;
 }
 
 .upgrade-banner-desc {
 	font-size: 12px;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	line-height: 1.4;
 }
 
@@ -580,9 +615,9 @@
 	flex-shrink: 0;
 	padding: 8px 16px;
 	border-radius: 8px;
-	background: rgba(255, 255, 255, 0.08);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	color: #fff;
+	background: rgba(var(--pr-fg), 0.08);
+	border: 1px solid rgba(var(--pr-fg), 0.1);
+	color: rgb(var(--pr-fg));
 	font-size: 12px;
 	font-weight: 600;
 	text-decoration: none;
@@ -591,8 +626,8 @@
 }
 
 .upgrade-banner-btn:hover {
-	background: rgba(255, 255, 255, 0.12);
-	border-color: rgba(255, 255, 255, 0.2);
+	background: rgba(var(--pr-fg), 0.12);
+	border-color: rgba(var(--pr-fg), 0.2);
 }
 
 /* ── Compact pricing card (embeddable section for other pages) ─────── */
@@ -608,7 +643,7 @@
 	font-size: 11px;
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	margin-bottom: 14px;
 	text-align: center;
 }
@@ -618,13 +653,13 @@
 	font-size: clamp(26px, 3.5vw, 40px);
 	font-weight: 700;
 	letter-spacing: -0.03em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	text-align: center;
 	margin: 0 0 12px;
 }
 
 .pricing-embed-section .section-lead {
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-size: 16px;
 	text-align: center;
 	max-width: 52ch;
@@ -635,14 +670,14 @@
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
 	gap: 1px;
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.06);
+	background: rgba(var(--pr-fg), 0.06);
+	border: 1px solid rgba(var(--pr-fg), 0.06);
 	border-radius: 16px;
 	overflow: hidden;
 }
 
 .pricing-embed-card {
-	background: rgba(10, 10, 10, 0.95);
+	background: var(--pr-card);
 	padding: 32px 28px;
 	display: flex;
 	flex-direction: column;
@@ -651,12 +686,12 @@
 }
 
 .pricing-embed-card:hover {
-	background: rgba(18, 18, 18, 0.95);
+	background: var(--pr-card-2);
 }
 
 .pricing-embed-card.featured {
-	background: rgba(18, 18, 18, 0.98);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+	background: var(--pr-card-3);
+	box-shadow: inset 0 0 0 1px rgba(var(--pr-fg), 0.12);
 }
 
 .pricing-embed-card .embed-tier-name {
@@ -664,7 +699,7 @@
 	font-size: 10px;
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	margin-bottom: 10px;
 	font-weight: 600;
 }
@@ -674,7 +709,7 @@
 	font-size: 32px;
 	font-weight: 700;
 	letter-spacing: -0.03em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	line-height: 1;
 	margin-bottom: 4px;
 }
@@ -682,12 +717,12 @@
 .pricing-embed-card .embed-price sub {
 	font-size: 14px;
 	font-weight: 400;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 }
 
 .pricing-embed-card .embed-cycle {
 	font-size: 12px;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	margin-bottom: 20px;
 }
 
@@ -706,13 +741,13 @@
 	align-items: flex-start;
 	gap: 8px;
 	font-size: 13px;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	line-height: 1.4;
 }
 
 .pricing-embed-card .embed-feats li::before {
 	content: '✓';
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-weight: 700;
 	font-size: 11px;
 	flex-shrink: 0;
@@ -720,7 +755,7 @@
 }
 
 .pricing-embed-card.featured .embed-feats li::before {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 }
 
 .pricing-embed-card .embed-popular {
@@ -731,8 +766,8 @@
 	font-weight: 700;
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
-	background: #fff;
-	color: #000;
+	background: rgb(var(--pr-fg));
+	color: rgb(var(--pr-bg));
 	padding: 3px 8px;
 	border-radius: 999px;
 }
@@ -747,7 +782,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 	text-decoration: none;
 	font-size: 14px;
 	font-weight: 500;
@@ -755,7 +790,7 @@
 }
 
 .pricing-embed-cta a:hover {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 }
 
 .pricing-embed-cta a .arrow {
@@ -780,11 +815,11 @@
 }
 
 /* Billing toggle — keyboard ring + press feedback */
-.billing-toggle span:hover { color: rgba(255, 255, 255, 0.78); }
-.billing-toggle span.is-active:hover { color: #fff; }
-.billing-toggle .toggle-track:active { background: rgba(255, 255, 255, 0.18); }
+.billing-toggle span:hover { color: rgba(var(--pr-fg), 0.78); }
+.billing-toggle span.is-active:hover { color: rgb(var(--pr-fg)); }
+.billing-toggle .toggle-track:active { background: rgba(var(--pr-fg), 0.18); }
 .billing-toggle .toggle-track:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, rgb(var(--pr-fg)));
 	outline-offset: var(--focus-ring-offset, 2px);
 }
 
@@ -806,11 +841,11 @@
 .pricing-cta:focus-visible,
 .upgrade-banner-btn:focus-visible,
 .pricing-embed-cta a:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, rgb(var(--pr-fg)));
 	outline-offset: var(--focus-ring-offset, 2px);
 }
-.upgrade-banner-btn:active { background: rgba(255, 255, 255, 0.16); }
-.pricing-embed-cta a:active { color: rgba(255, 255, 255, 0.78); }
+.upgrade-banner-btn:active { background: rgba(var(--pr-fg), 0.16); }
+.pricing-embed-cta a:active { color: rgba(var(--pr-fg), 0.78); }
 
 /* FAQ — answers ease in instead of popping; summary gets ring + press */
 .pricing-faq details[open] p {
@@ -821,11 +856,11 @@
 	to   { opacity: 1; transform: translateY(0); }
 }
 .pricing-faq summary:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, rgb(var(--pr-fg)));
 	outline-offset: var(--focus-ring-offset, 2px);
 	border-radius: var(--radius-sm, 6px);
 }
-.pricing-faq summary:active::after { background: rgba(255, 255, 255, 0.14); }
+.pricing-faq summary:active::after { background: rgba(var(--pr-fg), 0.14); }
 
 /* Below-the-fold sections reveal on scroll (IntersectionObserver adds
    .is-revealed). Transform/opacity only; the script reveals everything
@@ -947,7 +982,7 @@
 	font-size: clamp(26px, 3.5vw, 38px);
 	font-weight: 700;
 	letter-spacing: -0.025em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	text-align: center;
 	margin: 0 0 12px;
 }
@@ -958,20 +993,20 @@
 	text-align: center;
 	font-size: 15px;
 	line-height: 1.6;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 }
 
 .payg-lead a,
 .payg-foot a {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	text-decoration: none;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+	border-bottom: 1px solid rgba(var(--pr-fg), 0.3);
 	transition: border-color 0.15s;
 }
 
 .payg-lead a:hover,
 .payg-foot a:hover {
-	border-bottom-color: #fff;
+	border-bottom-color: rgb(var(--pr-fg));
 }
 
 .payg-grid {
@@ -981,8 +1016,8 @@
 }
 
 .payg-card {
-	background: rgba(10, 10, 10, 0.95);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: var(--pr-card);
+	border: 1px solid rgba(var(--pr-fg), 0.08);
 	border-radius: 14px;
 	padding: 22px 22px 20px;
 	display: flex;
@@ -992,14 +1027,14 @@
 }
 
 .payg-card:hover {
-	border-color: rgba(255, 255, 255, 0.2);
-	background: rgba(16, 16, 16, 0.97);
+	border-color: rgba(var(--pr-fg), 0.2);
+	background: var(--pr-card-4);
 	transform: translateY(-2px);
 }
 
 .payg-card.is-free {
-	background: rgba(18, 18, 18, 0.98);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+	background: var(--pr-card-3);
+	box-shadow: inset 0 0 0 1px rgba(var(--pr-fg), 0.14);
 }
 
 /* ── Holder discount banner + personalized "your price" ──────────────────── */
@@ -1013,14 +1048,14 @@
 	gap: 12px;
 	padding: 14px 18px;
 	border-radius: 14px;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	background: rgba(14, 14, 14, 0.92);
+	border: 1px solid rgba(var(--pr-fg), 0.1);
+	background: var(--pr-card-5);
 	font-size: 13.5px;
-	color: rgba(255, 255, 255, 0.78);
+	color: rgba(var(--pr-fg), 0.78);
 }
 .payg-holder-card.is-active {
 	border-color: color-mix(in srgb, var(--accent, #7c5cff) 55%, transparent);
-	background: color-mix(in srgb, var(--accent, #7c5cff) 12%, rgba(14, 14, 14, 0.92));
+	background: color-mix(in srgb, var(--accent, #7c5cff) 12%, var(--pr-card-5));
 }
 .payg-holder-badge {
 	flex: 0 0 auto;
@@ -1031,7 +1066,7 @@
 	text-transform: uppercase;
 	padding: 4px 10px;
 	border-radius: 999px;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	background: var(--accent, #7c5cff);
 }
 .payg-holder-msg {
@@ -1039,7 +1074,7 @@
 	line-height: 1.45;
 }
 .payg-holder-msg strong {
-	color: rgba(255, 255, 255, 0.95);
+	color: rgba(var(--pr-fg), 0.95);
 }
 .payg-holder-cta {
 	flex: 0 0 auto;
@@ -1053,14 +1088,14 @@
 	opacity: 0.8;
 }
 .payg-card.is-yourprice {
-	border-color: color-mix(in srgb, var(--accent, #7c5cff) 45%, rgba(255, 255, 255, 0.08));
+	border-color: color-mix(in srgb, var(--accent, #7c5cff) 45%, rgba(var(--pr-fg), 0.08));
 }
 .payg-badge.is-discount {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	background: var(--accent, #7c5cff);
 }
 .payg-was {
-	color: rgba(255, 255, 255, 0.4);
+	color: rgba(var(--pr-fg), 0.4);
 	font-weight: 400;
 	margin-right: 6px;
 	text-decoration-thickness: 1px;
@@ -1076,7 +1111,7 @@
 .payg-card-label {
 	font-size: 13px;
 	font-weight: 600;
-	color: rgba(255, 255, 255, 0.85);
+	color: rgba(var(--pr-fg), 0.85);
 	line-height: 1.35;
 }
 
@@ -1087,8 +1122,8 @@
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
 	font-weight: 700;
-	color: #000;
-	background: #fff;
+	color: rgb(var(--pr-bg));
+	background: rgb(var(--pr-fg));
 	padding: 3px 8px;
 	border-radius: 999px;
 }
@@ -1105,35 +1140,35 @@
 	font-size: 30px;
 	font-weight: 700;
 	letter-spacing: -0.02em;
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	line-height: 1;
 }
 
 .payg-card-price .unit {
 	font-size: 13px;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 }
 
 .payg-card-settle {
 	font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
 	font-size: 11px;
 	letter-spacing: 0.04em;
-	color: rgba(255, 255, 255, 0.45);
+	color: rgba(var(--pr-fg), 0.45);
 }
 
 .payg-card-settle strong {
-	color: rgba(255, 255, 255, 0.75);
+	color: rgba(var(--pr-fg), 0.75);
 	font-weight: 600;
 }
 
 .payg-card-note {
 	font-size: 12.5px;
 	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.55);
+	color: rgba(var(--pr-fg), 0.55);
 }
 
 .payg-card-note a {
-	color: #fff;
+	color: rgb(var(--pr-fg));
 	text-decoration: underline;
 }
 
@@ -1149,21 +1184,21 @@
 	font-weight: 600;
 	text-decoration: none;
 	cursor: pointer;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	background: rgba(255, 255, 255, 0.05);
-	color: #fff;
+	border: 1px solid rgba(var(--pr-fg), 0.12);
+	background: rgba(var(--pr-fg), 0.05);
+	color: rgb(var(--pr-fg));
 	transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .payg-card.is-free .payg-card-cta {
-	background: #fff;
-	color: #000;
+	background: rgb(var(--pr-fg));
+	color: rgb(var(--pr-bg));
 	border-color: transparent;
 }
 
 .payg-card-cta:hover {
-	background: rgba(255, 255, 255, 0.1);
-	border-color: rgba(255, 255, 255, 0.25);
+	background: rgba(var(--pr-fg), 0.1);
+	border-color: rgba(var(--pr-fg), 0.25);
 	transform: translateY(-1px);
 }
 
@@ -1172,7 +1207,7 @@
 }
 
 .payg-card-cta:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, rgb(var(--pr-fg)));
 	outline-offset: var(--focus-ring-offset, 2px);
 }
 
@@ -1182,13 +1217,13 @@
 	text-align: center;
 	font-size: 13px;
 	line-height: 1.6;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 }
 
 .payg-foot code {
 	font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
 	font-size: 12px;
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(var(--pr-fg), 0.7);
 }
 
 /* Loading skeleton — shimmer until the live catalog arrives. */
@@ -1200,9 +1235,9 @@
 	border-radius: 6px;
 	background: linear-gradient(
 		90deg,
-		rgba(255, 255, 255, 0.04) 25%,
-		rgba(255, 255, 255, 0.09) 37%,
-		rgba(255, 255, 255, 0.04) 63%
+		rgba(var(--pr-fg), 0.04) 25%,
+		rgba(var(--pr-fg), 0.09) 37%,
+		rgba(var(--pr-fg), 0.04) 63%
 	);
 	background-size: 400% 100%;
 	animation: payg-shimmer 1.4s ease infinite;
@@ -1256,12 +1291,12 @@
 .pricing-pay-assets {
 	margin-top: 12px;
 	font-size: 12px;
-	color: rgba(255, 255, 255, 0.45);
+	color: rgba(var(--pr-fg), 0.45);
 	text-align: center;
 }
 
 .pricing-pay-assets strong {
-	color: rgba(255, 255, 255, 0.75);
+	color: rgba(var(--pr-fg), 0.75);
 	font-weight: 600;
 }
 
@@ -1293,11 +1328,11 @@
 	width: min(560px, 100%);
 	max-height: calc(100vh - 40px);
 	overflow-y: auto;
-	background: #0d0d0f;
-	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: var(--pr-panel);
+	border: 1px solid rgba(var(--pr-fg), 0.14);
 	border-radius: 18px;
 	padding: 30px 28px 26px;
-	color: #eee;
+	color: var(--pr-panel-ink);
 	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 	animation: pc-rise var(--duration-fast, 180ms) var(--ease-standard, ease);
 	outline: none;
@@ -1320,7 +1355,7 @@
 }
 
 .pc-sub {
-	color: rgba(255, 255, 255, 0.55);
+	color: rgba(var(--pr-fg), 0.55);
 	font-size: 14px;
 	margin: 0 0 22px;
 }
@@ -1334,17 +1369,17 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(var(--pr-fg), 0.06);
+	border: 1px solid rgba(var(--pr-fg), 0.12);
 	border-radius: 50%;
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(var(--pr-fg), 0.7);
 	cursor: pointer;
 	transition: background var(--duration-fast, 140ms) ease, color var(--duration-fast, 140ms) ease;
 }
 
 .pc-close:hover, .pc-close:focus-visible {
-	background: rgba(255, 255, 255, 0.14);
-	color: #fff;
+	background: rgba(var(--pr-fg), 0.14);
+	color: rgb(var(--pr-fg));
 }
 
 .pc-close svg { width: 14px; height: 14px; }
@@ -1366,26 +1401,26 @@
 	flex-direction: column;
 	gap: 4px;
 	padding: 16px 14px;
-	background: rgba(255, 255, 255, 0.03);
-	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(var(--pr-fg), 0.03);
+	border: 1px solid rgba(var(--pr-fg), 0.12);
 	border-radius: 12px;
-	color: #eee;
+	color: var(--pr-panel-ink);
 	text-align: left;
 	cursor: pointer;
 	transition: border-color var(--duration-fast, 140ms) ease, background var(--duration-fast, 140ms) ease, transform var(--duration-fast, 140ms) ease;
 }
 
-.pc-asset:hover { border-color: rgba(255, 255, 255, 0.35); transform: translateY(-1px); }
+.pc-asset:hover { border-color: rgba(var(--pr-fg), 0.35); transform: translateY(-1px); }
 
 .pc-asset:focus-visible {
-	outline: 2px solid #fff;
+	outline: 2px solid rgb(var(--pr-fg));
 	outline-offset: 2px;
 }
 
 .pc-asset.is-selected {
-	border-color: #fff;
-	background: rgba(255, 255, 255, 0.07);
-	box-shadow: 0 0 0 1px #fff inset;
+	border-color: rgb(var(--pr-fg));
+	background: rgba(var(--pr-fg), 0.07);
+	box-shadow: 0 0 0 1px rgb(var(--pr-fg)) inset;
 }
 
 .pc-asset-name {
@@ -1398,7 +1433,7 @@
 
 .pc-asset-note {
 	font-size: 11.5px;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 	line-height: 1.4;
 }
 
@@ -1419,7 +1454,7 @@
 
 .pc-fineprint {
 	font-size: 12px;
-	color: rgba(255, 255, 255, 0.4);
+	color: rgba(var(--pr-fg), 0.4);
 	margin: 14px 0 0;
 	line-height: 1.5;
 }
@@ -1439,7 +1474,7 @@
 
 .pc-quote-meta {
 	font-size: 13px;
-	color: rgba(255, 255, 255, 0.55);
+	color: rgba(var(--pr-fg), 0.55);
 	margin-top: 4px;
 }
 
@@ -1455,7 +1490,7 @@
 }
 
 .pc-qr-wrap {
-	background: #fff;
+	background: rgb(var(--pr-fg));
 	border-radius: 12px;
 	padding: 8px;
 	line-height: 0;
@@ -1476,7 +1511,7 @@
 .pc-sig-label {
 	display: block;
 	font-size: 12.5px;
-	color: rgba(255, 255, 255, 0.55);
+	color: rgba(var(--pr-fg), 0.55);
 	margin-bottom: 6px;
 }
 
@@ -1490,10 +1525,10 @@
 	flex: 1;
 	min-width: 0;
 	padding: 10px 12px;
-	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: rgba(var(--pr-fg), 0.04);
+	border: 1px solid rgba(var(--pr-fg), 0.14);
 	border-radius: 10px;
-	color: #eee;
+	color: var(--pr-panel-ink);
 	font-size: 13px;
 	font-family: inherit;
 	transition: border-color var(--duration-fast, 140ms) ease;
@@ -1501,25 +1536,25 @@
 
 .pc-sig-row input:focus-visible {
 	outline: none;
-	border-color: #fff;
+	border-color: rgb(var(--pr-fg));
 }
 
 .pc-back {
 	margin-top: 14px;
 	background: none;
 	border: 0;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--pr-fg), 0.5);
 	font-size: 13px;
 	cursor: pointer;
 	padding: 4px 0;
 }
 
-.pc-back:hover, .pc-back:focus-visible { color: #fff; }
+.pc-back:hover, .pc-back:focus-visible { color: rgb(var(--pr-fg)); }
 
 .pc-status {
 	margin-top: 12px;
 	font-size: 13px;
-	color: rgba(255, 255, 255, 0.65);
+	color: rgba(var(--pr-fg), 0.65);
 	min-height: 1.2em;
 	line-height: 1.5;
 }
@@ -1550,7 +1585,7 @@
 }
 
 .pc-success p {
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(var(--pr-fg), 0.6);
 	font-size: 14px;
 	margin: 0 0 18px;
 }
