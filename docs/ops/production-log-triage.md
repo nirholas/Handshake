@@ -542,6 +542,27 @@ HTTP 503 GET /api/community/worlds   body: {"error":"cc_unconfigured","error_des
 
 ---
 
+## 🟢 HTTP 503 `/api/galaxy` — `watsonx_unavailable` (watsonx-unconfigured-503)
+
+- **Source:** [api/galaxy.js](../../api/galaxy.js). The Agent Galaxy positions
+  its stars with IBM Granite embeddings on watsonx.ai; without credentials there
+  is no semantic space to place anything in, so it answers a designed 503 rather
+  than inventing coordinates.
+- **What it means:** `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` (or
+  `WATSONX_SPACE_ID`) exist **nowhere** — not on the Cloud Run service, not in
+  `.env`, not in Secret Manager (swept 2026-07-29).
+- **No broken user path.** [src/galaxy.js](../../src/galaxy.js) matches this
+  exact error and renders a designed empty state ("IBM Granite isn't connected …
+  once watsonx credentials are configured, the universe lights up here"), so the
+  `/galaxy` page explains itself instead of failing. Nothing to fix in code.
+- **Resolve (owner, credential):** provision watsonx credentials at
+  `cloud.ibm.com`, then:
+  `gcloud run services update three-ws-api --region us-central1 --update-env-vars WATSONX_API_KEY=<key>,WATSONX_PROJECT_ID=<id>`.
+- **Monitor signature:** `watsonx-unconfigured-503` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `owner`.
+
+---
+
 ## 🟢 HTTP 503 `/health` on a model worker, UA `Google-Cloud-Scheduler` — `worker-coldstart-health-503`
 
 - **Source:** the keep-warm Cloud Scheduler probe hitting a GPU/model worker
