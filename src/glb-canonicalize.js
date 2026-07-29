@@ -17,9 +17,21 @@
 //   • SMPL / SMPL-X:   `left_hip`, `left_knee`, `left_ankle`, `left_elbow`, `left_wrist` (side-word joints)
 //   • Roblox R15/R6:   `LowerTorso`, `UpperTorso`, `Torso`, `LeftUpperArm`, `Left Arm`
 //   • Second Life:     `mPelvis`, `mTorso`, `mChest`, `mCollarLeft`, `mShoulderLeft`, `mKneeRight`
+//   • Anatomical:      `lumbar`, `thoracic`, `cervical`, `cranium`, `humerus.L`,
+//                      `ulna.L`, `femur.L`, `tibia.L`, `talus.L` (scan / anatomy-kit rigs)
 //   • snake_case:      `left_arm`, `Left_Arm`
 //   • kebab-case:      `left-arm`
 //   • lowercase:       `leftarm`, `lefthand`
+//
+// Finger chains are mapped per convention as well, and they are load-bearing: 30
+// of the 53 tracks in every clip in /public/animations/clips address a finger
+// joint, so a rig whose hands don't name-map scores ~40% retarget coverage, falls
+// under MIN_COVERAGE in animation-retarget.js, and gets NO action built at all.
+// Covered spellings: `index_01_l` (Unreal), `leftIndexProximal` (VRM 1.0),
+// `lIndex1` / `lMid1` (Daz), `f_index.01.L` + `thumb.01.L` (Rigify),
+// `finger2-1.L` (MakeHuman), `Index1.L` / `IndexFinger1_R` (Blender / Advanced
+// Skeleton), `J_Bip_L_Little1` (VRoid), `index_proximal.L` (anatomical).
+// Measured end to end by scripts/animation-dignity-sweep.mjs.
 //
 // Skeletons that aren't humanoid (quadrupeds, custom prop rigs) deliberately
 // fall through unchanged — there's no safe automatic mapping for those, and
@@ -106,7 +118,7 @@ const UNREAL_ALIASES = new Map(Object.entries({
 // `index01l`), so an otherwise-mapped mannequin arrived with 30 of its 52 joints
 // unmapped. That is not a cosmetic loss: 30 of the clip library's 53 tracks are
 // finger tracks, so a fingerless mannequin scored 40% coverage and fell under the
-// MIN_COVERAGE gate in animation-retarget.js — the rig built no action at all and
+// MIN_COVERAGE gate in animation-retarget.js: the rig built no action at all and
 // stood in its bind pose. Found by scripts/animation-dignity-sweep.mjs.
 for (const [uf, cf] of [
 	['thumb', 'Thumb'], ['index', 'Index'], ['middle', 'Middle'],

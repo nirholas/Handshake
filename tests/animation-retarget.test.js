@@ -627,7 +627,7 @@ describe('world-delta correctness — limb retarget preserves world motion', () 
 //
 // Why coverage is the sharp edge: 30 of a clip's 53 tracks address finger bones.
 // A convention whose hands don't name-map scores about 40%, falls under the gate,
-// and `retargetClip` returns a NULL clip — production then builds no action at
+// and `retargetClip` returns a NULL clip: production then builds no action at
 // all and the avatar stands frozen in its bind pose. Every convention here was
 // measured doing exactly that before the finger aliases landed in
 // src/glb-canonicalize.js, and nothing in the suite noticed, because every other

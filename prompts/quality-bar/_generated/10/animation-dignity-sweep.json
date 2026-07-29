@@ -1,0 +1,3604 @@
+{
+  "generatedAt": "2026-07-29T06:17:40.900Z",
+  "minCoverage": 0.5,
+  "thresholds": {
+    "swingDeg": {
+      "idle": 1.5,
+      "walk": 8
+    },
+    "travelHipHeights": {
+      "idle": 0.01,
+      "walk": 0.08
+    }
+  },
+  "conventions": [
+    {
+      "id": "mixamo",
+      "label": "Mixamo",
+      "note": "the reference export from mixamo.com and every Adobe/Fuse pipeline",
+      "bones": 52,
+      "renamedByIngest": 52,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "mixamorigLeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "mixamorigLeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "mixamorigLeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "mixamorigRightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "mixamorigRightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "mixamorigRightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "mixamorigLeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "mixamorigLeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "mixamorigLeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "mixamorigRightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "mixamorigRightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "mixamorigRightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "mixamorigLeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "mixamorigLeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "mixamorigLeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "mixamorigRightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "mixamorigRightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "mixamorigRightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "mixamorigLeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "mixamorigLeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "mixamorigLeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "mixamorigRightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "mixamorigRightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "mixamorigRightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "avaturn",
+      "label": "Avaturn / Ready Player Me",
+      "note": "canonical spelling, no vendor prefix, the rig the clip library was baked against",
+      "bones": 52,
+      "renamedByIngest": 0,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "unreal",
+      "label": "Unreal mannequin",
+      "note": "UE4/UE5 SK_Mannequin: pelvis, clavicle_l, upperarm_l, thigh_l, index_01_l",
+      "bones": 52,
+      "renamedByIngest": 50,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 50,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9622641509433962,
+              "matched": 51,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.4128930266038254
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.41853572368766073
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9622641509433962,
+              "matched": 51,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.45681312328535484
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.4558964114960448
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 50,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9622641509433962,
+              "matched": 51,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "upperarm_l",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "lowerarm_l",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "hand_l",
+                  "travelHipHeights": 0.4128930266038254
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "upperarm_r",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "lowerarm_r",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "hand_r",
+                  "travelHipHeights": 0.41853572368766073
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "thigh_l",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "calf_l",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "foot_l",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "thigh_r",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "calf_r",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "foot_r",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9622641509433962,
+              "matched": 51,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "upperarm_l",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "lowerarm_l",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "hand_l",
+                  "travelHipHeights": 0.45681312328535484
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "upperarm_r",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "lowerarm_r",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "hand_r",
+                  "travelHipHeights": 0.4558964114960448
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "thigh_l",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "calf_l",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "foot_l",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "thigh_r",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "calf_r",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "foot_r",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "vrm0",
+      "label": "VRM 0.x / VRoid",
+      "note": "VRoid Studio export: J_Bip_C_Hips, J_Bip_L_UpperArm, J_Bip_L_Little1",
+      "bones": 52,
+      "renamedByIngest": 52,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "J_Bip_L_UpperArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "J_Bip_L_LowerArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "J_Bip_L_Hand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "J_Bip_R_UpperArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "J_Bip_R_LowerArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "J_Bip_R_Hand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "J_Bip_L_UpperLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "J_Bip_L_LowerLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "J_Bip_L_Foot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "J_Bip_R_UpperLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "J_Bip_R_LowerLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "J_Bip_R_Foot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "J_Bip_L_UpperArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "J_Bip_L_LowerArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "J_Bip_L_Hand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "J_Bip_R_UpperArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "J_Bip_R_LowerArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "J_Bip_R_Hand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "J_Bip_L_UpperLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "J_Bip_L_LowerLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "J_Bip_L_Foot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "J_Bip_R_UpperLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "J_Bip_R_LowerLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "J_Bip_R_Foot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "vrm1",
+      "label": "VRM 1.0",
+      "note": "the 1.0 humanoid spec: leftUpperArm, leftToes, leftIndexProximal",
+      "bones": 52,
+      "renamedByIngest": 52,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "leftUpperArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "leftLowerArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "leftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "rightUpperArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "rightLowerArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "rightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "leftUpperLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "leftLowerLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "leftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "rightUpperLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "rightLowerLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "rightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "leftUpperArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "leftLowerArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "leftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "rightUpperArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "rightLowerArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "rightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "leftUpperLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "leftLowerLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "leftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "rightUpperLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "rightLowerLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "rightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "daz",
+      "label": "Daz / Genesis 8",
+      "note": "Genesis figure rig: hip, abdomenUpper, lShldrBend, lThighBend, lIndex1",
+      "bones": 52,
+      "renamedByIngest": 52,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "lShldrBend",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "lForearmBend",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "lHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "rShldrBend",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "rForearmBend",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "rHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "lThighBend",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "lShin",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "lFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "rThighBend",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "rShin",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "rFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "lShldrBend",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "lForearmBend",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "lHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "rShldrBend",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "rForearmBend",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "rHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "lThighBend",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "lShin",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "lFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "rThighBend",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "rShin",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "rFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "makehuman",
+      "label": "MakeHuman",
+      "note": "anatomical stems with a .L/.R side suffix: clavicle.L, upperarm.L, shin.L, finger2-1.L",
+      "bones": 51,
+      "renamedByIngest": 51,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 51,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9811320754716981,
+              "matched": 52,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.350435841599901
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.3681389958492004
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9811320754716981,
+              "matched": 52,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.4905558235170513
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.4934849450250485
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 51,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9811320754716981,
+              "matched": 52,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "upperarmL",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "forearmL",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "handL",
+                  "travelHipHeights": 0.350435841599901
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "upperarmR",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "forearmR",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "handR",
+                  "travelHipHeights": 0.3681389958492004
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "thighL",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "shinL",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "footL",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "thighR",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "shinR",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "footR",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9811320754716981,
+              "matched": 52,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "upperarmL",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "forearmL",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "handL",
+                  "travelHipHeights": 0.4905558235170513
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "upperarmR",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "forearmR",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "handR",
+                  "travelHipHeights": 0.4934849450250485
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "thighL",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "shinL",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "footL",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "thighR",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "shinR",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "footR",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "blender-rigify",
+      "label": "Blender / Rigify (.L suffix)",
+      "note": "the Blender human meta-rig: shoulder.L (clavicle) + upper_arm.L, f_index.01.L, thumb.01.L",
+      "bones": 51,
+      "renamedByIngest": 51,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 51,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9811320754716981,
+              "matched": 52,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.350435841599901
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.3681389958492004
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9811320754716981,
+              "matched": 52,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.4905558235170513
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.4934849450250485
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 49,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9433962264150944,
+              "matched": 50,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "shoulderL",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "forearmL",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "handL",
+                  "travelHipHeights": 0.37882317837123197
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "shoulderR",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "forearmR",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "handR",
+                  "travelHipHeights": 0.404255345941833
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "thighL",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "shinL",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "footL",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "thighR",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "shinR",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "footR",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": [
+                "LeftArm bound to \"shoulderL\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.",
+                "RightArm bound to \"shoulderR\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder."
+              ]
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9433962264150944,
+              "matched": 50,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "shoulderL",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "forearmL",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "handL",
+                  "travelHipHeights": 0.4635439277044953
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "shoulderR",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "forearmR",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "handR",
+                  "travelHipHeights": 0.5622210518338789
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "thighL",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "shinL",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "footL",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "thighR",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "shinR",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "footR",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": [
+                "LeftArm bound to \"shoulderL\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.",
+                "RightArm bound to \"shoulderR\" (a clavicle) while an upper-arm bone exists. remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder."
+              ]
+            }
+          ],
+          "pass": true,
+          "warnings": 4
+        }
+      ]
+    },
+    {
+      "id": "simple",
+      "label": "Simple shoulderL rig",
+      "note": "the hand-built / hobby rig: chest, shoulderL, elbowL, wristL, hipL, kneeL, ankleL",
+      "bones": 49,
+      "renamedByIngest": 49,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 49,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9433962264150944,
+              "matched": 50,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3481121483999707
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.36055365369868725
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9433962264150944,
+              "matched": 50,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.4065823559119456
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.4610423891438294
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 49,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 0.9433962264150944,
+              "matched": 50,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "shoulderL",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "elbowL",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "wristL",
+                  "travelHipHeights": 0.3481121483999707
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "shoulderR",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "elbowR",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "wristR",
+                  "travelHipHeights": 0.36055365369868725
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "hipL",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "kneeL",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "ankleL",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "hipR",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "kneeR",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "ankleR",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 0.9433962264150944,
+              "matched": 50,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "shoulderL",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "elbowL",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "wristL",
+                  "travelHipHeights": 0.4065823559119456
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "shoulderR",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "elbowR",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "wristR",
+                  "travelHipHeights": 0.4610423891438294
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "hipL",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "kneeL",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "ankleL",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "hipR",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "kneeR",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "ankleR",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    },
+    {
+      "id": "anatomical",
+      "label": "Anatomical Latin (novel)",
+      "note": "the convention the canonicalizer has never seen: scan/anatomy-kit rigs named for the bones themselves: humerus.L, ulna.L, femur.L, tibia.L, index_proximal.L",
+      "bones": 52,
+      "renamedByIngest": 52,
+      "unmappedNames": [],
+      "lanes": [
+        {
+          "lane": "ingest",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "LeftArm",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "LeftForeArm",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "LeftHand",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "RightArm",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "RightForeArm",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "RightHand",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "LeftUpLeg",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "LeftLeg",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "LeftFoot",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "RightUpLeg",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "RightLeg",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "RightFoot",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        },
+        {
+          "lane": "runtime",
+          "mappedBones": 52,
+          "clips": [
+            {
+              "clip": "idle",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 26.30100607129127,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "humerusL",
+                      "deg": 26.30100607129127
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "ulnaL",
+                      "deg": 5.518052838757844
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "carpusL",
+                  "travelHipHeights": 0.3219921899862276
+                },
+                "right arm": {
+                  "swingDeg": 28.329194407550652,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "humerusR",
+                      "deg": 28.329194407550652
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "ulnaR",
+                      "deg": 4.972747564926075
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "carpusR",
+                  "travelHipHeights": 0.35695464967113044
+                },
+                "left leg": {
+                  "swingDeg": 28.24936628811913,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "femurL",
+                      "deg": 28.24936628811913
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "tibiaL",
+                      "deg": 23.907236354543404
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "talusL",
+                  "travelHipHeights": 0.06015945002671804
+                },
+                "right leg": {
+                  "swingDeg": 30.990535116666255,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "femurR",
+                      "deg": 30.990535116666255
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "tibiaR",
+                      "deg": 23.03834302236302
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "talusR",
+                  "travelHipHeights": 0.048640764775951015
+                }
+              },
+              "failures": [],
+              "warnings": []
+            },
+            {
+              "clip": "walk",
+              "coverage": 1,
+              "matched": 53,
+              "total": 53,
+              "gatePassed": true,
+              "limbs": {
+                "left arm": {
+                  "swingDeg": 41.72210875339977,
+                  "swings": [
+                    {
+                      "bone": "LeftArm",
+                      "node": "humerusL",
+                      "deg": 37.54912696372359
+                    },
+                    {
+                      "bone": "LeftForeArm",
+                      "node": "ulnaL",
+                      "deg": 41.72210875339977
+                    }
+                  ],
+                  "effector": "LeftHand",
+                  "effectorNode": "carpusL",
+                  "travelHipHeights": 0.5249946508281168
+                },
+                "right arm": {
+                  "swingDeg": 49.331852527636705,
+                  "swings": [
+                    {
+                      "bone": "RightArm",
+                      "node": "humerusR",
+                      "deg": 49.331852527636705
+                    },
+                    {
+                      "bone": "RightForeArm",
+                      "node": "ulnaR",
+                      "deg": 21.418111968717106
+                    }
+                  ],
+                  "effector": "RightHand",
+                  "effectorNode": "carpusR",
+                  "travelHipHeights": 0.527543542603131
+                },
+                "left leg": {
+                  "swingDeg": 50.703146254218105,
+                  "swings": [
+                    {
+                      "bone": "LeftUpLeg",
+                      "node": "femurL",
+                      "deg": 50.15475697202484
+                    },
+                    {
+                      "bone": "LeftLeg",
+                      "node": "tibiaL",
+                      "deg": 50.703146254218105
+                    }
+                  ],
+                  "effector": "LeftFoot",
+                  "effectorNode": "talusL",
+                  "travelHipHeights": 0.7602954733369159
+                },
+                "right leg": {
+                  "swingDeg": 54.39747577647018,
+                  "swings": [
+                    {
+                      "bone": "RightUpLeg",
+                      "node": "femurR",
+                      "deg": 54.39747577647018
+                    },
+                    {
+                      "bone": "RightLeg",
+                      "node": "tibiaR",
+                      "deg": 49.19090656098831
+                    }
+                  ],
+                  "effector": "RightFoot",
+                  "effectorNode": "talusR",
+                  "travelHipHeights": 0.8214751592557609
+                }
+              },
+              "failures": [],
+              "warnings": []
+            }
+          ],
+          "pass": true,
+          "warnings": 0
+        }
+      ]
+    }
+  ],
+  "passed": 10,
+  "total": 10
+}

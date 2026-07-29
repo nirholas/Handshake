@@ -1,4 +1,4 @@
-// P3.2 / P3.3 — the shared build limits both the authoritative room and the /play
+// P3.2 / P3.3: the shared build limits both the authoritative room and the /play
 // client import. These numbers used to live in two places (the server held the
 // only real clear radius; the client defaulted a bare 12 in four spots), so these
 // tests lock the single source of truth and the tier progression it encodes.

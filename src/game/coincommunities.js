@@ -44,7 +44,7 @@ import {
 	COMPOSITE_PIECES, compositeCells,
 } from './build-voxels.js';
 import { WorldObjects, PropGhost, propDef, registerUploadedProp } from './world-objects.js';
-// P3.1 — durable per-world build persistence (Postgres index + R2 blob), the same
+// P3.1: durable per-world build persistence (Postgres index + R2 blob), the same
 // store the authoritative room writes through. See src/game/world-persist.js for
 // which side is the writer when.
 import { WorldBuildStore, worldIdForCoin, docObjects } from './world-persist.js';
@@ -513,7 +513,7 @@ export class CoinCommunities {
 			// Build props (R18): arm/disarm a placeable prop and rotate the armed one.
 			onPickProp: (id) => this._pickProp(id),
 			onRotateProp: () => this._rotateProp(),
-			// P3.3: bring your own prop — validate, upload, arm it for placement.
+			// P3.3: bring your own prop: validate, upload, arm it for placement.
 			onUploadProp: (file) => this._uploadProp(file),
 			onShareBuild: () => this._shareBuild(),
 			onOpenFeatured: () => this._openFeatured(),
@@ -1199,7 +1199,7 @@ export class CoinCommunities {
 		this.propGhost = new PropGhost(this.scene);
 		this.net.on('objectReject', ({ reason }) => this._onObjectReject(reason));
 
-		// P3.1 — the durable world store. Read it immediately (so the community's
+		// P3.1: the durable world store. Read it immediately (so the community's
 		// persisted build is standing here before the room even answers), and keep it
 		// as this client's writer for as long as the room is NOT the authority.
 		this._openWorldStore(coin, tier);
@@ -1731,7 +1731,7 @@ export class CoinCommunities {
 		this.ui.setOnFloor(false);
 		if (this._reactor) { this._reactor.dispose(); this._reactor = null; }
 		// Land any debounced world-store write before the objects it describes are
-		// disposed (P3.1) — leaving a world must not lose the last placement.
+		// disposed (P3.1): leaving a world must not lose the last placement.
 		this._closeWorldStore();
 		if (this.voxels) { this.voxels.dispose(); this.voxels = null; }
 		if (this.worldObjects) { this.worldObjects.dispose(); this.worldObjects = null; }
@@ -2996,7 +2996,7 @@ export class CoinCommunities {
 		this._refreshGhost();
 	}
 
-	// P3.3 — bring your own prop. Validate the model locally (size, geometry,
+	// P3.3: bring your own prop. Validate the model locally (size, geometry,
 	// triangle budget, real-world scale), upload it through the same presigned-PUT
 	// storage path avatars use, register it in the palette, and arm it so the next
 	// click drops it into the world. Every failure state is reported in the palette's
@@ -3017,7 +3017,7 @@ export class CoinCommunities {
 			this._pickProp(def.id);
 			this.ui.setPropUploadStatus('');
 			this.ui.toast(
-				`${name} is ready${info.vrm ? ' (VRM)' : ''} — click in the world to place it.`,
+				`${name} is ready${info.vrm ? ' (VRM)' : ''}: click in the world to place it.`,
 				'info',
 			);
 		} catch (err) {
@@ -3080,8 +3080,8 @@ export class CoinCommunities {
 	}
 
 	// Place a prop with no authoritative room in the picture (P3.1). It is a real
-	// object in the scene AND a real row in the durable world document — not a
-	// local-only decoration that quietly disappears — so the same caps the server
+	// object in the scene AND a real row in the durable world document: not a
+	// local-only decoration that quietly disappears: so the same caps the server
 	// enforces are enforced here before anything is written.
 	_placeLocalProp(target, yaw, url) {
 		const store = this._worldStore;
@@ -3093,11 +3093,11 @@ export class CoinCommunities {
 		const objs = this.worldObjects;
 		if (!objs) return false;
 		if (objs.localCount() >= MAX_WORLD_OBJECTS) {
-			this.ui.toast('This world is full of props — remove some to place more.', 'warn');
+			this.ui.toast('This world is full of props: remove some to place more.', 'warn');
 			return false;
 		}
 		if (this._offlineBuilt.size >= MAX_OBJECTS_PER_PLAYER) {
-			this.ui.toast('You’ve hit your prop limit for this world — remove some to place more.', 'warn');
+			this.ui.toast('You’ve hit your prop limit for this world: remove some to place more.', 'warn');
 			return false;
 		}
 		const rec = {
@@ -3160,7 +3160,7 @@ export class CoinCommunities {
 		this.propGhost.setType(this.buildProp, def?.upload ? def.glb : '');
 		this.propGhost.setPose(target.x, target.y, target.z, this.buildPropRot * (Math.PI / 2), this.buildPropScale);
 		// Placement is valid online (the room takes it) or offline once the durable
-		// world store is open and writable (P3.1) — the ghost tells the truth about
+		// world store is open and writable (P3.1): the ghost tells the truth about
 		// which of those is actually available right now.
 		this.propGhost.setValid(target.valid && (this._roomIsAuthority() || !!this._worldStore?.writable));
 		this.propGhost.show();
@@ -3241,7 +3241,7 @@ export class CoinCommunities {
 	}
 
 	// The room finished its first state sync. It restored the same document, so our
-	// local copies are duplicates — drop them — and anything we built while offline
+	// local copies are duplicates, drop them, and anything we built while offline
 	// is handed to the room as real spawn intents so it joins the shared world (and
 	// gets persisted by the authority) instead of stranding in a local doc.
 	_onRoomSynced() {
@@ -3299,7 +3299,7 @@ export class CoinCommunities {
 	_onWorldSaveError({ reason }) {
 		this.buildHud.setPersistent(false);
 		if (reason === 'too_large') {
-			this.ui.toast('This world has hit its saved-build size limit — remove some props to save more.', 'warn');
+			this.ui.toast('This world has hit its saved-build size limit: remove some props to save more.', 'warn');
 			return;
 		}
 		// Network/server blips are transient: the next placement re-arms the save, so

@@ -1,4 +1,4 @@
-// P3.4 — VRM support in /play.
+// P3.4: VRM support in /play.
 //
 // A VRM file IS a glTF binary, so our existing GLTFLoader parses one already;
 // what it does not do on its own is fix VRM 0.x's -Z facing, VRM skinned-mesh

@@ -1,11 +1,11 @@
-// build-limits — the ONE place the build system's numbers live (W-world-online P3.2).
+// build-limits: the ONE place the build system's numbers live (W-world-online P3.2).
 //
 // Both sides of the build feature need these: the authoritative room enforces
 // them, and the client needs the same values to draw an honest HUD (and to run
 // the identical caps while it is building solo against the durable world store,
-// P3.1). Duplicating them drifted once already — the client defaulted the
+// P3.1). Duplicating them drifted once already: the client defaulted the
 // creator clear radius to a bare `12` in four separate places while the server
-// held the only real value — so they are exported from here and imported by
+// held the only real value: so they are exported from here and imported by
 // both. `src/game/*` already imports server modules this way (vehicles,
 // world-features, cosmetics-catalog); this is the same pattern.
 //
@@ -14,14 +14,14 @@
 // which is a courtyard, not a place. It is now tiered by what the server can
 // actually prove about the caller:
 //
-//   • base     — any world, no proven standing.
-//   • holder   — the world is a coin's gated Holders tier, so every player in it
-//                passed a signed holder pass (WalkRoom.onAuth). Holders get a
-//                bigger canvas: this is the "so holders can build a real place"
-//                item from the port checklist.
-//   • creator  — the caller's verified wallet matches the coin's on-chain
-//                creator (WalkRoom._isCreator). World moderation reaches
-//                furthest.
+//   • base    : any world, no proven standing.
+//   • holder  : the world is a coin's gated Holders tier, so every player in it
+//               passed a signed holder pass (WalkRoom.onAuth). Holders get a
+//               bigger canvas: this is the "so holders can build a real place"
+//               item from the port checklist.
+//   • creator : the caller's verified wallet matches the coin's on-chain
+//               creator (WalkRoom._isCreator). World moderation reaches
+//               furthest.
 //
 // The tiers are additive-by-max, never multiplied, so a creator inside their own
 // Holders world gets the creator radius rather than a compounded number, and the
@@ -41,7 +41,7 @@ export const OBJ_SCALE_MAX = 10;
 export const BUILD_CLEAR_RADIUS_BASE = 12;
 export const BUILD_CLEAR_RADIUS_HOLDER = 24;
 export const BUILD_CLEAR_RADIUS_CREATOR = 48;
-// The widest any caller can ever reach — the absolute clamp on a malformed or
+// The widest any caller can ever reach: the absolute clamp on a malformed or
 // hostile `r`, independent of the tier the caller actually earned.
 export const BUILD_CLEAR_RADIUS_MAX = BUILD_CLEAR_RADIUS_CREATOR;
 
@@ -61,7 +61,7 @@ export function buildClearRadius({ creator = false, holder = false } = {}) {
 	return r;
 }
 
-/** Human-readable label for the tier a radius came from — used in HUD copy. */
+/** Human-readable label for the tier a radius came from: used in HUD copy. */
 export function buildTierLabel({ creator = false, holder = false } = {}) {
 	if (creator) return 'creator';
 	if (holder) return 'holder';
@@ -99,7 +99,7 @@ function hostAllowed(hostname, patterns) {
 /**
  * Is `url` a model this world may render? Returns the normalized url, or null.
  * Rejects anything that isn't https, on an allowed host, and pointing at a model
- * file — so a `javascript:` payload, an attacker's tracking pixel, or a 300 MB
+ * file: so a `javascript:` payload, an attacker's tracking pixel, or a 300 MB
  * file on someone else's CDN can never reach another player's loader.
  */
 export function normalizePropAssetUrl(url) {

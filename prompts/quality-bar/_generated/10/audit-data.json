@@ -136,6 +136,17 @@
 			"directed": "Full-body humanoid, standing in a neutral A-pose with arms slightly away from the body and legs slightly apart for optimal rigging, hands open, fingers separated; female, late twenties, lean muscular athletic build, toned proportions, determined",
 			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
 			"directorError": null
+		},
+		"b": {
+			"id": "b",
+			"label": "Grandmother",
+			"prompt": "A synthetic persona, not a real person: a grandmother in her seventies, soft build, silver hair pinned in a bun, reading glasses, wearing a knitted cardigan over a floral blouse and a long skirt with flat shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {},
+			"directed": "A single full-body humanoid, a grandmother in her seventies with a soft build, standing in a neutral A/T-adjacent pose with arms slightly away from the body and legs slightly apart. She has silver hair rendered as many",
+			"directedVia": "vertex gemini-2.5-flash (chat chain returned nothing)",
+			"directorError": null
 		}
 	},
 	"variants": [

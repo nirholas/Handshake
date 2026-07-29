@@ -186,6 +186,14 @@ export async function runOne(baseUrl, promptEntry, lane, tier) {
 		});
 		result.glbUrl = gen.glb_url;
 		result.creationId = gen.creation_id ?? null;
+		// /api/forge falls back between lanes internally (a cooling NIM gateway
+		// reroutes to the reconstruct lane, an exhausted HF Space hands off to a
+		// self-host worker), and the response reports which engine actually
+		// produced the GLB. Record it: without it a score can be filed under a lane
+		// that never ran, which is exactly the comparison the bench exists to make.
+		// `lane` stays the REQUESTED lane so resume keys are stable across runs.
+		result.effectiveLane = gen.backend ?? null;
+		result.cached = gen.cached === true;
 		result.views = [];
 		for (const view of CANONICAL_VIEWS) {
 			const viewResult = { view: view.label };

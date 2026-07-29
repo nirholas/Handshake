@@ -1,4 +1,4 @@
-// vrm-loader — VRM avatars and props in /play (W-world-online P3.4).
+// vrm-loader: VRM avatars and props in /play (W-world-online P3.4).
 //
 // A VRM file IS a glTF binary: same 12-byte header, same JSON + BIN chunks, with
 // the humanoid/material/spring data hanging off `extensions.VRM` (VRM 0.x) or
@@ -18,7 +18,7 @@
 // This module fixes all three on the plain-glTF path, so VRM avatars and props
 // work today with no new dependency, and the skeleton is picked up by
 // src/glb-canonicalize.js, which already maps both VRM 0.x (`J_Bip_C_Hips`) and
-// VRM 1.0 (`upperChest`) bone naming onto the canonical rig — so the pre-baked
+// VRM 1.0 (`upperChest`) bone naming onto the canonical rig: so the pre-baked
 // idle/walk/emote clips retarget onto a VRM the same as any other humanoid.
 //
 // ── The @pixiv/three-vrm seam ────────────────────────────────────────────────
@@ -27,7 +27,7 @@
 // rig, blend-shape expression presets and look-at. Those need the reference
 // implementation. `setVrmPluginFactory()` is the single integration point for it:
 // call it once at boot with a factory that returns a GLTFLoader plugin, and every
-// avatar/prop load in the app routes through it automatically — no call site
+// avatar/prop load in the app routes through it automatically: no call site
 // changes. To light it up:
 //
 //     npm install @pixiv/three-vrm

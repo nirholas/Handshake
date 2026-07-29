@@ -1,11 +1,11 @@
-// world-persist — the browser's half of the per-world build store (P3.1).
+// world-persist: the browser's half of the per-world build store (P3.1).
 //
 // `/play` builds into two different authorities depending on the connection:
 //
 //   • ONLINE (a live `walk_world` room). The Colyseus room is authoritative for
 //     every object and writes the durable doc itself with a service token
 //     (multiplayer/src/persistence.js → /api/world/save). The browser must NOT
-//     write in this mode — two writers on one doc is how builds get clobbered —
+//     write in this mode (two writers on one doc is how builds get clobbered),
 //     so this module is only ever armed while the room is not the authority.
 //
 //   • SOLO / PRE-JOIN (the room is unreachable, or we're still connecting). The
@@ -17,7 +17,7 @@
 //
 // Concurrency is the store's own optimistic-etag model: we send the etag we last
 // read as `ifMatch`; a 409 means someone else moved the doc, so we re-read and
-// re-run the producer against the FRESH doc (the producer merges — it never
+// re-run the producer against the FRESH doc (the producer merges: it never
 // blindly overwrites) and commit once more. Permission failures (401 anonymous,
 // 403 not this world's owner) are terminal for the session and reported through
 // `onDenied` so the HUD can stop promising the build is saved.
@@ -27,14 +27,14 @@
 
 import { log } from '../shared/log.js';
 
-// Matches SAVE_DEBOUNCE_MS in multiplayer/src/persistence.js — a burst of
+// Matches SAVE_DEBOUNCE_MS in multiplayer/src/persistence.js: a burst of
 // placements coalesces into one write, exactly like the server's.
 export const WORLD_SAVE_DEBOUNCE_MS = 4000;
 
 /**
  * The store key for a coin world. Mirrors WalkRoom's `worldKey` byte-for-byte
  * (multiplayer/src/rooms/WalkRoom.js) so the browser and the room read and write
- * the SAME document — a different key here would silently fork the build.
+ * the SAME document: a different key here would silently fork the build.
  * @param {string} mint coin mint address, '' for the mainland world
  * @param {string} [tier] 'holders' for a coin's gated tier
  */

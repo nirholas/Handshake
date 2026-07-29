@@ -54,7 +54,9 @@ coverage.
 `src/glb-canonicalize.js` maps an incoming skeleton's bone names onto three.ws's
 **canonical bone set**. It understands many rig conventions out of the box —
 Mixamo, Avaturn, Unreal, VRM / VRoid, VRM 1.0, Daz / Genesis, MakeHuman, Blender
-`.L`/`.R`, and simple `shoulderL`-style rigs.
+`.L`/`.R`, Rigify, SMPL, Roblox, Second Life, anatomical-Latin scan rigs, and
+simple `shoulderL`-style rigs. Finger chains are mapped per convention too, which
+matters more than it sounds: see the coverage note below.
 
 ### ④ Retarget clips
 
@@ -77,6 +79,29 @@ supported rigs**: support comes from the bone-name mapping in
 - **Hit a new skeleton convention?** Add its bone-name mapping to
   `glb-canonicalize.js` and cover it with a case in
   `tests/glb-canonicalize.test.js`. Do **not** hardcode a curated rig list.
+- **Fingers are load-bearing for coverage.** 30 of the 53 tracks in every clip
+  address a finger joint, so a rig whose hands do not name-map scores about 40%
+  coverage, drops under `MIN_COVERAGE`, and gets **no action built at all**: the
+  whole avatar stands frozen, arms and legs included. When you add a convention,
+  add its finger spellings too.
+
+### Proving it: the animation dignity sweep
+
+```bash
+node scripts/animation-dignity-sweep.mjs            # per-rig report, exit 0/1
+node scripts/animation-dignity-sweep.mjs --verbose  # per-limb swing + travel numbers
+node scripts/animation-dignity-sweep.mjs --json     # machine-readable
+```
+
+The sweep builds ten minimal skinned GLBs, one per naming convention (Mixamo,
+Avaturn, Unreal, VRoid, VRM 1.0, Daz, MakeHuman, Rigify, a simple `shoulderL`
+rig, and an anatomical-Latin rig), drives the real `idle` and `walk` clips onto
+each, and **measures** the result: retarget coverage, per-limb rotation swing in
+degrees, and end-effector world travel in hip-heights for both hands and both
+feet. It runs each rig down both production paths, ingest-canonicalized and
+raw-runtime, and fails the run if any limb does not move. Use it whenever you
+touch the canonicalizer or the retargeter; "the tests still pass" does not prove
+an avatar still animates.
 
 ## Output and surfaces
 

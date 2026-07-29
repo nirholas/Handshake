@@ -72,10 +72,12 @@ const PROVIDERS = {
 		network: 'Anthropic',
 		tier: 'flagship',
 		maxOutput: 16384,
-		description: 'Mythos-class flagship. State-of-the-art software engineering, knowledge work, vision, and science.',
-		// First-party Anthropic only — not yet mirrored on OpenRouter, so there is
-		// no openrouterModel fallback route (shows unavailable without the host key).
+		description: 'Most capable model. State-of-the-art reasoning, long-horizon agentic work, knowledge work, and vision.',
 		native: () => (env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-fable-5') : null),
+		// Mirrored on OpenRouter (verified 2026-07-29, same $10/$50 per MTok as
+		// first-party). Without this the roster showed the platform's most capable
+		// model as permanently unavailable, since no ANTHROPIC_API_KEY is set.
+		openrouterModel: 'anthropic/claude-fable-5',
 	},
 	// claude-mythos-5 is deliberately NOT in this menu: it is restricted-access
 	// (Project Glasswing orgs only), so with any normal host key the entry would

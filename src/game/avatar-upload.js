@@ -93,12 +93,12 @@ export async function validateGlb(file) {
 // A prop is validated harder than an avatar because everyone in the world pays
 // for it: tighter size cap, a triangle budget, and a real bounding-box sanity
 // check so a mis-exported model can't be dropped in as a kilometre-wide wall.
-// Reuses the same parse-before-upload discipline as validateGlb — nothing reaches
+// Reuses the same parse-before-upload discipline as validateGlb: nothing reaches
 // storage until it has been proven to be a renderable model right here.
 
 /**
  * Validate `file` as a placeable world prop.
- * Accepts .glb and .vrm (a VRM file is a glTF binary — see vrm-loader.js).
+ * Accepts .glb and .vrm (a VRM file is a glTF binary: see vrm-loader.js).
  * @throws {Error} with a user-facing message on rejection
  * @returns {Promise<{bytes:number, height:number, extent:number, triangles:number, vrm:boolean}>}
  */
@@ -107,11 +107,11 @@ export async function validatePropModel(file) {
 	const name = (file.name || '').toLowerCase();
 	const isVrm = name.endsWith('.vrm');
 	if (!name.endsWith('.glb') && !isVrm) {
-		throw new Error('Props must be .glb or .vrm — those bundle meshes and textures into one file. Export your model as GLB and try again.');
+		throw new Error('Props must be .glb or .vrm: those bundle meshes and textures into one file. Export your model as GLB and try again.');
 	}
 	if (file.size < 64) throw new Error('That file is empty.');
 	if (file.size > MAX_PROP_BYTES) {
-		throw new Error(`That model is ${(file.size / (1024 * 1024)).toFixed(1)} MB — props are capped at ${MAX_PROP_MB} MB so they load fast for everyone in the world. Decimate the mesh or shrink its textures.`);
+		throw new Error(`That model is ${(file.size / (1024 * 1024)).toFixed(1)} MB: props are capped at ${MAX_PROP_MB} MB so they load fast for everyone in the world. Decimate the mesh or shrink its textures.`);
 	}
 
 	await _meshoptReady;
@@ -119,7 +119,7 @@ export async function validatePropModel(file) {
 	try {
 		gltf = await _loader.parseAsync(await file.arrayBuffer(), '');
 	} catch {
-		throw new Error('That file could not be read as a 3D model — it may be corrupt or not actually a GLB/VRM.');
+		throw new Error('That file could not be read as a 3D model: it may be corrupt or not actually a GLB/VRM.');
 	}
 
 	try {
@@ -134,7 +134,7 @@ export async function validatePropModel(file) {
 		});
 		if (!hasMesh) throw new Error('That model has no visible geometry.');
 		if (triangles > PROP_MAX_TRIANGLES) {
-			throw new Error(`That model has ${triangles.toLocaleString()} triangles — props are capped at ${PROP_MAX_TRIANGLES.toLocaleString()} so a world full of them still runs smoothly. Decimate it and try again.`);
+			throw new Error(`That model has ${triangles.toLocaleString()} triangles: props are capped at ${PROP_MAX_TRIANGLES.toLocaleString()} so a world full of them still runs smoothly. Decimate it and try again.`);
 		}
 
 		const size = new Vector3();
@@ -142,10 +142,10 @@ export async function validatePropModel(file) {
 		const extent = Math.max(size.x, size.y, size.z);
 		if (!Number.isFinite(extent) || extent <= 0) throw new Error('That model has no measurable size.');
 		if (extent < PROP_MIN_EXTENT_M) {
-			throw new Error('That model is smaller than a millimetre across — re-export it at a real-world scale (metres).');
+			throw new Error('That model is smaller than a millimetre across: re-export it at a real-world scale (metres).');
 		}
 		if (extent > PROP_MAX_EXTENT_M) {
-			throw new Error(`That model is ${Math.round(extent)} m across — props are capped at ${PROP_MAX_EXTENT_M} m. Re-export it at a real-world scale (metres).`);
+			throw new Error(`That model is ${Math.round(extent)} m across: props are capped at ${PROP_MAX_EXTENT_M} m. Re-export it at a real-world scale (metres).`);
 		}
 
 		return { bytes: file.size, height: size.y, extent, triangles, vrm: isVrm };
@@ -156,8 +156,8 @@ export async function validatePropModel(file) {
 
 /**
  * Upload a validated world prop and return its public URL. Same presigned-PUT
- * path as an avatar (api/avatar/presign-glb) — one storage pipeline, one set of
- * server-side limits — so the resulting url passes the room's asset allow-list.
+ * path as an avatar (api/avatar/presign-glb), so one storage pipeline and one set
+ * of server-side limits apply, and the url passes the room's asset allow-list.
  */
 export async function uploadPropModel(file, onProgress) {
 	return uploadGlb(file, onProgress);

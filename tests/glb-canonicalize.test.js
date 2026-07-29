@@ -773,7 +773,7 @@ describe('canonicalizeBoneName', () => {
 //
 // 30 of the 53 tracks in every clip in public/animations/clips address finger
 // bones. A rig whose hands do not name-map therefore scores about 40% retarget
-// coverage, which is UNDER the MIN_COVERAGE gate in src/animation-retarget.js —
+// coverage, which is UNDER the MIN_COVERAGE gate in src/animation-retarget.js,
 // so production builds no action for it at all and the avatar stands frozen in
 // its bind pose, arms and legs included. That is how an Unreal mannequin, a VRM
 // 1.0 avatar, a Genesis figure, a MakeHuman export and a Rigify character were
@@ -873,7 +873,7 @@ describe('finger chains across rig conventions', () => {
 				}
 			}
 		}
-		// 30 distinct canonical finger bones — no two spellings collapsed onto one,
+		// 30 distinct canonical finger bones, no two spellings collapsed onto one,
 		// which would leave a joint undriven while coverage still looked healthy.
 		expect(mapped.size).toBe(30);
 	});

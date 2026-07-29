@@ -1,4 +1,4 @@
-// P3.1 — the browser's half of the durable per-world build store.
+// P3.1: the browser's half of the durable per-world build store.
 //
 // These lock the invariants that decide whether a community's build survives:
 // the world key must match WalkRoom's byte-for-byte, the client must never write
@@ -166,7 +166,7 @@ describe('WorldBuildStore', () => {
 		expect(store.writable).toBe(true);
 	});
 
-	it('writes nothing while disarmed — the authoritative room owns the doc', async () => {
+	it('writes nothing while disarmed: the authoritative room owns the doc', async () => {
 		const fetchImpl = fakeFetch([]);
 		const store = new WorldBuildStore({ worldId: MINT, fetchImpl });
 		store.setArmed(false);

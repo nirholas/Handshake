@@ -311,7 +311,7 @@ function uploadIdFor(url) {
 }
 
 /**
- * Register a player-uploaded model as a placeable prop (P3.3). Idempotent — the
+ * Register a player-uploaded model as a placeable prop (P3.3). Idempotent: the
  * same url always yields the same def, so re-uploading or restoring a build never
  * duplicates a palette entry. The model's url travels with each placed object, so
  * every other client renders it without needing this registry.
@@ -462,7 +462,7 @@ export class WorldObjects {
 			ownerId: obj.ownerId, kind: obj.kind, type: obj.type, url: obj.url || '',
 			mine, local,
 		});
-		// A local entry has no server interpolating it — snap it to its final pose
+		// A local entry has no server interpolating it: snap it to its final pose
 		// so a restored build renders in place instead of sliding in from the origin.
 		if (local) { holder.position.set(obj.x, obj.y, obj.z); holder.rotation.y = obj.yaw || 0; }
 	}
@@ -504,7 +504,7 @@ export class WorldObjects {
 	}
 
 	// ── locally-owned entries (P3.1) ─────────────────────────────────────────
-	// Objects restored from — or built into — the durable world store while this
+	// Objects restored from, or built into, the durable world store while this
 	// client has no authoritative room. They render exactly like server objects but
 	// are driven entirely from here, and are superseded the instant the room's own
 	// copy of the same id arrives (see _add). This is what lets a player walk into a
@@ -535,7 +535,7 @@ export class WorldObjects {
 		return true;
 	}
 
-	/** The local entries as plain records — what the world-doc producer persists. */
+	/** The local entries as plain records: what the world-doc producer persists. */
 	localObjects(out = []) {
 		out.length = 0;
 		for (const [id, e] of this.entries) {
@@ -611,7 +611,7 @@ export class PropGhost {
 
 	/**
 	 * @param {string|null} type catalog id, gallery id, or UPLOAD_PROP_TYPE
-	 * @param {string} [url]     player-uploaded model url (P3.3) — ghosts as a footprint
+	 * @param {string} [url]     player-uploaded model url (P3.3): ghosts as a footprint
 	 */
 	setType(type, url = '') {
 		if (type === this._type && url === this._url) return;

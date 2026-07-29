@@ -118,6 +118,9 @@ class FlexBoard {
 				el('div', { class: 'cf-empty-glyph', 'aria-hidden': 'true', text: '✦' }),
 				el('div', { class: 'cf-empty-title', text: 'No fits owned yet' }),
 				el('div', { class: 'cf-empty-sub', text: 'Be the first to buy a premium cosmetic — your fit tops the rarity board, and the coin’s creator earns a cut.' }),
+				el('p', { class: 'cf-more' }, [
+					el('a', { class: 'cf-more-link', href: '/fits', text: 'See the full cosmetics economy →' }),
+				]),
 			]));
 			return;
 		}
@@ -170,6 +173,16 @@ class FlexBoard {
 				]))),
 			]));
 		}
+
+		// The full ledger (creator earnings, the whole collector board, sale
+		// history) lives on its own public page; this panel is the in-game peek.
+		sections.push(el('p', { class: 'cf-more' }, [
+			el('a', {
+				class: 'cf-more-link',
+				href: '/fits',
+				text: 'See the full cosmetics economy →',
+			}),
+		]));
 
 		this.body.replaceChildren(...sections);
 	}
@@ -243,6 +256,10 @@ class FlexBoard {
 		.cf-empty-glyph{font-size:34px;opacity:.5}
 		.cf-empty-title{font-size:16px;font-weight:650;margin-top:6px;color:#e9eaf2}
 		.cf-empty-sub{font-size:13px;margin-top:6px;max-width:42ch;margin-inline:auto;line-height:1.5}
+		.cf-more{margin:14px 0 2px;text-align:center}
+		.cf-more-link{font-size:13px;color:#9aa3c7;text-decoration:none;border-bottom:1px solid transparent;transition:color .15s ease,border-color .15s ease}
+		.cf-more-link:hover{color:#e9eaf2;border-bottom-color:currentColor}
+		.cf-more-link:focus-visible{outline:2px solid #6f7bff;outline-offset:3px;border-radius:3px}
 		.cf-sec{margin-top:18px}
 		.cf-sec:first-child{margin-top:2px}
 		.cf-sec-h{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#8b91ac;margin:0 0 10px}

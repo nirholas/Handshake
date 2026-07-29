@@ -201,18 +201,27 @@ async function runBench(args) {
 	printSummary(run);
 }
 
-function printSummary(run) {
-	const byLaneTier = new Map();
+function meanTable(run, title, keyOf) {
+	const groups = new Map();
 	for (const r of run.results) {
-		const key = `${r.lane}/${r.tier}`;
-		if (!byLaneTier.has(key)) byLaneTier.set(key, []);
-		if (typeof r.meanScore === 'number') byLaneTier.get(key).push(r.meanScore);
+		const key = keyOf(r);
+		if (key == null) continue;
+		if (!groups.has(key)) groups.set(key, []);
+		if (typeof r.meanScore === 'number') groups.get(key).push(r.meanScore);
 	}
-	console.log('\nlane/tier          mean   n');
-	for (const [key, scores] of [...byLaneTier.entries()].sort()) {
+	console.log(`\n${title.padEnd(26)} mean   n`);
+	for (const [key, scores] of [...groups.entries()].sort()) {
 		const mean = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : NaN;
-		console.log(`${key.padEnd(18)} ${mean.toFixed(2).padStart(5)}   ${scores.length}`);
+		console.log(`${key.padEnd(26)} ${mean.toFixed(2).padStart(5)}   ${scores.length}`);
 	}
+}
+
+function printSummary(run) {
+	// Requested lane first (what the sweep asked for), then the lane that actually
+	// produced the GLB — forge reroutes internally when a lane is cooling, so the
+	// two tables disagreeing is the signal that a lane was down, not slow.
+	meanTable(run, 'requested lane/tier', (r) => `${r.lane}/${r.tier}`);
+	meanTable(run, 'effective lane/tier', (r) => (r.effectiveLane ? `${r.effectiveLane}/${r.tier}` : null));
 }
 
 async function resolveCompareFile(token) {

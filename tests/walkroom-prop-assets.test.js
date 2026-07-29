@@ -1,4 +1,4 @@
-// P3.2 / P3.3 — the WalkRoom half of the Phase 3 build work:
+// P3.2 / P3.3: the WalkRoom half of the Phase 3 build work:
 //   • a player-uploaded prop url is validated against the storage allow-list
 //     before it is published to every other client in the world, survives a
 //     save/restore round-trip, and is re-validated on the way back in;

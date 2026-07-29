@@ -172,7 +172,7 @@ Point the widget at it with `endpoint` / `data-endpoint`. The reference implemen
 - **Degrades deliberately.** No WebGL → the avatar stage hides, chat keeps working. No `SpeechRecognition` → the mic button never renders. TTS missing or muted → captions + lipsync still play. Endpoint down → a friendly error bubble with a working retry.
 - **Persists sensibly.** Conversation per tab session (`sessionStorage`), avatar choice + mute per visitor (`localStorage`).
 - **Accessible.** Dialog semantics, focus management, `aria-live` streaming region, Escape to close, full keyboard path, `prefers-reduced-motion` respected.
-- **Safe rendering.** Model output renders through a strict markdown-lite renderer: everything is escaped first, links are restricted to http(s)/mailto and hardened with `rel="noopener noreferrer"`.
+- **Safe rendering.** Model output is parsed with [`marked`](https://www.npmjs.com/package/marked) (CommonMark + GFM) and then sanitized with [`DOMPurify`](https://www.npmjs.com/package/dompurify) under an allowlist that permits only text-level markup. Media, forms, styles, and event handlers cannot survive the pass; link `href`s are restricted to `http(s):`/`mailto:`/relative and hardened with `rel="noopener noreferrer"`.
 
 ## Develop
 

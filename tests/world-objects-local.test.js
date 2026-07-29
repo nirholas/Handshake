@@ -1,4 +1,4 @@
-// P3.1 — locally-driven world objects.
+// P3.1: locally-driven world objects.
 //
 // When there is no authoritative room, /play renders the coin world's persisted
 // build from the durable store itself. These entries have to behave like real
@@ -120,7 +120,7 @@ describe('uploaded prop registry (P3.3)', () => {
 		expect(def.id.length).toBeLessThanOrEqual(48);
 		expect(def.upload).toBe(true);
 		expect(def.glb).toBe(url);
-		// Same url, same id — a re-upload must not stack duplicate palette entries.
+		// Same url, same id: a re-upload must not stack duplicate palette entries.
 		expect(registerUploadedProp(url).id).toBe(def.id);
 		// And it resolves through the shared catalog lookup the ghost/factory use.
 		expect(propDef(def.id)).toBe(def);

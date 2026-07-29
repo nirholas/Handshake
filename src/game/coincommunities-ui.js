@@ -1677,7 +1677,7 @@ export class CommunityUI {
 			onclick: () => this.h.onRotateProp?.(),
 		}, [el('span', { 'aria-hidden': 'true', text: '⟳' })]);
 
-		// P3.3 — bring your own prop. Same drop-a-model gesture as the lobby's avatar
+		// P3.3: bring your own prop. Same drop-a-model gesture as the lobby's avatar
 		// upload, pointed at the build palette: validated here, uploaded to storage,
 		// then armed as the active prop so the very next click places it.
 		this.propUploadFile = el('input', {

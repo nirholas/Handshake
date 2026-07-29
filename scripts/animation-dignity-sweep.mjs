@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Animation dignity sweep — proves the "no rig allowlist" claim in CLAUDE.md by
+// Animation dignity sweep. It proves the "no rig allowlist" claim in CLAUDE.md by
 // driving the real idle + walk clips onto ten differently-named humanoid rigs and
 // MEASURING that both arms and both legs actually move.
 //
@@ -20,10 +20,10 @@
 //     than the clavicle (the "arm swings from the shoulder blade" failure).
 //
 // It runs each rig down BOTH production paths:
-//   ingest  — canonicalizeGLBBones() first (what every stored avatar goes through:
+//   ingest:  canonicalizeGLBBones() first (what every stored avatar goes through:
 //             api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js,
 //             api/avatars/_actions.js), then retarget on the canonical names.
-//   runtime — retarget straight onto the raw rig names, the path a GLB loaded
+//   runtime: retarget straight onto the raw rig names, the path a GLB loaded
 //             directly into the viewer takes.
 // Both must pass. A convention that only survives one of them is reported, not
 // hidden.
@@ -76,7 +76,7 @@ const LIMBS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Skeleton template — one plausible adult humanoid, in metres, Y up, T-pose.
+// Skeleton template: one plausible adult humanoid, in metres, Y up, T-pose.
 // Every convention below is this same skeleton with its bones renamed, so a
 // difference in the results is a difference in NAMING, never in proportions.
 // ---------------------------------------------------------------------------
@@ -147,7 +147,7 @@ const CONVENTIONS = [
 	{
 		id: 'avaturn',
 		label: 'Avaturn / Ready Player Me',
-		note: 'canonical spelling, no vendor prefix — the rig the clip library was baked against',
+		note: 'canonical spelling, no vendor prefix, the rig the clip library was baked against',
 		name: (b) => b,
 	},
 	{
@@ -305,7 +305,7 @@ const CONVENTIONS = [
 		label: 'Anatomical Latin (novel)',
 		note:
 			'the convention the canonicalizer has never seen: scan/anatomy-kit rigs named for the ' +
-			'bones themselves — humerus.L, ulna.L, femur.L, tibia.L, index_proximal.L',
+			'bones themselves: humerus.L, ulna.L, femur.L, tibia.L, index_proximal.L',
 		name: (b) => {
 			const f = fingerParts(b);
 			if (f) {
@@ -339,7 +339,7 @@ const CHUNK_JSON = 0x4e4f534a;
 /**
  * Build a minimal but structurally valid skinned GLB for one convention: the
  * template skeleton renamed, parented under an `Armature` node, with a skin whose
- * joints list every surviving bone. No BIN chunk is needed — the sweep drives the
+ * joints list every surviving bone. No BIN chunk is needed: the sweep drives the
  * skeleton, and both the canonicalizer and the bone-graph reader work off the
  * JSON chunk alone (the same slice api/_lib/glb-inspect.js reads).
  *
@@ -721,7 +721,7 @@ function main() {
 		process.exit(failed.length === 0 ? 0 : 1);
 	}
 
-	console.log('Animation dignity sweep — idle + walk on 10 bone-naming conventions');
+	console.log('Animation dignity sweep: idle + walk on 10 bone-naming conventions');
 	console.log(`clips: ${CLIPS.join(', ')}   coverage gate: ${(MIN_COVERAGE * 100).toFixed(0)}%`);
 	console.log(
 		`limb floors: rotation swing idle >= ${MIN_LIMB_SWING_DEG.idle}deg / walk >= ${MIN_LIMB_SWING_DEG.walk}deg; ` +

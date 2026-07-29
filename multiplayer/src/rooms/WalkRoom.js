@@ -2438,7 +2438,7 @@ export class WalkRoom extends Room {
 		obj.kind = typeof payload.kind === 'string' ? payload.kind.slice(0, OBJ_STR_MAX) : '';
 		// P3.3: a player-uploaded model. This is the one client string every OTHER
 		// client will fetch, so it is validated against the storage allow-list here
-		// and refused outright otherwise — never silently dropped, or the uploader
+		// and refused outright otherwise: never silently dropped, or the uploader
 		// would watch their prop appear as a grey box for reasons no one explained.
 		if (payload.url != null && payload.url !== '') {
 			const url = normalizePropAssetUrl(payload.url);

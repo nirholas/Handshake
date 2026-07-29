@@ -896,7 +896,15 @@ export function createWalkNpcs(opts) {
 				toTarget.copy(target).sub(head.getWorldPosition(new Vector3())).normalize();
 				alignment = fwd.dot(toTarget);
 			}
-			out.push({ name: n.name, dist: +dist.toFixed(2), alignment: alignment == null ? null : +alignment.toFixed(3) });
+			out.push({
+				name: n.name,
+				dist: +dist.toFixed(2),
+				alignment: alignment == null ? null : +alignment.toFixed(3),
+				ready: n._ready,
+				hasBody: !!n._body,
+				hasGaze: !!n._gaze,
+				headBone: head ? head.name : null,
+			});
 		}
 		return out;
 	}

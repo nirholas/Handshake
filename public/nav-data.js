@@ -267,6 +267,13 @@ export const NAV_GROUPS = [
 						desc: 'Live, platform-wide feed of real agent wallet activity — tips, launches, trades & payments',
 					},
 					{
+						title: 'Fits Economy',
+						href: '/fits',
+						badge: 'Live',
+						badgeTone: 'live',
+						desc: 'The cosmetics ledger: rarest fits, top collectors, and the creators actually getting paid in settled USDC',
+					},
+					{
 						title: 'Receipt Vault',
 						href: '/receipts',
 						desc: 'Every x402 payment you made, retrievable forever: sign one message and get back your signed proof-of-purchase receipts',
