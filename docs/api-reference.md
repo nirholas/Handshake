@@ -3628,16 +3628,16 @@ is a billed inference request, so it does not share the generic public bucket).
 ```json
 {
   "enabled": true,
-  "q": "Who founded Solana and in what year?",
-  "answer": "Solana was founded by Anatoly Yakovenko in 2017. Raj Gokal and Greg Fitzgerald later joined as co-founders...",
+  "q": "What is the glTF file format used for?",
+  "answer": "The glTF (GL Transmission Format) file format is an open-standard, royalty-free 3D file format developed by the Khronos Group. It is primarily used for the efficient transmission and loading of 3D scenes and models...",
   "sources": [
     {
-      "title": "wikipedia.org",
-      "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQ...",
-      "domain": "wikipedia.org"
+      "title": "khronos.org",
+      "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF...",
+      "domain": "khronos.org"
     }
   ],
-  "queries": ["who founded Solana", "when was Solana founded"]
+  "queries": ["glTF file format uses", "what is glTF file format"]
 }
 ```
 

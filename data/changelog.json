@@ -3,6 +3,35 @@
 	"entries": [
 		{
 			"date": "2026-07-29",
+			"title": "A calmer first visit: the site now starts simple and opens up when you ask",
+			"summary": "three.ws does a lot, and a first-time visitor met all of it at once: around a hundred destinations across the menus and a homepage that ran from making a 3D model straight through to autonomous trading and payment protocols. The product's actual promise was competing with everything else for attention. Arriving now, you get the short version: three steps under the hero (create a 3D avatar, build an AI agent, publish it anywhere), each with an honest time estimate, and menus holding the twenty-odd destinations that serve that journey. Everything else is one click away behind a clearly labelled control that tells you how much it is holding back, and once you open it, it stays open on every page and every visit. Nothing was removed or hidden from anyone who wants it: a link shared straight into an advanced section still takes you exactly there, and power users can skip to the full platform from a link in the first screen.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "three.ws can search the live web now, with sources you can check",
+			"summary": "Until now the platform could not look anything up on the open web. Searching three.ws found things made on three.ws (avatars, agents, models, worlds, coins), and the news surfaces read from a fixed list of crypto publishers, but there was no way to ask a question about the wider web and get a current answer. A new public endpoint does exactly that: ask a question, get an answer written from live search results, plus the list of sources it was built from and the exact searches that were run, so you can check the work rather than take it on faith. The fact checker uses the same lookup, which means it now reads real current pages instead of falling back to Wikipedia summaries, and it correctly treats a government or reference source as more authoritative than an anonymous blog.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Category pages keep working when the market data provider rate-limits us",
+			"summary": "Every coin category page (layer-1, AI tokens, meme tokens and the rest) is built from one upstream market data provider, because it is the only free source that knows which coins belong to which sector. Whenever that provider throttled us, those pages returned an error and showed nothing at all, while the main coins table stayed up because it has a second source to fall back on. Category pages now fall back to the most recent real data they successfully loaded, clearly marked as of when it was fetched, and switch back to live figures the moment the provider recovers. Nothing is invented: a category we have never loaded still reports the outage honestly rather than showing a made-up table.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-29",
 			"title": "Payments that had already gone through no longer come back as failures",
 			"summary": "When an agent pays three.ws for an API call, the payment is sent to Solana and then confirmed. If the node that answered replied in a shape our software could not read, the platform gave up and called the payment failed, even though in many cases it had already settled on-chain. The caller got an error for something they had genuinely paid for. The platform now asks the chain directly before declaring any payment failed, and skips that check only in the one case that proves the payment never reached the network at all. Separately, the most common payment failure used to reach our logs carrying no reason whatsoever, which made it impossible to diagnose or fix; the underlying cause is now recorded alongside it.",
 			"tags": [
@@ -12,7 +41,7 @@
 		{
 			"date": "2026-07-29",
 			"title": "Uploaded avatars from far more 3D tools now animate instead of standing frozen",
-			"summary": "three.ws recognises an avatar's skeleton by its bone names, and every 3D tool names bones differently. When a name was not recognised the avatar still uploaded and still looked right, but it stood frozen in a T-pose, or walked while its legs stayed rigid. Rather than keep guessing which tools to support, we measured: a new audit reads the skeleton of avatars actually stored on the platform and reports exactly which ones fail and which bone names caused it. That turned up several whole families of rigs that were silently broken, and all of them now work: characters from Maya's Advanced Skeleton, Sketchfab exports, research and motion-capture tools that use the SMPL convention, Roblox and Second Life avatars, VRM converter output, and Blender rigs whose legs and finger joints were being dropped. In the lanes where people upload their own characters, the share that animate with a complete walk went from about 93% to over 98%. A small number of Blender rigs built on constraint systems still cannot be driven this way, because the constraints are discarded when the file is exported and forcing it would pull the limbs apart; those fall back to a working skeleton rather than breaking, and can be re-rigged automatically instead.",
+			"summary": "three.ws recognises an avatar's skeleton by its bone names, and every 3D tool names bones differently. When a name was not recognised the avatar still uploaded and still looked right, but it stood frozen in a T-pose, or walked while its legs stayed rigid. Rather than keep guessing which tools to support, we measured: a new audit reads the skeleton of avatars actually stored on the platform and reports exactly which ones fail and which bone names caused it. That turned up several whole families of rigs that were silently broken, and all of them now work: characters from Maya's Advanced Skeleton, Sketchfab exports, research and motion-capture tools that use the SMPL convention, Roblox and Second Life avatars, VRM converter output, and Blender rigs whose legs and finger joints were being dropped. Measured across 802 rigs that people uploaded or imported themselves: the share that walk with a complete leg chain went from 94.4% to 97.6%, the share that animate at all from 97.4% to 98.4%, and nothing that already worked regressed. A small number of Blender rigs built on constraint systems still cannot be driven this way, because the constraints are discarded when the file is exported and forcing it would pull the limbs apart; those fall back to a working skeleton rather than breaking, and can be re-rigged automatically instead.",
 			"tags": [
 				"improvement",
 				"fix"
