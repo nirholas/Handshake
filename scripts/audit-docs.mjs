@@ -64,6 +64,11 @@ const readJson = (p) => JSON.parse(readFileSync(resolve(root, p), 'utf8'));
 // ---------------------------------------------------------------- route table
 const vercel = readJson('vercel.json');
 const routeMatchers = (vercel.routes || [])
+	// A rule that answers with an error status is proof the path does NOT
+	// resolve, so error handlers (notably the catch-all `/(?!_vercel/).*` to
+	// 404.html) must never count as evidence that a link is good. Redirects
+	// (3xx) do count: they land the reader somewhere real.
+	.filter((r) => !(typeof r.status === 'number' && r.status >= 400))
 	.map((r) => r.src)
 	.filter(Boolean)
 	.filter((s) => s !== '/(.*)') // the catch-all matches everything, proving nothing
@@ -94,6 +99,11 @@ const routeExists = (sitePath) => {
 		`pages/${rel}.html`,
 		`public/${rel}/index.html`,
 		`docs/${rel}.md`,
+		// Trees copied into dist/ verbatim at build time (blog/ is the main one),
+		// where the filesystem phase serves the file directly. Verified live:
+		// /blog/<slug> and /blog/<slug>.html both return 200.
+		rel,
+		`${rel}.html`,
 	].some((candidate) => existsSync(resolve(root, candidate)));
 };
 
