@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-28",
+			"title": "Stopped agent trading wallets from being drained and refilled in a loop",
+			"summary": "The safeguard that keeps an auto-funded trading wallet from being swept below the level it gets topped up to was reading a setting that never actually loaded, so it never took effect. Auto-funded agent wallets could be emptied and refilled repeatedly, paying network fees on every leg and draining the funding wallet. The safeguard now loads the setting it depends on, and a new test pins every field it needs so it cannot silently switch off again.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-28",
 			"title": "Fixed a wallet-balancing loop that was quietly burning swap fees",
 			"summary": "The platform wallet that pays for agent-to-agent settlements holds both USDC (to pay other agents) and a little SOL (to pay Solana network fees). An automatic balancer kept each side topped up, but when the wallet was too small to satisfy both targets at once, the two rules fought: one swapped USDC into SOL, the next run swapped it straight back, over a hundred reversing swaps in an afternoon, each one paying exchange fees for nothing. The balancer now treats the SOL fee reserve as untouchable when topping up USDC, so the tug-of-war is structurally impossible, and the balancer itself keeps running even during database-storage pressure, since skipping it is what let the fee wallet run dry earlier today.",
 			"tags": [
@@ -16455,6 +16463,15 @@
 				"feature"
 			],
 			"link": "/watch"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Solana RPC failover fixed: the paid reserve is no longer the primary lane",
+			"summary": "The platform routes every Solana call through a chain of RPC providers so no single one becomes a bottleneck, with a paid endpoint held back as an emergency reserve. A configuration mistake had that reserve listed as the primary as well, and because the chain keeps the first entry for a repeated address, it quietly served all traffic and burned through its daily request cap while the free providers sat idle. The reserve is now held back as intended and the premium provider leads. Two safeguards prevent a repeat: the slowest public endpoint can no longer outrank a paid provider by being used as a default, and when one server discovers a provider is out of quota, the rest of the fleet now inherits that verdict immediately instead of each wasting another request against a cap that is already full.",
+			"tags": [
+				"infra",
+				"fix"
+			]
 		}
 	]
 }

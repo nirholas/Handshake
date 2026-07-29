@@ -54,6 +54,10 @@ Agent record shape (`agent_identities.meta`):
 
 Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, Quicknode, or Triton endpoint. Server-side calls do not depend on a single endpoint: [api/_lib/solana/connection.js](../api/_lib/solana/connection.js) builds a failover chain (explicit `SOLANA_RPC_URL`, then keyed providers such as Helius and Alchemy when their keys are set, then operator-supplied `SOLANA_RPC_FALLBACK_URLS`, then keyless public endpoints, with `SOLANA_RPC_LAST_RESORT_URLS` as a paid reserve tried last) and rotates past endpoints that are rate-limited or cooling down.
 
+**Never name the same endpoint as both the primary and the last-resort reserve.** The chain dedupes by URL and keeps the FIRST occurrence, so an endpoint listed in `SOLANA_RPC_URL` (or `QUICKNODE_RPC_URL`) *and* in `SOLANA_RPC_LAST_RESORT_URLS` is simply the primary: it absorbs 100% of traffic and its reserve status is a no-op. Production ran this exact misconfiguration until 2026-07-28, pointing `SOLANA_RPC_URL` at the metered QuickNode endpoint that was also the reserve; it burned through its daily request cap (`-32003 daily request limit reached`) while the free chain sat idle. The reserve must appear in `SOLANA_RPC_LAST_RESORT_URLS` and **nowhere else**.
+
+Two safeguards back this up. A bare public-cluster URL passed as the caller's explicit endpoint no longer wins priority 1: roughly 35 call sites spell their default as ``process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'``, so an unset `SOLANA_RPC_URL` used to pin the most-throttled endpoint in the chain ahead of every paid lane. It is still tried, just at its natural position. And the cooldown breaker is fleet-wide, mirrored through the shared cache: when one instance parks a provider for an exhausted quota, siblings inherit that verdict on their first call instead of each re-burning a doomed request against a cap that is already full.
+
 ---
 
 ## Registration flow
@@ -199,7 +203,7 @@ Returned as `{ error, error_description }` from the prep / confirm endpoints.
 | `SOLANA_RPC_URL` | Primary mainnet RPC. Defaults to public mainnet-beta. **Set this in production.** |
 | `SOLANA_RPC_URL_DEVNET` | Devnet RPC. Defaults to public devnet. |
 | `SOLANA_RPC_FALLBACK_URLS` | Comma-separated extra mainnet endpoints rotated into the failover chain after the primary. |
-| `SOLANA_RPC_LAST_RESORT_URLS` | Comma-separated paid/metered endpoints tried only after every free endpoint fails. |
+| `SOLANA_RPC_LAST_RESORT_URLS` | Comma-separated paid/metered endpoints tried only after every free endpoint fails. Must not repeat a URL already named as the primary, or it is the primary and the reserve is a no-op. |
 | `SOLANA_AGENT_COLLECTION_MAINNET` / `_DEVNET` | Address of the three.ws Agents collection; when set, registrations mint into it. |
 | `PUBLIC_APP_ORIGIN` | Canonical origin (exposed to code as `env.APP_ORIGIN`); used to synthesize a default `metadata_uri` if the caller didn't provide one. |
 
