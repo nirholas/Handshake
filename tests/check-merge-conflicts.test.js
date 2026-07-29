@@ -115,6 +115,53 @@ describe('check-merge-conflicts', () => {
 		rmSync(join(repo, 'scratch.js'));
 	});
 
+	it('ignores a marker mentioned mid-line in prose, not at column 0', () => {
+		// git only ever writes conflict markers at the start of a line. An
+		// unanchored fixed-string search also matches any file that merely
+		// *describes* one — this test file, the checker's own header comment, a
+		// doc explaining how to resolve conflicts. That false positive failed a
+		// production build on 2026-07-29. Anchoring is the fix; rewording every
+		// mention of a marker forever is not.
+		writeFileSync(
+			join(repo, 'src', 'prose.js'),
+			[
+				'// The stash pop left `' + OPEN + ' Updated upstream` in three files.',
+				`const note = "${OPEN} HEAD";`,
+				'export const ok = 1;',
+				'',
+			].join('\n'),
+		);
+		commitAll(repo);
+		const { code } = runIn(repo);
+		expect(code).toBe(0);
+		rmSync(join(repo, 'src', 'prose.js'));
+		commitAll(repo);
+	});
+
+	it('still catches a real marker at column 0 in the same file as prose', () => {
+		// Anchoring must not become a blind spot: a file that both discusses a
+		// marker and carries a genuine one still has to fail.
+		writeFileSync(
+			join(repo, 'src', 'both.js'),
+			[
+				'// Docs mention `' + OPEN + ' HEAD` inline.',
+				`${OPEN} HEAD`,
+				'const b = 2;',
+				MID,
+				'const b = 3;',
+				`${CLOSE} other`,
+				'',
+			].join('\n'),
+		);
+		commitAll(repo);
+		const { code, stdout } = runIn(repo);
+		expect(code).toBe(1);
+		expect(stdout).toContain('src/both.js');
+		expect(stdout).toContain('line 2');
+		rmSync(join(repo, 'src', 'both.js'));
+		commitAll(repo);
+	});
+
 	it('this repository is clean', () => {
 		const { code } = runIn(resolve(dirname(fileURLToPath(import.meta.url)), '..'));
 		expect(code).toBe(0);

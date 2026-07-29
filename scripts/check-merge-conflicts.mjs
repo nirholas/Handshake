@@ -20,10 +20,12 @@
  * 500'd every chat request at runtime.
  *
  * The check is one `git grep` over tracked files, so it costs milliseconds and
- * runs in `build:gcp` before anything is built. Both the opening and the
- * closing marker must be present for a file to be reported, which is what keeps
- * it quiet: a bare `=======` is an ordinary markdown rule, and `<<<<<<<` at the
- * start of a line is never legitimate source.
+ * runs in `build:gcp` and `gate` before anything is built. The opening marker
+ * at the start of a line is the trigger on its own: that is never legitimate
+ * source in any language we ship, and requiring a closing marker too would miss
+ * the interrupted merges (see the `character-studio/.gitignore` note below).
+ * What keeps it quiet is the column-0 anchor, not marker pairing — a bare
+ * `=======` is an ordinary markdown rule and is never matched.
  *
  * Usage:
  *   node scripts/check-merge-conflicts.mjs          # exits 1 on any marker
@@ -50,7 +52,14 @@ function git(args) {
 
 /** Tracked files carrying `marker` at the start of a line, as a Set of paths. */
 function filesWithMarker(marker) {
-	const out = git(['grep', '-l', '-F', `${marker} `, '--', '.']);
+	// ANCHORED to column 0. git writes conflict markers only at the start of a
+	// line, so anchoring loses no real conflict — but an unanchored -F search
+	// also matches any file that merely *mentions* a marker in prose, which is
+	// exactly what this script's own test file and the docs describing conflict
+	// resolution do. That false positive failed a production build on
+	// 2026-07-29, and "reword the prose" is the wrong fix: the rule the header
+	// comment already claims (start of a line) is the correct one.
+	const out = git(['grep', '-l', '-E', `^${marker} `, '--', '.']);
 	return new Set(out.split('\n').filter(Boolean));
 }
 
@@ -74,7 +83,7 @@ if (!conflicted.length) {
 
 console.error(`\ncheck:conflicts — ${conflicted.length} file(s) carry unresolved merge-conflict markers:\n`);
 for (const file of conflicted) {
-	const hits = git(['grep', '-n', '-F', `${OPEN} `, '--', file])
+	const hits = git(['grep', '-n', '-E', `^${OPEN} `, '--', file])
 		.split('\n')
 		.filter(Boolean)
 		.map((line) => line.slice(file.length + 1).split(':')[0]);
