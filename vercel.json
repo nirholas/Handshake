@@ -1404,6 +1404,10 @@
 			"dest": "/viewer.html"
 		},
 		{
+			"src": "/watch/?",
+			"dest": "/watch.html"
+		},
+		{
 			"src": "/ar/studio/?",
 			"headers": {
 				"permissions-policy": "xr-spatial-tracking=*, camera=(self), gyroscope=(self), accelerometer=(self), microphone=()"
@@ -5594,6 +5598,10 @@
 		{
 			"path": "/api/cron/treasury-sweepback",
 			"schedule": "41 */6 * * *"
+		},
+		{
+			"path": "/api/cron/free-model-audit",
+			"schedule": "17 */6 * * *"
 		},
 		{
 			"path": "/api/cron/economy-reconcile",

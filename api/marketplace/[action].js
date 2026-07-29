@@ -30,6 +30,7 @@ import {
 	vertexGeminiChatUrl,
 	vertexGeminiHeaders,
 } from '../_lib/vertex-gemini.js';
+import { modelThinksByDefault } from '../_lib/chat-models.js';
 import { getSkillPrices, skillPriceMap } from '../_lib/skill-price-cache.js';
 import { viewerNftGatedSkills } from '../_lib/nft-gate.js';
 import { z } from 'zod';
@@ -1100,7 +1101,11 @@ export function buildPreviewRoutes() {
 				},
 				buildPayload: ({ systemPrompt, history }) => ({
 					model,
-					max_tokens: 512,
+					// A preview reply is short, but on a thinking-by-default model
+					// max_tokens covers thinking AND the visible text — a 512 cap
+					// there returns an empty preview. Floor it for those ids only,
+					// so the default (Haiku) keeps its tight, cheap budget.
+					max_tokens: modelThinksByDefault(model) ? 4096 : 512,
 					system: systemPrompt,
 					messages: history,
 					stream: true,

@@ -93,7 +93,7 @@ export function timeAgo(iso, now = Date.now()) {
 	if (s < 3600) return `${Math.floor(s / 60)}m ago`;
 	if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
 	if (s < 14 * 86400) return `${Math.floor(s / 86400)}d ago`;
-	return formatDateShort(iso);
+	return formatDateShort(t);
 }
 
 /** HTML-escape for interpolating remote strings into innerHTML templates. */

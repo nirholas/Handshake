@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-28T22:21:36.586Z",
+	"generated_at": "2026-07-29T04:55:00.466Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-29",
+			"type": "launch",
+			"title": "Generation Watch",
+			"summary": "Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.",
+			"link": "/watch",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-29",
+			"type": "update",
+			"title": "Watch your 3D model being made, live",
+			"summary": "Free text-to-3D generations now come with a live progress page. When a generation is still running, the API (and the three.ws 3D Studio GPT in ChatGPT) hands you a three.ws/watch link showing a real countdown, the painted concept art the generator sculpts from, and an automatic jump into the interactive 3D viewer with download and AR links the moment your model is ready. No more staring at a chat window wondering how long is left.",
+			"link": "/watch",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-07-28",
 			"type": "launch",

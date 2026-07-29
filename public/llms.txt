@@ -118,6 +118,7 @@ Experimental features actively shipping. Expect fast iteration.
 - [Lipsync (Mic)](https://three.ws/lipsync/mic): Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.
 - [Avatar Artifact](https://three.ws/avatar-artifact): Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.
 - [glTF / GLB Viewer](https://three.ws/viewer): Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.
+- [Generation Watch](https://three.ws/watch): Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.
 - [AR Forge](https://three.ws/ar): Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.
 - [AR Studio](https://three.ws/ar/studio): A live multi-model AR scene through your camera: place any number of 3D models and avatars in your real space, pull in your forge creations, community models, the CC0 object library, or any GLB link, and generate new models by prompt without leaving the view.
 - [Daily Forge](https://three.ws/daily): A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.

@@ -7,6 +7,22 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Generation Watch</title>
+			<link>https://three.ws/watch</link>
+			<guid isPermaLink="false">2026-07-29:Generation Watch</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.</description>
+		</item>
+		<item>
+			<title>Watch your 3D model being made, live</title>
+			<link>https://three.ws/watch</link>
+			<guid isPermaLink="false">2026-07-29:Watch your 3D model being made, live</guid>
+			<pubDate>Wed, 29 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Free text-to-3D generations now come with a live progress page. When a generation is still running, the API (and the three.ws 3D Studio GPT in ChatGPT) hands you a three.ws/watch link showing a real countdown, the painted concept art the generator sculpts from, and an automatic jump into the interactive 3D viewer with download and AR links the moment your model is ready. No more staring at a chat window wondering how long is left.</description>
+		</item>
+		<item>
 			<title>Agent Symphony</title>
 			<link>https://three.ws/symphony</link>
 			<guid isPermaLink="false">2026-07-28:Agent Symphony</guid>

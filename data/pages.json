@@ -851,6 +851,14 @@
 					"added": "2026-07-08"
 				},
 				{
+					"path": "/watch",
+					"title": "Generation Watch",
+					"description": "Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.",
+					"priority": 0.4,
+					"changefreq": "monthly",
+					"added": "2026-07-29"
+				},
+				{
 					"path": "/ar",
 					"title": "AR Forge",
 					"description": "Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.",

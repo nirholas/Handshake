@@ -4712,6 +4712,27 @@ if (import.meta.env?.DEV) {
 		})),
 		env: currentEnvName,
 	});
+
+	// Terrain-adaptive foot planting: report each foot's world Y against the
+	// ground directly beneath it, so a headless run can assert that neither
+	// foot floats above nor sinks below its own patch of the rolling terrain.
+	window.__walkFootPlant = () => {
+		if (!footPlant?.enabled) return { active: false, reason: avatar ? 'rig unsupported' : 'no avatar' };
+		const groundY = (x, z) => (arActive ? GROUND_Y : terrain.heightAt(x, z));
+		const feet = footPlant.footWorldPositions().map(({ side, position }) => ({
+			side,
+			y: Number(position.y.toFixed(4)),
+			ground: Number(groundY(position.x, position.z).toFixed(4)),
+			clearance: Number((position.y - groundY(position.x, position.z)).toFixed(4)),
+		}));
+		return {
+			active: true,
+			motion: currentMotion,
+			rigY: Number(avatarRig.position.y.toFixed(4)),
+			pelvisOffset: Number(footPlant.pelvisOffset.toFixed(4)),
+			feet,
+		};
+	};
 }
 
 // ── Avatar picker ────────────────────────────────────────────────────────

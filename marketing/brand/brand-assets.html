@@ -16,7 +16,7 @@
 	   screenshots each .asset with omitBackground, so the page background here is
 	   only a working surface to judge contrast against. Boxes are sized to the
 	   artwork, with no padding, so the exported PNG has no dead margin. */
-	.asset { display: inline-flex; align-items: center; }
+	.asset { display: flex; width: max-content; align-items: center; }
 
 	.mark img { display: block; height: 512px; width: auto; }
 
@@ -24,6 +24,10 @@
 	.lockup img { display: block; height: 200px; width: auto; }
 	.lockup .word {
 		font-size: 150px; font-weight: 600; letter-spacing: -0.045em; line-height: 1;
+		white-space: nowrap;
+		/* Negative tracking pulls the final glyph past its side bearing, which a
+		   tight element screenshot would clip. This is the bearing, not padding. */
+		padding-right: 8px;
 		padding-bottom: 12px; /* optical: the wordmark sits low against the cube */
 	}
 	.lockup.on-dark .word { color: #ffffff; }

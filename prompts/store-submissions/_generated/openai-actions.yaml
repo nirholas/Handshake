@@ -15,7 +15,9 @@ info:
 
     Contract: POST /api/3d/studio either finishes inline (status "done" with
     glbUrl + viewerUrl + arUrl) or returns status "pending" with a "job"
-    handle. Poll GET /api/3d/studio?job=... every few seconds until status is
+    handle and watchUrl - a live three.ws progress page (countdown + concept
+    art, auto-opens the viewer when done) to hand the user immediately. Poll
+    GET /api/3d/studio?job=... every few seconds until status is
     "done" or "error". Generation typically takes 20-60 seconds at the default
     tier; tier "high" produces far more detail and can take several minutes,
     so keep polling patiently. Responses may carry previewImageUrl - the
@@ -42,14 +44,11 @@ paths:
       x-openai-isConsequential: false
       summary: Generate a 3D model (GLB) from a text prompt
       description: >-
-        Start a free text-to-3D generation. Describe ONE subject concretely
-        (shape, colors, style). Optionally pick a tier: "draft" (fastest),
-        "standard" (default), or "high" (maximum detail, slower - expect
-        minutes, not seconds). Returns status "done" with glbUrl (download),
-        viewerUrl (preview), and arUrl (see it in your room in AR), or
-        "pending" with a "job" handle for checkModelJob plus, once available,
-        previewImageUrl - the painted concept image to show the user while
-        the 3D model finishes. Unsafe prompts return error "prompt_rejected".
+        Start a free text-to-3D generation. Describe ONE subject. Optional
+        tier: draft (fastest), standard (default), high (max detail, takes
+        minutes). Returns "done" with glbUrl + viewerUrl + arUrl, or
+        "pending" with a job handle for checkModelJob plus watchUrl - the
+        live progress page to give the user.
       requestBody:
         required: true
         content:
@@ -100,6 +99,7 @@ paths:
                     status: pending
                     job: f1.eyJwIjoibnZpZGlhIn0.c2ln
                     poll: /api/3d/studio?job=f1.eyJwIjoibnZpZGlhIn0.c2ln&title=a%20low-poly%20orange%20fox
+                    watchUrl: https://three.ws/watch?job=f1.eyJwIjoibnZpZGlhIn0.c2ln&title=a%20low-poly%20orange%20fox
                     format: glb
         "400":
           description: >-
@@ -132,12 +132,11 @@ paths:
       x-openai-isConsequential: false
       summary: Check a pending 3D generation job
       description: >-
-        Poll a generation started by generate3DModel. Use the "poll" path from
-        the pending response verbatim (it carries the job handle and title).
-        Keep polling every few seconds while "pending"; when a pending state
-        carries previewImageUrl, show that concept image to the user while
-        they wait. Stop on "done" (present glbUrl + viewerUrl + arUrl) or
-        "error" (offer to retry - generation is free).
+        Poll a generation started by generate3DModel. Use the pending
+        response's "poll" path verbatim (it carries job and title). While
+        "pending", offer watchUrl, show previewImageUrl if present, and keep
+        polling. Stop on "done" (present glbUrl + viewerUrl + arUrl) or
+        "error" (offer a free retry).
       parameters:
         - name: job
           in: query
@@ -253,6 +252,15 @@ components:
         poll:
           type: string
           description: Relative poll path for the pending job.
+        watchUrl:
+          type: string
+          format: uri
+          description: >-
+            Live progress page for a pending generation - a three.ws link
+            showing a real countdown and the concept art, which opens the
+            interactive viewer automatically the moment the model is done.
+            Give it to the user on the first pending response ("watch it
+            being made here") so they can follow along outside the chat.
         error:
           type: string
           description: Human-readable failure message (present when status is error).

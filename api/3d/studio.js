@@ -17,13 +17,18 @@
 //
 //   POST { prompt, tier? }   (tier: draft | standard (default) | high)
 //     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format, previewImageUrl?, tier? }
-//     → 200 { status:'pending', job, poll, format, previewImageUrl?, tier?, etaSeconds? }
+//     → 200 { status:'pending', job, poll, watchUrl, format, previewImageUrl?, tier?, etaSeconds? }
 //     → 400 { error:'prompt_rejected', message }                  (safety gate refusal)
 //
 //   GET ?job=<id>&title=<prompt>   (title optional — labels the AR/viewer pages)
-//     → 200 { status:'pending', job, poll, previewImageUrl?, tier? }
+//     → 200 { status:'pending', job, poll, watchUrl, previewImageUrl?, tier? }
 //     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format, previewImageUrl?, tier? }
 //     → 200 { status:'error', error }                             (upstream failed — retry is free)
+//
+// watchUrl is the live progress page (public/watch.html): a three.ws link the
+// GPT hands the user on pending states so they can watch the countdown and the
+// concept image in a real browser tab instead of waiting inside the chat. When
+// the job finishes, that page forwards itself into the /viewer funnel.
 //
 // previewImageUrl is the forge's painted concept view — the image-generation
 // first step of the text path — surfaced on pending states so the GPT can show
@@ -96,6 +101,7 @@ export function shapeSubmit(job, base, prompt) {
 		status: 'pending',
 		job: handle,
 		poll: handle ? `/api/3d/studio?job=${encodeURIComponent(handle)}${t}` : null,
+		...(handle ? { watchUrl: `${base}/watch?job=${encodeURIComponent(handle)}${t}` } : {}),
 		format: 'glb',
 		...(preview ? { previewImageUrl: preview } : {}),
 		...(tier ? { tier } : {}),
@@ -141,6 +147,7 @@ export function shapePoll(data, base, jobId, title) {
 		status: 'pending',
 		job: jobId,
 		poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}${t}`,
+		watchUrl: `${base}/watch?job=${encodeURIComponent(jobId)}${t}`,
 		...(preview ? { previewImageUrl: preview } : {}),
 		...(tier ? { tier } : {}),
 		...(Number.isFinite(etaRemaining) && etaRemaining > 0 ? { etaSeconds: Math.round(etaRemaining) } : {}),

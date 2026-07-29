@@ -13,8 +13,6 @@ import createDOMPurify from 'dompurify';
 
 const marked = new Marked({ gfm: true, breaks: true, async: false });
 
-const purify = createDOMPurify(window);
-
 // Markdown output only: no media, no forms, no style. Links are hardened in
 // the hook below.
 const SANITIZE_CFG = {
@@ -29,14 +27,22 @@ const SANITIZE_CFG = {
 
 const SAFE_HREF = /^(?:https?:|mailto:)/i;
 
-purify.addHook('afterSanitizeAttributes', (node) => {
-	if (node.tagName !== 'A') return;
-	const href = node.getAttribute('href') || '';
-	const ok = SAFE_HREF.test(href) || href.startsWith('/') || href.startsWith('#');
-	if (!ok) node.removeAttribute('href');
-	node.setAttribute('target', '_blank');
-	node.setAttribute('rel', 'noopener noreferrer nofollow');
-});
+// Built on first use: DOMPurify needs a live window, and this module is also
+// imported by unit tests and by page bundles that load before body parse.
+let purify = null;
+function getPurify() {
+	if (purify) return purify;
+	purify = createDOMPurify(window);
+	purify.addHook('afterSanitizeAttributes', (node) => {
+		if (node.tagName !== 'A') return;
+		const href = node.getAttribute('href') || '';
+		const ok = SAFE_HREF.test(href) || href.startsWith('/') || href.startsWith('#');
+		if (!ok) node.removeAttribute('href');
+		node.setAttribute('target', '_blank');
+		node.setAttribute('rel', 'noopener noreferrer nofollow');
+	});
+	return purify;
+}
 
 /**
  * Render Markdown to sanitized HTML.
@@ -53,7 +59,7 @@ purify.addHook('afterSanitizeAttributes', (node) => {
 export function renderMarkdown(src, { classes, demoteHeadings = 0 } = {}) {
 	if (src == null || src === '') return '';
 	const raw = marked.parse(String(src));
-	const clean = purify.sanitize(raw, SANITIZE_CFG);
+	const clean = getPurify().sanitize(raw, SANITIZE_CFG);
 	if (!classes && !demoteHeadings) return clean;
 
 	const tpl = document.createElement('template');

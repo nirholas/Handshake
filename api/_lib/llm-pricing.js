@@ -75,10 +75,25 @@ function priceForModel(model) {
 	return best ? PRICE_PER_MTOK[best] : null;
 }
 
+// Anthropic prompt-cache multipliers against the model's base INPUT price.
+// A cache write costs more than a plain input token; a cache read costs a
+// tenth. These are ratios, not prices, so they stay correct as list prices
+// move. We only ever send the default 5-minute TTL (`{type:'ephemeral'}` with
+// no `ttl`), whose write multiplier is 1.25 — the 1h TTL's 2x does not apply.
+const CACHE_WRITE_MULTIPLIER = 1.25;
+const CACHE_READ_MULTIPLIER = 0.1;
+
 // Compute the cost of one completion in micro-USD. Returns an integer (rounded)
 // or 0 when the provider is free or the model is unpriced — never null, so the
 // caller can always record a numeric cost.
-export function costMicroUsd({ provider, model, input = 0, output = 0 } = {}) {
+//
+// `cacheWrite`/`cacheRead` are the Anthropic prompt-caching token counts
+// (`usage.cache_creation_input_tokens` / `usage.cache_read_input_tokens`).
+// They are DISJOINT from `input`: on a cached request the API reports
+// `input_tokens` as the uncached remainder only, so the three must be summed
+// (at their own rates) to price the full prompt. Omitting them would silently
+// under-report spend on every cached call.
+export function costMicroUsd({ provider, model, input = 0, output = 0, cacheWrite = 0, cacheRead = 0 } = {}) {
 	// A paid/BYOK model draws real spend even when its transport provider is an
 	// otherwise-free tier (e.g. OpenRouter Granite), so it is metered by its list
 	// price below rather than zeroed. Genuinely-free models still short-circuit.
@@ -91,7 +106,11 @@ export function costMicroUsd({ provider, model, input = 0, output = 0 } = {}) {
 	if (!price) return 0;
 	const [inPerM, outPerM] = price;
 	// tokens / 1e6 * usdPerM * 1e6 micro-usd  ==  tokens * usdPerM
-	const usdMicros = input * inPerM + output * outPerM;
+	const usdMicros =
+		input * inPerM +
+		output * outPerM +
+		cacheWrite * inPerM * CACHE_WRITE_MULTIPLIER +
+		cacheRead * inPerM * CACHE_READ_MULTIPLIER;
 	return Math.round(usdMicros);
 }
 

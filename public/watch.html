@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Watching your 3D model · three.ws</title>
+<meta name="description" content="Live progress for a three.ws 3D generation: countdown, concept art, and an automatic hand-off to the interactive viewer the moment the model is ready." />
+<meta name="robots" content="noindex" />
+<meta property="og:title" content="Watching a 3D model being made · three.ws" />
+<meta property="og:description" content="A 3D model is being generated on three.ws right now. Watch the live countdown and concept art." />
+<meta property="og:type" content="website" />
+<style>
+  :root { color-scheme: dark; --accent: #6ea8fe; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(130% 130% at 50% 0%, #14161c 0%, #0b0c10 60%, #08090c 100%);
+    color: #e8eaf0;
+    overflow: hidden;
+  }
+  .wrap { display: flex; flex-direction: column; height: 100dvh; }
+  header.bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(10,11,14,0.55); backdrop-filter: blur(8px);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: #e8eaf0; font-weight: 700; letter-spacing: .01em; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .brand:hover { color: #fff; }
+  .title { flex: 1 1 auto; min-width: 0; font-size: 13.5px; color: #aeb6c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stage { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .overlay {
+    min-height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 28px;
+  }
+  .h { font-size: 16px; font-weight: 650; }
+  .muted { color: #9aa3b2; font-size: 13px; line-height: 1.5; max-width: 44ch; }
+  .muted a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .muted a:hover { color: #dbe9ff; }
+  .muted a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+  /* Countdown ring */
+  .ringbox { position: relative; width: 168px; height: 168px; }
+  .ringbox svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: rgba(255,255,255,0.09); stroke-width: 7; }
+  .ring-arc {
+    fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(110,168,254,.55));
+    transition: stroke-dashoffset .6s ease;
+  }
+  .ring-arc.indeterminate { stroke-dasharray: 110 800; animation: orbit 1.6s linear infinite; transition: none; }
+  @keyframes orbit { to { stroke-dashoffset: -910; } }
+  @media (prefers-reduced-motion: reduce) { .ring-arc.indeterminate { animation-duration: 4s; } }
+  .ring-label {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+  }
+  .ring-time { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+  .ring-sub { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #9aa3b2; }
+
+  .concept {
+    max-width: min(320px, 78vw); border-radius: 14px; border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 12px 44px rgba(0,0,0,.45);
+    opacity: 0; transform: translateY(6px) scale(.98);
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .concept.shown { opacity: 1; transform: none; }
+  .concept-cap { font-size: 11.5px; color: #9aa3b2; letter-spacing: .04em; text-transform: uppercase; display: none; }
+  .concept-cap.shown { display: block; }
+
+  footer.bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 11px 16px; border-top: 1px solid rgba(255,255,255,0.07);
+    background: rgba(10,11,14,0.55); backdrop-filter: blur(8px);
+  }
+  .spacer { flex: 1 1 auto; }
+  a.btn {
+    appearance: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 600; color: #e8eaf0;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px; padding: 8px 13px; transition: background .15s, border-color .15s, transform .05s;
+  }
+  a.btn.primary { background: rgba(110,168,254,0.16); border-color: rgba(110,168,254,0.42); color: #dbe9ff; }
+  a.btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
+  a.btn.primary:hover { background: rgba(110,168,254,0.26); }
+  a.btn:active { transform: translateY(1px); }
+  a.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <a class="brand" href="https://three.ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
+    <span id="title" class="title"></span>
+  </header>
+
+  <div class="stage">
+    <div id="waiting" class="overlay" aria-live="polite">
+      <div class="ringbox" role="timer" aria-label="Estimated time remaining">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-track" cx="60" cy="60" r="53"></circle>
+          <circle id="arc" class="ring-arc indeterminate" cx="60" cy="60" r="53"></circle>
+        </svg>
+        <div class="ring-label">
+          <div id="time" class="ring-time">…</div>
+          <div id="timesub" class="ring-sub">warming up</div>
+        </div>
+      </div>
+      <div id="phase" class="h">Starting your 3D generation…</div>
+      <div class="muted">This page updates itself. When the model is ready it opens straight into the interactive 3D viewer with download and place-in-your-room AR links.</div>
+      <img id="concept" class="concept" alt="Concept art the generator painted for this model" decoding="async" />
+      <div id="concept-cap" class="concept-cap">Concept art — now being sculpted into 3D</div>
+    </div>
+
+    <div id="ready" class="overlay hidden">
+      <div class="h">Your model is ready — opening the viewer…</div>
+      <div class="muted">If nothing happens, <a id="ready-link" href="#">open it here</a>.</div>
+    </div>
+
+    <div id="error" class="overlay hidden">
+      <div class="h">This generation hit a snag</div>
+      <div id="errmsg" class="muted">The generator failed upstream. Generating is free, so trying again costs nothing.</div>
+      <a class="btn primary" href="https://three.ws/forge">Forge it again — free</a>
+    </div>
+
+    <div id="empty" class="overlay hidden">
+      <div class="h">Nothing to watch here</div>
+      <div class="muted">This page shows a 3D generation in progress from a <code>?job=</code> link. Start one for free at <a href="https://three.ws/forge">three.ws/forge</a> — no account needed.</div>
+      <a class="btn primary" href="https://three.ws/forge">Create a 3D model</a>
+    </div>
+  </div>
+
+  <footer class="bar">
+    <span class="muted">Free text-to-3D by three.ws</span>
+    <div class="spacer"></div>
+    <a class="btn" href="https://three.ws/viewer">3D viewer</a>
+    <a class="btn primary" href="https://three.ws/forge">Make your own →</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var job = (params.get('job') || '').trim();
+  var title = (params.get('title') || '').trim().slice(0, 120);
+
+  var waiting = document.getElementById('waiting');
+  var ready = document.getElementById('ready');
+  var errEl = document.getElementById('error');
+  var errMsg = document.getElementById('errmsg');
+  var empty = document.getElementById('empty');
+  var phaseEl = document.getElementById('phase');
+  var timeEl = document.getElementById('time');
+  var timeSub = document.getElementById('timesub');
+  var arc = document.getElementById('arc');
+  var concept = document.getElementById('concept');
+  var conceptCap = document.getElementById('concept-cap');
+  var titleEl = document.getElementById('title');
+
+  function show(el) {
+    [waiting, ready, errEl, empty].forEach(function (n) { n.classList.add('hidden'); });
+    el.classList.remove('hidden');
+  }
+
+  if (title) { titleEl.textContent = title; document.title = title + ' · three.ws'; }
+
+  // Same handle shape the API enforces — junk links land on the empty state.
+  if (!job || !/^[A-Za-z0-9._-]{8,1024}$/.test(job)) { show(empty); return; }
+
+  var CIRC = 2 * Math.PI * 53; // ring circumference for r=53
+  var eta = null;             // seconds remaining, as last reported
+  var etaSyncedAt = 0;        // performance.now() at last report
+  var etaTotal = null;        // largest estimate seen — the ring's 100% mark
+  var started = Date.now();
+
+  function fmt(s) {
+    s = Math.max(0, Math.round(s));
+    var m = Math.floor(s / 60);
+    return m + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  // Local 4Hz tick keeps the countdown moving between polls.
+  setInterval(function () {
+    if (eta == null) {
+      timeEl.textContent = fmt((Date.now() - started) / 1000);
+      timeSub.textContent = 'elapsed';
+      return;
+    }
+    var left = eta - (performance.now() - etaSyncedAt) / 1000;
+    timeEl.textContent = fmt(left);
+    timeSub.textContent = left > 0.5 ? 'remaining' : 'finishing up';
+    if (etaTotal > 0) {
+      arc.classList.remove('indeterminate');
+      var frac = Math.min(1, Math.max(0.02, 1 - Math.max(0, left) / etaTotal));
+      arc.setAttribute('stroke-dasharray', CIRC);
+      arc.setAttribute('stroke-dashoffset', String(CIRC * (1 - frac)));
+    }
+  }, 250);
+
+  var tierNames = { draft: 'draft quality', standard: 'standard quality', high: 'maximum detail' };
+  function applyState(d) {
+    if (Number.isFinite(d.etaSeconds) && d.etaSeconds > 0) {
+      eta = d.etaSeconds;
+      etaSyncedAt = performance.now();
+      if (!etaTotal || eta > etaTotal) etaTotal = eta;
+    }
+    if (d.previewImageUrl && /^https:\/\//.test(d.previewImageUrl) && concept.src !== d.previewImageUrl) {
+      concept.src = d.previewImageUrl;
+      concept.onload = function () { concept.classList.add('shown'); conceptCap.classList.add('shown'); };
+    }
+    var tier = tierNames[d.tier] || '';
+    phaseEl.textContent = concept.classList.contains('shown')
+      ? 'Sculpting the 3D mesh' + (tier ? ' at ' + tier : '') + '…'
+      : 'Painting the concept' + (tier ? ' at ' + tier : '') + '…';
+  }
+
+  var stopped = false;
+  function finish(d) {
+    stopped = true;
+    var target = d.viewerUrl && /^https:\/\//.test(d.viewerUrl) ? d.viewerUrl : null;
+    if (!target && d.glbUrl) target = 'https://three.ws/viewer?src=' + encodeURIComponent(d.glbUrl) + (title ? '&title=' + encodeURIComponent(title) : '');
+    if (!target) { failWith('The model finished but no viewer link came back. Start a fresh one — it is free.'); return; }
+    document.getElementById('ready-link').href = target;
+    show(ready);
+    setTimeout(function () { location.replace(target); }, 700);
+  }
+  function failWith(msg) {
+    stopped = true;
+    if (msg) errMsg.textContent = msg;
+    show(errEl);
+  }
+
+  var pollPath = '/api/3d/studio?job=' + encodeURIComponent(job) + (title ? '&title=' + encodeURIComponent(title) : '');
+  function nextDelay(d, retryAfter) {
+    if (retryAfter) return Math.max(3, retryAfter) * 1000;
+    var e = d && Number.isFinite(d.etaSeconds) ? d.etaSeconds : null;
+    if (e == null) return 5000;
+    return Math.min(10000, Math.max(4000, (e / 5) * 1000));
+  }
+
+  function poll() {
+    if (stopped) return;
+    fetch(pollPath, { headers: { accept: 'application/json' } })
+      .then(function (r) { return r.json().then(function (d) { return { r: r, d: d }; }); })
+      .then(function (x) {
+        var d = x.d || {};
+        if (x.r.status === 429) { setTimeout(poll, nextDelay(null, Number(d.retry_after) || 5)); return; }
+        if (x.r.status === 400) { failWith('This progress link is stale or malformed. Start a fresh generation — it is free.'); return; }
+        if (d.status === 'done') { finish(d); return; }
+        if (d.status === 'error') { failWith(d.error || null); return; }
+        applyState(d);
+        setTimeout(poll, nextDelay(d));
+      })
+      .catch(function () { setTimeout(poll, 6000); }); // transient blip — keep watching
+  }
+  poll();
+
+  // Nothing generates for 40+ minutes; stop a zombie tab honestly.
+  setTimeout(function () {
+    if (!stopped) failWith('This is taking far longer than it should. The job may have been lost upstream — start a fresh one, it is free.');
+  }, 40 * 60 * 1000);
+})();
+</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

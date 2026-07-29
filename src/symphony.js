@@ -372,6 +372,13 @@ function vizFrame(now) {
 	viz.raf = requestAnimationFrame(vizFrame);
 }
 
+// Browsers throttle rAF in background tabs but do not always stop it; drop the
+// loop outright when hidden and restart on return so a parked tab costs nothing.
+function vizSetRunning(run) {
+	if (run && !viz.raf) viz.raf = requestAnimationFrame(vizFrame);
+	else if (!run && viz.raf) { cancelAnimationFrame(viz.raf); viz.raf = 0; }
+}
+
 /* ── Ledger + stats ────────────────────────────────────────────────────── */
 
 function ledgerRowHTML(evt) {
@@ -389,21 +396,50 @@ function ledgerRowHTML(evt) {
 		: `<div class="sy-row">${inner}</div>`;
 }
 
+const EMPTY_LEDGER_HTML = `
+	<div class="sy-empty">
+		<p><strong>The economy is quiet right now.</strong></p>
+		<p>The moment an agent pays, trades, launches or levels up anywhere on
+		three.ws, you will hear it here. Meanwhile the drone you hear is the
+		platform's idle heartbeat.</p>
+		<p><a href="/pulse">Watch the Money Pulse</a> or <a href="/economy">see the economy dashboard</a>.</p>
+	</div>`;
+
+// Full rebuild. Only for first paint and for the empty state: a live feed that
+// re-rendered every row per event would restart all 60 enter animations and,
+// worse, make an aria-live container re-announce the entire list. Steady-state
+// arrivals go through prependLedgerRow() instead.
 function renderLedger() {
 	const el = $('sy-ledger');
 	if (!el) return;
-	if (!state.events.length) {
-		el.innerHTML = `
-			<div class="sy-empty">
-				<p><strong>The economy is quiet right now.</strong></p>
-				<p>The moment an agent pays, trades, launches or levels up anywhere on
-				three.ws, you will hear it here. Meanwhile the drone you hear is the
-				platform's idle heartbeat.</p>
-				<p><a href="/pulse">Watch the Money Pulse</a> or <a href="/economy">see the economy dashboard</a>.</p>
-			</div>`;
-		return;
-	}
-	el.innerHTML = state.events.map(ledgerRowHTML).join('');
+	el.innerHTML = state.events.length ? state.events.map(ledgerRowHTML).join('') : EMPTY_LEDGER_HTML;
+}
+
+// One newly-arrived event: insert a single node at the head and evict the tail.
+function prependLedgerRow(evt) {
+	const el = $('sy-ledger');
+	if (!el) return;
+	if (!el.querySelector('.sy-row')) { renderLedger(); return; } // was the empty state
+	const tpl = document.createElement('template');
+	tpl.innerHTML = ledgerRowHTML(evt).trim();
+	const row = tpl.content.firstElementChild;
+	if (!row) return;
+	el.prepend(row);
+	while (el.children.length > LEDGER_MAX) el.lastElementChild.remove();
+}
+
+// Screen readers get ONE short sentence per arrival, throttled, from a
+// dedicated live region. The ledger itself is not a live region: announcing a
+// 60-row list on every beat of a live feed is unusable.
+let lastAnnounceMs = 0;
+function announceEvent(evt) {
+	const el = $('sy-announce');
+	if (!el) return;
+	const now = Date.now();
+	if (now - lastAnnounceMs < 4000) return;
+	lastAnnounceMs = now;
+	const d = describeEvent(evt);
+	el.textContent = d.detail ? `${d.title}, ${d.detail}` : d.title;
 }
 
 function renderStats() {
@@ -443,7 +479,11 @@ function acceptEvent(evt, { silent = false } = {}) {
 			vizSpawn(note);
 		}
 	}
-	renderLedger();
+	// Silent arrivals are the first-paint backlog: the caller renders once after
+	// the batch instead of paying a full rebuild per row.
+	if (silent) return;
+	prependLedgerRow(evt);
+	announceEvent(evt);
 	renderStats();
 }
 
@@ -454,7 +494,8 @@ async function fetchFirstPaint() {
 		const data = await res.json();
 		const events = Array.isArray(data.events) ? data.events : [];
 		for (const evt of events.slice().reverse()) acceptEvent(evt, { silent: true });
-		if (!events.length) renderLedger();
+		renderLedger();
+		renderStats();
 		return true;
 	} catch (err) {
 		log.warn('first paint failed', err);
@@ -629,6 +670,7 @@ function wireControls() {
 		}
 	});
 	document.addEventListener('visibilitychange', () => {
+		vizSetRunning(!document.hidden);
 		if (!audio.ctx) return;
 		if (document.hidden && state.playing) audio.ctx.suspend().catch(() => {});
 		else if (!document.hidden && state.playing) audio.ctx.resume().catch(() => {});

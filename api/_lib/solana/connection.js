@@ -28,6 +28,8 @@
 
 import { Connection } from '@solana/web3.js';
 
+import { cacheGet, cacheSet } from '../cache.js';
+
 function deriveWsUrl(httpUrl) {
 	return String(httpUrl)
 		.replace(/^https:/, 'wss:')
@@ -183,11 +185,75 @@ const PUBLIC_MAINNET = 'https://api.mainnet-beta.solana.com';
 const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 
 // Process-wide endpoint cooldown, keyed by full URL. Shared across every
-// Connection built in this lambda instance — both solanaConnection() and
-// RpcFallback — so once one provider reports quota-exhausted, ALL callers skip
-// it until it recovers. Per-instance state is correct on Vercel: it self-heals
-// on cooldown expiry and a cold start simply re-probes.
+// Connection built in this instance (both solanaConnection() and RpcFallback),
+// so once one provider reports quota-exhausted, ALL callers skip it until it
+// recovers.
+//
+// The breaker is also FLEET-WIDE, mirrored through the shared cache. A
+// per-instance map alone was correct on Vercel's short-lived lambdas but is a
+// real cost on Cloud Run: the map dies with every cold start, so each fresh
+// instance re-discovers an exhausted quota the hard way, burning one more
+// doomed request against a provider that is already over its cap. On a DAILY
+// cap (QuickNode's -32003) that is actively harmful, since the wasted probes
+// are themselves what keeps the account pinned at its ceiling. Publishing the
+// verdict to L2 and inheriting it on the first call collapses fleet-wide waste
+// to roughly one probe per window. Same pattern, same reasoning as the
+// market-data breaker in api/_lib/market/token-market.js.
 const _endpointCooldown = new Map();
+const COOLDOWN_CACHE_KEY = 'rpccool:v1';
+// Re-read the shared verdict at most this often per instance; the first call on
+// a cold instance always awaits one read (that is the case worth paying for).
+const COOLDOWN_HYDRATE_MS = 60_000;
+let _cooldownHydratedAt = 0;
+let _cooldownHydrateInFlight = null;
+
+// Merge still-active shared cooldowns into the in-process map. Best-effort: a
+// cache miss or error leaves the local map as-is and the request proceeds.
+async function readSharedCooldowns() {
+	try {
+		const shared = await cacheGet(COOLDOWN_CACHE_KEY);
+		if (!shared || typeof shared !== 'object') return;
+		const now = Date.now();
+		for (const [url, until] of Object.entries(shared)) {
+			const ms = Number(until);
+			if (ms > now && ms > (_endpointCooldown.get(url) || 0)) _endpointCooldown.set(url, ms);
+		}
+	} catch {
+		/* local breaker still applies */
+	}
+}
+
+/**
+ * Inherit the fleet's view of dead endpoints. Awaited once per cold instance so
+ * the very first request already skips a quota-exhausted provider; refreshed in
+ * the background afterwards so steady-state RPC calls pay no cache round trip.
+ */
+export async function hydrateEndpointCooldowns(now = Date.now()) {
+	if (now - _cooldownHydratedAt < COOLDOWN_HYDRATE_MS) return;
+	if (_cooldownHydrateInFlight) return _cooldownHydrateInFlight;
+	_cooldownHydrateInFlight = readSharedCooldowns().finally(() => {
+		_cooldownHydratedAt = Date.now();
+		_cooldownHydrateInFlight = null;
+	});
+	return _cooldownHydrateInFlight;
+}
+
+// Publish the in-process cooldowns (only those still active) so siblings inherit
+// them. TTL tracks the longest remaining window; once it lapses the key vanishes
+// and endpoints are retried. Fire-and-forget by design: parking an endpoint must
+// never wait on, or fail because of, the cache.
+function publishCooldowns(now) {
+	const active = {};
+	let maxRemainingMs = 0;
+	for (const [url, until] of _endpointCooldown) {
+		if (until > now) {
+			active[url] = until;
+			maxRemainingMs = Math.max(maxRemainingMs, until - now);
+		}
+	}
+	if (maxRemainingMs <= 0) return;
+	cacheSet(COOLDOWN_CACHE_KEY, active, Math.ceil(maxRemainingMs / 1000)).catch(() => {});
+}
 
 function cooldownMsFor(status, bodyText) {
 	if (status === 429) {
@@ -222,7 +288,12 @@ export function isEndpointCooling(url) {
  */
 export function markEndpointCooldown(url, status, bodyText) {
 	const ms = cooldownMsFor(status, bodyText);
-	_endpointCooldown.set(url, Date.now() + ms);
+	const now = Date.now();
+	_endpointCooldown.set(url, now + ms);
+	// Only quota/auth-class parks are worth telling the fleet about. A 30s network
+	// blip would churn the shared key for no benefit, and a sibling re-probing a
+	// briefly-flaky node is exactly the behaviour we want to keep.
+	if (ms >= RATE_LIMIT_COOLDOWN_MS) publishCooldowns(now);
 	return ms;
 }
 
@@ -269,6 +340,20 @@ function lastResortUrls() {
 		.filter(Boolean);
 }
 
+// The caller's explicit `url` is pinned at priority 1 — but ~35 call sites spell
+// their default as `process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'`,
+// so whenever SOLANA_RPC_URL is unset they would pin the single most-throttled
+// endpoint in the chain AHEAD of Helius and every paid lane, silently inverting
+// the whole priority order. A bare public-cluster URL is that default leaking
+// through, never a deliberate choice, so it does not earn the pin. The endpoint
+// is NOT dropped: it still serves at its natural position near the end of the
+// free set, so behaviour degrades to the designed order instead of to nothing.
+function pinnedUrl(url) {
+	const v = normalizeRpcUrl(url);
+	if (!v) return '';
+	return v === PUBLIC_MAINNET || v === PUBLIC_DEVNET ? '' : v;
+}
+
 /**
  * Priority-ordered endpoint list for a network. An explicit `url` (the value a
  * call site already resolved) is pinned first; keyed providers, then any
@@ -289,7 +374,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		// .filter(isHttpUrl) is the hard guarantee: only a value `new Connection`
 		// accepts survives, so a malformed env entry can never reach the constructor.
 		return dedupe([
-			normalizeRpcUrl(url),
+			pinnedUrl(url),
 			normalizeRpcUrl(process.env.SOLANA_RPC_URL_DEVNET),
 			// QuickNode — a full dedicated endpoint URL (key embedded in the path), so
 			// it takes a URL var rather than an api-key. Premium/reliable, placed high.
@@ -301,7 +386,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		]).filter(isHttpUrl);
 	}
 	return dedupe([
-		normalizeRpcUrl(url),
+		pinnedUrl(url),
 		normalizeRpcUrl(process.env.SOLANA_RPC_URL),
 		// QuickNode — a full dedicated endpoint URL (key embedded in the path), so it
 		// takes a URL var rather than an api-key. A premium paid lane: placed right
@@ -595,6 +680,13 @@ export function makeRotatingFetch(endpoints) {
 				return { error: err };
 			}
 		};
+
+		// Inherit the fleet's verdict before choosing an endpoint, so a cold
+		// instance's very first call already skips a quota-dead provider instead of
+		// re-burning it. Awaited only on the first call of this instance; later
+		// refreshes run in the background (see hydrateEndpointCooldowns).
+		if (_cooldownHydratedAt === 0) await hydrateEndpointCooldowns();
+		else hydrateEndpointCooldowns();
 
 		let lastErr = null;
 		// Pass 1 skips endpoints currently in cooldown. Pass 2 runs ONLY when pass 1

@@ -659,10 +659,13 @@
 		try { el = document.getElementById(decodeURIComponent(hash.slice(1))); } catch (e) { return; }
 		if (!el || !el.closest('[data-tier="advanced"]')) return;
 		setLite(false, false);
+		// Instant, not smooth: the section only just appeared, so there is no
+		// scroll continuity to preserve and the page-wide `scroll-behavior:
+		// smooth` would otherwise animate across the whole document.
 		requestAnimationFrame(function () {
-			el.scrollIntoView({ block: 'start' });
+			el.scrollIntoView({ block: 'start', behavior: 'auto' });
 			// Late-loading media above can shift layout; correct once it settles.
-			setTimeout(function () { el.scrollIntoView({ block: 'start' }); }, 450);
+			setTimeout(function () { el.scrollIntoView({ block: 'start', behavior: 'auto' }); }, 450);
 		});
 	}
 	// This script runs mid-parse, before the gated sections below it exist in

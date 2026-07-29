@@ -354,7 +354,7 @@ The embed routes explicitly set `frame-ancestors *` so the embed iframe can be h
 
 ### Background cron jobs
 
-The `crons` array in `vercel.json` declares ~90 scheduled jobs (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). In production these run as **Google Cloud Scheduler jobs** (one per entry) each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
+The `crons` array in `vercel.json` declares every scheduled job (100 at time of writing: economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). That array is the authoritative count; read it rather than trusting a number quoted in prose. In production these run as **Google Cloud Scheduler jobs** (one per entry) each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
 
 | Cron | Schedule | Purpose |
 |---|---|---|

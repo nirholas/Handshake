@@ -198,6 +198,18 @@ function anthropicSystemField(system) {
 	return system;
 }
 
+// Anthropic reports `input_tokens` as the UNCACHED remainder once caching is in
+// play, with cache hits/writes on their own counters. Surfacing all three keeps
+// spend metering honest (see recordLlmSpend / costMicroUsd).
+function anthropicUsage(r) {
+	return {
+		input: r.usage?.input_tokens ?? 0,
+		output: r.usage?.output_tokens ?? 0,
+		cacheWrite: r.usage?.cache_creation_input_tokens ?? 0,
+		cacheRead: r.usage?.cache_read_input_tokens ?? 0,
+	};
+}
+
 function anthropicProvider(key, model) {
 	const m = model || ANTHROPIC_MODEL;
 	return {
@@ -216,7 +228,7 @@ function anthropicProvider(key, model) {
 			messages: [{ role: 'user', content: user }],
 		}),
 		extractText: anthropicText,
-		extractUsage: (r) => ({ input: r.usage?.input_tokens ?? 0, output: r.usage?.output_tokens ?? 0 }),
+		extractUsage: anthropicUsage,
 	};
 }
 
@@ -240,7 +252,7 @@ function vertexAnthropicProvider(model) {
 				messages: [{ role: 'user', content: user }],
 			}),
 		extractText: anthropicText,
-		extractUsage: (r) => ({ input: r.usage?.input_tokens ?? 0, output: r.usage?.output_tokens ?? 0 }),
+		extractUsage: anthropicUsage,
 	};
 }
 
@@ -626,13 +638,18 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 function recordLlmSpend(provider, usage, latencyMs, track) {
 	const input = usage?.input ?? 0;
 	const output = usage?.output ?? 0;
+	// Prompt-cache tokens are reported separately from `input` (which is the
+	// uncached remainder), so they are added to inputTokens for the "how big was
+	// the prompt" view and priced at their own rates by costMicroUsd.
+	const cacheWrite = usage?.cacheWrite ?? 0;
+	const cacheRead = usage?.cacheRead ?? 0;
 	recordEvent({
 		kind: 'llm',
 		provider: provider.name,
 		model: provider.model,
-		inputTokens: input,
+		inputTokens: input + cacheWrite + cacheRead,
 		outputTokens: output,
-		costMicroUsd: costMicroUsd({ provider: provider.name, model: provider.model, input, output }),
+		costMicroUsd: costMicroUsd({ provider: provider.name, model: provider.model, input, output, cacheWrite, cacheRead }),
 		latencyMs,
 		userId: track?.userId ?? null,
 		agentId: track?.agentId ?? null,

@@ -16446,6 +16446,15 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Watch your 3D model being made, live",
+			"summary": "Free text-to-3D generations now come with a live progress page. When a generation is still running, the API (and the three.ws 3D Studio GPT in ChatGPT) hands you a three.ws/watch link showing a real countdown, the painted concept art the generator sculpts from, and an automatic jump into the interactive 3D viewer with download and AR links the moment your model is ready. No more staring at a chat window wondering how long is left.",
+			"tags": [
+				"feature"
+			],
+			"link": "/watch"
 		}
 	]
 }

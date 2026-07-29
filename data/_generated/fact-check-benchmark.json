@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-07-08T01:46:16.570Z",
-  "endpoint": "in-process:api/x402/fact-check.js#_checkClaim (real chain, no HTTP/x402 payment layer — see prompts/x402-catalog/PROGRESS.md for why)",
+  "generated_at": "2026-07-28T23:50:58.991Z",
+  "endpoint": "in-process:api/x402/fact-check.js#_checkClaim (real chain, no HTTP/x402 payment layer)",
   "fixture_version": "1.0.0",
   "claim_count": 40,
   "total": 40,
-  "correct": 8,
-  "errors": 3,
-  "accuracy_pct": 20,
+  "correct": 3,
+  "errors": 30,
+  "accuracy_pct": 7.5,
   "by_class": {
     "supported": {
       "total": 10,
-      "correct": 0,
-      "accuracy_pct": 0
+      "correct": 1,
+      "accuracy_pct": 10
     },
     "contradicted": {
       "total": 10,
@@ -20,45 +20,45 @@
     },
     "mixed": {
       "total": 10,
-      "correct": 8,
-      "accuracy_pct": 80
+      "correct": 0,
+      "accuracy_pct": 0
     },
     "insufficient": {
       "total": 10,
-      "correct": 0,
-      "accuracy_pct": 0
+      "correct": 2,
+      "accuracy_pct": 20
     }
   },
   "by_difficulty": {
     "easy": {
       "total": 13,
-      "correct": 0,
-      "accuracy_pct": 0
+      "correct": 1,
+      "accuracy_pct": 7.7
     },
     "medium": {
       "total": 20,
-      "correct": 5,
-      "accuracy_pct": 25
+      "correct": 2,
+      "accuracy_pct": 10
     },
     "hard": {
       "total": 7,
-      "correct": 3,
-      "accuracy_pct": 42.9
+      "correct": 0,
+      "accuracy_pct": 0
     }
   },
   "confusion": {
     "supported": {
-      "mixed": 10
+      "insufficient": 2,
+      "supported": 1
     },
     "contradicted": {
-      "mixed": 9
+      "insufficient": 2
     },
     "mixed": {
-      "mixed": 8,
-      "contradicted": 1
+      "insufficient": 3
     },
     "insufficient": {
-      "mixed": 9
+      "insufficient": 2
     }
   }
 }

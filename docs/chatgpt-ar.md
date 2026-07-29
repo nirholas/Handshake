@@ -37,7 +37,7 @@ Every successful tool result carries `arUrl` in its `structuredContent`, and the
 
 ### 2. The "three.ws 3D Studio" custom GPT (Actions)
 
-Not every ChatGPT plan supports connectors, so the same lane also ships as a plain REST Actions surface for the custom GPT in the GPT Store:
+Not every ChatGPT plan supports connectors, so the same lane also ships as a plain REST Actions surface for the custom GPT in the GPT Store. The GPT's builder settings and instruction text live in [chatgpt-3d-studio-gpt.md](./chatgpt-3d-studio-gpt.md); the REST contract it calls:
 
 ```bash
 curl -s -X POST https://three.ws/api/3d/studio \

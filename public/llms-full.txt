@@ -633,6 +633,12 @@ URL: https://three.ws/viewer
 
 Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.
 
+### Generation Watch
+
+URL: https://three.ws/watch
+
+Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.
+
 ### AR Forge
 
 URL: https://three.ws/ar

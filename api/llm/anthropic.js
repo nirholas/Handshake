@@ -726,6 +726,12 @@ export default wrap(async (req, res) => {
 
 		let inputTokens = 0;
 		let outputTokens = 0;
+		// Prompt-cache counters ride alongside input_tokens on message_start and
+		// are DISJOINT from it (input_tokens is the uncached remainder once a
+		// cache breakpoint is in play). Tracked separately so the quota counts
+		// the true prompt size and costMicroUsd can price each at its own rate.
+		let cacheWriteTokens = 0;
+		let cacheReadTokens = 0;
 
 		if (route.kind === 'anthropic') {
 			// Pass upstream Anthropic SSE through verbatim; sniff usage events
@@ -745,8 +751,11 @@ export default wrap(async (req, res) => {
 						if (!line.startsWith('data: ')) continue;
 						try {
 							const ev = JSON.parse(line.slice(6));
-							if (ev.type === 'message_start')
+							if (ev.type === 'message_start') {
 								inputTokens = ev.message?.usage?.input_tokens ?? 0;
+								cacheWriteTokens = ev.message?.usage?.cache_creation_input_tokens ?? 0;
+								cacheReadTokens = ev.message?.usage?.cache_read_input_tokens ?? 0;
+							}
 							if (ev.type === 'message_delta')
 								outputTokens = ev.usage?.output_tokens ?? 0;
 						} catch {
@@ -765,9 +774,12 @@ export default wrap(async (req, res) => {
 		}
 
 		const latencyMs = Date.now() - t0;
-		if (inputTokens || outputTokens) {
+		// Cache tokens are part of the prompt the agent actually sent, so they
+		// count against the monthly token budget even though they bill cheaper.
+		const promptTokens = inputTokens + cacheWriteTokens + cacheReadTokens;
+		if (promptTokens || outputTokens) {
 			try {
-				await addMonthlyTokens(agentId, inputTokens + outputTokens);
+				await addMonthlyTokens(agentId, promptTokens + outputTokens);
 			} catch (err) {
 				log.warn('token_counter_write_failed', { agentId, msg: err?.message });
 			}
@@ -781,19 +793,23 @@ export default wrap(async (req, res) => {
 			status: 'ok',
 			provider: via,
 			model: usedModel,
-			inputTokens,
+			inputTokens: promptTokens,
 			outputTokens,
 			costMicroUsd: costMicroUsd({
 				provider: via,
 				model: usedModel,
 				input: inputTokens,
 				output: outputTokens,
+				cacheWrite: cacheWriteTokens,
+				cacheRead: cacheReadTokens,
 			}),
 			meta: {
 				model: usedModel,
 				requested_model: requestedModel,
-				input_tokens: inputTokens,
+				input_tokens: promptTokens,
 				output_tokens: outputTokens,
+				cache_write_tokens: cacheWriteTokens,
+				cache_read_tokens: cacheReadTokens,
 				upstream_status: upstream.status,
 			},
 		});
@@ -813,12 +829,18 @@ export default wrap(async (req, res) => {
 
 	let inputTokens = 0;
 	let outputTokens = 0;
+	// Disjoint from inputTokens once a cache breakpoint is in play — see the
+	// streaming path above.
+	let cacheWriteTokens = 0;
+	let cacheReadTokens = 0;
 	let outBody = upstreamText;
 	let outContentType = upstream.headers.get('content-type') || 'application/json';
 
 	if (route.kind === 'anthropic') {
 		inputTokens = upstreamJson?.usage?.input_tokens ?? 0;
 		outputTokens = upstreamJson?.usage?.output_tokens ?? 0;
+		cacheWriteTokens = upstreamJson?.usage?.cache_creation_input_tokens ?? 0;
+		cacheReadTokens = upstreamJson?.usage?.cache_read_input_tokens ?? 0;
 	} else if (upstreamJson) {
 		inputTokens = upstreamJson?.usage?.prompt_tokens ?? 0;
 		outputTokens = upstreamJson?.usage?.completion_tokens ?? 0;
@@ -827,9 +849,10 @@ export default wrap(async (req, res) => {
 		outContentType = 'application/json';
 	}
 
-	if (inputTokens || outputTokens) {
+	const promptTokens = inputTokens + cacheWriteTokens + cacheReadTokens;
+	if (promptTokens || outputTokens) {
 		try {
-			await addMonthlyTokens(agentId, inputTokens + outputTokens);
+			await addMonthlyTokens(agentId, promptTokens + outputTokens);
 		} catch (err) {
 			log.warn('token_counter_write_failed', { agentId, msg: err?.message });
 		}
@@ -844,19 +867,23 @@ export default wrap(async (req, res) => {
 		status: 'ok',
 		provider: via,
 		model: usedModel,
-		inputTokens,
+		inputTokens: promptTokens,
 		outputTokens,
 		costMicroUsd: costMicroUsd({
 			provider: via,
 			model: usedModel,
 			input: inputTokens,
 			output: outputTokens,
+			cacheWrite: cacheWriteTokens,
+			cacheRead: cacheReadTokens,
 		}),
 		meta: {
 			model: usedModel,
 			requested_model: requestedModel,
-			input_tokens: inputTokens,
+			input_tokens: promptTokens,
 			output_tokens: outputTokens,
+			cache_write_tokens: cacheWriteTokens,
+			cache_read_tokens: cacheReadTokens,
 			upstream_status: upstream.status,
 		},
 	});

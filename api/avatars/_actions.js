@@ -871,7 +871,10 @@ async function classifyAvatarImage({ thumbUrl, prompt, env }) {
 			});
 			if (!r.ok) throw Object.assign(new Error(`anthropic vision ${r.status}`), { code: 'vision_api_error' });
 			const d = await r.json();
-			return d.content?.[0]?.text || '';
+			// Pick the first TEXT block rather than content[0]: on a thinking-capable
+			// model the leading block is a (possibly empty) thinking block, which
+			// would silently classify every avatar as untagged.
+			return (d.content || []).find((b) => b?.type === 'text')?.text || '';
 		});
 	}
 	if (!attempts.length) {

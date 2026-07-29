@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-28T22:21:36.575Z",
+	"generated_at": "2026-07-29T04:55:00.379Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1034,6 +1034,16 @@
 					"title": "glTF / GLB Viewer",
 					"description": "Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.",
 					"added": "2026-07-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/watch",
+					"title": "Generation Watch",
+					"description": "Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.",
+					"added": "2026-07-29",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

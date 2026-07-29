@@ -166,6 +166,32 @@ describe('shape helpers — Actions wire contract', () => {
 		expectCleanWire(out);
 	});
 
+	// Pending states carry watchUrl — the live three.ws progress page (countdown +
+	// concept art) the GPT hands the user so the wait happens in a real browser tab
+	// that funnels into /viewer when the model lands. Done states never carry it.
+	it('shapeSubmit and shapePoll attach watchUrl to pending states only', async () => {
+		const { shapeSubmit, shapePoll } = await import('../../api/3d/studio.js');
+		const wanted =
+			'https://three.ws/watch?job=' +
+			encodeURIComponent(SUBMIT_QUEUED.job_id) +
+			'&title=' +
+			encodeURIComponent('a small ceramic robot figurine');
+
+		const queued = shapeSubmit(SUBMIT_QUEUED, 'https://three.ws', 'a small ceramic robot figurine');
+		expect(queued.watchUrl).toBe(wanted);
+
+		const pending = shapePoll(POLL_RUNNING, 'https://three.ws', SUBMIT_QUEUED.job_id, 'a small ceramic robot figurine');
+		expect(pending.watchUrl).toBe(wanted);
+
+		// Bare handle (no title) still gets a watch link.
+		const bare = shapePoll(POLL_RUNNING, 'https://three.ws', SUBMIT_QUEUED.job_id);
+		expect(bare.watchUrl).toBe('https://three.ws/watch?job=' + encodeURIComponent(SUBMIT_QUEUED.job_id));
+
+		// Done responses point at the viewer, not the waiting room.
+		expect(shapeSubmit(SUBMIT_DONE, 'https://three.ws', 'x').watchUrl).toBeUndefined();
+		expect(shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id, 'x').watchUrl).toBeUndefined();
+	});
+
 	it('shapePoll maps done/running/failed forge shapes cleanly, echoing the title into arUrl', async () => {
 		const { shapePoll } = await import('../../api/3d/studio.js');
 		const done = shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id, 'a tiny fox');

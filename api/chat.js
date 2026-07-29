@@ -984,8 +984,18 @@ export default wrap(async (req, res) => {
 			// from the first-party 'anthropic' provider so spend/usage reporting can
 			// attribute GCP-credit traffic; falls back to the provider name otherwise.
 			provider: route.via || route.name,
-			input_tokens: result.inputTokens,
+			// Full prompt size: on a cached Anthropic turn `input_tokens` is only
+			// the uncached remainder, so the cache counters are folded back in
+			// (and reported separately for cache-hit-rate visibility).
+			input_tokens:
+				result.inputTokens + (result.cacheWriteTokens ?? 0) + (result.cacheReadTokens ?? 0),
 			output_tokens: result.outputTokens,
+			...(result.cacheReadTokens || result.cacheWriteTokens
+				? {
+						cache_read_tokens: result.cacheReadTokens ?? 0,
+						cache_write_tokens: result.cacheWriteTokens ?? 0,
+					}
+				: {}),
 			actions: governedActions.map((a) => a.type),
 			governance: governance?.decision ?? null,
 			has_context: Boolean(body.context?.modelName),
@@ -1433,6 +1443,12 @@ async function streamAnthropic(upstream, sendSSE) {
 	const blocks = {};
 	let inputTokens = 0;
 	let outputTokens = 0;
+	// Prompt-cache counters. Anthropic reports input_tokens as the UNCACHED
+	// remainder once a cache breakpoint is in play, so these must be added back
+	// to get the true prompt size (and are reported separately so the dashboard
+	// can see how well the persona-prefix cache is working).
+	let cacheWriteTokens = 0;
+	let cacheReadTokens = 0;
 
 	try {
 		while (true) {
@@ -1453,6 +1469,8 @@ async function streamAnthropic(upstream, sendSSE) {
 				}
 				if (evt.type === 'message_start') {
 					inputTokens = evt.message?.usage?.input_tokens ?? 0;
+					cacheWriteTokens = evt.message?.usage?.cache_creation_input_tokens ?? 0;
+					cacheReadTokens = evt.message?.usage?.cache_read_input_tokens ?? 0;
 				} else if (evt.type === 'content_block_start') {
 					const cb = evt.content_block;
 					blocks[evt.index] = { type: cb.type, name: cb.name, partialJson: '' };
@@ -1477,10 +1495,10 @@ async function streamAnthropic(upstream, sendSSE) {
 			}
 		}
 	} catch (err) {
-		return { error: err, reply, actions, inputTokens, outputTokens };
+		return { error: err, reply, actions, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
 	}
 
-	return { reply, actions, inputTokens, outputTokens };
+	return { reply, actions, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
 }
 
 async function streamOpenAI(upstream, sendSSE) {

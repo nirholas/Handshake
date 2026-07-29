@@ -350,19 +350,32 @@ export async function searchWeb(query) {
 }
 
 /**
- * Run the same query across all three search queries in parallel (max 2 sources each).
- * Returns a flat deduplicated result list.
+ * Run every query in parallel and interleave the per-query result lists
+ * round-robin (query1[0], query2[0], query3[0], query1[1], …) before
+ * deduplicating.
+ *
+ * Order matters downstream: the consumer only stance-checks the first 5
+ * results, so a plain concatenation handed all five slots to query 1 and threw
+ * away the other two search angles the query generator was asked to produce.
+ * Round-robin guarantees each angle is represented in the checked set, which is
+ * what makes a contradicting source reachable when the first angle's phrasing
+ * only surfaces confirmations.
  *
  * @param {string[]} queries  Up to 3 queries.
  * @returns {Promise<Array<{url: string, title: string, snippet: string}>>}
  */
 export async function searchAll(queries) {
 	const settled = await Promise.allSettled(queries.map((q) => searchWeb(q)));
-	const combined = [];
-	for (const outcome of settled) {
-		if (outcome.status === 'fulfilled') {
-			combined.push(...outcome.value);
+	const lists = settled
+		.filter((o) => o.status === 'fulfilled' && Array.isArray(o.value))
+		.map((o) => o.value);
+
+	const interleaved = [];
+	const depth = Math.max(0, ...lists.map((l) => l.length));
+	for (let i = 0; i < depth; i++) {
+		for (const list of lists) {
+			if (i < list.length) interleaved.push(list[i]);
 		}
 	}
-	return deduplicate(combined);
+	return deduplicate(interleaved);
 }

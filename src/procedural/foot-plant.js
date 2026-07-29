@@ -72,6 +72,7 @@ export class FootPlantController {
 				const foot = resolve(leg.foot);
 				if (up && mid && foot) {
 					this._legs.push({
+						side: leg.side,
 						up,
 						mid,
 						foot,
@@ -90,6 +91,23 @@ export class FootPlantController {
 	/** @returns {boolean} whether this rig exposes hips plus at least one full leg chain */
 	get enabled() {
 		return !!this.hips && this._legs.length > 0;
+	}
+
+	/** @returns {number} the current damped pelvis drop, in world metres (<= 0) */
+	get pelvisOffset() {
+		return this._pelvisOffset;
+	}
+
+	/**
+	 * Current world position of each solved foot. Allocates, so this is for
+	 * instrumentation and tests, never the per-frame path.
+	 * @returns {Array<{side: string, position: import('three').Vector3}>}
+	 */
+	footWorldPositions() {
+		return this._legs.map((leg) => ({
+			side: leg.side,
+			position: leg.foot.getWorldPosition(new Vector3()),
+		}));
 	}
 
 	/**
