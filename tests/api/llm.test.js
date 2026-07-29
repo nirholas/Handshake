@@ -318,6 +318,127 @@ describe('llmComplete — a hung provider fails over within the cap, not the who
 	}, 15_000);
 });
 
+describe('llmComplete — a stalled HOST is not retried once per key', () => {
+	// Live regression (paid fact-check 502s, 2026-07-29): the chain holds one rung
+	// PER OpenRouter key, all pointing at the same host. When openrouter.ai
+	// accepted the POST, returned 200 headers and then never finished the body,
+	// every key behind it stalled identically — three rungs x the 12s cap = 36s,
+	// more than the whole 30s budget, so the healthy lanes further down were never
+	// reached and the caller got a 502. A stall is a property of the HOST, so the
+	// siblings are skipped.
+	it('skips sibling rungs on a host that already stalled, reaching the next distinct provider', async () => {
+		process.env.OPENROUTER_API_KEY = 'or-1';
+		process.env.OPENROUTER_FALLBACK_KEYS = 'or-2,or-3';
+		process.env.NVIDIA_API_KEY = 'nvapi-x';
+		process.env.LLM_PER_PROVIDER_TIMEOUT_MS = '4000';
+
+		const hits = [];
+		globalThis.fetch = vi.fn((url, opts) => {
+			const u = String(url);
+			if (u.includes(OPENROUTER_HOST)) {
+				hits.push('openrouter');
+				return new Promise((_, reject) => {
+					opts.signal?.addEventListener('abort', () => {
+						reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+					});
+				});
+			}
+			if (u.includes(NVIDIA_HOST)) {
+				hits.push('nvidia');
+				return Promise.resolve(openaiShape('served after the stalled host'));
+			}
+			throw new Error(`unexpected fetch: ${u}`);
+		});
+
+		const out = await llm.llmComplete({ user: 'u', timeoutMs: 30_000 });
+
+		expect(out.provider).toBe('nvidia');
+		// The host was tried ONCE, not once per key.
+		expect(hits.filter((h) => h === 'openrouter')).toHaveLength(1);
+		expect(hits).toEqual(['openrouter', 'nvidia']);
+
+		delete process.env.LLM_PER_PROVIDER_TIMEOUT_MS;
+	}, 15_000);
+
+	// An HTTP status is key-scoped, not host-scoped: a 402 means THIS key is out of
+	// credit, and the next key on the same host may be fine. Those siblings must
+	// still be tried, or key rotation stops working.
+	it('still rotates sibling keys on the same host after an HTTP failure', async () => {
+		process.env.OPENROUTER_API_KEY = 'or-1';
+		process.env.OPENROUTER_FALLBACK_KEYS = 'or-2';
+
+		let seen = 0;
+		globalThis.fetch = vi.fn(async (url) => {
+			if (!String(url).includes(OPENROUTER_HOST)) throw new Error(`unexpected fetch: ${url}`);
+			seen += 1;
+			return seen === 1 ? errResp(402, 'out of credit') : openaiShape('second key served');
+		});
+
+		const out = await llm.llmComplete({ user: 'u', timeoutMs: 30_000 });
+		expect(out.text).toBe('second key served');
+		expect(seen).toBe(2);
+	});
+
+	// The chain reserves budget for the rungs behind the current one, so a caller
+	// on a tight stage budget still reaches its reliability anchor. Without this a
+	// single slow lane consumed the caller's whole allowance.
+	it('caps one attempt to a share of the budget so later rungs still get a turn', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.NVIDIA_API_KEY = 'nvapi-x';
+
+		const hits = [];
+		globalThis.fetch = vi.fn((url, opts) => {
+			const u = String(url);
+			if (u.includes(GROQ_HOST)) {
+				hits.push('groq');
+				return new Promise((_, reject) => {
+					opts.signal?.addEventListener('abort', () => {
+						reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+					});
+				});
+			}
+			if (u.includes(NVIDIA_HOST)) {
+				hits.push('nvidia');
+				return Promise.resolve(openaiShape('anchor answered'));
+			}
+			throw new Error(`unexpected fetch: ${u}`);
+		});
+
+		// 9s budget with a stalling lead: the old code handed the lead the full
+		// per-provider cap and left nothing behind it.
+		const t0 = Date.now();
+		const out = await llm.llmComplete({ user: 'u', timeoutMs: 9_000 });
+		const elapsed = Date.now() - t0;
+
+		expect(out.provider).toBe('nvidia');
+		expect(out.text).toBe('anchor answered');
+		expect(hits).toEqual(['groq', 'nvidia']);
+		// The stalled lead was cut at roughly a third of the budget, not all of it.
+		expect(elapsed).toBeLessThan(8_000);
+	}, 15_000);
+
+	// Every rung reports itself, not just the last one: a chain that died because a
+	// slow lead ate the budget used to surface only the tail provider's message,
+	// which is how a starved chain got filed as a billing problem on the last rung.
+	it('attaches a per-provider attempt record to the thrown error', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.NVIDIA_API_KEY = 'nvapi-x';
+
+		globalThis.fetch = vi.fn(async (url) => {
+			if (String(url).includes(GROQ_HOST)) return errResp(429, 'rate limited');
+			if (String(url).includes(NVIDIA_HOST)) return errResp(503, 'down');
+			throw new Error(`unexpected fetch: ${url}`);
+		});
+
+		await expect(llm.llmComplete({ user: 'u', timeoutMs: 20_000 })).rejects.toMatchObject({
+			attempts: expect.arrayContaining([
+				expect.objectContaining({ provider: 'groq', error: 'http 429' }),
+				expect.objectContaining({ provider: 'nvidia', error: 'http 503' }),
+			]),
+		});
+	});
+});
+
 describe('llmComplete — BYOK Anthropic leads when supplied', () => {
 	it('uses Anthropic first when a BYOK key is explicitly supplied', async () => {
 		process.env.GROQ_API_KEY = 'g';
