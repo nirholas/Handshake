@@ -37,6 +37,27 @@ covers the server code itself.
     `[param]/` > `[...catchall].js`. Names starting with `_` or `.`
     (`api/_lib`, …) are never routable.
 
+4. **Server-rendered content for JS-only pages** —
+   [`ssr-pages.mjs`](ssr-pages.mjs) injects a page's own first view into its
+   static shell before it is sent. Some directory pages render their whole body
+   from client JS, so a crawler, a link unfurler, or a no-JS visitor saw an
+   empty page: `/discover` indexes 150k+ agents and shipped a 6.8 KB shell with
+   zero agents in it. The injected markup is the same default query the client
+   issues on load (progressive enhancement, not cloaking), and the client clears
+   the container before hydrating, so nothing is ever duplicated.
+
+    Registered pages live in the `PAGES` array in that file. To add one, give it
+    a `route`, its shell `file`, the internal `api` path to read, a `build()`
+    that turns the payload into markup, and an `apply()` whose markers appear
+    exactly once in the shell. `tests/ssr-pages.test.js` fails if a marker drifts
+    or the client stops clearing its container.
+
+    It never fails a page: a slow, failing, or malformed upstream falls back to
+    the untouched shell. Renders are cached (5 min TTL), concurrent requests
+    share one in-flight refresh, a stale render keeps serving for up to an hour
+    while refreshes fail, and the upstream call is capped at 2.5 s. Only
+    query-less GETs are rendered, since the injected view is the default one.
+
 Handler-facing parity:
 
 - `req.url` is the untouched original path + query string.

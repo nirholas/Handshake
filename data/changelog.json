@@ -16662,6 +16662,34 @@
 				"improvement"
 			],
 			"link": "/status"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "On-chain agent pages now load their registration details reliably",
+			"summary": "ERC-8004 agent pages read each agent's registration document from wherever its owner published it. Most of those hosts do not permit direct browser access, so a large share of agents showed \"Could not fetch registration JSON\" instead of their name, description, avatar, and skills. Pages now fall back to fetching that document through three.ws, so those agents render in full. The fallback validates every address it connects to and caps the download, so a hostile registration link cannot reach anything private.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/erc8004"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "Concierge demo and the 3D home demo both work again",
+			"summary": "The live widget on the Concierge page failed to start because the page ran its setup before the widget code had finished loading, leaving visitors with a dead demo on the page that sells it. The /demos/3d-home animated avatar demo never rendered its character either: the model uses compressed geometry and the page was loading it without the matching decoder. Both now load, animate, and respond as intended.",
+			"tags": [
+				"fix"
+			],
+			"link": "/concierge"
+		},
+		{
+			"date": "2026-07-29",
+			"title": "The agent directory is now readable without JavaScript, and the homepage loads lighter",
+			"summary": "Two things that made the site slower and harder to find. The Discover directory indexes over 150,000 agents but built its entire page in the browser, so search engines, link previews, and anyone on a slow or JavaScript-less connection saw an empty page. The server now sends the first page of agents and the live directory totals with the page itself, exactly matching what the browser then loads. Separately, the homepage was carrying a large duplicate copy of its own styling inline, plus two big scripts that blocked the page from drawing while they parsed. Those moved into files the browser caches once and reuses on every later visit, cutting the homepage document roughly in half.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/discover"
 		}
 	]
 }
