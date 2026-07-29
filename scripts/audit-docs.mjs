@@ -22,10 +22,15 @@
  *   node scripts/audit-docs.mjs --advisory   # report findings, always exit 0
  *   node scripts/audit-docs.mjs docs/x.md    # audit specific files
  *
- * Deliberately excluded: fenced code blocks (examples may reference files the
- * reader creates), external URLs (network-dependent, checked by nobody at build
- * time), and generated aggregates (docs/ALL.md, EVERYTHING.md) whose links are
- * rewritten by their generator.
+ * Deliberately excluded: fenced code blocks and inline code spans (both show
+ * the reader templates and examples, not links that must resolve), external
+ * URLs (network-dependent), generated aggregates (docs/ALL.md, EVERYTHING.md)
+ * whose links are rewritten by their generator, and the internal work-order
+ * packs under prompts/ and tasks/. Those packs delete work orders as they are
+ * completed (an owner directive, recorded by the retirement notes in each
+ * pack's index), so dangling index links there are the documented convention
+ * rather than rot. Pass an explicit path to audit them anyway:
+ *   node scripts/audit-docs.mjs prompts/roadmap/00-README.md
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join, relative } from 'node:path';
@@ -49,6 +54,10 @@ const SKIP_DIRS = new Set([
 ]);
 // Generated aggregates: their links are produced by a generator, not authored.
 const SKIP_FILES = new Set(['docs/ALL.md', 'docs/EVERYTHING.md', 'EVERYTHING.md', 'CHANGELOG.md']);
+// Internal work-order packs: completed orders are deleted by design (see the
+// retirement notes in each pack index), so their indexes intentionally list
+// files that no longer exist. Audited only when named explicitly.
+const SKIP_TREES = ['prompts', 'tasks'];
 
 const readJson = (p) => JSON.parse(readFileSync(resolve(root, p), 'utf8'));
 
@@ -150,8 +159,11 @@ const auditFile = (file) => {
 			return;
 		}
 		if (inFence) return;
+		// Strip inline code spans: `[Title](file.md)` inside backticks is a format
+		// template being shown to the reader, not a link that should resolve.
+		const scannable = line.replace(/`[^`]*`/g, '');
 
-		for (const match of line.matchAll(/\]\(([^)\s]+?)(#[^)\s]*)?\)/g)) {
+		for (const match of scannable.matchAll(/\]\(([^)\s]+?)(#[^)\s]*)?\)/g)) {
 			const target = match[1];
 			if (!target || target.startsWith('#')) continue; // same-page anchor, nothing to resolve
 			if (/^([a-z][a-z0-9+.-]*:)/i.test(target)) continue; // external or mailto
@@ -169,10 +181,10 @@ const auditFile = (file) => {
 			if (!existsSync(resolve(dir, decoded))) report(file, lineNo, 'dead-link', target);
 		}
 
-		for (const match of line.matchAll(/npm run ([a-zA-Z0-9:_-]+)/g)) {
+		for (const match of scannable.matchAll(/npm run ([a-zA-Z0-9:_-]+)/g)) {
 			if (!allScriptNames.has(match[1])) report(file, lineNo, 'dead-script', `npm run ${match[1]}`);
 		}
-		for (const match of line.matchAll(/\bnode (scripts\/[A-Za-z0-9._/-]+)/g)) {
+		for (const match of scannable.matchAll(/\bnode (scripts\/[A-Za-z0-9._/-]+)/g)) {
 			// Resolve against the doc's own directory first: a skill or package
 			// doc means its own scripts/ folder, not the repo root's.
 			const local = resolve(dir, match[1]);
@@ -185,7 +197,10 @@ const auditFile = (file) => {
 
 const targets = explicitFiles.length
 	? explicitFiles.map((f) => resolve(root, f))
-	: markdownFiles(root);
+	: markdownFiles(root).filter((f) => {
+			const rel = relative(root, f);
+			return !SKIP_TREES.some((tree) => rel === tree || rel.startsWith(`${tree}/`));
+		});
 
 for (const file of targets) {
 	if (existsSync(file) && statSync(file).isFile()) auditFile(file);

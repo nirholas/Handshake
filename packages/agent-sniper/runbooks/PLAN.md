@@ -20,7 +20,7 @@ behind each decision — plus a complete written log of the process.
 ## 2. Principles / hard rules
 
 - **No pump.fun Mayhem tokens.** Only normal launches. Enforced on-chain via
-  `isMayhemMode` (see [scripts/mayhem-filter.js](../scripts/mayhem-filter.js));
+  `isMayhemMode` (see [src/mayhem-filter.js](../src/mayhem-filter.js));
   verified working 2026-07-03. See memory `no-mayhem-pumpfun-tokens`.
 - **$THREE is the promoted coin.** Agents trade arbitrary runtime mints (the
   coin-agnostic exception); no other coin is *promoted*. Commit gate applies to any

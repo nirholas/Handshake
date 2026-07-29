@@ -116,10 +116,22 @@ See [docs/architecture.md](docs/architecture.md) for a deep dive.
 npm run typecheck   # tsc over the @ts-check'd files — also gates every deploy
 npm run test:core   # vitest unit suite
 npm test            # vitest + playwright e2e
+npm run audit:docs  # documentation integrity: dead links, dead routes, dead scripts
 ```
 
 If unit tests fail on a fresh clone with module-resolution or missing-file
 errors, run `npm run setup` first.
+
+`audit:docs` is the guard against documentation rot. It walks every Markdown
+file in the repo and reports four things: relative links that point at files
+which do not exist, site links (`/create`, `/docs/x`) that match no route in
+`data/pages.json`, `vercel.json`, `pages/`, or `public/`, commands naming an
+npm script or `scripts/*.mjs` file that is gone, and `packages/*` or `workers/*`
+directories missing a README. Run it after any change that renames, moves, or
+deletes a file, and after adding docs. Fenced code blocks, inline code spans,
+external URLs, generated aggregates, and the internal work-order packs under
+`prompts/` and `tasks/` are excluded by design; pass an explicit path to audit
+one of those anyway. Add `--advisory` to report without a non-zero exit.
 
 ### Manual Testing Checklist
 

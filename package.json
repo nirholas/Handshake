@@ -140,6 +140,7 @@
 		"smoke:mcp": "node scripts/smoke-mcp-remotes.mjs",
 		"test:mcp": "node scripts/test-mcp-all.mjs",
 		"audit:pages": "node scripts/audit-page-index.mjs",
+		"audit:docs": "node scripts/audit-docs.mjs",
 		"audit:routes": "node scripts/verify-routes.mjs",
 		"audit:handlers": "node scripts/audit-empty-handlers.mjs",
 		"audit:x402-catalog": "node scripts/audit-x402-catalog.mjs",
