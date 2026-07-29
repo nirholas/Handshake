@@ -9026,7 +9026,7 @@ The viewer targets every browser that ships WebGL 2.0 on a desktop or modern mob
 **Capabilities and graceful degradation**
 
 - **WebGL 2.0** is required; the viewer refuses to boot without it and shows a fallback message.
-- **WebAssembly** is required for the Draco / KTX2 / Meshopt decoders that ship under [`public/three/draco/`](public/three/draco/), [`public/three/basis/`](public/three/basis/), and `node_modules/three/examples/jsm/libs/`.
+- **WebAssembly** is required for the Draco / KTX2 / Meshopt decoders that are copied into `public/three/draco/` and `public/three/basis/` by `scripts/copy-three-decoders.mjs` on `postinstall` (both paths are generated and gitignored, so they only exist after `npm install`), plus `node_modules/three/examples/jsm/libs/`.
 - **`getUserMedia` (microphone)** requires HTTPS — see [Common gotchas](#common-gotchas). Without it the agent falls back to text input.
 - **`speechSynthesis`** is detected at runtime; agents fall back to silent text replies when TTS is unavailable.
 - **WebGPU** is not required and is not used yet — Phase 4 reserves it for client-side inference experiments.
