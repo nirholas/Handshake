@@ -98,6 +98,86 @@ describe('settleRingPayment already-landed recovery', () => {
 		expect(historySearched).toBe(true); // must search history so an aged-out landing is still found
 	});
 
+	it('recovers success when the RPC reply was unparseable and the signature landed', async () => {
+		// A fallback endpoint answering in a non-standard shape makes web3.js throw a
+		// superstruct union error instead of anything mentioning simulation. That
+		// message never matched the old probe condition, so the settle was reported
+		// failed WITHOUT ever asking the chain — 502ing a payment that had settled.
+		const p = buildSelfPay();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		let probed = false;
+		const conn = {
+			getBalance: async () => 1_000_000_000,
+			sendRawTransaction: async () => {
+				throw new Error('Expected the value to satisfy a union of `type | type`, but received: [object Object]');
+			},
+			getSignatureStatuses: async () => {
+				probed = true;
+				return { value: [{ err: null, confirmationStatus: 'confirmed' }] };
+			},
+		};
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(probed).toBe(true);
+		expect(res.success).toBe(true);
+		expect(res.replayed).toBe(true);
+		expect(res.transaction).toBe(p.sig);
+	});
+
+	it('skips the probe for a blockhash rejection, which proves the tx never landed', async () => {
+		const p = buildSelfPay();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		let probed = false;
+		const conn = {
+			getBalance: async () => 1_000_000_000,
+			sendRawTransaction: async () => {
+				throw new Error('Simulation failed. Message: Transaction simulation failed: Blockhash not found. Logs: [].');
+			},
+			getSignatureStatuses: async () => {
+				probed = true;
+				return { value: [null] };
+			},
+			simulateTransaction: async () => ({ value: { err: 'BlockhashNotFound', logs: [] } }),
+		};
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(probed).toBe(false); // no wasted round trip on a provably-never-landed tx
+		expect(res.success).toBe(false);
+	});
+
+	it('names the structured cause that web3.js drops from an empty-log preflight failure', async () => {
+		// "Transaction simulation failed. Logs: []" reached production logs with no
+		// cause at all (63 rows in 3 h, none diagnosable). The cause lives in
+		// res.error.data.err, which web3.js discards — re-simulating on the failure
+		// path is the only way to recover it.
+		const p = buildSelfPay();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const conn = {
+			getBalance: async () => 1_000_000_000,
+			sendRawTransaction: async () => {
+				throw new Error('Simulation failed. Message: Transaction simulation failed. Logs: [].');
+			},
+			getSignatureStatuses: async () => ({ value: [null] }),
+			simulateTransaction: async () => ({
+				value: { err: { InsufficientFundsForRent: { account_index: 1 } }, logs: [] },
+			}),
+		};
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.success).toBe(false);
+		expect(res.reason).toMatch(/^broadcast_failed:/);
+		expect(res.reason).toContain('InsufficientFundsForRent');
+	});
+
 	it('still fails closed when the signature did NOT land (a genuine simulation fault)', async () => {
 		const p = buildSelfPay();
 		process.env.X402_PAY_TO_SOLANA = p.payTo;

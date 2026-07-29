@@ -379,8 +379,8 @@ describe('refusal alerting', () => {
 	});
 });
 
-describe('known accounting gap: recordSettledFee only fires on success', () => {
-	// api/x402-facilitator/[action].js line "if (result.success) recordSettledFee
+describe('known accounting gap: recordSettledFee only fires on a granted credit', () => {
+	// api/x402-facilitator/[action].js line "if (credit.granted) recordSettledFee
 	// (result.feePayer, result.feeLamports)" only debits the in-process cache for
 	// SUCCESSFUL settles. A settle that broadcasts but comes back non-success
 	// (e.g. not_confirmed after the tx landed with an on-chain error) can still
@@ -405,13 +405,21 @@ describe('known accounting gap: recordSettledFee only fires on success', () => {
 	//    plus however many failed-but-burned settles occur. The hard SOL floor
 	//    in the settle path remains the real protection.
 
-	it('the handler source pins the success-only guard', () => {
+	// The guard moved from `result.success` to `credit.granted` when the settle-credit
+	// claim landed (one payment per signature). That is strictly narrower: the handler
+	// returns early on !result.success, so a granted credit still implies a successful
+	// settle, and an idempotent replay of an already-credited payment no longer
+	// double-debits the wallet's daily runway. Both halves are pinned below, because
+	// the gap documented above only stays bounded while the guard stays this narrow.
+	it('the handler source pins the granted-credit guard', () => {
 		const here = path.dirname(fileURLToPath(import.meta.url));
 		const src = readFileSync(
 			path.join(here, '..', 'api', 'x402-facilitator', '[action].js'),
 			'utf8',
 		);
-		expect(src).toMatch(/if \(result\.success\) recordSettledFee\(result\.feePayer, result\.feeLamports\);/);
+		expect(src).toMatch(/if \(credit\.granted\) recordSettledFee\(result\.feePayer, result\.feeLamports\);/);
+		// A failed settle must still return before any fee is metered.
+		expect(src).toMatch(/if \(!result\.success\)[\s\S]{0,600}?return json\(res, 200, \{ success: false/);
 	});
 
 	it('a failed settle that burned fees leaves the cached budget undebited (CURRENT behavior)', async () => {
