@@ -159,6 +159,23 @@ if (existsSync(cronHandler)) {
 	}
 }
 
+// 5. The subagent definitions in .claude/agents/ are operating rules too: an
+// agent executes them verbatim the same way it executes this file. Hold them
+// to the same two mechanical standards (real scripts, banned typography).
+const agentsDir = path.join(root, '.claude/agents');
+if (existsSync(agentsDir)) {
+	const { readdirSync: readAgents } = await import('node:fs');
+	for (const file of readAgents(agentsDir).filter((f) => f.endsWith('.md'))) {
+		const body = readFileSync(path.join(agentsDir, file), 'utf8');
+		if (/[—–]/.test(body)) {
+			failures.push(`.claude/agents/${file} contains an em/en-dash, which this repo bans everywhere`);
+		}
+		for (const m of body.matchAll(/npm run ([a-z0-9:._-]+)/g)) {
+			if (!scripts[m[1]]) failures.push(`.claude/agents/${file} tells the agent to run \`npm run ${m[1]}\`, which does not exist`);
+		}
+	}
+}
+
 if (failures.length) {
 	console.error(`[check-claude] ${failures.length} drift issue(s) between CLAUDE.md and the repo:`);
 	for (const f of failures) console.error(`[check-claude]   ${f}`);

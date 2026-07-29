@@ -184,6 +184,16 @@ Fix every issue found. Then report complete.
 - Use TodoWrite for any task with 3+ steps. Mark items complete in real time.
 - Communication: short. State what you did, what's next. No trailing recaps.
 
+## Specialized agents in this repo
+
+Three subagents live in `.claude/agents/` and encode checklists you would otherwise rebuild from scratch. Use them; they exist because each of these failures happened more than once:
+
+- **`completionist`** audits changed files against these operating rules at the end of a feature task. It reports violations, it does not fix them. One exception, and it is absolute: when the user asks to commit or push, that IS the approval. Do not run the completionist (or tests, audits, or diff reviews) first. Ship it.
+- **`deploy-preflight`** verifies a production deploy is safe BEFORE `gcloud builds submit`: build order, worktree artifacts, service-account pins, changelog wiring. Run it before any deploy, or when a deploy died mid-build. It does not deploy; deploys stay owner-gated.
+- **`x402-economy-triage`** diagnoses x402 outages against the known failure map. Run it before concluding "the wallets are dry", which is usually wrong: settle-floor starvation and capital dispersion look identical from the outside and have completely different fixes.
+
+`.claude/workflows/docs-drift.js` is a workflow script for sweeping documentation drift across the repo.
+
 ## Keeping this file true
 
 This file is the operating brain for every agent here, and agents execute what it says verbatim. A stale line in it does not read as stale, it reads as an instruction, and the cost is a wasted session per drift. Treat it as load-bearing code:
@@ -223,6 +233,7 @@ Rules:
 - **Docs are real implementations too.** The no-mocks, no-placeholders, no-TODO rules apply. Every code sample must actually run. Every link must resolve to a live path. A `// TODO: document` is a failed feature, not a doc.
 - **Update, don't duplicate.** If a doc already covers the area, extend it. Read the neighboring docs before adding a new file so you match their structure and depth.
 - **If you touched a feature and its existing docs are now wrong, fix them in the same change.** Stale docs are worse than none.
+- **Verify with `npm run audit:docs` before claiming a docs task done.** It mechanically catches dead relative links, site links that match no route, commands naming a script that no longer exists, and `packages/*`/`workers/*` directories missing a README. Renaming, moving, or deleting a file is exactly when it earns its keep. It is not wired into the deploy path, so nothing runs it for you.
 
 ---
 
@@ -244,6 +255,8 @@ When the user says commit and/or push, execute it right away. Do NOT run the com
 ### Concurrent agents share this worktree
 
 Other agents may be editing and committing on `main` while you work. Stage explicit paths only (never `git add -A` or `git add .`), and re-check `git status` and `git diff --staged` immediately before committing.
+
+Assume the other agents do NOT follow that rule. In practice they run `git add -A` sweeps, so **anything you leave uncommitted can be swept into an unrelated commit under someone else's message.** Two consequences: commit your own finished work promptly with explicit paths rather than batching it to the end of a long task, and re-read a file you are editing before each edit if the task spans a while, because the version on disk may no longer be the one you wrote. A file you created can also already be committed by the time you look.
 
 ### Revert commit messages: NEVER echo the reverted content
 
