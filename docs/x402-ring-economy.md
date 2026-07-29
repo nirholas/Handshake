@@ -328,6 +328,79 @@ then kept in a verified, watched, auto-fundable state:
   Generates the role wallets, writes secrets to a gitignored file, prints the env
   block. Never funds anything.
 
+## One signature, one payment
+
+A settlement is only real if it has its own on-chain transaction. Enforcing that
+turns out to be less obvious than it sounds, and getting it wrong overstated our
+own books for three weeks.
+
+**What went wrong.** Ed25519 signatures are deterministic: sign identical
+transaction bytes with the same key and you get the same signature. Two ring
+payments with the same payer, recipient, mint and amount, built against one
+shared tick blockhash with the same fee configuration, compile to *the same
+transaction*. Only one can land; the rest are rejected by the network as already
+processed. The facilitator treated that rejection as an idempotent retry of the
+payment in hand and reported success — so several distinct payments were
+credited against a single transfer.
+
+Measured on mainnet 2026-07-28, before the fix:
+
+| | |
+| --- | --- |
+| Credited settle rows | 59,271 |
+| Distinct signatures | 46,597 |
+| Rows sharing a signature | 12,674 (21.4%) |
+| USDC the log implied | 1,103.444 |
+| USDC actually moved | 1,027.424 |
+
+Two sampled transactions each carried exactly **one** SPL transfer of 1,000
+atomic units while **nine** settle rows, with nine distinct idempotency keys and
+timestamps seconds apart, were credited against them.
+
+**The fix, in three layers.**
+
+1. **Atomic credit at settle.** A successful broadcast is no longer a settled
+   payment. [`settle-credit.js`](../api/_lib/x402/settle-credit.js) claims the
+   credit for a signature, and only the winner is credited. A retry carrying the
+   *same* idempotency key is recognised as an idempotent replay and answered
+   with success without double-counting the fee; anything else is refused with
+   `signature_already_settled`, so the service is not delivered against a
+   transfer that settled a different payment. With the database unreachable the
+   claim fails **closed** (`settle_credit_unavailable`) — a refused settle is
+   retryable, whereas a wrongly-granted one is not recoverable.
+
+2. **A database constraint, not just code.** Migration
+   `20260729000000_x402_settle_sig_unique.sql` adds a partial unique index over
+   `tx_sig`. That index, not the pre-check, is what makes concurrent claims safe:
+   the credit insert runs `ON CONFLICT DO NOTHING`, so of any set of simultaneous
+   settles sharing a signature exactly one wins. The constraint is scoped by a
+   `credit_gated` marker column rather than a timestamp, because a migration
+   cannot know when its deploy will actually land — history is excluded by
+   construction and the rule takes effect precisely when the new code starts
+   serving.
+
+3. **Stop building identical transactions.** [`pay.js`](../api/_lib/x402/pay.js)
+   previously perturbed the priority fee from a 997-slot per-process counter that
+   started at the same value on every instance, so two instances paying the same
+   endpoint in one blockhash window produced identical bytes. It now draws from
+   ~4.08M slots with a CSPRNG, varying the **compute-unit limit** as well as the
+   price. The limit dimension is free: priority fee is `price × limit / 1e6`, so
+   at the baseline 5 µlamports even the top of the range floors to zero lamports,
+   and unused compute units are not billed. Sponsor mode, which sits exactly at
+   the 10,000-lamport ceiling, is restricted to the price slots that still floor
+   to zero.
+
+**Proving it stays fixed.** The `settle-signature-audit` pipeline
+([source](../api/_lib/x402/pipelines/settle-signature-audit.js)) runs hourly,
+free and read-only, and alerts if a single gated signature is ever credited
+twice. It also reports the gate's own refusals: a non-zero duplicate-refusal
+count is the gate *working*, while a sharp rise means payer-side entropy has
+regressed and buyers are eating avoidable retries.
+
+Pre-fix history is deliberately left intact. Those duplicates are real and
+published; `scripts/x402-milestone-stats.mjs` prints a warning with both figures
+so nobody quotes the row count as an on-chain transaction count.
+
 ## Reconciliation — proving every ring dollar on-chain
 
 The daily [revenue reconciler](../api/_lib/x402/revenue-reconciliation.js) proves

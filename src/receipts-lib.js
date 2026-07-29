@@ -124,30 +124,30 @@ export function resourceDisplay(resourceUrl) {
 	}
 }
 
-// Every x402 asset we settle in is a 6-decimal stablecoin (USDC on Solana and
-// on each EVM chain). Anything else stays unformatted rather than being
-// rendered at the wrong scale.
-const SIX_DECIMAL_ASSETS = new Set([
-	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC, Solana mainnet
-	'0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC, Base
-	'0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', // USDC, BNB Chain
-	'0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC, Ethereum
-]);
-
 /**
  * Human amount for a settled receipt, or null when we can't render it safely.
+ *
+ * The scale comes from the API's `assetDecimals` field, which the server
+ * resolves from the same env config that builds the 402 accepts. The client
+ * deliberately keeps NO copy of our asset addresses: a local registry would
+ * silently drift the day an asset is repointed, and rendering an amount at the
+ * wrong scale is worse than not rendering it. An unrecognised asset arrives
+ * with `assetDecimals: null` and stays unformatted.
+ *
  * @param {string|number|null|undefined} amountAtomics
- * @param {string|null|undefined} asset
+ * @param {number|null|undefined} assetDecimals
  * @returns {{ value: number, label: string }|null}
  */
-export function formatReceiptAmount(amountAtomics, asset) {
+export function formatReceiptAmount(amountAtomics, assetDecimals) {
 	if (amountAtomics == null || amountAtomics === '') return null;
 	const atomic = Number(amountAtomics);
 	if (!Number.isFinite(atomic)) return null;
-	const key = String(asset || '').toLowerCase();
-	const known = SIX_DECIMAL_ASSETS.has(String(asset || '')) || SIX_DECIMAL_ASSETS.has(key);
-	if (!known) return null;
-	const value = atomic / 1e6;
+	// Guard the null/undefined case BEFORE coercing: Number(null) is 0, which
+	// would pass an integer check and render a $0.01 payment as $10000.00.
+	if (assetDecimals == null) return null;
+	const decimals = Number(assetDecimals);
+	if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) return null;
+	const value = atomic / 10 ** decimals;
 	// Sub-cent micropayments are the norm on this rail, so show enough
 	// precision that a $0.001 call doesn't render as $0.00.
 	const label =
@@ -160,14 +160,14 @@ export function formatReceiptAmount(amountAtomics, asset) {
 /**
  * Total spend across rows whose amount we can render, plus how many rows had
  * no recorded amount (receipts issued before settlement capture landed).
- * @param {Array<{amountAtomics?: string|null, asset?: string|null}>} rows
+ * @param {Array<{amountAtomics?: string|null, assetDecimals?: number|null}>} rows
  */
 export function totalSpend(rows) {
 	let total = 0;
 	let priced = 0;
 	let unpriced = 0;
 	for (const r of rows || []) {
-		const amt = formatReceiptAmount(r.amountAtomics, r.asset);
+		const amt = formatReceiptAmount(r.amountAtomics, r.assetDecimals);
 		if (amt) {
 			total += amt.value;
 			priced++;

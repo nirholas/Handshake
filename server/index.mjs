@@ -35,6 +35,7 @@ import compression from 'compression';
 import { existsSync, statSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -487,6 +488,28 @@ app.use(async (req, res) => {
 	if (req.method === 'GET' || req.method === 'HEAD') {
 		const file = resolveStatic(currentPath);
 		if (file) {
+			// A few directory pages render their whole body from client JS, which
+			// leaves crawlers and no-JS visitors an empty shell. For those routes we
+			// inject the page's own first view before sending it. Any failure inside
+			// falls through to the untouched file, so this can never break a page.
+			if (req.method === 'GET' && isSsrRoute(currentPath) && !url.search) {
+				try {
+					const shell = readFileSync(file, 'utf8');
+					const html = await renderSsrPage(currentPath, shell, `http://127.0.0.1:${PORT}`);
+					if (html) {
+						res.set(collected);
+						if (fileStatus) res.status(fileStatus);
+						res.set('content-type', 'text/html; charset=utf-8');
+						// Same freshness the static shell gets from the CDN, but the
+						// injected block is only as fresh as its own cache TTL.
+						res.set('cache-control', 'public, max-age=60, s-maxage=300');
+						res.send(html);
+						return;
+					}
+				} catch (err) {
+					console.error(`[ssr] ${currentPath} fell back to the static shell:`, err.message);
+				}
+			}
 			await serveFile(req, res, file, collected, fileStatus);
 			return;
 		}

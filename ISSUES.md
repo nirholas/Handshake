@@ -29,13 +29,14 @@ this repo:
    OpenRouter as $0). Traffic survives on the free lanes (Groq/NIM plus the
    vertex-gemini credits anchor). Action: reactivate OpenAI billing and/or
    fund the OpenRouter key, or accept free-lane-only service.
-2. **Neon storage over the high-water mark; write crons silently no-op**
-   (found 2026-07-21). Database size exceeds the 2048MB high-water, which
-   makes six write crons no-op without alerting, and `db-retention`'s plain
-   `VACUUM` never returns space to the OS, so the condition cannot self-heal.
-   `intel-learn` also OOMs on an unbounded 64k-row query while the cap holds.
-   Action: bump the Neon plan or approve a destructive prune; until then the
-   affected crons stay dark.
+2. **Neon storage pressure — RESOLVED, re-verified 2026-07-29.** The branch
+   measures 2538MB against a 3072MB high-water (`isStoragePressured()` reports
+   `pressured: false`), so no write cron is gated. The two code defects behind
+   the original report are also closed: `wrapCron`'s `requireWriteCapacity`
+   preflight logs a named warn and heartbeats a healthy skip instead of failing
+   silently, and `db-retention` now VACUUM FULLs the worst offenders under
+   pressure (section D), which does return space to the OS. Re-open only if the
+   size crosses the high-water again.
 3. **Helius quota exhaustion, still live** (observed 2026-07-22: mainnet and
    devnet RPC 429 "max usage reached"; balances and solana-rpc fail over to
    public RPC with the designed 10min/360min cooldowns). Action: bump the
@@ -44,15 +45,29 @@ this repo:
 Carried forward from the retired `prompts/x402-catalog/` tracker (campaign
 closed 2026-07-28; full history in git):
 
-4. **No web-search key in prod** (owner action). `BRAVE_API_KEY` /
+4. **No web-search key in prod** (owner action, now non-blocking). `BRAVE_API_KEY` /
    `TAVILY_API_KEY` / `EXA_API_KEY` / `SERPER_API_KEY` are all absent on
-   `three-ws-api`, degrading the paid $0.10 fact-check product. Action: set
-   one of the four keys on the Cloud Run service.
-5. **Fact-check accuracy is 20% (8/40) on the published benchmark** (code).
-   `computeVerdict`'s support/contradict threshold and the query-generation
-   prompt need a rework; flagged as the next work order when the x402-catalog
-   campaign closed but never opened. Benchmark:
-   `data/_generated/fact-check-benchmark.json`.
+   `three-ws-api`. This no longer leaves the fact-checker on DuckDuckGo scraps:
+   the search chain now leads with Vertex-grounded Google Search (service-account
+   auth, GCP credits, no third-party key) and the keyless Wikipedia rung returns
+   full intro extracts rather than 150-char highlight fragments. Setting one of
+   the four keys is still an upgrade, not a prerequisite.
+5. **Fact-check verdict quality — reworked in-repo 2026-07-29, benchmark
+   awaiting a clean run** (code). The chain-level defects behind the 20% score
+   are fixed: `computeVerdict` now judges direction over stance-BEARING weight
+   with a coverage gate (all-neutral evidence returns `insufficient` instead of
+   collapsing every class to `mixed`), the Wikipedia rung returns real intro
+   extracts, `searchAll` interleaves the three query angles round-robin instead
+   of letting query 1 take all five checked slots, and the stance prompt carries
+   an explicit rubric that names a differing figure/date/record-holder as a
+   contradiction rather than "neutral". The published number is NOT restated
+   here because no trustworthy run exists yet: the last one scored 7.5% with 30
+   of 40 claims errored (it measured the LLM outage in item 1, not accuracy) and
+   `data/_generated/fact-check-benchmark.json` has been removed so `/fact-check`
+   renders its honest "not yet run" state. The runner now refuses to publish any
+   run with >10% errored claims. Action: re-run
+   `node scripts/fact-check-benchmark.mjs` against production once the deploy
+   below lands (Vertex answers there, so the chain is not degraded).
 6. **ASR/media backstops unconfigured** (owner action).
    `NVIDIA_ASR_FUNCTION_ID` unset in prod (`/api/v1/ai/asr` returns 503
    `not_configured`); the Replicate account is out of credit; Upstash Redis is

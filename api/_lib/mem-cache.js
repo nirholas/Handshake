@@ -29,12 +29,18 @@ import { LRUCache } from 'lru-cache';
 export function createCache({ max = 512, ttlMs, updateAgeOnGet = false } = {}) {
 	return new LRUCache({
 		max: Math.max(1, max),
-		// `Date` rather than lru-cache's default `performance`, for parity with
-		// the `Date.now()` expiry the hand-rolled Maps used, and because caches
-		// are constructed at module load — a monotonic clock captured then
-		// cannot be advanced by a test's fake timers, making TTL behaviour
-		// untestable. TTLs here are minutes long, so clock drift is immaterial.
-		perf: Date,
+		// Wall-clock TTL, for parity with the `Date.now()` expiry the hand-rolled
+		// Maps used (TTLs here are minutes long, so drift is immaterial). The
+		// indirection matters: lru-cache captures this object once, at
+		// construction, and caches are built at module load — resolving `Date`
+		// inside the call keeps TTL behaviour observable under fake timers
+		// instead of frozen against a clock captured before the test ran.
+		perf: { now: () => Date.now() },
+		// Read the clock on every TTL check. By default lru-cache memoizes "now"
+		// and clears it from a timer, which makes expiry granular and leaves a
+		// stale timestamp behind whenever that timer is discarded. One Date.now()
+		// per read is not worth the imprecision.
+		ttlResolution: 0,
 		...(ttlMs ? { ttl: ttlMs, updateAgeOnGet } : {}),
 	});
 }

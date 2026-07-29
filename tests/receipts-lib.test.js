@@ -17,8 +17,9 @@ import {
 	totalSpend,
 } from '../src/receipts-lib.js';
 
-const USDC_SOL = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-const USDC_BASE = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
+// The API supplies the scale (server-resolved from the same env config that
+// builds the 402 accepts), so these tests exercise decimals, not addresses.
+const USDC_DECIMALS = 6;
 
 const SOL_ADDR = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const EVM_ADDR = '0xAbCdEf0123456789aBcDeF0123456789ABCDEF01';
@@ -106,34 +107,37 @@ describe('display helpers', () => {
 
 describe('formatReceiptAmount', () => {
 	it('renders 6-decimal stablecoin amounts', () => {
-		expect(formatReceiptAmount('10000', USDC_SOL).label).toBe('$0.01');
-		expect(formatReceiptAmount('1000000', USDC_SOL).label).toBe('$1.00');
-		expect(formatReceiptAmount('2500000', USDC_BASE).label).toBe('$2.50');
+		expect(formatReceiptAmount('10000', USDC_DECIMALS).label).toBe('$0.01');
+		expect(formatReceiptAmount('1000000', USDC_DECIMALS).label).toBe('$1.00');
+		expect(formatReceiptAmount('2500000', USDC_DECIMALS).label).toBe('$2.50');
 	});
 
 	it('keeps precision on sub-cent micropayments instead of showing $0.00', () => {
-		expect(formatReceiptAmount('1000', USDC_SOL).label).toBe('$0.001');
-		expect(formatReceiptAmount('100', USDC_SOL).label).toBe('$0.0001');
+		expect(formatReceiptAmount('1000', USDC_DECIMALS).label).toBe('$0.001');
+		expect(formatReceiptAmount('100', USDC_DECIMALS).label).toBe('$0.0001');
 	});
 
-	it('refuses to guess the scale of an unknown asset', () => {
-		expect(formatReceiptAmount('10000', 'SomeUnknownMint1111')).toBe(null);
+	it('refuses to guess the scale when the server did not supply one', () => {
+		// An asset this deployment does not settle in arrives with a null scale.
 		expect(formatReceiptAmount('10000', null)).toBe(null);
+		expect(formatReceiptAmount('10000', undefined)).toBe(null);
+		expect(formatReceiptAmount('10000', 'six')).toBe(null);
+		expect(formatReceiptAmount('10000', 99)).toBe(null);
 	});
 
 	it('handles missing or malformed amounts', () => {
-		expect(formatReceiptAmount(null, USDC_SOL)).toBe(null);
-		expect(formatReceiptAmount('', USDC_SOL)).toBe(null);
-		expect(formatReceiptAmount('not-a-number', USDC_SOL)).toBe(null);
+		expect(formatReceiptAmount(null, USDC_DECIMALS)).toBe(null);
+		expect(formatReceiptAmount('', USDC_DECIMALS)).toBe(null);
+		expect(formatReceiptAmount('not-a-number', USDC_DECIMALS)).toBe(null);
 	});
 });
 
 describe('totalSpend', () => {
 	it('sums priced rows and counts the unpriced ones', () => {
 		const s = totalSpend([
-			{ amountAtomics: '10000', asset: USDC_SOL },
-			{ amountAtomics: '1000000', asset: USDC_SOL },
-			{ amountAtomics: null, asset: null },
+			{ amountAtomics: '10000', assetDecimals: USDC_DECIMALS },
+			{ amountAtomics: '1000000', assetDecimals: USDC_DECIMALS },
+			{ amountAtomics: null, assetDecimals: null },
 		]);
 		expect(s.label).toBe('$1.01');
 		expect(s.priced).toBe(2);
@@ -156,7 +160,7 @@ describe('receiptsToCsv', () => {
 				network: 'solana',
 				resourceUrl: 'https://three.ws/api/x402/d/prices?a="x",b',
 				amountAtomics: '10000',
-				asset: USDC_SOL,
+				asset: 'the-settlement-asset',
 				transaction: 'sig1',
 				format: 'jws',
 				payer: SOL_ADDR,

@@ -294,7 +294,7 @@ function renderVault() {
 			const when = r.issuedAt
 				? `<time datetime="${esc(r.issuedAt)}" title="${esc(new Date(r.issuedAt).toLocaleString())}">${esc(timeAgo(r.issuedAt))}</time>`
 				: '·';
-			const amount = formatReceiptAmount(r.amountAtomics, r.asset);
+			const amount = formatReceiptAmount(r.amountAtomics, r.assetDecimals);
 			const amountCell = amount
 				? `<span class="rc-amount" title="${esc(r.amountAtomics)} atomic units">${esc(amount.label)}</span>`
 				: '';

@@ -59,9 +59,17 @@ warning with the live numbers on every run.
 Two consequences. For copy: "payments settled" is a claim about the
 facilitator's own settlement operations and is what the video says; a claim of
 one chain transaction per payment would not survive an explorer check. For
-engineering: the settle path is returning an already-used signature for distinct
-payment requests, meaning some paid requests were served without their own
-settlement. That is a live correctness bug, tracked separately from this video.
+engineering: the settle path was returning an already-used signature for
+distinct payment requests, meaning some paid requests were served without their
+own settlement.
+
+**The engineering half is fixed** (2026-07-29). Settlement credit is now claimed
+atomically, one payment per signature, backed by a partial unique index; the
+payment builder draws from a ~4.08M-slot fee-nonce space so identical
+transactions are not built in the first place; and an hourly audit alerts on any
+recurrence. See ["One signature, one payment"](../../docs/x402-ring-economy.md)
+for the full write-up. The figures above are the pre-fix history and are left
+intact on purpose — they are what the published video reports.
 
 ## Files
 

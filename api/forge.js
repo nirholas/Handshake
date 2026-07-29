@@ -781,6 +781,10 @@ async function runHfImageLane({
 	mode = 'image_to_3d',
 	previewImageUrl = null,
 	textToImageModel = null,
+	// The art-directed rewrite that painted `previewImageUrl`, when it differed
+	// from the caller's raw prompt. Reported back verbatim so the client can show
+	// what the model was actually asked for. Null on image→3D (nothing to rewrite).
+	directedPrompt = null,
 	opts = null,
 	cacheKey = null,
 }) {
@@ -999,6 +1003,7 @@ async function runHfImageLane({
 		tier: tier.id,
 		backend: backendId,
 		prompt: prompt || null,
+		directed_prompt: directedPrompt,
 		preview_image_url: preview,
 		reference_image_urls: isImageMode ? [imageUrls[0]] : [preview],
 		text_to_image_model: isImageMode ? null : textToImageModel,
@@ -2024,6 +2029,7 @@ async function startJob(req, res) {
 					tier: tier.id,
 					backend: backendId,
 					prompt: prompt || null,
+					directed_prompt: directedPrompt,
 					preview_image_url: referenceImageUrl,
 					reference_image_urls: views,
 					text_to_image_model: isImageMode ? null : textToImageModel,
@@ -2067,6 +2073,7 @@ async function startJob(req, res) {
 					mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
 					previewImageUrl: referenceImageUrl,
 					textToImageModel,
+					directedPrompt,
 					opts,
 					cacheKey,
 				})
@@ -2104,6 +2111,7 @@ async function startJob(req, res) {
 					mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
 					previewImageUrl: referenceImageUrl,
 					textToImageModel,
+					directedPrompt,
 					opts,
 					cacheKey,
 				})
@@ -2267,6 +2275,7 @@ async function startJob(req, res) {
 						mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
 						previewImageUrl: referenceImageUrl,
 						textToImageModel,
+						directedPrompt,
 						opts,
 						cacheKey,
 					})
@@ -2341,6 +2350,7 @@ async function startJob(req, res) {
 			tier: tier.id,
 			backend: backendId,
 			prompt: prompt || null,
+			directed_prompt: directedPrompt,
 			preview_image_url: referenceImageUrl,
 			reference_image_urls: views,
 			views_requested: viewsRequested,
@@ -2737,6 +2747,12 @@ async function pollJob(req, res, jobId) {
 				backend: meta.backend ?? null,
 				tier: meta.tier ?? null,
 				path: meta.path ?? null,
+				// The reference view this job reconstructs from. The submit response
+				// already carries it, but a client that never saw that response —
+				// a coalesced job, a resumed job after a reload, a poll-time failover
+				// successor — otherwise has no way to learn it. Repeating it here lets
+				// the generation timeline reveal the reference the moment it exists.
+				preview_image_url: meta.preview_image_url ?? null,
 			}
 		: {};
 

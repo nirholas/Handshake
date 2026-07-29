@@ -373,7 +373,7 @@ function renderNotificationPrefs(resp, onRetry) {
 	panel.innerHTML = `
 		<div style="margin-bottom:14px">
 			<div class="dn-panel-title">Notification preferences</div>
-			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel — the bell (in-app) always stays available so nothing is ever silently lost.</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel. Account and security events always stay in your bell so nothing important is silently lost, but you can still quiet their push, email and Telegram.</div>
 		</div>
 		${!categories.length ? emptyStateHTML({
 			icon: '',
@@ -397,15 +397,25 @@ function renderNotificationPrefs(resp, onRetry) {
 									${cat.description ? `<div style="font-size:12px;color:var(--nxt-ink-dim);margin-top:2px">${esc(cat.description)}</div>` : ''}
 								</td>
 								${channels.map((ch) => {
-									const on = matrix?.[cat.key]?.[ch] ?? false;
-									const disabled = ch === 'telegram' && !body.prefs?.telegram_chat_id;
+									// A locked channel always delivers for this category (see
+									// notify-prefs lockedChannelsFor), so it renders on and
+									// non-interactive rather than as a toggle that does nothing.
+									const locked = (cat.lockedChannels || []).includes(ch);
+									const on = locked || (matrix?.[cat.key]?.[ch] ?? false);
+									const noTelegram = ch === 'telegram' && !body.prefs?.telegram_chat_id;
+									const disabled = locked || noTelegram;
+									const title = locked
+										? 'Always on: account and security events are kept in your bell'
+										: noTelegram
+											? 'Link a Telegram chat id to enable'
+											: '';
 									return `
 										<td style="padding:10px;text-align:center">
 											<button type="button" role="switch" class="set-switch" data-notif-cat="${esc(cat.key)}" data-notif-ch="${esc(ch)}"
 												aria-checked="${on ? 'true' : 'false'}"
-												${disabled ? 'disabled title="Link a Telegram chat id to enable"' : ''}
-												aria-label="${esc(cat.label || cat.key)} via ${esc(CHANNEL_LABEL[ch] || ch)}"
-												style="${disabled ? 'opacity:.35;cursor:not-allowed' : ''}"></button>
+												${disabled ? 'disabled' : ''}${title ? ` title="${esc(title)}"` : ''}
+												aria-label="${esc(cat.label || cat.key)} via ${esc(CHANNEL_LABEL[ch] || ch)}${locked ? ', always on' : ''}"
+												style="${noTelegram ? 'opacity:.35;cursor:not-allowed' : locked ? 'cursor:not-allowed' : ''}"></button>
 										</td>
 									`;
 								}).join('')}

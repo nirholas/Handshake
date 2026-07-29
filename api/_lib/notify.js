@@ -23,18 +23,14 @@
  * @returns {Promise<{ id: string|null, in_app?: boolean }>}
  */
 import { sql } from './db.js';
-import { resolvePrefs, channelEnabled, pushPayloadFor, categoryForType } from './notify-prefs.js';
+import {
+	resolvePrefs,
+	channelEnabled,
+	pushPayloadFor,
+	categoryForType,
+	lockedChannelsFor,
+} from './notify-prefs.js';
 import { sendPushToUser } from './web-push.js';
-
-// Categories whose in-app row is written no matter what the user muted. The
-// bell is the durable record of what happened to an account, not an
-// interruption: muting should quiet push, email and telegram, never erase the
-// user's own audit trail. 'account' is "Account & security" and carries
-// security_alert, wallet_anomaly_frozen, withdrawal_failed and the payment
-// mismatches, and it is also the fallback for any type not yet in
-// TYPE_CATEGORY, so honoring a mute here would silently hide future
-// security-relevant events too. The interruptive channels stay fully mutable.
-const IN_APP_ALWAYS = new Set(['account']);
 
 export function insertNotification(userId, type, payload = {}) {
 	return deliver(userId, type, payload).catch((err) => {
@@ -48,8 +44,12 @@ async function deliver(userId, type, payload) {
 	// resolvePrefs already falls back to defaults on a DB error, so a lookup
 	// problem degrades to "deliver on the default channels", never to silence.
 	const prefs = await resolvePrefs(userId);
+	// The bell is the durable record of what happened to an account, so a few
+	// categories (Account & security) always write their row; muting there
+	// quiets push, email and telegram only. See lockedChannelsFor.
 	const wantsInApp =
-		IN_APP_ALWAYS.has(categoryForType(type)) || channelEnabled(prefs, type, 'in_app');
+		lockedChannelsFor(categoryForType(type)).includes('in_app') ||
+		channelEnabled(prefs, type, 'in_app');
 
 	// 2: durable in-app row, only when the user left the bell on for this
 	// category. Muting in_app must leave no row behind: the inbox list and the

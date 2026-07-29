@@ -169,6 +169,12 @@ export class CommunityNet {
 			objectChange: new Set(), // (obj, id) — its transform/owner changed
 			objectRemove: new Set(), // (id) — an object left the world
 			objectReject: new Set(), // ({reason}) — server refused a spawn (world/player full)
+			// Fired once per connection, the moment the FIRST authoritative state
+			// snapshot has been decoded — i.e. every objectAdd/blockAdd the room had at
+			// join has already been emitted. `/play` uses it to retire the build it
+			// restored locally from the durable world store (P3.1), because from this
+			// point the room's own copies are in the scene and ours are duplicates.
+			synced: new Set(),      // () — first full state patch applied
 			reaction: new Set(),    // ({id, emoji}) — a player sent a floating reaction
 			tag: new Set(),         // ({event, itId, leaderboard}) — tag mini-game state (R08)
 			floorBeat: new Set(),   // ({clip}) — disco-pad beat tick (R06): pulses the floor + aligns standing dancers
@@ -452,6 +458,11 @@ export class CommunityNet {
 			this.worldTime = Number(this.room.state.worldTime) || 0;
 			$state?.listen?.('worldTime', (v) => { this.worldTime = Number(v) || 0; this._emit('worldtime', this.worldTime); });
 
+			// The first decoded state snapshot: everything the room already held
+			// (blocks, objects, vehicles) has now been emitted through the callbacks
+			// registered above. Registered AFTER them so their handlers run first.
+			this.room.onStateChange.once(() => { if (!this._destroyed && gen === this._connectGen) this._emit('synced'); });
+
 			this.room.onLeave((code, reason) => {
 				this._setStatus('offline');
 				// A play-pass eviction (the server dropped us because our pass expired
@@ -653,6 +664,10 @@ export class CommunityNet {
 		const msg = { kind: String(kind || ''), x, y, z };
 		if (typeof opts.type === 'string') msg.type = opts.type;
 		if (typeof opts.id === 'string') msg.id = opts.id;
+		// P3.3: a player-uploaded model url. The server re-validates it against the
+		// storage allow-list and refuses the spawn outright if it doesn't pass, so
+		// this is a request like any other, never a trusted value.
+		if (typeof opts.url === 'string' && opts.url) msg.url = opts.url;
 		if (Number.isFinite(opts.yaw)) msg.yaw = opts.yaw;
 		if (Number.isFinite(opts.scale)) msg.scale = opts.scale;
 		if (Number.isFinite(opts.vx)) msg.vx = opts.vx;

@@ -130,13 +130,29 @@ describe('insertNotification: a muted in_app category', () => {
 		expect(funnelEvents()).toEqual([]);
 	});
 
-	it('applies to unmapped types through the account fallback category', async () => {
+	it('keeps the bell row for Account & security even when in_app is muted', async () => {
+		// 'account' is a locked in_app category (notify-prefs lockedChannelsFor):
+		// the bell is the durable record of what happened to the account, so
+		// muting it quiets push, email and telegram only. Without this, a user
+		// could hide their own security_alert and wallet_anomaly_frozen rows.
+		prefsState.stored = {
+			categories: { account: { in_app: false, push: false, email: false, telegram: false } },
+		};
+
+		const out = await insertNotification(USER, 'security_alert', {});
+
+		expect(out.in_app).toBe(true);
+		expect(inboxInserts()).toHaveLength(1);
+		expect(sendPushToUser).not.toHaveBeenCalled(); // the mutable channels still obey
+	});
+
+	it('routes unmapped types through the account fallback, so they are never silently hidden', async () => {
 		prefsState.stored = { categories: { account: { in_app: false } } };
 
 		const out = await insertNotification(USER, 'some_brand_new_type', {});
 
-		expect(out.in_app).toBe(false);
-		expect(inboxInserts()).toHaveLength(0);
+		expect(out.in_app).toBe(true);
+		expect(inboxInserts()).toHaveLength(1);
 	});
 });
 

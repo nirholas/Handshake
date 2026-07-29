@@ -1401,9 +1401,19 @@
 				justify-content: center;
 				gap: var(--space-sm);
 			}
+			/* Stage timeline list. Rows are rendered by src/forge-timeline.js; the
+			   markers are the dots below, so the list itself carries none. */
+			.gen-stages {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-sm);
+			}
 			.step {
 				display: flex;
-				align-items: center;
+				align-items: flex-start;
 				gap: 0.7rem;
 				color: var(--ink-dim);
 				font-size: var(--text-sm);
@@ -1414,6 +1424,127 @@
 				border-radius: 50%;
 				border: 2px solid var(--stroke-strong);
 				flex: none;
+				margin-top: 0.2em;
+			}
+			.step-body {
+				display: flex;
+				flex-direction: column;
+				gap: 0.15rem;
+				min-width: 0;
+				flex: 1 1 auto;
+			}
+			.step-label {
+				line-height: var(--leading-snug, 1.35);
+			}
+			.step-detail {
+				font-size: var(--text-2xs);
+				line-height: 1.45;
+				color: var(--ink-dim);
+				opacity: 0.85;
+			}
+			.step[data-state='pending'] .step-detail {
+				opacity: 0.6;
+			}
+			/* Reference view revealed inside the timeline the moment the API hands
+			   one over. Anchor, so it is keyboard reachable and opens full size. */
+			.step-thumb {
+				flex: none;
+				width: 34px;
+				height: 34px;
+				border-radius: var(--radius-sm, 6px);
+				overflow: hidden;
+				border: 1px solid var(--stroke);
+				background: var(--surface-1);
+				display: block;
+				transition: border-color 0.18s ease, transform 0.18s ease;
+			}
+			.step-thumb img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+				animation: paint-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+			}
+			.step-thumb:hover {
+				border-color: var(--accent);
+				transform: scale(1.06);
+			}
+			.step-thumb:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+				border-color: var(--accent);
+			}
+			.step-thumb:active {
+				transform: scale(0.98);
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.step-thumb,
+				.step-thumb img {
+					transition: none;
+					animation: none;
+				}
+				.step-thumb:hover {
+					transform: none;
+				}
+			}
+			/* Cold-start warming card: a designed, honest waiting state for a GPU
+			   worker that is booting, instead of a silent stall. */
+			.gen-warming {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.6rem;
+				margin-top: var(--space-sm);
+				padding: var(--space-sm) var(--space-md);
+				border: 1px solid color-mix(in srgb, var(--warning, #e0a93e) 40%, var(--stroke));
+				border-radius: var(--radius-md);
+				background: color-mix(in srgb, var(--warning, #e0a93e) 7%, var(--surface-2));
+			}
+			.gen-warming.is-hidden {
+				display: none;
+			}
+			.gen-warming-pip {
+				flex: none;
+				width: 9px;
+				height: 9px;
+				margin-top: 0.35rem;
+				border-radius: 50%;
+				background: var(--warning, #e0a93e);
+				box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning, #e0a93e) 60%, transparent);
+				animation: warm-pulse 1.9s ease-out infinite;
+			}
+			@keyframes warm-pulse {
+				to {
+					box-shadow: 0 0 0 10px transparent;
+				}
+			}
+			.gen-warming-copy {
+				min-width: 0;
+			}
+			.gen-warming-title {
+				margin: 0;
+				font-size: var(--text-sm);
+				font-weight: 600;
+				color: var(--ink);
+			}
+			.gen-warming-body {
+				margin: 0.2rem 0 0;
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+			}
+			.gen-warming-count {
+				margin: 0.3rem 0 0;
+				font-family: var(--font-mono);
+				font-size: var(--text-2xs);
+				color: var(--warning, #e0a93e);
+			}
+			.gen-warming[data-phase='over'] .gen-warming-pip {
+				animation-duration: 3.2s;
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.gen-warming-pip {
+					animation: none;
+				}
 			}
 			.step[data-state='active'] {
 				color: var(--ink);
@@ -1795,6 +1926,132 @@
 				animation: saved-pop 3s ease forwards;
 			}
 			.saved-chip.is-hidden { display: none; }
+
+			/* "What we actually asked the model" — the art-directed rewrite, shown
+			   under the result bar. Collapsed by default: context, not headline. */
+			.directed {
+				border-top: 1px solid var(--stroke);
+			}
+			.directed[hidden] {
+				display: none;
+			}
+			.directed-summary {
+				display: flex;
+				align-items: center;
+				gap: var(--space-xs);
+				padding: var(--space-sm) var(--space-md);
+				cursor: pointer;
+				list-style: none;
+				font-size: var(--text-sm);
+				color: var(--ink-dim);
+				transition: color 0.18s ease, background 0.18s ease;
+			}
+			.directed-summary::-webkit-details-marker {
+				display: none;
+			}
+			.directed-summary:hover {
+				color: var(--ink);
+				background: var(--surface-1);
+			}
+			.directed-summary:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: -2px;
+				color: var(--ink);
+			}
+			.directed-summary:active {
+				background: var(--surface-2);
+			}
+			.directed-chip {
+				flex: none;
+				font-family: var(--font-mono);
+				font-size: var(--text-2xs);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--accent);
+				background: var(--accent-soft);
+				border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+				border-radius: 999px;
+				padding: 1px 8px;
+			}
+			.directed-summary-text {
+				min-width: 0;
+			}
+			.directed-caret {
+				flex: none;
+				margin-left: auto;
+				transition: transform 0.2s ease;
+			}
+			.directed[open] .directed-caret {
+				transform: rotate(180deg);
+			}
+			.directed-body {
+				padding: 0 var(--space-md) var(--space-md);
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-sm);
+				animation: directed-in 0.24s ease both;
+			}
+			@keyframes directed-in {
+				from {
+					opacity: 0;
+					transform: translateY(-4px);
+				}
+			}
+			.directed-intro {
+				margin: 0;
+				font-size: var(--text-xs);
+				line-height: 1.55;
+				color: var(--ink-dim);
+				max-width: 68ch;
+			}
+			.directed-block {
+				min-width: 0;
+			}
+			.directed-label {
+				margin: 0 0 0.25rem;
+				font-family: var(--font-mono);
+				font-size: var(--text-2xs);
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--ink-dim);
+			}
+			.directed-model {
+				text-transform: none;
+				letter-spacing: 0;
+				opacity: 0.8;
+			}
+			.directed-text {
+				margin: 0;
+				font-size: var(--text-sm);
+				line-height: 1.6;
+				color: var(--ink);
+				overflow-wrap: anywhere;
+			}
+			.directed-text--enhanced {
+				padding: var(--space-sm) var(--space-md);
+				border: 1px solid var(--stroke);
+				border-left: 2px solid var(--accent);
+				border-radius: var(--radius-md);
+				background: var(--surface-1);
+			}
+			.directed-actions {
+				display: flex;
+				align-items: center;
+				gap: var(--space-xs);
+				flex-wrap: wrap;
+			}
+			.directed-status {
+				font-size: var(--text-xs);
+				color: var(--accent);
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.directed-body {
+					animation: none;
+				}
+				.directed-caret {
+					transition: none;
+				}
+			}
 			.result-bar .actions {
 				display: flex;
 				gap: var(--space-xs);
@@ -3112,17 +3369,21 @@
 						<div class="shimmer" aria-hidden="true"></div>
 					</div>
 					<div class="gen-steps">
-						<div class="step" id="step-image" data-state="active">
-							<span class="dot" aria-hidden="true"></span>
-							<span data-i18n="forge.painting_photoreal_reference_image">Painting photoreal reference image</span>
-						</div>
-						<div class="step" id="step-mesh" data-state="pending">
-							<span class="dot" aria-hidden="true"></span>
-							<span data-i18n="forge.reconstructing_textured_mesh">Reconstructing textured mesh</span>
-						</div>
-						<div class="step" id="step-finish" data-state="pending">
-							<span class="dot" aria-hidden="true"></span>
-							<span data-i18n="forge.finalizing_glb">Finalizing GLB</span>
+						<!-- Named stage timeline. Every row, and every state change on it, is
+						     driven by a real /api/forge signal (see src/forge-timeline.js);
+						     the lane decides which stages exist, so a text→3D engine with no
+						     reference-image step simply never shows one. -->
+						<ol class="gen-stages" id="gen-stages" aria-live="polite"></ol>
+						<!-- Cold-start honesty: shown only when the API reports cold_start
+						     for the chosen self-hosted GPU lane, and dismissed by the first
+						     real "running" poll, never by a timer. -->
+						<div class="gen-warming is-hidden" id="gen-warming" role="status" data-phase="off">
+							<span class="gen-warming-pip" aria-hidden="true"></span>
+							<div class="gen-warming-copy">
+								<p class="gen-warming-title">Waking up a GPU</p>
+								<p class="gen-warming-body"></p>
+								<p class="gen-warming-count"></p>
+							</div>
 						</div>
 						<div
 							class="gen-progress"
@@ -3398,6 +3659,44 @@
 							<button class="btn" type="button" id="again" data-i18n="forge.make_another">Make another</button>
 						</div>
 					</div>
+
+					<!-- What the model was actually asked for: the art-directed rewrite
+					     that painted the reference view, straight from the API's
+					     directed_prompt field. Hidden unless the server reports one.
+					     Wired in src/forge-directed-prompt.js. -->
+					<details class="directed" id="forge-directed" hidden>
+						<summary class="directed-summary">
+							<span class="directed-chip">art-directed</span>
+							<span class="directed-summary-text">What we actually asked the model</span>
+							<svg class="directed-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+								<polyline points="6 9 12 15 18 9" />
+							</svg>
+						</summary>
+						<div class="directed-body">
+							<p class="directed-intro">
+								Your words set the subject. Before anything is painted, an art
+								director rewrites them into a single-subject brief with materials,
+								lighting and composition cues, and that rewrite is what conditions
+								the reference view your mesh is built from.
+							</p>
+							<div class="directed-block">
+								<p class="directed-label">You typed</p>
+								<p class="directed-text" id="forge-directed-raw"></p>
+							</div>
+							<div class="directed-block">
+								<p class="directed-label">
+									Sent to the reference painter
+									<span class="directed-model" id="forge-directed-model" hidden></span>
+								</p>
+								<p class="directed-text directed-text--enhanced" id="forge-directed-text"></p>
+							</div>
+							<div class="directed-actions">
+								<button class="btn btn-ghost" type="button" id="forge-directed-copy">Copy prompt</button>
+								<button class="btn btn-ghost" type="button" id="forge-directed-use">Use as my prompt</button>
+								<span class="directed-status" id="forge-directed-status" role="status" aria-live="polite"></span>
+							</div>
+						</div>
+					</details>
 
 					<!-- Category picker — label your model so the gallery and explore feed
 					     can surface it under the right filter. Wired in forge.js via the
