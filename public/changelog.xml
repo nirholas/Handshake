@@ -47,6 +47,14 @@
 			<description>Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.</description>
 		</item>
 		<item>
+			<title>The treasury self-repair now reports when it cannot repair</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The treasury self-repair now reports when it cannot repair</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The platform keeps its automated payments funded by pulling idle funds back from its own agent wallets. When that repair could not run, it said nothing at all: no log line, no alert. A recent stall lasted about eleven hours for exactly that reason, with funds available the whole time and no way to see the repair was blocked. It now raises an alert, and distinguishes the two cases that look identical but need opposite responses: the network providers were unreachable (free to fix, nothing to fund), or every source really is empty (the only case that needs a top-up).</description>
+		</item>
+		<item>
 			<title>Generation Watch</title>
 			<link>https://three.ws/watch</link>
 			<guid isPermaLink="false">2026-07-29:Generation Watch</guid>

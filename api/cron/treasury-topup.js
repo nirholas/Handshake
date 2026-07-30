@@ -81,8 +81,15 @@ export default wrapCron(async (req, res) => {
 	// (~10k repeats each) while misreporting the count of genuinely dry engines.
 	const masterAliased = [];
 	// Fallback env vars can resolve two registry entries to the SAME wallet
-	// (e.g. x402-ring-payer falling back to the agent key) — top it up once.
-	const seenPubkeys = new Set();
+	// (e.g. x402-ring-payer falling back to the agent key, or the circulation
+	// treasury sharing the pump-cron-relayer key). Top a shared wallet up ONCE,
+	// but judge it against the STRICTEST of its specs. First-spec-wins dedupe
+	// silently dropped the later, higher floor: production 2026-07-30 had the
+	// circulation treasury (floor 0.2, refill 0.5) deduped behind
+	// pump-cron-relayer (floor 0.01), so the shared wallet at 0.012 SOL was
+	// never a refill target, the deficit read zero, fuel never fired, and the
+	// Money Pulse ran free-actions-only while the master held idle USDC.
+	const byPubkey = new Map();
 	for (const spec of SOLANA_SIGNERS) {
 		if (spec.isMaster || spec.network === 'devnet') continue;
 		const resolved = await resolveSignerPubkey(spec);
@@ -95,22 +102,32 @@ export default wrapCron(async (req, res) => {
 			masterAliased.push(spec.name);
 			continue;
 		}
-		if (seenPubkeys.has(resolved.pubkey)) continue;
-		seenPubkeys.add(resolved.pubkey);
+		const refillToSol = spec.refillTo ?? spec.minSol * DEFAULT_REFILL_MULTIPLE;
+		const merged = byPubkey.get(resolved.pubkey);
+		if (!merged) {
+			byPubkey.set(resolved.pubkey, { names: [spec.name], minSol: spec.minSol, refillToSol });
+		} else {
+			merged.names.push(spec.name);
+			merged.minSol = Math.max(merged.minSol, spec.minSol);
+			merged.refillToSol = Math.max(merged.refillToSol, refillToSol);
+		}
+	}
+	for (const [pubkey, merged] of byPubkey) {
+		const name = merged.names.join('+');
 		let lamports;
 		try {
-			lamports = await connection.getBalance(new PublicKey(resolved.pubkey), 'confirmed');
+			lamports = await connection.getBalance(new PublicKey(pubkey), 'confirmed');
 		} catch (e) {
-			errors.push({ name: spec.name, pubkey: resolved.pubkey, reason: `rpc_error: ${e.message}` });
+			errors.push({ name, pubkey, reason: `rpc_error: ${e.message}` });
 			continue;
 		}
 		const sol = lamports / LAMPORTS_PER_SOL;
-		if (sol >= spec.minSol) continue;
+		if (sol >= merged.minSol) continue;
 		targets.push({
-			name: spec.name,
-			pubkey: resolved.pubkey,
+			name,
+			pubkey,
 			currentSol: Number(sol.toFixed(6)),
-			refillToSol: spec.refillTo ?? spec.minSol * DEFAULT_REFILL_MULTIPLE,
+			refillToSol: merged.refillToSol,
 		});
 	}
 
@@ -197,6 +214,51 @@ export default wrapCron(async (req, res) => {
 			`pulled ${agentReclaim.reclaimedSol} SOL back from ${agentReclaim.moves.length} platform agent wallet(s) to cover a ${totalDeficitSol.toFixed(3)} SOL deficit.`,
 			{ signature: `economy-agent-reclaim:${agentReclaim.moves.map((m) => m.address).join(',')}` },
 		);
+	}
+
+	// A self-heal that CANNOT heal has to say so. Both reclaim legs return their
+	// readErrors and failed sends in the HTTP response, and this cron's response
+	// goes to Cloud Scheduler, which discards it, so until now a reclaim that was
+	// blocked left no log line, no ledger row (the agent leg writes none on
+	// failure, unlike the engine leg's `inflow_failed`) and no alert. On
+	// 2026-07-29 that silence cost ~11 hours: every Solana RPC lane was in quota
+	// cooldown, so the balance reads failed, no candidate was ever planned, and
+	// 0.12 SOL sat reclaimable in agent wallets while the sponsor stayed under its
+	// settle floor and every 402 challenge dropped its Solana accept.
+	//
+	// Two outcomes look identical from the master's balance and have OPPOSITE
+	// remediations, so name which one happened:
+	//   blocked  : we could not read or could not send. Nothing to fund; the RPC
+	//              tier is the problem. Free to fix, no owner money.
+	//   nothing  : every source is genuinely at or below its floor. This is the
+	//              only case that needs the owner to send SOL.
+	const reclaimedTotal = Number((reclaim.reclaimedSol + agentReclaim.reclaimedSol).toFixed(6));
+	if (!dryRun && totalDeficitSol > 0 && reclaimedTotal < totalDeficitSol) {
+		const readErrors = [...(reclaim.readErrors || []), ...(agentReclaim.readErrors || [])];
+		const failedSends = [...(reclaim.failed || []), ...(agentReclaim.failed || [])];
+		const legErrors = [reclaim.error, agentReclaim.error].filter(Boolean);
+		const blocked = readErrors.length + failedSends.length + legErrors.length > 0;
+		const sample = readErrors[0]?.reason || failedSends[0]?.reason || legErrors[0] || '';
+		if (blocked) {
+			await sendOpsAlert(
+				'♻️ Economy self-heal BLOCKED: reclaim could not run',
+				`Deficit ${totalDeficitSol.toFixed(4)} SOL, reclaimed only ${reclaimedTotal} SOL. ` +
+					`${readErrors.length} balance read error(s), ${failedSends.length} failed send(s)` +
+					`${legErrors.length ? `, ${legErrors.length} leg error(s)` : ''}. First: ${String(sample).slice(0, 180)}. ` +
+					'An `rpc_error` here means the Solana RPC tier is exhausted, NOT that the wallets are dry: ' +
+					'idle SOL may still be sitting in agent wallets that could not be read. Check ' +
+					'healthz rpc_lanes and the provider quotas before sending any funds.',
+				{ signature: 'economy-selfheal-blocked', severity: 'warn' },
+			);
+		} else {
+			await sendOpsAlert(
+				'⛽ Economy self-heal found nothing to reclaim',
+				`Deficit ${totalDeficitSol.toFixed(4)} SOL and every reclaim source is at or below its floor ` +
+					`(${(reclaim.skipped || []).length + (agentReclaim.skipped || []).length} source(s) skipped). ` +
+					'This is the case that genuinely needs funding: send SOL to the economy master.',
+				{ signature: 'economy-selfheal-nothing-to-reclaim', severity: 'warn' },
+			);
+		}
 	}
 
 	// Self-healing, step 2 (revenue): if reclaim did not close the gap, convert a
