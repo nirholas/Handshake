@@ -24,9 +24,7 @@
 --   connector_ref       — opaque reference to which wallet/connector to use (null = platform default)
 --   status              — 'active' | 'exhausted' | 'expired' | 'cancelled'
 --   expires_at          — hard expiry; payments rejected after this time
---   token_hash          : HMAC-SHA256 of the bearer token, keyed by PAYMENT_SESSION_SECRET
---                         (see hashToken in api/_lib/pay/spend-governor.js; the token itself
---                         is never stored, and lookup is by id + hash so a stolen row is inert)
+--   token_hash          — bcrypt hash of the bearer token (token itself never stored)
 --   session_metadata    — arbitrary JSON for caller bookkeeping
 --   created_at / updated_at
 
