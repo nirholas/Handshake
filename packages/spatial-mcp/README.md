@@ -22,10 +22,10 @@ Put the artifact in your MCP tool result's `structuredContent`. Only `spatialMcp
 import { buildSpatialArtifact } from '@three-ws/spatial-mcp';
 
 const spatial = buildSpatialArtifact({
-	glbUrl: 'https://cdn.yoursite.example/models/helmet.glb',
-	kind: 'model',
-	prompt: 'a battle-worn sci-fi helmet',
-	title: 'Battle-worn helmet',
+	glbUrl: 'https://three.ws/avatars/xbot.glb',
+	kind: 'rigged-model',
+	prompt: 'a sci-fi robot',
+	title: 'Sci-fi robot',
 });
 
 return {

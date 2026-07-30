@@ -17,10 +17,10 @@ Put the artifact in your tool result's `structuredContent`. Only `spatialMcpVers
 import { buildSpatialArtifact } from './spatial-mcp.js';
 
 const spatial = buildSpatialArtifact({
-  glbUrl: 'https://cdn.example.com/model.glb', // https .glb — required
-  kind: 'model',                                // model | mesh | avatar | rigged-model | scene
-  viewerUrl: 'https://example.com/viewer?src=…',
-  prompt: 'a battle-worn sci-fi helmet',
+  glbUrl: 'https://three.ws/avatars/xbot.glb',  // https .glb (required)
+  kind: 'rigged-model',                          // model | mesh | avatar | rigged-model | scene
+  viewerUrl: 'https://three.ws/app#model=https://three.ws/avatars/xbot.glb',
+  prompt: 'a sci-fi robot',
 });
 
 return {
@@ -51,7 +51,7 @@ Agents can validate over MCP without importing anything:
 ```jsonc
 // tools/call → validate_spatial_response
 { "artifact": { "spatialMcpVersion": "0.1", "kind": "model",
-                "scene": { "glbUrl": "https://cdn.example.com/model.glb", "format": "glb" } } }
+                "scene": { "glbUrl": "https://three.ws/avatars/xbot.glb", "format": "glb" } } }
 // → structuredContent: { valid: true, errors: [], warnings: [...] }
 ```
 
@@ -61,7 +61,7 @@ If your existing 3D tool returns some other shape, a tiny adapter makes it confo
 
 ```js
 // Your tool already returns something like this:
-const foreign = { model_url: 'https://cdn.example.com/model.glb', thumbnail: null, name: 'A helmet' };
+const foreign = { model_url: 'https://three.ws/avatars/xbot.glb', thumbnail: null, name: 'A robot' };
 
 // A 6-line adapter → conformant artifact:
 function toSpatialArtifact(f) {

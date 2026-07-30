@@ -47,7 +47,7 @@ const fetchWithPayment = withPaymentInterceptor(fetch, wallet);
 
 // Check a 3D model
 const res = await fetchWithPayment(
-  "https://three.ws/api/x402/model-check?url=https://example.com/model.glb"
+  "https://three.ws/api/x402/model-check?url=https://three.ws/avatars/cesium-man.glb"
 );
 const { model, suggestions } = await res.json();
 

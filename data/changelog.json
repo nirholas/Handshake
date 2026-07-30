@@ -16895,6 +16895,15 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Every code sample in the docs now points at a real, loadable 3D model",
+			"summary": "Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get.",
+			"tags": [
+				"docs",
+				"improvement"
+			]
 		}
 	]
 }

@@ -113,7 +113,7 @@ GLB is the best choice for embeds: one file, no CORS complexity, maximum compati
 <agent-3d body="./models/my-character.glb"></agent-3d>
 
 <!-- Absolute URL — the server must send permissive CORS headers -->
-<agent-3d body="https://assets.example.com/my-character.glb"></agent-3d>
+<agent-3d body="https://three.ws/avatars/michelle.glb"></agent-3d>
 ```
 
 See the [CORS gotcha](#cors) below if your GLB is on a different domain.

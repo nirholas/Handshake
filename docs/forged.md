@@ -89,7 +89,7 @@ The response carries the props plus aggregate stats:
 			"category": "container",
 			"tier": "standard",
 			"status": "done",
-			"glb_url": "https://cdn.example/props/….glb",
+			"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/nvidia/5ab878cd-513d-4fb6-94b8-d389f7d7e433.glb",
 			"novelty": 0.41,
 			"cluster_id": 3,
 			"price_usdc": 0.05,
@@ -97,7 +97,7 @@ The response carries the props plus aggregate stats:
 			"payer_short": "7skQxs…9fWn",
 			"tx_sig": "5Yw…settlement signature…",
 			"explorer_url": "https://solscan.io/tx/5Yw…",
-			"viewer_url": "/app?src=https%3A%2F%2Fcdn.example%2Fprops%2F….glb"
+			"viewer_url": "/app?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fnvidia%2F5ab878cd-513d-4fb6-94b8-d389f7d7e433.glb"
 		}
 	],
 	"stats": {

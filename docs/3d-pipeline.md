@@ -58,11 +58,11 @@ model can walk, wave, and emote. **In:** a static GLB. **Out:** a rigged GLB.
 # 1. Discover the price (unpaid request returns the 402 challenge)
 curl -s -X POST https://three.ws/api/x402/pipeline-rig \
   -H 'content-type: application/json' \
-  -d '{"glb_url":"https://three.ws/forge/character.glb","rig_type":"biped"}'
+  -d '{"glb_url":"https://three.ws/avatars/mannequin.glb","rig_type":"biped"}'
 
 # 2. Pay with an x402 client (settles the 402 and retries automatically)
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-rig \
-  --json '{"glb_url":"https://three.ws/forge/character.glb","rig_type":"biped"}'
+  --json '{"glb_url":"https://three.ws/avatars/mannequin.glb","rig_type":"biped"}'
 # → { "stage":"rig", "output_url":"https://three.ws/cdn/x402-pipeline/rig/….glb", ... }
 ```
 
@@ -74,7 +74,7 @@ options. **Out:** a cleaned GLB with predictable topology.
 
 ```bash
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-remesh \
-  --json '{"glb_url":"https://three.ws/forge/sample.glb","remesh_mode":"quad","target_faces":20000}'
+  --json '{"glb_url":"https://three.ws/avatars/brainstem.glb","remesh_mode":"quad","target_faces":20000}'
 # → { "stage":"remesh", "output_url":"…", "face_count":20000, "quad_ratio":0.98, "textured":true }
 ```
 
@@ -91,7 +91,7 @@ topology, so the asset drops into a real-time engine within budget. **In:** a GL
 
 ```bash
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-gameready \
-  --json '{"glb_url":"https://three.ws/forge/prop.glb","topology":"quad","poly_budget":12000}'
+  --json '{"glb_url":"https://three.ws/avatars/fox.glb","topology":"quad","poly_budget":12000}'
 # → { "stage":"gameready", "output_url":"…", "poly_budget":12000, "quad_ratio":0.97 }
 ```
 

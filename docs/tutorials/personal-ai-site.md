@@ -257,7 +257,7 @@ Here is the full page. Replace the placeholder values in brackets and swap in yo
     <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
     <agent-3d
       id="maya"
-      body="https://yourname.com/avatars/maya.glb"
+      body="https://three.ws/avatars/michelle.glb"
       brain="claude-opus-4-7"
       style="height: calc(100% - 130px); display: block"
     ></agent-3d>
@@ -381,8 +381,8 @@ When a visitor asks to see or look at a project, call `load_project`
 with the matching URL.
 
 Project model URLs:
-- Acme Dashboard: https://yourname.com/models/acme-dashboard.glb
-- Health App AR: https://yourname.com/models/health-ar.glb
+- Studio Scene: https://three.ws/avatars/studio.glb
+- Fox Mascot: https://three.ws/avatars/fox.glb
 ```
 
 `handlers.js`:
@@ -399,13 +399,13 @@ Install it by adding the `skills` attribute to the element (or a `skills` entry 
 ```html
 <agent-3d
   id="maya"
-  body="https://yourname.com/avatars/maya.glb"
+  body="https://three.ws/avatars/michelle.glb"
   brain="claude-opus-4-7"
   skills="https://yourname.com/skills/load-project/"
 ></agent-3d>
 ```
 
-Now when a visitor says "show me the health app", the agent calls `load_project`, which calls `ctx.loadGLB()` on the scene controller, swapping the avatar's environment for the project model. The full authoring reference (context API, sandboxing, publishing) is in the [Skills system](/docs/skills) doc, and [Build a custom skill](/docs/tutorials/custom-skill) walks through a bundle end to end.
+Now when a visitor says "show me the studio scene", the agent calls `load_project`, which calls `ctx.loadGLB()` on the scene controller, swapping the avatar's environment for the project model. The full authoring reference (context API, sandboxing, publishing) is in the [Skills system](/docs/skills) doc, and [Build a custom skill](/docs/tutorials/custom-skill) walks through a bundle end to end.
 
 ---
 

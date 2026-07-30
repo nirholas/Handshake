@@ -376,7 +376,7 @@ The minimum manifest to run an agent:
   "name": "Aria",
   "description": "A helpful 3D guide for my product",
   "body": {
-    "uri": "https://example.com/aria.glb",
+    "uri": "https://three.ws/avatars/michelle.glb",
     "format": "gltf-binary"
   },
   "brain": {

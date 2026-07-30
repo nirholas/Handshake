@@ -75,9 +75,9 @@ Inspect any public GLB — exact stats, no viewer:
 ```js
 import { inspect } from '@three-ws/glb-tools';
 
-const report = await inspect('https://three.ws/avatar/character-studio/sample.glb');
+const report = await inspect('https://three.ws/avatars/cesium-man.glb');
 
-console.log(report.model.counts.totalTriangles); // → 24812
+console.log(report.model.counts.totalTriangles); // → 4672
 console.log(report.model.counts.skins > 0);       // → true  (rigged)
 report.suggestions.forEach((s) => console.log(`[${s.severity}] ${s.message}`));
 ```

@@ -137,7 +137,7 @@ Then pay for any endpoint:
 ```js
 const out = await window.X402.pay({
   endpoint: 'https://three.ws/api/x402/model-check?url=' +
-            encodeURIComponent('https://three.ws/avatar/character-studio/sample.glb'),
+            encodeURIComponent('https://three.ws/avatars/cesium-man.glb'),
   method: 'GET',
   merchant: 'three.ws',
   action: 'Model Check',

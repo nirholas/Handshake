@@ -405,7 +405,7 @@ const wallet = createWalletClient({
 const fetchPaid = wrapFetchWithPayment(fetch, wallet);
 
 const url = `http://localhost:3000/api/model-check?url=${encodeURIComponent(
-  'https://three.ws/avatar/character-studio/sample.glb',
+  'https://three.ws/avatars/cesium-man.glb',
 )}`;
 
 const res = await fetchPaid(url);
@@ -486,7 +486,7 @@ function send402(res, resourceUrl, extra = {}) {
           input: {
             type: 'http',
             method: 'GET',
-            queryParams: { url: 'https://three.ws/avatar/character-studio/sample.glb' },
+            queryParams: { url: 'https://three.ws/avatars/cesium-man.glb' },
             queryParamsSchema: {
               $schema: 'https://json-schema.org/draft/2020-12/schema',
               type: 'object',
@@ -499,12 +499,12 @@ function send402(res, resourceUrl, extra = {}) {
           output: {
             type: 'json',
             example: {
-              url: 'https://three.ws/avatar/character-studio/sample.glb',
-              fetchedBytes: 1572864,
+              url: 'https://three.ws/avatars/cesium-man.glb',
+              fetchedBytes: 438044,
               counts: {
-                scenes: 1, nodes: 18, meshes: 6, materials: 4,
-                textures: 3, animations: 1, totalVertices: 12480,
-                totalTriangles: 24812,
+                scenes: 1, nodes: 22, meshes: 1, materials: 1,
+                textures: 1, animations: 1, totalVertices: 3273,
+                totalTriangles: 4672,
               },
             },
           },
@@ -608,7 +608,7 @@ export async function check_model({ glb_url }, ctx) {
 }
 ```
 
-Load the skill into your agent, ask "is this model too heavy for mobile? https://example-cdn/your-asset.glb", and watch the agent pay $0.001 mid-conversation and reply with concrete numbers.
+Load the skill into your agent, ask "is this model too heavy for mobile? https://three.ws/avatars/cesium-man.glb", and watch the agent pay $0.001 mid-conversation and reply with concrete numbers.
 
 The settlement is real. The receiver wallet (your endpoint's `X402_PAY_TO_BASE`) is credited. The buyer (your agent's operator wallet) is debited. Both sides see the transfer on-chain.
 

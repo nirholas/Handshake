@@ -82,7 +82,7 @@ There are three ways to offer AR from your own page, depending on how you embed.
 </script>
 
 <three-ws-viewer
-  src="https://three.ws/cdn/your-model.glb"
+  src="https://three.ws/avatars/michelle.glb"
   ar
 ></three-ws-viewer>
 ```

@@ -378,12 +378,15 @@ import { WebXRSession } from '/src/ar/webxr.js';
 // iOS: Quick Look takes a USDZ, not a GLB (bake one with
 // glbBlobToAnimatedUsdzBlob / glbBlobToUsdzBlob, see the USDZ pipeline above)
 if (canUseQuickLook()) {
-  openQuickLook('https://cdn.example.com/model.usdz');
+  const glbBlob = await fetch('https://three.ws/avatars/cesium-man.glb').then((r) => r.blob());
+  const { glbBlobToUsdzBlob } = await import('/src/usdz-pipeline.js');
+  const usdzBlob = await glbBlobToUsdzBlob(glbBlob);
+  openQuickLook(URL.createObjectURL(usdzBlob));
 }
 
 // Android: Scene Viewer takes the GLB URL
 else if (canUseSceneViewer()) {
-  openSceneViewer('https://cdn.example.com/model.glb', {
+  openSceneViewer('https://three.ws/avatars/cesium-man.glb', {
     title: 'My Agent',
     link: 'https://three.ws',
   });

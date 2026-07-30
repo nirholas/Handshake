@@ -11,7 +11,7 @@ This tutorial walks the URL-import path end to end. It's the sibling of [Upload 
 ## What you're building
 
 ```
-You:    paste  https://models.example-cdn.com/64c3….glb   into /import/rpm
+You:    paste  https://three.ws/avatars/michelle.glb   into /import/rpm
    ↓    server fetches the file (no CORS to fight)
    ↓    humanoid bones canonicalized → idle/walk clips will play
    ↓    stored on the three.ws CDN as an avatar record

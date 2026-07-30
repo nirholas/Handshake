@@ -28,13 +28,13 @@ Core capabilities:
 The `src` attribute (or `body` for direct GLB URIs) on `<agent-3d>` loads a model on mount:
 
 ```html
-<agent-3d src="https://example.com/avatar.glb"></agent-3d>
+<agent-3d src="https://three.ws/avatars/michelle.glb"></agent-3d>
 ```
 
 For the standalone viewer page, pass the model via URL hash:
 
 ```
-https://three.ws/app#model=https://example.com/avatar.glb
+https://three.ws/app#model=https://three.ws/avatars/michelle.glb
 ```
 
 ### Programmatically
@@ -43,7 +43,7 @@ Set the `src` (or `body`) attribute on the element; a change to either triggers 
 
 ```js
 const el = document.querySelector('agent-3d');
-el.setAttribute('src', 'https://example.com/new-model.glb');
+el.setAttribute('src', 'https://three.ws/avatars/xbot.glb');
 ```
 
 Or drive the underlying `Viewer` instance directly. Its `load(url, rootPath, assetMap, onProgress)` method accepts HTTPS URLs, blob URLs, and data URIs.
@@ -315,7 +315,7 @@ A `?agent=<id>` query parameter (not hash) opens the same page in editing mode w
 Example: load a specific model with a fixed camera position:
 
 ```
-https://three.ws/app#model=https://cdn.example.com/robot.glb&cameraPosition=0,1.2,2.5
+https://three.ws/app#model=https://three.ws/avatars/xbot.glb&cameraPosition=0,1.2,2.5
 ```
 
 ---

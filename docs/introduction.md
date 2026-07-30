@@ -181,7 +181,7 @@ The minimum to get a three.ws on screen is two lines of HTML:
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
-<agent-3d body="https://example.com/avatar.glb"></agent-3d>
+<agent-3d body="https://three.ws/avatars/michelle.glb"></agent-3d>
 ```
 
 This loads your GLB file into a viewer with orbit controls, auto-sized to its container. No server, no build step, no API key required for a basic viewer.
@@ -190,7 +190,7 @@ To add an AI brain:
 
 ```html
 <agent-3d
-  body="https://example.com/avatar.glb"
+  body="https://three.ws/avatars/michelle.glb"
   brain="claude-sonnet-4-6"
   key-proxy="/api/llm"
   instructions="You are Aria, a helpful product guide."
