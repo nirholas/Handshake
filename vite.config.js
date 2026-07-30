@@ -616,6 +616,7 @@ const appConfig = {
 				'play-arena': resolve(__dirname, 'pages/play/arena.html'),
 				'play-ufo': resolve(__dirname, 'pages/play/ufo.html'),
 				'play-economy': resolve(__dirname, 'pages/play/economy.html'),
+				cookbook: resolve(__dirname, 'pages/cookbook.html'),
 				agi: resolve(__dirname, 'pages/agi.html'),
 				arena: resolve(__dirname, 'pages/arena.html'),
 				'smart-money': resolve(__dirname, 'pages/smart-money.html'),

@@ -3461,6 +3461,12 @@ URL: https://three.ws/tutorials/earn-and-spend-in-play
 
 Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.
 
+### Docs: The showcase
+
+URL: https://three.ws/docs/showcase
+
+The public directory of ERC-8004 agents that registered a real 3D avatar. Nothing is curated: an agent appears because the crawler verified its on-chain metadata resolves to a usable model. Covers the qualifying rules and the keyset-paginated API.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

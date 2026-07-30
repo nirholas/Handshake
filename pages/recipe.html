@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en" class="cookbook-page">
 	<head>
-		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — Cookbook recipe</title>
+		<title>three.ws Cookbook recipe</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
@@ -14,7 +14,7 @@
 		<meta name="theme-color" content="#000000" />
 		<meta property="og:type" content="article" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="three.ws — Cookbook recipe" />
+		<meta property="og:title" content="three.ws Cookbook recipe" />
 		<meta
 			property="og:description"
 			content="A runnable three.ws cookbook recipe: the file, why it is shaped that way, and what it produces."
@@ -283,7 +283,7 @@
 						escapeHtml(detail) +
 						'</p><p><a class="cb-btn primary" href="/cookbook">Back to the cookbook</a> ' +
 						'<a class="cb-btn" href="/docs/3d-api">API docs</a></p></div>';
-					document.title = 'three.ws — recipe not found';
+					document.title = 'three.ws Cookbook: recipe not found';
 				}
 
 				async function load() {
@@ -294,7 +294,7 @@
 					}
 					const recipe = window.recipeBySlug(slug);
 					if (recipe) {
-						document.title = recipe.title + ' — three.ws Cookbook';
+						document.title = recipe.title + ' / three.ws Cookbook';
 						crumb.textContent = recipe.title;
 						fillFacts(recipe);
 					}
