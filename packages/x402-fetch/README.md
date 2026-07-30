@@ -94,6 +94,10 @@ const pay = wrapFetchWithPayment(fetch, wallet);
 | `user rejected payment` | The wallet user cancelled the signature. |
 | `payment submitted but server still returned 402` | The retry was still gated — usually an amount/recipient mismatch. |
 
+## Examples
+
+Runnable scripts live in [`examples/`](./examples): a zero-spend 402 discovery probe and a real env-gated paid call against the live three.ws Market Data API.
+
 ## License
 
 All rights reserved. See [LICENSE](./LICENSE).

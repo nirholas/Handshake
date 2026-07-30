@@ -120,7 +120,7 @@ POST  /api/notifications/:id/read      → mark one read
 POST  /api/notifications/read-all      → mark everything read
 POST  /api/notifications/track         → delivery/click tracking
 GET   /api/notifications/preferences   → the preference matrix
-PATCH /api/notifications/preferences   → update it
+PUT   /api/notifications/preferences   → update it
 ```
 
 Preferences are a category × channel matrix
