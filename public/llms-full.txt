@@ -2692,6 +2692,12 @@ URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 
+### How to Monetize an MCP Server: Paid Tools with x402
+
+URL: https://three.ws/news/monetize-mcp-server-x402-paid-tools
+
+The seller-side guide to agent payments: choose work worth charging for, price it in atomic USDC units, answer unpaid calls with a real 402, verify then work then settle, charge per tool inside an MCP tools/call, and get indexed where agents shop for paid services.
+
 ### three.ws Joins the Quicknode Startup Program
 
 URL: https://three.ws/news/quicknode-startup-program
@@ -2804,7 +2810,7 @@ URL: https://three.ws/news/cmc-memecoin-3d-world
 
 URL: https://three.ws/news/aws-builder-center-blog
 
-three.ws's contribution is live on the official AWS Builder Center Blog: "How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3" — covering ResolveCustomer, MeterUsage, entitlements, SNS lifecycle webhooks, and bridging to an on-chain x402 paywall.
+three.ws's contribution is live on the official AWS Builder Center Blog: "How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3". It covers ResolveCustomer, MeterUsage, entitlements, SNS lifecycle webhooks, and bridging to an on-chain x402 paywall.
 
 ### three.ws Is Now Officially Live on AWS Marketplace
 

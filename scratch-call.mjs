@@ -1,0 +1,11 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+const [target, name, argsJson] = process.argv.slice(2);
+const t = new StdioClientTransport({ command: process.execPath, args: [target] });
+const c = new Client({ name: 'probe', version: '0.0.0' });
+await c.connect(t);
+const r = await c.callTool({ name, arguments: JSON.parse(argsJson || '{}') });
+console.log('isError:', r.isError);
+const txt = r.content?.[0]?.text ?? '';
+console.log(txt.slice(0, 2500));
+await c.close();

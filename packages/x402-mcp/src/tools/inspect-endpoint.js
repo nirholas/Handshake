@@ -31,14 +31,27 @@ export const def = {
 				result: probe.result,
 			};
 		}
-		const accepts = probe.accepts.map((a) => ({
-			scheme: a.scheme,
-			network: a.network,
-			price: a.price ?? a.maxAmountRequired ?? undefined,
-			asset: a.asset ?? a.extra?.asset ?? undefined,
-			pay_to: a.payTo ?? undefined,
-			max_timeout_seconds: a.maxTimeoutSeconds ?? undefined,
-		}));
+		const accepts = probe.accepts.map((a) => {
+			// x402 v2 advertises the atomic charge as `amount`; v1 called it
+			// `maxAmountRequired`, and some servers emit a bare `price`. Read all
+			// three or the price silently disappears from the answer.
+			const atomic = a.amount ?? a.maxAmountRequired ?? a.price ?? undefined;
+			const decimals = Number(a.extra?.decimals);
+			const assetName = String(a.extra?.name ?? '').trim();
+			const display =
+				atomic !== undefined && Number.isFinite(decimals)
+					? `${Number(atomic) / 10 ** decimals}${assetName ? ` ${assetName}` : ''}`
+					: undefined;
+			return {
+				scheme: a.scheme,
+				network: a.network,
+				price: atomic,
+				price_display: display,
+				asset: a.asset ?? a.extra?.asset ?? undefined,
+				pay_to: a.payTo ?? undefined,
+				max_timeout_seconds: a.maxTimeoutSeconds ?? undefined,
+			};
+		});
 		return {
 			ok: true,
 			url,

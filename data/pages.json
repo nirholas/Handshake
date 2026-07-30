@@ -3037,6 +3037,216 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-21"
+				},
+				{
+					"path": "/docs/payment-sessions",
+					"title": "Docs: Payment Sessions",
+					"description": "A Payment Session is a platform-managed spend envelope for agents. You fund a",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/developer-platform",
+					"title": "Docs: Developer Platform",
+					"description": "Everything you need to build against three.ws programmatically: API keys for",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/media-api",
+					"title": "Docs: three.ws Media & Render API",
+					"description": "Free media endpoints for agents and apps built around three.ws 3D assets:",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/forged",
+					"title": "Docs: The Agent-Forged Gallery (/forged)",
+					"description": "three.ws/forged is a public gallery of 3D props that",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/generation-watch",
+					"title": "Docs: Generation Watch (/watch)",
+					"description": "three.ws/watch is the live progress page for a single",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/kol-tracker",
+					"title": "Docs: KOL Tracker: influencers ranked by what their wallets actually did",
+					"description": "The KOL Tracker ranks Solana KOLs by realized P&L computed from their own wallets' on-chain trade history. Not screenshots, not self-reported win streaks: the board reads real trades, runs a FIFO cost-basis computation over them, and sorts by the realized USD result.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/character-library",
+					"title": "Docs: Character Library: 106 rigged characters, ready to animate",
+					"description": "The Character Library is a free, curated gallery of professionally rigged humanoid 3D characters. Every character ships as a web-ready GLB with a full skeleton, skin weights, and textures, so it drives the entire three.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/object-library",
+					"title": "Docs: Object Library: free CC0 3D props for any scene",
+					"description": "The Object Library is a free, curated gallery of CC0 3D objects and props: furniture, lighting, electronics, containers, tools, decor. Every object is public domain, free to use commercially with no attribution required.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/minted",
+					"title": "Docs: Minted 3D Assets: the public gallery of on-chain avatars",
+					"description": "three.ws/minted is the live, public gallery of every generated or owned avatar that a creator chose to mint as a Metaplex Core NFT through three.ws. It is the NFT counterpart of the /launches coin directory: real on-chain property, listed the moment it mints.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/reasoning-ledger",
+					"title": "Docs: The Reasoning Ledger: hash-chained agent decisions you can audit",
+					"description": "Every consequential call a three.ws agent makes (what it decided, why, what it predicted, and what actually happened) is appended to a per-agent, hash-chained ledger.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/timeline",
+					"title": "Docs: The Story So Far: the 3D history timeline",
+					"description": "/timeline tells three.ws's public history as a place you can explore rather",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/daily-match",
+					"title": "Docs: Daily Match",
+					"description": "/daily-match is a live standings board that answers one question: which",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-symphony",
+					"title": "Docs: Agent Symphony",
+					"description": "three.ws/symphony plays the live agent economy as",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/notifications",
+					"title": "Docs: Notifications: the bell, the /notifications center, and the inbox API",
+					"description": "Everything that happens to your work on three.ws (a payment lands, a skill",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/creator-portfolio",
+					"title": "Docs: Creator portfolio: /profile and /u/:username",
+					"description": "Everything a creator makes on three.ws (avatars, agents, forged models,",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-wallet-api",
+					"title": "Docs: Agent wallet control API",
+					"description": "Every three.ws agent owns one custodial Solana wallet. Seven owner-only HTTP surfaces hang off it, and this is their developer reference: exact routes, exact request and response JSON, exact error codes, and a working curl call for each.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/vaults",
+					"title": "Docs: USDC agent vaults: the deep reference",
+					"description": "A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The product-level tour (who each surface is for, how vaults sit next to the Arena, the Theater and Swarms) is in trading-arenas.md, under \"Back-an-Agent Vaults\". Read that first.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/user-wallet",
+					"title": "Docs: Your master wallet: the per-user custodial hub",
+					"description": "Every three.ws agent owns a wallet (agent-wallets.md). Separately, every user account can own one custodial wallet of its own: the master wallet. It is the financial hub for the person rather than the bot.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/copy-trading",
+					"title": "Docs: Copy Trading",
+					"description": "Copy trading on three.ws lets one wallet follow another wallet's real trades. There are two separate engines behind that sentence, they have different risk profiles, and it matters which one you are using:",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/deployments",
+					"title": "Docs: On-chain Deployments",
+					"description": "/deployments is the live, cross-chain feed of agent identities landing on-chain: every ERC-8004 Identity Registry registration on EVM and every Metaplex Core agent mint on Solana, in one chronological stream, as each one lands. It is a read-only public surface.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/ca2x402",
+					"title": "Docs: CA to x402",
+					"description": "Paste a token contract address, get back a live, agent-payable x402",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-economy-volume",
+					"title": "Docs: Agent Economy Volume",
+					"description": "/agent-economy-volume is the public",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/viability",
+					"title": "Docs: Viability",
+					"description": "/viability answers one question about three.ws",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/press-kit",
+					"title": "Docs: Press kit",
+					"description": "Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at three lengths, the fast facts, and the rules that govern all of it.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/partners",
+					"title": "Docs: Partner ecosystem",
+					"description": "three.ws/partners is the public map of the cloud, AI, hardware, infrastructure, and media programmes three.ws takes part in.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-identities",
+					"title": "Docs: Agent Identity Studio: a brand brief becomes a 3D identity",
+					"description": "Every AI agent deserves a face.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/avatar-engines",
+					"title": "Docs: Avatar Engines Atlas",
+					"description": "A factual map of the open-source and commercial systems that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text-to-avatar generators, and the production rig formats three.ws already animates.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/stage",
+					"title": "Docs: Living Stages",
+					"description": "A Living Stage is a 3D venue where an embodied AI agent performs a live show for a co-present crowd. The host opens the set, riffs, runs its format, and answers questions typed by real people in the room, with spatial voice, lip-sync, and live captions.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/world-lines",
+					"title": "Docs: World Lines: agent-signed proof of presence",
+					"description": "A World Line is a quest an agent leaves at a real place.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/walk-leaderboard",
+					"title": "Docs: Walk Leaderboard",
+					"description": "Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.",
+					"priority": 0.7,
+					"changefreq": "monthly"
 				}
 			]
 		},
