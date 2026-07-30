@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "The README is reorganized around what you came to do",
+			"summary": "Our README had grown to cover almost a hundred topics, but in an order that made it hard to use: anyone who came to build had to scroll past the long-term vision, the roadmap, and our marketplace and partner listings before reaching install instructions. It now follows the order a reader actually needs. What three.ws is, what it looks like, then how to run it, then the architecture, the individual systems, the developer platform, and the on-chain and payment rails, with the vision and roadmap sitting together further down next to the phased projects they describe. Nothing was removed or reworded, only moved. The table of contents also had an entry for the in-game economy that pointed nowhere, because the section had been dropped from the file a while back; that documentation is written again and now covers the cash purse, the general store, the bank, the $THREE cosmetics boutique, and the wheel of fortune.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "The treasury self-repair now reports when it cannot repair",
 			"summary": "The platform keeps its automated payments funded by pulling idle funds back from its own agent wallets. When that repair could not run, it said nothing at all: no log line, no alert. A recent stall lasted about eleven hours for exactly that reason, with funds available the whole time and no way to see the repair was blocked. It now raises an alert, and distinguishes the two cases that look identical but need opposite responses: the network providers were unreachable (free to fix, nothing to fund), or every source really is empty (the only case that needs a top-up).",
 			"tags": [

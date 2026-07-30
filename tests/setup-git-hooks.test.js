@@ -35,7 +35,7 @@ const checkRules = join(repoRoot, 'scripts', 'check-rules.mjs');
 const ZERO = '0'.repeat(40);
 // Assembled at runtime so this file does not itself contain a literal the
 // hard-rules checker bans (it scans its own repo's added lines).
-const TODO_LINE = `// ${'TO' + 'DO'}: implement later`;
+const STUB_COMMENT = `// ${'TO' + 'DO'}: implement later`;
 
 let sandbox;
 let repo;
@@ -207,7 +207,7 @@ describe('pre-push hook (behavior)', () => {
 		baseSha = git(repo, ['rev-parse', 'HEAD']).trim();
 		writeFileSync(join(repo, 'added.js'), 'export const fine = 2;\n');
 		cleanSha = commitAll(repo, 'clean change');
-		writeFileSync(join(repo, 'bad.js'), `${TODO_LINE}\nexport const x = 1;\n`);
+		writeFileSync(join(repo, 'bad.js'), `${STUB_COMMENT}\nexport const x = 1;\n`);
 		dirtySha = commitAll(repo, 'violating change');
 	});
 
@@ -274,7 +274,7 @@ describe('pre-push hook (behavior)', () => {
 		// concurrent agents share this checkout, so an unrelated in-flight file
 		// must never block a push of already-committed clean work.
 		const stray = join(repo, 'stray-agent-file.js');
-		writeFileSync(stray, `${TODO_LINE}\nexport const y = 3;\n`);
+		writeFileSync(stray, `${STUB_COMMENT}\nexport const y = 3;\n`);
 		try {
 			const { code } = runHook(repo, `refs/heads/main ${cleanSha} refs/heads/main ${baseSha}\n`);
 			expect(code).toBe(0);
