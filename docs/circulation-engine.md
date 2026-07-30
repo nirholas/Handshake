@@ -62,6 +62,7 @@ falls back to a weighted everyday mix.
 | `tip` | 18 | **Real** | Direct SOL transfer between two agents (0.001–0.006 SOL) |
 | `trade` | 12 | **Real** | On-chain trade via the platform trade engine; records `pump_agent_trades` |
 | `trial` | 12 | DB only | Records a `trial` skill-purchase row (no transfer) |
+| `use_trial` | 12 | DB only | Spends one run of an existing trial via `consumeTrialUse`, and logs real usage |
 | `buy_asset` | 8 | **Real** | Buyer pays in $THREE (SPL transfer) for an avatar/agent/plugin; records `asset_purchases` |
 | `review` | 8 | DB only | Inserts a marketplace review row |
 | `payment` | 6 | **Real** | Direct SOL transfer for a named service (0.0012–0.01 SOL), logged with category `x402` |
@@ -69,6 +70,40 @@ falls back to a weighted everyday mix.
 Listing actions (`list_skill`, `list_asset`) are emitted as needed to keep
 sellers "stocked" and are database-only (they create a price row, not a
 transfer).
+
+The weight table is a single exported constant, `LIGHT_ACTION_WEIGHTS` in
+`api/_lib/circulation.js`, and `tests/circulation-trial-conversion.test.js`
+holds every weighted kind to having a real handler in the `ACTIONS` registry.
+Adding a weight without a handler is otherwise a silent runtime skip.
+
+## The trial funnel
+
+`trial` and `use_trial` exist as a pair, and the pairing is load-bearing rather
+than decorative. A trial grants a fixed number of runs (`trial_remaining`). The
+buying action refuses a buyer who already has access, which correctly covers a
+confirmed purchase **or** a trial that still has runs left. Once those runs are
+spent, that agent is no longer a freeloader, it is the single best purchase
+candidate on the platform, and `buy_skill` becomes eligible for it again:
+
+```
+list_skill  ->  trial  ->  use_trial (xN, until trial_remaining hits 0)  ->  buy_skill
+```
+
+Both free actions sit outside `COSTLY_ACTIONS`, so they keep running when the
+paid budget is zero. That is deliberate: a lean treasury is exactly when the
+funnel most needs to keep advancing trials toward the point of conversion, so
+that demand is queued up and ready the moment the treasury can fund a purchase
+again.
+
+> **Why this is called out.** Before `use_trial` existed, nothing ever spent a
+> trial run. `consumeTrialUse` is reachable only from the x402 agent-action
+> route, which circulation agents never call, so `trial_remaining` stayed at
+> its granted value permanently and every trial retired its
+> (buyer, seller, skill) triple from the paid path for good. Production had
+> accumulated 10,282 trial rows, zero confirmed purchases ever, and not a
+> single exhausted trial. Marketplace revenue was a structural zero rather than
+> a demand problem. If you add another free action that grants access, give it
+> an exit in the same change.
 
 > The only coin the engine ever launches, trades, or prices marketplace
 > inventory against is **$THREE**

@@ -7,7 +7,7 @@ import { failure } from '../style.js';
  * `three-ws-avatar hash <path>` — SHA-256 of file bytes, lowercase hex.
  *
  * Prints the hash as a single line on stdout so it can be piped:
- *   sha=$(three-ws-avatar hash ./avatar.glb)
+ *   sha=$(three-ws-avatar hash ./michelle.glb)
  * Stdout stays the raw hex (or JSON with --json) — never decorated.
  */
 export async function hash({ positional, flags }) {

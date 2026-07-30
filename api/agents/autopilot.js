@@ -5,7 +5,8 @@
  *   GET    /api/agents/:id/autopilot            → policy + compiled rules + runway view
  *   POST   /api/agents/:id/autopilot/compile    → plain-English policy → structured rules (preview only)
  *   PUT    /api/agents/:id/autopilot            → save / arm / disarm / kill / edit rules
- *   POST   /api/agents/:id/autopilot/run        → run one real autopilot cycle now
+ *   POST   /api/agents/:id/autopilot/run        → run one cycle now { dry_run }
+ *                                                 (simulates unless dry_run is false)
  *
  * Every write is owner-only (server-side) and CSRF-protected. Executing paths act
  * ONLY on the agent's own wallet and are clamped to the agent's spend policy at
@@ -184,7 +185,12 @@ async function handleRun(req, res, id) {
 	} catch {
 		body = {};
 	}
-	const dryRun = body?.dry_run === true;
+	// A missing dry_run simulates. This endpoint moves real funds, so the default
+	// has to be the harmless one: a caller that forgot the flag, replayed a bare
+	// POST, or hand-rolled the request gets a preview, never a spend. Matches the
+	// sibling wallet-intents runner, which has always defaulted to simulation.
+	// Spending is opt-in and explicit: dry_run must be literally false.
+	const dryRun = body?.dry_run !== false;
 
 	try {
 		const result = await runAutopilotCycle({

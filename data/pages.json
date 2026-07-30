@@ -2136,6 +2136,15 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/world",
+					"title": "Docs World (immersive 3D docs)",
+					"description": "The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-07-30",
+					"showcase": true
+				},
+				{
 					"path": "/crypto",
 					"title": "Crypto Data API",
 					"description": "Free, keyless crypto data for AI agents in one API: token snapshots, security/rug signals, holder concentration, live pump.fun launches, bonding-curve status, whale activity, trending tokens, wallet portfolios and ticker-availability checks. No key, no account, no paywall.",

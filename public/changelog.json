@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-30T17:21:30.492Z",
+	"generated_at": "2026-07-30T19:20:19.101Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Docs World (immersive 3D docs)",
+			"summary": "The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.",
+			"link": "/docs/world",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-30",
 			"type": "launch",
@@ -93,6 +103,17 @@
 			"summary": "Three money surfaces now have real references. Agent vaults explains NAV-priced deposits and redemptions, the drawdown breaker, performance fees, and the public audit ledger. The master wallet doc covers funding it, sending SOL or USDC, and topping up an agent. Copy trading explains both ways to follow a leader, the leaderboard weighting, and the Smart Money directory. All three spell out exactly which requests move real money.",
 			"link": "/docs/vaults",
 			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Docs World: read the documentation inside a walkable 3D world",
+			"summary": "The docs now come in two forms with one content source. The classic reader at three.ws/docs stays exactly as it was, and a new immersive surface at three.ws/docs/world turns the same documentation into a place: all fourteen sections of the sidebar become glowing pavilions on a ring, you walk an avatar between them (keyboard, or a joystick on phones), and picking a page opens the live doc right inside the scene. Deep links carry over both ways, any rigged GLB can be your body via the avatar parameter, and devices without 3D support are routed to the classic docs with nothing missing.",
+			"link": "/docs/world",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},

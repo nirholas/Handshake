@@ -152,7 +152,43 @@ const SKILL_PRICE_MIN_THREE = 80; // whole $THREE
 const SKILL_PRICE_MAX_THREE = 1200;
 const ASSET_PRICE_MIN_THREE = 600;
 const ASSET_PRICE_MAX_THREE = 4000;
-const THREE_TOPUP_SOL = 0.012; // SOL spent to buy $THREE when a buyer is short
+const THREE_TOPUP_SOL = 0.012; // smallest $THREE top-up buy, and the quote probe size
+// Ceiling on ONE top-up buy. The per-tick share of the treasury caps it further
+// (see perActionSolCap), so this is the hard stop, not the usual spend.
+const THREE_TOPUP_MAX_SOL = Number(process.env.CIRCULATION_THREE_TOPUP_MAX_SOL) || 0.06;
+
+const roundSol = (n) => Math.round(Number(n) * 1e6) / 1e6;
+
+/**
+ * Size a $THREE top-up buy against what the buyer actually needs.
+ *
+ * Pure, so the refusal rule is unit-testable without a chain: a shortfall that
+ * costs more than `maxSol` returns `sufficient:false` and the caller skips
+ * WITHOUT trading, rather than buying a fixed slice that cannot clear the price
+ * and paying a fee for the privilege on every tick.
+ *
+ * @param {{needAtomic:bigint|string, haveAtomic:bigint|string, atomicPerSol:number,
+ *   maxSol:number, minSol?:number}} p
+ * @returns {{sol:number, sufficient:boolean, shortfallAtomic:string,
+ *   reason?:string, wantedSol?:number}}
+ */
+export function planThreeTopUp({ needAtomic, haveAtomic, atomicPerSol, maxSol, minSol = 0 }) {
+	const shortfall = BigInt(needAtomic) - BigInt(haveAtomic);
+	if (shortfall <= 0n) return { sol: 0, sufficient: true, shortfallAtomic: '0' };
+
+	const rate = Number(atomicPerSol);
+	if (!Number.isFinite(rate) || rate <= 0) {
+		return { sol: 0, sufficient: false, shortfallAtomic: shortfall.toString(), reason: 'no_rate' };
+	}
+
+	// 8% over the quoted rate: the fill moves the curve and pays fees, so buying
+	// exactly the quoted shortfall reliably lands a hair under the price.
+	const wanted = roundSol(Math.max(minSol, (Number(shortfall) / rate) * 1.08));
+	if (wanted > maxSol) {
+		return { sol: 0, sufficient: false, shortfallAtomic: shortfall.toString(), reason: 'above_cap', wantedSol: wanted };
+	}
+	return { sol: wanted, sufficient: true, shortfallAtomic: shortfall.toString() };
+}
 const SKILLS_PER_SELLER = 3; // how many skills a seller lists before it's "stocked"
 
 function threeAtomic(whole) {
@@ -637,10 +673,57 @@ async function ensureThree(ctx, agent, needAtomic) {
 	let have = await threeBalanceAtomic(conn, agent.address);
 	if (have >= needAtomic) return have;
 
-	await ensureFunded(conn, treasuryKp, agent, AGENT_FLOOR);
-
 	const { PublicKey } = await import('@solana/web3.js');
 	const { executeAgentTrade } = await import('../agents/agent-trade.js');
+	const { quoteTrade } = await import('../agents/solana-trade.js');
+	const mintPk = new PublicKey(THREE_MINT());
+
+	// Price the buy BEFORE funding or spending anything. This used to buy a fixed
+	// THREE_TOPUP_SOL of $THREE no matter what the listing cost: at roughly 100
+	// $THREE per 0.012 SOL, every listing above ~100 $THREE fell short, skipped,
+	// and paid a real trade fee to do it, then repeated on the next tick and the
+	// next. Skills list at 80-1200 $THREE and assets at 600-4000, so most of the
+	// marketplace was structurally unbuyable and marketplace GMV read zero while
+	// the fees still went out.
+	const capSol = Math.min(THREE_TOPUP_MAX_SOL, Number(ctx.perActionSolCap) || THREE_TOPUP_SOL);
+	let atomicPerSol = 0;
+	try {
+		const q = await quoteTrade({
+			conn,
+			side: 'buy',
+			mintPk,
+			mintStr: THREE_MINT(),
+			network,
+			solAmount: THREE_TOPUP_SOL,
+			slippageBps: 700,
+		});
+		atomicPerSol = Number(q.outAtomics) / THREE_TOPUP_SOL;
+	} catch (e) {
+		throw new Skip(`could not quote $THREE: ${e?.message || 'quote_failed'}`);
+	}
+
+	const planned = planThreeTopUp({
+		needAtomic,
+		haveAtomic: have,
+		atomicPerSol,
+		maxSol: capSol,
+		minSol: THREE_TOPUP_SOL,
+	});
+	// Refusing here is the point: a listing this tick cannot fund is skipped
+	// without spending, instead of buying a partial position and failing anyway.
+	if (!planned.sufficient) {
+		throw new Skip(
+			planned.reason === 'above_cap'
+				? `listing needs ~${planned.wantedSol} SOL of $THREE, over this tick's ${roundSol(capSol)} SOL cap`
+				: 'could not price $THREE for the top-up buy',
+		);
+	}
+
+	// Fund the BUY, not just the idle floor: a 0.02 SOL floor cannot settle a
+	// 0.04 SOL purchase, and the trade would abort on headroom after the transfer.
+	const needLamports = Math.floor(planned.sol * SOL) + FEE_BUFFER;
+	await ensureFunded(conn, treasuryKp, agent, Math.max(AGENT_FLOOR, needLamports));
+
 	const full = await loadAgentMeta(agent.id);
 	if (!full) throw new Skip('agent vanished');
 
@@ -651,8 +734,8 @@ async function ensureThree(ctx, agent, needAtomic) {
 		input: {
 			side: 'buy',
 			mint: THREE_MINT(),
-			mintPk: new PublicKey(THREE_MINT()),
-			amount: THREE_TOPUP_SOL,
+			mintPk,
+			amount: planned.sol,
 			isMax: false,
 			slippageBps: 700,
 			slippagePct: 7,
@@ -1587,7 +1670,15 @@ export async function runCirculationTick() {
 		});
 	}
 
-	const ctx = { conn, treasuryKp, pool, network: cfg.network, origin: cfg.origin, solUsd, cfg };
+	// What ONE paid action may draw this tick. The governor plans `paidBudget`
+	// actions against `spendableSol`, so an action that can size its own spend
+	// (the $THREE top-up) has to stay inside its share or it silently overspends
+	// the estimate the budget was built from and starves the actions behind it.
+	const perActionSolCap = budget && budget.paidBudget > 0
+		? Math.max(THREE_TOPUP_SOL, roundSol(budget.spendableSol / budget.paidBudget))
+		: THREE_TOPUP_SOL;
+
+	const ctx = { conn, treasuryKp, pool, network: cfg.network, origin: cfg.origin, solUsd, cfg, perActionSolCap };
 	const plan = await planActions(cfg, pool.length, budget);
 
 	const results = [];

@@ -1,0 +1,66 @@
+{
+	"name": "@three-ws/sign-language",
+	"version": "0.1.0",
+	"description": "American Sign Language for 3D avatars. Compile text into one continuous signed animation clip: known words sign from a lexicon of anatomically described signs, everything else fingerspells, with contact solving and non-manual facial markers. Zero runtime dependencies.",
+	"keywords": [
+		"asl",
+		"american-sign-language",
+		"sign-language",
+		"fingerspelling",
+		"accessibility",
+		"a11y",
+		"deaf",
+		"animation",
+		"avatar",
+		"humanoid",
+		"rig",
+		"skeleton",
+		"inverse-kinematics",
+		"gltf",
+		"glb",
+		"3d"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws/sign-language",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/sign-language"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"module": "./dist/index.mjs",
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist",
+		"example",
+		"README.md",
+		"LICENSE"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "node build.mjs",
+		"test": "node --test test/*.test.mjs",
+		"example": "node example/compile-utterance.mjs",
+		"prepublishOnly": "npm run build && npm test"
+	},
+	"devDependencies": {
+		"esbuild": "^0.27.7"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

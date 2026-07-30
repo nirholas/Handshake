@@ -50,41 +50,32 @@ function packageToolSources() {
 }
 
 // Tool-definition files that carry real MCP annotations but sit outside the
-// layout above, so the golden fixture never covered them. The safety gate has no
-// fixture to regenerate, so it covers them from day one; widening the golden
-// snapshot to match is a separate, reviewable change to a committed artifact.
-const UNSNAPSHOTTED_TOOL_FILES = ['api/_okx3d/tools.js', 'src/pump/mcp-tools.js'];
-
-const MCP_SERVER_TOOL_DIR = 'mcp-server/src/tools';
+// layouts above: the stdio flagship's tool factories, the OKX A2MCP variant, and
+// the pump.fun server's single registry module.
+const EXTRA_TOOL_DIRS = ['mcp-server/src/tools'];
+const EXTRA_TOOL_FILES = ['api/_okx3d/tools.js', 'src/pump/mcp-tools.js'];
 
 /**
- * Sorted, repo-relative paths of every MCP tool-definition file covered by the
- * golden contract snapshot.
+ * Sorted, repo-relative paths of every MCP tool-definition file in the repo.
+ * Both gates read this same list, so a public tool contract cannot be guarded by
+ * one and invisible to the other.
  * @returns {string[]}
  */
 export function mcpToolSources() {
-	return [
-		...HOSTED_TOOL_DIRS.filter((d) => existsSync(join(ROOT, d))).flatMap((d) =>
-			readdirSync(join(ROOT, d)).map((f) => `${d}/${f}`),
-		),
-		...HOSTED_TOOL_FILES.filter((f) => existsSync(join(ROOT, f))),
-		...packageToolSources(),
-	]
-		.filter((f) => f.endsWith('.js'))
-		.sort();
-}
+	const fromDirs = (dirs) =>
+		dirs
+			.filter((d) => existsSync(join(ROOT, d)))
+			.flatMap((d) => readdirSync(join(ROOT, d)).map((f) => `${d}/${f}`));
 
-/**
- * Every tool-definition file the SAFETY gate checks: the snapshotted set plus
- * the surfaces the golden fixture does not reach.
- * @returns {string[]}
- */
-export function allMcpToolSources() {
-	const extra = [
-		...UNSNAPSHOTTED_TOOL_FILES,
-		...(existsSync(join(ROOT, MCP_SERVER_TOOL_DIR))
-			? readdirSync(join(ROOT, MCP_SERVER_TOOL_DIR)).map((f) => `${MCP_SERVER_TOOL_DIR}/${f}`)
-			: []),
-	].filter((f) => f.endsWith('.js') && existsSync(join(ROOT, f)));
-	return [...new Set([...mcpToolSources(), ...extra])].sort();
+	return [
+		...new Set([
+			...fromDirs(HOSTED_TOOL_DIRS),
+			...fromDirs(EXTRA_TOOL_DIRS),
+			...HOSTED_TOOL_FILES,
+			...EXTRA_TOOL_FILES,
+			...packageToolSources(),
+		]),
+	]
+		.filter((f) => f.endsWith('.js') && existsSync(join(ROOT, f)))
+		.sort();
 }

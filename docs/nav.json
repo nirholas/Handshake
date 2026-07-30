@@ -1,0 +1,871 @@
+{
+	"sections": [
+		{
+			"title": "Start here",
+			"links": [
+				{
+					"label": "What is three.ws?",
+					"path": "start-here"
+				},
+				{
+					"label": "Agents vs. Avatars",
+					"path": "agents-vs-avatars"
+				},
+				{
+					"label": "Make your first agent",
+					"path": "make-your-agent"
+				},
+				{
+					"label": "Share & embed",
+					"path": "share-and-embed"
+				},
+				{
+					"label": "Do I need crypto?",
+					"path": "do-i-need-crypto"
+				}
+			]
+		},
+		{
+			"title": "What agents can do",
+			"links": [
+				{
+					"label": "The complete dossier",
+					"path": "agent-abilities"
+				},
+				{
+					"label": "The Body: 3D creation",
+					"path": "agent-abilities/chapters/01-the-body"
+				},
+				{
+					"label": "Motion & animation",
+					"path": "agent-abilities/chapters/02-motion"
+				},
+				{
+					"label": "Creation studios",
+					"path": "agent-abilities/chapters/03-creation-studios"
+				},
+				{
+					"label": "The Mind: memory & autonomy",
+					"path": "agent-abilities/chapters/04-the-mind"
+				},
+				{
+					"label": "The Voice: conversation",
+					"path": "agent-abilities/chapters/05-the-voice"
+				},
+				{
+					"label": "Identity & reputation",
+					"path": "agent-abilities/chapters/06-identity-reputation"
+				},
+				{
+					"label": "Skills",
+					"path": "agent-abilities/chapters/07-skills"
+				},
+				{
+					"label": "Screens",
+					"path": "agent-abilities/chapters/08-screens"
+				},
+				{
+					"label": "The Agent Economy",
+					"path": "agent-abilities/chapters/09-the-agent-economy"
+				},
+				{
+					"label": "The Agent Wallet: 23 abilities",
+					"path": "agent-abilities/chapters/10-the-agent-wallet"
+				},
+				{
+					"label": "Markets & intelligence",
+					"path": "agent-abilities/chapters/11-markets-intelligence"
+				},
+				{
+					"label": "Live worlds, social & IRL",
+					"path": "agent-abilities/chapters/12-live-worlds-social-irl"
+				},
+				{
+					"label": "Agents everywhere",
+					"path": "agent-abilities/chapters/13-agents-everywhere"
+				},
+				{
+					"label": "The Developer platform",
+					"path": "agent-abilities/chapters/14-the-developer-platform"
+				},
+				{
+					"label": "Full product map",
+					"path": "agent-abilities/chapters/15-appendix"
+				},
+				{
+					"label": "Everything on one page",
+					"path": "agent-abilities/FULL-ARTICLE"
+				}
+			]
+		},
+		{
+			"title": "Creation studios",
+			"links": [
+				{
+					"label": "Forge (text & image to 3D)",
+					"path": "forge"
+				},
+				{
+					"label": "How the Forge works (plain language)",
+					"path": "how-forge-works"
+				},
+				{
+					"label": "The Forge pipeline (deep dive)",
+					"path": "forge-pipeline"
+				},
+				{
+					"label": "Image to 3D",
+					"path": "image-to-3d"
+				},
+				{
+					"label": "Diorama (text to world)",
+					"path": "diorama"
+				},
+				{
+					"label": "Cosmos (living worlds)",
+					"path": "cosmos"
+				},
+				{
+					"label": "Splat viewer (Gaussian avatars)",
+					"path": "splat"
+				},
+				{
+					"label": "Scene Capture (video to point cloud)",
+					"path": "capture"
+				},
+				{
+					"label": "Restyle Studio",
+					"path": "restyle"
+				},
+				{
+					"label": "Scene Studio",
+					"path": "scene-studio"
+				},
+				{
+					"label": "Scene Composer",
+					"path": "compose"
+				},
+				{
+					"label": "Animation Studio",
+					"path": "animation-studio"
+				},
+				{
+					"label": "Sign language (ASL)",
+					"path": "sign-language"
+				},
+				{
+					"label": "Avatar Studio",
+					"path": "avatar-studio"
+				},
+				{
+					"label": "Mocap Studio",
+					"path": "mocap-studio"
+				},
+				{
+					"label": "Selfie to Avatar",
+					"path": "selfie-to-avatar"
+				},
+				{
+					"label": "Daily Forge",
+					"path": "daily-forge"
+				},
+				{
+					"label": "AR Studio",
+					"path": "ar-studio"
+				},
+				{
+					"label": "Generation Watch (live progress)",
+					"path": "generation-watch"
+				},
+				{
+					"label": "Character Library (106 rigged)",
+					"path": "character-library"
+				},
+				{
+					"label": "Agent Identity Studio",
+					"path": "agent-identities"
+				},
+				{
+					"label": "Living Stages",
+					"path": "stage"
+				},
+				{
+					"label": "Avatar Engines Atlas",
+					"path": "avatar-engines"
+				},
+				{
+					"label": "Object Library (CC0 props)",
+					"path": "object-library"
+				}
+			]
+		},
+		{
+			"title": "Voice & video",
+			"links": [
+				{
+					"label": "Voice Lab",
+					"path": "voice-lab"
+				},
+				{
+					"label": "Lipsync",
+					"path": "lipsync"
+				},
+				{
+					"label": "Talking Avatar Video",
+					"path": "talking-avatar-video"
+				}
+			]
+		},
+		{
+			"title": "Build an agent",
+			"links": [
+				{
+					"label": "Instant Agent Genesis",
+					"path": "genesis"
+				},
+				{
+					"label": "Agent Genome (breeding)",
+					"path": "genome"
+				},
+				{
+					"label": "Agent Studio",
+					"path": "agent-studio"
+				},
+				{
+					"label": "Multi-LLM Brain",
+					"path": "brain"
+				},
+				{
+					"label": "Agent Galaxy",
+					"path": "galaxy"
+				},
+				{
+					"label": "Integrations",
+					"path": "integrations"
+				}
+			]
+		},
+		{
+			"title": "Trading & markets",
+			"links": [
+				{
+					"label": "Coin Autopilot",
+					"path": "autopilot"
+				},
+				{
+					"label": "Signal Marketplace",
+					"path": "signals"
+				},
+				{
+					"label": "The AGI",
+					"path": "agi"
+				},
+				{
+					"label": "Alpha Co-pilot",
+					"path": "alpha-copilot"
+				},
+				{
+					"label": "Guardian console",
+					"path": "guardian"
+				},
+				{
+					"label": "Strategy Objects",
+					"path": "strategy-objects"
+				},
+				{
+					"label": "Mission Control (terminal)",
+					"path": "terminal"
+				},
+				{
+					"label": "Smart Money Radar",
+					"path": "smart-money"
+				},
+				{
+					"label": "Coin Radar",
+					"path": "radar"
+				},
+				{
+					"label": "Coin Clash",
+					"path": "clash"
+				},
+				{
+					"label": "x402 Studio",
+					"path": "x402-studio"
+				},
+				{
+					"label": "Fact Check",
+					"path": "fact-check"
+				},
+				{
+					"label": "Trading Copilot",
+					"path": "trading-copilot"
+				},
+				{
+					"label": "Earned autonomy (fleet self-tuning)",
+					"path": "sniper-autonomy"
+				},
+				{
+					"label": "Trader Card (claim your wallet)",
+					"path": "trader-card"
+				},
+				{
+					"label": "Clip Director",
+					"path": "clip-director"
+				},
+				{
+					"label": "KOL Tracker",
+					"path": "kol-tracker"
+				},
+				{
+					"label": "Copy trading (mirror)",
+					"path": "copy-trading"
+				},
+				{
+					"label": "Reasoning Ledger (verifiable decisions)",
+					"path": "reasoning-ledger"
+				},
+				{
+					"label": "Coin & market pages",
+					"path": "coin-pages"
+				}
+			]
+		},
+		{
+			"title": "Getting started",
+			"links": [
+				{
+					"label": "Introduction",
+					"path": "introduction"
+				},
+				{
+					"label": "Quick start",
+					"path": "quick-start"
+				},
+				{
+					"label": "Getting started (hosted)",
+					"path": "tutorials/getting-started"
+				},
+				{
+					"label": "Deployment",
+					"path": "deployment"
+				}
+			]
+		},
+		{
+			"title": "Core concepts",
+			"links": [
+				{
+					"label": "How it works",
+					"path": "how-it-works"
+				},
+				{
+					"label": "Architecture overview",
+					"path": "architecture"
+				},
+				{
+					"label": "Agent system",
+					"path": "agent-system"
+				},
+				{
+					"label": "Agent reputation",
+					"path": "agent-reputation"
+				},
+				{
+					"label": "Solana reputation",
+					"path": "solana-reputation"
+				},
+				{
+					"label": "Memory system",
+					"path": "memory"
+				},
+				{
+					"label": "Skills system",
+					"path": "skills"
+				},
+				{
+					"label": "Multi-agent",
+					"path": "multi-agent"
+				},
+				{
+					"label": "IRL (agents in the real world)",
+					"path": "irl"
+				},
+				{
+					"label": "World Lines (proof of presence)",
+					"path": "world-lines"
+				},
+				{
+					"label": "Walk Leaderboard",
+					"path": "walk-leaderboard"
+				},
+				{
+					"label": "Permissions",
+					"path": "permissions"
+				},
+				{
+					"label": "Layers",
+					"path": "layers"
+				}
+			]
+		},
+		{
+			"title": "Economy & payments",
+			"links": [
+				{
+					"label": "Circulation engine",
+					"path": "circulation-engine"
+				},
+				{
+					"label": "Money feed",
+					"path": "money-feed"
+				},
+				{
+					"label": "Agent wallets",
+					"path": "agent-wallets"
+				},
+				{
+					"label": "Marketplace",
+					"path": "marketplace"
+				},
+				{
+					"label": "Coin launches",
+					"path": "coin-launches"
+				},
+				{
+					"label": "x402 protocol",
+					"path": "x402"
+				},
+				{
+					"label": "x402 paid endpoints",
+					"path": "x402-endpoints"
+				},
+				{
+					"label": "x402 buyer client",
+					"path": "x402-buyer"
+				},
+				{
+					"label": "Autonomous x402 loop",
+					"path": "autonomous-x402"
+				},
+				{
+					"label": "x402 developer tools",
+					"path": "x402-dev-tools"
+				},
+				{
+					"label": "x402 revenue & receipts",
+					"path": "x402-revenue"
+				},
+				{
+					"label": "Market Data API (x402)",
+					"path": "market-data-api"
+				},
+				{
+					"label": "Premium Data API pass",
+					"path": "premium"
+				},
+				{
+					"label": "Pump Launcher (paid launch API)",
+					"path": "pump-launcher"
+				},
+				{
+					"label": "Launch Studio recipes",
+					"path": "launch-usecases"
+				},
+				{
+					"label": "Remix economy & royalties",
+					"path": "remix"
+				},
+				{
+					"label": "Embody (x402 3D body)",
+					"path": "embody"
+				},
+				{
+					"label": "Custody, limits & recovery",
+					"path": "custody"
+				},
+				{
+					"label": "Payment Sessions (spend envelopes)",
+					"path": "payment-sessions"
+				},
+				{
+					"label": "Agent wallet control API",
+					"path": "agent-wallet-api"
+				},
+				{
+					"label": "USDC agent vaults",
+					"path": "vaults"
+				},
+				{
+					"label": "CA to x402 (mint to endpoint)",
+					"path": "ca2x402"
+				},
+				{
+					"label": "Agent economy volume",
+					"path": "agent-economy-volume"
+				},
+				{
+					"label": "Viability (on-chain unit economics)",
+					"path": "viability"
+				},
+				{
+					"label": "Your master wallet",
+					"path": "user-wallet"
+				},
+				{
+					"label": "Agent-Forged Gallery",
+					"path": "forged"
+				},
+				{
+					"label": "Minted 3D assets",
+					"path": "minted"
+				},
+				{
+					"label": "Agent Symphony (economy as music)",
+					"path": "agent-symphony"
+				},
+				{
+					"label": "AgenC",
+					"path": "agenc"
+				}
+			]
+		},
+		{
+			"title": "Guides",
+			"links": [
+				{
+					"label": "Embedding",
+					"path": "embedding"
+				},
+				{
+					"label": "Concierge (AI chat widget)",
+					"path": "concierge"
+				},
+				{
+					"label": "Assistant widget (3D avatar)",
+					"path": "assistant-widget"
+				},
+				{
+					"label": "3D Viewer",
+					"path": "viewer"
+				},
+				{
+					"label": "Editor guide",
+					"path": "editor"
+				},
+				{
+					"label": "Animations (clips & slots)",
+					"path": "animations"
+				},
+				{
+					"label": "Avatar inspector",
+					"path": "avatar-inspector"
+				},
+				{
+					"label": "AR & WebXR",
+					"path": "ar"
+				},
+				{
+					"label": "Authentication",
+					"path": "authentication"
+				},
+				{
+					"label": "Avatar creation",
+					"path": "avatar-creation"
+				},
+				{
+					"label": "Avatar pipeline (end to end)",
+					"path": "avatar-pipeline"
+				},
+				{
+					"label": "ERC-8004",
+					"path": "erc8004"
+				},
+				{
+					"label": "Reputation system",
+					"path": "reputation"
+				},
+				{
+					"label": "Validation attestations",
+					"path": "validation"
+				},
+				{
+					"label": "3D provenance (verify authenticity)",
+					"path": "provenance"
+				},
+				{
+					"label": "SAS attestations",
+					"path": "sas-attestations"
+				},
+				{
+					"label": "Solana agents",
+					"path": "solana"
+				},
+				{
+					"label": "Deploy agents on-chain (bulk)",
+					"path": "onchain-agents"
+				},
+				{
+					"label": "On-chain deployments feed",
+					"path": "deployments"
+				},
+				{
+					"label": "Solana pump.fun signals",
+					"path": "solana-pumpfun"
+				},
+				{
+					"label": "Mint mark (\"3ws\")",
+					"path": "mint-mark"
+				},
+				{
+					"label": "Security",
+					"path": "security"
+				},
+				{
+					"label": "Configuration",
+					"path": "configuration"
+				},
+				{
+					"label": "Agent Skills pack (Claude)",
+					"path": "agent-skills"
+				},
+				{
+					"label": "Notifications",
+					"path": "notifications"
+				},
+				{
+					"label": "Creator portfolio",
+					"path": "creator-portfolio"
+				},
+				{
+					"label": "Contributing",
+					"path": "contributing"
+				}
+			]
+		},
+		{
+			"title": "SDK / API reference",
+			"links": [
+				{
+					"label": "REST API",
+					"path": "api-reference"
+				},
+				{
+					"label": "3D API (free text to 3D)",
+					"path": "3d-api"
+				},
+				{
+					"label": "Media & render API",
+					"path": "media-api"
+				},
+				{
+					"label": "Developer platform (keys, webhooks)",
+					"path": "developer-platform"
+				},
+				{
+					"label": "Crypto Data API (free)",
+					"path": "crypto-api"
+				},
+				{
+					"label": "3D Studio MCP (free)",
+					"path": "mcp-studio"
+				},
+				{
+					"label": "Agent manifest",
+					"path": "agent-manifest"
+				},
+				{
+					"label": "ERC-8004 smart contracts",
+					"path": "smart-contracts"
+				},
+				{
+					"label": "JavaScript API",
+					"path": "js-api"
+				},
+				{
+					"label": "Web component",
+					"path": "web-component"
+				},
+				{
+					"label": "MCP",
+					"path": "mcp"
+				},
+				{
+					"label": "MCP tools catalog",
+					"path": "mcp-tools"
+				},
+				{
+					"label": "Spatial MCP (3D responses)",
+					"path": "spatial-mcp"
+				},
+				{
+					"label": "SDK",
+					"path": "sdk"
+				},
+				{
+					"label": "Widgets",
+					"path": "widgets"
+				},
+				{
+					"label": "Widget Studio",
+					"path": "widget-studio"
+				},
+				{
+					"label": "Widget API (JSON-RPC)",
+					"path": "widget-api"
+				},
+				{
+					"label": "Widget reference",
+					"href": "/docs/widgets",
+					"external": true
+				}
+			]
+		},
+		{
+			"title": "Integrations",
+			"links": [
+				{
+					"label": "NVIDIA free models",
+					"path": "nvidia-models"
+				},
+				{
+					"label": "IBM watsonx & Granite",
+					"path": "ibm"
+				},
+				{
+					"label": "IBM x402 MCP",
+					"path": "ibm-x402-mcp"
+				},
+				{
+					"label": "BNB payments",
+					"path": "bnb-payments"
+				},
+				{
+					"label": "BNB vault",
+					"path": "bnb-vault"
+				}
+			]
+		},
+		{
+			"title": "Tutorials",
+			"links": [
+				{
+					"label": "Text prompt to 3D model",
+					"path": "tutorials/text-to-3d"
+				},
+				{
+					"label": "Photos to 3D model",
+					"path": "tutorials/image-to-3d"
+				},
+				{
+					"label": "Prompt recipes for 3D",
+					"path": "tutorials/prompts-for-3d"
+				},
+				{
+					"label": "Generate 3D from code",
+					"path": "tutorials/generate-3d-api"
+				},
+				{
+					"label": "Place your model in AR",
+					"path": "tutorials/view-in-ar"
+				},
+				{
+					"label": "Make your avatar sign (ASL)",
+					"path": "tutorials/sign-with-your-avatar"
+				},
+				{
+					"label": "Place an agent in the real world",
+					"path": "tutorials/place-agent-irl"
+				},
+				{
+					"label": "Build your first agent",
+					"path": "tutorials/first-agent"
+				},
+				{
+					"label": "Personal AI site",
+					"path": "tutorials/personal-ai-site"
+				},
+				{
+					"label": "Create a custom skill",
+					"path": "tutorials/custom-skill"
+				},
+				{
+					"label": "Embed on a website",
+					"path": "tutorials/embed-on-website"
+				},
+				{
+					"label": "Build a site concierge",
+					"path": "tutorials/build-a-site-concierge"
+				},
+				{
+					"label": "Add a 3D avatar assistant",
+					"path": "tutorials/add-a-3d-assistant"
+				},
+				{
+					"label": "Register on-chain",
+					"path": "tutorials/register-onchain"
+				},
+				{
+					"label": "Give an agent a spending envelope",
+					"path": "tutorials/agent-spending-envelope"
+				},
+				{
+					"label": "Render avatar images anywhere",
+					"path": "tutorials/render-avatar-images"
+				},
+				{
+					"label": "Library character to live embed",
+					"path": "tutorials/character-library-to-embed"
+				},
+				{
+					"label": "Read an agent's reputation",
+					"path": "tutorials/agent-reputation"
+				},
+				{
+					"label": "Read a Solana agent's reputation",
+					"path": "tutorials/solana-agent-reputation"
+				}
+			]
+		},
+		{
+			"title": "Reference",
+			"links": [
+				{
+					"label": "Docs World (3D docs)",
+					"path": "docs-world"
+				},
+				{
+					"label": "Examples",
+					"path": "examples"
+				},
+				{
+					"label": "Listings & distribution",
+					"path": "listings"
+				},
+				{
+					"label": "The Story So Far (3D timeline)",
+					"path": "timeline"
+				},
+				{
+					"label": "Press kit",
+					"path": "press-kit"
+				},
+				{
+					"label": "Partner ecosystem",
+					"path": "partners"
+				},
+				{
+					"label": "Daily Match",
+					"path": "daily-match"
+				},
+				{
+					"label": "Troubleshooting",
+					"path": "troubleshooting"
+				},
+				{
+					"label": "Changelog",
+					"path": "changelog"
+				}
+			]
+		}
+	]
+}

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T17:21:30.480Z",
+	"generated_at": "2026-07-30T19:20:19.088Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2616,6 +2616,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/docs/world",
+					"title": "Docs World (immersive 3D docs)",
+					"description": "The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.",
+					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				},
 				{
 					"path": "/crypto",

@@ -64,7 +64,7 @@ export async function init({ flags }) {
 			!meshPath && '--mesh',
 		].filter(Boolean);
 		failure(`init: missing required ${missing.length === 1 ? 'flag' : 'flags'} ${style.bold(missing.join(', '))}`);
-		hint('three-ws-avatar init --owner 0x742d35… --name "Nicholas" --mesh ./avatar.glb');
+		hint('three-ws-avatar init --owner 0x742d35… --name "Nicholas" --mesh ./michelle.glb');
 		return 1;
 	}
 

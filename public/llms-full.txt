@@ -1601,6 +1601,12 @@ URL: https://three.ws/docs
 
 Full documentation: SDKs, API reference, embedding, agent system, smart contracts.
 
+### Docs World (immersive 3D docs)
+
+URL: https://three.ws/docs/world
+
+The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.
+
 ### Crypto Data API
 
 URL: https://three.ws/crypto

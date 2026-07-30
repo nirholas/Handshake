@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Docs World: read the documentation inside a walkable 3D world",
+			"summary": "The docs now come in two forms with one content source. The classic reader at three.ws/docs stays exactly as it was, and a new immersive surface at three.ws/docs/world turns the same documentation into a place: all fourteen sections of the sidebar become glowing pavilions on a ring, you walk an avatar between them (keyboard, or a joystick on phones), and picking a page opens the live doc right inside the scene. Deep links carry over both ways, any rigged GLB can be your body via the avatar parameter, and devices without 3D support are routed to the classic docs with nothing missing.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/world"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Forge Max: the highest-quality 3D lane now has its own address, and it is a $THREE holder perk",
 			"summary": "The best result the platform can produce used to live behind a quality selector most people never opened. It now has a permanent home at three.ws/forge-max, which lands on the Forge with the High tier already pinned: 200k-poly geometry, 4K PBR and HD textures, and subject-aware routing that picks the engine best suited to what you asked for. Holding $THREE unlocks the tier, and anyone who brings their own Meshy, Tripo or Rodin key can use it too. Any Forge link also accepts a tier directly, so you can hand someone a URL that opens at draft, standard or high quality.",
 			"tags": [

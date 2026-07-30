@@ -1,0 +1,23 @@
+{
+	"name": "@three-ws/example-paid-mcp-server",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "A complete MCP server whose tools charge per call in USDC on Solana via x402: one free orientation tool and one paid glTF/GLB inspection tool.",
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@x402/core": "^2.14.0",
+		"@x402/extensions": "^2.14.0",
+		"@x402/mcp": "^2.14.0",
+		"@x402/svm": "^2.14.0",
+		"zod": "^3.23.8"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}

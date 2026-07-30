@@ -72,6 +72,6 @@ curl -X POST 'https://three.ws/api/galaxy' \
 
 ## Related
 
-- [IBM Granite suite](./ibm.md): the full set of watsonx-powered features on three.ws, including the IBM-branded galaxy variant at `/ibm/galaxy`.
+- [IBM Granite suite](./ibm.md): the full set of watsonx-powered features on three.ws, including the Granite embeddings that position this galaxy.
 - [Agent system](./agent-system.md) and [Agent reputation](./agent-reputation.md): what a "star" is and how agents earn standing.
 - Pages: [/galaxy](https://three.ws/galaxy), [/create](https://three.ws/create), [/agents](https://three.ws/agents).

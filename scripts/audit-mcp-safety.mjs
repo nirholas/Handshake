@@ -42,7 +42,7 @@
 // Run: node scripts/audit-mcp-safety.mjs   (exit 1 on any violation)
 //      node scripts/audit-mcp-safety.mjs --list   (print every tool + evidence)
 
-import { allMcpToolSources } from './lib/mcp-tool-sources.mjs';
+import { mcpToolSources } from './lib/mcp-tool-sources.mjs';
 import { checkTool, extractTools } from './lib/mcp-safety-check.mjs';
 
 // ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ const EXEMPTIONS = new Map([
 // Run
 // ---------------------------------------------------------------------------
 
-const sources = allMcpToolSources();
+const sources = mcpToolSources();
 const violations = [];
 const exempted = [];
 const rows = [];

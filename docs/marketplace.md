@@ -85,6 +85,43 @@ one is issued on the next prepare.
 `check-skill-access.js` answers whether a given buyer holds an active purchase or
 trial for a skill, so a gated skill call can verify entitlement before running.
 
+## Trials are metered, and they must expire into a sale
+
+A trial is not open-ended access. `start-trial.js` writes a `skill_purchases`
+row with `status='trial'` and a fixed `trial_remaining` count, and every
+successful gated call is expected to spend one of those runs:
+
+```js
+import { hasSkillAccess, consumeTrialUse, logSkillUsage } from './api/_lib/skill-access.js';
+
+const access = await hasSkillAccess(userId, agentId, skill);
+if (!access.owned) return { error: access.reason };   // 'not_purchased' | 'trial_exhausted' | 'expired'
+
+const result = await runSkill(skill, input);          // do the work first
+
+if (access.trial) await consumeTrialUse(userId, agentId, skill);
+logSkillUsage({ userId, agentId, skillName: skill });
+return result;
+```
+
+Two rules make the difference between a funnel and a dead end:
+
+1. **Consume only after the work succeeds.** Spending a run on a call that then
+   errored bills the buyer for nothing, and it is the fastest way to make a
+   trial feel like a scam.
+2. **Whoever grants a trial owns spending it.** `hasSkillAccess` returns
+   `trial: true` and leaves the decrement to the caller, by design, so the
+   caller can decide what counts as a use. The cost of forgetting is total, not
+   partial: a trial that is never spent never reaches `trial_exhausted`, and
+   because an active trial counts as access, that buyer can never be sold the
+   skill either. It is not that conversion gets slower. It stops entirely.
+
+That is not hypothetical. The circulation engine granted trials for a month
+without ever calling `consumeTrialUse`, and produced 10,282 trial rows with zero
+sales and zero exhausted trials before it was found. See
+[circulation engine](circulation-engine.md#the-trial-funnel) for the fix and the
+`list_skill -> trial -> use_trial -> buy_skill` cycle it restored.
+
 ## Current limitations
 
 - **Discovery surface.** Listings and prices live in the database and the buy/sell

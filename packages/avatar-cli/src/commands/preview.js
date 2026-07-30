@@ -1,15 +1,20 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assertValid } from '@three-ws/avatar-schema';
-import { style, heading, failure } from '../style.js';
+import { style, heading, failure, warn, hint } from '../style.js';
 
 const DEFAULT_VIEWER = 'https://three.ws';
 
 /**
- * `three-ws-avatar preview <path>` — print an embeddable snippet for a validated manifest.
+ * `three-ws-avatar preview <path>` - print an embeddable snippet for a validated manifest.
  *
- * Outputs both the <three-ws-avatar> custom-element snippet and a resolver URL
- * pointing at the three.ws viewer for the avatar's id.
+ * Outputs a resolver URL, an <agent-3d> custom-element snippet paired with the
+ * loader that registers it, and a zero-install iframe.
+ *
+ * `agent-3d` is the element three.ws actually registers (src/element.js and
+ * public/embed.js). A bare .glb/.gltf on `src` is treated as a body, so the
+ * mesh URI can be passed straight through. The snippet is emitted with its
+ * loader because the element does nothing until that script has run.
  *
  * Flags:
  *   --viewer <origin>   Override the viewer host (default: https://three.ws)
@@ -35,16 +40,24 @@ export async function preview({ positional, flags }) {
 	const viewer = (flags.viewer || DEFAULT_VIEWER).replace(/\/$/, '');
 	const encodedId = encodeURIComponent(manifest.id);
 	const resolverUrl = `${viewer}/a/${encodedId}`;
-	const element = `<three-ws-avatar id="${manifest.id}" src="${manifest.mesh.uri}"></three-ws-avatar>`;
+	const meshUri = manifest.mesh.uri;
+	const loader = `<script type="module" src="${viewer}/agent-3d/latest/agent-3d.js"></script>`;
+	const element = `<agent-3d src="${meshUri}" style="width:400px;height:600px"></agent-3d>`;
 	const iframe = `<iframe src="${resolverUrl}" width="480" height="640" frameborder="0" allow="camera; microphone; xr-spatial-tracking"></iframe>`;
+	// A manifest scaffolded without --mesh-uri points at the local file, which no
+	// browser will load cross-origin. Say so instead of printing a dead snippet.
+	const meshIsLocal = /^file:\/\//i.test(meshUri);
 
 	if (flags.json) {
 		console.log(
 			JSON.stringify({
 				id: manifest.id,
 				resolverUrl,
+				loader,
 				element,
 				iframe,
+				meshUri,
+				meshIsLocal,
 				schemaVersion: manifest.schemaVersion,
 			}),
 		);
@@ -56,10 +69,16 @@ export async function preview({ positional, flags }) {
 	console.log(heading('resolver url'));
 	console.log(resolverUrl);
 	console.log('');
-	console.log(heading('web component  — requires @three-ws/avatar on the page'));
+	console.log(heading('web component (loader registers <agent-3d>)'));
+	console.log(loader);
 	console.log(element);
 	console.log('');
-	console.log(heading('iframe  — zero-install'));
+	console.log(heading('iframe (zero-install)'));
 	console.log(iframe);
+	if (meshIsLocal) {
+		process.stderr.write('\n');
+		warn('mesh.uri is a local path, so the snippet above will not load in a browser.');
+		hint('re-run init with --mesh-uri https://your-host/avatar.glb, or edit mesh.uri to a public URL');
+	}
 	return 0;
 }

@@ -26,7 +26,7 @@ const COMMANDS = {
     --out <path>           Write manifest to a file instead of stdout
 
   ${style.dim('example')}
-    three-ws-avatar init --owner 0x742d35… --name "Nicholas" --mesh ./avatar.glb --out manifest.json`,
+    three-ws-avatar init --owner 0x742d35… --name "Nicholas" --mesh ./michelle.glb --out manifest.json`,
 	},
 	validate: {
 		run: validate,
@@ -45,10 +45,10 @@ const COMMANDS = {
 		usage: `${style.bold('three-ws-avatar hash')} ${style.dim('<path> [--json]')}
 
   Print the lowercase hex SHA-256 of a file's bytes — pipe-friendly:
-    sha=$(three-ws-avatar hash ./avatar.glb)
+    sha=$(three-ws-avatar hash ./michelle.glb)
 
   ${style.dim('example')}
-    three-ws-avatar hash ./avatar.glb --json`,
+    three-ws-avatar hash ./michelle.glb --json`,
 	},
 	preview: {
 		run: preview,
@@ -83,9 +83,9 @@ ${style.bold('global options')}
   --no-color    Disable colored output
 
 ${style.bold('examples')}
-  ${style.dim('three-ws-avatar init --owner 0xabc… --name "Nicholas" --mesh ./avatar.glb --out manifest.json')}
+  ${style.dim('three-ws-avatar init --owner 0xabc… --name "Nicholas" --mesh ./michelle.glb --out manifest.json')}
   ${style.dim('three-ws-avatar validate manifest.json')}
-  ${style.dim('three-ws-avatar hash ./avatar.glb')}
+  ${style.dim('three-ws-avatar hash ./michelle.glb')}
   ${style.dim('three-ws-avatar preview manifest.json')}
 
 ${style.dim(`${symbols.arrow} docs: https://three.ws  ${symbols.bullet}  issues: https://github.com/nirholas/three.ws/issues`)}

@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>three.ws on NVIDIA — free 3D generation on NVIDIA models and GPUs</title>
+	<meta name="description" content="three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key, and a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000." />
+	<link rel="canonical" href="https://three.ws/nvidia" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws on NVIDIA" />
+	<meta property="og:description" content="Free text-to-3D on NVIDIA-hosted TRELLIS, plus a self-hosted GPU fleet on L4 and Blackwell. The full model map, the fleet layout, and a call you can run right now." />
+	<meta property="og:url" content="https://three.ws/nvidia" />
+	<meta property="og:image" content="https://three.ws/og-image.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="three.ws on NVIDIA: free 3D generation on NVIDIA models and GPUs." />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws on NVIDIA" />
+	<meta name="twitter:description" content="Free text-to-3D on NVIDIA-hosted models, plus a self-hosted GPU fleet on L4 and Blackwell. One key, no account, no cost." />
+	<meta name="twitter:image" content="https://three.ws/og-image.png" />
+	<meta name="twitter:site" content="@trythreews" />
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<script src="/nav.js" defer></script>
+	<style>
+		:root {
+			color-scheme: dark;
+			--accent: #ffffff;
+			--border: #1e2318; --bg: #05070a;
+			--panel: #10140f; --panel2: #161b13;
+			--text: #e8e8f0; --muted: #8b9382;
+			--nv: #76b900; --nv-soft: #a6e34d;
+		}
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body { font: 16px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; }
+		a { color: inherit; }
+		:focus-visible { outline: 2px solid var(--nv); outline-offset: 3px; border-radius: 6px; }
+
+		main { max-width: 940px; margin: 0 auto; padding: 72px 24px 120px; }
+
+		/* Hero */
+		.eyebrow { display: inline-flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px 7px 12px; font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+		.eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--nv); box-shadow: 0 0 12px var(--nv); }
+		.eyebrow strong { color: var(--text); font-weight: 500; }
+
+		h1 { font-size: clamp(36px, 6vw, 56px); letter-spacing: -0.03em; line-height: 1.05; font-weight: 600; margin-bottom: 20px; }
+		h1 .gradient { background: linear-gradient(110deg, #ffffff 25%, var(--nv-soft) 90%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+		.lede { font-size: clamp(17px, 2vw, 19px); color: var(--muted); line-height: 1.55; max-width: 680px; margin-bottom: 36px; }
+		.lede strong { color: var(--text); font-weight: 500; }
+
+		.badge-plate { display: inline-block; background: #ffffff; border-radius: 20px; padding: 18px 22px; margin-bottom: 36px; transition: transform .18s ease, box-shadow .18s ease; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+		.badge-plate:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(118,185,0,.22), 0 0 0 1px rgba(255,255,255,.16); }
+		.badge-plate img { display: block; width: 250px; max-width: 100%; height: auto; }
+
+		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 88px; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter .15s, background .15s, transform .15s, border-color .15s; }
+		.btn-primary { background: var(--nv); color: #06210a; }
+		.btn-primary:hover { filter: brightness(1.12); }
+		.btn-primary:active { transform: translateY(1px); }
+		.btn-sec { background: var(--panel); border: 1px solid var(--border); color: var(--text); }
+		.btn-sec:hover { background: var(--panel2); border-color: #2c3a22; }
+		.btn-sec:active { transform: translateY(1px); }
+		.btn svg { width: 16px; height: 16px; }
+
+		section { margin-bottom: 80px; }
+		section h2 { font-size: clamp(24px, 3.5vw, 32px); letter-spacing: -0.02em; line-height: 1.15; font-weight: 600; margin-bottom: 14px; }
+		section .sub { color: var(--muted); font-size: 16px; margin-bottom: 30px; max-width: 660px; }
+
+		/* Layer cards */
+		.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+		.layer { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 26px; }
+		.layer .tag { display: inline-block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--nv-soft); border: 1px solid rgba(118,185,0,.28); background: rgba(118,185,0,.07); border-radius: 99px; padding: 4px 10px; margin-bottom: 14px; }
+		.layer h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 10px; }
+		.layer p { font-size: 14.5px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+		.layer ul { list-style: none; font-size: 14px; color: var(--muted); }
+		.layer li { padding-left: 18px; position: relative; margin-bottom: 7px; line-height: 1.5; }
+		.layer li::before { content: ""; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--nv); opacity: .7; }
+		.layer li strong { color: var(--text); font-weight: 600; }
+
+		/* Tables */
+		.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); }
+		table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+		th, td { text-align: left; padding: 13px 20px; border-bottom: 1px solid var(--border); vertical-align: top; }
+		tbody tr:last-child td { border-bottom: none; }
+		th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; background: rgba(255,255,255,.015); }
+		td { color: var(--muted); line-height: 1.5; }
+		td:first-child { color: var(--text); font-weight: 500; }
+		tbody tr:hover td { background: rgba(118,185,0,.035); }
+		td code, th code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; color: var(--nv-soft); }
+		.free { color: var(--nv); font-weight: 600; }
+
+		/* Code */
+		pre { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-top: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.7; color: var(--text); }
+		pre .c { color: var(--muted); }
+		pre .s { color: var(--nv-soft); }
+
+		.note { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; font-size: 14px; color: var(--muted); margin-top: 16px; }
+		.note strong { color: var(--text); }
+		.note a { color: var(--nv-soft); text-decoration: none; }
+		.note a:hover { text-decoration: underline; }
+
+		/* Read-next cards */
+		.reads { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+		a.read { display: block; text-decoration: none; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
+		a.read:hover { border-color: #35471f; background: var(--panel2); transform: translateY(-2px); }
+		a.read .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--nv-soft); margin-bottom: 9px; display: block; }
+		a.read h3 { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 7px; line-height: 1.35; }
+		a.read p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+		a.read .more { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 13px; color: var(--nv-soft); }
+
+		.disclaimer { font-size: 12px; color: var(--muted); margin-top: 64px; line-height: 1.65; max-width: 740px; }
+		.disclaimer a { color: var(--nv-soft); text-decoration: none; }
+		.disclaimer a:hover { text-decoration: underline; }
+
+		@media (max-width: 720px) {
+			main { padding: 52px 20px 96px; }
+			.badge-plate img { width: 210px; }
+			th, td { padding: 11px 14px; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			* { transition: none !important; }
+		}
+	</style>
+
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"three.ws on NVIDIA","description":"three.ws is a member of the NVIDIA Inception program. Free 3D generation on NVIDIA-hosted models plus a self-hosted GPU fleet on L4 and RTX PRO 6000.","url":"https://three.ws/nvidia","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/og-image.png"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Partners","item":"https://three.ws/partners"},{"@type":"ListItem","position":3,"name":"NVIDIA","item":"https://three.ws/nvidia"}]}]}</script>
+</head>
+<body>
+
+<header><div id="nav-container"></div></header>
+
+<main>
+
+	<div class="eyebrow">
+		<span class="dot" aria-hidden="true"></span>
+		<strong>NVIDIA Inception member</strong>
+		<span>·</span>
+		<span>Accepted July 2026</span>
+	</div>
+
+	<h1>Every model here is born on <span class="gradient">NVIDIA</span>.</h1>
+
+	<p class="lede">
+		Type a sentence, get a textured 3D model. That path runs end to end on NVIDIA silicon, and on
+		three.ws the first lane of it is <strong>free, keyless, and open source</strong>. This page is the
+		honest map of how: which NVIDIA-hosted models do what, which GPUs we run ourselves, and what we
+		learned putting them into production.
+	</p>
+
+	<div class="badge-plate">
+		<img src="/marks/nvidia-inception-badge.svg" width="250" height="108" alt="NVIDIA Inception Program member badge" />
+	</div>
+
+	<div class="cta-row">
+		<a href="/forge" class="btn btn-primary">
+			Generate one free
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+		</a>
+		<a href="/docs/nvidia-models" class="btn btn-sec">The model map</a>
+		<a href="/blog/image-to-3d-on-nvidia-l4-and-blackwell" class="btn btn-sec">Engineering post</a>
+		<a href="/docs/nvidia-inception" class="btn btn-sec">About the membership</a>
+	</div>
+
+	<section>
+		<h2>Two layers, one stack.</h2>
+		<p class="sub">
+			Almost every platform that says "runs on NVIDIA" means one of these. We run both, and they serve
+			different jobs: the hosted lane keeps the free tier free, the self-hosted fleet buys quality the
+			free tier cannot reach.
+		</p>
+
+		<div class="layers">
+
+			<div class="layer">
+				<span class="tag">Layer 1 · Hosted</span>
+				<h3>NVIDIA-hosted models, one key</h3>
+				<p>
+					A single <code>NVIDIA_API_KEY</code> from build.nvidia.com unlocks the entire catalog below.
+					No per-model billing, no per-seat cost. It is rate limited rather than metered, which is
+					exactly why we treat it as a free-first lane and always keep a fallback behind it.
+				</p>
+				<ul>
+					<li><strong>Text to 3D</strong> that costs a visitor nothing and needs no account</li>
+					<li><strong>Chat, vision, embeddings, reranking, safety, speech</strong> on the same key</li>
+					<li>Every call has a documented failover, so a rate limit degrades instead of breaking</li>
+				</ul>
+			</div>
+
+			<div class="layer">
+				<span class="tag">Layer 2 · Self-hosted</span>
+				<h3>Our own GPU fleet</h3>
+				<p>
+					Twelve Cloud Run GPU services, each a worker wrapping one model, autoscaled per lane.
+					Eleven on <code>nvidia-l4</code>, one on <code>nvidia-rtx-pro-6000</code> (Blackwell). This is
+					where the paid realism lanes live, and where PBR materials, rigging, and motion get made.
+				</p>
+				<ul>
+					<li><strong>Physically-based materials</strong>: baseColor, metallicRoughness, and normal maps</li>
+					<li><strong>Auto-rigging and motion</strong>, so a generated mesh can move, not just sit there</li>
+					<li>One wire contract across every worker, so any lane can fail over to any other</li>
+				</ul>
+			</div>
+
+		</div>
+	</section>
+
+	<section>
+		<h2>The free model map.</h2>
+		<p class="sub">
+			Every capability below is in production source and reachable on the free key. Nothing here is
+			aspirational, and nothing is a demo stub.
+		</p>
+
+		<div class="table-scroll">
+			<table>
+				<thead>
+					<tr><th>Capability</th><th>NVIDIA model</th><th>What it powers</th><th>Free</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>Text to 3D</td><td><code>microsoft/trellis</code></td><td>The keyless generate lane on /forge</td><td class="free">Yes</td></tr>
+					<tr><td>Text to image</td><td><code>black-forest-labs/flux.1-schnell</code></td><td>Reference images and texture inputs</td><td class="free">Yes</td></tr>
+					<tr><td>LLM, default lane</td><td><code>meta/llama-3.3-70b-instruct</code></td><td>Agent chat and platform reasoning</td><td class="free">Yes</td></tr>
+					<tr><td>LLM, model garden</td><td>Nemotron 120B / 49B / Nano 9B and peers</td><td>The Brain workbench model picker</td><td class="free">Yes</td></tr>
+					<tr><td>Vision</td><td><code>nvidia/nemotron-nano-12b-v2-vl</code></td><td>Photo checks before reconstruction, alt text</td><td class="free">Yes</td></tr>
+					<tr><td>Embeddings</td><td><code>nvidia/nv-embedqa-e5-v5</code></td><td>Agent memory and semantic search</td><td class="free">Yes</td></tr>
+					<tr><td>Reranking</td><td><code>nvidia/rerank-qa-mistral-4b</code></td><td>Sharpening retrieval before an answer</td><td class="free">Yes</td></tr>
+					<tr><td>Content safety</td><td><code>nvidia/llama-3.1-nemoguard-8b-content-safety</code></td><td>The guardrail in front of generation</td><td class="free">Yes</td></tr>
+					<tr><td>Text to speech</td><td><code>magpie-tts-multilingual</code> (Riva)</td><td>Avatar voices, multilingual</td><td class="free">Yes</td></tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="note">
+			<strong>Model by model, with the file each one is wired into:</strong>
+			<a href="/docs/nvidia-models">NVIDIA models on three.ws</a>. It names the exact endpoint, the fallback
+			behind it, and the environment variable that turns each lane on.
+		</div>
+	</section>
+
+	<section>
+		<h2>Try the free lane right now.</h2>
+		<p class="sub">
+			No key, no account, no wallet. One POST returns a real GLB you can open in any 3D viewer. This is the
+			same endpoint the browser UI calls.
+		</p>
+
+<pre><span class="c"># generate a textured 3D model on the free NVIDIA lane</span>
+curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{"prompt":"a small brass compass","backend":"nvidia"}'</span>
+
+<span class="c"># → {"creation_id":"…","status":"done",
+#    "glb_url":"https://…/forge/anon/….glb",
+#    "quality":{"valid":true,"score":0.947,…}}</span></pre>
+
+		<div class="note">
+			<strong>The <code>quality</code> block is not decoration.</strong> Every generation is inspected before it
+			is handed back: vertex and triangle counts, bounding-box diagonal, whether materials and textures
+			actually landed. A model that fails inspection is regenerated rather than shipped to you broken.
+		</div>
+	</section>
+
+	<section>
+		<h2>The GPU fleet.</h2>
+		<p class="sub">
+			What we run ourselves, and on which card. Each row is a separate Cloud Run service with its own
+			scaling policy, so a slow texture job never queues behind a rigging job.
+		</p>
+
+		<div class="table-scroll">
+			<table>
+				<thead>
+					<tr><th>Lane</th><th>Worker</th><th>GPU</th><th>CPU / memory</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>Image to 3D, PBR</td><td><code>model-hunyuan3d-21-rtx</code></td><td><code>nvidia-rtx-pro-6000</code></td><td>20 / 80 Gi</td></tr>
+					<tr><td>Image to 3D, fallback</td><td><code>model-hunyuan3d</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+					<tr><td>Text to 3D</td><td><code>model-trellis</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+					<tr><td>Image to 3D, fast</td><td><code>model-triposg</code>, <code>model-triposr</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi, 4 / 16 Gi</td></tr>
+					<tr><td>Texture synthesis</td><td><code>texture</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+					<tr><td>Auto-rigging</td><td><code>rig</code>, <code>unirig</code></td><td><code>nvidia-l4</code></td><td>4 / 16 Gi</td></tr>
+					<tr><td>Text to motion</td><td><code>model-text2motion</code></td><td><code>nvidia-l4</code></td><td>4 / 16 Gi</td></tr>
+					<tr><td>Video to scene</td><td><code>model-video2scene</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="note">
+			<strong>Everything above is open source.</strong> Each worker's Dockerfile, deploy config, and README are
+			in the repository, including the CUDA and PyTorch versions per GPU generation.
+		</div>
+	</section>
+
+	<section>
+		<h2>Read next.</h2>
+		<p class="sub">Two tutorials you can follow end to end, and two deeper pieces on how the stack was built.</p>
+
+		<div class="reads">
+
+			<a class="read" href="/tutorials/nvidia-3d-free">
+				<span class="kind">Tutorial</span>
+				<h3>Free text-to-3D on NVIDIA</h3>
+				<p>From an empty terminal to a downloaded GLB on the free lane, including how to poll a long job and what each response field means.</p>
+				<span class="more">Start the tutorial
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+			<a class="read" href="/tutorials/nvidia-nim-self-host">
+				<span class="kind">Tutorial</span>
+				<h3>Self-host TRELLIS on your own NIM</h3>
+				<p>Run the same text-to-3D model on your own NVIDIA GPU with NIM, then point a client at it and reconstruct from photos too.</p>
+				<span class="more">Start the tutorial
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+			<a class="read" href="/blog/image-to-3d-on-nvidia-l4-and-blackwell">
+				<span class="kind">Engineering</span>
+				<h3>Image-to-3D on L4 and Blackwell</h3>
+				<p>The field report: a memory-backed <code>/tmp</code> that SIGKILLs a 32 GiB instance mid-load, cu124 wheels with no sm_120 kernels, and the regional quota that flipped our GPU choice.</p>
+				<span class="more">Read the post
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+			<a class="read" href="/docs/nvidia-nemotron-spotlight">
+				<span class="kind">Essay</span>
+				<h3>The generator was never the hard part</h3>
+				<p>Published on the NVIDIA Developer Forums: why a 12B vision model standing in front of the 3D generator mattered more than the 3D generator itself.</p>
+				<span class="more">Read the essay
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				</span>
+			</a>
+
+		</div>
+	</section>
+
+	<section>
+		<h2>Why this matters.</h2>
+		<p class="sub">
+			Generating 3D used to require a workstation, a licence, and a skill you spent years acquiring.
+			The reason a visitor can now type a sentence on a school laptop and get a real, textured,
+			riggable model back for nothing is not one famous model getting good. It is an entire supporting
+			cast getting good and getting free at the same time, most of it hosted by NVIDIA behind a single
+			key. GPU capacity is the one hard constraint on how fast and how detailed that gets, which is
+			exactly the constraint Inception helps relax.
+		</p>
+		<div class="cta-row" style="margin-bottom:0">
+			<a href="/forge" class="btn btn-primary">
+				Generate a model
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+			</a>
+			<a href="https://github.com/nirholas/three.ws" class="btn btn-sec" target="_blank" rel="noopener">
+				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3C5.4.3 0 5.7 0 12.3c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.8 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.8-1.6 8.2-6.1 8.2-11.4C24 5.7 18.6.3 12 .3z"/></svg>
+				View source
+			</a>
+			<a href="/partners" class="btn btn-sec">All partners</a>
+		</div>
+	</section>
+
+	<p class="disclaimer">
+		three.ws is an independent member of the NVIDIA Inception program, NVIDIA's global program for startups
+		building on accelerated computing. Inception is a startup program, not a partnership, a reseller
+		relationship, or an investment: NVIDIA reviews applicants and admits companies building seriously on
+		accelerated computing. This page describes three.ws products that run on NVIDIA models and hardware; it
+		is not an NVIDIA product and is not endorsed by NVIDIA beyond the program membership shown. NVIDIA, the
+		NVIDIA logo, NVIDIA Inception, NIM, Riva, Nemotron, and NemoGuard are trademarks of NVIDIA Corporation.
+		Learn more about the program at
+		<a href="https://www.nvidia.com/en-us/startups/" target="_blank" rel="noopener">nvidia.com/en-us/startups</a>.
+	</p>
+
+</main>
+
+<div id="footer-container"></div>
+
+<script src="/brand.js" defer></script>
+<script src="/footer.js"></script>
+<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+<script type="module" src="/i18n.js"></script>
+</body>
+</html>

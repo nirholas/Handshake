@@ -3127,5 +3127,157 @@
 			},
 			"schemaHash": "1cec1d1a0dae"
 		}
+	],
+	"src/pump/mcp-tools.js": [
+		{
+			"name": "get_bonding_curve",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"schemaHash": "49c5f8bf53d0"
+		},
+		{
+			"name": "get_coin_intel",
+			"descHead": "Full Coin Intelligence snapshot for a pump.fun mint. Returns every signa",
+			"descHash": "92ae6dd705fc",
+			"schemaHash": "1e44fef7baab"
+		},
+		{
+			"name": "get_creator_profile",
+			"descHead": "All tokens by a creator wallet, with rug-pull risk flags.",
+			"descHash": "27d3d34ccb38",
+			"schemaHash": "5b542e7c8f5b"
+		},
+		{
+			"name": "get_graduated_tokens",
+			"descHead": "Tokens that graduated from the bonding curve to Raydium AMM.",
+			"descHash": "b9156b64cef8",
+			"schemaHash": "d99491585978"
+		},
+		{
+			"name": "get_king_of_the_hill",
+			"descHead": "Highest-market-cap token still on the bonding curve.",
+			"descHash": "7a0638e0198a",
+			"schemaHash": "c434b866b535"
+		},
+		{
+			"name": "get_new_tokens",
+			"descHead": "Most recently launched pump.fun tokens.",
+			"descHash": "c78a259b6bdd",
+			"schemaHash": "d99491585978"
+		},
+		{
+			"name": "get_oracle_conviction",
+			"descHead": "Oracle conviction score for a pump.fun mint — the fused 0–100 score the ",
+			"descHash": "347ddb2f7bf8",
+			"schemaHash": "1e44fef7baab"
+		},
+		{
+			"name": "get_token_details",
+			"descHead": "Full details for a specific pump.fun token by mint address.",
+			"descHash": "3cdcaa84cd2b",
+			"schemaHash": "e0dbb69b2809"
+		},
+		{
+			"name": "get_token_holders",
+			"descHead": "Top holders of a token with concentration analysis (on-chain).",
+			"descHash": "6cda8906e5a4",
+			"schemaHash": "09599c586dfe"
+		},
+		{
+			"name": "get_token_trades",
+			"descHead": "Recent buy/sell history for a token.",
+			"descHash": "49e53c8ada01",
+			"schemaHash": "bbad04bed87b"
+		},
+		{
+			"name": "get_trending_tokens",
+			"descHead": "Top pump.fun tokens by market cap.",
+			"descHash": "1607cb010f0a",
+			"schemaHash": "d99491585978"
+		},
+		{
+			"name": "kol_leaderboard",
+			"descHead": "Top KOL traders ranked by P&L for a given time window. Returns wallet, p",
+			"descHash": "0715582e0e3a",
+			"schemaHash": "ae54414329b2"
+		},
+		{
+			"name": "pumpfun_bot_status",
+			"descHead": "Returns the configuration and health status of the pump.fun indexer back",
+			"descHash": "b0e6ffc92d6c",
+			"schemaHash": "d6c5e29e0d65"
+		},
+		{
+			"name": "pumpfun_first_claims",
+			"descHead": "First-ever pump.fun creator fee claims in a time window — a cash-out sig",
+			"descHash": "3907f4c44a58",
+			"schemaHash": "f6849838d8b8"
+		},
+		{
+			"name": "pumpfun_list_claims",
+			"descHead": "List recent pump.fun fee-claim events for a creator wallet (on-chain, no",
+			"descHash": "2f700653d228",
+			"schemaHash": "ed5b74ae7e58"
+		},
+		{
+			"name": "pumpfun_quote_swap",
+			"descHead": "Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or ",
+			"descHash": "8e5de97f6929",
+			"schemaHash": "6174606137d0"
+		},
+		{
+			"name": "pumpfun_upload_metadata",
+			"descHead": "Upload coin metadata (name, symbol, description, image) to IPFS and get ",
+			"descHash": "a205387e4ba5",
+			"schemaHash": "327f71cfb7d4"
+		},
+		{
+			"name": "pumpfun_vanity_mint",
+			"descHead": "Generate a Solana keypair whose address ends/starts with a vanity patter",
+			"descHash": "f0a0f5f8f511",
+			"schemaHash": "ce380247af15"
+		},
+		{
+			"name": "pumpfun_watch_claims",
+			"descHead": "Return all pump.fun fee-claim events for a creator wallet within a look-",
+			"descHash": "96438f170ead",
+			"schemaHash": "283c56cdfdde"
+		},
+		{
+			"name": "pumpfun_watch_whales",
+			"descHead": "Collect whale trades on a pump.fun token for a short window (max 10 s). ",
+			"descHash": "b223f04d331f",
+			"schemaHash": "0a5483c9863c"
+		},
+		{
+			"name": "search_tokens",
+			"descHead": "Search pump.fun tokens by name, symbol, or mint address.",
+			"descHash": "b4f203b8db8f",
+			"schemaHash": "a2944466551a"
+		},
+		{
+			"name": "sns_resolve",
+			"descHead": "Resolve a .sol Solana Name Service domain to its owner wallet address.",
+			"descHash": "2ce9fd692a97",
+			"schemaHash": "49585a836add"
+		},
+		{
+			"name": "sns_reverseLookup",
+			"descHead": "Reverse-lookup a Solana wallet address to its primary .sol domain name.",
+			"descHash": "5355846929aa",
+			"schemaHash": "dadc798918e6"
+		},
+		{
+			"name": "social_cashtag_sentiment",
+			"descHead": "Score social-post sentiment for a cashtag using a deterministic lexicon.",
+			"descHash": "bdba5408f63e",
+			"schemaHash": "295c93dd416f"
+		},
+		{
+			"name": "social_x_post_impact",
+			"descHead": "Correlate an X (Twitter) post to a memecoin price impact. Fetches post m",
+			"descHash": "4e2f236362b7",
+			"schemaHash": "94cccbaa0a63"
+		}
 	]
 }
