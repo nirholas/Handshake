@@ -33,6 +33,26 @@
       ]
     },
     {
+      "id": "aws-builder-center-3d-agents-onchain-payments",
+      "title": "three.ws Publishes \"Build Autonomous AI Agents with 3D Bodies and On-Chain Payments\" on the AWS Builder Center",
+      "date": "2026-06-27T07:12:00.000Z",
+      "author": "three.ws",
+      "link": "https://builder.aws.com/content/3FMY7S5o4lwzb40gDsCJRCE20cX/build-autonomous-ai-agents-with-d-bodies-and-on-chain-payments-threews-on-aws",
+      "external_link": "https://builder.aws.com/content/3FMY7S5o4lwzb40gDsCJRCE20cX/build-autonomous-ai-agents-with-d-bodies-and-on-chain-payments-threews-on-aws",
+      "external_source": "the AWS Builder Center",
+      "summary": "Our second article on the official AWS Builder Center: how to build browser-native 3D AI agents with memory, on-chain wallets, and autonomous x402 payments, available through AWS Marketplace and embeddable in one line of HTML.",
+      "body_html": "<p><strong>Our second article is live on the official <a href=\"https://builder.aws.com/community/@threews\" rel=\"noopener\">AWS Builder Center</a>.</strong></p>\n<h2>The article</h2>\n<p><a href=\"https://builder.aws.com/content/3FMY7S5o4lwzb40gDsCJRCE20cX/build-autonomous-ai-agents-with-d-bodies-and-on-chain-payments-threews-on-aws\" rel=\"noopener\"><strong>Build Autonomous AI Agents with 3D Bodies and On-Chain Payments | three.ws on AWS</strong></a></p>\n<p>Where the first piece covered the billing rails, this one covers the agents themselves: what it takes to give an AI agent a body, a wallet, and the authority to spend.</p>\n<ul>\n<li><strong>A body in the browser.</strong> One <code>&lt;agent-3d&gt;</code> tag renders a rigged, animated 3D agent on any page, with no engine to install and no build step.</li>\n<li><strong>Memory and a brain.</strong> Conversation state persists across sessions, and the agent reasons over it.</li>\n<li><strong>An on-chain wallet.</strong> Solana-native identity plus ERC-8004 registration, so the agent is addressable and accountable.</li>\n<li><strong>Autonomous payments.</strong> Agents settle x402 micropayments in USDC per call, with no human in the loop.</li>\n<li><strong>Governed before they act.</strong> Spend policy is enforced server-side, so autonomy never means unbounded.</li>\n<li><strong>AWS procurement.</strong> Subscribe through AWS Marketplace and the spend lands on your existing AWS invoice.</li>\n</ul>\n<p>Every claim in the article points at Apache 2.0 source in <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a>.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/news/aws-builder-center-blog\">three.ws Publishes on the AWS Builder Center Blog</a></li>\n<li><a href=\"https://three.ws/blog/three-ws-on-aws-marketplace.html\">three.ws Launches on AWS Marketplace</a></li>\n<li><a href=\"https://three.ws/aws\">three.ws on AWS</a></li>\n</ul>",
+      "tags": [
+        "aws",
+        "aws-marketplace",
+        "agents",
+        "x402",
+        "3d",
+        "technical",
+        "blog"
+      ]
+    },
+    {
       "id": "text-to-3d-is-live",
       "slug": "text-to-3d-is-live",
       "title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",
@@ -287,10 +307,10 @@
       "id": "aws-builder-center-blog",
       "title": "three.ws Publishes on the AWS Builder Center Blog",
       "date": "2026-05-30T08:00:00.000Z",
-      "link": "https://three.ws/blog/three-ws-aws-partner.html",
+      "link": "https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3",
       "author": "three.ws",
       "summary": "three.ws's contribution is live on the official AWS Builder Center Blog: \"How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3\" — covering ResolveCustomer, MeterUsage, entitlements, SNS lifecycle webhooks, and bridging to an on-chain x402 paywall.",
-      "body_html": "<p><strong>Our contribution just went live on the official AWS Builder Center Blog.</strong></p>\n<h2>The article</h2>\n<p><em>\"How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3\"</em></p>\n<p>A technical deep-dive covering the full AWS Marketplace SaaS integration:</p>\n<ul>\n<li><strong>ResolveCustomer</strong> — validating the registration token on the fulfillment URL.</li>\n<li><strong>MeterUsage / BatchMeterUsage</strong> — reporting per-agent and per-inference usage daily through AWS.</li>\n<li><strong>GetEntitlements</strong> — checking contract entitlements for tiered feature gating.</li>\n<li><strong>Verified SNS webhooks</strong> — handling <code>subscribe-success</code>, <code>unsubscribe-success</code>, and <code>entitlement-updated</code> lifecycle events with signature verification.</li>\n<li><strong>Bridging to an on-chain x402 paywall</strong> — routing AWS subscription state into the three.ws x402 agent payment layer.</li>\n</ul>\n<p>All of it is open source at <a href=\"https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace\" rel=\"noopener\">github.com/nirholas/three.ws/tree/main/api/aws-marketplace</a>.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-on-aws-marketplace.html\">three.ws Launches on AWS Marketplace</a></li>\n<li><a href=\"https://three.ws/blog/three-ws-aws-partner.html\">three.ws Joins the AWS Partner Network</a></li>\n</ul>",
+      "body_html": "<p><strong>Our contribution just went live on the official AWS Builder Center Blog.</strong></p>\n<h2>The article</h2>\n<p><a href=\"https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3\" rel=\"noopener\"><strong>How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3</strong></a></p>\n<p>A technical deep-dive covering the full AWS Marketplace SaaS integration:</p>\n<ul>\n<li><strong>ResolveCustomer</strong> — validating the registration token on the fulfillment URL.</li>\n<li><strong>MeterUsage / BatchMeterUsage</strong> — reporting per-agent and per-inference usage daily through AWS.</li>\n<li><strong>GetEntitlements</strong> — checking contract entitlements for tiered feature gating.</li>\n<li><strong>Verified SNS webhooks</strong> — handling <code>subscribe-success</code>, <code>unsubscribe-success</code>, and <code>entitlement-updated</code> lifecycle events with signature verification.</li>\n<li><strong>Bridging to an on-chain x402 paywall</strong> — routing AWS subscription state into the three.ws x402 agent payment layer.</li>\n</ul>\n<p>All of it is open source at <a href=\"https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace\" rel=\"noopener\">github.com/nirholas/three.ws/tree/main/api/aws-marketplace</a>.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/blog/three-ws-on-aws-marketplace.html\">three.ws Launches on AWS Marketplace</a></li>\n<li><a href=\"https://three.ws/blog/three-ws-aws-partner.html\">three.ws Joins the AWS Partner Network</a></li>\n</ul>",
       "tags": [
         "aws",
         "aws-marketplace",
@@ -298,7 +318,9 @@
         "x402",
         "technical",
         "blog"
-      ]
+      ],
+      "external_link": "https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3",
+      "external_source": "the AWS Builder Center"
     },
     {
       "id": "aws-marketplace-live-may29",
