@@ -157,7 +157,7 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 			const verdict = classifyRpcBody(JSON.stringify({ jsonrpc: '2.0', id: 1, error: err }));
 			expect(verdict, `code ${err.code} must rotate`).toBeTruthy();
 		}
-		// A deterministic method error must NOT rotate — every lane would fail it.
+		// A deterministic method error must NOT rotate: every lane would fail it.
 		expect(
 			classifyRpcBody(
 				JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'invalid params' } }),
@@ -209,6 +209,34 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 		const h = rpcLaneHealth();
 		expect(h.paidTotal).toBe(0);
 		expect(h.allPaidCooling).toBe(false);
+	});
+
+	it('does not count a free node pinned as SOLANA_RPC_URL as paid capacity', () => {
+		// Repointing SOLANA_RPC_URL at a keyless node is the standard mitigation
+		// during a quota outage (applied 2026-07-30, when the Alchemy monthly cap,
+		// the Helius plan and the QuickNode daily cap were all exhausted at once).
+		// Judging "paid" by env-var provenance made that mitigation hide the very
+		// outage it was mitigating: the free node counted as a healthy premium lane,
+		// so allPaidCooling read false while every real paid lane was dark.
+		process.env.HELIUS_API_KEY = 'hk';
+		process.env.ALCHEMY_API_KEY = 'ak';
+		process.env.SOLANA_RPC_URL = 'https://solana-rpc.publicnode.com';
+
+		const health = rpcLaneHealth();
+		expect(health.paidTotal).toBe(2);
+		expect(health.lanes.find((l) => l.url.includes('publicnode')).paid).toBe(false);
+
+		markEndpointCooldown('https://mainnet.helius-rpc.com/?api-key=hk', 429, 'max usage reached');
+		markEndpointCooldown(
+			'https://solana-mainnet.g.alchemy.com/v2/ak',
+			429,
+			'Monthly capacity limit exceeded',
+		);
+
+		const after = rpcLaneHealth();
+		expect(after.allPaidCooling).toBe(true);
+		// The pinned free lane is still serving, which is the point of the mitigation.
+		expect(after.lanes.find((l) => l.url.includes('publicnode')).cooling).toBe(false);
 	});
 
 	it('masks credentials in every lane it reports', () => {

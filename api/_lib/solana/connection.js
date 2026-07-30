@@ -202,6 +202,70 @@ const NETWORK_COOLDOWN_MS = 30_000; // 30s — fetch threw (DNS/connection blip)
 const PUBLIC_MAINNET = 'https://api.mainnet-beta.solana.com';
 const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 
+// The keyless FREE mainnet lanes, in priority order. Declared once here because
+// two callers need the same truth: solanaRpcEndpoints() splices them into the
+// chain, and paidMainnetEndpoints() subtracts them to decide what counts as
+// paid capacity. Keeping one list means an operator who pins a free node as
+// SOLANA_RPC_URL cannot accidentally be counted as a healthy premium lane.
+//
+// PublicNode — keyless and un-throttled (the same node mcp-server uses) so
+// failover lands on a working endpoint instead of depending on the aggressively
+// rate-limited public mainnet-beta endpoint alone. Leo RPC's keyless FREE tier
+// is a second un-throttled lane, so the chain still has depth when every paid
+// key is exhausted (e.g. a Helius plan lapsing mid-billing-cycle).
+//
+// Tatum gates getBalance and getSignaturesForAddress behind a paid tier (a
+// -16401 "available for paid plans only" JSON-RPC error), which
+// isProviderTierError classifies as a fail-over signal, so it adds redundancy
+// for the methods it serves without ever blinding a balance/signature caller.
+// The free public-RPC pool has thinned (most providers now 401/403/429
+// keyless), so this set is curated to ones that actually respond; re-verify any
+// that start cooling persistently in the failover logs. (solana.therpc.io was
+// pruned 2026-07-17 after going fully unreachable, DNS fetch failures on every
+// probe of both getLatestBlockhash and getBalance.)
+//
+// MagicBlock + Tatum's gateway host were verified live (getLatestBlockhash +
+// sendTransaction enabled) on 2026-07-04 when the free pool was re-probed after
+// a Helius plan lapsed mid-cycle. They deepen the keyless chain precisely for
+// the "every paid key is exhausted" case; the classifyRpcBody guard still fails
+// them over if either returns garbage.
+const FREE_KEYLESS_MAINNET = [
+	'https://solana-rpc.publicnode.com',
+	'https://solana.leorpc.com/?api_key=FREE',
+	'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
+	'https://rpc.magicblock.app/mainnet',
+	'https://solana-mainnet.gateway.tatum.io',
+	PUBLIC_MAINNET,
+];
+
+// Hostnames of every keyless free lane, plus the public devnet cluster. A URL
+// on one of these hosts is never metered capacity no matter which env var
+// supplied it.
+const FREE_KEYLESS_HOSTS = new Set(
+	[...FREE_KEYLESS_MAINNET, PUBLIC_DEVNET].map((u) => {
+		try {
+			return new URL(u).host;
+		} catch {
+			return '';
+		}
+	}),
+);
+
+/**
+ * True when `url` is a metered/keyed lane we pay for, rather than one of the
+ * keyless free nodes. Judged by HOST, not by which env var it arrived in: an
+ * operator repointing SOLANA_RPC_URL at a free node during a quota outage must
+ * not make the paid-tier sensor read healthy.
+ */
+function isPaidLane(url) {
+	if (!url) return false;
+	try {
+		return !FREE_KEYLESS_HOSTS.has(new URL(url).host);
+	} catch {
+		return false;
+	}
+}
+
 // Process-wide endpoint cooldown, keyed by full URL. Shared across every
 // Connection built in this instance (both solanaConnection() and RpcFallback),
 // so once one provider reports quota-exhausted, ALL callers skip it until it
@@ -285,9 +349,9 @@ function cooldownMsFor(status, bodyText) {
 		// exhausted (HTTP 429 + `{code:-32003,"daily request limit reached - upgrade
 		// your account"}`); it means the endpoint is dead for the rest of the day, so
 		// park it for the long window instead of re-probing it every 10 minutes.
-		// Alchemy words the same class of failure completely differently — HTTP 429 +
+		// Alchemy words the same class of failure completely differently: HTTP 429 +
 		// `{code:429,"Monthly capacity limit exceeded. Visit …/billing to upgrade your
-		// scaling policy"}` — matching none of the phrases above. Left unmatched it
+		// scaling policy"}`, matching none of the phrases above. Left unmatched it
 		// took the 10m transient window, so a lane that was dead until the billing
 		// month rolled over re-entered rotation every 10 minutes and re-failed; when
 		// it was also SOLANA_RPC_URL, practically every Solana call in production
@@ -437,35 +501,9 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		// clusters and return wrong data). Tried before the public nodes so the
 		// configured providers absorb load first.
 		...extraFallbackUrls(),
-		// PublicNode — a keyless, un-throttled fallback (the same node mcp-server
-		// uses) so failover lands on a working endpoint instead of depending on the
-		// aggressively rate-limited public mainnet-beta endpoint alone.
-		'https://solana-rpc.publicnode.com',
-		// Leo RPC keyless FREE tier — a second un-throttled keyless lane so the
-		// chain still has depth when every paid key is exhausted (e.g. a Helius plan
-		// lapsing mid-billing-cycle). Verified serving getAccountInfo on mainnet.
-		'https://solana.leorpc.com/?api_key=FREE',
-		// Tatum keyless lane. PublicNode, Leo RPC and Tatum were each verified serving
-		// getAccountInfo (the method whose malformed response 500'd checkout). Tatum
-		// gates getBalance and getSignaturesForAddress behind a paid tier (a -16401
-		// "available for paid plans only" / "not available for anonymous access"
-		// JSON-RPC error), which isProviderTierError classifies as a fail-over signal,
-		// so it adds redundancy for the methods it serves without ever blinding a
-		// balance/signature caller. The free public-RPC pool has thinned (most
-		// providers now 401/403/429 keyless), so this set is curated to ones that
-		// actually respond; re-verify any that start cooling persistently in the
-		// failover logs. (solana.therpc.io was pruned 2026-07-17 after going fully
-		// unreachable, DNS fetch failures on every probe of both getLatestBlockhash
-		// and getBalance.)
-		'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
-		// MagicBlock + Tatum's gateway host — two more keyless lanes verified live
-		// (getLatestBlockhash + sendTransaction enabled) on 2026-07-04 when the free
-		// pool was re-probed after a Helius plan lapsed mid-cycle. They deepen the
-		// keyless chain precisely for the "every paid key is exhausted" case; the
-		// classifyRpcBody guard still fails them over if either returns garbage.
-		'https://rpc.magicblock.app/mainnet',
-		'https://solana-mainnet.gateway.tatum.io',
-		PUBLIC_MAINNET,
+		// The curated keyless free chain (see FREE_KEYLESS_MAINNET above), ending
+		// with the most-throttled public cluster.
+		...FREE_KEYLESS_MAINNET,
 		// Paid metered reserve (mainnet only — devnet URLs would cross clusters).
 		// Dead last BY DESIGN: these bill against a monthly quota, so they serve
 		// only when every free lane above is down or throttled at once.
@@ -480,6 +518,13 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
  * forms solanaRpcEndpoints() builds them. Free keyless nodes are excluded.
  * Used by the lane-health sensor to answer "are we still on paid capacity, or
  * has the whole premium tier gone dark and left us on free public nodes?"
+ *
+ * The operator vars are filtered through isPaidLane() because repointing
+ * SOLANA_RPC_URL at a keyless node is the standard mitigation during a quota
+ * outage (done 2026-07-30, when Alchemy/Helius/QuickNode were exhausted at
+ * once). Counting that free node as premium capacity would make this sensor
+ * report a healthy paid tier at exactly the moment the whole tier is dark —
+ * the same blind spot the sensor was written to close.
  */
 function paidMainnetEndpoints() {
 	const key = process.env.HELIUS_API_KEY;
@@ -490,7 +535,9 @@ function paidMainnetEndpoints() {
 		key && `https://mainnet.helius-rpc.com/?api-key=${key}`,
 		alch && `https://solana-mainnet.g.alchemy.com/v2/${alch}`,
 		...lastResortUrls(),
-	]).filter(isHttpUrl);
+	])
+		.filter(isHttpUrl)
+		.filter(isPaidLane);
 }
 
 /**
