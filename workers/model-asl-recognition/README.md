@@ -23,6 +23,12 @@ must not be shipped. It reads continuous fingerspelling — words, names, URLs,
 phone numbers — not just static letter poses. Realistic webcam accuracy is a
 10–20% character error rate; the chat LLM downstream is robust to that.
 
+Users meet this worker through the webcam button in agent chat and the demo on
+[/sign-language](https://three.ws/sign-language); the guided walkthrough is the
+tutorial [Make your avatar sign](https://three.ws/tutorials/sign-with-your-avatar).
+The public, keyless proxy in front of it is `/api/asl-recognition`, documented in
+[docs/api-reference.md](../../docs/api-reference.md).
+
 ## API
 
 Bearer auth on everything but `/health` (`Authorization: Bearer $API_KEY`,

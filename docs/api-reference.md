@@ -1430,6 +1430,103 @@ sample rate, whether the lane is configured).
 
 ---
 
+## Sign Language API: ASL fingerspelling → text
+
+Read American Sign Language fingerspelling from a webcam. No API key, no account,
+no payment: rate-limited per IP. This is the input half of the platform's signing
+loop (the output half, avatars that sign, is [docs/sign-language.md](./sign-language.md)).
+
+**Video never reaches the platform.** The caller extracts MediaPipe Holistic
+landmarks in the browser and posts coordinates only. `src/sign-input.js` ships a
+`SignInput` class that does the camera, the landmarker, and both calls below for you.
+
+Recognition runs the 1st-place model from Google's 2023 ASL Fingerspelling
+Recognition competition (Apache-2.0 weights, FSboard CC BY 4.0 corpus), served by
+[workers/model-asl-recognition](../workers/model-asl-recognition/README.md).
+
+### Feature schema
+
+```
+GET /api/asl-recognition
+```
+
+Returns the exact per-frame feature layout the recognizer expects. Fetch it once,
+then build every frame row in this column order.
+
+```json
+{
+	"columns": ["x_face_0", "x_face_61", "…", "z_pose_21"],
+	"max_frames": 1500,
+	"min_frames": 8
+}
+```
+
+| Field        | Type     | Description                                                                     |
+| ------------ | -------- | -------------------------------------------------------------------------------- |
+| `columns`    | string[] | 390 landmark column names, in order: `<x\|y\|z>_<face\|left_hand\|right_hand\|pose>_<index>` |
+| `max_frames` | number   | Longest accepted capture                                                         |
+| `min_frames` | number   | Below this the capture is too short to decode                                    |
+
+### Transcribe
+
+```
+POST /api/asl-recognition
+```
+
+**Request body**
+
+```json
+{ "frames": [[0.51, 0.32, null, "…"]], "clean": true }
+```
+
+| Field    | Type       | Description                                                                                  |
+| -------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| `frames` | number[][] | One row per video frame, each holding the values named by `columns`, in order. `null` marks a missing landmark. Required. |
+| `clean`  | boolean    | Run the LLM cleanup pass over the raw decode. Default `true`; send `false` for the untouched decode. |
+
+**Response (200)**
+
+```json
+{ "text": "hello world", "raw": "helo worlld", "cleaned": true, "frames": 214, "ms": 380 }
+```
+
+| Field     | Type    | Description                                                              |
+| --------- | ------- | -------------------------------------------------------------------------- |
+| `text`    | string  | The transcription, after cleanup when it ran                              |
+| `raw`     | string  | The model's untouched decode                                              |
+| `cleaned` | boolean | Whether cleanup changed the decode                                        |
+| `frames`  | number  | Frames decoded                                                            |
+| `ms`      | number  | Recognition time                                                          |
+
+Webcam fingerspelling decodes at a **10-20% character error rate**, which is why a
+constrained LLM pass recovers the intended word and why the browser surfaces the
+result for review before sending. Cleanup fails open: any LLM problem returns `raw`
+unchanged.
+
+**Example**
+
+```bash
+# 1. Fetch the column layout your frame rows must match.
+curl -s https://three.ws/api/asl-recognition | jq '{cols: (.columns | length), min_frames, max_frames}'
+
+# 2. Post captured landmark rows (frames.json holds { "frames": [[…]] }).
+curl -s -X POST https://three.ws/api/asl-recognition \
+  -H 'content-type: application/json' \
+  --data-binary @frames.json
+```
+
+**Errors**
+
+| Status | Code             | Meaning                                                                        |
+| ------ | ---------------- | -------------------------------------------------------------------------------- |
+| `400`  | `bad_request`    | Body is not `{ frames: [[…]] }`                                                 |
+| `400`  | `bad_frames`     | Frame rows do not match the published schema (wrong width, too few frames)      |
+| `429`  | `rate_limited`   | Per-IP recognition limit reached, retry shortly                                |
+| `502`  | `worker_error`   | The recognizer lane failed, retry                                              |
+| `503`  | `unconfigured`   | This deployment has no `GCP_ASL_RECOGNITION_URL` / `GCP_RECONSTRUCTION_KEY` set |
+
+---
+
 ## Token API — security
 
 Rug-check any Solana token in one free call. Instead of an invented "risk score",

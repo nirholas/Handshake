@@ -34,7 +34,7 @@ Under the motion generator sits a Spell box: type a word and the avatar spells i
 
 A spelled word is shareable as a link: `https://three.ws/pose?spell=HELLO` opens the studio, auto-loads a rigged avatar (same roster as animation deep links), and spells the word on arrival.
 
-Fingerspelling is the deterministic, spelling-based subset of sign language, it spells English words rather than translating into grammatical ASL. It is the first step of the platform's signing-avatars work; lexical signs come from the motion-capture lane, which can turn video of a real signer into a library clip.
+Fingerspelling is the deterministic, spelling-based subset of sign language, it spells English words rather than translating into grammatical ASL. The Studio's Spell box is spelling only. The platform also has a lexical vocabulary (words that are signed rather than spelled, on one or both hands), which drives [/sign-language](https://three.ws/sign-language), signed chat replies, and the `sign-language` embed attribute. See [docs/sign-language.md](./sign-language.md) for the whole system, or the tutorial [Make your avatar sign](https://three.ws/tutorials/sign-with-your-avatar) for a guided tour.
 
 ### Export, save, and sell
 

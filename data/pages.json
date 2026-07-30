@@ -2980,6 +2980,14 @@
 					"changefreq": "weekly"
 				},
 				{
+					"path": "/tutorials/sign-with-your-avatar",
+					"title": "Tutorial: Make Your Avatar Sign (ASL)",
+					"description": "Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/tutorials/animate-your-avatar",
 					"title": "Tutorial: Animate Your Avatar",
 					"description": "Step-by-step tutorial for animating your avatar with the built-in clip library.",

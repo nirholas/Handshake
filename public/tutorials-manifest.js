@@ -151,6 +151,16 @@
 			ctaPrimary: { label: 'Import an avatar', href: '/import/rpm' },
 		},
 		{
+			slug: 'sign-with-your-avatar',
+			tier: 'easy',
+			title: 'Make your avatar sign (ASL)',
+			blurb: 'Type a phrase and watch an avatar sign it in American Sign Language, share it as a link, export a spelled word as an animated GLB, turn on signed AI chat replies, and fingerspell back with your webcam.',
+			builds: 'A signing avatar you can share as a link, embed, and sign back to',
+			time: '15 min',
+			previewModel: '/avatars/cz.glb',
+			ctaPrimary: { label: 'Open sign language', href: '/sign-language' },
+		},
+		{
 			slug: 'walk-companion',
 			tier: 'easy',
 			title: 'Add the Walk Companion to your site',
