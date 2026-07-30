@@ -9761,7 +9761,7 @@ The driver is source-agnostic: it accepts any `AudioBuffer`, so it works identic
 | **Selfie fit**                      | [`/demos/selfie-fit.html`](https://three.ws/demos/selfie-fit.html) | Selfie reconstruction pipeline (Phase 1)                 |
 | **Persona extract**                 | [`/demos/persona-extract.html`](https://three.ws/demos/persona-extract.html) | Voice & Persona Hub onboarding interview                 |
 | **Memory seed**                     | [`/demos/memory-seed.html`](https://three.ws/demos/memory-seed.html) | Memory seeding from X/GitHub/Farcaster                   |
-| **Voice clone**                     | [`/demos/voice-clone.html`](https://three.ws/demos/voice-clone.html) | 3–10s recording → ElevenLabs custom voice                |
+| **Voice clone**                     | [`/demos/voice-clone.html`](https://three.ws/demos/voice-clone.html) | 3-10s recording → ElevenLabs custom voice                |
 | **Livepeer inference**              | [`/demos/livepeer-inference.html`](https://three.ws/demos/livepeer-inference.html) | Decentralized GPU inference end-to-end                   |
 | **Skill royalty**                   | [`/demos/skill-royalty.html`](https://three.ws/demos/skill-royalty.html) | Per-call royalty payouts to skill authors                |
 | **EAS reputation**                  | [`/demos/eas-reputation.html`](https://three.ws/demos/eas-reputation.html) | EAS-attested reputation viewer                           |
