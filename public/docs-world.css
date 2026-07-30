@@ -110,6 +110,20 @@ body {
 }
 
 /* ── HUD layout ──────────────────────────────────────────────────────────── */
+/* The HUD is an explicit overlay layer, not a bare wrapper. Its children are
+   each position:fixed, so without this the container collapses to a zero-height
+   box in normal flow: invisible to hit-testing and to anything that measures it.
+   It never swallows pointer events; each child opts back in. */
+#dw-hud {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	pointer-events: none;
+}
+#dw-hud[hidden] {
+	display: none;
+}
+
 .dw-hud-top {
 	position: fixed;
 	top: 14px;

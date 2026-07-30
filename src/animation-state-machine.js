@@ -88,27 +88,31 @@ const STATE_NAMES = Object.freeze(Object.keys(DEFAULT_STATES));
  *   exitOnMove      — a full-body gesture (sit) that the avatar rises out of the
  *                     instant a movement key/stick is pressed.
  *
- * `clip` names map to baked clips in public/animations/clips/. `point` reuses
- * the project's registry-sanctioned `reaction` clip (registry.json designates it
- * as the active default for the "point" agent slot).
+ * `clip` names map to baked clips in public/animations/clips/. Every gesture now
+ * names its own dedicated clip: the borrowed stand-ins several of them shipped
+ * with (`point` → `reaction`, `nod` → `xbot-agree`, `shrug` → `defeated`,
+ * `jog` → `xbot-run`, `sit` → the 2-key `sitidle` hold) predated the Mixamo
+ * clips that cover them exactly, and outlived that reason.
  */
 const GESTURES = Object.freeze({
 	wave:     { clip: 'wave',            label: 'Wave',     icon: '👋', loop: false, layer: 'upper', crossfade: 0.25 },
 	dance:    { clip: 'dance',           label: 'Dance',    icon: '💃', loop: true,  layer: 'full',  crossfade: 0.3  },
-	sit:      { clip: 'sitidle',         label: 'Sit',      icon: '🪑', loop: true,  layer: 'full',  crossfade: 0.35, exitOnMove: true },
-	point:    { clip: 'reaction',        label: 'Point',    icon: '👉', loop: false, layer: 'upper', crossfade: 0.25 },
+	// `sitloop` is a breathing seated idle; `sitidle` is a 2-key hold pose that
+	// freezes the avatar mid-frame for as long as the gesture is held.
+	sit:      { clip: 'sitloop',         label: 'Sit',      icon: '🪑', loop: true,  layer: 'full',  crossfade: 0.35, exitOnMove: true },
+	point:    { clip: 'point',           label: 'Point',    icon: '👉', loop: false, layer: 'upper', crossfade: 0.25 },
 	cheer:    { clip: 'av-cheering',     label: 'Cheer',    icon: '🙌', loop: false, layer: 'upper', crossfade: 0.25 },
 	agree:    { clip: 'xbot-agree',      label: 'Agree',    icon: '✅', loop: false, layer: 'upper', crossfade: 0.2  },
 	disagree: { clip: 'xbot-head-shake', label: 'Disagree', icon: '🙅', loop: false, layer: 'upper', crossfade: 0.2  },
 	talking:  { clip: 'av-vtubing',      label: 'Talking',  icon: '💬', loop: true,  layer: 'upper', crossfade: 0.3  },
-	// Conversational + locomotion gestures. `nod` reuses the agree clip as an
-	// upper-body affirm; `shrug` borrows the full-body `defeated` clip the agent
-	// slot registry already designates for the shrug slot; `jog` is a full-body
-	// run loop; `celebrate` a one-shot whole-body cheer. All clip names are baked
-	// in public/animations/manifest.json (covered by the gesture-manifest test).
-	nod:      { clip: 'xbot-agree',      label: 'Nod',      icon: '🙂', loop: false, layer: 'upper', crossfade: 0.2  },
-	shrug:    { clip: 'defeated',        label: 'Shrug',    icon: '🤷', loop: false, layer: 'full',  crossfade: 0.3  },
-	jog:      { clip: 'xbot-run',        label: 'Jog',      icon: '🏃', loop: true,  layer: 'full',  crossfade: 0.3  },
+	// Conversational + locomotion gestures. `shrug` is a shoulder shrug, so it
+	// overlays the base layer (shrug while walking) rather than taking the whole
+	// body over the way the borrowed `defeated` clip had to. All clip names are
+	// baked in public/animations/manifest.json (covered by the gesture-manifest
+	// test).
+	nod:      { clip: 'nod',             label: 'Nod',      icon: '🙂', loop: false, layer: 'upper', crossfade: 0.2  },
+	shrug:    { clip: 'shrug',           label: 'Shrug',    icon: '🤷', loop: false, layer: 'upper', crossfade: 0.25 },
+	jog:      { clip: 'jog',             label: 'Jog',      icon: '🏃', loop: true,  layer: 'full',  crossfade: 0.3  },
 	celebrate:{ clip: 'av-celebrating',  label: 'Celebrate',icon: '🎉', loop: false, layer: 'full',  crossfade: 0.3  },
 });
 

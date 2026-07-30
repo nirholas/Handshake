@@ -1,0 +1,27 @@
+import { chromium } from 'playwright';
+const BASE='http://localhost:3004';
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport:{width:1280,height:800} });
+const errors=[];
+page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+page.on('console',m=>{const t=m.text(); if(m.type()==='error' && !/websocket|vite/i.test(t)) errors.push(t);});
+await page.goto(BASE+'/docs/world',{waitUntil:'load',timeout:60000});
+await page.waitForFunction(()=>window.__docsWorld!==undefined,{timeout:60000});
+await page.waitForTimeout(5000);
+const out={};
+out.hudVisible=await page.isVisible('#dw-hud');
+out.player=await page.evaluate(()=>{const p=window.__docsWorld.player;let s=0,b=0;p.root.traverse(n=>{if(n.isSkinnedMesh)s++;if(n.isBone)b++});return {skinned:s,bones:b,pos:[+p.position.x.toFixed(1),+p.position.z.toFixed(1)]}});
+out.beaconOpacityAtSpawn=await page.evaluate(()=>{const s=window.__docsWorld.world.scene;let o=null;s.traverse(n=>{if(n.isSprite&&n.material.opacity!==undefined&&o===null&&Math.abs(n.position.y-5.4)<0.01)o=+n.material.opacity.toFixed(2)});return o});
+await page.screenshot({path:'/tmp/claude-1000/-workspaces-three-ws/2bb24e2a-01d6-4605-991f-31f1ec0d4995/scratchpad/dw-07-fixed.png'});
+// Walk away from spawn to confirm the beacon sign fades instead of covering labels
+await page.locator('#dw-canvas').click({position:{x:640,y:600}});
+await page.keyboard.down('w');
+await page.waitForTimeout(2600);
+await page.keyboard.up('w');
+await page.waitForTimeout(600);
+out.afterWalk=await page.evaluate(()=>{const p=window.__docsWorld.player;return {pos:[+p.position.x.toFixed(1),+p.position.z.toFixed(1)]}});
+out.beaconOpacityAfterWalk=await page.evaluate(()=>{const s=window.__docsWorld.world.scene;let o=null;s.traverse(n=>{if(n.isSprite&&o===null&&Math.abs(n.position.y-5.4)<0.01)o=+n.material.opacity.toFixed(2)});return o});
+await page.screenshot({path:'/tmp/claude-1000/-workspaces-three-ws/2bb24e2a-01d6-4605-991f-31f1ec0d4995/scratchpad/dw-08-walked.png'});
+await browser.close();
+console.log(JSON.stringify(out,null,2));
+console.log('ERRORS:',errors.length?errors:'none');

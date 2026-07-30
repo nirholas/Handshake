@@ -1,9 +1,9 @@
 /**
- * 11 — MCP agent session: drive Robinhood Chain through the Model Context Protocol.
+ * 11. MCP agent session: drive Robinhood Chain through the Model Context Protocol.
  *
  * Every other example in this repo imports `hoodchain` directly. An LLM agent
  * cannot do that: it can only call tools its host has been given. `hood-mcp` is
- * the bridge — an MCP server that exposes the same chain reads as protocol
+ * the bridge, an MCP server that exposes the same chain reads as protocol
  * tools, so Claude Code, Claude Desktop, Cursor, or any MCP-speaking host can
  * ask Robinhood Chain questions without a line of chain code.
  *
@@ -128,7 +128,7 @@ async function main() {
 
     if (args.listOnly) return
 
-    section('3 · get_chain_stats — the tool with no arguments')
+    section('3 · get_chain_stats, the tool with no arguments')
     const stats = readToolJson(await client.callTool({ name: 'get_chain_stats', arguments: {} }))
     if (stats?.error) {
       console.log(`  error: ${stats.error}`)
@@ -139,7 +139,7 @@ async function main() {
       if (stats.tvlUsd != null) console.log(`  TVL        ${fmtUsd(stats.tvlUsd)}`)
     }
 
-    section(`4 · get_stock_quote — the same call an agent makes for "what is ${args.symbol} worth?"`)
+    section(`4 · get_stock_quote, the same call an agent makes for "what is ${args.symbol} worth?"`)
     const quote = readToolJson(
       await client.callTool({ name: 'get_stock_quote', arguments: { symbol: args.symbol } }),
     )
@@ -160,7 +160,7 @@ async function main() {
       }
     }
 
-    section('5 · list_trending_coins — a list-shaped result')
+    section('5 · list_trending_coins, a list-shaped result')
     const trending = readToolJson(
       await client.callTool({ name: 'list_trending_coins', arguments: { limit: 5 } }),
     )

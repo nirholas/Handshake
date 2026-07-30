@@ -13,7 +13,7 @@
 //   GET  /api/pump/autopilot         → owner's launched coins → per-coin buyback/distribute toggles
 //   POST /api/agents/:id/autopilot/compile → English → structured rules (preview, never arms)
 //   PUT  /api/agents/:id/autopilot   → save / arm / disarm / kill
-//   POST /api/agents/:id/autopilot/run     → run one real cycle now
+//   POST /api/agents/:id/autopilot/run     → one cycle: preview (dry_run) or real spend
 //   POST /api/agent-screen-push      → render the cockpit to a PNG so /agents-live shows it
 //
 // Live: the host (agent-screen.js) forwards each SSE activity line to observeLog();

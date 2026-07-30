@@ -131,6 +131,15 @@ const KNOWN_SIGNATURES = [
 		class: 'self-healing',
 		action: `The pinned hiett/serverless-redis-http (SRH) image aborts sporadically (~3x/day observed) and Cloud Run restarts it; minScale 2 keeps a warm sibling serving and the API's cache circuit breaker + memory fallback ride out the blip (healthz cache stays ok). No user impact at the observed rate. Durable fix when the owner approves an image change: bump the SRH image tag on three-ws-redis-proxy. Investigate only if the crash rate climbs to many per hour or healthz cache degrades. ${RUNBOOK} §redis-proxy-srh-crash.`,
 	},
+	{
+		// Deliberately narrow: only the SHORT window is self-healing. A 403 benched
+		// for 30m is a credential failure and must stay `investigate` so a dead key
+		// is never classified as noise.
+		id: 'solana-rpc-policy-block',
+		match: /\[solana-rpc\] \S+ 403 .* cooling \d+s/i,
+		class: 'self-healing',
+		action: `A keyless Solana RPC node refused ONE call shape (PublicNode answers 403 to getTokenAccountsByOwner filtered by programId) while serving every other method. The request fails over and the lane stays in service, cooling seconds rather than the 30m an auth failure earns. No action needed. If instead you see this host cooling 30m, that is a real key problem, not this signature. ${RUNBOOK} §solana-rpc-403.`,
+	},
 ];
 
 // Known signatures for request-log (5xx) groups. `test` sees the http group:

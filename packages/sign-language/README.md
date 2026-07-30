@@ -39,10 +39,16 @@ node example/compile-utterance.mjs "happy to meet you"
 ```js
 import { SignSpeaker, estimateDuration } from '@three-ws/sign-language';
 
-const speaker = new SignSpeaker({ dominant: 'Right' });
-const clip = speaker.speak('nice to meet you');
+// `manager` is anything with { injectClip(name, clip, opts), playOnce(name, opts) }:
+// the three.ws AnimationManager, or a thin adapter over your own player.
+const speaker = new SignSpeaker({ manager, dominant: 'Right' });
+
 console.log(estimateDuration('nice to meet you')); // seconds, before compiling
+const { signed, spelled } = await speaker.speak('nice to meet you'); // resolves when the signing ends
+speaker.cancel(); // abandon an utterance; a newer speak() supersedes an older one
 ```
+
+`SignSpeaker` needs a manager: it drives an avatar. To get a clip without one, call `compileUtterance` directly, as above.
 
 ## The five layers
 
@@ -71,6 +77,19 @@ mixer.clipAction(parsed).play();
 ```
 
 Track names target the canonical Avaturn-style bone set (`Hips`, `RightHand`, `RightHandIndex1`, ...). A rig with different bone names retargets through the three.ws pipeline (`src/glb-canonicalize.js` + `src/animation-retarget.js` in the [monorepo](https://github.com/nirholas/three.ws)), which maps Mixamo, VRM, Daz, MakeHuman and other conventions automatically.
+
+## What this is, and what it is not
+
+Read this before shipping it to users.
+
+This renders **English word order using an ASL lexicon and the manual alphabet**. It does not produce ASL grammar, which has its own syntax, topic-comment structure, spatial reference, and classifier system. A fluent signer will recognise the vocabulary and read the sentence; they will also recognise that it is not native ASL. That is a deliberate, honest limit of a text-driven renderer, not a bug to file.
+
+Practical consequences:
+
+- **Present it alongside text, not instead of it.** It is assistive presentation, not a certified interpreter, and it should never be the only channel for anything that matters (safety information, legal terms, medical instruction).
+- **Fingerspelling is the honest fallback.** When a word is not in the lexicon the compiler spells it rather than guessing at a similar sign. A wrong sign reads as a different word; a spelled one reads as a spelled word.
+- **Have Deaf signers review anything user-facing.** `signGloss()` returns each sign's plain-English description precisely so a reviewer who does not read code can audit the vocabulary.
+- **Non-manual markers carry grammar.** Brow position distinguishes a yes/no question from a wh- question, so stripping the face lanes to save tracks changes meaning rather than just fidelity.
 
 ## Development
 

@@ -551,14 +551,16 @@ describe('reservation statement shape', () => {
 	// every test above passing against the in-memory store while reintroducing the
 	// overdraft against Postgres, so the shape is pinned directly.
 	let source;
+	let flat;
 	beforeAll(() => {
 		source = readFileSync(new URL('../api/_lib/pay/spend-governor.js', import.meta.url), 'utf8');
+		flat = source.replace(/\s+/g, ' ');
 	});
 
 	it('checks the remaining budget inside the UPDATE, not before it', () => {
-		const stmt = source.slice(
-			source.indexOf('UPDATE payment_sessions\n\t\t\tSET spent_usdc'),
-		).slice(0, 400);
+		const start = flat.indexOf('UPDATE payment_sessions SET spent_usdc');
+		expect(start).toBeGreaterThan(-1);
+		const stmt = flat.slice(start, start + 300);
 		expect(stmt).toContain('SET spent_usdc = spent_usdc +');
 		expect(stmt).toContain('(budget_usdc - spent_usdc) >=');
 		expect(stmt).toContain("AND status = 'active'");

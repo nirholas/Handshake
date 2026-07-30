@@ -7,6 +7,7 @@ import {
 	hydrateEndpointCooldowns,
 	rpcLaneHealth,
 	classifyRpcBody,
+	formatCooldown,
 } from '../api/_lib/solana/connection.js';
 import { cacheGet, cacheSet, cacheDel } from '../api/_lib/cache.js';
 
@@ -195,6 +196,19 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 			'{"error":"invalid api key"}',
 		);
 		expect(badKey).toBeGreaterThanOrEqual(30 * 60_000);
+	});
+
+	it('renders sub-minute cooldowns in seconds so a policy block cannot read as a bench', () => {
+		// The triage scanner keys the self-healing `solana-rpc-policy-block`
+		// signature on `cooling <n>s`. Rounding 30s to "1m" would both overstate the
+		// park by double and make a harmless policy block indistinguishable from a
+		// real 30-minute credential bench in the logs.
+		expect(formatCooldown(30_000)).toBe('30s');
+		expect(formatCooldown(59_999)).toBe('60s');
+		expect(formatCooldown(60_000)).toBe('1m');
+		expect(formatCooldown(10 * 60_000)).toBe('10m');
+		expect(formatCooldown(30 * 60_000)).toBe('30m');
+		expect(formatCooldown(6 * 3_600_000)).toBe('360m');
 	});
 
 	it('still refuses to rotate on a genuine invalid-params error', () => {

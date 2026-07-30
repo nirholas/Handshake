@@ -21,7 +21,7 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
-import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
+import { resolveSlot, resolveHint, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 import { ElevenLabsTTS } from './runtime/speech.js';
 import { LipSyncAnalyser, VISEMES as LIPSYNC_VISEMES } from './lip-sync-analyser.js';
 import { resolveMorphTargets, MORPH_ALIASES, ARKIT_VISEMES } from './runtime/arkit52.js';
@@ -721,8 +721,14 @@ export class AgentAvatar {
 	}
 
 	_onSkillStart(action) {
-		const hint = action.payload?.animationHint;
-		if (hint) this._triggerOneShot(hint, 1.0);
+		// Skills declare a hint, not a clip name (`animationHint: 'inspect'`).
+		// Feeding the raw hint to _triggerOneShot only ever matched a clip
+		// embedded in the GLB, so the two most common hints in the whole skill
+		// catalog — `inspect` and `gesture` — silently no-op'd on every
+		// library-driven avatar. Route hints through the slot vocabulary
+		// instead: it resolves to a baked clip and honours agent overrides.
+		const slot = resolveHint(action.payload?.animationHint);
+		if (slot) this._playSlot(slot, 1.0);
 		this._injectStimulus('patience', 0.4);
 	}
 

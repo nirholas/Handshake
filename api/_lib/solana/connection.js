@@ -612,7 +612,7 @@ function maskUrl(url) {
 // windows, but rounding sub-minute ones to `1m` overstates them by double, and
 // the shortest window (a policy block that keeps the lane in service) is exactly
 // the one an operator must not confuse with a real bench. Seconds below a minute.
-function formatCooldown(ms) {
+export function formatCooldown(ms) {
 	return ms < 60_000 ? `${Math.round(ms / 1000)}s` : `${Math.round(ms / 60_000)}m`;
 }
 

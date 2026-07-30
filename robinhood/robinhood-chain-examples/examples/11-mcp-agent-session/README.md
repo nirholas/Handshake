@@ -52,20 +52,20 @@ node index.js --list-only     # stop after the tool inventory
   search_token         read-only  (query, limit)
   9 tools total.
 
-3 · get_chain_stats — the tool with no arguments
+3 · get_chain_stats, the tool with no arguments
   chain      mainnet (id 4663)
   block      23563878
   gas price  0.02 gwei
   TVL        $355,018,487.24
 
-4 · get_stock_quote — the same call an agent makes for "what is AAPL worth?"
+4 · get_stock_quote, the same call an agent makes for "what is AAPL worth?"
   AAPL  Apple • Robinhood Token
   oracle     $333.01
   DEX mid    $333.10
   premium    0.026%
   underlying $333.01 per share (ERC-8056 multiplier 1000000000000000000)
 
-5 · list_trending_coins — a list-shaped result
+5 · list_trending_coins, a list-shaped result
   YODA / WETH         $0.00000927   -95.7% 24h  vol $264,059.93
   ASTEROID / WETH     $0.00192937  +132.9% 24h  vol $973,870.39
   HOODRAT / WETH      $0.00563021  +170.0% 24h  vol $7,800,285.23

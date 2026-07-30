@@ -31,11 +31,14 @@ describe('walk-gestures — clip availability', () => {
 		expect(looping.sort()).toEqual(['dance', 'jog', 'sit', 'talking']);
 	});
 
-	it('full-body gestures (celebrate, dance, jog, shrug, sit) take over the base layer; the rest overlay', () => {
+	it('full-body gestures (celebrate, dance, jog, sit) take over the base layer; the rest overlay', () => {
 		const full = GESTURE_NAMES.filter((n) => GESTURES[n].layer === 'full');
-		expect(full.sort()).toEqual(['celebrate', 'dance', 'jog', 'shrug', 'sit']);
+		expect(full.sort()).toEqual(['celebrate', 'dance', 'jog', 'sit']);
+		// `shrug` moved to the overlay layer with the dedicated shoulder-shrug
+		// clip: the borrowed `defeated` clip was a whole-body collapse and had to
+		// suppress locomotion, a real shrug does not.
 		const upper = GESTURE_NAMES.filter((n) => GESTURES[n].layer === 'upper');
-		expect(upper).toEqual(['wave', 'point', 'cheer', 'agree', 'disagree', 'talking', 'nod']);
+		expect(upper).toEqual(['wave', 'point', 'cheer', 'agree', 'disagree', 'talking', 'nod', 'shrug']);
 	});
 });
 

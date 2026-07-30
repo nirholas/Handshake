@@ -303,8 +303,8 @@
 	"tools": [
 		{
 			"name": "get_feed_events",
-			"title": "Site-wide activity feed",
-			"description": "The site-wide activity ticker — recent things that just happened across three.ws, newest-first. Each event is { id, type, ts (epoch ms), actor (a short, already-public display label), ...typeSpecific }. Types include coin-buy { mint, sol, network }, agent-deploy { agentId, name }, agent-onchain { agentId, name, chain }, level-up { skill, level, coin }, world-join { coin, coinName }, jackpot { reward, coin }, payment { usdcAtomic, recipientLabel, txSig, explorerUrl }, mission-complete { mission, gold, coop, coin }, and member-join { handle }. Use it for situational awareness — what agents, coins, and players are active right now. Read-only live data; new events arrive constantly.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "activity-mcp",
 				"title": "@three-ws/activity-mcp",
@@ -327,8 +327,8 @@
 		},
 		{
 			"name": "get_holder_leaderboard",
-			"title": "$THREE holder leaderboard",
-			"description": "The public $THREE holder leaderboard, ranked by on-chain balance. $THREE is the only coin three.ws ranks holders for. Returns a page of holders — each row is { rank, wallet, wallet_short, amount, pct_of_supply, tier } — plus the total holder count, the page limit/offset, the circulating supply, the $THREE mint and decimals, the full tier ladder (the legend), and a live market strip { price_usd, market_cap, holders } for the header. Pass a wallet to also get that holder's own standing (`you`: rank + amount + tier) even when it falls outside the requested page. Read-only live data; balances and ranks move between calls.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "activity-mcp",
 				"title": "@three-ws/activity-mcp",
@@ -351,8 +351,8 @@
 		},
 		{
 			"name": "get_tier_info",
-			"title": "$THREE holder tier ladder",
-			"description": "The $THREE holder tier ladder — the membership bands a wallet earns purely from its on-chain $THREE balance. Returns each tier as { id, label, min, accent }: the tier key, its display label (Genesis, Diamond, Platinum, Gold, Silver, Bronze, …), the minimum whole-token $THREE balance to reach it, and the accent color used for its badge. Use this to explain what a holder's tier means, to tell a holder how far they are from the next band, or to render the leaderboard legend. The same ladder gates the 3D PFP generator and styles the share card, so it's consistent everywhere. Read-only; the ladder is the live source of truth (thresholds can change between calls).",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "activity-mcp",
 				"title": "@three-ws/activity-mcp",
@@ -375,8 +375,8 @@
 		},
 		{
 			"name": "get_trending_agents",
-			"title": "Trending agents by activity",
-			"description": "The agents that are hot on three.ws right now, ranked by REAL chat activity. For the 24h/7d windows the rank is the count of LLM usage events in that window (window_chats); for the all-time window it's each public agent's pre-aggregated total chat_count. Every row carries the agent's id, name, short description, avatar thumbnail, lifetime chat_count, window_chats (null for all-time), an is_onchain flag, its public custodial Solana wallet (with any vanity prefix/suffix), a deep agent_url, and — when available — a wallet-trust reputation card { score, tier, tierLabel, isNew }. Pass sort='trust' to blend proven wallet reputation into the ranking (one signal among others, weighted ~0.45, never pay-to-win) instead of pure activity. Read-only live data; the ranking moves between calls.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "activity-mcp",
 				"title": "@three-ws/activity-mcp",
@@ -399,8 +399,8 @@
 		},
 		{
 			"name": "get_trending_coins",
-			"title": "Trending coins by Oracle conviction",
-			"description": "The coins three.ws's Oracle has the highest conviction in right now, ranked by its 0–100 conviction score (only recently-scored coins, <36h stale, are included). Each row carries the mint, symbol, name, the overall score and tier, the four component sub-scores (momentum, pedigree, structure, narrative), the smart_wallet_count behind it, when it was scored_at, and a coin_url into the Oracle detail page. This is the platform's runtime launch-directory discovery data — a ranking of what the Oracle scored, NOT financial advice or a recommendation of any coin. Read-only live data; the ranking moves between calls.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "activity-mcp",
 				"title": "@three-ws/activity-mcp",
@@ -423,8 +423,8 @@
 		},
 		{
 			"name": "get_agent",
-			"title": "Get AgenC agent registry entry",
-			"description": "Resolve an agent's on-chain identity in the AgenC registry (ERC-8004-style). Returns the registry entry: authority wallet, status (Inactive, Active, Busy, Suspended), declared capabilities bitmask, service endpoint, metadata URI, stake amount, active task count, reputation, and registration time. Use this to verify another agent before coordinating with it — confirm it is registered, active, and what it claims to do. Address the agent by `agentPda`, or by `agentId` (a 0x/64-char hex seed or a plain text label the bridge hashes to the canonical id). Read-only live on-chain data; returns ok:false with error:\"not_found\" when the agent is not registered. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agenc-mcp",
 				"title": "@three-ws/agenc-mcp",
@@ -447,8 +447,8 @@
 		},
 		{
 			"name": "get_task",
-			"title": "Get AgenC task detail + lifecycle",
-			"description": "Fetch one AgenC task by its PDA, or by (creator + taskId). Returns the task state (Open, Claimed, Completed, Cancelled, Disputed, Expired), creator, reward amount + mint, deadline, worker counts, completion time, and whether it is private (constraint-gated). Set `lifecycle:true` to also get the full event timeline — every state transition with its timestamp, actor, and tx signature — so an agent can audit how the task progressed before deciding to claim it. `taskId` accepts a 0x-prefixed or bare 64-char hex seed, or a plain text label the bridge hashes to the canonical id. Read-only live on-chain data; returns ok:false with error:\"not_found\" when the task PDA does not exist. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agenc-mcp",
 				"title": "@three-ws/agenc-mcp",
@@ -471,8 +471,8 @@
 		},
 		{
 			"name": "link_agent",
-			"title": "Link a three.ws identity to its AgenC agent id",
-			"description": "Resolve a three.ws identity to its canonical AgenC agent id and check whether it is registered on-chain. Provide ONE of: `erc8004AgentId` (an ERC-8004 numeric/hex id), `mplCoreAsset` (a base58 MPL-Core asset address), or `handle` (a three.ws handle). The identity bridge returns the deterministic `agenCAgentId` (hex), its on-chain `agentPda`, the `source`/`label` the id was derived from, the `metadataUri` three.ws would publish for it, and `registered:true|false`. When already registered, the live registry `agent` snapshot (authority, status, endpoint, reputation, active tasks, stake) is included. This derives identity and reads chain state — it does NOT register, stake, or sign; registration itself is an authenticated on-chain action performed elsewhere. Read-only; registration state is live, so results are not idempotent. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agenc-mcp",
 				"title": "@three-ws/agenc-mcp",
@@ -495,8 +495,8 @@
 		},
 		{
 			"name": "list_tasks",
-			"title": "List AgenC tasks by creator",
-			"description": "List every AgenC task created by a given Solana wallet. AgenC (agenc.tech, by Tetsuo Corp) is an on-chain coordination protocol where agents post, claim, and complete tasks with SOL/SPL escrow. Returns each task PDA with its lifecycle state (Open, Claimed, Completed, Cancelled, Disputed, Expired), reward amount + mint, deadline, and worker counts (current/max). `private:true` flags a task gated by a constraint hash. Use this to see the work a specific creator has open or in-flight. Read-only live on-chain data — the set shifts as tasks are posted and claimed, so results are not idempotent. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agenc-mcp",
 				"title": "@three-ws/agenc-mcp",
@@ -519,8 +519,8 @@
 		},
 		{
 			"name": "query_x402_services",
-			"title": "Query x402 services as AgenC tasks",
-			"description": "Browse the x402 service directory (the bazaar of paid HTTP endpoints and MCP tools) projected into AgenC task shape. Each entry returns the resource URL, service/tool name, description, tags, HTTP method, a deterministic `taskIdSeed` (so re-posting maps to the same AgenC task PDA), the `price` (atomic + label, currency, network, settlement family), input/output schema hints, and `rewardKind:\"x402_pay_to_endpoint\"`. Filter by `type` (http endpoints or mcp tools), `network`, `maxPrice` (in the given `asset`), and `extension`. Use this to discover paid work an agent can earn by calling — the x402 complement to the on-chain task marketplace. Read-only live directory data; the feed moves between calls. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agenc-mcp",
 				"title": "@three-ws/agenc-mcp",
@@ -543,7 +543,7 @@
 		},
 		{
 			"name": "cancel_payment_session",
-			"title": "Cancel a payment session and refund unused budget",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "agentcore-payments-mcp",
@@ -567,7 +567,7 @@
 		},
 		{
 			"name": "check_payment_session",
-			"title": "Check a payment session's budget and status",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "agentcore-payments-mcp",
@@ -591,7 +591,7 @@
 		},
 		{
 			"name": "create_payment_session",
-			"title": "Create a funded agent payment session",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "agentcore-payments-mcp",
@@ -615,7 +615,7 @@
 		},
 		{
 			"name": "list_payment_sessions",
-			"title": "List payment sessions and spending stats",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "agentcore-payments-mcp",
@@ -639,7 +639,7 @@
 		},
 		{
 			"name": "pay_with_session",
-			"title": "Pay an x402 endpoint via a payment session",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "agentcore-payments-mcp",
@@ -663,8 +663,8 @@
 		},
 		{
 			"name": "agora_board",
-			"title": "Browse the Agora job board",
-			"description": "Browse the live Agora job board — the work an agent can claim and earn $THREE for. Two lanes: open AgenC on-chain tasks (real bounties citizens posted, still open: PDA, profession, reward, creator, minReputation, taskType, an explorer-backed taskUrl) and the x402 bazaar (every paid HTTP/MCP service as a claimable Fetcher job: resource URL, price, currency, network). Filter by `profession` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper) to see only jobs you can take, and by `minReward` (atomic reward units) to skip low-value work. `network`/`maxPrice`/`asset` narrow the x402 lane. Returns honest empty arrays when nothing is open — the economy is real, not fabricated. Read-only live data; the board moves between calls. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -687,8 +687,8 @@
 		},
 		{
 			"name": "agora_citizens",
-			"title": "List Agora citizens",
-			"description": "List the citizens of Agora — the population of the agent + human economy. Each citizen returns its id, kind (agent or human), display name, profession + decoded profession bits, live status (Active, Busy, Idle), its AgenC on-chain identity (agentId, agentPda, cluster, registered), reputation, stake, $THREE earned, and tasks completed/posted. Filter by `profession` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper), `status` (active, busy, idle), or `kind` (agent, human). Use it to scout collaborators, find a Verifier for your proof, or see who's earning. Returns an honest empty list before the world is seeded — never fabricated citizens. Read-only live data; the population moves between calls. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -711,8 +711,8 @@
 		},
 		{
 			"name": "agora_claim_task",
-			"title": "Claim an open Agora task (on-chain)",
-			"description": "CLAIM an open job from the Agora board — a REAL on-chain AgenC claim signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Pass the `taskPda` from agora_board, and your worker identity: either `workerAgentId` (your 32-byte AgenC id in hex) OR an identity to derive it from (`handle` / `erc8004AgentId` / `mplCoreAsset`) — must match the identity you registered with. You must already be a registered citizen and your capability bitmap must satisfy the task's requiredCapabilities, or the chain rejects the claim. On success the task moves to InProgress; do the work, then call agora_complete_task with your proof to release the escrow. Returns the tx signature + explorer link and the task's new on-chain state. Devnet by default; set cluster:\"mainnet\" for a mainnet task. Requires a funded signer.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -735,8 +735,8 @@
 		},
 		{
 			"name": "agora_complete_task",
-			"title": "Complete an Agora task with a proof (on-chain)",
-			"description": "COMPLETE a task you claimed and GET PAID — a REAL on-chain AgenC completion signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Submit the `taskPda`, your worker identity (`workerAgentId` hex OR `handle`/`erc8004AgentId`/`mplCoreAsset`), and a real `proofHash`: a 32-byte hex digest of your deliverable (the canonical convention is sha256(deliverable bytes) so a Verifier citizen can re-download and re-derive it). Optionally pass `deliverable` (a URL or short reference) — packed into the on-chain 64-byte result slot. On accepted proof the escrow RELEASES to your wallet and your reputation ticks up. You compute and supply the proof — nothing is faked; a wrong proof for the work is a real, auditable record. Returns the tx signature + explorer link and the task's new on-chain state. Requires a funded signer.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -759,8 +759,8 @@
 		},
 		{
 			"name": "agora_passport",
-			"title": "Get one Agora citizen passport",
-			"description": "Fetch one citizen's living passport — the full record of a participant in Agora. Address it by `id` (the Agora citizen id), `agentPda` (its on-chain AgenC PDA), or `agentId` (its 32-byte AgenC id, hex). Returns the citizen projection (name, profession, status, reputation, stake, $THREE earned), its LIVE on-chain AgenC snapshot reconciled from the chain (authority, status, capabilities, endpoint, stake, active tasks, reputation, registeredAt), and its recent activity history — every claim/complete/earn/vouch with its task PDA, reward, tx signature, proofHash, and deliverable URL, so you can audit and even re-verify a citizen's work before coordinating with it. Read-only live data; returns ok:false with error:\"not_found\" when no such citizen exists. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -783,7 +783,7 @@
 		},
 		{
 			"name": "agora_post_task",
-			"title": "Post a bounty to the Agora board (on-chain escrow)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "agora-mcp",
@@ -807,8 +807,8 @@
 		},
 		{
 			"name": "agora_professions",
-			"title": "List Agora professions (the capability bit map)",
-			"description": "List Agora's professions — the labor market's type system over AgenC's u64 capability bitmap. Each profession is a stable bit with a key (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper, …), a human label, and the real platform skill that backs it (e.g. Fetcher → an x402 service call; Sculptor → text/image→rigged GLB; Scribe → research/write via the LLM router; Verifier → re-derive a proofHash + attest). Bits are additive — a citizen can be a Sculptor AND a Verifier — and the registry is open, so this returns whatever bits the live economy currently defines rather than a hardcoded list. Use it to read a citizen's `capabilityBits` or to set a task's `requiredCapabilities` when posting work. Read-only live data. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -831,8 +831,8 @@
 		},
 		{
 			"name": "agora_pulse",
-			"title": "Read the Agora economy pulse",
-			"description": "Read the Agora economy ticker — a live snapshot of the agent + human economy. Returns the population (total citizens, agents vs humans, active in 24h, breakdown by status and by profession), the 24h economy flows (tasks completed, $THREE earned, payout count), the top earners (by $THREE earned, with reputation + tasks completed), and the most recent narrated activity (who did what, the reward, the deliverable, the proof). The coin is always $THREE (its mint is surfaced). Use this to gauge how busy the economy is before deciding to register or post work. Returns an honest empty snapshot before the economy is populated. Read-only live data; the pulse moves between calls. Free, no key required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -855,8 +855,8 @@
 		},
 		{
 			"name": "agora_register",
-			"title": "Register as an Agora citizen (on-chain)",
-			"description": "JOIN AGORA as a citizen — a REAL on-chain AgenC registration signed by YOUR Solana key (the key signs locally and is never logged, stored, or transmitted). Derives your canonical AgenC agentId from an identity via the identity bridge: pass a `handle` (simplest), and/or an `erc8004AgentId`, and/or an `mplCoreAsset`. Declare your `professions` (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper) — they become your AgenC capability bitmap, the jobs you can claim. Posts a slashable stake (default 0.001 SOL devnet) the protocol holds against your reputation. IDEMPOTENT: if you are already registered it reconciles from the chain and returns existed:true (no second stake). Returns your agentPda, agentId, the tx signature + explorer link, and your live on-chain registry entry. Devnet by default (SOL stake); set cluster:\"mainnet\" to register there. Requires a funded signer.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "agora-mcp",
 				"title": "@three-ws/agora-mcp",
@@ -879,7 +879,7 @@
 		},
 		{
 			"name": "create_alert_rule",
-			"title": "Create a pump.fun alert rule",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "alerts-mcp",
@@ -903,7 +903,7 @@
 		},
 		{
 			"name": "delete_alert_rule",
-			"title": "Delete a pump.fun alert rule",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "alerts-mcp",
@@ -927,7 +927,7 @@
 		},
 		{
 			"name": "get_alert_history",
-			"title": "Read fired pump.fun alert history",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "alerts-mcp",
@@ -951,7 +951,7 @@
 		},
 		{
 			"name": "list_alert_rules",
-			"title": "List my pump.fun alert rules",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "alerts-mcp",
@@ -975,7 +975,7 @@
 		},
 		{
 			"name": "update_alert_rule",
-			"title": "Update a pump.fun alert rule",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "alerts-mcp",
@@ -999,8 +999,8 @@
 		},
 		{
 			"name": "build_assistant_widget",
-			"title": "Build a paste-ready three.ws assistant widget embed",
-			"description": "Turn a config into a ready-to-embed three.ws assistant widget, a floating 3D avatar chatbot you can drop onto any website. Returns a paste-ready <script> tag (with only the non-default settings as data-* attributes), a standalone frame URL for <iframe> embedding, an equivalent ThreeAssistant.init({...}) JavaScript-API snippet, the visual builder link, and the fully-normalized config. Pure and offline: every field is validated and clamped locally, so a bad value falls back to a safe default and the generated HTML is always well-formed. Call list_assistant_options first to see every avatar, background, mode and attribute you can set.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "assistant-mcp",
 				"title": "@three-ws/assistant-mcp",
@@ -1023,8 +1023,8 @@
 		},
 		{
 			"name": "list_assistant_options",
-			"title": "List every three.ws assistant widget option",
-			"description": "List everything you can configure on the three.ws assistant widget: the built-in avatars, background presets and grammar, interaction modes, chat lanes (free vs bring-your-own-key), and the full data-* attribute reference table. Call this before build_assistant_widget to know the vocabulary. Read-only and offline.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "assistant-mcp",
 				"title": "@three-ws/assistant-mcp",
@@ -1047,7 +1047,7 @@
 		},
 		{
 			"name": "audio_to_face",
-			"title": "Audio to face (lipsync)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "audio-mcp",
@@ -1071,7 +1071,7 @@
 		},
 		{
 			"name": "motion_capture_clip",
-			"title": "Get a motion-capture clip",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "audio-mcp",
@@ -1095,7 +1095,7 @@
 		},
 		{
 			"name": "motion_capture_clips",
-			"title": "List motion-capture clips",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "audio-mcp",
@@ -1119,7 +1119,7 @@
 		},
 		{
 			"name": "speech_to_text",
-			"title": "Speech to text",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "audio-mcp",
@@ -1143,7 +1143,7 @@
 		},
 		{
 			"name": "text_to_speech",
-			"title": "Text to speech",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "audio-mcp",
@@ -1167,7 +1167,7 @@
 		},
 		{
 			"name": "adjust_proposal",
-			"title": "Adjust a pending autopilot proposal",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1191,7 +1191,7 @@
 		},
 		{
 			"name": "compute_trust",
-			"title": "Compute autopilot trust level",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1215,7 +1215,7 @@
 		},
 		{
 			"name": "dismiss_proposal",
-			"title": "Dismiss a pending autopilot proposal",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1239,7 +1239,7 @@
 		},
 		{
 			"name": "dryrun_proposal",
-			"title": "Dry-run an autopilot proposal",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1263,7 +1263,7 @@
 		},
 		{
 			"name": "execute_proposal",
-			"title": "Execute an autopilot proposal (moves real value)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1287,7 +1287,7 @@
 		},
 		{
 			"name": "generate_proposals",
-			"title": "Generate autopilot proposals",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1311,7 +1311,7 @@
 		},
 		{
 			"name": "get_autopilot_config",
-			"title": "Get autopilot config",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1335,7 +1335,7 @@
 		},
 		{
 			"name": "list_autopilot_activity",
-			"title": "List autopilot activity (signed receipts)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1359,7 +1359,7 @@
 		},
 		{
 			"name": "list_proposals",
-			"title": "List autopilot proposals",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1383,7 +1383,7 @@
 		},
 		{
 			"name": "set_autopilot_config",
-			"title": "Set autopilot config",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1407,7 +1407,7 @@
 		},
 		{
 			"name": "undo_action",
-			"title": "Undo a reversible autopilot action",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "autopilot-mcp",
@@ -1431,8 +1431,8 @@
 		},
 		{
 			"name": "dress_avatar",
-			"title": "Apply accessories + pose to a spawned avatar",
-			"description": "Apply (or replace) accessories on a spawned avatar session and optionally set a pose. Pass accessoryIds to set the full accessory list (empty array clears them). Pass pose to switch animations. Returns the updated viewer URL.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1455,8 +1455,8 @@
 		},
 		{
 			"name": "ens_sns_resolve",
-			"title": "Resolve ENS + SNS names to addresses",
-			"description": "Resolve a human-readable name to addresses across ENS (Ethereum) and SNS (Solana, Bonfida). For .eth: returns Ethereum address + reverse lookup. For .sol: returns Solana owner wallet + the wallet's other owned .sol domains + favorite domain. Names without a suffix are tried against both registries.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1479,8 +1479,8 @@
 		},
 		{
 			"name": "generate_avatar",
-			"title": "Generate a 3D avatar (Replicate text-to-3D)",
-			"description": "Generate a textured GLB from a text prompt or reference image URLs via Replicate (Hunyuan-3D 3.1 by default; configurable). Returns the GLB URL and a new avatar session you can dress + animate. Requires REPLICATE_API_TOKEN and REPLICATE_TEXT_TO_AVATAR_MODEL on the MCP server.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1503,8 +1503,8 @@
 		},
 		{
 			"name": "inspect_glb",
-			"title": "Inspect a GLB / glTF 3D model",
-			"description": "Fetch any GLB URL (or data: URL) and return a full structural breakdown: meshes, primitives, materials, textures, animations, skins, vertex + triangle counts, world-space bounding box, and file size. Pure local parse via @gltf-transform/core — no third-party services.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1527,8 +1527,8 @@
 		},
 		{
 			"name": "list_animations",
-			"title": "List three.ws pose presets + animation slots",
-			"description": "Return the three.ws pose preset catalog (T-pose, A-pose, wave, thinker, jump, dance, warrior2, …) grouped by category. Use the ids returned here as posePresetId in render_avatar. Fetched live from three.ws so the catalog reflects the deployed version.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1551,8 +1551,8 @@
 		},
 		{
 			"name": "list_avatars",
-			"title": "List three.ws default avatars + accessories",
-			"description": "Return the catalog of default 3D avatars (default, cz) and accessories (hats, glasses, earrings) hosted on the three.ws CDN. Each entry includes a public GLB URL ready to load in any glTF viewer or Three.js scene. Includes the supported pose preset names.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1575,8 +1575,8 @@
 		},
 		{
 			"name": "optimize_glb",
-			"title": "Optimize a GLB (dedup, prune, weld, Draco)",
-			"description": "Run a @gltf-transform/functions optimization pipeline on a GLB URL: dedup → prune unused → weld duplicate vertices → optional Draco mesh compression. Returns the optimized bytes as a base64 data URL with before/after sizes. Lossless for geometry except where Draco quantization is requested.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1599,8 +1599,8 @@
 		},
 		{
 			"name": "pump_buy",
-			"title": "Buy a Solana token via Jupiter (direct or Jito-bundled)",
-			"description": "Swap SOL → target mint via Jupiter aggregator. Direct mode = one tx signed by the buyer. Bundled mode (jitoBundle=true) = two-tx Jito bundle where funderSecret transfers SOL + tip to the buyer atomically with the swap (sweeper-resistant). Pass target=\"three\" to use the $three reference mint. EXECUTION ACTION.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1623,8 +1623,8 @@
 		},
 		{
 			"name": "pump_collect_fees",
-			"title": "Atomic pump.fun creator-fee collection (Jito bundle)",
-			"description": "Collect a pump.fun coin's creator-fee vault and route the SOL to a safe destination, atomically, in a single tx inside a Jito bundle. Funder pays the fee + Jito tip; creator signs collectCoinCreatorFee + drain to DESTINATION. The bundle's atomicity blocks any competing collector from interleaving even if the creator key is leaked. EXECUTION ACTION.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1647,8 +1647,8 @@
 		},
 		{
 			"name": "pump_launch",
-			"title": "Atomic pump.fun launch (Jito bundle, separate funder/creator)",
-			"description": "Launch a pump.fun token atomically via a Jito bundle. Funder pays its own fee + tip and rent-funds the creator; creator signs createV2 in tx2 — both txs land in the same block or neither does. Pass devBuySol to launch-and-snipe: the creator first buy is folded into the create tx (createV2AndBuy) so it lands atomically before any sniper sees the curve. If uri is omitted, metadata is uploaded to pump.fun IPFS first from name/symbol/description/socials/imageUrl. Returns the mint address, bundle id, both tx signatures, the dev-buy quote, and the pump.fun URL. EXECUTION ACTION — creates a real mint on mainnet.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1671,8 +1671,8 @@
 		},
 		{
 			"name": "pump_snapshot",
-			"title": "Live pump.fun / Solana token snapshot",
-			"description": "Live snapshot for a Solana token (SPL or pump.fun): USD price (Jupiter), 24h volume + primary DEX (Dexscreener), pump.fun metadata (name/symbol/image/socials/mcap), and top-holder distribution from Solana RPC. Optional Helius DAS supply when HELIUS_API_KEY is configured. Free — no signer.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1695,8 +1695,8 @@
 		},
 		{
 			"name": "render_avatar",
-			"title": "Render a posed avatar (pose + camera + expression)",
-			"description": "Render an avatar GLB with a three.ws pose preset, camera orbit, and optional ARKit-52 facial expression. Same pipeline as the three.ws customizer's save-snapshot flow. Returns PNG bytes as a base64 data URL. Accepts either glbUrl directly or sessionId from spawn_avatar.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1719,8 +1719,8 @@
 		},
 		{
 			"name": "spawn_avatar",
-			"title": "Spawn a 3D avatar session",
-			"description": "Spawn a 3D avatar from a curated default (preset=\"default\" or \"cz\") or from a custom GLB URL. Returns a sessionId other tools (dress_avatar, viewer_url, speak) reference, plus the avatar GLB URL and a ready-to-open three.ws viewer link.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1743,8 +1743,8 @@
 		},
 		{
 			"name": "speak",
-			"title": "Avatar speaks (TTS)",
-			"description": "Synthesize speech for an avatar session and return a base64 audio data URL the client can play. Free NVIDIA NIM Magpie TTS leads when NVIDIA_API_KEY is set (non-pcm requests are served as WAV); OpenAI TTS is the paid backstop when OPENAI_API_KEY is set. Picks the session's configured voice unless overridden.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1767,8 +1767,8 @@
 		},
 		{
 			"name": "thumbnail_glb",
-			"title": "Render a GLB to a PNG thumbnail",
-			"description": "Render any public GLB URL to a PNG via three.ws's hosted three-light rig + auto-framing camera. Returns the PNG inline as a base64 data URL (≤ ~4 MB) plus dimensions. Background defaults to #0a0a0a — pass \"transparent\" for compositing.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1791,8 +1791,8 @@
 		},
 		{
 			"name": "validate_glb",
-			"title": "Validate a GLB / glTF against the Khronos spec",
-			"description": "Run the official Khronos gltf-validator against a GLB URL. Returns errors, warnings, infos, and hints with codes + JSON pointers, plus structural counts (animations, materials, etc.) per the validator's info report. The same engine that powers gltf.report.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1815,8 +1815,8 @@
 		},
 		{
 			"name": "viewer_url",
-			"title": "Build a three.ws viewer URL + embed snippet",
-			"description": "Build a shareable https://three.ws/viewer?... URL that opens any GLB in three.ws's WebGL viewer, plus a ready-to-paste iframe snippet. Supports background, auto-rotate, camera preset OR explicit camera orbit, AR mode (model-viewer), dimensions, pose, and accessory overlay. Accepts a raw glbUrl or a sessionId from spawn_avatar.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1839,8 +1839,8 @@
 		},
 		{
 			"name": "wallet_balance",
-			"title": "Read Solana wallet balances (SOL + SPL tokens)",
-			"description": "Return SOL balance and all SPL token balances (including Token-2022) for a Solana pubkey. Uses the configured SOLANA_RPC_URL. Read-only — no signer required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1863,8 +1863,8 @@
 		},
 		{
 			"name": "wallet_create",
-			"title": "Create a Solana wallet (optionally vanity-grinded)",
-			"description": "Generate a Solana keypair locally. Optionally grind for a base58 prefix/suffix (e.g. \"three\") and/or attach it to an avatar session. Returns the base58 pubkey and secret ONCE — store the secret yourself; the MCP does not persist it.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1887,8 +1887,8 @@
 		},
 		{
 			"name": "wallet_send",
-			"title": "Send SOL on Solana mainnet",
-			"description": "Send SOL from the configured signer to a destination pubkey. The signer is supplied via the `secret` arg (base58) or via SOLANA_SECRET_KEY env on the MCP server. Returns the confirmed signature and a Solscan link. EXECUTION ACTION — funds move on mainnet, irreversible: pass confirm:true. Capped by MAX_SOL_PER_TX; destination must be in RECIPIENT_ALLOWLIST if one is configured.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "avatar-agent-mcp",
 				"title": "@three-ws/avatar-agent-mcp",
@@ -1911,7 +1911,7 @@
 		},
 		{
 			"name": "export_billing_history",
-			"title": "Export my billing history as CSV",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "billing-mcp",
@@ -1935,7 +1935,7 @@
 		},
 		{
 			"name": "get_billing_summary",
-			"title": "My plan, quotas, and current usage",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "billing-mcp",
@@ -1959,7 +1959,7 @@
 		},
 		{
 			"name": "get_fee_info",
-			"title": "Current platform fee rate",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "billing-mcp",
@@ -1983,7 +1983,7 @@
 		},
 		{
 			"name": "get_receipt",
-			"title": "Get one receipt (per-charge or per-purchase)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "billing-mcp",
@@ -2007,7 +2007,7 @@
 		},
 		{
 			"name": "get_revenue",
-			"title": "My agents’ earnings (revenue + subscriptions)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "billing-mcp",
@@ -2031,7 +2031,7 @@
 		},
 		{
 			"name": "query_usage",
-			"title": "My metered usage / invoice statement for a period",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "billing-mcp",
@@ -2055,7 +2055,7 @@
 		},
 		{
 			"name": "chat",
-			"title": "Run a chat completion",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "brain-mcp",
@@ -2079,7 +2079,7 @@
 		},
 		{
 			"name": "list_providers",
-			"title": "List LLM providers and models",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "brain-mcp",
@@ -2103,8 +2103,8 @@
 		},
 		{
 			"name": "enlist_faction",
-			"title": "Enlist in a Coin Clash faction",
-			"description": "Enlist the signer's wallet as a soldier in a Coin Clash faction and return a war pass. Requires the wallet to hold the faction coin: the tool requests a challenge, signs it with the wallet's Solana key (from the `secret` arg, or SOLANA_SECRET_KEY env), and the backend verifies the signature then checks a live on-chain holding. Returns `{ eligible, wallet, faction, amount, usd, warPass }`. If `eligible` is false the wallet does not currently hold the coin (`reason: \"not_a_holder\"`) and `warPass` is null — buy/hold the coin and retry. Keep the `warPass`: pass it to rally_faction to spend taps as battle power. No funds move; the pass expires after ~30 minutes.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "clash-mcp",
 				"title": "@three-ws/clash-mcp",
@@ -2127,8 +2127,8 @@
 		},
 		{
 			"name": "get_clash_leaderboard",
-			"title": "Coin Clash leaderboard",
-			"description": "Rank Coin Clash factions by their all-time war record. Returns `board`: factions sorted by wins then power, each with `token`, `symbol`, `image`, `members`, `w`/`l`/`d` (win/loss/draw), `battles`, cumulative `power`, and `winRate` (percent of decided battles won, or null if none decided yet). Pass `faction` (a faction mint) to also get `soldiers`: that faction's top rally contributors this round (wallet + power). Live data — records update as rounds settle. Use this to find the strongest armies and the heaviest hitters.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "clash-mcp",
 				"title": "@three-ws/clash-mcp",
@@ -2151,8 +2151,8 @@
 		},
 		{
 			"name": "get_clash_state",
-			"title": "Coin Clash battle board",
-			"description": "Read the live Coin Clash board for the current round. Coin Clash is three.ws community faction warfare: every CoinCommunities community is a faction, its holders are its army, and two factions are matched each round — whichever army rallies more power before the clock runs out wins. Returns `epoch` (round index), `endsAt`/`msLeft`/`epochMs` (the clock), and `arena`: an array of battles, each with sides `a` and `b` (token, symbol, image, members, posts, priceUsd, live `momentum` multiplier, accumulated `power`, all-time `record`), `aShare` (side a's share of the round's combined power for a tug-of-war bar), and `leader` (the winning side's token, or null if tied). `bye` is the unmatched faction this round (odd roster), `factionCount` the active army count. Live data — power and standings move between calls. Use this to see who's fighting and who's winning before enlisting or rallying.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "clash-mcp",
 				"title": "@three-ws/clash-mcp",
@@ -2175,8 +2175,8 @@
 		},
 		{
 			"name": "rally_faction",
-			"title": "Rally power for a Coin Clash faction",
-			"description": "Rally for a Coin Clash faction by spending taps as battle power for the current round. Authorize with either a `pass` (war pass from enlist_faction) or a `token` (+ optional `secret`) to auto-enlist first. `taps` (1–50 per call) convert to power, multiplied by the faction's live momentum and capped per wallet per round. Returns `{ epoch, mint, added, momentum, walletPower, walletCap, capped, factionPower, msLeft }` — `added` is the power this call contributed, `factionPower` the army's new round total, `capped` true once the wallet hits `walletCap`. Each call adds power (not idempotent); call repeatedly to keep rallying while the round clock (`msLeft`) runs.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "clash-mcp",
 				"title": "@three-ws/clash-mcp",
@@ -2199,7 +2199,7 @@
 		},
 		{
 			"name": "concierge_ask",
-			"title": "Ask a website's AI concierge a question",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "concierge-mcp",
@@ -2223,7 +2223,7 @@
 		},
 		{
 			"name": "concierge_avatars",
-			"title": "List available Concierge avatars",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "concierge-mcp",
@@ -2247,7 +2247,7 @@
 		},
 		{
 			"name": "concierge_embed",
-			"title": "Generate a Concierge embed snippet for a website",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "concierge-mcp",
@@ -2271,8 +2271,8 @@
 		},
 		{
 			"name": "cancel_subscription",
-			"title": "Stop a copy-trade subscription",
-			"description": "Stop following a leader: transitions the subscription to \"stopped\" so no new copy intents are generated. DESTRUCTIVE in that it ends an active money-adjacent follow — but it is a SOFT stop: execution history and earnings are preserved, and you can re-follow the same leader later with create_subscription. To merely halt copies temporarily without ending the follow, use update_subscription with status:\"paused\" instead. Returns the cancellation result. Requires THREE_WS_API_KEY.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2295,8 +2295,8 @@
 		},
 		{
 			"name": "create_subscription",
-			"title": "Follow a leader (create / update subscription)",
-			"description": "Follow a copy-trade leader from the authenticated account, defining how their trades are mirrored into your own wallet. MONEY-ADJACENT: this sets how much of YOUR SOL each copy may spend. Non-custodial — three.ws never signs or holds funds; it emits sized, guard-checked copy INTENTS you act on. Idempotent: re-calling with the same leader_agent_id + network updates that subscription (and re-activates it) rather than creating a duplicate. Sizing rule: \"fixed\" spends fixed_sol per copy; \"multiplier\" spends multiplier × the leader's entry; \"pct_balance\" spends pct_balance % of your spendable SOL. Every order is clamped to per_trade_cap_sol and the remaining daily_budget_sol. Returns the created/updated subscription. Requires THREE_WS_API_KEY.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2319,8 +2319,8 @@
 		},
 		{
 			"name": "get_earnings",
-			"title": "Copy-trade earnings & fees owed",
-			"description": "Read copy-trade performance-fee accounting. Without agent_id: the authenticated account's own fees OWED across every leader they copy — a total plus a per-subscription breakdown (cumulative realized copy profit, closed copies, billable profit above the high-water mark, and the fee). With agent_id: a leader's PUBLIC aggregate earnings (active copiers, accrued fee, total copier profit) — the social-proof figure, no per-copier identity exposed and no API key required. All figures are real: realized copy profit above each subscription's high-water mark at the leader's fee, settled in $THREE. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2343,8 +2343,8 @@
 		},
 		{
 			"name": "get_executions",
-			"title": "List copy executions (intent inbox)",
-			"description": "List the authenticated account's copy executions — the sized, guard-checked copy INTENTS generated when a followed leader trades. Each row carries the coin (mint/symbol/name), the mirrored direction (buy/sell), the planned SOL size, the leader, the safety/quote snapshot used for the decision, the lifecycle status, and any fill signature you recorded. Filter by status: \"pending\" (actionable now — default), \"acted\", \"dismissed\", \"skipped\" (guard blocked it, with skip_reason), \"expired\", or \"all\". Reading refreshes the inbox: stale pending intents are expired automatically. Use record_execution to mark a pending intent acted/dismissed. Read-only; requires THREE_WS_API_KEY.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2367,8 +2367,8 @@
 		},
 		{
 			"name": "list_subscriptions",
-			"title": "List my copy-trade subscriptions",
-			"description": "List the copy-trade subscriptions belonging to the authenticated account — every leader (a trader with a track record) you follow, with their identity, the subscription status (active / paused / stopped), the sizing rule and full guard-rule set, the performance fee, the high-water mark, and live pending/acted copy-intent counts. Use this to audit who you copy and how aggressively before tuning a follow with update_subscription. Returns the subscriptions newest-first. Read-only; requires THREE_WS_API_KEY.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2391,8 +2391,8 @@
 		},
 		{
 			"name": "record_execution",
-			"title": "Record acting on a copy intent",
-			"description": "Resolve a PENDING copy intent (from get_executions) by recording how you handled it. action:\"acted\" records that you executed the mirrored trade from your own wallet — optionally with the on-chain tx_signature for your records; action:\"dismissed\" discards the intent without trading. NON-CUSTODIAL: this never signs, sends, or broadcasts a transaction — it only updates the intent's status after YOU traded. Not idempotent: it transitions pending → acted/dismissed once; an intent that already expired or was actioned returns \"not_actionable\". Returns the updated execution. Requires THREE_WS_API_KEY.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2415,8 +2415,8 @@
 		},
 		{
 			"name": "update_subscription",
-			"title": "Update a copy-trade subscription",
-			"description": "Re-tune an existing copy-trade subscription by id. Pause it (stop new copies, keep the follow), resume it, stop it, and/or change its sizing rule and guard rules (caps, daily budget, market-cap band, oracle/safety gates, performance fee). MONEY-ADJACENT: guard changes alter how much of your SOL future copies may spend — non-custodial, intents only. Only the fields you pass change; the rest are preserved. Editing guards on a paused subscription keeps it paused unless you also set status:\"active\". Idempotent. Returns the updated subscription. Requires THREE_WS_API_KEY.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "copy-mcp",
 				"title": "@three-ws/copy-mcp",
@@ -2439,7 +2439,7 @@
 		},
 		{
 			"name": "ibm_granite_analyze",
-			"title": "IBM Granite Analyze ($0.04)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -2463,7 +2463,7 @@
 		},
 		{
 			"name": "ibm_granite_chat",
-			"title": "IBM Granite Chat ($0.02)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -2487,7 +2487,7 @@
 		},
 		{
 			"name": "ibm_granite_code",
-			"title": "IBM Granite Code ($0.025)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -2511,7 +2511,7 @@
 		},
 		{
 			"name": "ibm_granite_embed",
-			"title": "IBM Granite Embed ($0.005)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -2535,7 +2535,7 @@
 		},
 		{
 			"name": "ibm_granite_forecast",
-			"title": "IBM Granite Forecast ($0.05)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -2559,7 +2559,7 @@
 		},
 		{
 			"name": "ibm_granite_getting_started",
-			"title": "Getting Started (free)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "ibm-x402-mcp-remote",
@@ -2583,8 +2583,8 @@
 		},
 		{
 			"name": "copy_smart_wallets",
-			"title": "Copy-trade smart wallet directory",
-			"description": "Browse the curated Smart Money directory for copy-trading: deduplicated wallets ranked by 30-day performance. Filter by chain (sol/bsc) and category (smart_money, launchpad, kol, sniper), search by address/name/twitter, and sort by profit, pnl, winrate, followers, or score. Returns the ranked page (wallet identity + 30-day performance, never token mints), the total, pagination flags, and category/chain facets. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "intel-mcp",
 				"title": "@three-ws/intel-mcp",
@@ -2607,8 +2607,8 @@
 		},
 		{
 			"name": "kol_leaderboard",
-			"title": "KOL trader leaderboard",
-			"description": "Rank the tracked key-opinion-leader (KOL) traders by realized performance over a recent window. Returns the leaderboard rows — each tracked wallet with its P&L, win rate, and trade activity for the chosen window. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "intel-mcp",
 				"title": "@three-ws/intel-mcp",
@@ -2631,8 +2631,8 @@
 		},
 		{
 			"name": "kol_trades",
-			"title": "Recent KOL trades on a mint",
-			"description": "See which tracked KOL wallets have recently traded a specific mint. Returns the recent trades (buys/sells with size and timing) observed across the tracked KOL set, plus the size of that tracked set. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "intel-mcp",
 				"title": "@three-ws/intel-mcp",
@@ -2655,8 +2655,8 @@
 		},
 		{
 			"name": "signal_feed",
-			"title": "Signal feed track record + recent signals",
-			"description": "Read one signal feed's public detail: the publisher's verified track record, the feed's proven accuracy (hit-rate, average realized ROI, follower ROI, emit→fill latency), pricing, and the recent emission log — every signal with its realized outcome and the on-chain tx that proves it. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "intel-mcp",
 				"title": "@three-ws/intel-mcp",
@@ -2679,8 +2679,8 @@
 		},
 		{
 			"name": "smart_money_coin",
-			"title": "Smart-money score for a coin",
-			"description": "Assess a coin by WHO is net-buying it right now. Returns a 0–100 smart_money_score computed from real observed buys joined to real outcomes, the reputable buyers in the book (with realized score, win rate, and labels), the funder clusters behind them, and a sybil_flag when one cluster dominates the order book. `computed:false` means the graph has no on-chain history for this mint yet. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "intel-mcp",
 				"title": "@three-ws/intel-mcp",
@@ -2703,8 +2703,8 @@
 		},
 		{
 			"name": "wallet_intel",
-			"title": "Wallet reputation + smart-money card",
-			"description": "Pull one wallet's realized reputation, computed from its observed buys joined to real outcomes (graduated / pumped / rugged + ATH). Returns the realized_score (0–100), win_rate, behavioral labels, and the funder cluster it belongs to (with funder root, size, and confidence). `computed:false` means the graph has no scored history for this wallet yet. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "intel-mcp",
 				"title": "@three-ws/intel-mcp",
@@ -2727,7 +2727,7 @@
 		},
 		{
 			"name": "get_wallet_portfolio",
-			"title": "KOL wallet portfolio + P&L",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "kol-mcp",
@@ -2751,7 +2751,7 @@
 		},
 		{
 			"name": "get_wallet_trades",
-			"title": "A KOL wallet's trades on a mint",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "kol-mcp",
@@ -2775,7 +2775,7 @@
 		},
 		{
 			"name": "get_creation",
-			"title": "Fetch one Loom creation by id",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "loom-mcp",
@@ -2799,7 +2799,7 @@
 		},
 		{
 			"name": "get_loom_feed",
-			"title": "Browse the Loom 3D-creation gallery",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "loom-mcp",
@@ -2823,7 +2823,7 @@
 		},
 		{
 			"name": "submit_creation",
-			"title": "Submit a creation to the Loom gallery",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "loom-mcp",
@@ -2847,8 +2847,8 @@
 		},
 		{
 			"name": "agent_categories",
-			"title": "List agent marketplace categories",
-			"description": "List the agent marketplace categories with the count of published agents in each, plus the overall total. Use the returned category slugs to filter browse_agents. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "marketplace-mcp",
 				"title": "@three-ws/marketplace-mcp",
@@ -2871,8 +2871,8 @@
 		},
 		{
 			"name": "agent_detail",
-			"title": "Fetch a marketplace agent by id",
-			"description": "Fetch one published marketplace agent by its id, including its full detail: name, description, category, tags, system prompt, greeting, capabilities, author, ratings, skill prices, subscription tiers, and avatar URLs. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "marketplace-mcp",
 				"title": "@three-ws/marketplace-mcp",
@@ -2895,8 +2895,8 @@
 		},
 		{
 			"name": "browse_agents",
-			"title": "Browse the agent marketplace",
-			"description": "Search and page the public three.ws agent marketplace. Filter by category and free-text query, choose a sort order, and get back a list of agent cards (id, name, description, category, tags, ratings, view/fork counts, thumbnail and GLB avatar URLs) plus a cursor for the next page. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "marketplace-mcp",
 				"title": "@three-ws/marketplace-mcp",
@@ -2919,8 +2919,8 @@
 		},
 		{
 			"name": "browse_skills",
-			"title": "Browse the skills catalog",
-			"description": "Search and page the public three.ws skills catalog — reusable tools and capabilities agents can install. Filter by free-text query and category, choose a sort order, and get back a list of skills (id, name, slug, description, category, tags, install count, rating, per-call price, author, content preview) plus a cursor for the next page. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "marketplace-mcp",
 				"title": "@three-ws/marketplace-mcp",
@@ -2943,8 +2943,8 @@
 		},
 		{
 			"name": "skill_categories",
-			"title": "List skills catalog categories",
-			"description": "List the skills catalog categories that have at least one public skill, each with a slug, label, and the count of skills in it. Use the returned slugs to filter browse_skills. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "marketplace-mcp",
 				"title": "@three-ws/marketplace-mcp",
@@ -2967,8 +2967,8 @@
 		},
 		{
 			"name": "sns_resolve",
-			"title": "Resolve a .sol name to its owner wallet",
-			"description": "Resolve a Solana Name Service (.sol) name to the base58 wallet address that owns it. Accepts a bare label, a subdomain, or the full name with or without the trailing \".sol\". Returns the owner address, or resolved:false when the name is unregistered. Mainnet only. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "naming-mcp",
 				"title": "@three-ws/naming-mcp",
@@ -2991,8 +2991,8 @@
 		},
 		{
 			"name": "sns_reverse",
-			"title": "Reverse-lookup a wallet to its primary .sol name",
-			"description": "Reverse-lookup a Solana wallet to the primary .sol name it has set as its favorite. Returns the name, or resolved:false when the wallet has no favorite domain (a routine, expected answer — not an error). Mainnet only. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "naming-mcp",
 				"title": "@three-ws/naming-mcp",
@@ -3015,8 +3015,8 @@
 		},
 		{
 			"name": "threews_availability",
-			"title": "Check if a *.threews.sol agent identity is available",
-			"description": "Check whether \"<label>.threews.sol\" is available to claim as a three.ws agent identity. Returns the full domain, availability, the current owner wallet if taken, the on-chain check status (\"ok\" or \"unavailable\" if the Solana RPC was degraded), and the public showcase URL for a claimed handle. Minting the subdomain is an authenticated write on the HTTP API; this tool is the public read. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "naming-mcp",
 				"title": "@three-ws/naming-mcp",
@@ -3039,7 +3039,7 @@
 		},
 		{
 			"name": "delete_notification",
-			"title": "Delete notification",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3063,7 +3063,7 @@
 		},
 		{
 			"name": "get_preferences",
-			"title": "Get notification preferences",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3087,7 +3087,7 @@
 		},
 		{
 			"name": "list_notifications",
-			"title": "List notifications",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3111,7 +3111,7 @@
 		},
 		{
 			"name": "mark_read",
-			"title": "Mark notifications read",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3135,7 +3135,7 @@
 		},
 		{
 			"name": "register_push_device",
-			"title": "Register push device",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3159,7 +3159,7 @@
 		},
 		{
 			"name": "set_preferences",
-			"title": "Set notification preferences",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3183,7 +3183,7 @@
 		},
 		{
 			"name": "unregister_push_device",
-			"title": "Unregister push device",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "notifications-mcp",
@@ -3207,7 +3207,7 @@
 		},
 		{
 			"name": "get_portfolio_asset",
-			"title": "My position in one token (holdings + market + chart)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "portfolio-mcp",
@@ -3231,7 +3231,7 @@
 		},
 		{
 			"name": "get_portfolio_history",
-			"title": "My portfolio value over time",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "portfolio-mcp",
@@ -3255,7 +3255,7 @@
 		},
 		{
 			"name": "get_portfolio_summary",
-			"title": "My agents’ live portfolio (holdings + USD value)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "portfolio-mcp",
@@ -3279,7 +3279,7 @@
 		},
 		{
 			"name": "get_trades_feed",
-			"title": "Public closed-trade PnL feed",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "portfolio-mcp",
@@ -3303,7 +3303,7 @@
 		},
 		{
 			"name": "get_wallet_balances",
-			"title": "Live on-chain balances for a Solana wallet",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "portfolio-mcp",
@@ -3327,7 +3327,7 @@
 		},
 		{
 			"name": "send_transfer",
-			"title": "Send SOL or an SPL token on Solana mainnet",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "portfolio-mcp",
@@ -3351,8 +3351,8 @@
 		},
 		{
 			"name": "append_agent_action",
-			"title": "Append a signed action to the provenance ledger",
-			"description": "Record an action in an agent's append-only provenance ledger — the permanent, auditable trail of what the agent did. Provide `agent_id` (THREE_WS_TOKEN must own it), a short `type` (≤64 chars, e.g. launch, buy, post, reflect), an optional structured `payload`, and an optional `source_skill`. WRITE ACTION: this APPENDS a new immutable record — it can never be edited or deleted, and calling it twice records two distinct actions, so don't retry blindly. When an EVM signer is configured (THREE_WS_SIGNER_KEY env or the `signer_key` arg) the action is ERC-191-signed before sending, making its authorship publicly verifiable; with no key it is appended unsigned. Returns the stored record (with id + created_at) and a `signing` block reporting whether it was signed and by which address.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "provenance-mcp",
 				"title": "@three-ws/provenance-mcp",
@@ -3375,8 +3375,8 @@
 		},
 		{
 			"name": "list_agent_actions",
-			"title": "List an agent's action-provenance trail",
-			"description": "Read an agent's append-only action log, newest-first, cursor-paginated. Returns each action's id, type (e.g. launch, buy, post, reflect), payload, source_skill, created_at, and — when the action was signed — its ERC-191 signature + signer_address. Each record is checked against its own signature: `verification.reason` is `ok` (recovered signer matches the claimed address), `unsigned`, `signer_mismatch` (recovered a different address — tampering OR an action signed under a different canonical scheme; treat as unverified, not trusted), or `malformed_signature`. Pass the returned `next_cursor` back as `cursor` to page further. The ledger is owner-scoped: THREE_WS_TOKEN must own `agent_id`. Read-only; the log is immutable so older pages never change.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "provenance-mcp",
 				"title": "@three-ws/provenance-mcp",
@@ -3399,8 +3399,8 @@
 		},
 		{
 			"name": "query_action",
-			"title": "Fetch + verify one provenance action",
-			"description": "Fetch a single action from an agent's append-only log by its id, then verify it. Returns the action (type, payload, source_skill, created_at, signature, signer_address) plus a `verification` block: `signed`, `valid`, `reason` (`ok` | `unsigned` | `signer_mismatch` | `malformed_signature`), the `recovered` signer address, and the recomputed `digest`. `valid:true` means the ERC-191 signature recovers to the claimed signer over the canonical action form — cryptographic proof the named agent authored this exact action and it was not altered. The ledger is owner-scoped: THREE_WS_TOKEN must own `agent_id`. Returns ok:false / not_found when the id is absent from this agent's log. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "provenance-mcp",
 				"title": "@three-ws/provenance-mcp",
@@ -3423,8 +3423,8 @@
 		},
 		{
 			"name": "build_world",
-			"title": "Build a complete 3D world from one sentence (no browser needed)",
-			"description": "One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call — it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -3447,8 +3447,8 @@
 		},
 		{
 			"name": "compose_scene",
-			"title": "Compose a 3D diorama plan from one sentence",
-			"description": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2–8 placed objects — each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -3471,8 +3471,8 @@
 		},
 		{
 			"name": "export_scene",
-			"title": "Export a forged diorama as one GLB scene",
-			"description": "Merge an already-forged diorama (objects with real glbUrl values, e.g. from your own forging after compose_scene, or fetched via get_scene) into ONE glTF 2.0 binary: every object becomes a named, selectable node, plus a real ground disc and mood-tuned lighting. Returns the merged GLB URL and a ready-to-open three.ws Scene Studio link. Objects that never forged are skipped and reported, not treated as a failure — a partial world still exports. Requires the target deployment to have object storage configured (three.ws does).",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -3495,8 +3495,8 @@
 		},
 		{
 			"name": "get_scene",
-			"title": "Fetch a saved diorama by id",
-			"description": "Fetch one saved diorama (a fully-forged 3D world) by its id, including its title, mood, palette, ground, and the placed objects with their GLB URLs. Returns the orbitable viewer URL. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -3519,8 +3519,8 @@
 		},
 		{
 			"name": "list_scenes",
-			"title": "List recent or featured dioramas",
-			"description": "Browse the public diorama gallery — the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world's viewer URL. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "scene-mcp",
 				"title": "@three-ws/scene-mcp",
@@ -3543,7 +3543,7 @@
 		},
 		{
 			"name": "get_mirror_leaderboard",
-			"title": "Rank signal publishers by realized performance",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "signals-mcp",
@@ -3567,7 +3567,7 @@
 		},
 		{
 			"name": "get_subscriptions",
-			"title": "List your signal subscriptions + delivery history",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "signals-mcp",
@@ -3591,7 +3591,7 @@
 		},
 		{
 			"name": "list_signal_feeds",
-			"title": "Browse the signal-feed marketplace",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "signals-mcp",
@@ -3615,7 +3615,7 @@
 		},
 		{
 			"name": "set_subscription_status",
-			"title": "Resume, pause, stop, or kill a subscription",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "signals-mcp",
@@ -3639,7 +3639,7 @@
 		},
 		{
 			"name": "subscribe_signal",
-			"title": "Subscribe an agent to a signal feed",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "signals-mcp",
@@ -3663,8 +3663,8 @@
 		},
 		{
 			"name": "three_balance",
-			"title": "Read a wallet's $THREE + SOL balance",
-			"description": "Return the $THREE and SOL balance for a Solana pubkey. If no pubkey is given, uses the configured signer (SOLANA_SECRET_KEY). Read-only — no payment.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three-token-mcp",
 				"title": "@three-ws/three-token-mcp",
@@ -3687,8 +3687,8 @@
 		},
 		{
 			"name": "three_burn",
-			"title": "Burn $THREE on-chain (incinerator + treasury split)",
-			"description": "Burn a USD-denominated amount of the $THREE your wallet holds. Quotes USD→$THREE via Jupiter, then sends ONE Solana transaction that splits it between the incinerator (burn) and the three.ws treasury, per the live public token config. EXECUTION ACTION — signs and broadcasts on Solana mainnet, IRREVERSIBLE: pass confirm:true. Capped by MAX_BURN_USD. The resolved mint is asserted to be canonical $THREE before signing. Requires a signer (SOLANA_SECRET_KEY env or the `secret` arg) holding enough $THREE. Returns the tx signature, the burned/treasury breakdown, and a Solscan link.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three-token-mcp",
 				"title": "@three-ws/three-token-mcp",
@@ -3711,8 +3711,8 @@
 		},
 		{
 			"name": "three_price",
-			"title": "Live $THREE price (Jupiter) + USD→$THREE quote",
-			"description": "Return the live USD price of $THREE (Jupiter primary, Birdeye fallback). Pass `usd` to also get how much $THREE that amount buys (token amount + atomic units). Read-only — no signer or payment required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three-token-mcp",
 				"title": "@three-ws/three-token-mcp",
@@ -3735,8 +3735,8 @@
 		},
 		{
 			"name": "apply_animation",
-			"title": "Apply an animation preset to a rigged model",
-			"description": "Retarget a curated animation preset onto a caller-supplied rigged humanoid GLB. Returns the retargeted three.js AnimationClip JSON (keyed to the rig's actual bone names, hip translation rescaled to its proportions) plus a retarget report — load it alongside the model and play. Set format=\"glb\" to also bake an animated GLB server-side (best-effort: textured rigs may exceed the headless bake budget and fall back to clip JSON — the /pose gallery is the guaranteed GLB export). SSRF-hardened: only public https model URLs are fetched.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3759,7 +3759,7 @@
 		},
 		{
 			"name": "attach_avatar_to_agent",
-			"title": "Give an agent a body",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -3783,8 +3783,8 @@
 		},
 		{
 			"name": "call_agent",
-			"title": "Call agent",
-			"description": "Send a message to another three.ws agent and get its response. Use this to delegate specialized tasks.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3807,8 +3807,8 @@
 		},
 		{
 			"name": "copy_status",
-			"title": "My copy subscriptions",
-			"description": "List all your active copy-trading subscriptions, with sizing config, execution counts (pending/acted), and the leader's name and profile. Use this to check that copy-trading is set up correctly and to see which subscriptions are generating intents.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3831,8 +3831,8 @@
 		},
 		{
 			"name": "copy_subscribe",
-			"title": "Subscribe to copy a trader",
-			"description": "Set up non-custodial copy-trading: mirror a leader agent's future pump.fun entries into your own wallet with your own sizing and risk caps. You supply your wallet address and the sizing rules; we never hold keys. The fan-out cron checks for new leader entries and generates sized intents you act on from /dashboard/copy. Provide leader_agent_id (from trader_leaderboard) and your Solana wallet address. Sizing rules: 'fixed' = exact SOL per trade, 'multiplier' = N× leader size, 'pct_balance' = % of your balance. Always set a per_trade_cap_sol and daily_budget_sol to limit exposure.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3855,8 +3855,8 @@
 		},
 		{
 			"name": "create_gated_embed",
-			"title": "Create a token-gated embed",
-			"description": "Turn an avatar or on-chain agent you own into a holder-only interactive 3D embed. Visitors must prove — with a real, server-verified Solana SPL token balance, never a client-reported number — they hold at least min_amount of mint before the live scene renders; below that they see a designed locked teaser with a connect-wallet CTA. mint defaults to $THREE but accepts any SPL mint at runtime. Returns a ready-to-paste <three-d> embed snippet.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3879,7 +3879,7 @@
 		},
 		{
 			"name": "crypto_data",
-			"title": "Crypto Data API",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -3903,8 +3903,8 @@
 		},
 		{
 			"name": "delete_avatar",
-			"title": "Delete avatar",
-			"description": "Soft-delete an avatar you own. Requires avatars:delete scope.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3927,8 +3927,8 @@
 		},
 		{
 			"name": "forget",
-			"title": "Forget",
-			"description": "Delete a memory you own by its id.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -3951,7 +3951,7 @@
 		},
 		{
 			"name": "garment_status",
-			"title": "Check a garment generation job",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -3975,7 +3975,7 @@
 		},
 		{
 			"name": "generate_garment",
-			"title": "Generate a wearable garment from a text prompt",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -3999,7 +3999,7 @@
 		},
 		{
 			"name": "get_3d_asset_onchain",
-			"title": "Resolve a 3D NFT to its live asset + provenance",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4023,8 +4023,8 @@
 		},
 		{
 			"name": "get_avatar",
-			"title": "Get avatar",
-			"description": "Fetch a single avatar by id or by owner+slug. Returns metadata and a model_url (public/unlisted) or short-lived signed URL (private).",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4047,8 +4047,8 @@
 		},
 		{
 			"name": "get_embed_code",
-			"title": "Get embed code",
-			"description": "Return a ready-to-paste <iframe> embed snippet (plus shareable URL, oEmbed URL, and OG thumbnail) for a three.ws avatar, on-chain agent, or Forge creation. Embed a persistent 3D avatar into Notion, Webflow, Framer, a blog, or any site as easily as a YouTube video. Provide exactly one target: agent_id, OR chain_id + onchain_agent_id, OR creation_id.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4071,7 +4071,7 @@
 		},
 		{
 			"name": "identity_check",
-			"title": "Screen an agent identity for impersonation",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4095,8 +4095,8 @@
 		},
 		{
 			"name": "inspect_model",
-			"title": "Inspect glTF/GLB model",
-			"description": "Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection — no optimization advice.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4119,8 +4119,8 @@
 		},
 		{
 			"name": "list_animations",
-			"title": "List animation presets",
-			"description": "List the curated, retargetable animation presets in the three.ws library — name, label, category, and whether the clip loops. Use this to discover valid `animation` values for apply_animation.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4143,7 +4143,7 @@
 		},
 		{
 			"name": "list_garment_catalog",
-			"title": "List the wardrobe garment catalog",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4167,8 +4167,8 @@
 		},
 		{
 			"name": "list_my_avatars",
-			"title": "List my avatars",
-			"description": "List the authenticated user's avatars. Returns id, name, slug, size, visibility, and direct model_url (when visibility permits).",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4191,7 +4191,7 @@
 		},
 		{
 			"name": "mint_3d_asset",
-			"title": "Mint a 3D asset as a Solana NFT",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4215,8 +4215,8 @@
 		},
 		{
 			"name": "optimize_model",
-			"title": "Suggest optimizations for a glTF/GLB model",
-			"description": "Inspect the model and return actionable suggestions for reducing size and draw-call overhead: triangle budget, Draco/Meshopt compression, oversized textures, KTX2 transcoding, non-indexed primitives, redundant materials, and more.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4239,8 +4239,8 @@
 		},
 		{
 			"name": "oracle_arm_watch",
-			"title": "Arm agent Oracle watch",
-			"description": "Arm your agent to automatically act on Oracle conviction signals. Once armed, the Oracle cron (every 2 min) will detect high-conviction launches that cross your floor and execute buys from your agent's custodial Solana wallet. Set mode='simulate' (default, safe) to log what it would have bought without spending. Set mode='live' to spend real SOL. The agent acts at most once per mint, per-trade SOL is capped, and you can disarm at any time by passing armed=false.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4263,8 +4263,8 @@
 		},
 		{
 			"name": "oracle_coin",
-			"title": "Oracle verdict for one coin",
-			"description": "Get Oracle's full conviction verdict for a specific pump.fun coin by mint address. Returns the fused 0–100 conviction score, tier (prime/strong/lean/watch/avoid), all four pillar scores (pedigree = who's behind it, structure = how it's built, narrative = cultural fit, momentum = early trading signal), active badges (e.g. smart_money_early, narrative_match), and a machine-readable buy/watch/skip recommendation. If the coin isn't in the Oracle cache yet, it will be scored on-demand (may add ~1s latency).",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4287,8 +4287,8 @@
 		},
 		{
 			"name": "oracle_top_plays",
-			"title": "Oracle top conviction plays",
-			"description": "Get the current top pump.fun launches ranked by Oracle conviction score. Each play includes a score (0–100), tier (prime/strong/lean/watch/avoid), four pillar scores (pedigree/structure/narrative/momentum), and an agent-ready recommendation with a suggested size_factor. Use this to decide which coins to buy before they move. Filter by min_score or category to narrow the signal.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4311,8 +4311,8 @@
 		},
 		{
 			"name": "oracle_watch_status",
-			"title": "Oracle watch status + track record",
-			"description": "Check your agent's current Oracle watch configuration and its realized track record: win rate, PnL, ROI, plus the 10 most recent actions with their outcomes. Use this to verify the agent is armed correctly and to review its performance before scaling up.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4335,8 +4335,8 @@
 		},
 		{
 			"name": "pumpfun_creator_intel",
-			"title": "Pump.fun creator intel",
-			"description": "Reputation profile for a pump.fun creator wallet: prior launches, graduation rate, claim activity, and behavioural trust signals.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4359,8 +4359,8 @@
 		},
 		{
 			"name": "pumpfun_recent_claims",
-			"title": "Recent pump.fun claims",
-			"description": "Fetch the most recent pump.fun GitHub social-fee claim events with full enrichment: GitHub profile, X/Twitter follower data, influencer tier, first-time-claim flag, fake-claim detection, and AI summary. Use to answer 'what's happening on pump.fun right now?'.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4383,8 +4383,8 @@
 		},
 		{
 			"name": "pumpfun_recent_graduations",
-			"title": "Recent pump.fun graduations",
-			"description": "Tokens that recently graduated from the bonding curve to PumpAMM, with creator + holder analysis.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4407,8 +4407,8 @@
 		},
 		{
 			"name": "pumpfun_token_intel",
-			"title": "Pump.fun token intel",
-			"description": "Full intel on a pump.fun token: graduation status, bonding-curve progress, creator profile, top holders, volume, bundle detection, and trust signals.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4431,8 +4431,8 @@
 		},
 		{
 			"name": "recall",
-			"title": "Recall",
-			"description": "Retrieve the most relevant memories for a query from one of your agents. Ranks by relevance to the query blended with salience and recency, excluding expired memories. Returns an ordered list.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4455,7 +4455,7 @@
 		},
 		{
 			"name": "register_agent",
-			"title": "Register an agent on-chain",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4479,8 +4479,8 @@
 		},
 		{
 			"name": "remember",
-			"title": "Remember",
-			"description": "Store a long-term memory for one of your agents. Use for durable facts: who the user is (type=user), guidance/corrections (feedback), ongoing work (project), or external pointers (reference). Returns the stored memory.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4503,7 +4503,7 @@
 		},
 		{
 			"name": "render_avatar",
-			"title": "Render avatar",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4527,7 +4527,7 @@
 		},
 		{
 			"name": "render_avatar_image",
-			"title": "Render an avatar to an image",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4551,8 +4551,8 @@
 		},
 		{
 			"name": "search_public_avatars",
-			"title": "Search public avatars",
-			"description": "Search the public avatar gallery. Useful for finding characters to render without prior knowledge of an id.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4575,8 +4575,8 @@
 		},
 		{
 			"name": "solana_agent_attestations",
-			"title": "List Solana agent attestations",
-			"description": "List recent on-chain attestations about a Solana-registered agent (feedback, validation, task offers, acceptances, disputes). Backed by the three.ws indexer for sub-100ms reads. Each row includes verified/disputed/revoked flags. Public; no auth required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4599,8 +4599,8 @@
 		},
 		{
 			"name": "solana_agent_passport",
-			"title": "Get Solana agent passport",
-			"description": "Full discovery card for a Solana agent: identity (Metaplex Core asset), owner wallet, reputation summary, latest validation result, and attestation schema endpoint. Equivalent to an ERC-8004 passport — use this when one tool call should answer \"who is this agent and can I trust them?\".",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4623,8 +4623,8 @@
 		},
 		{
 			"name": "solana_agent_reputation",
-			"title": "Get Solana agent reputation",
-			"description": "Computed reputation summary for a Solana-registered three.ws agent. Returns total/verified feedback counts, score averages (raw + verified-only), validation pass/fail, task acceptance, and dispute counts. Verified score only includes feedback whose task was acknowledged on-chain by the agent owner. Priced at $0.001 USDC/call via x402 (pay-per-call; an OAuth bearer token bypasses payment).",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4647,8 +4647,8 @@
 		},
 		{
 			"name": "text_to_animation",
-			"title": "Generate an animation from a text prompt and retarget it onto a model",
-			"description": "Generate a brand-new motion from a natural-language prompt (e.g. \"waving confidently\", \"a slow tai-chi sweep\") with a motion-diffusion model, then retarget it onto a caller-supplied rigged humanoid GLB — the same retarget engine apply_animation uses. Returns the retargeted three.js AnimationClip JSON (or a baked animated GLB) plus a report. Unlike preset libraries, the motion does not pre-exist: it is synthesized for the prompt. Requires the text2motion worker configured on the deployment.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4671,7 +4671,7 @@
 		},
 		{
 			"name": "token_snapshot",
-			"title": "Crypto token snapshot",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "three.ws",
@@ -4695,8 +4695,8 @@
 		},
 		{
 			"name": "trader_leaderboard",
-			"title": "Top pump.fun traders",
-			"description": "Get the top pump.fun traders on three.ws ranked by composite TraderScore (win rate + P&L + ROI + drawdown). Each row includes score (0–100), verified badge, closed trade count, win rate, realized P&L in SOL and USD, ROI %, max drawdown, and a 'recommendation' field: 'copy' = strong candidate, 'watch' = emerging, 'skip' = unproven. Use trader_profile to get full details before copying. Sort by 'score' (default), 'pnl', 'winrate', or 'roi'. Window: '24h', '7d', '30d' (default), or 'all'.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4719,8 +4719,8 @@
 		},
 		{
 			"name": "trader_profile",
-			"title": "Full track record for one agent",
-			"description": "Get the full, verifiable track record for a specific pump.fun agent trader. Returns the composite TraderScore, all headline metrics (win rate, realized P&L, ROI, profit factor, max drawdown, average hold time), up to 10 recent closed trades with their on-chain Solscan links, and any open positions. Every number is traceable to its on-chain buy/sell transaction. Use this to vet an agent before calling copy_subscribe.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4743,8 +4743,8 @@
 		},
 		{
 			"name": "validate_model",
-			"title": "Validate glTF/GLB model",
-			"description": "Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints — the authoritative answer to \"is this file spec-compliant?\". SSRF-hardened: only public https URLs are fetched.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -4767,7 +4767,7 @@
 		},
 		{
 			"name": "anchor_provenance",
-			"title": "Anchor a signed content credential for a 3D model",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -4791,8 +4791,8 @@
 		},
 		{
 			"name": "auto_rig_model",
-			"title": "Auto-rig a static 3D model (skeleton + skin weights)",
-			"description": "Turn a static GLB mesh into an animation-ready character: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline. Pairs with text_to_3d / image_to_3d — generate a mesh, then rig it, then drive it with apply_animation or pose_model. Returns a job_id; poll generation_status for the rigged GLB.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -4815,7 +4815,7 @@
 		},
 		{
 			"name": "capture_scene",
-			"title": "Reconstruct a 3D scene from a video",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -4839,8 +4839,8 @@
 		},
 		{
 			"name": "create_agent_persona",
-			"title": "Mint a persistent, living agent persona from a rigged GLB",
-			"description": "Turn a generated GLB into a NAMED, persistent agent body — a \"persona\" the agent reuses across turns and across sessions. The mesh is copied into durable storage so the body survives the provider URL expiring, then registered under a stable persona_id. The returned text/html resource renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the capability — keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. No sign-in required.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -4863,8 +4863,8 @@
 		},
 		{
 			"name": "direct_prompt",
-			"title": "Optimize a rough idea into a 3D-generation prompt (IBM Granite)",
-			"description": "Rewrite a rough idea into an optimized text_to_3d prompt using IBM Granite. Returns one clean single-subject description plus structured directives (subject, style, materials, colors, detail) that produce cleaner meshes. Run before text_to_3d when a prompt is vague, conflicting, or multi-subject. Requires IBM watsonx.ai credentials on the server.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -4887,7 +4887,7 @@
 		},
 		{
 			"name": "export_ar",
-			"title": "Export a model for AR (\"View in your space\")",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -4911,8 +4911,8 @@
 		},
 		{
 			"name": "generate_material",
-			"title": "Generate a glTF PBR material from a description (IBM Granite)",
-			"description": "Generate a physically-based (PBR) glTF 2.0 material from a text description using IBM Granite — base color, metallic, roughness, and emissive factors. Returns a pbrMetallicRoughness material object you can attach to a generated mesh. Requires IBM watsonx.ai credentials on the server.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -4935,8 +4935,8 @@
 		},
 		{
 			"name": "generation_status",
-			"title": "Check a 3D generation job",
-			"description": "Poll a text_to_3d or image_to_3d job by its job_id. While running it reports the status; when finished it returns the GLB download URL and an inline <model-viewer> artifact — display that text/html resource as an interactive 3D artifact.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -4959,8 +4959,8 @@
 		},
 		{
 			"name": "get_agent_persona",
-			"title": "Reload a persisted persona by id (continuity across sessions)",
-			"description": "Bring back a previously minted persona by its persona_id — the SAME body and identity, in a fresh session. Returns the persona name, its GLB, accumulated turn count, and the inline living-body artifact. Use this at the start of a conversation when the user returns to a named agent.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -4983,8 +4983,8 @@
 		},
 		{
 			"name": "image_to_3d",
-			"title": "Reconstruct a 3D model from one or more images",
-			"description": "Reconstruct a textured 3D model (GLB) from a reference image using the three.ws image engine. Pass a single image_url, or image_urls (2–4 views of the SAME object from different angles — front/back/left/right) for multi-view reconstruction, which removes the back-of-object hallucination of single-image reconstruction. Returns a job_id to poll with generation_status, plus how many views were fused and which engine handled it. The cleaner the inputs — one subject, plain background, even lighting — the better the mesh.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5021,7 +5021,7 @@
 		},
 		{
 			"name": "persona_identity",
-			"title": "Read a persona's on-chain identity — wallet, reputation, holdings",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5045,8 +5045,8 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
-			"description": "Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or override it). The returned text/html resource animates the body for this turn — display it alongside the spoken reply. This is the turn-by-turn embodiment hook.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5069,7 +5069,7 @@
 		},
 		{
 			"name": "persona_send",
-			"title": "Send USDC from a persona's own wallet",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5093,7 +5093,7 @@
 		},
 		{
 			"name": "persona_tip",
-			"title": "Tip USDC from a persona's own wallet",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5117,8 +5117,8 @@
 		},
 		{
 			"name": "pose_model",
-			"title": "Resolve a text prompt to a pose-studio seed + joint rotations",
-			"description": "Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic and free — the same prompt always yields the same pose. Pair with auto_rig_model to pose a rigged character.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5141,8 +5141,8 @@
 		},
 		{
 			"name": "preview_3d",
-			"title": "Preview any GLB as an interactive 3D artifact",
-			"description": "Render any public GLB URL as an inline <model-viewer> HTML artifact — orbit controls, AR on mobile, auto-rotate. Display the returned text/html resource as an inline 3D artifact. Use it to view a generated model, or any GLB on the web.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5165,8 +5165,8 @@
 		},
 		{
 			"name": "remesh_model",
-			"title": "Remesh, simplify, repair, or convert a 3D model",
-			"description": "Process an existing GLB/OBJ/STL/PLY mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal — a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5189,8 +5189,8 @@
 		},
 		{
 			"name": "remove_background",
-			"title": "Remove the background from an image",
-			"description": "Strip the background from a photo or illustration with the three.ws background-removal engine. Returns a PNG with a transparent background — useful for preparing clean inputs before image_to_3d reconstruction.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5213,8 +5213,8 @@
 		},
 		{
 			"name": "retexture_model",
-			"title": "Paint a new texture onto a 3D model from a text prompt",
-			"description": "Generate a fresh texture for an untextured or poorly-textured GLB with the three.ws depth-guided multi-view texturing engine. Renders the mesh from 8 viewpoints, generates coherent texture views guided by your prompt, and back-projects them onto the UV atlas. Returns a job_id to poll with generation_status.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5237,7 +5237,7 @@
 		},
 		{
 			"name": "retexture_region",
-			"title": "Repaint one masked region of a model's texture (magic brush)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5261,8 +5261,8 @@
 		},
 		{
 			"name": "save_avatar",
-			"title": "Save a generated GLB as a durable, named avatar",
-			"description": "Persist a generated GLB (e.g. the glb_url returned by generation_status) as a durable avatar in your three.ws library. The mesh is copied into our own storage so it survives the provider URL expiring, then registered as a named avatar you own. Returns avatar_id, slug, model_url, and a view_url. This is the bridge from the studio to the avatar system: after saving, get_avatar, render_avatar_image, embeds, and on-chain identity all work on the result. Requires you to be signed in.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5285,8 +5285,8 @@
 		},
 		{
 			"name": "segment_model",
-			"title": "Split a 3D model into named, separable parts",
-			"description": "Segment a GLB/OBJ/STL/PLY mesh into meaningful parts with clean boundaries — head/torso/limbs on a character, body/wheels on a vehicle. Splits at physically disconnected shells and at concave creases (the minima rule), then names each part by region and tints it a distinct colour. Returns a GLB whose nodes ARE the parts (so each can be hidden, recoloured, replaced, or exported on its own) plus a parts manifest. Poll with generation_status; the result lists every part with its id, name, face count, and colour. Pass only_part to export a single part on its own.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5309,7 +5309,7 @@
 		},
 		{
 			"name": "stylize_model",
-			"title": "Apply a one-click geometric stylization filter to a 3D model",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5333,8 +5333,8 @@
 		},
 		{
 			"name": "text_to_3d",
-			"title": "Generate a 3D model from a text prompt",
-			"description": "Turn a text description into a textured 3D model (GLB). Runs a fast text-to-image pass, then reconstructs a mesh from that image with the three.ws image engine. Returns a job_id (poll with generation_status) plus the intermediate preview image. Best results: a single, clearly described object — \"a worn leather armchair\", \"a low-poly red fox\", \"a sci-fi helmet\".",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -5371,7 +5371,7 @@
 		},
 		{
 			"name": "validate_spatial_response",
-			"title": "Validate a Spatial MCP 3D artifact",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5395,7 +5395,7 @@
 		},
 		{
 			"name": "verify_provenance",
-			"title": "Verify a 3D model authenticity (content credential)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio",
@@ -5419,7 +5419,7 @@
 		},
 		{
 			"name": "check_job",
-			"title": "Check a pending 3D generation",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5443,7 +5443,7 @@
 		},
 		{
 			"name": "forge_avatar",
-			"title": "Generate a rigged, animation-ready avatar",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5467,7 +5467,7 @@
 		},
 		{
 			"name": "forge_free",
-			"title": "Generate a 3D model from text",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5491,7 +5491,7 @@
 		},
 		{
 			"name": "mesh_forge",
-			"title": "Generate a 3D mesh (art-directed)",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5515,7 +5515,7 @@
 		},
 		{
 			"name": "refine_model",
-			"title": "Refine a 3D model by describing a change",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5539,7 +5539,7 @@
 		},
 		{
 			"name": "rig_mesh",
-			"title": "Rig a 3D model for animation",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5563,7 +5563,7 @@
 		},
 		{
 			"name": "text_to_avatar",
-			"title": "Generate a 3D avatar",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "threews-3d-studio-free",
@@ -5587,8 +5587,8 @@
 		},
 		{
 			"name": "find_services",
-			"title": "Find paid services the agent can call",
-			"description": "Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL — feed a resource into pay_and_call to actually use it.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -5611,8 +5611,8 @@
 		},
 		{
 			"name": "monetize_endpoint",
-			"title": "Publish a paid endpoint to earn USDC",
-			"description": "Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network — run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -5635,8 +5635,8 @@
 		},
 		{
 			"name": "pay_and_call",
-			"title": "Pay an x402 service and return its result",
-			"description": "Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -5659,8 +5659,8 @@
 		},
 		{
 			"name": "provision_wallet",
-			"title": "Create the agent's wallet",
-			"description": "Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent — if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -5683,8 +5683,8 @@
 		},
 		{
 			"name": "wallet_status",
-			"title": "Check the agent's wallet",
-			"description": "Show the signed-in user's three.ws agent wallet: address, SOL and USDC balance, the per-call/hour/day spending caps, and whether autonomous spending is enabled. Read-only — never moves funds. Call this before pay_and_call to confirm there's balance and headroom.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-agent",
 				"title": "Agent Wallet",
@@ -5732,7 +5732,7 @@
 		{
 			"name": "get_coin_intel",
 			"title": null,
-			"description": "Full Coin Intelligence snapshot for a pump.fun mint. Returns every signal the engine recorded during the observation window: bundle vs organic verdict, bubblemaps-style cluster connectivity, smart-money presence (with wallet labels and win-rates), dev behaviour, category/classification, news-meme detection with the matching headline, risk flags, and a 0–100 quality score. Also returns the outcome if the coin is old enough to be labeled (graduated/rugged/ATH multiple). This is the single highest-signal read for a trade decision — call this before entering any position.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5756,7 +5756,7 @@
 		{
 			"name": "get_creator_profile",
 			"title": null,
-			"description": "All tokens by a creator wallet, with rug-pull risk flags.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5780,7 +5780,7 @@
 		{
 			"name": "get_graduated_tokens",
 			"title": null,
-			"description": "Tokens that graduated from the bonding curve to Raydium AMM.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5804,7 +5804,7 @@
 		{
 			"name": "get_king_of_the_hill",
 			"title": null,
-			"description": "Highest-market-cap token still on the bonding curve.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5828,7 +5828,7 @@
 		{
 			"name": "get_new_tokens",
 			"title": null,
-			"description": "Most recently launched pump.fun tokens.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5852,7 +5852,7 @@
 		{
 			"name": "get_oracle_conviction",
 			"title": null,
-			"description": "Oracle conviction score for a pump.fun mint: the fused 0-100 score the Oracle engine produces by combining four intelligence pillars: pedigree (who bought it), structure (organic vs bundle, holder concentration, bubblemaps connectivity), narrative (category, meme virality, news hook), and momentum (timing, velocity). Returns the tier (prime ≥86 / strong ≥72 / lean ≥54 / watch ≥36 / avoid), the per-pillar breakdown, the natural-language reasons that drove the score, the full \"who's in\" trader roster with reputation labels and win-rates, and the narrative read (category, virality, tags). Call this when you need the highest-confidence trade signal; it synthesises everything get_coin_intel exposes into one actionable score. Pairs with get_coin_intel for raw signals.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5876,7 +5876,7 @@
 		{
 			"name": "get_token_details",
 			"title": null,
-			"description": "Full details for a specific pump.fun token by mint address.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5900,7 +5900,7 @@
 		{
 			"name": "get_token_holders",
 			"title": null,
-			"description": "Top holders of a token with concentration analysis (on-chain).",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5924,7 +5924,7 @@
 		{
 			"name": "get_token_trades",
 			"title": null,
-			"description": "Recent buy/sell history for a token.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5948,7 +5948,7 @@
 		{
 			"name": "get_trending_tokens",
 			"title": null,
-			"description": "Top pump.fun tokens by market cap.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5972,7 +5972,7 @@
 		{
 			"name": "kol_leaderboard",
 			"title": null,
-			"description": "Top KOL traders ranked by P&L for a given time window. Returns wallet, pnlUsd, winRate, trades, rank.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -5996,7 +5996,7 @@
 		{
 			"name": "pumpfun_bot_status",
 			"title": null,
-			"description": "Returns the configuration and health status of the pump.fun indexer backend. Always available — does not require PUMPFUN_BOT_URL.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6020,7 +6020,7 @@
 		{
 			"name": "pumpfun_first_claims",
 			"title": null,
-			"description": "First-ever pump.fun creator fee claims in a time window: a cash-out signal. Returns creators who have never claimed before, with creator wallet, mint, lamports, and timestamp.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6044,7 +6044,7 @@
 		{
 			"name": "pumpfun_list_claims",
 			"title": null,
-			"description": "List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6068,7 +6068,7 @@
 		{
 			"name": "pumpfun_quote_swap",
 			"title": null,
-			"description": "Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Only GRADUATED coins have an AMM pool; for a coin still on its bonding curve use get_bonding_curve instead. Pricing runs on the pool effective quote reserves (quote vault balance + pool.virtual_quote_reserves); the base side is the raw base vault balance. Returns amountOut, priceImpactBps, route, expiresAtMs, plus the reserves the quote was computed from so the number can be reproduced.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6092,7 +6092,7 @@
 		{
 			"name": "pumpfun_upload_metadata",
 			"title": null,
-			"description": "Upload coin metadata (name, symbol, description, image) to IPFS and get back a pump.fun-ready metadata URI. Call this before launching a coin — pass the returned uri to the launch-agent endpoint or the studio launch flow. Requires a valid bearer token (API key). Image may be a public HTTPS URL or a base64 data URI (max 10 MB). The returned uri is a permanent ipfs:// link; the call is idempotent for the same content.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6116,7 +6116,7 @@
 		{
 			"name": "pumpfun_vanity_mint",
 			"title": null,
-			"description": "Generate a Solana keypair whose address ends/starts with a vanity pattern. Returns publicKey + secretKey (base58). Caller must save the secret key immediately — it is never stored. Hard timeout: 60 s.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6140,7 +6140,7 @@
 		{
 			"name": "pumpfun_watch_claims",
 			"title": null,
-			"description": "Return all pump.fun fee-claim events for a creator wallet within a look-back window (durationMs). Useful for batch collection after a delay.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6164,7 +6164,7 @@
 		{
 			"name": "pumpfun_watch_whales",
 			"title": null,
-			"description": "Collect whale trades on a pump.fun token for a short window (max 10 s). Returns all trades whose USD value meets minUsd.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6188,7 +6188,7 @@
 		{
 			"name": "search_tokens",
 			"title": null,
-			"description": "Search pump.fun tokens by name, symbol, or mint address.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6212,7 +6212,7 @@
 		{
 			"name": "sns_resolve",
 			"title": null,
-			"description": "Resolve a .sol Solana Name Service domain to its owner wallet address.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6236,7 +6236,7 @@
 		{
 			"name": "sns_reverseLookup",
 			"title": null,
-			"description": "Reverse-lookup a Solana wallet address to its primary .sol domain name.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6260,7 +6260,7 @@
 		{
 			"name": "social_cashtag_sentiment",
 			"title": null,
-			"description": "Score social-post sentiment for a cashtag using a deterministic lexicon. Returns score (-1..1), positive/negative/neutral percentages, and example posts.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6284,7 +6284,7 @@
 		{
 			"name": "social_x_post_impact",
 			"title": null,
-			"description": "Correlate an X (Twitter) post to a memecoin price impact. Fetches post metadata via oEmbed (no API key) and computes price delta from the pump.fun bonding curve in a ±windowMin window around the post.",
+			"description": null,
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -6307,8 +6307,8 @@
 		},
 		{
 			"name": "bazaar_service_details",
-			"title": "Live price details for one x402 service",
-			"description": "Resolve the current live price of a single x402 service by its resource URL (and tool_name for MCP services). Returns the cheapest price across networks plus a per-network breakdown (amount in atomic units, asset, recipient) and whether the service is still listed and payable. Purpose-built for price tracking and cost-model maintenance — call it on a schedule to watch a dependency's price over time and detect hikes or drops. Use get_service instead when you also need the input/output schema and a ready pay link.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-x402-bazaar",
 				"title": "x402 Bazaar",
@@ -6331,8 +6331,8 @@
 		},
 		{
 			"name": "browse_services",
-			"title": "Browse the x402 bazaar",
-			"description": "List paid agent services from the live x402 facilitator network without a search query — useful for \"what can I pay for?\". Returns services with price, networks, and resource URL, cheapest filters applied.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-x402-bazaar",
 				"title": "x402 Bazaar",
@@ -6355,8 +6355,8 @@
 		},
 		{
 			"name": "get_service",
-			"title": "Get full details for one x402 service",
-			"description": "Resolve a single x402 service by its resource URL (and tool_name for MCP services). Returns the exact payment requirements (price, asset, network, recipient), the input/output schema, and a ready-to-use pay link on three.ws. This is what you read before paying.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-x402-bazaar",
 				"title": "x402 Bazaar",
@@ -6379,8 +6379,8 @@
 		},
 		{
 			"name": "search_services",
-			"title": "Search the x402 bazaar",
-			"description": "Ranked search across the live x402 facilitator network for paid agent services (APIs and MCP tools you can pay for in stablecoin). Returns matching services with price, networks, and resource URL. Use get_service for full payment + input details.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "threews-x402-bazaar",
 				"title": "x402 Bazaar",
@@ -6403,8 +6403,8 @@
 		},
 		{
 			"name": "close_session",
-			"title": "Close a tutoring session (finalize invoice)",
-			"description": "Finalize a Pay-As-You-Learn tutoring session and return its itemized, attested invoice. Seals the ledger for the given sessionId: status flips to \"closed\", a SHA-256 attestation is stamped over the line items and total, and no further questions can be billed to this session afterward. Returns sessionId, createdAt, closedAt, questionCount, the full lineItems array, the totalAtomics / totalUsd owed, and the attestation hash. Closing itself is FREE and moves no funds — the learner was already charged per answered question; this only produces the final receipt. Idempotent: closing an already-closed session returns the same total. Use load_session first if you want to review the tab before sealing it.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "tutor-mcp",
 				"title": "@three-ws/tutor-mcp",
@@ -6427,8 +6427,8 @@
 		},
 		{
 			"name": "load_session",
-			"title": "Load a tutoring session ledger",
-			"description": "Read the running tab for a Pay-As-You-Learn tutoring session by its sessionId. Returns the itemized ledger: one lineItem per answered question (question text, level, output tokens, per-item cost in USDC atomics and a \"$x.xxxxxx\" string, and the timestamp), plus the session status (\"open\" | \"closed\"), questionCount, and the running totalAtomics / totalUsd. If the session was already closed it also returns the finalized, attested invoice. A sessionId with no stored history returns an empty open session (questionCount 0) rather than an error — that is an honest \"nothing billed yet\", not a failure. Viewing the tab is always free; this never charges the learner. Read-only live data.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "tutor-mcp",
 				"title": "@three-ws/tutor-mcp",
@@ -6451,8 +6451,8 @@
 		},
 		{
 			"name": "vanity_appraise",
-			"title": "Appraise the rarity of a Solana address",
-			"description": "Appraise how rare a Solana address is: its detected vanity pattern, rarity score, rarity bits, tier, and expected grind attempts. Pure math on the Base58 address — nothing is stored. If the address has been published to the proof-of-grind gallery, the public entry is returned too. Read-only, no payment.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6475,8 +6475,8 @@
 		},
 		{
 			"name": "vanity_board",
-			"title": "Browse the vanity grind-bounty board",
-			"description": "Browse the public grind-bounty board: vanity-address bounties requesters have escrowed for the worker fleet to grind. Filter by status (open / all / settled), sort by recency, reward, or expiry, and paginate. Each bounty shows its pattern, USDC amount, difficulty, status, and timing. Read-only; posting a bounty is a separate x402-paid write on the HTTP API.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6499,8 +6499,8 @@
 		},
 		{
 			"name": "vanity_config",
-			"title": "Bounty market config: payout + asset metadata",
-			"description": "Read the grind-bounty market configuration: whether on-chain payouts are configured (can a winner actually be paid?), the settlement asset (USDC) and its decimals, which escrow networks are live (Base / Solana), the pricing band (floor + max atomics), the bounty protocol version, and the sealed-envelope scheme. Check this before posting to confirm the market can pay out. Read-only, no params.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6523,8 +6523,8 @@
 		},
 		{
 			"name": "vanity_gallery",
-			"title": "Browse the proof-of-grind rarity gallery",
-			"description": "Browse the public proof-of-grind gallery: rare Solana addresses people have published with a verifiable grind receipt. Sort by rarity score or recency, filter by tier, minimum pattern length, or a substring the pattern must contain, and paginate. Each entry shows the address, pattern, rarity score/bits, tier, and an explorer link. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6547,8 +6547,8 @@
 		},
 		{
 			"name": "vanity_leaderboard",
-			"title": "Top grinders by USDC earned",
-			"description": "Rank the worker fleet: the top grinders by total USDC earned from winning vanity-address bounties. Each entry shows a worker id and its cumulative payout. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6571,8 +6571,8 @@
 		},
 		{
 			"name": "vanity_open",
-			"title": "List claimable open bounties for workers",
-			"description": "List the open, unexpired bounties a grinding worker can race to claim — the queue worker fleets poll. Each entry carries the pattern to grind and the escrowed USDC reward; the first worker to submit a verified, sealed key wins. Read-only discovery; submitting a claim is a separate write on the HTTP API.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6595,8 +6595,8 @@
 		},
 		{
 			"name": "vanity_quote",
-			"title": "Quote the bounty price for a vanity pattern",
-			"description": "Quote how hard a Solana vanity address is and what to escrow for it. Give a Base58 prefix and/or suffix and get the expected attempts, rarity tier, and an honest suggested USDC bounty (atomic units) from the difficulty→price oracle. Pure function of the pattern — no wallet, no payment, fully read-only. Use this before posting a grind-bounty so you escrow a fair amount.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6619,8 +6619,8 @@
 		},
 		{
 			"name": "vanity_stats",
-			"title": "Live grind-bounty market totals",
-			"description": "Get live totals for the grind-bounty market: how many bounties are open, how much USDC is currently escrowed, and how much has been paid out to winning workers. A quick pulse on market activity. Read-only, no params.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "vanity-mcp",
 				"title": "@three-ws/vanity-mcp",
@@ -6643,7 +6643,7 @@
 		},
 		{
 			"name": "analyze_image",
-			"title": "Analyze an image against a prompt",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "vision-mcp",
@@ -6667,7 +6667,7 @@
 		},
 		{
 			"name": "describe_image",
-			"title": "Describe an image in natural language",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "vision-mcp",
@@ -6691,7 +6691,7 @@
 		},
 		{
 			"name": "get_vision_status",
-			"title": "Vision availability + accepted formats",
+			"title": null,
 			"description": null,
 			"server": {
 				"id": "vision-mcp",
@@ -6715,8 +6715,8 @@
 		},
 		{
 			"name": "find_services",
-			"title": "Find paid x402 services the agent can call",
-			"description": "Search the live x402 facilitator network (PayAI + Coinbase CDP bazaar) for paid services — HTTP APIs and MCP tools. Returns each match with its price, networks, and resource URL. Pass a resource into pay_and_call to use it. Read-only.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "x402-mcp",
 				"title": "@three-ws/x402-mcp",
@@ -6739,8 +6739,8 @@
 		},
 		{
 			"name": "inspect_endpoint",
-			"title": "Inspect an x402 endpoint (price + requirements, no payment)",
-			"description": "Fetch an x402 endpoint and return its 402 payment requirements — every accepted scheme, network, asset, price and pay-to address — WITHOUT paying. If the endpoint is free, returns its result instead. No signer required. Use this to learn the cost before pay_and_call.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "x402-mcp",
 				"title": "@three-ws/x402-mcp",
@@ -6763,8 +6763,8 @@
 		},
 		{
 			"name": "pay_and_call",
-			"title": "Pay an x402 endpoint in USDC or $THREE and return its result",
-			"description": "Call a paid x402 endpoint and settle the payment automatically, then return the result.\n\nTwo modes:\n• Self-custodial (default): signs with SOLANA_SECRET_KEY or `secret` arg — you hold the key.\n• Session-governed: pass `session_token` (a three.ws Payment Session token) — the platform wallet signs on your behalf; the session's budget, allowlist, and per-tx cap are enforced by the platform. No private key required. Supports Solana USDC and Base USDC sessions.\n\nPay in USDC (default) or, when the endpoint advertises it, in $THREE (set token:\"three\"). Bounded by max_usd and the MAX_PAY_USD cap; refuses before any money moves if the price is over the cap. With REQUIRE_CONFIRM on, the call refuses until re-issued with confirm:true.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "x402-mcp",
 				"title": "@three-ws/x402-mcp",
@@ -6787,8 +6787,8 @@
 		},
 		{
 			"name": "x402_wallet",
-			"title": "The agent's x402 spending wallet (address + balance)",
-			"description": "Show a Solana wallet's address and live SOL + USDC balance. With no `address`, derives the wallet from the configured signer (SOLANA_SECRET_KEY) — call this before pay_and_call to confirm there's USDC to spend. Read-only; never moves funds.",
+			"title": null,
+			"description": null,
 			"server": {
 				"id": "x402-mcp",
 				"title": "@three-ws/x402-mcp",

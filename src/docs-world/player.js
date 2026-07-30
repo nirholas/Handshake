@@ -81,7 +81,14 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 	// exact origin and would otherwise occlude the freshly-loaded avatar.
 	// Facing -z, matching the camera's spawn yaw of PI (controls.js), so the
 	// first view reads avatar → plaza → pavilion ring.
-	root.position.set(0, 0, 3.2);
+	//
+	// The x offset matters as much as the z one. The camera spawns directly
+	// behind the player looking down -z, so a purely-z offset leaves the player,
+	// the beacon and the far ring collinear: the 3.4m pillar sits 3m from the
+	// lens while the pavilions are 24m out, so it reads as a slab impaling the
+	// avatar and its welcome sign covers the pavilion labels behind it. Standing
+	// the player to one side puts the beacon beside them instead of through them.
+	root.position.set(3.4, 0, 3.4);
 	root.rotation.y = Math.PI;
 	scene.add(root);
 

@@ -71,13 +71,60 @@ function walk(node, visit) {
  * A string-literal or template-literal property value, with `${…}` standing in
  * for interpolations so a description stays readable and stable.
  */
-function stringValue(node) {
+function stringValue(node, constStrings = new Map(), seen = new Set()) {
 	if (!node) return null;
 	if (node.type === 'Literal' && typeof node.value === 'string') return node.value;
 	if (node.type === 'TemplateLiteral') {
 		return node.quasis.map((q) => q.value.cooked ?? '').join('${…}');
 	}
+	// Long descriptions are routinely written as `'part one ' + 'part two'`.
+	if (node.type === 'BinaryExpression' && node.operator === '+') {
+		const left = stringValue(node.left, constStrings, seen);
+		const right = stringValue(node.right, constStrings, seen);
+		if (left !== null && right !== null) return left + right;
+	}
+	// `description: DESCRIPTION`, where the text is a module-level constant.
+	if (node.type === 'Identifier' && constStrings.has(node.name) && !seen.has(node.name)) {
+		return stringValue(constStrings.get(node.name), constStrings, new Set([...seen, node.name]));
+	}
 	return null;
+}
+
+const STRINGY_NODES = ['Literal', 'TemplateLiteral', 'BinaryExpression', 'Identifier'];
+
+/**
+ * Every const in a module whose value could resolve to a string, plus the same
+ * from each module it imports a name out of. One hop is enough: descriptions
+ * reference shared constants (`… + THREE_MINT + …`), they do not chain.
+ */
+function collectConstStrings(ast, relPath, depth = 1) {
+	const out = new Map();
+	walk(ast, (node) => {
+		if (node.type !== 'VariableDeclarator' || node.id?.type !== 'Identifier') return;
+		if (node.init && STRINGY_NODES.includes(node.init.type)) out.set(node.id.name, node.init);
+	});
+	if (depth <= 0) return out;
+
+	for (const [local, binding] of collectImports(ast, relPath)) {
+		if (out.has(local)) continue;
+		const dep = loadModule(binding.path);
+		if (!dep) continue;
+		const value = dep.constStrings.get(binding.imported);
+		if (value) out.set(local, value);
+	}
+	return out;
+}
+
+/**
+ * The value a property holds, including `get description() { return '…' }`,
+ * which a few tools use to compose a description from other constants.
+ */
+function propertyValue(prop) {
+	if (!prop) return null;
+	if (prop.kind !== 'get') return prop.value;
+	const body = prop.value?.body?.body ?? [];
+	const returned = body.find((s) => s.type === 'ReturnStatement');
+	return returned?.argument ?? null;
 }
 
 /** The final identifier of a callee: `a.b.c()` -> "c", `c()` -> "c". */
@@ -243,9 +290,11 @@ function loadModule(absPath) {
 			ecmaVersion: 'latest',
 			sourceType: 'module',
 		});
+		const rel = relative(ROOT, absPath);
 		parsed = {
 			namedFunctions: collectNamedFunctions(ast),
-			imports: collectImports(ast, relative(ROOT, absPath)),
+			imports: collectImports(ast, rel),
+			constStrings: collectConstStrings(ast, rel, 0),
 		};
 	} catch {
 		parsed = null; // unparseable dependency: nothing to inspect
@@ -324,6 +373,7 @@ export function extractTools(relPath) {
 	const imports = collectImports(ast, relPath);
 	const constObjects = collectConstObjects(ast);
 	const overlays = collectAnnotationOverlays(constObjects);
+	const constStrings = collectConstStrings(ast, relPath);
 	const tools = [];
 
 	walk(ast, (node) => {
@@ -355,8 +405,8 @@ export function extractTools(relPath) {
 
 		tools.push({
 			name,
-			title: stringValue(props.get('title')),
-			description: stringValue(props.get('description')),
+			title: stringValue(propertyValue(props.get('title')), constStrings),
+			description: stringValue(propertyValue(props.get('description')), constStrings),
 			annotations,
 			evidence: [...evidence].sort(),
 			hasHandler: Boolean(handlerNode && FUNCTION_TYPES.has(handlerNode.type)),

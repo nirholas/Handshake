@@ -159,6 +159,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Agent task briefs](./agent-tasks/README.md): self-contained task prompts for AI agents working on the platform
 - [Troubleshooting and FAQ](./troubleshooting.md): fixes organized by symptom
 - [The 3D viewer](./viewer.md): the rendering layer reference (model loading, cameras, animation, lighting)
+- [The catalog quality gate](./seed-quality.md): how a platform-seeded model earns its slot in the public catalog, the two stages it must pass, and why a rejected asset is kept rather than deleted
 - [Examples gallery](./examples.md): copy-paste-ready code for common use cases
 - [Premium](./premium.md): the monthly Data API pass, one on-chain payment replacing per-call micropayments for 30 days
 - [Guardian console](./guardian.md): the inbox for the other side of social recovery and inheritance of agent wallets

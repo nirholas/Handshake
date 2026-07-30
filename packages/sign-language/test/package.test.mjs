@@ -1,4 +1,4 @@
-// @three-ws/sign-language — published-surface tests.
+// @three-ws/sign-language: published-surface tests.
 // ====================================================
 // The engine's deep coverage lives in the monorepo suite (tests/sign-rig,
 // sign-clip, sign-dictionary, fingerspelling, sign-speech, sign-goldens,
@@ -6,7 +6,7 @@
 // documented surface, that the documented behaviors actually hold through the
 // bundle, and that the bundle really is dependency-free.
 //
-//   node --test test/*.test.mjs      (build first — prepublishOnly does)
+//   node --test test/*.test.mjs      (build first; prepublishOnly does)
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
