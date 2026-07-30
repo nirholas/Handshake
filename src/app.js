@@ -1943,6 +1943,15 @@ class App {
 		this.avatar = new AgentAvatar(viewer, protocol, this.identity);
 		this.avatar.attach();
 
+		// This agent's own gesture bindings (meta.edits.animations, written by
+		// PUT /api/agents/:id/animations with animationSlots). Nothing used to
+		// apply them, so the override map documented since the slot system landed
+		// had no effect anywhere.
+		const slotOverrides = this.identity?.meta?.edits?.animations;
+		if (slotOverrides && typeof slotOverrides === 'object') {
+			this.avatar.setAnimationMap(slotOverrides);
+		}
+
 		// Create (or replace) the SceneController for agent scene operations
 		this.sceneCtrl = new SceneController(viewer);
 		if (this.runtime) this.runtime.viewer = this.sceneCtrl;

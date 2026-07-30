@@ -15,6 +15,10 @@ import { readEmbedPolicy, validateEmbedPolicy } from '../../_lib/embed-policy.js
 import { resolveAvatarUrl } from '../../_lib/avatars.js';
 import { buildAgentRegistrationMetadata } from '../../_lib/three-brand.js';
 import { publicUrl as r2PublicUrl } from '../../_lib/r2.js';
+// The one source of truth for the gesture slot vocabulary. Dependency-free, so
+// importing the runtime module here keeps the API and the browser in agreement
+// instead of restating the list.
+import { SLOTS } from '../../../src/runtime/animation-slots.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -168,9 +172,28 @@ const animationGraphSchema = z
 	})
 	.strict();
 
+// Gesture slot overrides: { slot: clipName }, persisted at meta.edits.animations,
+// which is where src/agent-avatar.js reads an agent's per-slot bindings from.
+// Keys are restricted to the fixed vocabulary (src/runtime/animation-slots.js) so
+// a typo cannot create a slot nothing will ever play; values are clip names,
+// deliberately not restricted to the platform manifest so an agent can point a
+// slot at one of its own uploaded clips. An empty object clears every override.
+const animationSlotsSchema = z
+	.record(
+		z.enum(/** @type {[string, ...string[]]} */ (SLOTS)),
+		z
+			.string()
+			.trim()
+			.min(1)
+			.max(60)
+			.regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/, 'clip name must be alphanumeric with - or _'),
+	)
+	.refine((map) => Object.keys(map).length <= SLOTS.length, 'too many slot overrides');
+
 const animationsBodySchema = z.object({
 	animations: z.array(animationEntrySchema).max(30),
 	animationGraph: animationGraphSchema.optional(),
+	animationSlots: animationSlotsSchema.optional(),
 });
 
 export const handleAnimations = wrap(async (req, res, id) => {
@@ -202,33 +225,47 @@ export const handleAnimations = wrap(async (req, res, id) => {
 
 	// Only touch meta.animationGraph when the request actually carries the
 	// field, so saving the clip-array on its own doesn't clobber an existing
-	// graph. `null` is a valid explicit "remove the graph" signal.
-	const hasGraph = Object.prototype.hasOwnProperty.call(rawBody || {}, 'animationGraph');
-	if (hasGraph) {
+	// graph. `null` is a valid explicit "remove the graph" signal. Same rule for
+	// the slot overrides at meta.edits.animations: absent means "leave alone",
+	// `{}` means "clear them".
+	const has = (key) => Object.prototype.hasOwnProperty.call(rawBody || {}, key);
+	await sql`
+		UPDATE agent_identities
+		SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{animations}', ${JSON.stringify(parsed.animations)}::jsonb, true)
+		WHERE id = ${id}
+	`;
+	if (has('animationGraph')) {
+		await sql`
+			UPDATE agent_identities
+			SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{animationGraph}',
+				${parsed.animationGraph ? JSON.stringify(parsed.animationGraph) : 'null'}::jsonb, true)
+			WHERE id = ${id}
+		`;
+	}
+	if (has('animationSlots')) {
+		// jsonb_set cannot create the intermediate {edits} object, so seed it first
+		// for agents that have never carried one.
 		await sql`
 			UPDATE agent_identities
 			SET meta = jsonb_set(
-				jsonb_set(COALESCE(meta, '{}'::jsonb), '{animations}', ${JSON.stringify(parsed.animations)}::jsonb, true),
-				'{animationGraph}',
-				${parsed.animationGraph ? JSON.stringify(parsed.animationGraph) : 'null'}::jsonb,
-				true
-			)
-			WHERE id = ${id}
-		`;
-	} else {
-		await sql`
-			UPDATE agent_identities
-			SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{animations}', ${JSON.stringify(parsed.animations)}::jsonb, true)
+				CASE WHEN COALESCE(meta, '{}'::jsonb) ? 'edits'
+					THEN COALESCE(meta, '{}'::jsonb)
+					ELSE jsonb_set(COALESCE(meta, '{}'::jsonb), '{edits}', '{}'::jsonb, true)
+				END,
+				'{edits,animations}', ${JSON.stringify(parsed.animationSlots ?? {})}::jsonb, true)
 			WHERE id = ${id}
 		`;
 	}
 
-	// Read back the persisted graph so the response reflects what's actually stored.
-	const [row] =
-		await sql`SELECT meta->'animationGraph' AS graph FROM agent_identities WHERE id = ${id}`;
+	// Read back what is actually stored so the response cannot drift from the row.
+	const [row] = await sql`
+		SELECT meta->'animationGraph' AS graph, meta->'edits'->'animations' AS slots
+		FROM agent_identities WHERE id = ${id}
+	`;
 	return json(res, 200, {
 		animations: parsed.animations,
 		animationGraph: row?.graph ?? null,
+		animationSlots: row?.slots ?? null,
 	});
 });
 
@@ -349,6 +386,14 @@ export const handleManifest = wrap(async (req, res, id) => {
 			tone_tags: row.persona_tone_tags || [],
 			extracted_at: row.persona_extracted_at || null,
 		},
+		// Gesture slot overrides, so an embed plays this agent's own body language
+		// rather than the platform defaults. Only present when the owner set some
+		// (PUT /api/agents/:id/animations with animationSlots); consumers fall back
+		// to DEFAULT_ANIMATION_MAP when it is absent.
+		animationSlots:
+			row.meta?.edits?.animations && Object.keys(row.meta.edits.animations).length
+				? row.meta.edits.animations
+				: undefined,
 		// Live signal — funded + active on the Money Pulse via the activation grant.
 		activated,
 		activatedAt,

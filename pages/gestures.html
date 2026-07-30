@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Agent Gestures · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Every gesture a three.ws agent can play: the slot vocabulary, the clip each slot resolves to, the skills that trigger it, and a builder for overriding any slot on your own agent." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/gestures" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Agent Gestures · three.ws" />
+		<meta property="og:description" content="The agent gesture vocabulary: 19 slots, the clip each plays, the skills that trigger them, and a live override builder." />
+		<meta property="og:url" content="https://three.ws/gestures" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Gestures&amp;d=Every+gesture+a+three.ws+agent+can+play%2C+previewed+live%2C+with+the+skills+that+trigger+it.&amp;p=%2Fgestures" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Agent Gestures · three.ws" />
+		<meta name="twitter:description" content="19 gesture slots, previewed live, with the skills that trigger each one." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Gestures&amp;d=Every+gesture+a+three.ws+agent+can+play%2C+previewed+live%2C+with+the+skills+that+trigger+it.&amp;p=%2Fgestures" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/gestures.css" />
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Gestures","description":"The three.ws agent gesture vocabulary: every animation slot, the clip it resolves to, the skills that trigger it, and how to override one.","url":"https://three.ws/gestures","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+		<meta property="og:locale" content="en_US">
+		<meta property="og:image:alt" content="Agent Gestures on three.ws">
+	</head>
+	<body class="gv-page">
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main>
+			<section class="gv-hero">
+				<div class="gv-hero-chip">
+					<span class="gv-hero-dot" aria-hidden="true"></span>
+					<span>Agent body language</span>
+				</div>
+				<h1>Agent gestures</h1>
+				<p class="gv-hero-lede">
+					An agent does not pick animation files. It names a <strong>slot</strong>, and the
+					platform resolves that slot to a real clip. Skills name a slot indirectly, through a
+					hint. This page is the whole vocabulary: what each slot plays, which skills trigger
+					it, and how to point a slot at any other clip in the library.
+				</p>
+				<div class="gv-hero-actions">
+					<a class="gv-btn gv-btn--primary" href="/animations">Browse every clip</a>
+					<a class="gv-btn gv-btn--secondary" href="/pose">Animation Studio</a>
+					<a class="gv-btn gv-btn--ghost" href="/docs/animations">Developer reference</a>
+				</div>
+				<dl class="gv-stats" data-role="stats" aria-live="polite">
+					<div class="gv-stat"><dt>Slots</dt><dd data-role="stat-slots">&mdash;</dd></div>
+					<div class="gv-stat"><dt>Clips in library</dt><dd data-role="stat-clips">&mdash;</dd></div>
+					<div class="gv-stat"><dt>Skill hints</dt><dd data-role="stat-hints">&mdash;</dd></div>
+					<div class="gv-stat"><dt>Skills wired</dt><dd data-role="stat-skills">&mdash;</dd></div>
+				</dl>
+			</section>
+
+			<section class="gv-body">
+				<!-- Left rail: the live stage. Sticky on desktop so a card click is
+				     always visible without scrolling back up. -->
+				<aside class="gv-stage-col">
+					<div class="gv-stage-card">
+						<div class="gv-stage" data-role="stage">
+							<div class="gv-stage-empty" data-role="stage-empty">
+								<div class="gv-stage-empty-icon" aria-hidden="true">🎬</div>
+								<p class="gv-stage-empty-title">Pick a gesture</p>
+								<p class="gv-stage-empty-body">
+									Choose any slot to play it on a live avatar. Nothing 3D loads until you do.
+								</p>
+							</div>
+							<div class="gv-stage-loading" data-role="stage-loading" hidden>
+								<div class="gv-spinner" aria-hidden="true"></div>
+								<p>Retargeting the clip&hellip;</p>
+							</div>
+							<div class="gv-stage-error" data-role="stage-error" hidden>
+								<p class="gv-stage-error-title" data-role="stage-error-title">That clip did not fit the preview avatar.</p>
+								<p class="gv-stage-error-body">
+									The clip is fine: the shared preview rig could not bind it. Every clip is
+									still previewable in the <a href="/animations">gallery</a>.
+								</p>
+								<button type="button" class="gv-btn gv-btn--secondary" data-role="stage-retry">Try again</button>
+							</div>
+						</div>
+						<div class="gv-stage-meta">
+							<div class="gv-stage-titles">
+								<p class="gv-stage-slot" data-role="stage-slot">No gesture selected</p>
+								<p class="gv-stage-clip" data-role="stage-clip">&nbsp;</p>
+							</div>
+							<div class="gv-stage-controls">
+								<button type="button" class="gv-icon-btn" data-role="stage-replay" title="Replay" aria-label="Replay" disabled>↻</button>
+								<button type="button" class="gv-icon-btn" data-role="stage-pause" title="Pause" aria-label="Pause" disabled>❙❙</button>
+							</div>
+						</div>
+						<p class="gv-sr-status" data-role="stage-status" role="status" aria-live="polite"></p>
+					</div>
+
+					<!-- Override builder. The output is exactly the shape an agent's
+					     meta.edits.animations takes, so it is copy-paste usable. -->
+					<div class="gv-override" data-role="override" hidden>
+						<h2 class="gv-override-title">Override this slot</h2>
+						<p class="gv-override-lede">
+							Point <code data-role="override-slot">slot</code> at any clip in the library. Paste
+							the result into your agent's <code>meta.edits.animations</code>.
+						</p>
+						<label class="gv-field">
+							<span class="gv-field-label">Clip</span>
+							<select class="gv-select" data-role="override-select"></select>
+						</label>
+						<pre class="gv-code" data-role="override-code"><code></code></pre>
+						<div class="gv-override-actions">
+							<button type="button" class="gv-btn gv-btn--primary" data-role="override-copy">Copy JSON</button>
+							<button type="button" class="gv-btn gv-btn--ghost" data-role="override-reset">Reset to default</button>
+						</div>
+					</div>
+				</aside>
+
+				<!-- Right rail: the vocabulary. -->
+				<div class="gv-main-col">
+					<div class="gv-section-head">
+						<h2 id="slots">The slot vocabulary</h2>
+						<p>
+							Fixed names an agent can override. A slot with no override resolves to the clip
+							shown on its card.
+						</p>
+					</div>
+
+					<div class="gv-grid" data-role="grid" role="list" aria-busy="true">
+						<div class="gv-card gv-card--skeleton" aria-hidden="true"></div>
+						<div class="gv-card gv-card--skeleton" aria-hidden="true"></div>
+						<div class="gv-card gv-card--skeleton" aria-hidden="true"></div>
+						<div class="gv-card gv-card--skeleton" aria-hidden="true"></div>
+						<div class="gv-card gv-card--skeleton" aria-hidden="true"></div>
+						<div class="gv-card gv-card--skeleton" aria-hidden="true"></div>
+					</div>
+
+					<div class="gv-error" data-role="grid-error" hidden>
+						<p class="gv-error-title">The clip library did not load.</p>
+						<p class="gv-error-body" data-role="grid-error-detail"></p>
+						<button type="button" class="gv-btn gv-btn--secondary" data-role="grid-retry">Retry</button>
+					</div>
+
+					<p class="gv-grid-hint">
+						<kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> move · <kbd>Enter</kbd> play ·
+						<kbd>Esc</kbd> stop
+					</p>
+
+					<div class="gv-section-head">
+						<h2 id="hints">What triggers a gesture</h2>
+						<p>
+							A skill declares a hint when it starts. The hint resolves to a slot, the slot
+							resolves to a clip, and the avatar plays it. Every row below is generated from
+							the shipped skill definitions.
+						</p>
+					</div>
+
+					<div class="gv-hints" data-role="hints">
+						<div class="gv-hints-loading">Loading the skill map&hellip;</div>
+					</div>
+
+					<div class="gv-section-head">
+						<h2 id="layers">Player gestures on /walk</h2>
+						<p>
+							The walk state machine keeps a second, player-driven gesture library with a layer
+							per gesture: <code>upper</code> gestures overlay locomotion, so an avatar waves or
+							shrugs while it keeps walking; <code>full</code> gestures take the whole body and
+							suppress movement until they end.
+						</p>
+					</div>
+					<div class="gv-layers" data-role="layers"></div>
+
+					<div class="gv-footnote">
+						<p>
+							Slots, hints and clips are held together mechanically:
+							<code>tests/animation-slots.test.js</code> scans every hint declared under
+							<code>src/</code> and fails the build if one resolves to no slot or to a clip that
+							is not baked in <code>public/animations/manifest.json</code>. The full developer
+							reference is <a href="/docs/animations">docs/animations</a>, and the walkthrough is
+							<a href="/tutorials/animate-your-agent">Animate your agent</a>.
+						</p>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js" defer></script>
+
+		<script type="module" src="/src/gestures-page.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

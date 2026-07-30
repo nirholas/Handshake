@@ -82,22 +82,28 @@ On [three.ws/gestures](https://three.ws/gestures), click the slot you want to ch
 }
 ```
 
-Paste the inner `animations` object into your agent's `meta.edits.animations` in the agent editor (**Edit → Advanced → meta**). Add as many slots as you like:
+To apply it, open your agent's editor, go to **Body → Gesture slots**, and pick a clip for the slot. There is one row per slot, `Platform default` inherits the platform clip, and **Save gestures** writes the map. Reload the agent page and the gesture is yours.
 
-```json
-{
-  "edits": {
-    "animations": {
+If you would rather do it from code, the same thing over the API:
+
+```bash
+curl -X PUT https://three.ws/api/agents/$AGENT_ID/animations \
+  -H "authorization: Bearer $THREE_WS_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{
+    "animations": [],
+    "animationSlots": {
       "dance": "av-offabean-dance",
       "celebrate": "av-cheering",
       "think": "av-smoking",
       "inspect": "av-spy"
     }
-  }
-}
+  }'
 ```
 
-Save, reload the agent page, and trigger the gesture. Anything not listed keeps the platform default, so an override map is only as long as the changes you want.
+Anything not listed keeps the platform default, so a map is only as long as the changes you want. `"animationSlots": {}` clears every override. The map is stored on the agent at `meta.edits.animations` and published on its public manifest as `animationSlots`, so an `<agent-3d>` embed of that agent plays its body language too.
+
+Two things the endpoint will reject rather than silently accept: a slot name outside the vocabulary (a typo would create a gesture nothing ever plays) and a clip name that is not a plain name. `animations` is the agent's clip list and is required by that endpoint; send `[]` only if you do not use it, since the field replaces what is there.
 
 Any of the 112 clip names in [`/animations/manifest.json`](https://three.ws/animations/manifest.json) is valid. Browse them with previews at [three.ws/animations](https://three.ws/animations).
 

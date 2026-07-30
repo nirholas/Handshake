@@ -8,6 +8,7 @@ import { isValidGlbMagic } from './shared/glb-magic.js';
 import { agentBus } from './agents/agent-bus.js';
 import { mountAutopilotMind } from './autopilot-mind.js';
 import { mountMoodInspector } from './agents/mood-inspector.js';
+import { SLOTS, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 // Boot the mood engine + embodiment so the edit-page avatar reflects mood live.
 import './agents/mood-embodiment.js';
 
@@ -744,6 +745,7 @@ async function renderAnimationsPicker() {
   updateAnimSaveButton();
 
   renderAnimGraphPicker();
+  renderAnimSlotsPicker();
 }
 
 function renderAnimGraphSkeleton() {
@@ -819,7 +821,7 @@ function updateAnimGraphSaveButton() {
 
 // Warn before navigating away with unsaved animation graph changes.
 window.addEventListener('beforeunload', (e) => {
-  const dirty = ANIM_STATES.some((s) => animGraphState[s] !== originalAnimGraphState[s]);
+  const dirty = ANIM_STATES.some((s) => animGraphState[s] !== originalAnimGraphState[s]) || animSlotsDirty();
   if (dirty) e.preventDefault();
 });
 
@@ -883,6 +885,131 @@ async function saveAnimationGraph() {
     status.className = 'form-status err';
   } finally {
     updateAnimGraphSaveButton();
+  }
+}
+
+// ── Gesture slots ──────────────────────────────────────────────────────────
+// The agent's own bindings for the fixed gesture vocabulary, stored at
+// meta.edits.animations and applied by src/agent-avatar.js. Same shape as the
+// animation-state picker above: one row per slot, "Platform default" inherits the
+// platform clip, and only real overrides are sent.
+
+let animSlotState = {};
+let originalAnimSlotState = {};
+
+function renderAnimSlotsPicker() {
+  const rows = $('anim-slots-rows');
+  const saveBtn = $('anim-slots-save');
+  if (!rows) return;
+
+  const saved = agentData.meta?.edits?.animations || {};
+  animSlotState = {};
+  for (const slot of SLOTS) animSlotState[slot] = saved[slot] ?? '';
+  originalAnimSlotState = { ...animSlotState };
+
+  rows.innerHTML = SLOTS.map((slot) => {
+    const def = DEFAULT_ANIMATION_MAP[slot];
+    const options = ['<option value="">Platform default</option>']
+      .concat(
+        animationLibrary.map((a) => {
+          const sel = animSlotState[slot] === a.name ? ' selected' : '';
+          return `<option value="${escapeHtml(a.name)}"${sel}>${escapeHtml(a.label || a.name)}</option>`;
+        }),
+      )
+      .join('');
+    return `
+      <div class="anim-graph-row" data-slot="${escapeHtml(slot)}">
+        <span class="anim-graph-row-label">${escapeHtml(slot)}</span>
+        <select aria-label="Clip for the ${escapeHtml(slot)} gesture">${options}</select>
+        <span class="anim-graph-row-meta">default: ${escapeHtml(def)}</span>
+      </div>
+    `;
+  }).join('');
+
+  rows.querySelectorAll('.anim-graph-row').forEach((row) => {
+    const slot = row.dataset.slot;
+    const select = row.querySelector('select');
+    select.addEventListener('change', () => {
+      animSlotState[slot] = select.value;
+      updateAnimSlotsSaveButton();
+    });
+  });
+
+  if (saveBtn && !saveBtn.dataset.wired) {
+    saveBtn.dataset.wired = '1';
+    saveBtn.addEventListener('click', saveAnimationSlots);
+  }
+  updateAnimSlotsSaveButton();
+}
+
+function animSlotsDirty() {
+  return SLOTS.some((s) => animSlotState[s] !== originalAnimSlotState[s]);
+}
+
+function updateAnimSlotsSaveButton() {
+  const saveBtn = $('anim-slots-save');
+  if (saveBtn) saveBtn.disabled = !animSlotsDirty();
+}
+
+/** { slot: clip } for real overrides only, so defaults stay inherited. */
+function buildAnimSlotsPayload() {
+  const out = {};
+  for (const slot of SLOTS) {
+    const clip = animSlotState[slot];
+    if (clip && clip !== DEFAULT_ANIMATION_MAP[slot]) out[slot] = clip;
+  }
+  return out;
+}
+
+async function saveAnimationSlots() {
+  const status = $('anim-slots-status');
+  const saveBtn = $('anim-slots-save');
+  if (!status || !saveBtn) return;
+
+  // PUT /api/agents/:id/animations requires animations[] alongside the slots,
+  // so re-send the current clip selection unchanged.
+  const animations = animationLibrary
+    .filter((a) => selectedAnimNames.has(a.name))
+    .map((a) => ({
+      name: a.name,
+      url: a.url,
+      loop: a.loop !== false,
+      source: 'mixamo',
+      addedAt: new Date().toISOString(),
+    }));
+
+  saveBtn.disabled = true;
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+
+  try {
+    const r = await apiFetch(`${API_BASE}/agents/${agentId}/animations`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ animations, animationSlots: buildAnimSlotsPayload() }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    if (!agentData.meta) agentData.meta = {};
+    agentData.meta.animations = j.animations;
+    agentData.meta.edits = { ...(agentData.meta.edits || {}), animations: j.animationSlots || {} };
+    originalAnimSlotState = { ...animSlotState };
+    const count = Object.keys(j.animationSlots || {}).length;
+    status.textContent = count
+      ? `Saved ${count} gesture override${count === 1 ? '' : 's'}.`
+      : 'Cleared every gesture override.';
+    status.className = 'form-status ok';
+    reloadOutfitPreview();
+    setTimeout(() => { status.textContent = ''; status.className = 'form-status'; }, 2500);
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  } finally {
+    updateAnimSlotsSaveButton();
   }
 }
 

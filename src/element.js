@@ -1777,6 +1777,13 @@ class Agent3DElement extends HTMLElement {
 				this._avatar = new AgentAvatar(this._viewer, protocol, _identity);
 				this._avatar.attach();
 
+				// Per-agent gesture bindings from the manifest (meta.edits.animations
+				// on the record, `animationSlots` on the wire). Without this the
+				// override map was unreachable: every agent played the platform
+				// defaults no matter what its owner had saved.
+				const _slots = manifest.animationSlots || manifest.meta?.edits?.animations;
+				if (_slots && typeof _slots === 'object') this._avatar.setAnimationMap(_slots);
+
 				// Honor a sign-language attribute present at boot (the observer
 				// only covers post-mount changes).
 				const signAttr = this.getAttribute('sign-language');

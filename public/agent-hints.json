@@ -1,0 +1,163 @@
+{
+	"hints": [
+		{
+			"hint": "gesture",
+			"slot": "point",
+			"clip": "point",
+			"skills": [
+				"agent-payments-accept-evm",
+				"agent-payments-accept-v2",
+				"agent-payments-distribute",
+				"agent-payments-register",
+				"agent-payments-update-buyback",
+				"agent-payments-withdraw",
+				"blink-execute",
+				"help",
+				"pumpfun-accept-payment",
+				"pumpfun-amm-buy",
+				"pumpfun-amm-sell",
+				"pumpfun-auto-snipe",
+				"pumpfun-buy",
+				"pumpfun-copy-trade",
+				"pumpfun-copy-trade-live",
+				"pumpfun-self-pay",
+				"pumpfun-self-swap",
+				"pumpfun-sell",
+				"pumpfun.vanityMint"
+			]
+		},
+		{
+			"hint": "inspect",
+			"slot": "inspect",
+			"clip": "lookdown",
+			"skills": [
+				"agent-payments-balances",
+				"agent-payments-check-whitelist",
+				"agent-payments-verify-evm",
+				"jupiter-quote",
+				"jupiter-tokens",
+				"kol.leaderboard",
+				"kol.walletPnl",
+				"pumpfun-invoice-pda",
+				"pumpfun-research-and-buy",
+				"pumpfun-status",
+				"pumpfun-verify-payment",
+				"pumpfun.channelFeed",
+				"pumpfun.quoteSwap",
+				"pyth-price",
+				"social.cashtagSentiment",
+				"social.xPostImpact",
+				"solana.resolveSns",
+				"solana.reverseSns",
+				"validate-model"
+			]
+		},
+		{
+			"hint": "curiosity",
+			"slot": "curiosity",
+			"clip": "av-spy",
+			"skills": [
+				"blink-parse",
+				"nft-portfolio",
+				"pumpfun-first-claims",
+				"pumpfun-recent-claims",
+				"pumpfun-watch-claims",
+				"pumpfun-watch-start",
+				"pumpfun.watchWhales"
+			]
+		},
+		{
+			"hint": "celebrate",
+			"slot": "celebrate",
+			"clip": "celebrate",
+			"skills": [
+				"jupiter-swap",
+				"pumpfun-claim-fees",
+				"pumpfun-create",
+				"pumpfun-launch-from-agent",
+				"pumpfun-self-launch",
+				"pumpfun-self-launch-from-identity"
+			]
+		},
+		{
+			"hint": "think",
+			"slot": "think",
+			"clip": "think",
+			"skills": [
+				"aixbt-intel",
+				"analyze-sentiment",
+				"pumpfun-list-claims",
+				"pumpfun-token-intel",
+				"think",
+				"wallet-activity"
+			]
+		},
+		{
+			"hint": "present",
+			"slot": "present",
+			"clip": "av-brag-claps",
+			"skills": [
+				"aixbt-scan",
+				"pay-agent",
+				"present-model"
+			]
+		},
+		{
+			"hint": "concern",
+			"slot": "concern",
+			"clip": "defeated",
+			"skills": [
+				"pumpfun-rug-exit-watch"
+			]
+		},
+		{
+			"hint": "gesture-magic",
+			"slot": "conjure",
+			"clip": "av-conductor",
+			"skills": [
+				"scene-create-object"
+			]
+		},
+		{
+			"hint": "gesture-manipulate",
+			"slot": "manipulate",
+			"clip": "av-push-block",
+			"skills": [
+				"scene-update-object"
+			]
+		},
+		{
+			"hint": "nod",
+			"slot": "nod",
+			"clip": "nod",
+			"skills": [
+				"remember"
+			]
+		},
+		{
+			"hint": "patience",
+			"slot": "patience",
+			"clip": "av-waiting",
+			"skills": [
+				"pumpfun-watch-stop"
+			]
+		},
+		{
+			"hint": "sign",
+			"slot": "sign",
+			"clip": "xbot-agree",
+			"skills": [
+				"sign-action"
+			]
+		},
+		{
+			"hint": "wave",
+			"slot": "wave",
+			"clip": "wave",
+			"skills": [
+				"greet"
+			]
+		}
+	],
+	"total_skills": 67
+}

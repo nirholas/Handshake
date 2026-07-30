@@ -55,6 +55,8 @@ Retarget sources are deliberately never committed: everything in `animation-sour
 
 Slots are the fixed vocabulary the agent avatar uses to express emotion and gesture. They resolve to clip names at runtime. Defined in `src/runtime/animation-slots.js`.
 
+Every slot below is previewable on a live avatar at [three.ws/gestures](https://three.ws/gestures), which also builds the override JSON for you.
+
 | Slot | Default clip | Notes |
 |---|---|---|
 | `idle` | `idle` | Always playing |
@@ -84,6 +86,13 @@ Agents can override individual slots via `meta.edits.animations`:
 ```
 
 An override wins over the default; any clip name in the manifest is valid. Unmapped slot names fall through to a clip of the same name, so an agent can point a slot at a clip the platform never wired.
+
+Two ways to write the map, both landing at `meta.edits.animations`:
+
+- **Agent editor, Body tab, Gesture slots.** One row per slot; `Platform default` inherits the platform clip.
+- **`PUT /api/agents/:id/animations`** with an `animationSlots` object (owner-authenticated). Keys are validated against `SLOTS`, so a typo is a 400 rather than a gesture that silently never plays; `{}` clears every override. The agent's public manifest then carries the map as `animationSlots`, which is how an `<agent-3d>` embed picks it up.
+
+Both ends of that path were dead until 2026-07-30: nothing could write the map (no field, no UI) and nothing applied it (`setAnimationMap` had no callers), so the override documented here had no effect anywhere. `tests/agent-animation-slots.test.js` pins the write contract and asserts each consumer still applies it.
 
 ## Skill animation hints
 
@@ -131,6 +140,8 @@ Resolved (see `public/animations/registry.json` → `resolved_issues`): the `fid
 
 ## Related
 
+- [Agent Gestures](/gestures): the live slot-and-hint reference, with an override builder
+- [Give your agent body language](/tutorials/animate-your-agent): the walkthrough
 - [3D asset pipeline](/docs/3d-asset-pipeline): the full generate, rig, animate, export chain
 - [Animation Studio](/docs/animation-studio): author and preview clips in the browser
 - [3D Viewer](/docs/viewer): how clips play back in the viewer and embeds
