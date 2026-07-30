@@ -44,29 +44,28 @@ function makeRepo(name, { guards, exempt = [], stages, scripts, extraScripts = [
 	if (hookTemplate !== undefined) writeFileSync(join(dir, 'scripts', 'setup-git-hooks.mjs'), hookTemplate);
 
 	writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'fixture', scripts }, null, 2));
-	writeFileSync(
-		join(dir, 'data', 'guards.json'),
-		JSON.stringify(
-			{
-				updated: '2026-07-30',
-				summary: 'fixture',
-				stages: stages ?? [
-					{ id: 'prebuild', title: 'Prebuild', when: 'x', description: 'y' },
-					{ id: 'gate', title: 'Gate', when: 'x', description: 'y' },
-					{ id: 'build:gcp', title: 'Deploy build', when: 'x', description: 'y' },
-					{ id: 'pre-push', title: 'Pre-push', when: 'x', description: 'y' },
-					{ id: 'manual', title: 'On demand', when: 'x', description: 'y' },
-				],
-				guards: guards.map(({ __skipFile, ...g }) => g),
-				// Every fixture necessarily contains a copy of the auditor, which the
-				// reverse check would otherwise report as an unregistered guard. The
-				// real repo registers it properly instead of exempting it.
-				exempt: [...exempt, { pattern: 'scripts/audit-guards.mjs', reason: 'the auditor under test' }],
-			},
-			null,
-			2,
-		),
-	);
+	const registry = {
+		updated: '2026-07-30',
+		summary: 'fixture',
+		stages: stages ?? [
+			{ id: 'prebuild', title: 'Prebuild', when: 'x', description: 'y' },
+			{ id: 'gate', title: 'Gate', when: 'x', description: 'y' },
+			{ id: 'build:gcp', title: 'Deploy build', when: 'x', description: 'y' },
+			{ id: 'pre-push', title: 'Pre-push', when: 'x', description: 'y' },
+			{ id: 'manual', title: 'On demand', when: 'x', description: 'y' },
+		],
+		guards: guards.map(({ __skipFile, ...g }) => g),
+		// Every fixture necessarily contains a copy of the auditor, which the
+		// reverse check would otherwise report as an unregistered guard. The
+		// real repo registers it properly instead of exempting it.
+		exempt: [...exempt, { pattern: 'scripts/audit-guards.mjs', reason: 'the auditor under test' }],
+	};
+	writeFileSync(join(dir, 'data', 'guards.json'), JSON.stringify(registry, null, 2));
+	// The auditor also checks the published copy the /guards page fetches, and
+	// requires it byte-identical to the tab-serialized registry. Without it every
+	// fixture would fail on that one note regardless of what it means to test.
+	mkdirSync(join(dir, 'public'), { recursive: true });
+	writeFileSync(join(dir, 'public', 'guards.json'), `${JSON.stringify(registry, null, '\t')}\n`);
 	return dir;
 }
 
