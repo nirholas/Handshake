@@ -9672,6 +9672,23 @@ Friends are stored in Postgres (`friendships`, `direct_messages`, `user_mutes` â
 
 ---
 
+## In-Game Economy
+
+The `/play` open world runs on two currencies that are kept strictly separate, and the separation is the whole design. **Cash** (the carried purse) is a pure game resource: earned by gathering, fishing, and combat, spent at vendors, never on-chain and never a token. **`$THREE`** is the platform's only coin, spent on-chain from the player's connected Solana wallet to unlock premium cosmetics. Price tables live in one module (`multiplayer/src/shop.js`) that the authoritative server and the client both import, so the price a player is shown is exactly the price the server charges.
+
+| Surface | Walk up to | What it does |
+| --- | --- | --- |
+| **General Store** | a clerk NPC (`E`) | Sell gathered goods (wood, stone, coal, fish, cooked fish, bones, hide) at fixed vendor rates, or buy tools, consumables, ammo, and the armor vest with cash. Only gathered and looted items are sellable: tools, weapons, mounts, and the starter kit are deliberately excluded so no player can dump their kit or farm a buy-then-sell arbitrage. |
+| **Bank Teller / ATM** | a teller NPC (`E`) | Move cash between the carried purse and a protected bank balance. Dying drops the carried purse and carried items into a tombstone (`dropCarried`); banked cash survives, which is the entire risk-versus-reward point of walking to the bank. |
+| **`$THREE` Boutique** | the boutique | Unlock premium wardrobe cosmetics for a real on-chain `$THREE` payment. Quote, sign, settle: the server prices the charge from the catalog (never from a client-supplied number), the player signs, and the server re-fetches the confirmed transaction from Solana RPC and checks destination and amount before granting the item. Settled quote nonces are retained as a replay guard. |
+| **Wheel of Fortune** | the plaza landmark (`E`) | One free spin every 12 hours on a real persisted cooldown that survives a disconnect, or a paid spin costing $3 of `$THREE`. Paid spins split 50/50 between the holder-rewards sink and the treasury, verified on-chain before any prize is granted. All 20 wedges are equal-odds by design, matching the client's fixed-angle rendering exactly. Gated behind an average skill level of 3 as a light anti-farm floor. |
+
+USD prices convert to `$THREE` at the live rate through `fetchTokenPriceUsd`, which walks a primary-then-fallback feed chain and caches the result briefly. If every feed is unavailable the server refuses to issue a quote rather than guessing at a price. Progression backs the whole loop: five skills (combat, woodcutting, mining, fishing, cooking) to a level cap of 99, a 24-slot inventory, and a 6-slot hotbar (`multiplayer/src/economy.js`). Server config: `GAME_TOKEN_MINT`, `GAME_TOKEN_TREASURY`, `GAME_TOKEN_DECIMALS`, `GAME_TOKEN_SECRET`.
+
+This in-game rail is distinct from two neighbours it is easy to confuse it with: the USDC [x402](#x402-payments) cosmetic rail (`api/x402/cosmetic-purchase.js`), which sells a different catalog for the standalone character creator, and the public settled-sale cosmetics ledger at `/fits`. Vendor and banking trades settle purely in the Colyseus room state; only the boutique and paid spins touch the chain.
+
+---
+
 ## Voice Lab & Mocap Studio
 
 Two creator tools sit alongside [Pose Studio](#pose-studio):
