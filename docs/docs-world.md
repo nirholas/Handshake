@@ -47,3 +47,34 @@ Any humanoid rig works; bone names are mapped automatically, exactly as describe
 ## For contributors
 
 The section list lives in [`docs/nav.json`](https://github.com/nirholas/three.ws/blob/main/docs/nav.json). Add a page there and it appears in both the classic sidebar and the world's pavilions; no world-side change is ever needed. The world itself lives in `src/docs-world/` (scene, player, controls, overlays) with the page shell at `pages/docs-world.html`.
+
+### The manifest format
+
+One object with a `sections` array. Each section becomes a sidebar group in the classic docs and one pavilion in the world, in this order:
+
+```json
+{
+  "sections": [
+    {
+      "title": "Start here",
+      "links": [
+        { "label": "What is three.ws?", "path": "start-here" },
+        { "label": "Widget reference", "href": "/docs/widgets", "external": true }
+      ]
+    }
+  ]
+}
+```
+
+Every link carries a `label` plus exactly one of:
+
+- **`path`**: a docs page, relative to `docs/` and without the `.md` extension. `"forge"` resolves to `docs/forge.md` and reads at `/docs/forge`. Nested paths work (`"agent-abilities/chapters/01-the-body"`).
+- **`href`**: any other destination. Set `"external": true` so both surfaces render it as a link out rather than an in-world page.
+
+Three rules the test suite enforces in [`tests/docs-world.test.js`](https://github.com/nirholas/three.ws/blob/main/tests/docs-world.test.js), so a bad entry fails CI rather than shipping a dead link:
+
+1. Every `path` must resolve to a markdown file that actually exists.
+2. A link is a `path` **or** an `href`, never both and never neither.
+3. No `path` may point into `docs/internal/`, `docs/ops/`, or `docs/security/`. Those directories are written for operators and are deliberately excluded from the published site, so a nav entry into one would 404 in production.
+
+Adding a section is the same edit: append to `sections` and a new pavilion appears on the ring, coloured and positioned automatically. Nothing in `src/docs-world/` hardcodes a section name or count.

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "The docs tell you when something is missing instead of showing an empty column",
+			"summary": "The documentation sidebar is now built from a shared list of pages that both the classic docs and the new 3D Docs World read, which means it arrives over the network and can occasionally fail. When it does, the contents column used to just sit there empty, which reads like the product has no documentation rather than like one request failed. It now says what happened, notes that the page you are reading is unaffected (it is), and offers a Retry button. Searching the sidebar for something with no matches also says so and offers to clear the search, instead of leaving you looking at a blank space. And opening a stale or mistyped /docs/world link no longer greets you with a load error over the 3D scene; it simply drops you into the world.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/world"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Documented the quality bar for models the platform adds to its own catalog",
 			"summary": "The platform generates and publishes 3D models into the public character and object catalogs on its own. Every one of them passes an automated quality check first, and that check now has a written explanation: what it measures, why a model gets turned away, and why rejected models are kept rather than deleted so the bar can be tuned against real failures. The check also gained a full test suite covering each way a model can fail.",
 			"tags": [

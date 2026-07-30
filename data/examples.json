@@ -96,12 +96,12 @@
 			"kind": "project",
 			"group": "Example projects",
 			"title": "paid-mcp-server",
-			"description": "A complete MCP server whose tools charge per call in USDC on Solana via x402: one free orientation tool and one paid glTF/GLB inspection tool.",
+			"description": "A complete, runnable MCP server whose tools charge per call in USDC on Solana over x402. It ships two tools on purpose:",
 			"path": "examples/paid-mcp-server",
 			"files": [],
 			"run": "cd examples/paid-mcp-server && npm install && npm run start",
 			"runKind": "command",
-			"readme": null
+			"readme": "examples/paid-mcp-server/README.md"
 		},
 		{
 			"id": "project:pump-fun-agent",
@@ -282,7 +282,7 @@
 			"kind": "package",
 			"group": "Package examples",
 			"title": "@three-ws/sign-language",
-			"description": "American Sign Language for 3D avatars. Compile text into one continuous signed animation clip: known words sign from a lexicon of anatomically described signs, everything else fingerspells, with contact solving and non-manual facial markers.",
+			"description": "American Sign Language for 3D avatars.",
 			"path": "packages/sign-language/example",
 			"files": [
 				"compile-utterance.mjs",

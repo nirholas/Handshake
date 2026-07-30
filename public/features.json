@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T22:36:11.128Z",
+	"generated_at": "2026-07-30T22:39:05.737Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1357,6 +1357,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/admin/economy",
+					"title": "Economy Health (admin)",
+					"description": "Operator dashboard for the autonomous economy: a one-line verdict on why the Money Pulse is loud or quiet, the funding chain from the economy master through each engine to the agent pool with live balances against their floors, per-lane 24h settle rates that separate 'never ran' (a funding fault) from 'all failing' (not), and the capped USDC-to-SOL refuel lane with its recent swaps. Read-only: every source is a live read and the treasury sweep is called in plan-only mode, so opening the page can never move funds. Admin-authed, noindex.",
+					"added": null,
+					"auth": "admin",
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/admin/ring",
 					"title": "Ring Dashboard (admin)",
 					"description": "Operator dashboard for the closed-loop x402 ring economy — live per-minute settlement pulse, loop diagram with wallet balances and floors, streaming activity feed with agent attribution and Solscan links, fee/burn efficiency vs the daily budget, integrity (leak scan + reconciliation), and per-endpoint coverage. Admin-authed, noindex. Labels all ring volume as internal dogfooding, not organic revenue.",
@@ -2401,6 +2411,16 @@
 					"title": "Agent Wallet",
 					"description": "The wallet surface for your agents: balances, funding, and activity.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/trading",
+					"title": "Autonomous Trading",
+					"description": "The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.",
+					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3522,6 +3542,16 @@
 					"title": "Tutorials",
 					"description": "Step-by-step build guides.",
 					"added": "2026-05-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/examples",
+					"title": "Examples",
+					"description": "Runnable copy-paste embed code: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets. Press Run and the exact snippet shown executes on the page against the production CDN bundle.",
+					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -5142,6 +5172,26 @@
 					"title": "Docs · Package extraction",
 					"description": "How reusable packages graduate out of the three.ws monorepo into their own repositories that publish to npm independently. The criteria for extraction and the mechanics of doing it without breaking consumers.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trading-experiment",
+					"title": "Docs · The 10 SOL trading experiment",
+					"description": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
+					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trading-hub",
+					"title": "Docs · The trading hub",
+					"description": "What /trading shows, where each number comes from, and how to read fleet vitals, the agent scoreboard, and the decision pipeline.",
+					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T22:36:11.137Z",
+	"generated_at": "2026-07-30T22:39:05.756Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,9 +9,49 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
+			"title": "Autonomous Trading",
+			"summary": "The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.",
+			"link": "/trading",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Docs · The 10 SOL trading experiment",
+			"summary": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
+			"link": "/docs/trading-experiment",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Docs · The trading hub",
+			"summary": "What /trading shows, where each number comes from, and how to read fleet vitals, the agent scoreboard, and the decision pipeline.",
+			"link": "/docs/trading-hub",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
 			"title": "Docs World (immersive 3D docs)",
 			"summary": "The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.",
 			"link": "/docs/world",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Examples",
+			"summary": "Runnable copy-paste embed code: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets. Press Run and the exact snippet shown executes on the page against the production CDN bundle.",
+			"link": "/examples",
 			"tags": [
 				"launch"
 			]
@@ -368,6 +408,17 @@
 			"link": "/fits",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The docs tell you when something is missing instead of showing an empty column",
+			"summary": "The documentation sidebar is now built from a shared list of pages that both the classic docs and the new 3D Docs World read, which means it arrives over the network and can occasionally fail. When it does, the contents column used to just sit there empty, which reads like the product has no documentation rather than like one request failed. It now says what happened, notes that the page you are reading is unaffected (it is), and offers a Retry button. Searching the sidebar for something with no matches also says so and offers to clear the search, instead of leaving you looking at a blank space. And opening a stale or mistyped /docs/world link no longer greets you with a load error over the 3D scene; it simply drops you into the world.",
+			"link": "/docs/world",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
