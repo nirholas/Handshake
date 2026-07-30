@@ -143,6 +143,21 @@ for (const rel of onDisk) {
 	);
 }
 
+// The published copy the /guards page fetches. data/ is never served, so the
+// page reads public/guards.json; if the two drift, the page and docs/guards.md
+// show different answers and neither looks wrong on its own.
+{
+	const publicPath = 'public/guards.json';
+	if (!existsSync(path.join(root, publicPath))) {
+		note(`${publicPath} is missing, so /guards has nothing to render. Run \`npm run build:guards\`.`);
+	} else {
+		const expected = `${JSON.stringify(registry, null, '\t')}\n`;
+		if (read(publicPath) !== expected) {
+			note(`${publicPath} is out of date with data/guards.json, so /guards would render stale content. Run \`npm run build:guards\`.`);
+		}
+	}
+}
+
 if (failures.length) {
 	console.error(`[audit-guards] ${failures.length} problem(s) between data/guards.json and the repo:`);
 	for (const f of failures) console.error(`[audit-guards]   ${f}`);
