@@ -77,7 +77,7 @@ Click a few that use two hands (`HAPPY`, `LOVE`, `MEET`, `WANT`) and a few defin
 
 Another 41 everyday spellings resolve to those same 32 signs, so ordinary sentences work without you memorizing the list: `hi` signs HELLO, `thanks` signs THANK, `everyone` signs Y'ALL, `done` signs FINISH. Everything else fingerspells, which is exactly what a human signer does with a name they have never seen.
 
-The full vocabulary with every gloss is in [the sign language reference](../sign-language.md#what-it-signs-and-what-it-spells).
+The full vocabulary with every gloss is in [the sign language reference](/docs/sign-language#what-it-signs-and-what-it-spells).
 
 ---
 
@@ -172,7 +172,7 @@ const { signed, spelled } = await speaker.speak('happy to meet you');
 // spelled → ['TO']
 ```
 
-And reading signing from a camera in your own page is the `SignInput` class plus the public `/api/asl-recognition` endpoint. Both are documented in [the reference](../sign-language.md#building-with-it).
+And reading signing from a camera in your own page is the `SignInput` class plus the public `/api/asl-recognition` endpoint. Both are documented in [the reference](/docs/sign-language#reading-signing-the-recognition-api).
 
 ---
 

@@ -262,6 +262,11 @@
 				max-width: 728px;
 			}
 
+			/* Jumping to a section must not park it under the fixed header. */
+			.docs-content :is(h2, h3, h4) {
+				scroll-margin-top: 88px;
+			}
+
 			/* ── Markdown typography ─────────────────────── */
 			.docs-content h1 {
 				font-family: var(--font-display);
@@ -1036,10 +1041,61 @@
 
 			const ALL_PAGES = NAV.flatMap(s => s.links.filter(l => l.path));
 
-			function currentPath() {
-				if (location.hash) return location.hash.slice(1).replace(/^\//, '');
+			// The hash is the doc route, which means a plain "#section" link inside a
+			// page would be read as "load the doc named section" and 404 the reader
+			// out of the page they were reading. Section links therefore route as
+			// "#<doc>@<section>": the doc part navigates, the part after @ scrolls.
+			// One exception, for links written by hand and shared: on first load a
+			// bare "#section" on a /docs/<doc> URL is that doc's section, not a doc.
+			let booted = false;
+
+			function currentRoute() {
+				const hash = location.hash.slice(1).replace(/^\//, '');
 				const m = location.pathname.match(/^\/docs\/([^/]+)$/);
-				return m ? m[1] : 'start-here';
+				const fromUrl = m ? m[1] : '';
+				if (hash.includes('@')) {
+					const at = hash.indexOf('@');
+					return {
+						path: hash.slice(0, at) || fromUrl || 'start-here',
+						anchor: hash.slice(at + 1),
+					};
+				}
+				if (hash) {
+					if (!booted && fromUrl) return { path: fromUrl, anchor: hash };
+					return { path: hash, anchor: '' };
+				}
+				return { path: fromUrl || 'start-here', anchor: '' };
+			}
+
+			function currentPath() {
+				return currentRoute().path;
+			}
+
+			function slugifyHeading(text) {
+				return (text || '')
+					.trim()
+					.toLowerCase()
+					.replace(/[^\w\- ]+/g, '')
+					.replace(/ /g, '-');
+			}
+
+			function scrollToAnchor(anchor) {
+				if (!anchor) {
+					window.scrollTo({ top: 0 });
+					return;
+				}
+				let target = document.getElementById(anchor);
+				if (!target) {
+					// Older docs carry hand-written anchors that punctuate differently
+					// from the slug. Match on letters and digits alone before giving up.
+					const loose = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+					const want = loose(anchor);
+					target = [...document.querySelectorAll('#docs-content h2, #docs-content h3, #docs-content h4')].find(
+						h => loose(h.id) === want || loose(h.textContent) === want,
+					);
+				}
+				if (target) target.scrollIntoView({ block: 'start' });
+				else window.scrollTo({ top: 0 });
 			}
 
 			function buildSidebar(filter) {
@@ -1186,7 +1242,7 @@
 				});
 			}
 
-			async function loadPage(path) {
+			async function loadPage(path, anchor) {
 				const content = document.getElementById('docs-content');
 				content.innerHTML =
 					'<div class="docs-loading"><span class="docs-loading-dot"></span> Loading…</div>';
@@ -1218,8 +1274,12 @@
 					content.querySelectorAll('a[href]').forEach(a => {
 						if (a.closest('.docs-pagetools')) return;
 						const h = a.getAttribute('href');
-						if (!h || h.startsWith('http') || h.startsWith('#') || h.startsWith('mailto:'))
+						if (!h || h.startsWith('http') || h.startsWith('mailto:')) return;
+						// A section link inside the page: keep it on this doc.
+						if (h.startsWith('#')) {
+							a.href = '#' + path + '@' + h.slice(1);
 							return;
+						}
 						if (h.endsWith('.md')) {
 							const abs = new URL(h, location.origin + '/docs/' + path).pathname;
 							if (abs.startsWith('/docs/')) {
@@ -1232,14 +1292,10 @@
 						}
 					});
 
-					// Add IDs to headings for anchor links
+					// Add IDs to headings for anchor links. GitHub's slug rules, so a
+					// link an author wrote against the file on GitHub resolves here too.
 					content.querySelectorAll('h2, h3, h4').forEach(h => {
-						if (!h.id) {
-							h.id = h.textContent
-								.toLowerCase()
-								.replace(/[^a-z0-9]+/g, '-')
-								.replace(/^-|-$/g, '');
-						}
+						if (!h.id) h.id = slugifyHeading(h.textContent);
 					});
 
 					// Prev / Next
@@ -1259,12 +1315,23 @@
 						'<p style="color:rgba(255,255,255,0.35);padding-top:2rem">Page not found.</p>';
 				}
 
-				window.scrollTo({ top: 0 });
+				scrollToAnchor(anchor);
 				buildSidebar(document.getElementById('search-input').value);
 			}
 
+			let loadedPath = '';
+
 			function navigate() {
-				loadPage(currentPath());
+				const { path, anchor } = currentRoute();
+				booted = true;
+				// Jumping between sections of the doc already on screen must not
+				// refetch and rebuild it: that would lose the reader's place.
+				if (path === loadedPath) {
+					scrollToAnchor(anchor);
+					return;
+				}
+				loadedPath = path;
+				loadPage(path, anchor);
 			}
 
 			window.addEventListener('hashchange', navigate);

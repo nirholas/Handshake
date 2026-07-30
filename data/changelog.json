@@ -3,6 +3,33 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Forge Max: the highest-quality 3D lane now has its own address, and it is a $THREE holder perk",
+			"summary": "The best result the platform can produce used to live behind a quality selector most people never opened. It now has a permanent home at three.ws/forge-max, which lands on the Forge with the High tier already pinned: 200k-poly geometry, 4K PBR and HD textures, and subject-aware routing that picks the engine best suited to what you asked for. Holding $THREE unlocks the tier, and anyone who brings their own Meshy, Tripo or Rodin key can use it too. Any Forge link also accepts a tier directly, so you can hand someone a URL that opens at draft, standard or high quality.",
+			"tags": [
+				"feature"
+			],
+			"link": "/forge-max"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The cosmetics economy has a public ledger: who owns the rarest fits, and who is getting paid",
+			"summary": "Every cosmetic sale on three.ws settles in real USDC, and until now none of it was visible. The Fits page ranks the scarcest premium pieces by how few wallets own them, lists the top collectors wearing them, names the creators actually earning from their designs, and streams each sale as it lands. There is also a free earnings lookup: paste any Solana wallet and see what it has made as a creator, broken down per cosmetic and per coin world. No account needed to read any of it.",
+			"tags": [
+				"feature"
+			],
+			"link": "/fits"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Agent Symphony: listen to the agent economy as it happens",
+			"summary": "The live activity of the platform is now playable as music. Every payment, coin buy, new agent and safety refusal on three.ws becomes a note the moment it happens, synthesized in your browser from the same real event stream that feeds the money feed. Nothing is prerecorded and nothing is simulated. The page works fully with sound off: a live ledger lists the actual events behind the notes with real links through to agent profiles and block explorers, and a visualization spawns an orb per note. Audio only ever starts when you ask it to, and you can record a clip and share it.",
+			"tags": [
+				"feature"
+			],
+			"link": "/symphony"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Sign language now has a beginner's walkthrough, and the reference was rewritten for people, not engineers",
 			"summary": "Signing avatars were documented as a system: engine modules first, and the person who just wanted to watch an avatar sign their name had to read past all of it. There is now a 15-minute no-code tutorial that takes you from typing a phrase to sharing it as a link, exporting a spelled word as an animated GLB, turning on signed AI chat replies, and fingerspelling back with your webcam. The reference page was rebuilt around the same order: a what-do-I-want table up front, the full list of every word the avatar signs rather than spells with a plain description of each sign, a troubleshooting table, an FAQ, and a glossary for anyone new to ASL terms, with the engine internals moved to the back for the people who need them. The public sign-recognition endpoint is documented in the API reference for the first time.",
 			"tags": [

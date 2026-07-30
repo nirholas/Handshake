@@ -47,6 +47,14 @@
 			<description>When a trading bot checks whether it still holds a coin, it asks a Solana data provider for its token accounts. An overloaded provider sometimes answers with an empty list for a wallet that demonstrably still holds the coin. The platform read that empty answer as proof the coin had been sold, set the position aside as needing manual reconciliation, and because each strategy allows only one position at a time, the strategy stopped trading entirely while still holding the coin. Four strategies sat frozen this way for up to 57 hours against a 30-minute time limit. An empty or malformed answer is now treated as unknown rather than as zero, and is double-checked against the wallet's own token account addresses before any position is set aside. A position set aside without a recorded timestamp is also no longer exempt from the existing time limit, which is what made these freezes permanent instead of self-clearing.</description>
 		</item>
 		<item>
+			<title>Agent Symphony: listen to the agent economy as it happens</title>
+			<link>https://three.ws/symphony</link>
+			<guid isPermaLink="false">2026-07-30:Agent Symphony: listen to the agent economy as it happens</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The live activity of the platform is now playable as music. Every payment, coin buy, new agent and safety refusal on three.ws becomes a note the moment it happens, synthesized in your browser from the same real event stream that feeds the money feed. Nothing is prerecorded and nothing is simulated. The page works fully with sound off: a live ledger lists the actual events behind the notes with real links through to agent profiles and block explorers, and a visualization spawns an orb per note. Audio only ever starts when you ask it to, and you can record a clip and share it.</description>
+		</item>
+		<item>
 			<title>An underfunded trading bot now sits out instead of failing every trade</title>
 			<link>https://three.ws/trades</link>
 			<guid isPermaLink="false">2026-07-30:An underfunded trading bot now sits out instead of failing every trade</guid>
@@ -109,6 +117,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>AI clients read a tool's safety label to decide whether they can run it without asking you first. A tool marked read-only gets run unattended. Across the 270 tools on the three.ws MCP servers those labels were only ever declarations: nothing checked that a tool marked read-only actually reads. A new build check now reads each tool's code, follows the functions it really calls, and refuses to ship a tool that claims to be read-only while writing to the database or sending a transaction, one that hides an irreversible action behind a non-destructive label, or one that ships no label at all. Four read tools that warm an internal cache while answering are recorded as reviewed exceptions with the reason written down, and the guarantee is documented for anyone integrating.</description>
+		</item>
+		<item>
+			<title>Forge Max: the highest-quality 3D lane now has its own address, and it is a $THREE holder perk</title>
+			<link>https://three.ws/forge-max</link>
+			<guid isPermaLink="false">2026-07-30:Forge Max: the highest-quality 3D lane now has its own address, and it is a $THREE holder perk</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The best result the platform can produce used to live behind a quality selector most people never opened. It now has a permanent home at three.ws/forge-max, which lands on the Forge with the High tier already pinned: 200k-poly geometry, 4K PBR and HD textures, and subject-aware routing that picks the engine best suited to what you asked for. Holding $THREE unlocks the tier, and anyone who brings their own Meshy, Tripo or Rodin key can use it too. Any Forge link also accepts a tier directly, so you can hand someone a URL that opens at draft, standard or high quality.</description>
 		</item>
 		<item>
 			<title>Full API reference for the agent wallet control surfaces</title>
@@ -213,6 +229,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>Everything on the platform that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) goes through a chain of RPC providers, tried in order. All four of our paid providers hit their limits on the same day, so every read started by failing over to a free node before it could succeed. The primary now points at a healthy node directly. The health monitor was also counting whichever node we point at as paid capacity, which meant switching to a free node during an outage would have made the monitor report the paid tier as healthy at the exact moment all of it was down. It now judges a lane by the provider it belongs to, so an exhausted paid tier is always visible on the status page.</description>
+		</item>
+		<item>
+			<title>The cosmetics economy has a public ledger: who owns the rarest fits, and who is getting paid</title>
+			<link>https://three.ws/fits</link>
+			<guid isPermaLink="false">2026-07-30:The cosmetics economy has a public ledger: who owns the rarest fits, and who is getting paid</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every cosmetic sale on three.ws settles in real USDC, and until now none of it was visible. The Fits page ranks the scarcest premium pieces by how few wallets own them, lists the top collectors wearing them, names the creators actually earning from their designs, and streams each sale as it lands. There is also a free earnings lookup: paste any Solana wallet and see what it has made as a creator, broken down per cosmetic and per coin world. No account needed to read any of it.</description>
 		</item>
 		<item>
 			<title>The economy's self-refuel can no longer mistake an unreadable balance for an empty wallet</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T17:12:50.491Z",
+	"generated_at": "2026-07-30T17:21:30.492Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -54,6 +54,16 @@
 			"link": "/trades",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Agent Symphony: listen to the agent economy as it happens",
+			"summary": "The live activity of the platform is now playable as music. Every payment, coin buy, new agent and safety refusal on three.ws becomes a note the moment it happens, synthesized in your browser from the same real event stream that feeds the money feed. Nothing is prerecorded and nothing is simulated. The page works fully with sound off: a live ledger lists the actual events behind the notes with real links through to agent profiles and block explorers, and a visualization spawns an orb per note. Audio only ever starts when you ask it to, and you can record a clip and share it.",
+			"link": "/symphony",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -137,6 +147,16 @@
 			"tags": [
 				"security",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Forge Max: the highest-quality 3D lane now has its own address, and it is a $THREE holder perk",
+			"summary": "The best result the platform can produce used to live behind a quality selector most people never opened. It now has a permanent home at three.ws/forge-max, which lands on the Forge with the High tier already pinned: 200k-poly geometry, 4K PBR and HD textures, and subject-aware routing that picks the engine best suited to what you asked for. Holding $THREE unlocks the tier, and anyone who brings their own Meshy, Tripo or Rodin key can use it too. Any Forge link also accepts a tier directly, so you can hand someone a URL that opens at draft, standard or high quality.",
+			"link": "/forge-max",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -275,6 +295,16 @@
 			"tags": [
 				"infra",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The cosmetics economy has a public ledger: who owns the rarest fits, and who is getting paid",
+			"summary": "Every cosmetic sale on three.ws settles in real USDC, and until now none of it was visible. The Fits page ranks the scarcest premium pieces by how few wallets own them, lists the top collectors wearing them, names the creators actually earning from their designs, and streams each sale as it lands. There is also a free earnings lookup: paste any Solana wallet and see what it has made as a creator, broken down per cosmetic and per coin world. No account needed to read any of it.",
+			"link": "/fits",
+			"tags": [
+				"feature"
 			]
 		},
 		{
