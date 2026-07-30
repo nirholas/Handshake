@@ -666,6 +666,16 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 					const simLogs = Array.isArray(sim?.value?.logs) ? sim.value.logs : [];
 					if (simErr) {
 						cause = ` cause:${typeof simErr === 'object' ? JSON.stringify(simErr) : String(simErr)}`;
+					} else {
+						// The re-simulation came back CLEAN: this transaction is valid, and the
+						// node that answered the send rejected it anyway. Left unmarked this was
+						// the worst log line in the settle path, a "Logs: []" failure with no
+						// cause appended, indistinguishable from "the cause probe found nothing"
+						// and from a real program error. It names the actual condition instead:
+						// our rotating pool asked one node to preflight a transaction another
+						// node's blockhash built, which is the expected failure shape while the
+						// paid RPC tier is exhausted and traffic is riding throttled free nodes.
+						cause = ' cause:resim_clean_preflight_false_negative';
 					}
 					if (simLogs.length) cause += ` logs:${simLogs.slice(-3).join(' | ')}`;
 				} catch (reSimErr) {
