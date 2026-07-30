@@ -1,4 +1,4 @@
-// /marketplace/analytics accounting: a free trial is not a sale.
+// /marketplace/analytics accounting : a free trial is not a sale.
 //
 // The defect this pins: every aggregate in the handler filtered on
 // `status IN ('confirmed','trial')`, so a `trial` row (a free grant that never
@@ -39,10 +39,18 @@ describe('marketplace analytics counts only paid purchases as sales', () => {
 		}
 	});
 
-	it('never sums an amount without restricting to confirmed rows', () => {
-		// SUM(amount) over a set that includes trials is the revenue bug itself.
-		const sums = SRC.match(/SUM\(\s*(?:sp\.)?amount\s*\)(?!\s*FILTER \(WHERE (?:sp\.)?status = 'confirmed'\))/g) || [];
-		expect(sums).toEqual([]);
+	it('never sums an amount over a set that can contain trials', () => {
+		// A bare SUM(amount) is fine when the surrounding query is already
+		// restricted to confirmed rows, and a bug when it is not. So judge each
+		// sql`` block, not the raw file.
+		const blocks = SRC.match(/sql`[\s\S]*?`/g) || [];
+		const offenders = blocks.filter((block) => {
+			if (!/SUM\(\s*(?:sp\.)?amount\s*\)/.test(block)) return false;
+			const filtered = /SUM\(\s*(?:sp\.)?amount\s*\)\s*FILTER \(WHERE (?:sp\.)?status = 'confirmed'\)/.test(block);
+			const wholeQueryPaid = /WHERE\s+(?:sp\.)?status = 'confirmed'/.test(block);
+			return !filtered && !wholeQueryPaid;
+		});
+		expect(offenders).toEqual([]);
 	});
 
 	it('restricts the 30-day volume chart to confirmed rows', () => {
