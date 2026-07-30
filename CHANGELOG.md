@@ -6,11 +6,8 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-07-30
 
-- **Autonomous Trading** (`/trading`) — The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.
-- **Docs · The 10 SOL trading experiment** (`/docs/trading-experiment`) — The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.
-- **Docs · The trading hub** (`/docs/trading-hub`) — What /trading shows, where each number comes from, and how to read fleet vitals, the agent scoreboard, and the decision pipeline.
 - **Docs World (immersive 3D docs)** (`/docs/world`) — The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.
-- **Examples** (`/examples`) — Runnable copy-paste embed code: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets. Press Run and the exact snippet shown executes on the page against the production CDN bundle.
+- **Repository guards** (`/docs/guards`) — The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.
 - **three.ws on NVIDIA** (`/nvidia`) — three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.
 - **Tutorial · Character Library to a Live Embed** (`/tutorials/character-library-to-embed`) — Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.
 - **Tutorial · Give an Agent a Spending Envelope** (`/tutorials/agent-spending-envelope`) — Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.

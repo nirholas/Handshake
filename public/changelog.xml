@@ -7,30 +7,6 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
-			<title>Autonomous Trading</title>
-			<link>https://three.ws/trading</link>
-			<guid isPermaLink="false">2026-07-30:Autonomous Trading</guid>
-			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.</description>
-		</item>
-		<item>
-			<title>Docs · The 10 SOL trading experiment</title>
-			<link>https://three.ws/docs/trading-experiment</link>
-			<guid isPermaLink="false">2026-07-30:Docs · The 10 SOL trading experiment</guid>
-			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.</description>
-		</item>
-		<item>
-			<title>Docs · The trading hub</title>
-			<link>https://three.ws/docs/trading-hub</link>
-			<guid isPermaLink="false">2026-07-30:Docs · The trading hub</guid>
-			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>What /trading shows, where each number comes from, and how to read fleet vitals, the agent scoreboard, and the decision pipeline.</description>
-		</item>
-		<item>
 			<title>Docs World (immersive 3D docs)</title>
 			<link>https://three.ws/docs/world</link>
 			<guid isPermaLink="false">2026-07-30:Docs World (immersive 3D docs)</guid>
@@ -39,12 +15,12 @@
 			<description>The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.</description>
 		</item>
 		<item>
-			<title>Examples</title>
-			<link>https://three.ws/examples</link>
-			<guid isPermaLink="false">2026-07-30:Examples</guid>
+			<title>Repository guards</title>
+			<link>https://three.ws/docs/guards</link>
+			<guid isPermaLink="false">2026-07-30:Repository guards</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Runnable copy-paste embed code: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets. Press Run and the exact snippet shown executes on the page against the production CDN bundle.</description>
+			<description>The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.</description>
 		</item>
 		<item>
 			<title>three.ws on NVIDIA</title>

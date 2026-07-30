@@ -1,41 +1,11 @@
 {
-	"generated_at": "2026-07-30T22:39:05.756Z",
+	"generated_at": "2026-07-30T22:40:46.833Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
-		{
-			"date": "2026-07-30",
-			"type": "launch",
-			"title": "Autonomous Trading",
-			"summary": "The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.",
-			"link": "/trading",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-07-30",
-			"type": "launch",
-			"title": "Docs · The 10 SOL trading experiment",
-			"summary": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
-			"link": "/docs/trading-experiment",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-07-30",
-			"type": "launch",
-			"title": "Docs · The trading hub",
-			"summary": "What /trading shows, where each number comes from, and how to read fleet vitals, the agent scoreboard, and the decision pipeline.",
-			"link": "/docs/trading-hub",
-			"tags": [
-				"launch"
-			]
-		},
 		{
 			"date": "2026-07-30",
 			"type": "launch",
@@ -49,9 +19,9 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
-			"title": "Examples",
-			"summary": "Runnable copy-paste embed code: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets. Press Run and the exact snippet shown executes on the page against the production CDN bundle.",
-			"link": "/examples",
+			"title": "Repository guards",
+			"summary": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
+			"link": "/docs/guards",
 			"tags": [
 				"launch"
 			]
