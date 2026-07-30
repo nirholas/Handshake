@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "New engineering post: how our 3D generation runs on NVIDIA L4 and Blackwell GPUs",
+			"summary": "A long-form write-up of what it actually took to get the high-realism image-to-3D lane onto newer NVIDIA hardware, published for anyone building on the same stack. It covers the memory ceiling that killed every startup of the new model, why the GPU driver software had to be rebuilt for the newer card, the regional capacity limits that made the bigger GPU the easier one to get, and a nine-point checklist for teams doing the same port. The NVIDIA documentation pages on three.ws are now cross-linked and registered in the sitemap, so the free model map and the Developer Forums write-up are discoverable from search and from the docs front door.",
+			"tags": [
+				"docs",
+				"infra"
+			],
+			"link": "/blog/image-to-3d-on-nvidia-l4-and-blackwell"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Solana reads keep working when every paid RPC plan runs dry at once",
 			"summary": "Everything on the platform that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) goes through a chain of RPC providers, tried in order. All four of our paid providers hit their limits on the same day, so every read started by failing over to a free node before it could succeed. The primary now points at a healthy node directly. The health monitor was also counting whichever node we point at as paid capacity, which meant switching to a free node during an outage would have made the monitor report the paid tier as healthy at the exact moment all of it was down. It now judges a lane by the provider it belongs to, so an exhausted paid tier is always visible on the status page.",
 			"tags": [
@@ -16947,6 +16957,15 @@
 				"fix",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Email and EVM wallet sign-in work again when the human check is on",
+			"summary": "Sign-in has a human-verification step (a Cloudflare check) that guards the email code and wallet flows. The page was loading the checker from a retired URL, so email sign-in stopped at \"could not load the CAPTCHA verifier\", and the Ethereum wallet flow never passed the check at all, failing with an unexplained authorization error the moment you picked your wallet. The checker now loads from the right place, and the wallet flow runs the same human check before asking your wallet to sign, so both paths complete. Solana wallet sign-in was unaffected.",
+			"tags": [
+				"fix"
+			],
+			"link": "/login"
 		}
 	]
 }

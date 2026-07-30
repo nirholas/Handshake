@@ -15,6 +15,14 @@
 			<description>A trading strategy whose wallet ran low could get stuck in a loop: it looked funded enough to place a shrunken buy, but not funded enough to run the safety simulation that has to pass before anything is broadcast. So it tried every candidate coin, failed at the same step every time, and filled its history with failures while never actually trading. One live strategy did this 82 times in a day without placing a single buy. Strategies now compare their balance against the amount a trade genuinely needs end to end, including the pre-trade safety checks, and quietly wait for a top-up instead. No trade behavior changes for a properly funded strategy.</description>
 		</item>
 		<item>
+			<title>Email and EVM wallet sign-in work again when the human check is on</title>
+			<link>https://three.ws/login</link>
+			<guid isPermaLink="false">2026-07-30:Email and EVM wallet sign-in work again when the human check is on</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Sign-in has a human-verification step (a Cloudflare check) that guards the email code and wallet flows. The page was loading the checker from a retired URL, so email sign-in stopped at &quot;could not load the CAPTCHA verifier&quot;, and the Ethereum wallet flow never passed the check at all, failing with an unexplained authorization error the moment you picked your wallet. The checker now loads from the right place, and the wallet flow runs the same human check before asking your wallet to sign, so both paths complete. Solana wallet sign-in was unaffected.</description>
+		</item>
+		<item>
 			<title>Every code sample in the docs now points at a real, loadable 3D model</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Every code sample in the docs now points at a real, loadable 3D model</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The autonomous economy's treasury refill sweep judged a wallet shared by two roles against the more permissive role's minimum balance, so the circulation treasury could sit nearly empty without ever qualifying for a top-up. With no measured shortfall, the USDC-to-SOL refuel lane stayed idle too, and the Money Pulse quietly dropped to free actions only. Shared wallets are now topped up once but held to the strictest floor across all their roles, so paid activity (tips, agent payments, trades, launches) self-heals instead of flatlining.</description>
+		</item>
+		<item>
+			<title>New engineering post: how our 3D generation runs on NVIDIA L4 and Blackwell GPUs</title>
+			<link>https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell</link>
+			<guid isPermaLink="false">2026-07-30:New engineering post: how our 3D generation runs on NVIDIA L4 and Blackwell GPUs</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A long-form write-up of what it actually took to get the high-realism image-to-3D lane onto newer NVIDIA hardware, published for anyone building on the same stack. It covers the memory ceiling that killed every startup of the new model, why the GPU driver software had to be rebuilt for the newer card, the regional capacity limits that made the bigger GPU the easier one to get, and a nine-point checklist for teams doing the same port. The NVIDIA documentation pages on three.ws are now cross-linked and registered in the sitemap, so the free model map and the Developer Forums write-up are discoverable from search and from the docs front door.</description>
 		</item>
 		<item>
 			<title>Payment health now names the real cause when settlements stall</title>

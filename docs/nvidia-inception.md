@@ -33,6 +33,6 @@ Membership is a startup program, not a partnership or an investment: NVIDIA revi
 ## Related
 
 - [NVIDIA models on three.ws](/docs/nvidia-models) — the free inference layer, model by model
-- [The generator was never the hard part](/docs/nvidia-nemotron-spotlight) — our Nemotron Nano write-up, published on the NVIDIA Developer Forums
-- [Image-to-3D on NVIDIA L4 and Blackwell](https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell) — the engineering post on the GPU fleet itself: memory ceilings, `sm_120` kernels, and regional quota
+- [The generator was never the hard part](/docs/nvidia-nemotron-spotlight): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
+- [Image-to-3D on NVIDIA L4 and Blackwell](https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell): the engineering post on the GPU fleet itself: memory ceilings, `sm_120` kernels, and regional quota
 - [How the forge works](/docs/how-forge-works) — the 3D generation pipeline the GPUs power

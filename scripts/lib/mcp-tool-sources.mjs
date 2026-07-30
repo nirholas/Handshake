@@ -1,9 +1,9 @@
 // Shared discovery of every MCP tool-definition source file in this repo.
 //
 // Two build gates consume this list, and they MUST agree on it:
-//   - scripts/audit-mcp-golden.mjs  — snapshots each tool's public contract
+//   - scripts/audit-mcp-golden.mjs: snapshots each tool's public contract
 //     (name, description, schema, annotations) and fails on undeclared drift.
-//   - scripts/audit-mcp-safety.mjs  — checks each tool's declared safety
+//   - scripts/audit-mcp-safety.mjs: checks each tool's declared safety
 //     annotations against what its handler actually does.
 //
 // Keeping the list here means a file that is invisible to one gate is invisible
