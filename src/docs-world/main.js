@@ -45,12 +45,15 @@ function showFallback({ title, message, retry = false } = {}) {
 	if (message) $('dw-fallback-sub').textContent = message;
 	const retryBtn = $('dw-fallback-retry');
 	retryBtn.hidden = !retry;
+	// Reveal BEFORE focusing: a still-hidden element cannot take focus, so the
+	// keyboard would have been left on <body> with the recovery action unreachable
+	// without tabbing for it.
+	$('dw-fallback').hidden = false;
+	$('dw-loading').hidden = true;
 	if (retry) {
 		retryBtn.onclick = () => location.reload();
 		retryBtn.focus({ preventScroll: true });
 	}
-	$('dw-fallback').hidden = false;
-	$('dw-loading').hidden = true;
 }
 
 async function boot() {
@@ -85,8 +88,16 @@ async function boot() {
 	try {
 		world = createDocsWorld(canvas, sections, { reducedMotion });
 	} catch {
-		// createRenderer already mounted its own panel; ours routes to the docs.
-		showFallback();
+		// createRenderer already mounted its own panel; ours covers the screen and
+		// routes onward. Retry is offered because the most common cause here is not
+		// a GPU-less device (isWebGLAvailable already cleared that above) but an
+		// exhausted per-tab context budget, which a reload genuinely clears.
+		showFallback({
+			title: 'The 3D view could not start',
+			message:
+				'The browser refused a graphics context, usually because too many 3D views are open at once. Reloading normally fixes it; the classic docs need no 3D at all.',
+			retry: true,
+		});
 		return;
 	}
 
@@ -290,5 +301,10 @@ async function boot() {
 
 boot().catch((err) => {
 	log.error('[docs-world] boot failed', err);
-	showFallback();
+	showFallback({
+		title: 'The world stopped before it opened',
+		message:
+			'Something failed while building the scene. Reloading often clears it, and the classic docs carry every page this world shows.',
+		retry: true,
+	});
 });

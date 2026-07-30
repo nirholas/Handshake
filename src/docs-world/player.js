@@ -114,13 +114,26 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 			root.add(model);
 
 			anim.attach(model, { avatarUrl });
+			// Before any clip plays: on a rig whose upper arms could not be
+			// name-mapped, the retarget drives torso and legs but leaves the arms
+			// at their authored bind pose, i.e. a T-pose. Custom ?avatar= rigs are
+			// exactly where that happens, so relax them into a rest pose first.
+			anim.relaxUndrivenArms();
 			try {
 				const defs = await fetch('/animations/manifest.json').then((r) => (r.ok ? r.json() : []));
 				if (Array.isArray(defs) && defs.length) {
 					anim.setAnimationDefs(defs);
 					const ok = await anim.ensureLoaded(CLIP_IDLE);
-					if (ok) await anim.crossfadeTo(CLIP_IDLE, 0);
-					currentClip = CLIP_IDLE;
+					// Only claim the idle clip once it is actually playing. Recording
+					// it unconditionally was self-defeating: the walk/idle switch below
+					// skips any clip equal to currentClip, so a failed idle load left
+					// the body frozen in its bind pose AND marked idle as current, so
+					// nothing ever retried it. Leaving it null lets the first tick
+					// re-attempt the crossfade.
+					if (ok) {
+						await anim.crossfadeTo(CLIP_IDLE, 0);
+						currentClip = CLIP_IDLE;
+					}
 					anim.ensureLoaded(CLIP_WALK).catch(() => {});
 				}
 			} catch (err) {

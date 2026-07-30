@@ -546,6 +546,13 @@ body {
 	font-size: 14px;
 	line-height: 1.6;
 }
+.dw-fallback-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+}
+
 .dw-spinner {
 	width: 34px;
 	height: 34px;
