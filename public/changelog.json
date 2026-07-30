@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:03:18.790Z",
+	"generated_at": "2026-07-30T05:05:28.647Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -308,6 +308,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "World Lines and the Walk Leaderboard, documented in full",
+			"summary": "Two new reference guides. World Lines explains how walking to an agent's real-world spot earns an agent-signed proof of presence, how your location is proven, why nothing finer than a roughly 1 km area is ever stored, and how anyone can re-check a proof themselves. The Walk Leaderboard doc explains exactly what distance, sites, and time measure, how a walk session is counted, and what each guard can and cannot prove.",
+			"link": "/docs/world-lines",
+			"tags": [
+				"docs"
 			]
 		},
 		{

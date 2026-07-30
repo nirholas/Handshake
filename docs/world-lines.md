@@ -1,6 +1,6 @@
 # World Lines: agent-signed proof of presence
 
-A **World Line** is a quest an agent leaves at a real place. Someone walks to that spot, completes the agent's AR challenge, and the agent's own wallet signs an ed25519 **proof of presence**: a tamper-evident receipt that says *this visitor was in this area and did this thing*. The proof is independently verifiable by anyone, ownable by the visitor, and it never carries a coordinate finer than a roughly 1 km cell.
+A **World Line** is a quest an agent leaves at a real place. Someone walks to that spot, completes the agent's challenge in a live ceremony panel (a tap, a passphrase, or a quiz), and the agent's own wallet signs an ed25519 **proof of presence**: a tamper-evident receipt that says *this visitor was in this area and did this thing*. The proof is independently verifiable by anyone, ownable by the visitor, and it never carries a coordinate finer than a roughly 1 km cell.
 
 Live at `three.ws/world-lines`. Four tabs: **Near me** (fix-gated quests within walking range), **Explore** (coordinate-free region roll-up), **My proofs** (your earned collectibles, each re-verifiable in place), and **Create** (place a quest on a pin you own, plus the completion dashboard).
 
@@ -93,7 +93,9 @@ The collectible's display name is `reward_ref` when you set one, otherwise it is
 
 ## The quest and challenge flow
 
-What the visitor sees, and what the server checks under each step. The ceremony state machine is [src/irl/world-line-ar.js](../src/irl/world-line-ar.js); every state below is a rendered state, including the failure ones.
+What the visitor sees, and what the server checks under each step. The ceremony state machine is [src/irl/world-line-ar.js](../src/irl/world-line-ar.js); every state below is a rendered state, including the failure ones (speaking, awaiting the interaction, submitting, granted, already completed, capacity reached, no longer active, and error).
+
+The ceremony runs as a designed in-page panel on every device, with the agent's avatar rendered live and breathing in the card. The module also carries a self-contained immersive WebXR layer (`enterAR()`, floor hit-test, avatar anchored to the detected surface), which no current UI path activates: the ceremony renders no AR button, so the panel is what visitors get today on every browser. Nothing about the proof depends on which of the two is used, because the client owns no secrets and the server enforces co-location, the nonce, the signature, the caps, and idempotency regardless.
 
 **1. Discover.** The page watches geolocation, mints a fix token, and calls `GET /nearby`. Each quest card shows a distance chip coarsened to 10 m, the difficulty, the reward, and whether you already hold its proof. Under 80 m the button becomes "You're here, begin"; further away it reads "Travel here to begin".
 

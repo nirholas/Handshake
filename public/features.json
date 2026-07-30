@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:03:18.783Z",
+	"generated_at": "2026-07-30T05:05:28.622Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4426,6 +4426,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/news/monetize-mcp-server-x402-paid-tools",
+					"title": "How to Monetize an MCP Server: Paid Tools with x402",
+					"description": "The seller-side guide to agent payments: choose work worth charging for, price it in atomic USDC units, answer unpaid calls with a real 402, verify then work then settle, charge per tool inside an MCP tools/call, and get indexed where agents shop for paid services.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/news/quicknode-startup-program",
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.",
@@ -4608,7 +4618,7 @@
 				{
 					"path": "/news/aws-builder-center-blog",
 					"title": "three.ws Publishes on the AWS Builder Center Blog",
-					"description": "three.ws's contribution is live on the official AWS Builder Center Blog: \"How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3\" — covering ResolveCustomer, MeterUsage, entitlements, SNS lifecycle webhooks, and bridging to an on-chain x402 paywall.",
+					"description": "three.ws's contribution is live on the official AWS Builder Center Blog: \"How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3\". It covers ResolveCustomer, MeterUsage, entitlements, SNS lifecycle webhooks, and bridging to an on-chain x402 paywall.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

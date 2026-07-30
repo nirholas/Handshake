@@ -239,6 +239,14 @@
 			<description>Everything that reads a Solana balance goes through a chain of nodes, so that if one is out of credits or refusing requests the next one answers. Two gaps in that chain were letting failures through. First, when our main paid node hit its monthly cap it said so in wording our code did not recognise as &quot;out of credits&quot;, so it was treated as briefly busy and put back at the front of the queue every ten minutes, meaning almost every balance lookup began by failing against a node that could not answer until the billing month rolled over. Second, some of the free public nodes refuse specific kinds of lookup outright, including the one that reads which tokens a wallet holds, and they refuse it with a reply our code read as &quot;you asked for something impossible&quot; rather than &quot;ask a different node&quot;. That turned into an outright error for the features built on it: your token balances, $THREE holder checks, and the gates that unlock embeds and scenes for holders. Both signals are now recognised, so an exhausted node steps aside for the rest of its billing period and a node that will not serve a lookup is skipped in favour of one that will.</description>
 		</item>
 		<item>
+			<title>World Lines and the Walk Leaderboard, documented in full</title>
+			<link>https://three.ws/docs/world-lines</link>
+			<guid isPermaLink="false">2026-07-30:World Lines and the Walk Leaderboard, documented in full</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Two new reference guides. World Lines explains how walking to an agent's real-world spot earns an agent-signed proof of presence, how your location is proven, why nothing finer than a roughly 1 km area is ever stored, and how anyone can re-check a proof themselves. The Walk Leaderboard doc explains exactly what distance, sites, and time measure, how a walk session is counted, and what each guard can and cannot prove.</description>
+		</item>
+		<item>
 			<title>Your wallet history page loads again instead of erroring</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Your wallet history page loads again instead of erroring</guid>
