@@ -282,6 +282,21 @@ export default wrapCron(async (req, res) => {
 			{ signature: `economy-fuel:${fuel.signature}` },
 		);
 	}
+	// A refuel that could not READ the USDC balance is the same class of
+	// look-alike as a reclaim that could not run, and it lands after the
+	// classification above, so it needs to say so itself. Without this the tick
+	// reports the indistinguishable-but-opposite `no_spare_usdc` and the operator
+	// funds a wallet that was never empty.
+	if (!dryRun && fuel.reason === 'usdc_read_failed') {
+		await sendOpsAlert(
+			'⛽ Economy refuel BLOCKED: USDC balance unreadable',
+			`Deficit ${totalDeficitSol.toFixed(4)} SOL and the master's USDC balance could not be read, so no refuel was planned. ` +
+				`First error: ${String(fuel.readError || 'unknown').slice(0, 180)}. ` +
+				'This is NOT "the revenue is spent": the balance is unknown, not zero. Check the Solana RPC lanes ' +
+				'(healthz rpc_lanes) before sending any funds.',
+			{ signature: 'economy-fuel-read-blocked', severity: 'warn' },
+		);
+	}
 
 	// Self-healing, step 3 (the USDC side): the steps above keep SOL flowing, but
 	// the ring/a2a payers SPEND USDC, and their only refill path used to be

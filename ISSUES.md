@@ -29,30 +29,36 @@ this repo:
    OpenRouter as $0). Traffic survives on the free lanes (Groq/NIM plus the
    vertex-gemini credits anchor). Action: reactivate OpenAI billing and/or
    fund the OpenRouter key, or accept free-lane-only service.
-2. **Neon storage pressure — RESOLVED, re-verified 2026-07-29.** The branch
-   measures 2538MB against a 3072MB high-water (`isStoragePressured()` reports
-   `pressured: false`), so no write cron is gated. The two code defects behind
-   the original report are also closed: `wrapCron`'s `requireWriteCapacity`
-   preflight logs a named warn and heartbeats a healthy skip instead of failing
-   silently, and `db-retention` now VACUUM FULLs the worst offenders under
-   pressure (section D), which does return space to the OS. Re-open only if the
-   size crosses the high-water again.
-3. **Helius quota exhaustion, still live** (observed 2026-07-22: mainnet and
-   devnet RPC 429 "max usage reached"; balances and solana-rpc fail over to
-   public RPC with the designed 10min/360min cooldowns). Action: bump the
-   Helius plan if the 429s persist at this volume.
+2. **Every paid Solana RPC lane is over quota at once** (owner action: money).
+   Re-probed 2026-07-30 with a metered `getBalance` (never `getHealth`, which is
+   unmetered and returns ok on an exhausted endpoint): Helius `-32429 max usage
+   reached`, QuickNode `-32003 daily request limit reached`, and BOTH Alchemy
+   apps (`ALCHEMY_API_KEY` and the key inside `SOLANA_RPC_FALLBACK_URLS`) return
+   `429 Monthly capacity limit exceeded` (they share one account quota, so the
+   second is not a spare). The dead Alchemy endpoint was also pinned as
+   `SOLANA_RPC_URL`, so every production Solana call began by failing over.
+   Mitigated in config on 2026-07-30 (revision `three-ws-api-00335-ncg`):
+   `SOLANA_RPC_URL` now points at `https://solana-rpc.publicnode.com`, with
+   Leo RPC and MagicBlock as `SOLANA_RPC_FALLBACK_URLS`. All three were burst-
+   probed 12/12 OK on `getBalance`, `getLatestBlockhash` and
+   `getSignatureStatuses`. The exhausted paid lanes stay in the chain and
+   re-enter rotation on their own when quota resets (`QUOTA_COOLDOWN_MS` is 6h).
+   The platform is therefore up but throttled, which shows up as intermittent
+   5xx and slow settles. Action: top up or upgrade a plan, or cut call volume
+   via the ring cadence knobs. Note GCP credits cannot help here: Blockchain
+   Node Engine is Ethereum-only, so there is no GCP-hosted Solana RPC.
 
 Carried forward from the retired `prompts/x402-catalog/` tracker (campaign
 closed 2026-07-28; full history in git):
 
-4. **No web-search key in prod** (owner action, now non-blocking). `BRAVE_API_KEY` /
+3. **No web-search key in prod** (owner action, now non-blocking). `BRAVE_API_KEY` /
    `TAVILY_API_KEY` / `EXA_API_KEY` / `SERPER_API_KEY` are all absent on
    `three-ws-api`. This no longer leaves the fact-checker on DuckDuckGo scraps:
    the search chain now leads with Vertex-grounded Google Search (service-account
    auth, GCP credits, no third-party key) and the keyless Wikipedia rung returns
    full intro extracts rather than 150-char highlight fragments. Setting one of
    the four keys is still an upgrade, not a prerequisite.
-5. **Fact-check verdict quality — reworked in-repo 2026-07-29, benchmark
+4. **Fact-check verdict quality, reworked in-repo 2026-07-29, benchmark
    awaiting a clean run** (code). The chain-level defects behind the 20% score
    are fixed: `computeVerdict` now judges direction over stance-BEARING weight
    with a coverage gate (all-neutral evidence returns `insufficient` instead of
@@ -68,11 +74,11 @@ closed 2026-07-28; full history in git):
    run with >10% errored claims. Action: re-run
    `node scripts/fact-check-benchmark.mjs` against production once the deploy
    below lands (Vertex answers there, so the chain is not degraded).
-6. **ASR/media backstops unconfigured** (owner action).
+5. **ASR/media backstops unconfigured** (owner action).
    `NVIDIA_ASR_FUNCTION_ID` unset in prod (`/api/v1/ai/asr` returns 503
    `not_configured`); the Replicate account is out of credit; Upstash Redis is
    absent on `three-ws-api`.
-7. **ENS resolution was live-broken; fixed in-repo 2026-07-29, awaiting
+6. **ENS resolution was live-broken; fixed in-repo 2026-07-29, awaiting
    deploy.** `GET /api/v1/resolve?name=vitalik.eth` returned 503
    `ens_unavailable` (measured 9.7s and 12.4s against the 8s budget) while the
    `.sol` lane worked. Two root causes, both fixed: `RPC_URL_ETHEREUM` pointed
@@ -92,6 +98,28 @@ closed 2026-07-28; full history in git):
    so it timed out on every name), the x402 identity-claim verifier (5s, which
    silently downgraded every ENS claim to "no evidence"), and `/api/v1/resolve`.
    All verified resolving keyless end to end.
-   Verify after the next deploy, then drop this item. Separately, the operator
-   should repoint or unset `RPC_URL_ETHEREUM` on the Cloud Run service, since
-   it is dead weight even demoted.
+   Verify after the next deploy, then drop this item. The related operator
+   action is already moot: `RPC_URL_ETHEREUM` is not set on the `three-ws-api`
+   Cloud Run service at all (checked 2026-07-30), so there is nothing to
+   repoint or unset. Re-measured live the same day, production still returns
+   503 `ens_unavailable` on `vitalik.eth` while `three.sol` resolves in 246ms,
+   which confirms the remaining gap is purely the undeployed fix.
+
+7. **BSC testnet contracts are code-complete but never publicly deployed**
+   (owner action; re-homed here 2026-07-30 when the BNB Chain campaign's work
+   orders were retired). Every contract proof in that campaign ran against an
+   anvil fork or a local instance because no funded deployer key exists:
+   `BNB_TESTNET_DEPLOYER_KEY` is absent from the shell env, the root `.env`, and
+   `contracts/.env`, and the public faucet is reCAPTCHA-gated, so the
+   `GreenfieldVault` and `WorldMoves` deploys and every real Greenfield write
+   never happened. The deploy scripts are dry-run verified and unchanged
+   (`forge script script/DeployGreenfieldVault.s.sol` /
+   `script/DeployWorldMoves.s.sol --broadcast`, both documented in
+   [contracts/DEPLOYMENTS.md](contracts/DEPLOYMENTS.md)). Action: fund a
+   throwaway EOA at `https://www.bnbchain.org/en/testnet-faucet`, set
+   `BNB_TESTNET_DEPLOYER_KEY` (and `GREENFIELD_VAULT_OPERATOR_KEY`, which falls
+   back to the same key), re-run the two scripts, then set
+   `WORLD_MOVES_ADDRESS_TESTNET`. No code change is needed: the moment the
+   address exists, `/api/bnb/world-config` starts returning `deployed:true` for
+   real visitors and the sender/reader/ghost paths light up as already proven.
+   Full history: `prompts/bnb-chain/PROGRESS.md`.

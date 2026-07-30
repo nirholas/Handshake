@@ -156,18 +156,58 @@ async function secondsSinceLastSwap() {
 	return secs == null ? Infinity : Number(secs);
 }
 
-/** Read an owner's USDC balance (whole tokens + atomics). */
+/**
+ * Read an owner's USDC balance (whole tokens + atomics).
+ *
+ * A failed read and a genuinely empty wallet are NOT the same thing, and this
+ * used to collapse both into zero. That is a fallback that cannot catch the case
+ * it exists for: reported as 0, the planner answers `no_spare_usdc`, which reads
+ * as "the revenue is already spent, the owner must send funds" when the truth was
+ * "the RPC lane was in cooldown" and nothing needed funding at all. Observed
+ * 2026-07-30: the master held 46 USDC while the refuel lane declined to act, so
+ * the economy stayed flat with its own cure sitting in its own wallet.
+ *
+ * The owner-wide scan runs first (it also sees non-canonical token accounts), the
+ * derived ATA is the fallback for lanes that do not serve the indexed method, and
+ * `readFailed` is set unless the chain actually answered.
+ */
 async function readUsdc(connection, owner, network) {
 	const mint = network === 'devnet' ? USDC_MINT_BY_NETWORK.devnet : USDC_MINT_BY_NETWORK.mainnet;
 	const { PublicKey } = await import('@solana/web3.js');
-	let atomics = 0n;
+	const mintKey = new PublicKey(mint);
+	const shape = (atomics) => ({
+		atomics,
+		usd: Number(atomics) / 10 ** USDC_DECIMALS,
+		readFailed: false,
+	});
+
 	try {
-		const r = await connection.getParsedTokenAccountsByOwner(owner, { mint: new PublicKey(mint) });
+		const r = await connection.getParsedTokenAccountsByOwner(owner, { mint: mintKey });
+		let atomics = 0n;
 		for (const a of r.value) atomics += BigInt(a.account.data.parsed?.info?.tokenAmount?.amount || '0');
+		return shape(atomics);
 	} catch {
-		/* no ATA ⇒ zero */
+		/* indexed scan unsupported or lane cooling: fall through to the ATA read */
 	}
-	return { atomics, usd: Number(atomics) / 10 ** USDC_DECIMALS };
+
+	try {
+		const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
+		const info = await connection.getAccountInfo(getAssociatedTokenAddressSync(mintKey, owner), 'confirmed');
+		// The ATA address is derived, not looked up, so a null account is the chain
+		// stating it does not exist: a real zero, not a read we failed to make.
+		if (!info) return shape(0n);
+		const data = Buffer.isBuffer(info.data) ? info.data : Buffer.from(info.data || []);
+		// SPL token account layout: mint(32) + owner(32) + amount(u64 LE).
+		if (data.length < 72) return shape(0n);
+		return shape(data.readBigUInt64LE(64));
+	} catch (e) {
+		return {
+			atomics: 0n,
+			usd: 0,
+			readFailed: true,
+			error: String(e?.message || 'usdc_read_failed').slice(0, 160),
+		};
+	}
 }
 
 /**
@@ -217,7 +257,22 @@ export async function refuelMasterFromUsdc({ connection, deficitSol, network = '
 	}
 
 	await ensureSchema();
-	const { usd: usdcUsd } = await readUsdc(connection, master.publicKey, network);
+	const usdc = await readUsdc(connection, master.publicKey, network);
+	// Never let an unread balance be planned as an empty one: "we could not look"
+	// and "there is nothing there" need opposite responses from the operator, and
+	// only the second one costs money to fix.
+	if (usdc.readFailed) {
+		return {
+			acted: false,
+			enabled: true,
+			reason: 'usdc_read_failed',
+			readError: usdc.error,
+			masterSol: round(masterSol),
+			spendableSol: round(spendablePre),
+			gapSol: round(gapPre),
+		};
+	}
+	const usdcUsd = usdc.usd;
 	const spentToday = await usdcSpentTodayUsd();
 	const solUsd = await solPriceUsd().catch(() => 0);
 

@@ -16938,6 +16938,15 @@
 				"docs",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The economy's self-refuel can no longer mistake an unreadable balance for an empty wallet",
+			"summary": "When the autonomous economy runs short of SOL it converts a small, capped slice of its own USDC revenue to keep paying agents. That check treated a failed balance lookup exactly like a zero balance, so whenever a Solana data provider was rate-limited the platform concluded its revenue was spent and stopped refuelling, with the funds it needed sitting in its own wallet. The balance read now has a second, cheaper path, and a lookup that genuinely fails is reported as unknown rather than empty, so recovery no longer waits on a human.",
+			"tags": [
+				"fix",
+				"infra"
+			]
 		}
 	]
 }

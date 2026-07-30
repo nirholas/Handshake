@@ -63,6 +63,14 @@
 			<description>Everything on the platform that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) goes through a chain of RPC providers, tried in order. All four of our paid providers hit their limits on the same day, so every read started by failing over to a free node before it could succeed. The primary now points at a healthy node directly. The health monitor was also counting whichever node we point at as paid capacity, which meant switching to a free node during an outage would have made the monitor report the paid tier as healthy at the exact moment all of it was down. It now judges a lane by the provider it belongs to, so an exhausted paid tier is always visible on the status page.</description>
 		</item>
 		<item>
+			<title>The economy's self-refuel can no longer mistake an unreadable balance for an empty wallet</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The economy's self-refuel can no longer mistake an unreadable balance for an empty wallet</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the autonomous economy runs short of SOL it converts a small, capped slice of its own USDC revenue to keep paying agents. That check treated a failed balance lookup exactly like a zero balance, so whenever a Solana data provider was rate-limited the platform concluded its revenue was spent and stopped refuelling, with the funds it needed sitting in its own wallet. The balance read now has a second, cheaper path, and a lookup that genuinely fails is reported as unknown rather than empty, so recovery no longer waits on a human.</description>
+		</item>
+		<item>
 			<title>The pages that shipped without docs now have them</title>
 			<link>https://three.ws/docs/start-here</link>
 			<guid isPermaLink="false">2026-07-30:The pages that shipped without docs now have them</guid>
