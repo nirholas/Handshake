@@ -1,0 +1,305 @@
+/* Examples gallery (/examples) */
+
+.exg-shell {
+	max-width: 1080px;
+	margin: 0 auto;
+	padding: 48px 20px 96px;
+}
+
+.exg-hero {
+	padding: 40px 0 8px;
+}
+
+.exg-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exg-live-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #38d39f;
+	box-shadow: 0 0 0 0 rgba(56, 211, 159, 0.5);
+	animation: exg-pulse 2.4s infinite;
+}
+
+@keyframes exg-pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(56, 211, 159, 0.45);
+	}
+	70% {
+		box-shadow: 0 0 0 8px rgba(56, 211, 159, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(56, 211, 159, 0);
+	}
+}
+
+.exg-title {
+	font-size: clamp(32px, 5vw, 48px);
+	line-height: 1.05;
+	margin: 14px 0 12px;
+	letter-spacing: -0.02em;
+}
+
+.exg-title em {
+	font-style: normal;
+	background: linear-gradient(90deg, #7c8cff, #38d39f);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.exg-sub {
+	max-width: 62ch;
+	color: var(--text-dim, #9a9aa4);
+	line-height: 1.65;
+}
+
+.exg-sub a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.exg-sub a:hover,
+.exg-docs a:hover {
+	color: var(--text, #ececf2);
+}
+
+.exg-grid {
+	display: grid;
+	gap: 24px;
+	margin-top: 40px;
+}
+
+.exg-card {
+	border: 1px solid var(--border, #26262e);
+	border-radius: 16px;
+	padding: 24px;
+	background: var(--surface, rgba(255, 255, 255, 0.02));
+	transition:
+		border-color 0.2s ease,
+		transform 0.2s ease;
+}
+
+.exg-card:hover {
+	border-color: var(--border-strong, #3a3a46);
+}
+
+.exg-card-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.exg-card-title {
+	font-size: 20px;
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+.exg-tags {
+	display: flex;
+	gap: 6px;
+}
+
+.exg-tag {
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	padding: 3px 8px;
+	border-radius: 999px;
+	border: 1px solid var(--border, #26262e);
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exg-blurb {
+	color: var(--text-dim, #9a9aa4);
+	line-height: 1.6;
+	margin: 10px 0 16px;
+	max-width: 72ch;
+}
+
+.exg-pre {
+	margin: 0;
+	padding: 16px;
+	border-radius: 12px;
+	border: 1px solid var(--border, #26262e);
+	background: var(--code-bg, #101016);
+	overflow-x: auto;
+	font-size: 12.5px;
+	line-height: 1.55;
+	tab-size: 2;
+	max-height: 340px;
+	overflow-y: auto;
+}
+
+.exg-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 14px;
+	flex-wrap: wrap;
+}
+
+.exg-btn {
+	appearance: none;
+	border: 1px solid var(--border, #26262e);
+	background: transparent;
+	color: var(--text, #ececf2);
+	font: inherit;
+	font-size: 14px;
+	padding: 9px 16px;
+	border-radius: 10px;
+	cursor: pointer;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.1s ease;
+}
+
+.exg-btn:hover {
+	border-color: var(--border-strong, #3a3a46);
+	background: var(--surface, rgba(255, 255, 255, 0.04));
+}
+
+.exg-btn:active {
+	transform: translateY(1px);
+}
+
+.exg-btn:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exg-btn--primary {
+	background: var(--text, #ececf2);
+	color: var(--bg, #0a0a0a);
+	border-color: transparent;
+}
+
+.exg-btn--primary:hover {
+	background: #fff;
+	color: #000;
+}
+
+.exg-btn--link {
+	border-style: dashed;
+}
+
+.exg-docs {
+	margin: 14px 0 0;
+	font-size: 13px;
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exg-docs a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.exg-stage {
+	margin-top: 16px;
+}
+
+.exg-frame {
+	width: 100%;
+	border: 1px solid var(--border, #26262e);
+	border-radius: 12px;
+	background: #0a0a0a;
+	display: block;
+}
+
+.exg-more {
+	margin-top: 56px;
+	border-top: 1px solid var(--border, #26262e);
+	padding-top: 32px;
+}
+
+.exg-more h2 {
+	font-size: 22px;
+	margin: 0 0 8px;
+}
+
+.exg-more p {
+	color: var(--text-dim, #9a9aa4);
+	line-height: 1.65;
+	max-width: 72ch;
+}
+
+.exg-more-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 14px;
+	margin-top: 18px;
+}
+
+.exg-more-card {
+	display: block;
+	border: 1px solid var(--border, #26262e);
+	border-radius: 12px;
+	padding: 16px;
+	text-decoration: none;
+	color: inherit;
+	transition:
+		border-color 0.15s ease,
+		transform 0.15s ease;
+}
+
+.exg-more-card:hover {
+	border-color: var(--border-strong, #3a3a46);
+	transform: translateY(-2px);
+}
+
+.exg-more-card:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exg-more-card strong {
+	display: block;
+	margin-bottom: 6px;
+}
+
+.exg-more-card span {
+	font-size: 13px;
+	color: var(--text-dim, #9a9aa4);
+	line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+	.exg-shell {
+		padding-top: 24px;
+	}
+
+	.exg-card {
+		padding: 18px;
+	}
+}
+
+html[data-theme='light'] .exg-pre {
+	background: #f5f5f8;
+	border-color: #e3e3ea;
+}
+
+html[data-theme='light'] .exg-card {
+	background: #fff;
+	border-color: #e3e3ea;
+}
+
+html[data-theme='light'] .exg-btn--primary {
+	background: #111;
+	color: #fff;
+}

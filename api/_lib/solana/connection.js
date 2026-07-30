@@ -608,6 +608,14 @@ function maskUrl(url) {
 	}
 }
 
+// Render a cooldown for the failover log. Whole minutes read fine for the long
+// windows, but rounding sub-minute ones to `1m` overstates them by double, and
+// the shortest window (a policy block that keeps the lane in service) is exactly
+// the one an operator must not confuse with a real bench. Seconds below a minute.
+function formatCooldown(ms) {
+	return ms < 60_000 ? `${Math.round(ms / 1000)}s` : `${Math.round(ms / 60_000)}m`;
+}
+
 // JSON-RPC error codes that mean "this provider can't serve you right now" — a
 // capacity/quota/auth/staleness problem the NEXT provider may not share, so we
 // fail over instead of surfacing it. Crucially this is how an exhausted paid plan
@@ -818,7 +826,7 @@ export function makeRotatingFetch(endpoints) {
 						// INFO, not WARN: the request continues to the next provider and
 						// still succeeds. This is the redundancy working, not a fault.
 						console.log(
-							`[solana-rpc] ${maskUrl(url)} ${resp.status} — cooling ${Math.round(ms / 60_000)}m, failing over`,
+							`[solana-rpc] ${maskUrl(url)} ${resp.status} — cooling ${formatCooldown(ms)}, failing over`,
 						);
 					}
 					return { error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`) };
@@ -830,7 +838,7 @@ export function makeRotatingFetch(endpoints) {
 					const ms = markEndpointCooldown(url, bad.status, bad.bodyText || '');
 					if (!alreadyCooling) {
 						console.log(
-							`[solana-rpc] ${maskUrl(url)} ${bad.log} — cooling ${Math.round(ms / 60_000)}m, failing over`,
+							`[solana-rpc] ${maskUrl(url)} ${bad.log} — cooling ${formatCooldown(ms)}, failing over`,
 						);
 					}
 					return { error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`) };

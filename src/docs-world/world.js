@@ -107,6 +107,12 @@ function makeLabelTexture(title, sub, colorHex) {
 	return tex;
 }
 
+// Base footprint of the central welcome sign, in world units, before resize()
+// fits it to the viewport's horizontal field of view.
+const BEACON_LABEL_SCALE = 0.8;
+const BEACON_LABEL_W = 6.4 * BEACON_LABEL_SCALE;
+const BEACON_LABEL_H = 2 * BEACON_LABEL_SCALE;
+
 function makeLabelSprite(title, sub, colorHex, scale = 1) {
 	const material = new SpriteMaterial({
 		map: makeLabelTexture(title, sub, colorHex),
@@ -346,7 +352,12 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 	);
 	pillar.position.y = 1.7;
 	beacon.add(pillar);
-	const beaconLabel = makeLabelSprite('three.ws Docs World', 'walk to a pavilion to read', '#8b5cf6', 0.8);
+	const beaconLabel = makeLabelSprite(
+		'three.ws Docs World',
+		'walk to a pavilion to read',
+		'#8b5cf6',
+		BEACON_LABEL_SCALE,
+	);
 	// Clear of the ring labels (which sit at y 3.6) so the two never stack.
 	beaconLabel.position.y = 5.4;
 	beacon.add(beaconLabel);
@@ -364,6 +375,16 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
 		camera.updateProjectionMatrix();
+
+		// The beacon sign is sized in WORLD units, but how much screen it covers
+		// depends on the horizontal field of view, which shrinks with the aspect
+		// ratio. On a portrait phone that made the welcome sign span nearly the full
+		// width and stack over the ring labels behind it at spawn, before the
+		// distance fade in tick() has anything to fade. Scaling it with aspect keeps
+		// the sign the same relative size on every device; desktop (aspect >= 1.6) is
+		// unchanged, and the floor stops it shrinking into illegibility.
+		const fit = Math.min(1, Math.max(0.52, camera.aspect / 1.6));
+		beaconLabel.scale.set(BEACON_LABEL_W * fit, BEACON_LABEL_H * fit, 1);
 	}
 	resize();
 

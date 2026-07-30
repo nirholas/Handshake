@@ -283,7 +283,7 @@ function build() {
 
 		for (const tool of found) {
 			const hints = tool.annotations.values ?? {};
-			const price = prices.get(tool.name) ?? 0;
+			const price = prices.get(tool.name) ?? null;
 			tools.push({
 				name: tool.name,
 				title: tool.title ?? null,
@@ -296,7 +296,11 @@ function build() {
 					idempotentHint: hints.idempotentHint ?? null,
 					openWorldHint: hints.openWorldHint ?? null,
 				},
-				price: { usd: price, free: price === 0 },
+				price: {
+					usd: price?.usd ?? 0,
+					free: !price,
+					...(price?.tiers ? { tiers: price.tiers } : {}),
+				},
 				source: relPath,
 			});
 		}

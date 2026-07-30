@@ -254,7 +254,7 @@ for (const abs of findExampleDirs(root)) {
 
 // Source titles and descriptions may carry em/en dashes; the repo bans both
 // glyphs in committed files, so normalize them to a plain hyphen on the way out.
-const plainDashes = (s) => (typeof s === 'string' ? s.replace(/[–—]/g, '-') : s);
+const plainDashes = (s) => (typeof s === 'string' ? s.replace(/[\u2013\u2014]/g, '-') : s);
 for (const e of entries) {
 	e.title = plainDashes(e.title);
 	e.description = plainDashes(e.description);
