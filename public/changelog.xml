@@ -7,6 +7,30 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Tutorial · Character Library to a Live Embed</title>
+			<link>https://three.ws/tutorials/character-library-to-embed</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Character Library to a Live Embed</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.</description>
+		</item>
+		<item>
+			<title>Tutorial · Give an Agent a Spending Envelope</title>
+			<link>https://three.ws/tutorials/agent-spending-envelope</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Give an Agent a Spending Envelope</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.</description>
+		</item>
+		<item>
+			<title>Tutorial · Render Avatars as Images</title>
+			<link>https://three.ws/tutorials/render-avatar-images</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Render Avatars as Images</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.</description>
+		</item>
+		<item>
 			<title>A slow data provider can no longer freeze a live trading position</title>
 			<link>https://three.ws/trades</link>
 			<guid isPermaLink="false">2026-07-30:A slow data provider can no longer freeze a live trading position</guid>
@@ -237,14 +261,6 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The platform keeps its automated payments funded by pulling idle funds back from its own agent wallets. When that repair could not run, it said nothing at all: no log line, no alert. A recent stall lasted about eleven hours for exactly that reason, with funds available the whole time and no way to see the repair was blocked. It now raises an alert, and distinguishes the two cases that look identical but need opposite responses: the network providers were unreachable (free to fix, nothing to fund), or every source really is empty (the only case that needs a top-up).</description>
-		</item>
-		<item>
-			<title>Three new step-by-step tutorials</title>
-			<link>https://three.ws/docs/tutorials/agent-spending-envelope</link>
-			<guid isPermaLink="false">2026-07-30:Three new step-by-step tutorials</guid>
-			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
-			<category>docs</category>
-			<description>Follow-along guides for three things people kept having to work out from reference docs. Give an agent a spending envelope walks from a credit deposit to a real settled payment and back to a refund, with every amount kept tiny and a free wiring test before any money moves. Render avatar images shows how to put a live 3D character's picture on any page or social card without running a 3D engine. And the character library guide goes from browsing 107 free rigged characters to one animating on your own site, with a gesture wired to a button.</description>
 		</item>
 		<item>
 			<title>Wallet balances and holder checks stop failing when a free Solana node refuses the call</title>

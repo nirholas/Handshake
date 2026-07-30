@@ -200,14 +200,21 @@ Requests are rate-limited per IP; a `429` carries `Retry-After`.
 ### curl
 
 ```bash
-# Mobile budget: 512px textures, ARKit-52 morphs only, Draco-compressed
+# Mobile budget: 512px textures, ARKit-52 morphs only
 curl -sL -o mobile.glb \
-  'https://three.ws/api/avatar/optimize?id=13f259c7-7024-4d68-b1f0-dbbf52c06209&textureSize=512&morphs=arkit52&draco=1'
+  'https://three.ws/api/avatar/optimize?id=13f259c7-7024-4d68-b1f0-dbbf52c06209&textureSize=512&morphs=arkit52'
 
 # By source URL, LOD 1
 curl -sL -o lite.glb \
   'https://three.ws/api/avatar/optimize?src=https%3A%2F%2Fthree.ws%2Favatars%2Fcesium-man.glb&lod=1'
+
+# Add Draco geometry compression. Smaller bytes, but the client then needs a
+# Draco decoder, so only add it when you know the consumer has one.
+curl -sL -o mobile-draco.glb \
+  'https://three.ws/api/avatar/optimize?id=13f259c7-7024-4d68-b1f0-dbbf52c06209&textureSize=512&draco=1'
 ```
+
+If `draco=1` comes back `500 transcode_failed` with `draco.createCompressedPrimitive is not a function`, that is a server-side codec problem and not something wrong with your request: the running image resolved an older glTF-transform than the one this repo pins, whose Draco writer expects a different encoder interface. Every other parameter still works, so drop `draco=1` to get your model now. A rebuild picks up the pinned version and restores it.
 
 ---
 

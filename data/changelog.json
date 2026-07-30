@@ -17118,15 +17118,6 @@
 				"docs"
 			],
 			"link": "/docs/world-lines"
-		},
-		{
-			"date": "2026-07-30",
-			"title": "Three new step-by-step tutorials",
-			"summary": "Follow-along guides for three things people kept having to work out from reference docs. Give an agent a spending envelope walks from a credit deposit to a real settled payment and back to a refund, with every amount kept tiny and a free wiring test before any money moves. Render avatar images shows how to put a live 3D character's picture on any page or social card without running a 3D engine. And the character library guide goes from browsing 107 free rigged characters to one animating on your own site, with a gesture wired to a button.",
-			"tags": [
-				"docs"
-			],
-			"link": "/docs/tutorials/agent-spending-envelope"
 		}
 	]
 }

@@ -1,11 +1,41 @@
 {
-	"generated_at": "2026-07-30T05:18:51.563Z",
+	"generated_at": "2026-07-30T05:23:51.627Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Tutorial · Character Library to a Live Embed",
+			"summary": "Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.",
+			"link": "/tutorials/character-library-to-embed",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Tutorial · Give an Agent a Spending Envelope",
+			"summary": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",
+			"link": "/tutorials/agent-spending-envelope",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Tutorial · Render Avatars as Images",
+			"summary": "Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.",
+			"link": "/tutorials/render-avatar-images",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-30",
 			"type": "update",
@@ -307,16 +337,6 @@
 			"tags": [
 				"infra",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-07-30",
-			"type": "update",
-			"title": "Three new step-by-step tutorials",
-			"summary": "Follow-along guides for three things people kept having to work out from reference docs. Give an agent a spending envelope walks from a credit deposit to a real settled payment and back to a refund, with every amount kept tiny and a free wiring test before any money moves. Render avatar images shows how to put a live 3D character's picture on any page or social card without running a 3D engine. And the character library guide goes from browsing 107 free rigged characters to one animating on your own site, with a gesture wired to a button.",
-			"link": "/docs/tutorials/agent-spending-envelope",
-			"tags": [
-				"docs"
 			]
 		},
 		{
