@@ -453,5 +453,20 @@
 		"pattern": "Avaturn",
 		"file": "docs/tutorials/explore-docs-world.md",
 		"reason": "Names the upstream rig conventions whose bone names are mapped automatically, same scope as the docs/animations.md exemption."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/tutorials/ship-an-avatar-manifest.md",
+		"reason": "Names the upstream rig conventions whose bone names are recognized for retargeting, and the literal `--skeleton` enum values the manifest accepts; same scope as the docs/animations.md and avatar-cli exemptions."
+	},
+	{
+		"pattern": "avaturn",
+		"file": "docs/tutorials/ship-an-avatar-manifest.md",
+		"reason": "Lowercase form is a literal accepted value of the manifest's `skeleton` field, so the tutorial has to name it exactly."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "docs/tutorials/ship-an-avatar-manifest.md",
+		"reason": "Same rig-convention list: identifies an upstream skeleton whose bone names the retargeter recognizes, not a product recommendation."
 	}
 ]
