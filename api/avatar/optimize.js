@@ -62,7 +62,7 @@ const SOURCE_FETCH_TIMEOUT_MS = 30_000;
  *
  * @throws {Error & { code: 'too_large' }} once the cap is exceeded
  */
-async function readCapped(upstream, cap, abort) {
+export async function readCapped(upstream, cap, abort) {
 	if (!upstream.body) {
 		// No stream available (a mocked or already-buffered response): fall back to
 		// buffering, then apply the same cap so the limit still holds.
