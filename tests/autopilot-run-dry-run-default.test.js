@@ -78,7 +78,7 @@ beforeEach(async () => {
 	handler = (await import('../api/agents/autopilot.js')).default;
 });
 
-describe('POST /autopilot/run — dry_run default', () => {
+describe('POST /autopilot/run: dry_run default', () => {
 	it('simulates when the body omits dry_run entirely', async () => {
 		await handler(makeReq({}), makeRes(), AGENT_ID, 'run');
 

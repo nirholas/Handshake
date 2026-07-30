@@ -123,7 +123,7 @@ export const CLIP_CATEGORIES = Object.freeze({
 	sitidle: 'sit',
 	sitclap: 'sit',
 	sitlaugh: 'sit',
-	// Props & objects — the avatar handles something rather than fighting
+	// Props & objects: the avatar handles something rather than fighting
 	'av-push-block': 'interaction',
 	removing: 'interaction',
 	'torch-light': 'interaction',

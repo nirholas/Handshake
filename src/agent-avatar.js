@@ -724,7 +724,7 @@ export class AgentAvatar {
 		// Skills declare a hint, not a clip name (`animationHint: 'inspect'`).
 		// Feeding the raw hint to _triggerOneShot only ever matched a clip
 		// embedded in the GLB, so the two most common hints in the whole skill
-		// catalog — `inspect` and `gesture` — silently no-op'd on every
+		// catalog (`inspect` and `gesture`) silently no-op'd on every
 		// library-driven avatar. Route hints through the slot vocabulary
 		// instead: it resolves to a baked clip and honours agent overrides.
 		const slot = resolveHint(action.payload?.animationHint);
