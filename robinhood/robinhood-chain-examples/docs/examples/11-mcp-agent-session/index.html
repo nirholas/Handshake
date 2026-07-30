@@ -5,23 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MCP agent session · Robinhood Chain Examples</title>
     <meta name="description" content="Model Context Protocol" />
-    <link rel="stylesheet" href="../style.css" />
-    <link rel="stylesheet" href="../hljs-theme.css" />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../../hljs-theme.css" />
   </head>
   <body>
     <div class="topbar">
-      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="brand" href="../../index.html">Robinhood Chain Examples</a>
       <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
     </div>
     <div class="wrap"><div class="readme"><h1>11 · MCP agent session</h1>
 <p>Every other example here imports <code>hoodchain</code> and calls it directly. An LLM
 agent cannot do that: it only reaches the world through tools its host has
-been given. <a href="https://www.npmjs.com/package/hood-mcp"><code>hood-mcp</code></a> is the bridge</p>
-<ul>
-<li>a Model Context Protocol server that exposes Robinhood Chain reads as
-protocol tools, so Claude Code, Claude Desktop, Cursor, or any MCP host can
-answer &quot;what is AAPL worth on Robinhood Chain?&quot; without a line of chain code.</li>
-</ul>
+been given. <a href="https://www.npmjs.com/package/hood-mcp"><code>hood-mcp</code></a> is the bridge:
+a Model Context Protocol server that exposes Robinhood Chain reads as protocol
+tools, so Claude Code, Claude Desktop, Cursor, or any MCP host can answer
+&quot;what is AAPL worth on Robinhood Chain?&quot; without a line of chain code.</p>
 <p>This example is the client half of that conversation, written longhand: it
 spawns the real <code>hood-mcp</code> data server over stdio, completes the MCP
 initialize handshake, lists the tools the server advertises, then calls three

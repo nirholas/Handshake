@@ -5,33 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Launch a coin (testnet) · Robinhood Chain Examples</title>
     <meta name="description" content="Launchpad direct rail" />
-    <link rel="stylesheet" href="../style.css" />
-    <link rel="stylesheet" href="../hljs-theme.css" />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../../hljs-theme.css" />
   </head>
   <body>
     <div class="topbar">
-      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="brand" href="../../index.html">Robinhood Chain Examples</a>
       <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
     </div>
-    <div class="wrap"><div class="readme"><h1>13 · Launch a coin (testnet) — blocked on siblings</h1>
-<p><strong>Status: not built.</strong> This example is supposed to launch a memecoin on
-Robinhood Chain testnet (46630) via <code>hood-launcher</code>&#39;s direct rail. That
-package doesn&#39;t exist yet in the <code>robinhood/</code> workspace — see the root
-README&#39;s SDK feedback for the full picture of what&#39;s shipped vs. pending.</p>
-<h2>What&#39;s missing</h2>
-<p><strong><code>hood-launcher</code></strong> — a launch client for NOXA and The Odyssey (prompt 08 in
-<code>prompts/robinhood-chain/</code>), wrapping the raw factory calldata documented in
-<code>hoodchain</code>&#39;s <code>launchpads.ts</code> (<code>NOXA_ADDRESSES.launchFactory</code>,
-<code>ODYSSEY_ADDRESSES.bondingCurveFactory</code>) into a single <code>launch({ name, symbol, initialBuy })</code> call.</p>
-<h2>What this example will do once it exists</h2>
-<pre><code class="hljs language-bash">ROBINHOOD_CHAIN_PRIVATE_KEY=0x... node index.js --name <span class="hljs-string">&quot;Test Coin&quot;</span> --symbol TEST
-</code></pre><p>launching a real token on testnet 46630 from faucet-funded ETH, printing the
-new token address, the launch tx hash, and an explorer link — the same
-funded-key pattern as <a href="../04-swap-memecoin">example 04</a>.</p>
-<h2>Owner action</h2>
-<p>Build <code>hood-launcher</code> (prompt 08), then this example becomes a real testnet
-launch script. Note the faucet is currently owner-blocked (Turnstile + Google
-Sign-In gate) independent of this — see example 04&#39;s README for that detail.</p>
+    <div class="wrap"><div class="readme"><h1>13 · Launch a coin (testnet)</h1>
+<p>Robinhood Chain has three ways to bring a token into the world: <strong>NOXA</strong> (one
+tx deploys the ERC-20, opens a Uniswap v3 pool, and locks the LP), <strong>The
+Odyssey</strong> (a native-ETH bonding curve that graduates to Uniswap), and a
+<strong>direct</strong> rail that deploys and seeds a Uniswap v3 pool yourself.
+<a href="https://www.npmjs.com/package/hood-launcher"><code>hood-launcher</code></a> puts all three
+behind one call.</p>
+<p>This example walks the whole pipeline for a single coin: build and screen the
+concept, run the rail&#39;s on-chain preflight, print exactly what the launch will
+cost and what it will send, then stop (dry run, the default) or broadcast.</p>
+<p><strong>What it proves:</strong> a launch is a pipeline, not a transaction. Content
+screening, ticker uniqueness, artwork, spend caps, and a rail preflight all
+have to pass before any ETH moves, and every one of those checks is a real
+read against the live chain.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20.</li>
+<li><strong>No wallet or key for the dry run.</strong> Preflight is read-only.</li>
+<li>Broadcasting needs a testnet-funded key. The public faucet is behind a
+Turnstile + Google Sign-In gate, so it cannot be scripted; fund a throwaway
+key by hand first. This is the same funding gate as
+<a href="../04-swap-memecoin">example 04</a>.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install
+npm start                              <span class="hljs-comment"># dry run on the direct rail</span>
+node index.js --symbol MYCOIN          <span class="hljs-comment"># pin your own ticker</span>
+node index.js --rail noxa              <span class="hljs-comment"># ask a mainnet-only rail what it thinks</span>
+node index.js --generate-logo          <span class="hljs-comment"># generate a real 3D GLB logo first (slow)</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>1 - Operator config
+  network    testnet  (chain 46630)
+  signer     none, reads only
+  live flag  unset
+  mode       dry run (no broadcast)
+
+2 - Coin
+  name       Example Coin
+  symbol     EXZJJ
+  rail       direct
+  initialBuy 0.001 ETH
+  logo       https://three.ws/models/demo-avatar.glb
+
+3 - Preflight (a real read against the live factory)
+  rail         direct on testnet
+  protocol fee 0 ETH
+  tx value     0.001 ETH  (fee + initial buy)
+  pairs with   0x7943e237c7F95DA44E0301572D358911207852Fa
+  ready        no
+    blocker: No signer configured, direct rail requires a wallet account.
+
+4 - Result
+  Dry run: nothing was broadcast. The numbers above are what the
+  launch would cost right now, read from the live contracts.
+</code></pre><p>One blocker, and it is the honest one: no key is configured, so nothing can be
+signed. Everything else already passed against the real chain, including the
+WETH pair token the pool would use.</p>
+<h2>Which rail works on testnet</h2>
+<p>Only <code>direct</code>. Ask the others and preflight says so itself:</p>
+<pre><code>$ node index.js --rail noxa
+    blocker: NOXA only operates on mainnet 4663, no testnet deployment exists.
+
+$ node index.js --rail odyssey
+    blocker: The Odyssey only operates on mainnet 4663, no testnet deployment exists.
+</code></pre><p>That is not a limitation of this example. Both launchpads are mainnet-only
+contracts, and the launcher reads their deployment state rather than assuming
+it, so you find out in a free dry run instead of a reverted transaction.</p>
+<h2>Launching for real</h2>
+<pre><code class="hljs language-bash">LIVE=1 ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1 \
+  ROBINHOOD_CHAIN_PRIVATE_KEY=0x... node index.js --send
+</code></pre><p>Three separate gates, all deliberate: <code>LIVE=1</code> arms the launcher,
+<code>ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1</code> records that a human owns what gets
+deployed, and <code>--send</code> is the per-run confirmation. Spend caps
+(<code>MAX_LAUNCHES_PER_DAY</code>, <code>MAX_SEED_USDG</code>) are enforced on top of those, and a
+kill switch on disk can stop everything. A launch that clears all of that
+prints the token address, the tx hash, the pool, and an explorer link.</p>
+<h2>The safety rails are real, and you will hit them</h2>
+<p>Two of them fired while this example was being written, both correctly:</p>
+<ul>
+<li><strong>Content screening.</strong> An early draft described the coin using a brand term
+and the launcher refused to price it: <code>Concept rejected (description): contains denylisted term</code>.</li>
+<li><strong>Ticker uniqueness.</strong> The first hardcoded default collided with a token
+that already exists on testnet, so the default is now randomised: <code>Ticker &quot;EXMPL&quot; is already taken (testnet token 0x021b0a28...)</code>.</li>
+</ul>
+<p>Both are on-chain or policy reads that happen before any spend. That is the
+point of a preflight.</p>
 <hr>
 <p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
 </div></div>

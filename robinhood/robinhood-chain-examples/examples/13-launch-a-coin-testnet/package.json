@@ -1,0 +1,16 @@
+{
+  "name": "rh-example-13-launch-a-coin-testnet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Launch a memecoin on Robinhood Chain testnet through hood-launcher: concept, live preflight, then a real broadcast when a funded key is present.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "hood-launcher": "^0.1.0"
+  }
+}

@@ -2,10 +2,10 @@
 
 Every other example here imports `hoodchain` and calls it directly. An LLM
 agent cannot do that: it only reaches the world through tools its host has
-been given. [`hood-mcp`](https://www.npmjs.com/package/hood-mcp) is the bridge
- - a Model Context Protocol server that exposes Robinhood Chain reads as
-protocol tools, so Claude Code, Claude Desktop, Cursor, or any MCP host can
-answer "what is AAPL worth on Robinhood Chain?" without a line of chain code.
+been given. [`hood-mcp`](https://www.npmjs.com/package/hood-mcp) is the bridge:
+a Model Context Protocol server that exposes Robinhood Chain reads as protocol
+tools, so Claude Code, Claude Desktop, Cursor, or any MCP host can answer
+"what is AAPL worth on Robinhood Chain?" without a line of chain code.
 
 This example is the client half of that conversation, written longhand: it
 spawns the real `hood-mcp` data server over stdio, completes the MCP

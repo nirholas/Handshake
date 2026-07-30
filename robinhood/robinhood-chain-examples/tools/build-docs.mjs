@@ -30,6 +30,11 @@ const marked = new Marked(
   }),
 )
 
+// Example pages are written two levels deep (docs/examples/<id>/index.html),
+// so their path back to the docs root is `../../`, not `../`. Getting this
+// wrong loads no stylesheet at all and the page renders unstyled.
+const rootPrefix = (active) => (active === 'home' ? '' : '../../')
+
 const page = ({ title, description, active, body }) => `<!doctype html>
 <html lang="en">
   <head>
@@ -37,12 +42,12 @@ const page = ({ title, description, active, body }) => `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${title} · Robinhood Chain Examples</title>
     <meta name="description" content="${description}" />
-    <link rel="stylesheet" href="${active === 'home' ? '' : '../'}style.css" />
-    <link rel="stylesheet" href="${active === 'home' ? '' : '../'}hljs-theme.css" />
+    <link rel="stylesheet" href="${rootPrefix(active)}style.css" />
+    <link rel="stylesheet" href="${rootPrefix(active)}hljs-theme.css" />
   </head>
   <body>
     <div class="topbar">
-      <a class="brand" href="${active === 'home' ? '.' : '..'}/index.html">Robinhood Chain Examples</a>
+      <a class="brand" href="${rootPrefix(active) || './'}index.html">Robinhood Chain Examples</a>
       <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
     </div>
     <div class="wrap">${body}</div>
