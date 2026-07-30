@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T19:23:26.058Z",
+	"generated_at": "2026-07-30T22:36:11.137Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -146,6 +146,17 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Documented the quality bar for models the platform adds to its own catalog",
+			"summary": "The platform generates and publishes 3D models into the public character and object catalogs on its own. Every one of them passes an automated quality check first, and that check now has a written explanation: what it measures, why a model gets turned away, and why rejected models are kept rather than deleted so the bar can be tuned against real failures. The check also gained a full test suite covering each way a model can fail.",
+			"link": "/docs/seed-quality",
+			"tags": [
+				"docs",
+				"improvement"
 			]
 		},
 		{
