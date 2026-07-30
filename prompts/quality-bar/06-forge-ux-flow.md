@@ -27,6 +27,17 @@ is about the experience wrapped around it.
 4. **History and comparison.** A signed-in user's generations persist (check the existing
    storage; wire if half-built). Side-by-side compare two generations of the same prompt
    (engine A vs engine B), which also showcases the engine-switch feature.
+   **DONE 2026-07-30.** History already persisted; the compare half shipped in
+   `src/forge-compare.js` (compare mode over the gallery, two-pane viewer, orbit
+   synced but radius kept per model since generations differ in scale, and a
+   same-prompt hint that fires only on a genuine two-engine A/B). Covered by
+   `tests/forge-compare.test.js`, documented in `docs/forge.md`, verified in a
+   real browser at 320/768/1440 with no console errors. Task 5's "6 starters"
+   was already satisfied (six chips in `pages/forge.html`), so both gaps this
+   work order still carried are now closed. What keeps it open: the definition
+   of done below also asks for every result-moment action clicked through to its
+   destination and `npm run audit:web` clean on /forge, neither of which this
+   session ran.
 5. **Prompt help.** Subtle prompt-improvement affordance: show the director's enhanced prompt
    after generation ("what we actually asked the model"), one-click "try a variation". Good
    empty state: 6 curated example prompts with thumbnails that users can fire instantly.

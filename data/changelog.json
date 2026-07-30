@@ -3,6 +3,37 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Your agent's gestures now work, and you can choose them",
+			"summary": "Every agent has a fixed set of gestures it plays on its own: a nod when its body finishes loading, a look down while it reads on-chain data, a celebration when a payment settles. Several of those were pointing at the wrong motion, and the two most common ones, the gesture for reading data and the gesture for acting on it, were playing nothing at all across 38 of the skills that ask for them. Both are fixed, and five gestures that had been borrowing a stand-in clip (wave, nod, point, think and shrug) now play the real thing. A new page at three.ws/gestures shows the whole vocabulary on a live avatar: click a gesture to watch it, see which skills trigger it, and pick a different clip for any of them. That choice used to be documented but impossible to make, since nothing could save it and nothing read it back. Now the agent editor has a Gesture slots section, the API accepts the map, and an embedded avatar plays your agent's own body language instead of the defaults. Ten gallery posters that had rendered blank, and eight clips that never got one, were rendered too.",
+			"tags": [
+				"feature",
+				"fix",
+				"improvement"
+			],
+			"link": "/gestures"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Every guide and tutorial we have written is now reachable from the menus",
+			"summary": "Documentation had been landing faster than the navigation that points at it, so a number of finished guides were live but effectively invisible: you could read them only if you already knew the address. Eleven guides, including the whole AWS set, the repository guards reference and the trading swarms writeup, now appear in the docs sidebar, which also means they appear as pages you can walk to in the 3D docs world. Several tutorials that were missing from the tutorial library have been added to it, and one tutorial button that led nowhere now opens the page it promised. Checks now run automatically so a new guide cannot ship without a way to find it.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/docs"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The 3D docs world reads correctly on phones and at first glance",
+			"summary": "Three things were getting in the way of the walkable documentation the moment it loaded. The welcome sign in the middle of the plaza was split down the middle by the post it hung on, so the title read as broken text. Each pavilion's page count sat behind its glowing ring and could not be read, so you could not tell how big a section was before walking to it. On a phone held upright the welcome sign ran off the left edge of the screen entirely. All three are fixed, and the signpost no longer stands through your avatar.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/world"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Compare two generations of the same prompt side by side",
 			"summary": "The Forge lets you pick which engine builds your model, but until now the only way to judge that choice was to remember what the last one looked like. Once your gallery holds two models, a Compare control appears above it: turn it on, pick any two, and they open in two viewers side by side, each labelled with the engine and quality tier that produced it. Turning one model turns the other, so a difference in shape reads as a difference in shape rather than a difference in camera angle. Only the viewing angle is shared, never the zoom, because two versions of one prompt often differ in size and each needs its own framing distance to stay in view. If you have run the same prompt on two different engines, a note above the gallery points that pair out, since that is the comparison actually worth making.",
 			"tags": [

@@ -503,6 +503,14 @@
 			<description>Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names. The agent card other agents read to discover our 3D skills got the same fix, with each example naming a model that actually produces the result it advertises, including one that genuinely returns compression suggestions.</description>
 		</item>
 		<item>
+			<title>Every guide and tutorial we have written is now reachable from the menus</title>
+			<link>https://three.ws/docs</link>
+			<guid isPermaLink="false">2026-07-30:Every guide and tutorial we have written is now reachable from the menus</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Documentation had been landing faster than the navigation that points at it, so a number of finished guides were live but effectively invisible: you could read them only if you already knew the address. Eleven guides, including the whole AWS set, the repository guards reference and the trading swarms writeup, now appear in the docs sidebar, which also means they appear as pages you can walk to in the 3D docs world. Several tutorials that were missing from the tutorial library have been added to it, and one tutorial button that led nowhere now opens the page it promised. Checks now run automatically so a new guide cannot ship without a way to find it.</description>
+		</item>
+		<item>
 			<title>Every MCP tool's safety label is now verified, not just asserted</title>
 			<link>https://three.ws/docs/mcp</link>
 			<guid isPermaLink="false">2026-07-30:Every MCP tool's safety label is now verified, not just asserted</guid>
@@ -687,6 +695,14 @@
 			<description>Everything on the platform that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) goes through a chain of RPC providers, tried in order. All four of our paid providers hit their limits on the same day, so every read started by failing over to a free node before it could succeed. The primary now points at a healthy node directly. The health monitor was also counting whichever node we point at as paid capacity, which meant switching to a free node during an outage would have made the monitor report the paid tier as healthy at the exact moment all of it was down. It now judges a lane by the provider it belongs to, so an exhausted paid tier is always visible on the status page.</description>
 		</item>
 		<item>
+			<title>The 3D docs world reads correctly on phones and at first glance</title>
+			<link>https://three.ws/docs/world</link>
+			<guid isPermaLink="false">2026-07-30:The 3D docs world reads correctly on phones and at first glance</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three things were getting in the way of the walkable documentation the moment it loaded. The welcome sign in the middle of the plaza was split down the middle by the post it hung on, so the title read as broken text. Each pavilion's page count sat behind its glowing ring and could not be read, so you could not tell how big a section was before walking to it. On a phone held upright the welcome sign ran off the left edge of the screen entirely. All three are fixed, and the signpost no longer stands through your avatar.</description>
+		</item>
+		<item>
 			<title>The 3D docs world recovers instead of stranding you</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:The 3D docs world recovers instead of stranding you</guid>
@@ -845,6 +861,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Two new reference guides. World Lines explains how walking to an agent's real-world spot earns an agent-signed proof of presence, how your location is proven, why nothing finer than a roughly 1 km area is ever stored, and how anyone can re-check a proof themselves. The Walk Leaderboard doc explains exactly what distance, sites, and time measure, how a walk session is counted, and what each guard can and cannot prove.</description>
+		</item>
+		<item>
+			<title>Your agent's gestures now work, and you can choose them</title>
+			<link>https://three.ws/gestures</link>
+			<guid isPermaLink="false">2026-07-30:Your agent's gestures now work, and you can choose them</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every agent has a fixed set of gestures it plays on its own: a nod when its body finishes loading, a look down while it reads on-chain data, a celebration when a payment settles. Several of those were pointing at the wrong motion, and the two most common ones, the gesture for reading data and the gesture for acting on it, were playing nothing at all across 38 of the skills that ask for them. Both are fixed, and five gestures that had been borrowing a stand-in clip (wave, nod, point, think and shrug) now play the real thing. A new page at three.ws/gestures shows the whole vocabulary on a live avatar: click a gesture to watch it, see which skills trigger it, and pick a different clip for any of them. That choice used to be documented but impossible to make, since nothing could save it and nothing read it back. Now the agent editor has a Gesture slots section, the API accepts the map, and an embedded avatar plays your agent's own body language instead of the defaults. Ten gallery posters that had rendered blank, and eight clips that never got one, were rendered too.</description>
 		</item>
 		<item>
 			<title>Your agent's treasury now has a preview button, and a bare request can no longer spend</title>

@@ -109,6 +109,11 @@ function makeLabelTexture(title, sub, colorHex) {
 
 // Base footprint of the central welcome sign, in world units, before resize()
 // fits it to the viewport's horizontal field of view.
+// Pavilion sign height. The portal ring crowns at 3.425 (y 1.9 + radius 1.45 +
+// tube 0.075) and the label sprite is 2 units tall, so anything below 4.43 is
+// overlapped by the ring.
+const LABEL_Y = 4.75;
+
 const BEACON_LABEL_SCALE = 0.8;
 const BEACON_LABEL_W = 6.4 * BEACON_LABEL_SCALE;
 const BEACON_LABEL_H = 2 * BEACON_LABEL_SCALE;
@@ -282,7 +287,12 @@ function buildPavilion(section, index, count) {
 		pageCount === 1 ? '1 page' : pageCount + ' pages',
 		hex,
 	);
-	label.position.y = 3.6;
+	// Clear of the portal ring's crown (1.9 + 1.45 + 0.075) plus the sprite's own
+	// half-height: at 3.6 the ring cut straight across the "N pages" line from
+	// every angle, because sprite and torus share the pavilion's axis and so sit
+	// at the same depth. Height is the only separation that holds as the camera
+	// orbits.
+	label.position.y = LABEL_Y;
 	group.add(label);
 
 	return { group, portal, shimmer, label, angle, color, hex, section, index };
@@ -340,8 +350,13 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 	// Central beacon: a slim monolith marking spawn, labelled with the surface
 	// name so a shared screenshot explains itself.
 	const beacon = new Group();
+	// Height stops below the sign that hangs on it (bottom edge y 1.6). At 3.4 the
+	// post ran the full height of the sign and, sharing its axis, split the title
+	// down the middle from every camera angle: the first thing a visitor saw read
+	// "three.ws ocs World". Shortening the post moves nothing else; the sign keeps
+	// the screen position tuned below.
 	const pillar = new Mesh(
-		new CylinderGeometry(0.16, 0.28, 3.4, 10),
+		new CylinderGeometry(0.16, 0.28, 1.5, 10),
 		new MeshStandardMaterial({
 			color: 0x191828,
 			roughness: 0.35,
@@ -350,7 +365,7 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 			emissiveIntensity: 0.7,
 		}),
 	);
-	pillar.position.y = 1.7;
+	pillar.position.y = 0.75;
 	beacon.add(pillar);
 	const beaconLabel = makeLabelSprite(
 		'three.ws Docs World',
@@ -415,7 +430,7 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 		t += dt;
 		for (const p of pavilions) {
 			p.shimmer.rotation.z += dt * 0.35;
-			p.label.position.y = 3.6 + Math.sin(t * 0.9 + p.index) * 0.07;
+			p.label.position.y = LABEL_Y + Math.sin(t * 0.9 + p.index) * 0.07;
 			p.portal.material.emissiveIntensity = 1.1 + Math.sin(t * 1.6 + p.index * 2) * 0.25;
 		}
 		stars.rotation.y += dt * 0.004;

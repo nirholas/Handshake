@@ -82,13 +82,14 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 	// Facing -z, matching the camera's spawn yaw of PI (controls.js), so the
 	// first view reads avatar → plaza → pavilion ring.
 	//
-	// The x offset matters as much as the z one. The camera spawns directly
-	// behind the player looking down -z, so a purely-z offset leaves the player,
-	// the beacon and the far ring collinear: the 3.4m pillar sits 3m from the
-	// lens while the pavilions are 24m out, so it reads as a slab impaling the
-	// avatar and its welcome sign covers the pavilion labels behind it. Standing
-	// the player to one side puts the beacon beside them instead of through them.
-	root.position.set(2.4, 0, 3.4);
+	// The x offset is bounded on both sides, which is why it is this exact value.
+	// Too small and the beacon post stands directly behind the avatar (the camera
+	// spawns on the same axis), so it reads as a spike through their head. Too
+	// large and it pushes the welcome sign toward the frame edge: horizontal FOV
+	// shrinks with the aspect ratio, so on a portrait phone the sign spans ~0.47
+	// of NDC width on its own and an offset past ~1.5m clips it off the left.
+	// 1.2m clears the avatar and still leaves the sign fully framed at 390px.
+	root.position.set(1.2, 0, 3.4);
 	root.rotation.y = Math.PI;
 	scene.add(root);
 
