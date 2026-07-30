@@ -154,7 +154,12 @@ function collectObservations(budgetMs) {
 					sigs: new Set(msg.signature ? [msg.signature] : []),
 				};
 				observations.set(mint, obs);
-				send({ method: 'subscribeTokenTrade', keys: [mint] });
+				// No per-mint trade subscription here: PumpPortal gates
+				// subscribeTokenTrade behind an API key and refuses it on every new
+				// mint ("only available when connecting with an API key"), so the call
+				// was a guaranteed failure per launch. Trades already arrive through
+				// the keyless on-chain firehose subscribed above, which feeds the same
+				// recordTrade.
 				metaPending.push(fetchMeta(obs.meta.uri).then((m) => { if (m) Object.assign(obs.meta, m); }).catch(() => {}));
 			} else if (msg.txType === 'buy' || msg.txType === 'sell') {
 				recordTrade(msg);

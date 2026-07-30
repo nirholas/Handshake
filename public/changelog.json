@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:00:04.686Z",
+	"generated_at": "2026-07-30T05:03:18.790Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -266,6 +266,16 @@
 			"link": null,
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The seeded payment feed now lands every payment instead of one in forty",
+			"summary": "The job that sends small real payments through the platform to keep the public payment feed live was building every payment in a batch identically. Because a payment is identified by its own contents, all of them looked like a single repeated payment: one went through and the rest were rejected as duplicates, and any that slipped past were refused on-chain. About one in forty actually landed, so the feed showed a fraction of the activity it was meant to, and the rejections were the largest single source of errors in production. Each payment in a batch is now distinct, and the pump.fun launch watcher stopped making a per-launch request to a data feed that always refused it.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

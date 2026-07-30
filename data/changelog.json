@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "The seeded payment feed now lands every payment instead of one in forty",
+			"summary": "The job that sends small real payments through the platform to keep the public payment feed live was building every payment in a batch identically. Because a payment is identified by its own contents, all of them looked like a single repeated payment: one went through and the rest were rejected as duplicates, and any that slipped past were refused on-chain. About one in forty actually landed, so the feed showed a fraction of the activity it was meant to, and the rejections were the largest single source of errors in production. Each payment in a batch is now distinct, and the pump.fun launch watcher stopped making a per-launch request to a data feed that always refused it.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Our AWS Builder Center articles are now linked from the site and the docs",
 			"summary": "three.ws has published two engineering deep dives on Amazon's official AWS Builder Center, and until now nothing on the site pointed at either of them. Both are now linked from the AWS partner page, indexed in the docs with a note on exactly which open-source code each one walks through, and announced in the news feed with working links to the live articles. The news feed also stopped mislabelling articles published elsewhere as posts from X, so every piece is now credited to the place it actually appeared.",
 			"tags": [

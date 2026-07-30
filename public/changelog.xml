@@ -207,6 +207,14 @@
 			<description>Our README had grown to cover almost a hundred topics, but in an order that made it hard to use: anyone who came to build had to scroll past the long-term vision, the roadmap, and our marketplace and partner listings before reaching install instructions. It now follows the order a reader actually needs. What three.ws is, what it looks like, then how to run it, then the architecture, the individual systems, the developer platform, and the on-chain and payment rails, with the vision and roadmap sitting together further down next to the phased projects they describe. Nothing was removed or reworded, only moved. The table of contents also had an entry for the in-game economy that pointed nowhere, because the section had been dropped from the file a while back; that documentation is written again and now covers the cash purse, the general store, the bank, the $THREE cosmetics boutique, and the wheel of fortune.</description>
 		</item>
 		<item>
+			<title>The seeded payment feed now lands every payment instead of one in forty</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The seeded payment feed now lands every payment instead of one in forty</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The job that sends small real payments through the platform to keep the public payment feed live was building every payment in a batch identically. Because a payment is identified by its own contents, all of them looked like a single repeated payment: one went through and the rest were rejected as duplicates, and any that slipped past were refused on-chain. About one in forty actually landed, so the feed showed a fraction of the activity it was meant to, and the rejections were the largest single source of errors in production. Each payment in a batch is now distinct, and the pump.fun launch watcher stopped making a per-launch request to a data feed that always refused it.</description>
+		</item>
+		<item>
 			<title>The three.ws user group on IBM Community is now linked from the docs</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:The three.ws user group on IBM Community is now linked from the docs</guid>
