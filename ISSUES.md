@@ -51,11 +51,19 @@ this repo:
    `429 Monthly capacity limit exceeded` (they share one account quota, so the
    second is not a spare). The dead Alchemy endpoint was also pinned as
    `SOLANA_RPC_URL`, so every production Solana call began by failing over.
-   Mitigated in config on 2026-07-30 (revision `three-ws-api-00335-ncg`):
-   `SOLANA_RPC_URL` now points at `https://solana-rpc.publicnode.com`, with
-   Leo RPC and MagicBlock as `SOLANA_RPC_FALLBACK_URLS`. All three were burst-
-   probed 12/12 OK on `getBalance`, `getLatestBlockhash` and
-   `getSignatureStatuses`. The exhausted paid lanes stay in the chain and
+   Mitigated in config on 2026-07-30 (current revision `three-ws-api-00346-x9m`):
+   `SOLANA_RPC_URL` points at `https://rpc.magicblock.app/mainnet`, with
+   `api.mainnet-beta.solana.com`, PublicNode and Leo RPC as the fallbacks.
+   **Pick the primary by call SHAPE, not by a `getBalance` probe.** All the free
+   lanes pass `getBalance`, `getLatestBlockhash` and `getSignatureStatuses`
+   12/12, which makes them look interchangeable. They are not: on
+   `getTokenAccountsByOwner` filtered by `programId`, the call every token and
+   USDC balance reader makes constantly, PublicNode returns **HTTP 403
+   `blocked parameter: params.1.programId`** and Leo RPC returns `-32603`.
+   Only MagicBlock and `mainnet-beta` serve it, which is why they hold the top
+   two slots. Promoting PublicNode is actively harmful before commit `61f3ae758`
+   ships, because that 403 was sized as an auth failure and parked the whole
+   node for 30 minutes on ordinary traffic. The exhausted paid lanes stay in the chain and
    re-enter rotation on their own when quota resets (`QUOTA_COOLDOWN_MS` is 6h).
    The platform is therefore up but throttled, which shows up as intermittent
    5xx and slow settles. Action: top up or upgrade a plan, or cut call volume
