@@ -1954,6 +1954,14 @@
 					"description": "The wallet surface for your agents: balances, funding, and activity.",
 					"priority": 0.6,
 					"changefreq": "weekly"
+				},
+				{
+					"path": "/trading",
+					"title": "Autonomous Trading",
+					"description": "The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.",
+					"priority": 0.9,
+					"changefreq": "hourly",
+					"added": "2026-07-30"
 				}
 			]
 		},
@@ -2145,7 +2153,7 @@
 				},
 				{
 					"path": "/docs/trading-hub",
-					"title": "Docs \u00b7 The trading hub",
+					"title": "Docs · The trading hub",
 					"description": "The front door to the autonomous trading system: live fleet vitals read off the running bots, the strategy arena and experiments board, and the smart-money radar, with the twenty pages behind them organised into one path.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -3985,6 +3993,14 @@
 					"description": "Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.",
 					"priority": 0.8,
 					"changefreq": "weekly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/trading-experiment",
+					"title": "Docs · The 10 SOL trading experiment",
+					"description": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
+					"priority": 0.6,
+					"changefreq": "monthly",
 					"added": "2026-07-30"
 				}
 			]

@@ -81,7 +81,9 @@ async function boot() {
 	// ── Stage ────────────────────────────────────────────────────────────────
 	const mountStage = async () => {
 		stage?.dispose();
-		stage = new PoseStage(stageHost, { glbUrl: avatar.url });
+		// Portrait framing crops to the signing space: fingerspelling happens at
+		// jaw height, so a full-body shot would waste most of the frame on shoes.
+		stage = new PoseStage(stageHost, { glbUrl: avatar.url, framing: 'portrait' });
 		try {
 			const { supported } = await stage.mount();
 			stage.start();
@@ -123,15 +125,21 @@ async function boot() {
 		clearHighlights();
 		const marks = [];
 		let clip;
+		// One letter is a reference pose: it must stay up to be studied, so the
+		// hand does not settle back to rest at the end. A whole word does settle,
+		// the way a signer lowers their hand when the word is finished.
+		const single = letters.replace(/\s+/g, '').length === 1;
 		try {
-			clip = buildFingerspellingClip(letters, { ...scaledTiming(rate), dominant, marks });
+			clip = buildFingerspellingClip(letters, { ...scaledTiming(rate), dominant, marks, settle: !single });
 		} catch (err) {
 			setStatus(err?.message || 'Could not build that spelling.');
 			return null;
 		}
 		const name = `aa-${token}`;
 		stage.anim.injectClip(name, clip, { loop: false });
-		stage.anim.playOnce(name, {});
+		// A single letter holds its final frame so it can be studied and orbited;
+		// a word hands the avatar back to its idle when the spelling is done.
+		stage.anim.playOnce(name, single ? { settleTo: null } : {});
 
 		const startedAt = performance.now();
 		for (const mark of marks) {
@@ -378,7 +386,7 @@ async function boot() {
 		if (current) play(current, { describe: false });
 	});
 	buildOptions(
-		'#aa-hand',
+		'#aa-hand-opts',
 		[
 			{ label: 'Right-handed', side: 'Right' },
 			{ label: 'Left-handed', side: 'Left' },

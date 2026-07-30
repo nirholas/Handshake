@@ -172,23 +172,14 @@ here; the code-quality items from that pass are not production issues.
     whose Draco writer calls an encoder interface `draco3dgltf@1.5.7` does not
     expose. Every other `optimize` parameter returns a real GLB in production.
     Action: rebuild, and confirm the build installs from the lockfile rather
-    than resolving fresh. Two smaller defects on the same endpoint: it stalls
-    instead of returning `413` on an oversized `glbUrl`, and avatar
-    `13f259c7-…` has zero morph targets so `expression` is a silent no-op on it.
-10. **An empty POST to `/api/agents/:id/autopilot` spends real money.**
-    `autopilot.js` treats a missing `dry_run` as `false` (`body?.dry_run === true`)
-    and runs a real cycle, while the adjacent intents endpoint on the same wallet
-    treats a missing `dry_run` as `true` and simulates. Same verb, same wallet,
-    opposite default. Action: make the money-moving default the safe one.
-11. **The public marketplace GMV on `/pulse` counts confirmed trials.** In
-    `handleMarketplace()` the `purchases` count filters on `status='confirmed'
-    AND kind = ANY(MARKET_PAID_KINDS)`, but `gmv_atomic` and `fee_atomic` filter
-    on `status='confirmed'` alone, so a confirmed `trial` row with a non-zero
-    amount inflates published GMV and skews `avg_ticket_three` (a GMV over a
-    count that excluded it). Same asymmetry in `series_7d`, and `trials` has no
-    status filter at all while every sibling field is confirmed-only. This is a
-    number on a public transparency page.
-12. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (operator action:
+    than resolving fresh. One smaller defect remains on the same endpoint:
+    avatar `13f259c7-…` has zero morph targets, so `expression` is a silent
+    no-op on it. (The oversized-`glbUrl` stall listed here is fixed: the 50 MB
+    cap is now counted while streaming and aborts the transfer, so a chunked
+    source with no `content-length` returns `413` instead of being buffered in
+    full, and an unresponsive source times out as `504` rather than holding the
+    request open. Covered by `tests/avatar-optimize-source-cap.test.js`.)
+10. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (operator action:
     run the script). The script sets `AllowedOrigins: ['*']` for GET/HEAD, but
     the live policy still echoes only the old allowlist, so a third-party origin
     gets no `access-control-allow-origin`. Re-running it removes the need for the

@@ -100,7 +100,7 @@
 			.aa-keys-section h2 { font-size: clamp(20px, 2.2vw, 27px); letter-spacing: -.02em; margin: 0 0 8px; }
 			.aa-keys-section > p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 68ch; margin: 0 0 18px; }
 			.aa-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
-			.aa-keys.aa-keys-digits { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); margin-top: 14px; max-width: 640px; }
+			.aa-keys.aa-keys-digits { grid-template-columns: repeat(10, minmax(0, 1fr)); margin-top: 14px; max-width: 700px; }
 			.aa-key {
 				appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 20px;
 				aspect-ratio: 1 / 1; border-radius: 14px; color: var(--ink-dim);
@@ -172,6 +172,12 @@
 				.aa-hero { grid-template-columns: 1fr; }
 				.aa-grid { grid-template-columns: 1fr; }
 			}
+			@media (max-width: 620px) {
+				.aa-keys { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+				.aa-keys.aa-keys-digits { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+				.aa-key { font-size: 17px; border-radius: 12px; }
+				.aa-big { width: 62px; height: 62px; font-size: 44px; }
+			}
 		</style>
 	</head>
 	<body>
@@ -217,7 +223,7 @@
 						</div>
 						<div class="aa-setting">
 							<span class="aa-setting-label" id="aa-hand-label">Signing hand</span>
-							<div class="aa-opts" id="aa-hand" role="group" aria-labelledby="aa-hand-label"></div>
+							<div class="aa-opts" id="aa-hand-opts" role="group" aria-labelledby="aa-hand-label"></div>
 						</div>
 						<div class="aa-setting">
 							<span class="aa-setting-label" id="aa-rig-label">Avatar</span>

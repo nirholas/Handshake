@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Marketplace analytics no longer counts free trials as sales",
+			"summary": "The public marketplace analytics page was reporting more than ten thousand skill sales and millions of $THREE in volume when the marketplace had never completed a single paid sale. Every one of those was a free trial: the page counted a trial the same as a purchase, and summed the price the trial would have cost as though it had been paid. Sales, volume, revenue and buyer counts now count paid purchases only. Free trials are still shown, as their own figure and as a conversion funnel from trials granted through to trials that turned into a sale, so you can see how the marketplace is really doing instead of a number that flattered it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/marketplace/analytics"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "New tutorial: sell a skill with a free trial that converts",
+			"summary": "A step-by-step walkthrough of listing an agent skill for sale, attaching a metered free trial, and having that trial expire into a real on-chain purchase. It covers how to pick a trial length for different kinds of skills, and the one missing step that quietly makes a trialled skill impossible to ever sell.",
+			"tags": [
+				"docs"
+			],
+			"link": "/tutorials/sell-a-skill-with-a-trial"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Your agent's treasury now has a preview button, and a bare request can no longer spend",
 			"summary": "Running one treasury cycle by hand moves real funds out of your agent's wallet. The endpoint behind that button treated a request that said nothing about whether to simulate as permission to spend, while the sibling endpoint on the very same wallet treated the same silence as a request to simulate. Silence now always means simulate: spending has to ask for itself explicitly, so a forgotten flag, a repeated request, or a hand-written one previews instead of paying. The cockpit gained a Preview cycle button that shows exactly what the policy would do (would buy back, would sweep, would pay compute) while moving nothing, and Run one cycle now asks a second time before it spends, telling you plainly that real funds are about to move.",
 			"tags": [
@@ -17246,6 +17265,16 @@
 				"docs"
 			],
 			"link": "/docs/authentication"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Agents can now actually buy from the marketplace, and operators get an Economy Health dashboard",
+			"summary": "When one agent bought a skill or asset from another it first had to acquire $THREE, and it always bought the same tiny fixed amount no matter what the listing cost. Almost every listing was priced above what that bought, so purchases failed, retried on the next tick, and paid a real trading fee every time, which is why marketplace sales sat at zero. The purchase now prices the listing first, buys exactly what it needs, and declines up front (spending nothing) when a listing is beyond what the engine can fund that minute. Alongside it, a new operator dashboard reads the live economy and states in one line whether money is flowing and, if not, which link in the funding chain broke.",
+			"tags": [
+				"fix",
+				"feature",
+				"infra"
+			]
 		}
 	]
 }

@@ -399,30 +399,6 @@
 				{
 					"label": "Oracle (the conviction engine)",
 					"path": "oracle"
-				},
-				{
-					"label": "Meta-Allocator",
-					"path": "meta-allocator"
-				},
-				{
-					"label": "The three.ws launchpad",
-					"path": "native-launchpad"
-				},
-				{
-					"label": "Memetic Launcher",
-					"path": "memetic-launcher"
-				},
-				{
-					"label": "Repo to coin launcher",
-					"path": "pump-launch-repos"
-				},
-				{
-					"label": "Robinhood Chain markets",
-					"path": "robinhood-chain-markets"
-				},
-				{
-					"label": "The 10 SOL trading experiment",
-					"path": "trading-experiment"
 				}
 			]
 		},
@@ -505,10 +481,6 @@
 				{
 					"label": "The social layer",
 					"path": "social-layer"
-				},
-				{
-					"label": "Agora (agent + human economy)",
-					"path": "agora"
 				},
 				{
 					"label": "Trust primitives",
@@ -644,18 +616,6 @@
 					"path": "autonomous-economy"
 				},
 				{
-					"label": "Money map",
-					"path": "money-map"
-				},
-				{
-					"label": "Economy heartbeat",
-					"path": "economy-heartbeat"
-				},
-				{
-					"label": "The master wallet",
-					"path": "economy-master"
-				},
-				{
 					"label": "Closed-loop x402 ring economy",
 					"path": "x402-ring-economy"
 				},
@@ -666,10 +626,6 @@
 				{
 					"label": "Paid plans (USDC, SOL, $THREE)",
 					"path": "plan-checkout"
-				},
-				{
-					"label": "Paid API provider listing",
-					"path": "pay-skills-listing"
 				},
 				{
 					"label": "Vanity addresses",
@@ -686,10 +642,6 @@
 				{
 					"label": "Token-gated 3D embeds",
 					"path": "token-gated-3d-embeds"
-				},
-				{
-					"label": "Financial controls & audit",
-					"path": "financial-controls"
 				},
 				{
 					"label": "Real-funds risk acknowledgment",
@@ -897,10 +849,6 @@
 				{
 					"label": "Shared utilities",
 					"path": "shared-utilities"
-				},
-				{
-					"label": "Avatar CLI",
-					"path": "avatar-cli"
 				}
 			]
 		},
@@ -940,10 +888,6 @@
 					"path": "mcp-x402-bazaar"
 				},
 				{
-					"label": "MCP on the Cloudflare edge",
-					"path": "pump-fun-mcp-edge"
-				},
-				{
 					"label": "AR in ChatGPT",
 					"path": "chatgpt-ar"
 				},
@@ -952,20 +896,8 @@
 					"path": "chatgpt-3d-studio-gpt"
 				},
 				{
-					"label": "OKX.AI marketplace",
-					"path": "okx-marketplace"
-				},
-				{
-					"label": "BNB Chain world",
-					"path": "bnb-world"
-				},
-				{
 					"label": "Sketchfab showcase",
 					"path": "sketchfab"
-				},
-				{
-					"label": "News-feed syndication",
-					"path": "syndication"
 				},
 				{
 					"label": "NVIDIA Inception",
@@ -1055,6 +987,10 @@
 				{
 					"label": "Read a Solana agent's reputation",
 					"path": "tutorials/solana-agent-reputation"
+				},
+				{
+					"label": "Read the trading fleet",
+					"path": "tutorials/read-the-trading-fleet"
 				}
 			]
 		},
@@ -1120,14 +1056,6 @@
 				{
 					"label": "Publisher rights (news reader)",
 					"path": "news-rights"
-				},
-				{
-					"label": "Pump.fun platform fee",
-					"path": "pump-platform-fee"
-				},
-				{
-					"label": "Demo routes",
-					"path": "demo-routes"
 				}
 			]
 		}

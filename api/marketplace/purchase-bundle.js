@@ -187,14 +187,36 @@ async function handleConfirm(req, res, purchaseId) {
 	if (claimed.length === 0)
 		return error(res, 409, 'already_processed', 'purchase is no longer pending');
 
-	// Unlock every skill in the bundle — one row per skill.
+	// Unlock every skill in the bundle — one row per skill. hasSkillAccess() reads
+	// skill_purchases, so this row IS the unlock.
+	//
+	// Three column choices are load-bearing, and getting any of them wrong silently
+	// costs the buyer what they paid for:
+	//   reference     — NOT NULL and UNIQUE, so it is derived per skill. Omitting it
+	//                   made this insert throw 23502 for every bundle ever sold.
+	//   tx_signature  — UNIQUE, so it CANNOT be repeated across the bundle's skills:
+	//                   the second row would collide and ON CONFLICT DO NOTHING would
+	//                   swallow it, unlocking only the first skill. The settlement tx
+	//                   is recorded once on the bundle_purchases row above, which is
+	//                   where it belongs; these rows point back via `reference`.
+	//   amount/kind   — 0 and 'bundle'. The bundle's revenue is already counted once
+	//                   on bundle_purchases, so these access records stay out of the
+	//                   marketplace GMV and purchase counts on /pulse, which filter
+	//                   to paid kinds. Pricing them per skill would double-count the
+	//                   sale and report one bundle as N purchases.
+	//
+	// ON CONFLICT DO NOTHING remains correct: it now only absorbs the partial unique
+	// index on an already-owned skill, which is the buyer keeping access they have.
 	const skills = purchase.skills;
 	for (const skillName of skills) {
 		await sql`
 			INSERT INTO skill_purchases
-				(user_id, agent_id, skill, status, confirmed_at, tx_signature)
+				(user_id, agent_id, skill, status, kind, reference, amount,
+				 currency_mint, chain, confirmed_at)
 			VALUES
-				(${auth.userId}, ${purchase.agent_id}, ${skillName}, 'confirmed', now(), ${txSignature})
+				(${auth.userId}, ${purchase.agent_id}, ${skillName}, 'confirmed', 'bundle',
+				 ${`bundle_${purchaseId}_${skillName}`}, 0,
+				 ${purchase.currency_mint}, ${purchase.chain}, now())
 			ON CONFLICT DO NOTHING
 		`;
 	}

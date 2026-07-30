@@ -160,4 +160,38 @@ describe('designed states, not blank ones', () => {
 		const startHere = readFileSync(resolve(root, 'docs/start-here.md'), 'utf8');
 		expect(startHere).toContain('](./docs-world.md)');
 	});
+
+	it('offers retry for recoverable boot failures but not for a GPU-less device', () => {
+		// A dropped /docs/nav.json fetch, an exhausted WebGL context budget, and an
+		// unexpected boot throw are all cleared by a reload, so each must hand the
+		// visitor that action. isWebGLAvailable() failing is NOT: reloading cannot
+		// grow the device a GPU, and a button that reproduces the same dead end
+		// reads as a broken product rather than an honest limitation.
+		const shell = readFileSync(resolve(root, 'pages/docs-world.html'), 'utf8');
+		expect(shell).toContain('id="dw-fallback-retry"');
+
+		// Three recoverable branches: manifest fetch, renderer construction, and
+		// the boot catch-all. Each passes an options object, and every such call
+		// opts into retry.
+		// Lookbehind skips the `function showFallback({...})` declaration, which
+		// otherwise counts as a fourth "call".
+		const withOptions = (main.match(/(?<!function )showFallback\(\{/g) || []).length;
+		const withRetry = (main.match(/retry: true/g) || []).length;
+		expect(withOptions).toBe(3);
+		expect(withRetry).toBe(withOptions);
+
+		// The WebGL preflight branch calls showFallback with no argument, so it
+		// defaults to retry:false.
+		expect(main).toMatch(/if \(!isWebGLAvailable\(\)\) \{\s*showFallback\(\);/);
+		expect(main).toContain('retry = false');
+	});
+
+	it('reveals the fallback before focusing it, so the retry is keyboard-reachable', () => {
+		// focus() on a still-hidden element is a no-op, which would strand the
+		// keyboard on <body> with the only recovery action unreachable.
+		const revealIdx = main.indexOf("$('dw-fallback').hidden = false;");
+		const focusIdx = main.indexOf('retryBtn.focus(');
+		expect(revealIdx).toBeGreaterThan(-1);
+		expect(focusIdx).toBeGreaterThan(revealIdx);
+	});
 });

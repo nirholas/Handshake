@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Wallet sign-in · three.ws example</title>
+		<meta
+			name="description"
+			content="A runnable Sign-In with Solana (SIWS) and Sign-In with Ethereum (SIWE) demo against the three.ws auth API."
+		/>
+		<style>
+			/* Self-contained on purpose: this file runs with no build step and no
+			   stylesheet from the platform. Values mirror public/tokens.css so the
+			   demo looks native next to the rest of three.ws. */
+			:root {
+				--bg-0: #0a0a0a;
+				--bg-1: #1a1a1a;
+				--surface-1: rgba(255, 255, 255, 0.03);
+				--stroke: rgba(255, 255, 255, 0.08);
+				--stroke-strong: rgba(255, 255, 255, 0.14);
+				--ink: #e8e8e8;
+				--ink-bright: #ffffff;
+				--ink-dim: #888888;
+				--ink-faint: rgba(255, 255, 255, 0.55);
+				--ok: #4ade80;
+				--warn: #fbbf24;
+				--bad: #ff7a7a;
+				--radius-md: 10px;
+				--radius-lg: 14px;
+				color-scheme: dark;
+			}
+			@media (prefers-color-scheme: light) {
+				:root {
+					--bg-0: #ffffff;
+					--bg-1: #f3f4f6;
+					--surface-1: rgba(15, 18, 28, 0.035);
+					--stroke: rgba(15, 18, 28, 0.1);
+					--stroke-strong: rgba(15, 18, 28, 0.16);
+					--ink: #1d212b;
+					--ink-bright: #0a0c12;
+					--ink-dim: #5a616f;
+					--ink-faint: rgba(15, 18, 28, 0.62);
+					--ok: #15803d;
+					--warn: #a16207;
+					--bad: #b91c1c;
+					color-scheme: light;
+				}
+			}
+
+			* { box-sizing: border-box; }
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				padding: clamp(16px, 5vw, 56px) 16px;
+				background: var(--bg-0);
+				color: var(--ink);
+				font: 400 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+				display: flex;
+				justify-content: center;
+			}
+
+			.wrap { width: 100%; max-width: 720px; }
+
+			header { margin-bottom: 28px; }
+
+			h1 {
+				margin: 0 0 8px;
+				font-size: clamp(1.5rem, 4vw, 1.9rem);
+				line-height: 1.2;
+				letter-spacing: -0.02em;
+				color: var(--ink-bright);
+			}
+
+			.sub { margin: 0; color: var(--ink-dim); font-size: 0.9rem; }
+			.sub a { color: var(--ink); text-underline-offset: 3px; }
+
+			.card {
+				background: var(--surface-1);
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-lg);
+				padding: 20px;
+				margin-bottom: 16px;
+			}
+
+			.card h2 {
+				margin: 0 0 4px;
+				font-size: 0.95rem;
+				font-weight: 600;
+				color: var(--ink-bright);
+			}
+
+			.card p.hint {
+				margin: 0 0 16px;
+				font-size: 0.82rem;
+				color: var(--ink-dim);
+			}
+
+			.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+			button {
+				flex: 1 1 200px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				min-height: 44px;
+				padding: 0 18px;
+				font: inherit;
+				font-size: 0.875rem;
+				font-weight: 500;
+				color: var(--ink-bright);
+				background: var(--bg-1);
+				border: 1px solid var(--stroke-strong);
+				border-radius: var(--radius-md);
+				cursor: pointer;
+				transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+			}
+			button:hover:not(:disabled) {
+				background: color-mix(in srgb, var(--bg-1) 80%, var(--ink) 20%);
+				border-color: var(--ink-dim);
+			}
+			button:active:not(:disabled) { transform: translateY(1px); }
+			button:focus-visible { outline: 2px solid var(--ink-bright); outline-offset: 2px; }
+			button:disabled { opacity: 0.45; cursor: default; }
+
+			button svg { flex: none; }
+
+			/* Status region: every state is designed, including the empty one. */
+			#status {
+				margin-top: 16px;
+				padding: 12px 14px;
+				border-radius: var(--radius-md);
+				border: 1px solid var(--stroke);
+				background: var(--surface-1);
+				font-size: 0.82rem;
+				color: var(--ink-dim);
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				transition: border-color 0.2s ease, color 0.2s ease;
+			}
+			#status[data-state="working"] { color: var(--ink); border-color: var(--stroke-strong); }
+			#status[data-state="ok"]      { color: var(--ok);   border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+			#status[data-state="error"]   { color: var(--bad);  border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+
+			.spinner {
+				flex: none;
+				width: 13px; height: 13px;
+				margin-top: 3px;
+				border: 2px solid currentColor;
+				border-right-color: transparent;
+				border-radius: 50%;
+				animation: spin 0.7s linear infinite;
+				display: none;
+			}
+			#status[data-state="working"] .spinner { display: block; }
+			@keyframes spin { to { transform: rotate(360deg); } }
+			@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+			.dot { flex: none; width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: currentColor; }
+			#status[data-state="working"] .dot { display: none; }
+
+			/* Signed-in panel */
+			#account { display: none; }
+			#account[data-visible="true"] { display: block; }
+
+			dl.kv { margin: 0; display: grid; grid-template-columns: minmax(90px, auto) 1fr; gap: 8px 16px; }
+			dl.kv dt { color: var(--ink-dim); font-size: 0.78rem; }
+			dl.kv dd {
+				margin: 0;
+				font-size: 0.8rem;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				word-break: break-all;
+				color: var(--ink-bright);
+			}
+
+			/* Request log: the whole point of the demo is watching the real calls. */
+			#log {
+				margin: 0;
+				padding: 0;
+				list-style: none;
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 0.75rem;
+			}
+			#log:empty::before {
+				content: "No requests yet. Pick a wallet above and the calls will appear here.";
+				color: var(--ink-faint);
+				font-family: inherit;
+				font-size: 0.8rem;
+			}
+			#log li {
+				display: flex;
+				gap: 10px;
+				padding: 7px 0;
+				border-bottom: 1px solid var(--stroke);
+				animation: slide-in 0.25s ease both;
+			}
+			#log li:last-child { border-bottom: 0; }
+			@keyframes slide-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+			@media (prefers-reduced-motion: reduce) { #log li { animation: none; } }
+
+			#log .code { flex: none; width: 3ch; font-weight: 600; }
+			#log .code.s2 { color: var(--ok); }
+			#log .code.s4, #log .code.s5 { color: var(--bad); }
+			#log .url { color: var(--ink-dim); word-break: break-all; }
+
+			pre.msg {
+				margin: 14px 0 0;
+				padding: 12px;
+				background: var(--bg-1);
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-md);
+				font-size: 0.72rem;
+				line-height: 1.5;
+				white-space: pre-wrap;
+				word-break: break-word;
+				color: var(--ink);
+				max-height: 260px;
+				overflow: auto;
+			}
+			pre.msg:empty { display: none; }
+
+			footer { margin-top: 24px; font-size: 0.78rem; color: var(--ink-faint); }
+			footer a { color: var(--ink-dim); }
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<header>
+				<h1>Wallet sign-in</h1>
+				<p class="sub">
+					A real Sign-In with Solana (SIWS) and Sign-In with Ethereum (SIWE) round trip against the
+					three.ws auth API. Every request below is live. Signing is free and never touches a
+					transaction. Read the
+					<a href="https://three.ws/docs/authentication">Authentication guide</a> for the full contract.
+				</p>
+			</header>
+
+			<section class="card">
+				<h2>1. Sign in with a wallet</h2>
+				<p class="hint">
+					Solana is the home chain and the default. The EVM button uses the platform's own SIWE rail,
+					not the Privy one.
+				</p>
+				<div class="btn-row">
+					<button type="button" id="solana-btn">
+						<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+							<path fill="currentColor" d="M4.7 15.8h14.1a.6.6 0 0 1 .43 1.02l-2.62 2.63a.9.9 0 0 1-.63.26H1.88a.6.6 0 0 1-.43-1.02l2.62-2.63a.9.9 0 0 1 .63-.26Z"/>
+							<path fill="currentColor" d="M4.7 4.29h14.1a.6.6 0 0 0 .43 1.02l-2.62 2.63a.9.9 0 0 1-.63.26H1.88a.6.6 0 0 1-.43-1.02L4.07 4.55a.9.9 0 0 1 .63-.26Z"/>
+							<path fill="currentColor" d="M19.3 10.04H5.2a.9.9 0 0 0-.63.26l-2.62 2.63a.6.6 0 0 0 .43 1.02h14.1a.9.9 0 0 0 .63-.26l2.62-2.63a.6.6 0 0 0-.43-1.02Z"/>
+						</svg>
+						<span id="solana-label">Continue with Solana</span>
+					</button>
+					<button type="button" id="evm-btn">
+						<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+							<path fill="currentColor" d="M12 2 5.5 12.3 12 16.2l6.5-3.9L12 2Z"/>
+							<path fill="currentColor" d="m12 17.5-6.5-3.9L12 22l6.5-8.4-6.5 3.9Z"/>
+						</svg>
+						<span id="evm-label">Continue with EVM</span>
+					</button>
+				</div>
+
+				<div id="status" data-state="idle" role="status" aria-live="polite">
+					<span class="spinner" aria-hidden="true"></span>
+					<span class="dot" aria-hidden="true"></span>
+					<span id="status-text">Ready. Install Phantom, Backpack, Solflare, or MetaMask, then pick a chain.</span>
+				</div>
+
+				<pre class="msg" id="signed-message" aria-label="The message your wallet signed"></pre>
+			</section>
+
+			<section class="card" id="account">
+				<h2>2. Your session</h2>
+				<p class="hint">
+					Returned by <code>GET /api/auth/me</code> using the <code>__Host-sid</code> cookie the
+					verify call just set.
+				</p>
+				<dl class="kv" id="account-kv"></dl>
+				<div class="btn-row" style="margin-top: 16px">
+					<button type="button" id="logout-btn">Sign out</button>
+				</div>
+			</section>
+
+			<section class="card">
+				<h2>Request log</h2>
+				<p class="hint">Every call this page makes, in order, with its real status code.</p>
+				<ul id="log"></ul>
+			</section>
+
+			<footer>
+				Source:
+				<a href="https://github.com/nirholas/three.ws/tree/main/examples/wallet-sign-in">examples/wallet-sign-in</a>.
+				See the <a href="https://three.ws/docs/tutorials/wallet-sign-in">tutorial</a> for a line-by-line
+				walkthrough.
+			</footer>
+		</div>
+
+		<script type="module">
+			// ─────────────────────────────────────────────────────────────────────
+			// Where the API lives. Same-origin by default, so this file works both
+			// on three.ws itself and behind a dev proxy that forwards /api/* there.
+			// Override with ?api=https://three.ws to point a local page at prod.
+			// ─────────────────────────────────────────────────────────────────────
+			const API = new URLSearchParams(location.search).get('api') || '';
+
+			const statusEl = document.getElementById('status');
+			const statusText = document.getElementById('status-text');
+			const logEl = document.getElementById('log');
+			const msgEl = document.getElementById('signed-message');
+			const accountEl = document.getElementById('account');
+			const accountKv = document.getElementById('account-kv');
+			const solanaBtn = document.getElementById('solana-btn');
+			const evmBtn = document.getElementById('evm-btn');
+			const logoutBtn = document.getElementById('logout-btn');
+
+			function setStatus(state, text) {
+				statusEl.dataset.state = state;
+				statusText.textContent = text;
+			}
+
+			function logCall(status, method, url) {
+				const li = document.createElement('li');
+				const code = document.createElement('span');
+				code.className = `code s${String(status)[0]}`;
+				code.textContent = status;
+				const label = document.createElement('span');
+				label.className = 'url';
+				label.textContent = `${method} ${url}`;
+				li.append(code, label);
+				logEl.append(li);
+			}
+
+			// Every network call goes through here so the log is complete by
+			// construction rather than by remembering to add a line.
+			async function call(path, init = {}) {
+				const res = await fetch(API + path, { credentials: 'include', ...init });
+				logCall(res.status, init.method || 'GET', path);
+				return res;
+			}
+
+			function setBusy(busy) {
+				solanaBtn.disabled = busy;
+				evmBtn.disabled = busy;
+			}
+
+			// ── Wallet detection ────────────────────────────────────────────────
+			// Ordered the same way src/privy-login.js does it, so a Seeker/Seed
+			// Vault wallet that shadows window.solana still resolves correctly.
+			function getSolanaProvider() {
+				if (window.threeWsWallet?.isThreeWs) return window.threeWsWallet;
+				if (window.solana?.isThreeWs) return window.solana;
+				if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+				if (window.solana?.isPhantom) return window.solana;
+				if (window.backpack?.solana) return window.backpack.solana;
+				if (window.solflare?.isSolflare) return window.solflare;
+				return null;
+			}
+
+			const STATEMENT =
+				'Sign in to three.ws. This request will not trigger any blockchain transaction or cost ' +
+				'any fees. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and ' +
+				'Privacy Policy (https://three.ws/legal/privacy).';
+
+			// ── Sign-In with Solana ─────────────────────────────────────────────
+			solanaBtn.addEventListener('click', async () => {
+				const provider = getSolanaProvider();
+				if (!provider) {
+					setStatus('error', 'No Solana wallet found. Install Phantom, Backpack, or Solflare.');
+					return;
+				}
+				setBusy(true);
+				msgEl.textContent = '';
+				try {
+					setStatus('working', 'Connecting to your wallet…');
+					const { publicKey } = await provider.connect();
+					const address = publicKey.toString();
+
+					setStatus('working', 'Requesting a nonce…');
+					const nonceRes = await call('/api/auth/siws/nonce');
+					if (!nonceRes.ok) throw new Error('Could not get a nonce.');
+					const { nonce, csrf, domain, uri } = await nonceRes.json();
+
+					// Build from the SERVER's domain/uri, never location.host: that is
+					// what lets a proxied dev page produce a message the deployment
+					// accepts. See docs/authentication.md.
+					const message = [
+						`${domain} wants you to sign in with your Solana account:`,
+						address,
+						'',
+						STATEMENT,
+						'',
+						`URI: ${uri}`,
+						'Version: 1',
+						'Chain ID: mainnet',
+						`Nonce: ${nonce}`,
+						`Issued At: ${new Date().toISOString()}`,
+						`Expiration Time: ${new Date(Date.now() + 5 * 60 * 1000).toISOString()}`,
+					].join('\n');
+					msgEl.textContent = message;
+
+					setStatus('working', 'Approve the signature in your wallet…');
+					const { signature: sigBytes } = await provider.signMessage(
+						new TextEncoder().encode(message),
+						'utf8',
+					);
+					const signature = btoa(String.fromCharCode(...sigBytes));
+
+					setStatus('working', 'Verifying the signature…');
+					const verifyRes = await call('/api/auth/siws/verify', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
+						body: JSON.stringify({ message, signature, tosAccepted: true }),
+					});
+					const data = await verifyRes.json().catch(() => ({}));
+					if (!verifyRes.ok) throw new Error(describe(data));
+
+					setStatus('ok', `Signed in as ${address.slice(0, 4)}…${address.slice(-4)}.`);
+					await loadAccount();
+				} catch (err) {
+					setStatus('error', friendly(err));
+				} finally {
+					setBusy(false);
+				}
+			});
+
+			// ── Sign-In with Ethereum ───────────────────────────────────────────
+			evmBtn.addEventListener('click', async () => {
+				if (!window.ethereum) {
+					setStatus('error', 'No EVM wallet found. Install MetaMask or another browser wallet.');
+					return;
+				}
+				setBusy(true);
+				msgEl.textContent = '';
+				try {
+					setStatus('working', 'Connecting to your wallet…');
+					const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+					if (!address) throw new Error('No account returned from the wallet.');
+					const chainId = parseInt(await window.ethereum.request({ method: 'eth_chainId' }), 16);
+
+					setStatus('working', 'Requesting a nonce…');
+					const nonceRes = await call('/api/auth/siwe/nonce');
+					if (!nonceRes.ok) throw new Error('Could not get a nonce.');
+					const { nonce, csrf, expiresAt, domain, uri } = await nonceRes.json();
+
+					const host = domain || location.host;
+					const origin = uri || location.origin;
+					const message = [
+						`${host} wants you to sign in with your Ethereum account:`,
+						address,
+						'',
+						STATEMENT,
+						'',
+						`URI: ${origin}`,
+						'Version: 1',
+						`Chain ID: ${chainId}`,
+						`Nonce: ${nonce}`,
+						`Issued At: ${new Date().toISOString()}`,
+						...(expiresAt ? [`Expiration Time: ${expiresAt}`] : []),
+					].join('\n');
+					msgEl.textContent = message;
+
+					setStatus('working', 'Approve the signature in your wallet…');
+					const signature = await window.ethereum.request({
+						method: 'personal_sign',
+						params: [message, address],
+					});
+
+					setStatus('working', 'Verifying the signature…');
+					const verifyRes = await call('/api/auth/siwe/verify', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
+						body: JSON.stringify({ message, signature, tosAccepted: true }),
+					});
+					const data = await verifyRes.json().catch(() => ({}));
+					if (!verifyRes.ok) throw new Error(describe(data));
+
+					setStatus('ok', `Signed in as ${address.slice(0, 6)}…${address.slice(-4)}.`);
+					await loadAccount();
+				} catch (err) {
+					setStatus('error', friendly(err));
+				} finally {
+					setBusy(false);
+				}
+			});
+
+			// ── Session panel ───────────────────────────────────────────────────
+			async function loadAccount() {
+				// Two distinct "signed out" shapes: no cookie at all returns
+				// 200 {"user":null}, while an expired or revoked cookie returns
+				// 401 invalid_session. Treat both as signed out.
+				const res = await call('/api/auth/me');
+				const { user } = res.ok ? await res.json().catch(() => ({})) : {};
+				if (!user) {
+					accountEl.dataset.visible = 'false';
+					return;
+				}
+				accountKv.replaceChildren();
+				for (const [key, value] of Object.entries(user ?? {})) {
+					if (value === null || value === undefined || value === '') continue;
+					const dt = document.createElement('dt');
+					dt.textContent = key;
+					const dd = document.createElement('dd');
+					dd.textContent = String(value);
+					accountKv.append(dt, dd);
+				}
+				accountEl.dataset.visible = 'true';
+			}
+
+			logoutBtn.addEventListener('click', async () => {
+				logoutBtn.disabled = true;
+				try {
+					await call('/api/auth/logout', { method: 'POST' });
+					accountEl.dataset.visible = 'false';
+					msgEl.textContent = '';
+					setStatus('idle', 'Signed out. Pick a chain to sign in again.');
+				} finally {
+					logoutBtn.disabled = false;
+				}
+			});
+
+			// ── Error shaping ───────────────────────────────────────────────────
+			// The verify endpoint returns a machine code; turn the ones a developer
+			// will actually hit into something that says what to change.
+			const CODES = {
+				invalid_domain: 'The signed domain does not match the deployment. Build the message from the nonce response, not location.host.',
+				invalid_uri: 'The signed URI origin does not match the deployment. Use the uri the nonce response returned.',
+				invalid_chain: 'Chain ID must be mainnet, devnet, or testnet.',
+				invalid_message: 'The message is not parseable. Check the line order and the blank lines.',
+				invalid_nonce: 'That nonce is unknown to the server. Request a fresh one.',
+				nonce_reused: 'That nonce was already used. Nonces are single use; request a fresh one.',
+				nonce_expired: 'The nonce expired. They last five minutes.',
+				expired: 'The message expiration time has passed.',
+				invalid_signature: 'The signature does not verify against that address.',
+				invalid_request: 'CSRF check failed. Send the csrf value from the nonce response as x-csrf-token.',
+				account_deleted: 'That wallet belongs to a deleted account.',
+			};
+
+			function describe(data) {
+				return CODES[data?.code] || data?.error_description || data?.error || 'Sign-in failed.';
+			}
+
+			function friendly(err) {
+				const raw = err?.message || String(err);
+				if (/reject|denied|cancel|refused/i.test(raw)) return 'Signature cancelled in the wallet.';
+				return raw;
+			}
+
+			// Reflect an existing session on load, so a refresh does not look signed out.
+			loadAccount().then(() => {
+				if (accountEl.dataset.visible === 'true') {
+					setStatus('ok', 'You already have a session on this origin.');
+				}
+			});
+		</script>
+	</body>
+</html>

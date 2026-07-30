@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 349,
+	"count": 350,
 	"paths": [
 		"/",
 		"/3d",
@@ -328,6 +328,7 @@
 		"/tour-builder",
 		"/tracker",
 		"/trades",
+		"/trading",
 		"/trending",
 		"/tutor",
 		"/tutorials",

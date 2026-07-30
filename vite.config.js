@@ -579,6 +579,7 @@ const appConfig = {
 				'events-build-3d-agents-live': resolve(__dirname, 'pages/events/build-3d-agents-live.html'),
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
 				'avatar-sdk': resolve(__dirname, 'pages/avatar-sdk.html'),
+				'avatar-cli': resolve(__dirname, 'pages/avatar-cli.html'),
 				brain: resolve(__dirname, 'pages/brain.html'),
 				'agent-studio': resolve(__dirname, 'pages/agent-studio.html'),
 				cosmos: resolve(__dirname, 'pages/cosmos.html'),

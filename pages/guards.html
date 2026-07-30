@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Repository guards · three.ws</title>
+	<meta name="description" content="Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook." />
+	<link rel="canonical" href="https://three.ws/guards" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Repository guards · three.ws" />
+	<meta property="og:description" content="No CI, by necessity. Every check that protects this codebase, what it protects, and the stage it runs in." />
+	<meta property="og:url" content="https://three.ws/guards" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Repository+guards&amp;d=Every+mechanical+check+that+protects+the+three.ws+codebase%2C+and+the+stage+each+one+runs+in.&amp;p=%2Fguards" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Repository guards · three.ws" />
+	<meta name="twitter:description" content="No CI, by necessity. Every check that protects this codebase, and where it runs." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Repository+guards&amp;d=Every+mechanical+check+that+protects+the+three.ws+codebase%2C+and+the+stage+each+one+runs+in.&amp;p=%2Fguards" />
+	<style>
+		:root {
+			--gd-bg: #07080c;
+			--gd-panel: rgba(17, 19, 27, 0.86);
+			--gd-panel-2: rgba(255, 255, 255, 0.028);
+			--gd-border: rgba(255, 255, 255, 0.09);
+			--gd-border-2: rgba(255, 255, 255, 0.17);
+			--gd-text: #e9ebf2;
+			--gd-muted: #8b91a3;
+			--gd-faint: #5d6374;
+			--gd-accent: #8b5cf6;
+			--gd-accent-soft: rgba(139, 92, 246, 0.14);
+			--gd-code-bg: rgba(255, 255, 255, 0.05);
+			--gd-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.34);
+			/* One hue per stage, reused for chip, badge and card accent. */
+			--gd-prebuild: #38bdf8;
+			--gd-gate: #a78bfa;
+			--gd-deploy: #fbbf24;
+			--gd-prepush: #34d399;
+			--gd-manual: #94a3b8;
+		}
+
+		html[data-theme='light'] {
+			--gd-bg: #f7f8fb;
+			--gd-panel: #ffffff;
+			--gd-panel-2: rgba(15, 18, 30, 0.026);
+			--gd-border: rgba(15, 18, 30, 0.1);
+			--gd-border-2: rgba(15, 18, 30, 0.2);
+			--gd-text: #131722;
+			--gd-muted: #5b6274;
+			--gd-faint: #838a9c;
+			--gd-accent: #6d33e0;
+			--gd-accent-soft: rgba(109, 51, 224, 0.1);
+			--gd-code-bg: rgba(15, 18, 30, 0.05);
+			--gd-shadow: 0 1px 2px rgba(15, 18, 30, 0.06), 0 10px 30px rgba(15, 18, 30, 0.07);
+			--gd-prebuild: #0284c7;
+			--gd-gate: #6d33e0;
+			--gd-deploy: #b45309;
+			--gd-prepush: #047857;
+			--gd-manual: #55607a;
+		}
+
+		body {
+			background: var(--gd-bg);
+			color: var(--gd-text);
+		}
+
+		.gd-wrap {
+			max-width: 1180px;
+			margin: 0 auto;
+			padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem) 5rem;
+		}
+
+		/* Hero */
+		.gd-hero {
+			position: relative;
+			border: 1px solid var(--gd-border);
+			border-radius: 20px;
+			background:
+				radial-gradient(120% 150% at 8% -20%, var(--gd-accent-soft), transparent 62%),
+				var(--gd-panel);
+			padding: clamp(1.5rem, 4vw, 2.6rem);
+			overflow: hidden;
+			box-shadow: var(--gd-shadow);
+		}
+
+		.gd-eyebrow {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			font-size: 0.72rem;
+			letter-spacing: 0.09em;
+			text-transform: uppercase;
+			font-weight: 600;
+			color: var(--gd-accent);
+			background: var(--gd-accent-soft);
+			border: 1px solid color-mix(in srgb, var(--gd-accent) 32%, transparent);
+			border-radius: 999px;
+			padding: 0.3rem 0.7rem;
+			margin-bottom: 1rem;
+		}
+
+		.gd-hero h1 {
+			margin: 0 0 0.7rem;
+			font-size: clamp(1.85rem, 4.6vw, 3rem);
+			line-height: 1.08;
+			letter-spacing: -0.02em;
+		}
+
+		.gd-hero p {
+			margin: 0;
+			max-width: 62ch;
+			color: var(--gd-muted);
+			font-size: clamp(0.98rem, 1.6vw, 1.1rem);
+			line-height: 1.62;
+		}
+
+		.gd-hero a {
+			color: var(--gd-text);
+			text-decoration: underline;
+			text-underline-offset: 3px;
+			text-decoration-color: color-mix(in srgb, var(--gd-accent) 55%, transparent);
+		}
+
+		.gd-hero a:hover { text-decoration-color: var(--gd-accent); }
+
+		/* Stat rail */
+		.gd-stats {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 0.75rem;
+			margin-top: 1.7rem;
+		}
+
+		.gd-stat {
+			border: 1px solid var(--gd-border);
+			border-radius: 13px;
+			background: var(--gd-panel-2);
+			padding: 0.85rem 1rem;
+		}
+
+		.gd-stat-n {
+			font-size: 1.7rem;
+			font-weight: 700;
+			line-height: 1;
+			font-variant-numeric: tabular-nums;
+			letter-spacing: -0.02em;
+		}
+
+		.gd-stat-l {
+			margin-top: 0.32rem;
+			font-size: 0.76rem;
+			color: var(--gd-faint);
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+
+		/* Controls */
+		.gd-controls {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.7rem;
+			align-items: center;
+			justify-content: space-between;
+			margin: 2.4rem 0 1.1rem;
+		}
+
+		.gd-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+
+		.gd-chip {
+			font: inherit;
+			font-size: 0.84rem;
+			font-weight: 500;
+			color: var(--gd-muted);
+			background: var(--gd-panel-2);
+			border: 1px solid var(--gd-border);
+			border-radius: 999px;
+			padding: 0.42rem 0.85rem;
+			cursor: pointer;
+			transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+		}
+
+		.gd-chip:hover { color: var(--gd-text); border-color: var(--gd-border-2); }
+		.gd-chip:active { transform: translateY(1px); }
+
+		.gd-chip[aria-pressed='true'] {
+			color: var(--gd-text);
+			background: var(--gd-accent-soft);
+			border-color: color-mix(in srgb, var(--gd-accent) 45%, transparent);
+		}
+
+		.gd-chip .gd-chip-n {
+			display: inline-block;
+			margin-left: 0.4rem;
+			font-variant-numeric: tabular-nums;
+			color: var(--gd-faint);
+			font-size: 0.78rem;
+		}
+
+		.gd-chip[aria-pressed='true'] .gd-chip-n { color: var(--gd-accent); }
+
+		.gd-search {
+			flex: 1 1 210px;
+			max-width: 320px;
+			font: inherit;
+			font-size: 0.88rem;
+			color: var(--gd-text);
+			background: var(--gd-panel-2);
+			border: 1px solid var(--gd-border);
+			border-radius: 10px;
+			padding: 0.52rem 0.8rem;
+			transition: border-color 0.15s ease;
+		}
+
+		.gd-search::placeholder { color: var(--gd-faint); }
+		.gd-search:hover { border-color: var(--gd-border-2); }
+
+		:where(.gd-chip, .gd-search, .gd-card-toggle, .gd-copy):focus-visible {
+			outline: 2px solid var(--gd-accent);
+			outline-offset: 2px;
+		}
+
+		/* Stage explainer */
+		.gd-stage-note {
+			border: 1px solid var(--gd-border);
+			border-left: 3px solid var(--gd-stage, var(--gd-accent));
+			border-radius: 12px;
+			background: var(--gd-panel-2);
+			padding: 0.85rem 1.05rem;
+			margin-bottom: 1.4rem;
+			font-size: 0.9rem;
+			line-height: 1.6;
+			color: var(--gd-muted);
+		}
+
+		.gd-stage-note strong { color: var(--gd-text); }
+
+		.gd-stage-note code {
+			font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			font-size: 0.85em;
+			background: var(--gd-code-bg);
+			border-radius: 5px;
+			padding: 0.1rem 0.35rem;
+		}
+
+		/* Cards */
+		.gd-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+			gap: 0.9rem;
+		}
+
+		.gd-card {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			border: 1px solid var(--gd-border);
+			border-radius: 15px;
+			background: var(--gd-panel);
+			padding: 1.1rem 1.15rem;
+			transition: border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+		}
+
+		.gd-card::before {
+			content: '';
+			position: absolute;
+			inset: 0 auto 0 0;
+			width: 3px;
+			border-radius: 15px 0 0 15px;
+			background: var(--gd-stage, var(--gd-accent));
+			opacity: 0.65;
+		}
+
+		.gd-card:hover {
+			border-color: var(--gd-border-2);
+			transform: translateY(-2px);
+			box-shadow: var(--gd-shadow);
+		}
+
+		.gd-card h3 {
+			margin: 0 0 0.15rem;
+			font-size: 1.02rem;
+			letter-spacing: -0.01em;
+		}
+
+		.gd-card-id {
+			font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			font-size: 0.74rem;
+			color: var(--gd-faint);
+			margin-bottom: 0.7rem;
+			word-break: break-all;
+		}
+
+		.gd-protects {
+			margin: 0 0 0.85rem;
+			font-size: 0.9rem;
+			line-height: 1.58;
+			color: var(--gd-muted);
+		}
+
+		.gd-cmd {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			background: var(--gd-code-bg);
+			border: 1px solid var(--gd-border);
+			border-radius: 9px;
+			padding: 0.42rem 0.5rem 0.42rem 0.65rem;
+			margin-bottom: 0.85rem;
+		}
+
+		.gd-cmd code {
+			flex: 1;
+			font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			font-size: 0.79rem;
+			color: var(--gd-text);
+			overflow-x: auto;
+			white-space: nowrap;
+			scrollbar-width: none;
+		}
+
+		.gd-cmd code::-webkit-scrollbar { display: none; }
+
+		.gd-copy {
+			flex: none;
+			font: inherit;
+			font-size: 0.72rem;
+			color: var(--gd-muted);
+			background: transparent;
+			border: 1px solid var(--gd-border);
+			border-radius: 6px;
+			padding: 0.2rem 0.45rem;
+			cursor: pointer;
+			transition: color 0.15s ease, border-color 0.15s ease;
+		}
+
+		.gd-copy:hover { color: var(--gd-text); border-color: var(--gd-border-2); }
+		.gd-copy[data-copied='true'] { color: var(--gd-prepush); border-color: var(--gd-prepush); }
+
+		.gd-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.7rem; }
+
+		.gd-badge {
+			font-size: 0.7rem;
+			font-weight: 600;
+			letter-spacing: 0.03em;
+			text-transform: uppercase;
+			border-radius: 6px;
+			padding: 0.2rem 0.45rem;
+			color: var(--gd-b, var(--gd-manual));
+			background: color-mix(in srgb, var(--gd-b, var(--gd-manual)) 14%, transparent);
+			border: 1px solid color-mix(in srgb, var(--gd-b, var(--gd-manual)) 34%, transparent);
+		}
+
+		.gd-needs {
+			font-size: 0.72rem;
+			color: var(--gd-faint);
+			border: 1px dashed var(--gd-border-2);
+			border-radius: 6px;
+			padding: 0.2rem 0.45rem;
+		}
+
+		.gd-card-toggle {
+			margin-top: auto;
+			align-self: flex-start;
+			font: inherit;
+			font-size: 0.8rem;
+			font-weight: 500;
+			color: var(--gd-accent);
+			background: none;
+			border: none;
+			border-radius: 6px;
+			padding: 0.2rem 0;
+			cursor: pointer;
+		}
+
+		.gd-card-toggle:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+		.gd-why {
+			margin: 0.6rem 0 0;
+			padding-top: 0.7rem;
+			border-top: 1px solid var(--gd-border);
+			font-size: 0.855rem;
+			line-height: 1.62;
+			color: var(--gd-muted);
+		}
+
+		.gd-why[hidden] { display: none; }
+
+		/* Loading, empty, error */
+		.gd-skeleton {
+			border: 1px solid var(--gd-border);
+			border-radius: 15px;
+			background: linear-gradient(100deg, var(--gd-panel-2) 30%, rgba(255, 255, 255, 0.06) 50%, var(--gd-panel-2) 70%);
+			background-size: 220% 100%;
+			animation: gd-shimmer 1.35s ease-in-out infinite;
+			height: 190px;
+		}
+
+		@keyframes gd-shimmer {
+			from { background-position: 180% 0; }
+			to { background-position: -40% 0; }
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.gd-skeleton { animation: none; }
+			.gd-card, .gd-chip, .gd-copy { transition: none; }
+			.gd-card:hover { transform: none; }
+		}
+
+		.gd-state {
+			border: 1px solid var(--gd-border);
+			border-radius: 15px;
+			background: var(--gd-panel);
+			padding: 2.4rem 1.5rem;
+			text-align: center;
+		}
+
+		.gd-state h2 { margin: 0 0 0.5rem; font-size: 1.06rem; }
+
+		.gd-state p {
+			margin: 0 auto 1rem;
+			max-width: 46ch;
+			color: var(--gd-muted);
+			font-size: 0.92rem;
+			line-height: 1.6;
+		}
+
+		.gd-state button {
+			font: inherit;
+			font-size: 0.86rem;
+			color: var(--gd-text);
+			background: var(--gd-accent-soft);
+			border: 1px solid color-mix(in srgb, var(--gd-accent) 45%, transparent);
+			border-radius: 9px;
+			padding: 0.45rem 0.95rem;
+			cursor: pointer;
+		}
+
+		.gd-state button:hover { border-color: var(--gd-accent); }
+		.gd-state button:focus-visible { outline: 2px solid var(--gd-accent); outline-offset: 2px; }
+
+		/* Footer callout */
+		.gd-more {
+			margin-top: 2.6rem;
+			border: 1px solid var(--gd-border);
+			border-radius: 15px;
+			background: var(--gd-panel-2);
+			padding: 1.4rem 1.5rem;
+		}
+
+		.gd-more h2 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+
+		.gd-more p {
+			margin: 0 0 0.9rem;
+			color: var(--gd-muted);
+			font-size: 0.92rem;
+			line-height: 1.62;
+			max-width: 64ch;
+		}
+
+		.gd-links { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+
+		.gd-links a {
+			font-size: 0.86rem;
+			color: var(--gd-text);
+			text-decoration: none;
+			background: var(--gd-panel);
+			border: 1px solid var(--gd-border);
+			border-radius: 9px;
+			padding: 0.45rem 0.85rem;
+			transition: border-color 0.15s ease, transform 0.12s ease;
+		}
+
+		.gd-links a:hover { border-color: var(--gd-accent); transform: translateY(-1px); }
+		.gd-links a:focus-visible { outline: 2px solid var(--gd-accent); outline-offset: 2px; }
+
+		.gd-sr {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+
+		@media (max-width: 560px) {
+			.gd-controls { flex-direction: column; align-items: stretch; }
+			.gd-search { max-width: none; }
+			.gd-grid { grid-template-columns: 1fr; }
+		}
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="gd-wrap">
+		<section class="gd-hero">
+			<span class="gd-eyebrow">Engineering</span>
+			<h1>Repository guards</h1>
+			<p>
+				This codebase has no CI. What protects it instead is a set of small, fast checks wired into paths
+				nobody can skip: the prebuild, the gate, the deploy build, and the git pre-push hook. Every guard
+				below exists because something broke once. Read the
+				<a href="/docs/guards">full reference</a> or the
+				<a href="/docs/tutorials/write-a-guard">tutorial on writing one</a>.
+			</p>
+			<div class="gd-stats" id="gd-stats"></div>
+		</section>
+
+		<div class="gd-controls">
+			<div class="gd-chips" id="gd-chips" role="group" aria-label="Filter guards by stage"></div>
+			<label class="gd-sr" for="gd-search">Search guards</label>
+			<input
+				class="gd-search"
+				id="gd-search"
+				type="search"
+				placeholder="Search guards, commands, files"
+				autocomplete="off"
+			/>
+		</div>
+
+		<p class="gd-stage-note" id="gd-stage-note" hidden></p>
+
+		<div id="gd-results" aria-live="polite">
+			<div class="gd-grid" id="gd-skeletons" aria-hidden="true">
+				<div class="gd-skeleton"></div>
+				<div class="gd-skeleton"></div>
+				<div class="gd-skeleton"></div>
+				<div class="gd-skeleton"></div>
+				<div class="gd-skeleton"></div>
+				<div class="gd-skeleton"></div>
+			</div>
+			<p class="gd-sr" id="gd-status">Loading the guard registry.</p>
+		</div>
+
+		<section class="gd-more">
+			<h2>Adding a guard</h2>
+			<p>
+				A guard that is not wired into an unavoidable path protects nothing. Write the checker, give it an npm
+				script, register it in <code>data/guards.json</code>, and wire it into a stage. Running
+				<code>npm run audit:guards</code> will tell you if the last two steps disagree.
+			</p>
+			<div class="gd-links">
+				<a href="/docs/tutorials/write-a-guard">Write a guard</a>
+				<a href="/docs/guards">Guard reference</a>
+				<a href="/docs/start-here">Start here</a>
+			</div>
+		</section>
+	</main>
+
+	<script type="module">
+		const STAGE_ORDER = ['prebuild', 'gate', 'build:gcp', 'pre-push', 'manual'];
+		const STAGE_COLOR = {
+			prebuild: 'var(--gd-prebuild)',
+			gate: 'var(--gd-gate)',
+			'build:gcp': 'var(--gd-deploy)',
+			'pre-push': 'var(--gd-prepush)',
+			manual: 'var(--gd-manual)',
+		};
+		const NEEDS_LABEL = {
+			none: 'offline',
+			network: 'needs network',
+			credentials: 'needs credentials',
+			browser: 'needs a browser',
+			gcloud: 'needs gcloud',
+		};
+
+		const els = {
+			stats: document.getElementById('gd-stats'),
+			chips: document.getElementById('gd-chips'),
+			search: document.getElementById('gd-search'),
+			note: document.getElementById('gd-stage-note'),
+			results: document.getElementById('gd-results'),
+			status: document.getElementById('gd-status'),
+		};
+
+		let registry = null;
+		let activeStage = 'all';
+		let query = '';
+
+		/** Sort by the stage rail order, then alphabetically, so the list is stable. */
+		function rank(guard) {
+			const stages = guard.stages || [];
+			const best = Math.min(...stages.map((s) => STAGE_ORDER.indexOf(s)).filter((i) => i >= 0), 99);
+			return best === Infinity ? 99 : best;
+		}
+
+		function matches(guard) {
+			if (activeStage !== 'all' && !(guard.stages || []).includes(activeStage)) return false;
+			if (!query) return true;
+			const hay = [guard.title, guard.id, guard.npm, guard.script, guard.protects, guard.why]
+				.filter(Boolean)
+				.join(' ')
+				.toLowerCase();
+			return hay.includes(query);
+		}
+
+		function stageLabel(id) {
+			const stage = (registry.stages || []).find((s) => s.id === id);
+			return stage ? stage.title : id;
+		}
+
+		function renderStats() {
+			const guards = registry.guards || [];
+			const automatic = guards.filter((g) => (g.stages || []).some((s) => s !== 'manual')).length;
+			const offline = guards.filter((g) => g.needs === 'none').length;
+			const tiles = [
+				{ n: guards.length, l: 'Guards' },
+				{ n: automatic, l: 'On an automatic path' },
+				{ n: offline, l: 'Run with no credentials' },
+				{ n: (registry.stages || []).length, l: 'Stages' },
+			];
+			els.stats.replaceChildren(
+				...tiles.map((t) => {
+					const d = document.createElement('div');
+					d.className = 'gd-stat';
+					const n = document.createElement('div');
+					n.className = 'gd-stat-n';
+					n.textContent = String(t.n);
+					const l = document.createElement('div');
+					l.className = 'gd-stat-l';
+					l.textContent = t.l;
+					d.append(n, l);
+					return d;
+				}),
+			);
+		}
+
+		function renderChips() {
+			const guards = registry.guards || [];
+			const defs = [{ id: 'all', title: 'All' }].concat(
+				STAGE_ORDER.filter((id) => guards.some((g) => (g.stages || []).includes(id))).map((id) => ({
+					id,
+					title: stageLabel(id),
+				})),
+			);
+			els.chips.replaceChildren(
+				...defs.map((def) => {
+					const b = document.createElement('button');
+					b.type = 'button';
+					b.className = 'gd-chip';
+					b.setAttribute('aria-pressed', String(def.id === activeStage));
+					b.dataset.stage = def.id;
+					b.textContent = def.title;
+					const count = document.createElement('span');
+					count.className = 'gd-chip-n';
+					count.textContent = String(
+						def.id === 'all' ? guards.length : guards.filter((g) => (g.stages || []).includes(def.id)).length,
+					);
+					b.append(count);
+					if (def.id !== 'all') b.style.setProperty('--gd-accent', STAGE_COLOR[def.id]);
+					b.addEventListener('click', () => {
+						activeStage = def.id;
+						renderChips();
+						renderNote();
+						renderList();
+					});
+					return b;
+				}),
+			);
+		}
+
+		function renderNote() {
+			if (activeStage === 'all') {
+				els.note.hidden = true;
+				return;
+			}
+			const stage = (registry.stages || []).find((s) => s.id === activeStage);
+			if (!stage) {
+				els.note.hidden = true;
+				return;
+			}
+			els.note.hidden = false;
+			els.note.style.setProperty('--gd-stage', STAGE_COLOR[activeStage]);
+			els.note.replaceChildren();
+			const when = document.createElement('strong');
+			when.textContent = `${stage.title}: ${stage.when} `;
+			els.note.append(when, document.createTextNode(stage.description));
+		}
+
+		function card(guard) {
+			const el = document.createElement('article');
+			el.className = 'gd-card';
+			const primary = (guard.stages || []).find((s) => STAGE_ORDER.includes(s)) || 'manual';
+			el.style.setProperty('--gd-stage', STAGE_COLOR[primary]);
+
+			const h = document.createElement('h3');
+			h.textContent = guard.title;
+
+			const id = document.createElement('div');
+			id.className = 'gd-card-id';
+			id.textContent = guard.script;
+
+			const badges = document.createElement('div');
+			badges.className = 'gd-badges';
+			for (const s of guard.stages || []) {
+				const b = document.createElement('span');
+				b.className = 'gd-badge';
+				b.style.setProperty('--gd-b', STAGE_COLOR[s] || 'var(--gd-manual)');
+				b.textContent = stageLabel(s);
+				badges.append(b);
+			}
+			if (guard.needs && guard.needs !== 'none') {
+				const n = document.createElement('span');
+				n.className = 'gd-needs';
+				n.textContent = NEEDS_LABEL[guard.needs] || guard.needs;
+				badges.append(n);
+			}
+
+			const protects = document.createElement('p');
+			protects.className = 'gd-protects';
+			protects.textContent = guard.protects;
+
+			el.append(h, id, badges, protects);
+
+			if (guard.npm) {
+				const cmd = document.createElement('div');
+				cmd.className = 'gd-cmd';
+				const code = document.createElement('code');
+				const text = `npm run ${guard.npm}`;
+				code.textContent = text;
+				const copy = document.createElement('button');
+				copy.type = 'button';
+				copy.className = 'gd-copy';
+				copy.textContent = 'Copy';
+				copy.setAttribute('aria-label', `Copy ${text}`);
+				copy.addEventListener('click', async () => {
+					try {
+						await navigator.clipboard.writeText(text);
+						copy.dataset.copied = 'true';
+						copy.textContent = 'Copied';
+					} catch {
+						// Clipboard is unavailable over plain HTTP or when the user denied it.
+						// Select the text instead so the copy is still one keystroke away.
+						const range = document.createRange();
+						range.selectNodeContents(code);
+						const sel = window.getSelection();
+						sel.removeAllRanges();
+						sel.addRange(range);
+						copy.textContent = 'Selected';
+					}
+					setTimeout(() => {
+						copy.textContent = 'Copy';
+						delete copy.dataset.copied;
+					}, 1600);
+				});
+				cmd.append(code, copy);
+				el.append(cmd);
+			}
+
+			const why = document.createElement('p');
+			why.className = 'gd-why';
+			why.textContent = guard.why;
+			why.hidden = true;
+			why.id = `why-${guard.id}`;
+
+			const toggle = document.createElement('button');
+			toggle.type = 'button';
+			toggle.className = 'gd-card-toggle';
+			toggle.textContent = 'Why it exists';
+			toggle.setAttribute('aria-expanded', 'false');
+			toggle.setAttribute('aria-controls', why.id);
+			toggle.addEventListener('click', () => {
+				const open = why.hidden;
+				why.hidden = !open;
+				toggle.setAttribute('aria-expanded', String(open));
+				toggle.textContent = open ? 'Hide' : 'Why it exists';
+			});
+
+			el.append(toggle, why);
+			return el;
+		}
+
+		function renderList() {
+			const guards = (registry.guards || [])
+				.filter(matches)
+				.sort((a, b) => rank(a) - rank(b) || a.title.localeCompare(b.title));
+
+			els.results.replaceChildren();
+
+			if (!guards.length) {
+				const empty = document.createElement('div');
+				empty.className = 'gd-state';
+				const h = document.createElement('h2');
+				h.textContent = 'No guard matches that';
+				const p = document.createElement('p');
+				p.textContent = query
+					? `Nothing in the registry mentions "${query}". Try a command name like audit:docs, or a file like check-rules.`
+					: 'No guard runs in this stage yet.';
+				const b = document.createElement('button');
+				b.type = 'button';
+				b.textContent = 'Clear filters';
+				b.addEventListener('click', () => {
+					query = '';
+					activeStage = 'all';
+					els.search.value = '';
+					renderChips();
+					renderNote();
+					renderList();
+				});
+				empty.append(h, p, b);
+				els.results.append(empty);
+				announce('No guards match the current filter.');
+				return;
+			}
+
+			const grid = document.createElement('div');
+			grid.className = 'gd-grid';
+			grid.append(...guards.map(card));
+			els.results.append(grid);
+			announce(`${guards.length} guard${guards.length === 1 ? '' : 's'} shown.`);
+		}
+
+		function announce(message) {
+			const p = document.createElement('p');
+			p.className = 'gd-sr';
+			p.textContent = message;
+			els.results.append(p);
+		}
+
+		function renderError(detail) {
+			els.results.replaceChildren();
+			const box = document.createElement('div');
+			box.className = 'gd-state';
+			const h = document.createElement('h2');
+			h.textContent = 'The guard registry did not load';
+			const p = document.createElement('p');
+			p.textContent = `${detail} The registry is a static file, so this is usually a network blip. Reading it directly from the repository always works.`;
+			const b = document.createElement('button');
+			b.type = 'button';
+			b.textContent = 'Try again';
+			b.addEventListener('click', load);
+			const links = document.createElement('div');
+			links.className = 'gd-links';
+			links.style.justifyContent = 'center';
+			links.style.marginTop = '0.9rem';
+			const docs = document.createElement('a');
+			docs.href = '/docs/guards';
+			docs.textContent = 'Read the guard reference';
+			links.append(docs);
+			box.append(h, p, b, links);
+			els.results.append(box);
+		}
+
+		async function load() {
+			els.results.replaceChildren();
+			const skeletons = document.createElement('div');
+			skeletons.className = 'gd-grid';
+			skeletons.setAttribute('aria-hidden', 'true');
+			for (let i = 0; i < 6; i += 1) {
+				const s = document.createElement('div');
+				s.className = 'gd-skeleton';
+				skeletons.append(s);
+			}
+			els.results.append(skeletons);
+
+			try {
+				const res = await fetch('/guards.json', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`the server answered ${res.status}.`);
+				const data = await res.json();
+				if (!data || !Array.isArray(data.guards)) throw new Error('the response was not a guard registry.');
+				registry = data;
+				renderStats();
+				renderChips();
+				renderNote();
+				renderList();
+			} catch (err) {
+				renderError(err instanceof Error ? err.message : 'Something went wrong.');
+			}
+		}
+
+		let searchTimer;
+		els.search.addEventListener('input', (e) => {
+			clearTimeout(searchTimer);
+			const value = e.target.value.trim().toLowerCase();
+			searchTimer = setTimeout(() => {
+				query = value;
+				if (registry) renderList();
+			}, 120);
+		});
+
+		load();
+	</script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

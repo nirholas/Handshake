@@ -8,6 +8,17 @@ Everything on this page moves real money. Read [Safety: this is a spend surface]
 
 Code: `api/user/wallet/index.js`, `send.js`, `fund-agent.js`, `history.js`.
 
+## The page: [three.ws/wallet](https://three.ws/wallet)
+
+If you just want to use your wallet rather than script it, **[/wallet](https://three.ws/wallet)** is the whole feature in a browser. Sign in and it shows your balances across Solana and Base, your two addresses with copy buttons and explorer links, and three actions: send, fund an agent, and history. If you have never provisioned a wallet, the page offers to create one and explains exactly what gets generated first.
+
+Two things about that page are worth knowing before you use it:
+
+- **Sending is two-step by design.** When you submit the send form, the page does not sign anything. It calls `POST /api/user/wallet/send` with `simulate: true`, which runs the real balance, rent, and fee checks on the server and returns what the transfer would actually cost. Only after you read back the amount, recipient, asset, and network, and press **Confirm and send**, does anything get signed and broadcast. A transfer cannot be reversed, so nothing leaves your wallet without you seeing the final numbers.
+- **It is the same API documented below.** The page has no privileged path: it is a session-authenticated client over these four endpoints, so anything it can do, the `curl` examples on this page can do too.
+
+Page code: `pages/wallet.html`, `src/master-wallet.js` (controller), `src/wallet-api.js` (the client), `public/master-wallet.css`. Not to be confused with `src/wallet.js`, which connects an **external** wallet such as Phantom and has nothing to do with the custodial master wallet.
+
 ## Master wallet vs agent wallet
 
 They are different wallets with different jobs, and mixing them up is the single most common mistake here.
@@ -41,7 +52,7 @@ CSRF=$(curl -s -b cookies.txt https://three.ws/api/csrf-token | python3 -c 'impo
 
 ## Provisioning: lazy, and idempotent
 
-No wallet exists until you ask for one. `GET /api/user/wallet` on an account that has never provisioned returns `{"wallet": null}`, which is the signal for a UI to offer a "create wallet" action rather than an error state.
+No wallet exists until you ask for one. `GET /api/user/wallet` on an account that has never provisioned returns `{"wallet": null}`, which is the signal for a UI to offer a "create wallet" action rather than an error state. That is exactly what [/wallet](https://three.ws/wallet) renders for a new account.
 
 `POST /api/user/wallet` creates the pair: a Solana keypair and an EVM keypair, both generated server-side, both encrypted at rest with AES-256-GCM under the dedicated `WALLET_ENCRYPTION_KEY` (the same secret box that protects agent wallets, deliberately not the session signing secret). There is no seed phrase for you to write down.
 

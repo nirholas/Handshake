@@ -150,7 +150,13 @@ export function describeFleet(status, now = Date.now()) {
  */
 export function sparkPath(series, w = 120, h = 32) {
 	if (!Array.isArray(series)) return '';
-	const pts = series.map(Number).filter((n) => Number.isFinite(n));
+	// Drop nullish and empty entries BEFORE coercing. Number(null) and Number('')
+	// are both 0, so mapping first would turn a missing datapoint into a real
+	// zero and bend the line toward a value the series never contained.
+	const pts = series
+		.filter((v) => v !== null && v !== undefined && v !== '')
+		.map(Number)
+		.filter((n) => Number.isFinite(n));
 	if (pts.length < 2) return '';
 	const min = Math.min(...pts);
 	const max = Math.max(...pts);

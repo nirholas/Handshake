@@ -52,6 +52,7 @@ export const NAV = [
 	{ path: '/dashboard/prelaunch-radar', label: 'Pre-Launch Radar', icon: 'live', group: 'Monetize',   tags: ['radar', 'pre-launch', 'precursor', 'block-zero', 'snipe', 'creator', 'smart-money', 'pump.fun', 'pre-cog', 'watchlist'] },
 	{ path: '/oracle',                label: 'Oracle',          icon: 'oracle',    group: 'Monetize',   tags: ['conviction', 'score', 'tier', 'pump.fun', 'signal', 'ai', 'trade intelligence', 'wins', 'proof', 'leaderboard'], external: true },
 	{ path: '/dashboard/portfolio',   label: 'Portfolio',        icon: 'portfolio', group: 'Monetize',  tags: ['nft', 'holdings', 'balances', 'wallet', 'collection', 'crypto', 'tokens', 'chart', 'send'] },
+	{ path: '/wallet',                label: 'Master Wallet',   icon: 'wallet',    group: 'Monetize',   tags: ['wallet', 'master wallet', 'custodial', 'sol', 'usdc', 'send', 'fund agent', 'top up', 'balance', 'deposit', 'solana', 'base', 'history'], external: true },
 	{ path: '/dashboard/landscape',   label: 'Landscape',       icon: 'landscape', group: 'Monetize',   tags: ['competitors', 'market', 'competitive', 'intelligence', 'positioning', 'tam', 'investor'] },
 	{ path: '/reputation',            label: 'Reputation',      icon: 'star',      group: 'Monetize',   tags: ['reviews', 'attestations', 'onchain', 'trust', 'score'], external: true },
 
@@ -118,6 +119,7 @@ export const ICONS = {
 	receipt:   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5h10v15l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V2.5z"/><path d="M8 6.5h4M8 9.5h4M8 12.5h2.5"/></svg>',
 	paysess:   '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="16" height="10" rx="2"/><path d="M2 8.5h16"/><circle cx="6" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M9.5 12h5"/></svg>',
 	pulse:     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10h3l2-5 3 10 2-7 2 2h4"/></svg>',
+	wallet:    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 012-2h9a1 1 0 011 1v1"/><rect x="2.5" y="6" width="15" height="10" rx="2"/><circle cx="14" cy="11" r="1.2" fill="currentColor" stroke="none"/></svg>',
 };
 
 /** Resolve the route for the current pathname (exact match wins; falls back to startsWith). */

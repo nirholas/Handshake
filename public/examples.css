@@ -279,6 +279,389 @@
 	line-height: 1.5;
 }
 
+/* The generated half of the page: every example found by scanning the repo.
+   Styled to sit under the curated snippets without competing with them, so the
+   cards are quieter than .exg-card and the grid is denser. */
+
+.exi-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	margin-top: 20px;
+}
+
+.exi-search-wrap {
+	position: relative;
+	flex: 1 1 240px;
+	max-width: 380px;
+}
+
+.exi-search-icon {
+	position: absolute;
+	left: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--text-dim, #9a9aa4);
+	pointer-events: none;
+}
+
+.exi-search {
+	width: 100%;
+	padding: 9px 12px 9px 34px;
+	border-radius: 10px;
+	border: 1px solid var(--border, #26262e);
+	background: var(--surface, #131319);
+	color: var(--text, #ececf1);
+	font: inherit;
+	font-size: 14px;
+	outline: none;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.exi-search:hover {
+	border-color: var(--border-strong, #3a3a46);
+}
+
+.exi-search:focus-visible {
+	border-color: #7c8cff;
+	box-shadow: 0 0 0 3px rgba(124, 140, 255, 0.22);
+}
+
+.exi-count {
+	margin-left: auto;
+	font-size: 13px;
+	color: var(--text-dim, #9a9aa4);
+	font-variant-numeric: tabular-nums;
+}
+
+.exi-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 16px 0 4px;
+}
+
+.exi-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 7px 13px;
+	border-radius: 999px;
+	cursor: pointer;
+	border: 1px solid var(--border, #26262e);
+	background: transparent;
+	color: var(--text-dim, #9a9aa4);
+	font: inherit;
+	font-size: 13px;
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease,
+		background 0.15s ease;
+}
+
+.exi-chip:hover {
+	border-color: var(--border-strong, #3a3a46);
+	color: var(--text, #ececf1);
+}
+
+.exi-chip:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exi-chip.is-active {
+	background: var(--text, #ececf1);
+	border-color: transparent;
+	color: var(--bg, #0b0b0f);
+	font-weight: 600;
+}
+
+.exi-chip-n {
+	font-size: 11px;
+	opacity: 0.7;
+	font-variant-numeric: tabular-nums;
+}
+
+.exi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 14px;
+	margin-top: 18px;
+}
+
+.exi-card {
+	display: flex;
+	flex-direction: column;
+	gap: 9px;
+	border: 1px solid var(--border, #26262e);
+	border-radius: 12px;
+	padding: 16px;
+	transition:
+		border-color 0.15s ease,
+		transform 0.15s ease;
+}
+
+.exi-card:hover {
+	border-color: var(--border-strong, #3a3a46);
+	transform: translateY(-2px);
+}
+
+.exi-card:focus-within {
+	border-color: var(--border-strong, #3a3a46);
+}
+
+.exi-card-top {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.exi-kind {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exi-owner {
+	margin-left: auto;
+	font-size: 11px;
+	color: var(--text-dim, #9a9aa4);
+	border: 1px solid var(--border, #26262e);
+	border-radius: 999px;
+	padding: 2px 9px;
+}
+
+.exi-card-title {
+	margin: 0;
+	font-size: 16px;
+	line-height: 1.3;
+}
+
+.exi-card-title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.exi-card-title a:hover {
+	text-decoration: underline;
+}
+
+.exi-card-title a:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 3px;
+	border-radius: 4px;
+}
+
+.exi-card-desc {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exi-files {
+	list-style: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+}
+
+.exi-files code {
+	font-size: 11.5px;
+	color: var(--text-dim, #9a9aa4);
+	background: var(--code-bg, #0f0f14);
+	border: 1px solid var(--border, #26262e);
+	border-radius: 5px;
+	padding: 2px 7px;
+}
+
+.exi-more {
+	font-size: 11.5px;
+	color: var(--text-dim, #9a9aa4);
+	align-self: center;
+}
+
+.exi-run {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: var(--code-bg, #0f0f14);
+	border: 1px solid var(--border, #26262e);
+	border-radius: 10px;
+	padding: 7px 7px 7px 11px;
+}
+
+.exi-run code {
+	flex: 1;
+	min-width: 0;
+	font-size: 12px;
+	color: var(--text, #ececf1);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.exi-copy {
+	flex: none;
+	cursor: pointer;
+	font: inherit;
+	font-size: 12px;
+	padding: 4px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--border, #26262e);
+	background: transparent;
+	color: var(--text-dim, #9a9aa4);
+	transition:
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.exi-copy:hover {
+	color: var(--text, #ececf1);
+	border-color: var(--border-strong, #3a3a46);
+}
+
+.exi-copy:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exi-copy.is-copied {
+	color: #38d39f;
+	border-color: #38d39f;
+}
+
+.exi-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-top: auto;
+	padding-top: 4px;
+}
+
+.exi-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 13px;
+	border-radius: 9px;
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+	font-family: inherit;
+	border: 1px solid transparent;
+	background: var(--text, #ececf1);
+	color: var(--bg, #0b0b0f);
+	transition:
+		filter 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.exi-btn:hover {
+	filter: brightness(0.92);
+}
+
+.exi-btn:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exi-btn--ghost {
+	background: transparent;
+	color: var(--text, #ececf1);
+	border-color: var(--border, #26262e);
+}
+
+.exi-btn--ghost:hover {
+	filter: none;
+	border-color: var(--border-strong, #3a3a46);
+}
+
+.exi-path {
+	margin-left: auto;
+	font-size: 11px;
+	color: var(--text-dim, #9a9aa4);
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.exi-skeleton {
+	height: 180px;
+	border-radius: 12px;
+	border: 1px solid var(--border, #26262e);
+	background: linear-gradient(
+		100deg,
+		var(--surface, #131319) 30%,
+		var(--code-bg, #0f0f14) 50%,
+		var(--surface, #131319) 70%
+	);
+	background-size: 200% 100%;
+	animation: exi-shimmer 1.3s infinite linear;
+}
+
+@keyframes exi-shimmer {
+	to {
+		background-position: -200% 0;
+	}
+}
+
+.exi-state {
+	text-align: center;
+	padding: 48px 20px;
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exi-state h3 {
+	color: var(--text, #ececf1);
+	margin: 0 0 8px;
+	font-size: 18px;
+}
+
+.exi-state p {
+	max-width: 54ch;
+	margin: 0 auto 16px;
+}
+
+.exi-subhead {
+	font-size: 15px;
+	margin: 40px 0 0;
+	color: var(--text-dim, #9a9aa4);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.exi-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.exi-skeleton {
+		animation: none;
+	}
+
+	.exi-card:hover,
+	.exg-more-card:hover {
+		transform: none;
+	}
+}
+
 @media (max-width: 640px) {
 	.exg-shell {
 		padding-top: 24px;
@@ -287,6 +670,31 @@
 	.exg-card {
 		padding: 18px;
 	}
+
+	.exi-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.exi-count {
+		margin-left: 0;
+	}
+
+	.exi-path {
+		margin-left: 0;
+		width: 100%;
+	}
+}
+
+html[data-theme='light'] .exi-card,
+html[data-theme='light'] .exi-search {
+	background: #fff;
+	border-color: #e3e3ea;
+}
+
+html[data-theme='light'] .exi-run,
+html[data-theme='light'] .exi-files code {
+	background: #f5f5f8;
+	border-color: #e3e3ea;
 }
 
 html[data-theme='light'] .exg-pre {

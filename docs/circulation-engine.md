@@ -124,8 +124,32 @@ its own sake.
 | `ASSET_PRICE_MIN/MAX_THREE` | 600 / 4000 $THREE |
 | `AGENT_FLOOR` (top-up target) | 0.02 SOL |
 | `LAUNCH_FLOOR` | 0.034 SOL |
-| `THREE_TOPUP_SOL` (buy $THREE when short) | 0.012 SOL |
+| `THREE_TOPUP_SOL` (smallest $THREE buy, and the quote probe) | 0.012 SOL |
+| `THREE_TOPUP_MAX_SOL` (hard ceiling on one $THREE buy) | 0.06 SOL |
 | `FEE_BUFFER` (per-tx headroom) | 0.0009 SOL |
+
+### Buying $THREE for a marketplace purchase
+
+A buyer that is short on $THREE acquires it through the real trade engine before
+paying. The buy is **sized to the shortfall**, not fixed: `ensureThree()` quotes
+`THREE_TOPUP_SOL` worth of $THREE, derives the live rate, and buys what the
+listing actually costs plus 8% headroom for curve movement and fees.
+
+Two bounds apply, and the smaller wins:
+
+- `THREE_TOPUP_MAX_SOL`, the absolute ceiling on a single buy, and
+- this tick's share of the treasury (`spendableSol / paidBudget`), so an action
+  that sizes its own spend cannot quietly overspend the budget the governor
+  planned from and starve the actions queued behind it.
+
+If the shortfall costs more than that, the action is **skipped before any SOL
+moves**, naming the SOL it would have needed. This matters: the engine used to
+buy a flat 0.012 SOL of $THREE regardless of price. At roughly 100 $THREE per
+0.012 SOL, and with skills listed at 80-1200 $THREE and assets at 600-4000, most
+of the marketplace was unbuyable. Every attempt still paid a real trade fee,
+skipped with `still short on $THREE after top-up buy`, and repeated next tick, so
+marketplace GMV read zero while the fees went out. Sizing math is pure and
+covered by [tests/circulation-three-topup.test.js](../tests/circulation-three-topup.test.js).
 
 ## Cadence
 
@@ -202,6 +226,8 @@ budget, so raise gradually and watch tick runtime and treasury balance.
 
 ## Related
 
+- [Economy Health dashboard](economy-health-dashboard.md) — the operator page
+  that diagnoses this engine when the pulse goes quiet.
 - [Money feed](money-feed.md) — where circulation activity surfaces.
 - [Autonomous x402 loop](autonomous-x402.md) — the separate treasury-paid loop
   that buys polling intel from our own x402 endpoints.

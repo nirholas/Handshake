@@ -343,7 +343,14 @@ if (res.ok) {
 }
 ```
 
-A `401` response means no valid session exists.
+There are two distinct signed-out shapes, and a client that checks only one of them will get it wrong:
+
+| Situation | Status | Body |
+|---|---|---|
+| No session cookie at all | `200` | `{"user":null}` |
+| Cookie present but expired or revoked | `401` | `{"error":"invalid_session"}` |
+
+So treat "signed out" as `!response.ok || !body.user`, not as `response.status === 401`.
 
 ### Logging out
 

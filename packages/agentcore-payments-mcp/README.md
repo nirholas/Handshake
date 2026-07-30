@@ -121,6 +121,20 @@ The existing `pay_and_call` tool in `@three-ws/x402-mcp` now accepts `session_to
 
 This routes the payment through `/api/pay/execute` instead of signing locally — the session's governance policy applies.
 
+## Examples
+
+Runnable, no-payment examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs       # every tool with its schema and safety annotations
+node examples/plan-a-session.mjs   # read live x402 prices, print the policy to authorize
+```
+
+Neither one holds a wallet, reads a credential, or calls `pay_with_session`, so
+nothing is signed and nothing is spent. `plan-a-session.mjs` is the habit worth
+copying: read what an endpoint actually charges before you decide what budget to
+authorize. See [`examples/README.md`](./examples/README.md).
+
 ## Session lifecycle
 
 ```

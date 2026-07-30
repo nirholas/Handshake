@@ -44,6 +44,7 @@ The demos import the framework source directly (`../src/element.js`, `../src/lib
 | [agent-native-3d/](./agent-native-3d/) | A Node script that drives the free `/api/mcp-studio` MCP server end to end: generate a mesh, rig it, save it as a persistent agent persona, speak through it, and emit every distribution snippet. |
 | [agenc-task-roundtrip/](./agenc-task-roundtrip/) | End-to-end AgenC coordination-protocol demo on Solana devnet: two wallets register, post, claim, and complete a task with real on-chain transactions. |
 | [metamask-agent-wallet/](./metamask-agent-wallet/) | A localhost bridge plus single page that gives an agent a real server-side wallet through the authenticated MetaMask Agentic CLI. |
+| [paid-mcp-server/](./paid-mcp-server/) | An MCP server whose tools charge per call in USDC on Solana over x402: one free orientation tool, one paid glTF/GLB inspector. The seller side of the agent economy, with the verify-work-settle ordering that means a failed call never takes money. |
 | [monicas-apartment/](./monicas-apartment/) | A walkable first-person Three.js scene in one self-contained HTML file: procedural textures, AABB collision, pointer-lock controls. |
 
 More SDK-specific examples live next to their SDKs: [concierge-sdk/examples/](../concierge-sdk/examples/) and [assistant-sdk/examples/](../assistant-sdk/examples/).

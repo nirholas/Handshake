@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 37 examples: 10 web component demos, 9 end-to-end projects, and 18 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 39 examples: 10 web component demos, 10 end-to-end projects, and 19 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -750,11 +750,13 @@ The repo ships 37 examples: 10 web component demos, 9 end-to-end projects, and 1
 | [`examples/paid-mcp-server`](../examples/paid-mcp-server) | A complete, runnable MCP server whose tools charge per call in USDC on Solana over x402. It ships two tools on purpose: | `cd examples/paid-mcp-server && npm install && npm run start` |
 | [`examples/pump-fun-agent`](../examples/pump-fun-agent) | An example agent manifest that composes all four production pump.fun skills into one 3D trading agent: swap, coin creation, creator-fee collection, and token payments. | Reference files, nothing to execute |
 | [`examples/three-concierge`](../examples/three-concierge) | The reference agent for manifest spec agent-manifest/0.2. Trinity welcomes users to three.ws, explains the platform, and launches and trades $three on pump.fun through the real pump.fun skills in pump-fun-skills/. | Reference files, nothing to execute |
+| [`examples/wallet-sign-in`](../examples/wallet-sign-in) | See the directory for details. | `npm run dev, then open /examples/wallet-sign-in/index.html` |
 
 ### Package examples
 
 | Example | What it shows | Run it |
 |---|---|---|
+| [`packages/agentcore-payments-mcp/examples`](../packages/agentcore-payments-mcp/examples) | MCP server for three.ws Agent Payment Sessions - govern agent x402 spending without exposing private keys. | `node packages/agentcore-payments-mcp/examples/list-tools.mjs` |
 | [`assistant-sdk/examples`](../assistant-sdk/examples) | A 3D avatar assistant for any website, in one script tag. A floating launcher opens a real, animated 3D avatar in a panel, standing directly on your page (transparent), or against a color or gradient. It has two modes: | `npm run dev, then open /assistant-sdk/examples/index.html` |
 | [`avatar-sdk/examples`](../avatar-sdk/examples) | A self-contained page, no build step. It loads the SDK's @three-ws/avatar/agent entry from a CDN, awaits ensureAgent3D() to register the <agent-3d> element, and renders the real three.ws default avatar using the documented src and kiosk attributes. | `npm run dev, then open /avatar-sdk/examples/index.html` |
 | [`packages/avatar-schema/examples`](../packages/avatar-schema/examples) | JSON Schema and validator for three.ws on-chain avatar manifests - the canonical, hash-anchored format any cross-chain client can use to resolve an avatar. | Reference files, nothing to execute |

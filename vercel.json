@@ -1231,6 +1231,10 @@
 			"dest": "/avatar-sdk.html"
 		},
 		{
+			"src": "/avatar-cli/?",
+			"dest": "/avatar-cli.html"
+		},
+		{
 			"src": "/avatar-artifact/?",
 			"dest": "/avatar-artifact.html"
 		},

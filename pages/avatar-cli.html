@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Avatar CLI &middot; @three-ws/avatar-cli &middot; three.ws</title>
+		<meta
+			name="description"
+			content="Terminal-native tooling for on-chain avatars. Scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, CI-safe."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Avatar CLI &middot; @three-ws/avatar-cli" />
+		<meta
+			property="og:description"
+			content="Scaffold, validate, hash, and preview avatar manifests from your shell. No account, no API key, no network call."
+		/>
+		<meta property="og:url" content="https://three.ws/avatar-cli" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+CLI&amp;d=Terminal-native+tooling+for+on-chain+avatars%3A+scaffold%2C+validate%2C+hash%2C+and+preview+avatar+manifests+from+your+shell.&amp;p=%2Favatar-cli" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Avatar CLI &middot; three.ws" />
+		<meta name="twitter:description" content="Scaffold, validate, hash, and preview avatar manifests from your shell." />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+CLI&amp;d=Terminal-native+tooling+for+on-chain+avatars%3A+scaffold%2C+validate%2C+hash%2C+and+preview+avatar+manifests+from+your+shell.&amp;p=%2Favatar-cli" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Avatar CLI - three.ws" />
+
+		<link rel="canonical" href="https://three.ws/avatar-cli" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/avatar-cli.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar CLI","description":"Terminal-native tooling for on-chain avatars: scaffold, validate, hash, and preview avatar manifests from your shell.","url":"https://three.ws/avatar-cli","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"SoftwareApplication","name":"@three-ws/avatar-cli","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"softwareVersion":"0.2.0","url":"https://www.npmjs.com/package/@three-ws/avatar-cli"}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main>
+			<!-- Hero -->
+			<section class="cli-hero" aria-labelledby="cli-hero-title">
+				<div class="cli-hero-bg" aria-hidden="true">
+					<div class="cli-hero-orb a"></div>
+					<div class="cli-hero-orb b"></div>
+					<div class="cli-hero-grid"></div>
+				</div>
+
+				<div class="cli-wrap cli-hero-inner">
+					<div class="cli-hero-copy">
+						<div class="cli-badge">
+							<span class="cli-badge-dot" aria-hidden="true"></span>
+							npm &middot; @three-ws/avatar-cli
+						</div>
+
+						<h1 class="cli-h1" id="cli-hero-title">
+							Avatars belong in your<br /><em>build pipeline</em>.
+						</h1>
+
+						<p class="cli-sub">
+							Scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it
+							against the published schema, and print an embed snippet that actually renders.
+							<strong>Offline, deterministic, and safe to put in a release script.</strong>
+						</p>
+
+						<div class="cli-install">
+							<div class="cli-install-cmd" role="group" aria-label="Install command">
+								<span class="cli-prompt" aria-hidden="true">$</span>
+								<code class="cli-cmd-text" id="install-cmd">npm install -g @three-ws/avatar-cli</code>
+								<button class="cli-copy" data-copy-target="install-cmd" aria-label="Copy install command">
+									<svg class="cli-copy-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+									<span class="cli-copy-label">Copy</span>
+								</button>
+							</div>
+							<p class="cli-install-alt">
+								or run it once with <code>npx @three-ws/avatar-cli</code>
+							</p>
+						</div>
+
+						<div class="cli-ctas">
+							<a href="/docs/avatar-cli" class="cli-btn cli-btn-primary">
+								Read the docs
+								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</a>
+							<a href="/docs/tutorials/ship-an-avatar-manifest" class="cli-btn cli-btn-ghost">Tutorial</a>
+							<a href="https://github.com/nirholas/three.ws/tree/main/packages/avatar-cli" class="cli-btn cli-btn-ghost" target="_blank" rel="noopener">
+								<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+								Source
+							</a>
+						</div>
+
+						<dl class="cli-stats">
+							<div class="cli-stat">
+								<dt class="cli-stat-label">Runtime deps</dt>
+								<dd class="cli-stat-value">1</dd>
+							</div>
+							<div class="cli-stat">
+								<dt class="cli-stat-label">Network calls</dt>
+								<dd class="cli-stat-value">0</dd>
+							</div>
+							<div class="cli-stat">
+								<dt class="cli-stat-label">Commands</dt>
+								<dd class="cli-stat-value">4</dd>
+							</div>
+							<div class="cli-stat">
+								<dt class="cli-stat-label">Node</dt>
+								<dd class="cli-stat-value">18+</dd>
+							</div>
+						</dl>
+					</div>
+
+					<!-- Replayed terminal -->
+					<div class="cli-term-shell">
+						<div class="cli-term-glow" aria-hidden="true"></div>
+						<div class="cli-term" role="img" aria-label="Terminal session: init scaffolds a manifest, validate confirms it is schema-valid, preview prints an embed snippet.">
+							<div class="cli-term-bar">
+								<span class="cli-term-dot r"></span>
+								<span class="cli-term-dot y"></span>
+								<span class="cli-term-dot g"></span>
+								<span class="cli-term-title">three-ws-avatar</span>
+								<button class="cli-term-replay" type="button" aria-label="Replay the terminal session">
+									<svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M14 8A6 6 0 1 1 8 2c1.9 0 3.58.88 4.68 2.26" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 1.5V5h-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+									Replay
+								</button>
+							</div>
+							<pre class="cli-term-body" id="cli-term-body" tabindex="0"></pre>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Commands -->
+			<section class="cli-section" id="commands" aria-labelledby="cli-commands-title">
+				<div class="cli-wrap">
+					<header class="cli-section-head">
+						<span class="cli-eyebrow">Four commands</span>
+						<h2 class="cli-h2" id="cli-commands-title">The whole surface area</h2>
+						<p class="cli-lede">
+							No config file, no project scaffold, no state directory. Each command does one
+							thing to one file and tells you what happened.
+						</p>
+					</header>
+
+					<div class="cli-cmd-grid">
+						<article class="cli-cmd-card">
+							<div class="cli-cmd-head">
+								<h3 class="cli-cmd-name"><code>init</code></h3>
+								<span class="cli-chip">writes</span>
+							</div>
+							<p class="cli-cmd-desc">
+								Scaffolds a schema-valid manifest from a wallet, a name, and a mesh file.
+								Reads the mesh once to compute its SHA-256 and size, so the document cannot
+								disagree with the bytes it was built from.
+							</p>
+							<pre class="cli-snip"><code>three-ws-avatar init \
+  --owner eip155:1:0x742d35Cc… \
+  --name "Nicholas" \
+  --mesh ./michelle.glb \
+  --skeleton mixamo \
+  --out manifest.json</code></pre>
+						</article>
+
+						<article class="cli-cmd-card">
+							<div class="cli-cmd-head">
+								<h3 class="cli-cmd-name"><code>validate</code></h3>
+								<span class="cli-chip">exits 0/1</span>
+							</div>
+							<p class="cli-cmd-desc">
+								Checks a manifest against <code>@three-ws/avatar-schema</code> and prints every
+								error at the instance path where it happened. Non-zero exit makes it a build
+								gate rather than a report.
+							</p>
+							<pre class="cli-snip"><code>$ three-ws-avatar validate broken.json
+<span class="e">✖ broken.json is invalid (7 errors)</span>
+  • / must have required property 'mesh'
+  • /id must match a schema in anyOf</code></pre>
+						</article>
+
+						<article class="cli-cmd-card">
+							<div class="cli-cmd-head">
+								<h3 class="cli-cmd-name"><code>hash</code></h3>
+								<span class="cli-chip">pipe-safe</span>
+							</div>
+							<p class="cli-cmd-desc">
+								Lowercase hex SHA-256 of a file, alone on stdout so it composes. The same
+								digest <code>init</code> writes into <code>mesh.sha256</code>, which is what
+								makes drift detection a one-line comparison.
+							</p>
+							<pre class="cli-snip"><code>$ sha=$(three-ws-avatar hash ./michelle.glb)
+$ echo "$sha"
+<span class="ok">28d788538f7b22b8e00c1d715fffc380…</span></code></pre>
+						</article>
+
+						<article class="cli-cmd-card">
+							<div class="cli-cmd-head">
+								<h3 class="cli-cmd-name"><code>preview</code></h3>
+								<span class="cli-chip">emits HTML</span>
+							</div>
+							<p class="cli-cmd-desc">
+								Validates, then prints a resolver URL, an <code>&lt;agent-3d&gt;</code> snippet
+								paired with the loader that registers it, and a zero-install iframe. Warns when
+								<code>mesh.uri</code> is still a local path.
+							</p>
+							<pre class="cli-snip"><code>$ three-ws-avatar preview manifest.json
+<span class="dim">› web component</span>
+&lt;script type="module" src="…/agent-3d.js"&gt;&lt;/script&gt;
+&lt;agent-3d src="…/michelle.glb"&gt;&lt;/agent-3d&gt;</code></pre>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<!-- Live proof -->
+			<section class="cli-section cli-section-alt" id="live" aria-labelledby="cli-live-title">
+				<div class="cli-wrap">
+					<header class="cli-section-head">
+						<span class="cli-eyebrow">Proof, not a promise</span>
+						<h2 class="cli-h2" id="cli-live-title">The snippet on the left is rendering on the right</h2>
+						<p class="cli-lede">
+							This is not a screenshot. The markup below is exactly what <code>preview</code>
+							prints, pasted into this page unmodified. If it ever stopped working, this
+							section would break in public.
+						</p>
+					</header>
+
+					<div class="cli-live">
+						<div class="cli-live-code">
+							<div class="cli-live-code-bar">
+								<span class="cli-live-code-label">preview output</span>
+								<button class="cli-copy cli-copy-sm" data-copy-target="live-snippet" aria-label="Copy the embed snippet">
+									<svg class="cli-copy-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M10.5 3.5v-1a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+									<span class="cli-copy-label">Copy</span>
+								</button>
+							</div>
+							<pre class="cli-snip cli-snip-lg"><code id="live-snippet">&lt;script type="module" src="/agent-3d/latest/agent-3d.js"&gt;&lt;/script&gt;
+&lt;agent-3d
+  src="https://three.ws/avatars/michelle.glb"
+  style="width:100%;height:420px"&gt;&lt;/agent-3d&gt;</code></pre>
+							<p class="cli-live-note">
+								Both lines matter. <code>&lt;agent-3d&gt;</code> is an unknown element until the
+								loader registers it, so pasting only the tag gives you an empty box with no
+								warning. That is why <code>preview</code> always prints them together.
+							</p>
+						</div>
+
+						<div class="cli-live-stage">
+							<div class="cli-live-stage-frame" id="live-stage" data-state="loading">
+								<div class="cli-live-skeleton" aria-hidden="true">
+									<div class="cli-live-skeleton-sheen"></div>
+								</div>
+								<p class="cli-live-fallback" role="status">
+									<span class="cli-live-fallback-title">Viewer unavailable</span>
+									<span class="cli-live-fallback-body">
+										The component loader did not register. The snippet is still correct;
+										see the <a href="/docs/web-component">web component reference</a>.
+									</span>
+								</p>
+								<script type="module" src="/agent-3d/latest/agent-3d.js"></script>
+								<agent-3d
+									src="https://three.ws/avatars/michelle.glb"
+									style="width:100%;height:420px"
+								></agent-3d>
+							</div>
+							<p class="cli-live-caption">
+								<code>michelle.glb</code> &middot; Mixamo rig &middot; served from three.ws
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Manifest anatomy -->
+			<section class="cli-section" id="manifest" aria-labelledby="cli-manifest-title">
+				<div class="cli-wrap">
+					<header class="cli-section-head">
+						<span class="cli-eyebrow">The artifact</span>
+						<h2 class="cli-h2" id="cli-manifest-title">What a manifest actually is</h2>
+						<p class="cli-lede">
+							Seven required fields. <code>uri</code> says where the mesh is, <code>sha256</code>
+							says what it must be. Those are different promises, and only the second one
+							survives someone re-uploading a different model to the same path.
+						</p>
+					</header>
+
+					<div class="cli-manifest">
+						<pre class="cli-snip cli-snip-lg cli-manifest-code"><code>{
+  <span class="k">"schemaVersion"</span>: <span class="n">1</span>,
+  <span class="k">"id"</span>: <span class="s">"eip155:1:0x742d35Cc6634C0532925a3b844Bc454e4438f44e"</span>,
+  <span class="k">"name"</span>: <span class="s">"Nicholas"</span>,
+  <span class="k">"mesh"</span>: {
+    <span class="k">"uri"</span>: <span class="s">"https://three.ws/avatars/michelle.glb"</span>,
+    <span class="k">"sha256"</span>: <span class="s">"28d788538f7b22b8e00c1d715fffc380bb06a304613d522c20523d3d6ff79bc2"</span>,
+    <span class="k">"format"</span>: <span class="s">"glb"</span>,
+    <span class="k">"kBytes"</span>: <span class="n">830</span>
+  },
+  <span class="k">"skeleton"</span>: <span class="s">"mixamo"</span>,
+  <span class="k">"owner"</span>: {
+    <span class="k">"chain"</span>: <span class="s">"eip155:1"</span>,
+    <span class="k">"address"</span>: <span class="s">"0x742d35Cc6634C0532925a3b844Bc454e4438f44e"</span>
+  },
+  <span class="k">"createdAt"</span>: <span class="s">"2026-07-30T19:23:34.595Z"</span>
+}</code></pre>
+
+						<ul class="cli-field-list">
+							<li class="cli-field">
+								<span class="cli-field-name">id</span>
+								<span class="cli-field-note">A CAIP-10 account, or a name service handle ending in <code>.eth</code>, <code>.ws</code>, or <code>.sol</code>.</span>
+							</li>
+							<li class="cli-field">
+								<span class="cli-field-name">mesh.sha256</span>
+								<span class="cli-field-note">Content address for the model. The field that catches a silent re-export.</span>
+							</li>
+							<li class="cli-field">
+								<span class="cli-field-name">skeleton</span>
+								<span class="cli-field-note">One of <code>avaturn</code>, <code>mixamo</code>, <code>rpm</code>, <code>vrm-humanoid</code>, <code>custom</code>. Decides which animation library retargets onto the rig.</span>
+							</li>
+							<li class="cli-field">
+								<span class="cli-field-name">owner</span>
+								<span class="cli-field-note">Chain-scoped account, so ownership is unambiguous off-platform.</span>
+							</li>
+						</ul>
+
+						<p class="cli-manifest-more">
+							Five optional fields the schema also accepts:
+							<code>animations</code>, <code>accessories</code>, <code>traits</code>,
+							<code>creator</code>, and <code>signature</code>. The last one is the interesting
+							one: everything else is a claim you are making, while a signature is a claim
+							someone else can verify without trusting your server.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<!-- Release gate -->
+			<section class="cli-section cli-section-alt" id="ci" aria-labelledby="cli-ci-title">
+				<div class="cli-wrap">
+					<header class="cli-section-head">
+						<span class="cli-eyebrow">In your release</span>
+						<h2 class="cli-h2" id="cli-ci-title">Fail the build, not the page</h2>
+						<p class="cli-lede">
+							A manifest that is only correct on the day you wrote it is a document, not a
+							guarantee. Two checks turn it into one. Neither needs network access.
+						</p>
+					</header>
+
+					<div class="cli-gate-grid">
+						<article class="cli-gate">
+							<h3 class="cli-gate-title">
+								<span class="cli-gate-num">01</span>
+								Did the mesh change?
+							</h3>
+							<pre class="cli-snip"><code>expected=$(node -p "require('./manifest.json').mesh.sha256")
+actual=$(three-ws-avatar hash ./michelle.glb)
+[ "$expected" = "$actual" ] || {
+  echo "mesh hash mismatch"; exit 1;
+}</code></pre>
+							<p class="cli-gate-note">
+								Catches the re-export nobody mentioned, the lossy optimization pass, the
+								teammate who swapped the model and kept the filename, and the CDN that
+								started serving an error page with a <code>200</code>.
+							</p>
+						</article>
+
+						<article class="cli-gate">
+							<h3 class="cli-gate-title">
+								<span class="cli-gate-num">02</span>
+								Is every manifest still valid?
+							</h3>
+							<pre class="cli-snip"><code>find . -name '*.avatar.json' \
+  -not -path './node_modules/*' -print0 \
+  | xargs -0 -n1 three-ws-avatar validate</code></pre>
+							<p class="cli-gate-note">
+								<code>xargs</code> exits non-zero if any single invocation failed, so one bad
+								manifest fails the whole step. Wire it into whatever already runs on release.
+							</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<!-- Next -->
+			<section class="cli-section" id="next" aria-labelledby="cli-next-title">
+				<div class="cli-wrap">
+					<header class="cli-section-head">
+						<span class="cli-eyebrow">Keep going</span>
+						<h2 class="cli-h2" id="cli-next-title">Where to next</h2>
+					</header>
+
+					<div class="cli-next-grid">
+						<a class="cli-next-card" href="/docs/avatar-cli">
+							<h3 class="cli-next-title">CLI reference</h3>
+							<p class="cli-next-desc">Every flag, exit code, and <code>--json</code> shape, command by command.</p>
+							<span class="cli-next-go" aria-hidden="true">Read
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+						<a class="cli-next-card" href="/docs/tutorials/ship-an-avatar-manifest">
+							<h3 class="cli-next-title">Ship an avatar manifest</h3>
+							<p class="cli-next-desc">The guided path: raw GLB to a live embed, with the reasoning at each step.</p>
+							<span class="cli-next-go" aria-hidden="true">Start
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+						<a class="cli-next-card" href="/docs/web-component">
+							<h3 class="cli-next-title">Web component</h3>
+							<p class="cli-next-desc">Everything <code>&lt;agent-3d&gt;</code> does beyond a body: voice, brain, memory, skills.</p>
+							<span class="cli-next-go" aria-hidden="true">Explore
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+						<a class="cli-next-card" href="/avatar-sdk">
+							<h3 class="cli-next-title">Avatar SDK</h3>
+							<p class="cli-next-desc">The browser half: web component, React bindings, creator iframe, uploads.</p>
+							<span class="cli-next-go" aria-hidden="true">Open
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="h-footer-horizon" role="contentinfo" aria-label="Site footer">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div id="footer-content"></div>
+		</footer>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/avatar-cli-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
