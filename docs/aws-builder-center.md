@@ -38,7 +38,6 @@ Written and reviewed in this repo, not yet submitted:
 
 | Draft | Subject |
 |---|---|
-| [aws-builder-center-agent-payment-sessions.md](./aws-builder-center-agent-payment-sessions.md) | Agent Payment Sessions: giving an agent a budget instead of a private key, and enforcing it atomically in Postgres |
 | [aws-builder-center-mcp-agents.md](./aws-builder-center-mcp-agents.md) | An MCP server whose paid tools settle per call in USDC over HTTP 402 |
 
 ## Publishing checklist
