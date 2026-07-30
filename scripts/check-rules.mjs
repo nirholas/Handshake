@@ -16,6 +16,7 @@
 //   node scripts/check-rules.mjs              working tree + staged, vs HEAD
 //   node scripts/check-rules.mjs --staged     staged only (pre-commit)
 //   node scripts/check-rules.mjs --base <ref> everything since <ref> (branch review)
+//   node scripts/check-rules.mjs --base <ref> --head <ref>   a pushed ref that is not HEAD (pre-push hook)
 //   node scripts/check-rules.mjs --paths a.js b.js   only these files
 //
 // --paths matters here: concurrent agents share this worktree, so a bare
@@ -33,6 +34,8 @@ const argv = process.argv.slice(2);
 const staged = argv.includes('--staged');
 const baseIdx = argv.indexOf('--base');
 const base = baseIdx === -1 ? null : argv[baseIdx + 1];
+const headIdx = argv.indexOf('--head');
+const head = headIdx === -1 ? 'HEAD' : argv[headIdx + 1];
 const pathsIdx = argv.indexOf('--paths');
 const paths = pathsIdx === -1 ? [] : argv.slice(pathsIdx + 1).filter((a) => !a.startsWith('--'));
 
@@ -104,7 +107,7 @@ const RULES = [
 ];
 
 let diffArgs;
-if (base) diffArgs = ['diff', '--unified=0', `${base}...HEAD`];
+if (base) diffArgs = ['diff', '--unified=0', `${base}...${head}`];
 else if (staged) diffArgs = ['diff', '--unified=0', '--staged'];
 else diffArgs = ['diff', '--unified=0', 'HEAD'];
 if (paths.length) diffArgs = [...diffArgs, '--', ...paths];
