@@ -18,6 +18,60 @@ function statCard(val, lbl) {
 	return `<div class="stat-card"><div class="stat-val">${val}</div><div class="stat-lbl">${lbl}</div></div>`;
 }
 
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/**
+ * Render the trial funnel. Free trials are never counted as sales, so this is
+ * the only place they are shown, and the shape of the drop-off is the point:
+ * each bar is sized against the widest stage.
+ */
+function renderFunnel(funnel) {
+	const section = document.getElementById('funnel-section');
+	const list = document.getElementById('funnel-steps');
+	const note = document.getElementById('funnel-note');
+	if (!section || !list || !funnel) return;
+
+	const { granted = 0, used = 0, exhausted = 0, converted = 0 } = funnel;
+	if (!granted && !converted) return; // nothing to show yet; leave the section hidden
+
+	const stages = [
+		{ name: 'Trials granted', n: granted, tint: 'var(--violet)', desc: 'Buyers who started a free trial of a listed skill.' },
+		{ name: 'Trials used', n: used, tint: 'var(--cyan)', desc: 'Trials where at least one run has actually been spent.' },
+		{ name: 'Trials exhausted', n: exhausted, tint: 'var(--amber)', desc: 'Every free run gone. The highest-intent state in the marketplace.' },
+		{ name: 'Converted to a sale', n: converted, tint: 'var(--green)', desc: 'Paid in full, settled on chain.' },
+	];
+
+	const widest = Math.max(...stages.map((s) => s.n), 1);
+	list.innerHTML = stages
+		.map((s) => {
+			const pct = Math.max((s.n / widest) * 100, s.n > 0 ? 2 : 0);
+			const rate = granted > 0 ? `${((s.n / granted) * 100).toFixed(s.n && s.n < granted / 100 ? 1 : 0)}% of granted` : '';
+			return `<li class="funnel-step" style="--pct:${pct.toFixed(1)}%;--tint:${s.tint};">
+				<div class="funnel-head">
+					<span class="funnel-name">${esc(s.name)}</span>
+					<span class="funnel-val">${s.n.toLocaleString()}${rate ? `<span class="funnel-rate">${rate}</span>` : ''}</span>
+				</div>
+				<div class="funnel-desc">${esc(s.desc)}</div>
+			</li>`;
+		})
+		.join('');
+
+	// The two shapes that mean something is wired wrong rather than demand being
+	// weak. Saying so beats leaving a reader to conclude the market is dead.
+	let diagnosis = '';
+	if (granted > 20 && used === 0) {
+		diagnosis = `All ${granted.toLocaleString()} trials still hold every run they were granted, so nothing is metering trial usage. Until runs are spent, no trial can reach the exhausted state that makes a buyer eligible to purchase.`;
+	} else if (exhausted > 10 && converted === 0) {
+		diagnosis = `${exhausted.toLocaleString()} trials have run out with no purchases behind them. That is a checkout problem, not a demand problem.`;
+	}
+	if (diagnosis) {
+		note.innerHTML = `${esc(diagnosis)} <a href="/tutorials/sell-a-skill-with-a-trial">How the trial funnel is meant to work</a>`;
+		note.hidden = false;
+	}
+
+	section.hidden = false;
+}
+
 function rankRow(num, name, sub, primary, secondary) {
 	return `
 		<div class="rank-row">
@@ -123,17 +177,20 @@ async function load() {
 	}
 
 	const { data } = await res.json();
-	const { summary, topSkills, topAgents, salesVolume } = data;
+	const { summary, topSkills, topAgents, salesVolume, trialFunnel } = data;
 
-	// Stats
+	// Stats. `totalSales` and `totalVolumeAtomic` count PAID purchases only;
+	// free trials get their own card so they can never read as revenue.
 	const totalVol = fmtVolume(summary.totalVolumeAtomic, USDC_MINT);
 	statsGrid.innerHTML = [
-		statCard(summary.totalSales.toLocaleString(), 'Total skill sales'),
+		statCard(summary.totalSales.toLocaleString(), 'Paid skill sales'),
 		statCard(totalVol, 'Total volume'),
-		statCard(summary.uniqueBuyers.toLocaleString(), 'Unique buyers'),
-		statCard(summary.uniqueSellers.toLocaleString(), 'Creators with sales'),
-		statCard(summary.totalNfts.toLocaleString(), 'NFT receipts minted'),
+		statCard((summary.totalTrials ?? 0).toLocaleString(), 'Free trials taken'),
+		statCard(summary.uniqueBuyers.toLocaleString(), 'Paying buyers'),
+		statCard(summary.uniqueSellers.toLocaleString(), 'Creators listing skills'),
 	].join('');
+
+	renderFunnel(trialFunnel);
 
 	// Top skills
 	document.getElementById('top-skills-count').textContent = topSkills.length;
@@ -142,10 +199,12 @@ async function load() {
 			i + 1,
 			s.skill,
 			s.agentName || '',
-			`${s.totalSales} ${s.totalSales === 1 ? 'sale' : 'sales'}`,
+			s.totalSales > 0
+				? `${s.totalSales} ${s.totalSales === 1 ? 'sale' : 'sales'}`
+				: `${s.totalTrials || 0} ${s.totalTrials === 1 ? 'trial' : 'trials'}, no sales yet`,
 			fmtVolume(s.totalRevenue, s.currencyMint),
 		)).join('')
-		: '<div style="color:var(--muted);font-size:13px;padding:16px 0;">No sales yet.</div>';
+		: '<div style="color:var(--muted);font-size:13px;padding:16px 0;">No skills listed yet.</div>';
 
 	// Top agents
 	document.getElementById('top-agents-count').textContent = topAgents.length;
