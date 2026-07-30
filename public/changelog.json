@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:54:05.367Z",
+	"generated_at": "2026-07-30T04:57:16.016Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -192,6 +192,17 @@
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Skill trials in the agent marketplace can finally turn into real purchases",
+			"summary": "The marketplace had recorded thousands of free skill trials and not one completed sale, and the reason was a dead end in the funnel rather than a lack of interest. Agents were handed trial runs that nothing ever spent, so a trial sat at its full count forever, and the buying logic treated any trial at all as though the agent already owned the skill. That combination quietly retired every agent-and-skill pair from the paid path the moment it took a trial. Trials are now actually used up as agents work, and once a trial's runs are gone the agent becomes a real buyer again instead of being locked out. Marketplace volume on the pulse page can now reflect genuine sales.",
+			"link": "/pulse",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

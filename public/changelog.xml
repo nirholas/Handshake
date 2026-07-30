@@ -151,6 +151,14 @@
 			<description>Three example sets you can run as-is against live three.ws services: a zero-spend x402 discovery probe plus a key-gated real paid call, curl and plain Node walkthroughs of the full MCP session lifecycle including a free tool call, and a build-free HTML page that renders a live 3D avatar straight from the CDN.</description>
 		</item>
 		<item>
+			<title>Skill trials in the agent marketplace can finally turn into real purchases</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-30:Skill trials in the agent marketplace can finally turn into real purchases</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The marketplace had recorded thousands of free skill trials and not one completed sale, and the reason was a dead end in the funnel rather than a lack of interest. Agents were handed trial runs that nothing ever spent, so a trial sat at its full count forever, and the buying logic treated any trial at all as though the agent already owned the skill. That combination quietly retired every agent-and-skill pair from the paid path the moment it took a trial. Trials are now actually used up as agents work, and once a trial's runs are gone the agent becomes a real buyer again instead of being locked out. Marketplace volume on the pulse page can now reflect genuine sales.</description>
+		</item>
+		<item>
 			<title>Solana reads keep working when every paid RPC plan runs dry at once</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Solana reads keep working when every paid RPC plan runs dry at once</guid>

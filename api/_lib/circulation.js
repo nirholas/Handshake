@@ -35,6 +35,7 @@ import { CHAIN_BY_ID } from './erc8004-chains.js';
 import { publicUrl as r2PublicUrl } from './r2.js';
 import { pinToIPFS } from './ipfs-pin.js';
 import { confirmSkillPurchase, resolvePayoutAddress } from './purchase-confirm.js';
+import { consumeTrialUse, logSkillUsage } from './skill-access.js';
 import { resolveMarketplaceFee } from './marketplace-platform-fee.js';
 import { submitProtected } from './execution-engine.js';
 import { insertNotification } from './notify.js';
@@ -77,6 +78,40 @@ const PAY_MAX = Math.floor(0.01 * SOL);
 // quieter-but-alive state and automatically speeds back up as the ring's revenue
 // share refills the treasury. Self-balancing instead of burst-then-dead.
 const COSTLY_ACTIONS = new Set(['tip', 'payment', 'trade', 'launch', 'deploy', 'buy_skill', 'buy_asset']);
+
+/**
+ * The light-action mix, weighted HARD toward real marketplace purchases (value
+ * delivered plus take-rate earned) and away from the bare p2p `payment`
+ * transfer, which moves SOL but delivers nothing.
+ *
+ * Anything not in COSTLY_ACTIONS costs nothing on-chain and so stays eligible
+ * when the paid budget is exhausted. `use_trial` is deliberately free and
+ * weighted at the trial rate: it is the funnel's missing middle, since a trial
+ * that is never spent never reaches the exhausted state that makes its holder
+ * eligible to buy.
+ *
+ * Exported so a test can hold every weighted kind to having a real handler.
+ */
+export const LIGHT_ACTION_WEIGHTS = [
+	['buy_skill', 34],
+	['tip', 18],
+	['trade', 12],
+	['trial', 12],
+	['use_trial', 12],
+	['buy_asset', 8],
+	['review', 8],
+	['payment', 6],
+];
+
+/** Action kinds the engine can actually execute. */
+export function actionKinds() {
+	return Object.keys(ACTIONS);
+}
+
+/** True when this kind spends on-chain and is gated by the paid budget. */
+export function isCostlyAction(kind) {
+	return COSTLY_ACTIONS.has(kind);
+}
 /** Leave this much SOL so the treasury can always pay its own transfer fees. */
 const TREASURY_RESERVE_SOL = Number(process.env.CIRCULATION_TREASURY_RESERVE_SOL) || 0.005;
 /** Typical just-in-time top-up one paid action draws (observed ~0.012 SOL). */
@@ -1000,10 +1035,17 @@ async function actionBuySkill(ctx) {
 	if (!candidates.length) throw new Skip('no eligible buyer');
 	const buyer = pick(candidates);
 
+	// A confirmed purchase means the buyer owns the skill outright. A trial only
+	// blocks while it still has uses left: once those run out, that agent is
+	// precisely the one the funnel exists to convert, so it must stay buyable.
+	// Treating a spent trial as ownership is what pinned marketplace revenue at a
+	// structural zero, since every trial permanently retired its (buyer, seller,
+	// skill) triple from the paid path.
 	const [owned] = await sql`
 		select 1 from skill_purchases
 		where user_id = ${buyer.userId} and agent_id = ${listing.agent_id} and skill = ${listing.skill}
-		  and status in ('confirmed','trial') limit 1
+		  and (status = 'confirmed' or (status = 'trial' and coalesce(trial_remaining, 0) > 0))
+		limit 1
 	`;
 	if (owned) throw new Skip('buyer already owns this skill');
 
@@ -1114,6 +1156,46 @@ async function actionTrial(ctx) {
 	`;
 	await logAction({ kind: 'trial', actorAgentId: taker.id, counterpartyAgentId: listing.agent_id, detail: { skill: listing.skill, taker: taker.name, seller: listing.seller_name } });
 	return { kind: 'trial', taker: taker.name, seller: listing.seller_name, skill: listing.skill };
+}
+
+// A trial holder spends one of its remaining trial runs, through the same
+// consumeTrialUse + logSkillUsage path a human-owned agent uses. Free: no chain
+// write, so it runs even when the paid budget is zero.
+//
+// This is the only thing that drains trial_remaining for circulation agents.
+// consumeTrialUse is otherwise reachable only from the x402 agent-action route,
+// which these agents never call, so before this existed every trial sat at full
+// count forever and blocked its holder from ever converting to a paid purchase.
+async function actionUseTrial(ctx) {
+	const { pool } = ctx;
+	const byUser = new Map(pool.map((a) => [a.userId, a]));
+	const userIds = [...byUser.keys()].filter(Boolean);
+	if (!userIds.length) throw new Skip('no agents with accounts');
+
+	const rows = await sql`
+		select user_id, agent_id, skill, trial_remaining
+		from skill_purchases
+		where status = 'trial' and coalesce(trial_remaining, 0) > 0
+		  and user_id = ANY(${userIds}::uuid[])
+		order by random() limit 25
+	`;
+	if (!rows.length) throw new Skip('no active trial to use');
+
+	const row = pick(rows);
+	const actor = byUser.get(row.user_id);
+	const remaining = await consumeTrialUse(row.user_id, row.agent_id, row.skill);
+	// Null means another tick spent the last use between the select and the
+	// update; that is ordinary contention, not a fault.
+	if (remaining === null) throw new Skip('trial already spent');
+	logSkillUsage({ userId: row.user_id, agentId: row.agent_id, skillName: row.skill });
+
+	await logAction({
+		kind: 'use_trial',
+		actorAgentId: actor.id,
+		counterpartyAgentId: row.agent_id,
+		detail: { skill: row.skill, taker: actor.name, trial_remaining: remaining },
+	});
+	return { kind: 'use_trial', taker: actor.name, skill: row.skill, trial_remaining: remaining };
 }
 
 // A seller agent lists its 3D avatar as a purchasable asset (real asset_prices row,
@@ -1402,19 +1484,8 @@ async function planActions(cfg, poolSize, budget = null) {
 	if (listedSkillCount < poolSize * 3) plan.push('list_skill');
 	if (listedAssetCount < Math.floor(poolSize / 2)) plan.push('list_asset');
 
-	// Fill the remaining budget with light actions. Weighted HARD toward real
-	// marketplace purchases (value delivered + take-rate earned) — the honest signal
-	// we want to grow — and away from the bare p2p `payment` transfer, which moves
-	// SOL but delivers nothing and only padded the x402 counter.
-	const weighted = [
-		['buy_skill', 34],
-		['tip', 18],
-		['trade', 12],
-		['trial', 12],
-		['buy_asset', 8],
-		['review', 8],
-		['payment', 6],
-	];
+	// Fill the remaining budget with light actions (see LIGHT_ACTION_WEIGHTS).
+	const weighted = LIGHT_ACTION_WEIGHTS;
 	// Fill against the affordable budget: once the paid slots are used up, only
 	// actions that cost nothing on-chain remain eligible, so a lean treasury
 	// yields a quieter-but-live tick instead of a wall of guaranteed skips.
@@ -1446,6 +1517,7 @@ const ACTIONS = {
 	list_skill: actionListSkill,
 	buy_skill: actionBuySkill,
 	trial: actionTrial,
+	use_trial: actionUseTrial,
 	list_asset: actionListAsset,
 	buy_asset: actionBuyAsset,
 };

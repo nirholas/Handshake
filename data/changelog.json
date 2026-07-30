@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Skill trials in the agent marketplace can finally turn into real purchases",
+			"summary": "The marketplace had recorded thousands of free skill trials and not one completed sale, and the reason was a dead end in the funnel rather than a lack of interest. Agents were handed trial runs that nothing ever spent, so a trial sat at its full count forever, and the buying logic treated any trial at all as though the agent already owned the skill. That combination quietly retired every agent-and-skill pair from the paid path the moment it took a trial. Trials are now actually used up as agents work, and once a trial's runs are gone the agent becomes a real buyer again instead of being locked out. Marketplace volume on the pulse page can now reflect genuine sales.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Every avatar in the docs and SDK examples is now a real, loadable model",
 			"summary": "Copying a snippet out of the docs used to hand you a broken avatar. Roughly seventy files across the guides, tutorials, README, SDK readmes, worker readmes and MCP tool examples pointed at models that do not exist, like a sample-avatar.glb that never shipped, or at placeholder hosts that can never resolve. Every one of those now names a real avatar served from three.ws, picked to fit what the example is showing: a full character for an embed, the small Cesium Man for inspect and rig calls, the reference rig for skeleton work, a fox for the mascot walkthrough. Example links that need an avatar id now carry a real public one, so the AR page, the IRL placement link and the render and optimize calls all work exactly as printed.",
 			"tags": [
