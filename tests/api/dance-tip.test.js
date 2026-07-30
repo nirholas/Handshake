@@ -13,6 +13,7 @@
 //   • The bazaar schema advertises the new `dance` enum values + sequence shape
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
 	STYLES,
 	pickStyle,
@@ -64,7 +65,18 @@ describe('STYLES — registry', () => {
 	// `idle`/`walk` are stage transitions, not danceable styles, so they're not
 	// valid routine clips.
 	it('only references clips that exist in the deployed animation manifest', () => {
-		const PERFORMABLE = new Set(['dance', 'rumba', 'silly', 'thriller', 'capoeira', 'twerk']);
+		// Read the shipped manifest rather than a hand-kept list: a hardcoded set
+		// goes stale the moment a new routine is added, which turns this guard
+		// into a false alarm instead of the real check its name promises.
+		const manifest = JSON.parse(
+			readFileSync(new URL('../../public/animations/manifest.json', import.meta.url), 'utf8'),
+		);
+		const entries = Array.isArray(manifest) ? manifest : manifest.animations || manifest.clips || [];
+		const PERFORMABLE = new Set(entries.map((a) => a.name || a.id).filter(Boolean));
+		// `idle`/`walk` ship in the manifest as stage transitions, so exclude them:
+		// a paid routine that only stands or walks is the frozen-dancer bug.
+		PERFORMABLE.delete('idle');
+		PERFORMABLE.delete('walk');
 		for (const [key, style] of Object.entries(STYLES)) {
 			const clips = style.sequence ? style.sequence.map((s) => s.clip) : [style.clip];
 			for (const clip of clips) {

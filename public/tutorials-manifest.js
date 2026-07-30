@@ -164,7 +164,7 @@
 			slug: 'import-avatar-url',
 			tier: 'easy',
 			title: 'Import an avatar by URL',
-			blurb: 'Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link — auto-validated, auto-rigged, ready for an agent.',
+			blurb: 'Bring any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.',
 			builds: 'An imported avatar live on your account from a single URL',
 			time: '6 min',
 			previewModel: '/avatars/cz.glb',

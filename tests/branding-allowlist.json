@@ -1,5 +1,10 @@
 [
 	{
+		"pattern": "<code>avaturn</code>",
+		"file": "pages/avatar-cli.html",
+		"reason": "Accepted value of the manifest `skeleton` field, fixed by the published @three-ws/avatar-schema enum (schema/avatar.v1.json). The field reference must print the literal a user types, so this is a technical identifier rather than product copy."
+	},
+	{
 		"pattern": "source: 'avaturn'",
 		"file": "*",
 		"reason": "Internal postMessage source value — required to match photo-pipeline iframe protocol, never shown to end users."

@@ -21,6 +21,13 @@ describe('SLOTS', () => {
 			'shrug',
 			'fidget',
 			'dance',
+			'inspect',
+			'present',
+			'sign',
+			'curiosity',
+			'patience',
+			'manipulate',
+			'conjure',
 		];
 		expect(SLOTS).toEqual(expected);
 	});

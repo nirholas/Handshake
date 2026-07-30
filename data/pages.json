@@ -48,6 +48,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/gestures",
+					"title": "Agent Gestures",
+					"description": "The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/character-library",
 					"title": "Character Library",
 					"description": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
@@ -4179,7 +4187,7 @@
 				{
 					"path": "/tutorials/import-avatar-url",
 					"title": "Tutorial · Import an avatar by URL",
-					"description": "Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.",
+					"description": "Bring any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-21"
