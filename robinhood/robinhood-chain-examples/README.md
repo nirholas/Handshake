@@ -163,28 +163,32 @@ README changes.
 Notes for whoever builds the next wave of Robinhood Chain packages, captured
 while wiring these 14 examples against `hoodchain`:
 
-- **`hoodchain` itself is solid.** Every example that could be built (01–08,
-  12, 14) worked first-try against the real registry, real feeds, and real
-  testnet pools — no workarounds needed. `getPortfolio`'s single-multicall
-  sweep and the typed error classes (`UnknownSymbolError`, `StaleFeedError`,
-  …) made the "designed error state" requirement trivial to satisfy honestly.
+- **`hoodchain` itself is solid.** Every example worked first-try against the
+  real registry, real feeds, and real testnet pools, with no workarounds
+  needed. `getPortfolio`'s single-multicall sweep and the typed error classes
+  (`UnknownSymbolError`, `StaleFeedError`, and friends) made the "designed
+  error state" requirement trivial to satisfy honestly.
 - **The biggest gap is `hoodkit` (React hooks).** Example 08 had to hand-roll
   a `useHoodPortfolio` polling hook because `hoodkit` doesn't exist yet. It's
   shaped so a real `hoodkit` export slots in as a one-line import swap — but
   every future React example will hit this same wall until it ships.
-- **`hood402` blocks two examples outright** (09, 10) and is the natural next
-  build: `hoodchain`'s own `usdg.ts` already documents that USDG has no
-  EIP-2612 `permit`, so `hood402`'s approval flow needs an on-chain `approve`
-  step baked in from day one, not bolted on later.
-- **`hood-mcp` and `hood-launcher`** are single-purpose wraps of
-  `getQuote`/`getPortfolio`/`getRecentLaunches` and the launchpad factory
-  addresses already in `hoodchain`'s `launchpads.ts` — both are thin once
-  `hoodchain` is the foundation, no new chain research required.
+- **`hood402` shipped and the USDG call was right.** Examples 09 and 10 now
+  run on it. `hoodchain`'s own `usdg.ts` had already documented that USDG
+  carries no EIP-2612 `permit`, and building the gasless path on EIP-3009
+  `transferWithAuthorization` instead of an approval flow is what made a
+  single-signature payment possible.
+- **`hood-mcp` and `hood-launcher` were thin, as predicted.** Both turned out
+  to be wraps of `getQuote`/`getPortfolio`/`getRecentLaunches` and the
+  launchpad factory addresses already in `hoodchain`'s `launchpads.ts`, with
+  no new chain research required. The launcher's own preflight then surfaced
+  something the SDK does not say out loud: **NOXA and The Odyssey have no
+  testnet deployment at all**, so `direct` is the only rail that can launch on
+  46630. Worth stating in the SDK docs next to the factory addresses.
 - **Testnet faucet remains the one real blocker for live execution.** Example
-  04's swap quote and example 13's future launch both work end-to-end except
-  for the final funded transaction — the public faucet's Turnstile + Google
-  Sign-In gate (documented in `prompts/robinhood-chain/_shared.md`) is a
-  human-in-the-browser step no agent can complete non-interactively.
+  04's swap and example 13's launch both run end to end right up to the final
+  funded transaction. The public faucet's Turnstile + Google Sign-In gate is a
+  human-in-the-browser step no agent can complete non-interactively, so both
+  examples stop at an honest, chain-reported blocker instead of a fake success.
 
 ## Learn more
 

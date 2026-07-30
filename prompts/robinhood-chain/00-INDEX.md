@@ -32,7 +32,7 @@ independent and can run concurrently. Every agent reads `_shared.md` first, then
 |---|---|---|
 | [07-agent-trading.md](07-agent-trading.md) | Autonomous trading agents | `robinhood/hood-traders/` |
 | [08-agent-launcher.md](08-agent-launcher.md) | Autonomous coin launcher | `robinhood/hood-launcher/` |
-| [09-examples.md](09-examples.md) | Examples gallery | `robinhood/robinhood-chain-examples/` |
+| 09-examples.md (retired 2026-07-30, verified shipped: all 14 examples built and run, captured output in every README, gallery works as static files) | Examples gallery | `robinhood/robinhood-chain-examples/` |
 | [12-threews-markets.md](12-threews-markets.md) | three.ws /markets display + purchase | in-repo (`api/`, `public/`) |
 | [13-threews-play.md](13-threews-play.md) | three.ws /play coin worlds + firehose | in-repo |
 | [16-alerts-bots.md](16-alerts-bots.md) | Telegram + Discord alert bots (`hood-alerts`) | `robinhood/hood-alerts/` |
