@@ -52,25 +52,44 @@ function requireCron(req, res) {
 	return false;
 }
 
+// A 404/410 is the world's own answer: the asset is genuinely gone. Every other
+// failure (timeout, socket error, 5xx, 429) describes the network or the CDN at
+// this instant, not the scene, so it must not be reported as a missing asset.
+function isAuthoritativeMiss(status) {
+	return status === 404 || status === 410;
+}
+
+async function headOnce(url) {
+	try {
+		const res = await fetch(url, {
+			method: 'HEAD',
+			redirect: 'follow',
+			headers: { 'user-agent': 'threews-world-health/1.0' },
+			signal: AbortSignal.timeout(ASSET_TIMEOUT_MS),
+		});
+		return { ok: res.ok, status: res.status };
+	} catch (e) {
+		return { ok: false, status: 0, error: e?.name === 'TimeoutError' ? 'timeout' : 'unreachable' };
+	}
+}
+
 // HEAD every asset URL with a bounded number in flight so the whole sweep
-// finishes well inside the 10s cron budget even with a large scene.
+// finishes well inside the 10s cron budget even with a large scene. A transient
+// failure is retried once before it counts: an 8s timeout on a cold CDN edge
+// used to alert "World asset MISSING" and park a degraded verdict for the full
+// cache hour, indistinguishable from a real 404.
 async function headAll(urls, concurrency) {
 	const results = new Array(urls.length);
 	let cursor = 0;
 	async function worker() {
 		while (cursor < urls.length) {
 			const i = cursor++;
-			try {
-				const res = await fetch(urls[i], {
-					method: 'HEAD',
-					redirect: 'follow',
-					headers: { 'user-agent': 'threews-world-health/1.0' },
-					signal: AbortSignal.timeout(ASSET_TIMEOUT_MS),
-				});
-				results[i] = { ok: res.ok, status: res.status };
-			} catch (e) {
-				results[i] = { ok: false, status: 0, error: e?.name === 'TimeoutError' ? 'timeout' : 'unreachable' };
+			let out = await headOnce(urls[i]);
+			if (!out.ok && !isAuthoritativeMiss(out.status)) {
+				out = await headOnce(urls[i]);
+				if (!out.ok) out.transient = !isAuthoritativeMiss(out.status);
 			}
+			results[i] = out;
 		}
 	}
 	await Promise.all(Array.from({ length: Math.min(concurrency, urls.length) }, worker));
@@ -107,9 +126,17 @@ export default wrapCron(async (req, res) => {
 	// `blueprints` is the patched-/status asset list ({id, assetUrl}); tolerate an
 	// older revision that predates the patch by treating an absent list as empty.
 	const blueprints = Array.isArray(status?.blueprints) ? status.blueprints : [];
-	const assetUrls = blueprints
-		.map((b) => b?.assetUrl)
-		.filter((u) => typeof u === 'string' && /^https?:\/\//.test(u));
+	// One asset is shared by many blueprints (a scene of 136 entries resolves to
+	// 17 distinct files), so sweep the distinct set: 8x fewer requests inside the
+	// same 10s budget, and one broken file counts once instead of once per user.
+	const blueprintIdsByAsset = new Map();
+	for (const b of blueprints) {
+		const u = b?.assetUrl;
+		if (typeof u !== 'string' || !/^https?:\/\//.test(u)) continue;
+		if (!blueprintIdsByAsset.has(u)) blueprintIdsByAsset.set(u, []);
+		if (b?.id) blueprintIdsByAsset.get(u).push(b.id);
+	}
+	const assetUrls = [...blueprintIdsByAsset.keys()];
 
 	const problems = [];
 
@@ -127,12 +154,29 @@ export default wrapCron(async (req, res) => {
 	// 3. HEAD every referenced asset; a 404 will crash the scene on join.
 	const checks = await headAll(assetUrls, ASSET_CONCURRENCY);
 	const missing = [];
+	const unreachable = [];
 	checks.forEach((c, i) => {
-		if (!c.ok) {
-			const bp = blueprints.find((b) => b.assetUrl === assetUrls[i]);
-			missing.push({ assetUrl: assetUrls[i], blueprintId: bp?.id, status: c.status, error: c.error });
-		}
+		if (c.ok) return;
+		const ids = blueprintIdsByAsset.get(assetUrls[i]) || [];
+		const entry = {
+			assetUrl: assetUrls[i],
+			blueprintId: ids[0],
+			blueprintIds: ids,
+			status: c.status,
+			error: c.error,
+		};
+		(c.transient ? unreachable : missing).push(entry);
 	});
+	// Reported but never escalated: the scene still loads for everyone whose edge
+	// serves the file, so this is a CDN observation, not a broken world.
+	if (unreachable.length) {
+		problems.push(`${unreachable.length} blueprint asset(s) unreachable this tick`);
+		console.warn(
+			`[world-health] transient asset failures: ${unreachable
+				.map((m) => `${m.assetUrl} (${m.error || `HTTP ${m.status}`})`)
+				.join(', ')}`,
+		);
+	}
 	if (missing.length) {
 		problems.push(`${missing.length} blueprint asset(s) missing`);
 		const detail = missing
@@ -164,6 +208,8 @@ export default wrapCron(async (req, res) => {
 		status: outcome,
 		protected: isProtected,
 		blueprintCount: blueprints.length,
+		assetCount: assetUrls.length,
 		...(missing.length ? { missingAssets: missing } : {}),
+		...(unreachable.length ? { unreachableAssets: unreachable } : {}),
 	});
 });

@@ -111,7 +111,7 @@
 				"glb"
 			],
 			"examples": [
-				"Validate https://example.com/model.glb",
+				"Validate https://three.ws/avatars/cesium-man.glb",
 				"Is this GLB spec-compliant?",
 				"Check my model for errors"
 			]
@@ -129,7 +129,7 @@
 			],
 			"examples": [
 				"How many triangles are in this model?",
-				"Inspect https://example.com/scene.glb",
+				"Inspect https://three.ws/avatars/studio.glb",
 				"Show texture stats for this GLB"
 			]
 		},
@@ -146,7 +146,7 @@
 			"examples": [
 				"How can I make this model smaller?",
 				"Optimize this GLB for web delivery",
-				"Suggest compression for https://example.com/avatar.glb"
+				"Suggest compression for https://three.ws/avatars/brainstem.glb"
 			]
 		},
 		{
@@ -163,7 +163,7 @@
 				"paid"
 			],
 			"examples": [
-				"Inspect https://example.com/model.glb (A2A x402)",
+				"Inspect https://three.ws/avatars/cesium-man.glb (A2A x402)",
 				"Vet this GLB before I mint it"
 			],
 			"inputModes": [

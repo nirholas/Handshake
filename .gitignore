@@ -411,3 +411,7 @@ SECURITY-AUDIT.md
 # Scratch harnesses for local 3D/pose debugging — never committed.
 scripts/.scratch/
 /workers/avatar-reconstruction/eval/adversarial/
+
+# Scratch copies of the built changelog feed (regenerate with npm run build:pages)
+old_changelog.json
+new_changelog.json

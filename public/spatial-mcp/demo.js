@@ -126,7 +126,7 @@ document.getElementById('artifact-json').textContent = JSON.stringify(transforme
 const BROKEN_EXAMPLE = {
 	spatialMcpVersion: '0.2',
 	kind: 'hologram',
-	scene: { glbUrl: 'http://example.com/model.glb', format: 'usdz' },
+	scene: { glbUrl: 'http://three.ws/avatars/xbot.glb', format: 'usdz' },
 	camera: { autoRotate: 'yes' },
 	ar: { supported: true },
 	meta: { title: 'ok to keep', session_id: 'sess_01HZY3', price_usd: '0.25' },
