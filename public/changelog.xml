@@ -7,12 +7,28 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Gestures</title>
+			<link>https://three.ws/gestures</link>
+			<guid isPermaLink="false">2026-07-30:Agent Gestures</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.</description>
+		</item>
+		<item>
 			<title>Autonomous Trading</title>
 			<link>https://three.ws/trading</link>
 			<guid isPermaLink="false">2026-07-30:Autonomous Trading</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.</description>
+		</item>
+		<item>
+			<title>Avatar CLI</title>
+			<link>https://three.ws/avatar-cli</link>
+			<guid isPermaLink="false">2026-07-30:Avatar CLI</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.</description>
 		</item>
 		<item>
 			<title>Docs · Economy Health Dashboard</title>
@@ -63,12 +79,28 @@
 			<description>How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.</description>
 		</item>
 		<item>
+			<title>Docs · Tutorial: earn and spend in /play</title>
+			<link>https://three.ws/docs/tutorials/earn-and-spend-in-play</link>
+			<guid isPermaLink="false">2026-07-30:Docs · Tutorial: earn and spend in /play</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.</description>
+		</item>
+		<item>
 			<title>Docs World (immersive 3D docs)</title>
 			<link>https://three.ws/docs/world</link>
 			<guid isPermaLink="false">2026-07-30:Docs World (immersive 3D docs)</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.</description>
+		</item>
+		<item>
+			<title>Docs: Avatar CLI</title>
+			<link>https://three.ws/docs/avatar-cli</link>
+			<guid isPermaLink="false">2026-07-30:Docs: Avatar CLI</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, with every flag, exit code, and JSON shape, plus the two checks that gate a release on your avatar manifest.</description>
 		</item>
 		<item>
 			<title>Examples</title>
@@ -87,6 +119,38 @@
 			<description>Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.</description>
 		</item>
 		<item>
+			<title>Recipe: build a whole asset pack in parallel</title>
+			<link>https://three.ws/cookbook/parallel-asset-pack</link>
+			<guid isPermaLink="false">2026-07-30:Recipe: build a whole asset pack in parallel</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Fan a list of prompts across the free 3D lane at a sane concurrency, download every model, render a still of each, and emit a manifest plus a browsable gallery. Partial failure degrades instead of aborting the run.</description>
+		</item>
+		<item>
+			<title>Recipe: gate 3D assets in CI</title>
+			<link>https://three.ws/cookbook/asset-quality-gate</link>
+			<guid isPermaLink="false">2026-07-30:Recipe: gate 3D assets in CI</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Generated geometry fails quietly. This gate inspects every model against an explicit triangle, size, and material budget and exits non-zero, so a bad asset fails the build instead of the launch.</description>
+		</item>
+		<item>
+			<title>Recipe: give your AI assistant a 3D tool</title>
+			<link>https://three.ws/cookbook/mcp-3d-tool</link>
+			<guid isPermaLink="false">2026-07-30:Recipe: give your AI assistant a 3D tool</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A Model Context Protocol server that exposes text-to-3D generation and model rendering as tools, so Claude Code, Claude Desktop, or Cursor can build and then actually look at 3D models mid-conversation.</description>
+		</item>
+		<item>
+			<title>Recipe: text to 3D from the command line</title>
+			<link>https://three.ws/cookbook/text-to-3d-cli</link>
+			<guid isPermaLink="false">2026-07-30:Recipe: text to 3D from the command line</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.</description>
+		</item>
+		<item>
 			<title>Repository guards</title>
 			<link>https://three.ws/docs/guards</link>
 			<guid isPermaLink="false">2026-07-30:Repository guards</guid>
@@ -101,6 +165,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.</description>
+		</item>
+		<item>
+			<title>The in-game economy</title>
+			<link>https://three.ws/play/economy</link>
+			<guid isPermaLink="false">2026-07-30:The in-game economy</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.</description>
 		</item>
 		<item>
 			<title>three.ws on NVIDIA</title>
@@ -229,6 +301,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>This project ships without CI, so the checks that keep it correct run locally, on paths nobody can skip. Until now there was no way to see what they were: several working checks had no command to run them at all, and were findable only by reading the scripts folder. There is now a single registry behind a new page at /guards, where you can filter every guard by the stage it runs in, search by command, and read the specific failure that caused each one to be written. A new check keeps that page honest by refusing to pass if a guard claims to run somewhere it no longer does, which is the way this kind of page normally goes quietly out of date. A reference page and a step-by-step tutorial for writing your own guard ship alongside it.</description>
+		</item>
+		<item>
+			<title>A Cookbook of recipes you download and run</title>
+			<link>https://three.ws/cookbook</link>
+			<guid isPermaLink="false">2026-07-30:A Cookbook of recipes you download and run</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws/cookbook is now a library of five recipes instead of a single notebook. Each one is a real file you can download and run against the free, keyless 3D API: a command-line tool that turns a sentence into a downloaded 3D model, a builder that generates a whole asset pack in parallel and emits a browsable gallery, a Model Context Protocol server that gives Claude Code or Cursor a 3D tool it can call mid-conversation, a CI gate that fails your build when a model busts its triangle or file-size budget, and the original self-correcting generation loop that inspects its own output with vision. Every recipe was executed against the live API before publishing, and each page explains why the code is shaped the way it is, including a false-positive bug the CI gate had and how it was fixed. No API key is needed for any of them.</description>
 		</item>
 		<item>
 			<title>A healthy Solana node no longer benches itself for half an hour</title>
@@ -439,6 +519,14 @@
 			<description>Every owner-only endpoint on an agent's Solana wallet is now documented in one place: minting and revoking scoped session keys, creating and streaming programmable orders, compiling plain-language wallet rules, arming Treasury Autopilot, reading portfolio profit and loss, configuring guardians and the dead-man switch, and adjudicating an anomaly freeze. Each route lists its exact request and response, every error it can return, and a copy-paste example.</description>
 		</item>
 		<item>
+			<title>Learn the ASL alphabet on a hand you can turn around</title>
+			<link>https://three.ws/asl-alphabet</link>
+			<guid isPermaLink="false">2026-07-30:Learn the ASL alphabet on a hand you can turn around</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page teaches the American manual alphabet properly. Every letter and number is formed by a live 3D avatar rather than shown as a flat photograph, so you can orbit the hand and see the shape from any angle. Each letter comes with a written description and, more usefully, the letters it is confused with: F against 9, M against N, K against V, G against Q. A single letter holds its pose so you can study it. Type any letter key and the avatar signs it instantly. Spell a word and each key lights up in step with the hand. There is also a practice drill: the avatar spells something, you type what you read, and it keeps your streak. Speed, signing hand, and avatar carry over from the sign language page.</description>
+		</item>
+		<item>
 			<title>Marketplace analytics no longer counts free trials as sales</title>
 			<link>https://three.ws/marketplace/analytics</link>
 			<guid isPermaLink="false">2026-07-30:Marketplace analytics no longer counts free trials as sales</guid>
@@ -533,6 +621,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Three example sets you can run as-is against live three.ws services: a zero-spend x402 discovery probe plus a key-gated real paid call, curl and plain Node walkthroughs of the full MCP session lifecycle including a free tool call, and a build-free HTML page that renders a live 3D avatar straight from the CDN.</description>
+		</item>
+		<item>
+			<title>Runnable examples on the site, and every tutorial is now findable</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:Runnable examples on the site, and every tutorial is now findable</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Examples page at three.ws/examples shows copy-paste embed code you can run without leaving the page: press Run and the exact snippet executes in a sandboxed frame against the live production bundle. It also lists every example that ships in the repository, generated by scanning it, so the list cannot drift out of date. Separately, 44 of the 66 tutorials existed but were missing from the site index, which kept them out of search results, the sitemap, and the machine-readable page feeds. All 66 are now registered, and a build check keeps them that way.</description>
 		</item>
 		<item>
 			<title>Sign language now has a beginner's walkthrough, and the reference was rewritten for people, not engineers</title>
@@ -653,6 +749,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The job that sends small real payments through the platform to keep the public payment feed live was building every payment in a batch identically. Because a payment is identified by its own contents, all of them looked like a single repeated payment: one went through and the rest were rejected as duplicates, and any that slipped past were refused on-chain. About one in forty actually landed, so the feed showed a fraction of the activity it was meant to, and the rejections were the largest single source of errors in production. Each payment in a batch is now distinct, and the pump.fun launch watcher stopped making a per-launch request to a data feed that always refused it.</description>
+		</item>
+		<item>
+			<title>The sign language engine is now an installable package</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The sign language engine is now an installable package</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The code that makes three.ws avatars sign is published as @three-ws/sign-language, with zero runtime dependencies: no 3D library, no browser, no network. Give it a sentence and it returns one animation clip, with the words it knows signed and the rest fingerspelled, which means signing can now be compiled on a server, in a worker, or at build time, and played on any humanoid rig. It ships with a runnable example, a full API reference, and the same vocabulary the platform uses. A worked example page shows both ways to use it: one HTML attribute for signed chat replies, or the engine driven directly.</description>
 		</item>
 		<item>
 			<title>The three.ws user group on IBM Community is now linked from the docs</title>
@@ -2095,12 +2199,12 @@
 			<description>You no longer have to scroll the changelog to see what just shipped. The Features page opens with a 'New on three.ws' strip: the six latest features and page launches, each card linking straight to the live page. The sitemap gained a matching 'Newest' section listing the most recently launched pages with their dates. Both update themselves with every release.</description>
 		</item>
 		<item>
-			<title>Cookbook: self-correcting 3D with function calling</title>
+			<title>Cookbook: runnable recipes for the 3D API</title>
 			<link>https://three.ws/cookbook</link>
-			<guid isPermaLink="false">2026-07-21:Cookbook: self-correcting 3D with function calling</guid>
+			<guid isPermaLink="false">2026-07-21:Cookbook: runnable recipes for the 3D API</guid>
 			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.</description>
+			<description>Recipes you can run, not walkthroughs. A text-to-3D command line tool, a parallel asset-pack builder, an MCP server that gives your AI assistant a 3D tool, a CI quality gate, and a self-correcting generation loop. Every recipe ships a file that was executed against the live API.</description>
 		</item>
 		<item>
 			<title>Docs · NVIDIA Inception membership</title>
@@ -2117,6 +2221,14 @@
 			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.</description>
+		</item>
+		<item>
+			<title>Recipe: a self-correcting 3D collectible set</title>
+			<link>https://three.ws/cookbook/self-correcting-3d</link>
+			<guid isPermaLink="false">2026-07-21:Recipe: a self-correcting 3D collectible set</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>An AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, renders each result, inspects it with vision, grades it against the brief with structured outputs, and rebuilds whatever missed. Read it with interactive galleries, or download the notebook and run it.</description>
 		</item>
 		<item>
 			<title>3D viewers now hold the angle you choose</title>
@@ -11852,7 +11964,7 @@
 			<guid isPermaLink="false">2026-06-21:Tutorial · Import an avatar by URL</guid>
 			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.</description>
+			<description>Bring any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.</description>
 		</item>
 		<item>
 			<title>Tutorial · Mine a Solana vanity address</title>

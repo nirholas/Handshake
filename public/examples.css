@@ -4,6 +4,7 @@
 	max-width: 1080px;
 	margin: 0 auto;
 	padding: 48px 20px 96px;
+	font-family: var(--font-body, system-ui, sans-serif);
 }
 
 .exg-hero {
@@ -42,6 +43,7 @@
 }
 
 .exg-title {
+	font-family: var(--font-display, inherit);
 	font-size: clamp(32px, 5vw, 48px);
 	line-height: 1.05;
 	margin: 14px 0 12px;
