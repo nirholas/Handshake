@@ -513,6 +513,11 @@ ws error: Unexpected server response: 301
   tier read healthy at the exact moment all of it is dark. Cross-check by
   probing each provider by hand with the `getBalance` call above before
   trusting a green `rpc_lanes` row.
+- **Whole-tier runbook:** [solana-rpc-lanes.md](solana-rpc-lanes.md) has the
+  one-sweep probe over every configured lane, the measured per-lane capability
+  matrix (which free node refuses which method, and why PublicNode as primary
+  silently breaks holder gating), the rotate-vs-fail classification contract,
+  and the recovery commands.
 
 ---
 

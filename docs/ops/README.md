@@ -12,6 +12,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [gcp-model-workers.md](gcp-model-workers.md) | Self-hosted GPU generation lanes on Cloud Run: workers, weights, deploys. |
 | [gcp-logs.md](gcp-logs.md) | Production log reading and automated triage tools for the Cloud Run fleet. |
 | [production-log-triage.md](production-log-triage.md) | Known error/warning signature map: what each recurring log signature means and the fix. |
+| [solana-rpc-lanes.md](solana-rpc-lanes.md) | The Solana RPC tier end to end: one-sweep diagnosis, per-lane method capability, what must rotate vs fail, config traps, recovery. |
 | [page-audit.md](page-audit.md) | `scripts/page-audit.mjs`: authed Chromium sweep of every public page, console-error gated. |
 | [db-retention.md](db-retention.md) | Keeping the Neon Postgres branch under its storage cap: what grows, what gets pruned. |
 | [redis.md](redis.md) | Upstash Redis quota, burn rate, and which limiters are distributed vs local. |

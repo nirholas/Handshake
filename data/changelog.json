@@ -3,6 +3,50 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Your agent's treasury now has a preview button, and a bare request can no longer spend",
+			"summary": "Running one treasury cycle by hand moves real funds out of your agent's wallet. The endpoint behind that button treated a request that said nothing about whether to simulate as permission to spend, while the sibling endpoint on the very same wallet treated the same silence as a request to simulate. Silence now always means simulate: spending has to ask for itself explicitly, so a forgotten flag, a repeated request, or a hand-written one previews instead of paying. The cockpit gained a Preview cycle button that shows exactly what the policy would do (would buy back, would sweep, would pay compute) while moving nothing, and Run one cycle now asks a second time before it spends, telling you plainly that real funds are about to move.",
+			"tags": [
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "An oversized 3D model is now refused instead of quietly hanging",
+			"summary": "The endpoint that shrinks a 3D model caps its input at 50 MB. It only checked that cap after pulling the entire file into memory, and it could only stop early when the hosting server announced the size up front. Plenty of servers do not, so an enormous file was downloaded in full before anything measured it, and the request looked frozen rather than refused. The size is now counted as the file arrives: the moment it passes the cap the download is cut off and you get the clear too-large answer the endpoint always documented. A source that never responds, or that stalls halfway through, now times out with a specific message instead of holding the request open.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The trading hub guide is now findable",
+			"summary": "The trading hub is the front door to our autonomous trading system, and it had a written guide explaining how to read the fleet vitals, the strategy arena, and the smart-money radar. That guide was live but missing from our site index, so search engines and our own sitemap could not find it: you could only reach it if you already knew the address. It is now listed like every other guide.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "87 documentation pages that search engines could not see are now discoverable",
+			"summary": "The platform serves a page for every documentation file, but only pages listed in the site's page index reach the sitemap, the machine-readable llms.txt, and the feature list. 87 docs had never been listed, which meant they answered normally if you had the link and were invisible to every search engine and AI crawler otherwise. Each one now carries a real title and summary written from the doc itself, covering the API reference, the avatar and animation pipeline, memory, permissions, security, self-hosting, the MCP servers, and the troubleshooting guide. A new check in the documentation audit fails the build if a future doc lands unlisted, so this cannot silently happen again.",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "A home for everything three.ws runs on NVIDIA",
+			"summary": "A new page at three.ws/nvidia explains the whole NVIDIA side of the platform in one place: the free hosted lane that makes text-to-3D cost you nothing, the exact model behind each capability, the twelve GPU workers the platform runs itself, and a request you can paste into a terminal to generate a model right now. It links out to both NVIDIA tutorials, the engineering write-up on the GPU fleet, and the membership page. The partner directory now points here instead of at the membership doc.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/nvidia"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "The docs tell you when something is missing instead of showing an empty column",
 			"summary": "The documentation sidebar is now built from a shared list of pages that both the classic docs and the new 3D Docs World read, which means it arrives over the network and can occasionally fail. When it does, the contents column used to just sit there empty, which reads like the product has no documentation rather than like one request failed. It now says what happened, notes that the page you are reading is unaffected (it is), and offers a Retry button. Searching the sidebar for something with no matches also says so and offers to clear the search, instead of leaving you looking at a blank space. And opening a stale or mistyped /docs/world link no longer greets you with a load error over the 3D scene; it simply drops you into the world.",
 			"tags": [
