@@ -106,7 +106,7 @@ rebuild the mesh itself (not a shader), so the look survives export to any engin
 
 ```bash
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-stylize \
-  --json '{"glb_url":"https://three.ws/forge/statue.glb","style":"voxel","resolution":48}'
+  --json '{"glb_url":"https://three.ws/avatars/mannequin.glb","style":"voxel","resolution":48}'
 # → { "stage":"stylize", "output_url":"…", "style":"voxel", "resolution":48 }
 ```
 
@@ -121,7 +121,7 @@ mesh. **In:** an image (PNG/JPEG/WEBP/GIF). **Out:** a transparent PNG.
 
 ```bash
 npx @x402/fetch POST https://three.ws/api/x402/pipeline-rembg \
-  --json '{"image_url":"https://three.ws/uploads/photo.jpg","model":"rmbg2"}'
+  --json '{"image_url":"https://three.ws/avatars/thumbs/default.png","model":"rmbg2"}'
 # → { "stage":"rembg", "output_url":"https://three.ws/cdn/x402-pipeline/rembg/….png" }
 ```
 

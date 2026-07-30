@@ -48,7 +48,7 @@ curl -X POST https://$SERVICE_URL/process \
   -H "Authorization: Bearer $API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
-        "mesh": "https://three.ws/avatars/brainstem.glb",
+        "mesh": "https://three.ws/avatars/cesium-man.glb",
         "remesh_mode": "quad",
         "target_faces": 20000,
         "texture_size": 1024,

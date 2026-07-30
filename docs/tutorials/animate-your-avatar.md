@@ -57,10 +57,10 @@ In the top bar, click **Load avatar** and pick one of your rigged avatars (or a 
 If you'd rather skip the picker, deep-link directly:
 
 ```
-/pose?avatar=<your-avatar-id>
+/pose?avatar=0f25b676-e27b-4929-875c-4135fea0f635
 ```
 
-The Studio reads `?avatar=` on boot and loads it for you. Add `&anim=<clip-id>` and it also opens that saved clip — this is exactly what the Gallery's **Open in Studio** button does.
+The Studio reads `?avatar=` on boot and loads it for you (swap in your own avatar's id from its `/avatars/<id>` page). Add `&anim=<clip-id>` and it also opens that saved clip; this is exactly what the Gallery's **Open in Studio** button does.
 
 If the right panel shows **"Load a rigged avatar to animate"**, you're still on the mannequin — load an avatar. If it shows **"This rig can't be retargeted,"** the model exposes fewer than 8 recognizable humanoid bones (see Troubleshooting).
 

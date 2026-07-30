@@ -168,7 +168,7 @@ await fetch('/api/onboarding/link-avatar', {
   headers: { 'Content-Type': 'application/json' },
   credentials: 'include',
   body: JSON.stringify({
-    avatarId: 'your-avatar-uuid',   // the id from /avatars/<id>
+    avatarId: '0f25b676-e27b-4929-875c-4135fea0f635',   // your id from /avatars/<id>
     force: true,                    // replace the agent's current avatar
   }),
 });

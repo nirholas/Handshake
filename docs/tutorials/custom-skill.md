@@ -284,7 +284,7 @@ The `uri` points to the **directory**, not the manifest file. The runtime append
 
 ```html
 <agent-3d
-  body="./my-avatar.glb"
+  body="https://three.ws/avatars/michelle.glb"
   brain="claude-sonnet-4-6"
   skills="https://yourusername.github.io/weather-skill/"
 ></agent-3d>

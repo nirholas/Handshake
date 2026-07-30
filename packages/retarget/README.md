@@ -23,7 +23,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { canonicalizeGLBBones, retargetClipToObject, parseClipJSON } from '@three-ws/retarget';
 
 // 1. Canonicalize the avatar's bone names (byte-safe GLB rewrite, in memory).
-const raw = await fetch('/avatars/anything-humanoid.glb').then((r) => r.arrayBuffer());
+const raw = await fetch('https://three.ws/avatars/xbot.glb').then((r) => r.arrayBuffer());
 const { buffer } = canonicalizeGLBBones(raw);
 const gltf = await new GLTFLoader().parseAsync(buffer, '');
 

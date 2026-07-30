@@ -42,7 +42,7 @@ The fastest path. No npm, no bundler, no build step.
 **Lazy loading:** The component uses `IntersectionObserver` internally. The 3D scene doesn't boot until the element scrolls into view, so placing it below the fold has zero impact on initial page load. Add `eager` if you want it to start loading immediately:
 
 ```html
-<agent-3d eager body="./avatar.glb"></agent-3d>
+<agent-3d eager body="https://three.ws/avatars/default.glb"></agent-3d>
 ```
 
 ---
@@ -62,7 +62,7 @@ import '@three-ws/sdk'; // registers <agent-3d> as a side effect
 
 // The custom element is now available in HTML, or create it programmatically:
 const agent = document.createElement('agent-3d');
-agent.setAttribute('body', './avatar.glb');
+agent.setAttribute('body', 'https://three.ws/avatars/default.glb');
 agent.style.cssText = 'width:400px;height:500px;display:block';
 document.body.appendChild(agent);
 ```
@@ -75,7 +75,7 @@ import '@three-ws/sdk';
 export function AgentWidget() {
   return (
     <agent-3d
-      body="/avatar.glb"
+      body="https://three.ws/avatars/default.glb"
       style={{ width: '400px', height: '500px', display: 'block' }}
     />
   );
@@ -126,7 +126,7 @@ The `brain` attribute turns the 3D viewer into a conversational agent:
 
 ```html
 <agent-3d
-  body="./avatar.glb"
+  body="https://three.ws/avatars/default.glb"
   brain="claude-sonnet-4-6"
   instructions="You are a friendly product guide. Help visitors find what they need."
   mode="inline"

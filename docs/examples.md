@@ -30,7 +30,7 @@ The absolute simplest setup: one script tag, one custom element.
     <p>The agent below is embedded inline — no build step, no framework.</p>
 
     <agent-3d
-      body="/avatars/cz.glb"
+      body="https://three.ws/avatars/cz.glb"
       instructions="You are a friendly 3D guide."
       brain="claude-opus-4-7"
       width="100%"
@@ -72,7 +72,7 @@ A pinned chatbot bubble that stays fixed in the viewport corner — like a suppo
 
   <!-- Floating bubble — fixed, bottom-right -->
   <agent-3d
-    body="/avatars/cz.glb"
+    body="https://three.ws/avatars/cz.glb"
     instructions="You are a cheerful greeter. Wave when users say hi."
     mode="floating"
     position="bottom-right"
@@ -145,7 +145,7 @@ A full AI-powered agent with a text input. The agent reads your messages, reason
 <body>
   <agent-3d
     id="aria"
-    body="/avatars/aria.glb"
+    body="https://three.ws/avatars/michelle.glb"
     name="Aria"
     instructions="You are Aria, a friendly AI assistant. Be helpful and concise."
     brain="claude-opus-4-7"
@@ -215,7 +215,7 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
     <agent-3d
       id="leo"
       name="Coach Leo"
-      body="/avatars/cz.glb"
+      body="https://three.ws/avatars/cz.glb"
       instructions="You are Coach Leo. Friendly, short answers. When another agent says hi, wave and greet them back by name."
       brain="claude-opus-4-7"
       eager
@@ -223,7 +223,7 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
     <agent-3d
       id="mira"
       name="Mira"
-      body="/avatars/cz.glb"
+      body="https://three.ws/avatars/cz.glb"
       instructions="You are Mira, a quiet observer who only speaks when spoken to."
       brain="claude-opus-4-7"
       eager
@@ -346,7 +346,7 @@ export function AgentViewer({ body, name, instructions, brain = 'claude-opus-4-7
 function App() {
   return (
     <AgentViewer
-      body="/avatars/aria.glb"
+      body="https://three.ws/avatars/michelle.glb"
       name="Aria"
       instructions="You are Aria, a helpful assistant."
       style={{ width: '400px', height: '500px' }}
@@ -372,7 +372,7 @@ Listen to the agent's event stream to drive a custom transcript UI — no built-
 ```html
 <agent-3d
   id="agent"
-  body="/avatars/cz.glb"
+  body="https://three.ws/avatars/cz.glb"
   instructions="You are a helpful assistant."
   brain="claude-opus-4-7"
   style="display:block;width:400px;height:500px"
@@ -440,16 +440,16 @@ Load different GLB models at runtime by calling `say()` or by swapping the `body
 ```html
 <agent-3d
   id="viewer"
-  body="/avatars/cz.glb"
+  body="https://three.ws/avatars/cz.glb"
   instructions="Describe what you see in the scene."
   brain="claude-opus-4-7"
   style="display:block;width:400px;height:400px"
 ></agent-3d>
 
 <div style="display:flex;gap:8px;margin-top:12px">
-  <button onclick="load('/avatars/cz.glb')">Avatar 1</button>
-  <button onclick="load('/avatars/aria.glb')">Avatar 2</button>
-  <button onclick="load('/models/product.glb')">Product</button>
+  <button onclick="load('https://three.ws/avatars/cz.glb')">Avatar 1</button>
+  <button onclick="load('https://three.ws/avatars/michelle.glb')">Avatar 2</button>
+  <button onclick="load('https://three.ws/accessories/hat-cowboy.glb')">Product</button>
 </div>
 
 <script type="module">
@@ -478,7 +478,7 @@ Take a PNG snapshot of the current viewer state. The viewer renders a fresh fram
 ```html
 <agent-3d
   id="viewer"
-  body="/avatars/cz.glb"
+  body="https://three.ws/avatars/cz.glb"
   style="display:block;width:400px;height:400px"
 ></agent-3d>
 

@@ -31,7 +31,7 @@ asynchronous: `/infer` returns immediately with a `task_id`, and you poll
 curl -X POST "$SERVICE_URL/infer" \
   -H "Authorization: Bearer $API_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"images":["https://example.com/mug.png"],"job_id":"abc123"}'
+  -d '{"images":["https://three.ws/avatars/thumbs/default.png"],"job_id":"abc123"}'
 # → { "task_id": "…", "status": "queued", "model": "triposr" }
 ```
 

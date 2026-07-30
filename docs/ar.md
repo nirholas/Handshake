@@ -436,7 +436,7 @@ in 3D viewer" calls to action. See `GET|POST /api/render/glb` in the
 **For agents (MCP):** the free, read-only `export_ar` tool on the [3D Studio server](/docs/mcp) turns a GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
 
 ```jsonc
-// tools/call → export_ar { "glb_url": "https://three.ws/cdn/creations/model.glb", "title": "Robot" }
+// tools/call → export_ar { "glb_url": "https://three.ws/avatars/xbot.glb", "title": "Robot" }
 // → { arLaunchUrl: "https://three.ws/api/ar?src=…", viewerUrl: "…", sceneViewerUrl: "intent://…", spatial: { … } }
 
 // Rigged avatar? Pass kind:"avatar" to also get the living-agent link:

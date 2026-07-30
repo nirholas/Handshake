@@ -33,7 +33,7 @@ Request (`InferRequest`):
 
 ```json
 {
-	"images": ["https://example.com/owl.png"],
+	"images": ["https://three.ws/avatars/thumbs/default.png"],
 	"mode": "image",
 	"prompt": "",
 	"scribble_confidence": 0.4,

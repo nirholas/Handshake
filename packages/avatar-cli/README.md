@@ -47,19 +47,23 @@ The binary is `three-ws-avatar`. `--version` prints the package version; `--help
 ## Quick start
 
 ```bash
-# 1. Scaffold a manifest from your wallet + mesh (sha256 + size computed for you)
+# 1. Grab a real rigged avatar to work with (or point --mesh at your own GLB)
+curl -sLO https://three.ws/avatars/michelle.glb
+
+# 2. Scaffold a manifest from your wallet + mesh (sha256 + size computed for you)
 three-ws-avatar init \
   --owner eip155:1:0x742d35Cc6634C0532925a3b844Bc454e4438f44e \
   --name "Nicholas" \
-  --mesh ./avatar.glb \
+  --mesh ./michelle.glb \
+  --skeleton mixamo \
   --out manifest.json
 # → wrote /…/manifest.json   (validated against @three-ws/avatar-schema before writing)
 
-# 2. Validate it
+# 3. Validate it
 three-ws-avatar validate manifest.json
 # → ok: manifest.json
 
-# 3. Print embed snippets
+# 4. Print embed snippets
 three-ws-avatar preview manifest.json
 # → resolver URL, <three-ws-avatar> element, and <iframe> snippet
 ```
@@ -112,9 +116,9 @@ instance path and message (or a structured `errors` array with `--json`).
 ### `hash` — SHA-256 a file
 
 ```bash
-sha=$(three-ws-avatar hash ./avatar.glb)
+sha=$(three-ws-avatar hash ./michelle.glb)
 echo "$sha"
-# 3a7bd3e2360a3d29eea436fcfb7e44c735d117c42d1c1835420b6b9942dd4f1b
+# 28d788538f7b22b8e00c1d715fffc380bb06a304613d522c20523d3d6ff79bc2
 ```
 
 `--json` emits `{ "path", "sha256", "bytes" }` instead of the bare hex line.
@@ -141,7 +145,7 @@ Avatars are content, and content belongs in a build pipeline:
 ```bash
 # Fail the build if the mesh bytes drifted from what the manifest attests to.
 expected=$(node -p "require('./manifest.json').mesh.sha256")
-actual=$(three-ws-avatar hash ./avatar.glb)
+actual=$(three-ws-avatar hash ./michelle.glb)
 [ "$expected" = "$actual" ] || { echo "mesh hash mismatch"; exit 1; }
 
 # Gate every manifest change on schema validity.

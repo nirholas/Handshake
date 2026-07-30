@@ -77,7 +77,7 @@ import { defineElement } from './src/lib.js';
 
 // Ship under your own brand
 defineElement('my-avatar');
-// <my-avatar model="./agent.glb"></my-avatar>
+// <my-avatar model="https://three.ws/avatars/default.glb"></my-avatar>
 ```
 
 The element self-registers as `<agent-3d>` on import. `defineElement()` lets you override the tag before registration happens.

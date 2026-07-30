@@ -10,7 +10,7 @@ Every model three.ws generates can carry a **signed content credential** — cre
 ## Verify a model (free, public)
 
 ```bash
-curl "https://three.ws/api/provenance?src=https://three.ws/cdn/creations/model.glb"
+curl "https://three.ws/api/provenance?src=https://three.ws/avatars/default.glb"
 ```
 
 ```jsonc
@@ -40,7 +40,7 @@ The `anchor_provenance` tool signs a credential with the three.ws issuer key, wr
 
 ```jsonc
 // tools/call → anchor_provenance
-{ "glb_url": "https://three.ws/cdn/creations/model.glb",
+{ "glb_url": "https://three.ws/avatars/default.glb",
   "creator": "alice", "prompt": "a friendly robot", "model": "TRELLIS", "provider": "nvidia",
   "network": "devnet" }
 // → { status: "anchored", glbSha256, credentialHash, issuer, anchor: { tx, cluster, explorerUrl } }

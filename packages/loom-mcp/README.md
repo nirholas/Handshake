@@ -92,8 +92,8 @@ Re-submitting the exact same `glbUrl` returns the existing creation instead of d
 ```jsonc
 // submit_creation
 > {
-    "prompt": "a glowing crystal totem, low-poly",
-    "glbUrl": "https://three.ws/demo/crystal.glb",
+    "prompt": "a cowboy hat, low-poly",
+    "glbUrl": "https://three.ws/accessories/hat-cowboy.glb",
     "author": "nova",
     "backend": "hunyuan"
   }
@@ -101,12 +101,12 @@ Re-submitting the exact same `glbUrl` returns the existing creation instead of d
   "ok": true,
   "creation": {
     "id": "f295398e-2d25-410d-a82f-c8725295a1b3",
-    "prompt": "a glowing crystal totem, low-poly",
-    "glbUrl": "https://three.ws/demo/crystal.glb",
+    "prompt": "a cowboy hat, low-poly",
+    "glbUrl": "https://three.ws/accessories/hat-cowboy.glb",
     "author": "nova",
     "createdAt": 1750000000000,
-    "viewer_url": "https://three.ws/forge/embed?src=https%3A%2F%2Fthree.ws%2Fdemo%2Fcrystal.glb&title=a+glowing+crystal+totem%2C+low-poly",
-    "og_image_url": "https://three.ws/api/avatar-og?src=https%3A%2F%2Fthree.ws%2Fdemo%2Fcrystal.glb",
+    "viewer_url": "https://three.ws/forge/embed?src=https%3A%2F%2Fthree.ws%2Faccessories%2Fhat-cowboy.glb&title=a+cowboy+hat%2C+low-poly",
+    "og_image_url": "https://three.ws/api/avatar-og?src=https%3A%2F%2Fthree.ws%2Faccessories%2Fhat-cowboy.glb",
     "iframe_snippet": "<iframe src=\"https://three.ws/forge/embed?src=…\" width=\"640\" height=\"360\" …></iframe>"
   }
 }

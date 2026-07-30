@@ -50,16 +50,16 @@ Importing the package registers the `<agent-3d>` custom element as a side effect
 </script>
 
 <!-- Resolve a three.ws avatar by id… -->
-<agent-3d avatar-id="00000000-1111-2222-3333-444444444444"></agent-3d>
+<agent-3d avatar-id="0f25b676-e27b-4929-875c-4135fea0f635"></agent-3d>
 
 <!-- …or point at a GLB directly -->
-<agent-3d src="https://example.com/my-avatar.glb"></agent-3d>
+<agent-3d src="https://three.ws/avatars/michelle.glb"></agent-3d>
 
 <!-- Add brain="free" and the avatar holds a real conversation — no API key,
      no backend, no per-token cost. Routed through three.ws's host-paid free
      tier (OpenRouter/Groq/NVIDIA, whichever is healthy). -->
 <agent-3d
-  src="https://example.com/my-avatar.glb"
+  src="https://three.ws/avatars/michelle.glb"
   brain="free"
   instructions="You are Maya, a friendly guide to this site."
 ></agent-3d>
@@ -73,8 +73,8 @@ Need only a 3D preview — no chat, no voice, no 3 MB runtime? Use the light vie
 </script>
 
 <three-ws-viewer
-  src="https://example.com/my-avatar.glb"
-  alt="My avatar"
+  src="https://three.ws/avatars/default.glb"
+  alt="The three.ws default avatar"
   background="transparent"
   ar
 ></three-ws-viewer>

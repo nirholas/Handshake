@@ -29,7 +29,7 @@ Request (`RemoveRequest`):
 
 ```json
 {
-	"image": "https://example.com/portrait.jpg",
+	"image": "https://three.ws/avatars/thumbs/default.png",
 	"model": "rmbg2"
 }
 ```

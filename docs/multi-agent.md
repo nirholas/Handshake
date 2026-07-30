@@ -23,7 +23,7 @@ The `<agent-stage>` element is a shared scene host. All `<agent-3d>` children re
   <agent-3d
     id="leo"
     name="Coach Leo"
-    body="/avatars/leo.glb"
+    body="https://three.ws/avatars/xbot.glb"
     instructions="You are Coach Leo. Friendly, short answers."
     eager
   ></agent-3d>
@@ -31,7 +31,7 @@ The `<agent-stage>` element is a shared scene host. All `<agent-3d>` children re
   <agent-3d
     id="mira"
     name="Mira"
-    body="/avatars/mira.glb"
+    body="https://three.ws/avatars/realistic-female.glb"
     brain="none"
     instructions="You are Mira, a quiet observer who only speaks when spoken to."
     eager
@@ -61,7 +61,7 @@ If you don't need a shared 3D space, you can place two independent `<agent-3d>` 
 <div style="display:flex;gap:16px">
   <agent-3d
     id="host"
-    body="/avatars/aria.glb"
+    body="https://three.ws/avatars/michelle.glb"
     instructions="You are Aria, the host."
     style="width:300px;height:400px"
     eager
@@ -69,7 +69,7 @@ If you don't need a shared 3D space, you can place two independent `<agent-3d>` 
 
   <agent-3d
     id="guest"
-    body="/avatars/leo.glb"
+    body="https://three.ws/avatars/xbot.glb"
     instructions="You are Leo, the guest."
     style="width:300px;height:400px"
     eager
@@ -206,7 +206,7 @@ stage.getAgents();
 // → [{ agentId: 'Coach Leo', name: 'Coach Leo', position: [-0.55, 0, 0], element }, ...]
 
 // Add a new agent dynamically
-const el = await stage.addAgent({ name: 'Extra', body: { uri: '/avatars/extra.glb' } });
+const el = await stage.addAgent({ name: 'Extra', body: { uri: 'https://three.ws/avatars/mannequin.glb' } });
 
 // Remove by agentId
 stage.removeAgent('Coach Leo');

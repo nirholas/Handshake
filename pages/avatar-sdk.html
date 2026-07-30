@@ -295,10 +295,10 @@
 <span class="t-tag">&lt;script</span> <span class="t-attr">type</span>=<span class="t-str">"module"</span> <span class="t-attr">src</span>=<span class="t-str">"/avatar-sdk/dist/index.mjs"</span><span class="t-tag">&gt;&lt;/script&gt;</span>
 
 <span class="t-cmt">&lt;!-- by avatar UUID (resolved on the three.ws CDN) --&gt;</span>
-<span class="t-tag">&lt;agent-3d</span> <span class="t-attr">avatar-id</span>=<span class="t-str">"YOUR_AVATAR_UUID"</span><span class="t-tag">&gt;&lt;/agent-3d&gt;</span>
+<span class="t-tag">&lt;agent-3d</span> <span class="t-attr">avatar-id</span>=<span class="t-str">"0f25b676-e27b-4929-875c-4135fea0f635"</span><span class="t-tag">&gt;&lt;/agent-3d&gt;</span>
 
 <span class="t-cmt">&lt;!-- or by direct GLB URL --&gt;</span>
-<span class="t-tag">&lt;agent-3d</span> <span class="t-attr">src</span>=<span class="t-str">"https://example.com/avatar.glb"</span><span class="t-tag">&gt;&lt;/agent-3d&gt;</span></pre>
+<span class="t-tag">&lt;agent-3d</span> <span class="t-attr">src</span>=<span class="t-str">"https://three.ws/avatars/michelle.glb"</span><span class="t-tag">&gt;&lt;/agent-3d&gt;</span></pre>
 									</div>
 									<div class="sdk-tab-panel" role="tabpanel" hidden>
 										<pre class="sdk-pre" id="code-tab-react"><span class="t-kw">import</span> { AgentAvatar } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
@@ -306,7 +306,7 @@
 <span class="t-kw">export function</span> <span class="t-fn">MyPage</span>() {
   <span class="t-kw">return</span> (
     <span class="t-tag">&lt;AgentAvatar</span>
-      <span class="t-attr">avatarId</span>=<span class="t-str">"YOUR_AVATAR_UUID"</span>
+      <span class="t-attr">avatarId</span>=<span class="t-str">"0f25b676-e27b-4929-875c-4135fea0f635"</span>
       <span class="t-attr">style</span>=<span class="t-op">{{</span> width: <span class="t-str">'400px'</span>, height: <span class="t-str">'600px'</span> <span class="t-op">}}</span>
     <span class="t-tag">/&gt;</span>
   )<span class="t-op">;</span>
@@ -322,7 +322,7 @@
 
 <span class="t-cmt">// All set — create it programmatically</span>
 <span class="t-kw">const</span> el = document.<span class="t-fn">createElement</span>(<span class="t-str">'agent-3d'</span>)<span class="t-op">;</span>
-el.<span class="t-fn">setAttribute</span>(<span class="t-str">'avatar-id'</span>, <span class="t-str">'YOUR_AVATAR_UUID'</span>)<span class="t-op">;</span>
+el.<span class="t-fn">setAttribute</span>(<span class="t-str">'avatar-id'</span>, <span class="t-str">'0f25b676-e27b-4929-875c-4135fea0f635'</span>)<span class="t-op">;</span>
 document.body.<span class="t-fn">appendChild</span>(el)<span class="t-op">;</span></pre>
 									</div>
 								</div>

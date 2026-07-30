@@ -9,7 +9,7 @@
 <agent-3d src="agent://base/42" style="width:400px;height:500px"></agent-3d>
 ```
 
-All four layout modes, voice I/O, the LLM brain, persistent memory, and an extensible skill system are built in. Every feature is opt-in — a bare `<agent-3d body="./avatar.glb">` renders a silent 3D viewer with no API key and no external calls beyond the GLB itself.
+All four layout modes, voice I/O, the LLM brain, persistent memory, and an extensible skill system are built in. Every feature is opt-in — a bare `<agent-3d body="https://three.ws/avatars/default.glb">` renders a silent 3D viewer with no API key and no external calls beyond the GLB itself.
 
 ---
 
@@ -43,13 +43,13 @@ These tell the element what to load. When multiple are set, priority is `src` > 
 | `agent-id` | Shorthand onchain: | `agent-id="onchain:8453:42"` |
 | `agent-id` | Backend account ID | `agent-id="a_abc123"` |
 | `manifest` | IPFS or HTTPS manifest URL | `manifest="ipfs://bafy…/manifest.json"` |
-| `body` | Bare GLB URL (ad-hoc agent) | `body="./avatar.glb"` |
+| `body` | Bare GLB URL (ad-hoc agent) | `body="https://three.ws/avatars/default.glb"` |
 
 Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, and brain model can be provided as additional attributes:
 
 ```html
 <agent-3d
-  body="/avatars/guide.glb"
+  body="https://three.ws/avatars/default.glb"
   name="Guide"
   instructions="You are a friendly 3D guide."
   brain="claude-opus-4-7"
@@ -823,14 +823,14 @@ To render multiple agents in a single WebGL context, wrap `<agent-3d>` elements 
   <agent-3d
     id="leo"
     name="Coach Leo"
-    body="/avatars/leo.glb"
+    body="https://three.ws/avatars/xbot.glb"
     instructions="You are Coach Leo."
     eager
   ></agent-3d>
   <agent-3d
     id="mira"
     name="Mira"
-    body="/avatars/mira.glb"
+    body="https://three.ws/avatars/realistic-female.glb"
     brain="none"
     eager
   ></agent-3d>

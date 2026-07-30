@@ -96,7 +96,7 @@ Mount a body, wire the overlay to its state, load a persona, and have it speak:
 		onState: (state, detail) => overlay.setState(state, { ...detail, name: 'Scout' }),
 	});
 
-	await stage.loadPersona({ glbUrl: 'https://three.ws/models/agent.glb', name: 'Scout' });
+	await stage.loadPersona({ glbUrl: 'https://three.ws/avatars/xbot.glb', name: 'Scout' });
 	await stage.speak({ text: 'Found you. Walk with me.', emotion: 'joy' });
 </script>
 ```

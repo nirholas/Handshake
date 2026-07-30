@@ -8796,7 +8796,7 @@ The simplest possible setup — one script tag, one element, zero build step.
 	</head>
 	<body>
 		<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
-		<agent-3d body="https://three.ws/cdn/models/sample-avatar.glb"></agent-3d>
+		<agent-3d body="https://three.ws/avatars/default.glb"></agent-3d>
 	</body>
 </html>
 ```
@@ -8813,7 +8813,7 @@ Add `brain=` and `instructions=` to turn the viewer into a conversational agent.
 <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 
 <agent-3d
-	body="https://three.ws/cdn/models/sample-avatar.glb"
+	body="https://three.ws/avatars/default.glb"
 	brain="claude-sonnet-4-6"
 	name="Aria"
 	instructions="You are Aria, a friendly AI guide. Be warm, concise, and occasionally playful.
@@ -8836,7 +8836,7 @@ Pin the agent to a corner of the page so it persists as users scroll.
 <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
 
 <agent-3d
-	body="https://three.ws/cdn/models/sample-avatar.glb"
+	body="https://three.ws/avatars/default.glb"
 	brain="claude-sonnet-4-6"
 	instructions="You are a helpful product assistant. Answer questions about our features."
 	mode="floating"
@@ -8875,7 +8875,7 @@ Hide the built-in chrome and wire in your own input using the element's JS API.
 
 <agent-3d
 	id="agent"
-	body="./avatar.glb"
+	body="https://three.ws/avatars/default.glb"
 	brain="claude-sonnet-4-6"
 	kiosk
 	style="width:400px;height:560px;display:block"
@@ -8958,7 +8958,7 @@ For anything beyond a quick one-liner, define the agent in a manifest file and r
 	"name": "Aria",
 	"description": "A friendly AI guide",
 	"body": {
-		"uri": "./avatar.glb",
+		"uri": "https://three.ws/avatars/default.glb",
 		"format": "gltf-binary"
 	},
 	"brain": {
@@ -9413,7 +9413,7 @@ The `<agent-3d>` custom element (`src/element.js`) is the primary distribution m
 <script src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
 <agent-3d
-	body="https://example.com/my-avatar.glb"
+	body="https://three.ws/avatars/michelle.glb"
 	brain="https://example.com/manifest.json"
 	mode="chat"
 ></agent-3d>

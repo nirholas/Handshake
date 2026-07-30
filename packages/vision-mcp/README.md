@@ -80,14 +80,14 @@ All three tools are read-only — they look at an image, they never store or mut
 ## Example
 
 ```jsonc
-// analyze_image — read the text in a screenshot
-> { "imageUrl": "https://three.ws/render.png", "prompt": "What does the banner text say?" }
+// analyze_image: read the text in a logo image
+> { "imageUrl": "https://three.ws/logo.png", "prompt": "What does this logo say?" }
 {
   "ok": true,
-  "text": "The banner reads \"three.ws — 3D AI agents\".",
+  "text": "The logo reads \"three.ws\".",
   "provider": "nvidia",
   "model": "nvidia/nemotron-nano-12b-v2-vl",
-  "prompt": "What does the banner text say?",
+  "prompt": "What does this logo say?",
   "image_source": "url"
 }
 ```

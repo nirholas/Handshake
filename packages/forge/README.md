@@ -95,7 +95,7 @@ From an image or a sketch:
 
 ```js
 // Photo → 3D
-await forge({ images: ['https://example.com/sneaker.png'], prompt: 'a sneaker' });
+await forge({ images: ['https://three.ws/avatars/thumbs/default.png'], prompt: 'a 3D character' });
 
 // Drawing + a name → geometry (no textures)
 await forge({ images: ['data:image/png;base64,…'], prompt: 'a sword', path: 'sketch' });

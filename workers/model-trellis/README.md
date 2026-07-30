@@ -26,7 +26,7 @@ Request:
 
 ```json
 {
-	"images": ["https://example.com/chair.png"],
+	"images": ["https://three.ws/avatars/thumbs/default.png"],
 	"body_type": "neutral",
 	"job_id": "abc123",
 	"tier": "max",

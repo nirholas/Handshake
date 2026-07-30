@@ -70,7 +70,7 @@ only generated GLBs are returned to callers.
 
 ```json
 {
-	"images": ["https://example.com/portrait.png"],
+	"images": ["https://three.ws/avatars/thumbs/default.png"],
 	"tier": "high",
 	"job_id": "abc123"
 }
@@ -234,7 +234,7 @@ KEY=your-api-key
 
 TASK=$(curl -s -X POST "$BASE/infer" \
 	-H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' \
-	-d '{"images":["https://example.com/portrait.png"],"tier":"high"}' \
+	-d '{"images":["https://three.ws/avatars/thumbs/default.png"],"tier":"high"}' \
 	| python3 -c 'import sys,json; print(json.load(sys.stdin)["task_id"])')
 
 while :; do
