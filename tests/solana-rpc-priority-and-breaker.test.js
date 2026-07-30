@@ -176,6 +176,27 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 		expect(classifyRpcBody(JSON.stringify({ jsonrpc: '2.0', id: 1, error }))).toBeTruthy();
 	});
 
+	it('keeps a healthy lane after a 403 that refuses one call shape, not the key', () => {
+		// PublicNode answers HTTP 403 to getTokenAccountsByOwner filtered by programId
+		// while serving every other method. Sized as an auth failure it parked the node
+		// for 30m, so the token/USDC balance readers evicted their own primary on
+		// routine traffic and the rotation cascaded onto the exhausted paid lanes.
+		const blocked = markEndpointCooldown(
+			'https://policy-403.example/rpc',
+			403,
+			'{"code":-32602,"message":"Request blocked. Details: blocked parameter: params.1.programId"}',
+		);
+		expect(blocked).toBeLessThan(10 * 60_000);
+
+		// A real credential failure must still park the endpoint for the auth window.
+		const badKey = markEndpointCooldown(
+			'https://bad-key.example/rpc',
+			403,
+			'{"error":"invalid api key"}',
+		);
+		expect(badKey).toBeGreaterThanOrEqual(30 * 60_000);
+	});
+
 	it('still refuses to rotate on a genuine invalid-params error', () => {
 		// -32602 is shared between "you sent bad params" (deterministic, every lane
 		// fails it) and PublicNode's policy block above. Only the phrasing separates
