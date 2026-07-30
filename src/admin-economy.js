@@ -1,4 +1,4 @@
-// /admin/economy — autonomous economy health dashboard (DOM layer).
+// /admin/economy: autonomous economy health dashboard (DOM layer).
 //
 // All judgement lives in admin-economy-core.js; this file only fetches and
 // renders. Three real reads, no mocks and no synthetic numbers:
@@ -173,7 +173,7 @@ function renderLanes(health) {
 		tr.append(cell);
 
 		for (const v of [r.ok, r.skipped, r.error]) tr.append(el('td', 'ec-num', String(v ?? 0)));
-		tr.append(el('td', 'ec-reason', r.last_problem || '—'));
+		tr.append(el('td', 'ec-reason', r.last_problem || '-'));
 		tbody.append(tr);
 	}
 	table.append(tbody);
@@ -227,7 +227,7 @@ function renderFuel(data) {
 	const tbody = el('tbody');
 	for (const s of recent.slice(0, 8)) {
 		const tr = el('tr');
-		tr.append(el('td', null, s.at ? new Date(s.at).toLocaleString() : '—'));
+		tr.append(el('td', null, s.at ? new Date(s.at).toLocaleString() : '-'));
 		tr.append(el('td', 'ec-num', fmtUsd(s.usd)));
 		tr.append(el('td', 'ec-num', `${fmtSol(s.sol)} SOL`));
 		tr.append(el('td', 'ec-num', `${Number(s.price_impact_pct || 0).toFixed(2)}%`));
@@ -238,7 +238,7 @@ function renderFuel(data) {
 			a.target = '_blank';
 			a.rel = 'noopener noreferrer';
 			txCell.append(a);
-		} else txCell.textContent = '—';
+		} else txCell.textContent = '-';
 		tr.append(txCell);
 		tbody.append(tr);
 	}
@@ -260,7 +260,7 @@ function renderEngine(health) {
 		statCard('Agent pool', String(health.pool_size ?? 0), `target ${health.config?.pool_target ?? '?'}, ${health.quarantined_agents ?? 0} quarantined`),
 		statCard('Actions / tick', String(health.config?.actions_per_tick ?? 0), 'Paid slots are cut when the treasury is thin'),
 		statCard('Actions 24h', String(live.actions_24h ?? 0), `${live.actions_1h ?? 0} in the last hour`),
-		statCard('Last action', live.minutes_since == null ? '—' : `${live.minutes_since}m ago`, live.stale ? 'Stale: the tick may have stopped' : 'Ticking normally'),
+		statCard('Last action', live.minutes_since == null ? '-' : `${live.minutes_since}m ago`, live.stale ? 'Stale: the tick may have stopped' : 'Ticking normally'),
 	);
 }
 

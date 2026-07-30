@@ -1,5 +1,5 @@
 /**
- * Your master wallet (/wallet) — page controller.
+ * Your master wallet (/wallet): page controller.
  *
  * The per-user custodial hub described in docs/user-wallet.md. Until this page
  * existed the four /api/user/wallet endpoints were reachable only by curl, so

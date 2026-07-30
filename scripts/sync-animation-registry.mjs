@@ -157,7 +157,12 @@ function main() {
 
 	const rows = buildRows();
 	const rendered = renderRows(rows, indent);
-	const next = [...lines.slice(0, start + 1), ...rendered.map((l, i) => (i === rendered.length - 1 ? l : `${l},`)), ...lines.slice(end)].join('\n');
+	const withClips = [
+		...lines.slice(0, start + 1),
+		...rendered.map((l, i) => (i === rendered.length - 1 ? l : `${l},`)),
+		...lines.slice(end),
+	];
+	const next = replaceBlock(withClips, /^\s*"slots": \{\s*$/, renderSlots).join('\n');
 
 	// Parse before writing: a malformed registry breaks every reader downstream.
 	JSON.parse(next);
@@ -167,7 +172,7 @@ function main() {
 		return 0;
 	}
 	if (CHECK) {
-		console.error(`[registry] out of sync — run: node scripts/sync-animation-registry.mjs`);
+		console.error(`[registry] out of sync, run: node scripts/sync-animation-registry.mjs`);
 		return 1;
 	}
 	writeFileSync(REGISTRY, next);
@@ -175,4 +180,10 @@ function main() {
 	return 0;
 }
 
-if (existsSync(REGISTRY)) process.exitCode = main();
+// Only act when run as a command. tests/animation-registry.test.js imports
+// buildRows() to compare against the committed file and must not rewrite it.
+const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (invokedDirectly) {
+	if (!existsSync(REGISTRY)) throw new Error(`registry not found: ${REGISTRY}`);
+	process.exitCode = main();
+}

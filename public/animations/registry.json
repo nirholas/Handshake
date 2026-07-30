@@ -120,7 +120,7 @@
         { "name": "xbot-walk",               "label": "Walk (Xbot)",        "icon": "🚶", "loop": true,  "clip": "public/animations/clips/xbot-walk.json",               "source_fbx": "animation-sources/xbot-walk.glb",                                     "agent_slots": [] },
         { "name": "torch-light",             "label": "Light Torch",        "icon": "🔥", "loop": false, "clip": "public/animations/clips/torch-light.json",             "source_fbx": "animation-sources/Standing Torch Light Torch From Fire.fbx",          "agent_slots": [] },
         { "name": "torch-light-wall",        "label": "Light Torch (Wall)", "icon": "🕯️", "loop": false, "clip": "public/animations/clips/torch-light-wall.json",        "source_fbx": "animation-sources/Standing Torch Light Torch From Wall.fbx",          "agent_slots": [] },
-        { "name": "sitidle",                 "label": "Sit Idle",           "icon": "🪑", "loop": true,  "clip": "public/animations/clips/sitidle.json",                 "source_fbx": null,                                                                  "agent_slots": [], "note": "Hand-authored 2-key pose, no FBX source (commit 7a22e5993). Merged into manifest.json by build-animations.mjs from scripts/animations-extra-clips.json (previously orphaned — see known_issues history)." }
+        { "name": "sitidle",                 "label": "Sit Idle",           "icon": "🪑", "loop": true,  "clip": "public/animations/clips/sitidle.json",                 "source_fbx": null,                                                                  "agent_slots": [], "note": "Hand-authored 2-key pose, no FBX source (commit 7a22e5993). Merged into manifest.json by build-animations.mjs from scripts/animations-extra-clips.json (previously orphaned; see known_issues history)." }
       ]
     },
 
@@ -260,34 +260,49 @@
   "agent_slots": {
     "description": "The fixed slot vocabulary used by the agent avatar system (src/runtime/animation-slots.js). Slots are resolved to clip names from the 'clips' collection at runtime. Agents can override individual slots via meta.edits.animations.",
     "slots": {
-      "idle":      { "default_clip": "idle",     "status": "active" },
-      "wave":      { "default_clip": "reaction",  "status": "active — note: maps to 'reaction', not 'wave' clip" },
-      "nod":       { "default_clip": "reaction",  "status": "active — note: maps to 'reaction'" },
-      "shake":     { "default_clip": "angry",     "status": "active" },
-      "think":     { "default_clip": "pray",      "status": "active" },
-      "celebrate": { "default_clip": "celebrate", "status": "active" },
-      "concern":   { "default_clip": "defeated",  "status": "active" },
-      "bow":       { "default_clip": "sitclap",   "status": "active" },
-      "point":     { "default_clip": "reaction",  "status": "active — note: maps to 'reaction'. Dedicated 'point' clip now exists in the clips collection but DEFAULT_ANIMATION_MAP keeps the existing binding (behavior-change gate — see roadmap prompt 03)." },
-      "shrug":     { "default_clip": "defeated",  "status": "active — note: maps to 'defeated'. Dedicated 'shrug' clip now exists in the clips collection but DEFAULT_ANIMATION_MAP keeps the existing binding." },
-      "fidget":    { "default_clip": "av-waiting","status": "fixed 2026-07-08 — was 'Fidget' (no such clip, silent no-op); see resolved known_issues entry below" }
+      "idle":       { "default_clip": "idle",            "status": "active" },
+      "wave":       { "default_clip": "wave",            "status": "active" },
+      "nod":        { "default_clip": "nod",             "status": "active" },
+      "shake":      { "default_clip": "xbot-head-shake", "status": "active" },
+      "think":      { "default_clip": "think",           "status": "active" },
+      "celebrate":  { "default_clip": "celebrate",       "status": "active" },
+      "concern":    { "default_clip": "defeated",        "status": "active" },
+      "bow":        { "default_clip": "sitclap",         "status": "active (approximation) — no bow clip is baked; 'sitclap' reads as gratitude/applause. See known_issues: bow-slot-approximation" },
+      "point":      { "default_clip": "point",           "status": "active" },
+      "shrug":      { "default_clip": "shrug",           "status": "active" },
+      "fidget":     { "default_clip": "av-waiting",      "status": "fixed 2026-07-08 — was 'Fidget' (no such clip, silent no-op); see resolved known_issues entry below" },
+      "dance":      { "default_clip": "rumba",           "status": "active" },
+      "inspect":    { "default_clip": "lookdown",        "status": "active" },
+      "present":    { "default_clip": "av-brag-claps",   "status": "active" },
+      "sign":       { "default_clip": "xbot-agree",      "status": "active" },
+      "curiosity":  { "default_clip": "av-spy",          "status": "active" },
+      "patience":   { "default_clip": "av-waiting",      "status": "active" },
+      "manipulate": { "default_clip": "av-push-block",   "status": "active" },
+      "conjure":    { "default_clip": "av-conductor",    "status": "active" }
     }
   },
 
   "known_issues": [
     {
-      "id": "unused-agent-hint-targets",
-      "description": "Several animationHint values emitted by skills ('gesture', 'inspect', 'present', 'sign', 'curiosity', 'patience') have no matching clip or slot. They silently no-op on Avaturn models. Fix: either map them to existing clips in DEFAULT_ANIMATION_MAP or build dedicated clips.",
-      "affected_file": "src/runtime/animation-slots.js"
-    },
-    {
-      "id": "wave-slot-mismatch",
-      "description": "The 'wave' slot maps to 'reaction' clip, not the 'wave' clip. The 'wave' clip (from Standing Cover Turn.fbx) is in the manifest but unreachable by any agent slot or hint. Intentional or oversight?",
+      "id": "bow-slot-approximation",
+      "description": "The 'bow' slot has no dedicated clip: it resolves to 'sitclap' (Sitting Clap), which reads as gratitude/applause rather than a bow. Every other slot now plays a clip that means what the slot means. Fix: add Mixamo 'Bowing' (In Place, Without Skin) to animation-sources/, register it in scripts/animations.config.json as 'bow', run npm run build:animations, then point DEFAULT_ANIMATION_MAP.bow at it. tests/animation-slots.test.js already asserts the target exists, so the swap is a one-line change once the clip is baked.",
       "affected_file": "src/runtime/animation-slots.js"
     }
   ],
 
   "resolved_issues": [
+    {
+      "id": "unused-agent-hint-targets",
+      "resolved": "2026-07-30",
+      "description": "The skill hints 'gesture', 'inspect', 'present', 'sign', 'curiosity' and 'patience' are now slots (or aliases onto one) in src/runtime/animation-slots.js, and src/agent-avatar.js _onSkillStart routes animationHint through resolveHint() → _playSlot instead of passing the raw hint to _triggerOneShot, which only ever matched a clip embedded in the GLB. 'inspect' and 'gesture' alone account for 38 of the ~50 hint declarations in the skill catalog, so this was the most-hit dead path in the animation system. tests/animation-slots.test.js now scans every animationHint literal under src/ and fails if one resolves to no slot or to a clip missing from the manifest.",
+      "affected_file": "src/runtime/animation-slots.js"
+    },
+    {
+      "id": "wave-slot-mismatch",
+      "resolved": "2026-07-30",
+      "description": "Oversight, now fixed: the 'wave', 'nod', 'point', 'think' and 'shrug' slots borrowed 'reaction'/'pray'/'defeated' from before their dedicated clips were baked, which left five real clips unreachable by any slot or hint. Each slot now plays its own clip, and the walk state machine's matching gestures (src/animation-state-machine.js) were re-pointed with them: 'shrug' also moved to the upper-body overlay layer, since a shoulder shrug does not need to suppress locomotion the way the borrowed full-body 'defeated' clip did.",
+      "affected_file": "src/runtime/animation-slots.js"
+    },
     {
       "id": "orphaned-source-fbx",
       "resolved": "2026-07 (before roadmap prompt 03)",
