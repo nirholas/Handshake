@@ -1,5 +1,5 @@
 {
-  "_readme": "Central animation registry. Read-only reference for developers — does not affect runtime. Each collection section documents where the assets live, what pipeline uses them, and their current status. When doing a full swap, the 'clips' collection is the primary source of truth for the runtime (manifest.json is generated from scripts/animations.config.json).",
+  "_readme": "Central animation registry. Read-only reference for developers: does not affect runtime. Each collection section documents where the assets live, what pipeline uses them, and their current status. When doing a full swap, the 'clips' collection is the primary source of truth for the runtime (manifest.json is generated from scripts/animations.config.json).",
 
   "collections": {
 
@@ -125,11 +125,11 @@
     },
 
     "presets_robotexpressive": {
-      "description": "Legacy fallback presets from the Three.js RobotExpressive GLB. Written by scripts/download-animations.mjs. Not fetched by any current src/ code — superseded by the clips collection. Kept for reference and potential fallback use.",
+      "description": "Legacy fallback presets from the Three.js RobotExpressive GLB. Written by scripts/download-animations.mjs. Not fetched by any current src/ code: superseded by the clips collection. Kept for reference and potential fallback use.",
       "pipeline": "scripts/download-animations.mjs",
       "rig": "robotexpressive",
       "glb": "public/animations/robotexpressive.glb",
-      "status": "legacy — not loaded at runtime",
+      "status": "legacy: not loaded at runtime",
       "items": [
         { "name": "idle",     "label": "Idle",     "icon": "🧍", "loop": true,  "clip_name": "Idle" },
         { "name": "wave",     "label": "Wave",     "icon": "👋", "loop": false, "clip_name": "Wave" },
@@ -148,7 +148,7 @@
       "description": "FBX files used exclusively by the character-studio LoRA/pose capture pipeline. Not retargeted or available to the main runtime. Used to render pose reference images for LoRA training.",
       "pipeline": "character-studio LoRA capture",
       "rig": "mixamo",
-      "status": "pipeline-only — not visible in UI",
+      "status": "pipeline-only: not visible in UI",
       "items": [
         { "name": "AirSquat",                    "source_fbx": "character-studio/public/lora-assets/animations/AirSquat.fbx" },
         { "name": "Angry",                       "source_fbx": "character-studio/public/lora-assets/animations/Angry.fbx" },
@@ -197,7 +197,7 @@
       "description": "FBX files used exclusively by the character-studio sprite atlas generator. Not available to the main runtime.",
       "pipeline": "character-studio sprite atlas generator",
       "rig": "mixamo",
-      "status": "pipeline-only — not visible in UI",
+      "status": "pipeline-only: not visible in UI",
       "items": [
         { "name": "Backflip",                "source_fbx": "character-studio/public/sprite-atlas-assets/animations/Backflip.fbx" },
         { "name": "CapoeiraMixamo",          "source_fbx": "character-studio/public/sprite-atlas-assets/animations/CapoeiraMixamo.fbx" },
@@ -316,7 +316,7 @@
     {
       "id": "sitidle-unreachable-via-manifest",
       "resolved": "2026-07-08 (roadmap prompt 03)",
-      "description": "The 'sitidle' hand-authored pose clip existed as a file but was missing from manifest.json, so AnimationManager.crossfadeTo('sitidle')/canPlay('sitidle') silently failed for the state machine's 'sit' gesture (src/animation-state-machine.js) — a dead path with no console warning. build-animations.mjs now merges scripts/animations-extra-clips.json into every curated manifest rebuild so hand-authored clips survive future rebuilds. Covered by tests/embodiment-emotion.test.js's full-GESTURES manifest check."
+      "description": "The 'sitidle' hand-authored pose clip existed as a file but was missing from manifest.json, so AnimationManager.crossfadeTo('sitidle')/canPlay('sitidle') silently failed for the state machine's 'sit' gesture (src/animation-state-machine.js): a dead path with no console warning. build-animations.mjs now merges scripts/animations-extra-clips.json into every curated manifest rebuild so hand-authored clips survive future rebuilds. Covered by tests/embodiment-emotion.test.js's full-GESTURES manifest check."
     }
   ]
 }
