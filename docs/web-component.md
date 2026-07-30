@@ -82,6 +82,29 @@ Lighting, camera orbit, and environment are managed by the built-in viewer; they
 |-----------|------|---------|-------------|
 | `voice` | string | on if manifest configures voice | Voice mode. Set to `livekit` for the LiveKit realtime voice pipeline; TTS/STT providers otherwise come from the manifest. |
 
+### Sign language (ASL)
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sign-language` | boolean | off | The avatar signs every assistant reply in American Sign Language: words in the lexicon are signed, the rest are fingerspelled, in one continuous motion. Any value except `off` or `false` enables it, at boot or toggled at runtime. Requires a rig with finger bones; one without is refused with an explanation rather than signing wrong. |
+
+```html
+<agent-3d agent-id="your-agent" chat sign-language></agent-3d>
+```
+
+```js
+// Toggle it from your own UI at any time.
+const el = document.querySelector('agent-3d');
+el.setAttribute('sign-language', '');   // on
+el.removeAttribute('sign-language');    // off
+```
+
+Signing rides the same `SPEAK` event as spoken replies, so it works identically
+in the hosted app and in an embed. A runnable page is
+[examples/sign-language.html](../examples/sign-language.html); the engine and its
+vocabulary are documented in [Sign language](./sign-language.md), and the
+alphabet is browsable at [/asl-alphabet](https://three.ws/asl-alphabet).
+
 ### Skills and memory
 
 | Attribute | Type | Default | Description |

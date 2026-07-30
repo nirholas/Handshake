@@ -24,6 +24,7 @@ The demos import the framework source directly (`../src/element.js`, `../src/lib
 |---|---|---|
 | [bare-avatar.html](./bare-avatar.html) | The default `<agent-3d>` output: just the avatar on a transparent background, no chat UI. A checkerboard body proves the transparency. | [src/element.js](../src/element.js) |
 | [one-line-demo.html](./one-line-demo.html) | One `<agent-3d chat>` tag turns a page into a full conversational 3D agent (body, instructions, brain, chat UI). | [src/element.js](../src/element.js) |
+| [sign-language.html](./sign-language.html) | Two ways to sign: `<agent-3d chat sign-language>` for signed chat replies, and the engine driven directly to compile any text into one clip. | [src/element.js](../src/element.js), [src/sign-speech.js](../src/sign-speech.js) |
 | [minimal.html](./minimal.html) | `<agent-3d>` dropped into an ordinary landing-page layout. | [src/element.js](../src/element.js) |
 | [web-component.html](./web-component.html) | The `<mv-viewer>` custom element: three viewers with different attributes plus its event log. | [src/components/ModelViewerElement.js](../src/components/ModelViewerElement.js) |
 | [two-agents.html](./two-agents.html) | `<agent-stage formation="row">` hosting two `<agent-3d>` elements in one shared scene, with a chat input that addresses both. | [src/lib.js](../src/lib.js) |

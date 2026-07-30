@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Signing avatar: ASL replies and compiled clips</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--
+			Two ways to put American Sign Language on a page, side by side:
+
+			1. `<agent-3d chat sign-language>`: the avatar signs every assistant
+			   reply. One attribute; nothing else to wire.
+			2. The engine directly: compile any text into one signed clip
+			   (src/sign-speech.js) and play it on a viewer you control, with no
+			   chat and no agent involved.
+
+			Run it: npm run dev, then open
+			http://localhost:3000/examples/sign-language.html
+		-->
+		<style>
+			:root { color-scheme: dark; }
+			* { box-sizing: border-box; }
+			body {
+				margin: 0; min-height: 100vh; background: #07090d; color: #e8edf5;
+				font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+				padding: 40px clamp(16px, 5vw, 56px) 80px;
+			}
+			header { max-width: 68ch; }
+			h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.1; letter-spacing: -.02em; margin: 0 0 12px; }
+			p.lede { color: #93a2b8; margin: 0 0 8px; }
+			code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; color: #7dd3fc; }
+			.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; margin-top: 36px; }
+			.card { border: 1px solid #1d2734; border-radius: 18px; background: #0b1017; padding: 22px; }
+			.card h2 { font-size: 19px; margin: 0 0 6px; }
+			.card p { color: #93a2b8; font-size: 14px; margin: 0 0 16px; }
+			agent-3d { width: 100%; height: 460px; display: block; border-radius: 14px; overflow: hidden; background: #05070a; }
+			#stage { width: 100%; height: 360px; border-radius: 14px; background: #05070a; position: relative; }
+			.row { display: flex; gap: 8px; margin-top: 14px; }
+			input, button {
+				font: inherit; border-radius: 10px; border: 1px solid #24405c; padding: 10px 14px;
+			}
+			input { flex: 1 1 auto; min-width: 0; background: #0d151f; color: #e8edf5; }
+			input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.22); }
+			button { background: rgba(56,189,248,.16); color: #e8edf5; cursor: pointer; font-weight: 600; }
+			button:hover { background: rgba(56,189,248,.3); }
+			button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+			.out { margin-top: 12px; font-size: 13px; color: #93a2b8; min-height: 40px; font-family: ui-monospace, monospace; white-space: pre-line; }
+			.note { margin-top: 40px; max-width: 72ch; color: #93a2b8; font-size: 14px; border-left: 2px solid #24405c; padding-left: 16px; }
+			.note a { color: #7dd3fc; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>A signing avatar, two ways</h1>
+			<p class="lede">
+				Left: an agent whose every reply is signed, from one HTML attribute. Right: the
+				signing engine on its own, compiling whatever you type into a single animation clip.
+			</p>
+			<p class="lede">Words with a sign are signed; everything else is fingerspelled, in the same continuous motion.</p>
+		</header>
+
+		<div class="grid">
+			<section class="card">
+				<h2>1. Signed chat replies</h2>
+				<p>
+					<code>&lt;agent-3d chat sign-language&gt;</code>. Ask it anything: the answer is
+					spoken in the chat panel and signed on the avatar.
+				</p>
+				<agent-3d agent-id="trinity" chat sign-language body="/avatars/cz.glb"></agent-3d>
+			</section>
+
+			<section class="card">
+				<h2>2. The engine on its own</h2>
+				<p>
+					No agent, no chat: <code>compileUtterance()</code> turns text into one clip and the
+					viewer plays it. This is the same code path the attribute above uses.
+				</p>
+				<div id="stage" role="img" aria-label="A 3D avatar signing the text you enter"></div>
+				<div class="row">
+					<input id="text" type="text" value="happy to meet you" aria-label="Text to sign" maxlength="60" />
+					<button id="go" type="button">Sign it</button>
+				</div>
+				<div class="out" id="out" aria-live="polite">Type anything and press Sign it.</div>
+			</section>
+		</div>
+
+		<p class="note">
+			The engine is published as
+			<a href="https://www.npmjs.com/package/@three-ws/sign-language">@three-ws/sign-language</a>
+			with zero runtime dependencies, so it also runs in Node or a worker. The live feature is at
+			<a href="https://three.ws/sign-language">three.ws/sign-language</a>, the alphabet reference at
+			<a href="https://three.ws/asl-alphabet">three.ws/asl-alphabet</a>, and the full documentation at
+			<a href="https://three.ws/docs/sign-language">three.ws/docs/sign-language</a>.
+		</p>
+
+		<script type="module">
+			// 1. The web component: `sign-language` is the whole integration.
+			import '../src/element.js';
+
+			// 2. The engine, driven directly against a viewer this page owns.
+			import { PoseStage } from '../src/avatar-pose.js';
+			import { SignSpeaker } from '../src/sign-speech.js';
+			import { signLookup } from '../src/sign-dictionary.js';
+
+			const out = document.getElementById('out');
+			const stage = new PoseStage(document.getElementById('stage'), {
+				glbUrl: '/avatars/cz.glb',
+				framing: 'portrait',
+			});
+
+			let speaker = null;
+			try {
+				const { supported } = await stage.mount();
+				stage.start();
+				if (supported) {
+					speaker = new SignSpeaker({ manager: stage.anim, signs: signLookup() });
+					out.textContent = 'Ready. Type anything and press Sign it.';
+				} else {
+					out.textContent = 'This rig has no finger bones, so it cannot form handshapes.';
+				}
+			} catch (err) {
+				out.textContent = `Could not load the avatar: ${err.message}`;
+			}
+
+			async function sign() {
+				const text = document.getElementById('text').value.trim();
+				if (!speaker || !text) return;
+				try {
+					const { signed, spelled, clip } = await speaker.speak(text);
+					out.textContent =
+						`signed: ${signed.join(', ') || '(none)'}\n` +
+						`spelled: ${spelled.join(', ') || '(none)'}\n` +
+						`clip: ${clip.duration.toFixed(2)}s, ${clip.tracks.length} tracks`;
+				} catch (err) {
+					out.textContent = err.message;
+				}
+			}
+
+			document.getElementById('go').addEventListener('click', sign);
+			document.getElementById('text').addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') sign();
+			});
+		</script>
+	</body>
+</html>

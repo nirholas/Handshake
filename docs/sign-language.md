@@ -11,6 +11,7 @@ New here? The step-by-step walkthrough is [Tutorial: make your avatar sign](http
 | Watch an avatar sign something | [/sign-language](https://three.ws/sign-language) | Type a phrase, press **🤟 Sign it**. Known words sign, the rest spell |
 | Send someone a signed phrase | `https://three.ws/sign-language?say=happy+to+meet+you` | The page signs it on arrival. The **🔗 Share this phrase** chip copies this link for whatever was just signed |
 | See the whole vocabulary | [/sign-language](https://three.ws/sign-language#sl-vocab) | Every word with a real sign, as a chip you can click to watch |
+| Learn the manual alphabet | [/asl-alphabet](https://three.ws/asl-alphabet) | Every letter and number on a live hand, with what to look for, the look-alikes, and a drill for reading it |
 | Spell a word and download it | [/pose](https://three.ws/pose) | The Spell box builds an animation clip you can scrub, slow down, and export as an animated GLB |
 | Share a spelled word | `https://three.ws/pose?spell=HELLO` | The Studio spells it on arrival, on whatever avatar is loaded |
 | Get signed answers from an AI agent | [/app](https://three.ws/app) | The **🤟** button in the chat header signs every assistant reply |
@@ -81,6 +82,18 @@ A signer spells names and loanwords and *signs* everything else. The avatar does
 Another 41 everyday spellings route to those same signs, so ordinary sentences work without you thinking about it: `hi` and `hey` sign HELLO, `thanks` and `thank you` sign THANK, `i` and `im` sign ME, `everyone` and `everybody` sign YALL, `done` and `finished` sign FINISH, plus plurals and third-person forms (`helps`, `working`, `knows`). The full list is [`src/sign-dictionary.js`](../src/sign-dictionary.js).
 
 **Everything else fingerspells.** All 26 letter handshapes, the numbers 0-9, the traced J and Z motions, and the small bounce signers use for a double letter. A sentence that mixes both is one clip with no seam: the hands come up once at the start and settle once at the end, exactly as a signer does, rather than resetting between words.
+
+## Learn the alphabet on /asl-alphabet
+
+[/asl-alphabet](https://three.ws/asl-alphabet) is the reference for the manual alphabet itself. Every letter A-Z and digit 0-9 is formed by a live rig you can orbit, so you see the handshape from any angle rather than from one photographed side.
+
+- **Click a key, or press it.** Typing `q` signs a Q. A single letter holds its pose so you can study it; a word settles back to rest the way a signer finishes.
+- **Every letter is described**, with the letters it is confused with named explicitly (F against 9, M against N, K against V, G against Q). Look-alikes are where reading breaks down, so they are called out rather than left to be discovered.
+- **Spell any word** and each key lights up as the hand reaches it. The highlight comes from the clip builder itself, not from a timer guessed alongside it, so it stays in step at any speed.
+- **Practice reading it**, which is the harder half. The avatar spells a letter or a word, you type what you read, and your streak is kept on the device.
+- Deep links: `?letter=W` opens a letter, `?spell=HELLO` spells a word.
+
+Speed, signing hand, and avatar are the same settings as /sign-language, stored under the same key, so a left-handed signer sets that once for both pages.
 
 ## Fingerspell and export in the Animation Studio
 
@@ -162,6 +175,31 @@ const on = await agentAvatar.setSignLanguage(true);
 ```
 
 Need only the alphabet? `buildFingerspellingClip('HELLO')` in [`src/fingerspelling.js`](../src/fingerspelling.js) returns the same `AnimationClip` JSON document the animation library serves, with no avatar attached.
+
+Pass a `marks` array to collect `{ letter, start, end }` for every letter as it is placed, which is how /asl-alphabet keeps its keyboard in step with the hand:
+
+```js
+const marks = [];
+const clip = buildFingerspellingClip('HELLO', { marks });
+// marks → [{ letter: 'H', start: 0.35, end: 1.07 }, …]
+```
+
+## Install it as a package
+
+The whole engine ships as [`@three-ws/sign-language`](https://www.npmjs.com/package/@three-ws/sign-language) with **zero runtime dependencies**: no three.js, no DOM, no network. It compiles signing in a browser, in Node, or in a worker.
+
+```bash
+npm install @three-ws/sign-language
+```
+
+```js
+import { compileUtterance, signLookup } from '@three-ws/sign-language';
+
+const { clip, signed, spelled } = compileUtterance('happy to meet you', { signs: signLookup() });
+// signed → ['HAPPY', 'MEET', 'YOU']   spelled → ['TO']
+```
+
+The package README covers every export, the authoring format, and a runnable Node example: [packages/sign-language](../packages/sign-language/README.md).
 
 ## Reading signing: the recognition API
 
@@ -352,6 +390,9 @@ None of this replaces a human interpreter. It makes an avatar legible to signers
 ## Related
 
 - [Tutorial: make your avatar sign](https://three.ws/tutorials/sign-with-your-avatar), the guided walkthrough of everything on this page
+- [/asl-alphabet](https://three.ws/asl-alphabet), the manual alphabet on a live hand, with a practice drill
+- [`@three-ws/sign-language`](../packages/sign-language/README.md), the engine as an npm package
+- [examples/sign-language.html](../examples/sign-language.html), a runnable page with both integration paths
 - [Animation Studio](./animation-studio.md), the Spell box, exports, and share links
 - [docs/animations.md](./animations.md), clip formats and the retarget engine
 - [docs/web-component.md](./web-component.md), every `<agent-3d>` attribute including `sign-language`

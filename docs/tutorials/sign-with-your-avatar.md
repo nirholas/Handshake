@@ -79,6 +79,8 @@ Another 41 everyday spellings resolve to those same 32 signs, so ordinary senten
 
 The full vocabulary with every gloss is in [the sign language reference](/docs/sign-language#what-it-signs-and-what-it-spells).
 
+The letters themselves have their own reference: [/asl-alphabet](/asl-alphabet) forms every letter and number on a live hand, names the look-alikes (F against 9, M against N), and drills you on reading them. If you want to learn to fingerspell rather than just watch it, start there.
+
 ---
 
 ## Step 4: Share a signed phrase as a link
@@ -209,5 +211,7 @@ None of it replaces a human interpreter. It makes an avatar legible to signers i
 - [docs/sign-language.md](../sign-language.md): the full reference: vocabulary, developer APIs, and how the signing engine works
 - [docs/tutorials/animate-your-avatar.md](animate-your-avatar.md): the clip library, retargeting, and animated GLB export in depth
 - [docs/web-component.md](../web-component.md): every `<agent-3d>` attribute, including `sign-language`
+- [/asl-alphabet](/asl-alphabet): the manual alphabet, letter by letter, with a practice drill
+- [examples/sign-language.html](../../examples/sign-language.html): a runnable page with both integration paths
 
 Primary call to action: open **[/sign-language](/sign-language)** and sign your own name.
