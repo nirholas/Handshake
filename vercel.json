@@ -1569,6 +1569,10 @@
 			"dest": "/galaxy.html"
 		},
 		{
+			"src": "/quality-bench/?",
+			"dest": "/quality-bench.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},
@@ -4025,6 +4029,10 @@
 			"dest": "/animations.html"
 		},
 		{
+			"src": "/gestures/?",
+			"dest": "/gestures.html"
+		},
+		{
 			"src": "/character-library/?",
 			"dest": "/character-library.html"
 		},
@@ -4472,11 +4480,23 @@
 		},
 		{
 			"src": "/cookbook",
-			"dest": "/cookbook/index.html"
+			"dest": "/cookbook.html"
 		},
 		{
 			"src": "/cookbook/",
-			"dest": "/cookbook/index.html"
+			"dest": "/cookbook.html"
+		},
+		{
+			"src": "/cookbook/self-correcting-3d/?",
+			"dest": "/cookbook/self-correcting-3d/index.html"
+		},
+		{
+			"src": "/cookbook/([a-z0-9-]+)",
+			"dest": "/recipe.html"
+		},
+		{
+			"src": "/cookbook/([a-z0-9-]+)/",
+			"dest": "/recipe.html"
 		},
 		{
 			"src": "/discover",

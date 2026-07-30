@@ -40,7 +40,7 @@
 			/* One hue per stage, reused for chip, badge and card accent. */
 			--gd-prebuild: #38bdf8;
 			--gd-gate: #a78bfa;
-			--gd-deploy: #fbbf24;
+			--gd-deploy: var(--warn);
 			--gd-prepush: #34d399;
 			--gd-manual: #94a3b8;
 		}
@@ -65,9 +65,12 @@
 			--gd-manual: #55607a;
 		}
 
+		/* The page canvas stays on the site's own theme token, the way every other
+		   page does it, so the theme toggle flips this page with the rest of the
+		   site. Only the components below carry a page-scoped palette. */
 		body {
-			background: var(--gd-bg);
 			color: var(--gd-text);
+			min-height: 100vh;
 		}
 
 		.gd-wrap {

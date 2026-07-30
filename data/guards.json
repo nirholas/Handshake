@@ -136,6 +136,26 @@
 			"needs": "none"
 		},
 		{
+			"id": "sync-tutorial-pages",
+			"script": "scripts/sync-tutorial-pages.mjs",
+			"npm": "check:tutorials",
+			"title": "Tutorial reachability",
+			"protects": "Every tutorial appears in the library manifest, has its markdown on disk, and is registered in data/pages.json, with no duplicate slugs.",
+			"why": "Three files have to agree for a tutorial to be both reachable and indexable, and nothing checked that they did: forty-one live tutorials were missing from the page index and invisible to search, and three had markdown with no card in the library. Run it with --write to register what is missing.",
+			"stages": ["gate"],
+			"needs": "none"
+		},
+		{
+			"id": "audit-mcp-catalog",
+			"script": "scripts/build-mcp-catalog.mjs",
+			"npm": "audit:mcp-catalog",
+			"title": "MCP tool catalog freshness",
+			"protects": "public/mcp-catalog.json matches what the MCP servers actually expose.",
+			"why": "The searchable tool index at /mcp-tools renders from the generated catalog. A stale catalog advertises tools that moved, renamed, or no longer exist, which is worse than advertising nothing.",
+			"stages": ["gate"],
+			"needs": "none"
+		},
+		{
 			"id": "audit-x402-catalog",
 			"script": "scripts/audit-x402-catalog.mjs",
 			"npm": "audit:x402-catalog",

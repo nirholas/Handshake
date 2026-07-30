@@ -379,6 +379,8 @@ const appConfig = {
 				'features-deploy': resolve(__dirname, 'pages/features/deploy.html'),
 				tutorials: resolve(__dirname, 'pages/tutorials.html'),
 				tutorial: resolve(__dirname, 'pages/tutorial.html'),
+				cookbook: resolve(__dirname, 'pages/cookbook.html'),
+				recipe: resolve(__dirname, 'pages/recipe.html'),
 				glossary: resolve(__dirname, 'pages/glossary.html'),
 				playground: resolve(__dirname, 'pages/playground.html'),
 				coin3d: resolve(__dirname, 'pages/coin3d.html'),
@@ -616,13 +618,13 @@ const appConfig = {
 				'play-arena': resolve(__dirname, 'pages/play/arena.html'),
 				'play-ufo': resolve(__dirname, 'pages/play/ufo.html'),
 				'play-economy': resolve(__dirname, 'pages/play/economy.html'),
-				cookbook: resolve(__dirname, 'pages/cookbook.html'),
 				agi: resolve(__dirname, 'pages/agi.html'),
 				arena: resolve(__dirname, 'pages/arena.html'),
 				'smart-money': resolve(__dirname, 'pages/smart-money.html'),
 				pose: resolve(__dirname, 'pages/pose.html'),
 				'pose-mini': resolve(__dirname, 'pages/pose-mini.html'),
 				animations: resolve(__dirname, 'pages/animations.html'),
+				gestures: resolve(__dirname, 'pages/gestures.html'),
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),
 				'asl-alphabet': resolve(__dirname, 'pages/asl-alphabet.html'),
@@ -1067,6 +1069,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					// END:DISCOVER_ROUTE
 					'/tutorials': resolve(root, 'pages/tutorials.html'),
 					'/tutorials/': resolve(root, 'pages/tutorials.html'),
+					'/cookbook': resolve(root, 'pages/cookbook.html'),
+					'/cookbook/': resolve(root, 'pages/cookbook.html'),
 					'/glossary': resolve(root, 'pages/glossary.html'),
 					'/glossary/': resolve(root, 'pages/glossary.html'),
 					'/go': resolve(root, 'pages/go.html'),
@@ -1237,6 +1241,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/mint-success/': resolve(root, 'pages/mint-success.html'),
 					'/pump-dashboard': resolve(root, 'pages/pump-dashboard.html'),
 					'/pump-dashboard/': resolve(root, 'pages/pump-dashboard.html'),
+					'/wallet': resolve(root, 'pages/wallet.html'),
+					'/wallet/': resolve(root, 'pages/wallet.html'),
 					'/autopilot': resolve(root, 'pages/autopilot.html'),
 					'/autopilot/': resolve(root, 'pages/autopilot.html'),
 					'/pump-visualizer': resolve(root, 'pages/pump-visualizer.html'),
@@ -1617,6 +1623,14 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /tutorials/<slug>  → dedicated tutorial viewer template
 					else if (!filePath && /^\/tutorials\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/tutorial.html');
+					// /cookbook/self-correcting-3d  → the committed notebook export, which is a
+					// static nbconvert page, NOT a markdown recipe. It has to be matched before
+					// the generic slug rule below or the viewer would shadow it. Mirrors vercel.json.
+					else if (!filePath && /^\/cookbook\/self-correcting-3d\/?$/.test(path))
+						filePath = resolve(root, 'public/cookbook/self-correcting-3d/index.html');
+					// /cookbook/<slug>  → recipe viewer, renders /docs/cookbook/<slug>.md
+					else if (!filePath && /^\/cookbook\/[a-z0-9-]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/recipe.html');
 					// /p/<slug>  → public Launchpad Studio renderer (hydrates from /api/launchpad/get)
 					else if (!filePath && /^\/p\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'public/p/index.html');
