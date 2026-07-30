@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>@three-ws/avatar example</title>
+	<style>
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: grid;
+			place-items: center;
+			background: #0b0d12;
+			color: #e6e9f0;
+			font-family: system-ui, sans-serif;
+		}
+		main { text-align: center; }
+		agent-3d {
+			display: block;
+			width: min(90vw, 480px);
+			height: 560px;
+			margin: 0 auto;
+			border-radius: 16px;
+			overflow: hidden;
+		}
+		p { color: #8b93a7; font-size: 14px; }
+		a { color: #7aa2ff; }
+	</style>
+</head>
+<body>
+	<main>
+		<h1>@three-ws/avatar</h1>
+		<p id="status">Loading the &lt;agent-3d&gt; runtime...</p>
+
+		<!--
+			The documented "src" attribute points the element at a GLB directly;
+			"kiosk" (also documented) hides the debug GUI. The GLB is the real
+			default avatar served by three.ws with open CORS.
+		-->
+		<agent-3d src="https://three.ws/avatars/default.glb" kiosk></agent-3d>
+
+		<p>
+			Rendered by the <code>&lt;agent-3d&gt;</code> web component from
+			<a href="https://www.npmjs.com/package/@three-ws/avatar">@three-ws/avatar</a>.
+		</p>
+	</main>
+
+	<script type="module">
+		// The README's `@three-ws/avatar/agent` entry, loaded from a CDN so this
+		// page needs no build step. It exports ensureAgent3D(), which lazy-loads
+		// the self-contained runtime (Three.js inlined) and registers <agent-3d>.
+		import { ensureAgent3D } from 'https://unpkg.com/@three-ws/avatar@0.2.1/src/agent.js';
+
+		const status = document.getElementById('status');
+		try {
+			await ensureAgent3D();
+			status.textContent = 'Runtime ready: drag to orbit the avatar.';
+		} catch (err) {
+			status.textContent = 'Failed to load the avatar runtime: ' + err.message;
+		}
+	</script>
+</body>
+</html>

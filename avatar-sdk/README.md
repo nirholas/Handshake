@@ -50,7 +50,7 @@ Importing the package registers the `<agent-3d>` custom element as a side effect
 </script>
 
 <!-- Resolve a three.ws avatar by id… -->
-<agent-3d avatarid="00000000-1111-2222-3333-444444444444"></agent-3d>
+<agent-3d avatar-id="00000000-1111-2222-3333-444444444444"></agent-3d>
 
 <!-- …or point at a GLB directly -->
 <agent-3d src="https://example.com/my-avatar.glb"></agent-3d>
@@ -140,7 +140,7 @@ Both are transparent — no attribute needed, and desktop behavior is unchanged.
 
 ### `<agent-3d>`
 
-The full runtime element. Set `avatarid` to resolve a server-hosted avatar, or
+The full runtime element. Set `avatar-id` to resolve a server-hosted avatar, or
 `src`/`body` for a direct GLB. Other attributes: `ios-src` (USDZ for iOS AR Quick Look)
 and `kiosk` (hide the debug GUI). Instance methods include `playGesture(name, opts?)`
 and `setMorph(name, weight)`.
@@ -240,6 +240,10 @@ record. Computes a SHA-256 checksum client-side.
 | `description` | `string` | Optional. |
 | `tags` | `string[]` | Optional. |
 | `visibility` | `'public' \| 'unlisted' \| 'private'` | Defaults to `public`. |
+
+## Examples
+
+A runnable, build-free demo page (CDN load, `ensureAgent3D()`, one live avatar) lives in [`examples/`](./examples).
 
 ## Requirements
 

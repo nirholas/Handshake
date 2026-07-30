@@ -23,6 +23,30 @@
 			<description>The platform watches how many of its automated payments actually settle. When that number fell, the alert always said the same thing: payments are being rejected. That was misleading in the most common case, where nothing is rejected at all. The platform simply stops offering Solana as a payment option while its sponsor wallet is topped up, so its own agents have nothing they can pay. The health report now tells these two situations apart by name, counts how often the Solana option was unavailable, and points at the one-command self-repair instead of sending whoever is on call to the wrong system.</description>
 		</item>
 		<item>
+			<title>Payment Sessions, the developer platform, and the media APIs are now documented</title>
+			<link>https://three.ws/docs/payment-sessions</link>
+			<guid isPermaLink="false">2026-07-30:Payment Sessions, the developer platform, and the media APIs are now documented</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Three new developer guides: Payment Sessions (fund a capped spend envelope from prepaid credits and let an agent pay x402 services with a bearer token, no private key involved), the developer platform (API keys, usage metrics, signed webhooks, the one-call MCP connection test, and the public tool and skills catalogs), and the media and render API (avatar image renders, posed clip renders, the runtime GLB optimizer, the open model proxy, and the free vision and speech-to-text endpoints). Every endpoint ships with a runnable example.</description>
+		</item>
+		<item>
+			<title>Runnable examples for the x402 fetch wrapper, the MCP server, and the avatar SDK</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:Runnable examples for the x402 fetch wrapper, the MCP server, and the avatar SDK</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Three example sets you can run as-is against live three.ws services: a zero-spend x402 discovery probe plus a key-gated real paid call, curl and plain Node walkthroughs of the full MCP session lifecycle including a free tool call, and a build-free HTML page that renders a live 3D avatar straight from the CDN.</description>
+		</item>
+		<item>
+			<title>The pages that shipped without docs now have them</title>
+			<link>https://three.ws/docs/start-here</link>
+			<guid isPermaLink="false">2026-07-30:The pages that shipped without docs now have them</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.</description>
+		</item>
+		<item>
 			<title>Generation Watch</title>
 			<link>https://three.ws/watch</link>
 			<guid isPermaLink="false">2026-07-29:Generation Watch</guid>

@@ -143,8 +143,8 @@ export const AgentAvatar = forwardRef(function AgentAvatar(props, forwardedRef) 
 	useEffect(() => {
 		const el = localRef.current;
 		if (!el || !ready) return;
-		if (avatarId) el.setAttribute('avatarid', avatarId);
-		else el.removeAttribute('avatarid');
+		if (avatarId) el.setAttribute('avatar-id', avatarId);
+		else el.removeAttribute('avatar-id');
 	}, [avatarId, ready]);
 
 	useEffect(() => {

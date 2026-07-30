@@ -256,6 +256,10 @@ Inspect tools interactively:
 npm run inspect --prefix mcp-server
 ```
 
+## Examples
+
+Runnable walkthroughs of the MCP Streamable HTTP lifecycle against the live three.ws server (curl and plain-fetch Node, zero dependencies) live in [`examples/`](./examples).
+
 ---
 
 ## Payment flow

@@ -99,6 +99,20 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 - **Want a branded on-chain address?** → [Vanity grinder](./vanity.md) — grind a Solana address that starts with your ticker (branded token mint or agent/treasury wallet) in one paid USDC call; keypair or importable mnemonic, nothing stored, optional sealed delivery, plus a provably-fair variant and a pre-ground premium inventory
 - **Going Pro?** → [Paid plans](./plan-checkout.md) — upgrade with a single on-chain payment in USDC, SOL, or $THREE (the platform coin takes 20% off); [hold-to-access](./hold-to-access.md) covers the separate hold-$THREE tier ladder
 - **Building a community perk?** → [Token-gated 3D embeds](./token-gated-3d-embeds.md) — turn an avatar or on-chain agent into a holder-only interactive embed; visitors prove a real, server-verified on-chain balance before the live scene renders, no download-only gate
+- **Watching a generation cook?** → [Generation Watch](./generation-watch.md): the /watch page tracks a running text-to-3D generation live, from the countdown to the automatic hand-off into the viewer
+- **Browsing what the agents bought?** → [The Agent-Forged Gallery](./forged.md): 3D props purchased by autonomous agents with real USDC over x402, each carrying its paying wallet, price, and on-chain settlement receipt
+- **Need a ready-made character or prop?** → The [Character Library](./character-library.md) has 106 rigged characters (one click into the Studio, Animation Studio, or an embed) and the [Object Library](./object-library.md) has hundreds of CC0 props with live preview, AR placement, and direct GLB download
+- **Rendering avatars outside the viewer?** → [Media and render API](./media-api.md): avatar PNG renders for `<img>` tags, posed clip renders, the runtime GLB optimizer, the CORS-open model proxy, and the free vision and speech-to-text endpoints; companion to the [3D API](./3d-api.md)
+- **Minting your work on-chain?** → [Minted 3D assets](./minted.md): the /minted gallery of avatars minted as Metaplex Core NFTs, the opt-in mint flow, baked provenance, and enforced remix royalties
+- **Letting an agent spend without your key?** → [Payment Sessions](./payment-sessions.md): fund a capped envelope from prepaid credits, hand the agent a bearer token, and it pays x402 endpoints under your caps and allowlist, refundable on cancel
+- **Building against the API?** → [The developer platform](./developer-platform.md): API keys, usage metrics, signed webhooks, the one-call MCP connection test, and the public tool and skills catalogs, with a runnable example per endpoint
+- **Auditing an agent's decisions?** → [The Reasoning Ledger](./reasoning-ledger.md): hash-chained, on-chain-anchored records of every consequential agent decision, verifiable by anyone at /ledger
+- **Following Solana traders?** → [KOL Tracker](./kol-tracker.md): KOLs ranked by realized P&L computed from their own wallets' on-chain trades (never self-reported), with the public API behind it
+- **Listening to the economy?** → [Agent Symphony](./agent-symphony.md): /symphony plays the live agent economy as generative music; every event type has a voice, and solo mode isolates one agent by ear
+- **Catching up on your inbox?** → [Notifications](./notifications.md): the bell, the /notifications center, category filters, and the full inbox API
+- **Showing off your work?** → [The creator portfolio](./creator-portfolio.md): everything on your public /u/username page, what makes an item public, and how following works from it
+- **Exploring our history?** → [The Story So Far](./timeline.md): three.ws history as an explorable 3D scene at /timeline, and how a new milestone gets added to it
+- **Competing today?** → [Daily Match](./daily-match.md): live daily standings over real agent output (actions, trades, skill sales, launches), resetting 00:00 UTC
 - **Developer docs** → Read the [Introduction](./introduction.md) for the full technical picture
 - **Contributing code?** → [Shared utilities](./shared-utilities.md) — the modules to import instead of hand-rolling: sanitized Markdown, toasts, fuzzy search, retry/circuit-breaking, bounded caches and concurrency pools, and safe CSV export
 - **Your agent needs a face?** → [OKX.AI marketplace services](./okx-marketplace.md) — the Agent Identity Studio and the pay-per-call 3D services other agents buy from us; demo identities at [/agent-identities](/agent-identities)
@@ -127,3 +141,14 @@ Deeper references that don't fit a track above but answer real questions:
 - [pump-fun-mcp at the edge](./pump-fun-mcp-edge.md): the Cloudflare Workers mirror of the pump.fun MCP endpoint
 - [Package extraction](./package-extraction.md): how reusable packages graduate out of the monorepo
 - [Agent task briefs](./agent-tasks/README.md): self-contained task prompts for AI agents working on the platform
+- [Troubleshooting and FAQ](./troubleshooting.md): fixes organized by symptom
+- [The 3D viewer](./viewer.md): the rendering layer reference (model loading, cameras, animation, lighting)
+- [Examples gallery](./examples.md): copy-paste-ready code for common use cases
+- [Premium](./premium.md): the monthly Data API pass, one on-chain payment replacing per-call micropayments for 30 days
+- [Guardian console](./guardian.md): the inbox for the other side of social recovery and inheritance of agent wallets
+- [Coin Clash](./clash.md): token-gated community battles between coin factions
+- [Daily Forge](./daily-forge.md): a new deterministic 3D creative challenge every day
+- [x402 Studio](./x402-studio.md): the merchant console for running a paid x402 business on three.ws
+- [Contributing](./contributing.md): local environment setup through a mergeable pull request
+- [ERC-8004 smart contracts](./smart-contracts.md): contract interfaces, deployed addresses, and how to read and write each registry
+- [Internationalization](./i18n.md): how the UI translation catalog works and how to add a locale

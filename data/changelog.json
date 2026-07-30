@@ -16850,6 +16850,33 @@
 				"improvement"
 			],
 			"link": "/pricing"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Payment Sessions, the developer platform, and the media APIs are now documented",
+			"summary": "Three new developer guides: Payment Sessions (fund a capped spend envelope from prepaid credits and let an agent pay x402 services with a bearer token, no private key involved), the developer platform (API keys, usage metrics, signed webhooks, the one-call MCP connection test, and the public tool and skills catalogs), and the media and render API (avatar image renders, posed clip renders, the runtime GLB optimizer, the open model proxy, and the free vision and speech-to-text endpoints). Every endpoint ships with a runnable example.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/payment-sessions"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The pages that shipped without docs now have them",
+			"summary": "Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/start-here"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Runnable examples for the x402 fetch wrapper, the MCP server, and the avatar SDK",
+			"summary": "Three example sets you can run as-is against live three.ws services: a zero-spend x402 discovery probe plus a key-gated real paid call, curl and plain Node walkthroughs of the full MCP session lifecycle including a free tool call, and a build-free HTML page that renders a live 3D avatar straight from the CDN.",
+			"tags": [
+				"docs",
+				"sdk"
+			]
 		}
 	]
 }
