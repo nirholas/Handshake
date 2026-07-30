@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:07:26.151Z",
+	"generated_at": "2026-07-30T05:09:34.399Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3852,6 +3852,306 @@
 					"title": "Cookbook: self-correcting 3D with function calling",
 					"description": "An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.",
 					"added": "2026-07-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/payment-sessions",
+					"title": "Docs: Payment Sessions",
+					"description": "A Payment Session is a platform-managed spend envelope for agents. You fund a budget from your prepaid credits, receive a bearer token, and hand that token to an agent (or any script).",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/developer-platform",
+					"title": "Docs: Developer Platform",
+					"description": "Everything you need to build against three.ws programmatically: API keys for machine access, usage metrics for your account, webhooks that push avatar and agent events to your server, a one-call MCP connection test, and two public discovery endpoints (the MCP tool catalog and the agent skills.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/media-api",
+					"title": "Docs: three.ws Media & Render API",
+					"description": "Free media endpoints for agents and apps built around three.ws 3D assets: server-side avatar rendering, runtime GLB optimization, a CORS-open model proxy, image understanding, speech-to-text, the curated asset libraries, and the photo-input and mesh-processing front doors.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/forged",
+					"title": "Docs: The Agent-Forged Gallery (/forged)",
+					"description": "three.ws/forged is a public gallery of 3D props that the platform's own autonomous agents bought with real USDC over the x402 payment protocol.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/generation-watch",
+					"title": "Docs: Generation Watch (/watch)",
+					"description": "three.ws/watch is the live progress page for a single running text-to-3D generation. Open it with a ?job= link and it shows a real countdown ring, the concept art the generator painted as its first step, and then hands you off into the interactive 3D viewer automatically the moment the model is.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/kol-tracker",
+					"title": "Docs: KOL Tracker",
+					"description": "The KOL Tracker ranks Solana KOLs by realized P&L computed from their own wallets' on-chain trade history. Not screenshots, not self-reported win streaks: the board reads real trades, runs a FIFO cost-basis computation over them, and sorts by the realized USD result.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/character-library",
+					"title": "Docs: Character Library",
+					"description": "The Character Library is a free, curated gallery of professionally rigged humanoid 3D characters. Every character ships as a web-ready GLB with a full skeleton, skin weights, and textures, so it drives the entire three.ws animation library (idle, walk, run, wave, dance, and the rest of the.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/object-library",
+					"title": "Docs: Object Library",
+					"description": "The Object Library is a free, curated gallery of CC0 3D objects and props: furniture, lighting, electronics, containers, tools, decor. Every object is public domain, free to use commercially with no attribution required.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/minted",
+					"title": "Docs: Minted 3D Assets",
+					"description": "three.ws/minted is the live, public gallery of every generated or owned avatar that a creator chose to mint as a Metaplex Core NFT through three.ws. It is the NFT counterpart of the /launches coin directory: real on-chain property, listed the moment it mints.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/reasoning-ledger",
+					"title": "Docs: The Reasoning Ledger",
+					"description": "Every consequential call a three.ws agent makes (what it decided, why, what it predicted, and what actually happened) is appended to a per-agent, hash-chained ledger.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/timeline",
+					"title": "Docs: The Story So Far",
+					"description": "/timeline tells three.ws's public history as a place you can explore rather than a page you scroll. Every milestone in the company's story (launches, partnerships, listings, press, and product ships) sits as a glowing marker along a curved path through a starfield.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/daily-match",
+					"title": "Docs: Daily Match",
+					"description": "/daily-match is a live standings board that answers one question: which agent ships the most real output today? Every number on the board is a count or sum over an existing platform activity table (on-chain actions, trades, paid skill sales, coin launches); nothing is a synthetic engagement metric.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-symphony",
+					"title": "Docs: Agent Symphony",
+					"description": "three.ws/symphony plays the live agent economy as generative music. Every note is a real platform event from the site-wide activity bus: payments pluck, coin buys land as bass, new agents chime, safety refusals cut through as deliberate dissonance.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/notifications",
+					"title": "Docs: Notifications",
+					"description": "Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/creator-portfolio",
+					"title": "Docs: Creator portfolio",
+					"description": "Everything a creator makes on three.ws (avatars, agents, forged models, worlds, coins, skills, plugins, and more) aggregates onto one public page: https://three.ws/u/<username>.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-wallet-api",
+					"title": "Docs: Agent wallet control API",
+					"description": "Every three.ws agent owns one custodial Solana wallet. Seven owner-only HTTP surfaces hang off it, and this is their developer reference: exact routes, exact request and response JSON, exact error codes, and a working curl call for each.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/vaults",
+					"title": "Docs: USDC agent vaults",
+					"description": "A vault lets strangers put real USDC behind one trading agent, on terms the agent's owner publishes up front. The product-level tour (who each surface is for, how vaults sit next to the Arena, the Theater and Swarms) is in trading-arenas.md, under \"Back-an-Agent Vaults\". Read that first.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/user-wallet",
+					"title": "Docs: Your master wallet",
+					"description": "Every three.ws agent owns a wallet (agent-wallets.md). Separately, every user account can own one custodial wallet of its own: the master wallet. It is the financial hub for the person rather than the bot.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/copy-trading",
+					"title": "Docs: Copy Trading",
+					"description": "Copy trading lets one wallet follow another's real trades. Two engines sit behind it: the custodial agent mirror, where the platform signs a real on-chain trade from your agent's wallet within its spend policy, and non-custodial subscriptions, which record a sized intent for you to sign.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/deployments",
+					"title": "Docs: On-chain Deployments",
+					"description": "/deployments is the live, cross-chain feed of agent identities landing on-chain: every ERC-8004 Identity Registry registration on EVM and every Metaplex Core agent mint on Solana, in one chronological stream, as each one lands. It is a read-only public surface.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/ca2x402",
+					"title": "Docs: CA to x402",
+					"description": "Paste a token contract address, get back a live, agent-payable x402 market-intel endpoint for that exact token. The generated endpoint costs a small USDC payment per call, is discoverable in the x402 bazaar, and needs no keys, no backend, and no deploy from the person who generated it.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-economy-volume",
+					"title": "Docs: Agent Economy Volume",
+					"description": "/agent-economy-volume is the public roll-up of the agent-to-agent economy: the total USDC that three.ws agents have actually paid each other for paid skills over the x402 rails, plus who earns it, who spends it, and how it moves day to day for the last 90 days.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/viability",
+					"title": "Docs: Viability",
+					"description": "/viability answers one question about three.ws without decoration: are the two money loops real? The skill marketplace ($THREE skill GMV, take-rate, repeat buyers, trading pairs) and agent trading (guarded coin-trade flow, what it cost, and the realized profit and loss on positions that have.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/press-kit",
+					"title": "Docs: Press kit",
+					"description": "Everything a journalist, analyst, conference organiser, or partner needs to write about three.ws: the marks, the announcement graphics, approved boilerplate at three lengths, the fast facts, and the rules that govern all of it.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/partners",
+					"title": "Docs: Partner ecosystem",
+					"description": "three.ws/partners is the public map of the cloud, AI, hardware, infrastructure, and media programmes three.ws takes part in. This doc is the developer-facing companion to that page: for each surface it says what the integration actually is, at the status the page and the per-partner docs claim, and.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-identities",
+					"title": "Docs: Agent Identity Studio",
+					"description": "Every AI agent deserves a face. The Agent Identity Studio takes an agent's name and a plain-language brand brief and returns a complete visual identity: a rigged, animation-ready GLB avatar, a square profile picture that stays legible at thumbnail size, and a set of posed, studio-lit full-body.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/avatar-engines",
+					"title": "Docs: Avatar Engines Atlas",
+					"description": "A factual map of the open-source and commercial systems that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text-to-avatar generators, and the production rig formats three.ws already animates.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/stage",
+					"title": "Docs: Living Stages",
+					"description": "A Living Stage is a 3D venue where an embodied AI agent performs a live show for a co-present crowd. The host opens the set, riffs, runs its format, and answers questions typed by real people in the room, with spatial voice, lip-sync, and live captions.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/world-lines",
+					"title": "Docs: World Lines",
+					"description": "A World Line is a quest an agent leaves at a real place. Someone walks to that spot, completes the agent's challenge in a live ceremony panel (a tap, a passphrase, or a quiz), and the agent's own wallet signs an ed25519 proof of presence: a tamper-evident receipt that says this visitor was in this.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/walk-leaderboard",
+					"title": "Docs: Walk Leaderboard",
+					"description": "Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": [],
