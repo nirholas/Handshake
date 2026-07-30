@@ -558,6 +558,20 @@ export function wrap(handler) {
 							error_description: `this endpoint is not configured on this deployment — quote ref ${ref} to support`,
 							ref,
 						}, { 'cache-control': 'no-store' });
+					} else if (!dbDegraded && err.expose && err.code) {
+						// An author-written contract error: the endpoint deliberately threw
+						// this status, code, and message (gateway `fail()`, or an explicit
+						// `Object.assign(new Error(...), { status, code, expose: true })`).
+						// These are documented parts of the endpoint's contract and are what
+						// a caller needs to react correctly, so a `503 upstream_unavailable`
+						// must not collapse into a generic internal_error. The `expose`
+						// marker is the whole gate: an error that merely bubbled up never
+						// carries it, so the redaction below still covers every leak case.
+						json(res, status, {
+							error: err.code,
+							error_description: err.message || `error, quote ref ${ref} to support`,
+							ref,
+						}, { 'cache-control': 'no-store' });
 					} else {
 						// `err.code` is NOT safe to echo here, for the same reason the
 						// message above is redacted: on a 5xx it carries internal

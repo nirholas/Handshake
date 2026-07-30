@@ -118,7 +118,9 @@ function resolveBaseUrl(requested) {
 			new Error(
 				'No self-hosted TRELLIS NIM is configured. Set MODEL_TRELLIS_URL on the deployment, or pass a baseUrl pointing at your own NIM (nvcr.io/nim/microsoft/trellis).',
 			),
-			{ status: 503, code: 'nim_unconfigured' },
+			// expose: this is a documented contract error, not a leaked runtime code,
+			// so wrap() may hand the caller the real reason instead of internal_error.
+			{ status: 503, code: 'nim_unconfigured', expose: true },
 		);
 	}
 	return configured.replace(/\/$/, '');

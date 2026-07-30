@@ -86,3 +86,49 @@ describe('wrap() 5xx navigation routing', () => {
 		expect(res.headers['location']).toBeUndefined();
 	});
 });
+
+// A 5xx has two very different sources, and they need opposite handling: an error
+// the endpoint author wrote (`503 upstream_unavailable`) is contract a caller must
+// be able to react to, while an error that merely bubbled up carries internal
+// detail (SQLSTATE, ECONNREFUSED, a keyed RPC URL) and must stay redacted. The
+// `expose` marker is the only thing that separates them.
+describe('wrap() 5xx code exposure', () => {
+	it('hands back a deliberate contract code and message', async () => {
+		const handler = wrap(async () => {
+			throw Object.assign(new Error('pump.fun data source is temporarily unreachable'), {
+				status: 503,
+				code: 'upstream_unavailable',
+				expose: true,
+			});
+		});
+		const req = mockReq({ headers: { accept: 'application/json' } });
+		const res = mockRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(503);
+		const body = JSON.parse(res.body);
+		expect(body.error).toBe('upstream_unavailable');
+		expect(body.error_description).toContain('temporarily unreachable');
+		expect(body.ref).toMatch(/^[0-9a-f]{16}$/);
+	});
+
+	it('still redacts a 5xx code that was never marked as contract', async () => {
+		const handler = wrap(async () => {
+			// Shaped like a Postgres failure: the code names the storage engine's fault
+			// and the message carries the credentialed host.
+			throw Object.assign(new Error('relation "users" does not exist at db://user:pw@host'), {
+				status: 500,
+				code: '42P01',
+			});
+		});
+		const req = mockReq({ headers: { accept: 'application/json' } });
+		const res = mockRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(500);
+		const body = JSON.parse(res.body);
+		expect(body.error).toBe('internal_error');
+		expect(res.body).not.toContain('42P01');
+		expect(res.body).not.toContain('user:pw@host');
+	});
+});

@@ -49,7 +49,10 @@ import { recordEvent } from './usage.js';
  * @param {string} message
  */
 export function fail(status, code, message) {
-	throw Object.assign(new Error(message), { status, code });
+	// `expose` marks this as an author-written contract error, so wrap() may echo
+	// the code and message even on a 5xx. Errors that merely bubble up (a Postgres
+	// SQLSTATE, an ECONNREFUSED) carry no such marker and stay redacted.
+	throw Object.assign(new Error(message), { status, code, expose: true });
 }
 
 /**
