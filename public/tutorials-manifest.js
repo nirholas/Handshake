@@ -270,7 +270,7 @@
 			builds: 'Posed, expressive avatar images for pages, cards, and email',
 			time: '20 min',
 			previewModel: '/avatars/selfie-girl.glb',
-			ctaPrimary: { label: 'Open the render API', href: '/api/avatar/render' },
+			ctaPrimary: { label: 'Browse public avatars', href: '/gallery' },
 		},
 		{
 			slug: 'generate-3d-api',
