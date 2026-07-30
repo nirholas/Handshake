@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 39 examples: 10 web component demos, 10 end-to-end projects, and 19 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 40 examples: 11 web component demos, 10 end-to-end projects, and 19 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -787,6 +787,7 @@ The repo ships 39 examples: 10 web component demos, 10 end-to-end projects, and 
 | [`examples/bare-avatar.html`](../examples/bare-avatar.html) | JUST the avatar - the default. No chat, no input, no debug GUI, no name-plate, transparent background. Add the `chat` attribute to opt into the conversational UI. | `http://localhost:3000/examples/bare-avatar.html` |
 | [`examples/minimal.html`](../examples/minimal.html) | This is a plain HTML page. The floating agent in the corner was added with a single <agent-3d> tag - no build step, no framework. | `http://localhost:3000/examples/minimal.html` |
 | [`examples/one-line-demo.html`](../examples/one-line-demo.html) | Everything below the heading is a single <agent-3d> tag. | `http://localhost:3000/examples/one-line-demo.html` |
+| [`examples/sign-language.html`](../examples/sign-language.html) | Left: an agent whose every reply is signed, from one HTML attribute. Right: the signing engine on its own, compiling whatever you type into a single animation clip. | `http://localhost:3000/examples/sign-language.html` |
 | [`examples/embed-test.html`](../examples/embed-test.html) | Testing the <agent-3d> web component embed. | `http://localhost:3000/examples/embed-test.html` |
 | [`examples/widget-rpc.html`](../examples/widget-rpc.html) | This page loads /widget in the iframe and drives it through the ThreeWidget SDK. Open the source - it's ~70 lines, no build step. | `http://localhost:3000/examples/widget-rpc.html` |
 | [`examples/three-concierge.html`](../examples/three-concierge.html) | Trinity, the three.ws concierge, mounted live from a JSON manifest: a glTF body, browser voice, skills, and scene tools - wired end to end. | `http://localhost:3000/examples/three-concierge.html` |
