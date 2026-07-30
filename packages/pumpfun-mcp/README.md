@@ -110,6 +110,20 @@ The live tool list is fetched from the backend at startup; a bundled copy ships 
 npx -y @modelcontextprotocol/inspector npx @three-ws/pumpfun-mcp
 ```
 
+## Examples
+
+Runnable examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs     # every tool the backend currently serves, with schemas
+node examples/token-report.mjs   # live on-chain report for one mint
+```
+
+Both spawn this server over stdio and read live Solana mainnet data. Every tool
+here is free and read-only. See [`examples/README.md`](./examples/README.md) for
+expected output, including why the advertised tool count depends on whether the
+backend has an indexer configured.
+
 ## Configuration
 
 No configuration is required. One optional override exists:

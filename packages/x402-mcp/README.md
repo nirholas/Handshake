@@ -101,6 +101,19 @@ claude mcp add x402 --env SOLANA_SECRET_KEY=<base58> -- npx -y @three-ws/x402-mc
 { "ok": true, "paid": true, "payer": "Gx5E…", "price_usd": 0.05, "settlement": { … }, "result": { … } }
 ```
 
+## Examples
+
+Runnable, no-payment examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs      # every tool with its full input schema
+node examples/inspect-price.mjs   # find_services + inspect_endpoint on live data
+```
+
+Both spawn this server over stdio and hit the real bazaar. Neither reads a key or
+calls `pay_and_call`, so nothing is signed and nothing is spent. See
+[`examples/README.md`](./examples/README.md) for expected output.
+
 ## Requirements
 
 - **Node.js >= 20.**

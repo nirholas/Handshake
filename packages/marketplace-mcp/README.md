@@ -109,6 +109,19 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/marketplace-mcp
 
 Pass `next_cursor` back as `cursor` to fetch the following page.
 
+## Examples
+
+Runnable examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs            # every tool with its full input schema
+node examples/browse-marketplace.mjs    # categories + agents + detail + skills, live
+```
+
+Both spawn this server over stdio and read the live public catalog. Every tool
+here is read-only, so nothing can be published or purchased. See
+[`examples/README.md`](./examples/README.md) for expected output.
+
 ## Requirements
 
 - **Node.js >= 20.**

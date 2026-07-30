@@ -106,6 +106,19 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/vanity-mcp
 }
 ```
 
+## Examples
+
+Runnable examples live in [`examples/`](./examples):
+
+```bash
+node examples/list-tools.mjs           # every tool with its full input schema
+node examples/quote-and-appraise.mjs   # config + quote + appraise + stats, live
+```
+
+Both spawn this server over stdio and read the live market. Every tool here is
+read-only, so nothing can be posted, claimed, or paid. See
+[`examples/README.md`](./examples/README.md) for expected output.
+
 ## Requirements
 
 - **Node.js >= 20.**
