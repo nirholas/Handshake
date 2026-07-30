@@ -20,7 +20,8 @@
 //   4. The load-bearing factual claims still hold. These are the ones that
 //      have actually drifted before and cost a session each: the cron count,
 //      the build:gcp chain order, the db:migrate safety semantics, the
-//      README-coverage standard, and the retired X changelog lane. Each is
+//      README-coverage standard, the documented git remotes (the push target
+//      must actually resolve), and the retired X changelog lane. Each is
 //      re-derived from the source of truth on every run, so the doc cannot
 //      quietly go stale again.
 //
@@ -142,6 +143,48 @@ if (coverageGaps.length && /Coverage under `packages\/`, `workers\/`, and `servi
 		`CLAUDE.md claims 100% README coverage but ${coverageGaps.length} dir(s) have none: ${coverageGaps.join(', ')}. ` +
 			`Write the README (preferred) or correct the claim.`,
 	);
+}
+
+// 4f. Git remotes. CLAUDE.md names the push target in an imperative the agent
+// runs verbatim, and on 2026-07-30 this worktree had only `origin`, so that exact
+// command failed. A push instruction that does not resolve is worse than a
+// missing one: it fails at the moment the owner asked to ship. The remote table
+// is also a safety boundary (the retired mirror must never be the target), so a
+// documented URL that no longer matches the configured one has to surface.
+try {
+	const { execFileSync } = await import('node:child_process');
+	const configured = new Map();
+	for (const line of execFileSync('git', ['remote', '-v'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+		.split('\n')
+		.filter(Boolean)) {
+		const [name, url] = line.split(/\s+/);
+		if (name && url && !configured.has(name)) configured.set(name, url);
+	}
+	// Only trust this check when git actually reported a remote set; a bare clone
+	// with none configured is a legitimate state, not doc drift.
+	if (configured.size) {
+		const norm = (u) => u.replace(/\.git$/, '').replace(/\/$/, '');
+		// The remote table: lines like  - `name` -> `https://...`
+		const documented = new Map();
+		for (const m of md.matchAll(/^-\s+`([A-Za-z0-9_-]+)`\s*(?:→|->)\s*`(https?:\/\/[^`]+)`/gm)) {
+			documented.set(m[1], m[2]);
+		}
+		const pushTarget = md.match(/git push ([A-Za-z0-9_-]+) main/)?.[1];
+		if (pushTarget && !configured.has(pushTarget)) {
+			failures.push(
+				`CLAUDE.md tells agents to run \`git push ${pushTarget} main\` but no remote named \`${pushTarget}\` is configured ` +
+					`(configured: ${[...configured.keys()].join(', ')}). Add it, or correct the instruction.`,
+			);
+		}
+		for (const [name, url] of documented) {
+			const actual = configured.get(name);
+			if (actual && norm(actual) !== norm(url)) {
+				failures.push(`remote \`${name}\` points at ${actual} but CLAUDE.md documents ${url}`);
+			}
+		}
+	}
+} catch {
+	// No git, or not a repository. Nothing to verify; never fail on that.
 }
 
 // 4e. The retired X changelog lane. If the cron ever calls it again, the
