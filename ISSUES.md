@@ -158,6 +158,43 @@ closed 2026-07-28; full history in git):
     exit 0 means online, exit 2 means staged but logged out. A codespace cannot
     stay up on its own, so an always-on host is the durable fix.
 
+Found by the 2026-07-30 documentation audit, which read the handlers behind
+every surface it documented. Only the production-affecting findings are listed
+here; the code-quality items from that pass are not production issues.
+
+9. **`/api/avatar/optimize?draco=1` is broken on the running image** (needs a
+    rebuild, not engineering). It returns `500 transcode_failed` with
+    `draco.createCompressedPrimitive is not a function`. This is dependency
+    drift in the deployed image, not a code bug, and the obvious diagnosis is
+    wrong: `buildTranscodeIo()` IS present in the deployed commit, and this
+    repo's pinned tree encodes Draco correctly (verified locally, 888,060 bytes
+    out). The image resolved an older `@gltf-transform` than the pinned `^4.4.0`,
+    whose Draco writer calls an encoder interface `draco3dgltf@1.5.7` does not
+    expose. Every other `optimize` parameter returns a real GLB in production.
+    Action: rebuild, and confirm the build installs from the lockfile rather
+    than resolving fresh. Two smaller defects on the same endpoint: it stalls
+    instead of returning `413` on an oversized `glbUrl`, and avatar
+    `13f259c7-…` has zero morph targets so `expression` is a silent no-op on it.
+10. **An empty POST to `/api/agents/:id/autopilot` spends real money.**
+    `autopilot.js` treats a missing `dry_run` as `false` (`body?.dry_run === true`)
+    and runs a real cycle, while the adjacent intents endpoint on the same wallet
+    treats a missing `dry_run` as `true` and simulates. Same verb, same wallet,
+    opposite default. Action: make the money-moving default the safe one.
+11. **The public marketplace GMV on `/pulse` counts confirmed trials.** In
+    `handleMarketplace()` the `purchases` count filters on `status='confirmed'
+    AND kind = ANY(MARKET_PAID_KINDS)`, but `gmv_atomic` and `fee_atomic` filter
+    on `status='confirmed'` alone, so a confirmed `trial` row with a non-zero
+    amount inflates published GMV and skews `avg_ticket_three` (a GMV over a
+    count that excluded it). Same asymmetry in `series_7d`, and `trials` has no
+    status filter at all while every sibling field is confirmed-only. This is a
+    number on a public transparency page.
+12. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (operator action:
+    run the script). The script sets `AllowedOrigins: ['*']` for GET/HEAD, but
+    the live policy still echoes only the old allowlist, so a third-party origin
+    gets no `access-control-allow-origin`. Re-running it removes the need for the
+    `/api/glb` proxy in client-side viewers; the proxy stays the right advice for
+    notebooks and unusual dev ports regardless.
+
 ---
 
 ## Recently closed (2026-07-30; do not re-open without new evidence)
