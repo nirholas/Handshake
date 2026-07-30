@@ -8437,23 +8437,17 @@ endsolid threews_avatar
 ## Table of Contents
 
 - [What is three.ws?](#what-is-threews)
-- [Vision](#vision)
-- [Roadmap](#roadmap)
 - [Key Features](#key-features)
+- [Screenshots](#screenshots)
 - [Forge — Text & Image to 3D](#forge--text--image-to-3d)
 - [Platform Pages](#platform-pages)
-- [Install in Claude Code](#install-in-claude-code)
-- [Cloud Marketplaces](#cloud-marketplaces)
-- [Ecosystem Directories](#ecosystem-directories)
-- [IBM watsonx & Granite](#ibm-watsonx--granite)
-- [Screenshots](#screenshots)
+- [Getting Started](#getting-started)
+- [Examples](#examples)
+- [Tutorials](#tutorials)
 - [Architecture](#architecture)
     - [Design Docs & Specs](#design-docs--specs)
 - [Tech Stack](#tech-stack)
     - [Browser Support](#browser-support)
-- [Getting Started](#getting-started)
-- [Examples](#examples)
-- [Tutorials](#tutorials)
 - [Project Structure](#project-structure)
 - [The Agent System](#the-agent-system)
     - [Event Bus (Agent Protocol)](#event-bus-agent-protocol)
@@ -8461,10 +8455,12 @@ endsolid threews_avatar
     - [Empathy Layer](#empathy-layer)
     - [Skills](#skills)
     - [Memory](#memory)
+- [Animation System](#animation-system)
 - [Web Component & Embedding](#web-component--embedding)
 - [Widget System](#widget-system)
 - [Embed Editor](#embed-editor)
 - [Pose Studio](#pose-studio)
+- [Avatar Accessories & Coin Launchpad](#avatar-accessories--coin-launchpad)
 - [Launchpad](#launchpad)
 - [The Club](#the-club)
 - [Walk & Multiplayer](#walk--multiplayer)
@@ -8473,28 +8469,32 @@ endsolid threews_avatar
 - [Friends, Presence & Social](#friends-presence--social)
 - [In-Game Economy](#in-game-economy)
 - [Voice Lab & Mocap Studio](#voice-lab--mocap-studio)
-- [x402 Payments](#x402-payments)
-- [A2A — Agent-to-Agent Protocol](#a2a--agent-to-agent-protocol)
 - [Talk Mode & Lip-Sync](#talk-mode--lip-sync)
-- [Solana Mobile (Seeker)](#solana-mobile-seeker)
-- [Selfie Reconstruction Pipeline (Phase 1)](#selfie-reconstruction-pipeline-phase-1)
-- [Livepeer Inference Network (Phase 4)](#livepeer-inference-network-phase-4)
-- [Voice & Persona Hub (Phase 2)](#voice--persona-hub-phase-2)
-- [WASM Vanity Grinder](#wasm-vanity-grinder)
-- [News CMS & Syndication](#news-cms--syndication)
-- [Security Hardening](#security-hardening)
-- [Developer SDKs](#developer-sdks)
-- [Claude Code Integration](#claude-code-integration)
 - [Demos Hub](#demos-hub)
 - [Skill Library](#skill-library)
-- [Animation System](#animation-system)
-- [Avatar Accessories & Coin Launchpad](#avatar-accessories--coin-launchpad)
-- [Brain Proxy & LLM Routing](#brain-proxy--llm-routing)
+- [Developer SDKs](#developer-sdks)
 - [API Reference](#api-reference)
 - [Authentication & OAuth 2.1](#authentication--oauth-21)
 - [MCP Server](#mcp-server)
+- [Brain Proxy & LLM Routing](#brain-proxy--llm-routing)
+- [Claude Code Integration](#claude-code-integration)
+- [Install in Claude Code](#install-in-claude-code)
+- [Cloud Marketplaces](#cloud-marketplaces)
+- [Ecosystem Directories](#ecosystem-directories)
+- [IBM watsonx & Granite](#ibm-watsonx--granite)
+- [x402 Payments](#x402-payments)
+- [A2A — Agent-to-Agent Protocol](#a2a--agent-to-agent-protocol)
 - [On-Chain Identity (ERC-8004 + Metaplex Core)](#on-chain-identity-erc-8004--metaplex-core)
 - [Pump.fun Integration](#pumpfun-integration)
+- [WASM Vanity Grinder](#wasm-vanity-grinder)
+- [Solana Mobile (Seeker)](#solana-mobile-seeker)
+- [Vision](#vision)
+- [Roadmap](#roadmap)
+- [Selfie Reconstruction Pipeline (Phase 1)](#selfie-reconstruction-pipeline-phase-1)
+- [Voice & Persona Hub (Phase 2)](#voice--persona-hub-phase-2)
+- [Livepeer Inference Network (Phase 4)](#livepeer-inference-network-phase-4)
+- [News CMS & Syndication](#news-cms--syndication)
+- [Security Hardening](#security-hardening)
 - [Database Schema](#database-schema)
 - [Build & Deployment](#build--deployment)
     - [Versioning & Compatibility](#versioning--compatibility)
@@ -8526,135 +8526,6 @@ At its core, it does five things:
 The backend is a set of serverless-style handlers (in `api/`) served in production by a single Google Cloud Run container ([server/index.mjs](server/index.mjs)), backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
 
 three.ws is production-ready and serves [three.ws](https://three.ws) live on Google Cloud Run. The entire stack — viewer, agent runtime, contracts, backend, and web component — is open source under Apache 2.0.
-
----
-
-## Vision
-
-One day, creating your agent should be as simple as taking a selfie.
-
-Point your camera at yourself — or anyone — and watch a fully realized 3D avatar emerge: your face, your voice, your personality, alive in the browser. That avatar becomes an agent with memory and skills, registered onchain — as an ERC-8004 token on EVM or a Metaplex Core asset on Solana — permanent and verifiable by anyone forever. No 3D software. No wallet setup. No uploads. Just a photo and a name.
-
-This is the direction three.ws is heading: **photo → avatar → agent → onchain identity**, in a single flow. The infrastructure is already here — the viewer, the runtime, the contracts, the embedding layer. What comes next is closing the gap between a picture of a person and a living, ownable, embeddable piece of them that exists on the internet permanently.
-
----
-
-## Roadmap
-
-three.ws ships in four phases. Each phase closes a specific gap between the current platform and the end-state vision: **anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet.**
-
-| Phase | Theme                                                                                  | Status                                                                                                         |
-| ----- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **0** | Platform foundations (viewer, runtime, ERC-8004 + Metaplex Core identity, embed layer) | ✅ Shipped                                                                                                     |
-| **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress — capture UX + quality gates shipped; GPU reconstruction backend wiring                         |
-| **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
-| **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 Scaffolding — bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; contracts + audits next |
-| **4** | Open inference network (decentralized GPU layer)                                       | 🔮 Future — livepeer dep landed for early experimentation                                                      |
-
----
-
-### Phase 0 — Foundations _(Shipped)_
-
-The full stack is live at [three.ws](https://three.ws): WebGL viewer, LLM agent runtime, ERC-8004 identity contracts (EVM) and Metaplex Core mints (Solana), OAuth 2.1 server, MCP endpoint, and the `<agent-3d>` web component. Anyone can register an agent today — but the avatar still has to come from a 3D artist or a third-party tool.
-
-**What works:** model upload, agent runtime, onchain registration, embedding, signed action history, reputation scores.
-**What doesn't:** there is no automated path from a real human face to a usable 3D avatar.
-
----
-
-### Phase 1 — Selfie → Avatar Engine
-
-**Goal:** any user takes 3 selfies (left, center, right) and receives a rigged, animatable 3D avatar in under 60 seconds.
-
-**Deliverables**
-
-- Mobile-first capture UX with realtime quality gates (lighting, framing, blur)
-- Multi-view face reconstruction pipeline (FLAME / 3DMM fitting on top of a base body mesh)
-- Hosted inference workers (GPU-backed) for sub-minute generation
-- Output written directly to R2 and minted as a draft agent token — ERC-8004 on EVM, Metaplex Core asset on Solana
-
-**Compute requirements**
-
-- A100/H100-class GPUs for inference, sized to ~10k avatars/day at launch
-- Training budget for fine-tuning a stylized face-fitter on a curated dataset
-- CDN egress scaling for high-res GLB delivery
-
-**Verification:** 1,000 test users complete capture and mint an onchain agent of themselves end-to-end with ≥4/5 likeness score.
-
----
-
-### Phase 2 — Agent Personalization
-
-**Goal:** the avatar isn't just _you_ — the agent _acts_ like you.
-
-**Deliverables**
-
-- Voice cloning (3–10 seconds of speech → ElevenLabs custom voice bound to the agent)
-- Persona extraction from a short onboarding interview (tone, vocabulary, interests)
-- Memory seeding from connected accounts (X, GitHub, Farcaster) with explicit user consent
-- Per-agent fine-tuned system prompt stored in the manifest, signed and pinned to IPFS
-
-**Verification:** users return to converse with their own agent; ≥30% week-2 retention on minted agents.
-
----
-
-### Phase 3 — Onchain Economy
-
-**Goal:** agents are real economic objects on EVM and Solana, not just collectibles.
-
-**Deliverables**
-
-- **Agent tokens** — ERC-8004 mints with bonding-curve pricing or fair launch options
-- **Reputation markets** — stake on agents, earn from their action history (extends `ReputationRegistry.sol`)
-- **Skill royalties** — skill authors earn per-call fees through EIP-7710 delegated permissions
-- **Agent-to-agent payments** — agents transact autonomously via their delegated signer wallets
-- **Subscriptions & DCA** — recurring onchain payments to creators (cron infra already in place)
-
-**Funding requirements**
-
-- Smart contract audits (multi-firm) for the reputation, royalty, and delegation contracts
-- Liquidity for agent token launches
-- Indexer infrastructure across Base, Solana, and additional EVM chains
-
-**Verification:** ≥1,000 agents minted with active onchain reputation; ≥$X in cumulative skill royalties paid out.
-
----
-
-### Phase 4 — Open Inference Network
-
-**Goal:** decouple agent inference from any single provider. Anyone can run a node; agents pay nodes onchain for compute.
-
-**Deliverables**
-
-- Open protocol for agent inference (model weights, GPU runtime, signed responses)
-- Node operator client (Docker + GPU drivers) with onchain registration
-- Onchain settlement for inference jobs — pay-per-token with cryptographic receipts
-- Federation with existing decentralized compute networks where appropriate
-
-**Compute requirements**
-
-- Bootstrap GPU credits for early node operators
-- Cryptoeconomic security model (slashing, validator set) — research + audit budget
-
-**Verification:** ≥50% of production agent traffic served by independent node operators; latency parity with centralized inference.
-
----
-
-### What we need
-
-| Resource                   | Used for                                   | Phase |
-| -------------------------- | ------------------------------------------ | ----- |
-| **Inference GPUs**         | Avatar generation, agent conversations     | 1, 2  |
-| **Training compute**       | Fine-tuned face-fitter, voice models       | 1, 2  |
-| **Smart contract audits**  | Reputation, royalty, delegation contracts  | 3     |
-| **Token launch liquidity** | Agent token markets                        | 3     |
-| **Indexer infrastructure** | Multi-chain crawl + reputation aggregation | 3     |
-| **Node operator credits**  | Bootstrap the open inference network       | 4     |
-| **Engineering headcount**  | Capture pipeline, contracts, indexer, ops  | 1–4   |
-
-Phases 1 and 2 unblock the consumer story — _anyone gets an agent of themselves_. Phases 3 and 4 unblock the onchain story — _those agents are real economic actors that don't depend on any one company to keep running_. Both are required for the vision; neither is funded yet.
-
-If you want to support the project — compute credits, grants, partnerships, or contributions — open an issue or reach out via [three.ws](https://three.ws).
 
 ---
 
@@ -8752,6 +8623,18 @@ If you want to support the project — compute credits, grants, partnerships, or
 
 ---
 
+## Screenshots
+
+| Viewer                                   | Widget Studio                                   |
+| ---------------------------------------- | ----------------------------------------------- |
+| ![Viewer](public/screenshots/viewer.png) | ![Widget Studio](public/screenshots/studio.png) |
+
+| Agent Discovery                              | Avatar Creation                          |
+| -------------------------------------------- | ---------------------------------------- |
+| ![Discover](public/screenshots/discover.png) | ![Create](public/screenshots/create.png) |
+
+---
+
 ## Forge — Text & Image to 3D
 
 Type a sentence, get a 3D model. [**Forge**](https://three.ws/forge) turns a text prompt, one to four photos, or a rough sketch into a textured, downloadable GLB — in the browser, with a free draft tier and no account required.
@@ -8839,197 +8722,6 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **IBM Showcase**     | `/ibm`, `/ibm/galaxy`, `/ibm/oracle`, `/ibm/twin`, `/ibm/trust-layer`, `/ibm/proof`, `/ibm/vision` | Granite on watsonx.ai — semantic galaxy, TimeSeries oracle, digital twin, Guardian trust layer, on-chain proof, vision |
 | **Docs**             | `/docs`, `/docs/widgets`                                                                        | Developer documentation                                                                                         |
 | **Legal**            | `/legal/privacy`, `/legal/tos`                                                                  | Privacy policy and terms                                                                                        |
-
----
-
-## Install in Claude Code
-
-three.ws ships an official **Claude Code plugin marketplace** — install wallet, payments, pump.fun trading, agent scaffolding, and the 3D Forge as namespaced skills and MCP tools, in one command. Add the marketplace once:
-
-```
-/plugin marketplace add nirholas/three.ws
-```
-
-Then install any of the four plugins:
-
-```
-/plugin install three-ws-core@three-ws       # wallet + x402 — authenticate, fund, send, trade, bazaar, pay, monetize, query onchain
-/plugin install three-ws-developer@three-ws  # scaffold agents, configure MCP, runnable code examples
-/plugin install three-ws-pump-fun@three-ws   # create coins, swap, creator fees, tokenize agents, live avatar reactions
-/plugin install three-ws-3d@three-ws         # text→3D (free), text→avatar, mesh forge, auto-rig + scene/avatar MCP
-```
-
-Run `/reload-plugins` and the skills appear under each plugin's namespace (e.g. `/three-ws-3d:forge-3d`). Plugins that expose MCP tools (`three-ws-developer`, `three-ws-3d`) wire the published `@three-ws/*` MCP servers automatically — `forge_free` is free (no wallet); the paid lanes settle over x402 in USDC. The canonical manifest lives at [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json).
-
----
-
-## Cloud Marketplaces
-
-three.ws is available on major cloud marketplaces and open to infrastructure partnerships.
-
-| Cloud             | Status                                                                                                                                                                                                |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` — the Forge sculptor Lambda (`three-ws-forge`) and the S3 avatar bucket — registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). |
-| **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
-| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 100 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run — a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
-
-## Ecosystem Directories
-
-three.ws is indexed in chain-ecosystem dApp directories so the community can discover, vet, and rank it.
-
-| Directory               | Status                                                                                                                                       |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **BNB Chain · Dappbay** | Live: [dappbay.bnbchain.org/detail/three →](https://dappbay.bnbchain.org/detail/three) — categories: AI Agent Launchpad · AI Data · AI Infra |
-
----
-
-## IBM watsonx & Granite
-
-three.ws is an **IBM Business Partner**, and the agent runtime runs on **IBM Granite** foundation models served through **IBM watsonx.ai**. One IBM Cloud API key + project unlocks the whole suite; every call is real inference (no mock path — endpoints return `503` when unconfigured). Full docs: **[docs/ibm.md](docs/ibm.md)**. Live showcase: **[three.ws/ibm/galaxy](https://three.ws/ibm/galaxy)**.
-
-> **The public showcase is not the partnership.** The demos under `/ibm/*` are independent tools three.ws built for developers to explore Granite on watsonx.ai and build their own integrations — they are not official IBM partnership deliverables, not IBM products, and not endorsed by IBM. Our formal partnership work with IBM is being built on the IBM platform and is not yet public.
-
-| Granite model | Where it runs |
-| ------------- | ------------- |
-| `granite-3-8b-instruct` | Selectable avatar **brain** + all narration |
-| `granite-guardian-3-8b` | **Trust Layer** — allow/review/block governance gate, inline in `/api/chat` before an avatar moves value |
-| `granite-ttm-512/1024/1536-96-r2` | **TimeSeries** forecasting (Oracle, Twin, Proof) |
-| `granite-embedding-278m-multilingual` | **Semantic** agent map + `/api/watsonx/embed` |
-| `granite-vision-3-2-2b` | **Vision** — reads an avatar into a full agent identity |
-
-Six showcase surfaces put it on screen, cross-linked by an in-page suite switcher: the [Agent Galaxy](https://three.ws/ibm/galaxy) (semantic 3D star-map), the [Granite Oracle](https://three.ws/ibm/oracle) (narrated forecast), the [Digital Twin](https://three.ws/ibm/twin) (back-test + what-if), the [Trust Layer](https://three.ws/ibm/trust-layer) (Guardian + hash-chained audit ledger), [Granite Proof](https://three.ws/ibm/proof) (a Guardian-governed forecast notarized on Solana), and [Granite Vision](https://three.ws/ibm/vision). The standalone connector [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) exposes watsonx.ai to any MCP host — it is community-built and not an IBM product; the hosted platform integration is what runs on IBM watsonx.ai.
-
-### Pay-per-call Granite over MCP (x402)
-
-The world's first **x402-enabled MCP server on IBM Cloud**: [`@three-ws/ibm-x402-mcp`](packages/ibm-x402-mcp/) turns IBM Granite into a metered utility any AI agent can call. The operator holds the IBM credentials and funds inference; the caller pays **a few cents of USDC per call** — no IBM Cloud account, no subscription, no API-key signup. Full guide: **[docs/ibm-x402-mcp.md](docs/ibm-x402-mcp.md)**.
-
-| Tool | What it does | Price |
-| ---- | ------------ | ----- |
-| `ibm_granite_chat` | Conversational AI — Q&A, drafting, reasoning | $0.02 |
-| `ibm_granite_code` | Generate / review / refactor / explain / test / document code | $0.025 |
-| `ibm_granite_embed` | Batch text embeddings (1–64) for RAG, search, clustering | $0.005 |
-| `ibm_granite_analyze` | Structured doc analysis — entities, sentiment, risk, next steps | $0.04 |
-| `ibm_granite_forecast` | Zero-shot time-series forecasting via Granite TTM | $0.05 |
-
-The same five tools ship over two transports: **stdio** (`npx @three-ws/ibm-x402-mcp`, for Claude Desktop / Code / Cursor, paid on Solana) and **Streamable HTTP** (`https://three.ws/api/ibm-mcp`, for hosted clients and watsonx Orchestrate, paid on Base or Solana). An unpaid `tools/call` returns a `402` quoting the exact USDC price; x402-capable clients pay and retry automatically, settling on-chain only after the tool succeeds. Independent project integrating IBM Granite via watsonx.ai — not an IBM product.
-
----
-
-## Screenshots
-
-| Viewer                                   | Widget Studio                                   |
-| ---------------------------------------- | ----------------------------------------------- |
-| ![Viewer](public/screenshots/viewer.png) | ![Widget Studio](public/screenshots/studio.png) |
-
-| Agent Discovery                              | Avatar Creation                          |
-| -------------------------------------------- | ---------------------------------------- |
-| ![Discover](public/screenshots/discover.png) | ![Create](public/screenshots/create.png) |
-
----
-
-## Architecture
-
-The platform is organized into four layers. All layers communicate through a single event bus (`agent-protocol`) rather than direct calls.
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  Layer 4: Embed & Distribution                             │
-│  <agent-3d> web component · CDN library · 5 widget types   │
-│  Widget Studio · oEmbed · Open Graph cards                 │
-└────────────────────────────────────────────────────────────┘
-                            ↓ protocol events
-┌────────────────────────────────────────────────────────────┐
-│  Layer 3: Identity & Persistence                           │
-│  Agent passport · ERC-8004 (EVM) + Metaplex Core (Solana)  │
-│  Signed action log · Memory store · Cross-chain SIWX       │
-└────────────────────────────────────────────────────────────┘
-                            ↓ protocol events
-┌────────────────────────────────────────────────────────────┐
-│  Layer 2: Agent Runtime                                    │
-│  LLM tool-loop · Built-in tools · Skill registry           │
-│  Empathy Layer (emotion blending) · TTS/STT                │
-└────────────────────────────────────────────────────────────┘
-                            ↓ protocol events
-┌────────────────────────────────────────────────────────────┐
-│  Layer 1: Viewer                                           │
-│  three.js r184 · glTF / GLB · Draco / KTX2 / Meshopt       │
-│  Animations · Morph targets · HDR · Validation             │
-└────────────────────────────────────────────────────────────┘
-```
-
-The event bus decouples every component. The avatar emotion system reacts to `speak` events without knowing the runtime exists. The identity module records actions without knowing the UI exists. This makes the system testable, embeddable in isolation, and composable across pages.
-
-The backend is stateless serverless functions. All persistent state lives in Postgres (Neon), object storage (Cloudflare R2), or on-chain. Cron jobs handle scheduled blockchain operations (ERC-8004 crawl, DCA execution, subscription execution).
-
-### Design Docs & Specs
-
-The architecture above is the bird's-eye view; each load-bearing surface has a dedicated spec that defines its wire format, invariants, and extension points. New contributors should skim the spec for any subsystem they're about to change.
-
-| Spec                                                         | What it covers                                                                                                   |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| [specs/AGENT_MANIFEST.md](specs/AGENT_MANIFEST.md)           | Agent manifest JSON schema — body, brain, voice, memory, skills, signing. The contract every `<agent-3d>` reads. |
-| [specs/3D_AGENT_CARD.md](specs/3D_AGENT_CARD.md)             | The on-chain passport card layout — fields, signing, and rendering rules.                                        |
-| [specs/SKILL_SPEC.md](specs/SKILL_SPEC.md)                   | Skill bundle layout (`SKILL.md`, `tools.json`, `handlers.js`), trust modes, and distribution.                    |
-| [specs/PERMISSIONS_SPEC.md](specs/PERMISSIONS_SPEC.md)       | EIP-7710 delegated permissions model — capability scopes, redemption, revocation.                                |
-| [specs/MEMORY_SPEC.md](specs/MEMORY_SPEC.md)                 | Memory file format, types, salience model, and storage modes.                                                    |
-| [specs/STAGE_SPEC.md](specs/STAGE_SPEC.md)                   | Scene/stage configuration: camera presets, lighting, environment maps, hotspots.                                 |
-| [specs/EDITOR_SPEC.md](specs/EDITOR_SPEC.md)                 | Widget Studio + Embed Editor configuration surface and persistence shape.                                        |
-| [specs/EMBED_SPEC.md](specs/EMBED_SPEC.md)                   | The `<agent-3d>` element and chromeless iframe — attributes, JS API, and lifecycle.                              |
-| [specs/EMBED_HOST_PROTOCOL.md](specs/EMBED_HOST_PROTOCOL.md) | `postMessage` wire protocol between the iframe and its host page (origin lock, message kinds, RTT).              |
-| [specs/CLAUDE_ARTIFACT.md](specs/CLAUDE_ARTIFACT.md)         | Claude Artifact viewer integration — snippet loading and sandbox boundaries.                                     |
-| [specs/ENS_AGENT_CLAIM.md](specs/ENS_AGENT_CLAIM.md)         | ENS-based agent claim flow for verifiable owner ↔ agent binding.                                                |
-| [specs/VALIDATORS.md](specs/VALIDATORS.md)                   | Validator attestation rules — what gets signed, who can sign, how to read attestations.                          |
-| [specs/SECURITY.md](specs/SECURITY.md)                       | Threat model, trust boundaries, and the hardening checklist for production deployments.                          |
-
-Longer-form architecture and how-to documentation lives under [docs/](docs/): [docs/architecture.md](docs/architecture.md), [docs/agent-system.md](docs/agent-system.md), [docs/3d-asset-pipeline.md](docs/3d-asset-pipeline.md), [docs/animations.md](docs/animations.md), [docs/web-component.md](docs/web-component.md), [docs/api-reference.md](docs/api-reference.md), [docs/mcp.md](docs/mcp.md), [docs/permissions.md](docs/permissions.md), [docs/security.md](docs/security.md), [docs/smart-contracts.md](docs/smart-contracts.md), and more.
-
-### 3D asset pipeline — FBX, GLB, JSON
-
-Every avatar the site renders is a **GLB** (binary glTF 2.0 — the body, rig, and textures in one file); every shared gesture and dance is a format-light **clip JSON** (a serialized `THREE.AnimationClip` — motion only, retargeted onto any rig at runtime); and both originate as **FBX** source from Mixamo or a DCC tool. Two conversions come off one FBX — `npm run convert:fbx` for a full character GLB, `npm run build:animations` for a reusable library clip — then `npm run optimize:glb` makes it web-ready (~90% smaller). The full explainer, format specs, runtime modules, and the generate→rig→animate→export capability chain are in **[docs/3d-asset-pipeline.md](docs/3d-asset-pipeline.md)**.
-
----
-
-## Tech Stack
-
-**Frontend**
-
-- **Main UI**: The core application, including the 3D viewer, agent creation, and marketplace, is built with vanilla JavaScript modules and Vite.
-- **Chat**: The chat interface is a standalone Svelte application located in the `chat/` directory.
-- **3D Rendering**: three.js (r184) is used for WebGL 2.0 rendering.
-
-**Backend (Google Cloud Run)**
-
-- **Runtime**: Node.js — serverless-style handlers in `api/` served by one Express container ([server/index.mjs](server/index.mjs)) on Cloud Run (`three-ws-api`, `us-central1`).
-- **Database**: Neon Postgres (serverless)
-- **Storage**: Cloudflare R2 for model and avatar storage.
-- **Rate Limiting**: Upstash Redis.
-- **LLM**: The agent's brain is powered by the Anthropic (Claude) SDK.
-
-**Smart Contracts**
-
-- **Language**: Solidity 0.8+
-- **Framework**: Foundry for compiling, testing, and deploying the ERC-8004 contracts.
-- **Standards**: ERC-721, EIP-712, EIP-7710.
-
-### Browser Support
-
-The viewer targets every browser that ships WebGL 2.0 on a desktop or modern mobile device. Concrete support matrix:
-
-| Browser                  | Minimum   | Notes                                                                                                              |
-| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------ |
-| Chrome / Edge (Chromium) | 113+      | Full feature set including WebGPU experiments behind a flag. Recommended for development.                          |
-| Safari (macOS / iOS)     | 16.4+     | WebGL 2.0, Web Speech recognition (iOS 16.4 added support behind a permission prompt). Voice input requires HTTPS. |
-| Firefox                  | 115+      | KTX2 / Meshopt decoders all supported. Web Speech recognition is feature-gated by user-locale.                     |
-| Mobile Safari            | iOS 16.4+ | Touch controls and gyroscope mapped through `OrbitControls`.                                                       |
-| Android Chrome           | 113+      | Full feature set; AR button surfaces a Scene Viewer intent when present.                                           |
-
-**Capabilities and graceful degradation**
-
-- **WebGL 2.0** is required; the viewer refuses to boot without it and shows a fallback message.
-- **WebAssembly** is required for the Draco / KTX2 / Meshopt decoders that are copied into `public/three/draco/` and `public/three/basis/` by `scripts/copy-three-decoders.mjs` on `postinstall` (both paths are generated and gitignored, so they only exist after `npm install`), plus `node_modules/three/examples/jsm/libs/`.
-- **`getUserMedia` (microphone)** requires HTTPS — see [Common gotchas](#common-gotchas). Without it the agent falls back to text input.
-- **`speechSynthesis`** is detected at runtime; agents fall back to silent text replies when TTS is unavailable.
-- **WebGPU** is not required and is not used yet — Phase 4 reserves it for client-side inference experiments.
 
 ---
 
@@ -9340,6 +9032,112 @@ For sandboxed iframes use the widget embed path instead — it runs in its own b
 
 ---
 
+## Architecture
+
+The platform is organized into four layers. All layers communicate through a single event bus (`agent-protocol`) rather than direct calls.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Layer 4: Embed & Distribution                             │
+│  <agent-3d> web component · CDN library · 5 widget types   │
+│  Widget Studio · oEmbed · Open Graph cards                 │
+└────────────────────────────────────────────────────────────┘
+                            ↓ protocol events
+┌────────────────────────────────────────────────────────────┐
+│  Layer 3: Identity & Persistence                           │
+│  Agent passport · ERC-8004 (EVM) + Metaplex Core (Solana)  │
+│  Signed action log · Memory store · Cross-chain SIWX       │
+└────────────────────────────────────────────────────────────┘
+                            ↓ protocol events
+┌────────────────────────────────────────────────────────────┐
+│  Layer 2: Agent Runtime                                    │
+│  LLM tool-loop · Built-in tools · Skill registry           │
+│  Empathy Layer (emotion blending) · TTS/STT                │
+└────────────────────────────────────────────────────────────┘
+                            ↓ protocol events
+┌────────────────────────────────────────────────────────────┐
+│  Layer 1: Viewer                                           │
+│  three.js r184 · glTF / GLB · Draco / KTX2 / Meshopt       │
+│  Animations · Morph targets · HDR · Validation             │
+└────────────────────────────────────────────────────────────┘
+```
+
+The event bus decouples every component. The avatar emotion system reacts to `speak` events without knowing the runtime exists. The identity module records actions without knowing the UI exists. This makes the system testable, embeddable in isolation, and composable across pages.
+
+The backend is stateless serverless functions. All persistent state lives in Postgres (Neon), object storage (Cloudflare R2), or on-chain. Cron jobs handle scheduled blockchain operations (ERC-8004 crawl, DCA execution, subscription execution).
+
+### Design Docs & Specs
+
+The architecture above is the bird's-eye view; each load-bearing surface has a dedicated spec that defines its wire format, invariants, and extension points. New contributors should skim the spec for any subsystem they're about to change.
+
+| Spec                                                         | What it covers                                                                                                   |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| [specs/AGENT_MANIFEST.md](specs/AGENT_MANIFEST.md)           | Agent manifest JSON schema — body, brain, voice, memory, skills, signing. The contract every `<agent-3d>` reads. |
+| [specs/3D_AGENT_CARD.md](specs/3D_AGENT_CARD.md)             | The on-chain passport card layout — fields, signing, and rendering rules.                                        |
+| [specs/SKILL_SPEC.md](specs/SKILL_SPEC.md)                   | Skill bundle layout (`SKILL.md`, `tools.json`, `handlers.js`), trust modes, and distribution.                    |
+| [specs/PERMISSIONS_SPEC.md](specs/PERMISSIONS_SPEC.md)       | EIP-7710 delegated permissions model — capability scopes, redemption, revocation.                                |
+| [specs/MEMORY_SPEC.md](specs/MEMORY_SPEC.md)                 | Memory file format, types, salience model, and storage modes.                                                    |
+| [specs/STAGE_SPEC.md](specs/STAGE_SPEC.md)                   | Scene/stage configuration: camera presets, lighting, environment maps, hotspots.                                 |
+| [specs/EDITOR_SPEC.md](specs/EDITOR_SPEC.md)                 | Widget Studio + Embed Editor configuration surface and persistence shape.                                        |
+| [specs/EMBED_SPEC.md](specs/EMBED_SPEC.md)                   | The `<agent-3d>` element and chromeless iframe — attributes, JS API, and lifecycle.                              |
+| [specs/EMBED_HOST_PROTOCOL.md](specs/EMBED_HOST_PROTOCOL.md) | `postMessage` wire protocol between the iframe and its host page (origin lock, message kinds, RTT).              |
+| [specs/CLAUDE_ARTIFACT.md](specs/CLAUDE_ARTIFACT.md)         | Claude Artifact viewer integration — snippet loading and sandbox boundaries.                                     |
+| [specs/ENS_AGENT_CLAIM.md](specs/ENS_AGENT_CLAIM.md)         | ENS-based agent claim flow for verifiable owner ↔ agent binding.                                                |
+| [specs/VALIDATORS.md](specs/VALIDATORS.md)                   | Validator attestation rules — what gets signed, who can sign, how to read attestations.                          |
+| [specs/SECURITY.md](specs/SECURITY.md)                       | Threat model, trust boundaries, and the hardening checklist for production deployments.                          |
+
+Longer-form architecture and how-to documentation lives under [docs/](docs/): [docs/architecture.md](docs/architecture.md), [docs/agent-system.md](docs/agent-system.md), [docs/3d-asset-pipeline.md](docs/3d-asset-pipeline.md), [docs/animations.md](docs/animations.md), [docs/web-component.md](docs/web-component.md), [docs/api-reference.md](docs/api-reference.md), [docs/mcp.md](docs/mcp.md), [docs/permissions.md](docs/permissions.md), [docs/security.md](docs/security.md), [docs/smart-contracts.md](docs/smart-contracts.md), and more.
+
+### 3D asset pipeline — FBX, GLB, JSON
+
+Every avatar the site renders is a **GLB** (binary glTF 2.0 — the body, rig, and textures in one file); every shared gesture and dance is a format-light **clip JSON** (a serialized `THREE.AnimationClip` — motion only, retargeted onto any rig at runtime); and both originate as **FBX** source from Mixamo or a DCC tool. Two conversions come off one FBX — `npm run convert:fbx` for a full character GLB, `npm run build:animations` for a reusable library clip — then `npm run optimize:glb` makes it web-ready (~90% smaller). The full explainer, format specs, runtime modules, and the generate→rig→animate→export capability chain are in **[docs/3d-asset-pipeline.md](docs/3d-asset-pipeline.md)**.
+
+---
+
+## Tech Stack
+
+**Frontend**
+
+- **Main UI**: The core application, including the 3D viewer, agent creation, and marketplace, is built with vanilla JavaScript modules and Vite.
+- **Chat**: The chat interface is a standalone Svelte application located in the `chat/` directory.
+- **3D Rendering**: three.js (r184) is used for WebGL 2.0 rendering.
+
+**Backend (Google Cloud Run)**
+
+- **Runtime**: Node.js — serverless-style handlers in `api/` served by one Express container ([server/index.mjs](server/index.mjs)) on Cloud Run (`three-ws-api`, `us-central1`).
+- **Database**: Neon Postgres (serverless)
+- **Storage**: Cloudflare R2 for model and avatar storage.
+- **Rate Limiting**: Upstash Redis.
+- **LLM**: The agent's brain is powered by the Anthropic (Claude) SDK.
+
+**Smart Contracts**
+
+- **Language**: Solidity 0.8+
+- **Framework**: Foundry for compiling, testing, and deploying the ERC-8004 contracts.
+- **Standards**: ERC-721, EIP-712, EIP-7710.
+
+### Browser Support
+
+The viewer targets every browser that ships WebGL 2.0 on a desktop or modern mobile device. Concrete support matrix:
+
+| Browser                  | Minimum   | Notes                                                                                                              |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| Chrome / Edge (Chromium) | 113+      | Full feature set including WebGPU experiments behind a flag. Recommended for development.                          |
+| Safari (macOS / iOS)     | 16.4+     | WebGL 2.0, Web Speech recognition (iOS 16.4 added support behind a permission prompt). Voice input requires HTTPS. |
+| Firefox                  | 115+      | KTX2 / Meshopt decoders all supported. Web Speech recognition is feature-gated by user-locale.                     |
+| Mobile Safari            | iOS 16.4+ | Touch controls and gyroscope mapped through `OrbitControls`.                                                       |
+| Android Chrome           | 113+      | Full feature set; AR button surfaces a Scene Viewer intent when present.                                           |
+
+**Capabilities and graceful degradation**
+
+- **WebGL 2.0** is required; the viewer refuses to boot without it and shows a fallback message.
+- **WebAssembly** is required for the Draco / KTX2 / Meshopt decoders that are copied into `public/three/draco/` and `public/three/basis/` by `scripts/copy-three-decoders.mjs` on `postinstall` (both paths are generated and gitignored, so they only exist after `npm install`), plus `node_modules/three/examples/jsm/libs/`.
+- **`getUserMedia` (microphone)** requires HTTPS — see [Common gotchas](#common-gotchas). Without it the agent falls back to text input.
+- **`speechSynthesis`** is detected at runtime; agents fall back to silent text replies when TTS is unavailable.
+- **WebGPU** is not required and is not used yet — Phase 4 reserves it for client-side inference experiments.
+
+---
+
 ## Project Structure
 
 - `src/`: The core frontend JavaScript for the main application, including the 3D viewer, agent protocol, custom element, and feature modules (`club-*.js`, `walk*.js`, `pose-*.js`, `voice/`, `selfie-*.js`). Social/gameplay surfaces live in `game/` (Coin Communities: `coincommunities*`, `spin-wheel-ui`, `cosmetics-visual`, `avatar-rig`), `city/` (the `/city` world), `social/` (sentiment, X-post impact), `community/` (coin lobby/town), plus `friends.js`, `communities.js`, `marketplace*.js`, and `token-pay.js`.
@@ -9587,6 +9385,24 @@ const restored = Memory.fromSnapshot(JSON.parse(sessionStorage.getItem('agent-me
 
 ---
 
+## Animation System
+
+The avatar runtime ships with a slot-based animation manager that decouples animation clips from rigs — a clip authored for one body can be retargeted to any other rig at load time.
+
+| Module        | Path                                                             | Role                                                                  |
+| ------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Manager       | [src/animation-manager.js](src/animation-manager.js)             | Load, blend, and crossfade clips per slot (idle, gesture, locomotion) |
+| State machine | [src/animation-state-machine.js](src/animation-state-machine.js) | Drives slot transitions from protocol events                          |
+| Idle library  | [src/idle-animation.js](src/idle-animation.js)                   | Subtle breath / weight-shift loops that play under everything else    |
+| Fetcher       | `npm run fetch-animations`                                       | Downloads the canonical clip library from R2                          |
+| Builder       | `scripts/build-animations.mjs`                                   | Re-packs clip bundles into Meshopt + Draco-compressed GLB             |
+
+A new clip can be authored against any rig in Blender, exported as a GLB, and dropped into the animation library — the manager picks it up automatically and the agent runtime can invoke it via the `play_clip` tool.
+
+The **`sitidle` clip** is shipped as the default seated idle for chat-mode avatars; the **gemini-jump clip** drives the hero on `/`.
+
+---
+
 ## Web Component & Embedding
 
 The `<agent-3d>` custom element (`src/element.js`) is the primary distribution mechanism. It lazy-boots on intersection (IntersectionObserver), so off-screen agents don't load until visible.
@@ -9733,6 +9549,32 @@ Poses author cleanly into the avatar runtime via the `play_clip` tool — the ag
 
 ---
 
+## Avatar Accessories & Coin Launchpad
+
+Avatars are not just GLB files — they're composable rigs that the runtime can decorate with onchain accessories.
+
+### Accessories
+
+- Hats, glasses, props attached to named bone slots via [src/agent-accessories.js](src/agent-accessories.js)
+- Accessories are themselves ERC-1155 tokens, ownable and tradeable independently of the avatar
+- Equipping is non-destructive — the agent's base manifest stays unchanged, the accessory is layered at runtime
+
+### Coin Launchpad
+
+Every agent can mint a coin alongside its avatar — turning the agent into a tradeable economic object.
+
+| Surface          | Path                         | Purpose                                                            |
+| ---------------- | ---------------------------- | ------------------------------------------------------------------ |
+| Launchpad Studio | `/launchpad`                 | Configure coin name, ticker, supply, fee shares                    |
+| Hosted page      | `/p/[slug]`                  | Public launch page with `<agent-3d>` widget + buy button           |
+| Avatar coin drop | `public/demo/coin/`          | Demo flow — connect wallet → mint avatar + coin in one transaction |
+| Pump.fun bridge  | `POST /api/pump/launch-prep` | Route the launch through pump.fun's bonding curve                  |
+| Direct mint      | `contracts/script/`          | Deploy a standalone ERC-20 / SPL-22 alongside the agent            |
+
+The coin's metadata points back at the agent's onchain identity — ERC-8004 token on EVM or Metaplex Core asset on Solana — and the agent's manifest references the coin. The two-way binding is read from the bazaar, marketplace, and reputation registry on either chain.
+
+---
+
 ## Launchpad
 
 The **Launchpad** at `/launchpad` is a hosted-page builder for token launches, agent debuts, and drop campaigns. Each published page lives at a public URL like `/p/<slug>` with full Open Graph metadata for sharing.
@@ -9839,107 +9681,6 @@ Two creator tools sit alongside [Pose Studio](#pose-studio):
 
 ---
 
-## x402 Payments
-
-three.ws is a first-class [x402](https://x402.org) host. Agents can both **pay for** and **expose** paid endpoints. Settlement runs on Base, BSC, and Solana; the bazaar at `/x402` is the discovery surface.
-
-### Payment rails
-
-| Chain               | Settlement                     | Permit2 sibling     | Status |
-| ------------------- | ------------------------------ | ------------------- | ------ |
-| **Base mainnet**    | Coinbase CDP facilitator       | Gasless via relayer | Live   |
-| **Base sepolia**    | CDP facilitator                | Yes                 | Live   |
-| **BSC**             | Direct-scheme (no facilitator) | —                   | Live   |
-| **Solana (devnet)** | x402-solana direct             | —                   | Live   |
-
-Every CDP-settled endpoint ships a Permit2 sibling that accepts an EIP-2612 permit instead of an upfront approval — the buyer signs once, and the relayer pays gas. Wire-level checks live in `tests/e2e/` and exercise the buyer/seller flow end-to-end.
-
-### Paid endpoints
-
-| Route                                    | What you get                                  |
-| ---------------------------------------- | --------------------------------------------- |
-| `POST /api/x402/mint-to-mesh`            | Mint an avatar's mesh as an NFT               |
-| `POST /api/x402/mint-to-mesh-batch`      | Batch mint up to N meshes                     |
-| `POST /api/x402/dance-tip`               | Tip a club dancer in USDC                     |
-| `POST /api/x402/model-check`             | Run Khronos glTF validation as a paid service |
-| `POST /api/x402/pump-agent-audit`        | Audit a pump.fun token's creator history      |
-| `POST /api/x402/agent-reputation`        | Compute on-chain reputation snapshot          |
-| `POST /api/x402/onchain-identity-verify` | Verify ERC-8004 identity for a wallet         |
-| `POST /api/x402/symbol-availability`     | Check token symbol availability across chains |
-| `POST /api/x402/skill-marketplace`       | Paid skill marketplace listing                |
-| `POST /api/x402/asset-download`          | Pay-per-download for gated R2 assets          |
-| `POST /api/x402/did`                     | DID resolution as a service                   |
-| `GET /api/x402/my-receipts`              | Buyer-side receipts ledger                    |
-
-### Bazaar, SKUs, and subscriptions
-
-| Surface       | Path                              | Purpose                                     |
-| ------------- | --------------------------------- | ------------------------------------------- |
-| Bazaar        | `/x402`                           | Browsable marketplace of paid endpoints     |
-| Discovery     | `/x402-discover`                  | Search by tag, price, chain                 |
-| Checkout      | `/x402-pay`, `/api/x402-checkout` | Stripe-style one-shot purchase              |
-| SKU catalog   | `/api/x402-skus`                  | Server-defined SKUs with per-row pricing    |
-| Dashboard     | `/dashboard/x402`                 | Seller + buyer dashboard, receipts, payouts |
-| Subscriptions | `/api/x402/subscriptions`         | Recurring x402 charges on cron              |
-| Status        | `/api/x402-status`                | Health and chain reachability checks        |
-
-### How to expose a paid endpoint
-
-```js
-import { paidEndpoint } from './_lib/x402-paid-endpoint.js';
-
-export default paidEndpoint({
-	price: '0.10', // USDC
-	chain: 'base', // base | bsc | solana
-	network: 'mainnet',
-	resource: 'https://three.ws/api/your-endpoint',
-	description: 'What the buyer is paying for',
-	handler: async (req, res, { payer }) => {
-		// payer is verified — settle the request
-		res.json({ ok: true, payer });
-	},
-});
-```
-
-The helper handles the 402 challenge, Permit2 sibling, receipt write-back, idempotency-token enforcement, and CSRF/SSRF guards. See [api/\_lib/x402-paid-endpoint.js](api/_lib/x402-paid-endpoint.js).
-
-### Wire checks
-
-- Wire-level CORS, CDP, and Permit2 sibling checks: `tests/e2e/`
-- Offer receipts schema + buyer fetch: [api/\_lib/x402-buyer-fetch.js](api/_lib/x402-buyer-fetch.js)
-- Error envelope: full 402 body returned in the `PAYMENT-REQUIRED` header
-
----
-
-## A2A — Agent-to-Agent Protocol
-
-Agents transact with each other directly through an A2A bridge that sits on top of the MCP server and x402 payments.
-
-**How it works**
-
-When agent A wants to call a paid tool from agent B:
-
-1. **Discover** — A resolves B's DID via `POST /api/x402/did`, receiving B's MCP endpoint URL and payment wallet address.
-2. **Call** — A sends a `tools/call` JSON-RPC request to B's MCP endpoint.
-3. **Pay** — B's server returns `402 Payment Required` with a USDC price. A's SDK settles the x402 payment on-chain (Base or Solana) and retries with the payment proof in the `X-PAYMENT` header.
-4. **Execute** — B verifies the payment, runs the tool, and writes a signed receipt to `api/a2a/receipts`.
-5. **Ledger** — Both sides accumulate a row in `api/a2a/spending` — A for outbound spend, B for inbound revenue.
-
-Agent wallets sign with **EIP-7710 delegated permissions** — the delegated signer acts on behalf of the agent's root key without ever exposing it.
-
-| Surface         | Path                 | Purpose                                                  |
-| --------------- | -------------------- | -------------------------------------------------------- |
-| A2A client      | `sdk/a2a/`           | Outbound calls — pay another agent, settle the response  |
-| A2A server      | `api/a2a/`           | Inbound paid tools, exposed via MCP bridge               |
-| MCP bridge      | `api/mcp.js`         | Wraps paid tools as MCP `tools/call` with auto-402 retry |
-| Spending ledger | `api/a2a/spending`   | Per-agent spend caps and authorization gates             |
-| Receipts store  | `api/a2a/receipts`   | Signed receipts written on every paid call               |
-| DID resolution  | `POST /api/x402/did` | Resolve a counterparty DID to wallet + endpoints         |
-
-**SIWX (Sign-In with X-chain)** brokers cross-chain identity for paid sessions: an agent on Base proves ownership of a Solana wallet (or vice versa) to unlock chain-specific paid endpoints.
-
----
-
 ## Talk Mode & Lip-Sync
 
 The `talk` interaction mode wires together the LLM runtime, ElevenLabs TTS, and an **audio-driven ARKit-52 lip-sync driver** that maps live audio amplitude + formant analysis onto the 52 standard ARKit blendshapes.
@@ -9972,131 +9713,61 @@ The driver is source-agnostic: it accepts any `AudioBuffer`, so it works identic
 
 ---
 
-## Solana Mobile (Seeker)
+## Demos Hub
 
-three.ws ships with Mobile Wallet Adapter (MWA) wired into the web app and a release pipeline for the Solana Mobile dApp Store.
+`/demos` is a curated index of sandbox pages that exercise individual platform capabilities in isolation. Each demo is a single HTML file in [`public/demos/`](public/demos/) — perfect for screen recordings, bug reproductions, or showing off one feature without the rest of the app.
 
-**Wallet detection priority**
+| Demo                                | Path                             | What it shows                                            |
+| ----------------------------------- | -------------------------------- | -------------------------------------------------------- |
+| **USDZ & AR Quick Look**            | `/demos/usdz-ar.html`            | iOS USDZ export + AR Quick Look on a real device         |
+| **Half-body XR**                    | `/demos/halfbody-xr.html`        | Upper-body avatar in WebXR (Meta Quest, Vision Pro)      |
+| **Avatar SDK**                      | `/demos/avatar-sdk.html`         | `@three-ws/avatar` SDK loading + animating an avatar     |
+| **React SDK**                       | `/demos/react-sdk.html`          | React wrapper around the `<agent-3d>` element            |
+| **Audio-driven lipsync (mic)**      | `/lipsync/mic`                   | Live microphone → ARKit-52 lip-sync                      |
+| **Audio-driven lipsync (TTS)**      | `/lipsync`                       | ElevenLabs TTS → ARKit-52 lip-sync                       |
+| **Multi-LLM brain**                 | `/brain`                         | Side-by-side comparison of Claude / GPT / Groq / Gemini  |
+| **ERC-8004 registry browser**       | `/demos/erc8004.html`            | Browse all registered agents across chains               |
+| **Button jump**                     | `/demos/button-jump.html`        | Avatar reacts to a 2D button press                       |
+| **Tactile button (Gemini concept)** | `/demos/gemini-jump.html`        | Tactile button demo with avatar                          |
+| **Create v2**                       | `/demos/create-v2.html`          | Next-generation agent creation flow                      |
+| **3D home**                         | `/demos/3d-home.html`            | Home page with overlay canvas + transparent-bg viewer    |
+| **Selfie fit**                      | `/demos/selfie-fit.html`         | Selfie reconstruction pipeline (Phase 1)                 |
+| **Persona extract**                 | `/demos/persona-extract.html`    | Voice & Persona Hub onboarding interview                 |
+| **Memory seed**                     | `/demos/memory-seed.html`        | Memory seeding from X/GitHub/Farcaster                   |
+| **Voice clone**                     | `/demos/voice-clone.html`        | 3–10s recording → ElevenLabs custom voice                |
+| **Livepeer inference**              | `/demos/livepeer-inference.html` | Decentralized GPU inference end-to-end                   |
+| **Skill royalty**                   | `/demos/skill-royalty.html`      | Per-call royalty payouts to skill authors                |
+| **EAS reputation**                  | `/demos/eas-reputation.html`     | EAS-attested reputation viewer                           |
+| **Bonding curve**                   | `/demos/bonding-curve.html`      | Pre-launch bonding-curve pricing simulator               |
+| **Gallery picker**                  | `/demos/gallery-picker.html`     | Lazy 3D-thumbnail avatar picker (Embed Editor primitive) |
+| **Button**                          | `/demos/button.html`             | Minimal `<agent-3d>` embed reaction test                 |
 
-On **Seeker / Saga** hardware the app prefers seed-vault-backed signing — private keys never leave the secure element. On standard Android or desktop, the app falls back through WalletConnect and then to browser-extension wallets automatically, with no code change required.
-
-**What MWA unlocks on Seeker hardware**
-
-- x402 USDC payments signed from the seed vault without any browser extension
-- Metaplex Core agent mints (Solana on-chain registration) without leaving the app
-- SPL Memo attestations (reputation and validation) with hardware-secured signatures
-- SIWS (Sign-In with Solana) sessions authenticated at the chip level, not the software layer
-
-**Release pipeline**
-
-- dApp Store listing copy and release config live under [`solana-mobile/publish/`](solana-mobile/publish/)
-- Release pipeline scripts handle build → sign → APK submission for dApp Store updates
-- The listing targets Seeker-first and is compatible with Saga Gen 1 and Gen 2
-
----
-
-## Selfie Reconstruction Pipeline (Phase 1)
-
-Anyone takes 3 selfies (left, center, right) and receives a rigged, animatable 3D avatar in under a minute. The pipeline ships native — no third-party black box.
-
-| Module        | Path                                             | Role                                                                                                                 |
-| ------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Capture UX    | [src/selfie-capture.js](src/selfie-capture.js)   | Mobile-first 3-shot capture with real-time quality gates (lighting, framing, blur)                                   |
-| Pipeline      | [src/selfie-pipeline.js](src/selfie-pipeline.js) | Multi-view fit → FLAME / 3DMM face → base body mesh → rigged GLB                                                     |
-| Sandbox route | `/creating`                                      | Isolated reconstruction test bench, decoupled from the main flow                                                     |
-| Output        | Cloudflare R2                                    | Meshopt-compressed GLB pinned to IPFS and minted as a draft agent token — ERC-8004 on EVM or Metaplex Core on Solana |
-
-Reconstruction inference runs against the same Cloud Run handler pool as the agent runtime, with optional offload to the **Livepeer Inference Network** (see below) for GPU-heavy steps.
+The demos are intentionally separate from production routes (`/create`, `/avatars/[id]`, etc.) so the production flow keeps working while we test new ideas.
 
 ---
 
-## Livepeer Inference Network (Phase 4)
+## Skill Library
 
-three.ws is wiring the **Livepeer** decentralized GPU network as an alternative inference backend for avatar reconstruction and agent conversations.
+The platform ships with a set of built-in agent skills, packaged in `src/agent-skills-*.js` and registered via [`public/skills-index.json`](public/skills-index.json).
 
-- Open protocol: model weights, GPU runtime, signed responses
-- Onchain settlement: pay-per-token with cryptographic receipts, mediated by the same x402 rails described above
-- Node operator client (Docker + GPU drivers) with onchain registration
-- Federation with existing decentralized compute networks where appropriate
+| Skill                  | Module                                   | What it does                                                                               |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Wave / scene**       | `src/agent-skills-scene.js`              | Built-in wave, lookAt, play_clip, setExpression handlers                                   |
+| **Sentiment**          | `src/agent-skills-sentiment.js`          | Score incoming text 0–1, drive Empathy Layer spikes                                        |
+| **Agent payments**     | `src/agent-skills-agent-payments.js`     | EVM A2A payments, EIP-7710 delegated signing                                               |
+| **Solana Blinks**      | `src/agent-skills-blinks.js`             | Compose and broadcast Solana Action / Blink links                                          |
+| **Jupiter**            | `src/agent-skills-jupiter.js`            | Quote + swap any SPL token via Jupiter v6                                                  |
+| **NFTs**               | `src/agent-skills-nfts.js`               | Mint, transfer, and look up Metaplex Core / SPL-22 NFTs                                    |
+| **Pumpfun watch**      | `src/agent-skills-pumpfun-watch.js`      | Subscribe to pump.fun events (`recent-claims`, `token-intel`, `watch-start`, `watch-stop`) |
+| **Pumpfun compose**    | `src/agent-skills-pumpfun-compose.js`    | Build a pump.fun launch transaction with creator-signer split                              |
+| **Pumpfun hooks**      | `src/agent-skills-pumpfun-hooks.js`      | React-style hooks for in-app pump.fun integrations                                         |
+| **Pumpfun autonomous** | `src/agent-skills-pumpfun-autonomous.js` | Autonomous trade execution against signals + sentiment                                     |
+| **Pumpfun core**       | `src/agent-skills-pumpfun.js`            | Shared pump.fun client utilities                                                           |
+| **Accessories**        | `src/agent-accessories.js`               | Hat / glasses / prop slot attachment to a rigged avatar                                    |
+| **Memory**             | `src/agent-memory.js`                    | File-based memory CRUD (see [Memory](#memory))                                             |
+| **Reputation**         | `src/agent-reputation.js`                | Read on-chain reputation, surface in the chat UI                                           |
 
-The Livepeer dependency landed early so the Phase 1 selfie pipeline can switch its heaviest step (multi-view face fitting) onto external GPU nodes without touching the rest of the system. The goal: ≥50% of production agent traffic served by independent node operators with latency parity to centralized inference.
-
----
-
-## Voice & Persona Hub (Phase 2)
-
-The avatar isn't just _you_ — the agent _acts_ like you. The Voice & Persona Hub captures the inputs that turn a body into a personality.
-
-| Surface             | Path                                                                 | Purpose                                                          |
-| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Persona extraction  | [api/persona/extract.js](api/persona/extract.js)                     | Short onboarding interview → tone, vocabulary, interests profile |
-| Persona preview     | [api/persona/preview.js](api/persona/preview.js)                     | Try the extracted persona against test prompts before saving     |
-| Persona keys        | `scripts/generate-persona-key.mjs`                                   | Per-agent signing key + persona SSO setup                        |
-| Voice clone modal   | [src/voice/voice-clone-modal.js](src/voice/voice-clone-modal.js)     | 3–10s recording → ElevenLabs custom voice bound to the agent     |
-| Talk controller     | [src/voice/talk-controller.js](src/voice/talk-controller.js)         | Push-to-talk and continuous talk modes                           |
-| ARKit blendshapes   | [src/voice/arkit-blendshapes.js](src/voice/arkit-blendshapes.js)     | Standard ARKit-52 morph table                                    |
-| Lip-sync driver     | [src/voice/lipsync-driver.js](src/voice/lipsync-driver.js)           | Web Audio analyser → blendshape weights per frame                |
-| Avatar morph target | [src/voice/avatar-morph-target.js](src/voice/avatar-morph-target.js) | Per-rig binding of ARKit blendshapes to the loaded GLB           |
-| Avatar snapshot     | [src/voice/avatar-snapshot.js](src/voice/avatar-snapshot.js)         | Render-time pose capture for thumbnails and OG cards             |
-| Persona docs        | [docs/persona-hub.md](docs/persona-hub.md)                           | Full design + onboarding flow                                    |
-
-Memory seed extensions (X, GitHub, Farcaster) feed the agent's memory store at creation time with explicit user consent — see [docs/persona-hub.md](docs/persona-hub.md).
-
-The per-agent fine-tuned system prompt is stored in the manifest, signed, and pinned to IPFS — the persona becomes a verifiable part of the agent's onchain identity.
-
----
-
-## WASM Vanity Grinder
-
-`/vanity-wallet` is a browser-based vanity-address grinder compiled to WebAssembly. Generate **EVM addresses** with a prefix (`0xBEEF…`) or pattern, or **Solana addresses** (base58 prefix / suffix, e.g. `…pump`) in seconds, fully client-side, without leaking the private key to any server.
-
-| Module         | Path                            | Role                                                   |
-| -------------- | ------------------------------- | ------------------------------------------------------ |
-| WASM grinder   | `public/vanity-wallet.html`     | Multi-threaded secp256k1 keygen via WebWorkers         |
-| Solana variant | `scripts/pump-vanity-grind.mjs` | Server-side grinder for pump.fun mint vanity addresses |
-
-Common use cases on the platform: branded agent wallet addresses (e.g. an agent named `agent.eth` getting an address starting with `0xA6EF…`), or pump.fun token mint vanity (e.g. ending in `pump`).
-
-The Solana grinder backs the platform's pump.fun launches — the inaugural USDC token launches use a vanity mint pre-grind to produce shareable token addresses.
-
----
-
-## News CMS & Syndication
-
-A local-only news/blog CMS at `/admin/news` produces signed posts that auto-syndicate to multiple destinations.
-
-| Surface        | Path                                                       | Purpose                                             |
-| -------------- | ---------------------------------------------------------- | --------------------------------------------------- |
-| CMS            | `/admin/news`                                              | Local-only editor — drafts, images, scheduled posts |
-| Public listing | `/news`                                                    | Cover-image grid with permalinks                    |
-| Article        | `/news/<slug>`                                             | Server-rendered article with OG card                |
-| RSS / Atom     | `/api/news/rss`                                            | Standards-compliant feed for HackerNoon auto-import |
-| WebSub hub     | `/api/news/websub`                                         | Push notifications to subscribed hubs on publish    |
-| Dev.to         | syndication adapter                                        | Cross-posts with canonical URL pointing back        |
-| Medium         | syndication adapter                                        | Same, with format-aware re-render                   |
-| CMC handoff    | syndication adapter                                        | Coinmarketcap article + announcement listing        |
-| Newsletter     | [api/newsletter-subscribe.js](api/newsletter-subscribe.js) | Resend-backed double-opt-in newsletter              |
-
-Each article is a static HTML file in `public/news/` with metadata in Postgres. The CMS supports a cover-image convention for listing thumbnails and OG previews. Articles can be published once and reach HackerNoon, Dev.to, and Medium readers without manual cross-posting.
-
----
-
-## Security Hardening
-
-The platform has been hardened against the OWASP top-10 plus a set of issues specific to agent payments and cross-chain identity.
-
-| Control                   | Where                                                                                                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **SSRF guard**            | All outbound `fetch()` from agent runtime + skills goes through an SSRF allow-list filter (`api/_lib/safe-fetch.js`)                     |
-| **CSRF gates**            | State-changing endpoints require an Origin + Sec-Fetch-Site check; bearer-only paths exempt                                              |
-| **Header-origin pinning** | The iframe bridge locks onto the parent's origin from the first authenticated message and ignores later messages from a different origin |
-| **Fail-closed crons**     | Cron endpoints fail closed if their auth token is missing — no silent skips                                                              |
-| **Idempotency tokens**    | x402 paid endpoints require an idempotency key to prevent double-charge on retry                                                         |
-| **Embed policy**          | Per-agent iframe origin allow-list (`/api/agents/:id/embed-policy`) gates the chromeless embed                                           |
-| **Rate limiting**         | Upstash Redis per-user + per-API-key + per-IP buckets at every public endpoint                                                           |
-| **JWT key rotation**      | `JWT_KID` lets you rotate signing keys without invalidating in-flight sessions                                                           |
-| **Bcrypt cost**           | Tunable via `PASSWORD_ROUNDS` (default 11)                                                                                               |
-| **Audit signing**         | Every agent action is signed with the delegated signer key and chained into a per-agent action log                                       |
+Third-party skills are distributed over IPFS / Arweave / HTTP. See [docs/skills.md](docs/skills.md) for the full skill manifest spec and authoring guide.
 
 ---
 
@@ -10162,208 +9833,6 @@ loadAvatar('a_abc123', document.getElementById('avatar-slot'));
 ```
 
 `@three-ws/sdk` also exposes `AgentClient` (x402 paid calls), `PermissionsClient`, and ERC-8004 registry helpers. See [sdk/README.md](sdk/README.md), the [SDK guide](docs/sdk.md), and [examples](docs/examples.md).
-
----
-
-## Claude Code Integration
-
-three.ws ships as a first-class Claude Code SDK. There are two ways to integrate — pick one or use both:
-
-### 1. MCP server (paid tools via `npx`)
-
-Add the `@three-ws/mcp-server` to your Claude Desktop, Cursor, or Claude Code config in one step:
-
-```json
-{
-	"mcpServers": {
-		"3d-agent": {
-			"command": "npx",
-			"args": ["-y", "@three-ws/mcp-server"],
-			"env": {
-				"MCP_EVM_PAYMENT_ADDRESS": "0xYourBaseWallet",
-				"MCP_SVM_PAYMENT_ADDRESS": "YourSolanaWallet"
-			}
-		}
-	}
-}
-```
-
-| Config file location                                              | Platform                     |
-| ----------------------------------------------------------------- | ---------------------------- |
-| `~/Library/Application Support/Claude/claude_desktop_config.json` | macOS Claude Desktop         |
-| `%APPDATA%\Claude\claude_desktop_config.json`                     | Windows Claude Desktop       |
-| `.mcp.json` in your project root                                  | Claude Code (project-scoped) |
-| `~/.cursor/mcp.json`                                              | Cursor                       |
-
-Once configured, Claude can call these tools directly in conversation — no API key required, each call is settled in USDC via x402:
-
-| Tool               | Price       | What it does                                                                              |
-| ------------------ | ----------- | ----------------------------------------------------------------------------------------- |
-| `get_pose_seed`    | $0.001      | Pose map for a three.ws avatar from a plain-text prompt                                   |
-| `pump_snapshot`    | $0.005      | Live pump.fun token snapshot — price, volume, holders, trust signals                      |
-| `agent_reputation` | $0.01       | Agent reputation — ERC-8004 ReputationRegistry on EVM, attestation-memo roll-up on Solana |
-| `vanity_grinder`   | up to $0.50 | Mine a Solana keypair with a custom address prefix                                        |
-
-See [`mcp-server/README.md`](mcp-server/README.md) for full environment variable reference and programmatic client usage.
-
-### 2. Slash commands (`marketplace/plugins/three-ws-developer/commands/`)
-
-This repo ships three Claude Code slash commands that work in any project referencing this repo:
-
-| Command                  | What it does                                                                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `/setup-mcp`             | Detects your OS, collects wallet addresses, and writes the MCP config to the right file — end-to-end, no manual JSON editing              |
-| `/scaffold-agent`        | Scaffolds a new three.ws agent in your project: installs dependencies, creates `agent.js` with MCP client wiring, and adds `.env.example` |
-| `/use-tools [tool_name]` | Produces a complete, runnable Node.js script for calling a specific paid MCP tool with automatic x402 payment handling                    |
-
-Commands live in [`marketplace/plugins/three-ws-developer/commands/`](marketplace/plugins/three-ws-developer/commands/) and ship with the `three-ws-developer` plugin, so Claude Code picks them up once that plugin is installed.
-
----
-
-## Demos Hub
-
-`/demos` is a curated index of sandbox pages that exercise individual platform capabilities in isolation. Each demo is a single HTML file in [`public/demos/`](public/demos/) — perfect for screen recordings, bug reproductions, or showing off one feature without the rest of the app.
-
-| Demo                                | Path                             | What it shows                                            |
-| ----------------------------------- | -------------------------------- | -------------------------------------------------------- |
-| **USDZ & AR Quick Look**            | `/demos/usdz-ar.html`            | iOS USDZ export + AR Quick Look on a real device         |
-| **Half-body XR**                    | `/demos/halfbody-xr.html`        | Upper-body avatar in WebXR (Meta Quest, Vision Pro)      |
-| **Avatar SDK**                      | `/demos/avatar-sdk.html`         | `@three-ws/avatar` SDK loading + animating an avatar     |
-| **React SDK**                       | `/demos/react-sdk.html`          | React wrapper around the `<agent-3d>` element            |
-| **Audio-driven lipsync (mic)**      | `/lipsync/mic`                   | Live microphone → ARKit-52 lip-sync                      |
-| **Audio-driven lipsync (TTS)**      | `/lipsync`                       | ElevenLabs TTS → ARKit-52 lip-sync                       |
-| **Multi-LLM brain**                 | `/brain`                         | Side-by-side comparison of Claude / GPT / Groq / Gemini  |
-| **ERC-8004 registry browser**       | `/demos/erc8004.html`            | Browse all registered agents across chains               |
-| **Button jump**                     | `/demos/button-jump.html`        | Avatar reacts to a 2D button press                       |
-| **Tactile button (Gemini concept)** | `/demos/gemini-jump.html`        | Tactile button demo with avatar                          |
-| **Create v2**                       | `/demos/create-v2.html`          | Next-generation agent creation flow                      |
-| **3D home**                         | `/demos/3d-home.html`            | Home page with overlay canvas + transparent-bg viewer    |
-| **Selfie fit**                      | `/demos/selfie-fit.html`         | Selfie reconstruction pipeline (Phase 1)                 |
-| **Persona extract**                 | `/demos/persona-extract.html`    | Voice & Persona Hub onboarding interview                 |
-| **Memory seed**                     | `/demos/memory-seed.html`        | Memory seeding from X/GitHub/Farcaster                   |
-| **Voice clone**                     | `/demos/voice-clone.html`        | 3–10s recording → ElevenLabs custom voice                |
-| **Livepeer inference**              | `/demos/livepeer-inference.html` | Decentralized GPU inference end-to-end                   |
-| **Skill royalty**                   | `/demos/skill-royalty.html`      | Per-call royalty payouts to skill authors                |
-| **EAS reputation**                  | `/demos/eas-reputation.html`     | EAS-attested reputation viewer                           |
-| **Bonding curve**                   | `/demos/bonding-curve.html`      | Pre-launch bonding-curve pricing simulator               |
-| **Gallery picker**                  | `/demos/gallery-picker.html`     | Lazy 3D-thumbnail avatar picker (Embed Editor primitive) |
-| **Button**                          | `/demos/button.html`             | Minimal `<agent-3d>` embed reaction test                 |
-
-The demos are intentionally separate from production routes (`/create`, `/avatars/[id]`, etc.) so the production flow keeps working while we test new ideas.
-
----
-
-## Skill Library
-
-The platform ships with a set of built-in agent skills, packaged in `src/agent-skills-*.js` and registered via [`public/skills-index.json`](public/skills-index.json).
-
-| Skill                  | Module                                   | What it does                                                                               |
-| ---------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Wave / scene**       | `src/agent-skills-scene.js`              | Built-in wave, lookAt, play_clip, setExpression handlers                                   |
-| **Sentiment**          | `src/agent-skills-sentiment.js`          | Score incoming text 0–1, drive Empathy Layer spikes                                        |
-| **Agent payments**     | `src/agent-skills-agent-payments.js`     | EVM A2A payments, EIP-7710 delegated signing                                               |
-| **Solana Blinks**      | `src/agent-skills-blinks.js`             | Compose and broadcast Solana Action / Blink links                                          |
-| **Jupiter**            | `src/agent-skills-jupiter.js`            | Quote + swap any SPL token via Jupiter v6                                                  |
-| **NFTs**               | `src/agent-skills-nfts.js`               | Mint, transfer, and look up Metaplex Core / SPL-22 NFTs                                    |
-| **Pumpfun watch**      | `src/agent-skills-pumpfun-watch.js`      | Subscribe to pump.fun events (`recent-claims`, `token-intel`, `watch-start`, `watch-stop`) |
-| **Pumpfun compose**    | `src/agent-skills-pumpfun-compose.js`    | Build a pump.fun launch transaction with creator-signer split                              |
-| **Pumpfun hooks**      | `src/agent-skills-pumpfun-hooks.js`      | React-style hooks for in-app pump.fun integrations                                         |
-| **Pumpfun autonomous** | `src/agent-skills-pumpfun-autonomous.js` | Autonomous trade execution against signals + sentiment                                     |
-| **Pumpfun core**       | `src/agent-skills-pumpfun.js`            | Shared pump.fun client utilities                                                           |
-| **Accessories**        | `src/agent-accessories.js`               | Hat / glasses / prop slot attachment to a rigged avatar                                    |
-| **Memory**             | `src/agent-memory.js`                    | File-based memory CRUD (see [Memory](#memory))                                             |
-| **Reputation**         | `src/agent-reputation.js`                | Read on-chain reputation, surface in the chat UI                                           |
-
-Third-party skills are distributed over IPFS / Arweave / HTTP. See [docs/skills.md](docs/skills.md) for the full skill manifest spec and authoring guide.
-
----
-
-## Animation System
-
-The avatar runtime ships with a slot-based animation manager that decouples animation clips from rigs — a clip authored for one body can be retargeted to any other rig at load time.
-
-| Module        | Path                                                             | Role                                                                  |
-| ------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Manager       | [src/animation-manager.js](src/animation-manager.js)             | Load, blend, and crossfade clips per slot (idle, gesture, locomotion) |
-| State machine | [src/animation-state-machine.js](src/animation-state-machine.js) | Drives slot transitions from protocol events                          |
-| Idle library  | [src/idle-animation.js](src/idle-animation.js)                   | Subtle breath / weight-shift loops that play under everything else    |
-| Fetcher       | `npm run fetch-animations`                                       | Downloads the canonical clip library from R2                          |
-| Builder       | `scripts/build-animations.mjs`                                   | Re-packs clip bundles into Meshopt + Draco-compressed GLB             |
-
-A new clip can be authored against any rig in Blender, exported as a GLB, and dropped into the animation library — the manager picks it up automatically and the agent runtime can invoke it via the `play_clip` tool.
-
-The **`sitidle` clip** is shipped as the default seated idle for chat-mode avatars; the **gemini-jump clip** drives the hero on `/`.
-
----
-
-## Avatar Accessories & Coin Launchpad
-
-Avatars are not just GLB files — they're composable rigs that the runtime can decorate with onchain accessories.
-
-### Accessories
-
-- Hats, glasses, props attached to named bone slots via [src/agent-accessories.js](src/agent-accessories.js)
-- Accessories are themselves ERC-1155 tokens, ownable and tradeable independently of the avatar
-- Equipping is non-destructive — the agent's base manifest stays unchanged, the accessory is layered at runtime
-
-### Coin Launchpad
-
-Every agent can mint a coin alongside its avatar — turning the agent into a tradeable economic object.
-
-| Surface          | Path                         | Purpose                                                            |
-| ---------------- | ---------------------------- | ------------------------------------------------------------------ |
-| Launchpad Studio | `/launchpad`                 | Configure coin name, ticker, supply, fee shares                    |
-| Hosted page      | `/p/[slug]`                  | Public launch page with `<agent-3d>` widget + buy button           |
-| Avatar coin drop | `public/demo/coin/`          | Demo flow — connect wallet → mint avatar + coin in one transaction |
-| Pump.fun bridge  | `POST /api/pump/launch-prep` | Route the launch through pump.fun's bonding curve                  |
-| Direct mint      | `contracts/script/`          | Deploy a standalone ERC-20 / SPL-22 alongside the agent            |
-
-The coin's metadata points back at the agent's onchain identity — ERC-8004 token on EVM or Metaplex Core asset on Solana — and the agent's manifest references the coin. The two-way binding is read from the bazaar, marketplace, and reputation registry on either chain.
-
----
-
-## Brain Proxy & LLM Routing
-
-three.ws supports multiple LLM providers behind a single `brain` interface. The runtime is provider-agnostic — switch from Claude to GPT to Gemini to a local model with a one-line change.
-
-| Provider               | Path                             | Use case                                                              |
-| ---------------------- | -------------------------------- | --------------------------------------------------------------------- |
-| **Anthropic (Claude)** | `POST /api/llm/anthropic`        | Default — tool-loop, streaming, sentiment-tagged speak                |
-| **Groq**               | (anonymous)                      | Free fast-mode chat for unauthenticated visitors on `/chat`           |
-| **Multi-LLM brain**    | `/brain`, `POST /api/brain/chat` | Side-by-side compare Claude / GPT / Gemini / Groq for the same prompt |
-| **OpenRouter**         | proxied via brain                | Fallback when the primary provider is rate-limited                    |
-| **Null provider**      | `src/runtime/providers.js`       | No-op for tests and offline mode                                      |
-
-**Switching providers**
-
-Provider selection is per-agent and controlled by the manifest `brain.provider` field:
-
-```json
-{
-  "brain": {
-    "provider": "anthropic",
-    "model": "claude-sonnet-4-6",
-    "temperature": 0.8,
-    "maxTokens": 1024
-  }
-}
-```
-
-Supported `provider` values: `anthropic` · `groq` · `openrouter` · `null` (offline). Adding a new provider means implementing the two-method interface (`chat()` and `stream()`) in [`src/runtime/providers.js`](src/runtime/providers.js) — no other files need to change.
-
-**Free-first routing policy**
-
-The platform's `DEFAULT_PROVIDER_ORDER` in `src/llm.js` ensures AI chat never fails silently due to a single quota: free tiers (Groq, OpenRouter `:free` models, NVIDIA) are always tried first; paid keys (Anthropic, OpenAI) are last-resort only. An OpenRouter fallback key is configured for `:free` models so that even a depleted primary account doesn't take down the `/chat` surface.
-
-**Owner-card gating**
-
-When an agent has a paying owner — established via ERC-8004 mint or x402 subscription — the embed unlocks:
-
-- Longer context windows (up to 32k tokens per turn vs the anonymous 8k cap)
-- Access to higher-tier models (Claude Sonnet / Opus vs Groq fallback)
-- An owner-attribution card displayed below the avatar in the embed chrome
-
-The gating check runs server-side in [`api/chat.js`](api/chat.js) against the agent's subscription record in Postgres. It cannot be bypassed from the client — the model selection and context limit are applied at the API layer before the request reaches the LLM provider.
 
 ---
 
@@ -10575,6 +10044,280 @@ _Pump.fun_ ([`api/_mcp/tools/pumpfun.js`](api/_mcp/tools/pumpfun.js))
 
 ---
 
+## Brain Proxy & LLM Routing
+
+three.ws supports multiple LLM providers behind a single `brain` interface. The runtime is provider-agnostic — switch from Claude to GPT to Gemini to a local model with a one-line change.
+
+| Provider               | Path                             | Use case                                                              |
+| ---------------------- | -------------------------------- | --------------------------------------------------------------------- |
+| **Anthropic (Claude)** | `POST /api/llm/anthropic`        | Default — tool-loop, streaming, sentiment-tagged speak                |
+| **Groq**               | (anonymous)                      | Free fast-mode chat for unauthenticated visitors on `/chat`           |
+| **Multi-LLM brain**    | `/brain`, `POST /api/brain/chat` | Side-by-side compare Claude / GPT / Gemini / Groq for the same prompt |
+| **OpenRouter**         | proxied via brain                | Fallback when the primary provider is rate-limited                    |
+| **Null provider**      | `src/runtime/providers.js`       | No-op for tests and offline mode                                      |
+
+**Switching providers**
+
+Provider selection is per-agent and controlled by the manifest `brain.provider` field:
+
+```json
+{
+  "brain": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "temperature": 0.8,
+    "maxTokens": 1024
+  }
+}
+```
+
+Supported `provider` values: `anthropic` · `groq` · `openrouter` · `null` (offline). Adding a new provider means implementing the two-method interface (`chat()` and `stream()`) in [`src/runtime/providers.js`](src/runtime/providers.js) — no other files need to change.
+
+**Free-first routing policy**
+
+The platform's `DEFAULT_PROVIDER_ORDER` in `src/llm.js` ensures AI chat never fails silently due to a single quota: free tiers (Groq, OpenRouter `:free` models, NVIDIA) are always tried first; paid keys (Anthropic, OpenAI) are last-resort only. An OpenRouter fallback key is configured for `:free` models so that even a depleted primary account doesn't take down the `/chat` surface.
+
+**Owner-card gating**
+
+When an agent has a paying owner — established via ERC-8004 mint or x402 subscription — the embed unlocks:
+
+- Longer context windows (up to 32k tokens per turn vs the anonymous 8k cap)
+- Access to higher-tier models (Claude Sonnet / Opus vs Groq fallback)
+- An owner-attribution card displayed below the avatar in the embed chrome
+
+The gating check runs server-side in [`api/chat.js`](api/chat.js) against the agent's subscription record in Postgres. It cannot be bypassed from the client — the model selection and context limit are applied at the API layer before the request reaches the LLM provider.
+
+---
+
+## Claude Code Integration
+
+three.ws ships as a first-class Claude Code SDK. There are two ways to integrate — pick one or use both:
+
+### 1. MCP server (paid tools via `npx`)
+
+Add the `@three-ws/mcp-server` to your Claude Desktop, Cursor, or Claude Code config in one step:
+
+```json
+{
+	"mcpServers": {
+		"3d-agent": {
+			"command": "npx",
+			"args": ["-y", "@three-ws/mcp-server"],
+			"env": {
+				"MCP_EVM_PAYMENT_ADDRESS": "0xYourBaseWallet",
+				"MCP_SVM_PAYMENT_ADDRESS": "YourSolanaWallet"
+			}
+		}
+	}
+}
+```
+
+| Config file location                                              | Platform                     |
+| ----------------------------------------------------------------- | ---------------------------- |
+| `~/Library/Application Support/Claude/claude_desktop_config.json` | macOS Claude Desktop         |
+| `%APPDATA%\Claude\claude_desktop_config.json`                     | Windows Claude Desktop       |
+| `.mcp.json` in your project root                                  | Claude Code (project-scoped) |
+| `~/.cursor/mcp.json`                                              | Cursor                       |
+
+Once configured, Claude can call these tools directly in conversation — no API key required, each call is settled in USDC via x402:
+
+| Tool               | Price       | What it does                                                                              |
+| ------------------ | ----------- | ----------------------------------------------------------------------------------------- |
+| `get_pose_seed`    | $0.001      | Pose map for a three.ws avatar from a plain-text prompt                                   |
+| `pump_snapshot`    | $0.005      | Live pump.fun token snapshot — price, volume, holders, trust signals                      |
+| `agent_reputation` | $0.01       | Agent reputation — ERC-8004 ReputationRegistry on EVM, attestation-memo roll-up on Solana |
+| `vanity_grinder`   | up to $0.50 | Mine a Solana keypair with a custom address prefix                                        |
+
+See [`mcp-server/README.md`](mcp-server/README.md) for full environment variable reference and programmatic client usage.
+
+### 2. Slash commands (`marketplace/plugins/three-ws-developer/commands/`)
+
+This repo ships three Claude Code slash commands that work in any project referencing this repo:
+
+| Command                  | What it does                                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `/setup-mcp`             | Detects your OS, collects wallet addresses, and writes the MCP config to the right file — end-to-end, no manual JSON editing              |
+| `/scaffold-agent`        | Scaffolds a new three.ws agent in your project: installs dependencies, creates `agent.js` with MCP client wiring, and adds `.env.example` |
+| `/use-tools [tool_name]` | Produces a complete, runnable Node.js script for calling a specific paid MCP tool with automatic x402 payment handling                    |
+
+Commands live in [`marketplace/plugins/three-ws-developer/commands/`](marketplace/plugins/three-ws-developer/commands/) and ship with the `three-ws-developer` plugin, so Claude Code picks them up once that plugin is installed.
+
+---
+
+## Install in Claude Code
+
+three.ws ships an official **Claude Code plugin marketplace** — install wallet, payments, pump.fun trading, agent scaffolding, and the 3D Forge as namespaced skills and MCP tools, in one command. Add the marketplace once:
+
+```
+/plugin marketplace add nirholas/three.ws
+```
+
+Then install any of the four plugins:
+
+```
+/plugin install three-ws-core@three-ws       # wallet + x402 — authenticate, fund, send, trade, bazaar, pay, monetize, query onchain
+/plugin install three-ws-developer@three-ws  # scaffold agents, configure MCP, runnable code examples
+/plugin install three-ws-pump-fun@three-ws   # create coins, swap, creator fees, tokenize agents, live avatar reactions
+/plugin install three-ws-3d@three-ws         # text→3D (free), text→avatar, mesh forge, auto-rig + scene/avatar MCP
+```
+
+Run `/reload-plugins` and the skills appear under each plugin's namespace (e.g. `/three-ws-3d:forge-3d`). Plugins that expose MCP tools (`three-ws-developer`, `three-ws-3d`) wire the published `@three-ws/*` MCP servers automatically — `forge_free` is free (no wallet); the paid lanes settle over x402 in USDC. The canonical manifest lives at [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json).
+
+---
+
+## Cloud Marketplaces
+
+three.ws is available on major cloud marketplaces and open to infrastructure partnerships.
+
+| Cloud             | Status                                                                                                                                                                                                |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` — the Forge sculptor Lambda (`three-ws-forge`) and the S3 avatar bucket — registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). |
+| **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
+| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 100 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run — a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
+
+## Ecosystem Directories
+
+three.ws is indexed in chain-ecosystem dApp directories so the community can discover, vet, and rank it.
+
+| Directory               | Status                                                                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **BNB Chain · Dappbay** | Live: [dappbay.bnbchain.org/detail/three →](https://dappbay.bnbchain.org/detail/three) — categories: AI Agent Launchpad · AI Data · AI Infra |
+
+---
+
+## IBM watsonx & Granite
+
+three.ws is an **IBM Business Partner**, and the agent runtime runs on **IBM Granite** foundation models served through **IBM watsonx.ai**. One IBM Cloud API key + project unlocks the whole suite; every call is real inference (no mock path — endpoints return `503` when unconfigured). Full docs: **[docs/ibm.md](docs/ibm.md)**. Live showcase: **[three.ws/ibm/galaxy](https://three.ws/ibm/galaxy)**.
+
+> **The public showcase is not the partnership.** The demos under `/ibm/*` are independent tools three.ws built for developers to explore Granite on watsonx.ai and build their own integrations — they are not official IBM partnership deliverables, not IBM products, and not endorsed by IBM. Our formal partnership work with IBM is being built on the IBM platform and is not yet public.
+
+| Granite model | Where it runs |
+| ------------- | ------------- |
+| `granite-3-8b-instruct` | Selectable avatar **brain** + all narration |
+| `granite-guardian-3-8b` | **Trust Layer** — allow/review/block governance gate, inline in `/api/chat` before an avatar moves value |
+| `granite-ttm-512/1024/1536-96-r2` | **TimeSeries** forecasting (Oracle, Twin, Proof) |
+| `granite-embedding-278m-multilingual` | **Semantic** agent map + `/api/watsonx/embed` |
+| `granite-vision-3-2-2b` | **Vision** — reads an avatar into a full agent identity |
+
+Six showcase surfaces put it on screen, cross-linked by an in-page suite switcher: the [Agent Galaxy](https://three.ws/ibm/galaxy) (semantic 3D star-map), the [Granite Oracle](https://three.ws/ibm/oracle) (narrated forecast), the [Digital Twin](https://three.ws/ibm/twin) (back-test + what-if), the [Trust Layer](https://three.ws/ibm/trust-layer) (Guardian + hash-chained audit ledger), [Granite Proof](https://three.ws/ibm/proof) (a Guardian-governed forecast notarized on Solana), and [Granite Vision](https://three.ws/ibm/vision). The standalone connector [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) exposes watsonx.ai to any MCP host — it is community-built and not an IBM product; the hosted platform integration is what runs on IBM watsonx.ai.
+
+### Pay-per-call Granite over MCP (x402)
+
+The world's first **x402-enabled MCP server on IBM Cloud**: [`@three-ws/ibm-x402-mcp`](packages/ibm-x402-mcp/) turns IBM Granite into a metered utility any AI agent can call. The operator holds the IBM credentials and funds inference; the caller pays **a few cents of USDC per call** — no IBM Cloud account, no subscription, no API-key signup. Full guide: **[docs/ibm-x402-mcp.md](docs/ibm-x402-mcp.md)**.
+
+| Tool | What it does | Price |
+| ---- | ------------ | ----- |
+| `ibm_granite_chat` | Conversational AI — Q&A, drafting, reasoning | $0.02 |
+| `ibm_granite_code` | Generate / review / refactor / explain / test / document code | $0.025 |
+| `ibm_granite_embed` | Batch text embeddings (1–64) for RAG, search, clustering | $0.005 |
+| `ibm_granite_analyze` | Structured doc analysis — entities, sentiment, risk, next steps | $0.04 |
+| `ibm_granite_forecast` | Zero-shot time-series forecasting via Granite TTM | $0.05 |
+
+The same five tools ship over two transports: **stdio** (`npx @three-ws/ibm-x402-mcp`, for Claude Desktop / Code / Cursor, paid on Solana) and **Streamable HTTP** (`https://three.ws/api/ibm-mcp`, for hosted clients and watsonx Orchestrate, paid on Base or Solana). An unpaid `tools/call` returns a `402` quoting the exact USDC price; x402-capable clients pay and retry automatically, settling on-chain only after the tool succeeds. Independent project integrating IBM Granite via watsonx.ai — not an IBM product.
+
+---
+
+## x402 Payments
+
+three.ws is a first-class [x402](https://x402.org) host. Agents can both **pay for** and **expose** paid endpoints. Settlement runs on Base, BSC, and Solana; the bazaar at `/x402` is the discovery surface.
+
+### Payment rails
+
+| Chain               | Settlement                     | Permit2 sibling     | Status |
+| ------------------- | ------------------------------ | ------------------- | ------ |
+| **Base mainnet**    | Coinbase CDP facilitator       | Gasless via relayer | Live   |
+| **Base sepolia**    | CDP facilitator                | Yes                 | Live   |
+| **BSC**             | Direct-scheme (no facilitator) | —                   | Live   |
+| **Solana (devnet)** | x402-solana direct             | —                   | Live   |
+
+Every CDP-settled endpoint ships a Permit2 sibling that accepts an EIP-2612 permit instead of an upfront approval — the buyer signs once, and the relayer pays gas. Wire-level checks live in `tests/e2e/` and exercise the buyer/seller flow end-to-end.
+
+### Paid endpoints
+
+| Route                                    | What you get                                  |
+| ---------------------------------------- | --------------------------------------------- |
+| `POST /api/x402/mint-to-mesh`            | Mint an avatar's mesh as an NFT               |
+| `POST /api/x402/mint-to-mesh-batch`      | Batch mint up to N meshes                     |
+| `POST /api/x402/dance-tip`               | Tip a club dancer in USDC                     |
+| `POST /api/x402/model-check`             | Run Khronos glTF validation as a paid service |
+| `POST /api/x402/pump-agent-audit`        | Audit a pump.fun token's creator history      |
+| `POST /api/x402/agent-reputation`        | Compute on-chain reputation snapshot          |
+| `POST /api/x402/onchain-identity-verify` | Verify ERC-8004 identity for a wallet         |
+| `POST /api/x402/symbol-availability`     | Check token symbol availability across chains |
+| `POST /api/x402/skill-marketplace`       | Paid skill marketplace listing                |
+| `POST /api/x402/asset-download`          | Pay-per-download for gated R2 assets          |
+| `POST /api/x402/did`                     | DID resolution as a service                   |
+| `GET /api/x402/my-receipts`              | Buyer-side receipts ledger                    |
+
+### Bazaar, SKUs, and subscriptions
+
+| Surface       | Path                              | Purpose                                     |
+| ------------- | --------------------------------- | ------------------------------------------- |
+| Bazaar        | `/x402`                           | Browsable marketplace of paid endpoints     |
+| Discovery     | `/x402-discover`                  | Search by tag, price, chain                 |
+| Checkout      | `/x402-pay`, `/api/x402-checkout` | Stripe-style one-shot purchase              |
+| SKU catalog   | `/api/x402-skus`                  | Server-defined SKUs with per-row pricing    |
+| Dashboard     | `/dashboard/x402`                 | Seller + buyer dashboard, receipts, payouts |
+| Subscriptions | `/api/x402/subscriptions`         | Recurring x402 charges on cron              |
+| Status        | `/api/x402-status`                | Health and chain reachability checks        |
+
+### How to expose a paid endpoint
+
+```js
+import { paidEndpoint } from './_lib/x402-paid-endpoint.js';
+
+export default paidEndpoint({
+	price: '0.10', // USDC
+	chain: 'base', // base | bsc | solana
+	network: 'mainnet',
+	resource: 'https://three.ws/api/your-endpoint',
+	description: 'What the buyer is paying for',
+	handler: async (req, res, { payer }) => {
+		// payer is verified — settle the request
+		res.json({ ok: true, payer });
+	},
+});
+```
+
+The helper handles the 402 challenge, Permit2 sibling, receipt write-back, idempotency-token enforcement, and CSRF/SSRF guards. See [api/\_lib/x402-paid-endpoint.js](api/_lib/x402-paid-endpoint.js).
+
+### Wire checks
+
+- Wire-level CORS, CDP, and Permit2 sibling checks: `tests/e2e/`
+- Offer receipts schema + buyer fetch: [api/\_lib/x402-buyer-fetch.js](api/_lib/x402-buyer-fetch.js)
+- Error envelope: full 402 body returned in the `PAYMENT-REQUIRED` header
+
+---
+
+## A2A — Agent-to-Agent Protocol
+
+Agents transact with each other directly through an A2A bridge that sits on top of the MCP server and x402 payments.
+
+**How it works**
+
+When agent A wants to call a paid tool from agent B:
+
+1. **Discover** — A resolves B's DID via `POST /api/x402/did`, receiving B's MCP endpoint URL and payment wallet address.
+2. **Call** — A sends a `tools/call` JSON-RPC request to B's MCP endpoint.
+3. **Pay** — B's server returns `402 Payment Required` with a USDC price. A's SDK settles the x402 payment on-chain (Base or Solana) and retries with the payment proof in the `X-PAYMENT` header.
+4. **Execute** — B verifies the payment, runs the tool, and writes a signed receipt to `api/a2a/receipts`.
+5. **Ledger** — Both sides accumulate a row in `api/a2a/spending` — A for outbound spend, B for inbound revenue.
+
+Agent wallets sign with **EIP-7710 delegated permissions** — the delegated signer acts on behalf of the agent's root key without ever exposing it.
+
+| Surface         | Path                 | Purpose                                                  |
+| --------------- | -------------------- | -------------------------------------------------------- |
+| A2A client      | `sdk/a2a/`           | Outbound calls — pay another agent, settle the response  |
+| A2A server      | `api/a2a/`           | Inbound paid tools, exposed via MCP bridge               |
+| MCP bridge      | `api/mcp.js`         | Wraps paid tools as MCP `tools/call` with auto-402 retry |
+| Spending ledger | `api/a2a/spending`   | Per-agent spend caps and authorization gates             |
+| Receipts store  | `api/a2a/receipts`   | Signed receipts written on every paid call               |
+| DID resolution  | `POST /api/x402/did` | Resolve a counterparty DID to wallet + endpoints         |
+
+**SIWX (Sign-In with X-chain)** brokers cross-chain identity for paid sessions: an agent on Base proves ownership of a Solana wallet (or vice versa) to unlock chain-specific paid endpoints.
+
+---
+
 ## On-Chain Identity (ERC-8004 + Metaplex Core)
 
 three.ws supports two onchain identity paths as first-class peers — every reputation, attestation, and discovery surface reads from both, and SIWX brokers proofs between them so a single agent can hold reputation on both at once.
@@ -10763,6 +10506,263 @@ For external agents that need pump.fun data with strict latency, a Cloudflare Wo
 ### Vanity mint addresses
 
 The platform's pump.fun launches pre-grind vanity mint addresses with the WASM grinder so token addresses end in a brand-relevant suffix (`…pump`, `…ws`, etc.). See [WASM Vanity Grinder](#wasm-vanity-grinder).
+
+---
+
+## WASM Vanity Grinder
+
+`/vanity-wallet` is a browser-based vanity-address grinder compiled to WebAssembly. Generate **EVM addresses** with a prefix (`0xBEEF…`) or pattern, or **Solana addresses** (base58 prefix / suffix, e.g. `…pump`) in seconds, fully client-side, without leaking the private key to any server.
+
+| Module         | Path                            | Role                                                   |
+| -------------- | ------------------------------- | ------------------------------------------------------ |
+| WASM grinder   | `public/vanity-wallet.html`     | Multi-threaded secp256k1 keygen via WebWorkers         |
+| Solana variant | `scripts/pump-vanity-grind.mjs` | Server-side grinder for pump.fun mint vanity addresses |
+
+Common use cases on the platform: branded agent wallet addresses (e.g. an agent named `agent.eth` getting an address starting with `0xA6EF…`), or pump.fun token mint vanity (e.g. ending in `pump`).
+
+The Solana grinder backs the platform's pump.fun launches — the inaugural USDC token launches use a vanity mint pre-grind to produce shareable token addresses.
+
+---
+
+## Solana Mobile (Seeker)
+
+three.ws ships with Mobile Wallet Adapter (MWA) wired into the web app and a release pipeline for the Solana Mobile dApp Store.
+
+**Wallet detection priority**
+
+On **Seeker / Saga** hardware the app prefers seed-vault-backed signing — private keys never leave the secure element. On standard Android or desktop, the app falls back through WalletConnect and then to browser-extension wallets automatically, with no code change required.
+
+**What MWA unlocks on Seeker hardware**
+
+- x402 USDC payments signed from the seed vault without any browser extension
+- Metaplex Core agent mints (Solana on-chain registration) without leaving the app
+- SPL Memo attestations (reputation and validation) with hardware-secured signatures
+- SIWS (Sign-In with Solana) sessions authenticated at the chip level, not the software layer
+
+**Release pipeline**
+
+- dApp Store listing copy and release config live under [`solana-mobile/publish/`](solana-mobile/publish/)
+- Release pipeline scripts handle build → sign → APK submission for dApp Store updates
+- The listing targets Seeker-first and is compatible with Saga Gen 1 and Gen 2
+
+---
+
+## Vision
+
+One day, creating your agent should be as simple as taking a selfie.
+
+Point your camera at yourself — or anyone — and watch a fully realized 3D avatar emerge: your face, your voice, your personality, alive in the browser. That avatar becomes an agent with memory and skills, registered onchain — as an ERC-8004 token on EVM or a Metaplex Core asset on Solana — permanent and verifiable by anyone forever. No 3D software. No wallet setup. No uploads. Just a photo and a name.
+
+This is the direction three.ws is heading: **photo → avatar → agent → onchain identity**, in a single flow. The infrastructure is already here — the viewer, the runtime, the contracts, the embedding layer. What comes next is closing the gap between a picture of a person and a living, ownable, embeddable piece of them that exists on the internet permanently.
+
+---
+
+## Roadmap
+
+three.ws ships in four phases. Each phase closes a specific gap between the current platform and the end-state vision: **anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet.**
+
+| Phase | Theme                                                                                  | Status                                                                                                         |
+| ----- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **0** | Platform foundations (viewer, runtime, ERC-8004 + Metaplex Core identity, embed layer) | ✅ Shipped                                                                                                     |
+| **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress — capture UX + quality gates shipped; GPU reconstruction backend wiring                         |
+| **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
+| **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 Scaffolding — bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; contracts + audits next |
+| **4** | Open inference network (decentralized GPU layer)                                       | 🔮 Future — livepeer dep landed for early experimentation                                                      |
+
+---
+
+### Phase 0 — Foundations _(Shipped)_
+
+The full stack is live at [three.ws](https://three.ws): WebGL viewer, LLM agent runtime, ERC-8004 identity contracts (EVM) and Metaplex Core mints (Solana), OAuth 2.1 server, MCP endpoint, and the `<agent-3d>` web component. Anyone can register an agent today — but the avatar still has to come from a 3D artist or a third-party tool.
+
+**What works:** model upload, agent runtime, onchain registration, embedding, signed action history, reputation scores.
+**What doesn't:** there is no automated path from a real human face to a usable 3D avatar.
+
+---
+
+### Phase 1 — Selfie → Avatar Engine
+
+**Goal:** any user takes 3 selfies (left, center, right) and receives a rigged, animatable 3D avatar in under 60 seconds.
+
+**Deliverables**
+
+- Mobile-first capture UX with realtime quality gates (lighting, framing, blur)
+- Multi-view face reconstruction pipeline (FLAME / 3DMM fitting on top of a base body mesh)
+- Hosted inference workers (GPU-backed) for sub-minute generation
+- Output written directly to R2 and minted as a draft agent token — ERC-8004 on EVM, Metaplex Core asset on Solana
+
+**Compute requirements**
+
+- A100/H100-class GPUs for inference, sized to ~10k avatars/day at launch
+- Training budget for fine-tuning a stylized face-fitter on a curated dataset
+- CDN egress scaling for high-res GLB delivery
+
+**Verification:** 1,000 test users complete capture and mint an onchain agent of themselves end-to-end with ≥4/5 likeness score.
+
+---
+
+### Phase 2 — Agent Personalization
+
+**Goal:** the avatar isn't just _you_ — the agent _acts_ like you.
+
+**Deliverables**
+
+- Voice cloning (3–10 seconds of speech → ElevenLabs custom voice bound to the agent)
+- Persona extraction from a short onboarding interview (tone, vocabulary, interests)
+- Memory seeding from connected accounts (X, GitHub, Farcaster) with explicit user consent
+- Per-agent fine-tuned system prompt stored in the manifest, signed and pinned to IPFS
+
+**Verification:** users return to converse with their own agent; ≥30% week-2 retention on minted agents.
+
+---
+
+### Phase 3 — Onchain Economy
+
+**Goal:** agents are real economic objects on EVM and Solana, not just collectibles.
+
+**Deliverables**
+
+- **Agent tokens** — ERC-8004 mints with bonding-curve pricing or fair launch options
+- **Reputation markets** — stake on agents, earn from their action history (extends `ReputationRegistry.sol`)
+- **Skill royalties** — skill authors earn per-call fees through EIP-7710 delegated permissions
+- **Agent-to-agent payments** — agents transact autonomously via their delegated signer wallets
+- **Subscriptions & DCA** — recurring onchain payments to creators (cron infra already in place)
+
+**Funding requirements**
+
+- Smart contract audits (multi-firm) for the reputation, royalty, and delegation contracts
+- Liquidity for agent token launches
+- Indexer infrastructure across Base, Solana, and additional EVM chains
+
+**Verification:** ≥1,000 agents minted with active onchain reputation; ≥$X in cumulative skill royalties paid out.
+
+---
+
+### Phase 4 — Open Inference Network
+
+**Goal:** decouple agent inference from any single provider. Anyone can run a node; agents pay nodes onchain for compute.
+
+**Deliverables**
+
+- Open protocol for agent inference (model weights, GPU runtime, signed responses)
+- Node operator client (Docker + GPU drivers) with onchain registration
+- Onchain settlement for inference jobs — pay-per-token with cryptographic receipts
+- Federation with existing decentralized compute networks where appropriate
+
+**Compute requirements**
+
+- Bootstrap GPU credits for early node operators
+- Cryptoeconomic security model (slashing, validator set) — research + audit budget
+
+**Verification:** ≥50% of production agent traffic served by independent node operators; latency parity with centralized inference.
+
+---
+
+### What we need
+
+| Resource                   | Used for                                   | Phase |
+| -------------------------- | ------------------------------------------ | ----- |
+| **Inference GPUs**         | Avatar generation, agent conversations     | 1, 2  |
+| **Training compute**       | Fine-tuned face-fitter, voice models       | 1, 2  |
+| **Smart contract audits**  | Reputation, royalty, delegation contracts  | 3     |
+| **Token launch liquidity** | Agent token markets                        | 3     |
+| **Indexer infrastructure** | Multi-chain crawl + reputation aggregation | 3     |
+| **Node operator credits**  | Bootstrap the open inference network       | 4     |
+| **Engineering headcount**  | Capture pipeline, contracts, indexer, ops  | 1–4   |
+
+Phases 1 and 2 unblock the consumer story — _anyone gets an agent of themselves_. Phases 3 and 4 unblock the onchain story — _those agents are real economic actors that don't depend on any one company to keep running_. Both are required for the vision; neither is funded yet.
+
+If you want to support the project — compute credits, grants, partnerships, or contributions — open an issue or reach out via [three.ws](https://three.ws).
+
+---
+
+## Selfie Reconstruction Pipeline (Phase 1)
+
+Anyone takes 3 selfies (left, center, right) and receives a rigged, animatable 3D avatar in under a minute. The pipeline ships native — no third-party black box.
+
+| Module        | Path                                             | Role                                                                                                                 |
+| ------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Capture UX    | [src/selfie-capture.js](src/selfie-capture.js)   | Mobile-first 3-shot capture with real-time quality gates (lighting, framing, blur)                                   |
+| Pipeline      | [src/selfie-pipeline.js](src/selfie-pipeline.js) | Multi-view fit → FLAME / 3DMM face → base body mesh → rigged GLB                                                     |
+| Sandbox route | `/creating`                                      | Isolated reconstruction test bench, decoupled from the main flow                                                     |
+| Output        | Cloudflare R2                                    | Meshopt-compressed GLB pinned to IPFS and minted as a draft agent token — ERC-8004 on EVM or Metaplex Core on Solana |
+
+Reconstruction inference runs against the same Cloud Run handler pool as the agent runtime, with optional offload to the **Livepeer Inference Network** (see below) for GPU-heavy steps.
+
+---
+
+## Voice & Persona Hub (Phase 2)
+
+The avatar isn't just _you_ — the agent _acts_ like you. The Voice & Persona Hub captures the inputs that turn a body into a personality.
+
+| Surface             | Path                                                                 | Purpose                                                          |
+| ------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Persona extraction  | [api/persona/extract.js](api/persona/extract.js)                     | Short onboarding interview → tone, vocabulary, interests profile |
+| Persona preview     | [api/persona/preview.js](api/persona/preview.js)                     | Try the extracted persona against test prompts before saving     |
+| Persona keys        | `scripts/generate-persona-key.mjs`                                   | Per-agent signing key + persona SSO setup                        |
+| Voice clone modal   | [src/voice/voice-clone-modal.js](src/voice/voice-clone-modal.js)     | 3–10s recording → ElevenLabs custom voice bound to the agent     |
+| Talk controller     | [src/voice/talk-controller.js](src/voice/talk-controller.js)         | Push-to-talk and continuous talk modes                           |
+| ARKit blendshapes   | [src/voice/arkit-blendshapes.js](src/voice/arkit-blendshapes.js)     | Standard ARKit-52 morph table                                    |
+| Lip-sync driver     | [src/voice/lipsync-driver.js](src/voice/lipsync-driver.js)           | Web Audio analyser → blendshape weights per frame                |
+| Avatar morph target | [src/voice/avatar-morph-target.js](src/voice/avatar-morph-target.js) | Per-rig binding of ARKit blendshapes to the loaded GLB           |
+| Avatar snapshot     | [src/voice/avatar-snapshot.js](src/voice/avatar-snapshot.js)         | Render-time pose capture for thumbnails and OG cards             |
+| Persona docs        | [docs/persona-hub.md](docs/persona-hub.md)                           | Full design + onboarding flow                                    |
+
+Memory seed extensions (X, GitHub, Farcaster) feed the agent's memory store at creation time with explicit user consent — see [docs/persona-hub.md](docs/persona-hub.md).
+
+The per-agent fine-tuned system prompt is stored in the manifest, signed, and pinned to IPFS — the persona becomes a verifiable part of the agent's onchain identity.
+
+---
+
+## Livepeer Inference Network (Phase 4)
+
+three.ws is wiring the **Livepeer** decentralized GPU network as an alternative inference backend for avatar reconstruction and agent conversations.
+
+- Open protocol: model weights, GPU runtime, signed responses
+- Onchain settlement: pay-per-token with cryptographic receipts, mediated by the same x402 rails described above
+- Node operator client (Docker + GPU drivers) with onchain registration
+- Federation with existing decentralized compute networks where appropriate
+
+The Livepeer dependency landed early so the Phase 1 selfie pipeline can switch its heaviest step (multi-view face fitting) onto external GPU nodes without touching the rest of the system. The goal: ≥50% of production agent traffic served by independent node operators with latency parity to centralized inference.
+
+---
+
+## News CMS & Syndication
+
+A local-only news/blog CMS at `/admin/news` produces signed posts that auto-syndicate to multiple destinations.
+
+| Surface        | Path                                                       | Purpose                                             |
+| -------------- | ---------------------------------------------------------- | --------------------------------------------------- |
+| CMS            | `/admin/news`                                              | Local-only editor — drafts, images, scheduled posts |
+| Public listing | `/news`                                                    | Cover-image grid with permalinks                    |
+| Article        | `/news/<slug>`                                             | Server-rendered article with OG card                |
+| RSS / Atom     | `/api/news/rss`                                            | Standards-compliant feed for HackerNoon auto-import |
+| WebSub hub     | `/api/news/websub`                                         | Push notifications to subscribed hubs on publish    |
+| Dev.to         | syndication adapter                                        | Cross-posts with canonical URL pointing back        |
+| Medium         | syndication adapter                                        | Same, with format-aware re-render                   |
+| CMC handoff    | syndication adapter                                        | Coinmarketcap article + announcement listing        |
+| Newsletter     | [api/newsletter-subscribe.js](api/newsletter-subscribe.js) | Resend-backed double-opt-in newsletter              |
+
+Each article is a static HTML file in `public/news/` with metadata in Postgres. The CMS supports a cover-image convention for listing thumbnails and OG previews. Articles can be published once and reach HackerNoon, Dev.to, and Medium readers without manual cross-posting.
+
+---
+
+## Security Hardening
+
+The platform has been hardened against the OWASP top-10 plus a set of issues specific to agent payments and cross-chain identity.
+
+| Control                   | Where                                                                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **SSRF guard**            | All outbound `fetch()` from agent runtime + skills goes through an SSRF allow-list filter (`api/_lib/safe-fetch.js`)                     |
+| **CSRF gates**            | State-changing endpoints require an Origin + Sec-Fetch-Site check; bearer-only paths exempt                                              |
+| **Header-origin pinning** | The iframe bridge locks onto the parent's origin from the first authenticated message and ignores later messages from a different origin |
+| **Fail-closed crons**     | Cron endpoints fail closed if their auth token is missing — no silent skips                                                              |
+| **Idempotency tokens**    | x402 paid endpoints require an idempotency key to prevent double-charge on retry                                                         |
+| **Embed policy**          | Per-agent iframe origin allow-list (`/api/agents/:id/embed-policy`) gates the chromeless embed                                           |
+| **Rate limiting**         | Upstash Redis per-user + per-API-key + per-IP buckets at every public endpoint                                                           |
+| **JWT key rotation**      | `JWT_KID` lets you rotate signing keys without invalidating in-flight sessions                                                           |
+| **Bcrypt cost**           | Tunable via `PASSWORD_ROUNDS` (default 11)                                                                                               |
+| **Audit signing**         | Every agent action is signed with the delegated signer key and chained into a per-agent action log                                       |
 
 ---
 

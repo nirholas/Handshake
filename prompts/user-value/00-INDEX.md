@@ -7,7 +7,7 @@ user *return*. Every agent reads `_shared.md` first, then its prompt. Run order 
 waves consume earlier waves' output. Within a wave, prompts are independent and can run
 concurrently.
 
-> DO NOT DELETE PROMPT FILES — even after their work ships. Only the owner removes prompts.
+> Retirement follows the policy in [../README.md](../README.md): a work order is deleted only after its deliverables are verified shipped in the codebase and inbound code references are rewritten. Partial or blocked work orders stay.
 
 ## Wave 1 — foundation (run first, alone)
 | Prompt | Feature | Touches |

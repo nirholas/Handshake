@@ -290,7 +290,7 @@ above with the BscScan-visible ones (same script, same bytecode — only the
 
 ### Prompt 18 — two-wallet world E2E proof (anvil, `--block-time 0.45`)
 
-Prompt 18 (`prompts/bnb-chain/18-world-e2e-demo.md`) needed two real participants
+Prompt 18 (bnb-chain campaign, work order 18, world e2e demo; retired, see git history) needed two real participants
 moving in the same world at once with block spacing that actually reproduces
 BSC's live ~0.45s cadence — a step up from 14/15/16's wall-clock-paced local
 blocks. This run started a FRESH (non-forked) `anvil --chain-id 97 --block-time
@@ -407,7 +407,7 @@ on the real testnet ObjectHub for a real uploaded object (prompt 09); execute
 one real `buy()`; and paste the BSC tx hash plus the resulting
 `PermissionHub.settleCreatePolicy`/`PolicyGranted` proof (BscScan +
 GreenfieldScan once the cross-chain ack settles) per
-`prompts/bnb-chain/10-vault-contract.md`'s definition of done.
+the bnb-chain campaign work order 10 (vault contract; retired, see git history) definition of done.
 
 **Prompt 11 (vault unlock API) local-anvil proof, 2026-07-08 — mocked-hubs
 deploy script added:** [`script/DeployGreenfieldVaultMocked.s.sol`](script/DeployGreenfieldVaultMocked.s.sol)

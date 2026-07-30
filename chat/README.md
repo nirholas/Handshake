@@ -1,70 +1,105 @@
-# three.ws-chat
+# chat/ (three.ws Chat)
 
-### A fast, light, open chat UI
+The Svelte chat client served in production at **https://three.ws/chat**. It is the
+conversational surface of three.ws: multi-provider LLM chat with tool calling, inline
+3D model generation and viewing, agent wallets, and the skills marketplace, all wired
+to the platform's own `api/` handlers.
 
-### Key features:
+## Upstream and license
 
-- 🔌 Multiple providers, plug in your API keys (stored entirely locally) and you're good to go
+This app started as a fork of **eplus** (https://eplus.chat), a fast, light, open chat
+UI with a Go tool server; the tool server ([server/](server)) and sync server
+([sync/](sync)) still follow its design (write a Go function in
+[server/toolfns/toolfns.go](server/toolfns/toolfns.go), its comment becomes the tool
+description, click Sync in the UI). The three.ws copy has diverged heavily: platform
+auth, wallets, forge tools, and the inline 3D viewer are all three.ws additions.
+This directory is covered by [LICENSE](LICENSE) (proprietary, copyright 2026 nirholas).
 
-  - Local models (through Ollama)
-  - OpenRouter (which lets you use ALL models across many providers: OpenAI, Anthropic, OSS, 50+ others)
-  - OpenAI
-  - Anthropic
-  - Mistral
-  - Groq
+## What it does
 
-- 🛠️ Tool use
-  - Check out `server/toolfns/toolfns.go`. You only need to write functions. The function comment is the description the model receives, so it knows what to use. Click the `Sync` button in the web UI to refresh your tools.
-- 🖼️ Multimodal input: upload, paste, or share links to images
-- 🎨 Image generation using DALL-E 3
-- 📝 Multi-shot prompting. Also edit, delete, regenerate messages, whatever. The world is your oyster
-- ⚡ Pre-filled responses (where supported by provider)
-- 🌐 Support for all available models across all providers
-- 🔄 Change model mid-conversation
-- 🔐 Sync chats and keys across devices, end-to-end encrypted. Self-hosted, or use our hosted instance.
-- 🔗 Conversation sharing (if you choose to share, your conversation has to be stored on an external server for the share link to be made available. Self-hosted share options coming soon. No, I will not view any of your stuff.)
-- 🌿 Branching conversation history (like the left-right ChatGPT arrows that you can click to go back to a previous response)
+- **Models**: a Built-in free lane (server-selected `:free` models via `POST /api/chat/proxy`,
+  no key needed) plus bring-your-own-key providers (OpenRouter, Anthropic, OpenAI, Groq,
+  Mistral, local Ollama). Keys are stored only in the browser's localStorage and sent
+  browser-to-provider. The live model list comes from `GET /api/chat/models`; defaults
+  from `GET /api/chat/config` ([src/providers.js](src/providers.js), [src/stores.js](src/stores.js)).
+- **3D in chat**: the `ForgeTextTo3D` and `ForgeAvatar` client tools call the free forge
+  lane (`POST /api/forge`, `/api/forge?action=rig`, `/api/avatars/from-forge`) and return an
+  `application/model-3d` envelope that [src/ModelViewer3D.svelte](src/ModelViewer3D.svelte)
+  renders inline: orbit controls, animation playback, skeleton toggle, AR, GLB download.
+  Pasted `.glb` links auto-render too, proxied through `/api/glb?src=` when the host lacks CORS.
+- **Conversations** live entirely in the browser (localStorage), with optional
+  end-to-end-encrypted sync through the Go server in [sync/](sync).
 
-### Privacy:
+## Local development
 
-- Completely private and transparent. All your conversation history and keys are stored entirely locally, and kept only in your browser, on your device.
-
-## 3D in chat: forge models and view them inline
-
-The chat generates and displays real 3D models directly in the conversation. Three pieces work together:
-
-**Forge tools (on by default).** Two client tools are bootstrapped into every fresh conversation:
-
-- `ForgeTextTo3D` runs the free three.ws Forge lane (`POST /api/forge { prompt }`). It returns immediately; the model appears in the thread in roughly 30 to 90 seconds. Ask for "a 3D model of a brass steampunk owl" and the assistant calls it on its own.
-- `ForgeAvatar` runs the full text to mesh to auto-rig to avatar-library pipeline (`/api/forge`, `/api/forge?action=rig`, `/api/avatars/from-forge`). Saving to the library requires being signed in; without a session it still returns the rigged model.
-
-Both tools return an `application/model-3d` envelope instead of raw HTML: `{ contentType: 'application/model-3d', content: { glb, job, prompt, preview, eta, rigged, saved_url, status_note, error }, summary }`. The `summary` string is what the LLM reads; the compact `content` object is what renders, so tool results stay cheap in tokens.
-
-**The inline viewer (`src/ModelViewer3D.svelte`).** Any `application/model-3d` tool result renders directly in the message thread (and in the tool split view) as an interactive Three.js viewer: orbit and zoom with damping plus auto-rotate until first interaction, PBR environment lighting, animation playback when the GLB has clips, a skeleton toggle for rigged models (press S), and Download GLB / Viewer / View in AR / Recenter controls. While a forge job is pending it polls `GET /api/forge?job=` and shows the concept preview with a progress bar, then swaps in the model; once resolved, the GLB URL is persisted into the stored message so reloading the conversation renders instantly instead of re-polling. Viewers initialize lazily near the viewport, pause rendering offscreen, dispose all GPU resources on unmount, and recover from WebGL context loss with a reload card.
-
-**GLB links auto-render.** Paste a `.glb` URL into a message (or have the assistant produce one) and a viewer appears under it. Cross-origin models whose host lacks CORS headers are fetched through the same-origin `/api/glb?src=` proxy automatically. Links already rendered by a tool card or an earlier message are not duplicated.
-
-## How to install?
-
-If you don't want to use tools, you don't need to install anything. A hosted instance is available at: https://three.ws/chat
-
-If you want to use tools, proceed below.
-
-## Single binary:
-
-The three.ws-chat tool server is available prebuilt as a single binary. [Download prebuilt package from the releases page.](https://github.com/nirholas/three.ws-chat/releases)
-
-Download the binary for your platform, then run it, which will start the tool server:
-
-```
-./three.ws-chat-darwin-amd64
-Tool server running at http://localhost:8081
+```sh
+cd chat
+npm ci            # or: node scripts/ensure-deps.mjs
+npm run dev       # http://localhost:5173
 ```
 
-Go back to https://three.ws/chat, head over to Settings -> Tool calling, and click the "Refresh tools" button. You should be good to go!
+The dev server ([vite.config.js](vite.config.js)) does three things for you:
 
-### Building client and server locally:
+- Proxies `/api/*` to `https://three.ws` (override with `DEV_API_PROXY`, see below), so
+  auth, forge jobs, and paid calls hit the real backend during development.
+- Serves `/animations/*` and `/avatars/*` from the repo's `../public`, and `/agent-3d/*`
+  from `../dist-lib`, so 3D features work without a root build.
+- Aliases `$src` to [src/](src) and `$shared` to `../src/shared` (the app imports the
+  platform's `portable-wallet.js` from there: one repo, one wallet truth).
 
-1. Clone the repository
-2. Install and start the client: `npm i && npm run dev`. The client will be accessible at http://localhost:5173
-3. Install and start the server: `cd server && go generate ./... && go build && ./server -password foobar`. The server will be accessible at http://localhost:8081. You can plug this into the server address in the chat UI along with the password you selected.
+`npm run format` / `format:check` run Prettier. There is no test suite inside `chat/`;
+platform tests live in the repo root (`npm test`).
+
+## How production builds it
+
+`npm run build:chat` at the repo root runs [scripts/ensure-deps.mjs](scripts/ensure-deps.mjs)
+(skips `npm ci` when `package-lock.json` is unchanged), then `vite build` with
+`base: '/chat/'` into `../public/chat`, then copies that into `dist/chat/`.
+
+In the deploy chain, `build:chat` is a step inside `npm run build:gcp`, ordered before
+the root frontend `vite build`. That order is load-bearing: the root build empties
+`dist/` and then copies `public/` (which now contains the fresh `public/chat`) into it,
+so the chat bundle survives the wipe. The full chain is encoded in `build:gcp` in the
+root `package.json`; the deploy runbook lives in
+[../docs/ops/gcp-production.md](../docs/ops/gcp-production.md). The deploy worktree
+must hardlink `chat/node_modules` (`cp -al`), or the chat build dies with
+`Cannot find package '@sveltejs/vite-plugin-svelte'`.
+
+At runtime, [../server/index.mjs](../server/index.mjs) serves `dist/` and applies the
+route table from [../vercel.json](../vercel.json): `/chat` and `/chat/` rewrite to
+`/chat/index.html`, `/chat/(.*)` serves the built assets. The page is declared in
+`../data/pages.json` (path `/chat`), which feeds the sitemap and changelog.
+
+## Environment variables
+
+The built client ships no secrets and reads no runtime env vars.
+
+| Variable | Where | Effect |
+|---|---|---|
+| `DEV_API_PROXY` | dev only, shell env | Upstream for the Vite `/api/*` proxy (default `https://three.ws`) |
+| `BUILD_TIMESTAMP` | build time | Injected by [vite.config.js](vite.config.js) via `define`, shown in the UI |
+
+The Built-in free lane depends on `OPENROUTER_API_KEY` being set on the platform API
+(the Cloud Run service), not on anything in this directory.
+
+## Platform integration points
+
+Everything below is a real `api/` handler in the repo root, reached same-origin:
+
+- **Chat**: `/api/chat/models`, `/api/chat/config`, `/api/chat/proxy` (free lane with
+  moderation and model failover), `/api/chat-skills`, `/api/tts/google` (voice).
+- **Auth and identity**: `/api/auth/me`, `/api/csrf-token` (cookie session shared with
+  the rest of three.ws).
+- **Forge and 3D**: `/api/forge` (create, poll, rig), `/api/avatars/from-forge`,
+  `/api/glb` (CORS proxy), `/api/nft/resolve`.
+- **Agents and marketplace**: `/api/agents/*`, `/api/marketplace/agents`,
+  `/api/skills`, `/api/skills/*`, `/api/skills-manifest`.
+- **Wallet and payments** ([src/AgentWallet.svelte](src/AgentWallet.svelte),
+  [src/walletAuth.js](src/walletAuth.js)): `/api/wallet/balances`,
+  `/api/tx/solana/build-transfer`, `/api/tx/solana/build-swap`, `/api/tx/explain`,
+  `/api/x402-pay`, `/api/billing/*`, `/api/agents/payments/*`.
+- **Launches** (platform launcher, runtime mint input): `/api/pump/quote`,
+  `/api/pump/launch-prep`, `/api/pump/launch-confirm`, `/api/pump/sell-prep`,
+  `/api/pump/balances`, `/api/pump-fun-mcp`.
+- **Scenes and notifications**: `/api/scene/gate-check`, `/api/scene/gate-create`,
+  `/api/nft/mint-scene`, `/api/notifications`.

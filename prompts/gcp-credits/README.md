@@ -11,7 +11,7 @@ acceptance criteria all pass.
 | 1 | `01-gcp-foundation.md` | — | — (run first, alone) |
 | 2 | `02-vertex-claude-provider.md` | 01 | 03, 04 |
 | 3 | `03-imagen-activation.md` | 01 | 02, 04 |
-| 4 | `04-gpu-workers-deploy.md` | 01 | 02, 03 |
+| 4 | `04-gpu-workers-deploy.md` (retired 2026-07-30, verified shipped: six workers + flag-gated routing + cost docs; rig lane shipped as `workers/rig`/model-rig replacing the unirig stub) | 01 | 02, 03 |
 | 5 | `05-catalog-animation-seeding.md` | 04 | 06, 07 |
 | 6 | `06-vanity-inventory.md` | 01 | 05, 07 |
 | 7 | `07-spend-observability.md` | 01 (best after 02–04) | 05, 06 |

@@ -1,4 +1,5 @@
-// One-off evidence script for prompts/robinhood-chain/13-threews-play.md.
+// One-off evidence script for the robinhood-chain campaign, work order 13
+// (three.ws /play integration; retired, see git history).
 // Drives a real headless Chromium against the local server/index.mjs (built
 // dist/ + real api/** handlers, no mocks) to verify the Robinhood Chain /play
 // integration end to end: the /worlds lobby renders the Robinhood Chain tab,

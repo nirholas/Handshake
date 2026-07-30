@@ -5,7 +5,7 @@
 // on every tick. No hardcoded "0.45s" anywhere in this file: every number
 // on screen traces back to the most recent successful probe.
 //
-// See prompts/bnb-chain/17-latency-proof-page.md and 00-CONTEXT.md (verified
+// See the bnb-chain campaign, work order 17 (latency proof page; retired, see git history), and 00-CONTEXT.md (verified
 // fact #3 — 0.45s blocks live; never claim BEP-670's 250ms target).
 
 import { escapeHtml as esc, timeAgo } from './shared/coin-format.js';

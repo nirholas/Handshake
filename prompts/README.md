@@ -13,7 +13,6 @@ Internal work-order packs for Claude agents. Each subdirectory is a campaign: a 
 
 | Directory | What it is |
 |---|---|
-| [agent-briefs/](agent-briefs/) | Multi-agent program briefs (design system, 3D world, world-online), each with a program overview and its own progress log. |
 | [bnb-chain/](bnb-chain/) | BNB Chain campaign: payments and gasless-rail work orders with a verified-facts context file. |
 | [fable-audit/](fable-audit/) | One work order per finding from the 2026-07-11 deep audit, with severity, exact defect location, fix, and verification. |
 | [gcp-credits/](gcp-credits/) | Prompt pack for the GCP credit program: GPU worker deploys, catalog and animation seeding. |
@@ -24,7 +23,7 @@ Internal work-order packs for Claude agents. Each subdirectory is a campaign: a 
 | [store-submissions/](store-submissions/) | Prompts for listing three.ws MCP tools across Claude and OpenAI marketplaces and MCP registries. `_generated/` holds submission evidence. |
 | [user-value/](user-value/) | User-facing platform features: creator profiles, activity feed, social graph, notifications, discovery search, leaderboard, onboarding. |
 
-Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md).
+Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28; agent-briefs, whose world-online program shipped through Phase 3, was retired 2026-07-30); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md).
 
 ## Runtime consumption
 

@@ -1,4 +1,5 @@
-// One-off evidence script for prompts/store-submissions/18-token-gated-3d-embeds.md —
+// One-off evidence script for the store-submissions campaign, prompt 18
+// (token-gated 3D embeds; retired, see git history).
 // NOT part of the shipped feature. Drives the REAL api/embed/gate-create.js,
 // api/embed/gate-verify.js, and api/embed/resolve.js handlers (as real Node
 // request/response objects, not mocks) against the real dev database and real

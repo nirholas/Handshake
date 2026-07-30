@@ -4,7 +4,7 @@
 // threshold crossing into a Telegram ops ping via sendOpsAlert — the same path
 // the changelog bot uses, but the PRIVATE ops chat (TELEGRAM_ALERTS_CHAT_ID),
 // never the holders' channel. This is how the $100k credit program (see
-// prompts/gcp-credits/ and docs/gcp-credits.md) surfaces a runaway lane BEFORE
+// prompts/gcp-credits/ and docs/ops/gcp-credits.md) surfaces a runaway lane BEFORE
 // it drains the grant: scripts/gcp/create-budgets.mjs registers budgets at
 // 25/50/75/90/100% pointing at a Pub/Sub topic; that topic pushes here.
 //

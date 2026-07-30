@@ -5,7 +5,7 @@
 // probing the real route/API on this deployment. No hardcoded live/coming-soon
 // flags: a card lights up the moment its check target starts resolving.
 //
-// See prompts/bnb-chain/19-bnb-hub-page.md and 00-CONTEXT.md (verified/refuted
+// See the bnb-chain campaign, work order 19 (BNB hub page; retired, see git history), and 00-CONTEXT.md (verified/refuted
 // claims list — every sentence on this page traces back to that list).
 
 import { escapeHtml as esc, timeAgo } from './shared/coin-format.js';

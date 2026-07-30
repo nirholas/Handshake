@@ -2318,7 +2318,7 @@ sequenceDiagram
 
 > `docs/ALL.md` (3.4 MB) is a generated concatenation of the entire docs tree; `docs/llms.txt` / `docs/llms-full.txt` are the LLM-discovery indexes.
 
-> **Prompt / work-order collections** (agent-dispatch task files and campaign runbooks — not product docs) live under the top-level [`prompts/`](prompts) directory, not `docs/`: `store-submissions/`, `agent-briefs/`, and `roadmap/` (moved out of `docs/`), alongside `gcp-credits/` and `okx-ai/`. Completed campaigns (`x402-catalog/`, `x402-overhaul/`, `bnb-chain/` work orders) are deleted once verified shipped and remain readable in git history.
+> **Prompt / work-order collections** (agent-dispatch task files and campaign runbooks; not product docs) live under the top-level [`prompts/`](prompts) directory, not `docs/`: `store-submissions/` and `roadmap/` (moved out of `docs/`), alongside `gcp-credits/` and `okx-ai/`. Completed campaigns (`x402-catalog/`, `x402-overhaul/`, `agent-briefs/`, `bnb-chain/` work orders) are deleted once verified shipped and remain readable in git history.
 
 ---
 

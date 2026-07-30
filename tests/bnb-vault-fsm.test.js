@@ -2,7 +2,7 @@
 // backing the /vault page (prompt 12). No DOM, no network: every branch of
 // deriveListingState/nextFlowStep is exercised table-style so the UI's
 // buy → settle → unlock progression is provably correct independent of
-// mounting the page. See prompts/bnb-chain/12-vault-ui.md's "Tests" section.
+// mounting the page. See the bnb-chain campaign, work order 12's (vault UI; retired, see git history) "Tests" section.
 
 import { describe, it, expect } from 'vitest';
 import { deriveListingState, nextFlowStep, formatBnbAtomic, truncateAddress, pollDelayMs, SALE_STATUS, FLOW_STEPS } from '../src/vault-fsm.js';

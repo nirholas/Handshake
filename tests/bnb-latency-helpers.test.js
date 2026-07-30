@@ -1,7 +1,7 @@
 // Pure helpers behind the /bnb-latency live block-race page: interval
 // averaging from raw block timestamps, lane state derivation, sparkline bar
 // normalization, and the honest measured-vs-measured speedup ratio. See
-// prompts/bnb-chain/17-latency-proof-page.md — "Pure interval-averaging +
+// the bnb-chain campaign, work order 17 (latency proof page; retired, see git history): "Pure interval-averaging +
 // sparkline math in tests/ (feed block timestamps → correct rolling
 // average)".
 

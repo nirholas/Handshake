@@ -5,8 +5,9 @@
 // boutique-affordable balance to it, and writes the fixture (keys + env) to
 // disk for the server + Playwright runs to consume.
 //
-// Targets a local `solana-test-validator` (started separately — see
-// PORT-CHECKLIST/W04 brief) rather than the public devnet faucet: the public
+// Targets a local `solana-test-validator` (started separately; see the
+// W-world-online program's W04 brief and port checklist in git history)
+// rather than the public devnet faucet: the public
 // faucet is globally rate-limited ("airdrop limit today / faucet has run
 // dry" — hit repeatedly during this verification, unrelated to this box) and
 // a shared box running many concurrent agents makes that worse. A local

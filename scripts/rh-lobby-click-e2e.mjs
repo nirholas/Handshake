@@ -1,4 +1,5 @@
-// One-off evidence script for prompts/robinhood-chain/13-threews-play.md —
+// One-off evidence script for the robinhood-chain campaign, work order 13
+// (three.ws /play integration; retired, see git history). Covers the
 // full user journey: /worlds lobby -> Robinhood Chain tab -> click a real
 // coin card -> lands on /play with the coin-flavored biome active.
 

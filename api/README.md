@@ -69,6 +69,41 @@ The `_`-prefixed folders are imported by the endpoints; they are not routes:
 ### Scheduled jobs (Vercel Cron)
 - `cron/[name].js` — a single dynamic dispatcher for every cron job. Vercel hits `/api/cron/<name>`; `req.query.name` selects the job. Schedules are declared in `vercel.json` under `crons`, including: `audit-log-cleanup` (daily 04:00); `expire-pending-purchases`, `solana-attestations-crawl`, `index-delegations`, `run-coin-cycle`, `unstoppable-tick` (every 5 min); `cleanup-csrf-tokens` (hourly :17); `process-withdrawals`, `run-dca`, `run-subscriptions` (hourly); `erc8004-crawl`, `pumpfun-signals` (every 15 min); `run-x-scheduled-posts` (every min); `run-x-triggers` (every 5 min); `fetch-x-metrics`, `process-subscriptions` (every 6 h); `pump-agent-stats`, `solana-attest-event-cleanup` (every 10 min); `pumpfun-monitor` (every 3 min); `settle-royalties`, `siwx-gc` (daily 03:00); and the staggered `run-coin-payouts` / `club-payouts`.
 
+## Quick examples
+
+Every endpoint speaks plain HTTP. These run as-is against production (all verified):
+
+```bash
+# Liveness plus the exact commit and Cloud Run revision serving production
+curl -s https://three.ws/api/version
+
+# Public agent directory (no auth)
+curl -s "https://three.ws/api/agents/public?limit=3"
+
+# Paginated manifest of the free rigged-character library
+curl -s "https://three.ws/api/avatars/library?limit=5"
+
+# Free x402 market index: every paid market-data endpoint and its price
+curl -s https://three.ws/api/x402/market
+
+# The full MCP tool catalog as plain JSON (no auth, no payment)
+curl -s https://three.ws/api/tool_schema
+
+# Probing a paid surface bare returns its x402 payment challenge, not an error page
+curl -s -X POST https://three.ws/api/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+Three auth models coexist, and each handler states its own:
+
+- **Public**: no credentials (everything above).
+- **Session + CSRF**: browser surfaces send the session cookie plus a token from `/api/csrf-token`; see `_lib/auth.js` (`getSessionUser`).
+- **Bearer**: developer API keys and scoped agent tokens via the `Authorization: Bearer` header; see `_lib/auth.js` (`authenticateBearer`, `hasScope`) and [docs/developer-platform.md](../docs/developer-platform.md).
+
+Paid endpoints layer x402 on top: pay the challenge with any x402 client and retry with the `X-PAYMENT` header. Buyer-side walkthrough: [docs/x402-buyer.md](../docs/x402-buyer.md); free debugging bench: [docs/x402-dev-tools.md](../docs/x402-dev-tools.md).
+
 ## Local development
 
 These run under `vercel dev`, or behind the Vite dev-server proxy. CORS is applied per-endpoint via the `cors` helper in `_lib/http.js`.

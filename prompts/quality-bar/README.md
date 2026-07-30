@@ -27,7 +27,7 @@ measured so it cannot regress (09), with humans as the hardest special case (10)
 | 06 | 06-forge-ux-flow.md | /forge flagship experience | best after 01, 05 |
 | 07 | 07-design-system-sweep.md | Tokens, states, microinteractions sitewide | none |
 | 08 | 08-mobile-performance.md | Mobile excellence, GLB compression | best after 05 |
-| 09 | 09-realism-eval-harness.md | Benchmark + Gemini judge + regression gate | run EARLY for the baseline |
+| 09 | 09-realism-eval-harness.md (retired 2026-07-30, verified shipped) | Benchmark + Gemini judge + regression gate | run EARLY for the baseline |
 | 10 | 10-avatar-likeness-irl-people.md | IRL people: likeness, hands, rig, AR | best after 02, 04 |
 
 Run 09 first (baseline), then 01/04/05/07 in parallel (no dependencies), 02/03 as quota lands,

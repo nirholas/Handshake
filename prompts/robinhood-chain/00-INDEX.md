@@ -20,7 +20,7 @@ independent and can run concurrently. Every agent reads `_shared.md` first, then
 | [03-sdk-advanced-wrapper.md](03-sdk-advanced-wrapper.md) | Advanced toolkit (`hoodkit`) | `robinhood/hoodkit/` |
 | [04-market-data-api.md](04-market-data-api.md) | Hosted market-data API + x402 | `robinhood/hood-api/` |
 | [05-x402-usdg-rail.md](05-x402-usdg-rail.md) | x402 USDG middleware + facilitator | `robinhood/hood402/` |
-| [06-mcp-servers.md](06-mcp-servers.md) | MCP servers (data + trading) | `robinhood/hood-mcp/` |
+| 06-mcp-servers.md (retired 2026-07-30, verified shipped: hood-mcp@0.1.1 on npm, 13/13 tests green; owner residuals: faucet-funded swap hash, GitHub Pages enable) | MCP servers (data + trading) | `robinhood/hood-mcp/` |
 | [11-toolkit-cli.md](11-toolkit-cli.md) | CLI toolkit (`hood-cli`) | `robinhood/hood-cli/` |
 | [14-wallet-connect-kit.md](14-wallet-connect-kit.md) | Wallet & onboarding kit (`hood-connect`) | `robinhood/hood-connect/` |
 | [15-tokenlist.md](15-tokenlist.md) | Canonical token list (`hood-tokenlist`) | `robinhood/hood-tokenlist/` |

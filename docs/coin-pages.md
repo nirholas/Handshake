@@ -195,7 +195,7 @@ why it — not CoinPaprika — takes the high-volume chart job.
 
 ## The market tools
 
-Four more surfaces extend Markets, all sharing the same design system
+Five more surfaces extend Markets, all sharing the same design system
 ([`src/coin-pages.css`](../src/coin-pages.css)) and real, key-free data. Every
 one cross-links back into the markets table and the coin detail pages.
 
@@ -225,6 +225,48 @@ hidden. Fees are read straight from the chain — `/api/coin/gas` calls
 each tier with the live ETH price (CoinGecko → DefiLlama failover). No
 third-party gas API, no key.
 
+### `/screener`: the Token Screener
+
+A live filtering workbench over the **top 250 coins by market cap**. The page
+loads the whole set once (`/api/coin/markets?page=1&per_page=250`, the same
+cached endpoint behind the markets table, so no new endpoint), then every
+keystroke, filter change, and sort runs instantly in the browser with no
+further network traffic.
+
+The filter controls, all composable (a coin must pass every active one):
+
+- **Search**: a debounced (200 ms) substring match against name and symbol.
+- **Direction**: an All / Gainers / Losers segmented control. Gainers keeps
+  only coins whose 24h change is above zero, Losers only those below; a coin
+  flat at exactly 0 matches neither.
+- **Min market cap**: Any, $10M+, $100M+, $1B+, $10B+, $100B+.
+- **Min 24h volume**: Any, $1M+, $10M+, $100M+, $1B+.
+- **Reset** restores every control and the default sort in one click (the
+  zero-results empty state offers the same reset inline).
+
+The results table reuses the shared `cv-table` pattern from the markets index:
+rank, coin (icon, name, symbol), price, 24h %, 7d %, market cap, and 24h
+volume. **Every column sorts**: click a header, or focus it and press
+Enter/Space (headers are keyboard-reachable and announce `aria-sort`). The
+first activation sorts name and rank ascending and every numeric column
+descending; activating the already-active column flips the direction. Rows
+link to their [`/coin/:id`](#coinid--coin-detail) detail page, and clicking
+anywhere on a row navigates. A live match counter ("N of 250 coins",
+`aria-live`) and an "Updated HH:MM:SS" stamp keep the state legible, and
+lower-priority columns collapse at narrow widths while the coin column stays
+readable.
+
+Every state is designed: a 14-row skeleton while the single fetch is in
+flight, a plain-language error state when the markets feed is unavailable,
+and a zero-match empty state that suggests widening the floors and offers the
+one-click reset.
+
+Files: [`pages/screener.html`](../pages/screener.html) (shell, controls, SEO),
+[`src/screener.js`](../src/screener.js) (state, filtering, sorting,
+rendering), [`src/screener.css`](../src/screener.css), with shared formatters
+from [`src/shared/coin-format.js`](../src/shared/coin-format.js) and the table
+pattern from [`src/coins-index.js`](../src/coins-index.js).
+
 ### `/compare` — side-by-side comparison
 
 Up to four coins head to head: an **overlay chart** of normalized price
@@ -240,9 +282,10 @@ highlighted. Add coins with the search type-ahead; the selection is mirrored to
 Eight further tools round out the suite, same design system, same "real key-free
 data" rule:
 
-- **`/screener`** — filter the top 250 coins by search, gainers/losers, minimum
+- **`/screener`**: filter the top 250 coins by search, gainers/losers, minimum
   market cap, and minimum 24h volume; every column sorts. Reuses
-  `/api/coin/markets` (no new endpoint).
+  `/api/coin/markets` (no new endpoint). Documented in full in
+  [its own section above](#screener-the-token-screener).
 - **`/categories`** — every crypto sector ranked by market cap with 24h change,
   volume, and the top coins in each. New `/api/coin/categories` (CoinGecko
   `/coins/categories`). Each row opens a [category detail

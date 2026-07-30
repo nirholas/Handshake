@@ -4,7 +4,7 @@
 // rendered a per-category `in_app` toggle, but the bell row used to be inserted
 // unconditionally, so muting a category did nothing: the notification still
 // landed in the inbox and still counted toward unread. These tests pin the fix
-// from prompts/user-value/04-notifications.md task 6 ("store it, respect it in
+// from the user-value campaign, work order 04 task 6 ("store it, respect it in
 // the write path"): the `user_notifications` insert is gated on
 // channelEnabled(prefs, type, 'in_app'), independently of every other channel.
 //

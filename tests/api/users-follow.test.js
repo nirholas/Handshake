@@ -207,9 +207,9 @@ describe('GET /api/users/:username/follows', () => {
 });
 
 // GET /api/users/me/feed?scope=following is the "people I follow" activity
-// filter that 02-activity-feed.md's mission depends on — and it's under active
-// concurrent development by that prompt's agent (its query set and response
-// shape changed shape mid-session while this file was being written). We only
+// filter that the user-value campaign's work order 02 (activity feed; shipped
+// and retired, see git history) depended on. Its query set and response shape
+// changed mid-session while this file was being written, so we only
 // assert the follow-graph-specific contract here: default scope requires auth,
 // and the zero-following case degrades to an empty (never a crashed) feed. The
 // merge/render logic for avatars/agents/coins/models/worlds/follows itself is

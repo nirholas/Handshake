@@ -73,7 +73,7 @@ splatting, PBR/restyle, scene layout, Solana minting, embed/OG. Each roadmap pro
 7. `07-new-input-modalities.md` — sketch→3D, photo→avatar, multi-image→3D, voice→scene. New on-ramps into generation.
 
 ### Track 3 — New ways to create & use (3D + crypto + AI)
-8. `08-crypto-native-creation.md` — mint generated 3D as on-chain assets with signed provenance; token-gated/premium generation via x402; $THREE utility; royalties.
+8. `08-crypto-native-creation.md` (retired 2026-07-30, all five tasks verified shipped, see git history): mint generated 3D as on-chain assets with signed provenance; token-gated/premium generation via x402; $THREE utility; royalties.
 9. `09-creator-marketplace-remix.md` — gallery, remix, discovery, creator profiles, leaderboards (build on the Loom gallery + launches feed).
 10. `10-agent-native-3d-and-embed.md` — MCP tools + agents that autonomously create and use 3D; embeddable/social distribution so the platform spreads.
 

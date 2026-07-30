@@ -248,7 +248,9 @@ scripts/genesis-results.json
 # local test wallet (never commit)
 .wallet-test.json
 docs/three-ws-feature-article.md
-animation-sources/
+# Motion sources are build-time inputs, never committed; the README documents the directory.
+animation-sources/*
+!animation-sources/README.md
 scripts/mixamo-dl/
 demo.html
 demo2.html

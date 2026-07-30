@@ -5,7 +5,8 @@
  * platform produces gets a durable, cryptographically-verifiable record of who
  * made it, from what prompt/model, and (for a remix/mint) its parent lineage —
  * the "creator, prompt, parent lineage, model hash, timestamp" provenance line
- * from prompts/roadmap/08-crypto-native-creation.md.
+ * from the roadmap campaign, work order 08 (crypto-native creation; retired,
+ * see git history).
  *
  * Canonicalization + signing here is a byte-for-byte mirror of
  * packages/provenance-mcp/src/lib/signing.js (same ACTION_SIG_VERSION, same

@@ -1,7 +1,7 @@
 // Camera modes — a shared 4-mode chase camera (follow / cinematic / firstperson
 // / topdown), extracted from `/walk` (W01: open-world foundation) so `/play`
 // gets the same camera system instead of a second, divergent implementation.
-// See prompts/agent-briefs/W-world-online/PORT-CHECKLIST.md P1.4.
+// See the W-world-online program port checklist, item P1.4 (retired; see git history).
 //
 // `computeCameraForMode()` is the pure per-frame pose math (no allocation
 // beyond a shared scratch, no side effects) — both `walk.js` and

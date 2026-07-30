@@ -1,6 +1,7 @@
 // Unit tests for the merge/render logic of GET /api/users/me/feed, covering
 // both the scope=all (platform-wide, no-auth) path and the scope=following
-// (personal, auth-required) path added by prompts/user-value/02-activity-feed.md,
+// (personal, auth-required) path added by the user-value campaign, work order 02
+// (activity feed; retired, see git history),
 // across every event kind the endpoint emits: avatar, agent, coin, model,
 // world, restyle, follow (see tests/api/users-follow.test.js for the
 // follow-graph-specific contract this file deliberately leaves alone).

@@ -49,7 +49,7 @@ Hip units are detected from the clip data, not the file extension. Raw Mixamo FB
 
 ### If a source file is missing
 
-Retarget sources are deliberately never committed: the whole `animation-sources/` directory is gitignored, so a clean checkout has none of them and the built clips in `clips/` are the shipped artifact. When a configured clip's source is absent but its built JSON is already in `clips/`, the build republishes the built clip and logs `PREBUILT`. That is the normal path on a fresh clone, not an edge case. Only an entry with neither a source nor a built clip fails, and the failure message points at `npm run extract:animations` to regenerate extracted sources. Retiring a clip is therefore done by removing its config entry, not by deleting its source.
+Retarget sources are deliberately never committed: everything in `animation-sources/` except its README is gitignored, so a clean checkout has none of them and the built clips in `clips/` are the shipped artifact. When a configured clip's source is absent but its built JSON is already in `clips/`, the build republishes the built clip and logs `PREBUILT`. That is the normal path on a fresh clone, not an edge case. Only an entry with neither a source nor a built clip fails, and the failure message points at `npm run extract:animations` to regenerate extracted sources. Retiring a clip is therefore done by removing its config entry, not by deleting its source.
 
 ## Agent slots
 

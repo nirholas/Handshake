@@ -1,5 +1,5 @@
 // Unit tests for the notification center's read path
-// (prompts/user-value/04-notifications.md task 4):
+// (user-value campaign, work order 04 task 4; retired, see git history):
 //   GET  /api/notifications           -> api/notifications/index.js
 //   POST /api/notifications/read-all  -> api/notifications/read-all.js
 //

@@ -1,6 +1,6 @@
 // Pure helpers behind the /bnb hub page: block-time formatting and the
 // track-availability gating that decides "live" vs "coming soon" per card.
-// See prompts/bnb-chain/19-bnb-hub-page.md — "Pure helpers (stat formatting,
+// See the bnb-chain campaign, work order 19 (BNB hub page; retired, see git history): "Pure helpers (stat formatting,
 // track-availability gating) in tests/".
 
 import { describe, expect, it } from 'vitest';

@@ -4,7 +4,8 @@
 // generate → render → judge pipeline so the two callers can never drift apart on
 // what "a scored view" means.
 //
-// See prompts/quality-bar/09-realism-eval-harness.md for the mission spec and
+// Mission spec: quality-bar campaign, work order 09 (realism eval harness;
+// retired, see git history). See
 // data/quality-bench/README.md for how to run/read/extend the bench.
 
 import { renderClip } from './render-clip.js';
