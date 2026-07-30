@@ -3250,24 +3250,27 @@
 				},
 				{
 					"path": "/tutorials/agent-spending-envelope",
-					"title": "Tutorial: Give an Agent a Spending Envelope (No Private Key)",
-					"description": "By the end of this tutorial your agent will be able to buy things on the open internet, in real money, with a hard ceiling you set, and it will never touch a private key to do it. You create a budget from prepaid credits, get back a bearer token, and hand that token to the agent.",
-					"priority": 0.7,
-					"changefreq": "monthly"
+					"title": "Tutorial · Give an Agent a Spending Envelope",
+					"description": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
 				},
 				{
 					"path": "/tutorials/render-avatar-images",
-					"title": "Tutorial: Put a 3D Avatar in an <img> Tag",
-					"description": "By the end of this tutorial you will be rendering live 3D avatars as ordinary images, from a URL, with no 3D engine anywhere in your stack. No three.js, no WebGL context, no GLB loader, no canvas. Just an <img src> that happens to point at a headless renderer.",
-					"priority": 0.7,
-					"changefreq": "monthly"
+					"title": "Tutorial · Render Avatars as Images",
+					"description": "Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
 				},
 				{
 					"path": "/tutorials/character-library-to-embed",
-					"title": "Tutorial: From the Character Library to a Live Embed in Ten Minutes",
-					"description": "By the end of this tutorial there will be a rigged, animated 3D character standing on your own web page, waving when a visitor clicks a button. You will not model anything, rig anything, install a 3D toolchain, or pay anything.",
-					"priority": 0.7,
-					"changefreq": "monthly"
+					"title": "Tutorial · Character Library to a Live Embed",
+					"description": "Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
 				}
 			]
 		},
