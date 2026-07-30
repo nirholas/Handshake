@@ -30,7 +30,7 @@ Together: your face (or your prompt) becomes a model, the model becomes a talkin
    ```html
    <script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js"></script>
    <agent-3d
-     body="https://three.ws/cdn/models/procyon-fox.glb"
+     body="https://three.ws/avatars/fox.glb"
      brain="claude-sonnet-4-6"
      name="Procyon"
      instructions="You are Procyon's studio fox. Greet visitors warmly, talk about the art prints, and wave when someone says hi."

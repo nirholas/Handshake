@@ -81,7 +81,7 @@ URL; `SpeechNarrator` speaks and lipsyncs against whatever morphs it finds:
 import { AvatarStage, SpeechNarrator } from '@three-ws/page-agent';
 
 const stage = new AvatarStage(document.querySelector('#guide'), { background: 'transparent' });
-await stage.load('https://three.ws/avatars/mannequin.glb', { framing: 'upper' });
+await stage.load('https://three.ws/avatars/realistic-halfbody.glb', { framing: 'upper' });
 
 const narrator = new SpeechNarrator(stage, {
   onCaption: (t) => (captionEl.textContent = t || ''),
@@ -91,7 +91,7 @@ narrator.setAgent({
   voice: { lang: 'en-US', rate: 1.0, pitch: 1.0, match: ['samantha', 'aria'] },
 });
 
-await narrator.speak('Hi — I'm a fully custom guide.');
+await narrator.speak("Hi, I'm a fully custom guide.");
 ```
 
 This is the full advanced path — see [Building blocks](./guide-building-blocks.md)
@@ -108,7 +108,7 @@ tells you which lipsync tier your model qualifies for:
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { buildMorphMap } from '@three-ws/page-agent';
 
-const gltf = await new GLTFLoader().loadAsync('https://three.ws/avatars/michelle.glb');
+const gltf = await new GLTFLoader().loadAsync('https://three.ws/avatars/realistic-halfbody.glb');
 const morph = buildMorphMap(gltf.scene);
 
 console.log('lipsync tier:', morph?.mode ?? 'animation (no face morphs)');

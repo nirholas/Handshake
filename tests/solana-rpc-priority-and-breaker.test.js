@@ -6,6 +6,7 @@ import {
 	isEndpointCooling,
 	hydrateEndpointCooldowns,
 	rpcLaneHealth,
+	classifyRpcBody,
 } from '../api/_lib/solana/connection.js';
 import { cacheGet, cacheSet, cacheDel } from '../api/_lib/cache.js';
 
@@ -131,6 +132,37 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 	it('picks the long quota window for a daily-cap signal, not the short 429 window', async () => {
 		const ms = markEndpointCooldown(url, 429, 'daily request limit reached');
 		expect(ms).toBeGreaterThanOrEqual(6 * 3_600_000);
+	});
+
+	it.each([
+		['Alchemy monthly cap', 'Monthly capacity limit exceeded. Visit https://dashboard.alchemy.com/settings/billing to upgrade your scaling policy for continued service.'],
+		['Helius plan cap', 'max usage reached'],
+		['QuickNode daily cap', 'daily request limit reached - upgrade your account'],
+	])('parks %s for the quota window, never the 10m transient one', (_label, message) => {
+		// Every paid provider words exhaustion differently. Asserting only "is
+		// cooling" hid the Alchemy case: it matched no quota phrase, took the 10m
+		// transient window, and re-entered rotation as the primary every 10 minutes.
+		const ms = markEndpointCooldown(`https://${_label.replace(/\W+/g, '-')}.example/rpc`, 429, message);
+		expect(ms).toBeGreaterThanOrEqual(6 * 3_600_000);
+	});
+
+	it('classifies an exhausted-plan JSON-RPC body as a capacity error so the rotation fails over', () => {
+		// Alchemy reports its monthly cap as JSON-RPC code 429; QuickNode/Helius use
+		// negative codes. All three must rotate rather than surface to the caller.
+		for (const err of [
+			{ code: 429, message: 'Monthly capacity limit exceeded.' },
+			{ code: -32429, message: 'max usage reached' },
+			{ code: -32003, message: 'daily request limit reached' },
+		]) {
+			const verdict = classifyRpcBody(JSON.stringify({ jsonrpc: '2.0', id: 1, error: err }));
+			expect(verdict, `code ${err.code} must rotate`).toBeTruthy();
+		}
+		// A deterministic method error must NOT rotate — every lane would fail it.
+		expect(
+			classifyRpcBody(
+				JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'invalid params' } }),
+			),
+		).toBeNull();
 	});
 
 	it('hydrate() adopts a sibling verdict for an endpoint this instance never tried', async () => {

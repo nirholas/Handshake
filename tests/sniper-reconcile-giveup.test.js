@@ -7,7 +7,7 @@
 // from taking new trades. These tests pin the bound.
 
 import { describe, it, expect } from 'vitest';
-import { shouldGiveUpReconcile } from '../workers/agent-sniper/exit-logic.js';
+import { shouldGiveUpReconcile, reconcileParkAnchor } from '../workers/agent-sniper/exit-logic.js';
 
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 6, 27, 17, 0, 0);

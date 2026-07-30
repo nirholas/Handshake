@@ -283,3 +283,36 @@ export function shouldGiveUpReconcile(pendingSince, giveUpMs, now = Date.now()) 
 	if (!Number.isFinite(since)) return false;
 	return now - since >= giveUpMs;
 }
+
+/**
+ * When a position's reconcile park started, for the give-up bound above.
+ *
+ * `reconcile_pending_since` is the answer whenever it is set. It is NOT always
+ * set: a row parked by a revision that predates the column carries the
+ * `reconcile_pending` marker with no timestamp, and because
+ * shouldGiveUpReconcile() reads a null as "nothing is pending" those rows are
+ * unreapable forever. That is precisely the permanent wedge the bound exists to
+ * prevent, reintroduced through the back door. Observed in production: four arms
+ * frozen for 37 to 57 hours against a 30-minute max hold, each arm capped at one
+ * concurrent position, so each was fully stopped.
+ *
+ * For an already-parked row, fall back to the last moment the sweep could still
+ * evaluate it (`stale_since`), then to `opened_at`. Both are sound lower bounds
+ * on when the park began, so the fallback can only ever under-estimate the wait,
+ * never cut a park short.
+ *
+ * A row that is NOT parked returns its raw `reconcile_pending_since` (normally
+ * null), so a first park still gets its full window before the bound applies.
+ *
+ * Pure.
+ *
+ * @param {{reconcile_pending_since?: string|Date|null, error?: string|null,
+ *          stale_since?: string|Date|null, opened_at?: string|Date|null}} position
+ * @returns {string|Date|null} the anchor to measure the park from
+ */
+export function reconcileParkAnchor(position) {
+	const p = position || {};
+	if (p.reconcile_pending_since != null) return p.reconcile_pending_since;
+	if (p.error !== 'reconcile_pending') return null;
+	return p.stale_since ?? p.opened_at ?? null;
+}

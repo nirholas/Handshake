@@ -285,7 +285,14 @@ function cooldownMsFor(status, bodyText) {
 		// exhausted (HTTP 429 + `{code:-32003,"daily request limit reached - upgrade
 		// your account"}`); it means the endpoint is dead for the rest of the day, so
 		// park it for the long window instead of re-probing it every 10 minutes.
-		return /max usage reached|-32429|-32003|request limit|quota|usage limit|credits?\s*exhausted/i.test(
+		// Alchemy words the same class of failure completely differently — HTTP 429 +
+		// `{code:429,"Monthly capacity limit exceeded. Visit …/billing to upgrade your
+		// scaling policy"}` — matching none of the phrases above. Left unmatched it
+		// took the 10m transient window, so a lane that was dead until the billing
+		// month rolled over re-entered rotation every 10 minutes and re-failed; when
+		// it was also SOLANA_RPC_URL, practically every Solana call in production
+		// began by failing over (236 lane failures in 6h, measured 2026-07-30).
+		return /max usage reached|-32429|-32003|request limit|capacity limit|capacity exceeded|quota|usage limit|credits?\s*exhausted/i.test(
 			bodyText || '',
 		)
 			? QUOTA_COOLDOWN_MS
@@ -550,6 +557,7 @@ const PROVIDER_CAPACITY_CODES = new Set([
 	-32005, // node is behind by N slots — a fresher node may answer
 	-32004, // block/slot not available yet — another node may have it
 	-32003, // QuickNode: daily/request limit reached (capped), the next lane serves
+	429, // Alchemy: monthly capacity exceeded, reported as a JSON-RPC code
 ]);
 
 // A provider that gates a method behind its paid/registered tier answers with a
@@ -572,7 +580,7 @@ function isProviderCapacityError(rpcError) {
 	if (!rpcError || typeof rpcError !== 'object') return false;
 	if (PROVIDER_CAPACITY_CODES.has(rpcError.code)) return true;
 	if (isProviderTierError(rpcError)) return true;
-	return /too many requests|rate.?limit|request limit|quota|usage limit|credits?\s*exhausted|forbidden|api key|unauthor|max usage/i.test(
+	return /too many requests|rate.?limit|request limit|capacity limit|capacity exceeded|quota|usage limit|credits?\s*exhausted|forbidden|api key|unauthor|max usage/i.test(
 		String(rpcError.message || ''),
 	);
 }

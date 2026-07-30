@@ -20,7 +20,7 @@ import {
 	checkConcurrency, checkDailyBudgetLamports, checkPriceImpact,
 	checkDailyLoss, recordCustodyEvent, resolveEntrySize,
 } from '../../api/_lib/agent-trade-guards.js';
-import { shouldGiveUpReconcile } from './exit-logic.js';
+import { shouldGiveUpReconcile, reconcileParkAnchor } from './exit-logic.js';
 import { buildAmmSellInstructions, quoteAmmBuy, buildAmmBuyInstructions } from './amm-exit.js';
 import { getWalletBaseBalance, reconcileVanishedBag } from './reconcile.js';
 import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } from '../../api/_lib/trade-firewall.js';
@@ -605,7 +605,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 						// as live risk and held a concurrency slot. The time bound: the park
 						// itself had none, so a bag whose emptying tx could never be found
 						// re-parked every sweep forever and wedged that slot permanently.
-						if (shouldGiveUpReconcile(position.reconcile_pending_since, RECONCILE_GIVE_UP_MS)) {
+						if (shouldGiveUpReconcile(reconcileParkAnchor(position), RECONCILE_GIVE_UP_MS)) {
 							// The bag is provably gone but its proceeds are unknowable from
 							// chain history. Book it closed so the slot frees, and leave
 							// realized P&L NULL rather than inventing a number — every P&L
@@ -618,7 +618,11 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 								WHERE id = ${position.id} AND status <> 'closed'
 							`;
 							log.warn('reconcile gave up; bag gone, proceeds unknown', {
-								...tag, pending_since: position.reconcile_pending_since,
+								...tag,
+								pending_since: position.reconcile_pending_since,
+								// The anchor actually measured, which differs from pending_since
+								// on a row parked before that column existed.
+								park_anchor: reconcileParkAnchor(position),
 							});
 							return { status: 'closed', reason: 'reconcile_unresolved' };
 						}
