@@ -127,6 +127,14 @@ export const NAV_GROUPS = [
 						badgeTone: 'live',
 						desc: 'Avatars that sign in ASL — fingerspell anything, signed chat replies, webcam sign input',
 					},
+					{
+						title: 'ASL Alphabet',
+						href: '/asl-alphabet',
+						tier: 'beginner',
+						badge: 'New',
+						badgeTone: 'live',
+						desc: 'Every letter and number on a live 3D hand, with the look-alikes named and a drill for reading it',
+					},
 				],
 			},
 			{
@@ -630,6 +638,7 @@ export const NAV_GROUPS = [
 					{ title: 'Docs World', href: '/docs/world', desc: 'Walk the docs in 3D' },
 					{ title: 'Tutorials', href: '/tutorials', desc: 'Step-by-step guides' },
 					{ title: 'Examples', href: '/examples', desc: 'Runnable copy-paste code' },
+					{ title: 'Cookbook', href: '/cookbook', desc: 'Recipes you download and run' },
 					{ title: 'Chat', href: '/chat', desc: 'Talk to your agent' },
 				],
 			},

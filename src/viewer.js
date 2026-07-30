@@ -148,6 +148,32 @@ function makeCoinTexture() {
  * @param {Element} el
  * @param {object} options
  */
+
+/**
+ * dat.GUI renders every control as a bare `<input>`/`<select>` beside a text
+ * span, which leaves each one without an accessible name: a screen reader
+ * announces "checkbox" with no idea what it toggles, and axe flags it on every
+ * page that embeds a viewer. dat.GUI has no hook for this, so the rows are
+ * labelled after the fact from the property name each row already displays.
+ * @param {HTMLElement} root the GUI's DOM element
+ */
+function labelGUIControls(root) {
+	if (!root) return;
+	for (const row of root.querySelectorAll('.cr')) {
+		const name = row.querySelector('.property-name')?.textContent?.trim();
+		if (!name) continue;
+		for (const field of row.querySelectorAll('input, select')) {
+			if (!field.getAttribute('aria-label') && !field.id) field.setAttribute('aria-label', name);
+		}
+	}
+	// Folder titles are clickable <li>s, not buttons: give them a role and a
+	// name so the panel can be operated without a mouse.
+	for (const title of root.querySelectorAll('li.folder > .title')) {
+		if (!title.getAttribute('role')) title.setAttribute('role', 'button');
+		if (!title.hasAttribute('tabindex')) title.setAttribute('tabindex', '0');
+	}
+}
+
 export class Viewer {
 	constructor(el, options) {
 		this.el = el;
@@ -1875,6 +1901,7 @@ export class Viewer {
 		guiWrap.classList.add('gui-wrap--hidden');
 		guiWrap.appendChild(gui.domElement);
 		this._guiWrap = guiWrap;
+		labelGUIControls(gui.domElement);
 
 		// Toggle button — hides dat.GUI behind an "Advanced" control
 		const toggle = document.createElement('button');
