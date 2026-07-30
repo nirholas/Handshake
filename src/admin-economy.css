@@ -1,4 +1,4 @@
-/* /admin/economy — autonomous economy health dashboard.
+/* /admin/economy: autonomous economy health dashboard.
 
    Answers one question fast: is the Money Pulse quiet, and if so, which link in
    the funding chain broke? Shares the ring dashboard's token language (violet
@@ -576,6 +576,34 @@ body {
 @keyframes ec-shimmer {
 	from { background-position: 100% 50%; }
 	to { background-position: 0 50%; }
+}
+
+.ec-hint {
+	position: fixed;
+	right: 16px;
+	bottom: 16px;
+	padding: 7px 12px;
+	border-radius: 999px;
+	background: var(--ec-panel-2);
+	border: 1px solid var(--ec-line-2);
+	color: var(--ec-dim);
+	font-size: 12px;
+	backdrop-filter: blur(8px);
+	pointer-events: none;
+}
+
+.ec-hint kbd {
+	font: 600 11px/1 var(--ec-mono);
+	background: var(--ec-panel);
+	border: 1px solid var(--ec-line-2);
+	border-bottom-width: 2px;
+	border-radius: 5px;
+	padding: 3px 5px;
+	color: var(--ec-text);
+}
+
+@media (max-width: 640px) {
+	.ec-hint { display: none; }
 }
 
 .ec-foot {

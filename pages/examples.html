@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot (no-flash); runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Examples: runnable embed code · three.ws</title>
+		<meta
+			name="description"
+			content="Copy-paste examples that run right on this page: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets. Every snippet runs against the production CDN bundle."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/examples" />
+		<meta property="og:title" content="Examples: runnable embed code · three.ws" />
+		<meta
+			property="og:description"
+			content="Copy-paste examples that run right on the page, from the minimal 3D viewer to a talking agent with a custom chat UI. Run, copy, ship."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=dev&amp;t=Runnable+examples&amp;d=Copy-paste+embed+code+that+runs+right+on+the+page%3A+viewer%2C+talking+agent%2C+floating+bubble%2C+custom+chat+UI%2C+iframe+widgets&amp;p=%2Fexamples"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Examples: runnable embed code · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Copy-paste examples that run right on the page. Every snippet runs against the production CDN bundle."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=dev&amp;t=Runnable+examples&amp;d=Copy-paste+embed+code+that+runs+right+on+the+page%3A+viewer%2C+talking+agent%2C+floating+bubble%2C+custom+chat+UI%2C+iframe+widgets&amp;p=%2Fexamples"
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/ui-juice.css" />
+		<link rel="stylesheet" href="/examples.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/examples" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Examples: runnable embed code",
+				"description": "Copy-paste examples that run right on the page: the minimal 3D viewer, a talking agent, a floating support bubble, a custom chat UI over the JS API, and iframe widgets.",
+				"url": "https://three.ws/examples",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Runnable three.ws embed examples" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="exg-shell">
+			<section class="exg-hero">
+				<p class="exg-kicker">
+					<span class="exg-live-dot" aria-hidden="true"></span> Every snippet runs on this
+					page
+				</p>
+				<h1 class="exg-title">Runnable <em>examples</em></h1>
+				<p class="exg-sub">
+					<span id="exg-count">6</span> copy-paste examples, each one a complete document
+					that loads the production
+					<a href="https://three.ws/agent-3d/latest/agent-3d.js">CDN bundle</a>. Press
+					<strong>Run</strong> and the exact code shown executes in a sandboxed frame;
+					press <strong>Copy</strong> and paste it into any HTML page. Deeper walkthroughs
+					live in the <a href="/tutorials">tutorials</a>, and the full runnable set
+					(including agent manifests, skills, and end-to-end scripts) is in the
+					<a href="https://github.com/nirholas/three.ws/tree/main/examples"
+						>examples/ directory on GitHub</a
+					>.
+				</p>
+			</section>
+
+			<div class="exg-grid" id="exg-grid"></div>
+
+			<section class="exg-more" aria-labelledby="exg-more-h" data-role="ex-browse">
+				<h2 id="exg-more-h">Every example in the repo</h2>
+				<p>
+					Beyond the single-file snippets above, the repository ships complete example
+					projects and an example folder beside each SDK and published package: agents
+					defined entirely as files, installable skill bundles, and scripts that drive the
+					MCP and payment surfaces end to end. This list is generated by scanning the
+					repository, so it cannot advertise an example that was deleted or miss one that
+					was added. Each card shows the files it contains and the command that runs it.
+				</p>
+
+				<div class="exi-toolbar" role="toolbar" aria-label="Search and filter repository examples">
+					<div class="exi-search-wrap">
+						<svg class="exi-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+						<input
+							type="search"
+							class="exi-search"
+							data-role="ex-search"
+							placeholder="Search all examples…"
+							aria-label="Search all repository examples"
+							autocomplete="off"
+						/>
+					</div>
+					<span class="exi-count" data-role="ex-count" aria-live="polite"></span>
+				</div>
+
+				<div class="exi-chips" data-role="ex-chips" role="tablist" aria-label="Filter examples by kind"></div>
+				<p class="exi-sr" data-role="ex-live" aria-live="polite"></p>
+
+				<div class="exi-grid" data-role="ex-loading" aria-label="Loading examples">
+					<div class="exi-skeleton"></div>
+					<div class="exi-skeleton"></div>
+					<div class="exi-skeleton"></div>
+					<div class="exi-skeleton"></div>
+					<div class="exi-skeleton"></div>
+					<div class="exi-skeleton"></div>
+				</div>
+
+				<div class="exi-grid" data-role="ex-grid" hidden></div>
+
+				<div class="exi-state" data-role="ex-empty-search" hidden>
+					<h3>No matches</h3>
+					<p>No examples match your search or the selected kind.</p>
+					<button type="button" class="exi-btn exi-btn--ghost" data-role="ex-clear">Clear filters</button>
+				</div>
+
+				<div class="exi-state" data-role="ex-error" hidden>
+					<h3>Couldn't load the example index</h3>
+					<p data-role="ex-error-msg">Something went wrong loading the example index.</p>
+					<button type="button" class="exi-btn exi-btn--ghost" data-role="ex-retry">Try again</button>
+				</div>
+
+				<h3 class="exi-subhead">Start with these</h3>
+				<div class="exg-more-grid">
+					<a
+						class="exg-more-card"
+						href="https://github.com/nirholas/three.ws/tree/main/examples/coach-leo"
+						target="_blank"
+						rel="noopener"
+					>
+						<strong>coach-leo</strong>
+						<span
+							>The smallest complete agent defined as files: manifest, system prompt, one
+							skill. The template to copy.</span
+						>
+					</a>
+					<a
+						class="exg-more-card"
+						href="https://github.com/nirholas/three.ws/tree/main/examples/three-concierge"
+						target="_blank"
+						rel="noopener"
+					>
+						<strong>three-concierge</strong>
+						<span
+							>Trinity, the reference agent for manifest spec 0.2: pump.fun skills,
+							extended thinking, discovery card.</span
+						>
+					</a>
+					<a
+						class="exg-more-card"
+						href="https://github.com/nirholas/three.ws/tree/main/examples/skills"
+						target="_blank"
+						rel="noopener"
+					>
+						<strong>skills</strong>
+						<span
+							>Six installable skill bundles with documented tools, config, and safety
+							caps.</span
+						>
+					</a>
+					<a
+						class="exg-more-card"
+						href="https://github.com/nirholas/three.ws/tree/main/examples/agent-native-3d"
+						target="_blank"
+						rel="noopener"
+					>
+						<strong>agent-native-3d</strong>
+						<span
+							>A Node script that generates a mesh, rigs it, saves it as an agent persona,
+							and speaks through it via MCP.</span
+						>
+					</a>
+					<a
+						class="exg-more-card"
+						href="https://github.com/nirholas/three.ws/tree/main/examples/monicas-apartment"
+						target="_blank"
+						rel="noopener"
+					>
+						<strong>monicas-apartment</strong>
+						<span
+							>A walkable first-person Three.js scene in one self-contained HTML file. No
+							server at all.</span
+						>
+					</a>
+					<a class="exg-more-card" href="/docs/examples">
+						<strong>Examples doc</strong>
+						<span
+							>The written companion: every example annotated with what it demonstrates
+							and where the pieces live.</span
+						>
+					</a>
+				</div>
+			</section>
+		</main>
+
+		<script src="/examples.js" defer></script>
+		<script src="/examples-index.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

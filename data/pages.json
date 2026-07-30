@@ -3307,6 +3307,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/guards",
+					"title": "Repository guards",
+					"description": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/tutorials/agent-spending-envelope",
 					"title": "Tutorial · Give an Agent a Spending Envelope",
 					"description": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",

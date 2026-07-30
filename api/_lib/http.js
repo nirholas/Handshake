@@ -559,8 +559,16 @@ export function wrap(handler) {
 							ref,
 						}, { 'cache-control': 'no-store' });
 					} else {
+						// `err.code` is NOT safe to echo here, for the same reason the
+						// message above is redacted: on a 5xx it carries internal
+						// implementation detail the caller has no business seeing. A
+						// Postgres failure puts the raw SQLSTATE in it (a missing table
+						// answered `42P01`, naming the storage engine and the fault), and
+						// a Node socket failure puts ECONNREFUSED / ENOTFOUND there,
+						// mapping our internal topology. 4xx keeps its code below, where
+						// it is a deliberate, documented part of each endpoint's contract.
 						json(res, status, {
-							error: dbDegraded ? 'service_unavailable' : (err.code || 'internal_error'),
+							error: dbDegraded ? 'service_unavailable' : 'internal_error',
 							error_description: dbDegraded
 								? 'database temporarily unavailable — retry shortly'
 								: `internal error — quote ref ${ref} to support`,

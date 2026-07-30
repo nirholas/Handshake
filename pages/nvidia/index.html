@@ -4,13 +4,13 @@
 	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>three.ws on NVIDIA: free 3D generation on NVIDIA models and GPUs</title>
-	<meta name="description" content="three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key, and a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000." />
+	<title data-i18n="nvidia_index.meta_title">three.ws on NVIDIA: free 3D generation on NVIDIA models and GPUs</title>
+	<meta name="description" content="three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key, and a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000."  data-i18n-attr="content:nvidia_index.meta_description"/>
 	<link rel="canonical" href="https://three.ws/nvidia" />
 
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="three.ws on NVIDIA" />
-	<meta property="og:description" content="Free text-to-3D on NVIDIA-hosted TRELLIS, plus a self-hosted GPU fleet on L4 and Blackwell. The full model map, the fleet layout, and a call you can run right now." />
+	<meta property="og:title" content="three.ws on NVIDIA"  data-i18n-attr="content:nvidia_index.meta_og_title"/>
+	<meta property="og:description" content="Free text-to-3D on NVIDIA-hosted TRELLIS, plus a self-hosted GPU fleet on L4 and Blackwell. The full model map, the fleet layout, and a call you can run right now."  data-i18n-attr="content:nvidia_index.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/nvidia" />
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta property="og:image:width" content="1200" />
@@ -18,8 +18,8 @@
 	<meta property="og:image:alt" content="three.ws on NVIDIA: free 3D generation on NVIDIA models and GPUs." />
 
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="three.ws on NVIDIA" />
-	<meta name="twitter:description" content="Free text-to-3D on NVIDIA-hosted models, plus a self-hosted GPU fleet on L4 and Blackwell. One key, no account, no cost." />
+	<meta name="twitter:title" content="three.ws on NVIDIA"  data-i18n-attr="content:nvidia_index.meta_twitter_title"/>
+	<meta name="twitter:description" content="Free text-to-3D on NVIDIA-hosted models, plus a self-hosted GPU fleet on L4 and Blackwell. One key, no account, no cost."  data-i18n-attr="content:nvidia_index.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 	<meta name="twitter:site" content="@trythreews" />
 
@@ -142,14 +142,14 @@
 
 	<div class="eyebrow">
 		<span class="dot" aria-hidden="true"></span>
-		<strong>NVIDIA Inception member</strong>
+		<strong data-i18n="nvidia_index.nvidia_inception_member">NVIDIA Inception member</strong>
 		<span>·</span>
-		<span>Accepted July 2026</span>
+		<span data-i18n="nvidia_index.accepted_july_2026">Accepted July 2026</span>
 	</div>
 
-	<h1>Every model here is born on <span class="gradient">NVIDIA</span>.</h1>
+	<h1 data-i18n-html="nvidia_index.every_model_here_is_born_on_nvidia">Every model here is born on <span class="gradient">NVIDIA</span>.</h1>
 
-	<p class="lede">
+	<p class="lede" data-i18n-html="nvidia_index.type_a_sentence_get_a_textured_3d">
 		Type a sentence, get a textured 3D model. That path runs end to end on NVIDIA silicon, and on
 		three.ws the first lane of it is <strong>free, keyless, and open source</strong>. This page is the
 		honest map of how: which NVIDIA-hosted models do what, which GPUs we run ourselves, and what we
@@ -165,14 +165,14 @@
 			Generate one free
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
 		</a>
-		<a href="/docs/nvidia-models" class="btn btn-sec">The model map</a>
-		<a href="/blog/image-to-3d-on-nvidia-l4-and-blackwell" class="btn btn-sec">Engineering post</a>
-		<a href="/docs/nvidia-inception" class="btn btn-sec">About the membership</a>
+		<a href="/docs/nvidia-models" class="btn btn-sec" data-i18n="nvidia_index.the_model_map">The model map</a>
+		<a href="/blog/image-to-3d-on-nvidia-l4-and-blackwell" class="btn btn-sec" data-i18n="nvidia_index.engineering_post">Engineering post</a>
+		<a href="/docs/nvidia-inception" class="btn btn-sec" data-i18n="nvidia_index.about_the_membership">About the membership</a>
 	</div>
 
 	<section>
-		<h2>Two layers, one stack.</h2>
-		<p class="sub">
+		<h2 data-i18n="nvidia_index.two_layers_one_stack">Two layers, one stack.</h2>
+		<p class="sub" data-i18n="nvidia_index.almost_every_platform_that_says_runs_on">
 			Almost every platform that says "runs on NVIDIA" means one of these. We run both, and they serve
 			different jobs: the hosted lane keeps the free tier free, the self-hosted fleet buys quality the
 			free tier cannot reach.
@@ -181,32 +181,32 @@
 		<div class="layers">
 
 			<div class="layer">
-				<span class="tag">Layer 1 · Hosted</span>
-				<h3>NVIDIA-hosted models, one key</h3>
-				<p>
+				<span class="tag" data-i18n="nvidia_index.layer_1_hosted">Layer 1 · Hosted</span>
+				<h3 data-i18n="nvidia_index.nvidia_hosted_models_one_key">NVIDIA-hosted models, one key</h3>
+				<p data-i18n-html="nvidia_index.a_single_from_build_nvidia_com_unlocks">
 					A single <code>NVIDIA_API_KEY</code> from build.nvidia.com unlocks the entire catalog below.
 					No per-model billing, no per-seat cost. It is rate limited rather than metered, which is
 					exactly why we treat it as a free-first lane and always keep a fallback behind it.
 				</p>
 				<ul>
-					<li><strong>Text to 3D</strong> that costs a visitor nothing and needs no account</li>
-					<li><strong>Chat, vision, embeddings, reranking, safety, speech</strong> on the same key</li>
-					<li>Every call has a documented failover, so a rate limit degrades instead of breaking</li>
+					<li data-i18n-html="nvidia_index.text_to_3d_that_costs_a_visitor"><strong>Text to 3D</strong> that costs a visitor nothing and needs no account</li>
+					<li data-i18n-html="nvidia_index.chat_vision_embeddings_reranking_safety_spee"><strong>Chat, vision, embeddings, reranking, safety, speech</strong> on the same key</li>
+					<li data-i18n="nvidia_index.every_call_has_a_documented_failover_so">Every call has a documented failover, so a rate limit degrades instead of breaking</li>
 				</ul>
 			</div>
 
 			<div class="layer">
-				<span class="tag">Layer 2 · Self-hosted</span>
-				<h3>Our own GPU fleet</h3>
-				<p>
+				<span class="tag" data-i18n="nvidia_index.layer_2_self_hosted">Layer 2 · Self-hosted</span>
+				<h3 data-i18n="nvidia_index.our_own_gpu_fleet">Our own GPU fleet</h3>
+				<p data-i18n-html="nvidia_index.twelve_cloud_run_gpu_services_each_a">
 					Twelve Cloud Run GPU services, each a worker wrapping one model, autoscaled per lane.
 					Eleven on <code>nvidia-l4</code>, one on <code>nvidia-rtx-pro-6000</code> (Blackwell). This is
 					where the paid realism lanes live, and where PBR materials, rigging, and motion get made.
 				</p>
 				<ul>
-					<li><strong>Physically-based materials</strong>: baseColor, metallicRoughness, and normal maps</li>
-					<li><strong>Auto-rigging and motion</strong>, so a generated mesh can move, not just sit there</li>
-					<li>One wire contract across every worker, so any lane can fail over to any other</li>
+					<li data-i18n-html="nvidia_index.physically_based_materials_basecolor_metalli"><strong>Physically-based materials</strong>: baseColor, metallicRoughness, and normal maps</li>
+					<li data-i18n-html="nvidia_index.auto_rigging_and_motion_so_a_generated"><strong>Auto-rigging and motion</strong>, so a generated mesh can move, not just sit there</li>
+					<li data-i18n="nvidia_index.one_wire_contract_across_every_worker_so">One wire contract across every worker, so any lane can fail over to any other</li>
 				</ul>
 			</div>
 
@@ -214,8 +214,8 @@
 	</section>
 
 	<section>
-		<h2>The free model map.</h2>
-		<p class="sub">
+		<h2 data-i18n="nvidia_index.the_free_model_map">The free model map.</h2>
+		<p class="sub" data-i18n="nvidia_index.every_capability_below_is_in_production_sour">
 			Every capability below is in production source and reachable on the free key. Nothing here is
 			aspirational, and nothing is a demo stub.
 		</p>
@@ -223,32 +223,32 @@
 		<div class="table-scroll">
 			<table>
 				<thead>
-					<tr><th>Capability</th><th>NVIDIA model</th><th>What it powers</th><th>Free</th></tr>
+					<tr><th data-i18n="nvidia_index.capability">Capability</th><th data-i18n="nvidia_index.nvidia_model">NVIDIA model</th><th data-i18n="nvidia_index.what_it_powers">What it powers</th><th data-i18n="nvidia_index.free">Free</th></tr>
 				</thead>
 				<tbody>
-					<tr><td>Text to 3D</td><td><code>microsoft/trellis</code></td><td>The keyless generate lane on /forge</td><td class="free">Yes</td></tr>
-					<tr><td>Text to image</td><td><code>black-forest-labs/flux.1-schnell</code></td><td>Reference images and texture inputs</td><td class="free">Yes</td></tr>
-					<tr><td>LLM, default lane</td><td><code>meta/llama-3.3-70b-instruct</code></td><td>Agent chat and platform reasoning</td><td class="free">Yes</td></tr>
-					<tr><td>LLM, model garden</td><td>Nemotron 120B / 49B / Nano 9B and peers</td><td>The Brain workbench model picker</td><td class="free">Yes</td></tr>
-					<tr><td>Vision</td><td><code>nvidia/nemotron-nano-12b-v2-vl</code></td><td>Photo checks before reconstruction, alt text</td><td class="free">Yes</td></tr>
-					<tr><td>Embeddings</td><td><code>nvidia/nv-embedqa-e5-v5</code></td><td>Agent memory and semantic search</td><td class="free">Yes</td></tr>
-					<tr><td>Reranking</td><td><code>nvidia/rerank-qa-mistral-4b</code></td><td>Sharpening retrieval before an answer</td><td class="free">Yes</td></tr>
-					<tr><td>Content safety</td><td><code>nvidia/llama-3.1-nemoguard-8b-content-safety</code></td><td>The guardrail in front of generation</td><td class="free">Yes</td></tr>
-					<tr><td>Text to speech</td><td><code>magpie-tts-multilingual</code> (Riva)</td><td>Avatar voices, multilingual</td><td class="free">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.text_to_3d">Text to 3D</td><td><code>microsoft/trellis</code></td><td data-i18n="nvidia_index.the_keyless_generate_lane_on_forge">The keyless generate lane on /forge</td><td class="free" data-i18n="nvidia_index.yes">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.text_to_image">Text to image</td><td><code>black-forest-labs/flux.1-schnell</code></td><td data-i18n="nvidia_index.reference_images_and_texture_inputs">Reference images and texture inputs</td><td class="free" data-i18n="nvidia_index.yes_2">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.llm_default_lane">LLM, default lane</td><td><code>meta/llama-3.3-70b-instruct</code></td><td data-i18n="nvidia_index.agent_chat_and_platform_reasoning">Agent chat and platform reasoning</td><td class="free" data-i18n="nvidia_index.yes_3">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.llm_model_garden">LLM, model garden</td><td data-i18n="nvidia_index.nemotron_120b_49b_nano_9b_and_peers">Nemotron 120B / 49B / Nano 9B and peers</td><td data-i18n="nvidia_index.the_brain_workbench_model_picker">The Brain workbench model picker</td><td class="free" data-i18n="nvidia_index.yes_4">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.vision">Vision</td><td><code>nvidia/nemotron-nano-12b-v2-vl</code></td><td data-i18n="nvidia_index.photo_checks_before_reconstruction_alt_text">Photo checks before reconstruction, alt text</td><td class="free" data-i18n="nvidia_index.yes_5">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.embeddings">Embeddings</td><td><code>nvidia/nv-embedqa-e5-v5</code></td><td data-i18n="nvidia_index.agent_memory_and_semantic_search">Agent memory and semantic search</td><td class="free" data-i18n="nvidia_index.yes_6">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.reranking">Reranking</td><td><code>nvidia/rerank-qa-mistral-4b</code></td><td data-i18n="nvidia_index.sharpening_retrieval_before_an_answer">Sharpening retrieval before an answer</td><td class="free" data-i18n="nvidia_index.yes_7">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.content_safety">Content safety</td><td><code>nvidia/llama-3.1-nemoguard-8b-content-safety</code></td><td data-i18n="nvidia_index.the_guardrail_in_front_of_generation">The guardrail in front of generation</td><td class="free" data-i18n="nvidia_index.yes_8">Yes</td></tr>
+					<tr><td data-i18n="nvidia_index.text_to_speech">Text to speech</td><td data-i18n-html="nvidia_index.riva"><code>magpie-tts-multilingual</code> (Riva)</td><td data-i18n="nvidia_index.avatar_voices_multilingual">Avatar voices, multilingual</td><td class="free" data-i18n="nvidia_index.yes_9">Yes</td></tr>
 				</tbody>
 			</table>
 		</div>
 
 		<div class="note">
-			<strong>Model by model, with the file each one is wired into:</strong>
-			<a href="/docs/nvidia-models">NVIDIA models on three.ws</a>. It names the exact endpoint, the fallback
+			<strong data-i18n="nvidia_index.model_by_model_with_the_file_each">Model by model, with the file each one is wired into:</strong>
+			<a href="/docs/nvidia-models" data-i18n="nvidia_index.nvidia_models_on_three_ws">NVIDIA models on three.ws</a>. It names the exact endpoint, the fallback
 			behind it, and the environment variable that turns each lane on.
 		</div>
 	</section>
 
 	<section>
-		<h2>Try the free lane right now.</h2>
-		<p class="sub">
+		<h2 data-i18n="nvidia_index.try_the_free_lane_right_now">Try the free lane right now.</h2>
+		<p class="sub" data-i18n="nvidia_index.no_key_no_account_no_wallet_one">
 			No key, no account, no wallet. One POST returns a real GLB you can open in any 3D viewer. This is the
 			same endpoint the browser UI calls.
 		</p>
@@ -263,15 +263,15 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 #    "quality":{"valid":true,"score":0.947,…}}</span></pre>
 
 		<div class="note">
-			<strong>The <code>quality</code> block is not decoration.</strong> Every generation is inspected before it
+			<strong data-i18n-html="nvidia_index.the_block_is_not_decoration">The <code>quality</code> block is not decoration.</strong> Every generation is inspected before it
 			is handed back: vertex and triangle counts, bounding-box diagonal, whether materials and textures
 			actually landed. A model that fails inspection is regenerated rather than shipped to you broken.
 		</div>
 	</section>
 
 	<section>
-		<h2>The GPU fleet.</h2>
-		<p class="sub">
+		<h2 data-i18n="nvidia_index.the_gpu_fleet">The GPU fleet.</h2>
+		<p class="sub" data-i18n="nvidia_index.what_we_run_ourselves_and_on_which">
 			What we run ourselves, and on which card. Each row is a separate Cloud Run service with its own
 			scaling policy, so a slow texture job never queues behind a rigging job.
 		</p>
@@ -279,64 +279,64 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 		<div class="table-scroll">
 			<table>
 				<thead>
-					<tr><th>Lane</th><th>Worker</th><th>GPU</th><th>CPU / memory</th></tr>
+					<tr><th data-i18n="nvidia_index.lane">Lane</th><th data-i18n="nvidia_index.worker">Worker</th><th data-i18n="nvidia_index.gpu">GPU</th><th data-i18n="nvidia_index.cpu_memory">CPU / memory</th></tr>
 				</thead>
 				<tbody>
-					<tr><td>Image to 3D, PBR</td><td><code>model-hunyuan3d-21-rtx</code></td><td><code>nvidia-rtx-pro-6000</code></td><td>20 / 80 Gi</td></tr>
-					<tr><td>Image to 3D, fallback</td><td><code>model-hunyuan3d</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
-					<tr><td>Text to 3D</td><td><code>model-trellis</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
-					<tr><td>Image to 3D, fast</td><td><code>model-triposg</code>, <code>model-triposr</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi, 4 / 16 Gi</td></tr>
-					<tr><td>Texture synthesis</td><td><code>texture</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
-					<tr><td>Auto-rigging</td><td><code>rig</code>, <code>unirig</code></td><td><code>nvidia-l4</code></td><td>4 / 16 Gi</td></tr>
-					<tr><td>Text to motion</td><td><code>model-text2motion</code></td><td><code>nvidia-l4</code></td><td>4 / 16 Gi</td></tr>
-					<tr><td>Video to scene</td><td><code>model-video2scene</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.image_to_3d_pbr">Image to 3D, PBR</td><td><code>model-hunyuan3d-21-rtx</code></td><td><code>nvidia-rtx-pro-6000</code></td><td data-i18n="nvidia_index.20_80_gi">20 / 80 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.image_to_3d_fallback">Image to 3D, fallback</td><td><code>model-hunyuan3d</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.8_32_gi">8 / 32 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.text_to_3d_2">Text to 3D</td><td><code>model-trellis</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.8_32_gi_2">8 / 32 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.image_to_3d_fast">Image to 3D, fast</td><td><code>model-triposg</code>, <code>model-triposr</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.8_32_gi_4_16_gi">8 / 32 Gi, 4 / 16 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.texture_synthesis">Texture synthesis</td><td><code>texture</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.8_32_gi_3">8 / 32 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.auto_rigging">Auto-rigging</td><td><code>rig</code>, <code>unirig</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.4_16_gi">4 / 16 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.text_to_motion">Text to motion</td><td><code>model-text2motion</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.4_16_gi_2">4 / 16 Gi</td></tr>
+					<tr><td data-i18n="nvidia_index.video_to_scene">Video to scene</td><td><code>model-video2scene</code></td><td><code>nvidia-l4</code></td><td data-i18n="nvidia_index.8_32_gi_4">8 / 32 Gi</td></tr>
 				</tbody>
 			</table>
 		</div>
 
 		<div class="note">
-			<strong>Everything above is open source.</strong> Each worker's Dockerfile, deploy config, and README are
+			<strong data-i18n="nvidia_index.everything_above_is_open_source">Everything above is open source.</strong> Each worker's Dockerfile, deploy config, and README are
 			in the repository, including the CUDA and PyTorch versions per GPU generation.
 		</div>
 	</section>
 
 	<section>
-		<h2>Read next.</h2>
-		<p class="sub">Two tutorials you can follow end to end, and two deeper pieces on how the stack was built.</p>
+		<h2 data-i18n="nvidia_index.read_next">Read next.</h2>
+		<p class="sub" data-i18n="nvidia_index.two_tutorials_you_can_follow_end_to">Two tutorials you can follow end to end, and two deeper pieces on how the stack was built.</p>
 
 		<div class="reads">
 
 			<a class="read" href="/tutorials/nvidia-3d-free">
-				<span class="kind">Tutorial</span>
-				<h3>Free text-to-3D on NVIDIA</h3>
-				<p>From an empty terminal to a downloaded GLB on the free lane, including how to poll a long job and what each response field means.</p>
+				<span class="kind" data-i18n="nvidia_index.tutorial">Tutorial</span>
+				<h3 data-i18n="nvidia_index.free_text_to_3d_on_nvidia">Free text-to-3D on NVIDIA</h3>
+				<p data-i18n="nvidia_index.from_an_empty_terminal_to_a_downloaded">From an empty terminal to a downloaded GLB on the free lane, including how to poll a long job and what each response field means.</p>
 				<span class="more">Start the tutorial
 					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 				</span>
 			</a>
 
 			<a class="read" href="/tutorials/nvidia-nim-self-host">
-				<span class="kind">Tutorial</span>
-				<h3>Self-host TRELLIS on your own NIM</h3>
-				<p>Run the same text-to-3D model on your own NVIDIA GPU with NIM, then point a client at it and reconstruct from photos too.</p>
+				<span class="kind" data-i18n="nvidia_index.tutorial_2">Tutorial</span>
+				<h3 data-i18n="nvidia_index.self_host_trellis_on_your_own_nim">Self-host TRELLIS on your own NIM</h3>
+				<p data-i18n="nvidia_index.run_the_same_text_to_3d_model">Run the same text-to-3D model on your own NVIDIA GPU with NIM, then point a client at it and reconstruct from photos too.</p>
 				<span class="more">Start the tutorial
 					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 				</span>
 			</a>
 
 			<a class="read" href="/blog/image-to-3d-on-nvidia-l4-and-blackwell">
-				<span class="kind">Engineering</span>
-				<h3>Image-to-3D on L4 and Blackwell</h3>
-				<p>The field report: a memory-backed <code>/tmp</code> that SIGKILLs a 32 GiB instance mid-load, cu124 wheels with no sm_120 kernels, and the regional quota that flipped our GPU choice.</p>
+				<span class="kind" data-i18n="nvidia_index.engineering">Engineering</span>
+				<h3 data-i18n="nvidia_index.image_to_3d_on_l4_and_blackwell">Image-to-3D on L4 and Blackwell</h3>
+				<p data-i18n-html="nvidia_index.the_field_report_a_memory_backed_that">The field report: a memory-backed <code>/tmp</code> that SIGKILLs a 32 GiB instance mid-load, cu124 wheels with no sm_120 kernels, and the regional quota that flipped our GPU choice.</p>
 				<span class="more">Read the post
 					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 				</span>
 			</a>
 
 			<a class="read" href="/docs/nvidia-nemotron-spotlight">
-				<span class="kind">Essay</span>
-				<h3>The generator was never the hard part</h3>
-				<p>Published on the NVIDIA Developer Forums: why a 12B vision model standing in front of the 3D generator mattered more than the 3D generator itself.</p>
+				<span class="kind" data-i18n="nvidia_index.essay">Essay</span>
+				<h3 data-i18n="nvidia_index.the_generator_was_never_the_hard_part">The generator was never the hard part</h3>
+				<p data-i18n="nvidia_index.published_on_the_nvidia_developer_forums_why">Published on the NVIDIA Developer Forums: why a 12B vision model standing in front of the 3D generator mattered more than the 3D generator itself.</p>
 				<span class="more">Read the essay
 					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 				</span>
@@ -346,8 +346,8 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 	</section>
 
 	<section>
-		<h2>Why this matters.</h2>
-		<p class="sub">
+		<h2 data-i18n="nvidia_index.why_this_matters">Why this matters.</h2>
+		<p class="sub" data-i18n="nvidia_index.generating_3d_used_to_require_a_workstation">
 			Generating 3D used to require a workstation, a licence, and a skill you spent years acquiring.
 			The reason a visitor can now type a sentence on a school laptop and get a real, textured,
 			riggable model back for nothing is not one famous model getting good. It is an entire supporting
@@ -364,7 +364,7 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3C5.4.3 0 5.7 0 12.3c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.8 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.8-1.6 8.2-6.1 8.2-11.4C24 5.7 18.6.3 12 .3z"/></svg>
 				View source
 			</a>
-			<a href="/partners" class="btn btn-sec">All partners</a>
+			<a href="/partners" class="btn btn-sec" data-i18n="nvidia_index.all_partners">All partners</a>
 		</div>
 	</section>
 
@@ -376,7 +376,7 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 		is not an NVIDIA product and is not endorsed by NVIDIA beyond the program membership shown. NVIDIA, the
 		NVIDIA logo, NVIDIA Inception, NIM, Riva, Nemotron, and NemoGuard are trademarks of NVIDIA Corporation.
 		Learn more about the program at
-		<a href="https://www.nvidia.com/en-us/startups/" target="_blank" rel="noopener">nvidia.com/en-us/startups</a>.
+		<a href="https://www.nvidia.com/en-us/startups/" target="_blank" rel="noopener" data-i18n="nvidia_index.nvidia_com_en_us_startups">nvidia.com/en-us/startups</a>.
 	</p>
 
 </main>

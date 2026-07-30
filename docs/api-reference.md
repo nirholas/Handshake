@@ -2946,6 +2946,203 @@ The full seller-side wire contract — challenge fields, verify→work→settle 
 
 ---
 
+## Agent Payment Sessions API
+
+```
+POST   /api/pay/session                 Create a funded spend envelope
+GET    /api/pay/session                 List your sessions + aggregate stats
+GET    /api/pay/session/:id             Inspect one session
+PATCH  /api/pay/session/:id             Tighten policy on an active session
+DELETE /api/pay/session/:id             Cancel and refund the unspent budget
+GET    /api/pay/session/:id/executions  The payment ledger for one session
+POST   /api/pay/execute                 Pay an x402 endpoint with a session token
+```
+
+The buyer-side counterpart to the x402 endpoints above. Everything so far assumed the caller holds a wallet key; a **Payment Session** is how you let an autonomous agent pay for things without ever giving it one.
+
+> The agent does not hold a wallet. It proposes spend. Governance enforces policy.
+
+You fund a budget from your [credits](payment-sessions.md#prepaid-credits), set the policy, and receive a bearer token. The agent presents that token to `/api/pay/execute`; the platform's own wallet signs the on-chain transfer. A stolen token buys at most the remaining budget, only at hosts you approved, only until the session expires.
+
+Conceptual guide: [Payment sessions](payment-sessions.md). Step-by-step walkthrough: [Give an agent a spending envelope](tutorials/agent-spending-envelope.md). Enforcement source: [`api/_lib/pay/spend-governor.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/pay/spend-governor.js).
+
+### Authentication
+
+The **management** endpoints (`/api/pay/session*`) authenticate as *you*: a browser session cookie or an API key bearer token. They are how a human or a deploy script provisions budgets.
+
+The **spend** endpoint (`/api/pay/execute`) authenticates as the *session*: the `session_token` travels in the JSON body, not an `Authorization` header. That split is deliberate. An agent holding a session token can spend its budget and can do nothing else: it cannot create another session, read your other sessions, or raise its own ceiling.
+
+### POST /api/pay/session
+
+Creates a session and debits `budget_usd` from your credit balance immediately.
+
+| Field            | Type       | Default    | Notes                                                                 |
+| ---------------- | ---------- | ---------- | --------------------------------------------------------------------- |
+| `budget_usd`     | number     | required   | $0.001 to $1000. Debited from credits at creation.                     |
+| `label`          | string     | `""`       | Up to 120 chars. Shown in listings and on `/payments`.                 |
+| `expiry_seconds` | number     | `3600`     | 60 seconds to 90 days. Unspent budget is refunded at expiry.           |
+| `max_per_tx_usd` | number     | `null`     | Per-payment ceiling. `null` means only the total budget bounds a call. |
+| `allowed_hosts`  | string[]   | `[]`       | Up to 50 entries. Empty means any host. Normalized to bare hostnames.  |
+| `network`        | string     | `"solana"` | `solana` or `base`.                                                    |
+| `agent_id`       | string     | `null`     | Optional: the agent this session is provisioned for.                   |
+| `metadata`       | object     | `{}`       | Arbitrary JSON for your own bookkeeping.                               |
+
+```bash
+curl -X POST https://three.ws/api/pay/session \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "budget_usd": 10.00,
+    "label": "Research agent, June sprint",
+    "expiry_seconds": 86400,
+    "max_per_tx_usd": 0.50,
+    "allowed_hosts": ["api.example.com", "data.provider.io"],
+    "network": "solana"
+  }'
+```
+
+**201 Created**
+
+```json
+{
+	"session": {
+		"id": "5f2c…",
+		"label": "Research agent, June sprint",
+		"budget_usd": 10,
+		"spent_usd": 0,
+		"remaining_usd": 10,
+		"max_per_tx_usd": 0.5,
+		"allowed_hosts": ["api.example.com", "data.provider.io"],
+		"network": "solana",
+		"status": "active",
+		"expires_at": "2026-07-31T09:00:00.000Z",
+		"created_at": "2026-07-30T09:00:00.000Z"
+	},
+	"token": "pss_5f2c…_9a3f…",
+	"note": "Store this token securely. It is shown once and cannot be recovered."
+}
+```
+
+The `token` is returned exactly once. Only its HMAC is stored, so a lost token cannot be recovered: cancel the session (which refunds the remainder) and create another.
+
+**402 `insufficient_credits`** if your balance will not cover `budget_usd`. Top up at [/credits](https://three.ws/credits).
+
+### GET /api/pay/session
+
+Lists your sessions newest-first, plus portfolio-wide counters.
+
+Query: `status` (`active` | `exhausted` | `expired` | `cancelled`), `limit` (default 20), `cursor`.
+
+```json
+{
+	"sessions": [{ "id": "5f2c…", "status": "active", "remaining_usd": 8.65 }],
+	"next_cursor": null,
+	"stats": {
+		"sessions": { "active": 1, "exhausted": 3, "cancelled": 0, "expired": 2,
+			"total_budget_usd": 60, "total_spent_usd": 41.35 },
+		"executions": { "settled": 812, "failed": 4, "settled_usd": 41.35, "unique_endpoints": 6 }
+	}
+}
+```
+
+### GET /api/pay/session/:id
+
+Returns `{ session }` in the shape above, or **404** if the session does not exist *or* is not yours. Ownership failures are indistinguishable from missing rows on purpose.
+
+### PATCH /api/pay/session/:id
+
+Tightens an active session without restarting the agent holding its token. Accepts any of `label`, `allowed_hosts`, `max_per_tx_usd`; at least one is required (**400 `nothing_to_update`** otherwise). The budget and expiry are immutable: raising either would let a session outgrow the amount you authorized when you funded it.
+
+### DELETE /api/pay/session/:id
+
+Cancels the session and refunds the unspent budget to your credits in the same call.
+
+```json
+{ "cancelled": true, "session_id": "5f2c…", "refunded_usd": 8.65 }
+```
+
+### GET /api/pay/session/:id/executions
+
+The immutable payment ledger: one row per attempt, settled or not, with endpoint, host, amount, network, transaction hash, duration, and error code. This is the audit trail for what your agent actually bought.
+
+### POST /api/pay/execute
+
+The agent-facing endpoint. Give it a URL; it probes for the `402`, enforces policy, signs, pays, and returns the resource.
+
+| Field             | Type   | Notes                                                              |
+| ----------------- | ------ | ------------------------------------------------------------------ |
+| `session_token`   | string | required                                                            |
+| `url`             | string | required. Public HTTPS only; validated against SSRF before payment. |
+| `method`          | string | `GET` (default) or `POST`.                                          |
+| `body`            | object | JSON body, `POST` only.                                             |
+| `idempotency_key` | string | Strongly recommended. Unique-constrained, so a retry cannot double-bill. |
+
+```bash
+curl -X POST https://three.ws/api/pay/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://api.example.com/data",
+    "session_token": "pss_5f2c…_9a3f…",
+    "idempotency_key": "run-42-fetch-data"
+  }'
+```
+
+**200 OK** carries the resource *and* the receipt:
+
+```json
+{
+	"ok": true,
+	"paid": true,
+	"result": { "...": "the endpoint's own response" },
+	"payment": {
+		"session_id": "5f2c…",
+		"amount_usd": 0.05,
+		"network": "solana",
+		"payer": "…",
+		"pay_to": "…",
+		"tx_hash": "…",
+		"explorer": "https://solscan.io/tx/…"
+	},
+	"session": { "spent_usd": 1.35, "remaining_usd": 8.65 },
+	"duration_ms": 1840
+}
+```
+
+If the endpoint answers without a `402`, it was free. You get `paid: false` and the session is never touched.
+
+### Governance errors
+
+Policy runs in order (token, status, expiry, allowlist, per-transaction cap, budget) and each failure has its own code. None of these charge the session.
+
+| Status | Code                   | Meaning                                                          |
+| ------ | ---------------------- | ---------------------------------------------------------------- |
+| 401    | `invalid_token`        | Malformed token, or it does not hash to a stored session.         |
+| 403    | `session_inactive`     | Session is exhausted, cancelled, or expired.                      |
+| 403    | `session_expired`      | Past `expires_at`. The row is marked expired on the spot.         |
+| 403    | `allowlist_blocked`    | Target host is not on the allowlist. Detail carries the allowlist. |
+| 402    | `per_tx_exceeded`      | Price is over `max_per_tx_usd`. Detail carries both numbers.       |
+| 402    | `insufficient_budget`  | Remaining budget is too small. Detail carries need and remaining.  |
+
+An `allowlist_blocked` match is exact-host or true-subdomain. An entry of `example.com` covers `api.example.com` and does **not** cover `evil-example.com`.
+
+### Settlement outcomes
+
+Three, not two, and the third is the one to design for.
+
+| Result | HTTP | Budget | What to do |
+| ------ | ---- | ------ | ---------- |
+| Settled | 200 | Debited | Use the result. `tx_hash` is your receipt. |
+| Rejected pre-settlement | 402 `payment_rejected` | **Restored** | Nothing moved on-chain. Safe to retry. |
+| Submitted, unconfirmed | 502 `settle_uncertain` | **Held** | The transfer may have landed. Do not retry blindly: read `/api/pay/session/:id/executions` or the explorer first. |
+
+The budget is deliberately *not* restored on `settle_uncertain`. Releasing it would let the next call spend money that may already be gone, so the accounting stays conservative and the uncertainty stays visible in the ledger.
+
+### Expiry and refunds
+
+`/api/cron/payment-session-sweep` runs every five minutes, marks sessions past `expires_at` as expired, and credits the unspent remainder back, keyed by session id so overlapping ticks cannot double-refund. Short sessions are the recommended posture precisely because letting one lapse costs nothing.
+
+---
+
 ## Coin Market Data API
 
 Public, unauthenticated, CORS-open proxies over CoinGecko (plus a news
@@ -3947,4 +4144,5 @@ const { agents } = await res.json();
 - [SDK & Library](/docs/sdk): the npm packages and the web component bundle
 - [MCP documentation](/docs/mcp): the same platform surface as MCP tools
 - [x402](/docs/x402): how the paid `/api/x402/*` endpoints settle in USDC
+- [Payment sessions](/docs/payment-sessions): the buyer side, letting an agent spend a budget without holding a key
 - [Authentication](/docs/authentication): SIWE, sessions, API keys, and scopes

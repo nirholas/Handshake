@@ -443,5 +443,15 @@
 		"pattern": "| Avaturn | Avaturn |",
 		"file": "docs/avatar-engines.md",
 		"reason": "Factual row in the Avatar Engines Atlas interop table. Same reference-not-endorsement scope as the Ready Player Me row above."
+	},
+	{
+		"pattern": "avaturn",
+		"file": "docs/avatar-cli.md",
+		"reason": "CLI reference for `--skeleton`: `avaturn` is a literal accepted value of the flag (and its default), so the doc has to name it exactly or it stops describing the CLI."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/tutorials/explore-docs-world.md",
+		"reason": "Names the upstream rig conventions whose bone names are mapped automatically, same scope as the docs/animations.md exemption."
 	}
 ]

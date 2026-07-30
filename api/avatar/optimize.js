@@ -27,8 +27,13 @@
 //   400 invalid_request          missing / malformed params
 //   400 untrusted_source         src is not on a three.ws-controlled origin
 //   404 source_not_found         upstream returned non-200
-//   413 too_large                source > 50 MB (hard cap to protect runtime)
+//   413 too_large                source > 50 MB (hard cap to protect runtime;
+//                                enforced while streaming, so a chunked response
+//                                with no content-length is refused mid-download
+//                                rather than buffered in full)
 //   500 transcode_failed         pipeline threw
+//   502 upstream_unreachable     source fetch/read failed
+//   504 source_timeout           source did not respond or stalled mid-download
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -42,6 +47,42 @@ import { dedup, prune, textureCompress, weld } from '@gltf-transform/functions';
 import { ARKIT_52, ARKIT_VISEMES, MORPH_ALIASES } from '../../src/runtime/arkit52.js';
 
 const SOURCE_BYTE_CAP = 50 * 1024 * 1024;
+// An unresponsive or endlessly-slow source must not hold a request open forever.
+const SOURCE_FETCH_TIMEOUT_MS = 30_000;
+
+/**
+ * Read an upstream body, refusing to buffer more than `cap` bytes.
+ *
+ * The size guard used to be `Buffer.from(await upstream.arrayBuffer())` followed
+ * by a length check, which only works when the server declares content-length.
+ * A chunked response carries no such header, so an oversized source was fully
+ * downloaded before anyone measured it: the request appeared to stall rather
+ * than returning the 413 the endpoint documents. Counting as chunks arrive stops
+ * at the cap and aborts the transfer instead of paying for the whole body.
+ *
+ * @throws {Error & { code: 'too_large' }} once the cap is exceeded
+ */
+async function readCapped(upstream, cap, abort) {
+	if (!upstream.body) {
+		// No stream available (a mocked or already-buffered response): fall back to
+		// buffering, then apply the same cap so the limit still holds.
+		const buf = Buffer.from(await upstream.arrayBuffer());
+		if (buf.byteLength > cap) throw Object.assign(new Error('too_large'), { code: 'too_large' });
+		return buf;
+	}
+	const chunks = [];
+	let total = 0;
+	for await (const chunk of upstream.body) {
+		const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+		total += buf.byteLength;
+		if (total > cap) {
+			abort?.abort();
+			throw Object.assign(new Error('too_large'), { code: 'too_large' });
+		}
+		chunks.push(buf);
+	}
+	return Buffer.concat(chunks, total);
+}
 const VALID_TEXTURE_SIZES = new Set([128, 256, 512, 1024, 2048]);
 const VALID_LODS = new Set([0, 1, 2]);
 
@@ -230,22 +271,43 @@ export default wrap(async (req, res) => {
 		return error(res, err.status || 400, err.code || 'invalid_request', err.message);
 	}
 
+	const abort = new AbortController();
+	const fetchTimer = setTimeout(() => abort.abort(), SOURCE_FETCH_TIMEOUT_MS);
 	let upstream;
 	try {
-		upstream = await fetch(sourceUrl);
+		upstream = await fetch(sourceUrl, { signal: abort.signal });
 	} catch (err) {
+		clearTimeout(fetchTimer);
+		if (err?.name === 'AbortError') {
+			return error(res, 504, 'source_timeout', `source did not respond within ${SOURCE_FETCH_TIMEOUT_MS} ms`);
+		}
 		return error(res, 502, 'upstream_unreachable', err?.message || 'source fetch failed');
 	}
-	if (!upstream.ok) return error(res, 404, 'source_not_found', `upstream returned ${upstream.status}`);
+	if (!upstream.ok) {
+		clearTimeout(fetchTimer);
+		return error(res, 404, 'source_not_found', `upstream returned ${upstream.status}`);
+	}
 
 	const sizeHeader = upstream.headers.get('content-length');
 	if (sizeHeader && Number(sizeHeader) > SOURCE_BYTE_CAP) {
+		clearTimeout(fetchTimer);
+		abort.abort();
 		return error(res, 413, 'too_large', `source exceeds ${SOURCE_BYTE_CAP} bytes`);
 	}
 
-	const sourceBytes = Buffer.from(await upstream.arrayBuffer());
-	if (sourceBytes.byteLength > SOURCE_BYTE_CAP) {
-		return error(res, 413, 'too_large', `source exceeds ${SOURCE_BYTE_CAP} bytes`);
+	let sourceBytes;
+	try {
+		sourceBytes = await readCapped(upstream, SOURCE_BYTE_CAP, abort);
+	} catch (err) {
+		if (err?.code === 'too_large') {
+			return error(res, 413, 'too_large', `source exceeds ${SOURCE_BYTE_CAP} bytes`);
+		}
+		if (err?.name === 'AbortError') {
+			return error(res, 504, 'source_timeout', `source stalled mid-download after ${SOURCE_FETCH_TIMEOUT_MS} ms`);
+		}
+		return error(res, 502, 'upstream_unreachable', err?.message || 'source read failed');
+	} finally {
+		clearTimeout(fetchTimer);
 	}
 
 	let outBytes;

@@ -165,7 +165,7 @@ import { evaluateSeedAsset, inProcessTransport } from './api/_lib/seed-quality.j
 
 const verdict = await evaluateSeedAsset({
   glbBuffer,                                   // the bytes, for stage 1
-  glbUrl: 'https://cdn.three.ws/forge/abc.glb', // a public URL, for the renderer
+  glbUrl: 'https://three.ws/cdn/forge/abc.glb', // a public URL, for the renderer
   prompt: 'a knight in weathered plate armour',
   category: 'avatar',
   transport: inProcessTransport(),             // omit for a mesh-only run

@@ -2,11 +2,11 @@
 //
 // Two layers live here:
 //
-//   1. SLOTS + DEFAULT_ANIMATION_MAP — the slot names an agent may override
+//   1. SLOTS + DEFAULT_ANIMATION_MAP: the slot names an agent may override
 //      (meta.edits.animations) and the clip each one resolves to by default.
 //      Every value is a real baked clip in public/animations/manifest.json;
 //      tests/animation-slots.test.js fails the build if one drifts.
-//   2. HINT_ALIASES + resolveHint — the skill-side vocabulary. Skills declare
+//   2. HINT_ALIASES + resolveHint: the skill-side vocabulary. Skills declare
 //      `animationHint: '<name>'` (src/agent-skills*.js) and the avatar plays
 //      the matching slot. Hints that are not slot names (the `gesture-*`
 //      family) alias onto one, so a hint can never resolve to nothing.

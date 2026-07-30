@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Your master wallet — three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta
+			name="description"
+			content="One custodial wallet for your three.ws account: hold SOL and USDC on Solana and Base, top up any agent you own, send to any Solana address, and read your on-chain history."
+		/>
+		<meta name="robots" content="noindex" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Your master wallet — three.ws" />
+		<meta
+			property="og:description"
+			content="Fund it once, then top up your agents, send SOL or USDC, and read every transaction straight from Solana."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Your+Master+Wallet&amp;d=One+wallet+for+your+account%3A+balances%2C+sending%2C+and+agent+funding.&amp;p=%2Fwallet" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Your+Master+Wallet&amp;d=One+wallet+for+your+account%3A+balances%2C+sending%2C+and+agent+funding.&amp;p=%2Fwallet" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/master-wallet.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="wlt-wrap">
+			<p class="wlt-crumb"><a href="/">Home</a> / <a href="/account">Account</a> / Wallet</p>
+			<div id="wlt-root"></div>
+		</main>
+
+		<script type="module" src="/src/master-wallet.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

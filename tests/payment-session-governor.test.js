@@ -1,5 +1,5 @@
 /**
- * Agent Payment Sessions — the spend governor, pinned.
+ * Agent Payment Sessions: the spend governor, pinned.
  *
  * A payment session is the only thing standing between an autonomous agent and a
  * funded wallet: the agent holds a bearer token, never a key, and every payment it

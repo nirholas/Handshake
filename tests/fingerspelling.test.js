@@ -218,4 +218,26 @@ describe('buildFingerspellingClip', () => {
 		expect(() => buildFingerspellingClip('')).toThrow();
 		expect(buildFingerspellingClip('42').duration).toBeGreaterThan(0);
 	});
+
+	it('reports when each letter is on screen, in order and inside the clip', () => {
+		const marks = [];
+		const clip = buildFingerspellingClip('HELLO', { marks });
+		expect(marks.map((m) => m.letter).join('')).toBe('HELLO');
+		let previousEnd = 0;
+		for (const mark of marks) {
+			expect(mark.start).toBeGreaterThanOrEqual(previousEnd - 1e-9);
+			expect(mark.end).toBeGreaterThan(mark.start);
+			expect(mark.end).toBeLessThanOrEqual(clip.duration + 1e-9);
+			previousEnd = mark.end;
+		}
+		// The doubled L bounces, so it takes longer than a single letter.
+		const [, , firstL, secondL] = marks;
+		expect(secondL.end - secondL.start).toBeGreaterThan(firstL.end - firstL.start);
+	});
+
+	it('marks the word breaks too, so a phrase can be followed letter by letter', () => {
+		const marks = [];
+		buildFingerspellingClip('HI YOU', { marks });
+		expect(marks.map((m) => m.letter).join('')).toBe('HI YOU');
+	});
 });

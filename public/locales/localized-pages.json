@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 348,
+	"count": 349,
 	"paths": [
 		"/",
 		"/3d",
@@ -266,6 +266,7 @@
 		"/news/threews-play-coin-communities",
 		"/nim-forge",
 		"/notifications",
+		"/nvidia",
 		"/objects",
 		"/openai",
 		"/oracle",

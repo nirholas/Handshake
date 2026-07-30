@@ -255,6 +255,14 @@
 			"dest": "/agent-wallet.html"
 		},
 		{
+			"src": "/wallet",
+			"dest": "/wallet.html"
+		},
+		{
+			"src": "/wallet/",
+			"dest": "/wallet.html"
+		},
+		{
 			"src": "/viability",
 			"dest": "/viability.html"
 		},
@@ -309,6 +317,14 @@
 		{
 			"src": "/admin/seeder/",
 			"dest": "/admin/seeder.html"
+		},
+		{
+			"src": "/admin/economy",
+			"dest": "/admin/economy.html"
+		},
+		{
+			"src": "/admin/economy/",
+			"dest": "/admin/economy.html"
 		},
 		{
 			"src": "/admin/ring",
@@ -955,6 +971,10 @@
 			"dest": "/trades.html"
 		},
 		{
+			"src": "/trading/?",
+			"dest": "/trading.html"
+		},
+		{
 			"src": "/claim-wallet/?",
 			"dest": "/claim-wallet.html"
 		},
@@ -1287,6 +1307,10 @@
 			"dest": "/play/arena.html"
 		},
 		{
+			"src": "/play/economy/?",
+			"dest": "/play/economy.html"
+		},
+		{
 			"src": "/sniper/experiments/?",
 			"dest": "/sniper-experiments.html"
 		},
@@ -1535,6 +1559,10 @@
 		{
 			"src": "/galaxy/?",
 			"dest": "/galaxy.html"
+		},
+		{
+			"src": "/examples/?",
+			"dest": "/examples.html"
 		},
 		{
 			"src": "/lipsync/mic/?",
@@ -3997,6 +4025,10 @@
 			"dest": "/sign-language.html"
 		},
 		{
+			"src": "/asl-alphabet/?",
+			"dest": "/asl-alphabet.html"
+		},
+		{
 			"src": "/objects/?",
 			"dest": "/objects.html"
 		},
@@ -4927,6 +4959,14 @@
 		{
 			"src": "/agent-identities/",
 			"dest": "/agent-identities.html"
+		},
+		{
+			"src": "/mcp-tools",
+			"dest": "/mcp-tools.html"
+		},
+		{
+			"src": "/mcp-tools/",
+			"dest": "/mcp-tools.html"
 		},
 		{
 			"src": "/features",

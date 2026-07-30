@@ -121,12 +121,17 @@
 			<p>Loading the documentation and warming up the scene.</p>
 		</div>
 		<div class="dw-center" id="dw-fallback" hidden>
-			<h1>This device can't open the 3D world</h1>
+			<h1 id="dw-fallback-title">This device can't open the 3D world</h1>
 			<p id="dw-fallback-sub">
 				WebGL isn't available in this browser. The classic docs carry exactly the
 				same content, no 3D required.
 			</p>
-			<a class="dw-btn" href="/docs">Open the classic docs</a>
+			<div class="dw-fallback-actions">
+				<!-- Shown only for failures a reload can actually fix (a dropped
+				     manifest fetch), never for a device that has no WebGL at all. -->
+				<button class="dw-btn" type="button" id="dw-fallback-retry" hidden>Try again</button>
+				<a class="dw-btn" id="dw-fallback-classic" href="/docs">Open the classic docs</a>
+			</div>
 		</div>
 
 		<script type="module" src="/src/docs-world/main.js"></script>

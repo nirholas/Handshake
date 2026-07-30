@@ -1,0 +1,748 @@
+/* Your master wallet (/wallet).
+ *
+ * Built on the shared tokens in /tokens.css. The violet --wallet-* family is
+ * the same one the agent wallet hub and claim-wallet use, so a person moving
+ * between the three surfaces reads them as one system.
+ *
+ * Layout rules: nothing is a fixed pixel width, the balance grid reflows by
+ * available space rather than by breakpoint guesswork, and long addresses are
+ * middle-truncated in markup (never clipped by overflow) so they stay
+ * verifiable by eye at 320px.
+ */
+
+.wlt-wrap {
+	max-width: 880px;
+	margin: 0 auto;
+	padding: calc(var(--space-md) * 2) var(--space-md) calc(var(--space-md) * 4);
+}
+
+.wlt-crumb {
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+	margin: 0 0 var(--space-lg);
+}
+.wlt-crumb a {
+	color: inherit;
+}
+.wlt-crumb a:hover {
+	color: var(--ink);
+}
+
+/* ── Shared controls ─────────────────────────────────────────────────────── */
+
+.wlt-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-xs);
+	appearance: none;
+	font: var(--text-md) var(--font-body);
+	font-weight: var(--weight-medium);
+	color: var(--ink);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	padding: 9px 16px;
+	cursor: pointer;
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+.wlt-btn:hover:not(:disabled) {
+	background: var(--surface-3);
+	border-color: var(--stroke-strong);
+}
+.wlt-btn:active:not(:disabled) {
+	transform: translateY(1px);
+}
+.wlt-btn:focus-visible {
+	outline: var(--focus-ring-width) solid var(--wallet-focus);
+	outline-offset: var(--focus-ring-offset);
+}
+.wlt-btn:disabled {
+	opacity: var(--disabled-opacity);
+	cursor: var(--disabled-cursor);
+}
+.wlt-btn--primary {
+	background: var(--wallet-accent-fill);
+	border-color: var(--wallet-stroke-strong);
+	color: var(--wallet-accent);
+	font-weight: var(--weight-semibold);
+}
+.wlt-btn--primary:hover:not(:disabled) {
+	background: var(--wallet-accent-soft);
+	border-color: var(--wallet-accent-strong);
+	box-shadow: 0 0 0 1px var(--wallet-stroke), 0 8px 24px -12px var(--wallet-glow);
+}
+.wlt-btn--lg {
+	padding: 12px 22px;
+	font-size: var(--text-lg);
+}
+.wlt-btn--sm {
+	padding: 6px 12px;
+	font-size: var(--text-sm);
+}
+
+.wlt-icon-btn {
+	appearance: none;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--radius-sm);
+	color: var(--ink-dim);
+	font: var(--text-xs) var(--font-body);
+	padding: 4px 8px;
+	cursor: pointer;
+	text-decoration: none;
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
+}
+.wlt-icon-btn:hover {
+	color: var(--ink);
+	background: var(--surface-3);
+}
+.wlt-icon-btn:focus-visible {
+	outline: var(--focus-ring-width) solid var(--wallet-focus);
+	outline-offset: var(--focus-ring-offset);
+}
+.wlt-icon-btn.is-copied {
+	color: var(--success);
+}
+
+.wlt-linkbtn {
+	appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	color: var(--wallet-accent);
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.wlt-linkbtn:focus-visible {
+	outline: var(--focus-ring-width) solid var(--wallet-focus);
+	outline-offset: var(--focus-ring-offset);
+}
+
+/* ── Hero states (signed out, no wallet) ─────────────────────────────────── */
+
+.wlt-eyebrow {
+	display: inline-block;
+	font: var(--text-xs) var(--font-body);
+	font-weight: var(--weight-semibold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--wallet-accent);
+	margin-bottom: var(--space-xs);
+}
+
+.wlt-hero {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	padding: var(--space-xl);
+	position: relative;
+	overflow: hidden;
+}
+/* A single soft violet wash: enough to feel considered, never enough to fight
+   the text contrast in either theme. */
+.wlt-hero::before {
+	content: '';
+	position: absolute;
+	inset: -40% 40% 60% -20%;
+	background: radial-gradient(closest-side, var(--wallet-accent-soft), transparent);
+	pointer-events: none;
+}
+.wlt-hero > * {
+	position: relative;
+}
+.wlt-hero-title {
+	font: var(--text-2xl) var(--font-display);
+	font-weight: var(--weight-bold);
+	line-height: var(--leading-tight);
+	color: var(--ink-bright);
+	margin: 0 0 var(--space-sm);
+}
+.wlt-hero-sub {
+	font: var(--text-md) var(--font-body);
+	line-height: var(--leading-loose);
+	color: var(--ink-dim);
+	margin: 0 0 var(--space-lg);
+	max-width: 60ch;
+}
+.wlt-bullets {
+	list-style: none;
+	margin: 0 0 var(--space-lg);
+	padding: 0;
+	display: grid;
+	gap: var(--space-sm);
+}
+.wlt-bullets li {
+	font: var(--text-md) var(--font-body);
+	color: var(--ink-dim);
+	padding-left: 1.6em;
+	position: relative;
+}
+.wlt-bullets li::before {
+	content: '';
+	position: absolute;
+	left: 0.35em;
+	top: 0.62em;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--wallet-accent);
+}
+.wlt-bullets strong {
+	color: var(--ink);
+}
+.wlt-hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-sm);
+}
+
+/* ── Error / message ─────────────────────────────────────────────────────── */
+
+.wlt-msg {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	padding: var(--space-xl);
+}
+.wlt-msg--inline {
+	padding: var(--space-lg);
+	display: grid;
+	gap: var(--space-md);
+	justify-items: start;
+}
+.wlt-msg-title {
+	font: var(--text-xl) var(--font-display);
+	font-weight: var(--weight-bold);
+	color: var(--ink-bright);
+	margin: 0 0 var(--space-sm);
+}
+.wlt-msg-body {
+	font: var(--text-md) var(--font-body);
+	color: var(--ink-dim);
+	margin: 0 0 var(--space-lg);
+	max-width: 60ch;
+}
+.wlt-msg--inline .wlt-msg-body {
+	margin: 0;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.wlt-head {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--space-md);
+	flex-wrap: wrap;
+	margin-bottom: var(--space-lg);
+}
+.wlt-title {
+	font: var(--text-2xl) var(--font-display);
+	font-weight: var(--weight-bold);
+	color: var(--ink-bright);
+	margin: 0;
+	line-height: var(--leading-tight);
+}
+
+/* ── Notice banner ───────────────────────────────────────────────────────── */
+
+.wlt-notice {
+	display: flex;
+	align-items: center;
+	gap: var(--space-md);
+	flex-wrap: wrap;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--stroke);
+	padding: var(--space-md);
+	margin-bottom: var(--space-lg);
+	animation: wlt-notice-in var(--duration-base) var(--ease-out);
+}
+.wlt-notice--ok {
+	background: var(--badge-success-bg);
+	border-color: var(--badge-success-border);
+}
+.wlt-notice--err {
+	background: var(--badge-danger-bg);
+	border-color: var(--badge-danger-border);
+}
+.wlt-notice-text {
+	display: grid;
+	gap: 2px;
+	flex: 1 1 16rem;
+	min-width: 0;
+}
+.wlt-notice-text strong {
+	font: var(--text-md) var(--font-body);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright);
+}
+.wlt-notice-text span {
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+}
+@keyframes wlt-notice-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* ── Balances ────────────────────────────────────────────────────────────── */
+
+.wlt-balances {
+	display: grid;
+	/* Reflows by space, not by breakpoint: four across on a wide screen, two on
+	   a tablet, one on a phone, with no media query to keep in sync. */
+	grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+	gap: var(--space-sm);
+	margin-bottom: var(--space-lg);
+}
+.wlt-bal {
+	display: grid;
+	gap: 2px;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	padding: var(--space-md);
+	min-width: 0;
+}
+.wlt-bal--accent {
+	background: var(--wallet-accent-soft);
+	border-color: var(--wallet-stroke);
+}
+.wlt-bal-label {
+	font: var(--text-xs) var(--font-body);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-faint);
+}
+.wlt-bal-value {
+	font: var(--text-xl) var(--font-mono);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright);
+	overflow-wrap: anywhere;
+}
+.wlt-bal--accent .wlt-bal-value {
+	color: var(--wallet-accent);
+}
+.wlt-bal-sub {
+	font: var(--text-xs) var(--font-body);
+	color: var(--ink-dim);
+}
+.wlt-bal-na {
+	font-size: var(--text-sm);
+	color: var(--ink-faint);
+	font-family: var(--font-body);
+	font-weight: var(--weight-regular);
+}
+
+/* ── Addresses ───────────────────────────────────────────────────────────── */
+
+.wlt-addresses {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	padding: var(--space-md);
+	margin-bottom: var(--space-lg);
+	display: grid;
+	gap: var(--space-sm);
+}
+.wlt-addr {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
+}
+.wlt-addr-label {
+	font: var(--text-xs) var(--font-body);
+	font-weight: var(--weight-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-faint);
+	min-width: 3.5rem;
+}
+.wlt-addr-value {
+	font: var(--text-sm) var(--font-mono);
+	color: var(--ink);
+	background: var(--surface-2);
+	border-radius: var(--radius-sm);
+	padding: 4px 8px;
+	overflow-wrap: anywhere;
+}
+.wlt-addr-note {
+	font: var(--text-xs) var(--font-body);
+	color: var(--ink-faint);
+	margin: 0;
+	max-width: 60ch;
+}
+
+/* ── Tabs + panel ────────────────────────────────────────────────────────── */
+
+.wlt-actions {
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+}
+.wlt-tabs {
+	display: flex;
+	gap: 2px;
+	padding: var(--space-xs);
+	border-bottom: 1px solid var(--stroke);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.wlt-tabs::-webkit-scrollbar {
+	display: none;
+}
+.wlt-tab {
+	appearance: none;
+	background: transparent;
+	border: 0;
+	border-radius: var(--radius-sm);
+	color: var(--ink-dim);
+	font: var(--text-md) var(--font-body);
+	font-weight: var(--weight-medium);
+	padding: 10px 16px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
+}
+.wlt-tab:hover {
+	color: var(--ink);
+	background: var(--surface-2);
+}
+.wlt-tab:focus-visible {
+	outline: var(--focus-ring-width) solid var(--wallet-focus);
+	outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+.wlt-tab.is-active {
+	color: var(--wallet-accent);
+	background: var(--wallet-accent-soft);
+}
+.wlt-panel {
+	padding: var(--space-lg);
+}
+.wlt-panel:focus-visible {
+	outline: var(--focus-ring-width) solid var(--wallet-focus);
+	outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+/* ── Forms ───────────────────────────────────────────────────────────────── */
+
+.wlt-form {
+	display: grid;
+	gap: var(--space-md);
+}
+.wlt-field {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+.wlt-field label {
+	font: var(--text-sm) var(--font-body);
+	font-weight: var(--weight-medium);
+	color: var(--ink);
+}
+.wlt-field-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+	gap: var(--space-md);
+}
+.wlt-input {
+	width: 100%;
+	appearance: none;
+	font: var(--text-md) var(--font-body);
+	color: var(--ink);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	padding: 10px 12px;
+	transition:
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
+}
+.wlt-input:hover {
+	border-color: var(--stroke-strong);
+}
+.wlt-input:focus {
+	outline: none;
+	border-color: var(--wallet-accent-strong);
+	box-shadow: 0 0 0 3px var(--wallet-accent-soft);
+}
+input.wlt-input {
+	font-family: var(--font-mono);
+}
+.wlt-help {
+	font: var(--text-xs) var(--font-body);
+	color: var(--ink-faint);
+	margin: 0;
+}
+
+/* ── Confirmation ────────────────────────────────────────────────────────── */
+
+.wlt-confirm {
+	border: 1px solid var(--wallet-stroke-strong);
+	background: var(--wallet-accent-soft);
+	border-radius: var(--radius-md);
+	padding: var(--space-lg);
+	display: grid;
+	gap: var(--space-md);
+	animation: wlt-notice-in var(--duration-base) var(--ease-out);
+}
+.wlt-confirm-title {
+	font: var(--text-lg) var(--font-display);
+	font-weight: var(--weight-bold);
+	color: var(--ink-bright);
+	margin: 0;
+}
+.wlt-confirm-note {
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+	margin: 0;
+}
+.wlt-confirm-rows {
+	display: grid;
+	gap: var(--space-sm);
+	margin: 0;
+}
+.wlt-confirm-rows > div {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--space-md);
+	align-items: baseline;
+	flex-wrap: wrap;
+	padding-bottom: var(--space-sm);
+	border-bottom: 1px solid var(--hairline);
+}
+.wlt-confirm-rows > div:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+.wlt-confirm-rows dt {
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+	margin: 0;
+}
+.wlt-confirm-rows dd {
+	margin: 0;
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink);
+	text-align: right;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.wlt-confirm-rows code {
+	font-family: var(--font-mono);
+	font-size: var(--text-sm);
+}
+.wlt-confirm-amount {
+	font-size: var(--text-lg) !important;
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright) !important;
+}
+.wlt-confirm-usd {
+	color: var(--ink-dim);
+	font-weight: var(--weight-regular);
+	font-size: var(--text-sm);
+}
+.wlt-confirm-actions {
+	display: flex;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
+}
+
+/* ── History ─────────────────────────────────────────────────────────────── */
+
+.wlt-tx-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 2px;
+}
+.wlt-tx {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	padding: var(--space-sm);
+	border-radius: var(--radius-sm);
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+.wlt-tx:hover {
+	background: var(--surface-2);
+}
+.wlt-tx-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex: none;
+	background: var(--ink-faint);
+}
+.wlt-tx-dot--in {
+	background: var(--success);
+}
+.wlt-tx-dot--out {
+	background: var(--wallet-accent);
+}
+.wlt-tx-dot--failed {
+	background: var(--danger);
+}
+.wlt-tx-main {
+	display: grid;
+	gap: 1px;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.wlt-tx-summary {
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.wlt-tx-meta {
+	font: var(--text-xs) var(--font-body);
+	color: var(--ink-faint);
+}
+.wlt-tx-amount {
+	font: var(--text-sm) var(--font-mono);
+	color: var(--ink);
+	white-space: nowrap;
+}
+.wlt-tx-amount--in {
+	color: var(--success);
+}
+.wlt-tx-link {
+	font: var(--text-xs) var(--font-body);
+	color: var(--ink-dim);
+	text-decoration: none;
+	padding: 4px 8px;
+	border-radius: var(--radius-sm);
+	flex: none;
+}
+.wlt-tx-link:hover {
+	color: var(--ink);
+	background: var(--surface-3);
+}
+.wlt-tx-link:focus-visible {
+	outline: var(--focus-ring-width) solid var(--wallet-focus);
+	outline-offset: var(--focus-ring-offset);
+}
+.wlt-tx--failed .wlt-tx-summary {
+	color: var(--ink-dim);
+}
+
+/* ── Empty panel state ───────────────────────────────────────────────────── */
+
+.wlt-empty {
+	text-align: center;
+	padding: var(--space-xl) var(--space-md);
+	display: grid;
+	gap: var(--space-sm);
+	justify-items: center;
+}
+.wlt-empty h3 {
+	font: var(--text-lg) var(--font-display);
+	font-weight: var(--weight-semibold);
+	color: var(--ink);
+	margin: 0;
+}
+.wlt-empty p {
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+	margin: 0 0 var(--space-xs);
+	max-width: 44ch;
+}
+
+/* ── Skeletons ───────────────────────────────────────────────────────────── */
+
+.wlt-skel {
+	display: grid;
+	gap: var(--space-lg);
+}
+.wlt-skel-hero,
+.wlt-skel-card,
+.wlt-skel-panel,
+.wlt-inline-skel {
+	background: linear-gradient(
+		90deg,
+		var(--skeleton-base) 0%,
+		var(--skeleton-sheen) 50%,
+		var(--skeleton-base) 100%
+	);
+	background-size: 200% 100%;
+	border-radius: var(--skeleton-radius);
+	animation: wlt-sheen 1.4s var(--ease-standard) infinite;
+}
+.wlt-skel-hero {
+	height: 9rem;
+}
+.wlt-skel-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+	gap: var(--space-sm);
+}
+.wlt-skel-card {
+	height: 5.5rem;
+}
+.wlt-skel-panel {
+	height: 16rem;
+}
+.wlt-inline-skel {
+	height: 10rem;
+}
+@keyframes wlt-sheen {
+	from {
+		background-position: 200% 0;
+	}
+	to {
+		background-position: -200% 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wlt-skel-hero,
+	.wlt-skel-card,
+	.wlt-skel-panel,
+	.wlt-inline-skel,
+	.wlt-notice,
+	.wlt-confirm {
+		animation: none;
+	}
+	.wlt-btn,
+	.wlt-input,
+	.wlt-tab,
+	.wlt-tx {
+		transition: none;
+	}
+}
+
+@media (max-width: 40rem) {
+	.wlt-wrap {
+		padding-inline: var(--space-sm);
+	}
+	.wlt-hero,
+	.wlt-msg {
+		padding: var(--space-lg);
+	}
+	.wlt-hero-actions .wlt-btn {
+		flex: 1 1 100%;
+	}
+}

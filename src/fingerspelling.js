@@ -161,10 +161,14 @@ function readyPose(base, dominant) {
  *   `lead: false` starts with the hand already up in signing space and
  *   `settle: false` leaves it there: what a word in the MIDDLE of a sentence
  *   needs, since a signer does not lower their arm between words.
+ *   `marks` is an array this fills with `{ letter, start, end }` in seconds, so
+ *   a UI can follow along letter by letter without re-deriving the cadence
+ *   (the alphabet page highlights the letter the hand is actually on).
  * @returns {object} clip document, ready for THREE.AnimationClip.parse + retarget
  */
 export function buildFingerspellingClip(word, opts = {}) {
 	const timing = { ...DEFAULT_TIMING, ...opts };
+	const marks = Array.isArray(opts.marks) ? opts.marks : null;
 	const letters = normalizeWord(word);
 	if (!letters) throw new Error('word has no spellable characters (A-Z, 0-9)');
 
@@ -179,10 +183,12 @@ export function buildFingerspellingClip(word, opts = {}) {
 
 	let prev = null;
 	for (const ch of letters) {
+		const startedAt = tl.time;
 		if (ch === ' ') {
 			// A word break is a small drop and re-set of the hand, not a pause.
 			tl.to(readyPose(base, dominant), timing.transitionSeconds, { ease: 'smooth' });
 			tl.hold(timing.holdSeconds * 0.5);
+			if (marks) marks.push({ letter: ch, start: startedAt, end: tl.time });
 			prev = null;
 			continue;
 		}
@@ -203,6 +209,7 @@ export function buildFingerspellingClip(word, opts = {}) {
 			tl.to(letterPose(ch, { dominant }, base), timing.transitionSeconds, { ease: 'smooth' });
 			tl.hold(timing.holdSeconds);
 		}
+		if (marks) marks.push({ letter: ch, start: startedAt, end: tl.time });
 		prev = ch;
 	}
 

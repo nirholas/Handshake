@@ -55,6 +55,12 @@ const SKIP = [
 	/^docs\/ALL\.md$/,
 	/^CHANGELOG\.md$/,
 	/^public\/changelog\.(json|xml)$/,
+	// Machine-written mirrors of tool text that lives in source: the catalog is
+	// written by scripts/build-mcp-catalog.mjs, the fixture by
+	// scripts/audit-mcp-golden.mjs --update. Prose rules belong on the tool
+	// descriptions themselves, not on the generated copies of them.
+	/^public\/mcp-catalog\.json$/,
+	/^tests\/fixtures\/mcp-golden-tools\.json$/,
 	/^locales\//,
 	/\.min\.(js|css)$/,
 	/package-lock\.json$/,

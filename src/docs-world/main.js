@@ -31,10 +31,25 @@ import { log } from '../shared/log.js';
 
 const $ = (id) => document.getElementById(id);
 
-function showFallback(message) {
-	const el = $('dw-fallback');
+/**
+ * Show the designed no-world state.
+ *
+ * @param {{ title?: string, message?: string, retry?: boolean }} [opts]
+ *   `retry` marks the failure recoverable (a dropped manifest fetch, an offline
+ *   moment) and reveals a reload button. A device with no WebGL gets no retry:
+ *   reloading cannot grow it a GPU, and a button that reproduces the same dead
+ *   end is worse than none.
+ */
+function showFallback({ title, message, retry = false } = {}) {
+	if (title) $('dw-fallback-title').textContent = title;
 	if (message) $('dw-fallback-sub').textContent = message;
-	el.hidden = false;
+	const retryBtn = $('dw-fallback-retry');
+	retryBtn.hidden = !retry;
+	if (retry) {
+		retryBtn.onclick = () => location.reload();
+		retryBtn.focus({ preventScroll: true });
+	}
+	$('dw-fallback').hidden = false;
 	$('dw-loading').hidden = true;
 }
 
@@ -53,7 +68,12 @@ async function boot() {
 		if (!sections.length) throw new Error('empty manifest');
 	} catch (err) {
 		log.warn('[docs-world] nav manifest failed', err?.message);
-		showFallback('The docs manifest could not be loaded. The classic docs below always work.');
+		showFallback({
+			title: 'The world could not load its map',
+			message:
+				'The docs index (/docs/nav.json) did not arrive, so there are no pavilions to build. This is usually a dropped connection: try again, or read the same pages in the classic docs.',
+			retry: true,
+		});
 		return;
 	}
 

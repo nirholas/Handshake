@@ -431,13 +431,16 @@ async function handleStats(network) {
 	// honest viability signal: value is delivered AND the platform earns a take-rate,
 	// unlike the x402 counter which only measures agent-to-agent settlement plumbing.
 	// Sourced from skill_purchases (the same table /marketplace confirms against).
+	// Same "real sale" predicate as handleMarketplace(): money and party counts must
+	// agree on which rows are sales, or a non-paid confirmed row inflates one side.
+	const paidRow24 = sql`sp.status = 'confirmed' AND sp.kind = ANY(${MARKET_PAID_KINDS})`;
 	const [mkt24] = await sql`
 		SELECT
-			COUNT(*) FILTER (WHERE sp.status = 'confirmed' AND sp.kind = ANY(${MARKET_PAID_KINDS}))::int AS purchases,
-			COUNT(*) FILTER (WHERE sp.kind = 'trial')::int                                              AS trials,
-			COALESCE(SUM(sp.amount) FILTER (WHERE sp.status = 'confirmed'), 0)::text                     AS gmv_atomic,
-			COUNT(DISTINCT sp.user_id) FILTER (WHERE sp.status = 'confirmed')::int                       AS buyers,
-			COUNT(DISTINCT sp.agent_id) FILTER (WHERE sp.status = 'confirmed')::int                      AS sellers
+			COUNT(*) FILTER (WHERE ${paidRow24})::int                                  AS purchases,
+			COUNT(*) FILTER (WHERE sp.kind = 'trial')::int                             AS trials,
+			COALESCE(SUM(sp.amount) FILTER (WHERE ${paidRow24}), 0)::text              AS gmv_atomic,
+			COUNT(DISTINCT sp.user_id) FILTER (WHERE ${paidRow24})::int                AS buyers,
+			COUNT(DISTINCT sp.agent_id) FILTER (WHERE ${paidRow24})::int               AS sellers
 		FROM skill_purchases sp
 		JOIN agent_identities ai ON ai.id = sp.agent_id AND ${pubAgent}
 		WHERE sp.currency_mint = ${THREE_MINT} AND sp.chain = 'solana'
@@ -644,17 +647,29 @@ async function handleMarketplace(network) {
 		AND COALESCE((ai.meta->>'pulse_opt_out')::boolean, false) = false`;
 	const feeBps = marketplaceFeeBps();
 
+	// One definition of "a real marketplace sale", shared by EVERY money and party
+	// aggregate below. It has to be shared: filtering the counts on status+kind but
+	// the money on status alone is what let non-sale rows (a trial, or a bundle
+	// access record, both of which are 'confirmed' but not a paid kind) land in
+	// gmv/fees/buyers/sellers while being excluded from the purchase count. That
+	// also skewed avg_ticket, which divides a GMV by a count that excluded part of
+	// what produced it. These are published on a transparency page, so they are
+	// derived from one predicate rather than kept in sync by hand.
+	const paidRow = sql`sp.status = 'confirmed' AND sp.kind = ANY(${MARKET_PAID_KINDS})`;
+
 	// One windowed aggregate, reused for 24h and 7d so both cards read identically.
 	const windowAgg = async (interval) => {
 		const [r] = await sql`
 			SELECT
-				COUNT(*) FILTER (WHERE sp.status = 'confirmed' AND sp.kind = ANY(${MARKET_PAID_KINDS}))::int AS purchases,
-				COUNT(*) FILTER (WHERE sp.kind = 'trial')::int                                              AS trials,
-				COALESCE(SUM(sp.amount) FILTER (WHERE sp.status = 'confirmed'), 0)::text                     AS gmv_atomic,
-				COUNT(DISTINCT sp.user_id) FILTER (WHERE sp.status = 'confirmed')::int                       AS buyers,
-				COUNT(DISTINCT sp.agent_id) FILTER (WHERE sp.status = 'confirmed')::int                      AS sellers,
-				COUNT(DISTINCT (sp.user_id, sp.agent_id)) FILTER (WHERE sp.status = 'confirmed')::int        AS pairs,
-				COALESCE(SUM(sp.platform_fee_amount) FILTER (WHERE sp.status = 'confirmed'), 0)::text         AS fee_atomic
+				COUNT(*) FILTER (WHERE ${paidRow})::int                                    AS purchases,
+				-- Deliberately status-free: this counts trials STARTED in the window, so a
+				-- trial that has since lapsed still counts. It is a demand signal, not money.
+				COUNT(*) FILTER (WHERE sp.kind = 'trial')::int                             AS trials,
+				COALESCE(SUM(sp.amount) FILTER (WHERE ${paidRow}), 0)::text                AS gmv_atomic,
+				COUNT(DISTINCT sp.user_id) FILTER (WHERE ${paidRow})::int                  AS buyers,
+				COUNT(DISTINCT sp.agent_id) FILTER (WHERE ${paidRow})::int                 AS sellers,
+				COUNT(DISTINCT (sp.user_id, sp.agent_id)) FILTER (WHERE ${paidRow})::int   AS pairs,
+				COALESCE(SUM(sp.platform_fee_amount) FILTER (WHERE ${paidRow}), 0)::text   AS fee_atomic
 			FROM skill_purchases sp
 			JOIN agent_identities ai ON ai.id = sp.agent_id AND ${pubAgent}
 			WHERE sp.currency_mint = ${THREE_MINT} AND sp.chain = 'solana'
@@ -736,8 +751,8 @@ async function handleMarketplace(network) {
 		),
 		ev AS (
 			SELECT date_trunc('day', sp.created_at) AS day,
-			       COUNT(*) FILTER (WHERE sp.status = 'confirmed' AND sp.kind = ANY(${MARKET_PAID_KINDS}))::int AS purchases,
-			       COALESCE(SUM(sp.amount) FILTER (WHERE sp.status = 'confirmed'), 0)::text                    AS gmv_atomic
+			       COUNT(*) FILTER (WHERE ${paidRow})::int                       AS purchases,
+			       COALESCE(SUM(sp.amount) FILTER (WHERE ${paidRow}), 0)::text   AS gmv_atomic
 			FROM skill_purchases sp
 			JOIN agent_identities ai ON ai.id = sp.agent_id AND ${pubAgent}
 			WHERE sp.currency_mint = ${THREE_MINT} AND sp.chain = 'solana'

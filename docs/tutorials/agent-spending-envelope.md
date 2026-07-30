@@ -198,7 +198,7 @@ The response is `201` and contains the token once:
     "created_at": "2026-07-30T04:00:00.000Z"
   },
   "token": "pss_0b2f..._4f8a...",
-  "note": "Store this token securely - it is shown once and cannot be recovered."
+  "note": "Store this token securely. It is shown once and cannot be recovered."
 }
 ```
 

@@ -23,21 +23,27 @@ export default wrap(async (req, res) => {
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	const userId = session?.id ?? bearer?.userId ?? null;
 
-	// ── Top-selling skills (by confirmed purchase count) ─────────────────────
+	// ── Top skills ────────────────────────────────────────────────────────────
+	// A `trial` row is a free grant: nothing was paid and `amount` is only the
+	// list price it WOULD have cost. Counting trials as sales (and summing their
+	// amount as revenue) reported 10,454 sales and 6.2M $THREE of volume on a
+	// marketplace with zero completed purchases. Paid and free are now counted
+	// separately here and everywhere below; only `status = 'confirmed'` is money.
 	const topSkills = await sql`
 		SELECT
 			sp.skill,
 			sp.agent_id,
 			ai.name      AS agent_name,
 			ai.profile_image_url AS agent_image,
-			COUNT(sp.id) AS total_sales,
-			SUM(sp.amount) AS total_revenue_atomic,
+			COUNT(*) FILTER (WHERE sp.status = 'confirmed')            AS total_sales,
+			COUNT(*) FILTER (WHERE sp.status = 'trial')                AS total_trials,
+			COALESCE(SUM(sp.amount) FILTER (WHERE sp.status = 'confirmed'), 0) AS total_revenue_atomic,
 			sp.currency_mint
 		FROM skill_purchases sp
 		JOIN agent_identities ai ON ai.id = sp.agent_id
 		WHERE sp.status IN ('confirmed', 'trial')
 		GROUP BY sp.skill, sp.agent_id, ai.name, ai.profile_image_url, sp.currency_mint
-		ORDER BY total_sales DESC
+		ORDER BY total_sales DESC, total_trials DESC
 		LIMIT 10
 	`;
 
@@ -65,21 +71,45 @@ export default wrap(async (req, res) => {
 			SUM(amount) AS volume_atomic,
 			currency_mint
 		FROM skill_purchases
-		WHERE status IN ('confirmed', 'trial')
+		WHERE status = 'confirmed'
 		  AND confirmed_at >= NOW() - INTERVAL '30 days'
 		GROUP BY day, currency_mint
 		ORDER BY day ASC
 	`;
 
 	// ── Platform-wide summary stats ───────────────────────────────────────────
+	// `unique_buyers` counts people who PAID. Trial-takers are counted on their
+	// own line so an empty marketplace reads as empty instead of as busy.
 	const [summary] = await sql`
 		SELECT
-			COUNT(DISTINCT user_id)  AS unique_buyers,
-			COUNT(DISTINCT agent_id) AS unique_sellers,
-			COUNT(*)                 AS total_sales,
-			SUM(amount)              AS total_volume_atomic
+			COUNT(DISTINCT user_id) FILTER (WHERE status = 'confirmed')  AS unique_buyers,
+			COUNT(DISTINCT agent_id)                                     AS unique_sellers,
+			COUNT(*) FILTER (WHERE status = 'confirmed')                 AS total_sales,
+			COALESCE(SUM(amount) FILTER (WHERE status = 'confirmed'), 0) AS total_volume_atomic
 		FROM skill_purchases
 		WHERE status IN ('confirmed', 'trial')
+	`;
+
+	// ── Trial funnel ──────────────────────────────────────────────────────────
+	// The honest read on a marketplace that offers free trials: how many were
+	// granted, how many were actually used, how many ran out (the highest-intent
+	// state there is), and how many of those turned into a purchase. A large
+	// `exhausted` with a zero `converted` is a broken paywall, not weak demand;
+	// `granted` high with `used` at zero means nobody is metering trial runs at
+	// all. See docs/marketplace.md "Trials are metered".
+	const [funnel] = await sql`
+		SELECT
+			COUNT(*) FILTER (WHERE sp.status = 'trial')                     AS granted,
+			COUNT(*) FILTER (WHERE sp.status = 'trial'
+			                   AND asp.trial_uses IS NOT NULL
+			                   AND sp.trial_remaining < asp.trial_uses)     AS used,
+			COUNT(*) FILTER (WHERE sp.status = 'trial'
+			                   AND COALESCE(sp.trial_remaining, 0) <= 0)    AS exhausted,
+			COUNT(*) FILTER (WHERE sp.status = 'confirmed')                 AS converted
+		FROM skill_purchases sp
+		LEFT JOIN agent_skill_prices asp
+		       ON asp.agent_id = sp.agent_id AND asp.skill = sp.skill
+		WHERE sp.status IN ('confirmed', 'trial')
 	`;
 
 	// ── NFT mints count ────────────────────────────────────────────────────────
@@ -119,6 +149,14 @@ export default wrap(async (req, res) => {
 				totalSales:      Number(summary?.total_sales ?? 0),
 				totalVolumeAtomic: String(summary?.total_volume_atomic ?? 0),
 				totalNfts:       Number(nftStats?.total_nfts ?? 0),
+				// Free grants, reported separately so they can never be read as revenue.
+				totalTrials:     Number(funnel?.granted ?? 0),
+			},
+			trialFunnel: {
+				granted:   Number(funnel?.granted ?? 0),
+				used:      Number(funnel?.used ?? 0),
+				exhausted: Number(funnel?.exhausted ?? 0),
+				converted: Number(funnel?.converted ?? 0),
 			},
 			topSkills: topSkills.map(r => ({
 				skill:          r.skill,
@@ -126,6 +164,7 @@ export default wrap(async (req, res) => {
 				agentName:      r.agent_name,
 				agentImage:     r.agent_image,
 				totalSales:     Number(r.total_sales),
+				totalTrials:    Number(r.total_trials ?? 0),
 				totalRevenue:   String(r.total_revenue_atomic ?? 0),
 				currencyMint:   r.currency_mint,
 			})),

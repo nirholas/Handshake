@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash */ (function () {
+				document.documentElement.classList.add('js');
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="robots" content="noindex, nofollow" />
+		<title>Economy Health · Control · three.ws</title>
+		<meta
+			name="description"
+			content="Operator dashboard for the autonomous economy: one-line verdict on why the Money Pulse is quiet, the funding chain from master to agents, per-lane settle rates, and the USDC refuel lane."
+		/>
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/admin-economy.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="ec-wrap" id="ec-root" aria-busy="true">
+			<!-- Auth gate -->
+			<section class="ec-gate" id="ec-gate" hidden>
+				<div class="ec-gate-mark" aria-hidden="true">◈</div>
+				<h1>Economy Health</h1>
+				<p>Operator control. Enter the secret to read the funding chain.</p>
+				<form id="ec-gate-form" autocomplete="off">
+					<input
+						type="password"
+						id="ec-secret"
+						class="ec-input"
+						placeholder="CRON_SECRET"
+						aria-label="Operator secret"
+						autocomplete="current-password"
+					/>
+					<button type="submit" class="ec-btn ec-btn-primary">Unlock</button>
+					<p class="ec-gate-err" id="ec-gate-err" role="alert" aria-live="assertive"></p>
+				</form>
+			</section>
+
+			<!-- Dashboard -->
+			<div id="ec-panel" hidden>
+				<div class="ec-head">
+					<div>
+						<h1>Economy Health</h1>
+						<p>
+							Why the Money Pulse is loud or quiet, read from the same endpoints the
+							crons use. Every number is a live read; nothing here can move funds.
+						</p>
+					</div>
+					<div class="ec-head-actions">
+						<span class="ec-stamp" id="ec-stamp" aria-live="polite"></span>
+						<button type="button" class="ec-btn" id="ec-refresh">Refresh</button>
+						<button type="button" class="ec-btn" id="ec-pause" aria-pressed="false">Pause</button>
+					</div>
+				</div>
+
+				<section class="ec-verdict" id="ec-verdict" data-level="warn" role="status" aria-live="polite" hidden>
+					<span class="ec-verdict-dot" aria-hidden="true"></span>
+					<div>
+						<h2 id="ec-verdict-title">Reading the economy…</h2>
+						<p id="ec-verdict-detail"></p>
+					</div>
+				</section>
+
+				<section class="ec-section">
+					<h2>Money Pulse · last 24h</h2>
+					<p class="ec-sub">
+						Real settled movement from <code>/api/pulse</code>. Free actions such as
+						reviews and trials are deliberately excluded: they stay healthy through
+						exactly the outage this page exists to catch.
+					</p>
+					<div class="ec-grid" id="ec-pulse"></div>
+				</section>
+
+				<section class="ec-section">
+					<h2>Funding chain</h2>
+					<p class="ec-sub" id="ec-chain-summary"></p>
+					<div class="ec-chain" id="ec-chain"></div>
+				</section>
+
+				<section class="ec-section">
+					<h2>Circulation engine</h2>
+					<p class="ec-sub">
+						The agent pool and its tick cadence. A healthy action count with zero paid
+						lanes below is the signature of a treasury under its reserve.
+					</p>
+					<div class="ec-grid" id="ec-engine"></div>
+				</section>
+
+				<section class="ec-section">
+					<h2>Action lanes · last 24h</h2>
+					<p class="ec-sub">
+						Per-kind settle rate. <b>Never ran</b> means the budget governor never
+						planned it, which is a funding problem. <b>All failing</b> means it was
+						planned and rejected, which is not.
+					</p>
+					<div id="ec-lanes"></div>
+				</section>
+
+				<section class="ec-section">
+					<h2>USDC refuel lane</h2>
+					<p class="ec-sub">
+						When the chain runs short the master converts a bounded slice of its own
+						USDC revenue into SOL, so recovery does not wait on a human.
+					</p>
+					<div class="ec-grid" id="ec-fuel"></div>
+					<div id="ec-fuel-recent" style="margin-top: 14px"></div>
+				</section>
+
+				<section class="ec-section">
+					<h2>If the pulse is quiet</h2>
+					<p class="ec-sub">
+						The order matters. Each step rules out a cause that would make every later
+						reading meaningless.
+					</p>
+					<ol class="ec-runbook">
+						<li>
+							<b>Check the verdict above first.</b> It already applies these rules to
+							live data and names the single most actionable cause.
+						</li>
+						<li>
+							<b>Is money moving at all?</b> Volume and trades near zero while the
+							activity feed looks busy means the free lanes are carrying the feed and
+							the paid lanes are dead.
+						</li>
+						<li>
+							<b>Did the paid lanes ever run?</b> Zero <i>attempts</i> (not zero
+							successes) means the governor cut the paid budget because the
+							circulation treasury sat under its reserve.
+						</li>
+						<li>
+							<b>Read the funding chain.</b> Several roles can share one wallet, so a
+							link can be starved while another role's lower floor reports it healthy.
+							Always compare against the strictest floor.
+						</li>
+						<li>
+							<b>Separate "dry" from "unreadable".</b>
+							<code>no_spare_usdc</code> genuinely needs funding.
+							<code>usdc_read_failed</code> means an RPC lane broke and the balance is
+							unknown, so sending funds would be treating the wrong problem.
+						</li>
+					</ol>
+				</section>
+
+				<div class="ec-foot">
+					<span>Reads: <code>/api/pulse</code>, <code>/api/admin/circulation-health</code>, <code>/api/cron/treasury-topup?dry=1</code></span>
+					<a href="/admin/ring">Ring dashboard →</a>
+					<a href="/pulse">Public Money Pulse →</a>
+				</div>
+			</div>
+		</main>
+
+		<div class="ec-hint" id="ec-hint" hidden>
+			<kbd>r</kbd> refresh · <kbd>p</kbd> pause
+		</div>
+
+		<script type="module" src="/src/admin-economy.js"></script>
+	</body>
+</html>

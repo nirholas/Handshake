@@ -379,9 +379,14 @@ export function extractTools(relPath) {
 	walk(ast, (node) => {
 		if (node.type !== 'ObjectExpression') return;
 		const props = new Map();
+		// Getters (`get description() { return … }`) keep their Property node so
+		// the returned expression can be read; everything else maps to its value.
+		const propNodes = new Map();
 		for (const prop of node.properties) {
 			if (prop.type === 'Property' && !prop.computed) {
-				props.set(prop.key?.name ?? prop.key?.value, prop.value);
+				const key = prop.key?.name ?? prop.key?.value;
+				props.set(key, prop.value);
+				propNodes.set(key, prop);
 			}
 		}
 		const nameNode = props.get('name');
@@ -405,8 +410,8 @@ export function extractTools(relPath) {
 
 		tools.push({
 			name,
-			title: stringValue(propertyValue(props.get('title')), constStrings),
-			description: stringValue(propertyValue(props.get('description')), constStrings),
+			title: stringValue(propertyValue(propNodes.get('title')), constStrings),
+			description: stringValue(propertyValue(propNodes.get('description')), constStrings),
 			annotations,
 			evidence: [...evidence].sort(),
 			hasHandler: Boolean(handlerNode && FUNCTION_TYPES.has(handlerNode.type)),

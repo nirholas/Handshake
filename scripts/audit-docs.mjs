@@ -16,6 +16,10 @@
  *   3. `npm run <script>` references name a script that exists in the relevant
  *      package.json, and `node scripts/<x>` references an existing file.
  *   4. Every packages/* and workers/* directory carries a README.md.
+ *   5. Every public doc under docs/*.md is registered in data/pages.json, so it
+ *      reaches the sitemap, llms.txt and features.json instead of being live at
+ *      200 and invisible to every crawler. Docs that are deliberately not
+ *      published carry an entry in UNPUBLISHED_DOCS below with the reason.
  *
  * Usage:
  *   node scripts/audit-docs.mjs              # audit the whole repo, exit 1 on findings
@@ -235,6 +239,73 @@ if (!explicitFiles.length) {
 	}
 }
 
+// --------------------------------------------- public docs must be registered
+// A doc under docs/*.md is served at /docs/<slug> by the generic route in
+// vercel.json, so it answers 200 whether or not anyone declared it. Only
+// data/pages.json makes it discoverable: the sitemap, llms.txt, features.json
+// and the human sitemap all read from there and nothing else. An unregistered
+// doc is therefore live and invisible at the same time, which is the failure
+// this check exists to make loud.
+//
+// Each slug below is deliberately not published, with the reason. Two kinds:
+//   internal    operational, strategic or single-use material written for us,
+//               not for a reader arriving from search.
+//   owner-gated content referencing a crypto project other than $THREE.
+//               CLAUDE.md requires explicit owner approval before that lands in
+//               a commit, so registering one is a decision, never a default.
+const UNPUBLISHED_DOCS = new Map([
+	['agora', 'internal: strategy framing, not a reader-facing product doc'],
+	['avatar-cli', 'internal: in-flight, register when the CLI ships'],
+	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
+	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
+	['bnb-babt-findings', 'owner-gated: names a crypto project other than $THREE'],
+	['bnb-vault', 'owner-gated: names a crypto project other than $THREE'],
+	['bnb-world', 'owner-gated: names a crypto project other than $THREE'],
+	['btn-pill-migration', 'internal: one-time component migration map'],
+	['build', 'internal: build and deploy integrity runbook'],
+	['clip-director', 'internal: content strategy'],
+	['coin-launches', 'owner-gated: names a crypto project other than $THREE'],
+	['coin-pages', 'owner-gated: names a crypto project other than $THREE'],
+	['coinmarketcap-article', 'internal: draft prepared for an external publisher'],
+	['coinmarketcap-article-play', 'internal: draft prepared for an external publisher'],
+	['demo-routes', 'internal: dated route inventory'],
+	['economy-heartbeat', 'internal: scheduled-job operations'],
+	['economy-master', 'internal: funding-root wallet operations'],
+	['financial-controls', 'internal: audit-grade money-flow register'],
+	['launch-usecases', 'owner-gated: names a crypto project other than $THREE'],
+	['memetic-launcher', 'owner-gated: names a crypto project other than $THREE'],
+	['meta-allocator', 'owner-gated: names a crypto project other than $THREE'],
+	['money-map', 'internal: revenue-share and treasury routing'],
+	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
+	['okx-marketplace', 'owner-gated: names a crypto project other than $THREE'],
+	['pay-skills-listing', 'internal: listing metadata, not prose'],
+	['popular-3d-github-repos', 'internal: one-off ecosystem research sweep'],
+	['pump-fun-mcp-edge', 'owner-gated: names a crypto project other than $THREE'],
+	['pump-launch-repos', 'owner-gated: names a crypto project other than $THREE'],
+	['pump-platform-fee', 'owner-gated: names a crypto project other than $THREE'],
+	['robinhood-chain-markets', 'owner-gated: names a crypto project other than $THREE'],
+	['solana-pumpfun', 'owner-gated: names a crypto project other than $THREE'],
+	['syndication', 'internal: admin publishing configuration'],
+	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
+]);
+const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
+
+if (!explicitFiles.length) {
+	const docsDir = resolve(root, 'docs');
+	for (const entry of readdirSync(docsDir, { withFileTypes: true })) {
+		if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+		const slug = entry.name.replace(/\.md$/, '');
+		if (GENERATED_DOCS.has(slug) || UNPUBLISHED_DOCS.has(slug)) continue;
+		if (declaredPages.has(`/docs/${slug}`)) continue;
+		findings.push({
+			file: `docs/${entry.name}`,
+			line: 0,
+			kind: 'unregistered-doc',
+			detail: `served at /docs/${slug} but absent from data/pages.json, so no crawler can find it. Add an entry there, or add the slug to UNPUBLISHED_DOCS in this script with the reason it stays unpublished.`,
+		});
+	}
+}
+
 // ---------------------------------------------------------------- the verdict
 const byKind = findings.reduce((acc, f) => {
 	(acc[f.kind] = acc[f.kind] || []).push(f);
@@ -246,6 +317,7 @@ const LABEL = {
 	'dead-route': 'Site links pointing at routes that do not resolve',
 	'dead-script': 'Commands naming scripts that do not exist',
 	'missing-readme': 'Directories required to carry a README.md',
+	'unregistered-doc': 'Public docs missing from data/pages.json (live but undiscoverable)',
 };
 
 if (!findings.length) {

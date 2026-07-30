@@ -80,9 +80,29 @@
 			.an-error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:16px 20px;color:#ef4444;font-size:13px;margin-bottom:24px;}
 			/* Two column layout for top tables */
 			.an-two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+
+			/* ── Trial funnel ──────────────────────────────────────────────
+			   Four stages, each a bar whose width is its share of the widest
+			   stage, so the drop-off is legible at a glance rather than a row
+			   of numbers to compare by hand. */
+			.funnel-intro{color:var(--muted);font-size:13px;margin:-8px 0 16px;max-width:62ch;}
+			.funnel{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:stage;}
+			.funnel-step{background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .15s;}
+			.funnel-step:hover,.funnel-step:focus-within{border-color:var(--line-2);}
+			.funnel-step::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--pct,0%);background:var(--tint,var(--violet));opacity:.14;transition:width .5s cubic-bezier(.22,1,.36,1);}
+			@media(prefers-reduced-motion:reduce){.funnel-step::before{transition:none;}}
+			.funnel-head{position:relative;display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+			.funnel-name{font-size:13px;font-weight:600;}
+			.funnel-val{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+			.funnel-desc{position:relative;font-size:12px;color:var(--muted);margin-top:4px;max-width:62ch;}
+			.funnel-rate{font-size:11px;color:var(--dim);margin-left:8px;font-variant-numeric:tabular-nums;}
+			.funnel-note{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.55;background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.25);color:var(--text);}
+			.funnel-note a{color:var(--amber);}
+
 			@media(max-width:720px){
 				.an-two-col{grid-template-columns:1fr;}
 				.stats-grid{grid-template-columns:repeat(2,1fr);}
+				.funnel-head{flex-direction:column;align-items:flex-start;gap:2px;}
 			}
 			@media(max-width:400px){
 				.stats-grid{grid-template-columns:1fr;}
@@ -128,6 +148,13 @@
 				<div class="stat-card"><div class="skeleton skeleton-stat" style="width:60%;"></div><div class="skeleton skeleton-row" style="width:50%;margin-top:8px;"></div></div>
 				<div class="stat-card"><div class="skeleton skeleton-stat" style="width:60%;"></div><div class="skeleton skeleton-row" style="width:50%;margin-top:8px;"></div></div>
 			</div>
+
+			<section class="an-section" id="funnel-section" hidden>
+				<h2 data-i18n-html="marketplace_analytics.trial_funnel">Trial Funnel <span class="an-count">All time</span></h2>
+				<p class="funnel-intro" data-i18n="marketplace_analytics.trial_funnel_intro">Free trials are counted here, never as sales. A skill sells when a trial runs out and the buyer wants one more run.</p>
+				<ol class="funnel" id="funnel-steps" aria-label="Trial conversion funnel"></ol>
+				<p class="funnel-note" id="funnel-note" hidden></p>
+			</section>
 
 			<div class="an-section">
 				<h2 data-i18n-html="marketplace_analytics.sales_volume_last_30_days">Sales Volume <span class="an-count">Last 30 days</span></h2>

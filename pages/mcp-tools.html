@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>MCP Tool Catalog · three.ws</title>
+	<meta name="description" content="Every MCP tool three.ws publishes, in one searchable catalog: what it does, which server hosts it, what it costs in USDC, and whether it is safe for an AI client to run unattended. Generated from source, so it is never out of date." />
+	<link rel="canonical" href="https://three.ws/mcp-tools" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="MCP Tool Catalog · three.ws" />
+	<meta property="og:description" content="Every MCP tool three.ws publishes: what it does, what it costs, and whether an AI client can run it unattended. Generated from source." />
+	<meta property="og:url" content="https://three.ws/mcp-tools" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=MCP+Tool+Catalog&amp;d=Every+MCP+tool+three.ws+publishes%3A+what+it+does%2C+what+it+costs%2C+and+whether+an+AI+client+can+run+it+unattended.&amp;p=%2Fmcp-tools" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="MCP Tool Catalog · three.ws" />
+	<meta name="twitter:description" content="Every MCP tool three.ws publishes, searchable by safety, price, and server." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=MCP+Tool+Catalog&amp;d=Every+MCP+tool+three.ws+publishes%3A+what+it+does%2C+what+it+costs%2C+and+whether+an+AI+client+can+run+it+unattended.&amp;p=%2Fmcp-tools" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="MCP Tool Catalog — three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<style>
+		:root {
+			--mc-read: #4ade80;
+			--mc-write: #fbbf24;
+			--mc-irreversible: #f87171;
+			--mc-paid: #c4b5fd;
+			--mc-maxw: 1240px;
+		}
+		:root[data-theme="light"] {
+			--mc-read: #15803d;
+			--mc-write: #a16207;
+			--mc-irreversible: #b91c1c;
+			--mc-paid: #6d28d9;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+
+		.mc-wrap { max-width: var(--mc-maxw); margin: 0 auto; padding: 0 18px 96px; }
+
+		/* ── hero ───────────────────────────────────────────────────────── */
+		.mc-hero { padding: 34px 0 8px; }
+		.mc-hero h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.mc-hero p { margin: 0; max-width: 68ch; color: var(--ink-dim); line-height: 1.6; }
+		.mc-hero a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		.mc-hero a:hover { color: var(--ink-bright, var(--ink)); }
+
+		/* ── stat strip ─────────────────────────────────────────────────── */
+		.mc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 22px 0 6px; }
+		.mc-stat { border: 1px solid var(--stroke); background: var(--surface-1, rgba(255,255,255,0.03)); border-radius: var(--radius-md, 10px); padding: 12px 14px; }
+		.mc-stat dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); margin: 0 0 4px; }
+		.mc-stat dd { margin: 0; font-size: 1.4rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+
+		/* ── controls ───────────────────────────────────────────────────── */
+		.mc-controls { position: sticky; top: 58px; z-index: 20; padding: 14px 0 12px; background: color-mix(in srgb, var(--bg-0) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hairline); margin-bottom: 18px; }
+		.mc-search { position: relative; display: flex; align-items: center; }
+		.mc-search svg { position: absolute; left: 12px; width: 16px; height: 16px; color: var(--ink-dim); pointer-events: none; }
+		.mc-search input {
+			width: 100%; padding: 11px 84px 11px 36px; font: inherit; font-size: 0.95rem;
+			color: var(--ink); background: var(--surface-2, rgba(255,255,255,0.05));
+			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+			transition: border-color 0.15s ease, background 0.15s ease;
+		}
+		.mc-search input::placeholder { color: var(--ink-dim); }
+		.mc-search input:hover { border-color: var(--stroke-strong); }
+		.mc-search input:focus-visible { outline: none; border-color: var(--accent); background: var(--surface-3, rgba(255,255,255,0.07)); }
+		.mc-kbd {
+			position: absolute; right: 10px; display: inline-flex; gap: 4px; pointer-events: none;
+		}
+		.mc-kbd kbd {
+			font: 600 0.7rem/1 var(--font-mono, ui-monospace, monospace); padding: 4px 6px;
+			border: 1px solid var(--stroke); border-radius: 5px; color: var(--ink-dim);
+			background: var(--surface-1, rgba(255,255,255,0.04));
+		}
+		.mc-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+		.mc-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+		.mc-group-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); margin-right: 2px; }
+		.mc-chip {
+			font: inherit; font-size: 0.82rem; padding: 6px 11px; cursor: pointer;
+			color: var(--ink-dim); background: transparent;
+			border: 1px solid var(--stroke); border-radius: 999px;
+			transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+		}
+		.mc-chip:hover { color: var(--ink); border-color: var(--stroke-strong); background: var(--surface-1, rgba(255,255,255,0.04)); }
+		.mc-chip:active { transform: translateY(1px); }
+		.mc-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-chip[aria-pressed="true"] { color: var(--ink-bright, var(--ink)); border-color: currentColor; background: var(--surface-3, rgba(255,255,255,0.08)); }
+		.mc-chip[data-safety="read"][aria-pressed="true"] { color: var(--mc-read); }
+		.mc-chip[data-safety="write"][aria-pressed="true"] { color: var(--mc-write); }
+		.mc-chip[data-safety="irreversible"][aria-pressed="true"] { color: var(--mc-irreversible); }
+		.mc-select {
+			font: inherit; font-size: 0.82rem; padding: 6px 10px; color: var(--ink);
+			background: var(--surface-1, rgba(255,255,255,0.04)); border: 1px solid var(--stroke);
+			border-radius: 999px; cursor: pointer; max-width: 240px;
+		}
+		.mc-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-reset { margin-left: auto; }
+
+		.mc-count { font-size: 0.85rem; color: var(--ink-dim); margin: 0 0 14px; font-variant-numeric: tabular-nums; }
+
+		/* ── tool grid ──────────────────────────────────────────────────── */
+		.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+		.mc-card {
+			display: flex; flex-direction: column; gap: 8px; text-align: left;
+			padding: 15px 16px; font: inherit; cursor: pointer;
+			background: var(--surface-1, rgba(255,255,255,0.03));
+			border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px);
+			transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+		}
+		.mc-card:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.055)); transform: translateY(-1px); }
+		.mc-card:active { transform: translateY(0); }
+		.mc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+		.mc-name { font: 600 0.92rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; }
+		.mc-title { font-size: 0.78rem; color: var(--ink-dim); margin-top: 2px; }
+		.mc-desc {
+			font-size: 0.84rem; line-height: 1.5; color: var(--ink-dim); margin: 0;
+			display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+		}
+		.mc-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; padding-top: 4px; }
+		.mc-badge {
+			font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+			border: 1px solid currentColor; white-space: nowrap;
+		}
+		.mc-badge[data-safety="read"] { color: var(--mc-read); }
+		.mc-badge[data-safety="write"] { color: var(--mc-write); }
+		.mc-badge[data-safety="irreversible"] { color: var(--mc-irreversible); }
+		.mc-badge-price { color: var(--mc-paid); }
+		.mc-badge-free { color: var(--ink-dim); border-color: var(--stroke); }
+		.mc-server { font-size: 0.72rem; color: var(--ink-faint, var(--ink-dim)); font-family: var(--font-mono, ui-monospace, monospace); }
+
+		/* ── states ─────────────────────────────────────────────────────── */
+		.mc-skeleton { border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 15px 16px; }
+		.mc-shimmer { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-1, rgba(255,255,255,0.04)) 25%, var(--surface-3, rgba(255,255,255,0.09)) 50%, var(--surface-1, rgba(255,255,255,0.04)) 75%); background-size: 200% 100%; animation: mc-shimmer 1.4s ease-in-out infinite; }
+		.mc-shimmer + .mc-shimmer { margin-top: 9px; }
+		.mc-shimmer.w60 { width: 60%; } .mc-shimmer.w40 { width: 40%; } .mc-shimmer.w85 { width: 85%; }
+		@keyframes mc-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) {
+			.mc-shimmer { animation: none; }
+			.mc-card, .mc-chip { transition: none; }
+		}
+		.mc-empty, .mc-error {
+			border: 1px dashed var(--stroke-strong); border-radius: var(--radius-lg, 14px);
+			padding: 40px 24px; text-align: center; color: var(--ink-dim);
+		}
+		.mc-error { border-style: solid; border-color: var(--danger); }
+		.mc-empty h2, .mc-error h2 { margin: 0 0 8px; font-size: 1.05rem; color: var(--ink-bright, var(--ink)); }
+		.mc-empty p, .mc-error p { margin: 0 auto 16px; max-width: 46ch; line-height: 1.55; font-size: 0.9rem; }
+		.mc-btn {
+			font: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 16px; cursor: pointer;
+			color: var(--btn-secondary-fg, var(--ink)); background: var(--btn-secondary-bg, var(--surface-3));
+			border: 1px solid var(--btn-secondary-border, var(--stroke-strong)); border-radius: var(--radius-md, 10px);
+			transition: background 0.15s ease;
+		}
+		.mc-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
+		.mc-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		/* ── detail dialog ──────────────────────────────────────────────── */
+		dialog.mc-detail {
+			width: min(680px, calc(100vw - 32px)); max-height: min(84vh, 760px); padding: 0;
+			color: var(--ink); background: var(--bg-1); border: 1px solid var(--stroke-strong);
+			border-radius: var(--radius-lg, 14px);
+		}
+		dialog.mc-detail::backdrop { background: rgba(0,0,0,0.62); backdrop-filter: blur(3px); }
+		.mc-detail-in { padding: 20px 22px 24px; overflow-y: auto; max-height: inherit; }
+		.mc-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+		.mc-detail-head h2 { margin: 0; font: 650 1.05rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; }
+		.mc-close { font: inherit; font-size: 1.4rem; line-height: 1; padding: 2px 8px; cursor: pointer; color: var(--ink-dim); background: transparent; border: 1px solid transparent; border-radius: 8px; }
+		.mc-close:hover { color: var(--ink); border-color: var(--stroke); }
+		.mc-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-detail p.mc-detail-desc { font-size: 0.9rem; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 18px; white-space: pre-wrap; }
+		.mc-kv { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-bottom: 18px; }
+		.mc-kv th, .mc-kv td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+		.mc-kv th { font-weight: 500; color: var(--ink-dim); width: 40%; }
+		.mc-kv td { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); word-break: break-word; }
+		.mc-note { font-size: 0.82rem; line-height: 1.55; padding: 11px 13px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke); background: var(--surface-1, rgba(255,255,255,0.03)); color: var(--ink-dim); margin-bottom: 18px; }
+		.mc-snippet { position: relative; }
+		.mc-snippet pre {
+			margin: 0; padding: 13px 14px; overflow-x: auto; font-size: 0.78rem; line-height: 1.5;
+			font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink);
+			background: var(--bg-0); border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+		}
+		.mc-copy { position: absolute; top: 8px; right: 8px; font-size: 0.72rem; padding: 5px 10px; }
+		h3.mc-sub { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); margin: 0 0 8px; font-weight: 600; }
+
+		@media (max-width: 640px) {
+			.mc-controls { top: 0; }
+			.mc-grid { grid-template-columns: 1fr; }
+			.mc-reset { margin-left: 0; }
+		}
+	</style>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"MCP Tool Catalog","description":"Every MCP tool three.ws publishes: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended.","url":"https://three.ws/mcp-tools","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="mc-wrap">
+		<div class="mc-hero">
+			<h1>MCP Tool Catalog</h1>
+			<p>
+				Every tool three.ws publishes over the <a href="/docs/mcp">Model Context Protocol</a>, in one place:
+				what it does, which server hosts it, what it costs, and whether an AI client can run it without asking you first.
+				This page is generated from the source of every tool, so it cannot drift from what the servers actually serve.
+				The same data is machine-readable at <a href="/mcp-catalog.json"><code>/mcp-catalog.json</code></a>.
+			</p>
+		</div>
+
+		<dl class="mc-stats" id="mc-stats" aria-live="polite"></dl>
+
+		<div class="mc-controls">
+			<label class="mc-search">
+				<span class="sr-only">Search tools</span>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+				<input id="mc-q" type="search" autocomplete="off" spellcheck="false"
+					placeholder="Search 270 tools by name, description, or server…" />
+				<span class="mc-kbd" aria-hidden="true"><kbd>/</kbd></span>
+			</label>
+
+			<div class="mc-filters">
+				<div class="mc-group" role="group" aria-label="Filter by safety">
+					<span class="mc-group-label">Safety</span>
+					<button type="button" class="mc-chip" data-filter="safety" data-safety="read" data-value="read" aria-pressed="false">Read-only</button>
+					<button type="button" class="mc-chip" data-filter="safety" data-safety="write" data-value="write" aria-pressed="false">Writes</button>
+					<button type="button" class="mc-chip" data-filter="safety" data-safety="irreversible" data-value="irreversible" aria-pressed="false">Irreversible</button>
+				</div>
+				<div class="mc-group" role="group" aria-label="Filter by price">
+					<span class="mc-group-label">Price</span>
+					<button type="button" class="mc-chip" data-filter="price" data-value="free" aria-pressed="false">Free</button>
+					<button type="button" class="mc-chip" data-filter="price" data-value="paid" aria-pressed="false">Paid</button>
+				</div>
+				<div class="mc-group">
+					<span class="mc-group-label"><label for="mc-server">Server</label></span>
+					<select id="mc-server" class="mc-select"><option value="">All servers</option></select>
+				</div>
+				<button type="button" class="mc-btn mc-reset" id="mc-reset" hidden>Clear filters</button>
+			</div>
+		</div>
+
+		<p class="mc-count" id="mc-count" role="status" aria-live="polite"></p>
+		<div class="mc-grid" id="mc-grid"></div>
+	</main>
+
+	<dialog class="mc-detail" id="mc-detail" aria-labelledby="mc-detail-name">
+		<div class="mc-detail-in" id="mc-detail-in"></div>
+	</dialog>
+
+	<script src="/brand.js" defer></script>
+	<script type="module">
+		const grid = document.getElementById('mc-grid');
+		const countEl = document.getElementById('mc-count');
+		const statsEl = document.getElementById('mc-stats');
+		const qEl = document.getElementById('mc-q');
+		const serverEl = document.getElementById('mc-server');
+		const resetEl = document.getElementById('mc-reset');
+		const dialog = document.getElementById('mc-detail');
+		const dialogIn = document.getElementById('mc-detail-in');
+
+		const state = { q: '', safety: new Set(), price: new Set(), server: '' };
+		let catalog = null;
+
+		const esc = (s) =>
+			String(s ?? '').replace(/[&<>"']/g, (c) =>
+				({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+			);
+
+		const SAFETY_LABEL = {
+			read: 'Read-only',
+			write: 'Writes',
+			irreversible: 'Irreversible',
+		};
+		const SAFETY_BLURB = {
+			read: 'Does not change anything. An MCP client can run this without asking you.',
+			write: 'Changes something, and the change can be corrected by a follow-up call.',
+			irreversible: 'Cannot be undone once it runs. Approve each call deliberately.',
+		};
+
+		const priceLabel = (price) =>
+			price.free ? 'Free' : `$${price.usd.toFixed(price.usd < 0.01 ? 3 : 2)}`;
+
+		// ── skeleton while the catalog loads ──────────────────────────────
+		function renderSkeleton() {
+			grid.innerHTML = Array.from({ length: 9 })
+				.map(
+					() =>
+						'<div class="mc-skeleton" aria-hidden="true"><div class="mc-shimmer w60"></div>' +
+						'<div class="mc-shimmer w85"></div><div class="mc-shimmer"></div>' +
+						'<div class="mc-shimmer w40"></div></div>',
+				)
+				.join('');
+			countEl.textContent = 'Loading the catalog…';
+		}
+
+		function renderError(message) {
+			statsEl.hidden = true;
+			countEl.textContent = '';
+			grid.innerHTML =
+				'<div class="mc-error" style="grid-column:1/-1"><h2>The catalog could not be loaded</h2>' +
+				`<p>${esc(message)}</p>` +
+				'<button type="button" class="mc-btn" id="mc-retry">Try again</button></div>';
+			document.getElementById('mc-retry').addEventListener('click', load);
+		}
+
+		function renderStats() {
+			const c = catalog.counts;
+			const cells = [
+				['Tools', c.tools],
+				['Servers', c.servers],
+				['Read-only', c.read],
+				['Writes', c.write],
+				['Irreversible', c.irreversible],
+				['Free', c.free],
+				['Paid', c.paid],
+			];
+			statsEl.innerHTML = cells
+				.map(
+					([label, value]) =>
+						`<div class="mc-stat"><dt>${esc(label)}</dt><dd>${value}</dd></div>`,
+				)
+				.join('');
+		}
+
+		function matches(tool) {
+			if (state.safety.size && !state.safety.has(tool.safety)) return false;
+			if (state.price.size) {
+				const bucket = tool.price.free ? 'free' : 'paid';
+				if (!state.price.has(bucket)) return false;
+			}
+			if (state.server && tool.server.id !== state.server) return false;
+			if (state.q) {
+				const hay = `${tool.name} ${tool.title ?? ''} ${tool.description ?? ''} ${tool.server.id} ${tool.server.title}`.toLowerCase();
+				// Every term must appear somewhere, so "solana read" narrows sensibly.
+				return state.q.split(/\s+/).every((term) => hay.includes(term));
+			}
+			return true;
+		}
+
+		function cardHtml(tool, index) {
+			const desc = tool.description
+				? esc(tool.description)
+				: '<em>Composed at request time. Call tools/list on the server for the live text.</em>';
+			const price = tool.price.free
+				? '<span class="mc-badge mc-badge-free">Free</span>'
+				: `<span class="mc-badge mc-badge-price">${esc(priceLabel(tool.price))} USDC</span>`;
+			return (
+				`<button type="button" class="mc-card" data-index="${index}">` +
+				'<span class="mc-card-top"><span>' +
+				`<span class="mc-name">${esc(tool.name)}</span>` +
+				(tool.title ? `<span class="mc-title">${esc(tool.title)}</span>` : '') +
+				'</span></span>' +
+				`<p class="mc-desc">${desc}</p>` +
+				'<span class="mc-badges">' +
+				`<span class="mc-badge" data-safety="${tool.safety}">${SAFETY_LABEL[tool.safety]}</span>` +
+				price +
+				`<span class="mc-server">${esc(tool.server.title)}</span>` +
+				'</span></button>'
+			);
+		}
+
+		let visible = [];
+
+		function render() {
+			visible = catalog.tools.filter(matches);
+			const anyFilter = Boolean(state.q || state.safety.size || state.price.size || state.server);
+			resetEl.hidden = !anyFilter;
+
+			if (!visible.length) {
+				countEl.textContent = 'No matches';
+				grid.innerHTML =
+					'<div class="mc-empty" style="grid-column:1/-1"><h2>No tools match those filters</h2>' +
+					'<p>Try a different search term, or widen the filters. Every three.ws MCP tool is listed here, so an empty result means the filters are too narrow, not that the catalog is missing something.</p>' +
+					'<button type="button" class="mc-btn" id="mc-clear">Clear filters</button></div>';
+				document.getElementById('mc-clear').addEventListener('click', clearFilters);
+				return;
+			}
+
+			countEl.textContent =
+				visible.length === catalog.tools.length
+					? `${visible.length} tools`
+					: `${visible.length} of ${catalog.tools.length} tools`;
+			grid.innerHTML = visible.map(cardHtml).join('');
+		}
+
+		// ── detail dialog ─────────────────────────────────────────────────
+		function openDetail(tool) {
+			const a = tool.annotations;
+			const hint = (v) => (v === null ? 'not declared' : String(v));
+			const tiers = tool.price.tiers
+				? tool.price.tiers.map((t) => `${t.id} $${t.usd.toFixed(2)}`).join(' · ')
+				: null;
+
+			const call = {
+				jsonrpc: '2.0',
+				id: 1,
+				method: 'tools/call',
+				params: { name: tool.name, arguments: {} },
+			};
+			const snippet =
+				tool.server.transport === 'remote'
+					? `curl -X POST https://three.ws${tool.server.endpoint} \\\n  -H 'content-type: application/json' \\\n  -d '${JSON.stringify(call)}'`
+					: `${tool.server.endpoint}\n\n# then call ${tool.name} from your MCP client`;
+
+			dialogIn.innerHTML =
+				'<div class="mc-detail-head">' +
+				`<h2 id="mc-detail-name">${esc(tool.name)}</h2>` +
+				'<button type="button" class="mc-close" id="mc-close" aria-label="Close">&times;</button>' +
+				'</div>' +
+				(tool.title ? `<div class="mc-title">${esc(tool.title)}</div>` : '') +
+				`<p class="mc-detail-desc">${
+					tool.description
+						? esc(tool.description)
+						: 'This tool composes its description at request time. Call tools/list on the server for the live text.'
+				}</p>` +
+				`<div class="mc-note"><strong>${SAFETY_LABEL[tool.safety]}.</strong> ${SAFETY_BLURB[tool.safety]}</div>` +
+				'<h3 class="mc-sub">Details</h3>' +
+				'<table class="mc-kv"><tbody>' +
+				`<tr><th>Server</th><td>${esc(tool.server.title)}</td></tr>` +
+				`<tr><th>Endpoint</th><td>${esc(tool.server.endpoint ?? 'n/a')}</td></tr>` +
+				`<tr><th>Transport</th><td>${esc(tool.server.transport)}</td></tr>` +
+				`<tr><th>Auth</th><td>${esc(tool.server.auth)}</td></tr>` +
+				`<tr><th>Price</th><td>${esc(priceLabel(tool.price))}${tool.price.free ? '' : ' USDC'}${tiers ? ` (${esc(tiers)})` : ''}</td></tr>` +
+				`<tr><th>readOnlyHint</th><td>${hint(a.readOnlyHint)}</td></tr>` +
+				`<tr><th>destructiveHint</th><td>${hint(a.destructiveHint)}</td></tr>` +
+				`<tr><th>idempotentHint</th><td>${hint(a.idempotentHint)}</td></tr>` +
+				`<tr><th>openWorldHint</th><td>${hint(a.openWorldHint)}</td></tr>` +
+				`<tr><th>Source</th><td>${esc(tool.source)}</td></tr>` +
+				'</tbody></table>' +
+				'<h3 class="mc-sub">Call it</h3>' +
+				'<div class="mc-snippet">' +
+				`<pre><code>${esc(snippet)}</code></pre>` +
+				'<button type="button" class="mc-btn mc-copy" id="mc-copy">Copy</button>' +
+				'</div>';
+
+			document.getElementById('mc-close').addEventListener('click', () => dialog.close());
+			const copyBtn = document.getElementById('mc-copy');
+			copyBtn.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(snippet);
+					copyBtn.textContent = 'Copied';
+				} catch {
+					// Clipboard can be blocked by permissions; the text is selectable anyway.
+					copyBtn.textContent = 'Select and copy';
+				}
+				setTimeout(() => {
+					copyBtn.textContent = 'Copy';
+				}, 1600);
+			});
+
+			dialog.showModal();
+		}
+
+		grid.addEventListener('click', (event) => {
+			const card = event.target.closest('.mc-card');
+			if (card) openDetail(visible[Number(card.dataset.index)]);
+		});
+
+		// ── filter wiring + shareable URL ─────────────────────────────────
+		function syncUrl() {
+			const params = new URLSearchParams();
+			if (state.q) params.set('q', state.q);
+			if (state.safety.size) params.set('safety', [...state.safety].join(','));
+			if (state.price.size) params.set('price', [...state.price].join(','));
+			if (state.server) params.set('server', state.server);
+			const qs = params.toString();
+			history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+		}
+
+		function readUrl() {
+			const params = new URLSearchParams(location.search);
+			state.q = (params.get('q') ?? '').trim().toLowerCase();
+			state.server = params.get('server') ?? '';
+			for (const key of ['safety', 'price']) {
+				const raw = params.get(key);
+				if (raw) for (const v of raw.split(',').filter(Boolean)) state[key].add(v);
+			}
+			qEl.value = params.get('q') ?? '';
+		}
+
+		function syncChips() {
+			for (const chip of document.querySelectorAll('.mc-chip')) {
+				const on = state[chip.dataset.filter].has(chip.dataset.value);
+				chip.setAttribute('aria-pressed', String(on));
+			}
+			serverEl.value = state.server;
+		}
+
+		function clearFilters() {
+			state.q = '';
+			state.safety.clear();
+			state.price.clear();
+			state.server = '';
+			qEl.value = '';
+			syncChips();
+			syncUrl();
+			render();
+			qEl.focus();
+		}
+
+		for (const chip of document.querySelectorAll('.mc-chip')) {
+			chip.addEventListener('click', () => {
+				const bucket = state[chip.dataset.filter];
+				const value = chip.dataset.value;
+				if (bucket.has(value)) bucket.delete(value);
+				else bucket.add(value);
+				syncChips();
+				syncUrl();
+				render();
+			});
+		}
+
+		let debounce;
+		qEl.addEventListener('input', () => {
+			clearTimeout(debounce);
+			debounce = setTimeout(() => {
+				state.q = qEl.value.trim().toLowerCase();
+				syncUrl();
+				render();
+			}, 120);
+		});
+
+		serverEl.addEventListener('change', () => {
+			state.server = serverEl.value;
+			syncUrl();
+			render();
+		});
+
+		resetEl.addEventListener('click', clearFilters);
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === '/' && document.activeElement !== qEl) {
+				event.preventDefault();
+				qEl.focus();
+				qEl.select();
+			} else if (event.key === 'Escape' && document.activeElement === qEl && qEl.value) {
+				qEl.value = '';
+				state.q = '';
+				syncUrl();
+				render();
+			}
+		});
+
+		// ── load ──────────────────────────────────────────────────────────
+		async function load() {
+			renderSkeleton();
+			statsEl.hidden = false;
+			try {
+				const res = await fetch('/mcp-catalog.json', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`the server returned ${res.status}`);
+				catalog = await res.json();
+			} catch (error) {
+				renderError(
+					`${error.message}. The catalog is a static file at /mcp-catalog.json, so this is usually a network problem.`,
+				);
+				return;
+			}
+
+			renderStats();
+			qEl.placeholder = `Search ${catalog.counts.tools} tools by name, description, or server…`;
+			serverEl.innerHTML =
+				'<option value="">All servers</option>' +
+				catalog.servers
+					.map((s) => `<option value="${esc(s.id)}">${esc(s.title)} (${s.tools})</option>`)
+					.join('');
+			readUrl();
+			syncChips();
+			render();
+		}
+
+		load();
+	</script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

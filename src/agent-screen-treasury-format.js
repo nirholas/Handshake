@@ -156,5 +156,5 @@ export function previewLine(result = {}) {
 		self_fund: 'Would pay compute costs',
 		buffer: 'Would top up the buffer',
 	}[result.kind] || 'Would run a treasury action';
-	return usd ? `${verb} — ${usd}` : verb;
+	return usd ? `${verb}: ${usd}` : verb;
 }

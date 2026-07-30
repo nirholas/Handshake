@@ -358,8 +358,19 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 		'#8b5cf6',
 		BEACON_LABEL_SCALE,
 	);
-	// Clear of the ring labels (which sit at y 3.6) so the two never stack.
-	beaconLabel.position.y = 5.4;
+	// Height is set against the spawn camera, not against the ring labels' own y.
+	// The sign sits ~5m from the lens while the pavilions are 24m out, so its
+	// screen position is dominated by proximity: clearing the ring labels in
+	// world space (y 5.4) threw it off the top of the frame entirely. Just above
+	// the pillar's 3.4m crown keeps it legible on spawn and low enough to read
+	// against the empty plaza rather than across the pavilion label band.
+	//
+	// Below the pillar's crown rather than above it: the spawn camera pitches
+	// down about 24 degrees, which collapses everything at plaza height onto the
+	// same screen band as the 24m ring labels no matter how the sign is nudged
+	// around that height. Hanging it on the post instead drops it clear onto the
+	// dark plaza floor, and reads as a signpost rather than a floating card.
+	beaconLabel.position.y = 2.4;
 	beacon.add(beaconLabel);
 	scene.add(beacon);
 

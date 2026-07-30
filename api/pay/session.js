@@ -87,7 +87,7 @@ export default wrap(async (req, res) => {
 		return json(res, 201, {
 			session: result.session,
 			token: result.token,
-			note: 'Store this token securely — it is shown once and cannot be recovered.',
+			note: 'Store this token securely. It is shown once and cannot be recovered.',
 		});
 	}
 

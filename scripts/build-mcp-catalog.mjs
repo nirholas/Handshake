@@ -288,6 +288,10 @@ function build() {
 				name: tool.name,
 				title: tool.title ?? null,
 				description: tool.description ?? null,
+				// A couple of descriptions are composed at request time (they list
+				// the live provider pairs or the current allowed hosts), so the
+				// static read cannot see them. Say so rather than render a blank.
+				...(tool.description ? {} : { descriptionIsDynamic: true }),
 				server,
 				safety: safetyClass(hints),
 				annotations: {

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot - no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>ASL Alphabet: every letter on a live 3D hand · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="The American manual alphabet on a live 3D avatar. Click or type any letter to see the handshape, read what to look for, learn the look-alikes, spell any word, and drill yourself until you can read fingerspelling."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/asl-alphabet" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="ASL Alphabet: every letter on a live 3D hand · three.ws" />
+		<meta property="og:description" content="Click or type any letter to watch a 3D avatar sign it, read the handshape, learn the look-alikes, and practise reading fingerspelling." />
+		<meta property="og:url" content="https://three.ws/asl-alphabet" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=The+ASL+Alphabet&amp;d=Every+letter+and+number+of+the+American+manual+alphabet%2C+signed+by+a+live+3D+avatar%3A+what+to+look+for%2C+what+it+is+confused+with%2C+and+a+drill+to+practise&amp;p=%2Fasl-alphabet" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="ASL Alphabet: every letter on a live 3D hand · three.ws" />
+		<meta name="twitter:description" content="Click or type any letter to watch a 3D avatar sign it, read the handshape, learn the look-alikes, and practise reading fingerspelling." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=The+ASL+Alphabet&amp;d=Every+letter+and+number+of+the+American+manual+alphabet%2C+signed+by+a+live+3D+avatar&amp;p=%2Fasl-alphabet" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"The ASL alphabet on a live 3D avatar","description":"Every letter and number of the American manual alphabet, signed by a 3D avatar, with the handshape described, the look-alike letters named, and a practice drill.","learningResourceType":"Interactive reference","educationalLevel":"Beginner","teaches":"American Sign Language fingerspelling","url":"https://three.ws/asl-alphabet","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<style>
+			.aa-main { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+
+			/* Hero: the avatar signing, the letter, and what to look for */
+			.aa-hero {
+				display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(24px, 4vw, 56px);
+				align-items: center; padding: clamp(24px, 4vw, 56px) 0 clamp(16px, 2vw, 32px);
+			}
+			.aa-chip {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 5px 12px; border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-1); font-size: 12px; letter-spacing: .04em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+			}
+			.aa-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.18); }
+			.aa-hero h1 { font-size: clamp(30px, 4.6vw, 52px); line-height: 1.04; margin: 16px 0 12px; letter-spacing: -.02em; }
+			.aa-lede { max-width: 56ch; color: var(--ink-dim); font-size: clamp(15px, 1.35vw, 17px); line-height: 1.6; margin: 0; }
+
+			.aa-stage-wrap {
+				position: relative; border: 1px solid var(--stroke); border-radius: 20px; overflow: hidden;
+				background: radial-gradient(120% 120% at 50% 0%, rgba(56,189,248,.10), transparent 60%), var(--surface-1);
+				aspect-ratio: 4 / 5; min-height: 360px;
+			}
+			#aa-stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+			.aa-status {
+				position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px;
+				font-family: var(--font-mono); font-size: 13px; color: #fff;
+				background: linear-gradient(to top, rgba(0,0,0,.6), transparent); pointer-events: none; min-height: 20px;
+			}
+
+			/* The letter card */
+			.aa-card { border: 1px solid var(--stroke); border-radius: 18px; background: var(--surface-1); padding: 20px 22px; margin-top: 22px; }
+			.aa-card-top { display: flex; align-items: center; gap: 18px; }
+			.aa-big {
+				font-size: 56px; line-height: 1; font-weight: 600; letter-spacing: -.03em;
+				width: 76px; height: 76px; display: grid; place-items: center; flex: 0 0 auto;
+				border-radius: 16px; background: rgba(56,189,248,.14); border: 1px solid rgba(56,189,248,.35);
+			}
+			.aa-card-body p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink); }
+			.aa-look { margin-top: 8px !important; color: var(--ink-dim) !important; font-size: 14px !important; }
+			.aa-motion {
+				display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+				font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+				color: #38bdf8; border: 1px solid rgba(56,189,248,.4); border-radius: 999px; padding: 4px 10px;
+			}
+
+			/* Settings */
+			.aa-settings { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px; }
+			.aa-setting { display: flex; align-items: center; gap: 9px; }
+			.aa-setting-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+			.aa-opts { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--surface-2); }
+			.aa-opt {
+				appearance: none; border: 0; background: transparent; color: var(--ink-dim);
+				font: inherit; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+				cursor: pointer; transition: color .14s ease, background .14s ease;
+			}
+			.aa-opt:hover { color: var(--ink); }
+			.aa-opt:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
+			.aa-opt:active { transform: scale(.96); }
+			.aa-opt[aria-pressed='true'] { color: var(--ink); background: rgba(56,189,248,.2); }
+
+			/* The keyboard */
+			.aa-keys-section { margin-top: clamp(36px, 5vw, 64px); }
+			.aa-keys-section h2 { font-size: clamp(20px, 2.2vw, 27px); letter-spacing: -.02em; margin: 0 0 8px; }
+			.aa-keys-section > p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 68ch; margin: 0 0 18px; }
+			.aa-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
+			.aa-keys.aa-keys-digits { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); margin-top: 14px; max-width: 640px; }
+			.aa-key {
+				appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 20px;
+				aspect-ratio: 1 / 1; border-radius: 14px; color: var(--ink-dim);
+				border: 1px solid var(--stroke); background: var(--surface-2);
+				transition: color .14s ease, border-color .14s ease, background .14s ease, transform .14s ease;
+			}
+			.aa-key:hover { color: var(--ink); border-color: rgba(56,189,248,.6); transform: translateY(-2px); }
+			.aa-key:active { transform: translateY(0) scale(.97); }
+			.aa-key:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 2px; }
+			.aa-key[aria-pressed='true'] { color: var(--ink); background: rgba(56,189,248,.16); border-color: rgba(56,189,248,.7); }
+			.aa-key[data-live='true'] {
+				color: #04121c; background: #38bdf8; border-color: #38bdf8;
+				box-shadow: 0 0 0 4px rgba(56,189,248,.22);
+			}
+			.aa-keys-hint { margin-top: 14px; font-size: 13px; color: var(--ink-dim); }
+			.aa-keys-hint kbd {
+				font-family: var(--font-mono); font-size: 12px; padding: 2px 6px; border-radius: 6px;
+				border: 1px solid var(--stroke); background: var(--surface-2);
+			}
+
+			/* Spell + practice */
+			.aa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: clamp(36px, 5vw, 60px); }
+			.aa-panel { border: 1px solid var(--stroke); border-radius: 18px; background: var(--surface-1); padding: clamp(20px, 3vw, 28px); }
+			.aa-panel h2 { font-size: clamp(19px, 2vw, 24px); margin: 0 0 8px; letter-spacing: -.02em; }
+			.aa-panel p { color: var(--ink-dim); font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+			.aa-row { display: flex; gap: 8px; }
+			.aa-input {
+				flex: 1 1 auto; min-width: 0; box-sizing: border-box;
+				background: rgba(56,189,248,.06); border: 1px solid rgba(56,189,248,.4);
+				color: var(--ink); font: inherit; font-size: 15px; padding: 11px 14px; border-radius: 12px;
+			}
+			.aa-input::placeholder { color: var(--ink-dim); }
+			.aa-input:focus { outline: none; border-color: rgba(56,189,248,.85); box-shadow: 0 0 0 3px rgba(56,189,248,.2); }
+			.aa-btn {
+				flex: 0 0 auto; appearance: none; border: 1px solid rgba(56,189,248,.5);
+				background: rgba(56,189,248,.16); color: var(--ink); font: inherit; font-weight: 600;
+				font-size: 15px; padding: 11px 18px; border-radius: 12px; cursor: pointer;
+				transition: background .12s ease, border-color .12s ease;
+			}
+			.aa-btn:hover:not(:disabled) { background: rgba(56,189,248,.3); border-color: rgba(56,189,248,.8); }
+			.aa-btn:active:not(:disabled) { transform: scale(.98); }
+			.aa-btn:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
+			.aa-btn.aa-btn-quiet { background: transparent; border-color: var(--stroke); color: var(--ink-dim); font-weight: 500; }
+			.aa-btn.aa-btn-quiet:hover { color: var(--ink); border-color: rgba(56,189,248,.6); background: transparent; }
+			.aa-share { margin-top: 12px; font-size: 13px; padding: 7px 12px; }
+
+			.aa-modes { display: flex; gap: 16px; margin-bottom: 14px; font-size: 14px; color: var(--ink-dim); }
+			.aa-modes label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+			.aa-modes input { accent-color: #38bdf8; }
+			.aa-score { display: flex; gap: 20px; margin: 14px 0 0; font-size: 13px; color: var(--ink-dim); }
+			.aa-score strong { color: var(--ink); font-size: 18px; font-variant-numeric: tabular-nums; }
+			.aa-feedback {
+				margin-top: 14px; min-height: 44px; border: 1px dashed var(--stroke); border-radius: 12px;
+				padding: 12px 14px; font-size: 14px; color: var(--ink-dim); line-height: 1.5;
+			}
+			.aa-feedback[data-state='right'] { border-color: rgba(56,211,159,.6); color: var(--ink); }
+			.aa-feedback[data-state='wrong'] { border-color: rgba(239,68,68,.55); color: var(--ink); }
+			.aa-feedback[data-state='asking'], .aa-feedback[data-state='shown'] { border-color: rgba(56,189,248,.5); }
+			.aa-practice-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+			.aa-panel[data-disabled='true'] { opacity: .55; }
+
+			.aa-note { margin-top: clamp(32px, 4vw, 52px); border-left: 2px solid rgba(56,189,248,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 74ch; }
+			.aa-note a { color: var(--ink); }
+
+			@media (prefers-reduced-motion: reduce) {
+				.aa-key:hover, .aa-key:active, .aa-opt:active, .aa-btn:active:not(:disabled) { transform: none; }
+			}
+			@media (max-width: 900px) {
+				.aa-hero { grid-template-columns: 1fr; }
+				.aa-grid { grid-template-columns: 1fr; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="aa-main">
+			<section class="aa-hero">
+				<div class="aa-stage-wrap">
+					<div id="aa-stage" role="img" aria-label="A 3D avatar forming the selected letter of the American manual alphabet"></div>
+					<div class="aa-status" id="aa-status" aria-live="polite"></div>
+				</div>
+
+				<div>
+					<span class="aa-chip"><span class="aa-chip-dot"></span> The manual alphabet · live in 3D</span>
+					<h1>Every ASL letter, on a hand you can turn around.</h1>
+					<p class="aa-lede">
+						A picture of a handshape shows you one angle. This is the real thing: a rigged
+						avatar forming each letter of the American manual alphabet, at the speed you
+						choose, on either hand. Click a key, or just press it on your keyboard.
+					</p>
+
+					<div class="aa-card">
+						<div class="aa-card-top">
+							<div class="aa-big" id="aa-big" aria-hidden="true">A</div>
+							<div class="aa-card-body">
+								<p id="aa-hand">Closed fist, thumb resting straight along the side of the index finger.</p>
+								<p class="aa-look" id="aa-look"></p>
+							</div>
+						</div>
+						<span class="aa-motion" id="aa-motion" hidden>Traced: the motion is the letter</span>
+						<div>
+							<button class="aa-btn aa-btn-quiet aa-share" id="aa-share" type="button" hidden title="Copy a link that opens this letter">🔗 Share this</button>
+						</div>
+					</div>
+
+					<div class="aa-settings">
+						<div class="aa-setting">
+							<span class="aa-setting-label" id="aa-speed-label">Speed</span>
+							<div class="aa-opts" id="aa-speed" role="group" aria-labelledby="aa-speed-label"></div>
+						</div>
+						<div class="aa-setting">
+							<span class="aa-setting-label" id="aa-hand-label">Signing hand</span>
+							<div class="aa-opts" id="aa-hand" role="group" aria-labelledby="aa-hand-label"></div>
+						</div>
+						<div class="aa-setting">
+							<span class="aa-setting-label" id="aa-rig-label">Avatar</span>
+							<div class="aa-opts" id="aa-rig" role="group" aria-labelledby="aa-rig-label"></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="aa-keys-section" aria-label="The manual alphabet">
+				<h2>A to Z</h2>
+				<p>
+					Every letter is signed by the same engine an agent uses to sign a chat reply, so
+					what you learn here is exactly what you will read there. Hover a key for its
+					description; click it, or press it, to watch it.
+				</p>
+				<div class="aa-keys" id="aa-letters" role="group" aria-label="Letters"></div>
+
+				<h2 style="margin-top: 34px">0 to 9</h2>
+				<div class="aa-keys aa-keys-digits" id="aa-digits" role="group" aria-label="Numbers"></div>
+
+				<p class="aa-keys-hint">Tip: press any <kbd>letter</kbd> or <kbd>number</kbd> key to sign it instantly.</p>
+			</section>
+
+			<div class="aa-grid">
+				<section class="aa-panel" aria-label="Spell a word">
+					<h2>Spell anything</h2>
+					<p>
+						Type a word and watch it spelled letter by letter, with each key lighting up as
+						the hand reaches it. Names, places, and anything with no sign of its own are
+						exactly what fingerspelling is for.
+					</p>
+					<div class="aa-row">
+						<input
+							id="aa-spell-input"
+							class="aa-input"
+							type="text"
+							maxlength="24"
+							placeholder="your name, a city, a word…"
+							aria-label="Word to fingerspell"
+							autocomplete="off"
+						/>
+						<button id="aa-spell-btn" class="aa-btn" type="button">🤟 Spell it</button>
+					</div>
+				</section>
+
+				<section class="aa-panel" id="aa-practice" aria-label="Practice reading fingerspelling">
+					<h2>Practice reading it</h2>
+					<p>
+						Reading fingerspelling is the harder half, and it only comes from repetition.
+						The avatar spells something; you type what you read. Your streak is kept on
+						this device.
+					</p>
+					<div class="aa-modes" role="group" aria-label="What to practise">
+						<label><input type="radio" name="aa-mode" value="letters" checked /> Single letters</label>
+						<label><input type="radio" name="aa-mode" value="words" /> Whole words</label>
+					</div>
+					<div class="aa-row">
+						<input
+							id="aa-practice-input"
+							class="aa-input"
+							type="text"
+							maxlength="24"
+							placeholder="what did it spell?"
+							aria-label="What the avatar spelled"
+							autocomplete="off"
+						/>
+						<button id="aa-practice-check" class="aa-btn" type="button">Check</button>
+					</div>
+					<div class="aa-practice-actions">
+						<button id="aa-practice-start" class="aa-btn aa-btn-quiet" type="button">Start practising</button>
+						<button id="aa-practice-replay" class="aa-btn aa-btn-quiet" type="button" hidden>Show it again</button>
+						<button id="aa-practice-reveal" class="aa-btn aa-btn-quiet" type="button" hidden>Reveal</button>
+					</div>
+					<div class="aa-feedback" id="aa-practice-feedback">Press start and the avatar will spell something.</div>
+					<div class="aa-score">
+						<span>Streak <strong id="aa-streak">0</strong></span>
+						<span>Best <strong id="aa-best">0</strong></span>
+					</div>
+				</section>
+			</div>
+
+			<p class="aa-note">
+				Fingerspelling is one part of American Sign Language: it spells names, loanwords, and
+				anything with no sign of its own. Words that have signs are <em>signed</em>, and you
+				can watch those, get signed AI chat replies, and sign back with your webcam at
+				<a href="/sign-language">/sign-language</a>. The full reference is in
+				<a href="/docs/sign-language">the documentation</a>, and the engine behind both pages is
+				published as <a href="https://www.npmjs.com/package/@three-ws/sign-language">@three-ws/sign-language</a>.
+			</p>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/asl-alphabet-page.js"></script>
+	</body>
+</html>

@@ -623,6 +623,7 @@ export const NAV_GROUPS = [
 					{ title: 'Docs', href: '/docs', desc: 'SDKs + API reference' },
 					{ title: 'Docs World', href: '/docs/world', desc: 'Walk the docs in 3D' },
 					{ title: 'Tutorials', href: '/tutorials', desc: 'Step-by-step guides' },
+					{ title: 'Examples', href: '/examples', desc: 'Runnable copy-paste code' },
 					{ title: 'Chat', href: '/chat', desc: 'Talk to your agent' },
 				],
 			},

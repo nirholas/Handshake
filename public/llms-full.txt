@@ -2573,6 +2573,12 @@ URL: https://three.ws/docs/walk-leaderboard
 
 Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.
 
+### Repository guards
+
+URL: https://three.ws/docs/guards
+
+The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.
+
 ### Tutorial · Give an Agent a Spending Envelope
 
 URL: https://three.ws/tutorials/agent-spending-envelope

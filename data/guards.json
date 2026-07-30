@@ -306,6 +306,16 @@
 			"needs": "credentials"
 		},
 		{
+			"id": "audit-guards",
+			"script": "scripts/audit-guards.mjs",
+			"npm": "audit:guards",
+			"title": "The guard registry itself",
+			"protects": "Every entry in this file names a real script and a real npm script, every guard on disk is registered, and every stage claim matches the npm chain that would actually run it.",
+			"why": "This registry is rendered by docs/guards.md and by /guards, so a stale stage column does not read as stale, it reads as coverage a reader then stops looking for. Listing itself is not circular: it verifies its own script, npm binding, and gate membership exactly like every other entry.",
+			"stages": ["gate"],
+			"needs": "none"
+		},
+		{
 			"id": "check-erc7710-addresses",
 			"script": "scripts/check-erc7710-addresses.js",
 			"npm": "check:erc7710",
@@ -320,10 +330,6 @@
 		{
 			"pattern": "scripts/verify-*.mjs",
 			"reason": "One-off integration verifiers for a specific vendor surface or world build, not repository guards. They prove an external service works, so they belong with that feature rather than in a guard stage."
-		},
-		{
-			"pattern": "scripts/audit-guards.mjs",
-			"reason": "The guard that verifies this registry. Registering it in its own registry would be circular."
 		}
 	]
 }

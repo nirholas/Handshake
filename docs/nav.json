@@ -95,6 +95,22 @@
 				{
 					"label": "Everything on one page",
 					"path": "agent-abilities/FULL-ARTICLE"
+				},
+				{
+					"label": "Screen control (drive a computer)",
+					"path": "agent-screen-control"
+				},
+				{
+					"label": "The agent shell",
+					"path": "agent-shell"
+				},
+				{
+					"label": "Persona Hub",
+					"path": "persona-hub"
+				},
+				{
+					"label": "Agent labor market",
+					"path": "labor-market"
 				}
 			]
 		},
@@ -196,6 +212,38 @@
 				{
 					"label": "Object Library (CC0 props)",
 					"path": "object-library"
+				},
+				{
+					"label": "Avatar Studio",
+					"path": "character-studio"
+				},
+				{
+					"label": "Additive wardrobe",
+					"path": "avatar-wardrobe"
+				},
+				{
+					"label": "Selfie to avatar reconstruction",
+					"path": "avatar-reconstruction"
+				},
+				{
+					"label": "Motion Swap (swap yourself in video)",
+					"path": "motion-swap"
+				},
+				{
+					"label": "Procedural animation",
+					"path": "procedural-animation"
+				},
+				{
+					"label": "Background generation & notifications",
+					"path": "forge-background-generation"
+				},
+				{
+					"label": "Forge-Off (community voting)",
+					"path": "forge-off"
+				},
+				{
+					"label": "Avatar thumbnails",
+					"path": "avatar-thumbnails"
 				}
 			]
 		},
@@ -248,6 +296,14 @@
 		{
 			"title": "Trading & markets",
 			"links": [
+				{
+					"label": "Trading hub (start here)",
+					"path": "trading-hub"
+				},
+				{
+					"label": "Risk acknowledgment",
+					"path": "risk-acknowledgment"
+				},
 				{
 					"label": "Coin Autopilot",
 					"path": "autopilot"
@@ -327,6 +383,46 @@
 				{
 					"label": "Coin & market pages",
 					"path": "coin-pages"
+				},
+				{
+					"label": "Agent Sniper",
+					"path": "agent-sniper"
+				},
+				{
+					"label": "Trading surfaces (Radar, Mission Control)",
+					"path": "trading-surfaces"
+				},
+				{
+					"label": "Arenas, Theater & Vaults",
+					"path": "trading-arenas"
+				},
+				{
+					"label": "Oracle (the conviction engine)",
+					"path": "oracle"
+				},
+				{
+					"label": "Meta-Allocator",
+					"path": "meta-allocator"
+				},
+				{
+					"label": "The three.ws launchpad",
+					"path": "native-launchpad"
+				},
+				{
+					"label": "Memetic Launcher",
+					"path": "memetic-launcher"
+				},
+				{
+					"label": "Repo to coin launcher",
+					"path": "pump-launch-repos"
+				},
+				{
+					"label": "Robinhood Chain markets",
+					"path": "robinhood-chain-markets"
+				},
+				{
+					"label": "The 10 SOL trading experiment",
+					"path": "trading-experiment"
 				}
 			]
 		},
@@ -405,6 +501,22 @@
 				{
 					"label": "Layers",
 					"path": "layers"
+				},
+				{
+					"label": "The social layer",
+					"path": "social-layer"
+				},
+				{
+					"label": "Agora (agent + human economy)",
+					"path": "agora"
+				},
+				{
+					"label": "Trust primitives",
+					"path": "trust-primitives"
+				},
+				{
+					"label": "Onboarding tiers (Simple / Everything)",
+					"path": "onboarding-tier"
 				}
 			]
 		},
@@ -526,6 +638,66 @@
 				{
 					"label": "AgenC",
 					"path": "agenc"
+				},
+				{
+					"label": "The autonomous economy",
+					"path": "autonomous-economy"
+				},
+				{
+					"label": "Money map",
+					"path": "money-map"
+				},
+				{
+					"label": "Economy heartbeat",
+					"path": "economy-heartbeat"
+				},
+				{
+					"label": "The master wallet",
+					"path": "economy-master"
+				},
+				{
+					"label": "Closed-loop x402 ring economy",
+					"path": "x402-ring-economy"
+				},
+				{
+					"label": "x402 distribution & listings",
+					"path": "x402-distribution"
+				},
+				{
+					"label": "Paid plans (USDC, SOL, $THREE)",
+					"path": "plan-checkout"
+				},
+				{
+					"label": "Paid API provider listing",
+					"path": "pay-skills-listing"
+				},
+				{
+					"label": "Vanity addresses",
+					"path": "vanity"
+				},
+				{
+					"label": "Hold-to-access",
+					"path": "hold-to-access"
+				},
+				{
+					"label": "$THREE micro-buy loop",
+					"path": "three-microbuy"
+				},
+				{
+					"label": "Token-gated 3D embeds",
+					"path": "token-gated-3d-embeds"
+				},
+				{
+					"label": "Financial controls & audit",
+					"path": "financial-controls"
+				},
+				{
+					"label": "Real-funds risk acknowledgment",
+					"path": "risk-acknowledgment"
+				},
+				{
+					"label": "3D pipeline (pay-per-stage x402)",
+					"path": "3d-pipeline"
 				}
 			]
 		},
@@ -717,6 +889,18 @@
 					"label": "Widget reference",
 					"href": "/docs/widgets",
 					"external": true
+				},
+				{
+					"label": "ui-juice (game-feel library)",
+					"path": "ui-juice"
+				},
+				{
+					"label": "Shared utilities",
+					"path": "shared-utilities"
+				},
+				{
+					"label": "Avatar CLI",
+					"path": "avatar-cli"
 				}
 			]
 		},
@@ -742,6 +926,50 @@
 				{
 					"label": "BNB vault",
 					"path": "bnb-vault"
+				},
+				{
+					"label": "MCP: agent wallet server",
+					"path": "mcp-agent"
+				},
+				{
+					"label": "MCP: 3D Studio server",
+					"path": "mcp-3d-studio"
+				},
+				{
+					"label": "MCP: x402 Bazaar server",
+					"path": "mcp-x402-bazaar"
+				},
+				{
+					"label": "MCP on the Cloudflare edge",
+					"path": "pump-fun-mcp-edge"
+				},
+				{
+					"label": "AR in ChatGPT",
+					"path": "chatgpt-ar"
+				},
+				{
+					"label": "The 3D Studio custom GPT",
+					"path": "chatgpt-3d-studio-gpt"
+				},
+				{
+					"label": "OKX.AI marketplace",
+					"path": "okx-marketplace"
+				},
+				{
+					"label": "BNB Chain world",
+					"path": "bnb-world"
+				},
+				{
+					"label": "Sketchfab showcase",
+					"path": "sketchfab"
+				},
+				{
+					"label": "News-feed syndication",
+					"path": "syndication"
+				},
+				{
+					"label": "NVIDIA Inception",
+					"path": "nvidia-inception"
 				}
 			]
 		},
@@ -868,6 +1096,38 @@
 				{
 					"label": "Changelog",
 					"path": "changelog"
+				},
+				{
+					"label": "Internationalization (i18n)",
+					"path": "i18n"
+				},
+				{
+					"label": "Asset pipeline (FBX, GLB, JSON)",
+					"path": "3d-asset-pipeline"
+				},
+				{
+					"label": "Design tokens",
+					"path": "DESIGN-TOKENS"
+				},
+				{
+					"label": "Vanity protocol spec",
+					"path": "PROTOCOL-vanity"
+				},
+				{
+					"label": "Catalog quality gate",
+					"path": "seed-quality"
+				},
+				{
+					"label": "Publisher rights (news reader)",
+					"path": "news-rights"
+				},
+				{
+					"label": "Pump.fun platform fee",
+					"path": "pump-platform-fee"
+				},
+				{
+					"label": "Demo routes",
+					"path": "demo-routes"
 				}
 			]
 		}

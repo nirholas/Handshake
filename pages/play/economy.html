@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot (no-flash); runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>The in-game economy · three.ws</title>
+		<meta
+			name="description"
+			content="Every price, prize and gate in the /play world economy: what the general store pays for what you gather, what it sells, how the bank protects your cash through death, what the $THREE boutique charges, and the full wheel paytable with real odds. Read from the same tables the game server prices trades with."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/play/economy" />
+		<meta property="og:title" content="The in-game economy · three.ws" />
+		<meta
+			property="og:description"
+			content="The complete /play economy reference: store prices, bank rules, the $THREE boutique, and the full wheel paytable with real odds. Never transcribed, read straight from the game's own tables."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=The+in-game+economy&amp;d=Store+prices%2C+bank+rules%2C+the+%24THREE+boutique+and+the+full+wheel+paytable%2C+read+from+the+same+tables+the+game+server+prices+trades+with&amp;p=%2Fplay%2Feconomy"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="The in-game economy · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Store prices, bank rules, the $THREE boutique, and the full wheel paytable with real odds."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=The+in-game+economy&amp;d=Store+prices%2C+bank+rules%2C+the+%24THREE+boutique+and+the+full+wheel+paytable%2C+read+from+the+same+tables+the+game+server+prices+trades+with&amp;p=%2Fplay%2Feconomy"
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/ui-juice.css" />
+		<link rel="stylesheet" href="/src/play-economy.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/play/economy" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "The in-game economy",
+				"description": "The complete reference for the three.ws /play world economy: general store prices, banking rules, the $THREE cosmetics boutique, the Wheel of Fortune paytable, and the progression constants the economy is tuned against.",
+				"url": "https://three.ws/play/economy",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="The three.ws in-game economy reference" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="pe-shell">
+			<div class="pe-glow" aria-hidden="true"></div>
+
+			<section class="pe-hero">
+				<p class="pe-kicker">The /play world economy</p>
+				<h1 class="pe-title">Every price, prize and <em>gate</em></h1>
+				<p class="pe-sub">
+					The open world runs a real economy: a purse you can lose, a bank that protects
+					it, a store that prices every trade server-side, a cosmetics boutique that
+					settles on Solana, and a wheel with published odds. Until now you had to walk up
+					to each NPC to learn any of it. This is the whole thing, in one place.
+				</p>
+				<p class="pe-sub">
+					Nothing below is transcribed by hand. The page reads the same tables the
+					authoritative game server prices trades with, so a number here is the number
+					you will be charged.
+				</p>
+				<div class="pe-hero-actions">
+					<a class="pe-btn pe-btn-primary" href="/play">Enter the world</a>
+					<a class="pe-btn" href="/docs/in-game-economy">Read the reference doc</a>
+					<a class="pe-btn" href="/docs/tutorials/earn-and-spend-in-play"
+						>Tutorial: earn and spend</a
+					>
+				</div>
+			</section>
+
+			<p id="pe-status" class="pe-sr" role="status" aria-live="polite"></p>
+			<div id="pe-content"></div>
+
+			<p class="pe-fineprint">
+				The catalogs, gates and odds on this page are served by
+				<code>/api/play/economy</code>, which imports them from the game's own modules
+				rather than restating them, so this reference cannot drift from what the server
+				charges. Cash is a game resource and never leaves the world; only boutique unlocks
+				and paid spins touch the chain, and both are verified on-chain before anything is
+				granted. The separate USDC cosmetics rail for the standalone character creator is
+				documented under <a href="/fits">Fits</a>.
+			</p>
+		</main>
+
+		<script type="module" src="/src/play-economy.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

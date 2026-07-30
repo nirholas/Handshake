@@ -58,7 +58,7 @@ export const def = {
 			ok: true,
 			session: data.session,
 			token: data.token,
-			note: data.note ?? 'Store this token securely — it is shown once and cannot be recovered. Set PAYMENT_SESSION_TOKEN to use it as the default.',
+			note: data.note ?? 'Store this token securely. It is shown once and cannot be recovered. Set PAYMENT_SESSION_TOKEN to use it as the default.',
 		};
 	},
 };

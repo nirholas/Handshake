@@ -88,7 +88,7 @@ export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } =
 	// lens while the pavilions are 24m out, so it reads as a slab impaling the
 	// avatar and its welcome sign covers the pavilion labels behind it. Standing
 	// the player to one side puts the beacon beside them instead of through them.
-	root.position.set(3.4, 0, 3.4);
+	root.position.set(2.4, 0, 3.4);
 	root.rotation.y = Math.PI;
 	scene.add(root);
 

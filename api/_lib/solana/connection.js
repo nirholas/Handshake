@@ -826,7 +826,7 @@ export function makeRotatingFetch(endpoints) {
 						// INFO, not WARN: the request continues to the next provider and
 						// still succeeds. This is the redundancy working, not a fault.
 						console.log(
-							`[solana-rpc] ${maskUrl(url)} ${resp.status} — cooling ${formatCooldown(ms)}, failing over`,
+							`[solana-rpc] ${maskUrl(url)} ${resp.status}, cooling ${formatCooldown(ms)}, failing over`,
 						);
 					}
 					return { error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`) };
@@ -838,7 +838,7 @@ export function makeRotatingFetch(endpoints) {
 					const ms = markEndpointCooldown(url, bad.status, bad.bodyText || '');
 					if (!alreadyCooling) {
 						console.log(
-							`[solana-rpc] ${maskUrl(url)} ${bad.log} — cooling ${formatCooldown(ms)}, failing over`,
+							`[solana-rpc] ${maskUrl(url)} ${bad.log}, cooling ${formatCooldown(ms)}, failing over`,
 						);
 					}
 					return { error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`) };
