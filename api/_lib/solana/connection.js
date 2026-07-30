@@ -208,7 +208,7 @@ const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 // paid capacity. Keeping one list means an operator who pins a free node as
 // SOLANA_RPC_URL cannot accidentally be counted as a healthy premium lane.
 //
-// PublicNode — keyless and un-throttled (the same node mcp-server uses) so
+// PublicNode is keyless and un-throttled (the same node mcp-server uses) so
 // failover lands on a working endpoint instead of depending on the aggressively
 // rate-limited public mainnet-beta endpoint alone. Leo RPC's keyless FREE tier
 // is a second un-throttled lane, so the chain still has depth when every paid
@@ -523,7 +523,7 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
  * SOLANA_RPC_URL at a keyless node is the standard mitigation during a quota
  * outage (done 2026-07-30, when Alchemy/Helius/QuickNode were exhausted at
  * once). Counting that free node as premium capacity would make this sensor
- * report a healthy paid tier at exactly the moment the whole tier is dark —
+ * report a healthy paid tier at exactly the moment the whole tier is dark,
  * the same blind spot the sensor was written to close.
  */
 function paidMainnetEndpoints() {
