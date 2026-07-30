@@ -100,9 +100,24 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/vanity-mcp
 {
   "ok": true,
   "pattern": { "prefix": "THREE", "suffix": null, "ignoreCase": false },
-  "difficulty": { "expectedAttempts": 656356768, "tier": "epic", "tierLabel": "Epic" },
-  "oracle": { "suggestedAtomics": "500000", "suggestedUsdc": "0.50" },
-  "band": { "floorAtomics": 50000, "maxAtomics": 50000000, "decimals": 6, "asset": "USDC" }
+  "difficulty": {
+    "expectedAttempts": 11308763834,
+    "rarityBits": 39,
+    "tier": "mythic",
+    "tierLabel": "Mythic",
+    "accent": "#ff5db1",
+    "expectedGrindSeconds": 7539
+  },
+  "oracle": {
+    "floorAtomics": 50000,
+    "suggestedAtomics": 2094216,
+    "generousAtomics": 5235540,
+    "maxAtomics": 5000000000,
+    "expectedAttempts": 11308763834,
+    "expectedGrindSeconds": 7539,
+    "model": "58^effectiveLength @ refRate"
+  },
+  "band": { "floorAtomics": 50000, "maxAtomics": 5000000000, "decimals": 6, "asset": "USDC" }
 }
 ```
 

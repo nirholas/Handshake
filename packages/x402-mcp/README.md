@@ -81,7 +81,14 @@ claude mcp add x402 --env SOLANA_SECRET_KEY=<base58> -- npx -y @three-ws/x402-mc
 
 **`inspect_endpoint`** — `url` (required), `method` (`GET` | `POST`), `body` (object).
 
-**`pay_and_call`** — `url` (required), `method` (`GET` | `POST`), `body` (object), `max_usd` (lowers the cap for this call), `secret` (per-call signer override), `confirm` (must be `true` when `REQUIRE_CONFIRM` is on).
+**`pay_and_call`**: `url` (required), `method` (`GET` | `POST`), `body` (object), `max_usd` (lowers the cap for this call), `secret` (per-call signer override), `confirm` (must be `true` when `REQUIRE_CONFIRM` is on), `session_token`, `token`, `idempotency_key`.
+
+It has two settlement modes:
+
+- **Self-custodial (default).** Signs with `SOLANA_SECRET_KEY`, or the per-call `secret`. You hold the key.
+- **Session-governed.** Pass `session_token`, a [three.ws Payment Session](../../docs/payment-sessions.md) token, and the platform wallet signs on your behalf while enforcing that session's budget, host allowlist, and per-transaction cap. No private key needed. Solana USDC and Base USDC sessions are both supported, and `secret` and `token` are ignored in this mode.
+
+`token` selects the settlement asset: `usdc` (default), or `three` for the $THREE platform token when the endpoint advertises it. `idempotency_key` deduplicates a call, which is recommended with `session_token` so a retry cannot double-charge.
 
 ## Example
 

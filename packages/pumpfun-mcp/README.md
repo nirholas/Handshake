@@ -76,6 +76,10 @@ The server speaks stdio JSON-RPC — your MCP client spawns it via the `npx` com
 
 All tools are **read-only** — nothing signs or sends a transaction. `pumpfun_quote_swap` only quotes; `pumpfun_vanity_mint` returns a keypair for you to use yourself.
 
+**Six tools are indexer-gated.** `search_tokens`, `get_trending_tokens`, `get_new_tokens`, `get_graduated_tokens`, `get_king_of_the_hill`, and `get_creator_profile` need a pump.fun indexer (`PUMPFUN_BOT_URL`). The hosted endpoint at `three.ws/api/pump-fun-mcp` has none configured, so it filters those six out of `tools/list` and they will not appear when you connect to it; set the env var on your own deployment and they return with no code change. Everything else, including `get_token_trades`, works off on-chain data with no indexer. Call `pumpfun_bot_status` to see which side you are on. Note that without the indexer `get_token_details` returns SPL account facts only (`name`, `symbol`, and `uri` come back `null`).
+
+The hosted endpoint also serves three tools the table below does not list: `get_coin_intel`, `get_oracle_conviction`, and `pumpfun_upload_metadata`.
+
 | Tool                       | What it does                                                                                                                                                                                                                                                                          |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `search_tokens`             | Search pump.fun tokens by name, symbol, or mint.                                                                                                                                                                                                                                      |
