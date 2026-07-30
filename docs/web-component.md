@@ -9,7 +9,7 @@
 <agent-3d src="agent://base/42" style="width:400px;height:500px"></agent-3d>
 ```
 
-All four layout modes, voice I/O, the LLM brain, persistent memory, and an extensible skill system are built in. Every feature is opt-in — a bare `<agent-3d body="https://three.ws/avatars/default.glb">` renders a silent 3D viewer with no API key and no external calls beyond the GLB itself.
+All four layout modes, voice I/O, the LLM brain, persistent memory, and an extensible skill system are built in. Every feature is opt-in: a bare `<agent-3d body="https://three.ws/avatars/default.glb">` renders a silent 3D viewer with no API key and no external calls beyond the GLB itself.
 
 ---
 
