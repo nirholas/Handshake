@@ -17,9 +17,8 @@ import { notifyBuy, notifySell } from '../../api/_lib/sniper/notify.js';
 import { getPolicyRules } from '../../api/_lib/spend-policy-rules.js';
 import {
 	getSpendLimits, enforceSpendLimit, SpendLimitError, recordSpend, lamportsToUsd,
-	checkConcurrency, checkDailyBudgetLamports, checkSolHeadroom, checkPriceImpact,
-	checkDailyLoss, recordCustodyEvent,
-	ENTRY_HEADROOM_LAMPORTS,
+	checkConcurrency, checkDailyBudgetLamports, checkPriceImpact,
+	checkDailyLoss, recordCustodyEvent, resolveEntrySize,
 } from '../../api/_lib/agent-trade-guards.js';
 import { shouldGiveUpReconcile } from './exit-logic.js';
 import { buildAmmSellInstructions, quoteAmmBuy, buildAmmBuyInstructions } from './amm-exit.js';
@@ -341,18 +340,14 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			log.warn('wallet precheck failed', { ...tag, err: err?.message });
 			return skip(tag, 'wallet_precheck_failed');
 		}
-		const headroom = checkSolHeadroom(preBalance, perTrade, ENTRY_HEADROOM_LAMPORTS);
-		if (headroom) {
-			// Learning > profit (owner directive): a wallet too poor for the
-			// strategy's configured size still trades, shrunk to whatever is left
-			// after the fee/rent headroom — it only sits out once even a
-			// cfg.minTradeLamports-sized buy wouldn't fit. Safe to shrink here: every
-			// check already passed above (budget, spend policy) is a ceiling a
-			// smaller trade only clears more easily, never less.
-			const dustCapable = preBalance - ENTRY_HEADROOM_LAMPORTS;
-			if (dustCapable < cfg.minTradeLamports) return skip(tag, headroom.reason);
-			perTrade = dustCapable;
-		}
+		// Learning > profit (owner directive): a wallet too poor for the strategy's
+		// configured size still trades, shrunk to what it can actually afford. It
+		// sits out only when even a shrunk buy could not clear the pre-broadcast
+		// simulations. Safe to shrink: every check already passed above (budget,
+		// spend policy) is a ceiling a smaller trade only clears more easily.
+		const sized = resolveEntrySize(preBalance, perTrade, cfg.minTradeLamports);
+		if (sized.skip) return skip(tag, sized.skip);
+		perTrade = sized.sizeLamports;
 
 		// 5. idempotency lock — claim the (agent,mint,network) slot BEFORE the tx.
 		//    The wallet is known now, so it's written on the claim (no later UPDATE).

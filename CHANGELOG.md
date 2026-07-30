@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-07-30
 
+- **An underfunded trading bot now sits out instead of failing every trade** — A trading strategy whose wallet ran low could get stuck in a loop: it looked funded enough to place a shrunken buy, but not funded enough to run the safety simulation that has to pass before anything is broadcast. So it tried every candidate coin, failed at the same step every time, and filled its history with failures while never actually trading. One live strategy did this 82 times in a day without placing a single buy. Strategies now compare their balance against the amount a trade genuinely needs end to end, including the pre-trade safety checks, and quietly wait for a top-up instead. No trade behavior changes for a properly funded strategy. (`/trades`) `[fix]`
 - **Payment health now names the real cause when settlements stall** — The platform watches how many of its automated payments actually settle. When that number fell, the alert always said the same thing: payments are being rejected. That was misleading in the most common case, where nothing is rejected at all. The platform simply stops offering Solana as a payment option while its sponsor wallet is topped up, so its own agents have nothing they can pay. The health report now tells these two situations apart by name, counts how often the Solana option was unavailable, and points at the one-command self-repair instead of sending whoever is on call to the wrong system. `[infra, improvement]`
 
 ## 2026-07-29

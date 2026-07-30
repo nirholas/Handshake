@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>An underfunded trading bot now sits out instead of failing every trade</title>
+			<link>https://three.ws/trades</link>
+			<guid isPermaLink="false">2026-07-30:An underfunded trading bot now sits out instead of failing every trade</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A trading strategy whose wallet ran low could get stuck in a loop: it looked funded enough to place a shrunken buy, but not funded enough to run the safety simulation that has to pass before anything is broadcast. So it tried every candidate coin, failed at the same step every time, and filled its history with failures while never actually trading. One live strategy did this 82 times in a day without placing a single buy. Strategies now compare their balance against the amount a trade genuinely needs end to end, including the pre-trade safety checks, and quietly wait for a top-up instead. No trade behavior changes for a properly funded strategy.</description>
+		</item>
+		<item>
 			<title>Payment health now names the real cause when settlements stall</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Payment health now names the real cause when settlements stall</guid>

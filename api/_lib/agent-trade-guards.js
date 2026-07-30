@@ -418,6 +418,46 @@ export function checkSolHeadroom(walletLamports, spendLamports, headroomLamports
 	return null;
 }
 
+/**
+ * Resolve the entry size a wallet can actually trade, or decide it must sit out.
+ *
+ * Pure. Two floors apply and they are NOT the same number:
+ *   - `ENTRY_HEADROOM_LAMPORTS` covers the buy's own network fee + the token
+ *     ATA's rent + priority-fee/tip room. It is what the buy itself costs.
+ *   - `MIN_OPERATIONAL_WALLET_SOL` additionally covers the checks that run from
+ *     this wallet BEFORE any broadcast: the firewall's buy→sell round-trip probe
+ *     and the pre-broadcast compute-unit simulation.
+ *
+ * A balance above the first floor and below the second looks tradeable and is
+ * operationally dead: every attempt aborts at a simulation the wallet cannot
+ * afford to run, so an arm gated only on the first floor re-attempts every
+ * candidate forever and books a failure each time. Honest behavior is to sit out
+ * until the auto-funder tops the wallet back up.
+ *
+ * Returns `{ sizeLamports }` to trade (possibly shrunk below `wantLamports`), or
+ * `{ skip: reason }` to sit this candidate out.
+ *
+ * @param {bigint|number|string} walletLamports current wallet balance
+ * @param {bigint|number|string} wantLamports the strategy's configured size
+ * @param {bigint|number|string} minTradeLamports smallest size worth placing
+ * @returns {{sizeLamports: bigint, skip?: undefined}|{skip: string, sizeLamports?: undefined}}
+ */
+export function resolveEntrySize(walletLamports, wantLamports, minTradeLamports) {
+	const wallet = BigInt(walletLamports);
+	const want = BigInt(wantLamports);
+	const minTrade = BigInt(minTradeLamports);
+	const headroom = checkSolHeadroom(wallet, want, ENTRY_HEADROOM_LAMPORTS);
+	if (!headroom) return { sizeLamports: want };
+	// Short for the configured size. Shrinking is allowed (learning > profit), but
+	// only from a wallet that can still run the pre-broadcast simulations.
+	if (wallet < BigInt(Math.round(MIN_OPERATIONAL_WALLET_SOL * 1e9))) {
+		return { skip: headroom.reason };
+	}
+	const dustCapable = wallet - ENTRY_HEADROOM_LAMPORTS;
+	if (dustCapable < minTrade) return { skip: headroom.reason };
+	return { sizeLamports: dustCapable };
+}
+
 /** Price-impact circuit breaker. Blocked when impact > max. */
 export function checkPriceImpact(priceImpactPct, maxPct) {
 	if (maxPct == null) return null;
