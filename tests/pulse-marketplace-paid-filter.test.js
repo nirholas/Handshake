@@ -1,4 +1,4 @@
-// /pulse marketplace accounting — the money columns and the party counts must
+// /pulse marketplace accounting: the money columns and the party counts must
 // agree on what a "sale" is.
 //
 // The defect this pins: `purchases` filtered on status + kind, while `gmv_atomic`,

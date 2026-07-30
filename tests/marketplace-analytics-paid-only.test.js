@@ -1,4 +1,4 @@
-// /marketplace/analytics accounting — a free trial is not a sale.
+// /marketplace/analytics accounting: a free trial is not a sale.
 //
 // The defect this pins: every aggregate in the handler filtered on
 // `status IN ('confirmed','trial')`, so a `trial` row (a free grant that never
