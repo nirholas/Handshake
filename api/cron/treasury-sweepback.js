@@ -95,6 +95,23 @@ export default wrapCron(async (req, res) => {
 			{ signature: `economy-sweepback-fail:${f.pubkey}:${f.reason}` },
 		);
 	}
+	// A wallet whose balance could not be READ is silently absent from the sweep:
+	// it is neither swept nor reported as skipped, so the run looks clean while
+	// consolidating less than it should. Send failures above already alert; reads
+	// did not, and a read failure is exactly the shape RPC starvation takes (every
+	// Solana lane in quota cooldown, 2026-07-29). Aggregate into ONE alert rather
+	// than one per wallet, so a dark RPC tier cannot turn into an alert storm.
+	const readErrors = result.readErrors || [];
+	if (readErrors.length) {
+		await sendOpsAlert(
+			`↩️ Sweepback could not read ${readErrors.length} wallet(s)`,
+			`sweepback ${runId} skipped ${readErrors.length} wallet(s) it could not evaluate, so this consolidation is INCOMPLETE ` +
+				`(swept ${result.receivedSol} SOL). First: ${readErrors[0].name} ${String(readErrors[0].reason).slice(0, 160)}. ` +
+				'An `rpc_error` here means the Solana RPC tier is exhausted, not that the wallets are empty: ' +
+				'those wallets may hold SOL the master needs. Check healthz rpc_lanes and the provider quotas.',
+			{ signature: 'economy-sweepback-read-errors', severity: 'warn' },
+		);
+	}
 	if (mode === 'drain') {
 		await sendOpsAlert(
 			`↩️ Full drain consolidated engine wallets to the master`,
