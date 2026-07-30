@@ -1,5 +1,5 @@
 /*
- * Cookbook — the recipe index (/cookbook) and the recipe viewer (/cookbook/<slug>).
+ * Cookbook: the recipe index (/cookbook) and the recipe viewer (/cookbook/<slug>).
  *
  * Everything here is expressed in the shared design tokens from tokens.css, so
  * both surfaces follow the site's light/dark themes with no per-theme overrides
