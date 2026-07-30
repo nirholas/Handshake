@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Wallet balances and holder checks stop failing when a free Solana node refuses the call",
+			"summary": "Everything that reads a Solana balance goes through a chain of nodes, so that if one is out of credits or refusing requests the next one answers. Two gaps in that chain were letting failures through. First, when our main paid node hit its monthly cap it said so in wording our code did not recognise as \"out of credits\", so it was treated as briefly busy and put back at the front of the queue every ten minutes, meaning almost every balance lookup began by failing against a node that could not answer until the billing month rolled over. Second, some of the free public nodes refuse specific kinds of lookup outright, including the one that reads which tokens a wallet holds, and they refuse it with a reply our code read as \"you asked for something impossible\" rather than \"ask a different node\". That turned into an outright error for the features built on it: your token balances, $THREE holder checks, and the gates that unlock embeds and scenes for holders. Both signals are now recognised, so an exhausted node steps aside for the rest of its billing period and a node that will not serve a lookup is skipped in favour of one that will.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Your wallet history page loads again instead of erroring",
+			"summary": "The master wallet is the single account that funds your agents, pays for services, and buys skills. Three of its screens (the transaction history, the send form, and agent funding) read that wallet's record from a table that only the create-wallet step knew how to set up, and that step had never run in production. So instead of telling you there was no wallet yet, those screens returned a server error. The table is now created properly as part of our database setup rather than as a side effect of one request, so the history page shows an empty list, and sending and funding tell you plainly that no wallet exists yet, which is what they were always meant to do. The wallet record is also now tied to your account the same way your agent wallets are, so the two behave identically.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "The README is reorganized around what you came to do",
 			"summary": "Our README had grown to cover almost a hundred topics, but in an order that made it hard to use: anyone who came to build had to scroll past the long-term vision, the roadmap, and our marketplace and partner listings before reaching install instructions. It now follows the order a reader actually needs. What three.ws is, what it looks like, then how to run it, then the architecture, the individual systems, the developer platform, and the on-chain and payment rails, with the vision and roadmap sitting together further down next to the phased projects they describe. Nothing was removed or reworded, only moved. The table of contents also had an entry for the in-game economy that pointed nowhere, because the section had been dropped from the file a while back; that documentation is written again and now covers the cash purse, the general store, the bank, the $THREE cosmetics boutique, and the wheel of fortune.",
 			"tags": [
@@ -16907,7 +16924,7 @@
 		{
 			"date": "2026-07-30",
 			"title": "Every code sample in the docs now points at a real, loadable 3D model",
-			"summary": "Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names.",
+			"summary": "Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names. The agent card other agents read to discover our 3D skills got the same fix, with each example naming a model that actually produces the result it advertises, including one that genuinely returns compression suggestions.",
 			"tags": [
 				"docs",
 				"improvement"

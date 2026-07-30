@@ -20,7 +20,7 @@
 			<guid isPermaLink="false">2026-07-30:Every code sample in the docs now points at a real, loadable 3D model</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
-			<description>Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names.</description>
+			<description>Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names. The agent card other agents read to discover our 3D skills got the same fix, with each example naming a model that actually produces the result it advertises, including one that genuinely returns compression suggestions.</description>
 		</item>
 		<item>
 			<title>Money Pulse volume restored: shared treasury wallets now refill against their strictest floor</title>
@@ -63,12 +63,28 @@
 			<description>Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.</description>
 		</item>
 		<item>
+			<title>The README is reorganized around what you came to do</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The README is reorganized around what you came to do</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Our README had grown to cover almost a hundred topics, but in an order that made it hard to use: anyone who came to build had to scroll past the long-term vision, the roadmap, and our marketplace and partner listings before reaching install instructions. It now follows the order a reader actually needs. What three.ws is, what it looks like, then how to run it, then the architecture, the individual systems, the developer platform, and the on-chain and payment rails, with the vision and roadmap sitting together further down next to the phased projects they describe. Nothing was removed or reworded, only moved. The table of contents also had an entry for the in-game economy that pointed nowhere, because the section had been dropped from the file a while back; that documentation is written again and now covers the cash purse, the general store, the bank, the $THREE cosmetics boutique, and the wheel of fortune.</description>
+		</item>
+		<item>
 			<title>The treasury self-repair now reports when it cannot repair</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:The treasury self-repair now reports when it cannot repair</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The platform keeps its automated payments funded by pulling idle funds back from its own agent wallets. When that repair could not run, it said nothing at all: no log line, no alert. A recent stall lasted about eleven hours for exactly that reason, with funds available the whole time and no way to see the repair was blocked. It now raises an alert, and distinguishes the two cases that look identical but need opposite responses: the network providers were unreachable (free to fix, nothing to fund), or every source really is empty (the only case that needs a top-up).</description>
+		</item>
+		<item>
+			<title>Your wallet history page loads again instead of erroring</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:Your wallet history page loads again instead of erroring</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The master wallet is the single account that funds your agents, pays for services, and buys skills. Three of its screens (the transaction history, the send form, and agent funding) read that wallet's record from a table that only the create-wallet step knew how to set up, and that step had never run in production. So instead of telling you there was no wallet yet, those screens returned a server error. The table is now created properly as part of our database setup rather than as a side effect of one request, so the history page shows an empty list, and sending and funding tell you plainly that no wallet exists yet, which is what they were always meant to do. The wallet record is also now tied to your account the same way your agent wallets are, so the two behave identically.</description>
 		</item>
 		<item>
 			<title>Generation Watch</title>

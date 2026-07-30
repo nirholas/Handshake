@@ -6,7 +6,9 @@
 // for all platform activity: funding agents, x402 micropayments, skill purchases,
 // tips. One wallet per user, lazy-provisioned on first request.
 //
-// Storage: master_wallets table (bootstrapped inline if absent).
+// Storage: master_wallets table. Its canonical definition is the migration
+// api/_lib/migrations/20260730040000_master_wallets.sql; the inline bootstrap
+// below is only a net for environments whose migrations lag.
 // Encryption: same AES-256-GCM scheme as agent wallets (WALLET_ENCRYPTION_KEY).
 
 import { getSessionUser } from '../../_lib/auth.js';
@@ -21,13 +23,19 @@ import { recordEvent } from '../../_lib/usage.js';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
+// Safety net only, and it must stay shape-identical to the migration named above.
+// The earlier version of this bootstrap omitted the foreign key, so whichever of
+// the two ran first decided the table's constraints; the migration now converges
+// any table this path created. Three sibling handlers (history.js, send.js,
+// fund-agent.js) read master_wallets without calling this, so the migration, not
+// this function, is what guarantees the table exists.
 let _tableReady = false;
 async function ensureTable() {
 	if (_tableReady) return;
 	await sql`
 		CREATE TABLE IF NOT EXISTS master_wallets (
 			id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-			user_id       uuid        UNIQUE NOT NULL,
+			user_id       uuid        NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
 			solana_address text,
 			encrypted_solana_secret text,
 			evm_address   text,
