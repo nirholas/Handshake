@@ -37,6 +37,12 @@ URL: https://three.ws/animations
 
 Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.
 
+### Agent Gestures
+
+URL: https://three.ws/gestures
+
+The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.
+
 ### Character Library
 
 URL: https://three.ws/character-library
@@ -592,6 +598,12 @@ Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microso
 URL: https://three.ws/avatar-sdk
 
 The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
+
+### Avatar CLI
+
+URL: https://three.ws/avatar-cli
+
+The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.
 
 ## Labs
 
@@ -1468,6 +1480,12 @@ One custodial wallet for your account, separate from your agents'. Hold SOL and 
 URL: https://three.ws/trading
 
 The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.
+
+### The in-game economy
+
+URL: https://three.ws/play/economy
+
+Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.
 
 ## Agent Tools
 
@@ -2429,11 +2447,41 @@ URL: https://three.ws/docs/nvidia-nemotron-spotlight
 
 The three.ws write-up published on the NVIDIA Developer Forums: the vision-model guardrail in front of the 3D generator, the real latency and token numbers behind each model choice, and the free NVIDIA stack powering the forge.
 
-### Cookbook: self-correcting 3D with function calling
+### Cookbook: runnable recipes for the 3D API
 
 URL: https://three.ws/cookbook
 
-An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.
+Recipes you can run, not walkthroughs. A text-to-3D command line tool, a parallel asset-pack builder, an MCP server that gives your AI assistant a 3D tool, a CI quality gate, and a self-correcting generation loop. Every recipe ships a file that was executed against the live API.
+
+### Recipe: a self-correcting 3D collectible set
+
+URL: https://three.ws/cookbook/self-correcting-3d
+
+An AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, renders each result, inspects it with vision, grades it against the brief with structured outputs, and rebuilds whatever missed. Read it with interactive galleries, or download the notebook and run it.
+
+### Recipe: text to 3D from the command line
+
+URL: https://three.ws/cookbook/text-to-3d-cli
+
+A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.
+
+### Recipe: build a whole asset pack in parallel
+
+URL: https://three.ws/cookbook/parallel-asset-pack
+
+Fan a list of prompts across the free 3D lane at a sane concurrency, download every model, render a still of each, and emit a manifest plus a browsable gallery. Partial failure degrades instead of aborting the run.
+
+### Recipe: give your AI assistant a 3D tool
+
+URL: https://three.ws/cookbook/mcp-3d-tool
+
+A Model Context Protocol server that exposes text-to-3D generation and model rendering as tools, so Claude Code, Claude Desktop, or Cursor can build and then actually look at 3D models mid-conversation.
+
+### Recipe: gate 3D assets in CI
+
+URL: https://three.ws/cookbook/asset-quality-gate
+
+Generated geometry fails quietly. This gate inspects every model against an explicit triangle, size, and material budget and exits non-zero, so a bad asset fails the build instead of the launch.
 
 ### Docs: Payment Sessions
 
@@ -3255,7 +3303,7 @@ See any three.ws model in augmented reality and walk around it in your kitchen: 
 
 URL: https://three.ws/tutorials/import-avatar-url
 
-Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.
+Bring any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.
 
 ### Tutorial · Add the Walk Companion to your site
 
@@ -3431,6 +3479,12 @@ URL: https://three.ws/tutorials/mine-vanity-address
 
 Grind a custom-prefix Solana address in the browser, then prove how it was made with the proof-of-grind receipt, gallery, and bounty market.
 
+### Docs: Avatar CLI
+
+URL: https://three.ws/docs/avatar-cli
+
+Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, with every flag, exit code, and JSON shape, plus the two checks that gate a release on your avatar manifest.
+
 ### Tutorial · Ship an avatar manifest
 
 URL: https://three.ws/tutorials/ship-an-avatar-manifest
@@ -3466,6 +3520,12 @@ Run the full economic loop in the open world: gather raw materials, sell them to
 URL: https://three.ws/docs/showcase
 
 The public directory of ERC-8004 agents that registered a real 3D avatar. Nothing is curated: an agent appears because the crawler verified its on-chain metadata resolves to a usable model. Covers the qualifying rules and the keyset-paginated API.
+
+### Docs · Tutorial: earn and spend in /play
+
+URL: https://three.ws/docs/tutorials/earn-and-spend-in-play
+
+Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.
 
 ## Blog
 

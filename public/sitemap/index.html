@@ -79,7 +79,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 730 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 740 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -91,7 +91,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 730 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 740 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -100,11 +100,27 @@
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
 			<ul class="sm-list">
 				<li>
+					<a href="/gestures">
+						<span class="sm-new-date">Jul 30, 2026</span>
+						<span class="sm-title">Agent Gestures</span>
+						<span class="sm-path">/gestures</span>
+						<span class="sm-desc">The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/nvidia">
 						<span class="sm-new-date">Jul 30, 2026</span>
 						<span class="sm-title">three.ws on NVIDIA</span>
 						<span class="sm-path">/nvidia</span>
 						<span class="sm-desc">three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/avatar-cli">
+						<span class="sm-new-date">Jul 30, 2026</span>
+						<span class="sm-title">Avatar CLI</span>
+						<span class="sm-path">/avatar-cli</span>
+						<span class="sm-desc">The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.</span>
 					</a>
 				</li>
 				<li>
@@ -121,6 +137,14 @@
 						<span class="sm-title">Autonomous Trading</span>
 						<span class="sm-path">/trading</span>
 						<span class="sm-desc">The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/play/economy">
+						<span class="sm-new-date">Jul 30, 2026</span>
+						<span class="sm-title">The in-game economy</span>
+						<span class="sm-path">/play/economy</span>
+						<span class="sm-desc">Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.</span>
 					</a>
 				</li>
 				<li>
@@ -147,30 +171,6 @@
 						<span class="sm-desc">The front door to the autonomous trading system: live fleet vitals read off the running bots, the strategy arena and experiments board, and the smart-money radar, with the twenty pages behind them organised into one path.</span>
 					</a>
 				</li>
-				<li>
-					<a href="/docs/world">
-						<span class="sm-new-date">Jul 30, 2026</span>
-						<span class="sm-title">Docs World (immersive 3D docs)</span>
-						<span class="sm-path">/docs/world</span>
-						<span class="sm-desc">The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/economy-health-dashboard">
-						<span class="sm-new-date">Jul 30, 2026</span>
-						<span class="sm-title">Docs · Economy Health Dashboard</span>
-						<span class="sm-path">/docs/economy-health-dashboard</span>
-						<span class="sm-desc">The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/examples">
-						<span class="sm-new-date">Jul 30, 2026</span>
-						<span class="sm-title">Examples</span>
-						<span class="sm-path">/examples</span>
-						<span class="sm-desc">Runnable three.ws examples: copy-paste snippets that execute on the page against the production CDN bundle, plus every example that ships in the repository, generated by scanning it. Each one lists the files it contains and the command that runs it.</span>
-					</a>
-				</li>
 			</ul>
 		</section>
 		<nav class="sm-toc" aria-label="Sections">
@@ -188,7 +188,7 @@
 		</nav>
 		<section class="sm-section" id="main">
 			<header>
-				<h2>Main<span class="sm-count" data-count>43</span></h2>
+				<h2>Main<span class="sm-count" data-count>44</span></h2>
 				<p class="sm-section-desc">Entry points into the product.</p>
 			</header>
 			<ul class="sm-list">
@@ -218,6 +218,13 @@
 						<span class="sm-title">Animation Gallery</span>
 						<span class="sm-path">/animations</span>
 						<span class="sm-desc">Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/gestures">
+						<span class="sm-title">Agent Gestures</span>
+						<span class="sm-path">/gestures</span>
+						<span class="sm-desc">The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.</span>
 					</a>
 				</li>
 				<li>
@@ -498,7 +505,7 @@
 
 		<section class="sm-section" id="build">
 			<header>
-				<h2>Build<span class="sm-count" data-count>52</span></h2>
+				<h2>Build<span class="sm-count" data-count>53</span></h2>
 				<p class="sm-section-desc">Create and customize an agent.</p>
 			</header>
 			<ul class="sm-list">
@@ -866,6 +873,13 @@
 						<span class="sm-desc">The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.</span>
 					</a>
 				</li>
+				<li>
+					<a href="/avatar-cli">
+						<span class="sm-title">Avatar CLI</span>
+						<span class="sm-path">/avatar-cli</span>
+						<span class="sm-desc">The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.</span>
+					</a>
+				</li>
 			</ul>
 		</section>
 
@@ -1006,7 +1020,7 @@
 
 		<section class="sm-section" id="crypto">
 			<header>
-				<h2>Crypto<span class="sm-count" data-count>126</span></h2>
+				<h2>Crypto<span class="sm-count" data-count>127</span></h2>
 				<p class="sm-section-desc">On-chain features: pay-per-call, token launches, vanity wallets.</p>
 			</header>
 			<ul class="sm-list">
@@ -1892,6 +1906,13 @@
 						<span class="sm-desc">The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.</span>
 					</a>
 				</li>
+				<li>
+					<a href="/play/economy">
+						<span class="sm-title">The in-game economy</span>
+						<span class="sm-path">/play/economy</span>
+						<span class="sm-desc">Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.</span>
+					</a>
+				</li>
 			</ul>
 		</section>
 
@@ -2048,7 +2069,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>309</span></h2>
+				<h2>Learn<span class="sm-count" data-count>316</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -3006,9 +3027,44 @@
 				</li>
 				<li>
 					<a href="/cookbook">
-						<span class="sm-title">Cookbook: self-correcting 3D with function calling</span>
+						<span class="sm-title">Cookbook: runnable recipes for the 3D API</span>
 						<span class="sm-path">/cookbook</span>
-						<span class="sm-desc">An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.</span>
+						<span class="sm-desc">Recipes you can run, not walkthroughs. A text-to-3D command line tool, a parallel asset-pack builder, an MCP server that gives your AI assistant a 3D tool, a CI quality gate, and a self-correcting generation loop. Every recipe ships a file that was executed against the live API.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cookbook/self-correcting-3d">
+						<span class="sm-title">Recipe: a self-correcting 3D collectible set</span>
+						<span class="sm-path">/cookbook/self-correcting-3d</span>
+						<span class="sm-desc">An AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, renders each result, inspects it with vision, grades it against the brief with structured outputs, and rebuilds whatever missed. Read it with interactive galleries, or download the notebook and run it.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cookbook/text-to-3d-cli">
+						<span class="sm-title">Recipe: text to 3D from the command line</span>
+						<span class="sm-path">/cookbook/text-to-3d-cli</span>
+						<span class="sm-desc">A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cookbook/parallel-asset-pack">
+						<span class="sm-title">Recipe: build a whole asset pack in parallel</span>
+						<span class="sm-path">/cookbook/parallel-asset-pack</span>
+						<span class="sm-desc">Fan a list of prompts across the free 3D lane at a sane concurrency, download every model, render a still of each, and emit a manifest plus a browsable gallery. Partial failure degrades instead of aborting the run.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cookbook/mcp-3d-tool">
+						<span class="sm-title">Recipe: give your AI assistant a 3D tool</span>
+						<span class="sm-path">/cookbook/mcp-3d-tool</span>
+						<span class="sm-desc">A Model Context Protocol server that exposes text-to-3D generation and model rendering as tools, so Claude Code, Claude Desktop, or Cursor can build and then actually look at 3D models mid-conversation.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cookbook/asset-quality-gate">
+						<span class="sm-title">Recipe: gate 3D assets in CI</span>
+						<span class="sm-path">/cookbook/asset-quality-gate</span>
+						<span class="sm-desc">Generated geometry fails quietly. This gate inspects every model against an explicit triangle, size, and material budget and exits non-zero, so a bad asset fails the build instead of the launch.</span>
 					</a>
 				</li>
 				<li>
@@ -3967,7 +4023,7 @@
 					<a href="/tutorials/import-avatar-url">
 						<span class="sm-title">Tutorial · Import an avatar by URL</span>
 						<span class="sm-path">/tutorials/import-avatar-url</span>
-						<span class="sm-desc">Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.</span>
+						<span class="sm-desc">Bring any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.</span>
 					</a>
 				</li>
 				<li>
@@ -4174,6 +4230,13 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/avatar-cli">
+						<span class="sm-title">Docs: Avatar CLI</span>
+						<span class="sm-path">/docs/avatar-cli</span>
+						<span class="sm-desc">Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, with every flag, exit code, and JSON shape, plus the two checks that gate a release on your avatar manifest.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/tutorials/ship-an-avatar-manifest">
 						<span class="sm-title">Tutorial · Ship an avatar manifest</span>
 						<span class="sm-path">/tutorials/ship-an-avatar-manifest</span>
@@ -4213,6 +4276,13 @@
 						<span class="sm-title">Docs: The showcase</span>
 						<span class="sm-path">/docs/showcase</span>
 						<span class="sm-desc">The public directory of ERC-8004 agents that registered a real 3D avatar. Nothing is curated: an agent appears because the crawler verified its on-chain metadata resolves to a usable model. Covers the qualifying rules and the keyset-paginated API.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/tutorials/earn-and-spend-in-play">
+						<span class="sm-title">Docs · Tutorial: earn and spend in /play</span>
+						<span class="sm-path">/docs/tutorials/earn-and-spend-in-play</span>
+						<span class="sm-desc">Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.</span>
 					</a>
 				</li>
 			</ul>
