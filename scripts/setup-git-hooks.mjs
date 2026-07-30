@@ -79,6 +79,40 @@ try {
 hooksDir = path.resolve(root, hooksDir);
 const hookPath = path.join(hooksDir, 'pre-push');
 
+// Ensure the remote CLAUDE.md tells agents to push to actually exists.
+//
+// A clone names its remote `origin`, but CLAUDE.md's push instruction is
+// `git push threews main`, so on a fresh clone that command fails at exactly the
+// moment the owner asked to ship (observed in this worktree on 2026-07-30). Git
+// remotes are local config and cannot be committed, so the only way to make the
+// documented command true everywhere is to re-derive it here on every install.
+//
+// Deliberately narrow: it adds ONLY the push target named in the doc, only when
+// that name is absent, and only at the URL the doc records. It never edits or
+// removes an existing remote, and it can never create the retired mirror, which
+// CLAUDE.md forbids fetching from. Runs before the hook logic below because that
+// path exits early once the hook is current.
+function ensureDocumentedRemote() {
+	const docPath = path.join(root, 'CLAUDE.md');
+	if (!existsSync(docPath)) return;
+	const doc = readFileSync(docPath, 'utf8');
+	const target = doc.match(/git push ([A-Za-z0-9_-]+) main/)?.[1];
+	if (!target) return;
+	const url = doc.match(new RegExp(`^-\\s+\`${target}\`\\s*(?:→|->)\\s*\`(https?://[^\`]+)\``, 'm'))?.[1];
+	if (!url) return;
+	const existingRemotes = execFileSync('git', ['remote'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+	if (existingRemotes.includes(target)) return;
+	execFileSync('git', ['remote', 'add', target, url], { cwd: root, stdio: ['ignore', 'ignore', 'pipe'] });
+	console.log(`[setup-git-hooks] added the \`${target}\` remote (${url}) that CLAUDE.md documents as the push target`);
+}
+
+try {
+	ensureDocumentedRemote();
+} catch (err) {
+	// Never fail an install over this; the hook is the load-bearing half.
+	console.error(`[setup-git-hooks] could not verify the documented git remote: ${err.message}`);
+}
+
 const existing = existsSync(hookPath) ? readFileSync(hookPath, 'utf8') : '';
 if (existing.includes(MARKER)) {
 	if (existing === HOOK) process.exit(0); // current version already installed

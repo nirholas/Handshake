@@ -197,6 +197,86 @@ describe('setup-git-hooks (installer)', () => {
 	});
 });
 
+describe('setup-git-hooks (documented remote)', () => {
+	// Git remotes are local config and cannot be committed, so a fresh clone has
+	// only `origin` while CLAUDE.md's instruction is `git push threews main`. That
+	// command failed in this worktree on 2026-07-30. The installer re-derives the
+	// documented target so the instruction is true on every machine, which also
+	// keeps check:claude from red-flagging an innocent clone.
+	const REMOTE_DOC = [
+		'### Remotes',
+		'',
+		'- `threews` -> `https://github.com/nirholas/three.ws`',
+		'- `threeD` -> `https://github.com/nirholas/3D-Agent`',
+		'',
+		'When the user asks you to push: `git push threews main`.',
+		'',
+	].join('\n');
+
+	/** A repo with a CLAUDE.md remote table and only an `origin` remote, like a clone. */
+	function cloneLikeRepo(name, doc = REMOTE_DOC) {
+		const dir = join(sandbox, name);
+		mkdirSync(dir, { recursive: true });
+		git(dir, ['init', '-q']);
+		stageScripts(dir);
+		writeFileSync(join(dir, 'CLAUDE.md'), doc);
+		git(dir, ['remote', 'add', 'origin', 'https://github.com/nirholas/three.ws']);
+		return dir;
+	}
+
+	const remotesOf = (dir) => git(dir, ['remote']).split('\n').filter(Boolean);
+
+	it('adds the push target a clone does not have', () => {
+		const dir = cloneLikeRepo('clone-like');
+		const { code, out } = install(dir);
+		expect(code).toBe(0);
+		expect(out).toContain('added the `threews` remote');
+		expect(remotesOf(dir)).toContain('threews');
+		expect(git(dir, ['remote', 'get-url', 'threews']).trim()).toBe('https://github.com/nirholas/three.ws');
+	});
+
+	it('never creates the retired mirror, which the doc forbids fetching from', () => {
+		const dir = cloneLikeRepo('no-mirror');
+		install(dir);
+		// `threeD` is in the documented table but is not the push target, so it must
+		// not be created. Fetching from it has corrupted this repo's history before.
+		expect(remotesOf(dir)).not.toContain('threeD');
+	});
+
+	it('leaves an existing remote of that name untouched', () => {
+		const dir = cloneLikeRepo('existing-remote');
+		git(dir, ['remote', 'add', 'threews', 'https://github.com/someone/fork']);
+		install(dir);
+		// Repointing somebody's remote is how a push ends up at the wrong repo.
+		// Surfacing the mismatch is check:claude's job, not this script's.
+		expect(git(dir, ['remote', 'get-url', 'threews']).trim()).toBe('https://github.com/someone/fork');
+	});
+
+	it('is idempotent across installs', () => {
+		const dir = cloneLikeRepo('remote-idempotent');
+		install(dir);
+		const { out } = install(dir);
+		expect(out).not.toContain('added the');
+		expect(remotesOf(dir).filter((r) => r === 'threews')).toHaveLength(1);
+	});
+
+	it('does nothing when the doc names no push target', () => {
+		const dir = cloneLikeRepo('no-target', '# No remote table and no push instruction here.\n');
+		const { code } = install(dir);
+		expect(code).toBe(0);
+		expect(remotesOf(dir)).toEqual(['origin']);
+	});
+
+	it('still installs the hook when the remote is already correct', () => {
+		// The hook is the load-bearing half; remote setup must never short-circuit it.
+		const dir = cloneLikeRepo('hook-still-installed');
+		git(dir, ['remote', 'add', 'threews', 'https://github.com/nirholas/three.ws']);
+		const { code } = install(dir);
+		expect(code).toBe(0);
+		expect(existsSync(join(dir, '.git', 'hooks', 'pre-push'))).toBe(true);
+	});
+});
+
 describe('pre-push hook (behavior)', () => {
 	let baseSha;
 	let cleanSha;

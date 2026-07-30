@@ -245,6 +245,8 @@ Rules:
 - `threews` → `https://github.com/nirholas/three.ws` (canonical source of truth, the ONLY push and pull/fetch target)
 - `threeD` → `https://github.com/nirholas/3D-Agent` (retired mirror; its `main` has diverged with foreign history)
 
+Git remotes are local config and cannot be committed, so a fresh clone only has `origin`: `postinstall` adds the `threews` remote automatically when it is missing (`scripts/setup-git-hooks.mjs`), and `npm run check:claude` fails if the documented push target does not resolve. Neither ever creates `threeD`.
+
 When the user asks you to push (or to commit + push): `git push threews main`. Owner decision 2026-07-07: work happens on three.ws only; the 3D-Agent mirror is no longer kept in sync. Never force-push without an explicit request.
 
 **NEVER run `git pull`, `git fetch`, or `git merge` from `threeD`, and never push to it.** Pulling from `threeD` merges foreign history into this repo and has caused destructive README overwrites. Do not do it under any circumstances, even to resolve conflicts or sync state.
