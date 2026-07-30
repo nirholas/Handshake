@@ -2650,7 +2650,11 @@
 			.compare-modal {
 				position: fixed;
 				inset: 0;
-				z-index: 90;
+				/* Above the page's own chrome (the 1000-level starter toast and
+				   onboarding cards) and level with the shared full-screen modals
+				   in src/shared/*, which is the repo's convention for a dialog
+				   that owns the screen. */
+				z-index: 10000;
 				background: rgba(0, 0, 0, 0.72);
 				backdrop-filter: blur(6px);
 				display: grid;
