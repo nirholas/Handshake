@@ -76,6 +76,66 @@ export function isRailFault(reason) {
 	return RAIL_STATUS.test(r) || RAIL_SIGNATURE.test(r);
 }
 
+// The ring reports `no_solana_accept` when a 402 challenge carried no Solana
+// accept it could pay. On OUR OWN endpoints that is never the ring's choice: it
+// means buildRequirements() dropped the Solana accept, and the reason it drops
+// one in production is sponsorKnownBelowFloor() (api/_lib/x402-paid-endpoint.js).
+const NO_SOLANA_ACCEPT = 'no_solana_accept';
+// The sponsor-floor refusal, as the ring records it. x402-spec.js answers 503
+// `settlement_unavailable` for a fee wallet under its floor, so the reason token
+// arrives either as the 503 prose or as the raw floor signature.
+const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_floor|sponsor_sol_floor|sol_floor)/i;
+
+/**
+ * Why did the settle rate fall? Two failure shapes are indistinguishable in the
+ * rate alone and have opposite fixes, and the generic hint sent operators at the
+ * wrong one for a full shift on 2026-07-29:
+ *
+ *   FAULTS ROSE      the denominator grew; settles are being attempted and
+ *                    rejected. Look at the facilitator.
+ *   NUMERATOR FELL   rail faults stayed flat while settlements stopped
+ *                    happening, because the Solana accept was withdrawn from
+ *                    every challenge and the (Solana-only) ring had nothing it
+ *                    could pay. Look at the sponsor's SOL balance. On 07-29 this
+ *                    read as "settle 22%" while faults sat at their normal
+ *                    ~100/h and `no_solana_accept` went 0 to 374/h.
+ *
+ * Solana is the home chain, so a withdrawn Solana accept is a platform outage,
+ * not the benign "ring chose not to pay" the rate deliberately excludes.
+ * @param {{ noSolanaAccept: number, floorSignals: number, settled: number, faults: number }} s
+ * @returns {{ cause: 'sponsor_floor'|'rail', hint: string }}
+ */
+export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, settled, faults }) {
+	// A floor refusal is proof on its own. Absent that, treat the home chain going
+	// unpayable more often than it settles as the same cause: the accept is
+	// withdrawn for most of the window, which is what a flapping floor looks like
+	// through a cache-backed, fail-open check.
+	if (floorSignals > 0 || (noSolanaAccept > 0 && noSolanaAccept > settled)) {
+		return {
+			cause: /** @type {const} */ ('sponsor_floor'),
+			hint:
+				'The Solana accept is being WITHDRAWN, not rejected: ' +
+				`${noSolanaAccept} no_solana_accept + ${floorSignals} floor refusal(s) against ${faults} rail faults. ` +
+				'sponsorKnownBelowFloor() drops Solana from every 402 challenge while the sponsor sits under ' +
+				'X402_SPONSOR_SOL_FLOOR_LAMPORTS, so the ring has nothing payable and settlements stop. ' +
+				'Do NOT start at the facilitator. Check the sponsor balance, then let the free self-heal run: ' +
+				'POST /api/cron/treasury-topup?dry=1 (Bearer CRON_SECRET) to see the plan, then without ?dry=1 ' +
+				'to apply. Owner SOL is needed only when every reclaim source reports at_or_below_floor. ' +
+				'See docs/ops/production-log-triage.md.',
+		};
+	}
+	return {
+		cause: /** @type {const} */ ('rail'),
+		hint:
+			'Payments are being rejected at settle. Check the self-facilitator: ' +
+			'`npm run logs -- -s three-ws-api --grep "settle_failed" --since 3h`. ' +
+			'A 502 cluster with empty simulation logs is a duplicate-signature or ' +
+			'RPC-preflight fault; a 402 cluster is verify/facilitator rejection. A 503 ' +
+			'cluster is not a rail fault at all, it is the sponsor floor (checked above). ' +
+			'See docs/ops/production-log-triage.md.',
+	};
+}
+
 /**
  * Classify pre-aggregated settle buckets into a subsystem verdict. Pure — no DB,
  * no clock — so the thresholds and the rail-fault split are unit-testable
@@ -89,6 +149,12 @@ export function isRailFault(reason) {
 export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = {}) {
 	let settled = 0;
 	let faults = 0;
+	// Counted but deliberately kept OUT of the rate: these two explain a collapse
+	// the rate can only report. Folding them into `faults` would change what the
+	// percentage means (and peg it red on a benign quiet ring); dropping them
+	// entirely is what made the 07-29 numerator collapse unreadable.
+	let noSolanaAccept = 0;
+	let floorSignals = 0;
 	/** @type {Record<string, number>} */
 	const faultBy = {};
 	for (const b of Array.isArray(buckets) ? buckets : []) {
@@ -96,7 +162,12 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 		if (n <= 0) continue;
 		if (b.success && b.paid) {
 			settled += n;
-		} else if (!b.success && isRailFault(b.reason)) {
+			continue;
+		}
+		if (b.success) continue;
+		if (b.reason === NO_SOLANA_ACCEPT) noSolanaAccept += n;
+		if (SPONSOR_FLOOR.test(String(b.reason || ''))) floorSignals += n;
+		if (isRailFault(b.reason)) {
 			faults += n;
 			faultBy[b.reason] = (faultBy[b.reason] || 0) + n;
 		}
@@ -126,16 +197,21 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 		return { status: 'ok', settled, faults, attempts, rate, faultClasses, detail: base };
 	}
 	const status = rate < DOWN_RATE ? 'down' : 'degraded';
+	const { cause, hint } = diagnoseSettleDrop({ noSolanaAccept, floorSignals, settled, faults });
+	// Name the withdrawal in `detail` too: the hint is one field deep in the JSON,
+	// but `detail` is what the dashboard row, the digest and /api/status all print.
+	const withdrawn =
+		cause === 'sponsor_floor'
+			? `; Solana accept withdrawn (${noSolanaAccept} no_solana_accept, sponsor under SOL floor)`
+			: '';
 	return {
 		status,
 		settled, faults, attempts, rate, faultClasses,
-		detail: `${base}; ${faults} rail faults${topFaults ? ` (${topFaults})` : ''}`,
-		hint:
-			'Payments are being rejected at settle. Check the self-facilitator: ' +
-			'`npm run logs -- -s three-ws-api --grep "settle_failed" --since 3h`. ' +
-			'A 5xx/502 cluster with empty simulation logs is a duplicate-signature or ' +
-			'RPC-preflight fault; a 402 cluster is verify/facilitator rejection. See ' +
-			'docs/ops/production-log-triage.md.',
+		cause,
+		noSolanaAccept,
+		floorSignals,
+		detail: `${base}; ${faults} rail faults${topFaults ? ` (${topFaults})` : ''}${withdrawn}`,
+		hint,
 	};
 }
 
@@ -176,6 +252,11 @@ export async function gatherX402SettleHealth() {
 				attempts: v.attempts,
 				rate: v.rate == null ? null : Math.round(v.rate * 1000) / 1000,
 				topFaults: v.faultClasses.slice(0, 5),
+				// The collapse-vs-rejection split. `cause` is what an operator should
+				// read first; noSolanaAccept is the volume the rate cannot show.
+				...(v.cause ? { cause: v.cause } : {}),
+				noSolanaAccept: v.noSolanaAccept ?? 0,
+				floorSignals: v.floorSignals ?? 0,
 			},
 		};
 	} catch (err) {

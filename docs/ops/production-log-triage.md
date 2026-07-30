@@ -168,6 +168,23 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
 - **Symptom map:** `502` = fee wallet below its SOL floor or settle broadcast
   failed; `503` = the payer's self-pay refused or a data_unavailable refund;
   `402` from a ring agent = its buyer wallet is out of USDC.
+- **The quiet variant: no storm at all, just a settle-rate collapse
+  (`no_solana_accept`).** Observed 2026-07-29 16:00 UTC. The sponsor drifts
+  under its floor and
+  [buildRequirements()](../../api/_lib/x402-paid-endpoint.js) WITHDRAWS the
+  Solana accept from every 402 challenge (`sponsorKnownBelowFloor()`), so the
+  ring, which is Solana-only, never gets to attempt a payment. There is no 5xx
+  storm to grep, because nothing is being rejected. The fingerprint is:
+  settlements collapse (that hour: 735/h to 13/h) while rail faults stay at
+  their normal level (~100/h all day), and `no_solana_accept` in
+  `x402_autonomous_log` goes from exactly 0 to 300-400/h. Confirm the mechanism
+  from outside the box, no logs needed:
+  `curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'`.
+  Only `eip155:8453` back, no `solana:mainnet`, means the accept is withdrawn.
+  Fix is the same free self-heal as cause 1 above (`treasury-topup`). Since
+  2026-07-30 healthz reports this itself: `x402_settle.metrics.cause` is
+  `sponsor_floor` (vs `rail`) and `detail` names the withdrawal, so the sensor
+  no longer points at the facilitator for a funding problem.
 - **Not a code bug.** The economy-rebalance keypair crash (assigned
   `loadSignerKeypair`'s wrapper to `keypair`, read `.publicKey` of undefined)
   is fixed and live in commit `bb02839f9`. When

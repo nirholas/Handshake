@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Payment health now names the real cause when settlements stall</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:Payment health now names the real cause when settlements stall</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The platform watches how many of its automated payments actually settle. When that number fell, the alert always said the same thing: payments are being rejected. That was misleading in the most common case, where nothing is rejected at all. The platform simply stops offering Solana as a payment option while its sponsor wallet is topped up, so its own agents have nothing they can pay. The health report now tells these two situations apart by name, counts how often the Solana option was unavailable, and points at the one-command self-repair instead of sending whoever is on call to the wrong system.</description>
+		</item>
+		<item>
 			<title>Generation Watch</title>
 			<link>https://three.ws/watch</link>
 			<guid isPermaLink="false">2026-07-29:Generation Watch</guid>

@@ -122,6 +122,79 @@ describe('classifySettleBuckets — verdict from real bucket shapes', () => {
 		expect(classifySettleBuckets(undefined).status).toBe('unknown');
 	});
 
+	// The 2026-07-29 outage. Rail faults sat at their normal level all day while
+	// settlements fell 750/h → 25/h, because the sponsor dropped under its SOL
+	// floor and buildRequirements() withdrew the Solana accept from every
+	// challenge. The rate alone reads identically to a facilitator rejection, and
+	// the old hint sent an operator to the facilitator, where the 503s look flat
+	// and nothing explains the drop.
+	const acceptWithdrawnBuckets = [
+		{ success: true, paid: true, reason: 'none', n: 87 },
+		{ success: false, paid: false, reason: 'http_503', n: 154 },
+		{ success: false, paid: false, reason: 'http_402', n: 133 },
+		{ success: false, paid: false, reason: 'rpc_error', n: 12 },
+		{ success: false, paid: false, reason: 'This operation was aborted', n: 8 },
+		// The mechanism, which the rate deliberately does not count:
+		{ success: false, paid: false, reason: 'no_solana_accept', n: 1059 },
+		{ success: false, paid: false, reason: 'settlement temporarily unavailable', n: 26 },
+		// Excluded noise, same as any window:
+		{ success: false, paid: false, reason: 'datapoint_sweep_calls_failed', n: 24 },
+		{ success: false, paid: false, reason: 'cap_would_exceed', n: 8 },
+	];
+
+	it('blames the sponsor floor, not the facilitator, when the Solana accept is withdrawn', () => {
+		const v = classifySettleBuckets(acceptWithdrawnBuckets);
+		expect(v.status).toBe('down');
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.noSolanaAccept).toBe(1059);
+		expect(v.floorSignals).toBe(26);
+		// The rate itself is unchanged: no_solana_accept and the 503-prose floor
+		// refusals must not become rail faults, or the percentage stops meaning
+		// "of the settles we attempted, how many landed".
+		expect(v.settled).toBe(87);
+		expect(v.faults).toBe(307);
+		expect(v.detail).toMatch(/Solana accept withdrawn \(1059 no_solana_accept/);
+		expect(v.hint).toMatch(/WITHDRAWN, not rejected/);
+		expect(v.hint).toMatch(/treasury-topup/);
+		// And it must NOT send the operator down the facilitator path.
+		expect(v.hint).not.toMatch(/Payments are being rejected at settle/);
+	});
+
+	it('still blames the rail when faults rose and Solana is payable', () => {
+		const v = classifySettleBuckets(liveOutageBuckets);
+		expect(v.cause).toBe('rail');
+		expect(v.noSolanaAccept).toBe(0);
+		expect(v.floorSignals).toBe(0);
+		expect(v.hint).toMatch(/Payments are being rejected at settle/);
+		expect(v.detail).not.toMatch(/withdrawn/i);
+	});
+
+	it('a single floor refusal is enough to name the cause, even under heavy rail noise', () => {
+		// The flapping case: sponsorKnownBelowFloor() is cache-backed and fail-open,
+		// so some settles still land and no_solana_accept can be lower than settled.
+		// One 503-prose floor refusal is still proof of what is happening.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 40 },
+			{ success: false, paid: false, reason: 'http_502', n: 60 },
+			{ success: false, paid: false, reason: 'no_solana_accept', n: 3 },
+			{ success: false, paid: false, reason: 'fee_wallet_below_floor', n: 1 },
+		]);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.floorSignals).toBe(1);
+	});
+
+	it('no_solana_accept below the settled count alone does not cry sponsor floor', () => {
+		// A handful of third-party endpoints that only advertise Base is normal and
+		// is genuinely the ring choosing not to pay. Do not hijack the diagnosis.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 60 },
+			{ success: false, paid: false, reason: 'http_502', n: 40 },
+			{ success: false, paid: false, reason: 'no_solana_accept', n: 5 },
+		]);
+		expect(v.cause).toBe('rail');
+		expect(v.noSolanaAccept).toBe(5);
+	});
+
 	it('boundary: exactly 90% is OK, just under is DEGRADED', () => {
 		const ok = classifySettleBuckets([
 			{ success: true, paid: true, reason: 'none', n: 90 },

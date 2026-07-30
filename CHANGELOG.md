@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-30
+
+- **Payment health now names the real cause when settlements stall** — The platform watches how many of its automated payments actually settle. When that number fell, the alert always said the same thing: payments are being rejected. That was misleading in the most common case, where nothing is rejected at all. The platform simply stops offering Solana as a payment option while its sponsor wallet is topped up, so its own agents have nothing they can pay. The health report now tells these two situations apart by name, counts how often the Solana option was unavailable, and points at the one-command self-repair instead of sending whoever is on call to the wrong system. `[infra, improvement]`
+
 ## 2026-07-29
 
 - **Generation Watch** (`/watch`) — Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.

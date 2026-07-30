@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-30",
+			"title": "Payment health now names the real cause when settlements stall",
+			"summary": "The platform watches how many of its automated payments actually settle. When that number fell, the alert always said the same thing: payments are being rejected. That was misleading in the most common case, where nothing is rejected at all. The platform simply stops offering Solana as a payment option while its sponsor wallet is topped up, so its own agents have nothing they can pay. The health report now tells these two situations apart by name, counts how often the Solana option was unavailable, and points at the one-command self-repair instead of sending whoever is on call to the wrong system.",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
 			"date": "2026-07-29",
 			"title": "Hardened how agent and model text is displayed across the site",
 			"summary": "Everywhere the site shows text written by an AI model or another person (agent chat replies, bounty briefs, the on-page concierge widget, saved memories, skill manifests), that text is now rendered through a single hardened pipeline that strips anything dangerous before it reaches the page. It also renders more of what you actually write: tables, nested lists, and strikethrough now display properly instead of appearing as raw symbols. Previously eight different parts of the site each interpreted this text their own way, with no shared safety net.",
