@@ -29,10 +29,12 @@
 	<meta name="twitter:site" content="@trythreews" />
 	<style>
 		:root {
-			--mc-read: #4ade80;
-			--mc-write: #fbbf24;
-			--mc-irreversible: #f87171;
-			--mc-paid: #c4b5fd;
+			/* Safety classes ride the canonical status tokens: read is a healthy
+			   state, write is a caution, irreversible is a danger. */
+			--mc-read: var(--success);
+			--mc-write: var(--warn);
+			--mc-irreversible: var(--danger);
+			--mc-paid: var(--wallet-accent);
 			--mc-maxw: 1240px;
 		}
 		:root[data-theme="light"] {
