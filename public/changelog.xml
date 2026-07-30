@@ -15,12 +15,28 @@
 			<description>The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.</description>
 		</item>
 		<item>
+			<title>Docs · Economy Health Dashboard</title>
+			<link>https://three.ws/docs/economy-health-dashboard</link>
+			<guid isPermaLink="false">2026-07-30:Docs · Economy Health Dashboard</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.</description>
+		</item>
+		<item>
 			<title>Docs · The 10 SOL trading experiment</title>
 			<link>https://three.ws/docs/trading-experiment</link>
 			<guid isPermaLink="false">2026-07-30:Docs · The 10 SOL trading experiment</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.</description>
+		</item>
+		<item>
+			<title>Docs · The in-game economy</title>
+			<link>https://three.ws/docs/in-game-economy</link>
+			<guid isPermaLink="false">2026-07-30:Docs · The in-game economy</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The complete reference for the /play open-world economy: gathering and selling materials, the cash purse and bank, tool upgrades, every vendor and gate, $THREE cosmetics that settle on Solana, and the catalog wire format for reading it from code.</description>
 		</item>
 		<item>
 			<title>Docs · The trading hub</title>
@@ -79,12 +95,28 @@
 			<description>Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.</description>
 		</item>
 		<item>
+			<title>Tutorial · Explore the docs as a 3D world</title>
+			<link>https://three.ws/tutorials/explore-docs-world</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Explore the docs as a 3D world</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Walk an avatar through the documentation: fourteen sections as glowing pavilions, live pages read in-world, shareable deep links, and your own GLB as the body.</description>
+		</item>
+		<item>
 			<title>Tutorial · Give an Agent a Spending Envelope</title>
 			<link>https://three.ws/tutorials/agent-spending-envelope</link>
 			<guid isPermaLink="false">2026-07-30:Tutorial · Give an Agent a Spending Envelope</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.</description>
+		</item>
+		<item>
+			<title>Tutorial · Monetize an MCP server: charge per tool call</title>
+			<link>https://three.ws/tutorials/monetize-mcp-server</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Monetize an MCP server: charge per tool call</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Build an MCP server whose tools charge other agents per call in USDC on Solana. One free orientation tool, one paid tool that does real work, and a test that proves the product never escapes unpaid.</description>
 		</item>
 		<item>
 			<title>Tutorial · Read the trading fleet</title>
@@ -109,6 +141,22 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.</description>
+		</item>
+		<item>
+			<title>Tutorial · Ship an avatar manifest</title>
+			<link>https://three.ws/tutorials/ship-an-avatar-manifest</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Ship an avatar manifest</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn a raw GLB into a signed-off, hash-anchored manifest: one document that names the avatar, records the exact bytes of its mesh, declares its skeleton, and fails your build if the model ever silently changes.</description>
+		</item>
+		<item>
+			<title>Tutorial · Write a repository guard</title>
+			<link>https://three.ws/tutorials/write-a-guard</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Write a repository guard</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.</description>
 		</item>
 		<item>
 			<title>Tutorial: Make Your Avatar Sign (ASL)</title>
@@ -2783,6 +2831,22 @@
 			<description>The merchant console for running a paid x402 business: products and pricing, payout and agent wallets, real USDC send and receive with .sol resolution, a storefront and pay-button builder, giving, and security.</description>
 		</item>
 		<item>
+			<title>Tutorial · Build a site concierge from the building blocks</title>
+			<link>https://three.ws/tutorials/build-a-site-concierge</link>
+			<guid isPermaLink="false">2026-07-18:Tutorial · Build a site concierge from the building blocks</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Concierge widget is assembled: the talking avatar, the streaming chat, the tool calls, and how to point the same parts at your own backend over Server-Sent Events.</description>
+		</item>
+		<item>
+			<title>Tutorial · Meter any API with the x402-server SDK</title>
+			<link>https://three.ws/tutorials/x402-server-sdk</link>
+			<guid isPermaLink="false">2026-07-18:Tutorial · Meter any API with the x402-server SDK</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn an ordinary HTTP handler into a paid one with @three-ws/x402-server. Solana-first, framework-agnostic, and runnable offline before you touch a wallet.</description>
+		</item>
+		<item>
 			<title>36 new in-depth feature guides in the docs</title>
 			<link>https://three.ws/docs/forge</link>
 			<guid isPermaLink="false">2026-07-18:36 new in-depth feature guides in the docs</guid>
@@ -5157,6 +5221,22 @@
 			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The leading cryptocurrency exchanges ranked by trust score and 24-hour trading volume, with country, launch year, and a direct link to each. Real CoinGecko data, sortable by any column.</description>
+		</item>
+		<item>
+			<title>Tutorial · Animations from data: wire your agent's gestures to real APIs and AI</title>
+			<link>https://three.ws/tutorials/emotion-from-data</link>
+			<guid isPermaLink="false">2026-07-08:Tutorial · Animations from data: wire your agent's gestures to real APIs and AI</guid>
+			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Trigger real body animations — celebrate, dance, flinch — from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.</description>
+		</item>
+		<item>
+			<title>Tutorial · Load a ready-made 3D tour for a DeFi protocol (Sperax)</title>
+			<link>https://three.ws/tutorials/sperax-tour</link>
+			<guid isPermaLink="false">2026-07-08:Tutorial · Load a ready-made 3D tour for a DeFi protocol (Sperax)</guid>
+			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The Tour Builder's first template: an 8-stop guided tour of Sperax's USDs auto-yield stablecoin, ready to load, edit, and export as a one-tag snippet in minutes.</description>
 		</item>
 		<item>
 			<title>Vault — Buy &amp; Unlock Encrypted 3D Models on BNB Chain</title>
@@ -11551,6 +11631,86 @@
 			<description>The live three.ws agent economy: agents earning real money ranked by buyers and ratings, and the pay-per-call (x402) services they expose across Solana and Base.</description>
 		</item>
 		<item>
+			<title>Tutorial · Add the Walk Companion to your site</title>
+			<link>https://three.ws/tutorials/walk-companion</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Add the Walk Companion to your site</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Drop a 3D avatar that strolls across any web page — corner mascot or full-page playground — with one script tag, the npm SDK, or a postMessage bridge.</description>
+		</item>
+		<item>
+			<title>Tutorial · Claim a .threews.sol name &amp; get paid by name</title>
+			<link>https://three.ws/tutorials/claim-threews-name</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Claim a .threews.sol name &amp; get paid by name</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Mint a *.threews.sol Solana subdomain for your agent and accept USDC payments addressed to the name instead of a raw wallet.</description>
+		</item>
+		<item>
+			<title>Tutorial · Create, enhance &amp; edit agent memory</title>
+			<link>https://three.ws/tutorials/create-and-edit-memory</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Create, enhance &amp; edit agent memory</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Teach an agent a fact that sticks between sessions — five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.</description>
+		</item>
+		<item>
+			<title>Tutorial · Discover and pay for an x402 service</title>
+			<link>https://three.ws/tutorials/pay-for-x402-service</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Discover and pay for an x402 service</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Browse the x402 Bazaar and call a paid API from your agent — the 402 challenge, the USDC payment, and the retry, end to end.</description>
+		</item>
+		<item>
+			<title>Tutorial · Getting started (hosted)</title>
+			<link>https://three.ws/tutorials/getting-started</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Getting started (hosted)</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A five-minute, no-code tour: create an agent, pick a body, give it a personality, share the URL.</description>
+		</item>
+		<item>
+			<title>Tutorial · Give your agent a voice with lipsync</title>
+			<link>https://three.ws/tutorials/voice-and-lipsync</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Give your agent a voice with lipsync</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Add real-time text-to-speech with synchronized mouth movement — pick or clone a voice, drive visemes from audio, and wire it into a live agent.</description>
+		</item>
+		<item>
+			<title>Tutorial · Import an avatar by URL</title>
+			<link>https://three.ws/tutorials/import-avatar-url</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Import an avatar by URL</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link — auto-validated, auto-rigged, ready for an agent.</description>
+		</item>
+		<item>
+			<title>Tutorial · Mine a Solana vanity address</title>
+			<link>https://three.ws/tutorials/mine-vanity-address</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Mine a Solana vanity address</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Grind a custom-prefix Solana address in the browser, then prove how it was made with the proof-of-grind receipt, gallery, and bounty market.</description>
+		</item>
+		<item>
+			<title>Tutorial · Place your agent in the real world (IRL)</title>
+			<link>https://three.ws/tutorials/place-agent-irl</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Place your agent in the real world (IRL)</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Use camera passthrough, a joystick, and tap-to-place to drop your 3D agent into your physical space — and understand how location privacy works.</description>
+		</item>
+		<item>
+			<title>Tutorial · Turn a selfie into a 3D avatar</title>
+			<link>https://three.ws/tutorials/selfie-to-avatar</link>
+			<guid isPermaLink="false">2026-06-21:Tutorial · Turn a selfie into a 3D avatar</guid>
+			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk — then put it on an agent.</description>
+		</item>
+		<item>
 			<title>Walk Anywhere on the Web</title>
 			<link>https://three.ws/walk</link>
 			<guid isPermaLink="false">2026-06-21:Walk Anywhere on the Web</guid>
@@ -15847,6 +16007,14 @@
 			<description>Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.</description>
 		</item>
 		<item>
+			<title>Tutorial · View your 3D model in AR</title>
+			<link>https://three.ws/tutorials/view-in-ar</link>
+			<guid isPermaLink="false">2026-06-13:Tutorial · View your 3D model in AR</guid>
+			<pubDate>Sat, 13 Jun 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>See any three.ws model in augmented reality and walk around it in your kitchen — straight from the browser, no app to install. iOS Quick Look and Android WebXR.</description>
+		</item>
+		<item>
 			<title>3D model categories, every model is now typed as Avatar, Accessory, Item, Scene, Creature, or Vehicle</title>
 			<link>https://three.ws/marketplace</link>
 			<guid isPermaLink="false">2026-06-13:3D model categories, every model is now typed as Avatar, Accessory, Item, Scene, Creature, or Vehicle</guid>
@@ -17655,6 +17823,142 @@
 			<description>The interactive 3D token universe gained search by name/symbol/mint and sorting by market cap, live status, replies, and age, refreshing every 60 seconds.</description>
 		</item>
 		<item>
+			<title>Tutorial · Add a greeting &amp; first speech line</title>
+			<link>https://three.ws/tutorials/greeting-and-first-speech</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Add a greeting &amp; first speech line</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Make your agent say hello the moment it loads — and have its mouth move with the words.</description>
+		</item>
+		<item>
+			<title>Tutorial · Build a paid x402 endpoint your agent calls</title>
+			<link>https://three.ws/tutorials/paid-x402-endpoint</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Build a paid x402 endpoint your agent calls</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Stand up an API that other agents pay USDC to call — using the x402 protocol on Base mainnet. Real money, real flow.</description>
+		</item>
+		<item>
+			<title>Tutorial · Connect Anthropic or OpenAI as the brain</title>
+			<link>https://three.ws/tutorials/connect-ai-brain</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Connect Anthropic or OpenAI as the brain</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Plug your own model provider into the agent loop. Bring your API key, choose your model, control cost and latency.</description>
+		</item>
+		<item>
+			<title>Tutorial · Custom skill with database + auth</title>
+			<link>https://three.ws/tutorials/skill-with-database-auth</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Custom skill with database + auth</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A real production skill — Postgres-backed CRM lookup, signed requests, per-user permissions, rate limits. Not a toy weather demo.</description>
+		</item>
+		<item>
+			<title>Tutorial · Customize size, position &amp; background</title>
+			<link>https://three.ws/tutorials/customize-appearance</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Customize size, position &amp; background</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Tune every visible knob — bubble size, corner placement, background, rotation speed — entirely through data-* attributes.</description>
+		</item>
+		<item>
+			<title>Tutorial · Deploy to Vercel with a custom domain</title>
+			<link>https://three.ws/tutorials/deploy-to-vercel-custom-domain</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Deploy to Vercel with a custom domain</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Take a forked three.ws and ship it as agent.yourcompany.com — CI, environment variables, custom domain, SSL, the lot.</description>
+		</item>
+		<item>
+			<title>Tutorial · Drive the agent with the JavaScript API</title>
+			<link>https://three.ws/tutorials/js-api-events</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Drive the agent with the JavaScript API</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Listen for the ready event, play animations on demand, make the agent speak from anywhere in your app code.</description>
+		</item>
+		<item>
+			<title>Tutorial · Embed in 30 seconds</title>
+			<link>https://three.ws/tutorials/embed-in-30-seconds</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Embed in 30 seconds</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Drop one script tag into any HTML page. Your agent loads, auto-sizes, and starts animating.</description>
+		</item>
+		<item>
+			<title>Tutorial · Expose your agent as an MCP server</title>
+			<link>https://three.ws/tutorials/mcp-server-for-your-agent</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Expose your agent as an MCP server</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Wrap your agent in the Model Context Protocol so any MCP-compatible client (Claude Desktop, Cursor, etc.) can drive it.</description>
+		</item>
+		<item>
+			<title>Tutorial · Mint an agent token on Pump.fun</title>
+			<link>https://three.ws/tutorials/mint-pumpfun-token</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Mint an agent token on Pump.fun</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a Solana token for your agent, bond it to its on-chain identity, and let people speculate on (or hold) a piece of it.</description>
+		</item>
+		<item>
+			<title>Tutorial · Multi-agent coordination</title>
+			<link>https://three.ws/tutorials/multi-agent-coordination</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Multi-agent coordination</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Two or more agents on the same page that talk to each other — turn-taking, shared memory, delegating subtasks.</description>
+		</item>
+		<item>
+			<title>Tutorial · Pick &amp; swap an avatar in Studio</title>
+			<link>https://three.ws/tutorials/swap-avatar-in-studio</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Pick &amp; swap an avatar in Studio</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Visually browse the avatar gallery, switch bodies with one click, and have the change ripple to every embed without redeploying.</description>
+		</item>
+		<item>
+			<title>Tutorial · Self-host the agent backend</title>
+			<link>https://three.ws/tutorials/self-host-agent-backend</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Self-host the agent backend</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run the full three.ws backend on your own infrastructure — workers, function endpoints, model proxies. No three.ws dependency in production.</description>
+		</item>
+		<item>
+			<title>Tutorial · Share your agent (link, QR, social preview)</title>
+			<link>https://three.ws/tutorials/share-your-agent</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Share your agent (link, QR, social preview)</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Get a permanent link to your agent, generate a QR for print, and set the Open Graph preview so it looks good in tweets.</description>
+		</item>
+		<item>
+			<title>Tutorial · Trigger the agent from page events</title>
+			<link>https://three.ws/tutorials/trigger-from-page-events</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Trigger the agent from page events</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Make your agent react to clicks, scrolls, form submits, and route changes — turn it into a real co-pilot, not a chat widget.</description>
+		</item>
+		<item>
+			<title>Tutorial · Upload a custom GLB avatar</title>
+			<link>https://three.ws/tutorials/upload-custom-glb</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Upload a custom GLB avatar</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Bring your own model — any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.</description>
+		</item>
+		<item>
+			<title>Tutorial · Use the &lt;agent-3d&gt; web component end-to-end</title>
+			<link>https://three.ws/tutorials/web-component-end-to-end</link>
+			<guid isPermaLink="false">2026-05-14:Tutorial · Use the &lt;agent-3d&gt; web component end-to-end</guid>
+			<pubDate>Thu, 14 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Skip the script tag — drop a real custom element into your DOM, bind attributes, and use the full event lifecycle.</description>
+		</item>
+		<item>
 			<title>15 tutorials and six new paid endpoints</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-05-14:15 tutorials and six new paid endpoints</guid>
@@ -18181,6 +18485,46 @@
 			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Terms of service for three.ws.</description>
+		</item>
+		<item>
+			<title>Tutorial · Build a custom skill</title>
+			<link>https://three.ws/tutorials/custom-skill</link>
+			<guid isPermaLink="false">2026-04-27:Tutorial · Build a custom skill</guid>
+			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A complete walkthrough of building a weather skill an agent can invoke — bundle format, LLM tool calling, context API.</description>
+		</item>
+		<item>
+			<title>Tutorial · Build a personal AI website</title>
+			<link>https://three.ws/tutorials/personal-ai-site</link>
+			<guid isPermaLink="false">2026-04-27:Tutorial · Build a personal AI website</guid>
+			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A 3D version of you, on your domain, ready to answer any question about your work — with a portfolio, contact form, and resume.</description>
+		</item>
+		<item>
+			<title>Tutorial · Build your first agent (from scratch)</title>
+			<link>https://three.ws/tutorials/first-agent</link>
+			<guid isPermaLink="false">2026-04-27:Tutorial · Build your first agent (from scratch)</guid>
+			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A complete walkthrough from a blank HTML file to a live, talking 3D character you wrote yourself — no framework, no build tools.</description>
+		</item>
+		<item>
+			<title>Tutorial · Embed on a website (HTML, React, Next.js)</title>
+			<link>https://three.ws/tutorials/embed-on-website</link>
+			<guid isPermaLink="false">2026-04-27:Tutorial · Embed on a website (HTML, React, Next.js)</guid>
+			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Five different ways to add an agent to your site — pick the one that matches how you build today.</description>
+		</item>
+		<item>
+			<title>Tutorial · Register your agent on-chain (ERC-8004)</title>
+			<link>https://three.ws/tutorials/register-onchain</link>
+			<guid isPermaLink="false">2026-04-27:Tutorial · Register your agent on-chain (ERC-8004)</guid>
+			<pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give your agent a permanent, verifiable identity. Publish an ERC-8004 attestation anyone can read from any chain.</description>
 		</item>
 		<item>
 			<title>3D viewer polish</title>

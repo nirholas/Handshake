@@ -2152,6 +2152,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/in-game-economy",
+					"title": "Docs · The in-game economy",
+					"description": "The complete reference for the /play open-world economy: gathering and selling materials, the cash purse and bank, tool upgrades, every vendor and gate, $THREE cosmetics that settle on Solana, and the catalog wire format for reading it from code.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/docs/trading-hub",
 					"title": "Docs · The trading hub",
 					"description": "The front door to the autonomous trading system: live fleet vitals read off the running bots, the strategy arena and experiments board, and the smart-money radar, with the twenty pages behind them organised into one path.",
@@ -2664,6 +2672,12 @@
 					"title": "Docs · Circulation Engine",
 					"description": "The autonomous agent-to-agent activity loop — a pool of real platform agents tipping, paying, trading, and launching with one another.",
 					"added": "2026-06-29"
+				},
+				{
+					"path": "/docs/economy-health-dashboard",
+					"title": "Docs · Economy Health Dashboard",
+					"description": "The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.",
+					"added": "2026-07-30"
 				},
 				{
 					"path": "/docs/money-feed",
@@ -4000,6 +4014,350 @@
 					"title": "Docs · The 10 SOL trading experiment",
 					"description": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
 					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/getting-started",
+					"title": "Tutorial · Getting started (hosted)",
+					"description": "A five-minute, no-code tour: create an agent, pick a body, give it a personality, share the URL.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/explore-docs-world",
+					"title": "Tutorial · Explore the docs as a 3D world",
+					"description": "Walk an avatar through the documentation: fourteen sections as glowing pavilions, live pages read in-world, shareable deep links, and your own GLB as the body.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/embed-in-30-seconds",
+					"title": "Tutorial · Embed in 30 seconds",
+					"description": "Drop one script tag into any HTML page. Your agent loads, auto-sizes, and starts animating.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/customize-appearance",
+					"title": "Tutorial · Customize size, position & background",
+					"description": "Tune every visible knob — bubble size, corner placement, background, rotation speed — entirely through data-* attributes.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/swap-avatar-in-studio",
+					"title": "Tutorial · Pick & swap an avatar in Studio",
+					"description": "Visually browse the avatar gallery, switch bodies with one click, and have the change ripple to every embed without redeploying.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/greeting-and-first-speech",
+					"title": "Tutorial · Add a greeting & first speech line",
+					"description": "Make your agent say hello the moment it loads — and have its mouth move with the words.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/share-your-agent",
+					"title": "Tutorial · Share your agent (link, QR, social preview)",
+					"description": "Get a permanent link to your agent, generate a QR for print, and set the Open Graph preview so it looks good in tweets.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/selfie-to-avatar",
+					"title": "Tutorial · Turn a selfie into a 3D avatar",
+					"description": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk — then put it on an agent.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/view-in-ar",
+					"title": "Tutorial · View your 3D model in AR",
+					"description": "See any three.ws model in augmented reality and walk around it in your kitchen — straight from the browser, no app to install. iOS Quick Look and Android WebXR.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-13"
+				},
+				{
+					"path": "/tutorials/import-avatar-url",
+					"title": "Tutorial · Import an avatar by URL",
+					"description": "Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link — auto-validated, auto-rigged, ready for an agent.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/walk-companion",
+					"title": "Tutorial · Add the Walk Companion to your site",
+					"description": "Drop a 3D avatar that strolls across any web page — corner mascot or full-page playground — with one script tag, the npm SDK, or a postMessage bridge.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/sperax-tour",
+					"title": "Tutorial · Load a ready-made 3D tour for a DeFi protocol (Sperax)",
+					"description": "The Tour Builder's first template: an 8-stop guided tour of Sperax's USDs auto-yield stablecoin, ready to load, edit, and export as a one-tag snippet in minutes.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-08"
+				},
+				{
+					"path": "/tutorials/first-agent",
+					"title": "Tutorial · Build your first agent (from scratch)",
+					"description": "A complete walkthrough from a blank HTML file to a live, talking 3D character you wrote yourself — no framework, no build tools.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-04-27"
+				},
+				{
+					"path": "/tutorials/embed-on-website",
+					"title": "Tutorial · Embed on a website (HTML, React, Next.js)",
+					"description": "Five different ways to add an agent to your site — pick the one that matches how you build today.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-04-27"
+				},
+				{
+					"path": "/tutorials/personal-ai-site",
+					"title": "Tutorial · Build a personal AI website",
+					"description": "A 3D version of you, on your domain, ready to answer any question about your work — with a portfolio, contact form, and resume.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-04-27"
+				},
+				{
+					"path": "/tutorials/js-api-events",
+					"title": "Tutorial · Drive the agent with the JavaScript API",
+					"description": "Listen for the ready event, play animations on demand, make the agent speak from anywhere in your app code.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/web-component-end-to-end",
+					"title": "Tutorial · Use the <agent-3d> web component end-to-end",
+					"description": "Skip the script tag — drop a real custom element into your DOM, bind attributes, and use the full event lifecycle.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/build-a-site-concierge",
+					"title": "Tutorial · Build a site concierge from the building blocks",
+					"description": "How the Concierge widget is assembled: the talking avatar, the streaming chat, the tool calls, and how to point the same parts at your own backend over Server-Sent Events.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-18"
+				},
+				{
+					"path": "/tutorials/trigger-from-page-events",
+					"title": "Tutorial · Trigger the agent from page events",
+					"description": "Make your agent react to clicks, scrolls, form submits, and route changes — turn it into a real co-pilot, not a chat widget.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/upload-custom-glb",
+					"title": "Tutorial · Upload a custom GLB avatar",
+					"description": "Bring your own model — any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/connect-ai-brain",
+					"title": "Tutorial · Connect Anthropic or OpenAI as the brain",
+					"description": "Plug your own model provider into the agent loop. Bring your API key, choose your model, control cost and latency.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/create-and-edit-memory",
+					"title": "Tutorial · Create, enhance & edit agent memory",
+					"description": "Teach an agent a fact that sticks between sessions — five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/place-agent-irl",
+					"title": "Tutorial · Place your agent in the real world (IRL)",
+					"description": "Use camera passthrough, a joystick, and tap-to-place to drop your 3D agent into your physical space — and understand how location privacy works.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/voice-and-lipsync",
+					"title": "Tutorial · Give your agent a voice with lipsync",
+					"description": "Add real-time text-to-speech with synchronized mouth movement — pick or clone a voice, drive visemes from audio, and wire it into a live agent.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/pay-for-x402-service",
+					"title": "Tutorial · Discover and pay for an x402 service",
+					"description": "Browse the x402 Bazaar and call a paid API from your agent — the 402 challenge, the USDC payment, and the retry, end to end.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/emotion-from-data",
+					"title": "Tutorial · Animations from data: wire your agent's gestures to real APIs and AI",
+					"description": "Trigger real body animations — celebrate, dance, flinch — from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-08"
+				},
+				{
+					"path": "/tutorials/custom-skill",
+					"title": "Tutorial · Build a custom skill",
+					"description": "A complete walkthrough of building a weather skill an agent can invoke — bundle format, LLM tool calling, context API.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-04-27"
+				},
+				{
+					"path": "/tutorials/register-onchain",
+					"title": "Tutorial · Register your agent on-chain (ERC-8004)",
+					"description": "Give your agent a permanent, verifiable identity. Publish an ERC-8004 attestation anyone can read from any chain.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-04-27"
+				},
+				{
+					"path": "/tutorials/mint-pumpfun-token",
+					"title": "Tutorial · Mint an agent token on Pump.fun",
+					"description": "Launch a Solana token for your agent, bond it to its on-chain identity, and let people speculate on (or hold) a piece of it.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/paid-x402-endpoint",
+					"title": "Tutorial · Build a paid x402 endpoint your agent calls",
+					"description": "Stand up an API that other agents pay USDC to call — using the x402 protocol on Base mainnet. Real money, real flow.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/monetize-mcp-server",
+					"title": "Tutorial · Monetize an MCP server: charge per tool call",
+					"description": "Build an MCP server whose tools charge other agents per call in USDC on Solana. One free orientation tool, one paid tool that does real work, and a test that proves the product never escapes unpaid.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/x402-server-sdk",
+					"title": "Tutorial · Meter any API with the x402-server SDK",
+					"description": "Turn an ordinary HTTP handler into a paid one with @three-ws/x402-server. Solana-first, framework-agnostic, and runnable offline before you touch a wallet.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-18"
+				},
+				{
+					"path": "/tutorials/self-host-agent-backend",
+					"title": "Tutorial · Self-host the agent backend",
+					"description": "Run the full three.ws backend on your own infrastructure — workers, function endpoints, model proxies. No three.ws dependency in production.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/multi-agent-coordination",
+					"title": "Tutorial · Multi-agent coordination",
+					"description": "Two or more agents on the same page that talk to each other — turn-taking, shared memory, delegating subtasks.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/mcp-server-for-your-agent",
+					"title": "Tutorial · Expose your agent as an MCP server",
+					"description": "Wrap your agent in the Model Context Protocol so any MCP-compatible client (Claude Desktop, Cursor, etc.) can drive it.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/skill-with-database-auth",
+					"title": "Tutorial · Custom skill with database + auth",
+					"description": "A real production skill — Postgres-backed CRM lookup, signed requests, per-user permissions, rate limits. Not a toy weather demo.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/deploy-to-vercel-custom-domain",
+					"title": "Tutorial · Deploy to Vercel with a custom domain",
+					"description": "Take a forked three.ws and ship it as agent.yourcompany.com — CI, environment variables, custom domain, SSL, the lot.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-05-14"
+				},
+				{
+					"path": "/tutorials/claim-threews-name",
+					"title": "Tutorial · Claim a .threews.sol name & get paid by name",
+					"description": "Mint a *.threews.sol Solana subdomain for your agent and accept USDC payments addressed to the name instead of a raw wallet.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/mine-vanity-address",
+					"title": "Tutorial · Mine a Solana vanity address",
+					"description": "Grind a custom-prefix Solana address in the browser, then prove how it was made with the proof-of-grind receipt, gallery, and bounty market.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-06-21"
+				},
+				{
+					"path": "/tutorials/ship-an-avatar-manifest",
+					"title": "Tutorial · Ship an avatar manifest",
+					"description": "Turn a raw GLB into a signed-off, hash-anchored manifest: one document that names the avatar, records the exact bytes of its mesh, declares its skeleton, and fails your build if the model ever silently changes.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/write-a-guard",
+					"title": "Tutorial · Write a repository guard",
+					"description": "This repo has no CI, so a guard is the only thing between a mistake and production. Build one that fails the build when an API handler forgets its error boundary, wire it into the gate, cover it with tests, and register it.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/guards",
+					"title": "Repository guards",
+					"description": "Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/tutorials/write-a-guard",
+					"title": "Tutorial · Write a repository guard",
+					"description": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
+					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
 				}

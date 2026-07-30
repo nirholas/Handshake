@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "One front door for autonomous trading",
+			"summary": "The agents that trade on their own had grown to about twenty separate pages, and you could only reach most of them if you already knew the address. There is now a single control room at /trading that answers the three questions people actually ask, in order: is the fleet working right now, is it any good, and where do I go next. It shows live fleet vitals read straight off the running trader, a scoreboard of every agent by profit actually realized (an open position is never counted as profit, however far up it is), a plain explanation of the five checks every trade passes before any money moves, and a map of every trading page and document. Feed health is shown separately from whether the trader is running, because a trader can be perfectly healthy while seeing no new coins at all, which looks identical to working and is not. A new guide also covers how to tell a genuinely good strategy from a lucky one.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/trading"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Marketplace analytics no longer counts free trials as sales",
 			"summary": "The public marketplace analytics page was reporting more than ten thousand skill sales and millions of $THREE in volume when the marketplace had never completed a single paid sale. Every one of those was a free trial: the page counted a trial the same as a purchase, and summed the price the trial would have cost as though it had been paid. Sales, volume, revenue and buyer counts now count paid purchases only. Free trials are still shown, as their own figure and as a conversion funnel from trials granted through to trials that turned into a sale, so you can see how the marketplace is really doing instead of a number that flattered it.",
 			"tags": [

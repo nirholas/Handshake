@@ -193,6 +193,28 @@ here; the code-quality items from that pass are not production issues.
 Kept briefly because each one was previously mis-stated on this list, and the
 wrong version is what a future reader would otherwise trust.
 
+- **The autopilot spend default.** `POST /api/agents/:id/autopilot/run` read
+  `body?.dry_run === true`, so a bare `POST {}` ran a REAL cycle while the
+  sibling runner on the same wallet (`api/agents/wallet-intents.js`) read
+  `dry_run !== false` and simulated. Now `body?.dry_run !== false`: silence
+  simulates, and spending must ask for itself. The cockpit's Run button relied
+  on the unsafe default, so it now sends `dry_run: false` explicitly and asks a
+  second time before spending; a Preview cycle button runs the simulation.
+  Pinned by `tests/autopilot-run-dry-run-default.test.js` (3 of its 6 cases fail
+  against the old expression).
+- **The `/pulse` marketplace GMV.** This list said "a confirmed `trial` row with
+  a non-zero amount inflates published GMV". **That mechanism never occurred**:
+  a trial is written `status='trial', kind='trial'` and only a `'pending'` row
+  is ever promoted to `'confirmed'`, so the `status='confirmed'` filter already
+  excluded every trial. Live data agrees: all 10,454 `skill_purchases` rows are
+  `kind='trial', status='trial'`, and there is not one confirmed purchase yet.
+  The defect was real but latent: the money aggregates filtered on status alone
+  while the counts filtered on status AND kind, so they rested on an invariant
+  nothing enforced, and a trial carries the listing's FULL price in `amount`
+  despite nothing being paid. Every aggregate now derives from one shared
+  `paidRow` predicate, `series_7d` included. Do not re-file this as an
+  observed inflation of a published number; it was never that.
+- **Oversized sources on `/api/avatar/optimize`.** See item 9.
 - **Neon storage pressure.** `isStoragePressured()` reports `pressured: false` at
   2768MB, and `SHOW neon.max_cluster_size` returns **16TB**, so the 8192MB
   high-water on the service is a deliberate runaway backstop rather than a cap

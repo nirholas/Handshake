@@ -151,7 +151,7 @@
 			"kind": "package",
 			"group": "Package examples",
 			"title": "@three-ws/agentcore-payments-mcp",
-			"description": "MCP server for three.ws Agent Payment Sessions - govern agent x402 spending without exposing private keys.",
+			"description": "Two runnable examples. Neither one spends money, needs a wallet, or needs an account, so you can run both before deciding whether to fund anything.",
 			"path": "packages/agentcore-payments-mcp/examples",
 			"files": [
 				"list-tools.mjs",
@@ -159,7 +159,7 @@
 			],
 			"run": "node packages/agentcore-payments-mcp/examples/list-tools.mjs",
 			"runKind": "command",
-			"readme": null,
+			"readme": "packages/agentcore-payments-mcp/examples/README.md",
 			"owner": "packages/agentcore-payments-mcp"
 		},
 		{

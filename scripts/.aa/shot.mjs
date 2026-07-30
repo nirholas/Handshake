@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const url = process.argv[2] || 'http://localhost:3007/asl-alphabet?letter=W';
+const out = process.argv[3] || '/tmp/claude-1000/-workspaces-three-ws/ac683624-d99b-4e76-bfbe-4e0283327d2c/scratchpad/aa4.png';
+const sel = process.argv[4] || '.aa-stage-wrap';
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1180, height: 820 } });
+await p.goto(url, { waitUntil: 'networkidle' });
+await p.waitForTimeout(7000);
+const el = await p.$(sel);
+await (el || p).screenshot({ path: out });
+console.log('shot ok');
+await b.close();

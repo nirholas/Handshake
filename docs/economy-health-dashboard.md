@@ -135,8 +135,8 @@ diagnose({ stats, health, topup });
 
 ## Related
 
-- [Circulation engine](circulation-engine.md) — the engine this page watches.
-- [Economy master](economy-master.md) — the funding root at the top of the chain.
-- [Money feed](money-feed.md) — the public surface the volume comes from.
-- [Ring dashboard](x402-ring-economy.md#watching-it--the-operator-dashboard) —
+- [Circulation engine](circulation-engine.md): the engine this page watches.
+- [Economy master](economy-master.md): the funding root at the top of the chain.
+- [Money feed](money-feed.md): the public surface the volume comes from.
+- [Ring dashboard](x402-ring-economy.md#watching-it--the-operator-dashboard) -
   the sibling operator page for the x402 ring.

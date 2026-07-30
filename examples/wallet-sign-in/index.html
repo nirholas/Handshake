@@ -536,8 +536,10 @@
 				account_deleted: 'That wallet belongs to a deleted account.',
 			};
 
+			// The API's error shape is {error, error_description}: the machine code
+			// is in `error`, not in a `code` field.
 			function describe(data) {
-				return CODES[data?.code] || data?.error_description || data?.error || 'Sign-in failed.';
+				return CODES[data?.error] || data?.error_description || data?.error || 'Sign-in failed.';
 			}
 
 			function friendly(err) {

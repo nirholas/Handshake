@@ -496,6 +496,10 @@
 			"title": "Economy & payments",
 			"links": [
 				{
+					"label": "The in-game economy",
+					"path": "in-game-economy"
+				},
+				{
 					"label": "Circulation engine",
 					"path": "circulation-engine"
 				},
@@ -991,6 +995,10 @@
 				{
 					"label": "Read the trading fleet",
 					"path": "tutorials/read-the-trading-fleet"
+				},
+				{
+					"label": "Earn and spend in /play",
+					"path": "tutorials/earn-and-spend-in-play"
 				}
 			]
 		},

@@ -238,6 +238,12 @@ export const NAV_GROUPS = [
 						desc: 'Every coin is a 3D world — drop in & hang out',
 					},
 					{
+						title: 'In-Game Economy',
+						href: '/play/economy',
+						tier: 'advanced',
+						desc: 'Store prices, bank rules, the $THREE boutique & the full wheel paytable, read live from the game',
+					},
+					{
 						title: 'Coin Clash',
 						href: '/clash',
 						tier: 'advanced',

@@ -162,7 +162,7 @@ async function handleConfirm(req, res, purchaseId) {
 	});
 
 	if (verdict.status === 'pending')
-		return json(res, 200, { data: { ok: false, status: 'pending', message: 'payment not yet found on-chain — retry shortly' } });
+		return json(res, 200, { data: { ok: false, status: 'pending', message: 'payment not yet found on-chain: retry shortly' } });
 	if (verdict.status !== 'confirmed')
 		return error(res, 402, 'payment_not_verified', verdict.message || 'payment could not be verified on-chain');
 
@@ -187,19 +187,19 @@ async function handleConfirm(req, res, purchaseId) {
 	if (claimed.length === 0)
 		return error(res, 409, 'already_processed', 'purchase is no longer pending');
 
-	// Unlock every skill in the bundle — one row per skill. hasSkillAccess() reads
+	// Unlock every skill in the bundle: one row per skill. hasSkillAccess() reads
 	// skill_purchases, so this row IS the unlock.
 	//
 	// Three column choices are load-bearing, and getting any of them wrong silently
 	// costs the buyer what they paid for:
-	//   reference     — NOT NULL and UNIQUE, so it is derived per skill. Omitting it
+	//   reference    : NOT NULL and UNIQUE, so it is derived per skill. Omitting it
 	//                   made this insert throw 23502 for every bundle ever sold.
-	//   tx_signature  — UNIQUE, so it CANNOT be repeated across the bundle's skills:
+	//   tx_signature : UNIQUE, so it CANNOT be repeated across the bundle's skills:
 	//                   the second row would collide and ON CONFLICT DO NOTHING would
 	//                   swallow it, unlocking only the first skill. The settlement tx
 	//                   is recorded once on the bundle_purchases row above, which is
 	//                   where it belongs; these rows point back via `reference`.
-	//   amount/kind   — 0 and 'bundle'. The bundle's revenue is already counted once
+	//   amount/kind  : 0 and 'bundle'. The bundle's revenue is already counted once
 	//                   on bundle_purchases, so these access records stay out of the
 	//                   marketplace GMV and purchase counts on /pulse, which filter
 	//                   to paid kinds. Pricing them per skill would double-count the

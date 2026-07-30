@@ -1167,6 +1167,10 @@
 			"dest": "/activity.html"
 		},
 		{
+			"src": "/guards/?",
+			"dest": "/guards.html"
+		},
+		{
 			"src": "/pipeline/?",
 			"dest": "/pipeline.html"
 		},
