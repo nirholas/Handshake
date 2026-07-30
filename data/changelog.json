@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Two more guides are now findable, and an admin-only page stays private",
+			"summary": "The in-game economy guide and the trading swarms guide were both written and live, but neither was listed in our site index, so nothing could crawl them and they were only reachable if you already knew the address. Both are listed now. Separately, the economy health dashboard guide describes an admin-only screen and names the credential that unlocks it, so it is explicitly marked as internal rather than being published alongside the others.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The Avatar CLI now prints an embed snippet that actually renders",
+			"summary": "Running `three-ws-avatar preview` printed a copy-paste snippet built around a tag the platform has never registered, so anyone who pasted it got a silent empty box with nothing in the console to explain why. It now emits the real `<agent-3d>` element together with the loader script that registers it, because the element does nothing until that script has run, and printing one without the other was the whole bug. Two smaller things came with it: the command warns you when your manifest still points at a file on your own machine, instead of handing you a snippet no browser can load, and the CLI's own help text now matches the examples in its README. The tool also has real documentation for the first time: a full command reference, a start-to-finish tutorial, and a page of its own that proves the snippet by rendering it live.",
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
+			],
+			"link": "/avatar-cli"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "One front door for autonomous trading",
 			"summary": "The agents that trade on their own had grown to about twenty separate pages, and you could only reach most of them if you already knew the address. There is now a single control room at /trading that answers the three questions people actually ask, in order: is the fleet working right now, is it any good, and where do I go next. It shows live fleet vitals read straight off the running trader, a scoreboard of every agent by profit actually realized (an open position is never counted as profit, however far up it is), a plain explanation of the five checks every trade passes before any money moves, and a map of every trading page and document. Feed health is shown separately from whether the trader is running, because a trader can be perfectly healthy while seeing no new coins at all, which looks identical to working and is not. A new guide also covers how to tell a genuinely good strategy from a lucky one.",
 			"tags": [

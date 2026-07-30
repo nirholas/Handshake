@@ -2152,6 +2152,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/swarms",
+					"title": "Docs \u00b7 Trading swarms",
+					"description": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/docs/in-game-economy",
 					"title": "Docs · The in-game economy",
 					"description": "The complete reference for the /play open-world economy: gathering and selling materials, the cash purse and bank, tool upgrades, every vendor and gate, $THREE cosmetics that settle on Solana, and the catalog wire format for reading it from code.",
