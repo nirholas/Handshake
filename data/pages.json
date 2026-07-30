@@ -2881,6 +2881,14 @@
 					"added": "2026-06-12"
 				},
 				{
+					"path": "/tutorials/build-a-3d-asset-pipeline",
+					"title": "Tutorial: build a 3D asset pipeline",
+					"description": "Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over its triangle or size budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/tutorials/add-a-3d-assistant",
 					"title": "Tutorial · Add a 3D Avatar Assistant",
 					"description": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",

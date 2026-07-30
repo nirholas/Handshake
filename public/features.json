@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T23:07:12.622Z",
+	"generated_at": "2026-07-30T23:22:36.222Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3632,6 +3632,16 @@
 					"title": "Tutorial · Text Prompt to 3D Model",
 					"description": "Five-minute beginner walkthrough of the Forge: type a sentence, pick a quality tier, and download a textured GLB model.",
 					"added": "2026-06-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/build-a-3d-asset-pipeline",
+					"title": "Tutorial: build a 3D asset pipeline",
+					"description": "Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over its triangle or size budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.",
+					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

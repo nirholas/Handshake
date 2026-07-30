@@ -55,17 +55,12 @@
 		<script defer src="/nav.js"></script>
 		<script defer src="/footer-newsletter.js"></script>
 		<script defer src="/cookbook-manifest.js"></script>
-		<script
-			type="module"
-			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-			integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
-			crossorigin="anonymous"
-		></script>
 	</head>
 	<body>
 		<div class="cb-page">
-			<header></header>
+			<header><div id="nav-container"></div></header>
 
+			<main id="main-content">
 			<section class="cb-hero">
 				<div class="cb-hero-inner">
 					<span class="cb-eyebrow">Cookbook</span>
@@ -83,7 +78,7 @@
 				</div>
 			</section>
 
-			<main class="cb-main">
+			<div class="cb-main">
 				<div class="cb-toolbar" role="group" aria-label="Filter recipes by level">
 					<button class="cb-filter" type="button" data-level="all" aria-pressed="true">
 						All
@@ -130,6 +125,7 @@
 						<a class="cb-btn" href="/tutorials">Browse tutorials</a>
 					</div>
 				</section>
+			</div>
 			</main>
 
 			<footer id="site-footer"></footer>
@@ -159,26 +155,18 @@
 					);
 				}
 
-				/* A poster image is cheaper and sharper than a live canvas, so it wins when
-				   a recipe has one. The rotating model is the fallback, and it is paused
-				   for anyone who asked for reduced motion. */
+				/* Every poster is a render of a model the recipe itself produced, made with
+				   the platform renderer. A still beats a live canvas here: five WebGL
+				   contexts on one listing page is a real cost, and the alt text can then
+				   say what the reader is actually looking at. */
 				function media(recipe) {
-					if (recipe.poster) {
-						return (
-							'<img src="' +
-							escapeHtml(recipe.poster) +
-							'" alt="" loading="lazy" decoding="async" width="640" height="360">'
-						);
-					}
-					if (!recipe.previewModel) return '';
-					const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+					if (!recipe.poster) return '';
 					return (
-						'<model-viewer src="' +
-						escapeHtml(recipe.previewModel) +
-						'" camera-controls disable-zoom touch-action="pan-y"' +
-						(still ? '' : ' auto-rotate rotation-per-second="16deg"') +
-						' interaction-prompt="none" shadow-intensity="0.6" exposure="0.9"' +
-						' alt="" aria-hidden="true"></model-viewer>'
+						'<img src="' +
+						escapeHtml(recipe.poster) +
+						'" alt="' +
+						escapeHtml(recipe.posterAlt || '') +
+						'" loading="lazy" decoding="async" width="640" height="360">'
 					);
 				}
 

@@ -114,14 +114,16 @@ describe('every recipe is fully wired', () => {
 		}
 	});
 
-	it('has a poster or a preview model that exists', () => {
+	it('has a poster that exists, with alt text', () => {
 		for (const recipe of recipes) {
-			const asset = recipe.poster || recipe.previewModel;
-			if (!asset) continue;
+			expect(recipe.poster, `${recipe.slug} needs a poster`).toBeTruthy();
 			expect(
-				existsSync(resolve(root, `public${asset}`)),
-				`${recipe.slug} points at ${asset}, which does not exist`,
+				existsSync(resolve(root, `public${recipe.poster}`)),
+				`${recipe.slug} points at ${recipe.poster}, which does not exist`,
 			).toBe(true);
+			// The poster carries meaning (it is the recipe's own output), so empty alt
+			// would be wrong here even though decorative images take alt="".
+			expect(recipe.posterAlt, `${recipe.slug} poster needs alt text`).toBeTruthy();
 		}
 	});
 

@@ -515,6 +515,16 @@
 			ctaPrimary: { label: 'Run the example', href: 'https://github.com/nirholas/three.ws/tree/main/examples/wallet-sign-in' },
 		},
 		{
+			slug: 'build-a-3d-asset-pipeline',
+			tier: 'middle',
+			title: 'Build a 3D asset pipeline',
+			blurb: 'Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.',
+			builds: 'A regenerable asset folder plus a CI check that blocks bad models',
+			time: '25 min',
+			previewModel: '/animations/robotexpressive.glb',
+			ctaPrimary: { label: 'Open the Cookbook', href: '/cookbook' },
+		},
+		{
 			slug: 'agent-spending-envelope',
 			tier: 'advanced',
 			title: 'Give an agent a spending envelope (no private key)',

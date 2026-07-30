@@ -2213,6 +2213,12 @@ URL: https://three.ws/tutorials/text-to-3d
 
 Five-minute beginner walkthrough of the Forge: type a sentence, pick a quality tier, and download a textured GLB model.
 
+### Tutorial: build a 3D asset pipeline
+
+URL: https://three.ws/tutorials/build-a-3d-asset-pipeline
+
+Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over its triangle or size budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.
+
 ### Tutorial · Add a 3D Avatar Assistant
 
 URL: https://three.ws/tutorials/add-a-3d-assistant

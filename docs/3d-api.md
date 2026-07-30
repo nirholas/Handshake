@@ -488,6 +488,8 @@ mesh-optimization routes. See
 
 ## Related
 
+- [Cookbook](/cookbook) - runnable recipes built on these endpoints: a command-line client,
+  a parallel asset-pack builder, an MCP server, and a CI quality gate
 - [API Reference](/docs/api-reference) - the full three.ws HTTP API surface
 - [3D Studio MCP endpoint](/docs/mcp-studio) - the same free generation lane as MCP tools
 - [x402 Paid Endpoints](/docs/x402-endpoints) - the paid catalog Forge Pro belongs to
