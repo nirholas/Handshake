@@ -432,6 +432,16 @@
 			previewModel: '/animations/soldier.glb',
 			ctaPrimary: { label: 'Open /play', href: '/play' },
 		},
+		{
+			slug: 'wallet-sign-in',
+			tier: 'middle',
+			title: 'Add wallet sign-in to your app',
+			blurb: 'One button, one Phantom signature, and your visitor is authenticated as a three.ws user with a real session cookie. No password, no email, no transaction, no fee. Sign-In with Solana first, then the Ethereum path, with the CSRF and session-shape handling that actually survives production.',
+			builds: 'A working wallet sign-in button that produces a real three.ws session',
+			time: '30 min',
+			previewModel: '/avatars/cz.glb',
+			ctaPrimary: { label: 'Open the docs', href: '/docs' },
+		},
 
 		/* ───────────────────────── ADVANCED ───────────────────────── */
 		{
