@@ -58,6 +58,13 @@ non-profit projects).
 | `av-listening-music`  | Listening To Music | —     |
 | `av-leaning-wall`     | Leaning On A Wall  | —     |
 | `av-rap-dance`        | Rap Dancing        | —     |
+| `nod`                 | Nodding Head Yes   | agent `nod` slot |
+| `shrug`               | Shoulder Shrug     | agent `shrug` slot |
+| `point`               | Pointing (arm bent)| agent `point` slot |
+| `think`               | Thoughtfully Nodding Head Yes | agent `think` slot |
+| `sitloop`             | Sitting With Breathing Idle | loop; the walk `sit` gesture |
+| `turn`                | Standing 180 Left Turn | —  |
+| `jog`                 | Jog Forward        | loop; the walk `jog` gesture |
 
 To add a new Mixamo clip:
 

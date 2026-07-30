@@ -13,36 +13,74 @@
       <a class="brand" href="../index.html">Robinhood Chain Examples</a>
       <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
     </div>
-    <div class="wrap"><div class="readme"><h1>09 · x402 paid API call — blocked on siblings</h1>
-<p><strong>Status: not built.</strong> This example is supposed to show a client paying a
-<code>hood-api</code> endpoint via <code>hood402</code>. Neither package exists yet in the
-<code>robinhood/</code> workspace as of this writing — only the core SDK
-(<a href="https://github.com/nirholas/robinhood-chain-sdk"><code>hoodchain</code></a>) has shipped.
-Per this repo&#39;s mission (&quot;check which siblings exist and cover what&#39;s
-actually there; note any gaps&quot;), this folder is a placeholder-free gap note,
-not a stub implementation.</p>
-<h2>What&#39;s missing</h2>
+    <div class="wrap"><div class="readme"><h1>09 · Pay for an API call</h1>
+<p>A metered endpoint answers an unpaid request with HTTP 402 and a
+machine-readable price. This example is the client side of that exchange,
+step by step: decode the challenge, sign an EIP-3009 USDG authorization for
+exactly the quoted amount, retry with the <code>X-PAYMENT</code> header, and read the
+settlement receipt off <code>X-PAYMENT-RESPONSE</code>. Nothing is hidden inside a
+wrapper.</p>
+<p>The endpoint being paid is a <code>hood-api</code>-shaped quote route (<code>/v1/quote/:symbol</code>)
+gated by <a href="https://www.npmjs.com/package/hood402"><code>hood402</code></a>&#39;s <code>paywall()</code>. By
+default this file starts one locally so the example is standalone. It is the
+buy side of <a href="../10-x402-sell-your-api">example 10</a>, which is the sell side.</p>
+<p><strong>What it proves:</strong> x402 on Robinhood Chain runs on USDG, which has 6 decimals
+and <strong>no</strong> EIP-2612 <code>permit</code>, so the gasless path is EIP-3009
+<code>transferWithAuthorization</code>. The payer signs; the resource server or a
+facilitator broadcasts and pays the gas.</p>
+<h2>Prerequisites</h2>
 <ul>
-<li><strong><code>hood-api</code></strong> — a market-data API server for Robinhood Chain (Stock Token
-quotes, portfolios, launches) with metered endpoints.</li>
-<li><strong><code>hood402</code></strong> — an <a href="https://github.com/coinbase/x402">x402</a> payment client
-and middleware for USDG on Robinhood Chain (the payment rail this example
-would use).</li>
+<li>Node ≥ 20.</li>
+<li><strong>No key needed to see the full flow.</strong> Without
+<code>ROBINHOOD_CHAIN_PRIVATE_KEY</code> a fresh keypair is generated: the 402, the
+signature, and the on-chain verification are all still real, the payer just
+genuinely holds 0 USDG, so the server correctly reports
+<code>insufficient_funds</code>.</li>
+<li>To settle for real, fund a testnet wallet with USDG and set
+<code>ROBINHOOD_CHAIN_PRIVATE_KEY</code>. Faucet:
+<a href="https://faucet.testnet.chain.robinhood.com/">https://faucet.testnet.chain.robinhood.com/</a></li>
 </ul>
-<h2>What this example will do once they exist</h2>
-<pre><code>Client → GET /api/quote/AAPL on a hood-api endpoint
-       → 402 Payment Required (x402 challenge, USDG on Robinhood Chain)
-       → hood402 client signs and attaches payment
-       → retry → 200 OK with the priced quote
-</code></pre><p>The general x402 pattern is proven elsewhere on three.ws (see the
-<a href="https://three.ws"><code>pay-for-service</code></a> skill and <code>x402</code> catalog) — the gap here
-is Robinhood-Chain-specific: a <code>hood402</code> client that speaks USDG (6 decimals,
-no EIP-2612 <code>permit</code>, so approvals are on-chain — see <code>hoodchain</code>&#39;s <code>usdg.ts</code>)
-instead of the USDC flow those examples use.</p>
-<h2>Owner action</h2>
-<p>Build <code>hood-api</code> and <code>hood402</code> (prompts 04 and 05 in
-<code>prompts/robinhood-chain/</code>), then this example becomes a ~40-line client
-script. No further action needed from this repo until then.</p>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install
+npm start                                          <span class="hljs-comment"># local endpoint, testnet rail</span>
+node index.js --url https://api.example.com/v1/quote/AAPL
+HOOD_API_URL=http://localhost:8787 node index.js   <span class="hljs-comment"># paywall a real hood-api</span>
+ROBINHOOD_CHAIN_PRIVATE_KEY=0x... node index.js    <span class="hljs-comment"># pay for real</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>x402 paid API call - robinhood-testnet (chain 46630)
+  payer  0x387D8c3A54e1aE791a6025B2BA9Db2bED45da432  (ephemeral: no ROBINHOOD_CHAIN_PRIVATE_KEY set)
+  USDG   0x7E955252E15c84f5768B83c41a71F9eba181802F  6 decimals, EIP-3009 rail
+  seller 0xcc2210aff3F61eFe8EFC14236fe10ddd718C2271  (local endpoint, self-settling)
+  source hoodchain getQuote on mainnet 4663
+  target http://127.0.0.1:38751/v1/quote/AAPL
+
+1. GET without payment
+   HTTP 402 · x402Version 1
+   price    0.01 USDG
+   payTo    0xcc2210aff3F61eFe8EFC14236fe10ddd718C2271
+   asset    0x7E955252E15c84f5768B83c41a71F9eba181802F
+   expires  60s after payment
+
+2. Sign an EIP-3009 authorization for exactly that amount
+   from       0x387D8c3A54e1aE791a6025B2BA9Db2bED45da432
+   to         0xcc2210aff3F61eFe8EFC14236fe10ddd718C2271
+   value      10000 atomic (0.01 USDG)
+   validAfter 1785451436   validBefore 1785451741
+   nonce      0xe9c5b80b60e8857976241657997e63624ebf09f09d98d306545ef3cdbbbe824c
+   signature  0xeb78586ebe14d4016a76…9474671b
+
+3. Retry with the X-PAYMENT header
+   HTTP 402
+   error      The payer does not hold enough USDG to cover the payment.
+</code></pre><p>That third step is the honest ending for an unfunded payer, and it is the
+interesting one: the server verified a real signature against a real balance
+and refused to settle a payment that would revert. Fund the payer and step 3
+returns the quote plus a settlement tx hash instead.</p>
+<h2>The shape of the challenge</h2>
+<p>Everything the client needs to pay arrives in the 402 body: the scheme, the
+network, the asset contract, the maximum amount, and where to send it. That is
+what makes x402 machine-payable. No account, no API key, and no prior
+relationship, just a price an agent can read and satisfy.</p>
 <hr>
 <p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
 </div></div>

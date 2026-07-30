@@ -16,7 +16,7 @@ you at each step.
 
 ## Website
 
-The landing page in [`docs/`](docs/) is a single self-contained `index.html` (inline CSS + JS, zero external requests, works from `file://`). Its signature interaction is a **darkroom contact sheet**: the fourteen examples are frames of unexposed film. Hover a frame and its real source *develops* in like film in developer fluid; click to enlarge the whole thing with its run command and status. The four not-yet-built examples ship as honest blank, unexposed frames. Every code excerpt is a real capture from the example's own source.
+The landing page in [`docs/`](docs/) is a single self-contained `index.html` (inline CSS + JS, zero external requests, works from `file://`). Its signature interaction is a **darkroom contact sheet**: the fourteen examples are frames of unexposed film. Hover a frame and its real source *develops* in like film in developer fluid; click to enlarge the whole thing with its run command and status. Every code excerpt is a real capture from the example's own source.
 
 Deploy the `docs/` folder anywhere static:
 
@@ -39,9 +39,12 @@ Config lives in [`wrangler.toml`](wrangler.toml), [`netlify.toml`](netlify.toml)
   on npm as `hoodchain`. Examples pin `^0.1.0` in their `package.json` — a
   plain `npm install` resolves it. If you're developing against an unreleased
   local SDK build instead, see [Installing `hoodchain`](#installing-hoodchain).
-- Examples 09, 10, 11, and 13 are **not built** — they depend on sibling
-  packages (`hood-api`, `hood402`, `hood-mcp`, `hood-launcher`) that haven't
-  shipped yet. Each has a README explaining exactly what's missing.
+- **All fourteen examples are built and runnable.** The four that depend on
+  sibling packages (`hood402` for 09 and 10, `hood-mcp` for 11,
+  `hood-launcher` for 13) now resolve them from npm like any other dependency.
+  Each runs end to end with no key: 09 and 10 complete a real x402 challenge
+  and signature and stop honestly at an unfunded balance, 11 is fully
+  read-only, and 13 runs a real on-chain preflight without broadcasting.
 
 ## Installing `hoodchain`
 
@@ -125,11 +128,11 @@ robinhood-chain-examples/
 │   ├── 06-firehose/               raw sequencer feed decoder
 │   ├── 07-live-price-webpage/     zero-dependency static price page
 │   ├── 08-portfolio-dashboard/    Vite + React dashboard
-│   ├── 09-x402-paid-api-call/     gap note — blocked on hood-api/hood402
-│   ├── 10-x402-sell-your-api/     gap note — blocked on hood402
-│   ├── 11-mcp-agent-session/      gap note — blocked on hood-mcp
+│   ├── 09-x402-paid-api-call/     x402 client: 402, sign, retry, settle
+│   ├── 10-x402-sell-your-api/     x402 paywall middleware over a quote route
+│   ├── 11-mcp-agent-session/      MCP client driving hood-mcp over stdio
 │   ├── 12-telegram-price-bot/     grammY bot
-│   ├── 13-launch-a-coin-testnet/  gap note — blocked on hood-launcher
+│   ├── 13-launch-a-coin-testnet/  launch pipeline: screen, preflight, send
 │   └── 14-agent-paper-trader/     paper-trading strategy loop
 ├── docs/                          static gallery site (GitHub Pages, generated)
 ├── tools/build-docs.mjs           docs generator (marked + highlight.js)

@@ -13,26 +13,91 @@
       <a class="brand" href="../index.html">Robinhood Chain Examples</a>
       <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
     </div>
-    <div class="wrap"><div class="readme"><h1>11 · MCP agent session — blocked on siblings</h1>
-<p><strong>Status: not built.</strong> This example is supposed to be a scripted MCP client
-driving <code>hood-mcp</code> tools (quote, portfolio, launches, swap exposed as MCP tool
-calls for an LLM agent). <code>hood-mcp</code> doesn&#39;t exist yet in the <code>robinhood/</code>
-workspace — see the root README&#39;s SDK feedback for the full picture.</p>
-<h2>What&#39;s missing</h2>
-<p><strong><code>hood-mcp</code></strong> — an MCP server wrapping <code>hoodchain</code> (prompt 06 in
-<code>prompts/robinhood-chain/</code>), exposing tools like <code>get_stock_quote</code>,
-<code>get_portfolio</code>, <code>get_recent_launches</code>, <code>quote_swap</code> to any MCP-speaking
-agent host (Claude Code, Claude Desktop, etc.) — the same pattern three.ws&#39;s
-own <code>3d-agent-local</code> MCP server uses for its tools.</p>
-<h2>What this example will do once it exists</h2>
-<p>A minimal Node script using <code>@modelcontextprotocol/sdk</code>&#39;s client to connect to
-a locally-spawned <code>hood-mcp</code> server over stdio, list its tools, and call
-<code>get_stock_quote</code> for a symbol — printing the same kind of output as
-<a href="../02-stock-price-sdk">example 02</a>, but routed through MCP instead of a
-direct SDK import.</p>
-<h2>Owner action</h2>
-<p>Build <code>hood-mcp</code> (prompt 06), then this example becomes a ~30-line MCP client
-script — no further action needed from this repo until then.</p>
+    <div class="wrap"><div class="readme"><h1>11 · MCP agent session</h1>
+<p>Every other example here imports <code>hoodchain</code> and calls it directly. An LLM
+agent cannot do that: it only reaches the world through tools its host has
+been given. <a href="https://www.npmjs.com/package/hood-mcp"><code>hood-mcp</code></a> is the bridge</p>
+<ul>
+<li>a Model Context Protocol server that exposes Robinhood Chain reads as
+protocol tools, so Claude Code, Claude Desktop, Cursor, or any MCP host can
+answer &quot;what is AAPL worth on Robinhood Chain?&quot; without a line of chain code.</li>
+</ul>
+<p>This example is the client half of that conversation, written longhand: it
+spawns the real <code>hood-mcp</code> data server over stdio, completes the MCP
+initialize handshake, lists the tools the server advertises, then calls three
+of them. It is exactly what an agent host does internally, with the protocol
+traffic made visible.</p>
+<p><strong>What it proves:</strong> the SDK, the MCP server, and an agent host are three
+layers over one chain. Tool annotations (<code>readOnlyHint</code>) let a host know which
+calls are safe before it makes them, and the read-only data server is a
+separate binary from the trading server, so an agent cannot spend by accident.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. No wallet, key, or funds: all nine tools here are read-only.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install
+npm start                  <span class="hljs-comment"># handshake + tool list + three real calls</span>
+node index.js --symbol TSLA   <span class="hljs-comment"># price a different Stock Token</span>
+node index.js --list-only     <span class="hljs-comment"># stop after the tool inventory</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>1 · Spawning the MCP server over stdio
+  server   …/node_modules/hood-mcp/dist/data-server.js
+  network  mainnet
+  connected to hood-mcp v0.1.0
+  capabilities tools
+
+2 · Tools the server advertises
+  get_chain_stats      read-only  (no inputs)
+  list_stock_tokens    read-only  (pricedOnly, limit, offset)
+  get_stock_quote      read-only  (symbol, maxAgeSeconds)
+  get_portfolio        read-only  (address)
+  get_coin             read-only  (address)
+  list_trending_coins  read-only  (limit)
+  get_recent_launches  read-only  (lookbackBlocks, launchpad, limit)
+  watch_launches       read-only  (waitSeconds, launchpad, limit, includeRecentIfEmpty)
+  search_token         read-only  (query, limit)
+  9 tools total.
+
+3 · get_chain_stats, the tool with no arguments
+  chain      mainnet (id 4663)
+  block      23563878
+  gas price  0.02 gwei
+  TVL        $355,018,487.24
+
+4 · get_stock_quote, the same call an agent makes for &quot;what is AAPL worth?&quot;
+  AAPL  Apple • Robinhood Token
+  oracle     $333.01
+  DEX mid    $333.10
+  premium    0.026%
+  underlying $333.01 per share (ERC-8056 multiplier 1000000000000000000)
+
+5 · list_trending_coins, a list-shaped result
+  YODA / WETH         $0.00000927   -95.7% 24h  vol $264,059.93
+  ASTEROID / WETH     $0.00192937  +132.9% 24h  vol $973,870.39
+  HOODRAT / WETH      $0.00563021  +170.0% 24h  vol $7,800,285.23
+</code></pre><p>Captured live against mainnet at block 23,563,878. Your numbers will differ:
+the oracle price moves with the market, and the trending list is whatever is
+hot when you run it. The <code>premium</code> line is the DEX mid against the Chainlink
+oracle, so a fraction of a percent is normal and a wide gap is the signal.</p>
+<h2>Wire it into a real agent</h2>
+<p>The point of the server is that you do not write this client at all. Register
+it once and the nine tools become things your agent can simply ask for:</p>
+<pre><code class="hljs language-bash">claude mcp add hood-mcp -- npx -y hood-mcp
+</code></pre><p>For Claude Desktop or Cursor, add the same command to the host&#39;s MCP config:</p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;mcpServers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;hood-mcp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;npx&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;-y&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;hood-mcp&quot;</span><span class="hljs-punctuation">]</span> <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+</code></pre><p>Then ask in plain language: <em>&quot;What&#39;s the premium on TSLA on Robinhood Chain?&quot;</em>
+or <em>&quot;Show me coins that launched in the last hour.&quot;</em> The host picks the tool.</p>
+<h2>Trading tools are opt-in, deliberately</h2>
+<p><code>hood-mcp</code> ships a second binary, <code>hood-mcp-trading</code>, that is not started
+here. It requires an explicit private key plus a spend cap, and every
+state-changing tool is annotated <code>readOnlyHint: false</code> with a confirmation
+gate. Read-only and spending capabilities never share a process, so pointing
+an agent at the data server cannot move funds.</p>
 <hr>
 <p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
 </div></div>

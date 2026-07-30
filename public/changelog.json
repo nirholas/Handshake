@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T22:49:04.049Z",
+	"generated_at": "2026-07-30T22:49:50.337Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Docs · Economy Health Dashboard",
 			"summary": "The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.",
 			"link": "/docs/economy-health-dashboard",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Docs · MCP tool safety",
+			"summary": "What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.",
+			"link": "/docs/mcp-safety",
 			"tags": [
 				"launch"
 			]
@@ -260,6 +270,17 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "A browsable map of every check that guards this codebase",
+			"summary": "This project ships without CI, so the checks that keep it correct run locally, on paths nobody can skip. Until now there was no way to see what they were: several working checks had no command to run them at all, and were findable only by reading the scripts folder. There is now a single registry behind a new page at /guards, where you can filter every guard by the stage it runs in, search by command, and read the specific failure that caused each one to be written. A new check keeps that page honest by refusing to pass if a guard claims to run somewhere it no longer does, which is the way this kind of page normally goes quietly out of date. A reference page and a step-by-step tutorial for writing your own guard ship alongside it.",
+			"link": "/guards",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "A healthy Solana node no longer benches itself for half an hour",
 			"summary": "Everything that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) runs through a chain of providers tried in order, and a provider that fails is set aside for a while so callers stop paying for a request that cannot succeed. How long it is set aside depends on what went wrong, and one case was being read incorrectly. Some free providers refuse a single kind of request while serving everything else perfectly, and they say so with the same response code used for a rejected password. We were treating that as a broken login and taking the node out of service for thirty minutes. Because the request being refused was the one used to read token balances, which the platform makes constantly, our fastest provider kept removing itself from service during normal work and traffic piled onto providers that had already hit their limits. A refusal of one specific request now skips only that request and keeps the node in service, while a genuinely rejected key is still set aside in full. Chain reads are noticeably steadier as a result.",
 			"link": null,
@@ -287,6 +308,17 @@
 			"link": "/trades",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "A working example and tutorial for charging other agents to use your tools",
+			"summary": "If you want other people's AI assistants to pay you per call, there is now a complete worked example you can run in a minute and a step-by-step tutorial that builds it with you. The example is a real server with two tools: a free one that explains the prices and how paying works, and a paid one that inspects a 3D model and returns a report on what is wrong with it and how to fix it. It refuses to hand over the report until payment clears, and it refuses to take payment unless it actually produced a report, so a broken link or an unreachable file costs the caller nothing. It ships with fifteen tests, including one whose only job is to prove the paid result cannot escape unpaid.",
+			"link": "/tutorials/monetize-mcp-server",
+			"tags": [
+				"docs",
+				"sdk"
 			]
 		},
 		{
@@ -455,6 +487,17 @@
 			"link": "/forge-max",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Forty-one tutorials that search engines could not see are now indexed",
+			"summary": "The tutorial library, the tutorial text, and the site's page index are three separate files that all have to agree, and they had drifted: forty-one tutorials were live and readable but missing from the sitemap, so search engines and AI assistants never learned they existed. Three more had text written but no card in the library, which meant nobody could find them by browsing either. All of them are now registered and reachable, and a new check runs over the three files and fails when they disagree, so a tutorial can no longer go missing quietly.",
+			"link": "/tutorials",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
@@ -689,6 +732,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The examples page now lists every example that ships, not a hand-picked five",
+			"summary": "The /examples page had six runnable snippets you can execute on the page, then a short section naming five example projects by hand. The repository actually ships 39 of them: complete example agents, installable skill bundles, end-to-end scripts, and an examples folder beside every SDK and published package. The page now lists all of them, with a search box and filters by kind, and each card shows the files the example contains plus the exact command that runs it, with a copy button. The list is built by scanning the repository, so it cannot advertise an example that was deleted or miss one that was added.",
+			"link": "/examples",
+			"tags": [
+				"docs",
+				"improvement"
 			]
 		},
 		{

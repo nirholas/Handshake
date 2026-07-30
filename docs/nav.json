@@ -830,6 +830,10 @@
 					"path": "mcp-tools"
 				},
 				{
+					"label": "MCP tool safety",
+					"path": "mcp-safety"
+				},
+				{
 					"label": "Spatial MCP (3D responses)",
 					"path": "spatial-mcp"
 				},
@@ -1003,6 +1007,10 @@
 				{
 					"label": "Add a 3D avatar assistant",
 					"path": "tutorials/add-a-3d-assistant"
+				},
+				{
+					"label": "Add wallet sign-in",
+					"path": "tutorials/wallet-sign-in"
 				},
 				{
 					"label": "Register on-chain",

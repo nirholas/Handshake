@@ -422,6 +422,16 @@
 			previewModel: '/avatars/cz.glb',
 			ctaPrimary: { label: 'Open the Bazaar', href: '/bazaar' },
 		},
+		{
+			slug: 'earn-and-spend-in-play',
+			tier: 'middle',
+			title: 'Earn and spend in /play',
+			blurb: "Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.",
+			builds: 'A funded character who has run the whole gather → sell → bank loop',
+			time: '25 min',
+			previewModel: '/animations/soldier.glb',
+			ctaPrimary: { label: 'Open /play', href: '/play' },
+		},
 
 		/* ───────────────────────── ADVANCED ───────────────────────── */
 		{

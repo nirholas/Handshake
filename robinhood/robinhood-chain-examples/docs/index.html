@@ -1,695 +1,151 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>robinhood-chain-examples, a darkroom contact sheet of runnable code</title>
-<meta name="description" content="Fourteen runnable Robinhood Chain examples laid out as a photographic contact sheet. Hover a frame to develop it, the real code fades in like film in a tray, click to enlarge. From a raw viem read to a firehose decoder, a Telegram bot, and a paper-trading agent." />
-<link rel="canonical" href="https://nirholas.github.io/robinhood-chain-examples/" />
-<meta name="theme-color" content="#0a0a0b" />
-<meta property="og:type" content="website" />
-<meta property="og:title" content="robinhood-chain-examples, develop the frame to read the code" />
-<meta property="og:description" content="A darkroom contact sheet of fourteen runnable Robinhood Chain examples. Hover to develop each frame; the real code appears like film in developer fluid. Click to enlarge." />
-<meta property="og:url" content="https://nirholas.github.io/robinhood-chain-examples/" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="robinhood-chain-examples, a darkroom contact sheet" />
-<meta name="twitter:description" content="Fourteen runnable Robinhood Chain examples as a contact sheet. Hover to develop the frame, click to enlarge the real code." />
-<meta name="twitter:creator" content="@nichxbt" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0b'/><rect x='6' y='9' width='20' height='14' fill='none' stroke='%23e6e4de' stroke-width='1.6'/><rect x='4' y='6' width='3' height='2.4' fill='%23e6e4de'/><rect x='11' y='6' width='3' height='2.4' fill='%23e6e4de'/><rect x='18' y='6' width='3' height='2.4' fill='%23e6e4de'/><rect x='25' y='6' width='3' height='2.4' fill='%23e6e4de'/><rect x='4' y='23.6' width='3' height='2.4' fill='%23e6e4de'/><rect x='11' y='23.6' width='3' height='2.4' fill='%23e6e4de'/><rect x='18' y='23.6' width='3' height='2.4' fill='%23e6e4de'/><rect x='25' y='23.6' width='3' height='2.4' fill='%23e6e4de'/></svg>" />
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"robinhood-chain-examples","description":"Fourteen runnable example projects for Robinhood Chain (chain ID 4663), from a raw viem price read to a sequencer-firehose decoder, a Telegram bot, and a paper-trading agent, presented as a darkroom contact sheet.","codeRepository":"https://github.com/nirholas/robinhood-chain-examples","programmingLanguage":"JavaScript","runtimePlatform":"Node.js >= 20","author":{"@type":"Person","name":"nirholas","url":"https://x.com/nichxbt"},"license":"https://github.com/nirholas/robinhood-chain-examples/blob/main/LICENSE"}
-</script>
-<style>
-  :root{
-    --ink:#0a0a0b; --film:#17171a; --paper:#e6e4de; --graphite:#79776f; --dim:#4a4842;
-    --hair:rgba(230,228,222,.13); --hair2:rgba(230,228,222,.26);
-    --mono:ui-monospace,"SFMono-Regular","JetBrains Mono","Menlo","Consolas",monospace;
-    --grot:"Helvetica Neue","Inter","Arial",system-ui,sans-serif;
-    --ease:cubic-bezier(.16,1,.3,1);
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{background:var(--ink); color:var(--paper); font-family:var(--grot);
-    font-size:clamp(14px,1.1vw,17px); line-height:1.5; overflow-x:hidden; -webkit-font-smoothing:antialiased}
-  ::selection{background:var(--paper); color:var(--ink)}
-  a{color:inherit}
-  .mono{font-family:var(--mono)}
-  b{font-weight:700}
-
-  /* darkroom grain, static, cheap */
-  body::before{content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
-    background:
-      radial-gradient(120% 90% at 50% -20%, rgba(230,228,222,.045), transparent 55%),
-      radial-gradient(140% 90% at 50% 120%, rgba(0,0,0,.55), transparent 55%);}
-  @media(prefers-reduced-motion:reduce){*{animation-duration:.001s!important; transition-duration:.001s!important}}
-
-  main{position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:0 clamp(16px,3.4vw,52px)}
-
-  /* ---- film edge header ---- */
-  .edge{display:flex; align-items:center; gap:14px; padding:16px 0 10px;
-    font:600 10px/1 var(--mono); letter-spacing:.26em; text-transform:uppercase; color:var(--graphite)}
-  .edge .sprk{flex:1; height:12px; background:
-    repeating-linear-gradient(90deg, var(--hair2) 0 8px, transparent 8px 20px);
-    -webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
-    mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-  .edge .brand{color:var(--paper)}
-
-  header.hero{padding:clamp(30px,6vh,74px) 0 clamp(24px,4vh,44px); border-bottom:1px solid var(--hair)}
-  .eyebrow{font:600 11px/1 var(--mono); letter-spacing:.3em; text-transform:uppercase; color:var(--graphite);
-    display:flex; align-items:center; gap:12px; margin-bottom:24px}
-  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hair)}
-  .eyebrow .n{color:var(--paper)}
-  h1{font-weight:700; letter-spacing:-.03em; line-height:.97; font-size:clamp(38px,7vw,98px)}
-  h1 .lo{color:var(--graphite)}
-  .lede{max-width:60ch; margin-top:24px; font-size:clamp(16px,1.55vw,21px); line-height:1.45; color:#c5c2bb}
-  .metarow{display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:26px;
-    font:600 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--graphite)}
-  .metarow b{color:var(--paper); font-weight:700}
-  .metarow .devcount b{transition:color .3s}
-
-  .hint{margin-top:22px; font:500 12px/1 var(--mono); letter-spacing:.04em; color:var(--graphite);
-    display:inline-flex; align-items:center; gap:10px}
-  .hint svg{width:26px; height:26px}
-  @media(hover:none){.hint .desk{display:none}}
-  @media(hover:hover){.hint .touch{display:none}}
-
-  /* ================= CONTACT SHEET ================= */
-  .sheet{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr));
-    gap:clamp(20px,2.4vw,34px); padding:clamp(30px,5vh,58px) 0}
-  @media(max-width:640px){.sheet{grid-template-columns:1fr; gap:26px}}
-
-  .frame{position:relative; cursor:pointer; -webkit-tap-highlight-color:transparent;
-    outline:none; background:transparent; border:0; text-align:left; font:inherit; color:inherit; padding:0}
-  .frame:focus-visible .cell{box-shadow:0 0 0 2px var(--paper)}
-
-  /* sprocket rails top+bottom */
-  .cell{position:relative; background:var(--film); border:1px solid var(--hair2);
-    aspect-ratio:4/3; overflow:hidden; transition:border-color .3s, transform .4s var(--ease)}
-  .frame:hover .cell{border-color:var(--hair2); transform:translateY(-3px)}
-  .cell::before,.cell::after{content:""; position:absolute; left:0; right:0; height:11px; z-index:3;
-    background:repeating-linear-gradient(90deg, rgba(10,10,11,.9) 0 7px, transparent 7px 17px);
-    pointer-events:none}
-  .cell::before{top:0; border-bottom:1px solid var(--hair)}
-  .cell::after{bottom:0; border-top:1px solid var(--hair)}
-
-  /* frame code + note, grease-pencil register marks */
-  .reg{position:absolute; z-index:4; font:600 10px/1 var(--mono); letter-spacing:.14em; color:var(--graphite); pointer-events:none}
-  .reg.tl{top:14px; left:12px; color:var(--paper)}
-  .reg.br{bottom:14px; right:12px}
-
-  /* the latent negative → develops on hover */
-  .neg{position:absolute; inset:11px 0; z-index:1; padding:16px 16px 14px; overflow:hidden}
-  .code{font:500 11.5px/1.62 var(--mono); white-space:pre; color:var(--paper);
-    opacity:.05; transform:translateZ(0); transition:opacity .75s var(--ease); letter-spacing:0}
-  .code .cm{color:var(--graphite)}
-  .code .st{color:#b7b4ac}
-  @media(max-width:640px){.code{font-size:12px}}
-
-  /* developer-fluid wash: a meniscus sweeps down once */
-  .fluid{position:absolute; inset:0; z-index:2; pointer-events:none; opacity:0;
-    background:linear-gradient(180deg, transparent 0%, rgba(230,228,222,.10) 46%, rgba(230,228,222,.16) 50%, transparent 62%);
-    transform:translateY(-100%);}
-  .frame.dev .code{opacity:1}
-  .frame.dev .fluid{animation:wash .85s var(--ease) forwards}
-  @keyframes wash{0%{opacity:.9; transform:translateY(-100%)}100%{opacity:0; transform:translateY(110%)}}
-
-  /* grain that settles as it develops */
-  .grain{position:absolute; inset:11px 0; z-index:2; pointer-events:none; opacity:.5; mix-blend-mode:overlay;
-    background-image:repeating-linear-gradient(0deg, rgba(230,228,222,.05) 0 1px, transparent 1px 2px),
-      repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 1px, transparent 1px 2px);
-    transition:opacity .75s var(--ease)}
-  .frame.dev .grain{opacity:.14}
-
-  /* undeveloped hint badge */
-  .latent{position:absolute; inset:0; z-index:2; display:flex; align-items:center; justify-content:center;
-    pointer-events:none; transition:opacity .5s var(--ease)}
-  .latent span{font:600 10px/1 var(--mono); letter-spacing:.24em; text-transform:uppercase; color:var(--dim);
-    border:1px solid var(--hair); padding:8px 12px}
-  .frame.dev .latent{opacity:0}
-
-  /* grease-pencil ring on recommended frames */
-  .ring{position:absolute; z-index:5; inset:-6px; pointer-events:none; opacity:.7}
-  .ring path{fill:none; stroke:var(--paper); stroke-width:1.4; stroke-linecap:round; opacity:.55}
-
-  /* caption strip below the cell */
-  .cap{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:12px 2px 0}
-  .cap .nm{font-size:clamp(15px,1.5vw,18px); font-weight:600; letter-spacing:-.01em}
-  .cap .nm small{display:block; font:500 12.5px/1.4 var(--grot); color:#9a978f; margin-top:3px; letter-spacing:0}
-  .cap .df{font:600 9.5px/1.5 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--graphite);
-    white-space:nowrap; border:1px solid var(--hair2); padding:5px 8px}
-  .frame.unbuilt .cell{background:repeating-linear-gradient(135deg, var(--film) 0 9px, #131315 9px 18px)}
-  .frame.unbuilt .cap .df{color:var(--dim)}
-
-  /* ================= LIGHTBOX ================= */
-  .lb{position:fixed; inset:0; z-index:80; display:none; background:rgba(6,6,7,.86);
-    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); padding:clamp(14px,4vw,54px);
-    align-items:center; justify-content:center; opacity:0; transition:opacity .3s var(--ease)}
-  .lb.open{display:flex; opacity:1}
-  .lb-inner{position:relative; width:min(920px,100%); max-height:92vh; overflow:auto;
-    background:var(--film); border:1px solid var(--hair2);
-    transform:translateY(14px) scale(.985); transition:transform .4s var(--ease)}
-  .lb.open .lb-inner{transform:none}
-  .lb-inner::before,.lb-inner::after{content:""; position:sticky; left:0; right:0; height:13px; display:block; z-index:2;
-    background:repeating-linear-gradient(90deg, var(--ink) 0 8px, transparent 8px 20px)}
-  .lb-inner::before{top:0; border-bottom:1px solid var(--hair)}
-  .lb-inner::after{bottom:0; border-top:1px solid var(--hair)}
-  .lb-head{display:flex; justify-content:space-between; align-items:flex-start; gap:18px; padding:22px clamp(20px,3vw,34px) 6px}
-  .lb-head .code-id{font:600 11px/1 var(--mono); letter-spacing:.2em; color:var(--graphite)}
-  .lb-head h3{font-size:clamp(22px,2.6vw,32px); font-weight:700; letter-spacing:-.02em; line-height:1.05; margin-top:8px}
-  .lb-head .sub{margin-top:10px; font-size:15px; color:#c5c2bb; max-width:56ch; line-height:1.45}
-  .lb-x{appearance:none; flex-shrink:0; background:transparent; border:1px solid var(--hair2); color:var(--paper);
-    font:600 11px/1 var(--mono); letter-spacing:.12em; padding:10px 13px; cursor:pointer; transition:background .2s}
-  .lb-x:hover{background:rgba(230,228,222,.1)}
-  .lb-body{padding:16px clamp(20px,3vw,34px) 8px}
-  .lb-code{border:1px solid var(--hair2); background:var(--ink); padding:20px 20px; overflow-x:auto;
-    font:500 13px/1.7 var(--mono); white-space:pre; color:var(--paper)}
-  .lb-code .cm{color:var(--graphite)} .lb-code .st{color:#b7b4ac}
-  .lb-meta{display:grid; grid-template-columns:120px 1fr; gap:0; margin:20px 0 6px; border-top:1px solid var(--hair)}
-  .lb-meta .k{font:600 10px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--graphite);
-    padding:14px 0; border-bottom:1px solid var(--hair)}
-  .lb-meta .v{padding:14px 0; border-bottom:1px solid var(--hair); font-size:14.5px; color:#d6d3cc; word-break:break-word}
-  .lb-meta .v.mono{font-family:var(--mono); font-size:13px}
-  .lb-foot{display:flex; flex-wrap:wrap; gap:12px; padding:8px clamp(20px,3vw,34px) 26px}
-  .lb-run{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:6px 0 2px}
-  .a{appearance:none; text-decoration:none; border:1px solid var(--paper); color:var(--paper); background:transparent;
-    font:600 11px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; padding:12px 18px; cursor:pointer;
-    transition:background .2s,color .2s,transform .25s var(--ease)}
-  .a:hover{background:var(--paper); color:var(--ink); transform:translateY(-2px)}
-  .a.solid{background:var(--paper); color:var(--ink)}
-  .a.solid:hover{background:transparent; color:var(--paper)}
-
-  /* ================= FOOTER SECTIONS ================= */
-  section{padding:clamp(44px,7vh,88px) 0; border-top:1px solid var(--hair)}
-  h2{font-weight:700; letter-spacing:-.03em; line-height:1; font-size:clamp(26px,4.4vw,52px)}
-  .cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,5vw,72px); align-items:start; margin-top:6px}
-  @media(max-width:840px){.cols{grid-template-columns:1fr; gap:30px}}
-  .install{border:1px solid var(--hair2); background:rgba(230,228,222,.03); padding:20px 22px;
-    font:500 13.5px/1.9 var(--mono); position:relative; overflow-x:auto}
-  .install .c{color:var(--graphite)} .install .p::before{content:"$ "; color:var(--graphite)}
-  .copy{position:absolute; top:12px; right:12px; appearance:none; border:1px solid var(--hair2); background:transparent;
-    color:var(--paper); font:600 10px/1 var(--mono); letter-spacing:.14em; padding:7px 11px; cursor:pointer; transition:background .2s}
-  .copy:hover{background:rgba(230,228,222,.1)}
-  .lede2{max-width:58ch; font-size:clamp(16px,1.55vw,20px); color:#c5c2bb; line-height:1.5}
-  .notelist{list-style:none; margin-top:20px; border-top:1px solid var(--hair)}
-  .notelist li{position:relative; padding:13px 0 13px 26px; border-bottom:1px solid var(--hair); font-size:15px; color:#c5c2bb; line-height:1.5}
-  .noteList li:last-child, .notelist li:last-child{border-bottom:0}
-  .notelist li::before{content:"\2192"; position:absolute; left:0; top:13px; color:var(--graphite); font-family:var(--mono)}
-  .notelist li b{color:var(--paper)}
-  .btns{display:flex; flex-wrap:wrap; gap:12px; margin-top:24px}
-
-  footer{padding:clamp(38px,6vh,64px) 0; display:flex; flex-wrap:wrap; justify-content:space-between; gap:22px; align-items:flex-end; border-top:1px solid var(--hair)}
-  footer .big{font:700 clamp(28px,5.6vw,60px)/.92 var(--grot); letter-spacing:-.03em}
-  footer .meta{font:500 12px/1.7 var(--mono); color:var(--graphite); text-align:right}
-  footer a{text-decoration:none; border-bottom:1px solid var(--hair2); transition:border-color .2s}
-  footer a:hover{border-color:var(--paper)}
-</style>
-</head>
-<body>
-<main>
-  <div class="edge" aria-hidden="true">
-    <span class="brand">ROBINHOOD-CHAIN</span><span class="sprk"></span><span>EXAMPLES · 4663 · ISO&#8202;monochrome</span>
-  </div>
-
-  <header class="hero">
-    <div class="eyebrow"><span class="n">00</span> / CONTACT SHEET · develop to read</div>
-    <h1>Fourteen frames.<br><span class="lo">Develop the code.</span></h1>
-    <p class="lede">A contact sheet of runnable Robinhood Chain examples. Each frame is a latent negative until you touch it: hover and the real source develops in like film in a tray. Click any frame to enlarge it, read the whole thing, and copy the command that runs it.</p>
-    <div class="metarow">
-      <span>chain <b>4663</b></span>
-      <span><b>14</b> frames</span>
-      <span><b>10</b> runnable · <b>4</b> awaiting deps</span>
-      <span class="devcount">developed <b id="devnum">0</b> / 14</span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gallery · Robinhood Chain Examples</title>
+    <meta name="description" content="Runnable Robinhood Chain examples, from a raw viem read to a live dashboard." />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="./index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
     </div>
-    <div class="hint">
-      <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="9" stroke="#79776f" stroke-width="1.5"/><path d="M23 23 L32 32" stroke="#79776f" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span class="desk">hover to develop &#183; click to enlarge &#183; 1-9 jumps a frame</span>
-      <span class="touch">tap a frame to develop &#183; tap again to enlarge</span>
-    </div>
-  </header>
+    <div class="wrap">
+<h1>Robinhood Chain Examples</h1>
+<p class="hero-sub">14 small, runnable projects for Robinhood Chain (mainnet 4663 / testnet 46630) —
+from a raw viem read to a live dashboard, a Telegram bot, and a paper trader. Every read below is real.</p>
 
-  <div class="sheet" id="sheet" aria-label="Example contact sheet"></div>
-
-  <!-- ============ INSTALL ============ -->
-  <section id="run">
-    <div class="eyebrow"><span class="n">01</span> / RUN ANY FRAME</div>
-    <div class="cols">
-      <div>
-        <h2>Every frame runs<br>in under a minute.</h2>
-        <p class="lede2" style="margin-top:22px">Each example is a small, self-contained project. Ten of the fourteen are read-only against the public Robinhood Chain RPC (no wallet, no key, no funds). Enlarge a frame for its exact run command; the pattern is always the same.</p>
-        <div class="btns">
-          <a class="a solid" href="https://github.com/nirholas/robinhood-chain-examples">browse the source</a>
-          <a class="a" href="https://github.com/nirholas/robinhood-chain-sdk">the hoodchain SDK</a>
-        </div>
-      </div>
-      <div>
-        <div class="install">
-          <button class="copy" data-copy="cd examples/01-read-stock-price && npm install && npm start">COPY</button>
-<span class="c"># clone, pick a frame, run it</span>
-<span class="p">git clone https://github.com/nirholas/robinhood-chain-examples</span>
-<span class="p">cd examples/01-read-stock-price</span>
-<span class="p">npm install</span>
-<span class="p">npm start</span>
-<span class="c"># reads AAPL's Chainlink feed on chain 4663, no key</span>
-        </div>
-        <p class="lede2" style="margin-top:16px; font-size:14.5px; color:#9a978f">Node &#8805; 20. Only two examples take a secret: a funded testnet key to <em>execute</em> a swap (04), and a Telegram bot token (12). Everything else reads straight from the public RPC.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ THE FOUR BLANKS ============ -->
-  <section id="gaps">
-    <div class="eyebrow"><span class="n">02</span> / THE FOUR BLANK FRAMES</div>
-    <div class="cols">
-      <div>
-        <h2>Four frames are<br>unexposed on purpose.</h2>
-        <p class="lede2" style="margin-top:22px">Examples 09, 10, 11 and 13 depend on sibling packages that haven't shipped yet. Rather than fake them, they ship as blank frames with a note explaining exactly what's missing, so the contact sheet stays honest about the state of the roll.</p>
-      </div>
-      <div>
-        <ul class="notelist">
-          <li><b>09 &#183; 10</b> pay for and sell an API over x402, blocked on <span class="mono">hood-api</span> and <span class="mono">hood402</span>. USDG has no EIP-2612 permit, so the approve step ships from day one.</li>
-          <li><b>11</b> a scripted MCP client driving chain tools, blocked on <span class="mono">hood-mcp</span>.</li>
-          <li><b>13</b> launching a token on testnet, blocked on <span class="mono">hood-launcher</span>. The launchpad factory addresses already live in the SDK.</li>
-          <li>Every published frame (01-08, 12, 14) worked first try against the real registry, feeds, and testnet pools, no workarounds needed.</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <footer>
-    <div class="big">develop<br>the roll.</div>
-    <div class="meta">
-      Robinhood Chain · ID 4663 · testnet 46630<br>
-      <a href="https://github.com/nirholas/robinhood-chain-examples">github.com/nirholas/robinhood-chain-examples</a><br>
-      <a href="https://github.com/nirholas/robinhood-chain-sdk">the hoodchain SDK</a><br>
-      built by <a href="https://x.com/nichxbt">@nichxbt</a> · <a href="https://three.ws">three.ws</a> · not affiliated with Robinhood Markets
-    </div>
-  </footer>
-</main>
-
-<!-- lightbox -->
-<div class="lb" id="lb" role="dialog" aria-modal="true" aria-labelledby="lb-title">
-  <div class="lb-inner">
-    <div class="lb-head">
-      <div>
-        <div class="code-id" id="lb-id"></div>
-        <h3 id="lb-title"></h3>
-        <div class="sub" id="lb-sub"></div>
-      </div>
-      <button class="lb-x" id="lb-x" aria-label="Close">CLOSE &#215;</button>
-    </div>
-    <div class="lb-body">
-      <div class="lb-code" id="lb-code"></div>
-      <div class="lb-meta" id="lb-meta"></div>
-      <div class="lb-run" id="lb-run"></div>
-    </div>
-    <div class="lb-foot" id="lb-foot"></div>
+<div class="embed-frame">
+  <iframe src="embed/07-live-price-webpage.html" title="Live Robinhood Chain Stock Token prices" loading="lazy"></iframe>
+  <div class="embed-label">
+    <span>Example 07, running live — client-side JSON-RPC, no backend.</span>
+    <a href="examples/07-live-price-webpage/index.html">How it works →</a>
   </div>
 </div>
 
-<script>
-"use strict";
-/* =====================================================================
-   Every code excerpt below is a trimmed, real capture from the actual
-   example's source in this repo, nothing invented. Fields (demonstrates,
-   difficulty, run) mirror the repo README's example table exactly.
-   ===================================================================== */
-const FRAMES = [
-  { id:'01', reg:'01A', dir:'01-read-stock-price', star:true, built:true,
-    name:'read-stock-price', diff:'Beginner',
-    sub:"Read one Stock Token's Chainlink price feed with viem only, no SDK, every address and ABI spelled out by hand.",
-    run:'cd examples/01-read-stock-price && npm install && npm start',
-    needs:'none, read-only, public RPC',
-    code:
-`import { createPublicClient, http, formatUnits } from 'viem'
-import { robinhood } from 'viem/chains'
+<div class="section-title">Which package do I need?</div>
+<table>
+  <thead><tr><th>You want to…</th><th>Use</th><th>Try</th></tr></thead>
+  <tbody>
+    <tr><td>Read one price, no dependency</td><td><code>viem</code> only</td><td>Example 01</td></tr>
+    <tr><td>Read prices / portfolios in a Node script</td><td><code>hoodchain</code></td><td>Examples 02, 03</td></tr>
+    <tr><td>Ship a static page with live prices</td><td><code>hoodchain</code>-derived raw RPC (no build step)</td><td>Example 07</td></tr>
+    <tr><td>Build a React app</td><td><code>hoodchain</code> + a local hook (hoodkit not shipped yet)</td><td>Example 08</td></tr>
+    <tr><td>Trade or launch on-chain</td><td><code>hoodchain</code>'s <code>swap</code> / <code>launchpads</code> modules</td><td>Examples 04, 05, 14</td></tr>
+    <tr><td>Charge or pay for an API call</td><td><code>hood402</code> (not shipped yet)</td><td>Examples 09, 10</td></tr>
+    <tr><td>Give an LLM agent chain tools</td><td><code>hood-mcp</code> (not shipped yet)</td><td>Example 11</td></tr>
+  </tbody>
+</table>
 
-// Stock Token -> its Chainlink feed (8-decimal answers)
-const FEEDS = { AAPL: { feed: '0x6B22…2cD0' } }
-
-const client = createPublicClient({ chain: robinhood, transport: http() })
-const [, answer] = await client.readContract({
-  address: FEEDS.AAPL.feed, abi: aggregatorV3Abi,
-  functionName: 'latestRoundData',
-})
-console.log('AAPL', formatUnits(answer, 8))` },
-
-  { id:'02', reg:'02A', dir:'02-stock-price-sdk', star:true, built:true,
-    name:'stock-price-sdk', diff:'Beginner',
-    sub:"The same read in three lines using hoodchain's bundled 95-token registry and typed errors.",
-    run:'cd examples/02-stock-price-sdk && npm install && npm start',
-    needs:'none, read-only, public RPC',
-    code:
-`import { createHoodClient, getQuote } from 'hoodchain'
-
-const hood = createHoodClient() // mainnet 4663, public RPC
-const q = await getQuote(hood, 'AAPL')
-
-console.log(\`AAPL $\${q.priceUsd.toFixed(2)}  feed \${q.feed}\`)
-// typed errors: UnknownSymbolError, FeedNotFoundError,
-//               StaleFeedError, never a silent NaN` },
-
-  { id:'03', reg:'03B', dir:'03-portfolio-valuation', built:true,
-    name:'portfolio-valuation', diff:'Intermediate',
-    sub:'Multiplier-correct valuation, the ERC-8056 uiMultiplier math generic trackers get wrong, swept across all 95 tokens in one multicall.',
-    run:'cd examples/03-portfolio-valuation && npm install && npm start',
-    needs:'none, read-only, public RPC',
-    code:
-`import { createHoodClient, getPortfolio } from 'hoodchain'
-
-const hood = createHoodClient()
-// one multicall sweeps all 95 tokens
-const p = await getPortfolio(hood, owner,
-  { maxAgeSeconds: 7 * 24 * 3600 })
-
-// value  = balance × feedPrice   (feed is ALREADY adjusted)
-// shares = balance × uiMultiplier ÷ 1e18
-// applying the multiplier twice is the classic bug` },
-
-  { id:'04', reg:'04A', dir:'04-swap-memecoin', built:true,
-    name:'swap-memecoin', diff:'Intermediate',
-    sub:'Quote (and, with a funded key, execute) a Uniswap v3 swap on testnet, the same code path swaps mainnet memecoins.',
-    run:'ROBINHOOD_CHAIN_PRIVATE_KEY=0x… node index.js --execute',
-    needs:'quote: none · execute: a funded testnet key',
-    code:
-`import { createHoodClient, quoteSwap, executeSwap } from 'hoodchain'
-
-const reader = createHoodClient({ chain: 'testnet' })
-const quote  = await quoteSwap(reader,
-  { tokenIn, tokenOut, amountIn })
-
-console.log('out', formatUnits(quote.amountOut, 18), 'NFLX')
-
-// no key -> print the quote and stop.
-// it never fabricates a transaction.
-if (!execute) process.exit(0)` },
-
-  { id:'05', reg:'05B', dir:'05-watch-launches', built:true,
-    name:'watch-launches', diff:'Intermediate',
-    sub:'Stream NOXA and The Odyssey launchpad activity into one Launch shape.',
-    run:'cd examples/05-watch-launches && npm install && npm start',
-    needs:'none, read-only, public RPC',
-    code:
-`import { createHoodClient, getRecentLaunches,
-         watchLaunches } from 'hoodchain'
-
-const hood = createHoodClient()
-const recent = await getRecentLaunches(hood,
-  { lookbackBlocks: 1_000_000n })
-
-// NOXA (instant Uniswap) + The Odyssey (bonding curve)
-// collapse into ONE Launch shape
-const stop = watchLaunches(hood, (l) =>
-  console.log(l.launchpad, l.token, l.pool ?? '(on curve)'))` },
-
-  { id:'06', reg:'06A', dir:'06-firehose', built:true,
-    name:'firehose', diff:'Advanced',
-    sub:'Decode the raw Arbitrum Nitro sequencer feed into typed transactions ~100-300ms before RPC sees them.',
-    run:'cd examples/06-firehose && npm install && npm start',
-    needs:'none, read-only, sequencer feed',
-    code:
-`import { subscribeFeed } from 'hoodchain'
-
-// wss://feed.mainnet.chain.robinhood.com
-// decode each frame ~100-300ms BEFORE RPC can answer
-const stop = subscribeFeed((tx) => {
-  if (matches(tx))
-    console.log(tx.transaction.hash, tx.transaction.to)
-})
-
-// front-of-block awareness, no node to run` },
-
-  { id:'07', reg:'07A', dir:'07-live-price-webpage', star:true, built:true,
-    name:'live-price-webpage', diff:'Beginner',
-    sub:'A dependency-free index.html showing live prices for 11 Stock Tokens via client-side JSON-RPC.',
-    run:'cd examples/07-live-price-webpage && npm install && npm start',
-    needs:'none, zero dependencies, no build step',
-    code:
-`<!-- zero dependencies, no build step -->
-<script>
-const RPC = 'https://rpc.mainnet.chain.robinhood.com'
-async function price(feed) {
-  const r = await fetch(RPC, { method: 'POST',
-    body: JSON.stringify({ jsonrpc:'2.0', id:1,
-      method:'eth_call',
-      params:[{ to: feed, data:'0xfeaf968c' }, 'latest'] })})
-  // decode latestRoundData by hand -> paint it
-}
-<\/script>` },
-
-  { id:'08', reg:'08B', dir:'08-portfolio-dashboard', built:true,
-    name:'portfolio-dashboard', diff:'Intermediate',
-    sub:'A Vite + React dashboard wrapping example 03 in a polling hook with designed loading, empty and error states.',
-    run:'cd examples/08-portfolio-dashboard && npm install && npm run dev',
-    needs:'none, read-only, public RPC',
-    code:
-`import { createHoodClient, getPortfolio } from 'hoodchain'
-
-// local stand-in for hoodkit's useHoodPortfolio (Wave 2)
-export function useHoodPortfolio(owner, { pollMs = 20000 } = {}) {
-  const [state, setState] =
-    useState({ status: 'idle', portfolio: null })
-  // polls getPortfolio; loading / empty / error all designed
-  // upgrading later is a one-line import swap to hoodkit
-}` },
-
-  { id:'09', reg:'09·', dir:'09-x402-paid-api-call', built:false,
-    name:'x402-paid-api-call', diff:'Not built',
-    sub:'A client paying a hood-api endpoint via hood402. Blocked until those packages ship.',
-    run:'blocked on hood-api, hood402',
-    needs:'hood-api + hood402 (not shipped)',
-    note:'UNEXPOSED',
-    code:
-`// blocked on hood-api + hood402
-//
-// A client pays a metered endpoint in USDG over x402,
-// then reads the response.
-//
-// USDG has NO EIP-2612 permit, so the flow needs an
-// explicit on-chain approve() baked in from day one.` },
-
-  { id:'10', reg:'10·', dir:'10-x402-sell-your-api', built:false,
-    name:'x402-sell-your-api', diff:'Not built',
-    sub:'A paid endpoint using hood402 middleware. Blocked until hood402 ships.',
-    run:'blocked on hood402',
-    needs:'hood402 (not shipped)',
-    note:'UNEXPOSED',
-    code:
-`// blocked on hood402
-//
-// A server wraps a route in hood402 middleware:
-//   402 Payment Required -> verify USDG payment -> serve.
-//
-// The natural next build on top of hoodchain, the
-// launchpad + registry plumbing already exists.` },
-
-  { id:'11', reg:'11·', dir:'11-mcp-agent-session', built:false,
-    name:'mcp-agent-session', diff:'Not built',
-    sub:'A scripted MCP client driving hood-mcp tools. Blocked until hood-mcp ships.',
-    run:'blocked on hood-mcp',
-    needs:'hood-mcp (not shipped)',
-    note:'UNEXPOSED',
-    code:
-`// blocked on hood-mcp
-//
-// A scripted MCP client calls typed chain tools ·
-// getQuote, getPortfolio, getRecentLaunches, so an
-// LLM agent can read chain 4663 without touching RPC.
-//
-// A thin wrap of the SDK once hood-mcp lands.` },
-
-  { id:'12', reg:'12A', dir:'12-telegram-price-bot', built:true,
-    name:'telegram-price-bot', diff:'Intermediate',
-    sub:'A grammY Telegram bot: /price AAPL, /trending, deployable on any free tier.',
-    run:'TELEGRAM_BOT_TOKEN=… node index.js',
-    needs:'a free Telegram bot token from @BotFather',
-    code:
-`import { Bot } from 'grammy'
-import { createHoodClient, getQuote,
-         getRecentLaunches } from 'hoodchain'
-
-const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN)
-bot.command('price', async (ctx) => {
-  const q = await getQuote(hood, symbol)
-  ctx.reply(\`\${symbol} $\${q.priceUsd.toFixed(2)}\`)
-})
-bot.start() // long-polling, no webhook, free-tier ready` },
-
-  { id:'13', reg:'13·', dir:'13-launch-a-coin-testnet', built:false,
-    name:'launch-a-coin-testnet', diff:'Not built',
-    sub:"Launching a token via hood-launcher's direct rail. Blocked until hood-launcher ships.",
-    run:'blocked on hood-launcher',
-    needs:'hood-launcher (not shipped)',
-    note:'UNEXPOSED',
-    code:
-`// blocked on hood-launcher
-//
-// Launch a token on the NOXA / Odyssey factory from a
-// script, on testnet 46630 first.
-//
-// Factory addresses already live in the SDK's
-// launchpads.ts, the wrap is thin.` },
-
-  { id:'14', reg:'14B', dir:'14-agent-paper-trader', built:true,
-    name:'agent-paper-trader', diff:'Intermediate',
-    sub:'A minimal momentum strategy loop polling real prices, simulating fills against a virtual USDG balance, no real funds.',
-    run:'cd examples/14-agent-paper-trader && npm install && npm start',
-    needs:'none, read-only, paper fills in memory',
-    code:
-`import { createHoodClient, getQuote } from 'hoodchain'
-
-// virtual USDG balance, no wallet, no real funds
-const book = new Map(SYMBOLS.map((s) =>
-  [s, { high: null, position: null }]))
-
-// BUY  when price is >= DIP_PCT below the session high
-// SELL when price is >= TAKE_PROFIT_PCT above entry
-// every fill logged in memory only, paper mode` },
-];
-
-const REPO = 'https://github.com/nirholas/robinhood-chain-examples/tree/main/examples/';
-
-/* one-line captions for the contact strip */
-const TAGS = {
-  '01':'Raw viem, no SDK', '02':'Three lines with hoodchain',
-  '03':'Multiplier-correct across 95 tokens', '04':'Uniswap v3 quote + guarded execute',
-  '05':'NOXA + Odyssey into one stream', '06':'Sequencer feed, decoded early',
-  '07':'Zero-dependency price page', '08':'Vite + React dashboard',
-  '09':'Pay an API over x402', '10':'Sell an API over x402',
-  '11':'MCP tools for an agent', '12':'grammY Telegram price bot',
-  '13':'Launch a token from a script', '14':'Paper-trading strategy loop',
-};
-
-/* ---- monochrome pseudo-highlight: comments + strings only ---- */
-function hi(src){
-  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const lines = src.split('\n').map(line=>{
-    const ci = line.indexOf('//');
-    // avoid matching // inside a string/url roughly: only treat as comment if not preceded by ':' url pattern is rare here
-    if(ci>=0 && !/https?:$/.test(line.slice(0,ci))){
-      const before = esc(line.slice(0,ci));
-      const comment = esc(line.slice(ci));
-      return hiStrings(before) + '<span class="cm">'+comment+'</span>';
-    }
-    return hiStrings(esc(line));
-  });
-  return lines.join('\n');
-}
-function hiStrings(escaped){
-  return escaped.replace(/(&#39;|&quot;|')([^'"&]*?)(&#39;|&quot;|')/g, m=>'<span class="st">'+m+'</span>')
-                .replace(/(`[^`]*`)/g, m=>'<span class="st">'+m+'</span>');
-}
-
-/* ---- build the sheet ---- */
-const sheet = document.getElementById('sheet');
-const developed = new Set();
-const devnum = document.getElementById('devnum');
-
-const ringPaths = [
-  'M30 8 C 8 6, 4 40, 30 46 C 62 52, 66 4, 34 6',
-  'M28 6 C 4 12, 8 44, 34 46 C 64 48, 62 2, 30 8',
-];
-
-FRAMES.forEach((f, idx)=>{
-  const btn = document.createElement('button');
-  btn.className = 'frame' + (f.built?'':' unbuilt');
-  btn.type = 'button';
-  btn.setAttribute('aria-label', `Frame ${f.id}: ${f.name}, ${f.built?'develop and enlarge':'unexposed frame'}`);
-  btn.dataset.idx = idx;
-  btn.innerHTML =
-    `<div class="cell">
-       ${f.star?`<svg class="ring" viewBox="0 0 72 54" preserveAspectRatio="none" aria-hidden="true"><path d="${ringPaths[idx%ringPaths.length].replace(/(\d+)/g,(n)=>Math.round(n*0.98))}"/></svg>`:''}
-       <span class="reg tl">${f.reg}</span>
-       <span class="reg br">${f.built?'● exp':'✕ blank'}</span>
-       <div class="neg"><pre class="code">${hi(f.code)}</pre></div>
-       <div class="grain"></div>
-       <div class="fluid"></div>
-       <div class="latent"><span>${f.note||'latent · develop'}</span></div>
-     </div>
-     <div class="cap">
-       <span class="nm">${f.name}<small>${TAGS[f.id]||''}.</small></span>
-       <span class="df">${f.diff}</span>
-     </div>`;
-  sheet.appendChild(btn);
-
-  let devd = false, swallow = false;
-  function develop(){
-    if(devd) return; devd = true;
-    btn.classList.add('dev');
-    if(!developed.has(f.id)){ developed.add(f.id); devnum.textContent = developed.size; }
-  }
-  btn.addEventListener('pointerenter', e=>{ if(e.pointerType!=='touch') develop(); });
-  btn.addEventListener('focus', develop);
-  btn.addEventListener('pointerdown', e=>{
-    if(e.pointerType==='touch' && !devd){ develop(); swallow = true; }
-  });
-  btn.addEventListener('click', ()=>{
-    if(swallow){ swallow = false; return; } // first touch only developed the frame
-    develop(); openLB(idx);
-  });
-});
-
-/* ---- keyboard: 1-9 develop+enlarge that frame ---- */
-addEventListener('keydown', e=>{
-  if(lb.classList.contains('open')){
-    if(e.key==='Escape') closeLB();
-    return;
-  }
-  const n = parseInt(e.key,10);
-  if(n>=1 && n<=9){ openLB(n-1); }
-});
-
-/* ---- lightbox ---- */
-const lb = document.getElementById('lb');
-const lbId = document.getElementById('lb-id');
-const lbTitle = document.getElementById('lb-title');
-const lbSub = document.getElementById('lb-sub');
-const lbCode = document.getElementById('lb-code');
-const lbMeta = document.getElementById('lb-meta');
-const lbRun = document.getElementById('lb-run');
-const lbFoot = document.getElementById('lb-foot');
-let lastFocus = null;
-
-function openLB(idx){
-  const f = FRAMES[idx]; if(!f) return;
-  lastFocus = document.activeElement;
-  lbId.textContent = `FRAME ${f.reg} · chain 4663`;
-  lbTitle.textContent = f.name;
-  lbSub.textContent = f.sub;
-  lbCode.innerHTML = hi(f.code);
-  lbMeta.innerHTML =
-    `<div class="k">status</div><div class="v">${f.built?'runnable, verified on-chain':'unexposed, awaiting a sibling package'}</div>
-     <div class="k">difficulty</div><div class="v">${f.diff}</div>
-     <div class="k">needs</div><div class="v">${f.needs}</div>`;
-  lbRun.innerHTML = `<div class="install" style="width:100%"><button class="copy" data-copy="${f.run.replace(/"/g,'&quot;')}">COPY</button><span class="${f.built?'p':'c'}">${f.built?f.run:('# '+f.run)}</span></div>`;
-  lbFoot.innerHTML =
-    `<a class="a solid" href="${REPO}${f.dir}">open the folder</a>
-     <a class="a" href="${REPO}${f.dir}#readme">read its walkthrough</a>`;
-  bindCopies(lbRun);
-  lb.classList.add('open');
-  document.body.style.overflow='hidden';
-  document.getElementById('lb-x').focus();
-}
-function closeLB(){
-  lb.classList.remove('open');
-  document.body.style.overflow='';
-  if(lastFocus) lastFocus.focus();
-}
-document.getElementById('lb-x').addEventListener('click', closeLB);
-lb.addEventListener('click', e=>{ if(e.target===lb) closeLB(); });
-
-/* ---- copy buttons ---- */
-function bindCopies(root){
-  root.querySelectorAll('.copy').forEach(btn=>{
-    if(btn.dataset.bound) return; btn.dataset.bound='1';
-    btn.addEventListener('click', e=>{
-      e.stopPropagation();
-      navigator.clipboard.writeText(btn.dataset.copy||'').then(()=>{
-        const t=btn.textContent; btn.textContent='COPIED'; setTimeout(()=>btn.textContent=t,1200);
-      }).catch(()=>{});
-    });
-  });
-}
-bindCopies(document);
-</script>
-</body>
+<div class="section-title">All examples</div>
+<div class="grid">
+<a class="card" href="examples/01-read-stock-price/index.html">
+      <div class="num">01</div>
+      <div class="title">Read a stock price</div>
+      <div class="concept">viem only, no SDK</div>
+      <div class="proves">Robinhood Chain is a normal EVM L2 — viem ships its chain def, Chainlink feeds are a plain readContract.</div>
+      <span class="badge Beginner">Beginner</span>
+    </a>
+<a class="card" href="examples/02-stock-price-sdk/index.html">
+      <div class="num">02</div>
+      <div class="title">Stock price with the SDK</div>
+      <div class="concept">hoodchain basics</div>
+      <div class="proves">hoodchain collapses example 01 to 3 lines and covers all 95 registry tokens.</div>
+      <span class="badge Beginner">Beginner</span>
+    </a>
+<a class="card" href="examples/03-portfolio-valuation/index.html">
+      <div class="num">03</div>
+      <div class="title">Portfolio valuation</div>
+      <div class="concept">ERC-8056 multiplier math</div>
+      <div class="proves">The correct way to value Stock Token holdings without double-counting corporate actions.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/04-swap-memecoin/index.html">
+      <div class="num">04</div>
+      <div class="title">Swap a token</div>
+      <div class="concept">Uniswap v3 quote + execute</div>
+      <div class="proves">One code path quotes and (with a funded key) executes swaps on testnet and mainnet alike.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/05-watch-launches/index.html">
+      <div class="num">05</div>
+      <div class="title">Watch launches</div>
+      <div class="concept">NOXA + Odyssey event streams</div>
+      <div class="proves">Two different launchpad contract shapes decode into one Launch type.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/06-firehose/index.html">
+      <div class="num">06</div>
+      <div class="title">Sequencer firehose</div>
+      <div class="concept">Raw Nitro feed decoding</div>
+      <div class="proves">Transactions are visible ~100–300ms before they hit RPC, straight off the public feed socket.</div>
+      <span class="badge Advanced">Advanced</span>
+    </a>
+<a class="card" href="examples/07-live-price-webpage/index.html">
+      <div class="num">07</div>
+      <div class="title">Live price webpage</div>
+      <div class="concept">Client-side JSON-RPC</div>
+      <div class="proves">Read-only chain calls work from a static page — no backend, no build step, live on this gallery below.</div>
+      <span class="badge Beginner">Beginner</span>
+    </a>
+<a class="card" href="examples/08-portfolio-dashboard/index.html">
+      <div class="num">08</div>
+      <div class="title">Portfolio dashboard</div>
+      <div class="concept">React + polling hook</div>
+      <div class="proves">A production-shaped dashboard (loading/empty/error states) is a thin wrapper over example 03.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/09-x402-paid-api-call/index.html">
+      <div class="num">09</div>
+      <div class="title">Pay for an API call</div>
+      <div class="concept">x402 client</div>
+      <div class="proves">USDG has no EIP-2612 permit, so the gasless rail is EIP-3009 transferWithAuthorization: the payer signs, the server broadcasts.</div>
+      <span class="badge Advanced">Advanced</span>
+    </a>
+<a class="card" href="examples/10-x402-sell-your-api/index.html">
+      <div class="num">10</div>
+      <div class="title">Sell your API</div>
+      <div class="concept">x402 server middleware</div>
+      <div class="proves">Monetizing an endpoint is middleware, not architecture: one paywall() call, and a free route sits beside the paid one.</div>
+      <span class="badge Advanced">Advanced</span>
+    </a>
+<a class="card" href="examples/11-mcp-agent-session/index.html">
+      <div class="num">11</div>
+      <div class="title">MCP agent session</div>
+      <div class="concept">Model Context Protocol</div>
+      <div class="proves">The SDK, an MCP server, and an agent host are three layers over one chain, and read-only tools never share a process with spending ones.</div>
+      <span class="badge Advanced">Advanced</span>
+    </a>
+<a class="card" href="examples/12-telegram-price-bot/index.html">
+      <div class="num">12</div>
+      <div class="title">Telegram price bot</div>
+      <div class="concept">grammY + hoodchain</div>
+      <div class="proves">A full user-facing bot is ~70 lines once the SDK does the chain work.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/13-launch-a-coin-testnet/index.html">
+      <div class="num">13</div>
+      <div class="title">Launch a coin (testnet)</div>
+      <div class="concept">Launchpad direct rail</div>
+      <div class="proves">A launch is a pipeline, not a transaction: screening, ticker uniqueness, artwork, caps and a live preflight all clear before any ETH moves.</div>
+      <span class="badge Advanced">Advanced</span>
+    </a>
+<a class="card" href="examples/14-agent-paper-trader/index.html">
+      <div class="num">14</div>
+      <div class="title">Agent paper trader</div>
+      <div class="concept">Strategy loop, simulated</div>
+      <div class="proves">A strategy loop is just getQuote on a timer — real execution slots in later without a rewrite.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+</div>
+</div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
 </html>

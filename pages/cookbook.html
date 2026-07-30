@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en" class="cookbook-page">
+	<head>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Cookbook</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Runnable recipes for building with three.ws: text to 3D from the command line, parallel asset packs, an MCP tool for your AI assistant, a CI quality gate, and a self-correcting generation loop. Every recipe ships a file you can run."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Cookbook" />
+		<meta
+			property="og:description"
+			content="Runnable recipes for building with three.ws. Every recipe ships a file you can run, against the free and keyless 3D API."
+		/>
+		<meta property="og:url" content="https://three.ws/cookbook" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=learn&amp;t=Cookbook&amp;d=Runnable+recipes+for+building+with+three.ws&amp;p=%2Fcookbook"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Cookbook" />
+		<meta
+			name="twitter:description"
+			content="Runnable recipes for building with three.ws. Every recipe ships a file you can run, against the free and keyless 3D API."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=learn&amp;t=Cookbook&amp;d=Runnable+recipes+for+building+with+three.ws&amp;p=%2Fcookbook"
+		/>
+
+		<link rel="canonical" href="https://three.ws/cookbook" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/cookbook.css" />
+		<script defer src="/nav.js"></script>
+		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/cookbook-manifest.js"></script>
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+			integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
+			crossorigin="anonymous"
+		></script>
+	</head>
+	<body>
+		<div class="cb-page">
+			<header></header>
+
+			<section class="cb-hero">
+				<div class="cb-hero-inner">
+					<span class="cb-eyebrow">Cookbook</span>
+					<h1>Recipes you can run.</h1>
+					<p>
+						Not walkthroughs. Every recipe here is a real file that was executed against the
+						live API before it was published: a command-line tool, a batch pipeline, an MCP
+						server, a CI gate, a self-correcting agent loop. Copy one, run it, change it.
+					</p>
+					<div class="cb-hero-meta">
+						<span><strong id="cb-total">0</strong> recipes</span>
+						<span>Free, keyless <a href="/docs/3d-api">3D API</a></span>
+						<span>Python and Node</span>
+					</div>
+				</div>
+			</section>
+
+			<main class="cb-main">
+				<div class="cb-toolbar" role="group" aria-label="Filter recipes by level">
+					<button class="cb-filter" type="button" data-level="all" aria-pressed="true">
+						All
+					</button>
+					<button class="cb-filter" type="button" data-level="beginner" aria-pressed="false">
+						Beginner
+					</button>
+					<button
+						class="cb-filter"
+						type="button"
+						data-level="intermediate"
+						aria-pressed="false"
+					>
+						Intermediate
+					</button>
+					<button class="cb-filter" type="button" data-level="advanced" aria-pressed="false">
+						Advanced
+					</button>
+					<span class="cb-count" id="cb-count" aria-live="polite"></span>
+				</div>
+
+				<ul class="cb-grid" id="cb-grid"></ul>
+
+				<div class="cb-empty" id="cb-empty" hidden>
+					<h2>No recipes at that level yet</h2>
+					<p>
+						The cookbook is small and growing. Clear the filter to see everything, or open an
+						issue with the recipe you wish existed.
+					</p>
+					<button type="button" id="cb-clear">Show all recipes</button>
+				</div>
+
+				<section class="cb-outro">
+					<div>
+						<h2>Write one</h2>
+						<p>
+							A recipe is a file that runs, plus the prose explaining why it is shaped that
+							way. If you built something on the 3D API worth copying, send it.
+						</p>
+					</div>
+					<div class="cb-outro-links">
+						<a class="cb-btn primary" href="/docs/3d-api">Read the API docs</a>
+						<a class="cb-btn" href="https://github.com/nirholas/three.ws">Contribute on GitHub</a>
+						<a class="cb-btn" href="/tutorials">Browse tutorials</a>
+					</div>
+				</section>
+			</main>
+
+			<footer id="site-footer"></footer>
+		</div>
+
+		<script>
+			(function () {
+				'use strict';
+
+				const grid = document.getElementById('cb-grid');
+				const empty = document.getElementById('cb-empty');
+				const count = document.getElementById('cb-count');
+				const total = document.getElementById('cb-total');
+				const filters = Array.from(document.querySelectorAll('.cb-filter'));
+
+				function escapeHtml(value) {
+					return String(value == null ? '' : value).replace(
+						/[&<>"']/g,
+						(c) =>
+							({
+								'&': '&amp;',
+								'<': '&lt;',
+								'>': '&gt;',
+								'"': '&quot;',
+								"'": '&#39;',
+							})[c],
+					);
+				}
+
+				/* A poster image is cheaper and sharper than a live canvas, so it wins when
+				   a recipe has one. The rotating model is the fallback, and it is paused
+				   for anyone who asked for reduced motion. */
+				function media(recipe) {
+					if (recipe.poster) {
+						return (
+							'<img src="' +
+							escapeHtml(recipe.poster) +
+							'" alt="" loading="lazy" decoding="async" width="640" height="360">'
+						);
+					}
+					if (!recipe.previewModel) return '';
+					const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+					return (
+						'<model-viewer src="' +
+						escapeHtml(recipe.previewModel) +
+						'" camera-controls disable-zoom touch-action="pan-y"' +
+						(still ? '' : ' auto-rotate rotation-per-second="16deg"') +
+						' interaction-prompt="none" shadow-intensity="0.6" exposure="0.9"' +
+						' alt="" aria-hidden="true"></model-viewer>'
+					);
+				}
+
+				function card(recipe) {
+					const tags = (recipe.tags || [])
+						.slice(0, 3)
+						.map((t) => '<span class="cb-chip">' + escapeHtml(t) + '</span>')
+						.join('');
+					const download = recipe.download
+						? '<a class="cb-dl" href="' +
+							escapeHtml(recipe.download.href) +
+							'" download>' +
+							escapeHtml(recipe.download.label) +
+							'</a>'
+						: '';
+					return (
+						'<li class="cb-card" data-level="' +
+						escapeHtml(recipe.level) +
+						'">' +
+						'<div class="cb-card-media">' +
+						media(recipe) +
+						'</div>' +
+						'<div class="cb-card-body">' +
+						'<h2><a href="' +
+						escapeHtml(recipe.href) +
+						'">' +
+						escapeHtml(recipe.title) +
+						'</a></h2>' +
+						'<p>' +
+						escapeHtml(recipe.blurb) +
+						'</p>' +
+						'<p class="cb-card-builds">Builds: ' +
+						escapeHtml(recipe.builds) +
+						'</p>' +
+						'<div class="cb-card-foot">' +
+						'<span class="cb-chip" data-level="' +
+						escapeHtml(recipe.level) +
+						'">' +
+						escapeHtml(recipe.level) +
+						'</span>' +
+						'<span class="cb-chip">' +
+						escapeHtml(recipe.language) +
+						'</span>' +
+						'<span class="cb-chip">' +
+						escapeHtml(recipe.time) +
+						'</span>' +
+						tags +
+						download +
+						'</div></div></li>'
+					);
+				}
+
+				function render(level) {
+					const recipes = window.RECIPES || [];
+					const shown = level === 'all' ? recipes : recipes.filter((r) => r.level === level);
+					grid.innerHTML = shown.map(card).join('');
+					grid.hidden = shown.length === 0;
+					empty.hidden = shown.length !== 0;
+					count.textContent =
+						shown.length === recipes.length
+							? recipes.length + ' recipes'
+							: shown.length + ' of ' + recipes.length;
+				}
+
+				function select(level) {
+					filters.forEach((btn) =>
+						btn.setAttribute('aria-pressed', String(btn.dataset.level === level)),
+					);
+					render(level);
+					const url = new URL(location.href);
+					if (level === 'all') url.searchParams.delete('level');
+					else url.searchParams.set('level', level);
+					history.replaceState(null, '', url);
+				}
+
+				filters.forEach((btn) => btn.addEventListener('click', () => select(btn.dataset.level)));
+				document.getElementById('cb-clear').addEventListener('click', () => select('all'));
+
+				/* Left/right arrows walk the filter chips, the way a segmented control should. */
+				document.querySelector('.cb-toolbar').addEventListener('keydown', (event) => {
+					const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+					if (!step) return;
+					const here = filters.indexOf(document.activeElement);
+					if (here < 0) return;
+					event.preventDefault();
+					const next = filters[(here + step + filters.length) % filters.length];
+					next.focus();
+					select(next.dataset.level);
+				});
+
+				function boot() {
+					const recipes = window.RECIPES || [];
+					total.textContent = String(recipes.length);
+					const wanted = new URL(location.href).searchParams.get('level');
+					select(
+						wanted && filters.some((b) => b.dataset.level === wanted) ? wanted : 'all',
+					);
+				}
+
+				/* The manifest is a deferred classic script, so it has run by DOMContentLoaded. */
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', boot);
+				} else {
+					boot();
+				}
+			})();
+		</script>
+	</body>
+</html>

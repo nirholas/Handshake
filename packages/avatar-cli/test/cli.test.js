@@ -197,8 +197,52 @@ test('preview outputs resolver url and embed snippet', async () => {
 	const { code, stdout } = await captured(() => main(['preview', outPath]));
 	assert.equal(code, 0);
 	assert.ok(stdout.includes('https://three.ws/a/b.eth'));
-	assert.ok(stdout.includes('<three-ws-avatar'));
+	assert.ok(stdout.includes('<agent-3d'));
 	assert.ok(stdout.includes('<iframe'));
+	// The element does nothing until the loader registers it, so a snippet
+	// without the script is a snippet that renders an empty box.
+	assert.ok(stdout.includes('/agent-3d/latest/agent-3d.js'));
+});
+
+test('preview never emits an element the platform does not register', async () => {
+	const outPath = join(workDir, 'm-preview-element.json');
+	await captured(() =>
+		main(['init', '--owner', '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', '--name', 'b.eth', '--mesh', meshPath, '--out', outPath]),
+	);
+	const { stdout } = await captured(() => main(['preview', outPath]));
+	// `three-ws-avatar` is the binary name, not a custom element: nothing in the
+	// codebase calls customElements.define('three-ws-avatar'), so emitting it
+	// produced markup that silently rendered nothing.
+	assert.ok(!stdout.includes('<three-ws-avatar'));
+});
+
+test('preview warns when the mesh uri is still a local path', async () => {
+	const outPath = join(workDir, 'm-preview-local.json');
+	await captured(() =>
+		main(['init', '--owner', '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', '--name', 'e.eth', '--mesh', meshPath, '--out', outPath]),
+	);
+	const { code, stderr } = await captured(() => main(['preview', outPath]));
+	assert.equal(code, 0);
+	assert.match(stderr, /local path/);
+	assert.match(stderr, /--mesh-uri/);
+});
+
+test('preview stays quiet when the mesh uri is public', async () => {
+	const outPath = join(workDir, 'm-preview-public.json');
+	await captured(() =>
+		main([
+			'init',
+			'--owner', '0xffffffffffffffffffffffffffffffffffffffff',
+			'--name', 'f.eth',
+			'--mesh', meshPath,
+			'--mesh-uri', 'https://three.ws/avatars/michelle.glb',
+			'--out', outPath,
+		]),
+	);
+	const { code, stdout, stderr } = await captured(() => main(['preview', outPath]));
+	assert.equal(code, 0);
+	assert.ok(!stderr.includes('local path'));
+	assert.ok(stdout.includes('src="https://three.ws/avatars/michelle.glb"'));
 });
 
 test('preview --json emits structured output', async () => {
@@ -211,6 +255,10 @@ test('preview --json emits structured output', async () => {
 	const obj = JSON.parse(stdout);
 	assert.equal(obj.id, 'c.eth');
 	assert.match(obj.resolverUrl, /three\.ws\/a\/c\.eth/);
+	assert.match(obj.loader, /<script type="module" src="https:\/\/three\.ws\/agent-3d\/latest\/agent-3d\.js"><\/script>/);
+	assert.match(obj.element, /^<agent-3d /);
+	assert.equal(obj.meshIsLocal, true);
+	assert.ok(obj.meshUri.startsWith('file://'));
 });
 
 test('preview honors custom --viewer flag', async () => {
@@ -224,4 +272,8 @@ test('preview honors custom --viewer flag', async () => {
 	assert.equal(code, 0);
 	const obj = JSON.parse(stdout);
 	assert.match(obj.resolverUrl, /localhost:3000/);
+	// --viewer has to move the loader too, or a staging page pulls the element
+	// registration from production while everything else points at staging.
+	assert.match(obj.loader, /localhost:3000\/agent-3d\/latest\/agent-3d\.js/);
+	assert.match(obj.iframe, /localhost:3000/);
 });

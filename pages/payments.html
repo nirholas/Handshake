@@ -842,6 +842,9 @@
 					const d = await api('/api/pay/session?limit=50');
 					sessions = d.items || [];
 					stats = d.stats;
+					// Derive the chips' visibility from this load rather than latching it,
+					// so a reload after signing in restores them without a hard refresh.
+					$('pwFilters').hidden = false;
 					if (stats) renderStats(stats);
 					renderList();
 				} catch (err) {

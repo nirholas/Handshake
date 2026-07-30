@@ -3,8 +3,16 @@
 three.ws ships several [MCP](mcp.md) servers: tool servers that AI assistants
 (Claude, ChatGPT, any MCP client) can call directly. One is free and 3D-only; the
 others expose paid tools that settle per call in USDC over [x402](x402.md). This
-page is the catalog: which server hosts which tool, whether it's free or paid, and
-what it does.
+page explains how the servers are grouped and how the paid ones charge.
+
+> **Looking for a specific tool?** The complete, always-current list lives at
+> **[/mcp-tools](/mcp-tools)**: every tool on every server, searchable, with its
+> price and whether an AI client can run it unattended. That page is generated
+> from the source of each tool on every build, so it cannot drift. The same data
+> is machine-readable at [`/mcp-catalog.json`](/mcp-catalog.json).
+>
+> The tables below are a curated orientation to the servers, not the full index.
+> Where a figure here and the catalog disagree, the catalog is right.
 
 > Source: [`api/mcp-studio.js`](../api/mcp-studio.js) (free),
 > [`api/mcp-3d.js`](../api/mcp-3d.js) + [`api/_mcp3d/pricing.js`](../api/_mcp3d/pricing.js)

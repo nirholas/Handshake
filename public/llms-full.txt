@@ -3173,6 +3173,12 @@ URL: https://three.ws/tutorials/read-the-trading-fleet
 
 Tell a working autonomous strategy from a lucky one: why realized profit is the only profit, how to read profit factor against win rate and drawdown, the sample size below which a rank means nothing, and how to spot a broken fleet that still shows a green light.
 
+### Docs · MCP tool safety
+
+URL: https://three.ws/docs/mcp-safety
+
+What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.
+
 ### MCP Tool Catalog
 
 URL: https://three.ws/mcp-tools

@@ -81,9 +81,16 @@ describe('examples index: generated, mirrored, and served', () => {
 	});
 
 	it('mirrors idempotently, so a rebuild produces no phantom diff', () => {
-		const before = readFileSync(resolve(root, 'public/examples.json'), 'utf8');
-		execFileSync('node', ['scripts/mirror-examples-index.mjs'], { cwd: root, encoding: 'utf8' });
-		expect(readFileSync(resolve(root, 'public/examples.json'), 'utf8')).toBe(before);
+		// Compare two consecutive mirror runs rather than the committed file
+		// against one run: other agents share this worktree and regenerate
+		// data/examples.json, and a legitimately updated source would otherwise
+		// read as a broken mirror.
+		const read = () => readFileSync(resolve(root, 'public/examples.json'), 'utf8');
+		const run = () => execFileSync('node', ['scripts/mirror-examples-index.mjs'], { cwd: root, encoding: 'utf8' });
+		run();
+		const first = read();
+		run();
+		expect(read()).toBe(first);
 	});
 });
 

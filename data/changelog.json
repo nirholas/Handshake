@@ -3,6 +3,46 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "The examples page now lists every example that ships, not a hand-picked five",
+			"summary": "The /examples page had six runnable snippets you can execute on the page, then a short section naming five example projects by hand. The repository actually ships 39 of them: complete example agents, installable skill bundles, end-to-end scripts, and an examples folder beside every SDK and published package. The page now lists all of them, with a search box and filters by kind, and each card shows the files the example contains plus the exact command that runs it, with a copy button. The list is built by scanning the repository, so it cannot advertise an example that was deleted or miss one that was added.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/examples"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "A browsable map of every check that guards this codebase",
+			"summary": "This project ships without CI, so the checks that keep it correct run locally, on paths nobody can skip. Until now there was no way to see what they were: several working checks had no command to run them at all, and were findable only by reading the scripts folder. There is now a single registry behind a new page at /guards, where you can filter every guard by the stage it runs in, search by command, and read the specific failure that caused each one to be written. A new check keeps that page honest by refusing to pass if a guard claims to run somewhere it no longer does, which is the way this kind of page normally goes quietly out of date. A reference page and a step-by-step tutorial for writing your own guard ship alongside it.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/guards"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "A working example and tutorial for charging other agents to use your tools",
+			"summary": "If you want other people's AI assistants to pay you per call, there is now a complete worked example you can run in a minute and a step-by-step tutorial that builds it with you. The example is a real server with two tools: a free one that explains the prices and how paying works, and a paid one that inspects a 3D model and returns a report on what is wrong with it and how to fix it. It refuses to hand over the report until payment clears, and it refuses to take payment unless it actually produced a report, so a broken link or an unreachable file costs the caller nothing. It ships with fifteen tests, including one whose only job is to prove the paid result cannot escape unpaid.",
+			"tags": [
+				"docs",
+				"sdk"
+			],
+			"link": "/tutorials/monetize-mcp-server"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Forty-one tutorials that search engines could not see are now indexed",
+			"summary": "The tutorial library, the tutorial text, and the site's page index are three separate files that all have to agree, and they had drifted: forty-one tutorials were live and readable but missing from the sitemap, so search engines and AI assistants never learned they existed. Three more had text written but no card in the library, which meant nobody could find them by browsing either. All of them are now registered and reachable, and a new check runs over the three files and fails when they disagree, so a tutorial can no longer go missing quietly.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/tutorials"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Free trials are no longer counted as marketplace sales",
 			"summary": "The public marketplace numbers were wrong in the way that flatters us most: a free trial of a skill was counted as a sale, and the price it would have cost was added to reported volume. On the live data that published more than ten thousand sales and millions in volume at a moment when the number of purchases anyone had actually paid for was zero. Paid sales and free trials are now separate everywhere they are reported. Trials get their own count and a drop-off view showing how many were started, used, used up, and turned into a purchase, which is genuinely useful to a creator deciding whether a trial is working, and can no longer be mistaken for revenue.",
 			"tags": [

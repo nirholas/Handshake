@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 350,
+	"count": 349,
 	"paths": [
 		"/",
 		"/3d",
@@ -62,7 +62,6 @@
 		"/concierge",
 		"/constellation",
 		"/converter",
-		"/cookbook",
 		"/cosmos",
 		"/create",
 		"/create-agent",

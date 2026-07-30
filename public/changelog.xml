@@ -23,6 +23,14 @@
 			<description>The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.</description>
 		</item>
 		<item>
+			<title>Docs · MCP tool safety</title>
+			<link>https://three.ws/docs/mcp-safety</link>
+			<guid isPermaLink="false">2026-07-30:Docs · MCP tool safety</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.</description>
+		</item>
+		<item>
 			<title>Docs · The 10 SOL trading experiment</title>
 			<link>https://three.ws/docs/trading-experiment</link>
 			<guid isPermaLink="false">2026-07-30:Docs · The 10 SOL trading experiment</guid>
@@ -207,6 +215,14 @@
 			<description>The platform serves a page for every documentation file, but only pages listed in the site's page index reach the sitemap, the machine-readable llms.txt, and the feature list. 87 docs had never been listed, which meant they answered normally if you had the link and were invisible to every search engine and AI crawler otherwise. Each one now carries a real title and summary written from the doc itself, covering the API reference, the avatar and animation pipeline, memory, permissions, security, self-hosting, the MCP servers, and the troubleshooting guide. A new check in the documentation audit fails the build if a future doc lands unlisted, so this cannot silently happen again.</description>
 		</item>
 		<item>
+			<title>A browsable map of every check that guards this codebase</title>
+			<link>https://three.ws/guards</link>
+			<guid isPermaLink="false">2026-07-30:A browsable map of every check that guards this codebase</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>This project ships without CI, so the checks that keep it correct run locally, on paths nobody can skip. Until now there was no way to see what they were: several working checks had no command to run them at all, and were findable only by reading the scripts folder. There is now a single registry behind a new page at /guards, where you can filter every guard by the stage it runs in, search by command, and read the specific failure that caused each one to be written. A new check keeps that page honest by refusing to pass if a guard claims to run somewhere it no longer does, which is the way this kind of page normally goes quietly out of date. A reference page and a step-by-step tutorial for writing your own guard ship alongside it.</description>
+		</item>
+		<item>
 			<title>A healthy Solana node no longer benches itself for half an hour</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:A healthy Solana node no longer benches itself for half an hour</guid>
@@ -229,6 +245,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When a trading bot checks whether it still holds a coin, it asks a Solana data provider for its token accounts. An overloaded provider sometimes answers with an empty list for a wallet that demonstrably still holds the coin. The platform read that empty answer as proof the coin had been sold, set the position aside as needing manual reconciliation, and because each strategy allows only one position at a time, the strategy stopped trading entirely while still holding the coin. Four strategies sat frozen this way for up to 57 hours against a 30-minute time limit. An empty or malformed answer is now treated as unknown rather than as zero, and is double-checked against the wallet's own token account addresses before any position is set aside. A position set aside without a recorded timestamp is also no longer exempt from the existing time limit, which is what made these freezes permanent instead of self-clearing.</description>
+		</item>
+		<item>
+			<title>A working example and tutorial for charging other agents to use your tools</title>
+			<link>https://three.ws/tutorials/monetize-mcp-server</link>
+			<guid isPermaLink="false">2026-07-30:A working example and tutorial for charging other agents to use your tools</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>If you want other people's AI assistants to pay you per call, there is now a complete worked example you can run in a minute and a step-by-step tutorial that builds it with you. The example is a real server with two tools: a free one that explains the prices and how paying works, and a paid one that inspects a 3D model and returns a report on what is wrong with it and how to fix it. It refuses to hand over the report until payment clears, and it refuses to take payment unless it actually produced a report, so a broken link or an unreachable file costs the caller nothing. It ships with fifteen tests, including one whose only job is to prove the paid result cannot escape unpaid.</description>
 		</item>
 		<item>
 			<title>Agent Symphony: listen to the agent economy as it happens</title>
@@ -357,6 +381,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The best result the platform can produce used to live behind a quality selector most people never opened. It now has a permanent home at three.ws/forge-max, which lands on the Forge with the High tier already pinned: 200k-poly geometry, 4K PBR and HD textures, and subject-aware routing that picks the engine best suited to what you asked for. Holding $THREE unlocks the tier, and anyone who brings their own Meshy, Tripo or Rodin key can use it too. Any Forge link also accepts a tier directly, so you can hand someone a URL that opens at draft, standard or high quality.</description>
+		</item>
+		<item>
+			<title>Forty-one tutorials that search engines could not see are now indexed</title>
+			<link>https://three.ws/tutorials</link>
+			<guid isPermaLink="false">2026-07-30:Forty-one tutorials that search engines could not see are now indexed</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The tutorial library, the tutorial text, and the site's page index are three separate files that all have to agree, and they had drifted: forty-one tutorials were live and readable but missing from the sitemap, so search engines and AI assistants never learned they existed. Three more had text written but no card in the library, which meant nobody could find them by browsing either. All of them are now registered and reachable, and a new check runs over the three files and fails when they disagree, so a tutorial can no longer go missing quietly.</description>
 		</item>
 		<item>
 			<title>Free trials are no longer counted as marketplace sales</title>
@@ -533,6 +565,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the autonomous economy runs short of SOL it converts a small, capped slice of its own USDC revenue to keep paying agents. That check treated a failed balance lookup exactly like a zero balance, so whenever a Solana data provider was rate-limited the platform concluded its revenue was spent and stopped refuelling, with the funds it needed sitting in its own wallet. The balance read now has a second, cheaper path, and a lookup that genuinely fails is reported as unknown rather than empty, so recovery no longer waits on a human.</description>
+		</item>
+		<item>
+			<title>The examples page now lists every example that ships, not a hand-picked five</title>
+			<link>https://three.ws/examples</link>
+			<guid isPermaLink="false">2026-07-30:The examples page now lists every example that ships, not a hand-picked five</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The /examples page had six runnable snippets you can execute on the page, then a short section naming five example projects by hand. The repository actually ships 39 of them: complete example agents, installable skill bundles, end-to-end scripts, and an examples folder beside every SDK and published package. The page now lists all of them, with a search box and filters by kind, and each card shows the files the example contains plus the exact command that runs it, with a copy button. The list is built by scanning the repository, so it cannot advertise an example that was deleted or miss one that was added.</description>
 		</item>
 		<item>
 			<title>The GitHub README now shows the real product</title>
