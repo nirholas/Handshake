@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Sign language now has a beginner's walkthrough, and the reference was rewritten for people, not engineers",
+			"summary": "Signing avatars were documented as a system: engine modules first, and the person who just wanted to watch an avatar sign their name had to read past all of it. There is now a 15-minute no-code tutorial that takes you from typing a phrase to sharing it as a link, exporting a spelled word as an animated GLB, turning on signed AI chat replies, and fingerspelling back with your webcam. The reference page was rebuilt around the same order: a what-do-I-want table up front, the full list of every word the avatar signs rather than spells with a plain description of each sign, a troubleshooting table, an FAQ, and a glossary for anyone new to ASL terms, with the engine internals moved to the back for the people who need them. The public sign-recognition endpoint is documented in the API reference for the first time.",
+			"tags": [
+				"docs"
+			],
+			"link": "/tutorials/sign-with-your-avatar"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "The GitHub README now shows the real product",
 			"summary": "The project README on GitHub was rebuilt around live proof: fresh screenshots captured from the production site (Forge, the viewer, discovery, the Club, Coin Communities, the x402 bazaar, the Money Pulse, and more), every tutorial linked to its live page, npm links for all 22 published packages, block-explorer links for the on-chain registries, and stale links to retired pages cleaned up.",
 			"tags": [

@@ -2297,6 +2297,12 @@ URL: https://three.ws/tutorials/agent-personality
 
 Step-by-step tutorial for giving your agent a personality.
 
+### Tutorial: Make Your Avatar Sign (ASL)
+
+URL: https://three.ws/tutorials/sign-with-your-avatar
+
+Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.
+
 ### Tutorial: Animate Your Avatar
 
 URL: https://three.ws/tutorials/animate-your-avatar

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:39:38.992Z",
+	"generated_at": "2026-07-30T17:12:50.477Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3772,6 +3772,16 @@
 					"title": "Tutorial: Agent Personality",
 					"description": "Step-by-step tutorial for giving your agent a personality.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/sign-with-your-avatar",
+					"title": "Tutorial: Make Your Avatar Sign (ASL)",
+					"description": "Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.",
+					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

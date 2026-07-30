@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:39:38.998Z",
+	"generated_at": "2026-07-30T17:12:50.491Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -32,6 +32,16 @@
 			"title": "Tutorial · Render Avatars as Images",
 			"summary": "Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.",
 			"link": "/tutorials/render-avatar-images",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Tutorial: Make Your Avatar Sign (ASL)",
+			"summary": "Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.",
+			"link": "/tutorials/sign-with-your-avatar",
 			"tags": [
 				"launch"
 			]
@@ -233,6 +243,16 @@
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Sign language now has a beginner's walkthrough, and the reference was rewritten for people, not engineers",
+			"summary": "Signing avatars were documented as a system: engine modules first, and the person who just wanted to watch an avatar sign their name had to read past all of it. There is now a 15-minute no-code tutorial that takes you from typing a phrase to sharing it as a link, exporting a spelled word as an animated GLB, turning on signed AI chat replies, and fingerspelling back with your webcam. The reference page was rebuilt around the same order: a what-do-I-want table up front, the full list of every word the avatar signs rather than spells with a plain description of each sign, a troubleshooting table, an FAQ, and a glossary for anyone new to ASL terms, with the engine internals moved to the back for the people who need them. The public sign-recognition endpoint is documented in the API reference for the first time.",
+			"link": "/tutorials/sign-with-your-avatar",
+			"tags": [
+				"docs"
 			]
 		},
 		{
