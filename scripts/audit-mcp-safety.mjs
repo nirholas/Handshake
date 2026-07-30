@@ -25,334 +25,54 @@
 //      (destructiveHint defaults to TRUE when omitted, so an unannotated tool
 //      is advertised as destructive; that is safe but always unintended)
 //
-// Evidence is gathered from the handler's transitive call closure WITHIN its own
-// file: `sql` template tags opening with insert/update/delete, and calls to the
-// known transaction-signing and payment-settling helpers. Cross-file calls are
-// out of scope on purpose -- importing a module that CAN send a transaction is
-// not evidence that this handler does, and that inference produced false
-// positives on every read-only tool sharing an RPC helper.
+// Evidence is the handler's transitive call closure: `sql` template tags opening
+// with insert/update/delete, plus calls to the known transaction-signing and
+// payment-settling helpers. Same-module calls are followed to any depth, and a
+// call into an imported function is followed one module hop.
+//
+// Following a CALL is evidence; merely importing a module that could mutate is
+// not. That distinction is load-bearing: a dozen genuinely read-only tools share
+// one Solana RPC helper, and treating the import as evidence flagged them all.
 //
 // Cache and telemetry writes are real writes that are not semantic mutations
-// (warming an attestation cache on read, recording usage). Those are exempted
-// individually in EXEMPTIONS below, each with a reason, so an exemption is a
-// reviewed line in this file rather than a silent hole in the gate.
+// (warming a cache on read, recording usage). Those are exempted individually in
+// EXEMPTIONS below, each with a reason, so an exemption is a reviewed line in
+// this file rather than a silent hole in the gate.
 //
 // Run: node scripts/audit-mcp-safety.mjs   (exit 1 on any violation)
 //      node scripts/audit-mcp-safety.mjs --list   (print every tool + evidence)
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { parse } from 'acorn';
-
-import { ROOT, allMcpToolSources } from './lib/mcp-tool-sources.mjs';
-
-// ---------------------------------------------------------------------------
-// Mutation vocabulary
-// ---------------------------------------------------------------------------
-
-// Helper calls that sign, send, or settle. Matched on the callee's final
-// identifier, so `conn.sendTransaction(...)` and `sendTransaction(...)` both hit.
-const MUTATION_CALLS = new Map([
-	['sendTransaction', 'tx-send'],
-	['sendRawTransaction', 'tx-send'],
-	['sendAndConfirmTransaction', 'tx-send'],
-	['sendVersionedTransaction', 'tx-send'],
-	['signTransaction', 'tx-sign'],
-	['partialSign', 'tx-sign'],
-	['hedgedSend', 'tx-send'],
-	['settlePayment', 'payment-settle'],
-	['transferUsdc', 'funds-transfer'],
-	['transferSol', 'funds-transfer'],
-	['solanaTransfer', 'funds-transfer'],
-	['mintTo', 'mint'],
-	['createMint', 'mint'],
-	['mintAsset', 'mint'],
-]);
-
-// Evidence classes that make an action irreversible, so `destructiveHint: false`
-// is wrong for them.
-const IRREVERSIBLE = new Set(['tx-send', 'tx-sign', 'payment-settle', 'funds-transfer', 'mint']);
-
-// A `sql` tagged template whose text opens with one of these is a write.
-const SQL_WRITE = /^\s*(?:--[^\n]*\n|\s)*(insert|update|delete|truncate|drop|alter)\b/i;
+import { allMcpToolSources } from './lib/mcp-tool-sources.mjs';
+import { checkTool, extractTools } from './lib/mcp-safety-check.mjs';
 
 // ---------------------------------------------------------------------------
 // Reviewed exemptions
 // ---------------------------------------------------------------------------
 // A tool listed here keeps `readOnlyHint: true` despite carrying write evidence,
-// because the write is a cache fill or telemetry record rather than the effect
-// the caller asked for. Keyed `tool:evidence`. Every entry needs a reason.
+// because the write is a cache fill rather than the effect the caller asked for.
+// Keyed `tool:evidence`; every entry states why.
 //
-// Empty today: no read-only tool currently writes on the read path. It stays
-// because the alternative, when a cache-warming read does appear, is someone
-// weakening an annotation or deleting the gate. `tests/mcp-safety-audit.test.js`
-// exercises it so it cannot rot unnoticed.
-const EXEMPTIONS = new Map();
-
-// ---------------------------------------------------------------------------
-// AST helpers
-// ---------------------------------------------------------------------------
-
-const FUNCTION_TYPES = new Set([
-	'FunctionDeclaration',
-	'FunctionExpression',
-	'ArrowFunctionExpression',
+// All four below are read-through cache fills: the caller asked for a read and
+// got a read, and the server warmed its own cache on the way. Each write is
+// wrapped non-fatally at the source, so a failed write still returns the read.
+const EXEMPTIONS = new Map([
+	[
+		'oracle_coin:db-write',
+		'scoreCoin(..., { persist: true }) caches the conviction verdict it just computed (upsertConviction/upsertNarrative, both non-fatal) so the next read is warm.',
+	],
+	[
+		'solana_agent_reputation:db-write',
+		'ensureWarm() crawls attestations into the cache on a cold read; the caller receives a computed reputation summary.',
+	],
+	[
+		'solana_agent_attestations:db-write',
+		'ensureWarm() crawls attestations into the cache on a cold read; the caller receives the attestation list.',
+	],
+	[
+		'solana_agent_passport:db-write',
+		'ensureWarm() crawls attestations into the cache on a cold read; the caller receives the passport view.',
+	],
 ]);
-
-/** Walk every child node, depth-first. */
-function walk(node, visit) {
-	if (!node || typeof node.type !== 'string') return;
-	visit(node);
-	for (const key of Object.keys(node)) {
-		if (key === 'type' || key === 'start' || key === 'end') continue;
-		const value = node[key];
-		if (Array.isArray(value)) {
-			for (const child of value) walk(child, visit);
-		} else if (value && typeof value.type === 'string') {
-			walk(value, visit);
-		}
-	}
-}
-
-/** The final identifier of a callee: `a.b.c()` -> "c", `c()` -> "c". */
-function calleeName(callee) {
-	if (!callee) return null;
-	if (callee.type === 'Identifier') return callee.name;
-	if (callee.type === 'MemberExpression' && !callee.computed) {
-		return callee.property?.name ?? null;
-	}
-	return null;
-}
-
-/**
- * Local name -> resolved absolute path, for every relative import in a module.
- * Extension-less specifiers are not used in this repo's ESM sources, so a
- * specifier is resolved as written.
- */
-function collectImports(ast, relPath) {
-	const dir = dirname(join(ROOT, relPath));
-	const bindings = new Map();
-	for (const node of ast.body) {
-		if (node.type !== 'ImportDeclaration') continue;
-		const source = node.source.value;
-		if (typeof source !== 'string' || !source.startsWith('.')) continue;
-		const target = resolvePath(dir, source);
-		if (!existsSync(target)) continue;
-		for (const spec of node.specifiers) {
-			if (spec.type === 'ImportSpecifier') {
-				bindings.set(spec.local.name, { path: target, imported: spec.imported.name });
-			}
-		}
-	}
-	return bindings;
-}
-
-/** Map of every function declared at any level of a module, by name. */
-function collectNamedFunctions(ast) {
-	const fns = new Map();
-	walk(ast, (node) => {
-		if (node.type === 'FunctionDeclaration' && node.id?.name) {
-			fns.set(node.id.name, node);
-		} else if (node.type === 'VariableDeclarator' && node.id?.type === 'Identifier') {
-			if (node.init && FUNCTION_TYPES.has(node.init.type)) fns.set(node.id.name, node.init);
-		} else if (
-			node.type === 'Property' &&
-			!node.computed &&
-			node.key?.name &&
-			node.value &&
-			FUNCTION_TYPES.has(node.value.type)
-		) {
-			// Object-literal methods, incl. `async handler(...)` shorthand.
-			if (!fns.has(node.key.name)) fns.set(node.key.name, node.value);
-		}
-	});
-	return fns;
-}
-
-/**
- * Unwrap the object-literal inside `Object.freeze({...})`, which is how several
- * servers declare their shared annotation constants.
- */
-function unwrapObject(node) {
-	if (!node) return null;
-	if (node.type === 'ObjectExpression') return node;
-	if (
-		node.type === 'CallExpression' &&
-		calleeName(node.callee) === 'freeze' &&
-		node.arguments.length === 1
-	) {
-		return unwrapObject(node.arguments[0]);
-	}
-	return null;
-}
-
-/**
- * Boolean-valued properties of an object literal, resolving `...SPREAD` of a
- * local constant so shared annotation constants compose the way they do at
- * runtime (`{ title: '…', ...LIVE_READ }`).
- */
-function objectBooleans(objNode, constObjects, seen = new Set()) {
-	const values = {};
-	const target = unwrapObject(objNode);
-	if (!target || seen.has(target)) return values;
-	seen.add(target);
-	for (const prop of target.properties) {
-		if (prop.type === 'SpreadElement') {
-			const source =
-				prop.argument.type === 'Identifier'
-					? constObjects.get(prop.argument.name)
-					: unwrapObject(prop.argument);
-			if (source) Object.assign(values, objectBooleans(source, constObjects, seen));
-			continue;
-		}
-		if (prop.type !== 'Property' || prop.computed) continue;
-		const key = prop.key?.name ?? prop.key?.value;
-		if (prop.value?.type === 'Literal' && typeof prop.value.value === 'boolean') {
-			values[key] = prop.value.value;
-		}
-	}
-	return values;
-}
-
-/** Resolve an `annotations` property to plain booleans, following a local const. */
-function readAnnotations(node, constObjects) {
-	if (!node) return { kind: 'missing', values: {} };
-	let target = node;
-	if (node.type === 'Identifier') {
-		target = constObjects.get(node.name);
-		if (!target) return { kind: 'unresolved', values: {}, ref: node.name };
-	}
-	if (!unwrapObject(target)) return { kind: 'dynamic', values: {} };
-	return { kind: 'resolved', values: objectBooleans(target, constObjects) };
-}
-
-/** Every object literal assigned to a const, by name (Object.freeze unwrapped). */
-function collectConstObjects(ast) {
-	const out = new Map();
-	walk(ast, (node) => {
-		if (node.type !== 'VariableDeclarator' || node.id?.type !== 'Identifier') return;
-		const obj = unwrapObject(node.init);
-		if (obj) out.set(node.id.name, obj);
-	});
-	return out;
-}
-
-const HINT_KEYS = new Set([
-	'readOnlyHint',
-	'destructiveHint',
-	'idempotentHint',
-	'openWorldHint',
-]);
-
-/**
- * Annotations declared in a name-keyed overlay map rather than inline on the
- * tool def. The pump.fun server declares its tool list and its annotations as
- * two separate exports (`TOOLS` + `TOOL_ANNOTATIONS`) and merges them at
- * registration, so an inline-only reader would see 25 unannotated tools.
- * @returns {Map<string, Record<string, boolean>>} tool name -> hints
- */
-function collectAnnotationOverlays(constObjects) {
-	const overlays = new Map();
-	for (const objNode of constObjects.values()) {
-		for (const prop of objNode.properties) {
-			if (prop.type !== 'Property' || prop.computed) continue;
-			const toolName = prop.key?.name ?? prop.key?.value;
-			if (typeof toolName !== 'string') continue;
-			if (!unwrapObject(prop.value)) continue;
-			const values = objectBooleans(prop.value, constObjects);
-			if (Object.keys(values).some((key) => HINT_KEYS.has(key))) overlays.set(toolName, values);
-		}
-	}
-	return overlays;
-}
-
-/**
- * Mutation evidence inside one function plus every same-file function it calls.
- * @returns {Set<string>} evidence labels
- */
-function evidenceFor(fnNode, namedFunctions) {
-	const evidence = new Set();
-	const seen = new Set();
-
-	const visitFunction = (fn) => {
-		if (!fn || seen.has(fn)) return;
-		seen.add(fn);
-		const nested = [];
-		walk(fn, (node) => {
-			if (node.type === 'TaggedTemplateExpression') {
-				const tag = calleeName(node.tag);
-				const text = node.quasi?.quasis?.[0]?.value?.cooked ?? '';
-				if (tag === 'sql' && SQL_WRITE.test(text)) evidence.add('db-write');
-			}
-			if (node.type === 'CallExpression') {
-				const name = calleeName(node.callee);
-				if (!name) return;
-				const label = MUTATION_CALLS.get(name);
-				if (label) evidence.add(label);
-				const target = namedFunctions.get(name);
-				// Do not re-enter the function we are already inside.
-				if (target && target !== fn) nested.push(target);
-			}
-		});
-		for (const fn2 of nested) visitFunction(fn2);
-	};
-
-	visitFunction(fnNode);
-	return evidence;
-}
-
-/** Extract every tool definition with a handler from one file. */
-function extractTools(relPath) {
-	const src = readFileSync(join(ROOT, relPath), 'utf8');
-	let ast;
-	try {
-		ast = parse(src, { ecmaVersion: 'latest', sourceType: 'module' });
-	} catch (error) {
-		return { parseError: error.message, tools: [] };
-	}
-
-	const namedFunctions = collectNamedFunctions(ast);
-	const constObjects = collectConstObjects(ast);
-	const overlays = collectAnnotationOverlays(constObjects);
-	const tools = [];
-
-	walk(ast, (node) => {
-		if (node.type !== 'ObjectExpression') return;
-		const props = new Map();
-		for (const prop of node.properties) {
-			if (prop.type === 'Property' && !prop.computed) {
-				props.set(prop.key?.name ?? prop.key?.value, prop.value);
-			}
-		}
-		const nameNode = props.get('name');
-		const name =
-			nameNode?.type === 'Literal' && typeof nameNode.value === 'string' ? nameNode.value : null;
-		if (!name) return;
-		// A tool definition, as this repo writes them: a wire name plus a
-		// description and either a schema or annotations.
-		if (!props.has('description') || !(props.has('inputSchema') || props.has('annotations'))) return;
-
-		const handlerNode = props.get('handler');
-		const annotations = props.has('annotations')
-			? readAnnotations(props.get('annotations'), constObjects)
-			: overlays.has(name)
-				? { kind: 'resolved', values: overlays.get(name), via: 'overlay' }
-				: { kind: 'missing', values: {} };
-		const evidence =
-			handlerNode && FUNCTION_TYPES.has(handlerNode.type)
-				? evidenceFor(handlerNode, namedFunctions)
-				: new Set();
-
-		tools.push({
-			name,
-			annotations,
-			evidence: [...evidence].sort(),
-			hasHandler: Boolean(handlerNode && FUNCTION_TYPES.has(handlerNode.type)),
-		});
-	});
-
-	return { tools };
-}
 
 // ---------------------------------------------------------------------------
 // Run
@@ -371,44 +91,9 @@ for (const relPath of sources) {
 	}
 	for (const tool of tools) {
 		rows.push({ file: relPath, ...tool });
-		const { name, annotations, evidence } = tool;
-		const where = `${relPath}: ${name}`;
-
-		if (annotations.kind === 'missing') {
-			violations.push(
-				`${where}: no annotations. destructiveHint defaults to TRUE when omitted, so this tool is advertised as destructive. Declare them explicitly.`,
-			);
-			continue;
-		}
-		if (annotations.kind === 'unresolved') {
-			violations.push(
-				`${where}: annotations reference "${annotations.ref}", which is not a local object literal. Declare the constant in this file so the gate can read it.`,
-			);
-			continue;
-		}
-		if (annotations.kind === 'dynamic') {
-			violations.push(`${where}: annotations are computed at runtime and cannot be verified.`);
-			continue;
-		}
-
-		const { readOnlyHint, destructiveHint } = annotations.values;
-		const unexempted = evidence.filter((label) => !EXEMPTIONS.has(`${name}:${label}`));
-		for (const label of evidence) {
-			if (EXEMPTIONS.has(`${name}:${label}`)) exempted.push(`${name} (${label})`);
-		}
-
-		if (readOnlyHint === true && unexempted.length) {
-			violations.push(
-				`${where}: declares readOnlyHint:true but its handler shows ${unexempted.join(', ')}. An MCP client may auto-approve this call. Set readOnlyHint:false, or add a reviewed EXEMPTIONS entry if the write is a cache/telemetry fill.`,
-			);
-		}
-
-		const irreversible = unexempted.filter((label) => IRREVERSIBLE.has(label));
-		if (irreversible.length && destructiveHint === false) {
-			violations.push(
-				`${where}: declares destructiveHint:false but its handler shows ${irreversible.join(', ')}, which cannot be undone. Set destructiveHint:true.`,
-			);
-		}
+		const result = checkTool(tool, `${relPath}: ${tool.name}`, EXEMPTIONS);
+		violations.push(...result.violations);
+		exempted.push(...result.exempted);
 	}
 }
 

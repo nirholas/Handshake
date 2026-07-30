@@ -3539,6 +3539,18 @@
 			"dest": "/api/agents/showrunner"
 		},
 		{
+			"src": "/api/agents/ens/([^/]+)",
+			"dest": "/api/agents/ens/[name]?name=$1"
+		},
+		{
+			"src": "/api/agents/8004/agent",
+			"dest": "/api/agents/8004/agent"
+		},
+		{
+			"src": "/api/agents/8004/search",
+			"dest": "/api/agents/8004/search"
+		},
+		{
 			"src": "/api/agents/([^/]+)(?:/.*)?",
 			"dest": "/api/agents/[id]"
 		},

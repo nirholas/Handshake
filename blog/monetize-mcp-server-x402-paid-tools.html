@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Monetize an MCP Server: Paid Tools with x402</title>
+    <meta name="description" content="A complete guide to charging for MCP tools with x402: price a tool in USDC, issue the 402 challenge, verify and settle on Solana, get discovered in the bazaar, and test the buyer side.">
+    <meta name="keywords" content="monetize MCP server, MCP server payments, x402 MCP, paid MCP tools, agent payments, pay per call API, USDC, Solana, Model Context Protocol, x402 tutorial, HTTP 402">
+    <link rel="canonical" href="https://three.ws/blog/monetize-mcp-server-x402-paid-tools">
+
+    <meta property="og:title" content="How to Monetize an MCP Server: Paid Tools with x402">
+    <meta property="og:description" content="Wrap a tool in a 402, get paid per call in USDC on Solana, and let any agent discover and buy it. Real code, real endpoints, no accounts or API keys.">
+    <meta property="og:url" content="https://three.ws/blog/monetize-mcp-server-x402-paid-tools">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="How to Monetize an MCP Server: Paid Tools with x402">
+    <meta name="twitter:description" content="Charge per call for MCP tools: the 402 handshake, verify-then-work-then-settle, spend caps, bazaar discovery, and a live endpoint you can curl right now.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 760px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 21px; font-weight: 600; margin: 48px 0 12px; letter-spacing: -0.01em; scroll-margin-top: 90px; }
+        h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: #e7e7f5; }
+        p { color: #c8c8e0; line-height: 1.75; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.75; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 8px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .lede { font-size: 18px; color: #d6d6ea; }
+        pre { background: #0b0b1a; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 16px 18px; overflow-x: auto; margin: 0 0 22px; }
+        pre code { background: none; color: #dbe7ff; padding: 0; font-size: 13px; line-height: 1.65; display: block; }
+        .table-scroll { overflow-x: auto; margin: 0 0 22px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; }
+        table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 480px; }
+        th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.06); color: #c8c8e0; vertical-align: top; }
+        th { color: #9ad4ff; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(154,212,255,.04); }
+        tbody tr:last-child td { border-bottom: none; }
+        .callout { border: 1px solid rgba(154,212,255,.18); background: rgba(154,212,255,.05); border-radius: 12px; padding: 16px 18px; margin: 0 0 22px; }
+        .callout p:last-child { margin-bottom: 0; }
+        .toc { border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 18px 22px; margin: 0 0 34px; background: rgba(255,255,255,.02); }
+        .toc h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #7a85a8; margin: 0 0 10px; }
+        .toc ol { margin: 0; padding-left: 20px; font-size: 15px; }
+        .toc li { margin-bottom: 4px; }
+        .faq-q { font-weight: 600; color: #e7e7f5; margin: 24px 0 6px; font-size: 16px; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 44px 0; }
+        @media (max-width: 600px) { .post-wrap { padding: 72px 18px 64px; } }
+    </style>
+    <meta property="og:image" content="https://three.ws/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:image" content="https://three.ws/og-image.png">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"How to Monetize an MCP Server: Paid Tools with x402","description":"A complete guide to charging for MCP tools with x402: price a tool in USDC, issue the 402 challenge, verify and settle on Solana, get discovered in the bazaar, and test the buyer side.","image":"https://three.ws/og-image.png","datePublished":"2026-07-30T12:00:00.000Z","dateModified":"2026-07-30T12:00:00.000Z","author":{"@type":"Organization","name":"three.ws","url":"https://three.ws"},"publisher":{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":{"@type":"ImageObject","url":"https://three.ws/og-image.png"}},"mainEntityOfPage":{"@type":"WebPage","@id":"https://three.ws/blog/monetize-mcp-server-x402-paid-tools"},"keywords":"monetize MCP server, MCP server payments, x402 MCP, paid MCP tools, agent payments, pay per call API, USDC, Solana, Model Context Protocol, x402 tutorial, HTTP 402"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://three.ws/blog"},{"@type":"ListItem","position":3,"name":"How to Monetize an MCP Server: Paid Tools with x402","item":"https://three.ws/blog/monetize-mcp-server-x402-paid-tools"}]}</script>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-07-30</span>
+            <span class="post-tag">x402</span>
+            <span class="post-tag">MCP</span>
+            <span class="post-tag">Guide</span>
+        </div>
+        <h1>How to Monetize an MCP Server: Paid Tools with x402</h1>
+
+        <p class="lede">The Model Context Protocol solved distribution for tools. Any assistant can now call your code. What it never solved is getting paid for it, because every payment system on the web assumes a human with a credit card completes a signup form. This guide fixes that: you will price a tool, make it answer unpaid requests with a real <code>402 Payment Required</code> challenge, verify and settle in USDC on Solana, publish it where agents look for paid capabilities, and test the buyer side from Claude.</p>
+
+        <p>Everything below runs on the same rails three.ws uses in production, and every endpoint quoted here is live while you read this. No sandbox, no test tokens, no mocks.</p>
+
+        <div class="toc">
+            <h2>What you will build</h2>
+            <ol>
+                <li><a href="#why">Why per-call payment fits agent tools</a></li>
+                <li><a href="#handshake">The x402 handshake, seven steps</a></li>
+                <li><a href="#shapes">Two shapes for a paid MCP server</a></li>
+                <li><a href="#work">Step 1: choose work worth charging for</a></li>
+                <li><a href="#price">Step 2: price it in atomic units</a></li>
+                <li><a href="#paid">Step 3: make the endpoint paid</a></li>
+                <li><a href="#inside">Step 4: charge inside a tool call</a></li>
+                <li><a href="#verify">Step 5: verify it against a real 402</a></li>
+                <li><a href="#discovery">Step 6: get discovered</a></li>
+                <li><a href="#buyer">Step 7: test the buyer side</a></li>
+                <li><a href="#rules">Production rules that keep you honest</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ol>
+        </div>
+
+        <h2 id="why">Why per-call payment fits agent tools</h2>
+        <p>A subscription is a bet that a customer will use a service repeatedly and predictably. An autonomous agent is the opposite: it discovers a tool the moment it needs one, calls it two or three times, and may never return. Three properties make per-call payment the natural fit.</p>
+        <ul>
+            <li><strong>Real marginal cost.</strong> If a tool burns GPU time, model tokens, RPC calls, or paid upstream data, every call costs you money. Charging per call is the only pricing that tracks the cost honestly.</li>
+            <li><strong>No signup a machine can complete.</strong> API keys assume an account, an email confirmation, and a dashboard visit. An agent has a wallet, not an inbox. A payment protocol it can satisfy in one round trip is the difference between being callable and being skipped.</li>
+            <li><strong>Price is discoverable before purchase.</strong> The 402 challenge states the price, the asset, the chain, and the recipient. A caller can read the price and decide, which is exactly what a spending limit needs to work.</li>
+        </ul>
+
+        <h2 id="handshake">The x402 handshake, seven steps</h2>
+        <p><a href="https://x402.org" rel="noopener">x402</a> takes the HTTP status code that has been reserved and unused since 1997 and turns it into a working payment rail. The whole protocol:</p>
+        <ol>
+            <li>The client requests your resource with no payment attached.</li>
+            <li>You answer <code>402</code> with a JSON body whose <code>accepts[]</code> lists every payment you will take: scheme, network, asset, amount, pay-to address, timeout.</li>
+            <li>The client picks one accept and signs a payment for it (an SPL transfer on Solana, a gasless <a href="https://eips.ethereum.org/EIPS/eip-3009" rel="noopener">EIP-3009</a> authorization on Base).</li>
+            <li>The client retries the same request with the signed payload in an <code>X-PAYMENT</code> header.</li>
+            <li>You verify the payment with a facilitator's <code>/verify</code>. Nothing has moved yet.</li>
+            <li><strong>You do the work.</strong> Only now.</li>
+            <li>You settle with the facilitator's <code>/settle</code>, then return <code>200</code> with the receipt in <code>X-PAYMENT-RESPONSE</code>.</li>
+        </ol>
+        <div class="callout">
+            <p><strong>The ordering in steps 5 to 7 is the whole design.</strong> Verify before you work, so you never do unpaid work. Settle after the work succeeds, so a failure moves no money and the buyer can retry the same payment. Get this backwards and you will either be farmed for free compute or charge for errors.</p>
+        </div>
+
+        <h2 id="shapes">Two shapes for a paid MCP server</h2>
+        <p>There are two places the payment can live, and picking the wrong one is the most common early mistake.</p>
+        <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>Shape</th><th>Where payment happens</th><th>Choose it when</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>A. Paid HTTP endpoint</strong></td>
+                    <td>An ordinary HTTPS route answers <code>402</code> and settles the <code>X-PAYMENT</code> header.</td>
+                    <td>Your capability is useful to any caller: agents, scripts, backends, MCP clients through a buyer-side payer. This is the default. You may never need to ship an MCP server at all.</td>
+                </tr>
+                <tr>
+                    <td><strong>B. Paid MCP tool</strong></td>
+                    <td>Inside <code>tools/call</code>. The payment travels in <code>_meta["x402/payment"]</code> and the receipt comes back in <code>_meta["x402/payment-response"]</code>.</td>
+                    <td>The value is the tool ergonomics themselves: schemas, prompts, and a conversation-native surface, and you want per-tool prices inside one connector.</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+        <p>Most teams should build A first and add B when a client base asks for it. Shape A is a smaller surface, is testable with <code>curl</code>, and is what discovery indexes. Shape B is worth it when you run several priced tools behind one connector, which is how <a href="/docs/ibm-x402-mcp" rel="noopener">Granite over MCP</a> exposes five metered models with a free explainer tool in front of them.</p>
+
+        <h3>Prerequisites</h3>
+        <ul>
+            <li><strong>Node 18 or newer.</strong> The server package uses global <code>fetch</code> and Web Crypto.</li>
+            <li><strong>A public HTTPS URL.</strong> Buyer libraries refuse to send signed payloads to plaintext origins, so localhost works for unit tests only.</li>
+            <li><strong>A Solana address to receive USDC.</strong> You do not need SOL in it. Settlement is facilitator-broadcast, and the fee payer is not you.</li>
+            <li><strong>A piece of work worth money.</strong> The next step is about being honest with yourself here.</li>
+        </ul>
+
+        <h2 id="work">Step 1: choose work worth charging for</h2>
+        <p>A paid endpoint that wraps a free public API is not a business, it is a toll booth on an open road, and agents route around it as soon as one of them reads the docs. Put a candidate through three tests before writing code.</p>
+        <ol>
+            <li><strong>Can it be done client-side?</strong> If the calling model can do it in-context, it will, and it should. Charge for what requires your data, your credentials, your hardware, or your index.</li>
+            <li><strong>Does each call cost you something?</strong> Marginal cost is what makes per-call pricing defensible instead of extractive.</li>
+            <li><strong>Is the output structured?</strong> The buyer is a language model. JSON it can reason over is worth more than prose it has to parse.</li>
+        </ol>
+        <p>Three that pass, all running on three.ws today: <a href="/docs/x402-endpoints" rel="noopener">model inspection</a> (fetch a glTF or GLB, return vertex and material counts plus optimization advice), agent reputation lookup (aggregate on-chain review history), and ticker availability (check a symbol against the live registry). Each needs something the caller does not have locally.</p>
+
+        <h2 id="price">Step 2: price it in atomic units</h2>
+        <p>Prices are strings of atomic units, never floats. USDC has six decimals, so:</p>
+        <div class="table-scroll">
+        <table>
+            <thead><tr><th>Price</th><th>Atomic units</th><th>Fits</th></tr></thead>
+            <tbody>
+                <tr><td>$0.001</td><td><code>'1000'</code></td><td>Cheap lookups, validation, metadata reads</td></tr>
+                <tr><td>$0.01</td><td><code>'10000'</code></td><td>A small model call, a parse, a summary</td></tr>
+                <tr><td>$0.05</td><td><code>'50000'</code></td><td>Multi-step inference, a forecast, a render</td></tr>
+                <tr><td>$0.25</td><td><code>'250000'</code></td><td>Heavy GPU work, long generation</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <p>For calibration, here is what the live Granite tool tier charges per call: chat $0.02, code $0.025, embeddings $0.005, document analysis $0.04, time-series forecast $0.05. Agents are price sensitive in aggregate, so the practical ceiling for an impulse call with no prior relationship sits somewhere near a nickel. Above that, expect the caller to check a spend cap first, and make sure your 402 metadata explains what the money buys.</p>
+
+        <h2 id="paid">Step 3: make the endpoint paid</h2>
+        <p>The seller side is one wrapper. Install the merchant package:</p>
+        <pre><code>npm install @three-ws/x402-server</code></pre>
+        <p>Then wrap the handler. Unpaid requests get the challenge, paid ones run your code:</p>
+        <pre><code>import { paid } from '@three-ws/x402-server';
+
+export default paid(
+  {
+    price: '10000',                    // $0.01 in 6-decimal USDC atomics
+    asset: 'usdc',
+    payTo: { solana: 'YOUR_SOLANA_ADDRESS' },
+    description: 'Document summarization',
+    serviceName: 'Summarize',
+    tags: ['nlp', 'summary'],
+  },
+  async (req, res) => {
+    const { text } = req.body;
+    res.json({ summary: await summarize(text) });
+  },
+);</code></pre>
+        <p>That is a complete paid API. The wrapper builds the v2 challenge envelope, mirrors it into the <code>PAYMENT-REQUIRED</code> header for header-only clients, verifies the retry against a facilitator, runs your handler, settles, and attaches the receipt. It is framework agnostic: mount it as Express or Connect middleware, a Fastify hook, or a bare Node handler.</p>
+
+        <h3>Two chains, one config</h3>
+        <p>Add a second lane and the challenge advertises both accepts. The buyer picks whichever chain it holds funds on. Solana leads when both are present.</p>
+        <pre><code>import { paid } from '@three-ws/x402-server';
+
+export default paid(
+  {
+    price: '50000',                          // $0.05
+    asset: 'usdc',
+    payTo: {
+      solana: 'YOUR_SOLANA_ADDRESS',
+      base: '0xYourBaseAddress',
+    },
+    network: ['solana', 'base'],
+    maxTimeoutSeconds: 60,
+    onSettled: (receipt) => recordSale(receipt),
+  },
+  async (req, res, payment) => {
+    const result = await render(req.body.prompt);
+    res.json({ result, paidBy: payment.payer });
+  },
+);</code></pre>
+        <p>Two details worth internalizing. The handler's third argument, <code>payment</code>, exists only on a paid call and carries <code>{ payer, network, accept, amount }</code>, which is your per-caller analytics key and your rate-limit key. And <strong>throwing from the handler skips settlement entirely</strong>: no funds move, the buyer gets a <code>500</code>, and the same signed payment can be retried. Let your errors throw. Do not catch them into a fake success.</p>
+
+        <h3>Response ordering</h3>
+        <p>By default the wrapper buffers your response, settles, then flushes the <code>200</code> with the receipt attached, so the buyer never receives the goods before payment lands. For responses you cannot buffer, a large file or an SSE stream, set <code>streaming: true</code> and settlement runs first, before your handler writes a byte.</p>
+
+        <h3>Taking a platform fee without marking up the buyer</h3>
+        <p>If you host other people's tools, <code>feeBps</code> splits your cut out of the listed price rather than adding to it. <code>feeSplit()</code> computes it as <code>floor(price × bps / 10000)</code>, and returns nothing when the fee would round to zero atomic units, in which case the creator receives the full amount. The buyer's total is whatever the challenge said. Surprise billing is how you lose a marketplace.</p>
+        <pre><code>paid({
+  price: '50000',
+  asset: 'usdc',
+  payTo: { solana: 'CREATOR_SOLANA_ADDRESS' },
+  feeBps: 250,                                // 2.5%, capped at 1000 (10%)
+  feeTo: 'YOUR_TREASURY_ADDRESS',
+}, handler);</code></pre>
+
+        <h2 id="inside">Step 4: charge inside a tool call</h2>
+        <p>For shape B the payment rides in the MCP message itself. An unpaid <code>tools/call</code> returns a payment-required envelope quoting the price and the receiving address. The client signs, retries with the payload in <code>_meta["x402/payment"]</code>, and the settlement receipt comes back in <code>_meta["x402/payment-response"]</code>. x402-capable clients run that loop without asking the user anything.</p>
+        <p>The same three primitives that back <code>paid()</code> are exported for this, so you keep one wire contract across both shapes:</p>
+        <pre><code>import {
+  buildChallenge,
+  verifyPayment,
+  settlePayment,
+  NETWORK_SOLANA_MAINNET,
+} from '@three-ws/x402-server';
+
+const requirements = [{
+  scheme: 'exact',
+  network: NETWORK_SOLANA_MAINNET,
+  asset: 'usdc',
+  payTo: process.env.X402_PAY_TO_SOLANA,
+  amount: '20000',                            // $0.02
+  maxTimeoutSeconds: 60,
+}];
+
+server.registerTool('summarize_document', schema, async (args, extra) => {
+  const header = extra?._meta?.['x402/payment'];
+
+  if (!header) {
+    const challenge = buildChallenge({
+      price: '20000',
+      asset: 'usdc',
+      payTo: { solana: process.env.X402_PAY_TO_SOLANA },
+      description: 'Document summarization',
+    });
+    return { isError: true, content: [{ type: 'text', text: JSON.stringify(challenge) }] };
+  }
+
+  const verified = await verifyPayment({ paymentHeader: header, requirements });
+  if (!verified.ok) {
+    return { isError: true, content: [{ type: 'text', text: JSON.stringify(verified.body) }] };
+  }
+
+  const summary = await summarize(args.text);
+  const receipt = await settlePayment({ verified });
+
+  return {
+    content: [{ type: 'text', text: summary }],
+    _meta: { 'x402/payment-response': receipt },
+  };
+});</code></pre>
+        <p><strong>Ship one free tool alongside the paid ones.</strong> A tool named something like <code>getting_started</code> that returns your price list and explains the payment flow costs you nothing and removes the guesswork for a client that has never paid an MCP tool before. Every paid connector we run has one, and it is consistently the first tool a new caller invokes.</p>
+
+        <h2 id="verify">Step 5: verify it against a real 402</h2>
+        <p>Before trusting your own implementation, look at a working one. This is a live production endpoint, and the response below is what it returns right now to an unpaid request:</p>
+        <pre><code>curl -s 'https://three.ws/api/x402/model-check?url=https://three.ws/avatars/cesium-man.glb'</code></pre>
+        <pre><code>{
+  "x402Version": 2,
+  "error": "X-PAYMENT header is required",
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+      "amount": "1000",
+      "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+      "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "maxTimeoutSeconds": 60,
+      "resource": "https://three.ws/api/x402/model-check",
+      "extra": { "name": "USDC", "decimals": 6, "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW" }
+    }
+  ]
+}</code></pre>
+        <p>Four things to copy from it. The status is <code>402</code>, not <code>400</code> or <code>403</code>, because buyer libraries branch on the code. The <code>network</code> is a CAIP-2 identifier, not a friendly name. The Solana accept carries <code>extra.feePayer</code>, which is mandatory on that lane and the single most common omission. And the same price is offered on more than one chain so a caller with the wrong balance is not turned away.</p>
+        <p>Now check your own endpoint the same way, and confirm the unhappy paths: a malformed <code>X-PAYMENT</code> header returns a fresh <code>402</code> rather than a <code>500</code>, an underpayment is rejected, and a handler that throws leaves the buyer's balance untouched.</p>
+
+        <h2 id="discovery">Step 6: get discovered</h2>
+        <p>A paid endpoint nobody can find earns nothing. Three surfaces matter, in this order.</p>
+        <ul>
+            <li><strong>Facilitator discovery.</strong> Your challenge metadata (<code>serviceName</code>, <code>description</code>, <code>tags</code>, <code>iconUrl</code>) is what catalogs read. Fill all of it. A row that just says "paid endpoint" is a row no agent picks.</li>
+            <li><strong>The bazaar.</strong> <a href="/docs/mcp-x402-bazaar" rel="noopener">three.ws/api/mcp-bazaar</a> is an MCP server over the merged live facilitator catalog, with <code>search_services</code>, <code>browse_services</code>, and <code>get_service</code>. Its listings come from live discovery, never a cached copy, so a correct challenge is all it takes to appear.</li>
+            <li><strong>The MCP Registry.</strong> If you shipped shape B, publish a <code>server.json</code> manifest so clients can install your connector by name.</li>
+        </ul>
+        <p>One nuance about facilitators: PayAI is free, community run, and covers both Solana and Base. Coinbase CDP settlements additionally get indexed by catalogs that autonomous agents query. The protocol lets you advertise several networks in one challenge, so running both is normal and costs nothing architecturally.</p>
+
+        <h2 id="buyer">Step 7: test the buyer side</h2>
+        <p>The last mile is proving an assistant can find, price, and buy your tool without a human in the loop. Give Claude a self-custodial x402 wallet:</p>
+        <pre><code>claude mcp add x402 --env SOLANA_SECRET_KEY=&lt;base58&gt; -- npx -y @three-ws/x402-mcp</code></pre>
+        <p>That connector exposes four tools: <code>x402_wallet</code> (address and live balances), <code>find_services</code> (search the bazaar), <code>inspect_endpoint</code> (read a 402's requirements without paying), and <code>pay_and_call</code> (pay in USDC and return the result). The first three need no key at all, which makes <code>inspect_endpoint</code> the fastest way to see your own challenge exactly as a buyer sees it.</p>
+        <p>Note how the spending controls are layered, because this is the pattern to imitate if you build your own payer. <code>pay_and_call</code> is annotated as destructive so the client prompts first. The server probes the 402 and refuses before any money moves if the price exceeds <code>MAX_PAY_USD</code>, which defaults to one dollar. And with <code>REQUIRE_CONFIRM</code> on, the call refuses until it is reissued with <code>confirm: true</code>. Three independent brakes, none of which trust the seller's quoted price.</p>
+
+        <h2 id="rules">Production rules that keep you honest</h2>
+        <ul>
+            <li><strong>Verify, work, settle. In that order, every time.</strong> Any other order either gives away work or charges for failures.</li>
+            <li><strong>Never mark up the listed price.</strong> Fees come out of what the challenge advertised. The buyer's total must equal the quote.</li>
+            <li><strong>Make retries safe.</strong> A settled payment plus a failed response is the case that generates support mail. Key your work on the payment payload so a retry returns the same result instead of charging twice.</li>
+            <li><strong>Log every settlement.</strong> <code>onSettled</code> gives you the receipt with network, payer, and transaction. That is your ledger, your fraud signal, and your revenue report.</li>
+            <li><strong>Rate limit by payer.</strong> Payment is not authorization. A funded wallet can still hammer you.</li>
+            <li><strong>Return real errors.</strong> Quota exhausted, upstream down, bad input: say so with a status the caller can act on. An agent that gets a clear <code>503</code> retries later. One that gets a vague <code>200</code> full of nonsense stops trusting the tool.</li>
+        </ul>
+
+        <h2 id="faq">FAQ</h2>
+        <p class="faq-q">Do buyers need an account with me?</p>
+        <p>No. That is the point. A wallet with USDC and an x402-capable client is the entire onboarding. There is no signup, no API key issuance, and no billing relationship to maintain.</p>
+
+        <p class="faq-q">Which chain should I settle on?</p>
+        <p>Solana first. Fees are negligible relative to a fraction-of-a-cent call, confirmation is fast enough to sit inside a request, and it is where the agent-payment volume is. Add Base as a second accept so EVM-funded callers are not excluded, and let the buyer choose.</p>
+
+        <p class="faq-q">What stops an agent from paying for something worthless?</p>
+        <p>Buyer-side caps, which is why every serious payer enforces them independently of the seller. A price ceiling per call, an explicit confirmation step, and a pre-payment probe of the 402 mean the wallet holder sets the risk, not the merchant.</p>
+
+        <p class="faq-q">Can I charge different prices for different tools in one MCP server?</p>
+        <p>Yes. In shape B the price is per tool call, so one connector can hold a free explainer tool, a half-cent lookup, and a five-cent inference call. Quote the price in each tool's own challenge.</p>
+
+        <p class="faq-q">What happens if my handler crashes after the payment is verified?</p>
+        <p>Nothing moves. Verification is not settlement. A thrown error skips settlement, the buyer keeps their funds, and the signed payment stays valid for a retry inside its timeout window.</p>
+
+        <p class="faq-q">Is this only for AI tools?</p>
+        <p>No. Any HTTP endpoint can take payment this way: data lookups, file conversion, rendering, scraping, geocoding. Agents are simply the first buyers with a wallet and no patience for signup forms.</p>
+
+        <hr>
+
+        <h2>Further reading</h2>
+        <ul>
+            <li><a href="/docs/x402-endpoints">x402 endpoints reference</a>: every paid route on the platform, with prices and payloads.</li>
+            <li><a href="/tutorials/paid-x402-endpoint">Tutorial: build a paid x402 endpoint your agent calls</a>: the long-form walkthrough, from scaffold to production.</li>
+            <li><a href="/tutorials/pay-for-x402-service">Tutorial: pay for an x402 service</a>: the buyer side, end to end.</li>
+            <li><a href="/docs/mcp-x402-bazaar">The x402 bazaar MCP server</a>: how discovery works and what it indexes.</li>
+            <li><a href="/docs/mcp">MCP on three.ws</a>: connectors, transports, and OAuth.</li>
+            <li><a href="/blog/x402-stripe-for-agent-payments">Why x402 is Stripe for agent payments</a>: the argument behind the protocol.</li>
+        </ul>
+
+        <p>Packages used here: <a href="https://www.npmjs.com/package/@three-ws/x402-server" rel="noopener">@three-ws/x402-server</a> (seller), <a href="https://www.npmjs.com/package/@three-ws/x402-mcp" rel="noopener">@three-ws/x402-mcp</a> (buyer), and <a href="https://www.npmjs.com/package/@three-ws/x402-fetch" rel="noopener">@three-ws/x402-fetch</a> (a paying <code>fetch</code> for your own clients). Source for all three is in the <a href="https://github.com/nirholas/three.ws" rel="noopener">three.ws repository</a>.</p>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <div id="footer-container"></div>
+    <script src="/nav.js"></script>
+    <script src="/footer.js"></script>
+</body>
+</html>

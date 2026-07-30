@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Paid requests stop being refused after they were already served",
+			"summary": "When someone pays for one of our endpoints, we broadcast their payment to Solana and confirm it. Before broadcasting, we asked one of our own nodes to dry-run it first. But the payer builds and signs their payment against their own node, so if the node that answered us happened to be running a few slots behind, it had simply never seen the reference the payment was built against and rejected it as unknown. The payment was perfectly valid. Because that check runs after we have already done the paid work, the caller was charged effort and then handed an error. We now hand that decision to the network itself rather than to whichever of our nodes replied: if the payment is still live it goes through, and if it has genuinely expired it is dropped without landing and without a fee. Resending is safe because Solana ignores a duplicate of a payment it has already seen. Genuine faults, such as an underfunded account, are still refused on the first attempt as before.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "New engineering post: how our 3D generation runs on NVIDIA L4 and Blackwell GPUs",
 			"summary": "A long-form write-up of what it actually took to get the high-realism image-to-3D lane onto newer NVIDIA hardware, published for anyone building on the same stack. It covers the memory ceiling that killed every startup of the new model, why the GPU driver software had to be rebuilt for the newer card, the regional capacity limits that made the bigger GPU the easier one to get, and a nine-point checklist for teams doing the same port. The NVIDIA documentation pages on three.ws are now cross-linked and registered in the sitemap, so the free model map and the Developer Forums write-up are discoverable from search and from the docs front door.",
 			"tags": [

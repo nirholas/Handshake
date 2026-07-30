@@ -151,6 +151,83 @@ describe('settleRingPayment already-landed recovery', () => {
 		expect(res.success).toBe(false);
 	});
 
+	it('recovers a stale-read-node blockhash rejection by resending with preflight off', async () => {
+		// The buyer signs against THEIR RPC, so the blockhash is real; a node in our
+		// rotating pool that lags a few slots has just never seen it and web3.js
+		// reports that as a hard send failure. Production 2026-07-30: this class was
+		// the bulk of 433 broadcast_failed settles, each one a valid payment refused
+		// after the handler had already run.
+		const p = buildSelfPay();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const sends = [];
+		const conn = {
+			getBalance: async () => 1_000_000_000,
+			sendRawTransaction: async (_raw, opts) => {
+				sends.push(opts?.skipPreflight === true);
+				if (sends.length === 1) {
+					throw new Error('Simulation failed. Message: Transaction simulation failed: Blockhash not found. Logs: [].');
+				}
+				return p.sig;
+			},
+			getSignatureStatuses: async () => ({ value: [{ err: null, confirmationStatus: 'confirmed' }] }),
+			simulateTransaction: async () => ({ value: { err: 'BlockhashNotFound', logs: [] } }),
+		};
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(sends).toEqual([false, true]); // preflight on first, off for the resend
+		expect(res.success).toBe(true);
+		expect(res.transaction).toBe(p.sig);
+	});
+
+	it('reports both causes when the preflight-off resend also fails', async () => {
+		const p = buildSelfPay();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const conn = {
+			getBalance: async () => 1_000_000_000,
+			sendRawTransaction: async (_raw, opts) => {
+				if (opts?.skipPreflight === true) throw new Error('blockhash expired for real');
+				throw new Error('Simulation failed. Message: Transaction simulation failed: Blockhash not found. Logs: [].');
+			},
+			getSignatureStatuses: async () => ({ value: [null] }),
+			simulateTransaction: async () => ({ value: { err: 'BlockhashNotFound', logs: [] } }),
+		};
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.success).toBe(false);
+		expect(res.reason).toMatch(/^broadcast_failed:/);
+		expect(res.reason).toContain('preflight_retry_failed');
+	});
+
+	it('does not resend with preflight off for a non-blockhash failure', async () => {
+		// A genuine fault (bad amount, frozen account) fails on every node, so a
+		// preflight-off resend would only burn a fee. Only the blockhash class earns it.
+		const p = buildSelfPay();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const sends = [];
+		const conn = {
+			getBalance: async () => 1_000_000_000,
+			sendRawTransaction: async (_raw, opts) => {
+				sends.push(opts?.skipPreflight === true);
+				throw new Error('Transaction simulation failed. Logs: [].');
+			},
+			getSignatureStatuses: async () => ({ value: [null] }),
+			simulateTransaction: async () => ({ value: { err: { Custom: 1 }, logs: [] } }),
+		};
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(sends).toEqual([false]); // exactly one send attempt
+		expect(res.success).toBe(false);
+	});
+
 	it('names the structured cause that web3.js drops from an empty-log preflight failure', async () => {
 		// "Transaction simulation failed. Logs: []" reached production logs with no
 		// cause at all (63 rows in 3 h, none diagnosable). The cause lives in

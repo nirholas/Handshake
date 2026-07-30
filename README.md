@@ -1,10 +1,12 @@
 # three.ws         
 
-[**Website**](https://three.ws) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
+[**Website**](https://three.ws) · [**Docs**](https://three.ws/docs) · [**Changelog**](https://three.ws/changelog) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
+
+[![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07)
 
 https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
-**Give your AI a body.** three.ws is an open-source, browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model — or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere — no plugins, no server uploads, no installs required.
+**Give your AI a body.** three.ws is a source-available, browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model, or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere: no plugins, no server uploads, no installs required.
 
 > **Try it in 60 seconds:** open [three.ws/forge](https://three.ws/forge), type *"a brass steampunk owl, full body"*, and download the GLB. Text→3D, image→3D, and sketch→3D — free draft tier, no account. [Jump to the Forge section ↓](#forge--text--image-to-3d)
 
@@ -8429,6 +8431,8 @@ endsolid threews_avatar
 | **Contract Address (CA)** | `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump` |
 | **Network** | Solana |
 | **Trade** | [pump.fun](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump) |
+| **Explorer** | [Solscan](https://solscan.io/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump) |
+| **In the product** | [/pulse](https://three.ws/pulse) (live platform economy) · [/launches](https://three.ws/launches) (launch directory) |
 
 > Always verify the contract address above before trading. `$THREE` is the only token associated with three.ws.
 
@@ -8525,7 +8529,7 @@ At its core, it does five things:
 
 The backend is a set of serverless-style handlers (in `api/`) served in production by a single Google Cloud Run container ([server/index.mjs](server/index.mjs)), backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
 
-three.ws is production-ready and serves [three.ws](https://three.ws) live on Google Cloud Run. The entire stack — viewer, agent runtime, contracts, backend, and web component — is open source under Apache 2.0.
+three.ws is production-ready and serves [three.ws](https://three.ws) live on Google Cloud Run: `GET https://three.ws/api/version` returns the exact commit the site is running right now. The entire stack (viewer, agent runtime, contracts, backend, and web component) is source-available in this repository; see [LICENSE](LICENSE) for terms.
 
 ---
 
@@ -8711,7 +8715,7 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Walk**             | `/walk`                                                                                         | Authoritative multiplayer walk scene (Colyseus on Fly.io)                                                       |
 | **Coin Communities** | `/communities`, `/communities/[mint]`, `/worlds`, `/play`                                       | Live 3D world per Solana token — lobby, coin profile, and the shared coin-keyed world                           |
 | **City**             | `/city`                                                                                         | Free-roam walkable 3D city scene                                                                                |
-| **Bazaar (x402)**    | `/x402`, `/x402-discover`, `/x402-pay`                                                          | Paid-API marketplace, discovery, Stripe-style checkout                                                          |
+| **Bazaar (x402)**    | `/x402`, `/x402/studio`, `/x402-revenue`                                                        | Paid-API marketplace, listing studio, revenue dashboard                                                         |
 | **Artifacts**        | `/artifact`, `/artifact/snippet`, `/artifact-example`                                           | Claude Artifact viewer                                                                                          |
 | **Solana / DeFi**    | `/pumpfun`, `/pump-visualizer`, `/vanity-wallet`                                                | pump.fun launcher, live token visualizer, WASM vanity grinder                                                   |
 | **Mobile (Seeker)**  | Solana Mobile dApp Store                                                                        | MWA wallet wired into the web app + Seeker release pipeline                                                     |
@@ -8719,7 +8723,7 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Admin / Rep**      | `/admin`, `/reputation`                                                                         | Staff admin, reputation registry                                                                                |
 | **Experiments**      | `/rider`                                                                                        | A-Frame WebVR music visualization                                                                               |
 | **Integrations**     | `/cz`, `/lobehub/iframe`                                                                        | CZ demo, LobeHub plugin                                                                                         |
-| **IBM Showcase**     | `/ibm`, `/ibm/galaxy`, `/ibm/oracle`, `/ibm/twin`, `/ibm/trust-layer`, `/ibm/proof`, `/ibm/vision` | Granite on watsonx.ai — semantic galaxy, TimeSeries oracle, digital twin, Guardian trust layer, on-chain proof, vision |
+| **IBM / Granite**    | `/galaxy`, `/ibm/x402-demo`, `/ibm/hello`                                                       | Granite on watsonx.ai: semantic agent galaxy, pay-per-call Granite demo, hello-world embed                      |
 | **Docs**             | `/docs`, `/docs/widgets`                                                                        | Developer documentation                                                                                         |
 | **Legal**            | `/legal/privacy`, `/legal/tos`                                                                  | Privacy policy and terms                                                                                        |
 
@@ -10204,7 +10208,7 @@ three.ws is indexed in chain-ecosystem dApp directories so the community can dis
 
 ## IBM watsonx & Granite
 
-three.ws is an **IBM Business Partner**, and the agent runtime runs on **IBM Granite** foundation models served through **IBM watsonx.ai**. One IBM Cloud API key + project unlocks the whole suite; every call is real inference (no mock path — endpoints return `503` when unconfigured). Full docs: **[docs/ibm.md](docs/ibm.md)**. Live showcase: **[three.ws/ibm/galaxy](https://three.ws/ibm/galaxy)**.
+three.ws is an **IBM Business Partner**, and the agent runtime runs on **IBM Granite** foundation models served through **IBM watsonx.ai**. One IBM Cloud API key + project unlocks the whole suite; every call is real inference (no mock path: endpoints return `503` when unconfigured). Full docs: **[docs/ibm.md](docs/ibm.md)**. Live showcase: **[three.ws/galaxy](https://three.ws/galaxy)**.
 
 > **The public showcase is not the partnership.** The demos under `/ibm/*` are independent tools three.ws built for developers to explore Granite on watsonx.ai and build their own integrations — they are not official IBM partnership deliverables, not IBM products, and not endorsed by IBM. Our formal partnership work with IBM is being built on the IBM platform and is not yet public.
 
@@ -10216,7 +10220,7 @@ three.ws is an **IBM Business Partner**, and the agent runtime runs on **IBM Gra
 | `granite-embedding-278m-multilingual` | **Semantic** agent map + `/api/watsonx/embed` |
 | `granite-vision-3-2-2b` | **Vision** — reads an avatar into a full agent identity |
 
-Six showcase surfaces put it on screen, cross-linked by an in-page suite switcher: the [Agent Galaxy](https://three.ws/ibm/galaxy) (semantic 3D star-map), the [Granite Oracle](https://three.ws/ibm/oracle) (narrated forecast), the [Digital Twin](https://three.ws/ibm/twin) (back-test + what-if), the [Trust Layer](https://three.ws/ibm/trust-layer) (Guardian + hash-chained audit ledger), [Granite Proof](https://three.ws/ibm/proof) (a Guardian-governed forecast notarized on Solana), and [Granite Vision](https://three.ws/ibm/vision). The standalone connector [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) exposes watsonx.ai to any MCP host — it is community-built and not an IBM product; the hosted platform integration is what runs on IBM watsonx.ai.
+Three live surfaces put it on screen: the [Agent Galaxy](https://three.ws/galaxy) (every public agent embedded by Granite into a navigable semantic 3D star-map), the [x402 Granite demo](https://three.ws/ibm/x402-demo) (pay-per-call Granite inference settled in USDC), and the [hello-world embed](https://three.ws/ibm/hello). The backend endpoints behind them live in [api/ibm/](api/ibm/) (`galaxy`, `oracle`, `twin`, `vision`, `attest`). The standalone connector [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) ([npm](https://www.npmjs.com/package/@three-ws/ibm-watsonx-mcp)) exposes watsonx.ai to any MCP host; it is community-built and not an IBM product. The hosted platform integration is what runs on IBM watsonx.ai.
 
 ### Pay-per-call Granite over MCP (x402)
 
@@ -10271,8 +10275,9 @@ Every CDP-settled endpoint ships a Permit2 sibling that accepts an EIP-2612 perm
 | Surface       | Path                              | Purpose                                     |
 | ------------- | --------------------------------- | ------------------------------------------- |
 | Bazaar        | `/x402`                           | Browsable marketplace of paid endpoints     |
-| Discovery     | `/x402-discover`                  | Search by tag, price, chain                 |
-| Checkout      | `/x402-pay`, `/api/x402-checkout` | Stripe-style one-shot purchase              |
+| Listing studio | `/x402/studio`                   | Author and publish your own paid listing    |
+| Revenue       | `/x402-revenue`                   | Seller revenue dashboard                    |
+| Checkout      | `/api/x402-checkout`              | Stripe-style one-shot purchase              |
 | SKU catalog   | `/api/x402-skus`                  | Server-defined SKUs with per-row pricing    |
 | Dashboard     | `/dashboard/x402`                 | Seller + buyer dashboard, receipts, payouts |
 | Subscriptions | `/api/x402/subscriptions`         | Recurring x402 charges on cron              |

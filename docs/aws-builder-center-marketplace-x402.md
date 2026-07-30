@@ -2,6 +2,11 @@
 title: "One paywall, two economies: putting AWS Marketplace metering in front of an x402 API"
 venue: AWS Builder Center
 account: three.ws (official)
+status: published
+published_title: "How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3"
+published_date: 2026-05-30
+published_url: https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3
+index: docs/aws-builder-center.md
 description: "How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3 — ResolveCustomer, MeterUsage, entitlements, and verified SNS lifecycle webhooks — and bridged it to an on-chain x402 paywall so one access check bills two ways. Real code, and the five things that bit us."
 tags: [aws, marketplace, saas, serverless, api]
 ---

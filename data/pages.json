@@ -3055,6 +3055,31 @@
 					"added": "2026-05-17"
 				},
 				{
+					"path": "/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+					"title": "Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs",
+					"description": "A field report from the three.ws GPU fleet: why Hunyuan3D 2.1 could not load on an NVIDIA L4, why CUDA 12.4 wheels have no sm_120 kernels for RTX PRO 6000 Blackwell, and the regional quota that made the bigger card the available card.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-30"
+				},
+				{
+					"path": "/blog/monetize-mcp-server-x402-paid-tools",
+					"title": "How to Monetize an MCP Server: Paid Tools with x402",
+					"description": "A complete guide to charging for MCP tools with x402: price a tool in USDC, issue the 402 challenge, verify and settle on Solana, get discovered in the bazaar, and test the buyer side.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-30"
+				},
+				{
+					"path": "/blog/three-ws-openai-select-partner",
+					"title": "three.ws Named an OpenAI Select Partner",
+					"description": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-25",
+					"added": "2026-07-25"
+				},
+				{
 					"path": "/blog/autonomous-trading-experiment",
 					"title": "We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.",
 					"description": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.",
@@ -3096,15 +3121,6 @@
 					"changefreq": "monthly",
 					"lastmod": "2026-07-16",
 					"added": "2026-07-16"
-				},
-				{
-					"path": "/blog/three-ws-openai-select-partner",
-					"title": "three.ws Named an OpenAI Select Partner",
-					"description": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"lastmod": "2026-07-25",
-					"added": "2026-07-25"
 				},
 				{
 					"path": "/blog/three-ws-alibaba-cloud-partnership",

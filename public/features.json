@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:37:10.832Z",
+	"generated_at": "2026-07-30T04:44:37.237Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3875,6 +3875,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+					"title": "Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs",
+					"description": "A field report from the three.ws GPU fleet: why Hunyuan3D 2.1 could not load on an NVIDIA L4, why CUDA 12.4 wheels have no sm_120 kernels for RTX PRO 6000 Blackwell, and the regional quota that made the bigger card the available card.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/blog/three-ws-openai-select-partner",
+					"title": "three.ws Named an OpenAI Select Partner",
+					"description": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
+					"added": "2026-07-25",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/blog/autonomous-trading-experiment",
 					"title": "We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.",
 					"description": "Two weeks of fully autonomous pump.fun trading on Solana: 11 armed strategies, 90 closed real-money trades, every entry thesis, every exit, every mistake. Plus the 83,000 coins the fleet did not buy, the winners it missed, and a paperhands audit of every sell. Complete dataset included.",
@@ -3919,16 +3939,6 @@
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
 					"added": "2026-07-16",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/blog/three-ws-openai-select-partner",
-					"title": "three.ws Named an OpenAI Select Partner",
-					"description": "three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.",
-					"added": "2026-07-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

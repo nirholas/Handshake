@@ -2355,6 +2355,18 @@ URL: https://three.ws/blog
 
 Editorial index of three.ws launches and long-form posts.
 
+### Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs
+
+URL: https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell
+
+A field report from the three.ws GPU fleet: why Hunyuan3D 2.1 could not load on an NVIDIA L4, why CUDA 12.4 wheels have no sm_120 kernels for RTX PRO 6000 Blackwell, and the regional quota that made the bigger card the available card.
+
+### three.ws Named an OpenAI Select Partner
+
+URL: https://three.ws/blog/three-ws-openai-select-partner
+
+three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.
+
 ### We Gave 11 AI Agents Their Own Wallets and Real SOL. Here Are All 90 Trades.
 
 URL: https://three.ws/blog/autonomous-trading-experiment
@@ -2384,12 +2396,6 @@ What actually happens between typing a prompt on three.ws and downloading a text
 URL: https://three.ws/blog/three-ws-quicknode-startup-program
 
 three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
-
-### three.ws Named an OpenAI Select Partner
-
-URL: https://three.ws/blog/three-ws-openai-select-partner
-
-three.ws has been named an OpenAI Select Partner within the OpenAI Partner Network. What we ship on OpenAI surfaces today: a free 3D Studio MCP connector for ChatGPT, custom GPT Actions, the open Spatial MCP response shape, and one-tap AR.
 
 ### three.ws Joins the Alibaba Cloud Partner Network
 

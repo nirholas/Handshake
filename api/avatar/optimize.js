@@ -38,7 +38,6 @@ import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { publicUrl } from '../_lib/r2.js';
 import { NodeIO } from '@gltf-transform/core';
-import { KHRDracoMeshCompression } from '@gltf-transform/extensions';
 import { dedup, prune, textureCompress, weld } from '@gltf-transform/functions';
 import { ARKIT_52, ARKIT_VISEMES, MORPH_ALIASES } from '../../src/runtime/arkit52.js';
 
@@ -196,12 +195,9 @@ function transcodeIo() {
 }
 
 async function applyDraco(doc) {
-	const draco = doc.createExtension(KHRDracoMeshCompression).setRequired(true);
-	for (const mesh of doc.getRoot().listMeshes()) {
-		for (const prim of mesh.listPrimitives()) {
-			prim.setExtension('KHR_draco_mesh_compression', draco.createCompressedPrimitive(prim));
-		}
-	}
+	const { draco } = await import('@gltf-transform/functions');
+	// Draco encodes indexed primitives only, so weld before handing it the mesh.
+	await doc.transform(weld(), draco());
 }
 
 export default wrap(async (req, res) => {

@@ -550,6 +550,10 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 	}
 
 	let signature;
+	// Set only when the preflight-off resend below is attempted and also fails, so
+	// the reported reason distinguishes "our read node was stale" from "the payment
+	// was genuinely unsendable".
+	let preflightRetryNote = '';
 	try {
 		signature = await connection.sendRawTransaction(tx.serialize(), {
 			skipPreflight: false,
@@ -616,41 +620,67 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 				replayed: true,
 			};
 		}
-		// The dominant broadcast failure reaches production logs with NO cause at all:
-		// web3.js renders the preflight rejection as "Transaction simulation failed.
-		// Logs: []" and drops the structured cause (res.error.data.err), while its own
-		// getLogs() only reads back a LANDED transaction — useless for a tx that never
-		// landed. Re-simulate on the failure path to recover that cause. Deliberately
-		// replaceRecentBlockhash:false, unlike the assertSettleable pre-check: the point
-		// is to see whether the blockhash this send actually carried was unknown to the
-		// endpoint that answered, which is how a rotating multi-RPC pool fails when the
-		// hash is fetched from one node and the send lands on another.
-		let cause = '';
-		if (!/Logs: \[[^\]]/.test(m)) {
+		// A preflight "blockhash not found" is usually a FALSE rejection, not a dead
+		// transaction. The buyer builds and signs the payment against THEIR RPC, so the
+		// blockhash it carries is real; we then preflight it on whichever node our
+		// rotating pool happens to answer with, and a node lagging even a few slots
+		// behind the buyer's has simply never seen that hash. web3.js surfaces that as a
+		// hard send failure, so a perfectly valid payment was reported broadcast_failed
+		// and the buyer 502'd having already been charged for the handler.
+		// Re-sending with preflight OFF hands the decision to the validator instead of
+		// our read node: if the hash is live the settle lands, and if it genuinely
+		// expired the transaction is dropped without landing and without a fee, so the
+		// only cost is the confirm wait below. Resending the identical signed bytes is
+		// idempotent (Solana dedupes by signature), so this cannot double-settle.
+		if (provablyNeverLanded) {
 			try {
-				const sim = await connection.simulateTransaction(tx, {
-					sigVerify: false,
-					replaceRecentBlockhash: false,
-					commitment: 'confirmed',
+				signature = await connection.sendRawTransaction(tx.serialize(), {
+					skipPreflight: true,
+					maxRetries: 5,
 				});
-				const simErr = sim?.value?.err ?? null;
-				const simLogs = Array.isArray(sim?.value?.logs) ? sim.value.logs : [];
-				if (simErr) {
-					cause = ` cause:${typeof simErr === 'object' ? JSON.stringify(simErr) : String(simErr)}`;
-				}
-				if (simLogs.length) cause += ` logs:${simLogs.slice(-3).join(' | ')}`;
-			} catch (reSimErr) {
-				cause = ` cause_probe_failed:${String(reSimErr?.message || reSimErr).slice(0, 120)}`;
+			} catch (retryErr) {
+				preflightRetryNote = ` preflight_retry_failed:${String(retryErr?.message || retryErr).slice(0, 120)}`;
 			}
 		}
-		// web3.js appends the LAST simulation-log lines to the message, so the
-		// failure cause sits at the END. A head-only truncation kept only the
-		// ComputeBudget preamble and hid the failing instruction from every
-		// production log. Keep the head (error class) and the tail (cause).
-		const detail = `${m}${cause}`.replace(/\s+/g, ' ').trim();
-		const full = `broadcast_failed:${detail}`;
-		const reason = full.length <= 480 ? full : `${full.slice(0, 200)} … ${full.slice(-276)}`;
-		return { success: false, reason };
+		// Only report a broadcast failure if the preflight-off resend above did not
+		// produce a signature; otherwise fall through to the confirm step below.
+		if (signature == null) {
+			// The dominant broadcast failure reaches production logs with NO cause at all:
+			// web3.js renders the preflight rejection as "Transaction simulation failed.
+			// Logs: []" and drops the structured cause (res.error.data.err), while its own
+			// getLogs() only reads back a LANDED transaction, useless for a tx that never
+			// landed. Re-simulate on the failure path to recover that cause. Deliberately
+			// replaceRecentBlockhash:false, unlike the assertSettleable pre-check: the point
+			// is to see whether the blockhash this send actually carried was unknown to the
+			// endpoint that answered, which is how a rotating multi-RPC pool fails when the
+			// hash is fetched from one node and the send lands on another.
+			let cause = '';
+			if (!/Logs: \[[^\]]/.test(m)) {
+				try {
+					const sim = await connection.simulateTransaction(tx, {
+						sigVerify: false,
+						replaceRecentBlockhash: false,
+						commitment: 'confirmed',
+					});
+					const simErr = sim?.value?.err ?? null;
+					const simLogs = Array.isArray(sim?.value?.logs) ? sim.value.logs : [];
+					if (simErr) {
+						cause = ` cause:${typeof simErr === 'object' ? JSON.stringify(simErr) : String(simErr)}`;
+					}
+					if (simLogs.length) cause += ` logs:${simLogs.slice(-3).join(' | ')}`;
+				} catch (reSimErr) {
+					cause = ` cause_probe_failed:${String(reSimErr?.message || reSimErr).slice(0, 120)}`;
+				}
+			}
+			// web3.js appends the LAST simulation-log lines to the message, so the
+			// failure cause sits at the END. A head-only truncation kept only the
+			// ComputeBudget preamble and hid the failing instruction from every
+			// production log. Keep the head (error class) and the tail (cause).
+			const detail = `${m}${cause}${preflightRetryNote}`.replace(/\s+/g, ' ').trim();
+			const full = `broadcast_failed:${detail}`;
+			const reason = full.length <= 480 ? full : `${full.slice(0, 200)} … ${full.slice(-276)}`;
+			return { success: false, reason };
+		}
 	}
 
 	const conf = await confirmSignature(connection, signature);

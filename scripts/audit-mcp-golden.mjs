@@ -22,48 +22,21 @@
 //
 // Run:  node scripts/audit-mcp-golden.mjs           → compare, exit 1 on drift
 //       node scripts/audit-mcp-golden.mjs --update  → regenerate the fixture
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { resolve, dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { parse } from 'acorn';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+import { ROOT, mcpToolSources } from './lib/mcp-tool-sources.mjs';
+
 const FIXTURE = join(ROOT, 'tests', 'fixtures', 'mcp-golden-tools.json');
 
-// Every hosted MCP server's tool-definition sources. A new hosted server MUST
-// be added here (and the fixture regenerated) or its contract is unguarded.
-const SOURCES = [
-	...readdirSync(join(ROOT, 'api/_mcp/tools')).map((f) => `api/_mcp/tools/${f}`),
-	...readdirSync(join(ROOT, 'api/_mcp3d/tools')).map((f) => `api/_mcp3d/tools/${f}`),
-	'api/_mcp-studio/tools.js',
-	'api/_mcpagent/tools.js',
-	'api/_mcpbazaar/tools.js',
-	'api/_mcpibm/tools.js',
-	// Published MCP packages expose each tool as packages/<name>-mcp/src/tools/*.js.
-	// Snapshot them too — a package tool's public contract (name, description,
-	// input schema, safety annotations) is a promise to every MCP client that
-	// installed it, and a silent refactor must not be allowed to change it.
-	...packageToolSources(),
-].filter((f) => f.endsWith('.js')).sort();
-
-// Discover every `packages/*-mcp/src/tools/*.js` tool-definition file. Returns
-// repo-relative, forward-slash paths (matching the hosted entries above) so the
-// same static AST extractor and fixture keying work unchanged. `index.js`
-// barrels are skipped — they re-export, they don't define contracts.
-function packageToolSources() {
-	const pkgRoot = join(ROOT, 'packages');
-	if (!existsSync(pkgRoot)) return [];
-	return readdirSync(pkgRoot, { withFileTypes: true })
-		.filter((d) => d.isDirectory() && d.name.endsWith('-mcp'))
-		.flatMap((d) => {
-			const rel = `packages/${d.name}/src/tools`;
-			if (!existsSync(join(ROOT, rel))) return [];
-			return readdirSync(join(ROOT, rel))
-				.filter((f) => f.endsWith('.js') && f !== 'index.js')
-				.map((f) => `${rel}/${f}`);
-		});
-}
+// Every hosted + published MCP server's tool-definition sources, discovered by
+// scripts/lib/mcp-tool-sources.mjs so this gate and the safety gate can never
+// diverge on which files are guarded. Tools built dynamically (e.g.
+// buildGettingStartedTool) are invisible to static parsing and out of scope --
+// verify those against a running server (`npm run test:mcp` / `smoke:mcp`).
+const SOURCES = mcpToolSources();
 
 const sha12 = (text) => createHash('sha256').update(text).digest('hex').slice(0, 12);
 
