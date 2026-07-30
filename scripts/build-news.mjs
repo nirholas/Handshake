@@ -232,7 +232,7 @@ function renderArticlePage(item) {
 		? `<figure class="hero"><img src="${escapeAttr(item.image)}" alt="${escapeAttr(imageAlt)}" loading="eager" fetchpriority="high"${heroDims}/></figure>`
 		: '';
 	const externalAttribution = item.externalLink
-		? `<p><em>Originally shared on <a href="${escapeAttr(item.externalLink)}" rel="noopener">X</a>.</em></p>`
+		? `<p><em>Originally published on <a href="${escapeAttr(item.externalLink)}" rel="noopener">${escapeHtml(item.externalSource || 'X')}</a>.</em></p>`
 		: '';
 	return `<!DOCTYPE html>
 <html lang="en">

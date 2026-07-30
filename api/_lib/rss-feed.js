@@ -66,6 +66,11 @@ export async function loadCuratedItems({ includeDrafts = false } = {}) {
 			slug,
 			permalink: `${SITE_ORIGIN}${NEWS_PATH_PREFIX}/${slug}`,
 			externalLink,
+			// Where the item was first published. Most curated items are X posts, so
+			// that stays the default; articles published at a named venue (the AWS
+			// Builder Center, a partner blog) set external_source to be attributed
+			// correctly instead of being labelled as an X post.
+			externalSource: typeof e.external_source === 'string' && e.external_source ? e.external_source : 'X',
 			title: String(e.title),
 			author: typeof e.author === 'string' && e.author ? e.author : 'three.ws',
 			summary: typeof e.summary === 'string' ? e.summary : deriveSummary(e.body_html),
@@ -275,7 +280,7 @@ function renderItemXml(item) {
 \t\t\t</media:content>`;
 		}
 		const bodyWithAttribution = item.externalLink
-			? `${item.bodyHtml}\n<p><em>Originally shared on <a href="${escapeAttr(item.externalLink)}" rel="noopener">X</a> — follow more updates at <a href="https://three.ws" rel="noopener">three.ws</a>.</em></p>`
+			? `${item.bodyHtml}\n<p><em>Originally published on <a href="${escapeAttr(item.externalLink)}" rel="noopener">${escapeXml(item.externalSource)}</a>. Follow more updates at <a href="https://three.ws" rel="noopener">three.ws</a>.</em></p>`
 			: item.bodyHtml;
 		return `\t\t<item>
 \t\t\t<title>${escapeXml(item.title)}</title>

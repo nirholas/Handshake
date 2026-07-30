@@ -2,6 +2,21 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 80. Last merged from data/archives/trythreews_tweets_2026-06-03.json on 2026-06-05 (102 total items, merged June 2026 posts).",
   "items": [
     {
+      "id": "monetize-mcp-server-x402-paid-tools",
+      "slug": "monetize-mcp-server-x402-paid-tools",
+      "title": "How to Monetize an MCP Server: Paid Tools with x402",
+      "date": "2026-07-30T12:00:00.000Z",
+      "author": "three.ws",
+      "link": "https://three.ws/blog/monetize-mcp-server-x402-paid-tools",
+      "summary": "The seller-side guide to agent payments: choose work worth charging for, price it in atomic USDC units, answer unpaid calls with a real 402, verify then work then settle, charge per tool inside an MCP tools/call, and get indexed where agents shop for paid services.",
+      "body_html": "<p><strong>The Model Context Protocol solved distribution for tools and left payment unsolved</strong>, because every payment system on the web assumes a human with a credit card completes a signup form. An autonomous agent has a wallet, not an inbox.</p>\n<h2>What the guide covers</h2>\n<ul>\n<li>How to tell whether a capability is worth charging for, and how to price it in fractions of a cent.</li>\n<li>Wrapping a route so unpaid requests receive a real <code>402 Payment Required</code> challenge, on Solana first with Base as a second accept.</li>\n<li>The ordering that keeps it honest: verify the payment, do the work, only then settle, so a failure charges nobody and a retry cannot double-charge.</li>\n<li>Charging per tool inside an MCP <code>tools/call</code> using the <code>_meta</code> payment convention, plus why every paid connector should ship one free explainer tool.</li>\n<li>Getting listed in the x402 bazaar where agents shop for paid capabilities, and proving an assistant can buy your service unattended with spend caps in place.</li>\n</ul>\n<p>Every example is real and the production endpoint quoted in the article returns a live 402 you can inspect from a terminal in one line. Read it: <a href=\"https://three.ws/blog/monetize-mcp-server-x402-paid-tools\" rel=\"noopener\">three.ws/blog/monetize-mcp-server-x402-paid-tools</a></p>",
+      "tags": [
+        "x402",
+        "mcp",
+        "agent-payments"
+      ]
+    },
+    {
       "id": "quicknode-startup-program",
       "slug": "quicknode-startup-program",
       "title": "three.ws Joins the Quicknode Startup Program",

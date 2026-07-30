@@ -2123,13 +2123,13 @@ const SELF_ENDPOINTS = [
 						{ ex: BRIDGE_ALERT_TTL_SECONDS },
 					);
 					console.warn(
-						`[x402/bridge-status] ALERT: \${v.down_count} bridge(s) down — \${downBridges.join(', ')}`,
+						`[x402/bridge-status] ALERT: ${v.down_count} bridge(s) down: ${downBridges.join(', ')}`,
 					);
 				} else if (typeof v.down_count === 'number') {
 					await redis.del(BRIDGE_ALERT_KEY);
 				}
 			} catch (err) {
-				console.warn(`[x402/bridge-status] alert write failed: \${err?.message || err}`);
+				console.warn(`[x402/bridge-status] alert write failed: ${err?.message || err}`);
 			}
 		},
 	},

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:57:16.016Z",
+	"generated_at": "2026-07-30T05:00:04.686Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -140,6 +140,17 @@
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Our AWS Builder Center articles are now linked from the site and the docs",
+			"summary": "three.ws has published two engineering deep dives on Amazon's official AWS Builder Center, and until now nothing on the site pointed at either of them. Both are now linked from the AWS partner page, indexed in the docs with a note on exactly which open-source code each one walks through, and announced in the news feed with working links to the live articles. The news feed also stopped mislabelling articles published elsewhere as posts from X, so every piece is now credited to the place it actually appeared.",
+			"link": "/aws",
+			"tags": [
+				"docs",
+				"improvement"
 			]
 		},
 		{

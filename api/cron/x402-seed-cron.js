@@ -129,7 +129,7 @@ function parseSolanaAccept(challengeBody) {
 
 // Build and sign a USDC TransferChecked versioned transaction for x402.
 // Caller provides a pre-fetched blockhash and mint to avoid per-call RPCs.
-function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists }) {
+export function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists, index = 0 }) {
 	const mint = new PublicKey(accept.asset);
 	const payTo = new PublicKey(accept.payTo);
 	const feePayer = new PublicKey(accept.extra.feePayer);
@@ -144,7 +144,19 @@ function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists 
 
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
-		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 }),
+		// The priority fee is what makes each transaction in a batch DISTINCT, and
+		// it has to be: every other input (blockhash, amount, accounts, decimals) is
+		// identical across the batch, so a fixed price made all N transactions
+		// byte-identical. Identical bytes mean one signature, and the paid endpoint
+		// derives paymentId by hashing the payment proof, so the whole batch
+		// collided on a single id: one call landed and the rest 409'd on
+		// writeConflict, while any that raced past the guard hit the chain as a
+		// duplicate signature and settled as `broadcast_failed` with empty
+		// simulation logs. Measured 2026-07-30: ~40 of 41 calls per tick lost, the
+		// single largest source of 4xx on the fleet at 2,403/hour.
+		// Cost of the spread is negligible: 60k CU * N microLamports is 0.06*N
+		// lamports, so a full batch adds a few lamports in total.
+		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 + index }),
 	];
 	if (!receiverAtaExists) {
 		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
@@ -328,8 +340,8 @@ export default wrapCron(async (req, res) => {
 
 	// ── Step 3: build the signed transactions (synchronous) ───────────────────
 	const affordable = plan.batch;
-	const txBases = Array.from({ length: affordable }, () =>
-		buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists }),
+	const txBases = Array.from({ length: affordable }, (_, index) =>
+		buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAtaExists, index }),
 	);
 
 	// ── Step 4: fire all in parallel ──────────────────────────────────────────

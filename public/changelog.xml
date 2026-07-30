@@ -111,6 +111,14 @@
 			<description>A complete, hands-on walkthrough of the seller side of agent payments, written for anyone who wants their code to earn money from other people's AI agents. It covers how to tell whether a capability is worth charging for, how to set a price in fractions of a cent, the exact ordering that keeps you honest (check the payment, do the work, only then take the money, so a failure never charges anyone), how to charge per tool inside an assistant connector, how to get listed where agents shop for paid services, and how to prove an assistant can find and buy your service with no human involved. Every example is real and every endpoint quoted is live, including one you can try from a terminal in one line.</description>
 		</item>
 		<item>
+			<title>Our AWS Builder Center articles are now linked from the site and the docs</title>
+			<link>https://three.ws/aws</link>
+			<guid isPermaLink="false">2026-07-30:Our AWS Builder Center articles are now linked from the site and the docs</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>three.ws has published two engineering deep dives on Amazon's official AWS Builder Center, and until now nothing on the site pointed at either of them. Both are now linked from the AWS partner page, indexed in the docs with a note on exactly which open-source code each one walks through, and announced in the news feed with working links to the live articles. The news feed also stopped mislabelling articles published elsewhere as posts from X, so every piece is now credited to the place it actually appeared.</description>
+		</item>
+		<item>
 			<title>Paid requests stop being refused after they were already served</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Paid requests stop being refused after they were already served</guid>

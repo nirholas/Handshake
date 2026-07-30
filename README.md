@@ -9002,17 +9002,24 @@ The loader ([public/artifact.js](public/artifact.js)) mounts a rotatable 3D view
 
 ## Tutorials
 
-Step-by-step guides in [`docs/tutorials/`](docs/tutorials/):
+54 step-by-step guides ship in [`docs/tutorials/`](docs/tutorials/), and every one is published live at [three.ws/tutorials](https://three.ws/tutorials). The core path:
 
-| Tutorial                                                       | What you'll build                                                    | Time    |
-| -------------------------------------------------------------- | -------------------------------------------------------------------- | ------- |
-| [Turn a Text Prompt into a 3D Model](docs/tutorials/text-to-3d.md) | A real, textured, downloadable 3D model from a one-line description | ~5 min  |
-| [Turn Photos into a 3D Model](docs/tutorials/image-to-3d.md)   | A GLB reconstructed from 1–4 photos of a real object                 | ~10 min |
-| [Build Your First Agent](docs/tutorials/first-agent.md)        | A talking 3D character on a shareable page, from zero                | ~20 min |
-| [Embed on Your Website](docs/tutorials/embed-on-website.md)    | Add an agent to any page — plain HTML, React, Webflow, WordPress     | ~15 min |
-| [Write a Custom Skill](docs/tutorials/custom-skill.md)         | A new tool the agent can call (e.g., fetch live weather data)        | ~30 min |
-| [Register On-Chain](docs/tutorials/register-onchain.md)        | Mint your agent onchain — ERC-8004 on EVM or Metaplex Core on Solana | ~20 min |
-| [Build a Personal AI Site](docs/tutorials/personal-ai-site.md) | A full personal site with an embedded AI version of yourself         | ~45 min |
+| Tutorial                                                       | What you'll build                                                    | Time    | Live |
+| -------------------------------------------------------------- | -------------------------------------------------------------------- | ------- | ---- |
+| [Turn a Text Prompt into a 3D Model](docs/tutorials/text-to-3d.md) | A real, textured, downloadable 3D model from a one-line description | ~5 min  | [open](https://three.ws/tutorials/text-to-3d) |
+| [Turn Photos into a 3D Model](docs/tutorials/image-to-3d.md)   | A GLB reconstructed from 1-4 photos of a real object                 | ~10 min | [open](https://three.ws/tutorials/image-to-3d) |
+| [Build Your First Agent](docs/tutorials/first-agent.md)        | A talking 3D character on a shareable page, from zero                | ~20 min | [open](https://three.ws/tutorials/first-agent) |
+| [Embed on Your Website](docs/tutorials/embed-on-website.md)    | Add an agent to any page: plain HTML, React, Webflow, WordPress      | ~15 min | [open](https://three.ws/tutorials/embed-on-website) |
+| [Write a Custom Skill](docs/tutorials/custom-skill.md)         | A new tool the agent can call (e.g., fetch live weather data)        | ~30 min | [open](https://three.ws/tutorials/custom-skill) |
+| [Register On-Chain](docs/tutorials/register-onchain.md)        | Mint your agent onchain: ERC-8004 on EVM or Metaplex Core on Solana  | ~20 min | [open](https://three.ws/tutorials/register-onchain) |
+| [Build a Personal AI Site](docs/tutorials/personal-ai-site.md) | A full personal site with an embedded AI version of yourself         | ~45 min | [open](https://three.ws/tutorials/personal-ai-site) |
+
+Beyond the core path, the catalog covers every surface in this README. A sampler, grouped by what you want to do:
+
+- **Embed & integrate:** [Embed in 30 seconds](https://three.ws/tutorials/embed-in-30-seconds) · [Add a 3D assistant to your app](https://three.ws/tutorials/add-a-3d-assistant) · [Build a site concierge](https://three.ws/tutorials/build-a-site-concierge) · [Shopify shopping assistant](https://three.ws/tutorials/shopify-shopping-assistant) · [JS API and events](https://three.ws/tutorials/js-api-events) · [Trigger from page events](https://three.ws/tutorials/trigger-from-page-events)
+- **Avatars & 3D:** [Selfie to avatar](https://three.ws/tutorials/selfie-to-avatar) · [Animate your avatar](https://three.ws/tutorials/animate-your-avatar) · [Build a 3D scene](https://three.ws/tutorials/build-a-scene) · [View in AR](https://three.ws/tutorials/view-in-ar) · [Upload a custom GLB](https://three.ws/tutorials/upload-custom-glb) · [Voice and lip-sync](https://three.ws/tutorials/voice-and-lipsync)
+- **Agents & AI:** [Connect an AI brain](https://three.ws/tutorials/connect-ai-brain) · [Agent personality](https://three.ws/tutorials/agent-personality) · [Create and edit memory](https://three.ws/tutorials/create-and-edit-memory) · [Multi-agent coordination](https://three.ws/tutorials/multi-agent-coordination) · [MCP server for your agent](https://three.ws/tutorials/mcp-server-for-your-agent)
+- **On-chain & payments:** [Claim your threews.sol name](https://three.ws/tutorials/claim-threews-name) · [Mint a pump.fun token](https://three.ws/tutorials/mint-pumpfun-token) · [Mine a vanity address](https://three.ws/tutorials/mine-vanity-address) · [x402 server SDK](https://three.ws/tutorials/x402-server-sdk) · [Solana agent reputation](https://three.ws/tutorials/solana-agent-reputation)
 
 ### Common gotchas
 
@@ -9740,28 +9747,27 @@ The driver is source-agnostic: it accepts any `AudioBuffer`, so it works identic
 
 | Demo                                | Path                             | What it shows                                            |
 | ----------------------------------- | -------------------------------- | -------------------------------------------------------- |
-| **USDZ & AR Quick Look**            | `/demos/usdz-ar.html`            | iOS USDZ export + AR Quick Look on a real device         |
-| **Half-body XR**                    | `/demos/halfbody-xr.html`        | Upper-body avatar in WebXR (Meta Quest, Vision Pro)      |
-| **Avatar SDK**                      | `/demos/avatar-sdk.html`         | `@three-ws/avatar` SDK loading + animating an avatar     |
-| **React SDK**                       | `/demos/react-sdk.html`          | React wrapper around the `<agent-3d>` element            |
-| **Audio-driven lipsync (mic)**      | `/lipsync/mic`                   | Live microphone → ARKit-52 lip-sync                      |
-| **Audio-driven lipsync (TTS)**      | `/lipsync`                       | ElevenLabs TTS → ARKit-52 lip-sync                       |
-| **Multi-LLM brain**                 | `/brain`                         | Side-by-side comparison of Claude / GPT / Groq / Gemini  |
-| **ERC-8004 registry browser**       | `/demos/erc8004.html`            | Browse all registered agents across chains               |
-| **Button jump**                     | `/demos/button-jump.html`        | Avatar reacts to a 2D button press                       |
-| **Tactile button (Gemini concept)** | `/demos/gemini-jump.html`        | Tactile button demo with avatar                          |
-| **Create v2**                       | `/demos/create-v2.html`          | Next-generation agent creation flow                      |
-| **3D home**                         | `/demos/3d-home.html`            | Home page with overlay canvas + transparent-bg viewer    |
-| **Selfie fit**                      | `/demos/selfie-fit.html`         | Selfie reconstruction pipeline (Phase 1)                 |
-| **Persona extract**                 | `/demos/persona-extract.html`    | Voice & Persona Hub onboarding interview                 |
-| **Memory seed**                     | `/demos/memory-seed.html`        | Memory seeding from X/GitHub/Farcaster                   |
-| **Voice clone**                     | `/demos/voice-clone.html`        | 3–10s recording → ElevenLabs custom voice                |
-| **Livepeer inference**              | `/demos/livepeer-inference.html` | Decentralized GPU inference end-to-end                   |
-| **Skill royalty**                   | `/demos/skill-royalty.html`      | Per-call royalty payouts to skill authors                |
-| **EAS reputation**                  | `/demos/eas-reputation.html`     | EAS-attested reputation viewer                           |
-| **Bonding curve**                   | `/demos/bonding-curve.html`      | Pre-launch bonding-curve pricing simulator               |
-| **Gallery picker**                  | `/demos/gallery-picker.html`     | Lazy 3D-thumbnail avatar picker (Embed Editor primitive) |
-| **Button**                          | `/demos/button.html`             | Minimal `<agent-3d>` embed reaction test                 |
+| **USDZ & AR Quick Look**            | [`/demos/usdz-ar.html`](https://three.ws/demos/usdz-ar.html) | iOS USDZ export + AR Quick Look on a real device         |
+| **Half-body XR**                    | [`/demos/halfbody-xr.html`](https://three.ws/demos/halfbody-xr.html) | Upper-body avatar in WebXR (Meta Quest, Vision Pro)      |
+| **Avatar SDK**                      | [`/demos/avatar-sdk.html`](https://three.ws/demos/avatar-sdk.html) | `@three-ws/avatar` SDK loading + animating an avatar     |
+| **React SDK**                       | [`/demos/react-sdk.html`](https://three.ws/demos/react-sdk.html) | React wrapper around the `<agent-3d>` element            |
+| **Audio-driven lipsync (mic)**      | [`/lipsync/mic`](https://three.ws/lipsync/mic) | Live microphone → ARKit-52 lip-sync                      |
+| **Audio-driven lipsync (TTS)**      | [`/lipsync`](https://three.ws/lipsync) | ElevenLabs TTS → ARKit-52 lip-sync                       |
+| **Multi-LLM brain**                 | [`/brain`](https://three.ws/brain) | Side-by-side comparison of Claude / GPT / Groq / Gemini  |
+| **ERC-8004 registry browser**       | [`/demos/erc8004.html`](https://three.ws/demos/erc8004.html) | Browse all registered agents across chains               |
+| **Button jump**                     | [`/demos/button-jump.html`](https://three.ws/demos/button-jump.html) | Avatar reacts to a 2D button press                       |
+| **Create v2**                       | [`/demos/create-v2.html`](https://three.ws/demos/create-v2.html) | Next-generation agent creation flow                      |
+| **3D home**                         | [`/demos/3d-home.html`](https://three.ws/demos/3d-home.html) | Home page with overlay canvas + transparent-bg viewer    |
+| **Selfie fit**                      | [`/demos/selfie-fit.html`](https://three.ws/demos/selfie-fit.html) | Selfie reconstruction pipeline (Phase 1)                 |
+| **Persona extract**                 | [`/demos/persona-extract.html`](https://three.ws/demos/persona-extract.html) | Voice & Persona Hub onboarding interview                 |
+| **Memory seed**                     | [`/demos/memory-seed.html`](https://three.ws/demos/memory-seed.html) | Memory seeding from X/GitHub/Farcaster                   |
+| **Voice clone**                     | [`/demos/voice-clone.html`](https://three.ws/demos/voice-clone.html) | 3–10s recording → ElevenLabs custom voice                |
+| **Livepeer inference**              | [`/demos/livepeer-inference.html`](https://three.ws/demos/livepeer-inference.html) | Decentralized GPU inference end-to-end                   |
+| **Skill royalty**                   | [`/demos/skill-royalty.html`](https://three.ws/demos/skill-royalty.html) | Per-call royalty payouts to skill authors                |
+| **EAS reputation**                  | [`/demos/eas-reputation.html`](https://three.ws/demos/eas-reputation.html) | EAS-attested reputation viewer                           |
+| **Bonding curve**                   | [`/demos/bonding-curve.html`](https://three.ws/demos/bonding-curve.html) | Pre-launch bonding-curve pricing simulator               |
+| **Gallery picker**                  | [`/demos/gallery-picker.html`](https://three.ws/demos/gallery-picker.html) | Lazy 3D-thumbnail avatar picker (Embed Editor primitive) |
+| **Button**                          | [`/demos/button.html`](https://three.ws/demos/button.html) | Minimal `<agent-3d>` embed reaction test                 |
 
 The demos are intentionally separate from production routes (`/create`, `/avatars/[id]`, etc.) so the production flow keeps working while we test new ideas.
 
@@ -9800,38 +9806,38 @@ Fifteen packages ship from this repo, all published to npm under the **`@three-w
 
 | Package | Install | What it does |
 | --- | --- | --- |
-| [`@three-ws/avatar`](avatar-sdk/) | `npm i @three-ws/avatar` | 3D avatar viewer, creator iframe, AR/VR runtime + React bindings (`/react`) |
-| [`@three-ws/agent-ui`](agent-ui-sdk/) | `npm i @three-ws/agent-ui` | Drop a 3D avatar overlay into any UI; it reacts to buttons, inputs, and navigation |
-| [`@three-ws/avatar-schema`](packages/avatar-schema/) | `npm i @three-ws/avatar-schema` | JSON Schema + validator for on-chain avatar manifests |
-| [`@three-ws/viewer-presets`](packages/viewer-presets/) | `npm i @three-ws/viewer-presets` | Tuned light-rig, floor-reflection, and bloom presets for avatar viewers |
-| [`@three-ws/avatar-cli`](packages/avatar-cli/) | `npm i -g @three-ws/avatar-cli` | Scaffold, validate, hash, and preview avatar manifests from your shell or CI |
+| [`@three-ws/avatar`](avatar-sdk/) | [`npm i @three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) | 3D avatar viewer, creator iframe, AR/VR runtime + React bindings (`/react`) |
+| [`@three-ws/agent-ui`](agent-ui-sdk/) | [`npm i @three-ws/agent-ui`](https://www.npmjs.com/package/@three-ws/agent-ui) | Drop a 3D avatar overlay into any UI; it reacts to buttons, inputs, and navigation |
+| [`@three-ws/avatar-schema`](packages/avatar-schema/) | [`npm i @three-ws/avatar-schema`](https://www.npmjs.com/package/@three-ws/avatar-schema) | JSON Schema + validator for on-chain avatar manifests |
+| [`@three-ws/viewer-presets`](packages/viewer-presets/) | [`npm i @three-ws/viewer-presets`](https://www.npmjs.com/package/@three-ws/viewer-presets) | Tuned light-rig, floor-reflection, and bloom presets for avatar viewers |
+| [`@three-ws/avatar-cli`](packages/avatar-cli/) | [`npm i -g @three-ws/avatar-cli`](https://www.npmjs.com/package/@three-ws/avatar-cli) | Scaffold, validate, hash, and preview avatar manifests from your shell or CI |
 
 **Agents & payments**
 
 | Package | Install | What it does |
 | --- | --- | --- |
-| [`@three-ws/sdk`](sdk/) | `npm i @three-ws/sdk` | Ship an ERC-8004 agent: chat panel, voice I/O, on-chain registration, `.well-known` manifests |
-| [`@three-ws/solana-agent`](solana-agent-sdk/) | `npm i @three-ws/solana-agent` | Solana agent ops — keypair + browser wallet, transfers, swaps, x402 exact-scheme payments |
-| [`@three-ws/agent-payments`](agent-payments-sdk/) | `npm i @three-ws/agent-payments` | Agent-token payments — USDC/Token-2022, v2 trades, plus EVM / x402 / a2a / cross-chain |
+| [`@three-ws/sdk`](sdk/) | [`npm i @three-ws/sdk`](https://www.npmjs.com/package/@three-ws/sdk) | Ship an ERC-8004 agent: chat panel, voice I/O, on-chain registration, `.well-known` manifests |
+| [`@three-ws/solana-agent`](solana-agent-sdk/) | [`npm i @three-ws/solana-agent`](https://www.npmjs.com/package/@three-ws/solana-agent) | Solana agent ops: keypair + browser wallet, transfers, swaps, x402 exact-scheme payments |
+| [`@three-ws/agent-payments`](agent-payments-sdk/) | [`npm i @three-ws/agent-payments`](https://www.npmjs.com/package/@three-ws/agent-payments) | Agent-token payments: USDC/Token-2022, v2 trades, plus EVM / x402 / a2a / cross-chain |
 
 **MCP servers** (run over stdio with one command — also in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas))
 
 | Package | Run | What it does |
 | --- | --- | --- |
-| [`@three-ws/mcp-server`](mcp-server/) | `npx -y @three-ws/mcp-server` | 16 tools: free text→3D (`forge_free`) + 15 paid x402 — text/image→3D, rigging, pose, pump.fun, ERC-8004, vanity, AgenC, aixbt |
-| [`@three-ws/avatar-agent`](packages/avatar-agent-mcp/) | `npx -y @three-ws/avatar-agent` | Spawn a textured GLB avatar with a Solana wallet, a voice, and pump.fun launch powers |
-| [`@three-ws/avatar-mcp`](packages/threews-avatar-mcp/) | `npx -y @three-ws/avatar-mcp` | Render a live, rotatable on-chain avatar inline + a paste-anywhere embed (free) |
-| [`@three-ws/pumpfun-mcp`](packages/pumpfun-mcp/) | `npx -y @three-ws/pumpfun-mcp` | 23 free, read-only pump.fun + Solana tools — no API key |
-| [`@three-ws/three-token-mcp`](packages/three-token-mcp/) | `npx -y @three-ws/three-token-mcp` | Price, hold, and burn **$THREE** on Solana — deflation as an agent primitive |
-| [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) | `npx -y @three-ws/ibm-watsonx-mcp` | IBM watsonx.ai Granite (chat, generate, embed, forecast) with your own IBM key |
-| [`@three-ws/ibm-x402-mcp`](packages/ibm-x402-mcp/) | `npx -y @three-ws/ibm-x402-mcp` | Pay-per-use IBM Granite — USDC on Solana, no IBM account required |
-| [`@three-ws/mcp-bridge`](mcp-bridge/) | `npx -y @three-ws/mcp-bridge` | x402 universal payer — auto-pay any x402 endpoint on the open web, with Bazaar discovery + spend caps |
-| [`@three-ws/x402-mcp`](packages/x402-mcp/) | `npx -y @three-ws/x402-mcp` | Self-custodial x402 wallet — discover, inspect, and pay any x402 service in USDC |
-| [`@three-ws/scene-mcp`](packages/scene-mcp/) | `npx -y @three-ws/scene-mcp` | Compose a placed 3D diorama from one sentence, then browse the saved scene gallery |
-| [`@three-ws/intel-mcp`](packages/intel-mcp/) | `npx -y @three-ws/intel-mcp` | Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards |
-| [`@three-ws/vanity-mcp`](packages/vanity-mcp/) | `npx -y @three-ws/vanity-mcp` | Solana vanity-address bounty market — quote difficulty + USDC price, browse the board |
-| [`@three-ws/marketplace-mcp`](packages/marketplace-mcp/) | `npx -y @three-ws/marketplace-mcp` | Browse the public three.ws agent marketplace + skills catalog (read-only) |
-| [`@three-ws/naming-mcp`](packages/naming-mcp/) | `npx -y @three-ws/naming-mcp` | On-chain identity for agents — resolve .sol names, reverse-lookup wallets, check handles |
+| [`@three-ws/mcp-server`](mcp-server/) | [`npx -y @three-ws/mcp-server`](https://www.npmjs.com/package/@three-ws/mcp-server) | 16 tools: free text→3D (`forge_free`) + 15 paid x402: text/image→3D, rigging, pose, pump.fun, ERC-8004, vanity, AgenC, aixbt |
+| [`@three-ws/avatar-agent`](packages/avatar-agent-mcp/) | [`npx -y @three-ws/avatar-agent`](https://www.npmjs.com/package/@three-ws/avatar-agent) | Spawn a textured GLB avatar with a Solana wallet, a voice, and pump.fun launch powers |
+| [`@three-ws/avatar-mcp`](packages/threews-avatar-mcp/) | [`npx -y @three-ws/avatar-mcp`](https://www.npmjs.com/package/@three-ws/avatar-mcp) | Render a live, rotatable on-chain avatar inline + a paste-anywhere embed (free) |
+| [`@three-ws/pumpfun-mcp`](packages/pumpfun-mcp/) | [`npx -y @three-ws/pumpfun-mcp`](https://www.npmjs.com/package/@three-ws/pumpfun-mcp) | 23 free, read-only pump.fun + Solana tools: no API key |
+| [`@three-ws/three-token-mcp`](packages/three-token-mcp/) | [`npx -y @three-ws/three-token-mcp`](https://www.npmjs.com/package/@three-ws/three-token-mcp) | Price, hold, and burn **$THREE** on Solana: deflation as an agent primitive |
+| [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) | [`npx -y @three-ws/ibm-watsonx-mcp`](https://www.npmjs.com/package/@three-ws/ibm-watsonx-mcp) | IBM watsonx.ai Granite (chat, generate, embed, forecast) with your own IBM key |
+| [`@three-ws/ibm-x402-mcp`](packages/ibm-x402-mcp/) | [`npx -y @three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp) | Pay-per-use IBM Granite: USDC on Solana, no IBM account required |
+| [`@three-ws/mcp-bridge`](mcp-bridge/) | [`npx -y @three-ws/mcp-bridge`](https://www.npmjs.com/package/@three-ws/mcp-bridge) | x402 universal payer: auto-pay any x402 endpoint on the open web, with Bazaar discovery + spend caps |
+| [`@three-ws/x402-mcp`](packages/x402-mcp/) | [`npx -y @three-ws/x402-mcp`](https://www.npmjs.com/package/@three-ws/x402-mcp) | Self-custodial x402 wallet: discover, inspect, and pay any x402 service in USDC |
+| [`@three-ws/scene-mcp`](packages/scene-mcp/) | [`npx -y @three-ws/scene-mcp`](https://www.npmjs.com/package/@three-ws/scene-mcp) | Compose a placed 3D diorama from one sentence, then browse the saved scene gallery |
+| [`@three-ws/intel-mcp`](packages/intel-mcp/) | [`npx -y @three-ws/intel-mcp`](https://www.npmjs.com/package/@three-ws/intel-mcp) | Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards |
+| [`@three-ws/vanity-mcp`](packages/vanity-mcp/) | [`npx -y @three-ws/vanity-mcp`](https://www.npmjs.com/package/@three-ws/vanity-mcp) | Solana vanity-address bounty market: quote difficulty + USDC price, browse the board |
+| [`@three-ws/marketplace-mcp`](packages/marketplace-mcp/) | [`npx -y @three-ws/marketplace-mcp`](https://www.npmjs.com/package/@three-ws/marketplace-mcp) | Browse the public three.ws agent marketplace + skills catalog (read-only) |
+| [`@three-ws/naming-mcp`](packages/naming-mcp/) | [`npx -y @three-ws/naming-mcp`](https://www.npmjs.com/package/@three-ws/naming-mcp) | On-chain identity for agents: resolve .sol names, reverse-lookup wallets, check handles |
 
 Per-server deep dives (every tool, argument, env var, and example): [Scenes](https://three.ws/docs/mcp-scenes) · [x402 Wallet](https://three.ws/docs/mcp-x402) · [Intel](https://three.ws/docs/mcp-intel) · [Vanity](https://three.ws/docs/mcp-vanity) · [Naming](https://three.ws/docs/mcp-naming) · [Marketplace](https://three.ws/docs/mcp-marketplace). Full catalog: [docs/mcp.md](docs/mcp.md).
 
@@ -9932,7 +9938,7 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-The ~80 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
+The 101 crons in `vercel.json` are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs); the schedules below match `vercel.json` verbatim.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -10017,7 +10023,7 @@ Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings s
 
 **Endpoint:** `POST /api/mcp` (tools), `GET /api/mcp` (SSE), `DELETE /api/mcp` (session terminate)
 **Auth:** OAuth 2.1 Bearer token with `mcp` scope; some tools additionally require x402 USDC payment
-**Registry:** Listed on the [official MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as `io.github.nirholas/three.ws` — one of 42 three.ws MCP servers in the registry. Also discoverable on [Smithery](https://smithery.ai/search?q=three.ws), [Glama](https://glama.ai/mcp/servers?query=three.ws), and [PulseMCP](https://www.pulsemcp.com/servers?q=three.ws).
+**Registry:** Listed on the [official MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as `io.github.nirholas/three.ws`, alongside the other three.ws servers published under the `io.github.nirholas` namespace (`threews-3d-studio`, `threews-avatar`, `threews-pumpfun`, `threews-x402-bazaar`, `three-token-mcp`, and more). Also discoverable on [Smithery](https://smithery.ai/search?q=three.ws), [Glama](https://glama.ai/mcp/servers?query=three.ws), and [PulseMCP](https://www.pulsemcp.com/servers?q=three.ws).
 **x402scan:** [view on x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) — paid MCP tool calls and revenue
 
 **Available tools:**
@@ -10192,9 +10198,9 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 
 | Cloud             | Status                                                                                                                                                                                                |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review — see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` — the Forge sculptor Lambda (`three-ws-forge`) and the S3 avatar bucket — registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). |
+| **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review: see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` (the Forge sculptor Lambda `three-ws-forge` and the S3 avatar bucket), registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). We publish engineering write-ups on the AWS Builder Center as [@threews](https://builder.aws.com/community/@threews); the index is [docs/aws-builder-center.md](docs/aws-builder-center.md). |
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
-| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 100 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run — a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
+| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 101 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run: a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
 
 ## Ecosystem Directories
 
@@ -10373,23 +10379,23 @@ See [`contracts/DEPLOYMENTS.md`](contracts/DEPLOYMENTS.md) for current mainnet a
 
 **Mainnet (across Ethereum, Optimism, BSC, Gnosis, Polygon, Fantom, zkSync Era, Moonbeam, Mantle, Base, Arbitrum One, Celo, Avalanche, Linea, Scroll):**
 
-| Contract           | Address                                      |
-| ------------------ | -------------------------------------------- |
-| IdentityRegistry   | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` |
-| ReputationRegistry | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` |
-| ValidationRegistry | _(same address on all chains)_               |
+| Contract           | Address                                      | Proof |
+| ------------------ | -------------------------------------------- | ----- |
+| IdentityRegistry   | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | [Basescan](https://basescan.org/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432) · [Etherscan](https://etherscan.io/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432) |
+| ReputationRegistry | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` | [Basescan](https://basescan.org/address/0x8004BAa17C55a88189AE136b182e5fdA19dE9b63) · [Etherscan](https://etherscan.io/address/0x8004BAa17C55a88189AE136b182e5fdA19dE9b63) |
+| ValidationRegistry | not yet deployed on mainnet                  | see [contracts/DEPLOYMENTS.md](contracts/DEPLOYMENTS.md) |
 
 **Testnet (BSC Testnet, Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, Optimism Sepolia, Polygon Amoy, Avalanche Fuji):**
 
-| Contract           | Address                                      |
-| ------------------ | -------------------------------------------- |
-| IdentityRegistry   | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
-| ReputationRegistry | `0x8004B663056A597Dffe9eCcC1965A193B7388713` |
-| ValidationRegistry | `0x8004Cb1BF31DAf7788923b405b754f57acEB4272` |
+| Contract           | Address                                      | Proof |
+| ------------------ | -------------------------------------------- | ----- |
+| IdentityRegistry   | `0x8004A818BFB912233c491871b3d84c89A494BD9e` | [Base Sepolia](https://sepolia.basescan.org/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
+| ReputationRegistry | `0x8004B663056A597Dffe9eCcC1965A193B7388713` | [Base Sepolia](https://sepolia.basescan.org/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
+| ValidationRegistry | `0x8004Cb1BF31DAf7788923b405b754f57acEB4272` | [Base Sepolia](https://sepolia.basescan.org/address/0x8004Cb1BF31DAf7788923b405b754f57acEB4272) |
 
 ### CREATE2 Factory (ThreeWSFactory)
 
-A custom vanity-prefixed CREATE2 deployer at `0x00000000D49195AE81759cd247cFeDD9D0B479df` (7 leading zeros) is used to mint matching addresses across chains. The factory init code hash is `0x30f9d9020bf9622bbe7f8a1625d447efe350dfafd0a91e6dbd62d56547db835f`; bytecode is byte-identical on every deployed chain. Source is verified on each chain's explorer.
+A custom vanity-prefixed CREATE2 deployer at [`0x00000000D49195AE81759cd247cFeDD9D0B479df`](https://basescan.org/address/0x00000000D49195AE81759cd247cFeDD9D0B479df) (7 leading zeros) is used to mint matching addresses across chains. The factory init code hash is `0x30f9d9020bf9622bbe7f8a1625d447efe350dfafd0a91e6dbd62d56547db835f`; bytecode is byte-identical on every deployed chain. Source is verified on each chain's explorer.
 
 ### Audits & EAS
 
@@ -10964,7 +10970,7 @@ npm run build       # frontend build to dist/ (only when frontend changed)
 npm run deploy:gcp  # check:dist + db:check, gcloud builds submit, purge CDN
 ```
 
-`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (100 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
+`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (101 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
 
 **Environment variables** live on the Cloud Run service, not in `.env` files — inspect or update them with `gcloud run services describe/update three-ws-api --region us-central1`. See [Environment Variables](#environment-variables) for the full list.
 

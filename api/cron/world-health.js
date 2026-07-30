@@ -182,6 +182,11 @@ export default wrapCron(async (req, res) => {
 		const detail = missing
 			.map((m) => `${m.blueprintId || 'unknown'}: ${m.assetUrl} (${m.error || `HTTP ${m.status}`})`)
 			.join('\n');
+		// Log the URLs as well as alerting. sendOpsAlert dedups by signature for an
+		// hour and does not reach the logs, so a sustained gap left nothing in
+		// Cloud Logging to identify WHICH asset was missing; the less severe
+		// transient branch was strictly better instrumented than this one.
+		console.warn(`[world-health] missing assets: ${detail.replace(/\n/g, ' | ')}`);
 		sendOpsAlert('World asset MISSING', detail, {
 			// Signature keyed to the set of missing URLs so a new gap re-alerts but
 			// the same sustained outage dedups to once an hour.

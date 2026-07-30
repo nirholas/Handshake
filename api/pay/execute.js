@@ -285,7 +285,7 @@ export default wrap(async (req, res) => {
 		return json(res, 200, {
 			ok: true,
 			paid: false,
-			note: 'Endpoint served response without a 402 — no payment needed.',
+			note: 'Endpoint served response without a 402. No payment needed.',
 			status: probeResult.status,
 			result: probeResult.result,
 		});
@@ -348,7 +348,7 @@ export default wrap(async (req, res) => {
 			headers: { 'X-PAYMENT': xPayment },
 		});
 	} catch (err) {
-		// Network failure AFTER signing — chain state unknown, do NOT roll back.
+		// Network failure AFTER signing: chain state unknown, do NOT roll back.
 		await recordExecution({
 			sessionId: sessionRecord.id,
 			userId: sessionRecord.user_id,
@@ -366,7 +366,7 @@ export default wrap(async (req, res) => {
 			idempotencyKey,
 		}).catch(() => {});
 		return error(res, 502, 'settle_uncertain',
-			'Payment was submitted but confirmation was not received — do not retry immediately.');
+			'Payment was submitted but confirmation was not received. Do not retry immediately.');
 	}
 
 	const paidJson = safeJson(paid.text) ?? paid.text;
@@ -395,7 +395,7 @@ export default wrap(async (req, res) => {
 			idempotencyKey,
 		}).catch(() => {});
 		return error(res, 402, 'payment_rejected',
-			'Service rejected the payment before settlement — budget has been restored.',
+			'Service rejected the payment before settlement. Budget has been restored.',
 			typeof paidJson === 'object' ? paidJson : null);
 	}
 

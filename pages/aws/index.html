@@ -81,6 +81,16 @@
 		.note { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; font-size: 14px; color: var(--muted); margin-top: 12px; }
 		.note strong { color: var(--text); }
 
+		.writing { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+		.writing a { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px 22px; text-decoration: none; transition: border-color .18s ease, transform .18s ease, background-color .18s ease; }
+		.writing a:hover, .writing a:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+		.writing a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+		.writing a:active { transform: translateY(0); }
+		.writing .t { display: block; color: var(--text); font-size: 15px; font-weight: 600; line-height: 1.4; }
+		.writing .d { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.6; margin-top: 6px; }
+		.writing .m { display: block; color: var(--accent); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; margin-top: 10px; }
+		@media (prefers-reduced-motion: reduce) { .writing a { transition: none; } .writing a:hover, .writing a:focus-visible { transform: none; } }
+
 		.footer { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 24px 60px; border-top: 1px solid var(--border); }
 		.footer a { color: var(--muted); text-decoration: none; }
 		.footer a:hover { color: var(--text); }
@@ -252,6 +262,28 @@
 			<div class="note">
 				<strong data-i18n="aws_index.open_source">Open source.</strong> The integration lives in <a href="https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none" data-i18n="aws_index.api_aws_marketplace">api/aws-marketplace/</a> and <a href="https://github.com/nirholas/three.ws/blob/main/api/_lib/aws-marketplace.js" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none" data-i18n="aws_index.api_lib_aws_marketplace_js">api/_lib/aws-marketplace.js</a>. Review the code, fork it, run your own deployment.
 			</div>
+		</section>
+
+		<section>
+			<h2 data-i18n="aws_index.our_writing_on_the_aws_builder_center">Our writing on the AWS Builder Center.</h2>
+			<p class="sub" data-i18n="aws_index.we_publish_the_engineering_behind_this">We publish the engineering behind this integration on Amazon's community platform, under the official <a href="https://builder.aws.com/community/@threews" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">@threews</a> account. Both articles link back to the Apache 2.0 source.</p>
+
+			<ul class="writing">
+				<li>
+					<a href="https://builder.aws.com/content/3ESpll50BdSp9eiCEIxcfG9pGUN/how-we-metered-a-saas-product-through-aws-marketplace-with-the-aws-sdk-for-javascript-v3" target="_blank" rel="noopener">
+						<span class="t" data-i18n="aws_index.how_we_metered_a_saas_product">How we metered a SaaS product through AWS Marketplace with the AWS SDK for JavaScript v3</span>
+						<span class="d" data-i18n="aws_index.resolvecustomer_meterusage_entitlements">ResolveCustomer, MeterUsage, GetEntitlements, and SNS lifecycle webhooks with real signature verification, then bridging an AWS CustomerIdentifier into the same access check that serves an on-chain x402 paywall.</span>
+						<span class="m">30 May 2026 · AWS Builder Center</span>
+					</a>
+				</li>
+				<li>
+					<a href="https://builder.aws.com/content/3FMY7S5o4lwzb40gDsCJRCE20cX/build-autonomous-ai-agents-with-d-bodies-and-on-chain-payments-threews-on-aws" target="_blank" rel="noopener">
+						<span class="t" data-i18n="aws_index.build_autonomous_ai_agents_with_3d_bodies">Build Autonomous AI Agents with 3D Bodies and On-Chain Payments</span>
+						<span class="d" data-i18n="aws_index.browser_native_3d_ai_agents_with_memory">Browser-native 3D AI agents with memory, on-chain wallets, and autonomous payments: available on AWS Marketplace, embeddable in one line of HTML, and governed before they act.</span>
+						<span class="m">27 June 2026 · AWS Builder Center</span>
+					</a>
+				</li>
+			</ul>
 		</section>
 
 		<section>

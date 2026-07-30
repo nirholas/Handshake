@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Our AWS Builder Center articles are now linked from the site and the docs",
+			"summary": "three.ws has published two engineering deep dives on Amazon's official AWS Builder Center, and until now nothing on the site pointed at either of them. Both are now linked from the AWS partner page, indexed in the docs with a note on exactly which open-source code each one walks through, and announced in the news feed with working links to the live articles. The news feed also stopped mislabelling articles published elsewhere as posts from X, so every piece is now credited to the place it actually appeared.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/aws"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Skill trials in the agent marketplace can finally turn into real purchases",
 			"summary": "The marketplace had recorded thousands of free skill trials and not one completed sale, and the reason was a dead end in the funnel rather than a lack of interest. Agents were handed trial runs that nothing ever spent, so a trial sat at its full count forever, and the buying logic treated any trial at all as though the agent already owned the skill. That combination quietly retired every agent-and-skill pair from the paid path the moment it took a trial. Trials are now actually used up as agents work, and once a trial's runs are gone the agent becomes a real buyer again instead of being locked out. Marketplace volume on the pulse page can now reflect genuine sales.",
 			"tags": [
