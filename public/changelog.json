@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T23:13:00.142Z",
+	"generated_at": "2026-07-30T23:27:23.421Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -339,6 +339,16 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
+			"title": "Tutorial: build a 3D asset pipeline",
+			"summary": "Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over its triangle or size budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.",
+			"link": "/tutorials/build-a-3d-asset-pipeline",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
 			"title": "Tutorial: Make Your Avatar Sign (ASL)",
 			"summary": "Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.",
 			"link": "/tutorials/sign-with-your-avatar",
@@ -526,6 +536,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Compare two generations of the same prompt side by side",
+			"summary": "The Forge lets you pick which engine builds your model, but until now the only way to judge that choice was to remember what the last one looked like. Once your gallery holds two models, a Compare control appears above it: turn it on, pick any two, and they open in two viewers side by side, each labelled with the engine and quality tier that produced it. Turning one model turns the other, so a difference in shape reads as a difference in shape rather than a difference in camera angle. Only the viewing angle is shared, never the zoom, because two versions of one prompt often differ in size and each needs its own framing distance to stay in view. If you have run the same prompt on two different engines, a note above the gallery points that pair out, since that is the comparison actually worth making.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

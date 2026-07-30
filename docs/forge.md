@@ -50,6 +50,27 @@ Health is real. The UI fetches `/api/forge?health=1` after load and disables any
 
 Generation is a job. `POST /api/forge` returns a `job_id`; the client polls `GET /api/forge?job=<id>` until the status is `done` or `failed`. The lanes that complete inline within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync) can instead answer the POST directly with `status:'done'`, the `glb_url`, and a null `job_id`, and they retry once automatically on a failed result. Because the in-flight job id is written to `localStorage`, closing the tab or navigating away does not lose the generation: returning to Forge within a 30-minute window resumes polling the same job. Finished models for your browser are surfaced from a gallery on load, and a share link always wins over a resume.
 
+### Comparing two engines on one prompt
+
+The engine grid is only useful if you can see what choosing an engine actually
+changes. Once your gallery holds two models, a **Compare** control appears above
+it. Turn it on, pick any two creations, and they open side by side in two
+viewers, each labelled with the engine and tier that produced it.
+
+Camera orbit is synced across both panes, so turning one turns the other. Only
+the orbit angles are shared, never the distance: two generations of one prompt
+routinely differ in scale, and model-viewer frames each at its own radius, so
+copying an absolute distance across would zoom one model into its own interior.
+Each pane keeps the distance that frames it and turns in lockstep. Untick **Sync
+cameras** to inspect one model on its own.
+
+When your gallery contains the same prompt run on two *different* engines, a
+hint above the grid points it out, because that is the comparison worth making.
+Two runs of one prompt on one engine is a re-roll, not an engine comparison, and
+the hint deliberately stays quiet for it (`findComparablePrompts` in
+[src/forge-compare.js](../src/forge-compare.js), covered by
+[tests/forge-compare.test.js](../tests/forge-compare.test.js)).
+
 ## Walkthrough
 
 1. Open [/forge](https://three.ws/forge). No login, no wallet, no key required.

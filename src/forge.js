@@ -16,6 +16,7 @@ import { payForHighGeneration } from './forge-pay.js';
 import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
+import { createCompare } from './forge-compare.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -354,6 +355,11 @@ const timeline = createForgeTimeline({
 	warming: els.genWarming,
 	engineLabel,
 });
+
+// Side-by-side compare over the creations gallery. It stays dormant until the
+// gallery holds two models with a GLB, so a first-time visitor never sees a
+// control that cannot do anything.
+const compare = createCompare({ engineLabel });
 
 // Lane-switch notice in the generating panel: makes a mid-flight engine
 // failover (server poll-time redispatch, or the client's own automatic retry
@@ -1988,6 +1994,9 @@ async function loadGallery() {
 	const creations = Array.isArray(data?.creations) ? data.creations : [];
 	if (!data?.enabled || creations.length === 0) {
 		els.creations.classList.add('is-hidden');
+		// An empty gallery must also drop any compare state left from a previous
+		// load, or the toggle survives into a section the user cannot see.
+		compare.setCreations([]);
 		return;
 	}
 	els.creationsGrid.innerHTML = '';
@@ -2054,12 +2063,18 @@ async function loadGallery() {
 		meta.textContent = c.prompt || 'Untitled';
 		card.appendChild(meta);
 
-		card.addEventListener('click', () => openCreation(c));
+		// In compare mode a click picks the card instead of opening it; compare
+		// reports whether it consumed the click.
+		card.addEventListener('click', () => {
+			if (compare.handleCardClick(c)) return;
+			openCreation(c);
+		});
 
 		els.creationsGrid.appendChild(card);
 	}
 	els.creationsCount.textContent = `${creations.length} saved`;
 	els.creations.classList.remove('is-hidden');
+	compare.setCreations(creations);
 }
 
 // Load a creation into the viewer — shared by gallery card clicks and the

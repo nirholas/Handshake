@@ -271,6 +271,14 @@
 			<description>Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.</description>
 		</item>
 		<item>
+			<title>Tutorial: build a 3D asset pipeline</title>
+			<link>https://three.ws/tutorials/build-a-3d-asset-pipeline</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial: build a 3D asset pipeline</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over its triangle or size budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.</description>
+		</item>
+		<item>
 			<title>Tutorial: Make Your Avatar Sign (ASL)</title>
 			<link>https://three.ws/tutorials/sign-with-your-avatar</link>
 			<guid isPermaLink="false">2026-07-30:Tutorial: Make Your Avatar Sign (ASL)</guid>
@@ -413,6 +421,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Paying for a bundle took the money, recorded the purchase as confirmed, and then failed while granting access, so the request errored and trying again was refused as already processed. The skills stayed locked and there was no way to recover them. The unlock now writes complete records and files them as access rather than as extra sales, so one bundle purchase is still reported as one sale instead of several.</description>
+		</item>
+		<item>
+			<title>Compare two generations of the same prompt side by side</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-30:Compare two generations of the same prompt side by side</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge lets you pick which engine builds your model, but until now the only way to judge that choice was to remember what the last one looked like. Once your gallery holds two models, a Compare control appears above it: turn it on, pick any two, and they open in two viewers side by side, each labelled with the engine and quality tier that produced it. Turning one model turns the other, so a difference in shape reads as a difference in shape rather than a difference in camera angle. Only the viewing angle is shared, never the zoom, because two versions of one prompt often differ in size and each needs its own framing distance to stay in view. If you have run the same prompt on two different engines, a note above the gallery points that pair out, since that is the comparison actually worth making.</description>
 		</item>
 		<item>
 			<title>Docs for agent vaults, your master wallet, and copy trading</title>

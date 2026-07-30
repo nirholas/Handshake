@@ -2558,6 +2558,215 @@
 				grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 				gap: 12px;
 			}
+			/* Compare mode ------------------------------------------------- */
+			.compare-toggle {
+				margin-left: auto;
+				background: transparent;
+				border: 1px solid var(--stroke-strong);
+				color: var(--ink-dim);
+				border-radius: var(--radius-pill);
+				padding: 0.25rem 0.7rem;
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				cursor: pointer;
+				transition:
+					color 0.15s,
+					border-color 0.15s,
+					background 0.15s;
+			}
+			.compare-toggle:hover {
+				color: var(--ink);
+				border-color: var(--ink-dim);
+			}
+			.compare-toggle:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.compare-toggle[aria-pressed='true'] {
+				background: var(--accent-soft);
+				border-color: var(--accent);
+				color: var(--ink);
+			}
+			.compare-hint {
+				margin: 0 0 var(--space-sm);
+				font-size: var(--text-xs);
+				color: var(--ink-dim);
+			}
+			/* In compare mode a card is a selectable target, not a link to the
+			   viewer, so it reads differently and shows its selection order. */
+			.creations-grid.is-comparing .creation {
+				cursor: copy;
+			}
+			.creations-grid.is-comparing .creation[aria-pressed='true'] {
+				border-color: var(--accent);
+				box-shadow: 0 0 0 2px var(--accent-soft);
+			}
+			.creation .pick {
+				position: absolute;
+				top: 6px;
+				right: 6px;
+				width: 22px;
+				height: 22px;
+				border-radius: 50%;
+				display: grid;
+				place-items: center;
+				background: var(--accent);
+				color: var(--btn-primary-fg, #000);
+				font-family: var(--font-mono);
+				font-size: 11px;
+				font-weight: 700;
+				line-height: 1;
+			}
+			.compare-tray {
+				position: sticky;
+				bottom: 12px;
+				margin-top: var(--space-md);
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-sm);
+				flex-wrap: wrap;
+				padding: 0.6rem 0.85rem;
+				background: var(--surface-1);
+				border: 1px solid var(--stroke-strong);
+				border-radius: var(--radius-md);
+				box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.8);
+			}
+			.compare-tray-label {
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				color: var(--ink-dim);
+			}
+			.compare-tray-actions {
+				display: flex;
+				gap: 8px;
+			}
+			.compare-go {
+				background: var(--btn-primary-bg);
+				border-color: transparent;
+				color: var(--btn-primary-fg);
+			}
+			/* Compare modal ------------------------------------------------ */
+			.compare-modal {
+				position: fixed;
+				inset: 0;
+				z-index: 90;
+				background: rgba(0, 0, 0, 0.72);
+				backdrop-filter: blur(6px);
+				display: grid;
+				place-items: center;
+				padding: clamp(8px, 3vw, 32px);
+				animation: compare-fade 0.18s ease-out;
+			}
+			@keyframes compare-fade {
+				from {
+					opacity: 0;
+				}
+			}
+			.compare-modal-inner {
+				width: min(1180px, 100%);
+				max-height: 100%;
+				overflow-y: auto;
+				background: var(--surface-1);
+				border: 1px solid var(--stroke-strong);
+				border-radius: var(--radius-lg);
+				padding: clamp(14px, 2.5vw, 22px);
+			}
+			.compare-modal-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: var(--space-sm);
+			}
+			.compare-modal-head h2 {
+				font-family: var(--font-display);
+				font-size: var(--text-lg);
+				margin: 0;
+			}
+			.compare-modal-tools {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+			}
+			.compare-sync {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				color: var(--ink-dim);
+				cursor: pointer;
+			}
+			.compare-close {
+				background: transparent;
+				border: 1px solid var(--stroke-strong);
+				color: var(--ink);
+				border-radius: var(--radius-sm);
+				width: 30px;
+				height: 30px;
+				font-size: 20px;
+				line-height: 1;
+				cursor: pointer;
+			}
+			.compare-close:hover {
+				background: var(--surface-2);
+			}
+			.compare-close:focus-visible,
+			.compare-sync input:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.compare-prompt {
+				margin: 6px 0 14px;
+				color: var(--ink-dim);
+				font-size: var(--text-sm);
+			}
+			.compare-panes {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 14px;
+			}
+			.compare-pane {
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-md);
+				overflow: hidden;
+				background: var(--surface-2);
+				display: flex;
+				flex-direction: column;
+			}
+			.compare-pane model-viewer {
+				width: 100%;
+				aspect-ratio: 1 / 1;
+				background: var(--surface-2);
+				display: block;
+			}
+			.compare-pane-meta {
+				padding: 10px 12px;
+				border-top: 1px solid var(--stroke);
+				display: flex;
+				flex-direction: column;
+				gap: 3px;
+			}
+			.compare-pane-engine {
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				color: var(--ink);
+			}
+			.compare-pane-sub {
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				color: var(--ink-dim);
+			}
+			@media (max-width: 720px) {
+				.compare-panes {
+					grid-template-columns: 1fr;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.compare-modal {
+					animation: none;
+				}
+			}
 			/* Showcase uses larger cards — the section spans full width */
 			#showcase .creations-grid {
 				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -3802,9 +4011,63 @@
 				<div class="creations-head">
 					<h2 data-i18n="forge.your_creations">Your creations</h2>
 					<span class="count" id="creations-count"></span>
+					<button
+						type="button"
+						class="compare-toggle is-hidden"
+						id="compare-toggle"
+						aria-pressed="false"
+					>
+						Compare
+					</button>
 				</div>
+				<!-- Same-prompt hint: appears only when the gallery actually holds two
+				     generations of one prompt, which is the comparison worth making. -->
+				<p class="compare-hint is-hidden" id="compare-hint"></p>
 				<div class="creations-grid" id="creations-grid"></div>
+				<!-- Selection tray, visible only in compare mode -->
+				<div class="compare-tray is-hidden" id="compare-tray" role="status">
+					<span class="compare-tray-label" id="compare-tray-label"></span>
+					<div class="compare-tray-actions">
+						<button type="button" class="btn btn-ghost" id="compare-clear">Clear</button>
+						<button type="button" class="btn compare-go" id="compare-open" disabled>
+							Compare
+						</button>
+					</div>
+				</div>
 			</section>
+
+			<!-- Side-by-side compare: two generations of one prompt, engine A vs
+			     engine B. Camera orbit is synced across both viewers so a shape
+			     difference reads as a shape difference, not a camera difference. -->
+			<div
+				class="compare-modal is-hidden"
+				id="compare-modal"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="compare-modal-title"
+			>
+				<div class="compare-modal-inner">
+					<div class="compare-modal-head">
+						<h2 id="compare-modal-title">Compare generations</h2>
+						<div class="compare-modal-tools">
+							<label class="compare-sync">
+								<input type="checkbox" id="compare-sync" checked />
+								<span>Sync cameras</span>
+							</label>
+							<button
+								type="button"
+								class="compare-close"
+								id="compare-close"
+								aria-label="Close compare"
+							>
+								&times;
+							</button>
+						</div>
+					</div>
+					<p class="compare-prompt" id="compare-prompt"></p>
+					<div class="compare-panes" id="compare-panes"></div>
+				</div>
+			</div>
 
 			<!-- Fresh from the Forge — newest community models (src/forge-showcase.js).
 			     Hidden until the public feed returns real rows, so deployments without
