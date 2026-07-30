@@ -782,6 +782,28 @@ Restart Claude Code after editing `.mcp.json` so the new server config is picked
 
 ---
 
+## Tool safety annotations
+
+Every tool three.ws publishes carries the MCP `annotations` block, and those hints are a promise you can build on. Clients use them to decide whether a call needs a human in the loop, so the values are verified rather than asserted:
+
+| Hint | What it means on three.ws |
+| --- | --- |
+| `readOnlyHint: true` | The call does not change state. Safe for a client to run unattended. |
+| `readOnlyHint: false` | The call changes something: a stored avatar, an embed, an on-chain asset, a payment. |
+| `destructiveHint: true` | The change cannot be undone (a transfer, a tip, a delete). |
+| `destructiveHint: false` | The change is additive, so a retry or a follow-up call can correct it. |
+| `idempotentHint` | Whether repeating the identical call produces the identical result. |
+| `openWorldHint` | Whether the answer depends on a live external system (a chain, a market feed). |
+
+Two things to know about the guarantee:
+
+- **A read-only tool never writes anything you asked about.** A handful of read tools warm an internal cache while serving you (the Oracle verdict cache, the on-chain attestation cache). Those writes are the server's own bookkeeping, they are non-fatal, and they never change the result you get.
+- **Anything that spends is annotated as spending.** Tools that mint, tip, or settle a payment declare `readOnlyHint: false`, and the irreversible ones declare `destructiveHint: true`. Price is advertised separately in `tools/list` under `pricing` (see [x402](/docs/x402)).
+
+Contributors: `npm run audit:mcp-safety` enforces this. It parses each tool's handler, follows the functions it actually calls, and fails the build when a tool declares `readOnlyHint: true` while writing to the database or sending a transaction, when an irreversible action declares `destructiveHint: false`, or when a tool ships no annotations at all (the MCP spec defaults `destructiveHint` to `true` when omitted, so an unannotated tool tells clients to treat a harmless read as dangerous). The check is part of `npm run gate`; `npm run audit:mcp-safety -- --list` prints every tool with the evidence found in its handler.
+
+---
+
 ## Related
 
 - [MCP Tools Catalog](/docs/mcp-tools): every three.ws MCP tool, its server, and its price
