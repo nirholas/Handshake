@@ -99,6 +99,15 @@
 			.funnel-note{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.55;background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.25);color:var(--text);}
 			.funnel-note a{color:var(--amber);}
 
+			/* Empty volume chart: a designed state, not a blank box. */
+			.chart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:160px;gap:6px;padding:24px 16px;}
+			.chart-empty-title{font-size:14px;font-weight:600;margin:0;}
+			.chart-empty-body{font-size:12.5px;color:var(--muted);margin:0;max-width:46ch;line-height:1.55;}
+			.chart-empty-cta{margin-top:10px;font-size:12.5px;font-weight:500;color:var(--text);text-decoration:none;border:1px solid var(--line-2);background:var(--bg-2);padding:7px 14px;border-radius:20px;transition:border-color .15s,transform .15s;}
+			.chart-empty-cta:hover{border-color:var(--cyan);}
+			.chart-empty-cta:active{transform:translateY(1px);}
+			.chart-empty-cta:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
 			@media(max-width:720px){
 				.an-two-col{grid-template-columns:1fr;}
 				.stats-grid{grid-template-columns:repeat(2,1fr);}

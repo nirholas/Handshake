@@ -45,7 +45,10 @@ function renderFunnel(funnel) {
 	list.innerHTML = stages
 		.map((s) => {
 			const pct = Math.max((s.n / widest) * 100, s.n > 0 ? 2 : 0);
-			const rate = granted > 0 ? `${((s.n / granted) * 100).toFixed(s.n && s.n < granted / 100 ? 1 : 0)}% of granted` : '';
+			// The first stage IS the denominator, so "100% of granted" there is noise.
+			const rate = granted > 0 && s.n !== granted
+				? `${((s.n / granted) * 100).toFixed(s.n && s.n < granted / 100 ? 1 : 0)}% of granted`
+				: '';
 			return `<li class="funnel-step" style="--pct:${pct.toFixed(1)}%;--tint:${s.tint};">
 				<div class="funnel-head">
 					<span class="funnel-name">${esc(s.name)}</span>
@@ -218,7 +221,21 @@ async function load() {
 		)).join('')
 		: '<div style="color:var(--muted);font-size:13px;padding:16px 0;">No agents yet.</div>';
 
-	// Volume chart
+	// Volume chart. An empty chart is now a real, correct state rather than a
+	// loading artifact: before trials stopped counting as sales this box was
+	// filled with volume nobody ever paid. Say so instead of drawing a void.
+	const chartWrap = canvas?.parentElement;
+	if (!salesVolume.length && chartWrap) {
+		const hasTrials = (trialFunnel?.granted ?? 0) > 0;
+		chartWrap.innerHTML = `<div class="chart-empty">
+			<p class="chart-empty-title">No paid sales in the last 30 days</p>
+			<p class="chart-empty-body">${hasTrials
+				? 'Free trials are not counted here. This chart tracks money that actually moved on chain, so it stays empty until a trial converts into a purchase.'
+				: 'This chart tracks money that actually moved on chain. It fills in as soon as the first skill sells.'}</p>
+			<a class="chart-empty-cta" href="/tutorials/sell-a-skill-with-a-trial">List a skill and sell it</a>
+		</div>`;
+	}
+
 	if (salesVolume.length && canvas) {
 		// Group by day (sum across currencies)
 		const byDay = {};
