@@ -424,3 +424,9 @@ scripts/.scratch/
 # Scratch copies of the built changelog feed (regenerate with npm run build:pages)
 old_changelog.json
 new_changelog.json
+
+# Root-level scratch screenshot/debug harnesses. The repo-hygiene rule keeps
+# throwaway scripts out of the root; ignoring them means an agent's in-flight
+# harness can never be swept into a commit by a `git add -A` from another
+# session. Put anything you intend to keep in scripts/.
+/scratch-*.mjs
