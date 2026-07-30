@@ -3,6 +3,34 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Every avatar in the docs and SDK examples is now a real, loadable model",
+			"summary": "Copying a snippet out of the docs used to hand you a broken avatar. Roughly seventy files across the guides, tutorials, README, SDK readmes, worker readmes and MCP tool examples pointed at models that do not exist, like a sample-avatar.glb that never shipped, or at placeholder hosts that can never resolve. Every one of those now names a real avatar served from three.ws, picked to fit what the example is showing: a full character for an embed, the small Cesium Man for inspect and rig calls, the reference rig for skeleton work, a fox for the mascot walkthrough. Example links that need an avatar id now carry a real public one, so the AR page, the IRL placement link and the render and optimize calls all work exactly as printed.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/docs/quick-start"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Avatar optimize endpoint works again for saved avatars",
+			"summary": "Asking the optimize endpoint to shrink one of your saved avatars failed every time with a transcode error. Saved avatars are stored geometry-compressed, and the endpoint was reading them without the matching decoder loaded, so it rejected the file before doing any work. Requesting Draco output was broken separately: that code called a compression function that no longer exists in the library, so it threw for every request that asked for it. Both are fixed and the endpoint now returns a valid model for saved avatars and for any model URL you pass it.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Every MCP tool's safety label is now verified, not just asserted",
+			"summary": "AI clients read a tool's safety label to decide whether they can run it without asking you first. A tool marked read-only gets run unattended. Across the 270 tools on the three.ws MCP servers those labels were only ever declarations: nothing checked that a tool marked read-only actually reads. A new build check now reads each tool's code, follows the functions it really calls, and refuses to ship a tool that claims to be read-only while writing to the database or sending a transaction, one that hides an irreversible action behind a non-destructive label, or one that ships no label at all. Four read tools that warm an internal cache while answering are recorded as reviewed exceptions with the reason written down, and the guarantee is documented for anyone integrating.",
+			"tags": [
+				"security",
+				"docs"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "ENS name lookup and the ERC-8004 registry demo answer again",
 			"summary": "Three published endpoints were unreachable in production. A broad routing rule for agent profiles sat above them in the route table and captured their requests, so instead of running they returned the agent-profile handler's \"agent not found\". Looking up which agents belong to an ENS name never worked at all, and the ERC-8004 registry demo could neither search the registry nor open a single agent, because both of its data calls were being captured. The three routes now resolve to their own handlers, and a test pins them above the catch-all so the same shadowing cannot come back.",
 			"tags": [

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:49:21.756Z",
+	"generated_at": "2026-07-30T04:54:05.367Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "An underfunded trading bot now sits out instead of failing every trade",
 			"summary": "A trading strategy whose wallet ran low could get stuck in a loop: it looked funded enough to place a shrunken buy, but not funded enough to run the safety simulation that has to pass before anything is broadcast. So it tried every candidate coin, failed at the same step every time, and filled its history with failures while never actually trading. One live strategy did this 82 times in a day without placing a single buy. Strategies now compare their balance against the amount a trade genuinely needs end to end, including the pre-trade safety checks, and quietly wait for a top-up instead. No trade behavior changes for a properly funded strategy.",
 			"link": "/trades",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Avatar optimize endpoint works again for saved avatars",
+			"summary": "Asking the optimize endpoint to shrink one of your saved avatars failed every time with a transcode error. Saved avatars are stored geometry-compressed, and the endpoint was reading them without the matching decoder loaded, so it rejected the file before doing any work. Requesting Draco output was broken separately: that code called a compression function that no longer exists in the library, so it threw for every request that asked for it. Both are fixed and the endpoint now returns a valid model for saved avatars and for any model URL you pass it.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -59,12 +69,34 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "Every avatar in the docs and SDK examples is now a real, loadable model",
+			"summary": "Copying a snippet out of the docs used to hand you a broken avatar. Roughly seventy files across the guides, tutorials, README, SDK readmes, worker readmes and MCP tool examples pointed at models that do not exist, like a sample-avatar.glb that never shipped, or at placeholder hosts that can never resolve. Every one of those now names a real avatar served from three.ws, picked to fit what the example is showing: a full character for an embed, the small Cesium Man for inspect and rig calls, the reference rig for skeleton work, a fox for the mascot walkthrough. Example links that need an avatar id now carry a real public one, so the AR page, the IRL placement link and the render and optimize calls all work exactly as printed.",
+			"link": "/docs/quick-start",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "Every code sample in the docs now points at a real, loadable 3D model",
 			"summary": "Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names. The agent card other agents read to discover our 3D skills got the same fix, with each example naming a model that actually produces the result it advertises, including one that genuinely returns compression suggestions.",
 			"link": null,
 			"tags": [
 				"docs",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Every MCP tool's safety label is now verified, not just asserted",
+			"summary": "AI clients read a tool's safety label to decide whether they can run it without asking you first. A tool marked read-only gets run unattended. Across the 270 tools on the three.ws MCP servers those labels were only ever declarations: nothing checked that a tool marked read-only actually reads. A new build check now reads each tool's code, follows the functions it really calls, and refuses to ship a tool that claims to be read-only while writing to the database or sending a transaction, one that hides an irreversible action behind a non-destructive label, or one that ships no label at all. Four read tools that warm an internal cache while answering are recorded as reviewed exceptions with the reason written down, and the guarantee is documented for anyone integrating.",
+			"link": "/docs/mcp",
+			"tags": [
+				"security",
+				"docs"
 			]
 		},
 		{
