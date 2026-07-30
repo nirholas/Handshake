@@ -136,15 +136,15 @@
 			"id": "project:wallet-sign-in",
 			"kind": "project",
 			"group": "Example projects",
-			"title": "wallet-sign-in",
-			"description": "",
+			"title": "Wallet sign-in",
+			"description": "A single-page, no-build demo of the two wallet authentication rails three.ws runs itself: Sign-In with Solana (SIWS) and Sign-In with Ethereum (SIWE).",
 			"path": "examples/wallet-sign-in",
 			"files": [
 				"index.html"
 			],
 			"run": "npm run dev, then open /examples/wallet-sign-in/index.html",
 			"runKind": "command",
-			"readme": null
+			"readme": "examples/wallet-sign-in/README.md"
 		},
 		{
 			"id": "package:packages/agentcore-payments-mcp",

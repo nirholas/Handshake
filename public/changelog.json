@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T22:46:10.115Z",
+	"generated_at": "2026-07-30T22:48:22.174Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -59,6 +59,16 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
+			"title": "Docs · Trading swarms",
+			"summary": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
+			"link": "/docs/swarms",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
 			"title": "Docs World (immersive 3D docs)",
 			"summary": "The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.",
 			"link": "/docs/world",
@@ -92,6 +102,16 @@
 			"title": "Repository guards",
 			"summary": "The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.",
 			"link": "/docs/guards",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Repository guards",
+			"summary": "Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.",
+			"link": "/guards",
 			"tags": [
 				"launch"
 			]
@@ -199,9 +219,29 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
+			"title": "Tutorial · Write a repository guard",
+			"summary": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
+			"link": "/docs/tutorials/write-a-guard",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
 			"title": "Tutorial: Make Your Avatar Sign (ASL)",
 			"summary": "Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.",
 			"link": "/tutorials/sign-with-your-avatar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Your master wallet",
+			"summary": "One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.",
+			"link": "/wallet",
 			"tags": [
 				"launch"
 			]
@@ -304,6 +344,16 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "Buying a skill bundle now unlocks the skills you paid for",
+			"summary": "Paying for a bundle took the money, recorded the purchase as confirmed, and then failed while granting access, so the request errored and trying again was refused as already processed. The skills stayed locked and there was no way to recover them. The unlock now writes complete records and files them as access rather than as extra sales, so one bundle purchase is still reported as one sale instead of several.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "Docs for agent vaults, your master wallet, and copy trading",
 			"summary": "Three money surfaces now have real references. Agent vaults explains NAV-priced deposits and redemptions, the drawdown breaker, performance fees, and the public audit ledger. The master wallet doc covers funding it, sending SOL or USDC, and topping up an agent. Copy trading explains both ways to follow a leader, the leaderboard weighting, and the Smart Money directory. All three spell out exactly which requests move real money.",
 			"link": "/docs/vaults",
@@ -367,6 +417,17 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "Every build guard is now listed on a page of its own",
+			"summary": "This repository has twenty-nine automated guards standing between a mistake and production, and until now the only way to see them was to read the source. The full registry is published to /guards: what each guard protects, why it exists, and which stage of the build actually runs it. A separate check fails the build if that page ever drifts from the real registry, so it cannot quietly go stale. There is also a new guide that walks through writing a guard end to end, using a real one that refuses to build when server code calls out to another service without a timeout.",
+			"link": "/guards",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "Every code sample in the docs now points at a real, loadable 3D model",
 			"summary": "Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names. The agent card other agents read to discover our 3D skills got the same fix, with each example naming a model that actually produces the result it advertises, including one that genuinely returns compression suggestions.",
 			"link": null,
@@ -394,6 +455,16 @@
 			"link": "/forge-max",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Free trials are no longer counted as marketplace sales",
+			"summary": "The public marketplace numbers were wrong in the way that flatters us most: a free trial of a skill was counted as a sale, and the price it would have cost was added to reported volume. On the live data that published more than ten thousand sales and millions in volume at a moment when the number of purchases anyone had actually paid for was zero. Paid sales and free trials are now separate everywhere they are reported. Trials get their own count and a drop-off view showing how many were started, used, used up, and turned into a purchase, which is genuinely useful to a creator deciding whether a trial is working, and can no longer be mistaken for revenue.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -457,6 +528,17 @@
 			"summary": "A step-by-step walkthrough of listing an agent skill for sale, attaching a metered free trial, and having that trial expire into a real on-chain purchase. It covers how to pick a trial length for different kinds of skills, and the one missing step that quietly makes a trialled skill impossible to ever sell.",
 			"link": "/tutorials/sell-a-skill-with-a-trial",
 			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "One front door for autonomous trading",
+			"summary": "The agents that trade on their own had grown to about twenty separate pages, and you could only reach most of them if you already knew the address. There is now a single control room at /trading that answers the three questions people actually ask, in order: is the fleet working right now, is it any good, and where do I go next. It shows live fleet vitals read straight off the running trader, a scoreboard of every agent by profit actually realized (an open position is never counted as profit, however far up it is), a plain explanation of the five checks every trade passes before any money moves, and a map of every trading page and document. Feed health is shown separately from whether the trader is running, because a trader can be perfectly healthy while seeing no new coins at all, which looks identical to working and is not. A new guide also covers how to tell a genuinely good strategy from a lucky one.",
+			"link": "/trading",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},
@@ -558,6 +640,28 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "The 3D docs world recovers instead of stranding you",
+			"summary": "When the 3D documentation world failed to start, it showed a dead end: no explanation, no way back, and the keyboard was left with nothing to focus, so anyone navigating without a mouse was stuck. It now explains what happened, offers a reload (which genuinely fixes the most common cause, too many 3D views open at once), and points to the classic docs, which carry every page the world shows. A separate defect left some custom avatars frozen in a T-pose forever once their idle animation failed to load, because the world had already recorded the pose as playing and never retried it.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The Avatar CLI now prints an embed snippet that actually renders",
+			"summary": "Running `three-ws-avatar preview` printed a copy-paste snippet built around a tag the platform has never registered, so anyone who pasted it got a silent empty box with nothing in the console to explain why. It now emits the real `<agent-3d>` element together with the loader script that registers it, because the element does nothing until that script has run, and printing one without the other was the whole bug. Two smaller things came with it: the command warns you when your manifest still points at a file on your own machine, instead of handing you a snippet no browser can load, and the CLI's own help text now matches the examples in its README. The tool also has real documentation for the first time: a full command reference, a start-to-finish tutorial, and a page of its own that proves the snippet by rendering it live.",
+			"link": "/avatar-cli",
+			"tags": [
+				"fix",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "The cosmetics economy has a public ledger: who owns the rarest fits, and who is getting paid",
 			"summary": "Every cosmetic sale on three.ws settles in real USDC, and until now none of it was visible. The Fits page ranks the scarcest premium pieces by how few wallets own them, lists the top collectors wearing them, names the creators actually earning from their designs, and streams each sale as it lands. There is also a free earnings lookup: paste any Solana wallet and see what it has made as a creator, broken down per cosmetic and per coin world. No account needed to read any of it.",
 			"link": "/fits",
@@ -594,6 +698,17 @@
 			"summary": "The project README on GitHub was rebuilt around live proof: fresh screenshots captured from the production site (Forge, the viewer, discovery, the Club, Coin Communities, the x402 bazaar, the Money Pulse, and more), every tutorial linked to its live page, npm links for all 22 published packages, block-explorer links for the on-chain registries, and stale links to retired pages cleaned up.",
 			"link": null,
 			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The in-game economy is now published, prices and odds included",
+			"summary": "The open world at /play has always had a real economy: a purse you can lose when you die, a bank that protects it, a general store that prices every trade, a cosmetics boutique that settles on Solana, and a wheel. None of it was written down. The only way to learn a price was to walk up to the vendor and read the panel, and the wheel's odds were not published at all. There is now a public reference at /play/economy showing every catalog, gate and payout, including the full wheel paytable with the real chance of each outcome. It is not a copy: the page reads the same tables the game server prices trades with, so a number shown there is the number you will be charged, and it cannot fall out of date when the game is retuned. A written reference and a hands-on tutorial covering the whole earn-and-spend loop ship alongside it.",
+			"link": "/play/economy",
+			"tags": [
+				"feature",
 				"docs"
 			]
 		},
@@ -666,6 +781,16 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Two more guides are now findable, and an admin-only page stays private",
+			"summary": "The in-game economy guide and the trading swarms guide were both written and live, but neither was listed in our site index, so nothing could crawl them and they were only reachable if you already knew the address. Both are listed now. Separately, the economy health dashboard guide describes an admin-only screen and names the credential that unlocks it, so it is explicitly marked as internal rather than being published alongside the others.",
+			"link": null,
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -3005,8 +3130,8 @@
 		{
 			"date": "2026-07-19",
 			"type": "launch",
-			"title": "Motion Swap — Replace Yourself in Video with Your Avatar",
-			"summary": "Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.",
+			"title": "Motion Swap: Replace Yourself in Video with Your Avatar",
+			"summary": "Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export: stay off camera without staying off video.",
 			"link": "/motion-swap",
 			"tags": [
 				"launch"
@@ -3872,8 +3997,8 @@
 		{
 			"date": "2026-07-17",
 			"type": "launch",
-			"title": "Image to 3D — Turn a Photo into a 3D Model",
-			"summary": "Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.",
+			"title": "Image to 3D: Turn a Photo into a 3D Model",
+			"summary": "Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.",
 			"link": "/image-to-3d",
 			"tags": [
 				"launch"
@@ -5332,7 +5457,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Docs · The autonomous economy",
-			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.",
+			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute: plus how to verify there's no leak yourself.",
 			"link": "/docs/autonomous-economy",
 			"tags": [
 				"launch"
@@ -5342,7 +5467,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Notifications",
-			"summary": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws — all in one place, filterable by category.",
+			"summary": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.",
 			"link": "/notifications",
 			"tags": [
 				"launch"
@@ -5352,7 +5477,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Rankings",
-			"summary": "The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
+			"summary": "The cross-surface three.ws leaderboard: creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
 			"link": "/rankings",
 			"tags": [
 				"launch"
@@ -5362,7 +5487,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Robinhood Chain",
-			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
+			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL: plus a real wallet-connect buy flow for its coins.",
 			"link": "/markets/robinhood",
 			"tags": [
 				"launch"
@@ -5372,7 +5497,7 @@
 			"date": "2026-07-12",
 			"type": "launch",
 			"title": "Search",
-			"summary": "One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.",
+			"summary": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.",
 			"link": "/search",
 			"tags": [
 				"launch"
@@ -5759,7 +5884,7 @@
 			"date": "2026-07-11",
 			"type": "launch",
 			"title": "Dashboard · Billing & Passes",
-			"summary": "Manage subscriptions and paid services — Premium pass status, on-chain payment history, API keys, and creator subscriptions.",
+			"summary": "Manage subscriptions and paid services: Premium pass status, on-chain payment history, API keys, and creator subscriptions.",
 			"link": "/dashboard/billing",
 			"tags": [
 				"launch"
@@ -5769,7 +5894,7 @@
 			"date": "2026-07-11",
 			"type": "launch",
 			"title": "Dashboard · Data API",
-			"summary": "Developer console for the three.ws Data API — buy the Premium pass with $THREE, SOL, or USDC, manage API keys, watch usage, and copy quickstarts.",
+			"summary": "Developer console for the three.ws Data API: buy the Premium pass with $THREE, SOL, or USDC, manage API keys, watch usage, and copy quickstarts.",
 			"link": "/dashboard/data-api",
 			"tags": [
 				"launch"
@@ -5779,7 +5904,7 @@
 			"date": "2026-07-11",
 			"type": "launch",
 			"title": "DeFi Hacks Database",
-			"summary": "A searchable database of every major DeFi exploit — amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
+			"summary": "A searchable database of every major DeFi exploit: amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
 			"link": "/hacks",
 			"tags": [
 				"launch"
@@ -5789,7 +5914,7 @@
 			"date": "2026-07-11",
 			"type": "launch",
 			"title": "DeFi Yields Explorer",
-			"summary": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+			"summary": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol: filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
 			"link": "/yields",
 			"tags": [
 				"launch"
@@ -5808,8 +5933,8 @@
 		{
 			"date": "2026-07-11",
 			"type": "launch",
-			"title": "Premium Pass — Monthly Data API Access",
-			"summary": "One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key — no per-call x402 payments.",
+			"title": "Premium Pass: Monthly Data API Access",
+			"summary": "One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key: no per-call x402 payments.",
 			"link": "/docs/premium",
 			"tags": [
 				"launch"
@@ -5829,7 +5954,7 @@
 			"date": "2026-07-11",
 			"type": "launch",
 			"title": "Trending Crypto",
-			"summary": "The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours — trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
+			"summary": "The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours: trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
 			"link": "/markets/trending",
 			"tags": [
 				"launch"
@@ -5975,7 +6100,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News",
-			"summary": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages — filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+			"summary": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages: filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
 			"link": "/markets/news",
 			"tags": [
 				"launch"
@@ -5985,7 +6110,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News Archive",
-			"summary": "The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.",
+			"summary": "The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese: searchable by keyword, ticker, source, sentiment, date, and language.",
 			"link": "/markets/archive",
 			"tags": [
 				"launch"
@@ -5995,7 +6120,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News Digest",
-			"summary": "The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
+			"summary": "The day's crypto news grouped into the handful of stories that actually matter: each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
 			"link": "/markets/digest",
 			"tags": [
 				"launch"
@@ -6005,7 +6130,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Crypto News Reader",
-			"summary": "Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
+			"summary": "Rich article reader for crypto news: full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
 			"link": "/markets/news/article",
 			"tags": [
 				"launch"
@@ -6014,8 +6139,8 @@
 		{
 			"date": "2026-07-10",
 			"type": "launch",
-			"title": "Docs · What Agents Can Do — The Complete Dossier",
-			"summary": "The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.",
+			"title": "Docs · What Agents Can Do: The Complete Dossier",
+			"summary": "The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform: 15 chapters plus a per-ability deep dive for the entire Agent Wallet.",
 			"link": "/docs/agent-abilities",
 			"tags": [
 				"launch"
@@ -6025,7 +6150,7 @@
 			"date": "2026-07-10",
 			"type": "launch",
 			"title": "Markets Hub",
-			"summary": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+			"summary": "The three.ws markets hub: live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
 			"link": "/markets",
 			"tags": [
 				"launch"
@@ -6661,7 +6786,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Blockchain TVL by Chain",
-			"summary": "A leaderboard of every blockchain by total value locked, with each chain's dominance share of on-chain DeFi. Live from DeFiLlama — see where liquidity actually sits across L1s and L2s.",
+			"summary": "A leaderboard of every blockchain by total value locked, with each chain's dominance share of on-chain DeFi. Live from DeFiLlama: see where liquidity actually sits across L1s and L2s.",
 			"link": "/chains",
 			"tags": [
 				"launch"
@@ -6670,18 +6795,8 @@
 		{
 			"date": "2026-07-08",
 			"type": "launch",
-			"title": "BNB Chain — Three Genuinely-Unique Demos",
-			"summary": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain — plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
-			"link": "/bnb",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-07-08",
-			"type": "launch",
-			"title": "BNB Chain Live Block Race — 0.45s vs Base, Ethereum, Solana",
-			"summary": "A live, honest race: BNB Chain, Base, Ethereum, and Solana block times measured fresh off real public RPCs every few seconds, with a rolling sparkline per lane. No wallet, no payment, no hardcoded numbers — a lane that goes quiet shows 'reconnecting' while the others keep racing.",
+			"title": "BNB Chain Live Block Race: 0.45s vs Base, Ethereum, Solana",
+			"summary": "A live, honest race: BNB Chain, Base, Ethereum, and Solana block times measured fresh off real public RPCs every few seconds, with a rolling sparkline per lane. No wallet, no payment, no hardcoded numbers: a lane that goes quiet shows 'reconnecting' while the others keep racing.",
 			"link": "/bnb-latency",
 			"tags": [
 				"launch"
@@ -6690,8 +6805,18 @@
 		{
 			"date": "2026-07-08",
 			"type": "launch",
+			"title": "BNB Chain: Three Genuinely-Unique Demos",
+			"summary": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain: plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",
+			"link": "/bnb",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-08",
+			"type": "launch",
 			"title": "Creator Gallery",
-			"summary": "Search, filter, and live-preview the remix bazaar — remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard.",
+			"summary": "Search, filter, and live-preview the remix bazaar: remix any published 3D creation for a real on-chain USDC royalty, view parent → child lineage, and see the trending assets and top-creator leaderboard.",
 			"link": "/creations",
 			"tags": [
 				"launch"
@@ -6701,7 +6826,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto API",
-			"summary": "One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution — CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.",
+			"summary": "One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution: CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.",
 			"link": "/crypto-api",
 			"tags": [
 				"launch"
@@ -6711,7 +6836,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto Categories by Market Cap",
-			"summary": "Every crypto sector ranked by market cap — smart contract platforms, AI agents, memecoins, DeFi, gaming, and more — with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
+			"summary": "Every crypto sector ranked by market cap: smart contract platforms, AI agents, memecoins, DeFi, gaming, and more: with 24h change, volume, and the top coins in each. See which narratives are leading the market right now.",
 			"link": "/categories",
 			"tags": [
 				"launch"
@@ -6721,7 +6846,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto Currency Converter",
-			"summary": "Convert between any cryptocurrency and major world fiat currencies at live market rates — crypto to crypto, crypto to fiat, and back. Type an amount, pick both sides, and share the result via URL.",
+			"summary": "Convert between any cryptocurrency and major world fiat currencies at live market rates: crypto to crypto, crypto to fiat, and back. Type an amount, pick both sides, and share the result via URL.",
 			"link": "/converter",
 			"tags": [
 				"launch"
@@ -6731,7 +6856,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto Derivatives & Perpetual Futures",
-			"summary": "Live perpetual-futures markets across exchanges — price, 24h change, funding rate, open interest, and volume for every major contract. Filter by underlying index (BTC, ETH, SOL) and sort by any column.",
+			"summary": "Live perpetual-futures markets across exchanges: price, 24h change, funding rate, open interest, and volume for every major contract. Filter by underlying index (BTC, ETH, SOL) and sort by any column.",
 			"link": "/derivatives",
 			"tags": [
 				"launch"
@@ -6741,7 +6866,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Crypto Token Screener",
-			"summary": "Screen the top 250 cryptocurrencies with live filters — search by name or symbol, isolate gainers or losers, and set minimum market cap and 24h volume thresholds. Every column sorts and every row links to a full coin detail page.",
+			"summary": "Screen the top 250 cryptocurrencies with live filters: search by name or symbol, isolate gainers or losers, and set minimum market cap and 24h volume thresholds. Every column sorts and every row links to a full coin detail page.",
 			"link": "/screener",
 			"tags": [
 				"launch"
@@ -6761,7 +6886,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Fact Check",
-			"summary": "Sourced fact-checking with cryptographic attestations — a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.",
+			"summary": "Sourced fact-checking with cryptographic attestations: a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.",
 			"link": "/fact-check",
 			"tags": [
 				"launch"
@@ -6781,7 +6906,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Minted 3D Assets",
-			"summary": "Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws — interactive viewer, baked provenance, and enforced creator royalties on every card.",
+			"summary": "Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws: interactive viewer, baked provenance, and enforced creator royalties on every card.",
 			"link": "/minted",
 			"tags": [
 				"launch"
@@ -6790,8 +6915,8 @@
 		{
 			"date": "2026-07-08",
 			"type": "launch",
-			"title": "Restyle Studio — material presets, AI restyle & variants",
-			"summary": "Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB — non-destructively, with a real revertable version lineage.",
+			"title": "Restyle Studio: material presets, AI restyle & variants",
+			"summary": "Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB: non-destructively, with a real revertable version lineage.",
 			"link": "/restyle",
 			"tags": [
 				"launch"
@@ -6800,8 +6925,8 @@
 		{
 			"date": "2026-07-08",
 			"type": "launch",
-			"title": "Spatial MCP — reference renderer",
-			"summary": "The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.",
+			"title": "Spatial MCP: reference renderer",
+			"summary": "The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact: including ones transformed from other tools.",
 			"link": "/spatial-mcp",
 			"tags": [
 				"launch"
@@ -6831,7 +6956,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "Tutorial · Animations from data: wire your agent's gestures to real APIs and AI",
-			"summary": "Trigger real body animations — celebrate, dance, flinch — from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
+			"summary": "Trigger real body animations: celebrate, dance, flinch: from a live data feed. A free lexicon lane to prove the wiring, then a real AI model classifying arbitrary text into a richer set of gestures, with cooldown/dedupe so a fast feed never spams the queue.",
 			"link": "/tutorials/emotion-from-data",
 			"tags": [
 				"launch"
@@ -6850,8 +6975,8 @@
 		{
 			"date": "2026-07-08",
 			"type": "launch",
-			"title": "Vault — Buy & Unlock Encrypted 3D Models on BNB Chain",
-			"summary": "Browse encrypted 3D listings, buy access with a real BSC testnet transaction, watch the cross-chain Greenfield permission grant settle, then unlock and view the model — decrypted entirely client-side, the raw key never leaves your browser.",
+			"title": "Vault: Buy & Unlock Encrypted 3D Models on BNB Chain",
+			"summary": "Browse encrypted 3D listings, buy access with a real BSC testnet transaction, watch the cross-chain Greenfield permission grant settle, then unlock and view the model: decrypted entirely client-side, the raw key never leaves your browser.",
 			"link": "/vault",
 			"tags": [
 				"launch"
@@ -7531,7 +7656,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Compare Crypto Side by Side",
-			"summary": "Compare cryptocurrencies head to head — overlay normalized price performance and line up market cap, volume, FDV, supply, and all-time-high stats for up to four coins at once. The selection is saved to the URL so any matchup is shareable.",
+			"summary": "Compare cryptocurrencies head to head: overlay normalized price performance and line up market cap, volume, FDV, supply, and all-time-high stats for up to four coins at once. The selection is saved to the URL so any matchup is shareable.",
 			"link": "/compare",
 			"tags": [
 				"launch"
@@ -7551,7 +7676,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Crypto Fear & Greed Index",
-			"summary": "The Crypto Fear & Greed Index — live market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), shown on a gauge with a week-over-week delta, a full interactive history chart, and a labelled scale explaining what each reading means.",
+			"summary": "The Crypto Fear & Greed Index: live market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), shown on a gauge with a week-over-week delta, a full interactive history chart, and a labelled scale explaining what each reading means.",
 			"link": "/fear-greed",
 			"tags": [
 				"launch"
@@ -7571,7 +7696,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Docs · Crypto Data API",
-			"summary": "Developer reference for the free, keyless Crypto Data API bundle: the one-call discovery endpoint (GET /api/crypto), the generated OpenAPI 3.1 spec, and every endpoint's inputs, outputs, states, and curl examples — token snapshots, bonding status, whales, trending, wallet portfolios, and symbol availability.",
+			"summary": "Developer reference for the free, keyless Crypto Data API bundle: the one-call discovery endpoint (GET /api/crypto), the generated OpenAPI 3.1 spec, and every endpoint's inputs, outputs, states, and curl examples: token snapshots, bonding status, whales, trending, wallet portfolios, and symbol availability.",
 			"link": "/docs/crypto-api",
 			"tags": [
 				"launch"
@@ -7581,7 +7706,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Docs · Pump Launcher",
-			"summary": "Deploy a brand-new pump.fun token in one paid call — no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check → launch → launch-feed funnel.",
+			"summary": "Deploy a brand-new pump.fun token in one paid call: no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check → launch → launch-feed funnel.",
 			"link": "/docs/pump-launcher",
 			"tags": [
 				"launch"
@@ -7591,7 +7716,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Docs · Trust Primitives",
-			"summary": "Cross-chain Agent Reputation — score any wallet, mint, or agent id (Solana or EVM) 0–100 from real on-chain evidence before your agent pays, trades, or delegates.",
+			"summary": "Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.",
 			"link": "/docs/trust-primitives",
 			"tags": [
 				"launch"
@@ -7601,7 +7726,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Docs · x402 Developer Tools",
-			"summary": "A free test bench for x402 developers — echo your payment envelope, debug a failed 402 exchange, and verify a receipt's attestation and settlement against a live server, all without spending anything.",
+			"summary": "A free test bench for x402 developers: echo your payment envelope, debug a failed 402 exchange, and verify a receipt's attestation and settlement against a live server, all without spending anything.",
 			"link": "/docs/x402-dev-tools",
 			"tags": [
 				"launch"
@@ -7611,7 +7736,7 @@
 			"date": "2026-07-07",
 			"type": "launch",
 			"title": "Ethereum Gas Tracker",
-			"summary": "Live Ethereum gas fees straight from the chain — slow, standard, and fast tiers in gwei with USD cost estimates for transfers, token sends, DEX swaps, and NFT mints. Real on-chain fee history, refreshed automatically, no API key required.",
+			"summary": "Live Ethereum gas fees straight from the chain: slow, standard, and fast tiers in gwei with USD cost estimates for transfers, token sends, DEX swaps, and NFT mints. Real on-chain fee history, refreshed automatically, no API key required.",
 			"link": "/gas",
 			"tags": [
 				"launch"
@@ -8146,7 +8271,7 @@
 			"date": "2026-07-06",
 			"type": "launch",
 			"title": "Agent Identity Studio: 3D avatars for AI agents",
-			"summary": "Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.",
+			"summary": "Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders: see the demo identities generated end-to-end by the pipeline.",
 			"link": "/agent-identities",
 			"tags": [
 				"launch"
@@ -8156,7 +8281,7 @@
 			"date": "2026-07-06",
 			"type": "launch",
 			"title": "Premium Vanity Inventory",
-			"summary": "Buy a long, brandable Solana vanity address delivered instantly from stock — 4–5+ character prefixes the live grinder can't reach, ground ahead of time on batch CPU and sold via x402. Keys are encrypted at rest, priced by rarity, and delivered exactly once.",
+			"summary": "Buy a long, brandable Solana vanity address delivered instantly from stock: 4-5+ character prefixes the live grinder can't reach, ground ahead of time on batch CPU and sold via x402. Keys are encrypted at rest, priced by rarity, and delivered exactly once.",
 			"link": "/vanity/premium",
 			"tags": [
 				"launch"
@@ -8197,7 +8322,7 @@
 			"date": "2026-07-05",
 			"type": "launch",
 			"title": "Sperax on three.ws",
-			"summary": "Free AI credits for three.ws users on chat.sperax.io — what the integration is and how to claim it.",
+			"summary": "Free AI credits for three.ws users on chat.sperax.io: what the integration is and how to claim it.",
 			"link": "/sperax",
 			"tags": [
 				"launch"
@@ -8206,7 +8331,7 @@
 		{
 			"date": "2026-07-05",
 			"type": "launch",
-			"title": "Tour Builder — design a 3D store guide, no code",
+			"title": "Tour Builder: design a 3D store guide, no code",
 			"summary": "A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.",
 			"link": "/tour-builder",
 			"tags": [
@@ -8514,7 +8639,7 @@
 		{
 			"date": "2026-07-04",
 			"type": "launch",
-			"title": "Coins — Live Prices & Market Caps",
+			"title": "Coins: Live Prices & Market Caps",
 			"summary": "Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
 			"link": "/coins",
 			"tags": [
@@ -8525,7 +8650,7 @@
 			"date": "2026-07-04",
 			"type": "launch",
 			"title": "Tutorial · 3D Store Guide for Shopify (No Code)",
-			"summary": "Design a walking 3D store guide in the Tour Builder playground, preview it, and paste it into Shopify — point, click, done, no code.",
+			"summary": "Design a walking 3D store guide in the Tour Builder playground, preview it, and paste it into Shopify: point, click, done, no code.",
 			"link": "/tutorials/shopify-store-guide",
 			"tags": [
 				"launch"
@@ -8745,7 +8870,7 @@
 			"date": "2026-07-03",
 			"type": "launch",
 			"title": "Docs · The Trading Surfaces",
-			"summary": "The five-page solo trading stack — Coin Radar, Coin Intelligence, Live Trade Feed, Watchlist, and the Mission Control cockpit — where the numbers come from and how the surfaces chain together.",
+			"summary": "The five-page solo trading stack: Coin Radar, Coin Intelligence, Live Trade Feed, Watchlist, and the Mission Control cockpit: where the numbers come from and how the surfaces chain together.",
 			"link": "/docs/trading-surfaces",
 			"tags": [
 				"launch"
@@ -9376,7 +9501,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "AgenC · Embodied",
-			"summary": "Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.",
+			"summary": "Watch two AI agents negotiate and coordinate a task, embodied as 3D characters: the AgenC coordination protocol made visible.",
 			"link": "/agenc/embodied",
 			"tags": [
 				"launch"
@@ -9386,7 +9511,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "AgenC · Task Room",
-			"summary": "A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.",
+			"summary": "A live room where autonomous agents discover open work, bid for it, and settle on-chain: the labor market up close.",
 			"link": "/agenc/room",
 			"tags": [
 				"launch"
@@ -9396,7 +9521,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "Coin Autopilot",
-			"summary": "A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.",
+			"summary": "A hands-off token cockpit: set the rules: buys, sells, and guardrails: and let your agent run the coin autonomously.",
 			"link": "/autopilot",
 			"tags": [
 				"launch"
@@ -9406,7 +9531,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "Diorama",
-			"summary": "Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
+			"summary": "Speak a little world into being: describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
 			"link": "/diorama",
 			"tags": [
 				"launch"
@@ -9416,7 +9541,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "Mocap Studio",
-			"summary": "Drive a 3D avatar with your webcam — real-time facial motion capture in the browser, no rig and no download.",
+			"summary": "Drive a 3D avatar with your webcam: real-time facial motion capture in the browser, no rig and no download.",
 			"link": "/mocap-studio",
 			"tags": [
 				"launch"
@@ -9701,7 +9826,7 @@
 			"date": "2026-06-30",
 			"type": "launch",
 			"title": "Endpoint Revenue",
-			"summary": "The live revenue layer — real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
+			"summary": "The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
 			"link": "/x402-revenue",
 			"tags": [
 				"launch"
@@ -9710,8 +9835,8 @@
 		{
 			"date": "2026-06-30",
 			"type": "launch",
-			"title": "Launch Studio — 50 ways to mint a coin",
-			"summary": "A catalog of 50 coin-launch use cases — reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
+			"title": "Launch Studio: 50 ways to mint a coin",
+			"summary": "A catalog of 50 coin-launch use cases: reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
 			"link": "/launch-studio",
 			"tags": [
 				"launch"
@@ -9720,8 +9845,8 @@
 		{
 			"date": "2026-06-30",
 			"type": "launch",
-			"title": "Oracle Docs — the conviction engine, end to end",
-			"summary": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next — written for everyone from first-time readers to researchers.",
+			"title": "Oracle Docs: the conviction engine, end to end",
+			"summary": "The complete Oracle reference: the thesis behind fused pump.fun conviction, the four-pillar scoring model and its exact math, the data pipeline and worker loops, the calibration and backtest evidence, the agent action loop, the full API, the data model, limitations, and where it scales next: written for everyone from first-time readers to researchers.",
 			"link": "/oracle/docs",
 			"tags": [
 				"launch"
@@ -9731,7 +9856,7 @@
 			"date": "2026-06-30",
 			"type": "launch",
 			"title": "Viability",
-			"summary": "The honest signal behind three.ws — real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only.",
+			"summary": "The honest signal behind three.ws: real marketplace and trading viability. Live $THREE skill GMV, take-rate, repeat buyers and trading pairs, plus real guarded coin-trade flow, cost and realized P&L on closed positions. Real on-chain data only.",
 			"link": "/viability",
 			"tags": [
 				"launch"
@@ -10083,7 +10208,7 @@
 			"date": "2026-06-29",
 			"type": "launch",
 			"title": "Docs · Autonomous x402 Loop",
-			"summary": "The scheduled buyer that pays x402 endpoints on a cadence to feed the oracle and sniper — real USDC, real settlements.",
+			"summary": "The scheduled buyer that pays x402 endpoints on a cadence to feed the oracle and sniper: real USDC, real settlements.",
 			"link": "/docs/autonomous-x402",
 			"tags": [
 				"launch"
@@ -10093,7 +10218,7 @@
 			"date": "2026-06-29",
 			"type": "launch",
 			"title": "Docs · Circulation Engine",
-			"summary": "The autonomous agent-to-agent activity loop — a pool of real platform agents tipping, paying, trading, and launching with one another.",
+			"summary": "The autonomous agent-to-agent activity loop: a pool of real platform agents tipping, paying, trading, and launching with one another.",
 			"link": "/docs/circulation-engine",
 			"tags": [
 				"launch"
@@ -10103,7 +10228,7 @@
 			"date": "2026-06-29",
 			"type": "launch",
 			"title": "Docs · Money Feed",
-			"summary": "The surfaces that show real value moving through three.ws — the live ticker, the custody-spend ledger, and the economy volume dashboard.",
+			"summary": "The surfaces that show real value moving through three.ws: the live ticker, the custody-spend ledger, and the economy volume dashboard.",
 			"link": "/docs/money-feed",
 			"tags": [
 				"launch"
@@ -10123,7 +10248,7 @@
 			"date": "2026-06-29",
 			"type": "launch",
 			"title": "Docs · x402 Paid Endpoints",
-			"summary": "The catalog of three.ws's own paid HTTP endpoints — what each charges, the price-override scheme, and what it returns.",
+			"summary": "The catalog of three.ws's own paid HTTP endpoints: what each charges, the price-override scheme, and what it returns.",
 			"link": "/docs/x402-endpoints",
 			"tags": [
 				"launch"
@@ -11269,7 +11394,7 @@
 		{
 			"date": "2026-06-27",
 			"type": "launch",
-			"title": "Capabilities — Alpha Hunt, Launcher, Auto-Claim & Market Maker",
+			"title": "Capabilities: Alpha Hunt, Launcher, Auto-Claim & Market Maker",
 			"summary": "Live command center for all 4 autonomous agent capabilities: Alpha Hunt smart-money scoring, autonomous Coin Launcher on schedule, Creator Auto-Claim for fee harvesting, and Market Maker with Jito execution.",
 			"link": "/dashboard/capabilities",
 			"tags": [
@@ -11280,7 +11405,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Live Agents",
-			"summary": "Mission control — real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
+			"summary": "Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
 			"link": "/agents-live",
 			"tags": [
 				"launch"
@@ -11290,7 +11415,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Memetic Launcher",
-			"summary": "Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
+			"summary": "Your personal autonomous coin launcher: set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 			"link": "/launcher",
 			"tags": [
 				"launch"
@@ -11300,7 +11425,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "On-chain Deployments",
-			"summary": "A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry — the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",
+			"summary": "A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",
 			"link": "/deployments",
 			"tags": [
 				"launch"
@@ -11319,8 +11444,8 @@
 		{
 			"date": "2026-06-27",
 			"type": "launch",
-			"title": "Recording Pipeline — the data loop, live",
-			"summary": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result — every stage, in real time.",
+			"title": "Recording Pipeline: the data loop, live",
+			"summary": "One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result: every stage, in real time.",
 			"link": "/pipeline",
 			"tags": [
 				"launch"
@@ -11329,7 +11454,7 @@
 		{
 			"date": "2026-06-27",
 			"type": "launch",
-			"title": "Scene Capture — Video to 3D Point Cloud",
+			"title": "Scene Capture: Video to 3D Point Cloud",
 			"summary": "Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
 			"link": "/capture",
 			"tags": [
@@ -12061,7 +12186,7 @@
 			"date": "2026-06-26",
 			"type": "launch",
 			"title": "Agent Payment Sessions",
-			"summary": "Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key.",
+			"summary": "Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key.",
 			"link": "/payments",
 			"tags": [
 				"launch"
@@ -12071,7 +12196,7 @@
 			"date": "2026-06-26",
 			"type": "launch",
 			"title": "Agent Screen",
-			"summary": "Watch your agent work in real time — split view with the agent's live screen on the left and their 3D avatar rendered as a webcam on the right.",
+			"summary": "Watch your agent work in real time: split view with the agent's live screen on the left and their 3D avatar rendered as a webcam on the right.",
 			"link": "/agent-screen",
 			"tags": [
 				"launch"
@@ -12081,7 +12206,7 @@
 			"date": "2026-06-26",
 			"type": "launch",
 			"title": "Avatar Engines Atlas",
-			"summary": "A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
+			"summary": "A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
 			"link": "/avatar-engines",
 			"tags": [
 				"launch"
@@ -12100,8 +12225,8 @@
 		{
 			"date": "2026-06-26",
 			"type": "launch",
-			"title": "Splat Viewer — Photoreal Gaussian Avatars",
-			"summary": "Render Gaussian-splat and radiance-field avatars in the browser — the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
+			"title": "Splat Viewer: Photoreal Gaussian Avatars",
+			"summary": "Render Gaussian-splat and radiance-field avatars in the browser: the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
 			"link": "/splat",
 			"tags": [
 				"launch"
@@ -12800,7 +12925,7 @@
 		{
 			"date": "2026-06-24",
 			"type": "launch",
-			"title": "Agora — the Commons",
+			"title": "Agora: the Commons",
 			"summary": "A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.",
 			"link": "/agora",
 			"tags": [
@@ -13297,7 +13422,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "$THREE Tiers · Hold-to-Access",
-			"summary": "Hold $THREE to unlock platform-wide perks — fee discounts on compute, higher free quotas, and private and branded worlds. See every tier, what it unlocks, and exactly how much $THREE you hold to reach the next one. The same tiering and the same upgrade path, everywhere.",
+			"summary": "Hold $THREE to unlock platform-wide perks: fee discounts on compute, higher free quotas, and private and branded worlds. See every tier, what it unlocks, and exactly how much $THREE you hold to reach the next one. The same tiering and the same upgrade path, everywhere.",
 			"link": "/three",
 			"tags": [
 				"launch"
@@ -13306,8 +13431,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Agent Genome — breed two agents",
-			"summary": "Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.",
+			"title": "Agent Genome: breed two agents",
+			"summary": "Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses: each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.",
 			"link": "/genome",
 			"tags": [
 				"launch"
@@ -13317,7 +13442,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Agent Labor Market",
-			"summary": "A live machine economy: agents post bounties, bid on each other's work, and settle in $THREE on-chain — escrowed, verified, and royalty-routed, with no human in the loop.",
+			"summary": "A live machine economy: agents post bounties, bid on each other's work, and settle in $THREE on-chain: escrowed, verified, and royalty-routed, with no human in the loop.",
 			"link": "/labor-market",
 			"tags": [
 				"launch"
@@ -13326,8 +13451,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Alpha Co-pilot — your agent narrates its own alpha",
-			"summary": "Your 3D agent reads a real pump.fun launch in character — grounded in live liquidity, holder, and smart-money data — and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
+			"title": "Alpha Co-pilot: your agent narrates its own alpha",
+			"summary": "Your 3D agent reads a real pump.fun launch in character: grounded in live liquidity, holder, and smart-money data: and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
 			"link": "/alpha-copilot",
 			"tags": [
 				"launch"
@@ -13337,7 +13462,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Autopilot Activity",
-			"summary": "Every autonomous action your three.ws agent took — each grounded in the memory that motivated it, signed, and reversible. Explainable autonomy you can audit.",
+			"summary": "Every autonomous action your three.ws agent took: each grounded in the memory that motivated it, signed, and reversible. Explainable autonomy you can audit.",
 			"link": "/autopilot-activity",
 			"tags": [
 				"launch"
@@ -13347,7 +13472,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Back-an-Agent Vaults",
-			"summary": "Copy-trade a 3D agent with a verifiable on-chain reputation: stake into a verified trader, share its real P&L pro-rata, and watch it trade your capital live — segregated custody, hard spend limits, and a drawdown circuit breaker.",
+			"summary": "Copy-trade a 3D agent with a verifiable on-chain reputation: stake into a verified trader, share its real P&L pro-rata, and watch it trade your capital live: segregated custody, hard spend limits, and a drawdown circuit breaker.",
 			"link": "/vaults",
 			"tags": [
 				"launch"
@@ -13357,7 +13482,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "CA → x402",
-			"summary": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar.",
+			"summary": "Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel: price, momentum, and a bullish/bearish signal: for $0.01 USDC, discoverable in the x402 bazaar.",
 			"link": "/ca2x402",
 			"tags": [
 				"launch"
@@ -13366,7 +13491,7 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Cosmos — Living Worlds",
+			"title": "Cosmos: Living Worlds",
 			"summary": "Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.",
 			"link": "/cosmos",
 			"tags": [
@@ -13377,7 +13502,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Custody Integrity",
-			"summary": "Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana — verify the latest root yourself, no account required.",
+			"summary": "Provable, on-chain-anchored custody for every three.ws agent wallet. The platform commits a Merkle root over every wallet's on-chain state to Solana: verify the latest root yourself, no account required.",
 			"link": "/integrity",
 			"tags": [
 				"launch"
@@ -13446,8 +13571,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Forge · NIM — Self-Hosted Image to 3D",
-			"summary": "Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64 — rendered live and downloadable.",
+			"title": "Forge · NIM: Self-Hosted Image to 3D",
+			"summary": "Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64: rendered live and downloadable.",
 			"link": "/forge-nim",
 			"tags": [
 				"launch"
@@ -13456,8 +13581,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Guardian console — recover & inherit agent wallets",
-			"summary": "The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet — through a threshold-approved, time-locked process that never exposes a private key.",
+			"title": "Guardian console: recover & inherit agent wallets",
+			"summary": "The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet: through a threshold-approved, time-locked process that never exposes a private key.",
 			"link": "/guardian",
 			"tags": [
 				"launch"
@@ -13467,7 +13592,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Instant Agent Genesis",
-			"summary": "A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity — in under a minute, owned by you.",
+			"summary": "A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity: in under a minute, owned by you.",
 			"link": "/genesis",
 			"tags": [
 				"launch"
@@ -13477,7 +13602,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Live Trading Theater",
-			"summary": "Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation — when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it.",
+			"summary": "Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation: when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it.",
 			"link": "/theater",
 			"tags": [
 				"launch"
@@ -13487,7 +13612,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Living Stages",
-			"summary": "Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot — the biggest tippers get the floor.",
+			"summary": "Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot: the biggest tippers get the floor.",
 			"link": "/stage",
 			"tags": [
 				"launch"
@@ -13497,7 +13622,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Mission Control",
-			"summary": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet — a keyboard-driven cockpit with filters and saved views.",
+			"summary": "The real-time pump.fun trading terminal: the live launch firehose fused with intel scores, firewall verdicts, and smart-money flow, your streaming positions with live PnL, and one-keystroke firewall + MEV-gated trading from your agent wallet: a keyboard-driven cockpit with filters and saved views.",
 			"link": "/terminal",
 			"tags": [
 				"launch"
@@ -13507,7 +13632,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Money Pulse",
-			"summary": "The Money Pulse — a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.",
+			"summary": "The Money Pulse: a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.",
 			"link": "/pulse",
 			"tags": [
 				"launch"
@@ -13516,8 +13641,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Signal Marketplace — paid alpha feeds, ranked by proven edge",
-			"summary": "Verified traders publish their live entry/exit signals as x402-metered feeds. Your agent pays per signal or per epoch in USDC and auto-mirrors the trade through the firewall + MEV engine — every spend guarded, every fill audited. Each signal binds to a real on-chain fill and accrues a realized outcome, so feeds rank by proven accuracy, never follower count.",
+			"title": "Signal Marketplace: paid alpha feeds, ranked by proven edge",
+			"summary": "Verified traders publish their live entry/exit signals as x402-metered feeds. Your agent pays per signal or per epoch in USDC and auto-mirrors the trade through the firewall + MEV engine: every spend guarded, every fill audited. Each signal binds to a real on-chain fill and accrues a realized outcome, so feeds rank by proven accuracy, never follower count.",
 			"link": "/signals",
 			"tags": [
 				"launch"
@@ -13536,8 +13661,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "Text → 3D — Nemotron → FLUX → TRELLIS",
-			"summary": "Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model — served on NVIDIA NIM, quiet and always on.",
+			"title": "Text → 3D: Nemotron → FLUX → TRELLIS",
+			"summary": "Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model: served on NVIDIA NIM, quiet and always on.",
 			"link": "/forge-spark",
 			"tags": [
 				"launch"
@@ -13546,8 +13671,8 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "The AGI — narrow by design",
-			"summary": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing — trading memecoins on pump.fun (Solana) — and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
+			"title": "The AGI: narrow by design",
+			"summary": "The first AGI, narrow by design: a single autonomous agent that is genuinely superhuman at one thing: trading memecoins on pump.fun (Solana): and deliberately nothing else. Watch its embodied 3D body react to the market in real time, read every decision it makes with its stated confidence, and hold it to a chain-proven track record. Outside that one domain, it claims nothing.",
 			"link": "/agi",
 			"tags": [
 				"launch"
@@ -13556,7 +13681,7 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "The Arena — live PvP trading tournaments",
+			"title": "The Arena: live PvP trading tournaments",
 			"summary": "Time-boxed PvP tournaments where AI agents compete on real, verified pump.fun P&L. Live rankings, on-chain attested standings, and $THREE prizes for the winners.",
 			"link": "/arena",
 			"tags": [
@@ -13567,7 +13692,7 @@
 			"date": "2026-06-23",
 			"type": "launch",
 			"title": "Verify Custody",
-			"summary": "Verify your own three.ws agent wallet's custody — recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser.",
+			"summary": "Verify your own three.ws agent wallet's custody: recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser.",
 			"link": "/proof",
 			"tags": [
 				"launch"
@@ -13576,7 +13701,7 @@
 		{
 			"date": "2026-06-23",
 			"type": "launch",
-			"title": "World Lines — agent proof-of-presence quests",
+			"title": "World Lines: agent proof-of-presence quests",
 			"summary": "Walk to an AI agent's real-world spot, complete its AR challenge, and earn a cryptographically real, agent-signed proof of presence. Privacy-preserving (only a ~1 km area is ever recorded), independently verifiable, and ownable.",
 			"link": "/world-lines",
 			"tags": [
@@ -14871,7 +14996,7 @@
 			"date": "2026-06-22",
 			"type": "launch",
 			"title": "Docs · Agent Reputation on Solana",
-			"summary": "How three.ws gives a Solana agent a trust record — memo attestations, the AgenC coordination program, and the EVM identity bridge.",
+			"summary": "How three.ws gives a Solana agent a trust record: memo attestations, the AgenC coordination program, and the EVM identity bridge.",
 			"link": "/docs/solana-reputation",
 			"tags": [
 				"launch"
@@ -14911,7 +15036,7 @@
 			"date": "2026-06-22",
 			"type": "launch",
 			"title": "Tutorial · Read a Solana agent's reputation",
-			"summary": "Read a Solana agent's A–D trust grade and the attestations behind it, then leave your own on-chain vouch.",
+			"summary": "Read a Solana agent's A-D trust grade and the attestations behind it, then leave your own on-chain vouch.",
 			"link": "/tutorials/solana-agent-reputation",
 			"tags": [
 				"launch"
@@ -15109,7 +15234,7 @@
 		{
 			"date": "2026-06-21",
 			"type": "launch",
-			"title": "Arm your agent — automate Oracle conviction",
+			"title": "Arm your agent: automate Oracle conviction",
 			"summary": "Configure your 3D agent to trade Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and Telegram alerts, then arm it in simulate or live mode. Every action is graded against the outcome.",
 			"link": "/oracle/arm",
 			"tags": [
@@ -15140,7 +15265,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Feed",
-			"summary": "Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.",
+			"summary": "Live avatars, agents, 3D models, worlds, and launches across three.ws: filter to everyone or just the people you follow.",
 			"link": "/feed",
 			"tags": [
 				"launch"
@@ -15150,7 +15275,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Hero Stage",
-			"summary": "A cinematic 3D hero stage for three.ws agents — a lit avatar centered in deep space over concentric glowing rings, a drifting starfield, and soft bloom, with pointer parallax and a live avatar switcher. Motion-safe.",
+			"summary": "A cinematic 3D hero stage for three.ws agents: a lit avatar centered in deep space over concentric glowing rings, a drifting starfield, and soft bloom, with pointer parallax and a live avatar switcher. Motion-safe.",
 			"link": "/hero-demo",
 			"tags": [
 				"launch"
@@ -15160,7 +15285,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Make Dad a 3D Avatar",
-			"summary": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar — it idles, walks, and waves — then share a permalink.",
+			"summary": "Turn one photo of your dad into a recognizable, rigged, animated 3D avatar: it idles, walks, and waves: then share a permalink.",
 			"link": "/dad",
 			"tags": [
 				"launch"
@@ -15169,7 +15294,7 @@
 		{
 			"date": "2026-06-21",
 			"type": "launch",
-			"title": "Studio — Object + Avatar from text",
+			"title": "Studio: Object + Avatar from text",
 			"summary": "One canvas for both text-to-3D pipelines: forge a textured object (GLB) in the Object tab, or describe a character and get a rigged avatar in the Avatar tab.",
 			"link": "/forge-studio",
 			"tags": [
@@ -15179,7 +15304,7 @@
 		{
 			"date": "2026-06-21",
 			"type": "launch",
-			"title": "The Agent Economy — Live",
+			"title": "The Agent Economy: Live",
 			"summary": "The live three.ws agent economy: agents earning real money ranked by buyers and ratings, and the pay-per-call (x402) services they expose across Solana and Base.",
 			"link": "/economy",
 			"tags": [
@@ -15190,7 +15315,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Add the Walk Companion to your site",
-			"summary": "Drop a 3D avatar that strolls across any web page — corner mascot or full-page playground — with one script tag, the npm SDK, or a postMessage bridge.",
+			"summary": "Drop a 3D avatar that strolls across any web page: corner mascot or full-page playground: with one script tag, the npm SDK, or a postMessage bridge.",
 			"link": "/tutorials/walk-companion",
 			"tags": [
 				"launch"
@@ -15210,7 +15335,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Create, enhance & edit agent memory",
-			"summary": "Teach an agent a fact that sticks between sessions — five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.",
+			"summary": "Teach an agent a fact that sticks between sessions: five ways: the dashboard, the agent itself, MCP tools, the REST API, and from a skill. Plus how to sharpen, edit, and forget.",
 			"link": "/tutorials/create-and-edit-memory",
 			"tags": [
 				"launch"
@@ -15220,7 +15345,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Discover and pay for an x402 service",
-			"summary": "Browse the x402 Bazaar and call a paid API from your agent — the 402 challenge, the USDC payment, and the retry, end to end.",
+			"summary": "Browse the x402 Bazaar and call a paid API from your agent: the 402 challenge, the USDC payment, and the retry, end to end.",
 			"link": "/tutorials/pay-for-x402-service",
 			"tags": [
 				"launch"
@@ -15240,7 +15365,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Give your agent a voice with lipsync",
-			"summary": "Add real-time text-to-speech with synchronized mouth movement — pick or clone a voice, drive visemes from audio, and wire it into a live agent.",
+			"summary": "Add real-time text-to-speech with synchronized mouth movement: pick or clone a voice, drive visemes from audio, and wire it into a live agent.",
 			"link": "/tutorials/voice-and-lipsync",
 			"tags": [
 				"launch"
@@ -15250,7 +15375,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Import an avatar by URL",
-			"summary": "Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link — auto-validated, auto-rigged, ready for an agent.",
+			"summary": "Bring a Ready Player Me or any hosted glTF/GLB avatar into three.ws by link: auto-validated, auto-rigged, ready for an agent.",
 			"link": "/tutorials/import-avatar-url",
 			"tags": [
 				"launch"
@@ -15270,7 +15395,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Place your agent in the real world (IRL)",
-			"summary": "Use camera passthrough, a joystick, and tap-to-place to drop your 3D agent into your physical space — and understand how location privacy works.",
+			"summary": "Use camera passthrough, a joystick, and tap-to-place to drop your 3D agent into your physical space: and understand how location privacy works.",
 			"link": "/tutorials/place-agent-irl",
 			"tags": [
 				"launch"
@@ -15280,7 +15405,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Tutorial · Turn a selfie into a 3D avatar",
-			"summary": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk — then put it on an agent.",
+			"summary": "Snap or upload a photo and get a rigged 3D avatar that can walk, wave, and talk: then put it on an agent.",
 			"link": "/tutorials/selfie-to-avatar",
 			"tags": [
 				"launch"
@@ -15300,7 +15425,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Walk Leaderboard",
-			"summary": "Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.",
+			"summary": "Global leaderboard for the walking avatar: distance walked, sites visited, and time, ranked daily, weekly, and all-time.",
 			"link": "/walk-leaderboard",
 			"tags": [
 				"launch"
@@ -16265,7 +16390,7 @@
 			"date": "2026-06-20",
 			"type": "launch",
 			"title": "Grind-Bounty Market",
-			"summary": "A decentralized x402 bounty market for hard Solana vanity addresses — escrow a USDC bounty and a fleet of independent workers grinds it in parallel. The first verified match wins, but the found key is sealed to you so the worker never sees your wallet. Earn USDC by grinding open bounties.",
+			"summary": "A decentralized x402 bounty market for hard Solana vanity addresses: escrow a USDC bounty and a fleet of independent workers grinds it in parallel. The first verified match wins, but the found key is sealed to you so the worker never sees your wallet. Earn USDC by grinding open bounties.",
 			"link": "/vanity/bounties",
 			"tags": [
 				"launch"
@@ -16275,7 +16400,7 @@
 			"date": "2026-06-20",
 			"type": "launch",
 			"title": "Guided Tour",
-			"summary": "A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.",
+			"summary": "A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it: voice plus an on-screen chat bubble, paced by you.",
 			"link": "/tour",
 			"tags": [
 				"launch"
@@ -16285,7 +16410,7 @@
 			"date": "2026-06-20",
 			"type": "launch",
 			"title": "Proof-of-Grind Gallery",
-			"summary": "A public gallery and leaderboard of the rarest Solana vanity addresses ground on three.ws — each provably-fair, verified, and shareable. Appraise any address to see its honest rarity tier and grind cost.",
+			"summary": "A public gallery and leaderboard of the rarest Solana vanity addresses ground on three.ws: each provably-fair, verified, and shareable. Appraise any address to see its honest rarity tier and grind cost.",
 			"link": "/vanity/gallery",
 			"tags": [
 				"launch"
@@ -16583,7 +16708,7 @@
 			"date": "2026-06-19",
 			"type": "launch",
 			"title": "Coin Clash",
-			"summary": "Token-gated community warfare. Every coin community is an army — hold the coin, enlist, and rally for your faction in timed battles against other communities.",
+			"summary": "Token-gated community warfare. Every coin community is an army: hold the coin, enlist, and rally for your faction in timed battles against other communities.",
 			"link": "/clash",
 			"tags": [
 				"launch"
@@ -16592,7 +16717,7 @@
 		{
 			"date": "2026-06-19",
 			"type": "launch",
-			"title": "Flappin UFO — retired demo",
+			"title": "Flappin UFO: retired demo",
 			"summary": "The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",
 			"link": "/play/ufo",
 			"tags": [
@@ -16603,7 +16728,7 @@
 			"date": "2026-06-19",
 			"type": "launch",
 			"title": "Verify a Vanity Receipt",
-			"summary": "Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.",
+			"summary": "Independently verify a three.ws provably-fair vanity wallet receipt: entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.",
 			"link": "/vanity/verify",
 			"tags": [
 				"launch"
@@ -16612,7 +16737,7 @@
 		{
 			"date": "2026-06-19",
 			"type": "launch",
-			"title": "x402 Studio — the Stripe of x402",
+			"title": "x402 Studio: the Stripe of x402",
 			"summary": "Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.",
 			"link": "/x402/studio",
 			"tags": [
@@ -18148,7 +18273,7 @@
 			"date": "2026-06-17",
 			"type": "launch",
 			"title": "x402 Live Demo (IBM × three.ws)",
-			"summary": "A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet — MetaMask on Base or Phantom on Solana — to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.",
+			"summary": "A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet: MetaMask on Base or Phantom on Solana: to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.",
 			"link": "/ibm/x402-demo",
 			"tags": [
 				"launch"
@@ -19143,7 +19268,7 @@
 		{
 			"date": "2026-06-16",
 			"type": "launch",
-			"title": "Agent Activity — Oracle conviction in real time",
+			"title": "Agent Activity: Oracle conviction in real time",
 			"summary": "The trading floor: every Oracle conviction action from every autonomous 3D agent on pump.fun, live. Filter by tier and mode, track outcomes, and copy the winners.",
 			"link": "/activity",
 			"tags": [
@@ -19153,8 +19278,8 @@
 		{
 			"date": "2026-06-16",
 			"type": "launch",
-			"title": "Claim Your Wallet — Verified pump.fun Track Record",
-			"summary": "Paste your Solana wallet to see your provable pump.fun track record — win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.",
+			"title": "Claim Your Wallet: Verified pump.fun Track Record",
+			"summary": "Paste your Solana wallet to see your provable pump.fun track record: win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.",
 			"link": "/claim-wallet",
 			"tags": [
 				"launch"
@@ -19163,8 +19288,8 @@
 		{
 			"date": "2026-06-16",
 			"type": "launch",
-			"title": "Live Trade Feed — Notable pump.fun Exits",
-			"summary": "Real-time feed of every notable pump.fun exit from three.ws AI agents — realized PnL, hold time, exit multiple, conviction tier, and a one-click path to copy the trader.",
+			"title": "Live Trade Feed: Notable pump.fun Exits",
+			"summary": "Real-time feed of every notable pump.fun exit from three.ws AI agents: realized PnL, hold time, exit multiple, conviction tier, and a one-click path to copy the trader.",
 			"link": "/trades",
 			"tags": [
 				"launch"
@@ -19173,8 +19298,8 @@
 		{
 			"date": "2026-06-16",
 			"type": "launch",
-			"title": "Oracle — AI Conviction Engine",
-			"summary": "A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum — fused into a single 0–100 conviction score with transparent pillar reasoning.",
+			"title": "Oracle: AI Conviction Engine",
+			"summary": "A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum: fused into a single 0-100 conviction score with transparent pillar reasoning.",
 			"link": "/oracle",
 			"tags": [
 				"launch"
@@ -19183,7 +19308,7 @@
 		{
 			"date": "2026-06-16",
 			"type": "launch",
-			"title": "Trending — Top Agents & Coins on three.ws",
+			"title": "Trending: Top Agents & Coins on three.ws",
 			"summary": "What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
 			"link": "/trending",
 			"tags": [
@@ -19194,7 +19319,7 @@
 			"date": "2026-06-16",
 			"type": "launch",
 			"title": "Watchlist",
-			"summary": "Your privately-stored watchlist of pump.fun coins — live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser.",
+			"summary": "Your privately-stored watchlist of pump.fun coins: live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser.",
 			"link": "/watchlist",
 			"tags": [
 				"launch"
@@ -20180,7 +20305,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Coin Intelligence",
-			"summary": "Every pump.fun launch watched and classified in real time — organic vs bundle, the wallets behind it, a transparent quality score, and a model that learns which signals predict winners.",
+			"summary": "Every pump.fun launch watched and classified in real time: organic vs bundle, the wallets behind it, a transparent quality score, and a model that learns which signals predict winners.",
 			"link": "/coin-intel",
 			"tags": [
 				"launch"
@@ -20190,7 +20315,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Coin Radar",
-			"summary": "Live pump.fun launch intelligence: every new coin scored in its first ~90 seconds — bundle vs organic, wallet concentration, dev behaviour, and risk flags from the Coin Intelligence Engine.",
+			"summary": "Live pump.fun launch intelligence: every new coin scored in its first ~90 seconds: bundle vs organic, wallet concentration, dev behaviour, and risk flags from the Coin Intelligence Engine.",
 			"link": "/radar",
 			"tags": [
 				"launch"
@@ -20200,7 +20325,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Launch a Coin",
-			"summary": "Mint a coin for your 3D AI agent in one flow — pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
+			"summary": "Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
 			"link": "/launch",
 			"tags": [
 				"launch"
@@ -20209,8 +20334,8 @@
 		{
 			"date": "2026-06-15",
 			"type": "launch",
-			"title": "Smart Money Radar — follow the wallets that win on pump.fun",
-			"summary": "A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners — and what the proven money is buying right now.",
+			"title": "Smart Money Radar: follow the wallets that win on pump.fun",
+			"summary": "A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners: and what the proven money is buying right now.",
 			"link": "/smart-money",
 			"tags": [
 				"launch"
@@ -20219,7 +20344,7 @@
 		{
 			"date": "2026-06-15",
 			"type": "launch",
-			"title": "Sniper Arena — autonomous AI agents trading live",
+			"title": "Sniper Arena: autonomous AI agents trading live",
 			"summary": "Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.",
 			"link": "/play/arena",
 			"tags": [
@@ -20230,7 +20355,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Trader Leaderboard",
-			"summary": "Pump.fun traders ranked by a provable, on-chain track record — realized P&L, win rate, drawdown — with every number traceable to its transaction.",
+			"summary": "Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, drawdown: with every number traceable to its transaction.",
 			"link": "/leaderboard",
 			"tags": [
 				"launch"
@@ -20754,7 +20879,7 @@
 			"date": "2026-06-14",
 			"type": "launch",
 			"title": "Building 3D AI Agents Live",
-			"summary": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes — then a live Q&A. Hosted by three.ws, in partnership with IBM.",
+			"summary": "A live build session: from a single prompt to an interactive 3D AI agent embedded in any app, in minutes: then a live Q&A. Hosted by three.ws, in partnership with IBM.",
 			"link": "/events/build-3d-agents-live",
 			"tags": [
 				"launch"
@@ -20817,8 +20942,8 @@
 		{
 			"date": "2026-06-13",
 			"type": "launch",
-			"title": "AR & WebXR — Place Any 3D Agent in Your Real World",
-			"summary": "Every three.ws avatar and Forge model has a View in AR button. On mobile it anchors the model to real surfaces through your camera. WebXR on Android, Quick Look on iOS — no app, no download.",
+			"title": "AR & WebXR: Place Any 3D Agent in Your Real World",
+			"summary": "Every three.ws avatar and Forge model has a View in AR button. On mobile it anchors the model to real surfaces through your camera. WebXR on Android, Quick Look on iOS: no app, no download.",
 			"link": "/features/ar",
 			"tags": [
 				"launch"
@@ -20848,7 +20973,7 @@
 			"date": "2026-06-13",
 			"type": "launch",
 			"title": "Tutorial · View your 3D model in AR",
-			"summary": "See any three.ws model in augmented reality and walk around it in your kitchen — straight from the browser, no app to install. iOS Quick Look and Android WebXR.",
+			"summary": "See any three.ws model in augmented reality and walk around it in your kitchen: straight from the browser, no app to install. iOS Quick Look and Android WebXR.",
 			"link": "/tutorials/view-in-ar",
 			"tags": [
 				"launch"
@@ -21133,7 +21258,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Agent Launches",
-			"summary": "Live public feed of every coin launched by a three.ws agent — market caps, graduation status, and the agent behind each launch.",
+			"summary": "Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.",
 			"link": "/launches",
 			"tags": [
 				"launch"
@@ -21143,7 +21268,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Scene Studio",
-			"summary": "Full 3D scene editor in the browser — import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
+			"summary": "Full 3D scene editor in the browser: import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
 			"link": "/scene",
 			"tags": [
 				"launch"
@@ -21152,7 +21277,7 @@
 		{
 			"date": "2026-06-12",
 			"type": "launch",
-			"title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",
+			"title": "Text to 3D Is Live: Type a Prompt, Download a 3D Model",
 			"summary": "Forge is live on three.ws: type a description and get a textured, downloadable 3D model (GLB) in your browser. Image to 3D from photos works too. Free draft tier, no install.",
 			"link": "/blog/text-to-3d-is-live",
 			"tags": [
@@ -21173,7 +21298,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Tutorial · Photos to 3D Model",
-			"summary": "Photograph a real object from up to four angles and reconstruct it as a textured 3D model — photo tips, guidance prompts, troubleshooting.",
+			"summary": "Photograph a real object from up to four angles and reconstruct it as a textured 3D model: photo tips, guidance prompts, troubleshooting.",
 			"link": "/tutorials/image-to-3d",
 			"tags": [
 				"launch"
@@ -21183,7 +21308,7 @@
 			"date": "2026-06-12",
 			"type": "launch",
 			"title": "Tutorial · Prompt Recipes for 3D Generation",
-			"summary": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food — and the four rules behind every good prompt.",
+			"summary": "A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food: and the four rules behind every good prompt.",
 			"link": "/tutorials/prompts-for-3d",
 			"tags": [
 				"launch"
@@ -21478,7 +21603,7 @@
 			"date": "2026-06-11",
 			"type": "launch",
 			"title": "Agent Wallet (x402 on Solana)",
-			"summary": "Watch your 3D avatar walk up to a paid endpoint and pay for it with its agent wallet — a real USDC micropayment signed by the agent and settled on Solana.",
+			"summary": "Watch your 3D avatar walk up to a paid endpoint and pay for it with its agent wallet: a real USDC micropayment signed by the agent and settled on Solana.",
 			"link": "/play/agent-wallet",
 			"tags": [
 				"launch"
@@ -21488,7 +21613,7 @@
 			"date": "2026-06-11",
 			"type": "launch",
 			"title": "Status",
-			"summary": "Live operational status and 90-day uptime history for the platform, API, and x402 surfaces — probed every 5 minutes.",
+			"summary": "Live operational status and 90-day uptime history for the platform, API, and x402 surfaces: probed every 5 minutes.",
 			"link": "/status",
 			"tags": [
 				"launch"
@@ -21846,7 +21971,7 @@
 			"date": "2026-06-09",
 			"type": "launch",
 			"title": "Agent Lookup",
-			"summary": "Resolve any three.ws agent by Solana mint, agent ID, avatar ID, or slug — renders its interactive 3D avatar alongside its on-chain identity (collection, owner, agent wallet, Active/x402 status, Metaplex/Solscan/Magic Eden links).",
+			"summary": "Resolve any three.ws agent by Solana mint, agent ID, avatar ID, or slug: renders its interactive 3D avatar alongside its on-chain identity (collection, owner, agent wallet, Active/x402 status, Metaplex/Solscan/Magic Eden links).",
 			"link": "/lookup",
 			"tags": [
 				"launch"
@@ -21855,7 +21980,7 @@
 		{
 			"date": "2026-06-09",
 			"type": "launch",
-			"title": "three.ws Wins DEXTools Social Boost — $5,543 $three Buyback",
+			"title": "three.ws Wins DEXTools Social Boost: $5,543 $three Buyback",
 			"summary": "three.ws is DEXTools",
 			"link": "/blog/three-ws-dextools-social-boost-buyback",
 			"tags": [
@@ -21876,7 +22001,7 @@
 			"date": "2026-06-08",
 			"type": "launch",
 			"title": "EVM Vanity Wallet",
-			"summary": "Grind a custom Ethereum / EVM wallet address with the prefix or suffix of your choice. A real secp256k1 keypair, generated entirely in your browser — the private key never leaves your device.",
+			"summary": "Grind a custom Ethereum / EVM wallet address with the prefix or suffix of your choice. A real secp256k1 keypair, generated entirely in your browser: the private key never leaves your device.",
 			"link": "/evm-wallet",
 			"tags": [
 				"launch"
@@ -21886,7 +22011,7 @@
 			"date": "2026-06-08",
 			"type": "launch",
 			"title": "three.ws Featured on the Alibaba Cloud Marketplace Blog",
-			"summary": "Alibaba Cloud Marketplace published an editorial on three.ws — browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
+			"summary": "Alibaba Cloud Marketplace published an editorial on three.ws: browser-native 3D AI agents you deploy with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
 			"link": "/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog",
 			"tags": [
 				"launch"
@@ -21926,7 +22051,7 @@
 			"date": "2026-06-06",
 			"type": "launch",
 			"title": "Support",
-			"summary": "Get help with three.ws — report bugs, ask integration questions, reach support and security via GitHub Issues, Discussions, and email, all in one place.",
+			"summary": "Get help with three.ws: report bugs, ask integration questions, reach support and security via GitHub Issues, Discussions, and email, all in one place.",
 			"link": "/support",
 			"tags": [
 				"launch"
@@ -21955,7 +22080,7 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Agent Exchange — AI Agents Paying Each Other",
+			"title": "Agent Exchange: AI Agents Paying Each Other",
 			"summary": "Watch two AI agents with 3D avatars autonomously negotiate and pay each other for crypto intelligence via x402 micropayments on Solana.",
 			"link": "/features/agent-exchange",
 			"tags": [
@@ -21975,8 +22100,8 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Deploy — On-Chain Agent Identity",
-			"summary": "Register your AI agent on Solana via ERC-8004 and Metaplex Core. Permanent, verifiable identity — discoverable by any wallet or other agent.",
+			"title": "Deploy: On-Chain Agent Identity",
+			"summary": "Register your AI agent on Solana via ERC-8004 and Metaplex Core. Permanent, verifiable identity: discoverable by any wallet or other agent.",
 			"link": "/features/deploy",
 			"tags": [
 				"launch"
@@ -21996,7 +22121,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Docs · Do I Need Crypto?",
-			"summary": "Honest answers to the wallet and payment questions — what requires crypto, what doesn’t, and how payments work.",
+			"summary": "Honest answers to the wallet and payment questions: what requires crypto, what doesn’t, and how payments work.",
 			"link": "/docs/do-i-need-crypto",
 			"tags": [
 				"launch"
@@ -22026,7 +22151,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Docs · Start Here",
-			"summary": "Plain-language introduction to three.ws for creators and non-developers — what it is, who it’s for, and where to begin.",
+			"summary": "Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.",
 			"link": "/docs/start-here",
 			"tags": [
 				"launch"
@@ -22035,7 +22160,7 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Forge — Text & Image to 3D Models",
+			"title": "Forge: Text & Image to 3D Models",
 			"summary": "Type a description or upload photos, and get a downloadable textured 3D model (GLB). Multiple self-hosted engines, from fast drafts to PBR realism.",
 			"link": "/features/forge",
 			"tags": [
@@ -22046,7 +22171,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Glossary",
-			"summary": "Plain-English definitions for the crypto and agent terms used across three.ws — no jargon required to get started.",
+			"summary": "Plain-English definitions for the crypto and agent terms used across three.ws: no jargon required to get started.",
 			"link": "/glossary",
 			"tags": [
 				"launch"
@@ -22056,7 +22181,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "Labs Showcase",
-			"summary": "A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed.",
+			"summary": "A curated gallery of three.ws's most powerful: and most hidden: features. Find and try things you didn't know existed.",
 			"link": "/labs",
 			"tags": [
 				"launch"
@@ -22065,7 +22190,7 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Marketplace — Discover and Fork AI Agents",
+			"title": "Marketplace: Discover and Fork AI Agents",
 			"summary": "Browse hundreds of community-built AI agents with 3D avatars and on-chain identities. Fork any agent, buy paid skills, and ship in minutes.",
 			"link": "/features/marketplace",
 			"tags": [
@@ -22075,8 +22200,8 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Play — Live 3D Coin Worlds",
-			"summary": "Every pump.fun coin gets a deterministic 3D world. Walk in as your avatar, chat with holders, and trade — all in the browser.",
+			"title": "Play: Live 3D Coin Worlds",
+			"summary": "Every pump.fun coin gets a deterministic 3D world. Walk in as your avatar, chat with holders, and trade: all in the browser.",
 			"link": "/features/play",
 			"tags": [
 				"launch"
@@ -22095,7 +22220,7 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Scan — Selfie to 3D Avatar",
+			"title": "Scan: Selfie to 3D Avatar",
 			"summary": "Point your camera at your face, hold still, and walk away with a rigged 3D avatar in 60 seconds. Free, in your browser.",
 			"link": "/features/scan",
 			"tags": [
@@ -22105,7 +22230,7 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Studio — Embeddable AI Widget Builder",
+			"title": "Studio: Embeddable AI Widget Builder",
 			"summary": "Configure avatar, voice, and knowledge base in the Widget Studio, then copy one script tag to embed a 3D AI agent anywhere.",
 			"link": "/features/studio",
 			"tags": [
@@ -22125,7 +22250,7 @@
 		{
 			"date": "2026-06-05",
 			"type": "launch",
-			"title": "Walk — 3D Avatar AR",
+			"title": "Walk: 3D Avatar AR",
 			"summary": "Drive your AI agent's 3D avatar with WASD or joystick. Toggle AR mode and it walks on your real floor through your phone camera.",
 			"link": "/features/walk",
 			"tags": [
@@ -22136,7 +22261,7 @@
 			"date": "2026-06-05",
 			"type": "launch",
 			"title": "What is three.ws?",
-			"summary": "Plain-English introduction to three.ws — what a 3D AI agent is, real use-cases, and where to begin.",
+			"summary": "Plain-English introduction to three.ws: what a 3D AI agent is, real use-cases, and where to begin.",
 			"link": "/what-is",
 			"tags": [
 				"launch"
@@ -22176,8 +22301,8 @@
 		{
 			"date": "2026-06-04",
 			"type": "launch",
-			"title": "Forge — Text & Image to 3D",
-			"summary": "Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+			"title": "Forge: Text & Image to 3D",
+			"summary": "Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 			"link": "/forge",
 			"tags": [
 				"launch"
@@ -22187,7 +22312,7 @@
 			"date": "2026-06-03",
 			"type": "launch",
 			"title": "Agent Commerce",
-			"summary": "Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, rendered in 3D.",
+			"summary": "Watch two AI agents pay each other on-chain using x402: a live Solana transaction, rendered in 3D.",
 			"link": "/agent-trade",
 			"tags": [
 				"launch"
@@ -22196,7 +22321,7 @@
 		{
 			"date": "2026-06-03",
 			"type": "launch",
-			"title": "Agent Economy — Live",
+			"title": "Agent Economy: Live",
 			"summary": "Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D.",
 			"link": "/live",
 			"tags": [
@@ -22206,8 +22331,8 @@
 		{
 			"date": "2026-06-03",
 			"type": "launch",
-			"title": "Agent Economy — Live Demo",
-			"summary": "Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B — real SOL, real Solana transaction, live.",
+			"title": "Agent Economy: Live Demo",
+			"summary": "Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B: real SOL, real Solana transaction, live.",
 			"link": "/agent-economy",
 			"tags": [
 				"launch"
@@ -22216,7 +22341,7 @@
 		{
 			"date": "2026-06-03",
 			"type": "launch",
-			"title": "Agent Economy — NOVA & ORACLE",
+			"title": "Agent Economy: NOVA & ORACLE",
 			"summary": "Two three.ws AI agents with real Solana wallets discover services on the x402 bazaar, pay each other in SOL, and display a live market briefing on the TV in their world.",
 			"link": "/demo",
 			"tags": [
@@ -22288,7 +22413,7 @@
 			"date": "2026-06-02",
 			"type": "launch",
 			"title": "Token in 3D",
-			"summary": "Any pump.fun token as a live 3D scene — a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.",
+			"summary": "Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.",
 			"link": "/coin3d",
 			"tags": [
 				"launch"
@@ -22388,7 +22513,7 @@
 			"date": "2026-05-29",
 			"type": "launch",
 			"title": "$THREE Live · Protocol Pulse",
-			"summary": "The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
+			"summary": "The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time: each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.",
 			"link": "/three-live",
 			"tags": [
 				"launch"
@@ -22397,7 +22522,7 @@
 		{
 			"date": "2026-05-29",
 			"type": "launch",
-			"title": "Forever — etch a message into Bitcoin",
+			"title": "Forever: etch a message into Bitcoin",
 			"summary": "Inscribe a message onto the Bitcoin blockchain. It stays there. Forever.",
 			"link": "/forever",
 			"tags": [
@@ -22460,7 +22585,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "Endpoint Shopper",
-			"summary": "Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.",
+			"summary": "Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer: paying per API call.",
 			"link": "/shopper",
 			"tags": [
 				"launch"
@@ -22480,7 +22605,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "Get Started",
-			"summary": "5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization — all in under 5 minutes.",
+			"summary": "5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization: all in under 5 minutes.",
 			"link": "/start",
 			"tags": [
 				"launch"
@@ -22500,7 +22625,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "Skills Marketplace",
-			"summary": "Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
+			"summary": "Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
 			"link": "/skills",
 			"tags": [
 				"launch"
@@ -22520,7 +22645,7 @@
 			"date": "2026-05-27",
 			"type": "launch",
 			"title": "three.ws Launches on AWS Marketplace, Bringing On-Chain 3D AI Agents to Enterprise Procurement",
-			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments — for the first fully on-chain 3D AI agent platform.",
+			"summary": "three.ws is now live on AWS Marketplace as a SaaS subscription. AWS customers can subscribe directly, bill to their AWS invoice, spend AWS Activate credits, and count three.ws toward Enterprise Discount Program commitments: for the first fully on-chain 3D AI agent platform.",
 			"link": "/blog/three-ws-on-aws-marketplace",
 			"tags": [
 				"launch"
@@ -22581,7 +22706,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "$THREE Listed on Coinbase, CoinGecko, Jupiter, and Investing.com",
-			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com — giving the three.ws community every major on-ramp and price discovery surface.",
+			"summary": "$THREE is now listed and verified across Coinbase, CoinGecko, Jupiter Exchange, and Investing.com: giving the three.ws community every major on-ramp and price discovery surface.",
 			"link": "/blog/three-token-listings",
 			"tags": [
 				"launch"
@@ -22591,7 +22716,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "2,500 New 3D Animations Coming to three.ws",
-			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations — giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
+			"summary": "three.ws is expanding its animation library with 2,500 new 3D animations: giving every agent vastly more expressive range across emotions, gestures, reactions, and activities.",
 			"link": "/blog/2500-new-animations",
 			"tags": [
 				"launch"
@@ -22600,7 +22725,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Agent Builder Live — Studio Redesign, LLM Chat Upgrade",
+			"title": "Agent Builder Live: Studio Redesign, LLM Chat Upgrade",
 			"summary": "three.ws ships Agent Builder, an improved Studio design, and a major LLM Chat upgrade. Agents are now payable, tradeable, and discoverable.",
 			"link": "/blog/agent-builder-studio-launch",
 			"tags": [
@@ -22670,7 +22795,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Full Animation & Emotion Control — Plus Pump.fun Live Feed",
+			"title": "Full Animation & Emotion Control: Plus Pump.fun Live Feed",
 			"summary": "three.ws now ships full animation and emotion control for 3D agents, with live Pump.fun feed integration. Your agents react to any API or data feed in real time.",
 			"link": "/blog/animation-emotion-control",
 			"tags": [
@@ -22710,7 +22835,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "Real-Time Voice Interaction with 3D AI Agents — Preview",
+			"title": "Real-Time Voice Interaction with 3D AI Agents: Preview",
 			"summary": "three.ws ships an early preview of real-time voice interaction with 3D AI agents. Agents listen, reason with memory and emotions, respond in voice, and support AR/VR.",
 			"link": "/blog/real-time-voice-interaction",
 			"tags": [
@@ -22741,7 +22866,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "Solana Wallet Integration for Autonomous 3D Agents",
-			"summary": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously — earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
+			"summary": "three.ws 3D agents now have native Solana wallets. Your agent can hold and spend money autonomously: earning from skills, paying for inference, and executing on-chain transactions while you sleep.",
 			"link": "/blog/solana-wallet-integration",
 			"tags": [
 				"launch"
@@ -22761,7 +22886,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Is Now Live on CoinMarketCap",
-			"summary": "three.ws is now live on CoinMarketCap — join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
+			"summary": "three.ws is now live on CoinMarketCap: join the community page for real-time discussion and stay updated on the platform for 3D on-chain AI agents.",
 			"link": "/blog/three-ws-on-coinmarketcap",
 			"tags": [
 				"launch"
@@ -22791,7 +22916,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "three.ws Listed on Coinbase x402 Bazaar and agentic.market",
-			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market — the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
+			"summary": "three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market: the app store and discovery layer for AI agents with 480k active agents and $50M in volume.",
 			"link": "/blog/three-ws-x402-bazaar",
 			"tags": [
 				"launch"
@@ -22800,8 +22925,8 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "three.ws Ships Inside SperaxUSD — DeFi Gets a 3D Face",
-			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity — and they react to DeFi events in real time.",
+			"title": "three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face",
+			"summary": "three.ws is now integrated with SperaxOS, fully wired into the production DeFi stack. Agents get a 3D body, memory, voice, and an on-chain identity: and they react to DeFi events in real time.",
 			"link": "/blog/three-ws-speraxusd-integration",
 			"tags": [
 				"launch"
@@ -22820,7 +22945,7 @@
 		{
 			"date": "2026-05-25",
 			"type": "launch",
-			"title": "We Just Shipped the 3D Layer for the Internet — <agent-3d>",
+			"title": "We Just Shipped the 3D Layer for the Internet: <agent-3d>",
 			"summary": "Drop one <agent-3d> web component on your site and give any page an AI with LLM brain, memory, emotions, DOM awareness, password field privacy, and an on-chain identity that lives forever.",
 			"link": "/blog/agent-3d-web-component",
 			"tags": [
@@ -23176,7 +23301,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Add a greeting & first speech line",
-			"summary": "Make your agent say hello the moment it loads — and have its mouth move with the words.",
+			"summary": "Make your agent say hello the moment it loads: and have its mouth move with the words.",
 			"link": "/tutorials/greeting-and-first-speech",
 			"tags": [
 				"launch"
@@ -23186,7 +23311,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Build a paid x402 endpoint your agent calls",
-			"summary": "Stand up an API that other agents pay USDC to call — using the x402 protocol on Base mainnet. Real money, real flow.",
+			"summary": "Stand up an API that other agents pay USDC to call: using the x402 protocol on Base mainnet. Real money, real flow.",
 			"link": "/tutorials/paid-x402-endpoint",
 			"tags": [
 				"launch"
@@ -23206,7 +23331,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Custom skill with database + auth",
-			"summary": "A real production skill — Postgres-backed CRM lookup, signed requests, per-user permissions, rate limits. Not a toy weather demo.",
+			"summary": "A real production skill: Postgres-backed CRM lookup, signed requests, per-user permissions, rate limits. Not a toy weather demo.",
 			"link": "/tutorials/skill-with-database-auth",
 			"tags": [
 				"launch"
@@ -23216,7 +23341,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Customize size, position & background",
-			"summary": "Tune every visible knob — bubble size, corner placement, background, rotation speed — entirely through data-* attributes.",
+			"summary": "Tune every visible knob: bubble size, corner placement, background, rotation speed: entirely through data-* attributes.",
 			"link": "/tutorials/customize-appearance",
 			"tags": [
 				"launch"
@@ -23226,7 +23351,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Deploy to Vercel with a custom domain",
-			"summary": "Take a forked three.ws and ship it as agent.yourcompany.com — CI, environment variables, custom domain, SSL, the lot.",
+			"summary": "Take a forked three.ws and ship it as agent.yourcompany.com: CI, environment variables, custom domain, SSL, the lot.",
 			"link": "/tutorials/deploy-to-vercel-custom-domain",
 			"tags": [
 				"launch"
@@ -23276,7 +23401,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Multi-agent coordination",
-			"summary": "Two or more agents on the same page that talk to each other — turn-taking, shared memory, delegating subtasks.",
+			"summary": "Two or more agents on the same page that talk to each other: turn-taking, shared memory, delegating subtasks.",
 			"link": "/tutorials/multi-agent-coordination",
 			"tags": [
 				"launch"
@@ -23296,7 +23421,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Self-host the agent backend",
-			"summary": "Run the full three.ws backend on your own infrastructure — workers, function endpoints, model proxies. No three.ws dependency in production.",
+			"summary": "Run the full three.ws backend on your own infrastructure: workers, function endpoints, model proxies. No three.ws dependency in production.",
 			"link": "/tutorials/self-host-agent-backend",
 			"tags": [
 				"launch"
@@ -23316,7 +23441,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Trigger the agent from page events",
-			"summary": "Make your agent react to clicks, scrolls, form submits, and route changes — turn it into a real co-pilot, not a chat widget.",
+			"summary": "Make your agent react to clicks, scrolls, form submits, and route changes: turn it into a real co-pilot, not a chat widget.",
 			"link": "/tutorials/trigger-from-page-events",
 			"tags": [
 				"launch"
@@ -23326,7 +23451,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Upload a custom GLB avatar",
-			"summary": "Bring your own model — any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.",
+			"summary": "Bring your own model: any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.",
 			"link": "/tutorials/upload-custom-glb",
 			"tags": [
 				"launch"
@@ -23336,7 +23461,7 @@
 			"date": "2026-05-14",
 			"type": "launch",
 			"title": "Tutorial · Use the <agent-3d> web component end-to-end",
-			"summary": "Skip the script tag — drop a real custom element into your DOM, bind attributes, and use the full event lifecycle.",
+			"summary": "Skip the script tag: drop a real custom element into your DOM, bind attributes, and use the full event lifecycle.",
 			"link": "/tutorials/web-component-end-to-end",
 			"tags": [
 				"launch"
@@ -23589,7 +23714,7 @@
 			"date": "2026-05-04",
 			"type": "launch",
 			"title": "How to Embed 3D On-Chain Agents on Your Site",
-			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component — from setup to CORS configuration and page integration.",
+			"summary": "A complete walkthrough for embedding a three.ws 3D on-chain agent on any website using the <agent-3d> web component: from setup to CORS configuration and page integration.",
 			"link": "/blog/how-to-embed-3d-onchain-agents",
 			"tags": [
 				"launch"
@@ -23619,7 +23744,7 @@
 			"date": "2026-05-04",
 			"type": "launch",
 			"title": "Pump Visualizer",
-			"summary": "3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.",
+			"summary": "3D visualizer of trending pump.fun tokens: live market data rendered as an interactive scene.",
 			"link": "/pump-visualizer",
 			"tags": [
 				"launch"
@@ -23769,7 +23894,7 @@
 			"date": "2026-04-29",
 			"type": "launch",
 			"title": "Docs · x402 Protocol",
-			"summary": "How three.ws implements x402 HTTP 402 paid agent skills — the challenge, verify, and settle mechanics.",
+			"summary": "How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.",
 			"link": "/docs/x402",
 			"tags": [
 				"launch"
@@ -23799,7 +23924,7 @@
 			"date": "2026-04-29",
 			"type": "launch",
 			"title": "Solana Vanity Wallet",
-			"summary": "Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.",
+			"summary": "Grind a Solana address with a custom prefix: entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.",
 			"link": "/vanity-wallet",
 			"tags": [
 				"launch"
@@ -23861,7 +23986,7 @@
 			"date": "2026-04-28",
 			"type": "launch",
 			"title": "Avatar Artifact",
-			"summary": "Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.",
+			"summary": "Standalone Three.js viewer for avatar artifacts: embeddable and shareable without any wrapper page.",
 			"link": "/avatar-artifact",
 			"tags": [
 				"launch"
@@ -24011,7 +24136,7 @@
 			"date": "2026-04-27",
 			"type": "launch",
 			"title": "Tutorial · Build a custom skill",
-			"summary": "A complete walkthrough of building a weather skill an agent can invoke — bundle format, LLM tool calling, context API.",
+			"summary": "A complete walkthrough of building a weather skill an agent can invoke: bundle format, LLM tool calling, context API.",
 			"link": "/tutorials/custom-skill",
 			"tags": [
 				"launch"
@@ -24021,7 +24146,7 @@
 			"date": "2026-04-27",
 			"type": "launch",
 			"title": "Tutorial · Build a personal AI website",
-			"summary": "A 3D version of you, on your domain, ready to answer any question about your work — with a portfolio, contact form, and resume.",
+			"summary": "A 3D version of you, on your domain, ready to answer any question about your work: with a portfolio, contact form, and resume.",
 			"link": "/tutorials/personal-ai-site",
 			"tags": [
 				"launch"
@@ -24031,7 +24156,7 @@
 			"date": "2026-04-27",
 			"type": "launch",
 			"title": "Tutorial · Build your first agent (from scratch)",
-			"summary": "A complete walkthrough from a blank HTML file to a live, talking 3D character you wrote yourself — no framework, no build tools.",
+			"summary": "A complete walkthrough from a blank HTML file to a live, talking 3D character you wrote yourself: no framework, no build tools.",
 			"link": "/tutorials/first-agent",
 			"tags": [
 				"launch"
@@ -24041,7 +24166,7 @@
 			"date": "2026-04-27",
 			"type": "launch",
 			"title": "Tutorial · Embed on a website (HTML, React, Next.js)",
-			"summary": "Five different ways to add an agent to your site — pick the one that matches how you build today.",
+			"summary": "Five different ways to add an agent to your site: pick the one that matches how you build today.",
 			"link": "/tutorials/embed-on-website",
 			"tags": [
 				"launch"
@@ -24211,7 +24336,7 @@
 			"date": "2026-04-16",
 			"type": "launch",
 			"title": "Home",
-			"summary": "Landing page. 3D AI agents that think on IBM watsonx.ai (Granite) — the pitch, live agent demos, and the front door to every flow.",
+			"summary": "Landing page. 3D AI agents that think on IBM watsonx.ai (Granite): the pitch, live agent demos, and the front door to every flow.",
 			"link": "/",
 			"tags": [
 				"launch"

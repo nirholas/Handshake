@@ -52,6 +52,7 @@ import { REQUIRED_VENUE_EMPTIES, collectVenueEmpties, resolveVenueAnchors } from
 import { AnimationManager } from './animation-manager.js';
 import { ClubCamera } from './club-camera.js';
 import { ClubAudio, styleAudioFor, TRACK_LABELS } from './club-audio.js';
+import { DANCES } from './club-dances.js';
 import { playSequence, ticketSteps } from './club-sequence.js';
 import { detectProfile, PROFILES, createFrameWatchdog, isMobileLayout } from './club-perf.js';
 import {
@@ -1748,17 +1749,9 @@ function setAutoFollow(on) {
 }
 
 // ── Side panel — render pole controls ────────────────────────────────────
-const DANCES = [
-	{ key: 'twerk',    label: 'Pole Twerk' },
-	{ key: 'rumba',    label: 'Rumba' },
-	{ key: 'silly',    label: 'Silly' },
-	{ key: 'thriller', label: 'Thriller' },
-	{ key: 'capoeira', label: 'Capoeira' },
-	{ key: 'hiphop',   label: 'Hip Hop' },
-	{ key: 'spin',     label: 'Pole Spin' },
-	{ key: 'climb',    label: 'Climb + Invert' },
-	{ key: 'combo',    label: 'Combo' },
-];
+// DANCES lives in src/club-dances.js so tests can hold it against the paid
+// endpoint's STYLES; the two lists used to drift (the picker still offered
+// "Climb + Invert" long after that routine was re-choreographed).
 
 // Track per-pole card elements for status updates.
 const poleCardEls = new Map();

@@ -1,4 +1,4 @@
-// Bundle purchase unlock — the insert that grants the skills has to satisfy the
+// Bundle purchase unlock: the insert that grants the skills has to satisfy the
 // real skill_purchases constraints, or a paid bundle silently grants nothing.
 //
 // What happened: the unlock loop supplied only (user_id, agent_id, skill, status,

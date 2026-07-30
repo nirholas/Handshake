@@ -1,8 +1,8 @@
 /*
- * Cookbook manifest — single source of truth for the recipe library.
+ * Cookbook manifest: single source of truth for the recipe library.
  *
  * Loaded as a classic script by /cookbook (the index) and /cookbook/<slug>
- * (the recipe viewer) — exposes window.RECIPES.
+ * (the recipe viewer): exposes window.RECIPES.
  *
  * A recipe is not a tutorial. A tutorial teaches you the product through its
  * UI; a recipe hands you a file you can run. Every entry here therefore points

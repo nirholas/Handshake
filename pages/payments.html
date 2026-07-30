@@ -159,6 +159,12 @@
 			.pw-empty-icon { width: 64px; height: 64px; background: linear-gradient(135deg, rgba(124,92,255,0.15), rgba(47,191,113,0.1)); border-radius: 18px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); }
 			.pw-empty h2 { font-size: 1.3rem; margin: 0 0 0.6rem; letter-spacing: -0.02em; }
 			.pw-empty p { color: rgba(255,255,255,0.5); margin: 0 auto 2rem; max-width: 38ch; line-height: 1.6; font-size: 14.5px; }
+			/* Secondary route out of an empty state: someone who cannot sign in yet
+			   still needs somewhere to go, or the page is a dead end for them. */
+			.pw-empty-alt { margin-top: 1.25rem; font-size: 13.5px; color: rgba(255,255,255,0.42); }
+			.pw-empty-alt a { color: rgba(167,139,250,0.95); text-decoration: none; border-bottom: 1px solid rgba(167,139,250,0.28); padding-bottom: 1px; transition: color .16s ease, border-color .16s ease; }
+			.pw-empty-alt a:hover { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
+			.pw-empty-alt a:focus-visible { outline: 2px solid rgba(167,139,250,0.9); outline-offset: 3px; border-radius: 3px; }
 
 			/* ── Create modal ────────────────────────────────────────── */
 			.modal-bg { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .2s; }
@@ -846,9 +852,12 @@
 								<h2>Sign in to manage sessions</h2>
 								<p>Payment sessions are account-scoped. Sign in to create and manage them.</p>
 								<a href="/login?r=/payments" class="btn-primary" style="text-decoration:none;display:inline-flex">Sign in →</a>
+								<div class="pw-empty-alt">Evaluating first? Read <a href="/docs/tutorials/agent-spending-envelope">the walkthrough</a> or the <a href="/docs/payment-sessions">payment sessions guide</a>.</div>
 							</div>
 						`;
 						$('pwStats').innerHTML = '';
+						// Status chips filter a list that does not exist while signed out.
+						$('pwFilters').hidden = true;
 					} else {
 						$('pwList').innerHTML = `<div class="pw-empty"><h2>Could not load sessions</h2><p>${esc(err.message)}</p></div>`;
 					}

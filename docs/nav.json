@@ -399,6 +399,14 @@
 				{
 					"label": "Oracle (the conviction engine)",
 					"path": "oracle"
+				},
+				{
+					"label": "Trading swarms",
+					"path": "swarms"
+				},
+				{
+					"label": "The autonomous trading experiment",
+					"path": "trading-experiment"
 				}
 			]
 		},
@@ -906,6 +914,34 @@
 				{
 					"label": "NVIDIA Inception",
 					"path": "nvidia-inception"
+				},
+				{
+					"label": "AWS Builder Center",
+					"path": "aws-builder-center"
+				},
+				{
+					"label": "AWS Marketplace listing",
+					"path": "aws-marketplace"
+				},
+				{
+					"label": "AWS partner spotlight",
+					"path": "aws-partner-spotlight"
+				},
+				{
+					"label": "AWS: MCP agents",
+					"path": "aws-builder-center-mcp-agents"
+				},
+				{
+					"label": "AWS: agent payment sessions",
+					"path": "aws-builder-center-agent-payment-sessions"
+				},
+				{
+					"label": "AWS: marketplace x402",
+					"path": "aws-builder-center-marketplace-x402"
+				},
+				{
+					"label": "NVIDIA Nemotron spotlight",
+					"path": "nvidia-nemotron-spotlight"
 				}
 			]
 		},
@@ -977,6 +1013,10 @@
 					"path": "tutorials/agent-spending-envelope"
 				},
 				{
+					"label": "Monetize an MCP server",
+					"path": "tutorials/monetize-mcp-server"
+				},
+				{
 					"label": "Render avatar images anywhere",
 					"path": "tutorials/render-avatar-images"
 				},
@@ -999,6 +1039,10 @@
 				{
 					"label": "Earn and spend in /play",
 					"path": "tutorials/earn-and-spend-in-play"
+				},
+				{
+					"label": "Write a repository guard",
+					"path": "tutorials/write-a-guard"
 				}
 			]
 		},
@@ -1064,6 +1108,18 @@
 				{
 					"label": "Publisher rights (news reader)",
 					"path": "news-rights"
+				},
+				{
+					"label": "Repository guards",
+					"path": "guards"
+				},
+				{
+					"label": "Package extraction",
+					"path": "package-extraction"
+				},
+				{
+					"label": "Economy Health dashboard",
+					"path": "economy-health-dashboard"
 				}
 			]
 		}

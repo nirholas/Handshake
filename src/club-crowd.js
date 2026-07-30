@@ -32,7 +32,7 @@ import { log } from './shared/log.js';
 // resolved from the manifest passed to the constructor. A missing clip is just
 // dropped — the crowd falls back to whatever else retargeted on that rig.
 const IDLE_CLIPS = ['idle', 'av-idle-breath', 'av-waiting', 'av-chilling', 'av-leaning-wall', 'av-listening-music', 'av-smoking'];
-const DANCE_CLIPS = ['twerk', 'dance', 'rumba', 'av-dance-shuffle', 'av-rap-dance', 'av-headbang', 'av-banging-tunes', 'av-cheering', 'av-boxer-dance'];
+const DANCE_CLIPS = ['twerk', 'dance', 'rumba', 'av-dance-shuffle', 'av-rap-dance', 'av-headbang', 'av-banging-tunes', 'av-cheering', 'av-boxer-dance', 'av-offabean-dance', 'michelle-samba-dance'];
 const ALL_CROWD_CLIPS = [...new Set([...IDLE_CLIPS, ...DANCE_CLIPS])];
 
 // Public 3D avatars to pull for the crowd. Larger page than the entrance's agent

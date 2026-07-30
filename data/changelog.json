@@ -3,6 +3,50 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "Free trials are no longer counted as marketplace sales",
+			"summary": "The public marketplace numbers were wrong in the way that flatters us most: a free trial of a skill was counted as a sale, and the price it would have cost was added to reported volume. On the live data that published more than ten thousand sales and millions in volume at a moment when the number of purchases anyone had actually paid for was zero. Paid sales and free trials are now separate everywhere they are reported. Trials get their own count and a drop-off view showing how many were started, used, used up, and turned into a purchase, which is genuinely useful to a creator deciding whether a trial is working, and can no longer be mistaken for revenue.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Buying a skill bundle now unlocks the skills you paid for",
+			"summary": "Paying for a bundle took the money, recorded the purchase as confirmed, and then failed while granting access, so the request errored and trying again was refused as already processed. The skills stayed locked and there was no way to recover them. The unlock now writes complete records and files them as access rather than as extra sales, so one bundle purchase is still reported as one sale instead of several.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Every build guard is now listed on a page of its own",
+			"summary": "This repository has twenty-nine automated guards standing between a mistake and production, and until now the only way to see them was to read the source. The full registry is published to /guards: what each guard protects, why it exists, and which stage of the build actually runs it. A separate check fails the build if that page ever drifts from the real registry, so it cannot quietly go stale. There is also a new guide that walks through writing a guard end to end, using a real one that refuses to build when server code calls out to another service without a timeout.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/guards"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The 3D docs world recovers instead of stranding you",
+			"summary": "When the 3D documentation world failed to start, it showed a dead end: no explanation, no way back, and the keyboard was left with nothing to focus, so anyone navigating without a mouse was stuck. It now explains what happened, offers a reload (which genuinely fixes the most common cause, too many 3D views open at once), and points to the classic docs, which carry every page the world shows. A separate defect left some custom avatars frozen in a T-pose forever once their idle animation failed to load, because the world had already recorded the pose as playing and never retried it.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The in-game economy is now published, prices and odds included",
+			"summary": "The open world at /play has always had a real economy: a purse you can lose when you die, a bank that protects it, a general store that prices every trade, a cosmetics boutique that settles on Solana, and a wheel. None of it was written down. The only way to learn a price was to walk up to the vendor and read the panel, and the wheel's odds were not published at all. There is now a public reference at /play/economy showing every catalog, gate and payout, including the full wheel paytable with the real chance of each outcome. It is not a copy: the page reads the same tables the game server prices trades with, so a number shown there is the number you will be charged, and it cannot fall out of date when the game is retuned. A written reference and a hands-on tutorial covering the whole earn-and-spend loop ship alongside it.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/play/economy"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Two more guides are now findable, and an admin-only page stays private",
 			"summary": "The in-game economy guide and the trading swarms guide were both written and live, but neither was listed in our site index, so nothing could crawl them and they were only reachable if you already knew the address. Both are listed now. Separately, the economy health dashboard guide describes an admin-only screen and names the credential that unlocks it, so it is explicitly marked as internal rather than being published alongside the others.",
 			"tags": [

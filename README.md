@@ -9726,6 +9726,8 @@ USD prices convert to `$THREE` at the live rate through `fetchTokenPriceUsd`, wh
 
 This in-game rail is distinct from two neighbours it is easy to confuse it with: the USDC [x402](#x402-payments) cosmetic rail (`api/x402/cosmetic-purchase.js`), which sells a different catalog for the standalone character creator, and the public settled-sale cosmetics ledger at `/fits`. Vendor and banking trades settle purely in the Colyseus room state; only the boutique and paid spins touch the chain.
 
+Every catalog, gate and odds table above is published live at **[three.ws/play/economy](https://three.ws/play/economy)**, served by `GET /api/play/economy` ([api/play/economy.js](api/play/economy.js)). That endpoint imports the game's own modules rather than restating them, so the public reference cannot drift from what the server charges. Full reference: [docs/in-game-economy.md](docs/in-game-economy.md). Hands-on walkthrough: [docs/tutorials/earn-and-spend-in-play.md](docs/tutorials/earn-and-spend-in-play.md).
+
 ---
 
 ## Voice Lab & Mocap Studio

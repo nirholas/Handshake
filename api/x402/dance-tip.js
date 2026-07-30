@@ -30,8 +30,8 @@ const ROUTE = '/api/x402/dance-tip';
 const DESCRIPTION =
 	'three.ws club stage — tip a dancer to perform one routine on the 3D ' +
 	'stage. Pay $0.001 USDC per performance. Pick a dancer slot (1-4) and a ' +
-	'dance style (free-floor: rumba, silly, thriller, capoeira, hiphop; pole ' +
-	'work: twerk; choreographed routines: spin, climb, combo). The settled ' +
+	'dance style (free-floor: rumba, silly, thriller, capoeira, hiphop, ' +
+	'offabean; pole work: twerk; choreographed routines: spin, climb, combo). The settled ' +
 	'call returns a performance ticket the /club page consumes to spawn the ' +
 	'dancer and play the routine — sequence styles chain multiple clips ' +
 	'back-to-back, and pole styles turn her into the pole.';
@@ -46,6 +46,9 @@ export const STYLES = Object.freeze({
 	silly:    { clip: 'silly',    label: 'Silly',    loop: true, durationSec: 10, track: 'silly' },
 	thriller: { clip: 'thriller', label: 'Thriller', loop: true, durationSec: 14, track: 'thriller' },
 	capoeira: { clip: 'capoeira', label: 'Capoeira', loop: true, durationSec: 12, track: 'capoeira' },
+	// 16.1s of choreography, the longest single-clip style on the stage: booked
+	// for one full pass rather than cut mid-routine.
+	offabean: { clip: 'av-offabean-dance', label: 'Offabean', loop: true, durationSec: 16, track: 'hiphop' },
 
 	// Pole work — `pole: true` tells the /club stage to turn the dancer into the
 	// pole and dance against it (back to the crowd) rather than facing out like

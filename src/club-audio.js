@@ -668,6 +668,7 @@ const TRACK_BY_DANCE = Object.freeze({
 	thriller: 'thriller',
 	capoeira: 'capoeira',
 	hiphop: 'hiphop',
+	offabean: 'hiphop',
 	twerk: 'im-in-love-wit-a-stripper-fast',
 	spin: 'pole',
 	climb: 'pole',

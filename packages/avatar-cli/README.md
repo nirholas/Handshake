@@ -65,7 +65,7 @@ three-ws-avatar validate manifest.json
 
 # 4. Print embed snippets
 three-ws-avatar preview manifest.json
-# → resolver URL, <three-ws-avatar> element, and <iframe> snippet
+# → resolver URL, <agent-3d> element + loader, and <iframe> snippet
 ```
 
 ## Commands
@@ -75,7 +75,7 @@ three-ws-avatar preview manifest.json
 | `init` | Scaffold a new avatar manifest from a wallet and mesh file. |
 | `validate <path>` | Validate an existing manifest against the schema (exit 1 if invalid). |
 | `hash <path>` | Compute the SHA-256 of any file, lowercase hex. |
-| `preview <path>` | Print resolver URL + embeddable `<three-ws-avatar>` and `<iframe>` snippets. |
+| `preview <path>` | Print resolver URL + an embeddable `<agent-3d>` snippet (with its loader) and an `<iframe>` snippet. |
 
 ### `init` — scaffold a manifest
 
@@ -131,12 +131,18 @@ three-ws-avatar preview manifest.json
 
 Prints three things:
 
-1. The resolver URL — `https://three.ws/a/{id}`
-2. A `<three-ws-avatar>` web-component snippet (requires [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) on the page)
+1. The resolver URL, `https://three.ws/a/{id}`
+2. An `<agent-3d>` web-component snippet, together with the loader `<script>` that
+   registers the element. Both lines are printed because `<agent-3d>` is an ordinary
+   unknown element until that script runs, so the snippet is only complete with both.
 3. A zero-install `<iframe>` embed snippet
 
+When `mesh.uri` is still a local `file://` path, `preview` warns instead of printing a
+snippet no browser can load. Pass `--mesh-uri` to `init` to set a public URL.
+
 Use `--viewer http://localhost:3000` to target a local dev viewer, or `--json` for
-machine-readable output (`{ id, resolverUrl, element, iframe, schemaVersion }`).
+machine-readable output
+(`{ id, resolverUrl, loader, element, iframe, meshUri, meshIsLocal, schemaVersion }`).
 
 ## CI usage
 
@@ -160,7 +166,7 @@ three-ws-avatar validate manifest.json
 ## Related packages
 
 - [`@three-ws/avatar-schema`](https://www.npmjs.com/package/@three-ws/avatar-schema) — the manifest format this CLI scaffolds and validates.
-- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) — the runtime SDK and `<three-ws-avatar>` / `<agent-3d>` elements the `preview` snippets embed.
+- [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) is the runtime SDK behind the `<agent-3d>` element the `preview` snippets embed.
 
 ## Links
 

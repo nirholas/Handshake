@@ -496,8 +496,13 @@
 					return;
 				}
 				accountKv.replaceChildren();
-				for (const [key, value] of Object.entries(user ?? {})) {
+				for (const [key, value] of Object.entries(user)) {
 					if (value === null || value === undefined || value === '') continue;
+					// `sid` is the live session identifier. It is in the response
+					// because the server uses it, not because a UI should print it:
+					// anything that renders it can leak it through a screenshot or a
+					// copied DOM. Never put it on screen.
+					if (key === 'sid') continue;
 					const dt = document.createElement('dt');
 					dt.textContent = key;
 					const dd = document.createElement('dd');
