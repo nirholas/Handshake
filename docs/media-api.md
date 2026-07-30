@@ -727,7 +727,7 @@ Fields are `null` until the stage that produces them completes; on failure
 # Submit
 curl -s -X POST https://three.ws/api/forge-segment \
   -H 'content-type: application/json' \
-  -d '{"mesh_url":"https://three.ws/cdn/forge/anon/a1b2c3d4.glb","method":"auto","max_parts":16}'
+  -d '{"mesh_url":"https://three.ws/avatars/cesium-man.glb","method":"auto","max_parts":16}'
 
 # Poll
 curl -s 'https://three.ws/api/forge-segment?job=JOB_ID'
