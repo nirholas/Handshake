@@ -604,6 +604,7 @@ Docs, tutorials, and reference.
 - [Tutorial · Earn and spend in /play](https://three.ws/tutorials/earn-and-spend-in-play): Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.
 - [Docs: The showcase](https://three.ws/docs/showcase): The public directory of ERC-8004 agents that registered a real 3D avatar. Nothing is curated: an agent appears because the crawler verified its on-chain metadata resolves to a usable model. Covers the qualifying rules and the keyset-paginated API.
 - [Docs · Tutorial: earn and spend in /play](https://three.ws/docs/tutorials/earn-and-spend-in-play): Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.
+- [Tutorial · Give your agent body language](https://three.ws/tutorials/animate-your-agent): Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.
 
 ## Blog
 

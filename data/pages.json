@@ -4494,6 +4494,14 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/animate-your-agent",
+					"title": "Tutorial · Give your agent body language",
+					"description": "Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
 				}
 			]
 		},

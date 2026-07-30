@@ -223,6 +223,16 @@
 
 		/* ────────────────────────── MIDDLE ────────────────────────── */
 		{
+			slug: 'animate-your-agent',
+			tier: 'middle',
+			title: 'Give your agent body language',
+			blurb: 'Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.',
+			builds: 'An agent that gestures on its own, with a vocabulary you control',
+			time: '12 min',
+			previewModel: '/avatars/michelle.glb',
+			ctaPrimary: { label: 'Open the gesture vocabulary', href: '/gestures' },
+		},
+		{
 			slug: 'shopify-store-guide-advanced',
 			tier: 'middle',
 			title: 'Customize your Shopify 3D store guide',

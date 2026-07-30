@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T23:27:23.421Z",
+	"generated_at": "2026-07-30T23:27:32.542Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -262,6 +262,16 @@
 			"title": "Tutorial · Give an Agent a Spending Envelope",
 			"summary": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",
 			"link": "/tutorials/agent-spending-envelope",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Tutorial · Give your agent body language",
+			"summary": "Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.",
+			"link": "/tutorials/animate-your-agent",
 			"tags": [
 				"launch"
 			]

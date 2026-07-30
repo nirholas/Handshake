@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T23:22:36.222Z",
+	"generated_at": "2026-07-30T23:27:32.533Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5831,6 +5831,16 @@
 					"path": "/docs/tutorials/earn-and-spend-in-play",
 					"title": "Docs · Tutorial: earn and spend in /play",
 					"description": "Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.",
+					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/animate-your-agent",
+					"title": "Tutorial · Give your agent body language",
+					"description": "Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.",
 					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,

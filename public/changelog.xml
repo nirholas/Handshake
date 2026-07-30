@@ -215,6 +215,14 @@
 			<description>Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.</description>
 		</item>
 		<item>
+			<title>Tutorial · Give your agent body language</title>
+			<link>https://three.ws/tutorials/animate-your-agent</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Give your agent body language</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Clips, slots and hints: the three-name chain that makes an agent nod, look down while it reads, celebrate a settled payment, and dance on request. Re-point any gesture without touching skill code.</description>
+		</item>
+		<item>
 			<title>Tutorial · Monetize an MCP server: charge per tool call</title>
 			<link>https://three.ws/tutorials/monetize-mcp-server</link>
 			<guid isPermaLink="false">2026-07-30:Tutorial · Monetize an MCP server: charge per tool call</guid>
