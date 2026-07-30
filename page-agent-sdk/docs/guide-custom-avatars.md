@@ -106,9 +106,16 @@ tells you which lipsync tier your model qualifies for:
 
 ```js
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { buildMorphMap } from '@three-ws/page-agent';
 
-const gltf = await new GLTFLoader().loadAsync('https://three.ws/avatars/realistic-halfbody.glb');
+// Every rig in the three.ws catalog carries EXT_meshopt_compression, and
+// GLTFLoader throws without a decoder. `AvatarStage` wires this for you; a
+// standalone loader has to do it itself.
+const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+
+const gltf = await loader.loadAsync('https://three.ws/avatars/realistic-halfbody.glb');
 const morph = buildMorphMap(gltf.scene);
 
 console.log('lipsync tier:', morph?.mode ?? 'animation (no face morphs)');

@@ -343,6 +343,16 @@ function publishCooldowns(now) {
 		.catch(() => {});
 }
 
+// A provider refusing one call shape (a blocked method, an unsupported filter, an
+// unindexed account key) rather than the caller. Endpoint-scoped credentials are
+// not the problem, so the lane must survive the refusal; only this request fails
+// over. Kept separate from isProviderTierError, which matches paid-plan gating.
+function isBlockedCallShape(bodyText) {
+	return /request blocked|blocked parameter|excluded from account secondary indexes|method .*(not supported|is not available|disabled)/i.test(
+		bodyText || '',
+	);
+}
+
 function cooldownMsFor(status, bodyText) {
 	if (status === 429) {
 		// "request limit reached" / -32003 is how QuickNode signals a DAILY cap
@@ -362,6 +372,16 @@ function cooldownMsFor(status, bodyText) {
 			? QUOTA_COOLDOWN_MS
 			: RATE_LIMIT_COOLDOWN_MS;
 	}
+	// A 403 normally means a bad/expired key, which is an endpoint-wide problem.
+	// Some keyless nodes instead answer 403 to refuse ONE call shape while serving
+	// everything else: PublicNode returns `{"code":-32602,"Request blocked.
+	// Details: blocked parameter: params.1.programId"}` for getTokenAccountsByOwner
+	// filtered by programId, a call the token/USDC balance readers make constantly.
+	// Treated as an auth failure that parked the whole node for 30m, so a healthy
+	// primary was evicted by its own routine traffic and the rotation cascaded onto
+	// the exhausted paid lanes. The endpoint is fine, this one request is not: fail
+	// over for the call, keep the lane.
+	if (status === 403 && isBlockedCallShape(bodyText)) return NETWORK_COOLDOWN_MS;
 	if (status === 401 || status === 403) return AUTH_COOLDOWN_MS;
 	// 404/410: the endpoint URL is dead or misrouted (expired Quicknode/Alchemy
 	// app, wrong path) — a persistent misconfiguration, so park it like an auth
@@ -617,9 +637,28 @@ const PROVIDER_CAPACITY_CODES = new Set([
 // surfaced straight to the caller and blinded every getSignaturesForAddress
 // consumer (the ring leak scanner) and every getBalance consumer the moment the
 // rotation cascaded past the keyed lanes onto Tatum.
+// A keyless lane can also refuse a method by POLICY rather than by tier, and the
+// dangerous variant answers HTTP 200 so no status-driven rotation fires. Measured
+// on the live free lanes 2026-07-30:
+//   • PublicNode getProgramAccounts → 200 + {code:-32010, "… excluded from account
+//     secondary indexes; this RPC method unavailable for key"}
+//   • PublicNode getTokenAccountsByOwner → {code:-32602, "Request blocked.
+//     Details: blocked parameter: params.1.programId"}, a -32602 that is NOT
+//     invalid params, so the code alone would wrongly read as deterministic
+//   • MagicBlock getProgramAccounts → {code:403, "Your IP or provider is blocked
+//     from this endpoint"}
+// All three are provider-specific: another lane serves the same call normally, so
+// rotating is correct. Unclassified, the 200-status one surfaced straight to the
+// caller and hard-failed the $THREE holder-gating and token-balance readers
+// (api/_lib/balances.js, api/_lib/coin/holders.js, api/_lib/embed-gate.js,
+// api/scene/gate-check.js) whenever the rotation was sitting on that lane.
+const PROVIDER_POLICY_BLOCK = /excluded from account secondary indexes|this rpc method unavailable|request blocked|blocked parameter|blocked from this endpoint/i;
+
 function isProviderTierError(rpcError) {
+	const message = String(rpcError?.message || '');
+	if (PROVIDER_POLICY_BLOCK.test(message)) return true;
 	return /not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i.test(
-		String(rpcError?.message || ''),
+		message,
 	);
 }
 

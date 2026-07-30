@@ -165,6 +165,32 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 		).toBeNull();
 	});
 
+	it.each([
+		// Measured on the live free lanes 2026-07-30. The first is the dangerous one:
+		// HTTP 200, so nothing rotates on status, and code -32010 is not a capacity
+		// code, so it reached $THREE holder-gating callers as a hard error.
+		['PublicNode getProgramAccounts (200)', { code: -32010, message: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA excluded from account secondary indexes; this RPC method unavailable for key' }],
+		['PublicNode getTokenAccountsByOwner', { code: -32602, message: 'Request blocked. Details: blocked parameter: params.1.programId' }],
+		['MagicBlock IP block', { code: 403, message: 'Your IP or provider is blocked from this endpoint' }],
+	])('rotates past a provider POLICY block: %s', (_label, error) => {
+		expect(classifyRpcBody(JSON.stringify({ jsonrpc: '2.0', id: 1, error }))).toBeTruthy();
+	});
+
+	it('still refuses to rotate on a genuine invalid-params error', () => {
+		// -32602 is shared between "you sent bad params" (deterministic, every lane
+		// fails it) and PublicNode's policy block above. Only the phrasing separates
+		// them, so the genuine case must stay non-rotating.
+		expect(
+			classifyRpcBody(
+				JSON.stringify({
+					jsonrpc: '2.0',
+					id: 1,
+					error: { code: -32602, message: 'Invalid param: WrongSize' },
+				}),
+			),
+		).toBeNull();
+	});
+
 	it('hydrate() adopts a sibling verdict for an endpoint this instance never tried', async () => {
 		const unseen = 'https://never-tried-here.example/rpc';
 		expect(isEndpointCooling(unseen)).toBe(false);
