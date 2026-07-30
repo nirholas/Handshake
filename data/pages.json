@@ -792,6 +792,14 @@
 					"description": "The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.",
 					"priority": 0.6,
 					"changefreq": "weekly"
+				},
+				{
+					"path": "/avatar-cli",
+					"title": "Avatar CLI",
+					"description": "The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-30"
 				}
 			]
 		},
@@ -1970,6 +1978,14 @@
 					"priority": 0.9,
 					"changefreq": "hourly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/play/economy",
+					"title": "The in-game economy",
+					"description": "Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-30"
 				}
 			]
 		},
@@ -3144,11 +3160,51 @@
 				},
 				{
 					"path": "/cookbook",
-					"title": "Cookbook: self-correcting 3D with function calling",
-					"description": "An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.",
+					"title": "Cookbook: runnable recipes for the 3D API",
+					"description": "Recipes you can run, not walkthroughs. A text-to-3D command line tool, a parallel asset-pack builder, an MCP server that gives your AI assistant a 3D tool, a CI quality gate, and a self-correcting generation loop. Every recipe ships a file that was executed against the live API.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-07-21"
+				},
+				{
+					"path": "/cookbook/self-correcting-3d",
+					"title": "Recipe: a self-correcting 3D collectible set",
+					"description": "An AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, renders each result, inspects it with vision, grades it against the brief with structured outputs, and rebuilds whatever missed. Read it with interactive galleries, or download the notebook and run it.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-21"
+				},
+				{
+					"path": "/cookbook/text-to-3d-cli",
+					"title": "Recipe: text to 3D from the command line",
+					"description": "A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/cookbook/parallel-asset-pack",
+					"title": "Recipe: build a whole asset pack in parallel",
+					"description": "Fan a list of prompts across the free 3D lane at a sane concurrency, download every model, render a still of each, and emit a manifest plus a browsable gallery. Partial failure degrades instead of aborting the run.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/cookbook/mcp-3d-tool",
+					"title": "Recipe: give your AI assistant a 3D tool",
+					"description": "A Model Context Protocol server that exposes text-to-3D generation and model rendering as tools, so Claude Code, Claude Desktop, or Cursor can build and then actually look at 3D models mid-conversation.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/cookbook/asset-quality-gate",
+					"title": "Recipe: gate 3D assets in CI",
+					"description": "Generated geometry fails quietly. This gate inspects every model against an explicit triangle, size, and material budget and exits non-zero, so a bad asset fails the build instead of the launch.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
 				},
 				{
 					"path": "/docs/payment-sessions",
@@ -4361,6 +4417,14 @@
 					"added": "2026-06-21"
 				},
 				{
+					"path": "/docs/avatar-cli",
+					"title": "Docs: Avatar CLI",
+					"description": "Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, with every flag, exit code, and JSON shape, plus the two checks that gate a release on your avatar manifest.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/tutorials/ship-an-avatar-manifest",
 					"title": "Tutorial · Ship an avatar manifest",
 					"description": "Turn a raw GLB into a signed-off, hash-anchored manifest: one document that names the avatar, records the exact bytes of its mesh, declares its skeleton, and fails your build if the model ever silently changes.",
@@ -4406,6 +4470,14 @@
 					"description": "The public directory of ERC-8004 agents that registered a real 3D avatar. Nothing is curated: an agent appears because the crawler verified its on-chain metadata resolves to a usable model. Covers the qualifying rules and the keyset-paginated API.",
 					"priority": 0.7,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/tutorials/earn-and-spend-in-play",
+					"title": "Docs · Tutorial: earn and spend in /play",
+					"description": "Run the full economic loop in the open world: gather materials, sell them to the vendor, buy a better tool, bank what you cannot afford to lose, and spin the wheel. Explains why cooking triples fish value and why the bank is the only real decision.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
 				}
 			]
 		},
