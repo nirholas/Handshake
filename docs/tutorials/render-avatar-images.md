@@ -225,18 +225,33 @@ Useful morph names on a model with the full set: `jawOpen`, `mouthSmile`, `mouth
 
 Lookup is by **exact name** against the GLB's own morph target dictionary, with a lowercase fallback. There is no alias resolution and no error when a name misses: an unknown morph is skipped, and the render returns `200` with that part of the face untouched. So "my expression did nothing" is nearly always "this model has no morph target by that name", not "the endpoint is broken".
 
-The cheap test is a byte-size comparison between a neutral render and an extreme one:
+The cheap test is a byte-size comparison between a neutral render and a deliberately extreme one:
 
 ```bash
-A=13f259c7-7024-4d68-b1f0-dbbf52c06209   # Michelle: zero morph targets
 R=https://three.ws/api/avatar/render
 E=$(jq -rn '{jawOpen:1,mouthSmile:1}|tostring|@uri')
 
-curl -sL -o /dev/null -w 'neutral %{size_download}\n'  "$R?avatar=$A&scene=headshot&size=256"
-curl -sL -o /dev/null -w 'extreme %{size_download}\n"' "$R?avatar=$A&scene=headshot&size=256&expression=$E"
+probe() {
+  curl -sL -o /dev/null -w "  neutral %{size_download}\n" "$R?avatar=$1&scene=headshot&size=256"
+  curl -sL -o /dev/null -w "  extreme %{size_download}\n" "$R?avatar=$1&scene=headshot&size=256&expression=$E"
+}
+
+echo 'Michelle:';    probe 13f259c7-7024-4d68-b1f0-dbbf52c06209
+echo 'Selfie Girl:'; probe a4bad2f5-8a07-43cf-82e5-b6ba1314441e
 ```
 
-Identical byte counts mean nothing moved, which means no matching morph targets. Run the same two commands against Selfie Girl and the numbers differ. Do this once per model and write the answer down.
+```
+Michelle:
+  neutral 48125
+  extreme 48125
+Selfie Girl:
+  neutral 41924
+  extreme 42179
+```
+
+Identical byte counts mean nothing moved, which means no matching morph targets. Different counts mean the face responded. Do this once per model and write the answer down.
+
+Give the first render of each pair a moment: a cold render boots headless chromium, so the numbers only line up once both URLs are cached.
 
 A malformed `expression` value, on the other hand, is a real `400`:
 
@@ -335,20 +350,42 @@ Those headers are the endpoint telling you exactly what it did, which is worth l
 | `cameraOrbit` | auto | `{ theta, phi, radius }`. `radius: null` auto-frames the model, which is what you want unless you are building a turntable. |
 | `expression` | none | Same ARKit-52 morph map, same exact-name matching. |
 
-**The 10 MB cap is the constraint that bites.** Plenty of interesting characters are bigger. Two ways through it: pick a smaller model, or shrink one first with `GET /api/avatar/optimize`, which re-encodes a three.ws-hosted GLB down to a texture budget you name:
+**The 10 MB cap is the constraint that bites**, and it does not fail politely. An oversized `glbUrl` stalls: the request hangs while the fetch runs into the cap rather than returning a fast `400`. So check the size yourself before you send it. One `HEAD` is enough:
 
 ```bash
-curl -sL -D - -o small.glb \
-  'https://three.ws/api/avatar/optimize?src=https%3A%2F%2Fthree.ws%2Favatars%2Fselfie-girl.glb&textureSize=512&morphs=arkit52' \
-  | grep -i 'x-three-ws'
+curl -sI 'https://three.ws/avatars/selfie-girl.glb' | grep -i content-length
+# Content-Length: 2235548     → 2.2 MB, fine
+```
+
+When a model is too big, shrink it with `GET /api/avatar/optimize`, which re-encodes a three.ws-hosted GLB down to a texture budget you name. Here is a 20 MB character from the [free character library](/character-library):
+
+```bash
+REMY='https://three.ws/api/avatar/optimize?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Favatars%2Fmixamo%2Fglb%2Fremy.glb&textureSize=512&morphs=arkit52'
+
+curl -sL -D - -o small.glb "$REMY" | grep -i 'x-three-ws'
 ```
 
 ```
-x-three-ws-source-bytes: 2235548
-x-three-ws-output-bytes: 1120932
+x-three-ws-source-bytes: 20566060
+x-three-ws-output-bytes: 1737840
 ```
 
-`textureSize` accepts `128`, `256`, `512`, `1024`, `2048`, and `morphs=arkit52` drops every morph target outside the standard set. `src` must be on a three.ws-controlled origin (the app origin or the CDN host); anything else is `400 untrusted_source`. Full parameter list in the [Media & Render API reference](/docs/media-api.md).
+20.6 MB down to 1.7 MB, a 92% cut, mostly from capping textures at 512px and dropping non-ARKit morph targets. `textureSize` accepts `128`, `256`, `512`, `1024`, `2048`; `lod=1` or `lod=2` adds progressively more aggressive welding; `morphs=arkit52` drops every morph target outside the standard set. `src` must be on a three.ws-controlled origin (the app origin or the CDN host), otherwise it is `400 untrusted_source`. Full parameter list in the [Media & Render API reference](/docs/media-api.md).
+
+Best part: the optimizer's own URL is a public https URL, so you can hand it straight to the renderer and never store an intermediate file.
+
+```bash
+curl -s -D h.txt -X POST https://three.ws/api/render/avatar-clip \
+  -H 'content-type: application/json' \
+  -d "{\"glbUrl\":\"$REMY\",\"posePresetId\":\"salute\",\"background\":\"transparent\",\"width\":512,\"height\":512}" \
+  -o remy-salute.png
+
+grep -i '^x-render-pose' h.txt
+# x-render-pose: salute
+# x-render-pose-label: Salute
+```
+
+A 20 MB character, rendered through a 10 MB endpoint, in one request. The optimizer's output is cached immutably per URL, so the second render of the same character skips the transcode entirely.
 
 For a turntable, hold everything constant and step `theta`:
 
@@ -457,7 +494,8 @@ If you want a talking, animated agent rather than a viewer, that is the `<agent-
 | Expression renders but the face never changes | The GLB has no morph target by that name | Exact-name matching, no aliases, no error. Run the byte-size comparison in Step 5. Michelle has zero morph targets; Selfie Girl has 63. |
 | Image is 2048px when you asked for 4096 | Dimensions are clamped, not rejected | Read `x-render-size` to see what you actually got. Max is 2048 per axis. |
 | `400 bad_request` from `avatar-clip` | `glbUrl` is missing, non-public, or not http(s) | Private hosts and non-http schemes are blocked by design. Use a public https URL. |
-| `502 render_failed` on `avatar-clip` | GLB over 10 MB, unreachable, or unparseable | Shrink it with `/api/avatar/optimize` (Step 7), or verify the URL returns a real GLB with `curl -sL -o m.glb <url> && head -c 4 m.glb`. |
+| `avatar-clip` request hangs, then dies with no body | `glbUrl` is over the 10 MB cap | Check with `curl -sI <url> \| grep -i content-length` first, then shrink it through `/api/avatar/optimize` and pass the optimizer URL as `glbUrl` (Step 7). |
+| `502 render_failed` on `avatar-clip` | GLB unreachable or unparseable | Verify the URL returns a real GLB: `curl -sL -o m.glb <url> && head -c 4 m.glb` should print `glTF`. |
 | `429` with `Retry-After` | 120 renders per 10 min per IP on `/api/avatar/render`, 60 on `avatar-clip` | Keep batches sequential and honour `Retry-After`. It is a rolling window, not a ban. |
 | Empty canvas in `<model-viewer>`, CORS error in console | Loading a CDN GLB directly from your own origin | Route it through `/api/glb?src=...` (Step 9). |
 | Social card shows a blank or black box | Scraper hit a cold render, or choked on PNG alpha | Warm the URL once with `curl -sL`, and use `format=jpeg` with an opaque `bg`. |
