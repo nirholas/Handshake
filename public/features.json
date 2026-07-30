@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:46:12.729Z",
+	"generated_at": "2026-07-30T04:49:21.724Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4429,6 +4429,16 @@
 					"path": "/news/quicknode-startup-program",
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/news/aws-builder-center-3d-agents-onchain-payments",
+					"title": "three.ws Publishes \"Build Autonomous AI Agents with 3D Bodies and On-Chain Payments\" on the AWS Builder Center",
+					"description": "Our second article on the official AWS Builder Center: how to build browser-native 3D AI agents with memory, on-chain wallets, and autonomous x402 payments, available through AWS Marketplace and embeddable in one line of HTML.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

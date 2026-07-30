@@ -23,6 +23,14 @@
 			<description>A trading strategy whose wallet ran low could get stuck in a loop: it looked funded enough to place a shrunken buy, but not funded enough to run the safety simulation that has to pass before anything is broadcast. So it tried every candidate coin, failed at the same step every time, and filled its history with failures while never actually trading. One live strategy did this 82 times in a day without placing a single buy. Strategies now compare their balance against the amount a trade genuinely needs end to end, including the pre-trade safety checks, and quietly wait for a top-up instead. No trade behavior changes for a properly funded strategy.</description>
 		</item>
 		<item>
+			<title>Docs for agent vaults, your master wallet, and copy trading</title>
+			<link>https://three.ws/docs/vaults</link>
+			<guid isPermaLink="false">2026-07-30:Docs for agent vaults, your master wallet, and copy trading</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Three money surfaces now have real references. Agent vaults explains NAV-priced deposits and redemptions, the drawdown breaker, performance fees, and the public audit ledger. The master wallet doc covers funding it, sending SOL or USDC, and topping up an agent. Copy trading explains both ways to follow a leader, the leaderboard weighting, and the Smart Money directory. All three spell out exactly which requests move real money.</description>
+		</item>
+		<item>
 			<title>Email and EVM wallet sign-in work again when the human check is on</title>
 			<link>https://three.ws/login</link>
 			<guid isPermaLink="false">2026-07-30:Email and EVM wallet sign-in work again when the human check is on</guid>
@@ -31,12 +39,28 @@
 			<description>Sign-in has a human-verification step (a Cloudflare check) that guards the email code and wallet flows. The page was loading the checker from a retired URL, so email sign-in stopped at &quot;could not load the CAPTCHA verifier&quot;, and the Ethereum wallet flow never passed the check at all, failing with an unexplained authorization error the moment you picked your wallet. The checker now loads from the right place, and the wallet flow runs the same human check before asking your wallet to sign, so both paths complete. Solana wallet sign-in was unaffected.</description>
 		</item>
 		<item>
+			<title>ENS name lookup and the ERC-8004 registry demo answer again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:ENS name lookup and the ERC-8004 registry demo answer again</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three published endpoints were unreachable in production. A broad routing rule for agent profiles sat above them in the route table and captured their requests, so instead of running they returned the agent-profile handler's &quot;agent not found&quot;. Looking up which agents belong to an ENS name never worked at all, and the ERC-8004 registry demo could neither search the registry nor open a single agent, because both of its data calls were being captured. The three routes now resolve to their own handlers, and a test pins them above the catch-all so the same shadowing cannot come back.</description>
+		</item>
+		<item>
 			<title>Every code sample in the docs now points at a real, loadable 3D model</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Every code sample in the docs now points at a real, loadable 3D model</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Docs, tutorials, and package READMEs previously used made-up model URLs (example.com GLBs and dead three.ws paths) that failed if you copied the code. Every sample now references a real avatar from the three.ws library, so quick starts, embed snippets, AR examples, and paid model-check calls work as pasted. Example inspection outputs were re-run against the live API so the numbers shown are the numbers you get. The snippets that embed an avatar by id got the same treatment: the Avatar SDK docs and the embed snippets on the site now carry a real public avatar id that resolves, in place of a fill-in-the-blank id that rendered nothing, and the on-chain manifest example ships the real file hashes for the avatar it names. The agent card other agents read to discover our 3D skills got the same fix, with each example naming a model that actually produces the result it advertises, including one that genuinely returns compression suggestions.</description>
+		</item>
+		<item>
+			<title>Full API reference for the agent wallet control surfaces</title>
+			<link>https://three.ws/docs/agent-wallet-api</link>
+			<guid isPermaLink="false">2026-07-30:Full API reference for the agent wallet control surfaces</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Every owner-only endpoint on an agent's Solana wallet is now documented in one place: minting and revoking scoped session keys, creating and streaming programmable orders, compiling plain-language wallet rules, arming Treasury Autopilot, reading portfolio profit and loss, configuring guardians and the dead-man switch, and adjudicating an anomaly freeze. Each route lists its exact request and response, every error it can return, and a copy-paste example.</description>
 		</item>
 		<item>
 			<title>Money Pulse volume restored: shared treasury wallets now refill against their strictest floor</title>
@@ -87,6 +111,14 @@
 			<description>Three new developer guides: Payment Sessions (fund a capped spend envelope from prepaid credits and let an agent pay x402 services with a bearer token, no private key involved), the developer platform (API keys, usage metrics, signed webhooks, the one-call MCP connection test, and the public tool and skills catalogs), and the media and render API (avatar image renders, posed clip renders, the runtime GLB optimizer, the open model proxy, and the free vision and speech-to-text endpoints). Every endpoint ships with a runnable example.</description>
 		</item>
 		<item>
+			<title>Press kit, partner ecosystem, and the creation surfaces are documented</title>
+			<link>https://three.ws/docs/press-kit</link>
+			<guid isPermaLink="false">2026-07-30:Press kit, partner ecosystem, and the creation surfaces are documented</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>New guides for the Agent Identity Studio (a brand brief becomes a rigged avatar plus studio renders), Living Stages, the Avatar Engines Atlas, the press kit (logos, usage rules, and boilerplate, with editorial use needing no permission), and the partner ecosystem page. The docs site sidebar now lists all of them, so nothing added this week is reachable only by knowing its URL.</description>
+		</item>
+		<item>
 			<title>Runnable examples for the x402 fetch wrapper, the MCP server, and the avatar SDK</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-30:Runnable examples for the x402 fetch wrapper, the MCP server, and the avatar SDK</guid>
@@ -117,6 +149,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.</description>
+		</item>
+		<item>
+			<title>The public economy pages now explain their own numbers</title>
+			<link>https://three.ws/docs/viability</link>
+			<guid isPermaLink="false">2026-07-30:The public economy pages now explain their own numbers</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Documentation for the surfaces anyone can audit: CA to x402 (turn any contract address into an agent-payable market-intel endpoint), Agent Economy Volume (USDC agents have actually paid each other for skills, settled hires only), Viability (marketplace GMV, take rate, repeat buyers, and realized profit and loss from on-chain data with no projections), and the live on-chain deployments feed. Each doc says which ledger every figure comes from.</description>
 		</item>
 		<item>
 			<title>The README is reorganized around what you came to do</title>

@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "ENS name lookup and the ERC-8004 registry demo answer again",
+			"summary": "Three published endpoints were unreachable in production. A broad routing rule for agent profiles sat above them in the route table and captured their requests, so instead of running they returned the agent-profile handler's \"agent not found\". Looking up which agents belong to an ENS name never worked at all, and the ERC-8004 registry demo could neither search the registry nor open a single agent, because both of its data calls were being captured. The three routes now resolve to their own handlers, and a test pins them above the catch-all so the same shadowing cannot come back.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "A slow data provider can no longer freeze a live trading position",
 			"summary": "When a trading bot checks whether it still holds a coin, it asks a Solana data provider for its token accounts. An overloaded provider sometimes answers with an empty list for a wallet that demonstrably still holds the coin. The platform read that empty answer as proof the coin had been sold, set the position aside as needing manual reconciliation, and because each strategy allows only one position at a time, the strategy stopped trading entirely while still holding the coin. Four strategies sat frozen this way for up to 57 hours against a 30-minute time limit. An empty or malformed answer is now treated as unknown rather than as zero, and is double-checked against the wallet's own token account addresses before any position is set aside. A position set aside without a recorded timestamp is also no longer exempt from the existing time limit, which is what made these freezes permanent instead of self-clearing.",
 			"tags": [
@@ -17001,6 +17009,42 @@
 				"fix"
 			],
 			"link": "/login"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Full API reference for the agent wallet control surfaces",
+			"summary": "Every owner-only endpoint on an agent's Solana wallet is now documented in one place: minting and revoking scoped session keys, creating and streaming programmable orders, compiling plain-language wallet rules, arming Treasury Autopilot, reading portfolio profit and loss, configuring guardians and the dead-man switch, and adjudicating an anomaly freeze. Each route lists its exact request and response, every error it can return, and a copy-paste example.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/agent-wallet-api"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Docs for agent vaults, your master wallet, and copy trading",
+			"summary": "Three money surfaces now have real references. Agent vaults explains NAV-priced deposits and redemptions, the drawdown breaker, performance fees, and the public audit ledger. The master wallet doc covers funding it, sending SOL or USDC, and topping up an agent. Copy trading explains both ways to follow a leader, the leaderboard weighting, and the Smart Money directory. All three spell out exactly which requests move real money.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/vaults"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "The public economy pages now explain their own numbers",
+			"summary": "Documentation for the surfaces anyone can audit: CA to x402 (turn any contract address into an agent-payable market-intel endpoint), Agent Economy Volume (USDC agents have actually paid each other for skills, settled hires only), Viability (marketplace GMV, take rate, repeat buyers, and realized profit and loss from on-chain data with no projections), and the live on-chain deployments feed. Each doc says which ledger every figure comes from.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/viability"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Press kit, partner ecosystem, and the creation surfaces are documented",
+			"summary": "New guides for the Agent Identity Studio (a brand brief becomes a rigged avatar plus studio renders), Living Stages, the Avatar Engines Atlas, the press kit (logos, usage rules, and boilerplate, with editorial use needing no permission), and the partner ecosystem page. The docs site sidebar now lists all of them, so nothing added this week is reachable only by knowing its URL.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/press-kit"
 		}
 	]
 }

@@ -2361,6 +2361,12 @@ URL: https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell
 
 A field report from the three.ws GPU fleet: why Hunyuan3D 2.1 could not load on an NVIDIA L4, why CUDA 12.4 wheels have no sm_120 kernels for RTX PRO 6000 Blackwell, and the regional quota that made the bigger card the available card.
 
+### How to Monetize an MCP Server: Paid Tools with x402
+
+URL: https://three.ws/blog/monetize-mcp-server-x402-paid-tools
+
+A complete guide to charging for MCP tools with x402: price a tool in USDC, issue the 402 challenge, verify and settle on Solana, get discovered in the bazaar, and test the buyer side.
+
 ### three.ws Named an OpenAI Select Partner
 
 URL: https://three.ws/blog/three-ws-openai-select-partner
@@ -2691,6 +2697,12 @@ Product launches, integrations, and announcements from three.ws.
 URL: https://three.ws/news/quicknode-startup-program
 
 three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.
+
+### three.ws Publishes "Build Autonomous AI Agents with 3D Bodies and On-Chain Payments" on the AWS Builder Center
+
+URL: https://three.ws/news/aws-builder-center-3d-agents-onchain-payments
+
+Our second article on the official AWS Builder Center: how to build browser-native 3D AI agents with memory, on-chain wallets, and autonomous x402 payments, available through AWS Marketplace and embeddable in one line of HTML.
 
 ### Text to 3D Is Live — Type a Prompt, Download a 3D Model
 

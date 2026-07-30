@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:46:12.808Z",
+	"generated_at": "2026-07-30T04:49:21.756Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,9 +29,29 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "Docs for agent vaults, your master wallet, and copy trading",
+			"summary": "Three money surfaces now have real references. Agent vaults explains NAV-priced deposits and redemptions, the drawdown breaker, performance fees, and the public audit ledger. The master wallet doc covers funding it, sending SOL or USDC, and topping up an agent. Copy trading explains both ways to follow a leader, the leaderboard weighting, and the Smart Money directory. All three spell out exactly which requests move real money.",
+			"link": "/docs/vaults",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "Email and EVM wallet sign-in work again when the human check is on",
 			"summary": "Sign-in has a human-verification step (a Cloudflare check) that guards the email code and wallet flows. The page was loading the checker from a retired URL, so email sign-in stopped at \"could not load the CAPTCHA verifier\", and the Ethereum wallet flow never passed the check at all, failing with an unexplained authorization error the moment you picked your wallet. The checker now loads from the right place, and the wallet flow runs the same human check before asking your wallet to sign, so both paths complete. Solana wallet sign-in was unaffected.",
 			"link": "/login",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "ENS name lookup and the ERC-8004 registry demo answer again",
+			"summary": "Three published endpoints were unreachable in production. A broad routing rule for agent profiles sat above them in the route table and captured their requests, so instead of running they returned the agent-profile handler's \"agent not found\". Looking up which agents belong to an ENS name never worked at all, and the ERC-8004 registry demo could neither search the registry nor open a single agent, because both of its data calls were being captured. The three routes now resolve to their own handlers, and a test pins them above the catch-all so the same shadowing cannot come back.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -45,6 +65,16 @@
 			"tags": [
 				"docs",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Full API reference for the agent wallet control surfaces",
+			"summary": "Every owner-only endpoint on an agent's Solana wallet is now documented in one place: minting and revoking scoped session keys, creating and streaming programmable orders, compiling plain-language wallet rules, arming Treasury Autopilot, reading portfolio profit and loss, configuring guardians and the dead-man switch, and adjudicating an anomaly freeze. Each route lists its exact request and response, every error it can return, and a copy-paste example.",
+			"link": "/docs/agent-wallet-api",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -114,6 +144,16 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "Press kit, partner ecosystem, and the creation surfaces are documented",
+			"summary": "New guides for the Agent Identity Studio (a brand brief becomes a rigged avatar plus studio renders), Living Stages, the Avatar Engines Atlas, the press kit (logos, usage rules, and boilerplate, with editorial use needing no permission), and the partner ecosystem page. The docs site sidebar now lists all of them, so nothing added this week is reachable only by knowing its URL.",
+			"link": "/docs/press-kit",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "Runnable examples for the x402 fetch wrapper, the MCP server, and the avatar SDK",
 			"summary": "Three example sets you can run as-is against live three.ws services: a zero-spend x402 discovery probe plus a key-gated real paid call, curl and plain Node walkthroughs of the full MCP session lifecycle including a free tool call, and a build-free HTML page that renders a live 3D avatar straight from the CDN.",
 			"link": null,
@@ -150,6 +190,16 @@
 			"title": "The pages that shipped without docs now have them",
 			"summary": "Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.",
 			"link": "/docs/start-here",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The public economy pages now explain their own numbers",
+			"summary": "Documentation for the surfaces anyone can audit: CA to x402 (turn any contract address into an agent-payable market-intel endpoint), Agent Economy Volume (USDC agents have actually paid each other for skills, settled hires only), Viability (marketplace GMV, take rate, repeat buyers, and realized profit and loss from on-chain data with no projections), and the live on-chain deployments feed. Each doc says which ledger every figure comes from.",
+			"link": "/docs/viability",
 			"tags": [
 				"docs"
 			]
