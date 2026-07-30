@@ -138,3 +138,23 @@ export function actionToast(result = {}) {
 	}
 	return usd ? `${verb} — ${usd}` : verb;
 }
+
+/**
+ * Line for one row of a SIMULATED cycle (`last_status: 'would_run'`).
+ *
+ * Kept separate from actionToast on purpose: a preview must never be phrased in
+ * the past tense. "Bought back $THREE" and "Would buy back $THREE" describe very
+ * different states of the wallet, and reusing the settled formatter here would
+ * render an untouched balance as a completed spend.
+ */
+export function previewLine(result = {}) {
+	const usd = result.usd != null ? fmtUsd(result.usd) : null;
+	const verb = {
+		buyback: 'Would buy back $THREE',
+		dca: 'Would buy $THREE',
+		sweep: 'Would sweep profit to owner',
+		self_fund: 'Would pay compute costs',
+		buffer: 'Would top up the buffer',
+	}[result.kind] || 'Would run a treasury action';
+	return usd ? `${verb} — ${usd}` : verb;
+}

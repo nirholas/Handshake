@@ -1,0 +1,17 @@
+{
+  "name": "rh-example-11-mcp-agent-session",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Drive Robinhood Chain through the Model Context Protocol: spawn hood-mcp over stdio, list its tools, and call them like an agent host does.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.22.0",
+    "hood-mcp": "^0.1.1"
+  }
+}

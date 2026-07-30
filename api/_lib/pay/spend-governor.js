@@ -58,7 +58,11 @@ export class SpendGovernorError extends Error {
 const TOKEN_PREFIX = 'pss_';
 
 function hmacKey() {
-	const k = env.PAYMENT_SESSION_SECRET || env.WALLET_CAPABILITY_SECRET || env.SESSION_SECRET;
+	// env.PAYMENT_SESSION_SECRET already resolves the whole fallback chain
+	// (PAYMENT_SESSION_SECRET -> WALLET_CAPABILITY_SECRET -> WALLET_ENCRYPTION_KEY
+	// -> JWT_SECRET). Reading the raw process env here instead would silently ignore
+	// a configured PAYMENT_SESSION_SECRET, which is exactly the bug this replaced.
+	const k = env.PAYMENT_SESSION_SECRET;
 	if (!k) throw new Error('PAYMENT_SESSION_SECRET is not configured');
 	return k;
 }

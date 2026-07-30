@@ -1,4 +1,4 @@
-// @three-ws/sign-language — public entry.
+// @three-ws/sign-language: public entry.
 // =========================================
 // Re-exports the platform's American Sign Language engine from the monorepo
 // source; the publish build bundles everything into dist/index.mjs, so npm
@@ -6,16 +6,16 @@
 // three.js, no DOM, no network). It runs in a browser, in Node, and in a test
 // runner identically.
 //
-//   1. speak      — text in, one continuous signed AnimationClip out. Known
+//   1. speak      - text in, one continuous signed AnimationClip out. Known
 //                   words sign from the lexicon, the rest fingerspell, in a
 //                   single utterance with no seam between them.
-//   2. spell      — the manual alphabet: A-Z, 0-9, the traced J and Z, and the
+//   2. spell      - the manual alphabet: A-Z, 0-9, the traced J and Z, and the
 //                   double-letter bounce.
-//   3. lexicon    — the sign vocabulary, each entry a set of phases described
+//   3. lexicon    - the sign vocabulary, each entry a set of phases described
 //                   anatomically (handshape, place on the body, movement).
-//   4. author     — the layer signs are written in: handshapes, body anchors,
+//   4. author     - the layer signs are written in: handshapes, body anchors,
 //                   contact solving, non-manual (facial) markers, timelines.
-//   5. kinematics — the canonical-skeleton math the rest is solved on: forward
+//   5. kinematics - the canonical-skeleton math the rest is solved on: forward
 //                   kinematics, two-bone arm IK, and hand geometry.
 //
 // Clips come out as the same clip-JSON document three.ws's animation library

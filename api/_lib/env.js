@@ -409,6 +409,18 @@ export const env = {
 		return opt('WALLET_CAPABILITY_SECRET') || opt('WALLET_ENCRYPTION_KEY') || this.JWT_SECRET;
 	},
 
+	// HMAC key for Agent Payment Session bearer tokens (api/_lib/pay/spend-governor.js).
+	// A session token is `pss_<sessionId>_<random>`; only its HMAC under this key is
+	// stored, so a leaked DB row cannot be replayed as a token. Rotating this value
+	// invalidates every live session token at once, which is why it gets its own name
+	// instead of riding on WALLET_CAPABILITY_SECRET: rotating the capability secret
+	// must not silently revoke every agent's funded budget. Falls back to the
+	// capability secret (and through it to WALLET_ENCRYPTION_KEY / JWT_SECRET) so the
+	// feature works in every environment. NEVER log this value.
+	get PAYMENT_SESSION_SECRET() {
+		return opt('PAYMENT_SESSION_SECRET') || this.WALLET_CAPABILITY_SECRET;
+	},
+
 	// Long-lived Ed25519 signing seed for the provably-fair vanity grinder
 	// (api/_lib/vanity-service-key.js). Stored as a secret-box ciphertext (v2:…)
 	// or a raw 32-byte seed in hex/Base58. Signs every verifiable-grind receipt;

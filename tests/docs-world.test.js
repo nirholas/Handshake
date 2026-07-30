@@ -100,4 +100,64 @@ describe('routing', () => {
 		expect(vite).toContain("'docs-world': resolve(__dirname, 'pages/docs-world.html')");
 		expect(vite).toContain("'/docs/world': resolve(root, 'pages/docs-world.html')");
 	});
+
+	it('serves the manifest as a file instead of swallowing it into the SPA', () => {
+		// Both surfaces fetch /docs/nav.json, so if the SPA catch-all captured it
+		// the request would answer with docs/index.html and BOTH the classic
+		// sidebar and the whole 3D world would fail at once. The dot exclusion in
+		// the catch-all is what prevents that, so assert the behaviour, not the
+		// spelling: the catch-all must not match, and a later static rule must.
+		const routes = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')).routes;
+		const catchAllIdx = routes.findIndex((r) => r.src === '/docs/([^./]+)/?');
+		expect(new RegExp('^' + routes[catchAllIdx].src + '$').test('/docs/nav.json')).toBe(false);
+
+		const staticIdx = routes.findIndex(
+			(r, i) => i > catchAllIdx && new RegExp('^' + r.src + '$').test('/docs/nav.json'),
+		);
+		expect(staticIdx, 'no route serves /docs/nav.json').toBeGreaterThan(catchAllIdx);
+		expect(routes[staticIdx].dest).toContain('/docs/');
+	});
+
+	it('ships the manifest to dist, outside every private docs directory', () => {
+		// copy-static-docs mirrors docs/ into dist/docs but drops PRIVATE_DOCS.
+		// nav.json sits at the docs root, so it ships; this pins that it never
+		// moves under one of those directories.
+		expect(existsSync(resolve(root, 'docs/nav.json'))).toBe(true);
+		for (const dir of PRIVATE_DOCS) {
+			expect(existsSync(resolve(root, 'docs', dir, 'nav.json'))).toBe(false);
+		}
+	});
+});
+
+describe('designed states, not blank ones', () => {
+	const spa = readFileSync(resolve(root, 'docs/index.html'), 'utf8');
+	const main = readFileSync(resolve(root, 'src/docs-world/main.js'), 'utf8');
+	const reader = readFileSync(resolve(root, 'src/docs-world/reader.js'), 'utf8');
+
+	it('the classic sidebar explains a failed manifest instead of rendering empty', () => {
+		// The manifest is a network fetch with a real failure mode, and an empty
+		// sidebar reads as "this product has no docs" rather than "one request
+		// failed". The failure must be named and recoverable.
+		expect(spa).toContain('navError');
+		expect(spa).toContain('Contents unavailable');
+		expect(spa).toMatch(/retry\.addEventListener\('click'/);
+		expect(spa).toContain('.sidebar-empty');
+	});
+
+	it('a search matching nothing says so and offers a way back', () => {
+		expect(spa).toContain('No matches');
+		expect(spa).toContain('Clear search');
+	});
+
+	it('an unknown deep-link slug does not open the reader on a missing doc', () => {
+		// /docs/world#<stale-slug> used to open the reader on a doc that does not
+		// exist, so entering the world greeted the visitor with a load error.
+		expect(reader).toContain('hasPath(path)');
+		expect(main).toContain('if (!overlays.hasPath(slug)) return;');
+	});
+
+	it('the world doc is reachable from the docs entry point', () => {
+		const startHere = readFileSync(resolve(root, 'docs/start-here.md'), 'utf8');
+		expect(startHere).toContain('](./docs-world.md)');
+	});
 });

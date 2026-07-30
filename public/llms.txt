@@ -48,6 +48,7 @@ Entry points into the product.
 - [Feed](https://three.ws/feed): Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.
 - [Partner Ecosystem](https://three.ws/partners): three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.
 - [three.ws is an OpenAI Select Partner](https://three.ws/openai): three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.
+- [three.ws on NVIDIA](https://three.ws/nvidia): three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.
 - [Press kit](https://three.ws/press): Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.
 - [Pricing](https://three.ws/pricing): Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.
 - [Showcase](https://three.ws/showcase): AI-powered 3D model viewer showcase: drop in a model and explore it live.
@@ -368,6 +369,7 @@ Docs, tutorials, and reference.
 - [Docs · Skills](https://three.ws/docs/skills): Write, package, and monetize agent skills.
 - [Docs · Widgets](https://three.ws/docs/widgets): Build and publish reusable chat and 3D widgets.
 - [Docs · API Reference](https://three.ws/docs/api-reference): Full HTTP API reference.
+- [Docs · Authentication](https://three.ws/docs/authentication): Sign-In with Solana (SIWS), Sign-In with Ethereum (SIWE), Privy email/wallet login, sessions, and API keys.
 - [Docs · SDK](https://three.ws/docs/sdk): JavaScript / Node SDK for three.ws.
 - [Docs · Listings & Distribution](https://three.ws/docs/listings): Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).
 - [Tutorials](https://three.ws/tutorials): Step-by-step build guides.
@@ -376,6 +378,8 @@ Docs, tutorials, and reference.
 - [Tutorial · Photos to 3D Model](https://three.ws/tutorials/image-to-3d): Photograph a real object from up to four angles and reconstruct it as a textured 3D model — photo tips, guidance prompts, troubleshooting.
 - [Tutorial · Prompt Recipes for 3D Generation](https://three.ws/tutorials/prompts-for-3d): A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food — and the four rules behind every good prompt.
 - [Tutorial · Generate 3D Models from Code](https://three.ws/tutorials/generate-3d-api): Use the Forge as a plain HTTP API: submit prompts, poll jobs, download GLBs, batch asset packs, and pay per call with x402.
+- [Tutorial · Generate 3D Models Free, Powered by NVIDIA](https://three.ws/tutorials/nvidia-3d-free): The free text-to-3D lane, end to end: what NVIDIA NIM and Microsoft TRELLIS actually do with your prompt, when the free lane kicks in, how to write a prompt that reconstructs well, and how to download the finished GLB. No account, no key, no cost.
+- [Tutorial · Run Microsoft TRELLIS on Your Own NVIDIA NIM](https://three.ws/tutorials/nvidia-nim-self-host): Own the whole 3D pipeline: pull the TRELLIS NIM container onto your own NVIDIA GPU, serve text-to-3D and photo-to-3D yourself, and drive it through the same /api/forge-nim contract three.ws uses in production.
 - [Tutorial · Your First Prompt to 3D in ChatGPT](https://three.ws/tutorials/first-prompt-to-3d): Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.
 - [Tutorial · Read an agent's reputation](https://three.ws/tutorials/agent-reputation): Read any registered agent's ERC-8004 reputation from the UI, the REST API, the MCP tool, the SDK, or the contract.
 - [Tutorial · Read a Solana agent's reputation](https://three.ws/tutorials/solana-agent-reputation): Read a Solana agent's A–D trust grade and the attestations behind it, then leave your own on-chain vouch.
@@ -405,7 +409,9 @@ Docs, tutorials, and reference.
 - [Tutorial · Arm an Autonomous Sniper on Your Agent](https://three.ws/tutorials/arm-an-agent-sniper): Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.
 - [three.ws on AWS](https://three.ws/aws): three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
 - [Docs · NVIDIA Inception membership](https://three.ws/docs/nvidia-inception): three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.
+- [Docs · The 3D asset pipeline (FBX, GLB, and clip JSON)](https://three.ws/docs/3d-asset-pipeline): The canonical reference for moving a 3D character or motion from a source file to something the browser renders and animates: the three formats three.ws works with (FBX, GLB, and three.js clip JSON), how each converts into the others, and what the platform does with them today.
 - [Docs · Every NVIDIA model three.ws runs for free](https://three.ws/docs/nvidia-models): The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.
+- [Docs · NVIDIA Inception membership overview](https://three.ws/docs/nvidia-inception/index.html): The three.ws membership overview deck: what the platform is, the production numbers behind it, the team, the NVIDIA surfaces already in use, and what the Inception program is being used for.
 - [Docs · How Nemotron Nano made free text-to-3D production-ready](https://three.ws/docs/nvidia-nemotron-spotlight): The three.ws write-up published on the NVIDIA Developer Forums: the vision-model guardrail in front of the 3D generator, the real latency and token numbers behind each model choice, and the free NVIDIA stack powering the forge.
 - [Cookbook: self-correcting 3D with function calling](https://three.ws/cookbook): An executable tutorial: an AI art director turns a one-line brief into a themed set of real 3D props with parallel function calls, inspects each render with vision, and rebuilds what fails. Read it with interactive galleries, or download the notebook and run it.
 - [Docs: Payment Sessions](https://three.ws/docs/payment-sessions): A Payment Session is a platform-managed spend envelope for agents. You fund a budget from your prepaid credits, receive a bearer token, and hand that token to an agent (or any script).
@@ -441,6 +447,7 @@ Docs, tutorials, and reference.
 - [Tutorial · Give an Agent a Spending Envelope](https://three.ws/tutorials/agent-spending-envelope): Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.
 - [Tutorial · Render Avatars as Images](https://three.ws/tutorials/render-avatar-images): Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.
 - [Tutorial · Character Library to a Live Embed](https://three.ws/tutorials/character-library-to-embed): Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.
+- [Tutorial · Sell a Skill With a Free Trial That Converts](https://three.ws/tutorials/sell-a-skill-with-a-trial): List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.
 
 ## Blog
 

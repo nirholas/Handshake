@@ -2265,6 +2265,8 @@ Authentication is covered in detail in the [Authentication documentation](authen
 
 | Endpoint                    | Method   | Description                           |
 | --------------------------- | -------- | ------------------------------------- |
+| `/api/auth/siws/nonce`      | GET      | Get a SIWS (Sign-In with Solana) nonce + CSRF token |
+| `/api/auth/siws/verify`     | POST     | Verify SIWS signature, create session |
 | `/api/auth/siwe/nonce`      | GET      | Get a SIWE nonce                      |
 | `/api/auth/siwe/verify`     | POST     | Verify SIWE signature, create session |
 | `/api/auth/session`         | GET      | Get current session                   |

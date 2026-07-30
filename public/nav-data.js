@@ -621,6 +621,7 @@ export const NAV_GROUPS = [
 				label: 'Learn',
 				items: [
 					{ title: 'Docs', href: '/docs', desc: 'SDKs + API reference' },
+					{ title: 'Docs World', href: '/docs/world', desc: 'Walk the docs in 3D' },
 					{ title: 'Tutorials', href: '/tutorials', desc: 'Step-by-step guides' },
 					{ title: 'Chat', href: '/chat', desc: 'Talk to your agent' },
 				],

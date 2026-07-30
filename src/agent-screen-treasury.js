@@ -29,6 +29,7 @@ import {
 	policyLine,
 	isTreasuryActivity,
 	actionToast,
+	previewLine,
 } from './agent-screen-treasury-format.js';
 
 const GAUGE_R = 52;
@@ -89,6 +90,7 @@ export function createTreasuryCockpit({ agentId, bodyEl, toast, network = 'mainn
 	let destroyed = false;
 	let lastPush = 0;
 	let busy = false;          // a write is in flight
+	let runArmed = false;      // "Run one cycle" is one click from spending real funds
 	let lastCompiled = null;   // { rules, buffer_sol, sweep_destination, warnings, contradictions, source_text }
 
 	const auth = { credentials: 'include' };
@@ -364,7 +366,8 @@ export function createTreasuryCockpit({ agentId, bodyEl, toast, network = 'mainn
 			<div class="ast-actions">
 				<button class="ast-btn ast-btn-primary" data-act="save">Save policy</button>
 				<button class="ast-btn ${armed ? 'ast-btn-warn' : 'ast-btn-go'}" data-act="arm" ${killed ? 'disabled' : ''}>${armed ? 'Disarm' : 'Arm'}</button>
-				<button class="ast-btn ast-btn-ghost" data-act="run" ${!armed || killed ? 'disabled title="Arm a policy first"' : ''}>Run one cycle</button>
+				<button class="ast-btn ast-btn-ghost" data-act="preview" ${!armed || killed ? 'disabled title="Arm a policy first"' : ''} title="Simulate a cycle — spends nothing">Preview cycle</button>
+				<button class="ast-btn ast-btn-ghost" data-act="run" ${!armed || killed ? 'disabled title="Arm a policy first"' : ''} title="Run for real — moves funds from this agent's wallet">Run one cycle</button>
 				<button class="ast-btn ast-btn-kill ${killed ? 'active' : ''}" data-act="kill" title="Halt all autonomous spending instantly">${killed ? 'Clear kill switch' : 'Kill switch'}</button>
 			</div>
 			<div class="ast-msg" id="ast-msg"></div>
@@ -377,14 +380,18 @@ export function createTreasuryCockpit({ agentId, bodyEl, toast, network = 'mainn
 		const ta = bodyEl.querySelector('#ast-policy');
 		if (ta) {
 			ta.addEventListener('input', () => {
+				disarmRun();   // editing the policy invalidates whatever was about to run
 				clearTimeout(compileTimer);
 				compileTimer = setTimeout(() => compilePreview(ta.value, bodyEl.querySelector('#ast-sweep')?.value || ''), COMPILE_DEBOUNCE);
 			});
 		}
-		bodyEl.querySelector('[data-act="save"]')?.addEventListener('click', onSave);
-		bodyEl.querySelector('[data-act="arm"]')?.addEventListener('click', onArm);
+		// Every control other than Run itself disarms the pending real run, so a
+		// confirmation can never survive a change of intent.
+		bodyEl.querySelector('[data-act="save"]')?.addEventListener('click', () => { disarmRun(); onSave(); });
+		bodyEl.querySelector('[data-act="arm"]')?.addEventListener('click', () => { disarmRun(); onArm(); });
+		bodyEl.querySelector('[data-act="preview"]')?.addEventListener('click', () => { disarmRun(); onPreview(); });
 		bodyEl.querySelector('[data-act="run"]')?.addEventListener('click', onRun);
-		bodyEl.querySelector('[data-act="kill"]')?.addEventListener('click', onKill);
+		bodyEl.querySelector('[data-act="kill"]')?.addEventListener('click', () => { disarmRun(); onKill(); });
 		bindCoinToggles();
 		// compile an initial preview if there's existing policy text to show structure
 		const txt = ta?.value?.trim();
@@ -505,30 +512,80 @@ export function createTreasuryCockpit({ agentId, bodyEl, toast, network = 'mainn
 		} finally { busy = false; }
 	}
 
-	async function onRun() {
+	// One transport for both modes. `dry_run` is always sent explicitly: the server
+	// now simulates when the flag is missing, so a real run has to ask for itself.
+	async function postCycle({ dryRun }) {
+		const token = await csrfToken();
+		const res = await fetch(`/api/agents/${encodeURIComponent(agentId)}/autopilot/run?network=${network}`, {
+			method: 'POST', ...auth,
+			headers: { 'content-type': 'application/json', 'x-csrf-token': token },
+			body: JSON.stringify({ dry_run: dryRun }),
+		});
+		const j = await res.json().catch(() => ({}));
+		if (!res.ok) throw Object.assign(new Error(j.message || 'Run failed.'), { handled: true });
+		return j.data || j;
+	}
+
+	async function onPreview() {
 		if (busy) return;
-		busy = true; setMsg('Running one cycle…');
-		const btn = bodyEl.querySelector('[data-act="run"]');
+		busy = true; setMsg('Simulating a cycle…');
+		const btn = bodyEl.querySelector('[data-act="preview"]');
 		btn?.classList.add('running');
 		try {
-			const token = await csrfToken();
-			const res = await fetch(`/api/agents/${encodeURIComponent(agentId)}/autopilot/run?network=${network}`, {
-				method: 'POST', ...auth,
-				headers: { 'content-type': 'application/json', 'x-csrf-token': token },
-				body: JSON.stringify({}),
-			});
-			const j = await res.json().catch(() => ({}));
-			if (!res.ok) { setMsg(j.message || 'Run failed.', 'err'); return; }
-			const result = j.data || j;
-			reportCycle(result);
-			await fetchAll();        // real balance re-read so the number drops
-			pushWallFrame();
-		} catch {
-			setMsg('Network error running the cycle.', 'err');
+			reportPreview(await postCycle({ dryRun: true }));
+		} catch (e) {
+			setMsg(e.handled ? e.message : 'Network error simulating the cycle.', 'err');
 		} finally {
 			busy = false;
 			btn?.classList.remove('running');
 		}
+	}
+
+	// Real spend, so it asks twice. First click arms the button and states what is
+	// about to happen; second click executes. Any other action disarms it.
+	async function onRun() {
+		if (busy) return;
+		const btn = bodyEl.querySelector('[data-act="run"]');
+		if (!runArmed) {
+			runArmed = true;
+			if (btn) { btn.textContent = 'Confirm real run'; btn.classList.add('ast-btn-warn'); }
+			setMsg('This moves real funds from the agent’s wallet. Click again to confirm, or preview first.', 'warn');
+			return;
+		}
+		disarmRun();
+		busy = true; setMsg('Running one cycle…');
+		btn?.classList.add('running');
+		try {
+			const result = await postCycle({ dryRun: false });
+			reportCycle(result);
+			await fetchAll();        // real balance re-read so the number drops
+			pushWallFrame();
+		} catch (e) {
+			setMsg(e.handled ? e.message : 'Network error running the cycle.', 'err');
+		} finally {
+			busy = false;
+			btn?.classList.remove('running');
+		}
+	}
+
+	function disarmRun() {
+		runArmed = false;
+		const btn = bodyEl.querySelector('[data-act="run"]');
+		if (btn) { btn.textContent = 'Run one cycle'; btn.classList.remove('ast-btn-warn'); }
+	}
+
+	// A simulated cycle. Same shape as a real one, but every row comes back as
+	// 'would_run' and nothing left the wallet, so it reports intent and never
+	// re-reads the balance (there is nothing to re-read).
+	function reportPreview(result) {
+		if (!result?.ran) { reportCycle(result); return; }
+		const would = (result.results || []).filter((r) => r.last_status === 'would_run');
+		if (!would.length) {
+			setMsg('Preview complete — no rule is due to spend this period. Nothing was moved.', 'ok');
+			return;
+		}
+		const lines = would.map((r) => previewLine(r)).join(' · ');
+		setMsg(`Preview — ${lines}. Nothing was moved; use Run one cycle to execute.`, 'ok');
 	}
 
 	function reportCycle(result) {

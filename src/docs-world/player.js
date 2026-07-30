@@ -1,6 +1,6 @@
 // Docs World player: the visitor's avatar walking the documentation.
 //
-// Loads the universal mannequin (or a custom GLB passed via ?avatar=, the same
+// Loads the default rigged body (or a custom GLB passed via ?avatar=, the same
 // contract /play honours) and drives it with the platform's canonical clip
 // library through AnimationManager, so any humanoid rig walks here exactly as
 // it does in /walk. If the GLB or WebGL-side load fails, a simple glowing
@@ -17,9 +17,14 @@ import {
 } from 'three';
 import { AnimationManager } from '../animation-manager.js';
 import { gltfLoader } from '../loaders/gltf.js';
-import { MANNEQUIN_GLB } from '../shared/agent-3d.js';
 import { log } from '../shared/log.js';
 import { WORLD_RADIUS, RING_RADIUS } from './world.js';
+
+// The same default body /walk, /walk-embed and the embed preview use. It must
+// be a *skinned* rig: the canonical clip library drives the skeleton, so an
+// unskinned prop (mannequin.glb carries 0 skins) would stand frozen no matter
+// which clips loaded.
+const DEFAULT_BODY_GLB = '/avatars/default.glb';
 
 const CLIP_IDLE = 'idle';
 const CLIP_WALK = 'av-walk-feminine'; // same walk clip /walk uses; timeScale sets pace
@@ -36,7 +41,7 @@ const PAVILION_KEEPOUT = 2.4;
 
 const GLB_RE = /\.(glb|gltf|vrm)(\?|#|$)/i;
 
-/** Resolve the avatar to walk with: ?avatar=<glb url> or the mannequin. */
+/** Resolve the avatar to walk with: ?avatar=<glb url> or the default body. */
 export function requestedAvatarUrl(search = location.search) {
 	try {
 		const q = new URLSearchParams(search).get('avatar');
@@ -47,7 +52,7 @@ export function requestedAvatarUrl(search = location.search) {
 	} catch {
 		/* malformed query: fall through to the default body */
 	}
-	return MANNEQUIN_GLB;
+	return DEFAULT_BODY_GLB;
 }
 
 function fallbackBody() {
@@ -70,7 +75,7 @@ function fallbackBody() {
  * @param {import('three').WebGLRenderer} renderer
  * @param {{ avatarUrl?: string }} [opts]
  */
-export function createPlayer(scene, renderer, { avatarUrl = MANNEQUIN_GLB } = {}) {
+export function createPlayer(scene, renderer, { avatarUrl = DEFAULT_BODY_GLB } = {}) {
 	const root = new Group();
 	// Spawn a few metres off plaza centre: the beacon monolith stands at the
 	// exact origin and would otherwise occlude the freshly-loaded avatar.

@@ -67,6 +67,19 @@ function walk(node, visit) {
 	}
 }
 
+/**
+ * A string-literal or template-literal property value, with `${…}` standing in
+ * for interpolations so a description stays readable and stable.
+ */
+function stringValue(node) {
+	if (!node) return null;
+	if (node.type === 'Literal' && typeof node.value === 'string') return node.value;
+	if (node.type === 'TemplateLiteral') {
+		return node.quasis.map((q) => q.value.cooked ?? '').join('${…}');
+	}
+	return null;
+}
+
 /** The final identifier of a callee: `a.b.c()` -> "c", `c()` -> "c". */
 function calleeName(callee) {
 	if (!callee) return null;
@@ -342,6 +355,8 @@ export function extractTools(relPath) {
 
 		tools.push({
 			name,
+			title: stringValue(props.get('title')),
+			description: stringValue(props.get('description')),
 			annotations,
 			evidence: [...evidence].sort(),
 			hasHandler: Boolean(handlerNode && FUNCTION_TYPES.has(handlerNode.type)),

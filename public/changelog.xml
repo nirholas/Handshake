@@ -15,6 +15,14 @@
 			<description>The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.</description>
 		</item>
 		<item>
+			<title>three.ws on NVIDIA</title>
+			<link>https://three.ws/nvidia</link>
+			<guid isPermaLink="false">2026-07-30:three.ws on NVIDIA</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.</description>
+		</item>
+		<item>
 			<title>Tutorial · Character Library to a Live Embed</title>
 			<link>https://three.ws/tutorials/character-library-to-embed</link>
 			<guid isPermaLink="false">2026-07-30:Tutorial · Character Library to a Live Embed</guid>
@@ -39,12 +47,28 @@
 			<description>Put a live 3D avatar in an image tag: four camera framings, 28 poses, ARKit facial morphs, social cards, turntables, and a CORS-open GLB proxy. No 3D engine anywhere in your stack.</description>
 		</item>
 		<item>
+			<title>Tutorial · Sell a Skill With a Free Trial That Converts</title>
+			<link>https://three.ws/tutorials/sell-a-skill-with-a-trial</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Sell a Skill With a Free Trial That Converts</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.</description>
+		</item>
+		<item>
 			<title>Tutorial: Make Your Avatar Sign (ASL)</title>
 			<link>https://three.ws/tutorials/sign-with-your-avatar</link>
 			<guid isPermaLink="false">2026-07-30:Tutorial: Make Your Avatar Sign (ASL)</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.</description>
+		</item>
+		<item>
+			<title>A healthy Solana node no longer benches itself for half an hour</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:A healthy Solana node no longer benches itself for half an hour</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Everything that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) runs through a chain of providers tried in order, and a provider that fails is set aside for a while so callers stop paying for a request that cannot succeed. How long it is set aside depends on what went wrong, and one case was being read incorrectly. Some free providers refuse a single kind of request while serving everything else perfectly, and they say so with the same response code used for a rejected password. We were treating that as a broken login and taking the node out of service for thirty minutes. Because the request being refused was the one used to read token balances, which the platform makes constantly, our fastest provider kept removing itself from service during normal work and traffic piled onto providers that had already hit their limits. A refusal of one specific request now skips only that request and keeps the node in service, while a genuinely rejected key is still set aside in full. Chain reads are noticeably steadier as a result.</description>
 		</item>
 		<item>
 			<title>A slow data provider can no longer freeze a live trading position</title>
@@ -325,6 +349,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Everything that reads a Solana balance goes through a chain of nodes, so that if one is out of credits or refusing requests the next one answers. Two gaps in that chain were letting failures through. First, when our main paid node hit its monthly cap it said so in wording our code did not recognise as &quot;out of credits&quot;, so it was treated as briefly busy and put back at the front of the queue every ten minutes, meaning almost every balance lookup began by failing against a node that could not answer until the billing month rolled over. Second, some of the free public nodes refuse specific kinds of lookup outright, including the one that reads which tokens a wallet holds, and they refuse it with a reply our code read as &quot;you asked for something impossible&quot; rather than &quot;ask a different node&quot;. That turned into an outright error for the features built on it: your token balances, $THREE holder checks, and the gates that unlock embeds and scenes for holders. Both signals are now recognised, so an exhausted node steps aside for the rest of its billing period and a node that will not serve a lookup is skipped in favour of one that will.</description>
+		</item>
+		<item>
+			<title>Wallet sign-in is now fully documented, with Solana first</title>
+			<link>https://three.ws/docs/authentication</link>
+			<guid isPermaLink="false">2026-07-30:Wallet sign-in is now fully documented, with Solana first</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The authentication docs previously covered Ethereum wallets and email login but never explained Sign-In with Solana, even though Solana is the home chain and the login page defaults to it. The docs now walk the whole Solana flow: getting a nonce, building the sign-in message, signing with Phantom, Backpack, Solflare, or a Seeker one-tap wallet, and every error the verify step can return. The Privy section was rewritten to match how the login page actually works (our own UI, an email code rather than a hosted popup, and the Cloudflare human check), and the API reference now lists the Solana sign-in endpoints. The Authentication page is also registered in the sitemap so it is discoverable from search.</description>
 		</item>
 		<item>
 			<title>World Lines and the Walk Leaderboard, documented in full</title>

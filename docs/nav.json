@@ -749,6 +749,10 @@
 			"title": "Tutorials",
 			"links": [
 				{
+					"label": "Explore the docs in 3D",
+					"path": "tutorials/explore-docs-world"
+				},
+				{
 					"label": "Text prompt to 3D model",
 					"path": "tutorials/text-to-3d"
 				},

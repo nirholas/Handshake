@@ -1,8 +1,8 @@
 // Real glTF/GLB fetching and structural parsing, with no dependencies.
 //
 // Two jobs live here, and both are the paid tool's actual product:
-//   1. fetchModel()  — an SSRF-guarded, size-capped, timeout-bounded HTTPS fetch.
-//   2. inspectModel() — parse the container (GLB binary or .gltf JSON) and report
+//   1. fetchModel():  an SSRF-guarded, size-capped, timeout-bounded HTTPS fetch.
+//   2. inspectModel(): parse the container (GLB binary or .gltf JSON) and report
 //      what is inside it, plus optimization findings a caller can act on.
 //
 // The parser reads the glTF JSON chunk only. That is enough for every structural

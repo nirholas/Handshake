@@ -347,7 +347,8 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 	pillar.position.y = 1.7;
 	beacon.add(pillar);
 	const beaconLabel = makeLabelSprite('three.ws Docs World', 'walk to a pavilion to read', '#8b5cf6', 0.8);
-	beaconLabel.position.y = 4.5;
+	// Clear of the ring labels (which sit at y 3.6) so the two never stack.
+	beaconLabel.position.y = 5.4;
 	beacon.add(beaconLabel);
 	scene.add(beacon);
 
@@ -368,6 +369,16 @@ export function createDocsWorld(canvas, sections, { reducedMotion = false } = {}
 
 	let t = 0;
 	function tick(dt) {
+		// The beacon is a welcome sign, not a permanent overlay: once the visitor
+		// walks out toward the ring it would sit on top of the pavilion labels
+		// behind it, so fade it with distance. Deliberately ahead of the
+		// reduced-motion guard below, since this is a response to the visitor's
+		// own movement (not ambient decoration) and skipping it would strand the
+		// sign at full opacity exactly for the people least able to look past it.
+		const camDist = Math.hypot(camera.position.x, camera.position.z);
+		beaconLabel.material.opacity = Math.max(0, Math.min(1, (16 - camDist) / 8));
+		beaconLabel.visible = beaconLabel.material.opacity > 0.01;
+
 		if (reducedMotion) return;
 		t += dt;
 		for (const p of pavilions) {

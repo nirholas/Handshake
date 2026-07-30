@@ -52,12 +52,15 @@ const COMMANDS = {
 	},
 	preview: {
 		run: preview,
-		summary: 'Print an embeddable <three-ws-avatar> snippet for a manifest',
+		summary: 'Print an embeddable <agent-3d> snippet for a manifest',
 		usage: `${style.bold('three-ws-avatar preview')} ${style.dim('<path> [--viewer <origin>] [--json]')}
 
-  Validate a manifest and print a resolver URL, a <three-ws-avatar> web-component
-  snippet, and a zero-install iframe. Snippets are emitted uncolored so they
-  paste cleanly.
+  Validate a manifest and print a resolver URL, an <agent-3d> web-component
+  snippet with the loader that registers it, and a zero-install iframe.
+  Snippets are emitted uncolored so they paste cleanly.
+
+  Warns when mesh.uri is still a local file:// path, since no browser will
+  load that. Pass ${style.cyan('--mesh-uri')} to ${style.bold('init')} to set a public URL.
 
   ${style.dim('example')}
     three-ws-avatar preview manifest.json --viewer https://three.ws`,

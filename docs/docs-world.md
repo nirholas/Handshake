@@ -29,7 +29,7 @@ The **Index** chip (top left) lists every section; picking one teleports you to 
 
 ## Your avatar
 
-By default you walk as the platform mannequin, animated by the same canonical clip library that powers [/walk](/walk). Pass any rigged GLB with `?avatar=`:
+By default you walk as the platform's default rigged body, the same one [/walk](/walk) uses, animated by the shared canonical clip library. Pass any rigged GLB with `?avatar=`:
 
 ```text
 https://three.ws/docs/world?avatar=https://three.ws/avatars/michelle.glb

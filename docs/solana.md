@@ -58,6 +58,33 @@ Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, 
 
 Two safeguards back this up. A bare public-cluster URL passed as the caller's explicit endpoint no longer wins priority 1: roughly 35 call sites spell their default as ``process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'``, so an unset `SOLANA_RPC_URL` used to pin the most-throttled endpoint in the chain ahead of every paid lane. It is still tried, just at its natural position. And the cooldown breaker is fleet-wide, mirrored through the shared cache: when one instance parks a provider for an exhausted quota, siblings inherit that verdict on their first call instead of each re-burning a doomed request against a cap that is already full.
 
+### How long a failing endpoint is parked
+
+Failing over is only half the contract. The other half is *how long* a lane stays benched, and getting that wrong is expensive in both directions: park a healthy lane too long and you throw away capacity you are paying for, park a dead one too briefly and every caller keeps rediscovering it the hard way. `cooldownMsFor()` sizes the window to the failure class.
+
+| Failure | Window | Why |
+|---|---|---|
+| Quota exhausted (`max usage reached`, `daily request limit reached`, `Monthly capacity limit exceeded`) | 6 h | The plan is dead for the billing window. Re-probing cannot revive it. |
+| Plain rate limit (429, no quota wording) | 10 min | Transient burst throttling; the lane recovers on its own. |
+| Bad or expired key (401, 403) | 30 min | An endpoint-wide credential problem. |
+| Dead or misrouted URL (404, 410) | 30 min | Persistent misconfiguration, not a blip. |
+| One refused *call shape* (403 + `Request blocked`) | 30 s | The lane is healthy; only this request is unwelcome. |
+| Provider 5xx | 2 min | Server-side wobble. |
+| Fetch threw (DNS, connection) | 30 s | Network blip. |
+
+The second-to-last row is the subtle one, and it cost us a primary. Each provider draws its own line between "you may not do this" and "your key is bad", and they answer both with the same status code. PublicNode returns **HTTP 403** for `getTokenAccountsByOwner` filtered by `programId` while serving every other method perfectly:
+
+```jsonc
+// HTTP 403, but the key is fine and getBalance still works
+{ "jsonrpc": "2.0", "id": 1,
+  "error": { "code": -32602,
+             "message": "Request blocked. Details: blocked parameter: params.1.programId" } }
+```
+
+Read as a credential failure that benched the node for 30 minutes, and since token and USDC balance readers make that exact call constantly, a healthy primary evicted itself on its own routine traffic and the rotation cascaded onto whatever came next. So a 403 whose body names a blocked call shape now fails over for that one request and leaves the lane in service. A 403 that does *not* say so is still treated as a bad key and benched for the full 30 minutes. Both directions are covered by `tests/solana-rpc-priority-and-breaker.test.js`.
+
+The same distinction applies one layer up, to HTTP 200 responses carrying a JSON-RPC error. A provider refusing a call shape (PublicNode's `excluded from account secondary indexes`, Tatum's `available for paid plans only`) must rotate to the next lane, while a genuinely deterministic error (`invalid params`) must *not*, because every lane would fail it identically and rotating just multiplies one failure by the length of the chain.
+
 ---
 
 ## Registration flow

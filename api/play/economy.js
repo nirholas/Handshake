@@ -7,7 +7,7 @@
 // Every number here is imported from the SAME modules the authoritative multiplayer
 // server prices its trades with (multiplayer/src/{shop,items,cosmetics-catalog,
 // spin-wheel,economy}.js). Nothing is transcribed into this file, so a price shown
-// on /play/economy is the price WalkRoom will actually charge — the reference cannot
+// on /play/economy is the price WalkRoom will actually charge: the reference cannot
 // drift from the game because there is only one copy of the numbers.
 //
 // Static config only: no database, no wallet, no per-player state, no secrets. That

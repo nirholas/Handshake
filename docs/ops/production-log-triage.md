@@ -507,6 +507,42 @@ ws error: Unexpected server response: 301
   dedupes to the first occurrence) and burns the reserve first. That exact
   misconfiguration was live until 2026-07-29. See
   [docs/solana.md](../solana.md) for the full priority contract.
+- **Repointing the primary at a free node hides this sensor on older builds.**
+  `checkRpcLanes()` counts whichever URL `SOLANA_RPC_URL` names as paid
+  capacity, so pointing it at a keyless node during an outage makes the paid
+  tier read healthy at the exact moment all of it is dark. Cross-check by
+  probing each provider by hand with the `getBalance` call above before
+  trusting a green `rpc_lanes` row.
+
+---
+
+## 🟡 `[solana-rpc] https://<host> 403`, cooling 30m, failing over
+
+- **Source:** `cooldownMsFor()` in
+  [api/_lib/solana/connection.js](../../api/_lib/solana/connection.js).
+- **What it means:** depends entirely on the body, and the two cases need
+  opposite responses.
+  - **A real credential failure** (bad or expired key). The lane is benched for
+    30 minutes and stays benched. Fix the key.
+  - **A refused call shape.** Some keyless nodes answer 403 to reject ONE
+    request while serving everything else. PublicNode does this for
+    `getTokenAccountsByOwner` filtered by `programId`:
+    `{"code":-32602,"message":"Request blocked. Details: blocked parameter: params.1.programId"}`.
+- **Why it mattered:** token and USDC balance readers make that call constantly,
+  so when it was sized as a 30-minute auth bench, the primary evicted itself on
+  its own routine traffic and every Solana call cascaded down the chain onto the
+  exhausted paid lanes. Measured 2026-07-30, this was the last remaining
+  `solana-rpc` line in production after the primary was repointed.
+- **Resolve:** 🟢 nothing required for the blocked-call-shape case. It now
+  cools for 30 s (a fail-over for that request only) instead of benching the
+  lane, so the node keeps serving every other method. 🔴 for the credential
+  case, rotate the key on that provider.
+- **Tell them apart:**
+  ```sh
+  npm run logs -- -s three-ws-api --grep "403" --since 1h
+  ```
+  A body naming `Request blocked` / `blocked parameter` is the harmless case.
+  Anything else is a key problem.
 
 ---
 

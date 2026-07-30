@@ -330,6 +330,14 @@
 					"added": "2026-07-25"
 				},
 				{
+					"path": "/nvidia",
+					"title": "three.ws on NVIDIA",
+					"description": "three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
 					"path": "/press",
 					"title": "Press kit",
 					"description": "Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.",
@@ -2762,6 +2770,11 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/authentication",
+					"title": "Docs · Authentication",
+					"description": "Sign-In with Solana (SIWS), Sign-In with Ethereum (SIWE), Privy email/wallet login, sessions, and API keys."
+				},
+				{
 					"path": "/docs/sdk",
 					"title": "Docs · SDK",
 					"description": "JavaScript / Node SDK for three.ws.",
@@ -2820,6 +2833,20 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-12"
+				},
+				{
+					"path": "/tutorials/nvidia-3d-free",
+					"title": "Tutorial · Generate 3D Models Free, Powered by NVIDIA",
+					"description": "The free text-to-3D lane, end to end: what NVIDIA NIM and Microsoft TRELLIS actually do with your prompt, when the free lane kicks in, how to write a prompt that reconstructs well, and how to download the finished GLB. No account, no key, no cost.",
+					"priority": 0.8,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/tutorials/nvidia-nim-self-host",
+					"title": "Tutorial · Run Microsoft TRELLIS on Your Own NVIDIA NIM",
+					"description": "Own the whole 3D pipeline: pull the TRELLIS NIM container onto your own NVIDIA GPU, serve text-to-3D and photo-to-3D yourself, and drive it through the same /api/forge-nim contract three.ws uses in production.",
+					"priority": 0.8,
+					"changefreq": "monthly"
 				},
 				{
 					"path": "/tutorials/first-prompt-to-3d",
@@ -3034,10 +3061,24 @@
 					"added": "2026-07-21"
 				},
 				{
+					"path": "/docs/3d-asset-pipeline",
+					"title": "Docs · The 3D asset pipeline (FBX, GLB, and clip JSON)",
+					"description": "The canonical reference for moving a 3D character or motion from a source file to something the browser renders and animates: the three formats three.ws works with (FBX, GLB, and three.js clip JSON), how each converts into the others, and what the platform does with them today.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/nvidia-models",
 					"title": "Docs · Every NVIDIA model three.ws runs for free",
 					"description": "The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.",
 					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/nvidia-inception/index.html",
+					"title": "Docs · NVIDIA Inception membership overview",
+					"description": "The three.ws membership overview deck: what the platform is, the production numbers behind it, the team, the NVIDIA surfaces already in use, and what the Inception program is being used for.",
+					"priority": 0.5,
 					"changefreq": "monthly"
 				},
 				{
@@ -3285,6 +3326,14 @@
 					"path": "/tutorials/character-library-to-embed",
 					"title": "Tutorial · Character Library to a Live Embed",
 					"description": "Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/sell-a-skill-with-a-trial",
+					"title": "Tutorial · Sell a Skill With a Free Trial That Converts",
+					"description": "List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-07-30"

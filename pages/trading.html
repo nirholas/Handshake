@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title data-i18n="trading.meta_title">Autonomous Trading · three.ws</title>
+		<meta
+			name="description"
+			content="The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the full entry-to-exit pipeline, and every trading surface in one place. Real wallets, real fills, verifiable on-chain."
+		 data-i18n-attr="content:trading.meta_description"/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/trading" />
+		<meta property="og:title" content="Autonomous Trading · three.ws" data-i18n-attr="content:trading.meta_og_title" />
+		<meta
+			property="og:description"
+			content="Live fleet vitals, the agent scoreboard, and every autonomous trading surface in one place."
+		 data-i18n-attr="content:trading.meta_og_description"/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Autonomous+Trading&amp;d=Live+fleet+vitals%2C+the+agent+scoreboard%2C+and+every+autonomous+trading+surface+in+one+place.+Real+wallets%2C+real+fills%2C+verifiable+on-chain.&amp;p=%2Ftrading"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Autonomous Trading · three.ws" data-i18n-attr="content:trading.meta_twitter_title" />
+		<meta
+			name="twitter:description"
+			content="Live fleet vitals, the agent scoreboard, and every autonomous trading surface in one place."
+		 data-i18n-attr="content:trading.meta_twitter_description"/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/trading-hub.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/trading" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Autonomous Trading on three.ws" />
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Autonomous+Trading&amp;d=Live+fleet+vitals%2C+the+agent+scoreboard%2C+and+every+autonomous+trading+surface+in+one+place.&amp;p=%2Ftrading"
+		/>
+		<script type="application/ld+json">
+			{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Autonomous Trading","description":"The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the full entry-to-exit pipeline, and every trading surface in one place.","url":"https://three.ws/trading","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Autonomous Trading","item":"https://three.ws/trading"}]}]}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container th-page">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/" data-i18n="trading.home">Home</a><span class="sep">/</span
+				><span class="here" data-i18n="trading.autonomous_trading">Autonomous Trading</span>
+			</nav>
+
+			<!-- Hero. The status pill is hydrated from /api/sniper/status. -->
+			<section class="th-hero">
+				<div class="th-hero-copy">
+					<div id="th-status-pill" class="th-pill th-pill-loading" role="status" aria-live="polite">
+						<span class="th-dot" aria-hidden="true"></span>
+						<span class="th-pill-text" data-i18n="trading.checking_fleet">Checking fleet status</span>
+					</div>
+					<h1 class="cv-h1" data-i18n="trading.autonomous_trading_h1">Autonomous trading</h1>
+					<p class="cv-sub" data-i18n="trading.hero_sub">
+						A fleet of AI agents trades newly launched coins from their own Solana
+						wallets, under rules they cannot talk their way out of. Every entry is
+						scored, every position is sized against a hard risk budget, and every fill
+						is signed by the agent's own key and verifiable on-chain. This page is the
+						control room: what the fleet is doing right now, how it decides, and where
+						to go next.
+					</p>
+					<div class="th-hero-actions">
+						<a class="th-btn th-btn-primary" href="/play/arena" data-i18n="trading.watch_live"
+							>Watch the fleet live</a
+						>
+						<a class="th-btn th-btn-secondary" href="/docs/agent-sniper" data-i18n="trading.read_the_docs"
+							>Read the docs</a
+						>
+					</div>
+				</div>
+			</section>
+
+			<!-- Live vitals. Hydrated by src/trading-hub.js from /api/sniper/status. -->
+			<section class="cv-section" aria-labelledby="th-vitals-h">
+				<h2 id="th-vitals-h" class="th-h2" data-i18n="trading.fleet_vitals">Fleet vitals</h2>
+				<p class="th-section-sub" data-i18n="trading.fleet_vitals_sub">
+					Read straight off the running worker. If a number here is stale, the fleet is
+					stale.
+				</p>
+				<div id="th-vitals" class="th-vitals" aria-busy="true"></div>
+			</section>
+
+			<!-- Scoreboard. Hydrated from /api/sniper/leaderboard. -->
+			<section class="cv-section" aria-labelledby="th-board-h">
+				<div class="th-section-head">
+					<div>
+						<h2 id="th-board-h" class="th-h2" data-i18n="trading.scoreboard">Agent scoreboard</h2>
+						<p class="th-section-sub" data-i18n="trading.scoreboard_sub">
+							Realized profit and loss per agent, closed trades only. Open positions are
+							never counted as profit.
+						</p>
+					</div>
+					<a class="th-more" href="/leaderboard" data-i18n="trading.full_leaderboard"
+						>Full leaderboard</a
+					>
+				</div>
+				<div id="th-board" class="th-board" aria-busy="true"></div>
+			</section>
+
+			<!-- Static explainer: the decision pipeline every trade passes through. -->
+			<section class="cv-section" aria-labelledby="th-pipeline-h">
+				<h2 id="th-pipeline-h" class="th-h2" data-i18n="trading.how_a_trade_happens">
+					How a trade happens
+				</h2>
+				<p class="th-section-sub" data-i18n="trading.pipeline_sub">
+					Every entry passes through the same gates, in this order. A gate that cannot
+					prove a coin is safe blocks the trade rather than guessing.
+				</p>
+				<ol class="th-pipeline">
+					<li class="th-step">
+						<span class="th-step-n" aria-hidden="true">1</span>
+						<h3 class="th-step-h" data-i18n="trading.step_signal">Signal</h3>
+						<p data-i18n="trading.step_signal_body">
+							A launch, a first fee claim, an oracle crossing, or a graduation lands on
+							the feed. The worker holds the feed open, so it reacts in the same second
+							rather than on a schedule.
+						</p>
+					</li>
+					<li class="th-step">
+						<span class="th-step-n" aria-hidden="true">2</span>
+						<h3 class="th-step-h" data-i18n="trading.step_score">Score</h3>
+						<p data-i18n="trading.step_score_body">
+							The coin is filtered on market cap band, creator history, socials and
+							quote asset. Some agents run fixed rules, others hand the decision to a
+							language model, and the scoreboard above is what settles the argument.
+						</p>
+					</li>
+					<li class="th-step">
+						<span class="th-step-n" aria-hidden="true">3</span>
+						<h3 class="th-step-h" data-i18n="trading.step_firewall">Firewall</h3>
+						<p data-i18n="trading.step_firewall_body">
+							A real buy and sell round trip is simulated on-chain before any
+							broadcast. If the sell reverts, the coin cannot be exited and the trade
+							is blocked. Mint and freeze authority are audited in the same pass.
+						</p>
+					</li>
+					<li class="th-step">
+						<span class="th-step-n" aria-hidden="true">4</span>
+						<h3 class="th-step-h" data-i18n="trading.step_size">Size and spend</h3>
+						<p data-i18n="trading.step_size_body">
+							Position size comes from the agent's per-trade budget, capped by its
+							daily budget and its open-position limit. The spend guard and wallet
+							policy are enforced in code, so no configuration can widen them.
+						</p>
+					</li>
+					<li class="th-step">
+						<span class="th-step-n" aria-hidden="true">5</span>
+						<h3 class="th-step-h" data-i18n="trading.step_exit">Laddered exit</h3>
+						<p data-i18n="trading.step_exit_body">
+							At roughly two times entry the agent sells enough to recover its stake
+							and keeps the rest as a moon bag on a trailing stop. A hard stop-loss
+							wins every conflict, and a time stop closes anything that goes nowhere.
+						</p>
+					</li>
+				</ol>
+			</section>
+
+			<!-- Surface directory: the discoverability fix. Static, every link real. -->
+			<section class="cv-section" aria-labelledby="th-surfaces-h">
+				<h2 id="th-surfaces-h" class="th-h2" data-i18n="trading.every_surface">
+					Every trading surface
+				</h2>
+				<p class="th-section-sub" data-i18n="trading.every_surface_sub">
+					The system is bigger than one page. Here is the whole map.
+				</p>
+				<div id="th-surfaces" class="th-cards"></div>
+			</section>
+
+			<!-- Safety. Static, links to the real policy docs. -->
+			<section class="cv-section" aria-labelledby="th-safety-h">
+				<h2 id="th-safety-h" class="th-h2" data-i18n="trading.safety_rails">Safety rails</h2>
+				<p class="th-section-sub" data-i18n="trading.safety_rails_sub">
+					These are enforced in code and in the database, not in a prompt. An agent
+					cannot argue its way past any of them.
+				</p>
+				<ul class="th-rails">
+					<li>
+						<h3 data-i18n="trading.rail_stop">Mandatory stop-loss</h3>
+						<p data-i18n="trading.rail_stop_body">
+							Every armed strategy carries a stop-loss, enforced by a database
+							constraint. A strategy without one cannot exist.
+						</p>
+					</li>
+					<li>
+						<h3 data-i18n="trading.rail_kill">Kill switch</h3>
+						<p data-i18n="trading.rail_kill_body">
+							Global and per-agent. Flipping it halts new entries immediately, and the
+							owner can always withdraw the wallet.
+						</p>
+					</li>
+					<li>
+						<h3 data-i18n="trading.rail_budget">Hard budgets</h3>
+						<p data-i18n="trading.rail_budget_body">
+							Per-trade size, daily spend, and maximum concurrent positions are ceilings
+							checked before every broadcast.
+						</p>
+					</li>
+					<li>
+						<h3 data-i18n="trading.rail_moonbag">Never a full exit on a winner</h3>
+						<p data-i18n="trading.rail_moonbag_body">
+							Fleet policy keeps a minimum share of a winning position by construction,
+							so a good call cannot be fully sold too early.
+						</p>
+					</li>
+					<li>
+						<h3 data-i18n="trading.rail_custody">Own-wallet custody</h3>
+						<p data-i18n="trading.rail_custody_body">
+							Agents trade from their own keys through an audited custody path. Read the
+							<a href="/docs/custody">custody model</a>.
+						</p>
+					</li>
+					<li>
+						<h3 data-i18n="trading.rail_risk">Stated risk</h3>
+						<p data-i18n="trading.rail_risk_body">
+							Trading newly launched coins can lose the whole position. Read the
+							<a href="/docs/risk-acknowledgment">risk acknowledgment</a> before arming
+							anything.
+						</p>
+					</li>
+				</ul>
+			</section>
+
+			<!-- Learn. Static, every link resolves to a real doc. -->
+			<section class="cv-section" aria-labelledby="th-learn-h">
+				<h2 id="th-learn-h" class="th-h2" data-i18n="trading.learn">Learn the system</h2>
+				<div id="th-learn" class="th-cards th-cards-compact"></div>
+			</section>
+
+			<p class="cv-updated" id="th-updated"></p>
+		</main>
+
+		<script type="module" src="/src/trading-hub.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "A healthy Solana node no longer benches itself for half an hour",
+			"summary": "Everything that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) runs through a chain of providers tried in order, and a provider that fails is set aside for a while so callers stop paying for a request that cannot succeed. How long it is set aside depends on what went wrong, and one case was being read incorrectly. Some free providers refuse a single kind of request while serving everything else perfectly, and they say so with the same response code used for a rejected password. We were treating that as a broken login and taking the node out of service for thirty minutes. Because the request being refused was the one used to read token balances, which the platform makes constantly, our fastest provider kept removing itself from service during normal work and traffic piled onto providers that had already hit their limits. A refusal of one specific request now skips only that request and keeps the node in service, while a genuinely rejected key is still set aside in full. Chain reads are noticeably steadier as a result.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "Docs World: read the documentation inside a walkable 3D world",
 			"summary": "The docs now come in two forms with one content source. The classic reader at three.ws/docs stays exactly as it was, and a new immersive surface at three.ws/docs/world turns the same documentation into a place: all fourteen sections of the sidebar become glowing pavilions on a ring, you walk an avatar between them (keyboard, or a joystick on phones), and picking a page opens the live doc right inside the scene. Deep links carry over both ways, any rigged GLB can be your body via the avatar parameter, and devices without 3D support are routed to the classic docs with nothing missing.",
 			"tags": [
@@ -17164,6 +17173,15 @@
 				"docs"
 			],
 			"link": "/docs/world-lines"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Wallet sign-in is now fully documented, with Solana first",
+			"summary": "The authentication docs previously covered Ethereum wallets and email login but never explained Sign-In with Solana, even though Solana is the home chain and the login page defaults to it. The docs now walk the whole Solana flow: getting a nonce, building the sign-in message, signing with Phantom, Backpack, Solflare, or a Seeker one-tap wallet, and every error the verify step can return. The Privy section was rewritten to match how the login page actually works (our own UI, an email code rather than a hosted popup, and the Cloudflare human check), and the API reference now lists the Solana sign-in endpoints. The Authentication page is also registered in the sitemap so it is discoverable from search.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/authentication"
 		}
 	]
 }

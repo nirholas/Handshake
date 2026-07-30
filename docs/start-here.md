@@ -139,6 +139,7 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 
 Deeper references that don't fit a track above but answer real questions:
 
+- [Docs World](./docs-world.md): these same docs as a walkable 3D world, where every section is a pavilion you can stroll up to and read inside the scene
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
 - [NVIDIA models on three.ws](./nvidia-models.md): the free hosted inference layer model by model, one key behind text-to-3D, chat, vision, embeddings, safety, and speech
 - [NVIDIA Inception membership](./nvidia-inception.md): what the platform already runs on NVIDIA silicon and what the program adds on top

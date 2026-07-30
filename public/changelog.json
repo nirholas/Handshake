@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T19:20:19.101Z",
+	"generated_at": "2026-07-30T19:23:26.058Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs World (immersive 3D docs)",
 			"summary": "The full three.ws documentation as a walkable 3D world: every docs section is a glowing pavilion, and the live pages render inside the scene.",
 			"link": "/docs/world",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "three.ws on NVIDIA",
+			"summary": "three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.",
+			"link": "/nvidia",
 			"tags": [
 				"launch"
 			]
@@ -49,11 +59,32 @@
 		{
 			"date": "2026-07-30",
 			"type": "launch",
+			"title": "Tutorial · Sell a Skill With a Free Trial That Converts",
+			"summary": "List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.",
+			"link": "/tutorials/sell-a-skill-with-a-trial",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
 			"title": "Tutorial: Make Your Avatar Sign (ASL)",
 			"summary": "Step-by-step tutorial for signing avatars: type a phrase and watch it signed in ASL, share it as a link, export a spelled word as an animated GLB, turn on signed chat replies, and fingerspell back with your webcam.",
 			"link": "/tutorials/sign-with-your-avatar",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "A healthy Solana node no longer benches itself for half an hour",
+			"summary": "Everything that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) runs through a chain of providers tried in order, and a provider that fails is set aside for a while so callers stop paying for a request that cannot succeed. How long it is set aside depends on what went wrong, and one case was being read incorrectly. Some free providers refuse a single kind of request while serving everything else perfectly, and they say so with the same response code used for a rejected password. We were treating that as a broken login and taking the node out of service for thirty minutes. Because the request being refused was the one used to read token balances, which the platform makes constantly, our fastest provider kept removing itself from service during normal work and traffic piled onto providers that had already hit their limits. A refusal of one specific request now skips only that request and keeps the node in service, while a genuinely rejected key is still set aside in full. Chain reads are noticeably steadier as a result.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -419,6 +450,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Wallet sign-in is now fully documented, with Solana first",
+			"summary": "The authentication docs previously covered Ethereum wallets and email login but never explained Sign-In with Solana, even though Solana is the home chain and the login page defaults to it. The docs now walk the whole Solana flow: getting a nonce, building the sign-in message, signing with Phantom, Backpack, Solflare, or a Seeker one-tap wallet, and every error the verify step can return. The Privy section was rewritten to match how the login page actually works (our own UI, an email code rather than a hosted popup, and the Cloudflare human check), and the API reference now lists the Solana sign-in endpoints. The Authentication page is also registered in the sitemap so it is discoverable from search.",
+			"link": "/docs/authentication",
+			"tags": [
+				"docs"
 			]
 		},
 		{

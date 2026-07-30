@@ -117,13 +117,27 @@ function runnableFiles(dir) {
 }
 
 // How a reader actually runs this example, stated concretely.
+// The concrete way a reader runs this, or null when the directory is reference
+// material (schema samples, agent-as-files definitions) with nothing to execute.
 function runHint(dirRel, files) {
 	const script = files.find((f) => /\.(mjs|js)$/.test(f));
 	const shell = files.find((f) => f.endsWith('.sh'));
 	const html = files.find((f) => f.endsWith('.html'));
 	if (script) return `node ${dirRel}/${script}`;
 	if (shell) return `bash ${dirRel}/${shell}`;
-	if (html) return `open ${dirRel}/${html}`;
+	if (html) return `npm run dev, then open /${dirRel}/${html}`;
+	// A project with its own package.json runs through its declared script.
+	const pkgPath = join(root, dirRel, 'package.json');
+	if (existsSync(pkgPath)) {
+		try {
+			const scripts = JSON.parse(read(pkgPath)).scripts || {};
+			for (const name of ['start', 'dev', 'demo', 'run']) {
+				if (scripts[name]) return `cd ${dirRel} && npm install && npm run ${name}`;
+			}
+		} catch {
+			/* a malformed package.json just means no hint */
+		}
+	}
 	return null;
 }
 
@@ -155,12 +169,18 @@ for (const name of readdirSync(examplesDir)) {
 	if (SKIP_DIRS.has(name)) continue;
 	const readme = read(join(abs, 'README.md'));
 	const files = runnableFiles(abs);
+	let projectPkgDescription = '';
+	try {
+		projectPkgDescription = JSON.parse(read(join(abs, 'package.json'))).description || '';
+	} catch {
+		/* not every example project is a package */
+	}
 	entries.push({
 		id: `project:${name}`,
 		kind: 'project',
 		group: 'Example projects',
 		title: firstHeading(readme) || name,
-		description: clamp(firstProse(readme)),
+		description: clamp(firstProse(readme)) || clamp(projectPkgDescription),
 		path: `examples/${name}`,
 		files,
 		run: runHint(`examples/${name}`, files),
@@ -208,19 +228,21 @@ for (const abs of findExampleDirs(root)) {
 	if (!files.length) continue;
 	const readme = read(join(abs, 'README.md'));
 	const ownerReadme = read(join(root, owner, 'README.md'));
-	const pkgName = (() => {
-		try {
-			return JSON.parse(read(join(root, owner, 'package.json'))).name || owner;
-		} catch {
-			return owner;
-		}
-	})();
+	let pkgName = owner;
+	let pkgDescription = '';
+	try {
+		const pkg = JSON.parse(read(join(root, owner, 'package.json')));
+		pkgName = pkg.name || owner;
+		pkgDescription = pkg.description || '';
+	} catch {
+		/* not every examples owner is an npm package */
+	}
 	entries.push({
 		id: `package:${owner}`,
 		kind: 'package',
 		group: 'Package examples',
 		title: pkgName,
-		description: clamp(firstProse(readme) || firstProse(ownerReadme)),
+		description: clamp(firstProse(readme) || firstProse(ownerReadme) || pkgDescription),
 		path: rel,
 		files,
 		run: runHint(rel, files),
@@ -228,6 +250,14 @@ for (const abs of findExampleDirs(root)) {
 		readme: existsSync(join(abs, 'README.md')) ? `${rel}/README.md` : null,
 		owner,
 	});
+}
+
+// Source titles and descriptions may carry em/en dashes; the repo bans both
+// glyphs in committed files, so normalize them to a plain hyphen on the way out.
+const plainDashes = (s) => (typeof s === 'string' ? s.replace(/[–—]/g, '-') : s);
+for (const e of entries) {
+	e.title = plainDashes(e.title);
+	e.description = plainDashes(e.description);
 }
 
 entries.sort((a, b) => a.group.localeCompare(b.group) || a.title.localeCompare(b.title));

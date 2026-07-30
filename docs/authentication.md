@@ -2,21 +2,122 @@
 
 Authentication is how three.ws knows who you are: it protects your agents, your avatars, and your dashboard, and it is required for anything that writes data. Sign in at [three.ws/login](https://three.ws/login) with a crypto wallet or a plain email/social account; developers can also mint API keys for scripts and servers.
 
-three.ws supports three authentication methods. Which one you need depends on how you're building:
+three.ws supports four authentication methods. Which one you need depends on how you're building:
 
 | Method | Best for |
 |--------|----------|
-| **Sign-In With Ethereum (SIWE)** | Users with a browser wallet (MetaMask, Coinbase Wallet, etc.) |
-| **Privy** | Users without a wallet — email, Google, Twitter, Discord login |
+| **Sign-In With Solana (SIWS)** | Users with a Solana wallet (Phantom, Backpack, Solflare, Seeker). Solana is the home chain; this is the default wallet sign-in. |
+| **Sign-In With Ethereum (SIWE)** | Users with an EVM browser wallet (MetaMask, Coinbase Wallet, etc.) |
+| **Privy** | Users without a wallet: email code sign-in, plus Privy-managed wallet login |
 | **API keys** | Server-to-server and programmatic access |
 
 Authentication controls who can edit or publish an agent, which agents a user owns (for on-chain operations), rate limiting and usage tracking, and access to the dashboard and API.
 
 ---
 
+## Sign-In With Solana (SIWS)
+
+SIWS ([CAIP-122](https://chainagnostic.org/CAIPs/caip-122)) lets users authenticate by signing a message with their Solana wallet. No password, no email, no transaction, no fees. This is the platform's own rail: the nonce and the session both come from three.ws, with no third-party auth service in the path.
+
+### Supported wallets
+
+- **Phantom** (`window.phantom.solana`)
+- **Backpack** (`window.backpack.solana`)
+- **Solflare** (`window.solflare`)
+- **Solana Seeker / Seed Vault** (the three.ws mobile app injects a one-tap wallet; see below)
+- Any wallet exposing the standard `connect()` + `signMessage()` provider interface
+
+### How the flow works
+
+1. Your frontend calls `GET /api/auth/siws/nonce`. The response carries a one-time nonce (valid 5 minutes), a CSRF token, and the canonical `domain` and `uri` to sign against. The endpoint also sets a `__Host-csrf-siws` cookie.
+2. You build a CAIP-122 message using the nonce and the server-provided domain and URI.
+3. The user signs the message in their wallet (a free, off-chain ed25519 signature).
+4. You `POST /api/auth/siws/verify` with the raw message and the signature (base58 or base64 encoded), plus the CSRF token as an `X-CSRF-Token` header.
+5. The backend parses the message, checks domain and URI against the deployment, checks the chain id (`mainnet`, `devnet`, or `testnet`), checks the time window, burns the nonce (single use), verifies the ed25519 signature recovers the claimed address, and issues a session cookie.
+
+Always build the message from the `domain` and `uri` the nonce endpoint returns rather than `location.host`: that keeps dev frontends that proxy `/api/*` to a remote upstream (Codespaces tunnels, preview deploys) producing messages that pass the server's domain check.
+
+### API routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/auth/siws/nonce` | Generate a nonce + CSRF token; returns canonical domain/uri |
+| `POST` | `/api/auth/siws/verify` | Verify signed message, issue session |
+| `POST` | `/api/auth/logout` | Revoke session cookie |
+
+### Raw SIWS flow
+
+This is the exact flow the [three.ws login page](https://three.ws/login) runs (see [public/login.html](../public/login.html) and [src/privy-login.js](../src/privy-login.js), Solana branch):
+
+```js
+// 1. Get nonce + CSRF token + canonical domain/uri
+const { nonce, csrf, domain, uri } = await fetch('/api/auth/siws/nonce', {
+  credentials: 'include',
+}).then((r) => r.json());
+
+// 2. Connect the wallet
+const provider = window.phantom?.solana ?? window.solana;
+const { publicKey } = await provider.connect();
+const address = publicKey.toString();
+
+// 3. Build the CAIP-122 message. Put the Terms agreement in the signed
+//    statement so the signature itself evidences acceptance.
+const statement =
+  'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees. ' +
+  'By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).';
+const message = [
+  `${domain} wants you to sign in with your Solana account:`,
+  address,
+  '',
+  statement,
+  '',
+  `URI: ${uri}`,
+  'Version: 1',
+  'Chain ID: mainnet',
+  `Nonce: ${nonce}`,
+  `Issued At: ${new Date().toISOString()}`,
+  `Expiration Time: ${new Date(Date.now() + 5 * 60 * 1000).toISOString()}`,
+].join('\n');
+
+// 4. Sign (ed25519 over the utf8 bytes) and encode the 64-byte signature
+const { signature: sigBytes } = await provider.signMessage(new TextEncoder().encode(message), 'utf8');
+const signature = btoa(String.fromCharCode(...sigBytes)); // base58 also accepted
+
+// 5. Verify: CSRF token in the header, tosAccepted because the statement
+//    carries the agreement
+const res = await fetch('/api/auth/siws/verify', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
+  body: JSON.stringify({ message, signature, tosAccepted: true }),
+});
+const { user } = await res.json();
+```
+
+### One-tap sign-in (Seeker / Seed Vault)
+
+Wallets that implement the [Sign In With Solana wallet feature](https://github.com/phantom/sign-in-with-solana) expose `signIn()`, which merges authorization and the sign-in signature into a single wallet interaction. The three.ws mobile wallet advertises this with a `supportsSignIn` flag. When available, call `signIn()` with the same fields (domain, statement, uri, nonce, timestamps), then POST the wallet's `signedMessageText` and signature to the same verify endpoint. The server accepts the exact bytes the wallet signed. Wallets without `signIn()` fall through to the two-step `connect()` + `signMessage()` flow above.
+
+### Verify errors
+
+| Status | Code | Meaning |
+|--------|------|---------|
+| `400` | `invalid_message` | Message is not parseable CAIP-122 |
+| `400` | `invalid_domain` / `invalid_uri` | Domain or URI does not match this deployment |
+| `400` | `invalid_chain` | Chain ID is not `mainnet`, `devnet`, or `testnet` |
+| `400` | `expired` / `not_yet_valid` | Outside the message's time window |
+| `400` | `invalid_nonce` / `nonce_reused` / `nonce_expired` | Nonce unknown, already burned, or past its 5-minute TTL |
+| `401` | `invalid_signature` | Signature does not verify against the claimed address |
+| `403` | `invalid_request` | CSRF header missing or does not match the `__Host-csrf-siws` cookie |
+| `403` | `account_deleted` | Wallet belongs to a deleted account |
+
+---
+
 ## Sign-In With Ethereum (SIWE)
 
 SIWE ([EIP-4361](https://eips.ethereum.org/EIPS/eip-4361)) lets users authenticate by signing a message with their Ethereum wallet — no password, no email required.
+
+Note that the login page has two EVM sign-in paths: the quick "connect wallet" button at the top runs SIWE through Privy (see the [Privy section](#privy-social--email-auth) below), while the "Using on-chain features?" section runs the platform's own SIWE rail documented here. Both end in the same three.ws session; the own rail is the one to integrate against if you are building outside the Privy SDK.
 
 ### Supported wallets
 
@@ -150,7 +251,7 @@ An already-signed-in user can also record acceptance directly with `POST /api/le
 
 ## Privy (Social / Email Auth)
 
-Privy lets users log in with email, Google, Twitter, or Discord. Each Privy account gets a wallet managed by Privy's MPC system, so users get wallet-based identity without needing MetaMask or any browser extension.
+Privy lets users log in with an email code, or with a wallet through Privy's auth service. Each Privy account gets a wallet managed by Privy's MPC system, so users get wallet-based identity without needing MetaMask or any browser extension.
 
 ### Why use Privy
 
@@ -158,13 +259,27 @@ Not every user has a crypto wallet. If your audience includes non-web3 users, Pr
 
 ### How it works
 
-1. The frontend initiates login via the Privy client SDK (using `VITE_PRIVY_APP_ID`).
-2. Privy handles the OAuth UI — email magic link, Google OAuth, etc.
-3. On success, Privy issues an identity token (a JWT signed with Privy's ES256 key).
-4. Your frontend posts that token to `POST /api/auth/privy/verify`.
+The three.ws login and register pages run Privy **headless**: our own UI drives `@privy-io/js-sdk-core` directly (see [src/privy-login.js](../src/privy-login.js)), so there is no Privy-hosted modal.
+
+1. The frontend reads the app id from `GET /api/config` (`privyAppId`) and constructs the SDK client.
+2. **Email**: `privy.auth.email.sendCode(email, captchaToken)` sends a 6-digit code; `privy.auth.email.loginWithCode(email, code)` exchanges it for an identity token (a JWT signed with Privy's ES256 key).
+3. **EVM wallet**: the page runs Privy's SIWE ceremony (`siwe/init` for a nonce and message, `personal_sign` in the wallet, `loginWithSiwe` to finish) and gets the same kind of identity token.
+4. The frontend posts that token to `POST /api/auth/privy/verify`.
 5. The backend fetches Privy's JWKS, verifies the token signature and audience, and finds-or-creates the user record (keyed on the Privy DID).
 6. Linked wallets are synced best-effort from Privy's server API into the user's wallet list; a login with no wallet still succeeds.
-7. A session cookie is issued; from this point the user is authenticated identically to a SIWE user.
+7. A session cookie is issued; from this point the user is authenticated identically to a SIWS or SIWE user.
+
+Solana wallet sign-in does not go through Privy at all: it uses the platform's own [SIWS rail](#sign-in-with-solana-siws) above.
+
+### CAPTCHA (Cloudflare Turnstile)
+
+When CAPTCHA is enabled for the Privy app (Privy dashboard, Security tab), Privy rejects both `passwordless/init` (the email code send) and `siwe/init` (the wallet nonce) with `401 invalid_credentials` unless the request carries a Turnstile token. Three things follow for anyone integrating headless:
+
+- Fetch the app config (`GET https://auth.privy.io/api/v1/apps/{appId}` with a `privy-app-id` header) to read `captcha_enabled` and `captcha_site_key` (Turnstile keys are prefixed `t:`), and load the Turnstile widget from `https://challenges.cloudflare.com/turnstile/v0/api.js`. Run it in `interaction-only` appearance so users only see it when Cloudflare requires an interaction.
+- `email.sendCode` accepts the token as its second argument.
+- `siwe.init` in `@privy-io/js-sdk-core` has no token parameter, so the login page calls the init endpoint directly with `{ address, token }`, builds the standard EIP-4361 message from the returned nonce, and hands the wallet's signature plus that message to `loginWithSiwe(signature, wallet, message)`. A `401` with code `invalid_captcha` means the token was read but failed verification; `invalid_credentials` means no token reached Privy at all.
+
+If the app config declares a `custom_api_url` (three.ws uses `https://privy.three.ws`), every auth call above goes to that domain instead of `auth.privy.io`.
 
 ### Configuration
 

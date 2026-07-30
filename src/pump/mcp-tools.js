@@ -346,7 +346,7 @@ export const TOOLS = [
 	{
 		name: 'pumpfun_first_claims',
 		description:
-			'First-ever pump.fun creator fee claims in a time window — a cash-out signal. Returns creators who have never claimed before, with creator wallet, mint, lamports, and timestamp.',
+			'First-ever pump.fun creator fee claims in a time window: a cash-out signal. Returns creators who have never claimed before, with creator wallet, mint, lamports, and timestamp.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -586,7 +586,7 @@ export const TOOLS = [
 	{
 		name: 'get_oracle_conviction',
 		description:
-			'Oracle conviction score for a pump.fun mint — the fused 0–100 score the Oracle engine produces by combining four intelligence pillars: pedigree (who bought it), structure (organic vs bundle, holder concentration, bubblemaps connectivity), narrative (category, meme virality, news hook), and momentum (timing, velocity). Returns the tier (prime ≥86 / strong ≥72 / lean ≥54 / watch ≥36 / avoid), the per-pillar breakdown, the natural-language reasons that drove the score, the full "who\'s in" trader roster with reputation labels and win-rates, and the narrative read (category, virality, tags). Call this when you need the highest-confidence trade signal — it synthesises everything get_coin_intel exposes into one actionable score. Pairs with get_coin_intel for raw signals.',
+			'Oracle conviction score for a pump.fun mint: the fused 0-100 score the Oracle engine produces by combining four intelligence pillars: pedigree (who bought it), structure (organic vs bundle, holder concentration, bubblemaps connectivity), narrative (category, meme virality, news hook), and momentum (timing, velocity). Returns the tier (prime ≥86 / strong ≥72 / lean ≥54 / watch ≥36 / avoid), the per-pillar breakdown, the natural-language reasons that drove the score, the full "who\'s in" trader roster with reputation labels and win-rates, and the narrative read (category, virality, tags). Call this when you need the highest-confidence trade signal; it synthesises everything get_coin_intel exposes into one actionable score. Pairs with get_coin_intel for raw signals.',
 		inputSchema: {
 			type: 'object',
 			properties: {

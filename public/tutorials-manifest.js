@@ -21,6 +21,16 @@
 			ctaPrimary: { label: 'Open the editor', href: '/create' },
 		},
 		{
+			slug: 'explore-docs-world',
+			tier: 'easy',
+			title: 'Explore the docs as a 3D world',
+			blurb: 'Walk an avatar through the documentation: fourteen sections as glowing pavilions, live pages read in-world, shareable deep links, and your own GLB as the body.',
+			builds: 'Fluency with the immersive docs at /docs/world',
+			time: '5 min',
+			previewModel: '/avatars/mannequin.glb',
+			ctaPrimary: { label: 'Enter the Docs World', href: '/docs/world' },
+		},
+		{
 			slug: 'add-a-3d-assistant',
 			tier: 'easy',
 			title: 'Add a 3D avatar assistant to your site',
@@ -403,6 +413,16 @@
 			time: '60 min',
 			previewModel: '/animations/robotexpressive.glb',
 			ctaPrimary: { label: 'Skills docs', href: '/docs#skills' },
+		},
+		{
+			slug: 'sell-a-skill-with-a-trial',
+			tier: 'middle',
+			title: 'Sell a skill with a free trial that converts',
+			blurb: 'List a skill in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Includes the missing decrement that quietly makes trials unsellable.',
+			builds: 'A listed skill whose free trial expires into a paid, on-chain sale',
+			time: '15 min',
+			previewModel: '/avatars/michelle.glb',
+			ctaPrimary: { label: 'Open the marketplace', href: '/marketplace' },
 		},
 		{
 			slug: 'register-onchain',

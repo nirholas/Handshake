@@ -3167,8 +3167,8 @@
 		},
 		{
 			"name": "get_oracle_conviction",
-			"descHead": "Oracle conviction score for a pump.fun mint — the fused 0–100 score the ",
-			"descHash": "347ddb2f7bf8",
+			"descHead": "Oracle conviction score for a pump.fun mint: the fused 0-100 score the O",
+			"descHash": "a0d4b8569c30",
 			"schemaHash": "1e44fef7baab"
 		},
 		{
@@ -3209,8 +3209,8 @@
 		},
 		{
 			"name": "pumpfun_first_claims",
-			"descHead": "First-ever pump.fun creator fee claims in a time window — a cash-out sig",
-			"descHash": "3907f4c44a58",
+			"descHead": "First-ever pump.fun creator fee claims in a time window: a cash-out sign",
+			"descHash": "8ded7617c657",
 			"schemaHash": "f6849838d8b8"
 		},
 		{

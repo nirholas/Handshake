@@ -110,6 +110,7 @@
 		"demo:agent-wallet-bridge": "node scripts/agent-wallet-x402-bridge.mjs",
 		"dev:lib": "TARGET=lib vite",
 		"presence": "node scripts/three-ws-presence.mjs",
+		"build:examples": "node scripts/build-examples-index.mjs",
 		"build:pages": "node scripts/build-page-index.mjs",
 		"build:discovery": "node scripts/build-discovery-cards.mjs",
 		"build:openai-cards": "node scripts/render-openai-social-cards.mjs",
