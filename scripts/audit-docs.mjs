@@ -287,6 +287,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['solana-pumpfun', 'owner-gated: names a crypto project other than $THREE'],
 	['syndication', 'internal: admin publishing configuration'],
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
+	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 

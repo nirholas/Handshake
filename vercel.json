@@ -4033,6 +4033,10 @@
 			"dest": "/objects.html"
 		},
 		{
+			"src": "/examples/?",
+			"dest": "/examples.html"
+		},
+		{
 			"src": "/forged/?",
 			"dest": "/forged.html"
 		},
