@@ -27,7 +27,7 @@ the three.ws CDN with `access-control-allow-origin: *`, so it loads from any ori
 ></script>
 
 <agent-3d
-  body="https://three.ws/cdn/forge/anon/YOUR_MODEL.glb"
+  body="https://three.ws/avatars/default.glb"
   mode="section"
   kiosk
   poster="/images/avatar-poster.webp"

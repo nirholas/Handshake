@@ -6,9 +6,14 @@ The repo is genuinely clean — no esbuild-trap files, no committed `dist/`, no
 fake-data arrays, no stub/TODO markers in first-party code. These are the real, small
 wins. Each is independent; do them as separate commits.
 
-> **Status (2026-07-29):** items 3, 4, 5 and 7 are closed. See the per-item notes
-> and **Actual net** at the bottom. Items 3 and 4 were **withdrawn**: every
-> "unused" dependency turned out to be load-bearing. Items 1, 2 and 6 are open.
+> **Status (re-verified 2026-07-30):** only item 6 is still open. Items 1 and 2
+> have since landed: `grep -rn "node-fetch"` across `workers/`, `api/`, `src/`,
+> `packages/` and every `package.json` now returns nothing first-party (the sole
+> hit is a code sample inside a third-party skill doc in `data/skills/seed.json`),
+> and `query-string` is gone from the tree and from the root `package.json`.
+> Items 3, 4, 5 and 7 were closed on 2026-07-29, with 3 and 4 **withdrawn**:
+> every "unused" dependency there turned out to be load-bearing. See the
+> per-item notes and **Actual net** at the bottom.
 
 **Verify every removal with a peer-dependency check, a dynamic-import grep, and a
 build before deleting.** `npm ls <pkg>` is not sufficient: it does not distinguish a

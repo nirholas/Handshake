@@ -27,7 +27,7 @@ Both are Apache-2.0 licensed. Neither requires the other.
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
-<agent-3d model="./avatar.glb"></agent-3d>
+<agent-3d model="https://three.ws/avatars/default.glb"></agent-3d>
 ```
 
 **UMD (legacy bundlers or `<script>` without `type="module"`):**
@@ -90,7 +90,7 @@ Direct three.js viewer — loads GLB/glTF, manages camera, lighting, and animati
 import { Viewer } from './src/lib.js';
 
 const viewer = new Viewer(document.getElementById('canvas-container'));
-viewer.load('./avatar.glb');
+viewer.load('https://three.ws/avatars/default.glb');
 ```
 
 Full attribute and event API is documented in [Web Component reference](web-component.md).

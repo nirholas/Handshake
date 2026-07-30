@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs</title>
+    <meta name="description" content="A field report from the three.ws GPU fleet: why Hunyuan3D 2.1 could not load on an NVIDIA L4, why CUDA 12.4 wheels have no sm_120 kernels for RTX PRO 6000 Blackwell, and the regional quota that made the bigger card the available card.">
+    <meta name="keywords" content="Hunyuan3D 2.1, NVIDIA L4, RTX PRO 6000, Blackwell, sm_120, CUDA 12.8, Cloud Run GPU, image to 3D, text to 3D, PBR textures, GPU inference, PyTorch, TORCH_CUDA_ARCH_LIST, NVIDIA Inception, three.ws">
+    <link rel="canonical" href="https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell">
+
+    <meta property="og:title" content="Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs">
+    <meta property="og:description" content="Two walls, both invisible from the model card: a memory-backed /tmp that SIGKILLs a 32 GiB instance mid-load, and cu124 wheels that ship no sm_120 kernels for Blackwell. Here is what we measured and what we changed.">
+    <meta property="og:url" content="https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Image-to-3D on NVIDIA L4 and Blackwell">
+    <meta name="twitter:description" content="Why our image-to-3D worker could not load on an L4, why Blackwell needed a cu128 rebuild, and why regional quota made the bigger GPU the easier one to get.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 760px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 22px; font-weight: 600; margin: 48px 0 12px; letter-spacing: -0.01em; }
+        h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: #dcdcf0; letter-spacing: -0.005em; }
+        p { color: #c8c8e0; line-height: 1.75; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.75; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 8px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 48px 0; }
+
+        .lede { font-size: 18px; color: #d6d6ea; line-height: 1.7; }
+
+        .callout { border: 1px solid rgba(150,170,255,.22); background: rgba(120,140,255,.05); border-radius: 14px; padding: 20px 22px; margin: 0 0 32px; }
+        .callout h3 { margin-top: 0; color: #9ad4ff; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+        .callout ul { margin-bottom: 0; }
+        .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+
+        .callout.warn { border-color: rgba(255,190,120,.24); background: rgba(255,170,80,.05); }
+        .callout.warn h3 { color: #ffc785; }
+
+        .table-scroll { overflow-x: auto; margin: 0 0 24px; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 480px; }
+        th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.07); vertical-align: top; }
+        th { color: #9aa3c4; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; border-bottom-color: rgba(255,255,255,.14); }
+        td { color: #c8c8e0; line-height: 1.55; }
+        tbody tr:hover td { background: rgba(255,255,255,.02); }
+        td code { font-size: 12px; }
+
+        pre { background: #0b0b1c; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 16px 18px; overflow-x: auto; margin: 0 0 24px; -webkit-overflow-scrolling: touch; }
+        pre code { background: none; padding: 0; color: #c5d8ee; font-size: 13px; line-height: 1.6; display: block; }
+
+        figure { margin: 0 0 24px; }
+        figcaption { color: #7a85a8; font-size: 13px; line-height: 1.6; margin-top: 8px; }
+
+        .toc { border-left: 2px solid rgba(154,212,255,.25); padding: 2px 0 2px 18px; margin: 0 0 36px; }
+        .toc ol { margin: 0; padding-left: 18px; font-size: 15px; }
+        .toc li { margin-bottom: 4px; }
+
+        @media (max-width: 600px) {
+            .post-wrap { padding: 80px 18px 64px; }
+            h2 { font-size: 20px; }
+        }
+    </style>
+    <meta property="og:image" content="https://three.ws/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:image" content="https://three.ws/og-image.png">
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-07-30</span>
+            <span class="post-tag">Engineering</span>
+            <span class="post-tag">NVIDIA</span>
+            <span class="post-tag">GPU</span>
+            <span class="post-tag">3D</span>
+        </div>
+        <h1>Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs</h1>
+
+        <p class="lede">Every 3D generation lane on three.ws runs on NVIDIA silicon. Moving our realism lane from Hunyuan3D 2.0 to 2.1 cost us two days on problems that were invisible from the model card and from the platform docs alike. This is the field report: what failed, what the logs actually said, and what we changed. If you are putting a large diffusion-plus-mesh pipeline on managed GPU infrastructure, two of these will probably bite you too.</p>
+
+        <div class="callout">
+            <h3>The short version</h3>
+            <ul>
+                <li><strong>A 24 GiB GPU is not the constraint. The 32 GiB of system memory next to it is.</strong> Cloud Run backs <code>/tmp</code> with RAM, so staged weights and loaded weights are charged to the same budget, twice.</li>
+                <li><strong>Blackwell is compute capability 12.0.</strong> CUDA 12.4 wheels ship no <code>sm_120</code> kernels. The fix is a cu128 rebuild, not a flag.</li>
+                <li><strong>Check quota per GPU type before you pick a tier.</strong> In our region the bigger, newer card was the one we could actually get.</li>
+                <li><strong>Make readiness a separate signal from liveness.</strong> A worker that binds its port before the model loads will report healthy while it is dying.</li>
+            </ul>
+        </div>
+
+        <div class="toc">
+            <ol>
+                <li><a href="#fleet">The fleet</a></li>
+                <li><a href="#why21">Why 2.1 was worth the trouble</a></li>
+                <li><a href="#wall1">Wall 1: memory-backed <code>/tmp</code></a></li>
+                <li><a href="#wall2">Wall 2: Blackwell needs sm_120</a></li>
+                <li><a href="#quota">The quota surprise</a></li>
+                <li><a href="#rollback">Designing for a one-line rollback</a></li>
+                <li><a href="#tiers">Spending the GPU budget</a></li>
+                <li><a href="#checklist">A checklist for your own port</a></li>
+            </ol>
+        </div>
+
+        <h2 id="fleet">The fleet</h2>
+
+        <p>three.ws runs two distinct NVIDIA layers. The first is a <strong>free hosted lane</strong>: one <code>NVIDIA_API_KEY</code> unlocks TRELLIS for text-to-3D, FLUX.1-schnell for images, the Llama and Nemotron chat lineup, embeddings, reranking, safety, and speech. That layer is documented model by model in <a href="/docs/nvidia-models">NVIDIA models on three.ws</a> and it is not what this post is about.</p>
+
+        <p>The second is our <strong>self-hosted GPU fleet</strong>: twelve Cloud Run services, each a FastAPI worker wrapping one model, autoscaled per lane. Eleven run on <code>nvidia-l4</code>. One runs on <code>nvidia-rtx-pro-6000</code>.</p>
+
+        <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>Lane</th><th>Worker</th><th>GPU</th><th>CPU / memory</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Image to 3D (PBR)</td><td><code>model-hunyuan3d-21-rtx</code></td><td><code>nvidia-rtx-pro-6000</code></td><td>20 / 80 Gi</td></tr>
+                <tr><td>Image to 3D (fallback)</td><td><code>model-hunyuan3d</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+                <tr><td>Text to 3D</td><td><code>model-trellis</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+                <tr><td>Image to 3D (fast)</td><td><code>model-triposg</code>, <code>model-triposr</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi, 4 / 16 Gi</td></tr>
+                <tr><td>Texture synthesis</td><td><code>texture</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+                <tr><td>Auto-rigging</td><td><code>rig</code>, <code>unirig</code></td><td><code>nvidia-l4</code></td><td>4 / 16 Gi</td></tr>
+                <tr><td>Text to motion</td><td><code>model-text2motion</code></td><td><code>nvidia-l4</code></td><td>4 / 16 Gi</td></tr>
+                <tr><td>Video to scene</td><td><code>model-video2scene</code></td><td><code>nvidia-l4</code></td><td>8 / 32 Gi</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>The L4 is a genuinely excellent default for this workload: 24 GiB of VRAM, a low power envelope, and wide availability. Nine of these lanes never needed anything else. The tenth did, and finding out why took longer than it should have.</p>
+
+        <h2 id="why21">Why 2.1 was worth the trouble</h2>
+
+        <p>Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture. It reads fine in a product thumbnail and it reads like plastic under real lighting, because a diffuse map carries no information about how a surface responds to light.</p>
+
+        <p>Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass: multiview PBR diffusion, RealESRGAN super-resolution, a texture bake, and an inpaint step to close seams. It exports a GLB with a true physically-based material set:</p>
+
+        <ul>
+            <li><strong>baseColor</strong>: the albedo, with lighting information removed rather than baked in.</li>
+            <li><strong>metallicRoughness</strong>: how metal and how polished each texel is. This is the map that decides whether a sword reads as steel or as grey paint.</li>
+            <li><strong>normal</strong>: surface detail below the mesh's triangle budget, so a leather grain survives decimation.</li>
+        </ul>
+
+        <p>PBR maps are the single biggest realism lever available in a generated asset, and they are why the same model dropped into an <a href="/ar">AR scene</a> under a real room's lighting stops looking like a toy. That was the whole motivation. Everything below is what stood between the motivation and the deploy.</p>
+
+        <h2 id="wall1">Wall 1: memory-backed <code>/tmp</code></h2>
+
+        <p>The 2.1 service on an L4 never finished loading. Not slowly. Not intermittently. Every single cold start ended the same way:</p>
+
+        <pre><code>Container terminated on signal 9</code></pre>
+
+        <p>Signal 9 is <code>SIGKILL</code>. On Cloud Run that almost always means the instance exceeded its memory limit and the platform killed it. Which was confusing, because the model fits comfortably in 24 GiB of VRAM. The problem was never VRAM.</p>
+
+        <h3>The arithmetic nobody does until it fails</h3>
+
+        <p>Our worker stages weights from a bucket into <code>/tmp</code>, then loads them. Two numbers matter:</p>
+
+        <ul>
+            <li>The staged weight tree on disk: roughly <strong>18 GiB</strong>.</li>
+            <li>The model resident after <code>from_pretrained</code>: roughly <strong>14 GiB</strong>.</li>
+        </ul>
+
+        <p><strong>On Cloud Run, <code>/tmp</code> is a tmpfs.</strong> It is not disk. Every byte written there is a byte of the instance's memory allocation, and it stays allocated until you delete the file. So the peak is not 14 GiB and it is not 18 GiB. It is both at once, against the L4 tier's ceiling of 32 GiB:</p>
+
+        <pre><code>18 GiB  staged weights, resident in tmpfs
++ 14 GiB  model loaded into process memory
+--------
+  32 GiB  peak, against a 32 GiB limit
+  → SIGKILL, every time</code></pre>
+
+        <p>This is worth internalizing as a general rule, because it is not specific to us or to this model: <strong>on any platform where <code>/tmp</code> is memory-backed, staging a large artifact before loading it doubles your peak</strong>. The same code on a VM with a real disk works fine, which is exactly why it survives local testing and dies in production.</p>
+
+        <h3>Why the health check looked green</h3>
+
+        <div class="callout warn">
+            <h3>The part that cost us the most time</h3>
+            <p>Our worker opens its HTTP port immediately and loads the pipeline in a background task, so cold starts do not fail the platform's startup probe. That is a deliberate and common design. The consequence is that <code>GET /health</code> answers <code>200</code> while the model is still loading, which means <strong>a service that can never finish loading still looks alive</strong>.</p>
+        </div>
+
+        <p>The fix is not to remove the background load. It is to make readiness a distinct field that only flips when the pipeline is actually usable, and to surface the failure rather than swallowing it:</p>
+
+        <pre><code>{
+  "ok": true,
+  "model": "hunyuan3d-2.1",
+  "gpu_available": true,
+  "gpu_name": "NVIDIA L4",
+  "pipeline_loaded": true,
+  "ready": true,
+  "load_error": null
+}</code></pre>
+
+        <p><code>ok</code> is liveness: the process is up. <code>ready</code> is the one your router should gate on. <code>load_error</code> carries a sanitized string so a failed load is a diagnosis instead of a mystery. If you take one operational idea from this post, take this one: <strong>a boolean that means "the port is open" and a boolean that means "this instance can do work" are different booleans, and conflating them turns a five-minute fix into a two-day hunt.</strong></p>
+
+        <h3>The two real fixes</h3>
+
+        <p>There are exactly two ways out, and they are worth knowing both:</p>
+
+        <ol>
+            <li><strong>Stage incrementally.</strong> Fetch one weight subtree, call <code>from_pretrained</code> on it, delete the staged copy, move to the next. The staged and resident copies never coexist at full size, and peak memory drops to roughly the resident footprint plus one subtree. This is the right fix if you are pinned to a memory-constrained tier.</li>
+            <li><strong>Move to a tier whose floor clears the peak.</strong> The platform minimums for <code>nvidia-rtx-pro-6000</code> on Cloud Run are 20 CPU and 80 GiB, which clears a 32 GiB peak with room to spare and stops the problem being a problem.</li>
+        </ol>
+
+        <p>We took the second, because we wanted the faster card anyway and because of the quota situation below. The first remains the correct fix for anyone who wants 2.1 on an L4, and it is a contained change: it lives entirely inside the staging function.</p>
+
+        <h2 id="wall2">Wall 2: Blackwell needs sm_120</h2>
+
+        <p>Switching GPU type should be a one-line change to a deploy config. It was not, and the reason is a good thing to have in your head before you plan a Blackwell migration.</p>
+
+        <p><strong>RTX PRO 6000 is Blackwell, and Blackwell is compute capability 12.0.</strong> Our L4 image was built on CUDA 12.4 with torch 2.5 (cu124). The cu124 wheels predate that architecture and <strong>ship no <code>sm_120</code> kernels at all</strong>. There is no runtime flag, no fallback path, and no JIT rescue that makes prebuilt cu124 binaries emit Blackwell code. You rebuild or you do not run.</p>
+
+        <p>The RTX image is the same application code on a different foundation:</p>
+
+        <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th></th><th>L4 image</th><th>RTX PRO 6000 image</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Architecture</td><td>Ada Lovelace, <code>sm_89</code></td><td>Blackwell, <code>sm_120</code></td></tr>
+                <tr><td>CUDA</td><td>12.4</td><td>12.8</td></tr>
+                <tr><td>PyTorch</td><td>2.5 (cu124)</td><td>2.7.1 (cu128)</td></tr>
+                <tr><td>Extensions built for</td><td><code>8.9</code></td><td><code>8.9;12.0</code></td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>Note the last row. We compile the custom CUDA extensions for <strong>both</strong> architectures, not just the one we deploy to:</p>
+
+        <pre><code>ENV TORCH_CUDA_ARCH_LIST="8.9;12.0"</code></pre>
+
+        <p>It costs build minutes and a little image size. It buys something worth much more: one image that boots on either GPU type. That turns "which card is available in this region today" from a rebuild into a deploy flag, and it turns a rollback into a redeploy rather than a re-architecture. If you are building images for a fleet that spans GPU generations, build fat and pick at deploy time.</p>
+
+        <p>The same discipline applies one level up. Hunyuan3D 2.0 and 2.1 have <em>mutually incompatible</em> Python stacks (torch 2.3 / cu121 with <code>hy3dgen</code> against torch 2.5 / cu124 with <code>hy3dshape</code> and <code>hy3dpaint</code>). Rather than fight that, we run them as two separate services. Trying to unify them in one image would have cost days and produced something more fragile than two clean containers.</p>
+
+        <h2 id="quota">The quota surprise</h2>
+
+        <p>This one is not code, and it is the finding most likely to save someone a planning cycle.</p>
+
+        <p>The intuitive assumption is that the small, cheap, mature GPU is the easy one to get, and the big new one is the scarce one you have to beg for. In <code>us-central1</code>, for us, it was the reverse. Our L4 quota was <strong>3 GPUs</strong>, shared across the entire fleet and permanently pinned at that ceiling. Every new L4 lane was a fight with the lanes we already had. The RTX PRO 6000 quota in the same region was granted at a far higher number.</p>
+
+        <div class="callout">
+            <h3>Practical takeaway</h3>
+            <p>Check your granted quota <em>per GPU type, per region</em> before you choose a tier on price or spec. The larger card can be the more available card, and "available" beats "theoretically cheaper" every time you are trying to ship. Note also that a granted quota number and what deploy-time enforcement lets you run can differ, so confirm with an actual deploy rather than a dashboard reading.</p>
+        </div>
+
+        <p>Our RTX service runs with min instances and max instances both set to 1, held warm. Nothing about that is elegant, but for a lane where a cold start means loading 14 GiB before the first token of work, a warm instance is the difference between a 20-second response and a 4-minute one. Warm capacity is the cheapest latency optimization available to anyone running large models behind a request path.</p>
+
+        <h2 id="rollback">Designing for a one-line rollback</h2>
+
+        <p>The best decision in this whole migration was made before any of it started: <strong>every image-to-3D worker speaks the same wire contract.</strong> Same request shape, same response shape, same task-polling semantics, regardless of which model or GPU is behind it.</p>
+
+        <pre><code>POST /infer     → 202 { "task_id": "...", "status": "queued" }
+GET  /tasks/:id → { "status": "done", "result_gcs_url": "...", "elapsed_ms": 224140 }
+GET  /health    → { "ok": true, "ready": true, "load_error": null }</code></pre>
+
+        <p>Because of that, rolling the realism lane back from 2.1 to 2.0 is repointing one environment variable at a different service URL. No rebuild, no code change, no redeploy of the caller. When you are moving a production lane onto new hardware, the ability to undo it in thirty seconds is what makes it reasonable to try at all.</p>
+
+        <p>Two smaller decisions carried more weight than they looked like they would:</p>
+
+        <ul>
+            <li><strong>Task state lives in object storage, not in the instance.</strong> Every transition writes a durable <code>tasks/{id}.json</code> blob, so a <code>POST /infer</code> and a later <code>GET /tasks/:id</code> that land on different autoscaled instances still resolve the same record. Without this, autoscaling silently loses jobs, and you will diagnose it as a model problem.</li>
+            <li><strong>Every remote image URL goes through an SSRF guard.</strong> Image-to-3D means accepting a URL from a caller and fetching it server-side, which is a textbook server-side request forgery surface. Ours is https-only and rejects private, loopback, link-local, and cloud-metadata addresses <em>on every redirect hop</em>, not just the first. Checking only the initial URL is the classic mistake: a redirect to <code>169.254.169.254</code> is one hop away from your instance metadata.</li>
+        </ul>
+
+        <h2 id="tiers">Spending the GPU budget</h2>
+
+        <p>With the memory ceiling gone, the interesting question becomes how to spend the compute. The 2.1 budget splits between the shape DiT (inference steps and marching-cubes octree resolution) and the paint pass (how many views, and at what resolution each view diffuses). We expose three tiers:</p>
+
+        <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>Tier</th><th>Shape steps</th><th>Octree</th><th>Paint views</th><th>Paint resolution</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>draft</code></td><td>30</td><td>256</td><td>6</td><td>512</td></tr>
+                <tr><td><code>standard</code></td><td>50</td><td>384</td><td>6</td><td>512</td></tr>
+                <tr><td><code>high</code> (default)</td><td>50</td><td>512</td><td>6</td><td>768</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>The non-obvious choice is that <strong>the multiview count stays at 6 across all three tiers.</strong> Views are the expensive axis: each additional view is another full diffusion pass held in VRAM alongside the shape DiT, the DINOv2 reference encoder, and RealESRGAN. Holding views constant and spending the extra budget on octree resolution and per-view resolution buys sharper geometry and crisper PBR maps without pushing VRAM into swap-or-die territory. The texture atlas is pinned high at load time regardless of tier (2048 render, 4096 texture), because atlas resolution is cheap relative to what it contributes.</p>
+
+        <p>The <code>elapsed_ms</code> in the response above is real: a <code>high</code>-tier generation is a multi-minute job. That is the correct trade for us. GPU time is the cheapest input in this pipeline and a user's opinion of the result is the most expensive output, so quality wins by default and the fast lanes exist for people who explicitly ask for one.</p>
+
+        <h2 id="checklist">A checklist for your own port</h2>
+
+        <p>If you are about to put a large image-to-3D or diffusion pipeline on managed GPU infrastructure, this is the list we wish we had started with:</p>
+
+        <ol>
+            <li><strong>Find out whether <code>/tmp</code> is memory-backed.</strong> If it is, add your staged size to your resident size and compare that sum, not either number alone, to the tier's memory limit.</li>
+            <li><strong>Separate liveness from readiness.</strong> Return both, gate routing on readiness, and surface the load error in the payload.</li>
+            <li><strong>Read your granted GPU quota per type and per region</strong> before you pick a tier. Then verify it with a real deploy.</li>
+            <li><strong>Match the CUDA toolkit to the target architecture.</strong> Blackwell is <code>sm_120</code> and needs cu128 wheels; no flag substitutes for the rebuild.</li>
+            <li><strong>Set <code>TORCH_CUDA_ARCH_LIST</code> to every architecture you might deploy to</strong>, not just today's. Fat images make GPU choice a deploy-time decision.</li>
+            <li><strong>Persist task state outside the instance</strong> the moment you enable autoscaling.</li>
+            <li><strong>Validate remote fetches on every redirect hop</strong>, not only the submitted URL.</li>
+            <li><strong>Keep one wire contract across model versions</strong> so rollback is an environment variable.</li>
+            <li><strong>Keep the old lane deployed</strong> while the new one earns its place. A warm fallback costs less than an outage.</li>
+        </ol>
+
+        <p>One licensing note, because it is easy to skip and expensive to skip: generative 3D checkpoints ship under a wide spread of terms, and several popular ones carry non-commercial or otherwise restricted licenses that differ from the permissive license on the surrounding code. Read the license on the exact checkpoint you intend to deploy, including any super-resolution or encoder models pulled in as dependencies, before it reaches production.</p>
+
+        <hr>
+
+        <h2>Where this runs</h2>
+
+        <p>Everything above is in production behind <a href="/forge">the forge</a>, the text and image to 3D surface on three.ws. The free lane needs no key and no account; the paid lanes route to the self-hosted fleet described here. Generated models drop straight into <a href="/ar">AR</a>, the <a href="/create">avatar studio</a>, and the <code>&lt;agent-3d&gt;</code> <a href="/docs/web-component">web component</a> for embedding on any site.</p>
+
+        <p>three.ws joined the <a href="/docs/nvidia-inception">NVIDIA Inception program</a> in July 2026. It is a startup program rather than a partnership or an investment, and in practice it means GPU capacity and engineering access on the exact constraint this post is about. The work of relaxing that constraint is ongoing, and we will keep publishing the numbers as we get them.</p>
+
+        <h2>Related reading</h2>
+        <ul>
+            <li><a href="/docs/nvidia-models">Every NVIDIA model three.ws runs for free</a>: the hosted inference layer, model by model, with the endpoint each one serves.</li>
+            <li><a href="/docs/nvidia-nemotron-spotlight">The generator was never the hard part</a>: our Nemotron Nano write-up, published on the NVIDIA Developer Forums, on why the vision model in front of the 3D generator mattered more than the generator.</li>
+            <li><a href="/docs/nvidia-inception">NVIDIA Inception membership</a>: what already runs on NVIDIA here and what the program adds.</li>
+            <li><a href="/docs/3d-asset-pipeline">The 3D asset pipeline</a>: what happens to a mesh between generation and a browser.</li>
+            <li><a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a>: the platform is open source, including the worker configurations quoted throughout this post.</li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <div id="footer-container"></div>
+    <script src="/nav.js"></script>
+    <script src="/footer.js"></script>
+</body>
+</html>

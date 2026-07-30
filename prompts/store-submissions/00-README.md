@@ -10,7 +10,9 @@ Goal: get three.ws's plugins and tools listed across **every** Claude and OpenAI
 6. **MCP registries & third-party directories** (Smithery, Glama, mcp.so, PulseMCP, LobeHub) — prompt 13
 7. **Shared asset kit + submission tracker** — prompt 14
 
-Each file in this folder is a **self-contained prompt** you paste into a fresh Claude Code chat in this repo. Run them in the order below. Each prompt drives one work-stream to a verified, production-complete state and ends by telling you exactly what to hand to the next chat.
+Each numbered prompt was a **self-contained work order** you pasted into a fresh Claude Code chat in this repo, driving one work-stream to a verified, production-complete state.
+
+> Retirement note (2026-07-30): every numbered prompt in this pack has been retired from the working tree and remains readable in git history. The run-order table below is kept as the map of what each work-stream owned; rows without a SHIPPED marker were retired without one, so do not read a missing marker as unfinished work. The live state of every submission target, including what still needs a human, is [`_generated/TRACKER.md`](_generated/TRACKER.md), not this file. `_generated/` also holds the machine-written submission evidence and is never delete-eligible.
 
 ---
 

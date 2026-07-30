@@ -37,8 +37,9 @@ if (!appId) {
 }
 
 // ── CAPTCHA (Cloudflare Turnstile) ───────────────────────────────────────────
-// Privy rejects passwordless/init with 401 invalid_credentials when the app has
-// CAPTCHA enabled and no token is sent, so this must resolve before sendCode.
+// Privy rejects passwordless/init AND siwe/init with 401 invalid_credentials
+// when the app has CAPTCHA enabled and no token is sent, so this must resolve
+// before sendCode and before the EVM wallet flow.
 
 async function fetchCaptchaConfig(id) {
 	try {
@@ -49,8 +50,12 @@ async function fetchCaptchaConfig(id) {
 		const cfg = await r.json();
 		if (!cfg?.captcha_enabled || !cfg.captcha_site_key) return null;
 		if (cfg.enabled_captcha_provider && cfg.enabled_captcha_provider !== 'turnstile') return null;
-		// Privy prefixes Turnstile site keys with "t:".
-		return { siteKey: cfg.captcha_site_key.replace(/^t:/, '') };
+		return {
+			// Privy prefixes Turnstile site keys with "t:".
+			siteKey: cfg.captcha_site_key.replace(/^t:/, ''),
+			// Apps with a custom auth domain serve every auth endpoint from it.
+			apiUrl: cfg.custom_api_url || 'https://auth.privy.io',
+		};
 	} catch {
 		return null;
 	}
@@ -64,7 +69,7 @@ function loadTurnstile() {
 		if (window.turnstile) { resolve(window.turnstile); return; }
 		window.__privyTurnstileOnload = () => resolve(window.turnstile);
 		const script = document.createElement('script');
-		script.src = 'https://challenges.cloudflare.com/turnstile/api.js?onload=__privyTurnstileOnload&render=explicit';
+		script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=__privyTurnstileOnload&render=explicit';
 		script.async = true;
 		script.onerror = () => {
 			turnstilePromise = null;
@@ -105,6 +110,46 @@ async function requestCaptchaToken(siteKey) {
 		}
 		turnstile.execute(slot);
 	});
+}
+
+// ── SIWE init with CAPTCHA ───────────────────────────────────────────────────
+// js-sdk-core's siwe.init() POSTs only {address}, with no way to attach a
+// CAPTCHA token, so a CAPTCHA-enabled app 401s every EVM login through the
+// SDK. The endpoint itself accepts a token field (same as passwordless/init),
+// so call it directly and hand the message to loginWithSiwe(signature,
+// wallet, message), which keeps the rest of the SDK flow intact.
+
+async function siweInitWithCaptcha(apiUrl, address, chainId, captchaToken) {
+	const r = await fetch(`${apiUrl}/api/v1/siwe/init`, {
+		method: 'POST',
+		credentials: 'include',
+		headers: { 'content-type': 'application/json', 'privy-app-id': appId },
+		body: JSON.stringify({ address, token: captchaToken }),
+	});
+	const data = await r.json().catch(() => ({}));
+	if (!r.ok) {
+		throw new Error(
+			data.code === 'invalid_captcha'
+				? 'CAPTCHA verification failed. Try again.'
+				: 'Could not reach the sign-in service. Try again.',
+		);
+	}
+	// Same EIP-4361 message the SDK's siwe.init() builds; the server verifies
+	// the domain and nonce on authenticate.
+	return [
+		`${location.hostname} wants you to sign in with your Ethereum account:`,
+		address,
+		'',
+		'By signing, you are proving you own this wallet and logging in. This does not initiate a transaction or cost any fees.',
+		'',
+		`URI: ${location.origin}`,
+		'Version: 1',
+		`Chain ID: ${chainId}`,
+		`Nonce: ${data.nonce}`,
+		`Issued At: ${new Date().toISOString()}`,
+		'Resources:',
+		'- https://privy.io',
+	].join('\n');
 }
 
 // ── Shared backend verify ─────────────────────────────────────────────────────
@@ -313,12 +358,25 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 			);
 			const chainId    = parseInt(chainIdHex, 16);
 
-			setWalletStatus('Generating sign-in message…');
-			const { message } = await withTimeout(
-				privy.auth.siwe.init({ address, chainId }, location.hostname, location.origin),
-				15_000,
-				'Could not reach the sign-in service. Try again.',
-			);
+			let message;
+			const captcha = await captchaConfigPromise;
+			if (captcha) {
+				setWalletStatus('Checking you are human…');
+				const captchaToken = await requestCaptchaToken(captcha.siteKey);
+				setWalletStatus('Generating sign-in message…');
+				message = await withTimeout(
+					siweInitWithCaptcha(captcha.apiUrl, address, chainId, captchaToken),
+					15_000,
+					'Could not reach the sign-in service. Try again.',
+				);
+			} else {
+				setWalletStatus('Generating sign-in message…');
+				({ message } = await withTimeout(
+					privy.auth.siwe.init({ address, chainId }, location.hostname, location.origin),
+					15_000,
+					'Could not reach the sign-in service. Try again.',
+				));
+			}
 
 			setWalletStatus('Sign the message in your wallet…');
 			const signature = await withTimeout(
@@ -329,7 +387,7 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 
 			setWalletStatus('Signing in…');
 			const { identity_token } = await withTimeout(
-				privy.auth.siwe.loginWithSiwe(signature),
+				privy.auth.siwe.loginWithSiwe(signature, { address, chainId }, message),
 				15_000,
 				'Could not reach the sign-in service. Try again.',
 			);

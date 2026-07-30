@@ -11,7 +11,10 @@
 //
 // Views:
 //   GET /api/forged                      : recent renderable props (status done)
-//   GET /api/forged?category=crate       : filter by prop family
+//   GET /api/forged?category=container   : filter by prop family (the eight
+//        families in _lib/x402/pipelines/forge-catalog.js: club-decor,
+//        ar-object, diorama-set, avatar-item, vehicle, container, furniture,
+//        terrain)
 //   GET /api/forged?status=all           : include queued/failed rows (audit view)
 //   GET /api/forged?limit=60             : page size (max 100)
 //
@@ -26,11 +29,14 @@ import { cors, json, method, serverError, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { explorerTxUrl } from './_lib/avatar-wallet.js';
+import { CATEGORIES as PROP_CATEGORIES } from './_lib/x402/pipelines/forge-catalog.js';
 
 const FEED_TTL_S = 20;
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 100;
-const CATEGORIES = new Set(['crate', 'barrel', 'furniture', 'terrain']);
+// Derived from the same catalog the buying pipeline picks from, so this filter
+// can never again accept names that match no row (or reject real families).
+const CATEGORIES = new Set(PROP_CATEGORIES);
 
 function shortAddr(a) {
 	if (!a || typeof a !== 'string') return null;

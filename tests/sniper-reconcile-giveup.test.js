@@ -53,3 +53,75 @@ describe('shouldGiveUpReconcile', () => {
 		expect(shouldGiveUpReconcile(new Date(NOW + 60_000).toISOString(), SIX_HOURS, NOW)).toBe(false);
 	});
 });
+
+// The anchor feeding that clock. A row parked before `reconcile_pending_since`
+// existed carries the park marker with no timestamp, and a null reads as "not
+// parked" above, so those rows could never be reaped. Four arms sat frozen for
+// 37 to 57 hours against a 30-minute max hold because of it.
+describe('reconcileParkAnchor', () => {
+	const iso = (ms) => new Date(ms).toISOString();
+
+	it('uses reconcile_pending_since whenever it is set', () => {
+		const since = iso(NOW - SIX_HOURS);
+		expect(reconcileParkAnchor({
+			reconcile_pending_since: since,
+			error: 'reconcile_pending',
+			stale_since: iso(NOW - 40 * 60 * 60 * 1000),
+		})).toBe(since);
+	});
+
+	it('prefers reconcile_pending_since even when the row is not marked parked', () => {
+		const since = iso(NOW - 1000);
+		expect(reconcileParkAnchor({ reconcile_pending_since: since, error: null })).toBe(since);
+	});
+
+	it('returns null for a position that is not parked', () => {
+		expect(reconcileParkAnchor({ reconcile_pending_since: null, error: null })).toBe(null);
+		expect(reconcileParkAnchor({ error: 'graduated:amm_entry', stale_since: iso(NOW) })).toBe(null);
+		expect(reconcileParkAnchor({})).toBe(null);
+		expect(reconcileParkAnchor(null)).toBe(null);
+	});
+
+	it('falls back to stale_since on a parked row with no park timestamp', () => {
+		const stale = iso(NOW - 40 * 60 * 60 * 1000);
+		expect(reconcileParkAnchor({
+			reconcile_pending_since: null,
+			error: 'reconcile_pending',
+			stale_since: stale,
+			opened_at: iso(NOW - 57 * 60 * 60 * 1000),
+		})).toBe(stale);
+	});
+
+	it('falls back to opened_at when there is no stale_since either', () => {
+		const opened = iso(NOW - 57 * 60 * 60 * 1000);
+		expect(reconcileParkAnchor({
+			reconcile_pending_since: null,
+			error: 'reconcile_pending',
+			stale_since: null,
+			opened_at: opened,
+		})).toBe(opened);
+	});
+
+	it('makes the legacy wedge reapable instead of permanent', () => {
+		// The exact production shape: parked marker, no park timestamp, stale for
+		// 57 hours. Before the anchor this returned null and never gave up.
+		const wedged = {
+			reconcile_pending_since: null,
+			error: 'reconcile_pending',
+			stale_since: iso(NOW - 57 * 60 * 60 * 1000),
+			opened_at: iso(NOW - 57 * 60 * 60 * 1000),
+		};
+		expect(shouldGiveUpReconcile(wedged.reconcile_pending_since, SIX_HOURS, NOW)).toBe(false);
+		expect(shouldGiveUpReconcile(reconcileParkAnchor(wedged), SIX_HOURS, NOW)).toBe(true);
+	});
+
+	it('still gives a fresh park its full window', () => {
+		const justParked = {
+			reconcile_pending_since: null,
+			error: 'reconcile_pending',
+			stale_since: iso(NOW - 60_000),
+			opened_at: iso(NOW - 30 * 60 * 1000),
+		};
+		expect(shouldGiveUpReconcile(reconcileParkAnchor(justParked), SIX_HOURS, NOW)).toBe(false);
+	});
+});

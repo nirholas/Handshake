@@ -129,6 +129,9 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 Deeper references that don't fit a track above but answer real questions:
 
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
+- [NVIDIA models on three.ws](./nvidia-models.md): the free hosted inference layer model by model, one key behind text-to-3D, chat, vision, embeddings, safety, and speech
+- [NVIDIA Inception membership](./nvidia-inception.md): what the platform already runs on NVIDIA silicon and what the program adds on top
+- [The generator was never the hard part](./nvidia-nemotron-spotlight.md): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [The onboarding tier](./onboarding-tier.md): why a first-time visitor sees ~20 nav destinations instead of ~100, how the Simple ⇄ Everything switch works, and which tier a new page belongs in
 - [What an agent can do](./agent-abilities/ABILITIES.md): the full abilities dossier, generated from the source article
 - [Use cases and example workflows](./content/use-cases/README.md): five audience-specific walkthroughs tying shipped features to concrete outcomes

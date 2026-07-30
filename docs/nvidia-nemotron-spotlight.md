@@ -145,4 +145,4 @@ Build the small stuff. Put it in front. The generator was never the hard part.
 
 ---
 
-*three.ws is a browser-native platform for generating 3D avatars, worlds, and agents from a sentence. The text-to-3D lane described here is free and open: no key, no account. Our full NVIDIA model map lives in [`docs/nvidia-models.md`](./nvidia-models.md), and the pipeline internals are in [`docs/3d-asset-pipeline.md`](./3d-asset-pipeline.md).*
+*three.ws is a browser-native platform for generating 3D avatars, worlds, and agents from a sentence. The text-to-3D lane described here is free and open: no key, no account. Our full NVIDIA model map lives in [`docs/nvidia-models.md`](./nvidia-models.md), and the pipeline internals are in [`docs/3d-asset-pipeline.md`](./3d-asset-pipeline.md). three.ws joined the [NVIDIA Inception program](./nvidia-inception.md) in July 2026; the companion engineering post on our own GPU fleet is [Image-to-3D on NVIDIA L4 and Blackwell](https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell).*

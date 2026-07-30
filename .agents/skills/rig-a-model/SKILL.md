@@ -54,7 +54,7 @@ curl -s -X POST https://three.ws/api/mcp-studio \
     "method": "tools/call",
     "params": {
       "name": "rig_mesh",
-      "arguments": { "glb_url": "https://three.ws/cdn/creations/abc123/mesh.glb" }
+      "arguments": { "glb_url": "https://three.ws/avatars/cesium-man.glb" }
     }
   }'
 ```
@@ -65,7 +65,7 @@ curl -s -X POST https://three.ws/api/mcp-studio \
 {
   "ok": true,
   "riggedGlbUrl": "https://three.ws/cdn/creations/def456/rigged.glb",
-  "sourceGlbUrl": "https://three.ws/cdn/creations/abc123/mesh.glb",
+  "sourceGlbUrl": "https://three.ws/avatars/cesium-man.glb",
   "poseStudioUrl": "https://three.ws/pose?src=https%3A%2F%2Fthree.ws%2F...",
   "jobId": "r9k2m7x4",
   "durationMs": 48000
@@ -80,7 +80,7 @@ The MCP tool is a thin client over the public rig endpoint. Submit, then poll:
 # 1. Start the rig job
 curl -s -X POST "https://three.ws/api/forge?action=rig" \
   -H 'content-type: application/json' \
-  -d '{ "glb_url": "https://three.ws/cdn/creations/abc123/mesh.glb" }'
+  -d '{ "glb_url": "https://three.ws/avatars/cesium-man.glb" }'
 # → { "job_id": "r9k2m7x4", ... }
 
 # 2. Poll until done (every ~3s, budget ~180s)

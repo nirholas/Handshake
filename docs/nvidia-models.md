@@ -191,6 +191,9 @@ The free NVIDIA TTS lane: **Magpie multilingual on Riva**, selected by an NVCF `
 
 ## Related
 
+- [NVIDIA Inception membership](/docs/nvidia-inception) - what membership adds on top of this free lane
+- [The generator was never the hard part](/docs/nvidia-nemotron-spotlight) - our Nemotron Nano write-up, published on the NVIDIA Developer Forums
+- [Image-to-3D on NVIDIA L4 and Blackwell](https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell) - the self-hosted GPU fleet behind the paid lanes, and the two walls we hit moving to Blackwell
 - [How Forge works](/docs/how-forge-works) - the /forge product this layer powers
 - [REST API](/docs/api-reference) - the endpoints these models serve
 - [Configuration](/docs/configuration) - all environment variables

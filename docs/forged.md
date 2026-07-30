@@ -75,7 +75,7 @@ a 20-second shared cache.
 |---|---|---|
 | `limit` | `30` | Page size, clamped to 1..100. |
 | `status=all` | off | Include `queued` and `failed` rows (audit view). By default only `done` rows with a GLB are returned. |
-| `category` | none | Filter by prop family. The handler accepts a fixed set: `crate`, `barrel`, `furniture`, `terrain`. Any other value returns `400 invalid_category`. |
+| `category` | none | Filter by prop family. Valid values are the eight families in the shared prop catalog (`api/_lib/x402/pipelines/forge-catalog.js`): `club-decor`, `ar-object`, `diorama-set`, `avatar-item`, `vehicle`, `container`, `furniture`, `terrain`. Any other value returns `400 invalid_category`, and the error body lists the accepted set. |
 
 The response carries the props plus aggregate stats:
 

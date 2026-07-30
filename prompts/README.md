@@ -21,9 +21,8 @@ Internal work-order packs for Claude agents. Each subdirectory is a campaign: a 
 | [roadmap/](roadmap/) | Self-contained improvement prompts for existing surfaces, plus the strategy layer ([fable-playbook.md](roadmap/fable-playbook.md)) that decides what to run next. |
 | [robinhood-chain/](robinhood-chain/) | Robinhood Chain pack, organized in waves where later waves consume earlier output. |
 | [store-submissions/](store-submissions/) | Prompts for listing three.ws MCP tools across Claude and OpenAI marketplaces and MCP registries. `_generated/` holds submission evidence. |
-| [user-value/](user-value/) | User-facing platform features: creator profiles, activity feed, social graph, notifications, discovery search, leaderboard, onboarding. |
 
-Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28; agent-briefs, whose world-online program shipped through Phase 3, was retired 2026-07-30); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md).
+Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28; agent-briefs, whose world-online program shipped through Phase 3, and user-value, all seven of whose work orders shipped, were retired 2026-07-30); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md).
 
 ## Runtime consumption
 

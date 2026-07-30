@@ -1,5 +1,6 @@
 // Unit tests for GET /api/users/:username/creations, the profile "Creations"
-// tab's aggregation endpoint (prompts/user-value/01-creator-profile.md), which
+// tab's aggregation endpoint (user-value campaign, work order 01; retired, see
+// git history), which
 // merges the three anonymous-by-design creation tables that only carry a
 // user_id when the creator happened to be signed in: forge_creations (models),
 // dioramas (worlds), and material_restyles (restyles).

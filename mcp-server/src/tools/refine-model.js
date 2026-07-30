@@ -83,7 +83,7 @@ export async function buildRefineModelTool() {
 			scheme: 'exact',
 			priceUsd: '$0.25',
 			inputSchema: inputJsonSchema,
-			example: { glb_url: 'https://three.ws/cdn/creations/abc123/mesh.glb', instruction: 'make it metallic', parent_prompt: 'a round robot mascot' },
+			example: { glb_url: 'https://three.ws/avatars/cesium-man.glb', instruction: 'make it metallic', parent_prompt: 'a round robot mascot' },
 			outputExample: {
 				ok: true,
 				mode: 'refine',
@@ -93,7 +93,7 @@ export async function buildRefineModelTool() {
 				instruction: 'make it metallic',
 				anchored: false,
 				lineage: [
-					{ index: 0, parentIndex: null, glbUrl: 'https://three.ws/cdn/creations/abc123/mesh.glb', instruction: null, refKind: 'origin' },
+					{ index: 0, parentIndex: null, glbUrl: 'https://three.ws/avatars/cesium-man.glb', instruction: null, refKind: 'origin' },
 					{ index: 1, parentIndex: 0, glbUrl: 'https://three.ws/cdn/creations/def456/mesh.glb', instruction: 'make it metallic', refKind: 'text' },
 				],
 				activeIndex: 1,

@@ -34,6 +34,32 @@ Do not describe the connector or the public demos as an official IBM release or 
 
 The session: the three.ws engineering team built and shipped a 3D, interactive, fully embeddable AI agent from a single text prompt, live: generate the agent from a prompt, embed it into any site as simply as a video, and wire it to real tools and data so it can take action, plus a look at the architecture behind frictionless deployment at scale. Aimed at developers, product builders, designers, and anyone exploring the next interface for AI beyond the chat box.
 
+### The Three.ws User Group on IBM Community
+
+three.ws runs a public user group on IBM Community for developers and engineers building AI agents with 3D capabilities: spatial reasoning, generative 3D, agentic pipelines, and real-time interactive AI systems. It is a community space three.ws moderates on IBM's platform, not an IBM product and not a partnership deliverable, so every framing rule above applies to what gets posted there.
+
+| Surface | Link |
+| ------- | ---- |
+| Group home | [Three.ws User Group](https://community.ibm.com/community/user/groups/community-home?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) |
+| Discussions | [Thread index](https://community.ibm.com/community/user/groups/community-home/digestviewer?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) |
+| Blogs | [Recent group blogs](https://community.ibm.com/community/user/groups/community-home/recent-community-blogs?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) |
+| Events | [Group events](https://community.ibm.com/community/user/groups/community-home/recent-community-events?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016) |
+| Library | [Files and assets](https://community.ibm.com/community/user/groups/community-home/librarydocuments?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016&LibraryFolderKey=&DefaultView=) |
+| Members | [Member list](https://community.ibm.com/community/user/groups/community-home/community-members?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016&Execute=1) |
+
+Published in the group so far:
+
+| Post | What it covers |
+| ---- | -------------- |
+| [Welcome to the Three.ws User Group: Building AI Agents With 3D Capabilities](https://community.ibm.com/community/user/blogs/jessica-swanson/2026/07/14/welcome-to-the-threews-user-group-building-ai-agen) | The group charter: who it is for and what gets discussed |
+| [three.ws: The Free AI 3D Model Generator's 10 Best Features](https://community.ibm.com/community/user/blogs/nich8/2026/07/16/threews-the-free-ai-3d-model-generators-10-best) | Feature tour of the free text-to-3D forge lane |
+| [Welcome to the three.ws IBM community: a full tour of the platform (start here)](https://community.ibm.com/community/user/discussion/welcome-to-the-threews-ibm-community-a-full-tour-of-the-platform-start-here) | Orientation thread: what the platform does, surface by surface |
+| [From a text prompt to an embeddable 3D agent, step by step](https://community.ibm.com/community/user/discussion/from-a-text-prompt-to-an-embeddable-3d-agent-step-by-step) | Prompt to generated agent to `<agent-3d>` embed, end to end |
+| [Type a Sentence, Get a 3D Model: A Hands-On Walkthrough of the three.ws Forge](https://community.ibm.com/community/user/discussion/type-a-sentence-get-a-3d-model-a-hands-on-walkthrough-of-the-threews-forge-user-perspective) | A user's first run through the forge, with the output |
+| [Why does my GLB model load white or untextured? (Three.js, Blender exports, web viewers)](https://community.ibm.com/community/user/discussion/why-does-my-glb-model-load-white-or-untextured-threejs-blender-exports-web-viewers) | Troubleshooting glTF/GLB texture and material loading |
+
+What belongs there, and what does not, is set by the [SEO keyword plan](./ops/seo-keyword-plan.md): one post per week maximum, tutorials that stand on their own for an IBM developer who never clicks through, and no crypto-cluster content (that goes on [three.ws/blog](https://three.ws/blog) instead). The user group is also linked from the site's [Community page](https://three.ws/community) and the global footer.
+
 ### Press & coverage
 
 Outside coverage of three.ws and its work on IBM watsonx.ai. These are third-party press and syndicated releases — link to them as coverage, and keep the distinctions above intact when you cite them. Do not let a headline upgrade the careful framing on this page.

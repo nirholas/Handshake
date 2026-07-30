@@ -45,11 +45,11 @@ export async function buildRigMeshTool() {
 			scheme: 'exact',
 			priceUsd: '$0.20',
 			inputSchema: inputJsonSchema,
-			example: { glb_url: 'https://three.ws/cdn/creations/abc123/mesh.glb' },
+			example: { glb_url: 'https://three.ws/avatars/cesium-man.glb' },
 			outputExample: {
 				ok: true,
 				riggedGlbUrl: 'https://three.ws/cdn/creations/def456/rigged.glb',
-				sourceGlbUrl: 'https://three.ws/cdn/creations/abc123/mesh.glb',
+				sourceGlbUrl: 'https://three.ws/avatars/cesium-man.glb',
 				poseStudioUrl: 'https://three.ws/pose?src=https%3A%2F%2Fthree.ws%2F...',
 				jobId: 'r9k2m7x4',
 				creationId: 'def456',

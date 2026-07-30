@@ -75,7 +75,7 @@ curl -X POST https://three.ws/api/x402/pump-launch \
   -d '{
     "name": "Helios",
     "symbol": "HELIO",
-    "imageUrl": "https://example.com/helios.png",
+    "imageUrl": "https://three.ws/logo.png",
     "description": "A sun-themed community coin.",
     "creator": "wwwPqsM4N7T9J69tB82nLyzxqsH159j4orftLTQfUGV",
     "twitter": "https://x.com/heliocoin",

@@ -159,6 +159,42 @@ async function applyTextureCap(doc, maxEdge) {
 	);
 }
 
+let _ioPromise = null;
+
+// Stored avatar GLBs ship meshopt-compressed, and callers can point `src` at a
+// Draco-packed model, so reading either one needs the matching decoder
+// registered. The Draco encoder is needed on the write side for `draco=1`.
+async function buildTranscodeIo() {
+	const { ALL_EXTENSIONS } = await import('@gltf-transform/extensions');
+	const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+	const [meshopt, dracoMod] = await Promise.all([import('meshoptimizer'), import('draco3dgltf')]);
+	const { MeshoptEncoder, MeshoptDecoder } = meshopt;
+	const draco3d = dracoMod.default ?? dracoMod;
+	const [, , decoder, encoder] = await Promise.all([
+		MeshoptEncoder.ready,
+		MeshoptDecoder.ready,
+		draco3d.createDecoderModule(),
+		draco3d.createEncoderModule(),
+	]);
+	return io.registerDependencies({
+		'meshopt.encoder': MeshoptEncoder,
+		'meshopt.decoder': MeshoptDecoder,
+		'draco3d.decoder': decoder,
+		'draco3d.encoder': encoder,
+	});
+}
+
+function transcodeIo() {
+	if (!_ioPromise) {
+		_ioPromise = buildTranscodeIo();
+		// A failed codec init must not poison every later request.
+		_ioPromise.catch(() => {
+			_ioPromise = null;
+		});
+	}
+	return _ioPromise;
+}
+
 async function applyDraco(doc) {
 	const draco = doc.createExtension(KHRDracoMeshCompression).setRequired(true);
 	for (const mesh of doc.getRoot().listMeshes()) {
@@ -218,7 +254,7 @@ export default wrap(async (req, res) => {
 
 	let outBytes;
 	try {
-		const io = new NodeIO();
+		const io = await transcodeIo();
 		const doc = await io.readBinary(sourceBytes);
 
 		await doc.transform(dedup(), prune({ keepLeaves: false, keepAttributes: false }));

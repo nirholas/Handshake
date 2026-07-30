@@ -5,9 +5,10 @@
 // asset enters the public catalog:
 //   • api/cron/forge-seed-cron.js  — the per-minute trickle, in-process on
 //     Cloud Run (Vertex reachable via the attached service account).
-//   • scripts/gcp/seed-avatars.mjs — the bulk batch runner, driven from a
-//     workstation with no GCP credentials, so it routes render + judge through
-//     the production HTTP surfaces instead.
+//   • the bulk batch runner (gcp-credits campaign, work order 05 task 5, still
+//     open: not in the tree yet) - driven from a workstation with no GCP
+//     credentials, so it routes render + judge through the production HTTP
+//     surfaces instead.
 //
 // Two stages, cheapest first:
 //

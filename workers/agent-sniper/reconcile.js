@@ -12,27 +12,98 @@
 import { sql } from '../../api/_lib/db.js';
 import { log } from './log.js';
 
+export const ASSOCIATED_TOKEN_PROGRAM = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+// Pump coins exist under both token programs; every owner+mint lookup has to
+// cover each one or a token-2022 bag reads as no bag at all.
+export const TOKEN_PROGRAMS = [
+	'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+	'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+];
+
+/**
+ * The associated-token addresses a mint can live at for one owner, one per token
+ * program. Derived, not looked up, so it works for an account that has since been
+ * closed (a closed account's address keeps its signature history).
+ * @returns {Array<import('@solana/web3.js').PublicKey>}
+ */
+export function deriveTokenAccounts(ctx, ownerPk, mintPk) {
+	const atp = new ctx.web3.PublicKey(ASSOCIATED_TOKEN_PROGRAM);
+	return TOKEN_PROGRAMS.map((tokenProgram) => {
+		const [ata] = ctx.web3.PublicKey.findProgramAddressSync(
+			[ownerPk.toBuffer(), new ctx.web3.PublicKey(tokenProgram).toBuffer(), mintPk.toBuffer()],
+			atp,
+		);
+		return ata;
+	});
+}
+
 /**
  * The wallet's actual balance of `mint` (raw base units), summed across token
  * accounts (pump coins are token-2022; the mint filter covers both programs).
  * Returns null when the read fails, callers must treat null as "unknown", not 0.
+ *
+ * A zero from this function means "confirmed: no token account holds this mint",
+ * because the caller treats zero as proof the bag is gone and parks the position
+ * as unreconcilable. Two ways that proof used to be manufactured out of a bad
+ * RPC response, both of which parked healthy positions holding real tokens and
+ * wedged their arm's concurrency slot:
+ *
+ *   1. A malformed response (no `value` array) fell through the `res?.value || []`
+ *      default and summed to zero. A shape failure is a failed read, not a zero
+ *      balance, so it now returns null like a thrown error does.
+ *   2. An EMPTY account list was trusted outright. A lagging or throttled node
+ *      serves an empty list for an owner that demonstrably holds the mint, and
+ *      this fleet runs degraded RPC often enough for that to be routine. An empty
+ *      list is now confirmed against the derived associated-token addresses
+ *      before it counts as gone: if one still exists and holds a balance, that
+ *      balance wins; if the probe itself fails, the answer is null.
+ *
  * @returns {Promise<bigint|null>}
  */
 export async function getWalletBaseBalance(ctx, ownerPk, mint) {
+	const mintPk = new ctx.web3.PublicKey(mint);
+	let res;
 	try {
-		const res = await ctx.connection.getParsedTokenAccountsByOwner(ownerPk, {
-			mint: new ctx.web3.PublicKey(mint),
-		});
-		let total = 0n;
-		for (const { account } of res?.value || []) {
-			const amt = account?.data?.parsed?.info?.tokenAmount?.amount;
-			if (amt != null) total += BigInt(amt);
-		}
-		return total;
+		res = await ctx.connection.getParsedTokenAccountsByOwner(ownerPk, { mint: mintPk });
 	} catch (err) {
 		log.warn('wallet balance read failed', { mint, err: err?.message });
 		return null;
 	}
+	if (!Array.isArray(res?.value)) {
+		log.warn('wallet balance read returned no account list', { mint });
+		return null;
+	}
+	if (res.value.length > 0) {
+		let total = 0n;
+		for (const { account } of res.value) {
+			const amt = account?.data?.parsed?.info?.tokenAmount?.amount;
+			if (amt != null) total += BigInt(amt);
+		}
+		return total;
+	}
+	// Empty list. Confirm against the derived addresses before calling the bag gone.
+	try {
+		for (const ata of deriveTokenAccounts(ctx, ownerPk, mintPk)) {
+			const info = await ctx.connection.getAccountInfo(ata);
+			if (!info) continue; // never opened, or closed on the sell that emptied it
+			const bal = await ctx.connection.getTokenAccountBalance(ata);
+			const amt = bal?.value?.amount;
+			if (amt == null) {
+				log.warn('token account exists but its balance is unreadable', { mint, ata: ata.toBase58() });
+				return null;
+			}
+			if (BigInt(amt) > 0n) {
+				log.warn('empty account list contradicted by a live token account', {
+					mint, ata: ata.toBase58(), amount: amt,
+				});
+				return BigInt(amt);
+			}
+		}
+	} catch (err) {
+		log.warn('token account confirmation failed', { mint, err: err?.message });
+		return null;
+	}
+	return 0n;
 }
 
 /**
@@ -60,12 +131,7 @@ export async function reconcileVanishedBag({ ctx, position, reason }) {
 		// account's ADDRESS still carries its signature history, so derive the ATA
 		// for both token programs and search those addresses too.
 		const seen = new Set(tokenAccounts.map((a) => a.toBase58()));
-		const ASSOCIATED_TOKEN_PROGRAM = new ctx.web3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
-		for (const tokenProgram of ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']) {
-			const [ata] = ctx.web3.PublicKey.findProgramAddressSync(
-				[ownerPk.toBuffer(), new ctx.web3.PublicKey(tokenProgram).toBuffer(), mintPk.toBuffer()],
-				ASSOCIATED_TOKEN_PROGRAM,
-			);
+		for (const ata of deriveTokenAccounts(ctx, ownerPk, mintPk)) {
 			if (!seen.has(ata.toBase58())) {
 				seen.add(ata.toBase58());
 				tokenAccounts.push(ata);

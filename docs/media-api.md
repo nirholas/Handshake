@@ -84,13 +84,16 @@ automatically. Subsequent requests answer `302` to the CDN copy
 # Discover the parameters, scenes, and pose catalog
 curl -s https://three.ws/api/avatar/render
 
+# The avatar id below is Michelle, a public featured avatar, so these run as-is.
+# Swap in your own id from GET https://three.ws/api/avatars/featured or /avatars/<id>.
+
 # Render a 256px transparent portrait
 curl -sL -o portrait.png \
-  'https://three.ws/api/avatar/render?avatar=YOUR_AVATAR_ID&scene=portrait&size=256&bg=transparent'
+  'https://three.ws/api/avatar/render?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209&scene=portrait&size=256&bg=transparent'
 
 # Waving, smiling, as WebP
 curl -sL -o card.webp \
-  'https://three.ws/api/avatar/render?avatar=YOUR_AVATAR_ID&pose=wave&expression=%7B%22mouthSmile%22%3A0.6%7D&format=webp'
+  'https://three.ws/api/avatar/render?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209&pose=wave&expression=%7B%22mouthSmile%22%3A0.6%7D&format=webp'
 ```
 
 ---
@@ -199,7 +202,7 @@ Requests are rate-limited per IP; a `429` carries `Retry-After`.
 ```bash
 # Mobile budget: 512px textures, ARKit-52 morphs only, Draco-compressed
 curl -sL -o mobile.glb \
-  'https://three.ws/api/avatar/optimize?id=YOUR_AVATAR_ID&textureSize=512&morphs=arkit52&draco=1'
+  'https://three.ws/api/avatar/optimize?id=13f259c7-7024-4d68-b1f0-dbbf52c06209&textureSize=512&morphs=arkit52&draco=1'
 
 # By source URL, LOD 1
 curl -sL -o lite.glb \
@@ -598,7 +601,7 @@ the submission proceeds; forge still validates the image.
 ```bash
 curl -s -X POST https://three.ws/api/input-photo \
   -H 'content-type: application/json' \
-  -d '{"image_url":"https://example.com/selfie.jpg","tier":"standard"}'
+  -d '{"image_url":"https://three.ws/avatars/thumbs/default.png","tier":"standard"}'
 ```
 
 ---
@@ -772,7 +775,7 @@ auth; rate-limited per IP.
 # Submit
 curl -s -X POST https://three.ws/api/forge-rembg \
   -H 'content-type: application/json' \
-  -d '{"image_url":"https://example.com/product-shot.jpg","model":"rmbg2"}'
+  -d '{"image_url":"https://three.ws/avatars/thumbs/default.png","model":"rmbg2"}'
 
 # Poll
 curl -s 'https://three.ws/api/forge-rembg?job=JOB_ID'

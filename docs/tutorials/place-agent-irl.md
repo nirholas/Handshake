@@ -62,8 +62,10 @@ You'll see your agent rendered against the ambient dark background, an **IRL** b
 To start with a specific agent's avatar, append `?avatar=` to the URL:
 
 ```
-https://three.ws/irl?avatar=YOUR_AVATAR_ID
+https://three.ws/irl?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209
 ```
+
+That id is Michelle, a public featured avatar, so you can open the link as-is to try it. Use your own avatar id (from `/avatars/<id>`, or `GET https://three.ws/api/avatars/featured`) to place your own agent.
 
 An explicit `?avatar=` link always wins over the avatar you used last visit. (Links from an agent profile's "View in IRL" button also pass `?agent=` to deep-focus that agent's pin once it's nearby.)
 

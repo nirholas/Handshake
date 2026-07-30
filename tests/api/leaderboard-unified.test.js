@@ -1,5 +1,5 @@
 // Unit tests for GET /api/leaderboard/unified, the cross-surface leaderboard
-// (prompts/user-value/06-cross-surface-leaderboard.md). Five real metrics, each
+// (user-value campaign, work order 06; retired, see git history). Five real metrics, each
 // a COUNT/SUM over an existing table, merged with profile data, ranked, paged,
 // and with the requester's own row always pinned even when it is off-page.
 //

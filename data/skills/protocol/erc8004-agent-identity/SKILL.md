@@ -1,6 +1,6 @@
 ---
 name: erc8004-agent-identity
-description: Complete guide to ERC-8004 — the open standard for on-chain AI agent identity, reputation, and validation. Covers agent registration as NFTs, reputation signals, validator attestations, and multi-chain deployment across 12 chains. Essential for building trustless AI agent ecosystems.
+description: Complete guide to ERC-8004: the open standard for on-chain AI agent identity, reputation, and validation. Covers agent registration as NFTs, reputation signals, validator attestations, and multi-chain deployment across 12 chains. Essential for building trustless AI agent ecosystems.
 license: MIT
 metadata:
   category: protocol
@@ -9,7 +9,7 @@ metadata:
   tags: [protocol, erc8004-agent-identity]
 ---
 
-# ERC-8004 — On-Chain AI Agent Identity
+# ERC-8004: On-Chain AI Agent Identity
 
 ERC-8004 is an open Ethereum standard for **discovering, choosing, and interacting with AI agents** across organizational boundaries without pre-existing trust. It was created by the Sperax team and is deployed across 12 chains.
 
@@ -29,7 +29,7 @@ ERC-8004 solves this with three on-chain registries.
 
 ### 1. Identity Registry (ERC-721 NFT)
 
-Every agent gets an **NFT identity** — a unique, transferrable on-chain identity.
+Every agent gets an **NFT identity**: a unique, transferrable on-chain identity.
 
 - Based on ERC-721 with URIStorage
 - TokenURI points to a JSON registration file
@@ -42,7 +42,7 @@ A standard interface for posting and querying **feedback signals** about agents.
 
 | Signal | Measures | Scale |
 |--------|----------|-------|
-| `starred` | Quality rating | 0–100 |
+| `starred` | Quality rating | 0-100 |
 | `reachable` | Endpoint reachable | binary |
 | `uptime` | Availability | percentage |
 | `successRate` | Task completion rate | percentage |
@@ -50,7 +50,7 @@ A standard interface for posting and querying **feedback signals** about agents.
 | `tradingYield` | Trading return | signed percentage |
 | `revenues` | Cumulative revenue | USD |
 
-**Star ratings** map to the 0–100 scale:
+**Star ratings** map to the 0-100 scale:
 - 1★ = 20, 2★ = 40, 3★ = 60, 4★ = 80, 5★ = 100
 
 ### 3. Validation Registry
@@ -70,7 +70,7 @@ A standard interface for posting and querying **feedback signals** about agents.
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "My Trading Agent",
   "description": "Automated yield optimizer on Arbitrum",
-  "image": "https://cdn.example.com/agent-avatar.png",
+  "image": "https://three.ws/avatars/thumbs/default.png",
   "services": [
     {
       "name": "MCP",
@@ -137,22 +137,22 @@ All contracts use vanity addresses starting with `0x8004...`
 ### Registration
 
 1. **Always include a rich registration file** with name, description, image, and services
-2. **Declare services explicitly** — other agents need to know how to communicate
-3. **Keep metadata current** — update when endpoints change
-4. **Use active flag** — set `"active": false` when taking agent offline
+2. **Declare services explicitly**: other agents need to know how to communicate
+3. **Keep metadata current**: update when endpoints change
+4. **Use active flag**: set `"active": false` when taking agent offline
 
 ### Reputation
 
-1. **Encourage feedback** — more signals = more trust
-2. **Monitor your scores** — respond to quality issues
-3. **Use standard signal types** — stick to the defined tags for interoperability
+1. **Encourage feedback**: more signals = more trust
+2. **Monitor your scores**: respond to quality issues
+3. **Use standard signal types**: stick to the defined tags for interoperability
 4. **Trusted probers** (infra watchtowers) should regularly publish uptime/reachability
 
 ### Security
 
-1. **Validate callers** — check msg.sender for sensitive operations
-2. **Rate-limit feedback** — prevent spam signals
-3. **Verify validators** — ensure validator contracts are trustworthy
+1. **Validate callers**: check msg.sender for sensitive operations
+2. **Rate-limit feedback**: prevent spam signals
+3. **Verify validators**: ensure validator contracts are trustworthy
 
 ## Use Cases for OpenClaw Agents
 

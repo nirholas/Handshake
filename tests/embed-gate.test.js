@@ -1,4 +1,5 @@
-// Unit tests for token-gated 3D embeds (prompts/store-submissions/18).
+// Unit tests for token-gated 3D embeds (store-submissions campaign, prompt 18;
+// retired, see git history).
 //
 // Covers the two things the store-submission prompt calls out explicitly:
 //   - gate pass/fail by balance (getSplTokenBalance + meetsGateThreshold, and

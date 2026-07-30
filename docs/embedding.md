@@ -70,7 +70,7 @@ The element accepts several ways to point at an agent — pick one:
 | `agent-id` (CAIP-10) | `agent-id="eip155:8453:0xReg…:42"` | Fully qualified on-chain reference |
 | `agent-id` (backend) | `agent-id="a_abc123"` | Legacy backend account ID |
 | `manifest` | `ipfs://bafy.../manifest.json` | IPFS or HTTPS manifest URL |
-| `body` | `./avatar.glb` | Bare GLB for an ad-hoc agent (viewer-only unless you also set `brain`) |
+| `body` | `https://three.ws/avatars/default.glb` | Bare GLB for an ad-hoc agent (viewer-only unless you also set `brain`) |
 
 When multiple are set, priority is `src` > `agent-id` > `manifest` > `body`.
 
@@ -81,7 +81,7 @@ free-tier proxy. Pair it with `instructions` for a system prompt:
 
 ```html
 <agent-3d
-  body="./avatar.glb"
+  body="https://three.ws/avatars/realistic-female.glb"
   brain="free"
   instructions="You are Maya, a friendly guide to this site."
 ></agent-3d>

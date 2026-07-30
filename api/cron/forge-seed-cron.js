@@ -29,8 +29,8 @@
 //                          history of 504s when a phase overruns, while a render
 //                          plus two judge calls costs 10-20 s. The mesh stage of
 //                          the gate always runs — it is deterministic, local, and
-//                          costs only the GLB fetch. The bulk runner
-//                          (scripts/gcp/seed-avatars.mjs) always runs both.
+//                          costs only the GLB fetch. The bulk runner (gcp-credits
+//                          work order 05 task 5, not in the tree yet) runs both.
 //   SEED_CRON_VISION_MS    budget for the vision stage (default 20 000 ms).
 //   SEED_CRON_RIG          '1' routes accepted avatars through the auto-rigger
 //                          before publishing, so catalog entries arrive

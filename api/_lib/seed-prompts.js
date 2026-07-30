@@ -1,6 +1,7 @@
 // @ts-check
 // Curated prompt pool for the forge auto-seed cron and the bulk batch runner
-// (scripts/gcp/seed-avatars.mjs). Every prompt targets the FLUX text→image →
+// (gcp-credits work order 05 task 5, still open: not in the tree yet). Every
+// prompt targets the FLUX text→image →
 // TRELLIS image→3D pipeline. Realistic human subjects with strong silhouettes
 // and clear costume detail produce the best meshes at draft quality — avoid thin
 // objects, transparent materials, and busy backgrounds.

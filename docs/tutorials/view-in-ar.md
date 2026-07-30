@@ -92,8 +92,10 @@ With `ar` present, a **View in AR** button appears on the viewer. Clicking it op
 **Full agent embed (`<agent-3d>`).** The talking-agent web component does not take an `ar` attribute. To offer AR next to it, link to the avatar's dedicated full-screen AR page, which picks the right method per device automatically:
 
 ```html
-<a href="https://three.ws/avatars/YOUR_AVATAR_ID/ar">See it in your room</a>
+<a href="https://three.ws/avatars/13f259c7-7024-4d68-b1f0-dbbf52c06209/ar">See it in your room</a>
 ```
+
+That id is Michelle, a public featured avatar, so the link works as written. Swap in your own avatar id from `/avatars/<id>` or `GET https://three.ws/api/avatars/featured`.
 
 ### Iframe embed + AR
 
@@ -101,7 +103,7 @@ If you're using the iframe embed, add `xr-spatial-tracking` to the `allow` attri
 
 ```html
 <iframe
-  src="https://three.ws/embed/avatar/YOUR_AVATAR_ID"
+  src="https://three.ws/embed/avatar/13f259c7-7024-4d68-b1f0-dbbf52c06209"
   allow="microphone; camera; xr-spatial-tracking; fullscreen"
   width="400"
   height="500"
