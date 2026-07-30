@@ -433,5 +433,15 @@
 		"pattern": "Avaturn, Unreal, VRoid, VRM 1.0, Daz, MakeHuman, Rigify",
 		"file": "docs/avatar-pipeline.md",
 		"reason": "Enumerates the third-party skeleton NAMING CONVENTIONS the retargeter maps bone names from (the same list CLAUDE.md documents). These are rig format identifiers in developer documentation, not a vendor three.ws builds on or presents to users."
+	},
+	{
+		"pattern": "| Ready Player Me | Ready Player Me |",
+		"file": "docs/avatar-engines.md",
+		"reason": "Factual row in the Avatar Engines Atlas interop table, which the doc opens by stating is a reference surface and not an endorsement. Naming the engine is the content; the row also records its license and integration reality so a builder can compare. Scoped to this one file and to the table row."
+	},
+	{
+		"pattern": "| Avaturn | Avaturn |",
+		"file": "docs/avatar-engines.md",
+		"reason": "Factual row in the Avatar Engines Atlas interop table. Same reference-not-endorsement scope as the Ready Player Me row above."
 	}
 ]
