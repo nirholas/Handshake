@@ -26,14 +26,20 @@ function handWrittenPart(text) {
 }
 
 describe('examples index generator', () => {
-	let original;
+	// Running the generator rewrites two files other tests read (and other
+	// agents share this worktree), so snapshot and restore both. The generator
+	// itself writes atomically, so a concurrent reader never sees a torn file.
+	let originalDoc;
+	let originalJson;
 
 	beforeEach(() => {
-		original = readFileSync(DOC, 'utf8');
+		originalDoc = readFileSync(DOC, 'utf8');
+		originalJson = existsSync(JSON_OUT) ? readFileSync(JSON_OUT, 'utf8') : null;
 	});
 
 	afterEach(() => {
-		writeFileSync(DOC, original);
+		writeFileSync(DOC, originalDoc);
+		if (originalJson !== null) writeFileSync(JSON_OUT, originalJson);
 	});
 
 	it('emits a machine-readable index whose entries all exist on disk', () => {

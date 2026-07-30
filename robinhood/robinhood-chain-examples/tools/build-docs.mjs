@@ -1,6 +1,6 @@
 /**
  * Build-time docs generator. Renders every example's README.md to static
- * HTML with syntax highlighting (marked + highlight.js, both server-side —
+ * HTML with syntax highlighting (marked + highlight.js, both server-side,
  * no client-side markdown fetching), builds the gallery landing page from
  * the shared manifest, and copies example 07's self-contained page into
  * docs/ so it runs live, embedded, on GitHub Pages.
@@ -139,7 +139,7 @@ async function buildGallery() {
     const num = String(i + 1).padStart(2, '0')
     const badge = ex.blocked ? '<span class="badge blocked">blocked</span>' : `<span class="badge ${ex.difficulty}">${ex.difficulty}</span>`
     const proves = ex.blocked
-      ? `Blocked on: <code>${ex.blocked}</code> (not built yet — see the README for the gap).`
+      ? `Blocked on: <code>${ex.blocked}</code> (not built yet, see the README for the gap).`
       : ex.proves
     return `<a class="card" href="examples/${ex.id}/index.html">
       <div class="num">${num}</div>
@@ -152,13 +152,13 @@ async function buildGallery() {
 
   const body = `
 <h1>Robinhood Chain Examples</h1>
-<p class="hero-sub">14 small, runnable projects for Robinhood Chain (mainnet 4663 / testnet 46630) —
+<p class="hero-sub">14 small, runnable projects for Robinhood Chain (mainnet 4663 / testnet 46630):
 from a raw viem read to a live dashboard, a Telegram bot, and a paper trader. Every read below is real.</p>
 
 <div class="embed-frame">
   <iframe src="embed/07-live-price-webpage.html" title="Live Robinhood Chain Stock Token prices" loading="lazy"></iframe>
   <div class="embed-label">
-    <span>Example 07, running live — client-side JSON-RPC, no backend.</span>
+    <span>Example 07, running live, client-side JSON-RPC, no backend.</span>
     <a href="examples/07-live-price-webpage/index.html">How it works →</a>
   </div>
 </div>

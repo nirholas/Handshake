@@ -17,9 +17,19 @@
 // command or URL that runs it. Descriptions come from the example's own README
 // or an HTML <title>/comment, never from a hand-kept list here.
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync, renameSync } from 'node:fs';
 import { join, relative, basename, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Write through a temp file in the same directory, then rename. rename(2) is
+// atomic on the same filesystem, so a reader (the page, a test, another agent
+// in this shared worktree) always sees either the old file or the new one,
+// never a half-written one.
+function writeAtomic(path, contents) {
+	const tmp = `${path}.tmp-${process.pid}`;
+	writeFileSync(tmp, contents);
+	renameSync(tmp, path);
+}
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(root, 'data/examples.json');
@@ -275,7 +285,7 @@ const payload = {
 	examples: entries,
 };
 
-writeFileSync(OUT, `${JSON.stringify(payload, null, '\t')}\n`);
+writeAtomic(OUT, `${JSON.stringify(payload, null, '\t')}\n`);
 
 // Mirror the same index into docs/examples.md between markers, so the doc's
 // inventory is regenerated rather than hand-kept. Everything outside the
@@ -352,7 +362,7 @@ if (handWritten(next) < handWritten(doc)) {
 			`would shrink from ${handWritten(doc)} to ${handWritten(next)} characters.`,
 	);
 }
-writeFileSync(DOC, next.endsWith('\n') ? next : `${next}\n`);
+writeAtomic(DOC, next.endsWith('\n') ? next : `${next}\n`);
 
 console.log(
 	`wrote data/examples.json + docs/examples.md index: ${payload.counts.total} examples ` +
