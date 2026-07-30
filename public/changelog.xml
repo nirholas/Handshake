@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A slow data provider can no longer freeze a live trading position</title>
+			<link>https://three.ws/trades</link>
+			<guid isPermaLink="false">2026-07-30:A slow data provider can no longer freeze a live trading position</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a trading bot checks whether it still holds a coin, it asks a Solana data provider for its token accounts. An overloaded provider sometimes answers with an empty list for a wallet that demonstrably still holds the coin. The platform read that empty answer as proof the coin had been sold, set the position aside as needing manual reconciliation, and because each strategy allows only one position at a time, the strategy stopped trading entirely while still holding the coin. Four strategies sat frozen this way for up to 57 hours against a 30-minute time limit. An empty or malformed answer is now treated as unknown rather than as zero, and is double-checked against the wallet's own token account addresses before any position is set aside. A position set aside without a recorded timestamp is also no longer exempt from the existing time limit, which is what made these freezes permanent instead of self-clearing.</description>
+		</item>
+		<item>
 			<title>An underfunded trading bot now sits out instead of failing every trade</title>
 			<link>https://three.ws/trades</link>
 			<guid isPermaLink="false">2026-07-30:An underfunded trading bot now sits out instead of failing every trade</guid>
@@ -45,6 +53,22 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A long-form write-up of what it actually took to get the high-realism image-to-3D lane onto newer NVIDIA hardware, published for anyone building on the same stack. It covers the memory ceiling that killed every startup of the new model, why the GPU driver software had to be rebuilt for the newer card, the regional capacity limits that made the bigger GPU the easier one to get, and a nine-point checklist for teams doing the same port. The NVIDIA documentation pages on three.ws are now cross-linked and registered in the sitemap, so the free model map and the Developer Forums write-up are discoverable from search and from the docs front door.</description>
+		</item>
+		<item>
+			<title>New guide: how to charge other agents for your own tools</title>
+			<link>https://three.ws/blog/monetize-mcp-server-x402-paid-tools</link>
+			<guid isPermaLink="false">2026-07-30:New guide: how to charge other agents for your own tools</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A complete, hands-on walkthrough of the seller side of agent payments, written for anyone who wants their code to earn money from other people's AI agents. It covers how to tell whether a capability is worth charging for, how to set a price in fractions of a cent, the exact ordering that keeps you honest (check the payment, do the work, only then take the money, so a failure never charges anyone), how to charge per tool inside an assistant connector, how to get listed where agents shop for paid services, and how to prove an assistant can find and buy your service with no human involved. Every example is real and every endpoint quoted is live, including one you can try from a terminal in one line.</description>
+		</item>
+		<item>
+			<title>Paid requests stop being refused after they were already served</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:Paid requests stop being refused after they were already served</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When someone pays for one of our endpoints, we broadcast their payment to Solana and confirm it. Before broadcasting, we asked one of our own nodes to dry-run it first. But the payer builds and signs their payment against their own node, so if the node that answered us happened to be running a few slots behind, it had simply never seen the reference the payment was built against and rejected it as unknown. The payment was perfectly valid. Because that check runs after we have already done the paid work, the caller was charged effort and then handed an error. We now hand that decision to the network itself rather than to whichever of our nodes replied: if the payment is still live it goes through, and if it has genuinely expired it is dropped without landing and without a fee. Resending is safe because Solana ignores a duplicate of a payment it has already seen. Genuine faults, such as an underfunded account, are still refused on the first attempt as before.</description>
 		</item>
 		<item>
 			<title>Payment health now names the real cause when settlements stall</title>
@@ -101,6 +125,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Our README had grown to cover almost a hundred topics, but in an order that made it hard to use: anyone who came to build had to scroll past the long-term vision, the roadmap, and our marketplace and partner listings before reaching install instructions. It now follows the order a reader actually needs. What three.ws is, what it looks like, then how to run it, then the architecture, the individual systems, the developer platform, and the on-chain and payment rails, with the vision and roadmap sitting together further down next to the phased projects they describe. Nothing was removed or reworded, only moved. The table of contents also had an entry for the in-game economy that pointed nowhere, because the section had been dropped from the file a while back; that documentation is written again and now covers the cash purse, the general store, the bank, the $THREE cosmetics boutique, and the wheel of fortune.</description>
+		</item>
+		<item>
+			<title>The three.ws user group on IBM Community is now linked from the docs</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The three.ws user group on IBM Community is now linked from the docs</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>We run a public user group on IBM Community for developers building AI agents with 3D capabilities, and until now the platform docs never pointed at it. The IBM documentation page now lists the group and everything published in it: the platform tour thread, the prompt-to-embeddable-agent walkthrough, the forge hands-on, the GLB texture troubleshooting thread, and both group blog posts, plus the discussions, blogs, events, library, and members sections.</description>
 		</item>
 		<item>
 			<title>The treasury self-repair now reports when it cannot repair</title>
