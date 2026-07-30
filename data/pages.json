@@ -3247,6 +3247,27 @@
 					"description": "Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.",
 					"priority": 0.7,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/tutorials/agent-spending-envelope",
+					"title": "Tutorial: Give an Agent a Spending Envelope (No Private Key)",
+					"description": "By the end of this tutorial your agent will be able to buy things on the open internet, in real money, with a hard ceiling you set, and it will never touch a private key to do it. You create a budget from prepaid credits, get back a bearer token, and hand that token to the agent.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/tutorials/render-avatar-images",
+					"title": "Tutorial: Put a 3D Avatar in an <img> Tag",
+					"description": "By the end of this tutorial you will be rendering live 3D avatars as ordinary images, from a URL, with no 3D engine anywhere in your stack. No three.js, no WebGL context, no GLB loader, no canvas. Just an <img src> that happens to point at a headless renderer.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/tutorials/character-library-to-embed",
+					"title": "Tutorial: From the Character Library to a Live Embed in Ten Minutes",
+					"description": "By the end of this tutorial there will be a rigged, animated 3D character standing on your own web page, waving when a visitor clicks a button. You will not model anything, rig anything, install a 3D toolchain, or pay anything.",
+					"priority": 0.7,
+					"changefreq": "monthly"
 				}
 			]
 		},

@@ -2525,6 +2525,24 @@ URL: https://three.ws/docs/walk-leaderboard
 
 Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.
 
+### Tutorial: Give an Agent a Spending Envelope (No Private Key)
+
+URL: https://three.ws/tutorials/agent-spending-envelope
+
+By the end of this tutorial your agent will be able to buy things on the open internet, in real money, with a hard ceiling you set, and it will never touch a private key to do it. You create a budget from prepaid credits, get back a bearer token, and hand that token to the agent.
+
+### Tutorial: Put a 3D Avatar in an <img> Tag
+
+URL: https://three.ws/tutorials/render-avatar-images
+
+By the end of this tutorial you will be rendering live 3D avatars as ordinary images, from a URL, with no 3D engine anywhere in your stack. No three.js, no WebGL context, no GLB loader, no canvas. Just an <img src> that happens to point at a headless renderer.
+
+### Tutorial: From the Character Library to a Live Embed in Ten Minutes
+
+URL: https://three.ws/tutorials/character-library-to-embed
+
+By the end of this tutorial there will be a rigged, animated 3D character standing on your own web page, waving when a visitor clicks a button. You will not model anything, rig anything, install a 3D toolchain, or pay anything.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.
