@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "The GitHub README now shows the real product",
+			"summary": "The project README on GitHub was rebuilt around live proof: fresh screenshots captured from the production site (Forge, the viewer, discovery, the Club, Coin Communities, the x402 bazaar, the Money Pulse, and more), every tutorial linked to its live page, npm links for all 22 published packages, block-explorer links for the on-chain registries, and stale links to retired pages cleaned up.",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
 			"title": "The seeded payment feed now lands every payment instead of one in forty",
 			"summary": "The job that sends small real payments through the platform to keep the public payment feed live was building every payment in a batch identically. Because a payment is identified by its own contents, all of them looked like a single repeated payment: one went through and the rest were rejected as duplicates, and any that slipped past were refused on-chain. About one in forty actually landed, so the feed showed a fraction of the activity it was meant to, and the rejections were the largest single source of errors in production. Each payment in a batch is now distinct, and the pump.fun launch watcher stopped making a per-launch request to a data feed that always refused it.",
 			"tags": [

@@ -183,6 +183,14 @@
 			<description>When the autonomous economy runs short of SOL it converts a small, capped slice of its own USDC revenue to keep paying agents. That check treated a failed balance lookup exactly like a zero balance, so whenever a Solana data provider was rate-limited the platform concluded its revenue was spent and stopped refuelling, with the funds it needed sitting in its own wallet. The balance read now has a second, cheaper path, and a lookup that genuinely fails is reported as unknown rather than empty, so recovery no longer waits on a human.</description>
 		</item>
 		<item>
+			<title>The GitHub README now shows the real product</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-30:The GitHub README now shows the real product</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The project README on GitHub was rebuilt around live proof: fresh screenshots captured from the production site (Forge, the viewer, discovery, the Club, Coin Communities, the x402 bazaar, the Money Pulse, and more), every tutorial linked to its live page, npm links for all 22 published packages, block-explorer links for the on-chain registries, and stale links to retired pages cleaned up.</description>
+		</item>
+		<item>
 			<title>The pages that shipped without docs now have them</title>
 			<link>https://three.ws/docs/start-here</link>
 			<guid isPermaLink="false">2026-07-30:The pages that shipped without docs now have them</guid>

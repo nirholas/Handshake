@@ -8629,13 +8629,29 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 
 ## Screenshots
 
-| Viewer                                   | Widget Studio                                   |
-| ---------------------------------------- | ----------------------------------------------- |
-| ![Viewer](public/screenshots/viewer.png) | ![Widget Studio](public/screenshots/studio.png) |
+Every image below is a real capture of the live production site. Click any caption to open that page.
 
-| Agent Discovery                              | Avatar Creation                          |
-| -------------------------------------------- | ---------------------------------------- |
-| ![Discover](public/screenshots/discover.png) | ![Create](public/screenshots/create.png) |
+| [Landing](https://three.ws)                    | [Forge: text → 3D](https://three.ws/forge)     |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![Landing](public/screenshots/landing.png)     | ![Forge](public/screenshots/forge.png)         |
+
+| [Viewer at /app](https://three.ws/app)         | [Avatar creation](https://three.ws/create)     |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![Viewer](public/screenshots/viewer.png)       | ![Create](public/screenshots/create.png)       |
+
+| [Agent discovery](https://three.ws/discover)   | [Marketplace](https://three.ws/marketplace)    |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![Discover](public/screenshots/discover.png)   | ![Marketplace](public/screenshots/marketplace.png) |
+
+| [The Club (multiplayer venue)](https://three.ws/club) | [Coin Communities](https://three.ws/communities) |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![Club](public/screenshots/club.png)           | ![Communities](public/screenshots/communities.png) |
+
+| [x402 Bazaar](https://three.ws/x402)           | [The Money Pulse](https://three.ws/pulse)      |
+| ---------------------------------------------- | ---------------------------------------------- |
+| ![x402 Bazaar](public/screenshots/x402-bazaar.png) | ![Pulse](public/screenshots/pulse.png)     |
+
+More captures appear inline in the sections below: [Widget Studio](#widget-system), [Embed Editor](#embed-editor), [Pose Studio](#pose-studio), [City](#city), [Walk](#walk--multiplayer), [Launchpad](#launchpad), [vanity grinder](#wasm-vanity-grinder), [Demos Hub](#demos-hub), and [Chat](#brain-proxy--llm-routing).
 
 ---
 
@@ -9506,7 +9522,9 @@ Both surfaces speak the same v1 wire protocol — pick the one that fits your st
 
 ## Widget System
 
-The Widget Studio (`/studio`) lets anyone build a shareable, embeddable 3D experience without writing code. Pick an avatar, pick a widget type, configure it, and get an iframe snippet.
+The Widget Studio ([three.ws/studio](https://three.ws/studio)) lets anyone build a shareable, embeddable 3D experience without writing code. Pick an avatar, pick a widget type, configure it, and get an iframe snippet.
+
+[![Widget Studio, live](public/screenshots/studio.png)](https://three.ws/studio)
 
 **Five widget types:**
 
@@ -9532,7 +9550,9 @@ Widgets are stored as JSON config in Postgres, pointing at an avatar in R2.
 
 ## Embed Editor
 
-The **Embed editor** at `/embed` ([src/editor/embed-editor.js](src/editor/embed-editor.js)) is a WYSIWYG configurator for embedding a three.ws avatar or agent on any website. Pick an avatar from the gallery picker, choose an embed mode, tune the environment and size, and copy a ready-to-paste snippet.
+The **Embed editor** at [three.ws/embed](https://three.ws/embed) ([src/editor/embed-editor.js](src/editor/embed-editor.js)) is a WYSIWYG configurator for embedding a three.ws avatar or agent on any website. Pick an avatar from the gallery picker, choose an embed mode, tune the environment and size, and copy a ready-to-paste snippet.
+
+[![Embed editor, live](public/screenshots/embed-editor.png)](https://three.ws/embed)
 
 | Feature              | Description                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------------- |
@@ -9548,7 +9568,9 @@ The **Embed editor** at `/embed` ([src/editor/embed-editor.js](src/editor/embed-
 
 ## Pose Studio
 
-`/pose` is a 3D pose-reference tool inspired by setpose.com. It builds a Three.js scene with an articulated mannequin, orbit camera, ground + grid, and a control panel that lets you pick presets, drag joints to pose them, fine-tune with sliders, swap body type, add floor props, change lighting and FOV, and export a PNG screenshot.
+[three.ws/pose](https://three.ws/pose) is a 3D pose-reference tool inspired by setpose.com. It builds a Three.js scene with an articulated mannequin, orbit camera, ground + grid, and a control panel that lets you pick presets, drag joints to pose them, fine-tune with sliders, swap body type, add floor props, change lighting and FOV, and export a PNG screenshot.
+
+[![Pose Studio, live](public/screenshots/pose-studio.png)](https://three.ws/pose)
 
 | Module         | Path                                           | Role                                        |
 | -------------- | ---------------------------------------------- | ------------------------------------------- |
@@ -9588,7 +9610,9 @@ The coin's metadata points back at the agent's onchain identity — ERC-8004 tok
 
 ## Launchpad
 
-The **Launchpad** at `/launchpad` is a hosted-page builder for token launches, agent debuts, and drop campaigns. Each published page lives at a public URL like `/p/<slug>` with full Open Graph metadata for sharing.
+The **Launchpad** at [three.ws/launchpad](https://three.ws/launchpad) is a hosted-page builder for token launches, agent debuts, and drop campaigns. Each published page lives at a public URL like `/p/<slug>` with full Open Graph metadata for sharing. The live launch directory is at [three.ws/launches](https://three.ws/launches).
+
+[![Launchpad, live](public/screenshots/launchpad.png)](https://three.ws/launchpad)
 
 | Surface     | Path                      | Purpose                                                              |
 | ----------- | ------------------------- | -------------------------------------------------------------------- |
@@ -9602,7 +9626,7 @@ Launchpad templates are JSON-configured and can embed any combination of `<agent
 
 ## The Club
 
-`/club` is a multiplayer 3D venue — a pole-club scene with rigged dancers, audio tracks, spotlights, mirror-ball cube cam, and on-chain tips.
+[three.ws/club](https://three.ws/club) is a multiplayer 3D venue: a club scene with rigged dancers, audio tracks, spotlights, mirror-ball cube cam, and on-chain tips (screenshot in the [gallery above](#screenshots)).
 
 **Stack:**
 
@@ -9624,7 +9648,9 @@ Launchpad templates are JSON-configured and can embed any combination of `<agent
 
 ## Walk & Multiplayer
 
-`/walk` is an authoritative multiplayer walk scene. Players join a shared 3D space, see each other's avatars in real time, and emit gestures over a WebSocket connection.
+[three.ws/walk](https://three.ws/walk) is an authoritative multiplayer walk scene. Players join a shared 3D space, see each other's avatars in real time, and emit gestures over a WebSocket connection.
+
+[![Walk, live](public/screenshots/walk.png)](https://three.ws/walk)
 
 The serverless-style request/response layer can't hold long-lived WebSockets, so the multiplayer server lives in its own workspace at [`multiplayer/`](multiplayer/) — a [Colyseus](https://colyseus.io) server packaged with a Fly.io `fly.toml` and Dockerfile. The Vite client at `/walk` autodiscovers the server (`ws://localhost:2567` in dev, your deployed host in prod).
 
@@ -9639,7 +9665,7 @@ npm run dev:walk-all     # Vite (:3000) + Colyseus (:2567)
 
 ## Coin Communities
 
-Every Solana token gets a **live 3D world**. Coin Communities turns a mint address into a shared multiplayer space: pick the same coin as someone else and you land together, walk around, emote, voice-chat, build with voxels, and watch the live market-cap chart on an in-world screen.
+Every Solana token gets a **live 3D world**. Coin Communities ([three.ws/communities](https://three.ws/communities), screenshot in the [gallery above](#screenshots)) turns a mint address into a shared multiplayer space: pick the same coin as someone else and you land together, walk around, emote, voice-chat, build with voxels, and watch the live market-cap chart on an in-world screen.
 
 | Surface           | Route                       | What it does                                                                                        |
 | ----------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -9661,7 +9687,9 @@ Every Solana token gets a **live 3D world**. Coin Communities turns a mint addre
 
 ## City
 
-`/city` is a free-roam 3D city scene — a walkable urban world with a follow camera, map, and player controller, built on the same Three.js stack as the rest of the platform.
+[three.ws/city](https://three.ws/city) is a free-roam 3D city scene: a walkable urban world (real Manhattan map data) with a follow camera, map, and player controller, built on the same Three.js stack as the rest of the platform.
+
+[![City, live](public/screenshots/city.png)](https://three.ws/city)
 
 **Key files:** `src/city/city-world.js` (scene + render loop), `city-map.js` (layout), `city-player.js` (movement/controller), `city-camera.js` (follow cam), `city.css`.
 
@@ -9685,7 +9713,7 @@ Friends are stored in Postgres (`friendships`, `direct_messages`, `user_mutes` �
 
 ## In-Game Economy
 
-The `/play` open world runs on two currencies that are kept strictly separate, and the separation is the whole design. **Cash** (the carried purse) is a pure game resource: earned by gathering, fishing, and combat, spent at vendors, never on-chain and never a token. **`$THREE`** is the platform's only coin, spent on-chain from the player's connected Solana wallet to unlock premium cosmetics. Price tables live in one module (`multiplayer/src/shop.js`) that the authoritative server and the client both import, so the price a player is shown is exactly the price the server charges.
+The [three.ws/play](https://three.ws/play) open world runs on two currencies that are kept strictly separate, and the separation is the whole design. **Cash** (the carried purse) is a pure game resource: earned by gathering, fishing, and combat, spent at vendors, never on-chain and never a token. **`$THREE`** is the platform's only coin, spent on-chain from the player's connected Solana wallet to unlock premium cosmetics. Price tables live in one module (`multiplayer/src/shop.js`) that the authoritative server and the client both import, so the price a player is shown is exactly the price the server charges.
 
 | Surface | Walk up to | What it does |
 | --- | --- | --- |
@@ -9743,7 +9771,9 @@ The driver is source-agnostic: it accepts any `AudioBuffer`, so it works identic
 
 ## Demos Hub
 
-`/demos` is a curated index of sandbox pages that exercise individual platform capabilities in isolation. Each demo is a single HTML file in [`public/demos/`](public/demos/) — perfect for screen recordings, bug reproductions, or showing off one feature without the rest of the app.
+[three.ws/demos](https://three.ws/demos) is a curated index of sandbox pages that exercise individual platform capabilities in isolation. Each demo is a single HTML file in [`public/demos/`](public/demos/): perfect for screen recordings, bug reproductions, or showing off one feature without the rest of the app. Every path below is a live link.
+
+[![Demos Hub, live](public/screenshots/demos.png)](https://three.ws/demos)
 
 | Demo                                | Path                             | What it shows                                            |
 | ----------------------------------- | -------------------------------- | -------------------------------------------------------- |
@@ -10073,7 +10103,9 @@ _Pump.fun_ ([`api/_mcp/tools/pumpfun.js`](api/_mcp/tools/pumpfun.js))
 
 ## Brain Proxy & LLM Routing
 
-three.ws supports multiple LLM providers behind a single `brain` interface. The runtime is provider-agnostic — switch from Claude to GPT to Gemini to a local model with a one-line change.
+three.ws supports multiple LLM providers behind a single `brain` interface. The runtime is provider-agnostic: switch from Claude to GPT to Gemini to a local model with a one-line change. See it in the wild on the live chat surface at [three.ws/chat](https://three.ws/chat) (model selector, tools, skills, wallet).
+
+[![Chat with model selector, live](public/screenshots/chat.png)](https://three.ws/chat)
 
 | Provider               | Path                             | Use case                                                              |
 | ---------------------- | -------------------------------- | --------------------------------------------------------------------- |
@@ -10246,7 +10278,9 @@ The same five tools ship over two transports: **stdio** (`npx @three-ws/ibm-x402
 
 ## x402 Payments
 
-three.ws is a first-class [x402](https://x402.org) host. Agents can both **pay for** and **expose** paid endpoints. Settlement runs on Base, BSC, and Solana; the bazaar at `/x402` is the discovery surface.
+three.ws is a first-class [x402](https://x402.org) host. Agents can both **pay for** and **expose** paid endpoints. Settlement runs on Base, BSC, and Solana; the bazaar at [three.ws/x402](https://three.ws/x402) is the discovery surface.
+
+**Public proof:** the server is [listed on x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) with its paid tool calls and revenue, and [three.ws/pulse](https://three.ws/pulse) renders every settled agent-to-agent payment as it lands on-chain (hundreds of x402 settlements per day, live counters, real events only).
 
 ### Payment rails
 
@@ -10483,8 +10517,8 @@ Full design and configuration in [docs/solana-pumpfun.md](docs/solana-pumpfun.md
 
 Beyond the Solana reputation signals described above, the platform also ships consumer-facing pump.fun tooling:
 
-- **Token Launcher** — UI for creating and launching new tokens, at [public/pumpfun.html](public/pumpfun.html).
-- **Live Dashboard** — real-time tracker for new tokens, at [pages/pump-live.html](pages/pump-live.html).
+- **Token Launcher** (live at [three.ws/pumpfun](https://three.ws/pumpfun)): UI for creating and launching new tokens, source in [public/pumpfun.html](public/pumpfun.html).
+- **Live Dashboard** (live at [three.ws/pump-live](https://three.ws/pump-live)): real-time tracker for new tokens, source in [pages/pump-live.html](pages/pump-live.html).
 - **Skills** — the [pump-fun-skills/](pump-fun-skills/) directory contains agent skills for reading and acting on pump.fun.
 
 ### Token launcher (USDC v2)
@@ -10508,7 +10542,7 @@ A buyback flow lets an agent route revenue from x402 paid endpoints into pump-sw
 
 ### Pump visualizer
 
-`/pump-visualizer` is a live view of pump.fun activity with three modes:
+[three.ws/pump-visualizer](https://three.ws/pump-visualizer) is a live view of pump.fun activity with three modes:
 
 | Mode           | What it shows                                                         |
 | -------------- | --------------------------------------------------------------------- |
@@ -10539,7 +10573,9 @@ The platform's pump.fun launches pre-grind vanity mint addresses with the WASM g
 
 ## WASM Vanity Grinder
 
-`/vanity-wallet` is a browser-based vanity-address grinder compiled to WebAssembly. Generate **EVM addresses** with a prefix (`0xBEEF…`) or pattern, or **Solana addresses** (base58 prefix / suffix, e.g. `…pump`) in seconds, fully client-side, without leaking the private key to any server.
+[three.ws/vanity-wallet](https://three.ws/vanity-wallet) is a browser-based vanity-address grinder compiled to WebAssembly. Generate **EVM addresses** with a prefix (`0xBEEF…`) or pattern, or **Solana addresses** (base58 prefix / suffix, e.g. `…pump`) in seconds, fully client-side, without leaking the private key to any server.
+
+[![Vanity wallet generator, live](public/screenshots/vanity-wallet.png)](https://three.ws/vanity-wallet)
 
 | Module         | Path                            | Role                                                   |
 | -------------- | ------------------------------- | ------------------------------------------------------ |

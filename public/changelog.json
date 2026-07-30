@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T05:05:28.647Z",
+	"generated_at": "2026-07-30T05:07:26.165Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -236,6 +236,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "The GitHub README now shows the real product",
+			"summary": "The project README on GitHub was rebuilt around live proof: fresh screenshots captured from the production site (Forge, the viewer, discovery, the Club, Coin Communities, the x402 bazaar, the Money Pulse, and more), every tutorial linked to its live page, npm links for all 22 published packages, block-explorer links for the on-chain registries, and stale links to retired pages cleaned up.",
+			"link": null,
+			"tags": [
+				"docs"
 			]
 		},
 		{
