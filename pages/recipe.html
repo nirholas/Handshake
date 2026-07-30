@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" class="cookbook-page">
+	<head>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Cookbook recipe</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="A runnable three.ws cookbook recipe: the file, why it is shaped that way, and what it produces."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<meta property="og:type" content="article" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Cookbook recipe" />
+		<meta
+			property="og:description"
+			content="A runnable three.ws cookbook recipe: the file, why it is shaped that way, and what it produces."
+		/>
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+		/>
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/cookbook.css" />
+		<script
+			src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"
+			integrity="sha384-odPBjvtXVM/5hOYIr3A1dB+flh0c3wAT3bSesIOqEGmyUA4JoKf/YTWy0XKOYAY7"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+			integrity="sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp"
+			crossorigin="anonymous"
+		></script>
+		<script defer src="/nav.js"></script>
+		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/cookbook-manifest.js"></script>
+	</head>
+	<body>
+		<div class="cb-page">
+			<header></header>
+
+			<main class="cb-main">
+				<nav class="cb-crumbs" aria-label="Breadcrumb">
+					<a href="/cookbook">Cookbook</a> <span aria-hidden="true">/</span>
+					<span id="cb-crumb-title">Recipe</span>
+				</nav>
+
+				<div class="cb-doc">
+					<article class="cb-article" id="cb-article">
+						<div class="cb-skeleton" aria-hidden="true">
+							<span></span><span></span><span></span><span></span><span></span>
+						</div>
+						<p class="sr-only" role="status">Loading the recipe.</p>
+					</article>
+
+					<aside class="cb-side" id="cb-side" hidden>
+						<div class="cb-side-card" id="cb-facts-card">
+							<h2>The file</h2>
+							<dl class="cb-facts" id="cb-facts"></dl>
+							<p style="margin: 0.9rem 0 0">
+								<a class="cb-btn primary" id="cb-download" href="#" download>Download</a>
+							</p>
+						</div>
+						<nav class="cb-side-card" id="cb-toc-card" aria-label="On this page">
+							<h2>On this page</h2>
+							<ul class="cb-toc" id="cb-toc"></ul>
+						</nav>
+					</aside>
+				</div>
+			</main>
+
+			<footer id="site-footer"></footer>
+		</div>
+
+		<script>
+			(function () {
+				'use strict';
+
+				const article = document.getElementById('cb-article');
+				const side = document.getElementById('cb-side');
+				const facts = document.getElementById('cb-facts');
+				const toc = document.getElementById('cb-toc');
+				const tocCard = document.getElementById('cb-toc-card');
+				const crumb = document.getElementById('cb-crumb-title');
+				const download = document.getElementById('cb-download');
+
+				const ICON_COPY =
+					'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+				function escapeHtml(value) {
+					return String(value == null ? '' : value).replace(
+						/[&<>"']/g,
+						(c) =>
+							({
+								'&': '&amp;',
+								'<': '&lt;',
+								'>': '&gt;',
+								'"': '&quot;',
+								"'": '&#39;',
+							})[c],
+					);
+				}
+
+				function currentSlug() {
+					const match = location.pathname.match(/^\/cookbook\/([a-z0-9-]+)\/?$/);
+					return match ? match[1] : '';
+				}
+
+				function slugifyHeading(text) {
+					return String(text)
+						.toLowerCase()
+						.replace(/[^a-z0-9]+/g, '-')
+						.replace(/^-+|-+$/g, '');
+				}
+
+				function fillFacts(recipe) {
+					const rows = [
+						['Language', recipe.language],
+						['Level', recipe.level],
+						['Time', recipe.time],
+						['Needs', recipe.needs],
+						['Builds', recipe.builds],
+					];
+					facts.innerHTML = rows
+						.filter(([, value]) => value)
+						.map(
+							([label, value]) =>
+								'<dt>' +
+								escapeHtml(label) +
+								'</dt><dd>' +
+								escapeHtml(value) +
+								'</dd>',
+						)
+						.join('');
+					if (recipe.download) {
+						download.href = recipe.download.href;
+						download.textContent = recipe.download.label;
+					} else {
+						download.hidden = true;
+					}
+					side.hidden = false;
+				}
+
+				/* Anchor every heading and mirror it into the sidebar, so a long recipe is
+				   linkable section by section. */
+				function buildToc() {
+					const headings = article.querySelectorAll('h2, h3');
+					const seen = new Set();
+					const items = [];
+					headings.forEach((heading) => {
+						let id = slugifyHeading(heading.textContent);
+						let unique = id;
+						let n = 2;
+						while (seen.has(unique)) unique = id + '-' + n++;
+						seen.add(unique);
+						heading.id = unique;
+						items.push(
+							'<li' +
+								(heading.tagName === 'H3' ? ' class="sub"' : '') +
+								'><a href="#' +
+								unique +
+								'">' +
+								escapeHtml(heading.textContent) +
+								'</a></li>',
+						);
+					});
+					if (!items.length) {
+						tocCard.hidden = true;
+						return;
+					}
+					toc.innerHTML = items.join('');
+					trackActiveHeading(headings);
+				}
+
+				function trackActiveHeading(headings) {
+					if (!('IntersectionObserver' in window) || !headings.length) return;
+					const links = new Map(
+						Array.from(toc.querySelectorAll('a')).map((a) => [
+							a.getAttribute('href').slice(1),
+							a,
+						]),
+					);
+					const observer = new IntersectionObserver(
+						(entries) => {
+							entries.forEach((entry) => {
+								const link = links.get(entry.target.id);
+								if (!link) return;
+								if (entry.isIntersecting) {
+									links.forEach((other) => other.removeAttribute('aria-current'));
+									link.setAttribute('aria-current', 'true');
+								}
+							});
+						},
+						{ rootMargin: '-80px 0px -70% 0px' },
+					);
+					headings.forEach((heading) => observer.observe(heading));
+				}
+
+				/* Every code block gets a copy button. Wrapping wide blocks in a scroller
+				   keeps the page itself from scrolling sideways on a phone. */
+				function enhanceCode() {
+					article.querySelectorAll('pre code').forEach((code) => {
+						if (window.hljs) {
+							try {
+								window.hljs.highlightElement(code);
+							} catch (err) {
+								/* Highlighting is decoration; unstyled code still reads fine. */
+							}
+						}
+						const pre = code.parentElement;
+						const button = document.createElement('button');
+						button.type = 'button';
+						button.className = 'cb-copy';
+						button.innerHTML = ICON_COPY + '<span>Copy</span>';
+						button.addEventListener('click', async () => {
+							const label = button.querySelector('span');
+							try {
+								await navigator.clipboard.writeText(code.textContent);
+								label.textContent = 'Copied';
+							} catch (err) {
+								label.textContent = 'Press Ctrl+C';
+							}
+							setTimeout(() => {
+								label.textContent = 'Copy';
+							}, 1600);
+						});
+						pre.appendChild(button);
+					});
+					article.querySelectorAll('table').forEach((table) => {
+						const scroller = document.createElement('div');
+						scroller.className = 'cb-table-scroll';
+						table.parentNode.insertBefore(scroller, table);
+						scroller.appendChild(table);
+					});
+				}
+
+				function appendPager(slug) {
+					const recipes = window.RECIPES || [];
+					const here = window.recipeIndex(slug);
+					if (here < 0) return;
+					const prev = recipes[here - 1];
+					const next = recipes[here + 1];
+					if (!prev && !next) return;
+					const nav = document.createElement('nav');
+					nav.className = 'cb-pager';
+					nav.setAttribute('aria-label', 'More recipes');
+					nav.innerHTML =
+						(prev
+							? '<a class="prev" href="' +
+								escapeHtml(prev.href) +
+								'"><span class="cb-pager-dir">Previous</span><span class="cb-pager-title">' +
+								escapeHtml(prev.title) +
+								'</span></a>'
+							: '<span></span>') +
+						(next
+							? '<a class="next" href="' +
+								escapeHtml(next.href) +
+								'"><span class="cb-pager-dir">Next</span><span class="cb-pager-title">' +
+								escapeHtml(next.title) +
+								'</span></a>'
+							: '<span></span>');
+					article.appendChild(nav);
+				}
+
+				function showError(slug, detail) {
+					article.innerHTML =
+						'<div class="cb-error"><h1>This recipe did not load</h1><p>' +
+						escapeHtml(detail) +
+						'</p><p><a class="cb-btn primary" href="/cookbook">Back to the cookbook</a> ' +
+						'<a class="cb-btn" href="/docs/3d-api">API docs</a></p></div>';
+					document.title = 'three.ws — recipe not found';
+				}
+
+				async function load() {
+					const slug = currentSlug();
+					if (!slug) {
+						showError('', 'No recipe was named in the URL.');
+						return;
+					}
+					const recipe = window.recipeBySlug(slug);
+					if (recipe) {
+						document.title = recipe.title + ' — three.ws Cookbook';
+						crumb.textContent = recipe.title;
+						fillFacts(recipe);
+					}
+
+					let markdown;
+					try {
+						const res = await fetch('/docs/cookbook/' + slug + '.md');
+						if (!res.ok) throw new Error('HTTP ' + res.status);
+						markdown = await res.text();
+					} catch (err) {
+						showError(
+							slug,
+							'We could not fetch /docs/cookbook/' +
+								slug +
+								'.md (' +
+								err.message +
+								'). It may have moved.',
+						);
+						return;
+					}
+
+					window.marked.setOptions({ gfm: true, breaks: false, mangle: false, headerIds: false });
+					article.innerHTML = window.marked.parse(markdown);
+
+					/* Internal .md links point at files in the repo; rewrite them to routes. */
+					article.querySelectorAll('a[href$=".md"]').forEach((link) => {
+						const href = link.getAttribute('href');
+						if (/^https?:/.test(href)) return;
+						link.setAttribute(
+							'href',
+							'/docs/' + href.replace(/^\.?\/?(docs\/)?/, '').replace(/\.md$/, ''),
+						);
+					});
+
+					buildToc();
+					enhanceCode();
+					appendPager(slug);
+				}
+
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', load);
+				} else {
+					load();
+				}
+			})();
+		</script>
+	</body>
+</html>

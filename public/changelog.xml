@@ -119,6 +119,14 @@
 			<description>Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.</description>
 		</item>
 		<item>
+			<title>Tutorial · Earn and spend in /play</title>
+			<link>https://three.ws/tutorials/earn-and-spend-in-play</link>
+			<guid isPermaLink="false">2026-07-30:Tutorial · Earn and spend in /play</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.</description>
+		</item>
+		<item>
 			<title>Tutorial · Explore the docs as a 3D world</title>
 			<link>https://three.ws/tutorials/explore-docs-world</link>
 			<guid isPermaLink="false">2026-07-30:Tutorial · Explore the docs as a 3D world</guid>
@@ -239,6 +247,22 @@
 			<description>A new page at three.ws/nvidia explains the whole NVIDIA side of the platform in one place: the free hosted lane that makes text-to-3D cost you nothing, the exact model behind each capability, the twelve GPU workers the platform runs itself, and a request you can paste into a terminal to generate a model right now. It links out to both NVIDIA tutorials, the engineering write-up on the GPU fleet, and the membership page. The partner directory now points here instead of at the membership doc.</description>
 		</item>
 		<item>
+			<title>A runnable wallet sign-in example and a step-by-step tutorial</title>
+			<link>https://three.ws/tutorials/wallet-sign-in</link>
+			<guid isPermaLink="false">2026-07-30:A runnable wallet sign-in example and a step-by-step tutorial</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Signing in with a Solana or Ethereum wallet was documented as a reference but there was nothing you could run. There is now a working demo page that performs the whole round trip against the live API, shows you the exact message your wallet signed, and logs every request with its real status code, plus a tutorial that walks the same flow line by line. Both spell out the four things that quietly break a first integration: the domain check that rejects a message built from a development address, the anti-forgery header the verify step requires, the two different responses that both mean signed out, and the field the API puts its error code in.</description>
+		</item>
+		<item>
+			<title>A searchable catalog of every tool three.ws gives an AI assistant</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-07-30:A searchable catalog of every tool three.ws gives an AI assistant</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws publishes 270 tools that AI assistants can call, spread across 36 servers, and until now the only way to see them all was to query each server. The new catalog page lists every one in a single searchable view: what it does, which server hosts it, what it costs in USDC, and whether an assistant can run it without asking you first. Filter by any of those and the link you copy keeps the filter. The same data is published as a single file any agent can fetch to discover the whole surface in one request. Both are generated from the source of each tool on every build, so unlike the hand-written table they replace they cannot fall out of date.</description>
+		</item>
+		<item>
 			<title>A slow data provider can no longer freeze a live trading position</title>
 			<link>https://three.ws/trades</link>
 			<guid isPermaLink="false">2026-07-30:A slow data provider can no longer freeze a live trading position</guid>
@@ -253,6 +277,14 @@
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>If you want other people's AI assistants to pay you per call, there is now a complete worked example you can run in a minute and a step-by-step tutorial that builds it with you. The example is a real server with two tools: a free one that explains the prices and how paying works, and a paid one that inspects a 3D model and returns a report on what is wrong with it and how to fix it. It refuses to hand over the report until payment clears, and it refuses to take payment unless it actually produced a report, so a broken link or an unreachable file costs the caller nothing. It ships with fifteen tests, including one whose only job is to prove the paid result cannot escape unpaid.</description>
+		</item>
+		<item>
+			<title>Agent payment sessions are now fully documented, tested, and easier to size correctly</title>
+			<link>https://three.ws/docs/api-reference</link>
+			<guid isPermaLink="false">2026-07-30:Agent payment sessions are now fully documented, tested, and easier to size correctly</guid>
+			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Payment sessions let an AI agent spend a budget you set without ever holding a private key, and the feature shipped without a full reference entry or a single test on the code that enforces the limits. The complete API is now documented endpoint by endpoint, including every governance refusal and what happens when a payment is submitted but never confirmed. The enforcement layer has 49 tests covering the budget race, the host allowlist, per-payment ceilings, and refunds. Two runnable examples ship with the payments MCP package, one of which reads what a paid endpoint actually charges so you can size a budget from real prices instead of guessing. A configuration bug meant setting PAYMENT_SESSION_SECRET had no effect and session tokens were quietly keyed to an unrelated secret, which is fixed.</description>
 		</item>
 		<item>
 			<title>Agent Symphony: listen to the agent economy as it happens</title>

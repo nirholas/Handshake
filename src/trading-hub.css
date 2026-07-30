@@ -65,13 +65,18 @@
 	outline-offset: 2px;
 }
 
+/* --accent is white on the dark theme, so the label has to be the page
+ * background rather than a light foreground. --btn-primary-fg is defined in
+ * public/style.css, which this page does not load, so it is only the first rung
+ * of the chain and --color-bg carries it when absent. Same reason
+ * --btn-primary-bg-hover falls back to --accent-soft. */
 .th-btn-primary {
 	background: var(--accent);
-	color: var(--btn-primary-fg);
+	color: var(--btn-primary-fg, var(--color-bg));
 }
 
 .th-btn-primary:hover {
-	background: var(--btn-primary-bg-hover);
+	background: var(--btn-primary-bg-hover, var(--accent-soft, var(--accent)));
 }
 
 .th-btn-secondary {

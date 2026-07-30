@@ -515,6 +515,16 @@
 			ctaPrimary: { label: 'Read the example code', href: 'https://github.com/nirholas/three.ws/tree/main/examples/paid-mcp-server' },
 		},
 		{
+			slug: 'wallet-sign-in',
+			tier: 'middle',
+			title: 'Add wallet sign-in to your app',
+			blurb: 'Authenticate visitors with Phantom, Backpack, Solflare, or MetaMask. The Sign-In with Solana round trip end to end, plus the four things that quietly break it: the domain check that rejects dev origins, the CSRF header on verify, the two different signed-out responses, and error codes that arrive in a field most people read wrong.',
+			builds: 'A working wallet sign-in button that produces a real three.ws session',
+			time: '20 min',
+			previewModel: '/avatars/cz.glb',
+			ctaPrimary: { label: 'Run the example', href: 'https://github.com/nirholas/three.ws/tree/main/examples/wallet-sign-in' },
+		},
+		{
 			slug: 'agent-spending-envelope',
 			tier: 'advanced',
 			title: 'Give an agent a spending envelope (no private key)',

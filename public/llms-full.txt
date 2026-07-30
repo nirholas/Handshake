@@ -2621,6 +2621,12 @@ URL: https://three.ws/docs/guards
 
 The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.
 
+### Tutorial · Add Wallet Sign-In to Your App
+
+URL: https://three.ws/tutorials/wallet-sign-in
+
+Authenticate visitors with Phantom, Backpack, Solflare, or MetaMask: the Sign-In with Solana round trip end to end, the domain check that rejects dev origins, CSRF on verify, both signed-out response shapes, and error codes mapped to fixes.
+
 ### Tutorial · Give an Agent a Spending Envelope
 
 URL: https://three.ws/tutorials/agent-spending-envelope
@@ -3448,6 +3454,12 @@ Every mechanical guard that protects the three.ws codebase, and the stage each o
 URL: https://three.ws/docs/tutorials/write-a-guard
 
 Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.
+
+### Tutorial · Earn and spend in /play
+
+URL: https://three.ws/tutorials/earn-and-spend-in-play
+
+Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.
 
 ## Blog
 

@@ -138,3 +138,6 @@ promote no specific token.
 - [MCP](mcp.md) overview · [3D Studio MCP](mcp-studio.md) ·
   [3D Studio (paid)](mcp-3d-studio.md) · [x402 bazaar](mcp-x402-bazaar.md)
 - [x402 paid endpoints](x402-endpoints.md) — the same capabilities over REST.
+- [MCP tool safety](mcp-safety.md) - what each tool's safety annotations mean,
+  and the build check that verifies them against the code.
+- [The full catalog](/mcp-tools) - every tool, searchable by safety and price.

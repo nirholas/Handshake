@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T22:49:50.337Z",
+	"generated_at": "2026-07-30T22:52:32.200Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -142,6 +142,16 @@
 			"title": "Tutorial · Character Library to a Live Embed",
 			"summary": "Pick a rigged character from the free library of 107, prove its skeleton drives the animation clip library, and embed it on your own site with one script tag and a gesture button. No modeling, no cost, ten minutes.",
 			"link": "/tutorials/character-library-to-embed",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "launch",
+			"title": "Tutorial · Earn and spend in /play",
+			"summary": "Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.",
+			"link": "/tutorials/earn-and-spend-in-play",
 			"tags": [
 				"launch"
 			]
@@ -303,6 +313,28 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "A runnable wallet sign-in example and a step-by-step tutorial",
+			"summary": "Signing in with a Solana or Ethereum wallet was documented as a reference but there was nothing you could run. There is now a working demo page that performs the whole round trip against the live API, shows you the exact message your wallet signed, and logs every request with its real status code, plus a tutorial that walks the same flow line by line. Both spell out the four things that quietly break a first integration: the domain check that rejects a message built from a development address, the anti-forgery header the verify step requires, the two different responses that both mean signed out, and the field the API puts its error code in.",
+			"link": "/tutorials/wallet-sign-in",
+			"tags": [
+				"docs",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "A searchable catalog of every tool three.ws gives an AI assistant",
+			"summary": "three.ws publishes 270 tools that AI assistants can call, spread across 36 servers, and until now the only way to see them all was to query each server. The new catalog page lists every one in a single searchable view: what it does, which server hosts it, what it costs in USDC, and whether an assistant can run it without asking you first. Filter by any of those and the link you copy keeps the filter. The same data is published as a single file any agent can fetch to discover the whole surface in one request. Both are generated from the source of each tool on every build, so unlike the hand-written table they replace they cannot fall out of date.",
+			"link": "/mcp-tools",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "A slow data provider can no longer freeze a live trading position",
 			"summary": "When a trading bot checks whether it still holds a coin, it asks a Solana data provider for its token accounts. An overloaded provider sometimes answers with an empty list for a wallet that demonstrably still holds the coin. The platform read that empty answer as proof the coin had been sold, set the position aside as needing manual reconciliation, and because each strategy allows only one position at a time, the strategy stopped trading entirely while still holding the coin. Four strategies sat frozen this way for up to 57 hours against a 30-minute time limit. An empty or malformed answer is now treated as unknown rather than as zero, and is double-checked against the wallet's own token account addresses before any position is set aside. A position set aside without a recorded timestamp is also no longer exempt from the existing time limit, which is what made these freezes permanent instead of self-clearing.",
 			"link": "/trades",
@@ -319,6 +351,18 @@
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Agent payment sessions are now fully documented, tested, and easier to size correctly",
+			"summary": "Payment sessions let an AI agent spend a budget you set without ever holding a private key, and the feature shipped without a full reference entry or a single test on the code that enforces the limits. The complete API is now documented endpoint by endpoint, including every governance refusal and what happens when a payment is submitted but never confirmed. The enforcement layer has 49 tests covering the budget race, the host allowlist, per-payment ceilings, and refunds. Two runnable examples ship with the payments MCP package, one of which reads what a paid endpoint actually charges so you can size a budget from real prices instead of guessing. A configuration bug meant setting PAYMENT_SESSION_SECRET had no effect and session tokens were quietly keyed to an unrelated secret, which is fixed.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"docs",
+				"fix",
+				"improvement"
 			]
 		},
 		{

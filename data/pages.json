@@ -3369,6 +3369,13 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/tutorials/wallet-sign-in",
+					"title": "Tutorial · Add Wallet Sign-In to Your App",
+					"description": "Authenticate visitors with Phantom, Backpack, Solflare, or MetaMask: the Sign-In with Solana round trip end to end, the domain check that rejects dev origins, CSRF on verify, both signed-out response shapes, and error codes mapped to fixes.",
+					"priority": 0.8,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/tutorials/agent-spending-envelope",
 					"title": "Tutorial · Give an Agent a Spending Envelope",
 					"description": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",
@@ -4384,6 +4391,21 @@
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/tutorials/earn-and-spend-in-play",
+					"title": "Tutorial · Earn and spend in /play",
+					"description": "Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/showcase",
+					"title": "Docs: The showcase",
+					"description": "The public directory of ERC-8004 agents that registered a real 3D avatar. Nothing is curated: an agent appears because the crawler verified its on-chain metadata resolves to a usable model. Covers the qualifying rules and the keyset-paginated API.",
+					"priority": 0.7,
+					"changefreq": "monthly"
 				}
 			]
 		},

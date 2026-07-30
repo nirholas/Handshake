@@ -3,6 +3,27 @@
 	"entries": [
 		{
 			"date": "2026-07-30",
+			"title": "A searchable catalog of every tool three.ws gives an AI assistant",
+			"summary": "three.ws publishes 270 tools that AI assistants can call, spread across 36 servers, and until now the only way to see them all was to query each server. The new catalog page lists every one in a single searchable view: what it does, which server hosts it, what it costs in USDC, and whether an assistant can run it without asking you first. Filter by any of those and the link you copy keeps the filter. The same data is published as a single file any agent can fetch to discover the whole surface in one request. Both are generated from the source of each tool on every build, so unlike the hand-written table they replace they cannot fall out of date.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-07-30",
+			"title": "Agent payment sessions are now fully documented, tested, and easier to size correctly",
+			"summary": "Payment sessions let an AI agent spend a budget you set without ever holding a private key, and the feature shipped without a full reference entry or a single test on the code that enforces the limits. The complete API is now documented endpoint by endpoint, including every governance refusal and what happens when a payment is submitted but never confirmed. The enforcement layer has 49 tests covering the budget race, the host allowlist, per-payment ceilings, and refunds. Two runnable examples ship with the payments MCP package, one of which reads what a paid endpoint actually charges so you can size a budget from real prices instead of guessing. A configuration bug meant setting PAYMENT_SESSION_SECRET had no effect and session tokens were quietly keyed to an unrelated secret, which is fixed.",
+			"tags": [
+				"docs",
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-07-30",
 			"title": "The examples page now lists every example that ships, not a hand-picked five",
 			"summary": "The /examples page had six runnable snippets you can execute on the page, then a short section naming five example projects by hand. The repository actually ships 39 of them: complete example agents, installable skill bundles, end-to-end scripts, and an examples folder beside every SDK and published package. The page now lists all of them, with a search box and filters by kind, and each card shows the files the example contains plus the exact command that runs it, with a copy button. The list is built by scanning the repository, so it cannot advertise an example that was deleted or miss one that was added.",
 			"tags": [
@@ -17388,6 +17409,16 @@
 				"feature",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-07-30",
+			"title": "A runnable wallet sign-in example and a step-by-step tutorial",
+			"summary": "Signing in with a Solana or Ethereum wallet was documented as a reference but there was nothing you could run. There is now a working demo page that performs the whole round trip against the live API, shows you the exact message your wallet signed, and logs every request with its real status code, plus a tutorial that walks the same flow line by line. Both spell out the four things that quietly break a first integration: the domain check that rejects a message built from a development address, the anti-forgery header the verify step requires, the two different responses that both mean signed out, and the field the API puts its error code in.",
+			"tags": [
+				"docs",
+				"sdk"
+			],
+			"link": "/tutorials/wallet-sign-in"
 		}
 	]
 }

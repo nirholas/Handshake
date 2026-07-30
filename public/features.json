@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T22:49:50.305Z",
+	"generated_at": "2026-07-30T22:52:32.153Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4318,6 +4318,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/tutorials/wallet-sign-in",
+					"title": "Tutorial · Add Wallet Sign-In to Your App",
+					"description": "Authenticate visitors with Phantom, Backpack, Solflare, or MetaMask: the Sign-In with Solana round trip end to end, the domain check that rejects dev origins, CSRF on verify, both signed-out response shapes, and error codes mapped to fixes.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/tutorials/agent-spending-envelope",
 					"title": "Tutorial · Give an Agent a Spending Envelope",
 					"description": "Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.",
@@ -5691,6 +5701,16 @@
 					"path": "/docs/tutorials/write-a-guard",
 					"title": "Tutorial · Write a repository guard",
 					"description": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json, wire it into a stage, and cover it with a test that includes the false positive it must never report.",
+					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/earn-and-spend-in-play",
+					"title": "Tutorial · Earn and spend in /play",
+					"description": "Run the full economic loop in the open world: gather raw materials, sell them to a vendor, buy a better tool, bank the rest so death can't take it, and spin the wheel. Covers why the world has two currencies that never touch, and why the server decides every price.",
 					"added": "2026-07-30",
 					"auth": null,
 					"indexable": true,

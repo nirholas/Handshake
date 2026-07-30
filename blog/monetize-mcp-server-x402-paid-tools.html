@@ -236,50 +236,45 @@ export default paid(
 
         <h2 id="inside">Step 4: charge inside a tool call</h2>
         <p>For shape B the payment rides in the MCP message itself. An unpaid <code>tools/call</code> returns a payment-required envelope quoting the price and the receiving address. The client signs, retries with the payload in <code>_meta["x402/payment"]</code>, and the settlement receipt comes back in <code>_meta["x402/payment-response"]</code>. x402-capable clients run that loop without asking the user anything.</p>
-        <p>The same three primitives that back <code>paid()</code> are exported for this, so you keep one wire contract across both shapes:</p>
-        <pre><code>import {
-  buildChallenge,
-  verifyPayment,
-  settlePayment,
-  NETWORK_SOLANA_MAINNET,
-} from '@three-ws/x402-server';
+        <p>Do not hand-roll that envelope. The <code>@x402/mcp</code> transport package builds it, and one resource server per process handles verification and settlement for every paid tool you register:</p>
+        <pre><code>import { HTTPFacilitatorClient, x402ResourceServer } from '@x402/core/server';
+import { declareDiscoveryExtension } from '@x402/extensions/bazaar';
+import { createPaymentWrapper, createToolResourceUrl } from '@x402/mcp';
+import { registerExactSvmScheme } from '@x402/svm/exact/server';
 
-const requirements = [{
-  scheme: 'exact',
-  network: NETWORK_SOLANA_MAINNET,
-  asset: 'usdc',
-  payTo: process.env.X402_PAY_TO_SOLANA,
-  amount: '20000',                            // $0.02
-  maxTimeoutSeconds: 60,
-}];
+const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 
-server.registerTool('summarize_document', schema, async (args, extra) => {
-  const header = extra?._meta?.['x402/payment'];
+const resourceServer = new x402ResourceServer([
+  new HTTPFacilitatorClient({ url: 'https://facilitator.payai.network' }),
+]);
+registerExactSvmScheme(resourceServer, {});
+await resourceServer.initialize();
 
-  if (!header) {
-    const challenge = buildChallenge({
-      price: '20000',
-      asset: 'usdc',
-      payTo: { solana: process.env.X402_PAY_TO_SOLANA },
-      description: 'Document summarization',
-    });
-    return { isError: true, content: [{ type: 'text', text: JSON.stringify(challenge) }] };
-  }
+const resourceUrl = createToolResourceUrl('summarize_document');
+const accepts = await resourceServer.buildPaymentRequirementsFromOptions(
+  [{
+    scheme: 'exact',
+    network: NETWORK_SOLANA_MAINNET,
+    payTo: process.env.X402_PAY_TO_SOLANA,
+    price: '$0.02',
+    maxTimeoutSeconds: 60,
+    extra: { name: 'USDC', decimals: 6 },
+  }],
+  { resourceUrl },
+);
 
-  const verified = await verifyPayment({ paymentHeader: header, requirements });
-  if (!verified.ok) {
-    return { isError: true, content: [{ type: 'text', text: JSON.stringify(verified.body) }] };
-  }
+const wrap = createPaymentWrapper(resourceServer, {
+  accepts,
+  resource: { url: resourceUrl, description, mimeType: 'application/json' },
+  extensions: declareDiscoveryExtension({ toolName: 'summarize_document', description, transport: 'stdio', inputSchema }),
+});
 
-  const summary = await summarize(args.text);
-  const receipt = await settlePayment({ verified });
-
-  return {
-    content: [{ type: 'text', text: summary }],
-    _meta: { 'x402/payment-response': receipt },
-  };
-});</code></pre>
+server.registerTool('summarize_document', schema, wrap(async (args) => ({
+  content: [{ type: 'text', text: await summarize(args.text) }],
+})));</code></pre>
+        <p>The wrapper answers an unpaid call with the challenge, verifies the retry, runs your handler, settles, and attaches the receipt. <code>declareDiscoveryExtension</code> is the part people skip: it is what puts your tool in the catalogs agents search when they go shopping.</p>
         <p><strong>Ship one free tool alongside the paid ones.</strong> A tool named something like <code>getting_started</code> that returns your price list and explains the payment flow costs you nothing and removes the guesswork for a client that has never paid an MCP tool before. Every paid connector we run has one, and it is consistently the first tool a new caller invokes.</p>
+        <p>A complete, runnable version of this shape (one free tool, one paid tool, 15 tests, real SSRF-guarded work) is in <a href="https://github.com/nirholas/three.ws/tree/main/examples/paid-mcp-server" rel="noopener">examples/paid-mcp-server</a>, and the step-by-step build is the tutorial <a href="/tutorials/monetize-mcp-server">Monetize an MCP server</a>.</p>
 
         <h2 id="verify">Step 5: verify it against a real 402</h2>
         <p>Before trusting your own implementation, look at a working one. This is a live production endpoint, and the response below is what it returns right now to an unpaid request:</p>

@@ -520,6 +520,7 @@ const appConfig = {
 				arm: resolve(__dirname, 'pages/arm.html'),
 				ca2x402: resolve(__dirname, 'pages/ca2x402.html'),
 				activity: resolve(__dirname, 'pages/activity.html'),
+				guards: resolve(__dirname, 'pages/guards.html'),
 				pipeline: resolve(__dirname, 'pages/pipeline.html'),
 				'coin-intel': resolve(__dirname, 'pages/coin-intel.html'),
 				coins: resolve(__dirname, 'pages/coins.html'),
