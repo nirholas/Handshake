@@ -130,7 +130,6 @@ export const NAV_GROUPS = [
 					{
 						title: 'ASL Alphabet',
 						href: '/asl-alphabet',
-						tier: 'beginner',
 						badge: 'New',
 						badgeTone: 'live',
 						desc: 'Every letter and number on a live 3D hand, with the look-alikes named and a drill for reading it',
