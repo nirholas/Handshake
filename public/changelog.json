@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:31:07.098Z",
+	"generated_at": "2026-07-30T04:33:39.690Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -73,6 +73,17 @@
 		{
 			"date": "2026-07-30",
 			"type": "update",
+			"title": "Solana reads keep working when every paid RPC plan runs dry at once",
+			"summary": "Everything on the platform that reads the Solana chain (wallet balances, coin prices, launch history, agent payments) goes through a chain of RPC providers, tried in order. All four of our paid providers hit their limits on the same day, so every read started by failing over to a free node before it could succeed. The primary now points at a healthy node directly. The health monitor was also counting whichever node we point at as paid capacity, which meant switching to a free node during an outage would have made the monitor report the paid tier as healthy at the exact moment all of it was down. It now judges a lane by the provider it belongs to, so an exhausted paid tier is always visible on the status page.",
+			"link": null,
+			"tags": [
+				"infra",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
 			"title": "The pages that shipped without docs now have them",
 			"summary": "Thirteen surfaces that launched with no guide are now fully documented: the Agent-Forged Gallery, Generation Watch, the KOL Tracker, the Character and Object Libraries, the Minted gallery, the Reasoning Ledger, the 3D history timeline, Daily Match, Agent Symphony, the notifications center, the creator portfolio, and the Token Screener. Each guide explains what the page shows, where every number comes from, and the public API behind it, and all of them are linked from the Start Here page.",
 			"link": "/docs/start-here",
@@ -99,6 +110,17 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-30",
+			"type": "update",
+			"title": "Wallet balances and holder checks stop failing when a free Solana node refuses the call",
+			"summary": "Everything that reads a Solana balance goes through a chain of nodes, so that if one is out of credits or refusing requests the next one answers. Two gaps in that chain were letting failures through. First, when our main paid node hit its monthly cap it said so in wording our code did not recognise as \"out of credits\", so it was treated as briefly busy and put back at the front of the queue every ten minutes, meaning almost every balance lookup began by failing against a node that could not answer until the billing month rolled over. Second, some of the free public nodes refuse specific kinds of lookup outright, including the one that reads which tokens a wallet holds, and they refuse it with a reply our code read as \"you asked for something impossible\" rather than \"ask a different node\". That turned into an outright error for the features built on it: your token balances, $THREE holder checks, and the gates that unlock embeds and scenes for holders. Both signals are now recognised, so an exhausted node steps aside for the rest of its billing period and a node that will not serve a lookup is skipped in favour of one that will.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

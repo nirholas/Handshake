@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T04:24:17.127Z",
+	"generated_at": "2026-07-30T04:33:39.595Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3822,6 +3822,26 @@
 					"title": "Docs · NVIDIA Inception membership",
 					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
 					"added": "2026-07-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/nvidia-models",
+					"title": "Docs · Every NVIDIA model three.ws runs for free",
+					"description": "The full free NVIDIA inference layer behind three.ws, model by model: TRELLIS for text-to-3D, FLUX.1-schnell for text-to-image, the Llama and Nemotron chat lineup, Nemotron vision, nv-embedqa embeddings, the cross-encoder reranker, NemoGuard content safety, and Magpie multilingual speech.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/nvidia-nemotron-spotlight",
+					"title": "Docs · How Nemotron Nano made free text-to-3D production-ready",
+					"description": "The three.ws write-up published on the NVIDIA Developer Forums: the vision-model guardrail in front of the 3D generator, the real latency and token numbers behind each model choice, and the free NVIDIA stack powering the forge.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": [],
