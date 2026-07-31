@@ -22,6 +22,7 @@
 import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
 import { resolveSlot, resolveHint, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
+import { RoutinePlayer, normalizeRoutine, slugify } from './runtime/choreography.js';
 import { ElevenLabsTTS } from './runtime/speech.js';
 import { LipSyncAnalyser, VISEMES as LIPSYNC_VISEMES } from './lip-sync-analyser.js';
 import { resolveMorphTargets, MORPH_ALIASES, ARKIT_VISEMES } from './runtime/arkit52.js';
@@ -211,6 +212,11 @@ export class AgentAvatar {
 		this._animationMap = {};
 		this._warnedSlots = new Set();
 
+		// Named gesture routines (from meta.choreographies) and the one currently
+		// performing, if any. Driven from the same frame hook as the emotion blend.
+		this._routines = new Map();
+		this._routinePlayer = null;
+
 		// Streak tracking for empathy injection
 		this._errorStreak = 0;
 		this._firstEncounter = true;
@@ -331,6 +337,7 @@ export class AgentAvatar {
 	detach() {
 		clearTimeout(this._firstEncounterTimer);
 		clearTimeout(this._playAmClipTimer);
+		this.stopChoreography();
 		if (this.viewer._afterAnimateHooks) {
 			const idx = this.viewer._afterAnimateHooks.indexOf(this._tickBound);
 			if (idx !== -1) this.viewer._afterAnimateHooks.splice(idx, 1);
@@ -453,15 +460,105 @@ export class AgentAvatar {
 		return resolveSlot(slot, this._animationMap);
 	}
 
+	// ── Choreography ──────────────────────────────────────────────────────────
+	//
+	// A routine is a named sequence of gesture slots with per-step timing
+	// (src/runtime/choreography.js). The timing engine is shared with the
+	// /choreograph studio, so what an owner composed there is frame-for-frame
+	// what their agent performs here; this class only supplies the "play one
+	// step" side effect and the frame deltas.
+
+	/**
+	 * Register the agent's saved routines (manifest `choreographies`, stored at
+	 * meta.choreographies). Invalid entries are dropped rather than thrown: one
+	 * bad routine must not cost the agent the rest of its body language.
+	 * @param {Array} list
+	 */
+	setChoreographies(list) {
+		this._routines = new Map();
+		for (const entry of Array.isArray(list) ? list : []) {
+			try {
+				const routine = normalizeRoutine(entry);
+				this._routines.set(routine.id, routine);
+			} catch (err) {
+				log.warn(`[AgentAvatar] skipping invalid choreography: ${err.message}`);
+			}
+		}
+		return this._routines.size;
+	}
+
+	/** The agent's registered routines, newest registration order. */
+	getChoreographies() {
+		return [...(this._routines?.values() ?? [])];
+	}
+
+	/**
+	 * Perform a routine: either one registered by id/name, or a literal routine
+	 * object (what a shared /choreograph link carries).
+	 *
+	 * @param {string|object} nameOrRoutine
+	 * @param {{loop?:boolean, onStep?:Function, onEnd?:Function}} [opts]
+	 * @returns {boolean} false when no such routine exists
+	 */
+	playChoreography(nameOrRoutine, opts = {}) {
+		let routine = null;
+		if (typeof nameOrRoutine === 'string') {
+			routine = this._routines?.get(slugify(nameOrRoutine)) ?? null;
+			if (!routine) {
+				log.warn(`[AgentAvatar] no choreography named "${nameOrRoutine}"`);
+				return false;
+			}
+		} else {
+			try {
+				routine = normalizeRoutine(nameOrRoutine);
+			} catch (err) {
+				log.warn(`[AgentAvatar] invalid choreography: ${err.message}`);
+				return false;
+			}
+		}
+
+		this.stopChoreography();
+		this._routinePlayer = new RoutinePlayer(routine, {
+			loop: opts.loop ?? routine.loop,
+			onStep: (step) => {
+				// The step owns the stage for exactly its own span, so the one-shot
+				// revert never fires mid-routine and steal the next step's crossfade.
+				this._playSlot(step.slot, step.hold / (step.speed || 1), step.clip);
+				opts.onStep?.(step);
+			},
+			onEnd: () => {
+				this._routinePlayer = null;
+				opts.onEnd?.();
+			},
+		});
+		this._routinePlayer.start();
+		return true;
+	}
+
+	/** Stop a routine mid-performance. The current gesture reverts as usual. */
+	stopChoreography() {
+		this._routinePlayer?.stop();
+		this._routinePlayer = null;
+	}
+
+	/** True while a routine is performing. */
+	get isPerforming() {
+		return Boolean(this._routinePlayer?.playing);
+	}
+
 	/**
 	 * Play a gesture by slot name, routing through the external animation manager.
 	 * Falls back to embedded clip search (_triggerOneShot) if the clip isn't in the library.
 	 * Warns once per missing clip name.
 	 * @param {string} slot — e.g. 'celebrate', 'think'
 	 * @param {number} [duration]
+	 * @param {string|null} [clipOverride] — play this exact clip instead of the
+	 *   slot's resolved one. Used by choreography steps that pin a clip; the slot
+	 *   is still what the fallbacks below key off, so a bad pin degrades to the
+	 *   slot's default rather than to nothing.
 	 */
-	_playSlot(slot, duration = 1.5) {
-		const clipName = this._resolveSlot(slot);
+	_playSlot(slot, duration = 1.5, clipOverride = null) {
+		const clipName = clipOverride || this._resolveSlot(slot);
 		this._isPlayingOneShot = true;
 		this._oneShotAction = slot;
 		this._oneShotDuration = duration;
@@ -837,8 +934,14 @@ export class AgentAvatar {
 			}
 		}
 
-		// Stage 3: Emotion-threshold gesture triggers (routed through slot map)
-		if (!this._isPlayingOneShot) {
+		// Stage 2b: Advance a performing routine. Runs after the one-shot timer so
+		// a step whose gesture just expired is replaced on the same frame.
+		this._routinePlayer?.update(dt);
+
+		// Stage 3: Emotion-threshold gesture triggers (routed through slot map).
+		// A routine outranks them: an owner who composed a performance did not ask
+		// for a stray celebrate to cut into it at the seam between two steps.
+		if (!this._isPlayingOneShot && !this._routinePlayer) {
 			const w = this._emotion;
 			if (w.celebration > 0.6) {
 				this._playSlot('celebrate', 2.0);

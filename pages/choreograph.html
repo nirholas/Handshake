@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Choreographer · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Compose a timed sequence of agent gestures on a timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/choreograph" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Choreographer · three.ws" />
+		<meta property="og:description" content="Compose agent gestures into a timed routine, preview it live in 3D, save it to your agent, and play it by name from any embed." />
+		<meta property="og:url" content="https://three.ws/choreograph" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Choreographer&amp;d=Compose+agent+gestures+into+a+timed+routine%2C+preview+it+live+in+3D%2C+then+play+it+by+name+from+any+embed.&amp;p=%2Fchoreograph" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Choreographer · three.ws" />
+		<meta name="twitter:description" content="A timeline for agent body language. Compose, preview in 3D, save to your agent, play it by name." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Choreographer&amp;d=Compose+agent+gestures+into+a+timed+routine%2C+preview+it+live+in+3D%2C+then+play+it+by+name+from+any+embed.&amp;p=%2Fchoreograph" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/choreograph.css" />
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"three.ws Choreographer","applicationCategory":"DesignApplication","operatingSystem":"Any","description":"Compose timed sequences of agent gestures on a timeline, preview them on a live 3D avatar, and save them to an agent as named routines playable from any embed.","url":"https://three.ws/choreograph","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+		<meta property="og:locale" content="en_US">
+		<meta property="og:image:alt" content="The three.ws gesture choreographer">
+	</head>
+	<body class="ch-page">
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main>
+			<section class="ch-hero">
+				<div class="ch-hero-chip">
+					<span class="ch-hero-dot" aria-hidden="true"></span>
+					<span>Agent body language</span>
+				</div>
+				<h1>Choreographer</h1>
+				<p class="ch-hero-lede">
+					One gesture is a beat. A <strong>routine</strong> is a performance: wave, then think,
+					then present the thing you just made. Build one on the timeline, watch the whole thing
+					on a live avatar, then save it to your agent and play it by name from any embed.
+				</p>
+				<div class="ch-hero-actions">
+					<a class="ch-btn ch-btn--secondary" href="/gestures">The gesture vocabulary</a>
+					<a class="ch-btn ch-btn--ghost" href="/animations">Browse every clip</a>
+					<a class="ch-btn ch-btn--ghost" href="/docs/choreography">Developer reference</a>
+				</div>
+			</section>
+
+			<section class="ch-body">
+				<!-- Left rail: the stage and the transport. Sticky on desktop, so
+				     editing a step at the bottom of a long routine still shows the
+				     avatar performing it. -->
+				<aside class="ch-stage-col">
+					<div class="ch-stage-card">
+						<div class="ch-stage" data-role="stage">
+							<div class="ch-stage-empty" data-role="stage-empty">
+								<div class="ch-stage-empty-icon" aria-hidden="true">🎬</div>
+								<p class="ch-stage-empty-title">Nothing staged yet</p>
+								<p class="ch-stage-empty-body">
+									Start from a routine below, or add a gesture. Nothing 3D loads until you do.
+								</p>
+							</div>
+							<div class="ch-stage-loading" data-role="stage-loading" hidden>
+								<div class="ch-spinner" aria-hidden="true"></div>
+								<p data-role="stage-loading-text">Retargeting the routine&hellip;</p>
+							</div>
+							<div class="ch-stage-error" data-role="stage-error" hidden>
+								<p class="ch-stage-error-title" data-role="stage-error-title">That step did not fit the preview avatar.</p>
+								<p class="ch-stage-error-body">
+									The clip is fine: the shared preview rig could not bind it. Swap the step's clip,
+									or preview it on its own in the <a href="/animations">gallery</a>.
+								</p>
+								<button type="button" class="ch-btn ch-btn--secondary" data-role="stage-retry">Try again</button>
+							</div>
+							<p class="ch-stage-badge" data-role="stage-badge" hidden></p>
+						</div>
+
+						<!-- Transport. The timeline is the primary control: its width is
+						     real time, so a long step looks long. -->
+						<div class="ch-transport">
+							<div class="ch-transport-row">
+								<button type="button" class="ch-icon-btn ch-icon-btn--play" data-role="play" title="Play (Space)" aria-label="Play routine" disabled>▶</button>
+								<button type="button" class="ch-icon-btn" data-role="restart" title="Restart (R)" aria-label="Restart routine" disabled>↻</button>
+								<button type="button" class="ch-icon-btn" data-role="loop" title="Loop the routine" aria-label="Loop the routine" aria-pressed="false" disabled>⟲</button>
+								<p class="ch-time"><span data-role="time">0.0</span>s <span class="ch-time-sep">/</span> <span data-role="duration">0.0</span>s</p>
+							</div>
+
+							<div
+								class="ch-timeline"
+								data-role="timeline"
+								role="slider"
+								tabindex="0"
+								aria-label="Routine playhead"
+								aria-valuemin="0"
+								aria-valuenow="0"
+								aria-valuemax="0"
+								aria-valuetext="0 seconds"
+							>
+								<div class="ch-timeline-track" data-role="timeline-track"></div>
+								<div class="ch-playhead" data-role="playhead" hidden></div>
+							</div>
+							<p class="ch-timeline-empty" data-role="timeline-empty">
+								An empty timeline. Add a gesture and it appears here.
+							</p>
+						</div>
+						<p class="ch-sr-status" data-role="stage-status" role="status" aria-live="polite"></p>
+					</div>
+
+					<div class="ch-shortcuts">
+						<p>
+							<kbd>Space</kbd> play/pause · <kbd>R</kbd> restart · <kbd>←</kbd> <kbd>→</kbd>
+							scrub · <kbd>Esc</kbd> stop
+						</p>
+					</div>
+				</aside>
+
+				<!-- Right rail: composition. -->
+				<div class="ch-main-col">
+					<div class="ch-section-head">
+						<h2 id="start">Start from a routine</h2>
+						<p>
+							Five performances built from the shipped slot vocabulary. Load one, then change
+							anything: they are starting points, not templates you have to keep.
+						</p>
+					</div>
+					<div class="ch-presets" data-role="presets" role="list"></div>
+
+					<div class="ch-section-head ch-section-head--tight">
+						<h2 id="routine">Your routine</h2>
+						<p>
+							Each row is one beat. Drag to reorder, set how long it holds, and point any step at
+							a different clip. The stage follows every edit.
+						</p>
+					</div>
+
+					<div class="ch-routine-bar">
+						<label class="ch-field ch-field--grow">
+							<span class="ch-field-label">Routine name</span>
+							<input
+								class="ch-input"
+								data-role="name"
+								type="text"
+								maxlength="40"
+								placeholder="Welcome"
+								autocomplete="off"
+								spellcheck="false"
+							/>
+						</label>
+						<p class="ch-routine-meta">
+							<span data-role="step-count">0</span> steps ·
+							<span data-role="meta-duration">0.0</span>s ·
+							id <code data-role="routine-id">routine</code>
+						</p>
+					</div>
+
+					<ol class="ch-steps" data-role="steps"></ol>
+
+					<div class="ch-empty" data-role="steps-empty">
+						<p class="ch-empty-title">No steps yet</p>
+						<p class="ch-empty-body">
+							Pick a gesture below to add the first beat, or load one of the routines above.
+						</p>
+					</div>
+
+					<div class="ch-section-head ch-section-head--tight">
+						<h2 id="palette">Add a gesture</h2>
+						<p>
+							The fixed slot vocabulary. A step names a slot, so a routine shared with another
+							agent still plays that agent's own take on each gesture.
+						</p>
+					</div>
+					<div class="ch-palette" data-role="palette" role="list"></div>
+
+					<div class="ch-section-head ch-section-head--tight">
+						<h2 id="ship">Ship it</h2>
+						<p>
+							Save the routine to an agent you own and it travels with that agent: the public
+							manifest carries it, and any embed can play it by name.
+						</p>
+					</div>
+
+					<div class="ch-ship">
+						<div class="ch-save" data-role="save-panel" hidden>
+							<label class="ch-field">
+								<span class="ch-field-label">Save to</span>
+								<select class="ch-select" data-role="agent-select"></select>
+							</label>
+							<div class="ch-actions">
+								<button type="button" class="ch-btn ch-btn--primary" data-role="save">Save to agent</button>
+								<button type="button" class="ch-btn ch-btn--ghost" data-role="share">Copy share link</button>
+							</div>
+							<p class="ch-save-status" data-role="save-status" role="status" aria-live="polite"></p>
+							<div class="ch-saved" data-role="saved" hidden>
+								<p class="ch-saved-title">Already on this agent</p>
+								<div class="ch-saved-list" data-role="saved-list"></div>
+							</div>
+						</div>
+
+						<div class="ch-save" data-role="save-signedout" hidden>
+							<p class="ch-save-lede">
+								Sign in to save this routine to an agent. Everything else on this page works
+								without an account, and your routine is already in the URL.
+							</p>
+							<div class="ch-actions">
+								<a class="ch-btn ch-btn--primary" href="/signin?next=/choreograph" data-role="signin">Sign in to save</a>
+								<button type="button" class="ch-btn ch-btn--ghost" data-role="share-2">Copy share link</button>
+							</div>
+						</div>
+
+						<details class="ch-export">
+							<summary>Play it from your own site</summary>
+							<p class="ch-export-lede">
+								The routine below is live: paste it into any page that already renders an
+								<code>&lt;agent-3d&gt;</code> embed.
+							</p>
+							<pre class="ch-code" data-role="embed-code"><code></code></pre>
+							<div class="ch-actions">
+								<button type="button" class="ch-btn ch-btn--secondary" data-role="copy-embed">Copy snippet</button>
+								<a class="ch-btn ch-btn--ghost" href="/docs/choreography">Read the reference</a>
+							</div>
+						</details>
+
+						<details class="ch-export">
+							<summary>Show the JSON</summary>
+							<p class="ch-export-lede">
+								Exactly what gets stored at <code>meta.choreographies</code>, and exactly what
+								<code>PUT /api/agents/:id/animations</code> accepts.
+							</p>
+							<pre class="ch-code" data-role="json-code"><code></code></pre>
+							<div class="ch-actions">
+								<button type="button" class="ch-btn ch-btn--secondary" data-role="copy-json">Copy JSON</button>
+							</div>
+						</details>
+					</div>
+
+					<div class="ch-footnote">
+						<p>
+							A routine is a list of slots and holds, not a list of animation files: the same
+							routine looks different on an agent that has remapped its own gestures on
+							<a href="/gestures">the vocabulary page</a>, which is the point. The wire format,
+							the storage shape and the playback API are documented in
+							<a href="/docs/choreography">docs/choreography</a>.
+						</p>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js" defer></script>
+
+		<script type="module" src="/src/choreograph-page.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

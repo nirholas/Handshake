@@ -34,6 +34,7 @@ export class AnimationLivePreview {
 		this._container = null;
 		this._action = null;
 		this._activeDef = null;
+		this._fading = []; // crossfade sources awaiting retirement
 		this._raf = 0;
 		this._lastT = 0;
 		this._playToken = 0;
@@ -208,19 +209,34 @@ export class AnimationLivePreview {
 	// Frame the figure's full motion envelope: sample the clip at a few points,
 	// union the bone boxes, and lock the camera for the whole loop so walks and
 	// flips stay in frame without camera chase.
+	//
+	// Accepts several clips, which is what a choreography needs: framing each
+	// step on its own would jog the camera at every cut, so a routine unions the
+	// envelopes of all of its clips once and holds that frame for the whole
+	// performance.
 	_frameCamera(bound) {
 		const THREE = this._three;
+		const clips = Array.isArray(bound) ? bound.filter(Boolean) : [bound];
+		if (!clips.length) return;
 		const box = new THREE.Box3();
 		const v = new THREE.Vector3();
-		const probe = this._mixer.clipAction(bound);
-		probe.play();
 		const samples = [0.05, 0.3, 0.55, 0.8];
-		for (const s of samples) {
-			this._mixer.setTime(bound.duration * s);
-			this._model.updateMatrixWorld(true);
-			for (const b of this._bones) box.expandByPoint(b.getWorldPosition(v));
+		for (const clip of clips) {
+			this._mixer.stopAllAction();
+			const probe = this._mixer.clipAction(clip);
+			probe.play();
+			for (const s of samples) {
+				this._mixer.setTime(clip.duration * s);
+				this._model.updateMatrixWorld(true);
+				for (const b of this._bones) box.expandByPoint(b.getWorldPosition(v));
+			}
+			probe.stop();
 		}
+		// Sampling drove the skeleton; put it back before the caller starts the
+		// real action, so a clip that animates only the upper body does not
+		// inherit a probe's legs.
 		this._mixer.setTime(0);
+		this._restoreRestPose();
 		box.expandByVector(new THREE.Vector3(0.24, 0.15, 0.24));
 		box.min.y = Math.min(box.min.y, 0);
 		const center = box.getCenter(new THREE.Vector3());
@@ -241,6 +257,16 @@ export class AnimationLivePreview {
 		cam.lookAt(center);
 		this._keyLight.target.position.copy(center);
 		this._keyLight.target.updateMatrixWorld();
+	}
+
+	/** Stop every crossfade source whose fade has elapsed. */
+	_retireFaded(incoming) {
+		const now = performance.now();
+		this._fading = this._fading.filter((entry) => {
+			if (entry.action === incoming || now < entry.until) return true;
+			entry.action.stop();
+			return false;
+		});
 	}
 
 	_resizeToContainer() {
@@ -267,13 +293,38 @@ export class AnimationLivePreview {
 	};
 
 	/**
+	 * Bind clips ahead of time. A choreography calls this once for its whole
+	 * step list so the first cut is not the first fetch: without it, step two
+	 * arrives mid-performance and the stage stutters exactly where the routine
+	 * was supposed to flow.
+	 *
+	 * Failures are swallowed per clip — one unbindable clip must not stop the
+	 * routine from being previewable — and reported by the resolved array's
+	 * `null` entries.
+	 *
+	 * @param {Array<{id:string, source:string, url?:string}>} defs
+	 * @returns {Promise<Array<object|null>>} bound clips, index-aligned with defs
+	 */
+	async prepare(defs) {
+		await this._boot();
+		return Promise.all(
+			(defs || []).map((def) => this._bindClip(def).catch(() => null)),
+		);
+	}
+
+	/**
 	 * Mount the shared canvas into `container` and play `def`'s clip.
 	 * Any previous preview stops. Resolves once playing; rejects on load or
 	 * retarget failure (the caller shows its fallback).
 	 *
+	 * `opts.crossfade` blends out of whatever is already playing instead of
+	 * hard-cutting, which is what turns a list of clips into a performance.
+	 * `opts.frameWith` locks the camera to the union of several clips' motion
+	 * envelopes, so it does not jog at every cut.
+	 *
 	 * @param {HTMLElement} container
 	 * @param {{id:string, source:string, url?:string, loop?:boolean}} def
-	 * @param {{ speed?: number, onFrame?: (t:number,d:number)=>void }} [opts]
+	 * @param {{ speed?: number, crossfade?: number, frameWith?: Array, onFrame?: (t:number,d:number)=>void }} [opts]
 	 */
 	async play(container, def, opts = {}) {
 		const token = ++this._playToken;
@@ -281,36 +332,68 @@ export class AnimationLivePreview {
 		const bound = await this._bindClip(def);
 		if (token !== this._playToken) return; // superseded while loading
 
-		this.stop({ keepBoot: true });
-		this._container = container;
-		container.appendChild(this._renderer.domElement);
-		this._resizeToContainer();
-
-		this._restoreRestPose();
-		const action = this._mixer.clipAction(bound);
 		const THREE = this._three;
+		// A crossfade is only possible into a stage that is already rendering this
+		// clip's neighbour; anything else (first play, a different container) is a
+		// cold start and takes the full reset path.
+		const blending =
+			opts.crossfade > 0 && this._action && this._container === container && this._raf;
+		const previous = blending ? this._action : null;
+
+		if (!blending) {
+			this.stop({ keepBoot: true });
+			this._container = container;
+			container.appendChild(this._renderer.domElement);
+			this._resizeToContainer();
+			this._restoreRestPose();
+		} else {
+			// A pending one-shot replay belongs to the outgoing clip.
+			this._mixer.removeEventListener?.('finished', this._replay);
+			this._replay = null;
+		}
+
+		// Frame before the incoming action starts: sampling drives the skeleton,
+		// and a routine frames once for all of its clips rather than per step.
+		if (!blending || opts.frameWith) {
+			this._frameCamera(opts.frameWith?.length ? opts.frameWith : bound);
+		}
+
+		const action = this._mixer.clipAction(bound);
+		action.reset();
 		if (def.loop === false) {
 			action.setLoop(THREE.LoopOnce, 0);
 			action.clampWhenFinished = true;
 			// One-shots replay on a beat so a hovering user sees the motion again.
-			this._mixer.removeEventListener?.('finished', this._replay);
-			this._replay = () => {
-				action.reset().play();
-			};
-			this._mixer.addEventListener('finished', this._replay);
+			// A sequenced step does not: the routine decides when the next cut is.
+			if (!opts.crossfade) {
+				this._mixer.removeEventListener?.('finished', this._replay);
+				this._replay = () => {
+					action.reset().play();
+				};
+				this._mixer.addEventListener('finished', this._replay);
+			}
 		} else {
 			action.setLoop(THREE.LoopRepeat, Infinity);
 		}
 		action.timeScale = opts.speed ?? 1;
-		action.play();
+		if (previous && previous !== action) {
+			action.play();
+			previous.crossFadeTo(action, opts.crossfade, false);
+			// A faded-out action keeps being evaluated at weight 0 forever unless it
+			// is stopped. Over a looping routine that is a slow leak of frame time,
+			// so retire each one as soon as its fade is spent.
+			this._retireFaded(action);
+			this._fading.push({ action: previous, until: performance.now() + opts.crossfade * 1000 });
+		} else {
+			action.setEffectiveWeight(1);
+			action.play();
+		}
 		this._action = action;
 		this._activeDef = def;
 		this._paused = false;
 		this._onFrame = opts.onFrame || null;
-		this._frameCamera(bound);
 		this._lastT = performance.now();
-		cancelAnimationFrame(this._raf);
-		this._raf = requestAnimationFrame(this._loop);
+		if (!this._raf) this._raf = requestAnimationFrame(this._loop);
 	}
 
 	/** Detach the canvas and halt rendering. Cheap — the engine stays warm. */
@@ -325,6 +408,7 @@ export class AnimationLivePreview {
 		if (this._mixer) this._mixer.stopAllAction();
 		this._action = null;
 		this._activeDef = null;
+		this._fading = [];
 		this._onFrame = null;
 		if (this._renderer?.domElement?.parentNode) {
 			this._renderer.domElement.parentNode.removeChild(this._renderer.domElement);

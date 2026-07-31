@@ -1784,6 +1784,13 @@ class Agent3DElement extends HTMLElement {
 				const _slots = manifest.animationSlots || manifest.meta?.edits?.animations;
 				if (_slots && typeof _slots === 'object') this._avatar.setAnimationMap(_slots);
 
+				// Saved gesture routines, same path: on the wire as `choreographies`,
+				// on the record at meta.choreographies. Registering them here is what
+				// makes `el.playRoutine('welcome')` resolve by name.
+				const _routines = manifest.choreographies || manifest.meta?.choreographies;
+				if (Array.isArray(_routines)) this._avatar.setChoreographies(_routines);
+				this._applyPendingRoutine();
+
 				// Honor a sign-language attribute present at boot (the observer
 				// only covers post-mount changes).
 				const signAttr = this.getAttribute('sign-language');
@@ -3248,6 +3255,50 @@ class Agent3DElement extends HTMLElement {
 		this._pendingMood = { valence, arousal, reducedMotion: Boolean(opts.reducedMotion) };
 		this._avatar?.setMood(valence, arousal, { reducedMotion: this._pendingMood.reducedMotion });
 		return true;
+	}
+
+	/**
+	 * Perform a gesture routine: a named sequence of gestures with per-step
+	 * timing, composed at three.ws/choreograph. Pass the routine's id to play one
+	 * the agent has saved, or a routine object to play one the host page owns.
+	 *
+	 *   el.playRoutine('welcome');
+	 *   el.playRoutine({ name: 'Hi', steps: [{ slot: 'wave', hold: 2 }] });
+	 *
+	 * Queued until the empathy layer attaches, so it lands when called during
+	 * boot rather than being dropped.
+	 * @param {string|object} nameOrRoutine
+	 * @param {{loop?:boolean}} [opts]
+	 * @returns {boolean} false when the named routine does not exist
+	 */
+	playRoutine(nameOrRoutine, opts = {}) {
+		if (!this._avatar) {
+			this._pendingRoutine = { nameOrRoutine, opts };
+			// A routine requested before boot is a real request, not a no-op: report
+			// success and let `_applyPendingRoutine` deliver it.
+			this._waitForReady().then(() => this._applyPendingRoutine());
+			return true;
+		}
+		return this._avatar.playChoreography(nameOrRoutine, opts);
+	}
+
+	/** Stop a performing routine. */
+	stopRoutine() {
+		this._pendingRoutine = null;
+		this._avatar?.stopChoreography();
+		return true;
+	}
+
+	/** The routines this agent has saved, as normalized routine objects. */
+	getRoutines() {
+		return this._avatar?.getChoreographies() ?? [];
+	}
+
+	_applyPendingRoutine() {
+		const pending = this._pendingRoutine;
+		if (!pending || !this._avatar) return;
+		this._pendingRoutine = null;
+		this._avatar.playChoreography(pending.nameOrRoutine, pending.opts);
 	}
 
 	_waitForReady() {
