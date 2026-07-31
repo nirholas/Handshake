@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>MCP Tool Catalog · three.ws</title>
-	<meta name="description" content="Every MCP tool three.ws publishes, in one searchable catalog: what it does, which server hosts it, what it costs in USDC, and whether it is safe for an AI client to run unattended. Generated from source, so it is never out of date." />
+	<title data-i18n="mcp_tools.meta_title">MCP Tool Catalog · three.ws</title>
+	<meta name="description" content="Every MCP tool three.ws publishes, in one searchable catalog: what it does, which server hosts it, what it costs in USDC, and whether it is safe for an AI client to run unattended. Generated from source, so it is never out of date."  data-i18n-attr="content:mcp_tools.meta_description"/>
 	<link rel="canonical" href="https://three.ws/mcp-tools" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,13 +15,13 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="MCP Tool Catalog · three.ws" />
-	<meta property="og:description" content="Every MCP tool three.ws publishes: what it does, what it costs, and whether an AI client can run it unattended. Generated from source." />
+	<meta property="og:title" content="MCP Tool Catalog · three.ws"  data-i18n-attr="content:mcp_tools.meta_og_title"/>
+	<meta property="og:description" content="Every MCP tool three.ws publishes: what it does, what it costs, and whether an AI client can run it unattended. Generated from source."  data-i18n-attr="content:mcp_tools.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/mcp-tools" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=MCP+Tool+Catalog&amp;d=Every+MCP+tool+three.ws+publishes%3A+what+it+does%2C+what+it+costs%2C+and+whether+an+AI+client+can+run+it+unattended.&amp;p=%2Fmcp-tools" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="MCP Tool Catalog · three.ws" />
-	<meta name="twitter:description" content="Every MCP tool three.ws publishes, searchable by safety, price, and server." />
+	<meta name="twitter:title" content="MCP Tool Catalog · three.ws"  data-i18n-attr="content:mcp_tools.meta_twitter_title"/>
+	<meta name="twitter:description" content="Every MCP tool three.ws publishes, searchable by safety, price, and server."  data-i18n-attr="content:mcp_tools.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=MCP+Tool+Catalog&amp;d=Every+MCP+tool+three.ws+publishes%3A+what+it+does%2C+what+it+costs%2C+and+whether+an+AI+client+can+run+it+unattended.&amp;p=%2Fmcp-tools" />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<meta property="og:locale" content="en_US" />
@@ -209,8 +209,8 @@
 
 	<main class="mc-wrap">
 		<div class="mc-hero">
-			<h1>MCP Tool Catalog</h1>
-			<p>
+			<h1 data-i18n="mcp_tools.mcp_tool_catalog">MCP Tool Catalog</h1>
+			<p data-i18n-html="mcp_tools.every_tool_three_ws_publishes_over_the">
 				Every tool three.ws publishes over the <a href="/docs/mcp">Model Context Protocol</a>, in one place:
 				what it does, which server hosts it, what it costs, and whether an AI client can run it without asking you first.
 				This page is generated from the source of every tool, so it cannot drift from what the servers actually serve.
@@ -222,7 +222,7 @@
 
 		<div class="mc-controls">
 			<label class="mc-search">
-				<span class="sr-only">Search tools</span>
+				<span class="sr-only" data-i18n="mcp_tools.search_tools">Search tools</span>
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
 				<input id="mc-q" type="search" autocomplete="off" spellcheck="false"
 					placeholder="Search 270 tools by name, description, or server…" />
@@ -231,21 +231,21 @@
 
 			<div class="mc-filters">
 				<div class="mc-group" role="group" aria-label="Filter by safety">
-					<span class="mc-group-label">Safety</span>
-					<button type="button" class="mc-chip" data-filter="safety" data-safety="read" data-value="read" aria-pressed="false">Read-only</button>
-					<button type="button" class="mc-chip" data-filter="safety" data-safety="write" data-value="write" aria-pressed="false">Writes</button>
-					<button type="button" class="mc-chip" data-filter="safety" data-safety="irreversible" data-value="irreversible" aria-pressed="false">Irreversible</button>
+					<span class="mc-group-label" data-i18n="mcp_tools.safety">Safety</span>
+					<button type="button" class="mc-chip" data-filter="safety" data-safety="read" data-value="read" aria-pressed="false" data-i18n="mcp_tools.read_only">Read-only</button>
+					<button type="button" class="mc-chip" data-filter="safety" data-safety="write" data-value="write" aria-pressed="false" data-i18n="mcp_tools.writes">Writes</button>
+					<button type="button" class="mc-chip" data-filter="safety" data-safety="irreversible" data-value="irreversible" aria-pressed="false" data-i18n="mcp_tools.irreversible">Irreversible</button>
 				</div>
 				<div class="mc-group" role="group" aria-label="Filter by price">
-					<span class="mc-group-label">Price</span>
-					<button type="button" class="mc-chip" data-filter="price" data-value="free" aria-pressed="false">Free</button>
-					<button type="button" class="mc-chip" data-filter="price" data-value="paid" aria-pressed="false">Paid</button>
+					<span class="mc-group-label" data-i18n="mcp_tools.price">Price</span>
+					<button type="button" class="mc-chip" data-filter="price" data-value="free" aria-pressed="false" data-i18n="mcp_tools.free">Free</button>
+					<button type="button" class="mc-chip" data-filter="price" data-value="paid" aria-pressed="false" data-i18n="mcp_tools.paid">Paid</button>
 				</div>
 				<div class="mc-group">
-					<span class="mc-group-label"><label for="mc-server">Server</label></span>
-					<select id="mc-server" class="mc-select"><option value="">All servers</option></select>
+					<span class="mc-group-label"><label for="mc-server" data-i18n="mcp_tools.server">Server</label></span>
+					<select id="mc-server" class="mc-select"><option value="" data-i18n="mcp_tools.all_servers">All servers</option></select>
 				</div>
-				<button type="button" class="mc-btn mc-reset" id="mc-reset" hidden>Clear filters</button>
+				<button type="button" class="mc-btn mc-reset" id="mc-reset" hidden data-i18n="mcp_tools.clear_filters">Clear filters</button>
 			</div>
 		</div>
 

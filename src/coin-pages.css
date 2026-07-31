@@ -73,7 +73,8 @@ html:not([data-theme='light']) {
 	--cv-border-hover: #3f3f46;
 	--cv-text: #fafafa;
 	--cv-text-2: #a1a1aa;
-	--cv-text-3: #71717a;
+	/* Muted text still has to clear WCAG AA (4.5:1) on every dark surface. */
+	--cv-text-3: #8b8b93;
 	--cv-green: #4ade80;
 	--cv-green-soft: rgba(34, 197, 94, 0.12);
 	--cv-red: #f87171;

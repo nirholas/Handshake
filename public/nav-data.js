@@ -677,6 +677,12 @@ export const NAV_GROUPS = [
 						href: '/avatar-sdk',
 						desc: 'npm · web component · React · GLB upload',
 					},
+					{
+						title: 'MCP Tool Catalog',
+						href: '/mcp-tools',
+						tier: 'advanced',
+						desc: 'All 270 AI tools: price, host server, and what runs unattended',
+					},
 				],
 			},
 		],

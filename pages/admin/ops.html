@@ -319,6 +319,14 @@ async function loadPayments() {
 function pct(v) { return v == null ? 'n/a' : (v * 100).toFixed(1) + '%'; }
 
 function renderPayments(d) {
+	// A failed inbound board (e.g. DB outage) must read as an error, not as a
+	// healthy board full of zeros.
+	if (d.inbound?.error) {
+		$('payCards').innerHTML = `<div class="alerts-empty" style="background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.16);color:#f87171;grid-column:1/-1">Payment ledger unavailable: ${esc(d.inbound.error)}</div>`;
+		$('payRingSettle').style.display = 'none';
+		$('payReasonsTable').style.display = 'none';
+		return;
+	}
 	const w3 = d.inbound?.windows?.['3h'] || {};
 	const w24 = d.inbound?.windows?.['24h'] || {};
 	const sp = d.sponsor || {};
@@ -337,11 +345,20 @@ function renderPayments(d) {
 			? `floor ${sp.sol_floor != null ? sp.sol_floor.toFixed(2) : 'n/a'} · burn ${sp.burn_sol_per_day_7d ?? 'n/a'}/day · runway ${sp.runway_days != null ? sp.runway_days + 'd' : 'n/a'}`
 			: 'sponsor wallet unconfigured';
 
+	// Zero events across 24h is a state of its own: one clear line beats four
+	// zero-cards that read like a broken board.
+	const quiet24 = ['settled', 'settle_failed', 'verify_rejected', 'replay_rejected', 'unsettled_flush']
+		.every((k) => !(w24[k] > 0));
+	const inboundCards = quiet24
+		? [{ lbl: 'Inbound x402 payments', val: '0', cls: '', sub: 'no payment events in 24h; paid routes may be idle or traffic is not reaching them' }]
+		: [
+			{ lbl: 'Inbound settle success (3h)', val: pct(w3.settle_success_rate), cls: settleCls, sub: `${w3.settled ?? 0} settled · ${w3.settle_failed ?? 0} failed` },
+			{ lbl: 'Verify rejects (3h)', val: pct(w3.verify_reject_rate), cls: verifyCls, sub: `${w3.verify_rejected ?? 0} rejected proofs` },
+			{ lbl: 'Replay rejects (24h)', val: String(replay24), cls: replay24 ? 'warn' : 'ok', sub: stageTxt },
+			{ lbl: 'Settled volume (24h)', val: '$' + Number(d.inbound?.settled_volume_usd_24h ?? 0).toFixed(2), cls: '', sub: `${w24.settled ?? 0} payments` },
+		];
 	$('payCards').innerHTML = [
-		{ lbl: 'Inbound settle success (3h)', val: pct(w3.settle_success_rate), cls: settleCls, sub: `${w3.settled ?? 0} settled · ${w3.settle_failed ?? 0} failed` },
-		{ lbl: 'Verify rejects (3h)', val: pct(w3.verify_reject_rate), cls: verifyCls, sub: `${w3.verify_rejected ?? 0} rejected proofs` },
-		{ lbl: 'Replay rejects (24h)', val: String(replay24), cls: replay24 ? 'warn' : 'ok', sub: stageTxt },
-		{ lbl: 'Settled volume (24h)', val: '$' + Number(d.inbound?.settled_volume_usd_24h ?? 0).toFixed(2), cls: '', sub: `${w24.settled ?? 0} payments` },
+		...inboundCards,
 		{ lbl: 'Sponsor fee wallet', val: sponsorVal, cls: sponsorCls, sub: sponsorSub },
 	].map(c => `<div class="sum-card"><div class="lbl">${c.lbl}</div><div class="val ${c.cls}">${c.val}</div><div class="sub">${c.sub}</div></div>`).join('');
 
