@@ -483,6 +483,12 @@
 	background: rgba(88,214,141,0.12); color: #6fdf9d;
 	box-shadow: inset 0 0 0 1px rgba(88,214,141,0.22);
 }
+/* "new" tone — recently shipped. Distinct from "live" on purpose: a new
+   surface is worth a look, a live one is worth watching. */
+.nav-pill-new {
+	background: rgba(139,92,246,0.16); color: #c4b5fd;
+	box-shadow: inset 0 0 0 1px rgba(139,92,246,0.3);
+}
 
 /* ── "Hot" top-level link — the one feature the nav spotlights ──────────── */
 /* Iridescent thread shared with the Forge brand (home #home-forge --hf-iris). */
@@ -573,6 +579,10 @@
 :root[data-theme='light'] .nav-pill-live {
 	background: rgba(46, 160, 90, 0.12); color: #1e8e4e;
 	box-shadow: inset 0 0 0 1px rgba(46, 160, 90, 0.3);
+}
+:root[data-theme='light'] .nav-pill-new {
+	background: rgba(109, 40, 217, 0.1); color: #5b21b6;
+	box-shadow: inset 0 0 0 1px rgba(109, 40, 217, 0.28);
 }
 .nav-pop-note {
 	padding: 6px 12px 8px; font-size: var(--text-2xs); color: var(--nv-text-4);

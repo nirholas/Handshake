@@ -380,6 +380,13 @@ export const NAV_GROUPS = [
 						desc: 'Start here: live fleet vitals, the agent scoreboard, and every trading surface in one map',
 					},
 					{
+						title: 'Exit Lab',
+						href: '/exit-lab',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: "Replay the fleet's real closed trades under a different exit policy and see what the SOL it already spent would have returned",
+					},
+					{
 						title: 'Mission Control',
 						href: '/terminal',
 						badge: 'Live',

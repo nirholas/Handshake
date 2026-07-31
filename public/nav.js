@@ -371,7 +371,7 @@ function advancedCount(group) {
 }
 
 function renderMenuItem(item) {
-	const tone = item.badgeTone === 'live' ? ' nav-pill-live' : '';
+	const tone = item.badgeTone === 'live' ? ' nav-pill-live' : item.badgeTone === 'new' ? ' nav-pill-new' : '';
 	const badge = item.badge
 		? ` <span class="nav-pill-sm${tone}"${i18nAttr(item.badge)}>${escHtml(item.badge)}</span>`
 		: '';
