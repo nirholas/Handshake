@@ -1,0 +1,584 @@
+/* Live Docs — runnable code samples in the three.ws documentation.
+ *
+ * Loaded by docs/index.html alongside public/docs-live.js. Everything is
+ * namespaced under .dlive so it can sit inside the docs prose styles without
+ * fighting them, and every colour is derived from the docs tokens
+ * (--docs-accent, --border, --text-muted) so the runner is visibly part of the
+ * page rather than a widget dropped onto it. */
+
+.dlive {
+	--dlive-radius: 12px;
+	--dlive-accent: var(--docs-accent, #8b5cf6);
+	--dlive-surface: rgba(255, 255, 255, 0.03);
+	--dlive-surface-2: rgba(255, 255, 255, 0.055);
+	--dlive-line: var(--border, rgba(255, 255, 255, 0.09));
+	--dlive-text: var(--text-body, rgba(224, 224, 224, 0.88));
+	--dlive-muted: var(--text-muted, rgba(224, 224, 224, 0.62));
+	margin: 1.35rem 0;
+	border: 1px solid var(--dlive-line);
+	border-radius: var(--dlive-radius);
+	background: var(--dlive-surface);
+	overflow: hidden;
+}
+
+:root[data-theme='light'] .dlive {
+	--dlive-surface: rgba(10, 12, 20, 0.02);
+	--dlive-surface-2: rgba(10, 12, 20, 0.045);
+	--dlive-line: rgba(10, 12, 20, 0.12);
+	--dlive-text: #1b1d24;
+	--dlive-muted: rgba(27, 29, 36, 0.62);
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+
+.dlive-bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	background: var(--dlive-surface-2);
+	border-bottom: 1px solid var(--dlive-line);
+	flex-wrap: wrap;
+}
+
+.dlive-bar-spacer {
+	flex: 1 1 auto;
+	min-width: 4px;
+}
+
+.dlive-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 9px 3px 7px;
+	border-radius: 999px;
+	font-size: 11.5px;
+	font-weight: 650;
+	letter-spacing: 0.02em;
+	color: var(--dlive-accent);
+	background: color-mix(in srgb, var(--dlive-accent) 14%, transparent);
+	border: 1px solid color-mix(in srgb, var(--dlive-accent) 32%, transparent);
+	white-space: nowrap;
+}
+
+.dlive-badge svg {
+	flex: none;
+}
+
+.dlive-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 11px;
+	border-radius: 8px;
+	border: 1px solid var(--dlive-line);
+	background: transparent;
+	color: var(--dlive-text);
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 600;
+	line-height: 1.2;
+	cursor: pointer;
+	transition:
+		background-color 0.14s ease,
+		border-color 0.14s ease,
+		color 0.14s ease,
+		transform 0.12s ease;
+}
+
+.dlive-btn:hover:not(:disabled) {
+	background: var(--dlive-surface-2);
+	border-color: color-mix(in srgb, var(--dlive-accent) 45%, var(--dlive-line));
+}
+
+.dlive-btn:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.dlive-btn:focus-visible {
+	outline: 2px solid var(--dlive-accent);
+	outline-offset: 2px;
+}
+
+.dlive-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.dlive-btn-active {
+	background: var(--dlive-surface-2);
+	border-color: color-mix(in srgb, var(--dlive-accent) 50%, var(--dlive-line));
+	color: var(--dlive-accent);
+}
+
+.dlive-btn-primary {
+	color: #fff;
+	border-color: transparent;
+	background: linear-gradient(135deg, var(--dlive-accent), color-mix(in srgb, var(--dlive-accent) 55%, #6366f1));
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
+}
+
+.dlive-btn-primary:hover:not(:disabled) {
+	filter: brightness(1.08);
+	border-color: transparent;
+}
+
+.dlive-btn-warn {
+	background: linear-gradient(135deg, #f59e0b, #d97706);
+	color: #1a1205;
+}
+
+.dlive-btn.is-busy {
+	position: relative;
+	color: transparent;
+}
+
+.dlive-btn.is-busy svg,
+.dlive-btn.is-busy span {
+	visibility: hidden;
+}
+
+.dlive-btn.is-busy::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 255, 255, 0.35);
+	border-top-color: #fff;
+	animation: dlive-spin 0.7s linear infinite;
+}
+
+@keyframes dlive-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ── Code stage ───────────────────────────────────────────────────────────── */
+
+.dlive-stage {
+	position: relative;
+}
+
+.dlive .dlive-pre {
+	margin: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+}
+
+.dlive-editor {
+	display: block;
+	width: 100%;
+	min-height: 96px;
+	margin: 0;
+	padding: 14px 16px;
+	border: 0;
+	border-left: 2px solid var(--dlive-accent);
+	background: rgba(0, 0, 0, 0.22);
+	color: var(--dlive-text);
+	font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+	font-size: 13px;
+	line-height: 1.6;
+	tab-size: 2;
+	resize: vertical;
+	outline: none;
+}
+
+:root[data-theme='light'] .dlive-editor {
+	background: rgba(10, 12, 20, 0.04);
+}
+
+.dlive-editor:focus {
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dlive-accent) 45%, transparent);
+}
+
+/* ── Placeholder fields ───────────────────────────────────────────────────── */
+
+.dlive-fields {
+	padding: 12px 14px;
+	border-top: 1px solid var(--dlive-line);
+	background: var(--dlive-surface-2);
+}
+
+.dlive-fields-hint {
+	margin: 0 0 9px;
+	font-size: 12.5px;
+	color: var(--dlive-muted);
+}
+
+.dlive-fields-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+	gap: 10px;
+}
+
+.dlive-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.dlive-field > span {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--dlive-muted);
+}
+
+.dlive-field input {
+	width: 100%;
+	padding: 7px 10px;
+	border-radius: 8px;
+	border: 1px solid var(--dlive-line);
+	background: rgba(0, 0, 0, 0.25);
+	color: var(--dlive-text);
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 12.5px;
+}
+
+:root[data-theme='light'] .dlive-field input {
+	background: #fff;
+}
+
+.dlive-field input:focus {
+	outline: 2px solid var(--dlive-accent);
+	outline-offset: 1px;
+	border-color: transparent;
+}
+
+/* ── Result panel ─────────────────────────────────────────────────────────── */
+
+.dlive-panel {
+	border-top: 1px solid var(--dlive-line);
+	background: rgba(0, 0, 0, 0.18);
+	animation: dlive-reveal 0.18s ease both;
+}
+
+:root[data-theme='light'] .dlive-panel {
+	background: rgba(10, 12, 20, 0.03);
+}
+
+@keyframes dlive-reveal {
+	from {
+		opacity: 0;
+		transform: translateY(-3px);
+	}
+}
+
+.dlive-panel-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 10px 9px 12px;
+	border-bottom: 1px solid var(--dlive-line);
+	flex-wrap: wrap;
+}
+
+.dlive-panel-close {
+	margin-left: auto;
+	padding: 4px 7px;
+}
+
+.dlive-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 9px;
+	border-radius: 999px;
+	font-size: 11.5px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	border: 1px solid transparent;
+}
+
+.dlive-chip-ok {
+	color: #34d399;
+	background: rgba(52, 211, 153, 0.13);
+	border-color: rgba(52, 211, 153, 0.32);
+}
+
+.dlive-chip-run {
+	color: var(--dlive-accent);
+	background: color-mix(in srgb, var(--dlive-accent) 14%, transparent);
+	border-color: color-mix(in srgb, var(--dlive-accent) 32%, transparent);
+}
+
+.dlive-chip-warn,
+.dlive-chip-redirect {
+	color: #fbbf24;
+	background: rgba(251, 191, 36, 0.13);
+	border-color: rgba(251, 191, 36, 0.32);
+}
+
+.dlive-chip-paid {
+	color: #38bdf8;
+	background: rgba(56, 189, 248, 0.13);
+	border-color: rgba(56, 189, 248, 0.32);
+}
+
+.dlive-chip-err {
+	color: #f87171;
+	background: rgba(248, 113, 113, 0.13);
+	border-color: rgba(248, 113, 113, 0.32);
+}
+
+.dlive-meta {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 11.5px;
+	color: var(--dlive-muted);
+	overflow-wrap: anywhere;
+	min-width: 0;
+}
+
+.dlive-stats {
+	font-size: 11.5px;
+	font-weight: 650;
+	color: var(--dlive-muted);
+	white-space: nowrap;
+}
+
+.dlive-note {
+	margin: 0;
+	padding: 12px 14px;
+	font-size: 13px;
+	color: var(--dlive-text);
+}
+
+.dlive-out {
+	margin: 0 !important;
+	max-height: 420px;
+	overflow: auto;
+	padding: 12px 14px !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	font-size: 12.5px;
+	line-height: 1.6;
+}
+
+.dlive-headers {
+	border-top: 1px solid var(--dlive-line);
+	font-size: 12px;
+}
+
+.dlive-headers > summary {
+	padding: 8px 14px;
+	cursor: pointer;
+	color: var(--dlive-muted);
+	font-weight: 600;
+}
+
+.dlive-headers > summary:focus-visible {
+	outline: 2px solid var(--dlive-accent);
+	outline-offset: -2px;
+}
+
+.dlive-hrow {
+	display: grid;
+	grid-template-columns: minmax(120px, 30%) 1fr;
+	gap: 10px;
+	padding: 4px 14px;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	color: var(--dlive-muted);
+	overflow-wrap: anywhere;
+}
+
+.dlive-hrow > span:first-child {
+	color: var(--dlive-text);
+}
+
+/* ── Preview frame ────────────────────────────────────────────────────────── */
+
+.dlive-frame-wrap {
+	position: relative;
+	min-height: 320px;
+	background:
+		linear-gradient(45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%) -8px 0/16px 16px,
+		linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%) -8px 0/16px 16px;
+}
+
+.dlive-frame {
+	display: block;
+	width: 100%;
+	height: 340px;
+	border: 0;
+	background: transparent;
+}
+
+@media (min-width: 900px) {
+	.dlive-frame {
+		height: 420px;
+	}
+	.dlive-frame-wrap {
+		min-height: 420px;
+	}
+}
+
+/* ── Console output ───────────────────────────────────────────────────────── */
+
+.dlive-console {
+	max-height: 320px;
+	overflow: auto;
+	padding: 10px 14px;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 12.5px;
+	line-height: 1.65;
+}
+
+.dlive-line {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	padding: 1px 0;
+	color: var(--dlive-text);
+}
+
+.dlive-line-warn {
+	color: #fbbf24;
+}
+
+.dlive-line-error {
+	color: #f87171;
+}
+
+.dlive-line-muted {
+	color: var(--dlive-muted);
+	font-style: italic;
+}
+
+/* ── Skeletons ────────────────────────────────────────────────────────────── */
+
+.dlive-skeleton {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		100deg,
+		transparent 20%,
+		color-mix(in srgb, var(--dlive-accent) 12%, transparent) 45%,
+		transparent 70%
+	);
+	background-size: 220% 100%;
+	animation: dlive-shimmer 1.15s linear infinite;
+}
+
+.dlive-skeleton-lines {
+	position: static;
+	height: 96px;
+	margin: 12px 14px;
+	border-radius: 8px;
+	background-color: var(--dlive-surface-2);
+}
+
+@keyframes dlive-shimmer {
+	from {
+		background-position: 120% 0;
+	}
+	to {
+		background-position: -60% 0;
+	}
+}
+
+/* ── First-visit hint ─────────────────────────────────────────────────────── */
+
+.dlive-hint {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 1.35rem 0;
+	padding: 10px 12px;
+	border-radius: 10px;
+	border: 1px dashed color-mix(in srgb, var(--docs-accent, #8b5cf6) 40%, transparent);
+	background: color-mix(in srgb, var(--docs-accent, #8b5cf6) 8%, transparent);
+	font-size: 13px;
+	color: var(--text-body, rgba(224, 224, 224, 0.88));
+}
+
+.dlive-hint-icon {
+	display: inline-flex;
+	color: var(--docs-accent, #8b5cf6);
+	flex: none;
+}
+
+.dlive-hint kbd {
+	padding: 1px 5px;
+	border-radius: 5px;
+	border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+	background: rgba(255, 255, 255, 0.06);
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 11.5px;
+}
+
+.dlive-hint-close {
+	margin-left: auto;
+	flex: none;
+	padding: 4px 6px;
+	border-radius: 7px;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	opacity: 0.65;
+	cursor: pointer;
+}
+
+.dlive-hint-close:hover {
+	opacity: 1;
+}
+
+.dlive-hint-close:focus-visible {
+	outline: 2px solid var(--docs-accent, #8b5cf6);
+	outline-offset: 2px;
+}
+
+/* ── Narrow screens ───────────────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+	.dlive-bar {
+		padding: 7px 8px;
+	}
+	.dlive-btn span {
+		display: none;
+	}
+	.dlive-btn-primary span,
+	.dlive-btn-warn span {
+		display: inline;
+	}
+	.dlive-hrow {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+}
+
+/* ── Motion preference ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.dlive-btn,
+	.dlive-panel {
+		transition: none;
+		animation: none;
+	}
+	.dlive-skeleton {
+		animation: none;
+		background: var(--dlive-surface-2);
+	}
+	.dlive-btn.is-busy::after {
+		animation-duration: 2.4s;
+	}
+}
+
+/* Printed docs should show the published sample, not a dead control strip. */
+@media print {
+	.dlive-bar,
+	.dlive-panel,
+	.dlive-fields,
+	.dlive-hint {
+		display: none !important;
+	}
+	.dlive {
+		border: 0;
+		background: none;
+	}
+}

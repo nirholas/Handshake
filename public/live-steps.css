@@ -1,0 +1,522 @@
+/******************************************************************************
+ * Live steps - the runnable API card embedded in three.ws documentation.
+ * ════════════════════════════════════════════════════════════════════════════
+ * Paired with /live-steps.js. Every colour resolves through the canonical
+ * tokens in tokens.css, so the card follows the reader's theme (dark and
+ * light) without a second palette. Motion is opt-out via prefers-reduced-motion
+ * and the layout collapses to a single column under 640px.
+ *****************************************************************************/
+
+.ls-card {
+	--ls-accent: var(--accent, #fff);
+	position: relative;
+	margin: 2rem 0;
+	padding: 1.15rem 1.25rem 1.25rem;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.25s ease;
+}
+
+/* A thin status rail on the leading edge: idle is quiet, a result is not. */
+.ls-card::before {
+	content: '';
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 2px;
+	border-radius: var(--radius-lg, 14px) 0 0 var(--radius-lg, 14px);
+	background: var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	transition: background 0.25s ease;
+}
+.ls-card[data-state='running']::before {
+	background: var(--ls-accent);
+}
+.ls-card[data-state='ok'] {
+	border-color: color-mix(in srgb, var(--success, #4ade80) 32%, transparent);
+}
+.ls-card[data-state='ok']::before {
+	background: var(--success, #4ade80);
+}
+.ls-card[data-state='error'] {
+	border-color: color-mix(in srgb, var(--danger, #f87171) 34%, transparent);
+}
+.ls-card[data-state='error']::before {
+	background: var(--danger, #f87171);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.ls-head {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.7rem;
+}
+
+.ls-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex: none;
+	margin-top: 0.15rem;
+	padding: 0.2rem 0.45rem;
+	border: 1px solid var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-pill, 999px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.58rem;
+	letter-spacing: 0.12em;
+}
+.ls-badge-dot {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--success, #4ade80);
+	box-shadow: 0 0 0 0 color-mix(in srgb, var(--success, #4ade80) 60%, transparent);
+	animation: ls-pulse 2.4s ease-out infinite;
+}
+.ls-badge-bad {
+	color: var(--danger, #f87171);
+	border-color: color-mix(in srgb, var(--danger, #f87171) 40%, transparent);
+}
+
+@keyframes ls-pulse {
+	0% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--success, #4ade80) 55%, transparent);
+	}
+	70%,
+	100% {
+		box-shadow: 0 0 0 6px transparent;
+	}
+}
+
+.ls-titles {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.ls-title {
+	margin: 0;
+	font-size: 0.98rem;
+	font-weight: 600;
+	line-height: 1.35;
+	color: var(--ink-bright, #fff);
+}
+.ls-target {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	flex-wrap: wrap;
+	margin: 0.3rem 0 0;
+	font-size: 0.75rem;
+}
+.ls-method {
+	padding: 0.1rem 0.36rem;
+	border-radius: var(--radius-sm, 6px);
+	background: color-mix(in srgb, var(--success, #4ade80) 16%, transparent);
+	color: var(--success, #4ade80);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.63rem;
+	letter-spacing: 0.06em;
+}
+.ls-method-local {
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-dim, #888);
+}
+.ls-path {
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.72rem;
+	overflow-wrap: anywhere;
+}
+
+.ls-ref {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	flex: none;
+	padding: 0.25rem 0.5rem;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-sm, 6px);
+	color: var(--ink-dim, #888);
+	font-size: 0.7rem;
+	text-decoration: none;
+	transition:
+		color 0.16s,
+		border-color 0.16s,
+		background 0.16s;
+}
+.ls-ref:hover {
+	color: var(--ink-bright, #fff);
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+}
+.ls-ref svg {
+	width: 11px;
+	height: 11px;
+}
+
+/* ── Copy ────────────────────────────────────────────────────────────────── */
+
+.ls-summary {
+	margin: 0.7rem 0 0;
+	color: var(--ink, #e8e8e8);
+	font-size: 0.86rem;
+	line-height: 1.6;
+	opacity: 0.82;
+}
+
+.ls-chain {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0.6rem 0 0;
+	color: var(--ink-dim, #888);
+	font-size: 0.76rem;
+}
+.ls-chain svg {
+	width: 13px;
+	height: 13px;
+	flex: none;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+
+.ls-inputs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem;
+	margin-top: 0.9rem;
+}
+.ls-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.28rem;
+	min-width: min(100%, 13rem);
+}
+.ls-field-label {
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.66rem;
+	letter-spacing: 0.05em;
+}
+.ls-input {
+	padding: 0.42rem 0.55rem;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-sm, 6px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-bright, #fff);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.78rem;
+	transition:
+		border-color 0.16s,
+		background 0.16s;
+}
+.ls-input:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
+}
+.ls-input:focus-visible {
+	outline: 2px solid var(--ls-accent);
+	outline-offset: 1px;
+	border-color: transparent;
+}
+.ls-field-hint {
+	color: var(--ink-dim, #888);
+	font-size: 0.68rem;
+	opacity: 0.75;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+
+.ls-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+	margin-top: 1rem;
+}
+
+.ls-run {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex: none;
+	padding: 0.45rem 0.85rem;
+	border: 1px solid var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-3, rgba(255, 255, 255, 0.08));
+	color: var(--ink-bright, #fff);
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		transform 0.14s ease,
+		background 0.16s,
+		border-color 0.16s,
+		opacity 0.16s;
+}
+.ls-run:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--ls-accent) 14%, transparent);
+	border-color: color-mix(in srgb, var(--ls-accent) 45%, transparent);
+}
+.ls-run:active:not(:disabled) {
+	transform: translateY(1px);
+}
+.ls-run:focus-visible {
+	outline: 2px solid var(--ls-accent);
+	outline-offset: 2px;
+}
+.ls-run:disabled {
+	opacity: 0.55;
+	cursor: progress;
+}
+.ls-run svg {
+	width: 13px;
+	height: 13px;
+}
+
+.ls-url {
+	flex: 1 1 12rem;
+	min-width: 0;
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.72rem;
+	overflow-wrap: anywhere;
+}
+
+.ls-meta {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	flex: none;
+	margin-left: auto;
+	font-size: 0.71rem;
+}
+.ls-meta:empty {
+	display: none;
+}
+.ls-pill {
+	padding: 0.12rem 0.4rem;
+	border-radius: var(--radius-pill, 999px);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.66rem;
+}
+.ls-pill-ok {
+	background: color-mix(in srgb, var(--success, #4ade80) 18%, transparent);
+	color: var(--success, #4ade80);
+}
+.ls-pill-bad {
+	background: color-mix(in srgb, var(--danger, #f87171) 18%, transparent);
+	color: var(--danger, #f87171);
+}
+.ls-dim {
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+}
+
+.ls-spinner {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	border: 2px solid color-mix(in srgb, var(--ls-accent) 25%, transparent);
+	border-top-color: var(--ls-accent);
+	animation: ls-spin 0.7s linear infinite;
+}
+@keyframes ls-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ── Result ──────────────────────────────────────────────────────────────── */
+
+.ls-result:empty {
+	display: none;
+}
+
+.ls-body {
+	position: relative;
+	margin-top: 0.85rem;
+}
+.ls-pre {
+	max-height: 22rem;
+	margin: 0;
+	padding: 0.85rem 0.95rem;
+	overflow: auto;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-md, 10px);
+	background: var(--bg-0, #0a0a0a);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.76rem;
+	line-height: 1.65;
+	white-space: pre;
+	tab-size: 2;
+}
+.ls-pre code {
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: var(--ink, #e8e8e8);
+}
+.ls-key {
+	color: var(--ls-accent);
+	opacity: 0.9;
+}
+.ls-str {
+	color: var(--success, #4ade80);
+}
+.ls-num {
+	color: var(--warn, #fbbf24);
+}
+.ls-lit {
+	color: var(--danger, #f87171);
+}
+
+.ls-copy {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0.26rem 0.5rem;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-sm, 6px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.66rem;
+	cursor: pointer;
+	opacity: 0;
+	transition:
+		opacity 0.16s ease,
+		color 0.16s,
+		border-color 0.16s;
+}
+.ls-body:hover .ls-copy,
+.ls-copy:focus-visible {
+	opacity: 1;
+}
+.ls-copy:hover {
+	color: var(--ink-bright, #fff);
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
+}
+.ls-copy:focus-visible {
+	outline: 2px solid var(--ls-accent);
+	outline-offset: 2px;
+}
+.ls-copy.is-copied {
+	color: var(--success, #4ade80);
+	border-color: color-mix(in srgb, var(--success, #4ade80) 45%, transparent);
+}
+.ls-copy svg {
+	width: 11px;
+	height: 11px;
+}
+@media (hover: none) {
+	.ls-copy {
+		opacity: 1;
+	}
+}
+
+.ls-note {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.4rem;
+	margin: 0.7rem 0 0;
+	font-size: 0.78rem;
+	line-height: 1.6;
+}
+.ls-note svg {
+	width: 13px;
+	height: 13px;
+	flex: none;
+	margin-top: 0.2rem;
+}
+.ls-note.is-hint {
+	color: var(--ink-dim, #888);
+}
+.ls-note.is-ok {
+	color: var(--success, #4ade80);
+}
+.ls-note.is-error {
+	color: var(--danger, #f87171);
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.ls-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin: 2rem 0 0;
+	padding: 0.85rem 1rem;
+	border: 1px dashed var(--stroke-strong, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+.ls-toolbar-text {
+	flex: 1 1 16rem;
+	color: var(--ink-dim, #888);
+	font-size: 0.82rem;
+	line-height: 1.55;
+}
+.ls-toolbar-text strong {
+	color: var(--ink-bright, #fff);
+}
+.ls-run-all {
+	margin-left: auto;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.ls-card {
+		padding: 1rem;
+	}
+	.ls-head {
+		flex-wrap: wrap;
+	}
+	.ls-ref {
+		order: 3;
+	}
+	.ls-field {
+		min-width: 100%;
+	}
+	.ls-meta {
+		margin-left: 0;
+		width: 100%;
+	}
+	.ls-run,
+	.ls-run-all {
+		width: 100%;
+		justify-content: center;
+		margin-left: 0;
+	}
+	.ls-pre {
+		font-size: 0.71rem;
+	}
+}
+
+/* ── Motion opt-out ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.ls-card,
+	.ls-card::before,
+	.ls-run,
+	.ls-copy,
+	.ls-ref,
+	.ls-input {
+		transition: none;
+	}
+	.ls-badge-dot,
+	.ls-spinner {
+		animation: none;
+	}
+	.ls-spinner {
+		border-top-color: color-mix(in srgb, var(--ls-accent) 25%, transparent);
+		background: var(--ls-accent);
+	}
+}

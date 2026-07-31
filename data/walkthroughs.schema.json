@@ -1,0 +1,94 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://three.ws/schemas/walkthroughs.schema.json",
+	"title": "three.ws walkthroughs",
+	"description": "Authored content for the interactive walkthrough player at /walkthroughs. Screenshots and hotspot rectangles are NOT authored here: scripts/capture-walkthroughs.mjs drives the live site and writes them into public/walkthroughs/manifest.json.",
+	"type": "object",
+	"required": ["version", "viewport", "walkthroughs"],
+	"properties": {
+		"$schema": { "type": "string" },
+		"version": { "type": "integer", "minimum": 1 },
+		"description": { "type": "string" },
+		"viewport": {
+			"type": "object",
+			"required": ["width", "height"],
+			"properties": {
+				"width": { "type": "integer", "minimum": 320 },
+				"height": { "type": "integer", "minimum": 320 }
+			},
+			"additionalProperties": false
+		},
+		"walkthroughs": {
+			"type": "array",
+			"minItems": 1,
+			"items": { "$ref": "#/definitions/walkthrough" }
+		}
+	},
+	"additionalProperties": false,
+	"definitions": {
+		"link": {
+			"type": "object",
+			"required": ["label", "href"],
+			"properties": {
+				"label": { "type": "string", "minLength": 1 },
+				"href": { "type": "string", "pattern": "^/" }
+			},
+			"additionalProperties": false
+		},
+		"walkthrough": {
+			"type": "object",
+			"required": ["slug", "title", "outcome", "blurb", "level", "minutes", "accent", "cta", "steps"],
+			"properties": {
+				"slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+				"title": { "type": "string", "minLength": 1 },
+				"outcome": { "type": "string", "minLength": 1, "description": "What the reader ends up holding." },
+				"blurb": { "type": "string", "minLength": 1 },
+				"level": { "enum": ["beginner", "intermediate", "advanced"] },
+				"minutes": { "type": "integer", "minimum": 1, "maximum": 60 },
+				"accent": { "type": "string", "pattern": "^#[0-9a-f]{6}$" },
+				"cta": { "$ref": "#/definitions/link" },
+				"related": { "type": "array", "items": { "$ref": "#/definitions/link" } },
+				"steps": {
+					"type": "array",
+					"minItems": 2,
+					"maxItems": 12,
+					"items": { "$ref": "#/definitions/step" }
+				}
+			},
+			"additionalProperties": false
+		},
+		"step": {
+			"type": "object",
+			"required": ["path", "focus", "title", "body"],
+			"properties": {
+				"path": { "type": "string", "pattern": "^/", "description": "Real route on three.ws that this step is captured from." },
+				"focus": { "type": "string", "minLength": 1, "description": "CSS selector for the element the step is about. Capture fails loudly if it stops matching." },
+				"title": { "type": "string", "minLength": 1 },
+				"body": { "type": "string", "minLength": 1 },
+				"tip": { "type": "string", "minLength": 1 },
+				"action": { "$ref": "#/definitions/link" },
+				"before": {
+					"type": "array",
+					"description": "Real interactions performed against the live page before the frame is taken, so a step can show a state the visitor would have to click their way into.",
+					"items": {
+						"type": "object",
+						"properties": {
+							"click": { "type": "string" },
+							"fill": {
+								"type": "array",
+								"items": { "type": "string" },
+								"minItems": 2,
+								"maxItems": 2
+							},
+							"wait": { "type": "integer", "minimum": 0, "maximum": 15000 }
+						},
+						"additionalProperties": false,
+						"minProperties": 1,
+						"maxProperties": 1
+					}
+				}
+			},
+			"additionalProperties": false
+		}
+	}
+}
