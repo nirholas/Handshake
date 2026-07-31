@@ -92,6 +92,32 @@ export function computeCameraFraming(box, preset, aspect, fovDeg, orbit) {
 	};
 }
 
+// Applies a requested morph map to a loaded model and reports which names
+// actually landed. Shared verbatim between Node (unit tests) and the headless
+// render page (injected via toString(), so keep it self-contained: plain
+// objects only, no three.js, no outer-scope references). A model with no
+// morph targets (or differently-named ones) used to make this a silent no-op:
+// the caller got a clean 200 with none of the requested expression applied
+// and no way to tell. Returns { requested, missing } or null when nothing
+// was requested.
+export function applyExpression(root, expression) {
+	if (!expression || typeof expression !== 'object') return null;
+	const requested = Object.keys(expression);
+	if (!requested.length) return null;
+	const matched = new Set();
+	root.traverse((o) => {
+		if (!o.isMesh || !o.morphTargetDictionary || !o.morphTargetInfluences) return;
+		for (const [name, value] of Object.entries(expression)) {
+			const idx = o.morphTargetDictionary[name] ?? o.morphTargetDictionary[name.toLowerCase()];
+			if (typeof idx === 'number') {
+				o.morphTargetInfluences[idx] = Number(value) || 0;
+				matched.add(name);
+			}
+		}
+	});
+	return { requested, missing: requested.filter((n) => !matched.has(n)) };
+}
+
 export const FORMAT_TYPES = {
 	png:  'image/png',
 	jpeg: 'image/jpeg',
@@ -205,7 +231,12 @@ function renderFingerprint(updatedAt, params) {
 //                       (MCP callers that only get a URL back)
 //                false → fire the write in the background and hand back the
 //                       buffer the caller already holds (the HTTP endpoint)
-// Returns { cached, key, imageUrl, buffer, contentType }. buffer is null on a hit.
+// Returns { cached, key, imageUrl, buffer, contentType, expressionReport }.
+// buffer is null on a hit. expressionReport is { requested, missing } when an
+// expression was requested on a fresh render (missing = morph names the model
+// does not carry, i.e. the part of the request that could not be honored),
+// null when no expression was requested, and undefined on a cache hit (the
+// stored image predates the check).
 export async function renderAvatarImage({ avatar, glbUrl, params, awaitUpload = false }) {
 	const contentType = FORMAT_TYPES[params.format];
 	const fingerprint = renderFingerprint(avatar.updated_at, params);
@@ -221,7 +252,7 @@ export async function renderAvatarImage({ avatar, glbUrl, params, awaitUpload = 
 	}
 
 	const cameraOrbit = { theta: params.scenePreset.theta, phi: params.scenePreset.phi, radius: null };
-	const { png } = await renderAvatarScene({
+	const { png, expressionReport } = await renderAvatarScene({
 		glbUrl,
 		width: params.width,
 		height: params.height,
@@ -244,7 +275,7 @@ export async function renderAvatarImage({ avatar, glbUrl, params, awaitUpload = 
 		put.catch((err) => console.warn('[avatar-render] cache write failed:', err?.message));
 	}
 
-	return { cached: false, key, imageUrl: publicUrl(key), buffer: png, contentType };
+	return { cached: false, key, imageUrl: publicUrl(key), buffer: png, contentType, expressionReport };
 }
 
 const DEFAULT_CHROMIUM_PACK =
@@ -340,6 +371,7 @@ import { makeGltfRig, poseFromMannequinPreset } from 'pose-rig';
 
 window.__renderDone = false;
 window.__renderError = null;
+window.__expressionReport = null;
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -389,16 +421,7 @@ function applyPose(root, poseMap) {
 	rig.applyPose(poseFromMannequinPreset(poseMap));
 }
 
-function applyExpression(root, expression) {
-	if (!expression || typeof expression !== 'object') return;
-	root.traverse((o) => {
-		if (!o.isMesh || !o.morphTargetDictionary || !o.morphTargetInfluences) return;
-		for (const [name, value] of Object.entries(expression)) {
-			const idx = o.morphTargetDictionary[name] ?? o.morphTargetDictionary[name.toLowerCase()];
-			if (typeof idx === 'number') o.morphTargetInfluences[idx] = Number(value) || 0;
-		}
-	});
-}
+${applyExpression.toString()}
 
 ${computeCameraFraming.toString()}
 
@@ -447,7 +470,7 @@ loader.load(${JSON.stringify(glbUrl)}, (gltf) => {
 		const root = gltf.scene;
 		scene.add(root);
 		applyPose(root, poseMap);
-		applyExpression(root, expression);
+		window.__expressionReport = applyExpression(root, expression);
 		frameCameraForScene(root, orbit, preset);
 		renderer.render(scene, camera);
 		requestAnimationFrame(() => {
@@ -500,12 +523,13 @@ export async function renderAvatarScene({
 		if (err) {
 			throw Object.assign(new Error(`render failed: ${err}`), { status: 502, code: 'render_failed' });
 		}
+		const expressionReport = await page.evaluate(() => window.__expressionReport);
 		const png = await page.screenshot({
 			type: 'png',
 			omitBackground: background === 'transparent',
 			clip: { x: 0, y: 0, width: W, height: H },
 		});
-		return { png };
+		return { png, expressionReport };
 	} finally {
 		await page.close().catch(() => {});
 	}

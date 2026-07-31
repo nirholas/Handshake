@@ -333,17 +333,25 @@ export const toolDefs = [
 				};
 			}
 
+			// A requested expression the model cannot express used to vanish
+			// silently (a morph-less avatar rendered fine with none of it applied).
+			// Tell the caller which morphs did not land.
+			const missingMorphs = out.expressionReport?.missing?.length ? out.expressionReport.missing : null;
+			const morphNote = missingMorphs
+				? `\nNote: this model has no morph target(s) named ${missingMorphs.join(', ')}; that part of the expression was not applied.`
+				: '';
 			return {
 				content: [
 					{
 						type: 'text',
-						text: `Rendered "${avatar.name}" (${resolved.params.scene}).\n${out.imageUrl}`,
+						text: `Rendered "${avatar.name}" (${resolved.params.scene}).\n${out.imageUrl}${morphNote}`,
 					},
 				],
 				structuredContent: {
 					image_url: out.imageUrl,
 					scene: resolved.params.scene,
 					cached: out.cached,
+					...(missingMorphs ? { expression_missing: missingMorphs } : {}),
 				},
 			};
 		},

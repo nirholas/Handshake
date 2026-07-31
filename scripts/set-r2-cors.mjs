@@ -117,7 +117,13 @@ const s3 = new S3Client({
 const Bucket = process.env.S3_BUCKET;
 
 if (flag('--get')) {
-	const current = await getCors();
+	let current;
+	try {
+		current = await getCors();
+	} catch (err) {
+		if (!explainAccessDenied(err, 'reading')) throw err;
+		process.exit(1);
+	}
 	console.log(JSON.stringify(current, null, 2));
 	process.exit(0);
 }

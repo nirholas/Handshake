@@ -15,6 +15,12 @@
 //   format     — png | jpeg | webp  (default: png)
 //   quality    — 1-100 for lossy formats  (default: 90)
 //
+// When an expression is requested, fresh (non-cached) responses carry
+// `x-render-expression: applied | partial | none`; `partial`/`none` add
+// `x-render-expression-missing` listing the morph names the model does not
+// have. A model with zero morph targets renders fine but reports `none`
+// instead of silently ignoring the expression.
+//
 // Caching:
 //   First request per parameter combo renders via headless chromium + three.js
 //   and caches the result in R2. Subsequent requests 302 to the CDN URL.
@@ -154,6 +160,17 @@ export default wrap(async function handler(req, res) {
 	res.setHeader('x-render-cache', 'miss');
 	res.setHeader('x-render-scene', params.scene);
 	res.setHeader('x-render-size', `${params.width}x${params.height}`);
-	res.setHeader('access-control-expose-headers', 'x-render-cache, x-render-scene, x-render-size');
+	// An expression request against a model that lacks the morph targets used to
+	// be indistinguishable from success. Report what actually landed so callers
+	// can tell "applied" from "the model cannot express this".
+	if (out.expressionReport) {
+		const { requested, missing } = out.expressionReport;
+		const state = missing.length === 0 ? 'applied' : missing.length === requested.length ? 'none' : 'partial';
+		res.setHeader('x-render-expression', state);
+		if (missing.length) {
+			res.setHeader('x-render-expression-missing', missing.slice(0, 32).join(','));
+		}
+	}
+	res.setHeader('access-control-expose-headers', 'x-render-cache, x-render-scene, x-render-size, x-render-expression, x-render-expression-missing');
 	res.end(imageBuffer);
 });
