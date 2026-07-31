@@ -30,6 +30,26 @@ const UNLOCK = (() => {
 	return SRC.slice(at, SRC.indexOf('`', SRC.indexOf('ON CONFLICT', at)));
 })();
 
+// Split a SQL VALUES tuple on its top-level commas. `${...}` interpolations can
+// themselves contain templates, braces and commas, so track nesting rather than
+// splitting on every comma.
+function splitTopLevel(body) {
+	const out = [];
+	let depth = 0;
+	let start = 0;
+	for (let i = 0; i < body.length; i++) {
+		const c = body[i];
+		if (c === '(' || c === '{') depth++;
+		else if (c === ')' || c === '}') depth--;
+		else if (c === ',' && depth === 0) {
+			out.push(body.slice(start, i));
+			start = i + 1;
+		}
+	}
+	out.push(body.slice(start));
+	return out;
+}
+
 describe('bundle unlock insert', () => {
 	it('supplies every NOT NULL column that has no default', () => {
 		// Read off skill_purchases: these six are NOT NULL with no default, so an
@@ -55,7 +75,20 @@ describe('bundle unlock insert', () => {
 		// deliberately absent from MARKET_PAID_KINDS, so these access records never
 		// count as marketplace GMV or as N separate purchases.
 		expect(UNLOCK).toMatch(/'bundle'/);
-		expect(UNLOCK).toMatch(/\b0\b/);
+
+		// `amount` must be literally zero in the VALUES list, not merely "a 0 appears
+		// somewhere in the statement". Read the VALUES tuple and pin the slot that
+		// lines up with `amount` in the column list.
+		const cols = UNLOCK.slice(UNLOCK.indexOf('('), UNLOCK.indexOf(')') + 1)
+			.replace(/[()\s]/g, '')
+			.split(',');
+		const amountIdx = cols.indexOf('amount');
+		expect(amountIdx, 'amount must be named in the column list').toBeGreaterThan(-1);
+
+		const valuesStart = UNLOCK.indexOf('(', UNLOCK.indexOf('VALUES'));
+		const values = splitTopLevel(UNLOCK.slice(valuesStart + 1, UNLOCK.lastIndexOf(')')));
+		expect(values.length, 'VALUES arity must match the column list').toBe(cols.length);
+		expect(values[amountIdx].trim(), 'the bundle unlock row must carry zero revenue').toBe('0');
 	});
 
 	it('still absorbs an already-owned skill', () => {
