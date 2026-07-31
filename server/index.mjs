@@ -36,6 +36,7 @@ import { existsSync, statSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
+import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -432,6 +433,21 @@ app.use(async (req, res) => {
 	const extraQuery = {};
 	let fileStatus = null;
 
+	// The route table serves /x and /x/ identically via duplicated entries, so
+	// every page exists at two URLs and crawlers see duplicate content held
+	// together only by canonical tags. Collapse the slash variant permanently.
+	// API paths keep their exact form and the root is already bare.
+	if (
+		(req.method === 'GET' || req.method === 'HEAD') &&
+		currentPath.length > 1 &&
+		currentPath.endsWith('/') &&
+		!currentPath.startsWith('/api/')
+	) {
+		const bare = currentPath.replace(/\/+$/, '') || '/';
+		res.redirect(301, bare + url.search);
+		return;
+	}
+
 	// Phase 1: rules before {handle: "filesystem"}.
 	for (const route of phase1Routes) {
 		const m = route.re.exec(currentPath);
@@ -508,6 +524,22 @@ app.use(async (req, res) => {
 					}
 				} catch (err) {
 					console.error(`[ssr] ${currentPath} fell back to the static shell:`, err.message);
+				}
+			}
+			// Shared-shell routes (/docs/*, /tutorials/*) all resolve to one HTML
+			// file whose static head names the shell's own route. Rewrite the head
+			// for the page actually requested so each route presents its own
+			// canonical, title, social card and JSON-LD. Uses the ORIGINAL request
+			// path: currentPath is already the dest rewrite (/docs/index.html).
+			if (req.method === 'GET' && file.endsWith('.html') && hasSeoRoute(url.pathname)) {
+				const html = renderSeoHead(url.pathname, file);
+				if (html) {
+					res.set(collected);
+					if (fileStatus) res.status(fileStatus);
+					res.set('content-type', 'text/html; charset=utf-8');
+					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.send(html);
+					return;
 				}
 			}
 			await serveFile(req, res, file, collected, fileStatus);

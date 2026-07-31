@@ -17536,6 +17536,16 @@
 				"docs"
 			],
 			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "Every docs page and tutorial now shows up properly in search and shares",
+			"summary": "Until now, sharing or searching any of the 300 documentation and tutorial pages showed the same generic card and sent search engines to the docs homepage instead of the page itself. Each page now carries its own title, description, preview image, and address, so links unfurl correctly in chats and social posts, and search results land readers on the exact page. Duplicate slash-variant URLs now redirect to one canonical address too.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/docs"
 		}
 	]
 }
