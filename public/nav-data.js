@@ -377,7 +377,7 @@ export const NAV_GROUPS = [
 						href: '/trading',
 						badge: 'Live',
 						badgeTone: 'live',
-						desc: 'Start here — live fleet vitals, the agent scoreboard, and every trading surface in one map',
+						desc: 'Start here: live fleet vitals, the agent scoreboard, and every trading surface in one map',
 					},
 					{
 						title: 'Mission Control',
