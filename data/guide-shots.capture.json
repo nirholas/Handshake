@@ -1,0 +1,164 @@
+{
+	"base": "https://three.ws",
+	"shots": 11,
+	"failed": 0,
+	"results": [
+		{
+			"id": "forge-compose",
+			"tutorials": [
+				"text-to-3d",
+				"nvidia-3d-free"
+			],
+			"url": "/forge",
+			"path": "/docs/img/guides/forge-compose.png",
+			"ok": true,
+			"bytes": 251193,
+			"width": 484,
+			"height": 686,
+			"ms": 21953,
+			"pageErrors": []
+		},
+		{
+			"id": "forge-quality-tiers",
+			"tutorials": [
+				"text-to-3d",
+				"nvidia-3d-free"
+			],
+			"url": "/forge",
+			"path": "/docs/img/guides/forge-quality-tiers.png",
+			"ok": true,
+			"bytes": 109172,
+			"width": 442,
+			"height": 270,
+			"ms": 13636,
+			"pageErrors": []
+		},
+		{
+			"id": "forge-stage",
+			"tutorials": [
+				"text-to-3d",
+				"nvidia-3d-free"
+			],
+			"url": "/forge",
+			"path": "/docs/img/guides/forge-stage.png",
+			"ok": true,
+			"bytes": 61648,
+			"width": 875,
+			"height": 732,
+			"ms": 10671,
+			"pageErrors": []
+		},
+		{
+			"id": "forge-photo-mode",
+			"tutorials": [
+				"image-to-3d"
+			],
+			"url": "/forge",
+			"path": "/docs/img/guides/forge-photo-mode.png",
+			"ok": true,
+			"bytes": 234415,
+			"width": 484,
+			"height": 924,
+			"ms": 11387,
+			"pageErrors": []
+		},
+		{
+			"id": "forge-example-chips",
+			"tutorials": [
+				"prompts-for-3d"
+			],
+			"url": "/forge",
+			"path": "/docs/img/guides/forge-example-chips.png",
+			"ok": true,
+			"bytes": 42587,
+			"width": 472,
+			"height": 131,
+			"ms": 7448,
+			"pageErrors": []
+		},
+		{
+			"id": "create-intent-hub",
+			"tutorials": [
+				"getting-started"
+			],
+			"url": "/create",
+			"path": "/docs/img/guides/create-intent-hub.png",
+			"ok": true,
+			"bytes": 471808,
+			"width": 920,
+			"height": 1508,
+			"ms": 27387,
+			"pageErrors": []
+		},
+		{
+			"id": "studio-workbench",
+			"tutorials": [
+				"swap-avatar-in-studio"
+			],
+			"url": "/studio",
+			"path": "/docs/img/guides/studio-workbench.png",
+			"ok": true,
+			"bytes": 742893,
+			"width": 1440,
+			"height": 1404,
+			"ms": 27228,
+			"pageErrors": []
+		},
+		{
+			"id": "app-chat-dock",
+			"tutorials": [
+				"add-a-3d-assistant"
+			],
+			"url": "/app",
+			"path": "/docs/img/guides/app-chat-dock.png",
+			"ok": true,
+			"bytes": 127807,
+			"width": 676,
+			"height": 131,
+			"ms": 88600,
+			"pageErrors": []
+		},
+		{
+			"id": "app-action-bar",
+			"tutorials": [
+				"animate-your-agent"
+			],
+			"url": "/app",
+			"path": "/docs/img/guides/app-action-bar.png",
+			"ok": true,
+			"bytes": 62743,
+			"width": 696,
+			"height": 80,
+			"ms": 107857,
+			"pageErrors": []
+		},
+		{
+			"id": "docs-sidebar",
+			"tutorials": [
+				"explore-docs-world"
+			],
+			"url": "/docs",
+			"path": "/docs/img/guides/docs-sidebar.png",
+			"ok": true,
+			"bytes": 133786,
+			"width": 296,
+			"height": 876,
+			"ms": 18462,
+			"pageErrors": []
+		},
+		{
+			"id": "agents-index",
+			"tutorials": [
+				"share-your-agent"
+			],
+			"url": "/agents",
+			"path": "/docs/img/guides/agents-index.png",
+			"ok": true,
+			"bytes": 310235,
+			"width": 1200,
+			"height": 360,
+			"ms": 9609,
+			"pageErrors": []
+		}
+	]
+}

@@ -1,0 +1,22 @@
+{
+	"generatedBy": "scripts/capture-doc-media.mjs",
+	"generatedAt": "2026-07-31T06:28:53.164Z",
+	"shots": {
+		"start-checklist": {
+			"id": "start-checklist",
+			"src": "/docs/img/start-checklist.webp",
+			"alt": "The three.ws getting-started checklist showing the first setup steps",
+			"caption": "The getting-started checklist is the shortest path from account to first agent.",
+			"route": "/start",
+			"viewport": "desktop",
+			"animated": false,
+			"capturedAt": "2026-07-31T06:26:37.985Z",
+			"capturedFrom": "http://localhost:3000",
+			"commit": "75883898b",
+			"sha256": "57f49a4e06061c0f50ea15ee04f72fc65d76318bdef17bda4cae94a2242abde3",
+			"bytes": 64358,
+			"width": 1800,
+			"height": 1125
+		}
+	}
+}

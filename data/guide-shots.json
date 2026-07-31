@@ -1,0 +1,182 @@
+{
+	"_readme": "Every screenshot in docs/tutorials/*.md is declared here and captured from the live product by scripts/capture-guide-shots.mjs. Add a shot, run the capture, run sync:guide-media. Never hand-place an image in a tutorial: check:guide-media fails on anything this file does not describe. See docs/guide-media.md.",
+	"defaults": {
+		"viewport": { "width": 1440, "height": 900 },
+		"scale": 2,
+		"settle": 4000
+	},
+	"shots": [
+		{
+			"id": "forge-compose",
+			"url": "/forge",
+			"clip": "form.composer",
+			"pad": 22,
+			"callouts": [
+				{ "selector": "#tab-text", "note": "**Describe it** is the text-to-3D tab, and the one the Forge opens on." },
+				{ "selector": "#prompt", "note": "The prompt box. One object, one material, no scenery." },
+				{ "selector": "#surprise", "note": "**Surprise me** fills the box with a known-good prompt; **Enhance** rewrites yours into a richer one." },
+				{ "selector": "#tier", "note": "Quality tier. Draft and Standard are free for everyone." },
+				{ "selector": "#generate", "note": "Generate. Results stream into the stage on the right." }
+			],
+			"alt": "The three.ws Forge compose panel, with the Describe it tab, prompt box, Surprise me and Enhance buttons, the quality tier row, and the Generate button each marked with a numbered callout.",
+			"caption": "The Forge compose panel. Everything you need for a text-to-3D run is in this one column.",
+			"placements": [
+				{ "tutorial": "text-to-3d", "anchor": "Step 2 — Describe the object" },
+				{ "tutorial": "nvidia-3d-free", "anchor": "Step 2 — Describe one object" }
+			]
+		},
+		{
+			"id": "forge-quality-tiers",
+			"url": "/forge",
+			"clip": ".forge-quality",
+			"pad": 18,
+			"callouts": [
+				{ "selector": "#tier", "note": "Draft, Standard and High. Start on Draft or Standard, then re-run the winning prompt on High." },
+				{ "selector": ".fq-row--engine", "note": "The engine row. Lanes marked FREE need no key and no account." }
+			],
+			"alt": "The Forge quality panel showing the Draft, Standard and High tier buttons above a row of generation engines, several labelled FREE, with numbered callouts on the tier row and the engine row.",
+			"caption": "Tier and engine sit together: tier decides how much detail you get, engine decides who renders it.",
+			"placements": [
+				{ "tutorial": "text-to-3d", "anchor": "Step 3 — Pick a quality tier" },
+				{ "tutorial": "nvidia-3d-free", "anchor": "Step 3 — Pick a tier (both free lanes)" }
+			]
+		},
+		{
+			"id": "forge-stage",
+			"url": "/forge",
+			"clip": "section.stage",
+			"pad": 16,
+			"alt": "The Forge stage panel, the large viewport where a finished 3D model is displayed and can be orbited.",
+			"caption": "The stage. Finished models land here and can be orbited, zoomed and downloaded without leaving the page.",
+			"placements": [
+				{ "tutorial": "text-to-3d", "anchor": "Step 5 — Inspect your model" },
+				{ "tutorial": "nvidia-3d-free", "anchor": "Step 4 — Generate and inspect" }
+			]
+		},
+		{
+			"id": "forge-photo-mode",
+			"url": "/forge",
+			"prep": [{ "click": "#tab-image" }, { "wait": 1200 }],
+			"clip": "form.composer",
+			"pad": 22,
+			"callouts": [
+				{ "selector": "#tab-image", "note": "**From photos** switches the Forge into photo-to-3D mode." },
+				{ "selector": "#views-grid", "note": "Drop up to six photos of the same object here, taken from different angles." },
+				{ "selector": "#views-counter", "note": "The view counter. More angles means a more complete reconstruction." }
+			],
+			"alt": "The Forge in photo mode, showing the From photos tab selected, an empty grid of reference view slots, and a view counter, each marked with a numbered callout.",
+			"caption": "Photo mode. The same panel, swapped from a prompt box to a reference-photo grid.",
+			"placements": [
+				{ "tutorial": "image-to-3d", "anchor": "Step 2 — Open the Forge in photo mode" }
+			]
+		},
+		{
+			"id": "forge-example-chips",
+			"url": "/forge",
+			"clip": "#examples",
+			"pad": 16,
+			"callouts": [
+				{ "selector": "#chips-more", "note": "Expands the list to the full set of worked example prompts." }
+			],
+			"alt": "A row of example prompt chips beneath the Forge prompt box, each one a complete ready-to-run prompt, with a callout on the button that reveals more.",
+			"caption": "Example chips are complete prompts, not keywords. Tap one to load it, then edit a word or two.",
+			"placements": [
+				{ "tutorial": "prompts-for-3d", "anchor": "The four rules" }
+			]
+		},
+		{
+			"id": "create-intent-hub",
+			"url": "/create",
+			"clip": "#avatar-options",
+			"pad": 20,
+			"callouts": [
+				{ "selector": "#card-default-editor", "note": "Start from a ready-made avatar. Fastest route to something on screen." },
+				{ "selector": "#card-prompt", "note": "Describe the character you want and have it generated." },
+				{ "selector": "#card-selfie", "note": "Turn a selfie into an avatar." },
+				{ "selector": "#card-upload-glb", "note": "Bring a GLB you already have." }
+			],
+			"alt": "The three.ws create page showing the avatar option cards: start from a default avatar, describe one, use a selfie, or upload a GLB, each marked with a numbered callout.",
+			"caption": "Every route to an avatar starts here. They all end in the same editor, so the choice is reversible.",
+			"placements": [
+				{ "tutorial": "getting-started", "anchor": "Step 1: Open the create flow" }
+			]
+		},
+		{
+			"id": "studio-workbench",
+			"url": "/studio",
+			"clip": "main.studio-layout",
+			"pad": 14,
+			"callouts": [
+				{ "selector": "#avatar-list", "note": "The avatar gallery. Pick a body without leaving the page." },
+				{ "selector": "#preview-frame", "note": "Live preview. It renders the real widget, not a picture of one." },
+				{ "selector": "#config-form", "note": "Widget settings. Every change re-renders the preview immediately." },
+				{ "selector": "#generate-btn", "note": "Produces the embed snippet to paste into your site." }
+			],
+			"alt": "The three.ws Widget Studio, a three-column workbench with an avatar gallery on the left, a live widget preview in the middle, and a configuration form on the right, with numbered callouts on each.",
+			"caption": "Widget Studio: pick on the left, watch in the middle, configure on the right, and leave with an embed snippet.",
+			"placements": [
+				{ "tutorial": "swap-avatar-in-studio", "anchor": "Step 1 — Open Widget Studio" }
+			]
+		},
+		{
+			"id": "app-chat-dock",
+			"url": "/app",
+			"clip": "#nxt-chat-dock",
+			"pad": 18,
+			"callouts": [
+				{ "selector": "#nxt-chat-input", "note": "Talk to the agent in plain language. It answers in character and moves while it does." },
+				{ "selector": "#nxt-chat-chips", "note": "Suggested openers, so an empty input is never a dead end." }
+			],
+			"alt": "The chat dock in the three.ws viewer, with a message input and a row of suggested opening prompts, each marked with a numbered callout.",
+			"caption": "The chat dock. Suggested prompts mean a first-time visitor never has to guess what to type.",
+			"placements": [
+				{ "tutorial": "add-a-3d-assistant", "anchor": "Step 1: the one-tag embed" }
+			]
+		},
+		{
+			"id": "app-action-bar",
+			"url": "/app",
+			"clip": ".nxt-action-bar--secondary",
+			"pad": 18,
+			"callouts": [
+				{ "selector": "#nxt-anim-btn", "note": "Browse the animation library and play any clip on the current avatar. Keyboard: `A`." },
+				{ "selector": "#nxt-avatar-btn", "note": "Swap the avatar. The scene keeps its camera and backdrop." },
+				{ "selector": "#nxt-backdrop-btn", "note": "Change the backdrop behind the agent." }
+			],
+			"alt": "The secondary action bar in the three.ws viewer with Animations, Avatar and Backdrop buttons, each marked with a numbered callout.",
+			"caption": "The action bar. Animations, avatar and backdrop are the three things worth changing first.",
+			"placements": [
+				{ "tutorial": "animate-your-agent", "anchor": "See the whole vocabulary" }
+			]
+		},
+		{
+			"id": "docs-sidebar",
+			"url": "/docs",
+			"clip": "#sidebar",
+			"pad": 14,
+			"callouts": [
+				{ "selector": "#search-input", "note": "Search filters the whole documentation tree as you type." }
+			],
+			"alt": "The three.ws documentation sidebar, with a search box above a long navigation tree of sections, and a callout on the search box.",
+			"caption": "The docs sidebar. Searching filters the tree in place rather than sending you to a results page.",
+			"placements": [
+				{ "tutorial": "explore-docs-world", "anchor": "Use the index instead of walking" }
+			]
+		},
+		{
+			"id": "agents-index",
+			"url": "/agents",
+			"clip": "section.hero",
+			"pad": 18,
+			"callouts": [
+				{ "selector": "#ag-search", "note": "Search across every published agent." },
+				{ "selector": "#ag-sort", "note": "Reorder the index. Useful for finding recently published agents." }
+			],
+			"alt": "The header of the three.ws agents index, with a wide search field and a sort selector, each marked with a numbered callout.",
+			"caption": "The public agents index. Your agent appears here once it is published, and this is the page visitors search.",
+			"placements": [
+				{ "tutorial": "share-your-agent", "anchor": "Step 1 — Find your agent's public URL" }
+			]
+		}
+	]
+}

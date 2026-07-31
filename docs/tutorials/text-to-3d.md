@@ -12,6 +12,8 @@ Type a sentence, get a downloadable 3D model. That's the whole tutorial. By the 
 
 Go to [three.ws/forge](/forge).
 
+![The Forge on the Describe it tab, with the prompt box and the quality tiers in view.](figure:page:/forge)
+
 You'll land on the **Describe it** tab — that's the text-to-3D mode. (The other tabs, **From photos** and **From a sketch**, turn images into models; see [Turn Photos into a 3D Model](/tutorials/image-to-3d) for those.)
 
 ---
@@ -73,6 +75,8 @@ Draft takes roughly 15 seconds; Standard about a minute; High a couple of minute
 ## Step 5 — Inspect your model
 
 When generation finishes, the model appears in a live 3D viewer:
+
+![A GLB in exactly the viewer the Forge hands you. Drag to rotate, scroll to zoom, and check the back and the underside for flaws.](figure:live:/avatars/fox.glb?orbit=25deg+72deg+3.2m)
 
 - **Drag** to rotate, **scroll** to zoom.
 - Press **F** for cinema mode — a fullscreen turntable. Press **Esc** to exit.

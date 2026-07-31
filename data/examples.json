@@ -453,14 +453,14 @@
 			"kind": "package",
 			"group": "Package examples",
 			"title": "agent-payments-sdk/src/solana",
-			"description": "",
+			"description": "Runnable examples for the Solana half of @three-ws/agent-payments. They read live mainnet data and never sign or send a transaction, so nothing here can spend.",
 			"path": "agent-payments-sdk/src/solana/examples",
 			"files": [
 				"listen-pump-events.ts"
 			],
 			"run": null,
 			"runKind": "command",
-			"readme": null,
+			"readme": "agent-payments-sdk/src/solana/examples/README.md",
 			"owner": "agent-payments-sdk/src/solana"
 		},
 		{

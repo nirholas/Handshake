@@ -20,6 +20,8 @@ Every embedded agent on three.ws has a permanent ID. The `<agent-3d>` tag uses t
 
 Open [https://three.ws/create](https://three.ws/create) in a new tab. The editor loads with a default avatar in the centre of the canvas. You have two paths from here.
 
+![The /create launchpad. Every path to a body starts on this page, and each one ends with an agent ID.](figure:page:/create)
+
 ### Path A — Use the default and save
 
 If you want to ship something working as fast as possible, skip every panel for now and click **Save** in the top-right of the editor. The platform creates an agent with the default body, the default personality, and a default greeting. Once saved, the URL in your browser's address bar becomes something like:

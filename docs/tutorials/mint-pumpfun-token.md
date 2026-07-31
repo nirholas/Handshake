@@ -206,6 +206,17 @@ Click your token. The detail panel shows:
 - Curve fill percentage (how close to graduation)
 - A trade list with each buy/sell, the wallet, and the amount
 
+The ribbon is rendered from a public endpoint, so you can check the same list without opening the page. Press Run and this tutorial calls it against the live site:
+
+```try
+GET /api/pump/launches?limit=5
+title: Coins launched through three.ws
+note: Public and unauthenticated. Every entry carries the mint plus the agent that launched it.
+pick: data.launches[0].mint
+```
+
+Copy the mint out of that response and paste it into a Solana explorer to confirm it on-chain. If your token is missing here but visible on Pump.fun, the bonding step (Step 7) did not complete.
+
 This is the same data surfaced on the per-agent dashboard at:
 
 ```

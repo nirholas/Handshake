@@ -1,0 +1,141 @@
+{
+	"$comment": "Recipes for every screenshot and loop the docs own. Each entry is captured from the running site by scripts/capture-doc-media.mjs and lands in public/docs/img/<id>.webp with provenance in public/docs/media-manifest.json. Edit the recipe, re-run the script; never hand-place a file the docs reference.",
+	"defaults": {
+		"viewport": "desktop",
+		"theme": "dark",
+		"settle": 3500
+	},
+	"shots": [
+		{
+			"id": "forge-prompt-panel",
+			"url": "/create/prompt",
+			"alt": "The three.ws prompt-to-3D page with the description field and quality tier picker",
+			"caption": "Describe it to 3D: the prompt field and the tier picker are the whole interface.",
+			"usedBy": ["tutorials/text-to-3d", "tutorials/first-prompt-to-3d"]
+		},
+		{
+			"id": "forge-hero",
+			"url": "/forge",
+			"alt": "The Forge page showing text and image to 3D generation options",
+			"caption": "The Forge accepts a sentence or an image and returns a textured GLB.",
+			"usedBy": ["tutorials/prompts-for-3d", "tutorials/generate-3d-api"]
+		},
+		{
+			"id": "image-to-3d-page",
+			"url": "/image-to-3d",
+			"alt": "The image-to-3D page with its upload dropzone",
+			"caption": "Drop a photo here and the same pipeline returns a mesh instead of a render.",
+			"usedBy": ["tutorials/image-to-3d"]
+		},
+		{
+			"id": "avatar-studio",
+			"url": "/avatar-studio",
+			"alt": "The three.ws Avatar Studio with a rigged avatar in the viewport and the customisation rail",
+			"caption": "Avatar Studio: the rig on the left, every appearance control on the right.",
+			"settle": 6000,
+			"usedBy": ["tutorials/customize-appearance", "tutorials/swap-avatar-in-studio"]
+		},
+		{
+			"id": "animation-studio",
+			"url": "/pose",
+			"alt": "The Animation Studio timeline with an avatar mid-clip",
+			"caption": "Animation Studio drives the same canonical clip library the embeds use.",
+			"settle": 6000,
+			"usedBy": ["tutorials/animate-your-avatar", "tutorials/animate-your-agent"]
+		},
+		{
+			"id": "start-checklist",
+			"url": "/start",
+			"alt": "The three.ws getting-started checklist showing the first setup steps",
+			"caption": "The getting-started checklist is the shortest path from account to first agent.",
+			"usedBy": ["tutorials/getting-started", "tutorials/first-agent"]
+		},
+		{
+			"id": "marketplace-grid",
+			"url": "/marketplace",
+			"alt": "The three.ws marketplace grid of published agents",
+			"caption": "Published agents land here, forkable by anyone.",
+			"usedBy": ["tutorials/share-your-agent"]
+		},
+		{
+			"id": "skills-marketplace",
+			"url": "/skills",
+			"alt": "The skills marketplace listing paid and free agent skills",
+			"caption": "Skills are sold, trialled and installed from this catalogue.",
+			"usedBy": ["tutorials/custom-skill", "tutorials/sell-a-skill-with-a-trial"]
+		},
+		{
+			"id": "character-library",
+			"url": "/character-library",
+			"alt": "The character library grid of ready-to-use rigged characters",
+			"caption": "Every character here is a real rigged GLB you can embed as-is.",
+			"settle": 5000,
+			"usedBy": ["tutorials/character-library-to-embed"]
+		},
+		{
+			"id": "voice-lab",
+			"url": "/voice",
+			"alt": "The Voice Lab page with the voice catalogue and preview controls",
+			"caption": "Voice Lab previews every voice the speech and lipsync stack can drive.",
+			"usedBy": ["tutorials/voice-and-lipsync", "tutorials/greeting-and-first-speech"]
+		},
+		{
+			"id": "scene-studio",
+			"url": "/scene",
+			"alt": "Scene Studio with a 3D scene in the viewport and the object rail",
+			"caption": "Scene Studio composes objects and avatars into one shareable scene.",
+			"settle": 6000,
+			"usedBy": ["tutorials/build-a-scene"]
+		},
+		{
+			"id": "widget-studio",
+			"url": "/studio",
+			"alt": "The Widget Studio configurator with a live avatar preview and generated embed code",
+			"caption": "Widget Studio writes the embed snippet while you watch the result.",
+			"settle": 6000,
+			"usedBy": ["tutorials/embed-on-website", "tutorials/embed-in-30-seconds"]
+		},
+		{
+			"id": "gallery-grid",
+			"url": "/gallery",
+			"alt": "The public avatar gallery grid",
+			"caption": "Every avatar in the gallery is a real GLB with a public render URL.",
+			"settle": 5000,
+			"usedBy": ["tutorials/import-avatar-url", "tutorials/upload-custom-glb"]
+		},
+		{
+			"id": "names-claim",
+			"url": "/threews/claim",
+			"alt": "The threews.sol subdomain claim page with the name availability field",
+			"caption": "Claiming a name is one field and one signature.",
+			"usedBy": ["tutorials/claim-threews-name"]
+		},
+		{
+			"id": "walk-mobile",
+			"url": "/walk",
+			"viewport": "mobile",
+			"alt": "The Walk experience on a phone-sized viewport with the avatar on screen",
+			"caption": "Walk on a phone: the same rig, the same clips, thumb-sized controls.",
+			"settle": 8000,
+			"usedBy": ["tutorials/walk-companion", "tutorials/view-in-ar"]
+		},
+		{
+			"id": "walk-loop",
+			"url": "/walk",
+			"alt": "Animated loop of a three.ws avatar walking in the Walk experience",
+			"caption": "Captured live: the default rig running the canonical walk clip.",
+			"settle": 9000,
+			"motion": { "seconds": 3, "fps": 12 },
+			"usedBy": ["tutorials/walk-companion"]
+		},
+		{
+			"id": "docs-world-loop",
+			"url": "/docs/world",
+			"alt": "Animated loop of the 3D Docs World with the guide avatar on the plaza",
+			"caption": "The documentation as a place you can walk through.",
+			"settle": 10000,
+			"motion": { "seconds": 3, "fps": 12 },
+			"usedBy": ["tutorials/explore-docs-world"]
+		}
+	]
+}

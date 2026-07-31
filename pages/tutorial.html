@@ -44,6 +44,8 @@
 			href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
 		/>
 		<link rel="stylesheet" href="/mobile.css" />
+		<!-- Runnable ```live blocks: real API calls rendered inline. See /docs/live-steps. -->
+		<link rel="stylesheet" href="/live-steps.css" />
 		<script
 			src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"
 			integrity="sha384-odPBjvtXVM/5hOYIr3A1dB+flh0c3wAT3bSesIOqEGmyUA4JoKf/YTWy0XKOYAY7"
@@ -57,6 +59,7 @@
 		<script defer src="/nav.js"></script>
 		<script defer src="/footer-newsletter.js"></script>
 		<script defer src="/tutorials-manifest.js"></script>
+		<script defer src="/live-steps.js"></script>
 		<script
 			type="module"
 			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
@@ -857,6 +860,7 @@
 				height: 18px;
 			}
 
+
 			@media (prefers-reduced-motion: reduce) {
 				.tdoc-progress-fill,
 				.tdoc-copy-btn,
@@ -878,6 +882,11 @@
 	<meta property="og:image:alt" content="Tutorial · Text Prompt to 3D Model — three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<script src="/model-viewer-meshopt.js"></script>
+	<!-- Resolves the `figure:` directives in tutorial markdown into real captured
+	     media, live 3D viewers, and a keyboard-navigable lightbox. The stylesheet
+	     is shared with the cookbook recipe viewer, so both render figures alike. -->
+	<link rel="stylesheet" href="/tutorial-figures.css">
+	<script src="/tutorial-figures.js"></script>
 </head>
 	<body class="home-page tutorial-page tut-doc-page">
 		<div class="cursor" id="cursor" aria-hidden="true"></div>
@@ -1338,7 +1347,18 @@
 					});
 
 					article.innerHTML = marked.parse(md);
+
+					// Swap every ```live block for a card that calls the real API.
+					// Runs before the highlight pass so those blocks are already
+					// gone by the time hljs walks the remaining code samples.
+					window.LiveSteps?.mount(article);
+
 					article.querySelectorAll('pre code').forEach((b) => hljs.highlightElement(b));
+
+					// Figures collect their placeholders synchronously, so this is
+					// safe to leave unawaited: the media arrives into boxes that
+					// were already reserved, and nothing below them moves.
+					window.tutorialFigures?.mount(article);
 
 					// Rewrite internal .md links and /docs/* refs so they navigate cleanly
 					article.querySelectorAll('a[href]').forEach((a) => {

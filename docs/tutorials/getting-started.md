@@ -18,6 +18,8 @@ You:    pick a body  →  name it  →  describe its personality
 Result: three.ws/@aria  →  a 3D character that talks, on a page you can share
 ```
 
+![The body half of that stack, live. This is the platform default avatar, rendered here by the same viewer your agent page uses. Drag it.](figure:live:/avatars/default.glb)
+
 A concrete example. Say you run a small coffee roaster and want a friendly guide on your site:
 
 ```
@@ -51,6 +53,8 @@ For a deeper take on the distinction, see [Agents vs. Avatars](/docs/agents-vs-a
 ## Step 1: Open the create flow
 
 Go to **[/create](/create)**. This is the launchpad for every way to make a body.
+
+![The /create launchpad, with the customize, template, upload and scan starting points laid out as cards.](figure:page:/create)
 
 You'll see a few starting points. For the fastest five-minute path, you have two good choices:
 
@@ -127,6 +131,21 @@ On the public agent page you'll find a **Share** button to copy the link, and an
 Each has its own **Copy** button. For sharing in a message, copy the **Direct link**. To put the live agent on your own website, copy the **Web component** snippet and paste it into your page — that's the whole integration.
 
 That's it. You created a body, gave it a brain, and shipped a shareable URL.
+
+### See the directory you just joined
+
+Publishing puts your agent in the public directory, and that directory is a plain public API. Press Run below and this page calls it live, from your browser, with no key and no account. The first agent it returns is rendered underneath the response.
+
+```try
+GET /api/agents/public?limit=3
+title: The public agent directory
+note: The same endpoint the marketplace reads. Your published agent appears in this list.
+pick: agents[0].avatar_thumbnail
+render: image
+alt: The portrait of the first agent in the live public directory
+```
+
+Every field you filled in above (name, description, skills) is in that JSON. That is what makes an agent embeddable, searchable, and reachable by other agents.
 
 ---
 

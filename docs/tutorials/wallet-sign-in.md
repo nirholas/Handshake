@@ -68,6 +68,14 @@ A real response:
 
 Note `domain` and `uri`. Step 3 explains why they are in there.
 
+Do not take that sample on faith. Run the call yourself, from this page, against the live API:
+
+```live
+{ "step": "siws-nonce" }
+```
+
+That is a real nonce, minted for you a moment ago, expiring five minutes from when you pressed the button. It signs you into nothing: a nonce only becomes a session once a matching signature reaches `verify`. The `csrf` field is hidden in the card because a page that displays a live CSRF token is a page you should not screenshot; your own call receives the real value.
+
 ---
 
 ## Step 3 - Build the message (the step everyone gets wrong)
@@ -109,6 +117,14 @@ Three rules about this block:
 - **The blank lines are structural.** One after the address, one after the statement. The parser relies on them; lose them and you get `invalid_message`.
 - **`Chain ID` must be `mainnet`, `devnet`, or `testnet`.** A numeric EVM-style chain id gets `invalid_chain`.
 - **Put the Terms agreement inside the statement.** The signature then evidences acceptance, which is what lets you send `tosAccepted: true` on verify honestly.
+
+Here is that assembly running on the nonce you just minted. Paste your own address if you want to see the exact bytes your wallet would be handed, or leave it blank and read the shape:
+
+```live
+{ "step": "siws-message" }
+```
+
+Count the blank lines in the output. Line 3 and line 5 are empty, and they are the two most common reasons a first integration returns `invalid_message`.
 
 ---
 
@@ -161,6 +177,14 @@ A client that checks only `res.status === 401` treats the first case as signed i
 A signed-in response carries `id`, `email`, `display_name`, `plan`, `is_admin`, and `sid`. Render the first few; **never render `sid`**, which is the live session identifier and should not end up in a screenshot or a copied DOM node.
 
 For a wallet-created account, `email` is a synthetic placeholder like `sol-8a447018a12183be@wallet.local` and `display_name` is the truncated address. Treat both as display fallbacks, not as a real inbox.
+
+Run it against your own browser. The card sends your cookies, so what comes back depends on whether you are signed in to three.ws right now, and either answer is the lesson:
+
+```live
+{ "step": "auth-me" }
+```
+
+If you are signed out you should see `200` with `{"user": null}`, which is exactly the shape that fools a `status === 401` check. If you are signed in, note that `sid` comes back redacted in this view for the reason above.
 
 ---
 

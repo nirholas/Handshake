@@ -453,14 +453,14 @@
 			"kind": "package",
 			"group": "Package examples",
 			"title": "agent-payments-sdk/src/solana",
-			"description": "",
+			"description": "Runnable examples for the Solana half of @three-ws/agent-payments. They read live mainnet data and never sign or send a transaction, so nothing here can spend.",
 			"path": "agent-payments-sdk/src/solana/examples",
 			"files": [
 				"listen-pump-events.ts"
 			],
 			"run": null,
 			"runKind": "command",
-			"readme": null,
+			"readme": "agent-payments-sdk/src/solana/examples/README.md",
 			"owner": "agent-payments-sdk/src/solana"
 		},
 		{
@@ -468,7 +468,7 @@
 			"kind": "html-demo",
 			"group": "Web component demos",
 			"title": "<agent-3d wallet> - the portable agent wallet",
-			"description": "Finding a public agent to show…",
+			"description": "The wallet is portable on its own too - mount it into any element (here, a light-DOM card; it also works inside a closed shadow root).",
 			"path": "examples/agent-wallet-embed.html",
 			"files": [
 				"agent-wallet-embed.html"

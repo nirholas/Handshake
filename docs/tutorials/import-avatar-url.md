@@ -65,6 +65,8 @@ The only hard requirements: the URL is `http://` or `https://`, it's publicly re
 
 Go to **[/import/rpm](/import/rpm)** (linked from [/create](/create) as the "bring your own avatar" path).
 
+![The importer with the Paste URL tab selected and the server-fetch banner above it.](figure:page:/import/rpm)
+
 You'll see an import card with two tabs. Leave it on **Paste URL** (the default). The warning banner up top spells out the model: the file is fetched on three.ws servers, so CORS-restricted CDNs all work; the Upload tab is the fallback for files on disk or dead hosts.
 
 If you're not signed in, the import call returns a `401` and the page bounces you to `/login?return=/import/rpm` — sign in and you land right back on the importer.

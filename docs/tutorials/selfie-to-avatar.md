@@ -59,6 +59,8 @@ You don't need a studio. A normal selfie in a well-lit room is plenty.
 
 Go to **[/scan](/scan)** (it lands you on [/create/selfie](/create/selfie)).
 
+![The Scanner with its one required slot: a front-facing photo, by camera or upload.](figure:page:/scan)
+
 You'll see one required slot: **Add a front-facing photo**. Two ways to fill it:
 
 - **Use camera** — opens your camera in the browser with live face guides. Hold still inside the oval; the page checks framing, lighting, blur, and head angle and captures when it's a good frame.

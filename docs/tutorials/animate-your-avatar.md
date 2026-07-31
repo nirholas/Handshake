@@ -50,7 +50,11 @@ Your avatar almost certainly names its bones differently — `mixamorig:Hips`, `
 
 ## Step 1: Open the Studio and load an avatar
 
+![The Pose Studio at /pose: viewport in the middle, clip library and playback controls on the right.](figure:page:/pose?settle=6000)
+
 Open **[/pose](/pose)**. You'll land on the built-in **mannequin** — a primitive figure for FK/IK posing. The mannequin has no skinned skeleton to export, so the preset library stays locked until you load a real avatar.
+
+![The mannequin itself. It poses, but it carries no skinned skeleton, which is why the preset library stays locked until you load a rigged avatar over it.](figure:live:/avatars/mannequin.glb)
 
 In the top bar, click **Load avatar** and pick one of your rigged avatars (or a public one). The right-panel **Animation** section unlocks the moment a compatible rig is loaded.
 

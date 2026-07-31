@@ -6,6 +6,8 @@ Time: about 5 minutes. You need a browser and nothing else. By the end you will 
 
 Open [three.ws/docs/world](https://three.ws/docs/world).
 
+![The spawn plaza, with the ring of section pavilions around it.](figure:page:/docs/world?settle=9000)
+
 You spawn in a plaza. Around you is a ring of fourteen glowing pavilions, one per section of the [classic docs](/docs) sidebar: Start here, Creation studios, Trading & markets, SDK / API reference, and so on. The label above each pavilion tells you its section and how many pages it holds.
 
 If your device cannot run WebGL you will see a notice with a button to the classic docs instead. Nothing is lost either way; both surfaces render the same markdown files.

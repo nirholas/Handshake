@@ -774,7 +774,7 @@ The repo ships 40 examples: 11 web component demos, 10 end-to-end projects, and 
 | [`x402-modal-sdk/examples`](../x402-modal-sdk/examples) | A drop-in payment modal for any x402 paid endpoint. | `node x402-modal-sdk/examples/server.mjs` |
 | [`packages/x402-server/examples`](../packages/x402-server/examples) | Runnable examples for the seller half of x402. Each is a standalone .mjs file. | `node packages/x402-server/examples/express-metered-api.mjs` |
 | [`examples`](../examples) | Runnable demos for the three.ws SDKs and agent runtime. Two kinds live here: | `npm run dev, then open /examples/agent-presence.html` |
-| [`agent-payments-sdk/src/solana/examples`](../agent-payments-sdk/src/solana/examples) | See the directory for details. | Reference files, nothing to execute |
+| [`agent-payments-sdk/src/solana/examples`](../agent-payments-sdk/src/solana/examples) | Runnable examples for the Solana half of @three-ws/agent-payments. They read live mainnet data and never sign or send a transaction, so nothing here can spend. | Reference files, nothing to execute |
 
 ### Web component demos
 

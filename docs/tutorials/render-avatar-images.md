@@ -2,6 +2,8 @@
 
 By the end of this tutorial you will be rendering live 3D avatars as ordinary images, from a URL, with no 3D engine anywhere in your stack. No three.js, no WebGL context, no GLB loader, no canvas. Just an `<img src>` that happens to point at a headless renderer.
 
+![A PNG produced by the very endpoint this tutorial teaches. No WebGL ran to put it on this page; it is an ordinary image file that a headless renderer wrote.](figure:glb:/avatars/michelle.glb?w=1200&h=1000)
+
 That unlocks the places WebGL cannot go: Open Graph and Twitter cards, transactional email, a Notion page, a PDF, a React Server Component, a Discord bot, a print sheet, an e-ink display, a Rust service that has no business booting a browser. Anywhere an image works, a posed and expressive 3D character now works too.
 
 **What you'll build:**
