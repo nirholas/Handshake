@@ -8,6 +8,22 @@ const CURRICULUM_URL = '/tour/curriculum.json';
 const STATE_KEY = 'tws:tour:state'; // live, per-tab tour (sessionStorage)
 const RESUME_KEY = 'tws:tour:resume'; // durable cross-session memory (localStorage)
 
+// The generic anchors TourDirector._resolveTarget() falls back to when a stop
+// has no hand-authored `targets` (only about a fifth of the curriculum does, see
+// scripts/build-tour.mjs → TARGETS). It lives here rather than in director.js so
+// the offline tools can read it without importing the whole 3D engine:
+// scripts/capture-tour-atlas.mjs resolves anchors exactly the way the live tour
+// does, and its report would be fiction if the two lists ever drifted.
+export const TOUR_FALLBACK_SELECTORS = [
+	'[data-tour-target]',
+	'main h1, .hero h1, h1',
+	'a.cta, .btn-primary, button[type="submit"], main a.button, .hero a',
+];
+
+// The content root a tour anchor is preferentially resolved inside. See
+// _resolveTarget() for why an unscoped lookup keeps landing on the site nav.
+export const TOUR_CONTENT_ROOT_SELECTOR = 'main, [role="main"], article';
+
 let _cache = null;
 
 export async function loadCurriculum() {

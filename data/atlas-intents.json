@@ -1,0 +1,319 @@
+{
+	"$comment": "Curated task intents for the Atlas command palette (public/atlas.js). An intent answers a goal with ordered steps instead of a single link, because the hard part of this product is knowing which of several plausible pages STARTS a flow. Every `to` is validated against data/pages.json by scripts/build-atlas-index.mjs; a step pointing at a route that does not exist fails the build. Keep `match` phrases in the words a newcomer would actually type, not our internal feature names.",
+	"intents": [
+		{
+			"id": "first-time",
+			"title": "I am new here. Where do I start?",
+			"blurb": "The shortest path from nothing to a live 3D agent on your own page.",
+			"match": [
+				"get started",
+				"start",
+				"new here",
+				"begin",
+				"first time",
+				"onboarding",
+				"how do i use this",
+				"what do i do",
+				"quickstart",
+				"tutorial",
+				"help"
+			],
+			"steps": [
+				{ "do": "Walk the guided setup. It asks three questions and creates your first agent.", "to": "/start" },
+				{ "do": "Give it a body: describe the avatar you want and generate it.", "to": "/create/prompt" },
+				{ "do": "Put it on a page. Widget Studio writes the embed code for you.", "to": "/studio" }
+			]
+		},
+		{
+			"id": "make-avatar",
+			"title": "Make a 3D avatar",
+			"blurb": "Text to a rigged, animation-ready GLB.",
+			"match": [
+				"make an avatar",
+				"create avatar",
+				"3d avatar",
+				"generate character",
+				"text to 3d",
+				"new avatar",
+				"build a character",
+				"make a character"
+			],
+			"steps": [
+				{ "do": "Describe the avatar you want. The forge returns a rigged GLB.", "to": "/create/prompt" },
+				{ "do": "Pose and animate it in the Animation Studio.", "to": "/pose" },
+				{ "do": "Browse what others made if you would rather start from an existing one.", "to": "/gallery" }
+			]
+		},
+		{
+			"id": "avatar-from-photo",
+			"title": "Turn a photo into a 3D avatar",
+			"blurb": "A selfie or a product photo becomes a textured 3D model.",
+			"match": [
+				"selfie",
+				"photo to 3d",
+				"image to 3d",
+				"picture to model",
+				"scan myself",
+				"turn a photo into",
+				"from a photo",
+				"my face"
+			],
+			"steps": [
+				{ "do": "Use Selfie to Avatar for a person.", "to": "/create/selfie" },
+				{ "do": "Use Image to 3D for an object or a product shot.", "to": "/image-to-3d" },
+				{ "do": "Need the highest fidelity? Forge Max runs the slow, high-quality lane.", "to": "/forge-max" }
+			]
+		},
+		{
+			"id": "embed-on-site",
+			"title": "Put an avatar on my website",
+			"blurb": "One script tag and one custom element. Works in plain HTML, React, and Next.js.",
+			"match": [
+				"embed",
+				"add to my website",
+				"put on my site",
+				"integrate",
+				"script tag",
+				"iframe",
+				"react",
+				"next.js",
+				"web component",
+				"install on my page"
+			],
+			"steps": [
+				{ "do": "Build the widget visually and copy the generated snippet.", "to": "/studio" },
+				{ "do": "Follow the 30-second version if you just want the two lines.", "to": "/tutorials/embed-in-30-seconds" },
+				{ "do": "Framework-specific setup for React and Next.js.", "to": "/tutorials/embed-on-website" }
+			]
+		},
+		{
+			"id": "create-agent",
+			"title": "Create an AI agent",
+			"blurb": "An agent with a body, a mind, a wallet, and an on-chain identity.",
+			"match": [
+				"create an agent",
+				"make an agent",
+				"new agent",
+				"ai agent",
+				"build a bot",
+				"my agent",
+				"agent identity"
+			],
+			"steps": [
+				{ "do": "Create the agent and give it a name, a personality, and a model.", "to": "/create-agent" },
+				{ "do": "Tune its behaviour, tools, and voice in Agent Studio.", "to": "/agent-studio" },
+				{ "do": "Manage everything you own from My Agents.", "to": "/my-agents", "note": "Requires sign-in" }
+			]
+		},
+		{
+			"id": "launch-coin",
+			"title": "Launch a coin",
+			"blurb": "Mint a token for your agent on pump.fun, from the platform.",
+			"match": [
+				"launch a coin",
+				"launch token",
+				"mint a token",
+				"pump fun",
+				"pumpfun",
+				"create a coin",
+				"new token",
+				"memecoin",
+				"ticker"
+			],
+			"steps": [
+				{ "do": "Launch the coin. Name, ticker, image, and the initial buy.", "to": "/launch" },
+				{ "do": "Read what each field does before you sign anything.", "to": "/docs/pump-launcher" },
+				{ "do": "Watch it land in the platform launch feed.", "to": "/launches" }
+			]
+		},
+		{
+			"id": "get-paid",
+			"title": "Get paid per API call",
+			"blurb": "Meter any endpoint with x402 and let other agents pay to use it.",
+			"match": [
+				"get paid",
+				"make money",
+				"monetize",
+				"charge for my api",
+				"paid endpoint",
+				"sell a service",
+				"earn",
+				"revenue",
+				"x402 server",
+				"per call"
+			],
+			"steps": [
+				{ "do": "Wire the paywall in x402 Studio.", "to": "/x402/studio" },
+				{ "do": "Follow the worked example of a paid endpoint end to end.", "to": "/tutorials/paid-x402-endpoint" },
+				{ "do": "Watch the receipts and revenue come in.", "to": "/x402-revenue" }
+			]
+		},
+		{
+			"id": "pay-for-service",
+			"title": "Pay another agent for a service",
+			"blurb": "Discover a paid endpoint and settle the call in USDC.",
+			"match": [
+				"pay for",
+				"buy a service",
+				"x402 client",
+				"call a paid api",
+				"402",
+				"discover services",
+				"bazaar",
+				"spend"
+			],
+			"steps": [
+				{ "do": "Browse every paid endpoint the network exposes.", "to": "/x402" },
+				{ "do": "Follow the discover-and-pay walkthrough.", "to": "/tutorials/pay-for-x402-service" },
+				{ "do": "Fund the wallet your agent pays from.", "to": "/wallet", "note": "Requires sign-in" }
+			]
+		},
+		{
+			"id": "use-mcp",
+			"title": "Connect this to Claude or another MCP client",
+			"blurb": "Give your assistant 3D generation, wallets, and market intel as tools.",
+			"match": [
+				"mcp",
+				"claude",
+				"cursor",
+				"model context protocol",
+				"connect my assistant",
+				"tools for my ai",
+				"claude desktop"
+			],
+			"steps": [
+				{ "do": "Browse every tool the MCP servers expose.", "to": "/mcp-tools" },
+				{ "do": "Copy the client config for your assistant.", "to": "/docs/mcp" },
+				{ "do": "Start with the free 3D Studio server if you want zero setup.", "to": "/docs/mcp-studio" }
+			]
+		},
+		{
+			"id": "animate",
+			"title": "Animate or pose an avatar",
+			"blurb": "Clips, gestures, and mocap on any humanoid rig.",
+			"match": [
+				"animate",
+				"animation",
+				"pose",
+				"walk cycle",
+				"idle",
+				"gesture",
+				"mocap",
+				"motion",
+				"make it move",
+				"dance"
+			],
+			"steps": [
+				{ "do": "Pose and preview clips on your own model.", "to": "/pose" },
+				{ "do": "Browse the clip library and copy the one you want.", "to": "/animations" },
+				{ "do": "Map gestures to your agent's reactions.", "to": "/gestures" }
+			]
+		},
+		{
+			"id": "talking-avatar",
+			"title": "Make my avatar talk",
+			"blurb": "Lip-synced speech, a voice, and an exportable video.",
+			"match": [
+				"talk",
+				"speech",
+				"voice",
+				"lip sync",
+				"talking head",
+				"say something",
+				"video",
+				"tts",
+				"speaking avatar"
+			],
+			"steps": [
+				{ "do": "Pick or clone a voice in the Voice Lab.", "to": "/voice" },
+				{ "do": "Render a lip-synced talking video from a script.", "to": "/create/video" },
+				{ "do": "Drive the same avatar live from your webcam.", "to": "/temporary" }
+			]
+		},
+		{
+			"id": "sell-agent",
+			"title": "List or sell an agent",
+			"blurb": "Publish to the marketplace and let others fork or buy it.",
+			"match": [
+				"sell",
+				"list my agent",
+				"marketplace",
+				"publish",
+				"share my agent",
+				"fork",
+				"storefront"
+			],
+			"steps": [
+				{ "do": "See what sells and how listings are presented.", "to": "/marketplace" },
+				{ "do": "Publish from the agent you own.", "to": "/my-agents", "note": "Requires sign-in" },
+				{ "do": "Check demand before you price it.", "to": "/marketplace/analytics" }
+			]
+		},
+		{
+			"id": "account",
+			"title": "Sign in or manage my account",
+			"blurb": "Email, wallet, billing, credits, and API keys.",
+			"match": [
+				"sign in",
+				"log in",
+				"login",
+				"account",
+				"register",
+				"sign up",
+				"password",
+				"billing",
+				"api key",
+				"credits",
+				"settings",
+				"profile"
+			],
+			"steps": [
+				{ "do": "Sign in with email or a Solana wallet.", "to": "/login" },
+				{ "do": "No account yet? Create one.", "to": "/register" },
+				{ "do": "Keys, billing, and usage live in the dashboard.", "to": "/dashboard", "note": "Requires sign-in" }
+			]
+		},
+		{
+			"id": "status",
+			"title": "Is something broken?",
+			"blurb": "Live uptime, 90 days of history, and a machine-readable feed.",
+			"match": [
+				"status",
+				"is it down",
+				"outage",
+				"uptime",
+				"broken",
+				"not working",
+				"incident",
+				"health"
+			],
+			"steps": [
+				{ "do": "Check live status and 90-day uptime for every surface.", "to": "/status" },
+				{ "do": "Poll the same data as JSON from your own monitor.", "to": "/api/status" },
+				{ "do": "Still stuck? The docs index is the fastest way to the right page.", "to": "/docs/start-here" }
+			]
+		},
+		{
+			"id": "map",
+			"title": "Show me everything",
+			"blurb": "The full route map: every page on three.ws, grouped and searchable.",
+			"match": [
+				"everything",
+				"all pages",
+				"site map",
+				"sitemap",
+				"what else",
+				"browse",
+				"map",
+				"atlas",
+				"index",
+				"whats here"
+			],
+			"steps": [
+				{ "do": "Browse the whole platform as one map.", "to": "/atlas" },
+				{ "do": "Prefer a flat list? The sitemap has every route.", "to": "/sitemap" },
+				{ "do": "Reading as a machine? Take llms.txt instead.", "to": "/llms.txt" }
+			]
+		}
+	]
+}

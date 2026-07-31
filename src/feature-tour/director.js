@@ -25,6 +25,8 @@ import {
 	normalizePath,
 	stopIndexForPath,
 	sectionTitle,
+	TOUR_FALLBACK_SELECTORS,
+	TOUR_CONTENT_ROOT_SELECTOR,
 } from './curriculum.js';
 import { GuideAvatar } from './guide-avatar.js';
 import { Spotlight } from './spotlight.js';
@@ -682,21 +684,32 @@ export class TourDirector {
 	}
 
 	// ── Target resolution ─────────────────────────────────────────────────────
+	// Curriculum anchors are broad on purpose (`form, .wizard, .step, button`),
+	// because one selector list has to survive across page redesigns. Run
+	// unscoped, though, document order hands them the site chrome: the nav
+	// renders before <main> on every page, so `/` spotlit the nav's "Create an
+	// agent" dropdown link instead of the hero CTA, `/docs` ringed the site nav
+	// instead of the docs sidebar, and `/create-agent` ringed a nav button
+	// instead of the wizard. scripts/capture-tour-atlas.mjs found all three.
+	//
+	// So: try every selector inside the page's main content first, and only fall
+	// back to the whole document when nothing in the content matched. A stop whose
+	// feature genuinely lives in the header (the nav search, the wallet button)
+	// still resolves on the second pass.
 	_resolveTarget(stop) {
-		const selectors = [
-			...(stop.targets || []),
-			'[data-tour-target]',
-			'main h1, .hero h1, h1',
-			'a.cta, .btn-primary, button[type="submit"], main a.button, .hero a',
-		];
-		for (const sel of selectors) {
-			let el;
-			try {
-				el = document.querySelector(sel);
-			} catch {
-				continue;
+		const selectors = [...(stop.targets || []), ...TOUR_FALLBACK_SELECTORS];
+		const main = document.querySelector(TOUR_CONTENT_ROOT_SELECTOR);
+		const scopes = main ? [main, document] : [document];
+		for (const scope of scopes) {
+			for (const sel of selectors) {
+				let el;
+				try {
+					el = scope.querySelector(sel);
+				} catch {
+					continue;
+				}
+				if (isVisible(el)) return el;
 			}
-			if (isVisible(el)) return el;
 		}
 		return null;
 	}

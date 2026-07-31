@@ -1,0 +1,297 @@
+{
+	"version": 1,
+	"generatedBy": "scripts/capture-tour-atlas.mjs",
+	"generatedAt": "2026-07-31T06:33:23.365Z",
+	"base": "https://three.ws",
+	"curriculumVersion": 2,
+	"curriculumGeneratedAt": "2026-07-12T17:16:09.990Z",
+	"sections": [
+		{
+			"id": "main",
+			"title": "Main"
+		},
+		{
+			"id": "build",
+			"title": "Build"
+		},
+		{
+			"id": "crypto",
+			"title": "Crypto"
+		},
+		{
+			"id": "labs",
+			"title": "Labs"
+		},
+		{
+			"id": "agent-tools",
+			"title": "Agent Tools"
+		},
+		{
+			"id": "learn",
+			"title": "Learn"
+		},
+		{
+			"id": "onboarding",
+			"title": "Getting started"
+		}
+	],
+	"tracks": [
+		{
+			"id": "full",
+			"title": "Full tour"
+		},
+		{
+			"id": "quick",
+			"title": "Quick highlights"
+		},
+		{
+			"id": "onboarding",
+			"title": "Getting started"
+		}
+	],
+	"summary": {
+		"total": 5,
+		"anchored": 5,
+		"missingAnchor": 0,
+		"curatedAnchor": 4,
+		"fallbackAnchor": 1,
+		"navScopedAnchor": 3,
+		"unreachable": 0,
+		"withConsoleErrors": 0,
+		"captured": 5
+	},
+	"stops": [
+		{
+			"id": "home",
+			"index": 0,
+			"title": "Home",
+			"path": "/",
+			"section": "main",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Here we have Home. Landing page. 3D AI agents that think on IBM watsonx.ai (Granite) — the pitch, live agent demos, and the front door to every flow.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "a[href=\"/create-agent\"], a[href=\"/create\"], .hero a.cta, main a.button",
+				"source": "curriculum",
+				"scope": "nav",
+				"tag": "a",
+				"rect": {
+					"left": 174.67750549316406,
+					"top": 84.08195495605469,
+					"width": 230.72999572753906,
+					"height": 88.22819519042969
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"the anchor resolved inside the site nav rather than the page content"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/home.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 23694
+				},
+				"thumb": {
+					"url": "/media/tour/home.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 5588
+				}
+			},
+			"capturedAt": "2026-07-31T06:32:49.872Z"
+		},
+		{
+			"id": "agenc-embodied",
+			"index": 5,
+			"title": "AgenC · Embodied",
+			"path": "/agenc/embodied",
+			"section": "main",
+			"tracks": [
+				"full"
+			],
+			"highlight": false,
+			"narration": "Let's visit AgenC · Embodied. Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "main h1, .hero h1, h1",
+				"source": "fallback",
+				"scope": "other",
+				"tag": "h1",
+				"rect": {
+					"left": 106,
+					"top": 24,
+					"width": 1068,
+					"height": 49
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"anchored by the director's generic fallback, not a curated selector for this page"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/agenc-embodied.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 24806
+				},
+				"thumb": {
+					"url": "/media/tour/agenc-embodied.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4882
+				}
+			},
+			"capturedAt": "2026-07-31T06:32:49.873Z"
+		},
+		{
+			"id": "create-agent",
+			"index": 26,
+			"title": "Create an Agent",
+			"path": "/create-agent",
+			"section": "build",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "This is Create an Agent. Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "form, .wizard, .step, button",
+				"source": "curriculum",
+				"scope": "nav",
+				"tag": "button",
+				"rect": {
+					"left": 165.8125,
+					"top": 11.34375,
+					"width": 81.96875,
+					"height": 47
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"the anchor resolved inside the site nav rather than the page content"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/create-agent.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 22768
+				},
+				"thumb": {
+					"url": "/media/tour/create-agent.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 4386
+				}
+			},
+			"capturedAt": "2026-07-31T06:32:49.833Z"
+		},
+		{
+			"id": "forge",
+			"index": 27,
+			"title": "Forge — Text to 3D",
+			"path": "/forge",
+			"section": "build",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Take a look at Forge — Text to 3D. Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "textarea, input[type=\"text\"], .prompt-input, form",
+				"source": "curriculum",
+				"scope": "main",
+				"tag": "form",
+				"rect": {
+					"left": 43.1875,
+					"top": 76,
+					"width": 456,
+					"height": 657.515625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [],
+			"media": {
+				"hero": {
+					"url": "/media/tour/forge.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 32228
+				},
+				"thumb": {
+					"url": "/media/tour/forge.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 6244
+				}
+			},
+			"capturedAt": "2026-07-31T06:33:08.529Z"
+		},
+		{
+			"id": "docs",
+			"index": 169,
+			"title": "Docs",
+			"path": "/docs",
+			"section": "learn",
+			"tracks": [
+				"full",
+				"quick"
+			],
+			"highlight": true,
+			"narration": "Next up, Docs. Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",
+			"status": 200,
+			"anchor": {
+				"state": "resolved",
+				"selector": "nav, .sidebar, main",
+				"source": "curriculum",
+				"scope": "nav",
+				"tag": "nav",
+				"rect": {
+					"left": 934.5,
+					"top": 2.421875,
+					"width": 327.625,
+					"height": 46.15625
+				}
+			},
+			"consoleErrors": 0,
+			"consoleSamples": [],
+			"notes": [
+				"the anchor resolved inside the site nav rather than the page content"
+			],
+			"media": {
+				"hero": {
+					"url": "/media/tour/docs.webp",
+					"width": 1200,
+					"height": 750,
+					"bytes": 41424
+				},
+				"thumb": {
+					"url": "/media/tour/docs.thumb.webp",
+					"width": 520,
+					"height": 325,
+					"bytes": 8028
+				}
+			},
+			"capturedAt": "2026-07-31T06:33:14.858Z"
+		}
+	]
+}
