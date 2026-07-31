@@ -101,10 +101,22 @@ function describeHtml(path) {
 	const html = read(path);
 	const title = html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim();
 	const meta = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)/i)?.[1];
-	const bodyText = html
-		.split(/<body[^>]*>/i)[1]
-		?.match(/<p[^>]*>([\s\S]{25,400}?)<\/p>/i)?.[1]
-		?.replace(/<[^>]+>/g, ' ');
+	// Take the first paragraph that is actually prose. A demo's first <p> is
+	// often a live status line ("Finding a public agent to show…"), which reads
+	// as a description but is really runtime state that changes on load.
+	const body = html.split(/<body[^>]*/i)[1] || '';
+	// An element whose id or class names a runtime slot holds state, not prose.
+	const isStatusSlot = (attrs) =>
+		/\b(?:id|class)="[^"]*\b(?:status|state|loading|error|log|output|result)\b/i.test(attrs);
+	let bodyText = '';
+	for (const match of body.matchAll(/<p([^>]*)>([\s\S]{25,400}?)<\/p>/gi)) {
+		const [, attrs, inner] = match;
+		const text = inner.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+		// A trailing ellipsis is the giveaway for in-progress copy ("Loading…").
+		if (!text || text.endsWith('…') || isStatusSlot(attrs)) continue;
+		bodyText = text;
+		break;
+	}
 	const lead = html.match(/^\s*<!--\s*([\s\S]{20,400}?)-->/m)?.[1];
 	const raw = meta || bodyText || lead || '';
 	const h1 = html.match(/<h1[^>]*>([\s\S]{2,90}?)<\/h1>/i)?.[1]?.replace(/<[^>]+>/g, '');

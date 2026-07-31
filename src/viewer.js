@@ -174,6 +174,22 @@ function labelGUIControls(root) {
 	}
 }
 
+/**
+ * Controls appear long after the panel is built: the animation, morph-target
+ * and camera folders fill in when a model finishes loading, and refill on every
+ * model swap. Labelling once at construction therefore leaves every
+ * later-added row nameless, so the panel is watched and each new row labelled
+ * as it arrives.
+ * @param {HTMLElement} root the GUI's DOM element
+ * @returns {MutationObserver|null}
+ */
+function watchGUIControls(root) {
+	if (!root || typeof MutationObserver !== 'function') return null;
+	const observer = new MutationObserver(() => labelGUIControls(root));
+	observer.observe(root, { childList: true, subtree: true });
+	return observer;
+}
+
 export class Viewer {
 	constructor(el, options) {
 		this.el = el;
@@ -1902,6 +1918,7 @@ export class Viewer {
 		guiWrap.appendChild(gui.domElement);
 		this._guiWrap = guiWrap;
 		labelGUIControls(gui.domElement);
+		this._guiObserver = watchGUIControls(gui.domElement);
 
 		// Toggle button — hides dat.GUI behind an "Advanced" control
 		const toggle = document.createElement('button');
@@ -2341,6 +2358,10 @@ export class Viewer {
 	dispose() {
 		if (this._disposed) return;
 		this._disposed = true;
+
+		// Stop watching the control panel before its DOM goes away.
+		this._guiObserver?.disconnect();
+		this._guiObserver = null;
 
 		if (this._rafId !== null) {
 			cancelAnimationFrame(this._rafId);

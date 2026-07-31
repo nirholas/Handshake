@@ -322,7 +322,7 @@ async function startNextJob(origin) {
 	const [{ count }] = await sql`
 		select count(*)::int as count from forge_seed_jobs where status = 'pending'
 	`;
-	if (count >= MAX_CONCURRENT_PENDING) {
+	if (count >= maxPending()) {
 		return { skipped: true, reason: `${count} jobs already pending` };
 	}
 

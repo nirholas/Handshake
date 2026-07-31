@@ -199,7 +199,7 @@ function freeLaneMultiplier(req, body) {
 
 // Returns true when the request carries the internal cron seed token, meaning
 // the call comes from forge-seed-cron (server→server). These bypass the per-IP
-// rate limit — they're metered by MAX_CONCURRENT_PENDING in the cron instead.
+// rate limit; they're metered by maxPending() in the cron instead.
 function isInternalSeedRequest(req) {
 	const token = req.headers['x-forge-seed'];
 	if (!token) return false;

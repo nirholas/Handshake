@@ -46,7 +46,8 @@ html[data-theme='light'] {
 	--cv-border-hover: #cbd5e1;
 	--cv-text: #0f172a;
 	--cv-text-2: #475569;
-	--cv-text-3: #94a3b8;
+	/* Muted text still has to clear WCAG AA (4.5:1) on the page surface. */
+	--cv-text-3: #64748b;
 	--cv-green: #16a34a;
 	--cv-green-soft: rgba(34, 197, 94, 0.1);
 	--cv-red: #dc2626;

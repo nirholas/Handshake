@@ -76,7 +76,7 @@ function parseArgs(argv) {
  * genuine generation job taking a minute or more, so this example supplies a
  * URI by default and exercises the forge path only behind `--generate-logo`.
  */
-const PLACEHOLDER_LOGO = 'https://three.ws/models/demo-avatar.glb'
+const PLACEHOLDER_LOGO = 'https://three.ws/avatars/default.glb'
 
 const fmtEth = (wei) => `${Number(wei) / 1e18} ETH`
 

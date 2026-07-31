@@ -780,7 +780,7 @@ The repo ships 40 examples: 11 web component demos, 10 end-to-end projects, and 
 
 | Example | What it shows | Run it |
 |---|---|---|
-| [`examples/agent-wallet-embed.html`](../examples/agent-wallet-embed.html) | Finding a public agent to show… | `http://localhost:3000/examples/agent-wallet-embed.html` |
+| [`examples/agent-wallet-embed.html`](../examples/agent-wallet-embed.html) | The wallet is portable on its own too - mount it into any element (here, a light-DOM card; it also works inside a closed shadow root). | `http://localhost:3000/examples/agent-wallet-embed.html` |
 | [`examples/agent-presence.html`](../examples/agent-presence.html) | Standalone test for the global presence element - all three modes + live market reactions, on real data. | `http://localhost:3000/examples/agent-presence.html` |
 | [`examples/two-agents.html`](../examples/two-agents.html) | Both agents render in a single WebGL context. Each keeps its own brain, memory, and chat chrome. | `http://localhost:3000/examples/two-agents.html` |
 | [`examples/web-component.html`](../examples/web-component.html) | Minimal, auto-rotate, and poster/reveal variants of the Custom Element wrapper. | `http://localhost:3000/examples/web-component.html` |

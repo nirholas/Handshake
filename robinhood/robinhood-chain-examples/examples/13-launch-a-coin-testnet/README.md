@@ -49,7 +49,7 @@ node index.js --generate-logo          # generate a real 3D GLB logo first (slow
   symbol     EXZJJ
   rail       direct
   initialBuy 0.001 ETH
-  logo       https://three.ws/models/demo-avatar.glb
+  logo       https://three.ws/avatars/default.glb
 
 3 - Preflight (a real read against the live factory)
   rail         direct on testnet

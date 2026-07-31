@@ -163,6 +163,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [The 3D viewer](./viewer.md): the rendering layer reference (model loading, cameras, animation, lighting)
 - [The catalog quality gate](./seed-quality.md): how a platform-seeded model earns its slot in the public catalog, the two stages it must pass, and why a rejected asset is kept rather than deleted
 - [Examples gallery](./examples.md): copy-paste-ready code for common use cases
+- [Cookbook](/cookbook): recipes you download and run, each one a real file executed against the live API, with the prose explaining why it is shaped that way
 - [Premium](./premium.md): the monthly Data API pass, one on-chain payment replacing per-call micropayments for 30 days
 - [Guardian console](./guardian.md): the inbox for the other side of social recovery and inheritance of agent wallets
 - [Coin Clash](./clash.md): token-gated community battles between coin factions

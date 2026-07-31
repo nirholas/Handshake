@@ -373,6 +373,13 @@ export const NAV_GROUPS = [
 				label: 'Terminal & trade',
 				items: [
 					{
+						title: 'Autonomous Trading',
+						href: '/trading',
+						badge: 'Live',
+						badgeTone: 'live',
+						desc: 'Start here — live fleet vitals, the agent scoreboard, and every trading surface in one map',
+					},
+					{
 						title: 'Mission Control',
 						href: '/terminal',
 						badge: 'Live',
