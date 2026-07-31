@@ -56,6 +56,8 @@ const state = {
 	clip: null, // the clip currently staged (default or override)
 	preview: null, // lazily imported AnimationLivePreview
 	paused: false,
+	agents: null, // null = not fetched yet, [] = signed out or no agents
+	agentsLoading: false,
 };
 
 /* ── data ──────────────────────────────────────────────────────────────── */
@@ -121,14 +123,16 @@ function cardHtml(slot) {
 	const label = def?.label || clip;
 	const icon = def?.icon || '🎞️';
 	const badge = APPROXIMATE.has(slot)
-		? '<span class="gv-badge gv-badge--warn">approx</span>'
+		? '<span class="gv-badge gv-badge--warn" title="No dedicated clip for this slot yet">approx</span>'
 		: def?.loop
-			? '<span class="gv-badge">loop</span>'
+			? '<span class="gv-badge" title="This clip loops">loop</span>'
 			: '';
+	// The note is rendered, not hidden behind a `title` tooltip: a browser
+	// tooltip needs a second of hover, never appears on touch, and is the
+	// difference between "what does `conjure` mean" being answered and not.
 	return `
 		<button type="button" class="gv-card" role="listitem" data-slot="${escapeHtml(slot)}"
-			aria-current="false"
-			title="${escapeHtml(SLOT_NOTES[slot] || '')}">
+			aria-current="false">
 			<span class="gv-card-thumb">
 				<span class="gv-card-thumb-fallback" aria-hidden="true">${icon}</span>
 				<img src="${THUMB_BASE}/${encodeURIComponent(clip)}.webp" alt=""
@@ -138,6 +142,7 @@ function cardHtml(slot) {
 			<span class="gv-card-body">
 				<span class="gv-card-slot">${escapeHtml(slot)}</span>
 				<span class="gv-card-clip">${escapeHtml(label)}</span>
+				<span class="gv-card-note">${escapeHtml(SLOT_NOTES[slot] || '')}</span>
 			</span>
 		</button>`;
 }
@@ -236,6 +241,111 @@ function renderOverride() {
 	$('code', el('override-code')).textContent = json;
 	const isDefault = state.clip === DEFAULT_ANIMATION_MAP[state.slot];
 	el('override-reset').disabled = isDefault;
+	renderApply();
+}
+
+/* ── apply to an agent ─────────────────────────────────────────────────── */
+
+/**
+ * The signed-in user's agents. A 401 is the ordinary signed-out case, not an
+ * error: the page is public and everything except this panel works without an
+ * account. Runs once, lazily, the first time a gesture is selected.
+ */
+async function loadAgents() {
+	if (state.agents !== null || state.agentsLoading) return;
+	state.agentsLoading = true;
+	try {
+		const res = await fetch('/api/agents', {
+			credentials: 'include',
+			headers: { accept: 'application/json' },
+		});
+		state.agents = res.ok ? ((await res.json()).agents ?? []) : [];
+	} catch {
+		state.agents = [];
+	} finally {
+		state.agentsLoading = false;
+		renderApply();
+	}
+}
+
+function renderApply() {
+	const panel = el('apply');
+	const signedOut = el('apply-signedout');
+	if (!state.slot) {
+		panel.hidden = true;
+		signedOut.hidden = true;
+		return;
+	}
+	const agents = state.agents;
+	if (agents === null) {
+		// Still loading: show neither panel rather than flashing the signed-out
+		// call to action at a user who is in fact signed in.
+		panel.hidden = true;
+		signedOut.hidden = true;
+		return;
+	}
+	if (!agents.length) {
+		panel.hidden = true;
+		signedOut.hidden = false;
+		return;
+	}
+	signedOut.hidden = true;
+	panel.hidden = false;
+
+	const select = el('apply-select');
+	if (select.dataset.filled !== String(agents.length)) {
+		select.dataset.filled = String(agents.length);
+		select.innerHTML = agents
+			.map((a) => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`)
+			.join('');
+	}
+	// Saving the default is a no-op the server would accept; say so instead.
+	const isDefault = state.clip === DEFAULT_ANIMATION_MAP[state.slot];
+	const save = el('apply-save');
+	save.disabled = false;
+	save.textContent = isDefault ? 'Clear this override' : 'Save to agent';
+}
+
+async function applyToAgent() {
+	const save = el('apply-save');
+	const status = el('apply-status');
+	const agentId = el('apply-select').value;
+	const agent = (state.agents || []).find((a) => a.id === agentId);
+	if (!agentId || !state.slot) return;
+
+	// Merge over the agent's existing overrides so saving one gesture never
+	// drops another. Selecting the platform default removes the entry.
+	const current = { ...(agent?.meta?.edits?.animations || {}) };
+	if (state.clip === DEFAULT_ANIMATION_MAP[state.slot]) delete current[state.slot];
+	else current[state.slot] = state.clip;
+
+	save.disabled = true;
+	status.textContent = 'Saving…';
+	status.className = 'gv-apply-status';
+	try {
+		const { apiFetch } = await import('./api.js');
+		const res = await apiFetch(`/api/agents/${agentId}/animations`, {
+			method: 'PUT',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ animationSlots: current }),
+		});
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			throw new Error(body.error_description || body.error || `HTTP ${res.status}`);
+		}
+		const saved = await res.json();
+		// Keep the local copy in step so a second save merges against the truth.
+		if (agent) agent.meta = { ...(agent.meta || {}), edits: { ...(agent.meta?.edits || {}), animations: saved.animationSlots || {} } };
+		const count = Object.keys(saved.animationSlots || {}).length;
+		status.innerHTML = `Saved. <a href="/a/${escapeHtml(agentId)}">Open ${escapeHtml(agent?.name || 'the agent')}</a> to see it, ${count} override${count === 1 ? '' : 's'} in total.`;
+		status.className = 'gv-apply-status is-ok';
+	} catch (err) {
+		status.textContent = `Could not save: ${err.message}`;
+		status.className = 'gv-apply-status is-err';
+	} finally {
+		save.disabled = false;
+	}
 }
 
 /* ── preview ───────────────────────────────────────────────────────────── */
@@ -261,6 +371,10 @@ async function play(slot, clip = DEFAULT_ANIMATION_MAP[slot]) {
 	const def = state.byName.get(clip);
 	el('stage-slot').textContent = slot;
 	el('stage-clip').textContent = def?.label ? `${def.label} · ${clip}` : clip;
+	const note = el('stage-note');
+	note.textContent = SLOT_NOTES[slot] || '';
+	note.hidden = !note.textContent;
+	loadAgents();
 	el('stage-status').textContent = `Playing ${slot}: ${def?.label || clip}`;
 	for (const card of document.querySelectorAll('.gv-card[data-slot]')) {
 		card.setAttribute('aria-current', String(card.dataset.slot === slot));
@@ -304,8 +418,17 @@ function stop() {
 	el('stage-slot').textContent = 'No gesture selected';
 	el('stage-clip').innerHTML = '&nbsp;';
 	el('stage-replay').disabled = true;
-	el('stage-pause').disabled = true;
+	// Reset the pause toggle: leaving it latched showed a play icon on a stage
+	// with nothing to play.
+	state.paused = false;
+	const pause = el('stage-pause');
+	pause.disabled = true;
+	pause.setAttribute('aria-pressed', 'false');
+	pause.textContent = '❙❙';
+	el('stage-note').hidden = true;
 	el('override').hidden = true;
+	el('apply').hidden = true;
+	el('apply-signedout').hidden = true;
 	state.slot = null;
 	state.clip = null;
 	for (const card of document.querySelectorAll('.gv-card[data-slot]')) {
@@ -407,7 +530,9 @@ function wire() {
 		if (state.slot) play(state.slot, DEFAULT_ANIMATION_MAP[state.slot]);
 	});
 
-	el('override-copy').addEventListener('click', async (e) => {
+	el('apply-save').addEventListener('click', applyToAgent);
+
+	const copy = async (e) => {
 		const btn = e.currentTarget;
 		const text = $('code', el('override-code')).textContent;
 		try {
@@ -426,12 +551,14 @@ function wire() {
 		setTimeout(() => {
 			btn.textContent = 'Copy JSON';
 		}, 1800);
-	});
+	};
+	el('override-copy').addEventListener('click', copy);
+	el('override-copy-2').addEventListener('click', copy);
 
-	// Free the GL context when the tab is hidden for a while.
+	// Stop burning frames on a hidden tab, without stomping a pause the user
+	// chose: state.paused stays the source of truth for the button.
 	document.addEventListener('visibilitychange', () => {
-		if (document.hidden) state.preview?.setPaused(true);
-		else if (!state.paused) state.preview?.setPaused(false);
+		state.preview?.setPaused(document.hidden ? true : state.paused);
 	});
 }
 

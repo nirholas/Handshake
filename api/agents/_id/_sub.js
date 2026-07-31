@@ -190,11 +190,21 @@ const animationSlotsSchema = z
 	)
 	.refine((map) => Object.keys(map).length <= SLOTS.length, 'too many slot overrides');
 
-const animationsBodySchema = z.object({
-	animations: z.array(animationEntrySchema).max(30),
-	animationGraph: animationGraphSchema.optional(),
-	animationSlots: animationSlotsSchema.optional(),
-});
+// Every field is optional and every one follows the same rule: present means
+// "replace this", absent means "leave it alone". `animations` used to be
+// required, which meant a caller changing one gesture slot had to resend the
+// agent's whole clip list, and sending `[]` (the obvious thing when you do not
+// use the list) silently wiped it.
+const animationsBodySchema = z
+	.object({
+		animations: z.array(animationEntrySchema).max(30).optional(),
+		animationGraph: animationGraphSchema.optional(),
+		animationSlots: animationSlotsSchema.optional(),
+	})
+	.refine(
+		(b) => b.animations !== undefined || b.animationGraph !== undefined || b.animationSlots !== undefined,
+		'send at least one of animations, animationGraph, animationSlots',
+	);
 
 export const handleAnimations = wrap(async (req, res, id) => {
 	if (cors(req, res, { methods: 'PUT,OPTIONS', credentials: true })) return;
@@ -229,11 +239,13 @@ export const handleAnimations = wrap(async (req, res, id) => {
 	// the slot overrides at meta.edits.animations: absent means "leave alone",
 	// `{}` means "clear them".
 	const has = (key) => Object.prototype.hasOwnProperty.call(rawBody || {}, key);
-	await sql`
-		UPDATE agent_identities
-		SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{animations}', ${JSON.stringify(parsed.animations)}::jsonb, true)
-		WHERE id = ${id}
-	`;
+	if (has('animations')) {
+		await sql`
+			UPDATE agent_identities
+			SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{animations}', ${JSON.stringify(parsed.animations)}::jsonb, true)
+			WHERE id = ${id}
+		`;
+	}
 	if (has('animationGraph')) {
 		await sql`
 			UPDATE agent_identities
@@ -257,13 +269,16 @@ export const handleAnimations = wrap(async (req, res, id) => {
 		`;
 	}
 
-	// Read back what is actually stored so the response cannot drift from the row.
+	// Read back what is actually stored so the response cannot drift from the row,
+	// and so a partial update still reports the fields it did not touch.
 	const [row] = await sql`
-		SELECT meta->'animationGraph' AS graph, meta->'edits'->'animations' AS slots
+		SELECT meta->'animations' AS animations,
+		       meta->'animationGraph' AS graph,
+		       meta->'edits'->'animations' AS slots
 		FROM agent_identities WHERE id = ${id}
 	`;
 	return json(res, 200, {
-		animations: parsed.animations,
+		animations: row?.animations ?? [],
 		animationGraph: row?.graph ?? null,
 		animationSlots: row?.slots ?? null,
 	});

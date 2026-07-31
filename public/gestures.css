@@ -337,10 +337,75 @@
 	white-space: nowrap;
 }
 
+.gv-stage-note {
+	margin: 0;
+	padding: 0 14px 13px;
+	font-size: 12.5px;
+	line-height: 1.5;
+	color: var(--gv-muted);
+}
+
 /* ── Override builder ──────────────────────────────────────────────────── */
 
 .gv-override {
 	padding: 16px;
+}
+
+.gv-apply {
+	padding-top: 4px;
+}
+.gv-apply-status {
+	margin: 10px 0 0;
+	font-size: 12.5px;
+	line-height: 1.5;
+	color: var(--gv-muted);
+	min-height: 1em;
+}
+.gv-apply-status.is-ok {
+	color: #4ade80;
+}
+.gv-apply-status.is-err {
+	color: #f87171;
+}
+.gv-apply-status a {
+	color: inherit;
+}
+:root[data-theme='light'] .gv-apply-status.is-ok {
+	color: #15803d;
+}
+:root[data-theme='light'] .gv-apply-status.is-err {
+	color: #b91c1c;
+}
+
+.gv-json {
+	margin: 14px 0 12px;
+	border-top: 1px solid var(--gv-border);
+	padding-top: 12px;
+}
+.gv-json > summary {
+	font-size: 12px;
+	color: var(--gv-muted);
+	cursor: pointer;
+	list-style: none;
+}
+.gv-json > summary::-webkit-details-marker {
+	display: none;
+}
+.gv-json > summary::before {
+	content: '▸ ';
+}
+.gv-json[open] > summary::before {
+	content: '▾ ';
+}
+.gv-json > summary:hover {
+	color: var(--text, #fafafa);
+}
+.gv-json > summary:focus-visible {
+	outline: 2px solid var(--gv-accent);
+	outline-offset: 2px;
+}
+.gv-json .gv-code {
+	margin-top: 10px;
 }
 .gv-override-title {
 	margin: 0 0 6px;
@@ -506,6 +571,18 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+.gv-card-note {
+	margin-top: 2px;
+	font-size: 11px;
+	line-height: 1.4;
+	color: var(--gv-muted);
+	opacity: 0.85;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 .gv-badge {
 	position: absolute;

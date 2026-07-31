@@ -108,6 +108,7 @@
 								<button type="button" class="gv-icon-btn" data-role="stage-pause" title="Pause" aria-label="Pause" disabled>❙❙</button>
 							</div>
 						</div>
+						<p class="gv-stage-note" data-role="stage-note" hidden></p>
 						<p class="gv-sr-status" data-role="stage-status" role="status" aria-live="polite"></p>
 					</div>
 
@@ -116,16 +117,41 @@
 					<div class="gv-override" data-role="override" hidden>
 						<h2 class="gv-override-title">Override this slot</h2>
 						<p class="gv-override-lede">
-							Point <code data-role="override-slot">slot</code> at any clip in the library. Paste
-							the result into your agent's <code>meta.edits.animations</code>.
+							Point <code data-role="override-slot">slot</code> at any clip in the library, then
+							save it straight to an agent you own.
 						</p>
 						<label class="gv-field">
 							<span class="gv-field-label">Clip</span>
 							<select class="gv-select" data-role="override-select"></select>
 						</label>
-						<pre class="gv-code" data-role="override-code"><code></code></pre>
+						<!-- Apply straight to an agent you own. The alternative is copying
+						     the JSON into the agent editor by hand, which is four more
+						     steps for the same result. -->
+						<div class="gv-apply" data-role="apply" hidden>
+							<label class="gv-field">
+								<span class="gv-field-label">Apply to</span>
+								<select class="gv-select" data-role="apply-select"></select>
+							</label>
+							<div class="gv-override-actions">
+								<button type="button" class="gv-btn gv-btn--primary" data-role="apply-save">Save to agent</button>
+								<button type="button" class="gv-btn gv-btn--ghost" data-role="override-copy">Copy JSON</button>
+							</div>
+							<p class="gv-apply-status" data-role="apply-status" role="status" aria-live="polite"></p>
+						</div>
+
+						<div class="gv-apply" data-role="apply-signedout" hidden>
+							<div class="gv-override-actions">
+								<a class="gv-btn gv-btn--primary" href="/signin?next=/gestures" data-role="apply-signin">Sign in to save this to an agent</a>
+								<button type="button" class="gv-btn gv-btn--ghost" data-role="override-copy-2">Copy JSON</button>
+							</div>
+						</div>
+
+						<details class="gv-json">
+							<summary>Show the JSON</summary>
+							<pre class="gv-code" data-role="override-code"><code></code></pre>
+						</details>
+
 						<div class="gv-override-actions">
-							<button type="button" class="gv-btn gv-btn--primary" data-role="override-copy">Copy JSON</button>
 							<button type="button" class="gv-btn gv-btn--ghost" data-role="override-reset">Reset to default</button>
 						</div>
 					</div>
