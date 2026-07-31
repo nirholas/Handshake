@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Exit Lab · three.ws</title>
+		<meta
+			name="description"
+			content="Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, the trailing stop, the take-initials ladder and the moon-bag floor, and see what the fleet would have made on the SOL it already spent. Real positions, real on-chain fills, no synthetic data."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/exit-lab" />
+		<meta property="og:title" content="Exit Lab · three.ws" />
+		<meta
+			property="og:description"
+			content="Replay the fleet's real closed trades under a different exit policy and see what the SOL it already spent would have returned."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Exit+Lab&amp;d=Replay+the+fleet%27s+real+closed+trades+under+a+different+exit+policy.+Real+positions%2C+real+on-chain+fills%2C+no+synthetic+data.&amp;p=%2Fexit-lab"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Exit Lab on three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Exit Lab · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Replay the fleet's real closed trades under a different exit policy and see what the SOL it already spent would have returned."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Exit+Lab&amp;d=Replay+the+fleet%27s+real+closed+trades+under+a+different+exit+policy.&amp;p=%2Fexit-lab"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/exit-lab.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/exit-lab" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<script type="application/ld+json">
+			{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Exit Lab","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"Replay the three.ws agent fleet's real closed positions under a different exit policy and compare the result against what the fleet actually booked.","url":"https://three.ws/exit-lab","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Autonomous Trading","item":"https://three.ws/trading"},{"@type":"ListItem","position":3,"name":"Exit Lab","item":"https://three.ws/exit-lab"}]}]}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container xl-page">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/">Home</a><span class="sep">/</span><a href="/trading">Autonomous Trading</a
+				><span class="sep">/</span><span class="here">Exit Lab</span>
+			</nav>
+
+			<section class="xl-hero">
+				<div id="xl-corpus-pill" class="xl-pill xl-pill-loading" role="status" aria-live="polite">
+					<span class="xl-dot" aria-hidden="true"></span>
+					<span class="xl-pill-text">Loading the fleet's closed trades</span>
+				</div>
+				<h1 class="cv-h1">Exit Lab</h1>
+				<p class="cv-sub">
+					The fleet already spent this SOL. This replays every real closed position
+					through the exact exit code the live worker runs, with the rules changed to
+					whatever you choose, and shows what those same trades would have returned.
+					Nothing here is simulated: every entry, peak and final price is a recorded
+					quote from a position that cost real money and settled on-chain.
+				</p>
+			</section>
+
+			<!-- The console. Controls are generated from PARAM_SPECS so the knobs, the
+			     sweep axes and the docs can never drift apart. -->
+			<section class="cv-section xl-console" aria-labelledby="xl-console-h">
+				<h2 id="xl-console-h" class="xl-h2">Exit policy</h2>
+				<div class="xl-console-grid">
+					<div class="xl-controls">
+						<div class="xl-presets" role="group" aria-label="Policy presets">
+							<span class="xl-presets-label">Start from</span>
+							<div id="xl-presets" class="xl-preset-row"></div>
+						</div>
+						<div id="xl-params" class="xl-params"></div>
+						<div class="xl-control-actions">
+							<button type="button" id="xl-reset" class="xl-btn xl-btn-ghost">
+								Reset to the live policy
+							</button>
+							<button type="button" id="xl-share" class="xl-btn xl-btn-ghost">
+								Copy a link to this policy
+							</button>
+						</div>
+					</div>
+
+					<div class="xl-results" id="xl-results" aria-live="polite" aria-busy="true"></div>
+				</div>
+			</section>
+
+			<!-- Where the money came from and went, by exit reason. -->
+			<section class="cv-section" aria-labelledby="xl-reasons-h">
+				<h2 id="xl-reasons-h" class="xl-h2">Which rule did the selling</h2>
+				<p class="xl-section-sub">
+					Every closed trade is attributed to the one rule that fired. A policy that
+					books its profit through a single rule is a policy resting on a single
+					assumption.
+				</p>
+				<div id="xl-reasons" class="xl-reasons"></div>
+			</section>
+
+			<!-- The grid search. Real work, real progress. -->
+			<section class="cv-section" aria-labelledby="xl-sweep-h">
+				<div class="xl-section-head">
+					<div>
+						<h2 id="xl-sweep-h" class="xl-h2">Search for a better policy</h2>
+						<p class="xl-section-sub">
+							Replays the whole corpus against every combination on a grid and ranks
+							the results. This is an exact search over trades that already happened,
+							not a prediction: it tells you what the fleet's past would have paid,
+							which is the only thing this data can honestly say.
+						</p>
+					</div>
+					<button type="button" id="xl-sweep-run" class="xl-btn xl-btn-primary">
+						Run the search
+					</button>
+				</div>
+				<div id="xl-sweep" class="xl-sweep"></div>
+			</section>
+
+			<!-- Trade by trade, with the on-chain proof. -->
+			<section class="cv-section" aria-labelledby="xl-trades-h">
+				<div class="xl-section-head">
+					<div>
+						<h2 id="xl-trades-h" class="xl-h2">Trade by trade</h2>
+						<p class="xl-section-sub">
+							The positions where this policy diverges most from what the fleet
+							actually did. Every row links to the buy and the sell on Solscan.
+						</p>
+					</div>
+					<div class="xl-trade-sort" role="group" aria-label="Sort trades">
+						<button type="button" class="xl-chip is-active" data-sort="divergence">
+							Biggest divergence
+						</button>
+						<button type="button" class="xl-chip" data-sort="best">Best under this policy</button>
+						<button type="button" class="xl-chip" data-sort="worst">Worst under this policy</button>
+					</div>
+				</div>
+				<div id="xl-trades" class="xl-trades" aria-busy="true"></div>
+			</section>
+
+			<!-- The caveats, in the page rather than in a footnote nobody reads. -->
+			<section class="cv-section" aria-labelledby="xl-honesty-h">
+				<h2 id="xl-honesty-h" class="xl-h2">What this can and cannot tell you</h2>
+				<ul class="xl-honesty" id="xl-honesty"></ul>
+			</section>
+
+			<p class="cv-updated" id="xl-updated"></p>
+		</main>
+
+		<script type="module" src="/src/exit-lab.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
