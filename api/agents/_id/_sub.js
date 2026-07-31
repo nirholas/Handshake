@@ -19,6 +19,9 @@ import { publicUrl as r2PublicUrl } from '../../_lib/r2.js';
 // importing the runtime module here keeps the API and the browser in agreement
 // instead of restating the list.
 import { SLOTS } from '../../../src/runtime/animation-slots.js';
+// Same reasoning for gesture routines: the studio, the avatar runtime and this
+// handler share one definition of a valid routine instead of three.
+import { normalizeRoutines, MAX_ROUTINES } from '../../../src/runtime/choreography.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -190,6 +193,21 @@ const animationSlotsSchema = z
 	)
 	.refine((map) => Object.keys(map).length <= SLOTS.length, 'too many slot overrides');
 
+// Choreographies: named, timed gesture routines, persisted at
+// meta.choreographies and served to embeds in the public manifest. Validation
+// is delegated to the same runtime module the studio and the avatar use
+// (src/runtime/choreography.js) rather than restated in zod, so a routine the
+// browser can build is exactly a routine the server will store. An empty array
+// clears them.
+const choreographiesSchema = z.array(z.unknown()).max(MAX_ROUTINES).transform((list, ctx) => {
+	try {
+		return normalizeRoutines(list);
+	} catch (err) {
+		ctx.addIssue({ code: z.ZodIssueCode.custom, message: err.message });
+		return z.NEVER;
+	}
+});
+
 // Every field is optional and every one follows the same rule: present means
 // "replace this", absent means "leave it alone". `animations` used to be
 // required, which meant a caller changing one gesture slot had to resend the
@@ -200,10 +218,15 @@ const animationsBodySchema = z
 		animations: z.array(animationEntrySchema).max(30).optional(),
 		animationGraph: animationGraphSchema.optional(),
 		animationSlots: animationSlotsSchema.optional(),
+		choreographies: choreographiesSchema.optional(),
 	})
 	.refine(
-		(b) => b.animations !== undefined || b.animationGraph !== undefined || b.animationSlots !== undefined,
-		'send at least one of animations, animationGraph, animationSlots',
+		(b) =>
+			b.animations !== undefined ||
+			b.animationGraph !== undefined ||
+			b.animationSlots !== undefined ||
+			b.choreographies !== undefined,
+		'send at least one of animations, animationGraph, animationSlots, choreographies',
 	);
 
 export const handleAnimations = wrap(async (req, res, id) => {
@@ -269,18 +292,29 @@ export const handleAnimations = wrap(async (req, res, id) => {
 		`;
 	}
 
+	if (has('choreographies')) {
+		await sql`
+			UPDATE agent_identities
+			SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{choreographies}',
+				${JSON.stringify(parsed.choreographies ?? [])}::jsonb, true)
+			WHERE id = ${id}
+		`;
+	}
+
 	// Read back what is actually stored so the response cannot drift from the row,
 	// and so a partial update still reports the fields it did not touch.
 	const [row] = await sql`
 		SELECT meta->'animations' AS animations,
 		       meta->'animationGraph' AS graph,
-		       meta->'edits'->'animations' AS slots
+		       meta->'edits'->'animations' AS slots,
+		       meta->'choreographies' AS choreographies
 		FROM agent_identities WHERE id = ${id}
 	`;
 	return json(res, 200, {
 		animations: row?.animations ?? [],
 		animationGraph: row?.graph ?? null,
 		animationSlots: row?.slots ?? null,
+		choreographies: row?.choreographies ?? [],
 	});
 });
 
@@ -409,6 +443,12 @@ export const handleManifest = wrap(async (req, res, id) => {
 			row.meta?.edits?.animations && Object.keys(row.meta.edits.animations).length
 				? row.meta.edits.animations
 				: undefined,
+		// Named gesture routines (/choreograph). Shipped alongside the slot map so
+		// an embed can play a whole performance by name — `el.playRoutine('welcome')`
+		// — without a second round trip. Absent when the agent has none.
+		choreographies: Array.isArray(row.meta?.choreographies) && row.meta.choreographies.length
+			? row.meta.choreographies
+			: undefined,
 		// Live signal — funded + active on the Money Pulse via the activation grant.
 		activated,
 		activatedAt,

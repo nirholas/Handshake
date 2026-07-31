@@ -3,9 +3,16 @@
  *
  * Routes (vercel.json rewrites map /api/agents/:id/bundles → this file):
  *   GET    /api/agents/:id/bundles            list active bundles (public)
+ *   GET    /api/agents/:id/bundles?action=pricing&skills=a,b[&price=N]
+ *                                             price a candidate bundle against
+ *                                             this agent's real sales (public)
  *   POST   /api/agents/:id/bundles            create bundle (auth, agent owner)
  *   PATCH  /api/agents/:id/bundles/:bundleId  update bundle (auth, agent owner)
  *   DELETE /api/agents/:id/bundles/:bundleId  deactivate bundle (auth, agent owner)
+ *
+ * Every one of these was unreachable in production until 2026-07-31: no route
+ * existed, so the /api/agents/:id catch-all answered each call with the AGENT
+ * object at 200. See tests/vercel-agents-subpath-routes.test.js.
  */
 
 import { z } from 'zod';
@@ -15,6 +22,7 @@ import { cors, json, method, wrap, error, readJson, rateLimited } from '../../_l
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { isUuid } from '../../_lib/validate.js';
+import { MARKET_PAID_KINDS } from '../../_lib/marketplace-kinds.js';
 
 const createSchema = z.object({
 	name:          z.string().trim().min(2).max(80),

@@ -496,6 +496,12 @@ export const limits = {
 	// active signed conversation while stopping scripted hammering.
 	aslTranscribeIp: (ip) =>
 		getLimiter('asl:transcribe:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
+	// Text → signed animation clip (/api/sign). The compile is pure CPU (tens of
+	// milliseconds) and the response is deterministic, so the edge cache absorbs
+	// repeats; 120 per 5 min per IP leaves a live console and a batching agent
+	// plenty of headroom while capping how much CPU one caller can burn.
+	signCompileIp: (ip) =>
+		getLimiter('sign:compile:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing
@@ -1453,6 +1459,14 @@ export const limits = {
 	// custodial withdrawals.
 	withdrawalPerUser: (userId) =>
 		getLimiter('withdrawal:user', { limit: 5, window: '1 d', critical: true }).limit(userId),
+	// Pricing a transfer without signing it (`simulate: true` on send / fund-agent).
+	// This deliberately does NOT draw on withdrawalPerUser: that budget is 5 per
+	// DAY, so charging previews against it meant four price checks locked a user
+	// out of their own funds until the next day. A preview moves nothing, but it
+	// does spend Solana RPC reads, so it gets its own per-minute ceiling instead
+	// of being free.
+	walletSimulate: (userId) =>
+		getLimiter('wallet:simulate', { limit: 30, window: '1 m' }).limit(userId),
 	// Discretionary agent-wallet trades: server-signed buys/sells from the agent's
 	// custodial wallet (POST /api/agents/:id/trade). Each one moves real funds and
 	// decrypts a custodial key, so it gets its own per-user write budget separate
