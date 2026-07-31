@@ -364,6 +364,7 @@ const appConfig = {
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
+				inspect: resolve(__dirname, 'pages/inspect.html'),
 				pitch: resolve(__dirname, 'pages/pitch.html'),
 				timeline: resolve(__dirname, 'pages/timeline.html'),
 				tracker: resolve(__dirname, 'pages/tracker.html'),
@@ -381,6 +382,7 @@ const appConfig = {
 				tutorial: resolve(__dirname, 'pages/tutorial.html'),
 				cookbook: resolve(__dirname, 'pages/cookbook.html'),
 				recipe: resolve(__dirname, 'pages/recipe.html'),
+				'pipeline-studio': resolve(__dirname, 'pages/pipeline-studio.html'),
 				glossary: resolve(__dirname, 'pages/glossary.html'),
 				playground: resolve(__dirname, 'pages/playground.html'),
 				coin3d: resolve(__dirname, 'pages/coin3d.html'),
@@ -487,6 +489,7 @@ const appConfig = {
 				'signal-detail': resolve(__dirname, 'pages/signal-detail.html'),
 				trades: resolve(__dirname, 'pages/trades.html'),
 				trading: resolve(__dirname, 'pages/trading.html'),
+				'exit-lab': resolve(__dirname, 'pages/exit-lab.html'),
 				'claim-wallet': resolve(__dirname, 'pages/claim-wallet.html'),
 				'meta-allocator': resolve(__dirname, 'pages/meta-allocator.html'),
 				'clip-director': resolve(__dirname, 'pages/clip-director.html'),
@@ -583,6 +586,7 @@ const appConfig = {
 				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
 				'avatar-sdk': resolve(__dirname, 'pages/avatar-sdk.html'),
 				'avatar-cli': resolve(__dirname, 'pages/avatar-cli.html'),
+				'rig-doctor': resolve(__dirname, 'pages/rig-doctor.html'),
 				brain: resolve(__dirname, 'pages/brain.html'),
 				'agent-studio': resolve(__dirname, 'pages/agent-studio.html'),
 				cosmos: resolve(__dirname, 'pages/cosmos.html'),
@@ -625,6 +629,7 @@ const appConfig = {
 				'pose-mini': resolve(__dirname, 'pages/pose-mini.html'),
 				animations: resolve(__dirname, 'pages/animations.html'),
 				gestures: resolve(__dirname, 'pages/gestures.html'),
+				choreograph: resolve(__dirname, 'pages/choreograph.html'),
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),
 				'asl-alphabet': resolve(__dirname, 'pages/asl-alphabet.html'),
@@ -1071,6 +1076,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/tutorials/': resolve(root, 'pages/tutorials.html'),
 					'/cookbook': resolve(root, 'pages/cookbook.html'),
 					'/cookbook/': resolve(root, 'pages/cookbook.html'),
+					'/cookbook/pipeline': resolve(root, 'pages/pipeline-studio.html'),
+					'/cookbook/pipeline/': resolve(root, 'pages/pipeline-studio.html'),
 					'/glossary': resolve(root, 'pages/glossary.html'),
 					'/glossary/': resolve(root, 'pages/glossary.html'),
 					'/go': resolve(root, 'pages/go.html'),
@@ -1149,6 +1156,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/trades/': resolve(root, 'pages/trades.html'),
 					'/trading': resolve(root, 'pages/trading.html'),
 					'/trading/': resolve(root, 'pages/trading.html'),
+					'/exit-lab': resolve(root, 'pages/exit-lab.html'),
+					'/exit-lab/': resolve(root, 'pages/exit-lab.html'),
 					'/terminal': resolve(root, 'pages/terminal.html'),
 					'/terminal/': resolve(root, 'pages/terminal.html'),
 					'/claim-wallet': resolve(root, 'pages/claim-wallet.html'),
@@ -1420,6 +1429,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/labs/': resolve(root, 'pages/labs.html'),
 					'/quality-bench': resolve(root, 'pages/quality-bench.html'),
 					'/quality-bench/': resolve(root, 'pages/quality-bench.html'),
+					'/inspect': resolve(root, 'pages/inspect.html'),
+					'/inspect/': resolve(root, 'pages/inspect.html'),
 					'/search': resolve(root, 'pages/search.html'),
 					'/search/': resolve(root, 'pages/search.html'),
 					'/rankings': resolve(root, 'pages/rankings.html'),
@@ -1628,6 +1639,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					// the generic slug rule below or the viewer would shadow it. Mirrors vercel.json.
 					else if (!filePath && /^\/cookbook\/self-correcting-3d\/?$/.test(path))
 						filePath = resolve(root, 'public/cookbook/self-correcting-3d/index.html');
+					// /cookbook/pipeline  → Pipeline Studio, an app page rather than a recipe.
+					// Same reason as above: it must beat the generic slug rule. Mirrors vercel.json.
+					else if (!filePath && /^\/cookbook\/pipeline\/?$/.test(path))
+						filePath = resolve(root, 'pages/pipeline-studio.html');
 					// /cookbook/<slug>  → recipe viewer, renders /docs/cookbook/<slug>.md
 					else if (!filePath && /^\/cookbook\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/recipe.html');

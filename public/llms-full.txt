@@ -1,4 +1,4 @@
-# three.ws — Complete Page Index
+# three.ws: Complete Page Index
 
 three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.
 
@@ -181,6 +181,12 @@ Live platform activity plus where to follow, contribute, and connect with three.
 URL: https://three.ws/search
 
 One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.
+
+### Atlas
+
+URL: https://three.ws/atlas
+
+The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.
 
 ### Sitemap
 
@@ -3904,13 +3910,13 @@ URL: https://three.ws/news/aws-builder-center-3d-agents-onchain-payments
 
 Our second article on the official AWS Builder Center: how to build browser-native 3D AI agents with memory, on-chain wallets, and autonomous x402 payments, available through AWS Marketplace and embeddable in one line of HTML.
 
-### Text to 3D Is Live — Type a Prompt, Download a 3D Model
+### Text to 3D Is Live - Type a Prompt, Download a 3D Model
 
 URL: https://three.ws/news/text-to-3d-is-live
 
-Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too — and agents can call the same pipeline over MCP.
+Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too - and agents can call the same pipeline over MCP.
 
-### three.ws Wins DEXTools Social Boost — $5,543 $three Buyback
+### three.ws Wins DEXTools Social Boost - $5,543 $three Buyback
 
 URL: https://three.ws/news/three-ws-dextools-social-boost-buyback
 
@@ -3920,7 +3926,7 @@ three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback 
 
 URL: https://three.ws/news/three-ws-featured-on-alibaba-cloud-marketplace-blog
 
-Alibaba Cloud Marketplace published an editorial introducing three.ws — Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.
+Alibaba Cloud Marketplace published an editorial introducing three.ws - Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.
 
 ### One Month In: How three.ws Built the 3D Agent Layer of the Internet
 
@@ -3932,7 +3938,7 @@ In one month, three.ws went from launch to global coverage: browser-native 3D AI
 
 URL: https://three.ws/news/cmc-mcp-registry-article
 
-CoinMarketCap article: three.ws brings autonomous payments and 3D generation to Anthropic's official MCP Registry — two new MCP servers give Claude and any MCP client the ability to spawn 3D agents and make on-chain x402 payments via the Coinbase-powered x402 Bazaar.
+CoinMarketCap article: three.ws brings autonomous payments and 3D generation to Anthropic's official MCP Registry - two new MCP servers give Claude and any MCP client the ability to spawn 3D agents and make on-chain x402 payments via the Coinbase-powered x402 Bazaar.
 
 ### three.ws Ships Two New MCP Servers: x402 Bazaar + 3D Agent Avatar
 
@@ -3944,13 +3950,13 @@ two new MCP servers are now live in Anthropic's official MCP Registry: the x402 
 
 URL: https://three.ws/news/bybit-alpha-listing
 
-$three is now listed on Bybit Alpha — the dedicated launchpad for new and emerging assets on Bybit, one of the world's top three crypto exchanges.
+$three is now listed on Bybit Alpha - the dedicated launchpad for new and emerging assets on Bybit, one of the world's top three crypto exchanges.
 
 ### Showcasing the three.ws × IBM Partnership
 
 URL: https://three.ws/news/ibm-collaboration-showcase
 
-three.ws and IBM are partners, and we shared a live demo publicly: a persistent, on-chain 3D agent embedded into any page as easily as a YouTube video — thinking on IBM watsonx.ai and Granite. The public /ibm demos are independent developer tools, not official partnership deliverables. The integration ships as an open-source MCP server and a first-class watsonx provider in the three.ws agent runtime, running on your own IBM Cloud credentials.
+three.ws and IBM are partners, and we shared a live demo publicly: a persistent, on-chain 3D agent embedded into any page as easily as a YouTube video - thinking on IBM watsonx.ai and Granite. The public /ibm demos are independent developer tools, not official partnership deliverables. The integration ships as an open-source MCP server and a first-class watsonx provider in the three.ws agent runtime, running on your own IBM Cloud credentials.
 
 ### The Animations & Poses Studio is officially LIVE on three.ws/pose
 
@@ -3964,11 +3970,11 @@ URL: https://three.ws/news/2061523804405616642
 
 Onboarding the next millions of developers and users requires a foundation built for absolute scale. Powered by @Solana and driven by our strategic partnership with @IBM, we are pushing the boundaries of what was thought to be impossible. We made embedding a persistent, on-cha…
 
-### IBM is thrilled to partner with three.ws on the future of enterprise AI agents —…
+### IBM is thrilled to partner with three.ws on the future of enterprise AI agents - …
 
 URL: https://three.ws/news/2061488909264040194
 
-IBM is thrilled to partner with three.ws on the future of enterprise AI agents — on-chain identity meets enterprise infrastructure.
+IBM is thrilled to partner with three.ws on the future of enterprise AI agents - on-chain identity meets enterprise infrastructure.
 
 ### three.ws ($three) Is Now Verified on Moonshot
 
@@ -3976,29 +3982,29 @@ URL: https://three.ws/news/moonshot-verified
 
 three.ws ($three) is now verified on Moonshot, the leading Solana token discovery and trading platform.
 
-### We're super excited about this partnership with three.ws — bringing on-chain 3D AI…
+### We're super excited about this partnership with three.ws - bringing on-chain 3D AI…
 
 URL: https://three.ws/news/2061418285896269952
 
-We're super excited about this partnership with three.ws — bringing on-chain 3D AI agents to enterprise scale.
+We're super excited about this partnership with three.ws - bringing on-chain 3D AI agents to enterprise scale.
 
 ### three.ws Showcases IBM Partnership: Embedding a 3D Agent as Easily as a YouTube Video
 
 URL: https://three.ws/news/ibm-showcase-may31
 
-three.ws showcased the IBM partnership publicly: embedding a persistent, on-chain 3D avatar into any platform is now as easy as embedding a YouTube video — powered by IBM watsonx.ai and Granite, onboarding the next millions of developers and users.
+three.ws showcased the IBM partnership publicly: embedding a persistent, on-chain 3D avatar into any platform is now as easy as embedding a YouTube video - powered by IBM watsonx.ai and Granite, onboarding the next millions of developers and users.
 
 ### Introducing three.ws/play: Live 3D Virtual Townhalls for Any Coin
 
 URL: https://three.ws/news/threews-play-coin-communities
 
-three.ws/play launches as a live 3D virtual townhall for any pump.fun coin, powered by the CoinComms API & SDK. 100% multiplayer, custom 3D avatars, real-time on-chain events — the community is the asset, and now it has a home.
+three.ws/play launches as a live 3D virtual townhall for any pump.fun coin, powered by the CoinComms API & SDK. 100% multiplayer, custom 3D avatars, real-time on-chain events - the community is the asset, and now it has a home.
 
 ### CoinMarketCap: Every Memecoin Is Now a 3D World You Can Walk Into
 
 URL: https://three.ws/news/cmc-memecoin-3d-world
 
-"Every Memecoin Is Now a 3D World You Can Walk Into" — three.ws guest post on CoinMarketCap. The community is the asset, so why does it live in a chat box? With three.ws/play, every coin gets a live 3D world its holders can walk into.
+"Every Memecoin Is Now a 3D World You Can Walk Into" - three.ws guest post on CoinMarketCap. The community is the asset, so why does it live in a chat box? With three.ws/play, every coin gets a live 3D world its holders can walk into.
 
 ### three.ws Publishes on the AWS Builder Center Blog
 
@@ -4010,7 +4016,7 @@ three.ws's contribution is live on the official AWS Builder Center Blog: "How we
 
 URL: https://three.ws/news/aws-marketplace-live-may29
 
-three.ws is now officially live on AWS Marketplace as an AWS Partner — delivering the open 3D layer for the internet. Embed fully embodied, browser-native 3D AI agents on any webpage. The first enterprise platform for on-chain 3D AI agents available through AWS.
+three.ws is now officially live on AWS Marketplace as an AWS Partner - delivering the open 3D layer for the internet. Embed fully embodied, browser-native 3D AI agents on any webpage. The first enterprise platform for on-chain 3D AI agents available through AWS.
 
 ### HUGE revamp coming to the landing page + dashboard
 
@@ -4028,7 +4034,7 @@ We still have plenty of time to make it to #1 spot on ProductHunt, I need everyo
 
 URL: https://three.ws/news/2059894004771418220
 
-Live now on Product Hunt. We're going for #1 — drop us a vote and a comment if you believe in the 3D agent web. three.ws — the platform for on-chain 3D AI agents.
+Live now on Product Hunt. We're going for #1 - drop us a vote and a comment if you believe in the 3D agent web. three.ws - the platform for on-chain 3D AI agents.
 
 ### three.ws is now live on AWS Marketplace.
 
@@ -4082,7 +4088,7 @@ The future we're building is one where agents can execute transactions, remember
 
 URL: https://three.ws/news/2059456289789657537
 
-three.ws is now an official AWS Partner. Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process. This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network — joining Solana, IB…
+three.ws is now an official AWS Partner. Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process. This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network - joining Solana, IB…
 
 ### We just shipped the 3D layer for the internet
 
@@ -4106,7 +4112,7 @@ View in API -> Official MCP Registry by @AnthropicAI registry.modelcontextprotoc
 
 URL: https://three.ws/news/2057782522994684413
 
-NPM package: @three-ws/avatar-agent (stdio transport) npmjs.com/package/@three-ws/avatar-agent Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity — with zero browser required.
+NPM package: @three-ws/avatar-agent (stdio transport) npmjs.com/package/@three-ws/avatar-agent Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity - with zero browser required.
 
 ### Our MCP Server was just pushed to the official @AnthropicAI MCP Registry
 
@@ -4118,7 +4124,7 @@ Our MCP Server was just pushed to the official @AnthropicAI MCP Registry Our com
 
 URL: https://three.ws/news/2057721370310775223
 
-2500 new 3D animations coming right up. Your agent is about to have a LOT more personality. Full animation library for the pose studio — walk cycles, reactions, emotes, and everything in between. Shipping to three.ws/pose this week.
+2500 new 3D animations coming right up. Your agent is about to have a LOT more personality. Full animation library for the pose studio - walk cycles, reactions, emotes, and everything in between. Shipping to three.ws/pose this week.
 
 ### We are excited to share an early preview of real-time voice interaction with 3D AI avatars
 
@@ -4136,7 +4142,7 @@ three.ws has partnered with HackerNoon, bringing on-chain 3D agent coverage to o
 
 URL: https://three.ws/news/listed-on-bnb-chain-dappbay
 
-three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> — the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents — in front of the BNB Chain ecosystem's discovery surface for AI dApps.
+three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> - the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents - in front of the BNB Chain ecosystem's discovery surface for AI dApps.
 
 ### three.ws is teaming up with @hackernoon
 
@@ -4148,7 +4154,7 @@ three.ws is teaming up with @hackernoon We're launching a new builder-focused in
 
 URL: https://three.ws/news/live-on-alibaba-cloud-marketplace
 
-three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> — one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent — available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.
+three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> - one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent - available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.
 
 ### We are excited to join the @CoinMarketCap community.
 
@@ -4178,7 +4184,7 @@ URL: https://three.ws/news/2055309846556401735
 
 URL: https://three.ws/news/2055307440921702738
 
-3D AI Agent on any website. 30 seconds. One line of HTML. The embed editor is live — three.ws/embed Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.
+3D AI Agent on any website. 30 seconds. One line of HTML. The embed editor is live - three.ws/embed Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.
 
 ### Great turn out.
 
@@ -4240,11 +4246,11 @@ URL: https://three.ws/news/2053025259645981078
 
 Agent Builder Live ++ Improved Studio Design ++ LLM Chat Upgrade Agents are now payable, tradeable, discoverable. → agents are payable (x402 + CDP) → agents are tradeable (pump.fun v2) → agents are discoverable (/.well-known/x402.json) → agents react with real-time emotion to …
 
-### Check out our @PulseMCP page — three.ws is listed in the official MCP server directory.
+### Check out our @PulseMCP page - three.ws is listed in the official MCP server directory.
 
 URL: https://three.ws/news/2052791935585407403
 
-Check out our @PulseMCP page — three.ws is listed in the official MCP server directory. pulsemcp.com — the leading community hub for the MCP ecosystem. three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endp…
+Check out our @PulseMCP page - three.ws is listed in the official MCP server directory. pulsemcp.com - the leading community hub for the MCP ecosystem. three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endp…
 
 ### three.ws is heating up since our MCP Server went live and displayed in
 
@@ -4256,7 +4262,7 @@ three.ws is heating up since our MCP Server went live and displayed in @PulseMCP
 
 URL: https://three.ws/news/2052685648377913671
 
-On-chain AI agents don't just think. They own, earn, and exist. Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes. Proof: we shipped one into @Shopify — a 3D agent living inside a storefron…
+On-chain AI agents don't just think. They own, earn, and exist. Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes. Proof: we shipped one into @Shopify - a 3D agent living inside a storefron…
 
 ### Never forget the ones that support you at all stages of growth.
 
@@ -4264,17 +4270,17 @@ URL: https://three.ws/news/2052603250524967045
 
 Never forget the ones that support you at all stages of growth. The entire community thanks you for taking the time to check out what we are building, if there's anything you would like us to integrate or build custom then let us know, we would love to hear your feedback!
 
-### This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one…
+### This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one…
 
 URL: https://three.ws/news/2052588973466484922
 
-This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.
+This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.
 
-### three.ws — the open-source platform for 3D AI agents on-chain.
+### three.ws - the open-source platform for 3D AI agents on-chain.
 
 URL: https://three.ws/news/2052426446073983267
 
-three.ws — the open-source platform for 3D AI agents on-chain. github.com/nirholas/three.ws $THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
+three.ws - the open-source platform for 3D AI agents on-chain. github.com/nirholas/three.ws $THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 
 ### Inside The 3D Agent Web on Amazon Music by three.ws
 
@@ -4292,7 +4298,7 @@ The three.ws Podcast is now live on @amazonmusic Long reads not your thing? Chec
 
 URL: https://three.ws/news/2052402580266098813
 
-The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec. three.ws is contributing to the W3C — proposing a new Community Group: 3D AI Agents & On-Chain Identity for the Web.
+The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec. three.ws is contributing to the W3C - proposing a new Community Group: 3D AI Agents & On-Chain Identity for the Web.
 
 ### three.ws is now contributing to the World Wide Web Consortium
 
@@ -4304,7 +4310,7 @@ three.ws is now contributing to the World Wide Web Consortium 3D AI agents with 
 
 URL: https://three.ws/news/2052189491801284690
 
-verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain without it you can't distinguish legitimate agents from imposters or track their actions basically enables the whole agent economy to function with trust — and three.ws i…
+verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain without it you can't distinguish legitimate agents from imposters or track their actions basically enables the whole agent economy to function with trust - and three.ws i…
 
 ### As part of our mission to give every agent a true onchain identity, we chose @SNS as…
 
@@ -4418,7 +4424,7 @@ three.ws & @alibaba_cloud Partner to Give 3D AI Agents On-Chain Wallets and Fina
 
 URL: https://three.ws/news/2050284562069266616
 
-slowly then all at once three.ws — the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.
+slowly then all at once three.ws - the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.
 
 ### three.ws is live
 
@@ -4448,7 +4454,7 @@ Never miss a @pumpfun runner again three.ws/pumpfun announces → Live graduatio
 
 URL: https://three.ws/news/2050016695897706885
 
-three.ws is listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.
+three.ws is listed on @AnthropicAI 's official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.
 
 ### @GoogleCloud x three.ws
 
@@ -4460,7 +4466,7 @@ URL: https://three.ws/news/2049997615421649363
 
 URL: https://three.ws/news/2049765915575914834
 
-meeting with Google Cloud team for Google Cloud for Web3 Startups partnership more compute incoming — expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.
+meeting with Google Cloud team for Google Cloud for Web3 Startups partnership more compute incoming - expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.
 
 ### Solana wallet integration for autonomous 3D agents now live on @trythreews
 
@@ -4520,7 +4526,7 @@ give your agents access to money. spin up solana agents with vanity addresses. p
 
 URL: https://three.ws/news/2049412062837928202
 
-three.ws is now listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws
+three.ws is now listed on @AnthropicAI 's official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws
 
 ### Your AI has been trapped in a chatbox long enough.
 
@@ -4534,8 +4540,8 @@ URL: https://three.ws/news/2049397875935989970
 
 three.ws listed in @AnthropicAI registry registry.modelcontextprotocol.io/?q=three.ws Our MCP server is now in the canonical directory used by Claude and all MCP-compatible clients.
 
-### three Ws — @phantom is excited about three.ws bringing on-chain 3D AI agents to the…
+### three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the…
 
 URL: https://three.ws/news/2045242891350814835
 
-three Ws — @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.
+three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.

@@ -250,6 +250,14 @@
 					"added": "2026-07-12"
 				},
 				{
+					"path": "/atlas",
+					"title": "Atlas",
+					"description": "The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
+				},
+				{
 					"path": "/sitemap",
 					"title": "Sitemap",
 					"description": "Human-readable index of every page on three.ws.",
@@ -802,12 +810,28 @@
 					"changefreq": "weekly"
 				},
 				{
+					"path": "/inspect",
+					"title": "Model Inspector",
+					"description": "Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
+				},
+				{
 					"path": "/avatar-cli",
 					"title": "Avatar CLI",
 					"description": "The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/rig-doctor",
+					"title": "Rig Doctor",
+					"description": "Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
 				}
 			]
 		},
@@ -1986,6 +2010,14 @@
 					"priority": 0.9,
 					"changefreq": "hourly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/exit-lab",
+					"title": "Exit Lab",
+					"description": "Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/play/economy",
@@ -4073,6 +4105,14 @@
 					"description": "The on-chain coordination protocol three.ws reads from for task discovery and agent identity. The read endpoints exposed over it, and how three.ws agents are bridged into it.",
 					"priority": 0.6,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/live-docs",
+					"title": "Docs · Live Docs",
+					"description": "Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/docs/docs-world",

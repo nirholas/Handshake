@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-30T23:31:59.236Z",
+	"generated_at": "2026-07-31T06:26:35.396Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -290,6 +290,16 @@
 					"title": "Search",
 					"description": "One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins: with remixable models remixable straight from the results.",
 					"added": "2026-07-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/atlas",
+					"title": "Atlas",
+					"description": "The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6447,8 +6457,8 @@
 				},
 				{
 					"path": "/news/text-to-3d-is-live",
-					"title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",
-					"description": "Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too — and agents can call the same pipeline over MCP.",
+					"title": "Text to 3D Is Live - Type a Prompt, Download a 3D Model",
+					"description": "Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too - and agents can call the same pipeline over MCP.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6457,7 +6467,7 @@
 				},
 				{
 					"path": "/news/three-ws-dextools-social-boost-buyback",
-					"title": "three.ws Wins DEXTools Social Boost — $5,543 $three Buyback",
+					"title": "three.ws Wins DEXTools Social Boost - $5,543 $three Buyback",
 					"description": "three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback of $three. The DEXTools wallet now holds a total of 2.47M $three.",
 					"added": null,
 					"auth": null,
@@ -6468,7 +6478,7 @@
 				{
 					"path": "/news/three-ws-featured-on-alibaba-cloud-marketplace-blog",
 					"title": "three.ws Featured on the Alibaba Cloud Marketplace Blog",
-					"description": "Alibaba Cloud Marketplace published an editorial introducing three.ws — Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
+					"description": "Alibaba Cloud Marketplace published an editorial introducing three.ws - Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6488,7 +6498,7 @@
 				{
 					"path": "/news/cmc-mcp-registry-article",
 					"title": "three.ws Brings Autonomous Payments and 3D Generation to Anthropic's Official MCP Registry",
-					"description": "CoinMarketCap article: three.ws brings autonomous payments and 3D generation to Anthropic's official MCP Registry — two new MCP servers give Claude and any MCP client the ability to spawn 3D agents and make on-chain x402 payments via the Coinbase-powered x402 Bazaar.",
+					"description": "CoinMarketCap article: three.ws brings autonomous payments and 3D generation to Anthropic's official MCP Registry - two new MCP servers give Claude and any MCP client the ability to spawn 3D agents and make on-chain x402 payments via the Coinbase-powered x402 Bazaar.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6508,7 +6518,7 @@
 				{
 					"path": "/news/bybit-alpha-listing",
 					"title": "$three Listed on Bybit Alpha",
-					"description": "$three is now listed on Bybit Alpha — the dedicated launchpad for new and emerging assets on Bybit, one of the world's top three crypto exchanges.",
+					"description": "$three is now listed on Bybit Alpha - the dedicated launchpad for new and emerging assets on Bybit, one of the world's top three crypto exchanges.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6518,7 +6528,7 @@
 				{
 					"path": "/news/ibm-collaboration-showcase",
 					"title": "Showcasing the three.ws × IBM Partnership",
-					"description": "three.ws and IBM are partners, and we shared a live demo publicly: a persistent, on-chain 3D agent embedded into any page as easily as a YouTube video — thinking on IBM watsonx.ai and Granite. The public /ibm demos are independent developer tools, not official partnership deliverables. The integration ships as an open-source MCP server and a first-class watsonx provider in the three.ws agent runtime, running on your own IBM Cloud credentials.",
+					"description": "three.ws and IBM are partners, and we shared a live demo publicly: a persistent, on-chain 3D agent embedded into any page as easily as a YouTube video - thinking on IBM watsonx.ai and Granite. The public /ibm demos are independent developer tools, not official partnership deliverables. The integration ships as an open-source MCP server and a first-class watsonx provider in the three.ws agent runtime, running on your own IBM Cloud credentials.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6547,8 +6557,8 @@
 				},
 				{
 					"path": "/news/2061488909264040194",
-					"title": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents —…",
-					"description": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents — on-chain identity meets enterprise infrastructure.",
+					"title": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents - …",
+					"description": "IBM is thrilled to partner with three.ws on the future of enterprise AI agents - on-chain identity meets enterprise infrastructure.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6567,8 +6577,8 @@
 				},
 				{
 					"path": "/news/2061418285896269952",
-					"title": "We're super excited about this partnership with three.ws — bringing on-chain 3D AI…",
-					"description": "We're super excited about this partnership with three.ws — bringing on-chain 3D AI agents to enterprise scale.",
+					"title": "We're super excited about this partnership with three.ws - bringing on-chain 3D AI…",
+					"description": "We're super excited about this partnership with three.ws - bringing on-chain 3D AI agents to enterprise scale.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6578,7 +6588,7 @@
 				{
 					"path": "/news/ibm-showcase-may31",
 					"title": "three.ws Showcases IBM Partnership: Embedding a 3D Agent as Easily as a YouTube Video",
-					"description": "three.ws showcased the IBM partnership publicly: embedding a persistent, on-chain 3D avatar into any platform is now as easy as embedding a YouTube video — powered by IBM watsonx.ai and Granite, onboarding the next millions of developers and users.",
+					"description": "three.ws showcased the IBM partnership publicly: embedding a persistent, on-chain 3D avatar into any platform is now as easy as embedding a YouTube video - powered by IBM watsonx.ai and Granite, onboarding the next millions of developers and users.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6588,7 +6598,7 @@
 				{
 					"path": "/news/threews-play-coin-communities",
 					"title": "Introducing three.ws/play: Live 3D Virtual Townhalls for Any Coin",
-					"description": "three.ws/play launches as a live 3D virtual townhall for any pump.fun coin, powered by the CoinComms API & SDK. 100% multiplayer, custom 3D avatars, real-time on-chain events — the community is the asset, and now it has a home.",
+					"description": "three.ws/play launches as a live 3D virtual townhall for any pump.fun coin, powered by the CoinComms API & SDK. 100% multiplayer, custom 3D avatars, real-time on-chain events - the community is the asset, and now it has a home.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6598,7 +6608,7 @@
 				{
 					"path": "/news/cmc-memecoin-3d-world",
 					"title": "CoinMarketCap: Every Memecoin Is Now a 3D World You Can Walk Into",
-					"description": "\"Every Memecoin Is Now a 3D World You Can Walk Into\" — three.ws guest post on CoinMarketCap. The community is the asset, so why does it live in a chat box? With three.ws/play, every coin gets a live 3D world its holders can walk into.",
+					"description": "\"Every Memecoin Is Now a 3D World You Can Walk Into\" - three.ws guest post on CoinMarketCap. The community is the asset, so why does it live in a chat box? With three.ws/play, every coin gets a live 3D world its holders can walk into.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6618,7 +6628,7 @@
 				{
 					"path": "/news/aws-marketplace-live-may29",
 					"title": "three.ws Is Now Officially Live on AWS Marketplace",
-					"description": "three.ws is now officially live on AWS Marketplace as an AWS Partner — delivering the open 3D layer for the internet. Embed fully embodied, browser-native 3D AI agents on any webpage. The first enterprise platform for on-chain 3D AI agents available through AWS.",
+					"description": "three.ws is now officially live on AWS Marketplace as an AWS Partner - delivering the open 3D layer for the internet. Embed fully embodied, browser-native 3D AI agents on any webpage. The first enterprise platform for on-chain 3D AI agents available through AWS.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6648,7 +6658,7 @@
 				{
 					"path": "/news/2059894004771418220",
 					"title": "Live now on Product Hunt.",
-					"description": "Live now on Product Hunt. We're going for #1 — drop us a vote and a comment if you believe in the 3D agent web. three.ws — the platform for on-chain 3D AI agents.",
+					"description": "Live now on Product Hunt. We're going for #1 - drop us a vote and a comment if you believe in the 3D agent web. three.ws - the platform for on-chain 3D AI agents.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6738,7 +6748,7 @@
 				{
 					"path": "/news/2059456289789657537",
 					"title": "three.ws is now an official AWS Partner.",
-					"description": "three.ws is now an official AWS Partner. Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process. This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network — joining Solana, IB…",
+					"description": "three.ws is now an official AWS Partner. Through this partnership, AWS customers can adopt three.ws through AWS Marketplace with a streamlined procurement process. This makes three.ws the first fully on-chain 3D AI agent platform in the AWS Partner Network - joining Solana, IB…",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6778,7 +6788,7 @@
 				{
 					"path": "/news/2057782522994684413",
 					"title": "NPM package: @three-ws/avatar-agent (stdio transport)",
-					"description": "NPM package: @three-ws/avatar-agent (stdio transport) npmjs.com/package/@three-ws/avatar-agent Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity — with zero browser required.",
+					"description": "NPM package: @three-ws/avatar-agent (stdio transport) npmjs.com/package/@three-ws/avatar-agent Drop it in any Node.js project and your agent gets a 3D body, voice, memory, and an on-chain identity - with zero browser required.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6798,7 +6808,7 @@
 				{
 					"path": "/news/2057721370310775223",
 					"title": "2500 new 3D animations coming right up.",
-					"description": "2500 new 3D animations coming right up. Your agent is about to have a LOT more personality. Full animation library for the pose studio — walk cycles, reactions, emotes, and everything in between. Shipping to three.ws/pose this week.",
+					"description": "2500 new 3D animations coming right up. Your agent is about to have a LOT more personality. Full animation library for the pose studio - walk cycles, reactions, emotes, and everything in between. Shipping to three.ws/pose this week.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6828,7 +6838,7 @@
 				{
 					"path": "/news/listed-on-bnb-chain-dappbay",
 					"title": "three.ws Listed on BNB Chain's Dappbay Directory",
-					"description": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> — the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents — in front of the BNB Chain ecosystem's discovery surface for AI dApps.",
+					"description": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> - the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents - in front of the BNB Chain ecosystem's discovery surface for AI dApps.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6848,7 +6858,7 @@
 				{
 					"path": "/news/live-on-alibaba-cloud-marketplace",
 					"title": "three.ws Launches on Alibaba Cloud Marketplace, Bringing Native x402 Agent Payments to Hyperscale",
-					"description": "three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> — one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent — available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.",
+					"description": "three.ws is now live on the Alibaba Cloud International Marketplace. The listing makes <agent-3d> - one HTML tag that deploys a Solana-minted, ERC-8004-walleted, x402-native 3D agent - available to every Alibaba Cloud customer worldwide. This is the first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6898,7 +6908,7 @@
 				{
 					"path": "/news/2055307440921702738",
 					"title": "3D AI Agent on any website.",
-					"description": "3D AI Agent on any website. 30 seconds. One line of HTML. The embed editor is live — three.ws/embed Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.",
+					"description": "3D AI Agent on any website. 30 seconds. One line of HTML. The embed editor is live - three.ws/embed Customize your agent, pick a layout, preview against your real site, copy the snippet, paste it in. Your 3D agent is live.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7007,8 +7017,8 @@
 				},
 				{
 					"path": "/news/2052791935585407403",
-					"title": "Check out our @PulseMCP page — three.ws is listed in the official MCP server directory.",
-					"description": "Check out our @PulseMCP page — three.ws is listed in the official MCP server directory. pulsemcp.com — the leading community hub for the MCP ecosystem. three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endp…",
+					"title": "Check out our @PulseMCP page - three.ws is listed in the official MCP server directory.",
+					"description": "Check out our @PulseMCP page - three.ws is listed in the official MCP server directory. pulsemcp.com - the leading community hub for the MCP ecosystem. three.ws gives Claude and any MCP client the ability to spawn 3D agents, mint on-chain identity, and attach x402 payment endp…",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7028,7 +7038,7 @@
 				{
 					"path": "/news/2052685648377913671",
 					"title": "On-chain AI agents don't just think.",
-					"description": "On-chain AI agents don't just think. They own, earn, and exist. Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes. Proof: we shipped one into @Shopify — a 3D agent living inside a storefron…",
+					"description": "On-chain AI agents don't just think. They own, earn, and exist. Build your on-chain 3D AI avatar, give it access to money and emotions, pick your desired widget layout, and embed it anywhere in minutes. Proof: we shipped one into @Shopify - a 3D agent living inside a storefron…",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7047,8 +7057,8 @@
 				},
 				{
 					"path": "/news/2052588973466484922",
-					"title": "This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one…",
-					"description": "This is pretty cool — three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.",
+					"title": "This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one…",
+					"description": "This is pretty cool - three.ws just put a 3D AI agent directly on a webpage with one HTML tag. Memory, voice, wallet, on-chain identity. All browser-native.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7057,8 +7067,8 @@
 				},
 				{
 					"path": "/news/2052426446073983267",
-					"title": "three.ws — the open-source platform for 3D AI agents on-chain.",
-					"description": "three.ws — the open-source platform for 3D AI agents on-chain. github.com/nirholas/three.ws $THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+					"title": "three.ws - the open-source platform for 3D AI agents on-chain.",
+					"description": "three.ws - the open-source platform for 3D AI agents on-chain. github.com/nirholas/three.ws $THREE CA: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7088,7 +7098,7 @@
 				{
 					"path": "/news/2052402580266098813",
 					"title": "The next web has agents in it.",
-					"description": "The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec. three.ws is contributing to the W3C — proposing a new Community Group: 3D AI Agents & On-Chain Identity for the Web.",
+					"description": "The next web has agents in it. They need identity, embodiment, and a way to transact. We're working on the spec. three.ws is contributing to the W3C - proposing a new Community Group: 3D AI Agents & On-Chain Identity for the Web.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7108,7 +7118,7 @@
 				{
 					"path": "/news/2052189491801284690",
 					"title": "verifiable identity means agents can own wallets, manage assets autonomously, and…",
-					"description": "verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain without it you can't distinguish legitimate agents from imposters or track their actions basically enables the whole agent economy to function with trust — and three.ws i…",
+					"description": "verifiable identity means agents can own wallets, manage assets autonomously, and build reputation onchain without it you can't distinguish legitimate agents from imposters or track their actions basically enables the whole agent economy to function with trust - and three.ws i…",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7298,7 +7308,7 @@
 				{
 					"path": "/news/2050284562069266616",
 					"title": "slowly then all at once",
-					"description": "slowly then all at once three.ws — the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.",
+					"description": "slowly then all at once three.ws - the 3D layer for the internet. On-chain agents with identity, memory, voice, and the ability to transact. One tag. Any page.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7348,7 +7358,7 @@
 				{
 					"path": "/news/2050016695897706885",
 					"title": "three.ws is listed on",
-					"description": "three.ws is listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.",
+					"description": "three.ws is listed on @AnthropicAI 's official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7368,7 +7378,7 @@
 				{
 					"path": "/news/2049765915575914834",
 					"title": "meeting with Google Cloud team for Google Cloud for Web3 Startups partnership",
-					"description": "meeting with Google Cloud team for Google Cloud for Web3 Startups partnership more compute incoming — expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.",
+					"description": "meeting with Google Cloud team for Google Cloud for Web3 Startups partnership more compute incoming - expanding our 3D rendering pipeline and global inference capacity for browser-native on-chain agents.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7468,7 +7478,7 @@
 				{
 					"path": "/news/2049412062837928202",
 					"title": "three.ws is now listed on",
-					"description": "three.ws is now listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws",
+					"description": "three.ws is now listed on @AnthropicAI 's official MCP Registry - the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -7497,8 +7507,8 @@
 				},
 				{
 					"path": "/news/2045242891350814835",
-					"title": "three Ws — @phantom is excited about three.ws bringing on-chain 3D AI agents to the…",
-					"description": "three Ws — @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.",
+					"title": "three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the…",
+					"description": "three Ws - @phantom is excited about three.ws bringing on-chain 3D AI agents to the Solana ecosystem.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

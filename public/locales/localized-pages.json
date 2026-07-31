@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 350,
+	"count": 351,
 	"paths": [
 		"/",
 		"/3d",
@@ -147,6 +147,7 @@
 		"/lookup",
 		"/marketplace",
 		"/markets",
+		"/mcp-tools",
 		"/meta-allocator",
 		"/minted",
 		"/mirror",

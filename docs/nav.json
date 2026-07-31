@@ -842,6 +842,14 @@
 					"path": "sdk"
 				},
 				{
+					"label": "Avatar CLI",
+					"path": "avatar-cli"
+				},
+				{
+					"label": "Rig Doctor (will my GLB animate?)",
+					"path": "rig-doctor"
+				},
+				{
 					"label": "Widgets",
 					"path": "widgets"
 				},
@@ -1051,12 +1059,20 @@
 				{
 					"label": "Write a repository guard",
 					"path": "tutorials/write-a-guard"
+				},
+				{
+					"label": "Ship an avatar manifest",
+					"path": "tutorials/ship-an-avatar-manifest"
 				}
 			]
 		},
 		{
 			"title": "Reference",
 			"links": [
+				{
+					"label": "Live Docs (runnable samples)",
+					"path": "live-docs"
+				},
 				{
 					"label": "Docs World (3D docs)",
 					"path": "docs-world"

@@ -72,6 +72,15 @@ const SKIP = [
 	// pattern table.
 	/^scripts\/check-rules\.mjs$/,
 	/^scripts\/check-claude-md\.mjs$/,
+	// The guard registry, for the same reason. Every guard there carries a
+	// PROOF: the exact violation it must reject, stored verbatim so
+	// scripts/prove-guards.mjs can write it into a sandbox and watch the guard
+	// fire. Proving this script works therefore requires storing a line that
+	// this script forbids. Scanning the fixtures reports the evidence as the
+	// offense. The prose fields (title, protects, why, proof summaries) are
+	// still held to the typography rule, by scripts/audit-guards.mjs.
+	/^data\/guards\.json$/,
+	/^public\/guards\.json$/,
 ];
 const skipped = (file) => SKIP.some((re) => re.test(file));
 

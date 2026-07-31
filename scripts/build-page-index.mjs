@@ -33,7 +33,35 @@ const publicDir = resolve(root, 'public');
 const newsRoutesFile = resolve(root, 'data/_generated/news-routes.json');
 const newsSourceFile = resolve(root, 'data/rss/items.json');
 
-const data = JSON.parse(readFileSync(dataFile, 'utf8'));
+// Last gate before public output: the house style bans the em-dash and en-dash
+// glyphs everywhere, but titles and summaries are hand-authored in
+// data/pages.json and data/changelog.json by many hands. Rather than hope every
+// author types the right character, normalize on the way out so no generated
+// surface (CHANGELOG.md, llms-full.txt, the RSS feed, features.json) can carry
+// one. A spaced hyphen is the allowed substitute and never changes the meaning.
+// Every rewrite is reported so the underlying data still gets cleaned up.
+const dashHits = [];
+function plain(value, where) {
+	if (typeof value !== 'string' || !/[—–]/.test(value)) return value;
+	if (where) dashHits.push(where);
+	return value
+		.replace(/\s*[—–]\s*/g, ' - ')
+		.replace(/ {2,}/g, ' ')
+		.trim();
+}
+// Recursively normalize every string in a parsed data file.
+function plainDeep(node, where) {
+	if (typeof node === 'string') return plain(node, where);
+	if (Array.isArray(node)) return node.map((n) => plainDeep(n, where));
+	if (node && typeof node === 'object') {
+		const out = {};
+		for (const [k, v] of Object.entries(node)) out[k] = plainDeep(v, where);
+		return out;
+	}
+	return node;
+}
+
+const data = plainDeep(JSON.parse(readFileSync(dataFile, 'utf8')), 'data/pages.json');
 const { site } = data;
 const sections = [...data.sections];
 
@@ -42,7 +70,7 @@ const sections = [...data.sections];
 // to holders.
 const changelogFile = resolve(root, 'data/changelog.json');
 const CHANGELOG_TAGS = new Set(['feature', 'improvement', 'fix', 'sdk', 'infra', 'docs', 'security']);
-const curatedEntries = JSON.parse(readFileSync(changelogFile, 'utf8')).entries;
+const curatedEntries = plainDeep(JSON.parse(readFileSync(changelogFile, 'utf8')).entries, 'data/changelog.json');
 for (const e of curatedEntries) {
 	const ctx = `data/changelog.json entry "${e.title || '?'}" (${e.date || 'no date'})`;
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date || '')) throw new Error(`${ctx}: date must be YYYY-MM-DD`);
@@ -69,7 +97,7 @@ if (!existsSync(newsRoutesFile) && existsSync(newsSourceFile)) {
 	execFileSync('node', [resolve(here, 'build-news.mjs')], { stdio: 'inherit', cwd: root });
 }
 if (existsSync(newsRoutesFile)) {
-	const newsRoutes = JSON.parse(readFileSync(newsRoutesFile, 'utf8'));
+	const newsRoutes = plainDeep(JSON.parse(readFileSync(newsRoutesFile, 'utf8')), 'data/rss/items.json');
 	if (Array.isArray(newsRoutes) && newsRoutes.length) {
 		sections.push({
 			id: 'news',
@@ -137,7 +165,7 @@ function buildLlmsTxt() {
 // ────────────────────────────────────────────────────────────────────────
 function buildLlmsFull() {
 	const lines = [];
-	lines.push(`# ${site.name} — Complete Page Index`);
+	lines.push(`# ${site.name}: Complete Page Index`);
 	lines.push('');
 	lines.push(site.description);
 	lines.push('');
@@ -500,7 +528,7 @@ function buildChangelog() {
 	const lines = [];
 	lines.push('# Changelog');
 	lines.push('');
-	lines.push('<!-- Generated from data/pages.json + data/changelog.json by scripts/build-page-index.mjs — DO NOT EDIT BY HAND. Add updates to data/changelog.json. -->');
+	lines.push('<!-- Generated from data/pages.json + data/changelog.json by scripts/build-page-index.mjs. DO NOT EDIT BY HAND. Add updates to data/changelog.json. -->');
 	lines.push('');
 	lines.push(`Public history for [${site.name}](${baseUrl}), newest first. New pages come from \`added\` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](${baseUrl}/changelog.json) and [RSS](${baseUrl}/changelog.xml), live at [${baseUrl.replace(/^https?:\/\//, '')}/changelog](${baseUrl}/changelog).`);
 	lines.push('');
@@ -509,9 +537,9 @@ function buildChangelog() {
 		lines.push('');
 		for (const item of items) {
 			if (item.type === 'launch') {
-				lines.push(`- **${item.title}** (\`${item.link}\`) — ${item.summary}`);
+				lines.push(`- **${item.title}** (\`${item.link}\`): ${item.summary}`);
 			} else {
-				lines.push(`- **${item.title}** — ${item.summary}${item.link ? ` (\`${item.link}\`)` : ''} \`[${item.tags.join(', ')}]\``);
+				lines.push(`- **${item.title}**: ${item.summary}${item.link ? ` (\`${item.link}\`)` : ''} \`[${item.tags.join(', ')}]\``);
 			}
 		}
 		lines.push('');
@@ -556,7 +584,7 @@ function buildChangelogRss() {
 \t\t<title>${escapeHtml(site.name)} changelog</title>
 \t\t<link>${baseUrl}/changelog</link>
 \t\t<atom:link href="${baseUrl}/changelog.xml" rel="self" type="application/rss+xml"/>
-\t\t<description>What's new on ${escapeHtml(site.name)} — features, improvements, and releases, newest first.</description>
+\t\t<description>What's new on ${escapeHtml(site.name)}: features, improvements, and releases, newest first.</description>
 \t\t<language>en</language>
 ${items}
 \t</channel>
@@ -633,4 +661,9 @@ for (const { file, content } of outputs) {
 	const rel = file.slice(root.length + 1);
 	console.log(`${changed ? 'wrote ' : 'same  '} ${rel}`);
 }
-console.log(`\n${allPages.length} pages across ${sections.length} sections — ${wrote}/${outputs.length} files updated.`);
+console.log(`\n${allPages.length} pages across ${sections.length} sections, ${wrote}/${outputs.length} files updated.`);
+if (dashHits.length) {
+	const bySource = dashHits.reduce((acc, s) => ((acc[s] = (acc[s] || 0) + 1), acc), {});
+	const summary = Object.entries(bySource).map(([s, n]) => `${n} in ${s}`).join(', ');
+	console.log(`normalized ${dashHits.length} em/en-dash to a plain hyphen on the way out (${summary}). Fix them at the source so authored copy matches what ships.`);
+}

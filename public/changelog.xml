@@ -4,8 +4,16 @@
 		<title>three.ws changelog</title>
 		<link>https://three.ws/changelog</link>
 		<atom:link href="https://three.ws/changelog.xml" rel="self" type="application/rss+xml"/>
-		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
+		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
+		<item>
+			<title>Atlas</title>
+			<link>https://three.ws/atlas</link>
+			<guid isPermaLink="false">2026-07-31:Atlas</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.</description>
+		</item>
 		<item>
 			<title>Agent Gestures</title>
 			<link>https://three.ws/gestures</link>
@@ -2100,7 +2108,7 @@
 			<guid isPermaLink="false">2026-07-23:Opening a 3D object gives you a viewer, not a chatbot</guid>
 			<pubDate>Thu, 23 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
-			<description>Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an &quot;Ask the agent&quot; box and prompts like &quot;Why are you embodied?&quot; that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing — Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.</description>
+			<description>Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an &quot;Ask the agent&quot; box and prompts like &quot;Why are you embodied?&quot; that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing: Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.</description>
 		</item>
 		<item>
 			<title>Real materials: skin, glass, and car paint that actually behave like the real thing</title>

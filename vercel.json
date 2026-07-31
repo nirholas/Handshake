@@ -2447,6 +2447,10 @@
 			"dest": "/api/marketplace/analytics"
 		},
 		{
+			"src": "/api/marketplace/trial-status",
+			"dest": "/api/marketplace/trial-status"
+		},
+		{
 			"src": "/api/users/me/transaction-history",
 			"dest": "/api/users/me/transaction-history"
 		},

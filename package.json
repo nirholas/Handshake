@@ -141,8 +141,10 @@
 		"audit:mcp": "node scripts/audit-mcp-manifests.mjs",
 		"smoke:mcp": "node scripts/smoke-mcp-remotes.mjs",
 		"test:mcp": "node scripts/test-mcp-all.mjs",
-		"audit:pages": "node scripts/audit-page-index.mjs",
+		"audit:pages": "node scripts/audit-page-index.mjs --strict",
 		"audit:docs": "node scripts/audit-docs.mjs",
+		"tutorials:media": "node scripts/capture-tutorial-media.mjs",
+		"tutorials:media:check": "node scripts/capture-tutorial-media.mjs --check",
 		"audit:routes": "node scripts/verify-routes.mjs",
 		"audit:handlers": "node scripts/audit-empty-handlers.mjs",
 		"audit:x402-catalog": "node scripts/audit-x402-catalog.mjs",
@@ -233,6 +235,7 @@
 		"audit:a11y": "playwright test tests/e2e/a11y-top-pages.spec.js",
 		"perf:mobile": "node scripts/mobile-perf.mjs",
 		"audit:mobile-touch": "node scripts/mobile-touch-audit.mjs",
+		"audit:overlays": "node scripts/audit-overlays.mjs",
 		"test:pages": "node scripts/test-pages.mjs",
 		"verify:ibm": "node scripts/verify-ibm-pages.mjs",
 		"verify:zauth": "node scripts/verify-zauth-runtime.mjs",
@@ -289,7 +292,8 @@
 		"typecheck": "tsc -p jsconfig.json",
 		"okx:bot": "node scripts/okx-bot-revive.mjs",
 		"check:conflicts": "node scripts/check-merge-conflicts.mjs",
-		"check:browser-graph": "node scripts/check-browser-graph.mjs"
+		"check:browser-graph": "node scripts/check-browser-graph.mjs",
+		"prove:guards": "node scripts/prove-guards.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

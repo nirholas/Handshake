@@ -1399,7 +1399,7 @@
 		{
 			"date": "2026-07-23",
 			"title": "Opening a 3D object gives you a viewer, not a chatbot",
-			"summary": "Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an \"Ask the agent\" box and prompts like \"Why are you embodied?\" that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing — Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.",
+			"summary": "Previewing a prop from the CC0 object library (a wrench, a vase, an ammo box) used to drop you into the embodied-agent surface, complete with an \"Ask the agent\" box and prompts like \"Why are you embodied?\" that make no sense for an inanimate object. Objects now open in a dedicated viewer mode: the agent chat and avatar controls are gone, replaced by the things you actually want for a 3D thing: Restyle to recolor or AI-restyle its materials, View in AR to place it in your room, and Download the CC0 GLB. Avatars are untouched and still open with the full agent experience.",
 			"tags": [
 				"improvement"
 			],

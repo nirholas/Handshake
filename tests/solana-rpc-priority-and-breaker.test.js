@@ -198,6 +198,37 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 		expect(badKey).toBeGreaterThanOrEqual(30 * 60_000);
 	});
 
+	it('benches a lane that bans us outright, even though the word "blocked" appears', () => {
+		// The dangerous direction of the short-cooldown rule. Three of these bodies
+		// say "blocked", but only the first names a CALL SHAPE the node refuses; the
+		// rest refuse the CALLER, so the node cannot serve the next request either and
+		// must leave the rotation for the full auth window. Matching "blocked" alone
+		// would hand an IP ban a 30-second park and let the rotation slam a banned node
+		// roughly 120 times an hour.
+		expect(
+			markEndpointCooldown(
+				'https://ip-ban.example/rpc',
+				403,
+				'{"code":403,"message":"Your IP or provider is blocked from this endpoint"}',
+			),
+		).toBeGreaterThanOrEqual(30 * 60_000);
+		expect(
+			markEndpointCooldown('https://geo-ban.example/rpc', 403, 'access denied: region not supported'),
+		).toBeGreaterThanOrEqual(30 * 60_000);
+		expect(
+			markEndpointCooldown('https://no-key.example/rpc', 403, '{"error":"api key required"}'),
+		).toBeGreaterThanOrEqual(30 * 60_000);
+
+		// Same body, classified for a DIFFERENT question: an IP ban still has to
+		// rotate this one request onto another lane. The two rules disagree on
+		// purpose, so pin both sides here rather than letting one drift into the other.
+		expect(
+			classifyRpcBody(
+				'{"jsonrpc":"2.0","id":1,"error":{"code":403,"message":"Your IP or provider is blocked from this endpoint"}}',
+			),
+		).toBeTruthy();
+	});
+
 	it('renders sub-minute cooldowns in seconds so a policy block cannot read as a bench', () => {
 		// The triage scanner keys the self-healing `solana-rpc-policy-block`
 		// signature on `cooling <n>s`. Rounding 30s to "1m" would both overstate the
