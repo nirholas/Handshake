@@ -359,6 +359,7 @@ const appConfig = {
 				'app-next': resolve(__dirname, 'pages/app-next.html'),
 				home: resolve(__dirname, 'pages/home.html'),
 				'what-is': resolve(__dirname, 'pages/what-is.html'),
+				atlas: resolve(__dirname, 'pages/atlas.html'),
 				tour: resolve(__dirname, 'pages/tour.html'),
 				concierge: resolve(__dirname, 'pages/concierge.html'),
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),

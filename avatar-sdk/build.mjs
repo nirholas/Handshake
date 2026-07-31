@@ -30,6 +30,22 @@ mkdirSync(outDir, { recursive: true });
 
 copyFileSync(src, resolve(outDir, 'index.mjs'));
 
+// Runtime modules published as their own subpaths. Both are dependency-free
+// (no Three.js, no DOM), which is the whole reason they can ship this way: a
+// consumer driving its own renderer wants the gesture vocabulary and the
+// routine sequencer without pulling in a second WebGL context. `choreography`
+// imports `animation-slots` by relative path, so they travel together.
+const runtimeDir = resolve(outDir, 'runtime');
+mkdirSync(runtimeDir, { recursive: true });
+for (const name of ['animation-slots.js', 'choreography.js']) {
+	const from = resolve(repoRoot, 'src', 'runtime', name);
+	if (!existsSync(from)) {
+		console.error(`[avatar-sdk] src/runtime/${name} is missing. Cannot publish the subpath.`);
+		process.exit(1);
+	}
+	copyFileSync(from, resolve(runtimeDir, name));
+}
+
 // Stylesheet stub. The custom element injects its own styles, so this is empty
 // — but consumers that bundle ".css" side-effect imports get a no-op instead
 // of a missing-file error.

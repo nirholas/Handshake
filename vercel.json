@@ -231,6 +231,10 @@
 			"dest": "/api/cdn-object?key=$1"
 		},
 		{
+			"src": "/atlas/?$",
+			"dest": "/atlas.html"
+		},
+		{
 			"src": "/agent-exchange",
 			"dest": "/agent-exchange.html"
 		},

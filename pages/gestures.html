@@ -15,12 +15,12 @@
 		<meta property="og:title" content="Agent Gestures · three.ws" />
 		<meta property="og:description" content="The agent gesture vocabulary: 19 slots, the clip each plays, the skills that trigger them, and a live override builder." />
 		<meta property="og:url" content="https://three.ws/gestures" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Gestures&amp;d=Every+gesture+a+three.ws+agent+can+play%2C+previewed+live%2C+with+the+skills+that+trigger+it.&amp;p=%2Fgestures" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Agent+Gestures&amp;d=The+three.ws+agent+gesture+vocabulary%3A+every+animation+slot%2C+the+clip+it+plays%2C+the+skills+that+trigger+it%2C+and+a+builder+for+overriding+any+slot+on+your+own&amp;p=%2Fgestures" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="twitter:title" content="Agent Gestures · three.ws" />
 		<meta name="twitter:description" content="19 gesture slots, previewed live, with the skills that trigger each one." />
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Gestures&amp;d=Every+gesture+a+three.ws+agent+can+play%2C+previewed+live%2C+with+the+skills+that+trigger+it.&amp;p=%2Fgestures" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Agent+Gestures&amp;d=The+three.ws+agent+gesture+vocabulary%3A+every+animation+slot%2C+the+clip+it+plays%2C+the+skills+that+trigger+it%2C+and+a+builder+for+overriding+any+slot+on+your+own&amp;p=%2Fgestures" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -60,8 +60,9 @@
 					it, and how to point a slot at any other clip in the library.
 				</p>
 				<div class="gv-hero-actions">
-					<a class="gv-btn gv-btn--primary" href="/animations">Browse every clip</a>
-					<a class="gv-btn gv-btn--secondary" href="/pose">Animation Studio</a>
+					<a class="gv-btn gv-btn--primary" href="/choreograph">Sequence gestures into a routine</a>
+					<a class="gv-btn gv-btn--secondary" href="/animations">Browse every clip</a>
+					<a class="gv-btn gv-btn--ghost" href="/pose">Animation Studio</a>
 					<a class="gv-btn gv-btn--ghost" href="/docs/animations">Developer reference</a>
 				</div>
 				<dl class="gv-stats" data-role="stats" aria-live="polite">
@@ -153,6 +154,10 @@
 
 						<div class="gv-override-actions">
 							<button type="button" class="gv-btn gv-btn--ghost" data-role="override-reset">Reset to default</button>
+							<!-- Carries the staged slot and clip straight into the sequencer,
+							     so "this gesture is good" turns into a routine without
+							     re-picking it there. Href is rewritten on every selection. -->
+							<a class="gv-btn gv-btn--ghost" href="/choreograph" data-role="override-sequence">Use in a routine</a>
 						</div>
 					</div>
 				</aside>

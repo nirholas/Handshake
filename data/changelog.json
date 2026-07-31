@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-31",
+			"title": "Your agent can perform a routine, not just a gesture",
+			"summary": "Until now an agent's body language was one beat at a time: a wave, a nod, a celebration, each fired on its own by something that happened. There was no way to say \"when someone lands on my agent, have it wave, then nod, then settle\", which is what a greeting actually is. The new Choreographer at three.ws/choreograph is a timeline for exactly that. Drop gestures onto it, set how long each one holds, drag them into the order you want, and watch the whole performance play on a live 3D avatar as you edit, with a playhead that follows along. Five routines are there to start from (a welcome, a demo pitch, a win, a failure, and a waiting loop) and every one of them is editable. Save a routine to an agent you own and it travels with that agent: any site embedding it can play the whole performance by name with one line of code, and it holds the stage, so a stray reaction cannot cut into the middle of it. A routine is also just a link, so you can share one with someone who has no account and they can open it, play it, and change it. Routines are built from gesture names rather than specific motion files, which means the same routine looks right on someone else's agent, in their agent's own body language.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/choreograph"
+		},
+		{
 			"date": "2026-07-30",
 			"title": "Your agent's gestures now work, and you can choose them",
 			"summary": "Every agent has a fixed set of gestures it plays on its own: a nod when its body finishes loading, a look down while it reads on-chain data, a celebration when a payment settles. Several of those were pointing at the wrong motion, and the two most common ones, the gesture for reading data and the gesture for acting on it, were playing nothing at all across 38 of the skills that ask for them. Both are fixed, and five gestures that had been borrowing a stand-in clip (wave, nod, point, think and shrug) now play the real thing. A new page at three.ws/gestures shows the whole vocabulary on a live avatar: click a gesture to watch it, see which skills trigger it, and pick a different clip for any of them. That choice used to be documented but impossible to make, since nothing could save it and nothing read it back. Now the agent editor has a Gesture slots section, the API accepts the map, and an embedded avatar plays your agent's own body language instead of the defaults. Ten gallery posters that had rendered blank, and eight clips that never got one, were rendered too.",

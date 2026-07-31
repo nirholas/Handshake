@@ -59,6 +59,8 @@
 			"import": "./src/react.jsx",
 			"default": "./src/react.jsx"
 		},
+		"./runtime/choreography.js": "./dist/runtime/choreography.js",
+		"./runtime/animation-slots.js": "./dist/runtime/animation-slots.js",
 		"./style.css": "./dist/style.css"
 	},
 	"files": [

@@ -74,6 +74,8 @@ const state = {
 	stagedClip: null, // clip currently mounted on the stage
 	agents: null, // null = not fetched, [] = signed out or none
 	dragIndex: -1,
+	loadedFromLink: false,
+	boundClips: [],
 };
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
@@ -425,6 +427,10 @@ function renderSavedRoutines() {
 
 /** Every mutation funnels through here so the URL, exports and stage agree. */
 function commit({ restage = true } = {}) {
+	// Any edit answers the "your link was broken" notice: the routine on screen
+	// is now the user's own, so the warning about the one they arrived with is
+	// stale.
+	setNotice('');
 	renderSteps();
 	if (restage) restageIfPlaying();
 	highlightActive();
@@ -466,6 +472,19 @@ function moveStep(from, to) {
 
 function setStatus(text) {
 	el('stage-status').textContent = text;
+}
+
+/**
+ * The one message that gets its own visible slot. `setStatus` writes to a
+ * screen-reader live region, which is right for play/pause chatter and wrong
+ * for "your link was broken": a sighted user arriving on a bad share link would
+ * otherwise see a routine they did not ask for and no explanation.
+ * @param {string} text (empty to clear)
+ */
+function setNotice(text) {
+	const box = el('notice');
+	box.textContent = text;
+	box.hidden = !text;
 }
 
 function setStageState(name, detail = '') {
@@ -532,6 +551,10 @@ async function startPlayback(fromIndex = 0) {
 	el('stage-loading-text').textContent =
 		state.stagedClip ? 'Cueing the routine…' : 'Retargeting the routine…';
 	if (!state.stagedClip) setStageState('loading');
+	// Flip the transport before the await. Binding every clip in the routine can
+	// take seconds on a cold first play, and a play button that still reads "▶"
+	// while the stage spins reads as a click that did not register.
+	setPlayButton(true);
 
 	await prepareClips(routine);
 
@@ -976,9 +999,14 @@ renderPresets();
 wire();
 loadManifest();
 loadAgents();
-if (!applyDeepLink()) {
+const linkError = applyDeepLink();
+if (!state.loadedFromLink) {
 	// An empty timeline is the hardest screen to start on, so the page opens on a
 	// real routine. Nothing 3D loads until the user presses play.
 	loadRoutine(PRESET_ROUTINES[0], { announce: false });
-	setStatus('Loaded the Welcome routine. Press play, or change any step.');
+	const opening = linkError
+		? `That shared routine could not be read (${linkError}). Loaded the Welcome routine instead.`
+		: 'Loaded the Welcome routine. Press play, or change any step.';
+	setStatus(opening);
+	if (linkError) setNotice(opening);
 }

@@ -503,7 +503,14 @@ export class AgentAvatar {
 	playChoreography(nameOrRoutine, opts = {}) {
 		let routine = null;
 		if (typeof nameOrRoutine === 'string') {
-			routine = this._routines?.get(slugify(nameOrRoutine)) ?? null;
+			// Ids are the contract, but a caller who types the display name it saw
+			// in the studio ("Take a bow") means the same routine as `take-a-bow`,
+			// and failing that is a papercut with no upside.
+			const key = slugify(nameOrRoutine);
+			routine =
+				this._routines?.get(key) ??
+				[...(this._routines?.values() ?? [])].find((r) => slugify(r.name) === key) ??
+				null;
 			if (!routine) {
 				log.warn(`[AgentAvatar] no choreography named "${nameOrRoutine}"`);
 				return false;

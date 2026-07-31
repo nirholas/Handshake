@@ -241,6 +241,11 @@ function renderOverride() {
 	$('code', el('override-code')).textContent = json;
 	const isDefault = state.clip === DEFAULT_ANIMATION_MAP[state.slot];
 	el('override-reset').disabled = isDefault;
+	// Hand the staged slot (and its clip, when it is not the default) to the
+	// sequencer as a one-step routine. Same wire format /choreograph shares with,
+	// so the link is the routine rather than a hint to go rebuild it there.
+	const step = isDefault ? `${state.slot}:1.6` : `${state.slot}:1.6@${state.clip}`;
+	el('override-sequence').href = `/choreograph?r=${encodeURIComponent(state.slot)}|${step}`;
 	renderApply();
 }
 

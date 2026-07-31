@@ -693,6 +693,10 @@
 					"path": "animations"
 				},
 				{
+					"label": "Choreography (gesture routines)",
+					"path": "choreography"
+				},
+				{
 					"label": "Avatar inspector",
 					"path": "avatar-inspector"
 				},

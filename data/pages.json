@@ -56,6 +56,14 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/choreograph",
+					"title": "Choreographer",
+					"description": "Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
+				},
+				{
 					"path": "/character-library",
 					"title": "Character Library",
 					"description": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
@@ -3571,6 +3579,13 @@
 					"path": "/docs/animations",
 					"title": "Docs · Animations",
 					"description": "The motion clips (idle, wave, dance, and about 2,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/choreography",
+					"title": "Docs · Choreography",
+					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},

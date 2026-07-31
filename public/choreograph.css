@@ -108,6 +108,17 @@
 	gap: 10px;
 }
 
+.ch-notice {
+	margin: 18px 0 0;
+	padding: 11px 14px;
+	border: 1px solid color-mix(in srgb, var(--ch-err) 45%, transparent);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--ch-err) 12%, transparent);
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--text, #fafafa);
+}
+
 /* ── Buttons ───────────────────────────────────────────────────────────── */
 
 .ch-btn {
