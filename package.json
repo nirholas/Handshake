@@ -293,7 +293,8 @@
 		"okx:bot": "node scripts/okx-bot-revive.mjs",
 		"check:conflicts": "node scripts/check-merge-conflicts.mjs",
 		"check:browser-graph": "node scripts/check-browser-graph.mjs",
-		"prove:guards": "node scripts/prove-guards.mjs"
+		"prove:guards": "node scripts/prove-guards.mjs",
+		"capture:docs-world": "node scripts/capture-docs-media.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

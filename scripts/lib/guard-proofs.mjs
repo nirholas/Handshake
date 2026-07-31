@@ -234,12 +234,12 @@ export function applyJsonOp(root, op) {
 }
 
 /** Apply the violation: writes, appends, JSON edits, symlinks, then deletes. */
-export function applyViolation(root, violation) {
-	applyFiles(root, violation.write);
+export function applyViolation(root, violation, context) {
+	applyFiles(root, violation.write, context);
 	for (const [rel, tail] of Object.entries(violation.append)) {
 		const abs = path.join(root, rel);
 		const head = existsSync(abs) ? readFileSync(abs, 'utf8') : '';
-		writeInto(root, rel, head + tail);
+		writeInto(root, rel, head + tail, context);
 	}
 	for (const op of violation.json) applyJsonOp(root, op);
 	for (const [rel, target] of Object.entries(violation.link)) {
@@ -308,7 +308,8 @@ export function unstageSandbox(root) {
 	spawnSync('git', ['reset', '--quiet'], { cwd: root, stdio: 'ignore' });
 }
 
-export function proveGuard(guard, proof, sandbox, { run = runGuard, stage = stageSandbox, unstage = unstageSandbox } = {}) {
+export function proveGuard(guard, proof, sandbox, options = {}) {
+	const { run = runGuard, stage = stageSandbox, unstage = unstageSandbox, context = {} } = options;
 	if (proof.kind === 'live') {
 		return {
 			id: guard.id,
@@ -320,31 +321,49 @@ export function proveGuard(guard, proof, sandbox, { run = runGuard, stage = stag
 
 	const saved = snapshot(sandbox, touchedPaths(proof));
 	try {
-		applyFiles(sandbox, proof.setup);
+		applyFiles(sandbox, proof.setup, context);
 		const control = run(guard.command, sandbox);
-		if (control.code !== 0) {
+
+		// A red baseline is not automatically a broken proof. Some guards are
+		// failing on the tree right now for reasons that have nothing to do with
+		// the fixture (a long tail of stub hrefs, a doc link someone else broke),
+		// and refusing to prove them would mean the guards most likely to be
+		// ignored are also the ones nobody verifies.
+		//
+		// So a red baseline downgrades the proof to a DIFFERENTIAL one, which is
+		// still sound: the expected fragment must be ABSENT before the mutation
+		// and PRESENT after it. That attributes the new finding to the fixture
+		// just as tightly as a clean baseline does. What it cannot do is hide the
+		// red: `baseline: "red"` rides along on the result and the runner reports
+		// it, because a guard that fails on its own repository is its own defect.
+		const baseline = control.code === 0 ? 'clean' : 'red';
+		if (baseline === 'red' && control.output.includes(proof.expect)) {
 			return {
 				id: guard.id,
 				verdict: VERDICTS.CONTROL_FAILED,
 				summary: proof.summary,
+				baseline,
 				controlCode: control.code,
 				output: excerpt(control.output),
 				ms: control.ms,
+				note: `the tree already produces "${proof.expect}" before the fixture is applied, so nothing can be attributed to it`,
 			};
 		}
 
-		applyViolation(sandbox, proof.violation);
+		applyViolation(sandbox, proof.violation, context);
 		if (proof.stage) stage(sandbox);
 		const violated = run(guard.command, sandbox);
+		const ms = control.ms + violated.ms;
 		if (violated.code === 0) {
 			return {
 				id: guard.id,
 				verdict: VERDICTS.NOT_CAUGHT,
 				summary: proof.summary,
-				controlCode: 0,
+				baseline,
+				controlCode: control.code,
 				violationCode: 0,
 				output: excerpt(violated.output),
-				ms: control.ms + violated.ms,
+				ms,
 			};
 		}
 		if (!violated.output.includes(proof.expect)) {
@@ -352,21 +371,23 @@ export function proveGuard(guard, proof, sandbox, { run = runGuard, stage = stag
 				id: guard.id,
 				verdict: VERDICTS.WRONG_REASON,
 				summary: proof.summary,
+				baseline,
 				expect: proof.expect,
-				controlCode: 0,
+				controlCode: control.code,
 				violationCode: violated.code,
 				output: excerpt(violated.output),
-				ms: control.ms + violated.ms,
+				ms,
 			};
 		}
 		return {
 			id: guard.id,
 			verdict: VERDICTS.PROVEN,
 			summary: proof.summary,
-			controlCode: 0,
+			baseline,
+			controlCode: control.code,
 			violationCode: violated.code,
 			evidence: firstMatchingLine(violated.output, proof.expect),
-			ms: control.ms + violated.ms,
+			ms,
 		};
 	} finally {
 		if (proof.stage) unstage(sandbox);
