@@ -108,6 +108,48 @@
 		.mc-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 		.mc-reset { margin-left: auto; }
 
+		/* ── trust policy ───────────────────────────────────────────────── */
+		.mc-policy {
+			border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px);
+			background: linear-gradient(180deg, var(--surface-2, rgba(255,255,255,0.05)), transparent 65%);
+			padding: 20px 20px 22px; margin: 0 0 26px;
+		}
+		.mc-policy-head h2 { margin: 0 0 8px; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--ink-bright, var(--ink)); }
+		.mc-policy-head p { margin: 0; max-width: 74ch; font-size: 0.89rem; line-height: 1.6; color: var(--ink-dim); }
+		.mc-policy-head a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		.mc-policy-head a:hover { color: var(--ink-bright, var(--ink)); }
+
+		.mc-policy-profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 16px 0 18px; }
+		.mc-prof {
+			display: flex; flex-direction: column; gap: 5px; text-align: left; font: inherit; cursor: pointer;
+			padding: 13px 14px; color: var(--ink); background: var(--surface-1, rgba(255,255,255,0.03));
+			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+			transition: border-color 0.15s ease, background 0.15s ease;
+		}
+		.mc-prof:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.06)); }
+		.mc-prof:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-prof[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft, var(--surface-3)); }
+		.mc-prof-name { font-weight: 650; font-size: 0.92rem; color: var(--ink-bright, var(--ink)); }
+		.mc-prof-name em { font-style: normal; font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-left: 6px; }
+		.mc-prof-desc { font-size: 0.8rem; line-height: 1.45; color: var(--ink-dim); }
+		.mc-prof-counts { font-size: 0.74rem; font-variant-numeric: tabular-nums; color: var(--ink-faint, var(--ink-dim)); margin-top: 2px; }
+
+		.mc-policy-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+		.mc-tab {
+			font: inherit; font-size: 0.8rem; padding: 5px 12px; cursor: pointer; color: var(--ink-dim);
+			background: transparent; border: 1px solid var(--stroke); border-radius: 999px;
+			transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+		}
+		.mc-tab:hover { color: var(--ink); border-color: var(--stroke-strong); }
+		.mc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-tab[aria-selected="true"] { color: var(--ink-bright, var(--ink)); border-color: currentColor; background: var(--surface-3, rgba(255,255,255,0.08)); }
+		.mc-policy-where { margin: 0 0 10px; font-size: 0.8rem; color: var(--ink-dim); }
+		.mc-policy-where code { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); }
+		.mc-policy-out .mc-snippet pre { max-height: 260px; overflow: auto; }
+		.mc-policy-live { margin: 10px 0 0; font-size: 0.78rem; line-height: 1.5; color: var(--ink-faint, var(--ink-dim)); }
+		.mc-policy-live a { color: var(--ink-dim); font-family: var(--font-mono, ui-monospace, monospace); }
+		.mc-policy-live a:hover { color: var(--ink); }
+
 		.mc-count { font-size: 0.85rem; color: var(--ink-dim); margin: 0 0 14px; font-variant-numeric: tabular-nums; }
 
 		/* ── tool grid ──────────────────────────────────────────────────── */
@@ -250,6 +292,57 @@
 				<button type="button" class="mc-btn mc-reset" id="mc-reset" hidden data-i18n="mcp_tools.clear_filters">Clear filters</button>
 			</div>
 		</div>
+
+		<section class="mc-policy" id="mc-policy" aria-labelledby="mc-policy-h">
+			<div class="mc-policy-head">
+				<div>
+					<h2 id="mc-policy-h">Let your assistant run the safe ones by itself</h2>
+					<p>
+						Your AI client decides whether to run a tool without asking you by trusting its
+						read-only label. Everywhere else that label is the tool author's own word for it.
+						Here it is <a href="/docs/mcp-safety">checked against the code on every build</a>,
+						so it is worth automating on. Pick how much you want automated and paste the result
+						into your client.
+					</p>
+				</div>
+			</div>
+
+			<div class="mc-policy-profiles" role="radiogroup" aria-label="How much to automate">
+				<button type="button" class="mc-prof" data-profile="strict" role="radio" aria-checked="false">
+					<span class="mc-prof-name">Strict</span>
+					<span class="mc-prof-desc">Only free, verified reads run by themselves. Nothing irreversible may run at all.</span>
+					<span class="mc-prof-counts" data-counts></span>
+				</button>
+				<button type="button" class="mc-prof" data-profile="balanced" role="radio" aria-checked="true">
+					<span class="mc-prof-name">Balanced <em>recommended</em></span>
+					<span class="mc-prof-desc">Every verified read runs. Anything that changes state asks first.</span>
+					<span class="mc-prof-counts" data-counts></span>
+				</button>
+				<button type="button" class="mc-prof" data-profile="open" role="radio" aria-checked="false">
+					<span class="mc-prof-name">Open</span>
+					<span class="mc-prof-desc">Reads and reversible writes run. Only the un-undoable stops for you.</span>
+					<span class="mc-prof-counts" data-counts></span>
+				</button>
+			</div>
+
+			<div class="mc-policy-out">
+				<div class="mc-policy-tabs" role="tablist" aria-label="Client format">
+					<button type="button" class="mc-tab" data-format="claude" role="tab" aria-selected="true">Claude</button>
+					<button type="button" class="mc-tab" data-format="vscode" role="tab" aria-selected="false">VS Code</button>
+					<button type="button" class="mc-tab" data-format="json" role="tab" aria-selected="false">Portable JSON</button>
+				</div>
+				<p class="mc-policy-where" id="mc-policy-where"></p>
+				<div class="mc-snippet">
+					<pre><code id="mc-policy-code">Loading the policy…</code></pre>
+					<button type="button" class="mc-btn mc-copy" id="mc-policy-copy">Copy</button>
+				</div>
+				<p class="mc-policy-live">
+					Always current: <a id="mc-policy-url" href="/api/mcp-policy">/api/mcp-policy</a> returns
+					this same document, so a client can refetch it instead of pinning a copy that goes stale
+					as tools are added.
+				</p>
+			</div>
+		</section>
 
 		<p class="mc-count" id="mc-count" role="status" aria-live="polite"></p>
 		<div class="mc-grid" id="mc-grid"></div>
@@ -581,6 +674,123 @@
 			}
 		});
 
+		// ── trust policy ──────────────────────────────────────────────────
+		// The decision (which tools may run unattended) belongs to /api/mcp-policy
+		// and is fetched, never re-implemented here: a second copy of those rules
+		// in the page would drift from the endpoint a client actually consumes.
+		// Only the per-client formatting below is presentational, derived from the
+		// buckets the endpoint returns.
+		const WHERE = {
+			claude: 'Paste into <code>.claude/settings.json</code> in your project, or your user settings.',
+			vscode: 'Paste into VS Code <code>settings.json</code>.',
+			json: 'The portable document, for any client that can read an allowlist.',
+		};
+
+		const policyState = { profile: 'balanced', format: 'claude' };
+		const policyCache = new Map();
+		const codeEl = () => document.getElementById('mc-policy-code');
+
+		async function loadPolicy(profile) {
+			if (policyCache.has(profile)) return policyCache.get(profile);
+			const res = await fetch(`/api/mcp-policy?profile=${encodeURIComponent(profile)}`, {
+				headers: { accept: 'application/json' },
+			});
+			if (!res.ok) throw new Error(`the policy endpoint returned ${res.status}`);
+			const doc = await res.json();
+			policyCache.set(profile, doc);
+			return doc;
+		}
+
+		/** Shape one policy document for a specific client's settings file. */
+		function formatPolicy(doc, format) {
+			const ids = (bucket) => doc.rules[bucket].map((t) => t.permission);
+			if (format === 'claude') {
+				return { permissions: { allow: ids('allow'), ask: ids('confirm'), deny: ids('deny') } };
+			}
+			if (format === 'vscode') {
+				const tools = {};
+				for (const id of ids('allow')) tools[id] = true;
+				for (const id of [...ids('confirm'), ...ids('deny')]) tools[id] = false;
+				return { 'chat.tools.autoApprove': tools };
+			}
+			return doc;
+		}
+
+		let policyText = '';
+
+		async function renderPolicy() {
+			for (const btn of document.querySelectorAll('.mc-prof')) {
+				btn.setAttribute('aria-checked', String(btn.dataset.profile === policyState.profile));
+			}
+			for (const tab of document.querySelectorAll('.mc-tab')) {
+				tab.setAttribute('aria-selected', String(tab.dataset.format === policyState.format));
+			}
+			document.getElementById('mc-policy-where').innerHTML = WHERE[policyState.format];
+
+			const link = document.getElementById('mc-policy-url');
+			const href = `/api/mcp-policy?profile=${policyState.profile}&format=${policyState.format}`;
+			link.href = href;
+			link.textContent = href;
+
+			let doc;
+			try {
+				doc = await loadPolicy(policyState.profile);
+			} catch (error) {
+				policyText = '';
+				codeEl().textContent =
+					`Could not load the policy: ${error.message}.\nFetch it directly at ${href}`;
+				return;
+			}
+
+			policyText = JSON.stringify(formatPolicy(doc, policyState.format), null, 2);
+			codeEl().textContent = policyText;
+
+			// Each profile advertises its own split, so the trade-off is visible
+			// before you pick. Fetched lazily; the active one is always accurate.
+			for (const btn of document.querySelectorAll('.mc-prof')) {
+				const cached = policyCache.get(btn.dataset.profile);
+				if (!cached) continue;
+				const c = cached.counts;
+				btn.querySelector('[data-counts]').textContent =
+					`${c.allow} run on their own · ${c.confirm} ask` + (c.deny ? ` · ${c.deny} blocked` : '');
+			}
+		}
+
+		/** Warm the other profiles so their counts appear without a click. */
+		async function warmPolicyCounts() {
+			await Promise.all(
+				['strict', 'balanced', 'open'].map((p) => loadPolicy(p).catch(() => null)),
+			);
+			renderPolicy();
+		}
+
+		for (const btn of document.querySelectorAll('.mc-prof')) {
+			btn.addEventListener('click', () => {
+				policyState.profile = btn.dataset.profile;
+				renderPolicy();
+			});
+		}
+		for (const tab of document.querySelectorAll('.mc-tab')) {
+			tab.addEventListener('click', () => {
+				policyState.format = tab.dataset.format;
+				renderPolicy();
+			});
+		}
+
+		document.getElementById('mc-policy-copy').addEventListener('click', async (event) => {
+			const btn = event.currentTarget;
+			if (!policyText) return;
+			try {
+				await navigator.clipboard.writeText(policyText);
+				btn.textContent = 'Copied';
+			} catch {
+				btn.textContent = 'Select and copy';
+			}
+			setTimeout(() => {
+				btn.textContent = 'Copy';
+			}, 1600);
+		});
+
 		// ── load ──────────────────────────────────────────────────────────
 		async function load() {
 			renderSkeleton();
@@ -606,6 +816,7 @@
 			readUrl();
 			syncChips();
 			render();
+			warmPolicyCounts();
 
 			const linked = new URLSearchParams(location.search).get('tool');
 			if (linked) {

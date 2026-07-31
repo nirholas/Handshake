@@ -1,0 +1,226 @@
+/**
+ * GET /api/marketplace/trial-status?role=buyer|seller
+ *
+ * The marketplace's conversion surface. A metered free trial is only a funnel
+ * if somebody can see it draining; until this endpoint existed the platform
+ * held thousands of live trials and exposed exactly one bit about any of them
+ * (`has_access: true|false`), so neither side of a trade could act on the one
+ * moment that actually converts: a buyer who liked a skill enough to spend
+ * every free run and wants another.
+ *
+ * Two perspectives, one route:
+ *
+ *   role=buyer  (default)  the caller's own trials, each with the runs left,
+ *                          the price to keep it, and a state to render against.
+ *   role=seller            trials running on skills the caller's agents sell,
+ *                          aggregated per skill, with the revenue sitting in
+ *                          the queue.
+ *
+ * Privacy: the seller view is deliberately COUNTS ONLY. A seller learns that
+ * nine buyers burned through a trial of `icon-set`; they never learn who. The
+ * buyer view is scoped to the caller's own rows. Neither view can be widened by
+ * a query param, because `role` selects between two fixed queries rather than
+ * parameterising one.
+ *
+ * Auth: session cookie or API-key bearer. Read-only, so no CSRF.
+ */
+
+import { sql } from '../_lib/db.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
+import { clientIp, limits } from '../_lib/rate-limit.js';
+
+/** Trials whose remaining runs are at or below this share of the grant are "running low". */
+const LOW_WATER_SHARE = 1 / 3;
+
+/**
+ * Where a trial sits in its life. `exhausted` is the highest-intent state in
+ * the marketplace: the buyer used everything they were given and came back.
+ */
+export function trialState(remaining, granted) {
+	const left = Number(remaining ?? 0);
+	if (left <= 0) return 'exhausted';
+	const total = Number(granted ?? 0);
+	if (total > 0 && left / total <= LOW_WATER_SHARE) return 'running-low';
+	if (left === 1) return 'running-low';
+	return 'fresh';
+}
+
+/**
+ * Atomic token amounts are strings out of Postgres (they overflow a JS number
+ * at 2^53). Format for display without ever going through Number().
+ */
+export function formatAtomic(atomic, decimals = 6) {
+	const raw = String(atomic ?? '0').replace(/[^0-9]/g, '') || '0';
+	const d = Number.isFinite(Number(decimals)) ? Math.max(0, Math.min(18, Number(decimals))) : 6;
+	if (d === 0) return raw.replace(/^0+(?=\d)/, '');
+	const padded = raw.padStart(d + 1, '0');
+	const whole = padded.slice(0, -d).replace(/^0+(?=\d)/, '');
+	const frac = padded.slice(-d).replace(/0+$/, '');
+	const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	return frac ? `${grouped}.${frac}` : grouped;
+}
+
+/** Sum atomic strings without precision loss. */
+function sumAtomic(values) {
+	let total = 0n;
+	for (const v of values) {
+		const digits = String(v ?? '0').replace(/[^0-9]/g, '');
+		if (digits) total += BigInt(digits);
+	}
+	return total.toString();
+}
+
+function priceOf(row) {
+	if (row.amount === null || row.amount === undefined) return null;
+	const decimals = row.mint_decimals ?? 6;
+	return {
+		atomic: String(row.amount),
+		decimals,
+		display: formatAtomic(row.amount, decimals),
+		mint: row.currency_mint || null,
+		chain: row.chain || 'solana',
+	};
+}
+
+export async function buyerView(userId) {
+	const rows = await sql`
+		SELECT sp.id, sp.agent_id, sp.skill, sp.trial_remaining, sp.created_at, sp.updated_at,
+		       ai.name               AS agent_name,
+		       ai.profile_image_url  AS agent_image,
+		       asp.trial_uses, asp.amount, asp.currency_mint, asp.chain, asp.mint_decimals
+		  FROM skill_purchases sp
+		  JOIN agent_identities ai
+		    ON ai.id = sp.agent_id AND ai.deleted_at IS NULL
+		  LEFT JOIN agent_skill_prices asp
+		    ON asp.agent_id = sp.agent_id AND asp.skill = sp.skill AND asp.is_active = true
+		 WHERE sp.user_id = ${userId} AND sp.status = 'trial'
+		 ORDER BY COALESCE(sp.trial_remaining, 0) ASC, sp.updated_at DESC
+		 LIMIT 200
+	`;
+
+	const trials = rows.map((r) => ({
+		purchaseId: r.id,
+		agentId: r.agent_id,
+		agentName: r.agent_name,
+		agentImage: r.agent_image || null,
+		skill: r.skill,
+		trialRemaining: Number(r.trial_remaining ?? 0),
+		trialUses: r.trial_uses === null || r.trial_uses === undefined ? null : Number(r.trial_uses),
+		state: trialState(r.trial_remaining, r.trial_uses),
+		price: priceOf(r),
+		startedAt: r.created_at,
+		lastUsedAt: r.updated_at,
+		agentUrl: `/agent/${r.agent_id}`,
+	}));
+
+	return {
+		role: 'buyer',
+		trials,
+		summary: {
+			active: trials.length,
+			fresh: trials.filter((t) => t.state === 'fresh').length,
+			runningLow: trials.filter((t) => t.state === 'running-low').length,
+			exhausted: trials.filter((t) => t.state === 'exhausted').length,
+		},
+	};
+}
+
+export async function sellerView(userId) {
+	const rows = await sql`
+		SELECT sp.agent_id, sp.skill,
+		       ai.name              AS agent_name,
+		       ai.profile_image_url AS agent_image,
+		       COUNT(*)::int                                                        AS active_trials,
+		       COUNT(*) FILTER (WHERE COALESCE(sp.trial_remaining, 0) <= 0)::int    AS exhausted,
+		       COUNT(*) FILTER (WHERE COALESCE(sp.trial_remaining, 0) = 1)::int     AS last_run,
+		       MAX(sp.updated_at)                                                   AS last_activity,
+		       asp.trial_uses, asp.amount, asp.currency_mint, asp.chain, asp.mint_decimals
+		  FROM skill_purchases sp
+		  JOIN agent_identities ai
+		    ON ai.id = sp.agent_id AND ai.deleted_at IS NULL
+		  LEFT JOIN agent_skill_prices asp
+		    ON asp.agent_id = sp.agent_id AND asp.skill = sp.skill AND asp.is_active = true
+		 WHERE ai.user_id = ${userId} AND sp.status = 'trial'
+		 GROUP BY sp.agent_id, sp.skill, ai.name, ai.profile_image_url,
+		          asp.trial_uses, asp.amount, asp.currency_mint, asp.chain, asp.mint_decimals
+		 ORDER BY exhausted DESC, last_run DESC, active_trials DESC
+		 LIMIT 200
+	`;
+
+	// Sales already made against these same skills, so the queue can be read
+	// against a real conversion rate instead of an absolute count nobody can
+	// calibrate. Scoped to the caller's agents by the same ownership join.
+	const soldRows = await sql`
+		SELECT sp.agent_id, sp.skill, COUNT(*)::int AS sold
+		  FROM skill_purchases sp
+		  JOIN agent_identities ai
+		    ON ai.id = sp.agent_id AND ai.deleted_at IS NULL
+		 WHERE ai.user_id = ${userId} AND sp.status = 'confirmed'
+		 GROUP BY sp.agent_id, sp.skill
+	`;
+	const sold = new Map(soldRows.map((r) => [`${r.agent_id}::${r.skill}`, r.sold]));
+
+	const queue = rows.map((r) => {
+		const price = priceOf(r);
+		// What the buyers already at zero would pay if every one of them converted.
+		const potential = price ? (BigInt(price.atomic) * BigInt(r.exhausted)).toString() : null;
+		const soldCount = sold.get(`${r.agent_id}::${r.skill}`) || 0;
+		return {
+			agentId: r.agent_id,
+			agentName: r.agent_name,
+			agentImage: r.agent_image || null,
+			skill: r.skill,
+			activeTrials: r.active_trials,
+			exhausted: r.exhausted,
+			lastRun: r.last_run,
+			sold: soldCount,
+			conversionRate: soldCount + r.active_trials > 0 ? soldCount / (soldCount + r.active_trials) : 0,
+			trialUses: r.trial_uses === null || r.trial_uses === undefined ? null : Number(r.trial_uses),
+			lastActivity: r.last_activity,
+			price,
+			potential: price
+				? { atomic: potential, display: formatAtomic(potential, price.decimals), mint: price.mint }
+				: null,
+			pricingUrl: `/dashboard-next/agent?id=${r.agent_id}`,
+		};
+	});
+
+	const decimals = queue.find((q) => q.price)?.price.decimals ?? 6;
+	const potentialAtomic = sumAtomic(queue.map((q) => q.potential?.atomic || '0'));
+
+	return {
+		role: 'seller',
+		queue,
+		summary: {
+			skillsWithTrials: queue.length,
+			activeTrials: queue.reduce((n, q) => n + q.activeTrials, 0),
+			warmLeads: queue.reduce((n, q) => n + q.exhausted, 0),
+			lastRun: queue.reduce((n, q) => n + q.lastRun, 0),
+			sold: queue.reduce((n, q) => n + q.sold, 0),
+			potential: { atomic: potentialAtomic, decimals, display: formatAtomic(potentialAtomic, decimals) },
+		},
+	};
+}
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	const userId = session?.id || bearer?.userId;
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const role = new URL(req.url, 'http://x').searchParams.get('role') || 'buyer';
+	if (role !== 'buyer' && role !== 'seller') {
+		return error(res, 400, 'validation_error', "role must be 'buyer' or 'seller'");
+	}
+
+	const data = role === 'seller' ? await sellerView(userId) : await buyerView(userId);
+	res.setHeader('Cache-Control', 'private, no-store');
+	return json(res, 200, { data });
+});

@@ -5,12 +5,17 @@
  * Checks the skill has trial_uses > 0 on agent_skill_prices.
  * Inserts a skill_purchases row with status='trial', kind='trial', no payment.
  * Rate-limit: one trial per (user, agent, skill).
+ *
+ * Auth: browser session cookie (CSRF enforced) OR an API-key bearer token, the
+ * same pair every other marketplace write accepts. Without the bearer branch a
+ * script had to scrape a session cookie and mint a CSRF token just to take a
+ * free trial, while the purchase that follows it took a plain bearer header.
  */
 
 import { z } from 'zod';
 import crypto from 'node:crypto';
 import { sql } from '../_lib/db.js';
-import { getSessionUser } from '../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -25,10 +30,14 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const session = await getSessionUser(req);
+	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	const userId = session?.id || bearer?.userId;
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const csrfOk = await requireCsrf(req, res, user.id);
+	// requireCsrf short-circuits on an Authorization: Bearer header, so this is
+	// a no-op for key callers and still mandatory for cookie callers.
+	const csrfOk = await requireCsrf(req, res, userId);
 	if (!csrfOk) return;
 
 	const rl = await limits.authIp(clientIp(req));
@@ -58,7 +67,7 @@ export default wrap(async (req, res) => {
 	const [existing] = await sql`
 		SELECT id, status, trial_remaining
 		FROM skill_purchases
-		WHERE user_id = ${user.id} AND agent_id = ${agent_id} AND skill = ${skill}
+		WHERE user_id = ${userId} AND agent_id = ${agent_id} AND skill = ${skill}
 		  AND status IN ('confirmed', 'trial')
 		LIMIT 1
 	`;
@@ -79,7 +88,7 @@ export default wrap(async (req, res) => {
 	// Check rate-limit: one trial attempt per (user, agent, skill) — look at any prior trial row
 	const [priorTrial] = await sql`
 		SELECT id FROM skill_purchases
-		WHERE user_id = ${user.id} AND agent_id = ${agent_id} AND skill = ${skill}
+		WHERE user_id = ${userId} AND agent_id = ${agent_id} AND skill = ${skill}
 		  AND kind = 'trial'
 		LIMIT 1
 	`;
@@ -93,7 +102,7 @@ export default wrap(async (req, res) => {
 		INSERT INTO skill_purchases
 			(user_id, agent_id, skill, status, kind, reference, amount, currency_mint, chain, trial_remaining)
 		VALUES
-			(${user.id}, ${agent_id}, ${skill}, 'trial', 'trial', ${reference},
+			(${userId}, ${agent_id}, ${skill}, 'trial', 'trial', ${reference},
 			 ${price.amount}, ${price.currency_mint}, ${price.chain}, ${price.trial_uses})
 		RETURNING id, trial_remaining, reference, created_at
 	`;

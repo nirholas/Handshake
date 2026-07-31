@@ -41,8 +41,21 @@
 			"title": "Merge-conflict markers",
 			"protects": "No unresolved conflict marker can be built or deployed.",
 			"why": "A stash-pop conflict was once committed wholesale and reached production source. A conflict marker is a syntax error rather than a lint violation, so neither eslint nor vitest caught it. It runs first in both chains because it costs seconds and the build costs minutes.",
-			"stages": ["gate", "build:gcp"],
-			"needs": "none"
+			"stages": [
+				"gate",
+				"build:gcp"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A staged source file carrying an unresolved conflict marker.",
+				"stage": true,
+				"violation": {
+					"write": {
+						"src/guard-proof-conflict.js": "export const side = 'resolved';\n<<<<<<< HEAD\nexport const owner = 'ours';\n=======\nexport const owner = 'theirs';\n>>>>>>> feature\n"
+					}
+				},
+				"expect": "src/guard-proof-conflict.js"
+			}
 		},
 		{
 			"id": "check-claude-md",
@@ -51,8 +64,19 @@
 			"title": "CLAUDE.md truth check",
 			"protects": "Every script, path, count, and runbook step named in CLAUDE.md matches the repo.",
 			"why": "Agents execute CLAUDE.md verbatim, so a stale line does not read as stale, it reads as an instruction. Each claim is re-derived from its source of truth on every run: the cron count from vercel.json, the deploy chain order from the real npm script, the documented git remotes from git itself.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "CLAUDE.md telling an agent to run an npm script that does not exist.",
+				"violation": {
+					"append": {
+						"CLAUDE.md": "\n\nProof fixture: verify the toolchain with `npm run guard-proof-nonexistent`.\n"
+					}
+				},
+				"expect": "guard-proof-nonexistent"
+			}
 		},
 		{
 			"id": "check-rules",
@@ -61,19 +85,39 @@
 			"title": "Hard rules, diff scoped",
 			"protects": "The CLAUDE.md hard rules on the lines you actually changed.",
 			"why": "A repo-wide sweep is impossible because thousands of tracked files predate the rules. Reading added lines only stops the bleeding without rewriting history: your change is held to the bar, the legacy around it is left alone. It also synthesizes hunks for untracked files, which a bare git diff cannot see.",
-			"stages": ["pre-push"],
-			"needs": "none"
+			"stages": [
+				"pre-push"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A new source file whose added lines break a CLAUDE.md hard rule.",
+				"violation": {
+					"write": {
+						"src/guard-proof-rule.js": "// TODO: wire this up later\nexport function proofFixture() {\n\treturn null;\n}\n"
+					}
+				},
+				"expect": "src/guard-proof-rule.js"
+			}
 		},
 		{
 			"id": "check-cron-drift",
 			"script": "scripts/check-cron-drift.mjs",
 			"npm": "check:cron-drift",
-			"npmAliases": ["check:cron-syntax"],
+			"npmAliases": [
+				"check:cron-syntax"
+			],
 			"title": "Cron schedule drift",
 			"protects": "Every cron declared in vercel.json is a valid expression, and matches what Cloud Scheduler is actually running.",
 			"why": "vercel.json is a live config file: the scheduler sync seeds Cloud Scheduler from its crons array. A schedule edited without a re-sync, or a job paused by hand during an incident and never resumed, fails silently because the declared config still looks right. The offline half validates expressions and runs in the gate; the live half compares against the running jobs.",
-			"stages": ["gate", "manual"],
-			"needs": "gcloud"
+			"stages": [
+				"gate",
+				"manual"
+			],
+			"needs": "gcloud",
+			"proof": {
+				"kind": "live",
+				"reason": "Compares the crons declared in vercel.json against the jobs actually deployed to Cloud Scheduler, so it needs an authenticated gcloud session and the live project. There is nothing offline to mutate."
+			}
 		},
 		{
 			"id": "audit-page-index",
@@ -82,8 +126,28 @@
 			"title": "Route documentation",
 			"protects": "Every human-facing route in vercel.json is documented in data/pages.json.",
 			"why": "data/pages.json feeds the sitemap, llms.txt, features.json, and the changelog. A page missing from it is invisible to crawlers and to the changelog, so it ships without ever being announced.",
-			"stages": ["prebuild", "gate"],
-			"needs": "none"
+			"stages": [
+				"prebuild",
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A public page route in vercel.json that no data/pages.json entry documents.",
+				"violation": {
+					"json": [
+						{
+							"file": "vercel.json",
+							"pointer": "routes",
+							"at": 0,
+							"insert": {
+								"src": "/guard-proof-orphan",
+								"dest": "/guard-proof-orphan.html"
+							}
+						}
+					]
+				},
+				"expect": "guard-proof-orphan"
+			}
 		},
 		{
 			"id": "check-pages",
@@ -92,8 +156,23 @@
 			"title": "Declared pages resolve",
 			"protects": "Every page declared in data/pages.json is actually reachable.",
 			"why": "Anything listed in pages.json is advertised to crawlers the moment it lands. Two pages shipped as hard 404s in three days, each with a built dist file and no route rewrite. The local mode gates the deploy build; the base-url mode sweeps a live deployment after it.",
-			"stages": ["build:gcp"],
-			"needs": "none"
+			"stages": [
+				"build:gcp"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A page advertised in data/pages.json with no built file behind it.",
+				"setup": {
+					"data/pages.json": "{\n\t\"site\": {\n\t\t\"base\": \"https://three.ws\"\n\t},\n\t\"sections\": [\n\t\t{\n\t\t\t\"id\": \"main\",\n\t\t\t\"title\": \"Main\",\n\t\t\t\"description\": \"Proof fixture section.\",\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"path\": \"/guards\",\n\t\t\t\t\t\"title\": \"Guards\",\n\t\t\t\t\t\"description\": \"Proof fixture page.\",\n\t\t\t\t\t\"priority\": 0.5,\n\t\t\t\t\t\"changefreq\": \"weekly\",\n\t\t\t\t\t\"added\": \"2026-07-31\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}\n",
+					"dist/guards.html": "<!doctype html><title>guards</title>\n"
+				},
+				"violation": {
+					"delete": [
+						"dist/guards.html"
+					]
+				},
+				"expect": "unreachable page"
+			}
 		},
 		{
 			"id": "verify-routes",
@@ -102,8 +181,25 @@
 			"title": "Routing and 404 model",
 			"protects": "Every catalog page is reachable, unknown paths reach the designed 404, and no page route is shadowed by an earlier rule.",
 			"why": "The route table is evaluated in order and split at the filesystem marker, so an earlier catch-all can swallow a later literal route. A handler can be routed and still never run, which is invisible until someone reports the endpoint dead.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "Deleting the route that serves a catalogued page, so its pretty URL 404s.",
+				"violation": {
+					"json": [
+						{
+							"file": "vercel.json",
+							"pointer": "routes",
+							"removeWhere": {
+								"src": "/guards/?"
+							}
+						}
+					]
+				},
+				"expect": "/guards"
+			}
 		},
 		{
 			"id": "audit-empty-handlers",
@@ -112,8 +208,20 @@
 			"title": "API handlers export a body",
 			"protects": "No API handler ships as an empty file or without an export.",
 			"why": "The api tree uses a dispatcher-shim pattern where a real endpoint can be a one-line re-export, which makes an accidentally empty handler look normal in review and return nothing in production.",
-			"stages": ["prebuild", "gate"],
-			"needs": "none"
+			"stages": [
+				"prebuild",
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "An API file that is routable but exports nothing, so it can never serve a response.",
+				"violation": {
+					"write": {
+						"api/guard-proof-empty.js": "\n"
+					}
+				},
+				"expect": "api/guard-proof-empty.js"
+			}
 		},
 		{
 			"id": "audit-hidden-guard",
@@ -122,8 +230,20 @@
 			"title": "The [hidden] guard",
 			"protects": "Every page resolves the CSS that makes the hidden attribute actually hide.",
 			"why": "The hidden HTML attribute only hides an element while some stylesheet maps it. A page that misses that rule renders its hidden scaffolding to real users. This is the verifier half of an inject-and-audit pair.",
-			"stages": ["prebuild", "gate"],
-			"needs": "none"
+			"stages": [
+				"prebuild",
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A product page that links no shared stylesheet, so [hidden] never hides anything.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-unguarded.html": "<!doctype html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Proof</title></head>\n<body><div hidden class=\"overlay\">covers everything</div></body>\n</html>\n"
+					}
+				},
+				"expect": "guard-proof-unguarded.html"
+			}
 		},
 		{
 			"id": "audit-docs",
@@ -132,8 +252,19 @@
 			"title": "Documentation integrity",
 			"protects": "No dead relative link, no site link that matches no route, no command naming a script that no longer exists, and no packages or workers directory without a README.",
 			"why": "Docs rot silently: a page gets renamed, a script gets dropped, a directory moves, and the doc that pointed at it keeps looking correct. Renaming or deleting a file is exactly when this earns its keep.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A doc whose relative link points at a file that does not exist.",
+				"violation": {
+					"write": {
+						"docs/guard-proof-dead-link.md": "# Proof fixture\n\nSee [the missing reference](./guard-proof-nowhere.md) for details.\n"
+					}
+				},
+				"expect": "guard-proof-dead-link.md"
+			}
 		},
 		{
 			"id": "sync-tutorial-pages",
@@ -142,8 +273,19 @@
 			"title": "Tutorial reachability",
 			"protects": "Every tutorial appears in the library manifest, has its markdown on disk, and is registered in data/pages.json, with no duplicate slugs.",
 			"why": "Three files have to agree for a tutorial to be both reachable and indexable, and nothing checked that they did: forty-one live tutorials were missing from the page index and invisible to search, and three had markdown with no card in the library. Run it with --write to register what is missing.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A tutorial markdown file that no manifest entry points at, so nothing can reach it.",
+				"violation": {
+					"write": {
+						"docs/tutorials/guard-proof-orphan.md": "# Proof fixture tutorial\n\nThis file exists on disk and in no index.\n"
+					}
+				},
+				"expect": "guard-proof-orphan"
+			}
 		},
 		{
 			"id": "audit-mcp-catalog",
@@ -152,8 +294,19 @@
 			"title": "MCP tool catalog freshness",
 			"protects": "public/mcp-catalog.json matches what the MCP servers actually expose.",
 			"why": "The searchable tool index at /mcp-tools renders from the generated catalog. A stale catalog advertises tools that moved, renamed, or no longer exist, which is worse than advertising nothing.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A new MCP tool landing without regenerating the public catalog.",
+				"violation": {
+					"write": {
+						"api/_mcp/tools/guard-proof-catalog.js": "export const guardProofTool = {\n\tname: 'guard_proof_catalog',\n\tdescription: 'Proof fixture tool used only inside the guard sandbox.',\n\tinputSchema: { type: 'object', properties: {}, additionalProperties: false },\n\tannotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },\n};\n"
+					}
+				},
+				"expect": "public/mcp-catalog.json is stale"
+			}
 		},
 		{
 			"id": "audit-x402-catalog",
@@ -162,8 +315,19 @@
 			"title": "x402 endpoint catalog",
 			"protects": "Every paid endpoint under api/x402 is documented in the public catalog.",
 			"why": "Each paid endpoint is a sellable product an agent can discover and call. One that exists but is undocumented earns nothing, because no buyer can find it.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A paid x402 endpoint that no buyer can find, because the catalog never mentions it.",
+				"violation": {
+					"write": {
+						"api/x402/guard-proof-endpoint.js": "export default async function handler(req, res) {\n\tres.status(200).json({ ok: true });\n}\n"
+					}
+				},
+				"expect": "guard-proof-endpoint"
+			}
 		},
 		{
 			"id": "audit-mcp-manifests",
@@ -172,8 +336,23 @@
 			"title": "MCP manifests",
 			"protects": "Every MCP registry manifest satisfies the official registry's rules, offline.",
 			"why": "The official registry enforces these rules at publish time, so a manifest that drifts past them blocks the next publish instead of failing here, where it is cheap to fix.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A registry manifest whose description exceeds the 100-character schema limit.",
+				"violation": {
+					"json": [
+						{
+							"file": "server.json",
+							"pointer": "description",
+							"set": "A deliberately overlong registry description used by the guard proof sandbox to exceed the one hundred character schema limit imposed by the registry."
+						}
+					]
+				},
+				"expect": "[audit:mcp]"
+			}
 		},
 		{
 			"id": "audit-mcp-golden",
@@ -182,8 +361,19 @@
 			"title": "MCP golden contracts",
 			"protects": "Tool names, descriptions, annotations, and input schemas of every hosted MCP server, against a committed snapshot.",
 			"why": "That contract is what external agents integrate against, so a well-meaning description edit silently changes how other people's agents route. It parses the sources statically rather than importing them, because importing would pull in database and RPC clients.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A tool contract appearing on the wire without being declared in the golden fixture.",
+				"violation": {
+					"write": {
+						"api/_mcp/tools/guard-proof-golden.js": "export const guardProofGoldenTool = {\n\tname: 'guard_proof_golden',\n\tdescription: 'Proof fixture tool used only inside the guard sandbox.',\n\tinputSchema: { type: 'object', properties: {}, additionalProperties: false },\n\tannotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },\n};\n"
+					}
+				},
+				"expect": "[audit:mcp-golden]"
+			}
 		},
 		{
 			"id": "audit-mcp-safety",
@@ -192,8 +382,19 @@
 			"title": "MCP safety annotations",
 			"protects": "Every MCP tool's declared safety annotations match what its handler actually does.",
 			"why": "Annotations are not decoration: clients read readOnlyHint and destructiveHint to decide what may run without asking a human. A tool that writes while claiming to be read-only removes a confirmation the user was relying on.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A tool shipping with no safety annotations at all, so a client cannot judge it.",
+				"violation": {
+					"write": {
+						"api/_mcp/tools/guard-proof-safety.js": "export const guardProofSafetyTool = {\n\tname: 'guard_proof_safety',\n\tdescription: 'Proof fixture tool used only inside the guard sandbox.',\n\tinputSchema: { type: 'object', properties: {}, additionalProperties: false },\n\tasync handler() {\n\t\treturn { ok: true };\n\t},\n};\n"
+					}
+				},
+				"expect": "no annotations"
+			}
 		},
 		{
 			"id": "audit-token-drift",
@@ -202,8 +403,19 @@
 			"title": "Design-token ratchet",
 			"protects": "Hardcoded colour hexes cannot creep back past a committed baseline.",
 			"why": "public/tokens.css is the single source of truth for colour primitives, but a big-bang cleanup of every legacy hex is not possible. Counting violations against a baseline and failing only when the count rises makes the debt strictly decreasing.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A token-covered page hardcoding a hex that is literally a design token.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-token.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\"><title>Proof</title>\n<link rel=\"stylesheet\" href=\"/style.css\">\n<style>\n.proof-a { color: #4ade80; }\n.proof-b { color: #f87171; }\n</style>\n</head>\n<body><p class=\"proof-a\">fixture</p></body>\n</html>\n"
+					}
+				},
+				"expect": "design-token drift increased"
+			}
 		},
 		{
 			"id": "check-browser-graph",
@@ -212,8 +424,19 @@
 			"title": "Browser bundle purity",
 			"protects": "No Node-only module leaks into the browser bundle.",
 			"why": "A Node builtin pulled into browser code does not fail the build, it fails at runtime in the user's tab, usually on a page nobody tested after the import was added.",
-			"stages": ["build:gcp"],
-			"needs": "none"
+			"stages": [
+				"build:gcp"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A Node built-in reaching the browser bundle through a real import chain.",
+				"violation": {
+					"append": {
+						"src/agent-skills.js": "\nimport 'node:zlib';\n"
+					}
+				},
+				"expect": "node:zlib"
+			}
 		},
 		{
 			"id": "check-dist",
@@ -222,8 +445,24 @@
 			"title": "Build output shape",
 			"protects": "dist/ contains every artifact the deploy expects, including the UMD library bundle.",
 			"why": "The frontend build empties dist/, so anything written before it is destroyed. This fails the build when the order was wrong instead of shipping an image missing its pages or its library.",
-			"stages": ["build:gcp"],
-			"needs": "none"
+			"stages": [
+				"build:gcp"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A build that finished without producing the published embed bundle.",
+				"setup": {
+					"dist/agent-3d/latest/agent-3d.js": "export const proof = 1;\n",
+					"dist/agent-3d/latest/agent-3d.umd.cjs": "module.exports = { proof: 1 };\n",
+					"dist/agent-3d/versions.json": "{\"latest\":\"0.0.0-proof\"}\n"
+				},
+				"violation": {
+					"delete": [
+						"dist/agent-3d/latest/agent-3d.umd.cjs"
+					]
+				},
+				"expect": "[check-dist] MISSING"
+			}
 		},
 		{
 			"id": "audit-deploy-artifacts",
@@ -232,8 +471,20 @@
 			"title": "Deploy artifact preflight",
 			"protects": "The two artifact failure classes that have taken production down.",
 			"why": "Both are invisible in a diff and obvious in seconds if something looks. Running it before a submit costs nothing next to a failed Cloud Build.",
-			"stages": ["manual"],
-			"needs": "none"
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A symlink committed to the index, which the deploy bundler cannot resolve.",
+				"stage": true,
+				"violation": {
+					"link": {
+						"data/guard-proof-link.md": "../README.md"
+					}
+				},
+				"expect": "guard-proof-link.md"
+			}
 		},
 		{
 			"id": "check-gcloudignore",
@@ -242,8 +493,19 @@
 			"title": "Cloud Build upload contents",
 			"protects": "What `gcloud builds submit` would actually upload.",
 			"why": "An over-broad ignore file silently drops a file the build needs; an under-broad one uploads gigabytes of node_modules and times out. Neither is visible until the build runs.",
-			"stages": ["manual"],
-			"needs": "gcloud"
+			"stages": [
+				"manual"
+			],
+			"needs": "gcloud",
+			"proof": {
+				"summary": "A missing .gcloudignore, which silently hands the upload set back to .gitignore.",
+				"violation": {
+					"delete": [
+						".gcloudignore"
+					]
+				},
+				"expect": "ignore file not found"
+			}
 		},
 		{
 			"id": "audit-links",
@@ -252,8 +514,19 @@
 			"title": "Site link integrity",
 			"protects": "Every navigable target across pages, public, and src resolves to a real route or file.",
 			"why": "It resolves each link against the real routing model rather than assuming the catch-all rules count as proof, so a dead internal path cannot hide behind a wildcard that would serve a 404 page.",
-			"stages": ["manual"],
-			"needs": "none"
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A page linking to a route that resolves to nothing.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-deadlink.html": "<!doctype html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Proof</title><link rel=\"stylesheet\" href=\"/style.css\"></head>\n<body><a href=\"/guard-proof-nowhere\">go nowhere</a></body>\n</html>\n"
+					}
+				},
+				"expect": "guard-proof-nowhere"
+			}
 		},
 		{
 			"id": "audit-console",
@@ -262,8 +535,14 @@
 			"title": "Console sweep",
 			"protects": "A clean browser console on every canonical route, at desktop and mobile widths.",
 			"why": "A clean console is part of the definition of done, and the only way to prove it is to drive the real pages in a real browser. Environment noise is filtered so the output is signal.",
-			"stages": ["manual"],
-			"needs": "browser"
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Drives a real browser over the live page set and reads the console, so it needs Playwright and a running server. A static fixture cannot produce a runtime console error."
+			}
 		},
 		{
 			"id": "audit-image-loading",
@@ -272,8 +551,19 @@
 			"title": "Image loading attributes",
 			"protects": "Every JS-rendered image sets its loading and decoding attributes.",
 			"why": "These images pull remote thumbnails and avatars. Without the attributes the browser blocks rendering on images far below the fold, which shows up as a slow page rather than as an error.",
-			"stages": ["manual"],
-			"needs": "none"
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A JS-rendered image with no loading attribute, which fetches eagerly off-screen.",
+				"violation": {
+					"write": {
+						"src/guard-proof-img.js": "export function proofThumb(url) {\n\treturn `<img src=\"${url}\" alt=\"proof\">`;\n}\n"
+					}
+				},
+				"expect": "guard-proof-img.js"
+			}
 		},
 		{
 			"id": "audit-garments",
@@ -282,8 +572,14 @@
 			"title": "Wardrobe catalog integrity",
 			"protects": "Every garment in the live catalog validates, and its GLB hash matches its manifest.",
 			"why": "It runs the same validation the closet runs at consume time, against the real fetched asset, so a re-uploaded or corrupted GLB is caught before a user wears it.",
-			"stages": ["manual"],
-			"needs": "network"
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Fetches every published garment asset over the network and inspects the returned GLB, so there is no offline input to mutate."
+			}
 		},
 		{
 			"id": "audit-rig-coverage",
@@ -292,8 +588,14 @@
 			"title": "Rig coverage",
 			"protects": "How well the canonicalizer maps the skeletons actually stored in production.",
 			"why": "The bone-name tables grew by anticipating rig conventions, and anticipation is not evidence. This walks real avatars and ranks the unmapped bone names by frequency, so the next mapping to add is a measurement rather than a guess.",
-			"stages": ["manual"],
-			"needs": "credentials"
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Loads real avatar rigs from production storage and retargets clips onto them, which needs live credentials and the model bucket."
+			}
 		},
 		{
 			"id": "audit-service-wallets",
@@ -302,8 +604,14 @@
 			"title": "Service wallet configuration",
 			"protects": "Every platform wallet's on-chain balance, its floor, and whether the advertised x402 fee payer matches the secret we actually co-sign with.",
 			"why": "An advertised fee-payer that does not match the configured secret silently 502s paid endpoints, and a wallet under its floor pauses its engine. Both look identical from outside and have different fixes.",
-			"stages": ["manual"],
-			"needs": "credentials"
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Reads live balances for the service wallets over RPC using the production keys in .env."
+			}
 		},
 		{
 			"id": "audit-wallet-flows",
@@ -312,8 +620,14 @@
 			"title": "Fleet wallet flows",
 			"protects": "Where the platform's SOL is, where it has been going, and whether any of it is leaking.",
 			"why": "Every time the paid rail goes dry the first theory is a leak. This separates the three real answers by measurement: capital dispersed into agent wallets, a starved fee floor, and an actual unexplained debit.",
-			"stages": ["manual"],
-			"needs": "credentials"
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Reconstructs on-chain transfer history for the fleet wallets from live RPC, so it has no offline input."
+			}
 		},
 		{
 			"id": "check-relayer-balances",
@@ -322,8 +636,14 @@
 			"title": "Relayer balances",
 			"protects": "Every configured Solana signer is above its documented minimum.",
 			"why": "The operator companion to the balance watchdog cron, run on demand from a machine that holds the signer secrets. Unconfigured signers are listed explicitly so the real deployment's holdings are visible at a glance.",
-			"stages": ["manual"],
-			"needs": "credentials"
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Queries the funded relayer accounts over RPC and compares them against the operating floor, which only exists on-chain."
+			}
 		},
 		{
 			"id": "audit-guards",
@@ -332,8 +652,23 @@
 			"title": "The guard registry itself",
 			"protects": "Every entry in this file names a real script and a real npm script, every guard on disk is registered, and every stage claim matches the npm chain that would actually run it.",
 			"why": "This registry is rendered by docs/guards.md and by /guards, so a stale stage column does not read as stale, it reads as coverage a reader then stops looking for. Listing itself is not circular: it verifies its own script, npm binding, and gate membership exactly like every other entry.",
-			"stages": ["gate"],
-			"needs": "none"
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A registry entry naming a guard script that is not in the repository.",
+				"violation": {
+					"json": [
+						{
+							"file": "data/guards.json",
+							"pointer": "guards.0.script",
+							"set": "scripts/guard-proof-missing.mjs"
+						}
+					]
+				},
+				"expect": "scripts/guard-proof-missing.mjs"
+			}
 		},
 		{
 			"id": "check-erc7710-addresses",
@@ -342,8 +677,14 @@
 			"title": "Delegation contract addresses",
 			"protects": "Every address in the delegation-manager deployment table is a deployed contract on its chain.",
 			"why": "A wrong or undeployed address fails only at the moment a user signs, which is the worst possible time to discover a typo in a constant.",
-			"stages": ["manual"],
-			"needs": "network"
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Resolves the delegation-framework contract addresses against live chain RPC, so the values it compares only exist on-chain."
+			}
 		}
 	],
 	"exempt": [

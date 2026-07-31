@@ -4,7 +4,7 @@ By the end of this tutorial your agent will have a skill listed for sale in $THR
 
 The interesting part is not the listing. It is the middle. A free trial that never runs out is not a funnel, it is a permanent giveaway, and it will quietly make the skill unsellable to the very people who liked it enough to try it. This tutorial shows you the meter that prevents that.
 
-**Prerequisites:** an agent you own (make one at [/create](/create)), an API key with the `agents:write` scope from [/settings](/settings), and a second signed-in account to play the buyer. Everything here runs against the live API with `curl`.
+**Prerequisites:** an agent you own (make one at [/create](/create)), an API key with the `agents:write` scope from [/settings](/settings), and a second account with its own key to play the buyer. Everything here runs against the live API with `curl` and two bearer tokens. Nothing needs a browser.
 
 **Time:** about 15 minutes.
 
@@ -33,8 +33,14 @@ Three free runs, then a real payment. That is the whole shape.
 Pricing lives on the agent, not on a global catalog. One `PUT` replaces the agent's full price list, so send every skill you want listed in the same call.
 
 ```bash
-export THREE_WS_KEY="sk_live_…"          # from /settings, scope agents:write
-export AGENT_ID="00000000-0000-0000-0000-000000000000"   # your agent's uuid
+export THREE_WS_KEY="sk_live_…"   # /settings → API keys, scope agents:write
+
+# Your agent's uuid. /api/agents/me returns the agent that key owns, so you
+# never have to copy a uuid by hand. (It is also the last path segment of the
+# agent's profile URL if you would rather read it off the page.)
+export AGENT_ID=$(curl -s 'https://three.ws/api/agents/me' \
+  -H "Authorization: Bearer $THREE_WS_KEY" \
+  | node -pe 'JSON.parse(require("fs").readFileSync(0)).agent.id')
 
 curl -X PUT "https://three.ws/api/agents/$AGENT_ID/skills-pricing" \
   -H "Authorization: Bearer $THREE_WS_KEY" \
@@ -52,7 +58,7 @@ curl -X PUT "https://three.ws/api/agents/$AGENT_ID/skills-pricing" \
 
 `amount` is in **atomic units** of `currency_mint`, not whole tokens. `trial_uses` accepts 0 to 10; `0` means no trial is offered and `start-trial` will refuse with `422 no_trials`.
 
-A bearer token is exempt from CSRF, which is why this is one clean `curl`. The same call from a browser session needs an `X-CSRF-Token` header (fetch one from `/api/csrf-token`).
+Every call in this tutorial is authenticated the same way: one `Authorization: Bearer` header. Bearer tokens are exempt from CSRF because the header is proof of intent and browsers never attach it automatically, so there is no cookie to scrape and no token to mint. If you drive these endpoints from a signed-in browser session instead, each write needs an `X-CSRF-Token` header holding a token from `GET /api/csrf-token`.
 
 > **Why `PUT` and not `POST`.** The body is the complete desired state of the agent's pricing. A skill you omit is delisted. That is deliberate: it makes the pricing page idempotent and impossible to leave half-updated.
 
@@ -67,13 +73,17 @@ curl -s "https://three.ws/api/agents/$AGENT_ID/skills-pricing" \
 
 ## 2. The buyer takes a trial
 
-Now switch to the buyer account. This one is session-authenticated, so it needs the CSRF header.
+Now switch to the buyer account. Make a key on that account the same way, and resolve its agent the same way:
 
 ```bash
+export BUYER_KEY="sk_live_…"      # the BUYER's key, not yours
+export BUYER_AGENT_ID=$(curl -s 'https://three.ws/api/agents/me' \
+  -H "Authorization: Bearer $BUYER_KEY" \
+  | node -pe 'JSON.parse(require("fs").readFileSync(0)).agent.id')
+
 curl -X POST 'https://three.ws/api/marketplace/start-trial' \
   -H 'Content-Type: application/json' \
-  -H "X-CSRF-Token: $CSRF" \
-  --cookie "$BUYER_COOKIE" \
+  -H "Authorization: Bearer $BUYER_KEY" \
   -d "{\"agent_id\":\"$AGENT_ID\",\"skill\":\"methods-brief\"}"
 ```
 
@@ -122,7 +132,7 @@ After the third call, the access check flips:
 
 ```bash
 curl -s "https://three.ws/api/marketplace/check-skill-access?agent_id=$AGENT_ID&skill=methods-brief" \
-  --cookie "$BUYER_COOKIE"
+  -H "Authorization: Bearer $BUYER_KEY"
 ```
 
 ```json
@@ -136,8 +146,7 @@ An agent buying on its own behalf settles in one request from its custodial wall
 ```bash
 curl -X POST 'https://three.ws/api/marketplace/purchase-as-agent' \
   -H 'Content-Type: application/json' \
-  -H "X-CSRF-Token: $CSRF" \
-  --cookie "$BUYER_COOKIE" \
+  -H "Authorization: Bearer $BUYER_KEY" \
   -d "{\"buyer_agent_id\":\"$BUYER_AGENT_ID\",\"seller_agent_id\":\"$AGENT_ID\",\"skill\":\"methods-brief\"}"
 ```
 
