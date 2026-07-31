@@ -26,6 +26,7 @@
 //   GET /api/pulse?view=stats            — aggregate money intelligence
 //   GET /api/pulse?view=marketplace      — marketplace commerce viability metrics
 //   GET /api/pulse?view=trading          — trading viability: activity, cost, realized P&L
+//   GET /api/pulse?view=graph&window=…   — money-flow topology: who paid whom, for what
 //   GET /api/pulse?view=agent-summary&agent_id=<id> — one wallet's lifetime summary
 //
 // Filters: type=all|tips|launches|trades|payments, network=mainnet|devnet.
@@ -39,6 +40,7 @@ import { explorerTxUrl, explorerAccountUrl } from './_lib/avatar-wallet.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { marketplaceFeeBps } from './_lib/marketplace-platform-fee.js';
 import { shapeTradingWindow, shapeTradingPnl, shapeTradingSeries, solFromLamports } from './_lib/pulse-trading.js';
+import { MARKET_PAID_KINDS } from './_lib/marketplace-kinds.js';
 
 // The custody categories that are safe to surface publicly. Everything else
 // (withdraw, vanity_swap, limit_change, key_recover) is owner-private and is
@@ -56,7 +58,6 @@ const FEED_SPEND_CATEGORIES = [...PUBLIC_SPEND_CATEGORIES, 'marketplace'];
 // "paid" only when status='confirmed' and it's not a free trial.
 const THREE_MINT = process.env.THREE_TOKEN_MINT || 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const THREE_DECIMALS = 6;
-const MARKET_PAID_KINDS = ['purchase', 'time_pass'];
 // atomic $THREE → whole-token float (keeps the fractional part Number-division gives).
 const threeFromAtomic = (atomic) => Number(atomic || 0) / 10 ** THREE_DECIMALS;
 
@@ -339,6 +340,231 @@ async function handleFeed(req, res, { network, type, agentId, mint, cursor, sinc
 		type,
 		agent_id: agentId || null,
 		mint: mint || null,
+	};
+}
+
+// ── money-flow graph view ─────────────────────────────────────────────────────
+// The TOPOLOGY of the agent economy: who paid whom, for what, and how much.
+//
+// Every other economy surface here is a leaderboard: totals per agent, ranked.
+// A ranking cannot show the shape of the flow, and the shape is what diagnoses
+// the platform's real failure mode. Capital dispersion looks perfectly healthy
+// on a leaderboard (busy agents, real volume) while the money is in fact
+// draining one-way into wallets that receive and never spend again. On a graph
+// that is a glance: a node with inbound edges and no outbound ones.
+//
+// Two edge sources, both already-public on-chain movements with an
+// explorer-verifiable signature. There is no third "estimated" or "inferred"
+// edge type; if the platform is quiet the graph is honestly empty.
+//
+//   · agent-to-agent x402 payments — the row's agent SPENT, meta.to is the payee
+//     wallet and meta.service names the skill that was bought.
+//   · tips — the row's agent RECEIVED, meta.from is the payer wallet.
+//
+// Marketplace purchases are deliberately excluded: they settle in $THREE from a
+// human buyer, so they are not an agent-to-agent edge and would silently mix a
+// second denomination into the USD flow totals.
+//
+// Privacy: identical gate to the live feed on the side we own (no deleted, no
+// private, no pulse_opt_out). A counterparty wallet is named ONLY when it
+// resolves to a public agent; anything else stays an address-only node, which is
+// exactly what the feed already exposes as `counterparty`.
+const GRAPH_WINDOWS = { '24h': '24 hours', '7d': '7 days', '30d': '30 days', '90d': '90 days' };
+const GRAPH_TTL_S = 60;
+// Aggregated edges are ranked by value, so the cap keeps the biggest flows. When
+// it bites we say so in the payload rather than presenting a truncated graph as
+// the whole economy.
+const GRAPH_MAX_EDGES = 400;
+
+const shortAddr = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
+
+async function handleGraph(network, windowKey) {
+	const interval = GRAPH_WINDOWS[windowKey] || GRAPH_WINDOWS['30d'];
+	const pubAgent = sql`deleted_at IS NULL AND is_public = true
+		AND COALESCE((meta->>'pulse_opt_out')::boolean, false) = false`;
+
+	// One directed-transfer CTE, then aggregate to edges. Counterparty resolution
+	// runs through a LATERAL with LIMIT 1 so two identities sharing a wallet can
+	// never fan a single payment into two edges.
+	const rows = await sql`
+		WITH transfers AS (
+			SELECT
+				ce.created_at                          AS ts,
+				'payment'::text                        AS kind,
+				payer.id::text                         AS from_agent,
+				NULL::text                             AS from_addr,
+				payee.id                               AS to_agent,
+				ce.meta->>'to'                         AS to_addr,
+				ce.amount_lamports                     AS lamports,
+				ce.usd                                 AS usd,
+				ce.signature                           AS signature,
+				NULLIF(ce.meta->>'service', '')        AS service
+			FROM agent_custody_events ce
+			JOIN agent_identities payer
+			  ON payer.id = ce.agent_id
+			 AND payer.deleted_at IS NULL AND payer.is_public = true
+			 AND COALESCE((payer.meta->>'pulse_opt_out')::boolean, false) = false
+			LEFT JOIN LATERAL (
+				SELECT ai.id::text AS id FROM agent_identities ai
+				WHERE ai.meta->>'solana_address' = ce.meta->>'to' AND ${pubAgent}
+				LIMIT 1
+			) payee ON true
+			WHERE ce.network = ${network}
+			  AND ce.event_type = 'spend' AND ce.category = 'x402'
+			  AND ce.status IN ('ok', 'confirmed')
+			  AND NULLIF(ce.meta->>'to', '') IS NOT NULL
+			  AND ce.created_at > now() - ${interval}::interval
+
+			UNION ALL
+
+			SELECT
+				ce.created_at, 'tip'::text,
+				tipper.id, ce.meta->>'from',
+				recv.id::text, NULL::text,
+				ce.amount_lamports, ce.usd, ce.signature, NULL::text
+			FROM agent_custody_events ce
+			JOIN agent_identities recv
+			  ON recv.id = ce.agent_id
+			 AND recv.deleted_at IS NULL AND recv.is_public = true
+			 AND COALESCE((recv.meta->>'pulse_opt_out')::boolean, false) = false
+			LEFT JOIN LATERAL (
+				SELECT ai.id::text AS id FROM agent_identities ai
+				WHERE ai.meta->>'solana_address' = ce.meta->>'from' AND ${pubAgent}
+				LIMIT 1
+			) tipper ON true
+			WHERE ce.network = ${network}
+			  AND ce.event_type = 'tip'
+			  AND ce.status IN ('ok', 'confirmed')
+			  AND NULLIF(ce.meta->>'from', '') IS NOT NULL
+			  AND ce.created_at > now() - ${interval}::interval
+		)
+		SELECT
+			COALESCE('a:' || from_agent, 'w:' || from_addr)   AS from_key,
+			COALESCE('a:' || to_agent,   'w:' || to_addr)     AS to_key,
+			from_agent, to_agent, from_addr, to_addr,
+			COUNT(*)::int                                     AS count,
+			COALESCE(SUM(lamports), 0)::text                  AS lamports,
+			COALESCE(SUM(usd), 0)::float8                     AS usd,
+			MAX(ts)                                           AS last_ts,
+			(ARRAY_AGG(signature ORDER BY ts DESC))[1]        AS last_signature,
+			ARRAY_REMOVE(ARRAY_AGG(DISTINCT kind), NULL)      AS kinds,
+			ARRAY_REMOVE(ARRAY_AGG(DISTINCT service), NULL)   AS services
+		FROM transfers
+		WHERE COALESCE(from_agent, from_addr) IS NOT NULL
+		  AND COALESCE(to_agent, to_addr) IS NOT NULL
+		GROUP BY 1, 2, from_agent, to_agent, from_addr, to_addr
+		ORDER BY usd DESC, count DESC
+		LIMIT ${GRAPH_MAX_EDGES + 1}
+	`;
+
+	const truncated = rows.length > GRAPH_MAX_EDGES;
+	const edgeRows = truncated ? rows.slice(0, GRAPH_MAX_EDGES) : rows;
+
+	// Name the agent nodes in one round trip. Only ids that survived the public
+	// gate above reach here, so this join adds no new disclosure.
+	const agentIds = [
+		...new Set(edgeRows.flatMap((r) => [r.from_agent, r.to_agent]).filter(Boolean)),
+	];
+	const agentRows = agentIds.length
+		? await sql`
+			SELECT ai.id::text AS id, ai.name, ai.meta->>'solana_address' AS addr,
+			       av.thumbnail_key AS thumb_key, av.visibility AS avatar_vis
+			FROM agent_identities ai
+			LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+			WHERE ai.id::text = ANY(${agentIds})
+		`
+		: [];
+	const agentById = new Map(agentRows.map((a) => [a.id, a]));
+
+	// Assemble nodes from the edges so the two collections can never disagree.
+	const nodes = new Map();
+	const nodeFor = (key, agentId, addr) => {
+		const existing = nodes.get(key);
+		if (existing) return existing;
+		const agent = agentId ? agentById.get(agentId) : null;
+		const address = agent?.addr || addr || null;
+		const node = {
+			id: key,
+			kind: agent ? 'agent' : 'wallet',
+			agent_id: agent?.id || null,
+			name: agent?.name || shortAddr(addr),
+			url: agent ? `/agent/${agent.id}` : null,
+			avatar_thumbnail_url: agent
+				? r2Url(agent.thumb_key, agent.avatar_vis === 'public' || agent.avatar_vis === 'unlisted')
+				: null,
+			address,
+			address_short: shortAddr(address),
+			explorer: address ? explorerAccountUrl(address, network) : null,
+			in_usd: 0, out_usd: 0, in_sol: 0, out_sol: 0, in_count: 0, out_count: 0,
+			partners_in: 0, partners_out: 0,
+		};
+		nodes.set(key, node);
+		return node;
+	};
+
+	// Service totals come from their own aggregation, never from the edges: one
+	// edge can cover several skills, so folding its USD into each of them would
+	// report more revenue per service than actually settled.
+	const serviceRows = await sql`
+		SELECT NULLIF(ce.meta->>'service', '') AS name,
+		       COUNT(*)::int                   AS count,
+		       COALESCE(SUM(ce.usd), 0)::float8 AS usd
+		FROM agent_custody_events ce
+		JOIN agent_identities payer
+		  ON payer.id = ce.agent_id
+		 AND payer.deleted_at IS NULL AND payer.is_public = true
+		 AND COALESCE((payer.meta->>'pulse_opt_out')::boolean, false) = false
+		WHERE ce.network = ${network}
+		  AND ce.event_type = 'spend' AND ce.category = 'x402'
+		  AND ce.status IN ('ok', 'confirmed')
+		  AND NULLIF(ce.meta->>'service', '') IS NOT NULL
+		  AND ce.created_at > now() - ${interval}::interval
+		GROUP BY 1
+		ORDER BY usd DESC
+	`;
+
+	const edges = edgeRows.map((r) => {
+		const sol = Number(r.lamports || 0) / 1e9;
+		const usd = Number(r.usd || 0);
+		const from = nodeFor(r.from_key, r.from_agent, r.from_addr);
+		const to = nodeFor(r.to_key, r.to_agent, r.to_addr);
+		from.out_usd += usd; from.out_sol += sol; from.out_count += r.count; from.partners_out += 1;
+		to.in_usd += usd;    to.in_sol += sol;    to.in_count += r.count;    to.partners_in += 1;
+		return {
+			from: r.from_key,
+			to: r.to_key,
+			count: r.count,
+			sol,
+			usd,
+			kinds: r.kinds || [],
+			services: r.services || [],
+			last_ts: r.last_ts,
+			last_signature: r.last_signature || null,
+			explorer: r.last_signature ? explorerTxUrl(r.last_signature, network) : null,
+		};
+	});
+
+	const nodeList = [...nodes.values()];
+	return {
+		network,
+		window: GRAPH_WINDOWS[windowKey] ? windowKey : '30d',
+		generated_at: new Date().toISOString(),
+		nodes: nodeList,
+		edges,
+		services: serviceRows.map((s) => ({ name: s.name, count: s.count, usd: Number(s.usd || 0) })),
+		totals: {
+			nodes: nodeList.length,
+			edges: edges.length,
+			transfers: edges.reduce((n, e) => n + e.count, 0),
+			usd: edges.reduce((n, e) => n + e.usd, 0),
+			sol: edges.reduce((n, e) => n + e.sol, 0),
+			payments: edges.filter((e) => e.kinds.includes('payment')).reduce((n, e) => n + e.count, 0),
+			tips: edges.filter((e) => e.kinds.includes('tip')).reduce((n, e) => n + e.count, 0),
+			named_agents: nodeList.filter((n) => n.kind === 'agent').length,
+		},
+		// Honest about its own limits: a capped graph must never read as the whole economy.
+		truncated,
+		max_edges: GRAPH_MAX_EDGES,
 	};
 }
 
@@ -991,6 +1217,20 @@ export default async function handler(req, res) {
 				await cacheSet(cacheKey, body, STATS_TTL_S);
 			}
 			res.setHeader('cache-control', 'public, max-age=20');
+			return json(res, 200, { data: body });
+		}
+
+		if (view === 'graph') {
+			const windowKey = GRAPH_WINDOWS[url.searchParams.get('window')]
+				? url.searchParams.get('window')
+				: '30d';
+			const cacheKey = `pulse:graph:${network}:${windowKey}`;
+			let body = await cacheGet(cacheKey);
+			if (body === null) {
+				body = await handleGraph(network, windowKey);
+				await cacheSet(cacheKey, body, GRAPH_TTL_S);
+			}
+			res.setHeader('cache-control', 'public, max-age=30');
 			return json(res, 200, { data: body });
 		}
 

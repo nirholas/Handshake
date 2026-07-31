@@ -25,14 +25,22 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { sql } from '../db.js';
 import { env } from '../env.js';
+import {
+	usdToAtomics,
+	atomicsToUsd,
+	normalizeHost,
+	statusVerdict,
+	expiryVerdict,
+	allowlistVerdict,
+	perTxVerdict,
+	budgetVerdict,
+} from './policy.js';
 
-// USDC has 6 decimals. Convert human USD to atomic units.
-export function usdToAtomics(usd) {
-	return BigInt(Math.round(Number(usd) * 1_000_000));
-}
-export function atomicsToUsd(atomics) {
-	return Number(atomics) / 1_000_000;
-}
+// The policy predicates below are shared with the dry-run simulator
+// (api/pay/simulate.js) so a simulated verdict and an enforced one can never
+// disagree. Re-exported here because this module was the original home of these
+// helpers and several callers already import them from this path.
+export { usdToAtomics, atomicsToUsd, normalizeHost };
 
 export class SpendGovernorError extends Error {
 	constructor(code, message, detail = {}) {
@@ -87,17 +95,9 @@ export function extractSessionId(token) {
 	return rest.slice(0, 36);
 }
 
-// Normalize any URL/host to a bare lowercase hostname for allowlist comparison.
-export function normalizeHost(raw) {
-	const s = String(raw || '').trim().toLowerCase();
-	if (!s) return '';
-	try {
-		const u = new URL(s.includes('://') ? s : `https://${s}`);
-		return u.hostname;
-	} catch {
-		// Might already be a bare hostname
-		return s.split('/')[0].split(':')[0] || '';
-	}
+/** Turn a policy rejection from policy.js into the thrown governance error. */
+function throwVerdict(verdict) {
+	if (verdict) throw new SpendGovernorError(verdict.code, verdict.message, verdict.detail);
 }
 
 /**
@@ -137,61 +137,25 @@ export async function reserveSessionSpend({ token, url, amountAtomics }) {
 	const session = await verifySessionToken(token);
 
 	// Phase 2: status check
-	if (session.status !== 'active') {
-		const messages = {
-			exhausted: 'Session budget is exhausted',
-			expired: 'Session has expired',
-			cancelled: 'Session has been cancelled',
-		};
-		throw new SpendGovernorError(
-			'session_inactive',
-			messages[session.status] ?? `Session is ${session.status}`,
-			{ status: session.status },
-		);
-	}
+	throwVerdict(statusVerdict(session.status));
 
 	// Phase 3: time expiry (belt-and-suspenders; DB sweep also marks expired rows)
 	const now = new Date();
-	if (new Date(session.expires_at) < now) {
+	const expired = expiryVerdict(session.expires_at, now);
+	if (expired) {
 		// Mark it expired so future checks skip the DB read
 		await sql`
 			UPDATE payment_sessions SET status = 'expired', updated_at = now()
 			WHERE id = ${session.id} AND status = 'active'
 		`.catch(() => {});
-		throw new SpendGovernorError('session_expired', 'Session has expired');
+		throwVerdict(expired);
 	}
 
 	// Phase 4: URL allowlist enforcement
-	const allowedHosts = Array.isArray(session.allowed_hosts) ? session.allowed_hosts : [];
-	if (allowedHosts.length > 0) {
-		let targetHost;
-		try {
-			targetHost = new URL(url).hostname.toLowerCase();
-		} catch {
-			throw new SpendGovernorError('allowlist_blocked', `Invalid target URL: ${url}`);
-		}
-		const canonicalAllowlist = allowedHosts.map(normalizeHost).filter(Boolean);
-		const allowed = canonicalAllowlist.some(
-			(h) => targetHost === h || targetHost.endsWith(`.${h}`),
-		);
-		if (!allowed) {
-			throw new SpendGovernorError(
-				'allowlist_blocked',
-				`Host ${targetHost} is not in this session's allowlist`,
-				{ host: targetHost, allowlist: canonicalAllowlist },
-			);
-		}
-	}
+	throwVerdict(allowlistVerdict(url, session.allowed_hosts));
 
 	// Phase 5: per-transaction ceiling
-	const perTxCap = session.max_per_tx_usdc != null ? BigInt(session.max_per_tx_usdc) : null;
-	if (perTxCap !== null && amountAtomics > perTxCap) {
-		throw new SpendGovernorError(
-			'per_tx_exceeded',
-			`Payment $${atomicsToUsd(amountAtomics)} exceeds the per-transaction limit $${atomicsToUsd(perTxCap)}`,
-			{ amount_usd: atomicsToUsd(amountAtomics), cap_usd: atomicsToUsd(perTxCap) },
-		);
-	}
+	throwVerdict(perTxVerdict(amountAtomics, session.max_per_tx_usdc));
 
 	// Phase 6: atomic budget reservation
 	// The WHERE clause ensures (budget_usdc - spent_usdc) >= amountAtomics before
@@ -214,10 +178,14 @@ export async function reserveSessionSpend({ token, url, amountAtomics }) {
 			SELECT budget_usdc, spent_usdc FROM payment_sessions WHERE id = ${session.id}
 		`;
 		const remaining = fresh ? BigInt(fresh.budget_usdc) - BigInt(fresh.spent_usdc) : 0n;
-		throw new SpendGovernorError(
-			'insufficient_budget',
-			`Insufficient session budget. Need $${atomicsToUsd(amount)}, remaining $${atomicsToUsd(remaining)}`,
-			{ need_usd: atomicsToUsd(amount), remaining_usd: atomicsToUsd(remaining) },
+		// The SQL predicate already decided; budgetVerdict only phrases the failure,
+		// using the same wording the simulator shows for a predicted shortfall.
+		throwVerdict(
+			budgetVerdict(amount, remaining) ?? {
+				code: 'insufficient_budget',
+				message: 'Session was not active when the payment was reserved',
+				detail: { need_usd: atomicsToUsd(amount), remaining_usd: atomicsToUsd(remaining) },
+			},
 		);
 	}
 

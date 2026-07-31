@@ -36,7 +36,14 @@ import { loadSeedKeypair } from '../_lib/x402/pay.js';
 import { cors, error, json, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from '../_lib/ssrf.js';
+import { validatePublicUrl, SsrfError } from '../_lib/ssrf.js';
+import {
+	guardedFetch,
+	safeJson,
+	b64decodeJson,
+	readChallenge,
+	USDC_SOLANA_MINT,
+} from '../_lib/pay/probe.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import {
 	usdToAtomics,
@@ -47,11 +54,8 @@ import {
 	recordExecution,
 	SpendGovernorError,
 } from '../_lib/pay/spend-governor.js';
-// Known USDC mint address on Solana
-const USDC_SOLANA_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 const SOLANA_RPC = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const FETCH_TIMEOUT_MS = 20_000;
 
 // ── Platform payer: Solana ───────────────────────────────────────────────────
 let _solanaKeypair = null;
@@ -74,44 +78,6 @@ function loadSolanaKeypair() {
 	}
 }
 
-// ── SSRF-guarded fetch ──────────────────────────────────────────────────────
-async function guardedFetch(rawUrl, { method = 'GET', headers = {}, body } = {}) {
-	const url = validatePublicUrl(rawUrl);
-	const addrs = await resolvePublicHost(url.hostname);
-	const agent = pinnedAgent(url.hostname, addrs);
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-	try {
-		const res = await fetch(url, {
-			method,
-			redirect: 'manual',
-			signal: controller.signal,
-			dispatcher: agent,
-			headers: {
-				'user-agent': 'three.ws-payment-session/1.0 (+https://three.ws/)',
-				accept: 'application/json, text/plain;q=0.8, */*;q=0.5',
-				...(body != null ? { 'content-type': 'application/json' } : {}),
-				...headers,
-			},
-			...(body != null ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {}),
-		});
-		const text = await res.text();
-		return { status: res.status, ok: res.ok, headers: res.headers, text };
-	} finally {
-		clearTimeout(timer);
-		await agent.close().catch(() => {});
-	}
-}
-
-function safeJson(text) {
-	try { return JSON.parse(text); } catch { return null; }
-}
-
-function b64decodeJson(s) {
-	if (!s) return null;
-	try { return JSON.parse(Buffer.from(String(s), 'base64').toString('utf8')); } catch { return null; }
-}
-
 // ── Probe a 402 endpoint and select a Solana USDC accept ────────────────────
 async function probe402(rawUrl, { method, body }) {
 	let res;
@@ -132,7 +98,7 @@ async function probe402(rawUrl, { method, body }) {
 		return { free: true, status: res.status, result: safeJson(res.text) ?? res.text };
 	}
 
-	const challenge = safeJson(res.text) || b64decodeJson(res.headers.get('payment-required'));
+	const challenge = readChallenge(res);
 	if (!challenge || !Array.isArray(challenge.accepts)) {
 		throw Object.assign(new Error('Service returned an unreadable payment challenge'), {
 			status: 502, code: 'invalid_challenge',

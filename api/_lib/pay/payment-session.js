@@ -25,13 +25,16 @@ import {
 	atomicsToUsd,
 	normalizeHost,
 } from './spend-governor.js';
+import { SESSION_LIMITS } from './policy.js';
 
-const MAX_LABEL_LEN = 120;
-const MAX_ALLOWED_HOSTS = 50;
-const MIN_BUDGET_USD = 0.001; // $0.001 minimum
-const MAX_BUDGET_USD = 1000; // $1000 maximum per session
-const MIN_TTL_SECONDS = 60;
-const MAX_TTL_SECONDS = 90 * 24 * 3600; // 90 days
+const {
+	MAX_LABEL_LEN,
+	MAX_ALLOWED_HOSTS,
+	MIN_BUDGET_USD,
+	MAX_BUDGET_USD,
+	MIN_TTL_SECONDS,
+	MAX_TTL_SECONDS,
+} = SESSION_LIMITS;
 
 function bad(message, code = 'bad_request') {
 	return Object.assign(new Error(message), { status: 400, code });
