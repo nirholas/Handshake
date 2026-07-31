@@ -150,6 +150,83 @@
 				.sl-btn:active:not(:disabled), .sl-phrase-chip:active { transform: none; }
 			}
 
+			/* The sign API console */
+			.sl-api { margin-top: clamp(48px, 6vw, 76px); border: 1px solid var(--stroke); border-radius: 20px; padding: clamp(24px, 4vw, 40px); background: var(--surface-1); }
+			.sl-api-head h2 { font-size: clamp(22px, 3vw, 30px); margin: 0 0 10px; letter-spacing: -.02em; }
+			.sl-api-head p { color: var(--ink-dim); font-size: 15px; line-height: 1.65; max-width: 68ch; margin: 0 0 24px; }
+			.sl-api-form .sl-input-row { max-width: 640px; }
+			.sl-api-form .sl-settings { margin-top: 14px; }
+			.sl-api-form .sl-chips { margin-top: 12px; }
+
+			.sl-api-out { margin-top: 26px; }
+			.sl-api-out[data-state='idle'] .sl-api-actions,
+			.sl-api-out[data-state='idle'] .sl-api-code,
+			.sl-api-out[data-state='error'] .sl-api-actions,
+			.sl-api-out[data-state='error'] .sl-api-code { display: none; }
+			.sl-api-out[data-state='loading'] { opacity: .55; }
+			.sl-api-out[data-state='loading'] .sl-api-timeline-wrap { animation: sl-api-pulse 1.1s ease-in-out infinite; }
+			@keyframes sl-api-pulse { 0%, 100% { opacity: .5 } 50% { opacity: .85 } }
+
+			.sl-api-stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; padding: 0; }
+			.sl-api-stat { border: 1px solid var(--stroke); border-radius: 12px; padding: 10px 14px; background: var(--surface-2); min-width: 92px; }
+			.sl-api-stat dt { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-dim); }
+			.sl-api-stat dd { margin: 3px 0 0; font-family: var(--font-mono); font-size: 16px; color: var(--ink); }
+
+			.sl-api-timeline-wrap { position: relative; }
+			.sl-api-timeline { display: flex; gap: 3px; align-items: stretch; min-height: 74px; }
+			.sl-api-timeline:empty { border: 1px dashed var(--stroke); border-radius: 12px; }
+			.sl-api-seg {
+				position: relative; flex: 1 1 0; min-width: 0; appearance: none; cursor: pointer;
+				display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+				border: 1px solid rgba(167,139,250,.35); border-radius: 10px; padding: 9px 8px 7px;
+				background: rgba(167,139,250,.10); color: var(--ink); font: inherit; text-align: left;
+				transition: background .14s ease, border-color .14s ease, transform .14s ease;
+			}
+			.sl-api-seg[data-kind='spelled'] { border-color: var(--stroke); background: var(--surface-2); }
+			.sl-api-seg:hover { transform: translateY(-2px); border-color: rgba(167,139,250,.75); }
+			.sl-api-seg:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 2px; }
+			.sl-api-seg[data-active] { background: rgba(167,139,250,.32); border-color: rgba(167,139,250,.95); }
+			.sl-api-seg-word { font-family: var(--font-mono); font-size: 12px; letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.sl-api-seg[data-kind='spelled'] .sl-api-seg-word { color: var(--ink-dim); }
+			.sl-api-seg-letters { display: flex; gap: 2px; }
+			.sl-api-letter {
+				flex: 1 1 0; min-width: 0; text-align: center; border-radius: 4px; padding: 3px 0;
+				background: rgba(127,127,127,.16); font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim);
+				overflow: hidden;
+			}
+			.sl-api-letter[data-active] { background: rgba(167,139,250,.55); color: var(--ink); }
+
+			.sl-api-playhead { position: absolute; top: -4px; bottom: 20px; width: 2px; background: #a78bfa; box-shadow: 0 0 8px rgba(167,139,250,.9); pointer-events: none; border-radius: 2px; }
+			.sl-api-ruler { position: relative; height: 18px; margin-top: 4px; }
+			.sl-api-tick { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--font-mono); font-size: 10px; color: var(--ink-dim); }
+
+			.sl-api-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+			.sl-btn-quiet { font-size: 13px; padding: 8px 14px; background: var(--surface-2); border-color: var(--stroke); text-decoration: none; }
+			.sl-btn-quiet:hover:not(:disabled) { background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.6); }
+			.sl-api-note { margin: 14px 0 0; color: var(--ink-dim); font-size: 14px; line-height: 1.6; min-height: 22px; }
+
+			.sl-api-code { margin-top: 18px; border-top: 1px solid var(--stroke); padding-top: 14px; }
+			.sl-api-code summary { cursor: pointer; font-size: 14px; color: var(--ink-dim); }
+			.sl-api-code summary:hover { color: var(--ink); }
+			.sl-api-code summary:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 2px; border-radius: 4px; }
+			.sl-api-code-h { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-dim); margin: 16px 0 6px; }
+			.sl-api-pre { margin: 0; padding: 14px; border: 1px solid var(--stroke); border-radius: 12px; background: var(--surface-2); overflow-x: auto; max-height: 340px; }
+			.sl-api-pre code { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--ink); white-space: pre; }
+			.sl-api-foot { margin: 22px 0 0; color: var(--ink-dim); font-size: 13px; line-height: 1.7; }
+			.sl-api-foot a { color: var(--ink); }
+			.sl-api-foot code { font-family: var(--font-mono); font-size: 12px; }
+
+			@media (max-width: 700px) {
+				/* Below this the blocks stop being readable side by side, so the
+				   timeline becomes a scrollable strip rather than a row of slivers. */
+				.sl-api-timeline { overflow-x: auto; }
+				.sl-api-seg { min-width: 76px; flex-basis: 76px; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.sl-api-seg:hover { transform: none; }
+				.sl-api-out[data-state='loading'] .sl-api-timeline-wrap { animation: none; }
+			}
+
 			/* Honest scope note */
 			.sl-note { margin-top: clamp(36px, 5vw, 56px); border-left: 2px solid rgba(167,139,250,.5); padding: 4px 0 4px 18px; color: var(--ink-dim); font-size: 14px; line-height: 1.65; max-width: 72ch; }
 
@@ -295,6 +372,27 @@
 						</p>
 					</div>
 				</div>
+			</section>
+
+			<section class="sl-api" id="sl-api" aria-label="The sign API, live">
+				<div class="sl-api-head">
+					<h2 data-i18n="sign_language.the_same_signing_over_http">The same signing, over HTTP</h2>
+					<p data-i18n="sign_language.api_lede">
+						Everything above compiles in the browser. The same compiler runs on the server,
+						so any app, agent or engine can ask for a signed utterance and get one back:
+						a three.js animation clip keyed to a canonical humanoid skeleton, plus the
+						timeline it performs on. No account, no key, no SDK. Type below and watch the
+						real endpoint answer.
+					</p>
+				</div>
+				<div id="sl-api-console"></div>
+				<p class="sl-api-foot" data-i18n-html="sign_language.api_foot">
+					Full reference: <a href="/docs/sign-language#the-sign-api">the sign API</a> ·
+					<a href="/docs/api-reference"><code>/api/sign</code> in the API reference</a> ·
+					the reverse direction is <a href="/docs/sign-language#reading-signing-the-recognition-api"><code>/api/asl-recognition</code></a>.
+					Agents can call it as the <code>sign_text</code> tool on the
+					<a href="/mcp-tools">three.ws MCP server</a>.
+				</p>
 			</section>
 
 			<p class="sl-note" data-i18n-html="sign_language.honest_scope_words_with_a_sign_are">

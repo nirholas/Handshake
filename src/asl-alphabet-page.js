@@ -411,6 +411,18 @@ async function boot() {
 	});
 
 	// ── Deep links ───────────────────────────────────────────────────────────
+	// The stage crossfades to its idle clip asynchronously after mounting, so a
+	// letter played the instant boot finishes is overwritten the moment that
+	// idle lands: the shared link opened on an avatar standing at rest. Wait for
+	// the idle to take before honoring the link.
+	const waitForIdleClip = async () => {
+		for (let i = 0; i < 60; i++) {
+			if (!stage?.anim || stage.anim.currentName) return;
+			await new Promise((resolve) => setTimeout(resolve, 50));
+		}
+	};
+	if (canSign) await waitForIdleClip();
+
 	const params = new URLSearchParams(location.search);
 	const wanted = (params.get('letter') || '').toUpperCase().slice(0, 1);
 	const wantedWord = params.get('spell') || '';

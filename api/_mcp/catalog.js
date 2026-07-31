@@ -16,12 +16,14 @@ import { toolDefs as traderDefs } from './tools/trader.js';
 import { toolDefs as tokenizeDefs } from './tools/tokenize.js';
 import { toolDefs as cryptoDataDefs } from './tools/crypto-data.js';
 import { toolDefs as garmentDefs } from './tools/garments.js';
+import { toolDefs as signDefs } from './tools/sign.js';
 
 const baseDefs = [
 	...avatarDefs,
 	...embedDefs,
 	...modelDefs,
 	...animationDefs,
+	...signDefs,
 	...solanaDefs,
 	...pumpfunDefs,
 	...agentDefs,
@@ -42,7 +44,7 @@ const gettingStarted = {
 	...buildGettingStartedTool({
 		server: 'three.ws',
 		tagline:
-			'The main three.ws MCP server: render and manage 3D avatars and models, animations, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, and the trader leaderboard + copy-trading system.',
+			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, and the trader leaderboard + copy-trading system.',
 		tools: baseDefs,
 		priceFor,
 		access: [

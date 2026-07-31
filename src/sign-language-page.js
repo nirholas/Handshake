@@ -9,9 +9,10 @@
 // (src/sign-speech.js) drives it exactly like a text-to-speech engine.
 
 import { PoseStage } from './avatar-pose.js';
-import { CHAT_TIMING, SignSpeaker } from './sign-speech.js';
+import { SignSpeaker, scaledTiming } from './sign-speech.js';
 import { normalizeWord } from './fingerspelling.js';
 import { SIGNS, signGloss, signLookup } from './sign-dictionary.js';
+import { initSignApiConsole } from './sign-api-console.js';
 import { log } from './shared/log.js';
 
 // Two hero rigs, because signing has two halves and no one avatar shows both
@@ -58,13 +59,6 @@ const DEMO_PHRASES = ['HELLO', 'HAPPY TO MEET YOU', 'WELCOME TO THREE WS', 'THAN
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
-/** Stretch every duration in the chat timing so the whole utterance slows. */
-function scaleTiming(rate) {
-	const out = {};
-	for (const [key, value] of Object.entries(CHAT_TIMING)) out[key] = value / rate;
-	return out;
-}
-
 async function boot() {
 	const stageHost = $('#sl-stage');
 	if (!stageHost) return;
@@ -96,7 +90,7 @@ async function boot() {
 			manager: stage.anim,
 			dominant,
 			signs: signLookup({ dominant, rate }),
-			timing: rate === 1 ? null : scaleTiming(rate),
+			timing: rate === 1 ? null : scaledTiming(rate),
 		});
 	};
 	const replay = async () => {
@@ -270,6 +264,13 @@ async function boot() {
 		});
 	};
 
+	/** Move the pressed state in a pill group to whichever button `match` picks. */
+	const syncPills = (hostSel, match) => {
+		$(hostSel)
+			?.querySelectorAll('.sl-opt')
+			.forEach((btn) => btn.setAttribute('aria-pressed', String(match(btn))));
+	};
+
 	buildOptions('#sl-speed', SPEEDS, (s) => s.rate === rate, (s) => setRate(s.rate));
 	buildOptions(
 		'#sl-hand',
@@ -340,6 +341,36 @@ async function boot() {
 
 	// ── Webcam sign-in demo ───────────────────────────────────────────────────
 	wireWebcamDemo(setStatus);
+
+	// ── The sign API, live on the same page ───────────────────────────────────
+	// The console calls /api/sign for real and draws the timeline that comes
+	// back; "play it on the avatar" hands the same utterance to the hero, with
+	// the console's hand and speed applied, so the request and the performance
+	// on screen are provably the same thing.
+	initSignApiConsole({
+		defaults: { hand: dominant === 'Left' ? 'left' : 'right', speed: rate },
+		sign: async ({ text, hand, speed }) => {
+			if (!speaker) throw new Error('the avatar has not finished loading');
+			stopHero();
+			heroActive = false;
+			const wanted = hand === 'left' ? 'Left' : 'Right';
+			if (wanted !== dominant || speed !== rate) {
+				dominant = wanted;
+				rate = speed;
+				savePrefs({ rate, dominant, avatar: avatar.id });
+				syncPills('#sl-hand', (btn) => btn.textContent.toLowerCase().startsWith(hand));
+				syncPills('#sl-speed', (btn) => btn.textContent === `${speed}×`);
+				rebuildSpeaker();
+			}
+			lastPhrase = text;
+			syncShare();
+			setStatus(`Signing: “${text.toLowerCase()}”`);
+			// Move to the avatar before it starts, not after it finishes.
+			stageHost.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+			const result = await speaker.speak(text);
+			if (!result.superseded) setStatus(describeResult(result));
+		},
+	});
 
 	// ── ?say= deep link ───────────────────────────────────────────────────────
 	// A shareable signing link, mirroring the studio's ?spell=: /sign-language

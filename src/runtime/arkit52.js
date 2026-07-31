@@ -133,6 +133,73 @@ const SYMMETRIC_PAIRS = Object.freeze({
 });
 
 /**
+ * Separator- and case-insensitive lookup: normalized spelling → canonical name.
+ * Exporters disagree about case and separators far more often than they
+ * disagree about the word itself (`MouthSmile_L`, `mouth-smile-left`,
+ * `Mouth Smile Left` are all the same shape), so normalizing before the lookup
+ * resolves rigs an exact-match table silently drops.
+ */
+const _normalizedMorphIndex = (() => {
+	const m = new Map();
+	const put = (spelling, canonical) => {
+		const key = normalizeToken(spelling);
+		if (key && !m.has(key)) m.set(key, canonical);
+	};
+	for (const name of ARKIT_52) put(name, name);
+	for (const name of ARKIT_VISEMES) put(name, name);
+	for (const [alias, canonical] of Object.entries(MORPH_ALIASES)) put(alias, canonical);
+	return m;
+})();
+
+function normalizeToken(name) {
+	return String(name || '').replace(/[\s_\-.:]/g, '').toLowerCase();
+}
+
+/**
+ * Resolve one GLB morph-target name to its canonical ARKit-52 / viseme name.
+ * Pure and string-only, so the same mapping runs in the browser (over a loaded
+ * Three.js mesh) and on the server (over names read straight out of a glTF
+ * JSON chunk, with no scene graph and no GPU).
+ *
+ * @param {string} glbName — the morph target name as authored in the GLB
+ * @returns {string | null} canonical name, or null when it is not an ARKit shape
+ */
+export function canonicalMorphName(glbName) {
+	if (!glbName) return null;
+	const direct = MORPH_ALIASES[glbName] || glbName;
+	if (ARKIT_52.includes(direct) || ARKIT_VISEMES.includes(direct)) return direct;
+	return _normalizedMorphIndex.get(normalizeToken(glbName)) || null;
+}
+
+/**
+ * Report ARKit-52 coverage from morph-target NAMES alone.
+ * Same contract as conformanceReport() but takes an iterable of strings, so a
+ * caller that never loads the mesh (the capability API, an upload validator)
+ * gets the identical answer as the runtime.
+ *
+ * @param {Iterable<string>} names
+ * @returns {{ implemented: string[], missing: string[], coverage: number, visemes: string[], unmapped: string[] }}
+ */
+export function conformanceFromNames(names) {
+	const resolved = new Set();
+	const unmapped = [];
+	for (const raw of names || []) {
+		const canonical = canonicalMorphName(raw);
+		if (canonical) resolved.add(canonical);
+		else if (raw) unmapped.push(String(raw));
+	}
+	const implemented = ARKIT_52.filter((name) => resolved.has(name));
+	const missing = ARKIT_52.filter((name) => !resolved.has(name));
+	return {
+		implemented,
+		missing,
+		coverage: implemented.length / ARKIT_52.length,
+		visemes: ARKIT_VISEMES.filter((name) => resolved.has(name)),
+		unmapped,
+	};
+}
+
+/**
  * Walk a Three.js root and build a canonical-name → [{mesh, index}] resolver.
  * Each canonical ARKit-52 name maps to every mesh slot that implements it,
  * either by exact name match or via MORPH_ALIASES.
@@ -148,8 +215,8 @@ export function resolveMorphTargets(root) {
 		if (!node.isMesh || !node.morphTargetDictionary || !node.morphTargetInfluences) return;
 		const dict = node.morphTargetDictionary;
 		for (const [glbName, idx] of Object.entries(dict)) {
-			const canonical = MORPH_ALIASES[glbName] || glbName;
-			if (!ARKIT_52.includes(canonical) && !ARKIT_VISEMES.includes(canonical)) continue;
+			const canonical = canonicalMorphName(glbName);
+			if (!canonical) continue;
 			if (!out.has(canonical)) out.set(canonical, []);
 			out.get(canonical).push({ mesh: node, index: idx });
 		}

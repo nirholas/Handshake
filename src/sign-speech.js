@@ -30,6 +30,22 @@ const WORD_GAP_SECONDS = 0.18;
 const NORMAL_BLEND_MODE = 2500;
 
 /**
+ * Timing for a given playback rate: every authored duration divided by it, so
+ * 0.5× is a signer taking twice as long over the same signs rather than a clip
+ * played back slowly. Pair it with `signLookup({ rate })`, which scales the
+ * lexical signs the same way.
+ *
+ * @param {number} rate  1 is citation speed; below 1 is slower
+ * @param {object} [base]  the timing table to scale (chat pacing by default)
+ */
+export function scaledTiming(rate, base = CHAT_TIMING) {
+	if (!(rate > 0) || rate === 1) return { ...base };
+	const out = {};
+	for (const [key, value] of Object.entries(base)) out[key] = value / rate;
+	return out;
+}
+
+/**
  * Split text into the word sequence the signer will perform. Letters and
  * digits survive (A-Z fingerspelling plus the ASL number handshapes 0-9);
  * punctuation is dropped.
@@ -109,7 +125,17 @@ function appendSegment(merged, clip, offset) {
  * }} [opts]
  *   `signs` resolves a word to a lexical sign clip document (canonical-bone
  *   tracks, the animation library shape); words it misses are fingerspelled.
- * @returns {{ clip: object, words: string[], signed: string[], spelled: string[], truncated: boolean }}
+ * @returns {{
+ *   clip: object,
+ *   words: string[],
+ *   signed: string[],
+ *   spelled: string[],
+ *   segments: { word: string, signed: boolean, gloss: string|null, start: number, end: number,
+ *               letters: { letter: string, start: number, end: number }[]|null }[],
+ *   truncated: boolean,
+ * }}
+ *   `segments` is the performed timeline: one entry per word in clip order, with
+ *   the seconds it occupies and, for a spelled word, where each letter lands.
  * @throws when the text has no spellable content.
  */
 export function compileUtterance(text, opts = {}) {
@@ -125,47 +151,69 @@ export function compileUtterance(text, opts = {}) {
 	// end. Only the first word leads in from rest and only the last settles back
 	// to it; every word between keeps the hands up in signing space, which is what
 	// makes a sentence read as one utterance instead of as a list of words.
-	const build = (word, position) =>
-		lookup(word, position) ??
-		buildFingerspellingClip(word, {
+	// Each word compiles to its own segment, and a spelled one also reports where
+	// each letter falls inside it, so a caller can follow the utterance along
+	// without re-deriving the cadence it was built from.
+	const build = (word, position) => {
+		const sign = lookup(word, position);
+		if (sign) return { segment: sign, signed: true, letters: null };
+		const marks = [];
+		const segment = buildFingerspellingClip(word, {
 			...timing,
 			name: `fs-${word.toLowerCase()}`,
 			lead: position.first,
 			settle: position.last,
 			dominant: opts.dominant,
+			marks,
 		});
+		return { segment, signed: false, letters: marks };
+	};
 
 	const chosen = [];
 	let planned = 0;
 	let truncated = false;
 	for (let i = 0; i < words.length; i++) {
 		const position = { first: i === 0, last: false };
-		const segment = build(words[i], position);
+		const built = build(words[i], position);
 		const gap = chosen.length ? WORD_GAP_SECONDS : 0;
 		// Reserve room for the closing settle so the cap still holds once the last
 		// word is rebuilt with it.
-		if (chosen.length && planned + gap + segment.duration + timing.tailSeconds > maxSeconds) {
+		if (chosen.length && planned + gap + built.segment.duration + timing.tailSeconds > maxSeconds) {
 			truncated = true;
 			break;
 		}
-		planned += gap + segment.duration;
-		chosen.push({ word: words[i], position, segment, signed: lookup(words[i], position) != null });
+		planned += gap + built.segment.duration;
+		chosen.push({ word: words[i], position, ...built });
 	}
 
 	// Whichever word ended up last (the real last, or the one truncation stopped
 	// at) is the one that lowers the hands.
 	const closing = chosen[chosen.length - 1];
 	closing.position = { ...closing.position, last: true };
-	closing.segment = build(closing.word, closing.position);
+	Object.assign(closing, build(closing.word, closing.position));
 
 	const merged = new Map();
 	let cursor = 0;
 	const signed = [];
 	const spelled = [];
+	const segments = [];
 	for (const entry of chosen) {
 		if (cursor > 0) cursor += WORD_GAP_SECONDS;
+		const start = cursor;
 		cursor = appendSegment(merged, entry.segment, cursor);
 		(entry.signed ? signed : spelled).push(entry.word);
+		segments.push({
+			word: entry.word,
+			signed: entry.signed,
+			gloss: entry.signed ? (lookupSign(entry.word)?.sign.gloss ?? null) : null,
+			start,
+			end: cursor,
+			letters: entry.letters
+				? entry.letters
+						.filter((m) => m.letter !== ' ')
+						.map((m) => ({ letter: m.letter, start: start + m.start, end: start + m.end }))
+				: null,
+		});
 	}
 
 	// Rotation lanes only. A signed utterance is upper-body: it must never write
@@ -188,6 +236,7 @@ export function compileUtterance(text, opts = {}) {
 		words,
 		signed,
 		spelled,
+		segments,
 		truncated,
 	};
 }
