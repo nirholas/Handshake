@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Render Lab · three.ws</title>
+	<meta name="description" content="Compose a real avatar render in the browser and copy the exact API call. Render Lab reads what each model can actually do (ARKit morphs, skeleton coverage, geometry) and only offers controls it will honor, so nothing you build here silently fails in production." />
+	<link rel="canonical" href="https://three.ws/render-lab" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/render-lab.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Render Lab · three.ws" />
+	<meta property="og:description" content="Compose a real avatar render, see what the model can actually do, and copy the exact API call. No signup." />
+	<meta property="og:url" content="https://three.ws/render-lab" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Render+Lab&amp;d=Compose+a+real+avatar+render+and+copy+the+exact+API+call.+Controls+adapt+to+what+each+model+can+actually+do.&amp;p=%2Frender-lab" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Render Lab · three.ws" />
+	<meta name="twitter:description" content="Compose a real avatar render, see what the model can actually do, and copy the exact API call." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Render+Lab&amp;d=Compose+a+real+avatar+render+and+copy+the+exact+API+call.&amp;p=%2Frender-lab" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Render Lab / three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="rl-wrap">
+		<section class="rl-hero">
+			<h1>Render Lab</h1>
+			<p>
+				Compose a real render against the live API, then copy the exact call. Every control here maps to
+				one parameter of <a href="/docs/media-api">GET /api/avatar/render</a>, and the lab reads each model
+				first: shapes it does not have and poses its skeleton cannot hold are switched off with the reason,
+				instead of failing quietly at render time. No account, no SDK, no key.
+			</p>
+		</section>
+
+		<div class="rl-grid">
+			<!-- ── stage ──────────────────────────────────────────────────── -->
+			<section class="rl-stage-col">
+				<div class="rl-stage" id="stage" data-state="idle">
+					<div class="rl-stage-frame" id="stageFrame">
+						<img id="stageImg" alt="" hidden />
+						<div class="rl-skeleton" id="stageSkeleton" aria-hidden="true"></div>
+						<p class="rl-stage-msg" id="stageMsg">Pick an avatar to start.</p>
+					</div>
+					<div class="rl-stage-bar">
+						<span class="rl-stage-meta" id="stageMeta"></span>
+						<div class="rl-stage-actions">
+							<button type="button" class="rl-btn rl-btn-ghost" id="btnSheet" data-tip="Render this configuration across every camera framing and pose at once. Click any tile to adopt it.">Contact sheet</button>
+							<button type="button" class="rl-btn rl-btn-ghost" id="btnPermalink" data-tip="Copy a link that reopens this exact configuration.">Copy link</button>
+							<a class="rl-btn rl-btn-primary" id="btnOpen" href="#" target="_blank" rel="noopener" data-tip="Open the raw image the API returned, in a new tab.">Open image</a>
+						</div>
+					</div>
+				</div>
+
+				<div class="rl-sheet" id="sheet" hidden>
+					<div class="rl-sheet-head">
+						<h2 id="sheetTitle">Contact sheet</h2>
+						<div class="rl-seg" role="group" aria-label="Contact sheet axis">
+							<button type="button" class="rl-seg-btn is-on" data-axis="scene">Framing</button>
+							<button type="button" class="rl-seg-btn" data-axis="pose">Poses</button>
+							<button type="button" class="rl-seg-btn" data-axis="expression">Expressions</button>
+						</div>
+						<button type="button" class="rl-btn rl-btn-ghost" id="btnSheetClose" aria-label="Close contact sheet">Close</button>
+					</div>
+					<div class="rl-sheet-grid" id="sheetGrid"></div>
+					<p class="rl-sheet-note" id="sheetNote"></p>
+				</div>
+
+				<!-- ── code ───────────────────────────────────────────────── -->
+				<section class="rl-code">
+					<div class="rl-code-head">
+						<div class="rl-tabs" role="tablist" aria-label="Code format">
+							<button type="button" class="rl-tab is-on" role="tab" aria-selected="true" data-lang="url">URL</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="html">HTML</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="curl">curl</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="js">JavaScript</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="component">Web component</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="mcp">MCP</button>
+						</div>
+						<button type="button" class="rl-btn rl-btn-secondary" id="btnCopyCode">Copy</button>
+					</div>
+					<pre class="rl-code-body"><code id="codeOut"></code></pre>
+					<p class="rl-code-note" id="codeNote"></p>
+				</section>
+			</section>
+
+			<!-- ── controls ───────────────────────────────────────────────── -->
+			<aside class="rl-rail">
+				<section class="rl-panel">
+					<h2 class="rl-panel-h">Model</h2>
+					<div class="rl-avatars" id="avatarStrip" role="radiogroup" aria-label="Choose an avatar"></div>
+					<label class="rl-field">
+						<span class="rl-label" data-tip="Any three.ws avatar ID, or a public .glb URL from anywhere on the web.">Avatar ID or GLB URL</span>
+						<span class="rl-input-row">
+							<input type="text" id="customInput" class="rl-input" placeholder="13f259c7-… or https://…/model.glb" spellcheck="false" autocomplete="off" />
+							<button type="button" class="rl-btn rl-btn-secondary" id="btnLoadCustom">Load</button>
+						</span>
+					</label>
+				</section>
+
+				<section class="rl-panel" id="capPanel" hidden>
+					<h2 class="rl-panel-h">What this model can do</h2>
+					<div class="rl-cap-head" id="capHead"></div>
+					<div class="rl-meters" id="capMeters"></div>
+					<ul class="rl-verdicts" id="capVerdicts"></ul>
+					<p class="rl-cap-src">Read from the GLB itself via <a href="/docs/media-api#capabilities">/api/avatar/capabilities</a>.</p>
+				</section>
+
+				<section class="rl-panel">
+					<h2 class="rl-panel-h">Framing</h2>
+					<div class="rl-chips" id="sceneChips" role="radiogroup" aria-label="Camera framing"></div>
+
+					<label class="rl-field">
+						<span class="rl-label" data-tip="Square output dimension in pixels. width/height override it when you need a non-square image.">Size <b id="sizeVal">512</b> px</span>
+						<input type="range" id="sizeInput" min="128" max="2048" step="64" value="512" class="rl-range" />
+					</label>
+
+					<label class="rl-field">
+						<span class="rl-label" data-tip="Any CSS color, or transparent for a cut-out PNG you can drop on any background.">Background</span>
+						<span class="rl-input-row">
+							<input type="color" id="bgColor" class="rl-color" value="#0a0a0a" aria-label="Background color" />
+							<input type="text" id="bgInput" class="rl-input" value="transparent" spellcheck="false" autocomplete="off" />
+						</span>
+					</label>
+
+					<label class="rl-field">
+						<span class="rl-label" data-tip="PNG keeps transparency. WebP and JPEG are smaller; quality applies to those two only.">Format</span>
+						<span class="rl-input-row">
+							<select id="formatInput" class="rl-select">
+								<option value="png">png</option>
+								<option value="webp">webp</option>
+								<option value="jpeg">jpeg</option>
+							</select>
+							<input type="number" id="qualityInput" class="rl-input rl-input-num" min="1" max="100" value="90" disabled aria-label="Quality" />
+						</span>
+					</label>
+				</section>
+
+				<section class="rl-panel" id="posePanel">
+					<h2 class="rl-panel-h">
+						Pose
+						<span class="rl-panel-state" id="poseState"></span>
+					</h2>
+					<div class="rl-chips rl-chips-scroll" id="poseChips" role="radiogroup" aria-label="Pose preset"></div>
+				</section>
+
+				<section class="rl-panel" id="exprPanel">
+					<h2 class="rl-panel-h">
+						Expression
+						<span class="rl-panel-state" id="exprState"></span>
+					</h2>
+					<div class="rl-presets" id="exprPresets"></div>
+					<div class="rl-sliders" id="exprSliders"></div>
+					<p class="rl-empty" id="exprEmpty" hidden></p>
+				</section>
+
+				<button type="button" class="rl-btn rl-btn-secondary rl-reset" id="btnReset">Reset everything</button>
+			</aside>
+		</div>
+
+		<section class="rl-next">
+			<h2>Next</h2>
+			<div class="rl-next-grid">
+				<a class="rl-next-card" href="/docs/media-api">
+					<strong>Media API reference</strong>
+					<span>Every parameter, response header, and cache rule for the render and capability endpoints.</span>
+				</a>
+				<a class="rl-next-card" href="/docs/tutorials/render-avatar-images">
+					<strong>Tutorial: render avatar images</strong>
+					<span>Ship avatar images into a real page, from first request to CDN-cached production use.</span>
+				</a>
+				<a class="rl-next-card" href="/create">
+					<strong>Make your own avatar</strong>
+					<span>Generate a rigged avatar from a prompt or a photo, then render it here.</span>
+				</a>
+			</div>
+		</section>
+	</main>
+
+	<script type="module" src="/src/render-lab.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
