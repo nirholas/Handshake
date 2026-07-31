@@ -17,7 +17,7 @@
 	<style>
 		:root {
 			--ins-pass: #2fbf71;
-			--ins-fail: #f87171;
+			--ins-fail: var(--danger);
 			--ins-line: rgba(255, 255, 255, 0.09);
 			--ins-panel: rgba(255, 255, 255, 0.032);
 			--ins-ink-2: rgba(255, 255, 255, 0.58);
@@ -103,11 +103,14 @@
 		@media (max-width: 940px) { .ins-main { grid-template-columns: 1fr; } }
 
 		.ins-stage {
-			position: relative; border-radius: 18px; border: 1px solid var(--ins-line);
+			border-radius: 18px; border: 1px solid var(--ins-line);
 			background: radial-gradient(120% 90% at 50% 0%, rgba(124, 92, 255, 0.11), transparent 62%), var(--ins-panel);
 			aspect-ratio: 1 / 1; overflow: hidden; position: sticky; top: 1.25rem;
 		}
-		@media (max-width: 940px) { .ins-stage { position: static; aspect-ratio: 4 / 3; } }
+		/* `relative`, never `static`: the hint, the error note and the busy overlay
+		   are absolutely positioned inside the stage, and `static` would remove
+		   their containing block and let them escape over the toolbar. */
+		@media (max-width: 940px) { .ins-stage { position: relative; aspect-ratio: 4 / 3; } }
 		#ins-canvas { width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 0.5s ease; }
 		.ins-stage.has-model #ins-canvas { opacity: 1; }
 		.ins-stage-empty {
@@ -190,6 +193,22 @@
 
 		.ins-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 	</style>
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Model+Inspector&amp;d=Run+the+exact+quality+gate+three.ws+applies+to+its+own+catalog+against+any+.glb%2C+in+your+browser.+Nothing+is+uploaded.+Per-rule+verdict%2C+what+was+measured&amp;p=%2Finspect">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:type" content="image/png">
+	<meta property="og:image:alt" content="Model Inspector — three.ws">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:site" content="@trythreews">
+	<meta name="twitter:title" content="Model Inspector · three.ws">
+	<meta name="twitter:description" content="Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Model+Inspector&amp;d=Run+the+exact+quality+gate+three.ws+applies+to+its+own+catalog+against+any+.glb%2C+in+your+browser.+Nothing+is+uploaded.+Per-rule+verdict%2C+what+was+measured&amp;p=%2Finspect">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Model Inspector","description":"Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.","url":"https://three.ws/inspect","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Model+Inspector&d=Run+the+exact+quality+gate+three.ws+applies+to+its+own+catalog+against+any+.glb%2C+in+your+browser.+Nothing+is+uploaded.+Per-rule+verdict%2C+what+was+measured&p=%2Finspect"}]}</script>
 </head>
 <body>
 	<div class="ins-wrap">

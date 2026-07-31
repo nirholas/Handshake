@@ -274,6 +274,10 @@ const appConfig = {
 			'three/addons/controls/OrbitControls.js',
 			'three/addons/environments/RoomEnvironment.js',
 			'three/addons/libs/meshopt_decoder.module.js',
+			// Loaded lazily by src/shared/cinematic-render.js. Without it here the
+			// dev optimizer discovers it mid-session and restarts the page under
+			// whichever viewer just asked for an HDRI.
+			'three/addons/loaders/RGBELoader.js',
 		],
 		exclude: ['@three-ws/agent-payments'],
 	},
@@ -361,10 +365,16 @@ const appConfig = {
 				'what-is': resolve(__dirname, 'pages/what-is.html'),
 				atlas: resolve(__dirname, 'pages/atlas.html'),
 				tour: resolve(__dirname, 'pages/tour.html'),
+				'tour-atlas': resolve(__dirname, 'pages/tour-atlas.html'),
 				concierge: resolve(__dirname, 'pages/concierge.html'),
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
+				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
+				bundles: resolve(__dirname, 'pages/bundles.html'),
+				bundles: resolve(__dirname, 'pages/bundles.html'),
+				'embed-doctor': resolve(__dirname, 'pages/embed-doctor.html'),
+				crews: resolve(__dirname, 'pages/crews.html'),
 				inspect: resolve(__dirname, 'pages/inspect.html'),
 				pitch: resolve(__dirname, 'pages/pitch.html'),
 				timeline: resolve(__dirname, 'pages/timeline.html'),
@@ -380,6 +390,8 @@ const appConfig = {
 				'features-agent-exchange': resolve(__dirname, 'pages/features/agent-exchange.html'),
 				'features-deploy': resolve(__dirname, 'pages/features/deploy.html'),
 				tutorials: resolve(__dirname, 'pages/tutorials.html'),
+				walkthroughs: resolve(__dirname, 'pages/walkthroughs.html'),
+				walkthrough: resolve(__dirname, 'pages/walkthrough.html'),
 				tutorial: resolve(__dirname, 'pages/tutorial.html'),
 				cookbook: resolve(__dirname, 'pages/cookbook.html'),
 				recipe: resolve(__dirname, 'pages/recipe.html'),
@@ -424,12 +436,14 @@ const appConfig = {
 				genesis: resolve(__dirname, 'pages/genesis.html'),
 				worlds: resolve(__dirname, 'pages/worlds.html'),
 				'docs-world': resolve(__dirname, 'pages/docs-world.html'),
+				'docs-freshness': resolve(__dirname, 'pages/docs-freshness.html'),
 				'avatar-studio': resolve(__dirname, 'pages/avatar-studio.html'),
 				'create-review': resolve(__dirname, 'pages/create-review.html'),
 				'import-rpm': resolve(__dirname, 'pages/import-rpm.html'),
 				marketplace: resolve(__dirname, 'pages/marketplace.html'),
 				'marketplace-walk': resolve(__dirname, 'pages/marketplace-walk.html'),
 				'marketplace-analytics': resolve(__dirname, 'pages/marketplace-analytics.html'),
+				conversions: resolve(__dirname, 'pages/conversions.html'),
 				collection: resolve(__dirname, 'pages/collection.html'),
 				// Key must NOT be `notifications` — that key at the top of this input
 				// object is the nav-bell module (src/notifications.js), which nav.js
@@ -458,6 +472,8 @@ const appConfig = {
 				minted: resolve(__dirname, 'pages/minted.html'),
 				creations: resolve(__dirname, 'pages/creations.html'),
 				pulse: resolve(__dirname, 'pages/pulse.html'),
+				'economy-lab': resolve(__dirname, 'pages/economy-lab.html'),
+				flow: resolve(__dirname, 'pages/flow.html'),
 				symphony: resolve(__dirname, 'pages/symphony.html'),
 				diorama: resolve(__dirname, 'pages/diorama.html'),
 				'x402-revenue': resolve(__dirname, 'pages/x402-revenue.html'),
@@ -600,6 +616,7 @@ const appConfig = {
 				billing: resolve(__dirname, 'pages/billing.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
 				payments: resolve(__dirname, 'pages/payments.html'),
+				'pay-simulator': resolve(__dirname, 'pages/pay-simulator.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
 				'gallery-picker': resolve(__dirname, 'pages/gallery-picker.html'),
 				status: resolve(__dirname, 'pages/status.html'),
@@ -623,6 +640,7 @@ const appConfig = {
 				'play-arena': resolve(__dirname, 'pages/play/arena.html'),
 				'play-ufo': resolve(__dirname, 'pages/play/ufo.html'),
 				'play-economy': resolve(__dirname, 'pages/play/economy.html'),
+				'play-solver': resolve(__dirname, 'pages/play/solver.html'),
 				agi: resolve(__dirname, 'pages/agi.html'),
 				arena: resolve(__dirname, 'pages/arena.html'),
 				'smart-money': resolve(__dirname, 'pages/smart-money.html'),
@@ -1057,6 +1075,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/gallery-picker': resolve(root, 'pages/gallery-picker.html'),
 					'/gallery-picker/': resolve(root, 'pages/gallery-picker.html'),
 					'/status': resolve(root, 'pages/status.html'),
+					'/atlas': resolve(root, 'pages/atlas.html'),
+					'/atlas/': resolve(root, 'pages/atlas.html'),
 					'/status/': resolve(root, 'pages/status.html'),
 					'/marketplace': resolve(root, 'pages/marketplace.html'),
 					'/marketplace/': resolve(root, 'pages/marketplace.html'),
@@ -1095,6 +1115,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/creations/': resolve(root, 'pages/creations.html'),
 					'/pulse': resolve(root, 'pages/pulse.html'),
 					'/pulse/': resolve(root, 'pages/pulse.html'),
+					'/flow': resolve(root, 'pages/flow.html'),
+					'/flow/': resolve(root, 'pages/flow.html'),
 					'/symphony': resolve(root, 'pages/symphony.html'),
 					'/symphony/': resolve(root, 'pages/symphony.html'),
 					'/x402-revenue': resolve(root, 'pages/x402-revenue.html'),
@@ -1179,6 +1201,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/ca2x402/': resolve(root, 'pages/ca2x402.html'),
 					'/activity': resolve(root, 'pages/activity.html'),
 					'/activity/': resolve(root, 'pages/activity.html'),
+					'/tour/atlas': resolve(root, 'pages/tour-atlas.html'),
+					'/tour/atlas/': resolve(root, 'pages/tour-atlas.html'),
 					'/guards': resolve(root, 'pages/guards.html'),
 					'/guards/': resolve(root, 'pages/guards.html'),
 					'/pipeline': resolve(root, 'pages/pipeline.html'),
@@ -1424,6 +1448,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 					'/docs/world': resolve(root, 'pages/docs-world.html'),
 					'/docs/world/': resolve(root, 'pages/docs-world.html'),
+					'/docs/freshness': resolve(root, 'pages/docs-freshness.html'),
+					'/docs/freshness/': resolve(root, 'pages/docs-freshness.html'),
 					'/bazaar': resolve(root, 'public/bazaar.html'),
 					'/bazaar/': resolve(root, 'public/bazaar.html'),
 					'/labs': resolve(root, 'pages/labs.html'),
@@ -1432,6 +1458,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/quality-bench/': resolve(root, 'pages/quality-bench.html'),
 					'/inspect': resolve(root, 'pages/inspect.html'),
 					'/inspect/': resolve(root, 'pages/inspect.html'),
+					'/render-lab': resolve(root, 'pages/render-lab.html'),
+					'/render-lab/': resolve(root, 'pages/render-lab.html'),
+					'/bundles': resolve(root, 'pages/bundles.html'),
+					'/bundles/': resolve(root, 'pages/bundles.html'),
 					'/search': resolve(root, 'pages/search.html'),
 					'/search/': resolve(root, 'pages/search.html'),
 					'/rankings': resolve(root, 'pages/rankings.html'),
@@ -1650,6 +1680,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					// /p/<slug>  → public Launchpad Studio renderer (hydrates from /api/launchpad/get)
 					else if (!filePath && /^\/p\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'public/p/index.html');
+					// /pay/simulator  → spend policy dry run. Checked before the /pay/c
+					// checkout rule, mirroring the order in vercel.json.
+					else if (!filePath && /^\/pay\/simulator\/?$/.test(path))
+						filePath = resolve(root, 'pages/pay-simulator.html');
 					// /pay/c/<slug>  → hosted x402 checkout page (hydrates from /api/x402-skus?slug=)
 					else if (!filePath && /^\/pay\/c\/[a-z0-9][a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/c/index.html');
@@ -2036,6 +2070,39 @@ support: resolve(__dirname, 'pages/support.html'),
 						{ tag: 'script', children: BOOTSTRAP, injectTo: 'head' },
 						{ tag: 'script', attrs: { defer: true, src: '/error-reporter.js' }, injectTo: 'head' },
 					];
+				},
+			},
+		},
+		{
+			// Atlas: the site-wide Cmd+K palette. A global shortcut has to exist on
+			// every page or it is not global, and there is no shared layout across the
+			// 250+ standalone entry points to hang it off, so it gets injected here.
+			// scripts/inject-atlas.mjs re-walks dist/ after the build and asserts the
+			// coverage, because this hook has historically missed pages depending on
+			// plugin ordering (see inject-tour-boot.mjs). Embeds and the nav/footer
+			// FRAGMENTS are excluded for the same reasons as the view-transitions
+			// plugin below: never steal Cmd+K inside someone else's page, and never
+			// put a script tag in a string that gets assigned via innerHTML.
+			name: 'three-ws-atlas',
+			transformIndexHtml: {
+				order: 'pre',
+				handler(_html, ctx) {
+					const EXCLUDED = new Set([
+						'widget.html',
+						'embed.html',
+						'avatar-embed.html',
+						'agent-embed.html',
+						'a-embed.html',
+						'agent-token-page.html',
+						'nav.html',
+						'footer.html',
+					]);
+					const filename = (ctx.filename || ctx.path || '')
+						.replace(/\\/g, '/')
+						.split('/')
+						.pop();
+					if (EXCLUDED.has(filename)) return [];
+					return [{ tag: 'script', attrs: { type: 'module', src: '/atlas.js' }, injectTo: 'body' }];
 				},
 			},
 		},

@@ -45,7 +45,17 @@
 				"gate",
 				"build:gcp"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A staged source file carrying an unresolved conflict marker.",
+				"stage": true,
+				"violation": {
+					"write": {
+						"src/guard-proof-conflict.js": "export const side = 'resolved';\n<<<<<<< HEAD\nexport const owner = 'ours';\n=======\nexport const owner = 'theirs';\n>>>>>>> feature\n"
+					}
+				},
+				"expect": "src/guard-proof-conflict.js"
+			}
 		},
 		{
 			"id": "check-claude-md",
@@ -57,7 +67,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "CLAUDE.md telling an agent to run an npm script that does not exist.",
+				"violation": {
+					"append": {
+						"CLAUDE.md": "\n\nProof fixture: verify the toolchain with `npm run guard-proof-nonexistent`.\n"
+					}
+				},
+				"expect": "guard-proof-nonexistent"
+			}
 		},
 		{
 			"id": "check-rules",
@@ -69,7 +88,16 @@
 			"stages": [
 				"pre-push"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A new source file whose added lines break a CLAUDE.md hard rule.",
+				"violation": {
+					"write": {
+						"src/guard-proof-rule.js": "// TODO: wire this up later\nexport function proofFixture() {\n\treturn null;\n}\n"
+					}
+				},
+				"expect": "src/guard-proof-rule.js"
+			}
 		},
 		{
 			"id": "check-cron-drift",
@@ -85,7 +113,11 @@
 				"gate",
 				"manual"
 			],
-			"needs": "gcloud"
+			"needs": "gcloud",
+			"proof": {
+				"kind": "live",
+				"reason": "Compares the crons declared in vercel.json against the jobs actually deployed to Cloud Scheduler, so it needs an authenticated gcloud session and the live project. There is nothing offline to mutate."
+			}
 		},
 		{
 			"id": "audit-page-index",
@@ -98,7 +130,24 @@
 				"prebuild",
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A public page route in vercel.json that no data/pages.json entry documents.",
+				"violation": {
+					"json": [
+						{
+							"file": "vercel.json",
+							"pointer": "routes",
+							"at": 0,
+							"insert": {
+								"src": "/guard-proof-orphan",
+								"dest": "/guard-proof-orphan.html"
+							}
+						}
+					]
+				},
+				"expect": "guard-proof-orphan"
+			}
 		},
 		{
 			"id": "check-pages",
@@ -110,7 +159,20 @@
 			"stages": [
 				"build:gcp"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A page advertised in data/pages.json with no built file behind it.",
+				"setup": {
+					"data/pages.json": "{\n\t\"site\": {\n\t\t\"base\": \"https://three.ws\"\n\t},\n\t\"sections\": [\n\t\t{\n\t\t\t\"id\": \"main\",\n\t\t\t\"title\": \"Main\",\n\t\t\t\"description\": \"Proof fixture section.\",\n\t\t\t\"pages\": [\n\t\t\t\t{\n\t\t\t\t\t\"path\": \"/guards\",\n\t\t\t\t\t\"title\": \"Guards\",\n\t\t\t\t\t\"description\": \"Proof fixture page.\",\n\t\t\t\t\t\"priority\": 0.5,\n\t\t\t\t\t\"changefreq\": \"weekly\",\n\t\t\t\t\t\"added\": \"2026-07-31\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}\n",
+					"dist/guards.html": "<!doctype html><title>guards</title>\n"
+				},
+				"violation": {
+					"delete": [
+						"dist/guards.html"
+					]
+				},
+				"expect": "not built into dist/"
+			}
 		},
 		{
 			"id": "verify-routes",
@@ -122,7 +184,22 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "Deleting the route that serves a catalogued page, so its pretty URL 404s.",
+				"violation": {
+					"json": [
+						{
+							"file": "vercel.json",
+							"pointer": "routes",
+							"removeWhere": {
+								"src": "/guards/?"
+							}
+						}
+					]
+				},
+				"expect": "/guards"
+			}
 		},
 		{
 			"id": "audit-empty-handlers",
@@ -135,7 +212,16 @@
 				"prebuild",
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "An API file that is routable but exports nothing, so it can never serve a response.",
+				"violation": {
+					"write": {
+						"api/guard-proof-empty.js": "\n"
+					}
+				},
+				"expect": "api/guard-proof-empty.js"
+			}
 		},
 		{
 			"id": "audit-hidden-guard",
@@ -148,7 +234,16 @@
 				"prebuild",
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A product page that links no shared stylesheet, so [hidden] never hides anything.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-unguarded.html": "<!doctype html>\n<html lang=\"en\">\n<head><meta charset=\"utf-8\"><title>Proof</title></head>\n<body><div hidden class=\"overlay\">covers everything</div></body>\n</html>\n"
+					}
+				},
+				"expect": "guard-proof-unguarded.html"
+			}
 		},
 		{
 			"id": "audit-docs",
@@ -160,7 +255,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A doc whose relative link points at a file that does not exist.",
+				"violation": {
+					"write": {
+						"docs/guard-proof-dead-link.md": "# Proof fixture\n\nSee [the missing reference](./guard-proof-nowhere.md) for details.\n"
+					}
+				},
+				"expect": "guard-proof-dead-link.md"
+			}
 		},
 		{
 			"id": "sync-tutorial-pages",
@@ -172,7 +276,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A tutorial markdown file that no manifest entry points at, so nothing can reach it.",
+				"violation": {
+					"write": {
+						"docs/tutorials/guard-proof-orphan.md": "# Proof fixture tutorial\n\nThis file exists on disk and in no index.\n"
+					}
+				},
+				"expect": "guard-proof-orphan"
+			}
 		},
 		{
 			"id": "audit-mcp-catalog",
@@ -184,7 +297,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A new MCP tool landing without regenerating the public catalog.",
+				"violation": {
+					"write": {
+						"api/_mcp/tools/guard-proof-catalog.js": "export const guardProofTool = {\n\tname: 'guard_proof_catalog',\n\tdescription: 'Proof fixture tool used only inside the guard sandbox.',\n\tinputSchema: { type: 'object', properties: {}, additionalProperties: false },\n\tannotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },\n};\n"
+					}
+				},
+				"expect": "public/mcp-catalog.json is stale"
+			}
 		},
 		{
 			"id": "audit-x402-catalog",
@@ -196,7 +318,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A paid x402 endpoint that no buyer can find, because the catalog never mentions it.",
+				"violation": {
+					"write": {
+						"api/x402/guard-proof-endpoint.js": "export default async function handler(req, res) {\n\tres.status(200).json({ ok: true });\n}\n"
+					}
+				},
+				"expect": "guard-proof-endpoint"
+			}
 		},
 		{
 			"id": "audit-mcp-manifests",
@@ -208,7 +339,20 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A registry manifest whose description exceeds the 100-character schema limit.",
+				"violation": {
+					"json": [
+						{
+							"file": "server.json",
+							"pointer": "description",
+							"set": "A deliberately overlong registry description used by the guard proof sandbox to exceed the one hundred character schema limit imposed by the registry."
+						}
+					]
+				},
+				"expect": "[audit:mcp]"
+			}
 		},
 		{
 			"id": "audit-mcp-golden",
@@ -220,7 +364,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A tool contract appearing on the wire without being declared in the golden fixture.",
+				"violation": {
+					"write": {
+						"api/_mcp/tools/guard-proof-golden.js": "export const guardProofGoldenTool = {\n\tname: 'guard_proof_golden',\n\tdescription: 'Proof fixture tool used only inside the guard sandbox.',\n\tinputSchema: { type: 'object', properties: {}, additionalProperties: false },\n\tannotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },\n};\n"
+					}
+				},
+				"expect": "[audit:mcp-golden]"
+			}
 		},
 		{
 			"id": "audit-mcp-safety",
@@ -232,7 +385,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A tool shipping with no safety annotations at all, so a client cannot judge it.",
+				"violation": {
+					"write": {
+						"api/_mcp/tools/guard-proof-safety.js": "export const guardProofSafetyTool = {\n\tname: 'guard_proof_safety',\n\tdescription: 'Proof fixture tool used only inside the guard sandbox.',\n\tinputSchema: { type: 'object', properties: {}, additionalProperties: false },\n\tasync handler() {\n\t\treturn { ok: true };\n\t},\n};\n"
+					}
+				},
+				"expect": "no annotations"
+			}
 		},
 		{
 			"id": "audit-token-drift",
@@ -244,7 +406,16 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A token-covered page hardcoding a hex that is literally a design token.",
+				"violation": {
+					"write": {
+						"pages/guard-proof-token.html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\"><title>Proof</title>\n<link rel=\"stylesheet\" href=\"/style.css\">\n<style>\n.proof-a { color: #4ade80; }\n.proof-b { color: #f87171; }\n</style>\n</head>\n<body><p class=\"proof-a\">fixture</p></body>\n</html>\n"
+					}
+				},
+				"expect": "design-token drift increased"
+			}
 		},
 		{
 			"id": "check-browser-graph",
@@ -256,7 +427,16 @@
 			"stages": [
 				"build:gcp"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A Node built-in reaching the browser bundle through a real import chain.",
+				"violation": {
+					"append": {
+						"src/solana/sns.js": "\nimport { promisify } from 'node:util';\nexport const proofPromisify = promisify;\n"
+					}
+				},
+				"expect": "node:util"
+			}
 		},
 		{
 			"id": "check-dist",
@@ -268,7 +448,34 @@
 			"stages": [
 				"build:gcp"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A build that finished without producing the published embed bundle.",
+				"setup": {
+					"dist/agent-3d/latest/agent-3d.js": "export const proof = 1;\n",
+					"dist/agent-3d/latest/agent-3d.umd.cjs": "module.exports = { proof: 1 };\n",
+					"dist/agent-3d/versions.json": "{\"latest\":\"{{pkg.version}}\"}\n",
+					"dist/dist-lib/agent-3d.js": {
+						"fill": 1000001
+					},
+					"dist/dist-lib/agent-3d.umd.cjs": {
+						"fill": 100001
+					},
+					"dist/home.html": "<!doctype html><title>home</title>\n",
+					"dist/dashboard.html": "<!doctype html><title>dashboard</title>\n",
+					"dist/pump-dashboard.html": "<!doctype html><title>pump</title>\n",
+					"dist/dashboard-next.html": "<!doctype html><title>next</title>\n",
+					"dist/create.html": "<!doctype html><title>create</title>\n",
+					"dist/discover.html": "<!doctype html><title>discover</title>\n",
+					"dist/chat.html": "<!doctype html><title>chat</title>\n"
+				},
+				"violation": {
+					"delete": [
+						"dist/dist-lib/agent-3d.umd.cjs"
+					]
+				},
+				"expect": "MISSING: dist/dist-lib/agent-3d.umd.cjs"
+			}
 		},
 		{
 			"id": "audit-deploy-artifacts",
@@ -280,7 +487,17 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A symlink committed to the index, which the deploy bundler cannot resolve.",
+				"stage": true,
+				"violation": {
+					"link": {
+						"data/guard-proof-link.md": "../README.md"
+					}
+				},
+				"expect": "guard-proof-link.md"
+			}
 		},
 		{
 			"id": "check-gcloudignore",
@@ -292,7 +509,16 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "gcloud"
+			"needs": "gcloud",
+			"proof": {
+				"summary": "A missing .gcloudignore, which silently hands the upload set back to .gitignore.",
+				"violation": {
+					"delete": [
+						".gcloudignore"
+					]
+				},
+				"expect": "ignore file not found"
+			}
 		},
 		{
 			"id": "audit-links",
@@ -304,7 +530,24 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A route in vercel.json whose destination file was never created.",
+				"violation": {
+					"json": [
+						{
+							"file": "vercel.json",
+							"pointer": "routes",
+							"at": 0,
+							"insert": {
+								"src": "/guard-proof-dangling",
+								"dest": "/guard-proof-dangling.html"
+							}
+						}
+					]
+				},
+				"expect": "guard-proof-dangling"
+			}
 		},
 		{
 			"id": "audit-console",
@@ -316,7 +559,11 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "browser"
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Drives a real browser over the live page set and reads the console, so it needs Playwright and a running server. A static fixture cannot produce a runtime console error."
+			}
 		},
 		{
 			"id": "audit-image-loading",
@@ -328,7 +575,16 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A JS-rendered image with no loading attribute, which fetches eagerly off-screen.",
+				"violation": {
+					"write": {
+						"src/guard-proof-img.js": "export function proofThumb(url) {\n\treturn `<img src=\"${url}\" alt=\"proof\">`;\n}\n"
+					}
+				},
+				"expect": "guard-proof-img.js"
+			}
 		},
 		{
 			"id": "audit-garments",
@@ -340,7 +596,11 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "network"
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Fetches every published garment asset over the network and inspects the returned GLB, so there is no offline input to mutate."
+			}
 		},
 		{
 			"id": "audit-rig-coverage",
@@ -352,7 +612,11 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "credentials"
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Loads real avatar rigs from production storage and retargets clips onto them, which needs live credentials and the model bucket."
+			}
 		},
 		{
 			"id": "audit-service-wallets",
@@ -364,7 +628,11 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "credentials"
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Reads live balances for the service wallets over RPC using the production keys in .env."
+			}
 		},
 		{
 			"id": "audit-wallet-flows",
@@ -376,7 +644,11 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "credentials"
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Reconstructs on-chain transfer history for the fleet wallets from live RPC, so it has no offline input."
+			}
 		},
 		{
 			"id": "check-relayer-balances",
@@ -388,7 +660,11 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "credentials"
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Queries the funded relayer accounts over RPC and compares them against the operating floor, which only exists on-chain."
+			}
 		},
 		{
 			"id": "audit-guards",
@@ -400,7 +676,20 @@
 			"stages": [
 				"gate"
 			],
-			"needs": "none"
+			"needs": "none",
+			"proof": {
+				"summary": "A registry entry naming a guard script that is not in the repository.",
+				"violation": {
+					"json": [
+						{
+							"file": "data/guards.json",
+							"pointer": "guards.0.script",
+							"set": "scripts/guard-proof-missing.mjs"
+						}
+					]
+				},
+				"expect": "scripts/guard-proof-missing.mjs"
+			}
 		},
 		{
 			"id": "check-erc7710-addresses",
@@ -412,7 +701,64 @@
 			"stages": [
 				"manual"
 			],
-			"needs": "network"
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Resolves the delegation-framework contract addresses against live chain RPC, so the values it compares only exist on-chain."
+			}
+		},
+		{
+			"id": "audit-overlays",
+			"script": "scripts/audit-overlays.mjs",
+			"npm": "audit:overlays",
+			"title": "Overlapping fixed overlays",
+			"protects": "No persistent floating widget can cover another one's controls.",
+			"why": "Viewport-anchored UI accumulated independently: the walk companion, the corner stack, consent bars, sticky rails, the chat launcher. Each is correct alone and they compete for the same few hundred pixels. The collision only appears on the one page where both are mounted at the one viewport where they touch, which is invisible to unit tests and to whoever built either widget. Every earlier fix was a bug report plus a hand measurement plus a magic offset.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Drives a real Chromium over real routes at real viewports and measures painted geometry, so the input is a rendered page rather than a file a fixture could write."
+			}
+		},
+		{
+			"id": "check-runnable-docs",
+			"script": "scripts/check-runnable-docs.mjs",
+			"npm": "check:runnable-docs",
+			"title": "Runnable doc samples still answer",
+			"protects": "Every sample a reader can press Run on still returns what the doc says it returns.",
+			"why": "A curl command in a tutorial can point at an endpoint renamed two quarters ago and nothing notices, because the doc still reads fine. This executes each sample through the same extractor the page uses (public/runnable-extract.js), so the doc and the check can never disagree about what the sample is.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Executes the documented calls against the live API and compares real response statuses, so there is no offline input to mutate."
+			}
+		},
+		{
+			"id": "check-doc-media",
+			"script": "scripts/check-doc-media.mjs",
+			"npm": "check:doc-media",
+			"title": "Doc figures match their manifest",
+			"protects": "Every figure a doc points at was really captured, still matches its recipe, and carries alt text.",
+			"why": "The capture pipeline can produce a correct image while the docs stay wrong: a tutorial points at a file nobody captured, a recipe outlives the doc that used it, an image gets swapped by hand so it no longer matches what the caption claims, or it ships with no alt text, which is a defect for every reader on a screen reader. None of that is visible in a diff.",
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A doc figure whose image file does not exist on disk.",
+				"violation": {
+					"write": {
+						"docs/guard-proof-media.md": "# Proof fixture\n\n![a figure that was never captured](/docs/img/guard-proof-missing.png)\n"
+					}
+				},
+				"expect": "guard-proof"
+			}
 		}
 	],
 	"exempt": [

@@ -38,6 +38,8 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { normalizeProof } from './lib/guard-proofs.mjs';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(path.join(root, rel), 'utf8');
 
@@ -47,6 +49,14 @@ const scripts = pkg.scripts || {};
 
 const failures = [];
 const note = (msg) => failures.push(msg);
+
+// Prose the /guards page and docs/guards.md render verbatim. It is held to the
+// CLAUDE.md typography rule here rather than by scripts/check-rules.mjs, which
+// skips this file: the proof fixtures beside this prose must contain the banned
+// patterns verbatim in order to prove the guards catch them, so a line-level
+// scan of the registry reports the evidence as the offense. Splitting it this
+// way keeps the reader-facing text under the rule and the fixtures exempt.
+const prose = [];
 
 // The stage a guard claims maps to a concrete place its name must appear.
 // `prebuild` runs raw `node scripts/x.mjs` calls rather than npm scripts, so it
@@ -97,6 +107,17 @@ for (const g of registry.guards || []) {
 		if (!g[field] || !String(g[field]).trim()) {
 			note(`${where} is missing \`${field}\`, which /guards and docs/guards.md both render`);
 		}
+		prose.push([`${where} \`${field}\``, g[field]]);
+	}
+
+	// Every guard states the violation it must reject. Without one the registry
+	// entry is an unverifiable claim, which is the exact thing
+	// scripts/prove-guards.mjs exists to eliminate.
+	try {
+		const proof = normalizeProof(g);
+		prose.push([`${where} proof ${proof.kind === 'live' ? 'reason' : 'summary'}`, proof.summary ?? proof.reason]);
+	} catch (err) {
+		note(`${where}: ${err.message}. Every guard must declare the violation it rejects (see docs/guards.md).`);
 	}
 
 	const stages = g.stages || [];

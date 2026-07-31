@@ -449,6 +449,34 @@
 			"schemaHash": "f98dc82b28e7"
 		}
 	],
+	"api/_mcp/tools/sign.js": [
+		{
+			"name": "list_sign_vocabulary",
+			"title": "List the ASL vocabulary",
+			"descHead": "List every word three.ws avatars have a real American Sign Language sign",
+			"descHash": "45de605cfaef",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "bf8afb195b69"
+		},
+		{
+			"name": "sign_text",
+			"title": "Sign text in ASL",
+			"descHead": "Compile English text into one continuous American Sign Language performa",
+			"descHash": "6636359a5774",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "c9372440542d"
+		}
+	],
 	"api/_mcp/tools/solana.js": [
 		{
 			"name": "solana_agent_attestations",
