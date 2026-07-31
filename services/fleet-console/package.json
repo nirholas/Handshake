@@ -1,0 +1,21 @@
+{
+	"name": "@three-ws/fleet-console",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Live health console for an open-source fleet: enumerates every repository of a GitHub owner, resolves the URLs each one claims to be deployed at, probes them, verifies advertised npm packages actually exist, and scores the result.",
+	"main": "src/server.js",
+	"scripts": {
+		"start": "node src/server.js",
+		"dev": "node --watch src/server.js",
+		"scan": "node src/cli.js scan",
+		"mcp": "node src/mcp.js"
+	},
+	"bin": {
+		"fleet-console": "src/cli.js",
+		"fleet-console-mcp": "src/mcp.js"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}
