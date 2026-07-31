@@ -746,3 +746,389 @@ input.wlt-input {
 		flex: 1 1 100%;
 	}
 }
+
+/* ── Explainers ───────────────────────────────────────────────────────────
+ *
+ * A "?" that opens on hover AND on keyboard focus, with the body text in the
+ * DOM and wired through aria-describedby. No JavaScript participates, so the
+ * explanation survives a failed bundle, and :focus-within means a keyboard
+ * user reaches it in exactly the tab order the mouse user sees.
+ */
+
+.wlt-tip {
+	position: relative;
+	display: inline-flex;
+	vertical-align: middle;
+	margin-inline-start: 6px;
+}
+.wlt-tip-btn {
+	appearance: none;
+	width: 1.05rem;
+	height: 1.05rem;
+	line-height: 1;
+	font: var(--text-xs) var(--font-body);
+	font-weight: var(--weight-bold);
+	color: var(--wallet-accent);
+	background: var(--wallet-accent-soft);
+	border: 1px solid var(--wallet-stroke);
+	border-radius: 50%;
+	cursor: help;
+	padding: 0;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+.wlt-tip-btn:hover,
+.wlt-tip-btn:focus-visible {
+	background: var(--wallet-accent-fill);
+	border-color: var(--wallet-stroke-strong);
+}
+.wlt-tip-btn:focus-visible {
+	outline: 2px solid var(--wallet-focus);
+	outline-offset: 2px;
+}
+.wlt-tip-body {
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 50%;
+	translate: -50% 0;
+	z-index: 20;
+	width: max-content;
+	max-width: min(19rem, 78vw);
+	padding: var(--space-sm) 12px;
+	font: var(--text-sm) var(--font-body);
+	font-weight: var(--weight-regular);
+	line-height: 1.5;
+	text-align: left;
+	white-space: normal;
+	color: var(--ink);
+	background: var(--surface-3);
+	border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-md);
+	box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+	opacity: 0;
+	visibility: hidden;
+	translate: -50% 4px;
+	transition:
+		opacity var(--duration-fast) var(--ease-standard),
+		translate var(--duration-fast) var(--ease-standard),
+		visibility var(--duration-fast);
+}
+.wlt-tip:hover .wlt-tip-body,
+.wlt-tip:focus-within .wlt-tip-body {
+	opacity: 1;
+	visibility: visible;
+	translate: -50% 0;
+}
+
+.wlt-head-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
+}
+
+/* The extra cost a top-up incurs when it also opens a token account. Styled as
+ * a caution rather than an error: nothing is wrong, there is just a charge the
+ * user has not been told about anywhere else. */
+.wlt-confirm-flag {
+	margin: var(--space-sm) 0 0;
+	padding: 10px 12px;
+	font: var(--text-sm) var(--font-body);
+	line-height: 1.55;
+	color: var(--ink);
+	background: var(--wallet-accent-soft);
+	border: 1px solid var(--wallet-stroke);
+	border-radius: var(--radius-md);
+}
+
+/* ── Deposit sheet ────────────────────────────────────────────────────────
+ *
+ * A native <dialog>, so the focus trap, Esc handling, inert background and
+ * top-layer stacking are the platform's job rather than four hand-rolled
+ * behaviours that drift.
+ */
+
+.wlt-sheet {
+	/* Surface, border, radius, shadow and scrim all come from the --modal-*
+	 * family that .tws-modal uses, so this reads as the same dialog system.
+	 * Only the width differs: the shared 480px is too narrow for a QR beside
+	 * its fields. */
+	width: min(48rem, calc(100vw - 2 * var(--space-md)));
+	max-height: min(92dvh, 46rem);
+	overflow: auto;
+	padding: var(--space-lg);
+	color: var(--ink);
+	background: var(--modal-bg);
+	border: 1px solid var(--modal-border);
+	border-radius: var(--modal-radius);
+	box-shadow: var(--modal-shadow);
+}
+.wlt-sheet::backdrop {
+	background: var(--modal-backdrop);
+	backdrop-filter: blur(3px);
+}
+.wlt-sheet[open] {
+	animation: wlt-sheet-in var(--duration-normal) var(--ease-standard);
+}
+@keyframes wlt-sheet-in {
+	from {
+		opacity: 0;
+		transform: translateY(10px) scale(0.985);
+	}
+}
+
+.wlt-sheet-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-md);
+	margin-bottom: var(--space-md);
+}
+.wlt-sheet-title {
+	font: var(--text-xl) var(--font-display);
+	font-weight: var(--weight-bold);
+	color: var(--ink-bright);
+	margin: 0;
+}
+
+.wlt-chips {
+	display: flex;
+	gap: var(--space-xs);
+	flex-wrap: wrap;
+}
+.wlt-chip {
+	appearance: none;
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	font: var(--text-md) var(--font-body);
+	font-weight: var(--weight-medium);
+	color: var(--ink-dim);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: 999px;
+	padding: 7px 14px;
+	cursor: pointer;
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+.wlt-chip:hover {
+	color: var(--ink);
+	border-color: var(--stroke-strong);
+}
+.wlt-chip:focus-visible {
+	outline: 2px solid var(--wallet-focus);
+	outline-offset: 2px;
+}
+.wlt-chip.is-active {
+	color: var(--ink-bright);
+	background: var(--wallet-accent-fill);
+	border-color: var(--wallet-stroke-strong);
+}
+.wlt-chip-net {
+	font: var(--text-xs) var(--font-body);
+	color: var(--ink-dim);
+	opacity: 0.85;
+}
+
+.wlt-sheet-hint {
+	margin: var(--space-sm) 0 var(--space-md);
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+}
+
+.wlt-sheet-body {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--space-lg);
+	align-items: start;
+}
+
+/* The code stays on white in both themes: a QR inverted to suit a dark UI is a
+ * QR that half the scanners in circulation will not read. */
+.wlt-qr-wrap {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-sm);
+	max-width: 15rem;
+}
+.wlt-qr {
+	display: grid;
+	place-items: center;
+	width: 15rem;
+	height: 15rem;
+	padding: 10px;
+	background: #fff;
+	border-radius: var(--radius-md);
+	box-shadow: 0 0 0 1px var(--wallet-stroke);
+}
+.wlt-qr canvas {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+.wlt-qr-cap,
+.wlt-qr-fallback {
+	margin: 0;
+	font: var(--text-xs) var(--font-body);
+	line-height: 1.5;
+	color: var(--ink-dim);
+	text-align: center;
+}
+
+.wlt-sheet-fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-md);
+	min-width: 0;
+}
+.wlt-field-label {
+	display: block;
+	font: var(--text-sm) var(--font-body);
+	font-weight: var(--weight-medium);
+	color: var(--ink);
+	margin-bottom: 6px;
+}
+.wlt-optional {
+	font-weight: var(--weight-regular);
+	color: var(--ink-dim);
+}
+.wlt-dep-addr {
+	display: block;
+	font: var(--text-sm) var(--font-mono);
+	color: var(--ink);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-sm);
+	padding: 10px 12px;
+	/* An address must stay fully readable to be verified, so it wraps rather
+	 * than truncating. anywhere keeps that from forcing a horizontal scroll. */
+	overflow-wrap: anywhere;
+	user-select: all;
+}
+.wlt-sheet-actions {
+	display: flex;
+	gap: var(--space-xs);
+	flex-wrap: wrap;
+	margin-top: var(--space-sm);
+}
+
+.wlt-sheet-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-md);
+	flex-wrap: wrap;
+	margin-top: var(--space-lg);
+	padding-top: var(--space-md);
+	border-top: 1px solid var(--stroke);
+	font: var(--text-sm) var(--font-body);
+	color: var(--ink-dim);
+}
+.wlt-watch {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+}
+.wlt-watch-pulse {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--wallet-accent);
+	box-shadow: 0 0 0 0 var(--wallet-glow);
+	animation: wlt-pulse 2s var(--ease-standard) infinite;
+}
+@keyframes wlt-pulse {
+	70% {
+		box-shadow: 0 0 0 9px rgb(139 92 246 / 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgb(139 92 246 / 0);
+	}
+}
+.wlt-watch-held {
+	font-variant-numeric: tabular-nums;
+}
+
+.wlt-sheet-done {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	gap: var(--space-sm);
+	padding: var(--space-lg) var(--space-md);
+}
+.wlt-sheet-tick {
+	color: var(--wallet-accent);
+}
+.wlt-sheet-tick path {
+	stroke-dasharray: 44;
+	stroke-dashoffset: 44;
+	animation: wlt-tick var(--duration-slow) var(--ease-standard) forwards;
+}
+@keyframes wlt-tick {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+.wlt-sheet-done-title {
+	font: var(--text-xl) var(--font-display);
+	font-weight: var(--weight-bold);
+	color: var(--ink-bright);
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+}
+.wlt-sheet-done-sub {
+	margin: 0;
+	font: var(--text-md) var(--font-body);
+	color: var(--ink-dim);
+	max-width: 32rem;
+}
+.wlt-sheet-done-actions {
+	display: flex;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
+	justify-content: center;
+	margin-top: var(--space-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wlt-sheet[open],
+	.wlt-watch-pulse,
+	.wlt-sheet-tick path {
+		animation: none;
+	}
+	.wlt-sheet-tick path {
+		stroke-dashoffset: 0;
+	}
+	.wlt-tip-body,
+	.wlt-chip {
+		transition: none;
+	}
+}
+
+@media (max-width: 44rem) {
+	.wlt-sheet {
+		padding: var(--space-md);
+	}
+	/* Below this width the two columns would each be too narrow to be usable,
+	 * so the QR leads and the fields follow it. */
+	.wlt-sheet-body {
+		grid-template-columns: minmax(0, 1fr);
+		justify-items: center;
+	}
+	.wlt-qr-wrap {
+		max-width: 100%;
+	}
+	.wlt-sheet-fields {
+		width: 100%;
+	}
+	.wlt-sheet-foot {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}

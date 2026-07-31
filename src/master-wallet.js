@@ -32,8 +32,10 @@ import {
 	previewSend,
 	send as sendFunds,
 	fetchMyAgents,
+	previewFundAgent,
 	fundAgent,
 } from './wallet-api.js';
+import { openDepositSheet } from './wallet-deposit.js';
 
 const root = document.getElementById('wlt-root');
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -122,6 +124,28 @@ function humanError(res) {
 	return ERROR_COPY[res?.code] || res?.message || 'Something went wrong.';
 }
 
+/**
+ * A hover/focus explainer for one idea. The body text lives in the DOM and is
+ * wired with aria-describedby, so it reaches assistive tech and shows on
+ * keyboard focus. Visibility is pure CSS: a tooltip that needs JavaScript to
+ * appear is one that disappears when the JavaScript does.
+ */
+let tipSeq = 0;
+function tip(text) {
+	const id = `wlt-tip-${++tipSeq}`;
+	return `<span class="wlt-tip"
+		><button class="wlt-tip-btn" type="button" aria-describedby="${id}" aria-label="Explain this"
+			>?</button
+		><span class="wlt-tip-body" role="tooltip" id="${id}">${esc(text)}</span
+	></span>`;
+}
+
+/** Amount fields all offer the same escape hatch: let the server work out max. */
+function maxHint(targetId) {
+	return `<p class="wlt-help">Type an amount, or <button class="wlt-linkbtn" type="button"
+		data-act="max" data-target="${targetId}">use my full balance</button>.</p>`;
+}
+
 // ── Rendering ────────────────────────────────────────────────────────────────
 
 function skeleton() {
@@ -193,8 +217,19 @@ function emptyState() {
 
 function balanceCards(b) {
 	const cards = [
-		{ label: 'Total value', value: fmtUsd(b?.total_usd), sub: 'Solana + Base', accent: true },
-		{ label: 'SOL', value: fmtAmount(b?.sol, 6), sub: 'Solana' },
+		{
+			label: 'Total value',
+			value: fmtUsd(b?.total_usd),
+			sub: 'Solana + Base',
+			accent: true,
+			tip: 'Both chains added together, priced live. A balance the network did not answer for is left out rather than counted as zero.',
+		},
+		{
+			label: 'SOL',
+			value: fmtAmount(b?.sol, 6),
+			sub: 'Solana',
+			tip: 'Solana charges every transaction a fee in SOL, so a wallet holding only USDC cannot send anything. Around 0.01 SOL covers a lot of activity.',
+		},
 		{ label: 'USDC', value: fmtAmount(b?.sol_usdc, 2), sub: 'Solana' },
 		{ label: 'USDC', value: fmtAmount(b?.evm_usdc, 2), sub: 'Base' },
 	];
@@ -202,7 +237,7 @@ function balanceCards(b) {
 		.map(
 			(c) => `
 			<div class="wlt-bal${c.accent ? ' wlt-bal--accent' : ''}">
-				<span class="wlt-bal-label">${esc(c.label)}</span>
+				<span class="wlt-bal-label">${esc(c.label)}${c.tip ? tip(c.tip) : ''}</span>
 				<span class="wlt-bal-value">${
 					c.value == null
 						? '<span class="wlt-bal-na" title="This balance could not be read just now">unavailable</span>'
@@ -260,6 +295,13 @@ function confirmPanel() {
 				}
 				<div><dt>Network</dt><dd>Solana mainnet</dd></div>
 			</dl>
+			${
+				p.rentSol
+					? `<p class="wlt-confirm-flag">This agent has no ${esc(p.assetLabel)} account yet, so the transfer also opens one.
+						That costs an extra <strong>${esc(fmtAmount(p.rentSol, 6))} SOL</strong> in rent from this wallet, once.
+						The agent keeps the account afterwards.</p>`
+					: ''
+			}
 			<div class="wlt-confirm-actions">
 				<button class="wlt-btn wlt-btn--primary" type="button" data-act="confirm" ${state.busy ? 'disabled' : ''}>
 					${state.busy ? 'Sending…' : 'Confirm and send'}
@@ -292,7 +334,7 @@ function sendPanel() {
 					<label for="wlt-amount">Amount</label>
 					<input class="wlt-input" id="wlt-amount" name="amount" type="text" required
 						spellcheck="false" autocomplete="off" inputmode="decimal" placeholder="0.0" />
-					<p class="wlt-help">Type an amount, or <button class="wlt-linkbtn" type="button" data-act="max">send max</button>.</p>
+					${maxHint('wlt-amount')}
 				</div>
 			</div>
 			<button class="wlt-btn wlt-btn--primary" type="submit" ${state.busy ? 'disabled' : ''}>
@@ -355,6 +397,7 @@ function fundPanel() {
 					<label for="wlt-fund-amount">Amount</label>
 					<input class="wlt-input" id="wlt-fund-amount" name="amount" type="text" required
 						spellcheck="false" autocomplete="off" inputmode="decimal" placeholder="0.0" />
+					${maxHint('wlt-fund-amount')}
 				</div>
 			</div>
 			<button class="wlt-btn wlt-btn--primary" type="submit" ${state.busy ? 'disabled' : ''}>
@@ -433,11 +476,15 @@ function readyState() {
 		<header class="wlt-head">
 			<div>
 				<span class="wlt-eyebrow">Master wallet</span>
-				<h1 class="wlt-title">Your wallet</h1>
+				<h1 class="wlt-title">Your wallet${tip(
+					'Your account holds this one. Each agent has its own separate wallet, funded from here, so an agent can only ever spend what you moved into it.',
+				)}</h1>
 			</div>
-			<button class="wlt-btn wlt-btn--sm" type="button" data-act="refresh" ${state.busy ? 'disabled' : ''}>
-				Refresh balances
-			</button>
+			<div class="wlt-head-actions">
+				<button class="wlt-btn wlt-btn--primary" type="button" data-act="deposit">Add funds</button>
+				<button class="wlt-btn wlt-btn--sm" type="button" data-act="refresh" ${state.busy ? 'disabled' : ''}
+					aria-label="Re-read balances from Solana and Base">Refresh</button>
+			</div>
 		</header>
 
 		${noticeBanner()}
@@ -449,7 +496,11 @@ function readyState() {
 		<section class="wlt-addresses" aria-label="Wallet addresses">
 			${addressRow('Solana', w.solana_address, `https://solscan.io/account/${w.solana_address}`)}
 			${addressRow('Base', w.evm_address, `https://basescan.org/address/${w.evm_address}`)}
-			<p class="wlt-addr-note">Fund this wallet by sending SOL or SPL tokens to the Solana address, or USDC on Base to the Base address.</p>
+			<p class="wlt-addr-note">
+				Copying an address by hand is the slow way in.
+				<button class="wlt-linkbtn" type="button" data-act="deposit">Add funds</button>
+				shows a scannable payment request instead, and this page announces the deposit the moment it lands on chain.
+			</p>
 		</section>
 
 		<section class="wlt-actions">
@@ -537,9 +588,13 @@ async function onCreate() {
 	state.notice = {
 		kind: 'ok',
 		title: 'Your master wallet is ready.',
-		body: 'Send SOL or USDC to the Solana address below to fund it.',
+		body: 'It is empty until you fund it. Scan the code to send it something.',
 	};
 	await loadWallet();
+	// A wallet with nothing in it can do nothing, so the very next step is
+	// always funding. Opening the sheet here removes the hunt for the button
+	// that every new user would otherwise have to make on their own.
+	if (state.phase === 'ready') onDeposit();
 }
 
 /**
@@ -578,7 +633,13 @@ async function onReviewSend(form) {
 	render();
 }
 
-function onReviewFund(form) {
+/**
+ * Price an agent top-up the same way a send is priced: ask the server, which
+ * resolves it against the chain and signs nothing. This is why the confirmation
+ * can state what "max" actually means and warn when the transfer also opens a
+ * token account for the agent at the sender's expense.
+ */
+async function onReviewFund(form) {
 	const agentId = form.agent_id.value;
 	const asset = form.asset.value;
 	const amount = form.amount.value.trim();
@@ -587,28 +648,29 @@ function onReviewFund(form) {
 		render();
 		return;
 	}
-	const isMax = amount === 'max' || amount === 'MAX';
-	const n = isMax ? null : Number(amount);
-	if (!isMax && (!Number.isFinite(n) || n <= 0)) {
-		state.notice = { kind: 'err', title: 'Enter an amount greater than zero.' };
+	state.busy = true;
+	state.notice = null;
+	render();
+	const res = await previewFundAgent({ agentId, asset, amount });
+	state.busy = false;
+	if (!res.ok) {
+		state.notice = { kind: 'err', title: 'That top-up was not accepted.', body: humanError(res) };
 		render();
 		return;
 	}
+	const sim = res.data?.simulation || {};
 	const agent = state.agents.items.find((a) => a.id === agentId);
-	// fund-agent has no simulate path, so this confirmation is built from the
-	// user's own input plus the agent record. The server re-validates ownership,
-	// balance, rent and fees before it signs anything.
-	state.notice = null;
 	state.pending = {
 		kind: 'fund',
 		agentId,
 		agentName: agent?.name || 'Your agent',
-		destination: agent?.solana_address || '',
+		destination: sim.agent_wallet || agent?.solana_address || '',
 		asset,
 		assetLabel: asset,
 		amount,
-		humanAmount: n,
-		usdValue: asset === 'USDC' ? n : null,
+		humanAmount: sim.human_amount,
+		usdValue: sim.usd_value,
+		rentSol: sim.creates_token_account ? sim.token_account_rent_sol : 0,
 	};
 	render();
 }
@@ -643,6 +705,44 @@ async function onConfirm() {
 	// Balances and history both moved; re-read rather than guess the new numbers.
 	await loadWallet();
 	if (state.history.status !== 'idle') loadHistory();
+}
+
+/**
+ * Open the scan-to-fund sheet.
+ *
+ * `readBalances` is handed to the sheet rather than a whole API client: the
+ * watcher only ever needs the balance object, and passing a narrow function
+ * keeps the sheet testable without a network. Whatever the sheet last read is
+ * already the truth, so on close the page adopts it instead of issuing another
+ * request for a number it just saw.
+ */
+async function onDeposit() {
+	const w = state.wallet;
+	if (!w) return;
+	let latest = null;
+	const arrival = await openDepositSheet({
+		solanaAddress: w.solana_address,
+		evmAddress: w.evm_address,
+		balances: w.balances,
+		async readBalances() {
+			const res = await fetchWallet();
+			if (!res.ok || !res.data?.wallet?.balances) return null;
+			latest = res.data.wallet;
+			return latest.balances;
+		},
+	});
+	if (latest) state.wallet = latest;
+	if (arrival) {
+		state.notice = {
+			kind: 'ok',
+			title: `${fmtAmount(arrival.delta, arrival.asset === 'sol' ? 6 : 2)} ${arrival.label} landed in your wallet.`,
+			body: 'You can send it, or top up an agent with it, right now.',
+		};
+		// A deposit is a history event too, so a tab already showing history
+		// should not keep showing the list from before the money arrived.
+		if (state.history.status !== 'idle') loadHistory();
+	}
+	render();
 }
 
 async function onCopy(text, btn) {
@@ -682,6 +782,7 @@ root.addEventListener('click', (e) => {
 	const act = el.dataset.act;
 	if (act === 'create') return void onCreate();
 	if (act === 'reload' || act === 'refresh') return void loadWallet();
+	if (act === 'deposit') return void onDeposit();
 	if (act === 'reload-history') return void loadHistory();
 	if (act === 'reload-agents') return void loadAgents();
 	if (act === 'tab') return switchTab(el.dataset.tab);
@@ -698,7 +799,9 @@ root.addEventListener('click', (e) => {
 		return;
 	}
 	if (act === 'max') {
-		const input = root.querySelector('#wlt-amount');
+		// "max" is a server-side word, not a number: only the API knows what is
+		// left after rent and fees. The review step reads back what it resolved to.
+		const input = root.querySelector(`#${el.dataset.target}`);
 		if (input) {
 			input.value = 'max';
 			input.focus();
@@ -712,7 +815,7 @@ root.addEventListener('submit', (e) => {
 	e.preventDefault();
 	if (state.busy) return;
 	if (form.dataset.form === 'send') return void onReviewSend(form);
-	if (form.dataset.form === 'fund') return onReviewFund(form);
+	if (form.dataset.form === 'fund') return void onReviewFund(form);
 });
 
 // Arrow-key navigation across the tablist, per the WAI-ARIA tabs pattern.

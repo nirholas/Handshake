@@ -1,6 +1,13 @@
 // POST /api/user/wallet/fund-agent
 // Transfer USDC or SOL from the user's master wallet into one of their agent wallets.
-// Body: { agent_id: string, amount: number | "max", asset: "SOL" | "USDC" }
+// Body: { agent_id: string, amount: number | "max", asset: "SOL" | "USDC", simulate?: boolean }
+//
+// `simulate: true` runs the identical ownership, balance, rent and fee path and
+// returns the resolved numbers WITHOUT recovering the key or signing anything.
+// It is what the /wallet confirmation step is built from, so the amount a user
+// reads back is the amount the chain produced (notably for `"max"`, which the
+// browser cannot compute, and for the extra rent when the agent has no token
+// account yet). Mirrors the simulate contract in send.js.
 
 import { getSessionUser } from '../../_lib/auth.js';
 import { sql } from '../../_lib/db.js';
@@ -35,8 +42,22 @@ export default wrap(async (req, res) => {
 
 	if (!(await requireCsrf(req, res, session.id))) return;
 
-	const rl = await limits.withdrawalPerUser(session.id);
+	let body;
+	try { body = await readJson(req); }
+	catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid body'); }
+
+	// Parsed before the limiter so a preview does not spend the 5-per-DAY
+	// withdrawal budget. See the matching note in send.js.
+	const simulate = body.simulate === true;
+	const rl = simulate
+		? await limits.walletSimulate(session.id)
+		: await limits.withdrawalPerUser(session.id);
 	if (!rl.success) return json(res, 429, { error: 'rate_limited' });
+	// Parity with send.js: the per-user budget bounds one account, the per-IP one
+	// bounds a caller cycling accounts. `clientIp` was imported here and never
+	// used, which left this the only funds-moving wallet route without it.
+	const rlIp = await limits.authIp(clientIp(req));
+	if (!rlIp.success) return json(res, 429, { error: 'rate_limited' });
 
 	// Load master wallet
 	const [mw] = await sql`
@@ -44,10 +65,6 @@ export default wrap(async (req, res) => {
 		FROM master_wallets WHERE user_id = ${session.id}
 	`;
 	if (!mw?.solana_address) return error(res, 404, 'not_found', 'master wallet not set up');
-
-	let body;
-	try { body = await readJson(req); }
-	catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid body'); }
 
 	const agentId = body.agent_id;
 	if (!agentId || typeof agentId !== 'string') return error(res, 400, 'bad_request', 'agent_id required');
@@ -80,6 +97,10 @@ export default wrap(async (req, res) => {
 
 	let ixs = [];
 	let humanAmount, usdValue;
+	// Set when the agent has no USDC token account yet: the transfer then also
+	// pays that account's rent, which the confirmation step surfaces rather than
+	// letting the user discover it as a surprise SOL debit.
+	let tokenAccountRentLamports = 0n;
 
 	if (asset === 'SOL') {
 		let rentReserve;
@@ -126,11 +147,30 @@ export default wrap(async (req, res) => {
 			if (balanceLamports < SOL_FEE_RESERVE_LAMPORTS + ataRent) {
 				return error(res, 400, 'insufficient_sol_for_fees', 'need more SOL in master wallet for fees');
 			}
+			tokenAccountRentLamports = ataRent;
 			ixs.push(createAssociatedTokenAccountIdempotentInstruction(
 				fromPk, destAta, destPk, mintPk, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 			));
 		}
 		ixs.push(createTransferCheckedInstruction(sourceAta, mintPk, destAta, fromPk, amountRaw, USDC_DECIMALS, [], TOKEN_PROGRAM_ID));
+	}
+
+	// Everything above is validation and chain reads. Returning here means the
+	// encrypted secret is never decrypted and no transaction is ever built.
+	if (simulate) {
+		return json(res, 200, {
+			simulation: {
+				asset,
+				agent_id: agentId,
+				agent_wallet: agentSolAddr,
+				human_amount: humanAmount,
+				usd_value: usdValue,
+				creates_token_account: tokenAccountRentLamports > 0n,
+				token_account_rent_sol:
+					tokenAccountRentLamports > 0n ? Number(tokenAccountRentLamports) / 1e9 : 0,
+				network: 'mainnet',
+			},
+		});
 	}
 
 	const keypair = await recoverSolanaAgentKeypair(mw.encrypted_solana_secret, {

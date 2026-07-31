@@ -113,7 +113,24 @@ export function fetchMyAgents() {
 	return call('/api/agents');
 }
 
-/** Top up an agent you own, in SOL or USDC. */
+/**
+ * Price an agent top-up without signing anything. Same ownership, balance, rent
+ * and fee checks as the real call, and it never decrypts the wallet key. Returns
+ * `{ simulation: { asset, agent_id, agent_wallet, human_amount, usd_value,
+ * creates_token_account, token_account_rent_sol, network } }`.
+ *
+ * Two of those the browser genuinely cannot work out on its own: what `"max"`
+ * resolves to, and whether this transfer also pays rent to open a token account
+ * for the agent. Both are shown before the user confirms.
+ */
+export function previewFundAgent({ agentId, asset, amount }) {
+	return call('/api/user/wallet/fund-agent', {
+		method: 'POST',
+		body: { agent_id: agentId, asset, amount, simulate: true },
+	});
+}
+
+/** Top up an agent you own, in SOL or USDC. Only after the preview is confirmed. */
 export function fundAgent({ agentId, asset, amount }) {
 	return call('/api/user/wallet/fund-agent', {
 		method: 'POST',

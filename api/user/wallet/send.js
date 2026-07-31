@@ -35,7 +35,22 @@ export default wrap(async (req, res) => {
 
 	if (!(await requireCsrf(req, res, session.id))) return;
 
-	const rlUser = await limits.withdrawalPerUser(session.id);
+	let body;
+	try { body = await readJson(req); }
+	catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid body'); }
+
+	const network = 'mainnet';
+	const asset = typeof body.asset === 'string' && body.asset.trim() ? body.asset.trim() : 'SOL';
+	const simulate = body.simulate === true;
+
+	// The body is parsed before the limiters on purpose: a simulate moves no
+	// funds, so it must not draw on the 5-per-DAY withdrawal budget. Charging
+	// previews against it meant a user who priced a transfer four times could
+	// not send at all until the next day. Previews get their own per-minute
+	// ceiling; only a real broadcast spends the daily one.
+	const rlUser = simulate
+		? await limits.walletSimulate(session.id)
+		: await limits.withdrawalPerUser(session.id);
 	if (!rlUser.success) return json(res, 429, { error: 'rate_limited' });
 	const rlIp = await limits.authIp(clientIp(req));
 	if (!rlIp.success) return json(res, 429, { error: 'rate_limited' });
@@ -47,14 +62,6 @@ export default wrap(async (req, res) => {
 	if (!row?.solana_address) {
 		return error(res, 404, 'not_found', 'master wallet not set up yet');
 	}
-
-	let body;
-	try { body = await readJson(req); }
-	catch (e) { return error(res, 400, 'bad_request', e?.message || 'invalid body'); }
-
-	const network = 'mainnet';
-	const asset = typeof body.asset === 'string' && body.asset.trim() ? body.asset.trim() : 'SOL';
-	const simulate = body.simulate === true;
 
 	const dest = validateSolanaAddress(body.destination);
 	if (!dest.valid) return error(res, 400, 'invalid_destination', `not a valid Solana address (${dest.reason})`);
