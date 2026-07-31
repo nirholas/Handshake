@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Crew HQ · three.ws</title>
+	<meta name="description" content="Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world." />
+	<link rel="canonical" href="https://three.ws/crews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/crews.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Crew HQ · three.ws" />
+	<meta property="og:description" content="A crew is a group of people whose agents share one tag and one headquarters. Found one, invite your people, and see who is live in the world right now." />
+	<meta property="og:url" content="https://three.ws/crews" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Crew+HQ&amp;d=Found+a+crew%2C+invite+your+people%2C+and+watch+the+whole+roster+stand+in+one+3D+headquarters.&amp;p=%2Fcrews" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Crew HQ · three.ws" />
+	<meta name="twitter:description" content="Found a crew, invite your people, and watch the roster stand in one 3D headquarters." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Crew+HQ&amp;d=Found+a+crew%2C+invite+your+people%2C+and+watch+the+whole+roster+stand+in+one+3D+headquarters.&amp;p=%2Fcrews" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Crew HQ / three.ws" />
+	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="cw-wrap">
+		<section class="cw-hero">
+			<h1>Crew HQ</h1>
+			<p>
+				A crew is a group of accounts whose agents fly one tag. Every member stands in this
+				headquarters as their own agent, lit when they are live in
+				<a href="/play">the world</a> and unlit when they are not. Found one, invite your
+				people, and share the link.
+			</p>
+			<p id="cw-public-note" class="cw-hint" hidden style="margin-top:10px"></p>
+		</section>
+
+		<div class="cw-error" id="cw-error" role="alert" hidden></div>
+
+		<!-- The room. Hidden until there is a crew to put in it. -->
+		<section class="cw-room" id="cw-room" aria-labelledby="cw-room-heading" hidden>
+			<h2 id="cw-room-heading" class="cw-sr">The crew headquarters</h2>
+			<div class="cw-room-head" id="cw-room-head"></div>
+			<div class="cw-stage" id="cw-stage" role="list" aria-label="Crew members in the headquarters"></div>
+		</section>
+
+		<!-- Signed out. -->
+		<section class="cw-panel" id="cw-signedout" hidden style="margin-top:22px">
+			<h3>Sign in to found or join a crew</h3>
+			<p class="cw-hint">
+				A crew is tied to your account, not to a browser, so the roster and the tag follow you
+				everywhere you sign in. Browsing the directory below needs no account at all.
+			</p>
+			<a class="cw-btn primary" href="/login?next=%2Fcrews">Sign in</a>
+		</section>
+
+		<!-- Invites addressed to me. Shown above everything else: an invite is the
+		     one thing on this page that expires socially. -->
+		<section class="cw-panel" id="cw-invites-panel" hidden style="margin-top:22px">
+			<h3>You have been invited</h3>
+			<p class="cw-hint">Accepting one clears the rest. You can be in one crew at a time.</p>
+			<div id="cw-invites"></div>
+		</section>
+
+		<div class="cw-cols">
+			<!-- Roster -->
+			<section class="cw-panel" id="cw-roster-panel" hidden>
+				<h3>Roster</h3>
+				<p class="cw-hint">
+					Owner first, then by the day they joined. Presence is the same signal the in-world
+					friends list reads, so “in world” means the same thing in both places.
+				</p>
+				<ul class="cw-roster" id="cw-roster"></ul>
+			</section>
+
+			<!-- Manage: invite people (any member may invite) -->
+			<section class="cw-panel" id="cw-manage" hidden>
+				<h3>Invite people</h3>
+				<p class="cw-hint" id="cw-manage-hint"></p>
+				<div class="cw-field">
+					<label for="cw-invite-q">Search accounts</label>
+					<input id="cw-invite-q" type="search" autocomplete="off" placeholder="Name or username" />
+					<span class="cw-note">Someone already in a crew shows their tag instead of a button.</span>
+				</div>
+				<ul class="cw-results" id="cw-results">
+					<li class="cw-empty">Type at least 2 characters of a name or username.</li>
+				</ul>
+			</section>
+
+			<!-- Found a crew -->
+			<section class="cw-panel" id="cw-found-panel" hidden>
+				<h3>Found a crew</h3>
+				<p class="cw-hint">
+					Two steps. The tag is a short badge worn over your avatar in world; the name is what
+					people read. Both are public and the tag is unique across the whole site.
+				</p>
+				<form id="cw-found" novalidate>
+					<div class="cw-field">
+						<label for="cw-found-tag">Tag</label>
+						<input id="cw-found-tag" name="tag" maxlength="6" autocomplete="off" spellcheck="false"
+							placeholder="NOVA" aria-describedby="cw-found-tag-note" />
+						<span class="cw-note" id="cw-found-tag-note"></span>
+					</div>
+					<div class="cw-field">
+						<label for="cw-found-name">Crew name</label>
+						<input id="cw-found-name" name="name" maxlength="32" autocomplete="off"
+							placeholder="Nova Collective" />
+						<span class="cw-note">Up to 32 characters.</span>
+					</div>
+					<button type="submit" class="cw-btn primary" id="cw-found-submit" disabled>Found the crew</button>
+				</form>
+			</section>
+		</div>
+
+		<!-- Directory -->
+		<section class="cw-panel" id="cw-dir-panel" hidden style="margin-top:16px">
+			<h3>Every crew</h3>
+			<p class="cw-hint">
+				Biggest first. Open one to see its headquarters and who is standing in it right now.
+			</p>
+			<div class="cw-dir" id="cw-dir">
+				<p class="cw-empty" style="grid-column:1/-1">Loading crews…</p>
+			</div>
+		</section>
+	</main>
+
+	<div class="cw-toast" id="cw-toast" role="status" aria-live="polite" data-show="false"></div>
+
+	<script src="/brand.js" defer></script>
+	<script type="module" src="/src/crews-page.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

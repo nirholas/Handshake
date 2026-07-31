@@ -9,6 +9,7 @@
 // single-purpose queries the api/crews/* endpoints wrap thinly.
 
 import { sql } from './db.js';
+import { publicUrl, thumbnailUrl } from './r2.js';
 
 // Columns safe to expose for any account — never leak email, wallet, plan, or
 // admin flags through a crew roster. Built lazily so importing this module never
@@ -32,6 +33,18 @@ function toProfile(row) {
 export function normalizeTag(raw) {
 	const t = String(raw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 	return t.length >= 2 && t.length <= 6 ? t : '';
+}
+
+// Tags that would collide with a route segment. `/api/crews/:tag` and
+// `/crews/:tag` both resolve an exact file or page before the dynamic segment
+// (server/index.mjs precedence: exact file > [param].js), so a crew tagged
+// SEARCH would be permanently unreachable at its own public URL. Refusing the
+// tag at founding time is the only place this can be fixed without breaking an
+// existing crew's link later.
+const RESERVED_TAGS = new Set(['SEARCH', 'INDEX', 'API', 'ADMIN', 'NEW', 'ME', 'ALL', 'NULL']);
+
+export function isReservedTag(tag) {
+	return RESERVED_TAGS.has(String(tag || '').toUpperCase());
 }
 
 function normalizeName(raw) {
@@ -98,7 +111,9 @@ export async function crewTagsFor(accountIds) {
 }
 
 // The full roster for a crew, owner first then by join time. Each entry carries
-// the public profile + role; presence is merged at the endpoint layer (Redis).
+// the public profile + role + the member's standee (their agent's 3D avatar, so
+// the Crew HQ room can render the roster in 3D). Presence is merged at the
+// endpoint layer (Redis).
 export async function listMembers(crewId) {
 	const rows = await sql`
 		select ${publicUserCols()}, m.role, m.joined_at
@@ -107,7 +122,144 @@ export async function listMembers(crewId) {
 		where m.crew_id = ${crewId} and u.deleted_at is null
 		order by (m.role = 'owner') desc, m.joined_at asc
 	`;
-	return rows.map((r) => ({ ...toProfile(r), role: r.role, joinedAt: r.joined_at }));
+	const standees = await standeesFor(rows.map((r) => r.id));
+	return rows.map((r) => ({
+		...toProfile(r),
+		role: r.role,
+		joinedAt: r.joined_at,
+		standee: standees[r.id] || null,
+	}));
+}
+
+// The 3D figure that represents each account in the Crew HQ room: their agent
+// and, when that agent owns a publicly readable avatar, the GLB the viewer
+// loads. One row per account, preferring an agent that actually has a model
+// over an older one that does not, so a member with several agents stands as
+// the one that can be rendered.
+//
+// Visibility is enforced here exactly as api/agents.js decorate() enforces it:
+// only 'public' / 'unlisted' avatars ever emit a URL, so a private model can
+// never leak through a crew roster. An account with no agent, or no renderable
+// avatar, resolves to a null modelUrl — the page falls back to the default rig
+// and offers to claim one, which is the whole point of showing the gap.
+export async function standeesFor(accountIds) {
+	const ids = [...new Set((accountIds || []).filter(Boolean))];
+	if (!ids.length) return {};
+	let rows;
+	try {
+		rows = await sql`
+			select distinct on (i.user_id)
+			       i.user_id, i.id as agent_id, i.name as agent_name,
+			       a.storage_key, a.thumbnail_key, a.visibility
+			from agent_identities i
+			left join avatars a on a.id = i.avatar_id and a.deleted_at is null
+			where i.user_id = any(${ids}) and i.deleted_at is null
+			order by i.user_id,
+			         (a.storage_key is not null and a.visibility in ('public', 'unlisted')) desc,
+			         i.created_at asc
+		`;
+	} catch (err) {
+		// A roster that renders without standees beats a 500. Any schema drift in
+		// the agent tables degrades the room to the default rig, never the page.
+		if (isMissingRelation(err)) return {};
+		throw err;
+	}
+	const out = {};
+	for (const r of rows) {
+		const readable = r.visibility === 'public' || r.visibility === 'unlisted';
+		out[r.user_id] = {
+			agentId: r.agent_id,
+			agentName: r.agent_name || null,
+			modelUrl: readable && r.storage_key ? publicUrl(r.storage_key) : null,
+			thumbUrl: readable && r.thumbnail_key ? thumbnailUrl(r.thumbnail_key) : null,
+		};
+	}
+	return out;
+}
+
+// True when an error is Postgres telling us a table/column isn't there — the
+// signal every crews endpoint uses to degrade instead of 500 while a migration
+// is still rolling out.
+export function isMissingRelation(err) {
+	const m = err?.message || '';
+	return m.includes('relation') || m.includes('does not exist') || err?.code === '42P01';
+}
+
+// Public crew directory: every crew with at least one member, biggest first, so
+// a visitor with no crew has somewhere to look before founding their own. Only
+// public roster facts (tag, name, size, founding date, a few member faces).
+export async function listCrewDirectory(limit = 24) {
+	const cap = Math.min(Math.max(Number(limit) || 24, 1), 60);
+	const rows = await sql`
+		select c.id, c.tag, c.name, c.created_at,
+		       count(m.account_id)::int as member_count
+		from crews c
+		join crew_members m on m.crew_id = c.id
+		group by c.id, c.tag, c.name, c.created_at
+		order by count(m.account_id) desc, c.created_at asc
+		limit ${cap}
+	`;
+	if (!rows.length) return [];
+
+	const faces = await sql`
+		select m.crew_id, u.id, u.display_name, u.username, u.avatar_url
+		from crew_members m
+		join users u on u.id = m.account_id
+		where m.crew_id = any(${rows.map((r) => r.id)}) and u.deleted_at is null
+		order by (m.role = 'owner') desc, m.joined_at asc
+	`;
+	const byCrew = new Map();
+	for (const f of faces) {
+		const list = byCrew.get(f.crew_id) || [];
+		if (list.length < 5) list.push(toProfile(f));
+		byCrew.set(f.crew_id, list);
+	}
+	return rows.map((r) => ({
+		tag: r.tag,
+		name: r.name,
+		createdAt: r.created_at,
+		memberCount: r.member_count,
+		faces: byCrew.get(r.id) || [],
+	}));
+}
+
+// Search accounts to invite. Mirrors friends-store.searchUsers but annotates
+// what a crew owner actually needs to know before clicking: whether the person
+// is already in a crew (and which), and whether this crew already invited them.
+// Both make the invite button render its true state instead of failing on click.
+export async function searchInvitees(meId, q, limit = 12) {
+	const term = String(q || '').trim();
+	if (term.length < 2) return [];
+	const like = `%${term.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+	const rows = await sql`
+		select ${publicUserCols()}
+		from users u
+		where u.deleted_at is null
+		  and u.id <> ${meId}
+		  and (u.display_name ilike ${like} or u.username ilike ${like})
+		order by
+			(lower(u.username) = lower(${term}) or lower(u.display_name) = lower(${term})) desc,
+			length(coalesce(u.username, u.display_name)) asc
+		limit ${Math.min(Math.max(Number(limit) || 12, 1), 25)}
+	`;
+	if (!rows.length) return [];
+
+	const ids = rows.map((r) => r.id);
+	const tags = await crewTagsFor(ids);
+	const myCrew = await getMyCrew(meId);
+	const invited = myCrew
+		? new Set(
+				(
+					await sql`select invitee_id from crew_invites where crew_id = ${myCrew.id} and invitee_id = any(${ids})`
+				).map((r) => r.invitee_id),
+			)
+		: new Set();
+
+	return rows.map((r) => ({
+		...toProfile(r),
+		crew: tags[r.id] || null,
+		invited: invited.has(r.id),
+	}));
 }
 
 // Public view of a crew by tag: identity + roster. Returns null if no such tag.
@@ -152,7 +304,8 @@ export async function listInvites(accountId) {
 // duplicate tag and an account that's already in a crew (one-crew-per-account).
 export async function createCrew(accountId, rawTag, rawName) {
 	const tag = normalizeTag(rawTag);
-	if (!tag) throw err('Tag must be 2–6 letters or digits.', 400, 'bad_tag');
+	if (!tag) throw err('Tag must be 2-6 letters or digits.', 400, 'bad_tag');
+	if (isReservedTag(tag)) throw err('That tag is reserved.', 409, 'tag_reserved');
 	const name = normalizeName(rawName) || tag;
 	if (name.length < 2) throw err('Crew name is too short.', 400, 'bad_name');
 

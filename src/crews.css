@@ -1,0 +1,536 @@
+/* Crew HQ (/crews) — the room, the roster, the directory.
+ *
+ * Everything here rides the site tokens in public/style.css. The only local
+ * variables are the two the crest generator drives per crew (--crew-hue and
+ * --crew-hue-2), so a crew's colour is data, not a hand-picked palette.
+ */
+
+.cw-wrap {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 0 18px 96px;
+}
+
+/* ── hero ────────────────────────────────────────────────────────────────── */
+.cw-hero {
+	padding: 34px 0 6px;
+}
+.cw-hero h1 {
+	font-size: clamp(1.7rem, 4vw, 2.5rem);
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+	margin: 0 0 10px;
+	color: var(--ink-bright, var(--ink));
+}
+.cw-hero p {
+	margin: 0;
+	max-width: 66ch;
+	color: var(--ink-dim);
+	line-height: 1.6;
+}
+.cw-hero a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.cw-hero a:hover {
+	color: var(--ink-bright, var(--ink));
+}
+
+/* ── the room ────────────────────────────────────────────────────────────── */
+/* A crew's headquarters: every member standing as their own agent. The floor
+   glow and the horizon line are drawn with gradients rather than an image so
+   the room weighs nothing and recolours itself from the crew crest. */
+.cw-room {
+	position: relative;
+	margin: 26px 0 0;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg, 16px);
+	background:
+		radial-gradient(120% 90% at 50% 108%, hsl(var(--crew-hue, 210) 70% 22% / 0.55), transparent 62%),
+		linear-gradient(180deg, var(--surface-1, rgba(255, 255, 255, 0.03)), rgba(0, 0, 0, 0.22));
+	overflow: hidden;
+}
+.cw-room::after {
+	/* horizon: a single hairline that reads as a floor without a texture */
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 92px;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, hsl(var(--crew-hue, 210) 80% 62% / 0.35), transparent);
+	pointer-events: none;
+}
+.cw-room-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 14px;
+	padding: 18px 20px 6px;
+	position: relative;
+	z-index: 2;
+}
+.cw-room-title {
+	min-width: 0;
+}
+.cw-room-title h2 {
+	margin: 0;
+	font-size: 1.25rem;
+	letter-spacing: -0.01em;
+	color: var(--ink-bright, var(--ink));
+	overflow-wrap: anywhere;
+}
+.cw-room-title p {
+	margin: 3px 0 0;
+	font-size: 0.85rem;
+	color: var(--ink-dim);
+}
+.cw-room-actions {
+	margin-left: auto;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* The stage scrolls horizontally rather than shrinking figures below the size
+   where a face is legible. */
+.cw-stage {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	gap: 10px;
+	align-items: flex-end;
+	padding: 8px 20px 26px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x proximity;
+	scrollbar-width: thin;
+}
+.cw-standee {
+	flex: 0 0 auto;
+	width: 172px;
+	scroll-snap-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding-bottom: 4px;
+	text-decoration: none;
+	color: inherit;
+	border-radius: var(--radius-md, 12px);
+	transition: transform 0.18s ease;
+}
+.cw-standee:hover,
+.cw-standee:focus-visible {
+	transform: translateY(-3px);
+}
+.cw-standee:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
+.cw-figure {
+	position: relative;
+	width: 100%;
+	height: 230px;
+	display: grid;
+	place-items: end center;
+}
+.cw-figure agent-3d,
+.cw-figure .cw-figure-img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+}
+/* Offline members are present but unlit: the room still shows the whole crew. */
+.cw-standee[data-online='false'] .cw-figure {
+	filter: grayscale(0.85) brightness(0.62);
+	opacity: 0.75;
+}
+.cw-plinth {
+	position: absolute;
+	left: 50%;
+	bottom: -6px;
+	translate: -50% 0;
+	width: 116px;
+	height: 26px;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, hsl(var(--crew-hue, 210) 85% 62% / 0.42), transparent);
+	pointer-events: none;
+}
+.cw-standee[data-online='true'] .cw-plinth {
+	animation: cw-pulse 3.2s ease-in-out infinite;
+}
+@keyframes cw-pulse {
+	0%, 100% { opacity: 0.55; }
+	50%      { opacity: 1; }
+}
+.cw-nameplate {
+	text-align: center;
+	max-width: 100%;
+}
+.cw-nameplate b {
+	display: block;
+	font-size: 0.92rem;
+	font-weight: 600;
+	color: var(--ink-bright, var(--ink));
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.cw-nameplate span {
+	display: block;
+	font-size: 0.75rem;
+	color: var(--ink-dim);
+	margin-top: 2px;
+}
+.cw-live {
+	color: var(--success);
+}
+.cw-live::before {
+	content: '';
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	margin-right: 5px;
+	border-radius: 50%;
+	background: currentColor;
+	vertical-align: middle;
+	box-shadow: 0 0 0 0 currentColor;
+	animation: cw-dot 2.4s ease-out infinite;
+}
+@keyframes cw-dot {
+	0%   { box-shadow: 0 0 0 0 hsl(140 70% 60% / 0.55); }
+	70%  { box-shadow: 0 0 0 7px hsl(140 70% 60% / 0); }
+	100% { box-shadow: 0 0 0 0 hsl(140 70% 60% / 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cw-standee[data-online='true'] .cw-plinth,
+	.cw-live::before { animation: none; }
+	.cw-standee:hover, .cw-standee:focus-visible { transform: none; }
+}
+
+/* ── crest ───────────────────────────────────────────────────────────────── */
+/* Every crew gets a deterministic crest from its tag, so a crew is recognisable
+   before you read its name and no crew has to upload art to look like itself. */
+.cw-crest {
+	flex: 0 0 auto;
+	width: 56px;
+	height: 56px;
+	border-radius: 14px;
+	display: grid;
+	place-items: center;
+	font: 700 0.95rem/1 var(--font-mono, ui-monospace, monospace);
+	letter-spacing: 0.04em;
+	color: #fff;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+	background:
+		linear-gradient(150deg, hsl(var(--crew-hue, 210) 78% 52%), hsl(var(--crew-hue-2, 260) 74% 42%));
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--shadow-1);
+}
+.cw-crest.sm {
+	width: 38px;
+	height: 38px;
+	border-radius: 10px;
+	font-size: 0.72rem;
+}
+
+/* ── panels ──────────────────────────────────────────────────────────────── */
+.cw-cols {
+	display: grid;
+	grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+	gap: 16px;
+	margin-top: 22px;
+	align-items: start;
+}
+@media (max-width: 860px) {
+	.cw-cols { grid-template-columns: 1fr; }
+}
+.cw-panel {
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	padding: 18px;
+}
+.cw-panel > h3 {
+	margin: 0 0 4px;
+	font-size: 1rem;
+	color: var(--ink-bright, var(--ink));
+}
+.cw-panel > .cw-hint {
+	margin: 0 0 14px;
+	font-size: 0.84rem;
+	color: var(--ink-dim);
+	line-height: 1.55;
+}
+
+/* ── roster ──────────────────────────────────────────────────────────────── */
+.cw-roster {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.cw-row {
+	display: flex;
+	align-items: center;
+	gap: 11px;
+	padding: 9px 10px;
+	border: 1px solid transparent;
+	border-radius: var(--radius-md, 10px);
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cw-row:hover {
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	border-color: var(--stroke);
+}
+.cw-avatar {
+	flex: 0 0 auto;
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	object-fit: cover;
+	background: var(--surface-3, rgba(255, 255, 255, 0.08));
+	border: 1px solid var(--stroke);
+}
+.cw-row-main {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.cw-row-main b {
+	display: block;
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--ink);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.cw-row-main span {
+	display: block;
+	font-size: 0.76rem;
+	color: var(--ink-dim);
+	margin-top: 1px;
+}
+.cw-tag-badge {
+	font: 600 0.68rem/1 var(--font-mono, ui-monospace, monospace);
+	padding: 4px 7px;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--badge-border, var(--stroke-strong));
+	background: var(--badge-bg, var(--surface-3));
+	color: var(--badge-fg, var(--ink));
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	white-space: nowrap;
+}
+.cw-tag-badge.owner {
+	background: var(--badge-warn-bg);
+	color: var(--badge-warn-fg);
+	border-color: var(--badge-warn-border);
+}
+
+/* ── controls ────────────────────────────────────────────────────────────── */
+.cw-field {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	margin-bottom: 12px;
+}
+.cw-field label {
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-dim);
+}
+.cw-field input {
+	font: inherit;
+	font-size: 0.95rem;
+	padding: 10px 12px;
+	color: var(--ink);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md, 10px);
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cw-field input::placeholder { color: var(--ink-dim); }
+.cw-field input:hover { border-color: var(--stroke-strong); }
+.cw-field input:focus-visible {
+	outline: none;
+	border-color: var(--accent);
+	background: var(--surface-3, rgba(255, 255, 255, 0.07));
+}
+.cw-field input[aria-invalid='true'] { border-color: var(--danger); }
+.cw-field .cw-note {
+	font-size: 0.76rem;
+	color: var(--ink-dim);
+	min-height: 1em;
+}
+.cw-field .cw-note[data-tone='bad'] { color: var(--danger); }
+.cw-field .cw-note[data-tone='good'] { color: var(--success); }
+#cw-found-tag { text-transform: uppercase; letter-spacing: 0.12em; font-family: var(--font-mono, ui-monospace, monospace); }
+
+.cw-btn {
+	font: inherit;
+	font-size: var(--btn-text-size, 0.88rem);
+	font-weight: 550;
+	padding: 9px 14px;
+	cursor: pointer;
+	border-radius: var(--btn-radius, 10px);
+	border: 1px solid var(--btn-secondary-border, var(--stroke-strong));
+	background: var(--btn-secondary-bg, var(--surface-3));
+	color: var(--btn-secondary-fg, var(--ink));
+	transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+	white-space: nowrap;
+}
+.cw-btn:hover:not(:disabled) { background: var(--btn-secondary-bg-hover, rgba(255, 255, 255, 0.12)); }
+.cw-btn:active:not(:disabled) { transform: translateY(1px); }
+.cw-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cw-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.cw-btn.primary {
+	background: var(--btn-primary-bg, var(--accent));
+	color: var(--btn-primary-fg, #0a0a0a);
+	border-color: var(--btn-primary-border, transparent);
+}
+.cw-btn.primary:hover:not(:disabled) { background: var(--btn-primary-bg-hover, rgba(255, 255, 255, 0.88)); }
+.cw-btn.danger {
+	background: var(--btn-danger-bg);
+	color: var(--btn-danger-fg);
+	border-color: var(--btn-danger-border);
+}
+.cw-btn.danger:hover:not(:disabled) { background: var(--btn-danger-bg-hover); }
+.cw-btn.sm { padding: 6px 10px; font-size: 0.8rem; }
+
+/* ── search results ──────────────────────────────────────────────────────── */
+.cw-results {
+	list-style: none;
+	margin: 10px 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 320px;
+	overflow-y: auto;
+}
+
+/* ── invites ─────────────────────────────────────────────────────────────── */
+.cw-invite {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md, 12px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	margin-bottom: 8px;
+}
+.cw-invite .cw-row-main { flex: 1 1 auto; }
+.cw-invite-actions { display: flex; gap: 6px; }
+
+/* ── directory ───────────────────────────────────────────────────────────── */
+.cw-dir {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 10px;
+	margin-top: 12px;
+}
+.cw-dir-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 13px 14px;
+	text-decoration: none;
+	color: inherit;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+.cw-dir-card:hover {
+	border-color: var(--stroke-strong);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	transform: translateY(-2px);
+}
+.cw-dir-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cw-faces { display: flex; margin-top: 5px; }
+.cw-faces img,
+.cw-faces .cw-face-blank {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 1px solid var(--bg-0);
+	background: var(--surface-3, rgba(255, 255, 255, 0.09));
+	margin-right: -6px;
+}
+
+/* ── states ──────────────────────────────────────────────────────────────── */
+.cw-empty {
+	text-align: center;
+	padding: 30px 18px;
+	color: var(--ink-dim);
+	font-size: 0.9rem;
+	line-height: 1.6;
+}
+.cw-empty strong { display: block; color: var(--ink); margin-bottom: 5px; font-size: 1rem; }
+.cw-error {
+	border: 1px solid var(--badge-danger-border, var(--stroke));
+	background: var(--badge-danger-bg, var(--surface-2));
+	color: var(--ink);
+	border-radius: var(--radius-md, 12px);
+	padding: 14px 16px;
+	margin: 18px 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+.cw-error p { margin: 0; flex: 1 1 220px; font-size: 0.88rem; }
+
+.cw-skeleton { display: flex; gap: 10px; padding: 8px 20px 26px; }
+.cw-shimmer {
+	background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 37%, var(--skeleton-base) 63%);
+	background-size: 400% 100%;
+	animation: cw-shimmer 1.4s ease infinite;
+	border-radius: var(--skeleton-radius, 10px);
+}
+.cw-skeleton .cw-shimmer { width: 172px; height: 268px; flex: 0 0 auto; }
+@keyframes cw-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .cw-shimmer { animation: none; } }
+
+/* A live region that announces the result of every mutation for screen readers
+   and doubles as the visible confirmation nobody should have to guess at. */
+.cw-toast {
+	position: fixed;
+	left: 50%;
+	bottom: 22px;
+	translate: -50% 0;
+	z-index: 90;
+	max-width: min(92vw, 460px);
+	padding: 11px 16px;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke-strong);
+	background: var(--modal-bg, rgba(10, 11, 18, 0.96));
+	color: var(--ink);
+	font-size: 0.88rem;
+	box-shadow: var(--shadow-3);
+	opacity: 0;
+	transform: translateY(8px);
+	pointer-events: none;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.cw-toast[data-show='true'] { opacity: 1; transform: translateY(0); }
+.cw-toast[data-tone='bad'] { border-color: var(--badge-danger-border); color: var(--danger); }
+.cw-toast[data-tone='good'] { border-color: var(--badge-success-border); }
+
+.cw-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

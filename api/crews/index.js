@@ -27,6 +27,7 @@ import {
 	declineInvite,
 	leaveCrew,
 	kickMember,
+	isMissingRelation,
 } from '../_lib/crews-store.js';
 
 function isUuid(v) {
@@ -99,10 +100,8 @@ async function crewWithPresence(me) {
 		crew = await getMyCrew(me);
 		invites = await listInvites(me);
 	} catch (err) {
-		// Crew tables may not be migrated yet — return an empty view rather than 500.
-		if (err?.message?.includes('relation') || err?.message?.includes('does not exist')) {
-			return EMPTY;
-		}
+		// Crew tables may not be migrated yet: return an empty view rather than 500.
+		if (isMissingRelation(err)) return EMPTY;
 		throw err;
 	}
 	if (!crew) return { crew: null, members: [], invites: invites || [] };

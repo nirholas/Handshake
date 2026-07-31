@@ -7,7 +7,7 @@
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { readPresence } from '../_lib/presence-store.js';
-import { getCrewByTag, normalizeTag } from '../_lib/crews-store.js';
+import { getCrewByTag, normalizeTag, isMissingRelation } from '../_lib/crews-store.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -25,9 +25,7 @@ export default wrap(async (req, res) => {
 	try {
 		crew = await getCrewByTag(tag);
 	} catch (err) {
-		if (err?.message?.includes('relation') || err?.message?.includes('does not exist')) {
-			return error(res, 404, 'not_found', 'no such crew');
-		}
+		if (isMissingRelation(err)) return error(res, 404, 'not_found', 'no such crew');
 		throw err;
 	}
 	if (!crew) return error(res, 404, 'not_found', 'no such crew');
