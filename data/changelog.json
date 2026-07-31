@@ -17526,6 +17526,16 @@
 				"improvement"
 			],
 			"link": "/sign-language"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "AI assistants can now find three.ws on their own",
+			"summary": "Ask ChatGPT, Claude, Grok, Kimi, or Perplexity about three.ws and their crawlers now get a proper welcome. robots.txt explicitly invites AI assistants in, including to the public API they can actually call for you. The llms.txt index that AI models read now leads with the machine entry points (the MCP servers, the x402 paid-service catalog, the agent card) instead of burying them. And a new directory at /.well-known/mcp.json lists all seven hosted MCP servers with their endpoint, auth, and what each one does, so any MCP-capable assistant can connect without hunting through docs.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/mcp-tools"
 		}
 	]
 }

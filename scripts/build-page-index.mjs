@@ -145,7 +145,23 @@ function buildLlmsTxt() {
 	if (site.github) lines.push(`Source: ${site.github}`);
 	if (site.contact) lines.push(`Contact: ${site.contact}`);
 	lines.push('');
+	// The machine-readable section leads, and skips the `indexable` filter its
+	// entries all carry (they are excluded from the crawler sitemap, not from
+	// agents): an AI reading this file should learn the MCP servers, the x402
+	// catalog, and the agent card before the human page list.
+	const machine = sections.find((s) => s.id === 'machine');
+	if (machine) {
+		lines.push('## For AI agents');
+		lines.push('');
+		lines.push('Machine-readable entry points. Fetch these instead of scraping HTML.');
+		lines.push('');
+		for (const p of machine.pages) {
+			lines.push(`- [${p.title}](${baseUrl}${p.path}): ${p.description}`);
+		}
+		lines.push('');
+	}
 	for (const section of sections) {
+		if (section.id === 'machine') continue;
 		const pages = section.pages.filter(indexable);
 		if (!pages.length) continue;
 		lines.push(`## ${section.title}`);

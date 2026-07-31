@@ -5022,6 +5022,31 @@
 					"description": "ChatGPT-style plugin manifest.",
 					"indexable": false,
 					"added": "2026-04-17"
+				},
+				{
+					"path": "/api/mcp",
+					"title": "MCP server",
+					"description": "Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.",
+					"indexable": false
+				},
+				{
+					"path": "/.well-known/mcp.json",
+					"title": ".well-known/mcp.json",
+					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+					"indexable": false,
+					"added": "2026-07-31"
+				},
+				{
+					"path": "/.well-known/agent-card.json",
+					"title": ".well-known/agent-card.json",
+					"description": "A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.",
+					"indexable": false
+				},
+				{
+					"path": "/.well-known/x402.json",
+					"title": ".well-known/x402.json",
+					"description": "x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.",
+					"indexable": false
 				}
 			]
 		}

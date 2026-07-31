@@ -1,0 +1,69 @@
+{
+	"$comment": "Directory of hosted three.ws Model Context Protocol servers. Every endpoint speaks MCP over Streamable HTTP (JSON-RPC 2.0, POST). Thirty-seven more install-and-run servers are published on npm under the @three-ws scope; find all of them in the official MCP registry.",
+	"name": "three.ws",
+	"description": "The 3D agent economy: generate, rig, and animate 3D avatars and worlds; pay and get paid per call with x402 (USDC on Solana and Base); read live crypto market and on-chain intelligence.",
+	"website": "https://three.ws",
+	"documentation": "https://three.ws/docs/mcp",
+	"registry": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas",
+	"x402Catalog": "https://three.ws/.well-known/x402.json",
+	"agentCard": "https://three.ws/.well-known/agent-card.json",
+	"llms": "https://three.ws/llms.txt",
+	"servers": [
+		{
+			"name": "three.ws",
+			"endpoint": "https://three.ws/api/mcp",
+			"transport": "streamable-http",
+			"auth": "OAuth 2.1 (end-user) or API key (server-to-server)",
+			"description": "Avatars, glTF/GLB validation and inspection, agent data, memory, and copy-trading tools.",
+			"documentation": "https://three.ws/docs/mcp"
+		},
+		{
+			"name": "3D Studio",
+			"endpoint": "https://three.ws/api/mcp-3d",
+			"transport": "streamable-http",
+			"auth": "OAuth 2.1 or x402 pay-per-call",
+			"description": "Paid text-to-3D and image-to-3D generation, rigging, retexture, and optimization.",
+			"documentation": "https://three.ws/docs/mcp-3d-studio"
+		},
+		{
+			"name": "3D Studio (free)",
+			"endpoint": "https://three.ws/api/mcp-studio",
+			"transport": "streamable-http",
+			"auth": "none",
+			"description": "Free text-to-3D, image-to-3D, and rigged avatars. No account, no payment.",
+			"documentation": "https://three.ws/docs/mcp-studio"
+		},
+		{
+			"name": "Agent wallet",
+			"endpoint": "https://three.ws/api/mcp-agent",
+			"transport": "streamable-http",
+			"auth": "OAuth 2.1",
+			"description": "The agent's custodial wallet: check balance, find and pay x402 services, monetize an endpoint.",
+			"documentation": "https://three.ws/docs/mcp-agent"
+		},
+		{
+			"name": "x402 Bazaar",
+			"endpoint": "https://three.ws/api/mcp-bazaar",
+			"transport": "streamable-http",
+			"auth": "OAuth 2.1 or x402",
+			"description": "Discover, browse, and price paid agent services across the x402 facilitator network.",
+			"documentation": "https://three.ws/docs/mcp-x402-bazaar"
+		},
+		{
+			"name": "pump.fun",
+			"endpoint": "https://three.ws/api/pump-fun-mcp",
+			"transport": "streamable-http",
+			"auth": "none",
+			"description": "Free read-only pump.fun and Solana token tools.",
+			"documentation": "https://three.ws/docs/mcp"
+		},
+		{
+			"name": "IBM x402",
+			"endpoint": "https://three.ws/api/ibm-mcp",
+			"transport": "streamable-http",
+			"auth": "x402 pay-per-call (authenticated three.ws principals call without per-call payment)",
+			"description": "Pay-per-use IBM Granite AI.",
+			"documentation": "https://three.ws/docs/ibm-x402-mcp"
+		}
+	]
+}

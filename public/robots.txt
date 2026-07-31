@@ -7,17 +7,46 @@ Disallow: /api/
 Disallow: /admin/
 Disallow: /studio-deposit-harness*
 
-# Embed routes serve raw runtime, not human content — keep them out of SERPs.
+# Embed routes serve raw runtime, not human content; keep them out of SERPs.
 Disallow: /agent/*/embed
 Disallow: /widget/*/embed
 Disallow: /avatar/*/embed
 
-# Cosmetic OG image endpoints — fine for social crawlers, useless for SERP.
+# Cosmetic OG image endpoints: fine for social crawlers, useless for SERP.
 Disallow: /api/agent/*/og
 Disallow: /api/avatar/*/og
 
-Sitemap: https://three.ws/sitemap.xml
+# ----------------------------------------------------------------------
+# AI assistants fetching on behalf of a live user (ChatGPT, Claude, Grok,
+# Perplexity, Kimi, DuckDuckGo, Mistral) are welcome everywhere public,
+# INCLUDING the API: the x402 pay-per-call endpoints, the free 3D lanes,
+# and the MCP servers are the product. Only signed-in account surfaces
+# stay off limits.
+# ----------------------------------------------------------------------
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: Perplexity-User
+User-agent: DuckAssistBot
+User-agent: MistralAI-User
+Allow: /
+Disallow: /my-agents
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /admin/
+Disallow: /studio-deposit-harness*
 
-# AI-agent index (https://llmstxt.org/)
-# Concise:  https://three.ws/llms.txt
-# Long form: https://three.ws/llms-full.txt
+# AI index and training crawlers (GPTBot, ClaudeBot, GrokBot, PerplexityBot,
+# Google-Extended, Bytespider, CCBot, and the rest) are equally welcome and
+# already covered by the "User-agent: *" rules above; nothing here blocks
+# them. Start from the machine-readable index instead of scraping HTML:
+#
+#   https://three.ws/llms.txt                      concise AI index (https://llmstxt.org/)
+#   https://three.ws/llms-full.txt                 long-form page index
+#   https://three.ws/.well-known/mcp.json          hosted MCP servers
+#   https://three.ws/.well-known/agent-card.json   A2A agent card
+#   https://three.ws/.well-known/x402.json         paid-service catalog (x402)
+#   https://three.ws/.well-known/openapi.yaml      HTTP API spec
+
+Sitemap: https://three.ws/sitemap.xml

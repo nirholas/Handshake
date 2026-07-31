@@ -45,6 +45,8 @@ The MCP server configuration is at `.mcp.json` in the project root, which Claude
 
 This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **44 three.ws MCP servers** — all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
 
+The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch.
+
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 
 **Seven hosted remote servers** (Streamable HTTP, no install):
