@@ -27,7 +27,7 @@
 		"api/tournaments/[id].js": {
 			"maxDuration": 120
 		},
-		"{api/agents/networth,api/avatars/from-forge,api/pay/execute,api/cron/launcher-claimer,api/seed/synthesize,api/cron/x402-ring-tick}.js": {
+		"{api/agents/networth,api/avatars/from-forge,api/pay/execute,api/pay/simulate,api/cron/launcher-claimer,api/seed/synthesize,api/cron/x402-ring-tick}.js": {
 			"maxDuration": 60
 		},
 		"{api/club/tips-stream,api/feed-stream,api/pump/trades-stream,api/oracle/stream,api/oracle/action-stream,api/sniper/stream,api/sniper/radar-stream,api/agent-screen-stream}.js": {
@@ -647,6 +647,26 @@
 			"dest": "/api/agents/[id]/tiers?id=$1"
 		},
 		{
+			"src": "/api/agents/([^/]+)/bundles/([^/]+)",
+			"dest": "/api/agents/[id]/bundles?id=$1&bundle_id=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/bundles",
+			"dest": "/api/agents/[id]/bundles?id=$1"
+		},
+		{
+			"src": "/api/agents/([^/]+)/pricing-rules/([^/]+)",
+			"dest": "/api/agents/[id]/pricing-rules?id=$1&rule_id=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/pricing-rules",
+			"dest": "/api/agents/[id]/pricing-rules?id=$1"
+		},
+		{
+			"src": "/api/agents/([^/]+)/skill-prices",
+			"dest": "/api/agents/[id]/skill-prices?id=$1"
+		},
+		{
 			"src": "/api/ledger/verify/([^/]+)",
 			"dest": "/api/ledger/verify/[agentId]?agentId=$1"
 		},
@@ -709,6 +729,10 @@
 		{
 			"src": "/api/pay/execute",
 			"dest": "/api/pay/execute"
+		},
+		{
+			"src": "/api/pay/simulate",
+			"dest": "/api/pay/simulate"
 		},
 		{
 			"src": "/api/portfolio/summary",
@@ -975,6 +999,10 @@
 			"dest": "/trading.html"
 		},
 		{
+			"src": "/exit-lab/?",
+			"dest": "/exit-lab.html"
+		},
+		{
 			"src": "/claim-wallet/?",
 			"dest": "/claim-wallet.html"
 		},
@@ -1237,6 +1265,10 @@
 		{
 			"src": "/avatar-cli/?",
 			"dest": "/avatar-cli.html"
+		},
+		{
+			"src": "/rig-doctor/?",
+			"dest": "/rig-doctor.html"
 		},
 		{
 			"src": "/avatar-artifact/?",
@@ -2451,6 +2483,10 @@
 			"dest": "/api/marketplace/start-trial"
 		},
 		{
+			"src": "/api/marketplace/purchase-bundle/([^/]+)/confirm",
+			"dest": "/api/marketplace/purchase-bundle?purchase_id=$1&op=confirm"
+		},
+		{
 			"src": "/api/marketplace/purchase/([^/]+)/confirm",
 			"dest": "/api/marketplace/purchase?reference=$1&op=confirm"
 		},
@@ -3187,6 +3223,10 @@
 		{
 			"src": "/api/sniper/status",
 			"dest": "/api/sniper/status.js"
+		},
+		{
+			"src": "/api/sniper/exit-lab",
+			"dest": "/api/sniper/exit-lab.js"
 		},
 		{
 			"src": "/api/trending",
@@ -4033,6 +4073,10 @@
 			"dest": "/gestures.html"
 		},
 		{
+			"src": "/choreograph/?",
+			"dest": "/choreograph.html"
+		},
+		{
 			"src": "/character-library/?",
 			"dest": "/character-library.html"
 		},
@@ -4489,6 +4533,10 @@
 		{
 			"src": "/cookbook/self-correcting-3d/?",
 			"dest": "/cookbook/self-correcting-3d/index.html"
+		},
+		{
+			"src": "/cookbook/pipeline/?",
+			"dest": "/pipeline-studio.html"
 		},
 		{
 			"src": "/cookbook/([a-z0-9-]+)",
@@ -4987,6 +5035,14 @@
 		{
 			"src": "/agent-identities/",
 			"dest": "/agent-identities.html"
+		},
+		{
+			"src": "/inspect",
+			"dest": "/inspect.html"
+		},
+		{
+			"src": "/inspect/",
+			"dest": "/inspect.html"
 		},
 		{
 			"src": "/mcp-tools",
