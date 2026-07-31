@@ -123,8 +123,10 @@
 		.mc-card:active { transform: translateY(0); }
 		.mc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 		.mc-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-		.mc-name { font: 600 0.92rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; }
-		.mc-title { font-size: 0.78rem; color: var(--ink-dim); margin-top: 2px; }
+		/* Both are spans inside one cell, so they must be blocks or the mono name
+		   and the human title run together on a single line. */
+		.mc-name { display: block; font: 600 0.92rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; }
+		.mc-title { display: block; font-size: 0.78rem; color: var(--ink-dim); margin-top: 3px; line-height: 1.35; }
 		.mc-desc {
 			font-size: 0.84rem; line-height: 1.5; color: var(--ink-dim); margin: 0;
 			display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
@@ -225,7 +227,7 @@
 				<span class="sr-only" data-i18n="mcp_tools.search_tools">Search tools</span>
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
 				<input id="mc-q" type="search" autocomplete="off" spellcheck="false"
-					placeholder="Search 270 tools by name, description, or server…" />
+					placeholder="Search tools by name, description, or server…" />
 				<span class="mc-kbd" aria-hidden="true"><kbd>/</kbd></span>
 			</label>
 
@@ -316,18 +318,18 @@
 		function renderStats() {
 			const c = catalog.counts;
 			const cells = [
-				['Tools', c.tools],
-				['Servers', c.servers],
-				['Read-only', c.read],
-				['Writes', c.write],
-				['Irreversible', c.irreversible],
-				['Free', c.free],
-				['Paid', c.paid],
+				['Tools', c.tools, 'Every tool three.ws publishes over MCP'],
+				['Servers', c.servers, 'Hosted endpoints plus installable npm servers'],
+				['Read-only', c.read, SAFETY_BLURB.read],
+				['Writes', c.write, SAFETY_BLURB.write],
+				['Irreversible', c.irreversible, SAFETY_BLURB.irreversible],
+				['Free', c.free, 'No payment, wallet, or key required'],
+				['Paid', c.paid, 'Settled per call in USDC over x402'],
 			];
 			statsEl.innerHTML = cells
 				.map(
-					([label, value]) =>
-						`<div class="mc-stat"><dt>${esc(label)}</dt><dd>${value}</dd></div>`,
+					([label, value, hint]) =>
+						`<div class="mc-stat" title="${esc(hint)}"><dt>${esc(label)}</dt><dd>${value}</dd></div>`,
 				)
 				.join('');
 		}
@@ -352,8 +354,8 @@
 				? esc(tool.description)
 				: '<em>Composed at request time. Call tools/list on the server for the live text.</em>';
 			const price = tool.price.free
-				? '<span class="mc-badge mc-badge-free">Free</span>'
-				: `<span class="mc-badge mc-badge-price">${esc(priceLabel(tool.price))} USDC</span>`;
+				? '<span class="mc-badge mc-badge-free" title="No payment, no wallet, no key">Free</span>'
+				: `<span class="mc-badge mc-badge-price" title="Costs ${esc(priceLabel(tool.price))} USDC per call, settled over x402">${esc(priceLabel(tool.price))} USDC</span>`;
 			return (
 				`<button type="button" class="mc-card" data-index="${index}">` +
 				'<span class="mc-card-top"><span>' +
@@ -362,7 +364,7 @@
 				'</span></span>' +
 				`<p class="mc-desc">${desc}</p>` +
 				'<span class="mc-badges">' +
-				`<span class="mc-badge" data-safety="${tool.safety}">${SAFETY_LABEL[tool.safety]}</span>` +
+				`<span class="mc-badge" data-safety="${tool.safety}" title="${esc(SAFETY_BLURB[tool.safety])}">${SAFETY_LABEL[tool.safety]}</span>` +
 				price +
 				`<span class="mc-server">${esc(tool.server.title)}</span>` +
 				'</span></button>'
@@ -407,10 +409,26 @@
 				method: 'tools/call',
 				params: { name: tool.name, arguments: {} },
 			};
-			const snippet =
-				tool.server.transport === 'remote'
-					? `curl -X POST https://three.ws${tool.server.endpoint} \\\n  -H 'content-type: application/json' \\\n  -d '${JSON.stringify(call)}'`
-					: `${tool.server.endpoint}\n\n# then call ${tool.name} from your MCP client`;
+
+			// A bare curl at a paid tool answers 402, not data. Showing it without
+			// that step would send every reader down a dead end, so the snippet
+			// names the payment handshake instead of pretending it is free.
+			let snippet;
+			if (tool.server.transport !== 'remote') {
+				snippet = `${tool.server.endpoint}\n\n# then call ${tool.name} from your MCP client`;
+			} else {
+				const curl =
+					`curl -X POST https://three.ws${tool.server.endpoint} \\\n` +
+					`  -H 'content-type: application/json' \\\n` +
+					`  -d '${JSON.stringify(call)}'`;
+				snippet = tool.price.free
+					? curl
+					: `# ${tool.name} costs $${priceLabel(tool.price).replace('$', '')} USDC per call.\n` +
+						`# Called without payment it returns a PaymentRequired quote:\n${curl}\n\n` +
+						`# Settle the quote and retry with the payment in _meta, or let a\n` +
+						`# paying client do it for you:\n` +
+						`npx -y @three-ws/mcp-bridge --url https://three.ws${tool.server.endpoint}`;
+			}
 
 			dialogIn.innerHTML =
 				'<div class="mc-detail-head">' +
@@ -459,7 +477,19 @@
 			});
 
 			dialog.showModal();
+			setToolParam(tool.name);
 		}
+
+		/** Keep ?tool= in sync so one tool can be linked to directly. */
+		function setToolParam(name) {
+			const params = new URLSearchParams(location.search);
+			if (name) params.set('tool', name);
+			else params.delete('tool');
+			const qs = params.toString();
+			history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+		}
+
+		dialog.addEventListener('close', () => setToolParam(null));
 
 		grid.addEventListener('click', (event) => {
 			const card = event.target.closest('.mc-card');
@@ -576,6 +606,14 @@
 			readUrl();
 			syncChips();
 			render();
+
+			const linked = new URLSearchParams(location.search).get('tool');
+			if (linked) {
+				const tool = catalog.tools.find((t) => t.name === linked);
+				// A stale or mistyped ?tool= must not silently swallow the deep link.
+				if (tool) openDetail(tool);
+				else countEl.textContent += ` (no tool named "${linked}")`;
+			}
 		}
 
 		load();

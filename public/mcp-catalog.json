@@ -2824,8 +2824,7 @@
 		{
 			"name": "submit_creation",
 			"title": "Submit a creation to the Loom gallery",
-			"description": null,
-			"descriptionIsDynamic": true,
+			"description": "Contribute a forged 3D creation to Loom, the PUBLIC, world-readable community gallery. ⚠️ Anything you submit becomes visible to everyone on the platform, so only post models you intend to share. Requires `prompt` (the text that forged it, ≤1000 chars) and `glbUrl` (an https URL to the GLB, hosted on an allowed domain: three.ws, r2.dev, cloudflarestorage.com, replicate.delivery, githubusercontent.com). Optional: `author` attribution (free text, ≤40 chars — NOT an authenticated identity; defaults to \"anon\"), `previewImageUrl`, `tier`, and `backend`. No key or account is needed; the endpoint is rate-limited to ~20 submissions per hour per IP. Re-submitting the exact same glbUrl returns the existing creation instead of duplicating it. Returns the stored creation with its id and a ready-to-use viewer_url + iframe_snippet. The only coin this platform references is $THREE — never put any other token in a prompt.",
 			"server": {
 				"id": "loom-mcp",
 				"title": "@three-ws/loom-mcp",

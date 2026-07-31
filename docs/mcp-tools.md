@@ -14,6 +14,11 @@ page explains how the servers are grouped and how the paid ones charge.
 > The tables below are a curated orientation to the servers, not the full index.
 > Where a figure here and the catalog disagree, the catalog is right.
 
+[![The MCP Tool Catalog on a phone: the stat strip wraps, the filters stay reachable, and each tool card shows its safety class, price, and host server](/docs/img/mcp-catalog-mobile.png)](/mcp-tools)
+
+*The catalog on a phone. Search, filters and the per-tool detail all work at
+320px, so you can look a tool up from anywhere.*
+
 > Source: [`api/mcp-studio.js`](../api/mcp-studio.js) (free),
 > [`api/mcp-3d.js`](../api/mcp-3d.js) + [`api/_mcp3d/pricing.js`](../api/_mcp3d/pricing.js)
 > (paid studio), `api/_mcp*/` + `packages/*-mcp` (agent/commerce tools).

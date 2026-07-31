@@ -87,6 +87,23 @@ function stringValue(node, constStrings = new Map(), seen = new Set()) {
 	if (node.type === 'Identifier' && constStrings.has(node.name) && !seen.has(node.name)) {
 		return stringValue(constStrings.get(node.name), constStrings, new Set([...seen, node.name]));
 	}
+	// `… + ALLOWED_HOSTS.join(', ') + …`: a literal list rendered into the copy.
+	if (
+		node.type === 'CallExpression' &&
+		node.callee.type === 'MemberExpression' &&
+		node.callee.property?.name === 'join' &&
+		node.callee.object?.type === 'Identifier' &&
+		constStrings.has(node.callee.object.name)
+	) {
+		const array = constStrings.get(node.callee.object.name);
+		if (array?.type === 'ArrayExpression') {
+			const parts = array.elements.map((el) => stringValue(el, constStrings, seen));
+			if (parts.every((part) => part !== null)) {
+				const sep = stringValue(node.arguments[0], constStrings, seen) ?? ',';
+				return parts.join(sep);
+			}
+		}
+	}
 	return null;
 }
 
@@ -101,7 +118,9 @@ function collectConstStrings(ast, relPath, depth = 1) {
 	const out = new Map();
 	walk(ast, (node) => {
 		if (node.type !== 'VariableDeclarator' || node.id?.type !== 'Identifier') return;
-		if (node.init && STRINGY_NODES.includes(node.init.type)) out.set(node.id.name, node.init);
+		if (node.init && (STRINGY_NODES.includes(node.init.type) || node.init.type === 'ArrayExpression')) {
+			out.set(node.id.name, node.init);
+		}
 	});
 	if (depth <= 0) return out;
 

@@ -17,6 +17,11 @@ the rest tells you how the check works and how to satisfy it.
 - Browse every tool and its safety class: [MCP Tool Catalog](/mcp-tools)
 - Machine-readable, same data: [`/mcp-catalog.json`](/mcp-catalog.json)
 
+[![The MCP Tool Catalog filtered to the irreversible tools, each card showing its safety class, price, and host server](/docs/img/mcp-catalog-irreversible.png)](/mcp-tools?safety=irreversible)
+
+*The catalog filtered to the tools that cannot be undone. Every filter is in the
+URL, so [that view](/mcp-tools?safety=irreversible) is a link you can send someone.*
+
 ---
 
 ## What the hints mean here
@@ -33,20 +38,24 @@ the rest tells you how the check works and how to satisfy it.
 The catalog collapses the first two rows into one **safety class** per tool, which
 is what the catalog page filters on:
 
-| Class | Derived from | Count today |
-| --- | --- | --- |
-| `read` | `readOnlyHint: true` | 181 |
-| `write` | `readOnlyHint: false`, `destructiveHint: false` | 70 |
-| `irreversible` | `readOnlyHint: false`, `destructiveHint: true` | 19 |
+| Class | Derived from |
+| --- | --- |
+| `read` | `readOnlyHint: true` |
+| `write` | `readOnlyHint: false`, `destructiveHint: false` |
+| `irreversible` | `readOnlyHint: false`, `destructiveHint: true` |
 
-Counts come from `/mcp-catalog.json`, which is regenerated from source on every
-build. The catalog is the number that is current; the table above is a snapshot.
+For how many tools are in each class right now, read the catalog rather than a
+number typed into a doc:
+
+```bash
+curl -s https://three.ws/mcp-catalog.json | jq '.counts'
+```
 
 ---
 
 ## What you can rely on
 
-**A read-only tool never changes anything you asked about.** Four read tools warm
+**A read-only tool never changes anything you asked about.** A few read tools warm
 an internal cache while they answer you (the Oracle conviction cache, the on-chain
 attestation cache). Those writes are the server's own bookkeeping, they are wrapped
 so a failure still returns your answer, and they never change your result. They are
@@ -60,6 +69,12 @@ payment declare `readOnlyHint: false`, and the irreversible ones declare
 **An unannotated tool cannot ship.** The MCP spec says `destructiveHint` defaults to
 `true` when omitted, so a tool with no annotations tells every client that a
 harmless read might be dangerous. The build fails on that.
+
+Opening any tool shows the four hints it declares, its price, and a call
+snippet. For a paid tool the snippet names the payment step rather than handing
+you a command that answers `402`.
+
+[![The detail view for mint_3d_asset: a plain-language safety note, a table of the four annotation hints, the price, the source file, and a copyable call snippet](/docs/img/mcp-tool-detail.png)](/mcp-tools?tool=mint_3d_asset)
 
 ### Reading it from a client
 

@@ -808,7 +808,7 @@ Contributors: `npm run audit:mcp-safety` enforces this. It parses each tool's ha
 
 - [MCP Tools Catalog](/docs/mcp-tools): every three.ws MCP tool, its server, and its price
 - [MCP tool safety](/docs/mcp-safety): what the safety annotations promise, and how they are verified
-- [MCP Tool Catalog](/mcp-tools): the searchable index of all 270 tools, generated from source
+- [MCP Tool Catalog](/mcp-tools): the searchable index of every tool, generated from source
 - [3D Studio MCP (free)](/docs/mcp-studio): the no-auth, no-payment 3D generation server
 - [Spatial MCP](/docs/spatial-mcp): returning live 3D scenes as native MCP responses
 - [x402](/docs/x402): the USDC micropayment rail behind the paid tools
