@@ -23,6 +23,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { isUuid } from '../../_lib/validate.js';
 import { MARKET_PAID_KINDS } from '../../_lib/marketplace-kinds.js';
+import { simulatePrice, suggestPrice } from '../../_lib/bundle-pricing.js';
 
 const createSchema = z.object({
 	name:          z.string().trim().min(2).max(80),
@@ -52,6 +53,8 @@ export default wrap(async (req, res) => {
 	if (!agentId || !isUuid(agentId))
 		return error(res, 400, 'validation_error', 'valid agent id required');
 
+	if (req.method === 'GET' && url.searchParams.get('action') === 'pricing')
+		return handlePricing(req, res, agentId, url);
 	if (req.method === 'GET')    return handleList(req, res, agentId);
 	if (req.method === 'POST' && !bundleId) return handleCreate(req, res, agentId);
 	if (req.method === 'PATCH' && bundleId) return handlePatch(req, res, agentId, bundleId);
@@ -87,6 +90,136 @@ async function handleList(req, res, agentId) {
 	`;
 
 	return json(res, 200, { data: { bundles } });
+}
+
+// ── GET pricing simulation ──────────────────────────────────────────────────
+//
+// "What should I charge for this bundle?" is the question that stops a seller
+// from publishing one, and the honest answer is not a percentage off the sum of
+// the parts. It is in the agent's own ledger: some buyers already bought two or
+// three of these skills separately, and what they paid is the only real evidence
+// of what the combination is worth.
+//
+// So this endpoint backtests a candidate price against actual history. It finds
+// every buyer who purchased 2+ of the chosen skills, sums what each of them
+// really paid, and reports what the bundle would have collected from those same
+// people instead. A seller sees revenue delta and buyer count from their own
+// sales rather than a guess, and a bundle priced above the historical basket is
+// shown as the revenue loss it would have been.
+//
+// Public on purpose: it reads only aggregate counts and the agent's own list
+// prices, both of which the marketplace already publishes per skill. No buyer
+// identity, and no row-level history, leaves this handler.
+
+const MAX_SIMULATED_SKILLS = 50;
+
+async function handlePricing(req, res, agentId, url) {
+	if (!method(req, res, ['GET'])) return;
+
+	const skills = [...new Set(
+		(url.searchParams.get('skills') || '')
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean),
+	)];
+	if (skills.length < 2)
+		return error(res, 400, 'validation_error', 'skills must name at least 2 skills, comma separated');
+	if (skills.length > MAX_SIMULATED_SKILLS)
+		return error(res, 400, 'validation_error', `at most ${MAX_SIMULATED_SKILLS} skills can be simulated at once`);
+
+	const rawPrice = url.searchParams.get('price');
+	const askedPrice = rawPrice == null || rawPrice === '' ? null : Number(rawPrice);
+	if (askedPrice !== null && (!Number.isInteger(askedPrice) || askedPrice < 1))
+		return error(res, 400, 'validation_error', 'price must be a positive integer in atomic units');
+
+	// Per-skill list price and real sales. Money and buyer counts filter to paid
+	// kinds, matching the definition /pulse publishes, so a trial or an access row
+	// from an earlier bundle can never inflate what a seller sees here.
+	const paid = sql`sp.status = 'confirmed' AND sp.kind = ANY(${MARKET_PAID_KINDS})`;
+	const parts = await sql`
+		SELECT p.skill,
+		       MAX(p.amount)                                        AS list_amount,
+		       MAX(p.currency_mint)                                 AS currency_mint,
+		       MAX(p.chain)                                         AS chain,
+		       COUNT(*) FILTER (WHERE ${paid})::int                 AS units,
+		       COALESCE(SUM(sp.amount) FILTER (WHERE ${paid}), 0)::text AS gross_atomic,
+		       COUNT(DISTINCT sp.user_id) FILTER (WHERE ${paid})::int   AS buyers
+		FROM agent_skill_prices p
+		LEFT JOIN skill_purchases sp
+		       ON sp.agent_id = p.agent_id AND sp.skill = p.skill
+		WHERE p.agent_id = ${agentId} AND p.is_active = true AND p.skill = ANY(${skills})
+		GROUP BY p.skill
+		ORDER BY p.skill
+	`;
+
+	if (!parts.length)
+		return error(res, 404, 'not_found', 'none of those skills have an active price on this agent');
+
+	// A skill with no active price cannot be summed, so say which ones were left
+	// out rather than quietly pricing a smaller bundle than the seller asked for.
+	const pricedSkills = parts.map((p) => p.skill);
+	const unpricedSkills = skills.filter((s) => !pricedSkills.includes(s));
+
+	// Currency has to be uniform: adding a $THREE price to a USDC price would
+	// produce a number that means nothing.
+	const mints = [...new Set(parts.map((p) => p.currency_mint))];
+	if (mints.length > 1)
+		return error(res, 409, 'mixed_currency', `these skills are priced in ${mints.length} different currencies and cannot be bundled together`);
+
+	const sumOfParts = parts.reduce((sum, p) => sum + Number(p.list_amount), 0);
+
+	// The historical basket: buyers who took 2+ of these skills, and what each
+	// actually paid across them. This is the population a bundle would have
+	// converted, so it is the only population worth pricing against.
+	const baskets = await sql`
+		SELECT sp.user_id,
+		       COUNT(DISTINCT sp.skill)::int AS skills_bought,
+		       SUM(sp.amount)::text          AS paid_atomic
+		FROM skill_purchases sp
+		WHERE sp.agent_id = ${agentId}
+		  AND sp.skill = ANY(${pricedSkills})
+		  AND ${paid}
+		GROUP BY sp.user_id
+		HAVING COUNT(DISTINCT sp.skill) >= 2
+	`;
+
+	const basketTotals = baskets.map((b) => Number(b.paid_atomic));
+	const multiBuyers = basketTotals.length;
+	const historicalRevenue = basketTotals.reduce((sum, n) => sum + n, 0);
+
+	// The arithmetic lives in api/_lib/bundle-pricing.js so it can be tested
+	// without a database. That matters here: the marketplace has no multi-skill
+	// basket at all yet, precisely because bundles were unreachable, so the
+	// evidence path has no production rows to exercise it.
+	const { price: suggested, basis, median_basket: medianBasket } = suggestPrice(sumOfParts, basketTotals);
+	const simulate = (price) => simulatePrice(price, sumOfParts, basketTotals);
+
+	return json(res, 200, {
+		data: {
+			agent_id: agentId,
+			currency_mint: mints[0],
+			chain: parts[0].chain,
+			skills: parts.map((p) => ({
+				skill: p.skill,
+				list_amount: String(p.list_amount),
+				units_sold: p.units,
+				gross_atomic: p.gross_atomic,
+				buyers: p.buyers,
+			})),
+			unpriced_skills: unpricedSkills,
+			sum_of_parts_atomic: String(sumOfParts),
+			history: {
+				multi_skill_buyers: multiBuyers,
+				revenue_atomic: String(historicalRevenue),
+				median_basket_atomic: medianBasket === null ? null : String(medianBasket),
+				// Says out loud whether the suggestion is evidence or a default, so a
+				// seller with no history is never misled into reading it as a finding.
+				basis,
+			},
+			suggested: simulate(suggested),
+			asked: askedPrice === null ? null : simulate(askedPrice),
+		},
+	});
 }
 
 // ── POST create ─────────────────────────────────────────────────────────────
