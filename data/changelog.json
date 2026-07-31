@@ -17516,6 +17516,16 @@
 				"sdk"
 			],
 			"link": "/tutorials/wallet-sign-in"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "The signing avatar stays in frame, and you can now move the camera around it",
+			"summary": "Scrolling the page with your cursor over the 3D signing avatar used to zoom the camera into its torso and leave it stuck out of frame. Plain scrolling now just scrolls the page: zooming takes a pinch, ctrl+scroll, or a scroll after grabbing the model. You can also move the avatar around the frame with a right-click drag (two fingers on touch), and a Reset view button plus double-click snap the camera back home whenever you lose it. The avatar itself looks healthier too: the studio lighting was overexposing skin into a washed-out gray, and a softer, warmer setup now lets natural skin tones through. All of this applies everywhere an avatar poses: the sign language page, the ASL alphabet, and the Animation Studio.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/sign-language"
 		}
 	]
 }

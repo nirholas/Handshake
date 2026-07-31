@@ -86,6 +86,8 @@ export class PoseStage {
 		this._running = false;
 		this._frame = 0;
 		this._resizeObserver = null;
+		this._homeView = null;
+		this._resetBtn = null;
 		this._mounted = false;
 		this._disposed = false;
 
@@ -106,7 +108,7 @@ export class PoseStage {
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 		renderer.outputColorSpace = SRGBColorSpace;
 		renderer.toneMapping = ACESFilmicToneMapping;
-		renderer.toneMappingExposure = 1.05;
+		renderer.toneMappingExposure = 1.0;
 		renderer.domElement.className = 'av-pose-canvas';
 		this.renderer = renderer;
 		this.host.appendChild(renderer.domElement);
@@ -119,23 +121,56 @@ export class PoseStage {
 		const pmrem = new PMREMGenerator(renderer);
 		scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 		pmrem.dispose();
-		scene.add(new HemisphereLight(0xffffff, 0x39404d, 0.9));
-		const key = new DirectionalLight(0xffffff, 1.5);
+		// The environment already supplies broad ambient fill. Piling strong
+		// hemisphere + ambient + key on top of it overexposed skin into a pale,
+		// desaturated gray (ACES rolls blown highlights toward white), so the
+		// added lights only shape form: a soft warm key and a gentle sky fill.
+		scene.environmentIntensity = 0.85;
+		scene.add(new HemisphereLight(0xffffff, 0x39404d, 0.35));
+		const key = new DirectionalLight(0xfff1e0, 1.0);
 		key.position.set(2, 3, 2.4);
-		scene.add(key, new AmbientLight(0xffffff, 0.35));
+		scene.add(key, new AmbientLight(0xffffff, 0.12));
 
 		const w = this.host.clientWidth || 1;
 		const h = this.host.clientHeight || 1;
 		this.camera = new PerspectiveCamera(35, w / h, 0.01, 100);
 
+		// The wheel gate must attach to the HOST (capture phase) so it runs
+		// before OrbitControls' own wheel listener on the canvas: a plain scroll
+		// over the stage must keep scrolling the page. Zooming the avatar takes
+		// intent: ctrl/cmd+wheel, a pinch, or a wheel after grabbing the model.
+		// Without this, scrolling past the hero dollied the camera into the
+		// torso and stranded the avatar out of frame with no way back.
+		this._wheelEngaged = false;
+		this._onWheelGate = (e) => {
+			if (!e.ctrlKey && !e.metaKey && !this._wheelEngaged) e.stopImmediatePropagation();
+		};
+		this._onPointerEngage = () => { this._wheelEngaged = true; };
+		this._onPointerDisengage = () => { this._wheelEngaged = false; };
+		this.host.addEventListener('wheel', this._onWheelGate, { capture: true });
+		renderer.domElement.addEventListener('pointerdown', this._onPointerEngage);
+		renderer.domElement.addEventListener('pointerleave', this._onPointerDisengage);
+
 		this.controls = new OrbitControls(this.camera, renderer.domElement);
 		this.controls.enableDamping = true;
 		this.controls.dampingFactor = 0.08;
-		this.controls.enablePan = false;
+		// Pan moves the avatar around the frame: right-drag or two-finger drag.
+		this.controls.enablePan = true;
+		this.controls.screenSpacePanning = true;
 		this.controls.minDistance = 0.6;
 		this.controls.maxDistance = 8;
 		// Keep the camera above the floor so users can't orbit under the avatar.
 		this.controls.maxPolarAngle = Math.PI * 0.92;
+		// One-finger vertical swipes keep scrolling the page on touch screens;
+		// horizontal swipes orbit. OrbitControls sets touch-action:none, which
+		// would swallow mobile page scrolling over a tall hero canvas.
+		renderer.domElement.style.touchAction = 'pan-y';
+
+		// A camera the user can move is a camera the user can lose. Double-click
+		// snaps home, and a reset pill appears whenever the view leaves home.
+		renderer.domElement.addEventListener('dblclick', () => this.reframe());
+		this._buildResetButton();
+		this.controls.addEventListener('start', () => this._setViewMoved(true));
 
 		this._resize();
 		this._resizeObserver = new ResizeObserver(() => this._resize());
@@ -193,12 +228,54 @@ export class PoseStage {
 		// percent of margin above the head and below the feet.
 		const target = new Vector3(cx, height * (portrait ? 0.8 : 0.52), cz);
 		const dist = height * (portrait ? 0.92 : 1.75);
-		this.camera.position.set(cx, height * (portrait ? 0.83 : 0.58), cz + dist);
-		this.camera.near = Math.max(0.01, dist / 100);
-		this.camera.far = dist * 20;
+		this._homeView = {
+			target,
+			position: new Vector3(cx, height * (portrait ? 0.83 : 0.58), cz + dist),
+			near: Math.max(0.01, dist / 100),
+			far: dist * 20,
+		};
+		this.reframe();
+	}
+
+	/** Snap the camera back to the home framing. Safe to call any time. */
+	reframe() {
+		if (!this._homeView || !this.camera) return;
+		const { target, position, near, far } = this._homeView;
+		this.camera.position.copy(position);
+		this.camera.near = near;
+		this.camera.far = far;
 		this.camera.updateProjectionMatrix();
 		this.controls.target.copy(target);
 		this.controls.update();
+		this._setViewMoved(false);
+	}
+
+	/** The reset pill lives inside the host so every PoseStage page gets it. */
+	_buildResetButton() {
+		if (getComputedStyle(this.host).position === 'static') this.host.style.position = 'relative';
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.textContent = 'Reset view';
+		btn.setAttribute('aria-label', 'Reset the camera to the default view');
+		btn.title = 'Drag to rotate, right-drag to move, pinch or ctrl+scroll to zoom. Double-click also resets.';
+		btn.style.cssText = [
+			'position:absolute', 'top:10px', 'right:10px', 'z-index:2',
+			'padding:6px 12px', 'border-radius:999px', 'border:1px solid rgba(167,139,250,.4)',
+			'background:rgba(10,10,14,.72)', 'color:#e7e5f4', 'font:12px/1.2 ui-monospace,monospace',
+			'cursor:pointer', 'opacity:0', 'pointer-events:none', 'transition:opacity .2s ease',
+			'backdrop-filter:blur(6px)',
+		].join(';');
+		btn.addEventListener('click', () => this.reframe());
+		btn.addEventListener('pointerenter', () => { btn.style.borderColor = 'rgba(167,139,250,.9)'; });
+		btn.addEventListener('pointerleave', () => { btn.style.borderColor = 'rgba(167,139,250,.4)'; });
+		this._resetBtn = btn;
+		this.host.appendChild(btn);
+	}
+
+	_setViewMoved(moved) {
+		if (!this._resetBtn) return;
+		this._resetBtn.style.opacity = moved ? '1' : '0';
+		this._resetBtn.style.pointerEvents = moved ? 'auto' : 'none';
 	}
 
 	/**
@@ -260,6 +337,9 @@ export class PoseStage {
 		this.stop();
 		this._resizeObserver?.disconnect();
 		this._resizeObserver = null;
+		this.host?.removeEventListener('wheel', this._onWheelGate, { capture: true });
+		this._resetBtn?.remove();
+		this._resetBtn = null;
 		this.anim.dispose();
 		this.scene?.environment?.dispose?.();
 		this.renderer?.domElement?.remove();
