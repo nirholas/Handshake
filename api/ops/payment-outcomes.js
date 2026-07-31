@@ -1,0 +1,181 @@
+// GET /api/ops/payment-outcomes: the payment-outcome board.
+//
+// The fable-audit called out that the x402 griefing classes (verify-reject
+// floods, settle failures, sponsor-fee starvation) only become visible after
+// they halt the economy. This endpoint aggregates the durable payment ledger
+// (x402_audit_log), the self-facilitator settle log, the outbound ring settle
+// sensor, and the live ring wallet balances into one read-only JSON board:
+//
+//   inbound      : settle / verify-reject / replay-reject / unsettled-flush
+//                  counts and rates over 1h / 3h / 24h windows, replay stage
+//                  split, top failure reasons, settled volume.
+//   ring_settle  : gatherX402SettleHealth(), the outbound settle-success-rate
+//                  sensor (3h window, rail-fault allowlist).
+//   sponsor      : fee-wallet SOL vs its floor plus measured burn (7d of
+//                  fee_lamports) and the runway in days that implies.
+//
+// Auth: authorizeOps (admin session, or x-ops-secret / OPS_SECRET): the same
+// gate as /api/ops/health, so the /admin/ops dashboard reuses its stored
+// secret. Read-only; moves no funds; reads balances via RPC only.
+
+import { cors, json, method, wrap, error } from '../_lib/http.js';
+import { sql } from '../_lib/db.js';
+import { authorizeOps } from '../_lib/ops-auth.js';
+import { gatherX402SettleHealth } from '../_lib/ops/x402-settle-health.js';
+import { checkRingWallets } from '../_lib/x402/wallet-balance-monitor.js';
+
+export const maxDuration = 30;
+
+const INBOUND_EVENTS = [
+	'payment_settled',
+	'payment_failed',
+	'payment_verify_rejected',
+	'payment_replay_rejected',
+	'payment_unsettled_flush',
+];
+
+function rate(numerator, denominator) {
+	if (!denominator) return null;
+	return Math.round((numerator / denominator) * 1000) / 1000;
+}
+
+function windowStats(counts) {
+	const settled = counts.payment_settled || 0;
+	const settleFailed = counts.payment_failed || 0;
+	const verifyRejected = counts.payment_verify_rejected || 0;
+	const replayRejected = counts.payment_replay_rejected || 0;
+	const unsettledFlush = counts.payment_unsettled_flush || 0;
+	// Attempts that reached verify: replays are refused before verify, so they
+	// are reported but excluded from both denominators.
+	const verifyAttempts = settled + settleFailed + verifyRejected;
+	const settleAttempts = settled + settleFailed;
+	return {
+		settled,
+		settle_failed: settleFailed,
+		verify_rejected: verifyRejected,
+		replay_rejected: replayRejected,
+		unsettled_flush: unsettledFlush,
+		settle_success_rate: rate(settled, settleAttempts),
+		verify_reject_rate: rate(verifyRejected, verifyAttempts),
+	};
+}
+
+async function inboundBoard() {
+	// One 24h index scan carries all three windows via FILTER.
+	const rows = await sql`
+		SELECT event_type,
+		       count(*) FILTER (WHERE created_at >= now() - interval '1 hour')::int  AS h1,
+		       count(*) FILTER (WHERE created_at >= now() - interval '3 hours')::int AS h3,
+		       count(*)::int AS h24
+		FROM x402_audit_log
+		WHERE created_at >= now() - interval '24 hours'
+		  AND event_type = ANY(${INBOUND_EVENTS})
+		GROUP BY event_type
+	`;
+	const byWindow = { h1: {}, h3: {}, h24: {} };
+	for (const r of rows) {
+		byWindow.h1[r.event_type] = r.h1;
+		byWindow.h3[r.event_type] = r.h3;
+		byWindow.h24[r.event_type] = r.h24;
+	}
+
+	const [replayStages, reasons, [volume]] = await Promise.all([
+		sql`
+			SELECT coalesce(metadata->>'stage', 'unknown') AS stage, count(*)::int AS n
+			FROM x402_audit_log
+			WHERE created_at >= now() - interval '24 hours'
+			  AND event_type = 'payment_replay_rejected'
+			GROUP BY 1
+		`,
+		sql`
+			SELECT coalesce(metadata->>'code', metadata->>'reason', 'unknown') AS reason,
+			       event_type, count(*)::int AS n
+			FROM x402_audit_log
+			WHERE created_at >= now() - interval '24 hours'
+			  AND event_type IN ('payment_failed', 'payment_verify_rejected')
+			GROUP BY 1, 2
+			ORDER BY n DESC
+			LIMIT 12
+		`,
+		sql`
+			SELECT coalesce(sum(
+				CASE WHEN amount_atomics IS NOT NULL AND amount_atomics ~ '^[0-9]+$'
+				THEN amount_atomics::numeric ELSE 0 END
+			), 0) AS atomics
+			FROM x402_audit_log
+			WHERE created_at >= now() - interval '24 hours'
+			  AND event_type = 'payment_settled'
+		`,
+	]);
+
+	return {
+		windows: {
+			'1h': windowStats(byWindow.h1),
+			'3h': windowStats(byWindow.h3),
+			'24h': windowStats(byWindow.h24),
+		},
+		replay_stages_24h: Object.fromEntries(replayStages.map((r) => [r.stage, r.n])),
+		top_failure_reasons_24h: reasons.map((r) => ({
+			reason: r.reason,
+			stage: r.event_type === 'payment_failed' ? 'settle' : 'verify',
+			count: r.n,
+		})),
+		settled_volume_usd_24h: Number(volume?.atomics || 0) / 1e6,
+	};
+}
+
+async function sponsorBoard() {
+	// Balances via the ring monitor with alerting disabled: a dashboard READ
+	// must never page anyone; the scheduled monitor owns alerting.
+	const ring = await checkRingWallets({ sendAlert: async () => {} });
+	const sponsor = ring.wallets.find((w) => w.role === 'sponsor') || null;
+
+	// Measured burn, not a remembered constant: fee_lamports over settled
+	// settles for 7 days (ISSUES.md item 6 records the folklore number being
+	// wrong by roughly 10x, so derive it every time).
+	const [burn] = await sql`
+		SELECT count(*)::int AS settles,
+		       coalesce(sum(fee_lamports), 0)::bigint AS lamports
+		FROM x402_self_facilitator_log
+		WHERE ts >= now() - interval '7 days'
+		  AND action = 'settle' AND ok = true
+	`;
+	const burnSolPerDay = Number(burn?.lamports || 0) / 7 / 1e9;
+	const sol = sponsor?.sol ?? null;
+	return {
+		configured: Boolean(sponsor?.address),
+		address: sponsor?.address || null,
+		sol,
+		sol_floor: sponsor?.sol_floor ?? null,
+		below_floor: Boolean(sponsor?.sol_low),
+		settles_7d: burn?.settles ?? 0,
+		burn_sol_per_day_7d: Math.round(burnSolPerDay * 1e6) / 1e6,
+		runway_days: sol != null && burnSolPerDay > 0
+			? Math.round((sol / burnSolPerDay) * 10) / 10
+			: null,
+	};
+}
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const auth = await authorizeOps(req);
+	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
+
+	// The three boards are independent reads; one failing must not blank the
+	// others (an RPC outage is exactly when the settle panels matter most).
+	const [inbound, ringSettle, sponsor] = await Promise.allSettled([
+		inboundBoard(),
+		gatherX402SettleHealth(),
+		sponsorBoard(),
+	]);
+	const unwrap = (r) => (r.status === 'fulfilled' ? r.value : { error: r.reason?.message || 'unavailable' });
+
+	return json(res, 200, {
+		ok: true,
+		generated_at: new Date().toISOString(),
+		inbound: unwrap(inbound),
+		ring_settle: unwrap(ringSettle),
+		sponsor: unwrap(sponsor),
+	}, { 'cache-control': 'no-store' });
+});

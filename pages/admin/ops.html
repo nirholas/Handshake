@@ -138,6 +138,16 @@
 		.skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; height: 14px; }
 		@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
+		/* Payment outcomes */
+		.pay-detail { font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,0.55); border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+		.pay-detail.ok { border-color: rgba(47,191,113,0.2); }
+		.pay-detail.warn { border-color: rgba(240,169,59,0.3); }
+		.pay-detail.down { border-color: rgba(248,113,113,0.35); }
+		.pay-detail .pd-status { font-weight: 700; margin-right: 0.5rem; }
+		.pay-detail.ok .pd-status { color: #2fbf71; }
+		.pay-detail.warn .pd-status { color: #f0a93b; }
+		.pay-detail.down .pd-status { color: var(--danger); }
+
 		/* Category headings inside probe grid */
 		.cat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: rgba(255,255,255,0.25); margin: 1.25rem 0 0.5rem; grid-column: 1 / -1; }
 		.cat-label:first-child { margin-top: 0; }
@@ -200,6 +210,23 @@
 			<div class="probe-grid" id="probeGrid">
 				<div class="skeleton" style="height:38px;grid-column:1/-1"></div>
 			</div>
+		</div>
+
+		<!-- Payment outcomes (from /api/ops/payment-outcomes) -->
+		<div class="ops-section" id="paymentsSection">
+			<div class="ops-section-hd">Payment outcomes</div>
+			<div class="ops-summary" id="payCards">
+				<div class="skeleton" style="height:72px;grid-column:1/-1"></div>
+			</div>
+			<div class="pay-detail" id="payRingSettle"></div>
+			<table class="cron-table" id="payReasonsTable" style="display:none">
+				<thead><tr>
+					<th>Failure reason (24h)</th>
+					<th>Stage</th>
+					<th>Count</th>
+				</tr></thead>
+				<tbody id="payReasonsBody"></tbody>
+			</table>
 		</div>
 
 		<!-- Cron heartbeats -->
@@ -273,6 +300,72 @@ async function load() {
 		$('refreshBtn').disabled = false;
 	}
 	loadAlerts();
+	loadPayments();
+}
+
+async function loadPayments() {
+	if (!_secret) return;
+	try {
+		const r = await fetch('/api/ops/payment-outcomes', { headers: { 'x-ops-secret': _secret } });
+		if (!r.ok) throw new Error('HTTP ' + r.status);
+		renderPayments(await r.json());
+	} catch (e) {
+		$('payCards').innerHTML = `<div class="alerts-empty" style="background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.16);color:#f87171;grid-column:1/-1">Couldn't load payment outcomes: ${esc(e.message)}</div>`;
+		$('payRingSettle').style.display = 'none';
+		$('payReasonsTable').style.display = 'none';
+	}
+}
+
+function pct(v) { return v == null ? 'n/a' : (v * 100).toFixed(1) + '%'; }
+
+function renderPayments(d) {
+	const w3 = d.inbound?.windows?.['3h'] || {};
+	const w24 = d.inbound?.windows?.['24h'] || {};
+	const sp = d.sponsor || {};
+	const replay24 = w24.replay_rejected || 0;
+	const stages = d.inbound?.replay_stages_24h || {};
+	const stageTxt = replay24
+		? Object.entries(stages).map(([s, n]) => `${s}: ${n}`).join(' · ')
+		: 'no replays seen';
+
+	const settleCls = w3.settle_success_rate == null ? '' : w3.settle_success_rate >= 0.9 ? 'ok' : w3.settle_success_rate >= 0.7 ? 'warn' : 'bad';
+	const verifyCls = w3.verify_reject_rate == null ? '' : w3.verify_reject_rate <= 0.05 ? 'ok' : w3.verify_reject_rate <= 0.2 ? 'warn' : 'bad';
+	const sponsorCls = sp.error || sp.below_floor ? 'bad' : sp.runway_days != null && sp.runway_days < 3 ? 'warn' : 'ok';
+	const sponsorVal = sp.error ? '✕' : sp.sol != null ? sp.sol.toFixed(4) + ' SOL' : sp.configured === false ? 'not set' : 'n/a';
+	const sponsorSub = sp.error ? esc(sp.error)
+		: sp.sol != null
+			? `floor ${sp.sol_floor != null ? sp.sol_floor.toFixed(2) : 'n/a'} · burn ${sp.burn_sol_per_day_7d ?? 'n/a'}/day · runway ${sp.runway_days != null ? sp.runway_days + 'd' : 'n/a'}`
+			: 'sponsor wallet unconfigured';
+
+	$('payCards').innerHTML = [
+		{ lbl: 'Inbound settle success (3h)', val: pct(w3.settle_success_rate), cls: settleCls, sub: `${w3.settled ?? 0} settled · ${w3.settle_failed ?? 0} failed` },
+		{ lbl: 'Verify rejects (3h)', val: pct(w3.verify_reject_rate), cls: verifyCls, sub: `${w3.verify_rejected ?? 0} rejected proofs` },
+		{ lbl: 'Replay rejects (24h)', val: String(replay24), cls: replay24 ? 'warn' : 'ok', sub: stageTxt },
+		{ lbl: 'Settled volume (24h)', val: '$' + Number(d.inbound?.settled_volume_usd_24h ?? 0).toFixed(2), cls: '', sub: `${w24.settled ?? 0} payments` },
+		{ lbl: 'Sponsor fee wallet', val: sponsorVal, cls: sponsorCls, sub: sponsorSub },
+	].map(c => `<div class="sum-card"><div class="lbl">${c.lbl}</div><div class="val ${c.cls}">${c.val}</div><div class="sub">${c.sub}</div></div>`).join('');
+
+	const rs = d.ring_settle || {};
+	const rsEl = $('payRingSettle');
+	if (rs.status) {
+		rsEl.style.display = 'block';
+		rsEl.className = 'pay-detail ' + (rs.status === 'ok' ? 'ok' : rs.status === 'down' ? 'down' : 'warn');
+		rsEl.innerHTML = `<span class="pd-status">Ring settle: ${esc(rs.status)}</span>${esc(rs.detail || '')}`;
+	} else {
+		rsEl.style.display = 'none';
+	}
+
+	const reasons = d.inbound?.top_failure_reasons_24h || [];
+	if (reasons.length) {
+		$('payReasonsTable').style.display = 'table';
+		$('payReasonsBody').innerHTML = reasons.map(r => `<tr>
+			<td>${esc(r.reason)}</td>
+			<td class="cron-ago">${esc(r.stage)}</td>
+			<td class="cron-ago">${r.count}</td>
+		</tr>`).join('');
+	} else {
+		$('payReasonsTable').style.display = 'none';
+	}
 }
 
 let _showResolved = false;
@@ -454,6 +547,7 @@ async function tryAuth() {
 	$('authGate').style.display = 'none';
 	$('dashboard').style.display = 'block';
 	loadAlerts();
+	loadPayments();
 	startAutoRefresh();
 }
 

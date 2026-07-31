@@ -939,6 +939,22 @@ export function paidEndpoint(spec) {
 			// Verify is a payment outcome too — record it so the invalid/rejected-
 			// payment rate is visible alongside settlements. A 402 here is a rejected
 			// proof (insufficient/invalid), distinct from an upstream verify fault.
+			// The Axiom metric is fire-and-forget and unconfigured in most deploys,
+			// so ALSO write the durable audit event: the verify-reject rate is one
+			// of the three panels /api/ops/payment-outcomes exists to show, and a
+			// griefing wave (junk X-PAYMENT floods) is invisible without it.
+			logPaymentEvent({
+				eventType: 'payment_verify_rejected',
+				route,
+				resourceUrl,
+				durationMs: Date.now() - requestStartTime,
+				ipAddress: clientIp(req),
+				userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+				metadata: {
+					reason: err.code || (err.status === 402 ? 'verify_rejected' : 'verify_failed'),
+					kind: err.status === 402 ? 'rejected_proof' : 'upstream_fault',
+				},
+			});
 			recordPaymentMetric({
 				kind: 'x402',
 				status: 'failed',
