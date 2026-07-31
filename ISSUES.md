@@ -126,12 +126,17 @@ closed 2026-07-28; full history in git):
    Full history: `prompts/bnb-chain/PROGRESS.md`.
 
 6. **The x402 sponsor has under a day of runway** (owner action: ~1 SOL).
-   Measured 2026-07-30: the sponsor
-   (`WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`) holds 0.0502 SOL against a
-   burn of ~0.085 SOL/day, derived from 8,030 lamports per settle over 10,611
-   settles in `x402_self_facilitator_log`. Do not quote a remembered burn rate
+   Re-measured 2026-07-31: the sponsor
+   (`WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`) holds 0.0318 SOL, barely
+   above its 0.03 floor, against a measured burn of 0.060 SOL/day (7 days of
+   `fee_lamports` over successful settles): roughly half a day of runway.
+   Do not quote a remembered burn rate
    here; the previously circulated "1 to 2 SOL/day" was wrong by roughly 10x.
-   ~1 SOL covers about 12 days. **Never top up per-agent wallets**, that strands
+   ~1 SOL covers about 16 days at the current burn. The number is now live on
+   the payment-outcome board: `GET /api/ops/payment-outcomes` and the
+   "Payment outcomes" panel on `/admin/ops` show balance vs floor, measured
+   burn, and runway (see `docs/ops/payment-outcomes.md`; ships with the next
+   deploy). **Never top up per-agent wallets**, that strands
    SOL and kills the rail. Related but already handled: the earlier
    `fee_wallet_below_floor` outage (18:00 to 02:45) was a symptom of item 2, not
    an independent fault, and cleared with no funding the moment `SOLANA_RPC_URL`
@@ -139,9 +144,11 @@ closed 2026-07-28; full history in git):
    was 0.00018 SOL and the floor was doing its job.
 
 7. **`x402_settle` reports degraded, and what remains is rail faults**
-   (closes with item 2). The settle sensor sits near 78% on a rolling 3h window,
-   dragged down by the dead hours above; it ran 95.2% in the hour after the RPC
-   repoint. Every current failure is RPC-shaped rather than financial:
+   (closes with item 2). Re-read 2026-07-31 01:10 UTC: the sensor is DOWN at
+   30.3% (549/1813 paid attempts, 3h) with the faults dominated by `http_502`
+   (1055) and `http_402` (153), so the degradation has deepened since the
+   repoint; the free lanes alone are not holding the rate. Earlier readings:
+   near 78% on 2026-07-30, 95.2% in the hour right after the RPC repoint. Every current failure is RPC-shaped rather than financial:
    `broadcast_failed` with empty simulation logs, `Blockhash not found`, and
    malformed-response parse errors. The test that settles this is grouping
    failures by payment amount, because they are amount-independent and the
@@ -172,19 +179,30 @@ here; the code-quality items from that pass are not production issues.
     whose Draco writer calls an encoder interface `draco3dgltf@1.5.7` does not
     expose. Every other `optimize` parameter returns a real GLB in production.
     Action: rebuild, and confirm the build installs from the lockfile rather
-    than resolving fresh. One smaller defect remains on the same endpoint:
-    avatar `13f259c7-…` has zero morph targets, so `expression` is a silent
-    no-op on it. (The oversized-`glbUrl` stall listed here is fixed: the 50 MB
+    than resolving fresh. The related silent-expression defect is fixed in
+    code (2026-07-31): a render/expression request against a model lacking
+    the requested morph targets now reports itself via
+    `x-render-expression: applied|partial|none` (+ `x-render-expression-missing`)
+    on `/api/avatar/render`, and the MCP render tool names the missing
+    morphs; pinned by `tests/api/avatar-render-expression-report.test.js`.
+    Ships with the next deploy. (The oversized-`glbUrl` stall listed here is fixed: the 50 MB
     cap is now counted while streaming and aborts the transfer, so a chunked
     source with no `content-length` returns `413` instead of being buffered in
     full, and an unresponsive source times out as `504` rather than holding the
     request open. Covered by `tests/avatar-optimize-source-cap.test.js`.)
-10. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (operator action:
-    run the script). The script sets `AllowedOrigins: ['*']` for GET/HEAD, but
+10. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
+    one credential). The script sets `AllowedOrigins: ['*']` for GET/HEAD, but
     the live policy still echoes only the old allowlist, so a third-party origin
     gets no `access-control-allow-origin`. Re-running it removes the need for the
     `/api/glb` proxy in client-side viewers; the proxy stays the right advice for
-    notebooks and unusual dev ports regardless.
+    notebooks and unusual dev ports regardless. Attempted 2026-07-31: the only
+    R2 token on this machine (`S3_*` in `.env`, bucket `chatty-storage`) is
+    object-scoped and gets `403 AccessDenied` on Get/PutBucketCors, and gcloud
+    auth is dead so the Cloud Run env cannot be read for an alternate token.
+    Owner: mint an "Admin Read & Write" R2 token scoped to the bucket (the
+    script prints the exact steps; its `--get` path now explains this instead
+    of crashing), drop it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`,
+    then `node scripts/set-r2-cors.mjs`.
 
 ---
 
