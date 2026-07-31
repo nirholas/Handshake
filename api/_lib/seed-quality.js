@@ -29,15 +29,25 @@
 // with a JSON sidecar carrying the full verdict, so prompt and threshold tuning
 // works off real failures instead of guesses.
 
-import { scoreGlbQuality } from './glb-quality.js';
-import { inspectGlb } from './glb-inspect.js';
 import { judgeOnce, JUDGE_MODEL, RENDER_BACKGROUND } from './quality-bench.js';
 import { vertexGeminiAvailable, vertexGeminiChatUrl, vertexGeminiHeaders } from './vertex-gemini.js';
 import { copyObject, putObject } from './r2.js';
 
-// Bumped whenever a threshold or judge prompt changes, and stored on every
-// verdict — an accept rate is only comparable within one gate version.
-export const SEED_GATE_VERSION = 1;
+// Stage 1 lives in its own module because it is the only part of this gate that
+// can run in a browser: it touches nothing but the glTF JSON chunk, where this
+// file statically imports Vertex, the headless renderer and the R2 client.
+// The public inspector at /inspect imports that module directly, so the verdict
+// a creator sees is produced by this exact code rather than a re-implementation
+// of the rules. Re-exported here so existing server callers are unaffected.
+import {
+	SEED_GATE_VERSION,
+	SEED_MESH_BOUNDS,
+	gateMesh,
+	explainMeshGate,
+	MESH_GATE_RULES,
+} from './seed-mesh-gate.js';
+
+export { SEED_GATE_VERSION, SEED_MESH_BOUNDS, gateMesh, explainMeshGate, MESH_GATE_RULES };
 
 function numEnv(name, fallback) {
 	const raw = typeof process !== 'undefined' ? process.env?.[name] : null;
@@ -45,71 +55,12 @@ function numEnv(name, fallback) {
 	return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-// Catalog bounds, on top of the forge-wide QUALITY_THRESHOLDS. Deliberately
-// stricter than the interactive flow: a user who generates a coarse mesh chose
-// to, a catalog entry nobody asked for has to earn its slot.
-export const SEED_MESH_BOUNDS = Object.freeze({
-	minVertices: numEnv('SEED_GATE_MIN_VERTICES', 1_500),
-	maxVertices: numEnv('SEED_GATE_MAX_VERTICES', 1_500_000),
-	minBytes: numEnv('SEED_GATE_MIN_BYTES', 20_000),
-	// A rigged avatar with blendshapes legitimately runs tens of MB; the ceiling
-	// only catches runaway output that would break the viewer's fetch budget.
-	maxBytes: numEnv('SEED_GATE_MAX_BYTES', 80 * 1024 * 1024),
-	requireTexture: (process?.env?.SEED_GATE_REQUIRE_TEXTURE ?? '1') !== '0',
-});
-
 // Vision thresholds, 1-10 on the shared realism-bench scale.
 export const SEED_JUDGE_THRESHOLDS = Object.freeze({
 	minGeometryIntegrity: numEnv('SEED_GATE_MIN_GEOMETRY', 5),
 	minPromptAdherence: numEnv('SEED_GATE_MIN_ADHERENCE', 5),
 	minMean: numEnv('SEED_GATE_MIN_MEAN', 4.5),
 });
-
-// ── Stage 1: mesh sanity ─────────────────────────────────────────────────────
-
-/**
- * Deterministic structural gate over the GLB bytes.
- * @param {Buffer|Uint8Array} buf
- * @param {{ category?: string }} [opts]
- */
-export function gateMesh(buf, { category = 'avatar' } = {}) {
-	const quality = scoreGlbQuality(buf);
-	const inspected = inspectGlb(buf);
-	const reasons = [];
-	const b = SEED_MESH_BOUNDS;
-
-	if (!quality.valid) {
-		return {
-			pass: false,
-			reasons: ['not_valid_glb'],
-			quality,
-			rigged: false,
-			metrics: quality.metrics,
-		};
-	}
-	if (quality.flag === 'degenerate') reasons.push(...quality.reasons);
-
-	const m = quality.metrics;
-	if (m.vertexCount < b.minVertices) reasons.push('vertices_below_floor');
-	if (m.vertexCount > b.maxVertices) reasons.push('vertices_above_ceiling');
-	if (m.sizeBytes < b.minBytes) reasons.push('file_too_small');
-	if (m.sizeBytes > b.maxBytes) reasons.push('file_too_large');
-	if (b.requireTexture && !m.hasTextures) reasons.push('no_textures');
-	// A collapsed bounding box passes triangle counts but renders as a speck.
-	if (!(m.bboxDiagonal > 0)) reasons.push('zero_volume');
-	// Props may be a loose collection of parts; a catalog avatar that arrives as
-	// a dozen disconnected meshes is a scene, not a character.
-	if (category === 'avatar' && m.meshCount > 8) reasons.push('too_many_meshes_for_a_character');
-
-	return {
-		pass: reasons.length === 0,
-		reasons,
-		quality,
-		rigged: Boolean(inspected?.isRigged),
-		jointCount: inspected?.skeletonJointCount ?? 0,
-		metrics: m,
-	};
-}
 
 // ── Stage 2: vision judge ────────────────────────────────────────────────────
 

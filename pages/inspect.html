@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Model Inspector · Does your model clear the catalog bar? · three.ws</title>
+	<meta name="description" content="Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Instant per-rule verdict with the fix for every failure." />
+	<link rel="canonical" href="https://three.ws/inspect" />
+	<meta property="og:title" content="Model Inspector · three.ws" />
+	<meta property="og:description" content="Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded." />
+	<meta property="og:url" content="https://three.ws/inspect" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		:root {
+			--ins-pass: #2fbf71;
+			--ins-fail: #f87171;
+			--ins-line: rgba(255, 255, 255, 0.09);
+			--ins-panel: rgba(255, 255, 255, 0.032);
+			--ins-ink-2: rgba(255, 255, 255, 0.58);
+			--ins-ink-3: rgba(255, 255, 255, 0.38);
+		}
+		[data-theme='light'] {
+			--ins-line: rgba(0, 0, 0, 0.11);
+			--ins-panel: rgba(0, 0, 0, 0.025);
+			--ins-ink-2: rgba(0, 0, 0, 0.62);
+			--ins-ink-3: rgba(0, 0, 0, 0.45);
+		}
+
+		.ins-wrap { max-width: 1240px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3.25rem) 1.25rem 5rem; }
+
+		.ins-hero { max-width: 62ch; margin-bottom: 2rem; }
+		.ins-eyebrow {
+			display: inline-flex; align-items: center; gap: 0.5rem;
+			font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+			color: var(--ins-ink-3); margin: 0 0 0.85rem;
+		}
+		.ins-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ins-pass); box-shadow: 0 0 10px var(--ins-pass); }
+		.ins-title { font-size: clamp(1.75rem, 4.4vw, 2.6rem); font-weight: 800; letter-spacing: -0.032em; line-height: 1.08; margin: 0 0 0.85rem; }
+		.ins-lede { font-size: clamp(14px, 1.6vw, 16px); line-height: 1.62; color: var(--ins-ink-2); margin: 0; }
+		.ins-lede strong { color: inherit; font-weight: 650; }
+
+		/* Input */
+		.ins-intake { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+		@media (max-width: 780px) { .ins-intake { grid-template-columns: 1fr; } }
+
+		.ins-drop {
+			position: relative; border: 1.5px dashed var(--ins-line); border-radius: 16px;
+			background: var(--ins-panel); padding: 1.6rem 1.4rem; text-align: center;
+			transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+		}
+		.ins-drop.is-over { border-color: var(--ins-pass); background: rgba(47, 191, 113, 0.09); transform: scale(1.008); }
+		.ins-drop-title { font-size: 14.5px; font-weight: 650; margin: 0 0 0.3rem; }
+		.ins-drop-sub { font-size: 12.5px; color: var(--ins-ink-3); margin: 0 0 0.95rem; }
+
+		.ins-btn {
+			font: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 10px;
+			border: 1px solid var(--ins-line); background: rgba(255, 255, 255, 0.06); color: inherit;
+			cursor: pointer; transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+		}
+		.ins-btn:hover { background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.2); }
+		.ins-btn:active { transform: translateY(1px); }
+		.ins-btn:focus-visible, .ins-preset:focus-visible, .ins-seg button:focus-visible, .ins-url-row input:focus-visible, .ins-check summary:focus-visible {
+			outline: 2px solid var(--ins-pass); outline-offset: 2px;
+		}
+
+		.ins-side { display: flex; flex-direction: column; gap: 0.85rem; }
+		.ins-url-row { display: flex; gap: 0.5rem; }
+		.ins-url-row input {
+			flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 9px 13px; border-radius: 10px;
+			border: 1px solid var(--ins-line); background: var(--ins-panel); color: inherit;
+		}
+		.ins-url-row input::placeholder { color: var(--ins-ink-3); }
+
+		.ins-presets { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+		.ins-preset {
+			font: inherit; text-align: left; padding: 7px 12px; border-radius: 10px; cursor: pointer;
+			border: 1px solid var(--ins-line); background: var(--ins-panel); color: inherit;
+			display: flex; flex-direction: column; gap: 1px;
+			transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+		}
+		.ins-preset:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+		.ins-preset:active { transform: translateY(0); }
+		.ins-preset-name { font-size: 12.5px; font-weight: 650; }
+		.ins-preset-note { font-size: 10.5px; color: var(--ins-ink-3); }
+
+		.ins-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+		.ins-seg { display: inline-flex; padding: 3px; border-radius: 11px; border: 1px solid var(--ins-line); background: var(--ins-panel); }
+		.ins-seg button {
+			font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 14px; border-radius: 8px;
+			border: 0; background: transparent; color: var(--ins-ink-2); cursor: pointer; transition: background 0.16s ease, color 0.16s ease;
+		}
+		.ins-seg button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.13); color: inherit; }
+		.ins-seg button:hover[aria-pressed='false'] { color: inherit; }
+		.ins-meta { font-size: 11.5px; color: var(--ins-ink-3); font-variant-numeric: tabular-nums; }
+		.ins-filename { font-size: 12.5px; font-weight: 600; padding: 4px 10px; border-radius: 7px; background: rgba(255, 255, 255, 0.07); }
+
+		/* Layout */
+		.ins-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 1.5rem; align-items: start; }
+		@media (max-width: 940px) { .ins-main { grid-template-columns: 1fr; } }
+
+		.ins-stage {
+			position: relative; border-radius: 18px; border: 1px solid var(--ins-line);
+			background: radial-gradient(120% 90% at 50% 0%, rgba(124, 92, 255, 0.11), transparent 62%), var(--ins-panel);
+			aspect-ratio: 1 / 1; overflow: hidden; position: sticky; top: 1.25rem;
+		}
+		@media (max-width: 940px) { .ins-stage { position: static; aspect-ratio: 4 / 3; } }
+		#ins-canvas { width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 0.5s ease; }
+		.ins-stage.has-model #ins-canvas { opacity: 1; }
+		.ins-stage-empty {
+			position: absolute; inset: 0; display: grid; place-content: center; gap: 0.4rem; text-align: center;
+			padding: 2rem; color: var(--ins-ink-3); font-size: 13px; pointer-events: none; transition: opacity 0.3s ease;
+		}
+		.ins-stage.has-model .ins-stage-empty { opacity: 0; }
+		.ins-stage-empty svg { margin: 0 auto 0.5rem; opacity: 0.5; }
+		.ins-hint {
+			position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+			font-size: 11px; color: var(--ins-ink-3); background: rgba(0, 0, 0, 0.4);
+			padding: 4px 11px; border-radius: 999px; backdrop-filter: blur(8px); pointer-events: none;
+		}
+		.ins-viewer-note {
+			position: absolute; left: 12px; right: 12px; bottom: 12px; font-size: 11.5px; line-height: 1.45;
+			padding: 9px 12px; border-radius: 10px; background: rgba(248, 113, 113, 0.12);
+			border: 1px solid rgba(248, 113, 113, 0.28); color: inherit;
+		}
+
+		.ins-busy {
+			position: absolute; inset: 0; display: grid; place-content: center; gap: 0.6rem; justify-items: center;
+			background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(3px); z-index: 3; font-size: 12.5px; color: var(--ins-ink-2);
+		}
+		.ins-spinner { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ins-line); border-top-color: var(--ins-pass); animation: ins-spin 0.75s linear infinite; }
+		@keyframes ins-spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) { .ins-spinner { animation-duration: 2.4s; } }
+
+		/* Verdict */
+		.ins-panel { border-radius: 18px; border: 1px solid var(--ins-line); background: var(--ins-panel); padding: 1.4rem; }
+		.ins-placeholder h2 { font-size: 15px; font-weight: 700; margin: 0 0 0.5rem; }
+		.ins-placeholder p { font-size: 13px; line-height: 1.6; color: var(--ins-ink-2); margin: 0 0 0.9rem; }
+		.ins-placeholder ol { margin: 0; padding-left: 1.15rem; font-size: 13px; line-height: 1.75; color: var(--ins-ink-2); }
+		.ins-placeholder li::marker { color: var(--ins-ink-3); font-variant-numeric: tabular-nums; }
+
+		.ins-error { border-radius: 14px; border: 1px solid rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.08); padding: 1.1rem 1.25rem; font-size: 13px; line-height: 1.6; }
+
+		.ins-verdict-head { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+		.ins-badge { font-size: 11.5px; font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; }
+		.ins-badge.is-pass { background: rgba(47, 191, 113, 0.16); color: var(--ins-pass); border: 1px solid rgba(47, 191, 113, 0.34); }
+		.ins-badge.is-fail { background: rgba(248, 113, 113, 0.14); color: var(--ins-fail); border: 1px solid rgba(248, 113, 113, 0.32); }
+		.ins-headline { font-size: 17px; font-weight: 750; letter-spacing: -0.018em; margin: 0; }
+		.ins-summary { font-size: 13px; line-height: 1.58; color: var(--ins-ink-2); margin: 0 0 0.85rem; }
+
+		.ins-rig { font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 10px; margin-bottom: 1.1rem; }
+		.ins-rig.is-rigged { background: rgba(47, 191, 113, 0.1); color: var(--ins-pass); }
+		.ins-rig.is-unrigged { background: rgba(255, 255, 255, 0.06); color: var(--ins-ink-2); }
+
+		.ins-checks { display: flex; flex-direction: column; gap: 0.4rem; }
+		.ins-check { border-radius: 12px; border: 1px solid var(--ins-line); background: rgba(255, 255, 255, 0.02); overflow: hidden; }
+		.ins-check.is-fail { border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.05); }
+		.ins-check.is-skipped { opacity: 0.6; }
+		.ins-check summary {
+			display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 0.6rem; align-items: baseline;
+			padding: 0.7rem 0.9rem; cursor: pointer; list-style: none; font-size: 13px;
+			transition: background 0.15s ease;
+		}
+		.ins-check summary::-webkit-details-marker { display: none; }
+		.ins-check summary:hover { background: rgba(255, 255, 255, 0.035); }
+		.ins-check-icon { font-weight: 800; font-size: 12px; }
+		.ins-check.is-pass .ins-check-icon { color: var(--ins-pass); }
+		.ins-check.is-fail .ins-check-icon { color: var(--ins-fail); }
+		.ins-check.is-skipped .ins-check-icon { color: var(--ins-ink-3); }
+		.ins-check-label { font-weight: 620; }
+		.ins-check-actual { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ins-ink-2); text-align: right; }
+		.ins-check-bound { grid-column: 2 / -1; font-size: 11px; color: var(--ins-ink-3); font-variant-numeric: tabular-nums; }
+		.ins-check-body { padding: 0 0.9rem 0.85rem 1.95rem; }
+		.ins-check-why { font-size: 12.5px; line-height: 1.6; color: var(--ins-ink-2); margin: 0; }
+		.ins-check-fix { font-size: 12.5px; line-height: 1.6; margin: 0.55rem 0 0; padding: 0.6rem 0.8rem; border-radius: 9px; background: rgba(255, 255, 255, 0.045); }
+		.ins-check-fix span { display: block; font-size: 10px; font-weight: 750; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ins-ink-3); margin-bottom: 0.25rem; }
+
+		.ins-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.15rem; padding-top: 1.15rem; border-top: 1px solid var(--ins-line); }
+
+		/* Explainer */
+		.ins-notes { margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+		.ins-note { border-radius: 14px; border: 1px solid var(--ins-line); background: var(--ins-panel); padding: 1.1rem 1.2rem; }
+		.ins-note h3 { font-size: 13px; font-weight: 700; margin: 0 0 0.45rem; }
+		.ins-note p { font-size: 12.5px; line-height: 1.62; color: var(--ins-ink-2); margin: 0; }
+		.ins-note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--ins-ink-3); }
+		.ins-note a:hover { text-decoration-color: currentColor; }
+
+		.ins-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+	</style>
+</head>
+<body>
+	<div class="ins-wrap">
+		<header class="ins-hero">
+			<p class="ins-eyebrow">Catalog bar · <span id="ins-gate-version">gate</span></p>
+			<h1 class="ins-title">Would your model make it into the catalog?</h1>
+			<p class="ins-lede">
+				This runs the <strong>exact quality gate</strong> three.ws applies to its own catalog entries against any
+				<code>.glb</code> you give it. Same module, same thresholds, same decision.
+				It runs entirely in your browser: <strong>nothing is uploaded</strong>, and the verdict is instant.
+			</p>
+		</header>
+
+		<div class="ins-intake">
+			<div class="ins-drop" id="ins-drop">
+				<p class="ins-drop-title">Drop a .glb here</p>
+				<p class="ins-drop-sub">It never leaves your machine.</p>
+				<button type="button" class="ins-btn" id="ins-browse">Choose a file</button>
+				<input type="file" id="ins-file" accept=".glb,model/gltf-binary" hidden />
+			</div>
+
+			<div class="ins-side">
+				<form class="ins-url-row" id="ins-url-form">
+					<input type="url" id="ins-url" placeholder="…or paste a .glb URL" aria-label="Model URL" />
+					<button type="submit" class="ins-btn">Inspect</button>
+				</form>
+				<div>
+					<p class="ins-meta" style="margin: 0 0 0.45rem;">Try one of these real models from our library:</p>
+					<div class="ins-presets" id="ins-presets"></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="ins-toolbar">
+			<div class="ins-seg" role="group" aria-label="Asset category">
+				<button type="button" data-category="avatar" aria-pressed="true">Character</button>
+				<button type="button" data-category="accessory" aria-pressed="false">Prop</button>
+			</div>
+			<span class="ins-meta">Props skip the character-only checks.</span>
+			<span class="ins-filename" id="ins-filename" hidden></span>
+		</div>
+
+		<div class="ins-main">
+			<div class="ins-stage" id="ins-stage">
+				<canvas id="ins-canvas"></canvas>
+				<div class="ins-stage-empty">
+					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+						<path d="M12 2 3 7v10l9 5 9-5V7z" /><path d="M3 7l9 5 9-5M12 12v10" />
+					</svg>
+					<span>Your model appears here</span>
+				</div>
+				<div class="ins-hint" id="ins-hint" hidden>Drag to orbit · scroll to zoom</div>
+				<div class="ins-viewer-note" id="ins-viewer-note" hidden></div>
+				<div class="ins-busy" id="ins-busy" hidden>
+					<div class="ins-spinner"></div>
+					<span id="ins-busy-label">Inspecting…</span>
+				</div>
+			</div>
+
+			<div>
+				<div class="ins-panel ins-placeholder" id="ins-placeholder">
+					<h2>No model yet</h2>
+					<p>Give the inspector a model and it reports every structural check the catalog applies, what it measured, and how to fix anything that failed.</p>
+					<ol>
+						<li>Drop a <code>.glb</code>, paste a URL, or pick a sample.</li>
+						<li>Read the per-rule verdict. Failures open first.</li>
+						<li>Switch to <strong>Prop</strong> if it is not a character.</li>
+					</ol>
+				</div>
+
+				<div class="ins-error" id="ins-error" role="alert" hidden></div>
+
+				<div class="ins-panel" id="ins-result" role="status" aria-live="polite" hidden>
+					<div class="ins-verdict-head">
+						<span class="ins-badge" id="ins-badge"></span>
+						<h2 class="ins-headline" id="ins-headline"></h2>
+					</div>
+					<p class="ins-summary" id="ins-summary"></p>
+					<div class="ins-rig" id="ins-rig"></div>
+					<div class="ins-checks" id="ins-checks"></div>
+					<div class="ins-actions">
+						<button type="button" class="ins-btn" id="ins-copy-json">Copy verdict JSON</button>
+						<button type="button" class="ins-btn" id="ins-share" hidden>Copy shareable link</button>
+						<a class="ins-btn" href="/create" style="text-decoration: none;">Generate a new one</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<section class="ins-notes">
+			<div class="ins-note">
+				<h3>Why the bar is strict</h3>
+				<p>A creator who generates a coarse mesh chose to, and can regenerate. A visitor browsing the catalog chose nothing: every entry is the platform vouching for itself. One melted blob on the storefront costs more trust than ten rejected generations cost compute.</p>
+			</div>
+			<div class="ins-note">
+				<h3>This is the real gate</h3>
+				<p>The page imports the same module the seeding cron runs, so the rules here cannot drift from the rules in production. Read <a href="/docs/seed-quality">the full gate documentation</a> for the vision stage that runs after this one.</p>
+			</div>
+			<div class="ins-note">
+				<h3>Structure, not taste</h3>
+				<p>These checks measure whether a model is built well enough to publish: density, weight, texture, bounds, assembly. Whether it <em>looks</em> good is judged separately by a vision model on the catalog path.</p>
+			</div>
+		</section>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/inspect-page.js"></script>
+</body>
+</html>

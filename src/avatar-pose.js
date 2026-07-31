@@ -180,8 +180,14 @@ export class PoseStage {
 		// It also centers on the model's true x/z, since a close camera amplifies
 		// any off-origin authoring the full-body distance hides.
 		const portrait = this.framing === 'portrait';
-		const cx = portrait ? center.x : 0;
-		const cz = portrait ? center.z : 0;
+		// Center on the BODY, not on the bounding box. A raised arm moves the
+		// box sideways, so framing from it swings the camera off the figure the
+		// moment a pose plays (a signing hand pushed the avatar to the frame's
+		// edge). The hips are the one landmark a pose does not move.
+		const root = this.model.getObjectByName('Hips') || this.model.getObjectByName('mixamorig:Hips');
+		const bodyCenter = root ? root.getWorldPosition(new Vector3()) : center;
+		const cx = portrait ? bodyCenter.x : 0;
+		const cz = portrait ? bodyCenter.z : 0;
 		// Full framing must contain the whole figure: at fov 35 the visible span
 		// is ~0.63*dist, so 1.75*height centered at 0.52*height leaves a few
 		// percent of margin above the head and below the feet.

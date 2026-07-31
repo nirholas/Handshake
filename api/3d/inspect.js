@@ -17,7 +17,12 @@
 // Output:
 //   { url, valid, stats:{ vertices, triangles, materials, textures, animations,
 //     extensions[], … }, sizeBytes, recommendations:[{ severity, issue, fix }],
-//     validation:{…}, ts }
+//     validation:{ valid, numErrors, numWarnings, …,
+//       issues:[{ code, message, severity, pointer? }] }, ts }
+//
+// `validation.issues` carries the actual glTF-Validator findings (capped at 10;
+// the counts beside it are the true totals). Without them a caller that gates on
+// `valid` knows only that an asset failed, never why.
 //
 // Reuses the same inspection core the paid /api/x402/model-check route uses
 // (api/_lib/model-inspect.js → src/gltf-inspect.js) plus the official Khronos
@@ -104,12 +109,43 @@ export function buildRecommendations(info) {
 		.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3));
 }
 
+// The validator reports severity as an integer; callers want a word they can
+// branch on without memorizing the enum.
+const VALIDATOR_SEVERITY = ['error', 'warning', 'info', 'hint'];
+
+// How many individual issues ride along in the response. The validator itself is
+// capped at 100 below; a caller needs the first handful to act, not a wall of
+// repeats of the same code, and the counts above already carry the true totals.
+const MAX_REPORTED_ISSUES = 10;
+
+// Reshape the validator's raw message list into the wire contract: what is wrong,
+// where, and how severe. Exported so the shape is pinned in tests without running
+// the validator over real bytes.
+export function shapeIssues(messages) {
+	if (!Array.isArray(messages)) return [];
+	return messages.slice(0, MAX_REPORTED_ISSUES).map((m) => ({
+		code: typeof m?.code === 'string' ? m.code : 'UNKNOWN',
+		message: typeof m?.message === 'string' ? m.message : '',
+		severity: VALIDATOR_SEVERITY[m?.severity] || 'error',
+		// The JSON pointer into the asset (e.g. /images/0/bufferView). Absent on
+		// whole-file issues, so it is omitted rather than sent as an empty string.
+		...(typeof m?.pointer === 'string' && m.pointer ? { pointer: m.pointer } : {}),
+	}));
+}
+
 // Run the Khronos glTF-Validator for the authoritative spec-compliance verdict.
 // External resources (a .gltf's side-car .bin/textures) are NOT fetched — GLBs
 // are self-contained, and fetching arbitrary side files would reopen the SSRF
 // surface fetch-model.js closes. A validator failure never fails the whole call:
 // inspectModel already proved the bytes parse, so we degrade to valid:true with a
-// note rather than 500. Returns { valid, ...counts } or null when unavailable.
+// note rather than 500. Returns { valid, ...counts, issues[] } or null when
+// unavailable.
+//
+// The `issues` array is the difference between a usable verdict and an unusable
+// one. Counts alone tell a caller that the asset failed and nothing about why:
+// a CI gate keyed on `valid` can only print "1 error" and stop. Carrying the
+// codes and pointers means the same gate can say IMAGE_MIME_TYPE_INVALID at
+// /images/0/bufferView, which is a fix, not a mystery.
 async function runValidator(bytes, filename) {
 	try {
 		const report = await validateBytes(bytes, {
@@ -126,6 +162,8 @@ async function runValidator(bytes, filename) {
 			numWarnings: issues.numWarnings ?? 0,
 			numInfos: issues.numInfos ?? 0,
 			numHints: issues.numHints ?? 0,
+			issues: shapeIssues(issues.messages),
+			truncated: Boolean(issues.truncated),
 		};
 	} catch {
 		return null;

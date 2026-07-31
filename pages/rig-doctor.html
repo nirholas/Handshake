@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Rig Doctor &middot; Will your GLB animate? &middot; three.ws</title>
+		<meta
+			name="description"
+			content="Drop a .glb and find out in one second whether it will animate on three.ws. Rig Doctor names your skeleton convention, scores every limb group, repairs non-standard bone names in your browser, and hands the fixed file back. Nothing is uploaded."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Rig Doctor &middot; Will your GLB animate?" />
+		<meta
+			property="og:description"
+			content="Drop a GLB. Get the verdict, the limb-by-limb coverage, and a repaired file with canonical bone names. Runs entirely in your browser."
+		/>
+		<meta property="og:url" content="https://three.ws/rig-doctor" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Rig+Doctor&amp;d=Drop+a+GLB+and+find+out+in+one+second+whether+it+will+animate.+Diagnose%2C+repair%2C+and+preview+in+your+browser.&amp;p=%2Frig-doctor" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Rig Doctor &middot; three.ws" />
+		<meta name="twitter:description" content="Drop a GLB. Get the verdict, limb-by-limb coverage, and a repaired file. Nothing leaves your machine." />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Rig+Doctor&amp;d=Drop+a+GLB+and+find+out+in+one+second+whether+it+will+animate.+Diagnose%2C+repair%2C+and+preview+in+your+browser.&amp;p=%2Frig-doctor" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Rig Doctor - three.ws" />
+
+		<link rel="canonical" href="https://three.ws/rig-doctor" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/rig-doctor.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Rig Doctor","description":"Diagnose and repair a GLB avatar skeleton in the browser. Names the rig convention, scores limb coverage against the three.ws canonical skeleton, rewrites non-standard bone names, and previews the result.","url":"https://three.ws/rig-doctor","applicationCategory":"DeveloperApplication","operatingSystem":"Any","browserRequirements":"Requires WebGL2","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is my model uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. Rig Doctor reads the file with the browser FileReader API and analyses it on your machine. No bytes are sent to any server, which is why it works with the network disconnected."}},{"@type":"Question","name":"Why does my avatar load but never move?","acceptedAnswer":{"@type":"Answer","text":"Animation clips address bones by name. If your rig names its joints something the canonical skeleton does not recognise, the clip plays against nothing and the character stands in its bind pose. Rig Doctor tells you exactly which joints failed to map and can rename them for you."}},{"@type":"Question","name":"What does the repaired file change?","acceptedAnswer":{"@type":"Answer","text":"Only the names of nodes referenced from skins[].joints[], plus an armature orientation fold when one is present. Geometry, materials, textures, and the binary chunk are copied through byte for byte."}}]}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main>
+			<!-- Hero and the drop zone. The tool IS the hero: no scrolling to reach it. -->
+			<section class="rd-hero" aria-labelledby="rd-hero-title">
+				<div class="rd-hero-bg" aria-hidden="true">
+					<div class="rd-orb a"></div>
+					<div class="rd-orb b"></div>
+					<div class="rd-grid"></div>
+				</div>
+
+				<div class="rd-hero-inner">
+					<span class="rd-badge">
+						<span class="rd-badge-dot" aria-hidden="true"></span>
+						Runs entirely in your browser
+					</span>
+					<h1 class="rd-hero-title" id="rd-hero-title">
+						Will your avatar actually move?
+					</h1>
+					<p class="rd-hero-sub">
+						Animation clips address bones by name. A rig whose joints are called
+						<code>Bip001 L UpperArm</code> loads perfectly, renders perfectly, and then
+						stands frozen forever. Drop your <code>.glb</code> and know in one second,
+						before you upload it anywhere.
+					</p>
+
+					<!-- Drop zone. Label wraps the input so click, keyboard, and drop all work. -->
+					<div class="rd-drop-wrap">
+						<label
+							class="rd-drop"
+							id="rd-drop"
+							data-state="idle"
+							data-tip="Or press D from anywhere on the page"
+						>
+							<input
+								type="file"
+								id="rd-file"
+								accept=".glb,model/gltf-binary"
+								class="rd-file-input"
+								aria-describedby="rd-drop-hint"
+							/>
+							<span class="rd-drop-icon" aria-hidden="true">
+								<svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+									<path d="M12 15V3m0 0L8 7m4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+									<path d="M3 15v3a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+								</svg>
+							</span>
+							<span class="rd-drop-title">Drop a .glb here</span>
+							<span class="rd-drop-hint" id="rd-drop-hint">
+								or click to choose a file. Nothing is uploaded.
+							</span>
+						</label>
+
+						<div class="rd-samples">
+							<span class="rd-samples-label">No file handy? Try one:</span>
+							<div class="rd-samples-row" role="group" aria-label="Sample rigs">
+								<button type="button" class="rd-sample" data-sample="/avatars/michelle.glb" data-sample-name="michelle.glb" data-tip="A Mixamo rig: every joint maps, full clip library plays">
+									Mixamo rig
+								</button>
+								<button type="button" class="rd-sample" data-sample="/avatars/realistic-halfbody.glb" data-sample-name="realistic-halfbody.glb" data-tip="A halfbody avatar: hands rigged, legs missing entirely">
+									Halfbody
+								</button>
+								<button type="button" class="rd-sample" data-sample="/avatars/fox.glb" data-sample-name="fox.glb" data-tip="A skinned but non-humanoid rig: nothing maps">
+									Non-humanoid
+								</button>
+								<button type="button" class="rd-sample" data-sample="/avatars/mannequin.glb" data-sample-name="mannequin.glb" data-tip="A static mesh with no skeleton at all">
+									No skeleton
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<ul class="rd-hero-facts">
+						<li><strong>0 bytes</strong> leave your machine</li>
+						<li><strong>52</strong> canonical joints scored</li>
+						<li><strong>11</strong> rig conventions recognised</li>
+						<li><strong>1</strong> click to download the repair</li>
+					</ul>
+				</div>
+			</section>
+
+			<!-- Everything below is written by src/rig-doctor-page.js once a file is read. -->
+			<section class="rd-results" id="rd-results" hidden aria-live="polite" aria-labelledby="rd-results-title">
+				<h2 class="rd-sr-only" id="rd-results-title">Diagnosis</h2>
+
+				<!-- Verdict banner -->
+				<div class="rd-verdict" id="rd-verdict" data-level="pass">
+					<div class="rd-verdict-mark" id="rd-verdict-mark" aria-hidden="true"></div>
+					<div class="rd-verdict-body">
+						<p class="rd-verdict-file" id="rd-verdict-file"></p>
+						<h3 class="rd-verdict-headline" id="rd-verdict-headline"></h3>
+						<p class="rd-verdict-detail" id="rd-verdict-detail"></p>
+						<ul class="rd-verdict-notes" id="rd-verdict-notes"></ul>
+					</div>
+					<div class="rd-verdict-actions" id="rd-verdict-actions"></div>
+				</div>
+
+				<div class="rd-columns">
+					<!-- Left: live preview driven by the real clip library -->
+					<div class="rd-col rd-col-stage">
+						<div class="rd-panel rd-panel-stage">
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title">Live preview</h3>
+								<span class="rd-panel-note" id="rd-stage-note">Loading the scene</span>
+							</div>
+							<div class="rd-stage" id="rd-stage" data-state="loading">
+								<div class="rd-stage-status" id="rd-stage-status">
+									<span class="rd-spinner" aria-hidden="true"></span>
+									<span id="rd-stage-status-text">Building the scene</span>
+								</div>
+							</div>
+							<div class="rd-clips" id="rd-clips" role="group" aria-label="Play a clip on this rig"></div>
+							<p class="rd-stage-foot" id="rd-stage-foot">
+								This is the same retargeting path the platform uses, running on your file.
+							</p>
+						</div>
+					</div>
+
+					<!-- Right: the diagnosis proper -->
+					<div class="rd-col rd-col-report">
+						<div class="rd-panel">
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title">Coverage</h3>
+								<span class="rd-panel-note" id="rd-coverage-note"></span>
+							</div>
+							<div class="rd-groups" id="rd-groups"></div>
+						</div>
+
+						<div class="rd-panel">
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title">Inventory</h3>
+								<span class="rd-panel-note" id="rd-inventory-note"></span>
+							</div>
+							<dl class="rd-stats" id="rd-stats"></dl>
+						</div>
+
+						<div class="rd-panel" id="rd-renames-panel" hidden>
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title">Bone rewrites</h3>
+								<span class="rd-panel-note" id="rd-renames-note"></span>
+							</div>
+							<div class="rd-renames" id="rd-renames"></div>
+						</div>
+
+						<div class="rd-panel" id="rd-unmapped-panel" hidden>
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title">Unrecognised joints</h3>
+								<span class="rd-panel-note">Not in any convention we know</span>
+							</div>
+							<div class="rd-chips" id="rd-unmapped"></div>
+							<p class="rd-panel-foot">
+								If these are a standard rig, they belong in the canonicalizer.
+								<a href="https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js" rel="noopener">Open an issue with this list</a>
+								and every future upload of that rig animates.
+							</p>
+						</div>
+
+						<div class="rd-panel">
+							<div class="rd-panel-head">
+								<h3 class="rd-panel-title">Ship it</h3>
+								<span class="rd-panel-note">Generated from this exact file</span>
+							</div>
+							<div class="rd-tabs" role="tablist" aria-label="Generated output">
+								<button type="button" class="rd-tab" role="tab" id="rd-tab-manifest" aria-controls="rd-pane-manifest" aria-selected="true" data-pane="manifest">Manifest</button>
+								<button type="button" class="rd-tab" role="tab" id="rd-tab-embed" aria-controls="rd-pane-embed" aria-selected="false" data-pane="embed">Embed</button>
+								<button type="button" class="rd-tab" role="tab" id="rd-tab-cli" aria-controls="rd-pane-cli" aria-selected="false" data-pane="cli">CLI</button>
+							</div>
+							<div class="rd-pane" id="rd-pane-manifest" role="tabpanel" aria-labelledby="rd-tab-manifest">
+								<pre class="rd-code"><code id="rd-out-manifest"></code></pre>
+								<button type="button" class="rd-copy" data-copy-target="rd-out-manifest">Copy manifest</button>
+							</div>
+							<div class="rd-pane" id="rd-pane-embed" role="tabpanel" aria-labelledby="rd-tab-embed" hidden>
+								<pre class="rd-code"><code id="rd-out-embed"></code></pre>
+								<button type="button" class="rd-copy" data-copy-target="rd-out-embed">Copy embed</button>
+							</div>
+							<div class="rd-pane" id="rd-pane-cli" role="tabpanel" aria-labelledby="rd-tab-cli" hidden>
+								<pre class="rd-code"><code id="rd-out-cli"></code></pre>
+								<button type="button" class="rd-copy" data-copy-target="rd-out-cli">Copy commands</button>
+							</div>
+							<p class="rd-panel-foot">
+								Replace the placeholder URI and owner, then
+								<a href="/docs/avatar-cli">validate it with the CLI</a>.
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Static explainer. Visible before any file is dropped, so the page still
+			     teaches something to a visitor who has nothing to test. -->
+			<section class="rd-explain" aria-labelledby="rd-explain-title">
+				<div class="rd-explain-inner">
+					<h2 class="rd-explain-title" id="rd-explain-title">Why rigs go silent</h2>
+					<div class="rd-explain-grid">
+						<article class="rd-explain-card">
+							<span class="rd-explain-num" aria-hidden="true">01</span>
+							<h3>Clips address bones by name</h3>
+							<p>
+								Every clip in the three.ws library is authored against one canonical
+								skeleton: <code>Hips</code>, <code>LeftForeArm</code>,
+								<code>RightUpLeg</code>, 52 joints in total. A track that names
+								<code>LeftForeArm</code> drives nothing on a rig that calls that joint
+								<code>lowerarm_l</code>.
+							</p>
+						</article>
+						<article class="rd-explain-card">
+							<span class="rd-explain-num" aria-hidden="true">02</span>
+							<h3>The failure is silent</h3>
+							<p>
+								Nothing errors. The GLB loads, the material renders, the mixer runs, and
+								the character stands in its bind pose. Nobody tells you why, which is
+								why this page exists and why it runs before you upload rather than after.
+							</p>
+						</article>
+						<article class="rd-explain-card">
+							<span class="rd-explain-num" aria-hidden="true">03</span>
+							<h3>Most rigs are one rename away</h3>
+							<p>
+								Mixamo, Avaturn, Ready Player Me, Unreal, VRM, Daz, Rigify, Biped,
+								HumanIK, Reallusion, and MakeHuman all name the same joints
+								differently. The canonicalizer already knows every one of those
+								dialects, and it can rewrite your file in place.
+							</p>
+						</article>
+						<article class="rd-explain-card">
+							<span class="rd-explain-num" aria-hidden="true">04</span>
+							<h3>Partial rigs are the common case</h3>
+							<p>
+								A rig rarely fails outright. Far more often the torso and arms map and
+								the legs do not, so the avatar glides across the floor with frozen
+								knees. Scoring each limb group separately is the difference between
+								"62% covered" and "your legs will not move".
+							</p>
+						</article>
+					</div>
+
+					<div class="rd-explain-next">
+						<a class="rd-next-card" href="/animations">
+							<h3 class="rd-next-title">The clip library</h3>
+							<p class="rd-next-desc">Every motion your rig has to match, previewed. This is what the 52 joints are for.</p>
+							<span class="rd-next-go" aria-hidden="true">Open
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+						<a class="rd-next-card" href="/avatar-cli">
+							<h3 class="rd-next-title">Avatar CLI</h3>
+							<p class="rd-next-desc">Scaffold, hash, and validate the manifest from your shell or from CI.</p>
+							<span class="rd-next-go" aria-hidden="true">Open
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+						<a class="rd-next-card" href="/docs/rig-doctor">
+							<h3 class="rd-next-title">Read the reference</h3>
+							<p class="rd-next-desc">What each verdict means, the full canonical joint list, and how to fix each one.</p>
+							<span class="rd-next-go" aria-hidden="true">Open
+								<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+							</span>
+						</a>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="h-footer-horizon" role="contentinfo" aria-label="Site footer">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div id="footer-content"></div>
+		</footer>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/rig-doctor-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

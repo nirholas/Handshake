@@ -35,6 +35,15 @@ const CHUNK_BIN  = 0x004E4942;      // 'BIN\0' little-endian
  *   extensionsUsed: string[],
  *   hasBinChunk: boolean,
  *   binChunkBytes: number,
+ *   morphTargetNames: string[],
+ *   morphTargetSlots: number,
+ *   boneNames: string[],
+ *   animationNames: string[],
+ *   primitiveCount: number,
+ *   triangleCount: number,
+ *   vertexCount: number,
+ *   materialCount: number,
+ *   textureCount: number,
  * }}
  */
 export function inspectGlb(buf, { allowPartial = false } = {}) {
@@ -116,6 +125,86 @@ export function inspectGlb(buf, { allowPartial = false } = {}) {
 		extensionsUsed,
 		hasBinChunk,
 		binChunkBytes,
+		...describeAssetSurface(gltf, { skins, nodes, meshes, animations }),
+	};
+}
+
+/**
+ * The named, countable surface of a glTF asset: which morph targets and bones
+ * it exposes, and how heavy the geometry is. Everything here is read from the
+ * JSON chunk alone, so it costs nothing beyond the prefix already fetched.
+ *
+ * Morph target names live in `extras.targetNames` by convention (the glTF spec
+ * has no first-class place for them). Blender, three.js, Ready Player Me and
+ * Avaturn all write them on the mesh; some pipelines write them per-primitive
+ * instead, so both are read and merged in declaration order.
+ */
+function describeAssetSurface(gltf, { skins, nodes, meshes, animations }) {
+	const accessors = Array.isArray(gltf.accessors) ? gltf.accessors : [];
+	const materials = Array.isArray(gltf.materials) ? gltf.materials : [];
+	const textures = Array.isArray(gltf.textures) ? gltf.textures : [];
+
+	const morphTargetNames = [];
+	const seenMorph = new Set();
+	const pushMorph = (list) => {
+		if (!Array.isArray(list)) return;
+		for (const name of list) {
+			if (typeof name !== 'string' || seenMorph.has(name)) continue;
+			seenMorph.add(name);
+			morphTargetNames.push(name);
+		}
+	};
+
+	let primitiveCount = 0;
+	let triangleCount = 0;
+	let vertexCount = 0;
+	let morphSlotCount = 0;
+	for (const mesh of meshes) {
+		pushMorph(mesh?.extras?.targetNames);
+		const primitives = Array.isArray(mesh?.primitives) ? mesh.primitives : [];
+		for (const prim of primitives) {
+			primitiveCount += 1;
+			pushMorph(prim?.extras?.targetNames);
+			if (Array.isArray(prim?.targets)) morphSlotCount = Math.max(morphSlotCount, prim.targets.length);
+			const position = accessors[prim?.attributes?.POSITION];
+			if (position?.count > 0) vertexCount += position.count;
+			// mode 4 is TRIANGLES and is also the spec default when omitted.
+			const mode = prim?.mode ?? 4;
+			if (mode !== 4) continue;
+			const indices = accessors[prim?.indices];
+			const indexed = indices?.count > 0 ? indices.count : position?.count;
+			if (indexed > 0) triangleCount += Math.floor(indexed / 3);
+		}
+	}
+
+	const boneNames = [];
+	const seenBone = new Set();
+	for (const skin of skins) {
+		const joints = Array.isArray(skin?.joints) ? skin.joints : [];
+		for (const index of joints) {
+			const name = nodes[index]?.name;
+			if (typeof name !== 'string' || seenBone.has(name)) continue;
+			seenBone.add(name);
+			boneNames.push(name);
+		}
+	}
+
+	const animationNames = animations
+		.map((a) => (typeof a?.name === 'string' ? a.name : null))
+		.filter(Boolean);
+
+	return {
+		morphTargetNames,
+		// A mesh can carry morph targets with no names attached; the slot count
+		// keeps "this model can morph" true even when nothing can address them.
+		morphTargetSlots: morphSlotCount,
+		boneNames,
+		animationNames,
+		primitiveCount,
+		triangleCount,
+		vertexCount,
+		materialCount: materials.length,
+		textureCount: textures.length,
 	};
 }
 
@@ -173,7 +262,11 @@ function bufToDataView(buf) {
 }
 
 function bufSlice(buf, start, end) {
-	if (Buffer.isBuffer?.(buf)) return buf.subarray(start, end);
+	// `typeof` guard, not `Buffer?.isBuffer`: a browser has no `Buffer` binding
+	// at all, and reading an undeclared identifier throws a ReferenceError that
+	// optional chaining cannot catch. This module is reachable from the browser
+	// via seed-mesh-gate.js (the /inspect page).
+	if (typeof Buffer !== 'undefined' && Buffer.isBuffer?.(buf)) return buf.subarray(start, end);
 	if (ArrayBuffer.isView(buf)) {
 		return new Uint8Array(buf.buffer, buf.byteOffset + start, end - start);
 	}
