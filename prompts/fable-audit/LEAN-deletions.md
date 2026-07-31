@@ -111,6 +111,24 @@ stays as-is: different runtime (browser), deliberate copy.
 files. **⚠ some skill bodies reference other coins → the regeneration diff may hit the
 commit gate; check before staging.** Larger effort — treat as its own task.
 
+**Tooling DONE (2026-07-31): `scripts/build-skills-seed.mjs`, `npm run
+build:skills-seed` / `check:skills-seed`.** Corrections to the entry above,
+verified against the tree: there are no `public/skills/`, `dist/`, or
+`examples/skills/` copies of seed.json (those dirs hold unrelated example
+packs), so the single `data/skills/seed.json` is the only generated artifact.
+Builtin entries regenerate wholly from `data/skills/<category>/<id>/SKILL.md`
+(content = body.trim(), manifest = frontmatter); the two vendored metamask
+entries regenerate their content from the vendor body + the marketplace
+trailer while carrying their hand-curated manifest/category over from the
+existing entry. `--check` is the drift gate; the first run caught 5 real
+drifts (a block-scalar description stored literally for one trading skill, a
+deleted sentence still present in another's seed copy, an edited erc8004
+description never mirrored) plus the stale `total: 113` (real count 115).
+**The regeneration itself is NOT committed:** its 14-line diff touches
+other-project skill content, so `node scripts/build-skills-seed.mjs` + commit
+awaits owner approval per the commit gate. Verified idempotent: regenerate,
+then `--check` passes and a second run writes nothing.
+
 ## 7. De-duplicate draco vendor libs: DONE
 Correction to the original finding: the files were **never committed**. Both trees
 were gitignored and regenerated from `node_modules/three` by
