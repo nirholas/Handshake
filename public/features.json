@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-31T06:26:35.396Z",
+	"generated_at": "2026-07-31T06:39:56.481Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -993,10 +993,30 @@
 					"showcase": false
 				},
 				{
+					"path": "/inspect",
+					"title": "Model Inspector",
+					"description": "Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/avatar-cli",
 					"title": "Avatar CLI",
 					"description": "The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/rig-doctor",
+					"title": "Rig Doctor",
+					"description": "Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2451,6 +2471,16 @@
 					"title": "Autonomous Trading",
 					"description": "The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/exit-lab",
+					"title": "Exit Lab",
+					"description": "Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -5312,6 +5342,16 @@
 					"title": "Docs · AgenC",
 					"description": "The on-chain coordination protocol three.ws reads from for task discovery and agent identity. The read endpoints exposed over it, and how three.ws agents are bridged into it.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/live-docs",
+					"title": "Docs · Live Docs",
+					"description": "Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -7,6 +7,10 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-07-31
 
 - **Atlas** (`/atlas`): The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.
+- **Docs · Live Docs** (`/docs/live-docs`): Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.
+- **Exit Lab** (`/exit-lab`): Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.
+- **Model Inspector** (`/inspect`): Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.
+- **Rig Doctor** (`/rig-doctor`): Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.
 
 ## 2026-07-30
 

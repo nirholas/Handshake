@@ -109,7 +109,9 @@ Create and customize an agent.
 - [Avatar Studio](https://three.ws/avatar-studio): Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.
 - [TRELLIS NIM Forge](https://three.ws/nim-forge): Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.
 - [Avatar SDK](https://three.ws/avatar-sdk): The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
+- [Model Inspector](https://three.ws/inspect): Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.
 - [Avatar CLI](https://three.ws/avatar-cli): The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.
+- [Rig Doctor](https://three.ws/rig-doctor): Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.
 
 ## Labs
 
@@ -262,6 +264,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Agent Wallet](https://three.ws/agent-wallet): The wallet surface for your agents: balances, funding, and activity.
 - [Your master wallet](https://three.ws/wallet): One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.
 - [Autonomous Trading](https://three.ws/trading): The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.
+- [Exit Lab](https://three.ws/exit-lab): Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.
 - [The in-game economy](https://three.ws/play/economy): Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.
 
 ## Agent Tools
@@ -552,6 +555,7 @@ Docs, tutorials, and reference.
 - [Docs · The provably-fair vanity grinding protocol](https://three.ws/docs/PROTOCOL-vanity): A vanity-address service normally asks you to trust the operator: trust the randomness, trust that no copy was kept. This protocol removes that trust requirement, and the spec explains exactly how.
 - [Docs · Changelog and versioning](https://three.ws/docs/changelog): How three.ws is versioned, what changed across releases, and how to upgrade safely. Written for developers pinning the SDK or the CDN bundle to a specific version.
 - [Docs · AgenC](https://three.ws/docs/agenc): The on-chain coordination protocol three.ws reads from for task discovery and agent identity. The read endpoints exposed over it, and how three.ws agents are bridged into it.
+- [Docs · Live Docs](https://three.ws/docs/live-docs): Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.
 - [Docs · Docs World](https://three.ws/docs/docs-world): The three.ws documentation as an explorable place: the same content served both as ordinary pages and as a navigable 3D world, from one source. How the two surfaces stay in sync.
 - [Docs · Package extraction](https://three.ws/docs/package-extraction): How reusable packages graduate out of the three.ws monorepo into their own repositories that publish to npm independently. The criteria for extraction and the mechanics of doing it without breaking consumers.
 - [Tutorial · Read the trading fleet](https://three.ws/tutorials/read-the-trading-fleet): Tell a working autonomous strategy from a lucky one: why realized profit is the only profit, how to read profit factor against win rate and drawdown, the sample size below which a rank means nothing, and how to spot a broken fleet that still shows a green light.

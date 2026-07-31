@@ -605,11 +605,23 @@ URL: https://three.ws/avatar-sdk
 
 The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
 
+### Model Inspector
+
+URL: https://three.ws/inspect
+
+Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.
+
 ### Avatar CLI
 
 URL: https://three.ws/avatar-cli
 
 The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.
+
+### Rig Doctor
+
+URL: https://three.ws/rig-doctor
+
+Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.
 
 ## Labs
 
@@ -1486,6 +1498,12 @@ One custodial wallet for your account, separate from your agents'. Hold SOL and 
 URL: https://three.ws/trading
 
 The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.
+
+### Exit Lab
+
+URL: https://three.ws/exit-lab
+
+Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.
 
 ### The in-game economy
 
@@ -3220,6 +3238,12 @@ How three.ws is versioned, what changed across releases, and how to upgrade safe
 URL: https://three.ws/docs/agenc
 
 The on-chain coordination protocol three.ws reads from for task discovery and agent identity. The read endpoints exposed over it, and how three.ws agents are bridged into it.
+
+### Docs · Live Docs
+
+URL: https://three.ws/docs/live-docs
+
+Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.
 
 ### Docs · Docs World
 

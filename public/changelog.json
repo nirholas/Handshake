@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-31T06:26:35.409Z",
+	"generated_at": "2026-07-31T06:39:58.008Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,46 @@
 			"title": "Atlas",
 			"summary": "The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.",
 			"link": "/atlas",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Docs · Live Docs",
+			"summary": "Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.",
+			"link": "/docs/live-docs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Exit Lab",
+			"summary": "Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.",
+			"link": "/exit-lab",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Model Inspector",
+			"summary": "Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.",
+			"link": "/inspect",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Rig Doctor",
+			"summary": "Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
+			"link": "/rig-doctor",
 			"tags": [
 				"launch"
 			]
