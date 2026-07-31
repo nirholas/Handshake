@@ -48,18 +48,32 @@
 		<!-- HUD: revealed by main.js once the scene is up -->
 		<div id="dw-hud" hidden>
 			<div class="dw-hud-top">
-				<a class="dw-chip" href="/docs" id="dw-back" title="Back to the classic docs">←<span class="dw-chip-label"> Classic docs</span></a>
-				<button class="dw-chip" type="button" id="dw-index-btn" aria-haspopup="true">☰<span class="dw-chip-label"> Index</span></button>
+				<a class="dw-chip" href="/docs" id="dw-back" data-tip="Leave the world and read the same pages as a normal docs site">←<span class="dw-chip-label"> Classic docs</span></a>
+				<button class="dw-chip" type="button" id="dw-index-btn" aria-haspopup="true" data-tip="Every section, as a list. Picking one takes you straight to its pavilion.">☰<span class="dw-chip-label"> Index</span></button>
+				<button class="dw-chip dw-chip-search" type="button" id="dw-search-btn" data-tip="Search every page and let the world walk you there. [[/]] or [[Ctrl]]+[[K]]">
+					<span aria-hidden="true">⌕</span><span class="dw-chip-label"> Search docs</span><kbd class="dw-chip-kbd">/</kbd>
+				</button>
 				<div class="dw-hud-spacer"></div>
-				<button class="dw-chip" type="button" id="dw-camera-btn" title="Cycle camera (C)">Follow</button>
-				<button class="dw-chip" type="button" id="dw-help-btn" aria-label="Controls help">?</button>
+				<button class="dw-chip" type="button" id="dw-camera-btn" data-tip="Cycle follow, cinematic, first person and top down. [[C]]">Follow</button>
+				<button class="dw-chip" type="button" id="dw-help-btn" aria-label="Controls help" data-tip="Controls, and replay the welcome tour">?</button>
 			</div>
 
 			<button class="dw-prompt" type="button" id="dw-prompt" hidden>
 				<kbd>E</kbd> Enter <strong id="dw-prompt-label"></strong>
 			</button>
 
-			<div class="dw-hint" id="dw-hint">WASD walk · Shift run · drag look · E enter · C camera</div>
+			<!-- Wayfinder: live route readout, shown only while a route is running -->
+			<div class="dw-way" id="dw-way" hidden>
+				<span class="dw-way-dot" id="dw-way-dot" aria-hidden="true"></span>
+				<span class="dw-way-text">
+					<span class="dw-way-label" id="dw-way-label"></span>
+					<span class="dw-way-sub" id="dw-way-sub"></span>
+				</span>
+				<button class="dw-way-act" type="button" id="dw-way-read" data-tip="Skip the walk and open the page now">Read now</button>
+				<button class="dw-way-cancel" type="button" id="dw-way-cancel" aria-label="Stop guiding me" data-tip="Stop guiding me">✕</button>
+			</div>
+
+			<div class="dw-hint" id="dw-hint">WASD walk · Shift run · drag look · E enter · <kbd>/</kbd> search</div>
 
 			<div class="dw-joystick" id="dw-joystick" hidden aria-hidden="true">
 				<div class="dw-joystick-thumb" id="dw-joystick-thumb"></div>
@@ -83,10 +97,45 @@
 				<tr><td>Walk</td><td>WASD / arrows / left-side joystick</td></tr>
 				<tr><td>Run</td><td>Shift (push the joystick to its edge)</td></tr>
 				<tr><td>Look</td><td>Drag anywhere · scroll to zoom</td></tr>
+				<tr><td>Find a page</td><td><kbd>/</kbd> or <kbd>Ctrl</kbd>+<kbd>K</kbd> searches every page</td></tr>
+				<tr><td>Guided walk</td><td>Shift+Enter on a search result routes you there</td></tr>
 				<tr><td>Open a section</td><td>Walk close and press E, or tap its pavilion</td></tr>
 				<tr><td>Camera</td><td>C cycles follow / cinematic / first person / top down</td></tr>
 				<tr><td>Close panels</td><td>Esc</td></tr>
 			</table>
+			<button class="dw-btn ghost" type="button" id="dw-tour-replay">Replay the welcome tour</button>
+		</div>
+
+		<!-- Search palette: every page, one keystroke away -->
+		<div class="dw-search" id="dw-search" role="dialog" aria-label="Search the documentation" hidden>
+			<div class="dw-search-card">
+				<div class="dw-search-head">
+					<span class="dw-search-icon" aria-hidden="true">⌕</span>
+					<input
+						id="dw-search-input"
+						type="text"
+						role="combobox"
+						aria-expanded="true"
+						aria-controls="dw-search-results"
+						aria-autocomplete="list"
+						autocomplete="off"
+						spellcheck="false"
+						placeholder="Search every page…"
+						aria-label="Search every documentation page"
+					/>
+					<button class="dw-close" type="button" id="dw-search-close" aria-label="Close search">✕</button>
+				</div>
+				<div class="dw-search-results" id="dw-search-results" role="listbox" aria-label="Search results"></div>
+				<p class="dw-search-empty" id="dw-search-empty" hidden>
+					No page matches that. Try a shorter word, or open the <a href="/docs">classic docs</a> index.
+				</p>
+				<div class="dw-search-foot">
+					<span><kbd>↑</kbd><kbd>↓</kbd> move</span>
+					<span><kbd>Enter</kbd> read</span>
+					<span><kbd>Shift</kbd>+<kbd>Enter</kbd> walk me there</span>
+					<span><kbd>Esc</kbd> close</span>
+				</div>
+			</div>
 		</div>
 
 		<!-- Section page list -->

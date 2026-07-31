@@ -28,6 +28,7 @@
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
 		/>
+		<link rel="stylesheet" href="/docs-live.css" />
 		<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 		<style>
@@ -1117,6 +1118,17 @@
 					content.querySelectorAll('pre code').forEach(block => {
 						hljs.highlightElement(block);
 					});
+
+					// Live Docs: samples that can be run become runnable in place
+					// (public/docs-live.js). Loaded lazily on the first rendered
+					// page so a reader who never scrolls to a code block never
+					// pays for the runner; the module caches after that.
+					import('/docs-live.js')
+						.then(m => m.enhance(content))
+						.catch(() => {
+							/* Static samples still read correctly; the copy
+							   buttons and highlighting above are unaffected. */
+						});
 
 					// Rewrite internal .md links → hash routing. Resolve each href
 					// against the current doc's URL so relative links inside nested

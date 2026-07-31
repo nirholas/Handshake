@@ -90,6 +90,10 @@ export function createOverlays({ sections, onNavigateDoc }) {
 	}
 
 	function closeSection() {
+		// Idempotent: callers that close both overlays defensively (the search
+		// palette hands off to the wayfinder that way) must not yank focus back to
+		// a stale opener recorded during some earlier, already-closed panel.
+		if (panel.hidden) return;
 		panel.classList.remove('open');
 		panel.hidden = true;
 		lastFocus?.focus?.({ preventScroll: true });
@@ -171,6 +175,9 @@ export function createOverlays({ sections, onNavigateDoc }) {
 	}
 
 	function closeReader() {
+		// Idempotent for the same reason as closeSection, and additionally so a
+		// no-op close never rewrites the URL hash out from under a deep link.
+		if (reader.hidden) return;
 		openPath = null;
 		reader.classList.remove('open');
 		reader.hidden = true;

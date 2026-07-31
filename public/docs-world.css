@@ -603,6 +603,318 @@ body {
 	color: var(--dw-text-muted);
 }
 
+/* ── Search palette ──────────────────────────────────────────────────────── */
+.dw-chip-search {
+	border-color: rgba(139, 92, 246, 0.34);
+}
+.dw-chip-kbd {
+	font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+	padding: 2px 6px;
+	margin-left: 2px;
+	border-radius: 5px;
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid var(--dw-border);
+	color: var(--dw-text-muted);
+}
+
+.dw-search {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	padding: max(10vh, 60px) 16px 16px;
+	background: rgba(6, 6, 12, 0.62);
+	backdrop-filter: blur(6px);
+	opacity: 0;
+	transition: opacity 0.16s ease;
+}
+.dw-search.open {
+	opacity: 1;
+}
+
+.dw-search-card {
+	width: min(620px, 100%);
+	max-height: min(70vh, 560px);
+	display: flex;
+	flex-direction: column;
+	background: var(--dw-panel-bg);
+	border: 1px solid var(--dw-border);
+	border-radius: 16px;
+	box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+	overflow: hidden;
+	transform: translateY(-8px) scale(0.985);
+	transition:
+		transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1),
+		opacity 0.18s ease;
+}
+.dw-search.open .dw-search-card {
+	transform: none;
+}
+
+.dw-search-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 12px 12px 16px;
+	border-bottom: 1px solid var(--dw-border);
+}
+.dw-search-icon {
+	font-size: 19px;
+	color: var(--dw-accent);
+	line-height: 1;
+}
+#dw-search-input {
+	flex: 1;
+	min-width: 0;
+	background: none;
+	border: 0;
+	outline: none;
+	color: var(--dw-text);
+	font-family: inherit;
+	font-size: 16px; /* 16px stops iOS Safari zooming the viewport on focus */
+	padding: 4px 0;
+}
+#dw-search-input::placeholder {
+	color: rgba(224, 224, 240, 0.42);
+}
+
+.dw-search-results {
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 6px;
+	scrollbar-width: thin;
+}
+
+.dw-sr {
+	display: flex;
+	align-items: stretch;
+	gap: 4px;
+	border-radius: 10px;
+}
+.dw-sr.active {
+	background: rgba(139, 92, 246, 0.15);
+}
+
+.dw-sr-open {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 11px;
+	padding: 10px 12px;
+	background: none;
+	border: 0;
+	border-radius: 10px;
+	color: var(--dw-text);
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	cursor: pointer;
+}
+.dw-sr-open:focus-visible,
+.dw-sr-walk:focus-visible {
+	outline: 2px solid var(--dw-accent);
+	outline-offset: -2px;
+}
+
+.dw-sr-dot {
+	flex: none;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	box-shadow: 0 0 10px currentColor;
+}
+.dw-sr-text {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.dw-sr-label {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.dw-sr-label mark {
+	background: rgba(139, 92, 246, 0.32);
+	color: #fff;
+	border-radius: 3px;
+	padding: 0 1px;
+}
+.dw-sr-section {
+	font-size: 11.5px;
+	color: var(--dw-text-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dw-sr-walk {
+	flex: none;
+	align-self: center;
+	margin-right: 8px;
+	padding: 6px 12px;
+	border-radius: 999px;
+	background: transparent;
+	border: 1px solid var(--dw-border);
+	color: var(--dw-text-muted);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+	opacity: 0;
+	transition:
+		opacity 0.14s ease,
+		color 0.14s ease,
+		border-color 0.14s ease;
+}
+/* Revealed on the active row and on hover, so the palette stays quiet while
+   scanning but the second action is never more than one keystroke away. Always
+   visible to keyboard focus and on touch, where there is no hover to reveal it. */
+.dw-sr.active .dw-sr-walk,
+.dw-sr:hover .dw-sr-walk,
+.dw-sr-walk:focus-visible {
+	opacity: 1;
+}
+.dw-sr-walk:hover {
+	color: var(--dw-text);
+	border-color: rgba(139, 92, 246, 0.5);
+}
+
+.dw-search-empty {
+	margin: 0;
+	padding: 22px 18px 26px;
+	color: var(--dw-text-muted);
+	font-size: 13.5px;
+	text-align: center;
+}
+.dw-search-empty a {
+	color: var(--dw-accent);
+}
+
+.dw-search-foot {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+	padding: 10px 16px;
+	border-top: 1px solid var(--dw-border);
+	color: var(--dw-text-muted);
+	font-size: 11.5px;
+}
+.dw-search-foot kbd {
+	font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+	padding: 2px 5px;
+	margin-right: 3px;
+	border-radius: 4px;
+	background: rgba(255, 255, 255, 0.07);
+	border: 1px solid var(--dw-border);
+}
+
+/* ── Wayfinder readout ───────────────────────────────────────────────────── */
+.dw-way {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: 82px;
+	z-index: 25;
+	display: flex;
+	align-items: center;
+	gap: 11px;
+	max-width: min(520px, calc(100vw - 28px));
+	padding: 9px 10px 9px 14px;
+	border-radius: 999px;
+	background: var(--dw-panel-bg);
+	border: 1px solid rgba(139, 92, 246, 0.34);
+	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+	pointer-events: auto;
+	animation: dw-way-in 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes dw-way-in {
+	from {
+		opacity: 0;
+		transform: translateX(-50%) translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%);
+	}
+}
+.dw-way-dot {
+	flex: none;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	box-shadow: 0 0 12px currentColor;
+	animation: dw-way-pulse 1.6s ease-in-out infinite;
+}
+@keyframes dw-way-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.42;
+	}
+}
+.dw-way-text {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.dw-way-label {
+	font-size: 13.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.dw-way-sub {
+	font-size: 11.5px;
+	color: var(--dw-text-muted);
+	white-space: nowrap;
+}
+.dw-way-act {
+	flex: none;
+	padding: 6px 13px;
+	border-radius: 999px;
+	background: var(--dw-accent-soft);
+	border: 1px solid rgba(139, 92, 246, 0.4);
+	color: var(--dw-text);
+	font: inherit;
+	font-size: 12.5px;
+	cursor: pointer;
+	transition: background 0.14s ease;
+}
+.dw-way-act:hover {
+	background: rgba(139, 92, 246, 0.26);
+}
+.dw-way-cancel {
+	flex: none;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: none;
+	border: 1px solid var(--dw-border);
+	color: var(--dw-text-muted);
+	font-size: 12px;
+	line-height: 1;
+	cursor: pointer;
+}
+.dw-way-cancel:hover {
+	color: var(--dw-text);
+}
+.dw-way-act:focus-visible,
+.dw-way-cancel:focus-visible {
+	outline: 2px solid var(--dw-accent);
+	outline-offset: 2px;
+}
+
+#dw-tour-replay {
+	margin-top: 16px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.dw-prompt {
 		animation: none;
@@ -613,8 +925,14 @@ body {
 	.dw-panel,
 	.dw-reader,
 	.dw-reader-card,
-	.dw-chip {
+	.dw-chip,
+	.dw-search,
+	.dw-search-card {
 		transition: none;
+	}
+	.dw-way,
+	.dw-way-dot {
+		animation: none;
 	}
 }
 
@@ -628,5 +946,26 @@ body {
 	}
 	.dw-chip span.dw-chip-label {
 		display: none;
+	}
+	/* The keyboard hint on the search chip is meaningless without a keyboard,
+	   and the chip is the touch affordance for the same palette. */
+	.dw-chip-kbd {
+		display: none;
+	}
+	.dw-search {
+		padding-top: 8vh;
+	}
+	/* Hover cannot reveal the second action on touch, and the active row is not
+	   a concept a finger has: show every walk button. */
+	.dw-sr-walk {
+		opacity: 1;
+	}
+	.dw-way {
+		bottom: 92px;
+		left: 14px;
+		right: 14px;
+		max-width: none;
+		transform: none;
+		animation: none;
 	}
 }
