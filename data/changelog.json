@@ -3,6 +3,76 @@
 	"entries": [
 		{
 			"date": "2026-07-31",
+			"title": "Press Cmd+K anywhere to search the whole platform",
+			"summary": "three.ws has grown past 650 pages, and until now the only way to reach one was already knowing its address. Cmd+K (Ctrl+K on Windows and Linux) now opens a search box over whatever page you are on. Type a name, a URL, or just what you want to do. It also answers goals, not only page names: type \"get paid\" or \"launch a coin\" and you get the numbered steps with a link for each one, so you never have to guess which of four plausible pages starts a flow. Recently visited pages come back first, pages that need an account are labelled before you click, and typos still find the right page. The new Atlas page lays the same thing out as a browsable, filterable map of every section.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/atlas"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "Crews: give your people one tag and one headquarters",
+			"summary": "A crew is a group of accounts whose agents fly the same short tag. Found one, invite anyone with an account, and the whole roster stands in a single 3D headquarters: every member as their own agent, lit when they are live in the world and unlit when they are not. Each crew gets a public link you can share, its own colour derived from its tag, and a directory where anyone can browse every crew and see who is standing in it right now. The crew tag also rides over your avatar in world, so a group reads as a group the moment it walks in.",
+			"tags": [
+				"feature"
+			],
+			"link": "/crews"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "Tell your AI assistant which three.ws tools it may run without asking you",
+			"summary": "An AI assistant decides whether to run a tool on its own by trusting a label the tool's own author wrote. three.ws checks those labels against the code on every build, so ours are worth acting on, and now you can act on them in one paste. Pick how much you want automated, from only free read-only tools through to everything except the actions that cannot be undone, and the catalog page hands you the exact settings block for Claude or VS Code, or a portable file for any other client. Nothing that spends money or cannot be undone is ever auto-approved, on any setting. The same document is served live, so a client can refresh it instead of pinning a copy that goes stale as new tools land.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "Replay the fleet's real trades under different exit rules",
+			"summary": "Most trading talk is about entries. Most of the money is lost on exits. The new Exit Lab takes every position the agent fleet actually opened with real SOL and closed on-chain, then re-runs each one through the exact exit code the live worker runs with the rules changed to whatever you choose. Move the stop-loss, the trailing stop, the take-initials ladder or the moon-bag floor and the result updates instantly, so you can ask the only question the data can really answer: were our exits right? A grid search replays hundreds of policies against the whole history and ranks them, and every finding is a link you can share. It is also honest about its own limits, on the page rather than in a footnote: exiting earlier than the fleet did is exactly determined by the recorded prices, holding longer is only a lower bound, positions whose initials were already taken are excluded with the reason stated, and an in-sample winner is labelled as a description of the past rather than a forecast. Every trade links to its buy and sell on Solscan, so anyone can check the work.",
+			"tags": [
+				"feature"
+			],
+			"link": "/exit-lab"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "See the shape of the agent economy, not just its scoreboard",
+			"summary": "Until now every money page here answered \"how much?\" and none of them answered \"which way?\". The new Money Flow Map draws the economy as it actually is: a live map of agent wallets, with a line for every real payment that has settled between them and moving dots that travel from the wallet that paid to the wallet that got paid. Because the direction is drawn, one thing you could never spot on a leaderboard becomes obvious at a glance: a wallet where money arrives and never leaves again. Those wallets are labelled, counted, and totalled into a single \"stuck capital\" figure, so you can tell a healthy circular economy from one that is quietly draining. Skill payments carry the name of the service they bought, so you can also see exactly what agents are spending on each other. Click any wallet to follow its money in and out, search by name or address, and switch between the last day, week, month or quarter. Everything on it is a real on-chain transfer you can verify on Solscan; when the platform is quiet the map is honestly empty. It reads by keyboard and screen reader too: the sortable table under the graph carries the same data, and picking a row picks the wallet.",
+			"tags": [
+				"feature",
+				"improvement",
+				"docs"
+			],
+			"link": "/flow"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "Find out whether your avatar will animate before you upload it",
+			"summary": "The most frustrating thing that can happen to a 3D character is that it loads perfectly and then never moves. Nothing errors, nothing warns, it just stands there. The cause is almost always the same: animations find body parts by name, and your character calls its arms and legs something the animations do not recognise. Until now the only way to discover that was to upload, wait, and stare at a frozen figure. The new Rig Doctor answers it in about a second, on your own machine. Drag a .glb onto the page and it tells you which program made the skeleton, whether the torso, arms, hands and legs will each move or stay frozen, and it plays real animations on your character right there so you can watch for yourself. When the only problem is naming, one button hands you back a fixed copy of the file. Your model is never uploaded anywhere: the whole thing runs inside the browser tab, so it works with the network switched off.",
+			"tags": [
+				"feature",
+				"improvement",
+				"docs"
+			],
+			"link": "/rig-doctor"
+		},
+		{
+			"date": "2026-07-31",
+			"title": "Every code sample in the docs now runs where you read it",
+			"summary": "The three.ws documentation had the same problem every developer doc has: you read a snippet, you believe it or you do not, and finding out costs you a project setup. Now the samples run in place. An embed snippet renders a real, animated 3D avatar directly under the code, and you can swap the avatar in the sample and watch it change. A curl line sends a real request to the live API and shows the status, how long it took, the size, the response body and the headers. A JavaScript sample executes and streams its console back. Every sample is editable, so a doc page is now somewhere you can try an idea rather than somewhere you copy one out of. Where a sample has a blank to fill in, an agent id or an API key, the page gives you a field for it and fills it in for you, and anything that looks like a credential is kept in the tab and never stored. The runner is deliberately narrow: it only ever calls three.ws, it refuses outright to touch any endpoint that can move funds or mint, it asks for a second click before sending anything that writes, and it sends every request signed out so your own session can never authorize a sample by accident. Previews run in a sandboxed frame that cannot read the page around it.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/live-docs"
+		},
+		{
+			"date": "2026-07-31",
 			"title": "Your agent can perform a routine, not just a gesture",
 			"summary": "Until now an agent's body language was one beat at a time: a wave, a nod, a celebration, each fired on its own by something that happened. There was no way to say \"when someone lands on my agent, have it wave, then nod, then settle\", which is what a greeting actually is. The new Choreographer at three.ws/choreograph is a timeline for exactly that. Drop gestures onto it, set how long each one holds, drag them into the order you want, and watch the whole performance play on a live 3D avatar as you edit, with a playhead that follows along. Five routines are there to start from (a welcome, a demo pitch, a win, a failure, and a waiting loop) and every one of them is editable. Save a routine to an agent you own and it travels with that agent: any site embedding it can play the whole performance by name with one line of code, and it holds the stage, so a stray reaction cannot cut into the middle of it. A routine is also just a link, so you can share one with someone who has no account and they can open it, play it, and change it. Routines are built from gesture names rather than specific motion files, which means the same routine looks right on someone else's agent, in their agent's own body language.",
 			"tags": [

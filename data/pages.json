@@ -217,6 +217,15 @@
 					"added": "2026-06-17"
 				},
 				{
+					"path": "/conversions",
+					"title": "Trial Conversions",
+					"description": "Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"auth": true,
+					"added": "2026-07-31"
+				},
+				{
 					"path": "/collection",
 					"title": "My Collection",
 					"description": "View all the skills and subscriptions you've unlocked on three.ws.",
@@ -248,6 +257,14 @@
 					"priority": 0.6,
 					"changefreq": "daily",
 					"added": "2026-05-04"
+				},
+				{
+					"path": "/crews",
+					"title": "Crew HQ",
+					"description": "Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/search",
@@ -312,6 +329,14 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-06-20"
+				},
+				{
+					"path": "/tour/atlas",
+					"title": "Tour Atlas",
+					"description": "Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/walk",
@@ -405,6 +430,15 @@
 					"changefreq": "weekly",
 					"added": "2026-07-18",
 					"showcase": true
+				},
+				{
+					"path": "/embed-doctor",
+					"title": "Embed Doctor",
+					"description": "Find out why your 3D agent embed is not showing up. Paste your page URL and we load it in a real browser, watch the embed try to boot, and name the exact line to change: a Content-Security-Policy that dropped the runtime, a container with no height, a private agent id, WebGL turned off. Works on a snippet too, before you deploy it.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"auth": null,
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/agora",
@@ -834,9 +868,26 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/render-lab",
+					"title": "Render Lab",
+					"description": "Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-31",
+					"showcase": true
+				},
+				{
 					"path": "/rig-doctor",
 					"title": "Rig Doctor",
 					"description": "Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
+				},
+				{
+					"path": "/bundles",
+					"title": "Skill Bundles",
+					"description": "Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-31"
@@ -996,6 +1047,15 @@
 					"changefreq": "always",
 					"added": "2026-07-28",
 					"showcase": true
+				},
+				{
+					"path": "/economy-lab",
+					"title": "Runway Lab",
+					"description": "A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-31",
+					"showcase": true
 				}
 			]
 		},
@@ -1123,6 +1183,15 @@
 					"priority": 0.8,
 					"changefreq": "always",
 					"added": "2026-06-23",
+					"showcase": true
+				},
+				{
+					"path": "/flow",
+					"title": "Money Flow Map",
+					"description": "The shape of the agent economy: a live force-directed map of who pays whom, for which skill, and how much. Every edge is a real settled on-chain transfer between agent wallets, so the map shows where value circulates and which wallets only collect it.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-07-31",
 					"showcase": true
 				},
 				{
@@ -2034,6 +2103,14 @@
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/play/solver",
+					"title": "The economy solver",
+					"description": "The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
 				}
 			]
 		},
@@ -2115,6 +2192,14 @@
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-06-26"
+				},
+				{
+					"path": "/pay/simulator",
+					"title": "Spend Policy Simulator",
+					"description": "Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. See which calls settle, which are refused and by which rule, and the exact policy the run needs.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/login",
@@ -2238,6 +2323,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/exit-lab",
+					"title": "Docs · Exit Lab",
+					"description": "How the counterfactual replay works: the two-phase walk over a recorded price path, why it feeds production exit code instead of reimplementing it, which positions are excluded and why, and the exact limits of what a replay can claim.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/docs/trading-hub",
@@ -2760,6 +2853,12 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/docs/money-flow-map",
+					"title": "Docs · Money Flow Map",
+					"description": "How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.",
+					"added": "2026-07-31"
+				},
+				{
 					"path": "/docs/money-feed",
 					"title": "Docs · Money Feed",
 					"description": "The surfaces that show real value moving through three.ws: the live ticker, the custody-spend ledger, and the economy volume dashboard.",
@@ -2903,6 +3002,36 @@
 					"title": "Tutorials",
 					"description": "Step-by-step build guides.",
 					"added": "2026-05-04"
+				},
+				{
+					"path": "/walkthroughs",
+					"title": "Walkthroughs",
+					"description": "Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.",
+					"added": "2026-07-31"
+				},
+				{
+					"path": "/walkthroughs/forge-your-first-3d-model",
+					"title": "Walkthrough · Forge your first 3D model",
+					"description": "The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.",
+					"added": "2026-07-31"
+				},
+				{
+					"path": "/walkthroughs/build-your-first-agent",
+					"title": "Walkthrough · Build your first agent",
+					"description": "Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.",
+					"added": "2026-07-31"
+				},
+				{
+					"path": "/walkthroughs/embed-a-3d-avatar",
+					"title": "Walkthrough · Embed a 3D avatar on your site",
+					"description": "Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.",
+					"added": "2026-07-31"
+				},
+				{
+					"path": "/walkthroughs/find-an-agent-worth-using",
+					"title": "Walkthrough · Find an agent worth using",
+					"description": "From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/examples",
@@ -3471,6 +3600,14 @@
 					"description": "Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.",
 					"priority": 0.7,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/atlas",
+					"title": "Docs: Atlas and Cmd+K search",
+					"description": "How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/docs/guards",
@@ -4144,12 +4281,28 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/tutorials/find-a-better-exit-policy",
+					"title": "Tutorial · Find a better exit policy",
+					"description": "Take the trades the fleet already made and re-run them under different exit rules: why tightening an exit is measurable and loosening one is only a hypothesis, which of the five knobs can actually fire, and how to tell a real finding from a policy that caught two lucky coins.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-31"
+				},
+				{
 					"path": "/tutorials/read-the-trading-fleet",
 					"title": "Tutorial · Read the trading fleet",
 					"description": "Tell a working autonomous strategy from a lucky one: why realized profit is the only profit, how to read profit factor against win rate and drawdown, the sample size below which a rank means nothing, and how to spot a broken fleet that still shows a green light.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/live-steps",
+					"title": "Docs · Live steps: documentation that runs",
+					"description": "Tutorial steps that perform a real request against the live three.ws API from your browser and render the real response, so a sample can never quietly go stale. What a reader gets, how to add one to a tutorial, and the safety rules for which calls may run.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/docs/mcp-safety",
@@ -4494,6 +4647,14 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/rig-doctor",
+					"title": "Rig Doctor reference",
+					"description": "What each Rig Doctor verdict means, how limb-group coverage is scored, what the in-browser repair changes, the eleven rig conventions it recognises, and the full 52-joint canonical skeleton.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/tutorials/ship-an-avatar-manifest",
@@ -4966,6 +5127,14 @@
 					"description": "XML sitemap for search-engine crawlers.",
 					"indexable": false,
 					"added": "2026-05-25"
+				},
+				{
+					"path": "/api/mcp-policy",
+					"title": "MCP trust policy",
+					"description": "A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.",
+					"priority": 0.5,
+					"changefreq": "weekly",
+					"added": "2026-07-31"
 				},
 				{
 					"path": "/llms.txt",

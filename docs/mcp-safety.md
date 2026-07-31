@@ -108,6 +108,76 @@ if (!autoRunnable.has(name)) await confirmWithUser(name);
 
 ---
 
+## Turn it into client configuration
+
+Verified labels are only worth having if a client can act on them. `GET /api/mcp-policy`
+turns the catalog into a ready-to-paste allowlist: you choose how much you want
+automated, and it names exactly the tools that qualify.
+
+[![The trust policy builder: three profiles with their split of run-on-their-own, ask, and blocked counts, a Claude/VS Code/portable format switch, and the generated settings block](/docs/img/mcp-trust-policy.png)](/mcp-tools#mc-policy)
+
+Three profiles, each a different answer to "how much do I automate":
+
+| Profile | Runs unattended | Asks first | Refused outright |
+| --- | --- | --- | --- |
+| `strict` | verified reads that are also free | everything else | anything irreversible |
+| `balanced` (default) | every verified read | everything that changes state | nothing |
+| `open` | reads and reversible writes | irreversible actions only | nothing |
+
+The ladder only ever widens: a tool `strict` trusts is still trusted by
+`balanced` and `open`, so loosening never silently revokes something. **No profile
+auto-approves an irreversible action**, and `tests/api/mcp-policy.test.js` pins
+both properties.
+
+### For Claude
+
+```bash
+curl -s 'https://three.ws/api/mcp-policy?profile=balanced&format=claude'
+```
+
+```json
+{
+  "permissions": {
+    "allow": ["mcp__three.ws__get_avatar", "mcp__activity-mcp__get_trending_coins"],
+    "ask":   ["mcp__three.ws__mint_3d_asset"],
+    "deny":  []
+  }
+}
+```
+
+Merge that into `.claude/settings.json` in your project (or your user settings).
+
+### For VS Code
+
+```bash
+curl -s 'https://three.ws/api/mcp-policy?profile=strict&format=vscode'
+```
+
+Returns a `chat.tools.autoApprove` map where a tool is `true` only if the policy
+would run it unattended. Paste into `settings.json`.
+
+### Portable
+
+`format=json` (the default) returns the full document: every tool with its
+bucket, its namespaced permission id, its safety class, and its price, plus the
+verification claim and a pointer back to the catalog it came from.
+
+```bash
+curl -s https://three.ws/api/mcp-policy | jq '.counts'
+```
+
+Refetch it rather than pinning a copy. Tools get added; a policy fetched at build
+time goes stale, and a stale allowlist is how a new mutating tool ends up trusted
+by an old config.
+
+> Six tool names are published by two different servers (`sns_resolve`,
+> `find_services`, `pay_and_call`, `list_animations`, `render_avatar`,
+> `kol_leaderboard`). The namespaced `mcp__<server>__<tool>` id is the key, not
+> the bare name. The `<server>` segment is the name **you** gave that server in
+> your own client config; the policy uses the id three.ws publishes for it.
+
+---
+
 ## How the check works
 
 `npm run audit:mcp-safety` parses every tool-definition file in the repo with
