@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" class="cookbook-page">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws: Pipeline Studio</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Run the whole 3D asset pipeline in your browser: generate a pack of models from prompts, render each one, gate them against a triangle and size budget, then export the manifest and the exact commands to reproduce the run locally. Free, keyless, no install."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws: Pipeline Studio" />
+		<meta
+			property="og:description"
+			content="Generate, render, and quality-gate a whole pack of 3D models in the browser. Free and keyless, and it exports the CLI commands that reproduce the run."
+		/>
+		<meta property="og:url" content="https://three.ws/cookbook/pipeline" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=learn&amp;t=Pipeline+Studio&amp;d=Generate%2C+render%2C+and+gate+a+pack+of+3D+models+in+the+browser&amp;p=%2Fcookbook%2Fpipeline"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws: Pipeline Studio" />
+		<meta
+			name="twitter:description"
+			content="Generate, render, and quality-gate a whole pack of 3D models in the browser. Free and keyless, and it exports the CLI commands that reproduce the run."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=learn&amp;t=Pipeline+Studio&amp;d=Generate%2C+render%2C+and+gate+a+pack+of+3D+models+in+the+browser&amp;p=%2Fcookbook%2Fpipeline"
+		/>
+
+		<link rel="canonical" href="https://three.ws/cookbook/pipeline" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/cookbook.css" />
+		<link rel="stylesheet" href="/pipeline-studio.css" />
+		<script defer src="/nav.js"></script>
+		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/pipeline-studio.js"></script>
+	</head>
+	<body>
+		<div class="cb-page">
+			<header><div id="nav-container"></div></header>
+
+			<main id="main-content">
+				<section class="cb-hero pl-hero">
+					<div class="cb-hero-inner">
+						<span class="cb-eyebrow"><a href="/cookbook">Cookbook</a> / Studio</span>
+						<h1>Pipeline Studio</h1>
+						<p>
+							The cookbook's four stages, running here instead of on your machine. Give it a
+							list of prompts and it generates every model on the free lane, renders each one,
+							inspects it against a budget you set, and hands you the manifest plus the exact
+							commands to reproduce the whole run locally.
+						</p>
+						<div class="cb-hero-meta">
+							<span>No API key</span>
+							<span>No install</span>
+							<span>Real <a href="/docs/3d-api">3D API</a>, real models</span>
+						</div>
+					</div>
+				</section>
+
+				<div class="pl-shell">
+					<!-- ── Controls ─────────────────────────────────────────────── -->
+					<form class="pl-rail" id="pl-form" novalidate>
+						<section class="pl-panel">
+							<h2 class="pl-panel-title">
+								<span class="pl-step">1</span> Prompts
+								<button
+									class="pl-hint"
+									type="button"
+									data-hint="The free lane is single-subject. &quot;a brass watering can&quot; works; &quot;a kitchen with a table and three chairs&quot; produces a blob. One object per line, with a material and a shape."
+								>
+									<span aria-hidden="true">?</span>
+									<span class="pl-sr">What makes a good prompt?</span>
+								</button>
+							</h2>
+							<p class="pl-panel-note">One object per line.</p>
+							<label class="pl-sr" for="pl-prompts">Prompts, one per line</label>
+							<textarea
+								id="pl-prompts"
+								name="prompts"
+								rows="5"
+								spellcheck="false"
+								aria-describedby="pl-prompt-count"
+							></textarea>
+							<p class="pl-count" id="pl-prompt-count" aria-live="polite"></p>
+
+							<div class="pl-presets" role="group" aria-label="Load a preset pack">
+								<span class="pl-presets-label">Or load a pack:</span>
+								<div class="pl-preset-row" id="pl-presets"></div>
+							</div>
+						</section>
+
+						<section class="pl-panel">
+							<h2 class="pl-panel-title">
+								<span class="pl-step">2</span> Budget
+								<button
+									class="pl-hint"
+									type="button"
+									data-hint="The gate runs the same rules as asset_gate.py, so a verdict here is the verdict your CI will reach. Numbers that hurt a real user are failures; everything else is a note."
+								>
+									<span aria-hidden="true">?</span>
+									<span class="pl-sr">How is the budget applied?</span>
+								</button>
+							</h2>
+							<p class="pl-panel-note">The bar every model has to clear.</p>
+
+							<div class="pl-field">
+								<label for="pl-tri">Max triangles</label>
+								<input
+									id="pl-tri"
+									name="maxTriangles"
+									type="number"
+									min="100"
+									max="2000000"
+									step="1000"
+									value="100000"
+									inputmode="numeric"
+								/>
+							</div>
+
+							<div class="pl-field">
+								<label for="pl-mb">Max size (MB)</label>
+								<input
+									id="pl-mb"
+									name="maxSizeMb"
+									type="number"
+									min="0.1"
+									max="64"
+									step="0.5"
+									value="8"
+									inputmode="decimal"
+								/>
+							</div>
+
+							<div class="pl-field">
+								<label for="pl-mat">Max materials</label>
+								<input
+									id="pl-mat"
+									name="maxMaterials"
+									type="number"
+									min="0"
+									max="256"
+									step="1"
+									value="16"
+									inputmode="numeric"
+								/>
+							</div>
+
+							<label class="pl-check">
+								<input id="pl-req-tex" name="requireTextures" type="checkbox" />
+								<span>Require textures</span>
+								<button
+									class="pl-hint"
+									type="button"
+									data-hint="Fails any model that ships no texture images. Leave this off unless your renderer genuinely cannot handle vertex-coloured geometry."
+								>
+									<span aria-hidden="true">?</span>
+									<span class="pl-sr">What does requiring textures do?</span>
+								</button>
+							</label>
+
+							<label class="pl-check">
+								<input id="pl-req-mat" name="requireMaterials" type="checkbox" />
+								<span>Require materials</span>
+								<button
+									class="pl-hint"
+									type="button"
+									data-hint="Zero materials is normally a note, not a failure: the draft lane often returns vertex-coloured geometry that renders in full colour with no material at all. Turn this on only if you need real PBR materials."
+								>
+									<span aria-hidden="true">?</span>
+									<span class="pl-sr">What does requiring materials do?</span>
+								</button>
+							</label>
+						</section>
+
+						<section class="pl-panel">
+							<h2 class="pl-panel-title">
+								<span class="pl-step">3</span> Run
+								<button
+									class="pl-hint"
+									type="button"
+									data-hint="Three at a time matches the cookbook's asset_pack.py. The free lane is a shared GPU pool, so twenty parallel jobs do not finish sooner, they queue behind each other and burn poll requests."
+								>
+									<span aria-hidden="true">?</span>
+									<span class="pl-sr">Why is concurrency capped?</span>
+								</button>
+							</h2>
+
+							<div class="pl-field">
+								<label for="pl-workers">Models at a time</label>
+								<input
+									id="pl-workers"
+									name="workers"
+									type="number"
+									min="1"
+									max="4"
+									step="1"
+									value="3"
+									inputmode="numeric"
+								/>
+							</div>
+
+							<div class="pl-actions">
+								<button class="pl-btn primary" type="submit" id="pl-run">
+									Run pipeline
+									<kbd>&#8984;&#8629;</kbd>
+								</button>
+								<button class="pl-btn" type="button" id="pl-stop" hidden>Stop</button>
+							</div>
+							<p class="pl-eta" id="pl-eta"></p>
+						</section>
+
+						<section class="pl-panel pl-log-panel">
+							<h2 class="pl-panel-title">Run log</h2>
+							<ol class="pl-log" id="pl-log" aria-live="polite" aria-relevant="additions"></ol>
+						</section>
+					</form>
+
+					<!-- ── Results ──────────────────────────────────────────────── -->
+					<div class="pl-results">
+						<ol class="pl-stages" id="pl-stages">
+							<li data-stage="generate">
+								<span class="pl-stage-name">Generate</span>
+								<span class="pl-stage-num" data-count="generate">0</span>
+							</li>
+							<li data-stage="render">
+								<span class="pl-stage-name">Render</span>
+								<span class="pl-stage-num" data-count="render">0</span>
+							</li>
+							<li data-stage="gate">
+								<span class="pl-stage-name">Gate</span>
+								<span class="pl-stage-num" data-count="gate">0</span>
+							</li>
+							<li data-stage="export">
+								<span class="pl-stage-name">Export</span>
+								<span class="pl-stage-num" data-count="export">0</span>
+							</li>
+						</ol>
+
+						<div class="pl-verdict" id="pl-verdict" hidden></div>
+
+						<ul class="pl-grid" id="pl-grid"></ul>
+
+						<div class="pl-intro" id="pl-intro">
+							<h2>Nothing has run yet</h2>
+							<p>
+								The prompts on the left are already a working pack. Press
+								<strong>Run pipeline</strong> and watch four stages happen: every prompt becomes
+								a real GLB on the free lane, each model gets rendered to a still, each still gets
+								inspected against your budget, and the whole thing becomes a manifest you can
+								download.
+							</p>
+							<p class="pl-intro-time">
+								A pack of three takes roughly two minutes. Nothing is charged and nothing is
+								stored on your account, because there is no account.
+							</p>
+						</div>
+
+						<section class="pl-export" id="pl-export" hidden>
+							<h2>Take it with you</h2>
+							<p>
+								This run happened in a browser tab. The same pipeline as files on your machine,
+								with the budget you just set:
+							</p>
+							<div class="pl-export-actions">
+								<button class="pl-btn primary" type="button" id="pl-dl-manifest">
+									Download manifest.json
+								</button>
+								<button class="pl-btn" type="button" id="pl-dl-all">Download every GLB</button>
+								<button class="pl-btn" type="button" id="pl-share">Copy share link</button>
+							</div>
+							<h3>Reproduce it locally</h3>
+							<pre class="pl-code"><code id="pl-repro"></code></pre>
+							<button class="pl-btn subtle" type="button" id="pl-copy-repro">Copy commands</button>
+							<p class="pl-export-foot">
+								Both files come from the cookbook:
+								<a href="/cookbook/parallel-asset-pack">parallel asset pack</a> and
+								<a href="/cookbook/asset-quality-gate">the CI quality gate</a>.
+							</p>
+						</section>
+					</div>
+				</div>
+			</main>
+
+			<footer id="site-footer"></footer>
+		</div>
+
+		<div class="pl-tip" id="pl-tip" role="tooltip" hidden></div>
+	</body>
+</html>
