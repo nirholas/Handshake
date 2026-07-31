@@ -41,6 +41,8 @@ import { resolveConfig, resolveAvatarEntry } from './config.js';
 
 const CANVAS_W = 200;
 const CANVAS_H = 280;
+// Identifies this widget's claim on the corner in window.twsCornerStack.
+const CORNER_RESERVE_KEY = 'walk-companion';
 const CURSOR_IDLE_MS = 450; // cursor still longer than this → stop walking
 const GAZE_IDLE_MS = 4000; // cursor still longer than this → gaze drifts back to the clip
 const GAZE_PX_PER_M = 260; // page pixels per scene metre when aiming the head at the cursor
@@ -121,6 +123,29 @@ class WalkCompanion {
 		this._onVisibility = this._onVisibility.bind(this);
 		this._onPageHide = this._onPageHide.bind(this);
 		this._tick = this._tick.bind(this);
+		this._syncCornerReserve = this._syncCornerReserve.bind(this);
+	}
+
+	/**
+	 * Tell the host page's corner stack how much of the bottom-right corner this
+	 * companion occupies, so its cards ("Getting started", feature discovery)
+	 * stack above the avatar instead of underneath it.
+	 *
+	 * Measured from computed style rather than getBoundingClientRect(): the host
+	 * animates in with a translateY, and a rect read mid-transition would report
+	 * a short-changed height that the stack would then settle into.
+	 *
+	 * Optional by design. The SDK ships standalone, so a page without the corner
+	 * stack simply skips this.
+	 */
+	_syncCornerReserve() {
+		const stack = typeof window !== 'undefined' ? window.twsCornerStack : null;
+		if (!stack || typeof stack.reserve !== 'function' || !this.host) return;
+		const cs = getComputedStyle(this.host);
+		const bottom = parseFloat(cs.bottom) || 0;
+		const height = parseFloat(cs.height) || 0;
+		if (height <= 0) return;
+		stack.reserve(CORNER_RESERVE_KEY, bottom + height);
 	}
 
 	async mount() {
@@ -161,6 +186,9 @@ class WalkCompanion {
 		this._picker?.destroy();
 		this._picker = null;
 		this._teardownScene();
+		window.removeEventListener('resize', this._syncCornerReserve);
+		window.removeEventListener('tws-corner-stack:ready', this._syncCornerReserve);
+		window.twsCornerStack?.release?.(CORNER_RESERVE_KEY);
 		if (this.host && this.host.parentNode) this.host.parentNode.removeChild(this.host);
 		this.host = null;
 	}
@@ -197,6 +225,16 @@ class WalkCompanion {
 		// Clicking the avatar detaches it into Playground mode.
 		this.canvas.addEventListener('click', () => this.owner._detachToPlayground(this));
 		requestAnimationFrame(() => host.classList.add('is-in'));
+		// Claim the corner before anything else settles there, and re-measure on
+		// resize: the narrow-viewport rule shrinks the companion to 148x208.
+		// Bound here rather than in _bindEvents() so the claim survives the
+		// avatar-failed-to-load path, where the host stays on the page.
+		this._syncCornerReserve();
+		window.addEventListener('resize', this._syncCornerReserve);
+		// If the corner stack has not booted yet, claim the corner the moment it
+		// does. Without this the companion could win the load race and silently
+		// keep no reservation at all.
+		window.addEventListener('tws-corner-stack:ready', this._syncCornerReserve);
 	}
 
 	_showError() {

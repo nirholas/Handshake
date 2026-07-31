@@ -22,7 +22,13 @@ import { treeInRange, rockInRange, firepitInRange, rodPickupInRange } from './wo
 // Per-swing cadence on the real clock (ms). The handlers tolerate a profile whose
 // `cd` map predates these keys — `now < undefined` is false, so a missing key just
 // means "ready now", and the first action arms it.
-export const ACTIVITY_COOLDOWN_MS = { chop: 1300, mine: 1500, cook: 900, pickupRod: 8000 };
+// `fish` lives here too even though WalkRoom owns the cast handler: it is the same
+// kind of number (a per-swing floor on the real clock), and keeping all five in one
+// exported table is what lets rate-model.js compute attempts-per-hour for every
+// gather activity without a second copy of any cadence.
+export const ACTIVITY_COOLDOWN_MS = {
+	chop: 1300, mine: 1500, cook: 900, pickupRod: 8000, fish: 1500,
+};
 
 // The two gather activities differ only in tool, node, resource and the mining-only
 // coal bonus — so one config table drives both through the shared core below.

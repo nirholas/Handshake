@@ -63,7 +63,7 @@ import {
 	fishingSpotInRange, treeInRange, rockInRange, firepitInRange,
 	DANGER_ZONES, SPAWN_POINT, dangerZoneAt, isSafeZone, isDangerZone, randomPointInZone,
 } from '../world-features.js';
-import { registerActivityHandlers } from '../activities.js';
+import { registerActivityHandlers, ACTIVITY_COOLDOWN_MS } from '../activities.js';
 import { registerSpinHandlers } from '../spin-wheel.js';
 import {
 	selectTarget, rollDamage, applyDamage, addHeat, decayHeat, heatStars,
@@ -265,11 +265,11 @@ const MOTION_VALUES = new Set(['idle', 'walk', 'run']);
 // them in this free-roam world — so they live off the synced WalkState schema
 // (kept in this.econ) and stream to the owning client via targeted messages.
 // This keeps the shared /walk schema untouched and peers' wire cost at zero.
-const FISH_COOLDOWN_MS = 1500;   // per-cast reel time (cadence on the real clock)
-const CONSUME_COOLDOWN_MS = 1100; // pace between bites — no instant heal-spam
-const CHOP_COOLDOWN_MS = 1300;   // per-swing axe cadence
-const MINE_COOLDOWN_MS = 1500;   // per-strike pickaxe cadence (ore is slower)
-const COOK_COOLDOWN_MS = 900;    // pace between fish on the fire
+// Per-cast reel time. Read from the shared cadence table in activities.js (which the
+// chop/mine/cook handlers already arm from) so there is exactly one copy of every
+// gather cadence in the codebase.
+const FISH_COOLDOWN_MS = ACTIVITY_COOLDOWN_MS.fish;
+const CONSUME_COOLDOWN_MS = 1100; // pace between bites, no instant heal-spam
 // Per-action rate ceilings (messages/sec/client) — a flooding client is dropped.
 // vsync rides at the same 15Hz the move netcode uses; allow 2× for jitter, like
 // MOVES_PER_SEC_LIMIT. enter/exit are deliberate, rare actions.
