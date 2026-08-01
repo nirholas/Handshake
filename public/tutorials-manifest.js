@@ -665,6 +665,16 @@
 			ctaPrimary: { label: 'Open Mission Control', href: '/terminal' },
 		},
 		{
+			slug: 'find-a-better-exit-policy',
+			tier: 'advanced',
+			title: 'Find a Better Exit Policy From Trades You Already Made',
+			blurb: 'Take the fleet\'s real closed positions and re-run them under different exit rules in the Exit Lab: which knob to move, by how much, and exactly what a counterfactual replay can and cannot claim.',
+			builds: 'An exit policy proven against your own trade history, not opinions',
+			time: '20 min',
+			previewModel: '/animations/soldier.glb',
+			ctaPrimary: { label: 'Open the Exit Lab', href: '/exit-lab' },
+		},
+		{
 			slug: 'read-the-trading-fleet',
 			tier: 'advanced',
 			title: 'Read the trading fleet: a working strategy vs a lucky one',
