@@ -1523,3 +1523,87 @@ run something genuinely agentic. Do not trade task correctness for hostability.
    retest and resubmit via support chat.
 2. **`gcloud auth login`** (the token expired again overnight, same failure the memory
    file records) -> needed for any Cloud Run / VM work, not for the listing itself.
+
+---
+
+## 2026-08-01, Work Order 05: pre-submission sweep GREEN, submission staged, NOT submitted (WO-04 has no GO + wallet logged out)
+
+Ran WO-05 Step 0 in full against live production. **Every check a reviewer can run passes.**
+The submission itself was not sent, for two independent reasons, both of which are the
+work order's own gates: WO-04 has still never recorded a GO (no funded settlement has ever
+happened, buyer wallet is still empty), and the on-chain write needs an OKX session that
+only a human can open. Agent #2632 untouched: no update, no activate, no deactivate.
+
+Note for whoever reads two entries for this date: a concurrent session was writing
+`e2e-evidence/10-402-*.json` and `20-5d-garbage-header.txt` at 21:33 while this sweep ran.
+Same work order, independent probes, same conclusions.
+
+### Step 0 sweep, live against production (2026-08-01)
+
+| Check | Result |
+|---|---|
+| All 9 paid services, unpaid `POST` | **402** on every one, `PAYMENT-REQUIRED` header present, `accepts[0]` = `eip155:196`, `payTo 0x4022de2D36C334E73C7a108805Cea11C0564f402`, asset USD₮0 `0x779ded…713736` |
+| Advertised amounts vs catalog | identity-studio `1500000`, text-to-3d `10000`, pro `300000`, image `300000`, rig `250000`, avatar `500000`, retarget `100000`, pose-seed `20000`, fbx `100000`. **Zero mismatches** |
+| identity-studio rail (the 2026-07-07 open finding) | **RESOLVED.** It now leads with `eip155:196` at the catalog price `1500000`, not Solana-first at `1000`. Nothing left to fix before submitting that row |
+| Free lanes | `catalog` 200 (11 services), `health` 200, all five subsystems ok, `payment-rail settleable:true`, live block `66850734`, `facilitator_configured:false` (relayer route, expected) |
+| Three-way string diff | **CLEAN.** `api/_lib/okx-catalog.js` == live `/api/okx/3d/catalog` == `scripts/okx-listing-payload.mjs` output, across name / capability / input / price / endpoint on all 11 rows, byte for byte |
+| OKX listing invariants (mechanical) | All 11 rows pass: `serviceName` 9 to 27 chars (limit 5 to 30), description exactly 2 lines, each part within the 200 display-width limit (widest 199), totals 319 to 394 of 400, no links, no em/en dashes, `fee` a plain quoted number, `serviceType: "A2MCP"`, `endpoint` https and short |
+| Adversarial, funding-independent | garbage `PAYMENT-SIGNATURE` -> **400** `invalid_payment`, no crash, no job run. Valid base64 carrying junk JSON -> **402** with a fresh full challenge and the actionable error "X Layer payment must carry payload.authorization + payload.signature (EIP-3009)". Free `GET` descriptor -> 200 |
+| Tests | `okx-3d-services` + `okx-identity-studio` = **47 passed** |
+| Delta builder | Dry-run against the last known live listing shape (7 stale rows) produced 18 entries: 7 `delete` (each carrying its id) + 11 `create`, `create` entries correctly carry no id. Ready to run for real against `service-list` |
+
+Deliberate keep: every row carries a usage `Example:` line, which the older skill invariants
+discourage but the 2026-07-26 reviewer rejection explicitly demanded. The reviewer's written
+instruction wins. If `validate-listing` flags it during the update flow, keep the examples
+and say so in the submission chat. Second deliberate keep: output formats (GLB, FBX, USDZ)
+stay in the copy; those are what the buyer receives, not implementation stack.
+
+### Why nothing was submitted
+
+1. **WO-04 GO absent.** Live X Layer reads today: buyer `0x75d00a2713565171f33216e5aa2a375e076ecf69`
+   = **0 USD₮0** and 0 OKB; seller `0x4022de2D…f402` = 2.427731 USD₮0 (recipient, not payer);
+   relayer `0xe81DE501…415B` = 0.02 OKB. No funded settlement has ever occurred, so WO-05's
+   hard gate is unmet and the work order says do not submit.
+2. **Wallet logged out.** `onchainos wallet status` -> `loggedIn:false, accountCount:0`
+   (v4.4.0). Every write and even `get-agents` / `service-list` needs the browser login from
+   RUNBOOK 0. Approval status therefore carries forward unverified from 2026-07-26.
+
+### Staged so the ship is one sequence
+
+`npm run okx:bot` ran green up to the login: daemon running (pid 2611853), runtime ready,
+briefing regenerated from the live catalog module (6309 chars), 12 skills linked, permission
+bypass on. Only the session is missing. Login URL handed to the owner this session
+(`authSessionId 30fe7b83-a60a-401f-a981-e56b089b8278`).
+
+Listing avatar re-verified on disk: `prompts/okx-ai/assets/okx-avatar-440.png`, exactly
+440x440, opaque RGB (color type 2), 172 KB, still never uploaded on-chain.
+
+Once the human completes the login, in order:
+
+```bash
+onchainos wallet login --phase poll --session-id <authSessionId>
+okx-a2a agent refresh --json                      # agentCount >= 1 -> chat bot online
+onchainos agent get-agents --agent-ids 2632       # capture approval status BEFORE
+onchainos agent upload --file prompts/okx-ai/assets/okx-avatar-440.png
+onchainos agent service-list --agent-id 2632 \
+  | node scripts/okx-listing-payload.mjs --delta > /tmp/okx-2632-delta.json
+# validate-listing on the create+update entries only, diff card, human confirm, then:
+# onchainos agent update --agent-id 2632 --picture <CDN url> --service "$(cat /tmp/okx-2632-delta.json)"
+onchainos agent activate --agent-id 2632 --preferred-language en-US
+onchainos agent get-agents --agent-ids 2632       # capture approval status AFTER
+```
+
+### Owner actions (both single, both required for a real resubmission)
+
+1. **OKX browser login** as `claude@three.ws` (email OTP). Unblocks the write, the reads, and
+   the chat bot the reviewer retests.
+2. **Fund the buyer wallet** `0x75d00a2713565171f33216e5aa2a375e076ecf69` on X Layer
+   (chainId 196) with USD₮0 `0x779ded0c9e1022225f8e0630b35a9b54be713736`. One call of every
+   paid service costs **$3.08**; **$8** covers the gauntlet with retries and margin. Buyer
+   needs no OKB (EIP-3009 is gasless for the payer, the relayer redeems). Top the relayer
+   `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` from 0.02 to ~0.1 OKB if a dry run shows
+   `broadcast_failed`.
+
+Item 1 alone allows a resubmission of the fixed listing (which is what the 2026-07-26
+rejection asked for). Item 2 is what turns WO-04's NO-GO into a GO and makes the claim
+"payments settle" observed rather than unit-tested.
