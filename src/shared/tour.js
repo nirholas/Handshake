@@ -14,6 +14,7 @@
  *
  * options: {
  *   id:         string,                           // namespaced key for persistence
+ *   sync:       boolean,                          // server-persist, default true
  *   onComplete: () => void,
  *   onSkip:     () => void,
  * }
@@ -21,6 +22,8 @@
  * Persistence:
  *   - localStorage key: `tour:${id}:done`
  *   - When signed in, syncs to /api/dashboard/prefs (PATCH tours.${id} = true)
+ *   - Pass `sync: false` on public, signed-out surfaces: the prefs endpoint
+ *     needs a session, so the sync would only ever 401 there
  *   - isTourDone(id) checks both localStorage and prefs cache
  *
  * Accessibility:
@@ -48,8 +51,19 @@ export function isTourDone(id) {
 	return !!_prefsCache.tours?.[id];
 }
 
-export function markTourDone(id) {
+/**
+ * Record a tour as completed.
+ *
+ * @param {string} id
+ * @param {{ sync?: boolean }} [opts] `sync: false` keeps the record local only.
+ *   /api/dashboard/prefs requires a session, so on a public page (the docs
+ *   world, any signed-out marketing surface) the sync answers 401 and the
+ *   browser logs a console error for a request that was never going to work.
+ *   Authed surfaces leave it on and keep cross-device persistence.
+ */
+export function markTourDone(id, { sync = true } = {}) {
 	localStorage.setItem(_lsKey(id), '1');
+	if (!sync) return;
 	// Best-effort server sync
 	fetch(PREFS_URL, {
 		method: 'PATCH',
@@ -216,7 +230,12 @@ function injectStyles() {
 	document.head.appendChild(style);
 }
 
-export function startTour(steps, { id, onComplete, onSkip } = {}) {
+/**
+ * @param {Array} steps
+ * @param {{ id?: string, sync?: boolean, onComplete?: Function, onSkip?: Function }} [options]
+ *   `sync` is forwarded to markTourDone; see there for when to turn it off.
+ */
+export function startTour(steps, { id, sync = true, onComplete, onSkip } = {}) {
 	if (id && isTourDone(id)) return Promise.resolve('completed');
 
 	injectStyles();
@@ -261,7 +280,7 @@ export function startTour(steps, { id, onComplete, onSkip } = {}) {
 		function finish(outcome) {
 			cleanup();
 			if (outcome === 'completed') {
-				if (id) markTourDone(id);
+				if (id) markTourDone(id, { sync });
 				onComplete?.();
 			} else {
 				onSkip?.();

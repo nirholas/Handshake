@@ -68,7 +68,14 @@ export class TourDirector {
 	// Begin a fresh tour from the very first stop (called by the "Start tour"
 	// button / ?tour=start). `track` chooses Quick vs Full; voice/speed default to
 	// the visitor's remembered preferences. Navigates to stop 0's page if needed.
-	async start(track) {
+	//
+	// `stopId` starts the tour at a named curriculum stop instead of the top. The
+	// Tour Atlas (/tour/atlas) links every one of its cards this way, so a visitor
+	// who found a feature in the atlas can drop the guide onto that exact stop
+	// rather than sitting through the run-up to it. An unknown id is ignored and
+	// the tour starts from the beginning, so a stale bookmark degrades to the
+	// normal experience instead of a dead link.
+	async start(track, stopId) {
 		this._showLoading();
 		await this._ensureCurriculum();
 		const prefs = readResume();
@@ -81,6 +88,23 @@ export class TourDirector {
 		this.playlist = buildPlaylist(this.curriculum, this.track);
 		this.pos = 0;
 		this.index = this.playlist[0] ?? 0;
+		if (stopId) {
+			const abs = this.curriculum.stops.findIndex((s) => s.id === stopId);
+			// A stop outside the requested track (an onboarding stop while the
+			// visitor asked for 'full') is still reachable: switch to the track that
+			// actually contains it, exactly as the chapter panel's jump does.
+			if (abs >= 0) {
+				if (this.playlist.indexOf(abs) < 0) {
+					this.track = this.curriculum.stops[abs].section === 'onboarding' ? 'onboarding' : 'full';
+					this.playlist = buildPlaylist(this.curriculum, this.track);
+				}
+				const pos = this.playlist.indexOf(abs);
+				if (pos >= 0) {
+					this.pos = pos;
+					this.index = abs;
+				}
+			}
+		}
 		// Record that the account was actually offered the onboarding tour, so
 		// the server-side auto-start check (api/me.js `show_onboarding_tour`)
 		// never re-triggers it — even if the visitor abandons this run before

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Tour Atlas · three.ws</title>
+	<meta name="description" content="Every stop on the three.ws guided tour, as a real screenshot of the live site with the feature circled. Search 185 stops, filter by chapter, read what the guide says, and drop the tour onto any feature in one click." />
+	<link rel="canonical" href="https://three.ws/tour/atlas" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Tour Atlas · three.ws" />
+	<meta property="og:description" content="Every feature on three.ws, photographed on the live site with the feature circled. 185 stops, searchable, one click from the guided tour." />
+	<meta property="og:url" content="https://three.ws/tour/atlas" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Tour+Atlas&amp;d=Every+feature+on+three.ws%2C+photographed+on+the+live+site+with+the+feature+circled.&amp;p=%2Ftour%2Fatlas" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Tour Atlas · three.ws" />
+	<meta name="twitter:description" content="185 stops of the three.ws guided tour, each one a real screenshot with the feature circled." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Tour+Atlas&amp;d=Every+feature+on+three.ws%2C+photographed+on+the+live+site+with+the+feature+circled.&amp;p=%2Ftour%2Fatlas" />
+	<style>
+		:root {
+			--ta-bg: #07080c;
+			--ta-panel: rgba(17, 19, 27, 0.86);
+			--ta-panel-2: rgba(255, 255, 255, 0.028);
+			--ta-border: rgba(255, 255, 255, 0.09);
+			--ta-border-2: rgba(255, 255, 255, 0.17);
+			--ta-text: #e9ebf2;
+			--ta-muted: #8b91a3;
+			--ta-faint: #5d6374;
+			--ta-accent: #7aa2ff;
+			--ta-accent-soft: rgba(122, 162, 255, 0.14);
+			--ta-good: #34d399;
+			--ta-warn: #fbbf24;
+			--ta-bad: #f87171;
+			--ta-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.34);
+			--ta-radius: 14px;
+		}
+
+		html[data-theme='light'] {
+			--ta-bg: #f7f8fb;
+			--ta-panel: #ffffff;
+			--ta-panel-2: rgba(15, 18, 30, 0.026);
+			--ta-border: rgba(15, 18, 30, 0.1);
+			--ta-border-2: rgba(15, 18, 30, 0.2);
+			--ta-text: #131722;
+			--ta-muted: #5b6274;
+			--ta-faint: #838a9c;
+			--ta-accent: #3b62d0;
+			--ta-accent-soft: rgba(59, 98, 208, 0.1);
+			--ta-good: #0f9d66;
+			--ta-warn: #b45309;
+			--ta-bad: #b91c1c;
+			--ta-shadow: 0 1px 2px rgba(15, 18, 30, 0.06), 0 10px 30px rgba(15, 18, 30, 0.07);
+		}
+
+		.ta-wrap {
+			max-width: 1320px;
+			margin: 0 auto;
+			padding: 92px 20px 96px;
+			color: var(--ta-text);
+		}
+
+		/* ── Masthead ─────────────────────────────────────────────────────── */
+		.ta-head { margin-bottom: 28px; }
+		.ta-eyebrow {
+			display: inline-flex; align-items: center; gap: 8px;
+			font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			letter-spacing: 0.1em; text-transform: uppercase;
+			color: var(--ta-accent); margin-bottom: 14px;
+		}
+		.ta-eyebrow::before {
+			content: ''; width: 6px; height: 6px; border-radius: 50%;
+			background: var(--ta-accent); box-shadow: 0 0 0 4px var(--ta-accent-soft);
+		}
+		.ta-h1 {
+			font: 700 clamp(30px, 5vw, 46px)/1.08 Inter, system-ui, sans-serif;
+			letter-spacing: -0.03em; margin: 0 0 14px;
+		}
+		.ta-lede {
+			max-width: 68ch; margin: 0 0 4px;
+			font: 400 16px/1.65 Inter, system-ui, sans-serif; color: var(--ta-muted);
+		}
+		.ta-lede a { color: var(--ta-accent); text-decoration: none; border-bottom: 1px solid var(--ta-accent-soft); }
+		.ta-lede a:hover { border-bottom-color: currentColor; }
+
+		/* ── Stat rail ────────────────────────────────────────────────────── */
+		.ta-stats {
+			display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 10px; margin: 24px 0 8px;
+		}
+		.ta-stat {
+			background: var(--ta-panel); border: 1px solid var(--ta-border);
+			border-radius: var(--ta-radius); padding: 14px 16px;
+		}
+		.ta-stat-n {
+			font: 700 24px/1 Inter, system-ui, sans-serif; letter-spacing: -0.02em;
+			display: block; margin-bottom: 6px;
+		}
+		.ta-stat-l {
+			font: 500 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+			letter-spacing: 0.06em; text-transform: uppercase; color: var(--ta-faint);
+		}
+		.ta-stat[data-tone='good'] .ta-stat-n { color: var(--ta-good); }
+		.ta-stat[data-tone='warn'] .ta-stat-n { color: var(--ta-warn); }
+		.ta-stat[data-tone='bad'] .ta-stat-n { color: var(--ta-bad); }
+
+		.ta-provenance {
+			margin: 14px 0 0; font: 400 13px/1.6 Inter, system-ui, sans-serif; color: var(--ta-faint);
+		}
+		.ta-provenance code {
+			font: 500 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			background: var(--ta-panel-2); border: 1px solid var(--ta-border);
+			border-radius: 5px; padding: 2px 6px;
+		}
+
+		/* ── Toolbar ──────────────────────────────────────────────────────── */
+		.ta-tools {
+			position: sticky; top: 0; z-index: 20;
+			margin: 28px 0 22px; padding: 14px 0 12px;
+			background: linear-gradient(to bottom, var(--ta-bg) 72%, transparent);
+		}
+		.ta-searchrow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+		.ta-search {
+			flex: 1 1 260px; min-width: 0;
+			background: var(--ta-panel); color: var(--ta-text);
+			border: 1px solid var(--ta-border); border-radius: 10px;
+			padding: 11px 14px; font: 400 14px/1.2 Inter, system-ui, sans-serif;
+			transition: border-color 0.16s ease, box-shadow 0.16s ease;
+		}
+		.ta-search::placeholder { color: var(--ta-faint); }
+		.ta-search:focus-visible {
+			outline: none; border-color: var(--ta-accent);
+			box-shadow: 0 0 0 3px var(--ta-accent-soft);
+		}
+		.ta-seg {
+			display: inline-flex; background: var(--ta-panel); border: 1px solid var(--ta-border);
+			border-radius: 10px; padding: 3px; gap: 2px;
+		}
+		.ta-seg button {
+			appearance: none; background: transparent; border: 0; cursor: pointer;
+			color: var(--ta-muted); border-radius: 7px; padding: 7px 12px;
+			font: 600 12px/1 Inter, system-ui, sans-serif;
+			transition: background 0.16s ease, color 0.16s ease;
+		}
+		.ta-seg button:hover { color: var(--ta-text); background: var(--ta-panel-2); }
+		.ta-seg button[aria-pressed='true'] { background: var(--ta-accent-soft); color: var(--ta-accent); }
+		.ta-seg button:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 1px; }
+
+		.ta-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+		.ta-chip {
+			appearance: none; cursor: pointer;
+			background: var(--ta-panel); border: 1px solid var(--ta-border); color: var(--ta-muted);
+			border-radius: 999px; padding: 6px 13px;
+			font: 500 12.5px/1 Inter, system-ui, sans-serif;
+			transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+		}
+		.ta-chip:hover { border-color: var(--ta-border-2); color: var(--ta-text); }
+		.ta-chip[aria-pressed='true'] {
+			background: var(--ta-accent-soft); border-color: transparent; color: var(--ta-accent);
+		}
+		.ta-chip:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 2px; }
+		.ta-chip-n { color: var(--ta-faint); margin-left: 6px; font-variant-numeric: tabular-nums; }
+		.ta-chip[aria-pressed='true'] .ta-chip-n { color: inherit; opacity: 0.7; }
+
+		.ta-count {
+			margin: 16px 0 0; font: 500 13px/1 Inter, system-ui, sans-serif; color: var(--ta-faint);
+			display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+		}
+		.ta-reset {
+			appearance: none; background: none; border: 0; padding: 0; cursor: pointer;
+			color: var(--ta-accent); font: 500 13px/1 Inter, system-ui, sans-serif;
+			text-decoration: underline; text-underline-offset: 3px;
+		}
+		.ta-reset:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 3px; border-radius: 3px; }
+
+		/* ── Grid ─────────────────────────────────────────────────────────── */
+		.ta-grid {
+			display: grid; gap: 18px; margin: 22px 0 0;
+			grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+		}
+		.ta-card {
+			display: flex; flex-direction: column; text-align: left;
+			appearance: none; cursor: pointer; padding: 0; color: inherit;
+			background: var(--ta-panel); border: 1px solid var(--ta-border);
+			border-radius: var(--ta-radius); overflow: hidden;
+			transition: transform 0.18s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.18s ease, box-shadow 0.18s ease;
+		}
+		.ta-card:hover { transform: translateY(-3px); border-color: var(--ta-border-2); box-shadow: var(--ta-shadow); }
+		.ta-card:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 2px; }
+		.ta-card:active { transform: translateY(-1px); }
+
+		.ta-shot {
+			position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+			background: var(--ta-panel-2); border-bottom: 1px solid var(--ta-border);
+		}
+		.ta-shot img {
+			width: 100%; height: 100%; object-fit: cover; object-position: top center;
+			display: block; transition: transform 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+		}
+		.ta-card:hover .ta-shot img { transform: scale(1.035); }
+		.ta-shot-none {
+			position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+			padding: 18px; font: 500 12.5px/1.5 Inter, system-ui, sans-serif; color: var(--ta-faint);
+		}
+		.ta-idx {
+			position: absolute; top: 9px; left: 9px; z-index: 2;
+			padding: 3px 8px; border-radius: 999px;
+			background: rgba(8, 10, 16, 0.76); color: rgba(255, 255, 255, 0.82);
+			border: 1px solid rgba(255, 255, 255, 0.14);
+			font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			font-variant-numeric: tabular-nums;
+		}
+
+		.ta-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+		.ta-title { font: 650 15px/1.3 Inter, system-ui, sans-serif; letter-spacing: -0.01em; }
+		.ta-path {
+			font: 500 11.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			color: var(--ta-faint); word-break: break-all;
+		}
+		.ta-say {
+			font: 400 13px/1.55 Inter, system-ui, sans-serif; color: var(--ta-muted);
+			display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+			line-clamp: 3; overflow: hidden;
+		}
+		.ta-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 4px; }
+		.ta-badge {
+			display: inline-flex; align-items: center; gap: 5px;
+			padding: 3.5px 8px; border-radius: 6px;
+			font: 600 10.5px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
+			letter-spacing: 0.03em; text-transform: uppercase;
+			border: 1px solid var(--ta-border); color: var(--ta-faint); background: var(--ta-panel-2);
+		}
+		.ta-badge[data-tone='good'] { color: var(--ta-good); border-color: color-mix(in srgb, var(--ta-good) 34%, transparent); }
+		.ta-badge[data-tone='warn'] { color: var(--ta-warn); border-color: color-mix(in srgb, var(--ta-warn) 34%, transparent); }
+		.ta-badge[data-tone='bad'] { color: var(--ta-bad); border-color: color-mix(in srgb, var(--ta-bad) 40%, transparent); }
+		.ta-badge[data-tone='accent'] { color: var(--ta-accent); border-color: color-mix(in srgb, var(--ta-accent) 34%, transparent); }
+
+		/* ── States ───────────────────────────────────────────────────────── */
+		.ta-skel {
+			background: var(--ta-panel); border: 1px solid var(--ta-border);
+			border-radius: var(--ta-radius); overflow: hidden;
+		}
+		.ta-skel-shot { aspect-ratio: 16 / 10; background: var(--ta-panel-2); }
+		.ta-skel-line { height: 11px; border-radius: 5px; background: var(--ta-panel-2); margin: 12px 16px; }
+		.ta-skel-line:last-child { width: 55%; margin-bottom: 20px; }
+		@keyframes ta-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+		.ta-skel { animation: ta-pulse 1.5s ease-in-out infinite; }
+		@media (prefers-reduced-motion: reduce) {
+			.ta-skel { animation: none; }
+			.ta-card, .ta-shot img { transition: none; }
+			.ta-card:hover { transform: none; }
+			.ta-card:hover .ta-shot img { transform: none; }
+		}
+
+		.ta-empty {
+			grid-column: 1 / -1; text-align: center; padding: 64px 24px;
+			border: 1px dashed var(--ta-border-2); border-radius: var(--ta-radius);
+			background: var(--ta-panel-2);
+		}
+		.ta-empty h2 { font: 650 18px/1.3 Inter, system-ui, sans-serif; margin: 0 0 8px; }
+		.ta-empty p { font: 400 14px/1.6 Inter, system-ui, sans-serif; color: var(--ta-muted); margin: 0 auto 18px; max-width: 44ch; }
+
+		.ta-btn {
+			display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+			appearance: none; border-radius: 9px; padding: 10px 16px;
+			font: 600 13.5px/1 Inter, system-ui, sans-serif; text-decoration: none;
+			border: 1px solid var(--ta-border-2); background: var(--ta-panel); color: var(--ta-text);
+			transition: border-color 0.16s ease, background 0.16s ease, transform 0.12s ease;
+		}
+		.ta-btn:hover { border-color: var(--ta-accent); }
+		.ta-btn:active { transform: translateY(1px); }
+		.ta-btn:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 2px; }
+		.ta-btn[data-variant='primary'] {
+			background: var(--ta-accent); border-color: var(--ta-accent); color: #07080c;
+		}
+		html[data-theme='light'] .ta-btn[data-variant='primary'] { color: #ffffff; }
+		.ta-btn[data-variant='primary']:hover { filter: brightness(1.08); }
+
+		/* ── Lightbox ─────────────────────────────────────────────────────── */
+		.ta-lb[hidden] { display: none; }
+		.ta-lb {
+			position: fixed; inset: 0; z-index: 2147483000;
+			display: grid; place-items: center; padding: 24px;
+			background: rgba(5, 6, 10, 0.82); backdrop-filter: blur(6px);
+		}
+		.ta-lb-panel {
+			width: min(1080px, 100%); max-height: calc(100vh - 48px);
+			display: flex; flex-direction: column; overflow: hidden;
+			background: var(--ta-panel); border: 1px solid var(--ta-border-2);
+			border-radius: 16px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+		}
+		.ta-lb-figure { position: relative; background: #05060a; flex-shrink: 0; }
+		.ta-lb-figure img { display: block; width: 100%; height: auto; max-height: 58vh; object-fit: contain; }
+		.ta-lb-x {
+			position: absolute; top: 10px; right: 10px; z-index: 3;
+			width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+			display: grid; place-items: center; font: 600 15px/1 Inter, system-ui, sans-serif;
+			background: rgba(8, 10, 16, 0.78); color: #fff; border: 1px solid rgba(255, 255, 255, 0.16);
+		}
+		.ta-lb-x:hover { background: rgba(8, 10, 16, 0.95); }
+		.ta-lb-x:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 2px; }
+		.ta-lb-nav {
+			position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+			width: 40px; height: 56px; border-radius: 10px; cursor: pointer;
+			display: grid; place-items: center; font: 600 18px/1 Inter, system-ui, sans-serif;
+			background: rgba(8, 10, 16, 0.7); color: #fff; border: 1px solid rgba(255, 255, 255, 0.14);
+		}
+		.ta-lb-nav:hover { background: rgba(8, 10, 16, 0.92); }
+		.ta-lb-nav:focus-visible { outline: 2px solid var(--ta-accent); outline-offset: 2px; }
+		.ta-lb-nav[data-dir='prev'] { left: 10px; }
+		.ta-lb-nav[data-dir='next'] { right: 10px; }
+		.ta-lb-nav[disabled] { opacity: 0.3; cursor: default; }
+		.ta-lb-body { padding: 20px 24px 24px; overflow-y: auto; }
+		.ta-lb-kicker {
+			font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			letter-spacing: 0.08em; text-transform: uppercase; color: var(--ta-accent); margin-bottom: 10px;
+		}
+		.ta-lb-h { font: 700 22px/1.25 Inter, system-ui, sans-serif; letter-spacing: -0.02em; margin: 0 0 10px; }
+		.ta-lb-say { font: 400 15px/1.65 Inter, system-ui, sans-serif; color: var(--ta-muted); margin: 0 0 18px; max-width: 72ch; }
+		.ta-lb-meta {
+			display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 12px; margin: 0 0 20px; padding: 16px 0 0; border-top: 1px solid var(--ta-border);
+		}
+		.ta-lb-meta div { min-width: 0; }
+		.ta-lb-meta dt {
+			font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+			letter-spacing: 0.06em; text-transform: uppercase; color: var(--ta-faint); margin-bottom: 6px;
+		}
+		.ta-lb-meta dd {
+			margin: 0; font: 500 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+			color: var(--ta-text); word-break: break-word;
+		}
+		.ta-lb-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+		@media (max-width: 640px) {
+			.ta-wrap { padding: 78px 14px 72px; }
+			.ta-grid { grid-template-columns: 1fr; gap: 14px; }
+			.ta-lb { padding: 0; }
+			.ta-lb-panel { max-height: 100vh; height: 100%; border-radius: 0; border: 0; width: 100%; }
+			.ta-lb-figure img { max-height: 40vh; }
+			.ta-tools { position: static; background: none; }
+		}
+	</style>
+</head>
+<body>
+	<script src="/nav.js"></script>
+
+	<main class="ta-wrap">
+		<header class="ta-head">
+			<p class="ta-eyebrow">Guided tour</p>
+			<h1 class="ta-h1">Tour Atlas</h1>
+			<p class="ta-lede">
+				The <a href="/tour">guided tour</a> walks a 3D avatar across this site, rings the feature it is
+				talking about, and narrates what it does. This is every one of its stops, photographed on the
+				live site with that same ring painted on. Search it, read what the guide says, then drop the
+				tour onto any feature in one click.
+			</p>
+			<div class="ta-stats" id="ta-stats"></div>
+			<p class="ta-provenance" id="ta-provenance"></p>
+		</header>
+
+		<div class="ta-tools">
+			<div class="ta-searchrow">
+				<input
+					id="ta-search"
+					class="ta-search"
+					type="search"
+					placeholder="Search features, paths, or what the guide says…"
+					aria-label="Search tour stops"
+					autocomplete="off"
+					spellcheck="false"
+				/>
+				<div class="ta-seg" id="ta-track" role="group" aria-label="Tour track"></div>
+				<div class="ta-seg" id="ta-health" role="group" aria-label="Anchor health"></div>
+			</div>
+			<div class="ta-chips" id="ta-sections" role="group" aria-label="Tour chapter"></div>
+			<p class="ta-count" id="ta-count" aria-live="polite"></p>
+		</div>
+
+		<div class="ta-grid" id="ta-grid"></div>
+	</main>
+
+	<div class="ta-lb" id="ta-lb" hidden role="dialog" aria-modal="true" aria-labelledby="ta-lb-h">
+		<div class="ta-lb-panel">
+			<div class="ta-lb-figure">
+				<button class="ta-lb-x" type="button" data-act="close" aria-label="Close">✕</button>
+				<button class="ta-lb-nav" type="button" data-dir="prev" data-act="prev" aria-label="Previous stop">‹</button>
+				<button class="ta-lb-nav" type="button" data-dir="next" data-act="next" aria-label="Next stop">›</button>
+				<img id="ta-lb-img" alt="" />
+			</div>
+			<div class="ta-lb-body">
+				<p class="ta-lb-kicker" id="ta-lb-kicker"></p>
+				<h2 class="ta-lb-h" id="ta-lb-h"></h2>
+				<p class="ta-lb-say" id="ta-lb-say"></p>
+				<dl class="ta-lb-meta" id="ta-lb-meta"></dl>
+				<div class="ta-lb-actions" id="ta-lb-actions"></div>
+			</div>
+		</div>
+	</div>
+
+	<script type="module" src="/src/tour-atlas.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

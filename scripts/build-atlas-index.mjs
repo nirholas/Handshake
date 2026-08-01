@@ -30,8 +30,11 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGES = resolve(root, 'data/pages.json');
-const INTENTS = resolve(root, 'data/atlas-intents.json');
-const OUT = resolve(root, 'public/atlas-index.json');
+// Overridable so tests/atlas.test.js can run the REAL generator against a
+// deliberately broken catalog and prove the gate below actually bites. A gate
+// nobody has ever seen fail is a gate nobody knows works.
+const INTENTS = process.env.ATLAS_INTENTS || resolve(root, 'data/atlas-intents.json');
+const OUT = process.env.ATLAS_OUT || resolve(root, 'public/atlas-index.json');
 
 // Descriptions in data/pages.json run to 428 chars. The palette renders one
 // clamped line and scores on the leading text anyway, so carrying the full body

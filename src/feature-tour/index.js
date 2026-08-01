@@ -35,8 +35,8 @@ export function createFeatureTour() {
 		isActive() {
 			return explore?.isActive() === true || readState().active === true;
 		},
-		start(track) {
-			return ensure().start(track);
+		start(track, stopId) {
+			return ensure().start(track, stopId);
 		},
 		startExplore,
 		resume() {
@@ -61,7 +61,9 @@ export function createFeatureTour() {
 					const requestedTrack = params.get('track');
 					const track =
 						requestedTrack === 'quick' || requestedTrack === 'onboarding' ? requestedTrack : 'full';
-					ensure().start(track);
+					// ?stop=<curriculum stop id> drops the guide straight onto one
+					// feature. Every card in the Tour Atlas (/tour/atlas) links here.
+					ensure().start(track, params.get('stop') || undefined);
 				}
 			} else if (param === '0') {
 				control.exit();

@@ -419,7 +419,10 @@ async function boot() {
 	initTooltips();
 	// First visit only. Deliberately after the HUD is revealed: the tour spotlights
 	// real controls, and spotlighting a hidden element would frame empty screen.
-	if (!isTourDone(TOUR_ID)) startTour(tourSteps, { id: TOUR_ID });
+	// sync:false because /docs/world is public: the prefs endpoint the engine
+	// syncs to needs a session, so on a signed-out visit it can only answer 401
+	// and put a console error on an otherwise clean page.
+	if (!isTourDone(TOUR_ID)) startTour(tourSteps, { id: TOUR_ID, sync: false });
 	// Console/debug handle, same convention as window.__walkPlayground.
 	window.__docsWorld = { world, player, overlays, controls, search, wayfinder };
 	requestAnimationFrame((t) => {

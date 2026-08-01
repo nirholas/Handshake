@@ -53,6 +53,10 @@ import sharp from 'sharp';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+	TOUR_FALLBACK_SELECTORS,
+	TOUR_CONTENT_ROOT_SELECTOR,
+} from '../src/feature-tour/curriculum.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CURRICULUM_PATH = resolve(ROOT, 'public/tour/curriculum.json');
@@ -184,7 +188,7 @@ function dismissChrome(selectors) {
 // anchor came from the curriculum's hand-authored `targets` or from the
 // director's generic fallback chain. That distinction is the difference between
 // "the tour points at this feature" and "the tour points at the page's h1".
-function resolveAnchor(groups) {
+function resolveAnchor({ groups, contentRootSelector }) {
 	const visible = (el) => {
 		if (!el || !el.isConnected) return false;
 		const r = el.getBoundingClientRect();
@@ -198,22 +202,26 @@ function resolveAnchor(groups) {
 		if (el.closest('footer')) return 'footer';
 		return 'other';
 	};
-	for (const group of groups) {
-		let el = null;
-		try {
-			el = document.querySelector(group.selector);
-		} catch {
-			continue; // an unparseable selector is rot too, and falls through as unmatched
+	const main = document.querySelector(contentRootSelector);
+	const roots = main ? [main, document] : [document];
+	for (const root of roots) {
+		for (const group of groups) {
+			let el = null;
+			try {
+				el = root.querySelector(group.selector);
+			} catch {
+				continue; // an unparseable selector is rot too, and falls through as unmatched
+			}
+			if (!visible(el)) continue;
+			el.setAttribute('data-tws-atlas-anchor', '1');
+			return {
+				matched: true,
+				selector: group.selector,
+				source: group.source,
+				scope: scopeOf(el),
+				tag: el.tagName.toLowerCase(),
+			};
 		}
-		if (!visible(el)) continue;
-		el.setAttribute('data-tws-atlas-anchor', '1');
-		return {
-			matched: true,
-			selector: group.selector,
-			source: group.source,
-			scope: scopeOf(el),
-			tag: el.tagName.toLowerCase(),
-		};
 	}
 	return { matched: false, selector: null, source: null, scope: null, tag: null };
 }
@@ -384,7 +392,10 @@ async function captureStop(context, stop) {
 		await page.evaluate(dismissChrome, CHROME_SELECTORS);
 
 		const groups = anchorGroups(stop);
-		const hit = await page.evaluate(resolveAnchor, groups);
+		const hit = await page.evaluate(resolveAnchor, {
+			groups,
+			contentRootSelector: TOUR_CONTENT_ROOT_SELECTOR,
+		});
 		record.anchor.state = hit.matched ? 'resolved' : 'missing';
 		record.anchor.selector = hit.selector;
 		record.anchor.source = hit.source;
@@ -554,8 +565,8 @@ async function main() {
 						? 'DEAD'
 						: record.anchor.state === 'missing'
 							? 'ROT '
-							: record.anchor.state === 'none'
-								? 'PAGE'
+							: record.anchor.source === 'fallback'
+								? 'GEN '
 								: 'OK  ';
 				log(
 					`  [${String(done).padStart(3)}/${stops.length}] ${mark} ${record.path}  ${record.id}` +
@@ -575,8 +586,9 @@ async function main() {
 	if (HEALTH_ONLY) {
 		const s = summarize(results);
 		console.log(
-			`\nAnchors: ${s.anchored} resolved, ${s.missingAnchor} missing, ${s.wholePage} whole-page. ` +
-				`${s.unreachable} unreachable page(s), ${s.withConsoleErrors} with console errors.`,
+			`\nAnchors: ${s.anchored} resolved (${s.curatedAnchor} curated, ${s.fallbackAnchor} fallback), ` +
+				`${s.missingAnchor} missing. ${s.unreachable} unreachable page(s), ` +
+				`${s.withConsoleErrors} with console errors.`,
 		);
 		for (const r of results.filter((r) => r.anchor.state === 'missing')) {
 			console.log(`  rot: ${r.id} (${r.path}): ${r.notes[0] || 'anchor did not resolve'}`);
