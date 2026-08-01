@@ -29,6 +29,14 @@
 			href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
 		/>
 		<link rel="stylesheet" href="/docs-live.css" />
+		<!-- Cookbook recipes and tutorials both use `figure:` directives, and both
+		     render here as well as in the standalone viewers. Without the resolver
+		     this shell paints <img src="figure:img:…">, which is a broken image and
+		     an ERR_UNKNOWN_URL_SCHEME per figure. Same files the tutorial viewer
+		     loads, so a figure looks identical on every surface. -->
+		<link rel="stylesheet" href="/tutorial-figures.css" />
+		<script src="/tutorial-figures.js"></script>
+		<script src="/model-viewer-meshopt.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 		<style>
@@ -275,6 +283,87 @@
 				transform: translateY(-50%);
 				pointer-events: none;
 				opacity: 0.35;
+			}
+			.sidebar-search kbd {
+				position: absolute;
+				right: 8px;
+				top: 50%;
+				transform: translateY(-50%);
+				pointer-events: none;
+				font: 600 10px/1 var(--font-mono, ui-monospace, monospace);
+				color: rgba(255, 255, 255, 0.28);
+				border: 1px solid var(--border);
+				border-radius: 4px;
+				padding: 3px 5px;
+				transition: opacity 0.15s;
+			}
+			.sidebar-search input:focus ~ kbd,
+			.sidebar-search input:not(:placeholder-shown) ~ kbd {
+				opacity: 0;
+			}
+
+			/* Full-text results from the docs search index. Rendered above the
+			   filtered page list because a content match is almost always what
+			   someone typing a question is looking for. */
+			.sidebar-results {
+				margin: 0 var(--space-sm) var(--space-md);
+			}
+			.sidebar-results[hidden] {
+				display: none;
+			}
+			.sidebar-results-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 8px;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: rgba(255, 255, 255, 0.32);
+				padding: 0 4px 6px;
+			}
+			.sidebar-hit {
+				display: block;
+				padding: 7px 9px;
+				border-radius: var(--radius-md);
+				text-decoration: none;
+				border: 1px solid transparent;
+				transition: background 0.12s, border-color 0.12s;
+			}
+			.sidebar-hit:hover,
+			.sidebar-hit:focus-visible,
+			.sidebar-hit[aria-selected='true'] {
+				background: rgba(139, 92, 246, 0.1);
+				border-color: rgba(139, 92, 246, 0.35);
+				outline: none;
+			}
+			.sidebar-hit-title {
+				display: block;
+				font-size: var(--text-sm);
+				color: #e6e6e6;
+				line-height: 1.35;
+			}
+			.sidebar-hit-title mark {
+				background: rgba(139, 92, 246, 0.28);
+				color: #fff;
+				border-radius: 2px;
+				padding: 0 1px;
+			}
+			.sidebar-hit-doc {
+				display: block;
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.38);
+				margin-top: 2px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.sidebar-results-note {
+				padding: 4px 5px 0;
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.34);
+				line-height: 1.5;
 			}
 
 			.sidebar-section {
@@ -805,11 +894,24 @@
 					<input
 						type="text"
 						id="search-input"
-						placeholder="Search…"
+						placeholder="Search the docs…"
 						autocomplete="off"
 						spellcheck="false"
+						role="combobox"
+						aria-expanded="false"
+						aria-controls="content-results"
+						aria-autocomplete="list"
+						aria-label="Search the documentation"
 					/>
+					<kbd>/</kbd>
 				</div>
+				<div
+					class="sidebar-results"
+					id="content-results"
+					role="listbox"
+					aria-label="Documentation content matches"
+					hidden
+				></div>
 				<nav id="sidebar-nav"></nav>
 			</aside>
 
@@ -1110,8 +1212,32 @@
 					if (!res.ok) throw new Error(res.status);
 					const md = await res.text();
 
-					const html = marked.parse(md);
+					// Turn `figure:` directives into inert slots BEFORE parsing. Left as
+					// <img src="figure:…">, the browser fires a request the moment the
+					// markup lands and logs ERR_UNKNOWN_URL_SCHEME for every figure.
+					const html = marked.parse(
+						window.tutorialFigures ? window.tutorialFigures.preprocess(md) : md,
+					);
 					content.innerHTML = html;
+
+					// Fill those slots with the captured media, the live 3D viewers,
+					// and the shared lightbox.
+					window.tutorialFigures?.mount(content);
+
+					// Freshness: has anyone checked this page against the code lately?
+					// Mounted above the article, before the heavier enhancers, because
+					// a reader deciding whether to trust the page should see it first.
+					// Fails silently: a missing report must never cost the reader the
+					// documentation itself.
+					const freshHost = document.createElement('div');
+					content.prepend(freshHost);
+					import('/doc-freshness.js')
+						.then((m) => m.mountBadge(freshHost, m.docPathForSlug(path)))
+						.catch(() => freshHost.remove());
+
+					// Markdown images become captioned, zoomable figures sized from
+					// the media manifest, so the article never reflows on decode.
+					window.DocFigures?.upgrade(content);
 
 					renderPageTools(path, md);
 
@@ -1208,9 +1334,206 @@
 
 			window.addEventListener('hashchange', navigate);
 
-			document.getElementById('search-input').addEventListener('input', e => {
-				buildSidebar(e.target.value);
+			// ── Full-text search over the docs corpus ────────────────────────────
+			//
+			// The sidebar filter has always matched page TITLES, which only helps a
+			// reader who already knows what the page is called. The engine in
+			// /docs-search.js answers the other question: "which page says this?" -
+			// against an index of every heading and paragraph under docs/.
+			//
+			// It is loaded on the first keystroke, never on page load: the index is
+			// ~1.4 MB and most readers arrive to read, not to search.
+			const searchInput = document.getElementById('search-input');
+			const resultsBox = document.getElementById('content-results');
+			const MIN_QUERY = 2;
+			const SEARCH_DEBOUNCE_MS = 90;
+			const MAX_HITS = 8;
+
+			let enginePromise = null;
+			let searchTimer = null;
+			let activeHit = -1;
+			let lastQuery = '';
+
+			function loadEngine() {
+				if (enginePromise) return enginePromise;
+				enginePromise = new Promise(resolve => {
+					if (window.twsDocsSearch) return resolve(window.twsDocsSearch);
+					const script = document.createElement('script');
+					script.src = '/docs-search.js';
+					script.onload = () => resolve(window.twsDocsSearch || null);
+					// A missing engine degrades to title filtering, which is exactly
+					// what this page did before. Nothing user-facing breaks.
+					script.onerror = () => resolve(null);
+					document.head.appendChild(script);
+				}).then(async engine => {
+					if (!engine) return null;
+					const ok = await engine.ready();
+					return ok ? engine : null;
+				});
+				return enginePromise;
+			}
+
+			function escapeHtml(text) {
+				return String(text).replace(
+					/[&<>"']/g,
+					c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+				);
+			}
+
+			// Highlight the terms that actually earned the match, longest first so
+			// "wallet" wins over "wall" and the shorter term cannot split the tag it
+			// is nested inside.
+			function highlight(text, matched) {
+				const safe = escapeHtml(text);
+				const terms = (matched || [])
+					.filter(t => t && t.length >= MIN_QUERY)
+					.sort((a, b) => b.length - a.length)
+					.slice(0, 8)
+					.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+				if (!terms.length) return safe;
+				return safe.replace(new RegExp('(' + terms.join('|') + ')', 'gi'), '<mark>$1</mark>');
+			}
+
+			function clearResults() {
+				resultsBox.hidden = true;
+				resultsBox.innerHTML = '';
+				searchInput.setAttribute('aria-expanded', 'false');
+				searchInput.removeAttribute('aria-activedescendant');
+				activeHit = -1;
+			}
+
+			function renderNote(message) {
+				resultsBox.hidden = false;
+				resultsBox.innerHTML = '<p class="sidebar-results-note">' + escapeHtml(message) + '</p>';
+				searchInput.setAttribute('aria-expanded', 'false');
+			}
+
+			function renderHits(hits, query) {
+				if (!hits.length) {
+					renderNote('No content matches “' + query + '”. Matching page names are listed below.');
+					return;
+				}
+				const head =
+					'<div class="sidebar-results-head"><span>In page content</span><span>' +
+					hits.length +
+					'</span></div>';
+				resultsBox.innerHTML =
+					head +
+					hits
+						.map(
+							(hit, i) =>
+								'<a class="sidebar-hit" role="option" aria-selected="false" id="docs-hit-' +
+								i +
+								'" href="' +
+								escapeHtml(hit.url) +
+								'"><span class="sidebar-hit-title">' +
+								highlight(hit.heading || hit.docTitle, hit.matched) +
+								'</span><span class="sidebar-hit-doc">' +
+								escapeHtml(hit.docTitle) +
+								'</span></a>',
+						)
+						.join('');
+				resultsBox.hidden = false;
+				searchInput.setAttribute('aria-expanded', 'true');
+				activeHit = -1;
+				searchInput.removeAttribute('aria-activedescendant');
+			}
+
+			function moveActive(delta) {
+				const rows = [...resultsBox.querySelectorAll('.sidebar-hit')];
+				if (!rows.length) return false;
+				if (activeHit >= 0 && rows[activeHit]) rows[activeHit].setAttribute('aria-selected', 'false');
+				activeHit = (activeHit + delta + rows.length + 1) % (rows.length + 1);
+				// The extra slot is "nothing selected", so ArrowUp from the first row
+				// returns focus to the query rather than wrapping to the bottom.
+				if (activeHit === rows.length) {
+					activeHit = -1;
+					searchInput.removeAttribute('aria-activedescendant');
+					return true;
+				}
+				const row = rows[activeHit];
+				row.setAttribute('aria-selected', 'true');
+				row.scrollIntoView({ block: 'nearest' });
+				searchInput.setAttribute('aria-activedescendant', row.id);
+				return true;
+			}
+
+			async function runSearch(query) {
+				const trimmed = query.trim();
+				lastQuery = trimmed;
+				if (trimmed.length < MIN_QUERY) {
+					clearResults();
+					return;
+				}
+				const engine = await loadEngine();
+				// The reader kept typing while the index loaded; that keystroke's own
+				// search is already on its way.
+				if (lastQuery !== trimmed) return;
+				if (!engine) {
+					renderNote('Content search is unavailable. Page names still filter below.');
+					return;
+				}
+				renderHits(engine.query(trimmed, MAX_HITS), trimmed);
+			}
+
+			searchInput.addEventListener('input', e => {
+				const value = e.target.value;
+				buildSidebar(value);
+				clearTimeout(searchTimer);
+				searchTimer = setTimeout(() => runSearch(value), SEARCH_DEBOUNCE_MS);
 			});
+
+			searchInput.addEventListener('keydown', e => {
+				if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+					if (moveActive(e.key === 'ArrowDown' ? 1 : -1)) e.preventDefault();
+					return;
+				}
+				if (e.key === 'Enter') {
+					const row = resultsBox.querySelectorAll('.sidebar-hit')[activeHit];
+					if (row) {
+						e.preventDefault();
+						row.click();
+					}
+					return;
+				}
+				if (e.key === 'Escape') {
+					if (resultsBox.hidden && !searchInput.value) return;
+					e.preventDefault();
+					searchInput.value = '';
+					buildSidebar('');
+					clearResults();
+				}
+			});
+
+			resultsBox.addEventListener('click', () => {
+				// Navigation is by hash, so the result list would otherwise stay open
+				// over the page the reader just chose.
+				clearResults();
+				if (window.innerWidth <= 860) {
+					document.getElementById('sidebar').classList.remove('open');
+					document.getElementById('sidebar-overlay').classList.remove('visible');
+				}
+			});
+
+			// "/" is the near-universal focus-search shortcut. Ignored while the
+			// reader is typing somewhere else, so it never swallows a real slash.
+			document.addEventListener('keydown', e => {
+				if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+				const tag = (e.target.tagName || '').toLowerCase();
+				if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+				e.preventDefault();
+				document.getElementById('sidebar').classList.add('open');
+				searchInput.focus();
+				searchInput.select();
+			});
+
+			// /docs?q=… runs the search on arrival, so a search result is a URL
+			// someone can send to a colleague.
+			const initialQuery = new URLSearchParams(location.search).get('q');
+			if (initialQuery) {
+				searchInput.value = initialQuery;
+				runSearch(initialQuery);
+			}
 
 			const fab = document.getElementById('sidebar-fab');
 			const sidebar = document.getElementById('sidebar');

@@ -430,3 +430,9 @@ new_changelog.json
 # harness can never be swept into a commit by a `git add -A` from another
 # session. Put anything you intend to keep in scripts/.
 /scratch-*.mjs
+
+# Documentation search index: generated from docs/**/*.md by
+# scripts/build-docs-search-index.mjs (prebuild + postinstall). It is ~1.4 MB
+# and rewritten by every docs edit, so committing it would grow the repo by a
+# fresh copy per docs change while adding nothing a build cannot reproduce.
+public/docs-search-index.json

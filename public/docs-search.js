@@ -48,6 +48,13 @@
 	var HEADING_BOOST = 2.2;
 	var TITLE_BOOST = 1.5;
 
+	// How hard to favour sections that contain ALL the query's terms over ones
+	// that contain one of them repeatedly. Tuned on real queries against this
+	// corpus: 1 was too weak to beat a single high-frequency term, 2 started
+	// discarding good partial matches when a query included a word we simply do
+	// not use.
+	var COORD_EXPONENT = 1.5;
+
 	// One document should not be able to fill the result list with five of its
 	// own sections when four other documents also answer the question.
 	var MAX_PER_DOC = 2;
@@ -56,8 +63,8 @@
 	var MAX_TOKEN = 24;
 	var JUNK_TOKEN = /^(?:[0-9a-f]{8,}|\d{6,})$/;
 	var STOPWORDS = {};
-	('a an and are as at be been but by for from had has have how i if in into is it its of on or '
-		+ 'that the their then there these they this to was were what when where which while who will with you your')
+	('a an and are as at be been but by did do does for from had has have how i if in into is it its me my '
+		+ 'of on or our so than that the their then there these they this to us was we were what when where which while who will with you your')
 		.split(' ')
 		.forEach(function (w) {
 			STOPWORDS[w] = true;
@@ -165,14 +172,24 @@
 		}
 	}
 
-	function accumulate(scores, termIndex, weight) {
+	function accumulate(scores, coverage, bit, termIndex, weight) {
 		var weightedIdf = idf(index.dfs[termIndex]) * weight;
 		var avgLen = index.avgLen || 1;
 		eachPosting(termIndex, function (sectionId, tf) {
 			var len = index.sections[sectionId][2] || 1;
 			var norm = tf + K1 * (1 - B + (B * len) / avgLen);
 			scores[sectionId] = (scores[sectionId] || 0) + (weightedIdf * (tf * (K1 + 1))) / norm;
+			coverage[sectionId] = (coverage[sectionId] || 0) | bit;
 		});
+	}
+
+	function popcount(mask) {
+		var n = 0;
+		while (mask) {
+			mask &= mask - 1;
+			n++;
+		}
+		return n;
 	}
 
 	/**
@@ -196,22 +213,33 @@
 		var trailingIsPartial = /[a-z0-9]$/i.test(text);
 
 		var scores = {};
+		// Which of the query's terms each section actually contains, as a bitmask.
+		// Only the first 31 unique terms get a bit, which no real query reaches.
+		var coverage = {};
 		var matched = [];
-		for (var t = 0; t < unique.length; t++) {
+		var scoredTerms = 0;
+		for (var t = 0; t < unique.length && t < 31; t++) {
 			var token = unique[t];
+			var bit = 1 << t;
 			var exact = termId(token);
+			var hitAny = false;
 			if (exact !== -1) {
-				accumulate(scores, exact, 1);
+				accumulate(scores, coverage, bit, exact, 1);
 				matched.push(token);
+				hitAny = true;
 			}
 			if (token === last && trailingIsPartial) {
 				var expansions = prefixTermIds(token);
 				for (var e = 0; e < expansions.length; e++) {
 					if (expansions[e] === exact) continue;
-					accumulate(scores, expansions[e], PREFIX_WEIGHT);
+					accumulate(scores, coverage, bit, expansions[e], PREFIX_WEIGHT);
 					matched.push(terms[expansions[e]]);
+					hitAny = true;
 				}
 			}
+			// A term nobody wrote (a typo, a product we do not document) must not
+			// count against every section for lacking it.
+			if (hitAny) scoredTerms++;
 		}
 
 		var ranked = [];
@@ -222,10 +250,24 @@
 			var doc = index.docs[section[0]];
 			var heading = (section[1] || '').toLowerCase();
 			var title = (doc[1] || '').toLowerCase();
-			var boost = 1;
+			// Scaled by the FRACTION of the query the heading carries, not
+			// compounded per word. Multiplying once per matched term let a long
+			// heading that happens to contain three common query words outrank the
+			// page actually about the subject by an order of magnitude.
+			var inHeading = 0;
+			var inTitle = 0;
 			for (var m = 0; m < unique.length; m++) {
-				if (heading.indexOf(unique[m]) !== -1) boost *= HEADING_BOOST;
-				else if (title.indexOf(unique[m]) !== -1) boost *= TITLE_BOOST;
+				if (heading.indexOf(unique[m]) !== -1) inHeading++;
+				else if (title.indexOf(unique[m]) !== -1) inTitle++;
+			}
+			var of = Math.max(1, scoredTerms);
+			var boost = (1 + ((HEADING_BOOST - 1) * inHeading) / of) * (1 + ((TITLE_BOOST - 1) * inTitle) / of);
+			// Coordination: a section holding every word of the question beats one
+			// holding a single rare word many times. Without this, "fund an agent
+			// wallet" is won by whichever page says "fund" most often rather than
+			// by the page about funding agent wallets.
+			if (scoredTerms > 1) {
+				boost *= Math.pow(popcount(coverage[key] || 0) / scoredTerms, COORD_EXPONENT);
 			}
 			ranked.push({ sectionId: sectionId, docId: section[0], score: scores[key] * boost });
 		}
@@ -234,11 +276,19 @@
 		});
 
 		var perDoc = {};
+		var seenHeading = {};
 		var out = [];
 		for (var r = 0; r < ranked.length && out.length < max; r++) {
 			var hit = ranked[r];
 			var seen = perDoc[hit.docId] || 0;
 			if (seen >= MAX_PER_DOC) continue;
+			// Long-form docs are also published split into chapters, so the same
+			// heading legitimately exists in two places. Both are real
+			// destinations, but showing both spends a result slot to say the same
+			// sentence twice: keep whichever ranked higher.
+			var headingKey = (index.sections[hit.sectionId][1] || '').toLowerCase();
+			if (headingKey && seenHeading[headingKey]) continue;
+			seenHeading[headingKey] = true;
 			perDoc[hit.docId] = seen + 1;
 			out.push(result(hit));
 		}
