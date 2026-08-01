@@ -46,6 +46,8 @@ export function advertisedPackages(markdown) {
 			if (raw.includes('/') && !raw.startsWith('@')) continue;
 			if (raw.startsWith('.') || raw.includes(':') || raw.endsWith('.tgz')) continue;
 			const name = stripVersionRange(raw);
+			// A bare number on an install line is a port or a count, never a package.
+			if (/^\d+$/.test(name)) continue;
 			if (PACKAGE_NAME.test(name)) names.add(name);
 		}
 	}

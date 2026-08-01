@@ -35,12 +35,15 @@ function statTiles(summary, history) {
 		}
 	];
 
-	const trend = history.length
-		? `<div class="stat"><div class="k">Median trend</div><div style="margin-top:6px">${sparkline(
-				history.map((entry) => ({ at: entry.at, score: entry.medianScore })),
-				{ width: 150, height: 40 }
-			)}</div><div class="s">${history.length} scan${history.length === 1 ? '' : 's'} recorded</div></div>`
-		: '';
+	// A sparkline needs at least two points to be a line. Below that the tile
+	// would show a sentence where every neighbouring tile shows a number.
+	const trend =
+		history.length >= 2
+			? `<div class="stat"><div class="k">Median trend</div><div style="margin-top:6px">${sparkline(
+					history.map((entry) => ({ at: entry.at, score: entry.medianScore })),
+					{ width: 150, height: 40 }
+				)}</div><div class="s">${history.length} scans recorded</div></div>`
+			: '';
 
 	return `<section class="stats" aria-label="Fleet summary">
 ${tiles.map((tile) => `<div class="stat ${tile.cls || ''}"><div class="k">${esc(tile.k)}</div><div class="v">${esc(tile.v)}</div><div class="s">${esc(tile.s)}</div></div>`).join('\n')}
@@ -125,11 +128,22 @@ ${rows
 /** The scanning / never-scanned state. It polls for progress rather than spinning. */
 export function scanningPage({ owner, progress, authenticated }) {
 	const pct = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
+	const failed = progress.phase === 'failed' && progress.error;
 	const body = `<section class="hero">
-  <h1>${progress.running ? 'Scanning the fleet' : 'No scan has run yet'}</h1>
+  <h1>${failed ? 'The scan could not run' : progress.running ? 'Scanning the fleet' : 'No scan has run yet'}</h1>
   <p class="lede">Fleet Console enumerates every public repository owned by <strong>${esc(owner)}</strong>, extracts the URLs and
   packages each one advertises, and checks them against the live internet. The first pass takes a few minutes.</p>
 </section>
+${
+	failed
+		? `<section class="panel"><h2>What went wrong</h2><div class="pad">
+  <p class="mono" style="margin-top:0;color:var(--bad)">${esc(progress.error)}</p>
+  <p style="color:var(--muted);margin-bottom:0">The console reports this rather than showing an empty fleet, because an empty
+  fleet reads as "nothing is broken" when the truth is "nothing could be seen". Fix the cause and the next scheduled scan
+  recovers on its own.</p>
+</div></section>`
+		: ''
+}
 ${authenticated ? '' : '<div class="note"><strong>Running unauthenticated.</strong> GitHub allows 60 requests an hour without a token, which covers only a handful of repositories. Set <code>GITHUB_TOKEN</code> for a full scan.</div>'}
 <section class="panel"><div class="pad">
   <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Scan progress"><span style="width:${pct}%"></span></div>

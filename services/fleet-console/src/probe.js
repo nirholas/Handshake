@@ -28,7 +28,7 @@ export const PROBE_STATES = {
 const classifyError = (error) => {
 	const code = error?.cause?.code || error?.code || '';
 	const message = String(error?.message || error || '').toLowerCase();
-	if (error?.name === 'AbortError' || message.includes('timeout') || code === 'UND_ERR_HEADERS_TIMEOUT') return 'timeout';
+	if (error?.name === 'AbortError' || message.includes('timeout') || code === 'ETIMEDOUT' || code === 'UND_ERR_HEADERS_TIMEOUT' || code === 'UND_ERR_CONNECT_TIMEOUT') return 'timeout';
 	if (code === 'ENOTFOUND' || code === 'EAI_AGAIN' || message.includes('getaddrinfo')) return 'dns_failure';
 	if (code === 'ECONNREFUSED') return 'refused';
 	if (code === 'ECONNRESET' || code === 'EPIPE') return 'unreachable';

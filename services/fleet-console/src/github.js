@@ -88,15 +88,29 @@ export async function ghGet(path, { accept, attempts = 3 } = {}) {
 	return { status: 0, data: null, notModified: false, error: String(lastError?.message || lastError) };
 }
 
-/** Every non-fork, non-archived repository owned by `owner`, newest API page first. */
+/**
+ * Every non-fork, non-archived repository owned by `owner`, highest star count first.
+ *
+ * Enumeration failures are thrown rather than swallowed. An expired token
+ * returning 401 would otherwise produce an empty fleet, and an empty fleet
+ * renders as "everything is fine" instead of "the console cannot see anything".
+ */
 export async function listRepos(owner) {
 	const out = [];
 	for (let page = 1; page <= 10; page++) {
-		const { status, data } = await ghGet(`/users/${encodeURIComponent(owner)}/repos?per_page=100&page=${page}&sort=updated`);
-		if (status !== 200 || !Array.isArray(data) || data.length === 0) break;
+		const { status, data, error } = await ghGet(`/users/${encodeURIComponent(owner)}/repos?per_page=100&page=${page}&sort=updated`);
+		if (status === 401) throw new Error('GitHub rejected the credentials (401). GITHUB_TOKEN is missing, expired or revoked.');
+		if (status === 404) throw new Error(`GitHub has no user or organisation called "${owner}" (404). Check FLEET_OWNER.`);
+		if (status === 403 || status === 429) {
+			throw new Error(`GitHub rate limit reached${rateLimit.resetAt ? `, resets at ${rateLimit.resetAt}` : ''}. Set GITHUB_TOKEN to raise the budget from 60 to 5000 requests an hour.`);
+		}
+		if (status === 0) throw new Error(`Could not reach the GitHub API: ${error || 'network failure'}`);
+		if (status !== 200) throw new Error(`GitHub responded ${status} while listing repositories for "${owner}".`);
+		if (!Array.isArray(data) || data.length === 0) break;
 		out.push(...data);
 		if (data.length < 100) break;
 	}
+	if (out.length === 0) throw new Error(`"${owner}" has no public repositories the console can see.`);
 	return out
 		.filter((repo) => (config.includeForks ? true : !repo.fork))
 		.filter((repo) => (config.includeArchived ? true : !repo.archived))

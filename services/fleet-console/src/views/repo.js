@@ -52,6 +52,29 @@ ${rows
 </tbody></table></div>`;
 }
 
+/**
+ * One button per live site, not one per probed path. Several probes on the same
+ * origin are the same site checked twice, and rendering both produced two
+ * identical "Open live site" buttons side by side.
+ */
+function liveSiteButtons(repo) {
+	const seen = new Map();
+	for (const entry of repo.deployments || []) {
+		if (entry.state !== 'live' && entry.state !== 'redirected') continue;
+		let host = '';
+		try {
+			host = new URL(entry.url).host;
+		} catch {
+			continue;
+		}
+		if (!seen.has(host)) seen.set(host, entry.url);
+	}
+	return [...seen]
+		.slice(0, 3)
+		.map(([host, url]) => `<a class="btn" href="${attr(url)}" rel="noopener" target="_blank">Open ${esc(host)}</a>`)
+		.join('');
+}
+
 export function repoPage({ repo, owner, history }) {
 	const checks = repo.checks || [];
 	const passed = checks.filter((entry) => entry.status === 'pass').length;
@@ -73,7 +96,7 @@ export function repoPage({ repo, owner, history }) {
       </div>
       <div class="chips" style="margin-top:12px">
         <a class="btn" href="${attr(repo.htmlUrl)}" rel="noopener" target="_blank">Source on GitHub</a>
-        ${(repo.deployments || []).filter((entry) => entry.state === 'live' || entry.state === 'redirected').slice(0, 2).map((entry) => `<a class="btn" href="${attr(entry.url)}" rel="noopener" target="_blank">Open live site</a>`).join('')}
+        ${liveSiteButtons(repo)}
         <a class="btn" href="/api/repo/${encodeURIComponent(repo.name)}">JSON</a>
         <a class="btn" href="/badge/${encodeURIComponent(repo.name)}.svg">Badge</a>
       </div>
