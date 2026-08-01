@@ -1,0 +1,190 @@
+# okx-chat-bot
+
+Always-on host for the OKX.AI marketplace chat bot (agent **#2632**).
+
+Buyers message our marketplace listing over XMTP. That chat is delivered to a
+local `okx-a2a` daemon, which reads agent identities through an `onchainos`
+wallet session and spawns an AI subsession to author the reply and drive the
+task lifecycle (accept, negotiate, deliver). Both CLIs used to run on a
+developer codespace, which cannot stay up: a rebuild wipes the CLIs and an idle
+nap kills the daemon (observed alive at 21:09, dead by 03:13 the same night).
+OKX's own chat test then reports "no delivery in 30 minutes" and flags the
+listing offline.
+
+This worker is the durable host for that pair. It restores the wallet identity,
+supervises the daemon, rebuilds the AI subsession's world knowledge on every
+boot, and makes the one failure a human must clear (an expired OKX session) page
+loudly with the exact commands to fix it.
+
+## The failure it exists to kill
+
+The dangerous outage here is **silent**. The process stays up, the container
+reports healthy, and chat is simply never delivered because the wallet session
+expired or no XMTP client came online. From the outside that is
+indistinguishable from "nobody messaged us".
+
+So readiness is deliberately strict: a bot that cannot receive a message is
+**not ready**, even though the process is perfectly alive. `/readyz` returns 503
+in every state below except `online`.
+
+| `reason` | Status | Ready | What it means |
+|---|---|---|---|
+| `daemon_down` | down | no | `okx-a2a` is not running. No chat is delivered. |
+| `wallet_unreadable` | unknown | no | `onchainos wallet status` did not answer. Session state unknown. |
+| `session_logged_out` | down | no | Session expired. Every XMTP client is offline. **Needs a human OTP.** |
+| `no_active_client` | degraded | no | Logged in, but 0 XMTP clients serving. The daemon retries every minute. |
+| `ai_provider_uncredentialed` | degraded | no | Chat arrives but the subsession has no key, so it cannot author a reply. |
+| `online` | ok | yes | At least one XMTP client is serving at least one agent identity. |
+
+`classify()` in [session.js](session.js) is pure, so this state machine is
+testable without a daemon, a wallet, or a network.
+
+## Architecture
+
+| File | Role |
+|------|------|
+| `index.js` | Entrypoint. Boot order, health server, session probe, heartbeat, ops alerts, graceful shutdown. |
+| `config.js` | Env-driven config (`loadConfig`, `paths`) and AI-provider selection (`resolveProvider`). |
+| `cli.js` | Timeout-bounded, non-throwing wrappers around the `okx-a2a` and `onchainos` binaries. |
+| `session.js` | Pure health `classify()` plus `loginInstructions()`, the exact commands a human runs. |
+| `state.js` | Tar the wallet/XMTP identity to GCS and restore it on boot (`snapshotState`, `restoreState`). |
+| `supervisor.js` | Owns the `okx-a2a run` child with capped exponential backoff restarts. |
+| `workspace.js` | Rebuilds the AI subsession's briefing and skills from the image on every boot. |
+| `log.js` | Structured JSON lines for Cloud Logging. |
+
+### Three things that are load-bearing
+
+**The daemon runs in the foreground, never via `daemon start`.** `okx-a2a daemon
+start` delegates to an OS autostart unit (systemd/launchd). There is no systemd
+in a container, so that call installs a unit and silently leaves the daemon
+**down**: the exact trap that made the local bot look staged but offline. The
+supported foreground entrypoint is `okx-a2a run`, and `supervisor.js` owns that
+child directly. It also clears the lock file before every spawn, because a
+crashed daemon leaves one behind that blocks the next start.
+
+**Identity lives on disk, not in a database.** `~/.onchainos/keyring.enc` plus
+`session.json` and `machine-identity` are what make the wallet session survive,
+and `~/.okx-agent-task/` holds the XMTP client database. Cloud Run's filesystem
+is in-memory and dies with the revision, so `state.js` tars both trees to one
+GCS object and restores it on boot. Without that, every deploy would log the bot
+out and need a fresh human OTP.
+
+**The AI workspace is rebuilt from the image, not from the snapshot.** The
+adapter spawns the AI CLI with cwd set to `~/.okx-agent-task/workspace`, and
+whatever is in that directory **is** the subsession's world knowledge. A naive
+containerisation ships an agent that knows nothing about three.ws and improvises
+answers to paying buyers. `workspace.js` writes a briefing (as both `CLAUDE.md`
+and `AGENTS.md`, since which one is read depends on the spawned CLI) and copies
+12 skills in on every boot, so a redeploy always ships the current catalog.
+
+## Configuration
+
+Every knob is env-driven, so the same image runs on Cloud Run, on a plain VM, and
+locally with no code change. Defaults are the production posture.
+
+| Env | Default | Purpose |
+|---|---|---|
+| `OKX_BOT_HOME` | `$HOME` | HOME for both CLIs. Decides where all durable state lands. |
+| `PORT` | unset | Health server port. Unset means no health server (fine locally, never on Cloud Run). |
+| `OKX_BOT_AGENT_ID` | `2632` | The marketplace agent this bot answers for. |
+| `OKX_BOT_STATE_BUCKET` | unset | GCS bucket for the state snapshot. Unset means ephemeral mode. |
+| `OKX_BOT_STATE_OBJECT` | `okx-chat-bot/state.tar.gz` | Object name within that bucket. |
+| `OKX_BOT_REPO_ROOT` | `/app` | Where the briefing and skills are read from. |
+| `OKX_BOT_AI_PROVIDER` | auto | Pin the provider (`claude`, `codex`, `hermes`, `openclaw`). |
+| `OKX_BOT_HEARTBEAT_MS` | `30000` | Heartbeat cadence. |
+| `OKX_BOT_SESSION_PROBE_MS` | `60000` | How often health is re-probed. |
+| `OKX_BOT_SNAPSHOT_MS` | `300000` | Periodic state snapshot cadence. |
+| `OKX_BOT_ALERT_REPEAT_MS` | `21600000` | Re-alert ceiling while a bad state persists (6 h). |
+| `OKX_BOT_RESTART_BASE_MS` | `2000` | Daemon restart backoff floor. |
+| `OKX_BOT_RESTART_MAX_MS` | `60000` | Daemon restart backoff ceiling. |
+
+**Provider selection is by credential, not by preference.** A provider CLI with
+no key spawns, fails to authenticate, and produces exactly the symptom this
+worker exists to kill: silence on the buyer's side. So an explicit
+`OKX_BOT_AI_PROVIDER` wins; otherwise `ANTHROPIC_API_KEY` or
+`CLAUDE_CODE_OAUTH_TOKEN` selects `claude`, and `OPENAI_API_KEY` selects
+`codex`. With no credential at all the worker boots, logs an error, and reports
+`ai_provider_uncredentialed` rather than pretending to be healthy.
+
+`DATABASE_URL` is also required, for the heartbeat row.
+
+## Running it
+
+Both CLIs must be on `PATH`. `cliEnv()` prepends `$HOME/.local/bin` (where the
+`onchainos` installer drops its binary) so a local run works whether or not the
+binary has been relocated to `/usr/local/bin`.
+
+```bash
+# Local, ephemeral: no state bucket, no health server.
+npm run worker:okx-bot
+
+# Local, with a health server and an explicit provider.
+PORT=8080 OKX_BOT_AI_PROVIDER=claude npm run worker:okx-bot
+```
+
+Then read the health verdict:
+
+```bash
+curl -s localhost:8080/readyz | jq '{ready: .health.ready, reason: .health.reason, agents}'
+```
+
+To stage the same workspace on a developer machine without running the worker,
+use [scripts/okx-bot-revive.mjs](../../scripts/okx-bot-revive.mjs), which keeps
+the identical skill list.
+
+## HTTP surface
+
+| Path | Behaviour |
+|---|---|
+| `/readyz` | **Strict.** 200 only when `health.ready` is true, 503 otherwise. |
+| any other path | Liveness. Always 200, with the same status body under `ok: true`. |
+
+Liveness is deliberately always-200: Cloud Run must **not** restart the
+container for a logged-out session. A restart cannot fix it (only a human OTP
+can) and a restart loop would destroy the state snapshot cadence.
+
+When a human is needed, the response carries a `remedy` array with the real
+commands, so the fix travels with the status instead of living in a runbook
+someone has to go find.
+
+## Deploying
+
+The service must run `--min-instances=1 --max-instances=1`. This is not a
+capacity choice: the GCS snapshot has exactly one writer, and concurrent
+revisions would interleave snapshots and corrupt the identity.
+
+One-time setup:
+
+1. Create the state bucket and grant the runtime service account
+   `roles/storage.objectAdmin` on it.
+2. Set `OKX_BOT_STATE_BUCKET`, `DATABASE_URL`, and an AI-provider key
+   (`ANTHROPIC_API_KEY` preferred) on the service.
+3. Confirm the image has both CLIs installed and the repo at `OKX_BOT_REPO_ROOT`.
+
+The first boot logs `no state snapshot yet: first boot for this bucket` and
+comes up logged out, which pages a human to complete the initial OTP as
+`claude@three.ws`. Every boot after that restores the session.
+
+Shutdown order matters and is handled on SIGTERM: the daemon is stopped
+**before** the final snapshot, so the sqlite files are quiesced rather than
+copied mid-write. The periodic timer snapshot is a live copy and is
+best-effort by design, so an ungraceful kill loses minutes, not the identity.
+
+## Monitoring
+
+The worker writes a `bot_heartbeat` row (keyed on `worker = 'okx-chat-bot'`)
+carrying the current verdict, agent and client counts, provider, and restart
+count. That feeds `/api/healthz` subsystems and the `gcp-triage` skill.
+
+A transition into a bad state fires an ops alert through `sendOpsAlert`, at most
+once per `OKX_BOT_ALERT_REPEAT_MS` while it persists, so one overnight expiry
+does not become a hundred notifications. Recovery fires a matching info alert.
+
+Daemon stdout and stderr are forwarded into the worker's own log stream under a
+`daemon` prefix, since that output is the only window into XMTP delivery.
+
+## Related
+
+- [scripts/okx-bot-revive.mjs](../../scripts/okx-bot-revive.mjs) stages the same workspace locally.
+- [api/_lib/okx-chat-briefing.js](../../api/_lib/okx-chat-briefing.js) generates the subsession briefing.
+- [workers/README.md](../README.md) is the worker index.

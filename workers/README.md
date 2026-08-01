@@ -65,6 +65,22 @@ Background removal — strips backgrounds from images using BRIA RMBG-2.0 (Apach
 ### `pump-fun-mcp/`
 Remote Model Context Protocol server (a mirror of `/api/pump-fun-mcp`) deployed as a Cloudflare Worker — `worker.js` + `wrangler.toml`, named `pump-fun-mcp`, with `nodejs_compat`. Exposes pump.fun token tools to MCP clients; configurable via `wrangler secret put` (`SOLANA_RPC_URL`, `PUMPFUN_BOT_URL`, `PUMPFUN_BOT_TOKEN`, ...). Deploy with `wrangler deploy`.
 
+## Always-on Node workers
+
+Long-lived Node processes rather than request-scoped services. They hold feeds,
+sessions, or daemons open, so a scheduled cron cannot replace them. Each one
+carries its own README with its env contract and failure modes.
+
+### `okx-chat-bot/`
+Durable host for the OKX.AI marketplace chat bot (agent #2632). Supervises the
+`okx-a2a` XMTP daemon and the `onchainos` wallet session that marketplace chat is
+delivered through, restores that identity from GCS on boot, and rebuilds the AI
+subsession's briefing and skills from the image every time. Readiness is strict:
+a bot that cannot receive a buyer's message reports 503 on `/readyz` even though
+the process is alive, because the outage this worker exists to kill is silent.
+Must run `--min-instances=1 --max-instances=1` (single snapshot writer). Run
+locally with `npm run worker:okx-bot`. See [okx-chat-bot/README.md](okx-chat-bot/README.md).
+
 ## Loose scripts
 
 ### `strategy-executor.js`
