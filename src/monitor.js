@@ -2,8 +2,9 @@
  * /monitor - mission-control board for the three.ws 3D AI agent fleet.
  *
  * Every panel polls a real public endpoint on its own cadence and owns its
- * loading / empty / error states. Polling pauses while the tab is hidden and
- * refreshes everything the moment it becomes visible again.
+ * loading / empty / error states. Panels carry their own controls (search,
+ * sort, period and network toggles, stream filters); polling pauses while the
+ * tab is hidden and refreshes everything the moment it becomes visible again.
  */
 
 const $ = (id) => document.getElementById(id);
@@ -32,6 +33,10 @@ async function getJson(url) {
 	return res.json();
 }
 
+function stamp(badgeEl) {
+	badgeEl.title = 'updated ' + new Date().toISOString().slice(11, 19) + ' UTC';
+}
+
 function showError(bodyEl, badgeEl, message, retry) {
 	badgeEl.textContent = 'stale';
 	badgeEl.dataset.tone = 'err';
@@ -53,13 +58,19 @@ tickClock();
 
 async function loadHomeStats() {
 	try {
-		const s = await getJson('/api/home-stats');
-		if (!s.available) return;
-		$('t-agents').textContent = nf.format(s.agents);
-		$('t-onchain').textContent = nf.format(s.onchain_agents);
-		$('t-forge').textContent = nf.format(s.forge_models);
-		$('t-widgets').textContent = nf.format(s.widgets);
-		$('t-chains').textContent = nf.format(s.chains);
+		const [home, platform] = await Promise.allSettled([getJson('/api/home-stats'), getJson('/api/platform/stats')]);
+		if (home.status === 'fulfilled' && home.value.available) {
+			const s = home.value;
+			$('t-agents').textContent = nf.format(s.agents);
+			$('t-onchain').textContent = nf.format(s.onchain_agents);
+			$('t-forge').textContent = nf.format(s.forge_models);
+			$('t-widgets').textContent = nf.format(s.widgets);
+			$('t-chains').textContent = nf.format(s.chains);
+		}
+		if (platform.status === 'fulfilled') {
+			$('t-avatars').textContent = nf.format(platform.value.avatars);
+			$('t-countries').textContent = nf.format(platform.value.countries);
+		}
 	} catch {
 		/* the bar keeps its previous values; panels surface their own errors */
 	}
@@ -67,8 +78,11 @@ async function loadHomeStats() {
 
 /* ---------------- fleet + spotlight ---------------- */
 
+let roster = [];
 let selectedAgentId = null;
 let spotlightMounted = false;
+let fleetQuery = '';
+let fleetSort = 'live';
 
 function mountSpotlight(agent) {
 	selectedAgentId = agent.id;
@@ -91,6 +105,22 @@ function mountSpotlight(agent) {
 		row.setAttribute('aria-selected', row.dataset.agentId === agent.id ? 'true' : 'false');
 	});
 }
+
+function cycleSpotlight(step) {
+	if (!roster.length) return;
+	const at = roster.findIndex((a) => a.id === selectedAgentId);
+	const next = roster[(at + step + roster.length) % roster.length];
+	mountSpotlight(next);
+	document.querySelector(`.fleet-row[data-agent-id="${next.id}"]`)?.scrollIntoView({ block: 'nearest' });
+}
+
+$('spot-prev').addEventListener('click', () => cycleSpotlight(-1));
+$('spot-next').addEventListener('click', () => cycleSpotlight(1));
+$('spot-full').addEventListener('click', () => {
+	const el = document.querySelector('#spot-stage agent-3d');
+	if (el?.openFullscreen) el.openFullscreen();
+	else el?.requestFullscreen?.();
+});
 
 function fleetRow(agent) {
 	const row = document.createElement('div');
@@ -127,16 +157,21 @@ async function loadFleet() {
 	const body = $('fleet-body');
 	const badge = $('fleet-badge');
 	try {
-		const data = await getJson('/api/agents/public?sort=live&limit=30');
+		const params = new URLSearchParams({ sort: fleetSort, limit: '30' });
+		if (fleetQuery) params.set('q', fleetQuery);
+		const data = await getJson('/api/agents/public?' + params);
 		const agents = data.agents || [];
+		roster = agents;
 		badge.dataset.tone = '';
+		stamp(badge);
 		badge.textContent =
 			data.active_total != null && data.total != null
 				? `${nf.format(data.active_total)} active / ${nf.format(data.total)}`
 				: `${agents.length} shown`;
 		if (!agents.length) {
-			body.innerHTML =
-				'<div class="panel-empty">No agents with recorded activity yet. <a href="/create">Create the first one</a> and it appears here as soon as it acts.</div>';
+			body.innerHTML = fleetQuery
+				? `<div class="panel-empty">No agents match "${esc(fleetQuery)}". Clear the search to see the whole fleet.</div>`
+				: '<div class="panel-empty">No agents with recorded activity yet. <a href="/create">Create the first one</a> and it appears here as soon as it acts.</div>';
 			return;
 		}
 		body.innerHTML = '';
@@ -150,6 +185,19 @@ async function loadFleet() {
 	}
 }
 
+let fleetDebounce = null;
+$('fleet-search').addEventListener('input', (e) => {
+	clearTimeout(fleetDebounce);
+	fleetDebounce = setTimeout(() => {
+		fleetQuery = e.target.value.trim();
+		loadFleet();
+	}, 300);
+});
+$('fleet-sort').addEventListener('change', (e) => {
+	fleetSort = e.target.value;
+	loadFleet();
+});
+
 /* ---------------- on air (live screen casts) ---------------- */
 
 async function loadOnAir() {
@@ -159,6 +207,7 @@ async function loadOnAir() {
 		const data = await getJson('/api/agent-screen-active');
 		const desks = data.desks || [];
 		badge.dataset.tone = '';
+		stamp(badge);
 		badge.textContent = desks.length ? desks.length + ' casting' : 'idle';
 		if (!desks.length) {
 			body.innerHTML =
@@ -181,15 +230,19 @@ async function loadOnAir() {
 	}
 }
 
-/* ---------------- money pulse (24h stats + 7d sparkline + launches) ---------------- */
+/* ---------------- money pulse (stats + sparkline + leaders + launches) ---------------- */
+
+let pulseNetwork = 'mainnet';
 
 async function loadPulseStats() {
 	const body = $('pulse-body');
 	const badge = $('pulse-badge');
 	try {
-		const { data } = await getJson('/api/pulse?view=stats&network=mainnet');
+		const { data } = await getJson('/api/pulse?view=stats&network=' + encodeURIComponent(pulseNetwork));
 		badge.dataset.tone = '';
-		badge.textContent = data.network || 'mainnet';
+		badge.textContent = data.network || pulseNetwork;
+		stamp(badge);
+		const mkt = data.marketplace_24h || {};
 		const tiles = [
 			[usd(data.volume_24h?.usd ?? 0), 'volume 24h', 'green'],
 			[nf.format(data.trades_24h ?? 0), 'trades'],
@@ -197,6 +250,8 @@ async function loadPulseStats() {
 			[nf.format(data.payments_24h ?? 0), 'payments'],
 			[nf.format(data.tips_24h?.count ?? 0), 'tips'],
 			[nf.format(data.active_wallets_24h ?? 0), 'active wallets'],
+			[nf.format(mkt.trials ?? 0), 'skill trials'],
+			[nf.format(mkt.purchases ?? 0), 'skill sales'],
 		];
 		const series = data.series_7d || [];
 		const max = Math.max(1, ...series.map((d) => d.events || 0));
@@ -213,17 +268,54 @@ async function loadPulseStats() {
 					)
 					.join('')}</div>
 			</div>`;
+		renderLeaders(data.top_earners || [], data.busiest_wallets || []);
 		renderLaunches(data.recent_launches || []);
 	} catch (err) {
 		showError(body, badge, 'Pulse stats unreachable (' + err.message + ').', loadPulseStats);
+		showError($('lead-body'), $('lead-badge'), 'Leaderboard unreachable.', loadPulseStats);
 		showError($('launch-body'), $('launch-badge'), 'Launch feed unreachable.', loadPulseStats);
 	}
+}
+
+$('pulse-net').addEventListener('click', (e) => {
+	const btn = e.target.closest('button[data-net]');
+	if (!btn || btn.getAttribute('aria-pressed') === 'true') return;
+	pulseNetwork = btn.dataset.net;
+	$('pulse-net').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+	loadPulseStats();
+});
+
+function renderLeaders(earners, busiest) {
+	const body = $('lead-body');
+	const badge = $('lead-badge');
+	badge.dataset.tone = '';
+	stamp(badge);
+	const list = earners.length ? earners : busiest;
+	badge.textContent = earners.length ? 'tips' : busiest.length ? 'busiest' : 'quiet';
+	if (!list.length) {
+		body.innerHTML =
+			'<div class="panel-empty">No tip earners in the last 24h. Tip any agent from its profile and it climbs this board.</div>';
+		return;
+	}
+	body.innerHTML = list
+		.slice(0, 8)
+		.map(
+			(a, i) => `
+			<a class="desk-row" href="${esc(a.url || '#')}">
+				<span class="fleet-actions" style="min-width:14px">${i + 1}</span>
+				${a.avatar_thumbnail_url ? `<img class="fleet-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" />` : '<div class="fleet-av-fb" aria-hidden="true">?</div>'}
+				<div class="fleet-meta"><div class="fleet-name">${esc(a.name || 'agent')}</div><div class="fleet-sub">${a.tip_count != null ? nf.format(a.tip_count) + ' tips' : nf.format(a.events || 0) + ' events'}</div></div>
+				<span class="wire-amt">${a.usd != null ? usd(a.usd) : ''}</span>
+			</a>`
+		)
+		.join('');
 }
 
 function renderLaunches(launches) {
 	const body = $('launch-body');
 	const badge = $('launch-badge');
 	badge.dataset.tone = '';
+	stamp(badge);
 	badge.textContent = launches.length ? launches.length + ' recent' : 'quiet';
 	if (!launches.length) {
 		body.innerHTML =
@@ -245,19 +337,22 @@ function renderLaunches(launches) {
 
 /* ---------------- x402 revenue ---------------- */
 
+let x402Period = '24h';
+
 async function loadX402() {
 	const body = $('x402-body');
 	const badge = $('x402-badge');
 	try {
-		const { data } = await getJson('/api/x402-revenue?view=stats&period=24h');
-		const t = data.totals || {};
+		const { data } = await getJson('/api/x402-revenue?view=stats&period=' + encodeURIComponent(x402Period));
 		badge.dataset.tone = '';
 		badge.textContent = 'USDC';
+		stamp(badge);
+		const t = data.totals || {};
 		const endpoints = (data.by_endpoint || []).slice(0, 5);
 		const top = Math.max(0.000001, ...endpoints.map((e) => Number(e.gross_usd) || 0));
 		body.innerHTML = `
 			<div class="rev-tiles">
-				<div class="tile"><div class="tile-val" data-tone="green">${usd(t.gross_usd)}</div><div class="tile-lbl">gross 24h</div></div>
+				<div class="tile"><div class="tile-val" data-tone="green">${usd(t.gross_usd)}</div><div class="tile-lbl">gross ${esc(x402Period)}</div></div>
 				<div class="tile"><div class="tile-val">${nf.format(t.total_payments ?? 0)}</div><div class="tile-lbl">settlements</div></div>
 				<div class="tile"><div class="tile-val">${nf.format(t.unique_payers ?? 0)}</div><div class="tile-lbl">payers</div></div>
 				<div class="tile"><div class="tile-val">${usd(t.avg_payment_usd, 4)}</div><div class="tile-lbl">avg payment</div></div>
@@ -267,27 +362,38 @@ async function loadX402() {
 					const g = Number(e.gross_usd) || 0;
 					return `<div class="bar-row"><span class="bar-name">${esc((e.endpoint || '').replace('/api/x402/', '').replace('/api/', ''))}</span><span class="bar-val">${usd(g)} · ${nf.format(e.count || 0)}x</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2, Math.round((g / top) * 100))}%"></div></div></div>`;
 				})
-				.join('') || '<div class="panel-empty">No settled endpoint revenue in the last 24h.</div>'}`;
+				.join('') || `<div class="panel-empty">No settled endpoint revenue in the last ${esc(x402Period)}.</div>`}`;
 	} catch (err) {
 		showError(body, badge, 'Revenue ledger unreachable (' + err.message + ').', loadX402);
 	}
 }
 
+$('x402-period').addEventListener('click', (e) => {
+	const btn = e.target.closest('button[data-period]');
+	if (!btn || btn.getAttribute('aria-pressed') === 'true') return;
+	x402Period = btn.dataset.period;
+	$('x402-period').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+	loadX402();
+});
+
 /* ---------------- agent-to-agent hires ---------------- */
+
+let a2aWindow = 30;
 
 async function loadA2A() {
 	const body = $('a2a-body');
 	const badge = $('a2a-badge');
 	try {
-		const data = await getJson('/api/agent-economy/volume?window=30&top=5&recent=5');
-		const t = data.totals || {};
+		const data = await getJson(`/api/agent-economy/volume?window=${a2aWindow}&top=5&recent=5`);
 		badge.dataset.tone = '';
-		badge.textContent = t.hires ? nf.format(t.hires) + ' hires' : 'x402';
+		badge.textContent = data.totals?.hires ? nf.format(data.totals.hires) + ' hires' : 'x402';
+		stamp(badge);
+		const t = data.totals || {};
 		const providers = data.top_providers || [];
 		if (!t.hires && !providers.length) {
 			body.innerHTML = `
 				<div class="rev-tiles">
-					<div class="tile"><div class="tile-val">${usd(t.volume_usd ?? 0)}</div><div class="tile-lbl">volume 30d</div></div>
+					<div class="tile"><div class="tile-val">${usd(t.volume_usd ?? 0)}</div><div class="tile-lbl">volume ${a2aWindow}d</div></div>
 					<div class="tile"><div class="tile-val">${nf.format(t.pending_hires ?? 0)}</div><div class="tile-lbl">pending</div></div>
 				</div>
 				<div class="panel-empty">No completed agent-to-agent hires in this window. Any agent with a <a href="/agents/economy">listed paid skill</a> can be hired by another agent over x402; settlements land here.</div>`;
@@ -295,7 +401,7 @@ async function loadA2A() {
 		}
 		body.innerHTML = `
 			<div class="rev-tiles">
-				<div class="tile"><div class="tile-val" data-tone="green">${usd(t.volume_usd ?? 0)}</div><div class="tile-lbl">volume 30d</div></div>
+				<div class="tile"><div class="tile-val" data-tone="green">${usd(t.volume_usd ?? 0)}</div><div class="tile-lbl">volume ${a2aWindow}d</div></div>
 				<div class="tile"><div class="tile-val">${nf.format(t.hires ?? 0)}</div><div class="tile-lbl">hires</div></div>
 				<div class="tile"><div class="tile-val">${nf.format(t.unique_providers ?? 0)}</div><div class="tile-lbl">providers</div></div>
 				<div class="tile"><div class="tile-val">${usd(t.avg_hire_usd ?? 0)}</div><div class="tile-lbl">avg hire</div></div>
@@ -311,10 +417,22 @@ async function loadA2A() {
 	}
 }
 
-/* ---------------- live wire (delta-polled event feed) ---------------- */
+$('a2a-window').addEventListener('click', (e) => {
+	const btn = e.target.closest('button[data-window]');
+	if (!btn || btn.getAttribute('aria-pressed') === 'true') return;
+	a2aWindow = Number(btn.dataset.window);
+	$('a2a-window').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+	loadA2A();
+});
+
+/* ---------------- live wire (delta-polled, filterable, pausable) ---------------- */
 
 let wireCursor = null;
-const WIRE_MAX = 40;
+let wireEvents = [];
+let wireFilter = 'all';
+let wirePaused = false;
+const WIRE_MAX = 80;
+const WIRE_SHOWN = 40;
 
 function wireRow(ev, fresh) {
 	const row = document.createElement('div');
@@ -330,7 +448,25 @@ function wireRow(ev, fresh) {
 	return row;
 }
 
+function renderWire(freshIds = new Set()) {
+	const body = $('wire-body');
+	const badge = $('wire-badge');
+	const shown = (wireFilter === 'all' ? wireEvents : wireEvents.filter((e) => e.kind === wireFilter)).slice(0, WIRE_SHOWN);
+	body.innerHTML = '';
+	if (!shown.length) {
+		body.innerHTML =
+			wireFilter === 'all'
+				? '<div class="panel-empty">The wire is quiet: no on-chain agent events yet today. Tips, trades, snipes, payments and launches stream in here the moment they settle.</div>'
+				: `<div class="panel-empty">No ${esc(wireFilter)} events in the buffer. Switch back to all or wait for the next settlement.</div>`;
+		badge.textContent = wirePaused ? 'paused' : 'quiet';
+		return;
+	}
+	for (const ev of shown) body.appendChild(wireRow(ev, freshIds.has(ev.id)));
+	badge.textContent = wirePaused ? 'paused' : 'streaming';
+}
+
 async function loadWire() {
+	if (wirePaused) return;
 	const body = $('wire-body');
 	const badge = $('wire-badge');
 	try {
@@ -338,25 +474,103 @@ async function loadWire() {
 		const { data } = await getJson(url);
 		const events = data.events || [];
 		badge.dataset.tone = '';
+		stamp(badge);
 		if (data.head_cursor) wireCursor = data.head_cursor;
-		const initial = !!body.querySelector('.sk') || !!body.querySelector('.panel-err');
-		if (initial) {
-			body.innerHTML = '';
-			if (!events.length) {
-				body.innerHTML =
-					'<div class="panel-empty">The wire is quiet: no on-chain agent events yet today. Tips, trades, snipes, payments and launches stream in here the moment they settle.</div>';
-				badge.textContent = 'quiet';
-				return;
-			}
-			for (const ev of events) body.appendChild(wireRow(ev, false));
-		} else if (events.length) {
-			body.querySelector('.panel-empty')?.remove();
-			for (const ev of [...events].reverse()) body.prepend(wireRow(ev, true));
-			while (body.childElementCount > WIRE_MAX) body.lastElementChild.remove();
+		const initial = !wireEvents.length;
+		if (!initial && !events.length) {
+			// Nothing new: leave the DOM alone so a reader's scroll position survives.
+			badge.textContent = wirePaused ? 'paused' : 'streaming';
+			return;
 		}
-		badge.textContent = 'streaming';
+		const fresh = new Set();
+		if (!initial) for (const ev of events) fresh.add(ev.id);
+		wireEvents = [...events, ...wireEvents.filter((e) => !events.some((n) => n.id === e.id))].slice(0, WIRE_MAX);
+		renderWire(fresh);
 	} catch (err) {
 		showError(body, badge, 'Event wire unreachable (' + err.message + ').', loadWire);
+	}
+}
+
+$('wire-filters').addEventListener('click', (e) => {
+	const btn = e.target.closest('button[data-kind]');
+	if (!btn) return;
+	wireFilter = btn.dataset.kind;
+	$('wire-filters').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+	renderWire();
+});
+
+$('wire-pause').addEventListener('click', () => {
+	wirePaused = !wirePaused;
+	const btn = $('wire-pause');
+	btn.setAttribute('aria-pressed', wirePaused ? 'true' : 'false');
+	btn.textContent = wirePaused ? 'resume' : 'pause';
+	if (!wirePaused) loadWire();
+	else $('wire-badge').textContent = 'paused';
+});
+
+/* ---------------- forge feed ---------------- */
+
+async function loadForge() {
+	const body = $('forge-body');
+	const badge = $('forge-badge');
+	try {
+		const data = await getJson('/api/forge-gallery?scope=community&limit=18');
+		badge.dataset.tone = '';
+		stamp(badge);
+		if (!data.enabled) {
+			body.innerHTML = '<div class="panel-empty">The community forge gallery is not enabled on this deployment.</div>';
+			badge.textContent = 'off';
+			return;
+		}
+		const creations = (data.creations || []).filter((c) => c.preview_image_url);
+		badge.textContent = creations.length ? creations.length + ' recent' : 'quiet';
+		if (!creations.length) {
+			body.innerHTML =
+				'<div class="panel-empty">No finished community creations yet. <a href="/forge">Forge a 3D model from text</a> and it shows up here.</div>';
+			return;
+		}
+		body.innerHTML = `<div class="forge-grid">${creations
+			.slice(0, 12)
+			.map(
+				(c) => `
+				<a class="forge-cell" href="/creations" title="${esc((c.prompt || '').slice(0, 140))}">
+					<img src="${esc(c.preview_image_url)}" alt="${esc((c.prompt || '3D creation').slice(0, 80))}" loading="lazy" />
+					<span class="forge-tag">${esc(c.model_category && c.model_category !== 'other' ? c.model_category : rel(c.created_at) + ' ago')}</span>
+				</a>`
+			)
+			.join('')}</div>`;
+	} catch (err) {
+		showError(body, badge, 'Forge gallery unreachable (' + err.message + ').', loadForge);
+	}
+}
+
+/* ---------------- crews ---------------- */
+
+async function loadCrews() {
+	const body = $('crew-body');
+	const badge = $('crew-badge');
+	try {
+		const { data } = await getJson('/api/crews/directory?limit=8');
+		const crews = data.crews || [];
+		badge.dataset.tone = '';
+		stamp(badge);
+		badge.textContent = crews.length ? crews.length + ' crews' : 'none yet';
+		if (!crews.length) {
+			body.innerHTML =
+				'<div class="panel-empty">No crews founded yet. <a href="/crews">Found the first crew</a>: pick a tag, invite your people, and the whole roster stands in one 3D headquarters.</div>';
+			return;
+		}
+		body.innerHTML = crews
+			.map(
+				(c) => `
+				<a class="desk-row" href="/crews">
+					<span class="launch-sym" style="min-width:44px">${esc(c.tag)}</span>
+					<div class="fleet-meta"><div class="fleet-name">${esc(c.name || c.tag)}</div><div class="fleet-sub">${nf.format(c.memberCount || 0)} member${c.memberCount === 1 ? '' : 's'}</div></div>
+				</a>`
+			)
+			.join('');
+	} catch (err) {
+		showError(body, badge, 'Crew directory unreachable (' + err.message + ').', loadCrews);
 	}
 }
 
@@ -368,6 +582,7 @@ async function loadSystems() {
 	try {
 		const s = await getJson('/api/status');
 		badge.dataset.tone = '';
+		stamp(badge);
 		const dot = $('bar-dot');
 		if (s.state === 'operational' || (s.summary && s.summary.operational === s.summary.total)) {
 			dot.dataset.state = 'ok';
@@ -400,7 +615,7 @@ async function loadSystems() {
 	}
 }
 
-/* ---------------- scheduler ---------------- */
+/* ---------------- scheduler + keyboard ---------------- */
 
 const JOBS = [
 	[loadHomeStats, 300],
@@ -410,6 +625,8 @@ const JOBS = [
 	[loadX402, 90],
 	[loadA2A, 120],
 	[loadWire, 15],
+	[loadForge, 120],
+	[loadCrews, 180],
 	[loadSystems, 120],
 ];
 
@@ -420,6 +637,28 @@ for (const [job, seconds] of JOBS) {
 	}, seconds * 1000);
 }
 
+function refreshAll() {
+	for (const [job] of JOBS) job();
+}
+
+$('refresh-all').addEventListener('click', refreshAll);
+
 document.addEventListener('visibilitychange', () => {
-	if (!document.hidden) for (const [job] of JOBS) job();
+	if (!document.hidden) refreshAll();
+});
+
+document.addEventListener('keydown', (e) => {
+	if (e.metaKey || e.ctrlKey || e.altKey) return;
+	const tag = document.activeElement?.tagName;
+	if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement?.isContentEditable) return;
+	if (e.key === 'f') {
+		e.preventDefault();
+		$('fleet-search').focus();
+	} else if (e.key === 'r') {
+		refreshAll();
+	} else if (e.key === '[') {
+		cycleSpotlight(-1);
+	} else if (e.key === ']') {
+		cycleSpotlight(1);
+	}
 });

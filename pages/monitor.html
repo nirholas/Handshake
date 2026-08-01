@@ -142,6 +142,35 @@
 				.mon-bar-stats { margin-left: 0; }
 			}
 
+			/* Panel controls */
+			.panel-ctrl { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--mon-border); background: rgba(127, 127, 127, 0.02); flex-wrap: wrap; flex-shrink: 0; }
+			.ctrl-input { flex: 1; min-width: 80px; background: var(--mon-bg); border: 1px solid var(--mon-border); color: var(--mon-text); font: inherit; font-size: 11px; padding: 3px 8px; }
+			.ctrl-input::placeholder { color: var(--mon-faint); }
+			.ctrl-input:focus { outline: none; border-color: var(--mon-green); }
+			.ctrl-select { background: var(--mon-bg); border: 1px solid var(--mon-border); color: var(--mon-text); font: inherit; font-size: 10px; padding: 3px 6px; cursor: pointer; }
+			.ctrl-select:hover, .ctrl-select:focus-visible { border-color: var(--mon-border-2); outline: none; }
+			.seg { display: inline-flex; border: 1px solid var(--mon-border); }
+			.seg button { appearance: none; background: transparent; border: none; color: var(--mon-dim); font: inherit; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 8px; cursor: pointer; transition: color 0.12s, background 0.12s; }
+			.seg button:hover { color: var(--mon-text); }
+			.seg button[aria-pressed="true"] { background: var(--mon-surface-2); color: var(--mon-text); }
+			.seg button:focus-visible { outline: 1px solid var(--mon-green); outline-offset: -1px; }
+			.chip { appearance: none; background: transparent; border: 1px solid var(--mon-border); color: var(--mon-dim); font: inherit; font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; cursor: pointer; transition: color 0.12s, border-color 0.12s; }
+			.chip:hover { color: var(--mon-text); border-color: var(--mon-border-2); }
+			.chip[aria-pressed="true"] { color: var(--mon-green); border-color: var(--mon-green); }
+			.chip:focus-visible { outline: 1px solid var(--mon-green); outline-offset: 1px; }
+			.icon-btn { appearance: none; background: transparent; border: 1px solid var(--mon-border); color: var(--mon-dim); font: inherit; font-size: 10px; line-height: 1.2; padding: 3px 8px; cursor: pointer; transition: color 0.12s, border-color 0.12s; }
+			.icon-btn:hover, .icon-btn:focus-visible { color: var(--mon-text); border-color: var(--mon-border-2); outline: none; }
+			.icon-btn[aria-pressed="true"] { color: var(--mon-amber); border-color: var(--mon-amber); }
+			.mon-kbd { font-size: 9px; color: var(--mon-faint); border: 1px solid var(--mon-border); border-radius: 3px; padding: 0 4px; }
+
+			/* Forge feed */
+			.forge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+			.forge-cell { position: relative; display: block; aspect-ratio: 1; background: var(--mon-surface-2); border: 1px solid var(--mon-border); overflow: hidden; }
+			.forge-cell img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s; }
+			.forge-cell:hover img, .forge-cell:focus-visible img { transform: scale(1.06); }
+			.forge-cell:focus-visible { outline: 1px solid var(--mon-green); }
+			.forge-tag { position: absolute; left: 0; right: 0; bottom: 0; font-size: 8px; color: #e8e8e8; background: linear-gradient(transparent, rgba(0, 0, 0, 0.82)); padding: 12px 5px 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 			/* Skeletons */
 			.sk { background: rgba(127,127,127,0.08); border-radius: 3px; animation: mon-shimmer 1.3s ease-in-out infinite; }
 			@keyframes mon-shimmer { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
@@ -251,10 +280,13 @@
 				<div class="mon-bar-stats" id="bar-stats" aria-label="Platform totals">
 					<span class="mon-bar-stat">agents <b id="t-agents">·</b></span>
 					<span class="mon-bar-stat">on-chain <b id="t-onchain">·</b></span>
+					<span class="mon-bar-stat">avatars <b id="t-avatars">·</b></span>
 					<span class="mon-bar-stat">3D models forged <b id="t-forge">·</b></span>
 					<span class="mon-bar-stat">live widgets <b id="t-widgets">·</b></span>
 					<span class="mon-bar-stat">chains <b id="t-chains">·</b></span>
+					<span class="mon-bar-stat">countries <b id="t-countries">·</b></span>
 				</div>
+				<button type="button" class="icon-btn" id="refresh-all" title="Refresh every panel now (r)" aria-label="Refresh every panel now">refresh <span class="mon-kbd">r</span></button>
 			</div>
 
 			<div class="mon-grid">
@@ -262,6 +294,15 @@
 					<div class="panel-head">
 						<span class="panel-title" id="p-fleet-t"><a href="/agents">Fleet</a></span>
 						<span class="panel-badge" id="fleet-badge">loading</span>
+					</div>
+					<div class="panel-ctrl">
+						<input type="search" class="ctrl-input" id="fleet-search" placeholder="Search agents... ( f )" aria-label="Search agents by name or description" />
+						<select class="ctrl-select" id="fleet-sort" aria-label="Sort fleet">
+							<option value="live" selected>most active</option>
+							<option value="newest">newest</option>
+							<option value="popular">popular</option>
+							<option value="name">name</option>
+						</select>
 					</div>
 					<div class="panel-body" id="fleet-body" role="listbox" aria-label="Agents ranked by most recent activity">
 						<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
@@ -271,7 +312,12 @@
 				<section class="panel span-4 tall" aria-labelledby="p-spot-t">
 					<div class="panel-head">
 						<span class="panel-title" id="p-spot-t">Spotlight</span>
-						<span class="panel-badge" id="spot-badge">3D live</span>
+						<span style="display:flex;gap:5px;align-items:center">
+							<button type="button" class="icon-btn" id="spot-prev" title="Previous agent" aria-label="Previous agent">&lt;</button>
+							<button type="button" class="icon-btn" id="spot-next" title="Next agent" aria-label="Next agent">&gt;</button>
+							<button type="button" class="icon-btn" id="spot-full" title="Open avatar fullscreen" aria-label="Open avatar fullscreen">full</button>
+							<span class="panel-badge" id="spot-badge">3D live</span>
+						</span>
 					</div>
 					<div class="spot-stage" id="spot-stage"></div>
 					<div class="spot-foot">
@@ -297,7 +343,13 @@
 				<section class="panel span-4" aria-labelledby="p-pulse-t">
 					<div class="panel-head">
 						<span class="panel-title" id="p-pulse-t"><a href="/pulse">Money Pulse · 24h</a></span>
-						<span class="panel-badge" id="pulse-badge">mainnet</span>
+						<span style="display:flex;gap:5px;align-items:center">
+							<span class="seg" id="pulse-net" role="group" aria-label="Network">
+								<button type="button" data-net="mainnet" aria-pressed="true">main</button>
+								<button type="button" data-net="devnet" aria-pressed="false">dev</button>
+							</span>
+							<span class="panel-badge" id="pulse-badge">·</span>
+						</span>
 					</div>
 					<div class="panel-body" id="pulse-body">
 						<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
@@ -306,8 +358,15 @@
 
 				<section class="panel span-4" aria-labelledby="p-x402-t">
 					<div class="panel-head">
-						<span class="panel-title" id="p-x402-t"><a href="/x402-revenue">x402 Revenue · 24h</a></span>
-						<span class="panel-badge" id="x402-badge">USDC</span>
+						<span class="panel-title" id="p-x402-t"><a href="/x402-revenue">x402 Revenue</a></span>
+						<span style="display:flex;gap:5px;align-items:center">
+							<span class="seg" id="x402-period" role="group" aria-label="Revenue period">
+								<button type="button" data-period="24h" aria-pressed="true">24h</button>
+								<button type="button" data-period="7d" aria-pressed="false">7d</button>
+								<button type="button" data-period="30d" aria-pressed="false">30d</button>
+							</span>
+							<span class="panel-badge" id="x402-badge">USDC</span>
+						</span>
 					</div>
 					<div class="panel-body" id="x402-body">
 						<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
@@ -316,8 +375,15 @@
 
 				<section class="panel span-4" aria-labelledby="p-a2a-t">
 					<div class="panel-head">
-						<span class="panel-title" id="p-a2a-t"><a href="/agent-economy-volume">A2A Hires · 30d</a></span>
-						<span class="panel-badge" id="a2a-badge">x402</span>
+						<span class="panel-title" id="p-a2a-t"><a href="/agent-economy-volume">A2A Hires</a></span>
+						<span style="display:flex;gap:5px;align-items:center">
+							<span class="seg" id="a2a-window" role="group" aria-label="Hire window">
+								<button type="button" data-window="7" aria-pressed="false">7d</button>
+								<button type="button" data-window="30" aria-pressed="true">30d</button>
+								<button type="button" data-window="90" aria-pressed="false">90d</button>
+							</span>
+							<span class="panel-badge" id="a2a-badge">x402</span>
+						</span>
 					</div>
 					<div class="panel-body" id="a2a-body">
 						<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
@@ -327,10 +393,31 @@
 				<section class="panel span-6" aria-labelledby="p-wire-t">
 					<div class="panel-head">
 						<span class="panel-title" id="p-wire-t"><a href="/pulse">Live Wire</a></span>
-						<span class="panel-badge" id="wire-badge">·</span>
+						<span style="display:flex;gap:5px;align-items:center">
+							<button type="button" class="icon-btn" id="wire-pause" aria-pressed="false" title="Pause the stream" aria-label="Pause or resume the stream">pause</button>
+							<span class="panel-badge" id="wire-badge">·</span>
+						</span>
+					</div>
+					<div class="panel-ctrl" id="wire-filters" role="group" aria-label="Filter events by kind">
+						<button type="button" class="chip" data-kind="all" aria-pressed="true">all</button>
+						<button type="button" class="chip" data-kind="tip" aria-pressed="false">tips</button>
+						<button type="button" class="chip" data-kind="trade" aria-pressed="false">trades</button>
+						<button type="button" class="chip" data-kind="snipe" aria-pressed="false">snipes</button>
+						<button type="button" class="chip" data-kind="payment" aria-pressed="false">payments</button>
+						<button type="button" class="chip" data-kind="launch" aria-pressed="false">launches</button>
 					</div>
 					<div class="panel-body" id="wire-body" aria-live="polite">
 						<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
+					</div>
+				</section>
+
+				<section class="panel span-3" aria-labelledby="p-lead-t">
+					<div class="panel-head">
+						<span class="panel-title" id="p-lead-t"><a href="/pulse">Leaders · 24h</a></span>
+						<span class="panel-badge" id="lead-badge">tips</span>
+					</div>
+					<div class="panel-body" id="lead-body">
+						<div class="sk sk-row"></div><div class="sk sk-row"></div>
 					</div>
 				</section>
 
@@ -340,6 +427,26 @@
 						<span class="panel-badge" id="launch-badge">·</span>
 					</div>
 					<div class="panel-body" id="launch-body">
+						<div class="sk sk-row"></div><div class="sk sk-row"></div>
+					</div>
+				</section>
+
+				<section class="panel span-6" aria-labelledby="p-forge-t">
+					<div class="panel-head">
+						<span class="panel-title" id="p-forge-t"><a href="/creations">Forge Feed</a></span>
+						<span class="panel-badge" id="forge-badge">text to 3D</span>
+					</div>
+					<div class="panel-body" id="forge-body">
+						<div class="sk sk-row"></div><div class="sk sk-row"></div>
+					</div>
+				</section>
+
+				<section class="panel span-3" aria-labelledby="p-crew-t">
+					<div class="panel-head">
+						<span class="panel-title" id="p-crew-t"><a href="/crews">Crews</a></span>
+						<span class="panel-badge" id="crew-badge">·</span>
+					</div>
+					<div class="panel-body" id="crew-body">
 						<div class="sk sk-row"></div><div class="sk sk-row"></div>
 					</div>
 				</section>
