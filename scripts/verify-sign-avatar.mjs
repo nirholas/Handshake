@@ -88,6 +88,10 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	}
 
 	// The camera: a drag has to move the view and surface the reset affordance.
+	// Measure only once the stage is centred, or the earlier interactions leave
+	// it scrolled and the synthetic drag lands somewhere else entirely.
+	await page.$eval(stageSel, (el) => el.scrollIntoView({ block: 'center' }));
+	await page.waitForTimeout(500);
 	const box = await page.$eval(`${stageSel} canvas`, (el) => {
 		const r = el.getBoundingClientRect();
 		return { x: r.x, y: r.y, w: r.width, h: r.height };

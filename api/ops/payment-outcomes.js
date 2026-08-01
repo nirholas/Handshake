@@ -11,8 +11,9 @@
 //                  split, top failure reasons, settled volume.
 //   ring_settle  : gatherX402SettleHealth(), the outbound settle-success-rate
 //                  sensor (3h window, rail-fault allowlist).
-//   sponsor      : fee-wallet SOL vs its floor plus measured burn (7d of
-//                  fee_lamports) and the runway in days that implies.
+//   sponsor      : fee-wallet SOL vs its floor plus measured burn (fee_lamports
+//                  over a stated window) and the runway in days that implies,
+//                  including the threshold the scheduled monitor alerts on.
 //
 // Auth: authorizeOps (admin session, or x-ops-secret / OPS_SECRET): the same
 // gate as /api/ops/health, so the /admin/ops dashboard reuses its stored
@@ -125,34 +126,36 @@ async function inboundBoard() {
 }
 
 async function sponsorBoard() {
-	// Balances via the ring monitor with alerting disabled: a dashboard READ
-	// must never page anyone; the scheduled monitor owns alerting.
+	// Balances AND runway via the ring monitor with alerting disabled: a dashboard
+	// READ must never page anyone; the scheduled monitor owns alerting. The burn
+	// and runway are computed there (api/_lib/x402/sponsor-runway.js) so the number
+	// this board renders and the number the alert fires on are the same number,
+	// measured the same way, over the same window.
 	const ring = await checkRingWallets({ sendAlert: async () => {} });
 	const sponsor = ring.wallets.find((w) => w.role === 'sponsor') || null;
+	const runway = ring.sponsorRunway || null;
 
-	// Measured burn, not a remembered constant: fee_lamports over settled
-	// settles for 7 days (ISSUES.md item 6 records the folklore number being
-	// wrong by roughly 10x, so derive it every time).
-	const [burn] = await sql`
-		SELECT count(*)::int AS settles,
-		       coalesce(sum(fee_lamports), 0)::bigint AS lamports
-		FROM x402_self_facilitator_log
-		WHERE ts >= now() - interval '7 days'
-		  AND action = 'settle' AND ok = true
-	`;
-	const burnSolPerDay = Number(burn?.lamports || 0) / 7 / 1e9;
-	const sol = sponsor?.sol ?? null;
 	return {
 		configured: Boolean(sponsor?.address),
 		address: sponsor?.address || null,
-		sol,
+		sol: sponsor?.sol ?? null,
+		// The ring's 1.5x watch floor (what `below_floor` compares against) and the
+		// facilitator's hard floor (where settling actually stops) are different
+		// numbers, and conflating them is how a "safe" reading precedes an outage.
 		sol_floor: sponsor?.sol_floor ?? null,
+		settle_floor_sol: runway?.floor_sol ?? null,
 		below_floor: Boolean(sponsor?.sol_low),
-		settles_7d: burn?.settles ?? 0,
-		burn_sol_per_day_7d: Math.round(burnSolPerDay * 1e6) / 1e6,
-		runway_days: sol != null && burnSolPerDay > 0
-			? Math.round((sol / burnSolPerDay) * 10) / 10
-			: null,
+		// Measured burn, never a remembered constant: fee_lamports over successful
+		// settles in the stated window (ISSUES.md item 6 records the folklore number
+		// being wrong by roughly 10x, so it is derived on every read).
+		burn_window_days: runway?.burn_window_days ?? null,
+		settles_in_window: runway?.settles_in_window ?? 0,
+		burn_sol_per_day: runway?.burn_sol_per_day ?? null,
+		runway_days: runway?.runway_days ?? null,
+		runway_days_to_floor: runway?.runway_days_to_floor ?? null,
+		runway_alert_days: runway?.alert_days ?? null,
+		runway_status: runway?.status ?? 'unknown',
+		runway_reason: runway?.reason ?? null,
 	};
 }
 

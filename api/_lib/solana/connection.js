@@ -199,6 +199,11 @@ const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m — transient 429
 const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m — bad/expired key on this provider only
 const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m — provider 5xx
 const NETWORK_COOLDOWN_MS = 30_000; // 30s — fetch threw (DNS/connection blip)
+// A lane refusing ONE call shape is demoted for that method alone, never for the
+// lane. Short, because a policy block is a provider setting that can change and
+// re-probing costs exactly one request that transparently fails over — unlike a
+// quota probe, which burns the very budget it is testing.
+const METHOD_DEMOTION_MS = 15 * 60_000; // 15m — this lane refuses this method
 const PUBLIC_MAINNET = 'https://api.mainnet-beta.solana.com';
 const PUBLIC_DEVNET = 'https://api.devnet.solana.com';
 
@@ -343,14 +348,34 @@ function publishCooldowns(now) {
 		.catch(() => {});
 }
 
-// A provider refusing one call shape (a blocked method, an unsupported filter, an
-// unindexed account key) rather than the caller. Endpoint-scoped credentials are
-// not the problem, so the lane must survive the refusal; only this request fails
-// over. Kept separate from isProviderTierError, which matches paid-plan gating.
-function isBlockedCallShape(bodyText) {
-	return /request blocked|blocked parameter|excluded from account secondary indexes|method .*(not supported|is not available|disabled)/i.test(
-		bodyText || '',
-	);
+// Every way a provider says "not THIS call" while staying perfectly healthy for
+// every other call. Three distinct phrasings live here because three distinct
+// mechanisms produce them, and all three were previously scattered across two
+// near-duplicate matchers that disagreed about which strings counted:
+//
+//   • POLICY BLOCK — the node is configured to refuse a shape.
+//     PublicNode getTokenAccountsByOwner → `Request blocked. Details: blocked
+//     parameter: params.1.programId`; PublicNode getProgramAccounts → `… excluded
+//     from account secondary indexes; this RPC method unavailable for key`;
+//     MagicBlock getProgramAccounts → `Your IP or provider is blocked from this
+//     endpoint`.
+//   • TIER GATE — the method exists but the keyless/free plan may not call it.
+//     Tatum getBalance / getSignaturesForAddress → `available for paid plans only`.
+//   • METHOD DISABLED — an operator switched the shape off on that node.
+//
+// All three are lane-and-method specific: the next lane serves the same call
+// normally, and this lane serves every other call normally. That is precisely the
+// signature of a METHOD demotion, never of a lane bench, and never of an auth
+// fault. Matching on wording (not on the JSON-RPC code) is deliberate: PublicNode
+// returns -32602 for a policy block, the same code a genuine invalid-params error
+// uses, and a genuine invalid-params error must NOT demote anything because every
+// lane would reject it identically.
+const METHOD_REFUSAL =
+	/request blocked|blocked parameter|excluded from account secondary indexes|this rpc method unavailable|blocked from this endpoint|method .*(?:not supported|is not available|disabled)|not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i;
+
+/** True when `text` is a provider refusing one call shape rather than the caller. */
+export function isMethodRefusal(text) {
+	return METHOD_REFUSAL.test(text || '');
 }
 
 function cooldownMsFor(status, bodyText) {
@@ -381,7 +406,13 @@ function cooldownMsFor(status, bodyText) {
 	// primary was evicted by its own routine traffic and the rotation cascaded onto
 	// the exhausted paid lanes. The endpoint is fine, this one request is not: fail
 	// over for the call, keep the lane.
-	if (status === 403 && isBlockedCallShape(bodyText)) return NETWORK_COOLDOWN_MS;
+	//
+	// The rotating fetch no longer reaches this branch — it recognises the refusal
+	// first and demotes the METHOD instead of the lane (see markMethodDemotion), so
+	// the lane keeps serving every other call shape with no cooldown at all. The
+	// branch stays because markEndpointCooldown is exported and must still classify
+	// a blocked call shape as the cheapest window rather than a 30m auth bench.
+	if (status === 403 && isMethodRefusal(bodyText)) return NETWORK_COOLDOWN_MS;
 	if (status === 401 || status === 403) return AUTH_COOLDOWN_MS;
 	// 404/410: the endpoint URL is dead or misrouted (expired Quicknode/Alchemy
 	// app, wrong path) — a persistent misconfiguration, so park it like an auth
@@ -394,6 +425,99 @@ function cooldownMsFor(status, bodyText) {
 /** True when `url` is currently parked in cooldown and should be skipped. */
 export function isEndpointCooling(url) {
 	return (_endpointCooldown.get(url) || 0) > Date.now();
+}
+
+// ---------------------------------------------------------------------------
+// Per-method lane capability
+// ---------------------------------------------------------------------------
+// The lane cooldown above is the right tool for a provider that cannot serve
+// ANY call — quota spent, key rejected, node down. It is the wrong tool for the
+// far more common free-lane failure: a provider that serves most of the chain
+// happily and refuses exactly one call shape. PublicNode answers getBalance,
+// getLatestBlockhash and getSignatureStatuses perfectly while refusing
+// getTokenAccountsByOwner with a programId filter and getProgramAccounts
+// outright; MagicBlock serves the token filters and IP-blocks
+// getProgramAccounts. Parking the whole lane on those refusals meant a lane's
+// own routine traffic evicted it, and the rotation cascaded down onto the
+// exhausted paid lanes that the free chain exists to protect.
+//
+// So a method-level refusal demotes (url, method) and nothing else: the lane
+// stays in rotation for every other shape, and only this shape skips it. It is
+// never an auth fault, so it never earns the 30m auth bench and is never
+// published as a fleet-wide bench.
+//
+// Deliberately process-local, unlike the quota breaker. Re-discovering a method
+// block on a cold instance costs ONE request that transparently fails over.
+// Re-discovering a quota block costs a request against a plan that is already
+// over its cap, which is what keeps a daily cap pinned — that asymmetry is the
+// whole reason the quota verdict is shared and this one is not.
+const _methodDemotion = new Map(); // `${url} ${method}` → expiry ms
+
+const methodKey = (url, method) => `${url} ${method}`;
+
+/**
+ * The JSON-RPC method names carried by a request body, deduped. Handles the
+ * single-call and batch forms web3.js emits. Returns [] for an unreadable body,
+ * which makes every capability check a no-op — an unparseable request must never
+ * silently skip a healthy lane.
+ */
+export function rpcMethodsFromBody(body) {
+	if (typeof body !== 'string' || !body) return [];
+	let parsed;
+	try {
+		parsed = JSON.parse(body);
+	} catch {
+		return [];
+	}
+	const items = Array.isArray(parsed) ? parsed : [parsed];
+	const out = [];
+	for (const item of items) {
+		const m = item && typeof item === 'object' ? item.method : null;
+		if (typeof m === 'string' && m && !out.includes(m)) out.push(m);
+	}
+	return out;
+}
+
+/** True when `url` is currently demoted for `method`. */
+export function isMethodDemoted(url, method) {
+	return (_methodDemotion.get(methodKey(url, method)) || 0) > Date.now();
+}
+
+/**
+ * True when `url` is demoted for ANY method in `methods`. A JSON-RPC batch is
+ * atomic from the caller's side: if one member would be refused, the whole batch
+ * comes back partially broken, so the lane is skipped for the batch.
+ */
+export function isAnyMethodDemoted(url, methods) {
+	return methods.some((m) => isMethodDemoted(url, m));
+}
+
+/**
+ * Demote `url` for each of `methods` for METHOD_DEMOTION_MS. Returns the window
+ * so the caller can log it. Never touches the lane cooldown.
+ */
+export function markMethodDemotion(url, methods, now = Date.now()) {
+	const until = now + METHOD_DEMOTION_MS;
+	for (const m of methods) _methodDemotion.set(methodKey(url, m), until);
+	return METHOD_DEMOTION_MS;
+}
+
+/**
+ * Every live (url, method) demotion, for the ops surface. Expired entries are
+ * dropped as they are read, which is the only reaping this map needs: the key
+ * space is bounded by lanes × methods.
+ */
+export function rpcMethodDemotions(now = Date.now()) {
+	const out = [];
+	for (const [key, until] of _methodDemotion) {
+		if (until <= now) {
+			_methodDemotion.delete(key);
+			continue;
+		}
+		const [url, method] = key.split(' ');
+		out.push({ url, method, remainingMs: until - now });
+	}
+	return out;
 }
 
 /**
@@ -635,17 +759,8 @@ const PROVIDER_CAPACITY_CODES = new Set([
 	429, // Alchemy: monthly capacity exceeded, reported as a JSON-RPC code
 ]);
 
-// A provider that gates a method behind its paid/registered tier answers with a
-// method-shaped JSON-RPC error (Tatum returns -32601-class codes for
-// `getBalance` / `getSignaturesForAddress` on the keyless lane). The code alone
-// is indistinguishable from a genuinely absent method — which is deterministic
-// and must NOT rotate — so this matches the plan-gate phrasing instead. Unlike a
-// missing method, a tier gate is provider-specific: the next lane serves the call
-// normally, so failing over is the correct disposition. Left unclassified these
-// surfaced straight to the caller and blinded every getSignaturesForAddress
-// consumer (the ring leak scanner) and every getBalance consumer the moment the
-// rotation cascaded past the keyed lanes onto Tatum.
-// A keyless lane can also refuse a method by POLICY rather than by tier, and the
+// A provider that refuses one call shape — by paid-tier gate, by policy, or by
+// switching the method off — answers with a method-shaped JSON-RPC error, and the
 // dangerous variant answers HTTP 200 so no status-driven rotation fires. Measured
 // on the live free lanes 2026-07-30:
 //   • PublicNode getProgramAccounts → 200 + {code:-32010, "… excluded from account
@@ -655,19 +770,19 @@ const PROVIDER_CAPACITY_CODES = new Set([
 //     invalid params, so the code alone would wrongly read as deterministic
 //   • MagicBlock getProgramAccounts → {code:403, "Your IP or provider is blocked
 //     from this endpoint"}
-// All three are provider-specific: another lane serves the same call normally, so
-// rotating is correct. Unclassified, the 200-status one surfaced straight to the
-// caller and hard-failed the $THREE holder-gating and token-balance readers
-// (api/_lib/balances.js, api/_lib/coin/holders.js, api/_lib/embed-gate.js,
-// api/scene/gate-check.js) whenever the rotation was sitting on that lane.
-const PROVIDER_POLICY_BLOCK = /excluded from account secondary indexes|this rpc method unavailable|request blocked|blocked parameter|blocked from this endpoint/i;
-
+//   • Tatum getBalance / getSignaturesForAddress → -16401 "available for paid
+//     plans only", a code otherwise indistinguishable from a genuinely absent
+//     method (which IS deterministic and must never rotate)
+// Every one is lane-and-method specific, so the disposition is: fail this request
+// over to the next lane, and demote THIS method on THIS lane — never the lane.
+// Unclassified, the 200-status ones surfaced straight to the caller and hard-failed
+// the $THREE holder-gating and token-balance readers (api/_lib/balances.js,
+// api/_lib/coin/holders.js, api/_lib/embed-gate.js, api/scene/gate-check.js)
+// whenever the rotation was sitting on that lane; classified as a LANE fault, they
+// benched a healthy free primary on its own routine traffic. isMethodRefusal (the
+// single matcher, defined near the cooldown table) decides the class.
 function isProviderTierError(rpcError) {
-	const message = String(rpcError?.message || '');
-	if (PROVIDER_POLICY_BLOCK.test(message)) return true;
-	return /not available for anonymous access|available for paid plans only|upgrade your subscription|please register at/i.test(
-		message,
-	);
+	return isMethodRefusal(String(rpcError?.message || ''));
 }
 
 function isProviderCapacityError(rpcError) {

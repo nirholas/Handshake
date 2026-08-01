@@ -435,6 +435,114 @@ function _lookupBone(name) {
 	return LOOKUP.get(key) ?? UNREAL_ALIASES.get(key) ?? EXTRA_ALIASES.get(key) ?? null;
 }
 
+// A joint spelled like the shoulder blade / collar bone rather than the limb.
+const CLAVICLE_SPELLING = /shoulder|clavicle|collar|scapula/i;
+// A joint spelled like the upper arm itself.
+const UPPER_ARM_SPELLING = /upper.?arm|humerus/i;
+// Clavicle-only spellings: `shoulder` is deliberately absent, because SMPL-style
+// rigs use it FOR the upper arm (`left_shoulder`) and name the clavicle
+// `left_collar`. Used by the mirror-image pass.
+const COLLAR_ONLY_SPELLING = /clavicle|collar|scapula/i;
+
+/**
+ * Resolve the clavicle / upper-arm naming collision on a canonicalization plan.
+ *
+ * Anatomical rigs give the two bones names that normalize onto ONE canonical
+ * name, and no name-only table can separate them, because the same spelling
+ * means different bones on different rigs:
+ *
+ *   - Rigify names the clavicle `shoulder.L` and the upper arm `upper_arm.L`;
+ *     both resolve to `LeftArm`, so the clip's arm rotation binds to the
+ *     clavicle and the arm swings from the shoulder blade.
+ *   - SMPL names the clavicle `left_collar` and the upper arm `left_shoulder`;
+ *     both resolve to `LeftShoulder`, leaving `LeftArm` vacant and the arm clip
+ *     unbound entirely.
+ *   - The hand-built hobby rig spells its upper arm `shoulderL` with no clavicle
+ *     at all, so re-pointing that spelling would freeze its arms.
+ *
+ * The collision is therefore resolved by contention, not by spelling: a target
+ * is only reassigned when two joints contest it AND the sibling target is free,
+ * so a rig without the collision is never touched. When more than one contender
+ * is eligible and the caller supplies an `isAncestor` test, skeleton hierarchy
+ * breaks the tie: the clavicle is the parent of the upper arm.
+ *
+ * Mutates each entry's `canonical` in place.
+ *
+ * @param {Array<{raw: string, canonical: string}>} plan  candidate assignments
+ * @param {{ isAncestor?: (a: object, b: object) => boolean }} [opts]
+ * @returns {number} entries reassigned
+ */
+export function resolveArmShoulderCollisions(plan, opts = {}) {
+	const isAncestor = typeof opts.isAncestor === 'function' ? opts.isAncestor : null;
+	const count = new Map();
+	for (const p of plan) count.set(p.canonical, (count.get(p.canonical) || 0) + 1);
+
+	// Of several eligible entries, prefer the one that sits ABOVE another
+	// contender in the skeleton (the clavicle parents the upper arm). Falls back
+	// to document order when there is no hierarchy to read.
+	const outermost = (eligible, contenders) => {
+		if (eligible.length < 2 || !isAncestor) return eligible[0];
+		return eligible.find((e) => contenders.some((o) => o !== e && isAncestor(e, o))) || eligible[0];
+	};
+	const innermost = (eligible, contenders) => {
+		if (eligible.length < 2 || !isAncestor) return eligible[0];
+		return eligible.find((e) => contenders.some((o) => o !== e && isAncestor(o, e))) || eligible[0];
+	};
+
+	const move = (entry, from, to) => {
+		entry.canonical = to;
+		count.set(from, (count.get(from) || 1) - 1);
+		count.set(to, (count.get(to) || 0) + 1);
+	};
+
+	let changed = 0;
+	// Arm contested (Rigify): demote the clavicle-spelled contender to Shoulder.
+	for (const side of ['Left', 'Right']) {
+		const arm = `${side}Arm`;
+		const shoulder = `${side}Shoulder`;
+		if ((count.get(arm) || 0) < 2 || (count.get(shoulder) || 0) > 0) continue;
+		const contenders = plan.filter((p) => p.canonical === arm);
+		if (!contenders.some((p) => UPPER_ARM_SPELLING.test(p.raw))) continue;
+		const eligible = contenders.filter(
+			(p) => CLAVICLE_SPELLING.test(p.raw) && !UPPER_ARM_SPELLING.test(p.raw),
+		);
+		const pick = outermost(eligible, contenders);
+		if (!pick) continue;
+		move(pick, arm, shoulder);
+		changed++;
+	}
+
+	// Shoulder contested (SMPL): promote the shoulder-spelled contender to Arm.
+	for (const side of ['Left', 'Right']) {
+		const arm = `${side}Arm`;
+		const shoulder = `${side}Shoulder`;
+		if ((count.get(shoulder) || 0) < 2 || (count.get(arm) || 0) > 0) continue;
+		const contenders = plan.filter((p) => p.canonical === shoulder);
+		if (!contenders.some((p) => COLLAR_ONLY_SPELLING.test(p.raw))) continue;
+		const eligible = contenders.filter(
+			(p) => /shoulder/i.test(p.raw) && !COLLAR_ONLY_SPELLING.test(p.raw),
+		);
+		const pick = innermost(eligible, contenders);
+		if (!pick) continue;
+		move(pick, shoulder, arm);
+		changed++;
+	}
+	return changed;
+}
+
+// Whether glTF node `a` is an ancestor of node `b`, walking up `parentOf`.
+// Tolerates the cyclic parentage a malformed GLB can carry: the visited set
+// stops the walk instead of looping forever.
+function isAncestorNode(parentOf, aIndex, bIndex) {
+	if (aIndex == null || bIndex == null || aIndex === bIndex) return false;
+	const seen = new Set([bIndex]);
+	for (let cur = parentOf.get(bIndex); cur != null && !seen.has(cur); cur = parentOf.get(cur)) {
+		if (cur === aIndex) return true;
+		seen.add(cur);
+	}
+	return false;
+}
+
 /**
  * Walk a parsed glTF JSON object and canonicalize joint-node names in place.
  * Only nodes referenced from `skins[].joints[]` are touched — non-bone nodes
@@ -455,20 +563,22 @@ export function canonicalizeJointNodes(json) {
 	}
 	// Pass 1: resolve each joint to a canonical target (or null).
 	const plan = [];
-	const targetCount = new Map();
 	for (const idx of jointIndices) {
 		const node = json.nodes[idx];
 		if (!node || typeof node.name !== 'string') continue;
 		const canonical = canonicalizeBoneName(node.name);
 		if (!canonical || canonical === node.name) continue;
-		plan.push({ node, raw: node.name, canonical });
-		targetCount.set(canonical, (targetCount.get(canonical) || 0) + 1);
+		plan.push({ node, index: idx, raw: node.name, canonical });
 	}
 
-	// Pass 1.5/1.6: the clavicle/upper-arm collision, resolved for both lanes by
-	// the shared resolver below.
+	// Pass 1.5/1.6: the clavicle/upper-arm collision, resolved by the shared
+	// resolver the runtime lane also uses.
+	const parentOf = new Map();
+	json.nodes.forEach((n, i) => {
+		if (Array.isArray(n.children)) for (const c of n.children) parentOf.set(c, i);
+	});
 	resolveArmShoulderCollisions(plan, {
-		isAncestor: (a, b) => isAncestorNode(json, a.index, b.index),
+		isAncestor: (a, b) => isAncestorNode(parentOf, a.index, b.index),
 	});
 
 	// Pass 2: apply. A canonical name is assigned at most once — when two joints

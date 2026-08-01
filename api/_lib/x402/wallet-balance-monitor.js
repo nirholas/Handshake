@@ -74,6 +74,10 @@ const log = logger('x402-wallet-balance-monitor');
 //   • treasury — UNBOUNDED. It only receives ring payments and gets swept back
 //     to the payer by the rebalancer, so a low balance is its healthy resting
 //     state, not an alert condition.
+// The sponsor also gets a RUNWAY check (sponsor-runway.js): a floor breach says
+// the rail is already dead, and by then the Solana accept has been withdrawn from
+// every 402 challenge. The runway alert fires days earlier, off a burn rate
+// measured from the settle ledger on every run.
 const RING_SOL_FLOOR_LAMPORTS = Math.round(SPONSOR_SOL_FLOOR_LAMPORTS * 1.5);
 const RING_PAYER_USDC_FLOOR_ATOMIC = Number(
 	env.X402_RING_PAYER_USDC_FLOOR_ATOMIC || process.env.X402_RING_PAYER_USDC_FLOOR_ATOMIC || 5_000_000,
@@ -485,11 +489,16 @@ export async function run(ctx = {}) {
 		threshold_usdc: ALERT_THRESHOLD_USDC,
 		usdc_delta: usdcDelta,
 		spend_rate_usdc_hr: spendRateUsdcHr,
-		ring: ring.configured ? { wallets: ring.wallets, breaches: ring.breaches } : null,
+		ring: ring.configured
+			? { wallets: ring.wallets, breaches: ring.breaches, sponsor_runway: ring.sponsorRunway }
+			: null,
 	};
 
+	const runwayNote = ring.sponsorRunway && ring.sponsorRunway.runway_days_to_floor != null
+		? ` runway:${ring.sponsorRunway.runway_days_to_floor}d/${ring.sponsorRunway.status}`
+		: '';
 	const ringNote = ring.configured
-		? ` ring:${ring.breaches.length ? `BREACH(${ring.breaches.length})` : 'ok'}`
+		? ` ring:${ring.breaches.length ? `BREACH(${ring.breaches.length})` : 'ok'}${runwayNote}`
 		: '';
 
 	return {
@@ -520,5 +529,9 @@ export const WALLET_BALANCE = Object.freeze({
 		solFloorLamports: RING_SOL_FLOOR_LAMPORTS,
 		payerUsdcFloorAtomic: RING_PAYER_USDC_FLOOR_ATOMIC,
 		sponsorHardFloorLamports: SPONSOR_SOL_FLOOR_LAMPORTS,
+		// Runway watch on the same wallet: measured burn window, and the days-left
+		// threshold that pages. Both env-overridable without a redeploy.
+		sponsorBurnWindowDays: SPONSOR_BURN_WINDOW_DAYS,
+		sponsorRunwayAlertDays: SPONSOR_RUNWAY_ALERT_DAYS,
 	},
 });

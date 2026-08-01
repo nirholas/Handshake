@@ -13,21 +13,33 @@
  *   2. Write — PUT of presigned uploads from the same web origins.
  *
  * Usage:
- *   # Pull production R2 creds into .env, then run.
- *   vercel env pull .env
- *   node scripts/set-r2-cors.mjs               # apply (idempotent)
- *   node scripts/set-r2-cors.mjs --get         # show what's live
+ *   node scripts/set-r2-cors.mjs --probe       # measure the LIVE policy from outside (no bucket creds)
+ *   node scripts/set-r2-cors.mjs --get         # read the live policy (needs an admin token)
  *   node scripts/set-r2-cors.mjs --dry-run     # print the policy, don't push
+ *   node scripts/set-r2-cors.mjs               # apply (idempotent, needs an admin token)
  *
- * Requires the same env as the API: S3_ENDPOINT, S3_ACCESS_KEY_ID,
- * S3_SECRET_ACCESS_KEY, S3_BUCKET. R2 implements the S3 PutBucketCors
- * API verbatim, so this script also works against AWS S3 and B2.
+ * Where the credentials come from:
+ *   - `.env` / `.env.local` hold S3_ENDPOINT, S3_ACCESS_KEY_ID,
+ *     S3_SECRET_ACCESS_KEY, S3_BUCKET. The token normally checked in here is
+ *     "Object Read & Write" scoped, which is enough for --probe but NOT for
+ *     Get/PutBucketCors. Put an "Admin Read & Write" R2 token in `.env.local`
+ *     as R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY to use --get or apply.
+ *   - Production runtime values live on the Cloud Run service, readable with
+ *     `gcloud run services describe three-ws-api --region us-central1
+ *      --project aerial-vehicle-466722-p5 --format=yaml`. Those are the same
+ *     object-scoped keys, so they do not unlock --get either.
+ *   - Do NOT use `vercel env pull`: it returns empty for secret-type vars, and
+ *     production has not run on Vercel since 2026-07-07.
+ *
+ * R2 implements the S3 PutBucketCors API verbatim, so this script also works
+ * against AWS S3 and B2.
  */
 
 import {
 	S3Client,
 	GetBucketCorsCommand,
 	PutBucketCorsCommand,
+	ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -53,8 +65,8 @@ const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {
 	// Deploy-time invocation: missing env is not a deploy failure. Local-dev
 	// invocation: surface the hint. Either way, exit 0 so a CI step can chain.
-	console.log(`[set-r2-cors] skipped — missing env: ${missing.join(', ')}`);
-	console.log('[set-r2-cors] (local: drop R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET in .env.local, or run `vercel env pull .env` for production creds.)');
+	console.log(`[set-r2-cors] skipped, missing env: ${missing.join(', ')}`);
+	console.log('[set-r2-cors] (local: drop R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET in .env.local. Production values: gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=yaml)');
 	process.exit(0);
 }
 
@@ -116,6 +128,10 @@ const s3 = new S3Client({
 
 const Bucket = process.env.S3_BUCKET;
 
+if (flag('--probe')) {
+	process.exit((await probe()) ? 0 : 1);
+}
+
 if (flag('--get')) {
 	let current;
 	try {
@@ -154,6 +170,112 @@ if (JSON.stringify(before) === JSON.stringify(after)) {
 } else {
 	console.log(`Applied CORS policy to ${Bucket}.`);
 	console.log('Rules:', after.CORSRules.map((r) => `${r.ID || '(no id)'} → ${r.AllowedMethods.join(',')}`).join(' | '));
+}
+
+// Measure the policy the bucket actually enforces, using only object-scoped
+// credentials. GetBucketCors needs an admin token that most environments do
+// not have, so without this the live policy is unverifiable and drift between
+// POLICY above and the bucket goes unnoticed for months (it did: 2026-08-01).
+//
+// Two requests per origin, one per rule:
+//   read  — GET on the public host; the `public-read` rule should echo every origin.
+//   write — PUT preflight on the S3 endpoint; only ALLOWED_ORIGINS should get 204.
+// Exits nonzero when the measurement disagrees with POLICY.
+async function probe() {
+	const publicHost = process.env.S3_PUBLIC_DOMAIN || process.env.R2_PUBLIC_DOMAIN;
+	if (!publicHost) {
+		console.error('--probe needs S3_PUBLIC_DOMAIN (the public r2.dev or custom-domain host).');
+		return false;
+	}
+
+	const key = await probeKey();
+	if (!key) {
+		console.error('--probe could not find a public object to read. Pass one with --key=<object key>.');
+		return false;
+	}
+
+	const readUrl = `${publicHost.replace(/\/$/, '')}/${encodeR2Key(key)}`;
+	const writeUrl = `${process.env.S3_ENDPOINT.replace(/\/$/, '')}/${Bucket}/${PROBE_WRITE_KEY}`;
+
+	console.log(`Probing ${Bucket} (read: ${readUrl})\n`);
+	console.log(`${'ORIGIN'.padEnd(38)} ${'READ'.padEnd(6)} ${'WRITE'.padEnd(6)} EXPECTED`);
+
+	let ok = true;
+	for (const origin of PROBE_ORIGINS) {
+		const [read, write] = await Promise.all([
+			corsAllowed(readUrl, origin, 'GET'),
+			corsAllowed(writeUrl, origin, 'PUT'),
+		]);
+		const wantRead = ruleAllows('public-read', origin);
+		const wantWrite = ruleAllows('browser-upload', origin);
+		const bad = read !== wantRead || write !== wantWrite;
+		if (bad) ok = false;
+		const want = `read=${wantRead ? 'yes' : 'no'} write=${wantWrite ? 'yes' : 'no'}${bad ? '  <- DRIFT' : ''}`;
+		console.log(`${origin.padEnd(38)} ${(read ? 'yes' : 'no').padEnd(6)} ${(write ? 'yes' : 'no').padEnd(6)} ${want}`);
+	}
+
+	console.log('');
+	if (ok) {
+		console.log('Live policy matches POLICY in this script.');
+	} else {
+		console.log('Live policy DIFFERS from POLICY in this script. Apply it with an admin token:');
+		console.log('  node scripts/set-r2-cors.mjs');
+	}
+	return ok;
+}
+
+// A key whose object is world-readable, so the read probe measures CORS rather
+// than auth. Prefers a caller-supplied --key, else the first thumbnail.
+async function probeKey() {
+	const explicit = process.argv.find((a) => a.startsWith('--key='));
+	if (explicit) return explicit.slice('--key='.length);
+	try {
+		const r = await s3.send(new ListObjectsV2Command({ Bucket, Prefix: 'thumb/', MaxKeys: 1 }));
+		return r.Contents?.[0]?.Key || null;
+	} catch {
+		return null;
+	}
+}
+
+// True when the browser would be allowed through: a matching
+// Access-Control-Allow-Origin on the actual request for GET, and a non-error
+// preflight for PUT (which never touches a real object, so the key need not exist).
+async function corsAllowed(url, origin, method) {
+	const headers = { origin };
+	// HEAD, not GET: same CORS rule, none of the bytes.
+	let init = { method: 'HEAD', headers, redirect: 'manual' };
+	if (method === 'PUT') {
+		init = {
+			method: 'OPTIONS',
+			headers: { ...headers, 'access-control-request-method': 'PUT', 'access-control-request-headers': 'content-type' },
+		};
+	}
+	let res;
+	try {
+		res = await fetch(url, init);
+	} catch {
+		return false;
+	}
+	if (method === 'PUT' && !res.ok) return false;
+	const allow = res.headers.get('access-control-allow-origin');
+	return allow === '*' || allow === origin;
+}
+
+// Does POLICY's named rule cover this origin? Mirrors S3 matching: one `*` per
+// entry, matched against the whole origin string.
+function ruleAllows(id, origin) {
+	const rule = POLICY.CORSRules.find((r) => r.ID === id);
+	if (!rule) return false;
+	return rule.AllowedOrigins.some((pattern) => {
+		if (pattern === '*') return true;
+		if (!pattern.includes('*')) return pattern === origin;
+		const [head, tail] = pattern.split('*');
+		return origin.startsWith(head) && origin.endsWith(tail) && origin.length >= head.length + tail.length;
+	});
+}
+
+function encodeR2Key(key) {
+	return key.split('/').map(encodeURIComponent).join('/');
 }
 
 async function getCors() {
