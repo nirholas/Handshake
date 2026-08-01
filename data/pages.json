@@ -2340,6 +2340,30 @@
 					"added": "2026-07-31"
 				},
 				{
+					"path": "/docs/crews",
+					"title": "Docs · Crews",
+					"description": "How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-08-01"
+				},
+				{
+					"path": "/docs/economy-solver",
+					"title": "Docs · The solved economy",
+					"description": "The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-01"
+				},
+				{
+					"path": "/docs/overlay-audit",
+					"title": "Docs · Overlay audit",
+					"description": "The measured report on every UI overlay surface: which pages draw what over the content, what the audit sweep checks, and how to read a finding before fixing it.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-08-01"
+				},
+				{
 					"path": "/docs/trading-hub",
 					"title": "Docs · The trading hub",
 					"description": "The front door to the autonomous trading system: live fleet vitals read off the running bots, the strategy arena and experiments board, and the smart-money radar, with the twenty pages behind them organised into one path.",

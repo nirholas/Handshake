@@ -15,6 +15,38 @@
 			<description>Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.</description>
 		</item>
 		<item>
+			<title>Docs · Crews</title>
+			<link>https://three.ws/docs/crews</link>
+			<guid isPermaLink="false">2026-08-01:Docs · Crews</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.</description>
+		</item>
+		<item>
+			<title>Docs · Overlay audit</title>
+			<link>https://three.ws/docs/overlay-audit</link>
+			<guid isPermaLink="false">2026-08-01:Docs · Overlay audit</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The measured report on every UI overlay surface: which pages draw what over the content, what the audit sweep checks, and how to read a finding before fixing it.</description>
+		</item>
+		<item>
+			<title>Docs · The solved economy</title>
+			<link>https://three.ws/docs/economy-solver</link>
+			<guid isPermaLink="false">2026-08-01:Docs · The solved economy</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.</description>
+		</item>
+		<item>
+			<title>Pick animations by what they do: the motion of every clip is now measured and queryable</title>
+			<link>https://three.ws/gestures</link>
+			<guid isPermaLink="false">2026-08-01:Pick animations by what they do: the motion of every clip is now measured and queryable</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every animation clip in the library has been measured from its keyframes: how energetic it is, its tempo, which part of the body leads, whether it loops without a visible snap, and whether it survives as an upper-body overlay. The measurements power a new public API (GET /api/animations/signatures) with filters, slot-fit verdicts and a similar-clips ranking, plus two free MCP tools (animation_signature, find_similar_animations) so agents can pick clips the same way. The gestures page and the runtime defaults already run on the same numbers, so what you preview is what agents get.</description>
+		</item>
+		<item>
 			<title>.well-known/mcp.json</title>
 			<link>https://three.ws/.well-known/mcp.json</link>
 			<guid isPermaLink="false">2026-07-31:.well-known/mcp.json</guid>

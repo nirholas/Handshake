@@ -17616,6 +17616,16 @@
 				"infra"
 			],
 			"link": "/docs"
+		},
+		{
+			"date": "2026-08-01",
+			"title": "Pick animations by what they do: the motion of every clip is now measured and queryable",
+			"summary": "Every animation clip in the library has been measured from its keyframes: how energetic it is, its tempo, which part of the body leads, whether it loops without a visible snap, and whether it survives as an upper-body overlay. The measurements power a new public API (GET /api/animations/signatures) with filters, slot-fit verdicts and a similar-clips ranking, plus two free MCP tools (animation_signature, find_similar_animations) so agents can pick clips the same way. The gestures page and the runtime defaults already run on the same numbers, so what you preview is what agents get.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/gestures"
 		}
 	]
 }
