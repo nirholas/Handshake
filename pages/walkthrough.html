@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" class="wt-html">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Walkthrough · three.ws</title>
+		<meta
+			name="description"
+			content="An interactive walkthrough of three.ws, built from frames captured out of the live product."
+		/>
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/walkthrough.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="Walkthrough · three.ws" />
+		<meta
+			property="og:description"
+			content="An interactive walkthrough of three.ws, built from frames captured out of the live product."
+		/>
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=learn&amp;t=Walkthrough&amp;d=An+interactive+walkthrough+of+three.ws&amp;p=%2Fwalkthroughs"
+		/>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<!-- The player owns everything below: it reads the slug from the URL and
+		     renders its loading, error, not-found and ready states into #wt-root. -->
+		<main id="main-content" class="wt-page">
+			<div id="wt-root" data-state="loading"></div>
+		</main>
+
+		<script type="module" src="/src/walkthrough.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

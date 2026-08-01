@@ -23,6 +23,7 @@ const state = {
 	playing: false,
 	timer: null,
 	motion: true,
+	sheet: false,
 };
 
 const el = {};
@@ -91,7 +92,7 @@ function shellHtml(w) {
 			<span class="wt-play-label">Play</span>
 		</button>
 		<ol class="wt-rail" id="wt-rail"></ol>
-		<a class="wt-visit" id="wt-visit" href="${esc(w.cta.href)}">${esc(w.cta.label)} <span aria-hidden="true">↗</span></a>
+		<a class="wt-visit" id="wt-visit" href="${esc(w.cta.href)}"><span id="wt-visit-label">${esc(w.cta.label)}</span> <span aria-hidden="true">↗</span></a>
 	</div>
 
 	<div class="wt-progress" id="wt-progress" aria-hidden="true"><span id="wt-progress-fill"></span></div>
@@ -131,6 +132,7 @@ function cacheNodes(root) {
 		'wt-prev',
 		'wt-next',
 		'wt-visit',
+		'wt-visit-label',
 		'wt-live',
 		'wt-progress-fill',
 	];
@@ -150,7 +152,7 @@ function applyStep(i, opts = {}) {
 	const w = state.walkthrough;
 	state.index = Math.max(0, Math.min(w.steps.length - 1, i));
 	const step = w.steps[state.index];
-	const layout = stepLayout(step.hotspot, { motion: state.motion });
+	const layout = stepLayout(step.hotspot, { motion: state.motion, sheet: state.sheet });
 
 	el['wt-frame'].src = step.shot;
 	el['wt-frame'].alt = `${step.pageTitle || w.title}: ${step.title}`;
@@ -165,8 +167,15 @@ function applyStep(i, opts = {}) {
 
 	const c = el['wt-callout'];
 	c.dataset.side = layout.callout.side;
-	c.style.left = `${(layout.callout.x * 100).toFixed(4)}%`;
-	c.style.top = `${(layout.callout.y * 100).toFixed(4)}%`;
+	if (layout.callout.side === 'sheet') {
+		// The sheet is placed entirely in CSS; inline coordinates would win
+		// against it and drag the card off the bottom of the stage.
+		c.style.removeProperty('left');
+		c.style.removeProperty('top');
+	} else {
+		c.style.left = `${(layout.callout.x * 100).toFixed(4)}%`;
+		c.style.top = `${(layout.callout.y * 100).toFixed(4)}%`;
+	}
 
 	el['wt-count'].textContent = `Step ${state.index + 1} of ${w.steps.length}`;
 	el['wt-steptitle'].textContent = step.title;
@@ -180,7 +189,7 @@ function applyStep(i, opts = {}) {
 
 	el['wt-caption'].textContent = `Captured from ${step.path}`;
 	el['wt-visit'].href = step.path;
-	el['wt-visit'].firstChild.textContent = `Open ${step.path} `;
+	el['wt-visit-label'].textContent = `Open ${step.path}`;
 
 	el['wt-prev'].disabled = state.index === 0;
 	el['wt-next'].disabled = state.index === w.steps.length - 1;
@@ -301,15 +310,17 @@ function bind(root) {
 		});
 	}
 
-	const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-	const syncMotion = () => {
-		state.motion = !mq.matches;
+	const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const sheetMq = window.matchMedia('(max-width: 860px)');
+	const sync = (rerender) => {
+		state.motion = !motionMq.matches;
+		state.sheet = sheetMq.matches;
 		root.classList.toggle('wt-static', !state.motion);
-		if (state.walkthrough) applyStep(state.index, { silent: true });
+		if (rerender && state.walkthrough) applyStep(state.index, { silent: true });
 	};
-	mq.addEventListener('change', syncMotion);
-	state.motion = !mq.matches;
-	root.classList.toggle('wt-static', !state.motion);
+	motionMq.addEventListener('change', () => sync(true));
+	sheetMq.addEventListener('change', () => sync(true));
+	sync(false);
 }
 
 function renderError(root, heading, detail, retry) {

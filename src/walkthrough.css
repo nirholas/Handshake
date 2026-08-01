@@ -1,0 +1,871 @@
+/* Interactive walkthroughs: the player (/walkthroughs/<slug>) and the index
+ * (/walkthroughs). Every value comes from public/tokens.css; the one local
+ * variable is --wt-accent, which the player sets per walkthrough from the
+ * manifest so each one carries its own colour without forking the palette.
+ */
+
+.wt-page {
+	--wt-accent: var(--accent, #fff);
+	--wt-stage-radius: var(--radius-lg);
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: var(--space-lg) var(--space-md) var(--space-2xl);
+}
+
+/* ── Shared header ─────────────────────────────────────────────────────────── */
+
+.wt-back,
+.wt-idx-back {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2xs);
+	font-size: var(--text-md);
+	color: var(--ink-dim);
+	text-decoration: none;
+	border-radius: var(--radius-sm);
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.wt-back:hover,
+.wt-idx-back:hover {
+	color: var(--ink-bright);
+}
+
+.wt-back:focus-visible,
+.wt-idx-back:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+}
+
+.wt-head {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2xs);
+	margin-bottom: var(--space-lg);
+}
+
+.wt-title {
+	font-family: var(--font-display);
+	font-size: var(--text-3xl);
+	font-weight: var(--weight-bold);
+	line-height: var(--leading-tight);
+	color: var(--ink-bright);
+	margin: var(--space-2xs) 0 0;
+}
+
+.wt-outcome {
+	font-size: var(--text-base);
+	color: var(--ink-dim);
+	max-width: 62ch;
+	margin: 0;
+}
+
+.wt-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2xs);
+	list-style: none;
+	padding: 0;
+	margin: var(--space-2xs) 0 0;
+}
+
+.wt-chip {
+	font-size: var(--text-2xs);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	font-weight: var(--weight-semibold);
+	color: var(--ink-dim);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: 4px 10px;
+}
+
+.wt-chip-level {
+	color: var(--wt-accent);
+	border-color: color-mix(in srgb, var(--wt-accent) 45%, transparent);
+	background: color-mix(in srgb, var(--wt-accent) 12%, transparent);
+}
+
+/* ── Stage ─────────────────────────────────────────────────────────────────── */
+
+.wt-stagewrap {
+	position: relative;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--space-xs);
+}
+
+.wt-stage {
+	position: relative;
+	aspect-ratio: 16 / 10;
+	margin: 0;
+	overflow: hidden;
+	border-radius: var(--wt-stage-radius);
+	border: 1px solid var(--stroke-strong);
+	background: var(--bg-1);
+	box-shadow: var(--shadow-3);
+	cursor: e-resize;
+	isolation: isolate;
+}
+
+.wt-frame {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transform-origin: 0 0;
+	will-change: transform;
+	transition: transform var(--duration-slow) var(--ease-emphasized);
+}
+
+/* The spotlight is one element: an enormous spread shadow paints everything
+ * outside it, so there is no second overlay to keep in sync. */
+.wt-spot {
+	position: absolute;
+	border-radius: var(--radius-md);
+	box-shadow:
+		0 0 0 100vmax rgb(4 4 8 / 0.68),
+		inset 0 0 0 2px var(--wt-accent),
+		0 0 24px color-mix(in srgb, var(--wt-accent) 55%, transparent);
+	transition:
+		left var(--duration-slow) var(--ease-emphasized),
+		top var(--duration-slow) var(--ease-emphasized),
+		width var(--duration-slow) var(--ease-emphasized),
+		height var(--duration-slow) var(--ease-emphasized);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.wt-callout {
+	position: absolute;
+	z-index: 2;
+	width: clamp(232px, 28%, 344px);
+	padding: var(--space-sm);
+	background: var(--bg-1);
+	border: 1px solid var(--stroke-strong);
+	border-left: 3px solid var(--wt-accent);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-3);
+	cursor: auto;
+	transition:
+		left var(--duration-slow) var(--ease-emphasized),
+		top var(--duration-slow) var(--ease-emphasized);
+}
+
+.wt-callout[data-side='right'] {
+	transform: translate(18px, -50%);
+}
+.wt-callout[data-side='left'] {
+	transform: translate(calc(-100% - 18px), -50%);
+}
+.wt-callout[data-side='bottom'] {
+	transform: translate(-50%, 18px);
+}
+.wt-callout[data-side='top'] {
+	transform: translate(-50%, calc(-100% - 18px));
+}
+.wt-callout[data-side='over'] {
+	transform: translate(-50%, -50%);
+	width: clamp(260px, 46%, 460px);
+}
+
+/* Narrow screens: a callout floating beside a hotspot would be a few words
+ * wide, so it docks along the bottom of the stage instead and the spotlight
+ * alone does the pointing. The player parks the frame higher to match. */
+.wt-callout[data-side='sheet'] {
+	left: 0;
+	top: auto;
+	bottom: 0;
+	width: 100%;
+	max-height: 52%;
+	overflow-y: auto;
+	transform: none;
+	border-radius: 0;
+	border: none;
+	border-top: 3px solid var(--wt-accent);
+	background: color-mix(in srgb, var(--bg-1) 92%, transparent);
+	backdrop-filter: blur(var(--blur-md));
+	box-shadow: none;
+}
+
+.wt-callout-count {
+	margin: 0 0 var(--space-3xs);
+	font-size: var(--text-2xs);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-weight: var(--weight-semibold);
+	color: var(--wt-accent);
+}
+
+.wt-callout-title {
+	margin: 0 0 var(--space-2xs);
+	font-family: var(--font-display);
+	font-size: var(--text-lg);
+	font-weight: var(--weight-semibold);
+	line-height: var(--leading-tight);
+	color: var(--ink-bright);
+}
+
+.wt-callout-body {
+	margin: 0;
+	font-size: var(--text-ui);
+	line-height: var(--leading-normal);
+	color: var(--ink);
+}
+
+.wt-callout-tip {
+	margin: var(--space-2xs) 0 0;
+	padding-left: var(--space-xs);
+	border-left: 2px solid var(--stroke);
+	font-size: var(--text-md);
+	line-height: var(--leading-normal);
+	color: var(--ink-dim);
+}
+
+.wt-callout-tip[hidden] {
+	display: none;
+}
+
+.wt-callout-action {
+	display: inline-flex;
+	margin-top: var(--space-xs);
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	color: var(--wt-accent);
+	text-decoration: none;
+	border-bottom: 1px solid color-mix(in srgb, var(--wt-accent) 40%, transparent);
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.wt-callout-action:hover {
+	border-bottom-color: var(--wt-accent);
+}
+
+.wt-callout-action:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+	border-radius: var(--radius-sm);
+}
+
+.wt-caption {
+	position: absolute;
+	left: var(--space-xs);
+	bottom: var(--space-xs);
+	z-index: 2;
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs);
+	color: var(--ink-faint);
+	background: rgb(4 4 8 / 0.6);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: 3px 9px;
+	pointer-events: none;
+}
+
+/* ── Arrows ────────────────────────────────────────────────────────────────── */
+
+.wt-arrow {
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	font-size: var(--text-2xl);
+	line-height: 1;
+	color: var(--ink);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	cursor: pointer;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.wt-arrow:hover:not(:disabled) {
+	background: var(--surface-2);
+	color: var(--ink-bright);
+	transform: scale(1.06);
+}
+
+.wt-arrow:active:not(:disabled) {
+	transform: scale(0.96);
+}
+
+.wt-arrow:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+}
+
+.wt-arrow:disabled {
+	opacity: 0.32;
+	cursor: not-allowed;
+}
+
+/* ── Control bar ───────────────────────────────────────────────────────────── */
+
+.wt-bar {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--space-sm);
+	margin-top: var(--space-md);
+}
+
+.wt-play {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2xs);
+	padding: 8px 14px;
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	cursor: pointer;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.wt-play:hover {
+	background: var(--surface-2);
+	border-color: var(--stroke-strong);
+}
+
+.wt-play:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+}
+
+.wt-play-icon {
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 6px 0 6px 10px;
+	border-color: transparent transparent transparent var(--wt-accent);
+}
+
+.wt-play.is-playing .wt-play-icon {
+	width: 10px;
+	height: 12px;
+	border: none;
+	background: linear-gradient(to right, var(--wt-accent) 0 3px, transparent 3px 7px, var(--wt-accent) 7px 10px);
+}
+
+.wt-rail {
+	display: flex;
+	gap: var(--space-3xs);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+
+.wt-rail-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2xs);
+	max-width: 210px;
+	padding: 6px 12px 6px 6px;
+	font-size: var(--text-md);
+	color: var(--ink-dim);
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: var(--radius-pill);
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.wt-rail-btn:hover {
+	background: var(--surface-1);
+	color: var(--ink-bright);
+}
+
+.wt-rail-btn:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 2px;
+}
+
+.wt-rail-btn[aria-current='step'] {
+	color: var(--ink-bright);
+	background: var(--surface-2);
+	border-color: color-mix(in srgb, var(--wt-accent) 40%, transparent);
+}
+
+.wt-rail-n {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	flex: 0 0 22px;
+	font-size: var(--text-2xs);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-pill);
+	background: var(--surface-2);
+	color: var(--ink-dim);
+}
+
+.wt-rail-btn[aria-current='step'] .wt-rail-n {
+	background: var(--wt-accent);
+	color: var(--bg-0);
+}
+
+.wt-rail-t {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.wt-visit {
+	font-size: var(--text-md);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-dim);
+	text-decoration: none;
+	white-space: nowrap;
+	border-radius: var(--radius-sm);
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.wt-visit:hover {
+	color: var(--ink-bright);
+}
+
+.wt-visit:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+}
+
+.wt-progress {
+	height: 3px;
+	margin-top: var(--space-sm);
+	background: var(--surface-1);
+	border-radius: var(--radius-pill);
+	overflow: hidden;
+}
+
+.wt-progress span {
+	display: block;
+	height: 100%;
+	width: 0;
+	background: var(--wt-accent);
+	transition: width var(--duration-base) var(--ease-out);
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+
+.wt-foot {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-lg);
+	justify-content: space-between;
+	margin-top: var(--space-xl);
+	padding-top: var(--space-lg);
+	border-top: 1px solid var(--stroke);
+}
+
+.wt-foot-label {
+	margin: 0 0 var(--space-2xs);
+	font-size: var(--text-2xs);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-faint);
+}
+
+.wt-foot-cta {
+	display: inline-flex;
+	align-items: center;
+	padding: 10px 18px;
+	font-size: var(--text-ui);
+	font-weight: var(--weight-semibold);
+	color: var(--bg-0);
+	background: var(--wt-accent);
+	border-radius: var(--radius-pill);
+	text-decoration: none;
+	transition: filter var(--duration-fast) var(--ease-standard);
+}
+
+.wt-foot-cta:hover {
+	filter: brightness(1.12);
+}
+
+.wt-foot-cta:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+}
+
+.wt-foot-related ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3xs);
+}
+
+.wt-foot-related a {
+	font-size: var(--text-ui);
+	color: var(--ink-dim);
+	text-decoration: none;
+	border-radius: var(--radius-sm);
+}
+
+.wt-foot-related a:hover {
+	color: var(--ink-bright);
+}
+
+.wt-foot-related a:focus-visible {
+	outline: 2px solid var(--wt-accent);
+	outline-offset: 3px;
+}
+
+/* ── Loading, error, screen-reader ─────────────────────────────────────────── */
+
+.wt-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.wt-skeleton {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+}
+
+.wt-sk-line,
+.wt-sk-stage,
+.wt-sk-bar {
+	background: linear-gradient(90deg, var(--surface-1) 25%, var(--surface-2) 37%, var(--surface-1) 63%);
+	background-size: 400% 100%;
+	animation: wt-shimmer 1.4s ease infinite;
+	border-radius: var(--radius-md);
+}
+
+.wt-sk-line-lg {
+	height: 38px;
+	width: min(420px, 70%);
+}
+.wt-sk-line-sm {
+	height: 18px;
+	width: min(560px, 90%);
+}
+.wt-sk-stage {
+	aspect-ratio: 16 / 10;
+	border-radius: var(--radius-lg);
+}
+.wt-sk-bar {
+	height: 40px;
+}
+
+@keyframes wt-shimmer {
+	0% {
+		background-position: 100% 0;
+	}
+	100% {
+		background-position: 0 0;
+	}
+}
+
+.wt-msg {
+	max-width: 52ch;
+	margin: var(--space-2xl) auto;
+	text-align: center;
+}
+
+.wt-msg h1 {
+	font-family: var(--font-display);
+	font-size: var(--text-2xl);
+	color: var(--ink-bright);
+	margin: 0 0 var(--space-2xs);
+}
+
+.wt-msg p {
+	color: var(--ink-dim);
+	margin: 0 0 var(--space-md);
+}
+
+.wt-msg-actions {
+	display: flex;
+	gap: var(--space-2xs);
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.wt-msg-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 9px 16px;
+	font-size: var(--text-ui);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.wt-msg-btn:hover {
+	border-color: var(--stroke-strong);
+}
+
+.wt-msg-btn:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
+
+/* ── Reduced motion: the frame stops moving under the reader ───────────────── */
+
+.wt-static .wt-frame,
+.wt-static .wt-spot,
+.wt-static .wt-callout {
+	transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wt-sk-line,
+	.wt-sk-stage,
+	.wt-sk-bar {
+		animation: none;
+	}
+}
+
+/* ── Index page ────────────────────────────────────────────────────────────── */
+
+.wt-idx-hero {
+	max-width: 68ch;
+	margin-bottom: var(--space-xl);
+}
+
+.wt-idx-eyebrow {
+	font-size: var(--text-2xs);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--ink-faint);
+	margin: 0 0 var(--space-2xs);
+}
+
+.wt-idx-title {
+	font-family: var(--font-display);
+	font-size: var(--text-3xl);
+	font-weight: var(--weight-bold);
+	line-height: var(--leading-tight);
+	color: var(--ink-bright);
+	margin: 0 0 var(--space-xs);
+}
+
+.wt-idx-sub {
+	font-size: var(--text-base);
+	line-height: var(--leading-normal);
+	color: var(--ink-dim);
+	margin: 0;
+}
+
+.wt-idx-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: var(--space-md);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.wt-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	transition:
+		transform var(--duration-base) var(--ease-standard),
+		border-color var(--duration-base) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.wt-card:hover {
+	transform: translateY(-3px);
+	border-color: var(--stroke-strong);
+	box-shadow: var(--shadow-3);
+}
+
+.wt-card:focus-within {
+	border-color: var(--wt-card-accent, var(--accent));
+}
+
+.wt-card-shot {
+	position: relative;
+	aspect-ratio: 16 / 10;
+	overflow: hidden;
+	background: var(--bg-1);
+	border-bottom: 1px solid var(--stroke);
+}
+
+.wt-card-shot img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform var(--duration-slow) var(--ease-out);
+}
+
+.wt-card:hover .wt-card-shot img {
+	transform: scale(1.03);
+}
+
+.wt-card-steps {
+	position: absolute;
+	right: var(--space-2xs);
+	bottom: var(--space-2xs);
+	font-size: var(--text-2xs);
+	font-weight: var(--weight-semibold);
+	color: var(--ink-bright);
+	background: rgb(4 4 8 / 0.72);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: 3px 9px;
+}
+
+.wt-card-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2xs);
+	padding: var(--space-sm);
+	flex: 1;
+}
+
+.wt-card-title {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-lg);
+	font-weight: var(--weight-semibold);
+	line-height: var(--leading-tight);
+}
+
+.wt-card-title a {
+	color: var(--ink-bright);
+	text-decoration: none;
+}
+
+/* The whole card is the hit target; the heading link owns the accessible name. */
+.wt-card-title a::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+
+.wt-card-title a:focus-visible {
+	outline: none;
+}
+
+.wt-card:has(a:focus-visible) {
+	outline: 2px solid var(--wt-card-accent, var(--accent));
+	outline-offset: 3px;
+}
+
+.wt-card-outcome {
+	margin: 0;
+	font-size: var(--text-ui);
+	color: var(--ink);
+	line-height: var(--leading-normal);
+}
+
+.wt-card-blurb {
+	margin: 0;
+	font-size: var(--text-md);
+	color: var(--ink-dim);
+	line-height: var(--leading-normal);
+}
+
+.wt-card-meta {
+	display: flex;
+	gap: var(--space-2xs);
+	margin-top: auto;
+	padding-top: var(--space-2xs);
+	list-style: none;
+	padding-left: 0;
+}
+
+.wt-idx-note {
+	margin: var(--space-xl) 0 0;
+	padding: var(--space-sm);
+	font-size: var(--text-md);
+	line-height: var(--leading-normal);
+	color: var(--ink-dim);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+}
+
+.wt-idx-note strong {
+	color: var(--ink-bright);
+	font-weight: var(--weight-semibold);
+}
+
+.wt-idx-note a {
+	color: var(--ink-bright);
+}
+
+/* ── Narrow screens ────────────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+	.wt-page {
+		padding: var(--space-md) var(--space-sm) var(--space-xl);
+	}
+
+	.wt-title {
+		font-size: var(--text-2xl);
+	}
+
+	/* Arrows move under the stage so the frame keeps the full width. */
+	.wt-stagewrap {
+		grid-template-columns: 1fr;
+	}
+
+	.wt-arrow {
+		position: absolute;
+		bottom: calc(-1 * var(--space-2xl));
+		z-index: 3;
+	}
+
+	.wt-arrow-prev {
+		left: 0;
+	}
+	.wt-arrow-next {
+		right: 0;
+	}
+
+	.wt-bar {
+		grid-template-columns: 1fr;
+		justify-items: stretch;
+		gap: var(--space-2xs);
+		margin-top: calc(var(--space-2xl) + var(--space-xs));
+	}
+
+	.wt-play,
+	.wt-visit {
+		justify-self: start;
+	}
+
+	.wt-stage {
+		cursor: auto;
+	}
+
+	.wt-caption {
+		display: none;
+	}
+}

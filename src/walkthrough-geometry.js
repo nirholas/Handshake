@@ -21,20 +21,23 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
  * gutter into view.
  *
  * @param {{x:number,y:number,w:number,h:number}} hotspot normalized frame coords
- * @param {{fill?:number,maxScale?:number}} [opts] fill = share of the stage the hotspot should occupy
+ * @param {{fill?:number,maxScale?:number,center?:{x:number,y:number}}} [opts]
+ *   fill = share of the stage the hotspot should occupy; center = where on the
+ *   stage to park it, which moves up when a bottom sheet covers the lower half.
  * @returns {{scale:number,x:number,y:number}} transform, offsets in normalized stage units
  */
 export function frameTransform(hotspot, opts = {}) {
 	const fill = opts.fill ?? 0.58;
 	const maxScale = opts.maxScale ?? 3.2;
+	const center = opts.center ?? { x: 0.5, y: 0.5 };
 	const w = Math.max(hotspot.w, 1e-4);
 	const h = Math.max(hotspot.h, 1e-4);
 	const scale = clamp(Math.min(fill / w, fill / h), 1, maxScale);
 	const cx = hotspot.x + hotspot.w / 2;
 	const cy = hotspot.y + hotspot.h / 2;
 	// Bounds: the image spans [offset, offset + scale]; it must cover [0, 1].
-	const x = clamp(0.5 - scale * cx, 1 - scale, 0);
-	const y = clamp(0.5 - scale * cy, 1 - scale, 0);
+	const x = clamp(center.x - scale * cx, 1 - scale, 0);
+	const y = clamp(center.y - scale * cy, 1 - scale, 0);
 	return { scale, x, y };
 }
 
@@ -83,13 +86,20 @@ export function calloutPlacement(spot, opts = {}) {
 
 /**
  * Everything the renderer needs for one step, in one call.
+ *
+ * `sheet` is the narrow-screen mode: the callout is docked along the bottom of
+ * the stage instead of beside the hotspot, so there is no side to choose and
+ * the frame is parked higher to keep the spotlight clear of the sheet.
+ *
  * @param {{x:number,y:number,w:number,h:number}} hotspot
- * @param {{fill?:number,maxScale?:number,need?:number,needBlock?:number,motion?:boolean}} [opts]
+ * @param {{fill?:number,maxScale?:number,need?:number,needBlock?:number,motion?:boolean,sheet?:boolean,center?:{x:number,y:number}}} [opts]
  */
 export function stepLayout(hotspot, opts = {}) {
+	const center = opts.center ?? (opts.sheet ? { x: 0.5, y: 0.29 } : { x: 0.5, y: 0.5 });
 	// With motion off the frame is shown whole, so the hotspot keeps its
 	// captured position instead of being zoomed under the reader.
-	const transform = opts.motion === false ? { scale: 1, x: 0, y: 0 } : frameTransform(hotspot, opts);
+	const transform = opts.motion === false ? { scale: 1, x: 0, y: 0 } : frameTransform(hotspot, { ...opts, center });
 	const spot = projectHotspot(hotspot, transform);
-	return { transform, spot, callout: calloutPlacement(spot, opts) };
+	const callout = opts.sheet ? { side: 'sheet', x: 0.5, y: 1 } : calloutPlacement(spot, opts);
+	return { transform, spot, callout };
 }
