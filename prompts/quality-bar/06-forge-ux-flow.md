@@ -1,67 +1,83 @@
-# 06: Forge UX, from prompt to proud screenshot
+# QB-06: Forge UX, from prompt to proud screenshot
 
-Read `prompts/quality-bar/_shared.md` first. Its operating clause applies: finish 100%, never ask.
+**How to run this:** paste this whole file into a fresh Claude Code chat opened in
+`/workspaces/three.ws`, or say "execute `prompts/quality-bar/06-forge-ux-flow.md`".
+It is complete on its own. Also read `prompts/quality-bar/_shared.md` and `CLAUDE.md`.
+
+## Binding operating clause
+
+1. Finish 100%. Never end with a question, a plan you did not execute, or "should I proceed?".
+2. Blockers have pre-answered routes at the bottom. Use them and keep going.
+3. CLAUDE.md hard rules: no mocks, no stubs, no TODO comments, no fake progress bars, no
+   em-dash or en-dash characters. Stage explicit paths only. Do not push unless asked.
 
 ## Mission
 
-Make /forge feel like a flagship product: the flow from typing a prompt to holding a
-share-worthy 3D result should be legible, alive, and impossible to dead-end. The failover
-plumbing exists (3e22c3e82: poll-time lane failover, one-click engine switching); this prompt
-is about the experience wrapped around it.
+Make `/forge` feel like a flagship product: the path from typing a prompt to holding a
+share-worthy 3D result should be legible, alive, and impossible to dead-end.
+
+## Step 0: re-derive current state (trust nothing below)
+
+```bash
+npm run dev            # port 3000, then walk /forge as a first-time user in a real browser
+ls src/forge-compare.js src/forge-prompt-gen.js api/_lib/forge-lane-health.js
+grep -n "starter\|chip" pages/forge.html | head -20
+npm run audit:web -- --only /forge 2>/dev/null || node scripts/page-audit.mjs
+```
+
+Known shipped as of 2026-07-30, verify then skip: generation history persistence, the
+side-by-side compare mode (`src/forge-compare.js`, `tests/forge-compare.test.js`, documented in
+`docs/forge.md`), and the six curated starter prompts on `pages/forge.html`.
 
 ## Tasks
 
-1. **Walk the flow as a first-time user** (`npm run dev`, real browser, also 320px). Log every
-   moment of confusion: what is happening now, how long will it take, what do I do with the
-   result. Fix what you find; the list below is the floor, not the ceiling.
+1. **Walk the flow as a first-time user** (`npm run dev`, real browser, also at 320 px). Write
+   down every moment of confusion: what is happening now, how long will it take, what do I do
+   with the result. Fix what you find. The list below is the floor, not the ceiling.
 2. **Generation timeline.** Replace passive waiting with a real stage timeline (enhancing
    prompt, generating reference views, sculpting mesh, painting textures, finishing) driven by
-   the actual poll states the API already returns, with elapsed time and the honest ETA from
-   `api/_lib/forge-lane-health.js`. Show the reference images as they are produced (prompt 01
-   makes them); watching the concept appear kills perceived latency.
-3. **Result moment.** When the GLB lands: camera intro move, quality viewer (prompt 05 module),
-   and immediate actions with zero hunting: download GLB/USDZ, view in AR (/ar handoff), rig it
-   (auto-rig lane), refine it (`refine_model` conversational iteration), restyle materials,
-   place it IRL (/irl), share link with a real og-image of THIS model. Every action wired to
-   the existing feature, no dead buttons.
-4. **History and comparison.** A signed-in user's generations persist (check the existing
-   storage; wire if half-built). Side-by-side compare two generations of the same prompt
-   (engine A vs engine B), which also showcases the engine-switch feature.
-   **DONE 2026-07-30.** History already persisted; the compare half shipped in
-   `src/forge-compare.js` (compare mode over the gallery, two-pane viewer, orbit
-   synced but radius kept per model since generations differ in scale, and a
-   same-prompt hint that fires only on a genuine two-engine A/B). Covered by
-   `tests/forge-compare.test.js`, documented in `docs/forge.md`, verified in a
-   real browser at 320/768/1440 with no console errors. Task 5's "6 starters"
-   was already satisfied (six chips in `pages/forge.html`), so both gaps this
-   work order still carried are now closed. What keeps it open: the definition
-   of done below also asks for every result-moment action clicked through to its
-   destination and `npm run audit:web` clean on /forge, neither of which this
-   session ran.
-5. **Prompt help.** Subtle prompt-improvement affordance: show the director's enhanced prompt
-   after generation ("what we actually asked the model"), one-click "try a variation". Good
-   empty state: 6 curated example prompts with thumbnails that users can fire instantly.
-6. **Error and retry UX.** Every failure path renders a designed state: what failed in plain
+   the poll states the API already returns, with elapsed time and the honest ETA from
+   `api/_lib/forge-lane-health.js`. Show reference images as they are produced; watching the
+   concept appear kills perceived latency.
+3. **Result moment.** When the GLB lands: a camera intro move, the quality viewer, and
+   immediate actions with zero hunting: download GLB and USDZ, view in AR (`/ar` handoff), rig
+   it, refine it (`refine_model`), restyle materials, place it IRL (`/irl`), share a link whose
+   og-image renders this model. Click every one of those through to its destination and back.
+   A dead button is a failed task.
+4. **Prompt help.** After generation, show the director's enhanced prompt ("what we actually
+   asked the model") with a one-click "try a variation".
+5. **Error and retry UX.** Every failure path renders a designed state: what failed in plain
    language, the automatic recovery that already happened (failover), and the one-click manual
-   options (switch engine buttons from 3e22c3e82). No raw error strings, no dead ends. Session
-   expiry mid-generation must preserve the job and resume after re-auth.
-7. **Keyboard + a11y.** Cmd/Ctrl+Enter submits, Esc collapses panels, focus states everywhere,
-   ARIA labels on the viewer controls, prefers-reduced-motion respected on the intro move.
+   options (engine switch). No raw error strings, no dead ends. Session expiry mid-generation
+   must preserve the job and resume after re-auth; test that by clearing the session cookie
+   mid-poll.
+6. **Keyboard and accessibility.** Cmd/Ctrl+Enter submits, Esc collapses panels, focus-visible
+   everywhere, ARIA labels on viewer controls, `prefers-reduced-motion` respected on the intro
+   move. Confirm with `npm run audit:a11y`.
 
 ## Definition of done
 
-- The full walk-through repeated clean: no confusion points left, no console errors, all states
-  (loading/empty/error/success) designed at 320/768/1440.
-- Every result-moment action clicked through to its destination feature and back.
-- `npm test` green (respect the vitest-masks-e2e gotcha); `npm run audit:web` clean on /forge.
-- Changelog entry in holder language. Screenshots of the result moment in the report; apply the
-  pride check before calling it done.
+- [ ] The full walk-through repeats clean: no confusion points, no console errors, loading,
+      empty, error and success states designed at 320, 768 and 1440 px.
+- [ ] Every result-moment action clicked through to its destination feature and back, listed
+      one by one in the report with what happened.
+- [ ] `npm run audit:web` clean on `/forge`; `npm run audit:a11y` no new failures.
+- [ ] `npm test` green (do not pipe through `tail`).
+- [ ] `data/changelog.json` entry in holder language; screenshots of the result moment in the
+      report.
+- [ ] `npm run check:rules -- --paths <files you touched>` clean.
 
-## Anticipated blockers, pre-answered
+## Never blocked (pre-answered)
 
-- Poll payloads missing a stage you want to display: extend the API response in `api/forge.js`
-  (additive field, keep old clients working) rather than faking states client-side.
-- USDZ availability: the bake pipeline exists (iOS AR work, 8b23b8d9e); if a model lacks USDZ,
-  generate on demand through that path, show a brief "preparing AR file" state.
-- Persistence store choice: use whatever `api/` already uses for user artifacts (R2 +
-  database rows); do not introduce new storage.
+| Blocker | Do this |
+|---|---|
+| A poll payload lacks a stage you want to show | Extend the response in `api/forge.js` as an additive field (old clients keep working). Never fake a state client-side. |
+| USDZ missing for a model | Generate on demand through the existing bake pipeline and show a brief honest "preparing AR file" state. |
+| Persistence store choice | Use what `api/` already uses for user artifacts (R2 plus database rows). Do not introduce new storage. |
+| The crawler reports WebGL or texture errors | `npm run audit:web` runs pages concurrently and produces false 3D failures. Re-check any 3D failure serially before reporting it. |
+| A generation is slow because a GPU is cold | That is task 2's subject, not a blocker. Show the honest ETA. |
+
+## Report format
+
+The confusion list with what you changed for each, the action-by-action click-through table,
+screenshots, and any single remaining owner action. No recap of this file.

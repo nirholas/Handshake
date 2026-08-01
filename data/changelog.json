@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-01",
+			"title": "Your own avatar can sign now, not just the two that shipped with the page",
+			"summary": "Sign language ran on two fixed rigs. You could watch the platform's avatars sign, but never your own, which is backwards for a feature whose whole point is that an avatar communicates. The Avatar setting on the sign language page and the ASL alphabet page now has a third option that opens the avatar gallery: pick any avatar you own, or any public one, and it takes over the signing on the spot, keeping the speed and signing hand you already chose. Your pick is remembered and carries between both pages. It works because a sign is described anatomically, an index fingertip on the chin rather than a fixed coordinate, so the same vocabulary is measured onto your avatar's own skeleton, whatever its proportions. An avatar that genuinely cannot sign, a model with no skeleton or no finger bones, is not left standing there mute: the page says which avatar it is and puts the working one back.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/sign-language"
+		},
+		{
+			"date": "2026-08-01",
 			"title": "Docs search now lands on the exact section you typed",
 			"summary": "Typing a heading you saw in the docs did not always take you to it. A short section carries few words, so a long page that happened to reuse the same common words could outrank the section actually titled that. Search now recognises when what you typed IS a section's heading and sends you there first. Measured across the whole documentation corpus, a heading finding its own section went from 80 to 83 percent, and queries like \"cost per asset\" that previously returned three unrelated pages now open the right one.",
 			"tags": [

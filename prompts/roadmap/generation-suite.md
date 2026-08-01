@@ -1,135 +1,109 @@
-# three.ws — AI Generation Suite Roadmap (prompt→3D, image→3D, full Meshy/Tripo class)
+# RM-GEN: Generation suite parity and production truth
 
-**This is the platform's current top priority.** The goal is a generation suite that matches
-Meshy and Tripo feature-for-feature on quality and beats them on agent-nativeness — and,
-above all, that **actually works in production**. The repo already contains most of the
-surface area; the gap is between "code exists" and "a user can run it on three.ws today."
+**How to run this:** paste this whole file into a fresh Claude Code chat opened in
+`/workspaces/three.ws`, or say "execute `prompts/roadmap/generation-suite.md`".
+It is complete on its own. Also read `prompts/roadmap/00-README.md` (safety doctrine and the
+regression gate) and `CLAUDE.md`.
 
-Status below is from a **live production audit on 2026-06-11** — every row was probed
-against the deployed endpoints, not inferred from code.
+## Binding operating clause
 
----
+1. Finish 100%. Never end with a question, a plan you did not execute, or "should I proceed?".
+2. "Works" means verified in production by running it, after deploy. Tests passing is not the
+   bar; a stranger getting a GLB is the bar.
+3. Fix the smallest broken thing that unblocks a whole flow before building anything new.
+4. CLAUDE.md hard rules: no mocks, no stubs, no TODO comments, no em-dash or en-dash
+   characters. Stage explicit paths only. Deploys are owner-gated: prepare them so the ship is
+   one command.
 
-## Verified current state
+## Mission
 
-| Feature | Code | Production reality (verified) |
+A generation suite that matches Meshy and Tripo on quality and beats them on agent-nativeness,
+and that actually works in production. The repo has the surface area; the gap has historically
+been between "code exists" and "a user can run it on three.ws today".
+
+## Step 0: rebuild the truth table (mandatory, replaces every claim below)
+
+The June 2026 audit that this file used to carry is stale: several workers that it listed as
+undeployed are Ready now. Do not read old status from anywhere. Probe production yourself and
+write the table into your report:
+
+```bash
+gcloud run services list --region us-central1 --project aerial-vehicle-466722-p5 \
+  --format="table(metadata.name,status.conditions[0].status)"
+gcloud run services describe three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --format=yaml | grep -E "^ *- name: (GCP_|MODEL_|LONGCAT_|REPLICATE_)" -A1
+curl -s "https://three.ws/api/forge?catalog" | python3 -m json.tool | head -60
+curl -s "https://three.ws/api/forge?health" | python3 -m json.tool | head -60
+```
+
+Then, for each row, run the real flow end to end against production and record the outcome:
+
+| Feature | Endpoint | Probe |
 |---|---|---|
-| Text→3D (`/forge`, FLUX/Imagen → TRELLIS) | ✅ complete | ❌ **was broken** — Vertex path crashed on malformed `GCP_SERVICE_ACCOUNT_JSON` with no Replicate fallback. Fixed in code 2026-06-11; needs deploy. |
-| Image→3D (`/forge`, 1–4 views → TRELLIS) | ✅ complete | ❌ **was broken** — Replicate 404s unversioned community-model submits (`firtoz/trellis`). Fixed in code 2026-06-11 (version-resolve retry); needs deploy. |
-| Image upload (R2 presign) | ✅ complete | ✅ works (verified live) |
-| Tier/backend catalog + gallery | ✅ complete | ✅ works (verified live) |
-| Meshy / Tripo geometry path (BYOK) | ✅ complete | ⚠️ reports `configured: true`; untested without a BYOK key — needs a live key test |
-| x402 paid generation (`/api/x402/forge`) | ✅ complete | ⚠️ untested live; shares the (broken→fixed) submit path, so re-verify after deploy |
-| Auto-rig (`?action=rig`) | ✅ complete | ❌ 501 — `REPLICATE_RERIG_MODEL` unset, `workers/unirig` not deployed |
-| Remesh / retopo / lowpoly (`/api/forge-remesh`) | ✅ complete | ❌ 503 — `workers/remesh` not deployed, `GCP_REMESH_URL` unset |
-| Stylize (`/api/forge-stylize`) | ✅ complete | ❌ 503 — `workers/stylize` not deployed |
-| Part segmentation (`/api/forge-segment`) | ✅ complete | ❌ 503 — `workers/segment` not deployed |
-| Background removal (`/api/forge-rembg`) | ✅ complete | ❌ 503 — `workers/rembg` not deployed |
-| Text→animation (`/api/forge-motion`) | ✅ complete | ❌ 503 — `workers/model-text2motion` not deployed |
-| Retexture full/region (`/api/studio/retexture-*`) | ✅ complete | ❌ dead — `GCP_TEXTURE_URL` unset; also MCP/API-only, no `/forge` UI |
-| Talking-avatar video | ✅ complete | ❌ dead — `LONGCAT_WORKER_URL` unset |
-| MCP 3D Studio tools (15 tools) | ✅ complete | ⚠️ tools resolve but inherit every breakage above |
+| Text to 3D | `POST /api/forge` | submit, poll to `done`, download the GLB, assert it parses with geometry |
+| Image to 3D | `POST /api/forge` | presign, upload, submit, poll, download |
+| Auto-rig | `POST /api/forge?action=rig` | rig a real mesh, assert bones and skin weights exist |
+| Remesh / retopo | `POST /api/forge-remesh` | real mesh in, real mesh out |
+| Stylize | `POST /api/forge-stylize` | same |
+| Segment | `POST /api/forge-segment` | same |
+| Background removal | `POST /api/forge-rembg` | real image in, alpha out |
+| Text to motion | `POST /api/forge-motion` | clip out, plays on the default rig |
+| Retexture | `POST /api/studio/retexture-*` | textures actually change |
+| Talking avatar | the longcat worker route | real video out |
+| x402 paid generation | `POST /api/x402/forge` | 402, pay, artifact |
+| MCP 3D Studio tools | `POST /api/mcp-studio`, `/api/mcp-3d` | `tools/list` then a real `tools/call` |
 
-Root cause in one sentence: **the API layer shipped, the compute layer behind it never got
-deployed, and the two flows that don't need GCP workers died on two provider regressions
-nobody noticed because nothing smoke-tests production.**
+A `configured: true` in the catalog means an env var exists, nothing more. That is exactly how
+dead flows once looked green. Only a real artifact counts.
 
----
+## Tasks
 
-## Phase 0 — Restore the core (now)
+1. **Close every red row from Step 0.** Root-cause each (missing env var, worker not Ready,
+   provider regression, schema drift), fix it, and re-run the same probe. If the fix needs a
+   deploy, stage everything and name the one command.
+2. **Health that tells the truth.** `GET /api/forge?health` must live-probe each provider
+   (cheap authenticated HEAD or equivalent) rather than reporting on env-var presence. Add or
+   extend the scheduled smoke test so a draft generation runs daily and alerts on failure.
+3. **Surface the hidden tools in `/forge`.** Retexture (full and region), remesh, stylize,
+   segment, rig, animate and export exist as APIs or MCP tools; the result panel should offer
+   them as one pipeline on one page. Every button wired to the real endpoint.
+4. **Preview then refine.** Cheap fast preview, then a one-click refine of the chosen result at
+   a higher tier conditioned on the same seed and reference. The tier system already exists.
+5. **Export formats.** The remesh worker already converts glb, obj, stl, ply, usdz, 3mf and fbx.
+   Expose a format picker on download instead of GLB-only.
+6. **PBR material controls.** Expose the map outputs (albedo, normal, roughness, metallic) and
+   a re-bake option in the result panel. Coordinate with `prompts/quality-bar/04-...` rather
+   than duplicating it.
+7. **Job webhooks and public API docs.** Extend the existing Replicate webhook plumbing to
+   forge jobs and publish the endpoint contract in `docs/` with runnable examples, since we
+   sell it through x402.
+8. **Community gallery.** Add an opt-in public showcase over the existing private gallery, with
+   a remix action that generates a variation.
 
-The two flows everything else builds on.
+## Definition of done
 
-1. **Ship the 2026-06-11 fixes** (done in repo, needs deploy):
-   - `api/_providers/replicate.js` — on 404 from the unversioned model endpoint, resolve
-     `latest_version` and retry version-pinned. Unbreaks image→3D and text→3D's mesh step.
-   - `api/_mcp3d/text-to-image.js` — Vertex failure now falls back to Replicate FLUX;
-     Vertex's inline data-URI PNG is persisted to R2 and submitted as an https URL.
-   - `api/_mcp3d/vertex-imagen.js` — tolerant service-account JSON parsing (quoted /
-     escaped / base64 manglings), designed `unconfigured` error instead of a parse crash.
-   - Regression tests: `tests/api/providers-replicate.test.js`, `tests/api/text-to-image.test.js`.
-2. **Fix `GCP_SERVICE_ACCOUNT_JSON` in Vercel prod** — re-paste the raw key-file JSON
-   (current value is mangled; the fallback masks it, but Imagen is the better/cheaper path).
-3. **Verify `VERTEX_IMAGEN_MODEL`** — default `imagen-3.0-generate-001` may be retired on
-   Vertex; pin a current Imagen model explicitly.
-4. **Post-deploy smoke test, both flows, in prod**: submit text→3D draft → poll → GLB loads;
-   submit image→3D → poll → GLB loads. No green checkmark without a real GLB.
+- [ ] Step 0 table filled in from real production probes, every row green or explained with a
+      named blocker and a one-command fix.
+- [ ] `/api/forge?health` live-probes providers; the daily smoke test covers what you shipped.
+- [ ] Every newly surfaced tool clicked through in a real browser at 320, 768 and 1440 px, with
+      loading, empty, error and success states designed.
+- [ ] `npm run gate` no worse than the baseline you captured at the start; `npm test` green.
+- [ ] `data/changelog.json` entries for the user-visible additions; docs updated for the API
+      contract.
+- [ ] `npm run check:rules -- --paths <files you touched>` clean.
 
-**Done when:** a first-time visitor on three.ws/forge gets a model from a prompt and from a
-photo, draft tier, under 2 minutes, zero console errors.
+## Never blocked (pre-answered)
 
-## Phase 1 — Light up the built-but-dark compute (next)
+| Blocker | Do this |
+|---|---|
+| A worker is not deployed | Deploy it from `workers/<name>/cloudbuild.yaml` with the pinned build and runtime service accounts. Staging weights from `gs://three-ws-model-weights` is part of the task. |
+| An env var is missing | Look in `.env`, then the Cloud Run service, then Secret Manager. Update single vars with `--update-env-vars`; `--set-env-vars` replaces the entire set. |
+| A third-party provider 404s or throttles | Use the failover chain in `api/forge.js`; if a rung is missing, adding it is part of the task. |
+| `gcloud` auth dead | Do everything else, then put the exact commands in the report; one `gcloud auth login` clears it. |
+| A deploy is required | Owner-gated. Prepare it, name the single command, and finish everything else. |
+| Production is behind `main` | Check `curl -s https://three.ws/api/version` against `git log` before debugging a "broken" feature. A stale revision explains most phantom failures. |
 
-Everything here is written and containerized; it needs deployment + env wiring.
+## Report format
 
-1. **Deploy automation for the editing workers.** ✅ Built 2026-06-12:
-   `workers/deploy/deploy-editing.sh` provisions + deploys `stylize`, `remesh`, `segment`,
-   `rembg` (CPU-only, default set) and optionally `texture` / `model-text2motion` (GPU),
-   prints the URL + key pairs, and with `VERCEL_TOKEN` upserts them into Vercel production
-   via REST. ❌ Not yet run — needs a privileged GCP identity (Cloud Shell):
-   `PROJECT_ID=… ./workers/deploy/deploy-editing.sh`.
-2. **Set the env vars** (names): `GCP_REMESH_URL`, `GCP_STYLIZE_URL`, `GCP_SEGMENT_URL`,
-   `GCP_REMBG_URL`, `GCP_TEXTURE_URL`, `GCP_TEXT2MOTION_URL`, `GCP_TRIPOSG_URL`
-   (+ shared `GCP_RECONSTRUCTION_KEY`), `LONGCAT_WORKER_URL`/`LONGCAT_WORKER_KEY`.
-3. **Auto-rig**: deploy `workers/unirig` (or pin a Replicate UniRig build) and set
-   `REPLICATE_RERIG_MODEL` / route through the GCP pipeline. Rig is the gateway to the
-   avatar/animation economy — it unlocks `/forge-motion` clips on generated meshes.
-4. **Per-feature prod verification**, same bar as Phase 0: real mesh in, real result out.
-5. **Production health surface.** `?catalog` says `configured: true` when an env var exists —
-   that's how two dead flows looked green. Add a `/api/forge?health` that live-probes each
-   provider (cheap HEAD/auth checks) + a scheduled smoke test that runs a draft generation
-   daily and alerts on failure.
-
-**Done when:** every row in the table above reads ✅, verified in prod, and a daily smoke
-test guards regressions.
-
-## Phase 2 — Parity gaps vs Meshy / Tripo
-
-What they have that we don't (or that we hide). Ordered by user impact.
-
-1. **Surface the hidden tools in `/forge`.** Retexture (full + region/magic-brush) and
-   text→animation exist as APIs/MCP tools with no UI. The result panel should offer:
-   Retexture · Remesh · Stylize · Segment · Rig · Animate · Export — one pipeline, one page.
-2. **Preview → refine flow.** Meshy's signature UX: cheap fast preview, then one-click refine
-   of the chosen result (re-run at high tier conditioned on the same seed/reference). We have
-   the tier system; add "Refine this" on every draft result.
-3. **Export formats.** The remesh worker already converts glb/obj/stl/ply/usdz/3mf/fbx —
-   expose a format picker on download instead of GLB-only.
-4. **PBR material controls.** High tier claims PBR; expose map outputs (albedo/normal/
-   roughness/metallic) and a re-bake option in the result panel.
-5. **Sketch→3D.** ✅ Built 2026-06-12 on TripoSG-scribble (VAST AI, MIT) — a native
-   sketch+prompt→geometry model, not a controlnet preprocessing hack. New
-   `workers/model-triposg` GPU worker (also added to the avatar pipeline's mesh pool as
-   the TripoSR quality successor), `sketch` path through forge-tiers / gcp provider /
-   `/api/forge`, and a "From a sketch" mode on `/forge` that only appears when the
-   engine is live. ❌ Not deployed: stage weights (`stage-weights.sh`, key `triposg`),
-   deploy the worker (`deploy-all.sh`), set `GCP_TRIPOSG_URL` in Vercel. Output is
-   untextured geometry — pairs with retexture/stylize (item 1).
-6. **Job webhooks + public API docs.** Replicate webhook plumbing exists for avatars; extend
-   to forge jobs and publish the endpoint contract (we already sell it via x402 — document it
-   like a product, with examples).
-7. **Community gallery.** The private per-client gallery exists; add opt-in public showcase
-   with remix ("generate a variation of this").
-
-## Phase 3 — Where we beat them
-
-1. **Agent-native generation.** Meshy/Tripo sell to humans with credit cards; we sell to
-   agents with wallets. x402 pricing + MCP tools are live differentiators — market them,
-   benchmark them, keep them first-class in every new feature.
-2. **Text→animation on generated meshes.** Neither Meshy nor Tripo generates animation.
-   Generate → rig → animate from one prompt chain is a demo nobody else can run.
-3. **Generate → place.** One-click "drop into world": a generated asset becomes a networked
-   object in `/play` (Wave 0 object sync from the 3D-world roadmap). The generation suite
-   feeds the sandbox economy; assets become $three-priced cosmetics and props.
-4. **Holder perks.** Generation tiers/quotas for $three holders (the only coin: 
-   `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`).
-
----
-
-## Operating rules for this roadmap
-
-- **"Works" means verified in production**, by running it, after deploy. The 2026-06 audit
-  found two fully-tested, fully-wired flows that were 100% dead in prod. Tests passing is
-  not the bar; a stranger getting a GLB is the bar.
-- Fix the smallest broken thing that unblocks a whole flow before building anything new.
-- Every phase ends with the daily smoke test extended to cover what it shipped.
+The Step 0 truth table (before and after), the root cause per red row, what you shipped, and
+the single owner action if one remains. No recap of this file.

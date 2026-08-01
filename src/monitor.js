@@ -93,6 +93,15 @@ function mountSpotlight(agent) {
 	el.setAttribute('api-base', 'https://three.ws');
 	el.setAttribute('responsive', '');
 	el.setAttribute('background', 'transparent');
+	// Binding by agent-id opts into the full conversational chrome by default,
+	// whose name plate and action chips sit exactly where this panel prints the
+	// agent's name and links. A monitor tile wants the bare avatar: the footer
+	// below already names it and links to the chat.
+	el.setAttribute('chat', 'off');
+	el.setAttribute('name-plate', 'off');
+	// Head-to-mid-thigh crop: a tile is wider than it is tall, and full-body
+	// framing spends most of that height on empty room above the avatar.
+	el.setAttribute('framing', 'portrait');
 	stage.appendChild(el);
 	spotlightMounted = true;
 	$('spot-name').textContent = agent.name || 'Unnamed agent';

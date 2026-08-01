@@ -36,9 +36,23 @@ Three settings sit under the input, and all three are remembered on your next vi
 |---|---|---|
 | **Speed** | 0.5×, 0.75×, 1× | Signing is content, not decoration. Learners and many viewers want it slower, and slowing it must not mean losing it |
 | **Signing hand** | Right-handed, Left-handed | About one signer in ten is left-dominant. The whole sign mirrors, not just the hand |
-| **Avatar** | Classic, Expressive face | The classic rig is light and animates smoothly everywhere but carries no face blendshapes. The expressive rig shows the [non-manual markers](#the-face-is-grammar) a signed question needs |
+| **Avatar** | Classic, Expressive face, your own | The classic rig is light and animates smoothly everywhere but carries no face blendshapes. The expressive rig shows the [non-manual markers](#the-face-is-grammar) a signed question needs. The third pill opens the avatar gallery: see [Sign with your own avatar](#sign-with-your-own-avatar) |
 
 If you have `prefers-reduced-motion` turned on, the page never auto-plays: signing starts only when you ask for it.
+
+### Sign with your own avatar
+
+The **Avatar** setting's third pill (`Your avatar…`) opens the three.ws avatar gallery: your own avatars and every public one. Pick one and it takes the hero's place immediately, keeping the speed and signing hand you already set.
+
+It works because signs are anatomy, not coordinates. A sign says "index fingertip on the chin", and the solver measures your avatar's skeleton to find where its chin is, so the same entry lands correctly on a tall rig, a short one, long fingers or small hands. Nothing about the vocabulary is per-avatar, which is also why the [clips retarget](#how-it-works) instead of being rebuilt.
+
+Once picked, the avatar is remembered on that device and is already on stage on [/asl-alphabet](https://three.ws/asl-alphabet) too. Click its pill again to swap to a different one; the built-in pills switch back without a trip through the gallery.
+
+Some avatars cannot sign. A model with no skeleton, or a humanoid rig with no finger bones, has nothing to form a handshape with. Rather than leave a mute avatar on stage, the page says so and puts the rig that was working back:
+
+> Nova can't sign: it has no usable skeleton. Classic is back on stage.
+
+Anything created by the [Avatar Studio](https://three.ws/create) or by [/forge](https://three.ws/forge) with a humanoid rig signs. If your own model does not, run it through [rig repair](https://three.ws/rig-doctor) first.
 
 ## What it signs, and what it spells
 
@@ -93,7 +107,7 @@ Another 41 everyday spellings route to those same signs, so ordinary sentences w
 - **Practice reading it**, which is the harder half. The avatar spells a letter or a word, you type what you read, and your streak is kept on the device.
 - Deep links: `?letter=W` opens a letter, `?spell=HELLO` spells a word.
 
-Speed, signing hand, and avatar are the same settings as /sign-language, stored under the same key, so a left-handed signer sets that once for both pages.
+Speed, signing hand, and avatar are the same settings as /sign-language, stored under the same key, so a left-handed signer sets that once for both pages. That includes [your own avatar](#sign-with-your-own-avatar): pick it on either page and it forms the letters on both.
 
 ## Fingerspell and export in the Animation Studio
 
@@ -382,7 +396,7 @@ In ASL the face carries grammar: raised brows mark a yes/no question, furrowed b
   head: { tilt: 3, nod: -3 } },
 ```
 
-Markers apply on any avatar shipping ARKit face shapes. An avatar without them still signs; it just loses the marker. On [/sign-language](https://three.ws/sign-language) the **Avatar** setting switches the hero between the light classic rig and an expressive rig whose face actually shows them.
+Markers apply on any avatar shipping ARKit face shapes, including [one of your own](#sign-with-your-own-avatar). An avatar without them still signs; it just loses the marker. On [/sign-language](https://three.ws/sign-language) the **Avatar** setting switches the hero between the light classic rig and an expressive rig whose face actually shows them.
 
 ## Motion capture with hands
 

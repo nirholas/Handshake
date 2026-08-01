@@ -1,99 +1,108 @@
-# 05 — Bulk catalog & animation seeding on the self-hosted GPU fleet
+# GCP-05: Bulk catalog and animation seeding on the self-hosted GPU fleet
+
+**How to run this:** paste this whole file into a fresh Claude Code chat opened in
+`/workspaces/three.ws`, or say "execute `prompts/gcp-credits/05-catalog-animation-seeding.md`".
+It is complete on its own. Also read `prompts/gcp-credits/README.md` and `CLAUDE.md`.
+
+## Binding operating clause
+
+1. Finish 100%. Never end with a question, a plan you did not execute, or "should I proceed?".
+2. Blockers have pre-answered routes at the bottom. Use them and keep going.
+3. CLAUDE.md hard rules: no mocks, no fake data, no TODO comments, no em-dash or en-dash
+   characters. Stage explicit paths only; other agents share this worktree.
+4. GPU spend on the self-hosted fleet is pre-approved (credits). Curation beats volume: a
+   catalog of 5,000 junk meshes is worse than today's catalog.
 
 ## Mission
 
-Use the self-hosted GPU lanes (prompt 04) to mass-produce durable platform content that outlives
-the credits: a much larger curated avatar catalog and a generative text→motion animation library
-listed in the marketplace. This is the "credits → permanent assets" play. Quality-gate
-everything — a catalog of 5,000 junk meshes is worse than today's catalog. Verify the browsing
-surfaces hold up at the new scale.
+Turn credits into durable platform content: a much larger curated avatar catalog and a
+generated text-to-motion clip library, both quality-gated, both browsable at the new scale.
 
-## Prerequisites (stop and report if missing)
+## Step 0: re-derive current state (trust nothing below)
 
-- Prompt 04 live in at least preview: `MODEL_TRELLIS_URL` etc. set, self-host lanes healthy,
-  `FORGE_SELFHOST_PRIMARY` available. text2motion service deployed (`GCP_TEXT2MOTION_URL`).
+```bash
+gcloud run services list --region us-central1 --project aerial-vehicle-466722-p5 \
+  --format="value(metadata.name,status.conditions[0].status)" | grep -E "trellis|text2motion|rig|hunyuan"
+gcloud run services describe three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --format=yaml | grep -E "GCP_TEXT2MOTION_URL|MODEL_TRELLIS_URL|FORGE_SELFHOST_PRIMARY|SEED_CRON_BATCH"
+sed -n '1,40p' api/cron/forge-seed-cron.js
+node -e "const d=require('./data/motion-prompts.json');console.log(Object.keys(d), d.prompts?.length)"
+curl -s "https://three.ws/api/animations/library?limit=1" | head -20
+psql "$DATABASE_URL" -c "select count(*) from avatars" 2>/dev/null || echo "use api/_lib/db helpers instead"
+```
 
-## Context (from prior code audit; re-verify)
-
-- **Seed cron exists:** `api/cron/forge-seed-cron.js` runs ~per-minute, generates real avatars
-  on the free NIM draft lane, attributes each to a fresh OG-username user, publishes to the
-  avatars table. Prompt library: `api/_lib/seed-prompts.js` (200+ prompts).
-- **Catalog surfaces:** `api/avatars/`, `/gallery`, `/dashboard/avatars`, curated GLBs in
-  `public/avatars/`.
-- **Animation marketplace:** `api/marketplace/animations.js` (creator-listed clips) with x402
-  download route `api/x402/animation-download.js`. The Mixamo library (2,800+ retargeted clips)
-  is already live at `/animations`, served from R2 (`animations/library/clips/*.json` +
-  `manifest.json`, endpoint `GET /api/animations/library`).
-- **Vision QA available:** `api/vision.js` / `api/_lib/vision.js` can describe a render — usable
-  as an automated quality gate.
-- Assets land in R2 via `api/_lib/r2.js` (`forge/…` prefixes); thumbnails already part of the
-  pipeline.
+Known as of 2026-08-01: `data/motion-prompts.json` exists (the task-6 prompt library),
+`api/cron/forge-seed-cron.js`, `api/_lib/seed-prompts.js`, `api/marketplace/animations.js`,
+`api/x402/animation-download.js` and `api/animations/library.js` all exist;
+`scripts/gcp/seed-avatars.mjs` does not. Verify each before deciding what is left.
 
 ## Tasks
 
-### A. Avatar catalog seeding (target: +3,000–5,000 *curated* avatars)
+### A. Avatar catalog seeding (target: several thousand curated avatars)
 
-1. **Upgrade the seed cron** to use the self-hosted lane when `FORGE_SELFHOST_PRIMARY=1`
-   (it should inherit this from prompt 04's routing — verify, don't assume) and make its
-   cadence/batch size env-tunable (`SEED_CRON_BATCH`, default = current behavior).
-2. **Expand `seed-prompts.js`** meaningfully: broaden coverage (professions, fantasy, sci-fi,
-   animals-as-props vs humanoids, styles) with attention to what makes good *rigged* avatars —
-   humanoid, front-facing, full-body. Keep prompts coin-neutral (no third-party crypto
-   references — commit gate).
-3. **Automated quality gate before publish:** render thumbnail → `api/vision.js` check
-   (humanoid? complete body? not a blob?) + mesh sanity (vertex count bounds, has texture).
-   Failing assets are not published (keep them in R2 under a `forge/rejected/` prefix with the
-   reason, for tuning). Track accept rate.
-4. **Rig the keepers:** run accepted avatars through UniRig so catalog entries are
-   animation-ready (that's the product bar — a catalog avatar that T-poses is half-built).
-   Verify a sample in the viewer with idle/walk clips playing.
-5. **Batch runner:** a resumable script `scripts/gcp/seed-avatars.mjs` (checkpoint file, safe
-   to re-run, parallelism tuned to deployed GPU count) for bulk runs beyond the cron cadence.
-   Run it for a first real batch (e.g. 500) end to end before scaling up; report accept rate
-   and $/accepted-asset, then continue to target if quality holds.
+1. **Point the seed cron at the self-hosted lane** when `FORGE_SELFHOST_PRIMARY=1`, and make
+   cadence and batch size env-tunable (`SEED_CRON_BATCH`, default equals current behavior, so
+   the change is a no-op when unset).
+2. **Broaden `api/_lib/seed-prompts.js`**: professions, fantasy, sci-fi, styles, with attention
+   to what makes a good rigged avatar (humanoid, front-facing, full-body). Keep every prompt
+   coin-neutral: no crypto project other than $THREE, ever, in committed content.
+3. **Automated quality gate before publish**: render a thumbnail, run it through the vision
+   check (`api/vision.js` / `api/_lib/vision.js`) for humanoid, complete body, not a blob, plus
+   mesh sanity (vertex-count bounds, has texture). Rejected assets stay in R2 under a
+   `forge/rejected/` prefix with the reason, for tuning. Track and report accept rate.
+4. **Rig the keepers** through the rig worker so catalog entries are animation-ready, and spot
+   check a sample in the viewer with idle and walk clips playing. A catalog avatar that T-poses
+   is half-built.
+5. **Resumable batch runner** `scripts/gcp/seed-avatars.mjs`: checkpoint file, safe to re-run,
+   parallelism tuned to the deployed GPU count, asserts the backend actually used and aborts on
+   fallthrough to any paid third-party lane. Run one real batch of 500 end to end, report
+   accept rate and cost per accepted asset, then continue only if quality holds.
 
-### B. Animation library seeding (target: +500–1,000 curated motion clips)
+### B. Animation library seeding (target: several hundred curated clips)
 
-6. **Prompt set for text2motion:** build a motion prompt library (locomotion variants, emotes,
-   dances, combat, idles, interactions) — a data file, not hardcoded.
-7. **Batch generate → retarget → publish:** generate clips via `GCP_TEXT2MOTION_URL`, convert
-   to the canonical-skeleton clip JSON format the library uses (match the Mixamo library's
-   format exactly — inspect existing clips in R2/`public/animations/`), upload under a distinct
-   prefix (`animations/library/generated/…`), and update the manifest. QA gate: clip duration
-   sane, no NaN keyframes, plays on the default rig without foot-sliding disasters (spot-check
-   a sample visually in the viewer).
-8. **Marketplace listing:** list the generated set in `api/marketplace/animations.js` under a
-   platform creator identity, priced consistently with existing listings, downloadable via the
-   existing x402 route. Free tier: consider adding a rotating subset to the free library —
-   owner-visible decision; implement the mechanism, note the policy choice in the report.
+6. **Use `data/motion-prompts.json`** as the prompt library (extend it if categories are thin;
+   it is data, never hardcoded).
+7. **Generate, retarget, publish**: clips through `GCP_TEXT2MOTION_URL`, converted to the exact
+   canonical-skeleton clip JSON the library already serves (inspect a real clip from
+   `GET /api/animations/library` first and match it byte-shape), uploaded under a distinct
+   prefix, manifest updated. Quality gate: sane duration, no NaN keyframes, plays on the default
+   rig without foot-sliding. Spot-check a sample visually.
+8. **List the generated set** in `api/marketplace/animations.js` under a platform creator
+   identity, priced consistently with existing listings, downloadable through the existing x402
+   route. Implement a rotating free subset mechanism and record the policy choice you made.
 
-### C. Scale-proofing the surfaces
+### C. Scale-proofing
 
-9. With the catalog at 5–10× size: verify `/gallery`, `/dashboard/avatars`, `/animations`, and
-   the marketplace list endpoints paginate (not fetch-all), thumbnails lazy-load, and API
-   responses stay bounded. Fix what breaks — pagination, indexes on the avatars table, manifest
-   sharding if the animation manifest gets huge. Test at realistic counts, not 10 items.
+9. At 5 to 10 times the current catalog size, verify `/gallery`, `/dashboard/avatars`,
+   `/animations` and the marketplace list endpoints paginate rather than fetch-all, that
+   thumbnails lazy-load, and that API responses stay bounded. Fix what breaks: pagination,
+   indexes on the avatars table, manifest sharding. Test at realistic counts, not ten items.
 
-## Guardrails
+## Definition of done
 
-- Curation over volume. If accept rate is poor, stop scaling and tune prompts/gates first;
-  report honestly.
-- All batch spend is on self-host lanes (credits) — never let a bulk run fall through to
-  Replicate; assert the backend in the batch script and abort on fallthrough.
-- Cron changes must be no-ops when the new env vars are unset.
+- [ ] Seed cron on the self-hosted lane and env-tunable; quality gate live with a measured
+      accept rate.
+- [ ] First avatar batch published: rigged, animated in the viewer, browsable in the gallery.
+- [ ] Generated motion clips live in the library and the marketplace, sample visually verified.
+- [ ] Scale test at target counts passes on all four surfaces, with the fixes committed.
+- [ ] Cost per accepted asset and accept rate recorded in `docs/gcp-credits.md`.
+- [ ] `npm test` green; `git diff` reviewed (no esbuild-mangled `api/` files: check `head -1`
+      for `__defProp`).
+- [ ] `data/changelog.json` entries for the bigger catalog and the new generated-animation
+      collection, in plain language.
+- [ ] `npm run check:rules -- --paths <files you touched>` clean.
 
-## Acceptance criteria
+## Never blocked (pre-answered)
 
-- [ ] Seed cron upgraded + env-tunable; quality gate live with measured accept rate.
-- [ ] First avatar batch published: rigged, animated in viewer, browsable in gallery.
-- [ ] Generated motion clips live in library + marketplace; sample visually verified.
-- [ ] Scale test at target counts passes on all four surfaces; fixes committed.
-- [ ] $/accepted-asset and accept-rate numbers in `docs/gcp-credits.md`.
-- [ ] `npm test` green; `git diff` reviewed (no `api/` esbuild-mangled files).
+| Blocker | Do this |
+|---|---|
+| A self-host lane is not Ready | Deploy or scale it (credits approved) using the bind-first pattern in `workers/model-trellis/main.py`. If a lane genuinely cannot come up, seed with the lanes that are up and report which one is missing. |
+| Accept rate is poor | Stop scaling, tune prompts and gates first, and report the numbers honestly. Volume without curation fails this work order. |
+| A batch would fall through to a paid third-party lane | Assert the backend in the batch script and abort. Never let bulk spend leave the credits. |
+| Database migration needed for an index | `npm run db:status` first (it previews), then `npm run db:migrate` applies every pending migration immediately with no dry run. Read the pending list before running it. |
+| Vision QA rejects everything | Inspect ten rejected thumbnails yourself before touching the threshold; a broken render pipeline looks exactly like a strict gate. |
 
-## Wrap-up
+## Report format
 
-Changelog entries (users notice: bigger catalog, new generated-animations collection) —
-plain language. Update docs (`docs/gcp-credits.md`; marketplace/animations docs if they exist).
-Commit explicit paths, push `threews` (+ attempt `threeD`). Report: counts published, accept
-rates, spend, and remaining headroom.
+Counts published, accept rates, spend, cost per accepted asset, the four scale-test results,
+and any single remaining owner action. No recap of this file.

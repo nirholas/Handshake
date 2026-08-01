@@ -13,6 +13,7 @@ Internal work-order packs for Claude agents. Each subdirectory is a campaign: a 
 
 | Directory | What it is |
 |---|---|
+| [backlog/](backlog/) | The open backlog, one work order per item: everything [../ISSUES.md](../ISSUES.md) and the retired campaign logs still carry, each with a measured starting state and a definition of done. |
 | [bnb-chain/](bnb-chain/) | BNB Chain campaign: payments and gasless-rail work orders with a verified-facts context file. |
 | [fable-audit/](fable-audit/) | One work order per finding from the 2026-07-11 deep audit, with severity, exact defect location, fix, and verification. |
 | [gcp-credits/](gcp-credits/) | Prompt pack for the GCP credit program: GPU worker deploys, catalog and animation seeding. |

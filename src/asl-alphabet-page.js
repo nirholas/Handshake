@@ -12,35 +12,17 @@
 import { PoseStage } from './avatar-pose.js';
 import { buildFingerspellingClip, normalizeWord } from './fingerspelling.js';
 import { DIGITS, LETTERS, LETTER_NOTES, PRACTICE_WORDS } from './asl-alphabet-data.js';
+import { buildRigPicker, loadSignPrefs, resolveRig, saveSignPrefs } from './sign-avatars.js';
 import { log } from './shared/log.js';
 
-// The same two rigs, and the same stored preferences, as /sign-language: a
-// left-handed signer who set that once should never set it again.
-const AVATARS = [
-	{ id: 'classic', label: 'Classic', url: '/avatars/cz.glb' },
-	{ id: 'expressive', label: 'Expressive face', url: '/avatars/default.glb' },
-];
-const PREFS_KEY = 'threews:sign-prefs';
+// The rigs and the stored preferences are shared with /sign-language, including
+// a custom avatar: a left-handed signer who set that once, on either page,
+// should never set it again.
 const SPEEDS = [
 	{ label: '0.5×', rate: 0.5 },
 	{ label: '0.75×', rate: 0.75 },
 	{ label: '1×', rate: 1 },
 ];
-
-function loadPrefs() {
-	try {
-		return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
-	} catch {
-		return {};
-	}
-}
-function savePrefs(prefs) {
-	try {
-		localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-	} catch {
-		/* private mode: settings just don't persist */
-	}
-}
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const CHARS = [...LETTERS, ...DIGITS];
@@ -60,8 +42,8 @@ async function boot() {
 	const stageHost = $('#aa-stage');
 	if (!stageHost) return;
 
-	const prefs = loadPrefs();
-	let avatar = AVATARS.find((a) => a.id === prefs.avatar) || AVATARS[0];
+	const prefs = loadSignPrefs();
+	let avatar = resolveRig(prefs);
 	let rate = SPEEDS.some((s) => s.rate === prefs.rate) ? prefs.rate : 1;
 	let dominant = prefs.dominant === 'Left' ? 'Left' : 'Right';
 
@@ -273,7 +255,7 @@ async function boot() {
 	const practice = {
 		answer: '',
 		streak: 0,
-		best: Number(loadPrefs().aslBest || 0),
+		best: Number(loadSignPrefs().aslBest || 0),
 		active: false,
 	};
 	const practiceEl = $('#aa-practice');
@@ -328,7 +310,7 @@ async function boot() {
 		practice.streak = right ? practice.streak + 1 : 0;
 		if (practice.streak > practice.best) {
 			practice.best = practice.streak;
-			savePrefs({ ...loadPrefs(), aslBest: practice.best });
+			saveSignPrefs({ aslBest: practice.best });
 		}
 		renderScore();
 		if (practiceFeedback) {
@@ -378,7 +360,7 @@ async function boot() {
 		}
 	};
 
-	const persist = () => savePrefs({ ...loadPrefs(), rate, dominant, avatar: avatar.id });
+	const persist = () => saveSignPrefs({ rate, dominant, avatar: avatar.id });
 
 	buildOptions('#aa-speed', SPEEDS, (s) => s.rate === rate, (s) => {
 		rate = s.rate;
@@ -398,16 +380,33 @@ async function boot() {
 			if (current) play(current, { describe: false });
 		},
 	);
-	let switchingRig = false;
-	buildOptions('#aa-rig', AVATARS, (a) => a.id === avatar.id, async (picked) => {
-		if (switchingRig || picked.id === avatar.id) return;
-		switchingRig = true;
-		avatar = picked;
-		persist();
-		setStatus('Loading avatar…');
-		const ok = await mountStage();
-		switchingRig = false;
-		if (ok && current) play(current, { describe: false });
+	// Any avatar on three.ws can form the letters, not only the two rigs that
+	// ship with the platform: the handshapes are solved against whatever
+	// skeleton is attached, so they land on your own avatar's fingers.
+	buildRigPicker({
+		host: '#aa-rig',
+		optionClass: 'aa-opt',
+		active: avatar,
+		onStatus: setStatus,
+		apply: async (picked) => {
+			const previous = avatar;
+			avatar = picked;
+			persist();
+			setStatus('Loading avatar…');
+			if (await mountStage()) {
+				if (current) play(current, { describe: false });
+				else if (picked.custom) setStatus(`${picked.label} is forming the letters now.`);
+				return true;
+			}
+			// No finger bones means no handshapes, and a hand that cannot move is
+			// worse than the rig the visitor already had. Put that one back.
+			avatar = previous;
+			persist();
+			const restored = await mountStage();
+			setStatus(`${picked.label} has no finger bones, so it cannot form handshapes. ${previous.label} is back on stage.`);
+			if (restored && current) play(current, { describe: false });
+			return false;
+		},
 	});
 
 	// ── Deep links ───────────────────────────────────────────────────────────

@@ -465,54 +465,11 @@ export function canonicalizeJointNodes(json) {
 		targetCount.set(canonical, (targetCount.get(canonical) || 0) + 1);
 	}
 
-	// Pass 1.5: collision-aware shoulder/upper-arm split. Rigify and other
-	// anatomical rigs name the clavicle `shoulder.L` and the upper arm
-	// `upper_arm.L`; both normalise onto `LeftArm`, so two joints would take the
-	// same name and the clip's arm rotation would bind to the clavicle instead of
-	// the upper arm (arm swings from the shoulder blade). When an Arm target is
-	// contested and one contender is clavicle-spelled, demote it to the Shoulder
-	// bone (which the clip library also drives) — but only if Shoulder is free, so
-	// this can never fire on a rig that doesn't actually have the collision.
-	const isClavicle = (raw) => /shoulder|clavicle|collar/i.test(raw);
-	const isUpperArm = (raw) => /upper.?arm|upperarm/i.test(raw);
-	for (const side of ['Left', 'Right']) {
-		const arm = `${side}Arm`;
-		const shoulder = `${side}Shoulder`;
-		if ((targetCount.get(arm) || 0) < 2 || (targetCount.get(shoulder) || 0) > 0) continue;
-		const contenders = plan.filter((p) => p.canonical === arm);
-		const hasUpperArm = contenders.some((p) => isUpperArm(p.raw));
-		if (!hasUpperArm) continue;
-		for (const p of contenders) {
-			if (isClavicle(p.raw) && !isUpperArm(p.raw)) {
-				p.canonical = shoulder;
-				targetCount.set(arm, targetCount.get(arm) - 1);
-				targetCount.set(shoulder, 1);
-				break;
-			}
-		}
-	}
-
-	// Pass 1.6: the mirror-image collision. SMPL-style rigs name the clavicle
-	// `left_collar` and the upper arm `left_shoulder`; both normalise onto
-	// `LeftShoulder`, leaving `LeftArm` vacant and the arm clip unbound. When a
-	// Shoulder target is contested between a collar/clavicle-spelled joint and a
-	// shoulder-spelled one, and Arm is free, the shoulder-spelled joint is the
-	// upper arm — promote it to the Arm bone.
-	for (const side of ['Left', 'Right']) {
-		const arm = `${side}Arm`;
-		const shoulder = `${side}Shoulder`;
-		if ((targetCount.get(shoulder) || 0) < 2 || (targetCount.get(arm) || 0) > 0) continue;
-		const contenders = plan.filter((p) => p.canonical === shoulder);
-		if (!contenders.some((p) => /clavicle|collar/i.test(p.raw))) continue;
-		for (const p of contenders) {
-			if (/shoulder/i.test(p.raw) && !/clavicle|collar/i.test(p.raw)) {
-				p.canonical = arm;
-				targetCount.set(shoulder, targetCount.get(shoulder) - 1);
-				targetCount.set(arm, 1);
-				break;
-			}
-		}
-	}
+	// Pass 1.5/1.6: the clavicle/upper-arm collision, resolved for both lanes by
+	// the shared resolver below.
+	resolveArmShoulderCollisions(plan, {
+		isAncestor: (a, b) => isAncestorNode(json, a.index, b.index),
+	});
 
 	// Pass 2: apply. A canonical name is assigned at most once — when two joints
 	// still resolve to the same target after collision resolution (SMPL's

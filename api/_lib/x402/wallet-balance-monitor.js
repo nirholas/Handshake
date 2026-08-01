@@ -44,6 +44,13 @@ import { randomUUID } from 'node:crypto';
 import { fetchWithTimeout, loadSeedKeypair, USDC_MINT } from './pay.js';
 import { SPONSOR_SOL_FLOOR_LAMPORTS } from './self-facilitator.js';
 import { ringFloorSpecs, evaluateRingWallet, LAMPORTS_PER_SOL } from './ring-floors.js';
+import {
+	computeSponsorRunway,
+	formatSponsorRunwayAlert,
+	measureSponsorBurn,
+	SPONSOR_BURN_WINDOW_DAYS,
+	SPONSOR_RUNWAY_ALERT_DAYS,
+} from './sponsor-runway.js';
 import { sql as defaultSql } from '../db.js';
 import { env } from '../env.js';
 import { sendOpsAlert } from '../alerts.js';
@@ -218,7 +225,10 @@ function resolveRingAddresses() {
  *   { readBalance }   async (address) => { lamports, usdcAtomic } — override the
  *                     on-chain reader (used by tests to avoid RPC + spl-token)
  *   { sendAlert }     override sendOpsAlert (tests assert on it)
- * @returns {Promise<{ configured: boolean, wallets: object[], breaches: string[] }>}
+ *   { sql }           override the SQL client the burn measurement reads
+ *   { measureBurn }   override the burn measurement entirely (tests, dry runs)
+ * @returns {Promise<{ configured: boolean, wallets: object[], breaches: string[],
+ *   sponsorRunway: import('./sponsor-runway.js').SponsorRunway|null }>}
  */
 export async function checkRingWallets(ctx = {}) {
 	const redis = ctx.redis || null;
@@ -226,7 +236,7 @@ export async function checkRingWallets(ctx = {}) {
 	const addrs = resolveRingAddresses();
 	const anyConfigured = Boolean(addrs.payer || addrs.treasury || addrs.sponsor);
 	if (!anyConfigured) {
-		return { configured: false, wallets: [], breaches: [] };
+		return { configured: false, wallets: [], breaches: [], sponsorRunway: null };
 	}
 
 	// On-chain balance reader — injectable for tests. Reads SOL always and USDC
@@ -287,11 +297,47 @@ export async function checkRingWallets(ctx = {}) {
 		}
 	}
 
+	// ── Sponsor RUNWAY ────────────────────────────────────────────────────────
+	// The floor check above answers "is the fee wallet dead yet?". This answers
+	// "how long until it is", which is the only version of the question anyone can
+	// act on. Burn is measured from the settle ledger every run (see
+	// sponsor-runway.js for why a remembered constant is not acceptable here), and
+	// the runway is taken to the FACILITATOR hard floor rather than the ring's 1.5x
+	// watch floor, because the hard floor is where settling actually stops.
+	const sponsorEntry = wallets.find((w) => w.role === 'sponsor' && w.configured) || null;
+	let sponsorRunway = null;
+	if (sponsorEntry) {
+		const sql = ctx.sql || (await import('../db.js')).sql;
+		const burn = ctx.measureBurn
+			? await ctx.measureBurn({ windowDays: SPONSOR_BURN_WINDOW_DAYS })
+			: await measureSponsorBurn(sql, { windowDays: SPONSOR_BURN_WINDOW_DAYS });
+		sponsorRunway = computeSponsorRunway({
+			address: sponsorEntry.address,
+			sol: sponsorEntry.sol,
+			floorSol: SPONSOR_SOL_FLOOR_LAMPORTS / LAMPORTS_PER_SOL,
+			burnSolPerDay: burn.burn_sol_per_day,
+			settles: burn.settles,
+			windowDays: burn.window_days,
+			alertDays: SPONSOR_RUNWAY_ALERT_DAYS,
+		});
+		if (sponsorRunway.should_alert) {
+			const a = formatSponsorRunwayAlert(sponsorRunway);
+			await sendAlert(a.title, a.detail, { signature: a.signature, severity: a.severity });
+		}
+		log.info('x402_sponsor_runway', {
+			status: sponsorRunway.status,
+			sol: sponsorRunway.sol,
+			burn_sol_per_day: sponsorRunway.burn_sol_per_day,
+			runway_days_to_floor: sponsorRunway.runway_days_to_floor,
+			window_days: sponsorRunway.burn_window_days,
+		});
+	}
+
 	// Cheap consumer snapshot (dashboard / health) — mirrors the seed-wallet key.
 	if (redis) {
 		try {
 			await redis.set(REDIS_RING_KEY, JSON.stringify({
-				ts: new Date().toISOString(), wallets, breaches,
+				ts: new Date().toISOString(), wallets, breaches, sponsor_runway: sponsorRunway,
 			}), { ex: ALERT_TTL_SECONDS });
 		} catch (err) {
 			log.warn('ring_balance_redis_write_failed', { message: err?.message });
@@ -306,7 +352,7 @@ export async function checkRingWallets(ctx = {}) {
 		});
 	}
 
-	return { configured: true, wallets, breaches };
+	return { configured: true, wallets, breaches, sponsorRunway };
 }
 
 /**
@@ -410,9 +456,9 @@ export async function run(ctx = {}) {
 	// Independent of the seed-wallet reading above: these are the closed-loop
 	// ring's own wallets, watched on-chain against their role floors so the loop
 	// never halts on a drained sponsor or an empty payer float. Never throws.
-	let ring = { configured: false, wallets: [], breaches: [] };
+	let ring = { configured: false, wallets: [], breaches: [], sponsorRunway: null };
 	try {
-		ring = await checkRingWallets({ redis });
+		ring = await checkRingWallets({ redis, sql });
 	} catch (err) {
 		log.warn('ring_balance_check_failed', { message: err?.message });
 	}

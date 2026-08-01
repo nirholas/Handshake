@@ -169,28 +169,7 @@ Found by the 2026-07-30 documentation audit, which read the handlers behind
 every surface it documented. Only the production-affecting findings are listed
 here; the code-quality items from that pass are not production issues.
 
-9. **`/api/avatar/optimize?draco=1` is broken on the running image** (needs a
-    rebuild, not engineering). It returns `500 transcode_failed` with
-    `draco.createCompressedPrimitive is not a function`. This is dependency
-    drift in the deployed image, not a code bug, and the obvious diagnosis is
-    wrong: `buildTranscodeIo()` IS present in the deployed commit, and this
-    repo's pinned tree encodes Draco correctly (verified locally, 888,060 bytes
-    out). The image resolved an older `@gltf-transform` than the pinned `^4.4.0`,
-    whose Draco writer calls an encoder interface `draco3dgltf@1.5.7` does not
-    expose. Every other `optimize` parameter returns a real GLB in production.
-    Action: rebuild, and confirm the build installs from the lockfile rather
-    than resolving fresh. The related silent-expression defect is fixed in
-    code (2026-07-31): a render/expression request against a model lacking
-    the requested morph targets now reports itself via
-    `x-render-expression: applied|partial|none` (+ `x-render-expression-missing`)
-    on `/api/avatar/render`, and the MCP render tool names the missing
-    morphs; pinned by `tests/api/avatar-render-expression-report.test.js`.
-    Ships with the next deploy. (The oversized-`glbUrl` stall listed here is fixed: the 50 MB
-    cap is now counted while streaming and aborts the transfer, so a chunked
-    source with no `content-length` returns `413` instead of being buffered in
-    full, and an unresponsive source times out as `504` rather than holding the
-    request open. Covered by `tests/avatar-optimize-source-cap.test.js`.)
-10. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
+9. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
     one credential). The script sets `AllowedOrigins: ['*']` for GET/HEAD, but
     the live policy still echoes only the old allowlist, so a third-party origin
     gets no `access-control-allow-origin`. Re-running it removes the need for the
@@ -206,10 +185,23 @@ here; the code-quality items from that pass are not production issues.
 
 ---
 
-## Recently closed (2026-07-30; do not re-open without new evidence)
+## Recently closed (do not re-open without new evidence)
 
 Kept briefly because each one was previously mis-stated on this list, and the
 wrong version is what a future reader would otherwise trust.
+
+- **`/api/avatar/optimize?draco=1` (closed 2026-08-01).** It returned
+  `500 transcode_failed` with `draco.createCompressedPrimitive is not a function`
+  because the deployed image had resolved an older `@gltf-transform` than the
+  pinned `^4.4.0`. This was always dependency drift in the image, never a code
+  bug. The 2026-08-01 rebuild fixed it, verified live against production:
+  `curl "https://three.ws/api/avatar/optimize?src=https://three.ws/avatars/cesium-man.glb&draco=1"`
+  returns `200` with a 129,972-byte GLB stamped `glTF-Transform v4.4.0`. The two
+  sibling defects filed under the same item also shipped: the silent-expression
+  report (`x-render-expression` on `/api/avatar/render`, pinned by
+  `tests/api/avatar-render-expression-report.test.js`) and the oversized-source
+  stall (streaming 50 MB cap returning `413`/`504`, covered by
+  `tests/avatar-optimize-source-cap.test.js`).
 
 - **The autopilot spend default.** `POST /api/agents/:id/autopilot/run` read
   `body?.dry_run === true`, so a bare `POST {}` ran a REAL cycle while the

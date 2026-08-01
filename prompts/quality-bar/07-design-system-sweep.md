@@ -1,55 +1,82 @@
-# 07: Design-system consistency sweep (tokens, states, microinteractions)
+# QB-07: Design-system consistency sweep (tokens, states, microinteractions)
 
-Read `prompts/quality-bar/_shared.md` first. Its operating clause applies: finish 100%, never ask.
+**How to run this:** paste this whole file into a fresh Claude Code chat opened in
+`/workspaces/three.ws`, or say "execute `prompts/quality-bar/07-design-system-sweep.md`".
+It is complete on its own. Also read `prompts/quality-bar/_shared.md`, `DESIGN-TOKENS.md`
+and `CLAUDE.md`.
+
+## Binding operating clause
+
+1. Finish 100%. Never end with a question or an unexecuted plan. This is a sweep, so if the
+   session cannot cover every surface, finish complete surfaces cleanly and list the remainder
+   ordered by traffic. Never leave a surface half-migrated.
+2. Blockers have pre-answered routes at the bottom.
+3. CLAUDE.md hard rules: no mocks, no TODO comments, no commented-out code, no em-dash or
+   en-dash characters. Stage explicit paths only, commit per surface.
 
 ## Mission
 
-Make 300+ pages feel like one product. Audit and enforce a single design language: tokens for
-color/spacing/type/radius/shadow, consistent interactive states, designed empty/error/loading
-states everywhere, and the microinteractions that signal quality.
+Make 300+ pages feel like one product: one token sheet, consistent interactive states,
+designed empty, error and loading states everywhere, and the microinteractions that signal
+quality.
+
+## Step 0: re-derive current state (trust nothing below)
+
+```bash
+npm run audit:tokens        # scripts/audit-token-drift.mjs, the drift gate
+npm run audit:console       # console errors across pages
+npm run audit:overlays
+npm run audit:a11y          # playwright axe pass on the top pages
+grep -rn "#[0-9a-fA-F]\{6\}" src/ pages/ --include=*.css --include=*.html | wc -l
+```
+
+Record those numbers. They are your before-baseline and the report must show the after-numbers
+next to them.
 
 ## Tasks
 
-1. **Token audit.** Find the real token sheet (`src/styles/`, root CSS custom properties).
+1. **Token audit.** Find the canonical token sheet (`src/styles/`, `DESIGN-TOKENS.md`).
    Inventory hardcoded values across `src/`, `pages/`, `public/*.html` (colors, px spacing,
    font sizes, radii, shadows, z-indices). Consolidate to tokens; where two near-identical
-   values exist (#0a0a0b vs #0b0b0c), pick the canonical one. Ship the token sheet as the
-   single source with a short comment header documenting the scale.
-2. **Interactive-state pass.** Every button, link, card, input across the platform gets hover,
-   active, focus-visible, and disabled states from shared classes/tokens. Focus rings visible
-   on dark AND light contexts. Grep for `cursor: pointer` elements missing states as a cheap
-   detector.
-3. **State design sweep.** For each major surface (forge, markets, marketplace/agents,
+   values exist, pick one canonical value and use it everywhere.
+2. **Interactive-state pass.** Every button, link, card and input gets hover, active,
+   focus-visible and disabled states from shared classes and tokens. Focus rings must be
+   visible on dark and light contexts. Grep for `cursor: pointer` elements with no state rules
+   as a cheap detector.
+3. **State design sweep.** For each major surface (forge, markets, marketplace, agents,
    dashboard, wallet, launches, changelog, news, play, walk, irl, ar, scene studio, docs):
-   verify loading (skeletons, not spinners, matching final layout), empty (says what to DO,
-   with a working CTA, ideally an illustration or 3D flourish), error (plain language +
-   recovery action), and overflow (1,000 items, 200-char names, tiny screens). Fix inline;
-   keep a per-surface checklist in the report.
-4. **Motion language.** One transition standard: durations (150ms micro, 250ms panel), one
-   easing curve set, opacity+transform only (no layout-thrashing animations),
-   prefers-reduced-motion honored globally. Element enter/exit intentional on the top surfaces.
-5. **Typography and rhythm.** Consistent type scale and line-height rhythm; heading hierarchy
-   semantic (h1 once per page, no skipped levels); readable measure on text-heavy pages
-   (docs, news, changelog).
-6. **Contrast and a11y floor.** Automated pass (axe-core via Playwright, already available in
-   the e2e stack) on the top 30 pages: fix contrast below AA, missing labels, keyboard traps.
+   verify loading (skeletons matching the final layout, not spinners), empty (says what to do
+   with a working call to action), error (plain language plus a recovery action), and overflow
+   (1,000 items, 200-character names, tiny screens). Fix inline; keep a per-surface checklist.
+4. **Motion language.** One standard: 150 ms micro, 250 ms panel, one easing set, opacity and
+   transform only, `prefers-reduced-motion` honored globally.
+5. **Typography and rhythm.** One type scale and line-height rhythm; semantic heading
+   hierarchy (one h1 per page, no skipped levels); readable measure on text-heavy pages.
+6. **Contrast and accessibility floor.** Fix everything `npm run audit:a11y` reports on the top
+   30 pages: contrast below AA, missing labels, keyboard traps.
 
 ## Definition of done
 
-- Token sheet canonical; a grep for raw hex colors in `src/` returns only the token sheet and
-  justified exceptions (third-party embeds), listed in the report.
-- Per-surface state checklist complete with fixes shipped.
-- axe pass results before/after in the report; `npm run audit:web` no new errors;
-  visual spot-check at 320/768/1440 on the top 10 pages.
-- One changelog entry summarizing the visible polish in holder language.
+- [ ] Token sheet canonical; a raw-hex grep over `src/` returns only the token sheet plus
+      justified exceptions, each listed in the report.
+- [ ] Per-surface state checklist complete, with the fixes shipped.
+- [ ] `npm run audit:tokens`, `npm run audit:console`, `npm run audit:a11y` all better than the
+      Step 0 baseline and none worse. Before and after numbers in the report.
+- [ ] `npm run audit:web` shows no new errors; visual spot-check at 320, 768, 1440 px on the
+      top 10 pages.
+- [ ] One `data/changelog.json` entry summarizing the visible polish in holder language.
+- [ ] `npm run check:rules -- --paths <files you touched>` clean.
 
-## Anticipated blockers, pre-answered
+## Never blocked (pre-answered)
 
-- Scale: this is a sweep, so batch by surface and commit per surface (pathspec commits); if the
-  session cannot finish all surfaces, finish complete surfaces cleanly and list the remainder
-  ordered by traffic; never leave a surface half-migrated.
-- Legacy pages under `public/*.html` not in the Vite graph: remember the raw-/src trap (an
-  unregistered page shipping `/src` imports breaks: CSS import kills the page); test each
-  touched public page actually renders.
-- Light/dark: the platform is dark-first; if a light context exists (docs, embeds), tokens must
-  carry both or explicitly declare dark-only. Do not invent a light theme in this prompt.
+| Blocker | Do this |
+|---|---|
+| Scale: too many surfaces for one session | Batch by surface, commit per surface with explicit paths, and list the remainder ordered by traffic. Never leave one half-migrated. |
+| A legacy page under `public/*.html` is not in the Vite graph | Remember the raw-`/src` trap: an unregistered page shipping `/src` imports breaks (a CSS import kills the page). Test every touched public page actually renders. |
+| Light vs dark | The platform is dark-first. If a light context exists (docs, embeds), tokens carry both or explicitly declare dark-only. Do not invent a light theme here. |
+| A token change touches a file another agent is editing | Re-read the file immediately before each edit and stage only your own paths. |
+
+## Report format
+
+Before and after audit numbers, the per-surface checklist, the exceptions list, and the
+remainder ordered by traffic. No recap of this file.

@@ -1,86 +1,94 @@
-# Work Order 07: Final audit, docs closure, approval watch, first-sale readiness
+# OKX-07: Final audit, docs closure, approval watch, first-sale readiness
 
-Read `prompts/okx-ai/00-CONTEXT.md` and ALL of `prompts/okx-ai/PROGRESS.md`. 01–05 must be
-complete (06 ideally too). Read `/workspaces/three.ws/CLAUDE.md`.
+**How to run this:** paste this whole file into a fresh Claude Code chat opened in
+`/workspaces/three.ws`, or say "execute `prompts/okx-ai/07-final-audit-and-watch.md`".
+Read `prompts/okx-ai/00-CONTEXT.md`, all of `prompts/okx-ai/PROGRESS.md`,
+`prompts/okx-ai/RUNBOOK.md` and `CLAUDE.md` first.
 
-## Mission
+## Binding operating clause
 
-Close the loop: independently audit everything shipped in this work stream, close every
-docs/changelog gap, watch the resubmission through review, and make sure the day we get
-approved is the day we're ready to sell, not the day we start scrambling.
+1. Finish 100%. Trust nothing in `PROGRESS.md` until you have re-verified it yourself today.
+   This work order exists precisely because earlier work orders claimed done.
+2. Stop only for a real payment or an OTP, batched into one message, per the CLAUDE.md gates.
+3. CLAUDE.md hard rules: no mocks, no TODO comments, no em-dash or en-dash characters. Stage
+   explicit paths only.
 
-## Part 1, Independent adversarial audit
+## Part 1: independent adversarial audit (against production, today)
 
-Trust nothing in PROGRESS.md until re-verified. Sample-run the critical path yourself,
-against production, TODAY:
+1. Unpaid 402 on the cheapest and the flagship endpoints, still spec-valid. Challenges drift
+   when unrelated deploys touch shared code.
+2. One real paid call end to end including the on-chain settlement check (OKX-04's runbook;
+   request funding in your single owner message if the wallet is dry).
+3. Replay protection spot check (OKX-04 case 5a) still rejects.
+4. Free lane: health honest, catalog identical to the module and to the submitted listing
+   (`onchainos agent service-list --agent-id 2632`).
+5. Audit every file this work stream touched (derive the list from `PROGRESS.md` plus
+   `git log --since` the stream's start) against the CLAUDE.md rules: no TODOs, no dead paths,
+   no half-wired states, no scratch files, repo root clean. Fix what you find; do not file it.
+6. `npm test` green; `npm run build:pages` green (it validates changelog entries);
+   `npm run audit:docs` clean.
 
-1. Unpaid 402 on the cheapest and flagship endpoints → still spec-valid (challenges drift
-   when unrelated deploys touch shared code).
-2. One real paid call end to end incl. on-chain settlement check (04's runbook; request
-   funding if dry).
-3. Replay-protection spot check (04 case 5a), still rejects.
-4. Free lane: health honest, catalog 1:1 with the catalog module and with the submitted
-   listing (pull the live listing: `onchainos agent service-list --agent-id 2632`).
-5. Run the repo's completionist audit (the completionist agent) over every file this work
-   stream touched (derive from PROGRESS.md + `git log --since` the stream's start). Fix
-   everything it finds: no TODOs, no dead paths, no half-wired states, no stray scratch
-   files, repo root clean.
-6. `npm test` green; `npm run build:pages` green (validates changelog entries).
+## Part 2: docs closure sweep
 
-## Part 2, Docs closure sweep
+Read each as a zero-context outsider and verify it is correct, not merely present:
 
-Per CLAUDE.md's Documentation section, verify each layer exists and is CORRECT (read them
-as a zero-context outsider):
+- [ ] `specs/okx-agent-payments.md` matches implemented reality, including every OKX-04 fix.
+- [ ] `docs/okx-marketplace.md` documents every service and every curl example actually runs
+      (run them), and is linked from `docs/start-here.md`.
+- [ ] `docs/agent-identities.md` still matches the shipped Agent Identity Studio.
+- [ ] `STRUCTURE.md` has rows for every surface this stream added.
+- [ ] `data/pages.json` registers every new page.
+- [ ] `data/changelog.json` entries are present and well-formed; any claim OKX-04 disproved is
+      corrected. A doc that promises what the code does not do is a release blocker.
+- [ ] Every new package or worker directory has a README.
 
-- [ ] `specs/okx-agent-payments.md`, matches implemented reality, incl. every 04 fix
-- [ ] `docs/okx-marketplace.md`, every service documented, every curl example actually
-      runs (run them), linked from `docs/start-here.md`
-- [ ] `STRUCTURE.md`, rows for the new surface(s)
-- [ ] `data/pages.json`, any new pages registered (06's showcase)
-- [ ] `data/changelog.json`, entries from 02/03/06 present + well-formed; stale claims
-      corrected (docs that promise what 04 disproved are release blockers)
-- [ ] README(s) in any new package/worker directories created by this stream
-
-## Part 3, Approval watch + launch runbook
+## Part 3: approval watch and launch execution
 
 1. Check current approval status (`onchainos agent get-agents --agent-ids 2632`).
-2. Write `prompts/okx-ai/RUNBOOK.md`, the operator's guide for the human + future agents:
-   - Daily status-check one-liner; how to read approval states (approvalDisplayStatus map).
-   - **If APPROVED**: activation confirmation; the launch checklist, changelog entry
-     announcing the listing (tags: `feature`; this is THE holder-visible moment), Telegram
-     changelog push per repo process, set 06's avatar live if deferred, verify the listing
-     renders correctly in the marketplace UI (search for us as a buyer would:
-     `onchainos agent search --query "3D avatar rigging GLB"`, confirm we appear, cells
-     read well, prices right).
-   - **If REJECTED again**: capture the exact remark (`approvalRemark` + email), append to
-     PROGRESS.md, map the stated reason to the responsible work order, fix, re-run 05.
-   - **First-sale ops**: how to see sales/feedback (`soldCount`, `feedback-list`), how
-     revenue arrives (payTo wallet, from 04's evidence), where errors surface
-     (existing error-reporting path from api/_mcp/payments.js), what to monitor daily.
-3. If the platform exposes review timing/messaging via the task/chat surface, note in the
-   RUNBOOK how the human triggers the check (the okx-task-watch flow exists for live
-   monitoring, reference it as the tool for the human to invoke, don't leave a daemon).
+2. `prompts/okx-ai/RUNBOOK.md` already exists. Verify every command in it by running it, fix
+   whatever has drifted, and keep it good enough for a zero-context operator to run launch day
+   alone.
+3. **Execute the branch that matches reality, do not just document it:**
+   - **Approved**: confirm activation, add the holder-visible `data/changelog.json` entry
+     announcing the listing (tag `feature`), let the changelog cron deliver it (never run
+     `changelog:push` manually, its file state double-posts against the cron's DB state), and
+     verify the listing renders correctly to a buyer
+     (`onchainos agent search --query "3D avatar rigging GLB"`).
+   - **Rejected again**: capture the exact `approvalRemark` and email text, append it to
+     `PROGRESS.md`, map the stated reason to the responsible work order, fix it, and re-run
+     OKX-05.
+   - **Still pending**: record the status and the date, and leave the watch command in the
+     RUNBOOK. Do not idle-loop or leave a daemon running.
+4. First-sale ops in the RUNBOOK: where sales and feedback show up (`soldCount`,
+   `feedback-list`), how revenue arrives (the payTo wallet from OKX-04's evidence), where errors
+   surface (`api/_mcp/payments.js`), and what to monitor daily.
 
-## Part 4, Memory
+## Part 4: memory
 
-Write/update the agent-memory file for this work stream (per the memory system in the
-system prompt) so future sessions don't re-derive: agent #2632 state, what shipped, where
-evidence lives, RUNBOOK location, current watch status. Update `MEMORY.md` index.
+Write or update the agent-memory file for this work stream so future sessions do not re-derive
+it: agent #2632 state, what shipped, where the evidence lives, the RUNBOOK location, the
+current watch status. Update `MEMORY.md`.
 
 ## Definition of done
 
-- [ ] Part 1 audit run with evidence pasted; every finding fixed, not filed
-- [ ] Part 2 checklist fully green (each item verified, not assumed)
-- [ ] RUNBOOK.md written and complete enough that a zero-context operator could run launch
-      day from it alone
-- [ ] Approval status checked and recorded; if already decided, the corresponding RUNBOOK
-      branch EXECUTED (launch checklist or rejection loop), not just written
-- [ ] Memory file written; PROGRESS.md closed out with final state of the whole stream
-- [ ] All changes committed (explicit paths) + pushed to `threews` (only push target)
+- [ ] Part 1 audit run with evidence pasted; every finding fixed, not filed.
+- [ ] Part 2 checklist green item by item, each verified rather than assumed.
+- [ ] RUNBOOK commands all personally executed and corrected where they had drifted.
+- [ ] Approval status checked and recorded, and the matching branch EXECUTED.
+- [ ] Memory file written; `PROGRESS.md` closed out with the final state of the whole stream.
+- [ ] `npm run check:rules -- --paths <files you touched>` clean.
 
-## Anti-laziness gates
+## Never blocked (pre-answered)
 
-- This audit exists BECAUSE the prior work orders claimed done. Re-verify with fresh eyes;
-  every "verified in 04" claim you re-test and confirm, say so; every one you can't
-  reproduce is a defect to fix now.
-- Do not write the RUNBOOK from imagination, every command in it must be one you ran.
+| Blocker | Do this |
+|---|---|
+| The bot is offline | `npm run okx:bot`. Exit 0 means online, exit 2 means staged but logged out (login URL printed). |
+| Wallet dry or logged out | One batched owner message with the funding table and the OTP request. Everything else proceeds without it. |
+| A doc claim cannot be reproduced | That is a defect in the doc, not in your test. Correct the doc in the same session. |
+| A deploy would be needed to fix a live string | Deploys are owner-gated. Prepare it as one command, say so, and finish everything else. |
+| Approval has not moved in days | Record the status, keep the watch command in the RUNBOOK, and end the session. Never poll in a loop. |
+
+## Report format
+
+Which PROGRESS claims you re-verified and which failed re-verification, the docs checklist
+result, the executed launch branch, and the single owner action if one remains.

@@ -255,6 +255,7 @@ export class PoseStage {
 		if (getComputedStyle(this.host).position === 'static') this.host.style.position = 'relative';
 		const btn = document.createElement('button');
 		btn.type = 'button';
+		btn.className = 'av-pose-reset';
 		btn.textContent = 'Reset view';
 		btn.setAttribute('aria-label', 'Reset the camera to the default view');
 		btn.title = 'Drag to rotate, right-drag to move, pinch or ctrl+scroll to zoom. Double-click also resets.';

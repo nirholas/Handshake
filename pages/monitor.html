@@ -93,6 +93,11 @@
 			.mon-grid {
 				display: grid; gap: 8px;
 				grid-template-columns: repeat(12, minmax(0, 1fr));
+				/* Capped rows are what makes this a board rather than a stack of
+				   pages: a panel with 30 rows scrolls inside itself instead of
+				   stretching its whole row, which would also hand the 3D spotlight
+				   an absurdly tall viewport and sink the avatar out of frame. */
+				grid-auto-rows: minmax(220px, 460px);
 			}
 			.panel {
 				background: var(--mon-surface); border: 1px solid var(--mon-border);
@@ -133,6 +138,9 @@
 			.span-8 { grid-column: span 8; }
 			.span-12 { grid-column: span 12; }
 			.tall { min-height: 430px; }
+			@media (max-width: 680px) {
+				.mon-grid { grid-auto-rows: minmax(220px, 380px); }
+			}
 			@media (max-width: 1180px) {
 				.span-3, .span-4, .span-5 { grid-column: span 6; }
 				.span-6, .span-8 { grid-column: span 12; }

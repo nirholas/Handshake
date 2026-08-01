@@ -15,13 +15,9 @@ import { buildFingerspellingClip, normalizeWord } from './fingerspelling.js';
 import { LETTERS, LETTER_NOTES } from './asl-alphabet-data.js';
 import { GradeSmoother, gradeHandshape, rankHandshapes } from './sign-grader.js';
 import { HAND_CONNECTIONS, handshapeLandmarks, projectHand } from './sign-hand-model.js';
+import { loadSignPrefs, resolveRig, saveSignPrefs } from './sign-avatars.js';
 import { log } from './shared/log.js';
 
-const AVATARS = [
-	{ id: 'classic', label: 'Classic', url: '/avatars/cz.glb' },
-	{ id: 'expressive', label: 'Expressive face', url: '/avatars/default.glb' },
-];
-const PREFS_KEY = 'threews:sign-prefs';
 const PROGRESS_KEY = 'threews:sign-mirror-progress';
 
 // Letters whose handshape is identical to another letter's: in ASL they differ
@@ -86,9 +82,11 @@ async function boot() {
 	const stageHost = $('#sm-stage');
 	if (!stageHost) return;
 
-	const prefs = readJSON(PREFS_KEY, {});
+	const prefs = loadSignPrefs();
 	const progress = readJSON(PROGRESS_KEY, { passed: {}, best: {} });
-	let avatar = AVATARS.find((a) => a.id === prefs.avatar) || AVATARS[0];
+	// The rig, the signing hand and any custom avatar come from the same stored
+	// block /sign-language and /asl-alphabet write.
+	let avatar = resolveRig(prefs);
 	let dominant = prefs.dominant === 'Left' ? 'Left' : 'Right';
 
 	let stage = null;
@@ -442,7 +440,7 @@ async function boot() {
 		btn.addEventListener('click', () => {
 			dominant = btn.dataset.hand === 'Left' ? 'Left' : 'Right';
 			handBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.hand === dominant)));
-			writeJSON(PREFS_KEY, { ...readJSON(PREFS_KEY, {}), dominant });
+			saveSignPrefs({ dominant });
 			drawTarget(current);
 			showOnAvatar(current);
 		});

@@ -13,36 +13,8 @@ import { SignSpeaker, scaledTiming } from './sign-speech.js';
 import { normalizeWord } from './fingerspelling.js';
 import { SIGNS, signGloss, signLookup } from './sign-dictionary.js';
 import { initSignApiConsole } from './sign-api-console.js';
+import { buildRigPicker, loadSignPrefs, resolveRig, saveSignPrefs } from './sign-avatars.js';
 import { log } from './shared/log.js';
-
-// Two hero rigs, because signing has two halves and no one avatar shows both
-// best. The classic rig is light enough to animate smoothly everywhere,
-// including on software renderers, but carries no face blendshapes. The
-// expressive rig ships the full ARKit shape set, so the non-manual markers a
-// signed question needs (raised brows, furrowed brows, a headshake's set jaw)
-// are actually visible on it. See docs/sign-language.md.
-const AVATARS = [
-	{ id: 'classic', label: 'Classic', url: '/avatars/cz.glb' },
-	{ id: 'expressive', label: 'Expressive face', url: '/avatars/default.glb' },
-];
-
-// Speed, hand, and rig survive a reload: a left-handed signer should not have
-// to re-declare themselves on every visit.
-const PREFS_KEY = 'threews:sign-prefs';
-function loadPrefs() {
-	try {
-		return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
-	} catch {
-		return {};
-	}
-}
-function savePrefs(prefs) {
-	try {
-		localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-	} catch {
-		/* private mode: settings just don't persist */
-	}
-}
 
 // Signing speed. Learners and many Deaf viewers want it slower, and signing is
 // content, so it cannot simply be reduced away like decorative motion.
@@ -63,8 +35,10 @@ async function boot() {
 	const stageHost = $('#sl-stage');
 	if (!stageHost) return;
 
-	const prefs = loadPrefs();
-	let avatar = AVATARS.find((a) => a.id === prefs.avatar) || AVATARS[0];
+	// Speed, hand, and rig survive a reload and carry across every sign surface:
+	// a left-handed signer should not have to re-declare themselves per page.
+	const prefs = loadSignPrefs();
+	let avatar = resolveRig(prefs);
 	let stage = null;
 	let speaker = null;
 	let heroTimer = 0;
@@ -104,7 +78,7 @@ async function boot() {
 	};
 	const applySetting = (fn) => {
 		fn();
-		savePrefs({ rate, dominant, avatar: avatar.id });
+		saveSignPrefs({ rate, dominant, avatar: avatar.id });
 		rebuildSpeaker();
 		replay();
 	};
@@ -283,22 +257,39 @@ async function boot() {
 	);
 	// Switching rigs replaces the whole stage: the clips are rig-independent
 	// (they retarget on attach), so the speaker just rebuilds against the new
-	// skeleton and whatever was signing resumes on the new avatar.
-	let switchingRig = false;
-	buildOptions('#sl-rig', AVATARS, (a) => a.id === avatar.id, async (picked) => {
-		if (switchingRig || picked.id === avatar.id) return;
-		switchingRig = true;
-		avatar = picked;
-		savePrefs({ rate, dominant, avatar: avatar.id });
-		setStatus('Loading avatar…');
-		const ok = await mountStage();
-		switchingRig = false;
-		if (!ok) return;
-		if (picked.id === 'expressive') {
-			setStatus('This avatar has a face: questions raise the brows, negation furrows them.');
-		}
-		if (heroActive && !reducedMotion) heroTick();
-		else replay();
+	// skeleton and whatever was signing resumes on the new avatar. That is why
+	// any avatar on three.ws can take the hero's place, not only the two rigs
+	// that ship with it.
+	buildRigPicker({
+		host: '#sl-rig',
+		optionClass: 'sl-opt',
+		active: avatar,
+		onStatus: setStatus,
+		apply: async (picked) => {
+			const previous = avatar;
+			avatar = picked;
+			saveSignPrefs({ rate, dominant, avatar: avatar.id });
+			setStatus('Loading avatar…');
+			if (!(await mountStage())) {
+				// A rig with no usable skeleton cannot sign, and leaving a mute
+				// avatar on stage would read as the feature being broken. Put the
+				// working one back and say which one is signing.
+				avatar = previous;
+				saveSignPrefs({ avatar: avatar.id });
+				const restored = await mountStage();
+				setStatus(`${picked.label} can’t sign: it has no usable skeleton. ${previous.label} is back on stage.`);
+				if (restored && heroActive && !reducedMotion) heroTick();
+				return false;
+			}
+			if (picked.id === 'expressive') {
+				setStatus('This avatar has a face: questions raise the brows, negation furrows them.');
+			} else if (picked.custom) {
+				setStatus(`${picked.label} is signing. Speed and signing hand carry over.`);
+			}
+			if (heroActive && !reducedMotion) heroTick();
+			else replay();
+			return true;
+		},
 	});
 
 	// ── Vocabulary: every word with a real sign, playable ─────────────────────
@@ -357,7 +348,7 @@ async function boot() {
 			if (wanted !== dominant || speed !== rate) {
 				dominant = wanted;
 				rate = speed;
-				savePrefs({ rate, dominant, avatar: avatar.id });
+				saveSignPrefs({ rate, dominant, avatar: avatar.id });
 				syncPills('#sl-hand', (btn) => btn.textContent.toLowerCase().startsWith(hand));
 				syncPills('#sl-speed', (btn) => btn.textContent === `${speed}×`);
 				rebuildSpeaker();

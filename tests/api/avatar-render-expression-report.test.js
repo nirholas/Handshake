@@ -1,5 +1,5 @@
 // Regression lock for the silent-expression defect on /api/avatar/render
-// (ISSUES.md item 9, second defect): a model with zero morph targets, or with
+// (filed with the Draco transcode item, since closed): a model with zero morph targets, or with
 // morphs named differently from the request, rendered a clean 200 with none of
 // the requested expression applied and gave the caller no way to tell.
 // applyExpression now returns { requested, missing }, the page publishes it as
