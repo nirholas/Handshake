@@ -245,10 +245,21 @@ export const NAV_GROUPS = [
 						desc: 'Every coin is a 3D world — drop in & hang out',
 					},
 					{
+						title: 'Crew HQ',
+						href: '/crews',
+						desc: 'Found a crew, invite your people, and see the whole roster stand in one 3D headquarters',
+					},
+					{
 						title: 'In-Game Economy',
 						href: '/play/economy',
 						tier: 'advanced',
 						desc: 'Store prices, bank rules, the $THREE boutique & the full wheel paytable, read live from the game',
+					},
+					{
+						title: 'Economy Solver',
+						href: '/play/solver',
+						tier: 'advanced',
+						desc: 'Exact cash and XP per hour for every node at every level, solved from the game’s own tables',
 					},
 					{
 						title: 'Coin Clash',
@@ -278,6 +289,13 @@ export const NAV_GROUPS = [
 						title: 'Money Pulse',
 						href: '/pulse',
 						desc: 'Live, platform-wide feed of real agent wallet activity — tips, launches, trades & payments',
+					},
+					{
+						title: 'Money Flow Map',
+						href: '/flow',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'The shape of the economy: a live map of who pays whom, for which skill, and which wallets only collect',
 					},
 					{
 						title: 'Fits Economy',

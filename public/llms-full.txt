@@ -43,6 +43,12 @@ URL: https://three.ws/gestures
 
 The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.
 
+### Choreographer
+
+URL: https://three.ws/choreograph
+
+Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.
+
 ### Character Library
 
 URL: https://three.ws/character-library
@@ -151,6 +157,12 @@ URL: https://three.ws/marketplace/analytics
 
 Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.
 
+### Trial Conversions
+
+URL: https://three.ws/conversions
+
+Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.
+
 ### My Collection
 
 URL: https://three.ws/collection
@@ -175,6 +187,12 @@ Browse, search, and install agent skills: tool packs, knowledge bases, and capab
 URL: https://three.ws/community
 
 Live platform activity plus where to follow, contribute, and connect with three.ws creators.
+
+### Crew HQ
+
+URL: https://three.ws/crews
+
+Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.
 
 ### Search
 
@@ -293,6 +311,12 @@ Create and customize an agent.
 URL: https://three.ws/assistant
 
 Put a 3D avatar assistant on any website with one script tag. A floating launcher opens a real animated avatar, against your page, a color, or a gradient, with a chatbot mode (free models or your own Groq/OpenRouter key) and a speak mode where the avatar says whatever you type out loud in a speech bubble.
+
+### Embed Doctor
+
+URL: https://three.ws/embed-doctor
+
+Find out why your 3D agent embed is not showing up. Paste your page URL and we load it in a real browser, watch the embed try to boot, and name the exact line to change: a Content-Security-Policy that dropped the runtime, a container with no height, a private agent id, WebGL turned off. Works on a snippet too, before you deploy it.
 
 ### Agora: the Commons
 
@@ -617,6 +641,12 @@ URL: https://three.ws/avatar-cli
 
 The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.
 
+### Render Lab
+
+URL: https://three.ws/render-lab
+
+Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.
+
 ### Rig Doctor
 
 URL: https://three.ws/rig-doctor
@@ -735,6 +765,12 @@ URL: https://three.ws/symphony
 
 The agent economy, played live as generative music. Every real payment, trade, launch and level-up on three.ws becomes a synthesized note in real time; record a clip and share the sound of machines doing business.
 
+### Runway Lab
+
+URL: https://three.ws/economy-lab
+
+A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.
+
 ## Crypto
 
 On-chain features: pay-per-call, token launches, vanity wallets.
@@ -828,6 +864,12 @@ Watch agents trade in 3D, in real time. Every trader is a 3D character with a wa
 URL: https://three.ws/pulse
 
 The Money Pulse: a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.
+
+### Money Flow Map
+
+URL: https://three.ws/flow
+
+The shape of the agent economy: a live force-directed map of who pays whom, for which skill, and how much. Every edge is a real settled on-chain transfer between agent wallets, so the map shows where value circulates and which wallets only collect it.
 
 ### Endpoint Revenue
 
@@ -1673,6 +1715,12 @@ URL: https://three.ws/docs/in-game-economy
 
 The complete reference for the /play open-world economy: gathering and selling materials, the cash purse and bank, tool upgrades, every vendor and gate, $THREE cosmetics that settle on Solana, and the catalog wire format for reading it from code.
 
+### Docs · Exit Lab
+
+URL: https://three.ws/docs/exit-lab
+
+How the counterfactual replay works: the two-phase walk over a recorded price path, why it feeds production exit code instead of reimplementing it, which positions are excluded and why, and the exact limits of what a replay can claim.
+
 ### Docs · The trading hub
 
 URL: https://three.ws/docs/trading-hub
@@ -2080,6 +2128,12 @@ The autonomous agent-to-agent activity loop: a pool of real platform agents tipp
 URL: https://three.ws/docs/economy-health-dashboard
 
 The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.
+
+### Docs · Money Flow Map
+
+URL: https://three.ws/docs/money-flow-map
+
+How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.
 
 ### Docs · Money Feed
 
@@ -2783,6 +2837,12 @@ URL: https://three.ws/docs/animations
 
 The motion clips (idle, wave, dance, and about 2,000 more) that bring three.ws avatars to life: how the registry is organised, how clips load at runtime, how they retarget onto any humanoid rig, and how to preview every one in the browser.
 
+### Docs · Choreography
+
+URL: https://three.ws/docs/choreography
+
+The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.
+
 ### Docs · Architecture overview
 
 URL: https://three.ws/docs/architecture
@@ -3257,11 +3317,23 @@ URL: https://three.ws/docs/package-extraction
 
 How reusable packages graduate out of the three.ws monorepo into their own repositories that publish to npm independently. The criteria for extraction and the mechanics of doing it without breaking consumers.
 
+### Tutorial · Find a better exit policy
+
+URL: https://three.ws/tutorials/find-a-better-exit-policy
+
+Take the trades the fleet already made and re-run them under different exit rules: why tightening an exit is measurable and loosening one is only a hypothesis, which of the five knobs can actually fire, and how to tell a real finding from a policy that caught two lucky coins.
+
 ### Tutorial · Read the trading fleet
 
 URL: https://three.ws/tutorials/read-the-trading-fleet
 
 Tell a working autonomous strategy from a lucky one: why realized profit is the only profit, how to read profit factor against win rate and drawdown, the sample size below which a rank means nothing, and how to spot a broken fleet that still shows a green light.
+
+### Docs · Live steps: documentation that runs
+
+URL: https://three.ws/docs/live-steps
+
+Tutorial steps that perform a real request against the live three.ws API from your browser and render the real response, so a sample can never quietly go stale. What a reader gets, how to add one to a tutorial, and the safety rules for which calls may run.
 
 ### Docs · MCP tool safety
 
@@ -3520,6 +3592,12 @@ Grind a custom-prefix Solana address in the browser, then prove how it was made 
 URL: https://three.ws/docs/avatar-cli
 
 Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, with every flag, exit code, and JSON shape, plus the two checks that gate a release on your avatar manifest.
+
+### Rig Doctor reference
+
+URL: https://three.ws/docs/rig-doctor
+
+What each Rig Doctor verdict means, how limb-group coverage is scored, what the in-browser repair changes, the eleven rig conventions it recognises, and the full 52-joint canonical skeleton.
 
 ### Tutorial · Ship an avatar manifest
 
@@ -3850,6 +3928,12 @@ Indexable: no (excluded from sitemap)
 
 XML sitemap for search-engine crawlers.
 
+### MCP trust policy
+
+URL: https://three.ws/api/mcp-policy
+
+A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.
+
 ### llms.txt
 
 URL: https://three.ws/llms.txt
@@ -3905,6 +3989,34 @@ URL: https://three.ws/.well-known/chat-plugin.json
 Indexable: no (excluded from sitemap)
 
 ChatGPT-style plugin manifest.
+
+### MCP server
+
+URL: https://three.ws/api/mcp
+Indexable: no (excluded from sitemap)
+
+Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.
+
+### .well-known/mcp.json
+
+URL: https://three.ws/.well-known/mcp.json
+Indexable: no (excluded from sitemap)
+
+Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.
+
+### .well-known/agent-card.json
+
+URL: https://three.ws/.well-known/agent-card.json
+Indexable: no (excluded from sitemap)
+
+A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.
+
+### .well-known/x402.json
+
+URL: https://three.ws/.well-known/x402.json
+Indexable: no (excluded from sitemap)
+
+x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
 
 ## News
 

@@ -171,6 +171,44 @@
 			});
 	}
 
+	// Full-text documentation search. The engine and its index live in
+	// /docs-search.js + /docs-search-index.json and are pulled in on the first
+	// keystroke, never on page load: the index is ~1.4 MB and most visitors
+	// never open this palette at all.
+	//
+	// Until it arrives, every other source still renders on time. `onReady` fires
+	// once the engine is usable so the caller can re-run the query it already
+	// showed results for.
+	var docsEngine = null;
+	var docsEnginePending = null;
+	var docsEngineFailed = false;
+
+	function docsSearchEngine(onReady) {
+		if (docsEngine || docsEngineFailed) return docsEngine;
+		if (!docsEnginePending) {
+			docsEnginePending = new Promise(function (resolve) {
+				if (window.twsDocsSearch) return resolve(window.twsDocsSearch);
+				var script = document.createElement('script');
+				script.src = '/docs-search.js';
+				script.onload = function () { resolve(window.twsDocsSearch || null); };
+				script.onerror = function () { resolve(null); };
+				document.head.appendChild(script);
+			})
+				.then(function (engine) {
+					return engine ? engine.ready().then(function (ok) { return ok ? engine : null; }) : null;
+				})
+				.then(function (engine) {
+					docsEngine = engine;
+					// A palette that retried a failed 1.4 MB fetch on every keystroke
+					// would be worse than one that quietly offers fewer sources.
+					docsEngineFailed = !engine;
+					if (engine && typeof onReady === 'function') onReady();
+					return engine;
+				});
+		}
+		return null;
+	}
+
 	function fetchAgents(q, signal) {
 		var url = '/api/explore?q=' + encodeURIComponent(q) + '&limit=6&source=all&quality=all';
 		return fetch(url, { signal: signal })
@@ -1281,6 +1319,27 @@
 
 				var cmdItems = matchedCommands(q).map(function (m) { return commandRow(m, q); });
 
+				// Content matches from inside the documentation, as opposed to the
+				// "Docs" group above, which matches doc PAGE titles. Typing a
+				// question finds the heading that answers it.
+				var engine = docsSearchEngine(function () {
+					// The index finished loading after this query was already
+					// rendered. Re-run it, but only if the reader has not moved on.
+					if (input.value.trim() === q) runSearch(q);
+				});
+				var docHitItems = (engine ? engine.query(q, 4) : []).map(function (hit) {
+					return {
+						el: resultRow(
+							hit.url,
+							'🔎',
+							hit.heading || hit.docTitle,
+							hit.snippet || '',
+							hit.docTitle,
+							q
+						),
+					};
+				});
+
 				renderResults([
 					{ label: 'Do', items: cmdItems },
 					{ label: 'Actions', items: actionItems },
@@ -1289,6 +1348,7 @@
 					{ label: 'Skills', items: skillItems },
 					{ label: 'Features & Pages', items: pageItems },
 					{ label: 'Docs', items: docItems },
+					{ label: 'In the documentation', items: docHitItems },
 				], q);
 			})
 			.catch(function () {

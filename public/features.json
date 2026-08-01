@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-31T06:39:56.481Z",
+	"generated_at": "2026-07-31T18:50:57.120Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -60,6 +60,16 @@
 					"title": "Agent Gestures",
 					"description": "The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/choreograph",
+					"title": "Choreographer",
+					"description": "Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -246,6 +256,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/conversions",
+					"title": "Trial Conversions",
+					"description": "Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.",
+					"added": "2026-07-31",
+					"auth": true,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/collection",
 					"title": "My Collection",
 					"description": "View all the skills and subscriptions you've unlocked on three.ws.",
@@ -280,6 +300,16 @@
 					"title": "Community",
 					"description": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 					"added": "2026-05-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/crews",
+					"title": "Crew HQ",
+					"description": "Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -481,6 +511,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/embed-doctor",
+					"title": "Embed Doctor",
+					"description": "Find out why your 3D agent embed is not showing up. Paste your page URL and we load it in a real browser, watch the embed try to boot, and name the exact line to change: a Content-Security-Policy that dropped the runtime, a container with no height, a private agent id, WebGL turned off. Works on a snippet too, before you deploy it.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				},
 				{
 					"path": "/agora",
@@ -1013,6 +1053,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/render-lab",
+					"title": "Render Lab",
+					"description": "Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
 					"path": "/rig-doctor",
 					"title": "Rig Doctor",
 					"description": "Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
@@ -1208,6 +1258,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/economy-lab",
+					"title": "Runway Lab",
+					"description": "A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				}
 			]
 		},
@@ -1361,6 +1421,16 @@
 					"title": "Money Pulse",
 					"description": "The Money Pulse: a real-time, platform-wide feed of three.ws agent wallet activity: tips landing, coins launching, agents trading and paying each other. Every beat is a real on-chain event.",
 					"added": "2026-06-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/flow",
+					"title": "Money Flow Map",
+					"description": "The shape of the agent economy: a live force-directed map of who pays whom, for which skill, and how much. Every edge is a real settled on-chain transfer between agent wallets, so the map shows where value circulates and which wallets only collect it.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2738,6 +2808,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/exit-lab",
+					"title": "Docs · Exit Lab",
+					"description": "How the counterfactual replay works: the two-phase walk over a recorded price path, why it feeds production exit code instead of reimplementing it, which positions are excluded and why, and the exact limits of what a replay can claim.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/trading-hub",
 					"title": "Docs · The trading hub",
 					"description": "The front door to the autonomous trading system: live fleet vitals read off the running bots, the strategy arena and experiments board, and the smart-money radar, with the twenty pages behind them organised into one path.",
@@ -3412,6 +3492,16 @@
 					"title": "Docs · Economy Health Dashboard",
 					"description": "The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/money-flow-map",
+					"title": "Docs · Money Flow Map",
+					"description": "How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -4588,6 +4678,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/choreography",
+					"title": "Docs · Choreography",
+					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/architecture",
 					"title": "Docs · Architecture overview",
 					"description": "The engineering map of three.ws: how a request flows from the browser through the route table to a handler, where 3D generation runs, how state is stored, and which layer to extend when you want to add something.",
@@ -5378,10 +5478,30 @@
 					"showcase": false
 				},
 				{
+					"path": "/tutorials/find-a-better-exit-policy",
+					"title": "Tutorial · Find a better exit policy",
+					"description": "Take the trades the fleet already made and re-run them under different exit rules: why tightening an exit is measurable and loosening one is only a hypothesis, which of the five knobs can actually fire, and how to tell a real finding from a policy that caught two lucky coins.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/tutorials/read-the-trading-fleet",
 					"title": "Tutorial · Read the trading fleet",
 					"description": "Tell a working autonomous strategy from a lucky one: why realized profit is the only profit, how to read profit factor against win rate and drawdown, the sample size below which a rank means nothing, and how to spot a broken fleet that still shows a green light.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/live-steps",
+					"title": "Docs · Live steps: documentation that runs",
+					"description": "Tutorial steps that perform a real request against the live three.ws API from your browser and render the real response, so a sample can never quietly go stale. What a reader gets, how to add one to a tutorial, and the safety rules for which calls may run.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -5812,6 +5932,16 @@
 					"title": "Docs: Avatar CLI",
 					"description": "Command reference for @three-ws/avatar-cli: init, validate, hash, and preview, with every flag, exit code, and JSON shape, plus the two checks that gate a release on your avatar manifest.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/rig-doctor",
+					"title": "Rig Doctor reference",
+					"description": "What each Rig Doctor verdict means, how limb-group coverage is scored, what the in-browser repair changes, the eleven rig conventions it recognises, and the full 52-joint canonical skeleton.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6369,6 +6499,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/api/mcp-policy",
+					"title": "MCP trust policy",
+					"description": "A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/llms.txt",
 					"title": "llms.txt",
 					"description": "AI-agent-friendly index of every public page (Howard convention).",
@@ -6443,6 +6583,46 @@
 					"title": ".well-known/chat-plugin.json",
 					"description": "ChatGPT-style plugin manifest.",
 					"added": "2026-04-17",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/api/mcp",
+					"title": "MCP server",
+					"description": "Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/.well-known/mcp.json",
+					"title": ".well-known/mcp.json",
+					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/.well-known/agent-card.json",
+					"title": ".well-known/agent-card.json",
+					"description": "A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.",
+					"added": null,
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/.well-known/x402.json",
+					"title": ".well-known/x402.json",
+					"description": "x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.",
+					"added": null,
 					"auth": null,
 					"indexable": false,
 					"tags": [],

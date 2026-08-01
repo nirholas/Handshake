@@ -7,12 +7,44 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>.well-known/mcp.json</title>
+			<link>https://three.ws/.well-known/mcp.json</link>
+			<guid isPermaLink="false">2026-07-31:.well-known/mcp.json</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.</description>
+		</item>
+		<item>
 			<title>Atlas</title>
 			<link>https://three.ws/atlas</link>
 			<guid isPermaLink="false">2026-07-31:Atlas</guid>
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.</description>
+		</item>
+		<item>
+			<title>Choreographer</title>
+			<link>https://three.ws/choreograph</link>
+			<guid isPermaLink="false">2026-07-31:Choreographer</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.</description>
+		</item>
+		<item>
+			<title>Crew HQ</title>
+			<link>https://three.ws/crews</link>
+			<guid isPermaLink="false">2026-07-31:Crew HQ</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.</description>
+		</item>
+		<item>
+			<title>Docs · Exit Lab</title>
+			<link>https://three.ws/docs/exit-lab</link>
+			<guid isPermaLink="false">2026-07-31:Docs · Exit Lab</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the counterfactual replay works: the two-phase walk over a recorded price path, why it feeds production exit code instead of reimplementing it, which positions are excluded and why, and the exact limits of what a replay can claim.</description>
 		</item>
 		<item>
 			<title>Docs · Live Docs</title>
@@ -23,12 +55,44 @@
 			<description>Every code sample in the three.ws docs is editable and the runnable ones execute in place: an embed snippet renders a real animated avatar, a curl line sends a real request to the live API and shows status, latency and body, and a script runs with its console captured. What can run, what can never run, and how to opt a sample out.</description>
 		</item>
 		<item>
+			<title>Docs · Live steps: documentation that runs</title>
+			<link>https://three.ws/docs/live-steps</link>
+			<guid isPermaLink="false">2026-07-31:Docs · Live steps: documentation that runs</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Tutorial steps that perform a real request against the live three.ws API from your browser and render the real response, so a sample can never quietly go stale. What a reader gets, how to add one to a tutorial, and the safety rules for which calls may run.</description>
+		</item>
+		<item>
+			<title>Docs · Money Flow Map</title>
+			<link>https://three.ws/docs/money-flow-map</link>
+			<guid isPermaLink="false">2026-07-31:Docs · Money Flow Map</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.</description>
+		</item>
+		<item>
+			<title>Embed Doctor</title>
+			<link>https://three.ws/embed-doctor</link>
+			<guid isPermaLink="false">2026-07-31:Embed Doctor</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Find out why your 3D agent embed is not showing up. Paste your page URL and we load it in a real browser, watch the embed try to boot, and name the exact line to change: a Content-Security-Policy that dropped the runtime, a container with no height, a private agent id, WebGL turned off. Works on a snippet too, before you deploy it.</description>
+		</item>
+		<item>
 			<title>Exit Lab</title>
 			<link>https://three.ws/exit-lab</link>
 			<guid isPermaLink="false">2026-07-31:Exit Lab</guid>
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.</description>
+		</item>
+		<item>
+			<title>MCP trust policy</title>
+			<link>https://three.ws/api/mcp-policy</link>
+			<guid isPermaLink="false">2026-07-31:MCP trust policy</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.</description>
 		</item>
 		<item>
 			<title>Model Inspector</title>
@@ -39,12 +103,132 @@
 			<description>Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.</description>
 		</item>
 		<item>
+			<title>Money Flow Map</title>
+			<link>https://three.ws/flow</link>
+			<guid isPermaLink="false">2026-07-31:Money Flow Map</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The shape of the agent economy: a live force-directed map of who pays whom, for which skill, and how much. Every edge is a real settled on-chain transfer between agent wallets, so the map shows where value circulates and which wallets only collect it.</description>
+		</item>
+		<item>
+			<title>Render Lab</title>
+			<link>https://three.ws/render-lab</link>
+			<guid isPermaLink="false">2026-07-31:Render Lab</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.</description>
+		</item>
+		<item>
 			<title>Rig Doctor</title>
 			<link>https://three.ws/rig-doctor</link>
 			<guid isPermaLink="false">2026-07-31:Rig Doctor</guid>
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.</description>
+		</item>
+		<item>
+			<title>Rig Doctor reference</title>
+			<link>https://three.ws/docs/rig-doctor</link>
+			<guid isPermaLink="false">2026-07-31:Rig Doctor reference</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What each Rig Doctor verdict means, how limb-group coverage is scored, what the in-browser repair changes, the eleven rig conventions it recognises, and the full 52-joint canonical skeleton.</description>
+		</item>
+		<item>
+			<title>Runway Lab</title>
+			<link>https://three.ws/economy-lab</link>
+			<guid isPermaLink="false">2026-07-31:Runway Lab</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.</description>
+		</item>
+		<item>
+			<title>Trial Conversions</title>
+			<link>https://three.ws/conversions</link>
+			<guid isPermaLink="false">2026-07-31:Trial Conversions</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.</description>
+		</item>
+		<item>
+			<title>Tutorial · Find a better exit policy</title>
+			<link>https://three.ws/tutorials/find-a-better-exit-policy</link>
+			<guid isPermaLink="false">2026-07-31:Tutorial · Find a better exit policy</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Take the trades the fleet already made and re-run them under different exit rules: why tightening an exit is measurable and loosening one is only a hypothesis, which of the five knobs can actually fire, and how to tell a real finding from a policy that caught two lucky coins.</description>
+		</item>
+		<item>
+			<title>AI assistants can now find three.ws on their own</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-07-31:AI assistants can now find three.ws on their own</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Ask ChatGPT, Claude, Grok, Kimi, or Perplexity about three.ws and their crawlers now get a proper welcome. robots.txt explicitly invites AI assistants in, including to the public API they can actually call for you. The llms.txt index that AI models read now leads with the machine entry points (the MCP servers, the x402 paid-service catalog, the agent card) instead of burying them. And a new directory at /.well-known/mcp.json lists all seven hosted MCP servers with their endpoint, auth, and what each one does, so any MCP-capable assistant can connect without hunting through docs.</description>
+		</item>
+		<item>
+			<title>Every code sample in the docs now runs where you read it</title>
+			<link>https://three.ws/docs/live-docs</link>
+			<guid isPermaLink="false">2026-07-31:Every code sample in the docs now runs where you read it</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws documentation had the same problem every developer doc has: you read a snippet, you believe it or you do not, and finding out costs you a project setup. Now the samples run in place. An embed snippet renders a real, animated 3D avatar directly under the code, and you can swap the avatar in the sample and watch it change. A curl line sends a real request to the live API and shows the status, how long it took, the size, the response body and the headers. A JavaScript sample executes and streams its console back. Every sample is editable, so a doc page is now somewhere you can try an idea rather than somewhere you copy one out of. Where a sample has a blank to fill in, an agent id or an API key, the page gives you a field for it and fills it in for you, and anything that looks like a credential is kept in the tab and never stored. The runner is deliberately narrow: it only ever calls three.ws, it refuses outright to touch any endpoint that can move funds or mint, it asks for a second click before sending anything that writes, and it sends every request signed out so your own session can never authorize a sample by accident. Previews run in a sandboxed frame that cannot read the page around it.</description>
+		</item>
+		<item>
+			<title>Every docs page and tutorial now shows up properly in search and shares</title>
+			<link>https://three.ws/docs</link>
+			<guid isPermaLink="false">2026-07-31:Every docs page and tutorial now shows up properly in search and shares</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Until now, sharing or searching any of the 300 documentation and tutorial pages showed the same generic card and sent search engines to the docs homepage instead of the page itself. Each page now carries its own title, description, preview image, and address, so links unfurl correctly in chats and social posts, and search results land readers on the exact page. Duplicate slash-variant URLs now redirect to one canonical address too.</description>
+		</item>
+		<item>
+			<title>Find out whether your avatar will animate before you upload it</title>
+			<link>https://three.ws/rig-doctor</link>
+			<guid isPermaLink="false">2026-07-31:Find out whether your avatar will animate before you upload it</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The most frustrating thing that can happen to a 3D character is that it loads perfectly and then never moves. Nothing errors, nothing warns, it just stands there. The cause is almost always the same: animations find body parts by name, and your character calls its arms and legs something the animations do not recognise. Until now the only way to discover that was to upload, wait, and stare at a frozen figure. The new Rig Doctor answers it in about a second, on your own machine. Drag a .glb onto the page and it tells you which program made the skeleton, whether the torso, arms, hands and legs will each move or stay frozen, and it plays real animations on your character right there so you can watch for yourself. When the only problem is naming, one button hands you back a fixed copy of the file. Your model is never uploaded anywhere: the whole thing runs inside the browser tab, so it works with the network switched off.</description>
+		</item>
+		<item>
+			<title>Replay the fleet's real trades under different exit rules</title>
+			<link>https://three.ws/exit-lab</link>
+			<guid isPermaLink="false">2026-07-31:Replay the fleet's real trades under different exit rules</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Most trading talk is about entries. Most of the money is lost on exits. The new Exit Lab takes every position the agent fleet actually opened with real SOL and closed on-chain, then re-runs each one through the exact exit code the live worker runs with the rules changed to whatever you choose. Move the stop-loss, the trailing stop, the take-initials ladder or the moon-bag floor and the result updates instantly, so you can ask the only question the data can really answer: were our exits right? A grid search replays hundreds of policies against the whole history and ranks them, and every finding is a link you can share. It is also honest about its own limits, on the page rather than in a footnote: exiting earlier than the fleet did is exactly determined by the recorded prices, holding longer is only a lower bound, positions whose initials were already taken are excluded with the reason stated, and an in-sample winner is labelled as a description of the past rather than a forecast. Every trade links to its buy and sell on Solscan, so anyone can check the work.</description>
+		</item>
+		<item>
+			<title>See the shape of the agent economy, not just its scoreboard</title>
+			<link>https://three.ws/flow</link>
+			<guid isPermaLink="false">2026-07-31:See the shape of the agent economy, not just its scoreboard</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until now every money page here answered &quot;how much?&quot; and none of them answered &quot;which way?&quot;. The new Money Flow Map draws the economy as it actually is: a live map of agent wallets, with a line for every real payment that has settled between them and moving dots that travel from the wallet that paid to the wallet that got paid. Because the direction is drawn, one thing you could never spot on a leaderboard becomes obvious at a glance: a wallet where money arrives and never leaves again. Those wallets are labelled, counted, and totalled into a single &quot;stuck capital&quot; figure, so you can tell a healthy circular economy from one that is quietly draining. Skill payments carry the name of the service they bought, so you can also see exactly what agents are spending on each other. Click any wallet to follow its money in and out, search by name or address, and switch between the last day, week, month or quarter. Everything on it is a real on-chain transfer you can verify on Solscan; when the platform is quiet the map is honestly empty. It reads by keyboard and screen reader too: the sortable table under the graph carries the same data, and picking a row picks the wallet.</description>
+		</item>
+		<item>
+			<title>Tell your AI assistant which three.ws tools it may run without asking you</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-07-31:Tell your AI assistant which three.ws tools it may run without asking you</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An AI assistant decides whether to run a tool on its own by trusting a label the tool's own author wrote. three.ws checks those labels against the code on every build, so ours are worth acting on, and now you can act on them in one paste. Pick how much you want automated, from only free read-only tools through to everything except the actions that cannot be undone, and the catalog page hands you the exact settings block for Claude or VS Code, or a portable file for any other client. Nothing that spends money or cannot be undone is ever auto-approved, on any setting. The same document is served live, so a client can refresh it instead of pinning a copy that goes stale as new tools land.</description>
+		</item>
+		<item>
+			<title>The signing avatar stays in frame, and you can now move the camera around it</title>
+			<link>https://three.ws/sign-language</link>
+			<guid isPermaLink="false">2026-07-31:The signing avatar stays in frame, and you can now move the camera around it</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Scrolling the page with your cursor over the 3D signing avatar used to zoom the camera into its torso and leave it stuck out of frame. Plain scrolling now just scrolls the page: zooming takes a pinch, ctrl+scroll, or a scroll after grabbing the model. You can also move the avatar around the frame with a right-click drag (two fingers on touch), and a Reset view button plus double-click snap the camera back home whenever you lose it. The avatar itself looks healthier too: the studio lighting was overexposing skin into a washed-out gray, and a softer, warmer setup now lets natural skin tones through. All of this applies everywhere an avatar poses: the sign language page, the ASL alphabet, and the Animation Studio.</description>
+		</item>
+		<item>
+			<title>Your agent can perform a routine, not just a gesture</title>
+			<link>https://three.ws/choreograph</link>
+			<guid isPermaLink="false">2026-07-31:Your agent can perform a routine, not just a gesture</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until now an agent's body language was one beat at a time: a wave, a nod, a celebration, each fired on its own by something that happened. There was no way to say &quot;when someone lands on my agent, have it wave, then nod, then settle&quot;, which is what a greeting actually is. The new Choreographer at three.ws/choreograph is a timeline for exactly that. Drop gestures onto it, set how long each one holds, drag them into the order you want, and watch the whole performance play on a live 3D avatar as you edit, with a playhead that follows along. Five routines are there to start from (a welcome, a demo pitch, a win, a failure, and a waiting loop) and every one of them is editable. Save a routine to an agent you own and it travels with that agent: any site embedding it can play the whole performance by name with one line of code, and it holds the stage, so a stray reaction cannot cut into the middle of it. A routine is also just a link, so you can share one with someone who has no account and they can open it, play it, and change it. Routines are built from gesture names rather than specific motion files, which means the same routine looks right on someone else's agent, in their agent's own body language.</description>
 		</item>
 		<item>
 			<title>Agent Gestures</title>

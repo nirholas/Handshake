@@ -1346,7 +1346,21 @@
 						breaks: false,
 					});
 
-					article.innerHTML = marked.parse(md);
+					// Turn `figure:` directives into inert slots BEFORE parsing. Left as
+					// <img src="figure:…">, the browser fires a request the moment the
+					// markup lands and logs ERR_UNKNOWN_URL_SCHEME for every figure.
+					article.innerHTML = marked.parse(
+						window.tutorialFigures ? window.tutorialFigures.preprocess(md) : md,
+					);
+
+					// Freshness: a tutorial is a promise that these steps still work,
+					// so say plainly whether the code behind them has moved since the
+					// steps were written. Fails silently; the tutorial is the point.
+					const freshHost = document.createElement('div');
+					article.prepend(freshHost);
+					import('/doc-freshness.js')
+						.then((m) => m.mountBadge(freshHost, m.docPathForSlug(slug, { tutorial: true })))
+						.catch(() => freshHost.remove());
 
 					// Swap every ```live block for a card that calls the real API.
 					// Runs before the highlight pass so those blocks are already

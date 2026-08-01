@@ -759,6 +759,10 @@
 			"dest": "/payments.html"
 		},
 		{
+			"src": "/pay/simulator/?",
+			"dest": "/pay-simulator.html"
+		},
+		{
 			"src": "/oauth/token",
 			"dest": "/api/oauth/[action]?action=token"
 		},
@@ -921,6 +925,14 @@
 		{
 			"src": "/pulse/?",
 			"dest": "/pulse.html"
+		},
+		{
+			"src": "/economy-lab/?",
+			"dest": "/economy-lab.html"
+		},
+		{
+			"src": "/flow/?",
+			"dest": "/flow.html"
 		},
 		{
 			"src": "/symphony/?",
@@ -1199,6 +1211,10 @@
 			"dest": "/activity.html"
 		},
 		{
+			"src": "/tour/atlas/?",
+			"dest": "/tour-atlas.html"
+		},
+		{
 			"src": "/guards/?",
 			"dest": "/guards.html"
 		},
@@ -1353,6 +1369,10 @@
 		{
 			"src": "/play/economy/?",
 			"dest": "/play/economy.html"
+		},
+		{
+			"src": "/play/solver/?",
+			"dest": "/play/solver.html"
 		},
 		{
 			"src": "/sniper/experiments/?",
@@ -2541,6 +2561,14 @@
 		{
 			"src": "/notifications/",
 			"dest": "/notifications.html"
+		},
+		{
+			"src": "/conversions",
+			"dest": "/conversions.html"
+		},
+		{
+			"src": "/conversions/",
+			"dest": "/conversions.html"
 		},
 		{
 			"src": "/marketplace/analytics",
@@ -3849,6 +3877,10 @@
 			"dest": "/api/x402/pay-by-name.js"
 		},
 		{
+			"src": "/api/x402/runway-lab",
+			"dest": "/api/x402/runway-lab.js"
+		},
+		{
 			"src": "/threews/claim/?",
 			"dest": "/threews-claim.html"
 		},
@@ -4160,6 +4192,10 @@
 			"dest": "/docs-world.html"
 		},
 		{
+			"src": "/docs/freshness/?",
+			"dest": "/docs-freshness.html"
+		},
+		{
 			"src": "/docs/([^./]+)/?",
 			"dest": "/docs/index.html"
 		},
@@ -4178,6 +4214,22 @@
 		{
 			"src": "/glossary/",
 			"dest": "/glossary.html"
+		},
+		{
+			"src": "/walkthroughs",
+			"dest": "/walkthroughs.html"
+		},
+		{
+			"src": "/walkthroughs/",
+			"dest": "/walkthroughs.html"
+		},
+		{
+			"src": "/walkthroughs/([a-z0-9-]+)",
+			"dest": "/walkthrough.html"
+		},
+		{
+			"src": "/walkthroughs/([a-z0-9-]+)/",
+			"dest": "/walkthrough.html"
 		},
 		{
 			"src": "/tutorials",
@@ -4997,6 +5049,14 @@
 			"dest": "/extension-terms.html"
 		},
 		{
+			"src": "/crews/?",
+			"dest": "/crews.html"
+		},
+		{
+			"src": "/crews/([A-Za-z0-9]{2,6})/?",
+			"dest": "/crews.html"
+		},
+		{
 			"src": "/what-is",
 			"dest": "/what-is.html"
 		},
@@ -5053,12 +5113,36 @@
 			"dest": "/inspect.html"
 		},
 		{
+			"src": "/embed-doctor",
+			"dest": "/embed-doctor.html"
+		},
+		{
+			"src": "/embed-doctor/",
+			"dest": "/embed-doctor.html"
+		},
+		{
+			"src": "/bundles",
+			"dest": "/bundles.html"
+		},
+		{
+			"src": "/bundles/",
+			"dest": "/bundles.html"
+		},
+		{
 			"src": "/mcp-tools",
 			"dest": "/mcp-tools.html"
 		},
 		{
 			"src": "/mcp-tools/",
 			"dest": "/mcp-tools.html"
+		},
+		{
+			"src": "/render-lab",
+			"dest": "/render-lab.html"
+		},
+		{
+			"src": "/render-lab/",
+			"dest": "/render-lab.html"
 		},
 		{
 			"src": "/features",

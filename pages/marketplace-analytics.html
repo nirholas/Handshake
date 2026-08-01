@@ -98,6 +98,9 @@
 			.funnel-rate{font-size:11px;color:var(--dim);margin-left:8px;font-variant-numeric:tabular-nums;}
 			.funnel-note{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.55;background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.25);color:var(--text);}
 			.funnel-note a{color:var(--amber);}
+			.funnel-link{color:var(--cyan);text-decoration:underline;text-underline-offset:2px;transition:opacity .15s;}
+			.funnel-link:hover{opacity:.75;}
+			.funnel-link:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:4px;}
 
 			/* Empty volume chart: a designed state, not a blank box. */
 			.chart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:160px;gap:6px;padding:24px 16px;}
@@ -160,7 +163,7 @@
 
 			<section class="an-section" id="funnel-section" hidden>
 				<h2 data-i18n-html="marketplace_analytics.trial_funnel">Trial Funnel <span class="an-count">All time</span></h2>
-				<p class="funnel-intro" data-i18n="marketplace_analytics.trial_funnel_intro">Free trials are counted here, never as sales. A skill sells when a trial runs out and the buyer wants one more run.</p>
+				<p class="funnel-intro" data-i18n="marketplace_analytics.trial_funnel_intro">Free trials are counted here, never as sales. A skill sells when a trial runs out and the buyer wants one more run. <a href="/conversions" class="funnel-link">See your own trials and conversions</a>.</p>
 				<ol class="funnel" id="funnel-steps" aria-label="Trial conversion funnel"></ol>
 				<p class="funnel-note" id="funnel-note" hidden></p>
 			</section>
