@@ -196,9 +196,27 @@ describe('explainMeshGate', () => {
 		const report = explainMeshGate(gateMesh(healthy({ verts: 12_000 }), { category: 'avatar' }), { category: 'avatar' });
 		expect(report.pass).toBe(true);
 		expect(report.headline).toBe('Clears the catalog bar');
-		const density = report.checks.find((c) => c.id === 'vertices_below_floor');
+		const density = report.checks.find((c) => c.id === 'vertex_count');
 		expect(density.actual).toBe('12,000 vertices');
-		expect(density.bound).toBe(`at least ${SEED_MESH_BOUNDS.minVertices.toLocaleString('en-US')}`);
+		expect(density.bound).toBe(
+			`${SEED_MESH_BOUNDS.minVertices.toLocaleString('en-US')} to ${SEED_MESH_BOUNDS.maxVertices.toLocaleString('en-US')}`,
+		);
+	});
+
+	it('collapses a floor/ceiling pair into one row instead of two identical ones', () => {
+		// Vertex count is one measurement. Showing it twice (once against the floor,
+		// once against the ceiling) put the same number on screen twice.
+		const report = explainMeshGate(gateMesh(healthy(), { category: 'avatar' }), { category: 'avatar' });
+		const labels = report.checks.map((c) => c.label);
+		expect(new Set(labels).size, `duplicate rows: ${labels.join(', ')}`).toBe(labels.length);
+	});
+
+	it('adopts the breached end of a range, and only that end', () => {
+		const thin = explainMeshGate(gateMesh(healthy({ verts: 300 }), {}), {});
+		const row = thin.checks.find((c) => c.label === 'Geometry density');
+		expect(row.id).toBe('vertices_below_floor');
+		expect(row.status).toBe('fail');
+		expect(row.bound).toBe(`at least ${SEED_MESH_BOUNDS.minVertices.toLocaleString('en-US')}`);
 	});
 
 	it('stamps the gate version so a verdict is comparable only within one', () => {
@@ -245,9 +263,26 @@ describe('explainMeshGate', () => {
 
 	it('formats bytes and counts for a human, not in raw units', () => {
 		const report = explainMeshGate(gateMesh(healthy({}, { binBytes: 2_500_000 }), {}), {});
-		const size = report.checks.find((c) => c.id === 'file_too_large');
+		const size = report.checks.find((c) => c.id === 'file_weight');
 		expect(size.actual).toMatch(/^2\.\d MB$/);
-		expect(size.bound).toBe('at most 80.0 MB');
+		expect(size.bound).toBe('20 KB to 80.0 MB');
+	});
+
+	it('reports the bounding box at a precision that reads, without implying a unit', () => {
+		// Submissions arrive in metres and in centimetres, so a raw float like
+		// 88387.306 is noise on a check that only asks "does it have extent".
+		const big = explainMeshGate(gateMesh(healthy({ bbox: [-50_000, 50_000] }), {}), {});
+		expect(big.checks.find((c) => c.id === 'zero_volume').actual).toMatch(/^[\d,]+ units across$/);
+
+		const small = explainMeshGate(gateMesh(healthy({ bbox: [-1, 1] }), {}), {});
+		expect(small.checks.find((c) => c.id === 'zero_volume').actual).toBe('3.46 units across');
+	});
+
+	it('says a collapsed box is collapsed rather than printing 0.000', () => {
+		const report = explainMeshGate(gateMesh(healthy({ bbox: [0, 0] }), {}), {});
+		const row = report.checks.find((c) => c.id === 'zero_volume');
+		expect(row.status).toBe('fail');
+		expect(row.actual).toBe('collapsed to a point');
 	});
 
 	it('names the failing checks in the summary so the reason is visible unopened', () => {

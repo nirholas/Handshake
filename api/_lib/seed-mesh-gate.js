@@ -115,8 +115,22 @@ export function gateMesh(buf, { category = 'avatar' } = {}) {
 // cannot drift from the rule it describes, and so a reason code can never ship
 // without an explanation (tests/seed-mesh-gate.test.js asserts exactly that).
 
-/** Every reason code gateMesh can emit, with the guidance a creator needs. */
+/**
+ * Every reason code gateMesh can emit, with the guidance a creator needs, plus
+ * the two range checks (`vertex_count`, `file_weight`) that stand in when
+ * neither end of a bound was breached.
+ */
 export const MESH_GATE_RULES = Object.freeze({
+	vertex_count: {
+		label: 'Geometry density',
+		why: 'Dense enough to read as a real object, without so much geometry that the viewer stalls on a phone.',
+		fix: 'Nothing to do. This model sits inside the range the catalog accepts.',
+	},
+	file_weight: {
+		label: 'File weight',
+		why: 'Heavy enough to be a real textured asset, light enough to load before a visitor gives up.',
+		fix: 'Nothing to do. This model sits inside the range the catalog accepts.',
+	},
 	not_valid_glb: {
 		label: 'Readable glTF 2.0',
 		why: 'The file is not a binary glTF. Nothing downstream can open it, so no other check can even run.',
@@ -166,6 +180,18 @@ export const MESH_GATE_RULES = Object.freeze({
 
 const fmtInt = (n) => Number(n || 0).toLocaleString('en-US');
 
+// The bounding-box diagonal is in the model's own units, and submissions arrive
+// in metres, centimetres and arbitrary scales alike. A raw `88387.306` is noise:
+// the only thing this check asks is whether the box has any extent at all, so
+// the number is reported at a precision that reads, without implying a unit.
+function fmtExtent(n) {
+	const d = Number(n || 0);
+	if (!(d > 0)) return 'collapsed to a point';
+	if (d >= 1000) return `${fmtInt(Math.round(d))} units across`;
+	if (d >= 1) return `${d.toFixed(2)} units across`;
+	return `${d.toFixed(3)} units across`;
+}
+
 function fmtBytes(n) {
 	const b = Number(n || 0);
 	if (b >= 1024 * 1024) return `${(b / 1024 / 1024).toFixed(1)} MB`;
@@ -205,35 +231,34 @@ export function explainMeshGate(verdict, { category = 'avatar' } = {}) {
 		};
 	}
 
+	// Vertex count and file size each have a floor AND a ceiling, but they are one
+	// measurement and one concept apiece. Rendering them as two rows showing the
+	// identical number is noise, so the pair collapses into a single check that
+	// reports the range and adopts whichever end was breached.
+	const range = (id, lowId, highId, actual, low, high) => {
+		const breached = failed.has(lowId) ? lowId : failed.has(highId) ? highId : null;
+		return {
+			id: breached || id,
+			status: breached ? 'fail' : 'pass',
+			actual,
+			bound: breached === lowId ? `at least ${low}` : breached === highId ? `at most ${high}` : `${low} to ${high}`,
+			// A passing range check describes the range, not the floor's failure
+			// mode: "too coarse to read" is the wrong caption on a model that is
+			// neither too coarse nor too dense.
+			...rule(breached || id),
+		};
+	};
+
 	const checks = [
-		{
-			id: 'vertices_below_floor',
-			status: failed.has('vertices_below_floor') ? 'fail' : 'pass',
-			actual: `${fmtInt(m.vertexCount)} vertices`,
-			bound: `at least ${fmtInt(b.minVertices)}`,
-			...rule('vertices_below_floor'),
-		},
-		{
-			id: 'vertices_above_ceiling',
-			status: failed.has('vertices_above_ceiling') ? 'fail' : 'pass',
-			actual: `${fmtInt(m.vertexCount)} vertices`,
-			bound: `at most ${fmtInt(b.maxVertices)}`,
-			...rule('vertices_above_ceiling'),
-		},
-		{
-			id: 'file_too_small',
-			status: failed.has('file_too_small') ? 'fail' : 'pass',
-			actual: fmtBytes(m.sizeBytes),
-			bound: `at least ${fmtBytes(b.minBytes)}`,
-			...rule('file_too_small'),
-		},
-		{
-			id: 'file_too_large',
-			status: failed.has('file_too_large') ? 'fail' : 'pass',
-			actual: fmtBytes(m.sizeBytes),
-			bound: `at most ${fmtBytes(b.maxBytes)}`,
-			...rule('file_too_large'),
-		},
+		range(
+			'vertex_count',
+			'vertices_below_floor',
+			'vertices_above_ceiling',
+			`${fmtInt(m.vertexCount)} vertices`,
+			fmtInt(b.minVertices),
+			fmtInt(b.maxVertices),
+		),
+		range('file_weight', 'file_too_small', 'file_too_large', fmtBytes(m.sizeBytes), fmtBytes(b.minBytes), fmtBytes(b.maxBytes)),
 		{
 			id: 'no_textures',
 			status: !b.requireTexture ? 'skipped' : failed.has('no_textures') ? 'fail' : 'pass',
@@ -244,8 +269,8 @@ export function explainMeshGate(verdict, { category = 'avatar' } = {}) {
 		{
 			id: 'zero_volume',
 			status: failed.has('zero_volume') ? 'fail' : 'pass',
-			actual: `${Number(m.bboxDiagonal || 0).toFixed(3)} diagonal`,
-			bound: 'greater than 0',
+			actual: fmtExtent(m.bboxDiagonal),
+			bound: 'must have extent',
 			...rule('zero_volume'),
 		},
 		{
