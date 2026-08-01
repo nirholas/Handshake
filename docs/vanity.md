@@ -107,6 +107,7 @@ tier for the requested pattern.
 
 ### Example
 
+<!-- runnable: 402 an unpaid call answers with the x402 challenge, which is the expected first response -->
 ```bash
 # Grind an address starting with "So" (2-char keypair tier, $0.05).
 # @x402/fetch handles the 402 → pay → retry handshake automatically.

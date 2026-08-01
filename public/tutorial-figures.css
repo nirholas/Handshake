@@ -238,9 +238,12 @@
 
 /* ── Lightbox ──────────────────────────────────────────────── */
 
+/* The viewers that host figures unlock scrolling with their own `overflow: auto
+   !important` on <html> and <body>, so the modal lock has to answer in kind or
+   the page scrolls away underneath an open lightbox. */
 html.tfig-lb-open,
 html.tfig-lb-open body {
-	overflow: hidden;
+	overflow: hidden !important;
 }
 
 .tfig-lightbox {

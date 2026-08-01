@@ -8,10 +8,16 @@
  *   ![Michelle, the default rigged avatar](figure:glb:/avatars/michelle.glb)
  *   ![Drag to orbit the model](figure:live:/avatars/michelle.glb)
  *
- * marked turns that into <img src="figure:page:/forge">, which no browser can
- * load. This script runs immediately after the parse and swaps each one for a
- * <figure>: a numbered caption, an intrinsic-size box so the page never shifts,
- * a blurred placeholder that resolves into the real capture, and click-to-zoom.
+ * Left alone, marked turns that into <img src="figure:page:/forge">, and the
+ * browser immediately tries to fetch it: one guaranteed-failing request per
+ * figure and an ERR_UNKNOWN_URL_SCHEME in the console before any script gets a
+ * chance to intervene. So the directives are rewritten to inert slot elements
+ * BEFORE the parse (preprocess), and mount() fills those slots afterwards with
+ * a <figure>: a numbered caption, an intrinsic-size box so the page never
+ * shifts, a blurred placeholder that resolves into the real capture, and
+ * click-to-zoom. mount() still upgrades a raw <img src="figure:…"> if one
+ * reaches the DOM, so a viewer that forgets to preprocess degrades to the old
+ * behaviour rather than showing nothing.
  *
  * Media comes from /tutorial-media.json, written by
  * scripts/capture-tutorial-media.mjs from real screenshots of the deployed site
@@ -27,6 +33,26 @@
 
 	var MANIFEST_URL = '/tutorial-media.json';
 	var manifestPromise = null;
+
+	// ![caption](figure:kind:/target?opts) anywhere in the markdown source.
+	var DIRECTIVE_RE = /!\[([^\]]*)\]\((figure:[^)\s]+)\)/g;
+
+	function escapeAttr(value) {
+		return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
+
+	/**
+	 * Rewrite figure directives into inert slots. Call this on the raw markdown
+	 * before handing it to marked; the slot is block-level HTML, so marked leaves
+	 * it alone instead of wrapping it in a paragraph.
+	 */
+	function preprocess(markdown) {
+		if (typeof markdown !== 'string' || markdown.indexOf('figure:') === -1) return markdown;
+		return markdown.replace(DIRECTIVE_RE, function (whole, alt, raw) {
+			if (!alt.trim()) return whole;
+			return '<div class="tfig-slot" data-figure="' + escapeAttr(raw) + '" data-alt="' + escapeAttr(alt.trim()) + '"></div>';
+		});
+	}
 
 	function loadManifest() {
 		if (!manifestPromise) {
@@ -155,12 +181,11 @@
 		return frame;
 	}
 
-	function mountFigure(img, record, index, lightbox) {
-		var raw = img.getAttribute('src') || '';
+	function mountFigure(raw, altText, record, index, lightbox) {
 		var directive = parseDirective(raw);
 		if (!directive) return null;
 
-		var alt = (img.getAttribute('alt') || '').trim() || 'Figure ' + index;
+		var alt = (altText || '').trim() || 'Figure ' + index;
 		var figure = el('figure', 'tfig');
 		figure.id = 'figure-' + index;
 		var body = el('div', 'tfig-body');
@@ -320,32 +345,53 @@
 
 	// ── Mount ──────────────────────────────────────────────────────────────────
 
+	/**
+	 * Collect the placeholders left for us, in document order, whichever form
+	 * they arrived in: the slots preprocess() wrote, and any raw <img> from a
+	 * viewer that parsed the markdown without preprocessing it.
+	 */
+	function collectPlaceholders(article) {
+		return Array.prototype.slice
+			.call(article.querySelectorAll('.tfig-slot[data-figure], img[src^="figure:"]'))
+			.map(function (node) {
+				var isSlot = node.classList && node.classList.contains('tfig-slot');
+				return {
+					node: node,
+					raw: isSlot ? node.getAttribute('data-figure') : node.getAttribute('src') || '',
+					alt: isSlot ? node.getAttribute('data-alt') : node.getAttribute('alt') || '',
+					// marked wraps a lone image in a paragraph, and a <figure> inside a
+					// <p> is invalid markup the browser will hoist out. Replace the
+					// wrapper instead. Slots are block-level already and never wrapped.
+					target:
+						!isSlot && node.parentElement && node.parentElement.tagName === 'P' && node.parentElement.childNodes.length === 1
+							? node.parentElement
+							: node,
+				};
+			});
+	}
+
 	function mount(article) {
 		if (!article) return Promise.resolve(0);
-		var placeholders = Array.prototype.slice.call(article.querySelectorAll('img[src^="figure:"]'));
+		var placeholders = collectPlaceholders(article);
 		if (!placeholders.length) return Promise.resolve(0);
 
 		return loadManifest().then(function (figures) {
-			var lightbox = document.querySelector('.tfig-lightbox') ? null : createLightbox();
-			if (lightbox) document.body.appendChild(lightbox.node);
-			else lightbox = window.__tfigLightbox;
-			window.__tfigLightbox = lightbox;
+			var lightbox = window.__tfigLightbox;
+			if (!lightbox) {
+				lightbox = createLightbox();
+				document.body.appendChild(lightbox.node);
+				window.__tfigLightbox = lightbox;
+			}
 
 			var mounted = 0;
-			placeholders.forEach(function (img, i) {
-				var raw = img.getAttribute('src') || '';
+			placeholders.forEach(function (slot, i) {
 				var index = i + 1;
-				var built = mountFigure(img, figures[raw], index, lightbox);
+				var built = mountFigure(slot.raw, slot.alt, figures[slot.raw], index, lightbox);
 				if (!built) {
-					img.remove();
+					slot.target.remove();
 					return;
 				}
-				// marked wraps a lone image in a paragraph; a <figure> inside a <p>
-				// is invalid and the browser will hoist it, so replace the wrapper.
-				var host = img.parentElement;
-				var replaceTarget =
-					host && host.tagName === 'P' && host.childNodes.length === 1 ? host : img;
-				replaceTarget.replaceWith(built.figure);
+				slot.target.replaceWith(built.figure);
 				if (built.record && built.record.src && built.kind !== 'live') {
 					lightbox.register({
 						figureIndex: index,
@@ -359,5 +405,5 @@
 		});
 	}
 
-	window.tutorialFigures = { mount: mount };
+	window.tutorialFigures = { mount: mount, preprocess: preprocess };
 })();

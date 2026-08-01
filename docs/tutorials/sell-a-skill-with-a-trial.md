@@ -30,6 +30,12 @@ Three free runs, then a real payment. That is the whole shape.
 
 ## 1. List the skill with a trial attached
 
+Before pricing anything, look at what you are pricing against. This is the live catalog a buyer shops from, with real install counts, ratings, and per-call prices:
+
+```live
+{ "step": "skills-catalog", "note": "Raise the limit to see more of the market you are about to list into." }
+```
+
 Pricing lives on the agent, not on a global catalog. One `PUT` replaces the agent's full price list, so send every skill you want listed in the same call.
 
 ```bash

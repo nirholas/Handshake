@@ -116,6 +116,18 @@ const ANNOTATE = (callouts) => {
   return missing;
 };
 
+// Freeze anything still moving. A three.ws page is full of live media: a
+// model-viewer orbits by default, videos loop, canvases redraw. Playwright waits
+// for the capture target to hold still, so an un-frozen 3D viewer never settles
+// and the shot times out instead of failing honestly.
+const FREEZE = () => {
+  document.querySelectorAll('model-viewer').forEach(mv => {
+    mv.removeAttribute('auto-rotate');
+    try { mv.pause?.(); } catch {}
+  });
+  document.querySelectorAll('video').forEach(v => { try { v.pause(); } catch {} });
+};
+
 // A transparent, absolutely-positioned rect used as the screenshot target. Using
 // an element (rather than a raw clip box) keeps padding unambiguous: Playwright
 // scrolls it into view and captures exactly its bounds.
@@ -131,15 +143,7 @@ const FRAME = ({ selector, pad }) => {
   const y = Math.max(0, r.top + window.scrollY - pad);
   const w = Math.min(docW - x, r.width + pad * 2);
   const h = Math.min(docH - y, r.height + pad * 2);
-  const frame = document.createElement('div');
-  frame.id = 'tws-capture-frame';
-  Object.assign(frame.style, {
-    position: 'absolute', top: y + 'px', left: x + 'px',
-    width: w + 'px', height: h + 'px',
-    pointerEvents: 'none', background: 'transparent', zIndex: '0',
-  });
-  document.body.appendChild(frame);
-  return { w: Math.round(w), h: Math.round(h) };
+  return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
 };
 
 // ── prep steps: drive the UI into the state a guide step describes ────────────
@@ -159,6 +163,13 @@ async function runPrep(page, prep) {
 		if (step.scrollTo) {
 			await page.locator(step.scrollTo).first()
 				.scrollIntoViewIfNeeded({ timeout: 15000 });
+		}
+		// waitFor lets a shot depend on real work finishing (a generation
+		// completing, a model loading) instead of a guessed sleep, so a picture
+		// captioned "your finished model" actually contains one.
+		if (step.waitFor) {
+			await page.locator(step.waitFor).first()
+				.waitFor({ state: 'visible', timeout: step.timeout ?? 240000 });
 		}
 		if (step.wait) await page.waitForTimeout(step.wait);
 	}
@@ -234,6 +245,7 @@ for (const shot of shots) {
 
 		// Re-apply after prep: a click can mount fresh chrome.
 		await page.addStyleTag({ content: SUPPRESS_CSS });
+		await page.evaluate(FREEZE);
 
 		let missing = [];
 		if (shot.callouts?.length) {
@@ -247,8 +259,12 @@ for (const shot of shots) {
 		if (shot.clip) {
 			dims = await page.evaluate(FRAME, { selector: shot.clip, pad: shot.pad ?? 20 });
 			if (!dims) throw new Error(`clip target not found or zero-size: ${shot.clip}`);
-			await page.locator('#tws-capture-frame').screenshot({
-				path: outPath, timeout: 90000, animations: 'disabled',
+			// A document-coordinate clip rather than an element screenshot: these
+			// pages stream content in, so waiting for an element's box to hold
+			// still can never succeed on a page that is legitimately alive.
+			await page.screenshot({
+				path: outPath, timeout: 90000, animations: 'disabled', fullPage: true,
+				clip: { x: dims.x, y: dims.y, width: dims.w, height: dims.h },
 			});
 		} else {
 			await page.screenshot({
@@ -281,12 +297,14 @@ for (const shot of shots) {
 await browser.close();
 
 const failed = results.filter(r => !r.ok);
+// Captured captions echo page copy, and the repo bans em/en dashes in
+// committed bytes, so scrub them at the boundary.
 writeFileSync(REPORT, JSON.stringify({
 	base: BASE,
 	shots: results.length,
 	failed: failed.length,
 	results,
-}, null, '\t') + '\n');
+}, null, '\t').replace(/ [\u2013\u2014] /g, ': ').replace(/[\u2013\u2014]/g, '-') + '\n');
 
 console.log(`\n${results.length - failed.length}/${results.length} captured -> public/docs/img/guides/`);
 console.log(`report: data/guide-shots.capture.json`);

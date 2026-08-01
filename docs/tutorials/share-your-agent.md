@@ -35,6 +35,14 @@ A few practical notes:
 
 If you ever forget the URL, the "Copy share link" button on the agent profile page copies the canonical version to your clipboard.
 
+Every public agent is also in the platform's own directory, which is a plain open endpoint. Press the button and you are looking at the live directory, portrait and all, the way it exists as you read this:
+
+```live
+{ "step": "agents-public", "note": "The public directory, unauthenticated. Raise the limit and the cursor fields appear so you can page through it." }
+```
+
+Each entry carries `home_url`, which is the same canonical link this step is about. That is the shape to read if you are listing your agents somewhere else rather than copying one URL by hand.
+
 ### What visitors see when they open the link
 
 The public agent page renders the agent's full 3D body in the centre of the screen, with chat input below it and microphone access for voice. The agent's name and one-line description show above. There is a small "Embed this agent on your site" prompt below for visitors who want to take the experience back to their own pages.

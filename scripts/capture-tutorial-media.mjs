@@ -22,6 +22,7 @@
  *
  * Kinds:
  *   page:<path>   screenshot of https://three.ws<path> in a real browser
+ *   img:<path>    an image already committed under public/, adopted as a figure
  *   glb:<path>    PNG returned by GET /api/render/glb?glbUrl=…
  *   live:<path>   an interactive <model-viewer>, mounted at runtime. No capture
  *                 happens here; it is listed in the manifest so the checker can
@@ -41,7 +42,7 @@
  *   npm run tutorials:media -- --only embed-in-30-seconds
  *   BASE_URL=http://localhost:3000 npm run tutorials:media
  *
- * Output: public/docs/img/tutorials/<slug>/<name>-<hash>.webp plus a manifest
+ * Output: public/docs/img/<collection>/<slug>/<name>-<hash>.webp plus a manifest
  * carrying intrinsic width/height and a blurred inline placeholder, so the page
  * reserves the exact box before the byte arrives and never shifts layout.
  */
@@ -59,9 +60,16 @@ const BASE_URL = (process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '')
 // NOT the capture base: figures are usually shot against a local server running
 // the commit being shipped, and a doorway into localhost is a dead link.
 const SITE_URL = (process.env.SITE_URL || 'https://three.ws').replace(/\/$/, '');
-const TUTORIAL_DIR = resolve(ROOT, 'docs/tutorials');
-const IMG_ROOT = resolve(ROOT, 'public/docs/img/tutorials');
 const MANIFEST = resolve(ROOT, 'public/tutorial-media.json');
+
+// Every markdown collection whose figures this script captures. Both viewers
+// (pages/tutorial.html and pages/recipe.html) load the same tutorial-figures.js
+// and read the same manifest, so a collection is just a directory plus the
+// folder its assets land in. Adding a third is one more row.
+const COLLECTIONS = [
+	{ name: 'tutorials', dir: resolve(ROOT, 'docs/tutorials'), img: 'docs/img/tutorials' },
+	{ name: 'cookbook', dir: resolve(ROOT, 'docs/cookbook'), img: 'docs/img/cookbook' },
+];
 
 const argv = process.argv.slice(2);
 const has = (name) => argv.includes(`--${name}`);
@@ -75,7 +83,7 @@ const ONLY = opt('only', '');
 const QUALITY = Math.max(40, Math.min(100, Number(opt('quality', 82)) || 82));
 
 const FIGURE_RE = /!\[([^\]]*)\]\((figure:[^)\s]+)\)/g;
-const KINDS = new Set(['page', 'glb', 'live']);
+const KINDS = new Set(['page', 'glb', 'live', 'img']);
 
 // ── Parse ────────────────────────────────────────────────────────────────────
 
@@ -85,7 +93,7 @@ function parseDirective(raw) {
 	const colon = body.indexOf(':');
 	if (colon === -1) return { error: 'a figure needs a kind, as in figure:page:/create' };
 	const kind = body.slice(0, colon);
-	if (!KINDS.has(kind)) return { error: `unknown figure kind "${kind}" (use page, glb or live)` };
+	if (!KINDS.has(kind)) return { error: `unknown figure kind "${kind}" (use page, glb, img or live)` };
 	const rest = body.slice(colon + 1);
 	const q = rest.indexOf('?');
 	const target = q === -1 ? rest : rest.slice(0, q);
@@ -95,26 +103,29 @@ function parseDirective(raw) {
 }
 
 function collectDirectives() {
-	const files = readdirSync(TUTORIAL_DIR)
-		.filter((f) => f.endsWith('.md'))
-		.filter((f) => !ONLY || f === `${ONLY}.md`);
 	const found = [];
 	const problems = [];
-	for (const file of files) {
-		const slug = file.replace(/\.md$/, '');
-		const md = readFileSync(resolve(TUTORIAL_DIR, file), 'utf8');
-		for (const match of md.matchAll(FIGURE_RE)) {
-			const [, alt, raw] = match;
-			const parsed = parseDirective(raw);
-			if (parsed.error) {
-				problems.push(`${file}: ${parsed.error}`);
-				continue;
+	for (const collection of COLLECTIONS) {
+		if (!existsSync(collection.dir)) continue;
+		const files = readdirSync(collection.dir)
+			.filter((f) => f.endsWith('.md'))
+			.filter((f) => !ONLY || f === `${ONLY}.md`);
+		for (const file of files) {
+			const slug = file.replace(/\.md$/, '');
+			const md = readFileSync(resolve(collection.dir, file), 'utf8');
+			for (const match of md.matchAll(FIGURE_RE)) {
+				const [, alt, raw] = match;
+				const parsed = parseDirective(raw);
+				if (parsed.error) {
+					problems.push(`${file}: ${parsed.error}`);
+					continue;
+				}
+				if (!alt.trim()) {
+					problems.push(`${file}: ${raw} has an empty caption. Every figure needs one, for the caption and the alt text.`);
+					continue;
+				}
+				found.push({ collection: collection.name, img: collection.img, slug, alt: alt.trim(), raw, ...parsed });
 			}
-			if (!alt.trim()) {
-				problems.push(`${file}: ${raw} has an empty caption. Every figure needs one, for the caption and the alt text.`);
-				continue;
-			}
-			found.push({ slug, alt: alt.trim(), raw, ...parsed });
 		}
 	}
 	return { found, problems };
@@ -153,28 +164,40 @@ async function capturePage(browser, entry) {
 	// The site reads its theme from localStorage before first paint, so setting
 	// it as an init script is the only way to capture the light theme honestly.
 	await context.addInitScript(`try{localStorage.setItem('twx_theme',${JSON.stringify(theme)})}catch(e){}`);
+	// Floating chrome is not the UI a tutorial is teaching, and most of it
+	// rotates its contents per visit, so leaving it in makes every re-capture a
+	// spurious diff. Hiding it with a stylesheet installed before first paint
+	// beats removing the nodes after load: the i18n switcher and the corner
+	// stack both mount asynchronously, after any fixed settle has elapsed, so a
+	// removal pass races them and loses on the slower pages.
+	await context.addInitScript(`(function(){
+		var css = '#cookie-banner,.cookie-banner,[data-role="consent"],.newsletter-toast,'
+			+ '#tws-corner-stack,.twx-i18n-fab,lang-switcher,.walk-c2w-fx,.nav-skip,'
+			+ '.tour-overlay,.tour-spotlight,.tour-bubble'
+			+ '{display:none !important}';
+		function put(){ var s=document.createElement('style'); s.textContent=css; (document.head||document.documentElement).appendChild(s); }
+		if (document.head) put(); else document.addEventListener('DOMContentLoaded', put);
+	})();`);
+	// Every first-run coach tour on the platform gates on `tour:<id>:done`, and a
+	// capture browser is always a first visit, so every figure of a touring page
+	// would otherwise be a photo of the tour instead of the feature. Answering
+	// "already seen" is what a returning reader's browser says, and it suppresses
+	// the tour before it mounts rather than racing to remove it afterwards.
+	await context.addInitScript(`(function(){
+		try {
+			var real = localStorage.getItem.bind(localStorage);
+			localStorage.getItem = function(key){ return /^tour:.*:done$/.test(key) ? '1' : real(key); };
+		} catch (e) {}
+	})();`);
 	const page = await context.newPage();
 	try {
 		const url = `${BASE_URL}${entry.target}`;
 		const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
 		if (res && res.status() >= 400) throw new Error(`${url} returned HTTP ${res.status()}`);
 		await page.waitForTimeout(settle);
-		// Floating chrome is not the UI a tutorial is teaching, and most of it
-		// rotates its contents per visit, so leaving it in makes every re-capture
-		// a spurious diff. Strip it, then let the layout settle before shooting.
+		// The stylesheet above covers the chrome we know by name. Anything else
+		// still pinned to a viewport corner at capture time is chrome too.
 		await page.evaluate(() => {
-			const noise = [
-				'#cookie-banner',
-				'.cookie-banner',
-				'[data-role="consent"]',
-				'.newsletter-toast',
-				'#tws-corner-stack', // rotating "Have you tried…" + Getting started progress
-				'lang-switcher', // runtime i18n picker, injected on every page
-				'.walk-c2w-fx', // full-viewport walk-mode effect layer
-				'.nav-skip',
-			];
-			for (const sel of noise) document.querySelectorAll(sel).forEach((el) => el.remove());
-			// Any leftover fixed overlay pinned to a viewport corner is chrome too.
 			for (const el of document.querySelectorAll('body > *')) {
 				if (getComputedStyle(el).position !== 'fixed') continue;
 				const r = el.getBoundingClientRect();
@@ -183,12 +206,17 @@ async function capturePage(browser, entry) {
 		});
 		await page.waitForTimeout(400);
 
+		// A page driving a render loop never reaches the idle state the default
+		// screenshot path waits for, so a 3D figure times out at exactly the
+		// moment it looks best. Freezing CSS animations and giving the shot a
+		// real budget is what makes the WebGL surfaces capturable at all.
+		const shotOpts = { type: 'png', animations: 'disabled', timeout: 120000 };
 		let shot;
 		if (selector) {
 			const el = await page.waitForSelector(selector, { timeout: 15000, state: 'visible' });
-			shot = await el.screenshot({ type: 'png' });
+			shot = await el.screenshot(shotOpts);
 		} else {
-			shot = await page.screenshot({ type: 'png', fullPage });
+			shot = await page.screenshot({ ...shotOpts, fullPage });
 		}
 		return shot;
 	} finally {
@@ -196,11 +224,35 @@ async function capturePage(browser, entry) {
 	}
 }
 
+/**
+ * Adopt an image that already lives in public/ into the figure system.
+ *
+ * Some real platform output is a file before it is ever a URL: a still rendered
+ * from a model a recipe generated, committed alongside that recipe. Those bytes
+ * are as real as a fresh capture, and without this kind the only way to show one
+ * is a bare markdown <img> with no caption, no placeholder and no lightbox. This
+ * gives it the same figure treatment as everything else.
+ *
+ * It reads from disk only. A missing file is a hard failure, never a silent gap.
+ */
+async function captureLocalImage(entry) {
+	const path = resolve(ROOT, 'public', entry.target.replace(/^\//, ''));
+	if (!existsSync(path)) {
+		throw new Error(`no such image in public/: ${entry.target}`);
+	}
+	const buf = readFileSync(path);
+	if (buf.length < 100) throw new Error(`${entry.target} is ${buf.length} bytes, which is not an image`);
+	return buf;
+}
+
 async function captureGlb(entry) {
 	const width = Math.max(64, Math.min(2048, Number(entry.params.get('w')) || 1200));
 	const height = Math.max(64, Math.min(2048, Number(entry.params.get('h')) || 900));
 	const background = entry.params.get('bg') || 'transparent';
-	const glbUrl = `${BASE_URL}${entry.target}`;
+	// The renderer fetches the mesh server-side, so the GLB has to be reachable
+	// from outside this machine. Capturing against a local server is normal here;
+	// pointing the renderer at that local URL is not, and it 400s.
+	const glbUrl = `${SITE_URL}${entry.target}`;
 	const url = `${BASE_URL}/api/render/glb?glbUrl=${encodeURIComponent(glbUrl)}&width=${width}&height=${height}&background=${encodeURIComponent(background)}`;
 	const res = await fetch(url, { signal: AbortSignal.timeout(120000) });
 	if (!res.ok) {
@@ -271,7 +323,7 @@ async function main() {
 		byDirective.get(entry.raw).slugs.add(entry.slug);
 	}
 	const entries = [...byDirective.values()];
-	console.log(`capture-tutorial-media: ${entries.length} figure(s) across ${new Set(found.map((f) => f.slug)).size} tutorial(s), base ${BASE_URL}`);
+	console.log(`capture-tutorial-media: ${entries.length} figure(s) across ${new Set(found.map((f) => f.slug)).size} document(s), base ${BASE_URL}`);
 
 	if (CHECK_ONLY) {
 		const missing = entries.filter((e) => e.kind !== 'live' && !prevFigures[e.raw]);
@@ -293,7 +345,13 @@ async function main() {
 	const needsBrowser = entries.some((e) => e.kind === 'page' && (FORCE || !prevFigures[e.raw]));
 	if (needsBrowser) browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 
-	const figures = {};
+	// A scoped run (--only) sees just one document's directives, and a run where
+	// some captures fail sees fewer still. Writing `figures` fresh would then
+	// publish a manifest missing every figure this run did not look at, and the
+	// prune below would delete their files. Carry the prior manifest forward and
+	// let this run overwrite only what it actually re-captured.
+	const partialRun = Boolean(ONLY);
+	const figures = partialRun ? { ...prevFigures } : {};
 	let captured = 0;
 	let reused = 0;
 	const failures = [];
@@ -302,7 +360,7 @@ async function main() {
 		for (const entry of entries) {
 			const slugs = [...entry.slugs].sort();
 			const name = assetName(entry);
-			const rel = `docs/img/tutorials/${slugs[0]}/${name}.webp`;
+			const rel = `${entry.img}/${slugs[0]}/${name}.webp`;
 			const outPath = resolve(ROOT, 'public', rel);
 			const prior = prevFigures[entry.raw];
 
@@ -314,7 +372,8 @@ async function main() {
 						model: entry.target,
 						orbit: entry.params.get('orbit') || null,
 						source: `${SITE_URL}${entry.target}`,
-						tutorials: slugs,
+						collection: entry.collection,
+						docs: slugs,
 					};
 					console.log(`  live   ${entry.target}`);
 				} catch (err) {
@@ -324,13 +383,18 @@ async function main() {
 			}
 
 			if (!FORCE && prior && prior.src && existsSync(resolve(ROOT, 'public', prior.src.replace(/^\//, '')))) {
-				figures[entry.raw] = { ...prior, tutorials: slugs };
+				figures[entry.raw] = { ...prior, collection: entry.collection, docs: slugs };
 				reused += 1;
 				continue;
 			}
 
 			try {
-				const png = entry.kind === 'page' ? await capturePage(browser, entry) : await captureGlb(entry);
+				const png =
+					entry.kind === 'page'
+						? await capturePage(browser, entry)
+						: entry.kind === 'img'
+							? await captureLocalImage(entry)
+							: await captureGlb(entry);
 				mkdirSync(dirname(outPath), { recursive: true });
 				const { width, height, placeholder } = await encode(png, outPath);
 				figures[entry.raw] = {
@@ -340,7 +404,8 @@ async function main() {
 					height,
 					placeholder,
 					source: `${SITE_URL}${entry.target}`,
-					tutorials: slugs,
+					collection: entry.collection,
+					docs: slugs,
 				};
 				captured += 1;
 				console.log(`  wrote  /${rel}  ${width}x${height}`);
@@ -354,15 +419,21 @@ async function main() {
 	}
 
 	// Drop assets whose directive no longer exists, so the folder tracks the
-	// markdown instead of growing forever.
-	const live = new Set(Object.values(figures).map((f) => f.src).filter(Boolean));
-	for (const rec of Object.values(prevFigures)) {
-		if (!rec.src || live.has(rec.src)) continue;
-		const stale = resolve(ROOT, 'public', rec.src.replace(/^\//, ''));
-		if (existsSync(stale)) {
-			rmSync(stale);
-			console.log(`  pruned /${rec.src.replace(/^\//, '')}`);
+	// markdown instead of growing forever. Only a full sweep may prune: a scoped
+	// run has not read the directives that justify the other files, so to it
+	// every one of them looks orphaned.
+	if (!partialRun && !failures.length) {
+		const live = new Set(Object.values(figures).map((f) => f.src).filter(Boolean));
+		for (const rec of Object.values(prevFigures)) {
+			if (!rec.src || live.has(rec.src)) continue;
+			const stale = resolve(ROOT, 'public', rec.src.replace(/^\//, ''));
+			if (existsSync(stale)) {
+				rmSync(stale);
+				console.log(`  pruned /${rec.src.replace(/^\//, '')}`);
+			}
 		}
+	} else if (failures.length) {
+		console.log('  skipped pruning: this run had failures, so an absent figure may just be one that did not capture.');
 	}
 
 	const payload = {

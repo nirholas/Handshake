@@ -134,18 +134,13 @@ That's it. You created a body, gave it a brain, and shipped a shareable URL.
 
 ### See the directory you just joined
 
-Publishing puts your agent in the public directory, and that directory is a plain public API. Press Run below and this page calls it live, from your browser, with no key and no account. The first agent it returns is rendered underneath the response.
+Publishing puts your agent in the public directory, and that directory is a plain public API. Press Run below: this page calls it live, from your browser, with no key and no account.
 
-```try
-GET /api/agents/public?limit=3
-title: The public agent directory
-note: The same endpoint the marketplace reads. Your published agent appears in this list.
-pick: agents[0].avatar_thumbnail
-render: image
-alt: The portrait of the first agent in the live public directory
+```live
+{ "step": "agents-public" }
 ```
 
-Every field you filled in above (name, description, skills) is in that JSON. That is what makes an agent embeddable, searchable, and reachable by other agents.
+Every field you filled in above (name, description, skills) is in that JSON, and the portrait rendered under it is the real avatar of the first agent in the list. That combination is what makes an agent embeddable, searchable, and reachable by other agents.
 
 ---
 

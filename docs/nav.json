@@ -301,6 +301,10 @@
 					"path": "trading-hub"
 				},
 				{
+					"label": "Exit Lab (replay real trades)",
+					"path": "exit-lab"
+				},
+				{
 					"label": "Risk acknowledgment",
 					"path": "risk-acknowledgment"
 				},
@@ -506,6 +510,10 @@
 				{
 					"label": "The in-game economy",
 					"path": "in-game-economy"
+				},
+				{
+					"label": "The economy solver",
+					"path": "economy-solver"
 				},
 				{
 					"label": "Circulation engine",
@@ -1055,6 +1063,10 @@
 				{
 					"label": "Read the trading fleet",
 					"path": "tutorials/read-the-trading-fleet"
+				},
+				{
+					"label": "Find a better exit policy",
+					"path": "tutorials/find-a-better-exit-policy"
 				},
 				{
 					"label": "Earn and spend in /play",

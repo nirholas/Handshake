@@ -136,6 +136,46 @@
 			"settle": 10000,
 			"motion": { "seconds": 3, "fps": 12 },
 			"usedBy": ["tutorials/explore-docs-world"]
+		},
+		{
+			"id": "sign-api-console",
+			"url": "/sign-language",
+			"alt": "The sign API console on three.ws: the phrase \"happy to meet you\" compiled into four timeline blocks, happy, to, meet, you, with the spelled word broken into its letters, above the duration, signed and fingerspelled counts",
+			"caption": "One real request to /api/sign, drawn as the performance it returns. Filled blocks are lexical signs; the outlined one is fingerspelled, letter by letter.",
+			"clip": "#sl-api",
+			"settle": 6000,
+			"actions": [
+				{ "type": "hide", "selectors": ["#tws-corner-stack"] },
+				{ "type": "scroll", "selector": "#sl-api" },
+				{ "type": "waitFor", "selector": ".sl-api-seg", "timeout": 30000 }
+			],
+			"usedBy": ["sign-language"]
+		},
+		{
+			"id": "sign-language-hero",
+			"url": "/sign-language",
+			"alt": "A rigged 3D avatar mid-sign on the three.ws sign-language page, beside the phrase input and the speed and signing-hand controls",
+			"caption": "Type anything: the avatar signs the words it has signs for and spells the rest.",
+			"clip": ".sl-hero",
+			"settle": 9000,
+			"actions": [
+				{ "type": "hide", "selectors": ["#tws-corner-stack"] },
+				{ "type": "waitFor", "selector": "#sl-stage canvas", "timeout": 40000 }
+			],
+			"usedBy": ["sign-language"]
+		},
+		{
+			"id": "asl-alphabet-hero",
+			"url": "/asl-alphabet",
+			"alt": "A rigged 3D avatar forming a letter of the American manual alphabet, beside that letter's description and the speed and signing-hand controls",
+			"caption": "Every letter of the manual alphabet on a hand you can turn around.",
+			"clip": ".aa-hero",
+			"settle": 9000,
+			"actions": [
+				{ "type": "hide", "selectors": ["#tws-corner-stack"] },
+				{ "type": "waitFor", "selector": "#aa-stage canvas", "timeout": 40000 }
+			],
+			"usedBy": ["sign-language"]
 		}
 	]
 }

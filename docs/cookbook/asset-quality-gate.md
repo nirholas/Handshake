@@ -20,6 +20,8 @@ PASS  176ed971-0be5-4fc6-b2ff-3370aa499e13.glb       19,074 tris     1.6 MB   1 
 1/1 assets passed the budget
 ```
 
+![The wicker basket this gate rejected at 147,617 triangles, which looks perfectly fine](figure:img:/cookbook/posters/asset-quality-gate.png)
+
 Exit codes are the whole point: **0** everything passed, **1** at least one asset
 busted its budget, **2** the gate itself could not run. Wire it into CI and a bad
 asset fails the build instead of the launch.

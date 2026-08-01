@@ -182,6 +182,7 @@ The signature is ed25519 over the UTF-8 bytes of that string, produced with the 
 
 ### Over HTTP, no auth
 
+<!-- runnable: no the proof id is illustrative; substitute one from a real collectible -->
 ```bash
 curl -s https://three.ws/api/irl/world-lines/verify/9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
 ```
@@ -402,6 +403,7 @@ An invalid `region` is ignored (you get the roll-up) rather than erroring.
 
 Single quest. Pass the fix and coordinates to unlock the full challenge spec; omit them for the "travel here" view.
 
+<!-- runnable: no the quest id is illustrative; substitute one from GET /browse -->
 ```bash
 curl -s 'https://three.ws/api/irl/world-lines/1b2a3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d?lat=37.77493&lng=-122.41942' \
   -H 'x-irl-fix: <token>'

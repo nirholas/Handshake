@@ -24,6 +24,8 @@ open garden-pack/index.html
 
 101 seconds for three models, not 268. The slowest job sets the wall clock.
 
+![A clay flower pot, one of the three models this run built in parallel](figure:img:/cookbook/posters/parallel-asset-pack.png)
+
 ## What it writes
 
 ```
@@ -142,8 +144,19 @@ python3 asset_gate.py garden-pack/models/*.glb --max-triangles 100000
 
 See [Gate 3D assets in CI](/cookbook/asset-quality-gate).
 
+## Run it without installing anything
+
+The [Pipeline Studio](/cookbook/pipeline) is this recipe plus the gate below,
+running in a browser tab against the same free API. It fans prompts out at the
+same concurrency, renders every result, grades each one, and then prints the
+`asset_pack.py` and `asset_gate.py` commands that reproduce the run on your
+machine. Useful for picking a triangle budget before you commit to one.
+
+![The Studio mid-run: finished models already graded while the last one is still generating](figure:img:/cookbook/media/pipeline-studio-midrun.png)
+
 ## Where to go next
 
 - **The single-model client this builds on** → [Text to 3D from the command line](/cookbook/text-to-3d-cli)
+- **The same pipeline, no install** → [Pipeline Studio](/cookbook/pipeline)
 - **Let a model choose the prompts** → [A self-correcting 3D collectible set](/cookbook/self-correcting-3d)
 - **The full endpoint reference** → [3D API docs](/docs/3d-api)

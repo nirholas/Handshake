@@ -243,6 +243,7 @@ Statuses are `open`, `paused`, `closing`, `closed`. Terms changes are recorded i
 
 Event types: `open`, `deposit`, `redeem`, `trade`, `fee`, `fee_claim`, `drawdown_halt`, `pause`, `resume`, `terms`, `close`, `nav`. Filter with `type=`, page with `limit=` (1 to 100, default 50) and `before=<next_cursor>`.
 
+<!-- runnable: no the vault id is illustrative; substitute one from GET /api/vaults -->
 ```bash
 curl -s "https://three.ws/api/vaults/ledger?vault_id=8b1c04f6-59a8-4d0e-a1b7-3f5c9e2d7a44&type=trade&limit=20"
 ```

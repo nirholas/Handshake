@@ -66,6 +66,7 @@ them.
 
 4. **Poll for free** until the GLB is ready:
 
+   <!-- runnable: no the job id is illustrative; use the one the submit call returned -->
    ```bash
    curl 'https://three.ws/api/forge?job=abcd1234efgh5678ij'
    # → { "status": "done", "glb_url": "https://.../model.glb", ... }

@@ -58,6 +58,7 @@ Before the launch dialog opens, decide three things and verify them.
 
 **Symbol availability check.** Pump.fun does not enforce ticker uniqueness, but the three.ws agent registry warns when a ticker is already used by another listed agent. Hit the platform's symbol-availability endpoint from your terminal:
 
+<!-- runnable: 402 an unpaid call answers with the x402 challenge, which is the expected first response -->
 ```bash
 curl 'https://three.ws/api/x402/symbol-availability?symbol=ATLAS' \
   -H 'accept: application/json'
@@ -208,11 +209,8 @@ Click your token. The detail panel shows:
 
 The ribbon is rendered from a public endpoint, so you can check the same list without opening the page. Press Run and this tutorial calls it against the live site:
 
-```try
-GET /api/pump/launches?limit=5
-title: Coins launched through three.ws
-note: Public and unauthenticated. Every entry carries the mint plus the agent that launched it.
-pick: data.launches[0].mint
+```live
+{ "step": "pump-launches" }
 ```
 
 Copy the mint out of that response and paste it into a Solana explorer to confirm it on-chain. If your token is missing here but visible on Pump.fun, the bonding step (Step 7) did not complete.

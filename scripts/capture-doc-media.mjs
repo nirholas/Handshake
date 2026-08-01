@@ -28,18 +28,22 @@
  * line the reader can click.
  *
  * ── Usage ────────────────────────────────────────────────────────────────────
- *   node scripts/capture-doc-media.mjs                  # every shot, against localhost:3000
+ *   node scripts/capture-doc-media.mjs                  # every shot, against https://three.ws
  *   node scripts/capture-doc-media.mjs --only forge-prompt,walk-hero
- *   node scripts/capture-doc-media.mjs --base https://three.ws
+ *   node scripts/capture-doc-media.mjs --base http://localhost:3000
  *   node scripts/capture-doc-media.mjs --list           # print the shot table, capture nothing
  *   node scripts/capture-doc-media.mjs --concurrency 2  # default 2; 3D routes are GPU-less and heavy
  *
- * Target defaults to http://localhost:3000 (`npm run dev`) so a capture reflects
- * the working tree rather than whatever is deployed. Pass --base to shoot prod.
+ * Target defaults to the live site, because that is the build a reader is
+ * looking at when they compare a figure against the product. Pass
+ * `--base http://localhost:3000` to shoot the working tree instead (worth doing
+ * before shipping a UI change that a figure documents).
  *
  * Headless Chromium renders WebGL through ANGLE/SwiftShader, which is slower
  * than a GPU but faithful; `settle` per shot is the knob when a 3D route needs
- * longer to finish loading its rig.
+ * longer to finish loading its rig. On those routes the compositor can also be
+ * too busy to satisfy Playwright's screenshot within its timeout, so `shoot()`
+ * falls back to a direct CDP capture that never waits for a stable frame.
  */
 import { chromium } from 'playwright';
 import { execFile, execFileSync } from 'node:child_process';
@@ -65,7 +69,7 @@ const opt = (name, fallback) => {
 	return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
 };
 
-const BASE = (opt('base', process.env.BASE_URL || 'http://localhost:3000')).replace(/\/$/, '');
+const BASE = opt('base', process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '');
 const CONCURRENCY = Math.max(1, Number(opt('concurrency', 2)) || 2);
 const ONLY = (opt('only', '') || '')
 	.split(',')
@@ -160,6 +164,19 @@ async function applyActions(page, actions = []) {
 			case 'wait':
 				await page.waitForTimeout(action.ms || 500);
 				break;
+			// Site chrome that legitimately belongs on a live page: the corner
+			// companion, the onboarding checklist, a "have you tried" promo: sits
+			// on top of whatever a doc figure is trying to show. Hiding it is not
+			// staging the product; it is framing the subject, the same way a crop
+			// is. Anything hidden here is named in the recipe, so a reader can see
+			// exactly what was taken out of frame.
+			case 'hide':
+				await page.evaluate((selectors) => {
+					for (const sel of selectors) {
+						for (const node of document.querySelectorAll(sel)) node.style.display = 'none';
+					}
+				}, Array.isArray(action.selectors) ? action.selectors : [action.selector]);
+				break;
 			default:
 				fail(`unknown action type "${action.type}"`);
 		}
@@ -174,11 +191,18 @@ async function preparePage(page, shot) {
 		/* long-poll and 3D routes may never idle; the settle below covers them */
 	});
 	await page.evaluate(() => document.fonts?.ready).catch(() => {});
-	// Dismiss anything that would sit on top of the subject in a first visit.
+	// Site chrome that follows the visitor across every route and parks itself
+	// over the bottom-right of the viewport: the corner companion stack (the
+	// "have you tried…" promo and the getting-started pill) and consent banners.
+	// It is real UI, but it is never the subject of a doc figure, and leaving it
+	// in means every screenshot on the site carries the same two floating cards
+	// over whatever the reader was told to look at. Framing it out is a crop,
+	// not a fabrication: nothing about the documented surface changes.
 	await page
 		.evaluate(() => {
-			for (const sel of ['#cookie-banner', '.cookie-banner', '[data-consent-banner]']) {
-				document.querySelector(sel)?.remove();
+			const chrome = ['#tws-corner-stack', '#cookie-banner', '.cookie-banner', '[data-consent-banner]'];
+			for (const selector of chrome) {
+				for (const node of document.querySelectorAll(selector)) node.remove();
 			}
 		})
 		.catch(() => {});
@@ -193,6 +217,46 @@ async function subjectOf(page, shot) {
 	await handle.scrollIntoViewIfNeeded();
 	await page.waitForTimeout(250);
 	return handle;
+}
+
+/**
+ * Take one PNG of `subject`.
+ *
+ * Playwright's screenshot waits for the compositor to produce a stable frame.
+ * On a route running a continuous WebGL render loop through SwiftShader that
+ * can never happen inside the timeout, and the capture dies on a page that is
+ * in fact rendering perfectly. So: try the normal path (it produces the better
+ * result, element-clipped and correctly scaled), and when it times out fall
+ * back to a raw CDP capture, which grabs whatever is on screen right now. The
+ * clip rectangle is recomputed from the element box so a cropped shot stays
+ * cropped.
+ */
+async function shoot(page, subject, { fullPage = false, timeout = 20000 } = {}) {
+	const isElement = subject !== page;
+	try {
+		return await subject.screenshot({
+			type: 'png',
+			timeout,
+			...(isElement ? {} : { fullPage }),
+		});
+	} catch (err) {
+		if (!/timeout/i.test(String(err?.message))) throw err;
+		const session = await page.context().newCDPSession(page);
+		try {
+			const box = isElement ? await subject.boundingBox() : null;
+			const scale = await page.evaluate(() => window.devicePixelRatio).catch(() => 1);
+			const { data } = await session.send('Page.captureScreenshot', {
+				format: 'png',
+				captureBeyondViewport: false,
+				...(box
+					? { clip: { x: box.x, y: box.y, width: box.width, height: box.height, scale } }
+					: {}),
+			});
+			return Buffer.from(data, 'base64');
+		} finally {
+			await session.detach().catch(() => {});
+		}
+	}
 }
 
 /** PNG buffer from Chromium → optimised WebP on disk. Returns the written metadata. */
@@ -224,7 +288,10 @@ async function writeMotion(page, shot, subject, outPath) {
 		const interval = 1000 / fps;
 		for (let i = 0; i < frameCount; i++) {
 			const started = Date.now();
-			const buffer = await subject.screenshot({ type: 'png', animations: 'allow' });
+			// Short per-frame timeout on purpose: a frame that cannot be taken
+			// promptly must fall through to the CDP grab, otherwise one slow
+			// frame stalls the whole cadence and the loop plays back uneven.
+			const buffer = await shoot(page, subject, { timeout: 8000 });
 			writeFileSync(path.join(frameDir, `f${String(i).padStart(4, '0')}.png`), buffer);
 			const elapsed = Date.now() - started;
 			if (elapsed < interval) await page.waitForTimeout(interval - elapsed);
@@ -286,24 +353,24 @@ async function captureShot(browser, shot, commit) {
 	}, shot.theme === 'light' ? 'light' : 'dark');
 
 	const page = await context.newPage();
-	const ext = shot.motion ? 'webp' : 'webp';
-	const outPath = path.join(OUT_DIR, `${shot.id}.${ext}`);
+	// Stills and loops both ship as WebP: a UI screenshot at quality 90 is
+	// visually lossless at a fraction of PNG's bytes, and an animated WebP is
+	// the only looping format that stays an ordinary <img> on every browser
+	// the site supports.
+	const outPath = path.join(OUT_DIR, `${shot.id}.webp`);
 	try {
 		await preparePage(page, shot);
 		const subject = await subjectOf(page, shot);
 		const written = shot.motion
 			? await writeMotion(page, shot, subject, outPath)
 			: await writeStill(
-					await subject.screenshot({
-						type: 'png',
-						...(subject === page ? { fullPage: Boolean(shot.fullPage) } : {}),
-					}),
+					await shoot(page, subject, { fullPage: Boolean(shot.fullPage), timeout: 25000 }),
 					outPath,
 				);
 		const sha256 = createHash('sha256').update(readFileSync(outPath)).digest('hex');
 		return {
 			id: shot.id,
-			src: `/docs/img/${shot.id}.${ext}`,
+			src: `/docs/img/${shot.id}.webp`,
 			alt: shot.alt,
 			caption: shot.caption || null,
 			route: shot.url,
@@ -395,6 +462,8 @@ async function main() {
 	const specIds = new Set(readSpec().map((s) => s.id));
 	for (const id of Object.keys(merged)) if (!specIds.has(id)) delete merged[id];
 
+	// Manifest alt text echoes doc copy, and the repo bans em/en dashes in
+	// committed bytes, so scrub them at the boundary.
 	writeFileSync(
 		MANIFEST_FILE,
 		`${JSON.stringify(
@@ -405,7 +474,7 @@ async function main() {
 			},
 			null,
 			'\t',
-		)}\n`,
+		).replace(/ [\u2013\u2014] /g, ': ').replace(/[\u2013\u2014]/g, '-')}\n`,
 	);
 
 	console.log(

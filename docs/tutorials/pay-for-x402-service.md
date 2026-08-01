@@ -82,6 +82,7 @@ What you signed is exactly what the challenge declared — the modal never inven
 
 To understand what the modal is doing, hit a paid endpoint by hand. Any x402 endpoint answers an unpaid request with a 402:
 
+<!-- runnable: 402 the unpaid 402 challenge is the whole lesson here -->
 ```bash
 curl -i https://three.ws/api/x402/model-check
 ```

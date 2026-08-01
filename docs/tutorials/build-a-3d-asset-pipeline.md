@@ -16,6 +16,14 @@ key to store.
 Every stage uses a file from the [Cookbook](/cookbook). Download them into one
 working directory as you go.
 
+**Want to see it before you build it?** The
+[Pipeline Studio](/cookbook/pipeline) runs all four stages in a browser tab, on
+the same free API, with no install at all. It is the fastest way to understand
+what you are about to write, and it hands you the exact commands below when it
+finishes.
+
+![The Pipeline Studio after a real three-model run: prompts and a budget on the left, every model rendered and graded on the right](figure:img:/cookbook/media/pipeline-studio-run.png)
+
 ---
 
 ## Stage 1: one model, from the command line
@@ -35,7 +43,9 @@ saved 1651 KB to a-wooden-treasure-chest-with-iron-bands.glb
 ```
 
 Open the viewer URL to look at it, or the AR URL on a phone to stand it on your
-desk.
+desk. This is the model that command produced:
+
+![The treasure chest built by this exact command, rendered through the platform renderer](figure:img:/cookbook/posters/text-to-3d-cli.png)
 
 **What to learn here:** the API answers in two shapes, not one. It returns the
 finished model inline when the draft is quick, and a job handle when the shared
@@ -80,6 +90,8 @@ open garden-pack/index.html
 101 seconds instead of 268. Open `garden-pack/index.html` and you have an
 interactive gallery you can send to someone.
 
+![One of the three garden props, generated in the same parallel run](figure:img:/cookbook/posters/parallel-asset-pack.png)
+
 **What to learn here:** concurrency is deliberately low, at three. The free lane
 is a shared GPU pool, so twenty simultaneous jobs do not finish faster, they
 queue behind each other and burn poll requests. Details, plus the failure-handling
@@ -112,7 +124,11 @@ FAIL  a-woven-wicker-basket.glb                     147,617 tris     2.8 MB   0 
       fail: 147,617 triangles exceeds the budget of 100,000
 ```
 
-Exit code 1. In CI, that fails the build.
+Exit code 1. In CI, that fails the build. The basket is the one that busted the
+budget, and it does not look like a problem, which is the entire point of gating
+on numbers rather than on a glance:
+
+![The wicker basket that failed the gate at 147,617 triangles](figure:img:/cookbook/posters/asset-quality-gate.png)
 
 **What to learn here:** the difference between a failure and an advisory. The
 basket busting the triangle budget is a failure, because it will visibly hurt a

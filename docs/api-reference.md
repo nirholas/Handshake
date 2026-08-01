@@ -1787,6 +1787,7 @@ of the gateway's own per-IP budget, so one caller can't drain the shared key.
 | `category`  | string | Filter by category. Optional.               |
 | `chain`     | string | Filter by chain. Optional.                  |
 
+<!-- runnable: no needs a valid upstream aixbt key on the deployment -->
 ```bash
 curl -s 'https://three.ws/api/v1/market/intel?limit=5'
 ```
@@ -1810,6 +1811,7 @@ Same access model as `/market/intel`. Backed by aixbt's `/projects` feed.
 | `names`     | string | Comma-separated project names to filter. Optional |
 | `chain`     | string | Filter by chain. Optional.                        |
 
+<!-- runnable: no needs a valid upstream aixbt key on the deployment -->
 ```bash
 curl -s 'https://three.ws/api/v1/market/projects?limit=5&chain=solana'
 ```

@@ -71,6 +71,55 @@ the hint deliberately stays quiet for it (`findComparablePrompts` in
 [src/forge-compare.js](../src/forge-compare.js), covered by
 [tests/forge-compare.test.js](../tests/forge-compare.test.js)).
 
+### Reel: video and stills, rendered in your browser
+
+A GLB is the wrong thing to send someone who just wants to see what you made.
+The **Reel** button on the result bar (or the `R` key) renders a cinematic pass
+over the finished model and hands back three real files:
+
+| File | What it is | Where it goes |
+| --- | --- | --- |
+| `<name>-<shot>-reel.mp4` | The video, 30fps, MP4 where the browser can encode it and WebM otherwise | Slides, posts, a landing page `<video>` |
+| `<name>-<shot>-hero.png` | The shot's hero frame on the reel backdrop | Thumbnails, link previews |
+| `<name>-<shot>-cutout.png` | The same frame with a transparent background | Dropping the model onto any design |
+
+Three shots ship. **Turntable** is one clean revolution whose last frame lands
+exactly on its first, so it loops without a jump. **Hero push** opens wide and
+dollies into a three-quarter hero angle. **Low reveal** rises from below the
+horizon. Aspect is 16:9, 1:1 or 9:16, and length is 4, 8 or 12 seconds.
+
+Everything runs client side. Nothing is uploaded, no job is queued, and no
+server renders anything, so a reel costs nothing and works while you are signed
+out.
+
+Two implementation choices are worth knowing because they are what make the
+output trustworthy:
+
+- **Reel renders its own pass rather than recording the page's viewer.**
+  `<model-viewer>` runs a single shared WebGL canvas across every viewer on a
+  page and moves it between shadow roots as visibility changes, so a canvas
+  stream taken from it can carry zero frames while still reporting a clean
+  recording. Owning the canvas also means the output is exactly the resolution
+  you picked instead of your window size times your display's pixel ratio. The
+  lighting is not a reimplementation: tone mapping, the HDRI environment and the
+  ground contact shadow all come from
+  [src/shared/cinematic-render.js](../src/shared/cinematic-render.js), the same
+  module behind [/irl](https://three.ws/irl) and the avatar viewers.
+- **The shot is paced to a fixed timestep.** Frames are rendered one at a time
+  and pushed to the encoder on a wall-clock schedule, so a slow laptop produces
+  the same 4-second reel as a fast desktop rather than a shorter, jerkier one.
+
+Camera tracks are expressed in multiples of the model's own framed distance, so
+a ring and a cathedral get the same shot rather than the same numbers, and the
+framing distance accounts for the aspect: a 9:16 frame is limited by its
+horizontal field of view, and ignoring that is exactly how a vertical reel crops
+the subject's head off. The sampler, the framing maths, the codec preference and
+the filenames live in [src/forge-reel.js](../src/forge-reel.js) and are covered
+by [tests/forge-reel.test.js](../tests/forge-reel.test.js).
+
+If a browser has no canvas video encoder, Reel says so and still produces both
+stills; it never reports a recording that did not happen.
+
 ## Walkthrough
 
 1. Open [/forge](https://three.ws/forge). No login, no wallet, no key required.
@@ -78,7 +127,7 @@ the hint deliberately stays quiet for it (`findComparablePrompts` in
 3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to four images of the same object from different angles; each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
 5. Click Generate. A real elapsed-driven progress line runs against the catalog's ETA estimate for the chosen path, tier, and engine.
-6. When the model lands, orbit it in the viewer, view it in AR, download the GLB, or run the post-generation tools (stylize, optimize, Game-Ready retopology, split).
+6. When the model lands, orbit it in the viewer, view it in AR, download the GLB, or run the post-generation tools (stylize, optimize, Game-Ready retopology, split). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
 7. Keep going on the same result: **Rig for animation** adds a humanoid skeleton (POST `/api/forge?action=rig`) and hands off to Pose Studio or IRL placement; **Restyle materials** re-skins the surface with a free-text instruction or a preset chip (chrome, wood, gold, neon, marble, rust) via `/api/material-studio`, keeping the mesh untouched; **Iterate** makes a shape-changing edit from a plain-language instruction ("make the helmet red", "add a backpack") via `/api/forge-iterate` — the same conversational core the `refine_model` MCP tool uses — and keeps every version in a branchable lineage strip; **Place IRL** opens `/irl?avatar=<glb_url>` to anchor the model in AR at a real-world location.
 
 ## Examples

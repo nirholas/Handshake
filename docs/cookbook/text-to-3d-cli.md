@@ -14,6 +14,8 @@ prompt: a wooden treasure chest with iron bands
 saved 1651 KB to a-wooden-treasure-chest-with-iron-bands.glb
 ```
 
+![The treasure chest that command produced, rendered by the platform renderer](figure:img:/cookbook/posters/text-to-3d-cli.png)
+
 That is the whole recipe. No API key, no account, no `pip install`. The file is
 about 160 lines of standard-library Python, and roughly a third of it is there
 to handle the two things that actually go wrong in production.
