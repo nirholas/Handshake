@@ -25,9 +25,10 @@
  *   • Both parties are painted (they have a background, border, shadow, or a
  *     canvas/img/video/svg inside). A transparent positioning wrapper hides
  *     nothing and is not a finding.
- *   • At least one party is interactive (focusable, or contains something
- *     focusable that can receive pointer events). Two decorative layers
- *     overlapping is a design choice.
+ *   • The party UNDERNEATH is interactive or carries text: something a visitor
+ *     could have clicked or read, and now cannot. A decorative layer losing
+ *     pixels is not a defect: the Walk Companion is drawn over its own
+ *     footprint-trail canvas on purpose.
  *   • The overlap clears both thresholds: --min-area px² and --min-ratio of the
  *     SMALLER party's area. Ratio alone flags hairline seams on huge bars;
  *     area alone flags a 1% clip of two full-width rails.
@@ -240,6 +241,7 @@ function collectOverlays() {
 		zIndex: c.cs.zIndex === 'auto' ? null : Number(c.cs.zIndex),
 		pointerEvents: c.cs.pointerEvents,
 		interactive: interactive(c.el, c.cs),
+		hasText: (c.el.innerText || '').trim().length > 1,
 		box: c.box,
 		area: Math.round(c.area),
 		coverage: +(c.area / (vw * vh)).toFixed(3),
@@ -266,8 +268,6 @@ function findCollisions(overlays) {
 		for (let j = i + 1; j < widgets.length; j++) {
 			const a = widgets[i];
 			const b = widgets[j];
-			// Decorative-on-decorative is a design decision, not a defect.
-			if (!a.interactive && !b.interactive) continue;
 			// A dialog is meant to sit on everything while it is open.
 			if (a.isDialog || b.isDialog) continue;
 			if (a.ariaHidden && b.ariaHidden) continue;
@@ -280,11 +280,17 @@ function findCollisions(overlays) {
 			const az = a.zIndex ?? 0;
 			const bz = b.zIndex ?? 0;
 			const top = az === bz ? (a.index > b.index ? a : b) : az > bz ? a : b;
+			const under = top === a ? b : a;
+			// The defect is losing something you could have read or clicked. A
+			// decorative layer underneath loses nothing: the Walk Companion is
+			// deliberately drawn over its own footprint-trail canvas, and calling
+			// that a bug would train everyone to ignore this report.
+			if (!under.interactive && !under.hasText) continue;
 			out.push({
 				a: a.label,
 				b: b.label,
 				covering: top.label,
-				covered: (top === a ? b : a).label,
+				covered: under.label,
 				zIndexA: a.zIndex,
 				zIndexB: b.zIndex,
 				overlapPx: Math.round(hit.area),
@@ -333,14 +339,34 @@ async function auditRoute(browser, route, viewport) {
 	const page = await ctx.newPage();
 	const result = { route, viewport: viewport.id, collisions: [], scrims: [], error: null };
 	try {
-		const res = await page.goto(BASE + route, {
-			waitUntil: 'domcontentloaded',
-			timeout: 45000,
-		});
+		// One retry: a dev server restarting mid-sweep (or a cold serverless
+		// route) refuses a single connection, and an audit that reports that as
+		// a finding is worse than useless.
+		let res = null;
+		for (let attempt = 0; attempt < 2; attempt++) {
+			try {
+				res = await page.goto(BASE + route, { waitUntil: 'domcontentloaded', timeout: 45000 });
+				break;
+			} catch (err) {
+				if (attempt === 1) throw err;
+				await page.waitForTimeout(4000);
+			}
+		}
 		if (res && res.status() >= 400) {
 			result.error = `HTTP ${res.status()}`;
 			await ctx.close();
 			return result;
+		}
+		// The companion is a lazily-injected Three.js module; on an unbundled dev
+		// server it can take ten seconds to appear. Waiting for it (rather than
+		// guessing a settle) is the difference between auditing the widget-heavy
+		// page a visitor sees and auditing a page with the widgets still absent.
+		if (WITH_WIDGETS) {
+			await page
+				.waitForSelector('.walk-companion.is-in', { timeout: 20000 })
+				.catch(() => {
+					/* excluded route, no WebGL, or the visitor already dismissed it */
+				});
 		}
 		await page.waitForTimeout(SETTLE_MS);
 		const overlays = await page.evaluate(collectOverlays);
@@ -569,7 +595,9 @@ async function main() {
 			`\n${collisions} collision(s) across ${results.length} renders. Report: reports/overlays/index.html`,
 		);
 	}
-	process.exit(collisions > 0 ? 1 : 0);
+	// A route that would not render is not a pass. Silently exiting 0 on a dead
+	// dev server is how an audit starts lying about coverage.
+	process.exit(collisions > 0 || errored.length > 0 ? 1 : 0);
 }
 
 main().catch((err) => {
