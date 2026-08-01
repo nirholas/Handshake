@@ -203,6 +203,9 @@ describe('recipe prose', () => {
 
 	it('links only to recipes that exist', () => {
 		const known = new Set(recipes.map((r) => `/cookbook/${r.slug}`));
+		// The one cookbook route that is not a recipe: the Pipeline Studio
+		// (vercel.json routes /cookbook/pipeline to pipeline-studio.html).
+		known.add('/cookbook/pipeline');
 		for (const recipe of markdownRecipes) {
 			const markdown = read(`docs/cookbook/${recipe.slug}.md`);
 			for (const [, href] of markdown.matchAll(/\]\((\/cookbook\/[a-z0-9-]+)\)/g)) {

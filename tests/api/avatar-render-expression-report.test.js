@@ -67,7 +67,7 @@ describe('applyExpression report', () => {
 describe('render page wiring', () => {
 	it('injects applyExpression verbatim and publishes __expressionReport', () => {
 		const html = sceneViewerHtml({
-			glbUrl: 'https://cdn.three.ws/a.glb',
+			glbUrl: 'https://three.ws/cdn/a.glb',
 			width: 64,
 			height: 64,
 			background: 'transparent',

@@ -137,7 +137,7 @@
 		{
 			"hint": "patience",
 			"slot": "patience",
-			"clip": "av-waiting",
+			"clip": "av-idle-anim",
 			"skills": [
 				"pumpfun-watch-stop"
 			]

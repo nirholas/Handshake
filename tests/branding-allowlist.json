@@ -473,5 +473,30 @@
 		"pattern": "Ready Player Me",
 		"file": "docs/tutorials/ship-an-avatar-manifest.md",
 		"reason": "Same rig-convention list: identifies an upstream skeleton whose bone names the retargeter recognizes, not a product recommendation."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, Ready Player Me, Unreal, VRM, Daz, Rigify, Biped,",
+		"file": "pages/rig-doctor.html",
+		"reason": "The rig doctor's whole job is naming which skeleton convention a GLB uses; this list enumerates the conventions the canonicalizer maps, as technical identifiers rather than product copy."
+	},
+	{
+		"pattern": "| Avaturn / three.ws canonical | joint names already match exactly | `avaturn` |",
+		"file": "docs/rig-doctor.md",
+		"reason": "Fingerprint table row documenting the detector's literal `avaturn` output value."
+	},
+	{
+		"pattern": "This is the Avaturn reference rig",
+		"file": "docs/rig-doctor.md",
+		"reason": "Documents which physical skeleton the clip library is authored against; renaming it would make the doc lie about the bone names it lists."
+	},
+	{
+		"pattern": "Ready Player Me is distinguished from plain Mixamo",
+		"file": "docs/rig-doctor.md",
+		"reason": "Documents the detector's ordering between two skeleton conventions, a technical identifier rather than product copy."
+	},
+	{
+		"pattern": "| Ready Player Me | `Wolf3D_*` mesh nodes over a Mixamo skeleton | `rpm` |",
+		"file": "docs/rig-doctor.md",
+		"reason": "Fingerprint table row documenting the detector's literal `rpm` output value."
 	}
 ]
