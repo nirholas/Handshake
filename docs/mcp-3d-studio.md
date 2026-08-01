@@ -42,6 +42,8 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `auto_rig_model(glb_url)`                                | Add a humanoid skeleton + per-vertex skin weights to a static GLB (VAST-AI UniRig). Returns a `job_id`; poll for the rigged GLB.     |
 | `list_animations(category?)`                             | The curated, retargetable animation-clip catalogue (names, categories, loop flags).                                                  |
+| `animation_signature(clip, slot?)`                       | A clip's measured motion: energy, tempo, leading region, loop seam, travel. Pass `slot` for an ok/warn fit verdict against a runtime slot. |
+| `find_similar_animations(clip, limit?)`                  | The library ranked by measured-motion distance from a reference clip: "more like this" for animations.                              |
 | `apply_animation(model_url, animation, format?, speed?)` | Retarget a preset clip onto a rigged GLB — returns the retargeted `AnimationClip` JSON (or a baked animated GLB).                    |
 | `pose_model(prompt)`                                     | Map a pose description to a deterministic seed + full Euler joint-rotation map from the in-repo preset library. Free, deterministic. |
 
@@ -168,7 +170,7 @@ For tool calls there are two lanes:
 | `auto_rig_model`, `retexture_model`, `retexture_region` | $0.05                       |
 | `stylize_model`, `remesh_model`, `segment_model`         | $0.02                       |
 | `remove_background`, `pose_model`, `apply_animation`, `direct_prompt`, `generate_material` | $0.01 |
-| `generation_status`, `preview_3d`, `list_animations`, `inspect_model`, `optimize_model`, `getting_started` | free |
+| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `inspect_model`, `optimize_model`, `getting_started` | free |
 
 Payment settles only after the work succeeds — a wholesale failure costs
 nothing, and the same signed payment cannot be replayed.

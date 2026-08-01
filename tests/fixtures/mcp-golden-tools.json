@@ -118,6 +118,19 @@
 	],
 	"api/_mcp/tools/animations.js": [
 		{
+			"name": "animation_signature",
+			"title": "Measure what an animation clip actually does",
+			"descHead": "The measured motion signature of a baked clip: energy, tempo, which body",
+			"descHash": "b6be349c0653",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "7bf0d491e1fc"
+		},
+		{
 			"name": "apply_animation",
 			"title": "Apply an animation preset to a rigged model",
 			"descHead": "Retarget a curated animation preset onto a caller-supplied rigged humano",
@@ -129,6 +142,19 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "ae2a6528b1ba"
+		},
+		{
+			"name": "find_similar_animations",
+			"title": "Find clips with similar measured motion",
+			"descHead": "Rank the library's clips by measured-motion distance from a reference cl",
+			"descHash": "4e1e1b4079fc",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "81f2be06fbe3"
 		},
 		{
 			"name": "list_animations",
