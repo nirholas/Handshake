@@ -13,6 +13,14 @@
 // agent can fetch https://three.ws/mcp-catalog.json to discover the whole
 // surface (name, description, input schema, price, safety) in one request.
 //
+// The input schema is the part that makes the catalog callable rather than
+// merely browsable, and it went missing for a long time: every tool shipped with
+// its description and price but no arguments, so a reader could see that
+// `text_to_3d` exists and still had no way to know what to send it.
+// scripts/lib/mcp-schema.mjs recovers it from source; `inputSchemaIsPartial`
+// marks the handful whose bounds are env-driven and therefore unknowable
+// offline, so a reader is never told a constraint that is not real.
+//
 // Everything is parsed statically with acorn. Project doctrine forbids importing
 // the hosted catalogs here: they pull in DB and RPC clients that block without
 // live credentials, which would make a docs build depend on production.
@@ -26,6 +34,7 @@ import { parse } from 'acorn';
 
 import { ROOT, mcpToolSources } from './lib/mcp-tool-sources.mjs';
 import { extractTools } from './lib/mcp-safety-check.mjs';
+import { extractInputSchemas } from './lib/mcp-schema.mjs';
 
 const OUT = join(ROOT, 'public', 'mcp-catalog.json');
 
@@ -272,6 +281,19 @@ function safetyClass({ readOnlyHint, destructiveHint }) {
 	return destructiveHint === true ? 'irreversible' : 'write';
 }
 
+/**
+ * One canonical shape for every argument list: always an object schema with a
+ * `properties` map, empty when the tool takes nothing. A tool whose schema could
+ * not be read statically gets null, never an empty object that would read as
+ * "confirmed: no arguments".
+ * @param {object|null|undefined} schema
+ */
+function normalizeSchema(schema) {
+	if (!schema) return null;
+	if (schema.type && schema.type !== 'object') return schema;
+	return { type: 'object', properties: {}, ...schema };
+}
+
 function build() {
 	const prices = collectPrices();
 	const tools = [];
@@ -280,10 +302,12 @@ function build() {
 		const { parseError, tools: found } = extractTools(relPath);
 		if (parseError) throw new Error(`${relPath}: ${parseError}`);
 		const server = serverFor(relPath);
+		const schemas = extractInputSchemas(relPath);
 
 		for (const tool of found) {
 			const hints = tool.annotations.values ?? {};
 			const price = prices.get(tool.name) ?? null;
+			const read = schemas.get(tool.name);
 			tools.push({
 				name: tool.name,
 				title: tool.title ?? null,
@@ -305,6 +329,13 @@ function build() {
 					free: !price,
 					...(price?.tiers ? { tiers: price.tiers } : {}),
 				},
+				// The arguments, as JSON Schema. Normalized so "takes no arguments"
+				// is one shape rather than three (`{}`, a bare `type: 'object'`, and
+				// a properties-less object all meant it), which is what lets a
+				// consumer build a form without special-casing each.
+				inputSchema: normalizeSchema(read?.schema),
+				...(read?.dynamic?.length ? { inputSchemaIsPartial: true } : {}),
+				...(read && !read.schema ? { inputSchemaIsDynamic: true, inputSchemaNote: read.reason } : {}),
 				source: relPath,
 			});
 		}
@@ -330,6 +361,10 @@ function build() {
 			read: tools.filter((t) => t.safety === 'read').length,
 			write: tools.filter((t) => t.safety === 'write').length,
 			irreversible: tools.filter((t) => t.safety === 'irreversible').length,
+			// Schema coverage, so a drop is visible in the diff rather than only in
+			// whichever tool page stopped rendering its arguments.
+			withSchema: tools.filter((t) => t.inputSchema).length,
+			withArguments: tools.filter((t) => Object.keys(t.inputSchema?.properties || {}).length).length,
 		},
 		servers: [...byServer.values()].sort((a, b) => a.id.localeCompare(b.id)),
 		tools,

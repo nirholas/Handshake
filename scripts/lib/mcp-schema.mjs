@@ -26,7 +26,7 @@
 // tool's arguments is worse than one that says it does not know.
 
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, normalize } from 'node:path';
 import { parse } from 'acorn';
 
 import { ROOT } from './mcp-tool-sources.mjs';
@@ -58,12 +58,63 @@ function unwrapFreeze(node) {
 }
 
 /** Every `const x = …` in the module, by name. */
-function collectConsts(ast) {
+function collectLocalConsts(ast) {
 	const out = new Map();
 	walk(ast, (node) => {
 		if (node.type !== 'VariableDeclarator' || node.id?.type !== 'Identifier') return;
 		if (node.init) out.set(node.id.name, unwrapFreeze(node.init));
 	});
+	return out;
+}
+
+const moduleCache = new Map();
+
+/** Parsed consts of a repo-relative module, or null when it cannot be read. */
+function localConstsOf(relPath) {
+	if (moduleCache.has(relPath)) return moduleCache.get(relPath);
+	let consts = null;
+	try {
+		const ast = parse(readFileSync(join(ROOT, relPath), 'utf8'), {
+			ecmaVersion: 'latest',
+			sourceType: 'module',
+		});
+		consts = collectLocalConsts(ast);
+	} catch {
+		consts = null; // missing or unparseable: nothing to inherit
+	}
+	moduleCache.set(relPath, consts);
+	return consts;
+}
+
+/**
+ * Every const a tool file can see by name: its own, plus one level of
+ * relative imports.
+ *
+ * Schema bounds and enum member lists are routinely hoisted into a shared
+ * module (`maximum: TOKENIZE_3D_ROYALTY_CAP_BPS`, `z.enum(ACCEPTED_IMAGE_TYPES)`),
+ * and a reader that stopped at the file boundary dropped exactly those
+ * constraints. One level is enough for every case in this repo and keeps the
+ * read bounded; a bare package specifier is never followed.
+ */
+function collectConsts(ast, relPath) {
+	const out = collectLocalConsts(ast);
+	const dir = dirname(relPath);
+
+	for (const node of ast.body) {
+		if (node.type !== 'ImportDeclaration') continue;
+		const spec = node.source?.value;
+		if (typeof spec !== 'string' || !spec.startsWith('.')) continue;
+		const imported = localConstsOf(normalize(join(dir, spec)));
+		if (!imported) continue;
+		for (const s of node.specifiers) {
+			if (s.type !== 'ImportSpecifier') continue;
+			const local = s.local.name;
+			// A local declaration always wins over an import of the same name.
+			if (out.has(local)) continue;
+			const value = imported.get(s.imported.name ?? s.imported.value);
+			if (value) out.set(local, value);
+		}
+	}
 	return out;
 }
 
@@ -104,9 +155,13 @@ function jsonValue(node, ctx, path) {
 			if (node.operator !== '+') break;
 			const left = jsonValue(node.left, ctx, path);
 			const right = jsonValue(node.right, ctx, path);
-			if (left === undefined || right === undefined) return undefined;
+			if (left === undefined && right === undefined) return undefined;
 			if (typeof left === 'number' && typeof right === 'number') return left + right;
-			return `${left}${right}`;
+			// One side is an env-driven or computed value (`'cap: $' + CAPS.max`).
+			// Mark the hole the way a template literal's is marked rather than
+			// dropping a whole sentence of documentation over one number.
+			const text = (side) => (side === undefined ? '${…}' : String(side));
+			return `${text(left)}${text(right)}`;
 		}
 
 		case 'UnaryExpression': {
@@ -118,19 +173,23 @@ function jsonValue(node, ctx, path) {
 		}
 
 		case 'ArrayExpression': {
+			// All or nothing. A truncated array is a lie in every position a schema
+			// puts one: a short `enum` rejects values the tool accepts, and a short
+			// `required` tells a caller an argument is optional when it is not.
 			const out = [];
-			node.elements.forEach((element, i) => {
-				if (!element) return; // a hole
+			for (let i = 0; i < node.elements.length; i++) {
+				const element = node.elements[i];
+				if (!element) continue; // a hole
 				if (element.type === 'SpreadElement') {
 					const spread = jsonValue(element.argument, ctx, `${path}[${i}]`);
-					if (Array.isArray(spread)) out.push(...spread);
-					else ctx.dynamic.push(`${path}[${i}]`);
-					return;
+					if (!Array.isArray(spread)) return undefined;
+					out.push(...spread);
+					continue;
 				}
 				const value = jsonValue(element, ctx, `${path}[${i}]`);
-				if (value === undefined) ctx.dynamic.push(`${path}[${i}]`);
-				else out.push(value);
-			});
+				if (value === undefined) return undefined;
+				out.push(value);
+			}
 			return out;
 		}
 
@@ -186,6 +245,22 @@ function jsonValue(node, ctx, path) {
 			return object[node.property?.name];
 		}
 
+		case 'CallExpression': {
+			// `Object.keys(SOME_CONST)` is how several enums are declared, and the
+			// const it reads is right here in the module.
+			const callee = node.callee;
+			if (
+				callee?.type === 'MemberExpression' &&
+				callee.object?.name === 'Object' &&
+				callee.property?.name === 'keys' &&
+				node.arguments.length === 1
+			) {
+				const source = jsonValue(node.arguments[0], ctx, path);
+				if (source && typeof source === 'object' && !Array.isArray(source)) return Object.keys(source);
+			}
+			break;
+		}
+
 		default:
 			break;
 	}
@@ -194,11 +269,44 @@ function jsonValue(node, ctx, path) {
 
 /* ── zod shapes ──────────────────────────────────────────────────────────── */
 
-// The zod vocabulary these tool files actually use. Anything outside it makes
-// the whole schema dynamic rather than a partially-invented one: an argument
-// list that is subtly wrong costs an integrator more than one that is absent.
-const ZOD_BASES = new Set(['string', 'number', 'boolean', 'array', 'object', 'enum', 'literal']);
-const ZOD_MODIFIERS = new Set(['min', 'max', 'int', 'optional', 'describe', 'default', 'nullable']);
+// The zod vocabulary these tool files actually use, surveyed across every
+// source in mcpToolSources(). Anything outside it makes the whole schema
+// dynamic rather than a partially-invented one: an argument list that is subtly
+// wrong costs an integrator more than one that is absent.
+const ZOD_BASES = new Set([
+	'string',
+	'number',
+	'boolean',
+	'array',
+	'object',
+	'enum',
+	'literal',
+	'record',
+	'union',
+	'any',
+]);
+const ZOD_MODIFIERS = new Set([
+	'min',
+	'max',
+	'gt',
+	'int',
+	'positive',
+	'nonnegative',
+	'optional',
+	'nullable',
+	'describe',
+	'default',
+	'catch',
+	'trim',
+	'refine',
+	'partial',
+	'strict',
+	'url',
+	'uuid',
+	'email',
+	'regex',
+	'nonempty',
+]);
 
 /**
  * Unwind a chained zod expression into its base call plus the modifiers applied
@@ -206,9 +314,11 @@ const ZOD_MODIFIERS = new Set(['min', 'max', 'int', 'optional', 'describe', 'def
  * `{ base: z.string() call, chain: [min, optional] }`.
  * @returns {{base: object, chain: {name: string, args: object[]}[]}|null}
  */
-function unwindZodChain(node) {
+function unwindZodChain(node, consts) {
 	const chain = [];
-	let cursor = node;
+	// A field is as often hoisted to a const as written inline
+	// (`inputSchema: { subscription }`), so follow the name before giving up.
+	let cursor = node?.type === 'Identifier' && consts?.has(node.name) ? consts.get(node.name) : node;
 	while (cursor?.type === 'CallExpression' && cursor.callee?.type === 'MemberExpression' && !cursor.callee.computed) {
 		const name = cursor.callee.property?.name;
 		const receiver = cursor.callee.object;
@@ -230,7 +340,7 @@ function unwindZodChain(node) {
  * @returns {{schema: object, required: boolean}|null} null when unreadable
  */
 function zodField(node, ctx, path) {
-	const unwound = unwindZodChain(node);
+	const unwound = unwindZodChain(node, ctx.consts);
 	if (!unwound) return null;
 	const { base, chain } = unwound;
 
@@ -261,8 +371,15 @@ function zodField(node, ctx, path) {
 		}
 		case 'enum': {
 			const values = jsonValue(base.args[0], ctx, `${path}.enum`);
-			if (!Array.isArray(values) || !values.every((v) => typeof v === 'string')) return null;
-			schema = { type: 'string', enum: values };
+			if (Array.isArray(values) && values.every((v) => typeof v === 'string')) {
+				schema = { type: 'string', enum: values };
+			} else {
+				// The member list lives behind an import or a computed expression. The
+				// argument itself is still real and still a string; keeping it without
+				// the enum beats dropping a documented argument over a missing list.
+				ctx.dynamic.push(`${path}.enum`);
+				schema = { type: 'string' };
+			}
 			break;
 		}
 		case 'literal': {
@@ -271,6 +388,35 @@ function zodField(node, ctx, path) {
 			schema = { type: typeof value === 'number' ? 'number' : typeof value, const: value };
 			break;
 		}
+		case 'record': {
+			// z.record(value) and z.record(key, value) both constrain the values.
+			const valueNode = base.args.length > 1 ? base.args[1] : base.args[0];
+			if (!valueNode) {
+				schema = { type: 'object' };
+				break;
+			}
+			const values = zodField(valueNode, ctx, `${path}.*`);
+			if (!values) return null;
+			schema = { type: 'object', additionalProperties: values.schema };
+			break;
+		}
+		case 'union': {
+			const members = base.args[0];
+			if (members?.type !== 'ArrayExpression') return null;
+			const built = [];
+			for (const member of members.elements) {
+				const field = member ? zodField(member, ctx, `${path}|`) : null;
+				if (!field) return null;
+				built.push(field.schema);
+			}
+			schema = { anyOf: built };
+			break;
+		}
+		case 'any':
+			// No constraint at all. An empty schema is what that means in JSON
+			// Schema, and it is the honest answer rather than inventing a type.
+			schema = {};
+			break;
 		default:
 			return null;
 	}
@@ -281,12 +427,61 @@ function zodField(node, ctx, path) {
 	for (const step of chain) {
 		switch (step.name) {
 			case 'optional':
-			case 'nullable':
 				required = false;
+				break;
+			case 'nullable':
+				// A nullable field still has to be sent; it may just be null. Widening
+				// the type says exactly that, where treating it as optional would tell
+				// an integrator they can omit a required argument.
+				if (typeof schema.type === 'string') schema.type = [schema.type, 'null'];
+				else if (!schema.type) schema.anyOf = [{ ...schema }, { type: 'null' }];
 				break;
 			case 'int':
 				schema.type = 'integer';
 				break;
+			// Parse-time only: `.trim()` normalizes the value, `.catch()` swaps in a
+			// fallback on failure, `.refine()` runs a predicate. None of the three
+			// narrows the accepted shape, so none of them changes the schema.
+			case 'trim':
+			case 'catch':
+			case 'refine':
+				break;
+			case 'strict':
+				schema.additionalProperties = false;
+				break;
+			case 'partial':
+				delete schema.required;
+				break;
+			case 'positive':
+				schema.exclusiveMinimum = 0;
+				break;
+			case 'nonnegative':
+				schema.minimum = 0;
+				break;
+			case 'nonempty':
+				schema[base.name === 'array' ? 'minItems' : 'minLength'] = 1;
+				break;
+			case 'url':
+				schema.format = 'uri';
+				break;
+			case 'uuid':
+				schema.format = 'uuid';
+				break;
+			case 'email':
+				schema.format = 'email';
+				break;
+			case 'regex': {
+				// Inline literal, or a named const like `BASE58_RE` declared above.
+				let node = step.args[0];
+				if (node?.type === 'Identifier') node = ctx.consts.get(node.name) ?? node;
+				const source = node?.regex?.pattern;
+				if (typeof source !== 'string') {
+					ctx.dynamic.push(`${path}.pattern`);
+					break;
+				}
+				schema.pattern = source;
+				break;
+			}
 			case 'describe': {
 				const text = jsonValue(step.args[0], ctx, `${path}.description`);
 				if (typeof text !== 'string') return null;
@@ -300,14 +495,21 @@ function zodField(node, ctx, path) {
 				required = false;
 				break;
 			}
+			case 'gt': {
+				const bound = jsonValue(step.args[0], ctx, `${path}.gt`);
+				if (typeof bound !== 'number') return null;
+				schema.exclusiveMinimum = bound;
+				break;
+			}
 			case 'min':
 			case 'max': {
 				const bound = jsonValue(step.args[0], ctx, `${path}.${step.name}`);
 				if (typeof bound !== 'number') return null;
-				const key = {
-					string: step.name === 'min' ? 'minLength' : 'maxLength',
-					array: step.name === 'min' ? 'minItems' : 'maxItems',
-				}[base.name] ?? (step.name === 'min' ? 'minimum' : 'maximum');
+				const key =
+					{
+						string: step.name === 'min' ? 'minLength' : 'maxLength',
+						array: step.name === 'min' ? 'minItems' : 'maxItems',
+					}[base.name] ?? (step.name === 'min' ? 'minimum' : 'maximum');
 				schema[key] = bound;
 				break;
 			}
@@ -325,15 +527,29 @@ function zodField(node, ctx, path) {
 function zodShapeObject(node, ctx, path) {
 	const properties = {};
 	const required = [];
+	let readable = 0;
 	for (const prop of node.properties) {
-		if (prop.type !== 'Property' || prop.computed) return null;
+		if (prop.type !== 'Property' || prop.computed) {
+			ctx.dynamic.push(`${path}.…computed`);
+			continue;
+		}
 		const key = propKey(prop);
-		if (typeof key !== 'string') return null;
+		if (typeof key !== 'string') {
+			ctx.dynamic.push(`${path}.…computed`);
+			continue;
+		}
 		const field = zodField(prop.value, ctx, `${path}.${key}`);
-		if (!field) return null;
+		// One field built with a construct this reader does not model must not cost
+		// the caller the other six. Report it and keep going.
+		if (!field) {
+			ctx.dynamic.push(`${path}.${key}`);
+			continue;
+		}
+		readable++;
 		properties[key] = field.schema;
 		if (field.required) required.push(key);
 	}
+	if (node.properties.length && !readable) return null;
 	// `.strict()` on the outer object and zod's default strip on inner ones both
 	// render as `additionalProperties: false`.
 	const schema = { type: 'object', properties };
@@ -353,6 +569,7 @@ function zodShapeObject(node, ctx, path) {
  */
 export function materializeSchema(node, consts) {
 	const ctx = { consts, dynamic: [], seen: new Set() };
+	const unreadable = 'declared with a zod construct this reader does not model';
 
 	// `const inputJsonSchema = jsonSchemaFromZod(inputZodShape)` — follow the
 	// identifier to the call, then read the zod shape it was built from.
@@ -371,8 +588,12 @@ export function materializeSchema(node, consts) {
 				const schema = zodShapeObject(shape, ctx, 'inputSchema');
 				if (schema) return { schema, dynamic: [], reason: null };
 			}
-			return { schema: null, dynamic: [], reason: 'zod shape uses a construct this reader does not model' };
+			return { schema: null, dynamic: [], reason: unreadable };
 		}
+		// `parameters: z.object({ … })`: the tool-SDK style. Read the zod chain
+		// directly; a bare `z.object()` is already the whole argument schema.
+		const field = zodField(target, ctx, 'inputSchema');
+		if (field?.schema?.type === 'object') return { schema: field.schema, dynamic: [], reason: null };
 		return { schema: null, dynamic: [], reason: 'built by a call at import time' };
 	}
 
@@ -380,11 +601,39 @@ export function materializeSchema(node, consts) {
 		return { schema: null, dynamic: [], reason: 'not a statically-declared object' };
 	}
 
+	// Two object shapes are legal here and they are not interchangeable: a JSON
+	// Schema (`{ type: 'object', properties: { … } }`) and a raw zod shape
+	// (`{ field: z.string() }`, which the MCP SDK converts itself). Reading a raw
+	// shape with the JSON reader is what dropped the arguments of 33 tools: every
+	// value was a call expression it could not resolve, so every property was
+	// discarded and the tool shipped an empty `properties` object.
+	if (isRawZodShape(target, consts)) {
+		const schema = zodShapeObject(target, ctx, 'inputSchema');
+		if (schema) return { schema, dynamic: [], reason: null };
+		return { schema: null, dynamic: [], reason: unreadable };
+	}
+
 	const schema = jsonValue(target, ctx, 'inputSchema');
 	if (!schema || typeof schema !== 'object') {
 		return { schema: null, dynamic: ctx.dynamic, reason: 'did not resolve to an object' };
 	}
 	return { schema, dynamic: ctx.dynamic, reason: null };
+}
+
+/**
+ * True when an object literal is a zod raw shape rather than a JSON Schema.
+ * A JSON Schema always announces itself with `type` or `properties`; a raw
+ * shape's values are all zod chains.
+ */
+function isRawZodShape(node, consts) {
+	// Decided on the values, never the keys: a shape whose first field happens to
+	// be named `type` (`{ type: z.enum(['http','mcp']) }`) is still a zod shape,
+	// and a key-based test read six of those as JSON Schema and emitted them with
+	// no arguments at all. A JSON Schema literal can never hold a `z.…()` chain
+	// in a property position, so one is proof.
+	return node.properties.some(
+		(prop) => prop.type === 'Property' && !prop.computed && Boolean(unwindZodChain(prop.value, consts)),
+	);
 }
 
 /**
@@ -407,24 +656,34 @@ export function extractInputSchemas(relPath) {
 	} catch {
 		return new Map();
 	}
-	const consts = collectConsts(ast);
+	const consts = collectConsts(ast, relPath);
 	const out = new Map();
 
 	walk(ast, (node) => {
 		if (node.type !== 'ObjectExpression') return;
 		let name = null;
 		let schemaNode = null;
+		let parametersNode = null;
 		for (const prop of node.properties) {
 			if (prop.type !== 'Property' || prop.computed) continue;
 			const key = propKey(prop);
-			if (key === 'name' && prop.value.type === 'Literal' && typeof prop.value.value === 'string') {
-				name = prop.value.value;
+			if (key === 'name') {
+				// A wire name is as often `name: TOOL_NAME` as a literal; resolving it
+				// through the module's consts is what keeps @three-ws/tool-sdk tools
+				// (which always name themselves that way) from vanishing.
+				const value = jsonValue(prop.value, { consts, dynamic: [], seen: new Set() }, 'name');
+				if (typeof value === 'string') name = value;
 			} else if (key === 'inputSchema') {
 				schemaNode = prop.value;
+			} else if (key === 'parameters') {
+				// @three-ws/tool-sdk names the same field `parameters` and converts it
+				// to `inputSchema` when it emits MCP tools (defineTool → toMcpTools).
+				parametersNode = prop.value;
 			}
 		}
-		if (!name || !schemaNode || out.has(name)) return;
-		out.set(name, materializeSchema(schemaNode, consts));
+		const source = schemaNode ?? parametersNode;
+		if (!name || !source || out.has(name)) return;
+		out.set(name, materializeSchema(source, consts));
 	});
 
 	return out;
