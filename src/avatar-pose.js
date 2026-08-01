@@ -154,14 +154,17 @@ export class PoseStage {
 		const key = new DirectionalLight(0xfff1e0, 1.0);
 		key.position.set(2, 3, 2.4);
 		key.castShadow = true;
-		// A phone rendering a full-body figure does not need a desktop-grade map;
-		// halving it here is the cheapest way to keep the hero at 60fps on mobile.
-		const shadowRes = window.innerWidth < 700 ? 1024 : 2048;
+		// VSM runs a two-pass Gaussian over the shadow map every frame, so its
+		// cost is mapSize² × blurSamples, NOT canvas size. 2048/16 measured
+		// pathological on a software renderer (seconds per frame), which is what
+		// a GPU-less visitor falls back to. 1024/8 is 8x cheaper and, blurred
+		// over a single figure, visually indistinguishable. Phones halve again.
+		const shadowRes = window.innerWidth < 700 ? 512 : 1024;
 		key.shadow.mapSize.set(shadowRes, shadowRes);
 		// VSM blurs in map space, so softness comes from radius, not from bias
 		// tweaking. These read as an overcast key rather than a hard studio edge.
-		key.shadow.radius = 4;
-		key.shadow.blurSamples = 16;
+		key.shadow.radius = 3;
+		key.shadow.blurSamples = 8;
 		key.shadow.bias = -0.0005;
 		scene.add(key, key.target, new AmbientLight(0xffffff, 0.12));
 		this._key = key;

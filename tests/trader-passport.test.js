@@ -37,6 +37,7 @@ function payload(over = {}) {
 		score: 78, verified: true, closed: 41, win_rate: 0.61, realized_pnl_sol: 12.5,
 		max_drawdown_pct: 18.4, unique_coins: 33, snipe_hit_rate: 0.42, snipe_sample: 12,
 		self_dealing_excluded: 2, source: 'threews.trader-stats',
+		...over,
 	};
 }
 
@@ -190,7 +191,7 @@ describe('verifyOnChain', () => {
 		expect(v).toMatchObject({ valid: true, found: true, attester: ATTESTER, subject: SUBJECT, slot: 300_123_456 });
 		expect(v.reasons).toEqual([]);
 		expect(v.payload.score).toBe(78);
-		expect(v.block_time).toBe('2026-06-14T09:35:00.000Z');
+		expect(v.block_time).toBe(new Date(1_781_000_100 * 1000).toISOString());
 	});
 
 	it('rejects an attestation signed by someone other than the expected issuer', async () => {

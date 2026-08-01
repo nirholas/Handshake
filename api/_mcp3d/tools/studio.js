@@ -33,7 +33,10 @@ import {
 	resolveBackendId,
 	estimateEtaSeconds,
 	estimateCredits,
+	isSelfHostBackend,
+	coldStartSecondsFor,
 } from '../../_lib/forge-tiers.js';
+import { laneHealthSnapshot } from '../../_lib/forge-lane-health.js';
 import { resolveProviderKey } from '../../_lib/forge-provider-key.js';
 import { encodeJobToken, decodeJobToken } from '../../_lib/forge-job-token.js';
 import { watsonxConfig, watsonxChatComplete } from '../../_lib/watsonx.js';
@@ -338,6 +341,21 @@ const BACKEND_PROP = {
 // "needs a BYOK key" — a designed, branchable result (mirrors /api/forge's
 // needs_key state), not an error: the geometry providers have no platform key,
 // so a caller without one is told exactly how to enable the path.
+// Honest cold-start signal for a self-hosted lane, mirroring api/forge.js: true
+// only when the shared liveness probe reached the worker but it answered slowly
+// (a scale-to-zero container spinning up). Without this an MCP caller is handed a
+// warm ETA while the GPU is still booting, which reads as a stalled job.
+async function coldStartFor(backendId) {
+	if (!isSelfHostBackend(backendId) || !coldStartSecondsFor(backendId)) return false;
+	try {
+		const snap = await laneHealthSnapshot([backendId]);
+		const rec = snap.byId[backendId];
+		return Boolean(rec && rec.status === 'ok' && rec.warm === false);
+	} catch {
+		return false;
+	}
+}
+
 function needsKeyResult(backendId) {
 	const meta = BACKENDS[backendId];
 	// The bring-your-own-key path is the one place a credential provider name must
@@ -438,7 +456,8 @@ async function submitGeometryJob({
 		kind: submitted.kind,
 		taskId: submitted.taskId,
 	});
-	const etaSeconds = estimateEtaSeconds({ backendId, tier });
+	const cold = await coldStartFor(backendId);
+	const etaSeconds = estimateEtaSeconds({ backendId, tier, cold });
 
 	return {
 		content: [
@@ -447,6 +466,9 @@ async function submitGeometryJob({
 				text:
 					`Started ${isImageMode ? 'image-to-3D' : 'text-to-3D'} on the ${engineLabelFor(backendId)} ` +
 					`(${path} path, ${tier.id} tier).\nJob ID: ${token}\n` +
+					(cold
+						? `That worker scales to zero, so it is booting now (about ${coldStartSecondsFor(backendId)}s). The job is accepted and starts the moment it answers.\n`
+						: '') +
 					pollHint(etaSeconds, 'Reconstruction typically finishes in 30–90 seconds.'),
 			},
 		],

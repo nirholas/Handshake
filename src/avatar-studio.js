@@ -365,6 +365,7 @@ function maybeSuggestDraft() {
 			applyAllColors();
 			applyAllLayers();
 			applyMorphsToRoot(scene.root, workingAppearance.morphs);
+			applyProportions();
 			if (accessoryManager) accessoryManager.hydrateFromAppearance(workingAppearance);
 		}
 		pushHistory();

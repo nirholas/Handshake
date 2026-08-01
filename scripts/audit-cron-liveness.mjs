@@ -273,8 +273,20 @@ if (!STATIC_ONLY && !base) {
  * 404 not_found    → DEAD: nothing routes this path (the killer case).
  * 404 other        → ALIVE: the handler itself chose to answer 404.
  * 5xx              → BROKEN: the handler threw.
+ * 2xx + skip marker→ SKIPPED: wrapCron short-circuited BEFORE the auth gate.
  * 2xx              → UNGATED: it executed for an anonymous caller.
+ *
+ * The SKIPPED case is subtle and was worth a verdict of its own. `wrapCron`
+ * runs its storage-pressure probe BEFORE the handler body, so a cron built with
+ * `{ requireWriteCapacity: true }` answers 200 {ok:true, skipped:
+ * 'db_at_storage_cap'} to ANY caller, credential or not, whenever the database
+ * is over DB_RETENTION_HIGH_WATER_MB. Reading that as UNGATED is wrong (nothing
+ * ran, no gate was bypassed) and reading it as ALIVE is also wrong (the job is
+ * doing nothing on every tick). It is its own state: reachable, but inert. The
+ * same applies to wrapCron's db_unavailable / db_full degradation.
  */
+const SKIP_MARKERS = ['db_at_storage_cap', 'db_unavailable', 'db_full'];
+
 function classify(status, body) {
 	const err = body && typeof body === 'object' ? String(body.error || '') : '';
 	if (status === 401 || status === 403) return { verdict: 'ALIVE', why: `auth gate rejected (${status})` };
@@ -286,8 +298,16 @@ function classify(status, body) {
 		return { verdict: 'ALIVE', why: `handler answered 404 (${err || 'no error code'})` };
 	}
 	if (status >= 500) return { verdict: 'BROKEN', why: `handler returned ${status} ${err}` };
-	if (status >= 200 && status < 300)
+	if (status >= 200 && status < 300) {
+		const marker = body && typeof body === 'object' ? String(body.skipped || body.reason || '') : '';
+		if (SKIP_MARKERS.includes(marker)) {
+			return {
+				verdict: 'SKIPPED',
+				why: `200 ${marker}, wrapCron short-circuited before the handler body; the job is doing nothing`,
+			};
+		}
 		return { verdict: 'UNGATED', why: `${status} to an unauthenticated caller, the job body ran` };
+	}
 	return { verdict: 'BROKEN', why: `unexpected ${status} ${err}` };
 }
 
@@ -319,10 +339,22 @@ if (base) {
 		try {
 			const r = await probe(`${base}${row.path}`);
 			const c = classify(r.status, r.body);
-			row.probe = { status: r.status, error: r.body?.error ?? null, why: c.why };
+			row.probe = {
+				status: r.status,
+				error: r.body?.error ?? null,
+				skipped: r.body?.skipped ?? r.body?.reason ?? null,
+				why: c.why,
+			};
 			row.verdict = c.verdict;
 			if (c.verdict === 'ALIVE' && r.status === 405) {
 				row.notes.push('handler rejects GET; Cloud Scheduler invokes crons with GET');
+			}
+			if (c.verdict === 'SKIPPED') {
+				row.notes.push(
+					r.body?.high_water_mb
+						? `db ${r.body.size_mb ?? '?'}MB vs high-water ${r.body.high_water_mb}MB. DB_RETENTION_HIGH_WATER_MB is read from THIS env; confirm production's value before calling it an outage.`
+						: 'confirm whether this env matches production before calling it an outage',
+				);
 			}
 		} catch (err) {
 			// A transport-level failure is ambiguous: it can mean this handler hung,
@@ -404,6 +436,32 @@ if (drift && Array.isArray(drift.invalid)) {
 	}
 }
 
+// A cron whose handler is perfectly healthy but which Cloud Scheduler never
+// fires is DEAD in the only sense that matters. This is the verdict the code-side
+// stages structurally cannot reach on their own, and it is why --drift exists:
+// /api/cron/garment-job-sweep passed every static and probe stage while having
+// no scheduler job at all, so the garment worker's whole claim/retry recovery
+// path had never once been driven.
+if (drift?.checkedLive) {
+	const missing = new Map((drift.missing || []).map((m) => [m.path, m.id]));
+	const paused = new Map((drift.paused || []).map((p) => [p.path, p.state]));
+	for (const row of results) {
+		if (missing.has(row.path)) {
+			row.scheduler = { state: 'MISSING', id: missing.get(row.path) };
+			row.verdict = 'DEAD';
+			row.notes.push(
+				`no Cloud Scheduler job "${missing.get(row.path)}" exists, so this cron never fires in production regardless of handler health`,
+			);
+		} else if (paused.has(row.path)) {
+			row.scheduler = { state: paused.get(row.path) };
+			row.verdict = 'DEAD';
+			row.notes.push(`Cloud Scheduler job is ${paused.get(row.path)}, not ENABLED`);
+		} else {
+			row.scheduler = { state: 'ENABLED' };
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------
@@ -414,11 +472,14 @@ const broken = byVerdict('BROKEN');
 const ungated = byVerdict('UNGATED');
 const alive = byVerdict('ALIVE');
 const staticOk = byVerdict('STATIC-OK');
+const skipped = byVerdict('SKIPPED');
+const inconclusive = byVerdict('INCONCLUSIVE');
 
 const report = {
 	declared: results.length,
 	probed: Boolean(base),
 	base: base && base.startsWith('http://127.0.0.1') ? '(local server)' : base,
+	schedulerChecked: Boolean(drift?.checkedLive),
 	bootError,
 	counts: {
 		alive: alive.length,
@@ -426,6 +487,8 @@ const report = {
 		dead: dead.length,
 		broken: broken.length,
 		ungated: ungated.length,
+		skipped: skipped.length,
+		inconclusive: inconclusive.length,
 	},
 	crons: results,
 	drift,
@@ -439,13 +502,19 @@ if (AS_JSON) {
 	console.log(base ? `Probed against: ${report.base}` : 'Static analysis only (no probe).');
 	if (bootError) console.log(`\nCould not boot a local server:\n${bootError}`);
 	console.log('');
-	console.log(`${pad('PATH', 44)} ${pad('VERDICT', 10)} ${pad('HANDLER', 34)} EVIDENCE`);
+	console.log(
+		report.schedulerChecked
+			? 'Cloud Scheduler: compared against the live job list.'
+			: 'Cloud Scheduler: NOT compared (pass --drift with a live gcloud session).',
+	);
+	console.log('');
+	console.log(`${pad('PATH', 44)} ${pad('VERDICT', 13)} ${pad('HANDLER', 34)} EVIDENCE`);
 	for (const r of results) {
 		const evidence = r.probe
 			? `${r.probe.status ?? 'ERR'} ${r.probe.why || r.probe.error || ''}`
 			: r.notes[0] || (r.loads ? 'module loads' : '');
 		console.log(
-			`${pad(r.path, 44)} ${pad(r.verdict, 10)} ${pad(r.handler || '(none)', 34)} ${evidence}`,
+			`${pad(r.path, 44)} ${pad(r.verdict, 13)} ${pad(r.handler || '(none)', 34)} ${evidence}`,
 		);
 	}
 
@@ -453,6 +522,8 @@ if (AS_JSON) {
 		['DEAD (declared but nothing runs)', dead],
 		['BROKEN (handler errors)', broken],
 		['UNGATED (runs for anonymous callers)', ungated],
+		['SKIPPED (reachable but short-circuiting every tick)', skipped],
+		['INCONCLUSIVE (probe could not finish)', inconclusive],
 	]) {
 		if (!rows.length) continue;
 		console.log(`\n${label}: ${rows.length}`);
@@ -486,8 +557,11 @@ if (AS_JSON) {
 	}
 
 	console.log(
-		`\nalive ${alive.length}  static-ok ${staticOk.length}  dead ${dead.length}  broken ${broken.length}  ungated ${ungated.length}`,
+		`\nalive ${alive.length}  static-ok ${staticOk.length}  skipped ${skipped.length}  dead ${dead.length}  broken ${broken.length}  ungated ${ungated.length}  inconclusive ${inconclusive.length}`,
 	);
 }
 
+// SKIPPED does not fail the run on its own: whether it is an outage depends on
+// the environment's DB_RETENTION_HIGH_WATER_MB, which is a deployment fact this
+// script cannot decide from a local probe. It is reported loudly instead.
 process.exit(dead.length + broken.length + ungated.length ? 1 : 0);

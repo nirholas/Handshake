@@ -66,8 +66,11 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	check('the avatar gallery opened', true);
 	await page.waitForSelector('.agp-card', { timeout: 60000 });
 	const pickedName = await page.$eval('.agp-card', (el) => el.querySelector('.agp-card-name')?.textContent?.trim() || '');
-	await page.click('.agp-card');
-	await page.click('.agp-cta');
+	// The gallery shell animates in, and under load its transition can outlast
+	// Playwright's stability wait, so drive these two the way a person does:
+	// the element is there and enabled, click it.
+	await page.click('.agp-card', { force: true });
+	await page.click('.agp-cta', { force: true });
 	await page.waitForTimeout(6000);
 
 	const prefs = await page.evaluate(() => JSON.parse(localStorage.getItem('threews:sign-prefs') || '{}'));

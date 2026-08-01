@@ -23,16 +23,16 @@ function solscanAddr(addr, network) {
 }
 
 function fmtNum(n, dp = 0) {
-	return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(dp) : ', ';
+	return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(dp) : '-';
 }
 
 /** How a committed field is rendered against its live counterpart. */
 const DRIFT_ROWS = [
 	{ key: 'score', label: 'Trader Score', fmt: (v) => fmtNum(v, 0) },
 	{ key: 'closed', label: 'Closed trades', fmt: (v) => fmtNum(v, 0) },
-	{ key: 'win_rate', label: 'Win rate', fmt: (v) => (typeof v === 'number' ? fmtPct(v * 100) : ', ') },
-	{ key: 'realized_pnl_sol', label: 'Realized P&L', fmt: (v) => (typeof v === 'number' ? fmtSol(v) : ', ') },
-	{ key: 'max_drawdown_pct', label: 'Max drawdown', fmt: (v) => (typeof v === 'number' ? fmtPct(v) : ', ') },
+	{ key: 'win_rate', label: 'Win rate', fmt: (v) => (typeof v === 'number' ? fmtPct(v * 100) : '-') },
+	{ key: 'realized_pnl_sol', label: 'Realized P&L', fmt: (v) => (typeof v === 'number' ? fmtSol(v) : '-') },
+	{ key: 'max_drawdown_pct', label: 'Max drawdown', fmt: (v) => (typeof v === 'number' ? fmtPct(v) : '-') },
 ];
 
 function skeleton() {
@@ -138,11 +138,11 @@ function attested(d) {
 				</a>
 				<div class="tp-pp-fact">
 					<span class="tp-pp-fact-k">Slot</span>
-					<span class="tp-pp-fact-v">${c.slot != null ? c.slot : ', '}</span>
+					<span class="tp-pp-fact-v">${c.slot != null ? c.slot : '-'}</span>
 				</div>
 				<div class="tp-pp-fact">
 					<span class="tp-pp-fact-k">Signed</span>
-					<span class="tp-pp-fact-v">${c.block_time ? escapeHtml(relTime(c.block_time)) : ', '}</span>
+					<span class="tp-pp-fact-v">${c.block_time ? escapeHtml(relTime(c.block_time)) : '-'}</span>
 				</div>
 			</div>
 
@@ -168,7 +168,7 @@ function renderVerdict(el, v) {
 			<a href="${solscanTx(v.signature, v.network)}" target="_blank" rel="noopener">${escapeHtml(shortAddr(v.signature, 6, 6))} ↗</a>
 			was signed by <code>${escapeHtml(shortAddr(v.attester || '', 6, 6))}</code> and commits
 			<code>${escapeHtml(shortAddr(v.subject || '', 4, 4))}</code>'s score of
-			<strong>${fmtNum(v.payload?.score, 0)}</strong> at slot ${v.slot ?? ', '}.`;
+			<strong>${fmtNum(v.payload?.score, 0)}</strong> at slot ${v.slot ?? '-'}.`;
 		return;
 	}
 	el.className = 'tp-pp-verdict is-bad';

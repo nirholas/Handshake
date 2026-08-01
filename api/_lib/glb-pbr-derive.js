@@ -501,12 +501,19 @@ export function halveField(src, width, height) {
 // GLTFLoader through EXT_texture_webp, which the three.ws viewer and
 // scripts/compress-glbs.mjs already rely on.
 //
-// The two maps get different quality settings because they fail differently: a
-// normal map's channels are a unit vector, so lossy chroma error shows up as
-// visible faceting and needs near-lossless treatment, while the ORM map is three
-// smooth masks that tolerate ordinary quality without a visible change.
-const NORMAL_WEBP = Object.freeze({ quality: 95, effort: 4, nearLossless: true, smartSubsample: false });
-const ORM_WEBP = Object.freeze({ quality: 88, effort: 4 });
+// The two maps get different settings because they fail differently. A normal
+// map's three channels are one unit vector, so chroma SUBSAMPLING (not quality
+// as such) is what shows up as visible faceting: `smartSubsample: false` keeps
+// it at 4:4:4 and the remaining lossy error stays below the threshold of
+// visibility. The ORM map is three smooth masks and tolerates ordinary quality.
+//
+// Measured on a real 2048x2048 trellis_selfhost albedo, encoding the derived
+// normal: nearLossless takes 10.4 s for 2732 KB, q92 at 4:4:4 takes 0.69 s for
+// 927 KB. Near-lossless is both slower and larger on this kind of data (smooth
+// gradients, no flat runs to exploit), so it buys nothing here and would have
+// put a 45 s stall in the delivery path.
+const NORMAL_WEBP = Object.freeze({ quality: 92, effort: 2, smartSubsample: false });
+const ORM_WEBP = Object.freeze({ quality: 88, effort: 2 });
 
 async function encodeMap(sharp, rgb, width, height, options) {
 	return sharp(Buffer.from(rgb), { raw: { width, height, channels: 3 } })

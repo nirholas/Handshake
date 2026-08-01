@@ -159,7 +159,11 @@ async function loadAndRender(host) {
 		safe(() => get(`/api/agents/${encodeURIComponent(agentId)}/pricing-rules`)),
 		safe(() => get(`/api/monetization/wallet?agent_id=${encodeURIComponent(agentId)}`)),
 		safe(() => get(`/api/monetization/withdrawals?agent_id=${encodeURIComponent(agentId)}&limit=50`)),
-		safe(() => get('/api/users/earnings')),
+		// /api/users/me/earnings, not /api/users/earnings: the bare path is
+		// swallowed by the /api/users/([^/]+) catch-all above it in vercel.json
+		// and answers "user not found" for a user literally named "earnings",
+		// which safe() then discards, leaving the panel silently empty.
+		safe(() => get('/api/users/me/earnings')),
 		safe(() => get(`/api/monetization/revenue?agent_id=${encodeURIComponent(agentId)}&period=${encodeURIComponent(STATE.period)}`)),
 		safe(() => get(`/api/creators/skill-analytics?agent_id=${encodeURIComponent(agentId)}&days=${days}`)),
 	]);

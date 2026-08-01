@@ -182,4 +182,33 @@ describe('projectDiscoveryResources', () => {
 		expect(page.items).toEqual([]);
 		expect(page.pagination.total).toBe(0);
 	});
+
+	// A crawler pages this catalog by offset with no cursor. Two builds that
+	// hold the same resources in a different order must still page identically,
+	// or a sweep reads some resources twice and never reads others at all.
+	it('orders a page by resource regardless of catalog insertion order', () => {
+		const urls = ['svc-c', 'svc-a', 'svc-b'].map((s) => `https://three.ws/api/x402/${s}`);
+		const page = projectDiscoveryResources(
+			doc(urls.map((url) => item({ url }))),
+			{},
+		);
+		expect(page.items.map((i) => i.resource)).toEqual([...urls].sort());
+	});
+
+	it('pages two shuffled builds of one catalog to the same items', () => {
+		const urls = Array.from({ length: 40 }, (_, i) => `https://three.ws/api/x402/svc-${i}`);
+		const build = (order) => doc(order.map((url) => item({ url })));
+		const forward = projectDiscoveryResources(build(urls), { limit: 10, offset: 20 });
+		const reversed = projectDiscoveryResources(build([...urls].reverse()), { limit: 10, offset: 20 });
+		expect(forward.items.map((i) => i.resource)).toEqual(reversed.items.map((i) => i.resource));
+	});
+
+	// The MCP transports publish one entry per tool at a single resource URL,
+	// so `resource` alone is not a total order.
+	it('breaks resource ties on tool name so same-url entries page stably', () => {
+		const tool = (toolName) =>
+			item({ url: 'https://three.ws/api/mcp', path: '/api/mcp', toolName });
+		const page = projectDiscoveryResources(doc([tool('render'), tool('inspect'), tool('validate')]), {});
+		expect(page.items.map((i) => i.metadata.toolName)).toEqual(['inspect', 'render', 'validate']);
+	});
 });

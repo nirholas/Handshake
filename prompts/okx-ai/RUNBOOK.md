@@ -7,9 +7,10 @@ human or agent: every command below was run from this repo and its real output r
 - **Full history:** [`PROGRESS.md`](PROGRESS.md).
 - **Public docs:** [`docs/okx-marketplace.md`](../../docs/okx-marketplace.md), [`specs/okx-agent-payments.md`](../../specs/okx-agent-payments.md).
 
-**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.3.0 as of 2026-07-23; check drift with
-`onchainos --version`). The read commands below need no login. Every **write** (update,
-activate, resubmit) needs an authenticated session as `claude@three.ws`. **Login mechanics
+**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.4.0 as of 2026-08-01; check drift with
+`onchainos --version`). Almost everything here needs an authenticated session as
+`claude@three.ws`: every **write** (update, activate, resubmit) and, as of v4.3.0, the
+**reads** too (see the note after the login block). **Login mechanics
 changed as of v4.3.0** (older sessions in `PROGRESS.md` describe a direct `wallet login
 <email>` + OTP-typed flow; that no longer exists):
 
@@ -29,8 +30,11 @@ onchainos wallet status   # loggedIn: true once done
 ```
 
 `onchainos agent get-agents` / `service-list` / `search` need this session even though they
-are reads (they 401 with "session expired" when logged out). Only `curl` against our own
-`/api/okx/3d/*` endpoints (§7) and public RPC reads are truly login-free.
+are reads. Re-confirmed 2026-08-01: logged out, all three return
+`{"ok":false,"error":"session expired, please login again: onchainos wallet login"}`, so
+**approval status cannot be read at all without a human completing the browser login.**
+Only `curl` against our own `/api/okx/3d/*` endpoints (§7), public RPC reads, and
+`--help` on any subcommand are truly login-free.
 
 ---
 
@@ -219,9 +223,12 @@ This is the holder-visible moment. Work the list top to bottom.
    ```bash
    npm run build:pages          # validates the entry; fails the build if malformed
    ```
-   Delivery to Telegram (@three_ws) and X (@trythreews) is automatic: the
+   Delivery to the holders' Telegram channel (@three_ws) is automatic: the
    `/api/cron/changelog-push` cron posts the entry once the deploy that ships
-   it is live. No manual push step.
+   it is live. No manual push step. **X.com delivery is retired** (owner directive
+   2026-07-18), Telegram is the only automatic lane. Never run `npm run changelog:push`
+   for a release: its file-based state is separate from the cron's DB state, so a manual
+   push double-posts to holders.
 
 4. **Set the agent's own avatar live** if WO-06's dogfood upload was deferred (it was, the
    asset is generated but never written on-chain). This is an on-chain write: OTP required.
@@ -265,7 +272,7 @@ This is the holder-visible moment. Work the list top to bottom.
 | What | How |
 | --- | --- |
 | Did we sell? | `onchainos agent get-agents --agent-ids 2632` → `soldCount` |
-| What did buyers say? | `onchainos agent feedback-list` (verified present: "Query Agent reviews") |
+| What did buyers say? | `onchainos agent feedback-list --agent-id 2632` ("Query Agent reviews"). `--agent-id` is runtime-enforced: omit it and the CLI answers `missing required parameter: --agent-id`. Optional `--page` / `--page-size`. |
 | Where does revenue land? | The seller/payTo wallet on X Layer (196), **verify live**, it has moved before (see §3); as of 2026-07-23 it is `0x4022de2D36C334E73C7a108805Cea11C0564f402`, the platform's standard EVM merchant wallet, not the buyer wallet. Confirm the first payout against the settlement tx hash from WO-04. |
 | Where do errors surface? | The existing error-reporting path in [`api/_mcp/payments.js`](../../api/_mcp/payments.js); paid-endpoint failures answer **before** settlement, so a failed job never charges a buyer. |
 | Daily watch | `soldCount`, `approvalLabel`, and the paid-endpoint health/catalog free routes (§7). |

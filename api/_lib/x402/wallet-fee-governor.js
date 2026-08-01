@@ -50,8 +50,16 @@ export function walletFeeGovernorConfig(e = process.env) {
 		// cache window of settles per instance.
 		spentCacheMs: Math.max(1_000, Math.floor(num(e.X402_WALLET_FEE_SPENT_CACHE_MS, 20_000))),
 		// Release the daily budget gradually across the UTC day instead of all of
-		// it at 00:00. Default ON. Only an explicit "false" disables it.
-		paceDay: String(e.X402_WALLET_FEE_PACE_DAY ?? '').trim().toLowerCase() !== 'false',
+		// it at 00:00. OPT-IN: only an explicit "true" enables it.
+		//
+		// Off by default on purpose. Pacing changes which gate refuses a starved
+		// wallet first (the governor rather than the hard SOL floor), and the floor
+		// vs governor distinction is the diagnostic the runway lab exists to make
+		// visible. Flipping it silently on a live money rail would trade a real
+		// diagnostic for an availability gain that does not, by itself, settle one
+		// extra payment. Enable it with a config-only env update once an operator
+		// wants the smoother shape.
+		paceDay: String(e.X402_WALLET_FEE_PACE_DAY ?? '').trim().toLowerCase() === 'true',
 		// The slice of budget unlocked at the very top of the day, so a paced
 		// wallet is never dead for the first minutes after the reset.
 		paceMinSliceLamports: Math.floor(num(e.X402_WALLET_FEE_PACE_MIN_SLICE_LAMPORTS, 200_000)),

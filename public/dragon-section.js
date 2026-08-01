@@ -5,7 +5,13 @@
   if (!container) return;
 
   const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;';
+  // pan-y, not none. This is a decorative backdrop sitting mid-way down a very
+  // tall scrolling page: `touch-action: none` plus a preventDefault-ing
+  // touchmove meant every vertical swipe that started on the dragon was
+  // swallowed, so a phone user who put a thumb here could not scroll past the
+  // section at all. pan-y hands vertical scroll back to the page while
+  // horizontal drag and tap-to-breathe-fire still reach the canvas.
+  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;';
   container.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   // Some headless/embedded browsers (e.g. Lightpanda) hand back a 2D context that

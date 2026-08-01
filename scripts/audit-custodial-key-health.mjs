@@ -1,0 +1,189 @@
+#!/usr/bin/env node
+// Audit every custodial Solana wallet the platform stores, and report how much
+// SOL sits behind a secret we can no longer decrypt.
+//
+// Why this exists: the treasury self-heal (api/cron/treasury-topup.js) reclaims
+// idle SOL from platform-owned agent wallets back to the master fee wallet when
+// the master runs short. A wallet whose `encrypted_solana_secret` fails AES-GCM
+// decryption cannot be signed for, so its balance is invisible to that self-heal
+// and to every other spend path. The failure is silent by construction: the
+// reclaim leg reports a failed SEND, and a WebCrypto OperationError wearing a
+// Solana costume sends operators after RPC health and funding for a key problem
+// no amount of either can fix (2026-08-01: the entire reclaimable balance the
+// engine planned to pull was behind two such wallets).
+//
+// A key rotation is the usual cause. `scripts/rekey-stale-launch-wallets.mjs`
+// documents one: the WALLET_ENCRYPTION_KEY changed during the Vercel to Cloud
+// Run migration in 2026-07, and every wallet written under the retired key
+// became unreadable. This script measures the blast radius of that class.
+//
+// READ-ONLY. It decrypts in memory to test the key, never writes, never signs,
+// never broadcasts. Balances are read with getMultipleAccounts (100 per call) so
+// a full fleet sweep costs a handful of RPC requests rather than one per wallet.
+//
+// Usage:
+//   node scripts/audit-custodial-key-health.mjs
+//   node scripts/audit-custodial-key-health.mjs --json
+//   node scripts/audit-custodial-key-health.mjs --platform-only
+//
+// Env (read from .env / .env.local, or the process env):
+//   DATABASE_URL, WALLET_ENCRYPTION_KEY, JWT_SECRET, SOLANA_RPC_URL
+
+import { readFileSync } from 'node:fs';
+
+const AS_JSON = process.argv.includes('--json');
+const PLATFORM_ONLY = process.argv.includes('--platform-only');
+
+// Same ownership markers the reclaim leg uses (api/_lib/economy-sweepback.js):
+// platform agents live under one owner email or the agent-email suffix.
+const PLATFORM_OWNER_EMAIL = 'agents@three.ws';
+const PLATFORM_EMAIL_SUFFIX = '@agents.three.ws';
+const LAMPORTS_PER_SOL = 1_000_000_000;
+
+for (const file of ['.env', '.env.local']) {
+	let text;
+	try {
+		text = readFileSync(file, 'utf8');
+	} catch {
+		continue;
+	}
+	for (const line of text.split('\n')) {
+		const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+		if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim().replace(/^['"]|['"]$/g, '');
+	}
+}
+
+const { sql } = await import('../api/_lib/db.js');
+const { decryptSecret } = await import('../api/_lib/secret-box.js');
+const { Connection, PublicKey } = await import('@solana/web3.js');
+
+const rows = await sql`
+	SELECT a.id                               AS agent_id,
+	       a.name                             AS name,
+	       a.created_at                       AS created_at,
+	       a.meta->>'solana_address'          AS address,
+	       a.meta->>'encrypted_solana_secret' AS secret,
+	       LOWER(u.email)                     AS owner
+	FROM agent_identities a
+	JOIN users u ON u.id = a.user_id
+	WHERE a.deleted_at IS NULL
+	  AND a.meta->>'solana_address' IS NOT NULL
+	  AND a.meta->>'encrypted_solana_secret' IS NOT NULL
+	ORDER BY a.created_at ASC
+`;
+
+const isPlatform = (owner) =>
+	owner === PLATFORM_OWNER_EMAIL || (owner || '').endsWith(PLATFORM_EMAIL_SUFFIX);
+
+const wallets = rows.filter((r) => (PLATFORM_ONLY ? isPlatform(r.owner) : true));
+
+// Decrypt is the whole test: AES-GCM authenticates, so a wrong key throws rather
+// than returning wrong plaintext. We never touch the recovered material beyond
+// checking that it exists.
+for (const w of wallets) {
+	try {
+		const plain = await decryptSecret(w.secret);
+		w.decryptable = Boolean(plain && plain.length > 0);
+		w.reason = w.decryptable ? null : 'empty_plaintext';
+	} catch (e) {
+		w.decryptable = false;
+		w.reason = e?.name === 'OperationError' ? 'wrong_key' : e?.message || 'decrypt_failed';
+	}
+}
+
+const connection = new Connection(
+	process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+	'confirmed',
+);
+
+const balances = new Map();
+const readErrors = [];
+for (let i = 0; i < wallets.length; i += 100) {
+	const chunk = wallets.slice(i, i + 100);
+	let keys;
+	try {
+		keys = chunk.map((w) => new PublicKey(w.address));
+	} catch (e) {
+		for (const w of chunk) readErrors.push({ address: w.address, reason: `bad_address: ${e?.message}` });
+		continue;
+	}
+	try {
+		const infos = await connection.getMultipleAccountsInfo(keys);
+		infos.forEach((info, idx) => balances.set(chunk[idx].address, (info?.lamports ?? 0) / LAMPORTS_PER_SOL));
+	} catch (e) {
+		for (const w of chunk) readErrors.push({ address: w.address, reason: `rpc_error: ${e?.message}` });
+	}
+}
+
+const sum = (list) => list.reduce((t, w) => t + (balances.get(w.address) || 0), 0);
+const round = (n) => Number(n.toFixed(9));
+
+const platform = wallets.filter((w) => isPlatform(w.owner));
+const customer = wallets.filter((w) => !isPlatform(w.owner));
+const stranded = wallets.filter((w) => !w.decryptable);
+const strandedFunded = stranded.filter((w) => (balances.get(w.address) || 0) > 0);
+
+const report = {
+	checked_at: new Date().toISOString(),
+	rpc: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+	wallets: wallets.length,
+	read_errors: readErrors.length,
+	decryptable: wallets.length - stranded.length,
+	undecryptable: stranded.length,
+	sol: {
+		total: round(sum(wallets)),
+		decryptable: round(sum(wallets.filter((w) => w.decryptable))),
+		stranded: round(sum(stranded)),
+		stranded_platform: round(sum(stranded.filter((w) => isPlatform(w.owner)))),
+		stranded_customer: round(sum(stranded.filter((w) => !isPlatform(w.owner)))),
+	},
+	counts: {
+		platform: platform.length,
+		customer: customer.length,
+		stranded_platform: stranded.filter((w) => isPlatform(w.owner)).length,
+		stranded_customer: stranded.filter((w) => !isPlatform(w.owner)).length,
+		stranded_funded: strandedFunded.length,
+	},
+	top_stranded: strandedFunded
+		.sort((a, b) => (balances.get(b.address) || 0) - (balances.get(a.address) || 0))
+		.slice(0, 20)
+		.map((w) => ({
+			name: w.name,
+			address: w.address,
+			owner: w.owner,
+			sol: round(balances.get(w.address) || 0),
+			reason: w.reason,
+			created_at: w.created_at,
+			platform: isPlatform(w.owner),
+		})),
+};
+
+if (AS_JSON) {
+	console.log(JSON.stringify(report, null, 2));
+	process.exit(0);
+}
+
+const pct = (n, d) => (d ? `${((n / d) * 100).toFixed(1)}%` : 'n/a');
+console.log(`custodial key health  (${report.checked_at})`);
+console.log(`  rpc                 ${report.rpc}`);
+console.log(`  wallets             ${report.wallets} (${report.counts.platform} platform, ${report.counts.customer} customer)`);
+console.log(`  decryptable         ${report.decryptable} (${pct(report.decryptable, report.wallets)})`);
+console.log(`  undecryptable       ${report.undecryptable} (${pct(report.undecryptable, report.wallets)}), ${report.counts.stranded_funded} of them funded`);
+console.log(`  read errors         ${report.read_errors}`);
+console.log('');
+console.log(`  SOL total           ${report.sol.total}`);
+console.log(`  SOL spendable       ${report.sol.decryptable}`);
+console.log(`  SOL stranded        ${report.sol.stranded}  (platform ${report.sol.stranded_platform}, customer ${report.sol.stranded_customer})`);
+if (report.top_stranded.length) {
+	console.log('');
+	console.log('  largest stranded wallets');
+	for (const w of report.top_stranded) {
+		console.log(`    ${String(w.sol).padStart(14)} SOL  ${w.address}  ${w.platform ? 'platform' : 'customer'}  ${w.name || ''} (${w.reason})`);
+	}
+}
+if (report.sol.stranded_customer > 0) {
+	console.log('');
+	console.log('  Customer funds are stranded. This is a support obligation, not just an');
+	console.log('  ops number: those users cannot withdraw. Escalate before anything else.');
+}
+process.exit(0);

@@ -89,6 +89,50 @@ export function planFloatMove({ balanceAtomic, floorAtomic, targetAtomic, ceilin
 }
 
 /**
+ * Can this agent actually pay for the purchase it is about to attempt?
+ *
+ * The ring-tick driver has asked this of its shared payer since day one
+ * (assessBackpressure → `insufficient_payer_usdc` in ring-tick-plan.js), but the
+ * agent-buyer roster never did: each persona pays from its OWN custodial wallet,
+ * and when the float top-up upstream is dry those wallets run to zero without
+ * anything stopping the next tick from shopping anyway.
+ *
+ * What that costs, measured on production 2026-08-01: 180 purchases in one 3h
+ * window, every one of them probing the endpoint, building and signing a USDC
+ * transfer, and paying for a facilitator `verify` that SIMULATES the transfer
+ * against an RPC node, only for the simulation to come back
+ * `InstructionError:[2,{Custom:1}]` (SPL insufficient funds). The caller then
+ * recorded `http_402`, which the settle sensor counts as a payment-RAIL fault:
+ * an empty wallet was reading as a broken rail, at ~9% of the settle rate.
+ *
+ * A wallet that cannot fund a transfer is not a rail fault and not an error. It
+ * is the same benign back-pressure the shared payer already reports, so it
+ * carries the same reason token the sensor already excludes.
+ *
+ * Pure, so the arithmetic is testable without a wallet, an RPC or a DB. An
+ * unreadable balance ADMITS (returns ok): a balance read that failed must never
+ * be the thing that stops the economy, and the simulation downstream remains the
+ * authoritative check.
+ *
+ * @param {{ usdcAtomic: number|null|undefined, priceAtomic: number }} p
+ * @returns {{ ok: boolean, reason: string|null, detail?: string }}
+ */
+export function assessAgentBuyingPower({ usdcAtomic, priceAtomic }) {
+	const have = Number(usdcAtomic);
+	if (!Number.isFinite(have)) return { ok: true, reason: null };
+	const need = Math.max(0, Number(priceAtomic) || 0);
+	if (need === 0) return { ok: true, reason: null };
+	if (have < need) {
+		return {
+			ok: false,
+			reason: 'insufficient_payer_usdc',
+			detail: `${Math.max(0, Math.floor(have))}<${need}`,
+		};
+	}
+	return { ok: true, reason: null };
+}
+
+/**
  * Resolve the float band from env, once per call. FLOAT is the target; floor is
  * half of it, ceiling is double — a symmetric band that keeps a small working
  * balance without letting winnings accumulate off-ledger.
