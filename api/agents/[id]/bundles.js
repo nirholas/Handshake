@@ -141,6 +141,7 @@ async function handlePricing(req, res, agentId, url) {
 		       MAX(p.amount)                                        AS list_amount,
 		       MAX(p.currency_mint)                                 AS currency_mint,
 		       MAX(p.chain)                                         AS chain,
+		       MAX(p.mint_decimals)                                 AS mint_decimals,
 		       COUNT(*) FILTER (WHERE ${paid})::int                 AS units,
 		       COALESCE(SUM(sp.amount) FILTER (WHERE ${paid}), 0)::text AS gross_atomic,
 		       COUNT(DISTINCT sp.user_id) FILTER (WHERE ${paid})::int   AS buyers
@@ -199,6 +200,10 @@ async function handlePricing(req, res, agentId, url) {
 			agent_id: agentId,
 			currency_mint: mints[0],
 			chain: parts[0].chain,
+			// The UI needs this to render a price. Without it every amount here is
+			// an atomic integer that a client can only guess the scale of, and the
+			// guess is wrong by 10^6 on a $THREE price.
+			mint_decimals: Number(parts[0].mint_decimals ?? 6),
 			skills: parts.map((p) => ({
 				skill: p.skill,
 				list_amount: String(p.list_amount),

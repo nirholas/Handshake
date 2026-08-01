@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Skill Bundles · three.ws</title>
+	<meta name="description" content="Bundle an agent's skills into one purchase and price it from your own sales. three.ws backtests any price against the buyers who already bought two or more of those skills separately, so you can see what the bundle would have earned before you publish it." />
+	<link rel="canonical" href="https://three.ws/bundles" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Skill Bundles · three.ws" />
+	<meta property="og:description" content="Bundle an agent's skills into one purchase, priced from your own sales rather than a rule of thumb." />
+	<meta property="og:url" content="https://three.ws/bundles" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Skill+Bundles&amp;d=Bundle+an+agent%27s+skills+into+one+purchase+and+price+it+from+your+own+sales%2C+backtested+against+the+buyers+who+already+bought+them+separately&amp;p=%2Fbundles" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Skill Bundles · three.ws" />
+	<meta name="twitter:description" content="Price a bundle from your own ledger, not a rule of thumb." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Skill+Bundles&amp;d=Bundle+an+agent%27s+skills+into+one+purchase+and+price+it+from+your+own+sales%2C+backtested+against+the+buyers+who+already+bought+them+separately&amp;p=%2Fbundles" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Skill Bundles / three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<style>
+		:root {
+			--bd-maxw: 1180px;
+			/* Evidence-backed numbers read as healthy; defaults read as neutral, so a
+			   seller can tell a finding from a fallback at a glance. */
+			--bd-evidence: var(--success);
+			--bd-default: var(--ink-dim);
+			--bd-loss: var(--danger);
+		}
+		:root[data-theme="light"] {
+			--bd-evidence: #15803d;
+			--bd-loss: #b91c1c;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+
+		.bd-wrap { max-width: var(--bd-maxw); margin: 0 auto; padding: 0 18px 96px; }
+
+		/* ── hero ───────────────────────────────────────────────────────── */
+		.bd-hero { padding: 34px 0 4px; }
+		.bd-hero h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.bd-hero p { margin: 0; max-width: 68ch; color: var(--ink-dim); line-height: 1.6; }
+		.bd-hero a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		.bd-hero a:hover { color: var(--ink-bright, var(--ink)); }
+
+		/* ── how it works: three steps, so the page teaches before it asks ── */
+		.bd-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 24px 0 28px; }
+		.bd-step { border: 1px solid var(--stroke); background: var(--surface-1, rgba(255,255,255,0.03)); border-radius: var(--radius-md, 10px); padding: 14px 16px; }
+		.bd-step b { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); font-weight: 600; margin-bottom: 6px; }
+		.bd-step span { color: var(--ink); line-height: 1.5; font-size: 0.94rem; }
+
+		/* ── layout ─────────────────────────────────────────────────────── */
+		.bd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+		@media (max-width: 900px) { .bd-grid { grid-template-columns: minmax(0, 1fr); } }
+
+		.bd-card { border: 1px solid var(--stroke); background: var(--surface-1, rgba(255,255,255,0.03)); border-radius: var(--radius-md, 12px); padding: 18px; }
+		.bd-card > h2 { margin: 0 0 4px; font-size: 1.05rem; letter-spacing: -0.01em; color: var(--ink-bright, var(--ink)); }
+		.bd-card > p.bd-sub { margin: 0 0 16px; color: var(--ink-dim); font-size: 0.88rem; line-height: 1.5; }
+
+		/* ── tooltips: every number explains itself without leaving the page ── */
+		.bd-tip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border-radius: 50%; border: 1px solid var(--stroke); color: var(--ink-dim); font-size: 0.62rem; font-weight: 700; cursor: help; vertical-align: middle; background: none; padding: 0; line-height: 1; }
+		.bd-tip:hover, .bd-tip:focus-visible { color: var(--ink-bright, var(--ink)); border-color: var(--ink-dim); }
+		.bd-tip::after {
+			content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px);
+			width: max-content; max-width: 260px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--stroke);
+			background: var(--bg-1, #14161c); color: var(--ink); font-size: 0.78rem; font-weight: 400; line-height: 1.45; text-align: left;
+			opacity: 0; pointer-events: none; transition: opacity 140ms ease, transform 140ms ease; z-index: 60; box-shadow: 0 8px 26px rgba(0,0,0,0.32);
+		}
+		.bd-tip:hover::after, .bd-tip:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+		@media (prefers-reduced-motion: reduce) { .bd-tip::after { transition: none; } }
+
+		/* ── skill picker ───────────────────────────────────────────────── */
+		.bd-skills { display: flex; flex-direction: column; gap: 6px; max-height: 460px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+		.bd-skill { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--hairline, var(--stroke)); border-radius: 9px; cursor: pointer; transition: border-color 130ms ease, background 130ms ease; }
+		.bd-skill:hover { border-color: var(--ink-dim); background: color-mix(in srgb, var(--ink) 4%, transparent); }
+		.bd-skill:focus-within { outline: 2px solid var(--accent, #6d8cff); outline-offset: 2px; }
+		.bd-skill input { width: 16px; height: 16px; accent-color: var(--accent, #6d8cff); cursor: pointer; flex: none; }
+		.bd-skill[data-checked="1"] { border-color: color-mix(in srgb, var(--accent, #6d8cff) 60%, var(--stroke)); background: color-mix(in srgb, var(--accent, #6d8cff) 8%, transparent); }
+		.bd-skill-name { flex: 1 1 auto; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
+		.bd-skill-meta { flex: none; text-align: right; font-variant-numeric: tabular-nums; }
+		.bd-skill-price { display: block; font-weight: 600; color: var(--ink-bright, var(--ink)); }
+		.bd-skill-sold { display: block; font-size: 0.74rem; color: var(--ink-dim); margin-top: 1px; }
+
+		/* ── price panel ────────────────────────────────────────────────── */
+		.bd-pricebox { border: 1px solid var(--stroke); border-radius: 10px; padding: 14px; margin-bottom: 14px; background: color-mix(in srgb, var(--ink) 3%, transparent); }
+		.bd-priceline { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+		.bd-priceline span { color: var(--ink-dim); font-size: 0.85rem; }
+		.bd-priceline b { font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+		.bd-priceinput { display: flex; align-items: center; gap: 10px; }
+		.bd-priceinput input[type="number"] { flex: 1 1 auto; min-width: 0; padding: 11px 12px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--bg-0); color: var(--ink); font-size: 1.05rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+		.bd-priceinput input[type="number"]:focus-visible { outline: 2px solid var(--accent, #6d8cff); outline-offset: 1px; border-color: transparent; }
+		.bd-priceinput .bd-unit { flex: none; color: var(--ink-dim); font-size: 0.86rem; }
+		.bd-slider { width: 100%; margin: 12px 0 2px; accent-color: var(--accent, #6d8cff); }
+		.bd-discount { font-size: 0.84rem; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+		.bd-discount b { color: var(--bd-evidence); }
+		.bd-discount[data-negative="1"] b { color: var(--bd-loss); }
+
+		.bd-basis { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em; border: 1px solid; }
+		.bd-basis[data-basis="median_basket"] { color: var(--bd-evidence); border-color: color-mix(in srgb, var(--bd-evidence) 45%, transparent); background: color-mix(in srgb, var(--bd-evidence) 11%, transparent); }
+		.bd-basis[data-basis="discount_off_list"] { color: var(--bd-default); border-color: var(--stroke); }
+
+		.bd-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin-top: 4px; }
+		.bd-tile { border: 1px solid var(--hairline, var(--stroke)); border-radius: 9px; padding: 11px 12px; }
+		.bd-tile dt { margin: 0 0 5px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); display: flex; align-items: center; }
+		.bd-tile dd { margin: 0; font-size: 1.18rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+		.bd-tile dd[data-tone="up"] { color: var(--bd-evidence); }
+		.bd-tile dd[data-tone="down"] { color: var(--bd-loss); }
+
+		/* ── buttons ────────────────────────────────────────────────────── */
+		.bd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--surface-2, rgba(255,255,255,0.05)); color: var(--ink); font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: background 130ms ease, border-color 130ms ease, transform 90ms ease; }
+		.bd-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 9%, transparent); border-color: var(--ink-dim); }
+		.bd-btn:active:not(:disabled) { transform: translateY(1px); }
+		.bd-btn:focus-visible { outline: 2px solid var(--accent, #6d8cff); outline-offset: 2px; }
+		.bd-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+		.bd-btn--primary { background: var(--accent, #6d8cff); border-color: transparent; color: #fff; }
+		.bd-btn--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent, #6d8cff) 86%, #fff); border-color: transparent; }
+		.bd-btn--ghost { background: none; }
+		.bd-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+
+		.bd-field { display: block; margin-bottom: 12px; }
+		.bd-field span { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); margin-bottom: 6px; }
+		.bd-field input[type="text"], .bd-field textarea, .bd-select { width: 100%; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--bg-0); color: var(--ink); font: inherit; font-size: 0.92rem; }
+		.bd-field textarea { resize: vertical; min-height: 62px; line-height: 1.5; }
+		.bd-field input:focus-visible, .bd-field textarea:focus-visible, .bd-select:focus-visible { outline: 2px solid var(--accent, #6d8cff); outline-offset: 1px; border-color: transparent; }
+
+		/* ── states ─────────────────────────────────────────────────────── */
+		.bd-note { border: 1px solid var(--stroke); border-radius: 10px; padding: 16px 18px; color: var(--ink-dim); line-height: 1.6; font-size: 0.92rem; }
+		.bd-note b { color: var(--ink-bright, var(--ink)); font-weight: 600; }
+		.bd-note a { color: var(--accent, #6d8cff); text-decoration: underline; text-underline-offset: 3px; }
+		.bd-note--error { border-color: color-mix(in srgb, var(--bd-loss) 45%, var(--stroke)); background: color-mix(in srgb, var(--bd-loss) 8%, transparent); color: var(--ink); }
+		.bd-note--ok { border-color: color-mix(in srgb, var(--bd-evidence) 45%, var(--stroke)); background: color-mix(in srgb, var(--bd-evidence) 9%, transparent); color: var(--ink); }
+		.bd-hide { display: none !important; }
+
+		/* Skeletons over spinners: the layout does not jump when data lands. */
+		.bd-sk { border-radius: 8px; background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 7%, transparent) 25%, color-mix(in srgb, var(--ink) 13%, transparent) 37%, color-mix(in srgb, var(--ink) 7%, transparent) 63%); background-size: 400% 100%; animation: bd-shimmer 1.35s ease infinite; }
+		@keyframes bd-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+		@media (prefers-reduced-motion: reduce) { .bd-sk { animation: none; } }
+		.bd-sk-row { height: 44px; margin-bottom: 6px; }
+
+		/* ── published bundles ──────────────────────────────────────────── */
+		.bd-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+		.bd-bundle { border: 1px solid var(--stroke); border-radius: 11px; padding: 15px 16px; background: var(--surface-1, rgba(255,255,255,0.03)); }
+		.bd-bundle h3 { margin: 0 0 4px; font-size: 1rem; color: var(--ink-bright, var(--ink)); }
+		.bd-bundle p { margin: 0 0 10px; font-size: 0.86rem; color: var(--ink-dim); line-height: 1.5; }
+		.bd-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+		.bd-chip { font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--hairline, var(--stroke)); color: var(--ink-dim); }
+		.bd-bundle-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+		.bd-bundle-price { font-size: 1.1rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+
+		.bd-section { margin-top: 40px; }
+		.bd-section > h2 { margin: 0 0 6px; font-size: 1.2rem; letter-spacing: -0.01em; }
+		.bd-section > p { margin: 0; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.55; max-width: 68ch; }
+
+		.bd-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="bd-wrap">
+		<section class="bd-hero">
+			<h1>Skill bundles</h1>
+			<p>
+				Sell several of an agent's skills as one purchase. The hard part was never the bundle,
+				it was the price, so three.ws prices it from your own sales: it finds the buyers who already
+				bought two or more of these skills separately and shows what the bundle would have earned
+				from those same people. See <a href="/docs/skill-bundles">the docs</a> for the API.
+			</p>
+		</section>
+
+		<div class="bd-steps">
+			<div class="bd-step"><b>1 · Pick</b><span>Choose two or more priced skills. The sum of their list prices is your ceiling.</span></div>
+			<div class="bd-step"><b>2 · Price</b><span>Move the price and watch the backtest against buyers who really paid.</span></div>
+			<div class="bd-step"><b>3 · Publish</b><span>The bundle goes live on the agent. One payment unlocks every skill in it.</span></div>
+		</div>
+
+		<!-- Signed out / no agents / load failure all land here. -->
+		<div id="bd-gate" class="bd-note bd-hide"></div>
+
+		<div id="bd-builder" class="bd-hide">
+			<label class="bd-field" id="bd-agent-field">
+				<span>Agent</span>
+				<select class="bd-select" id="bd-agent"></select>
+			</label>
+
+			<div class="bd-grid">
+				<section class="bd-card" aria-labelledby="bd-pick-h">
+					<h2 id="bd-pick-h">Pick the skills</h2>
+					<p class="bd-sub">Only skills with an active price can be bundled, because a bundle has to be worth less than its parts to mean anything.</p>
+					<div id="bd-skills" class="bd-skills" role="group" aria-label="Skills to bundle"></div>
+					<div id="bd-skills-empty" class="bd-note bd-hide" style="margin-top:12px"></div>
+				</section>
+
+				<section class="bd-card" aria-labelledby="bd-price-h">
+					<h2 id="bd-price-h">Price it against your sales</h2>
+					<p class="bd-sub">Every number here comes from this agent's confirmed, paid purchases. Trials and access granted by an earlier bundle are excluded, so nothing inflates what you see.</p>
+
+					<div id="bd-price-idle" class="bd-note">Select at least two skills to see pricing.</div>
+
+					<div id="bd-price-loading" class="bd-hide">
+						<div class="bd-sk bd-sk-row"></div>
+						<div class="bd-sk bd-sk-row"></div>
+						<div class="bd-sk bd-sk-row" style="height:78px"></div>
+					</div>
+
+					<div id="bd-price-body" class="bd-hide">
+						<div class="bd-pricebox">
+							<div class="bd-priceline">
+								<span>Sum of the parts
+									<button type="button" class="bd-tip" data-tip="What a buyer pays today if they buy every selected skill one at a time. Your bundle price should sit below this." aria-label="What sum of the parts means">?</button>
+								</span>
+								<b id="bd-sum">&#183;</b>
+							</div>
+							<div class="bd-priceline">
+								<span>Suggested
+									<button type="button" class="bd-tip" id="bd-suggest-tip" data-tip="" aria-label="How the suggested price was derived">?</button>
+								</span>
+								<span class="bd-basis" id="bd-basis" data-basis="discount_off_list">&#183;</span>
+							</div>
+							<div class="bd-priceinput">
+								<label class="bd-sr" for="bd-price">Bundle price</label>
+								<input type="number" id="bd-price" min="0" step="0.000001" inputmode="decimal" />
+								<span class="bd-unit" id="bd-unit">$THREE</span>
+								<button type="button" class="bd-btn bd-btn--ghost" id="bd-use-suggested">Use suggested</button>
+							</div>
+							<label class="bd-sr" for="bd-slider">Bundle price slider</label>
+							<input type="range" class="bd-slider" id="bd-slider" min="1" max="100" value="80" />
+							<div class="bd-discount" id="bd-discount">&#183;</div>
+						</div>
+
+						<dl class="bd-tiles">
+							<div class="bd-tile">
+								<dt>Multi-skill buyers
+									<button type="button" class="bd-tip" data-tip="People who already bought two or more of the selected skills separately. This is the population a bundle would have converted, so it is the only one worth pricing against." aria-label="What multi-skill buyers means">?</button>
+								</dt>
+								<dd id="bd-buyers">&#183;</dd>
+							</div>
+							<div class="bd-tile">
+								<dt>They paid
+									<button type="button" class="bd-tip" data-tip="What those buyers actually spent across the selected skills, at your list prices, in confirmed purchases." aria-label="What they paid means">?</button>
+								</dt>
+								<dd id="bd-paid">&#183;</dd>
+							</div>
+							<div class="bd-tile">
+								<dt>Bundle would earn
+									<button type="button" class="bd-tip" data-tip="The same buyers, at the price above. This is a backtest over real history, not a forecast: it says nothing about buyers you have not had yet." aria-label="What bundle would earn means">?</button>
+								</dt>
+								<dd id="bd-backtest">&#183;</dd>
+							</div>
+							<div class="bd-tile">
+								<dt>Revenue delta
+									<button type="button" class="bd-tip" data-tip="Backtest minus what they really paid. Negative means this price would have left money on the table with the buyers you already had." aria-label="What revenue delta means">?</button>
+								</dt>
+								<dd id="bd-delta">&#183;</dd>
+							</div>
+							<div class="bd-tile">
+								<dt>Better off
+									<button type="button" class="bd-tip" data-tip="How many of those buyers spent more piecemeal than this bundle costs. These are the ones the bundle wins on value." aria-label="What better off means">?</button>
+								</dt>
+								<dd id="bd-better">&#183;</dd>
+							</div>
+						</dl>
+
+						<div id="bd-unpriced" class="bd-note bd-hide" style="margin-top:12px"></div>
+
+						<label class="bd-field" style="margin-top:16px">
+							<span>Bundle name</span>
+							<input type="text" id="bd-name" maxlength="80" placeholder="Research starter pack" />
+						</label>
+						<label class="bd-field">
+							<span>Description <span style="text-transform:none;letter-spacing:0">(optional)</span></span>
+							<textarea id="bd-desc" maxlength="500" placeholder="What a buyer gets, in one line."></textarea>
+						</label>
+
+						<div class="bd-actions">
+							<button type="button" class="bd-btn bd-btn--primary" id="bd-publish">Publish bundle</button>
+							<span id="bd-publish-note" class="bd-discount"></span>
+						</div>
+					</div>
+
+					<div id="bd-price-error" class="bd-note bd-note--error bd-hide" style="margin-top:12px"></div>
+				</section>
+			</div>
+
+			<section class="bd-section" aria-labelledby="bd-live-h">
+				<h2 id="bd-live-h">Published bundles</h2>
+				<p>Live on this agent right now. Buyers see these on the agent's marketplace listing; one payment unlocks every skill inside.</p>
+				<div id="bd-list" class="bd-list"></div>
+				<div id="bd-list-empty" class="bd-note bd-hide" style="margin-top:14px"></div>
+			</section>
+		</div>
+	</main>
+
+	<script type="module">
+		import { apiFetch } from '/src/api.js';
+
+		const $ = (id) => document.getElementById(id);
+		const show = (el, on) => el.classList.toggle('bd-hide', !on);
+
+		// ── formatting ──────────────────────────────────────────────────
+		// Amounts arrive as atomic integer strings. They can exceed
+		// Number.MAX_SAFE_INTEGER on a 9-decimal mint, so scaling goes through
+		// BigInt and only the already-scaled result becomes a Number.
+		let decimals = 6;
+		let symbol = '$THREE';
+
+		function fromAtomic(atomic) {
+			const neg = String(atomic).startsWith('-');
+			const digits = String(atomic).replace('-', '') || '0';
+			const scale = 10n ** BigInt(decimals);
+			const v = BigInt(digits);
+			const whole = v / scale;
+			const frac = v % scale;
+			const n = Number(whole) + Number(frac) / Number(scale);
+			return neg ? -n : n;
+		}
+		function toAtomic(display) {
+			// Round rather than truncate: typing 1.9999999 must not silently drop a unit.
+			return String(BigInt(Math.round(Number(display) * 10 ** decimals)));
+		}
+		const fmt = (atomic) => {
+			const n = fromAtomic(atomic);
+			return n.toLocaleString(undefined, { maximumFractionDigits: Math.min(decimals, 4) });
+		};
+		const signed = (atomic) => (String(atomic).startsWith('-') ? '' : '+') + fmt(atomic);
+
+		// ── state ───────────────────────────────────────────────────────
+		let agents = [];
+		let agentId = null;
+		let priced = [];        // [{ skill, list_amount, units_sold, buyers }]
+		let selected = new Set();
+		let pricing = null;     // last pricing response
+		let sumOfParts = 0;
+		let pricingSeq = 0;     // guards against an out-of-order response overwriting a newer one
+
+		// ── boot ────────────────────────────────────────────────────────
+		async function boot() {
+			let res;
+			try {
+				res = await apiFetch('/api/agents/me', { allowAnonymous: true });
+			} catch {
+				return gate('Could not reach three.ws. Check your connection and <a href="/bundles">try again</a>.');
+			}
+			if (res.status === 401) {
+				return gate('<b>Sign in to build a bundle.</b> Bundles belong to an agent you own, so this page needs your account. <a href="/login?next=%2Fbundles">Sign in</a> or <a href="/register">create an account</a>.');
+			}
+			if (!res.ok) return gate('Could not load your agents (HTTP ' + res.status + '). <a href="/bundles">Retry</a>.');
+
+			const body = await res.json().catch(() => null);
+			agents = body?.data?.agents || body?.agents || (Array.isArray(body?.data) ? body.data : []) || [];
+			if (!agents.length) {
+				return gate('<b>You have no agents yet.</b> A bundle groups the skills of one agent, so make an agent and give it priced skills first. <a href="/create">Create an agent</a>.');
+			}
+
+			const sel = $('bd-agent');
+			sel.innerHTML = agents.map((a) => '<option value="' + esc(a.id) + '">' + esc(a.name || a.id) + '</option>').join('');
+			// A single agent needs no picker: one less control, one less decision.
+			show($('bd-agent-field'), agents.length > 1);
+			sel.addEventListener('change', () => selectAgent(sel.value));
+
+			show($('bd-builder'), true);
+			await selectAgent(agents[0].id);
+		}
+
+		function gate(html) {
+			$('bd-gate').innerHTML = html;
+			show($('bd-gate'), true);
+			show($('bd-builder'), false);
+		}
+
+		const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+		async function selectAgent(id) {
+			agentId = id;
+			selected = new Set();
+			pricing = null;
+			renderPricing();
+			await Promise.all([loadSkills(), loadBundles()]);
+		}
+
+		// ── skills ──────────────────────────────────────────────────────
+		async function loadSkills() {
+			const box = $('bd-skills');
+			box.innerHTML = '<div class="bd-sk bd-sk-row"></div><div class="bd-sk bd-sk-row"></div><div class="bd-sk bd-sk-row"></div>';
+			show($('bd-skills-empty'), false);
+
+			let rows = [];
+			try {
+				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/skills-pricing');
+				if (res.ok) {
+					const b = await res.json().catch(() => null);
+					rows = b?.data?.prices || b?.prices || b?.data || [];
+				}
+			} catch { rows = []; }
+
+			priced = (Array.isArray(rows) ? rows : []).filter((r) => r && (r.is_active === undefined || r.is_active) && Number(r.amount) > 0);
+			if (priced.length) decimals = Number(priced[0].mint_decimals ?? 6);
+
+			if (priced.length < 2) {
+				box.innerHTML = '';
+				$('bd-skills-empty').innerHTML = priced.length
+					? '<b>This agent has one priced skill.</b> A bundle needs at least two. <a href="/marketplace">Price another skill</a> and come back.'
+					: '<b>This agent has no priced skills.</b> Set a price on two or more skills first, then bundle them. <a href="/marketplace">Open the marketplace</a>.';
+				show($('bd-skills-empty'), true);
+				renderPricing();
+				return;
+			}
+
+			box.innerHTML = priced.map((r) => {
+				const skill = esc(r.skill);
+				return '<label class="bd-skill" data-skill="' + skill + '">' +
+					'<input type="checkbox" value="' + skill + '" />' +
+					'<span class="bd-skill-name">' + skill + '</span>' +
+					'<span class="bd-skill-meta">' +
+						'<span class="bd-skill-price">' + fmt(r.amount) + '</span>' +
+					'</span>' +
+				'</label>';
+			}).join('');
+
+			box.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+				cb.addEventListener('change', () => {
+					if (cb.checked) selected.add(cb.value); else selected.delete(cb.value);
+					cb.closest('.bd-skill').dataset.checked = cb.checked ? '1' : '0';
+					refreshPricing();
+				});
+			});
+			renderPricing();
+		}
+
+		// ── pricing ─────────────────────────────────────────────────────
+		let debounce;
+		function refreshPricing() {
+			clearTimeout(debounce);
+			debounce = setTimeout(fetchPricing, 180);
+		}
+
+		async function fetchPricing() {
+			if (selected.size < 2) { pricing = null; renderPricing(); return; }
+			const seq = ++pricingSeq;
+			show($('bd-price-idle'), false);
+			show($('bd-price-body'), false);
+			show($('bd-price-error'), false);
+			show($('bd-price-loading'), true);
+
+			const qs = new URLSearchParams({ action: 'pricing', skills: [...selected].join(',') });
+			let res;
+			try {
+				res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles?' + qs);
+			} catch {
+				if (seq !== pricingSeq) return;
+				return priceError('Could not reach the pricing service. Change a skill to retry.');
+			}
+			if (seq !== pricingSeq) return; // a newer request already answered
+			show($('bd-price-loading'), false);
+
+			if (!res.ok) {
+				const b = await res.json().catch(() => null);
+				return priceError(esc(b?.error_description || b?.message || ('Pricing failed (HTTP ' + res.status + ').')));
+			}
+			const body = await res.json().catch(() => null);
+			pricing = body?.data || null;
+			if (!pricing) return priceError('The pricing service returned an unreadable response.');
+
+			decimals = Number(pricing.mint_decimals ?? decimals);
+			sumOfParts = Number(fromAtomic(pricing.sum_of_parts_atomic));
+			$('bd-price').value = String(fromAtomic(pricing.suggested.price));
+			syncSliderFromPrice();
+			renderPricing();
+		}
+
+		function priceError(msg) {
+			show($('bd-price-loading'), false);
+			show($('bd-price-body'), false);
+			$('bd-price-error').innerHTML = msg;
+			show($('bd-price-error'), true);
+		}
+
+		function renderPricing() {
+			const ready = !!pricing && selected.size >= 2;
+			show($('bd-price-idle'), !ready && selected.size < 2);
+			show($('bd-price-body'), ready);
+			if (!ready) return;
+
+			const h = pricing.history;
+			$('bd-sum').textContent = fmt(pricing.sum_of_parts_atomic) + ' ' + symbol;
+			$('bd-unit').textContent = symbol;
+
+			const basis = $('bd-basis');
+			basis.dataset.basis = h.basis;
+			basis.textContent = h.basis === 'median_basket'
+				? fmt(pricing.suggested.price) + ' ' + symbol + ' · from your sales'
+				: fmt(pricing.suggested.price) + ' ' + symbol + ' · no sales yet';
+			$('bd-suggest-tip').dataset.tip = h.basis === 'median_basket'
+				? 'The median of what your multi-skill buyers actually spent (' + h.multi_skill_buyers + ' of them). A price this population has already shown it will pay, capped at the sum of the parts.'
+				: 'No buyer has bought two or more of these skills yet, so there is nothing to learn from. This is a plain 20% off the sum of the parts, shown as a starting point rather than a finding.';
+
+			$('bd-buyers').textContent = h.multi_skill_buyers;
+			$('bd-paid').textContent = fmt(h.revenue_atomic);
+			updateDerived();
+			renderUnpriced();
+		}
+
+		// Recomputed locally as the seller drags, so the panel responds instantly
+		// instead of waiting on a round trip per keystroke. Identical arithmetic to
+		// api/_lib/bundle-pricing.js simulatePrice, over the same inputs the server
+		// already returned; the published price is still whatever the server stores.
+		function updateDerived() {
+			if (!pricing) return;
+			const h = pricing.history;
+			const price = Number($('bd-price').value || 0);
+			const priceAtomic = BigInt(toAtomic(price));
+			const buyers = BigInt(h.multi_skill_buyers);
+			const backtest = priceAtomic * buyers;
+			const paid = BigInt(h.revenue_atomic);
+			const delta = backtest - paid;
+
+			$('bd-backtest').textContent = fmt(String(backtest));
+			const d = $('bd-delta');
+			d.textContent = h.multi_skill_buyers ? signed(String(delta)) : '0';
+			d.dataset.tone = delta > 0n ? 'up' : delta < 0n ? 'down' : '';
+
+			// "Better off" needs per-buyer baskets, which the server does not expose
+			// (that would leak individual spend). Report the server's count for the
+			// suggested price and say so, rather than inventing a number per drag.
+			$('bd-better').textContent = Math.abs(price - fromAtomic(pricing.suggested.price)) < 1e-9
+				? pricing.suggested.buyers_better_off
+				: '&#183;';
+
+			const off = sumOfParts > 0 ? ((sumOfParts - price) / sumOfParts) * 100 : 0;
+			const disc = $('bd-discount');
+			disc.dataset.negative = off < 0 ? '1' : '0';
+			disc.innerHTML = off >= 0
+				? '<b>' + off.toFixed(1) + '% off</b> the sum of the parts.'
+				: '<b>' + Math.abs(off).toFixed(1) + '% above</b> the sum of the parts, so buying the skills one at a time would be cheaper.';
+
+			const bad = !(price > 0) || off < 0;
+			$('bd-publish').disabled = bad || !$('bd-name').value.trim();
+			$('bd-publish-note').textContent = !$('bd-name').value.trim()
+				? 'Give the bundle a name to publish it.'
+				: off < 0 ? 'Price it below the sum of the parts first.' : '';
+		}
+
+		function renderUnpriced() {
+			const missing = pricing?.unpriced_skills || [];
+			const box = $('bd-unpriced');
+			show(box, missing.length > 0);
+			if (missing.length) {
+				box.innerHTML = '<b>Left out:</b> ' + missing.map(esc).join(', ') +
+					'. These have no active price, so they cannot be counted in the sum of the parts.';
+			}
+		}
+
+		function syncSliderFromPrice() {
+			const price = Number($('bd-price').value || 0);
+			const pct = sumOfParts > 0 ? Math.round((price / sumOfParts) * 100) : 80;
+			$('bd-slider').value = String(Math.max(1, Math.min(100, pct)));
+		}
+
+		$('bd-price').addEventListener('input', () => { syncSliderFromPrice(); updateDerived(); });
+		$('bd-slider').addEventListener('input', () => {
+			if (!sumOfParts) return;
+			const pct = Number($('bd-slider').value) / 100;
+			$('bd-price').value = String(Number((sumOfParts * pct).toFixed(decimals)));
+			updateDerived();
+		});
+		$('bd-name').addEventListener('input', updateDerived);
+		$('bd-use-suggested').addEventListener('click', () => {
+			if (!pricing) return;
+			$('bd-price').value = String(fromAtomic(pricing.suggested.price));
+			syncSliderFromPrice();
+			updateDerived();
+		});
+
+		// ── publish ─────────────────────────────────────────────────────
+		$('bd-publish').addEventListener('click', async () => {
+			if (!pricing) return;
+			const btn = $('bd-publish');
+			const note = $('bd-publish-note');
+			btn.disabled = true;
+			note.textContent = 'Publishing…';
+			try {
+				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles', {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({
+						name: $('bd-name').value.trim(),
+						description: $('bd-desc').value.trim(),
+						price_amount: Number(toAtomic($('bd-price').value)),
+						currency_mint: pricing.currency_mint,
+						chain: pricing.chain,
+						skills: [...selected],
+					}),
+				});
+				if (!res.ok) {
+					const b = await res.json().catch(() => null);
+					note.textContent = b?.error_description || b?.message || ('Publish failed (HTTP ' + res.status + ').');
+					btn.disabled = false;
+					return;
+				}
+				note.textContent = 'Published.';
+				$('bd-name').value = '';
+				$('bd-desc').value = '';
+				await loadBundles();
+			} catch {
+				note.textContent = 'Could not reach three.ws. Nothing was published; try again.';
+				btn.disabled = false;
+			}
+		});
+
+		// ── published list ──────────────────────────────────────────────
+		async function loadBundles() {
+			const list = $('bd-list');
+			list.innerHTML = '<div class="bd-sk" style="height:132px"></div><div class="bd-sk" style="height:132px"></div>';
+			show($('bd-list-empty'), false);
+
+			let bundles = [];
+			try {
+				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles');
+				if (res.ok) {
+					const b = await res.json().catch(() => null);
+					bundles = b?.data?.bundles || [];
+				}
+			} catch { bundles = []; }
+
+			if (!bundles.length) {
+				list.innerHTML = '';
+				$('bd-list-empty').innerHTML = '<b>No bundles yet.</b> Pick two skills above, set a price, and publish. Buyers will see it on this agent’s listing.';
+				show($('bd-list-empty'), true);
+				return;
+			}
+
+			list.innerHTML = bundles.map((b) => {
+				const skills = Array.isArray(b.skills) ? b.skills : [];
+				return '<article class="bd-bundle">' +
+					'<h3>' + esc(b.name) + '</h3>' +
+					(b.description ? '<p>' + esc(b.description) + '</p>' : '') +
+					'<div class="bd-chips">' + skills.map((s) => '<span class="bd-chip">' + esc(s) + '</span>').join('') + '</div>' +
+					'<div class="bd-bundle-foot">' +
+						'<span class="bd-bundle-price">' + fmt(b.price_amount) + ' ' + symbol + '</span>' +
+						'<button type="button" class="bd-btn bd-btn--ghost" data-off="' + esc(b.id) + '">Deactivate</button>' +
+					'</div>' +
+				'</article>';
+			}).join('');
+
+			list.querySelectorAll('button[data-off]').forEach((btn) => {
+				btn.addEventListener('click', async () => {
+					btn.disabled = true;
+					btn.textContent = 'Deactivating…';
+					try {
+						const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles/' + encodeURIComponent(btn.dataset.off), { method: 'DELETE' });
+						if (!res.ok) { btn.textContent = 'Failed, retry'; btn.disabled = false; return; }
+						await loadBundles();
+					} catch { btn.textContent = 'Failed, retry'; btn.disabled = false; }
+				});
+			});
+		}
+
+		boot();
+	</script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
