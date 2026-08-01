@@ -140,11 +140,12 @@ the best reason yet to follow the existing rule that every doc sample uses a liv
 three.ws avatar URL and a real endpoint. A sample that 404s now 404s in front of
 the reader.
 
-**Previews follow the reader's origin.** A sample correctly hardcodes
+**Absolute URLs are left exactly as published; relative ones resolve against the
+page you are reading.** A sample correctly hardcodes
 `https://three.ws/agent-3d/…` because that is what someone pastes into their own
-site. Inside the preview frame that URL is rewritten to whatever origin the
-reader is on, so a preview on a dev server exercises the local build instead of
-silently loading production.
+site, and the preview loads precisely that. A relative URL such as
+`/avatars/michelle.glb` would otherwise resolve against `about:srcdoc` and load
+nothing, so the frame carries a `<base>` pointing at the reader's own origin.
 
 ---
 

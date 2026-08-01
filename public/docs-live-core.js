@@ -380,23 +380,25 @@ export function applyPlaceholders(request = {}, values = {}) {
 // ── Preview documents ────────────────────────────────────────────────────────
 
 /**
- * Point a snippet's three.ws asset URLs at the origin the reader is actually on.
+ * The `<base>` a sandboxed frame needs so relative URLs in a snippet resolve.
  *
- * A doc sample correctly hardcodes `https://three.ws/agent-3d/…` because that is
- * what a reader pastes into their own site. Inside the preview iframe on a dev
- * server or a preview deploy, that URL loads the PRODUCTION component, so the
- * preview stops reflecting the build under test. On three.ws itself this is a
- * no-op.
+ * A frame built from `srcdoc` with no `allow-same-origin` has an opaque origin
+ * and a document URL of `about:srcdoc`, so `body="/avatars/michelle.glb"`
+ * resolves to nothing at all. A base pointing at the reader's own origin makes
+ * relative URLs mean what they mean on the page they were read on.
  *
- * @param {string} html
- * @param {string} origin
- * @returns {string}
+ * Absolute `https://three.ws/…` URLs are deliberately left alone. Rewriting
+ * them to the current origin (an earlier version of this did) breaks the frame
+ * on any origin that does not itself serve `/agent-3d/…`, and it is also the
+ * wrong preview: a sample hardcodes the production URL precisely because that is
+ * what the reader will paste into their own site.
+ *
+ * @param {string} [origin]
+ * @returns {string} a `<base>` tag, or '' when no usable origin was supplied
  */
-export function rewriteAssetOrigin(html, origin) {
+export function baseTag(origin) {
 	const target = normalizeOrigin(origin);
-	if (!target) return String(html || '');
-	if (/^https:\/\/(www\.)?three\.ws$/.test(target)) return String(html || '');
-	return String(html || '').replace(/https:\/\/(?:www\.)?three\.ws(?=\/)/g, target);
+	return target ? `<base href="${target}/">` : '';
 }
 
 /**
@@ -413,18 +415,19 @@ export function rewriteAssetOrigin(html, origin) {
  */
 export function buildPreviewDoc(snippet, opts = {}) {
 	const theme = opts.theme === 'light' ? 'light' : 'dark';
-	const body = rewriteAssetOrigin(snippet, opts.origin);
+	const body = String(snippet == null ? '' : snippet);
 	const bg = theme === 'light' ? '#f6f7f9' : '#0e0f13';
 	const fg = theme === 'light' ? '#16181d' : '#e8eaf0';
 
-	// A snippet that already declares a full document is used verbatim (minus
-	// the origin rewrite): wrapping it again would nest <html> inside <body>.
+	// A snippet that already declares a full document is used verbatim: wrapping
+	// it again would nest <html> inside <body>.
 	if (/^\s*<(!doctype|html)\b/i.test(body)) return body;
 
 	return `<!doctype html>
 <html lang="en" data-theme="${theme}">
 <head>
 <meta charset="utf-8">
+${baseTag(opts.origin)}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 	:root { color-scheme: ${theme}; }
@@ -459,12 +462,12 @@ ${body}
  * @returns {string}
  */
 export function buildScriptDoc(snippet, opts = {}) {
-	const code = rewriteAssetOrigin(snippet, opts.origin);
+	const code = String(snippet == null ? '' : snippet);
 	// The snippet is injected as a module body. `</script>` inside a string
 	// literal would otherwise close the tag early and break the document.
 	const safe = code.replace(/<\/script/gi, '<\\/script');
 	return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"></head><body>
+<html lang="en"><head><meta charset="utf-8">${baseTag(opts.origin)}</head><body>
 <script type="module">
 const send = (level, args) => {
 	const parts = args.map((a) => {

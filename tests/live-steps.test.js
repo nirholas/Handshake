@@ -14,8 +14,20 @@ import vm from 'node:vm';
 const ROOT = resolve(__dirname, '..');
 const SOURCE = readFileSync(join(ROOT, 'public/live-steps.js'), 'utf8');
 
+/*
+ * A fresh vm context has no web globals, so hand the script the same small set
+ * a browser would: URL and URLSearchParams for request building, and a location
+ * for resolving relative asset URLs. Anything beyond this (document, fetch) is
+ * only reached from mount(), which the browser pass in
+ * scripts/capture-live-steps-media.mjs exercises for real.
+ */
 function load() {
-	const sandbox = { window: {} };
+	const sandbox = {
+		window: {},
+		URL,
+		URLSearchParams,
+		location: new URL('https://three.ws/tutorials/wallet-sign-in'),
+	};
 	vm.createContext(sandbox);
 	vm.runInContext(SOURCE, sandbox, { filename: 'live-steps.js' });
 	return sandbox.window.LiveSteps;
@@ -245,6 +257,72 @@ describe('the SIWS message derivation', () => {
 			nonce: 'N',
 		});
 		expect(anon.split('\n')[1]).toBe('<your-solana-address>');
+	});
+});
+
+describe('the rendered-asset lane', () => {
+	it('parses a dotted path with indexes', () => {
+		expect(LiveSteps.parsePickPath('agents[0].avatar_thumbnail')).toEqual([
+			'agents',
+			0,
+			'avatar_thumbnail',
+		]);
+		expect(LiveSteps.parsePickPath('data.launches[2].agent.avatar_thumbnail_url')).toEqual([
+			'data',
+			'launches',
+			2,
+			'agent',
+			'avatar_thumbnail_url',
+		]);
+	});
+
+	it('rejects anything that is not a plain path', () => {
+		for (const bad of ['', 'a..b', 'a[b]', 'a[]', '.a', 'a.', 'a()', 'a[0', null, 42]) {
+			expect(LiveSteps.parsePickPath(bad)).toBe(null);
+		}
+	});
+
+	it('reads a value, and returns undefined rather than throwing on a miss', () => {
+		const body = { agents: [{ avatar_thumbnail: '/a.png' }] };
+		expect(LiveSteps.pickValue(body, ['agents', 0, 'avatar_thumbnail'])).toBe('/a.png');
+		expect(LiveSteps.pickValue(body, ['agents', 5, 'avatar_thumbnail'])).toBe(undefined);
+		expect(LiveSteps.pickValue(body, ['nope', 'deeper'])).toBe(undefined);
+		// An array where an object key is expected must not be indexed by name.
+		expect(LiveSteps.pickValue(body, ['agents', 'avatar_thumbnail'])).toBe(undefined);
+	});
+
+	it('only lets https and same-origin paths become a subresource', () => {
+		expect(LiveSteps.safeAssetUrl('/avatars/cz.glb')).toBe('/avatars/cz.glb');
+		expect(LiveSteps.safeAssetUrl('https://cdn.example/a.png')).toBe('https://cdn.example/a.png');
+		for (const bad of [
+			'javascript:alert(1)',
+			'data:image/svg+xml,<svg onload=alert(1)>',
+			'http://insecure.example/a.png',
+			'//evil.example/a.png',
+			'',
+			null,
+			{},
+		]) {
+			expect(LiveSteps.safeAssetUrl(bad)).toBe(null);
+		}
+	});
+
+	it('infers the asset kind from the extension, query string and all', () => {
+		expect(LiveSteps.mediaKind('/a/b.glb')).toBe('model');
+		expect(LiveSteps.mediaKind('/a/b.gltf?v=2')).toBe('model');
+		expect(LiveSteps.mediaKind('/a/b.webp#x')).toBe('image');
+		expect(LiveSteps.mediaKind('/a/b.JPG')).toBe('image');
+		expect(LiveSteps.mediaKind('/a/b.txt')).toBe(null);
+		expect(LiveSteps.mediaKind(null)).toBe(null);
+	});
+
+	it('every registered render declares a readable path, a known kind and alt text', () => {
+		for (const step of LiveSteps.STEPS) {
+			if (!step.renders) continue;
+			expect(LiveSteps.parsePickPath(step.renders.pick)).toBeTruthy();
+			expect(['image', 'model', 'auto', undefined]).toContain(step.renders.kind);
+			expect(String(step.renders.alt).length).toBeGreaterThan(10);
+		}
 	});
 });
 

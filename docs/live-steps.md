@@ -95,7 +95,25 @@ Add an entry to `STEPS` in [public/live-steps.js](https://github.com/nirholas/th
 - `inputs` become editable text fields and are sent as query parameters. Give each one a `value` (the default), a `placeholder`, and a `hint`.
 - `exports` maps a variable name to a key in the response body, making it available to later steps on the page.
 
-### 3. For something that is not a request, add a derivation
+### 3. If the response points at something you can see, render it
+
+Printing JSON proves the API answered. It does not show what the answer *is*. When a response carries the URL of a portrait, a thumbnail, or a GLB, add a `renders` block and the card mounts that asset live underneath the body, so "call the endpoint" and "look at what it returned" collapse into one card:
+
+```js
+renders: {
+  pick: 'agents[0].avatar_thumbnail',
+  kind: 'image',
+  alt: 'The portrait of the first agent in the live public directory',
+}
+```
+
+- `pick` is a dotted path with optional numeric indexes, read from the raw response body. The registry declares it; markdown never supplies one.
+- `kind` is `image`, `model`, or `auto` to infer it from the file extension. A `model` mounts in `model-viewer`, orbitable, and drops its auto-rotate under `prefers-reduced-motion`. A host page that has not registered `model-viewer` gets a real link to the file instead of an empty box.
+- `alt` is required. A step that renders an asset without alt text fails at load.
+
+The URL comes off the network, so it is treated as untrusted: it must be `https:` or a same-origin absolute path before it can become a subresource, and it is applied with `setAttribute` on a fresh element. A `javascript:` or `data:` value in that field renders nothing. When the field is simply absent, the card stays quiet, because a directory whose first entry has no portrait is a normal response rather than an error.
+
+### 4. For something that is not a request, add a derivation
 
 A `derive` step runs a named pure function in the same file and performs no network call. Use it when the thing worth showing is a transform rather than a response, such as assembling the exact message a wallet signs:
 
@@ -114,7 +132,7 @@ A `derive` step runs a named pure function in the same file and performs no netw
 
 The function itself lives in the `DERIVATIONS` map and receives one object holding every chained variable plus the reader's input values. A derivation named in a step but missing from that map fails at load.
 
-### 4. Verify
+### 5. Verify
 
 ```bash
 npx vitest run tests/live-steps.test.js
@@ -134,16 +152,20 @@ The card follows the reader's theme through the canonical tokens in `tokens.css`
 
 ## Currently registered steps
 
-| id | Call | Publishes |
-|---|---|---|
-| `version` | `GET /api/version` | `commit` |
-| `platform-stats` | `GET /api/platform/stats` | |
-| `agents-public` | `GET /api/agents/public` | |
-| `skills-catalog` | `GET /api/skills` | |
-| `three-leaderboard` | `GET /api/leaderboard` | |
-| `auth-me` | `GET /api/auth/me` | |
-| `siws-nonce` | `GET /api/auth/siws/nonce` | `nonce`, `domain`, `uri`, `expiresAt` |
-| `siws-message` | local derivation | |
+| id | Call | Publishes | Renders |
+|---|---|---|---|
+| `version` | `GET /api/version` | `commit` | |
+| `platform-stats` | `GET /api/platform/stats` | | |
+| `agents-public` | `GET /api/agents/public` | | first agent's portrait |
+| `pump-launches` | `GET /api/pump/launches` | | launching agent's portrait |
+| `pump-trending` | `GET /api/pump/trending` | | |
+| `skills-catalog` | `GET /api/skills` | | |
+| `three-leaderboard` | `GET /api/leaderboard` | | |
+| `auth-me` | `GET /api/auth/me` | | |
+| `siws-nonce` | `GET /api/auth/siws/nonce` | `nonce`, `domain`, `uri`, `expiresAt` | |
+| `siws-message` | local derivation | | |
+
+Run `npx vitest run tests/live-steps.test.js` after editing the registry; the suite asserts this table's invariants against the shipped file.
 
 ---
 

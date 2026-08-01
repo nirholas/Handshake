@@ -20,7 +20,7 @@ import {
 	formatResponseBody,
 	isSecretName,
 	parseCurl,
-	rewriteAssetOrigin,
+	baseTag,
 	runLabel,
 	statusTone,
 	tokenizeShell,
@@ -261,21 +261,34 @@ describe('applyPlaceholders', () => {
 	});
 });
 
-describe('rewriteAssetOrigin', () => {
-	it('points production asset URLs at a dev origin so the preview tests the local build', () => {
-		const out = rewriteAssetOrigin('<script src="https://three.ws/agent-3d/latest/agent-3d.js"></script>', 'http://localhost:3000');
-		expect(out).toContain('http://localhost:3000/agent-3d/latest/agent-3d.js');
+describe('baseTag', () => {
+	it('anchors relative URLs to the origin the reader is on', () => {
+		expect(baseTag('http://localhost:3000/docs/')).toBe('<base href="http://localhost:3000/">');
+		expect(baseTag('https://three.ws')).toBe('<base href="https://three.ws/">');
 	});
 
-	it('is a no-op on three.ws itself', () => {
-		const html = '<script src="https://three.ws/agent-3d/latest/agent-3d.js"></script>';
-		expect(rewriteAssetOrigin(html, 'https://three.ws')).toBe(html);
-		expect(rewriteAssetOrigin(html, 'https://www.three.ws')).toBe(html);
+	it('emits nothing when there is no usable origin', () => {
+		expect(baseTag()).toBe('');
+		expect(baseTag('not a url')).toBe('');
 	});
+});
 
-	it('leaves other hosts untouched', () => {
-		const html = '<img src="https://cdn.example/x.png">';
-		expect(rewriteAssetOrigin(html, 'http://localhost:3000')).toBe(html);
+describe('absolute URLs in a snippet', () => {
+	// The first version of this feature rewrote https://three.ws/… to the
+	// current origin so a dev-server preview would exercise the local build.
+	// That broke every preview on any origin not serving /agent-3d/: the
+	// sandboxed frame has an opaque origin, so the rewritten module script was
+	// a cross-origin load with no CORS behind it. Production serves those
+	// assets with `access-control-allow-origin: *`; leaving the URL alone is
+	// both what works and what the reader will actually paste.
+	it('leaves a production asset URL exactly as published', () => {
+		const snippet = '<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>';
+		expect(buildPreviewDoc(snippet, { origin: 'http://localhost:3099' })).toContain(
+			'https://three.ws/agent-3d/latest/agent-3d.js',
+		);
+		expect(buildScriptDoc('fetch("https://three.ws/api/version")', { origin: 'http://localhost:3099' })).toContain(
+			'https://three.ws/api/version',
+		);
 	});
 });
 

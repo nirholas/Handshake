@@ -8,8 +8,9 @@
  * Documentation rots silently. A curl command in a tutorial can point at an
  * endpoint that was renamed two quarters ago and nothing notices, because the
  * doc still reads fine. This turns that class of rot into a build failure: if
- * the reader can press Run on a sample, CI can press Run on the same sample,
- * using literally the same extractor (public/runnable-extract.js).
+ * the reader can press Run on a sample, CI presses Run on the same sample, over
+ * the same parser and the same safety rules the Live Docs runner uses
+ * (public/docs-live-verify.js on top of public/docs-live-core.js).
  *
  * A sample passes when the live response status matches its contract:
  *   • by default, any 2xx
@@ -34,7 +35,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runnableSamples } from '../public/runnable-extract.js';
+import { verifiableSamples } from '../public/docs-live-verify.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(ROOT, 'docs');
@@ -50,11 +51,18 @@ const ONLY = flag('only');
 const CONCURRENCY = Math.max(1, Math.min(12, Number(flag('concurrency', '6')) || 6));
 const TIMEOUT_MS = Math.max(5000, Number(flag('timeout', '30000')) || 30000);
 
+/**
+ * Generated single-file aggregates hold a copy of every other doc, so probing
+ * them would double every call and report each failure against a file nobody
+ * edits. The same set is skipped by audit-docs and the docs search index.
+ */
+const GENERATED_AGGREGATES = new Set(['ALL.md', 'EVERYTHING.md']);
+
 function walk(dir, out = []) {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		const path = join(dir, entry.name);
 		if (entry.isDirectory()) walk(path, out);
-		else if (entry.name.endsWith('.md')) out.push(path);
+		else if (entry.name.endsWith('.md') && !GENERATED_AGGREGATES.has(entry.name)) out.push(path);
 	}
 	return out;
 }
@@ -63,7 +71,7 @@ function inventory() {
 	const byUrl = new Map();
 	for (const file of walk(DOCS)) {
 		const rel = relative(ROOT, file);
-		for (const sample of runnableSamples(readFileSync(file, 'utf8'))) {
+		for (const sample of verifiableSamples(readFileSync(file, 'utf8'))) {
 			if (ONLY && !sample.url.includes(ONLY)) continue;
 			const existing = byUrl.get(sample.url);
 			if (existing) {
@@ -89,28 +97,37 @@ function inventory() {
 	return [...byUrl.values()].sort((a, b) => a.url.localeCompare(b.url));
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function probe(sample) {
 	const url = `${BASE}${sample.path}`;
 	const started = Date.now();
-	try {
-		const res = await fetch(url, {
-			headers: { accept: sample.accept || 'application/json, */*' },
-			redirect: 'follow',
-			signal: AbortSignal.timeout(TIMEOUT_MS),
-		});
-		const expected = sample.expectStatus
-			? res.status === sample.expectStatus
-			: res.status >= 200 && res.status < 300;
-		return { ...sample, status: res.status, ms: Date.now() - started, ok: expected };
-	} catch (err) {
-		return {
-			...sample,
-			status: 'ERR',
-			ms: Date.now() - started,
-			ok: false,
-			error: String(err.message || err).slice(0, 120),
-		};
+	let last = null;
+	// Two attempts, because a shared per-IP budget can throttle a burst of
+	// probes and a 429 says nothing about whether the doc is still true.
+	for (let attempt = 0; attempt < 2; attempt++) {
+		if (attempt) await sleep(2500);
+		try {
+			const res = await fetch(url, {
+				headers: { accept: sample.accept || 'application/json, */*' },
+				redirect: 'follow',
+				signal: AbortSignal.timeout(TIMEOUT_MS),
+			});
+			last = { status: res.status };
+			if (res.status !== 429) break;
+		} catch (err) {
+			last = { status: 'ERR', error: String(err.message || err).slice(0, 120) };
+			break;
+		}
 	}
+	const ms = Date.now() - started;
+	if (sample.expectStatus) {
+		return { ...sample, ...last, ms, ok: last.status === sample.expectStatus };
+	}
+	// A 429 that survives the retry still proves the route exists and is
+	// enforcing its budget, which is all this gate claims to check.
+	const alive = (last.status >= 200 && last.status < 300) || last.status === 429;
+	return { ...sample, ...last, ms, ok: alive, throttled: last.status === 429 };
 }
 
 async function main() {

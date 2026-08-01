@@ -420,6 +420,100 @@
 	}
 }
 
+/* ── Rendered asset ──────────────────────────────────────────────────────────
+ * When a response carries the URL of a portrait or a GLB, the card mounts it
+ * under the body so "what did the endpoint answer" and "what does that answer
+ * look like" are one glance rather than two tabs. The frame keeps a stable
+ * aspect box so the card does not jump as the asset streams in. */
+
+.ls-asset {
+	margin-top: 0.85rem;
+}
+.ls-asset-head {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-bottom: 0.4rem;
+}
+.ls-asset-label {
+	color: var(--ink-dim, #888);
+	font-size: 0.7rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+.ls-asset-src {
+	flex: 1 1 10rem;
+	min-width: 0;
+	color: var(--ink-dim, #888);
+	font-family: var(--font-mono, monospace);
+	font-size: 0.68rem;
+	opacity: 0.7;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ls-asset-frame {
+	position: relative;
+	display: grid;
+	place-items: center;
+	aspect-ratio: 16 / 9;
+	max-height: 20rem;
+	overflow: hidden;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-md, 10px);
+	background:
+		radial-gradient(
+			circle at 50% 38%,
+			color-mix(in srgb, var(--ls-accent) 9%, transparent),
+			transparent 62%
+		),
+		var(--bg-0, #0a0a0a);
+}
+.ls-asset-img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+.ls-asset-model {
+	width: 100%;
+	height: 100%;
+	background: none;
+	--poster-color: transparent;
+}
+.ls-asset-model:focus-visible {
+	outline: 2px solid var(--ls-accent);
+	outline-offset: -2px;
+}
+.ls-asset-hint {
+	position: absolute;
+	right: 0.55rem;
+	bottom: 0.5rem;
+	padding: 0.16rem 0.42rem;
+	border-radius: var(--radius-pill, 999px);
+	background: color-mix(in srgb, var(--bg-0, #0a0a0a) 72%, transparent);
+	color: var(--ink-dim, #888);
+	font-size: 0.64rem;
+	pointer-events: none;
+}
+.ls-asset-fallback {
+	color: var(--ink, #e8e8e8);
+	font-size: 0.8rem;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.ls-asset-fallback:focus-visible {
+	outline: 2px solid var(--ls-accent);
+	outline-offset: 3px;
+}
+.ls-asset-fail {
+	margin: 0;
+	padding: 0 1rem;
+	color: var(--ink-dim, #888);
+	font-size: 0.78rem;
+	text-align: center;
+}
+
 .ls-note {
 	display: flex;
 	align-items: flex-start;
@@ -497,6 +591,9 @@
 	}
 	.ls-pre {
 		font-size: 0.71rem;
+	}
+	.ls-asset-frame {
+		aspect-ratio: 4 / 3;
 	}
 }
 

@@ -137,6 +137,58 @@
 				},
 			],
 			exports: {},
+			renders: {
+				pick: 'agents[0].avatar_thumbnail',
+				kind: 'image',
+				alt: 'The portrait of the first agent in the live public directory',
+			},
+		},
+		{
+			id: 'pump-launches',
+			kind: 'request',
+			method: 'GET',
+			path: '/api/pump/launches',
+			title: 'List coins launched through three.ws',
+			summary:
+				'Every mint launched from the platform, newest first, each joined to the agent that launched it. Public: this is what the launches feed renders from.',
+			docs: '/launches',
+			credentials: 'omit',
+			inputs: [
+				{
+					name: 'limit',
+					label: 'limit',
+					value: '3',
+					placeholder: '3',
+					hint: 'How many launches to return.',
+				},
+			],
+			exports: {},
+			renders: {
+				pick: 'data.launches[0].agent.avatar_thumbnail_url',
+				kind: 'image',
+				alt: 'The portrait of the agent behind the most recent launch',
+			},
+		},
+		{
+			id: 'pump-trending',
+			kind: 'request',
+			method: 'GET',
+			path: '/api/pump/trending',
+			title: 'Read the trending coin feed',
+			summary:
+				'Trending mints from the live Pump.fun feed, the same source the market surfaces score against. Values move between one run and the next, which is the point.',
+			docs: '/pumpfun',
+			credentials: 'omit',
+			inputs: [
+				{
+					name: 'limit',
+					label: 'limit',
+					value: '3',
+					placeholder: '3',
+					hint: 'How many coins to return.',
+				},
+			],
+			exports: {},
 		},
 		{
 			id: 'skills-catalog',
@@ -278,6 +330,20 @@
 					}
 					produced.add(name);
 				}
+				if (step.renders) {
+					if (!parsePickPath(step.renders.pick)) {
+						throw new Error(
+							`live-steps: ${step.id} renders an unreadable path "${step.renders.pick}"`,
+						);
+					}
+					const kind = step.renders.kind || 'auto';
+					if (kind !== 'auto' && kind !== 'model' && kind !== 'image') {
+						throw new Error(`live-steps: ${step.id} renders unknown kind "${kind}"`);
+					}
+					if (!step.renders.alt) {
+						throw new Error(`live-steps: ${step.id} renders without alt text`);
+					}
+				}
 			} else {
 				if (typeof DERIVATIONS[step.derive] !== 'function') {
 					throw new Error(`live-steps: ${step.id} names unknown derivation "${step.derive}"`);
@@ -339,14 +405,21 @@
 	 * ══════════════════════════════════════════════════════════════════════ */
 
 	function buildUrl(step, values) {
-		const params = new URLSearchParams();
+		/*
+		 * encodeURIComponent rather than URLSearchParams, for two reasons. It
+		 * percent-encodes the delimiters that matter here (/, ?, #, &) where
+		 * URLSearchParams leaves some of them raw and turns spaces into '+', and
+		 * it is a language built-in, so this stays pure and testable outside a
+		 * browser. Only declared inputs are read, so an undeclared key a caller
+		 * passes in can never reach the URL.
+		 */
+		const pairs = [];
 		for (const input of step.inputs || []) {
 			const raw = values[input.name];
 			if (raw === undefined || raw === null || String(raw).trim() === '') continue;
-			params.set(input.name, String(raw).trim());
+			pairs.push(`${encodeURIComponent(input.name)}=${encodeURIComponent(String(raw).trim())}`);
 		}
-		const qs = params.toString();
-		return qs ? `${step.path}?${qs}` : step.path;
+		return pairs.length ? `${step.path}?${pairs.join('&')}` : step.path;
 	}
 
 	/* ══════════════════════════════════════════════════════════════════════
@@ -467,6 +540,145 @@
 		return described
 			? `The API rejected the request: ${described}`
 			: 'The API answered with an unexpected status.';
+	}
+
+	/* ══════════════════════════════════════════════════════════════════════
+	 * The render lane - the part only a 3D platform can do.
+	 *
+	 * Printing JSON proves the API answered. It does not show what the answer
+	 * IS. When a response carries the URL of an avatar, a thumbnail or a GLB,
+	 * a step can declare `renders` and the card mounts that asset live under
+	 * the body: "call the endpoint" and "look at the thing it returned" become
+	 * one card instead of a call, a copy, and a trip to another tab.
+	 *
+	 * The URL comes off the network, so it is treated as untrusted:
+	 *   - it is read from the RAW body by a path the registry declares, never
+	 *     by anything markdown supplies,
+	 *   - it must be https: or a same-origin absolute path, so a redirected or
+	 *     poisoned field can never produce a javascript: or data: subresource,
+	 *   - it is set through setAttribute on a fresh element, never innerHTML.
+	 * ══════════════════════════════════════════════════════════════════════ */
+
+	const MODEL_EXT = /\.(glb|gltf)(\?|#|$)/i;
+	const IMAGE_EXT = /\.(png|jpe?g|webp|avif|gif)(\?|#|$)/i;
+
+	/* `agents[0].avatar_thumbnail` -> ['agents', 0, 'avatar_thumbnail']. */
+	function parsePickPath(expr) {
+		if (typeof expr !== 'string' || !expr) return null;
+		/* A trailing separator would otherwise consume cleanly and yield a path
+		 * one segment shorter than the author wrote. */
+		if (expr.endsWith('.')) return null;
+		const out = [];
+		const re = /([A-Za-z_$][\w$]*)|\[(\d+)\]/g;
+		let consumed = 0;
+		/* A separator promises another segment; "a." must not parse as ['a']. */
+		let expectSegment = true;
+		let match;
+		while ((match = re.exec(expr)) !== null) {
+			if (match.index !== consumed) return null;
+			consumed = re.lastIndex;
+			out.push(match[1] !== undefined ? match[1] : Number(match[2]));
+			expectSegment = false;
+			if (expr.charAt(consumed) === '.') {
+				consumed += 1;
+				expectSegment = true;
+			}
+			re.lastIndex = consumed;
+		}
+		if (expectSegment || consumed !== expr.length || !out.length) return null;
+		return out;
+	}
+
+	function pickValue(body, path) {
+		let cursor = body;
+		for (const segment of path) {
+			if (cursor === null || cursor === undefined) return undefined;
+			if (typeof segment === 'number') {
+				if (!Array.isArray(cursor)) return undefined;
+			} else if (typeof cursor !== 'object' || Array.isArray(cursor)) {
+				return undefined;
+			}
+			cursor = cursor[segment];
+		}
+		return cursor;
+	}
+
+	function mediaKind(url) {
+		if (typeof url !== 'string') return null;
+		if (MODEL_EXT.test(url)) return 'model';
+		if (IMAGE_EXT.test(url)) return 'image';
+		return null;
+	}
+
+	/*
+	 * Only https and same-origin absolute paths may become a subresource. A
+	 * scheme-relative or bare-relative value is rejected rather than resolved:
+	 * the origin it would pick up depends on the page, and a URL whose host
+	 * depends on where the docs are hosted is not a URL worth rendering.
+	 */
+	function safeAssetUrl(url) {
+		if (typeof url !== 'string' || !url) return null;
+		if (url.startsWith('//')) return null;
+		if (url.startsWith('/')) return url;
+		return /^https:\/\/[^\s/?#]+/i.test(url) ? url : null;
+	}
+
+	function renderAsset(url, kind, alt) {
+		const wrap = el('div', 'ls-asset');
+		const head = el('div', 'ls-asset-head');
+		head.append(el('span', 'ls-asset-label', 'Rendered from this response'), el('code', 'ls-asset-src', url));
+		wrap.appendChild(head);
+
+		const frame = el('div', 'ls-asset-frame');
+		/*
+		 * model-viewer is loaded by the pages that host live steps. If a host
+		 * page has not registered it, mounting the element would paint an empty
+		 * box, so the reader gets a real link to the file instead.
+		 */
+		if (kind === 'model' && !(window.customElements && customElements.get('model-viewer'))) {
+			const link = el('a', 'ls-asset-fallback', 'Open the model file');
+			link.href = url;
+			link.target = '_blank';
+			link.rel = 'noopener noreferrer';
+			frame.appendChild(link);
+			wrap.appendChild(frame);
+			return wrap;
+		}
+
+		if (kind === 'model') {
+			const viewer = document.createElement('model-viewer');
+			viewer.className = 'ls-asset-model';
+			viewer.setAttribute('src', url);
+			viewer.setAttribute('camera-controls', '');
+			viewer.setAttribute('touch-action', 'pan-y');
+			viewer.setAttribute('interaction-prompt', 'none');
+			viewer.setAttribute('shadow-intensity', '0');
+			viewer.setAttribute('exposure', '0.95');
+			viewer.setAttribute('environment-image', 'neutral');
+			viewer.setAttribute('field-of-view', '32deg');
+			viewer.setAttribute('tabindex', '0');
+			viewer.setAttribute('alt', alt || 'The model this response points at');
+			const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (!reduce) {
+				viewer.setAttribute('auto-rotate', '');
+				viewer.setAttribute('auto-rotate-delay', '600');
+				viewer.setAttribute('rotation-per-second', '16deg');
+			}
+			frame.append(viewer, el('span', 'ls-asset-hint', 'Drag to orbit'));
+		} else {
+			const img = new Image();
+			img.className = 'ls-asset-img';
+			img.src = url;
+			img.alt = alt || 'The image this response points at';
+			img.loading = 'lazy';
+			img.decoding = 'async';
+			img.addEventListener('error', () => {
+				frame.replaceChildren(el('p', 'ls-asset-fail', 'That URL did not load as an image.'));
+			});
+			frame.appendChild(img);
+		}
+		wrap.appendChild(frame);
+		return wrap;
 	}
 
 	/* ══════════════════════════════════════════════════════════════════════
@@ -689,6 +901,19 @@
 				showNote('is-ok', `Later steps on this page can now use ${exported.join(', ')}.`);
 				ctx.onExport();
 			}
+
+			/*
+			 * The render lane. Read from the raw body (redaction never hides an
+			 * asset URL, but reading raw keeps the two concerns independent), and
+			 * stay quiet when the field is absent: a directory whose first entry
+			 * has no portrait is a normal response, not an error to shout about.
+			 */
+			if (step.renders && parsed) {
+				const raw = pickValue(parsed, parsePickPath(step.renders.pick));
+				const url = safeAssetUrl(raw);
+				const kind = step.renders.kind === 'auto' || !step.renders.kind ? mediaKind(url) : step.renders.kind;
+				if (url && kind) result.appendChild(renderAsset(url, kind, step.renders.alt));
+			}
 			return true;
 		}
 
@@ -812,6 +1037,10 @@
 		redact,
 		buildUrl,
 		explainFailure,
+		parsePickPath,
+		pickValue,
+		safeAssetUrl,
+		mediaKind,
 		mount,
 	};
 })();
