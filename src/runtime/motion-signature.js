@@ -56,6 +56,24 @@ const MAX_BEAT_PERIOD = 2.5;
 /** A peak below this is noise, not a beat. */
 const BEAT_FLOOR = 0.25;
 
+/**
+ * Minimum relative spread (standard deviation over mean) of the motion-energy
+ * envelope before a beat is claimed at all. A clip moving at a steady rate has
+ * a flat envelope: it is continuous, not rhythmic, and any lag will correlate
+ * with any other. Without this gate a constant-speed ramp reports whatever the
+ * shortest searched lag happens to be.
+ */
+const BEAT_MIN_PULSE = 0.3;
+
+/**
+ * A candidate lag this close to the strongest peak wins if it is shorter.
+ * Autocorrelation peaks at every multiple of the true period, and the estimator
+ * gets noisier as the overlap shrinks, so the largest peak is regularly 2x or
+ * 3x the real one. Preferring the shortest near-equal peak is the standard
+ * octave-error guard from pitch detection.
+ */
+const BEAT_HARMONIC_TOLERANCE = 0.88;
+
 /** Loop-seam thresholds: mean bone angle (rad) and root offset (metres). */
 const SEAM_ANGLE_LIMIT = 0.2;
 const SEAM_ROOT_LIMIT = 0.06;
@@ -206,6 +224,9 @@ function findBeat(signal, dt, duration) {
 		energy += dev[i] * dev[i];
 	}
 	if (energy <= 0) return { period: null, strength: 0 };
+	if (mean > 0 && Math.sqrt(energy / n) / mean < BEAT_MIN_PULSE) {
+		return { period: null, strength: 0 };
+	}
 
 	const minLag = Math.max(2, Math.round(MIN_BEAT_PERIOD / dt));
 	const maxLag = Math.min(n - 2, Math.round(maxLagS / dt));
@@ -221,11 +242,22 @@ function findBeat(signal, dt, duration) {
 
 	let bestLag = 0;
 	let best = 0;
+	const peaks = [];
 	for (let lag = minLag; lag <= maxLag; lag++) {
 		if (acf[lag] <= acf[lag - 1] || acf[lag] < acf[lag + 1]) continue;
+		peaks.push(lag);
 		if (acf[lag] > best) {
 			best = acf[lag];
 			bestLag = lag;
+		}
+	}
+	// Octave-error guard: the shortest peak within tolerance of the strongest
+	// one is the true period; the strongest is regularly a multiple of it.
+	for (const lag of peaks) {
+		if (lag < bestLag && acf[lag] >= best * BEAT_HARMONIC_TOLERANCE) {
+			bestLag = lag;
+			best = acf[lag];
+			break;
 		}
 	}
 	if (bestLag === 0 || best < BEAT_FLOOR) {

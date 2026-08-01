@@ -104,7 +104,10 @@ const GESTURES = Object.freeze({
 	cheer:    { clip: 'av-cheering',     label: 'Cheer',    icon: '🙌', loop: false, layer: 'upper', crossfade: 0.25 },
 	agree:    { clip: 'xbot-agree',      label: 'Agree',    icon: '✅', loop: false, layer: 'upper', crossfade: 0.2  },
 	disagree: { clip: 'xbot-head-shake', label: 'Disagree', icon: '🙅', loop: false, layer: 'upper', crossfade: 0.2  },
-	talking:  { clip: 'av-vtubing',      label: 'Talking',  icon: '💬', loop: true,  layer: 'upper', crossfade: 0.3  },
+	// av-vtubing reads as talking at full body, but 63% of its motion is hips
+	// and legs (signatures.json upperShare 0.372), which the upper-layer strip
+	// discards; av-conductor keeps its gesticulation above the waist.
+	talking:  { clip: 'av-conductor',    label: 'Talking',  icon: '💬', loop: true,  layer: 'upper', crossfade: 0.3  },
 	// Conversational + locomotion gestures. `shrug` is a shoulder shrug, so it
 	// overlays the base layer (shrug while walking) rather than taking the whole
 	// body over the way the borrowed `defeated` clip had to. All clip names are

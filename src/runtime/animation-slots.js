@@ -55,11 +55,13 @@ export const DEFAULT_ANIMATION_MAP = {
 	bow: 'sitclap',
 	point: 'point',
 	shrug: 'shrug',
-	// Was 'Fidget' — no such clip exists (case mismatch against the lowercase
-	// manifest names too), so the slot silently no-op'd on every agent that hit
-	// it. av-waiting is a real baked idle-fidget loop (see registry.json
-	// known_issues: broken-fidget-slot).
-	fidget: 'av-waiting',
+	// Was 'Fidget', a clip that does not exist (case mismatch against the
+	// lowercase manifest names too), so the slot silently no-op'd on every agent
+	// that hit it (registry.json known_issues: broken-fidget-slot). av-waiting looked
+	// right but measures with an open loop seam and root drift (signatures.json:
+	// loopClean false), which snaps every cycle on a looping slot;
+	// av-listening-music is a clean anchored loop with the same restless read.
+	fidget: 'av-listening-music',
 	dance: 'rumba',
 	// Skill-driven slots. Each one exists because a skill emits the matching
 	// hint; before they were slots those hints hit no clip and no-op'd silently.
@@ -67,7 +69,9 @@ export const DEFAULT_ANIMATION_MAP = {
 	present: 'av-brag-claps',
 	sign: 'xbot-agree',
 	curiosity: 'av-spy',
-	patience: 'av-waiting',
+	// Looping slot, so it needs a clean anchored loop; av-waiting's open seam
+	// rules it out here too.
+	patience: 'av-idle-anim',
 	manipulate: 'av-push-block',
 	conjure: 'av-conductor',
 };
