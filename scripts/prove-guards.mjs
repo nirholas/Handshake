@@ -270,7 +270,9 @@ if (write && !only.length && !stageFilter) {
 		})),
 	};
 	const out = path.join(root, 'public/guard-proofs.json');
-	const body = `${JSON.stringify(payload, null, '\t')}\n`;
+	// Guard summaries quote page copy and commit subjects, and the repo bans
+	// em/en dashes in committed bytes, so scrub them at the boundary.
+	const body = `${JSON.stringify(payload, null, '\t').replace(/ [\u2013\u2014] /g, ': ').replace(/[\u2013\u2014]/g, '-')}\n`;
 	if ((existsSync(out) ? readFileSync(out, 'utf8') : null) !== body) {
 		writeFileSync(out, body);
 		console.log('[prove-guards] wrote public/guard-proofs.json');
