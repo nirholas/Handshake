@@ -351,6 +351,25 @@ export function openDepositSheet({ solanaAddress, evmAddress, balances, readBala
 	}
 
 	/**
+	 * Re-point every representation of the request at once.
+	 *
+	 * The QR is not the only copy of the URI on screen: "Open in wallet" is a
+	 * deep link and "Copy payment link" is a clipboard payload, and all three
+	 * must agree. Redrawing only the code left the link carrying the amount the
+	 * user had typed BEFORE their last edit, which is exactly the kind of
+	 * mismatch that sends the wrong number to a stranger's wallet.
+	 */
+	function refreshRequest() {
+		const uri = currentUri();
+		if (!uri) return;
+		const open = dlg.querySelector('[data-dep="open"]');
+		if (open) open.setAttribute('href', uri);
+		const copyUri = dlg.querySelector('[data-dep="copy-uri"]');
+		if (copyUri) copyUri.dataset.copy = uri;
+		drawQr();
+	}
+
+	/**
 	 * Render the QR from the `qrcode` package, loaded on demand so the wallet
 	 * page does not carry it for the majority of visits that never deposit.
 	 * A failure downgrades to the copyable address rather than an empty box.
@@ -450,7 +469,7 @@ export function openDepositSheet({ solanaAddress, evmAddress, balances, readBala
 		if (e.target?.dataset?.dep !== 'amount') return;
 		view.amount = e.target.value.trim();
 		clearTimeout(amountTimer);
-		amountTimer = setTimeout(drawQr, 280);
+		amountTimer = setTimeout(refreshRequest, 280);
 	});
 
 	async function rebaselineThenWatch() {

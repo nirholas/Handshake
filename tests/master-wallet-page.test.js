@@ -258,3 +258,138 @@ describe('master wallet page is reachable', () => {
 		expect(read('STRUCTURE.md')).toContain('pages/wallet.html');
 	});
 });
+
+describe('reviewing a top-up prices it on the server and signs nothing', () => {
+	beforeEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it('sends simulate:true and the agent_id body key', async () => {
+		const calls = stubFetch(() =>
+			jsonResponse({ simulation: { human_amount: 4, usd_value: 4, agent_wallet: 'AgentSol' } }),
+		);
+		const { previewFundAgent } = await loadClient();
+		const res = await previewFundAgent({ agentId: 'a-1', asset: 'USDC', amount: 'max' });
+
+		expect(res.ok).toBe(true);
+		const call = calls.find((c) => c.path.endsWith('/api/user/wallet/fund-agent'));
+		const body = JSON.parse(call.init.body);
+		expect(call.init.method).toBe('POST');
+		expect(body.simulate).toBe(true);
+		// snake_case: the handler reads body.agent_id, not agentId.
+		expect(body.agent_id).toBe('a-1');
+		expect(body).not.toHaveProperty('agentId');
+		expect(call.init.headers['x-csrf-token']).toBe(CSRF);
+	});
+
+	it('omits simulate entirely on the real top-up', async () => {
+		const calls = stubFetch(() => jsonResponse({ signature: 'sig' }));
+		const { fundAgent } = await loadClient();
+		await fundAgent({ agentId: 'a-1', asset: 'SOL', amount: '0.1' });
+
+		const body = JSON.parse(
+			calls.find((c) => c.path.endsWith('/api/user/wallet/fund-agent')).init.body,
+		);
+		// `simulate: false` would still be a truthy key some future handler could
+		// misread. The broadcast path carries no simulate key at all.
+		expect(body).not.toHaveProperty('simulate');
+	});
+
+	it('returns before the key is ever recovered on the simulate path', () => {
+		const src = read('api/user/wallet/fund-agent.js');
+		const simulateReturn = src.indexOf('if (simulate) {');
+		const keyRecovery = src.indexOf('recoverSolanaAgentKeypair(mw.encrypted_solana_secret');
+		expect(simulateReturn).toBeGreaterThan(-1);
+		expect(keyRecovery).toBeGreaterThan(-1);
+		// Ordering IS the guarantee: a preview that reached the decrypt call
+		// would be one refactor away from signing.
+		expect(simulateReturn).toBeLessThan(keyRecovery);
+	});
+
+	it('discloses the token-account rent a top-up silently pays', () => {
+		const src = read('api/user/wallet/fund-agent.js');
+		expect(src).toContain('creates_token_account');
+		expect(src).toContain('token_account_rent_sol');
+		// And the page has to actually show it, not just receive it.
+		expect(read('src/master-wallet.js')).toContain('wlt-confirm-flag');
+	});
+});
+
+describe('pricing a transfer does not consume the daily withdrawal budget', () => {
+	// withdrawalPerUser is 5 per user per DAY. Both spend routes used to charge
+	// it before checking `simulate`, so four price checks locked a user out of
+	// their own funds for 24 hours. A preview moves nothing and must not count.
+	it('routes simulate to the per-minute limiter on both spend routes', () => {
+		for (const path of ['api/user/wallet/send.js', 'api/user/wallet/fund-agent.js']) {
+			const src = read(path);
+			expect(src).toContain('limits.walletSimulate(session.id)');
+			expect(src).toContain('limits.withdrawalPerUser(session.id)');
+			// The body must be parsed BEFORE the limiter, or the branch cannot
+			// know which budget to draw on.
+			expect(src.indexOf('await readJson(req)')).toBeLessThan(
+				src.indexOf('limits.walletSimulate(session.id)'),
+			);
+		}
+	});
+
+	it('defines walletSimulate as a real per-minute limiter', () => {
+		const src = read('api/_lib/rate-limit.js');
+		expect(src).toMatch(/walletSimulate:[\s\S]{0,200}?wallet:simulate/);
+		expect(src).toMatch(/wallet:simulate['"],\s*\{\s*limit:\s*\d+,\s*window:\s*'1 m'/);
+	});
+
+	it('guards fund-agent by IP as well, matching send', () => {
+		// clientIp was imported here and unused, leaving this the only
+		// funds-moving wallet route without a per-IP ceiling.
+		expect(read('api/user/wallet/fund-agent.js')).toContain('limits.authIp(clientIp(req))');
+	});
+});
+
+describe('scan-to-fund is wired into the page', () => {
+	it('offers Add funds as the primary action and opens the sheet', () => {
+		const src = read('src/master-wallet.js');
+		expect(src).toContain("import { openDepositSheet } from './wallet-deposit.js'");
+		expect(src).toContain('data-act="deposit"');
+		expect(src).toContain('openDepositSheet(');
+	});
+
+	it('hands the sheet a balance reader rather than the whole client', () => {
+		// The watcher only needs balances; a narrow injection is what keeps
+		// wallet-deposit.js testable with no network at all.
+		expect(read('src/master-wallet.js')).toContain('async readBalances()');
+	});
+
+	it('opens the sheet straight after provisioning, since an empty wallet does nothing', () => {
+		const src = read('src/master-wallet.js');
+		const create = src.indexOf('async function onCreate()');
+		const next = src.indexOf('function ', create + 10);
+		expect(src.slice(create, next)).toContain('onDeposit()');
+	});
+
+	it('offers max on every amount field, not just send', () => {
+		const src = read('src/master-wallet.js');
+		expect(src).toContain("maxHint('wlt-amount')");
+		expect(src).toContain("maxHint('wlt-fund-amount')");
+		// The handler must target the field that asked, not a hardcoded one.
+		expect(src).toContain('root.querySelector(`#${el.dataset.target}`)');
+	});
+
+	it('ships the deposit sheet styles the module depends on', () => {
+		const css = read('public/master-wallet.css');
+		for (const cls of ['.wlt-sheet', '.wlt-qr', '.wlt-chip', '.wlt-watch-pulse', '.wlt-tip-body']) {
+			expect(css).toContain(cls);
+		}
+		// The QR stays light in both themes; a theme-inverted code fails scanners.
+		expect(css).toMatch(/\.wlt-qr\s*\{[^}]*background:\s*#fff/);
+	});
+
+	it('explains the concepts that actually confuse people', () => {
+		const src = read('src/master-wallet.js');
+		expect(src).toContain('function tip(');
+		expect(src).toContain('aria-describedby');
+		expect(src).toContain('role="tooltip"');
+		// The two real confusions: master vs agent wallet, and why SOL is needed.
+		expect(src).toMatch(/Each agent has its own separate wallet/);
+		expect(src).toMatch(/fee in SOL/);
+	});
+});
