@@ -25,7 +25,7 @@ import {
 } from '../multiplayer/src/rate-model.js';
 import { handleGather, handleCook, ACTIVITY_COOLDOWN_MS } from '../multiplayer/src/activities.js';
 import { newProfile, addItem, LEVEL_CAP } from '../multiplayer/src/economy.js';
-import { TREES, ROCKS, FISHING_SPOTS } from '../multiplayer/src/world-features.js';
+import { TREES, ROCKS, FISHING_SPOTS, FIREPITS } from '../multiplayer/src/world-features.js';
 import { SELL_PRICES, BUY_CATALOG } from '../multiplayer/src/shop.js';
 import { WHEEL_SEGMENTS } from '../multiplayer/src/spin-wheel.js';
 import { MOB_STATS, LOOT_TABLES } from '../multiplayer/src/items.js';
@@ -108,7 +108,10 @@ function simulateCook(level, attempts, seed) {
 	const profile = newProfile('sim');
 	profile.levels.cooking = level;
 	const { room, client, observed } = stubRoom(profile);
-	// Firepits sit at fixed world coordinates; stand on the first one.
+	// The handler refuses to cook away from a fire, so stand on a real roast pit
+	// rather than weakening the range check.
+	room.state.players.get('s1').x = FIREPITS[0].x;
+	room.state.players.get('s1').z = FIREPITS[0].z;
 	const rng = seededRandom(seed);
 	const spy = vi.spyOn(Math, 'random').mockImplementation(rng);
 	let cooked = 0;
@@ -195,8 +198,11 @@ describe('rate-model: the closed form matches the real handlers', () => {
 		const d = doublePct / 100;
 		const rebuiltExact = (1 - p) * 2 + p * exact * (1 + d);
 		const rebuiltNaive = (1 - p) * 2 + p * naive * (1 + d);
-		expect(perAttempt).toBeCloseTo(rebuiltExact, 6);
-		expect(perAttempt).not.toBeCloseTo(rebuiltNaive, 6);
+		// `p` and `d` come back from the model already rounded for display, so compare
+		// on a relative tolerance rather than absolute decimals. The gap between the
+		// exact and naive terms is orders of magnitude larger than that rounding.
+		expect(Math.abs(perAttempt - rebuiltExact) / rebuiltExact).toBeLessThan(1e-4);
+		expect(Math.abs(perAttempt - rebuiltNaive) / rebuiltNaive).toBeGreaterThan(1e-2);
 	});
 });
 
@@ -295,9 +301,11 @@ describe('rate-model: rankings only ever recommend rates a player can hold', () 
 		const cook = cookRate(20);
 
 		// Fish produced at the chosen split must equal fish consumed at that split.
+		// The published shares are rounded for display, so the balance is checked on a
+		// relative tolerance: supply and demand must agree to within 0.1%.
 		const produced = (loop.fishSharePct / 100) * fish.unitsPerHour;
 		const consumed = (loop.cookSharePct / 100) * cook.attemptsPerHour;
-		expect(produced).toBeCloseTo(consumed, 4);
+		expect(Math.abs(produced - consumed) / consumed).toBeLessThan(1e-3);
 		expect(loop.fishSharePct + loop.cookSharePct).toBeCloseTo(100, 6);
 		expect(loop.sustainable).toBe(true);
 	});

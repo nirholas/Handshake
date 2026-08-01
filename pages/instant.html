@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>Instant Agent: one sentence to a live 3D agent · three.ws</title>
+		<meta
+			name="description"
+			content="Describe an agent in one sentence and watch it stand up: a name, a written personality, a rigged 3D body from the library, and a conversation you can have right now. No account, no 3D software, no setup."
+		/>
+		<meta name="robots" content="index, follow" />
+		<link rel="canonical" href="https://three.ws/instant" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Instant Agent: one sentence to a live 3D agent" />
+		<meta
+			property="og:description"
+			content="Type one sentence. Get a named character with a personality, a rigged 3D body, and a live conversation. No account required."
+		/>
+		<meta property="og:url" content="https://three.ws/instant" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=main&amp;t=Instant+Agent&amp;d=One+sentence+to+a+live+3D+agent.+No+account+required.&amp;p=%2Finstant"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Instant Agent: one sentence to a live 3D agent" />
+		<meta
+			name="twitter:description"
+			content="Type one sentence. Get a named character with a personality, a rigged 3D body, and a live conversation."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=main&amp;t=Instant+Agent&amp;d=One+sentence+to+a+live+3D+agent.+No+account+required.&amp;p=%2Finstant"
+		/>
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/instant.css" />
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Instant Agent",
+				"url": "https://three.ws/instant",
+				"description": "Describe an agent in one sentence and get a named character with a written personality, a rigged 3D body, and a live conversation.",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+	</head>
+
+	<body class="ia-page">
+		<a class="skip-link" href="#main-content">Skip to content</a>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="ia-main" id="main-content">
+			<div class="ia-grid">
+				<!-- ── Brief ─────────────────────────────────────────────── -->
+				<div class="ia-brief-col">
+					<div class="ia-hero">
+						<p class="ia-eyebrow">Instant Agent</p>
+						<h1 class="ia-title">Describe it in one sentence.<br />Watch it stand up.</h1>
+						<p class="ia-sub">
+							You write the idea. We write the character, cast a rigged 3D body from the
+							library, and hand you a conversation you can have right now. No account, no 3D
+							software, nothing to install.
+						</p>
+					</div>
+
+					<form class="ia-form" id="ia-form" novalidate>
+						<div class="ia-field">
+							<label class="sr-only" for="ia-idea">Describe your agent in one sentence</label>
+							<textarea
+								class="ia-input"
+								id="ia-idea"
+								name="idea"
+								rows="3"
+								maxlength="400"
+								autocomplete="off"
+								placeholder="A patient tutor that explains high school physics with everyday examples"
+							></textarea>
+							<div class="ia-field-row">
+								<span class="ia-count" id="ia-count">0 / 400</span>
+								<button class="ia-go" id="ia-go" type="submit" disabled>
+									<span id="ia-go-label">Bring it to life</span>
+								</button>
+							</div>
+						</div>
+					</form>
+
+					<div class="ia-examples" id="ia-examples">
+						<p class="ia-examples-label">Or start from one of these</p>
+					</div>
+
+					<!-- Progress. Every step flips on a real milestone, never a timer. -->
+					<ol class="ia-steps" id="ia-steps" hidden aria-live="polite">
+						<li class="ia-step" data-step="write" data-state="idle">
+							<span class="ia-dot" aria-hidden="true"></span>
+							<span class="ia-step-label">Writing the character</span>
+						</li>
+						<li class="ia-step" data-step="cast" data-state="idle">
+							<span class="ia-dot" aria-hidden="true"></span>
+							<span class="ia-step-label">Casting a body</span>
+						</li>
+						<li class="ia-step" data-step="move" data-state="idle">
+							<span class="ia-dot" aria-hidden="true"></span>
+							<span class="ia-step-label">Teaching it to move</span>
+						</li>
+					</ol>
+
+					<div class="ia-error" id="ia-error" hidden role="alert">
+						<h2 id="ia-error-title">Something went wrong</h2>
+						<p id="ia-error-body"></p>
+						<div class="ia-actions">
+							<button class="ia-mini is-primary" type="button" id="ia-retry">Try again</button>
+							<a class="ia-mini" href="/create">Use the full editor instead</a>
+						</div>
+					</div>
+
+					<section class="ia-card ia-reveal" id="ia-result" hidden aria-labelledby="ia-name">
+						<div class="ia-id">
+							<h2 class="ia-name" id="ia-name"></h2>
+							<span class="ia-handle" id="ia-handle"></span>
+						</div>
+						<p class="ia-tagline" id="ia-tagline"></p>
+						<div class="ia-meta" id="ia-meta"></div>
+						<p class="ia-persona" id="ia-persona"></p>
+						<div class="ia-actions">
+							<button class="ia-mini is-primary" type="button" id="ia-keep">Keep this agent</button>
+							<button class="ia-mini" type="button" id="ia-again">Regenerate</button>
+							<button class="ia-mini" type="button" id="ia-copy">Copy the personality</button>
+						</div>
+						<p class="ia-keep-note" id="ia-keep-note" hidden></p>
+					</section>
+
+					<section class="ia-chat" id="ia-chat" hidden aria-labelledby="ia-chat-title">
+						<h2 class="ia-chat-title" id="ia-chat-title">Talk to it</h2>
+						<div class="ia-log" id="ia-log" role="log" aria-live="polite"></div>
+						<div class="ia-starters" id="ia-starters"></div>
+						<form class="ia-ask" id="ia-ask">
+							<label class="sr-only" for="ia-ask-input">Send a message to your agent</label>
+							<textarea
+								class="ia-ask-input"
+								id="ia-ask-input"
+								rows="1"
+								maxlength="1000"
+								placeholder="Ask it something"
+							></textarea>
+							<button class="ia-send" id="ia-send" type="submit" disabled>Send</button>
+						</form>
+					</section>
+
+					<p class="ia-note">
+						Nothing is saved until you press <strong>Keep this agent</strong>. Want the full
+						controls instead? The <a href="/create">editor</a> has body sculpting, voice, and
+						memory, and the <a href="/tutorials/getting-started">getting-started tutorial</a>
+						walks the long way through.
+					</p>
+				</div>
+
+				<!-- ── Stage ─────────────────────────────────────────────── -->
+				<div class="ia-stage-col">
+					<div class="ia-stage-wrap">
+						<div class="ia-stage" id="ia-stage"></div>
+						<div class="ia-stage-empty" id="ia-stage-empty">
+							<svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path
+									d="M12 2 3 7v10l9 5 9-5V7l-9-5Z"
+									stroke="currentColor"
+									stroke-width="1.2"
+									stroke-linejoin="round"
+								/>
+								<path d="M3 7l9 5 9-5M12 12v10" stroke="currentColor" stroke-width="1.2" />
+							</svg>
+							<span>Your agent's body appears here.</span>
+						</div>
+						<span class="ia-stage-badge" id="ia-stage-badge" hidden></span>
+					</div>
+					<div class="ia-bodies" id="ia-bodies" hidden role="group" aria-label="Swap the body"></div>
+				</div>
+			</div>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/instant-agent.js"></script>
+	</body>
+</html>

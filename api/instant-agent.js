@@ -306,8 +306,8 @@ export default wrap(async (req, res) => {
 	// Anonymous free-text reaching a provider gets the same screening as
 	// anonymous chat. A block is a 400 with a plain reason, never a silent
 	// rewrite of what the visitor asked for.
-	const verdict = await moderateAnonInput(idea, { surface: 'instant-agent' });
-	if (verdict?.blocked) {
+	const verdict = await moderateAnonInput(idea);
+	if (verdict.flagged) {
 		return error(
 			res,
 			400,
@@ -322,7 +322,14 @@ export default wrap(async (req, res) => {
 			system: SYSTEM,
 			user: idea,
 			maxTokens: 700,
-			timeoutMs: 25_000,
+			// A deliberate one-shot generation the visitor is watching a progress
+			// meter for, not a background enrichment: the free lanes need real time
+			// to emit ~700 tokens of structured JSON, and the chain slices this
+			// budget across every rung it tries. At the 25s default the lead free
+			// provider was cut to an ~8s slice and its 200 response was abandoned
+			// mid-body, which reads to the caller as "the model failed" when it was
+			// only starved.
+			timeoutMs: 55_000,
 			track: { tool: 'instant-agent', clientId: clientIp(req) },
 		});
 	} catch (err) {

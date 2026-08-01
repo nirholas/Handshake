@@ -1,0 +1,726 @@
+/* Instant Agent (/start)
+ * ----------------------
+ * One screen, two columns: the brief on the left, the live body on the right.
+ * On narrow viewports the stage moves above the brief and sticks, so the avatar
+ * stays visible while you type to it.
+ *
+ * Everything here reads from the shared tokens in /tokens.css. No new palette.
+ */
+
+.ia-page {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.ia-main {
+	flex: 1;
+	width: min(1280px, 100%);
+	margin: 0 auto;
+	padding: clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2rem) 4rem;
+}
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+
+.ia-grid {
+	display: grid;
+	gap: clamp(1rem, 2.5vw, 2rem);
+	grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+	.ia-grid {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+		align-items: start;
+	}
+	.ia-stage-col {
+		position: sticky;
+		top: 5rem;
+	}
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────── */
+
+.ia-hero {
+	margin: 0 0 clamp(1.25rem, 3vw, 2rem);
+}
+
+.ia-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+	margin: 0 0 0.75rem;
+}
+
+.ia-eyebrow::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--success);
+	box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15);
+}
+
+.ia-title {
+	font-size: clamp(1.85rem, 5vw, 3rem);
+	line-height: 1.05;
+	letter-spacing: -0.02em;
+	margin: 0 0 0.6rem;
+	color: var(--ink-bright, #fff);
+}
+
+.ia-sub {
+	font-size: clamp(0.95rem, 1.4vw, 1.06rem);
+	line-height: 1.55;
+	color: var(--ink-dim);
+	margin: 0;
+	max-width: 46ch;
+}
+
+/* ── The one input ─────────────────────────────────────────────────────── */
+
+.ia-form {
+	margin: 0 0 1rem;
+}
+
+.ia-field {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+	padding: 0.9rem 0.95rem 0.85rem;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-card);
+	transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ia-field:focus-within {
+	border-color: var(--stroke-strong);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.07);
+}
+
+.ia-input {
+	width: 100%;
+	min-height: 4.5rem;
+	resize: vertical;
+	background: transparent;
+	border: 0;
+	outline: none;
+	color: var(--ink);
+	font: inherit;
+	font-size: 1.02rem;
+	line-height: 1.5;
+}
+
+.ia-input::placeholder {
+	color: var(--ink-dim);
+}
+
+.ia-field-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.ia-count {
+	font-size: 0.74rem;
+	color: var(--ink-dim);
+	font-variant-numeric: tabular-nums;
+}
+
+.ia-count[data-over='1'] {
+	color: var(--warn);
+}
+
+.ia-go {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 44px;
+	padding: 0 1.15rem;
+	border-radius: var(--radius-control);
+	border: 1px solid transparent;
+	background: var(--btn-primary-bg);
+	color: var(--btn-primary-fg);
+	font-weight: 650;
+	font-size: 0.92rem;
+	cursor: pointer;
+	transition: background 0.16s ease, transform 0.12s ease;
+}
+
+.ia-go:hover:not(:disabled) {
+	background: var(--btn-primary-bg-hover);
+}
+
+.ia-go:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.ia-go:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.ia-go:focus-visible,
+.ia-chip:focus-visible,
+.ia-mini:focus-visible,
+.ia-send:focus-visible {
+	outline: 2px solid var(--ink);
+	outline-offset: 2px;
+}
+
+/* ── Example chips ─────────────────────────────────────────────────────── */
+
+.ia-examples {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin: 0 0 1.5rem;
+}
+
+.ia-examples-label {
+	width: 100%;
+	font-size: 0.74rem;
+	color: var(--ink-dim);
+	margin: 0 0 0.15rem;
+}
+
+.ia-chip {
+	min-height: 36px;
+	padding: 0.42rem 0.8rem;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke);
+	background: var(--surface-1);
+	color: var(--ink);
+	font-size: 0.82rem;
+	cursor: pointer;
+	transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+}
+
+.ia-chip:hover {
+	background: var(--surface-3);
+	border-color: var(--stroke-strong);
+}
+
+.ia-chip:active {
+	transform: translateY(1px);
+}
+
+/* ── Progress ──────────────────────────────────────────────────────────── */
+
+.ia-steps {
+	list-style: none;
+	margin: 0 0 1.25rem;
+	padding: 0.9rem 1rem;
+	display: grid;
+	gap: 0.55rem;
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-card);
+}
+
+.ia-step {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	font-size: 0.88rem;
+	color: var(--ink-dim);
+	transition: color 0.2s ease;
+}
+
+.ia-step[data-state='active'] {
+	color: var(--ink);
+}
+
+.ia-step[data-state='done'] {
+	color: var(--ink-dim);
+}
+
+.ia-dot {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	border-radius: 999px;
+	border: 1.5px solid var(--stroke-strong);
+	display: grid;
+	place-items: center;
+	font-size: 0.6rem;
+	line-height: 1;
+}
+
+.ia-step[data-state='active'] .ia-dot {
+	border-color: var(--ink);
+	animation: ia-pulse 1.3s ease-in-out infinite;
+}
+
+.ia-step[data-state='done'] .ia-dot {
+	border-color: var(--success);
+	color: var(--success);
+}
+
+@keyframes ia-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.22);
+	}
+	50% {
+		box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ia-step[data-state='active'] .ia-dot {
+		animation: none;
+	}
+	.ia-reveal {
+		animation: none !important;
+	}
+}
+
+/* ── Result card ───────────────────────────────────────────────────────── */
+
+.ia-reveal {
+	animation: ia-rise 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes ia-rise {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.ia-card {
+	background: var(--card-bg);
+	border: 1px solid var(--card-border);
+	border-radius: var(--radius-card);
+	padding: clamp(1rem, 2.4vw, 1.5rem);
+	margin: 0 0 1rem;
+}
+
+.ia-id {
+	display: flex;
+	align-items: baseline;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+	margin: 0 0 0.3rem;
+}
+
+.ia-name {
+	font-size: clamp(1.3rem, 3vw, 1.7rem);
+	letter-spacing: -0.015em;
+	margin: 0;
+	color: var(--ink-bright, #fff);
+}
+
+.ia-handle {
+	font-family: var(--font-mono, 'JetBrains Mono', monospace);
+	font-size: 0.82rem;
+	color: var(--ink-dim);
+	word-break: break-all;
+}
+
+.ia-tagline {
+	margin: 0 0 0.9rem;
+	color: var(--ink);
+	font-size: 0.98rem;
+	line-height: 1.5;
+}
+
+.ia-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin: 0 0 1rem;
+}
+
+.ia-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.28rem 0.6rem;
+	border-radius: var(--radius-pill, 999px);
+	background: var(--badge-bg);
+	border: 1px solid var(--badge-border);
+	color: var(--ink-dim);
+	font-size: 0.74rem;
+	white-space: nowrap;
+	cursor: help;
+}
+
+.ia-persona {
+	margin: 0 0 1rem;
+	padding: 0.8rem 0.9rem;
+	background: var(--surface-1);
+	border-left: 2px solid var(--stroke-strong);
+	border-radius: 0 var(--radius-control) var(--radius-control) 0;
+	color: var(--ink-dim);
+	font-size: 0.88rem;
+	line-height: 1.6;
+	white-space: pre-wrap;
+}
+
+.ia-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.ia-mini {
+	min-height: 40px;
+	padding: 0 0.85rem;
+	border-radius: var(--radius-control);
+	border: 1px solid var(--stroke-strong);
+	background: var(--surface-2);
+	color: var(--ink);
+	font-size: 0.85rem;
+	cursor: pointer;
+	transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.ia-mini:hover:not(:disabled) {
+	background: var(--surface-3);
+}
+
+.ia-mini:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.ia-mini.is-primary {
+	background: var(--btn-primary-bg);
+	color: var(--btn-primary-fg);
+	border-color: transparent;
+	font-weight: 650;
+}
+
+.ia-mini.is-primary:hover:not(:disabled) {
+	background: var(--btn-primary-bg-hover);
+}
+
+/* ── Chat ──────────────────────────────────────────────────────────────── */
+
+.ia-chat {
+	background: var(--card-bg);
+	border: 1px solid var(--card-border);
+	border-radius: var(--radius-card);
+	padding: clamp(0.85rem, 2vw, 1.15rem);
+}
+
+.ia-chat-title {
+	font-size: 0.78rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+	margin: 0 0 0.7rem;
+}
+
+.ia-log {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	max-height: 320px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	margin: 0 0 0.75rem;
+	padding-right: 0.2rem;
+}
+
+.ia-msg {
+	max-width: 92%;
+	padding: 0.6rem 0.8rem;
+	border-radius: 14px;
+	font-size: 0.9rem;
+	line-height: 1.55;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+.ia-msg.is-agent {
+	align-self: flex-start;
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	color: var(--ink);
+	border-bottom-left-radius: 5px;
+}
+
+.ia-msg.is-you {
+	align-self: flex-end;
+	background: var(--surface-3);
+	border: 1px solid var(--stroke-strong);
+	color: var(--ink);
+	border-bottom-right-radius: 5px;
+}
+
+.ia-msg.is-error {
+	align-self: stretch;
+	background: var(--badge-danger-bg);
+	border: 1px solid var(--badge-danger-border);
+	color: var(--badge-danger-fg);
+}
+
+.ia-typing::after {
+	content: '';
+	display: inline-block;
+	width: 0.5em;
+	animation: ia-ellipsis 1.1s steps(4, end) infinite;
+}
+
+@keyframes ia-ellipsis {
+	0% {
+		content: '';
+	}
+	25% {
+		content: '.';
+	}
+	50% {
+		content: '..';
+	}
+	75% {
+		content: '...';
+	}
+}
+
+.ia-starters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin: 0 0 0.7rem;
+}
+
+.ia-ask {
+	display: flex;
+	gap: 0.5rem;
+	align-items: flex-end;
+}
+
+.ia-ask-input {
+	flex: 1;
+	min-height: 44px;
+	max-height: 120px;
+	resize: none;
+	padding: 0.65rem 0.75rem;
+	border-radius: var(--radius-control);
+	border: 1px solid var(--stroke-strong);
+	background: var(--surface-1);
+	color: var(--ink);
+	font: inherit;
+	font-size: 0.92rem;
+	line-height: 1.4;
+}
+
+.ia-ask-input:focus {
+	outline: none;
+	border-color: var(--ink-dim);
+}
+
+.ia-send {
+	min-height: 44px;
+	min-width: 44px;
+	padding: 0 0.9rem;
+	border-radius: var(--radius-control);
+	border: 1px solid transparent;
+	background: var(--btn-primary-bg);
+	color: var(--btn-primary-fg);
+	font-weight: 650;
+	cursor: pointer;
+}
+
+.ia-send:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+/* ── Stage ─────────────────────────────────────────────────────────────── */
+
+.ia-stage-wrap {
+	position: relative;
+	border-radius: var(--radius-card);
+	border: 1px solid var(--stroke);
+	background: radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.05), transparent 65%),
+		var(--bg-0);
+	overflow: hidden;
+	aspect-ratio: 3 / 4;
+	max-height: 72vh;
+}
+
+@media (max-width: 899px) {
+	.ia-stage-wrap {
+		aspect-ratio: 4 / 3;
+		max-height: 46vh;
+	}
+	.ia-stage-col {
+		position: sticky;
+		top: 0.5rem;
+		z-index: 3;
+	}
+}
+
+.ia-stage {
+	position: absolute;
+	inset: 0;
+}
+
+.ia-stage canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.ia-stage-empty {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-content: center;
+	gap: 0.55rem;
+	justify-items: center;
+	padding: 1.5rem;
+	text-align: center;
+	color: var(--ink-dim);
+	font-size: 0.88rem;
+	line-height: 1.55;
+}
+
+.ia-stage-empty svg {
+	opacity: 0.5;
+}
+
+.ia-stage-badge {
+	position: absolute;
+	left: 0.7rem;
+	bottom: 0.7rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.3rem 0.6rem;
+	border-radius: var(--radius-pill, 999px);
+	background: rgba(10, 10, 10, 0.72);
+	border: 1px solid var(--stroke-strong);
+	color: var(--ink-dim);
+	font-size: 0.72rem;
+	backdrop-filter: blur(6px);
+	max-width: calc(100% - 1.4rem);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ia-bodies {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin: 0.7rem 0 0;
+}
+
+.ia-body-btn {
+	min-height: 36px;
+	padding: 0.35rem 0.7rem;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke);
+	background: var(--surface-1);
+	color: var(--ink-dim);
+	font-size: 0.78rem;
+	cursor: pointer;
+	transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.ia-body-btn:hover {
+	background: var(--surface-3);
+	color: var(--ink);
+}
+
+.ia-body-btn[aria-pressed='true'] {
+	background: var(--surface-3);
+	border-color: var(--stroke-strong);
+	color: var(--ink);
+}
+
+.ia-body-btn:focus-visible {
+	outline: 2px solid var(--ink);
+	outline-offset: 2px;
+}
+
+/* ── Error ─────────────────────────────────────────────────────────────── */
+
+.ia-error {
+	padding: 1rem 1.1rem;
+	border-radius: var(--radius-card);
+	background: var(--badge-danger-bg);
+	border: 1px solid var(--badge-danger-border);
+	color: var(--ink);
+	margin: 0 0 1rem;
+}
+
+.ia-error h2 {
+	margin: 0 0 0.35rem;
+	font-size: 1rem;
+	color: var(--badge-danger-fg);
+}
+
+.ia-error p {
+	margin: 0 0 0.75rem;
+	font-size: 0.9rem;
+	line-height: 1.55;
+	color: var(--ink-dim);
+}
+
+.ia-keep-note {
+	margin: 0.85rem 0 0;
+	font-size: 0.82rem;
+	line-height: 1.55;
+	color: var(--ink-dim);
+}
+
+.ia-keep-note a {
+	color: var(--ink);
+}
+
+/* ── Skip link ─────────────────────────────────────────────────────────── */
+
+.skip-link {
+	position: absolute;
+	left: -9999px;
+	top: 0;
+	z-index: 100;
+	padding: 0.6rem 1rem;
+	background: var(--bg-1);
+	color: var(--ink);
+	border: 1px solid var(--stroke-strong);
+	border-radius: 0 0 var(--radius-control) 0;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+	left: 0;
+	outline: 2px solid var(--ink);
+	outline-offset: 2px;
+}
+
+/* ── Footnote ──────────────────────────────────────────────────────────── */
+
+.ia-note {
+	margin: 1.5rem 0 0;
+	font-size: 0.8rem;
+	line-height: 1.6;
+	color: var(--ink-dim);
+}
+
+.ia-note a {
+	color: var(--ink);
+}
+
+[hidden] {
+	display: none !important;
+}

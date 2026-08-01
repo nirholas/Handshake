@@ -817,6 +817,13 @@ export const limits = {
 	// keep that egress bounded. Non-critical: a Redis outage must never block a
 	// rewrite (the enhancer degrades gracefully to the original prompt anyway).
 	forgeEnhance: (key) => getLimiter('forge:enhance', { limit: 40, window: '1 h' }).limit(key),
+	// Instant Agent (/start): the anonymous "one sentence to a live agent" call.
+	// One real LLM completion per request with no account behind it, so it gets
+	// its own bucket rather than the shared publicIp pool: a script hammering it
+	// must not be able to spend provider budget, and must not be able to starve
+	// the read endpoints the same visitor's page needs. 12/10m is roughly a dozen
+	// honest retries while a person is deciding on their idea.
+	instantAgentIp: (ip) => getLimiter('instant-agent:ip', { limit: 12, window: '10 m' }).limit(ip),
 	// Self-hosted TRELLIS NIM demo (api/forge-nim) — each call is one real
 	// image/text→3D inference against the NIM, so cap per principal to keep that
 	// GPU egress bounded. Non-critical: a Redis blip must never block the demo.
