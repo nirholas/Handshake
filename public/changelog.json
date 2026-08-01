@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-01T20:09:05.333Z",
+	"generated_at": "2026-08-01T20:23:20.633Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -54,6 +54,17 @@
 			"link": "/docs/economy-solver",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "Docs search now lands on the exact section you typed",
+			"summary": "Typing a heading you saw in the docs did not always take you to it. A short section carries few words, so a long page that happened to reuse the same common words could outrank the section actually titled that. Search now recognises when what you typed IS a section's heading and sends you there first. Measured across the whole documentation corpus, a heading finding its own section went from 80 to 83 percent, and queries like \"cost per asset\" that previously returned three unrelated pages now open the right one.",
+			"link": "/docs",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{

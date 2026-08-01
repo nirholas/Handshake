@@ -48,6 +48,13 @@
 	var HEADING_BOOST = 2.2;
 	var TITLE_BOOST = 1.5;
 
+	// Typing a heading you have seen must land on that heading. The per-term
+	// boost above cannot guarantee it: a short section carries little term
+	// frequency, so a long page that merely uses the same common words can win
+	// on raw BM25. This fires only when the query and the heading reduce to the
+	// SAME token sequence, which is the one case where the intent is unambiguous.
+	var EXACT_HEADING_BOOST = 2.6;
+
 	// How hard to favour sections that contain ALL the query's terms over ones
 	// that contain one of them repeatedly. Tuned on real queries against this
 	// corpus: 1 was too weak to beat a single high-frequency term, 2 started
@@ -212,6 +219,9 @@
 		var last = tokens[tokens.length - 1];
 		var trailingIsPartial = /[a-z0-9]$/i.test(text);
 
+		// The query reduced to its token sequence, for the exact-heading test below.
+		var queryKey = tokens.join(' ');
+
 		var scores = {};
 		// Which of the query's terms each section actually contains, as a bitmask.
 		// Only the first 31 unique terms get a bit, which no real query reaches.
@@ -262,6 +272,12 @@
 			}
 			var of = Math.max(1, scoredTerms);
 			var boost = (1 + ((HEADING_BOOST - 1) * inHeading) / of) * (1 + ((TITLE_BOOST - 1) * inTitle) / of);
+			// Only headings already holding every query term can be the query, so
+			// the tokenize() call runs on a handful of candidates per keystroke
+			// rather than on every scored section.
+			if (unique.length && inHeading === unique.length && tokenize(section[1] || '').join(' ') === queryKey) {
+				boost *= EXACT_HEADING_BOOST;
+			}
 			// Coordination: a section holding every word of the question beats one
 			// holding a single rare word many times. Without this, "fund an agent
 			// wallet" is won by whichever page says "fund" most often rather than

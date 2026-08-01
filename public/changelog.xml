@@ -47,6 +47,14 @@
 			<description>The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.</description>
 		</item>
 		<item>
+			<title>Docs search now lands on the exact section you typed</title>
+			<link>https://three.ws/docs</link>
+			<guid isPermaLink="false">2026-08-01:Docs search now lands on the exact section you typed</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Typing a heading you saw in the docs did not always take you to it. A short section carries few words, so a long page that happened to reuse the same common words could outrank the section actually titled that. Search now recognises when what you typed IS a section's heading and sends you there first. Measured across the whole documentation corpus, a heading finding its own section went from 80 to 83 percent, and queries like &quot;cost per asset&quot; that previously returned three unrelated pages now open the right one.</description>
+		</item>
+		<item>
 			<title>Pick animations by what they do: the motion of every clip is now measured and queryable</title>
 			<link>https://three.ws/gestures</link>
 			<guid isPermaLink="false">2026-08-01:Pick animations by what they do: the motion of every clip is now measured and queryable</guid>

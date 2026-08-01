@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-01",
+			"title": "Docs search now lands on the exact section you typed",
+			"summary": "Typing a heading you saw in the docs did not always take you to it. A short section carries few words, so a long page that happened to reuse the same common words could outrank the section actually titled that. Search now recognises when what you typed IS a section's heading and sends you there first. Measured across the whole documentation corpus, a heading finding its own section went from 80 to 83 percent, and queries like \"cost per asset\" that previously returned three unrelated pages now open the right one.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/docs"
+		},
+		{
 			"date": "2026-07-31",
 			"title": "Press Cmd+K anywhere to search the whole platform",
 			"summary": "three.ws has grown past 650 pages, and until now the only way to reach one was already knowing its address. Cmd+K (Ctrl+K on Windows and Linux) now opens a search box over whatever page you are on. Type a name, a URL, or just what you want to do. It also answers goals, not only page names: type \"get paid\" or \"launch a coin\" and you get the numbered steps with a link for each one, so you never have to guess which of four plausible pages starts a flow. Recently visited pages come back first, pages that need an account are labelled before you click, and typos still find the right page. The new Atlas page lays the same thing out as a browsable, filterable map of every section.",
