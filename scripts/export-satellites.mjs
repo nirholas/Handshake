@@ -132,6 +132,8 @@ const REF_PATTERNS = [
 	/((?:src|href)=')([^']+)(')/g,                            // html attribute (single)
 	/((?:from|import)\s*\(?\s*['"])([^'"]+)(['"])/g,          // esm import / dynamic import
 	/((?:require)\(\s*['"])([^'"]+)(['"])/g,                  // cjs require
+	/(:\s*")(\.{1,2}\/[^"]*)(")/g,                            // json value path (agent manifest skill uri)
+	/(`)(\.{1,2}\/[^`\s]*)(`)/g,                              // markdown code span naming a path
 ];
 
 function routeRef(ref, fromRel, toRel) {
@@ -265,14 +267,18 @@ function listFiles(dir, acc = []) {
 //
 // Exclusion policy: an example whose code, fixtures, or docs reference a crypto
 // project other than $THREE stays OUT of this manifest until the owner approves
-// that specific content (CLAUDE.md commit gate). `examples/agenc-task-roundtrip`
-// is held out on exactly that basis: it depends on a third-party agent-commerce
-// SDK and pins that project's on-chain program id.
+// that specific content (CLAUDE.md commit gate). Three examples are held out on
+// exactly that basis, and each is one line away from being re-included:
+//   examples/agenc-task-roundtrip  depends on a third-party agent-commerce SDK
+//                                  and pins that project's on-chain program id
+//   examples/pump-fun-agent        installs pump-fun-skills/, whose SKILL.md and
+//   examples/three-concierge       lib carry third-party program ids, a sample
+//                                  third-party mint, and a bundler integration
+// An agent may only ship here if every skill its manifest installs ships too: a
+// public agent with a dangling skill uri is broken for the reader who tries it.
 // ---------------------------------------------------------------------------
 const AGENTS = [
 	{ dir: 'coach-leo', title: 'Coach Leo', shows: 'A full character agent: system prompt, manifest, and skill wiring.', run: 'Load into the three.ws agent builder (instructions.md + manifest.json).', docs: `${HOST}/docs/agents` },
-	{ dir: 'pump-fun-agent', title: 'pump.fun agent', shows: 'An agent wired to the live pump.fun feed for buys, sells, launches, and creator fees.', run: 'Load instructions.md + manifest.json into an agent runtime with the pump.fun skills.', docs: `${HOST}/docs/agent-skills` },
-	{ dir: 'three-concierge', title: 'Three Concierge (Trinity)', shows: 'An embedded concierge agent with an agent-card and on-chain identity.', run: 'Load instructions.md + manifest.json; embed via the agent-card.json.', docs: `${HOST}/docs/agent-protocol` },
 	{ dir: 'metamask-agent-wallet', title: 'MetaMask agent wallet', shows: 'A wallet-connected agent: a localhost bridge exposing the MetaMask Agentic CLI to a demo page.', run: 'node server.mjs, then open index.html at http://localhost:4280', docs: `${HOST}/docs/wallet` },
 ];
 
@@ -540,24 +546,35 @@ const failures = [];
 const fail = (stage, detail) => failures.push(`[${stage}] ${detail}`);
 
 // Stage 1: structure (offline).
-console.log('\nSmoke 1/4 structure: monorepo references, relative links, package manifests');
-const MONOREPO_REF = /(\.\.\/)+(src|docs|sdk|packages|solana-agent-sdk|agent-payments-sdk|mcp-server)\//;
+console.log('\nSmoke 1/4 structure: dangling references, escaped paths, package manifests');
 const staged = listFiles(OUT);
+// Every `../`-prefixed path, whether it sits in a link, an import, or prose. The
+// test is the same for all of them: does it resolve to something we shipped? A
+// reference that escapes the export is a monorepo leak; one that resolves is an
+// example referring to its own files, which is correct and must not be rewritten.
+const ESCAPING_REF = /(?:\.\.\/)+[A-Za-z0-9_.@-]+(?:\/[A-Za-z0-9_.@-]+)*\/?/g;
+const IN_LINK = /(?:\]\(|(?:src|href)=["']|(?:from|import|require)\s*\(?\s*['"])(?!https?:|mailto:|data:|#|\/)([^"')#\s]+)/g;
 for (const file of staged) {
 	if (!REWRITE_EXT.has(extname(file))) continue;
 	const rel = relative(OUT, file);
 	const text = readFileSync(file, 'utf8');
-	const leak = text.match(MONOREPO_REF);
-	if (leak) fail('structure', `${rel} still points into the monorepo: ${leak[0]}`);
 	if (/["']file:/.test(text)) fail('structure', `${rel} still declares a file: dependency`);
 	if (basename(file) === 'package.json') {
 		try { JSON.parse(text); } catch (e) { fail('structure', `${rel} is not valid JSON: ${e.message}`); }
+		continue;
 	}
-	// Relative links inside the export must resolve to something we shipped.
-	const linkRe = /(?:\]\(|(?:src|href)=["'])(?!https?:|mailto:|data:|#|\/)([^"')#\s]+)/g;
-	for (const m of text.matchAll(linkRe)) {
+	for (const m of text.matchAll(ESCAPING_REF)) {
+		const target = resolve(dirname(file), m[0]);
+		if (!target.startsWith(OUT + '/')) {
+			fail('structure', `${rel} escapes the export: ${m[0]}`);
+		} else if (!existsSync(target)) {
+			fail('structure', `${rel} references missing ${m[0]}`);
+		}
+	}
+	for (const m of text.matchAll(IN_LINK)) {
 		const target = m[1];
 		if (!target || target.startsWith('$') || target.includes('${')) continue;
+		if (!target.startsWith('.')) continue;
 		if (!existsSync(resolve(dirname(file), target))) {
 			fail('structure', `${rel} links to missing ${target}`);
 		}

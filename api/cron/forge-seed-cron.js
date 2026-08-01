@@ -791,20 +791,56 @@ export default wrapCron(async (req, res) => {
 	if (!requireCron(req, res)) return;
 
 	const origin = ORIGIN();
-	const [polled, started] = await Promise.all([
+	// Every phase advances a different set of rows, so they are safe to run
+	// together and the tick costs one phase's wall-clock, not four in series.
+	const [polled, gated, rigged, started] = await Promise.all([
 		pollPending(origin),
-		startNextJob(origin),
+		advanceGates(origin),
+		advanceRigs(origin),
+		startBatch(origin),
 	]);
 
-	const finalized = polled.filter(j => j.status === 'done').length;
+	const advanced = [...gated, ...rigged];
+	const published = advanced.filter(j => j.status === 'published').length;
+	const rejected = advanced.filter(j => j.status === 'rejected').length;
 	const failed = polled.filter(j => j.status === 'failed').length;
 
 	return json(res, 200, {
 		ok: true,
 		polled: polled.length,
-		finalized,
+		published,
+		rejected,
 		failed,
+		accept_rate: await recentAcceptRate(),
 		poll_results: polled,
-		new_job: started,
+		gate_results: gated,
+		rig_results: rigged,
+		new_jobs: started,
 	});
 });
+
+// Rolling accept rate over the last 24 h of gated seed jobs. Published vs
+// rejected only: a generation that never reached the gate (failed upstream) and
+// a gate that could not run (gate_error) are infrastructure, not curation, and
+// counting them would understate how good the prompts actually are.
+async function recentAcceptRate() {
+	try {
+		const [row] = await sql`
+			select
+				count(*) filter (where status = 'done')::int      as accepted,
+				count(*) filter (where status = 'rejected')::int  as rejected
+			from forge_seed_jobs
+			where started_at > now() - interval '24 hours'
+			  and status in ('done', 'rejected')
+		`;
+		const total = (row?.accepted || 0) + (row?.rejected || 0);
+		return {
+			window: '24h',
+			accepted: row?.accepted || 0,
+			rejected: row?.rejected || 0,
+			rate: total > 0 ? Number(((row.accepted / total) * 100).toFixed(1)) : null,
+		};
+	} catch {
+		return null;
+	}
+}

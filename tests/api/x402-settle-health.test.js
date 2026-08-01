@@ -208,3 +208,96 @@ describe('classifySettleBuckets — verdict from real bucket shapes', () => {
 		expect(degraded.status).toBe('degraded');
 	});
 });
+
+// ── The 2026-08-01 fee_runway_exhausted wave ────────────────────────────────
+// The shape: the wallet fee governor spends the fee wallet's daily SOL budget,
+// then refuses every remaining settle of the day. Measured on production that
+// morning: 85,265 governed refusals against 562 rail-shaped failures, a settle
+// rate of 25.9%, and a `rail` verdict whose hint sent the reader to the
+// facilitator to debug duplicate signatures. The money answer (fund the fee
+// wallet) was nowhere in the output.
+//
+// Both regimes below are the SAME condition and want the SAME action, so both
+// must name it. Before the caller-side admission check the refusal came back as
+// an http_502 and inflated the fault count; after it, the ring skips the call
+// and the counts collapse toward zero instead. A sensor that only understood the
+// first regime would go quiet exactly when the fix landed.
+describe('classifySettleBuckets: a governed throttle is not a rail fault', () => {
+	it('names the fee governor when its skips outnumber the rail faults', () => {
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 60 },
+			{ success: false, paid: false, reason: 'fee_runway_exhausted', n: 900 },
+			{ success: false, paid: true, reason: 'http_502', n: 40 },
+		]);
+		expect(v.cause).toBe('fee_governor');
+		expect(v.governorSkips).toBe(900);
+		// The skips stay out of the rate: they are not attempts that failed, they
+		// are calls we chose not to make.
+		expect(v.settled).toBe(60);
+		expect(v.faults).toBe(40);
+		expect(v.detail).toMatch(/900 call\(s\) paced by the fee governor/);
+		expect(v.hint).toMatch(/GOVERNED THROTTLE/);
+		expect(v.hint).toMatch(/runway-lab/);
+		// It must not send anyone at the facilitator or at the sponsor floor knob.
+		expect(v.hint).not.toMatch(/Payments are being rejected at settle/);
+		expect(v.hint).toMatch(/do NOT lower the sponsor floor/i);
+	});
+
+	it('reports DEGRADED, not UNKNOWN, when pacing is why there is nothing to judge', () => {
+		// The post-fix regime: the caller-side admission check skips the calls, so
+		// attempts fall under MIN_ATTEMPTS. `unknown` here would hide a rail that
+		// is 100% paced shut behind the same verdict a sleeping ring gets.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 4 },
+			{ success: false, paid: false, reason: 'fee_runway_exhausted', n: 1200 },
+		]);
+		expect(v.status).toBe('degraded');
+		expect(v.cause).toBe('fee_governor');
+		expect(v.rate).toBeNull();
+		expect(v.detail).toMatch(/1200 call\(s\) skipped by the wallet fee governor/);
+	});
+
+	it('a genuinely idle ring still reads UNKNOWN, a few skips are the governor working', () => {
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 3 },
+			{ success: false, paid: false, reason: 'fee_runway_exhausted', n: 6 },
+		]);
+		expect(v.status).toBe('unknown');
+		expect(v.governorSkips).toBe(6);
+	});
+
+	it('the hard SOL floor outranks the governor when both are lit', () => {
+		// Both want SOL in the same wallet, but under the floor every settle fails
+		// closed while a spent budget still settles at the paced rate. Report the
+		// harder stop.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 20 },
+			{ success: false, paid: false, reason: 'http_502', n: 40 },
+			{ success: false, paid: false, reason: 'fee_wallet_below_floor', n: 2 },
+			{ success: false, paid: false, reason: 'fee_runway_exhausted', n: 500 },
+		]);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.governorSkips).toBe(500);
+	});
+
+	it('pacing under a healthy rate stays OK and still reports the skip count', () => {
+		// The steady state this fix is aiming for: a small, funded budget paced
+		// across the day, everything it admits settling cleanly.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 248 },
+			{ success: false, paid: true, reason: 'http_502', n: 6 },
+			{ success: false, paid: false, reason: 'fee_runway_exhausted', n: 3100 },
+		]);
+		expect(v.status).toBe('ok');
+		expect(v.rate).toBeGreaterThan(0.9);
+		expect(v.governorSkips).toBe(3100);
+		expect(v.detail).toMatch(/3100 paced by the fee governor/);
+	});
+
+	it('the governor reason is never counted as a rail fault, in any variant', () => {
+		// pay.js records the reason with its arithmetic appended; the SQL bucket
+		// splits on ':' so the sensor sees the bare token. Cover both.
+		expect(isRailFault('fee_runway_exhausted')).toBe(false);
+		expect(isRailFault('fee_runway_exhausted:10022298+10000>10000000')).toBe(false);
+	});
+});

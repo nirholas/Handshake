@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-08-01T21:59:04.168Z",
+  "endpoint": "https://three.ws/api/x402/fact-check",
+  "fixture_version": "1.0.0",
+  "claim_count": 40,
+  "total": 40,
+  "correct": 18,
+  "errors": 0,
+  "accuracy_pct": 45,
+  "by_class": {
+    "supported": {
+      "total": 10,
+      "correct": 7,
+      "accuracy_pct": 70
+    },
+    "contradicted": {
+      "total": 10,
+      "correct": 6,
+      "accuracy_pct": 60
+    },
+    "mixed": {
+      "total": 10,
+      "correct": 0,
+      "accuracy_pct": 0
+    },
+    "insufficient": {
+      "total": 10,
+      "correct": 5,
+      "accuracy_pct": 50
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "total": 13,
+      "correct": 8,
+      "accuracy_pct": 61.5
+    },
+    "medium": {
+      "total": 20,
+      "correct": 8,
+      "accuracy_pct": 40
+    },
+    "hard": {
+      "total": 7,
+      "correct": 2,
+      "accuracy_pct": 28.6
+    }
+  },
+  "confusion": {
+    "supported": {
+      "supported": 7,
+      "insufficient": 3
+    },
+    "contradicted": {
+      "contradicted": 6,
+      "insufficient": 4
+    },
+    "mixed": {
+      "insufficient": 4,
+      "contradicted": 6
+    },
+    "insufficient": {
+      "insufficient": 5,
+      "contradicted": 4,
+      "supported": 1
+    }
+  }
+}

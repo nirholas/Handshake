@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-08-01",
+			"title": "Editing an avatar in the Avatar Studio no longer strips the clothes off it",
+			"summary": "An avatar on three.ws is stored as a plain body plus a record of everything it is wearing: skin and hair colours, face shape, accessories, a preset outfit, and any garments picked from the wardrobe. The platform reads that record and builds the dressed model from it. The Avatar Studio only shows some of those things, because the wardrobe lives in the avatar editor rather than in the Studio. Until now, saving from the Studio wrote back only what the Studio itself could see, which quietly deleted the rest: open a garment-wearing avatar in the Studio, change nothing but the hair colour, hit save, and the garments were gone with no warning and no way to get them back. The same save also replaced the avatar's plain body with a copy of what was on screen, which already had the colours and accessories applied, and the platform would then apply them a second time on top, so colours came back darker than chosen and hats could appear twice. Both are fixed. The Studio now carries the parts of the outfit it cannot show through a save untouched, and an edit saves the description of the avatar rather than overwriting the body it was built from, so the original is always still there and everything is applied exactly once. Reset clears what the Studio controls and leaves the wardrobe alone. Renaming an avatar in the Studio now counts as a change worth saving, which it previously did not.",
+			"tags": [
+				"fix"
+			],
+			"link": "/avatar-studio"
+		},
+		{
+			"date": "2026-08-01",
+			"title": "The payment rail stopped doing 85,000 pieces of work a day it already knew it would throw away",
+			"summary": "Every payment on three.ws costs a small amount of SOL in network fees, and the platform gives the wallet that pays those fees a daily budget so it can never drain itself in one burst. That budget was being checked at the very last moment, after the work was already done. A payment would be quoted, a transaction would be built and signed, and the blockchain would be asked to simulate it, and only then would the platform notice the budget was spent and refuse. Measured on 2026-08-01, that happened 85,264 times in a day against 4,142 payments that actually went through, so the rail was doing roughly twenty times more work than it could ever use, and each refusal came back to the caller looking like a server error rather than a budget decision. The budget check now happens first, before anything is built or signed and before the blockchain is contacted at all. Payments that cannot be funded are skipped in one step instead of after five, which removes around 170,000 wasted calls to Solana every day and takes that load off the same connections the rest of the platform shares. The number of payments that settle is unchanged, because it was never the wasted work that limited it. What changes is that the platform stops burning capacity to be told no, and the health board can now tell the difference between a rail that is broken and a rail that is deliberately pacing itself.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-01",
 			"title": "The wallet that pays for every payment now warns us days before it runs out",
 			"summary": "Every payment settled on three.ws costs a small amount of SOL, paid by one wallet on the platform's side. When that wallet gets low, payments do not fail loudly: the platform quietly stops offering Solana as a way to pay, so nothing is attempted and nothing is rejected. Payments simply stop, and every error counter stays flat, which is the opposite of what anyone debugging would expect. The runway on that wallet was already being calculated and shown on an internal board, but nothing acted on it. Now it alerts, by default when there are fewer than three days left, and the alert carries the real numbers: what the wallet holds, what it spends per day measured from actual settlement fees over the past week rather than from a remembered figure, and how long that leaves. It also names the misleading symptom up front so nobody spends a shift looking at the wrong system. Alongside it, the automatic recovery step that pulls idle funds back from platform wallets now records every attempt, so a recovery that could not run is visible instead of looking identical to one that had nothing to do.",
 			"tags": [
