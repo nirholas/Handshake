@@ -50,11 +50,20 @@ function renderPillError() {
 
 // ── vitals ──────────────────────────────────────────────────────────────────
 
-function vitalTile({ label, value, sub, tone }) {
-	return `<div class="th-vital${tone ? ` th-vital-${tone}` : ''}">
+// A vital is a number with no context unless you already know the system, which
+// is exactly the reader this page exists for. Each tile therefore carries a
+// plain-language explanation, reachable three ways so nobody is left out: hover
+// (pointer), focus (keyboard, the tile is tabbable), and aria-describedby (screen
+// reader, which gets it without any interaction at all).
+function vitalTile({ label, value, sub, tone, help }, i) {
+	const helpId = `th-vital-help-${i}`;
+	return `<div class="th-vital${tone ? ` th-vital-${tone}` : ''}" tabindex="0"${
+		help ? ` aria-describedby="${helpId}"` : ''
+	}>
 		<div class="th-vital-label">${esc(label)}</div>
 		<div class="th-vital-value">${esc(value)}</div>
 		<div class="th-vital-sub">${esc(sub)}</div>
+		${help ? `<span class="th-vital-help" id="${helpId}" role="tooltip">${esc(help)}</span>` : ''}
 	</div>`;
 }
 
@@ -70,32 +79,38 @@ function renderVitals(status) {
 			value: status?.mode === 'live' ? 'Live' : status?.mode === 'simulate' ? 'Simulate' : 'Unknown',
 			sub: status?.mode === 'live' ? 'Real funds, real fills' : 'Real quotes, no broadcast',
 			tone: status?.mode === 'live' ? 'live' : 'muted',
+			help: "Live means the worker signs and broadcasts real transactions from the agents' own wallets. Simulate means it does everything except broadcast: real launches, real quotes, real decisions, no money moved.",
 		},
 		{
 			label: 'Strategies armed',
 			value: String(status?.strategies ?? 0),
 			sub: 'Independent agents, each with its own rules',
+			help: 'How many strategies are currently enabled with their kill switch off. Each one has its own filters, position size and exit rules, and they compete on the same launches.',
 		},
 		{
 			label: 'Open positions',
 			value: String(status?.openPositions ?? 0),
 			sub: 'Held right now, not yet realized',
+			help: 'Coins the fleet is holding right now. An open position is not profit: it is worth whatever it re-quotes at, and that number moves until it closes.',
 		},
 		{
 			label: 'Launch feed',
 			value: d.feedLabel,
 			sub: d.feedDetail,
 			tone: d.feedTone,
+			help: 'The live stream of new launches. This is the failure that hides best: the worker can be up, healthy and beating steadily while its feed has gone silent, in which case it sees nothing and takes no trades.',
 		},
 		{
 			label: 'Funded to date',
 			value: formatSol(funding.fundedTotalSol, { signed: false }),
 			sub: `Last top-up ${formatAgo(funding.lastFundAt)}`,
+			help: 'Total SOL moved into agent trading wallets from the treasury. This is capital deployed, not profit or loss. A stale last top-up while strategies are armed usually means the funding wallet is dry.',
 		},
 		{
 			label: 'Uptime',
 			value: d.uptimeLabel,
 			sub: 'Since the worker last booted',
+			help: 'How long the current worker process has been running. A long uptime is not automatically good: it also means the process predates any fix deployed since it booted.',
 		},
 	];
 	el.innerHTML = tiles.map(vitalTile).join('');

@@ -841,7 +841,11 @@ body.market-page > #footer-container {
 .market-sidebar-toggle {
 	display: none;
 	position: fixed;
-	top: max(14px, env(safe-area-inset-top, 14px));
+	/* Clear the sticky site header. The toggle only ever shows under the 880px
+	   breakpoint, where public/nav.css makes the nav 65px tall: anchoring it to
+	   the viewport top put it entirely behind the nav, so on a phone the only
+	   way into the sidebar was invisible and unclickable. */
+	top: calc(65px + max(10px, env(safe-area-inset-top, 0px)));
 	left: max(14px, env(safe-area-inset-left, 14px));
 	z-index: 50;
 	background: #111;

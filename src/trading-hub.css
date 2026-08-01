@@ -201,11 +201,27 @@
 }
 
 .th-vital {
+	position: relative;
 	padding: var(--space-4);
 	border: 1px solid var(--color-hairline);
 	border-radius: var(--radius-card);
 	background: var(--surface-2);
 	min-height: 6.5rem;
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.th-vital[tabindex] {
+	cursor: help;
+}
+
+.th-vital[tabindex]:hover,
+.th-vital[tabindex]:focus-visible {
+	border-color: var(--color-border-strong);
+}
+
+.th-vital[tabindex]:focus-visible {
+	outline: var(--focus-ring-width) solid var(--focus-ring-color);
+	outline-offset: var(--focus-ring-offset);
 }
 
 .th-vital-label {
@@ -214,6 +230,69 @@
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	color: var(--color-text-faint);
+}
+
+/* The label carries a dotted underline so the tile reads as explainable before
+   anyone hovers it. Without the cue, a tooltip nobody knows exists is no help. */
+.th-vital[tabindex] .th-vital-label {
+	border-bottom: 1px dotted var(--color-border-strong);
+	display: inline-block;
+	padding-bottom: 1px;
+}
+
+/* Pointer and keyboard both reveal it; a screen reader already has it through
+   aria-describedby and never needs the visual state at all. */
+.th-vital-help {
+	position: absolute;
+	left: var(--space-3);
+	right: var(--space-3);
+	bottom: calc(100% - var(--space-2));
+	z-index: 5;
+	padding: var(--space-3);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--color-border-strong);
+	background: var(--bg-1);
+	box-shadow: var(--shadow-2);
+	color: var(--color-text);
+	font-size: var(--text-sm);
+	line-height: var(--leading-normal);
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(var(--space-1));
+	transition:
+		opacity var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		visibility var(--duration-fast) var(--ease-standard);
+	pointer-events: none;
+}
+
+.th-vital:hover .th-vital-help,
+.th-vital:focus-visible .th-vital-help,
+.th-vital:focus-within .th-vital-help {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+
+/* The first row of tiles has no space above it, so their tooltips open downward
+   instead of off the top of the section. */
+.th-vitals > .th-vital:nth-child(-n + 3) .th-vital-help {
+	bottom: auto;
+	top: calc(100% - var(--space-2));
+	transform: translateY(calc(var(--space-1) * -1));
+}
+
+.th-vitals > .th-vital:nth-child(-n + 3):hover .th-vital-help,
+.th-vitals > .th-vital:nth-child(-n + 3):focus-visible .th-vital-help,
+.th-vitals > .th-vital:nth-child(-n + 3):focus-within .th-vital-help {
+	transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.th-vital,
+	.th-vital-help {
+		transition: none;
+	}
 }
 
 .th-vital-value {

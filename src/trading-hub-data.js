@@ -20,6 +20,12 @@ export const SURFACES = [
 		href: '/play/arena',
 	},
 	{
+		kicker: 'Replay',
+		title: 'Exit Lab',
+		body: 'Re-run every real closed trade under different exit rules and see what the SOL already spent would have returned.',
+		href: '/exit-lab',
+	},
+	{
 		kicker: 'Compare',
 		title: 'Sniper Experiments',
 		body: 'Rule shields against oracle gates against language-model judgment, scored on the same market.',
@@ -100,6 +106,12 @@ export const LEARN = [
 		title: 'Arm your first agent',
 		body: 'Step by step, from an empty wallet to an armed strategy with conservative caps.',
 		href: '/tutorials/arm-an-agent-sniper',
+	},
+	{
+		kicker: 'Tutorial',
+		title: 'Find a better exit policy',
+		body: 'Why tightening an exit is measurable, loosening one is only a hypothesis, and how to tell a real finding from two lucky coins.',
+		href: '/tutorials/find-a-better-exit-policy',
 	},
 	{
 		kicker: 'Method',
