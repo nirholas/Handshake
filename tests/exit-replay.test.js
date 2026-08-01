@@ -259,7 +259,7 @@ describe('PARAM_SPECS', () => {
 			expect(spec.min).toBeLessThan(spec.max);
 			expect(spec.step).toBeGreaterThan(0);
 			expect(spec.help.length).toBeGreaterThan(40);
-			expect(spec.help).not.toMatch(/—|–/); // the repo's dash ban applies to UI copy
+			expect(spec.help).not.toMatch(/[\u2013\u2014]/); // the repo dash ban applies to UI copy
 		}
 	});
 

@@ -1,5 +1,5 @@
 /**
- * Exit Lab — counterfactual replay of REAL closed positions under a different
+ * Exit Lab: counterfactual replay of REAL closed positions under a different
  * exit policy.
  *
  * What this is, and why it is not the backtester
@@ -12,7 +12,7 @@
  * This module answers the opposite, and much sharper, question: **the fleet
  * already spent this SOL. Were the exits right?** It takes positions that were
  * genuinely entered and closed on-chain and re-runs each one through
- * `decideLadderedExit` — the SAME function the live position loop calls — with a
+ * `decideLadderedExit` (the SAME function the live position loop calls) with a
  * different set of exit parameters, mirroring the live partial-sell bookkeeping
  * leg for leg. Nothing here is synthesized: every input is a recorded price
  * point from a position that cost real money.

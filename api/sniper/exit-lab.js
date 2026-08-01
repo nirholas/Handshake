@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Exit Lab — the replayable corpus of REAL closed sniper positions.
+ * Exit Lab: the replayable corpus of REAL closed sniper positions.
  *
  *   GET /api/sniper/exit-lab?network=mainnet&window=90&limit=400
  *

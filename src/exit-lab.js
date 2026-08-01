@@ -1,4 +1,4 @@
-// /exit-lab — counterfactual replay of the fleet's real closed positions.
+// /exit-lab: counterfactual replay of the fleet's real closed positions.
 //
 // The corpus comes from /api/sniper/exit-lab (real on-chain closed positions,
 // nothing simulated). The replay runs HERE, in the browser, against the same

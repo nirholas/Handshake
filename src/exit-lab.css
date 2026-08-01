@@ -1,4 +1,4 @@
-/* /exit-lab — the counterfactual exit console.
+/* /exit-lab: the counterfactual exit console.
  *
  * Layered on /src/coin-pages.css (.cv-container, .cv-h1, .cv-sub, .cv-section,
  * .cv-crumbs). Everything is namespaced .xl-* so it cannot leak into the shared
@@ -614,6 +614,24 @@
 .xl-state-error {
 	border-color: color-mix(in srgb, var(--color-danger) 35%, transparent);
 	background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+}
+
+/* Loading is a skeleton of the layout that is coming, not a spinner: the shapes
+   below match the verdict card, the curve and the metric row, so nothing jumps
+   when the real numbers land. */
+.xl-state-loading {
+	border-style: dashed;
+}
+
+/* Empty is a real state with somewhere to go. The fleet has genuinely not closed
+   a replayable position yet, and the copy says what would change that. */
+.xl-state-empty {
+	border-style: dashed;
+}
+
+.xl-state-empty a,
+.xl-state-error a {
+	color: var(--color-text-bright);
 }
 
 .xl-skeleton {
