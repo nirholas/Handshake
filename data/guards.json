@@ -759,6 +759,22 @@
 				},
 				"expect": "guard-proof"
 			}
+		},
+		{
+			"id": "audit-tour-atlas",
+			"script": "scripts/build-tour-atlas.mjs",
+			"npm": "audit:tour-atlas",
+			"title": "The tour atlas tells the truth",
+			"protects": "public/tour/atlas.json matches a fresh render of data/tour-atlas.json: every stop resolves, every screenshot it promises exists on disk, and the curated anchors still parse.",
+			"why": "The atlas is a committed snapshot of a capture run. Edit the source manifest without re-rendering, delete a screenshot, or rot an anchor selector and the /tour-atlas page keeps promising media and spotlight targets that no longer exist. None of that fails a build on its own; only re-deriving the atlas and comparing catches it.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "live",
+				"reason": "The check re-renders the committed atlas from data/tour-atlas.json and verifies 160 captured screenshots exist on disk; a sandbox proof would need the full media tree copied per run, so it is exercised by the real gate instead."
+			}
 		}
 	],
 	"exempt": [

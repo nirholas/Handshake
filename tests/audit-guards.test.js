@@ -31,9 +31,12 @@ let sandbox;
  */
 function makeRepo(name, { guards, exempt = [], stages, scripts, extraScripts = [], hookTemplate }) {
 	const dir = join(sandbox, name);
-	mkdirSync(join(dir, 'scripts'), { recursive: true });
+	mkdirSync(join(dir, 'scripts', 'lib'), { recursive: true });
 	mkdirSync(join(dir, 'data'), { recursive: true });
 	copyFileSync(auditor, join(dir, 'scripts', 'audit-guards.mjs'));
+	// The auditor imports its proof helpers relatively, so the sandbox repo
+	// needs the lib file at the same path or every scenario dies on import.
+	copyFileSync(join(dirname(auditor), 'lib', 'guard-proofs.mjs'), join(dir, 'scripts', 'lib', 'guard-proofs.mjs'));
 
 	for (const g of guards) {
 		if (g.script && g.__skipFile !== true) {
@@ -87,6 +90,10 @@ const goodGuard = {
 	why: 'Because the thing broke once.',
 	stages: ['gate'],
 	needs: 'none',
+	// The auditor requires every guard to declare a proof; the sandboxed
+	// two-sided kind is exercised by tests/prove-guards.test.js, so fixtures
+	// here use the declared-live escape hatch.
+	proof: { kind: 'live', reason: 'fixture guard, proven elsewhere' },
 };
 const goodScripts = { 'check:thing': 'node scripts/check-thing.mjs', gate: 'npm run check:thing' };
 
