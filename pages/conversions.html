@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Trial Conversions · three.ws</title>
+		<meta name="description" content="Every free trial you hold and every trial running on the skills you sell, with the runs left, the price to convert, and the revenue sitting in the queue." />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				--bg: #0d0d0d;
+				--bg-2: #141414;
+				--card: #181818;
+				--line: rgba(255,255,255,0.07);
+				--line-2: rgba(255,255,255,0.12);
+				--text: #e7e9ee;
+				--muted: rgba(231,233,238,0.55);
+				--dim: rgba(231,233,238,0.35);
+				--green: #4ade80;
+				--amber: #f5a524;
+				--red: #f87171;
+				--violet: #a78bfa;
+				--cyan: #57c7ff;
+				--radius: 12px;
+				--skeleton-base: rgba(255,255,255,0.04);
+				--skeleton-sheen: rgba(255,255,255,0.08);
+				--focus: #57c7ff;
+			}
+			[data-theme='light'] {
+				--bg:#f5f5f5;--bg-2:#fff;--card:#fff;--line:rgba(0,0,0,.07);--line-2:rgba(0,0,0,.12);
+				--text:#111;--muted:rgba(0,0,0,.58);--dim:rgba(0,0,0,.38);
+				--skeleton-base:rgba(0,0,0,.04);--skeleton-sheen:rgba(0,0,0,.08);
+				--green:#16a34a;--amber:#b45309;--red:#dc2626;--violet:#7c3aed;--cyan:#0369a1;
+			}
+			* { box-sizing: border-box; margin: 0; padding: 0; }
+			html, body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+			a { color: inherit; text-decoration: none; }
+			:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+
+			.page-shell { max-width: 1100px; margin: 0 auto; padding: 0 20px 96px; }
+			.page-hero { padding: 48px 0 24px; }
+			.page-hero h1 { font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+			.page-hero p { color: var(--muted); margin-top: 8px; font-size: 14px; max-width: 62ch; line-height: 1.55; }
+
+			/* ── Role switch ─────────────────────────────────────────────── */
+			.role-switch { display: inline-flex; gap: 4px; padding: 4px; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 10px; margin: 20px 0 32px; }
+			.role-tab { appearance: none; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 7px; cursor: pointer; transition: background .15s, color .15s; }
+			.role-tab:hover { color: var(--text); }
+			.role-tab[aria-selected='true'] { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+			[data-theme='light'] .role-tab[aria-selected='true'] { box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+			.role-tab:active { transform: translateY(1px); }
+
+			/* ── Stats ───────────────────────────────────────────────────── */
+			.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
+			.stat-card { background: var(--card); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 18px; }
+			.stat-val { font-size: 26px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+			.stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+			.stat-card.is-hot .stat-val { color: var(--amber); }
+			.stat-card.is-money .stat-val { color: var(--green); }
+			.stat-unit { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+
+			/* ── Rows ────────────────────────────────────────────────────── */
+			.cv-list { display: flex; flex-direction: column; gap: 10px; }
+			.cv-row { background: var(--card); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; transition: border-color .15s, transform .15s; }
+			.cv-row:hover { border-color: rgba(255,255,255,.22); }
+			[data-theme='light'] .cv-row:hover { border-color: rgba(0,0,0,.22); }
+			.cv-main { min-width: 0; }
+			.cv-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+			.cv-skill { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+			.cv-agent { font-size: 12px; color: var(--muted); margin-top: 3px; }
+			.cv-agent a:hover { color: var(--text); text-decoration: underline; }
+
+			.pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; border: 1px solid transparent; white-space: nowrap; }
+			.pill-fresh { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 40%, transparent); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+			.pill-low { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, transparent); background: color-mix(in srgb, var(--amber) 12%, transparent); }
+			.pill-out { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, transparent); background: color-mix(in srgb, var(--red) 12%, transparent); }
+
+			/* Runs-left meter: the whole point of a metered trial, made visible.
+			   The track is a fixed width and the pips divide it, so a one-run
+			   grant reads as a full bar rather than a stray dash, and a ten-run
+			   grant reads as ten segments without running off the card. */
+			.meter { display: flex; gap: 3px; margin-top: 10px; width: 100%; max-width: 190px; }
+			.meter-pip { flex: 1 1 0; min-width: 4px; height: 6px; border-radius: 3px; background: var(--line-2); }
+			.meter-pip.is-left { background: var(--cyan); }
+			.meter-pip.is-left.is-low { background: var(--amber); }
+			/* Spent: no pip is filled, so the track itself has to carry the state. */
+			.meter.is-spent .meter-pip { background: color-mix(in srgb, var(--red) 28%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 45%, transparent); }
+			.meter-count { font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+			.meter-count strong { color: var(--text); font-weight: 600; }
+
+			.cv-side { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+			.cv-price { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+			.cv-price small { font-size: 11px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+			.cv-priceless { font-size: 12px; color: var(--dim); }
+
+			.btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text); cursor: pointer; transition: background .15s, border-color .15s, transform .12s; white-space: nowrap; }
+			.btn:hover { border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.05); }
+			[data-theme='light'] .btn:hover { border-color: rgba(0,0,0,.28); background: rgba(0,0,0,.03); }
+			.btn:active { transform: translateY(1px); }
+			.btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
+			.btn-primary:hover { background: var(--text); opacity: .88; }
+
+			/* Seller metrics strip */
+			.cv-metrics { display: flex; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+			.cv-metric { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+			.cv-metric b { color: var(--text); font-weight: 600; font-size: 13px; }
+			.cv-metric.is-hot b { color: var(--amber); }
+
+			/* ── Async states ────────────────────────────────────────────── */
+			.skeleton { background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 37%, var(--skeleton-base) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: 8px; }
+			@keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+			.skeleton-row { height: 86px; }
+			.skeleton-stat { height: 30px; }
+			.skeleton-line { height: 12px; }
+			@media (prefers-reduced-motion: reduce) {
+				.skeleton { animation: none; }
+				.btn:active, .role-tab:active { transform: none; }
+				.cv-row { transition: none; }
+			}
+
+			.cv-state { background: var(--card); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 40px 28px; text-align: center; }
+			.cv-state h2 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+			.cv-state p { color: var(--muted); font-size: 14px; margin-top: 8px; line-height: 1.6; max-width: 48ch; margin-inline: auto; }
+			.cv-state .btn { margin-top: 18px; }
+			.cv-state.is-error { border-color: color-mix(in srgb, var(--red) 40%, var(--line-2)); }
+			.cv-state.is-error h2 { color: var(--red); }
+			.cv-state-icon { font-size: 22px; opacity: .7; margin-bottom: 10px; }
+
+			.cv-note { font-size: 12px; color: var(--dim); margin-top: 18px; line-height: 1.6; }
+			.cv-note a { text-decoration: underline; }
+			.cv-note a:hover { color: var(--text); }
+
+			@media (max-width: 640px) {
+				.page-hero { padding: 32px 0 16px; }
+				.page-hero h1 { font-size: 23px; }
+				.cv-row { grid-template-columns: 1fr; }
+				.cv-side { align-items: stretch; text-align: left; flex-direction: row; justify-content: space-between; align-items: center; }
+				.role-switch { width: 100%; }
+				.role-tab { flex: 1; }
+				.stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="page-shell">
+			<div class="page-hero">
+				<h1>Trial conversions</h1>
+				<p>
+					A metered free trial only earns anything at the moment it runs out. This is both sides of that
+					moment: the trials you are holding, and the trials running on skills you sell.
+				</p>
+			</div>
+
+			<div class="role-switch" role="tablist" aria-label="Whose trials to show">
+				<button class="role-tab" role="tab" id="tab-buyer" aria-selected="true" aria-controls="cv-panel" data-role="buyer">
+					Trials I hold
+				</button>
+				<button class="role-tab" role="tab" id="tab-seller" aria-selected="false" aria-controls="cv-panel" data-role="seller" tabindex="-1">
+					Trials on my skills
+				</button>
+			</div>
+
+			<div class="stats-grid" id="cv-stats" aria-live="polite">
+				<div class="stat-card"><div class="skeleton skeleton-stat" style="width:55%"></div><div class="skeleton skeleton-line" style="width:70%;margin-top:10px"></div></div>
+				<div class="stat-card"><div class="skeleton skeleton-stat" style="width:55%"></div><div class="skeleton skeleton-line" style="width:70%;margin-top:10px"></div></div>
+				<div class="stat-card"><div class="skeleton skeleton-stat" style="width:55%"></div><div class="skeleton skeleton-line" style="width:70%;margin-top:10px"></div></div>
+				<div class="stat-card"><div class="skeleton skeleton-stat" style="width:55%"></div><div class="skeleton skeleton-line" style="width:70%;margin-top:10px"></div></div>
+			</div>
+
+			<div id="cv-panel" role="tabpanel" aria-labelledby="tab-buyer" aria-busy="true">
+				<div class="cv-list" id="cv-list">
+					<div class="skeleton skeleton-row"></div>
+					<div class="skeleton skeleton-row" style="animation-delay:.12s"></div>
+					<div class="skeleton skeleton-row" style="animation-delay:.24s"></div>
+				</div>
+			</div>
+
+			<p class="cv-note">
+				Prices are the seller's live list price in the mint they chose. Buying happens on the agent's own page,
+				where the amount and destination are shown before anything is signed. Read
+				<a href="/tutorials/sell-a-skill-with-a-trial">how a trial converts</a> or see the platform-wide
+				<a href="/marketplace-analytics">trial funnel</a>.
+			</p>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/conversions.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

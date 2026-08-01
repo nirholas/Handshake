@@ -651,16 +651,31 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 	const secrets = new Map(candidates.map((c) => [c.agentId, c.secret]));
 	const { recoverSolanaAgentKeypair } = await import('./agent-wallet.js');
 	for (const p of plan) {
+		// Recovery and broadcast are reported SEPARATELY on purpose. Sharing one
+		// catch made an undecryptable wallet secret surface as a failed send, and
+		// the alert then read "N failed send(s): The operation failed for an
+		// operation-specific reason": a WebCrypto AES-GCM OperationError wearing
+		// a Solana costume. That sent operators after RPC health and funding for a
+		// key problem no amount of either could fix.
+		let keypair;
 		try {
-			const keypair = await recoverSolanaAgentKeypair(secrets.get(p.agentId), {
+			keypair = await recoverSolanaAgentKeypair(secrets.get(p.agentId), {
 				agentId: p.agentId,
 				reason: 'economy_reclaim',
 				meta: { to: master, sol: p.sol },
 			});
-			if (keypair.publicKey.toBase58() !== p.address) {
-				failed.push({ name: p.name, address: p.address, sol: p.sol, reason: 'keypair_address_mismatch' });
-				continue;
-			}
+		} catch (e) {
+			failed.push({
+				name: p.name, address: p.address, sol: p.sol, stage: 'recover',
+				reason: `secret_undecryptable: ${e?.message || 'unknown'}`,
+			});
+			continue;
+		}
+		if (keypair.publicKey.toBase58() !== p.address) {
+			failed.push({ name: p.name, address: p.address, sol: p.sol, stage: 'recover', reason: 'keypair_address_mismatch' });
+			continue;
+		}
+		try {
 			const signature = await sendSol({
 				connection,
 				fromKeypair: keypair,
@@ -671,7 +686,7 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 			});
 			moves.push({ ...p, signature });
 		} catch (e) {
-			failed.push({ name: p.name, address: p.address, sol: p.sol, reason: e?.message || 'send_failed' });
+			failed.push({ name: p.name, address: p.address, sol: p.sol, stage: 'send', reason: e?.message || 'send_failed' });
 		}
 	}
 

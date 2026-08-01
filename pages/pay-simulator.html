@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title data-i18n="pay_simulator.meta_title">Spend Policy Simulator · three.ws</title>
+		<meta name="description" content="Dry-run an AI agent spending policy against real x402 prices before you authorize a dollar. See which calls settle, which are refused and why, and the exact budget the run needs." data-i18n-attr="content:pay_simulator.meta_description" />
+		<link rel="canonical" href="https://three.ws/pay/simulator" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<style>
+			body { display: flex; flex-direction: column; min-height: 100vh; }
+			.ps { flex: 1; max-width: 1180px; width: 100%; margin: 0 auto; padding: clamp(1.25rem, 4vw, 2.5rem) 1.25rem 5rem; }
+
+			/* ── Hero ────────────────────────────────────────────────── */
+			.ps-hero { position: relative; padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1.25rem, 4vw, 2.5rem) 1.75rem; border-radius: 20px; margin-bottom: 1.75rem; overflow: hidden; background: linear-gradient(135deg, rgba(124,92,255,0.13) 0%, rgba(47,191,113,0.05) 62%, transparent 100%); border: 1px solid rgba(255,255,255,0.1); }
+			.ps-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top right, rgba(124,92,255,0.18) 0%, transparent 62%); pointer-events: none; }
+			.ps-hero > * { position: relative; }
+			.ps-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: rgba(47,191,113,0.95); background: rgba(47,191,113,0.1); border: 1px solid rgba(47,191,113,0.25); border-radius: 99px; padding: 4px 12px; margin-bottom: 0.85rem; }
+			.ps-tag svg { width: 8px; height: 8px; fill: #2fbf71; }
+			.ps-hero h1 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); margin: 0 0 0.6rem; letter-spacing: -0.028em; font-weight: 700; }
+			.ps-hero p { margin: 0; color: rgba(255,255,255,0.58); max-width: 60ch; line-height: 1.65; font-size: 14.5px; }
+			.ps-hero p strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+
+			/* ── Presets ─────────────────────────────────────────────── */
+			.ps-presets { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.35rem; align-items: center; }
+			.ps-presets-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.38); font-weight: 600; margin-right: 0.25rem; }
+			.chip { font: inherit; font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.72); cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+			.chip:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.24); }
+			.chip:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
+			.chip[aria-pressed='true'] { background: rgba(124,92,255,0.18); border-color: rgba(124,92,255,0.45); color: #c4b5fd; }
+
+			/* ── Two-column workspace ────────────────────────────────── */
+			.ps-grid { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+			@media (max-width: 940px) { .ps-grid { grid-template-columns: 1fr; } }
+
+			.card { border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.022); padding: 1.35rem 1.35rem 1.5rem; }
+			.card + .card { margin-top: 1.25rem; }
+			.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); font-weight: 700; margin: 0 0 1.1rem; }
+
+			/* ── Form fields ─────────────────────────────────────────── */
+			.field { margin-bottom: 1.15rem; }
+			.field:last-child { margin-bottom: 0; }
+			.field label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 0.4rem; }
+			.field .hint { font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 0.35rem; line-height: 1.5; }
+			.field input, .field select, .field textarea { width: 100%; font: inherit; font-size: 13.5px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.25); color: #fff; transition: border-color .15s, box-shadow .15s; }
+			.field textarea { min-height: 128px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.65; }
+			.field input:hover, .field textarea:hover, .field select:hover { border-color: rgba(255,255,255,0.24); }
+			.field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: #7c5cff; box-shadow: 0 0 0 3px rgba(124,92,255,0.2); }
+			.field input[aria-invalid='true'] { border-color: var(--danger); }
+			.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+
+			/* Tooltip: an accessible "what is this?" affordance on every control. */
+			.tip { position: relative; display: inline-flex; }
+			.tip > button { width: 15px; height: 15px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; line-height: 1; cursor: help; display: inline-flex; align-items: center; justify-content: center; transition: background .15s, color .15s, border-color .15s; }
+			.tip > button:hover, .tip > button:focus-visible { background: rgba(124,92,255,0.2); border-color: #7c5cff; color: #fff; }
+			.tip > button:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
+			.tip .bubble { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px); width: max-content; max-width: 260px; padding: 8px 11px; border-radius: 9px; background: #17171f; border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 8px 28px rgba(0,0,0,0.55); font-size: 11.5px; line-height: 1.55; font-weight: 400; color: rgba(255,255,255,0.85); text-transform: none; letter-spacing: 0; opacity: 0; visibility: hidden; transition: opacity .16s ease, transform .16s ease, visibility .16s; z-index: 40; pointer-events: none; }
+			.tip > button:hover + .bubble, .tip > button:focus-visible + .bubble { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+			@media (prefers-reduced-motion: reduce) { .tip .bubble { transition: none; } }
+
+			/* ── Run button ──────────────────────────────────────────── */
+			.btn-primary { font: inherit; font-size: 13.5px; font-weight: 600; padding: 11px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #7c5cff, #6144e0); color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: opacity .15s, transform .1s; box-shadow: 0 2px 12px rgba(124,92,255,0.3); }
+			.btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+			.btn-primary:active:not(:disabled) { transform: translateY(0); }
+			.btn-primary:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 2px; }
+			.btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
+			.btn-ghost { font: inherit; font-size: 12.5px; font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.72); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; }
+			.btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+			.btn-ghost:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
+			.ps-run { display: flex; gap: 0.6rem; align-items: center; margin-top: 1.35rem; }
+			.ps-run .btn-primary { flex: 1; }
+			.kbd { font-family: ui-monospace, monospace; font-size: 10.5px; padding: 2px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.55); }
+			.spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+			@keyframes spin { to { transform: rotate(360deg); } }
+			@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+			/* ── Result panel states ─────────────────────────────────── */
+			.ps-idle, .ps-error { text-align: center; padding: clamp(2rem, 7vw, 4rem) 1.5rem; border: 1px dashed rgba(255,255,255,0.14); border-radius: 16px; }
+			.ps-idle svg, .ps-error svg { width: 40px; height: 40px; opacity: 0.4; margin-bottom: 1rem; }
+			.ps-idle h3, .ps-error h3 { margin: 0 0 0.5rem; font-size: 15.5px; font-weight: 650; }
+			.ps-idle p, .ps-error p { margin: 0 auto; max-width: 44ch; font-size: 13px; color: rgba(255,255,255,0.48); line-height: 1.65; }
+			.ps-error { border-color: rgba(248,113,113,0.35); border-style: solid; background: rgba(248,113,113,0.05); }
+			.ps-error h3 { color: var(--danger); }
+			.ps-error .btn-ghost { margin-top: 1.1rem; }
+
+			.skel { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+			@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+			.skel-row { height: 46px; margin-bottom: 0.6rem; }
+
+			/* ── Verdict banner ──────────────────────────────────────── */
+			.verdict { display: flex; align-items: flex-start; gap: 0.9rem; padding: 1.1rem 1.25rem; border-radius: 14px; margin-bottom: 1.25rem; border: 1px solid; }
+			.verdict.ok { background: rgba(47,191,113,0.08); border-color: rgba(47,191,113,0.3); }
+			.verdict.warn { background: rgba(251,191,36,0.07); border-color: rgba(251,191,36,0.3); }
+			.verdict-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+			.verdict.ok .verdict-icon { background: rgba(47,191,113,0.2); color: #2fbf71; }
+			.verdict.warn .verdict-icon { background: rgba(251,191,36,0.18); color: var(--warn); }
+			.verdict-body { min-width: 0; }
+			.verdict-body h3 { margin: 0 0 0.3rem; font-size: 15px; font-weight: 650; }
+			.verdict.ok h3 { color: #2fbf71; }
+			.verdict.warn h3 { color: var(--warn); }
+			.verdict-body p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.62); line-height: 1.6; }
+
+			/* ── Stats ───────────────────────────────────────────────── */
+			.ps-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.85rem; margin-bottom: 1.35rem; }
+			.stat { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 0.85rem 1rem; background: rgba(255,255,255,0.022); }
+			.stat .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 0.4rem; }
+			.stat .v { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+			.stat .v.g { color: #2fbf71; } .stat .v.r { color: var(--danger); } .stat .v.p { color: #a78bfa; } .stat .v.b { color: #7dd3fc; }
+
+			/* ── Spend curve ─────────────────────────────────────────── */
+			.curve { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.1rem 1.2rem 0.9rem; background: rgba(255,255,255,0.022); margin-bottom: 1.35rem; }
+			.curve-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+			.curve-head h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); font-weight: 700; }
+			.curve-head .legend { font-size: 11.5px; color: rgba(255,255,255,0.4); display: flex; gap: 0.9rem; }
+			.curve-head .legend i { font-style: normal; display: inline-flex; align-items: center; gap: 5px; }
+			.curve-head .legend i::before { content: ''; width: 8px; height: 8px; border-radius: 2px; }
+			.legend .l-settle::before { background: #2fbf71; }
+			.legend .l-refuse::before { background: var(--danger); }
+			.curve svg { width: 100%; height: 96px; display: block; overflow: visible; }
+			.curve .axis { font-size: 9.5px; fill: rgba(255,255,255,0.35); }
+
+			/* ── Timeline ────────────────────────────────────────────── */
+			.tl { display: flex; flex-direction: column; gap: 0.5rem; }
+			.tl-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 0.85rem; align-items: center; padding: 0.7rem 0.9rem; border-radius: 11px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); transition: border-color .15s, background .15s; }
+			.tl-row:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.04); }
+			.tl-idx { font-size: 11px; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.3); text-align: right; }
+			.tl-main { min-width: 0; }
+			.tl-url { font-size: 12.5px; font-family: ui-monospace, monospace; color: rgba(255,255,255,0.82); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.tl-why { font-size: 11.5px; margin-top: 3px; line-height: 1.45; }
+			.tl-why.bad { color: #fca5a5; }
+			.tl-why.dim { color: rgba(255,255,255,0.4); }
+			.tl-right { display: flex; align-items: center; gap: 0.7rem; flex-shrink: 0; }
+			.tl-amt { font-size: 12.5px; font-weight: 650; font-variant-numeric: tabular-nums; }
+			.tl-left { font-size: 11px; color: rgba(255,255,255,0.35); font-variant-numeric: tabular-nums; min-width: 62px; text-align: right; }
+			.pill { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+			.pill.settles { background: rgba(47,191,113,0.14); color: #2fbf71; border: 1px solid rgba(47,191,113,0.28); }
+			.pill.refused { background: rgba(248,113,113,0.12); color: var(--danger); border: 1px solid rgba(248,113,113,0.26); }
+			.pill.free { background: rgba(125,211,252,0.11); color: #7dd3fc; border: 1px solid rgba(125,211,252,0.24); }
+			.pill.unpriced { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.12); }
+			.tl-row.is-refused { border-color: rgba(248,113,113,0.22); }
+			.tl-row.is-first-refusal { border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.05); }
+			.tl-more { font: inherit; width: 100%; margin-top: 0.5rem; }
+
+			/* ── Recommendation ──────────────────────────────────────── */
+			.rec { border: 1px solid rgba(124,92,255,0.32); border-radius: 15px; background: linear-gradient(135deg, rgba(124,92,255,0.09), rgba(124,92,255,0.02)); padding: 1.25rem 1.35rem 1.35rem; margin-top: 1.5rem; }
+			.rec h3 { margin: 0 0 0.35rem; font-size: 14.5px; font-weight: 650; color: #c4b5fd; }
+			.rec > p { margin: 0 0 1.1rem; font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.6; }
+			.rec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.85rem; margin-bottom: 1.15rem; }
+			.rec-item .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.42); font-weight: 600; margin-bottom: 0.3rem; }
+			.rec-item .v { font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+			.rec-item .v small { font-size: 11.5px; font-weight: 400; color: rgba(255,255,255,0.42); display: block; margin-top: 2px; word-break: break-word; }
+			.rec-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+			/* ── Code block ──────────────────────────────────────────── */
+			.codewrap { margin-top: 1.35rem; }
+			.codewrap .code-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; }
+			.codewrap h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); font-weight: 700; }
+			.codewrap pre { margin: 0; padding: 1rem 1.1rem; border-radius: 12px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.09); overflow-x: auto; font-size: 12px; line-height: 1.7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255,255,255,0.82); }
+
+			/* ── Problems ────────────────────────────────────────────── */
+			.problems { margin-top: 1.35rem; border: 1px solid rgba(251,191,36,0.28); background: rgba(251,191,36,0.05); border-radius: 13px; padding: 1rem 1.15rem; }
+			.problems h3 { margin: 0 0 0.6rem; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--warn); font-weight: 700; }
+			.problems ul { margin: 0; padding-left: 1.1rem; }
+			.problems li { font-size: 12.5px; color: rgba(255,255,255,0.65); line-height: 1.65; margin-bottom: 0.3rem; }
+			.problems code { font-family: ui-monospace, monospace; font-size: 11.5px; background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 4px; }
+
+			.notes { margin-top: 0.9rem; font-size: 11.5px; color: var(--warn); line-height: 1.6; }
+
+			/* ── Footer links ────────────────────────────────────────── */
+			.ps-next { margin-top: 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.9rem; }
+			.ps-next a { display: block; padding: 1rem 1.15rem; border-radius: 13px; border: 1px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.022); text-decoration: none; transition: border-color .18s, transform .18s, background .18s; }
+			.ps-next a:hover { border-color: rgba(124,92,255,0.45); background: rgba(124,92,255,0.06); transform: translateY(-2px); }
+			.ps-next a:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
+			@media (prefers-reduced-motion: reduce) { .ps-next a:hover { transform: none; } }
+			.ps-next .t { font-size: 13.5px; font-weight: 650; color: #fff; margin-bottom: 0.25rem; }
+			.ps-next .d { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.55; }
+
+			.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(8px); background: #17171f; border: 1px solid rgba(255,255,255,0.16); padding: 10px 18px; border-radius: 10px; font-size: 13px; opacity: 0; visibility: hidden; transition: opacity .2s, transform .2s, visibility .2s; z-index: 90; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+			.toast.on { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+
+			/* Light theme adjustments */
+			[data-theme='light'] .ps-hero p, [data-theme='light'] .field .hint, [data-theme='light'] .ps-next .d { color: rgba(0,0,0,0.55); }
+			[data-theme='light'] .field input, [data-theme='light'] .field textarea, [data-theme='light'] .field select { background: rgba(0,0,0,0.03); color: #10101a; border-color: rgba(0,0,0,0.16); }
+			[data-theme='light'] .tl-url, [data-theme='light'] .ps-next .t { color: rgba(0,0,0,0.85); }
+			[data-theme='light'] .codewrap pre { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.8); }
+			[data-theme='light'] .tip .bubble { background: #fff; color: rgba(0,0,0,0.82); border-color: rgba(0,0,0,0.14); }
+
+			@media (max-width: 560px) {
+				.field-row { grid-template-columns: 1fr; }
+				.tl-row { grid-template-columns: 1fr auto; }
+				.tl-idx { display: none; }
+			}
+		</style>
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Spend Policy Simulator","applicationCategory":"DeveloperApplication","operatingSystem":"Any","url":"https://three.ws/pay/simulator","description":"Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. Shows which calls settle, which are refused and by which governance rule, and the smallest policy that covers the run.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	</head>
+	<body>
+		<a href="#main-content" class="h-skip-link" data-i18n="pay_simulator.skip_to_main_content">Skip to main content</a>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content" class="ps">
+			<div class="ps-hero">
+				<div class="ps-tag">
+					<svg viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" /></svg>
+					<span data-i18n="pay_simulator.tag">Dry run. Nothing is signed, nothing is spent.</span>
+				</div>
+				<h1 data-i18n="pay_simulator.h1">Spend Policy Simulator</h1>
+				<p data-i18n="pay_simulator.lede">
+					Before you hand an agent a budget, find out what that budget actually buys. This runs your
+					proposed policy against the <strong>real, live prices</strong> of the endpoints your agent
+					will call, using the same rules that enforce a payment session, and shows you exactly which
+					calls settle, which get refused and why, and where the money runs out.
+				</p>
+				<div class="ps-presets">
+					<span class="ps-presets-label" data-i18n="pay_simulator.presets_label">Start from</span>
+					<button type="button" class="chip" data-preset="research" aria-pressed="true" data-i18n="pay_simulator.preset_research">Research agent</button>
+					<button type="button" class="chip" data-preset="poller" aria-pressed="false" data-i18n="pay_simulator.preset_poller">Price poller</button>
+					<button type="button" class="chip" data-preset="tight" aria-pressed="false" data-i18n="pay_simulator.preset_tight">Over-tight policy</button>
+					<button type="button" class="chip" data-preset="mixed" aria-pressed="false" data-i18n="pay_simulator.preset_mixed">Mixed hosts</button>
+				</div>
+			</div>
+
+			<div class="ps-grid">
+				<!-- ── Left: the policy ─────────────────────────────── -->
+				<form id="psForm" novalidate>
+					<div class="card">
+						<h2 data-i18n="pay_simulator.policy_heading">The policy you are considering</h2>
+
+						<div class="field-row">
+							<div class="field">
+								<label for="fBudget">
+									<span data-i18n="pay_simulator.f_budget">Budget (USD)</span>
+									<span class="tip">
+										<button type="button" aria-label="What is the budget?">?</button>
+										<span class="bubble" role="tooltip" data-i18n="pay_simulator.tip_budget">The total the agent may ever spend on this session. It is debited from your credits when the session is created and refunded if you cancel.</span>
+									</span>
+								</label>
+								<input id="fBudget" name="budget" type="number" step="0.001" min="0.001" max="1000" value="1" inputmode="decimal" />
+							</div>
+							<div class="field">
+								<label for="fPerTx">
+									<span data-i18n="pay_simulator.f_pertx">Max per call</span>
+									<span class="tip">
+										<button type="button" aria-label="What is the per-call ceiling?">?</button>
+										<span class="bubble" role="tooltip" data-i18n="pay_simulator.tip_pertx">A ceiling on any single payment. It stops one unexpectedly expensive endpoint from draining the whole budget in one call. Leave blank for no ceiling.</span>
+									</span>
+								</label>
+								<input id="fPerTx" name="perTx" type="number" step="0.001" min="0" placeholder="none" inputmode="decimal" />
+							</div>
+						</div>
+
+						<div class="field">
+							<label for="fHosts">
+								<span data-i18n="pay_simulator.f_hosts">Allowed hosts</span>
+								<span class="tip">
+									<button type="button" aria-label="What is the allowlist?">?</button>
+									<span class="bubble" role="tooltip" data-i18n="pay_simulator.tip_hosts">Only these hosts may be paid. A subdomain of a listed domain is allowed; a lookalike domain is not. Leave blank to allow any host.</span>
+								</span>
+							</label>
+							<input id="fHosts" name="hosts" type="text" placeholder="three.ws, api.example.com" autocomplete="off" spellcheck="false" />
+							<div class="hint" data-i18n="pay_simulator.hint_hosts">Comma separated. Blank means any host is payable.</div>
+						</div>
+
+						<div class="field-row">
+							<div class="field">
+								<label for="fTtl">
+									<span data-i18n="pay_simulator.f_ttl">Expires in</span>
+									<span class="tip">
+										<button type="button" aria-label="What does expiry do?">?</button>
+										<span class="bubble" role="tooltip" data-i18n="pay_simulator.tip_ttl">How long the token stays spendable. When it elapses the session stops accepting payments and any unspent budget is refunded automatically.</span>
+									</span>
+								</label>
+								<select id="fTtl" name="ttl">
+									<option value="900">15 minutes</option>
+									<option value="3600" selected>1 hour</option>
+									<option value="86400">1 day</option>
+									<option value="604800">7 days</option>
+									<option value="2592000">30 days</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="fNetwork">
+									<span data-i18n="pay_simulator.f_network">Settles on</span>
+									<span class="tip">
+										<button type="button" aria-label="Which network settles?">?</button>
+										<span class="bubble" role="tooltip" data-i18n="pay_simulator.tip_network">The chain the platform wallet pays from. Solana is the default. An endpoint that does not offer a rail on this network cannot be paid by this session.</span>
+									</span>
+								</label>
+								<select id="fNetwork" name="network">
+									<option value="solana" selected>Solana</option>
+									<option value="base">Base</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div class="card">
+						<h2 data-i18n="pay_simulator.calls_heading">What the agent will call</h2>
+						<div class="field">
+							<label for="fCalls">
+								<span data-i18n="pay_simulator.f_calls">Endpoints, one per line</span>
+								<span class="tip">
+									<button type="button" aria-label="How do I write the call list?">?</button>
+									<span class="bubble" role="tooltip" data-i18n="pay_simulator.tip_calls">One https URL per line. Add "x12" to repeat a call twelve times, and "@0.05" to assume a price instead of probing the live one. Each unique endpoint is probed once, unpaid.</span>
+								</span>
+							</label>
+							<textarea id="fCalls" name="calls" spellcheck="false" autocomplete="off" aria-describedby="callsHint"></textarea>
+							<div class="hint" id="callsHint" data-i18n="pay_simulator.hint_calls">
+								<code>https://api.example.com/data x12</code> repeats a call.
+								<code>@0.05</code> assumes a price rather than probing it.
+							</div>
+						</div>
+
+						<div class="ps-run">
+							<button type="submit" class="btn-primary" id="btnRun">
+								<span id="runLabel" data-i18n="pay_simulator.run">Run the dry run</span>
+							</button>
+							<span class="kbd" aria-hidden="true" id="runKbd">Ctrl ↵</span>
+						</div>
+						<div class="hint" style="margin-top:0.7rem" data-i18n="pay_simulator.hint_free">
+							No account needed. No wallet is touched, no session is created, and no credits move.
+						</div>
+					</div>
+				</form>
+
+				<!-- ── Right: the result ────────────────────────────── -->
+				<section id="psResult" aria-live="polite" aria-busy="false">
+					<div class="ps-idle" id="psIdle">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+							<path d="M3 3v18h18" stroke-linecap="round" />
+							<path d="M7 15l4-5 3 3 5-7" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+						<h3 data-i18n="pay_simulator.idle_h">Nothing simulated yet</h3>
+						<p data-i18n="pay_simulator.idle_p">
+							A preset is already loaded. Press the button and the platform will probe each endpoint
+							for its live 402 price, then replay your policy over the result.
+						</p>
+					</div>
+				</section>
+			</div>
+
+			<div class="ps-next">
+				<a href="/payments">
+					<div class="t" data-i18n="pay_simulator.next_sessions">Create a session</div>
+					<div class="d" data-i18n="pay_simulator.next_sessions_d">Turn the recommended policy into a real budget envelope with a bearer token.</div>
+				</a>
+				<a href="/docs/payment-sessions">
+					<div class="t" data-i18n="pay_simulator.next_docs">How sessions work</div>
+					<div class="d" data-i18n="pay_simulator.next_docs_d">Custody, authority, and execution: why the agent never holds a key.</div>
+				</a>
+				<a href="/docs/tutorials/agent-spending-envelope">
+					<div class="t" data-i18n="pay_simulator.next_tutorial">Full walkthrough</div>
+					<div class="d" data-i18n="pay_simulator.next_tutorial_d">From first session to a running agent, end to end.</div>
+				</a>
+			</div>
+		</main>
+
+		<div class="toast" id="toast" role="status"></div>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const esc = (s) =>
+				String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+			// ── Presets ──────────────────────────────────────────────
+			// Every preset points at endpoints that are live right now, so the very
+			// first run returns real prices instead of a contrived example.
+			const PRESETS = {
+				research: {
+					budget: '0.05', perTx: '', hosts: 'three.ws', ttl: '3600', network: 'solana',
+					calls: 'https://three.ws/api/x402/model-check\nhttps://three.ws/api/x402/runway-lab\nhttps://three.ws/api/x402/model-check x5',
+				},
+				poller: {
+					budget: '0.01', perTx: '0.002', hosts: 'three.ws', ttl: '900', network: 'solana',
+					calls: 'https://three.ws/api/x402/model-check x30',
+				},
+				tight: {
+					budget: '0.002', perTx: '0.0005', hosts: 'example.com', ttl: '900', network: 'solana',
+					calls: 'https://three.ws/api/x402/model-check x4',
+				},
+				mixed: {
+					budget: '2.5', perTx: '1', hosts: 'three.ws', ttl: '86400', network: 'solana',
+					calls: 'https://three.ws/api/x402/model-check x3\nhttps://api.example.com/premium @1.20\nhttps://api.example.com/cheap @0.02 x6',
+				},
+			};
+
+			function applyPreset(name) {
+				const p = PRESETS[name];
+				if (!p) return;
+				$('fBudget').value = p.budget;
+				$('fPerTx').value = p.perTx;
+				$('fHosts').value = p.hosts;
+				$('fTtl').value = p.ttl;
+				$('fNetwork').value = p.network;
+				$('fCalls').value = p.calls;
+				for (const chip of document.querySelectorAll('[data-preset]')) {
+					chip.setAttribute('aria-pressed', String(chip.dataset.preset === name));
+				}
+			}
+
+			for (const chip of document.querySelectorAll('[data-preset]')) {
+				chip.addEventListener('click', () => applyPreset(chip.dataset.preset));
+			}
+
+			// ── Call-list parsing ────────────────────────────────────
+			// `https://host/path x12 @0.05`: repetition and an assumed price, in the
+			// order a person would naturally type them, either order accepted.
+			function parseCallLines(text) {
+				const calls = [];
+				for (const raw of String(text).split('\n')) {
+					const line = raw.trim();
+					if (!line || line.startsWith('#')) continue;
+					const parts = line.split(/\s+/);
+					const url = parts.shift();
+					const call = { url };
+					for (const token of parts) {
+						const rep = /^x(\d+)$/i.exec(token);
+						if (rep) { call.times = Number(rep[1]); continue; }
+						const price = /^@\$?([0-9]*\.?[0-9]+)$/.exec(token);
+						if (price) { call.price_usd = Number(price[1]); continue; }
+					}
+					calls.push(call);
+				}
+				return calls;
+			}
+
+			const money = (n) =>
+				n == null ? '-' : n === 0 ? '$0' : n < 0.01 ? `$${n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')}` : `$${n.toFixed(2)}`;
+
+			function toast(msg) {
+				const t = $('toast');
+				t.textContent = msg;
+				t.classList.add('on');
+				clearTimeout(toast._t);
+				toast._t = setTimeout(() => t.classList.remove('on'), 2200);
+			}
+
+			// ── Spend curve ──────────────────────────────────────────
+			// The remaining balance after each step. Drawn from the response rather
+			// than recomputed, so the picture cannot disagree with the verdict.
+			function curveSvg(timeline, budget) {
+				const pts = timeline.filter((s) => s.remaining_after_usd != null);
+				if (pts.length < 2) return '';
+				const W = 600, H = 80, PAD = 4;
+				const x = (i) => PAD + (i * (W - PAD * 2)) / (pts.length - 1);
+				const y = (v) => H - PAD - (Math.max(0, v) / budget) * (H - PAD * 2);
+				const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.remaining_after_usd).toFixed(1)}`).join(' ');
+				const area = `${line} L${x(pts.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`;
+				const dots = pts
+					.map((p, i) => {
+						const refused = p.outcome === 'refused';
+						return `<circle cx="${x(i).toFixed(1)}" cy="${y(p.remaining_after_usd).toFixed(1)}" r="${refused ? 3.2 : 2}" fill="${refused ? 'var(--danger)' : '#2fbf71'}"><title>${esc(`#${p.index + 1} ${p.outcome} · ${money(p.amount_usd)} · ${money(p.remaining_after_usd)} left`)}</title></circle>`;
+					})
+					.join('');
+				return `
+					<svg viewBox="0 0 ${W} ${H + 14}" role="img" aria-label="Remaining budget after each call" preserveAspectRatio="none">
+						<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="0%" stop-color="#2fbf71" stop-opacity="0.28" />
+							<stop offset="100%" stop-color="#2fbf71" stop-opacity="0" />
+						</linearGradient></defs>
+						<line x1="${PAD}" y1="${H - PAD}" x2="${W - PAD}" y2="${H - PAD}" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+						<path d="${area}" fill="url(#cg)" />
+						<path d="${line}" fill="none" stroke="#2fbf71" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" />
+						${dots}
+						<text class="axis" x="${PAD}" y="${H + 11}">${esc(money(budget))} at start</text>
+						<text class="axis" x="${W - PAD}" y="${H + 11}" text-anchor="end">${esc(money(pts[pts.length - 1].remaining_after_usd))} left</text>
+					</svg>`;
+			}
+
+			const RULE_LABEL = {
+				insufficient_budget: 'ran out of budget',
+				per_tx_exceeded: 'over the per-call ceiling',
+				allowlist_blocked: 'host not on the allowlist',
+				session_expired: 'session had expired',
+				session_inactive: 'session was not active',
+			};
+
+			let expanded = false;
+			let lastData = null;
+
+			function renderTimeline(data) {
+				const rows = expanded ? data.timeline : data.timeline.slice(0, 12);
+				const html = rows
+					.map((s) => {
+						const cls = s.outcome === 'refused' ? (s.index === data.verdict.first_refusal_index ? ' is-first-refusal' : ' is-refused') : '';
+						const why =
+							s.outcome === 'refused'
+								? `<div class="tl-why bad">${esc(s.reason)}</div>`
+								: s.outcome === 'unpriced'
+									? `<div class="tl-why dim">${esc(s.pricing.error_message || 'Could not be priced')}</div>`
+									: s.outcome === 'free'
+										? `<div class="tl-why dim">Answered without a 402, so no payment and no policy check.</div>`
+										: s.pricing.network
+											? `<div class="tl-why dim">${esc(String(s.pricing.network).split(':')[0])} · ${esc(s.pricing.source)}</div>`
+											: `<div class="tl-why dim">${esc(s.pricing.source)}</div>`;
+						const rep = s.of ? ` <span style="opacity:.4">${s.repetition}/${s.of}</span>` : '';
+						return `
+							<div class="tl-row${cls}">
+								<div class="tl-idx">${s.index + 1}</div>
+								<div class="tl-main">
+									<div class="tl-url" title="${esc(s.url)}">${esc(s.url)}${rep}</div>
+									${why}
+								</div>
+								<div class="tl-right">
+									<span class="tl-amt">${esc(money(s.amount_usd))}</span>
+									<span class="tl-left">${s.remaining_after_usd == null ? '' : esc(money(s.remaining_after_usd)) + ' left'}</span>
+									<span class="pill ${s.outcome}">${esc(s.outcome)}</span>
+								</div>
+							</div>`;
+					})
+					.join('');
+				const more =
+					data.timeline.length > 12
+						? `<button type="button" class="btn-ghost tl-more" id="tlMore">${expanded ? 'Show fewer' : `Show all ${data.timeline.length} calls`}</button>`
+						: '';
+				return `<div class="tl">${html}</div>${more}`;
+			}
+
+			function render(data) {
+				lastData = data;
+				const v = data.verdict;
+				const rec = data.recommended_policy;
+				const ok = v.feasible;
+
+				const ruleSummary = Object.entries(v.refusals_by_rule)
+					.map(([code, n]) => `${n} ${n === 1 ? 'call' : 'calls'} ${RULE_LABEL[code] || code}`)
+					.join(', ');
+
+				const verdictText = ok
+					? `All ${v.calls_total} ${v.calls_total === 1 ? 'call' : 'calls'} settle for ${money(v.spend_usd)}, leaving ${money(v.remaining_usd)} of the ${money(data.policy.budget_usd)} budget unused.`
+					: `${ruleSummary || `${v.calls_unpriced} could not be priced`}. The run spends ${money(v.spend_usd)} of ${money(data.policy.budget_usd)} before it stalls.`;
+
+				const notes = data.policy.notes.length
+					? `<div class="notes">${data.policy.notes.map((n) => esc(n)).join(' · ')}</div>`
+					: '';
+
+				const problems = data.problems.length
+					? `<div class="problems">
+							<h3>Endpoints that could not be priced</h3>
+							<ul>${data.problems.map((p) => `<li><code>${esc(p.url)}</code> ${esc(p.message)}</li>`).join('')}</ul>
+						</div>`
+					: '';
+
+				const curve = curveSvg(data.timeline, data.policy.budget_usd);
+
+				$('psResult').innerHTML = `
+					<div class="verdict ${ok ? 'ok' : 'warn'}">
+						<div class="verdict-icon" aria-hidden="true">${ok ? '✓' : '!'}</div>
+						<div class="verdict-body">
+							<h3>${ok ? 'This policy covers the run' : 'This policy would stop the agent'}</h3>
+							<p>${esc(verdictText)}</p>
+							${notes}
+						</div>
+					</div>
+
+					<div class="ps-stats">
+						<div class="stat"><div class="k">Settles</div><div class="v g">${v.calls_settled}</div></div>
+						<div class="stat"><div class="k">Refused</div><div class="v ${v.calls_refused ? 'r' : ''}">${v.calls_refused}</div></div>
+						<div class="stat"><div class="k">Total cost</div><div class="v p">${esc(money(v.spend_usd))}</div></div>
+						<div class="stat"><div class="k">Budget used</div><div class="v b">${v.budget_used_pct}%</div></div>
+					</div>
+
+					${curve ? `<div class="curve">
+						<div class="curve-head">
+							<h3>Remaining budget, call by call</h3>
+							<div class="legend"><i class="l-settle">settles</i><i class="l-refuse">refused</i></div>
+						</div>
+						${curve}
+					</div>` : ''}
+
+					<div id="tlHost">${renderTimeline(data)}</div>
+
+					${problems}
+
+					<div class="rec">
+						<h3>The smallest policy that covers this run</h3>
+						<p>Derived from the prices just measured: the summed cost, the largest single payment, and every host the run actually touches.</p>
+						<div class="rec-grid">
+							<div class="rec-item"><div class="k">Budget</div><div class="v">${esc(money(rec.budget_usd))}<small>${esc(money(rec.exact_cost_usd))} exact, rounded up</small></div></div>
+							<div class="rec-item"><div class="k">Max per call</div><div class="v">${esc(money(rec.max_per_tx_usd))}<small>largest payment in the run</small></div></div>
+							<div class="rec-item"><div class="k">Allowed hosts</div><div class="v" style="font-size:12.5px">${rec.allowed_hosts.length ? rec.allowed_hosts.map((h) => esc(h)).join('<br>') : '-'}${rec.missing_hosts.length ? `<small style="color:var(--warn)">missing from your allowlist: ${rec.missing_hosts.map((h) => esc(h)).join(', ')}</small>` : ''}</div></div>
+						</div>
+						<div class="rec-actions">
+							<button type="button" class="btn-primary" id="btnApply">Apply and re-run</button>
+							<a class="btn-ghost" href="/payments">Create this session</a>
+						</div>
+					</div>
+
+					<div class="codewrap">
+						<div class="code-head">
+							<h3>The create call this becomes</h3>
+							<button type="button" class="btn-ghost" id="btnCopy">Copy</button>
+						</div>
+						<pre id="codeBlock">${esc(curlFor(rec))}</pre>
+					</div>`;
+
+				$('psResult').setAttribute('aria-busy', 'false');
+				wireResultHandlers();
+			}
+
+			function curlFor(rec) {
+				const body = {
+					budget_usd: rec.budget_usd,
+					max_per_tx_usd: rec.max_per_tx_usd,
+					allowed_hosts: rec.allowed_hosts,
+					expiry_seconds: rec.expiry_seconds,
+					network: rec.network,
+				};
+				return `curl -X POST https://three.ws/api/pay/session \\\n  -H 'content-type: application/json' \\\n  -H 'cookie: __Host-sid=<your session cookie>' \\\n  -d '${JSON.stringify(body)}'`;
+			}
+
+			function wireResultHandlers() {
+				const more = $('tlMore');
+				if (more) {
+					more.addEventListener('click', () => {
+						expanded = !expanded;
+						$('tlHost').innerHTML = renderTimeline(lastData);
+						wireResultHandlers();
+						if (!expanded) $('tlHost').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+					});
+				}
+				const apply = $('btnApply');
+				if (apply) {
+					apply.addEventListener('click', () => {
+						const rec = lastData.recommended_policy;
+						$('fBudget').value = rec.budget_usd;
+						$('fPerTx').value = rec.max_per_tx_usd ?? '';
+						$('fHosts').value = rec.allowed_hosts.join(', ');
+						for (const chip of document.querySelectorAll('[data-preset]')) chip.setAttribute('aria-pressed', 'false');
+						run();
+					});
+				}
+				const copy = $('btnCopy');
+				if (copy) {
+					copy.addEventListener('click', async () => {
+						try {
+							await navigator.clipboard.writeText($('codeBlock').textContent);
+							toast('Copied');
+						} catch {
+							toast('Could not copy. Select the text instead.');
+						}
+					});
+				}
+			}
+
+			function showLoading(count) {
+				$('psResult').setAttribute('aria-busy', 'true');
+				const rows = Array.from({ length: Math.min(6, Math.max(3, count)) }, () => '<div class="skel skel-row"></div>').join('');
+				$('psResult').innerHTML = `
+					<div class="skel" style="height:74px;margin-bottom:1.25rem"></div>
+					<div class="ps-stats">${Array.from({ length: 4 }, () => '<div class="skel" style="height:66px"></div>').join('')}</div>
+					<div class="skel" style="height:130px;margin-bottom:1.35rem"></div>
+					${rows}`;
+			}
+
+			function showError(message, detail) {
+				$('psResult').setAttribute('aria-busy', 'false');
+				$('psResult').innerHTML = `
+					<div class="ps-error">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+							<circle cx="12" cy="12" r="9" /><path d="M12 7v6" stroke-linecap="round" /><circle cx="12" cy="16.5" r="0.9" fill="currentColor" stroke="none" />
+						</svg>
+						<h3>${esc(message)}</h3>
+						<p>${esc(detail || 'Check the endpoint list and try again.')}</p>
+						<button type="button" class="btn-ghost" id="btnRetry">Try again</button>
+					</div>`;
+				$('btnRetry')?.addEventListener('click', run);
+			}
+
+			// ── Run ──────────────────────────────────────────────────
+			let inFlight = null;
+
+			async function run() {
+				const calls = parseCallLines($('fCalls').value);
+				if (!calls.length) {
+					$('fCalls').setAttribute('aria-invalid', 'true');
+					$('fCalls').focus();
+					showError('No endpoints to simulate', 'Add at least one https URL, one per line, then run again.');
+					return;
+				}
+				$('fCalls').removeAttribute('aria-invalid');
+
+				const payload = {
+					policy: {
+						budget_usd: Number($('fBudget').value) || 0,
+						max_per_tx_usd: $('fPerTx').value === '' ? null : Number($('fPerTx').value),
+						allowed_hosts: $('fHosts').value,
+						expiry_seconds: Number($('fTtl').value),
+						network: $('fNetwork').value,
+					},
+					calls,
+				};
+
+				// A second submit while one is in flight aborts the first, so a
+				// slow probe can never overwrite a newer result.
+				inFlight?.abort();
+				const controller = new AbortController();
+				inFlight = controller;
+
+				$('btnRun').disabled = true;
+				$('runLabel').innerHTML = '<span class="spinner" aria-hidden="true"></span> Probing live prices';
+				showLoading(calls.reduce((n, c) => n + (c.times || 1), 0));
+
+				try {
+					const res = await fetch('/api/pay/simulate', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify(payload),
+						signal: controller.signal,
+					});
+					const data = await res.json().catch(() => null);
+					if (!res.ok || !data?.ok) {
+						showError(
+							data?.error?.message || data?.message || `Simulation failed (HTTP ${res.status})`,
+							res.status === 429 ? 'Too many simulations from this address. Wait a moment and try again.' : null,
+						);
+						return;
+					}
+					expanded = false;
+					render(data);
+				} catch (err) {
+					if (err.name === 'AbortError') return;
+					showError('Could not reach the simulator', err.message);
+				} finally {
+					if (inFlight === controller) inFlight = null;
+					$('btnRun').disabled = false;
+					$('runLabel').textContent = 'Run the dry run';
+				}
+			}
+
+			$('psForm').addEventListener('submit', (e) => {
+				e.preventDefault();
+				run();
+			});
+
+			// Ctrl/Cmd+Enter runs from anywhere on the page.
+			document.addEventListener('keydown', (e) => {
+				if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+					e.preventDefault();
+					run();
+				}
+			});
+			if (navigator.platform?.toLowerCase().includes('mac')) $('runKbd').textContent = '⌘ ↵';
+
+			applyPreset('research');
+		</script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

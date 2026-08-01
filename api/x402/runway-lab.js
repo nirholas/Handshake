@@ -129,20 +129,34 @@ async function observeWindow() {
 	const attempts = Number(totals?.attempts ?? 0);
 	const settled = Number(totals?.settled ?? 0);
 	const feeMedian = Number(totals?.fee_median ?? 0);
+	const refusalList = [...buckets.values()].sort((a, b) => b.count - a.count);
+	// Capacity refusals only: what the rail could not AFFORD, as opposed to what
+	// it correctly declined. This is the number the projection is comparable to.
+	const capacityRefused = refusalList
+		.filter((b) => CAPACITY_CAUSES.has(b.cause))
+		.reduce((n, b) => n + b.count, 0);
+	const capacityAttempts = settled + capacityRefused;
 
 	return {
 		window_hours: WINDOW_HOURS,
 		attempts,
 		settled,
 		refused: attempts - settled,
+		capacity_refused: capacityRefused,
+		// Share of settles the rail could afford, excluding duplicates and the
+		// dust guard. Compare THIS against the simulated admission rate.
+		capacity_admission_rate: capacityAttempts > 0 ? settled / capacityAttempts : null,
 		admission_rate: attempts > 0 ? settled / attempts : null,
 		fee_total_lamports: Number(totals?.fee_total ?? 0),
 		// Median over landed settles is the honest per-settle cost: the mean is
 		// dragged by the occasional multi-signature transaction.
 		fee_lamports_observed: feeMedian > 0 ? feeMedian : MIN_FEE_LAMPORTS,
 		fee_source: feeMedian > 0 ? 'observed_median_24h' : 'base_fee_default',
-		demand_per_hour: Math.round(attempts / WINDOW_HOURS),
-		refusals: [...buckets.values()].sort((a, b) => b.count - a.count),
+		// Real arrival rate, so the projection starts from measured demand rather
+		// than a guess. Duplicates are excluded: they are retries of a settle that
+		// already landed, not new demand on the rail.
+		demand_per_hour: Math.round(capacityAttempts / WINDOW_HOURS),
+		refusals: refusalList,
 	};
 }
 

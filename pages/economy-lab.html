@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot; no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<style>/* three.ws hidden-guard; make the `hidden` attribute authoritative */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title data-i18n="economy_lab.meta_title">Runway Lab · a live digital twin of the x402 payment rail · three.ws</title>
+		<meta
+			name="description"
+			content="Drag a slider and watch three.ws settlement survive or starve. The Runway Lab runs the exact admission-control code the live x402 settle path runs, seeded with live production balances, and tells you which of three levers fixes a stall."
+		 data-i18n-attr="content:economy_lab.meta_description"/>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<link rel="canonical" href="https://three.ws/economy-lab" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/economy-lab" />
+		<meta property="og:title" content="Runway Lab: a live digital twin of the x402 payment rail"  data-i18n-attr="content:economy_lab.meta_og_title"/>
+		<meta
+			property="og:description"
+			content="The same admission-control functions the live settle path runs, in your browser, seeded with live production state. Drag a knob, see when settlement stops, get the exact command that fixes it."
+		 data-i18n-attr="content:economy_lab.meta_og_description"/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Runway+Lab&amp;d=A+live+digital+twin+of+the+x402+payment+rail.+The+same+admission-control+code+the+settle+path+runs%2C+seeded+with+live+production+state.&amp;p=%2Feconomy-lab" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Runway Lab, three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Runway Lab: a live digital twin of the x402 payment rail"  data-i18n-attr="content:economy_lab.meta_twitter_title"/>
+		<meta
+			name="twitter:description"
+			content="Drag a slider and watch three.ws settlement survive or starve. Real code, real balances, real fix."
+		 data-i18n-attr="content:economy_lab.meta_twitter_description"/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Runway+Lab&amp;d=A+live+digital+twin+of+the+x402+payment+rail.&amp;p=%2Feconomy-lab" />
+
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/economy-lab.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Runway Lab","applicationCategory":"DeveloperApplication","operatingSystem":"Any","description":"A live digital twin of the three.ws x402 payment rail. Runs the production settle path's admission-control functions in the browser against live production state.","url":"https://three.ws/economy-lab","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<a class="el-skip" href="#el-controls">Skip to the controls</a>
+
+		<main class="el-shell">
+			<!-- ── Hero + live verdict ───────────────────────────────────────── -->
+			<section class="el-hero">
+				<p class="el-kicker"><span class="el-dot" aria-hidden="true"></span> Live digital twin</p>
+				<h1 class="el-title">Runway <em>Lab</em></h1>
+				<p class="el-sub">
+					Every three.ws payment passes one admission check: can the fee wallet
+					afford the next settle? This page runs
+					<strong>that exact function</strong>, imported from the settle path,
+					in your browser, against
+					<strong>live production balances</strong>. Drag a knob and watch the
+					rail survive or starve.
+				</p>
+
+				<div class="el-verdict" id="el-verdict" role="status" aria-live="polite" data-state="loading">
+					<div class="el-verdict-icon" aria-hidden="true"><span class="el-spin"></span></div>
+					<div class="el-verdict-body">
+						<p class="el-verdict-head" id="el-verdict-head">Reading live rail state</p>
+						<p class="el-verdict-detail" id="el-verdict-detail">
+							Fetching the fee wallet balance, the governor config this deploy is
+							running, and 24 hours of settle outcomes.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Live production state ─────────────────────────────────────── -->
+			<section class="el-section" aria-labelledby="el-live-h">
+				<div class="el-section-head">
+					<h2 id="el-live-h">Live rail state</h2>
+					<p class="el-section-sub">
+						Read fresh on load. Nothing on this page is a fixture.
+						<span class="el-stamp" id="el-stamp"></span>
+					</p>
+				</div>
+				<div class="el-stats" id="el-stats">
+					<div class="el-stat el-skeleton" aria-hidden="true"></div>
+					<div class="el-stat el-skeleton" aria-hidden="true"></div>
+					<div class="el-stat el-skeleton" aria-hidden="true"></div>
+					<div class="el-stat el-skeleton" aria-hidden="true"></div>
+					<div class="el-stat el-skeleton" aria-hidden="true"></div>
+					<div class="el-stat el-skeleton" aria-hidden="true"></div>
+				</div>
+				<p class="el-note" id="el-live-note" hidden></p>
+			</section>
+
+			<!-- ── The lab ───────────────────────────────────────────────────── -->
+			<section class="el-lab" aria-labelledby="el-controls-h">
+				<div class="el-panel el-panel-controls" id="el-controls">
+					<div class="el-panel-head">
+						<h2 id="el-controls-h">Knobs</h2>
+						<button type="button" class="el-reset" id="el-reset" disabled>
+							Reset to live
+						</button>
+					</div>
+
+					<div class="el-field" data-knob="balance">
+						<div class="el-field-head">
+							<label for="el-balance">Fee wallet balance</label>
+							<button type="button" class="el-help" aria-label="What is the fee wallet balance?" data-tip="The SOL held by the wallet that pays the network fee on every settle. In sponsor mode that is one shared wallet funding roughly a dozen paid pipelines at once, which is why its balance is the whole economy's ceiling.">?</button>
+							<output class="el-value" id="el-balance-out" for="el-balance"></output>
+						</div>
+						<input type="range" id="el-balance" min="0" max="2000000000" step="1000000" value="0" />
+						<p class="el-hint">Slide right to simulate a deposit, left to simulate a drain.</p>
+					</div>
+
+					<div class="el-field" data-knob="floor">
+						<div class="el-field-head">
+							<label for="el-floor">Hard SOL floor</label>
+							<button type="button" class="el-help" aria-label="What is the hard SOL floor?" data-tip="X402_SPONSOR_SOL_FLOOR_LAMPORTS. The settle path refuses outright below this, before the governor is even consulted, so the wallet can never be drained to zero by fees. It is the last line of defence, not a pacing knob.">?</button>
+							<output class="el-value" id="el-floor-out" for="el-floor"></output>
+						</div>
+						<input type="range" id="el-floor" min="0" max="200000000" step="1000000" value="0" />
+						<p class="el-hint">Raising this shrinks spendable SOL one-for-one.</p>
+					</div>
+
+					<div class="el-field" data-knob="runway">
+						<div class="el-field-head">
+							<label for="el-runway">Target runway</label>
+							<button type="button" class="el-help" aria-label="What is the target runway?" data-tip="X402_WALLET_FEE_RUNWAY_DAYS. The governor spreads spendable SOL over this many days to set a daily fee budget. Because the budget is recomputed from the live balance on every settle, the delivered throughput lands at spendable/(fee x (days + 1)), not spendable/days.">?</button>
+							<output class="el-value" id="el-runway-out" for="el-runway"></output>
+						</div>
+						<input type="range" id="el-runway" min="0.5" max="30" step="0.5" value="3" />
+						<p class="el-hint">Shorter runway spends faster today and leaves less for tomorrow.</p>
+					</div>
+
+					<div class="el-field" data-knob="heartbeat">
+						<div class="el-field-head">
+							<label for="el-heartbeat">Heartbeat budget</label>
+							<button type="button" class="el-help" aria-label="What is the heartbeat budget?" data-tip="X402_WALLET_FEE_MIN_BUDGET_LAMPORTS. A daily fee floor the governor never goes below, so a quiet wallet keeps a pulse and the economy can restart itself. It cannot rescue a wallet already sitting on its hard floor: only funding moves that.">?</button>
+							<output class="el-value" id="el-heartbeat-out" for="el-heartbeat"></output>
+						</div>
+						<input type="range" id="el-heartbeat" min="0" max="200000000" step="1000000" value="0" />
+						<p class="el-hint">The only knob that does not depend on the balance.</p>
+					</div>
+
+					<div class="el-field" data-knob="demand">
+						<div class="el-field-head">
+							<label for="el-demand">Demand</label>
+							<button type="button" class="el-help" aria-label="What is demand?" data-tip="Settle attempts arriving per hour. Seeded from the last 24 hours of the facilitator log, excluding duplicate-signature retries, so the projection starts from measured traffic rather than a guess.">?</button>
+							<output class="el-value" id="el-demand-out" for="el-demand"></output>
+						</div>
+						<input type="range" id="el-demand" min="0" max="3000" step="5" value="0" />
+						<p class="el-hint">What the rail is being asked to do, per hour.</p>
+					</div>
+
+					<div class="el-field" data-knob="horizon">
+						<div class="el-field-head">
+							<label for="el-horizon">Horizon</label>
+							<button type="button" class="el-help" aria-label="What is the horizon?" data-tip="How far forward to project. Day boundaries matter: the governor's meter resets at UTC midnight, so a rail that looks dead now may recover in a few hours without any change at all.">?</button>
+							<output class="el-value" id="el-horizon-out" for="el-horizon"></output>
+						</div>
+						<input type="range" id="el-horizon" min="6" max="336" step="6" value="72" />
+						<p class="el-hint">Watch for the UTC midnight reset.</p>
+					</div>
+
+					<div class="el-field el-field-toggle">
+						<label class="el-switch">
+							<input type="checkbox" id="el-governor" checked />
+							<span class="el-switch-track" aria-hidden="true"><span class="el-switch-thumb"></span></span>
+							<span class="el-switch-label">Wallet fee governor enabled</span>
+						</label>
+						<button type="button" class="el-help" aria-label="What does disabling the governor do?" data-tip="X402_WALLET_FEE_GOVERNOR_ENABLED=false. Turning it off removes all pacing and leaves only the hard SOL floor. Throughput jumps today and the wallet reaches its floor sooner. Useful for seeing exactly how much of a stall the governor owns.">?</button>
+					</div>
+				</div>
+
+				<div class="el-panel el-panel-chart">
+					<div class="el-panel-head">
+						<h2>Projection</h2>
+						<div class="el-legend" aria-hidden="true">
+							<span class="el-legend-item" data-series="balance">Balance</span>
+							<span class="el-legend-item" data-series="admitted">Settled</span>
+							<span class="el-legend-item" data-series="refused">Refused</span>
+						</div>
+					</div>
+					<figure class="el-chart-wrap">
+						<canvas id="el-chart" width="1000" height="380" role="img"
+							aria-label="Projected fee wallet balance and hourly settle outcomes over the selected horizon."></canvas>
+						<figcaption class="el-chart-caption" id="el-chart-caption"></figcaption>
+					</figure>
+					<div class="el-kpis" id="el-kpis"></div>
+				</div>
+			</section>
+
+			<!-- ── Solve ─────────────────────────────────────────────────────── -->
+			<section class="el-section" aria-labelledby="el-solve-h">
+				<div class="el-section-head">
+					<h2 id="el-solve-h">Solve for a target</h2>
+					<p class="el-section-sub">
+						The governor's budget is one equation with three independent terms,
+						so a stall always has three possible fixes. Name the throughput you
+						want and each lever is solved exactly, including the ones that
+						cannot work.
+					</p>
+				</div>
+				<div class="el-solve">
+					<div class="el-solve-input">
+						<label for="el-target">Target settles per day</label>
+						<input type="number" id="el-target" min="0" max="10000000" step="100" value="10000" />
+					</div>
+					<div class="el-levers" id="el-levers"></div>
+				</div>
+			</section>
+
+			<!-- ── Apply ─────────────────────────────────────────────────────── -->
+			<section class="el-section" aria-labelledby="el-apply-h">
+				<div class="el-section-head">
+					<h2 id="el-apply-h">Apply this configuration</h2>
+					<p class="el-section-sub">
+						Emitted only for knobs that differ from live, with the flag that
+						merges into the existing environment rather than replacing it.
+					</p>
+				</div>
+				<div class="el-apply" id="el-apply"></div>
+			</section>
+
+			<!-- ── Observed vs simulated ─────────────────────────────────────── -->
+			<section class="el-section" aria-labelledby="el-observed-h">
+				<div class="el-section-head">
+					<h2 id="el-observed-h">What the rail actually did</h2>
+					<p class="el-section-sub">
+						The last 24 hours of real settle outcomes, next to what this model
+						predicts for the same period. A gap between them is a bug in the
+						model or a cause the model does not know about, and either is worth
+						chasing.
+					</p>
+				</div>
+				<div class="el-observed" id="el-observed"></div>
+			</section>
+
+			<!-- ── How it works ──────────────────────────────────────────────── -->
+			<section class="el-section el-explain" aria-labelledby="el-how-h">
+				<div class="el-section-head">
+					<h2 id="el-how-h">Why this is faithful</h2>
+				</div>
+				<div class="el-explain-grid">
+					<article class="el-card">
+						<h3>It does not reimplement the decision</h3>
+						<p>
+							The simulation imports
+							<code>walletDailyFeeBudgetLamports()</code> and
+							<code>assessWalletFeeBudget()</code> from
+							<code>wallet-fee-governor.js</code>, the same module the live
+							facilitator calls on every settle. Change the governor and this
+							page changes with it. A parallel model would drift; this one
+							cannot.
+						</p>
+					</article>
+					<article class="el-card">
+						<h3>It applies them in the settle path's order</h3>
+						<ol class="el-steps">
+							<li><span class="el-step-n">1</span> Hard SOL floor. Below it, refused as <code>fee_wallet_below_floor</code>, and the meter is never consulted.</li>
+							<li><span class="el-step-n">2</span> Wallet fee governor. Over budget, refused as <code>fee_runway_exhausted</code>.</li>
+							<li><span class="el-step-n">3</span> Admitted. The fee is burned and metered against today.</li>
+						</ol>
+					</article>
+					<article class="el-card">
+						<h3>The budget is a moving target</h3>
+						<p>
+							The governor recomputes from the live balance on
+							<em>every</em> settle, so spending shrinks the budget authorising
+							the next spend. That feedback settles at
+							<code>spendable / (fee &times; (days + 1))</code> per day. At the
+							stock three-day runway the rail delivers a quarter of spendable
+							SOL per day, not a third: a 25% gap between the configured intent
+							and the real throughput, and the reason
+							&ldquo;three days of runway&rdquo; and
+							&ldquo;settlement stopped today&rdquo; are not contradictions.
+						</p>
+					</article>
+					<article class="el-card">
+						<h3>Not every refusal is scarcity</h3>
+						<p>
+							Duplicate-signature retries and the dust guard are correct
+							rejections, not capacity problems. Folding them into one number
+							makes a healthy rail read as a starved one, so this page counts
+							them separately and projects only against real demand.
+						</p>
+					</article>
+				</div>
+				<p class="el-fineprint">
+					Every figure is public: platform wallet balances, configured
+					thresholds, and aggregate settle counts are already served by
+					<a href="/api/x402-ring">/api/x402-ring</a> and
+					<a href="/api/x402-status">/api/x402-status</a>. No key material or
+					per-user data is reachable from this page. The seed endpoint is
+					<a href="/api/x402/runway-lab">/api/x402/runway-lab</a>.
+					Related surfaces: <a href="/pulse">Money Pulse</a>,
+					<a href="/live">Agent Economy Live</a>,
+					<a href="/x402-revenue">x402 revenue</a>.
+				</p>
+			</section>
+		</main>
+
+		<div class="el-tip" id="el-tip" role="tooltip" hidden></div>
+
+		<script type="module" src="/src/economy-lab.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

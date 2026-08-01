@@ -239,15 +239,31 @@ export default wrapCron(async (req, res) => {
 		const legErrors = [reclaim.error, agentReclaim.error].filter(Boolean);
 		const blocked = readErrors.length + failedSends.length + legErrors.length > 0;
 		const sample = readErrors[0]?.reason || failedSends[0]?.reason || legErrors[0] || '';
+		// A recovery failure and a broadcast failure are both "failed" but have
+		// nothing else in common. Undecryptable secrets are a KEY problem: the SOL
+		// in those wallets is unreachable until the right WALLET_ENCRYPTION_KEY is
+		// present, and no RPC tier or deposit changes that. Counting them as failed
+		// sends is what pointed the 2026-07-31 investigation at RPC health for an
+		// AES-GCM OperationError.
+		const undecryptable = failedSends.filter((f) => String(f?.reason || '').startsWith('secret_undecryptable'));
+		const sendFailures = failedSends.filter((f) => f?.stage === 'send');
 		if (blocked) {
+			const strandedSol = undecryptable.reduce((s, f) => s + (Number(f?.sol) || 0), 0);
 			await sendOpsAlert(
 				'♻️ Economy self-heal BLOCKED: reclaim could not run',
 				`Deficit ${totalDeficitSol.toFixed(4)} SOL, reclaimed only ${reclaimedTotal} SOL. ` +
-					`${readErrors.length} balance read error(s), ${failedSends.length} failed send(s)` +
+					`${readErrors.length} balance read error(s), ${sendFailures.length} failed send(s), ` +
+					`${undecryptable.length} undecryptable wallet secret(s)` +
 					`${legErrors.length ? `, ${legErrors.length} leg error(s)` : ''}. First: ${String(sample).slice(0, 180)}. ` +
 					'An `rpc_error` here means the Solana RPC tier is exhausted, NOT that the wallets are dry: ' +
 					'idle SOL may still be sitting in agent wallets that could not be read. Check ' +
-					'healthz rpc_lanes and the provider quotas before sending any funds.',
+					'healthz rpc_lanes and the provider quotas before sending any funds.' +
+					(undecryptable.length
+						? ` ${strandedSol.toFixed(4)} SOL is stranded behind secrets this deploy cannot decrypt ` +
+							`(${undecryptable.map((f) => f.name).slice(0, 4).join(', ')}). That is a KEY problem, not an RPC or ` +
+							'funding one: verify WALLET_ENCRYPTION_KEY matches the key those wallets were encrypted with. ' +
+							'Reclaim will keep skipping them until it does, so exclude that SOL from any runway estimate.'
+						: ''),
 				{ signature: 'economy-selfheal-blocked', severity: 'warn' },
 			);
 		} else {

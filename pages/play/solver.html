@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot (no-flash); runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>The economy solver · three.ws</title>
+		<meta
+			name="description"
+			content="The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value, and per-kill combat worth. Computed in closed form from the game's own tables, never measured."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/play/solver" />
+		<meta property="og:title" content="The economy solver · three.ws" />
+		<meta
+			property="og:description"
+			content="Exact expected cash and XP per hour for every node in the world at every level, solved in closed form from the game's own tables. Move the level and watch the whole world reprice."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=The+economy+solver&amp;d=Exact+expected+cash+and+XP+per+hour+for+every+node+in+the+%2Fplay+world+at+every+skill+level%2C+solved+in+closed+form+from+the+game%27s+own+tables&amp;p=%2Fplay%2Fsolver"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="The economy solver · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Every node in the /play world, priced exactly, at every level. Closed form, not measured."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=The+economy+solver&amp;d=Exact+expected+cash+and+XP+per+hour+for+every+node+in+the+%2Fplay+world+at+every+skill+level%2C+solved+in+closed+form+from+the+game%27s+own+tables&amp;p=%2Fplay%2Fsolver"
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/ui-juice.css" />
+		<link rel="stylesheet" href="/src/play-solver.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/play/solver" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebApplication",
+				"name": "The economy solver",
+				"applicationCategory": "GameApplication",
+				"operatingSystem": "Any modern browser",
+				"description": "An exact, closed-form model of the three.ws /play world economy: expected cash and XP per hour for every gatherable node at every skill level, the optimal fish-and-cook split, store payback in minutes, wheel expected value, and per-kill combat worth.",
+				"url": "https://three.ws/play/solver",
+				"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="The three.ws /play economy solver" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="ps-shell">
+			<div class="ps-glow" aria-hidden="true"></div>
+
+			<section class="ps-hero">
+				<p class="ps-kicker">The /play world economy, solved</p>
+				<h1 class="ps-title">What is an hour <em>actually</em> worth?</h1>
+				<p class="ps-sub">
+					Every yield rule in the open world is a pure function of your skill level and the
+					node you are standing at, and every swing has a fixed cadence the server enforces.
+					That means the expected cash, XP and goods per hour are not something you have to
+					grind out and average. They are solvable, exactly, in one pass.
+				</p>
+				<p class="ps-sub">
+					So we solved them. Move the level below and the entire world reprices: every tree,
+					every rock, every pond, the wheel, the store and each mob in it.
+				</p>
+				<div class="ps-hero-actions">
+					<a class="ps-btn ps-btn-primary" href="/play">Enter the world</a>
+					<a class="ps-btn" href="/play/economy">See the raw price tables</a>
+					<a class="ps-btn" href="/docs/economy-solver">How the model works</a>
+				</div>
+			</section>
+
+			<p id="ps-status" class="ps-sr" role="status" aria-live="polite"></p>
+			<div id="ps-content"></div>
+
+			<p class="ps-fineprint">
+				Served by <code>/api/play/solver</code>, which imports the authoritative game modules
+				rather than restating them: the yield curves from
+				<code>items.js</code>, the cadences from <code>activities.js</code>, the prices from
+				<code>shop.js</code> and the per-node tuning from <code>world-features.js</code>. No
+				number on this page was measured, sampled or transcribed, so it cannot drift from what
+				the server actually does. The model's assumptions are published with every result and
+				listed at the bottom of this page, because a rate quoted without its assumptions is a
+				lie. Cash is a game resource that never leaves the world; only boutique unlocks and
+				paid spins touch the chain.
+			</p>
+		</main>
+
+		<script type="module" src="/src/play-solver.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
