@@ -11,7 +11,9 @@ import {
 	pickVideoFormat,
 	reelFilename,
 	formatBytes,
-	stageScale,
+	reelFrameCount,
+	fitRadius,
+	REEL_FPS,
 } from '../src/forge-reel.js';
 
 const track = [
@@ -162,21 +164,54 @@ describe('formatBytes', () => {
 	});
 });
 
-describe('stageScale', () => {
-	// Scaling the stage down is how a 1280x720 reel stays recordable on a phone.
-	// Scaling it UP would upsample the encode, so 1 is the ceiling.
-	it('never enlarges past the native output size', () => {
-		expect(stageScale({ width: 540, height: 960 }, { width: 3000, height: 3000 })).toBe(1);
+describe('reelFrameCount', () => {
+	// The reel is rendered frame by frame, so this number is the whole shot.
+	it('is duration multiplied by the framerate', () => {
+		expect(reelFrameCount(4)).toBe(4 * REEL_FPS);
+		expect(reelFrameCount(12)).toBe(12 * REEL_FPS);
 	});
 
-	it('shrinks to fit a small viewport', () => {
-		const scale = stageScale({ width: 1280, height: 720 }, { width: 375, height: 812 });
-		expect(scale).toBeLessThan(1);
-		expect(1280 * scale).toBeLessThanOrEqual(375 - 48 + 0.001);
+	it('never returns fewer than the two frames motion needs', () => {
+		expect(reelFrameCount(0)).toBe(2);
+		expect(reelFrameCount(-5)).toBe(2);
+		expect(reelFrameCount(undefined)).toBe(2);
 	});
 
-	it('stays positive even on an absurdly short viewport', () => {
-		expect(stageScale({ width: 1280, height: 720 }, { width: 200, height: 100 })).toBeGreaterThan(0);
+	it('accepts a different framerate', () => {
+		expect(reelFrameCount(2, 60)).toBe(120);
+	});
+});
+
+describe('fitRadius', () => {
+	// A portrait frame is limited by its horizontal field of view. Ignoring
+	// that is exactly how a 9:16 reel crops the subject's head off.
+	it('pulls further back for a narrower frame', () => {
+		const wide = fitRadius(1, 38, 1280 / 720);
+		const tall = fitRadius(1, 38, 720 / 1280);
+		expect(tall).toBeGreaterThan(wide);
+	});
+
+	it('scales linearly with the subject, so model scale is irrelevant', () => {
+		const one = fitRadius(1, 38, 1);
+		const ten = fitRadius(10, 38, 1);
+		expect(ten / one).toBeCloseTo(10, 6);
+	});
+
+	it('keeps the whole bounding sphere inside the frame', () => {
+		for (const aspect of [16 / 9, 1, 9 / 16]) {
+			const distance = fitRadius(1, 38, aspect, 1);
+			// At this distance the sphere subtends exactly the limiting field of
+			// view, so any margin above 1 leaves air around it.
+			const vFov = (38 * Math.PI) / 180;
+			const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+			const limiting = Math.min(vFov, hFov);
+			expect(Math.asin(1 / distance) * 2).toBeCloseTo(limiting, 6);
+		}
+	});
+
+	it('stays finite for a degenerate model or aspect', () => {
+		expect(Number.isFinite(fitRadius(0, 38, 1))).toBe(true);
+		expect(Number.isFinite(fitRadius(1, 38, 0))).toBe(true);
 	});
 });
 

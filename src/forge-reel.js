@@ -7,43 +7,48 @@
  * it still assumed the user owned a screen recorder, knew how to crop it, and
  * would accept whatever framerate their capture tool felt like.
  *
- * This module removes that entire detour. It drives the result <model-viewer>
- * along a scripted camera track, records the live WebGL canvas through
- * MediaRecorder, and hands back three real files:
+ * This module removes that detour. It renders its own cinematic pass over the
+ * model and hands back three real files:
  *
  *   - a looping video (MP4 where the browser can encode it, WebM otherwise)
- *   - a hero still at the reel's aspect
- *   - a square still sized for link previews and app icons
+ *   - a hero still on the reel's backdrop
+ *   - the same hero frame as a transparent PNG cutout, for decks and sites
  *
- * Everything runs client side. No upload, no queue, no worker, no server cost,
- * and the pixels are the exact pixels the user is looking at: same GLB, same
- * HDRI environment, same tone mapping. The camera track is expressed in
- * multiples of the model's own framed radius, so a teacup and a cathedral get
- * the same shot rather than the same numbers.
+ * Everything runs client side: no upload, no queue, no worker, no server cost.
  *
- * The pure pieces (the shot tracks, the sampler, the codec choice, the output
- * dimensions) are exported and covered by tests/forge-reel.test.js. The mount
- * is DOM guarded so importing this file in Node is safe.
+ * Why its own renderer rather than recording the page's <model-viewer>: that
+ * component runs one shared WebGL canvas across every viewer on the page and
+ * moves it between shadow roots as visibility changes, so a canvas stream taken
+ * from it can silently carry zero frames while still reporting a clean
+ * recording. Owning the canvas also means the output resolution is exactly what
+ * the user picked instead of whatever the layout and pixel ratio happened to
+ * be, the shot is paced to a fixed timestep so a slow machine produces the same
+ * video as a fast one, and the page underneath never gets hijacked mid-take.
+ * The look is not a reimplementation either: lighting, tone mapping and the
+ * ground shadow all come from src/shared/cinematic-render.js, the same module
+ * behind /irl and the avatar viewers.
+ *
+ * The pure pieces (shot tracks, the sampler, framing maths, codec choice,
+ * filenames) are exported and covered by tests/forge-reel.test.js. The mount is
+ * DOM guarded so importing this file in Node is safe.
  */
 
-/** Frames per second requested from the canvas stream. */
+/** Frames per second the reel is rendered and encoded at. */
 export const REEL_FPS = 30;
 
-/** Video bitrate. High enough that a dark model on a dark stage stays clean. */
+/** Video bitrate. High enough that a dark model on a dark backdrop stays clean. */
 const VIDEO_BITRATE = 12_000_000;
 
 /**
- * Output sizes, in CSS pixels.
+ * Output sizes in real pixels.
  *
- * The recorded canvas is this multiplied by devicePixelRatio, so a 2x display
- * yields a 2560x1440 file from the 16:9 entry. The stage is scaled down with a
- * CSS transform when the viewport is smaller, which changes what the user sees
- * and not what gets encoded.
+ * These are the encoded dimensions, full stop. The preview inside the dialog is
+ * scaled with CSS, which changes what the user sees and not what gets written.
  */
 export const REEL_ASPECTS = [
 	{ id: 'wide', label: '16:9', hint: 'Landscape, for sites and decks', width: 1280, height: 720 },
-	{ id: 'square', label: '1:1', hint: 'Square, for link previews', width: 900, height: 900 },
-	{ id: 'tall', label: '9:16', hint: 'Vertical, for phone video', width: 540, height: 960 },
+	{ id: 'square', label: '1:1', hint: 'Square, for link previews', width: 1000, height: 1000 },
+	{ id: 'tall', label: '9:16', hint: 'Vertical, for phone video', width: 720, height: 1280 },
 ];
 
 /** Reel lengths offered. Short is the default: most people rewatch, few wait. */
@@ -57,7 +62,7 @@ export const REEL_DURATIONS = [4, 8, 12];
  *   theta   yaw in degrees, allowed to exceed 360 so a spin reads as a spin
  *   phi     polar angle in degrees (90 is eye level, smaller looks down)
  *   radius  multiple of the model's own framed distance, so scale is irrelevant
- *   fov     multiple of the viewer's default field of view
+ *   fov     multiple of the base field of view
  *
  * `ease` names the curve used to reach that keyframe from the previous one.
  * `heroT` marks the moment the stills are taken: the frame the shot was built
@@ -141,10 +146,41 @@ const lerp = (a, b, k) => a + (b - a) * k;
 const frameOf = (kf) => ({ theta: kf.theta, phi: kf.phi, radius: kf.radius, fov: kf.fov });
 
 /**
+ * How many frames a reel contains.
+ *
+ * The reel is rendered frame by frame rather than "for N seconds", so a slow
+ * machine produces the same file as a fast one instead of a shorter, jerkier
+ * take. At least two frames, or there is no motion to encode.
+ */
+export function reelFrameCount(seconds, fps = REEL_FPS) {
+	return Math.max(2, Math.round((Number(seconds) || 0) * fps));
+}
+
+/**
+ * Distance at which a sphere of `radius` fills the frame with a little air.
+ *
+ * A portrait frame is limited by its horizontal field of view, not its
+ * vertical, so the aspect has to enter the maths. Getting this wrong is how a
+ * 9:16 reel ends up with the model's shoulders cropped off.
+ *
+ * @param {number} radius bounding-sphere radius of the model
+ * @param {number} fovDeg vertical field of view in degrees
+ * @param {number} aspect width / height
+ * @param {number} margin multiplier for breathing room around the subject
+ */
+export function fitRadius(radius, fovDeg, aspect, margin = 1.18) {
+	const vFov = (Math.max(1, fovDeg) * Math.PI) / 180;
+	const safeAspect = Math.max(0.05, aspect || 1);
+	const hFov = 2 * Math.atan(Math.tan(vFov / 2) * safeAspect);
+	const limiting = Math.min(vFov, hFov);
+	return (Math.max(1e-6, radius) / Math.sin(limiting / 2)) * margin;
+}
+
+/**
  * Candidate recording formats, best first.
  *
- * MP4 is preferred because it drops straight into a slide, a phone, or an X
- * post without conversion. Chrome gained MP4 recording only recently and Safari
+ * MP4 is preferred because it drops straight into a slide, a phone, or a post
+ * without conversion. Chrome gained MP4 recording only recently and Safari
  * spells its codecs differently, so VP9 WebM stays as the universal floor.
  */
 export const REEL_MIME_CANDIDATES = [
@@ -199,16 +235,170 @@ export function formatBytes(bytes) {
 	return `${(n / (1024 * 1024)).toFixed(n < 10 * 1024 * 1024 ? 1 : 0)} MB`;
 }
 
+// ---------------------------------------------------------------------------
+// Renderer
+// ---------------------------------------------------------------------------
+
+let threeModules = null;
+
+async function loadThree() {
+	if (threeModules) return threeModules;
+	const [THREE, gltf, draco, meshopt, cinematic] = await Promise.all([
+		import('three'),
+		import('three/addons/loaders/GLTFLoader.js'),
+		import('three/addons/loaders/DRACOLoader.js'),
+		import('three/addons/libs/meshopt_decoder.module.js'),
+		import('./shared/cinematic-render.js'),
+	]);
+	threeModules = {
+		THREE,
+		GLTFLoader: gltf.GLTFLoader,
+		DRACOLoader: draco.DRACOLoader,
+		MeshoptDecoder: meshopt.MeshoptDecoder,
+		cinematic,
+	};
+	return threeModules;
+}
+
 /**
- * Fit an output size inside the viewport without changing the output size.
+ * A self-contained cinematic stage for one model.
  *
- * Returns the CSS transform scale for the stage. Capped at 1 so a small reel
- * is never blown up past its own resolution on a large screen.
+ * Owns its canvas, renderer, scene and camera. Sizes are exact: the drawing
+ * buffer is the requested pixel size with the pixel ratio pinned to 1, so the
+ * encoded frame is never quietly doubled on a retina display.
  */
-export function stageScale(output, viewport, padding = { x: 48, y: 210 }) {
-	const availW = Math.max(160, viewport.width - padding.x);
-	const availH = Math.max(160, viewport.height - padding.y);
-	return Math.min(1, availW / output.width, availH / output.height);
+async function createStage(modelUrl, { width, height }) {
+	const { THREE, GLTFLoader, DRACOLoader, MeshoptDecoder, cinematic } = await loadThree();
+
+	const canvas = document.createElement('canvas');
+	const renderer = new THREE.WebGLRenderer({
+		canvas,
+		antialias: true,
+		alpha: true,
+		// Manual frame capture reads the buffer after the draw call, so the
+		// buffer has to survive it.
+		preserveDrawingBuffer: true,
+	});
+	cinematic.applyCinematicDefaults(renderer, { exposure: 1.2 });
+	renderer.setPixelRatio(1);
+	renderer.setSize(width, height, false);
+
+	const scene = new THREE.Scene();
+	const camera = new THREE.PerspectiveCamera(38, width / height, 0.01, 1000);
+
+	await cinematic.loadEnvironment(renderer, scene, 'studio');
+
+	// A key light exists only to cast the contact shadow; the IBL does the
+	// actual lighting, so it is deliberately soft.
+	const key = new THREE.DirectionalLight(0xffffff, 1.1);
+	key.position.set(2.4, 4.2, 2.6);
+	key.castShadow = true;
+	key.shadow.mapSize.set(1024, 1024);
+	key.shadow.bias = -0.0012;
+	scene.add(key);
+
+	const loader = new GLTFLoader();
+	const dracoLoader = new DRACOLoader();
+	dracoLoader.setDecoderPath('/three/draco/gltf/');
+	loader.setDRACOLoader(dracoLoader);
+	loader.setMeshoptDecoder(MeshoptDecoder);
+	const gltf = await loader.loadAsync(modelUrl);
+	const model = gltf.scene;
+
+	// Recentre on the origin and stand it on the ground plane, so every preset
+	// orbits the subject rather than wherever the exporter left the pivot.
+	const box = new THREE.Box3().setFromObject(model);
+	const centre = box.getCenter(new THREE.Vector3());
+	model.position.sub(centre);
+	const recentred = new THREE.Box3().setFromObject(model);
+	model.position.y -= recentred.min.y;
+
+	model.traverse((node) => {
+		if (node.isMesh) {
+			node.castShadow = true;
+			node.receiveShadow = true;
+		}
+	});
+	scene.add(model);
+
+	const framed = new THREE.Box3().setFromObject(model);
+	const sphere = framed.getBoundingSphere(new THREE.Sphere());
+	const target = new THREE.Vector3(0, sphere.center.y, 0);
+	const shadow = cinematic.updateGroundContactShadow(scene, model, null, 0.4);
+	if (shadow) scene.add(shadow);
+
+	const backdrop = makeBackdrop(THREE);
+	scene.background = backdrop;
+
+	const baseFov = camera.fov;
+	const baseRadius = fitRadius(sphere.radius, baseFov, width / height);
+	key.shadow.camera.left = -sphere.radius * 2;
+	key.shadow.camera.right = sphere.radius * 2;
+	key.shadow.camera.top = sphere.radius * 2;
+	key.shadow.camera.bottom = -sphere.radius * 2;
+	key.shadow.camera.far = baseRadius * 4;
+	key.shadow.camera.updateProjectionMatrix();
+	key.target.position.copy(target);
+	scene.add(key.target);
+
+	function setCamera(sample) {
+		camera.fov = baseFov * sample.fov;
+		camera.updateProjectionMatrix();
+		const theta = (sample.theta * Math.PI) / 180;
+		const phi = (sample.phi * Math.PI) / 180;
+		const r = baseRadius * sample.radius;
+		camera.position.set(
+			target.x + r * Math.sin(phi) * Math.sin(theta),
+			target.y + r * Math.cos(phi),
+			target.z + r * Math.sin(phi) * Math.cos(theta),
+		);
+		camera.lookAt(target);
+	}
+
+	function resize(w, h) {
+		renderer.setSize(w, h, false);
+		camera.aspect = w / h;
+		camera.updateProjectionMatrix();
+	}
+
+	return {
+		canvas,
+		setCamera,
+		resize,
+		render: () => renderer.render(scene, camera),
+		setBackdrop: (on) => {
+			scene.background = on ? backdrop : null;
+			renderer.setClearAlpha(on ? 1 : 0);
+		},
+		dispose: () => {
+			backdrop.dispose?.();
+			dracoLoader.dispose?.();
+			renderer.dispose();
+		},
+	};
+}
+
+/**
+ * The reel's backdrop: a soft vertical gradient rather than flat black.
+ *
+ * Flat black loses every dark model against it and photographs badly in a
+ * thumbnail. The gradient gives the subject something to sit against without
+ * introducing a colour the model has to compete with.
+ */
+function makeBackdrop(THREE) {
+	const canvas = document.createElement('canvas');
+	canvas.width = 4;
+	canvas.height = 512;
+	const ctx = canvas.getContext('2d');
+	const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+	gradient.addColorStop(0, '#1b1b28');
+	gradient.addColorStop(0.55, '#111119');
+	gradient.addColorStop(1, '#08080d');
+	ctx.fillStyle = gradient;
+	ctx.fillRect(0, 0, 4, 512);
+	const texture = new THREE.CanvasTexture(canvas);
+	texture.colorSpace = THREE.SRGBColorSpace;
+	return texture;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,31 +409,26 @@ function mountForgeReel() {
 	const viewer = document.getElementById('viewer');
 	const download = document.getElementById('download');
 	const cinema = document.getElementById('cinema');
-	const shell = document.getElementById('viewer-shell');
 	const resultPanel = document.getElementById('state-result');
-	if (!viewer || !shell || !resultPanel || !download) return;
+	if (!viewer || !resultPanel || !download) return;
 
 	injectStyles();
-
-	// ---- trigger ----------------------------------------------------------
 
 	const trigger = document.createElement('button');
 	trigger.type = 'button';
 	trigger.className = 'btn btn-ghost reel-trigger';
 	trigger.id = 'reel-open';
-	trigger.title = 'Reel: record a cinematic video and stills of this model (R)';
+	trigger.title = 'Reel: render a cinematic video and stills of this model (R)';
 	trigger.setAttribute('aria-haspopup', 'dialog');
 	trigger.innerHTML = `${ICON_REEL}Reel`;
 	if (cinema && cinema.parentNode) cinema.parentNode.insertBefore(trigger, cinema);
 	else download.parentNode.insertBefore(trigger, download);
 
-	// ---- dialog -----------------------------------------------------------
-
 	const dialog = document.createElement('div');
 	dialog.className = 'reel-dialog';
 	dialog.setAttribute('role', 'dialog');
 	dialog.setAttribute('aria-modal', 'true');
-	dialog.setAttribute('aria-label', 'Record a reel of this model');
+	dialog.setAttribute('aria-label', 'Render a reel of this model');
 	dialog.hidden = true;
 	dialog.innerHTML = dialogMarkup();
 	document.body.appendChild(dialog);
@@ -257,39 +442,27 @@ function mountForgeReel() {
 		durations: dialog.querySelector('.reel-durations'),
 		start: dialog.querySelector('.reel-start'),
 		summary: dialog.querySelector('.reel-summary'),
-		recording: dialog.querySelector('.reel-recording'),
+		working: dialog.querySelector('.reel-working'),
+		workingTitle: dialog.querySelector('.reel-working-title'),
+		stage: dialog.querySelector('.reel-stage'),
 		bar: dialog.querySelector('.reel-bar-fill'),
+		barTrack: dialog.querySelector('.reel-bar'),
 		clock: dialog.querySelector('.reel-clock'),
 		cancel: dialog.querySelector('.reel-cancel'),
 		done: dialog.querySelector('.reel-done'),
 		video: dialog.querySelector('.reel-video'),
 		files: dialog.querySelector('.reel-files'),
 		again: [...dialog.querySelectorAll('.reel-again')],
-		fallback: dialog.querySelector('.reel-fallback'),
-		fallbackShots: dialog.querySelector('.reel-fallback-shots'),
-		recordingTitle: dialog.querySelector('.reel-recording-title'),
+		error: dialog.querySelector('.reel-error-panel'),
+		errorText: dialog.querySelector('.reel-error-text'),
 	};
 
-	// ---- capture stage ----------------------------------------------------
-
-	const backdrop = document.createElement('div');
-	backdrop.className = 'reel-stage-backdrop';
-	backdrop.hidden = true;
-	backdrop.innerHTML =
-		'<p class="reel-stage-note" role="status" aria-live="polite">Recording. Do not switch tabs: a background tab stops painting and the reel stops with it.</p>';
-	document.body.appendChild(backdrop);
-
-	const spacer = document.createElement('div');
-	spacer.className = 'reel-spacer';
-	spacer.hidden = true;
-	shell.parentNode.insertBefore(spacer, shell);
-
-	// ---- state ------------------------------------------------------------
-
 	const choice = { preset: REEL_PRESETS[0], aspect: REEL_ASPECTS[0], duration: REEL_DURATIONS[0] };
-	let capturing = false;
+	let busy = false;
 	let cancelled = false;
 	let lastFocus = null;
+	let stage = null;
+	let stageUrl = null;
 	const artefacts = [];
 
 	buildChoiceRow(el.presets, REEL_PRESETS, 'preset');
@@ -302,10 +475,9 @@ function mountForgeReel() {
 			const b = document.createElement('button');
 			b.type = 'button';
 			b.className = 'reel-chip';
-			b.dataset.kind = kind;
 			b.dataset.id = item.id;
 			b.setAttribute('aria-pressed', String(item.id === choice[kind].id));
-			b.innerHTML = `<span class="reel-chip-label">${item.label}</span><span class="reel-chip-hint">${item.blurb || item.hint || ''}</span>`;
+			b.innerHTML = `<span class="reel-chip-label">${escapeHtml(item.label)}</span><span class="reel-chip-hint">${escapeHtml(item.blurb || item.hint || '')}</span>`;
 			b.addEventListener('click', () => {
 				choice[kind] = item;
 				for (const sib of host.querySelectorAll('.reel-chip')) {
@@ -336,31 +508,22 @@ function mountForgeReel() {
 		}
 	}
 
-	function syncSummary() {
-		const fmt = pickVideoFormat(supportsMime);
-		const { width, height } = outputSize();
-		el.summary.textContent = fmt
-			? `${width}x${height} ${fmt.ext.toUpperCase()}, ${choice.duration}s, plus two PNG stills.`
-			: 'This browser cannot record video. Reel will still capture the stills.';
-	}
-
 	function supportsMime(mime) {
 		return typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(mime);
 	}
 
-	/** Output pixels, which is CSS size multiplied by the display's pixel ratio. */
-	function outputSize() {
-		const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-		return {
-			width: Math.round(choice.aspect.width * dpr),
-			height: Math.round(choice.aspect.height * dpr),
-		};
+	function syncSummary() {
+		const format = pickVideoFormat(supportsMime);
+		const { width, height } = choice.aspect;
+		el.summary.textContent = format
+			? `${width} by ${height} ${format.ext.toUpperCase()}, ${choice.duration}s at ${REEL_FPS}fps, plus two PNG stills.`
+			: 'This browser cannot encode video, so Reel will render the stills only.';
 	}
 
 	// ---- open / close -----------------------------------------------------
 
 	function open() {
-		if (capturing) return;
+		if (busy) return;
 		lastFocus = document.activeElement;
 		resetArtefacts();
 		showStep('setup');
@@ -372,7 +535,7 @@ function mountForgeReel() {
 	}
 
 	function close() {
-		if (capturing) {
+		if (busy) {
 			cancelled = true;
 			return;
 		}
@@ -410,16 +573,16 @@ function mountForgeReel() {
 
 	function showStep(step) {
 		el.setup.hidden = step !== 'setup';
-		el.recording.hidden = step !== 'recording';
+		el.working.hidden = step !== 'working';
 		el.done.hidden = step !== 'done';
-		el.fallback.hidden = step !== 'fallback';
+		el.error.hidden = step !== 'error';
 	}
 
 	function resetArtefacts() {
 		for (const a of artefacts.splice(0)) URL.revokeObjectURL(a.url);
 		el.files.textContent = '';
-		el.fallbackShots.textContent = '';
 		el.video.removeAttribute('src');
+		el.video.hidden = false;
 	}
 
 	trigger.addEventListener('click', open);
@@ -432,7 +595,7 @@ function mountForgeReel() {
 		if (event.target === dialog) close();
 	});
 	el.start.addEventListener('click', () => {
-		run().catch((err) => fail(err));
+		run().catch(fail);
 	});
 
 	// `R` mirrors cinema mode's `F`. Ignored while typing, and only while a
@@ -447,147 +610,81 @@ function mountForgeReel() {
 		open();
 	});
 
-	// ---- the capture itself ------------------------------------------------
+	// ---- the render --------------------------------------------------------
 
 	async function run() {
-		const format = pickVideoFormat(supportsMime);
-		const probe = findCanvas(viewer);
-		const canRecord = Boolean(format && probe && typeof probe.captureStream === 'function');
+		const modelUrl = viewer.getAttribute('src');
+		if (!modelUrl) {
+			fail(new Error('No model is loaded in the viewer yet'));
+			return;
+		}
 
-		capturing = true;
+		busy = true;
 		cancelled = false;
 		trigger.disabled = true;
 		resetArtefacts();
-		el.recordingTitle.textContent = canRecord ? 'Rolling' : 'Capturing stills';
-		showStep('recording');
-		setProgress(0);
+		showStep('working');
+		setPhase('Preparing the stage', true);
 
-		const restore = enterStage();
 		try {
-			const baseline = await frameModel();
-			if (canRecord) {
-				// Re-resolve after the stage is up: the shared canvas can move
-				// between shadow roots when viewer visibility changes.
-				const video = await recordVideo(findCanvas(viewer), format, baseline);
+			await ensureStage(modelUrl);
+			if (cancelled) return void abandon();
+
+			const format = pickVideoFormat(supportsMime);
+			if (format && typeof stage.canvas.captureStream === 'function') {
+				setPhase('Rendering the reel', false);
+				const video = await renderVideo(format);
 				if (video) addArtefact('Video', video.blob, video.filename);
 			}
-			if (!cancelled) {
-				el.recordingTitle.textContent = 'Capturing stills';
-				const stills = await captureStills(baseline);
-				for (const still of stills) addArtefact(still.label, still.blob, still.filename);
-				setProgress(1, choice.duration * 1000);
+			if (cancelled) return void abandon();
+
+			setPhase('Capturing stills', true);
+			for (const still of await renderStills()) {
+				addArtefact(still.label, still.blob, still.filename);
 			}
+
+			if (cancelled && artefacts.length === 0) return void abandon();
+			present(Boolean(format));
 		} finally {
-			restore();
-			capturing = false;
+			busy = false;
 			trigger.disabled = false;
 		}
+	}
 
-		if (cancelled && artefacts.length === 0) {
-			showStep('setup');
-			return;
-		}
-		presentResults(canRecord);
+	function abandon() {
+		resetArtefacts();
+		showStep('setup');
 	}
 
 	function fail(err) {
-		capturing = false;
+		busy = false;
 		trigger.disabled = false;
-		showStep('fallback');
-		el.fallbackShots.textContent = '';
-		const p = document.createElement('p');
-		p.className = 'reel-error';
-		p.textContent = `Recording stopped: ${err?.message || err}. The stills below still work, and the GLB download is unaffected.`;
-		el.fallbackShots.appendChild(p);
+		showStep('error');
+		el.errorText.textContent = `${err?.message || err}. Your model and its GLB download are untouched; try a shorter reel or a smaller aspect.`;
 	}
 
 	/**
-	 * Take the viewer over for the duration of the capture.
+	 * Build the stage once per model, and resize it per aspect afterwards.
 	 *
-	 * The shell is pinned to the exact output size so the encoded frames are the
-	 * size we advertise rather than whatever the layout happened to be. A spacer
-	 * holds the vacated height so the page underneath does not jump, and the
-	 * returned function puts everything back including the user's camera.
+	 * Re-parsing a multi-megabyte GLB for every take would be the single
+	 * slowest thing this feature does, so the parsed scene is kept for as long
+	 * as the viewer is showing the same model.
 	 */
-	function enterStage() {
-		const heldOrbit = viewer.getCameraOrbit?.();
-		const heldFov = viewer.getFieldOfView?.();
-		const heldRotate = viewer.hasAttribute('auto-rotate');
-		const heldControls = viewer.hasAttribute('camera-controls');
-		const heldDecay = viewer.getAttribute('interpolation-decay');
-
-		spacer.style.height = `${shell.getBoundingClientRect().height}px`;
-		spacer.hidden = false;
-		backdrop.hidden = false;
-		requestAnimationFrame(() => backdrop.classList.add('is-open'));
-
-		const { width, height } = choice.aspect;
-		const scale = stageScale(
-			{ width, height },
-			{ width: window.innerWidth, height: window.innerHeight },
-		);
-		shell.style.setProperty('--reel-w', `${width}px`);
-		shell.style.setProperty('--reel-h', `${height}px`);
-		shell.style.setProperty('--reel-scale', String(scale));
-		shell.classList.add('is-reel-stage');
-		document.body.classList.add('forge-reel-capturing');
-
-		// Auto-rotate and user drag both fight the scripted track, so both go
-		// away for the take. `interpolation-decay` at 1ms makes model-viewer
-		// honour our easing instead of smoothing on top of it.
-		viewer.removeAttribute('auto-rotate');
-		viewer.removeAttribute('camera-controls');
-		viewer.setAttribute('interpolation-decay', '1');
-
-		return () => {
-			shell.classList.remove('is-reel-stage');
-			shell.style.removeProperty('--reel-w');
-			shell.style.removeProperty('--reel-h');
-			shell.style.removeProperty('--reel-scale');
-			document.body.classList.remove('forge-reel-capturing');
-			backdrop.classList.remove('is-open');
-			backdrop.hidden = true;
-			spacer.hidden = true;
-			if (heldControls) viewer.setAttribute('camera-controls', '');
-			if (heldRotate) viewer.setAttribute('auto-rotate', '');
-			if (heldDecay === null) viewer.removeAttribute('interpolation-decay');
-			else viewer.setAttribute('interpolation-decay', heldDecay);
-			if (heldOrbit) {
-				viewer.cameraOrbit = `${heldOrbit.theta}rad ${heldOrbit.phi}rad ${heldOrbit.radius}m`;
-			}
-			if (typeof heldFov === 'number') viewer.fieldOfView = `${heldFov}rad`;
-			viewer.jumpCameraToGoal?.();
-		};
+	async function ensureStage(modelUrl) {
+		if (stage && stageUrl === modelUrl) {
+			stage.resize(choice.aspect.width, choice.aspect.height);
+			return;
+		}
+		stage?.dispose();
+		stage = await createStage(modelUrl, choice.aspect);
+		stageUrl = modelUrl;
+		el.stage.textContent = '';
+		el.stage.appendChild(stage.canvas);
 	}
 
-	/**
-	 * Reset to the viewer's own framing and read the numbers the track scales.
-	 *
-	 * Radius has to come from the model, not from a constant: the same "1.55x"
-	 * pull-back has to work for a ring and for a building.
-	 */
-	async function frameModel() {
-		viewer.cameraOrbit = '0deg 78deg auto';
-		viewer.fieldOfView = 'auto';
-		viewer.jumpCameraToGoal?.();
-		await nextFrame();
-		await nextFrame();
-		const orbit = viewer.getCameraOrbit?.();
-		const fov = viewer.getFieldOfView?.();
-		return {
-			radius: orbit?.radius || 1,
-			fov: typeof fov === 'number' && fov > 0 ? fov : 45,
-		};
-	}
-
-	function applyFrame(sample, baseline) {
-		viewer.cameraOrbit = `${sample.theta}deg ${sample.phi}deg ${sample.radius * baseline.radius}m`;
-		viewer.fieldOfView = `${sample.fov * baseline.fov}deg`;
-		viewer.jumpCameraToGoal?.();
-	}
-
-	async function recordVideo(canvas, format, baseline) {
-		const stream = canvas.captureStream(REEL_FPS);
+	async function renderVideo(format) {
+		const stream = stage.canvas.captureStream(0);
+		const track = stream.getVideoTracks()[0];
 		const recorder = new MediaRecorder(stream, {
 			mimeType: format.mime,
 			videoBitsPerSecond: VIDEO_BITRATE,
@@ -600,36 +697,38 @@ function mountForgeReel() {
 			recorder.onstop = () => resolve();
 		});
 
-		// One frame on the mark before the recorder opens, so the first encoded
-		// frame is the shot's opening frame and not the previous camera.
-		applyFrame(sampleTrack(choice.preset.track, 0), baseline);
+		const frames = reelFrameCount(choice.duration);
+		stage.setBackdrop(true);
+		stage.setCamera(sampleTrack(choice.preset.track, 0));
+		stage.render();
 		await nextFrame();
 
 		recorder.start(250);
-		const totalMs = choice.duration * 1000;
 		const startedAt = performance.now();
-
-		for (;;) {
-			await nextFrame();
-			const elapsed = performance.now() - startedAt;
-			const t = elapsed / totalMs;
-			if (cancelled || t >= 1) break;
-			applyFrame(sampleTrack(choice.preset.track, t), baseline);
-			setProgress(t, elapsed, totalMs);
+		for (let i = 0; i < frames; i++) {
+			// Pace to wall-clock so the encoder timestamps land where the shot
+			// says they should. A machine that renders faster than realtime
+			// waits; one that renders slower produces the same duration with
+			// fewer distinct frames.
+			const due = startedAt + (i * 1000) / REEL_FPS;
+			while (performance.now() < due && !cancelled) await nextFrame();
+			if (cancelled) break;
+			stage.setCamera(sampleTrack(choice.preset.track, i / frames));
+			stage.render();
+			track.requestFrame?.();
+			setProgress((i + 1) / frames, `frame ${i + 1} of ${frames}`);
 		}
 
-		setProgress(1, totalMs, totalMs);
 		// Flush before tearing the stream down. Killing the tracks first drops
 		// whatever the encoder had not handed over yet, which reads as a
 		// successful recording that produced no file.
 		recorder.stop();
 		await finished;
-		for (const track of stream.getTracks()) track.stop();
+		for (const t of stream.getTracks()) t.stop();
 
 		if (cancelled || chunks.length === 0) return null;
-		const blob = new Blob(chunks, { type: format.mime.split(';')[0] });
 		return {
-			blob,
+			blob: new Blob(chunks, { type: format.mime.split(';')[0] }),
 			filename: reelFilename(baseName(), choice.preset.id, 'reel', format.ext),
 		};
 	}
@@ -637,102 +736,80 @@ function mountForgeReel() {
 	/**
 	 * Two stills from the shot's own hero frame.
 	 *
-	 * The square one is taken by briefly restaging at 1:1 rather than by cropping
-	 * the wide frame, because cropping a 16:9 hero to a square cuts the model's
-	 * head off exactly as often as not.
+	 * The cutout is rendered rather than cropped: the same camera with the
+	 * backdrop removed and the clear alpha at zero, so the transparency follows
+	 * the silhouette exactly instead of a rectangle around it.
 	 */
-	async function captureStills(baseline) {
+	async function renderStills() {
 		const out = [];
 		const hero = sampleTrack(choice.preset.track, choice.preset.heroT);
-		applyFrame(hero, baseline);
-		await nextFrame();
-		await nextFrame();
 
-		const wide = await snapshot();
-		if (wide) {
+		stage.setBackdrop(true);
+		stage.setCamera(hero);
+		stage.render();
+		const onBackdrop = await canvasBlob(stage.canvas);
+		if (onBackdrop) {
 			out.push({
 				label: `Hero still ${choice.aspect.label}`,
-				blob: wide,
+				blob: onBackdrop,
 				filename: reelFilename(baseName(), choice.preset.id, 'hero', 'png'),
 			});
 		}
 
-		if (choice.aspect.id !== 'square') {
-			shell.style.setProperty('--reel-w', '1080px');
-			shell.style.setProperty('--reel-h', '1080px');
-			shell.style.setProperty(
-				'--reel-scale',
-				String(
-					stageScale(
-						{ width: 1080, height: 1080 },
-						{ width: window.innerWidth, height: window.innerHeight },
-					),
-				),
-			);
-			await nextFrame();
-			await nextFrame();
-			applyFrame(hero, baseline);
-			await nextFrame();
-			const square = await snapshot();
-			if (square) {
-				out.push({
-					label: 'Square still 1:1',
-					blob: square,
-					filename: reelFilename(baseName(), choice.preset.id, 'square', 'png'),
-				});
-			}
+		stage.setBackdrop(false);
+		stage.setCamera(hero);
+		stage.render();
+		const cutout = await canvasBlob(stage.canvas);
+		stage.setBackdrop(true);
+		if (cutout) {
+			out.push({
+				label: 'Transparent cutout',
+				blob: cutout,
+				filename: reelFilename(baseName(), choice.preset.id, 'cutout', 'png'),
+			});
 		}
 		return out;
 	}
 
-	async function snapshot() {
-		try {
-			if (typeof viewer.toBlob === 'function') {
-				return await viewer.toBlob({ mimeType: 'image/png', idealAspect: false });
-			}
-			const url = viewer.toDataURL?.('image/png');
-			if (!url) return null;
-			return await (await fetch(url)).blob();
-		} catch {
-			return null;
+	function setPhase(title, indeterminate) {
+		el.workingTitle.textContent = title;
+		el.barTrack.classList.toggle('is-indeterminate', Boolean(indeterminate));
+		if (indeterminate) {
+			el.bar.style.width = '100%';
+			el.clock.textContent = 'Working';
+			el.barTrack.removeAttribute('aria-valuenow');
 		}
 	}
 
-	function setProgress(t, elapsed = 0, total = choice.duration * 1000) {
-		const pct = Math.round(Math.min(1, Math.max(0, t)) * 100);
+	function setProgress(ratio, note) {
+		const pct = Math.round(Math.min(1, Math.max(0, ratio)) * 100);
 		el.bar.style.width = `${pct}%`;
-		el.bar.parentElement.setAttribute('aria-valuenow', String(pct));
-		el.clock.textContent = `${(elapsed / 1000).toFixed(1)}s of ${(total / 1000).toFixed(0)}s`;
+		el.barTrack.setAttribute('aria-valuenow', String(pct));
+		el.clock.textContent = note;
 	}
 
 	function addArtefact(label, blob, filename) {
-		const url = URL.createObjectURL(blob);
-		artefacts.push({ label, blob, filename, url });
+		artefacts.push({ label, blob, filename, url: URL.createObjectURL(blob) });
 	}
 
-	function presentResults(hadVideo) {
-		showStep(artefacts.some((a) => a.label === 'Video') ? 'done' : 'fallback');
-		const host = artefacts.some((a) => a.label === 'Video') ? el.files : el.fallbackShots;
-		host.textContent = '';
-
+	function present(couldRecord) {
+		showStep('done');
+		el.files.textContent = '';
 		const video = artefacts.find((a) => a.label === 'Video');
 		if (video) {
+			el.video.hidden = false;
 			el.video.src = video.url;
 			el.video.play().catch(() => {
 				// Autoplay refusal is fine: the controls are right there.
 			});
-		} else if (hadVideo) {
-			const p = document.createElement('p');
-			p.className = 'reel-error';
-			p.textContent =
-				'The recorder produced no frames, which usually means the tab lost focus mid-take. The stills below are from the same shot.';
-			host.appendChild(p);
 		} else {
-			const p = document.createElement('p');
-			p.className = 'reel-note';
-			p.textContent =
-				'This browser has no canvas video recording, so Reel captured the shot as stills instead. Chrome, Edge and Firefox record video.';
-			host.appendChild(p);
+			el.video.hidden = true;
+			const note = document.createElement('p');
+			note.className = 'reel-note';
+			note.textContent = couldRecord
+				? 'The encoder returned no frames on this machine, so Reel saved the shot as stills. Chrome, Edge and Firefox record video reliably.'
+				: 'This browser has no canvas video encoder, so Reel saved the shot as stills instead.';
+			el.files.appendChild(note);
 		}
 
 		for (const artefact of artefacts) {
@@ -741,17 +818,25 @@ function mountForgeReel() {
 			row.href = artefact.url;
 			row.download = artefact.filename;
 			row.innerHTML = `
-				<span class="reel-file-kind">${escapeHtml(artefact.label)}</span>
+				<span class="reel-file-kind">${escapeHtml(artefact.label)} <span class="reel-file-size">${formatBytes(artefact.blob.size)}</span></span>
 				<span class="reel-file-name">${escapeHtml(artefact.filename)}</span>
-				<span class="reel-file-size">${formatBytes(artefact.blob.size)}</span>
 				<span class="reel-file-cta">Download</span>`;
-			host.appendChild(row);
+			el.files.appendChild(row);
 		}
 	}
 
 	function baseName() {
 		return (download.getAttribute('download') || 'forge.glb').replace(/\.glb$/i, '') || 'forge';
 	}
+
+	// A new model in the viewer invalidates the cached stage.
+	new MutationObserver(() => {
+		if (stageUrl && viewer.getAttribute('src') !== stageUrl) {
+			stage?.dispose();
+			stage = null;
+			stageUrl = null;
+		}
+	}).observe(viewer, { attributes: true, attributeFilter: ['src'] });
 }
 
 // ---------------------------------------------------------------------------
@@ -760,39 +845,16 @@ function mountForgeReel() {
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-/**
- * Choose which of a model-viewer's canvases is actually being painted.
- *
- * There are two, and picking the wrong one is silent: the recording completes,
- * reports success, and contains zero frames. model-viewer runs a single shared
- * WebGL renderer whose canvas carries `id="webgl-canvas"`. While one viewer is
- * on screen that shared canvas is moved into its shadow root and marked `show`,
- * and the viewer's own 2D canvas sits idle. As soon as a second viewer becomes
- * visible the shared canvas is pulled back out and each element's own canvas is
- * blitted into instead.
- *
- * So: record the shared canvas when it is the one being shown here, otherwise
- * record this element's own canvas. Items are `{ id, shown }` so the rule can
- * be tested without a browser.
- */
-export function pickCaptureCanvas(canvases) {
-	if (!Array.isArray(canvases) || canvases.length === 0) return -1;
-	const shared = canvases.findIndex((c) => c.id === 'webgl-canvas' && c.shown);
-	if (shared !== -1) return shared;
-	const own = canvases.findIndex((c) => c.id !== 'webgl-canvas');
-	return own !== -1 ? own : 0;
-}
-
-function findCanvas(viewer) {
-	const nodes = [...(viewer.shadowRoot?.querySelectorAll('canvas') || [])];
-	if (nodes.length === 0) return null;
-	const index = pickCaptureCanvas(
-		nodes.map((node) => ({ id: node.id, shown: node.classList.contains('show') })),
-	);
-	return nodes[index] || null;
-}
-
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+const canvasBlob = (canvas) =>
+	new Promise((resolve) => {
+		try {
+			canvas.toBlob((blob) => resolve(blob), 'image/png');
+		} catch {
+			resolve(null);
+		}
+	});
 
 const prefersReducedMotion = () =>
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -818,8 +880,8 @@ function dialogMarkup() {
 	<div class="reel-panel">
 		<header class="reel-head">
 			<div>
-				<h2 class="reel-title">Record a reel</h2>
-				<p class="reel-sub">A cinematic pass over this model, encoded in your browser. Nothing is uploaded.</p>
+				<h2 class="reel-title">Render a reel</h2>
+				<p class="reel-sub">A cinematic pass over this model, rendered and encoded in your browser. Nothing is uploaded.</p>
 			</div>
 			<button type="button" class="reel-close" aria-label="Close">&times;</button>
 		</header>
@@ -832,26 +894,27 @@ function dialogMarkup() {
 			<h3 class="reel-legend">Length</h3>
 			<div class="reel-durations reel-row is-tight"></div>
 			<p class="reel-summary"></p>
-			<button type="button" class="btn btn-primary reel-start">Record reel</button>
+			<button type="button" class="btn btn-primary reel-start">Render reel</button>
 		</section>
 
-		<section class="reel-recording" hidden>
-			<p class="reel-recording-title">Rolling</p>
-			<div class="reel-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Recording progress">
+		<section class="reel-working" hidden>
+			<div class="reel-stage" aria-hidden="true"></div>
+			<p class="reel-working-title">Preparing the stage</p>
+			<div class="reel-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Render progress">
 				<span class="reel-bar-fill"></span>
 			</div>
-			<p class="reel-clock" aria-live="polite">0.0s</p>
+			<p class="reel-clock" aria-live="polite">Working</p>
 			<button type="button" class="btn btn-ghost reel-cancel">Cancel</button>
 		</section>
 
 		<section class="reel-done" hidden>
 			<video class="reel-video" playsinline muted loop controls></video>
 			<div class="reel-files"></div>
-			<button type="button" class="btn btn-ghost reel-again">Record another</button>
+			<button type="button" class="btn btn-ghost reel-again">Render another</button>
 		</section>
 
-		<section class="reel-fallback" hidden>
-			<div class="reel-fallback-shots"></div>
+		<section class="reel-error-panel" hidden role="alert">
+			<p class="reel-error-text"></p>
 			<button type="button" class="btn btn-ghost reel-again">Back</button>
 		</section>
 	</div>`;
@@ -863,48 +926,6 @@ function injectStyles() {
 	style.textContent = `
 	.reel-trigger svg { margin-right: 0.35rem; }
 
-	/* Stage: the viewer is pinned to the exact output size while recording, and
-	   scaled to fit the viewport without changing the encoded resolution. */
-	.viewer-shell.is-reel-stage {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		width: var(--reel-w);
-		height: var(--reel-h);
-		margin: 0;
-		transform: translate(-50%, -50%) scale(var(--reel-scale, 1));
-		transform-origin: center center;
-		z-index: 10001;
-		border-radius: 14px;
-		overflow: hidden;
-		box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65);
-	}
-	.viewer-shell.is-reel-stage model-viewer { width: 100%; height: 100%; }
-	body.forge-reel-capturing { overflow: hidden; }
-
-	.reel-stage-backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 10000;
-		background: rgba(6, 6, 10, 0.94);
-		opacity: 0;
-		transition: opacity 0.2s ease;
-	}
-	.reel-stage-backdrop.is-open { opacity: 1; }
-	.reel-stage-note {
-		position: absolute;
-		left: 50%;
-		bottom: 2.2rem;
-		transform: translateX(-50%);
-		margin: 0;
-		max-width: min(90vw, 44ch);
-		text-align: center;
-		font-size: 0.8rem;
-		line-height: 1.5;
-		color: rgba(255, 255, 255, 0.62);
-	}
-
-	/* Dialog */
 	.reel-dialog {
 		position: fixed;
 		inset: 0;
@@ -920,7 +941,7 @@ function injectStyles() {
 	.reel-dialog.is-open { opacity: 1; }
 	.reel-panel {
 		width: min(560px, 100%);
-		max-height: min(88vh, 760px);
+		max-height: min(88vh, 780px);
 		overflow-y: auto;
 		padding: 1.25rem 1.35rem 1.45rem;
 		border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
@@ -987,7 +1008,17 @@ function injectStyles() {
 	.reel-summary { margin: 0 0 0.95rem; font-size: 0.78rem; opacity: 0.66; }
 	.reel-start { width: 100%; }
 
-	.reel-recording-title { margin: 0 0 0.75rem; font-size: 0.92rem; font-weight: 600; }
+	.reel-stage {
+		display: grid;
+		place-items: center;
+		margin-bottom: 0.95rem;
+		border-radius: 12px;
+		overflow: hidden;
+		background: #08080d;
+	}
+	.reel-stage canvas { display: block; width: 100%; height: auto; max-height: 46vh; object-fit: contain; }
+
+	.reel-working-title { margin: 0 0 0.7rem; font-size: 0.92rem; font-weight: 600; }
 	.reel-bar {
 		height: 6px;
 		border-radius: 999px;
@@ -1002,6 +1033,14 @@ function injectStyles() {
 		background: var(--accent, #7c6cff);
 		transition: width 0.1s linear;
 	}
+	.reel-bar.is-indeterminate .reel-bar-fill {
+		background: linear-gradient(90deg, transparent, var(--accent, #7c6cff), transparent);
+		animation: reel-sweep 1.1s ease-in-out infinite;
+	}
+	@keyframes reel-sweep {
+		0% { transform: translateX(-100%); }
+		100% { transform: translateX(100%); }
+	}
 	.reel-clock { margin: 0.55rem 0 1rem; font-size: 0.78rem; opacity: 0.7; font-variant-numeric: tabular-nums; }
 
 	.reel-video {
@@ -1010,7 +1049,7 @@ function injectStyles() {
 		background: #06060a;
 		margin-bottom: 0.9rem;
 	}
-	.reel-files, .reel-fallback-shots { display: grid; gap: 0.5rem; margin-bottom: 0.95rem; }
+	.reel-files { display: grid; gap: 0.5rem; margin-bottom: 0.95rem; }
 	.reel-file {
 		display: grid;
 		grid-template-columns: 1fr auto;
@@ -1027,16 +1066,17 @@ function injectStyles() {
 	.reel-file:hover { background: var(--surface-3, rgba(255, 255, 255, 0.09)); border-color: var(--accent, #7c6cff); }
 	.reel-file:focus-visible { outline: 2px solid var(--accent, #7c6cff); outline-offset: 2px; }
 	.reel-file-kind { font-size: 0.85rem; font-weight: 600; }
+	.reel-file-size { font-weight: 400; opacity: 0.55; }
 	.reel-file-cta { grid-row: 1 / span 2; font-size: 0.78rem; opacity: 0.8; }
 	.reel-file-name { grid-column: 1; font-size: 0.73rem; opacity: 0.6; word-break: break-all; }
-	.reel-file-size { display: none; }
 
-	.reel-note, .reel-error { margin: 0 0 0.6rem; font-size: 0.8rem; line-height: 1.5; opacity: 0.75; }
-	.reel-error { color: var(--danger, #ff6b6b); opacity: 0.95; }
+	.reel-note, .reel-error-text { margin: 0 0 0.9rem; font-size: 0.8rem; line-height: 1.5; opacity: 0.78; }
+	.reel-error-text { color: var(--danger, #ff6b6b); opacity: 0.95; }
 
 	@media (prefers-reduced-motion: reduce) {
-		.reel-dialog, .reel-panel, .reel-chip, .reel-stage-backdrop, .reel-bar-fill { transition: none; }
+		.reel-dialog, .reel-panel, .reel-chip, .reel-bar-fill { transition: none; }
 		.reel-chip:hover { transform: none; }
+		.reel-bar.is-indeterminate .reel-bar-fill { animation: none; }
 	}`;
 	document.head.appendChild(style);
 }

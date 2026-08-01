@@ -36,6 +36,9 @@
 		/>
 		<link rel="stylesheet" href="/mobile.css" />
 		<link rel="stylesheet" href="/cookbook.css" />
+		<!-- Figures: the same capture pipeline and presentation the tutorial viewer
+		     uses, so a `figure:` directive in a recipe renders identically there. -->
+		<link rel="stylesheet" href="/tutorial-figures.css" />
 		<script
 			src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"
 			integrity="sha384-odPBjvtXVM/5hOYIr3A1dB+flh0c3wAT3bSesIOqEGmyUA4JoKf/YTWy0XKOYAY7"
@@ -49,7 +52,27 @@
 		<script defer src="/nav.js"></script>
 		<script defer src="/footer-newsletter.js"></script>
 		<script defer src="/cookbook-manifest.js"></script>
-	</head>
+		<!-- model-viewer backs the live/model figures and the fallback a model
+		     figure degrades to when its still has not been captured yet. -->
+		<script src="/model-viewer-meshopt.js"></script>
+		<script src="/tutorial-figures.js"></script>
+	
+	<link rel="canonical" href="https://three.ws/cookbook/text-to-3d-cli">
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:url" content="https://three.ws/cookbook/text-to-3d-cli">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Recipe%3A+text+to+3D+from+the+command+line&amp;d=A+standard-library+Python+CLI+that+turns+a+sentence+into+a+downloaded+GLB.+Handles+the+inline-versus-queued+response+split%2C+honors+the+server+poll+hint+so+it&amp;p=%2Fcookbook%2Ftext-to-3d-cli">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:type" content="image/png">
+	<meta property="og:image:alt" content="Recipe: text to 3D from the command line: three.ws">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:site" content="@trythreews">
+	<meta name="twitter:title" content="Recipe: text to 3D from the command line · three.ws">
+	<meta name="twitter:description" content="A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Recipe%3A+text+to+3D+from+the+command+line&amp;d=A+standard-library+Python+CLI+that+turns+a+sentence+into+a+downloaded+GLB.+Handles+the+inline-versus-queued+response+split%2C+honors+the+server+poll+hint+so+it&amp;p=%2Fcookbook%2Ftext-to-3d-cli">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Recipe: text to 3D from the command line","description":"A standard-library Python CLI that turns a sentence into a downloaded GLB. Handles the inline-versus-queued response split, honors the server poll hint so it never trips the rate limiter, and fails with a message you can act on. No API key.","url":"https://three.ws/cookbook/text-to-3d-cli","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Recipe%3A+text+to+3D+from+the+command+line&d=A+standard-library+Python+CLI+that+turns+a+sentence+into+a+downloaded+GLB.+Handles+the+inline-versus-queued+response+split%2C+honors+the+server+poll+hint+so+it&p=%2Fcookbook%2Ftext-to-3d-cli"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Cookbook","item":"https://three.ws/cookbook"},{"@type":"ListItem","position":3,"name":"Text To 3d Cli","item":"https://three.ws/cookbook/text-to-3d-cli"}]}]}</script>
+</head>
 	<body>
 		<div class="cb-page">
 			<header><div id="nav-container"></div></header>
@@ -317,7 +340,13 @@
 					}
 
 					window.marked.setOptions({ gfm: true, breaks: false, mangle: false, headerIds: false });
-					article.innerHTML = window.marked.parse(markdown);
+					/* Figure directives become inert slots BEFORE the parse: as plain
+					   markdown images marked emits <img src="figure:…">, and the browser
+					   fires a doomed request for a scheme it cannot resolve. */
+					const source = window.tutorialFigures
+						? window.tutorialFigures.preprocess(markdown)
+						: markdown;
+					article.innerHTML = window.marked.parse(source);
 
 					/* Internal .md links point at files in the repo; rewrite them to routes. */
 					article.querySelectorAll('a[href$=".md"]').forEach((link) => {
@@ -328,6 +357,12 @@
 							'/docs/' + href.replace(/^\.?\/?(docs\/)?/, '').replace(/\.md$/, ''),
 						);
 					});
+
+					/* Swap the `figure:` directives for real captured media before the
+					   TOC is built, so a figure never lands between a heading and its
+					   observed position. Media is optional: every figure kind has a
+					   live fallback, so a recipe with no captures still reads whole. */
+					if (window.tutorialFigures) window.tutorialFigures.mount(article);
 
 					buildToc();
 					enhanceCode();
