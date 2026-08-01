@@ -4,10 +4,27 @@
 // call cost us" — the admin spend dashboard reads the events this priced.
 //
 // Anthropic and OpenAI prices are list price per 1M tokens (input / output),
-// current as of each vendor's model catalog. Groq, OpenRouter, and NVIDIA NIM
-// are platform-funded free tiers (we hold the key, callers pay nothing), so
-// their marginal cost to us is $0 — they are intentionally priced at zero, not
+// current as of each vendor's model catalog. Groq and NVIDIA NIM are
+// platform-funded free tiers (we hold the key, callers pay nothing), so their
+// marginal cost to us is $0: they are intentionally priced at zero, not
 // omitted, so the dashboard can show "calls served free" alongside paid spend.
+//
+// OpenRouter is NOT blanket-free, and treating it as such is what made a real
+// $30 credit burn invisible: the platform key routes `:free` models (genuinely
+// $0) AND vendor mirrors like `anthropic/claude-opus-5` (real spend at close to
+// list price), and both used to price to exactly 0, the mirror because its
+// namespaced id matched no table key and the provider was on the free list. A
+// lane reporting $0 while it drains a balance is worse than one reporting
+// nothing, so:
+//
+//   • `:free` suffix          → 0, and only that suffix earns a free price.
+//   • vendor-namespaced id    → priced by the underlying model (openRouterBaseId).
+//   • a provider-reported cost (OpenRouter's `usage.cost`, requested with
+//     `usage: { include: true }`) always wins over the table, it is the
+//     authoritative number the account was actually charged.
+//   • anything else on a spending lane → UNKNOWN (null), never 0. Callers
+//     record null (usage_events.cost_micro_usd is nullable) and raise, so the
+//     gap is visible instead of masquerading as free traffic.
 
 import { isPaidModel } from './chat-models.js';
 
@@ -61,8 +78,49 @@ const PRICE_PER_MTOK = {
 
 // Providers whose marginal cost to the platform is zero (platform-funded free
 // tiers, or keyless anonymous tiers). vertex-gemini is deliberately NOT here —
-// it draws down GCP credits.
-const FREE_PROVIDERS = new Set(['groq', 'openrouter', 'nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations']);
+// it draws down GCP credits. openrouter is deliberately NOT here either: the
+// platform key serves both `:free` models and paid vendor mirrors, so freeness
+// is a property of the MODEL on that lane, not of the lane (see isFreeLane).
+const FREE_PROVIDERS = new Set(['groq', 'nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations']);
+
+// Strip a rung suffix from a provider name: '#n' for multi-key rungs
+// (openrouter#2), ':variant' for same-key model variants, '#instant' for the
+// Groq step-down. Every rung of a provider meters like its base.
+function baseProvider(provider) {
+	return String(provider || '').split(/[#:]/)[0];
+}
+
+/**
+ * The underlying model id behind an OpenRouter route.
+ *
+ * OpenRouter namespaces every id by vendor (`anthropic/claude-opus-5`,
+ * `openai/gpt-5.6-sol`, `x-ai/grok-4.5`), which matches nothing in the price
+ * table above, so a mirror of a $5/$25 model used to price to exactly $0.
+ * Strip the vendor segment so the mirror prices as the model it actually is.
+ * Ids already carrying a table-native prefix (`google/gemini-2.5-flash`,
+ * `ibm-granite/granite-4.1-8b`) are left alone by the caller because the table
+ * lookup tries the raw id first.
+ */
+export function openRouterBaseId(model) {
+	if (!model) return model;
+	const i = model.indexOf('/');
+	return i === -1 ? model : model.slice(i + 1);
+}
+
+/** Whether an OpenRouter route is the genuinely-free `:free` tier. */
+export function isOpenRouterFreeModel(model) {
+	return typeof model === 'string' && model.endsWith(':free');
+}
+
+/**
+ * Whether this provider/model pair costs the platform nothing. Used by the
+ * metering audit to tell "served free" apart from "we failed to price it".
+ */
+export function isFreeLane(provider, model) {
+	if (model && isPaidModel(model)) return false;
+	if (baseProvider(provider) === 'openrouter') return isOpenRouterFreeModel(model);
+	return FREE_PROVIDERS.has(baseProvider(provider));
+}
 
 function priceForModel(model) {
 	if (!model) return null;
@@ -75,6 +133,12 @@ function priceForModel(model) {
 	return best ? PRICE_PER_MTOK[best] : null;
 }
 
+// Resolve a price for a model, retrying once on the vendor-stripped id so an
+// OpenRouter mirror resolves to its underlying model's price.
+function priceForRoute(model) {
+	return priceForModel(model) || priceForModel(openRouterBaseId(model));
+}
+
 // Anthropic prompt-cache multipliers against the model's base INPUT price.
 // A cache write costs more than a plain input token; a cache read costs a
 // tenth. These are ratios, not prices, so they stay correct as list prices
@@ -83,27 +147,39 @@ function priceForModel(model) {
 const CACHE_WRITE_MULTIPLIER = 1.25;
 const CACHE_READ_MULTIPLIER = 0.1;
 
-// Compute the cost of one completion in micro-USD. Returns an integer (rounded)
-// or 0 when the provider is free or the model is unpriced — never null, so the
-// caller can always record a numeric cost.
-//
-// `cacheWrite`/`cacheRead` are the Anthropic prompt-caching token counts
-// (`usage.cache_creation_input_tokens` / `usage.cache_read_input_tokens`).
-// They are DISJOINT from `input`: on a cached request the API reports
-// `input_tokens` as the uncached remainder only, so the three must be summed
-// (at their own rates) to price the full prompt. Omitting them would silently
-// under-report spend on every cached call.
-export function costMicroUsd({ provider, model, input = 0, output = 0, cacheWrite = 0, cacheRead = 0 } = {}) {
-	// A paid/BYOK model draws real spend even when its transport provider is an
-	// otherwise-free tier (e.g. OpenRouter Granite), so it is metered by its list
-	// price below rather than zeroed. Genuinely-free models still short-circuit.
-	// Provider names carry rung suffixes — '#n' for multi-key (openrouter#2),
-	// ':variant' for same-key model variants (openrouter:free), '#instant' for
-	// the Groq step-down. Strip them so every rung of a free provider prices
-	// to zero.
-	if (!(model && isPaidModel(model)) && provider && FREE_PROVIDERS.has(String(provider).split(/[#:]/)[0])) return 0;
-	const price = priceForModel(model);
-	if (!price) return 0;
+/**
+ * Cost of one completion in micro-USD.
+ *
+ * Returns an integer, or **null when the cost is UNKNOWN**, a spending lane
+ * whose model has no price and whose provider reported none. Null is not an
+ * error path to swallow: `usage_events.cost_micro_usd` is nullable precisely so
+ * unknown reads as unknown, and callers log it (see recordLlmSpend). Zero is
+ * reserved for lanes that genuinely cost nothing.
+ *
+ * `reportedCostUsd` is the provider's own charge for the call, in USD, when it
+ * tells us (OpenRouter returns `usage.cost` when the request carries
+ * `usage: { include: true }`). It is authoritative and overrides the table.
+ *
+ * `cacheWrite`/`cacheRead` are the Anthropic prompt-caching token counts
+ * (`usage.cache_creation_input_tokens` / `usage.cache_read_input_tokens`).
+ * They are DISJOINT from `input`: on a cached request the API reports
+ * `input_tokens` as the uncached remainder only, so the three must be summed
+ * (at their own rates) to price the full prompt. Omitting them would silently
+ * under-report spend on every cached call.
+ */
+export function costMicroUsd({ provider, model, input = 0, output = 0, cacheWrite = 0, cacheRead = 0, reportedCostUsd = null } = {}) {
+	// The provider told us what it charged, nothing beats that, including for a
+	// lane we have no table price for.
+	if (Number.isFinite(reportedCostUsd)) return Math.round(reportedCostUsd * 1_000_000);
+	// Genuinely-free lanes: platform-funded free tiers, keyless anonymous tiers,
+	// and OpenRouter's `:free` routes. A paid/BYOK model on an otherwise-free
+	// transport (OpenRouter Granite, the Claude mirrors) is NOT free and falls
+	// through to the table below.
+	if (isFreeLane(provider, model)) return 0;
+	const price = priceForRoute(model);
+	// Unknown on a spending lane. Never 0: a fabricated zero is how a $30
+	// OpenRouter burn stayed invisible until the balance was gone.
+	if (!price) return null;
 	const [inPerM, outPerM] = price;
 	// tokens / 1e6 * usdPerM * 1e6 micro-usd  ==  tokens * usdPerM
 	const usdMicros =
@@ -114,8 +190,8 @@ export function costMicroUsd({ provider, model, input = 0, output = 0, cacheWrit
 	return Math.round(usdMicros);
 }
 
-// Whether we have a real price for this model (vs. defaulting to 0). Lets the
+// Whether we have a real price for this model (vs. reporting unknown). Lets the
 // dashboard distinguish "free provider" from "paid provider we can't price yet".
 export function isPriced(model) {
-	return priceForModel(model) != null;
+	return priceForRoute(model) != null;
 }

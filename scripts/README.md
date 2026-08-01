@@ -55,18 +55,39 @@ Runs the canonical CORS policy against the R2 bucket holding all media
 `<img>`, `fetch`) and presigned uploads to work cross-origin.
 
 ```sh
-vercel env pull .env
-node scripts/set-r2-cors.mjs            # apply
-node scripts/set-r2-cors.mjs --get      # show what's currently live
+node scripts/set-r2-cors.mjs --probe    # measure the live policy from outside
+node scripts/set-r2-cors.mjs --get      # read the live policy (admin token only)
 node scripts/set-r2-cors.mjs --dry-run  # print the policy without pushing
+node scripts/set-r2-cors.mjs            # apply (admin token only)
 ```
 
-Allowed origins are defined inline in the script — edit `ALLOWED_ORIGINS`
-when you add a new domain (preview branch, staging host, etc.) and re-run.
+Start with `--probe`. It measures what the bucket actually enforces using only
+the object-scoped keys every environment already has: one HEAD per origin
+against the public host for the read rule, one PUT preflight against the S3
+endpoint for the write rule. It prints a row per origin, marks any row where
+the measurement disagrees with the policy in the script, and exits `1` on
+drift. `--get` and the bare apply both call Get/PutBucketCors, which an
+"Object Read & Write" token cannot do; they print the exact token to mint
+instead of a stack trace.
+
+Credentials come from `.env` / `.env.local`, or from the Cloud Run service for
+production values (`gcloud run services describe three-ws-api --region
+us-central1 --project aerial-vehicle-466722-p5 --format=yaml`). Do not use
+`vercel env pull`: it returns empty for secret-type vars, and production has
+not run on Vercel since 2026-07-07. An admin token belongs in `.env.local` as
+`R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`.
+
+Allowed origins are defined inline in the script: edit `ALLOWED_ORIGINS` when
+you add a new domain (preview branch, staging host, etc.) and re-run.
 Idempotent: re-running with the same policy is a no-op.
 
 Run this any time you see `No 'Access-Control-Allow-Origin' header` errors
-on assets served from `*.r2.dev` or your custom R2 domain.
+on assets served from `*.r2.dev` or your custom R2 domain. As of 2026-08-01
+the live policy is an origin allowlist that predates the current script, so
+`--probe` reports drift on `www.three.ws`, `*.app.github.dev`,
+`localhost:5173`, and every third-party origin. Until an admin token applies
+the fix, browser reads of bucket-hosted GLBs from an unlisted origin must go
+through [`/api/glb`](../docs/media-api.md#same-origin-glb-proxy).
 
 ### `mobile-perf.mjs`: mobile field metrics under CPU + network throttling
 

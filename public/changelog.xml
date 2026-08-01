@@ -63,6 +63,14 @@
 			<description>Every animation clip in the library has been measured from its keyframes: how energetic it is, its tempo, which part of the body leads, whether it loops without a visible snap, and whether it survives as an upper-body overlay. The measurements power a new public API (GET /api/animations/signatures) with filters, slot-fit verdicts and a similar-clips ranking, plus two free MCP tools (animation_signature, find_similar_animations) so agents can pick clips the same way. The gestures page and the runtime defaults already run on the same numbers, so what you preview is what agents get.</description>
 		</item>
 		<item>
+			<title>Your own avatar can sign now, not just the two that shipped with the page</title>
+			<link>https://three.ws/sign-language</link>
+			<guid isPermaLink="false">2026-08-01:Your own avatar can sign now, not just the two that shipped with the page</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Sign language ran on two fixed rigs. You could watch the platform's avatars sign, but never your own, which is backwards for a feature whose whole point is that an avatar communicates. The Avatar setting on the sign language page and the ASL alphabet page now has a third option that opens the avatar gallery: pick any avatar you own, or any public one, and it takes over the signing on the spot, keeping the speed and signing hand you already chose. Your pick is remembered and carries between both pages. It works because a sign is described anatomically, an index fingertip on the chin rather than a fixed coordinate, so the same vocabulary is measured onto your avatar's own skeleton, whatever its proportions. An avatar that genuinely cannot sign, a model with no skeleton or no finger bones, is not left standing there mute: the page says which avatar it is and puts the working one back.</description>
+		</item>
+		<item>
 			<title>.well-known/mcp.json</title>
 			<link>https://three.ws/.well-known/mcp.json</link>
 			<guid isPermaLink="false">2026-07-31:.well-known/mcp.json</guid>

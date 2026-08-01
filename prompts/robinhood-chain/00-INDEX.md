@@ -1,53 +1,65 @@
-# Robinhood Chain prompt pack — execution index
+# Robinhood Chain pack: execution index
 
-> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+Robinhood in this workspace always means **Robinhood Crypto**, never equities or options
+(`CLAUDE.md`). Chain facts live in [_shared.md](_shared.md); the research behind the campaign is
+in [PLAN.md](PLAN.md). Facts in those two files override training data.
 
-Run order matters: later waves consume earlier waves' output. Within a wave, prompts are
-independent and can run concurrently. Every agent reads `_shared.md` first, then its prompt.
+## State: every work order in this pack has shipped and been retired
 
-> DO NOT DELETE PROMPT FILES — even after their work ships. This pack was wiped once by an
-> overzealous cleanup and had to be restored. Only the owner removes prompts.
+All 19 numbered work orders were completed and their files removed from the working tree; each
+remains readable in git history (`git log --diff-filter=D --name-only -- prompts/robinhood-chain/`).
+What they produced is on disk:
 
-## Wave 1 — foundation (run first, alone)
-| Prompt | Product | Folder | Status |
-|---|---|---|---|
-| [01-sdk-core.md](01-sdk-core.md) | Core TypeScript SDK (`hoodchain`) | `robinhood/robinhood-chain-sdk/` | DONE 2026-07-13 — write-path E2E proven with REAL MONEY on mainnet 4663 (swap tx `0x20ab04a4…2085`, WETH→USDG via SwapRouter02, 1.606331 USDG received). Supersedes the faucet-blocked testnet swap. |
-
-## Wave 2 — SDK consumers (run after 01 completes; all concurrent)
-| Prompt | Product | Folder |
+| Product | Folder | Kind |
 |---|---|---|
-| [02-sdk-simple-wrapper.md](02-sdk-simple-wrapper.md) | Dead-simple wrapper (`hood-js`) | `robinhood/hood-js/` |
-| [03-sdk-advanced-wrapper.md](03-sdk-advanced-wrapper.md) | Advanced toolkit (`hoodkit`) | `robinhood/hoodkit/` |
-| [04-market-data-api.md](04-market-data-api.md) | Hosted market-data API + x402 | `robinhood/hood-api/` |
-| [05-x402-usdg-rail.md](05-x402-usdg-rail.md) | x402 USDG middleware + facilitator | `robinhood/hood402/` |
-| 06-mcp-servers.md (retired 2026-07-30, verified shipped: hood-mcp@0.1.1 on npm, 13/13 tests green; owner residuals: faucet-funded swap hash, GitHub Pages enable) | MCP servers (data + trading) | `robinhood/hood-mcp/` |
-| [11-toolkit-cli.md](11-toolkit-cli.md) | CLI toolkit (`hood-cli`) | `robinhood/hood-cli/` |
-| [14-wallet-connect-kit.md](14-wallet-connect-kit.md) | Wallet & onboarding kit (`hood-connect`) | `robinhood/hood-connect/` |
-| [15-tokenlist.md](15-tokenlist.md) | Canonical token list (`hood-tokenlist`) | `robinhood/hood-tokenlist/` |
-| [17-erc8056.md](17-erc8056.md) | ERC-8056 reference (`erc8056`) | `robinhood/erc8056/` |
-| [18-status-page.md](18-status-page.md) | Chain status page (`hood-status`) | `robinhood/hood-status/` |
+| Core TypeScript SDK | `robinhood/robinhood-chain-sdk/` | standalone repo |
+| Simple wrapper | `robinhood/hood-js/` | standalone repo |
+| Advanced toolkit | `robinhood/hoodkit/` | standalone repo |
+| Market-data API + x402 | `robinhood/hood-api/` | standalone repo |
+| x402 USDG rail | `robinhood/hood402/` | standalone repo |
+| MCP servers | `robinhood/hood-mcp/` | standalone repo, published to npm |
+| CLI toolkit | `robinhood/hood-cli/` | standalone repo |
+| Wallet and onboarding kit | `robinhood/hood-connect/` | standalone repo |
+| Canonical token list | `robinhood/hood-tokenlist/` | standalone repo |
+| ERC-8056 reference | `robinhood/erc8056/` | standalone repo |
+| Chain status page | `robinhood/hood-status/` | standalone repo |
+| Trading agents | `robinhood/hood-traders/` | standalone repo |
+| Coin launcher | `robinhood/hood-launcher/` | standalone repo |
+| Alert bots | `robinhood/hood-alerts/` | standalone repo |
+| USDG checkout | `robinhood/hood-pay/` | standalone repo |
+| Examples gallery | `robinhood/robinhood-chain-examples/` | standalone repo |
+| Tutorial site | `robinhood/learn-robinhood-chain/` | standalone repo |
+| In-repo markets board | `pages/markets.html`, `api/v1/robinhood/*`, route `/markets/robinhood` | three.ws surface |
+| In-repo coin worlds and firehose | `api/robinhood/play-worlds.js`, `api/robinhood/coin-trades.js`, `workers/robinhood-feed/` | three.ws surface |
 
-## Wave 3 — applications (after wave 2; all concurrent)
-| Prompt | Product | Folder |
-|---|---|---|
-| [07-agent-trading.md](07-agent-trading.md) | Autonomous trading agents | `robinhood/hood-traders/` |
-| [08-agent-launcher.md](08-agent-launcher.md) | Autonomous coin launcher | `robinhood/hood-launcher/` |
-| 09-examples.md (retired 2026-07-30, verified shipped: all 14 examples built and run, captured output in every README, gallery works as static files) | Examples gallery | `robinhood/robinhood-chain-examples/` |
-| [12-threews-markets.md](12-threews-markets.md) | three.ws /markets display + purchase | in-repo (`api/`, `public/`) |
-| [13-threews-play.md](13-threews-play.md) | three.ws /play coin worlds + firehose | in-repo |
-| [16-alerts-bots.md](16-alerts-bots.md) | Telegram + Discord alert bots (`hood-alerts`) | `robinhood/hood-alerts/` |
-| [19-usdg-checkout.md](19-usdg-checkout.md) | USDG checkout for humans (`hood-pay`) | `robinhood/hood-pay/` |
+## What is left, and it is all owner-side
 
-## Wave 4 — synthesis (last)
-| Prompt | Product | Folder |
-|---|---|---|
-| [10-tutorials.md](10-tutorials.md) | Tutorial site (`learn-robinhood-chain`) | `robinhood/learn-robinhood-chain/` |
+None of these is agent-executable from this machine:
+
+1. **npm publish.** Every package is publish-ready (`npm pack` clean, `files`, `exports`,
+   `types` set). The owner holds the token: `npm publish --access public` per package.
+2. **GitHub Pages.** Each standalone repo ships a static `docs/` site. Enable Settings, Pages,
+   main branch, `/docs` after the repo is pushed. No GitHub Actions anywhere in this project.
+3. **Repo extraction and push.** The folders under `robinhood/` deliberately have no `.git`.
+   The owner extracts and pushes them.
+4. **Testnet faucet funding.** The official faucet requires Turnstile plus Google Sign-In in a
+   real browser, so a shared test wallet must be funded once by hand.
+
+## If you want an agent pass over this pack
+
+There is no open work order, so give a specific instruction instead. Useful ones:
+
+- "Re-verify every repo under `robinhood/`: install, build, test, `npm pack`, and report which
+  ones are still green." Real on-chain reads against mainnet 4663 are free and unblocked.
+- "Refresh `_shared.md` against the live chain and the current viem chain defs."
+- "Audit the in-repo `/markets/robinhood` surface against the live APIs and fix what drifted."
 
 ## Non-negotiables recap
-- Read `_shared.md` before starting. Facts there override training data.
-- Standalone repos live under `robinhood/<name>/`, MIT © 2026 nirholas, no `git init`, no commits.
-- Prompts 12–13 modify the three.ws app itself — same commit gate: leave uncommitted.
-- Docs sites are static `/docs` folders (Pages deploy-from-branch). No GitHub Actions anywhere.
-- Done = tested + real on-chain evidence + docs + report. See `_shared.md` report format.
 
-Research backing this pack: [PLAN.md](PLAN.md).
+- Standalone repos live under `robinhood/<name>/`, MIT, copyright 2026 nirholas, no `git init`
+  inside them and no commits from an agent.
+- **Commit gate:** everything in this campaign references a crypto project other than `$THREE`,
+  so no commit that touches it ships without explicit owner approval (`CLAUDE.md`).
+- Stock Token display is unrestricted; any buy or swap flow carries the eligibility disclosure
+  and a config-level geo gate. Memecoins carry no such restriction.
+- Done means tested, with real on-chain evidence, docs, and a report. Format in `_shared.md`.

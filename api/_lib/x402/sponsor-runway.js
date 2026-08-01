@@ -28,7 +28,7 @@
 //    consumer therefore carries the window alongside the number: a rate without
 //    its window is a rumour.
 // 2. RUNWAY IS MEASURED TO THE FLOOR, NOT TO ZERO. Settling stops at the floor,
-//    so the operationally meaningful figure is (balance − floor) / burn. The
+//    so the operationally meaningful figure is (balance minus floor) / burn. The
 //    to-zero figure is still reported (`runway_days`) because it is what the
 //    board has always shown and what a funding ask is sized against, but the
 //    STATUS and the alert key off `runway_days_to_floor`.

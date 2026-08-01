@@ -55,8 +55,10 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 
 	// The gallery: open it, take the first public avatar, and require the stage
 	// to come back up on that GLB.
+	// The gallery module is imported on demand (it pulls in model-viewer), so
+	// the first open waits on a real network fetch, not just a render.
 	await page.click(`${rigSel} button:nth-child(3)`);
-	await page.waitForSelector('.agp-overlay.agp-open', { timeout: 12000 });
+	await page.waitForSelector('.agp-overlay.agp-open', { timeout: 40000 });
 	check('the avatar gallery opened', true);
 	await page.waitForSelector('.agp-card', { timeout: 15000 });
 	const pickedName = await page.$eval('.agp-card', (el) => el.querySelector('.agp-card-name')?.textContent?.trim() || '');

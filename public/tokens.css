@@ -206,6 +206,26 @@
 	   opacity at the component level.) */
 	--ink-faint:  rgba(255, 255, 255, 0.55);
 
+	/* Scrim + on-scrim ink (B14): the one part of the palette that must NOT flip
+	   with the theme. A scrim sits on top of MEDIA (a screenshot, a video frame, a
+	   3D canvas, a modal backdrop), not on a page surface, so its job is legibility
+	   over unknown pixels: it stays dark and its ink stays light in both themes.
+	   Before this existed the platform had 400+ hand-rolled rgba(0,0,0,…) overlays
+	   clustered around four values; these four ARE that cluster, deduped.
+	     soft    gradient legibility wash under captions
+	     scrim   standard chip / label resting on media
+	     strong  hover or pressed state of the above, heavy caption bars
+	     modal   full-screen backdrop behind a dialog or lightbox
+	   Pair with --on-scrim* for text and hairlines; never with --ink*, which flips. */
+	--scrim-soft:   rgba(0, 0, 0, 0.35);
+	--scrim:        rgba(0, 0, 0, 0.55);
+	--scrim-strong: rgba(0, 0, 0, 0.78);
+	--scrim-modal:  rgba(0, 0, 0, 0.60);
+	--on-scrim-bright: #ffffff;
+	--on-scrim:        rgba(255, 255, 255, 0.82);
+	--on-scrim-dim:    rgba(255, 255, 255, 0.64);
+	--on-scrim-stroke: rgba(255, 255, 255, 0.16);
+
 	/* Elevation / shadow (B01) — three depth tiers. Mirrors the component layer
 	   in style.css so any surface can express depth without hand-rolling shadows.
 	     1 = resting panel · 2 = card · 3 = lifted / hover / modal */

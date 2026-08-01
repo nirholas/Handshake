@@ -1,0 +1,795 @@
+{
+  "status": 402,
+  "challenge": {
+    "x402Version": 2,
+    "error": "X-PAYMENT header is required",
+    "resource": {
+      "url": "https://three.ws/api/okx/3d/identity-studio",
+      "description": "three.ws Agent Identity Studio, A2MCP (MCP Streamable HTTP) service that turns an AI agent's brand brief into a complete 3D identity: rigged GLB avatar + posed studio renders with an OKX-avatar-slot PFP crop. $1.50 per identity, USDC via x402; job status polling is free. Operated by three.ws.",
+      "mimeType": "application/json",
+      "serviceName": "three.ws Agent Identity Studio",
+      "tags": [
+        "x402",
+        "mcp",
+        "3d",
+        "avatar",
+        "identity"
+      ],
+      "iconUrl": "https://three.ws/favicon.ico"
+    },
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "1500000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "maxTimeoutSeconds": 86400,
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "extra": {
+          "symbol": "USDT",
+          "name": "USD₮0",
+          "version": "1",
+          "transferMethod": "eip3009",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "1000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+        "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "extra": {
+          "name": "USDC",
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "10000000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+        "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+        "extra": {
+          "name": "THREE",
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "1000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "eip155:8453",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "1000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "eip155:8453",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6,
+          "assetTransferMethod": "permit2",
+          "supportsEip2612": true
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "1000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "maxTimeoutSeconds": 86400,
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "extra": {
+          "symbol": "USDT",
+          "name": "USD₮0",
+          "version": "1",
+          "transferMethod": "eip3009",
+          "decimals": 6
+        }
+      }
+    ],
+    "extensions": {
+      "bazaar": {
+        "discoverable": true,
+        "info": {
+          "input": {
+            "type": "http",
+            "method": "POST",
+            "body": {
+              "jsonrpc": "2.0",
+              "id": 1,
+              "method": "tools/call",
+              "params": {
+                "name": "validate_model",
+                "arguments": {
+                  "url": "https://example.com/model.glb"
+                }
+              }
+            },
+            "bodyType": "json"
+          },
+          "output": {
+            "type": "json",
+            "example": {
+              "jsonrpc": "2.0",
+              "id": 1,
+              "result": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\"ok\":true,\"warnings\":[],\"meta\":{\"vertices\":12345}}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "http"
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "POST",
+                    "PUT",
+                    "PATCH"
+                  ]
+                },
+                "bodyType": {
+                  "type": "string",
+                  "enum": [
+                    "json",
+                    "form-data",
+                    "text"
+                  ]
+                },
+                "body": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "required": [
+                    "jsonrpc",
+                    "method"
+                  ],
+                  "properties": {
+                    "jsonrpc": {
+                      "type": "string",
+                      "const": "2.0"
+                    },
+                    "id": {
+                      "type": [
+                        "string",
+                        "number"
+                      ]
+                    },
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "initialize",
+                        "tools/list",
+                        "tools/call",
+                        "ping"
+                      ],
+                      "description": "MCP JSON-RPC method."
+                    },
+                    "params": {
+                      "type": "object",
+                      "description": "For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, solana_register, solana_reputation, and others, see tools/list."
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "method",
+                "bodyType",
+                "body"
+              ],
+              "additionalProperties": false
+            },
+            "output": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "example": {
+                  "type": "object",
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "properties": {
+                    "jsonrpc": {
+                      "type": "string",
+                      "const": "2.0"
+                    },
+                    "id": {
+                      "type": [
+                        "string",
+                        "number"
+                      ]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "content": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "type",
+                              "text"
+                            ],
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "required": [
+            "input"
+          ]
+        }
+      }
+    }
+  },
+  "body": {
+    "x402Version": 2,
+    "error": "X-PAYMENT header is required",
+    "resource": {
+      "url": "https://three.ws/api/okx/3d/identity-studio",
+      "description": "three.ws Agent Identity Studio, A2MCP (MCP Streamable HTTP) service that turns an AI agent's brand brief into a complete 3D identity: rigged GLB avatar + posed studio renders with an OKX-avatar-slot PFP crop. $1.50 per identity, USDC via x402; job status polling is free. Operated by three.ws.",
+      "mimeType": "application/json",
+      "serviceName": "three.ws Agent Identity Studio",
+      "tags": [
+        "x402",
+        "mcp",
+        "3d",
+        "avatar",
+        "identity"
+      ],
+      "iconUrl": "https://three.ws/favicon.ico"
+    },
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "1500000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "maxTimeoutSeconds": 86400,
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "extra": {
+          "symbol": "USDT",
+          "name": "USD₮0",
+          "version": "1",
+          "transferMethod": "eip3009",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "1000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+        "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "extra": {
+          "name": "USDC",
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "10000000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+        "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+        "extra": {
+          "name": "THREE",
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "1000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "eip155:8453",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "amount": "1000",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "network": "eip155:8453",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6,
+          "assetTransferMethod": "permit2",
+          "supportsEip2612": true
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "1000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "maxTimeoutSeconds": 86400,
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+        "resource": "https://three.ws/api/okx/3d/identity-studio",
+        "extra": {
+          "symbol": "USDT",
+          "name": "USD₮0",
+          "version": "1",
+          "transferMethod": "eip3009",
+          "decimals": 6
+        }
+      }
+    ],
+    "extensions": {
+      "bazaar": {
+        "discoverable": true,
+        "info": {
+          "input": {
+            "type": "http",
+            "method": "POST",
+            "body": {
+              "jsonrpc": "2.0",
+              "id": 1,
+              "method": "tools/call",
+              "params": {
+                "name": "validate_model",
+                "arguments": {
+                  "url": "https://example.com/model.glb"
+                }
+              }
+            },
+            "bodyType": "json"
+          },
+          "output": {
+            "type": "json",
+            "example": {
+              "jsonrpc": "2.0",
+              "id": 1,
+              "result": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\"ok\":true,\"warnings\":[],\"meta\":{\"vertices\":12345}}"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "input": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "http"
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "POST",
+                    "PUT",
+                    "PATCH"
+                  ]
+                },
+                "bodyType": {
+                  "type": "string",
+                  "enum": [
+                    "json",
+                    "form-data",
+                    "text"
+                  ]
+                },
+                "body": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "required": [
+                    "jsonrpc",
+                    "method"
+                  ],
+                  "properties": {
+                    "jsonrpc": {
+                      "type": "string",
+                      "const": "2.0"
+                    },
+                    "id": {
+                      "type": [
+                        "string",
+                        "number"
+                      ]
+                    },
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "initialize",
+                        "tools/list",
+                        "tools/call",
+                        "ping"
+                      ],
+                      "description": "MCP JSON-RPC method."
+                    },
+                    "params": {
+                      "type": "object",
+                      "description": "For tools/call: { name, arguments }. Tool names include validate_model, inspect_model, optimize_model, search_public_avatars, solana_register, solana_reputation, and others, see tools/list."
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "method",
+                "bodyType",
+                "body"
+              ],
+              "additionalProperties": false
+            },
+            "output": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "example": {
+                  "type": "object",
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "properties": {
+                    "jsonrpc": {
+                      "type": "string",
+                      "const": "2.0"
+                    },
+                    "id": {
+                      "type": [
+                        "string",
+                        "number"
+                      ]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "content": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "type",
+                              "text"
+                            ],
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type"
+              ]
+            }
+          },
+          "required": [
+            "input"
+          ]
+        }
+      },
+      "eip2612GasSponsoring": {
+        "info": {
+          "description": "The facilitator accepts EIP-2612 gasless Permit to `Permit2` canonical contract.",
+          "version": "1"
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "description": "The address of the sender."
+            },
+            "asset": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "description": "The address of the ERC-20 token contract."
+            },
+            "spender": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "description": "The address of the spender (Canonical Permit2)."
+            },
+            "amount": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "description": "The amount to approve (uint256). Typically MaxUint."
+            },
+            "nonce": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "description": "The current nonce of the sender."
+            },
+            "deadline": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "description": "The timestamp at which the signature expires."
+            },
+            "signature": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]+$",
+              "description": "The 65-byte concatenated signature (r, s, v) as a hex string."
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9]+(\\.[0-9]+)*$",
+              "description": "Schema version identifier."
+            }
+          },
+          "required": [
+            "from",
+            "asset",
+            "spender",
+            "amount",
+            "nonce",
+            "deadline",
+            "signature",
+            "version"
+          ]
+        }
+      },
+      "erc20ApprovalGasSponsoring": {
+        "info": {
+          "description": "The facilitator broadcasts a pre-signed ERC-20 approve() transaction to grant Permit2 allowance.",
+          "version": "1"
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "description": "The address of the sender (token owner)."
+            },
+            "asset": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "description": "The address of the ERC-20 token contract."
+            },
+            "spender": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "description": "The address of the spender (Canonical Permit2)."
+            },
+            "amount": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "description": "The amount approved (uint256). Always MaxUint256."
+            },
+            "signedTransaction": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]+$",
+              "description": "The RLP-encoded signed EIP-1559 transaction as a hex string."
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9]+(\\.[0-9]+)*$",
+              "description": "Schema version identifier."
+            }
+          },
+          "required": [
+            "from",
+            "asset",
+            "spender",
+            "amount",
+            "signedTransaction",
+            "version"
+          ]
+        }
+      },
+      "offer-receipt": {
+        "includeTxHash": false,
+        "offerValiditySeconds": 60,
+        "info": {
+          "offers": [
+            {
+              "format": "jws",
+              "acceptIndex": 0,
+              "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxNTAwMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvaWRlbnRpdHktc3R1ZGlvIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg1NjIwMzE4LCJ2ZXJzaW9uIjoxfQ.uSjy8Xn73p2wNNtP_NiWZ1J_J5gG3MChJFuPOXQxfJ--rD4XUcJrCmUwGXDOL02YCziuX1l5CW9yhA-sSqQlCQ"
+            },
+            {
+              "format": "jws",
+              "acceptIndex": 1,
+              "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiJFUGpGV2RkNUF1ZnFTU3FlTTJxTjF4enliYXBDOEc0d0VHR2tad3lURHQxdiIsIm5ldHdvcmsiOiJzb2xhbmE6NWV5a3Q0VXNGdjhQOE5KZFRSRXBZMXZ6cUtxWkt2ZHAiLCJwYXlUbyI6Ind3d3d3RHhGV1JuN2dyZ3IzRXNyc2c1QzZOdkRvREhTQTRnYUNmZmNjclUiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9pZGVudGl0eS1zdHVkaW8iLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODU2MjAzMTgsInZlcnNpb24iOjF9._hMPP_eB3sAQKH8zUQ4sF2B9Ey_ttl5l5jD44kRC-UiO2TVYKX27JN2TuiaNko9BCqf79euMVe-p_Kamf-pDAQ"
+            },
+            {
+              "format": "jws",
+              "acceptIndex": 2,
+              "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvaWRlbnRpdHktc3R1ZGlvIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg1NjIwMzE4LCJ2ZXJzaW9uIjoxfQ.uY29GW0cHq7z85VFWZJq7EYnqGO2i9v2aNNmEfCYi9kjeWyvzTqXI9NEvGYo8ZDmSZY9pmrPZWalDnLjkD6DBA"
+            },
+            {
+              "format": "jws",
+              "acceptIndex": 3,
+              "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2lkZW50aXR5LXN0dWRpbyIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4NTYyMDMxOCwidmVyc2lvbiI6MX0.GY2k834ETC4j1rduzt79iuQ_GXEOkaRs58zVZYbUfMYJEZLDDfqT07KnEJ8rA2dkmSxwSE4Pfmia1mPxLiuuBQ"
+            },
+            {
+              "format": "jws",
+              "acceptIndex": 4,
+              "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDgzMzU4OWZDRDZlRGI2RTA4ZjRjN0MzMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJwYXlUbyI6IjB4NDAyMmRlMmQzNmMzMzRlNzNjN2ExMDg4MDVjZWExMWMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2lkZW50aXR5LXN0dWRpbyIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4NTYyMDMxOCwidmVyc2lvbiI6MX0.GY2k834ETC4j1rduzt79iuQ_GXEOkaRs58zVZYbUfMYJEZLDDfqT07KnEJ8rA2dkmSxwSE4Pfmia1mPxLiuuBQ"
+            },
+            {
+              "format": "jws",
+              "acceptIndex": 5,
+              "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwIiwiYXNzZXQiOiIweDc3OWRlZDBjOWUxMDIyMjI1ZjhlMDYzMGIzNWE5YjU0YmU3MTM3MzYiLCJuZXR3b3JrIjoiZWlwMTU1OjE5NiIsInBheVRvIjoiMHg0MDIyZGUyRDM2QzMzNEU3M0M3YTEwODgwNUNlYTExQzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvaWRlbnRpdHktc3R1ZGlvIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg1NjIwMzE4LCJ2ZXJzaW9uIjoxfQ.t0PolLtd6R8-YnLpIMxtgq9L57w54FA_5kGYiJf24qmOTT3rri-FcEX4FOyaHBtdO0912jXzfRVRnJt0P6VFDw"
+            }
+          ]
+        },
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "offers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "format": {
+                    "type": "string"
+                  },
+                  "acceptIndex": {
+                    "type": "integer"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer"
+                      },
+                      "resourceUrl": {
+                        "type": "string"
+                      },
+                      "scheme": {
+                        "type": "string"
+                      },
+                      "network": {
+                        "type": "string"
+                      },
+                      "asset": {
+                        "type": "string"
+                      },
+                      "payTo": {
+                        "type": "string"
+                      },
+                      "amount": {
+                        "type": "string"
+                      },
+                      "validUntil": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "resourceUrl",
+                      "scheme",
+                      "network",
+                      "asset",
+                      "payTo",
+                      "amount"
+                    ]
+                  },
+                  "signature": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "format",
+                  "signature"
+                ]
+              }
+            }
+          },
+          "required": [
+            "offers"
+          ]
+        }
+      }
+    }
+  }
+}

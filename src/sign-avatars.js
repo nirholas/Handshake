@@ -131,6 +131,12 @@ export function buildRigPicker({ host, optionClass, active, apply, onStatus }) {
 	// The custom pill carries the picked avatar's name once there is one, and
 	// keeps its own key in the map so pressed state tracks the avatar behind it.
 	let stored = customRig();
+	const describeCustom = () => {
+		customBtn.title = stored
+			? `${stored.label} is your avatar. Click it again to choose a different one.`
+			: 'Sign with any avatar you own, or any public one.';
+		customBtn.setAttribute('aria-haspopup', 'dialog');
+	};
 	const customBtn = addPill(stored ? stored.label : 'Your avatar…', async () => {
 		if (busy) return;
 		if (stored && stored.id !== current.id) {
@@ -161,11 +167,13 @@ export function buildRigPicker({ host, optionClass, active, apply, onStatus }) {
 		stored = rig;
 		saveSignPrefs({ customRig: rig });
 		customBtn.textContent = rig.label;
+		describeCustom();
 		if (previousKey) buttons.delete(previousKey);
 		buttons.set(rig.id, customBtn);
 		await choose(rig);
 	});
 	if (stored) buttons.set(stored.id, customBtn);
+	describeCustom();
 
 	press(current);
 }

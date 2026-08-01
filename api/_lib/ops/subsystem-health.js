@@ -197,6 +197,37 @@ function checkHelius() {
 // Falling through to free public nodes keeps the platform up but throttled, and
 // that is precisely the state an operator must be told about, because clearing
 // it costs money and only the owner can spend it.
+// Render a cooldown as a coarse "back in …". Whole hours past an hour, whole
+// minutes below it: an exhausted quota recovers on a 6h window, and reporting it
+// to the minute implies a precision the breaker does not have.
+function backIn(ms) {
+	if (ms >= 3_600_000) {
+		const h = Math.floor(ms / 3_600_000);
+		const m = Math.round((ms % 3_600_000) / 60_000);
+		return m ? `${h}h${m}m` : `${h}h`;
+	}
+	if (ms >= 60_000) return `${Math.round(ms / 60_000)}m`;
+	return `${Math.max(1, Math.round(ms / 1000))}s`;
+}
+
+// A one-line census of what is parked and when it comes back, appended to the
+// detail so it lands on /status and in healthz alike. Without it "1/3 paid lanes
+// serving" reads as an unexplained outage during what is in fact a normal quota
+// cooldown, and the next reader re-diagnoses "all lanes dead" from scratch. Cap
+// the list so a wide chain cannot turn one status line into a paragraph.
+const COOLING_LANES_SHOWN = 3;
+function coolingCensus(lanes) {
+	const cooling = lanes
+		.filter((l) => l.cooling)
+		.sort((a, b) => a.cooldownRemainingMs - b.cooldownRemainingMs);
+	if (cooling.length === 0) return '';
+	const shown = cooling
+		.slice(0, COOLING_LANES_SHOWN)
+		.map((l) => `${l.url.replace(/^https?:\/\//, '')} back in ${backIn(l.cooldownRemainingMs)}`);
+	const rest = cooling.length - shown.length;
+	return `; ${shown.join(', ')}${rest > 0 ? `, +${rest} more cooling` : ''}`;
+}
+
 function checkRpcLanes() {
 	const base = { name: 'rpc_lanes', label: 'Solana RPC lanes' };
 	try {
@@ -207,23 +238,43 @@ function checkRpcLanes() {
 			total: h.total,
 			cooling: h.cooling,
 		};
+		// Per-lane state, so healthz answers "which lane, and when is it back?"
+		// without anyone having to re-probe the providers by hand. Masked to
+		// scheme+host by rpcLaneHealth, so no API key leaves the process.
+		const lanes = h.lanes.map((l) => ({
+			url: l.url,
+			paid: l.paid,
+			cooling: l.cooling,
+			recoversAt: l.recoversAt,
+			recoversIn: l.cooling ? backIn(l.cooldownRemainingMs) : null,
+			blockedMethods: l.blockedMethods.map((b) => b.method),
+		}));
+		const census = coolingCensus(h.lanes);
 		if (h.paidTotal === 0) {
-			return { ...base, status: 'ok', detail: `${h.total} keyless lanes (no paid RPC configured)`, metrics };
+			return {
+				...base,
+				status: 'ok',
+				detail: `${h.total} keyless lanes (no paid RPC configured)${census}`,
+				metrics,
+				lanes,
+			};
 		}
 		if (h.allPaidCooling) {
 			return {
 				...base,
 				status: 'degraded',
-				detail: `all ${h.paidTotal} paid lanes exhausted; serving from ${h.total - h.cooling} free lanes`,
+				detail: `all ${h.paidTotal} paid lanes exhausted; serving from ${h.total - h.cooling} free lanes${census}`,
 				metrics,
-				hint: 'Every paid Solana RPC plan is over quota at once. Calls still succeed on free public nodes but are throttled, which shows up as intermittent 5xx and slow settles. Owner action: top up or upgrade the RPC plans.',
+				lanes,
+				hint: 'Every paid Solana RPC plan is over quota at once. Calls still succeed on free public nodes but are throttled, which shows up as intermittent 5xx and slow settles. Each lane above carries its own recovery time, a quota cooldown clears itself, so check those before assuming an outage. Owner action if they are not clearing: top up or upgrade the RPC plans.',
 			};
 		}
 		return {
 			...base,
 			status: 'ok',
-			detail: `${h.paidTotal - h.paidCooling}/${h.paidTotal} paid lanes serving`,
+			detail: `${h.paidTotal - h.paidCooling}/${h.paidTotal} paid lanes serving${census}`,
 			metrics,
+			lanes,
 		};
 	} catch (err) {
 		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };

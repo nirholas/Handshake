@@ -338,11 +338,21 @@ function renderPayments(d) {
 
 	const settleCls = w3.settle_success_rate == null ? '' : w3.settle_success_rate >= 0.9 ? 'ok' : w3.settle_success_rate >= 0.7 ? 'warn' : 'bad';
 	const verifyCls = w3.verify_reject_rate == null ? '' : w3.verify_reject_rate <= 0.05 ? 'ok' : w3.verify_reject_rate <= 0.2 ? 'warn' : 'bad';
-	const sponsorCls = sp.error || sp.below_floor ? 'bad' : sp.runway_days != null && sp.runway_days < 3 ? 'warn' : 'ok';
+	// The card mirrors the verdict the scheduled monitor alerts on, so the board
+	// and this page can never disagree about whether the sponsor is in trouble.
+	const sponsorCls = sp.error || sp.runway_status === 'critical' || sp.below_floor ? 'bad'
+		: sp.runway_status === 'warn' ? 'warn' : 'ok';
 	const sponsorVal = sp.error ? '✕' : sp.sol != null ? sp.sol.toFixed(4) + ' SOL' : sp.configured === false ? 'not set' : 'n/a';
+	// A burn rate without the window it was measured over is a rumour: print both.
+	const burnTxt = sp.burn_sol_per_day != null
+		? `burn ${sp.burn_sol_per_day}/day over ${sp.burn_window_days ?? '?'}d (${sp.settles_in_window ?? 0} settles)`
+		: `burn not measurable in ${sp.burn_window_days ?? '?'}d`;
+	const runwayTxt = sp.runway_days_to_floor != null
+		? `runway ${sp.runway_days_to_floor}d to floor${sp.runway_alert_days != null ? ` (alerts under ${sp.runway_alert_days}d)` : ''}`
+		: `runway unknown${sp.runway_reason ? ` (${esc(sp.runway_reason)})` : ''}`;
 	const sponsorSub = sp.error ? esc(sp.error)
 		: sp.sol != null
-			? `floor ${sp.sol_floor != null ? sp.sol_floor.toFixed(2) : 'n/a'} · burn ${sp.burn_sol_per_day_7d ?? 'n/a'}/day · runway ${sp.runway_days != null ? sp.runway_days + 'd' : 'n/a'}`
+			? `settle floor ${sp.settle_floor_sol != null ? sp.settle_floor_sol.toFixed(3) : 'n/a'} · ${burnTxt} · ${runwayTxt}`
 			: 'sponsor wallet unconfigured';
 
 	// Zero events across 24h is a state of its own: one clear line beats four

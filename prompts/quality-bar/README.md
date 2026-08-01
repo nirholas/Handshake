@@ -1,42 +1,41 @@
-# quality-bar: the $100k GCP-credit quality campaign
-
-> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+# quality-bar: the GCP-credit quality campaign
 
 Owner directive 2026-07-16: spend the Google Cloud credits liberally to make the platform's
-UX/UI excellent and 3D generations as real-looking as IRL people and objects. No new non-GCP
-paid APIs. Agents complete their prompt 100% and never stop to ask questions;
-`_shared.md` carries everything needed to make that possible. Read it before any prompt.
+UX and UI excellent and 3D generations as real-looking as IRL people and objects. No new
+non-GCP paid APIs. Agents complete their work order 100% and never stop to ask questions.
+
+**Read `_shared.md` before any work order.** Each work order is also self-contained: paste the
+file into a fresh Claude Code chat and it runs.
 
 ## The thesis
 
-IRL-real 3D is a chain, and every prompt owns one link:
+IRL-real 3D is a chain and every work order owns one link: photoreal reference images, then the
+strongest mesh and texture model at fleet scale, then complete PBR materials, then cinematic
+viewers, wrapped in a flagship UX, measured so it cannot regress, with humans as the hardest
+special case.
 
-photoreal reference images (01) -> strongest mesh+texture model (02) at fleet scale (03)
--> complete PBR materials (04) -> cinematic viewers (05), wrapped in a flagship UX (06, 07, 08),
-measured so it cannot regress (09), with humans as the hardest special case (10).
+## Open work orders
 
-## Prompts
+| # | File | Owns | State |
+|---|------|------|-------|
+| 03 | [03-gpu-fleet-scaleout.md](03-gpu-fleet-scaleout.md) | Scale ceilings, cold-start honesty, keep-warm, load test | Partial. The TripoSG and text2motion deploys it opened with are shipped; scale, cold-start UX and the load test are open. |
+| 04 | [04-pbr-texture-material-realism.md](04-pbr-texture-material-realism.md) | Full PBR sets, measured presets, skin/eye/hair | Open |
+| 06 | [06-forge-ux-flow.md](06-forge-ux-flow.md) | The `/forge` flagship experience | Partial. History, compare mode and starters shipped; the result-moment click-through and the clean audit sweep are open. |
+| 07 | [07-design-system-sweep.md](07-design-system-sweep.md) | Tokens, states, microinteractions sitewide | Open |
+| 08 | [08-mobile-performance.md](08-mobile-performance.md) | Mobile excellence, GLB delivery | Partial. A measured baseline exists in `_generated/08/`; the fixes and the re-measure are open. |
+| 10 | [10-avatar-likeness-irl-people.md](10-avatar-likeness-irl-people.md) | IRL people: likeness, hands, rig, AR | Partial. Animation dignity is proven across ten rig conventions; one runtime-lane defect plus the likeness audit are open. |
 
-| # | File | Owns | Depends on |
-|---|------|------|------------|
-| 01 | 01-photoreal-reference-pipeline.md | Vertex reference images at every entry point | none |
-| 02 | 02-hunyuan3d-flagship-lane.md | Hunyuan3D live and quality-leading | quota grant (in flight) |
-| 03 | 03-gpu-fleet-scaleout.md | TripoSG fix, text2motion, scale ceilings, cold-start UX | quota grant helps |
-| 04 | 04-pbr-texture-material-realism.md | Full PBR sets, skin/eye/hair materials | none |
-| 05 | 05-cinematic-viewers-everywhere.md | One rendering bar in every viewer | none |
-| 06 | 06-forge-ux-flow.md | /forge flagship experience | best after 01, 05 |
-| 07 | 07-design-system-sweep.md | Tokens, states, microinteractions sitewide | none |
-| 08 | 08-mobile-performance.md | Mobile excellence, GLB compression | best after 05 |
-| 09 | 09-realism-eval-harness.md (retired 2026-07-30, verified shipped) | Benchmark + Gemini judge + regression gate | run EARLY for the baseline |
-| 10 | 10-avatar-likeness-irl-people.md | IRL people: likeness, hands, rig, AR | best after 02, 04 |
+Retired after verification (readable in git history): 01 photoreal reference pipeline, 02 the
+Hunyuan3D flagship lane, 05 cinematic viewers, 09 the realism eval harness (now
+`scripts/quality-bench.mjs` plus the weekly cron).
 
-Run 09 first (baseline), then 01/04/05/07 in parallel (no dependencies), 02/03 as quota lands,
-then 06/08/10.
+Suggested order: 04, 07 and 08 have no dependencies and can run in parallel. 03 unblocks
+throughput. 06 and 10 land best after 04.
 
-## Ground rules recap (full versions in _shared.md and CLAUDE.md)
+## Ground rules recap (full versions in `_shared.md` and `CLAUDE.md`)
 
 - GCP spend approved; no new external paid APIs; never trade quality for cost.
-- Pathspec commits only; concurrent agents share the worktree; no push/post without owner say-so
-  (GCP deploys of surfaces your prompt owns ARE in scope for this campaign).
-- Every user-visible change: changelog entry. Every claim: verified, with the receipts in the
-  final report. Blockers get documented and routed around, never asked about.
+- Explicit-path commits only; concurrent agents share this worktree; no push or external post
+  without the owner saying so. GCP deploys of the surface a work order owns are in scope.
+- Every user-visible change gets a `data/changelog.json` entry. Every claim is verified with the
+  receipts in the final report. Blockers are routed around and documented, never asked about.

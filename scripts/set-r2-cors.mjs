@@ -115,6 +115,19 @@ const POLICY = {
 	],
 };
 
+// Origins --probe measures. Every literal from ALLOWED_ORIGINS, a concrete
+// sample per wildcard entry (a wildcard is only real if a host under it passes),
+// and two controls that must be read-allowed but write-denied.
+const PROBE_ORIGINS = [
+	...ALLOWED_ORIGINS.map((o) => o.replace('*', 'probe-cors')),
+	'https://example.org',
+	'http://localhost:8080',
+];
+
+// The preflight target. OPTIONS is answered from the bucket policy alone, so
+// this key is never created or read.
+const PROBE_WRITE_KEY = 'cors-preflight-probe.bin';
+
 const flag = (name) => process.argv.includes(name);
 
 const s3 = new S3Client({

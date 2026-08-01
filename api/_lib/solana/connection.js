@@ -700,13 +700,27 @@ function paidMainnetEndpoints() {
  */
 export function rpcLaneHealth(now = Date.now()) {
 	const paid = new Set(paidMainnetEndpoints());
+	// Group live method demotions by lane so each lane reports the call shapes it
+	// is currently skipped for. A lane can be fully healthy AND carry demotions, 
+	// that is the normal state of a free lane, not a degradation.
+	const demotionsByUrl = new Map();
+	for (const d of rpcMethodDemotions(now)) {
+		if (!demotionsByUrl.has(d.url)) demotionsByUrl.set(d.url, []);
+		demotionsByUrl.get(d.url).push({ method: d.method, remainingMs: d.remainingMs });
+	}
 	const lanes = solanaRpcEndpoints('mainnet').map((url) => {
 		const until = _endpointCooldown.get(url) || 0;
+		const cooling = until > now;
 		return {
 			url: maskUrl(url),
 			paid: paid.has(url),
-			cooling: until > now,
-			cooldownRemainingMs: until > now ? until - now : 0,
+			cooling,
+			cooldownRemainingMs: cooling ? until - now : 0,
+			// Absolute wall-clock recovery, so an operator reading a parked snapshot
+			// (the /status page renders a cron-parked copy, minutes old) gets a time
+			// that stays true instead of a countdown that silently over-reports.
+			recoversAt: cooling ? until : null,
+			blockedMethods: demotionsByUrl.get(url) || [],
 		};
 	});
 	const paidLanes = lanes.filter((l) => l.paid);
@@ -857,11 +871,15 @@ export function classifyRpcBody(body) {
 			const msg = String(item.error?.message || '');
 			// status 429 → cooldownMsFor scans the message for a quota signal and parks
 			// a truly-exhausted plan for hours rather than re-hitting it every call.
+			// `methodBlock` splits that: the lane is not out of capacity, it is refusing
+			// this one call shape, so the rotating fetch demotes the method and leaves
+			// the lane in rotation. Both still fail the request over to the next lane.
 			return {
 				status: 429,
 				reason: `provider error ${code}`.trim(),
 				log: `200 + provider error ${code} ${msg.slice(0, 48)}`.trim(),
 				bodyText: msg,
+				methodBlock: isMethodRefusal(msg),
 			};
 		}
 	}
@@ -903,9 +921,42 @@ export function shouldRotate(status) {
 // one request, so the caller gets nothing back — is the only WARN.
 export function makeRotatingFetch(endpoints) {
 	return async function rotatingFetch(_info, init) {
+		// The call shapes in this request. Empty for an unreadable body, which makes
+		// every capability check a no-op rather than guessing.
+		const methods = rpcMethodsFromBody(typeof init?.body === 'string' ? init.body : '');
+
+		// Park the lane, or demote just this call shape on it, and log the choice
+		// once. A method refusal is NOT a lane fault: the lane keeps serving every
+		// other shape and never enters cooldown, so it can never be benched by its
+		// own routine traffic. Returns nothing; the caller always rotates.
+		const penalise = (url, status, bodyText, methodBlock, log) => {
+			if (methodBlock && methods.length) {
+				const fresh = methods.filter((m) => !isMethodDemoted(url, m));
+				const ms = markMethodDemotion(url, methods);
+				// Only the first caller to hit the refusal logs it; the rest see the
+				// demotion already in place and stay quiet.
+				if (fresh.length) {
+					console.log(
+						`[solana-rpc] ${maskUrl(url)} refused ${fresh.join(',')}, demoting that method for ${formatCooldown(ms)}, failing over`,
+					);
+				}
+				return;
+			}
+			// Check BEFORE marking: if parallel rotatingFetch calls race onto the same
+			// endpoint simultaneously, only the first to resolve logs, all subsequent
+			// callers see alreadyCooling=true and skip the line.
+			const alreadyCooling = isEndpointCooling(url);
+			const ms = markEndpointCooldown(url, status, bodyText);
+			if (!alreadyCooling) {
+				// INFO, not WARN: the request continues to the next provider and still
+				// succeeds. This is the redundancy working, not a fault.
+				console.log(`[solana-rpc] ${maskUrl(url)} ${log}, cooling ${formatCooldown(ms)}, failing over`);
+			}
+		};
+
 		// One fully-validated attempt against a single endpoint. Returns
-		// `{ response }` with a usable JSON-RPC body, or `{ error }` after parking
-		// the endpoint in cooldown so the caller rotates on. It NEVER returns an
+		// `{ response }` with a usable JSON-RPC body, or `{ error }` after penalising
+		// the endpoint so the caller rotates on. It NEVER returns an
 		// unvalidated body: a 200 carrying an empty/HTML/truncated payload, a
 		// `{jsonrpc,id}` envelope missing `result`, or a 200 + JSON-RPC capacity
 		// error is treated as a failure — web3.js would otherwise choke on it with a
@@ -924,38 +975,26 @@ export function makeRotatingFetch(endpoints) {
 				});
 				if (shouldRotate(resp.status)) {
 					// Read the body only on the failure path (we never return it) so a
-					// quota signal can pick the long cooldown.
+					// quota signal can pick the long cooldown, and so a 401/403 can be told
+					// apart from a policy refusal. Reading it on 403 is load-bearing, not a
+					// nicety: PublicNode answers a programId-filtered getTokenAccountsByOwner
+					// with 403 + `blocked parameter`, and with the body unread that refusal
+					// classified as a bad key and benched a healthy free primary for 30
+					// minutes on its own routine traffic.
 					const bodyText =
-						resp.status === 429
+						resp.status === 429 || resp.status === 403 || resp.status === 401
 							? await resp
 									.clone()
 									.text()
 									.catch(() => '')
 							: '';
-					// Check BEFORE marking: if parallel rotatingFetch calls race onto
-					// the same endpoint simultaneously, only the first to resolve logs —
-					// all subsequent callers see alreadyCooling=true and skip the line.
-					const alreadyCooling = isEndpointCooling(url);
-					const ms = markEndpointCooldown(url, resp.status, bodyText);
-					if (!alreadyCooling) {
-						// INFO, not WARN: the request continues to the next provider and
-						// still succeeds. This is the redundancy working, not a fault.
-						console.log(
-							`[solana-rpc] ${maskUrl(url)} ${resp.status}, cooling ${formatCooldown(ms)}, failing over`,
-						);
-					}
+					penalise(url, resp.status, bodyText, isMethodRefusal(bodyText), String(resp.status));
 					return { error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`) };
 				}
 				const okBody = await resp.text();
 				const bad = classifyRpcBody(okBody);
 				if (bad) {
-					const alreadyCooling = isEndpointCooling(url);
-					const ms = markEndpointCooldown(url, bad.status, bad.bodyText || '');
-					if (!alreadyCooling) {
-						console.log(
-							`[solana-rpc] ${maskUrl(url)} ${bad.log}, cooling ${formatCooldown(ms)}, failing over`,
-						);
-					}
+					penalise(url, bad.status, bad.bodyText || '', bad.methodBlock === true, bad.log);
 					return { error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`) };
 				}
 				// Body already consumed above; hand the caller a fresh Response carrying
@@ -987,25 +1026,35 @@ export function makeRotatingFetch(endpoints) {
 		else hydrateEndpointCooldowns();
 
 		let lastErr = null;
-		// Pass 1 skips endpoints currently in cooldown. Pass 2 runs ONLY when pass 1
-		// tried nothing (every endpoint was already cooling) — it ignores cooldowns so
-		// a just-recovered node still gets exercised. Crucially both passes route
-		// through tryEndpoint(), so the all-cooling case validates like any other and
-		// can never fall back to a raw, unvalidated passthrough — the bug that leaked
-		// an empty `[]` body straight to the browser and broke web3.js reads.
-		for (const ignoreCooldown of [false, true]) {
+		// Passes widen the candidate set only when the narrower one had nothing to
+		// try. Pass 1 skips both lane cooldowns and lanes demoted for this call shape.
+		// Pass 2 forgives cooldowns so a just-recovered node still gets exercised but
+		// still respects capability, because a lane that refuses this shape will
+		// refuse it again. Pass 3 forgives everything, so a request whose method every
+		// lane has refused at some point still gets one honest attempt instead of
+		// failing on stale bookkeeping. Every pass routes through tryEndpoint(), so
+		// the widened cases validate like any other and can never fall back to a raw,
+		// unvalidated passthrough, the bug that leaked an empty `[]` body straight to
+		// the browser and broke web3.js reads.
+		const PASSES = [
+			{ ignoreCooldown: false, ignoreCapability: false },
+			{ ignoreCooldown: true, ignoreCapability: false },
+			{ ignoreCooldown: true, ignoreCapability: true },
+		];
+		for (const pass of PASSES) {
 			let attempted = false;
 			for (const url of endpoints) {
-				if (!ignoreCooldown && isEndpointCooling(url)) continue;
+				if (!pass.ignoreCooldown && isEndpointCooling(url)) continue;
+				if (!pass.ignoreCapability && isAnyMethodDemoted(url, methods)) continue;
 				attempted = true;
 				const out = await tryEndpoint(url);
 				if (out.response) return out.response;
 				lastErr = out.error;
 			}
-			// Pass 1 actually exercised at least one live endpoint and they all failed
-			// this request — the chain is genuinely down right now, so don't force a
-			// second cooldown-ignoring sweep that would just re-hammer dead lanes.
-			if (!ignoreCooldown && attempted) break;
+			// This pass actually exercised at least one candidate and they all failed
+			// this request: the chain is genuinely down for it right now, so don't
+			// force a wider sweep that would just re-hammer known-bad lanes.
+			if (attempted) break;
 		}
 		// Reached the end with every provider failing in this one request — the caller
 		// gets a thrown error (→ a clean 502 from the proxy), never garbage. THIS is

@@ -565,10 +565,9 @@ function effectorTravel(root, nodeMap, clip) {
  * normalize onto the SAME canonical name, `LeftArm`, and no name-only table can
  * separate them: the simple hobby rig in this sweep spells its upper arm
  * `shoulderL` too, so re-pointing that spelling at `LeftShoulder` would freeze
- * that rig's arms instead. The ingest canonicalizer resolves it structurally
- * (canonicalizeJointNodes pass 1.5 demotes the clavicle-spelled contender when an
- * upper-arm-spelled one is present), which is why this only ever fires on the
- * runtime lane. See RUNTIME_PIVOT_REMEDY.
+ * that rig's arms instead. Both lanes resolve it by contention through the
+ * shared resolver (`resolveArmShoulderCollisions` in src/glb-canonicalize.js),
+ * so this is a hard failure on either lane.
  */
 function armPivotCheck(nodeMap, present) {
 	const problems = [];
@@ -584,21 +583,18 @@ function armPivotCheck(nodeMap, present) {
 	return problems;
 }
 
-const RUNTIME_PIVOT_REMEDY =
-	'remedy: port canonicalizeJointNodes pass 1.5/1.6 (the clavicle/upper-arm collision resolver in ' +
-	'src/glb-canonicalize.js) into canonicalNodeMapFromObject in src/animation-retarget.js. Every avatar ' +
-	'stored by three.ws is canonicalized at ingest (api/_lib/auto-rig.js, api/_lib/reconstruct-finalize.js, ' +
-	'api/avatars/_actions.js, src/account.js), so this affects only a third-party GLB loaded straight into ' +
-	'the viewer, and the arm still animates: it swings from the shoulder blade instead of the shoulder.';
+const ARM_PIVOT_REMEDY =
+	'remedy: resolveArmShoulderCollisions in src/glb-canonicalize.js resolves this collision by ' +
+	'contention for both lanes (ingest via canonicalizeJointNodes, runtime via canonicalBoneEntries in ' +
+	'src/animation-retarget.js). A new rig that trips it needs the resolver widened there, never a ' +
+	'per-rig name special-case.';
 
 /**
- * Run one rig down one lane for one clip and return the measurements.
- *
- * @param {{ lane: string }} ctx  the lane decides whether a mis-pivoted arm is a
- *   failure (ingest, where the collision resolver runs and must have worked) or a
- *   warning (runtime, where no structural resolver exists yet).
+ * Run one rig down one lane for one clip and return the measurements. Both lanes
+ * run the same checks: they share the collision resolver, so a mis-pivoted arm is
+ * a failure whichever path produced the node map.
  */
-function measure({ root, nodeMap, present, clip, lane }) {
+function measure({ root, nodeMap, present, clip }) {
 	const result = retargetClipToObject(clip, root, { minCoverage: 0 });
 	const out = {
 		clip: clip.name,
@@ -653,8 +649,7 @@ function measure({ root, nodeMap, present, clip, lane }) {
 		);
 	}
 	for (const p of armPivotCheck(nodeMap, present)) {
-		if (lane === 'ingest') out.failures.push(p);
-		else out.warnings.push(`${p}. ${RUNTIME_PIVOT_REMEDY}`);
+		out.failures.push(`${p}. ${ARM_PIVOT_REMEDY}`);
 	}
 	return out;
 }
@@ -663,7 +658,7 @@ function measure({ root, nodeMap, present, clip, lane }) {
 function runLane({ buffer, present, lane }) {
 	const { root } = graphFromGLB(buffer);
 	const nodeMap = canonicalNodeMapFromObject(root);
-	const clips = CLIPS.map((name) => measure({ root, nodeMap, present, clip: loadClip(name), lane }));
+	const clips = CLIPS.map((name) => measure({ root, nodeMap, present, clip: loadClip(name) }));
 	return {
 		lane,
 		mappedBones: nodeMap.size,

@@ -18,7 +18,7 @@
 // browser (the /pose gallery) and in Node (the apply_animation MCP tool, vitest).
 
 import { AnimationClip, Box3, Quaternion, Vector3 } from 'three';
-import { canonicalizeBoneName } from './glb-canonicalize.js';
+import { canonicalizeBoneName, resolveArmShoulderCollisions } from './glb-canonicalize.js';
 import { CANONICAL_REST, CANONICAL_REST_WORLD } from './animation-canonical-rest.js';
 
 // A clip retargets cleanly only when enough of its tracks find a home on the
@@ -79,6 +79,56 @@ const _q = new Quaternion();
  * @property {number} face      Blendshape lanes bound on the target (0 = no face).
  */
 
+// Whether Object3D `a` is an ancestor of `b`. Feeds the hierarchy tie-break in
+// resolveArmShoulderCollisions: the clavicle parents the upper arm.
+function isAncestorObject(a, b) {
+	for (let n = b?.parent; n; n = n.parent) if (n === a) return true;
+	return false;
+}
+
+/**
+ * Resolve every canonical bone the graph carries, in the order the maps below
+ * read it: node-graph bones first, then skeleton bones some exporters name only
+ * there. Each graph node is considered once, the clavicle/upper-arm collision is
+ * resolved against the live hierarchy (see resolveArmShoulderCollisions), and
+ * only then does first-wins pick one node per canonical name.
+ *
+ * Resolution has to happen BEFORE the first-wins claim: a Rigify rig lists
+ * `shoulder.L` (the clavicle) ahead of `upper_arm.L` and both normalize onto
+ * `LeftArm`, so claiming first would drop the upper arm before anything could
+ * notice the two bones were fighting over one name.
+ *
+ * @param {import('three').Object3D} root
+ * @returns {Array<{node: import('three').Object3D, raw: string, canonical: string}>}
+ */
+function canonicalBoneEntries(root) {
+	const entries = [];
+	const seen = new Set();
+	const consider = (node) => {
+		if (!node?.name || seen.has(node)) return;
+		seen.add(node);
+		const canonical = canonicalizeBoneName(node.name);
+		if (canonical) entries.push({ node, raw: node.name, canonical });
+	};
+	const skinned = [];
+	root.traverse((node) => {
+		if (node.isSkinnedMesh) skinned.push(node);
+		if (node.isBone) consider(node);
+	});
+	for (const sm of skinned) {
+		for (const bone of sm.skeleton?.bones || []) consider(bone);
+	}
+	resolveArmShoulderCollisions(entries, {
+		isAncestor: (a, b) => isAncestorObject(a.node, b.node),
+	});
+	const claimed = new Set();
+	return entries.filter((e) => {
+		if (claimed.has(e.canonical)) return false;
+		claimed.add(e.canonical);
+		return true;
+	});
+}
+
 /**
  * Build a `canonical bone → target node name` map by walking an Object3D graph.
  * Used server-side (apply_animation) where there's no GltfRig wrapper. Prefers
@@ -89,19 +139,7 @@ const _q = new Quaternion();
  */
 export function canonicalNodeMapFromObject(root) {
 	const map = new Map();
-	const consider = (node) => {
-		if (!node?.name) return;
-		const canonical = canonicalizeBoneName(node.name);
-		if (canonical && !map.has(canonical)) map.set(canonical, node.name);
-	};
-	const skinned = [];
-	root.traverse((node) => {
-		if (node.isSkinnedMesh) skinned.push(node);
-		if (node.isBone) consider(node);
-	});
-	for (const sm of skinned) {
-		for (const bone of sm.skeleton?.bones || []) consider(bone);
-	}
+	for (const { canonical, node } of canonicalBoneEntries(root)) map.set(canonical, node.name);
 	return map;
 }
 
@@ -133,18 +171,8 @@ export function canonicalNodeMapFromRig(rig) {
  */
 export function canonicalRestMapFromObject(root) {
 	const map = new Map();
-	const consider = (node) => {
-		if (!node?.name) return;
-		const canonical = canonicalizeBoneName(node.name);
-		if (canonical && !map.has(canonical)) map.set(canonical, node.quaternion.clone());
-	};
-	const skinned = [];
-	root.traverse((node) => {
-		if (node.isSkinnedMesh) skinned.push(node);
-		if (node.isBone) consider(node);
-	});
-	for (const sm of skinned) {
-		for (const bone of sm.skeleton?.bones || []) consider(bone);
+	for (const { canonical, node } of canonicalBoneEntries(root)) {
+		map.set(canonical, node.quaternion.clone());
 	}
 	return map;
 }
@@ -185,18 +213,8 @@ function worldRestQuat(node, stopAt) {
  */
 export function canonicalWorldRestMapFromObject(root) {
 	const map = new Map();
-	const consider = (node) => {
-		if (!node?.name) return;
-		const canonical = canonicalizeBoneName(node.name);
-		if (canonical && !map.has(canonical)) map.set(canonical, worldRestQuat(node, root));
-	};
-	const skinned = [];
-	root.traverse((node) => {
-		if (node.isSkinnedMesh) skinned.push(node);
-		if (node.isBone) consider(node);
-	});
-	for (const sm of skinned) {
-		for (const bone of sm.skeleton?.bones || []) consider(bone);
+	for (const { canonical, node } of canonicalBoneEntries(root)) {
+		map.set(canonical, worldRestQuat(node, root));
 	}
 	return map;
 }

@@ -20,12 +20,15 @@ facts) and ends by appending to `PROGRESS.md` (the cross-chat handoff log).
 | 1 | `01-protocol-research.md` (retired: completed, in git history) | Pin the seller-side payments spec from primary sources + live captures | done |
 | 2 | `02-payments-integration.md` (retired: completed, in git history) | Implement the OKX rail on our endpoint, tested | done |
 | 3 | `03-service-decomposition.md` (retired: completed, in git history) | Split into micro-priced services + free catalog | done |
-| 4 | `04-e2e-real-payment-test.md` | Pay ourselves for real; settlement + adversarial gauntlet | **wallet funding**, OTP |
-| 5 | `05-relisting-resubmission.md` | Update #2632 + resubmit for review | OTP; confirm on-chain writes |
-| 6 | `06-agent-pfp-wedge.md` | "Agent Identity Studio", avatars for OKX agents (parallel after 02) | funding for test buys |
-| 7 | `07-final-audit-and-watch.md` | Adversarial re-audit, docs closure, approval watch, launch runbook | OTP |
+| 4 | [04-e2e-real-payment-test.md](04-e2e-real-payment-test.md) | Pay ourselves for real; settlement + adversarial gauntlet | **wallet funding**, OTP |
+| 5 | [05-relisting-resubmission.md](05-relisting-resubmission.md) | Update #2632 + resubmit for review | OTP; confirm the on-chain write |
+| 6 | `06-agent-pfp-wedge.md` (retired 2026-08-01, verified shipped: `identity-studio` in `api/_lib/okx-catalog.js`, `api/_okx3d/identity.js`, the `/agent-identities` showcase in `data/pages.json`, `docs/agent-identities.md`) | "Agent Identity Studio", 3D avatars for OKX agents | done |
+| 7 | [07-final-audit-and-watch.md](07-final-audit-and-watch.md) | Adversarial re-audit, docs closure, approval watch, launch execution | OTP |
 
-Strict chain: 01 → 02 → 03 → 04 → 05 → 07. 06 can run any time after 02.
+Strict chain: 04, then 05, then 07. Each file is self-contained; paste it into a fresh chat.
+
+Both remaining human touchpoints are batched into one message per work order: the email OTP for
+`claude@three.ws`, and an explicit yes on any real payment. Everything else runs autonomously.
 
 ## Ground rules baked into every order
 

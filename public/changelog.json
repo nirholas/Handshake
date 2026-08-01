@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-01T21:10:27.953Z",
+	"generated_at": "2026-08-01T21:31:58.559Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -76,6 +76,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "Your own avatar can sign now, not just the two that shipped with the page",
+			"summary": "Sign language ran on two fixed rigs. You could watch the platform's avatars sign, but never your own, which is backwards for a feature whose whole point is that an avatar communicates. The Avatar setting on the sign language page and the ASL alphabet page now has a third option that opens the avatar gallery: pick any avatar you own, or any public one, and it takes over the signing on the spot, keeping the speed and signing hand you already chose. Your pick is remembered and carries between both pages. It works because a sign is described anatomically, an index fingertip on the chin rather than a fixed coordinate, so the same vocabulary is measured onto your avatar's own skeleton, whatever its proportions. An avatar that genuinely cannot sign, a model with no skeleton or no finger bones, is not left standing there mute: the page says which avatar it is and puts the working one back.",
+			"link": "/sign-language",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

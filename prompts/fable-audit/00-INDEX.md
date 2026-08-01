@@ -1,46 +1,38 @@
-# Fable Audit — Work-Order Pack (2026-07-11)
+# Fable Audit pack (2026-07-11)
 
-> Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
+One work order per finding from the maximum-depth audit of 2026-07-11. Snapshot ref before the
+pack: `fable-audit-2026-07-11` (commit `267ee1418`).
 
-One `.md` per finding from the maximum-depth audit. Each file is a self-contained
-work order: context, the exact defect (file:line), the fix, verification, and a
-done checklist. Execute in the recommended order below.
+## State
 
-Snapshot ref before this pack: `fable-audit-2026-07-11` (at commit `267ee1418`).
-Work happens on `main`. Commit each item as its own small, revertible commit.
+**Every numbered finding shipped and its work order was retired** (C1, C2, H1 to H7, M1 to M7),
+along with the two batch records (`ENHANCEMENTS.md`, `LEAN-deletions.md`) once their items were
+closed. All of them, with their defect analysis, fixes and evidence, remain readable in git
+history:
+
+```bash
+git log --diff-filter=D --name-only -- prompts/fable-audit/ | head -40
+git show <sha>^:prompts/fable-audit/<file>.md
+```
+
+**What is left is one file:** [RESIDUALS.md](RESIDUALS.md), a runnable work order covering the
+three items that were deliberately left open, plus the one item (god-file splitting) that is
+explicitly not scheduled as its own session.
+
+| Item | Why it is still open |
+|---|---|
+| OIDC-authenticated invoker for `/api/cron/*` | Needs Cloud Scheduler and Cloud Run changes; `gcloud` auth on this machine dies to the Workspace reauth policy. The interim in-repo control ships regardless. |
+| Payment-outcome observability | The metrics already emit; nothing surfaces them. No UI surface was in scope for the audit batch. |
+| `data/skills/seed.json` regeneration | Generator and drift gate shipped; the regeneration diff touches other-project skill content, so committing it needs owner approval. |
 
 ## Commit gate reminder
-Some items touch skill files that reference other crypto projects (four.meme, BNB,
-OKX, etc.). Per `CLAUDE.md`, **any commit whose diff references a non-$THREE crypto
-project needs explicit owner approval first**. Items flagged `⚠ commit-gate` below
-must stop for owner sign-off before staging. Items without the flag are freely
-committable.
 
-## Recommended execution order
-| # | File | Severity | Area | Commit-gate |
-|---|---|---|---|---|
-| C1 | [C1-api-path-traversal.md](C1-api-path-traversal.md) | Critical | Server routing | no |
-| H1 | [H1-premium-status-ownership.md](H1-premium-status-ownership.md) | High | API authz | no |
-| H4 | [H4-dockerignore-ring-secrets.md](H4-dockerignore-ring-secrets.md) | High | Infra/secrets | no |
-| H6 | [H6-posthog-cookie-leak.md](H6-posthog-cookie-leak.md) | High | Server proxy | no |
-| H2 | [H2-self-facilitator-verify-simulation.md](H2-self-facilitator-verify-simulation.md) | High | Payments | no |
-| H3 | [H3-settlement-skip-on-flush.md](H3-settlement-skip-on-flush.md) | High | Payments | no |
-| M1 | [M1-facilitator-rate-limit.md](M1-facilitator-rate-limit.md) | Medium | Payments | no |
-| M2 | [M2-proxy-stream-crash.md](M2-proxy-stream-crash.md) | Medium | Server proxy | no |
-| H5 | [H5-worker-port-listener.md](H5-worker-port-listener.md) | High | Workers | no |
-| M3 | [M3-dockerfile-minimal.md](M3-dockerfile-minimal.md) | Medium | Infra | no |
-| M5 | [M5-ring-tx-bounds-guard.md](M5-ring-tx-bounds-guard.md) | Medium | Payments | no |
-| M6 | [M6-text-extract-allowhttp.md](M6-text-extract-allowhttp.md) | Medium | Security | no |
-| M7 | [M7-postversion-push-target.md](M7-postversion-push-target.md) | Medium | Repo/CI | no |
-| C2 | [C2-money-skill-confirmation-gates.md](C2-money-skill-confirmation-gates.md) | Critical | Skills | ⚠ partial |
-| H7 | [H7-wallet-skill-arbitration.md](H7-wallet-skill-arbitration.md) | High | Skills | ⚠ partial |
-| M4 | [M4-nft-model-id-placeholder.md](M4-nft-model-id-placeholder.md) | Medium | Skills | ⚠ commit-gate |
-| — | [LEAN-deletions.md](LEAN-deletions.md) | Lean | Deps/dedup | ⚠ partial |
-| — | [ENHANCEMENTS.md](ENHANCEMENTS.md) | Nice-to-have | Various | mixed |
+Any commit whose diff references a crypto project other than `$THREE` needs explicit owner
+approval first (`CLAUDE.md`). The seed-regeneration item ends at exactly that gate by design.
 
 ## Global done criteria for every item
-- Change is minimal and matches surrounding code style.
-- `npm test` still passes (or the relevant test is added).
-- A `data/changelog.json` entry is added **only** if the change is user-visible
-  (security/reliability fixes usually are; internal refactors are not).
-- `git diff` self-reviewed before commit; commit message is specific and neutral.
+
+- The change is minimal and matches surrounding code style.
+- `npm test` still passes, or the relevant test is added.
+- A `data/changelog.json` entry only if the change is user-visible or operator-visible.
+- `git diff` self-reviewed before commit; the commit message is specific and neutral.

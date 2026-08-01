@@ -442,9 +442,14 @@ Consequences, in order of how likely they are to matter to you:
 
 ## Step 9 - A real viewer on your own page
 
-Sometimes an image is not enough and you want the actual interactive model. Loading a GLB in the browser is a cross-origin `fetch`, which means CORS, and the CDN that hosts generated models answers cross-origin reads only for origins it recognizes (`three.ws` itself, and localhost dev servers). From `https://your-site.com`, a direct load fails with a CORS error and an empty canvas.
+Sometimes an image is not enough and you want the actual interactive model. Loading a GLB in the browser is a cross-origin `fetch`, which means CORS, and whether it works depends on which host serves the file.
 
-`GET /api/glb?src=<url>` exists exactly for this. It streams any public GLB back with `access-control-allow-origin: *`:
+Two hosts, two answers (measured 2026-08-01):
+
+- **`https://three.ws/...`**, which is where the built-in library avatars live (`/avatars/selfie-girl.glb` and friends), answers every origin with `access-control-allow-origin: *`. Load these directly. No proxy needed.
+- **`https://pub-*.r2.dev/...`**, the media CDN behind every avatar you or your users generated, answers only origins on its allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`). From `https://your-site.com`, from Jupyter, or from a Vite server on `localhost:5173`, a direct load fails with a CORS error and an empty canvas. That is the URL `/api/avatar/render` redirects to and the URL the avatar APIs return for user avatars.
+
+`GET /api/glb?src=<url>` exists for the second case. It streams any public GLB back with `access-control-allow-origin: *`, and it is harmless on the first, so if you cannot tell which host a URL points at, use it. The example below proxies a `three.ws` URL that would also load directly, because it is the pattern that keeps working when you swap in a generated avatar:
 
 ```bash
 curl -sD - -o /dev/null -H 'Origin: https://your-site.com' \
@@ -499,7 +504,7 @@ If you want a talking, animated agent rather than a viewer, that is the `<agent-
 | `avatar-clip` request hangs, then dies with no body | `glbUrl` is over the 10 MB cap | Check with `curl -sI <url> \| grep -i content-length` first, then shrink it through `/api/avatar/optimize` and pass the optimizer URL as `glbUrl` (Step 7). |
 | `502 render_failed` on `avatar-clip` | GLB unreachable or unparseable | Verify the URL returns a real GLB: `curl -sL -o m.glb <url> && head -c 4 m.glb` should print `glTF`. |
 | `429` with `Retry-After` | 120 renders per 10 min per IP on `/api/avatar/render`, 60 on `avatar-clip` | Keep batches sequential and honour `Retry-After`. It is a rolling window, not a ban. |
-| Empty canvas in `<model-viewer>`, CORS error in console | Loading a CDN GLB directly from your own origin | Route it through `/api/glb?src=...` (Step 9). |
+| Empty canvas in `<model-viewer>`, CORS error in console | Loading a `pub-*.r2.dev` GLB directly from an origin the CDN does not echo | Route it through `/api/glb?src=...` (Step 9). A `three.ws/...` GLB needs no proxy, so check the host before you assume CORS. |
 | Social card shows a blank or black box | Scraper hit a cold render, or choked on PNG alpha | Warm the URL once with `curl -sL`, and use `format=jpeg` with an opaque `bg`. |
 
 ---
@@ -514,7 +519,7 @@ If you want a talking, animated agent rather than a viewer, that is the `<agent-
 - `POST /api/render/avatar-clip` for arbitrary GLBs, free camera orbits, and turntables
 - The 10 MB cap and how `/api/avatar/optimize` gets you under it
 - The `302`-to-CDN cache, its `updated_at`-keyed invalidation, and the five things that follow from it
-- Why the CDN blocks your origin's direct GLB reads and how `/api/glb` fixes it in one attribute
+- Which host needs `/api/glb` and which does not, and how the proxy fixes the CDN case in one attribute
 
 ## Next steps
 

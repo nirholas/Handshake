@@ -1,0 +1,141 @@
+{
+  "status": 402,
+  "challenge": {
+    "x402Version": 2,
+    "resource": {
+      "url": "https://three.ws/api/okx/3d/fbx-export",
+      "mimeType": "application/json"
+    },
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "100000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "maxTimeoutSeconds": 86400,
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "symbol": "USDT",
+          "name": "USD₮0",
+          "version": "1",
+          "transferMethod": "eip3009",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "amount": "100000",
+        "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+        "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "name": "USDC",
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "eip155:8453",
+        "amount": "100000",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "eip155:8453",
+        "amount": "100000",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6,
+          "assetTransferMethod": "permit2",
+          "supportsEip2612": true
+        }
+      }
+    ]
+  },
+  "body": {
+    "x402Version": 2,
+    "resource": {
+      "url": "https://three.ws/api/okx/3d/fbx-export",
+      "mimeType": "application/json"
+    },
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:196",
+        "amount": "100000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "maxTimeoutSeconds": 86400,
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "symbol": "USDT",
+          "name": "USD₮0",
+          "version": "1",
+          "transferMethod": "eip3009",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "amount": "100000",
+        "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+        "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "name": "USDC",
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "eip155:8453",
+        "amount": "100000",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "eip155:8453",
+        "amount": "100000",
+        "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "maxTimeoutSeconds": 60,
+        "resource": "https://three.ws/api/okx/3d/fbx-export",
+        "extra": {
+          "name": "USD Coin",
+          "version": "2",
+          "decimals": 6,
+          "assetTransferMethod": "permit2",
+          "supportsEip2612": true
+        }
+      }
+    ]
+  }
+}

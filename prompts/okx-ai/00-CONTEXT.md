@@ -101,10 +101,10 @@ for the 6-digit OTP from that inbox and run `onchainos wallet verify <otp>`. Nev
 
 | # | File | Depends on |
 |---|---|---|
-| 01 | `01-protocol-research.md`, pin down the seller-side OKX payments spec |, |
-| 02 | `02-payments-integration.md`, implement OKX rail on our endpoint | 01 |
-| 03 | `03-service-decomposition.md`, split into micro-priced A2MCP services | 02 |
+| 01 | protocol research (retired, completed, in git history) | none |
+| 02 | payments integration (retired, completed, in git history) | 01 |
+| 03 | service decomposition (retired, completed, in git history) | 02 |
 | 04 | `04-e2e-real-payment-test.md`, pay ourselves for real, verify settlement | 02, 03 |
-| 05 | `05-relisting-resubmission.md`, update #2632 + resubmit for review | 04 |
-| 06 | `06-agent-pfp-wedge.md`, the "avatars for OKX agents" flagship service | 02 (parallel ok) |
+| 05 | `05-relisting-resubmission.md`, update #2632 and resubmit for review | 04 |
+| 06 | Agent Identity Studio (retired 2026-08-01, verified shipped) | 02 |
 | 07 | `07-final-audit-and-watch.md`, full audit, docs closure, approval watch | all |
