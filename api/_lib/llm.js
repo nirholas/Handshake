@@ -44,7 +44,7 @@ import {
 	vertexRequestHeaders,
 	toVertexBody,
 } from './vertex-claude.js';
-import { DEFAULT_FREE_MODEL, promptCacheMinChars } from './chat-models.js';
+import { DEFAULT_FREE_MODEL, promptCacheMinChars, isPaidModel } from './chat-models.js';
 
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 // Second Groq rung on a different model: Groq free-tier quotas are PER MODEL,
@@ -148,7 +148,9 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey, grokKey } = {
 			WHERE user_id = ${userId}
 				AND kind = 'llm'
 				AND provider NOT LIKE 'groq%'
-				AND provider NOT LIKE 'openrouter%'
+				-- OpenRouter is only free on its ':free' routes. A paid vendor mirror
+				-- on the platform key is real spend and counts against the cap.
+				AND NOT (provider LIKE 'openrouter%' AND (model IS NULL OR model LIKE '%:free'))
 				AND provider NOT LIKE 'vertex%'
 				AND provider NOT IN ('nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations')
 				AND created_at > NOW() - INTERVAL '24 hours'
@@ -302,11 +304,15 @@ function vertexGeminiProvider() {
 	};
 }
 
-function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {}, timeoutMs = null }) {
+function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {}, extraBody = null, extractCostUsd = null, timeoutMs = null }) {
 	return {
 		name,
 		model,
 		url,
+		// Optional reader for the provider's own charge for the call, in USD.
+		// Authoritative when present (see llm-pricing.costMicroUsd), a metered
+		// lane that reports its cost must never be priced from a table guess.
+		...(extractCostUsd ? { extractCostUsd } : {}),
 		// Optional per-provider timeout cap, tighter than the chain-wide one. For a
 		// lane that is known to QUEUE rather than fail fast (NVIDIA's free NIM sits
 		// behind a shared queue and was observed hanging 25s on a 900-token prompt
@@ -321,6 +327,7 @@ function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {},
 		buildBody: (system, user, maxTokens) => ({
 			model,
 			max_tokens: maxTokens,
+			...(extraBody || {}),
 			messages: [
 				// A system message with `content: undefined` is rejected outright by
 				// Groq ("'content' is missing", HTTP 400) — this was a live bug: every
@@ -335,6 +342,49 @@ function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {},
 		extractText: (r) => r.choices?.[0]?.message?.content || '',
 		extractUsage: (r) => ({ input: r.usage?.prompt_tokens ?? 0, output: r.usage?.completion_tokens ?? 0 }),
 	};
+}
+
+// One OpenRouter rung. Every OpenRouter request opts into usage accounting
+// (`usage: { include: true }`), so the response carries `usage.cost` in USD:
+// the exact amount the account was charged. That number is what the spend
+// ledger records. Without it OpenRouter traffic was priced from a table that
+// had no entry for a namespaced id, which resolved to $0 and hid a real $30
+// burn on the platform key until the balance was gone (llm-pricing.js).
+function openrouterProvider({ name, key, model }) {
+	return openaiCompatProvider({
+		name,
+		key,
+		url: 'https://openrouter.ai/api/v1/chat/completions',
+		model,
+		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+		extraBody: { usage: { include: true } },
+		extractCostUsd: (r) => (Number.isFinite(r?.usage?.cost) ? r.usage.cost : null),
+	});
+}
+
+// Paid Claude through OpenRouter's vendor mirror, for the surfaces that reach
+// Anthropic ONLY via api.anthropic.com (this module and api/chat.js) and so get
+// no Claude at all while ANTHROPIC_API_KEY is absent. /brain already has this
+// path; these do not.
+//
+// It is OFF by default and stays that way until the owner turns it on, because
+// it is real money on the platform key for ordinary agent traffic: the mirror
+// bills the underlying model's list price (Sonnet 5 at $3/$15 per 1M tokens is
+// roughly $0.006 on a 1k-in/300-out turn, i.e. ~$6 per thousand such turns),
+// and the same key's $30 balance is already spent. Enable with
+// OPENROUTER_CLAUDE_MIRROR_MODEL=<openrouter model id>, e.g.
+// `anthropic/claude-sonnet-5`. The model must be registered `paid: true` in
+// MODEL_CATALOG (isPaidModel) so it is metered rather than priced free and can
+// never be handed to anonymous traffic; an unregistered id is ignored.
+export const OPENROUTER_CLAUDE_MIRROR_ENV = 'OPENROUTER_CLAUDE_MIRROR_MODEL';
+function openrouterClaudeMirror(key) {
+	const model = process.env[OPENROUTER_CLAUDE_MIRROR_ENV];
+	if (!key || !model) return null;
+	if (!isPaidModel(model)) {
+		console.warn(`[llm] ${OPENROUTER_CLAUDE_MIRROR_ENV}=${model} is not a metered paid model in MODEL_CATALOG; mirror disabled`);
+		return null;
+	}
+	return openrouterProvider({ name: 'openrouter:claude-mirror', key, model });
 }
 
 // Build the ordered provider chain for a request: free platform providers
@@ -409,18 +459,18 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 	// the account carried ANY balance (e.g. credits bought to raise free-tier limits)
 	// every call that fell past a throttled Groq (constant in prod) was billed to
 	// the paid tier, ahead of the free NVIDIA/OVH/Vertex rungs right below it. That
-	// silently burned the balance (and our llm-pricing meters openrouter at $0, so it
-	// was invisible). :free-only keeps the balance serving only its intended purpose
+	// silently burned the balance, and llm-pricing metered openrouter at $0, so it
+	// was invisible (both halves are fixed: these rungs are :free-only, and every
+	// OpenRouter call now records the cost the account was actually charged).
+	// :free-only keeps the balance serving only its intended purpose
 	// (higher free-tier limits); an exhausted :free rung fails over to the next key,
 	// then to the free/credits lanes below.
 	const openrouterKeys = [...new Set([env.OPENROUTER_API_KEY, ...env.OPENROUTER_FALLBACK_KEYS].filter(Boolean))];
 	openrouterKeys.forEach((key, i) => {
-		chain.push(openaiCompatProvider({
+		chain.push(openrouterProvider({
 			name: i === 0 ? 'openrouter' : `openrouter#${i + 1}`,
 			key,
-			url: 'https://openrouter.ai/api/v1/chat/completions',
 			model: OPENROUTER_FREE_MODEL,
-			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
 		}));
 	});
 	if (env.NVIDIA_API_KEY) {
@@ -491,6 +541,14 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 	// own Claude billing; the platform doesn't re-buy the same model for them).
 	if (!anthropicKey && env.ANTHROPIC_API_KEY) {
 		chain.push(anthropicProvider(env.ANTHROPIC_API_KEY, anthropicModel));
+	}
+	// Optional paid Claude mirror on the OpenRouter platform key. OFF unless
+	// OPENROUTER_CLAUDE_MIRROR_MODEL is set (see openrouterClaudeMirror). It sits
+	// in the paid tail, never among the free rungs, and only when no other Claude
+	// transport is already in the chain: a BYOK key, the server key, or Vertex.
+	if (!anthropicKey && !env.ANTHROPIC_API_KEY && !vertexClaudeEnabled()) {
+		const claudeMirror = openrouterClaudeMirror(openrouterKeys[0]);
+		if (claudeMirror) chain.push(claudeMirror);
 	}
 	if (env.OPENAI_API_KEY) {
 		chain.push(openaiCompatProvider({
@@ -671,6 +729,9 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			continue;
 		}
 		const usage = p.extractUsage(data);
+		// A provider that reports what it charged (OpenRouter's `usage.cost`) is
+		// the authoritative meter for that call; carried alongside the token counts.
+		if (p.extractCostUsd) usage.costUsd = p.extractCostUsd(data);
 		const text = (p.extractText(data) || '').trim();
 		if (!text) {
 			// 200 but no usable content — fail over, keeping the result as the
@@ -702,9 +763,13 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 }
 
 // Fire-and-forget spend ledger write for one completion. Attribution comes from
-// the caller's optional `track`; the cost is derived from the provider/model
-// (free providers price to 0). Never throws — recordEvent swallows its own
-// errors and the cost math is total.
+// the caller's optional `track`; the cost is the provider's own reported charge
+// when it gives one, else the list-price table (free lanes price to 0). Never
+// throws: recordEvent swallows its own errors.
+//
+// An UNKNOWN cost (null) is recorded as null and logged, never coerced to 0: a
+// spending lane that reports $0 is indistinguishable from a free one on the
+// dashboard, which is exactly how the OpenRouter credit burn stayed invisible.
 function recordLlmSpend(provider, usage, latencyMs, track) {
 	const input = usage?.input ?? 0;
 	const output = usage?.output ?? 0;
@@ -713,13 +778,25 @@ function recordLlmSpend(provider, usage, latencyMs, track) {
 	// the prompt" view and priced at their own rates by costMicroUsd.
 	const cacheWrite = usage?.cacheWrite ?? 0;
 	const cacheRead = usage?.cacheRead ?? 0;
+	const cost = costMicroUsd({
+		provider: provider.name,
+		model: provider.model,
+		input,
+		output,
+		cacheWrite,
+		cacheRead,
+		reportedCostUsd: usage?.costUsd ?? null,
+	});
+	if (cost === null && (input || output)) {
+		console.warn(`[llm] unpriced spending lane ${provider.name}/${provider.model}, recording cost as unknown; add it to llm-pricing.js`);
+	}
 	recordEvent({
 		kind: 'llm',
 		provider: provider.name,
 		model: provider.model,
 		inputTokens: input + cacheWrite + cacheRead,
 		outputTokens: output,
-		costMicroUsd: costMicroUsd({ provider: provider.name, model: provider.model, input, output, cacheWrite, cacheRead }),
+		costMicroUsd: cost,
 		latencyMs,
 		userId: track?.userId ?? null,
 		agentId: track?.agentId ?? null,

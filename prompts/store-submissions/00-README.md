@@ -14,6 +14,8 @@ Each numbered prompt was a **self-contained work order** you pasted into a fresh
 
 > Retirement note (2026-07-30): every numbered prompt in this pack has been retired from the working tree and remains readable in git history. The run-order table below is kept as the map of what each work-stream owned; rows without a SHIPPED marker were retired without one, so do not read a missing marker as unfinished work. The live state of every submission target, including what still needs a human, is [`_generated/TRACKER.md`](_generated/TRACKER.md), not this file. `_generated/` also holds the machine-written submission evidence and is never delete-eligible.
 
+> **The one runnable work order in this pack is [01-submission-closeout.md](01-submission-closeout.md)** (added 2026-08-01). It re-verifies every tracker row against production, closes the remaining code gaps (the `@x402/mcp` `mcp://` interop bug, the Claude submission package, the devnet mint E2E), keeps the canonical metadata and directory docs consistent, and ends with one list of the steps only a human can click. Run it before any submission goes out; the tracker's numbers are only as fresh as its last run.
+
 ---
 
 ## Strategic summary (read once)

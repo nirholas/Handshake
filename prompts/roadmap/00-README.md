@@ -59,25 +59,30 @@ splatting, PBR/restyle, scene layout, Solana minting, embed/OG. Each roadmap pro
 
 ---
 
-## Tracks & run order
+## What is in this directory
 
-### Track 1 — Foundation & continuous improvement (do first)
-1. `01-regression-safety-net.md` — strengthen the gate itself so every later prompt is protected (golden snapshots for MCP `tools/list`, route/handler audits, a headless viewer render smoke test).
-2. `02-forge-generation-quality.md` — improve the existing text/image→3D Forge pipeline: quality, reliability, caching, formats, speed. Additive tiers/params.
-3. `03-embodiment-animation-lipsync.md` — expand the animation library, emotion/expression states, and audio-driven lipsync (reuse `audio-mcp`). New rig conventions.
-4. `04-viewer-scene-studio-perf-ar.md` — viewer + Scene Studio performance, mobile, accessibility, and AR/USDZ Quick Look. No API breaks.
+The original ten numbered track prompts (regression safety net, forge quality, embodiment and
+lipsync, viewer performance and AR, text to world, material restyle, new input modalities,
+crypto-native creation, creator marketplace, agent-native 3D and embed) all shipped and were
+retired; they remain readable in git history
+(`git log --diff-filter=D --name-only -- prompts/roadmap/`).
 
-### Track 2 — New 3D creation tools
-5. `05-text-to-world-scenes.md` — compositional scene/world generation (extend `scene-mcp`): place/arrange objects, environments, HDRI, export.
-6. `06-material-restyle-variants.md` — re-texture, PBR material editing, style/variant generation on existing GLBs.
-7. `07-new-input-modalities.md` — sketch→3D, photo→avatar, multi-image→3D, voice→scene. New on-ramps into generation.
+### Runnable work orders (paste one into a fresh chat)
 
-### Track 3 — New ways to create & use (3D + crypto + AI)
-8. `08-crypto-native-creation.md` (retired 2026-07-30, all five tasks verified shipped, see git history): mint generated 3D as on-chain assets with signed provenance; token-gated/premium generation via x402; $THREE utility; royalties.
-9. `09-creator-marketplace-remix.md` — gallery, remix, discovery, creator profiles, leaderboards (build on the Loom gallery + launches feed).
-10. `10-agent-native-3d-and-embed.md` — MCP tools + agents that autonomously create and use 3D; embeddable/social distribution so the platform spreads.
+| File | Owns | State |
+|---|---|---|
+| [generation-suite.md](generation-suite.md) | Meshy and Tripo class parity, and production truth for every generation endpoint | Open. Starts by rebuilding the production truth table from live probes. |
+| [creation-consolidation.md](creation-consolidation.md) | The last three creation-surface merges | Open. Two redirects are blocked behind real capability gaps, and closing those gaps is the work. |
+| [avatar-parametric-editor.md](avatar-parametric-editor.md) | Parametric avatar editor, phase 2 onward | Open. Phase 1 (122-slider parametric base) shipped 2026-07-22. |
+| [developer-resources-repos.md](developer-resources-repos.md) | The public examples satellite repo and its one-way export | Open. npm packages are published, so the blocker that stalled it is gone. |
 
-**Sequencing:** 01 first (it protects everything after). Then any track in any order; within a track, low number → high. Each prompt is independently runnable in its own chat.
+### Strategy and reference (read, do not execute)
+
+| File | What it is |
+|---|---|
+| [fable-playbook.md](fable-playbook.md) | The operating strategy above these work orders: what to run next, the revenue ladder, standing routines. |
+| [REUSE-MAP.md](REUSE-MAP.md) | License-vetted OSS to integrate instead of reinventing. Check it before building anything here. |
+| [pumpfun-trading.md](pumpfun-trading.md), [pumpfun-trading-arena.md](pumpfun-trading-arena.md), [pumpfun-trading-wedge.md](pumpfun-trading-wedge.md) | Three overlapping strategy documents for the trading product. They are plans, not work orders, and every commit touching them hits the CLAUDE.md commit gate. The wedge document's own recommendation stands: fold the arena draft into the master plan, keep the wedge as the delta. |
 
 ## Key surfaces (from STRUCTURE.md)
 - Forge: `packages/forge/`, `api/forge*.js`, `api/mcp-3d.js` (free TRELLIS lane + paid tiers + auto-rig, IBM Granite prompt director).

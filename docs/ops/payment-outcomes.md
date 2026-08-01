@@ -53,15 +53,69 @@ map lives in [production-log-triage.md](production-log-triage.md).
 
 The fee wallet that pays every settle's SOL fee:
 
-- `sol` vs `sol_floor` (`X402_SPONSOR_SOL_FLOOR_LAMPORTS`, default 0.02): at
-  or below the floor the self-facilitator refuses settlement, which surfaces
-  downstream as `fee_wallet_below_floor`.
-- `burn_sol_per_day_7d` is MEASURED from `fee_lamports` over the last 7 days
-  of successful settles, never quoted from memory: the folklore burn rate has
-  been wrong by roughly 10x before (ISSUES.md item 6).
-- `runway_days` = balance / measured burn. Under ~3 days the dashboard card
-  turns amber; below the floor it turns red. Top up the SPONSOR, never
-  per-agent wallets (that strands SOL and kills the rail).
+- `sol` is the live balance. Two different floors are reported and they are not
+  interchangeable: `settle_floor_sol` is the facilitator's hard floor
+  (`X402_SPONSOR_SOL_FLOOR_LAMPORTS`, default 0.02) where settlement is actually
+  refused, and `sol_floor` is the ring monitor's watch floor at 1.5x that, which
+  exists to warn early. `below_floor` compares against the watch floor.
+- `burn_sol_per_day` is MEASURED from `fee_lamports` over successful settles,
+  never quoted from memory: the folklore burn rate has been wrong by roughly 10x
+  before (ISSUES.md item 6). It always ships with `burn_window_days` (the window
+  it was measured over) and `settles_in_window` (the sample size). A burn rate
+  without its window is a rumour, so nothing here prints one without the other.
+- `runway_days` = balance / measured burn (to empty, what a funding ask is sized
+  against). `runway_days_to_floor` = (balance minus the settle floor) / burn,
+  which is the operational figure: settling stops at the floor, not at zero.
+- `runway_status` is the verdict the alert fires on (see below), and the
+  dashboard card colours from it so the board and the page cannot disagree.
+
+### The runway alert
+
+The runway is no longer render-only. `checkRingWallets()` in
+`api/_lib/x402/wallet-balance-monitor.js` runs on the autonomous loop's 10-minute
+tick, measures the burn, and calls `sendOpsAlert` through the normal alerting path
+(dashboard row always, Telegram push when `TELEGRAM_ALERTS_CHAT_ID` is wired).
+The verdict logic and the alert copy are pure functions in
+`api/_lib/x402/sponsor-runway.js`, unit-tested in
+`tests/x402-sponsor-runway.test.js` (the arithmetic and the rendered string) and
+`tests/x402-sponsor-runway-monitor.test.js` (that the monitor actually sends it).
+
+| `runway_status` | Condition | Alerts |
+|---|---|---|
+| `critical` | balance at or under the settle floor | yes, `critical` |
+| `warn` | `runway_days_to_floor` under the threshold | yes, `warn` |
+| `ok` | runway at or above the threshold | no |
+| `unknown` | balance unreadable, or no settles in the window | no |
+
+`unknown` deliberately never pages. An idle rail has no measurable burn and
+dividing by zero would page every quiet night, and an unreadable balance is an
+RPC problem, not a funding one.
+
+Two env knobs, both live without a redeploy:
+
+| Var | Default | Meaning |
+|---|---|---|
+| `X402_SPONSOR_RUNWAY_ALERT_DAYS` | `3` | days of runway to the floor below which the alert fires |
+| `X402_SPONSOR_BURN_WINDOW_DAYS` | `7` | window the burn rate is measured over |
+
+The alert message carries the wallet, the balance, the floor, the measured burn
+with its window and sample size, both runway figures, the threshold, and a
+top-up size computed from the measured burn. It points at the free self-heal
+(`POST /api/cron/treasury-topup?dry=1`) before any funding ask, and it repeats
+the rule that has broken the rail before: top up the SPONSOR or the economy
+master, NEVER per-agent wallets (that strands SOL in wallets that pay no fees).
+
+It also names the symptom in advance, because the symptom is misleading: under
+the floor, `sponsorKnownBelowFloor()` makes `buildRequirements()` withdraw the
+Solana accept from every 402 challenge, so the Solana-only ring never attempts a
+payment and there is nothing to reject. Settlements collapse while rail faults
+stay flat. The settle sensor reports that as `cause: sponsor_floor` (distinct
+from `rail`) in `ring_settle.metrics`; the accepts are checkable directly:
+
+```sh
+curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
+# only eip155:8453 means the Solana accept has been withdrawn
+```
 
 ## Reading it in an incident
 
@@ -73,7 +127,13 @@ The fee wallet that pays every settle's SOL fee:
    verify penalty limiter is holding (the reasons list will be dominated by
    `verify_rejected` with `rejected_proof`).
 3. Both fine but settles refused with 503s: look at `sponsor`. Floor breach or
-   sub-day runway is the answer; fund the sponsor address shown.
+   sub-day runway is the answer. Read `runway_status` first, then run the free
+   self-heal (`POST /api/cron/treasury-topup?dry=1`, then without `?dry=1`)
+   before asking for funds: reclaimable SOL sitting in platform agent wallets is
+   the usual answer, and every reclaim run now leaves `agent_reclaim` rows in
+   `economy_master_ledger` saying whether it was `blocked` (an RPC or key
+   problem, free to fix) or found `nothing_reclaimable` (the only case that
+   genuinely needs the owner to send SOL).
 4. `replay_stages_24h` nonzero: captured X-PAYMENT headers are being re-sent;
    the guard is working if the settles panel is unaffected.
 
@@ -81,7 +141,10 @@ The fee wallet that pays every settle's SOL fee:
 
 - `api/ops/payment-outcomes.js` (the endpoint), `pages/admin/ops.html` (the
   panel), `api/_lib/ops/x402-settle-health.js` (the sensor),
-  `api/_lib/x402/wallet-balance-monitor.js` (balances and floors),
-  `api/_lib/x402/audit-log.js` (the durable ledger the inbound panel reads).
+  `api/_lib/x402/wallet-balance-monitor.js` (balances, floors, and the runway
+  alert), `api/_lib/x402/sponsor-runway.js` (the burn measurement, the verdict,
+  and the alert copy), `api/_lib/x402/audit-log.js` (the durable ledger the
+  inbound panel reads), `api/_lib/economy-ledger.js` (`recordAgentReclaim`, the
+  durable trail for every self-heal attempt).
 - `/api/ops/money-health` is the complementary board: open reconciliation
   verdicts per money subsystem rather than live payment outcomes.

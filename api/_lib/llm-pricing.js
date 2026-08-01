@@ -133,10 +133,19 @@ function priceForModel(model) {
 	return best ? PRICE_PER_MTOK[best] : null;
 }
 
-// Resolve a price for a model, retrying once on the vendor-stripped id so an
-// OpenRouter mirror resolves to its underlying model's price.
+// Resolve a price for a model, falling back through the two shapes an
+// OpenRouter mirror id can take: vendor-namespaced (`anthropic/claude-opus-5`)
+// and dotted version segments (`anthropic/claude-haiku-4.5`, where the
+// first-party id is `claude-haiku-4-5`). Both resolve to the underlying model's
+// price instead of dropping to unknown.
 function priceForRoute(model) {
-	return priceForModel(model) || priceForModel(openRouterBaseId(model));
+	if (!model) return null;
+	const base = openRouterBaseId(model);
+	return (
+		priceForModel(model) ||
+		priceForModel(base) ||
+		priceForModel(base.replace(/(\d)\.(\d)/g, '$1-$2'))
+	);
 }
 
 // Anthropic prompt-cache multipliers against the model's base INPUT price.

@@ -15,6 +15,28 @@
 #     --region us-central1 --project aerial-vehicle-466722-p5
 
 steps:
+    # Validate the UPLOADED context before spending a build on it.
+    #
+    # The root Dockerfile does `COPY . .` and never rebuilds the frontend, so
+    # whatever `dist/` is in the tarball is exactly what production serves. That
+    # makes the submit directory load-bearing: on 2026-08-01 a `gcloud builds
+    # submit` run straight from the shared worktree (where a concurrent agent had
+    # left a partial build) uploaded a dist/ whose pages were two days old and
+    # missing /economy-lab, /bundles, /walkthroughs and /embed-doctor entirely,
+    # while dist/build-info.json claimed that day's commit. It was caught by
+    # eye, mid-upload, and cancelled.
+    #
+    # `npm run deploy:gcp` already gates on these two checks, but a direct
+    # `gcloud builds submit` (the form this file's own usage note documents)
+    # bypasses npm and therefore bypasses them. Running them here instead puts
+    # the gate on the one path EVERY deploy takes. Both scripts import only node
+    # builtins and read only uploaded paths (scripts/, data/, vercel.json,
+    # dist/), so they need no node_modules and add seconds to a ~20 min build.
+    - id: verify-context
+      name: node:24-slim
+      entrypoint: bash
+      args: ['-c', 'node scripts/check-dist.mjs && node scripts/check-pages.mjs']
+
     # Warm the layer cache from the last successful image (best-effort).
     - id: pull-cache
       name: gcr.io/cloud-builders/docker

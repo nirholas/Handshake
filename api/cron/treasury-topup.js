@@ -33,7 +33,7 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL, ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';
-import { recordSweep } from '../_lib/economy-ledger.js';
+import { recordSweep, recordAgentReclaim } from '../_lib/economy-ledger.js';
 import { refuelMasterFromUsdc } from '../_lib/economy-fuel.js';
 import { topUpUsdcEngines } from '../_lib/economy-usdc-topup.js';
 import { reclaimIdleSol, reclaimIdleAgentSol } from '../_lib/economy-sweepback.js';
@@ -136,6 +136,11 @@ export default wrapCron(async (req, res) => {
 	// what the next sweep would do (e.g. after adding a signer to the registry).
 	const dryRun = /[?&]dry=(1|true)\b/.test(req.url || '');
 
+	// One id for the whole tick: the reclaim legs and the sweep below are phases of
+	// the same run, and sharing the id is what lets a reader join a blocked reclaim
+	// to the sweep that then had nothing to distribute.
+	const runId = randomUUID();
+
 	// Self-healing fuel: before the master distributes, if it cannot cover the
 	// engines' real SOL deficit, convert a small bounded slice of its own idle
 	// USDC into native SOL. The circulation loop leaks SOL to fees every tick, so
@@ -208,6 +213,28 @@ export default wrapCron(async (req, res) => {
 			agentReclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [], error: e?.message || 'agent_reclaim_failed' };
 		}
 	}
+	// Book of record for the agent leg. Until this call the leg wrote NOTHING to
+	// the ledger, success or failure, so "the reclaim ran and every wallet was
+	// unreadable" and "the reclaim never ran" were the same absence of rows. The
+	// summary row is written even on a no-op, which is what makes the two
+	// distinguishable after the fact. Fail-soft: the ledger never gates the money
+	// path, and a dry run is recorded as a dry run rather than skipped, so an
+	// operator inspecting a plan leaves a trace too.
+	if (totalDeficitSol > 0 && reclaim.reclaimedSol < totalDeficitSol) {
+		try {
+			await recordAgentReclaim({
+				runId,
+				masterPubkey: ECONOMY_MASTER_ADDRESS,
+				network: 'mainnet',
+				result: { ...agentReclaim, dryRun },
+				masterSolBefore,
+				deficitSol: totalDeficitSol,
+			});
+		} catch (e) {
+			console.error('[treasury-topup] agent reclaim ledger write failed', { error: e?.message });
+		}
+	}
+
 	if (agentReclaim.reclaimedSol > 0 && !dryRun) {
 		await sendOpsAlert(
 			`♻️ Economy master reclaimed idle agent SOL`,
@@ -219,10 +246,12 @@ export default wrapCron(async (req, res) => {
 	// A self-heal that CANNOT heal has to say so. Both reclaim legs return their
 	// readErrors and failed sends in the HTTP response, and this cron's response
 	// goes to Cloud Scheduler, which discards it, so until now a reclaim that was
-	// blocked left no log line, no ledger row (the agent leg writes none on
-	// failure, unlike the engine leg's `inflow_failed`) and no alert. On
-	// 2026-07-29 that silence cost ~11 hours: every Solana RPC lane was in quota
-	// cooldown, so the balance reads failed, no candidate was ever planned, and
+	// blocked left no log line, no ledger row and no alert. Both gaps are closed:
+	// the alert below names which of the two outcomes happened, and
+	// recordAgentReclaim() above writes the durable rows the agent leg used to
+	// skip entirely. On 2026-07-29 that silence cost ~11 hours: every Solana RPC
+	// lane was in quota cooldown, so the balance reads failed, no candidate was
+	// ever planned, and
 	// 0.12 SOL sat reclaimable in agent wallets while the sponsor stayed under its
 	// settle floor and every 402 challenge dropped its Solana accept.
 	//
@@ -371,7 +400,6 @@ export default wrapCron(async (req, res) => {
 	// monitor ran even on a no-op sweep. The write never fails the response — but
 	// if SOL moved and the record was dropped, that is a monitoring gap an operator
 	// must know about (the reconcile cron would flag the tx as unrecorded).
-	const runId = randomUUID();
 	let ledger = { written: 0 };
 	if (result.configured && result.master) {
 		try {

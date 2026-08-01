@@ -19,6 +19,7 @@ import {
 	canonicalizeJointNodes,
 	canonicalizeArmatureOrientation,
 	canonicalizeGLBBones,
+	resolveArmShoulderCollisions,
 	CANONICAL_BONES,
 } from '../src/glb-canonicalize.js';
 
@@ -1026,6 +1027,56 @@ describe('canonicalizeJointNodes (in-place rewrite)', () => {
 		};
 		canonicalizeJointNodes(json);
 		expect(json.nodes[1].name).toBe('LeftShoulder');
+	});
+
+	it('uses skeleton hierarchy to pick the clavicle when two contenders are eligible', () => {
+		// `scapula.L` and `shoulder.L` are both clavicle-spelled, so spelling alone
+		// cannot say which one to demote, and document order would pick the wrong
+		// one. Hierarchy can: only `shoulder.L` sits above the upper arm.
+		//   spine → scapula.L (a leaf deform bone)
+		//         → shoulder.L → upper_arm.L
+		const plan = [
+			{ raw: 'scapula.L', canonical: 'LeftArm', id: 'scapula' },
+			{ raw: 'shoulder.L', canonical: 'LeftArm', id: 'clavicle' },
+			{ raw: 'upper_arm.L', canonical: 'LeftArm', id: 'arm' },
+		];
+		const parent = { scapula: 'spine', clavicle: 'spine', arm: 'clavicle' };
+		const changed = resolveArmShoulderCollisions(plan, {
+			isAncestor: (x, y) => {
+				for (let cur = parent[y.id]; cur; cur = parent[cur]) if (cur === x.id) return true;
+				return false;
+			},
+		});
+		expect(changed).toBe(1);
+		expect(plan.find((p) => p.id === 'clavicle').canonical).toBe('LeftShoulder');
+		expect(plan.find((p) => p.id === 'scapula').canonical).toBe('LeftArm');
+	});
+
+	it('resolves nothing on a plan with no contention', () => {
+		const plan = [
+			{ raw: 'clavicle.L', canonical: 'LeftShoulder' },
+			{ raw: 'upperarm.L', canonical: 'LeftArm' },
+		];
+		expect(resolveArmShoulderCollisions(plan)).toBe(0);
+		expect(plan.map((p) => p.canonical)).toEqual(['LeftShoulder', 'LeftArm']);
+	});
+
+	it('resolves the collision identically whichever order the joints are listed in', () => {
+		// glTF lists joints parent-first, but nothing in the spec requires it, and
+		// exporters that write the skin's joint array in skin-weight order do not.
+		// The result must not depend on that ordering.
+		const build = (order) => ({
+			nodes: order.map((name) => ({ name })),
+			skins: [{ joints: order.map((_, i) => i) }],
+		});
+		const parentFirst = build(['hips', 'shoulder.L', 'upper_arm.L', 'forearm.L']);
+		const childFirst = build(['hips', 'upper_arm.L', 'shoulder.L', 'forearm.L']);
+		canonicalizeJointNodes(parentFirst);
+		canonicalizeJointNodes(childFirst);
+		expect(parentFirst.nodes[1].name).toBe('LeftShoulder');
+		expect(parentFirst.nodes[2].name).toBe('LeftArm');
+		expect(childFirst.nodes[1].name).toBe('LeftArm');
+		expect(childFirst.nodes[2].name).toBe('LeftShoulder');
 	});
 
 	it('never assigns the same canonical name to two joints (SMPL ankle + foot chain)', () => {

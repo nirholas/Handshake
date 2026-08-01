@@ -51,6 +51,14 @@ const WORLD_STALE_MS = 90 * 60 * 1000;
 // alerts) is exactly the failure this check exists to catch.
 const SNIPER_FRESH_MS = 90_000;
 const SNIPER_DOWN_MS = 10 * 60 * 1000;
+// OKX marketplace chat bot (workers/okx-chat-bot, bot_heartbeat worker='okx-chat-bot').
+// It beats every ~30s and carries its own verdict in meta. Its defining failure is
+// SILENT: the wallet session expires, every XMTP client goes offline, and chat is
+// simply never delivered until OKX's own 30-minute chat test flags the listing
+// offline. A stale heartbeat means the host itself is gone; a fresh one carrying
+// meta.health='down' means the host is alive and telling us a human is needed.
+const OKX_BOT_FRESH_MS = 2 * 60 * 1000;
+const OKX_BOT_DOWN_MS = 10 * 60 * 1000;
 
 /** Statuses that pull the overall roll-up down, worst first. */
 const UNHEALTHY = ['down', 'degraded'];
@@ -399,6 +407,78 @@ async function checkSniper() {
 	}
 }
 
+/**
+ * Classify the OKX chat bot's heartbeat row. Pure, exported for tests;
+ * checkOkxChatBot() feeds it the live bot_heartbeat row.
+ *
+ * The bot self-diagnoses (it is the only thing that can run `onchainos wallet
+ * status`), so this reads its reported verdict rather than re-deriving one. What
+ * it adds is the freshness check: a bot that stops beating cannot report that it
+ * is broken, and that silence is the failure mode with the worst blast radius.
+ *
+ * @param {{ mode?: string, last_beat_at?: string|Date, meta?: object }|null|undefined} beat
+ * @param {number} [now]
+ */
+export function classifyOkxChatBotBeat(beat, now = Date.now()) {
+	const base = { name: 'okx_chat_bot', label: 'OKX marketplace chat bot (agent #2632)' };
+	if (!beat) {
+		return { ...base, status: 'unknown', detail: 'no heartbeat reported yet' };
+	}
+	const lastBeatMs = beat.last_beat_at ? new Date(beat.last_beat_at).getTime() : 0;
+	const ageMs = lastBeatMs ? now - lastBeatMs : Number.POSITIVE_INFINITY;
+	const meta = beat.meta && typeof beat.meta === 'object' ? beat.meta : {};
+
+	if (ageMs > OKX_BOT_DOWN_MS) {
+		const ageNote = Number.isFinite(ageMs) ? `${Math.round(ageMs / 60_000)} min old` : 'never recorded';
+		return {
+			...base,
+			status: 'down',
+			detail: `heartbeat ${ageNote}, the chat-bot host is gone, so marketplace chat is not delivered at all`,
+			hint: 'Redeploy the host: gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml . (see workers/okx-chat-bot/README.md). For a local stopgap, npm run okx:bot.',
+		};
+	}
+	if (ageMs > OKX_BOT_FRESH_MS) {
+		return { ...base, status: 'degraded', detail: `heartbeat ${Math.round(ageMs / 1000)}s old, host slow or mid-restart` };
+	}
+
+	const reported = typeof meta.health === 'string' ? meta.health : 'unknown';
+	if (reported === 'ok') {
+		return {
+			...base,
+			status: 'ok',
+			detail: `online (${meta.activeClients ?? '?'} XMTP client(s), provider=${beat.mode || meta.provider || 'unknown'})`,
+		};
+	}
+	if (reported === 'unknown') {
+		return { ...base, status: 'unknown', detail: String(meta.detail || 'bot could not determine its own state') };
+	}
+	return {
+		...base,
+		status: reported === 'down' ? 'down' : 'degraded',
+		detail: String(meta.detail || `bot reports ${reported}`),
+		hint: meta.needsHumanLogin
+			? 'The OKX wallet session expired and only a human can renew it (email OTP as claude@three.ws). The live login URL and the exact three commands are on the host: curl -s $OKX_BOT_URL/readyz | jq .remedy'
+			: 'Read the host logs: gcloud logging read \'resource.labels.service_name="okx-chat-bot"\' --freshness=1h --project aerial-vehicle-466722-p5.',
+	};
+}
+
+async function checkOkxChatBot() {
+	const base = { name: 'okx_chat_bot', label: 'OKX marketplace chat bot (agent #2632)' };
+	try {
+		const { sql } = await import('../db.js');
+		const rows = /** @type {Array<{ mode?: string, last_beat_at?: string|Date, meta?: object }>} */ (
+			await sql`
+				SELECT mode, last_beat_at, meta FROM bot_heartbeat
+				WHERE worker = 'okx-chat-bot'
+				LIMIT 1
+			`
+		);
+		return classifyOkxChatBotBeat(rows[0]);
+	} catch (err) {
+		return { ...base, status: 'unknown', detail: err?.message || 'heartbeat unreadable' };
+	}
+}
+
 function checkX402Config() {
 	const base = { name: 'x402_config', label: 'x402 payment config' };
 	try {
@@ -447,6 +527,10 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		checkWorld(),
 		Promise.resolve(checkX402Config()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),
+		// The marketplace chat bot goes offline SILENTLY (expired wallet session =
+		// no XMTP delivery), and until it was hosted it had no health surface at
+		// all: the listing was flagged offline by OKX before anyone here noticed.
+		probeDb ? checkOkxChatBot() : Promise.resolve({ name: 'okx_chat_bot', label: 'OKX marketplace chat bot (agent #2632)', status: 'unknown', detail: 'probe skipped' }),
 	];
 	const subsystems = await Promise.all(checks);
 

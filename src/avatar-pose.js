@@ -23,6 +23,10 @@ import {
 	PMREMGenerator,
 	SRGBColorSpace,
 	ACESFilmicToneMapping,
+	Mesh,
+	PlaneGeometry,
+	ShadowMaterial,
+	VSMShadowMap,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
@@ -66,11 +70,17 @@ export function loadPoseManifest() {
 export class PoseStage {
 	/**
 	 * @param {HTMLElement} host  container the canvas fills (the av-stage element)
-	 * @param {{ glbUrl: string }} opts
+	 * @param {{ glbUrl: string, framing?: 'full'|'portrait', label?: string }} opts
+	 *   `label` is the text alternative for what the avatar is showing. It is
+	 *   applied to the CANVAS (`role="img"`), never to the host: the host also
+	 *   holds the "Reset view" control, and a `role="img"` ancestor makes its
+	 *   whole subtree presentational, hiding that button from assistive tech
+	 *   (axe `nested-interactive`, WCAG 4.1.2).
 	 */
-	constructor(host, { glbUrl, framing = 'full' }) {
+	constructor(host, { glbUrl, framing = 'full', label = '' }) {
 		this.host = host;
 		this.glbUrl = glbUrl;
+		this.label = label;
 		// 'full' = whole body (studio default); 'portrait' = tighter on the
 		// upper body, where hand signing reads clearly.
 		this.framing = framing;
@@ -88,6 +98,8 @@ export class PoseStage {
 		this._resizeObserver = null;
 		this._homeView = null;
 		this._resetBtn = null;
+		this._key = null;
+		this._ground = null;
 		this._mounted = false;
 		this._disposed = false;
 
@@ -109,7 +121,19 @@ export class PoseStage {
 		renderer.outputColorSpace = SRGBColorSpace;
 		renderer.toneMapping = ACESFilmicToneMapping;
 		renderer.toneMappingExposure = 1.0;
+		// Shadows are the difference between a figure that is lit and a figure
+		// that is THERE: the shadow under a chin, an arm falling across a chest,
+		// and a contact shadow at the feet are what stop a rig reading as a
+		// flat cutout. PCFSoftShadowMap is deprecated in this three version and
+		// silently downgrades to hard edges, so VSM is the soft type to use.
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = VSMShadowMap;
 		renderer.domElement.className = 'av-pose-canvas';
+		// The rendered figure is the image; the container around it is not.
+		if (this.label) {
+			renderer.domElement.setAttribute('role', 'img');
+			renderer.domElement.setAttribute('aria-label', this.label);
+		}
 		this.renderer = renderer;
 		this.host.appendChild(renderer.domElement);
 
@@ -129,7 +153,27 @@ export class PoseStage {
 		scene.add(new HemisphereLight(0xffffff, 0x39404d, 0.35));
 		const key = new DirectionalLight(0xfff1e0, 1.0);
 		key.position.set(2, 3, 2.4);
-		scene.add(key, new AmbientLight(0xffffff, 0.12));
+		key.castShadow = true;
+		// A phone rendering a full-body figure does not need a desktop-grade map;
+		// halving it here is the cheapest way to keep the hero at 60fps on mobile.
+		const shadowRes = window.innerWidth < 700 ? 1024 : 2048;
+		key.shadow.mapSize.set(shadowRes, shadowRes);
+		// VSM blurs in map space, so softness comes from radius, not from bias
+		// tweaking. These read as an overcast key rather than a hard studio edge.
+		key.shadow.radius = 4;
+		key.shadow.blurSamples = 16;
+		key.shadow.bias = -0.0005;
+		scene.add(key, key.target, new AmbientLight(0xffffff, 0.12));
+		this._key = key;
+
+		// Catches the contact shadow at the feet. Invisible except where shadowed,
+		// so it costs nothing on the dark hero and grounds the figure properly on
+		// the light theme, where the stage background is a pale surface.
+		const ground = new Mesh(new PlaneGeometry(40, 40), new ShadowMaterial({ opacity: 0.34 }));
+		ground.rotation.x = -Math.PI / 2;
+		ground.receiveShadow = true;
+		scene.add(ground);
+		this._ground = ground;
 
 		const w = this.host.clientWidth || 1;
 		const h = this.host.clientHeight || 1;
@@ -180,7 +224,14 @@ export class PoseStage {
 		const gltf = await _loader.loadAsync(this.glbUrl);
 		if (this._disposed) return { supported: false };
 		this.model = gltf.scene;
-		this.model.traverse((n) => { if (n.isMesh) n.frustumCulled = false; });
+		this.model.traverse((n) => {
+			if (!n.isMesh && !n.isSkinnedMesh) return;
+			n.frustumCulled = false;
+			// Both flags: the avatar must shadow ITSELF (arm across the chest,
+			// chin onto the neck), not just drop a silhouette on the floor.
+			n.castShadow = true;
+			n.receiveShadow = true;
+		});
 		scene.add(this.model);
 		this._frameModel();
 
@@ -209,6 +260,7 @@ export class PoseStage {
 
 		// Drop the model so its feet sit at y=0, then look at the upper torso.
 		this.model.position.y -= box.min.y;
+		this._fitShadowCamera(height, center);
 		// Portrait framing crops to the signing space — roughly the waist up,
 		// where every handshape, the face, and both hands live. Signing reads at
 		// the scale of a finger, so a full-body distance throws the detail away.
@@ -237,6 +289,33 @@ export class PoseStage {
 		this.reframe();
 	}
 
+	/**
+	 * Size the shadow frustum to the rig actually loaded. A fixed frustum either
+	 * clips the shadow off a tall avatar or wastes most of its resolution on a
+	 * short one, and three.ws rigs range from chibi to 2m.
+	 * @param {number} height  model height in world units
+	 * @param {Vector3} center bounding-box center, for the light's aim
+	 */
+	_fitShadowCamera(height, center) {
+		const key = this._key;
+		if (!key) return;
+		// Raised arms and a signing reach put the silhouette well outside the
+		// resting bounds, so the frustum covers a generous margin around it.
+		const extent = height * 0.85;
+		const cam = key.shadow.camera;
+		cam.left = -extent;
+		cam.right = extent;
+		cam.top = extent;
+		cam.bottom = -extent;
+		cam.near = 0.05;
+		cam.far = height * 6;
+		cam.updateProjectionMatrix();
+		// Scale the light rig to the model so the key angle holds on any size.
+		key.position.set(height * 1.1, height * 1.6, height * 1.3);
+		key.target.position.set(center.x, height * 0.5, center.z);
+		key.target.updateMatrixWorld();
+	}
+
 	/** Snap the camera back to the home framing. Safe to call any time. */
 	reframe() {
 		if (!this._homeView || !this.camera) return;
@@ -263,18 +342,29 @@ export class PoseStage {
 			'position:absolute', 'top:10px', 'right:10px', 'z-index:2',
 			'padding:6px 12px', 'border-radius:999px', 'border:1px solid rgba(167,139,250,.4)',
 			'background:rgba(10,10,14,.72)', 'color:#e7e5f4', 'font:12px/1.2 ui-monospace,monospace',
-			'cursor:pointer', 'opacity:0', 'pointer-events:none', 'transition:opacity .2s ease',
+			'cursor:pointer', 'opacity:0', 'visibility:hidden', 'pointer-events:none',
+			'transition:opacity .2s ease, visibility .2s ease',
 			'backdrop-filter:blur(6px)',
 		].join(';');
 		btn.addEventListener('click', () => this.reframe());
 		btn.addEventListener('pointerenter', () => { btn.style.borderColor = 'rgba(167,139,250,.9)'; });
 		btn.addEventListener('pointerleave', () => { btn.style.borderColor = 'rgba(167,139,250,.4)'; });
+		// A focus ring the pill can't get from a stylesheet: it is built here,
+		// so pages that never styled `.av-pose-reset` would otherwise focus it
+		// invisibly (WCAG 2.4.7).
+		btn.addEventListener('focus', () => { btn.style.outline = '2px solid rgba(167,139,250,.95)'; btn.style.outlineOffset = '2px'; });
+		btn.addEventListener('blur', () => { btn.style.outline = 'none'; });
 		this._resetBtn = btn;
 		this.host.appendChild(btn);
 	}
 
 	_setViewMoved(moved) {
 		if (!this._resetBtn) return;
+		// `opacity:0` alone leaves the pill focusable and announced while it is
+		// invisible, so a keyboard user tabs into nothing. `visibility` removes
+		// it from the tab order and the accessibility tree, and still fades
+		// because the transition covers visibility as well as opacity.
+		this._resetBtn.style.visibility = moved ? 'visible' : 'hidden';
 		this._resetBtn.style.opacity = moved ? '1' : '0';
 		this._resetBtn.style.pointerEvents = moved ? 'auto' : 'none';
 	}
@@ -341,6 +431,10 @@ export class PoseStage {
 		this.host?.removeEventListener('wheel', this._onWheelGate, { capture: true });
 		this._resetBtn?.remove();
 		this._resetBtn = null;
+		this._ground?.geometry?.dispose();
+		this._ground?.material?.dispose();
+		this._ground = null;
+		this._key = null;
 		this.anim.dispose();
 		this.scene?.environment?.dispose?.();
 		this.renderer?.domElement?.remove();

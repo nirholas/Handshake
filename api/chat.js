@@ -26,6 +26,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/http.js';
 import { parse } from './_lib/validate.js';
 import { recordEvent } from './_lib/usage.js';
+import { costMicroUsd } from './_lib/llm-pricing.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
@@ -973,6 +974,25 @@ export default wrap(async (req, res) => {
 	res.end();
 
 	const latencyMs = Date.now() - started;
+	// Provider/model/tokens/cost ride in their own columns, not just `meta`: this
+	// route serves paid Anthropic, OpenAI and Vertex traffic, and until they were
+	// recorded the spend dashboard could not see a cent of it. A BYOK route bills
+	// the caller's own key, so platform cost is 0 there by definition; a host-key
+	// route whose model has no price records unknown (null) rather than a fake $0.
+	const meterProvider = route.via || route.name;
+	const chatCost = route.usingHostKey
+		? costMicroUsd({
+				provider: meterProvider,
+				model: route.model,
+				input: result.inputTokens,
+				output: result.outputTokens,
+				cacheWrite: result.cacheWriteTokens ?? 0,
+				cacheRead: result.cacheReadTokens ?? 0,
+			})
+		: 0;
+	if (chatCost === null) {
+		console.warn(`[chat:${meterProvider}] unpriced spending lane ${meterProvider}/${route.model}, recording cost as unknown; add it to llm-pricing.js`);
+	}
 	recordEvent({
 		userId: auth?.userId ?? null,
 		apiKeyId: auth?.apiKeyId,
@@ -980,6 +1000,12 @@ export default wrap(async (req, res) => {
 		kind: 'chat',
 		tool: route.model,
 		latencyMs,
+		provider: meterProvider,
+		model: route.model,
+		inputTokens:
+			result.inputTokens + (result.cacheWriteTokens ?? 0) + (result.cacheReadTokens ?? 0),
+		outputTokens: result.outputTokens,
+		costMicroUsd: chatCost,
 		meta: {
 			// `route.via` records the Vertex transport ('vertex-anthropic') distinctly
 			// from the first-party 'anthropic' provider so spend/usage reporting can

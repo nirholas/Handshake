@@ -24,6 +24,7 @@ import {
 
 import { env } from '../env.js';
 import { solanaConnection } from '../solana/connection.js';
+import { assessFeeAdmission } from './wallet-fee-meter.js';
 
 export const USDC_MINT = env.X402_ASSET_MINT_SOLANA;
 export const SOLANA_RPC = env.SOLANA_RPC_URL;
@@ -395,6 +396,29 @@ export async function payX402({
 			amountAtomic, txSig: null, status: 402, responseBody: probe.body,
 			errorMsg: `fee_ceiling_exceeded:${worstCaseFeeLamports}>${maxFeeLamports}`,
 		};
+	}
+
+	// Fee-budget admission: the caller-side twin of the settle path's wallet fee
+	// governor. Everything past this point (an ATA read, a signature, a facilitator
+	// verify that simulates against an RPC node) is wasted when the fee wallet's
+	// daily budget is already spent, because settleRingPayment() refuses at the end
+	// regardless. Checking here collapses a full handshake into one skipped call.
+	// Fails open: assessFeeAdmission() admits whenever it cannot price the call, 
+	// so this can only ever remove doomed work, never block a fundable payment.
+	const feeWalletB58 = selfPay ? buyer?.publicKey?.toBase58() : accept.extra?.feePayer;
+	if (feeWalletB58) {
+		const admission = await assessFeeAdmission({
+			feeWalletB58,
+			estFeeLamports: worstCaseFeeLamports,
+			connection: conn,
+		});
+		if (!admission.ok) {
+			return {
+				success: false, paid: false, free: false, skipped: true,
+				amountAtomic, txSig: null, status: 402, responseBody: probe.body,
+				errorMsg: admission.reason || 'fee_runway_exhausted',
+			};
+		}
 	}
 
 	// Step 2 — does the receiver ATA already exist? (saves an idempotent create ix)

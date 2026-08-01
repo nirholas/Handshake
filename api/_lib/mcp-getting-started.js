@@ -1,16 +1,16 @@
-// Shared free "getting_started" MCP tool — the one public, no-payment entry
+// Shared free "getting_started" MCP tool, the one public, no-payment entry
 // point every hosted three.ws MCP server exposes so any client (including
 // non-x402 hosts and unauthenticated discovery probes) can learn what the
 // server does before connecting or paying.
 //
 // The tool carries NO `scope` and NO price, so it passes the dispatcher's scope
 // check and is served by the anonymous "free" principal. The HTTP endpoints gate
-// the no-auth bypass on this exact tool name (isPublicTool) — never on merely
-// being unpriced — so scoped tools stay locked.
+// the no-auth bypass on this exact tool name (isPublicTool), never on merely
+// being unpriced, so scoped tools stay locked.
 
 export const GETTING_STARTED_TOOL = 'getting_started';
 
-// First sentence of a tool description — a compact one-liner for the overview.
+// First sentence of a tool description: a compact one-liner for the overview.
 function firstSentence(text = '') {
 	const t = String(text).trim().replace(/\s+/g, ' ');
 	const m = t.match(/^.*?[.!?](\s|$)/);
@@ -42,7 +42,7 @@ export function buildGettingStartedTool({ server, tagline, tools = [], priceFor,
 		});
 
 	const description =
-		`FREE — start here. Returns an overview of the ${server} MCP server: every tool and what it ` +
+		`FREE, start here. Returns an overview of the ${server} MCP server: every tool and what it ` +
 		`does, how to access it, and useful links. No payment or account required. Call this first to orient.`;
 
 	const inputSchema = {
@@ -80,13 +80,13 @@ export function buildGettingStartedTool({ server, tagline, tools = [], priceFor,
 	function renderText(p) {
 		if (!p.tagline) return JSON.stringify(p, null, 2);
 		return [
-			`# ${p.server} — Getting Started`,
+			`# ${p.server}: Getting Started`,
 			'',
 			p.tagline,
 			'',
 			'## Tools (this getting_started tool is free)',
 			...p.tools.map(
-				(t) => `- ${t.name}${t.price ? ` — ${t.price}` : ''} — ${t.summary}`,
+				(t) => `- ${t.name}${t.price ? ` (${t.price})` : ''}: ${t.summary}`,
 			),
 			...(p.access.length ? ['', '## Access', ...p.access.map((a) => `- ${a}`)] : []),
 			...(Object.keys(p.links).length
@@ -101,7 +101,7 @@ export function buildGettingStartedTool({ server, tagline, tools = [], priceFor,
 		name: GETTING_STARTED_TOOL,
 		title: 'Getting Started (free)',
 		description,
-		// Deliberately no `scope` — callable by the anonymous free principal.
+		// Deliberately no `scope`: callable by the anonymous free principal.
 		inputSchema,
 		async handler(args = {}) {
 			const payload = buildPayload(args?.section || 'overview');
@@ -114,7 +114,7 @@ export function buildGettingStartedTool({ server, tagline, tools = [], priceFor,
 }
 
 // Strict public-tool predicate for the HTTP no-auth bypass. Only the
-// getting_started tool qualifies — being unpriced is NOT sufficient.
+// getting_started tool qualifies; being unpriced is NOT sufficient.
 export function isPublicTool(name) {
 	return name === GETTING_STARTED_TOOL;
 }

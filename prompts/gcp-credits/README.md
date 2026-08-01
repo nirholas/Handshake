@@ -1,35 +1,32 @@
-# GCP $100k Credit Program — Prompt Pack
+# GCP credit program: prompt pack
 
-Run each prompt in a **fresh Claude Code chat**, in order. Each is self-contained and ends with
-verification + commit/push. Do not skip verification sections — a prompt is only done when its
-acceptance criteria all pass.
+The owner holds roughly $100k in Google Cloud credits on project `aerial-vehicle-466722-p5`
+(region `us-central1`) and has pre-approved spending them on quality, reliability and UX. This
+pack turned that into infrastructure. The plan and cost model live in `docs/gcp-credits.md`;
+the fleet and quota position live in `docs/ops/gcp-credits-plan.md`.
 
-## Run order & dependencies
+## State
 
-| # | File | Depends on | Can run in parallel with |
-|---|------|-----------|---------------------------|
-| 1 | `01-gcp-foundation.md` | — | — (run first, alone) |
-| 2 | `02-vertex-claude-provider.md` | 01 | 03, 04 |
-| 3 | `03-imagen-activation.md` | 01 | 02, 04 |
-| 4 | `04-gpu-workers-deploy.md` (retired 2026-07-30, verified shipped: six workers + flag-gated routing + cost docs; rig lane shipped as `workers/rig`/model-rig replacing the unirig stub) | 01 | 02, 03 |
-| 5 | `05-catalog-animation-seeding.md` | 04 | 06, 07 |
-| 6 | `06-vanity-inventory.md` | 01 | 05, 07 |
-| 7 | `07-spend-observability.md` | 01 (best after 02–04) | 05, 06 |
-| 8 | `08-expiry-revert-runbook.md` | all of the above | — (run last) |
+| # | Work order | State |
+|---|---|---|
+| 01 | GCP foundation | Retired, shipped (readable in git history) |
+| 02 | Vertex Claude provider | Retired, shipped. Wired and dormant: production runs no Claude on Vertex until the entitlement plus key land. |
+| 03 | Imagen activation | Retired, shipped |
+| 04 | GPU worker deploys | Retired, shipped: six workers, flag-gated routing, cost docs. The rig lane shipped as `workers/rig` (`model-rig`), replacing the unirig stub. |
+| 05 | [05-catalog-animation-seeding.md](05-catalog-animation-seeding.md) | **OPEN.** The credits-to-permanent-assets play: bulk curated avatar catalog plus a generated motion library. |
+| 06 | Vanity inventory | Retired, shipped (`scripts/gcp/vanity-*`) |
+| 07 | Spend observability | Retired, shipped (`scripts/gcp/burn-report.mjs`, `create-budgets.mjs`) |
+| 08 | Expiry and revert runbook | Retired, shipped (`scripts/gcp/revert-to-free.sh`, `emergency-stop.sh`, `teardown.sh`) |
 
-## Ground rules baked into every prompt
+## Ground rules baked into every work order
 
-- **Everything behind env flags.** Credits expire in ~1 year; every reroute must revert by
-  flipping env vars, never by migrating code back.
-- **No mocks, no placeholders, no half-wiring** (CLAUDE.md rules apply in full).
-- **Fail-safe chains.** Vertex/GCP lanes slot into existing provider chains as preferred lanes
-  with automatic fallthrough to the current providers on error — a GCP outage must never take
-  down a feature that works today.
-- **Never commit secrets.** Service-account JSON goes into Vercel env / local `.env` only.
-- Push with `git push threews main` — the only push target. Never push/pull/fetch/merge `threeD` (retired mirror, diverged history).
-
-## Budget targets (for context, not hard caps)
-
-- Claude on Vertex (dev + production chain inversion): $40–60k
-- GPU fleet (Cloud Run L4: TRELLIS/Hunyuan3D/UniRig/TripoSG/text2motion): $15–25k
-- Imagen: $3–5k · Vanity/observability/misc: ~$5k · Reserve: remainder
+- **Everything behind env flags.** Credits expire; every reroute must revert by flipping env
+  vars, never by migrating code back.
+- **No mocks, no placeholders, no half-wiring.** CLAUDE.md applies in full.
+- **Fail-safe chains.** GCP lanes slot into existing provider chains as preferred rungs with
+  automatic fallthrough. A GCP outage must never take down a feature that works today.
+- **Never commit secrets.** Service-account JSON lives in the Cloud Run service env and local
+  `.env` only.
+- **Prefer GCP over any paid third party**, and never downgrade quality to save credits.
+- Push target, when the owner asks for a push, is `git push threews main`. Never push, pull,
+  fetch or merge `threeD`.

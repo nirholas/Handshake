@@ -1496,7 +1496,7 @@ export async function build402Body({
 // registration probe flags any response whose headers exceed 16 KB
 // (HEADERS_OVERFLOW, "some clients will fail to parse this response").
 // Endpoints with rich bazaar schemas + per-accept signed offers were
-// emitting 11–17 KB headers, which the production LB then dropped entirely.
+// emitting 11-17 KB headers, which the production LB then dropped entirely.
 // 8 KB leaves comfortable room for the ~0.5 KB of ordinary headers.
 const PAYMENT_REQUIRED_HEADER_MAX = 8 * 1024;
 

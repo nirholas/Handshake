@@ -79,6 +79,20 @@ export const MODEL_CATALOG = {
 	'google/gemma-4-31b-it:free':                 { provider: 'openrouter', tools: true },
 	'inclusionai/ling-3.0-flash:free':            { provider: 'openrouter', tools: true },
 
+	// ── OpenRouter paid Claude mirrors: the no-ANTHROPIC_API_KEY escape hatch ──
+	// api/chat.js and _lib/llm.js reach Anthropic ONLY through api.anthropic.com,
+	// so with no ANTHROPIC_API_KEY set they get no Claude at all (unlike /brain,
+	// which already routes these mirror ids). These entries make the mirror
+	// available to those surfaces, and `paid: true` is what keeps it honest: real
+	// spend on the platform OpenRouter key, so it is metered at the underlying
+	// model's list price in llm-pricing.js and never served to anonymous callers.
+	// Nothing selects them implicitly: llm.js only builds the mirror rung when
+	// OPENROUTER_CLAUDE_MIRROR_MODEL names one (default unset), and they are not
+	// in OPENROUTER_SIBLINGS or any auto-built chain.
+	'anthropic/claude-opus-5':    { provider: 'openrouter', tools: true, paid: true },
+	'anthropic/claude-sonnet-5':  { provider: 'openrouter', tools: true, paid: true },
+	'anthropic/claude-haiku-4.5': { provider: 'openrouter', tools: true, paid: true },
+
 	// ── OpenRouter paid (BYOK, ~$0.05/$0.10 per 1M tok) — IBM Granite lane ─────
 	// Cheap, tool-capable Granite 4.1 for the "embed a Granite agent" surface.
 	// `paid: true` is load-bearing: unlike every other openrouter entry (which is

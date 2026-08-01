@@ -98,6 +98,21 @@ if (base) {
 				});
 				status = res.status;
 				if (status >= 300 && status < 400) note = `→ ${res.headers.get('location') || '(no location)'}`;
+				// A paid endpoint answering 402 IS reachable: the payment
+				// challenge is its correct response to an unpaid request, and
+				// /api/mcp has flagged on every production sweep because of it.
+				// Verified by SHAPE rather than by an allowlist of paid paths,
+				// so a route that starts charging needs no edit here, while a
+				// bare 402 with no challenge in it still fails.
+				if (status === 402) {
+					const challenge = await res.json().catch(() => null);
+					if (challenge && (challenge.x402Version || challenge.accepts)) {
+						status = 200;
+						note = 'x402 payment challenge';
+					} else {
+						note = '402 without a readable x402 challenge';
+					}
+				}
 			} catch (err) {
 				note = err.name === 'TimeoutError' ? 'timeout' : err.message;
 			}

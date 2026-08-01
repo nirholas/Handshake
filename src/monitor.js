@@ -93,15 +93,11 @@ function mountSpotlight(agent) {
 	el.setAttribute('api-base', 'https://three.ws');
 	el.setAttribute('responsive', '');
 	el.setAttribute('background', 'transparent');
-	// Binding by agent-id opts into the full conversational chrome by default,
-	// whose name plate and action chips sit exactly where this panel prints the
-	// agent's name and links. A monitor tile wants the bare avatar: the footer
-	// below already names it and links to the chat.
-	el.setAttribute('chat', 'off');
+	// Keep the agent-bound (chat) mode: it is what resolves and loads the avatar
+	// model. `chat="off"` renders a bare element that never fetches a GLB when
+	// the source is an agent id, which leaves an empty stage. Only the name plate
+	// is turned off, because the footer below already prints the name.
 	el.setAttribute('name-plate', 'off');
-	// Head-to-mid-thigh crop: a tile is wider than it is tall, and full-body
-	// framing spends most of that height on empty room above the avatar.
-	el.setAttribute('framing', 'portrait');
 	stage.appendChild(el);
 	spotlightMounted = true;
 	$('spot-name').textContent = agent.name || 'Unnamed agent';

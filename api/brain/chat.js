@@ -32,6 +32,9 @@ import {
 	vertexGeminiOpenAIBase,
 	vertexGeminiAccessToken,
 } from '../_lib/vertex-gemini.js';
+import { recordEvent } from '../_lib/usage.js';
+import { costMicroUsd } from '../_lib/llm-pricing.js';
+import { openrouterUsageFetch } from '../_lib/openrouter-usage.js';
 
 // Providers an anonymous (signed-out) caller may use: only the genuinely free
 // tiers — the OpenRouter-routed open-weight default and the free NVIDIA NIM
@@ -467,6 +470,17 @@ function buildPrimary(spec) {
 	return null;
 }
 
+// The spend-ledger lane for a resolved primary route. A native route meters
+// under its own network's provider (the model id comes off the AI SDK model
+// object); an OpenRouter-routed one meters as openrouter on the mirror id, which
+// is the lane that quietly drew real money before any of this was recorded.
+function meterForPrimary(spec, primary) {
+	if (primary?.via === 'openrouter') return { provider: 'openrouter', model: spec.openrouterModel };
+	const provider = meterProviderForNetwork(spec.network);
+	const model = primary?.model?.modelId || null;
+	return provider && model ? { provider, model } : null;
+}
+
 // A distinct fallback exists only when the primary ran on a native provider key
 // AND an OpenRouter key is configured — then OpenRouter routes around a native
 // outage (quota exhausted, out of credits, rate-limited). When the primary was
@@ -493,6 +507,7 @@ export function freeFallbackChain(providerKey, spec, primary) {
 		chain.push({
 			label: 'groq/llama-3.3-70b-versatile',
 			model: createOpenAI({ apiKey: env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' }).chat('llama-3.3-70b-versatile'),
+			meter: { provider: 'groq', model: 'llama-3.3-70b-versatile' },
 		});
 	}
 	openrouterKeys().forEach((key, i) => {
@@ -501,10 +516,15 @@ export function freeFallbackChain(providerKey, spec, primary) {
 		chain.push({
 			label: `openrouter${i > 0 ? `#${i + 1}` : ''}/${DEFAULT_FREE_MODEL}`,
 			model: openrouter(key)(DEFAULT_FREE_MODEL),
+			meter: { provider: i > 0 ? `openrouter#${i + 1}` : 'openrouter', model: DEFAULT_FREE_MODEL },
 		});
 	});
 	if (env.NVIDIA_API_KEY && !providerKey.startsWith('nvidia-')) {
-		chain.push({ label: 'nvidia/llama-3.3-70b-instruct', model: nvidia('meta/llama-3.3-70b-instruct') });
+		chain.push({
+			label: 'nvidia/llama-3.3-70b-instruct',
+			model: nvidia('meta/llama-3.3-70b-instruct'),
+			meter: { provider: 'nvidia', model: 'meta/llama-3.3-70b-instruct' },
+		});
 	}
 	// Credits-funded Vertex Gemini anchor, ALWAYS at the tail when the GCP
 	// project is set (api/chat.js semantics, see api/_lib/vertex-gemini.js). No
@@ -514,7 +534,13 @@ export function freeFallbackChain(providerKey, spec, primary) {
 	// attempt loop (vertexGemini flag) because its bearer token is minted per
 	// request; a token failure falls through like any other provider error.
 	if (vertexGeminiAvailable()) {
-		chain.push({ label: `vertex-gemini/${vertexGeminiModel()}`, vertexGemini: true });
+		chain.push({
+			label: `vertex-gemini/${vertexGeminiModel()}`,
+			vertexGemini: true,
+			// Credits-billed, not free: it draws down the GCP grant, so it meters
+			// at Vertex list price like every other spending lane.
+			meter: { provider: 'vertex-gemini', model: vertexGeminiModel() },
+		});
 	}
 	return chain;
 }
@@ -529,18 +555,91 @@ function nvidia(modelId) {
 	}).chat(modelId);
 }
 
+// Reported OpenRouter cost per model instance, in USD. A model object is built
+// per request (resolveBrain runs per call), so the WeakMap entry is per-request
+// too and disappears with the model. See recordBrainSpend.
+const openrouterCostByModel = new WeakMap();
+
+/** The USD OpenRouter reported for the last call on this model, or null. */
+function reportedCostFor(model) {
+	const cell = model ? openrouterCostByModel.get(model) : null;
+	return cell && Number.isFinite(cell.usd) ? cell.usd : null;
+}
+
 function openrouter(key = openrouterKeys()[0]) {
-	const provider = createOpenAI({
-		apiKey: key,
-		baseURL: 'https://openrouter.ai/api/v1',
-		headers: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws brain' },
-	});
 	// OpenRouter (like every OpenAI-*compatible* backend) implements the Chat
 	// Completions API, NOT OpenAI's newer Responses API. The AI SDK's callable
 	// default `provider(id)` builds a Responses-API model, which OpenRouter
 	// rejects ("Invalid Responses API request" / "unsupported content types").
 	// Force the chat-completions surface so every routed model actually answers.
-	return (modelId) => provider.chat(modelId);
+	return (modelId) => {
+		// One cost cell per model instance: the metering fetch fills it in when
+		// OpenRouter reports what the call was charged (openrouter-usage.js). Paid
+		// vendor mirrors run through here, so without this the spend is invisible.
+		const cell = { usd: null };
+		const model = createOpenAI({
+			apiKey: key,
+			baseURL: 'https://openrouter.ai/api/v1',
+			headers: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws brain' },
+			fetch: openrouterUsageFetch((usd) => {
+				cell.usd = usd;
+			}),
+		}).chat(modelId);
+		openrouterCostByModel.set(model, cell);
+		return model;
+	};
+}
+
+// Display network → the provider name the spend ledger meters under. Every
+// PROVIDERS spec's `network` must resolve here (tests/api/brain-spend.test.js
+// asserts it), because an unmapped lane would silently record no provider and
+// drop out of the metering audit.
+const NETWORK_METER_PROVIDER = {
+	Anthropic: 'anthropic',
+	'Anthropic · Google Vertex': 'vertex-anthropic',
+	OpenAI: 'openai',
+	'OpenAI · OpenRouter': 'openrouter',
+	xAI: 'grok',
+	'NVIDIA NIM': 'nvidia',
+	Groq: 'groq',
+	ModelScope: 'modelscope',
+	DeepSeek: 'deepseek',
+	DashScope: 'dashscope',
+	'IBM watsonx.ai': 'watsonx',
+};
+
+/** The ledger provider name for a spec's native lane. */
+export function meterProviderForNetwork(network) {
+	return NETWORK_METER_PROVIDER[network] || null;
+}
+
+// Write one /brain turn to the spend ledger. Until this existed, /brain was the
+// platform's largest unmetered LLM surface: it routes paid vendor mirrors
+// (anthropic/claude-opus-5 at $5/$25 per MTok) on the platform OpenRouter key
+// and recorded nothing at all, so the balance drained with no trace. Cost comes
+// from OpenRouter's own reported charge when it gives one, else the list-price
+// table; an unpriced spending lane records unknown (null) and warns rather than
+// booking a fake $0. Fire-and-forget, after the response has already ended.
+function recordBrainSpend({ provider, model, usage, latencyMs, userId, providerKey, laneLabel, reportedCostUsd = null }) {
+	if (!provider || !model) return;
+	const input = usage?.inputTokens ?? 0;
+	const output = usage?.outputTokens ?? 0;
+	const cost = costMicroUsd({ provider, model, input, output, reportedCostUsd });
+	if (cost === null && (input || output)) {
+		console.warn(`[brain:${providerKey}] unpriced spending lane ${provider}/${model}, recording cost as unknown; add it to llm-pricing.js`);
+	}
+	recordEvent({
+		kind: 'llm',
+		provider,
+		model,
+		tool: `brain:${providerKey}`,
+		userId: userId ?? null,
+		inputTokens: input,
+		outputTokens: output,
+		costMicroUsd: cost,
+		latencyMs,
+		meta: { surface: 'brain', provider_key: providerKey, lane: laneLabel, cost_reported: reportedCostUsd !== null },
+	});
 }
 
 // Stream IBM Granite (watsonx.ai) to the page using the same SSE protocol as
@@ -608,6 +707,7 @@ async function streamWatsonx(res, { messages, system, maxTokens, t0 }) {
 	res.write(`event: done\ndata: ${JSON.stringify({ elapsedMs, firstTokenMs, usage })}\n\n`);
 	res.write('data: [DONE]\n\n');
 	res.end();
+	return { usage, elapsedMs };
 }
 
 // Stream Vertex-served Claude to the /brain page using the same SSE protocol as
@@ -670,6 +770,7 @@ async function streamVertex(res, { messages, system, maxTokens, t0, model }) {
 	res.write(`event: done\ndata: ${JSON.stringify({ elapsedMs, firstTokenMs, usage })}\n\n`);
 	res.write('data: [DONE]\n\n');
 	res.end();
+	return { usage, elapsedMs };
 }
 
 export function validateMessages(input) {
@@ -751,7 +852,7 @@ export function resolveBrain(providerKey) {
 // the same tuned timeout budget and never-error-while-a-free-route-can-answer
 // behaviour. The caller owns auth, rate limiting, and message validation; this
 // owns the transport. Resolve `plan` via resolveBrain() first.
-export async function streamBrain(res, { plan, providerKey, messages, system, maxTokens }) {
+export async function streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId = null }) {
 	const { spec, primary, fallbackModel } = plan;
 
 	res.statusCode = 200;
@@ -855,6 +956,7 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 		})}\n\n`);
 		res.write('data: [DONE]\n\n');
 		res.end();
+		return { usage, elapsedMs };
 	};
 
 	// Ordered attempt list: the requested route first, its OpenRouter mirror
@@ -865,13 +967,24 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 	// error event while any free provider can still answer. Once partial output
 	// has streamed we are committed to that attempt.
 	try {
+		// `meter` names the lane in the spend ledger: { provider, model } as
+		// llm-pricing.js understands them. Every attempt that can draw money
+		// carries one, so no /brain turn lands in the ledger unattributed. The
+		// watsonx lane is the one exception: IBM bills its trial entitlement
+		// outside per-token pricing, so there is no honest number to record.
 		const attempts =
 			primary.kind === 'watsonx'
 				? [{ label: 'watsonx', watsonx: true }]
 				: primary.kind === 'vertex'
-					? [{ label: 'vertex', vertex: true, model: primary.model }]
-					: [{ label: 'primary', model: primary.model }];
-		if (fallbackModel) attempts.push({ label: 'openrouter-mirror', model: fallbackModel });
+					? [{ label: 'vertex', vertex: true, model: primary.model, meter: { provider: 'vertex-anthropic', model: primary.model } }]
+					: [{ label: 'primary', model: primary.model, meter: meterForPrimary(spec, primary) }];
+		if (fallbackModel) {
+			attempts.push({
+				label: 'openrouter-mirror',
+				model: fallbackModel,
+				meter: { provider: 'openrouter', model: spec.openrouterModel },
+			});
+		}
 		for (const f of freeFallbackChain(providerKey, spec, primary)) attempts.push(f);
 
 		let lastErr = null;
@@ -884,13 +997,28 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 				// Advisory for the client (current page ignores unknown events).
 				res.write(`event: fallback\ndata: ${JSON.stringify({ route: attempt.label })}\n\n`);
 			}
+			// Record one completed attempt in the spend ledger. Runs after the
+			// response has already ended, so it never adds latency to the turn.
+			const meterAttempt = (outcome) => {
+				if (!attempt.meter) return;
+				recordBrainSpend({
+					provider: attempt.meter.provider,
+					model: attempt.meter.model,
+					usage: outcome?.usage,
+					latencyMs: outcome?.elapsedMs ?? Date.now() - t0,
+					userId,
+					providerKey,
+					laneLabel: attempt.label,
+					reportedCostUsd: reportedCostFor(attempt.model),
+				});
+			};
 			try {
 				// watsonx.ai isn't an AI SDK model — stream it through the shared
 				// client, emitting the same first/chunk/done event protocol. It only
 				// throws before writing tokens, so falling through is safe.
 				if (attempt.watsonx) await streamWatsonx(res, { messages, system, maxTokens, t0 });
 				else if (attempt.vertex)
-					await streamVertex(res, { messages, system, maxTokens, t0, model: attempt.model });
+					meterAttempt(await streamVertex(res, { messages, system, maxTokens, t0, model: attempt.model }));
 				else if (attempt.vertexGemini) {
 					// Credits anchor: OpenAI-compatible Vertex endpoint, bearer token
 					// minted per attempt (a token-exchange failure throws here and is
@@ -900,8 +1028,8 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 						apiKey: await vertexGeminiAccessToken(),
 						baseURL: vertexGeminiOpenAIBase(),
 					}).chat(vertexGeminiModel());
-					await streamOnce(maxTokens, anchorModel);
-				} else await streamOnce(maxTokens, attempt.model);
+					meterAttempt(await streamOnce(maxTokens, anchorModel));
+				} else meterAttempt(await streamOnce(maxTokens, attempt.model));
 				return;
 			} catch (err) {
 				lastErr = err;
@@ -911,7 +1039,7 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 				const affordable = attempt.model ? affordableBudget(err) : null;
 				if (affordable && firstTokenMs === null && !res.writableEnded) {
 					try {
-						await streamOnce(affordable, attempt.model);
+						meterAttempt(await streamOnce(affordable, attempt.model));
 						return;
 					} catch (err2) {
 						lastErr = err2;
@@ -1003,7 +1131,7 @@ export default wrap(async function handler(req, res) {
 	const system = typeof body.system === 'string' ? body.system.slice(0, 8000) : undefined;
 	const maxTokens = resolveMaxTokens(body.maxTokens, providerKey, plan.spec.maxOutput);
 
-	await streamBrain(res, { plan, providerKey, messages, system, maxTokens });
+	await streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId });
 });
 
 /**

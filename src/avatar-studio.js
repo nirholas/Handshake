@@ -23,6 +23,7 @@ import { TalkScene } from './voice/talk-scene.js';
 import { AccessoryManager } from './agent-accessories.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel, applyMorphsToRoot } from './avatar-sculpt.js';
+import { applyProportionsToRoot, captureProportionRest } from './avatar-proportions.js';
 import { saveRemoteGlbToAccount, apiFetch } from './account.js';
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
@@ -70,8 +71,9 @@ let idle = null;
 let presets = [];
 let presetsById = new Map();
 
-let workingAppearance = { accessories: [], morphs: {}, colors: {}, hidden: [] };
+let workingAppearance = hydrateAppearance(null);
 let savedAppearance = null; // null = unsaved / the appearance at last save
+let savedName = '';        // the name at last save, so a name-only edit still saves
 let editAvatarId = null;   // non-null when in edit mode (?edit=ID)
 
 let history = [];
@@ -226,8 +228,9 @@ async function init() {
 	if (editAvatar) {
 		workingAppearance = hydrateAppearance(editAvatar.appearance);
 		savedAppearance = cloneAppearance(workingAppearance);
+		savedName = editAvatar.name || '';
 		const nameEl = $('as-name');
-		if (nameEl) nameEl.value = editAvatar.name || '';
+		if (nameEl) nameEl.value = savedName;
 		const titleEl = document.querySelector('.as-bar-title');
 		if (titleEl) titleEl.textContent = 'Edit Avatar';
 		const backEl = $('as-back');
@@ -303,11 +306,16 @@ function bindBaseSwitch(activeBase, isEdit) {
 	});
 }
 
+// The name a save would persist right now (the field, or the default).
+function currentName() {
+	return ($('as-name')?.value || '').trim() || 'My Avatar';
+}
+
 // Same dirty predicate updateDirtyState() renders from.
 function isDirtyNow() {
-	return savedAppearance !== null
-		? !appearanceEqual(workingAppearance, savedAppearance)
-		: collapseAppearance(workingAppearance) !== null;
+	if (savedAppearance === null) return collapseAppearance(workingAppearance) !== null;
+	if (editAvatarId && currentName() !== savedName) return true;
+	return !appearanceEqual(workingAppearance, savedAppearance);
 }
 
 // Surface the avatar's agent-wallet panel (create / manage) in the studio rail.
@@ -418,9 +426,7 @@ function updateUndoRedoBtns() {
 // ── Dirty state ──────────────────────────────────────────────────────
 
 function updateDirtyState() {
-	const isDirty = savedAppearance !== null
-		? !appearanceEqual(workingAppearance, savedAppearance)
-		: collapseAppearance(workingAppearance) !== null;
+	const isDirty = isDirtyNow();
 
 	const titleEl = document.querySelector('.as-bar-title');
 	if (titleEl) {
@@ -1408,6 +1414,8 @@ async function applyAccessory(tab, presetId) {
 function bindHeader() {
 	$('as-save').addEventListener('click', () => saveAvatar());
 	$('as-reset').addEventListener('click', () => resetAll());
+	// A renamed avatar is an unsaved change too, so keep the dirty marker honest.
+	$('as-name')?.addEventListener('input', () => updateDirtyState());
 	$('as-randomize')?.addEventListener('click', () => randomizeAppearance());
 	$('as-undo')?.addEventListener('click', () => undoAppearance());
 	$('as-redo')?.addEventListener('click', () => redoAppearance());
@@ -1431,7 +1439,13 @@ async function resetAll() {
 		if (accessoryManager) {
 			for (const id of wasIds) accessoryManager.removePreset(id);
 		}
-		workingAppearance = { accessories: [], morphs: {}, colors: {}, hidden: [] };
+		// Reset clears what Studio controls. The wardrobe it cannot show (baked
+		// outfit preset, catalog garments) is not Studio's to throw away.
+		workingAppearance = {
+			...hydrateAppearance(null),
+			outfit: workingAppearance.outfit ?? null,
+			garments: (workingAppearance.garments || []).map((g) => ({ ...g })),
+		};
 		if (scene?.root) {
 			applyMorphsToRoot(scene.root, {});
 			applyAllColors();
@@ -1518,15 +1532,16 @@ function hideSaveOverlay() {
 }
 
 async function saveAvatar() {
-	const name = ($('as-name')?.value || '').trim() || 'My Avatar';
+	const name = currentName();
 	const saveBtn = $('as-save');
 	const resetBtn = $('as-reset');
 	saveBtn.disabled = true;
 	resetBtn.disabled = true;
 
+	const appearance = collapseAppearance(workingAppearance);
+
 	// For edit mode, nudge the user if nothing changed
-	if (editAvatarId &&
-	    JSON.stringify(collapseAppearance(workingAppearance)) === JSON.stringify(collapseAppearance(savedAppearance))) {
+	if (editAvatarId && name === savedName && appearanceEqual(workingAppearance, savedAppearance)) {
 		setStatus('', 'No changes to save.');
 		saveBtn.disabled = false;
 		resetBtn.disabled = false;
@@ -1537,6 +1552,24 @@ async function saveAvatar() {
 	updateProgress(5);
 
 	try {
+		if (editAvatarId) {
+			// ── Edit mode: appearance is the source of truth ─────────────
+			// Everything Studio can change (colours, morphs, accessories, hidden
+			// layers) is replayed server-side by the bake, and the base body cannot
+			// be switched while editing, so there is no new geometry to upload.
+			// Re-exporting the live scene over the record's GLB would overwrite the
+			// pristine base with an already-dressed re-export, and the bake that
+			// follows the appearance PATCH would then apply the same appearance a
+			// second time: doubled colour multiplies and duplicated accessories on
+			// top of a base the user can never get back.
+			updateSaveOverlay('Saving customisation...', 'Rebuilding your model');
+			updateProgress(30);
+			const avatar = await patchEditedAvatar(editAvatarId, name, appearance);
+			updateProgress(90);
+			await finishSave(avatar);
+			return;
+		}
+
 		// ── Step 1: Export the live scene as a GLB ──────────────────
 		// This captures all colours, morphs, and accessories already applied
 		// to the Three.js scene — no server-side bake needed.
@@ -1570,31 +1603,23 @@ async function saveAvatar() {
 		// ── Step 2: Upload the GLB + create/update the DB record ────
 		updateSaveOverlay('Uploading...', 'Sending to your library');
 
-		let avatar;
-		if (editAvatarId) {
-			// Edit mode: upload new GLB version, PATCH it onto the existing record
-			avatar = await uploadEditedAvatar(editAvatarId, name, glbBlob,
-				(pct) => updateProgress(20 + pct * 0.6));
-		} else {
-			avatar = await saveRemoteGlbToAccount(
-				glbBlob,
-				{
-					name,
-					source: 'direct-upload',
-					source_meta: { generator: 'avatar-studio', body_type: BODY_TYPE },
-					visibility: 'public',
-				},
-				{
-					onProgress: (pct) => updateProgress(20 + pct * 0.6),
-				},
-			);
-		}
+		const avatar = await saveRemoteGlbToAccount(
+			glbBlob,
+			{
+				name,
+				source: 'direct-upload',
+				source_meta: { generator: 'avatar-studio', body_type: BODY_TYPE },
+				visibility: 'public',
+			},
+			{
+				onProgress: (pct) => updateProgress(20 + pct * 0.6),
+			},
+		);
 		updateProgress(82);
 
 		// ── Step 3: PATCH appearance for re-editability ─────────────
 		// The exported GLB already has everything baked; this PATCH only stores
 		// the appearance JSON as metadata so /create/studio?edit= can reload it.
-		const appearance = collapseAppearance(workingAppearance);
 		if (appearance) {
 			updateSaveOverlay('Saving customisation data...');
 			const patchRes = await apiFetch(`/api/avatars/${encodeURIComponent(avatar.id)}`, {
@@ -1612,31 +1637,7 @@ async function saveAvatar() {
 		}
 		updateProgress(92);
 
-		// ── Step 4: Thumbnail snapshot ──────────────────────────────
-		updateSaveOverlay('Capturing thumbnail...');
-		try {
-			await uploadAvatarSnapshot({ avatarId: avatar.id, scene });
-		} catch (err) {
-			log.warn('[avatar-studio] snapshot upload failed:', err?.message);
-		}
-
-		updateProgress(100);
-		updateSaveOverlay('Done!', editAvatarId ? 'Avatar updated.' : 'Avatar saved to your library.');
-
-		// Mark saved state, clear draft
-		savedAppearance = cloneAppearance(workingAppearance);
-		clearDraft();
-		updateDirtyState();
-
-		await new Promise((r) => setTimeout(r, 700));
-		hideSaveOverlay();
-
-		// Show a save-success toast with next-step CTAs (launch a coin / view).
-		// Give the user time to choose; fall back to the avatar page if they don't.
-		showSaveToast(avatar.id);
-
-		await new Promise((r) => setTimeout(r, 5000));
-		window.location.href = `/avatars/${encodeURIComponent(avatar.id)}`;
+		await finishSave(avatar);
 	} catch (err) {
 		hideSaveOverlay();
 		log.error('[avatar-studio] save failed:', err);
@@ -1653,34 +1654,62 @@ async function saveAvatar() {
 	}
 }
 
-// Upload a new GLB version for an existing avatar in edit mode.
-// Reuses saveRemoteGlbToAccount to presign + upload the blob, then PATCHes
-// the existing avatar record with the new storage key and updated name.
-async function uploadEditedAvatar(avatarId, name, glbBlob, onProgress) {
-	// Upload the new GLB to a fresh R2 key under the user's namespace
-	const tmp = await saveRemoteGlbToAccount(
-		glbBlob,
-		{
-			name,
-			source: 'direct-upload',
-			source_meta: { generator: 'avatar-studio', body_type: BODY_TYPE },
-			visibility: 'public',
-		},
-		{ onProgress },
-	);
-
-	// Replace the target avatar's GLB with the freshly uploaded key
-	const patchRes = await apiFetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+// Persist an edit-mode save. The record keeps its original GLB as the base and
+// the server bakes `appearance` onto it, so this is a metadata-only PATCH: the
+// pristine base survives every edit and the appearance is applied exactly once.
+// `appearance` is null when the user cleared every customisation, which the API
+// reads as "drop the baked GLB and serve the base again".
+async function patchEditedAvatar(avatarId, name, appearance) {
+	const res = await apiFetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
 		method: 'PATCH',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ glbUrl: tmp.storage_key, name }),
+		body: JSON.stringify({ name, appearance }),
 	});
-	if (!patchRes.ok) {
-		const body = await patchRes.json().catch(() => ({}));
-		throw new Error(body.message || `Avatar update failed (${patchRes.status})`);
+	if (!res.ok) {
+		const body = await res.json().catch(() => ({}));
+		const err = new Error(body.message || `Avatar update failed (${res.status})`);
+		err.code = body.error;
+		throw err;
 	}
-	const { avatar } = await patchRes.json();
+	const { avatar } = await res.json();
+	savedName = name;
 	return avatar;
+}
+
+// Shared success tail for both save paths: thumbnail, saved-state bookkeeping,
+// toast, redirect.
+async function finishSave(avatar) {
+	// A Studio snapshot only represents the avatar faithfully when Studio drew
+	// everything it is wearing. Wardrobe garments and baked outfit presets are
+	// carried through the appearance record but have no Studio UI and are not in
+	// the live scene, so overwriting the thumbnail here would show the avatar
+	// undressed. Leave the existing thumbnail alone in that case.
+	const wearsUnrenderedLayers = !!(workingAppearance.outfit || workingAppearance.garments?.length);
+	if (!wearsUnrenderedLayers) {
+		updateSaveOverlay('Capturing thumbnail...');
+		try {
+			await uploadAvatarSnapshot({ avatarId: avatar.id, scene });
+		} catch (err) {
+			log.warn('[avatar-studio] snapshot upload failed:', err?.message);
+		}
+	}
+
+	updateProgress(100);
+	updateSaveOverlay('Done!', editAvatarId ? 'Avatar updated.' : 'Avatar saved to your library.');
+
+	savedAppearance = cloneAppearance(workingAppearance);
+	clearDraft();
+	updateDirtyState();
+
+	await new Promise((r) => setTimeout(r, 700));
+	hideSaveOverlay();
+
+	// Show a save-success toast with next-step CTAs (launch a coin / view).
+	// Give the user time to choose; fall back to the avatar page if they don't.
+	showSaveToast(avatar.id);
+
+	await new Promise((r) => setTimeout(r, 5000));
+	window.location.href = `/avatars/${encodeURIComponent(avatar.id)}`;
 }
 
 function showSaveToast(avatarId) {

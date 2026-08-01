@@ -12,6 +12,8 @@ import {
 	walletFeeGovernorConfig,
 	walletDailyFeeBudgetLamports,
 	assessWalletFeeBudget,
+	pacedFeeBudgetLamports,
+	utcDayElapsedFraction,
 } from '../api/_lib/x402/wallet-fee-governor.js';
 
 describe('walletFeeGovernorConfig', () => {
@@ -65,6 +67,80 @@ describe('walletDailyFeeBudgetLamports', () => {
 	});
 });
 
+describe('utcDayElapsedFraction', () => {
+	it('runs 0 at the UTC reset and approaches 1 at the end of the day', () => {
+		expect(utcDayElapsedFraction(Date.UTC(2026, 7, 1, 0, 0, 0))).toBe(0);
+		expect(utcDayElapsedFraction(Date.UTC(2026, 7, 1, 6, 0, 0))).toBe(0.25);
+		expect(utcDayElapsedFraction(Date.UTC(2026, 7, 1, 12, 0, 0))).toBe(0.5);
+		expect(utcDayElapsedFraction(Date.UTC(2026, 7, 1, 23, 59, 59))).toBeCloseTo(1, 4);
+	});
+
+	it('an unreadable clock reports a full day so pacing cannot throttle', () => {
+		expect(utcDayElapsedFraction(Number.NaN)).toBe(1);
+	});
+});
+
+describe('pacedFeeBudgetLamports', () => {
+	it('unlocks the budget in proportion to the elapsed UTC day', () => {
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: 0.5,
+		})).toBe(5_000_000);
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: 0.25,
+		})).toBe(2_500_000);
+	});
+
+	it('never exceeds the daily budget, so pacing grants no extra spend', () => {
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: 1,
+		})).toBe(10_000_000);
+		// Out-of-range fractions clamp rather than overshoot.
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: 4,
+		})).toBe(10_000_000);
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: -1, minSliceLamports: 0,
+		})).toBe(0);
+	});
+
+	it('keeps a minimum slice alive right after the reset', () => {
+		// 00:00 exactly: proportional share is 0, the slice keeps a pulse.
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: 0, minSliceLamports: 200_000,
+		})).toBe(200_000);
+	});
+
+	it('the minimum slice never exceeds a budget smaller than itself', () => {
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 50_000, dayElapsedFraction: 0, minSliceLamports: 200_000,
+		})).toBe(50_000);
+	});
+
+	it('an unreadable clock falls back to the full budget (fail open)', () => {
+		expect(pacedFeeBudgetLamports({
+			budgetLamports: 10_000_000, dayElapsedFraction: Number.NaN,
+		})).toBe(10_000_000);
+	});
+
+	it('the production burst that motivated pacing is admitted gradually', () => {
+		// 2026-08-01: a 10,000,000 lamport budget was spent by ~1,002 settles at
+		// ~10,002 lamports each before midday, then every later settle refused.
+		// Paced, the same budget cannot all be drawn before the day is over.
+		const budget = 10_000_000;
+		const spentByMidday = 1_002 * 10_002;
+		const unlockedAtMidday = pacedFeeBudgetLamports({
+			budgetLamports: budget, dayElapsedFraction: 0.5, minSliceLamports: 200_000,
+		});
+		expect(unlockedAtMidday).toBe(5_000_000);
+		expect(spentByMidday).toBeGreaterThan(unlockedAtMidday);
+		// Budget still left for the evening, which is what the flatline destroyed.
+		const unlockedLate = pacedFeeBudgetLamports({
+			budgetLamports: budget, dayElapsedFraction: 0.95, minSliceLamports: 200_000,
+		});
+		expect(unlockedLate).toBeGreaterThan(unlockedAtMidday);
+	});
+});
+
 describe('assessWalletFeeBudget', () => {
 	it('admits while projected spend fits the budget, boundary inclusive', () => {
 		expect(assessWalletFeeBudget({
@@ -84,5 +160,54 @@ describe('assessWalletFeeBudget', () => {
 		expect(assessWalletFeeBudget({
 			spentTodayLamports: NaN, budgetLamports: 0, nextFeeLamports: 10_000,
 		}).ok).toBe(true);
+	});
+});
+
+// ── Recurrence guard for the 2026-08-01 fee_runway_exhausted wave ────────────
+// The outage: a near-floor fee wallet gets a sub-day budget, exhausts it hours
+// after the 00:00 UTC reset, and every settle for the rest of the day fails
+// with fee_runway_exhausted (85k rejects vs 562 rail-shaped failures). These
+// tests pin the relationship between the default config and the MEASURED
+// production constants, so a future default change that re-creates a sub-day
+// budget fails CI instead of failing the rail.
+describe('recurrence guard: default config sustains a full day at measured burn', () => {
+	// Measured 2026-08-01 (see prompts/backlog/01-x402-settle-runway.md):
+	// per-settle fee 6,000-8,000 lamports (pin the upper bound), total fee burn
+	// 0.06-0.09 SOL/day over successful settles (pin the upper bound), and the
+	// treasury self-heal holds the master wallet at ECONOMY_MASTER_OPERATING_SOL
+	// (0.3 SOL in production as of this fix).
+	const PER_SETTLE_FEE_LAMPORTS = 8_000;
+	const MEASURED_DAILY_BURN_LAMPORTS = 90_000_000;
+	const OPERATING_POINT_LAMPORTS = 300_000_000;
+	const FLOOR_LAMPORTS = 20_000_000; // X402_SPONSOR_SOL_FLOOR_LAMPORTS default
+
+	it('a wallet held at the operating point funds a full day of measured burn', () => {
+		const cfg = walletFeeGovernorConfig({});
+		const budget = walletDailyFeeBudgetLamports({
+			solLamports: OPERATING_POINT_LAMPORTS,
+			floorLamports: FLOOR_LAMPORTS,
+			runwayDays: cfg.runwayDays,
+			minBudgetLamports: cfg.minBudgetLamports,
+		});
+		expect(budget).toBeGreaterThanOrEqual(MEASURED_DAILY_BURN_LAMPORTS);
+	});
+
+	it('the heartbeat floor alone still admits >=1,000 settles/day', () => {
+		const cfg = walletFeeGovernorConfig({});
+		expect(Math.floor(cfg.minBudgetLamports / PER_SETTLE_FEE_LAMPORTS))
+			.toBeGreaterThanOrEqual(1_000);
+	});
+
+	it('the production runway override (1 day) triples the default budget', () => {
+		const base = walletDailyFeeBudgetLamports({
+			solLamports: OPERATING_POINT_LAMPORTS, floorLamports: FLOOR_LAMPORTS,
+			runwayDays: walletFeeGovernorConfig({}).runwayDays, minBudgetLamports: 0,
+		});
+		const prod = walletDailyFeeBudgetLamports({
+			solLamports: OPERATING_POINT_LAMPORTS, floorLamports: FLOOR_LAMPORTS,
+			runwayDays: walletFeeGovernorConfig({ X402_WALLET_FEE_RUNWAY_DAYS: '1' }).runwayDays,
+			minBudgetLamports: 0,
+		});
+		expect(prod).toBeGreaterThanOrEqual(base * 3);
 	});
 });

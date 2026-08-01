@@ -90,7 +90,7 @@ curl -sS -X POST https://three.ws/api/okx/3d/identity-studio \
 
 Each poll advances the pipeline one bounded step (generation → humanoid auto-rig → one
 studio render per poll) and reports `stage` + render progress. Poll every ~5 s; typical time
-to `done` is 3–6 minutes. When `status` is `"done"`, `deliverables` carries the PFP URLs,
+to `done` is 3-6 minutes. When `status` is `"done"`, `deliverables` carries the PFP URLs,
 the full-body set, `rigged_glb_url`, `mesh_glb_url`, `viewer_url`, and `pose_studio_url`.
 
 ### Payment semantics
@@ -151,7 +151,9 @@ engine failure answers before settlement and never charges.
 
 ### Text → 3D Model (GLB), $0.01
 
-Textured GLB from a text prompt on the fast draft lane (NVIDIA NIM TRELLIS).
+Textured GLB from a text prompt on the fast draft lane. The lane leads with our self-hosted
+TRELLIS worker and falls back through Hunyuan3D, HuggingFace, and NVIDIA NIM as a last
+resort, so a single dead upstream never fails the call.
 
 ```bash
 curl -i -X POST https://three.ws/api/okx/3d/text-to-3d \
@@ -172,7 +174,7 @@ curl -i -X POST https://three.ws/api/okx/3d/text-to-3d-pro \
 
 ### Image → 3D Model, $0.30
 
-Reconstructs a textured GLB from 1–4 public photos of one object.
+Reconstructs a textured GLB from 1-4 public photos of one object.
 
 ```bash
 curl -i -X POST https://three.ws/api/okx/3d/image-to-3d \

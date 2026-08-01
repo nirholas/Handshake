@@ -44,6 +44,30 @@ export function validatePrompt(raw) {
 	return { ok: true };
 }
 
+// Backend id → the lane name a person recognizes, so a narration can name the
+// engine that actually ran instead of guessing one. Mirrors ENGINE_LABELS in
+// src/forge.js; it lives here because this module is the one every non-/forge
+// surface shares (agent-screen, ar-studio, workers/agent-forge). An unknown or
+// absent id returns null, and callers fall back to a lane-agnostic line.
+const LANE_LABELS = {
+	nvidia: 'free NVIDIA NIM',
+	huggingface: 'free Hunyuan3D',
+	trellis: 'Fast',
+	trellis_selfhost: 'TRELLIS',
+	meshy: 'Meshy',
+	tripo: 'Tripo',
+	rodin: 'Rodin',
+	stability: 'Stability',
+	replicate_byok: 'Replicate',
+	hunyuan3d: 'Hunyuan3D',
+	triposg: 'TripoSG',
+};
+
+export function laneLabel(backendId) {
+	const id = String(backendId == null ? '' : backendId).trim();
+	return LANE_LABELS[id] || null;
+}
+
 // Map a real /api/forge job/poll state to a single holder-readable narration
 // line. The states come straight from the pipeline — no fabricated steps:
 //   submitting           → before the job is accepted
@@ -57,14 +81,30 @@ export function forgeStageNarration(state = {}) {
 	const status = String(state.status || state.stage || '').toLowerCase();
 	const eta = Number(state.eta_seconds) > 0 ? Math.round(Number(state.eta_seconds)) : null;
 	const etaSuffix = eta ? ` — ~${eta}s` : '';
+	// The lane that actually ran, when the caller knows it. Older callers pass no
+	// `backend`, so every line degrades to a lane-agnostic phrasing rather than
+	// naming the wrong engine.
+	const lane = laneLabel(state.backend);
+	const laneSuffix = lane ? ` on the ${lane} lane` : ' on the free lane';
+	// A scale-to-zero GPU worker booting is a real, nameable wait, not a stall.
+	// `cold_seconds` is the lane's spin-up budget from the API, never a timer we
+	// invent; without it we still name the state but promise no number.
+	const cold = Boolean(state.cold_start);
+	const coldSeconds = Number(state.cold_seconds) > 0 ? Math.round(Number(state.cold_seconds)) : null;
+	const coldWho = lane ? ` ${lane}` : '';
 
 	switch (status) {
 		case 'submitting':
 		case 'submit':
-			return 'Forging on the free TRELLIS lane…';
+			return `Forging${laneSuffix}…`;
 		case 'queued':
 		case 'queue':
-			return `Queued on the free NVIDIA NIM lane${etaSuffix}`;
+			if (cold) {
+				return coldSeconds
+					? `Waking up the${coldWho} GPU worker (about ${coldSeconds}s), then sculpting starts`
+					: `Waking up the${coldWho} GPU worker, then sculpting starts`;
+			}
+			return `Queued${laneSuffix}${etaSuffix}`;
 		case 'image':
 		case 'texturing':
 			return 'Drafting the look…';

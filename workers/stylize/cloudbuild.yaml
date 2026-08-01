@@ -1,3 +1,8 @@
+# Builds run as the pinned three-ws-build service account: the project's default
+# compute service account was deleted, so an unpinned submit fails with
+# "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
 substitutions:
   _REGION: us-central1
   _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com

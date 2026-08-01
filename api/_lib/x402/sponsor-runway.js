@@ -64,6 +64,13 @@ function clampNumber(raw, fallback, { min, max }) {
 	return Math.min(max, Math.max(min, n));
 }
 
+/** Finite number, or null. Null/undefined/'' stay null instead of coercing to 0. */
+function numOrNull(v) {
+	if (v == null || v === '') return null;
+	const n = Number(v);
+	return Number.isFinite(n) ? n : null;
+}
+
 function round(n, places) {
 	const f = 10 ** places;
 	return Math.round(n * f) / f;
@@ -115,11 +122,13 @@ export function computeSponsorRunway({
 	alertDays = SPONSOR_RUNWAY_ALERT_DAYS,
 	address = null,
 } = {}) {
-	const balance = Number.isFinite(Number(sol)) ? Number(sol) : null;
-	const floor = Number.isFinite(Number(floorSol)) ? Number(floorSol) : null;
-	const burn = Number.isFinite(Number(burnSolPerDay)) && Number(burnSolPerDay) > 0
-		? Number(burnSolPerDay)
-		: null;
+	// numOrNull, not Number(): `Number(null)` is 0, so a coercion here would turn
+	// an UNREADABLE balance into a wallet holding exactly nothing, which is a
+	// critical alert fired off an RPC hiccup.
+	const balance = numOrNull(sol);
+	const floor = numOrNull(floorSol);
+	const rawBurn = numOrNull(burnSolPerDay);
+	const burn = rawBurn != null && rawBurn > 0 ? rawBurn : null;
 	const spendable = balance != null && floor != null ? round(balance - floor, 9) : null;
 
 	const base = {

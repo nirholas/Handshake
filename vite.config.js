@@ -372,7 +372,6 @@ const appConfig = {
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
 				bundles: resolve(__dirname, 'pages/bundles.html'),
-				bundles: resolve(__dirname, 'pages/bundles.html'),
 				'embed-doctor': resolve(__dirname, 'pages/embed-doctor.html'),
 				crews: resolve(__dirname, 'pages/crews.html'),
 				inspect: resolve(__dirname, 'pages/inspect.html'),

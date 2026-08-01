@@ -775,6 +775,22 @@
 				"kind": "live",
 				"reason": "The check re-renders the committed atlas from data/tour-atlas.json and verifies 160 captured screenshots exist on disk; a sandbox proof would need the full media tree copied per run, so it is exercised by the real gate instead."
 			}
+		},
+		{
+			"id": "audit-route-shadowing",
+			"script": "scripts/audit-route-shadowing.mjs",
+			"npm": "audit:route-shadowing",
+			"title": "No API handler is routed but unreachable",
+			"protects": "Every handler under api/ that looks routed can actually be reached, by replaying the production router's ordered walk of vercel.json against each handler's own canonical URL.",
+			"why": "The route table is evaluated in order, so an earlier catch-all such as /api/agents/([^/]+) swallows every literal sibling declared after it. The handler file exists, the route table appears to mention it, and the endpoint is simply dead: it returns another handler's answer. This is invisible in a diff and in local testing, and has silently killed documented endpoints before. verify-routes covers PAGE routes; this covers API handlers.",
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "live",
+				"reason": "The audit currently reports a real backlog of 46 shadowed handlers, so it exits non-zero against the live repo and cannot yet pass the control half of a sandboxed proof. It stays a manual audit until that backlog is cleared, at which point it can move into the gate with a two-sided proof."
+			}
 		}
 	],
 	"exempt": [

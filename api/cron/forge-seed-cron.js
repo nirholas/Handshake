@@ -6,16 +6,29 @@
 // Every invocation does two things in parallel and returns immediately — it
 // never waits for a generation to finish, keeping execution well under 60 s:
 //
-//   1. Poll — check any pending seed jobs from prior minute(s). For each that
-//      finished: run the catalog quality gate, then copy the GLB into the
-//      avatars table (visibility=public) so the creator has a real profile
-//      asset, and mark the job done. Failures are quarantined, not published.
+//   1. Advance: move every open seed job one step along the pipeline. No step
+//      ever blocks on the next, so a tick stays short no matter how slow a lane
+//      is. The states, in order:
 //
-//   2. Start — pick the next unused prompt(s) from the 200+ library, claim an OG
+//        pending   → poll /api/forge; a finished mesh becomes `generated`
+//        generated → run the catalog quality gate (api/_lib/seed-quality.js).
+//                    A reject is quarantined under forge/rejected/ and never
+//                    published; a keeper either goes to `rigging` or straight
+//                    to publish.
+//        rigging    → poll the auto-rig job; publish the rigged mesh when it
+//                    lands, and publish the static keeper if the rig failed
+//                    (a gated keeper is never thrown away over a rig fault).
+//        done / rejected / failed / gate_error are terminal.
+//
+//   2. Start: pick the next unused prompt(s) from the library, claim an OG
 //      username for a new user, submit a draft-tier forge job under that user's
 //      client id, record the job so the next tick can poll it.
 //
-// Free NVIDIA NIM lane (draft, ~22 s) is always used — zero vendor spend.
+// Lane: the submit names no backend, so /api/forge's own free-first resolver
+// picks it: which, with FORGE_SELFHOST_PRIMARY=1, is our own Cloud Run GPU
+// fleet ahead of the hosted NVIDIA NIM allocation. Whichever lane runs, the
+// backend is recorded on the job row and asserted free: a seed job must never
+// silently spend on a paid third-party lane (see assertFreeBackend).
 // maxPending() caps in-flight jobs so a slow lane never builds debt.
 //
 // ── Env knobs (every one defaults to the historical behaviour) ───────────────
@@ -29,9 +42,12 @@
 //                          history of 504s when a phase overruns, while a render
 //                          plus two judge calls costs 10-20 s. The mesh stage of
 //                          the gate always runs — it is deterministic, local, and
-//                          costs only the GLB fetch. The bulk runner (gcp-credits
-//                          work order 05 task 5, not in the tree yet) runs both.
+//                          costs only the GLB fetch. The bulk runner
+//                          (scripts/gcp/seed-avatars.mjs) runs both.
 //   SEED_CRON_VISION_MS    budget for the vision stage (default 20 000 ms).
+//   SEED_CRON_GATE         jobs to gate per tick (default 2). Each costs one GLB
+//                          fetch plus a mesh parse, so the ceiling keeps the
+//                          tick inside its wall when a burst finishes at once.
 //   SEED_CRON_RIG          '1' routes accepted avatars through the auto-rigger
 //                          before publishing, so catalog entries arrive
 //                          animation-ready instead of frozen in bind pose.
@@ -42,7 +58,8 @@ import { sql } from '../_lib/db.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { SEED_PROMPTS, OG_USERNAMES, composeSeedPrompt } from '../_lib/seed-prompts.js';
 import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';
-import { getObjectBuffer } from '../_lib/r2.js';
+import { getObjectBuffer, publicUrl } from '../_lib/r2.js';
+import { isFreeBackend } from '../_lib/forge-tiers.js';
 import { circuitState, circuitRecordFailure, circuitRecordSuccess } from '../_lib/forge-scale.js';
 import { randomUUID } from 'node:crypto';
 
@@ -90,6 +107,9 @@ const SUBMIT_CONCURRENCY = 2;
 const visionGateEnabled = () => boolEnv('SEED_CRON_VISION');
 const visionGateBudgetMs = () => intEnv('SEED_CRON_VISION_MS', 20_000, { min: 5_000, max: 45_000 });
 const rigStageEnabled = () => boolEnv('SEED_CRON_RIG');
+// Gates per tick. Each one fetches the finished GLB and parses its glTF chunk;
+// two keeps the phase in the low seconds even when a burst lands together.
+const gateBatchSize = () => intEnv('SEED_CRON_GATE', 2, { min: 1, max: 10 });
 
 // Circuit breaker — state is shared across instances via Redis (forge-scale.js) so
 // every cron lambda sees the same open/closed decision; without that, each instance
@@ -147,6 +167,9 @@ async function fetchJson(url, options = {}) {
 // `creationId` is the row the mesh comes from — after the optional rig stage
 // that is the rig creation, whose preview_key is null, so `previewCreationId`
 // keeps pointing at the original generation's rendered preview.
+//
+// Returns the new avatars.id, or null when the creation row was not publishable
+// (no glb_key / not done) and nothing was inserted.
 async function insertSeedAvatar({
 	userId,
 	prompt,
@@ -156,7 +179,7 @@ async function insertSeedAvatar({
 	gate = null,
 	rigged = false,
 }) {
-	if (!creationId) return;
+	if (!creationId) return null;
 	const previewId = previewCreationId || creationId;
 	const meta = {
 		forge_creation_id: creationId,
@@ -165,7 +188,7 @@ async function insertSeedAvatar({
 		rigged,
 		...(gate ? { quality_gate: gate } : {}),
 	};
-	await sql`
+	const inserted = await sql`
 		insert into avatars
 			(owner_id, slug, name, description, storage_key, size_bytes,
 			 content_type, source, source_meta, thumbnail_key, visibility, tags,
@@ -197,7 +220,9 @@ async function insertSeedAvatar({
 		  and fc.glb_key is not null
 		  and fc.status = 'done'
 		on conflict do nothing
+		returning id
 	`;
+	return inserted[0]?.id || null;
 }
 
 // ── Quality gate ──────────────────────────────────────────────────────────────
@@ -255,8 +280,21 @@ function withDeadline(transport, budgetMs) {
 	};
 }
 
-// ── Phase 1: poll pending jobs ────────────────────────────────────────────────
+// Seed generations must never leave the free lanes: this cron runs unattended
+// every minute, so one silent fallthrough to a paid third-party engine bills the
+// platform continuously with nobody watching. A paid lane is recorded on the row
+// and reported, and the asset is still published (the spend already happened, 
+// throwing the mesh away would waste it twice), but the reason string makes the
+// fallthrough visible in the tick's response and in the accept-rate report.
+function assertFreeBackend(backend) {
+	if (!backend) return null;
+	return isFreeBackend(backend) ? null : `paid_lane:${backend}`;
+}
 
+// ── Phase 1a: poll in-flight generations ─────────────────────────────────────
+//
+// A finished generation becomes 'generated', not 'done': the mesh exists but has
+// not faced the catalog gate yet. Publishing happens only after advanceGates().
 async function pollPending(origin) {
 	const rows = await sql`
 		select id, user_id, raw_client_id, job_id, prompt, model_category
@@ -279,22 +317,22 @@ async function pollPending(origin) {
 
 			if (poll.body?.status === 'done' && poll.body.glb_url) {
 				const creationId = poll.body.creation_id ?? null;
-				await insertSeedAvatar({
-					userId: job.user_id,
-					prompt: job.prompt,
-					modelCategory: job.model_category,
-					creationId,
-				});
-
+				const backend = poll.body.backend || null;
 				await sql`
 					update forge_seed_jobs
-					set status = 'done',
+					set status = 'generated',
 					    creation_id = ${creationId},
 					    glb_url = ${poll.body.glb_url},
-					    finished_at = now()
+					    backend = ${backend}
 					where id = ${job.id}
 				`;
-				results.push({ job_id: job.job_id, status: 'done', prompt: job.prompt });
+				results.push({
+					job_id: job.job_id,
+					status: 'generated',
+					backend,
+					prompt: job.prompt,
+					...(assertFreeBackend(backend) ? { warning: assertFreeBackend(backend) } : {}),
+				});
 
 			} else if (poll.body?.status === 'failed') {
 				await sql`
@@ -316,9 +354,251 @@ async function pollPending(origin) {
 	return results;
 }
 
-// ── Phase 2: start next job ───────────────────────────────────────────────────
+// ── Phase 1b: gate finished generations, then publish or quarantine ──────────
 
-async function startNextJob(origin) {
+async function advanceGates(origin) {
+	const rows = await sql`
+		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url, backend
+		from forge_seed_jobs
+		where status = 'generated'
+		order by started_at asc
+		limit ${gateBatchSize()}
+	`;
+	if (!rows.length) return [];
+
+	const results = [];
+	for (const job of rows) {
+		try {
+			const { verdict, glbKey } = await gateCreation({
+				creationId: job.creation_id,
+				glbUrl: job.glb_url,
+				prompt: job.prompt,
+				category: job.model_category,
+				allowVision: true,
+			});
+
+			if (!verdict.accepted) {
+				const quarantine = await quarantineReject({
+					id: job.creation_id || job.id,
+					glbKey,
+					glbUrl: job.glb_url,
+					prompt: job.prompt,
+					category: job.model_category,
+					verdict,
+					extra: { source: 'forge-seed-cron', backend: job.backend },
+				});
+				await sql`
+					update forge_seed_jobs
+					set status = 'rejected',
+					    gate = ${JSON.stringify(verdict)}::jsonb,
+					    gate_reasons = ${verdict.reasons}::text[],
+					    error = ${verdict.reasons.join(',').slice(0, 500)},
+					    finished_at = now()
+					where id = ${job.id}
+				`;
+				results.push({
+					job_id: job.id,
+					status: 'rejected',
+					reasons: verdict.reasons,
+					quarantined: quarantine.modelCopied,
+					prompt: job.prompt,
+				});
+				continue;
+			}
+
+			// A keeper. Rig first when the stage is on and the mesh is not already
+			// skinned; otherwise publish straight away.
+			if (rigStageEnabled() && !verdict.mesh.rigged && job.model_category !== 'accessory') {
+				const rig = await startRigStage({ origin, job });
+				if (rig.jobId) {
+					await sql`
+						update forge_seed_jobs
+						set status = 'rigging',
+						    gate = ${JSON.stringify(verdict)}::jsonb,
+						    rig_job_id = ${rig.jobId},
+						    rig_creation_id = ${rig.creationId}
+						where id = ${job.id}
+					`;
+					results.push({ job_id: job.id, status: 'rigging', prompt: job.prompt });
+					continue;
+				}
+				// Rigger unavailable: publish the static keeper rather than stall it.
+			}
+
+			const avatarId = await publishSeedAvatar({ job, verdict, rigged: false });
+			results.push({ job_id: job.id, status: 'published', avatar_id: avatarId, prompt: job.prompt });
+
+		} catch (err) {
+			// The gate itself broke (storage read, renderer, judge transport). That is
+			// infrastructure, not a quality verdict, so the row is parked in its own
+			// terminal state and never counted against the accept rate.
+			await sql`
+				update forge_seed_jobs
+				set status = 'gate_error',
+				    error = ${String(err?.message || err).slice(0, 500)},
+				    finished_at = now()
+				where id = ${job.id}
+			`;
+			results.push({ job_id: job.id, status: 'gate_error', error: String(err?.message || err).slice(0, 200) });
+		}
+	}
+	return results;
+}
+
+// Publish a gated keeper and close the job out. Shared by the direct path and
+// the post-rig path so the avatar row is written in exactly one place.
+async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null }) {
+	const avatarId = await insertSeedAvatar({
+		userId: job.user_id,
+		prompt: job.prompt,
+		modelCategory: job.model_category,
+		creationId: rigged && rigCreationId ? rigCreationId : job.creation_id,
+		previewCreationId: job.creation_id,
+		gate: gateSummary(verdict),
+		rigged,
+	});
+	await sql`
+		update forge_seed_jobs
+		set status = 'done',
+		    avatar_id = ${avatarId},
+		    finished_at = now()
+		where id = ${job.id}
+	`;
+	return avatarId;
+}
+
+// The slice of the verdict worth carrying on the avatar row forever. The full
+// object (every judge score, every render note) stays on forge_seed_jobs.gate.
+// source_meta is read on every avatar detail render, so it gets the summary.
+function gateSummary(verdict) {
+	if (!verdict) return null;
+	return {
+		version: verdict.gateVersion,
+		accepted: verdict.accepted,
+		mesh_flag: verdict.mesh?.flag ?? null,
+		mesh_score: verdict.mesh?.score ?? null,
+		vision: verdict.vision?.status ?? 'skipped',
+		...(verdict.vision?.mean != null ? { vision_mean: verdict.vision.mean } : {}),
+	};
+}
+
+// ── Phase 1c: rig stage ──────────────────────────────────────────────────────
+
+// Submit the accepted mesh to the auto-rigger. Returns { jobId, creationId } on
+// a successful submit, or { jobId: null } when no rig lane is live, the caller
+// publishes the static keeper in that case rather than stalling it.
+async function startRigStage({ origin, job }) {
+	const cronSecret = process.env.CRON_SECRET || env.CRON_SECRET || '';
+	const glbUrl = await publishableGlbUrl(job);
+	if (!glbUrl) return { jobId: null, reason: 'no public glb url' };
+
+	const submit = await fetchJson(`${origin}/api/forge?action=rig`, {
+		method: 'POST',
+		headers: {
+			'content-type': 'application/json',
+			'x-forge-client': job.raw_client_id,
+			'x-forge-seed': cronSecret,
+		},
+		body: JSON.stringify({ glb_url: glbUrl }),
+	});
+	if (submit.status !== 200 || !submit.body?.job_id) {
+		console.warn(`[forge-seed] rig submit ${submit.status}: ${submit.body?.error || 'no job id'}`);
+		return { jobId: null, reason: `rig submit ${submit.status}` };
+	}
+	return { jobId: submit.body.job_id, creationId: submit.body.creation_id ?? null };
+}
+
+// The rigger fetches the mesh over HTTPS, so a bucket-relative glb_key has to be
+// resolved to its CDN URL first. Lanes that already hand back an absolute URL
+// pass straight through.
+async function publishableGlbUrl(job) {
+	if (job.glb_url && /^https?:\/\//i.test(job.glb_url)) return job.glb_url;
+	if (!job.creation_id) return null;
+	const [row] = await sql`select glb_key from forge_creations where id = ${job.creation_id} limit 1`;
+	const key = row?.glb_key;
+	if (!key) return null;
+	return /^https?:\/\//i.test(key) ? key : publicUrl(key);
+}
+
+async function advanceRigs(origin) {
+	const rows = await sql`
+		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url,
+		       rig_job_id, rig_creation_id, gate
+		from forge_seed_jobs
+		where status = 'rigging'
+		order by started_at asc
+		limit 10
+	`;
+	if (!rows.length) return [];
+
+	const cronSecret = process.env.CRON_SECRET || env.CRON_SECRET || '';
+	const results = [];
+	await Promise.all(rows.map(async (job) => {
+		try {
+			const poll = await fetchJson(
+				`${origin}/api/forge?job=${encodeURIComponent(job.rig_job_id)}`,
+				{ headers: { 'x-forge-client': job.raw_client_id, 'x-forge-seed': cronSecret } },
+			);
+
+			if (poll.body?.status === 'done' && poll.body.glb_url) {
+				const rigCreationId = poll.body.creation_id ?? job.rig_creation_id;
+				const avatarId = await publishSeedAvatar({
+					job,
+					verdict: job.gate,
+					rigged: true,
+					rigCreationId,
+				});
+				results.push({ job_id: job.id, status: 'published', rigged: true, avatar_id: avatarId });
+
+			} else if (poll.body?.status === 'failed' || poll.status >= 400) {
+				// The mesh already passed the gate. A rig fault must not cost the
+				// catalog the asset: publish it static and say so on the row.
+				const avatarId = await publishSeedAvatar({ job, verdict: job.gate, rigged: false });
+				await sql`
+					update forge_seed_jobs
+					set error = ${('rig failed: ' + (poll.body?.error || poll.status)).slice(0, 500)}
+					where id = ${job.id}
+				`;
+				results.push({ job_id: job.id, status: 'published', rigged: false, avatar_id: avatarId });
+			} else {
+				results.push({ job_id: job.id, status: 'rigging' });
+			}
+		} catch (err) {
+			results.push({ job_id: job.id, status: 'rig_poll_error', error: String(err?.message || err).slice(0, 200) });
+		}
+	}));
+	return results;
+}
+
+// ── Phase 2: start new generations ───────────────────────────────────────────
+
+// Start up to seedBatchSize() generations this tick, paced SUBMIT_CONCURRENCY at
+// a time. A whole batch fired at once is how bulk generation runs lose work (the
+// garment-forge incident): the lane accepts every submit and quietly drops the
+// overflow. `claimed` carries the prompts already taken this tick so two lanes in
+// the same batch never race onto the same prompt.
+async function startBatch(origin) {
+	const size = seedBatchSize();
+	const claimed = new Set();
+	const results = [];
+	let stop = false;
+
+	const worker = async () => {
+		while (!stop && results.length < size) {
+			const outcome = await startNextJob(origin, claimed);
+			results.push(outcome);
+			// A ceiling or an open circuit applies to the whole tick, not just this
+			// submit: keep going and every sibling submit hits the same wall.
+			if (outcome?.skipped) stop = true;
+		}
+	};
+	await Promise.all(
+		Array.from({ length: Math.min(SUBMIT_CONCURRENCY, size) }, worker),
+	);
+	return results.slice(0, size);
+}
+
+async function startNextJob(origin, claimed = new Set()) {
 	const [{ count }] = await sql`
 		select count(*)::int as count from forge_seed_jobs where status = 'pending'
 	`;
@@ -341,9 +621,11 @@ async function startNextJob(origin) {
 		select prompt from forge_seed_jobs order by started_at desc limit ${SEED_PROMPTS.length}
 	`;
 	const usedSet = new Set(recent.map(r => r.prompt));
-	const available = SEED_PROMPTS.filter(p => !usedSet.has(p.prompt));
-	const pool = available.length > 0 ? available : SEED_PROMPTS;
+	const available = SEED_PROMPTS.filter(p => !usedSet.has(p.prompt) && !claimed.has(p.prompt));
+	const fallback = SEED_PROMPTS.filter(p => !claimed.has(p.prompt));
+	const pool = available.length > 0 ? available : (fallback.length > 0 ? fallback : SEED_PROMPTS);
 	const chosen = pool[Math.floor(Math.random() * pool.length)];
+	claimed.add(chosen.prompt);
 
 	// Claim an OG username. Try the bare word first; if taken, try word + 2,
 	// word + 3 … up to word + 99 before falling back to word + short uuid hex.
@@ -381,7 +663,11 @@ async function startNextJob(origin) {
 			'x-forge-client': rawClientId,
 			'x-forge-seed': cronSecret,
 		},
-		body: JSON.stringify({ prompt: chosen.prompt, tier: 'draft', path: 'image' }),
+		// composeSeedPrompt appends the rig-readiness framing (full body, arms clear
+		// of the torso, neutral stance, plain background) the auto-rigger needs. The
+		// library string is what gets STORED, so the "recently used" de-duplication
+		// and the batch runner's checkpoint keys stay keyed on the bare prompt.
+		body: JSON.stringify({ prompt: composeSeedPrompt(chosen), tier: 'draft', path: 'image' }),
 	});
 
 	if (submit.timedOut) {
@@ -401,28 +687,21 @@ async function startNextJob(origin) {
 
 	const creationId = submit.body?.creation_id ?? null;
 
-	// The free NVIDIA draft lane finishes inline (~13–22 s) and returns the
-	// finished model in the submit response with job_id:null — there is nothing
-	// to poll. Attribute it to the synthetic user right now.
+	const backend = submit.body?.backend || null;
+
+	// Some lanes finish inline (the self-host TRELLIS worker when warm, the free
+	// NVIDIA draft lane) and return the finished model in the submit response with
+	// job_id:null, so there is nothing to poll. The mesh still has to face the
+	// catalog gate before it is published, so the row lands as 'generated' and
+	// next tick's gate phase decides: it is never published straight off a submit.
 	if (submit.body?.status === 'done' && submit.body?.glb_url) {
-		try {
-			await insertSeedAvatar({
-				userId: user.id,
-				prompt: chosen.prompt,
-				modelCategory: chosen.category,
-				creationId,
-			});
-		} catch (err) {
-			await sql`delete from users where id = ${user.id}`.catch(() => {});
-			return { ok: false, reason: `avatar insert failed: ${err?.message}` };
-		}
 		await circuitRecordSuccess(CIRCUIT_NAME);
 		await sql`
 			insert into forge_seed_jobs
 				(user_id, raw_client_id, job_id, prompt, model_category,
-				 status, creation_id, glb_url, finished_at)
+				 status, creation_id, glb_url, backend)
 			values (${user.id}, ${rawClientId}, ${submit.body.job_id || 'sync-' + (creationId || randomUUID())},
-			        ${chosen.prompt}, ${chosen.category}, 'done', ${creationId}, ${submit.body.glb_url}, now())
+			        ${chosen.prompt}, ${chosen.category}, 'generated', ${creationId}, ${submit.body.glb_url}, ${backend})
 		`;
 		return {
 			ok: true,
@@ -431,8 +710,10 @@ async function startNextJob(origin) {
 			glb_url: submit.body.glb_url,
 			prompt: chosen.prompt,
 			category: chosen.category,
+			backend,
 			username,
 			user_id: user.id,
+			...(assertFreeBackend(backend) ? { warning: assertFreeBackend(backend) } : {}),
 		};
 	}
 
@@ -440,16 +721,18 @@ async function startNextJob(origin) {
 	if (submit.body?.job_id) {
 		await circuitRecordSuccess(CIRCUIT_NAME);
 		await sql`
-			insert into forge_seed_jobs (user_id, raw_client_id, job_id, prompt, model_category)
-			values (${user.id}, ${rawClientId}, ${submit.body.job_id}, ${chosen.prompt}, ${chosen.category})
+			insert into forge_seed_jobs (user_id, raw_client_id, job_id, prompt, model_category, backend)
+			values (${user.id}, ${rawClientId}, ${submit.body.job_id}, ${chosen.prompt}, ${chosen.category}, ${backend})
 		`;
 		return {
 			ok: true,
 			job_id: submit.body.job_id,
 			prompt: chosen.prompt,
 			category: chosen.category,
+			backend,
 			username,
 			user_id: user.id,
+			...(assertFreeBackend(backend) ? { warning: assertFreeBackend(backend) } : {}),
 		};
 	}
 

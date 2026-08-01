@@ -2465,7 +2465,7 @@ async function boot(id) {
 			let done = null;
 			if (submit.status === 'done' && submit.glb_url) done = submit;
 			else if (!submitRes.ok || !submit.job_id) throw new Error(submit.message || `forge returned ${submitRes.status}`);
-			else { narrate({ status: 'queued', eta_seconds: submit.eta_seconds }); done = await pollForgeJob(submit.job_id, narrate); }
+			else { narrate({ status: 'queued', eta_seconds: submit.eta_seconds, backend: submit.backend, cold_start: submit.cold_start, cold_seconds: submit.cold_start_seconds }); done = await pollForgeJob(submit.job_id, narrate); }
 
 			const glbUrl = done.glb_url;
 			const viewerUrl = viewerLinkFor(glbUrl, location.origin);

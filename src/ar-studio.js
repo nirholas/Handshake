@@ -1404,19 +1404,33 @@ async function startForge(prompt) {
 	// forgeStageNarration() call via the shared eta_seconds/cold_start contract.
 	let etaSeconds = null;
 	let coldStart = false;
+	let coldSeconds = null;
+	let laneBackend = null;
+	// The last status the pipeline actually reported, so the repaint timer never
+	// claims a stage the worker has not entered.
+	let liveStatus = 'queued';
 	forgeChipState('working', 'Sending your prompt to the forge…');
 	const setStage = (status) => {
 		if (!forgeChip) return;
 		const elapsedS = (Date.now() - t0) / 1000;
 		const remaining = etaSeconds != null ? Math.max(0, Math.round(etaSeconds - elapsedS)) : null;
-		const narration = forgeStageNarration({ status, eta_seconds: remaining ?? undefined });
+		// The cold-start budget counts down from the real spin-up seconds the API
+		// reported, so the line shrinks against the clock instead of repeating.
+		const coldLeft = coldSeconds != null ? Math.max(0, Math.round(coldSeconds - elapsedS)) : null;
+		const narration = forgeStageNarration({
+			status,
+			eta_seconds: remaining ?? undefined,
+			backend: laneBackend ?? undefined,
+			cold_start: coldStart && status !== 'done',
+			cold_seconds: coldLeft ?? undefined,
+		});
 		const label = forgeChip.querySelector('.ars-chip-label');
 		const el = forgeChip.querySelector('.ars-chip-elapsed');
-		if (label) label.textContent = coldStart && status !== 'done' ? `Cold start — ${narration}` : narration;
+		if (label) label.textContent = narration;
 		if (el) el.textContent = `${Math.round(elapsedS)}s`;
 	};
 	const elapsed = setInterval(() => {
-		if (forgeChip?.dataset.state === 'working') setStage('running');
+		if (forgeChip?.dataset.state === 'working') setStage(liveStatus);
 	}, 1000);
 
 	try {
@@ -1436,12 +1450,20 @@ async function startForge(prompt) {
 		if (!res.ok) throw new Error(data.message || `The generator returned ${res.status}.`);
 		if (Number(data.eta_seconds) > 0) etaSeconds = Math.round(Number(data.eta_seconds));
 		coldStart = Boolean(data.cold_start);
+		if (Number(data.cold_start_seconds) > 0) coldSeconds = Math.round(Number(data.cold_start_seconds));
+		if (typeof data.backend === 'string' && data.backend) laneBackend = data.backend;
 
 		let done = data;
 		if (!(data.status === 'done' && data.glb_url)) {
 			if (!data.job_id) throw new Error('The forge did not accept the job. Try again.');
 			setStage('queued');
-			done = await pollForge(data.job_id, seq);
+			done = await pollForge(data.job_id, seq, (d) => {
+				if (typeof d.status === 'string' && d.status) liveStatus = d.status;
+				// A worker that answers "running" is up, so the boot is genuinely over.
+				if (d.status === 'running') coldStart = false;
+				if (typeof d.backend === 'string' && d.backend) laneBackend = d.backend;
+				setStage(liveStatus);
+			});
 		}
 		if (!done || seq !== forgeSeq) return;
 		rememberForge(prompt, done.glb_url);
@@ -1465,7 +1487,7 @@ async function startForge(prompt) {
 	}
 }
 
-async function pollForge(jobId, seq) {
+async function pollForge(jobId, seq, onUpdate) {
 	const deadline = Date.now() + MAX_POLL_MS;
 	for (;;) {
 		if (seq !== forgeSeq) return null;
@@ -1476,6 +1498,7 @@ async function pollForge(jobId, seq) {
 			headers: { 'x-forge-client': CLIENT_ID },
 		});
 		const data = await res.json().catch(() => ({}));
+		if (typeof onUpdate === 'function') onUpdate(data);
 		if (data.status === 'done' && data.glb_url) return data;
 		if (data.status === 'failed') throw new Error(data.error || 'Generation failed. Try rephrasing the prompt.');
 	}

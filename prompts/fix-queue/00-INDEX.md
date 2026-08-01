@@ -1,68 +1,75 @@
-# fix-queue: open defects and errors, one work order per file
+# fix-queue: defects reproduced by running the repo's own checks
 
-Every file in this directory is a self-contained prompt. Paste one into a fresh
-Claude Code chat in this repo and run it to 100% without further input. Read
-this index first; every work order assumes it.
+Every file here is a self-contained work order. Paste one into a fresh Claude
+Code chat in this repo and run it to 100% without further input. Read this index
+first; every work order assumes it.
 
-Opened 2026-08-01 from a live sweep of this worktree and of production. Each
-symptom below was reproduced on that date, with the exact command and output
-recorded in the work order. Nothing here is speculative.
+Opened 2026-08-01. Each work order below was found by **running a check and
+reading its output**, not by reading a tracker. The reproducing command and its
+verbatim output are in the file. Nothing here is speculative, and nothing here
+is a status claim inherited from an older document.
+
+## Scope, and where the other work lives
+
+This pack is the **repo and product defect queue**: things that are broken in
+the code, the pages, or the build, and that an agent can fix here and now with
+no external dependency.
+
+The **infrastructure and owner-gated backlog** (x402 settle runway, Solana RPC
+capacity, LLM lanes, R2 CORS, the fact-check benchmark, BNB testnet deploys, the
+OKX chat bot, x402scan) lives in [../backlog/](../backlog/) and is not
+duplicated here. Do not open a second work order for anything that pack owns;
+extend that pack instead.
 
 ## Shared facts (verified 2026-08-01)
 
 - **Production is current.** `GET https://three.ws/api/version` returns
   `6cc0370dc`, which is `main` HEAD, on revision `three-ws-api-00353-tzp`. So
-  the usual first question ("is this just a deploy gap?") is already answered:
-  it is not. Re-check it anyway before you debug a production symptom, because
-  `main` moves.
+  "it just needs a deploy" is not available as an explanation right now.
+  Re-check anyway, because `main` moves.
 - **`gcloud` auth works from this workspace** (`gcloud scheduler jobs list`
-  succeeded). This has historically been flaky (Workspace reauth policy), so if
-  a gcloud call returns `invalid_rapt`, that is the known failure and needs one
-  `gcloud auth login` from the owner. Do not redesign around it.
-- **Project `aerial-vehicle-466722-p5`, region `us-central1`, service
-  `three-ws-api`.**
-- **The repo gate is currently RED.** `npm run gate` exits 1 on
-  `audit:hidden-guard`. Work order 04 fixes it. If you are running a different
-  work order, capture that known-red baseline first so you do not get blamed
-  for it, and do not let it stop you.
+  succeeded). If a gcloud call returns `invalid_rapt`, that is the known
+  Workspace reauth failure and needs one `gcloud auth login` from the owner. Do
+  not redesign around it.
+- **The gate is RED.** `npm run gate` exits 1 on `audit:hidden-guard`. Work
+  order 01 fixes it. If you are running any other work order, capture that
+  known-red baseline first so it is clear you did not cause it, and do not let
+  it stop you.
 - **Concurrent agents share this worktree.** Stage explicit paths, never
   `git add -A`, and re-read a file before editing it if your task has been
-  running a while.
+  running a while. This pack was itself trimmed on the day it was written
+  because another agent shipped an overlapping pack an hour later.
 
 ## Rules that apply to every work order here
 
-1. CLAUDE.md wins over anything written here. No mocks, no fake data, no TODOs,
-   no stubs, no commented-out code.
+1. CLAUDE.md wins. No mocks, no fake data, no TODOs, no stubs, no commented-out
+   code, no em-dash characters.
 2. Do not stop to ask. The self-unblock playbook in CLAUDE.md covers every
    blocker these work orders can hit. Finish, then report.
 3. Deploys and pushes stay owner-gated. Prepare everything so shipping is one
    command, and say so in your report.
-4. Never top up per-agent x402 wallets. That strands SOL and kills the rail.
-5. A fix is not done until it is verified by the command named in the work
-   order, and the changelog entry (if user-visible) is written.
+4. A fix is not done until the verification command in the work order passes and
+   the `data/changelog.json` entry is written for anything user-visible.
 
 ## The queue
 
-| # | Work order | Severity | Blocked on |
+| # | Work order | Severity | Reproduce with |
 |---|---|---|---|
-| 01 | [x402 settle is DOWN at 26%](01-x402-settle-down.md) | P0 | nothing (diagnose first) |
-| 02 | [Two of three paid Solana RPC lanes are exhausted](02-solana-rpc-paid-lanes.md) | P0 | owner (money), work is routing |
-| 03 | [Every paid LLM backstop is dead](03-llm-paid-backstops.md) | P1 | owner (billing), work is failover proof |
-| 04 | [The gate is red: missing hidden guard](04-gate-red-hidden-guard.md) | P0 repo | nothing |
-| 05 | [Three eslint errors and 7804 warnings](05-lint-errors.md) | P1 | nothing |
-| 06 | [A declared cron never runs in production](06-cron-drift-garment-sweep.md) | P1 | nothing |
-| 07 | [17 broken stops in the guided tour](07-tour-atlas-broken-stops.md) | P1 | nothing |
-| 08 | [108 dead `#` links across the site](08-stub-hrefs-dead-paths.md) | P2 | nothing |
-| 09 | [A documented API call no longer answers as documented](09-runnable-docs-401.md) | P2 | nothing |
-| 10 | [`npm run test:core` never finishes](10-test-core-timeout.md) | P1 | nothing |
-| 11 | [`/api/avatar/optimize?draco=1` is 500 in production](11-avatar-optimize-draco.md) | P1 | owner (deploy) |
-| 12 | [Live R2 CORS does not match the script](12-r2-cors.md) | P2 | owner (one token) |
-| 13 | [The fact-check benchmark cannot be run](13-fact-check-benchmark.md) | P2 | owner (one credential) |
-| 14 | [Two external-venue blockers](14-external-venue-blockers.md) | P2 | owner. **Commit gate applies** |
+| 01 | [The gate is red: one page has no `[hidden]` guard](01-gate-red-hidden-guard.md) | P0 repo | `npm run gate` |
+| 02 | [Three eslint errors, one a real bug in a money test](02-lint-errors.md) | P1 | `npm run lint` |
+| 03 | [A declared cron has never run in production](03-cron-drift-garment-sweep.md) | P1 | `npm run check:cron-drift` |
+| 04 | [17 broken stops in the guided tour](04-tour-atlas-broken-stops.md) | P1 | `npm run audit:tour-atlas` |
+| 05 | [108 dead `#` links across the site](05-stub-hrefs-dead-paths.md) | P2 | `npm run audit:links` |
+| 06 | [A documented API call no longer answers as documented](06-runnable-docs-401.md) | P2 | `npm run check:runnable-docs` |
+| 07 | [`npm run test:core` never finishes](07-test-core-timeout.md) | P1 | `npm run test:core` |
+| 08 | [`optimize?draco=1` returns a BIGGER file, silently](08-avatar-optimize-inflates.md) | P1 | `curl` (in the file) |
 
-Work order 14 references crypto projects other than `$THREE`. Per CLAUDE.md,
-writing and working on it is fine, but **committing it needs explicit owner
-approval first.** The other thirteen carry no such constraint.
+Checks that were green on 2026-08-01 and are not represented here, so you do not
+re-run them hoping for work: `audit:docs` (1236 files), `audit:handlers` (1888
+handlers), `audit:pages` (161 routes), `check:tutorials` (69/69),
+`check:browser-graph` (1168 modules), `check:claude`, `audit:routes`,
+`audit:mcp`, `audit:mcp-golden`, `audit:x402-catalog`, `audit:tokens`, and
+`audit:links` for broken internal links (0; only the stub hrefs in 05 remain).
 
 ## When you finish one
 

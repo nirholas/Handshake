@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-01T21:31:58.559Z",
+	"generated_at": "2026-08-01T21:50:29.816Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -76,6 +76,28 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "The docs now tell you when a 3D model needs the CORS proxy and when it does not",
+			"summary": "Loading an avatar into a viewer on your own site is a cross-origin fetch, and whether it works depends on which host serves the file. Our docs treated that as one rule and got it wrong in both directions: they told you to route every model through the /api/glb proxy, including the built-in library avatars on three.ws, which already load from anywhere. The media API reference and both embed tutorials now show the actual split, measured rather than assumed. Files served from three.ws load directly. Files on the media CDN, which is where every avatar you generate lives, need the proxy on any origin outside the bucket's allowlist. The proxy stays safe to use when you cannot tell the two apart. Alongside it, the script that manages the bucket policy gained a probe mode that measures what the bucket actually enforces, so this class of drift gets caught by a command instead of by a broken embed.",
+			"link": "/docs/media-api",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-01",
+			"type": "update",
+			"title": "The wallet that pays for every payment now warns us days before it runs out",
+			"summary": "Every payment settled on three.ws costs a small amount of SOL, paid by one wallet on the platform's side. When that wallet gets low, payments do not fail loudly: the platform quietly stops offering Solana as a way to pay, so nothing is attempted and nothing is rejected. Payments simply stop, and every error counter stays flat, which is the opposite of what anyone debugging would expect. The runway on that wallet was already being calculated and shown on an internal board, but nothing acted on it. Now it alerts, by default when there are fewer than three days left, and the alert carries the real numbers: what the wallet holds, what it spends per day measured from actual settlement fees over the past week rather than from a remembered figure, and how long that leaves. It also names the misleading symptom up front so nobody spends a shift looking at the wrong system. Alongside it, the automatic recovery step that pulls idle funds back from platform wallets now records every attempt, so a recovery that could not run is visible instead of looking identical to one that had nothing to do.",
+			"link": null,
+			"tags": [
+				"infra",
+				"improvement"
 			]
 		},
 		{

@@ -49,6 +49,12 @@ export function walletFeeGovernorConfig(e = process.env) {
 		// re-summing the facilitator log. Bounds multi-instance undercount to one
 		// cache window of settles per instance.
 		spentCacheMs: Math.max(1_000, Math.floor(num(e.X402_WALLET_FEE_SPENT_CACHE_MS, 20_000))),
+		// Release the daily budget gradually across the UTC day instead of all of
+		// it at 00:00. Default ON. Only an explicit "false" disables it.
+		paceDay: String(e.X402_WALLET_FEE_PACE_DAY ?? '').trim().toLowerCase() !== 'false',
+		// The slice of budget unlocked at the very top of the day, so a paced
+		// wallet is never dead for the first minutes after the reset.
+		paceMinSliceLamports: Math.floor(num(e.X402_WALLET_FEE_PACE_MIN_SLICE_LAMPORTS, 200_000)),
 	};
 }
 
@@ -65,6 +71,42 @@ export function walletDailyFeeBudgetLamports({
 	const spendable = Math.max(0, solLamports - Math.max(0, floorLamports || 0));
 	const runwayBudget = Math.floor(spendable / Math.max(0.5, runwayDays));
 	return Math.max(Math.max(0, Math.floor(minBudgetLamports)), runwayBudget);
+}
+
+// ── Intraday pacing ─────────────────────────────────────────────────────────────
+// Fraction of the current UTC day already elapsed, 0 at 00:00 and approaching 1
+// at 23:59. Kept here (not in the meter) so the pacing math stays pure and the
+// caller owns the clock.
+export function utcDayElapsedFraction(now = Date.now()) {
+	const ms = Number(now);
+	if (!Number.isFinite(ms)) return 1;
+	const dayMs = 86_400_000;
+	const intoDay = ((ms % dayMs) + dayMs) % dayMs;
+	return intoDay / dayMs;
+}
+
+// How much of today's budget has been unlocked so far.
+//
+// Why this exists: the daily budget used to be spendable in full the moment the
+// UTC day rolled over, so a wallet near its floor burned the entire allowance in
+// a morning burst and then refused every settle for the rest of the day.
+// Measured on production 2026-08-01: 1,002 settles paid before midday against a
+// 10,000,000 lamport budget, then roughly 3,500 `fee_runway_exhausted` rejects
+// per hour for the following sixteen hours, each one a wasted round trip that
+// surfaced to callers as a 502. Spreading the same budget across the day turns
+// that burst-then-flatline into the steady pulse the heartbeat floor was always
+// meant to provide. It does not grant a wallet one extra lamport per day.
+export function pacedFeeBudgetLamports({
+	budgetLamports, dayElapsedFraction, minSliceLamports = 0,
+}) {
+	const budget = Math.max(0, Math.floor(Number(budgetLamports) || 0));
+	const fraction = Number(dayElapsedFraction);
+	// An unreadable clock must not throttle anything: fall back to the full budget.
+	if (!Number.isFinite(fraction)) return budget;
+	const clamped = Math.min(1, Math.max(0, fraction));
+	const unlocked = Math.floor(budget * clamped);
+	const floor = Math.max(0, Math.floor(Number(minSliceLamports) || 0));
+	return Math.min(budget, Math.max(unlocked, floor));
 }
 
 // ── Admission decision ──────────────────────────────────────────────────────────

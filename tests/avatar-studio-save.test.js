@@ -28,7 +28,7 @@ import {
 
 describe('collapseAppearance', () => {
 	it('returns null for a fully empty appearance', () => {
-		expect(collapseAppearance({ accessories: [], morphs: {}, colors: {}, hidden: [] })).toBeNull();
+		expect(collapseAppearance(hydrateAppearance(null))).toBeNull();
 	});
 
 	it('returns null for null/undefined input', () => {
@@ -73,24 +73,60 @@ describe('collapseAppearance', () => {
 		result.accessories.push('mutated');
 		expect(input.accessories).toHaveLength(1);
 	});
+
+	// Studio has no UI for `outfit` or `garments`, but a PATCH replaces the whole
+	// appearance record, so dropping them here silently undresses the avatar.
+	it('carries the baked outfit preset through', () => {
+		const result = collapseAppearance({ ...hydrateAppearance(null), outfit: 'outfit-formal' });
+		expect(result).toEqual({ outfit: 'outfit-formal' });
+	});
+
+	it('carries catalog garments through', () => {
+		const garments = [{ slot: 'top', id: 'denim-jacket' }, { slot: 'footwear', id: 'hi-tops' }];
+		const result = collapseAppearance({ ...hydrateAppearance(null), garments });
+		expect(result).toEqual({ garments });
+	});
+
+	it('keeps garments alongside the fields Studio does edit', () => {
+		const raw = {
+			outfit: 'outfit-casual',
+			accessories: ['hat-beanie'],
+			morphs: { jawOpen: 0.2 },
+			colors: { hair: '#3b2417' },
+			hidden: ['glasses'],
+			garments: [{ slot: 'top', id: 'denim-jacket' }],
+		};
+		expect(collapseAppearance(hydrateAppearance(raw))).toEqual(raw);
+	});
+
+	it('deep-copies garment entries, so mutating the result cannot reach the input', () => {
+		const input = { ...hydrateAppearance(null), garments: [{ slot: 'top', id: 'tee' }] };
+		const result = collapseAppearance(input);
+		result.garments[0].id = 'mutated';
+		result.garments.push({ slot: 'bottom', id: 'jeans' });
+		expect(input.garments).toEqual([{ slot: 'top', id: 'tee' }]);
+	});
+
+	it('ignores an empty outfit string and an empty garment list', () => {
+		expect(collapseAppearance({ ...hydrateAppearance(null), outfit: '', garments: [] })).toBeNull();
+	});
 });
 
 // ── hydrateAppearance ─────────────────────────────────────────────────────────
 
+const EMPTY = { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [] };
+
 describe('hydrateAppearance', () => {
 	it('returns defaults for null', () => {
-		const result = hydrateAppearance(null);
-		expect(result).toEqual({ accessories: [], morphs: {}, colors: {}, hidden: [] });
+		expect(hydrateAppearance(null)).toEqual(EMPTY);
 	});
 
 	it('returns defaults for undefined', () => {
-		const result = hydrateAppearance(undefined);
-		expect(result).toEqual({ accessories: [], morphs: {}, colors: {}, hidden: [] });
+		expect(hydrateAppearance(undefined)).toEqual(EMPTY);
 	});
 
 	it('returns defaults for a non-object (string)', () => {
-		const result = hydrateAppearance('bad');
-		expect(result).toEqual({ accessories: [], morphs: {}, colors: {}, hidden: [] });
+		expect(hydrateAppearance('bad')).toEqual(EMPTY);
 	});
 
 	it('fills in missing fields with defaults', () => {
@@ -103,10 +139,12 @@ describe('hydrateAppearance', () => {
 
 	it('round-trips a full appearance', () => {
 		const raw = {
+			outfit: 'outfit-sporty',
 			accessories: ['hat-01'],
 			morphs: { browDownLeft: 0.5 },
 			colors: { hair: '#0e0e0e' },
 			hidden: ['outfit'],
+			garments: [{ slot: 'outerwear', id: 'parka' }],
 		};
 		expect(hydrateAppearance(raw)).toEqual(raw);
 	});
@@ -117,13 +155,29 @@ describe('hydrateAppearance', () => {
 		result.accessories.push('mutated');
 		expect(raw.accessories).toHaveLength(1);
 	});
+
+	it('deep-copies garment entries, so mutations do not affect the source', () => {
+		const raw = { garments: [{ slot: 'top', id: 'tee' }] };
+		const result = hydrateAppearance(raw);
+		result.garments[0].id = 'mutated';
+		expect(raw.garments).toEqual([{ slot: 'top', id: 'tee' }]);
+	});
+
+	it('normalises a missing or blank outfit to null and drops junk garment entries', () => {
+		expect(hydrateAppearance({ outfit: '' }).outfit).toBeNull();
+		expect(hydrateAppearance({ garments: 'nope' }).garments).toEqual([]);
+		expect(hydrateAppearance({ garments: [null, { slot: 'top', id: 'tee' }] }).garments)
+			.toEqual([{ slot: 'top', id: 'tee' }]);
+	});
 });
 
 // ── cloneAppearance ───────────────────────────────────────────────────────────
 
 describe('cloneAppearance', () => {
 	it('produces an identical but distinct object', () => {
-		const a = { accessories: ['hat-01'], morphs: { jawOpen: 0.1 }, colors: { skin: '#fff' }, hidden: ['glasses'] };
+		const a = hydrateAppearance({
+			accessories: ['hat-01'], morphs: { jawOpen: 0.1 }, colors: { skin: '#fff' }, hidden: ['glasses'],
+		});
 		const b = cloneAppearance(a);
 		expect(b).toEqual(a);
 		expect(b).not.toBe(a);
@@ -141,6 +195,18 @@ describe('cloneAppearance', () => {
 		const b = cloneAppearance(a);
 		b.morphs.extra = 1;
 		expect(a.morphs.extra).toBeUndefined();
+	});
+
+	it('carries outfit + garments and isolates each garment entry', () => {
+		const a = hydrateAppearance({
+			outfit: 'outfit-formal',
+			garments: [{ slot: 'top', id: 'blazer' }],
+		});
+		const b = cloneAppearance(a);
+		expect(b.outfit).toBe('outfit-formal');
+		expect(b.garments).toEqual([{ slot: 'top', id: 'blazer' }]);
+		b.garments[0].id = 'mutated';
+		expect(a.garments[0].id).toBe('blazer');
 	});
 });
 
@@ -168,6 +234,22 @@ describe('appearanceEqual', () => {
 		const a = { accessories: [], morphs: {}, colors: { skin: '#fff' }, hidden: [] };
 		const b = { accessories: [], morphs: {}, colors: { skin: '#000' }, hidden: [] };
 		expect(appearanceEqual(a, b)).toBe(false);
+	});
+
+	// Studio never edits the wardrobe, so carrying it through must not make an
+	// untouched avatar look dirty the moment it loads.
+	it('a hydrated garment-wearing avatar is equal to its own clone', () => {
+		const a = hydrateAppearance({
+			outfit: 'outfit-casual',
+			colors: { skin: '#e0a878' },
+			garments: [{ slot: 'top', id: 'denim-jacket' }],
+		});
+		expect(appearanceEqual(a, cloneAppearance(a))).toBe(true);
+	});
+
+	it('losing the garments is a real difference, not a no-op', () => {
+		const dressed = hydrateAppearance({ garments: [{ slot: 'top', id: 'denim-jacket' }] });
+		expect(appearanceEqual(dressed, hydrateAppearance(null))).toBe(false);
 	});
 });
 

@@ -12,7 +12,10 @@
 // names play on standard three.ws avatars.
 
 import { Bone, Quaternion, Vector3, Euler, MathUtils } from 'three';
-import { canonicalizeBoneName as normalizeBoneName } from './glb-canonicalize.js';
+import {
+	canonicalizeBoneName as normalizeBoneName,
+	resolveArmShoulderCollisions,
+} from './glb-canonicalize.js';
 import { Mannequin } from './pose-mannequin.js';
 
 // ── Canonical skeleton ──────────────────────────────────────────────────────
@@ -521,15 +524,13 @@ export class GltfRig extends BaseRig {
 		// Collect skeleton bones. Prefer SkinnedMesh skeletons; fall back to any
 		// Bone nodes in the graph for rigs exported without a bound skin.
 		const seen = new Set();
+		const candidates = [];
 		const consider = (node) => {
+			if (seen.has(node)) return;
+			seen.add(node);
+			this.selectableMeshes.push(node);
 			const canonical = NORMALIZED_CANONICAL.get(normalizeBoneName(node.name));
-			if (canonical && !this.bones.has(canonical)) {
-				this.bones.set(canonical, node);
-			}
-			if (!seen.has(node)) {
-				seen.add(node);
-				this.selectableMeshes.push(node);
-			}
+			if (canonical) candidates.push({ node, raw: node.name, canonical });
 		};
 		scene.traverse((node) => {
 			if (node.isSkinnedMesh) this.skinnedMeshes.push(node);
@@ -538,6 +539,21 @@ export class GltfRig extends BaseRig {
 		// Some exporters name bones only on the skeleton, not the node graph.
 		for (const sm of this.skinnedMeshes) {
 			for (const bone of sm.skeleton?.bones || []) consider(bone);
+		}
+		// An anatomical rig spells the clavicle and the upper arm so that both
+		// normalize onto one canonical name (Rigify's `shoulder.L` + `upper_arm.L`
+		// both land on LeftArm). Resolve that contention before the first-wins
+		// claim below, or the studio labels the clavicle "Upper arm L" and every
+		// arm pose pivots from the shoulder blade. Same resolver the ingest
+		// canonicalizer and the runtime retargeter use.
+		resolveArmShoulderCollisions(candidates, {
+			isAncestor: (a, b) => {
+				for (let n = b.node?.parent; n; n = n.parent) if (n === a.node) return true;
+				return false;
+			},
+		});
+		for (const { canonical, node } of candidates) {
+			if (!this.bones.has(canonical)) this.bones.set(canonical, node);
 		}
 	}
 

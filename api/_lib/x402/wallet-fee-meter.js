@@ -16,14 +16,19 @@
 // fee is debited into the cache optimistically so a burst inside one cache
 // window still counts against the budget on this instance.
 
+import { PublicKey } from '@solana/web3.js';
 import { sql } from '../db.js';
+import { env } from '../env.js';
+import { solanaConnection } from '../solana/connection.js';
 import { sendOpsAlert } from '../alerts.js';
 import { ringAllowedAddresses } from './ring-allowlist.js';
-import { SPONSOR_SOL_FLOOR_LAMPORTS } from './self-facilitator.js';
+import { SPONSOR_SOL_FLOOR_LAMPORTS, sponsorSolLamports } from './self-facilitator.js';
 import {
 	walletFeeGovernorConfig,
 	walletDailyFeeBudgetLamports,
 	assessWalletFeeBudget,
+	pacedFeeBudgetLamports,
+	utcDayElapsedFraction,
 } from './wallet-fee-governor.js';
 
 // Controlled-wallet set, cached. ringAllowedAddresses() walks env + DB + the
@@ -85,6 +90,126 @@ export function recordSettledFee(pubkeyB58, feeLamports, now = Date.now()) {
 export function resetWalletFeeMeterCaches() {
 	_allowCache = { set: null, at: 0 };
 	_spentCache.clear();
+	_admissionCache.clear();
+}
+
+// ── Caller-side admission ───────────────────────────────────────────────────────
+// The settle-path meter below runs at the LAST step of the x402 handshake. By the
+// time it refuses, the caller has already probed the endpoint for its challenge,
+// read the receiver ATA, built and signed a Solana transfer, and paid for a
+// facilitator `verify`: which SIMULATES the transaction against an RPC node.
+// Every one of those steps is wasted when the wallet's daily fee budget is
+// already spent, because the settle is refused at the end regardless.
+//
+// Measured 2026-08-01: 85,264 of 90,041 daily settle attempts were refused with
+// `fee_runway_exhausted`, each having already burned a simulation. That is the
+// bulk of ~170k wasted RPC round-trips a day, and it is why the Solana lanes read
+// 1/3 serving while the settle rate read 26%.
+//
+// assessFeeAdmission() answers the same question with the SAME pure math, before
+// the caller spends anything, so an exhausted budget short-circuits one call
+// instead of paying for a full handshake to be told no at the end. It changes no
+// money: the settles it skips were never going to land. Total settled volume is
+// still capped by the wallet's funded budget: this removes the waste around that
+// cap, it does not raise it.
+//
+// Fails OPEN everywhere, exactly like the settle-path meter: an ungoverned
+// wallet, an unreadable balance, or an unreadable ledger all admit. The settle
+// path's meter and its hard SOL floor remain the real protection; a gate that
+// refused calls it could not price would be a worse outage than the waste it
+// prevents.
+
+// A refusal is stable until a top-up or the UTC-midnight budget reset, so it may
+// be cached far longer than an admission (which decays as settles land and spend
+// the budget down). One minute collapses a storm while still letting a top-up
+// reopen the rail promptly.
+const ADMISSION_REFUSED_TTL_MS = 60_000;
+const _admissionCache = new Map(); // pubkeyB58 → { ok, reason, at, day, ttl }
+
+const ADMIT = { ok: true, reason: null };
+
+export async function assessFeeAdmission({
+	feeWalletB58, estFeeLamports = 0, connection = null, config, now = Date.now(),
+} = {}) {
+	const cfg = config || walletFeeGovernorConfig();
+	if (!cfg.enabled || !feeWalletB58) return ADMIT;
+
+	// Never serve a verdict across a UTC day boundary: the budget resets at
+	// midnight and a stale refusal would hold the rail shut into the new day.
+	const day = utcDay(now);
+	const hit = _admissionCache.get(feeWalletB58);
+	if (hit && hit.day === day && now - hit.at < hit.ttl) {
+		return { ok: hit.ok, reason: hit.reason, cached: true };
+	}
+
+	// Only platform-controlled wallets are governed. An external buyer self-paying
+	// through our facilitator spends its own SOL; refusing it would refuse revenue.
+	let allowed;
+	try {
+		allowed = await governedWallets(now);
+	} catch {
+		return ADMIT;
+	}
+	if (!allowed || !allowed.has(feeWalletB58)) return ADMIT;
+
+	let solLamports;
+	try {
+		const conn = connection || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+		// Shares self-facilitator.js's balance cache, so this adds no RPC traffic of
+		// its own beyond what the settle path already reads for the same wallet.
+		solLamports = await sponsorSolLamports(conn, new PublicKey(feeWalletB58), now);
+	} catch {
+		return ADMIT;
+	}
+
+	const spent = await spentTodayLamports(feeWalletB58, cfg.spentCacheMs, now);
+	const budget = effectiveBudgetLamports(solLamports, cfg, now);
+	const verdict = assessWalletFeeBudget({
+		spentTodayLamports: spent,
+		budgetLamports: budget,
+		nextFeeLamports: estFeeLamports,
+	});
+
+	_admissionCache.set(feeWalletB58, {
+		ok: verdict.ok,
+		reason: verdict.reason,
+		at: now,
+		day,
+		ttl: verdict.ok ? cfg.spentCacheMs : ADMISSION_REFUSED_TTL_MS,
+	});
+	return {
+		ok: verdict.ok,
+		reason: verdict.reason,
+		budgetLamports: budget,
+		spentTodayLamports: spent,
+		cached: false,
+	};
+}
+
+// Single source of truth for "what fee budget applies to this wallet right now".
+// The caller-side admission gate and the settle-path meter MUST answer that
+// question identically: a laxer admission re-creates the wasted handshakes the
+// gate exists to remove, and a stricter one skips settles the rail could fund.
+// Routing both through one function makes divergence impossible rather than
+// merely unlikely.
+//
+// `daily` is what the wallet may burn across the whole UTC day. Pacing returns
+// how much of that has been unlocked so far, so the allowance is spread over the
+// day instead of being drainable in a morning burst. Same total per day, steadier
+// rail, and no wallet gets one extra lamport out of it.
+function effectiveBudgetLamports(solLamports, cfg, now = Date.now()) {
+	const daily = walletDailyFeeBudgetLamports({
+		solLamports,
+		floorLamports: SPONSOR_SOL_FLOOR_LAMPORTS,
+		runwayDays: cfg.runwayDays,
+		minBudgetLamports: cfg.minBudgetLamports,
+	});
+	if (!cfg.paceDay) return daily;
+	return pacedFeeBudgetLamports({
+		budgetLamports: daily,
+		dayElapsedFraction: utcDayElapsedFraction(now),
+		minSliceLamports: cfg.paceMinSliceLamports,
+	});
 }
 
 // Build the settle-path hook. Returns null when the governor is disabled so
@@ -97,12 +222,7 @@ export function facilitatorFeeMeter({ config } = {}) {
 		if (!allowed || !allowed.has(feeWalletB58)) return { ok: true, reason: null };
 
 		const spent = await spentTodayLamports(feeWalletB58, cfg.spentCacheMs);
-		const budget = walletDailyFeeBudgetLamports({
-			solLamports,
-			floorLamports: SPONSOR_SOL_FLOOR_LAMPORTS,
-			runwayDays: cfg.runwayDays,
-			minBudgetLamports: cfg.minBudgetLamports,
-		});
+		const budget = effectiveBudgetLamports(solLamports, cfg);
 		const verdict = assessWalletFeeBudget({
 			spentTodayLamports: spent,
 			budgetLamports: budget,

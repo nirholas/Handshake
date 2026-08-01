@@ -16,9 +16,20 @@
  * Blend wheel: MetaHuman-style 2-D barycentric blend of 6 face-type presets.
  * IDW (inverse distance weighting) maps puck position → weighted morph sum.
  * Slider fine-tuning still works on top — they share the same morphs dict.
+ *
+ * Proportions: morphs reshape a limb, they cannot lengthen one. Length, width
+ * and stature are skeleton-space parameters, rendered here as their own group
+ * from src/avatar-proportions.js and stored in `workingAppearance.proportions`.
  */
 
 import { detectFaceAll } from './avatar-face-capture.js';
+import {
+	applyProportionsToRoot,
+	availableProportionParams,
+	proportionsGroupHtml,
+	wireProportionsGroup,
+} from './avatar-proportions.js';
+import { canonicalizeBoneName } from './glb-canonicalize.js';
 import { log } from './shared/log.js';
 
 /* ────────────────────────────────────────────────────────────────────────── *
@@ -253,22 +264,51 @@ export function applyMorphsToRoot(root, morphs) {
 }
 
 /**
+ * Canonical bone → node map for the loaded rig, using the full name-variant
+ * coverage of glb-canonicalize (Mixamo, VRM, Unreal, Daz, Blender, …) rather
+ * than the lightweight fallback avatar-proportions ships for callers that
+ * can't afford the import. First bone wins, matching the retargeter's order.
+ */
+function boneNodeMap(root) {
+	const map = new Map();
+	const consider = (node) => {
+		if (!node?.name) return;
+		const canonical = canonicalizeBoneName(node.name);
+		if (canonical && !map.has(canonical)) map.set(canonical, node);
+	};
+	const skinned = [];
+	root?.traverse?.((node) => {
+		if (node.isSkinnedMesh) skinned.push(node);
+		if (node.isBone) consider(node);
+	});
+	for (const sm of skinned) {
+		for (const bone of sm.skeleton?.bones || []) consider(bone);
+	}
+	return map;
+}
+
+/**
  * Render the sculpt panel into the supplied container. Idempotent — calling
  * twice rebuilds. The opts wire to avatar-edit.js's state machinery so we
  * don't fork the dirty-tracking or save path.
  *
  * @param {object} opts
  * @param {HTMLElement} opts.container — element to render into
- * @param {object} opts.root — Three.js scene root (used to discover morphs)
- * @param {object} opts.working — workingAppearance reference (we mutate .morphs)
- * @param {() => void} opts.onDirty — called after each change
+ * @param {object} opts.root: Three.js scene root (used to discover morphs)
+ * @param {object} opts.working: workingAppearance reference (we mutate .morphs / .proportions)
+ * @param {() => void} opts.onDirty: called after each change
+ * @param {() => void} [opts.onRigChanged]: called after a proportion edit settles,
+ *   so the host can re-measure root motion (see AnimationManager.remeasureRigProportions)
  */
-export function renderSculptPanel({ container, root, working, onDirty }) {
+export function renderSculptPanel({ container, root, working, onDirty, onRigChanged }) {
 	const all = discoverMorphs(root);
-	if (!all.length) {
+	const boneMap = boneNodeMap(root);
+	const proportionIds = availableProportionParams(root, { boneMap });
+
+	if (!all.length && !proportionIds.length) {
 		container.innerHTML = `
 			<div class="ae-empty">
-				This avatar has no sculptable morph targets.<br/>
+				This avatar has no sculptable morph targets and no editable skeleton.<br/>
 				Re-import it through <a href="/create" style="color:inherit">/create</a>
 				to get a rig with ARKit-52 blendshapes.
 			</div>`;
@@ -278,9 +318,11 @@ export function renderSculptPanel({ container, root, working, onDirty }) {
 	const groups = groupMorphs(all);
 	working.morphs = working.morphs || {};
 	const available = new Set(all);
+	const rerender = () => renderSculptPanel({ container, root, working, onDirty, onRigChanged });
 
 	container.innerHTML = `
 		<div class="ae-sculpt-head">
+			${all.length ? `
 			<button class="ae-btn ae-sculpt-capture" type="button" id="ae-sculpt-capture">
 				<span class="ae-sculpt-capture-icon" aria-hidden="true">📸</span>
 				Capture from photo
@@ -288,43 +330,82 @@ export function renderSculptPanel({ container, root, working, onDirty }) {
 			<label class="ae-sculpt-mirror" title="Keep left/right morphs in sync">
 				<input type="checkbox" id="ae-sculpt-mirror-lock" ${_mirrorLocked ? 'checked' : ''}>
 				Mirror L/R
-			</label>
+			</label>` : ''}
 			<button class="ae-btn ae-sculpt-reset" type="button" id="ae-sculpt-reset">Reset all</button>
 		</div>
 		<p class="ae-sculpt-note">
-			Drag the wheel puck to blend face types. Use sliders for fine control.
-			Double-click any slider to zero it. Capture button reads face geometry
-			from your webcam — expression in the photo is ignored.
+			${all.length
+				? `Drag the wheel puck to blend face types. Use sliders for fine control.
+				   Double-click any slider to reset it. Capture button reads face geometry
+				   from your webcam: expression in the photo is ignored.`
+				: `This rig carries no blendshapes, so its build is sculpted from the
+				   skeleton. Double-click any slider to reset it.`}
 		</p>
 
-		${blendWheelHtml()}
+		${proportionsGroupHtml(proportionIds, working.proportions)}
+
+		${all.length ? blendWheelHtml() : ''}
 
 		${groups.map((g) => renderGroup(g, working.morphs)).join('')}
 	`;
 
+	ensureProportionCss();
 	wireSliders(container, root, working, onDirty);
-	wireBlendWheel(container, root, working, available, onDirty);
+	if (all.length) wireBlendWheel(container, root, working, available, onDirty);
+	wireProportionsGroup({ container, root, working, boneMap, onDirty, onRigChanged, rerender });
 
 	container.querySelector('#ae-sculpt-mirror-lock')?.addEventListener('change', (e) => {
 		_mirrorLocked = e.target.checked;
-		renderSculptPanel({ container, root, working, onDirty });
+		rerender();
 	});
 
 	container.querySelector('#ae-sculpt-reset')?.addEventListener('click', () => {
 		working.morphs = {};
+		working.proportions = {};
 		applyMorphsToRoot(root, clearAll(all));
-		renderSculptPanel({ container, root, working, onDirty });
+		applyProportionsToRoot(root, {}, { boneMap });
+		rerender();
 		onDirty?.();
+		onRigChanged?.();
 	});
 
 	container.querySelector('#ae-sculpt-capture')?.addEventListener('click', () => {
-		openFaceCaptureModal({
-			root,
-			working,
-			onDirty,
-			rerender: () => renderSculptPanel({ container, root, working, onDirty }),
-		});
+		openFaceCaptureModal({ root, working, onDirty, rerender });
 	});
+}
+
+/* ────────────────────────────────────────────────────────────────────────── *
+ * Proportions styling: injected once. The sculpt CSS lives inline in both
+ * pages/avatar-studio.html and pages/avatar-edit.html; the proportions group is
+ * shared by both surfaces, so its rules ship with the module instead of being
+ * copy-pasted into two <style> blocks that would drift.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+function ensureProportionCss() {
+	if (typeof document === 'undefined' || document.getElementById('ae-prop-css')) return;
+	const style = document.createElement('style');
+	style.id = 'ae-prop-css';
+	style.textContent = `
+		.ae-prop-note {
+			margin: 2px 0 8px;
+			font-size: 11px;
+			line-height: 1.5;
+			color: var(--text-3);
+		}
+		.ae-prop-section + .ae-prop-section { margin-top: 10px; }
+		.ae-prop-heading {
+			margin: 0 0 2px;
+			font-size: 9px;
+			font-weight: 600;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: var(--text-3);
+		}
+		.ae-prop-row { grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 52px; }
+		.ae-prop-row .ae-sculpt-value { color: var(--text-2, var(--text-3)); }
+		.ae-prop-rows #ae-prop-reset { align-self: flex-start; margin-top: 10px; }
+	`;
+	document.head.appendChild(style);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── *

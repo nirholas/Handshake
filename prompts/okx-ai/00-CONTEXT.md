@@ -55,11 +55,11 @@ verifies/settles, exact required fields) is what prompt 01 pins down.
 - **3D category is EMPTY.** Query "3D model avatar rendering game asset" → 1 result, a novelty
   trading-card generator. No text→3D, no rigging, no avatars. We would be first and only.
 - **The winning pattern**, "Onchain Data Explorer", **174 sales** (most-sold agent found):
-  ~19 tiny, sharply-scoped A2MCP endpoints, micro-priced ($0.000015–$0.000075 per call).
+  ~19 tiny, sharply-scoped A2MCP endpoints, micro-priced ($0.000015-$0.000075 per call).
   Granular + cheap + composable + free discovery endpoints.
 - **The losing pattern**, "TO1 Intelligence": 100+ services sprayed at $0.25 → 0 sales.
 - Everything that sells is **A2MCP fixed-price**. A2A "negotiated" listings ≈ 0 sales.
-- Creative/media: 2 agents total, both 2D, both 0 sales. Prices $0.5–$1.0.
+- Creative/media: 2 agents total, both 2D, both 0 sales. Prices $0.5-$1.0.
 
 ## Session preflight (run at the start of EVERY work order)
 

@@ -272,6 +272,12 @@ then kept in a verified, watched, auto-fundable state:
     the sponsor" attack **and** enforces "only our wallets settle here".
   - **SOL floor.** Below `X402_SPONSOR_SOL_FLOOR_LAMPORTS` (default 0.02 SOL) the
     facilitator refuses to settle, pausing the loop before it can drain your SOL.
+  - **Runway alert.** The floor says the rail is already dead. The runway says
+    how long until it is, and it pages first: the ring monitor measures the
+    sponsor's burn from `fee_lamports` over `X402_SPONSOR_BURN_WINDOW_DAYS`
+    (default 7) of successful settles and alerts when days-to-floor drops under
+    `X402_SPONSOR_RUNWAY_ALERT_DAYS` (default 3). Thresholds, statuses, and the
+    reason `unknown` never pages: [docs/ops/payment-outcomes.md](ops/payment-outcomes.md).
   - **Discovery catalog.** `GET /api/x402-facilitator/discovery/resources` serves
     the facilitator-standard resource list (`?limit=&offset=`, the
     `ListDiscoveryResourcesResponse` shape crawled by x402scan and every client

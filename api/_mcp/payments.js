@@ -15,7 +15,7 @@ export async function sendX402Error(res, { resourceUrl, accepts }, err) {
 		res.end(JSON.stringify({ error: err.code, error_description: err.message }));
 		return;
 	}
-	// Unexpected (non-X402) fault — route it through the shared boundary so the
+	// Unexpected (non-X402) fault: route it through the shared boundary so the
 	// MCP payment path gets the same ref + Sentry capture + deduped ops alert as
 	// an HTTP 5xx, then echo the ref so an agent can quote it to support.
 	const ref = reportServerError(err, { code: 'mcp_x402_failed', context: { resourceUrl } });
@@ -24,7 +24,7 @@ export async function sendX402Error(res, { resourceUrl, accepts }, err) {
 	res.end(
 		JSON.stringify({
 			error: 'internal',
-			error_description: `x402 processing failed — quote ref ${ref} to support`,
+			error_description: `x402 processing failed, quote ref ${ref} to support`,
 			ref,
 		}),
 	);

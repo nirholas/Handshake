@@ -45,7 +45,7 @@ test('reclaimableSol returns 0 when the engine is at or below its floor', () => 
 	assert.equal(reclaimableSol(1.05, 1), 0);       // within the buffer, not worth dust
 });
 import { ECONOMY_MASTER_ADDRESS } from '../api/_lib/economy-master.js';
-import { buildSweepbackRows, hashEntry } from '../api/_lib/economy-ledger.js';
+import { buildSweepbackRows, buildAgentReclaimRows, hashEntry } from '../api/_lib/economy-ledger.js';
 import { SOLANA_SIGNERS } from '../api/_lib/solana-signers.js';
 
 test('defaults are the documented guard values', () => {
@@ -382,4 +382,148 @@ test('agentCandidateFromRow defaults a bare row without inventing consent', () =
 	assert.equal(off.strategy.autoFundEnabled, false);
 	const nul = agentCandidateFromRow({ agent_id: 'a', address: 'A', owner: BOT, secret: 's', auto_fund_enabled: null }, 1);
 	assert.equal(nul.strategy.autoFundEnabled, false);
+});
+
+// ── agent-reclaim ledger rows ────────────────────────────────────────────────
+// The agent leg was the only money path in the economy that wrote NOTHING to the
+// book of record when it failed. "The reclaim ran and every wallet was
+// unreadable" and "the reclaim never ran" were the same absence of rows, and on
+// 2026-07-29 that ambiguity cost ~11 hours with the sponsor under its settle
+// floor. These pin the three row kinds and, above all, that the summary is
+// written even when nothing moved.
+
+test('agent reclaim: a failed send writes an inflow_failed row naming the reason', () => {
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		masterSolBefore: 0.2,
+		deficitSol: 0.4,
+		result: {
+			reclaimedSol: 0.05,
+			moves: [{ agentId: 'ag1', name: 'bot-one', address: 'A1', sol: 0.05, signature: 'sig1' }],
+			failed: [{ name: 'bot-two', address: 'A2', sol: 0.07, stage: 'send', reason: 'blockhash not found' }],
+			skipped: [{ name: 'bot-three', reason: 'at_or_below_floor' }],
+			readErrors: [],
+		},
+		solUsd: 100,
+		now: 1_700_000_000_000,
+	});
+	assert.equal(rows.length, 3);
+	assert.equal(rows[0].event, 'inflow');
+	assert.equal(rows[0].master_sol_after, 0.25);
+	assert.equal(rows[0].tx_signature, 'sig1');
+	assert.equal(rows[1].event, 'inflow_failed');
+	assert.equal(rows[1].reason, 'blockhash not found');
+	assert.equal(rows[1].target_pubkey, 'A2');
+	assert.equal(rows[1].detail.stage, 'send');
+	// A failed send must not move the running balance.
+	assert.equal(rows[1].master_sol_after, 0.25);
+	assert.equal(rows[2].event, 'agent_reclaim');
+	assert.equal(rows[2].detail.deficit_sol, 0.4);
+	assert.deepEqual(rows[2].detail.skipped_reasons, { at_or_below_floor: 1 });
+});
+
+test('agent reclaim: an undecryptable secret keeps its stage, so it is not chased as an RPC fault', () => {
+	// A WebCrypto AES-GCM OperationError wearing a Solana costume. The SOL behind
+	// it is unreachable until the right WALLET_ENCRYPTION_KEY is present, and no
+	// RPC tier or deposit changes that.
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		result: {
+			reclaimedSol: 0,
+			moves: [],
+			failed: [{ name: 'bot', address: 'A', sol: 0.3, stage: 'recover', reason: 'secret_undecryptable: OperationError' }],
+			skipped: [],
+			readErrors: [],
+		},
+		now: 1_700_000_000_000,
+	});
+	assert.equal(rows[0].event, 'inflow_failed');
+	assert.equal(rows[0].detail.stage, 'recover');
+	assert.match(rows[0].reason, /^secret_undecryptable/);
+	assert.equal(rows[1].reason, 'blocked');
+});
+
+test('agent reclaim: unreadable balances are recorded as blocked, not as an empty fleet', () => {
+	// The 2026-07-29 shape exactly: every lane in quota cooldown, so every read
+	// failed and nothing was ever planned. Sizing a funding ask from this run
+	// would be wrong; the summary says `blocked` so nobody does.
+	const readErrors = Array.from({ length: 25 }, (_, i) => ({
+		name: `bot-${i}`, address: `A${i}`, reason: 'rpc_error: 429 Too Many Requests',
+	}));
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		result: { reclaimedSol: 0, moves: [], failed: [], skipped: [], readErrors },
+		now: 1_700_000_000_000,
+	});
+	// Capped rows, uncapped counts: the chain stays bounded, the truth does not.
+	assert.equal(rows.length, 21);
+	assert.equal(rows[0].event, 'inflow_failed');
+	assert.equal(rows[0].detail.stage, 'read');
+	assert.match(rows[0].reason, /rpc_error/);
+	const summary = rows[20];
+	assert.equal(summary.event, 'agent_reclaim');
+	assert.equal(summary.reason, 'blocked');
+	assert.equal(summary.detail.read_errors, 25);
+	assert.equal(summary.detail.read_errors_logged, 20);
+});
+
+test('agent reclaim: a no-op run still writes the summary, and says nothing was reclaimable', () => {
+	// The load-bearing case. Without this row, "ran and found nothing" and "never
+	// ran" are indistinguishable, and only one of them needs the owner's money.
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		result: {
+			reclaimedSol: 0, moves: [], failed: [], readErrors: [],
+			skipped: [{ name: 'a', reason: 'at_or_below_floor' }, { name: 'b', reason: 'capital_committed' }],
+		},
+		now: 1_700_000_000_000,
+	});
+	assert.equal(rows.length, 1);
+	assert.equal(rows[0].event, 'agent_reclaim');
+	assert.equal(rows[0].reason, 'nothing_reclaimable');
+	assert.equal(rows[0].sol, 0);
+	assert.deepEqual(rows[0].detail.skipped_reasons, { at_or_below_floor: 1, capital_committed: 1 });
+});
+
+test('agent reclaim: a leg that threw records its own error rather than a clean zero', () => {
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		result: { reclaimedSol: 0, moves: [], failed: [], skipped: [], readErrors: [], error: 'agent_reclaim_failed' },
+		now: 1_700_000_000_000,
+	});
+	assert.match(rows[0].reason, /^leg_error: agent_reclaim_failed/);
+});
+
+test('agent reclaim: a dry run is recorded as a dry run', () => {
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		result: { reclaimedSol: 0.1, moves: [{ name: 'a', address: 'A', sol: 0.1, dryRun: true }], failed: [], skipped: [], readErrors: [], dryRun: true },
+		now: 1_700_000_000_000,
+	});
+	assert.equal(rows[1].detail.dry_run, true);
+});
+
+test('agent reclaim: rows chain like every other ledger batch', () => {
+	// The rows are appended to the same tamper-evident chain, so they must hash
+	// the same way. A row shape the hasher cannot read breaks verifyChain from
+	// that point on, which reads as a tamper, not as a bug.
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		masterSolBefore: 1,
+		result: {
+			reclaimedSol: 0.2,
+			moves: [{ name: 'a', address: 'A', sol: 0.2, signature: 'sigA' }],
+			failed: [{ name: 'b', address: 'B', sol: 0.1, stage: 'send', reason: 'send_failed' }],
+			skipped: [], readErrors: [],
+		},
+		now: 1_700_000_000_000,
+	});
+	let prev = '';
+	const hashes = rows.map((r, i) => {
+		const h = hashEntry(prev, { ...r, seq: i + 1 });
+		prev = h;
+		return h;
+	});
+	assert.equal(new Set(hashes).size, rows.length);
+	assert.ok(hashes.every((h) => /^[0-9a-f]{64}$/.test(h)));
 });

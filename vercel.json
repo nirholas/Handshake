@@ -1251,6 +1251,26 @@
 			"dest": "/api/trader-og.js"
 		},
 		{
+			"src": "/api/trader-passport/verify",
+			"dest": "/api/trader-passport-verify.js"
+		},
+		{
+			"src": "/api/trader-passport",
+			"dest": "/api/trader-passport.js"
+		},
+		{
+			"src": "/api/trade-og",
+			"dest": "/api/trade-og.js"
+		},
+		{
+			"src": "/api/trade-share",
+			"dest": "/api/trade-share.js"
+		},
+		{
+			"src": "/trade/([^/]+)/?",
+			"dest": "/api/trade-share?id=$1"
+		},
+		{
 			"src": "/admin/bulk-launch/?",
 			"dest": "/bulk-launch.html"
 		},

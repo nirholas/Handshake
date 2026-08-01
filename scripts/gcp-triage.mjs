@@ -140,6 +140,20 @@ const KNOWN_SIGNATURES = [
 		class: 'self-healing',
 		action: `A keyless Solana RPC node refused ONE call shape (PublicNode answers 403 to getTokenAccountsByOwner filtered by programId) while serving every other method. The request fails over and the lane stays in service, cooling seconds rather than the 30m an auth failure earns. No action needed. If instead you see this host cooling 30m, that is a real key problem, not this signature. ${RUNBOOK} §solana-rpc-403.`,
 	},
+	{
+		id: 'okx-bot-session-logged-out',
+		match: /session_logged_out/i,
+		services: ['okx-chat-bot'],
+		class: 'owner',
+		action: `The OKX marketplace chat bot's wallet session expired, so every XMTP client is offline and buyer chat for agent #2632 is NOT delivered. Nothing here is config-fixable and a redeploy will not help: OKX requires a human to complete an email OTP as claude@three.ws. The host already minted the login URL and holds the exact three commands, so do not go hunting for them: curl -s https://okx-chat-bot-<hash>-uc.a.run.app/readyz | jq .remedy (or read the ops alert, which carries the same lines). Renewing the session restores delivery within a minute; the host's next probe flips healthz okx_chat_bot back to ok on its own. Left unfixed, OKX's own chat test times out at 30 minutes and flags the listing offline. See workers/okx-chat-bot/README.md.`,
+	},
+	{
+		id: 'okx-bot-daemon-restart',
+		match: /"msg":"daemon exited"/i,
+		services: ['okx-chat-bot'],
+		class: 'self-healing',
+		action: `The okx-a2a XMTP daemon child died and the supervisor is restarting it with capped backoff (workers/okx-chat-bot/supervisor.js). One or two of these around a revision change is normal. Investigate only if the restart count climbs continuously, which means the daemon is failing at startup rather than dying in service: read the forwarded "daemon" lines just before the exit for the real error, most often a corrupt restored state tree (delete the GCS snapshot object and re-login) or a missing AI-provider credential.`,
+	},
 ];
 
 // Known signatures for request-log (5xx) groups. `test` sees the http group:

@@ -169,6 +169,10 @@
 .tp-row-muted:hover td { opacity: 0.85; }
 .tp-proof-link { color: var(--ink-dim); text-decoration: none; font-size: var(--text-2xs); border-bottom: 1px dotted var(--stroke-strong); white-space: nowrap; }
 .tp-proof-link:hover { color: var(--ink-bright); }
+.tp-proof-link:focus-visible { color: var(--ink-bright); outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+/* Share is an action, not a proof link: solid underline, accent on hover. */
+.tp-proof-share { border-bottom-style: solid; border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tp-proof-share:hover, .tp-proof-share:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ---- Proof callout ---- */
 .tp-proof-note {
@@ -477,4 +481,185 @@
 }
 @media (prefers-reduced-motion: reduce) {
 	.tp-panel.is-active, .tp-sk { animation: none; }
+}
+
+/* ---- Trader Passport (Proof tab) ----
+   The on-chain credential card. Reads as a sibling of .tp-proof-note, same
+   hairline-card vocabulary: but neutral rather than success-tinted, because it
+   states a fact that can come back either way, and an unverifiable credential
+   must not inherit a reassuring green. */
+.tp-pp {
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	background: var(--surface-1);
+	padding: var(--space-md);
+	margin-bottom: var(--space-md);
+}
+.tp-pp-head {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2xs);
+	flex-wrap: wrap;
+	margin-bottom: var(--space-sm);
+}
+.tp-pp-title {
+	font-family: var(--font-display);
+	font-size: var(--text-md);
+	color: var(--ink-bright);
+}
+.tp-pp-badge {
+	font-size: var(--text-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	border-radius: var(--radius-pill);
+	padding: 1px var(--space-2xs);
+}
+.tp-pp-badge-ok {
+	color: var(--success);
+	border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
+	background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+.tp-pp-badge-pending {
+	color: var(--ink-faint);
+	border: 1px solid var(--stroke-strong);
+}
+.tp-pp-kind {
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs);
+	color: var(--ink-faint);
+	margin-left: auto;
+}
+.tp-pp-note {
+	margin: 0 0 var(--space-sm);
+	font-size: var(--text-sm);
+	color: var(--ink-dim);
+	line-height: var(--leading-normal);
+	max-width: 72ch;
+}
+.tp-pp-note:last-child { margin-bottom: 0; }
+.tp-pp-note strong { color: var(--ink-bright); }
+.tp-pp-dim { color: var(--ink-faint); font-size: var(--text-xs); }
+.tp-pp-sk { max-width: 40ch; }
+
+/* Committed-vs-live table. Both columns always render: the credential is a
+   snapshot, and hiding the drift would make the anchor look like a live feed. */
+.tp-pp-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--text-sm);
+	margin-bottom: var(--space-sm);
+}
+.tp-pp-caption {
+	caption-side: top;
+	text-align: left;
+	font-size: var(--text-xs);
+	color: var(--ink-faint);
+	padding-bottom: var(--space-2xs);
+	max-width: 72ch;
+}
+.tp-pp-table th,
+.tp-pp-table td {
+	text-align: right;
+	padding: var(--space-3xs) var(--space-2xs);
+	border-bottom: 1px solid var(--stroke);
+	font-variant-numeric: tabular-nums;
+}
+.tp-pp-table thead th {
+	font-size: var(--text-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ink-faint);
+	font-weight: var(--weight-medium);
+}
+.tp-pp-table tbody th[scope='row'] {
+	text-align: left;
+	color: var(--ink-dim);
+	font-weight: var(--weight-regular);
+}
+.tp-pp-attested { color: var(--ink-dim); }
+.tp-pp-live { color: var(--ink-bright); font-weight: var(--weight-semibold); }
+.tp-pp-delta { font-size: var(--text-xs); }
+
+.tp-pp-facts {
+	display: flex;
+	gap: var(--space-2xs);
+	flex-wrap: wrap;
+	margin-bottom: var(--space-sm);
+}
+.tp-pp-fact {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-sm);
+	padding: var(--space-2xs) var(--space-sm);
+	text-decoration: none;
+	transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+}
+a.tp-pp-fact:hover,
+a.tp-pp-fact:focus-visible { border-color: var(--stroke-strong); background: var(--surface-2); }
+.tp-pp-fact-k {
+	font-size: var(--text-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ink-faint);
+}
+.tp-pp-fact-v {
+	font-family: var(--font-mono);
+	font-size: var(--text-xs);
+	color: var(--ink-bright);
+}
+
+.tp-pp-hist { margin-bottom: var(--space-sm); }
+.tp-pp-hist summary {
+	cursor: pointer;
+	font-size: var(--text-xs);
+	color: var(--ink-dim);
+}
+.tp-pp-hist summary:hover { color: var(--ink-bright); }
+.tp-pp-hist-list {
+	list-style: none;
+	margin: var(--space-2xs) 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3xs);
+}
+.tp-pp-hist-list li {
+	display: flex;
+	gap: var(--space-sm);
+	align-items: baseline;
+	font-size: var(--text-xs);
+	font-variant-numeric: tabular-nums;
+}
+.tp-pp-hist-day { color: var(--ink-dim); min-width: 9ch; }
+.tp-pp-hist-score { color: var(--ink-bright); min-width: 4ch; text-align: right; }
+
+.tp-pp-actions { display: flex; gap: var(--space-2xs); flex-wrap: wrap; margin-bottom: var(--space-sm); }
+.tp-pp-verdict:empty { display: none; }
+.tp-pp-verdict {
+	font-size: var(--text-sm);
+	line-height: var(--leading-normal);
+	border-radius: var(--radius-sm);
+	padding: var(--space-sm);
+	margin-bottom: var(--space-sm);
+	border: 1px solid var(--stroke);
+	color: var(--ink-dim);
+}
+.tp-pp-verdict ul { margin: var(--space-2xs) 0 0; padding-left: var(--space-md); }
+.tp-pp-verdict code { font-family: var(--font-mono); font-size: var(--text-xs); }
+.tp-pp-verdict.is-ok {
+	border-color: color-mix(in srgb, var(--success) 40%, var(--stroke));
+	background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+.tp-pp-verdict.is-bad {
+	border-color: color-mix(in srgb, var(--danger) 40%, var(--stroke));
+	background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.tp-pp-verdict.is-busy { border-style: dashed; }
+
+@media (max-width: 520px) {
+	.tp-pp-kind { margin-left: 0; width: 100%; }
+	.tp-pp-facts { flex-direction: column; }
+	.tp-pp-table { font-size: var(--text-xs); }
 }

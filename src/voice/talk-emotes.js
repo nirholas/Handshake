@@ -51,6 +51,16 @@ export class TalkEmotes {
 		this._manager.detach();
 	}
 
+	/**
+	 * Re-measure the rig after a skeleton-space proportion edit (Avatar Studio's
+	 * Proportions sliders) so root motion is rescaled to the new hip height and
+	 * the avatar doesn't foot-slide. Call with the rig at rest.
+	 * @returns {boolean}
+	 */
+	remeasureRig() {
+		return this._manager.remeasureRigProportions();
+	}
+
 	/** Tick the underlying AnimationMixer. Hook into the scene's RAF loop. */
 	update(dt) {
 		this._manager.mixer?.update(dt);

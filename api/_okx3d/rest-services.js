@@ -130,7 +130,7 @@ async function callStudioTool(name, args, { req, payer }) {
 const HANDLERS = {
 	// $0.01, the free draft-tier lane, submit-then-poll. No backend pin: the
 	// draft default now resolves to the photoreal image-intermediate pipeline
-	// (self-host TRELLIS → Hunyuan3D → HuggingFace → NVIDIA NIM last resort —
+	// (self-host TRELLIS → Hunyuan3D → HuggingFace → NVIDIA NIM last resort,
 	// see forge-tiers.js FREE_DEFAULT_FOR_TIERS), still zero vendor cost.
 	async 'text-to-3d'(args, ctx) {
 		const job = await startForge(ctx.base, {
@@ -189,7 +189,7 @@ const HANDLERS = {
 				'That looks like an object rather than a character. Auto-rigging needs a humanoid figure, use text-to-3d for objects, or set allow_non_humanoid to override.',
 			);
 		}
-		// Granite avatar director (text mode only, fail-soft) — without it this
+		// Granite avatar director (text mode only, fail-soft). Without it this
 		// paid lane reconstructed straight from the raw words with no photoreal
 		// reference-image briefing at all.
 		let effectivePrompt = args.prompt;

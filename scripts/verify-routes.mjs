@@ -15,10 +15,12 @@
  *                   (no earlier broad pattern swallows it).
  *
  * It does this two ways:
- *   • STATIC (default) — a faithful re-implementation of the Vercel legacy-routes
- *     matcher, run against a model of the built `dist/` file set (rollup HTML
- *     inputs from vite.config.js + auto-discovered dashboard-next + verbatim
- *     public/ , docs/ , blog/ , ibm/ copies). Deterministic, offline, CI-safe.
+ *   • STATIC (default), the shared legacy-routes matcher in
+ *     scripts/lib/vercel-routes.mjs (one offline model of what server/index.mjs
+ *     does at runtime, also used by scripts/audit-route-shadowing.mjs), run
+ *     against a model of the built `dist/` file set (rollup HTML inputs from
+ *     vite.config.js + auto-discovered dashboard-next + verbatim public/ ,
+ *     docs/ , blog/ , ibm/ copies). Deterministic, offline, CI-safe.
  *   • LIVE (--base=<url>) — real HTTP requests against a running preview / prod
  *     (`vercel dev`, `vercel build` preview, or https://three.ws), asserting the
  *     status code and, for redirects, the Location.
@@ -29,9 +31,10 @@
  *   node scripts/verify-routes.mjs --base=https://three.ws            # live sample
  *   node scripts/verify-routes.mjs --base=http://localhost:3000 --all # live, every route
  */
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadRouteTable, resolveRequest } from './lib/vercel-routes.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -80,29 +83,15 @@ for (const f of walk(resolve(ROOT, 'public'))) served.add(f); // public/ copied 
 for (const f of walk(resolve(ROOT, 'docs'))) served.add('docs/' + f);
 for (const f of walk(resolve(ROOT, 'blog'))) served.add('blog/' + f);
 
-const apiFile = (p) => {
-	// /api/foo or /api/foo/bar → is there an api/foo.js or api/foo/bar.js (or [param])?
-	const rel = p.replace(/^\//, '').split('?')[0];
-	if (!rel.startsWith('api/')) return false;
-	const base = resolve(ROOT, rel);
-	return existsSync(base + '.js') || existsSync(base) || existsSync(resolve(ROOT, rel.replace(/\/[^/]+$/, '')) ); // dynamic segment tolerated
-};
+// ───────────────────────── shared legacy-routes resolver ─────────────────────────
+// The matcher itself lives in scripts/lib/vercel-routes.mjs so this script and
+// scripts/audit-route-shadowing.mjs predict production from one implementation.
+// What stays here is this script's own view of the world: the modeled dist/ file
+// set below, and the api/ root that turns an /api/* dest into a real handler.
+const table = loadRouteTable(vercel);
+const { fsIndex: fsIdx, phase1Routes: mainRoutes, postFsRoutes: postRoutes } = table;
+const API_ROOT = resolve(ROOT, 'api');
 
-// ───────────────────────── faithful legacy-routes resolver ─────────────────────────
-const fsIdx = routes.findIndex((r) => r.handle === 'filesystem');
-const mainRoutes = fsIdx === -1 ? routes : routes.slice(0, fsIdx);
-const postRoutes = fsIdx === -1 ? [] : routes.slice(fsIdx + 1);
-
-function compile(src) {
-	try {
-		return new RegExp('^' + src + '$');
-	} catch {
-		return null;
-	}
-}
-function subst(dest, m) {
-	return dest.replace(/\$(\d+)/g, (_, n) => (m && m[+n] != null ? m[+n] : ''));
-}
 // Does the filesystem serve `path`? (path is dist-relative, leading slash stripped)
 function fileServes(path) {
 	const clean = path.replace(/^\//, '').split('?')[0];
@@ -121,47 +110,25 @@ function fileServes(path) {
 	return false;
 }
 
-// Returns { kind: 'file'|'redirect'|'api'|'external'|'notfound', status, dest, to }
-function resolvePath(pathname, depth = 0) {
-	if (depth > 6) return { kind: 'loop', status: 508 };
-	let path = pathname;
-	for (const r of mainRoutes) {
-		if (!r.src) continue;
-		if (r.has || r.missing) continue; // conditional (bot UA / query) — not the default GET
-		const re = compile(r.src);
-		if (!re) continue;
-		const m = path.match(re);
-		if (!m) continue;
-		if (r.continue) continue; // header-only layer
-		if (r.status && r.headers && r.headers.Location)
-			return { kind: 'redirect', status: r.status, to: subst(r.headers.Location, m) };
-		if (r.status === 404) return { kind: 'notfound', status: 404 };
-		if (r.dest) {
-			const d = subst(r.dest, m);
-			if (/^https?:\/\//.test(d)) return { kind: 'external', status: 200, to: d };
-			path = d.split('?')[0];
-			break; // rewrite ends the main phase → filesystem check
-		}
-	}
-	// filesystem check
-	if (path.replace(/^\//, '').split('?')[0].startsWith('api/')) {
-		return apiFile(path) ? { kind: 'api', status: 200, dest: path } : { kind: 'api-missing', status: 500, dest: path };
-	}
-	if (fileServes(path)) return { kind: 'file', status: 200, dest: path };
-	// post-filesystem (handle:filesystem) phase
-	for (const r of postRoutes) {
-		if (!r.src) continue;
-		const re = compile(r.src);
-		if (!re) continue;
-		const m = path.match(re);
-		if (!m) continue;
-		if (r.status === 404) return { kind: 'notfound', status: 404, dest: subst(r.dest || '', m) };
-		if (r.dest) {
-			const d = subst(r.dest, m);
-			if (fileServes(d)) return { kind: 'file', status: r.status || 200, dest: d };
-		}
-	}
-	return { kind: 'notfound', status: 404, dest: '(implicit)' };
+// Returns { kind: 'file'|'redirect'|'api'|'api-missing'|'external'|'notfound', status, dest, to }
+// A thin adapter over the shared resolver, keeping this script's original `kind`
+// vocabulary so the checks below read the same as before.
+function resolvePath(pathname) {
+	const r = resolveRequest(table, pathname, {
+		apiRoot: API_ROOT,
+		fileServes,
+		// This script asks "is the page reachable at this URL", so it models the
+		// trailing-slash form through the route table rather than short-circuiting
+		// on the server's 301 collapse.
+		collapseTrailingSlash: false,
+	});
+	if (r.outcome === 'handler') return { kind: 'api', status: 200, dest: r.dest };
+	if (r.outcome === 'api-missing') return { kind: 'api-missing', status: 500, dest: r.dest };
+	if (r.outcome === 'file') return { kind: 'file', status: r.status, dest: r.dest };
+	if (r.outcome === 'redirect') return { kind: 'redirect', status: r.status, to: r.to };
+	if (r.outcome === 'external') return { kind: 'external', status: 200, to: r.to };
+	if (r.outcome === 'status') return { kind: 'notfound', status: r.status };
+	return { kind: 'notfound', status: r.status ?? 404, dest: r.dest };
 }
 
 // ───────────────────────── checks ─────────────────────────

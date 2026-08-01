@@ -231,6 +231,59 @@ export class AnimationManager {
 	}
 
 	/**
+	 * Re-measure the height-dependent retarget inputs and rebuild every bound
+	 * action. Call after a skeleton-space proportion edit (leg length, stature,
+	 * foot size: see src/avatar-proportions.js) has moved the rig's hips.
+	 *
+	 * A clip's hip translation is authored around one hip height and rescaled
+	 * onto the rig's actual height at attach time. Lengthen the legs and that
+	 * factor is stale: the root travels the old distance while longer legs cover
+	 * more ground per stride, and the avatar foot-slides. Re-measuring and
+	 * re-retargeting fixes the stride without re-attaching, which matters because
+	 * attach() also re-captures the rest frames: and those must be read in the
+	 * bind pose, which a mid-animation rig is not in.
+	 *
+	 * Safe precisely because proportions never touch bone *rotations*: the
+	 * captured local/world rest rotations, the canonical→node map and the morph
+	 * map all stay valid. The caller must have the rig at rest when it calls
+	 * (applyProportionsToRoot leaves it there).
+	 *
+	 * @returns {boolean} true when the rig was re-measured
+	 */
+	remeasureRigProportions() {
+		if (!this.model || !this.mixer) return false;
+		const resume = this.currentName;
+		this._hipTargetLocalY = hipRestLocalHeight(this.model);
+		this._hipGroundLocalY = hipGroundLocalY(this.model);
+
+		this.mixer.stopAllAction();
+		for (const action of this.actions.values()) {
+			const clip = action.getClip?.();
+			if (clip) this.mixer.uncacheClip(clip);
+		}
+		this.actions.clear();
+		this.currentAction = null;
+		this.currentName = null;
+		this._latestCrossfadeTarget = null;
+		// Overlays are built from the old retarget too, so drop the cache and let
+		// the next gesture rebuild against the new proportions.
+		this.overlayAction = null;
+		this.overlayName = null;
+		this._overlayClips.clear();
+		this._detachOverlayFinish?.();
+
+		for (const [name, clip] of this.clips) {
+			const bound = this._retarget(clip);
+			if (!bound) continue;
+			const action = this.mixer.clipAction(bound);
+			action.enabled = true;
+			this.actions.set(name, action);
+		}
+		if (resume && this.actions.has(resume)) this.play(resume);
+		return true;
+	}
+
+	/**
 	 * Retarget a canonical-skeleton library clip onto the attached model's actual
 	 * bone names. Returns null when the rig shares too few bones to perform the
 	 * motion (a static prop, a non-humanoid rig), so callers skip building a dead

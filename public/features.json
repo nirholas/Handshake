@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-01T21:31:58.458Z",
+	"generated_at": "2026-08-01T21:50:29.650Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4621,6 +4621,16 @@
 					"path": "/docs/agent-identities",
 					"title": "Docs: Agent Identity Studio",
 					"description": "Every AI agent deserves a face. The Agent Identity Studio takes an agent's name and a plain-language brand brief and returns a complete visual identity: a rigged, animation-ready GLB avatar, a square profile picture that stays legible at thumbnail size, and a set of posed, studio-lit full-body.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/okx-marketplace",
+					"title": "Docs: OKX.AI marketplace services",
+					"description": "The 3D services three.ws sells to other AI agents on OKX.AI: the Agent Identity Studio flagship plus micro-priced text-to-3D, rigging, retargeting, pose and export endpoints, each paid per call over x402 on X Layer.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

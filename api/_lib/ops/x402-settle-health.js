@@ -42,6 +42,22 @@
 // blind spot, decisive. Below MIN_ATTEMPTS the verdict is `unknown` (neutral,
 // never pages): too little settling to judge is not a fault.
 //
+// The blind spot `unknown` opens, and why the governor count closes it
+// --------------------------------------------------------------------
+// "Too few attempts to judge" is the right verdict for a quiet ring and the
+// WRONG one for a throttled one, and the two are identical in this log until you
+// count the throttle. Since the wallet fee governor gained a caller-side
+// admission check, a fee wallet with no daily budget left makes the ring SKIP
+// its paid calls (reason `fee_runway_exhausted`) instead of settling them. Those
+// skips are correctly not rail faults (nothing broke, we chose not to spend),
+// but they also empty the numerator AND the denominator, so a rail that is
+// 100% paced shut reads exactly like a rail nobody used. Measured on production
+// 2026-08-01, before the admission check existed and while the same refusal
+// still came back as a 502: 85,265 governed refusals against 562 rail-shaped
+// failures, a settle rate of 25.9%, and a hint that sent the reader to the
+// facilitator for a funding problem. `governorSkips` is counted separately here
+// so the sensor can say "paced, top the fee wallet up" in both regimes.
+//
 // Consumed via gatherSubsystemHealth() → /api/healthz, /api/status, and the
 // uptime-check escalation digest (pages on first sight, re-pages hourly, clears
 // on recovery) — no new cron, no new alert path.
@@ -81,6 +97,13 @@ export function isRailFault(reason) {
 // means buildRequirements() dropped the Solana accept, and the reason it drops
 // one in production is sponsorKnownBelowFloor() (api/_lib/x402-paid-endpoint.js).
 const NO_SOLANA_ACCEPT = 'no_solana_accept';
+// The wallet fee governor's refusal, as both sides of the handshake record it:
+// the caller-side admission check (api/_lib/x402/pay.js) skips the call with
+// this reason, and the settle-path meter refuses with the same token. Never a
+// rail fault: it is the platform pacing its own SOL burn, but it is the one
+// benign reason that must still be COUNTED, because at volume it is the whole
+// explanation for a rate or an attempt count that fell off a cliff.
+const FEE_GOVERNOR = /^fee_runway_exhausted/i;
 // The sponsor-floor refusal, as the ring records it. x402-spec.js answers 503
 // `settlement_unavailable` for a fee wallet under its floor, so the reason token
 // arrives either as the 503 prose or as the raw floor signature.
@@ -100,16 +123,28 @@ const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_flo
  *                    read as "settle 22%" while faults sat at their normal
  *                    ~100/h and `no_solana_accept` went 0 to 374/h.
  *
+ *   BUDGET PACED     nothing failed and nothing was withdrawn: the wallet fee
+ *                    governor spent today's fee budget and is refusing the rest
+ *                    of the day's settles on purpose. Look at the fee wallet's
+ *                    SOL, not at the rail. On 2026-08-01 this shape was 85,265
+ *                    governed refusals against 562 rail-shaped failures, and the
+ *                    generic rail hint below sent the reader to the facilitator.
+ *
  * Solana is the home chain, so a withdrawn Solana accept is a platform outage,
  * not the benign "ring chose not to pay" the rate deliberately excludes.
- * @param {{ noSolanaAccept: number, floorSignals: number, settled: number, faults: number }} s
- * @returns {{ cause: 'sponsor_floor'|'rail', hint: string }}
+ * @param {{ noSolanaAccept: number, floorSignals: number, governorSkips?: number,
+ *   settled: number, faults: number }} s
+ * @returns {{ cause: 'sponsor_floor'|'fee_governor'|'rail', hint: string }}
  */
-export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, settled, faults }) {
+export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips = 0, settled, faults }) {
 	// A floor refusal is proof on its own. Absent that, treat the home chain going
 	// unpayable more often than it settles as the same cause: the accept is
 	// withdrawn for most of the window, which is what a flapping floor looks like
 	// through a cache-backed, fail-open check.
+	//
+	// The hard floor outranks the governor deliberately: both want SOL in the same
+	// wallet, but under the floor EVERY settle fails closed, while a spent budget
+	// still settles at the paced rate. Report the harder stop when both are lit.
 	if (floorSignals > 0 || (noSolanaAccept > 0 && noSolanaAccept > settled)) {
 		return {
 			cause: /** @type {const} */ ('sponsor_floor'),
@@ -122,6 +157,25 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, settled, faul
 				'POST /api/cron/treasury-topup?dry=1 (Bearer CRON_SECRET) to see the plan, then without ?dry=1 ' +
 				'to apply. Owner SOL is needed only when every reclaim source reports at_or_below_floor. ' +
 				'See docs/ops/production-log-triage.md.',
+		};
+	}
+	// Nothing failed and nothing was withdrawn: we are refusing our own settles to
+	// pace the fee wallet's SOL. Dominance over faults is the test, because a
+	// handful of governed skips is the governor working as designed on a healthy
+	// rail, while a landslide of them IS the reason the rate moved.
+	if (governorSkips > faults && governorSkips > 0) {
+		return {
+			cause: /** @type {const} */ ('fee_governor'),
+			hint:
+				'This is a GOVERNED THROTTLE, not a rail fault: ' +
+				`${governorSkips} settle(s) skipped by the wallet fee governor against ${faults} rail fault(s). ` +
+				'The fee wallet spent its daily SOL fee budget (spendable SOL / X402_WALLET_FEE_RUNWAY_DAYS, ' +
+				'floored at X402_WALLET_FEE_MIN_BUDGET_LAMPORTS), so the rail is pacing itself until the budget ' +
+				'refills. Do NOT debug the facilitator and do NOT lower the sponsor floor. Read the live budget ' +
+				'at GET /api/x402/runway-lab, then fund the fee wallet: POST /api/cron/treasury-topup?dry=1 ' +
+				'(Bearer CRON_SECRET) shows what the free self-heal can reclaim, and owner SOL is needed only ' +
+				'when every reclaim source reports at_or_below_floor or an undecryptable secret. ' +
+				'See docs/x402-ring-economy.md "The wallet fee governor".',
 		};
 	}
 	return {
@@ -155,6 +209,7 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 	// entirely is what made the 07-29 numerator collapse unreadable.
 	let noSolanaAccept = 0;
 	let floorSignals = 0;
+	let governorSkips = 0;
 	/** @type {Record<string, number>} */
 	const faultBy = {};
 	for (const b of Array.isArray(buckets) ? buckets : []) {
@@ -167,6 +222,7 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 		if (b.success) continue;
 		if (b.reason === NO_SOLANA_ACCEPT) noSolanaAccept += n;
 		if (SPONSOR_FLOOR.test(String(b.reason || ''))) floorSignals += n;
+		if (FEE_GOVERNOR.test(String(b.reason || ''))) governorSkips += n;
 		if (isRailFault(b.reason)) {
 			faults += n;
 			faultBy[b.reason] = (faultBy[b.reason] || 0) + n;
@@ -178,10 +234,30 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 		.sort((a, b) => b.n - a.n);
 
 	if (attempts < minAttempts) {
+		// A throttled rail is not an unjudgeable one. When the reason there is
+		// nothing to judge is that the governor skipped the calls, say so and report
+		// `degraded`: the funding action is identical to the low-rate case, and
+		// `unknown` would let a fully paced-shut economy sit silent behind a neutral
+		// verdict. The threshold is the same MIN_ATTEMPTS, so a handful of skips on
+		// a genuinely idle ring still reads `unknown`.
+		if (governorSkips >= minAttempts) {
+			const { cause, hint } = diagnoseSettleDrop({
+				noSolanaAccept, floorSignals, governorSkips, settled, faults,
+			});
+			return {
+				status: 'degraded',
+				settled, faults, attempts, rate: null, faultClasses,
+				cause, noSolanaAccept, floorSignals, governorSkips,
+				detail:
+					`settle throttled: ${governorSkips} call(s) skipped by the wallet fee governor, ` +
+					`${attempts} attempt(s) in ${WINDOW_INTERVAL}`,
+				hint,
+			};
+		}
 		return {
 			status: 'unknown',
-			settled, faults, attempts, rate: null, faultClasses,
-			detail: `only ${attempts} settle attempts in ${WINDOW_INTERVAL} — too few to judge`,
+			settled, faults, attempts, rate: null, faultClasses, governorSkips,
+			detail: `only ${attempts} settle attempts in ${WINDOW_INTERVAL}, too few to judge`,
 		};
 	}
 
@@ -194,22 +270,31 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS } = 
 	const base = `settle ${pct}% (${settled}/${attempts} paid attempts, ${WINDOW_INTERVAL})`;
 
 	if (rate >= OK_RATE) {
-		return { status: 'ok', settled, faults, attempts, rate, faultClasses, detail: base };
+		// A healthy rate with the governor pacing behind it is still healthy: the
+		// settles that ran, ran. Carry the skip count so a wallet quietly sliding
+		// toward its budget shows up before the rate does.
+		return {
+			status: 'ok', settled, faults, attempts, rate, faultClasses, governorSkips,
+			detail: governorSkips > 0 ? `${base}; ${governorSkips} paced by the fee governor` : base,
+		};
 	}
 	const status = rate < DOWN_RATE ? 'down' : 'degraded';
-	const { cause, hint } = diagnoseSettleDrop({ noSolanaAccept, floorSignals, settled, faults });
+	const { cause, hint } = diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips, settled, faults });
 	// Name the withdrawal in `detail` too: the hint is one field deep in the JSON,
 	// but `detail` is what the dashboard row, the digest and /api/status all print.
 	const withdrawn =
 		cause === 'sponsor_floor'
 			? `; Solana accept withdrawn (${noSolanaAccept} no_solana_accept, sponsor under SOL floor)`
-			: '';
+			: cause === 'fee_governor'
+				? `; ${governorSkips} call(s) paced by the fee governor (budget spent, not a rail fault)`
+				: '';
 	return {
 		status,
 		settled, faults, attempts, rate, faultClasses,
 		cause,
 		noSolanaAccept,
 		floorSignals,
+		governorSkips,
 		detail: `${base}; ${faults} rail faults${topFaults ? ` (${topFaults})` : ''}${withdrawn}`,
 		hint,
 	};
@@ -257,6 +342,9 @@ export async function gatherX402SettleHealth() {
 				...(v.cause ? { cause: v.cause } : {}),
 				noSolanaAccept: v.noSolanaAccept ?? 0,
 				floorSignals: v.floorSignals ?? 0,
+				// Deliberate spend-pacing, not failure. Read it next to `rate`: the two
+				// together separate "the rail broke" from "the rail is out of budget".
+				governorSkips: v.governorSkips ?? 0,
 			},
 		};
 	} catch (err) {

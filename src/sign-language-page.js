@@ -102,7 +102,10 @@ async function boot() {
 		stage?.dispose();
 		// Full-body framing: the whole avatar stays in frame, and the orbit
 		// controls let anyone zoom into the signing space when they want detail.
-		stage = new PoseStage(stageHost, { glbUrl: avatar.url });
+		stage = new PoseStage(stageHost, {
+			glbUrl: avatar.url,
+			label: 'A 3D avatar signing in American Sign Language',
+		});
 		try {
 			const { supported } = await stage.mount();
 			stage.start();

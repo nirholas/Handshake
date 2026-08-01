@@ -32,11 +32,22 @@
 
 import express from 'express';
 import compression from 'compression';
-import { existsSync, statSync, readdirSync, readFileSync } from 'node:fs';
+import { statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
+// Route resolution lives in its own module so the audit scripts
+// (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
+// instead of a copy that can silently drift from it.
+import {
+	loadRouteTable,
+	substitute,
+	isExternalDest,
+	hasMatches,
+	isRoutable,
+	resolveApi,
+} from './route-resolve.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -52,65 +63,9 @@ const BODY_LIMIT = '8mb';
 // vercel.json route table, split at the {handle: "filesystem"} marker.
 // ---------------------------------------------------------------------------
 
-const vercelConfig = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
-const fsIndex = vercelConfig.routes.findIndex((r) => r.handle === 'filesystem');
-const compileRoute = (r) => ({ ...r, re: new RegExp(`^${r.src}$`) });
-const phase1Routes = vercelConfig.routes
-	.slice(0, fsIndex === -1 ? vercelConfig.routes.length : fsIndex)
-	.filter((r) => r.src)
-	.map(compileRoute);
-const postFsRoutes =
-	fsIndex === -1
-		? []
-		: vercelConfig.routes
-				.slice(fsIndex + 1)
-				.filter((r) => r.src)
-				.map(compileRoute);
-
-// "$1"-style capture substitution used by dest and header values.
-function substitute(template, match) {
-	return template.replace(/\$(\d+)/g, (_, n) => match[Number(n)] ?? '');
-}
-
-const isExternalDest = (dest) => /^https?:\/\//.test(dest || '');
-
-// Vercel `has` conditions (query/header/cookie/host presence + optional regex
-// value) gate a route to only the requests it's meant for — e.g. the /app and
-// /agents/:id OG rules only fire for social-preview bots. Every entry must
-// match against the ORIGINAL request (url/headers), independent of any dest
-// rewrite already applied earlier in the same phase-1 pass.
-function hasMatches(route, req, url) {
-	if (!route.has) return true;
-	for (const cond of route.has) {
-		let val;
-		if (cond.type === 'query') val = url.searchParams.get(cond.key);
-		else if (cond.type === 'header') val = req.headers[cond.key.toLowerCase()];
-		else if (cond.type === 'cookie') {
-			const raw = req.headers.cookie || '';
-			const m = raw.match(new RegExp(`(?:^|;\\s*)${cond.key}=([^;]*)`));
-			val = m ? decodeURIComponent(m[1]) : undefined;
-		} else if (cond.type === 'host') val = req.headers.host;
-		else continue;
-		if (val == null) return false;
-		if (cond.value !== undefined && !compileHasValue(cond.value).test(val)) return false;
-	}
-	return true;
-}
-
-// Vercel `has[].value` patterns may carry a leading Perl-style `(?i)` inline
-// case-insensitive flag, which native RegExp rejects as an invalid group —
-// strip it and apply the `i` flag instead. Compiled patterns are cached since
-// the same route's has[] is re-evaluated on every matching request.
-const hasValueCache = new Map();
-function compileHasValue(value) {
-	let re = hasValueCache.get(value);
-	if (!re) {
-		const caseInsensitive = value.startsWith('(?i)');
-		re = new RegExp(caseInsensitive ? value.slice(4) : value, caseInsensitive ? 'i' : undefined);
-		hasValueCache.set(value, re);
-	}
-	return re;
-}
+const { config: vercelConfig, phase1Routes, postFsRoutes } = loadRouteTable(
+	path.join(ROOT, 'vercel.json'),
+);
 
 // ---------------------------------------------------------------------------
 // External-URL dests (reverse proxy), e.g. /ingest/* → PostHog.
@@ -191,74 +146,6 @@ async function proxyExternal(req, res, dest) {
 const routeCache = new Map();
 /** @type {Map<string, Promise<any>>} */
 const moduleCache = new Map();
-/** @type {Map<string, import('node:fs').Dirent[]>} */
-const dirCache = new Map();
-
-function listDir(dir) {
-	let entries = dirCache.get(dir);
-	if (!entries) {
-		entries = readdirSync(dir, { withFileTypes: true });
-		dirCache.set(dir, entries);
-	}
-	return entries;
-}
-
-function isRoutable(name) {
-	return !name.startsWith('_') && !name.startsWith('.');
-}
-
-function resolveApi(dir, segments, params) {
-	if (segments.length === 0) {
-		const index = path.join(dir, 'index.js');
-		return existsSync(index) ? { file: index, params } : null;
-	}
-	const [head, ...rest] = segments;
-
-	if (rest.length === 0) {
-		const exact = path.join(dir, `${head}.js`);
-		if (existsSync(exact)) return { file: exact, params };
-	}
-
-	const exactDir = path.join(dir, head);
-	if (existsSync(exactDir) && statSync(exactDir).isDirectory()) {
-		const hit = resolveApi(exactDir, rest, params);
-		if (hit) return hit;
-	}
-
-	const entries = listDir(dir);
-
-	if (rest.length === 0) {
-		for (const e of entries) {
-			if (!e.isFile() || !isRoutable(e.name)) continue;
-			if (e.name.startsWith('[') && e.name.endsWith('].js') && !e.name.startsWith('[...')) {
-				const name = e.name.slice(1, -4);
-				return { file: path.join(dir, e.name), params: { ...params, [name]: head } };
-			}
-		}
-	}
-
-	for (const e of entries) {
-		if (!e.isDirectory() || !isRoutable(e.name)) continue;
-		if (e.name.startsWith('[') && e.name.endsWith(']') && !e.name.startsWith('[...')) {
-			const name = e.name.slice(1, -1);
-			const hit = resolveApi(path.join(dir, e.name), rest, { ...params, [name]: head });
-			if (hit) return hit;
-		}
-	}
-
-	for (const e of entries) {
-		if (!e.isFile()) continue;
-		if (e.name.startsWith('[...') && e.name.endsWith('].js')) {
-			const name = e.name.slice(4, -4);
-			return {
-				file: path.join(dir, e.name),
-				params: { ...params, [name]: [head, ...rest].join('/') },
-			};
-		}
-	}
-
-	return null;
-}
 
 async function dispatchApi(req, res, pathname, extraQuery) {
 	// Route-table dests may target the file directly ("/api/x402/service.js").

@@ -271,6 +271,58 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
+ * INTERACTIVE-STATE FLOOR (B14)
+ * The tokens above name a focus ring and a disabled treatment, but naming them
+ * only helps the components that remember to reach for them. A sweep of the
+ * platform found ~1,500 selectors that declare `cursor: pointer` yet define no
+ * focus-visible or disabled rule at all: keyboard users landed on them with no
+ * visible ring, and disabled controls looked identical to live ones.
+ *
+ * These two rules close that gap once, for every page, because tokens.css is
+ * imported by both style.css and nav.css. They are wrapped in `:where()`, which
+ * forces their specificity to (0,0,0), so they are a FLOOR, never a ceiling:
+ * any component rule, however weakly written, still overrides them. Nothing
+ * that already styles its own focus or disabled state changes appearance.
+ *
+ * Scope note: `:focus-visible` fires on keyboard/assistive focus only, so this
+ * adds no ring to mouse clicks. A component that wants no ring should re-style
+ * it (a different colour, an inset shadow), not remove it.
+ * ════════════════════════════════════════════════════════════════════════════ */
+:where(
+	a[href],
+	area[href],
+	button,
+	input,
+	select,
+	textarea,
+	summary,
+	[tabindex]:not([tabindex='-1']),
+	[role='button'],
+	[role='link'],
+	[role='tab'],
+	[role='menuitem'],
+	[role='menuitemcheckbox'],
+	[role='menuitemradio'],
+	[role='option'],
+	[role='checkbox'],
+	[role='radio'],
+	[role='switch'],
+	[role='slider'],
+	[role='textbox']
+):focus-visible {
+	outline: var(--focus-ring-width) solid var(--focus-ring-color);
+	outline-offset: var(--focus-ring-offset);
+}
+
+/* Disabled floor. Covers both the native attribute and the ARIA state, since
+   custom controls (div/span with role=button) can only express the latter. */
+:where(button, input, select, textarea, fieldset, optgroup, option)[disabled],
+:where([aria-disabled='true']) {
+	opacity: var(--disabled-opacity);
+	cursor: var(--disabled-cursor);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
  * SEMANTIC ALIAS LAYER (B12)
  * Thin, theme-agnostic synonyms layered ON TOP of the primitives above — the
  * same sanctioned pattern as --nxt-* (app shell) and --nv-* (nav): every value
@@ -402,5 +454,36 @@
 		--duration-fast: 0ms;
 		--duration-base: 0ms;
 		--duration-slow: 0ms;
+	}
+
+	/* Reduced-motion floor (B14). Zeroing the duration tokens above only reaches
+	   motion that was authored through them. A sweep found 26 stylesheets with
+	   @keyframes and no reduced-motion block at all, plus hundreds of inline
+	   transitions with literal durations, so a user who asks for less motion
+	   still got shimmer, slides and parallax on those surfaces. This collapses
+	   the remainder in one place. `!important` is required to beat the literal
+	   declarations it exists to override.
+
+	   Deliberate carve-outs, because "reduce" does not mean "remove status":
+	     1. data-motion="essential" (or the .motion-keep class) and its subtree
+	        opts out. Use it where the movement IS the information, not decoration.
+	     2. Busy/progress indicators keep animating. A spinner frozen mid-rotation
+	        reads as a hung page, which is a worse outcome than the motion. The
+	        substring class match covers the ~28 differently-named spinner classes
+	        across the platform without maintaining a list of them. */
+	/* The exempt list is repeated per pseudo-element because a pseudo is selected
+	   through its originating element; there is no shorter correct spelling. */
+	*:not(.motion-keep, .motion-keep *, [data-motion='essential'], [data-motion='essential'] *, [aria-busy='true'], [aria-busy='true'] *, [role='progressbar'], [class*='spin'], [class*='loader']),
+	*:not(.motion-keep, .motion-keep *, [data-motion='essential'], [data-motion='essential'] *, [aria-busy='true'], [aria-busy='true'] *, [role='progressbar'], [class*='spin'], [class*='loader'])::before,
+	*:not(.motion-keep, .motion-keep *, [data-motion='essential'], [data-motion='essential'] *, [aria-busy='true'], [aria-busy='true'] *, [role='progressbar'], [class*='spin'], [class*='loader'])::after {
+		animation-duration: 1ms !important;
+		animation-delay: 0ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 1ms !important;
+		transition-delay: 0ms !important;
+	}
+
+	html {
+		scroll-behavior: auto !important;
 	}
 }

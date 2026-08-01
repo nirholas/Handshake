@@ -6,13 +6,20 @@
 // per difficulty. Writes data/_generated/fact-check-benchmark.json so the public
 // /fact-check accuracy page can render real, checkable numbers.
 //
-// The endpoint is paid ($0.10/claim), so the runner needs an access path — set
-// FACT_CHECK_BYPASS_TOKEN (an x402:bypass-scoped token) OR run it against a
-// deployment whose free lane covers the run. Without a way to reach the chain the
-// runner EXITS with a clear message naming what's missing and writes NOTHING — it
-// never fabricates scores.
+// The endpoint is paid ($0.10/claim), so the runner needs an access path. Two
+// exist, both handled by api/_lib/x402/access-control.js:
+//   • INTERNAL_API_KEY: the internal service key, sent as `X-API-Key`. This is
+//     the path the published runs use; the same value is set on the three-ws-api
+//     Cloud Run service. See docs/fact-check.md for rotation.
+//   • FACT_CHECK_BYPASS_TOKEN: an OAuth bearer carrying the `x402:bypass`
+//     scope, sent as `Authorization: Bearer`. Use it when you want a scoped,
+//     per-user credential instead of the service key.
+// With neither, the free lane (3 checks/day per IP) covers only the first few
+// claims and the rest 402: so the runner EXITS with a clear message naming what
+// is missing and writes NOTHING. It never fabricates scores.
 //
 // Usage:
+//   node --env-file=.env scripts/fact-check-benchmark.mjs
 //   FACT_CHECK_BYPASS_TOKEN=… node scripts/fact-check-benchmark.mjs
 //   FACT_CHECK_ENDPOINT=https://three.ws/api/x402/fact-check node scripts/fact-check-benchmark.mjs
 //
@@ -23,12 +30,28 @@
 // stale cached verdict:
 //   node --env-file=.env scripts/fact-check-benchmark.mjs --in-process
 //
-// The scoring core (scoreResults / summarize) is pure and unit-tested in
-// tests/api/fact-check-v2.test.js.
+// Publishing (`--publish`) additionally writes the run to the DB, which is what
+// the live /api/fact-check-benchmark endpoint reads first, so a re-run reaches
+// the public page without a deploy. Without the flag the run only updates the
+// committed file, which takes effect on the next deploy.
+//
+// The scoring core (scoreResults / validateFixture) is pure, lives in
+// api/_lib/fact-check-benchmark.js so the endpoint and the scheduled re-run share
+// it, and is unit-tested in tests/api/fact-check-benchmark.test.js.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import {
+	MAX_ERROR_RATE,
+	buildReport,
+	degradedReason,
+	isDegraded,
+	savePublishedRun,
+	scoreResults,
+	validateFixture,
+} from '../api/_lib/fact-check-benchmark.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..');
@@ -36,115 +59,50 @@ const FIXTURE = join(REPO, 'tests/fixtures/fact-check-benchmark.json');
 const OUT_DIR = join(REPO, 'data/_generated');
 const OUT_FILE = join(OUT_DIR, 'fact-check-benchmark.json');
 
-const VERDICT_CLASSES = ['supported', 'contradicted', 'mixed', 'insufficient'];
-const DIFFICULTIES = ['easy', 'medium', 'hard'];
-
-// ── Pure scoring core (exported for tests) ───────────────────────────────────
-
-// Group an array by a key function into { [key]: items[] }.
-function groupBy(items, keyFn) {
-	const out = {};
-	for (const it of items) {
-		const k = keyFn(it);
-		(out[k] ||= []).push(it);
-	}
-	return out;
-}
-
-// Score a set of results against the fixture. `results` is an array of
-// { claim, expected_verdict, difficulty, actual_verdict } (actual_verdict null =
-// the chain could not be reached for that claim → counts as incorrect but is
-// tracked separately as `errors`). Returns a structured accuracy report.
-export function scoreResults(results) {
-	const total = results.length;
-	const correct = results.filter((r) => r.actual_verdict === r.expected_verdict).length;
-	const errors = results.filter((r) => r.actual_verdict == null).length;
-
-	const pct = (c, t) => (t > 0 ? Math.round((c / t) * 1000) / 10 : null);
-
-	const byClass = {};
-	const grpClass = groupBy(results, (r) => r.expected_verdict);
-	for (const cls of VERDICT_CLASSES) {
-		const g = grpClass[cls] || [];
-		byClass[cls] = { total: g.length, correct: g.filter((r) => r.actual_verdict === r.expected_verdict).length };
-		byClass[cls].accuracy_pct = pct(byClass[cls].correct, byClass[cls].total);
-	}
-
-	const byDifficulty = {};
-	const grpDiff = groupBy(results, (r) => r.difficulty);
-	for (const d of DIFFICULTIES) {
-		const g = grpDiff[d] || [];
-		byDifficulty[d] = { total: g.length, correct: g.filter((r) => r.actual_verdict === r.expected_verdict).length };
-		byDifficulty[d].accuracy_pct = pct(byDifficulty[d].correct, byDifficulty[d].total);
-	}
-
-	// A simple confusion matrix expected→actual (only for claims that were checked).
-	const confusion = {};
-	for (const cls of VERDICT_CLASSES) confusion[cls] = {};
-	for (const r of results) {
-		if (r.actual_verdict == null) continue;
-		const row = (confusion[r.expected_verdict] ||= {});
-		row[r.actual_verdict] = (row[r.actual_verdict] || 0) + 1;
-	}
-
-	return {
-		total,
-		correct,
-		errors,
-		accuracy_pct: pct(correct, total),
-		by_class: byClass,
-		by_difficulty: byDifficulty,
-		confusion,
-	};
-}
-
-// Validate the fixture shape and return its claims. Throws on a malformed suite —
-// the benchmark is the product's quality bar, so a broken fixture must fail loud.
-export function validateFixture(fixture) {
-	if (!fixture || !Array.isArray(fixture.claims)) throw new Error('fixture.claims must be an array');
-	const claims = fixture.claims;
-	if (claims.length < 40) throw new Error(`fixture must have ≥40 claims, has ${claims.length}`);
-	const counts = Object.fromEntries(VERDICT_CLASSES.map((c) => [c, 0]));
-	for (const [i, c] of claims.entries()) {
-		if (!c.claim || typeof c.claim !== 'string') throw new Error(`claims[${i}].claim missing`);
-		if (!VERDICT_CLASSES.includes(c.expected_verdict)) throw new Error(`claims[${i}].expected_verdict invalid: ${c.expected_verdict}`);
-		if (!c.rationale) throw new Error(`claims[${i}].rationale missing`);
-		if (!DIFFICULTIES.includes(c.difficulty)) throw new Error(`claims[${i}].difficulty invalid: ${c.difficulty}`);
-		counts[c.expected_verdict]++;
-	}
-	for (const cls of VERDICT_CLASSES) {
-		if (counts[cls] < 10) throw new Error(`class "${cls}" has ${counts[cls]} claims, needs ≥10`);
-	}
-	return claims;
-}
-
-// A run whose claims mostly ERRORED measures upstream availability, not accuracy:
-// every unreachable claim scores as incorrect, so the headline number reads as
-// "the product is wrong" when the truth is "the chain was down". Publishing that
-// to /fact-check states a false accuracy figure for a paid product — a run went
-// out at 7.5% with 30 of 40 claims errored while the LLM chain was exhausted.
-// Refuse to write it; the page's designed "not yet run" state is honest, a bad
-// number is not.
-const MAX_ERROR_RATE = 0.1;
+// Re-exported for anything still importing the pure core from the script path.
+export { scoreResults, validateFixture };
 
 function refuseIfDegraded(score) {
-	const errorRate = score.total > 0 ? score.errors / score.total : 1;
-	if (errorRate <= MAX_ERROR_RATE) return;
+	if (!isDegraded(score)) return;
 	console.error(
-		`\nRefusing to publish: ${score.errors}/${score.total} claims could not be checked ` +
-			`(${Math.round(errorRate * 100)}% > ${Math.round(MAX_ERROR_RATE * 100)}% ceiling).\n` +
-			'This run measured provider availability, not verdict accuracy. Fix the chain ' +
-			'(the "[llm] chain exhausted" warn line names every rung that failed) and re-run.\n' +
+		`\nRefusing to publish: ${degradedReason(score)}\n` +
+			`(ceiling: ${Math.round(MAX_ERROR_RATE * 100)}% errored claims.)\n` +
+			'Fix the chain (the "[llm] chain exhausted" warn line names every rung that ' +
+			'failed) and re-run.\n' +
 			'Nothing was written — the accuracy page keeps rendering its honest state.',
 	);
 	process.exit(1);
 }
 
+// Write the scored run: always the committed file (the deploy-time fallback and
+// the seed for a fresh environment), plus the DB row when --publish is passed so
+// the live page picks it up immediately.
+async function writeReport(report, { publish }) {
+	await mkdir(OUT_DIR, { recursive: true });
+	await writeFile(OUT_FILE, JSON.stringify(report, null, 2) + '\n');
+	console.log(`Wrote ${OUT_FILE}`);
+	if (!publish) {
+		console.log('Not published to the DB (pass --publish to update the live page now).');
+		return;
+	}
+	await savePublishedRun(report);
+	console.log('Published to the DB: GET /api/fact-check-benchmark serves this run now.');
+}
+
 // ── Live chain call ──────────────────────────────────────────────────────────
 
-async function checkOne(endpoint, bypassToken, claim) {
-	const headers = { 'content-type': 'application/json' };
-	if (bypassToken) headers.authorization = `Bearer ${bypassToken}`;
+// Build the bypass headers once. Both paths are checked by
+// api/_lib/x402/access-control.js; sending both is harmless (the service key is
+// tried first) and lets a caller hold either credential.
+function bypassHeaders({ apiKey, bearer }) {
+	const headers = {};
+	if (apiKey) headers['x-api-key'] = apiKey;
+	if (bearer) headers.authorization = `Bearer ${bearer}`;
+	return headers;
+}
+
+async function checkOne(endpoint, access, claim) {
+	const headers = { 'content-type': 'application/json', ...bypassHeaders(access) };
 	const res = await fetch(endpoint, {
 		method: 'POST',
 		headers,
@@ -166,30 +124,53 @@ async function checkOne(endpoint, bypassToken, claim) {
 	return verdict;
 }
 
+// One live check with a bounded retry. A single 502 or edge timeout on a 40-claim
+// run costs 2.5 percentage points of "accuracy" that is really a transport blip,
+// and four of them trip the degraded-run refusal, so a transient failure is
+// retried once rather than being scored as a wrong verdict. A 402 is NOT
+// transient (no credential will appear between attempts) and fails immediately.
+async function checkOneWithRetry(endpoint, access, claim) {
+	try {
+		return await checkOne(endpoint, access, claim);
+	} catch (err) {
+		if (err.paymentRequired || err.status === 400 || err.status === 403) throw err;
+		await new Promise((r) => setTimeout(r, 3_000));
+		return checkOne(endpoint, access, claim);
+	}
+}
+
 async function main() {
 	const raw = await readFile(FIXTURE, 'utf8');
 	const fixture = JSON.parse(raw);
 	const claims = validateFixture(fixture);
 	console.log(`Loaded ${claims.length} benchmark claims (validated).`);
 
+	const publish = process.argv.includes('--publish');
 	const inProcess =
 		process.argv.includes('--in-process') || process.env.FACT_CHECK_INPROCESS === '1';
-	if (inProcess) return mainInProcess(claims, fixture);
+	if (inProcess) return mainInProcess(claims, fixture, { publish });
 
 	const endpoint = process.env.FACT_CHECK_ENDPOINT || 'https://three.ws/api/x402/fact-check';
-	const bypassToken = process.env.FACT_CHECK_BYPASS_TOKEN || '';
+	const access = {
+		apiKey: process.env.FACT_CHECK_API_KEY || process.env.INTERNAL_API_KEY || '',
+		bearer: process.env.FACT_CHECK_BYPASS_TOKEN || '',
+	};
+	const hasBypass = Boolean(access.apiKey || access.bearer);
 
-	// Probe reachability before spending a full run. A 402 without a bypass token
-	// means the run can't proceed without payment — exit clearly, write nothing.
-	if (!bypassToken) {
+	// Probe reachability before spending a full run. A 402 without any bypass
+	// credential means the run can't proceed without payment, exit clearly,
+	// write nothing.
+	if (!hasBypass) {
 		try {
-			await checkOne(endpoint, '', claims[0].claim);
+			await checkOne(endpoint, access, claims[0].claim);
 		} catch (err) {
 			if (err.paymentRequired) {
 				console.error(
 					'\nCannot run the benchmark: the fact-check endpoint requires payment and no ' +
-						'FACT_CHECK_BYPASS_TOKEN (x402:bypass scope) was provided.\n' +
-						'Set FACT_CHECK_BYPASS_TOKEN (and optionally FACT_CHECK_ENDPOINT) and re-run.\n' +
+						'bypass credential was provided.\n' +
+						'Set INTERNAL_API_KEY (the service key, sent as X-API-Key) or ' +
+						'FACT_CHECK_BYPASS_TOKEN (an x402:bypass-scoped bearer), optionally with ' +
+						'FACT_CHECK_ENDPOINT, and re-run.\n' +
 						'No scores were written — the accuracy page will render its honest "not yet run" state.',
 				);
 				process.exit(1);
@@ -199,12 +180,15 @@ async function main() {
 		}
 	}
 
-	console.log(`Running ${claims.length} claims through ${endpoint} …`);
+	console.log(
+		`Running ${claims.length} claims through ${endpoint} ` +
+			`(bypass: ${access.apiKey ? 'X-API-Key' : access.bearer ? 'Bearer x402:bypass' : 'none, free lane only'}) …`,
+	);
 	const results = [];
 	for (const [i, c] of claims.entries()) {
 		let actual = null;
 		try {
-			actual = await checkOne(endpoint, bypassToken, c.claim);
+			actual = await checkOneWithRetry(endpoint, access, c.claim);
 		} catch (err) {
 			console.warn(`  [${i + 1}/${claims.length}] error: ${err.message}`);
 		}
@@ -215,17 +199,9 @@ async function main() {
 
 	const score = scoreResults(results);
 	refuseIfDegraded(score);
-	const report = {
-		generated_at: new Date().toISOString(),
-		endpoint,
-		fixture_version: fixture.version || '1.0.0',
-		claim_count: claims.length,
-		...score,
-	};
-	await mkdir(OUT_DIR, { recursive: true });
-	await writeFile(OUT_FILE, JSON.stringify(report, null, 2) + '\n');
+	const report = buildReport({ score, endpoint, fixture, claimCount: claims.length });
 	console.log(`\nOverall accuracy: ${score.accuracy_pct}%  (${score.correct}/${score.total}, ${score.errors} errors)`);
-	console.log(`Wrote ${OUT_FILE}`);
+	await writeReport(report, { publish });
 }
 
 // ── In-process mode ──────────────────────────────────────────────────────────
@@ -234,7 +210,7 @@ async function main() {
 // produce the published data/_generated numbers so the benchmark measures the
 // product's verdict quality, not payment plumbing.
 
-async function mainInProcess(claims, fixture) {
+async function mainInProcess(claims, fixture, { publish } = {}) {
 	// Disable the shared Redis verdict cache for the run: a benchmark that reads
 	// week-old cached verdicts measures the cache, not the chain.
 	delete process.env.UPSTASH_REDIS_REST_URL;
@@ -271,22 +247,15 @@ async function mainInProcess(claims, fixture) {
 
 	const score = scoreResults(results);
 	refuseIfDegraded(score);
-	const report = {
-		generated_at: new Date().toISOString(),
-		endpoint,
-		fixture_version: fixture.version || '1.0.0',
-		claim_count: claims.length,
-		...score,
-	};
-	await mkdir(OUT_DIR, { recursive: true });
-	await writeFile(OUT_FILE, JSON.stringify(report, null, 2) + '\n');
+	const report = buildReport({ score, endpoint, fixture, claimCount: claims.length });
 	// Per-claim detail for diagnosis (not published; scratch aid for whoever is
 	// tuning the chain). Written next to nothing public.
 	if (process.env.FACT_CHECK_DETAIL_FILE) {
+		await mkdir(dirname(process.env.FACT_CHECK_DETAIL_FILE), { recursive: true });
 		await writeFile(process.env.FACT_CHECK_DETAIL_FILE, JSON.stringify(details, null, 2) + '\n');
 	}
 	console.log(`\nOverall accuracy: ${score.accuracy_pct}%  (${score.correct}/${score.total}, ${score.errors} errors)`);
-	console.log(`Wrote ${OUT_FILE}`);
+	await writeReport(report, { publish });
 }
 
 // Only run main() when invoked directly, not when imported by the test.

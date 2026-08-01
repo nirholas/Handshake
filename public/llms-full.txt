@@ -2807,6 +2807,12 @@ URL: https://three.ws/docs/agent-identities
 
 Every AI agent deserves a face. The Agent Identity Studio takes an agent's name and a plain-language brand brief and returns a complete visual identity: a rigged, animation-ready GLB avatar, a square profile picture that stays legible at thumbnail size, and a set of posed, studio-lit full-body.
 
+### Docs: OKX.AI marketplace services
+
+URL: https://three.ws/docs/okx-marketplace
+
+The 3D services three.ws sells to other AI agents on OKX.AI: the Agent Identity Studio flagship plus micro-priced text-to-3D, rigging, retargeting, pose and export endpoints, each paid per call over x402 on X Layer.
+
 ### Docs: Avatar Engines Atlas
 
 URL: https://three.ws/docs/avatar-engines

@@ -13,6 +13,7 @@ import {
 	identicon, verifiedBadge, signatureCoin,
 } from './trader-format.js';
 import { mountCopyPanel } from './copy-panel.js';
+import { mountPassport, resetPassport } from './trader-passport.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { ring, playRings, countUp } from './ui-juice.js';
 
@@ -259,6 +260,10 @@ function closedRows(closed) {
 		const proof = [
 			t.buy_url ? `<a class="tp-proof-link" href="${escapeHtml(t.buy_url)}" target="_blank" rel="noopener">buy ↗</a>` : '',
 			t.sell_url ? `<a class="tp-proof-link" href="${escapeHtml(t.sell_url)}" target="_blank" rel="noopener">sell ↗</a>` : '',
+			// /trade/<id> is the per-trade share page: its own OG card, the four
+			// numbers, both legs on Solscan, and one tap to post it.
+			t.id ? `<a class="tp-proof-link tp-proof-share" href="/trade/${encodeURIComponent(t.id)}"
+				title="Open this trade's shareable card">share</a>` : '',
 		].filter(Boolean).join(' ');
 		const tags = [
 			t.snipe
@@ -406,6 +411,7 @@ function render(data) {
 					: ''}
 				</div>
 			</div>
+			<div id="tp-passport"></div>
 			<table class="tp-table"><thead><tr>
 				<th>Coin</th><th>P&L</th><th>Exit</th><th>Held</th><th>When</th><th>On-chain</th>
 			</tr></thead><tbody>${closedRows(data.closed)}</tbody></table>
@@ -443,6 +449,13 @@ function wireTabs() {
 		content.querySelectorAll('.tp-panel').forEach((p) => {
 			p.classList.toggle('is-active', p.dataset.panel === tab.dataset.tab);
 		});
+		// The passport costs an extra request and only the Proof tab shows it, so
+		// it loads on first open rather than on every profile view.
+		if (tab.dataset.tab === 'proof' && ctx.agentId) {
+			mountPassport(document.getElementById('tp-passport'), {
+				agentId: ctx.agentId, network: ctx.network, window: ctx.window, toast,
+			});
+		}
 	}));
 }
 
@@ -455,6 +468,8 @@ function wireWindow() {
 		const url = new URL(location.href);
 		url.searchParams.set('window', ctx.window);
 		history.replaceState(null, '', url);
+		// A credential is per-window, so the cached one no longer describes the view.
+		resetPassport();
 		load();
 	});
 }

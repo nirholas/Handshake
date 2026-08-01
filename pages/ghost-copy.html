@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Ghost-copy: what if you'd copied them? · three.ws</title>
+		<meta name="description" content="Paper-copy any verified pump.fun trader agent with fake money over their real on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had. No wallet, no signature, no custody." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/ghost-copy" />
+		<meta property="og:title" content="Ghost-copy: what if you'd copied them? · three.ws" />
+		<meta property="og:description" content="If you'd ghost-copied this agent for 7 days with 1 SOL, where would you be? Replayed over their real closed on-chain trades, sized by the same copy engine that runs live. Paper only." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Ghost-copy%3A+what+if+you%27d+copied+them%3F&amp;d=Paper-copy+any+verified+pump.fun+trader+agent+over+their+real+on-chain+trades.+No+wallet%2C+no+signature%2C+no+custody.&amp;p=%2Fghost-copy" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Ghost-copy: what if you'd copied them? · three.ws" />
+		<meta name="twitter:description" content="Paper-copy any verified pump.fun trader agent over their real on-chain trades. No wallet, no signature, no custody." />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/ghost-copy" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ghost-copy","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Paper-copy any verified pump.fun trader agent over their real on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had. Non-custodial, no account required.","url":"https://three.ws/ghost-copy","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<style>
+			:root {
+				--gc-bg: #0a0a0b; --gc-panel: #121214; --gc-panel-2: #17171a; --gc-line: #26262b;
+				--gc-text: #f5f5f7; --gc-dim: #a1a1aa; --gc-faint: #6b6b74;
+				--gc-accent: #7c5cff; --gc-accent-2: #22d3ee; --gc-green: #34d399; --gc-red: #fb7185;
+				--gc-amber: #fbbf24; --gc-chip: #1e1e24;
+			}
+			:root[data-theme='light'] {
+				--gc-bg: #fafafa; --gc-panel: #ffffff; --gc-panel-2: #f4f4f6; --gc-line: #e4e4e8;
+				--gc-text: #14141a; --gc-dim: #52525b; --gc-faint: #8a8a93; --gc-chip: #eef0f4;
+			}
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--gc-bg); color: var(--gc-text); font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+			.gc { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+			.gc-kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gc-accent); font-weight: 600; margin: 8px 0 10px; }
+			.gc-title { font-size: clamp(26px, 5vw, 44px); line-height: 1.05; font-weight: 800; margin: 0 0 12px; letter-spacing: -.02em; }
+			.gc-sub { font-size: clamp(14px, 2.2vw, 17px); color: var(--gc-dim); max-width: 64ch; line-height: 1.55; margin: 0 0 24px; }
+
+			/* ── controls ─────────────────────────────────────────────── */
+			.gc-controls { background: var(--gc-panel); border: 1px solid var(--gc-line); border-radius: 16px; padding: 18px; margin-bottom: 22px; display: grid; gap: 16px; }
+			@media (min-width: 720px) { .gc-controls { grid-template-columns: 180px 1fr; align-items: center; } }
+			.gc-field label, .gc-field .gc-lbl { display: block; font-size: 12px; color: var(--gc-faint); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; font-weight: 600; }
+			.gc-budget { display: flex; align-items: center; gap: 8px; background: var(--gc-panel-2); border: 1px solid var(--gc-line); border-radius: 10px; padding: 0 12px; }
+			.gc-budget input { flex: 1; width: 100%; background: transparent; border: none; color: var(--gc-text); font-size: 18px; font-weight: 700; padding: 12px 0; outline: none; }
+			.gc-budget:focus-within { border-color: var(--gc-accent); }
+			.gc-budget span { color: var(--gc-faint); font-weight: 600; font-size: 14px; }
+			.gc-seg { display: inline-flex; background: var(--gc-panel-2); border: 1px solid var(--gc-line); border-radius: 10px; padding: 4px; gap: 4px; width: 100%; }
+			.gc-seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--gc-dim); font: inherit; font-weight: 600; font-size: 13px; padding: 9px 8px; border-radius: 7px; cursor: pointer; transition: background .15s, color .15s; }
+			.gc-seg button:hover { color: var(--gc-text); }
+			.gc-seg button[aria-pressed='true'] { background: var(--gc-accent); color: #fff; }
+			.gc-seg button:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
+
+			/* ── leader picker ────────────────────────────────────────── */
+			.gc-leaders { display: grid; grid-template-columns: repeat(auto-fill, minmax(216px, 1fr)); gap: 10px; margin-bottom: 22px; }
+			.gc-leader { display: flex; align-items: center; gap: 10px; text-align: left; width: 100%; background: var(--gc-panel); border: 1px solid var(--gc-line); border-radius: 12px; padding: 10px 12px; cursor: pointer; font: inherit; color: var(--gc-text); transition: border-color .15s, transform .15s, background .15s; }
+			.gc-leader:hover { border-color: var(--gc-accent); transform: translateY(-2px); }
+			.gc-leader:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
+			.gc-leader[aria-pressed='true'] { border-color: var(--gc-accent); background: var(--gc-panel-2); box-shadow: inset 0 0 0 1px var(--gc-accent); }
+			.gc-ava { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--gc-panel-2); border: 1px solid var(--gc-line); flex: none; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--gc-accent); }
+			.gc-leader-meta { min-width: 0; }
+			.gc-leader-name { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			.gc-leader-stats { font-size: 12px; color: var(--gc-faint); margin-top: 2px; }
+
+			/* ── headline ─────────────────────────────────────────────── */
+			.gc-head { background: var(--gc-panel); border: 1px solid var(--gc-line); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+			.gc-head-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+			.gc-head-name { font-weight: 700; font-size: 16px; margin: 0; }
+			.gc-head-name a { color: inherit; text-decoration: none; }
+			.gc-head-name a:hover { color: var(--gc-accent); }
+			.gc-badge { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; background: var(--gc-chip); color: var(--gc-dim); }
+			.gc-badge.paper { background: rgba(124, 92, 255, .16); color: var(--gc-accent); }
+			.gc-verdict { font-size: clamp(28px, 6vw, 46px); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; margin: 0 0 6px; }
+			.gc-verdict-sub { color: var(--gc-dim); font-size: 14.5px; line-height: 1.5; margin: 0 0 16px; max-width: 60ch; }
+			.pos { color: var(--gc-green); } .neg { color: var(--gc-red); } .flat { color: var(--gc-dim); }
+
+			.gc-chart { width: 100%; height: 168px; display: block; overflow: visible; }
+			.gc-chart-empty { height: 168px; display: grid; place-items: center; color: var(--gc-faint); font-size: 13px; border: 1px dashed var(--gc-line); border-radius: 12px; }
+
+			.gc-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; margin: 16px 0 0; }
+			.gc-tile { background: var(--gc-panel-2); border: 1px solid var(--gc-line); border-radius: 12px; padding: 12px; }
+			.gc-tile dt { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--gc-faint); font-weight: 600; margin: 0 0 5px; }
+			.gc-tile dd { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+			.gc-tile small { display: block; font-size: 11.5px; font-weight: 500; color: var(--gc-faint); margin-top: 3px; letter-spacing: 0; }
+
+			/* ── actions ──────────────────────────────────────────────── */
+			.gc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+			.gc-btn { appearance: none; font: inherit; font-weight: 600; font-size: 13.5px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--gc-line); background: var(--gc-panel-2); color: var(--gc-text); text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
+			.gc-btn:hover { border-color: var(--gc-accent); transform: translateY(-1px); }
+			.gc-btn:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
+			.gc-btn.primary { background: var(--gc-accent); border-color: var(--gc-accent); color: #fff; }
+
+			/* ── tables / sections ────────────────────────────────────── */
+			.gc-section { margin-top: 24px; }
+			.gc-section h2 { font-size: 15px; font-weight: 700; margin: 0 0 10px; letter-spacing: -.01em; }
+			.gc-section h2 span { color: var(--gc-faint); font-weight: 500; }
+			.gc-tablewrap { overflow-x: auto; border: 1px solid var(--gc-line); border-radius: 12px; background: var(--gc-panel); }
+			table.gc-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 620px; }
+			.gc-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--gc-faint); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--gc-line); white-space: nowrap; }
+			.gc-table td { padding: 10px 12px; border-bottom: 1px solid var(--gc-line); white-space: nowrap; }
+			.gc-table tr:last-child td { border-bottom: none; }
+			.gc-table tbody tr:hover { background: var(--gc-panel-2); }
+			.gc-table td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+			.gc-table a { color: var(--gc-accent-2); text-decoration: none; }
+			.gc-table a:hover { text-decoration: underline; }
+			.gc-coin { font-weight: 700; }
+			.gc-coin small { display: block; font-weight: 500; color: var(--gc-faint); font-size: 11px; }
+
+			details.gc-details { border: 1px solid var(--gc-line); border-radius: 12px; background: var(--gc-panel); padding: 4px 14px; }
+			details.gc-details summary { cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--gc-dim); padding: 10px 0; }
+			details.gc-details summary:hover { color: var(--gc-text); }
+			details.gc-details summary:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; border-radius: 6px; }
+			.gc-skips { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+			.gc-skips li { font-size: 12.5px; color: var(--gc-faint); padding: 9px 12px; background: var(--gc-panel-2); border: 1px solid var(--gc-line); border-radius: 9px; line-height: 1.5; }
+			.gc-skips li b { color: var(--gc-dim); }
+
+			.gc-honesty { background: var(--gc-panel); border: 1px solid var(--gc-line); border-left: 3px solid var(--gc-amber); border-radius: 10px; padding: 14px 16px; margin-top: 24px; }
+			.gc-honesty h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--gc-amber); margin: 0 0 8px; }
+			.gc-honesty ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+			.gc-honesty li { font-size: 13px; color: var(--gc-dim); line-height: 1.55; }
+
+			/* ── states ───────────────────────────────────────────────── */
+			.gc-empty, .gc-error { text-align: center; padding: 48px 20px; border: 1px dashed var(--gc-line); border-radius: 16px; background: var(--gc-panel); }
+			.gc-empty h3, .gc-error h3 { margin: 0 0 8px; font-size: 18px; }
+			.gc-empty p, .gc-error p { color: var(--gc-dim); margin: 0 auto 16px; max-width: 48ch; font-size: 14px; line-height: 1.55; }
+			.gc-empty a, .gc-error button, .gc-empty button { display: inline-block; background: var(--gc-accent); color: #fff; border: none; text-decoration: none; padding: 10px 18px; border-radius: 10px; font: inherit; font-weight: 600; cursor: pointer; }
+			.gc-skel { display: grid; gap: 12px; }
+			.gc-skel-block { border-radius: 14px; border: 1px solid var(--gc-line); background: linear-gradient(100deg, var(--gc-panel) 30%, var(--gc-panel-2) 50%, var(--gc-panel) 70%); background-size: 200% 100%; animation: gc-sh 1.3s ease-in-out infinite; }
+			.gc-skel-block.tall { height: 300px; } .gc-skel-block.short { height: 88px; }
+			@keyframes gc-sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .gc-skel-block, .gc-leader, .gc-btn { animation: none; transition: none; } }
+			.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+			.gc-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px); background: var(--gc-text); color: var(--gc-bg); font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 60; }
+			.gc-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="gc" aria-labelledby="gc-title">
+			<p class="gc-kicker">Ghost-copy · paper only · no wallet, no signature</p>
+			<h1 id="gc-title" class="gc-title">What if you'd copied them?</h1>
+			<p class="gc-sub">
+				Pick a verified pump.fun trader agent, a budget, and a window. We replay their real
+				closed on-chain round-trips through the same sizing engine that runs live copy-trading,
+				against a wallet that does not exist. You get the equity curve you would have had,
+				every trade your budget could not reach, and why. Nothing is signed and nothing is spent.
+			</p>
+
+			<section class="gc-controls" role="group" aria-label="Ghost-copy settings">
+				<div class="gc-field">
+					<label for="gcBudget">Budget</label>
+					<div class="gc-budget">
+						<input id="gcBudget" type="number" inputmode="decimal" min="0.01" step="0.1" value="1" aria-label="Ghost budget in SOL" />
+						<span>SOL</span>
+					</div>
+				</div>
+				<div class="gc-field">
+					<span class="gc-lbl" id="gcWindowLabel">Window</span>
+					<div class="gc-seg" role="group" aria-labelledby="gcWindowLabel" id="gcWindowSeg">
+						<button type="button" data-window="24h" aria-pressed="false">24h</button>
+						<button type="button" data-window="7d" aria-pressed="true">7d</button>
+						<button type="button" data-window="30d" aria-pressed="false">30d</button>
+						<button type="button" data-window="all" aria-pressed="false">all time</button>
+					</div>
+				</div>
+			</section>
+
+			<section aria-labelledby="gcLeadersLabel">
+				<h2 id="gcLeadersLabel" class="gc-kicker">Pick a leader</h2>
+				<div id="gcLeaders" class="gc-leaders" role="group" aria-labelledby="gcLeadersLabel"></div>
+			</section>
+
+			<div id="gcResult" aria-live="polite"></div>
+		</main>
+
+		<div id="gcToast" class="gc-toast" role="status" aria-live="polite"></div>
+
+		<footer id="footer-root"></footer>
+		<script type="module" src="/src/ghost-copy.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -217,6 +217,34 @@ async function login() {
 	console.log(`✓ session saved to ${AUTH_STATE.replace(ROOT + '/', '')}`);
 }
 
+// ── Click-listener tracking (installed before any page script runs) ───────────
+// `el.onclick` is only set by inline onclick= attributes and direct property
+// assignment. Everything wired with addEventListener reports onclick === null,
+// so a dead-control check built on it both misses real handlers and slanders
+// working ones. Patching addEventListener at document start is the only way to
+// know from inside the page which elements are genuinely interactive.
+function trackClickListeners() {
+	const ACTIVATING = new Set(['click', 'pointerdown', 'mousedown', 'mouseup', 'keydown', 'keyup']);
+	const wired = new WeakSet();
+	// Walk up to (but not including) <body>. A listener on a real container is
+	// genuine delegation and makes the anchor live. A listener on
+	// body/document/window is not counted: pages routinely attach one for
+	// dropdown dismissal or analytics, and honouring those would mark every
+	// anchor on the page live and silence the check entirely.
+	window.__auditWiredClick = (el) => {
+		for (let n = el; n && n !== document.body; n = n.parentElement) {
+			if (wired.has(n)) return true;
+			if (typeof n.onclick === 'function') return true;
+		}
+		return false;
+	};
+	const original = EventTarget.prototype.addEventListener;
+	EventTarget.prototype.addEventListener = function (type, listener, options) {
+		if (ACTIVATING.has(type) && listener) wired.add(this);
+		return original.call(this, type, listener, options);
+	};
+}
+
 // ── In-page audit (runs in the browser) ───────────────────────────────────────
 function inPageAudit() {
 	const vw = window.innerWidth;
@@ -285,20 +313,30 @@ function inPageAudit() {
 	if (noAlt > 0) {
 		findings.push({ type: 'a11y', severity: 'info', detail: `${noAlt} image(s) missing alt text` });
 	}
-	let deadLinks = 0;
+	// A link is dead only if it has no destination AND nothing made it
+	// interactive. Placeholder href="#" anchors that JS fills in later are fine
+	// once assigned; the ones nobody ever assigns or wires are real dead ends.
+	const deadLinks = [];
+	const wiredCheck = window.__auditWiredClick;
 	for (const a of document.querySelectorAll('a')) {
 		const href = a.getAttribute('href');
 		const r = a.getBoundingClientRect();
 		if (r.width === 0 || r.height === 0) continue;
-		if (href === null || href === '' || href === '#' || href === 'javascript:void(0)') {
-			if (!a.getAttribute('role') && !a.onclick) deadLinks++;
-		}
+		if (href !== null && href !== '' && href !== '#' && href !== 'javascript:void(0)') continue;
+		if (a.getAttribute('role')) continue;
+		if (wiredCheck ? wiredCheck(a) : a.onclick) continue;
+		deadLinks.push(
+			`${label(a)} ("${(a.textContent || '').trim().slice(0, 32) || 'no text'}") href=${
+				href === null ? 'absent' : `"${href}"`
+			}`,
+		);
+		if (deadLinks.length >= 12) break;
 	}
-	if (deadLinks > 0) {
+	if (deadLinks.length > 0) {
 		findings.push({
 			type: 'dead-link',
-			severity: 'info',
-			detail: `${deadLinks} link(s) with no destination (href="#"/empty, no handler)`,
+			severity: 'warn',
+			detail: `${deadLinks.length} link(s) with no destination and no click handler: ${deadLinks.join('; ')}`,
 		});
 	}
 
@@ -764,6 +802,7 @@ async function main() {
 			ignoreHTTPSErrors: true,
 		};
 		const ctx = await browser.newContext(ctxOpts);
+		await ctx.addInitScript(trackClickListeners);
 		console.log(`── ${viewport} ──`);
 		const onResult = (r) => {
 			const e = r.findings.filter((f) => f.severity === 'error').length;

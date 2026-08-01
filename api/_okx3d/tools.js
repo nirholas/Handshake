@@ -40,7 +40,7 @@ const createIdentityDef = {
 	description:
 		`$${ENTRY.priceUsd} per identity, ${ENTRY.describes.capability} ` +
 		`Async: returns a job_id immediately; poll ${STATUS_TOOL} (free) every few seconds until ` +
-		'status is "done" (typically 3–6 minutes). You are charged only when the job is accepted: ' +
+		'status is "done" (typically 3-6 minutes). You are charged only when the job is accepted: ' +
 		'invalid input or an unreachable reference image fails before settlement, and failed ' +
 		'pipeline stages retry free.',
 	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
@@ -56,7 +56,7 @@ const createIdentityDef = {
 			const status = describeIdentityJob(state);
 			return toolOk(
 				`Identity job accepted. Poll ${STATUS_TOOL} with this job_id until status is "done" ` +
-					`(ETA ~3–6 min). job_id: ${jobId}`,
+					`(ETA ~3-6 min). job_id: ${jobId}`,
 				{
 					ok: true,
 					job_id: jobId,

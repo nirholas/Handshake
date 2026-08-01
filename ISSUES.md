@@ -170,18 +170,34 @@ every surface it documented. Only the production-affecting findings are listed
 here; the code-quality items from that pass are not production issues.
 
 9. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
-    one credential). The script sets `AllowedOrigins: ['*']` for GET/HEAD, but
-    the live policy still echoes only the old allowlist, so a third-party origin
-    gets no `access-control-allow-origin`. Re-running it removes the need for the
-    `/api/glb` proxy in client-side viewers; the proxy stays the right advice for
-    notebooks and unusual dev ports regardless. Attempted 2026-07-31: the only
-    R2 token on this machine (`S3_*` in `.env`, bucket `chatty-storage`) is
-    object-scoped and gets `403 AccessDenied` on Get/PutBucketCors, and gcloud
-    auth is dead so the Cloud Run env cannot be read for an alternate token.
+    one credential). CONFIRMED by measurement 2026-08-01, not inference:
+    `node scripts/set-r2-cors.mjs --probe` reads the enforced policy from
+    outside using only object-scoped keys, and it exits 1 on this bucket.
+
+    | Surface | Result |
+    |---|---|
+    | Site edge, `three.ws/avatars/*.glb`, foreign origin | PASS, `access-control-allow-origin: *`. Not affected. |
+    | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL, no header at all. Preflight `OPTIONS` returns `403`. |
+    | Presigned `PUT` preflight on the S3 endpoint | Mixed. `204` for `three.ws`, `*.vercel.app`, `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`. |
+
+    The live policy is one allowlist rule serving both reads and writes
+    (`GET, PUT, HEAD, POST, DELETE`), predating the script's split into a
+    world-open `public-read` rule plus an origin-locked `browser-upload` rule.
+    Impact: user-generated avatars resolve to `pub-*.r2.dev` via
+    `publicUrl()` in [api/_lib/r2.js](api/_lib/r2.js), so third-party embeds
+    reading those GLBs directly get a CORS failure. The `/api/glb` proxy is
+    the working mitigation and stays correct after the fix; the docs now say
+    which host needs it (docs/media-api.md, both embed tutorials).
+
+    Blocked on one credential, not on code. The only R2 token reachable from
+    this machine (`S3_*` in `.env`, identical to the Cloud Run service env,
+    bucket `chatty-storage`) is object-scoped and gets `403 AccessDenied` on
+    Get/PutBucketCors. Secret Manager holds no R2 or Cloudflare admin token
+    (checked 2026-08-01 with working gcloud auth).
     Owner: mint an "Admin Read & Write" R2 token scoped to the bucket (the
-    script prints the exact steps; its `--get` path now explains this instead
+    script prints the exact steps; its `--get` path explains this instead
     of crashing), drop it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`,
-    then `node scripts/set-r2-cors.mjs`.
+    then `node scripts/set-r2-cors.mjs` and confirm with `--probe`.
 
 ---
 

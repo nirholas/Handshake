@@ -9,8 +9,8 @@ it builds on (see `STRUCTURE.md`) and the doc that governs it.
 
 Companion docs (read-order): [00-README.md](00-README.md) (roadmap prompts +
 regression gate), [REUSE-MAP.md](REUSE-MAP.md) (license-vetted OSS),
-[../x402-revenue.md](../x402-revenue.md) (how money is measured),
-[../improvement-plans/README.md](../improvement-plans/README.md).
+[../../docs/x402-revenue.md](../../docs/x402-revenue.md) (how money is measured),
+and [../backlog/00-INDEX.md](../backlog/00-INDEX.md) (the measured open backlog).
 
 ---
 

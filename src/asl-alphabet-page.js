@@ -65,7 +65,11 @@ async function boot() {
 		stage?.dispose();
 		// Portrait framing crops to the signing space: fingerspelling happens at
 		// jaw height, so a full-body shot would waste most of the frame on shoes.
-		stage = new PoseStage(stageHost, { glbUrl: avatar.url, framing: 'portrait' });
+		stage = new PoseStage(stageHost, {
+			glbUrl: avatar.url,
+			framing: 'portrait',
+			label: 'A 3D avatar forming the selected letter of the American manual alphabet',
+		});
 		try {
 			const { supported } = await stage.mount();
 			stage.start();

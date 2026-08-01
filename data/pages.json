@@ -3611,6 +3611,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/okx-marketplace",
+					"title": "Docs: OKX.AI marketplace services",
+					"description": "The 3D services three.ws sells to other AI agents on OKX.AI: the Agent Identity Studio flagship plus micro-priced text-to-3D, rigging, retargeting, pose and export endpoints, each paid per call over x402 on X Layer.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/avatar-engines",
 					"title": "Docs: Avatar Engines Atlas",
 					"description": "A factual map of the open-source and commercial systems that build high-quality and photoreal 3D human avatars: Gaussian-splat heads, single-photo humans, text-to-avatar generators, and the production rig formats three.ws already animates.",

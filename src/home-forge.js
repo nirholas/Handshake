@@ -34,12 +34,23 @@ import {
 import { milestoneNote } from './forge-milestones.js';
 import { initForgeControls } from './home-forge-controls.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
+import {
+	sleepUntilVisibleOrElapsed,
+	createHiddenClock,
+	fetchJobStatus,
+	nextBackoff,
+} from './shared/resilient-poll.js';
 
 const POLL_INTERVAL_MS = 2500;
 // Max-tier texture bakes legitimately run past 10 minutes at full quality; the
 // ceiling must sit above the slowest real generation. Queue wait does not count
 // against this window (see pollUntilDone).
 const MAX_POLL_MS = 12 * 60 * 1000;
+// Flaky-network budget for the status poll: a dropped socket or an edge 5xx is
+// not a dead job (all job state is server-side), so the poll backs off and
+// keeps holding until the network has been unusable for this long.
+const POLL_MAX_BACKOFF_MS = 20_000;
+const POLL_TRANSPORT_GRACE_MS = 90_000;
 const MODEL_VIEWER_SRC =
 	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
 const HISTORY_KEY = 'forge:home:history';
@@ -412,23 +423,57 @@ async function startJob(prompt, { config = DEFAULT_CFG, headers, payment } = {})
 }
 
 async function pollUntilDone(jobId, seq) {
-	let deadline = performance.now() + MAX_POLL_MS;
-	while (!pollAbort && seq === runSeq && performance.now() < deadline) {
-		await sleep(POLL_INTERVAL_MS);
-		if (pollAbort || seq !== runSeq) return null;
-		const res = await fetch(`/api/forge?job=${encodeURIComponent(jobId)}`, {
-			headers: CLIENT_HEADERS,
-		});
-		const data = await res.json().catch(() => ({}));
-		if (data.status === 'done' && data.glb_url) return data;
-		if (data.status === 'failed') throw new Error(data.error || 'Generation failed.');
-		if (data.status === 'queued') {
-			// A queued job is alive and waiting for a GPU: keep the step live and
-			// never spend the run budget on line time.
-			setStep('mesh', 'active');
-			deadline = performance.now() + MAX_POLL_MS;
+	// Foreground-only elapsed time: a backgrounded tab gets its timers clamped to
+	// a minute or more, so charging that stretch to the run budget would time out
+	// a job the server is still finishing.
+	const hidden = createHiddenClock();
+	const runNow = () => performance.now() - hidden.hiddenMs();
+	let deadline = runNow() + MAX_POLL_MS;
+	let backoffMs = POLL_INTERVAL_MS;
+	let offlineSince = 0;
+	try {
+		while (!pollAbort && seq === runSeq && runNow() < deadline) {
+			await sleepUntilVisibleOrElapsed(backoffMs);
+			if (pollAbort || seq !== runSeq) return null;
+
+			let data;
+			try {
+				data = await fetchJobStatus(`/api/forge?job=${encodeURIComponent(jobId)}`, {
+					headers: CLIENT_HEADERS,
+				});
+			} catch (err) {
+				// A dropped socket or an edge 5xx says nothing about the job, which
+				// keeps running server-side. Back off and hold rather than throwing a
+				// finished model away.
+				if (err?.kind !== 'transport') throw err;
+				if (!offlineSince) offlineSince = runNow();
+				if (runNow() - offlineSince > POLL_TRANSPORT_GRACE_MS) {
+					throw new Error(
+						'Lost the connection to the generator. Your model is still being built and will keep going. Reload to pick it back up.',
+					);
+				}
+				backoffMs = nextBackoff(backoffMs, POLL_MAX_BACKOFF_MS);
+				continue;
+			}
+			if (offlineSince) {
+				offlineSince = 0;
+				backoffMs = POLL_INTERVAL_MS;
+			}
+			if (data.status === 'done' && data.glb_url) return data;
+			if (data.status === 'failed') throw new Error(data.error || 'Generation failed.');
+			if (data.error === 'invalid_job' || data.error === 'missing_job') {
+				throw new Error(data.message || 'That generation is no longer available.');
+			}
+			if (data.status === 'queued') {
+				// A queued job is alive and waiting for a GPU: keep the step live and
+				// never spend the run budget on line time.
+				setStep('mesh', 'active');
+				deadline = runNow() + MAX_POLL_MS;
+			}
+			if (data.status === 'running') setStep('mesh', 'active');
 		}
-		if (data.status === 'running') setStep('mesh', 'active');
+	} finally {
+		hidden.stop();
 	}
 	if (pollAbort || seq !== runSeq) return null;
 	throw new Error('Generation timed out — try a simpler, single-subject prompt.');

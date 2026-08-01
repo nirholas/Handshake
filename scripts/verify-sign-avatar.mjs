@@ -21,6 +21,10 @@ function check(label, ok, detail = '') {
 
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+// A shared dev server restarts under other work; give navigation and the first
+// module transform room rather than reporting a cold cache as a broken page.
+page.setDefaultTimeout(60000);
+page.setDefaultNavigationTimeout(60000);
 
 // The dev server's HMR socket cannot reach a forwarded Codespace port. That is
 // the tunnel, not the page, and it never exists in a built deployment.
@@ -46,7 +50,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	await page.goto(`${BASE}${route}`, { waitUntil: 'domcontentloaded' });
 	await page.evaluate(() => localStorage.clear());
 	await page.reload({ waitUntil: 'domcontentloaded' });
-	await page.waitForSelector(`${rigSel} button`, { timeout: 15000 });
+	await page.waitForSelector(`${rigSel} button`, { timeout: 60000 });
 	await page.waitForTimeout(2500);
 
 	const labels = await page.$$eval(`${rigSel} button`, (els) => els.map((e) => e.textContent));
@@ -58,9 +62,9 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 	// The gallery module is imported on demand (it pulls in model-viewer), so
 	// the first open waits on a real network fetch, not just a render.
 	await page.click(`${rigSel} button:nth-child(3)`);
-	await page.waitForSelector('.agp-overlay.agp-open', { timeout: 40000 });
+	await page.waitForSelector('.agp-overlay.agp-open', { timeout: 60000 });
 	check('the avatar gallery opened', true);
-	await page.waitForSelector('.agp-card', { timeout: 15000 });
+	await page.waitForSelector('.agp-card', { timeout: 60000 });
 	const pickedName = await page.$eval('.agp-card', (el) => el.querySelector('.agp-card-name')?.textContent?.trim() || '');
 	await page.click('.agp-card');
 	await page.click('.agp-cta');
@@ -111,7 +115,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 
 	// The choice has to survive a reload, and across the sibling page.
 	await page.reload({ waitUntil: 'domcontentloaded' });
-	await page.waitForSelector(`${rigSel} button`, { timeout: 15000 });
+	await page.waitForSelector(`${rigSel} button`, { timeout: 60000 });
 	await page.waitForTimeout(2500);
 	const afterReload = await page.$eval(`${rigSel}`, (el) => el.querySelector('button[aria-pressed="true"]')?.textContent || '');
 	check('the custom avatar survives a reload', afterReload === pillLabel, afterReload);
@@ -122,7 +126,7 @@ for (const route of ['/sign-language', '/asl-alphabet']) {
 // on stage when the visitor walks back to /sign-language.
 console.log('\nCarry-over between the signing pages');
 await page.goto(`${BASE}/sign-language`, { waitUntil: 'domcontentloaded' });
-await page.waitForSelector('#sl-rig button', { timeout: 15000 });
+await page.waitForSelector('#sl-rig button', { timeout: 60000 });
 await page.waitForTimeout(2500);
 const carried = await page.$eval('#sl-rig', (el) => el.querySelector('button[aria-pressed="true"]')?.textContent || '');
 check('the avatar chosen on the alphabet page is signing here too', carried === lastPicked, `${carried} vs ${lastPicked}`);

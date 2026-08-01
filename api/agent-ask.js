@@ -278,7 +278,7 @@ export default async function handleAgentAsk(req, res) {
 	const maxTokens = Math.min(MAX_OUTPUT, plan.spec.maxOutput);
 
 	const { res: capRes, getText } = captureAnswer(res);
-	await streamBrain(capRes, { plan, providerKey, messages, system, maxTokens });
+	await streamBrain(capRes, { plan, providerKey, messages, system, maxTokens, userId });
 
 	// Persist + echo only a real answer (a failed stream emits no text frames).
 	const answer = getText();

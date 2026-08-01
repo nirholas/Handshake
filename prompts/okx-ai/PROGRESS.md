@@ -343,7 +343,7 @@ and touches shared MCP infra (blast radius = `api/mcp-3d.js` too), so it was del
 NOT changed here. The 8 WO-03 REST services, WO-04's actual targets, are all correct.
 
 ### GO/NO-GO
-- **Gauntlet cases 2–7 + settlement: BLOCKED on funding only.** Everything else is proven.
+- **Gauntlet cases 2-7 + settlement: BLOCKED on funding only.** Everything else is proven.
 - **Work Order 05: NO-GO until the gauntlet runs green post-funding** AND the identity-studio
   rail finding above is resolved (it would otherwise list a Solana-first, mispriced flagship).
 
@@ -433,7 +433,7 @@ changes.**
 primary-source citations, captures five approved sellers verbatim, cryptographically pins the
 USD₮0 domain separator, and is double-sourced across two independent 2026-07-06 sessions. It
 is a real deliverable, not a hollow shell (contrast the misleading commit `839c9a654`). The
-stale memory note "WOs 01–03 never ran" predates all of this.
+stale memory note "WOs 01-03 never ran" predates all of this.
 
 ### Re-verified LIVE today (2026-07-07), primary sources still hold
 
@@ -919,7 +919,7 @@ concurrent WO-04 session set, a redeploy picks up both).
 
 ### Unit-cost math + price decision (recorded per the WO)
 
-Price **$1.50** (1,500,000 atomic USD₮0), within the WO's $1.00–$2.00 band. Marginal cost per
+Price **$1.50** (1,500,000 atomic USD₮0), within the WO's $1.00-$2.00 band. Marginal cost per
 identity: generation (NVIDIA NIM TRELLIS free lane) ~$0; humanoid rig (self-hosted GCP UniRig, fixed
 infra) ~$0 marginal (Replicate backstop only if self-host is down: a few cents); 4 server-side
 renders (headless chromium + sharp compositing) compute-only ~$0; director (`llmComplete` free chain)
@@ -1086,7 +1086,7 @@ rail live, item 3, and wallet funding, item 4).
   is still 429 (item 1). Requirement 3 (#2632's own avatar) is downstream of requirement 2. Neither
   requires money by itself, but both require the rigging pipeline which fails closed on the same
   Redis gap. No code-only work available here beyond what WO-06 already shipped.
-- **WO-07**: explicitly requires "01–05 must be complete" before it runs; 05 hasn't run. Not
+- **WO-07**: explicitly requires "01-05 must be complete" before it runs; 05 hasn't run. Not
   started, correctly.
 - No piece of remaining work in 05/06/07 is code-only and non-financial/non-signature at this
   time, everything left is genuinely gated on the two owner items below.
@@ -1113,7 +1113,7 @@ rail live, item 3, and wallet funding, item 4).
    for the payer (EIP-3009 gas is facilitator/relayer-paid), but a small OKB balance is worth
    adding as a safety margin regardless of which settlement path (1) uses.
 
-Once 1–3 land: re-run WO-04 for real (funded paid E2E across the catalog), get its GO, then
+Once 1-3 land: re-run WO-04 for real (funded paid E2E across the catalog), get its GO, then
 dispatch WO-05 (resubmission) and finish WO-06's demo/avatar requirements, then WO-07.
 
 ### Files touched this session
@@ -1291,7 +1291,7 @@ listing avatar itself stays the logo mark (compliant, on-brand).
 
 ---
 
-## 2026-07-23 — Work Order 07: independent audit closed, payTo drift found + corrected, resubmission still owner/human-gated
+## 2026-07-23, Work Order 07: independent audit closed, payTo drift found + corrected, resubmission still owner/human-gated
 
 Re-verified everything live against production with fresh eyes; treated nothing in this file
 as true until re-checked.
@@ -1320,8 +1320,8 @@ as true until re-checked.
    throwaway scratch files. Full report in the agent's own summary (not duplicated here).
 6. **Tests:** `npx vitest run` on the OKX-scope test files (77 tests) green post-fix.
    Full `npm test`: **6 failures, all pre-existing and unrelated to this stream**
-   (`x402-self-facilitator-min-settle.test.js`, `x402-self-facilitator-settle-recovery.test.js`
-   — a Solana settleable-mint guard regression, and `material-studio-store.test.js`), not
+   (`x402-self-facilitator-min-settle.test.js` and `x402-self-facilitator-settle-recovery.test.js`,
+   a Solana settleable-mint guard regression, plus `material-studio-store.test.js`), not
    caused by or fixed in this session, flagged for whoever owns that code.
    `npm run build:pages` green (changelog validates).
 
@@ -1344,7 +1344,7 @@ seller `0x4022de2D…f402` = 2.43 USD₮0 (irrelevant, it's the recipient); rela
 rotated 2026-07-12, superseding the `0x1F4a…bb74` address named in the 2026-07-08 entry
 above) = 0.02 OKB gas.
 
-### Part 2 — docs closure
+### Part 2: docs closure
 
 - `specs/okx-agent-payments.md`: corrected (payTo drift note above).
 - `docs/okx-marketplace.md`: every one of its 8 curl examples (catalog, health,
@@ -1360,7 +1360,7 @@ above) = 0.02 OKB gas.
 - READMEs: `api/_okx3d/` is an internal implementation dir (like sibling `api/_lib`,
   `api/_mcp`, `api/_mcp3d`), consistent with repo convention of no README for those; no gap.
 
-### Part 3 — approval watch
+### Part 3: approval watch
 
 **Not completed this session.** `onchainos` CLI login changed as of v4.3.0: the old direct
 `wallet login <email>` + typed-OTP flow this whole stream's docs describe no longer exists.
@@ -1388,7 +1388,7 @@ the new login mechanic in full in `RUNBOOK.md` §0 so the next session doesn't r
 ### Next session, start here
 
 1. Re-probe live `payTo` before trusting any address in any doc, it has drifted silently once.
-2. `onchainos wallet status` — if logged out, `wallet login --phase init`, hand the human the
+2. `onchainos wallet status`, if logged out, `wallet login --phase init`, hand the human the
    URL, poll until `loggedIn:true`.
 3. `onchainos agent get-agents --agent-ids 2632` for current approval state, then RUNBOOK §4
    or §5 depending on the result.

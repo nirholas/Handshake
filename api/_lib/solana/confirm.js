@@ -30,11 +30,55 @@
 
 // Commitment ordering — a status at or above the requested level satisfies the wait.
 const COMMITMENT_RANK = { processed: 0, confirmed: 1, finalized: 2 };
-const POLL_INTERVAL_MS = 1_200;
 const MAX_CONFIRM_MS = 90_000; // absolute ceiling, even for the bare-signature form
 // Block height advances ~2.5 slots/s while a blockhash stays valid for ~150 slots
 // (~60s), so checking expiry every few polls is ample and saves an RPC round-trip.
 const BLOCKHEIGHT_CHECK_EVERY = 3;
+
+// Poll cadence. This loop is the single hottest Solana RPC consumer on the money
+// path: every server-signed send, every x402 settle, every launch confirms through
+// it. A flat 1.2s cadence over the 90s ceiling costs up to ~75 getSignatureStatuses
+// calls plus ~25 getBlockHeight calls for ONE transaction that never lands, and a
+// transaction that never lands is exactly what happens when the RPC tier is
+// throttled, so the flat cadence spent the most requests precisely when requests
+// were scarcest.
+//
+// Backing off geometrically after the fast opening costs nothing user-visible: a
+// healthy confirm lands in the first two or three polls, which keep the original
+// cadence. Only the doomed tail slows down, and the tail's polls were never going
+// to change the outcome. Same 90s ceiling, roughly a third of the requests.
+//
+// All three knobs are read per call, not at module load, so an operator can retune
+// the cadence with a config-only `gcloud run services update --update-env-vars`
+// and no rebuild.
+function pollCadence(env = process.env) {
+	const num = (v, d) => {
+		const n = Number(v);
+		return Number.isFinite(n) && n > 0 ? n : d;
+	};
+	const base = num(env.SOLANA_CONFIRM_POLL_INTERVAL_MS, 1_200);
+	return {
+		base,
+		// Never below the base: a "max" under the opening cadence would mean the loop
+		// speeds up as it backs off, which is the opposite of the intent.
+		max: Math.max(base, num(env.SOLANA_CONFIRM_POLL_MAX_INTERVAL_MS, 6_000)),
+		// <1 would shrink the interval each poll. Clamped so a typo cannot turn the
+		// backoff into a request storm against an already-throttled tier.
+		factor: Math.max(1, num(env.SOLANA_CONFIRM_POLL_BACKOFF, 1.5)),
+		// Polls served at the base cadence before the backoff starts. Covers the
+		// window nearly every confirm lands in, so the common path is unchanged.
+		fastPolls: Math.max(1, Math.floor(num(env.SOLANA_CONFIRM_FAST_POLLS, 3))),
+	};
+}
+
+/**
+ * Wait before poll `i` (0-based): the base cadence for the opening polls, then a
+ * geometric backoff capped at `max`.
+ */
+export function pollDelayMs(i, cadence = pollCadence()) {
+	if (i < cadence.fastPolls) return cadence.base;
+	return Math.min(cadence.max, Math.round(cadence.base * cadence.factor ** (i - cadence.fastPolls + 1)));
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -72,6 +116,7 @@ export async function pollConfirmation(conn, strategy, commitment = 'confirmed',
 	const lastValidBlockHeight = typeof strategy === 'object' && strategy ? strategy.lastValidBlockHeight : undefined;
 	const target = COMMITMENT_RANK[commitment] ?? COMMITMENT_RANK.confirmed;
 	const deadline = Date.now() + timeoutMs;
+	const cadence = pollCadence();
 
 	for (let i = 0; ; i++) {
 		let st = null;
@@ -105,7 +150,7 @@ export async function pollConfirmation(conn, strategy, commitment = 'confirmed',
 		}
 
 		if (Date.now() >= deadline) throw confirmTimeoutError(signature, timeoutMs);
-		await sleep(POLL_INTERVAL_MS);
+		await sleep(pollDelayMs(i, cadence));
 	}
 }
 

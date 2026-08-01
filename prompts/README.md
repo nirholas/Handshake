@@ -9,21 +9,53 @@ Internal work-order packs for Claude agents. Each subdirectory is a campaign: a 
 - `PROGRESS.md`, where present, is the cross-chat handoff log: the only memory between sessions. Agents append to it when they finish.
 - `_generated/` subdirectories hold machine-written evidence artifacts (JSON captures, screenshots, transcripts) produced by scripts, not by hand.
 
+## The work-order standard (every open work order follows it)
+
+A work order is a paste-and-run document. Pasting the whole file into a fresh Claude Code chat
+in this repo must be enough for an agent to finish the job without asking the owner anything.
+Each one carries, in this order:
+
+1. **A how-to-run line**: paste this file, or name its path.
+2. **A binding operating clause**: finish 100%, never end with a question or an unexecuted plan,
+   plus the CLAUDE.md hard rules that bite most often (no mocks, no TODOs, no em-dash, explicit-path
+   commits, deploys and pushes are owner-gated).
+3. **Step 0, re-derive the current state**, with the exact commands. This is the load-bearing
+   part: a work order's own status claims rot within weeks, so the agent measures first and
+   skips whatever already shipped. Never trust a status line, including the ones in these files.
+4. **Tasks** with real file paths, real endpoints and real commands.
+5. **A definition of done** whose every line is mechanically checkable.
+6. **A "never blocked" table** pre-answering the blockers that have historically stalled this
+   work, so the answer is in the file instead of in the owner's inbox.
+7. **A report format**, so the session ends with evidence rather than a recap.
+
+The only interruptions a work order may contain are the CLAUDE.md stop-and-ask gates: spending
+real funds, an irreversible on-chain write, a push or production deploy, a commit that
+references a crypto project other than `$THREE`, and destroying unrecoverable data. Where one is
+unavoidable, the work order batches every human touchpoint into a single message and does
+everything else around it.
+
 ## Subdirectories
 
 | Directory | What it is |
 |---|---|
 | [backlog/](backlog/) | The open backlog, one work order per item: everything [../ISSUES.md](../ISSUES.md) and the retired campaign logs still carry, each with a measured starting state and a definition of done. |
-| [bnb-chain/](bnb-chain/) | BNB Chain campaign: payments and gasless-rail work orders with a verified-facts context file. |
-| [fable-audit/](fable-audit/) | One work order per finding from the 2026-07-11 deep audit, with severity, exact defect location, fix, and verification. |
-| [gcp-credits/](gcp-credits/) | Prompt pack for the GCP credit program: GPU worker deploys, catalog and animation seeding. |
-| [okx-ai/](okx-ai/) | Sequenced work orders taking the three.ws 3D Studio listing (agent #2632) to approved status on OKX.AI, plus a runbook and progress log. |
-| [quality-bar/](quality-bar/) | The GCP-credit quality campaign: a chain of prompts covering photoreal references, mesh and texture quality, PBR materials, viewers, UX, and an eval harness. |
-| [roadmap/](roadmap/) | Self-contained improvement prompts for existing surfaces, plus the strategy layer ([fable-playbook.md](roadmap/fable-playbook.md)) that decides what to run next. |
-| [robinhood-chain/](robinhood-chain/) | Robinhood Chain pack, organized in waves where later waves consume earlier output. |
-| [store-submissions/](store-submissions/) | Prompts for listing three.ws MCP tools across Claude and OpenAI marketplaces and MCP registries. `_generated/` holds submission evidence. |
+| [bnb-chain/](bnb-chain/) | BNB Chain campaign. Every work order shipped and was retired; `00-CONTEXT.md` keeps the adversarially-verified chain facts and `PROGRESS.md` the proof log. The whole track's one remaining gap is a funded BSC testnet deployer key plus a funded Greenfield account, both owner actions. |
+| [fable-audit/](fable-audit/) | The 2026-07-11 deep audit. Every numbered finding shipped; [RESIDUALS.md](fable-audit/RESIDUALS.md) carries the three items deliberately left open. |
+| [fix-queue/](fix-queue/) | Defects reproduced on 2026-08-01 by running the repo's own checks (`gate`, `lint`, `audit:links`, `audit:tour-atlas`, `check:cron-drift`, `check:runnable-docs`, `test:core`) plus a production probe, one work order per symptom, each carrying the verbatim output. Complements [backlog/](backlog/), which owns the infrastructure and owner-gated items. |
+| [gcp-credits/](gcp-credits/) | The GCP credit program. Seven of eight work orders shipped and were retired; [05-catalog-animation-seeding.md](gcp-credits/05-catalog-animation-seeding.md) is the open one, turning credits into a curated catalog and a generated motion library. |
+| [okx-ai/](okx-ai/) | Taking the three.ws 3D Studio listing (agent #2632) to approved status on OKX.AI. Three open orders (real-payment gauntlet, relisting, final audit and launch), plus `RUNBOOK.md` and the progress log. Each batches its OTP and funding needs into one owner message. |
+| [quality-bar/](quality-bar/) | The GCP-credit quality campaign. Six open work orders (fleet scale, PBR materials, forge UX, design system, mobile, avatar likeness); the reference pipeline, flagship lane, viewers and eval harness shipped and were retired. |
+| [roadmap/](roadmap/) | Four runnable work orders for existing surfaces (generation suite, creation consolidation, parametric avatar editor, developer resources), plus the strategy layer ([fable-playbook.md](roadmap/fable-playbook.md)) that decides what to run next and [REUSE-MAP.md](roadmap/REUSE-MAP.md) for license-vetted OSS. |
+| [robinhood-chain/](robinhood-chain/) | Robinhood Crypto chain pack. All 19 work orders shipped; the index maps what they produced and the owner-side residuals. |
+| [store-submissions/](store-submissions/) | Listing three.ws MCP tools across the Claude and OpenAI marketplaces and the MCP registries. All 21 numbered orders shipped; [01-submission-closeout.md](store-submissions/01-submission-closeout.md) owns the remaining code gaps and the human submission steps. `_generated/` holds the evidence and the live tracker. |
 
-Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28; agent-briefs, whose world-online program shipped through Phase 3, and user-value, all seven of whose work orders shipped, were retired 2026-07-30); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md).
+Fully completed campaigns are removed from this directory once every work order is verified shipped (x402-catalog and x402-overhaul were retired 2026-07-28; agent-briefs, whose world-online program shipped through Phase 3, and user-value, all seven of whose work orders shipped, were retired 2026-07-30); their packs, progress logs, and evidence remain readable in git history. Open items they still carried were re-homed into [../ISSUES.md](../ISSUES.md) and then into [backlog/](backlog/).
+
+Individual work orders are retired the same way. Most recently (2026-08-01) the OKX Agent
+Identity Studio order and the Robinhood wallet-connect kit were deleted after their deliverables
+were verified on disk, and the two fable-audit batch records were replaced by the residuals file
+once their items closed. Retirement policy, unchanged: delete only after the deliverables are
+verified shipped in the codebase, never merely because a progress log claims done.
 
 ## Runtime consumption
 

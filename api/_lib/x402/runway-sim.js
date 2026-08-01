@@ -37,6 +37,7 @@
 import {
 	walletDailyFeeBudgetLamports,
 	assessWalletFeeBudget,
+	pacedFeeBudgetLamports,
 } from './wallet-fee-governor.js';
 
 export const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -71,6 +72,8 @@ const int = (v, d = 0) => {
  * @param {number} [input.startHourOfDay]     UTC hour at t=0, so day resets land correctly
  * @param {{hour:number, lamports:number}[]} [input.funding] deposits applied at the top of an hour
  * @param {boolean} [input.governorEnabled]   X402_WALLET_FEE_GOVERNOR_ENABLED
+ * @param {boolean} [input.paceDay]           X402_WALLET_FEE_PACE_DAY
+ * @param {number} [input.paceMinSliceLamports] X402_WALLET_FEE_PACE_MIN_SLICE_LAMPORTS
  */
 export function simulateRunway(input = {}) {
 	const floorLamports = Math.max(0, int(input.floorLamports));
@@ -81,6 +84,24 @@ export function simulateRunway(input = {}) {
 	const hours = Math.min(24 * 90, Math.max(1, int(input.hours, 24 * 7)));
 	const governorEnabled = input.governorEnabled !== false;
 	const startHourOfDay = ((int(input.startHourOfDay) % 24) + 24) % 24;
+	const paceDay = input.paceDay !== false;
+	const paceMinSliceLamports = Math.max(0, int(input.paceMinSliceLamports, 200_000));
+
+	// The budget the wallet may draw on at a given hour of the UTC day. Mirrors
+	// wallet-fee-meter.js: the daily figure, then the paced slice unlocked so far.
+	// Pacing is measured to the END of the hour being simulated, so an hour is
+	// allowed to spend the share it accrues during that hour.
+	const budgetAt = (solLamports, hourOfDay) => {
+		const daily = walletDailyFeeBudgetLamports({
+			solLamports, floorLamports, runwayDays, minBudgetLamports,
+		});
+		if (!paceDay) return daily;
+		return pacedFeeBudgetLamports({
+			budgetLamports: daily,
+			dayElapsedFraction: (hourOfDay + 1) / 24,
+			minSliceLamports: paceMinSliceLamports,
+		});
+	};
 
 	const fundingByHour = new Map();
 	for (const f of input.funding || []) {
@@ -119,9 +140,8 @@ export function simulateRunway(input = {}) {
 		let hourRefusedFloor = 0;
 		let hourRefusedGovernor = 0;
 		let lastReason = null;
-		let hourBudget = walletDailyFeeBudgetLamports({
-			solLamports: lamports, floorLamports, runwayDays, minBudgetLamports,
-		});
+		const hourOfDay = (startHourOfDay + h) % 24;
+		let hourBudget = budgetAt(lamports, hourOfDay);
 
 		for (let i = 0; i < demandPerHour; i++) {
 			if (attempts >= MAX_ATTEMPTS) { truncated = true; break; }
@@ -154,9 +174,7 @@ export function simulateRunway(input = {}) {
 
 			// (2) Wallet fee governor, recomputed per settle from the live balance
 			// exactly as wallet-fee-meter.js does.
-			const budgetLamports = walletDailyFeeBudgetLamports({
-				solLamports: lamports, floorLamports, runwayDays, minBudgetLamports,
-			});
+			const budgetLamports = budgetAt(lamports, hourOfDay);
 			hourBudget = budgetLamports;
 			if (governorEnabled) {
 				const verdict = assessWalletFeeBudget({

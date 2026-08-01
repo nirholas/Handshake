@@ -23,8 +23,12 @@ import { solanaConnection } from './solana/connection.js';
 import { RPC } from './solana-attestations.js';
 import { loadAttesterKeypair } from './attest-event.js';
 
-const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
-const TRADESCORE_KIND = 'threews.tradescore.v1';
+/** SPL Memo, the program the attestation instruction targets. Public so a consumer can pin it. */
+export const MEMO_PROGRAM_ID_BASE58 = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+/** Attestation kind written by this module and read back by the Trader Passport. */
+export const TRADESCORE_KIND = 'threews.tradescore.v1';
+
+const MEMO_PROGRAM_ID = new PublicKey(MEMO_PROGRAM_ID_BASE58);
 const TX_TIMEOUT_MS = 15_000;
 
 class TraderScoreAttestError extends Error {

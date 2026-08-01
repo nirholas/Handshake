@@ -109,7 +109,7 @@ The gallery and API are read-only consumers of a manifest built by a local pipel
 3. `scripts/fetch-mixamo-avatar-thumbnails.mjs` stages the PNG thumbnails.
 4. `scripts/build-mixamo-avatar-library.mjs` reads `public/avatars/mixamo/catalog.json`, merges the extra CC0 characters from `public/avatars/extra/characters.json`, and PUTs `avatars/library/manifest.json` to R2 (`--dry-run` prints without uploading).
 
-R2 CORS is configured by `scripts/set-r2-cors.mjs` so browsers can GET the GLBs cross-origin.
+R2 CORS is configured by `scripts/set-r2-cors.mjs` so browsers can GET the GLBs cross-origin. The live bucket policy is an origin allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`) that predates the world-open read rule now in that script, so a GLB loaded straight from the CDN on any other origin fails with no `access-control-allow-origin` header. Measure the live policy with `node scripts/set-r2-cors.mjs --probe`; until it is corrected, embeds on third-party origins should route the GLB through [`/api/glb`](./media-api.md#same-origin-glb-proxy), as [the embed tutorial](./tutorials/character-library-to-embed.md) does.
 
 ## Related
 

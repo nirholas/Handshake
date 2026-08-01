@@ -64,6 +64,29 @@ function makeRig(boneNames) {
 	return root;
 }
 
+// Build a SkinnedMesh-rooted skeleton with a REAL parent/child hierarchy, so
+// tests can exercise the structural (ancestor) reasoning the flat `makeRig`
+// can't express. Each bone gets a distinct rest rotation and offset, so a test
+// that reads the wrong node's rest pose fails instead of matching by accident.
+// `rows` is parent-before-child, each `{ name, parent }` naming a previous row.
+function makeHierarchicalRig(rows) {
+	const byName = new Map();
+	const root = new Object3D();
+	rows.forEach((row, i) => {
+		const bone = new Bone();
+		bone.name = row.name;
+		bone.position.set(0, 0.1 + i * 0.01, 0);
+		bone.quaternion.setFromEuler(new Euler(0, 0, (i + 1) * 0.05));
+		byName.set(row.name, bone);
+		(row.parent ? byName.get(row.parent) : root).add(bone);
+	});
+	const mesh = new SkinnedMesh(new BufferGeometry());
+	mesh.bind(new Skeleton([...byName.values()]));
+	root.add(mesh);
+	root.updateMatrixWorld(true);
+	return root;
+}
+
 // A canonical clip: quaternion tracks on a few bones + a Hips position track.
 function makeCanonicalClip() {
 	const q = new QuaternionKeyframeTrack('Hips.quaternion', [0, 1], [0, 0, 0, 1, 0, 0, 0, 1]);
@@ -96,6 +119,102 @@ describe('canonicalNodeMapFromObject', () => {
 	it('returns an empty map for a rig with no recognizable humanoid bones', () => {
 		const map = canonicalNodeMapFromObject(makeRig(['root', 'wheel_fl', 'wheel_fr']));
 		expect(map.size).toBe(0);
+	});
+});
+
+// A rig where the clavicle and the upper arm both normalize onto ONE canonical
+// name is the hardest naming case there is, because the same spelling means a
+// different bone on a different rig: Rigify's `shoulder.L` is the clavicle,
+// while a hand-built rig's `shoulderL` IS the upper arm. Getting it wrong binds
+// the arm clip to the shoulder blade (the arm swings from the wrong pivot) or
+// leaves LeftArm vacant so the arm never moves at all. The ingest canonicalizer
+// resolved this by contention; these cover the same resolver on the runtime lane
+// (canonicalNodeMapFromObject), which a third-party GLB loaded straight into the
+// viewer goes through without ever being renamed.
+describe('canonicalNodeMapFromObject: clavicle vs upper-arm collision', () => {
+	// Rigify: chest → shoulder.L (clavicle) → upper_arm.L → forearm.L → hand.L.
+	// Both `shoulder.L` and `upper_arm.L` normalize onto LeftArm.
+	const rigifyChain = (side) => [
+		{ name: `shoulder.${side}`, parent: 'chest' },
+		{ name: `upper_arm.${side}`, parent: `shoulder.${side}` },
+		{ name: `forearm.${side}`, parent: `upper_arm.${side}` },
+		{ name: `hand.${side}`, parent: `forearm.${side}` },
+	];
+
+	function makeRigifyRig() {
+		return makeHierarchicalRig([
+			{ name: 'hips', parent: null },
+			{ name: 'spine', parent: 'hips' },
+			{ name: 'chest', parent: 'spine' },
+			...rigifyChain('L'),
+			...rigifyChain('R'),
+		]);
+	}
+
+	it('binds LeftArm/RightArm to the upper arm and the clavicle to the Shoulder bone', () => {
+		const map = canonicalNodeMapFromObject(makeRigifyRig());
+		expect(map.get('LeftArm')).toBe('upper_arm.L');
+		expect(map.get('RightArm')).toBe('upper_arm.R');
+		expect(map.get('LeftShoulder')).toBe('shoulder.L');
+		expect(map.get('RightShoulder')).toBe('shoulder.R');
+		expect(map.get('LeftForeArm')).toBe('forearm.L');
+	});
+
+	it('keeps the rest maps on the same nodes the node map chose', () => {
+		const root = makeRigifyRig();
+		const nodes = canonicalNodeMapFromObject(root);
+		const rest = canonicalRestMapFromObject(root);
+		// The rest quaternion for a canonical bone must belong to the very node the
+		// track gets renamed onto, or the bind correction is computed against a
+		// different bone than the one it is applied to.
+		for (const key of ['LeftArm', 'LeftShoulder', 'RightArm', 'RightShoulder']) {
+			const node = root.getObjectByName(nodes.get(key));
+			expect(rest.get(key).equals(node.quaternion)).toBe(true);
+		}
+	});
+
+	it('leaves a hobby rig whose upper arm IS spelled shoulderL alone', () => {
+		// No clavicle in this skeleton: chest → shoulderL → elbowL. Demoting the
+		// only contender would vacate LeftArm and freeze the arm.
+		const map = canonicalNodeMapFromObject(
+			makeHierarchicalRig([
+				{ name: 'hips', parent: null },
+				{ name: 'chest', parent: 'hips' },
+				{ name: 'shoulderL', parent: 'chest' },
+				{ name: 'elbowL', parent: 'shoulderL' },
+				{ name: 'wristL', parent: 'elbowL' },
+			]),
+		);
+		expect(map.get('LeftArm')).toBe('shoulderL');
+		expect(map.has('LeftShoulder')).toBe(false);
+	});
+
+	it('promotes the upper arm on the mirror-image (SMPL) collision', () => {
+		// SMPL names the clavicle `left_collar` and the upper arm `left_shoulder`;
+		// both normalize onto LeftShoulder, so without resolution LeftArm is vacant
+		// and the arm track binds to nothing.
+		const map = canonicalNodeMapFromObject(
+			makeHierarchicalRig([
+				{ name: 'pelvis', parent: null },
+				{ name: 'spine3', parent: 'pelvis' },
+				{ name: 'left_collar', parent: 'spine3' },
+				{ name: 'left_shoulder', parent: 'left_collar' },
+				{ name: 'left_elbow', parent: 'left_shoulder' },
+				{ name: 'left_wrist', parent: 'left_elbow' },
+			]),
+		);
+		expect(map.get('LeftShoulder')).toBe('left_collar');
+		expect(map.get('LeftArm')).toBe('left_shoulder');
+		expect(map.get('LeftForeArm')).toBe('left_elbow');
+	});
+
+	it('actually drives the upper arm: the retargeted LeftArm track lands on it', () => {
+		const root = makeRigifyRig();
+		const clip = makeCanonicalClip();
+		const r = retargetClipToObject(clip, root, { minCoverage: 0 });
+		const names = r.clip.tracks.map((t) => t.name);
+		expect(names).toContain('upper_arm.L.quaternion');
+		expect(names).not.toContain('shoulder.L.quaternion');
 	});
 });
 

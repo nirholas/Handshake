@@ -1,247 +1,205 @@
 #!/usr/bin/env node
 // Audit: which api/** handlers are routed but can never execute?
 //
-// A handler is "shadowed" when the production router, walking vercel.json's
-// `routes` table in order, sends the handler's own canonical URL somewhere else:
-// to a different handler, to a static page, to an external proxy, or to a bare
-// status. The handler file exists, it looks routed, and it never runs.
+// scripts/verify-routes.mjs proves the same property for catalog PAGES. This
+// script covers the other half of the surface, the ~1,900 handlers under api/,
+// which is where the failure actually bites: a broad rule such as
+// "/api/agents/([^/]+)(?:/.*)?" placed above the narrow ones silently swallows
+// every endpoint below it, and the swallowed handlers stay in the tree looking
+// perfectly healthy. Both scripts share one matcher
+// (scripts/lib/vercel-routes.mjs), which mirrors server/index.mjs, so there is
+// no second copy of the routing rules to drift.
 //
-// This script replicates server/index.mjs's matching algorithm exactly:
-//   1. Split `routes` at the {handle:"filesystem"} marker into phase 1 / post-fs.
-//   2. Phase 1, in order: `continue` rules only collect headers; the first
-//      non-continue rule with a `dest` rewrites the path and ENDS phase 1; a
-//      non-continue rule with `status` and no `dest` ends the request outright.
-//      `has` conditions gate a rule to requests carrying the query/header/cookie
-//      /host it names, so a plain request skips those rules entirely.
-//   3. If the rewritten path is still under /api/, it is dispatched with Vercel
-//      filesystem semantics: exact file > exact dir > [param].js > [param]/ >
-//      [...catchall].js, with `_`- and `.`-prefixed names never routable.
+// A handler is REACHABLE if at least one concrete request path resolves to it.
+// Two families of path can do that, and both are modeled here, because checking
+// only the first produces mostly false positives:
 //
-// Dynamic handlers are probed with several concrete segment values, because a
-// route-table regex may accept one shape of id and reject another. A handler is
-// only reported as fully shadowed when EVERY probe value is diverted; when some
-// values reach it and others do not, it is reported as partially shadowed.
+//   1. Its own filesystem path: /api/pump/balances for api/pump/balances.js,
+//      with [param] segments filled in by several probe values (a rule regex may
+//      accept one id shape and reject another).
+//   2. Any route-table rule that REWRITES to it: /api/agents/x/memory/seed/x
+//      lands on api/agents/[id]/memory-seed-x.js, whose own filesystem path is
+//      swallowed by the /api/agents catch-all. The handler is alive; only its
+//      literal path is not.
+//
+// For (2) a concrete sample path is synthesised from each rule's `src` regex and
+// then re-tested against the same regex AND pushed through the real matcher, so
+// a rule only counts as delivering traffic when a request provably reaches its
+// own dest. A rule that cannot deliver to its own dest is itself reported as a
+// shadowed rule, which is how the /api/agents catch-all incident presents.
 //
 // Usage:
 //   node scripts/audit-route-shadowing.mjs            # human-readable report
+//   node scripts/audit-route-shadowing.mjs --all      # also list reachable-via-rule
 //   node scripts/audit-route-shadowing.mjs --json     # machine-readable
-//   node scripts/audit-route-shadowing.mjs --all      # include partial hits
 //
-// Exit code 1 when at least one fully shadowed handler is found.
+// Exit code 1 when a handler has no reachable path, or a rule cannot reach its
+// own destination.
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isRoutable, loadRouteTable, resolveApiPath, resolveRequest } from './lib/vercel-routes.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const API_ROOT = path.join(ROOT, 'api');
+const rel = (f) => path.relative(ROOT, f);
+
+const table = loadRouteTable(JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8')));
+
+// Probe values for a dynamic segment. A rule regex may accept one shape and
+// reject another (`([^/.]+)` vs `(\d+)` vs a base58 mint), so a dynamic handler
+// is tested against all of them and a rule capture takes the first that fits.
+const PROBES = [
+	'probehandler1',
+	'1234567890',
+	'Probe-Test_9',
+	'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+	'probe/sub',
+	'a',
+];
 
 // ---------------------------------------------------------------------------
-// Route table (mirrors server/index.mjs lines 55-113)
+// Synthesise a concrete request path from a route's `src` regex.
 // ---------------------------------------------------------------------------
 
-const vercelConfig = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
-const fsIndex = vercelConfig.routes.findIndex((r) => r.handle === 'filesystem');
-const compileRoute = (r, index) => ({ ...r, index, re: new RegExp(`^${r.src}$`) });
-const phase1Routes = vercelConfig.routes
-	.slice(0, fsIndex === -1 ? vercelConfig.routes.length : fsIndex)
-	.map((r, index) => ({ r, index }))
-	.filter(({ r }) => r.src)
-	.map(({ r, index }) => compileRoute(r, index));
-
-const substitute = (template, match) =>
-	template.replace(/\$(\d+)/g, (_, n) => match[Number(n)] ?? '');
-
-const isExternalDest = (dest) => /^https?:\/\//.test(dest || '');
-
-const hasValueCache = new Map();
-function compileHasValue(value) {
-	let re = hasValueCache.get(value);
-	if (!re) {
-		const caseInsensitive = value.startsWith('(?i)');
-		re = new RegExp(caseInsensitive ? value.slice(4) : value, caseInsensitive ? 'i' : undefined);
-		hasValueCache.set(value, re);
+function closingParen(src, open) {
+	let depth = 0;
+	for (let i = open; i < src.length; i++) {
+		if (src[i] === '\\') {
+			i++;
+			continue;
+		}
+		if (src[i] === '[') {
+			while (i < src.length && src[i] !== ']') i += src[i] === '\\' ? 2 : 1;
+			continue;
+		}
+		if (src[i] === '(') depth++;
+		else if (src[i] === ')' && --depth === 0) return i;
 	}
-	return re;
+	return -1;
 }
 
-// A plain request carries no extra query, no auth header and no cookie, so any
-// `has`-gated rule is skipped, exactly as it is in production for that request.
-function hasMatches(route, req, url) {
-	if (!route.has) return true;
-	for (const cond of route.has) {
-		let val;
-		if (cond.type === 'query') val = url.searchParams.get(cond.key);
-		else if (cond.type === 'header') val = req.headers[cond.key.toLowerCase()];
-		else if (cond.type === 'cookie') {
-			const raw = req.headers.cookie || '';
-			const m = raw.match(new RegExp(`(?:^|;\\s*)${cond.key}=([^;]*)`));
-			val = m ? decodeURIComponent(m[1]) : undefined;
-		} else if (cond.type === 'host') val = req.headers.host;
-		else continue;
-		if (val == null) return false;
-		if (cond.value !== undefined && !compileHasValue(cond.value).test(val)) return false;
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789-_ABZ';
+
+function accepts(pattern, value) {
+	try {
+		return new RegExp(`^(?:${pattern})$`).test(value);
+	} catch {
+		return false;
 	}
-	return true;
 }
 
-// ---------------------------------------------------------------------------
-// Filesystem resolution (mirrors server/index.mjs lines 197-261)
-// ---------------------------------------------------------------------------
-
-const dirCache = new Map();
-function listDir(dir) {
-	let entries = dirCache.get(dir);
-	if (!entries) {
-		entries = readdirSync(dir, { withFileTypes: true });
-		dirCache.set(dir, entries);
-	}
-	return entries;
-}
-
-const isRoutable = (name) => !name.startsWith('_') && !name.startsWith('.');
-
-function resolveApi(dir, segments, params) {
-	if (segments.length === 0) {
-		const index = path.join(dir, 'index.js');
-		return existsSync(index) ? { file: index, params } : null;
-	}
-	const [head, ...rest] = segments;
-
-	if (rest.length === 0) {
-		const exact = path.join(dir, `${head}.js`);
-		if (existsSync(exact)) return { file: exact, params };
-	}
-
-	const exactDir = path.join(dir, head);
-	if (existsSync(exactDir) && statSync(exactDir).isDirectory()) {
-		const hit = resolveApi(exactDir, rest, params);
-		if (hit) return hit;
-	}
-
-	const entries = listDir(dir);
-
-	if (rest.length === 0) {
-		for (const e of entries) {
-			if (!e.isFile() || !isRoutable(e.name)) continue;
-			if (e.name.startsWith('[') && e.name.endsWith('].js') && !e.name.startsWith('[...')) {
-				const name = e.name.slice(1, -4);
-				return { file: path.join(dir, e.name), params: { ...params, [name]: head } };
-			}
-		}
-	}
-
-	for (const e of entries) {
-		if (!e.isDirectory() || !isRoutable(e.name)) continue;
-		if (e.name.startsWith('[') && e.name.endsWith(']') && !e.name.startsWith('[...')) {
-			const name = e.name.slice(1, -1);
-			const hit = resolveApi(path.join(dir, e.name), rest, { ...params, [name]: head });
-			if (hit) return hit;
-		}
-	}
-
-	for (const e of entries) {
-		if (!e.isFile()) continue;
-		if (e.name.startsWith('[...') && e.name.endsWith('].js')) {
-			const name = e.name.slice(4, -4);
-			return {
-				file: path.join(dir, e.name),
-				params: { ...params, [name]: [head, ...rest].join('/') },
-			};
-		}
-	}
-
+// A character class (with its quantifier) is satisfied by the first probe it
+// accepts; failing that, by the first single character it accepts.
+function sampleCharClass(pattern) {
+	for (const probe of PROBES) if (accepts(pattern, probe)) return probe;
+	for (const ch of ALPHABET) if (accepts(pattern, ch)) return ch;
 	return null;
 }
 
-function dispatchTarget(pathname) {
-	const apiPath = pathname.endsWith('.js') ? pathname.slice(0, -3) : pathname;
-	let segments;
-	try {
-		segments = apiPath.slice(5).split('/').filter(Boolean).map(decodeURIComponent);
-	} catch {
-		return null;
+// A group is satisfied by the first probe its own pattern accepts; failing that
+// (nested groups, alternations) its first alternative is sampled recursively.
+function sampleGroup(inner, depth) {
+	let body = inner;
+	if (body.startsWith('?:')) body = body.slice(2);
+	else if (body.startsWith('?!') || body.startsWith('?=') || body.startsWith('?<')) return '';
+	for (const probe of PROBES) if (accepts(body, probe)) return probe;
+	const alt = body.split('|')[0];
+	if (alt === inner && !/[([]/.test(alt)) return sampleCharClass(alt);
+	return sampleFromSrc(alt, depth + 1);
+}
+
+/** @returns {string|null} a path matching `src`, or null when it cannot be built. */
+function sampleFromSrc(src, depth = 0) {
+	if (depth > 8) return null;
+	let out = '';
+	let i = 0;
+	while (i < src.length) {
+		const ch = src[i];
+		if (ch === '\\') {
+			const next = src[i + 1];
+			// \d, \w and friends stand for a character, not a literal.
+			if (next === 'd') out += '1';
+			else if (next === 'w') out += 'a';
+			else if (next === 's') out += ' ';
+			else out += next;
+			i += 2;
+			continue;
+		}
+		if (ch === '^' || ch === '$') {
+			i++;
+			continue;
+		}
+		if (ch === '(') {
+			const end = closingParen(src, i);
+			if (end === -1) return null;
+			const inner = src.slice(i + 1, end);
+			let j = end + 1;
+			let quant = '';
+			while (j < src.length && '?*+'.includes(src[j])) quant += src[j++];
+			i = j;
+			// An optional or starred group contributes nothing to the shortest path.
+			if (quant.startsWith('?') || quant.startsWith('*')) continue;
+			const piece = sampleGroup(inner, depth);
+			if (piece === null) return null;
+			out += piece;
+			continue;
+		}
+		if (ch === '[') {
+			let j = i + 1;
+			while (j < src.length && src[j] !== ']') j += src[j] === '\\' ? 2 : 1;
+			if (j >= src.length) return null;
+			const cls = src.slice(i, j + 1);
+			let k = j + 1;
+			let quant = '';
+			while (k < src.length && '?*+'.includes(src[k])) quant += src[k++];
+			i = k;
+			if (quant.startsWith('?') || quant.startsWith('*')) continue;
+			const piece = sampleCharClass(`${cls}${quant || ''}`);
+			if (piece === null) return null;
+			out += piece;
+			continue;
+		}
+		if (ch === '.') {
+			i++;
+			let quant = '';
+			while (i < src.length && '?*+'.includes(src[i])) quant += src[i++];
+			if (quant.startsWith('?') || quant.startsWith('*')) continue;
+			out += 'a';
+			continue;
+		}
+		// A quantifier on a plain literal: `/?` drops the char, `+` keeps one.
+		if (ch === '?') {
+			out = out.slice(0, -1);
+			i++;
+			continue;
+		}
+		if (ch === '*') {
+			out = out.slice(0, -1);
+			i++;
+			continue;
+		}
+		if (ch === '+') {
+			i++;
+			continue;
+		}
+		out += ch;
+		i++;
 	}
-	if (
-		segments.length === 0 ||
-		segments.some((s) => !isRoutable(s) || s === '..' || s.includes('/') || s.includes('\\'))
-	)
-		return null;
-	const route = resolveApi(API_ROOT, segments, {});
-	if (route && !route.file.startsWith(API_ROOT + path.sep)) return null;
-	return route;
+	return out;
+}
+
+// Only trust a sample the route's own regex accepts.
+function sampleForRoute(route) {
+	const sample = sampleFromSrc(route.src);
+	if (sample === null || !sample.startsWith('/')) return null;
+	return route.re.test(sample) ? sample : null;
 }
 
 // ---------------------------------------------------------------------------
-// Full request resolution (mirrors the express handler, lines 429-501)
+// Handler inventory
 // ---------------------------------------------------------------------------
-
-/**
- * Resolve a request path the way production does.
- * @returns {{outcome: string, file?: string, dest?: string, rule?: object}}
- *   outcome: 'handler' | 'no-handler' | 'static' | 'status' | 'external' | 'redirect'
- */
-function resolveRequest(pathname, { method = 'GET', headers = { host: 'three.ws' } } = {}) {
-	const url = new URL(pathname, 'http://internal');
-	const req = { method, headers, url: pathname };
-	let currentPath = url.pathname;
-	let matchedRule = null;
-
-	// The external-dest proxy middleware walks phase 1 with the same first-match
-	// semantics and hijacks the request when the winning dest is absolute.
-	for (const route of phase1Routes) {
-		const m = route.re.exec(currentPath);
-		if (!m) continue;
-		if (!hasMatches(route, req, url)) continue;
-		if (route.continue) continue;
-		if (!route.dest || !isExternalDest(route.dest)) break;
-		return { outcome: 'external', dest: substitute(route.dest, m), rule: route };
-	}
-
-	// Trailing-slash collapse (non-/api only).
-	if (
-		(method === 'GET' || method === 'HEAD') &&
-		currentPath.length > 1 &&
-		currentPath.endsWith('/') &&
-		!currentPath.startsWith('/api/')
-	) {
-		return { outcome: 'redirect', dest: currentPath.replace(/\/+$/, '') || '/' };
-	}
-
-	for (const route of phase1Routes) {
-		const m = route.re.exec(currentPath);
-		if (!m) continue;
-		if (!hasMatches(route, req, url)) continue;
-		if (route.continue) continue;
-		if (route.status && !route.dest) {
-			return { outcome: 'status', status: route.status, rule: route };
-		}
-		if (route.dest) {
-			const dest = substitute(route.dest, m);
-			const qIdx = dest.indexOf('?');
-			currentPath = qIdx === -1 ? dest : dest.slice(0, qIdx);
-			matchedRule = route;
-			break;
-		}
-	}
-
-	if (currentPath.startsWith('/api/')) {
-		const hit = dispatchTarget(currentPath);
-		if (hit) return { outcome: 'handler', file: hit.file, dest: currentPath, rule: matchedRule };
-		return { outcome: 'no-handler', dest: currentPath, rule: matchedRule };
-	}
-	return { outcome: 'static', dest: currentPath, rule: matchedRule };
-}
-
-// ---------------------------------------------------------------------------
-// Handler enumeration
-// ---------------------------------------------------------------------------
-
-// Probe values for a [param] segment. A route-table regex may accept one shape
-// and reject another (`([a-z0-9-]+)` vs `(\d+)` vs a base58 mint), so every
-// dynamic handler is tested against all of them.
-const PROBE_VALUES = ['probehandler1', '1234567890', 'Probe-Test_9', 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'];
 
 function collectHandlers(dir, urlSegments, out) {
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -252,6 +210,7 @@ function collectHandlers(dir, urlSegments, out) {
 			continue;
 		}
 		if (!entry.isFile() || !entry.name.endsWith('.js')) continue;
+		if (/\.(test|spec)\.js$/.test(entry.name)) continue;
 		const base = entry.name.slice(0, -3);
 		if (base === 'index') out.push({ file: abs, segments: [...urlSegments] });
 		else out.push({ file: abs, segments: [...urlSegments, base] });
@@ -259,11 +218,9 @@ function collectHandlers(dir, urlSegments, out) {
 	return out;
 }
 
-// Turn a handler's path segments into concrete request paths, one per probe
-// value (static handlers yield exactly one path).
-function candidatePaths(segments) {
+function canonicalPaths(segments) {
 	const dynamic = segments.some((s) => s.startsWith('['));
-	const probes = dynamic ? PROBE_VALUES : [PROBE_VALUES[0]];
+	const probes = dynamic ? PROBES.filter((p) => !p.includes('/')) : PROBES.slice(0, 1);
 	return probes.map((probe) => {
 		const parts = [];
 		for (const s of segments) {
@@ -271,83 +228,159 @@ function candidatePaths(segments) {
 			else if (s.startsWith('[') && s.endsWith(']')) parts.push(probe);
 			else parts.push(s);
 		}
-		return { probe, path: `/api/${parts.join('/')}` };
+		return `/api/${parts.join('/')}`;
 	});
 }
 
 function describe(result) {
 	switch (result.outcome) {
 		case 'handler':
-			return `handler ${path.relative(ROOT, result.file)}`;
-		case 'no-handler':
-			return `404 (rewritten to ${result.dest}, no handler)`;
-		case 'static':
-			return `static/page ${result.dest}`;
+			return result.file ? `handler ${rel(result.file)}` : `rewritten to ${result.dest}`;
+		case 'api-missing':
+			return `404 (rewritten to ${result.dest}, no handler resolves)`;
+		case 'file':
+		case 'notfound':
+			return `static ${result.dest} (HTTP ${result.status})`;
 		case 'status':
-			return `status ${result.status}`;
+			return `HTTP ${result.status}`;
 		case 'external':
-			return `external proxy ${result.dest}`;
+			return `external proxy ${result.to}`;
 		case 'redirect':
-			return `redirect ${result.dest}`;
+			return `HTTP ${result.status} redirect to ${result.to}`;
 		default:
 			return result.outcome;
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Run
+// Pass 1: which rules actually deliver traffic to their own destination?
+// ---------------------------------------------------------------------------
+
+const reachableVia = new Map(); // handler file -> [{ via, path }]
+const addReach = (file, entry) => {
+	if (!reachableVia.has(file)) reachableVia.set(file, []);
+	reachableVia.get(file).push(entry);
+};
+
+const deadRules = [];
+const unsampledRules = [];
+
+for (const route of table.phase1Routes) {
+	if (route.continue) continue;
+	const touchesApi = route.src.startsWith('/api/') || (route.dest || '').startsWith('/api/');
+	if (!touchesApi) continue;
+	const sample = sampleForRoute(route);
+	if (!sample) {
+		unsampledRules.push({ index: route.index, src: route.src, dest: route.dest ?? null });
+		continue;
+	}
+	const result = resolveRequest(table, sample, { apiRoot: API_ROOT });
+	const wanted = (route.dest || '').startsWith('/api/')
+		? resolveApiPath(API_ROOT, route.dest.split('?')[0])
+		: null;
+	if (result.outcome === 'handler' && result.file) {
+		addReach(result.file, { via: route.src, path: sample, ruleIndex: route.index });
+	}
+	// The rule is dead when a request that matches it does not end up where the
+	// rule points: an earlier rule claimed the path first.
+	if (wanted && (result.outcome !== 'handler' || result.file !== wanted.file)) {
+		deadRules.push({
+			index: route.index,
+			src: route.src,
+			dest: route.dest,
+			sample,
+			wanted: rel(wanted.file),
+			got: describe(result),
+			winner: result.rule ? { index: result.rule.index, src: result.rule.src } : null,
+		});
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Pass 2: which handlers have no reachable path at all?
 // ---------------------------------------------------------------------------
 
 const handlers = collectHandlers(API_ROOT, [], []);
-const full = [];
-const partial = [];
+const unreachable = [];
+const ruleOnly = [];
 
 for (const h of handlers) {
-	const rel = path.relative(ROOT, h.file);
-	const probes = candidatePaths(h.segments).map((c) => {
-		const result = resolveRequest(c.path);
-		const reached = result.outcome === 'handler' && result.file === h.file;
-		return { ...c, result, reached };
-	});
-	const reachedCount = probes.filter((p) => p.reached).length;
-	if (reachedCount === probes.length) continue;
-	const rule = probes.find((p) => !p.reached)?.result.rule;
+	const direct = [];
+	const diverted = [];
+	for (const p of canonicalPaths(h.segments)) {
+		const result = resolveRequest(table, p, { apiRoot: API_ROOT });
+		if (result.outcome === 'handler' && result.file === h.file) direct.push(p);
+		else diverted.push({ path: p, to: describe(result), rule: result.rule ?? null });
+	}
+	if (direct.length === canonicalPaths(h.segments).length) continue;
+	const viaRules = reachableVia.get(h.file) || [];
 	const record = {
-		handler: rel,
-		canonical: probes[0].path,
-		reachedWith: probes.filter((p) => p.reached).map((p) => p.path),
-		divertedTo: probes
-			.filter((p) => !p.reached)
-			.map((p) => ({ path: p.path, to: describe(p.result), outcome: p.result.outcome })),
-		rule: rule ? { index: rule.index, src: rule.src, dest: rule.dest ?? null } : null,
+		handler: rel(h.file),
+		canonical: canonicalPaths(h.segments)[0],
+		directPaths: direct,
+		divertedTo: diverted.map((d) => ({ path: d.path, to: d.to })),
+		blockingRule: diverted[0]?.rule
+			? { index: diverted[0].rule.index, src: diverted[0].rule.src, dest: diverted[0].rule.dest ?? null }
+			: null,
+		reachableVia: viaRules.map((v) => v.path),
 	};
-	if (reachedCount === 0) full.push(record);
-	else partial.push(record);
+	if (direct.length === 0 && viaRules.length === 0) unreachable.push(record);
+	else if (direct.length === 0) ruleOnly.push(record);
 }
+
+// ---------------------------------------------------------------------------
+// Report
+// ---------------------------------------------------------------------------
 
 const asJson = process.argv.includes('--json');
 const showAll = process.argv.includes('--all');
 
 if (asJson) {
-	console.log(JSON.stringify({ scanned: handlers.length, full, partial }, null, 2));
+	console.log(
+		JSON.stringify(
+			{ scanned: handlers.length, unreachable, ruleOnly, deadRules, unsampledRules },
+			null,
+			2,
+		),
+	);
 } else {
-	console.log(`Scanned ${handlers.length} routable handlers under api/.\n`);
-	console.log(`Fully shadowed (no request shape reaches them): ${full.length}`);
-	for (const r of full) {
+	console.log(
+		`Route shadowing audit: ${handlers.length} routable handlers under api/, ` +
+			`${table.phase1Routes.length} pre-filesystem rules.\n`,
+	);
+
+	console.log(`UNREACHABLE handlers (no request path resolves to them): ${unreachable.length}`);
+	for (const r of unreachable) {
 		console.log(`\n  ${r.handler}`);
 		for (const d of r.divertedTo) console.log(`    ${d.path}  ->  ${d.to}`);
-		if (r.rule) console.log(`    rule #${r.rule.index}: ${r.rule.src}  ->  ${r.rule.dest}`);
+		if (r.blockingRule)
+			console.log(`    blocked by rule #${r.blockingRule.index}: ${r.blockingRule.src} -> ${r.blockingRule.dest}`);
 	}
-	console.log(`\nPartially shadowed (some id shapes diverted): ${partial.length}`);
+
+	console.log(`\nDEAD route rules (rule never reaches its own dest): ${deadRules.length}`);
+	for (const r of deadRules) {
+		console.log(`\n  rule #${r.index}: ${r.src}  ->  ${r.dest}`);
+		console.log(`    ${r.sample}  ->  ${r.got}   (wanted ${r.wanted})`);
+		if (r.winner) console.log(`    claimed first by rule #${r.winner.index}: ${r.winner.src}`);
+	}
+
+	console.log(
+		`\nReachable only through a rewrite (literal path shadowed, endpoint alive): ${ruleOnly.length}`,
+	);
 	if (showAll) {
-		for (const r of partial) {
-			console.log(`\n  ${r.handler}`);
-			for (const d of r.divertedTo) console.log(`    ${d.path}  ->  ${d.to}`);
-			if (r.rule) console.log(`    rule #${r.rule.index}: ${r.rule.src}  ->  ${r.rule.dest}`);
-		}
-	} else if (partial.length) {
+		for (const r of ruleOnly) console.log(`  ${r.handler}  <-  ${r.reachableVia.join(', ')}`);
+	} else if (ruleOnly.length) {
 		console.log('  (re-run with --all to list them)');
+	}
+
+	if (unsampledRules.length) {
+		console.log(`\nRules whose src could not be sampled (not verified): ${unsampledRules.length}`);
+		for (const r of unsampledRules) console.log(`  #${r.index}: ${r.src} -> ${r.dest}`);
+	}
+
+	if (!unreachable.length && !deadRules.length) {
+		console.log('\n✓ every api/** handler is reachable and every API rule reaches its own dest.');
 	}
 }
 
-process.exit(full.length > 0 ? 1 : 0);
+process.exit(unreachable.length || deadRules.length ? 1 : 0);

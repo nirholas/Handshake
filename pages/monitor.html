@@ -204,7 +204,10 @@
 			.reg-chip { font-size: 8px; letter-spacing: 0.6px; color: var(--mon-cyan); border: 1px solid var(--mon-cyan); border-radius: 3px; padding: 0 4px; margin-left: 6px; vertical-align: 1px; }
 
 			/* Spotlight */
-			.spot-stage { position: relative; flex: 1; min-height: 300px; background: radial-gradient(ellipse at 50% 30%, rgba(87,199,255,0.06), transparent 65%); }
+			/* overflow:hidden keeps the widget's own chrome inside the stage: it is
+			   absolutely positioned and would otherwise print over the footer that
+			   names the agent, showing two labels stacked on each other. */
+			.spot-stage { position: relative; flex: 1; min-height: 200px; overflow: hidden; background: radial-gradient(ellipse at 50% 30%, rgba(87,199,255,0.06), transparent 65%); }
 			.spot-stage agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; }
 			.spot-foot { border-top: 1px solid var(--mon-border); padding: 8px 11px; flex-shrink: 0; }
 			.spot-name { font-size: 12px; font-weight: 700; }

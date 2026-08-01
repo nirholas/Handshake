@@ -1,5 +1,11 @@
 // Forge — text / image / multi-view → 3D generator (browser client).
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
+import {
+	sleepUntilVisibleOrElapsed,
+	createHiddenClock,
+	fetchJobStatus,
+	nextBackoff,
+} from './shared/resilient-poll.js';
 import { showSharePanel } from './shared/share.js';
 import { stampGlbAttribution } from './shared/glb-attribution.js';
 import {
@@ -40,6 +46,14 @@ const POLL_INTERVAL_MS = 2500;
 // real generation, not the average one, or the client abandons jobs the server
 // finishes. Queue wait does not count against this window (see pollUntilDone).
 const MAX_POLL_MS = 12 * 60 * 1000;
+// Flaky-network budget for the status poll. A phone on a train drops sockets,
+// and an edge node answers the occasional 502: neither means the generation
+// died, because all real job state lives server-side. The poll absorbs
+// consecutive transport failures with exponential backoff and only surfaces an
+// error once the network has been unusable for the whole window below. Anything
+// shorter loses a finished model to a single dropped request.
+const POLL_MAX_BACKOFF_MS = 20_000;
+const POLL_TRANSPORT_GRACE_MS = 90_000;
 // One slot per reference view the server accepts (api/forge.js MAX_VIEWS = 6).
 // MAX_VIEWS is derived from the labels so the slot grid, the pips, the "N of M
 // views" copy, and the fill logic can never disagree about how many exist.
@@ -481,6 +495,7 @@ function setBusy(busy) {
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
 
 // Mode switching --------------------------------------------------------------
 
@@ -1560,8 +1575,16 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	return data;
 }
 
+const QUEUE_NOTE =
+	'The engine is finishing earlier jobs. Yours is queued and will run at full quality, nothing is downgraded.';
+const PATCHY_NETWORK_NOTE =
+	'Your connection dropped. Still holding this generation, it keeps running on the server.';
+
 async function pollUntilDone(jobId) {
-	let deadline = performance.now() + MAX_POLL_MS;
+	const hidden = createHiddenClock();
+	// Foreground time only: a backgrounded tab must not burn the run budget.
+	const runNow = () => performance.now() - hidden.hiddenMs();
+	let deadline = runNow() + MAX_POLL_MS;
 	// Queue-state tracking: when the engine reports the job is waiting for a GPU
 	// (healthy but busy, one generation per instance), say so instead of showing
 	// a silent spinner that reads as a hang. Restored when the job starts running.
@@ -1569,71 +1592,104 @@ async function pollUntilDone(jobId) {
 	// through "queued" for a beat even when a GPU is free.
 	let queuedPolls = 0;
 	let inQueue = false;
-	while (!pollAbort && performance.now() < deadline) {
-		await sleep(POLL_INTERVAL_MS);
-		if (pollAbort) return null;
-		const res = await fetch(`/api/forge?job=${encodeURIComponent(jobId)}`, {
-			headers: forgeHeaders(),
-		});
-		if (!res.ok && res.status >= 500) {
-			throw new Error(`Status check failed (HTTP ${res.status}) — please try again.`);
-		}
-		const data = await res.json().catch(() => ({}));
-		if (data.error === 'unconfigured') {
-			const e = new Error(data.message || 'unconfigured');
-			e.kind = 'unconfigured';
-			throw e;
-		}
-		// One place folds the poll into the stage timeline: queued vs running, the
-		// lane a poll-time failover moved to, and a reference view that only
-		// becomes visible now (coalesced job, resumed session, failover successor).
-		timeline.applyPoll(data);
-		if (data.status === 'done' && data.glb_url) return data;
-		if (data.status === 'failed') {
-			// The server names the configured lanes that can still serve a fresh
-			// retry of this request (retry_backends) — carry them so the catch can
-			// auto-hop to a backup engine instead of dead-ending.
-			const e = new Error(data.error || 'Generation failed.');
-			if (data.retryable && Array.isArray(data.retry_backends) && data.retry_backends.length) {
-				e.kind = 'lane_failed';
-				e.retryBackends = data.retry_backends;
-			}
-			throw e;
-		}
-		if (data.status === 'queued') {
-			// Time spent in line must not consume the run budget: a queued job is
-			// alive and will get the full window once a GPU picks it up.
-			deadline = performance.now() + MAX_POLL_MS;
-			queuedPolls += 1;
-			// A cold worker has its own designed state in the timeline; the queue
-			// notice is for a warm lane that is simply busy, so it never doubles up.
-			if (!inQueue && queuedPolls >= 3 && !timeline.isCold()) {
-				inQueue = true;
-				setLaneNote(
-					'The engine is finishing earlier jobs. Yours is queued and will run at full quality, nothing is downgraded.',
-				);
-			}
-		}
-		if (data.status === 'running') {
-			queuedPolls = 0;
-			if (inQueue) {
-				inQueue = false;
-				setLaneNote('');
-			}
-			// Poll-time failover: the server moved this job onto a backup lane and
-			// keeps it running under the same id. Surface the switch so the user
-			// sees which engine is now serving, rather than a silent swap.
-			if (data.failover_from && data.backend && data.backend !== data.failover_from) {
-				setLaneNote(
-					`${engineLabel(data.failover_from)} hit a snag. Continuing on ${engineLabel(data.backend)}, no action needed.`,
-				);
-			}
-		}
+	// Flaky-network state: when the first transport failure lands, back off
+	// exponentially and tell the user the job is safe rather than killing it.
+	let backoffMs = POLL_INTERVAL_MS;
+	let offlineSince = 0;
+	try {
+		return await runPollLoop();
+	} finally {
+		hidden.stop();
 	}
-	if (pollAbort) return null;
-	throw new Error(
-		'Generation timed out. The model may be too complex — try fewer views or a simpler prompt.',
-	);
+
+	async function runPollLoop() {
+		while (!pollAbort && runNow() < deadline) {
+			await sleepUntilVisibleOrElapsed(backoffMs);
+			if (pollAbort) return null;
+
+			let data;
+			try {
+				data = await fetchJobStatus(`/api/forge?job=${encodeURIComponent(jobId)}`, {
+					headers: forgeHeaders(),
+				});
+			} catch (err) {
+				if (err?.kind !== 'transport') throw err;
+				if (!offlineSince) offlineSince = runNow();
+				if (runNow() - offlineSince > POLL_TRANSPORT_GRACE_MS) {
+					throw new Error(
+						'Lost the connection to the generator. Your model is still being built and will keep going. Reopen /forge to pick it back up.',
+					);
+				}
+				setLaneNote(PATCHY_NETWORK_NOTE);
+				backoffMs = nextBackoff(backoffMs, POLL_MAX_BACKOFF_MS);
+				continue;
+			}
+			if (offlineSince) {
+				// Back online: drop the patchy-network notice and restore whatever the
+				// job state itself has to say.
+				offlineSince = 0;
+				backoffMs = POLL_INTERVAL_MS;
+				setLaneNote(inQueue ? QUEUE_NOTE : '');
+			}
+			if (data.error === 'unconfigured') {
+				const e = new Error(data.message || 'unconfigured');
+				e.kind = 'unconfigured';
+				throw e;
+			}
+			// A malformed or missing handle can never resolve: fail immediately
+			// instead of spinning out the full run budget on a stale resume.
+			if (data.error === 'invalid_job' || data.error === 'missing_job') {
+				throw new Error(data.message || 'That generation is no longer available.');
+			}
+			// One place folds the poll into the stage timeline: queued vs running, the
+			// lane a poll-time failover moved to, and a reference view that only
+			// becomes visible now (coalesced job, resumed session, failover successor).
+			timeline.applyPoll(data);
+			if (data.status === 'done' && data.glb_url) return data;
+			if (data.status === 'failed') {
+				// The server names the configured lanes that can still serve a fresh
+				// retry of this request (retry_backends), carry them so the catch can
+				// auto-hop to a backup engine instead of dead-ending.
+				const e = new Error(data.error || 'Generation failed.');
+				if (data.retryable && Array.isArray(data.retry_backends) && data.retry_backends.length) {
+					e.kind = 'lane_failed';
+					e.retryBackends = data.retry_backends;
+				}
+				throw e;
+			}
+			if (data.status === 'queued') {
+				// Time spent in line must not consume the run budget: a queued job is
+				// alive and will get the full window once a GPU picks it up.
+				deadline = runNow() + MAX_POLL_MS;
+				queuedPolls += 1;
+				// A cold worker has its own designed state in the timeline; the queue
+				// notice is for a warm lane that is simply busy, so it never doubles up.
+				if (!inQueue && queuedPolls >= 3 && !timeline.isCold()) {
+					inQueue = true;
+					setLaneNote(QUEUE_NOTE);
+				}
+			}
+			if (data.status === 'running') {
+				queuedPolls = 0;
+				if (inQueue) {
+					inQueue = false;
+					setLaneNote('');
+				}
+				// Poll-time failover: the server moved this job onto a backup lane and
+				// keeps it running under the same id. Surface the switch so the user
+				// sees which engine is now serving, rather than a silent swap.
+				if (data.failover_from && data.backend && data.backend !== data.failover_from) {
+					setLaneNote(
+						`${engineLabel(data.failover_from)} hit a snag. Continuing on ${engineLabel(data.backend)}, no action needed.`,
+					);
+				}
+			}
+		}
+		if (pollAbort) return null;
+		throw new Error(
+			'Generation timed out. The model may be too complex, try fewer views or a simpler prompt.',
+		);
+	}
 }
 
 // Post the human verdict on a creation — the labeled half of the data flywheel.

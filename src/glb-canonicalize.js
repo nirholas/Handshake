@@ -477,16 +477,16 @@ export function resolveArmShoulderCollisions(plan, opts = {}) {
 	const count = new Map();
 	for (const p of plan) count.set(p.canonical, (count.get(p.canonical) || 0) + 1);
 
-	// Of several eligible entries, prefer the one that sits ABOVE another
-	// contender in the skeleton (the clavicle parents the upper arm). Falls back
-	// to document order when there is no hierarchy to read.
-	const outermost = (eligible, contenders) => {
+	// When spelling leaves more than one entry eligible, hierarchy decides: the
+	// clavicle is an ANCESTOR of the upper arm. `related` holds the contenders on
+	// the other side of that relation. Falls back to document order when the
+	// caller gave us no hierarchy to read (or none of the pairs are related).
+	const byHierarchy = (eligible, related, aboveRelated) => {
 		if (eligible.length < 2 || !isAncestor) return eligible[0];
-		return eligible.find((e) => contenders.some((o) => o !== e && isAncestor(e, o))) || eligible[0];
-	};
-	const innermost = (eligible, contenders) => {
-		if (eligible.length < 2 || !isAncestor) return eligible[0];
-		return eligible.find((e) => contenders.some((o) => o !== e && isAncestor(o, e))) || eligible[0];
+		const match = eligible.find((e) =>
+			related.some((o) => o !== e && (aboveRelated ? isAncestor(e, o) : isAncestor(o, e))),
+		);
+		return match || eligible[0];
 	};
 
 	const move = (entry, from, to) => {
@@ -502,11 +502,12 @@ export function resolveArmShoulderCollisions(plan, opts = {}) {
 		const shoulder = `${side}Shoulder`;
 		if ((count.get(arm) || 0) < 2 || (count.get(shoulder) || 0) > 0) continue;
 		const contenders = plan.filter((p) => p.canonical === arm);
-		if (!contenders.some((p) => UPPER_ARM_SPELLING.test(p.raw))) continue;
+		const upperArms = contenders.filter((p) => UPPER_ARM_SPELLING.test(p.raw));
+		if (upperArms.length === 0) continue;
 		const eligible = contenders.filter(
 			(p) => CLAVICLE_SPELLING.test(p.raw) && !UPPER_ARM_SPELLING.test(p.raw),
 		);
-		const pick = outermost(eligible, contenders);
+		const pick = byHierarchy(eligible, upperArms, true);
 		if (!pick) continue;
 		move(pick, arm, shoulder);
 		changed++;
@@ -518,11 +519,12 @@ export function resolveArmShoulderCollisions(plan, opts = {}) {
 		const shoulder = `${side}Shoulder`;
 		if ((count.get(shoulder) || 0) < 2 || (count.get(arm) || 0) > 0) continue;
 		const contenders = plan.filter((p) => p.canonical === shoulder);
-		if (!contenders.some((p) => COLLAR_ONLY_SPELLING.test(p.raw))) continue;
+		const collars = contenders.filter((p) => COLLAR_ONLY_SPELLING.test(p.raw));
+		if (collars.length === 0) continue;
 		const eligible = contenders.filter(
 			(p) => /shoulder/i.test(p.raw) && !COLLAR_ONLY_SPELLING.test(p.raw),
 		);
-		const pick = innermost(eligible, contenders);
+		const pick = byHierarchy(eligible, collars, false);
 		if (!pick) continue;
 		move(pick, shoulder, arm);
 		changed++;
