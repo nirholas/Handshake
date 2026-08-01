@@ -12,7 +12,15 @@
 			<guid isPermaLink="false">2026-08-01:Agent Monitor</guid>
 			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.</description>
+			<description>Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.</description>
+		</item>
+		<item>
+			<title>Docs · Agent Monitor</title>
+			<link>https://three.ws/docs/monitor</link>
+			<guid isPermaLink="false">2026-08-01:Docs · Agent Monitor</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.</description>
 		</item>
 		<item>
 			<title>Docs · Crews</title>

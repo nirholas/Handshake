@@ -6,7 +6,8 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-08-01
 
-- **Agent Monitor** (`/monitor`): Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.
+- **Agent Monitor** (`/monitor`): Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.
+- **Docs · Agent Monitor** (`/docs/monitor`): What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.
 - **Docs · Crews** (`/docs/crews`): How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.
 - **Docs · Overlay audit** (`/docs/overlay-audit`): The measured report on every UI overlay surface: which pages draw what over the content, what the audit sweep checks, and how to read a finding before fixing it.
 - **Docs · The solved economy** (`/docs/economy-solver`): The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.

@@ -511,7 +511,7 @@
 				{
 					"path": "/monitor",
 					"title": "Agent Monitor",
-					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.",
+					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
 					"indexable": true,
 					"added": "2026-08-01"
 				},
@@ -2882,6 +2882,12 @@
 					"title": "Docs · Economy Health Dashboard",
 					"description": "The operator dashboard that answers whether the Money Pulse is quiet and which link in the funding chain broke, plus the ranked diagnosis rules behind its verdict.",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/monitor",
+					"title": "Docs · Agent Monitor",
+					"description": "What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.",
+					"added": "2026-08-01"
 				},
 				{
 					"path": "/docs/money-flow-map",
