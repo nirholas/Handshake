@@ -784,3 +784,373 @@
 		animation: none;
 	}
 }
+
+/* ── Motion signatures ─────────────────────────────────────────────────── */
+/* Region colours are shared by the fingerprint bars, the legends and the
+ * atlas, so a colour means the same body part everywhere on the page. */
+
+:root {
+	--gv-r-head: #a78bfa;
+	--gv-r-arms: #7dd3fc;
+	--gv-r-torso: #34d399;
+	--gv-r-root: #fbbf24;
+	--gv-r-legs: #f472b6;
+	--gv-warn: #f59e0b;
+	--gv-ok: #34d399;
+}
+:root[data-theme='light'] {
+	--gv-r-head: #7c3aed;
+	--gv-r-arms: #0284c7;
+	--gv-r-torso: #059669;
+	--gv-r-root: #b45309;
+	--gv-r-legs: #db2777;
+	--gv-warn: #b45309;
+	--gv-ok: #047857;
+}
+
+[data-region='head'] { --gv-region: var(--gv-r-head); }
+[data-region='arms'] { --gv-region: var(--gv-r-arms); }
+[data-region='torso'] { --gv-region: var(--gv-r-torso); }
+[data-region='root'] { --gv-region: var(--gv-r-root); }
+[data-region='legs'] { --gv-region: var(--gv-r-legs); }
+
+.gv-fp {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 10px;
+}
+
+.gv-fp-bar {
+	display: flex;
+	width: 100%;
+	height: 6px;
+	border-radius: 999px;
+	overflow: hidden;
+	background: var(--gv-surface-2);
+}
+
+.gv-fp-seg {
+	display: block;
+	height: 100%;
+	background: var(--gv-region, var(--gv-muted));
+	/* A region that barely moves still gets a visible hairline rather than
+	 * rounding away to nothing, so the bar never implies zero when it is not. */
+	min-width: 1px;
+}
+
+.gv-fp-meta {
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	color: var(--gv-muted);
+	text-transform: lowercase;
+}
+
+.gv-fp--full {
+	margin-top: 0;
+	gap: 10px;
+}
+.gv-fp--full .gv-fp-bar {
+	height: 10px;
+}
+
+.gv-fp-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 14px;
+}
+
+.gv-fp-key {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	color: var(--gv-muted);
+}
+.gv-fp-key i {
+	width: 9px;
+	height: 9px;
+	border-radius: 3px;
+	background: var(--gv-region, var(--gv-muted));
+}
+.gv-fp-key b {
+	color: var(--text, #fafafa);
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.gv-sig {
+	margin-top: 14px;
+	padding: 18px;
+	border: 1px solid var(--gv-border);
+	border-radius: var(--gv-radius);
+	background: var(--gv-surface);
+}
+
+.gv-sig-title {
+	margin: 0 0 6px;
+	font-size: 13px;
+	font-weight: 620;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--gv-muted);
+}
+
+.gv-sig-sentence {
+	margin: 0 0 14px;
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.gv-sig-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+	gap: 10px;
+	margin: 14px 0 0;
+}
+
+.gv-sig-stat {
+	padding: 8px 10px;
+	border: 1px solid var(--gv-border);
+	border-radius: 10px;
+	background: var(--gv-surface-2);
+}
+.gv-sig-stat dt {
+	font-size: 10px;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--gv-muted);
+}
+.gv-sig-stat dd {
+	margin: 3px 0 0;
+	font-size: 13px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.gv-sig-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 12px;
+}
+.gv-sig-badges:empty {
+	display: none;
+}
+
+.gv-mbadge {
+	padding: 3px 9px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in srgb, var(--gv-ok) 50%, transparent);
+	background: color-mix(in srgb, var(--gv-ok) 14%, transparent);
+	color: var(--gv-ok);
+	font-size: 11px;
+	font-weight: 620;
+	letter-spacing: 0.02em;
+}
+.gv-mbadge.is-warn {
+	border-color: color-mix(in srgb, var(--gv-warn) 55%, transparent);
+	background: color-mix(in srgb, var(--gv-warn) 14%, transparent);
+	color: var(--gv-warn);
+}
+
+/* ── Slot fit verdict ──────────────────────────────────────────────────── */
+
+.gv-fit {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	margin-top: 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--gv-border);
+	border-radius: 12px;
+	background: var(--gv-surface);
+	font-size: 13px;
+	line-height: 1.5;
+}
+.gv-fit p {
+	margin: 0;
+}
+.gv-fit-icon::before {
+	content: '✓';
+	font-weight: 700;
+}
+.gv-fit.is-ok {
+	border-color: color-mix(in srgb, var(--gv-ok) 40%, transparent);
+}
+.gv-fit.is-ok .gv-fit-icon {
+	color: var(--gv-ok);
+}
+.gv-fit.is-warn {
+	border-color: color-mix(in srgb, var(--gv-warn) 50%, transparent);
+	background: color-mix(in srgb, var(--gv-warn) 8%, transparent);
+}
+.gv-fit.is-warn .gv-fit-icon {
+	color: var(--gv-warn);
+}
+.gv-fit.is-warn .gv-fit-icon::before {
+	content: '!';
+}
+
+/* ── Nearest clips ─────────────────────────────────────────────────────── */
+
+.gv-similar {
+	margin-top: 14px;
+	padding: 16px 18px;
+	border: 1px solid var(--gv-border);
+	border-radius: var(--gv-radius);
+	background: var(--gv-surface);
+}
+.gv-similar-title {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 620;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--gv-muted);
+}
+.gv-similar-lede {
+	margin: 4px 0 12px;
+	font-size: 12px;
+	color: var(--gv-muted);
+}
+
+.gv-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.gv-chip,
+.gv-pill {
+	padding: 6px 12px;
+	border: 1px solid var(--gv-border-strong);
+	border-radius: 999px;
+	background: var(--gv-surface-2);
+	color: inherit;
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+	transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+.gv-chip:hover,
+.gv-pill:hover {
+	background: var(--gv-surface-3);
+	transform: translateY(-1px);
+}
+.gv-chip:active,
+.gv-pill:active {
+	transform: translateY(0);
+}
+.gv-chip:focus-visible,
+.gv-pill:focus-visible {
+	outline: 2px solid var(--gv-accent);
+	outline-offset: 2px;
+}
+.gv-pill[aria-pressed='true'] {
+	background: var(--gv-accent);
+	border-color: var(--gv-accent);
+	color: var(--gv-accent-ink);
+	font-weight: 620;
+}
+
+/* ── The motion atlas ──────────────────────────────────────────────────── */
+
+.gv-atlas-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.gv-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.gv-atlas-count {
+	font-size: 12px;
+	color: var(--gv-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.gv-atlas {
+	border: 1px solid var(--gv-border);
+	border-radius: var(--gv-radius);
+	background:
+		radial-gradient(120% 90% at 50% 0%, var(--gv-surface-2), transparent 70%),
+		var(--gv-surface);
+	overflow: hidden;
+}
+
+.gv-atlas-svg {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.gv-atlas-grid {
+	stroke: var(--gv-border);
+	stroke-width: 1;
+	stroke-dasharray: 3 5;
+}
+.gv-atlas-axis {
+	stroke: var(--gv-border-strong);
+	stroke-width: 1;
+}
+.gv-atlas-label {
+	fill: var(--gv-muted);
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.gv-atlas-dot {
+	fill: var(--gv-region, var(--gv-accent));
+	fill-opacity: 0.55;
+	stroke: var(--gv-region, var(--gv-accent));
+	stroke-width: 1;
+	cursor: pointer;
+	transition: fill-opacity 0.16s ease, stroke-width 0.16s ease;
+}
+.gv-atlas-dot:hover {
+	fill-opacity: 0.95;
+	stroke-width: 2;
+}
+.gv-atlas-dot:focus-visible {
+	outline: none;
+	stroke: var(--text, #fafafa);
+	stroke-width: 2.5;
+	fill-opacity: 0.95;
+}
+.gv-atlas-dot.is-dim {
+	fill-opacity: 0.06;
+	stroke-opacity: 0.18;
+}
+.gv-atlas-dot.is-active {
+	fill-opacity: 1;
+	stroke: var(--text, #fafafa);
+	stroke-width: 2.5;
+}
+
+.gv-atlas-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 18px;
+	margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gv-chip,
+	.gv-pill,
+	.gv-atlas-dot {
+		transition: none;
+	}
+	.gv-chip:hover,
+	.gv-pill:hover {
+		transform: none;
+	}
+}

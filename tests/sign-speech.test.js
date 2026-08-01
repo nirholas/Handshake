@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { buildFingerspellingClip } from '../src/fingerspelling.js';
+import { signLookup } from '../src/sign-dictionary.js';
 import {
 	CHAT_TIMING,
 	SignSpeaker,
 	compileUtterance,
 	estimateDuration,
+	scaledTiming,
 	utteranceWords,
 } from '../src/sign-speech.js';
 
@@ -72,6 +74,78 @@ describe('compileUtterance', () => {
 	it('throws on unsignable text', () => {
 		expect(() => compileUtterance('!!!')).toThrow();
 		expect(compileUtterance('12345').clip.duration).toBeGreaterThan(0);
+	});
+});
+
+// The segment timeline is what a caption track, a scrubber, or the /api/sign
+// console reads to follow an utterance along. It is only useful if it describes
+// the clip exactly: gaps or drift show up as a caption running ahead of the
+// hands, which is worse than no caption at all.
+describe('compileUtterance segments', () => {
+	const signs = signLookup();
+
+	it('tiles the whole clip in order, one entry per word', () => {
+		const out = compileUtterance('happy to meet you', { signs });
+		expect(out.segments.map((s) => s.word)).toEqual(out.words);
+		expect(out.segments[0].start).toBe(0);
+		for (let i = 1; i < out.segments.length; i++) {
+			expect(out.segments[i].start).toBeGreaterThanOrEqual(out.segments[i - 1].end);
+		}
+		expect(out.segments[out.segments.length - 1].end).toBeCloseTo(out.clip.duration, 6);
+	});
+
+	it('marks signed words with their gloss and spelled words with their letters', () => {
+		const [hello, name] = compileUtterance('hello nich', { signs }).segments;
+		expect(hello.signed).toBe(true);
+		expect(hello.gloss).toMatch(/temple/);
+		expect(hello.letters).toBeNull();
+
+		expect(name.signed).toBe(false);
+		expect(name.gloss).toBeNull();
+		expect(name.letters.map((l) => l.letter).join('')).toBe('NICH');
+	});
+
+	it('keeps every letter inside its own word, in order', () => {
+		const word = compileUtterance('abc', { signs }).segments[0];
+		let previous = word.start;
+		for (const letter of word.letters) {
+			expect(letter.start).toBeGreaterThanOrEqual(previous - 1e-9);
+			expect(letter.end).toBeGreaterThan(letter.start);
+			expect(letter.end).toBeLessThanOrEqual(word.end + 1e-9);
+			previous = letter.end;
+		}
+	});
+
+	it('describes the truncated utterance, not the requested one', () => {
+		const out = compileUtterance(Array(30).fill('hello').join(' '), { signs, maxSeconds: 6 });
+		expect(out.truncated).toBe(true);
+		expect(out.segments.length).toBeLessThan(out.words.length);
+		expect(out.segments[out.segments.length - 1].end).toBeCloseTo(out.clip.duration, 6);
+	});
+
+	it('stretches with the rate rather than reporting citation timings', () => {
+		const fast = compileUtterance('hello', { signs: signLookup({ rate: 1 }) });
+		const slow = compileUtterance('hello', {
+			signs: signLookup({ rate: 0.5 }),
+			timing: scaledTiming(0.5),
+		});
+		expect(slow.segments[0].end).toBeGreaterThan(fast.segments[0].end * 1.5);
+		expect(slow.segments[0].end).toBeCloseTo(slow.clip.duration, 6);
+	});
+});
+
+describe('scaledTiming', () => {
+	it('divides every duration by the rate and leaves 1x untouched', () => {
+		expect(scaledTiming(1)).toEqual({ ...CHAT_TIMING });
+		const half = scaledTiming(0.5);
+		for (const [key, value] of Object.entries(CHAT_TIMING)) {
+			expect(half[key]).toBeCloseTo(value * 2, 9);
+		}
+	});
+
+	it('ignores a nonsense rate instead of producing Infinity', () => {
+		expect(scaledTiming(0)).toEqual({ ...CHAT_TIMING });
+		expect(scaledTiming(Number.NaN)).toEqual({ ...CHAT_TIMING });
 	});
 });
 

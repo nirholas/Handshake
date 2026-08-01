@@ -113,6 +113,30 @@
 						<p class="gv-sr-status" data-role="stage-status" role="status" aria-live="polite"></p>
 					</div>
 
+					<!-- Motion signature: measured from the clip's own keyframes by
+					     scripts/build-motion-signatures.mjs, not authored by hand. -->
+					<div class="gv-sig" data-role="signature" hidden>
+						<h2 class="gv-sig-title">What this clip actually does</h2>
+						<p class="gv-sig-sentence" data-role="signature-sentence"></p>
+						<div class="gv-fp gv-fp--full" data-role="signature-bar"></div>
+						<dl class="gv-sig-stats" data-role="signature-stats"></dl>
+						<div class="gv-sig-badges" data-role="signature-badges"></div>
+					</div>
+
+					<!-- The verdict: can this clip do the job this slot is for. -->
+					<div class="gv-fit" data-role="fit" hidden>
+						<span class="gv-fit-icon" aria-hidden="true"></span>
+						<p data-role="fit-text"></p>
+					</div>
+
+					<div class="gv-similar" data-role="similar" hidden>
+						<h2 class="gv-similar-title">Moves like this one</h2>
+						<p class="gv-similar-lede">
+							Nearest clips in the measured motion space, not by name.
+						</p>
+						<div class="gv-chips" data-role="similar-list"></div>
+					</div>
+
 					<!-- Override builder. The output is exactly the shape an agent's
 					     meta.edits.animations takes, so it is copy-paste usable. -->
 					<div class="gv-override" data-role="override" hidden>
@@ -203,6 +227,35 @@
 
 					<div class="gv-hints" data-role="hints">
 						<div class="gv-hints-loading">Loading the skill map&hellip;</div>
+					</div>
+
+					<div class="gv-section-head">
+						<h2 id="atlas">The motion atlas</h2>
+						<p>
+							Every clip in the library, measured from its own keyframes and plotted
+							by how energetic it is and how much of that energy is above the waist.
+							Calm upper-body gestures gather top-left; explosive full-body dances and
+							runs sit bottom-right. Colour is the region leading the movement. Click
+							any point to play it, or to try it in the slot you have selected.
+						</p>
+					</div>
+
+					<div class="gv-atlas-tools">
+						<div class="gv-pills" data-role="atlas-filters" role="group" aria-label="Filter the atlas"></div>
+						<span class="gv-atlas-count" data-role="atlas-count" aria-live="polite"></span>
+					</div>
+					<div class="gv-atlas" data-role="atlas"></div>
+					<div class="gv-atlas-legend">
+						<span class="gv-fp-key"><i data-region="head"></i>Head</span>
+						<span class="gv-fp-key"><i data-region="arms"></i>Arms</span>
+						<span class="gv-fp-key"><i data-region="torso"></i>Torso</span>
+						<span class="gv-fp-key"><i data-region="root"></i>Hips</span>
+						<span class="gv-fp-key"><i data-region="legs"></i>Legs</span>
+					</div>
+					<div class="gv-error" data-role="atlas-error" hidden>
+						<p class="gv-error-title">The motion index did not load.</p>
+						<p class="gv-error-body" data-role="atlas-error-detail"></p>
+						<button type="button" class="gv-btn gv-btn--secondary" data-role="atlas-retry">Retry</button>
 					</div>
 
 					<div class="gv-section-head">

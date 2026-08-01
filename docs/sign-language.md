@@ -201,6 +201,86 @@ const { clip, signed, spelled } = compileUtterance('happy to meet you', { signs:
 
 The package README covers every export, the authoring format, and a runnable Node example: [packages/sign-language](../packages/sign-language/README.md).
 
+## The sign API
+
+`GET /api/sign` compiles text into a signed utterance on the server and hands back both halves of it: the animation, and the timeline it performs on. No account, no API key, no SDK, and CORS is open, so a browser, a worker, a Unity build, a Python script or an agent can all call it directly.
+
+![The sign API console on three.ws, showing the phrase "happy to meet you" compiled into four timeline blocks with the spelled word broken into its letters](/docs/img/sign-api-console.webp)
+
+The console on [/sign-language](https://three.ws/sign-language#sl-api) is this endpoint, live: it calls the real URL, draws the response, and plays the same utterance on the avatar so you can see that the JSON and the hands agree.
+
+```bash
+curl -s "https://three.ws/api/sign?text=happy+to+meet+you" | jq '.timeline'
+```
+
+```json
+[
+  { "word": "HAPPY", "signed": true,  "gloss": "Both flat hands brush up the chest in circles.",
+    "start": 0, "end": 1.46, "letters": null },
+  { "word": "TO",    "signed": false, "gloss": null,
+    "start": 1.64, "end": 2.64,
+    "letters": [ { "letter": "T", "start": 1.64, "end": 2.14 },
+                 { "letter": "O", "start": 2.14, "end": 2.64 } ] },
+  { "word": "MEET",  "signed": true,  "gloss": "Two upright index fingers come together.",
+    "start": 2.82, "end": 3.98, "letters": null },
+  { "word": "YOU",   "signed": true,  "gloss": "Index finger points at the person addressed.",
+    "start": 4.16, "end": 5.0,  "letters": null }
+]
+```
+
+### Parameters
+
+| Parameter | Values | What it does |
+|---|---|---|
+| `text` | up to 600 characters | The text to sign. A-Z, 0-9 and spaces are performed; punctuation is dropped. Required to compile |
+| `hand` | `right` (default), `left` | Dominant hand. The whole sign mirrors, not just the hand |
+| `speed` | `0.25`-`1.5`, default `1` | Below 1 is a signer taking longer over the same signs, not a clip played back slowly |
+| `max_seconds` | `1`-`60`, default `45` | Cap the utterance. Longer text truncates at a word boundary and comes back with `truncated: true` |
+| `format` | `clip` (default), `timeline` | `timeline` omits the clip: a few hundred bytes instead of tens of kilobytes, when all you need is what would be signed |
+
+`POST` takes the same fields as a JSON body (`max_seconds` may also be written `maxSeconds`).
+
+### The response
+
+| Field | What it is |
+|---|---|
+| `duration` | Seconds the whole utterance takes |
+| `words`, `signed`, `spelled` | The utterance as words, and which of them had a real sign vs were fingerspelled |
+| `timeline` | One entry per word in performance order: `start`, `end`, `signed`, the `gloss` of the sign, and for a spelled word the `start`/`end` of every letter |
+| `clip` | A three.js `AnimationClip` document keyed to the canonical humanoid skeleton, rotation lanes only |
+| `truncated` | Whether `max_seconds` cut the utterance short |
+| `viewer` | A `/sign-language?say=…` link that performs the same text on a live avatar |
+
+`GET /api/sign` with no `text` returns the descriptor: every parameter, and the whole vocabulary with each sign's description. That is the call to make first if you want to know what will sign and what will spell.
+
+### Playing what comes back
+
+The clip is the same document the animation library ships, so it retargets onto any rigged humanoid through [`@three-ws/retarget`](https://www.npmjs.com/package/@three-ws/retarget) and plays like any other clip:
+
+```js
+const res = await fetch('https://three.ws/api/sign?text=hello+friend');
+const { clip, timeline, duration } = await res.json();
+
+const action = mixer.clipAction(THREE.AnimationClip.parse(retargetClip(clip, rig)));
+action.setLoop(THREE.LoopOnce, 1).play();
+
+// Caption it in sync: the timeline is in the same seconds as the clip.
+const at = (t) => timeline.find((s) => t >= s.start && t < s.end)?.word ?? '';
+```
+
+Responses are deterministic (the same text, hand and speed always compile to the same clip), so they cache hard at the edge and are cheap to call repeatedly. It is rate-limited per IP; a 429 comes back with the standard headers.
+
+### From an agent
+
+The same compiler is on the [three.ws MCP server](https://three.ws/mcp-tools) as two free tools:
+
+| Tool | What it does |
+|---|---|
+| `list_sign_vocabulary` | Every word with a real sign, and what the sign does. Optional `search` filter |
+| `sign_text` | Compiles text and returns the timeline, a link that plays it, and the clip URL. Pass `include_clip: true` to inline the clip document itself |
+
+`sign_text` withholds the clip by default on purpose: a sentence is tens of thousands of numbers, which is worth fetching over HTTP and worthless inside a chat transcript.
+
 ## Reading signing: the recognition API
 
 `/api/asl-recognition` is the endpoint behind the webcam input. No API key, no account; it is rate-limited per IP.

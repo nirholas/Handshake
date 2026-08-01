@@ -83,8 +83,11 @@ describe('letter shapes', () => {
 		const right = handshapeLocals('V', 'Right');
 		const left = handshapeLocals('V', 'Left');
 		expect(quatAngleDeg(left.LeftHandIndex1)).toBeCloseTo(quatAngleDeg(right.RightHandIndex1), 5);
-		// Curl hinge is mirrored: z components flip sign.
-		expect(left.LeftHandRing2[2]).toBeCloseTo(-right.RightHandRing2[2], 6);
+		// Curl hinge is mirrored: z components flip sign. The hinge is derived
+		// from the rig's MEASURED rest pose, which is not symmetric to the last
+		// decimal the way a hardcoded axis would be, so this holds to five
+		// places rather than exactly.
+		expect(left.LeftHandRing2[2]).toBeCloseTo(-right.RightHandRing2[2], 5);
 	});
 
 	it('rejects unknown characters', () => {
