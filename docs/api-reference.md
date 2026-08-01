@@ -4019,6 +4019,52 @@ Returns `{ "clips": [], "total": 0 }` until the library has been published, so c
 
 ---
 
+## Motion Signatures API
+
+```
+GET /api/animations/signatures
+```
+
+The measured motion signature of every baked clip in the starter library: energy, tempo, per-region motion shares, loop-seam cleanliness, root travel, and the derived flags (`overlay`, `anchored`, `loopClean`, `static`). Nothing is authored by hand; `scripts/build-motion-signatures.mjs` measures the keyframes and this endpoint serves the result with the plain-language derivations (`band`, `description`) added. No auth. CORS open. Edge-cached for 5 minutes.
+
+Use it to pick clips by what they do rather than by name: "a calm, arms-led loop that survives as an upper-body overlay" is a query here, not an afternoon of previewing.
+
+**Modes** (mutually exclusive; listing is the default)
+
+| Query | Answer |
+| ----- | ------ |
+| `?clip=<name>` | One clip's full signature. |
+| `?clip=<name>&slot=<slot>` | The signature plus a fit verdict: can this clip play in that runtime slot? `fit.level` is `ok` or `warn`, and `fit.message` says why in plain language (open loop seam, motion below the waist, held pose, root drift). |
+| `?slot=<slot>` | The health of the slot's own default clip: the question "is this slot fine right now?". |
+| `?similar=<name>&limit=<1..20>` | The nearest clips by measured motion distance, closest first. |
+
+**Listing filters** (combine freely)
+
+| Param | Values |
+| ----- | ------ |
+| `overlay` | `true` / `false`: survives the upper-body strip on /walk. |
+| `loop` | `clean`: last frame meets the first, no visible snap. |
+| `anchored` | `true` / `false`: ends where it started. |
+| `lead` | `head`, `arms`, `torso`, `root`, `legs`: which region carries the motion. |
+| `band` | `still`, `calm`, `gentle`, `lively`, `explosive`. |
+| `sort` | `energy`, `tempo`, `duration`, `upperShare`, `travel`, `beat`, `balance` (+ `order=asc|desc`, default desc). |
+| `limit`, `offset` | Paging, `limit` 1 to 200 (default 200). |
+
+```bash
+# Calm, clean-looping clips an agent can idle on
+curl 'https://three.ws/api/animations/signatures?loop=clean&band=calm'
+
+# Would av-waiting hold the fidget loop? (No: its last frame misses its first.)
+curl 'https://three.ws/api/animations/signatures?clip=av-waiting&slot=fidget'
+
+# Five clips that move like "wave"
+curl 'https://three.ws/api/animations/signatures?similar=wave&limit=5'
+```
+
+**Errors:** `404 unknown_clip`, `400 unknown_slot` / `unknown_region` / `unknown_band` / `unknown_sort`, each naming the valid values. The same data powers the `animation_signature` and `find_similar_animations` MCP tools and the /gestures page, so all three always agree.
+
+---
+
 ## Config API
 
 ```
