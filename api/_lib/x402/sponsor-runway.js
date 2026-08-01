@@ -80,7 +80,7 @@ function round(n, places) {
 
 /**
  * Turn a live sponsor balance and a measured burn rate into a runway verdict.
- * Pure — no clock, no DB, no RPC.
+ * Pure: no clock, no DB, no RPC.
  *
  * Statuses:
  *   `critical` the wallet is at or under its floor. Settlement is already being
