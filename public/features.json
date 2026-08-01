@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-31T18:50:57.120Z",
+	"generated_at": "2026-08-01T18:30:18.689Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -396,6 +396,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/tour/atlas",
+					"title": "Tour Atlas",
+					"description": "Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/walk",
 					"title": "Walk Anywhere on the Web",
 					"description": "Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.",
@@ -597,6 +607,16 @@
 					"title": "Live Agents",
 					"description": "Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/monitor",
+					"title": "Agent Monitor",
+					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.",
+					"added": "2026-08-01",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -1066,6 +1086,16 @@
 					"path": "/rig-doctor",
 					"title": "Rig Doctor",
 					"description": "Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/bundles",
+					"title": "Skill Bundles",
+					"description": "Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.",
 					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
@@ -2565,6 +2595,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/play/solver",
+					"title": "The economy solver",
+					"description": "The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -2655,6 +2695,16 @@
 					"title": "Agent Payment Sessions",
 					"description": "Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key.",
 					"added": "2026-06-26",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/pay/simulator",
+					"title": "Spend Policy Simulator",
+					"description": "Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. See which calls settle, which are refused and by which rule, and the exact policy the run needs.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3748,6 +3798,56 @@
 					"showcase": false
 				},
 				{
+					"path": "/walkthroughs",
+					"title": "Walkthroughs",
+					"description": "Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/walkthroughs/forge-your-first-3d-model",
+					"title": "Walkthrough · Forge your first 3D model",
+					"description": "The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/walkthroughs/build-your-first-agent",
+					"title": "Walkthrough · Build your first agent",
+					"description": "Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/walkthroughs/embed-a-3d-avatar",
+					"title": "Walkthrough · Embed a 3D avatar on your site",
+					"description": "Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/walkthroughs/find-an-agent-worth-using",
+					"title": "Walkthrough · Find an agent worth using",
+					"description": "From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.",
+					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/examples",
 					"title": "Examples",
 					"description": "Runnable three.ws examples: copy-paste snippets that execute on the page against the production CDN bundle, plus every example that ships in the repository, generated by scanning it. Each one lists the files it contains and the command that runs it.",
@@ -4522,6 +4622,16 @@
 					"title": "Docs: Walk Leaderboard",
 					"description": "Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/atlas",
+					"title": "Docs: Atlas and Cmd+K search",
+					"description": "How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.",
+					"added": "2026-07-31",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Monitor</title>
+			<link>https://three.ws/monitor</link>
+			<guid isPermaLink="false">2026-08-01:Agent Monitor</guid>
+			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.</description>
+		</item>
+		<item>
 			<title>.well-known/mcp.json</title>
 			<link>https://three.ws/.well-known/mcp.json</link>
 			<guid isPermaLink="false">2026-07-31:.well-known/mcp.json</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.</description>
+		</item>
+		<item>
+			<title>Docs: Atlas and Cmd+K search</title>
+			<link>https://three.ws/docs/atlas</link>
+			<guid isPermaLink="false">2026-07-31:Docs: Atlas and Cmd+K search</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.</description>
 		</item>
 		<item>
 			<title>Embed Doctor</title>
@@ -143,6 +159,38 @@
 			<description>A live digital twin of the three.ws x402 payment rail. Runs the exact admission-control code the production settle path runs, seeded with live production balances, so you can drag a knob and watch settlement survive or starve, then get the exact command that fixes it.</description>
 		</item>
 		<item>
+			<title>Skill Bundles</title>
+			<link>https://three.ws/bundles</link>
+			<guid isPermaLink="false">2026-07-31:Skill Bundles</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.</description>
+		</item>
+		<item>
+			<title>Spend Policy Simulator</title>
+			<link>https://three.ws/pay/simulator</link>
+			<guid isPermaLink="false">2026-07-31:Spend Policy Simulator</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. See which calls settle, which are refused and by which rule, and the exact policy the run needs.</description>
+		</item>
+		<item>
+			<title>The economy solver</title>
+			<link>https://three.ws/play/solver</link>
+			<guid isPermaLink="false">2026-07-31:The economy solver</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.</description>
+		</item>
+		<item>
+			<title>Tour Atlas</title>
+			<link>https://three.ws/tour/atlas</link>
+			<guid isPermaLink="false">2026-07-31:Tour Atlas</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.</description>
+		</item>
+		<item>
 			<title>Trial Conversions</title>
 			<link>https://three.ws/conversions</link>
 			<guid isPermaLink="false">2026-07-31:Trial Conversions</guid>
@@ -159,12 +207,60 @@
 			<description>Take the trades the fleet already made and re-run them under different exit rules: why tightening an exit is measurable and loosening one is only a hypothesis, which of the five knobs can actually fire, and how to tell a real finding from a policy that caught two lucky coins.</description>
 		</item>
 		<item>
+			<title>Walkthrough · Build your first agent</title>
+			<link>https://three.ws/walkthroughs/build-your-first-agent</link>
+			<guid isPermaLink="false">2026-07-31:Walkthrough · Build your first agent</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.</description>
+		</item>
+		<item>
+			<title>Walkthrough · Embed a 3D avatar on your site</title>
+			<link>https://three.ws/walkthroughs/embed-a-3d-avatar</link>
+			<guid isPermaLink="false">2026-07-31:Walkthrough · Embed a 3D avatar on your site</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.</description>
+		</item>
+		<item>
+			<title>Walkthrough · Find an agent worth using</title>
+			<link>https://three.ws/walkthroughs/find-an-agent-worth-using</link>
+			<guid isPermaLink="false">2026-07-31:Walkthrough · Find an agent worth using</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.</description>
+		</item>
+		<item>
+			<title>Walkthrough · Forge your first 3D model</title>
+			<link>https://three.ws/walkthroughs/forge-your-first-3d-model</link>
+			<guid isPermaLink="false">2026-07-31:Walkthrough · Forge your first 3D model</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.</description>
+		</item>
+		<item>
+			<title>Walkthroughs</title>
+			<link>https://three.ws/walkthroughs</link>
+			<guid isPermaLink="false">2026-07-31:Walkthroughs</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.</description>
+		</item>
+		<item>
 			<title>AI assistants can now find three.ws on their own</title>
 			<link>https://three.ws/mcp-tools</link>
 			<guid isPermaLink="false">2026-07-31:AI assistants can now find three.ws on their own</guid>
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Ask ChatGPT, Claude, Grok, Kimi, or Perplexity about three.ws and their crawlers now get a proper welcome. robots.txt explicitly invites AI assistants in, including to the public API they can actually call for you. The llms.txt index that AI models read now leads with the machine entry points (the MCP servers, the x402 paid-service catalog, the agent card) instead of burying them. And a new directory at /.well-known/mcp.json lists all seven hosted MCP servers with their endpoint, auth, and what each one does, so any MCP-capable assistant can connect without hunting through docs.</description>
+		</item>
+		<item>
+			<title>Crews: give your people one tag and one headquarters</title>
+			<link>https://three.ws/crews</link>
+			<guid isPermaLink="false">2026-07-31:Crews: give your people one tag and one headquarters</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A crew is a group of accounts whose agents fly the same short tag. Found one, invite anyone with an account, and the whole roster stands in a single 3D headquarters: every member as their own agent, lit when they are live in the world and unlit when they are not. Each crew gets a public link you can share, its own colour derived from its tag, and a directory where anyone can browse every crew and see who is standing in it right now. The crew tag also rides over your avatar in world, so a group reads as a group the moment it walks in.</description>
 		</item>
 		<item>
 			<title>Every code sample in the docs now runs where you read it</title>
@@ -189,6 +285,14 @@
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The most frustrating thing that can happen to a 3D character is that it loads perfectly and then never moves. Nothing errors, nothing warns, it just stands there. The cause is almost always the same: animations find body parts by name, and your character calls its arms and legs something the animations do not recognise. Until now the only way to discover that was to upload, wait, and stare at a frozen figure. The new Rig Doctor answers it in about a second, on your own machine. Drag a .glb onto the page and it tells you which program made the skeleton, whether the torso, arms, hands and legs will each move or stay frozen, and it plays real animations on your character right there so you can watch for yourself. When the only problem is naming, one button hands you back a fixed copy of the file. Your model is never uploaded anywhere: the whole thing runs inside the browser tab, so it works with the network switched off.</description>
+		</item>
+		<item>
+			<title>Press Cmd+K anywhere to search the whole platform</title>
+			<link>https://three.ws/atlas</link>
+			<guid isPermaLink="false">2026-07-31:Press Cmd+K anywhere to search the whole platform</guid>
+			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws has grown past 650 pages, and until now the only way to reach one was already knowing its address. Cmd+K (Ctrl+K on Windows and Linux) now opens a search box over whatever page you are on. Type a name, a URL, or just what you want to do. It also answers goals, not only page names: type &quot;get paid&quot; or &quot;launch a coin&quot; and you get the numbered steps with a link for each one, so you never have to guess which of four plausible pages starts a flow. Recently visited pages come back first, pages that need an account are labelled before you click, and typos still find the right page. The new Atlas page lays the same thing out as a browsable, filterable map of every section.</description>
 		</item>
 		<item>
 			<title>Replay the fleet's real trades under different exit rules</title>

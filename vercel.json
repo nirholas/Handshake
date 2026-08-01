@@ -2427,6 +2427,14 @@
 			"dest": "/agents-live.html"
 		},
 		{
+			"src": "/monitor",
+			"dest": "/monitor.html"
+		},
+		{
+			"src": "/monitor/",
+			"dest": "/monitor.html"
+		},
+		{
 			"src": "/cosmos",
 			"dest": "/cosmos.html"
 		},

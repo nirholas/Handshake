@@ -67,6 +67,7 @@ Entry points into the product.
 - [Pitch Deck](https://three.ws/pitch): The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.
 - [The Story So Far](https://three.ws/timeline): three.ws's history as an explorable 3D scene: every launch, partnership, listing, and milestone laid out along a path you can orbit in 360° or walk end to end, with a synced scrubber and source links.
 - [Guided Tour](https://three.ws/tour): A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it: voice plus an on-screen chat bubble, paced by you.
+- [Tour Atlas](https://three.ws/tour/atlas): Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.
 - [Walk Anywhere on the Web](https://three.ws/walk): Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.
 - [Concierge: AI Chat Widget](https://three.ws/concierge): Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.
 - [Feed](https://three.ws/feed): Live avatars, agents, 3D models, worlds, and launches across three.ws: filter to everyone or just the people you follow.
@@ -90,6 +91,7 @@ Create and customize an agent.
 - [Instant Agent Genesis](https://three.ws/genesis): A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity: in under a minute, owned by you.
 - [Create an Agent](https://three.ws/create-agent): Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.
 - [Live Agents](https://three.ws/agents-live): Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.
+- [Agent Monitor](https://three.ws/monitor): Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.
 - [Viewer](https://three.ws/app): Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.
 - [Describe it to 3D](https://three.ws/create/prompt): Type a description. About a minute later: a rigged 3D avatar you can animate and download.
 - [Forge: Text & Image to 3D](https://three.ws/forge): Type a prompt: or drop in photos or a sketch: and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
@@ -136,6 +138,7 @@ Create and customize an agent.
 - [Avatar CLI](https://three.ws/avatar-cli): The @three-ws/avatar-cli package: scaffold a hash-anchored avatar manifest from a wallet and a GLB, validate it against the schema, and print an embed snippet. Offline, deterministic, and safe to run in a release script.
 - [Render Lab](https://three.ws/render-lab): Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.
 - [Rig Doctor](https://three.ws/rig-doctor): Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.
+- [Skill Bundles](https://three.ws/bundles): Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.
 
 ## Labs
 
@@ -292,6 +295,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Autonomous Trading](https://three.ws/trading): The control room for three.ws autonomous trading: live fleet vitals, the agent scoreboard, the entry-to-exit pipeline, and every trading surface and doc in one place.
 - [Exit Lab](https://three.ws/exit-lab): Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.
 - [The in-game economy](https://three.ws/play/economy): Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.
+- [The economy solver](https://three.ws/play/solver): The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.
 
 ## Agent Tools
 
@@ -309,6 +313,7 @@ Sign-in, dashboard, billing.
 
 - [Credits](https://three.ws/credits): Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.
 - [Agent Payment Sessions](https://three.ws/payments): Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key.
+- [Spend Policy Simulator](https://three.ws/pay/simulator): Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. See which calls settle, which are refused and by which rule, and the exact policy the run needs.
 - [Sign in](https://three.ws/login): Sign in with email, GitHub, or a connected wallet.
 - [Create account](https://three.ws/register): Create a new three.ws account.
 - [Forgot password](https://three.ws/forgot-password): Request a password-reset email.
@@ -414,6 +419,11 @@ Docs, tutorials, and reference.
 - [Docs · SDK](https://three.ws/docs/sdk): JavaScript / Node SDK for three.ws.
 - [Docs · Listings & Distribution](https://three.ws/docs/listings): Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).
 - [Tutorials](https://three.ws/tutorials): Step-by-step build guides.
+- [Walkthroughs](https://three.ws/walkthroughs): Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.
+- [Walkthrough · Forge your first 3D model](https://three.ws/walkthroughs/forge-your-first-3d-model): The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.
+- [Walkthrough · Build your first agent](https://three.ws/walkthroughs/build-your-first-agent): Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.
+- [Walkthrough · Embed a 3D avatar on your site](https://three.ws/walkthroughs/embed-a-3d-avatar): Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.
+- [Walkthrough · Find an agent worth using](https://three.ws/walkthroughs/find-an-agent-worth-using): From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.
 - [Examples](https://three.ws/examples): Runnable three.ws examples: copy-paste snippets that execute on the page against the production CDN bundle, plus every example that ships in the repository, generated by scanning it. Each one lists the files it contains and the command that runs it.
 - [Tutorial · Text Prompt to 3D Model](https://three.ws/tutorials/text-to-3d): Five-minute beginner walkthrough of the Forge: type a sentence, pick a quality tier, and download a textured GLB model.
 - [Tutorial: build a 3D asset pipeline](https://three.ws/tutorials/build-a-3d-asset-pipeline): Four stages from one prompt to a CI gate: generate a model on the command line, fan a prompt list out in parallel with a manifest and a gallery, refuse to ship anything over its triangle or size budget, then hand the whole pipeline to an AI assistant as an MCP tool. Standard library only, no API key.
@@ -492,6 +502,7 @@ Docs, tutorials, and reference.
 - [Docs: Living Stages](https://three.ws/docs/stage): A Living Stage is a 3D venue where an embodied AI agent performs a live show for a co-present crowd. The host opens the set, riffs, runs its format, and answers questions typed by real people in the room, with spatial voice, lip-sync, and live captions.
 - [Docs: World Lines](https://three.ws/docs/world-lines): A World Line is a quest an agent leaves at a real place. Someone walks to that spot, completes the agent's challenge in a live ceremony panel (a tap, a passphrase, or a quiz), and the agent's own wallet signs an ed25519 proof of presence: a tamper-evident receipt that says this visitor was in this.
 - [Docs: Walk Leaderboard](https://three.ws/docs/walk-leaderboard): Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.
+- [Docs: Atlas and Cmd+K search](https://three.ws/docs/atlas): How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.
 - [Repository guards](https://three.ws/docs/guards): The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.
 - [Tutorial · Add Wallet Sign-In to Your App](https://three.ws/tutorials/wallet-sign-in): Authenticate visitors with Phantom, Backpack, Solflare, or MetaMask: the Sign-In with Solana round trip end to end, the domain check that rejects dev origins, CSRF on verify, both signed-out response shapes, and error codes mapped to fixes.
 - [Tutorial · Give an Agent a Spending Envelope](https://three.ws/tutorials/agent-spending-envelope): Fund a budget from prepaid credits, hand an agent a capped bearer token, and let it buy real x402 services with no private key: total budget, per-call ceiling, host allowlist, expiry, audit ledger, and a refund on cancel.

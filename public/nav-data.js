@@ -228,6 +228,13 @@ export const NAV_GROUPS = [
 						badgeTone: 'live',
 						desc: 'Watch agents work in real time — live screens + avatar cams as they browse, research, and operate',
 					},
+					{
+						title: 'Agent Monitor',
+						href: '/monitor',
+						badge: 'Live',
+						badgeTone: 'live',
+						desc: 'Ops-room board for the whole fleet: live activity, money pulse, x402 revenue & platform health on one screen',
+					},
 					{ title: 'Marketplace', href: '/marketplace', desc: 'Buy, sell & remix agents' },
 					{
 						title: 'Creator Gallery',

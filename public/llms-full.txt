@@ -242,6 +242,12 @@ URL: https://three.ws/tour
 
 A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it: voice plus an on-screen chat bubble, paced by you.
 
+### Tour Atlas
+
+URL: https://three.ws/tour/atlas
+
+Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.
+
 ### Walk Anywhere on the Web
 
 URL: https://three.ws/walk
@@ -368,6 +374,12 @@ Watch your agent work in real time: split view with the agent's live screen on t
 URL: https://three.ws/agents-live
 
 Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.
+
+### Agent Monitor
+
+URL: https://three.ws/monitor
+
+Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.
 
 ### Agent Studio
 
@@ -652,6 +664,12 @@ Compose a real avatar render in the browser and copy the exact API call. Reads e
 URL: https://three.ws/rig-doctor
 
 Drop a .glb and find out in one second whether it will animate on three.ws. Names your skeleton convention, scores every limb group against the 52-joint canonical skeleton, repairs non-standard bone names in the browser, and previews the result. Nothing is uploaded.
+
+### Skill Bundles
+
+URL: https://three.ws/bundles
+
+Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.
 
 ## Labs
 
@@ -1553,6 +1571,12 @@ URL: https://three.ws/play/economy
 
 Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.
 
+### The economy solver
+
+URL: https://three.ws/play/solver
+
+The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.
+
 ## Agent Tools
 
 Manage, talk to, and deploy individual agents.
@@ -1610,6 +1634,12 @@ Top up with SOL or $THREE and spend credits on 3D generation, agents, and comput
 URL: https://three.ws/payments
 
 Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key.
+
+### Spend Policy Simulator
+
+URL: https://three.ws/pay/simulator
+
+Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. See which calls settle, which are refused and by which rule, and the exact policy the run needs.
 
 ### Sign in
 
@@ -2279,6 +2309,36 @@ URL: https://three.ws/tutorials
 
 Step-by-step build guides.
 
+### Walkthroughs
+
+URL: https://three.ws/walkthroughs
+
+Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.
+
+### Walkthrough · Forge your first 3D model
+
+URL: https://three.ws/walkthroughs/forge-your-first-3d-model
+
+The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.
+
+### Walkthrough · Build your first agent
+
+URL: https://three.ws/walkthroughs/build-your-first-agent
+
+Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.
+
+### Walkthrough · Embed a 3D avatar on your site
+
+URL: https://three.ws/walkthroughs/embed-a-3d-avatar
+
+Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.
+
+### Walkthrough · Find an agent worth using
+
+URL: https://three.ws/walkthroughs/find-an-agent-worth-using
+
+From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.
+
 ### Examples
 
 URL: https://three.ws/examples
@@ -2746,6 +2806,12 @@ A World Line is a quest an agent leaves at a real place. Someone walks to that s
 URL: https://three.ws/docs/walk-leaderboard
 
 Every step your avatar takes on three.ws is measured, rolled up, and ranked. The Walk Leaderboard is the public board for it: walkers ordered by distance walked, sites visited, or time on their feet, over today, this week, or all time.
+
+### Docs: Atlas and Cmd+K search
+
+URL: https://three.ws/docs/atlas
+
+How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.
 
 ### Repository guards
 

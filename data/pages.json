@@ -509,6 +509,13 @@
 					"added": "2026-06-27"
 				},
 				{
+					"path": "/monitor",
+					"title": "Agent Monitor",
+					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.",
+					"indexable": true,
+					"added": "2026-08-01"
+				},
+				{
 					"path": "/agent-studio",
 					"title": "Agent Studio",
 					"description": "Author your agent's brain, memory, body, money, and skills in one place, with a live 3D avatar that updates everywhere as you edit.",

@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-31T18:50:57.333Z",
+	"generated_at": "2026-08-01T18:30:18.733Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-01",
+			"type": "launch",
+			"title": "Agent Monitor",
+			"summary": "Ops-room dashboard for the 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches and platform health on one screen.",
+			"link": "/monitor",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-31",
 			"type": "launch",
@@ -82,6 +92,16 @@
 			"title": "Docs · Money Flow Map",
 			"summary": "How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.",
 			"link": "/docs/money-flow-map",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Docs: Atlas and Cmd+K search",
+			"summary": "How the site-wide Cmd+K palette works, how the task shortcuts answer a goal with ordered steps instead of a link, how to add one, and how to open the palette from your own page.",
+			"link": "/docs/atlas",
 			"tags": [
 				"launch"
 			]
@@ -179,6 +199,46 @@
 		{
 			"date": "2026-07-31",
 			"type": "launch",
+			"title": "Skill Bundles",
+			"summary": "Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.",
+			"link": "/bundles",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Spend Policy Simulator",
+			"summary": "Dry-run an AI agent spending policy against real x402 prices before authorizing a budget. See which calls settle, which are refused and by which rule, and the exact policy the run needs.",
+			"link": "/pay/simulator",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "The economy solver",
+			"summary": "The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.",
+			"link": "/play/solver",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Tour Atlas",
+			"summary": "Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.",
+			"link": "/tour/atlas",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
 			"title": "Trial Conversions",
 			"summary": "Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.",
 			"link": "/conversions",
@@ -198,6 +258,56 @@
 		},
 		{
 			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Walkthrough · Build your first agent",
+			"summary": "Five steps to a named agent with a body, a personality, and a shareable URL, built before you ever sign in.",
+			"link": "/walkthroughs/build-your-first-agent",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Walkthrough · Embed a 3D avatar on your site",
+			"summary": "Configure the avatar by clicking, watch the code rewrite itself, then copy one script tag onto any page you control.",
+			"link": "/walkthroughs/embed-a-3d-avatar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Walkthrough · Find an agent worth using",
+			"summary": "From the marketplace front door to a shortlist, using the weekly theme, the type and price filters, and the live activity strip.",
+			"link": "/walkthroughs/find-an-agent-worth-using",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Walkthrough · Forge your first 3D model",
+			"summary": "The free text-to-3D lane end to end: what to type, which engine to pick, and where the finished GLB lands.",
+			"link": "/walkthroughs/forge-your-first-3d-model",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "launch",
+			"title": "Walkthroughs",
+			"summary": "Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.",
+			"link": "/walkthroughs",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-31",
 			"type": "update",
 			"title": "AI assistants can now find three.ws on their own",
 			"summary": "Ask ChatGPT, Claude, Grok, Kimi, or Perplexity about three.ws and their crawlers now get a proper welcome. robots.txt explicitly invites AI assistants in, including to the public API they can actually call for you. The llms.txt index that AI models read now leads with the machine entry points (the MCP servers, the x402 paid-service catalog, the agent card) instead of burying them. And a new directory at /.well-known/mcp.json lists all seven hosted MCP servers with their endpoint, auth, and what each one does, so any MCP-capable assistant can connect without hunting through docs.",
@@ -205,6 +315,16 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
+			"title": "Crews: give your people one tag and one headquarters",
+			"summary": "A crew is a group of accounts whose agents fly the same short tag. Found one, invite anyone with an account, and the whole roster stands in a single 3D headquarters: every member as their own agent, lit when they are live in the world and unlit when they are not. Each crew gets a public link you can share, its own colour derived from its tag, and a directory where anyone can browse every crew and see who is standing in it right now. The crew tag also rides over your avatar in world, so a group reads as a group the moment it walks in.",
+			"link": "/crews",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -239,6 +359,17 @@
 				"feature",
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-31",
+			"type": "update",
+			"title": "Press Cmd+K anywhere to search the whole platform",
+			"summary": "three.ws has grown past 650 pages, and until now the only way to reach one was already knowing its address. Cmd+K (Ctrl+K on Windows and Linux) now opens a search box over whatever page you are on. Type a name, a URL, or just what you want to do. It also answers goals, not only page names: type \"get paid\" or \"launch a coin\" and you get the numbered steps with a link for each one, so you never have to guess which of four plausible pages starts a flow. Recently visited pages come back first, pages that need an account are labelled before you click, and typos still find the right page. The new Atlas page lays the same thing out as a browsable, filterable map of every section.",
+			"link": "/atlas",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
